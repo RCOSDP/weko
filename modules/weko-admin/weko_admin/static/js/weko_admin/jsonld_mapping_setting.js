@@ -154,7 +154,7 @@ async function saveDataFormat(event, type) {
   if (type === 'new') {
     url = '/admin/jsonld-mapping/new/';
   } else {
-    url = '/admin/jsonld-mapping/edit/' + current_model_json['id'];
+    url = '/admin/jsonld-mapping/edit/' + current_model_json['id'] + '/';
   }
   fetch(url, {
     method: 'POST',
@@ -181,7 +181,7 @@ function openDeleteModal() {
 function deleteData() {
   closeError();
   fetch(
-    '/admin/jsonld-mapping/delete/' + current_model_json['id'],
+    '/admin/jsonld-mapping/delete/' + current_model_json['id'] + '/',
     {
       method: 'DELETE',
       credentials: 'include',

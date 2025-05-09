@@ -1738,9 +1738,8 @@ msgid "Duplicate Check"
 msgstr "重複チェック"
 
 #: weko_admin/templates/weko_admin/admin/sword_api_jsonld_settings.html:171
-#, fuzzy
-msgid "Meta data API"
-msgstr "メタデータAPI"
+msgid "Metadata Collection API"
+msgstr "メタデータ補完API"
 
 #: weko_admin/templates/weko_admin/admin/sword_api_jsonld_settings.html:182
 msgid "Disable"
@@ -1752,22 +1751,20 @@ msgstr "有効"
 
 #: weko_admin/templates/weko_admin/admin/sword_api_jsonld_settings.html:228
 msgid "\"Original\" means the original metadata received via the SWORD API."
-msgstr "\"Original\"はSWORD API経由で受信したもともとのメタデータを指します。"
+msgstr "「Original」はSWORD API経由で受信したもともとのメタデータを指します。"
 
 #: weko_admin/templates/weko_admin/admin/sword_api_settings.html:43
 msgid "Required item is not inputted"
 msgstr ""
 
 #: weko_admin/templates/weko_admin/admin/sword_api_settings.html:74
-#, fuzzy
-msgid "Direct"
+msgid "Direct_Registration"
 msgstr "直接登録"
 
 #: weko_admin/templates/weko_admin/admin/sword_api_settings.html:76
 #: weko_admin/templates/weko_admin/admin/sword_api_settings.html:83
-#, fuzzy
-msgid "Workflow"
-msgstr "ワークフロー"
+msgid "WorkFlow_Registration"
+msgstr "ワークフロー登録"
 
 #: weko_admin/templates/weko_admin/admin/web_api_account.html:39
 msgid "Input Type"
@@ -1838,6 +1835,9 @@ msgstr "現行"
 #: weko_admin/templates/weko_admin/settings/lifetime.html:59
 msgid "Update"
 msgstr "更新"
+
+msgid "Deleted ItemType"
+msgstr "削除済みアイテムタイプ"
 
 #~ msgid "Title_Asc"
 #~ msgstr "タイトル（昇順）"

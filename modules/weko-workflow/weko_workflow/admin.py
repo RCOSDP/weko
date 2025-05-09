@@ -407,7 +407,6 @@ class WorkFlowSettingView(BaseView):
             display_hide_label=display_hide,
             is_sysadmin=is_sysadmin,
             repositories=repositories
-            
         )
 
     @expose('/<string:workflow_id>', methods=['POST', 'PUT'])
@@ -623,7 +622,7 @@ class WorkSpaceWorkFlowSettingView(BaseView):
                 name='workspace_workflow_settings',
                 dict_to_object=False)
 
-        if not current_settings:  
+        if not current_settings:
             AdminSettings.update('workspace_workflow_settings', default_workspace_workflowselect_api)
             current_settings = AdminSettings.get(
                 name='workspace_workflow_settings',
@@ -696,7 +695,7 @@ activity_settings_adminview = {
     'view_class': ActivitySettingsView,
     'kwargs': {
         'category': _('Setting'),
-        'name': _('Activity'),
+        'name': _('Activity List'),
         'endpoint': 'activity'
     }
 }

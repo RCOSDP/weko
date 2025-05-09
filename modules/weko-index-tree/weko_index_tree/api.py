@@ -25,7 +25,6 @@ import os
 import sys
 from datetime import date, datetime, timezone
 from functools import partial
-from socketserver import DatagramRequestHandler
 import traceback
 
 from b2handle.clientcredentials import PIDClientCredentials
@@ -45,7 +44,6 @@ from invenio_indexer.api import RecordIndexer
 
 from weko_groups.api import Group
 from weko_redis.redis import RedisConnection
-from weko_logging.activity_logger import UserActivityLogger
 from weko_handle.api import Handle
 
 from .models import Index
@@ -69,6 +67,7 @@ class Indexes(object):
 
         # delay import
         from weko_workflow.config import WEKO_SERVER_CNRI_HOST_LINK
+        from weko_logging.activity_logger import UserActivityLogger
 
         def _add_index(data):
             with db.session.begin_nested():
@@ -211,6 +210,8 @@ class Indexes(object):
         :param detail: new index info for update.
         :return: Updated index info
         """
+        from weko_logging.activity_logger import UserActivityLogger
+
         try:
             with db.session.begin_nested():
                 index = cls.get_index(index_id)

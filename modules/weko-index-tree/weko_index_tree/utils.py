@@ -36,6 +36,7 @@ from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from flask_login import current_user
 from invenio_cache import current_cache
+from invenio_communities.models import Community
 from invenio_db import db
 from invenio_i18n.ext import current_i18n
 from invenio_pidstore.models import PersistentIdentifier
@@ -149,6 +150,37 @@ def can_user_access_index(lst):
 
         if check_roles(roles, contribute_role) or check_groups(groups, contribute_group):
             result = True
+
+    return result
+
+def can_admin_access_index(lst):
+    """Check if the specified user with admin role has access to the index item.
+
+    This function determines access permissions based on the user's admin roles.
+    It checks whether the user has administrative privileges directly on the index item,
+    or indirectly through one of its parent indexes.
+
+    Args:
+        lst (dict): Dictionary representing the index item.
+
+    Returns:
+        bool: True if the user has admin access to the index, False otherwise.
+    """
+    from .api import Indexes
+
+    result, roles = get_user_roles(is_super_role=False)
+
+    if not result:
+        if check_comadmin(roles, lst.get('id')):
+            result = True
+        else:
+            parent_id = lst.get('parent', 0)
+            while parent_id and parent_id != '0':
+                parent = Indexes.get_index(parent_id)
+                if parent and check_comadmin(roles, parent.id):
+                    result = True
+                    break
+                parent_id = parent.parent if parent else None
 
     return result
 
@@ -344,6 +376,10 @@ def reduce_index_by_role(tree, roles, groups, browsing_role=True, plst=None):
             lst = tree[i]
 
             if isinstance(lst, dict):
+                if check_comadmin(roles[1], lst.get('id')):
+                    i += 1
+                    continue
+
                 contribute_role = lst.pop('contribute_role')
                 public_state = lst.pop('public_state')
                 public_date = lst.pop('public_date')
@@ -1188,3 +1224,15 @@ def get_all_records_in_index(index_id):
 def create_limiter():
     from .config import WEKO_INDEX_TREE_API_LIMIT_RATE_DEFAULT
     return Limiter(app=Flask(__name__), key_func=get_remote_address, default_limits=WEKO_INDEX_TREE_API_LIMIT_RATE_DEFAULT)
+
+
+def check_comadmin(roles, index_id):
+    """Check if the user is a community admin based on roles and group_id."""
+    if roles is not None and any(
+            role.name == current_app.config.get("WEKO_ADMIN_PERMISSION_ROLE_COMMUNITY")
+            for role in current_user.roles
+    ):
+        com_list = Community.get_by_root_node_id(index_id)
+        if any(com.group_id and com.group_id in roles for com in com_list):
+            return True
+    return False

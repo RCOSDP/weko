@@ -1732,7 +1732,7 @@ msgid "Duplicate Check"
 msgstr ""
 
 #: weko_admin/templates/weko_admin/admin/sword_api_jsonld_settings.html:171
-msgid "Meta data API"
+msgid "Metadata Collection API"
 msgstr ""
 
 #: weko_admin/templates/weko_admin/admin/sword_api_jsonld_settings.html:182
@@ -1752,12 +1752,12 @@ msgid "Required item is not inputted"
 msgstr ""
 
 #: weko_admin/templates/weko_admin/admin/sword_api_settings.html:74
-msgid "Direct"
+msgid "Direct_Registration"
 msgstr ""
 
 #: weko_admin/templates/weko_admin/admin/sword_api_settings.html:76
 #: weko_admin/templates/weko_admin/admin/sword_api_settings.html:83
-msgid "Workflow"
+msgid "WorkFlow_Registration"
 msgstr ""
 
 #: weko_admin/templates/weko_admin/admin/web_api_account.html:39
@@ -1829,3 +1829,5 @@ msgstr ""
 msgid "Update"
 msgstr ""
 
+msgid "Deleted ItemType"
+msgstr ""

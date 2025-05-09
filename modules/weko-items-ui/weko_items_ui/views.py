@@ -948,10 +948,7 @@ def prepare_edit_item(id=None, community=None):
     if not id and request:
         if request.headers['Content-Type'] != 'application/json':
             """Check header of request"""
-            return jsonify(
-                code=err_code,
-                msg=_('Header Error')
-            )
+            return jsonify(code=err_code, msg=_('Header Error'))
 
     post_activity = request.get_json() or {}
     getargs = request.args if request else {}
@@ -985,7 +982,7 @@ def prepare_edit_item(id=None, community=None):
             str(deposit.get('weko_shared_id'))
         ]
         user_id = str(get_current_user())
-        activity = WorkActivity()
+        work_activity = WorkActivity()
         latest_pid = PIDVersioning(child=recid).last_child
 
         # ! Check User's Permissions
@@ -1020,16 +1017,15 @@ def prepare_edit_item(id=None, community=None):
         if check_an_item_is_locked(pid_value):
             return jsonify(
                 code=err_code,
-                msg=_('Item cannot be edited because '
-                      'the import is in progress.')
+                msg=_('Item cannot be edited because the import is in progress.')
             )
 
         # ! Check Record is being edit
         item_uuid = latest_pid.object_uuid
-        post_workflow = activity.get_workflow_activity_by_item_id(item_uuid)
+        latest_activity = work_activity.get_workflow_activity_by_item_id(item_uuid)
 
-        if post_workflow:
-            is_begin_edit = check_item_is_being_edit(recid, post_workflow, activity)
+        if latest_activity:
+            is_begin_edit = check_item_is_being_edit(recid, latest_activity, work_activity)
             if is_begin_edit:
                 return jsonify(
                     code=err_code,
@@ -1037,15 +1033,16 @@ def prepare_edit_item(id=None, community=None):
                     activity_id=is_begin_edit
                 )
 
-        if post_workflow:
-            post_activity['workflow_id'] = post_workflow.workflow_id
-            post_activity['flow_id'] = post_workflow.flow_id
+        if latest_activity:
+            post_activity['workflow_id'] = latest_activity.workflow_id
+            post_activity['flow_id'] = latest_activity.flow_id
         else:
-            post_workflow = activity.get_workflow_activity_by_item_id(
+            latest_activity = work_activity.get_workflow_activity_by_item_id(
                 recid.object_uuid
             )
-            workflow = get_workflow_by_item_type_id(item_type.name_id,
-                                                    item_type_id)
+            workflow = get_workflow_by_item_type_id(
+                item_type.name_id, item_type_id
+            )
             if not workflow:
                 return jsonify(
                     code=err_code,
@@ -1053,9 +1050,10 @@ def prepare_edit_item(id=None, community=None):
                 )
             post_activity['workflow_id'] = workflow.id
             post_activity['flow_id'] = workflow.flow_id
+
         post_activity['itemtype_id'] = item_type_id
         post_activity['community'] = community
-        post_activity['post_workflow'] = post_workflow
+        post_activity['post_workflow'] = latest_activity
 
         try:
             rtn = prepare_edit_workflow(post_activity, recid, deposit)
@@ -1068,9 +1066,8 @@ def prepare_edit_item(id=None, community=None):
                 msg=_('An error has occurred.')
             )
         except BaseException as ex:
-            import traceback
-            current_app.logger.error(traceback.format_exc())
             current_app.logger.error('Unexpected error: {}'.format(ex))
+            traceback.format_exc()
             db.session.rollback()
             return jsonify(
                 code=err_code,
@@ -1098,7 +1095,7 @@ def prepare_edit_item(id=None, community=None):
     )
 
 
-@blueprint_api.route('/prepare_delete_item', methods=['POST'])
+@blueprint.route('/prepare_delete_item', methods=['POST'])
 @login_required
 def prepare_delete_item(id=None, community=None):
     """Prepare_delete_item.
@@ -1131,10 +1128,7 @@ def prepare_delete_item(id=None, community=None):
     if not id and request:
         if request.headers['Content-Type'] != 'application/json':
             """Check header of request"""
-            return jsonify(
-                code=err_code,
-                msg=_('Header Error')
-            )
+            return jsonify(code=err_code, msg=_('Header Error'))
 
     post_activity = request.get_json() or {}
     getargs = request.args if request else {}
@@ -1207,6 +1201,7 @@ def prepare_delete_item(id=None, community=None):
                 msg=_('Item cannot be edited because the import is in progress.')
             )
 
+        workflow, workflow_id = None, None
         # ! Check Record is being edit
         item_uuid = latest_pid.object_uuid
         latest_activity = work_activity.get_workflow_activity_by_item_id(item_uuid)
@@ -1221,38 +1216,30 @@ def prepare_delete_item(id=None, community=None):
                 )
 
         if latest_activity:
-            post_activity['workflow_id'] = latest_activity.workflow_id
-        else:
-            latest_activity = work_activity.get_workflow_activity_by_item_id(
-                recid.object_uuid
-            )
+            workflow = WorkFlows().get_workflow_by_id(latest_activity.workflow_id)
+            if not workflow.is_deleted:
+                workflow_id = latest_activity.workflow_id
+
+        if not workflow_id:
             workflow = get_workflow_by_item_type_id(
-                item_type.name_id, item_type_id
+                item_type.name_id, item_type_id, with_deleted=False
             )
-            if not workflow:
-                return jsonify(
-                    code=err_code,
-                    msg=_('Workflow setting does not exist.')
-                )
-            post_activity['workflow_id'] = workflow.id
+            if workflow:
+                workflow_id = workflow.id
+
         post_activity['itemtype_id'] = item_type_id
         post_activity['community'] = community
-        post_activity['post_workflow'] = latest_activity
+        post_activity['workflow_id'] = workflow_id
 
-        workflows = WorkFlows()
-        workflow_detail = workflows.get_workflow_by_id(post_activity['workflow_id'])
-
-        from weko_records_ui.views import soft_delete
         from .utils import send_mail_item_deleted, send_mail_delete_request
-        if workflow_detail.delete_flow_id is None:
+
+        if not workflow or workflow.delete_flow_id is None:
+            from weko_records_ui.views import soft_delete
             soft_delete(pid_value)
             send_mail_item_deleted(pid_value, deposit, user_id)
-            return jsonify(
-                code=0,
-                msg="success",
-            )
+            return jsonify(code=0, msg="success")
 
-        post_activity['flow_id'] = workflow_detail.delete_flow_id
+        post_activity['flow_id'] = workflow.delete_flow_id
 
         try:
             rtn = prepare_delete_workflow(post_activity, recid, deposit)
@@ -1274,15 +1261,6 @@ def prepare_delete_item(id=None, community=None):
                 msg=_('An error has occurred.')
             )
 
-        err_code = current_app.config.get('WEKO_ITEMS_UI_API_RETURN_CODE_ERROR',
-                                        -1)
-        if request.headers['Content-Type'] != 'application/json':
-            """Check header of request"""
-            return jsonify(
-                code=err_code,
-                msg=_('Header Error')
-            )
-
         if community:
             comm = GetCommunity.get_community_by_id(community)
             url_redirect = url_for(
@@ -1296,14 +1274,10 @@ def prepare_delete_item(id=None, community=None):
             )
 
         if rtn.action_id == 2:   # end_action
-            soft_delete(pid_value)
             send_mail_item_deleted(pid_value, deposit, user_id)
 
         if rtn.action_id == 4:   # approval
             send_mail_delete_request(rtn)
-
-        if url_redirect.startswith("/api/"):
-            url_redirect = url_redirect[4:]
 
         return jsonify(
             code=0,

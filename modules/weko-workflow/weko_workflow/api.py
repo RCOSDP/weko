@@ -634,8 +634,13 @@ class WorkFlow(object):
     def get_workflow_by_itemtype_id(self, item_type_id):
         """Get workflow detail info by item type id.
 
-        :param item_type_id:
-        :return:
+        Get workflows which are not deleted by item type id.
+
+        Args:
+            item_type_id (int): item type id.
+
+        Returns:
+            list: workflow object list.
         """
         with db.session.no_autoflush:
             query = _WorkFlow.query.filter_by(
@@ -671,6 +676,30 @@ class WorkFlow(object):
                     wfs.append(tmp)
         return wfs
 
+    def reduce_workflows_for_registration(self, workflows):
+        """Reduce workflows for registration.
+
+        Get workflows which are not deleted and have item registration action.
+
+        Args:
+            workflows (list): workflow model object list.
+
+        Returns:
+            list: workflow model object list with item registration action.
+        """
+        if not isinstance(workflows, list):
+            return workflows
+        action_id = (
+            current_app.config.get("WEKO_WORKFLOW_ITEM_REGISTRATION_ACTION_ID")
+        )
+
+        wfs = []
+        for workflow in workflows:
+            if isinstance(workflow, _WorkFlow):
+                actions = workflow.flow_define.flow_actions
+                if action_id in [action.action_id for action in actions]:
+                    wfs.append(workflow)
+        return wfs
 
 class Action(object):
     """Operated on the Action."""
@@ -770,11 +799,13 @@ class WorkActivity(object):
     def init_activity(self, activity, community_id=None, item_id=None):
         """Create new activity.
 
-        :param activity:
-        :param community_id:
-        :param item_id:
-        :param for_delete:
-        :return:
+        Args:
+            activity (dict): activity info.
+            community_id (int): community id.
+            item_id (int): item id.
+
+        Returns:
+            Activity: activity object.
         """
         try:
             action_id = 0
@@ -2473,8 +2504,11 @@ class WorkActivity(object):
     def get_activity_by_id(activity_id):
         """Get activity by identifier.
 
-        @param activity_id: Activity identifier.
-        @return:
+        Args:
+            activity_id (str): Activity ID.
+
+        Returns:
+            Activity: Activity object. if not found, return None.
         """
         return _Activity.query.filter_by(activity_id=activity_id).one_or_none()
 

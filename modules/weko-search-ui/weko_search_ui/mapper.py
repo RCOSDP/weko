@@ -20,7 +20,8 @@ from rocrate.model.contextentity import ContextEntity
 
 from flask import current_app, url_for
 
-from weko_records.api import Mapping, ItemTypes, FeedbackMailList, ItemLink
+from invenio_pidstore.models import PersistentIdentifier
+from weko_records.api import Mapping, ItemTypes, FeedbackMailList, RequestMailList, ItemLink
 from weko_records.models import ItemType
 from weko_records.serializers.utils import get_full_mapping
 
@@ -1405,10 +1406,13 @@ class JsonLdMapper(JsonMapper):
         mapped_metadata = {}
         system_info = {
             **system_info,
+            # if new item, must not exist "id" and "uri"
             **({"id": str(system_info["id"])}
-                if isinstance(system_info.get("id"), int) else {}),
-            "list_file": [
-                filename[5:] for filename in system_info["list_file"]
+                if isinstance(system_info.get("id"), (int, str)) else {}),
+            **({"uri": system_info["uri"]}
+                if isinstance(system_info.get("uri"), str) else {}),
+            "file_path": [
+                filename[5:] for filename in system_info["file_path"]
                 if filename.startswith("data/")
             ],
             "non_extract": [
@@ -1536,12 +1540,19 @@ class JsonLdMapper(JsonMapper):
                 mapped_metadata["edit_mode"] = metadata.get(META_KEY)
             elif "wk:feedbackMail" in META_PATH:
                 # TODO: implement handling author_id
-                feedback_mail_list = metadata.get("feedback_mail_list", [])
+                feedback_mail_list = mapped_metadata.get(
+                    "feedback_mail_list", [])
                 feedback_mail_list.append(
                     {"email": metadata.get(META_KEY), "author_id": ""}
                 )
                 mapped_metadata["feedback_mail_list"] = feedback_mail_list
-            # TODO: implement request mail list
+            elif "wk:requestMail" in META_PATH:
+                request_mail_list = mapped_metadata.get(
+                    "request_mail_list", [])
+                request_mail_list.append(
+                    {"email": metadata.get(META_KEY), "author_id": ""}
+                )
+                mapped_metadata["request_mail_list"] = request_mail_list
             elif META_PATH not in properties_mapping:
                 missing_metadata[META_KEY] = metadata[META_KEY]
             else:
@@ -1728,11 +1739,20 @@ class JsonLdMapper(JsonMapper):
                 if "uri" in extracted else {}
             )
 
+            list_grant = extracted.get("wk:grant", [])
+            if not isinstance(list_grant, list):
+                raise ValueError(
+                    "Invalid json-ld format: wk:grant is not a list."
+                )
             for grant in extracted.get("wk:grant", []):
+                if not isinstance(grant, dict):
+                    continue
                 if grant.get("jpcoar:identifier") == "HDL":
                     system_info["cnri"] = grant.get("@id")
                     break
             for grant in extracted.get("wk:grant", []):
+                if not isinstance(grant, dict):
+                    continue
                 if grant.get("jpcoar:identifier") == "DOI":
                     system_info["doi"] = grant.get("@id")
                     system_info["doi_ra"] = grant.get("jpcoar:identifierRegistration")
@@ -1743,7 +1763,7 @@ class JsonLdMapper(JsonMapper):
                 {"item_id": link.get("identifier"), "sele_id" : link.get("value")}
                     for link in extracted.get("wk:itemLinks", [])
             ]
-            system_info["list_file"] = [
+            system_info["file_path"] = [
                 file["@id"] for file in extracted.get("hasPart", [])
             ]
             system_info["non_extract"] = [
@@ -1881,10 +1901,18 @@ class JsonLdMapper(JsonMapper):
             "public" if metadata["publish_status"] == "0" else "private")
         rocrate.root_dataset["wk:index"] = metadata.get("path", [])
         # wk:feedbackMail
+        pid = PersistentIdentifier.get("recid", metadata["control_number"])
         feedback_mail_list = FeedbackMailList.get_mail_list_by_item_id(
-            metadata["control_number"]
+            pid.object_uuid
         )
+        feedback_mail_list = [mail.get("email") for mail in feedback_mail_list]
         rocrate.root_dataset["wk:feedbackMail"] = feedback_mail_list
+        # wk:requestMail
+        request_mail_list = RequestMailList.get_mail_list_by_item_id(
+            pid.object_uuid
+        )
+        request_mail_list = [mail.get("email") for mail in request_mail_list]
+        rocrate.root_dataset["wk:requestMail"] = request_mail_list
         rocrate.root_dataset["wk:index"] = metadata.get("path", [])
         rocrate.root_dataset["wk:editMode"] = "Keep"
 
@@ -1896,8 +1924,8 @@ class JsonLdMapper(JsonMapper):
         list_at_id = []
         for item_link_info in list_item_link_info:
             dict_item_link = {
-                "identifier": item_link_info.item_links,
-                "value": item_link_info.value
+                "identifier": item_link_info["item_links"],
+                "value": item_link_info["value"]
             }
             list_entity.append(dict_item_link)
             list_at_id.append(gen_id("itemLinks"))

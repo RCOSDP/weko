@@ -25,6 +25,11 @@ def handle_notifications_form(form):
     Args:
         form (flask_wtf.FlaskForm): The notifications form.
     """
+    if not isinstance(form, NotificationsForm):
+        raise TypeError(
+            "form must be an instance of NotificationsForm, "
+            "not {}".format(type(form))
+        )
     form.process(formdata=request.form)
 
     if form.validate_on_submit():
@@ -34,15 +39,20 @@ def handle_notifications_form(form):
             )
             form.subscribe_email.data = False
             return
+        if form.subscribe_webpush.data and not form.webpush_endpoint.data:
+            form.subscribe_webpush.errors.append(
+                _("Failed to get subscription information. Please try again.")
+            )
+            form.subscribe_webpush.data = False
+            return
         NotificationsUserSettings.create_or_update(
             user_id=current_user.id,
-            subscribe_webpush=False,  # NOTE: This is not used.
             subscribe_email=form.subscribe_email.data
         )
         flash(_("Notifications settings updated."), category="success")
     else:
         flash(
-            _("There was an error updating your notifications settings."),
+            _("Failed to update your notifications settings."),
             category="error"
         )
 

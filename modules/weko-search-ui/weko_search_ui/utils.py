@@ -95,6 +95,7 @@ from weko_records.models import ItemMetadata
 from weko_records.serializers.utils import get_full_mapping, get_mapping
 from weko_records_ui.external import call_external_system
 from weko_redis.redis import RedisConnection
+from weko_schema_ui.config import WEKO_SCHEMA_RELATION_TYPE
 from weko_schema_ui.models import PublishStatus
 from weko_search_ui.mapper import BaseMapper, JPCOARV2Mapper, JsonLdMapper
 from weko_workflow.api import Flow, WorkActivity
@@ -911,11 +912,9 @@ def check_jsonld_import_items(
         mapping = json_mapping.mapping
         mapper = JsonLdMapper(item_type.id, mapping)
         if not mapper.is_valid:
-            current_app.logger.info(
-                f"Mapping is invalid for item type {item_type.item_type_name.name}."
-            )
             raise Exception(
-                f"Mapping is invalid for item type {item_type.item_type_name.name}."
+                "Mapping is invalid for item type {}."
+                .format(item_type.item_type_name.name)
             )
 
         with open(f"{data_path}/{json_name}", "r") as f:
@@ -924,25 +923,13 @@ def check_jsonld_import_items(
         list_record = [
             {
                 "$schema": f"/items/jsonschema/{item_type.id}",
-                # if new item, must not exist "id" and "uri"
-                **({"id": system_info.get("id")} if "id" in system_info else {}),
-                **({"uri": system_info.get("uri")} if "uri" in system_info else {}),
-                "_id": system_info.get("_id"),
                 "metadata": item_metadata,
                 "item_type_name": item_type.item_type_name.name,
                 "item_type_id": item_type.id,
                 "publish_status": item_metadata.get("publish_status"),
                 **({"edit_mode": item_metadata.get("edit_mode")}
                     if "edit_mode" in item_metadata else {}),
-                "link_data": system_info.get("link_data", []),
-                "file_path": system_info.get("list_file", []),
-                "non_extract": system_info.get("non_extract", []),
-                "save_as_is": system_info.get("save_as_is", False),
-                "metadata_replace": system_info.get("metadata_replace", False),
-                "cnri": system_info.get("cnri"),
-                "doi_ra": system_info.get("doi_ra", ""),
-                "doi": system_info.get("doi", ""),
-                "amend_doi": system_info.get("amend_doi"),
+                **system_info
             } for item_metadata, system_info in item_metadatas
         ]
         data_path = os.path.join(data_path, "data")
@@ -966,6 +953,9 @@ def check_jsonld_import_items(
         handle_check_and_prepare_index_tree(list_record, True, [])
         handle_check_and_prepare_publish_status(list_record)
 
+        handle_check_and_prepare_feedback_mail(list_record)
+        handle_check_and_prepare_request_mail(list_record)
+
         handle_check_file_metadata(list_record, data_path)
 
         handle_check_authors_prefix(list_record)
@@ -975,6 +965,8 @@ def check_jsonld_import_items(
         handle_check_doi_indexes(list_record)
         handle_check_doi_ra(list_record)
         handle_check_doi(list_record)
+
+        handle_check_item_link(list_record)
 
         check_result.update({"list_record": list_record})
 
@@ -1045,8 +1037,14 @@ def handle_save_bagit(list_record, file, data_path, filename):
     """Handle save bagit file as is.
 
     Save the bagit file as is if the metadata has the save_as_is flag.
+
+    Args:
+        list_record (list): List of records.
+        file (FileStorage | str): File object or file path.
+        data_path (str): Path to save the bagit file.
+        filename (str): Name of the bagit file.
     """
-    if len(list_record) > 2:
+    if not list_record or len(list_record) > 2:
         # item split flag takes precedence over save Bag flag
         return
 
@@ -1066,14 +1064,19 @@ def handle_save_bagit(list_record, file, data_path, filename):
     files_info = metadata.get("files_info")  # for Workflow registration
     key = files_info[0].get("key")
 
+    size = os.path.getsize(os.path.join(data_path, filename))
+    if size >= pow(1024, 4):
+        size_str = "{} TB".format(round(size/(pow(1024, 4)), 1))
+    elif size >= pow(1024, 3):
+        size_str = "{} GB".format(round(size/(pow(1024, 3)), 1))
+    elif size >= pow(1024, 2):
+        size_str = "{} MB".format(round(size/(pow(1024, 2)), 1))
+    elif size >= 1024:
+        size_str = "{} KB".format(round(size/1024, 1))
+    else:
+        size_str = "{} B".format(size)
     dataset_info = {                         # replace metadata
-        "filesize": [
-            {
-                "value": str(os.path.getsize(
-                    os.path.join(data_path, filename))
-                ),
-            }
-        ],
+        "filesize": [{ "value": size_str }],
         "filename":  filename,
         "format": "application/zip",
         "url": {
@@ -1082,6 +1085,7 @@ def handle_save_bagit(list_record, file, data_path, filename):
         },
     }
     metadata[key] = [dataset_info]
+    files_info[0]["items"] = [dataset_info]
 
 
 def get_priority(link_data):
@@ -1353,7 +1357,7 @@ def read_jpcoar_xml_file(file_path, item_type_info) -> dict:
     except Exception as ex:
         raise ex
     result["data_list"].append({
-        "$schema": item_type_info['schema'],
+        "$schema": f"/items/jsonschema/{item_type_info['item_type_id']}",
         "metadata": res,
         "item_type_name": item_type_info['name'],
         "item_type_id": item_type_info['item_type_id'],
@@ -1509,11 +1513,11 @@ def handle_check_exist_record(list_record) -> list:
                     item_exist = WekoRecord.get_record_by_pid(item_id)
                 except PIDDoesNotExistError:
                     item["status"] = None
-                    errors.append(_("Item does not exits" " in the system"))
+                    errors.append(_("Item does not exist in the system."))
                 if item_exist:
                     if item_exist.pid.is_deleted():
                         item["status"] = None
-                        errors.append(_("Item already DELETED" " in the system"))
+                        errors.append(_("Item already DELETED in the system."))
                     else:
                         exist_url = (
                                 request.host_url + "records/" + str(item_exist.get("recid"))
@@ -2026,7 +2030,6 @@ def import_items_to_system(item: dict, request_info=None, is_gakuninrdm=False, m
         return      -- Json response.
 
     """
-
     owner = -1
     if request_info and 'user_id' in request_info:
         owner = request_info['user_id']
@@ -2258,6 +2261,7 @@ def import_items_to_activity(item, request_info):
     workflow_id = request_info.get("workflow_id")
     item_id = item.get("id")
     metadata = item.get("metadata")
+    metadata["$schema"] = item.get("$schema")
     index = metadata.get("path")
     files_info = metadata.pop("files_info", [{}])
     files = [
@@ -2288,7 +2292,7 @@ def import_items_to_activity(item, request_info):
         )
         traceback.print_exc()
         url = headless.detail
-        recid = headless.recid
+        recid = str(headless.recid)
         current_action = headless.current_action
         error = str(ex)
 
@@ -2855,6 +2859,66 @@ def handle_check_doi(list_record):
         if error:
             item["errors"] = item["errors"] + [error] if item.get("errors") else [error]
             item["errors"] = list(set(item["errors"]))
+
+
+def handle_check_item_link(list_record):
+    """Check item link.
+
+    Check if item link url is valid.
+
+    Args:
+        list_record (list): List of records.
+    """
+    for item in list_record:
+        errors = []
+        link_data = item.get("link_data")
+        if not isinstance(link_data, list):
+            continue
+
+        for link_info in link_data:
+            if not isinstance(link_info, dict):
+                continue
+
+            uri = link_info.get("item_id")
+            reference_type = link_info.get("sele_id")
+            if reference_type not in WEKO_SCHEMA_RELATION_TYPE:
+                errors.append(
+                    _("Item Link type: '{}' is not one of {}.")
+                    .format(reference_type, WEKO_SCHEMA_RELATION_TYPE)
+                )
+            if not isinstance(uri, str):
+                errors.append(_("Please specify Item URL for item link."))
+                continue
+
+            item_id = uri.split("/")[-1]
+            if not item_id.isdecimal():
+                current_app.logger.error(f"item_id: {item_id}, uri: {uri}")
+                continue
+
+            system_url = request.host_url + "records/" + item_id
+            if uri != system_url:
+                current_app.logger.error(
+                    f"uri: {uri}, system_url: {system_url}"
+                )
+                errors.append(
+                    _("Specified Item Link URI and system URI do not match.")
+                )
+            try:
+                item_exist = WekoRecord.get_record_by_pid(item_id)
+            except PIDDoesNotExistError:
+                traceback.print_exc(file=sys.stdout)
+                errors.append(_("Linking item does not exist in the system."))
+                continue
+            if item_exist and item_exist.pid.is_deleted():
+                errors.append(_("Linking item already deleted in the system."))
+                continue
+
+            link_info["item_id"] = item_id
+
+        if errors:
+            item["errors"] = (
+                item["errors"] + errors if item.get("errors") else errors
+            )
 
 
 def register_item_handle(item):
@@ -5210,7 +5274,7 @@ def handle_flatten_data_encode_filename(list_record, data_path):
     for item in list_record:
         metadata = item.get("metadata")
         files_info = metadata.get("files_info")
-        item["filepath"] = []
+        item["file_path"] = []
 
         # get filename from metadata
         for file_info in files_info:
@@ -5218,14 +5282,22 @@ def handle_flatten_data_encode_filename(list_record, data_path):
             new_file_list = []
 
             for file in file_info["items"]:
-                filename = file.get("filename")
+                filename = (
+                    file.get("url", {}).get("label")
+                    or file.get("filename")
+                )
+                if not filename:
+                    continue
 
                 # encode filename
                 encoded_filename = urllib.parse.quote(filename, safe='')
                 file["filename"] = encoded_filename
 
                 # copy file in directory to root under data_path
-                if not os.path.exists(os.path.join(data_path, encoded_filename)):
+                if (
+                    encoded_filename != filename
+                    and os.path.exists(os.path.join(data_path, filename))
+                ):
                     shutil.copy(
                         os.path.join(data_path, filename),
                         os.path.join(data_path, encoded_filename)
@@ -5235,13 +5307,17 @@ def handle_flatten_data_encode_filename(list_record, data_path):
                     )
 
                 # for Direct registration
-                item["filepath"].append(encoded_filename)
+                item["file_path"].append(encoded_filename)
 
                 # for Workflow registration
                 new_file_list.append(file)
             if new_file_list:
                 metadata[key] = new_file_list # replace metadata
 
+        item["non_extract"] = [
+            urllib.parse.quote(filename, safe='')
+            for filename in item.get("non_extract")
+        ]
 
 def check_replace_file_import_items(list_record, data_path=None, is_gakuninrdm=False,
                        all_index_permission=True, can_edit_indexes=[]):

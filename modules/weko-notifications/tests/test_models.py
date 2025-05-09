@@ -23,51 +23,46 @@ class TestNotificationsUserSettings():
 
         assert NotificationsUserSettings.get_by_user_id(users[0]["id"]) == None
 
-        obj = NotificationsUserSettings(user_id=users[0]["id"],subscribe_webpush=False,subscribe_email=False)
+        obj = NotificationsUserSettings(user_id=users[0]["id"],subscribe_email=False)
         db.session.add(obj)
         db.session.commit()
 
         assert NotificationsUserSettings.get_by_user_id(users[0]["id"]) == obj
 
-        obj = NotificationsUserSettings(user_id=users[3]["id"],subscribe_webpush=False,subscribe_email=False)
+        obj = NotificationsUserSettings(user_id=users[3]["id"],subscribe_email=False)
         db.session.add(obj)
         db.session.commit()
 
         assert NotificationsUserSettings.get_by_user_id(users[3]["id"]) == obj
 
-    # def create_or_update(cls, user_id, subscribe_webpush=None, subscribe_email=None):
+    # def create_or_update(cls, user_id, subscribe_email=None):
     # .tox/c1/bin/pytest --cov=weko_notifications tests/test_models.py::TestNotificationsUserSettings::test_create_or_update -v -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-notifications/.tox/c1/tmp --full-trace
     def test_create_or_update(self, app, db, users, user_profiles, mocker):
-        obj = NotificationsUserSettings.create_or_update(users[0]["id"],subscribe_webpush=False,subscribe_email=False)
+        obj = NotificationsUserSettings.create_or_update(users[0]["id"],subscribe_email=False)
         assert obj.user_id == users[0]["id"]
-        assert obj.subscribe_webpush == False
         assert obj.subscribe_email == False
         assert NotificationsUserSettings.query.count() == 1
         assert NotificationsUserSettings.query.first() == obj
 
-        obj = NotificationsUserSettings.create_or_update(users[0]["id"],subscribe_webpush=True,subscribe_email=False)
+        obj = NotificationsUserSettings.create_or_update(users[0]["id"],subscribe_email=False)
         assert obj.user_id == users[0]["id"]
-        assert obj.subscribe_webpush == True
         assert obj.subscribe_email == False
         assert NotificationsUserSettings.query.count() == 1
         assert NotificationsUserSettings.query.first() == obj
 
-        obj = NotificationsUserSettings.create_or_update(users[0]["id"],subscribe_webpush=True,subscribe_email=True)
+        obj = NotificationsUserSettings.create_or_update(users[0]["id"],subscribe_email=True)
         assert obj.user_id == users[0]["id"]
-        assert obj.subscribe_webpush == True
         assert obj.subscribe_email == True
         assert NotificationsUserSettings.query.count() == 1
         assert NotificationsUserSettings.query.first() == obj
 
-        obj = NotificationsUserSettings.create_or_update(users[0]["id"],subscribe_webpush=False,subscribe_email=True)
+        obj = NotificationsUserSettings.create_or_update(users[0]["id"],subscribe_email=True)
         assert obj.user_id == users[0]["id"]
-        assert obj.subscribe_webpush == False
         assert obj.subscribe_email == True
         assert NotificationsUserSettings.query.count() == 1
         assert NotificationsUserSettings.query.first() == obj
 
-        obj = NotificationsUserSettings.create_or_update(users[0]["id"],subscribe_webpush=None,subscribe_email=None)
-        assert obj.subscribe_webpush == False
+        obj = NotificationsUserSettings.create_or_update(users[0]["id"],subscribe_email=None)
         assert obj.subscribe_email == True
         assert NotificationsUserSettings.query.count() == 1
         assert NotificationsUserSettings.query.first() == obj
@@ -76,6 +71,6 @@ class TestNotificationsUserSettings():
         mock_session_add.side_effect = SQLAlchemyError("Test exception")
 
         with pytest.raises(SQLAlchemyError):
-            NotificationsUserSettings.create_or_update(users[0]["id"],subscribe_webpush=True,subscribe_email=False)
+            NotificationsUserSettings.create_or_update(users[0]["id"],subscribe_email=False)
         assert NotificationsUserSettings.query.count() == 1
         assert NotificationsUserSettings.query.first() == obj

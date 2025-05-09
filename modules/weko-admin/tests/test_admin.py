@@ -1,39 +1,42 @@
 
 import os
-from os.path import dirname, join
-from flask import url_for,current_app,make_response
-from flask_admin import Admin
-from mock import patch
-from mock import MagicMock, patch
+import io
 import json
-from io import BytesIO
 import pytest
 from datetime import datetime
+from mock import MagicMock, patch
+
+from flask import url_for,current_app,make_response
+from flask_admin import Admin
+from flask_wtf import FlaskForm,Form
+from sqlalchemy.exc import SQLAlchemyError
 from wtforms.validators import ValidationError
 from werkzeug.datastructures import ImmutableMultiDict
-from flask_wtf import FlaskForm,Form
+
+from invenio_access.models import ActionUsers
+from invenio_accounts.testutils import login_user_via_session, create_test_user
+from invenio_communities.models import Community
+from invenio_oauth2server.models import Client
+
+from weko_admin.models import (
+    AdminSettings,StatisticsEmail,LogAnalysisRestrictedCrawlerList, RankingSettings,
+    SearchManagement, Identifier,FacetSearchSetting
+)
+from weko_index_tree.models import IndexStyle,Index
+from weko_records.api import JsonldMapping
+from weko_swordserver.api import SwordClient
 from weko_workflow.api import WorkFlow
 from weko_workflow.models import WorkFlow
-
-import pytest
-from requests import Response
-
-from invenio_accounts.testutils import login_user_via_session
-from .test_views import assert_role
-
-from invenio_accounts.testutils import login_user_via_session, create_test_user
-from invenio_access.models import ActionUsers
-from invenio_communities.models import Community
-
-from weko_index_tree.models import IndexStyle,Index
-from weko_admin.admin import StyleSettingView,LogAnalysisSettings,ItemExportSettingsView,IdentifierSettingView,\
-    identifier_adminview,facet_search_adminview,FacetSearchSettingView,SwordAPISettingsView, SwordAPIJsonldSettingsView,\
-    JsonldMappingView
-from weko_admin.models import AdminSettings,StatisticsEmail,LogAnalysisRestrictedCrawlerList,\
-                                RankingSettings,SearchManagement, Identifier,FacetSearchSetting
 from weko_records.models import ItemTypeJsonldMapping
 from weko_swordserver.models import SwordClientModel
-from invenio_oauth2server.models import Client
+
+from weko_admin.admin import (
+    StyleSettingView,LogAnalysisSettings,ItemExportSettingsView,IdentifierSettingView,
+    identifier_adminview,facet_search_adminview,FacetSearchSettingView,SwordAPISettingsView,
+    SwordAPIJsonldSettingsView, JsonldMappingView
+)
+
+from .test_views import assert_role
 
 # .tox/c1/bin/pytest --cov=weko_admin tests/test_admin.py -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
 
@@ -48,9 +51,9 @@ class TestStyleSettingView:
         url = url_for("stylesetting.index")
 
         # get
-        scss_dir = join(current_app.instance_path, current_app.config['WEKO_THEME_INSTANCE_DATA_DIR'])
+        scss_dir = os.path.join(current_app.instance_path, current_app.config['WEKO_THEME_INSTANCE_DATA_DIR'])
         os.makedirs(scss_dir, exist_ok=True)
-        scss_file = join(scss_dir, '_variables.scss')
+        scss_file = os.path.join(scss_dir, '_variables.scss')
         with open(scss_file, "w") as f:
             f.write("$body-bg: #ffff;\n$panel-bg: #ffff;\n$footer-default-bg: #0d5f89;\n$navbar-default-bg: #0d5f89;\n$panel-default-border: #dddddd;\n$input-bg-transparent: rgba(255, 255, 255, 0);")
         mock_render = mocker.patch("weko_admin.admin.StyleSettingView.render",return_value=make_response())
@@ -116,17 +119,17 @@ class TestStyleSettingView:
         login_user_via_session(client,email=users[0]["email"])
         url = url_for("stylesetting.upload_editor")
         from weko_theme.views import blueprint as theme_bp
-        path_to_instance = join("../../../../../",current_app.instance_path)
+        path_to_instance = os.path.join("../../../../../",current_app.instance_path)
 
         current_app.config.update(
-            THEME_FOOTER_WYSIWYG_TEMPLATE=join(path_to_instance,"footer_wysiwtg_template.html"),
-            THEME_HEADER_WYSIWYG_TEMPLATE=join(path_to_instance,"header_wysiwtg_template.html")
+            THEME_FOOTER_WYSIWYG_TEMPLATE=os.path.join(path_to_instance,"footer_wysiwtg_template.html"),
+            THEME_HEADER_WYSIWYG_TEMPLATE=os.path.join(path_to_instance,"header_wysiwtg_template.html")
         )
         target_file = str()
         if f_or_h == "footer":
-            target_file = join(theme_bp.root_path, theme_bp.template_folder, current_app.config["THEME_FOOTER_WYSIWYG_TEMPLATE"])
+            target_file = os.path.join(theme_bp.root_path, theme_bp.template_folder, current_app.config["THEME_FOOTER_WYSIWYG_TEMPLATE"])
         elif f_or_h == "header":
-            target_file = join(theme_bp.root_path, theme_bp.template_folder, current_app.config["THEME_HEADER_WYSIWYG_TEMPLATE"])
+            target_file = os.path.join(theme_bp.root_path, theme_bp.template_folder, current_app.config["THEME_HEADER_WYSIWYG_TEMPLATE"])
         else:
             pass
         if target_file:
@@ -145,7 +148,7 @@ class TestStyleSettingView:
 #    def get_contents(self, f_path):
 # .tox/c1/bin/pytest --cov=weko_admin tests/test_admin.py::TestStyleSettingView::test_get_contents -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
     def test_get_contents(self,client,mocker):
-        path = join(current_app.instance_path,dirname(__file__),"data/_variables.scss")
+        path = os.path.join(current_app.instance_path,os.path.dirname(__file__),"data/_variables.scss")
         result = StyleSettingView().get_contents(path)
         test = [
             "$body-bg: #ffff;\n",
@@ -166,8 +169,8 @@ class TestStyleSettingView:
 #    def cmp_files(self, f_path1, f_path2):
 # .tox/c1/bin/pytest --cov=weko_admin tests/test_admin.py::TestStyleSettingView::test_cmp_files -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
     def test_cmp_files(self,app,client,mocker):
-        path1=join(current_app.instance_path,dirname(__file__),"data/_variables.scss")
-        path2=join(current_app.instance_path,dirname(__file__),"data/actions.json")
+        path1=os.path.join(current_app.instance_path,os.path.dirname(__file__),"data/_variables.scss")
+        path2=os.path.join(current_app.instance_path,os.path.dirname(__file__),"data/actions.json")
         result = StyleSettingView().cmp_files(path1,path2)
         assert result == False
 
@@ -382,7 +385,7 @@ class TestReportView:
         data = {
             "report":json.dumps(stats_json),"year":"2022","month":"10","send_email":"False"
         }
-        mocker.patch("weko_admin.admin.package_reports",return_value=BytesIO())
+        mocker.patch("weko_admin.admin.package_reports",return_value=io.BytesIO())
         result = client.post(url,data=data)
         assert result.headers["Content-Type"] == "application/x-zip-compressed"
         assert result.headers["Content-Disposition"] == "attachment; filename=logReport_2022-10.zip"
@@ -2065,11 +2068,12 @@ class TestSwordAPISettingsView:
         assert res.status_code == 200
 
 
-#class SwordAPIJsonldSettingsView(ModelView):
-#
+# class SwordAPIJsonldSettingsView(ModelView):
+# .tox/c1/bin/pytest --cov=weko_admin tests/test_admin.py::TestSwordAPIJsonldSettingsView::test_create_view -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
 class TestSwordAPIJsonldSettingsView:
-
-    def test_create_view(self, client, users, db, mocker):
+    # def create_view(self):
+    # .tox/c1/bin/pytest --cov=weko_admin tests/test_admin.py::TestSwordAPIJsonldSettingsView::test_create_view -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
+    def test_create_view(self, client, db, users, item_type, flows, tokens, sword_mapping, mocker):
         url = url_for("swordapi/jsonld.create_view")
 
         #no administrator
@@ -2094,47 +2098,100 @@ class TestSwordAPIJsonldSettingsView:
                 res = client.get(url)
         assert res.status_code == 200
         args, kwargs = mock_render.call_args
+        assert args[0] == "weko_admin/admin/sword_api_jsonld_settings.html"
+        assert kwargs["workflows"]
+        assert kwargs["can_edit"]
 
         # post
         # success registration_type:Direct, active:True
         login_user_via_session(client,email=users[0]["email"])# sysadmin
-        with patch("weko_admin.admin.SwordClient.register", return_value=None):
-            res = client.post(url,
-                data=json.dumps({'application': '1',
-                                    'registration_type': 'Direct',
-                                    'mapping_id': '1',
-                                    'active': 'True',
-                                    'Meta_data_API_selected':[]}),
-                content_type='application/json')
+        with patch("weko_admin.admin.JsonLdMapper.validate", return_value=None):
+            res = client.post(
+                url,
+                data=json.dumps({
+                    'application': tokens[0]["client"].client_id,
+                    'registration_type': 'Direct',
+                    'mapping_id': '1',
+                    'active': 'True',
+                    'Meta_data_API_selected':[]
+                }),
+                content_type='application/json'
+            )
         assert res.status_code == 200
 
         # post
         # success registration_type:Workflow, active:false
         login_user_via_session(client,email=users[0]["email"])# sysadmin
-        with patch("weko_admin.admin.SwordClient.register", return_value=None):
-            res = client.post(url,
-                data=json.dumps({'application': '1',
-                                'registration_type': 'Workflow',
-                                'workflow_id':31001,
-                                'mapping_id': '1',
-                                'active': 'False',
-                                'Meta_data_API_selected':[]}),
-                content_type='application/json')
+        with patch("weko_admin.admin.JsonLdMapper.validate", return_value=None):
+            res = client.post(
+                url,
+                data=json.dumps({
+                    'application': tokens[1]["client"].client_id,
+                    'registration_type': 'Workflow',
+                    'workflow_id': flows["workflow"][0].id,
+                    'mapping_id': '1',
+                    'active': 'False',
+                    'Meta_data_API_selected':[]
+                }),
+                content_type='application/json'
+            )
         assert res.status_code == 200
 
         # post
-        # Error
+        # invalid mapping
         login_user_via_session(client,email=users[0]["email"])# sysadmin
-        with patch("weko_admin.admin.SwordClient.register", side_effect=Exception("test_error")):
-            res = client.post(url,
-                data=json.dumps({'application': '1',
-                                'registration_type': 'Workflow',
-                                'mapping_id': '1',
-                                'active': 'False'}),
-                content_type='application/json')
+        with patch("weko_admin.admin.JsonLdMapper.validate", return_value=["test_error"]):
+            res = client.post(
+                url,
+                data=json.dumps({
+                    'application': tokens[0]["client"].client_id,
+                    'registration_type': 'Direct',
+                    'mapping_id': '1',
+                    'active': 'True',
+                    'Meta_data_API_selected':[]
+                }),
+                content_type='application/json'
+            )
         assert res.status_code == 400
 
-    def test_edit_view(self, client, users, item_type, flows, db, mocker):
+        # post
+        # error in validate
+        login_user_via_session(client,email=users[0]["email"])# sysadmin
+        with patch("weko_admin.admin.JsonLdMapper.validate", side_effect=KeyError("test_key_error")):
+            res = client.post(
+                url,
+                data=json.dumps({
+                    'application': tokens[0]["client"].client_id,
+                    'registration_type': 'Direct',
+                    'mapping_id': '1',
+                    'active': 'True',
+                    'Meta_data_API_selected':[]
+                }),
+                content_type='application/json'
+            )
+        assert res.status_code == 400
+
+
+        # # post
+        # # Error
+        login_user_via_session(client,email=users[0]["email"])# sysadmin
+        with patch("weko_admin.admin.JsonLdMapper.validate", return_value=None):
+            with patch("weko_admin.admin.SwordClient.register", side_effect=SQLAlchemyError("test_db_error")):
+                res = client.post(
+                    url,
+                    data=json.dumps({
+                        'application': tokens[0]["client"].client_id,
+                        'registration_type': 'Workflow',
+                        'mapping_id': '1',
+                        'active': 'False'
+                    }),
+                    content_type='application/json'
+                )
+        assert res.status_code == 400
+
+    # def edit_view(self, id):
+    # .tox/c1/bin/pytest --cov=weko_admin tests/test_admin.py::TestSwordAPIJsonldSettingsView::test_edit_view -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
+    def test_edit_view(self, client, db, users, item_type, flows, tokens, sword_mapping, sword_client, mocker):
         url = url_for("swordapi/jsonld.edit_view", id=1)
 
         #no administrator
@@ -2145,92 +2202,114 @@ class TestSwordAPIJsonldSettingsView:
         res = client.get(url)
         assert res.status_code == 403
 
+        mock_render = mocker.patch("weko_admin.admin.SwordAPIJsonldSettingsView.render", return_value=make_response())
 
         # get
         # model_none
         url_none = url_for("swordapi/jsonld.edit_view", id=999)
         login_user_via_session(client,email=users[0]["email"])# sysadmin
-        mock_render = mocker.patch("weko_admin.admin.SwordAPIJsonldSettingsView.render", return_value=make_response())
         res = client.get(url_none)
         assert res.status_code == 404
 
+        mock_can_edit = mocker.patch("weko_admin.admin.SwordAPIJsonldSettingsView._is_editable", return_value=True)
 
         # get
         # work_flow_id exit
-        settings = list()
-        settings.append(Client(name=1,description=1,website=1,user_id=1,client_id="1",client_secret="KDjy6ntGKUX",is_confidential=True,is_internal=False,_redirect_uris="https://" ,_default_scopes="NULL"))
-        db.session.add_all(settings)
-        db.session.commit()
-        settings = list()
-        settings.append(ItemTypeJsonldMapping(id=1,name="sample1",mapping="{data:{}}",item_type_id=item_type[0]["obj"].id,version_id=6,is_deleted=False))
-        db.session.add_all(settings)
-        db.session.commit()
-        settings = list()
-        settings.append(SwordClientModel(id=1,client_id=1,registration_type_id=2,mapping_id=1,workflow_id=31001,active=True,meta_data_api=[]))
-        db.session.add_all(settings)
+        deleted_workflow = WorkFlow().query.filter_by(id=31001).first()
+        deleted_workflow.is_deleted = True
         db.session.commit()
         login_user_via_session(client,email=users[0]["email"])# sysadmin
-        mock_render = mocker.patch("weko_admin.admin.SwordAPIJsonldSettingsView.render", return_value=make_response())
-        deleted_workflow = WorkFlow(
-            id = "1",
-            flows_name = "test_workflow"
-        )
-        with patch("weko_admin.admin.WorkFlow.get_workflows_by_roles", return_value=["workflow 1"]):
-            with patch("weko_admin.admin.WorkFlow.get_deleted_workflow_list", return_value=[deleted_workflow]):
-                with patch("weko_admin.admin.WorkActivity.count_waiting_approval_by_workflow_id", return_value=2):
-                    res = client.get(url)
+        res = client.get(url)
         assert res.status_code == 200
-        with patch("weko_admin.admin.WorkFlow.get_workflows_by_roles", return_value=["workflow 1"]):
-            with patch("weko_admin.admin.WorkFlow.get_deleted_workflow_list", return_value=[deleted_workflow]):
-                    res = client.get(url)
-        assert res.status_code == 200
+        args, kwargs = mock_render.call_args
+        assert args[0] == "weko_admin/admin/sword_api_jsonld_settings.html"
+        assert kwargs["workflows"]
+        assert kwargs["can_edit"]
 
         # get
-        # work_flow_id none
-        SwordClientModel.query.filter_by(id=1).delete()
-        settings = list()
-        settings.append(SwordClientModel(id=1,client_id=1,registration_type_id=1,mapping_id=1,workflow_id=None,active=True,meta_data_api=[]))
-        db.session.add_all(settings)
-        db.session.commit()
+        # cannot edit
+        mock_can_edit.return_value = False
         login_user_via_session(client,email=users[0]["email"])# sysadmin
-        mock_render = mocker.patch("weko_admin.admin.SwordAPIJsonldSettingsView.render", return_value=make_response())
-        deleted_workflow = WorkFlow(
-            id = "1",
-            flows_name = "test_workflow"
-        )
-        with patch("weko_admin.admin.WorkFlow.get_workflows_by_roles", return_value=["workflow 1"]):
-            with patch("weko_admin.admin.WorkFlow.get_deleted_workflow_list", return_value=[deleted_workflow]):
-                res = client.get(url)
+        res = client.get(url)
         assert res.status_code == 200
 
+        mock_can_edit.return_value = True
         # post
         # success registration_type:Direct, active:True
         login_user_via_session(client,email=users[0]["email"])# sysadmin
-        res = client.post(url,
-            data=json.dumps({'registration_type': 'Direct',
-                            'workflow_id':31001,
-                            'mapping_id': '1',
-                            'active': 'True',
-                            'Meta_data_API_selected':[]}),
-            content_type='application/json')
+        with patch("weko_admin.admin.JsonLdMapper.validate", return_value=None):
+            res = client.post(
+                url,
+                data=json.dumps({
+                    'registration_type': 'Direct',
+                    'workflow_id': 31001,
+                    'mapping_id': '1',
+                    'active': 'True',
+                    'metadata_api_selected':[]
+                }),
+                content_type='application/json'
+            )
         assert res.status_code == 200
 
         # post
         # success registration_type:Workflow, active:false
         login_user_via_session(client,email=users[0]["email"])# sysadmin
-        res = client.post(url,
-            data=json.dumps({'registration_type': 'Workflow',
-                            'workflow_id':31001,
-                            'mapping_id': '1',
-                            'active': 'False',
-                            'Meta_data_API_selected':[]}),
-            content_type='application/json')
+        with patch("weko_admin.admin.JsonLdMapper.validate", return_value=None):
+            res = client.post(
+                url,
+                data=json.dumps({
+                    'registration_type': 'Workflow',
+                    'workflow_id':31001,
+                    'mapping_id': '1',
+                    'active': 'False',
+                    'metadata_api_selected': ["Original"]
+                }),
+                content_type='application/json'
+            )
         assert res.status_code == 200
 
         # post
-        # error
+        # canntot edit
+        mock_can_edit.return_value = False
+        login_user_via_session(client,email=users[0]["email"])
+        res = client.post(
+            url,
+            data=json.dumps({
+                'registration_type': 'Workflow',
+                'workflow_id':31001,
+                'mapping_id': '1',
+                'active': 'False',
+                'metadata_api_selected':[]
+            }),
+            content_type='application/json'
+        )
+        assert res.status_code == 400
+        assert json.loads(res.data) == "Unapproved items exit."
+
+        # post
+        # invalid mapping
+
+        mock_can_edit.return_value = True
         login_user_via_session(client,email=users[0]["email"])# sysadmin
-        with patch("weko_admin.admin.db.session.commit", side_effect=Exception("test_error")):
+        with patch("weko_admin.admin.JsonLdMapper.validate", return_value=["test_error"]):
+            res = client.post(
+                url,
+                data=json.dumps({
+                    'registration_type': 'Direct',
+                    'workflow_id': 31001,
+                    'mapping_id': '1',
+                    'active': 'True',
+                    'metadata_api_selected':[]
+                }),
+                content_type='application/json'
+            )
+        assert res.status_code == 400
+        assert json.loads(res.data) == {"error": "Invalid jsonld mapping."}
+
+        # post
+        # error in validate
+        login_user_via_session(client,email=users[0]["email"])# sysadmin
+        with patch("weko_admin.admin.JsonLdMapper.validate", side_effect=KeyError("test_key_error")):
             res = client.post(url,
                 data=json.dumps({'registration_type': 'Workflow',
                                 'workflow_id':31001,
@@ -2239,6 +2318,22 @@ class TestSwordAPIJsonldSettingsView:
                                 'Meta_data_API_selected':[]}),
                 content_type='application/json')
         assert res.status_code == 400
+        assert json.loads(res.data) == {"error": "Failed to validate jsonld mapping."}
+
+        # post
+        # error in update
+        login_user_via_session(client,email=users[0]["email"])# sysadmin
+        with patch("weko_admin.admin.JsonLdMapper.validate", return_value=None):
+            with patch("weko_admin.admin.SwordClient.update", side_effect=SQLAlchemyError("test_db_error")):
+                res = client.post(url,
+                    data=json.dumps({'registration_type': 'Workflow',
+                                    'workflow_id':31001,
+                                    'mapping_id': '1',
+                                    'active': 'False',
+                                    'Meta_data_API_selected':[]}),
+                    content_type='application/json')
+        assert res.status_code == 400
+        assert json.loads(res.data) == {"error": "Failed to update application settings: Test name"}
 
 
     def test_get_query_in_role_ids(self, client, users, db, mocker):
@@ -2253,8 +2348,8 @@ class TestSwordAPIJsonldSettingsView:
 
 
 
-#class JsonldMappingView(ModelView):
-#
+# class JsonldMappingView(ModelView):
+# .tox/c1/bin/pytest --cov=weko_admin tests/test_admin.py::TestJsonldMappingView::test_create_view -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
 class TestJsonldMappingView:
 
     def test_create_view(self, client, users, item_type, db, mocker):

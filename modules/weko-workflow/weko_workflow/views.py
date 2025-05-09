@@ -766,7 +766,16 @@ def display_guest_activity(file_name=""):
 @workflow_blueprint.route('/verify_deletion/<string:activity_id>', methods=['GET'])
 @login_required_customize
 def verify_deletion(activity_id="0"):
+    """Verify if the activity is deleted.
+
+    Args:
+        activity_id (str, optional): Activity ID. Defaults to "0".
+
+    Returns:
+        dict: JSON response with code, is_deleted, and for_delete status.
+    """
     is_deleted = False
+    for_delete = False
     activity = WorkActivity().get_activity_by_id(activity_id)
     if activity and activity.item_id:
         item_id = str(activity.item_id)
@@ -776,7 +785,9 @@ def verify_deletion(activity_id="0"):
         ).one_or_none()
         if recid and recid.is_deleted():
             is_deleted = True
-    res = {'code': 200, 'is_deleted':is_deleted}
+
+        for_delete = activity.flow_define.flow_type == WEKO_WORKFLOW_DELETION_FLOW_TYPE
+    res = {'code': 200, 'is_deleted':is_deleted, 'for_delete':for_delete}
 
     return jsonify(res), 200
 

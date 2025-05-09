@@ -183,10 +183,12 @@ def get_workspace_itemlist():
 
         # "doi": None,  # DOIリンク
         identifiers = source.get("identifier", [])
+        workspaceItem["doi"] = ""
         if identifiers:
-            workspaceItem["doi"] = identifiers[0].get("value", "")
-        else:
-            workspaceItem["doi"] = ""
+            for value in identifiers:
+                if value.get("value"):
+                    workspaceItem["doi"] = current_app.config.get("OAIHARVESTER_DOI_PREFIX", "") + "/" + identifiers[0].get("value", "")
+                    break
 
         # "resourceType": None,  # リソースタイプ
         resourceType = source.get("type", [])
@@ -333,18 +335,24 @@ def get_workspace_itemlist():
             accessrole_date_list = [
                 {
                     "accessrole": item["accessrole"],
-                    "dateValue": item["date"][0]["dateValue"],
+                    "dateValue": item["date"][0]["dateValue"] if (
+                        "date" in item and
+                        item["date"] and
+                        "dateValue" in item["date"][0]
+                     ) else None,
                 }
-                for item in fileList
-                if "accessrole" in item and "date" in item
+                for item in fileList if "accessrole" in item
             ]
 
             for accessrole_date in accessrole_date_list:
                 access_role = accessrole_date["accessrole"]
                 date_val = accessrole_date["dateValue"]
 
-                if access_role == "open_access" or \
-                    (access_role == "open_date" and date_val <= datetime.now(timezone.utc).strftime("%Y-%m-%d")):
+                if access_role == "open_access" or (
+                    access_role == "open_date" and
+                    date_val and
+                    date_val <= datetime.now(timezone.utc).strftime("%Y-%m-%d")
+                ):
                     # public
                     publicCnt += 1
                 elif access_role == "open_restricted":

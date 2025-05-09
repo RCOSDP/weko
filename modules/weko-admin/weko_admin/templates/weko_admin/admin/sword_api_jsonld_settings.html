@@ -114,9 +114,9 @@
     </div>
     <div class="col-sm-4" style="display: flex; justify-content: space-between;">
       <label for="Direct"><input type="radio" name="registration_type" value="Direct" onchange="changeRegistrationType(value)"/>
-      Direct</label>
+        {{_("Direct_Registration")}}</label>
       <label for="Workflow"><input type="radio" name="registration_type" value="Workflow" onchange="changeRegistrationType(value)"/>
-      Workflow</label>
+        {{_("WorkFlow_Registration")}}</label>
     </div>
   </div>
 
@@ -168,7 +168,7 @@
 
   <div class="row">
     <div class="col-sm-2 text-left">
-      <label for="mapping_list">{{_('Meta data API')}}</label>
+      <label for="mapping_list">{{_('Metadata Collection API')}}</label>
     </div>
     <div class="col-sm-8">
       <div class="panel-group" style="margin-bottom: 0;">

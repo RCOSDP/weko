@@ -14,13 +14,12 @@ from zipfile import ZipFile
 
 from flask import current_app, request
 from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.orm.exc import NoResultFound
 
 from invenio_accounts.models import User
 from invenio_oauth2server.models import Token
 from weko_accounts.models import ShibbolethUser
 from weko_admin.models import AdminSettings
-from weko_items_ui.utils import get_workflow_by_item_type_id
-from weko_records.api import ItemTypes
 from weko_search_ui.config import SWORD_METADATA_FILE, ROCRATE_METADATA_FILE
 from weko_search_ui.utils import (
     check_tsv_import_items,
@@ -96,11 +95,11 @@ def check_import_file_format(file, packaging):
             file_format = "TSV/CSV"
         else:
             current_app.logger.error(
-                "ro-crate-metadata.json or other metadata file is not found."
+                "Metadata file is not found in SimpleZip."
             )
             raise WekoSwordserverException(
                 "SimpleZip requires ro-crate-metadata.json or other metadata file.",
-                ErrorType.MetadataFormatNotAcceptable
+                ErrorType.ContentMalformed
                 )
     else:
         current_app.logger.error(
@@ -127,7 +126,8 @@ def get_shared_id_from_on_behalf_of(on_behalf_of):
 
     Raises:
         WekoSwordserverException:
-            If an error occurs while searching user by On-Behalf-Of.
+            - If no user found by On-Behalf-Of.
+            - If an error occurs while searching user by On-Behalf-Of.
     """
     shared_id = -1
     if on_behalf_of is None:
@@ -136,31 +136,38 @@ def get_shared_id_from_on_behalf_of(on_behalf_of):
     try:
         # get weko user id from email
         user = User.query.filter_by(email=on_behalf_of).one_or_none()
-        shared_id = user.id if user is not None else None
+        shared_id = int(user.id) if user is not None else None
         if shared_id is None:
             # get weko user id from personal access token
             token = (
                 Token.query
                 .filter_by(access_token=on_behalf_of).one_or_none()
             )
-            shared_id = token.user_id if token is not None else None
+            shared_id = int(token.user_id) if token is not None else None
         if shared_id is None:
             # get weko user id from shibboleth user eppn
             shib_user = (
                 ShibbolethUser.query
-                .filter_by(shib_eppn=on_behalf_of).one_or_none()
+                .filter_by(shib_eppn=on_behalf_of).one()
             )
-            shared_id = shib_user.weko_uid if shib_user is not None else None
-    except SQLAlchemyError as ex:
-        current_app.logger.error(
-            "Somthing went wrong while searching user by On-Behalf-Of.")
+            shared_id = int(shib_user.weko_uid)
+    except NoResultFound as ex:
+        msg = "No user found by On-Behalf-Of."
+        current_app.logger.error(msg)
         traceback.print_exc()
         raise WekoSwordserverException(
-            "An error occurred while searching user by On-Behalf-Of.",
+            msg, errorType=ErrorType.BadRequest
+        ) from ex
+    except SQLAlchemyError as ex:
+        current_app.logger.error(
+            "DB error occurred while searching user by On-Behalf-Of."
+        )
+        traceback.print_exc()
+        raise WekoSwordserverException(
+            "Failed to get shared ID from On-Behalf-Of.",
             errorType=ErrorType.ServerError
         ) from ex
     return shared_id
-
 
 
 def is_valid_file_hash(expected_hash, file):
@@ -177,6 +184,9 @@ def is_valid_file_hash(expected_hash, file):
     Returns:
         bool: Check result.
     """
+    if not isinstance(expected_hash, str):
+        return False
+
     file.seek(0)
     hasher = sha256()
     for chunk in iter(lambda: file.read(4096), b""):
@@ -237,20 +247,20 @@ def check_import_items(
         if register_type == "Workflow":
             item_type_id = check_result["list_record"][0].get("item_type_id")
             item_type_name = check_result["list_record"][0].get("item_type_name")
-            item_type = ItemTypes.get_by_id(item_type_id)
-            workflow = get_workflow_by_item_type_id(item_type.name_id,
-                                                    item_type_id)
 
-            if workflow is None:
+            list_workflow = WorkFlows().get_workflow_by_itemtype_id(item_type_id)
+            if not list_workflow:
                 current_app.logger.error(
                     f"Workflow not found for item type ID: {item_type_name}"
                 )
-                raise WekoSwordserverException(
-                    "Workflow not found for registration your item.",
-                    errorType=ErrorType.BadRequest
-                )
-            workflow_id = workflow.id
-            check_result.update({"workflow_id": workflow_id})
+                error = check_result.get("error", "")
+                error_ = "Workflow not found for item type ID."
+                error += f"; {error_}" if error else error_
+                check_result.update({"error": error})
+            else:
+                workflow = list_workflow[0]
+                workflow_id = workflow.id
+                check_result.update({"workflow_id": workflow_id})
 
     elif file_format == "XML":
         if register_type == "Direct":
@@ -288,7 +298,7 @@ def check_import_items(
             )
             raise WekoSwordserverException(
                 "No SWORD API setting found for client ID that you are using.",
-                errorType=ErrorType.ServerError
+                errorType=ErrorType.BadRequest
             )
         mapping_id = sword_client.mapping_id
         workflow_id = sword_client.workflow_id
@@ -321,18 +331,19 @@ def check_import_items(
             )
         )
 
-        if register_type == "Workflow":
-            item_type_id = check_result.get("item_type_id")
-            # Check if workflow and item type match
-            if workflow.itemtype_id != item_type_id:
-                current_app.logger.error(
-                    "Item type and workflow do not match. "
-                    f"ItemType ID must be {item_type_id}, "
-                    f"but the workflow's ItemType ID was {workflow.itemtype_id}.")
-                raise WekoSwordserverException(
-                    "Item type and workflow do not match.",
-                    errorType=ErrorType.BadRequest
-                )
+        item_type_id = check_result.get("item_type_id")
+        # Check if workflow and item type match
+        if (
+            register_type == "Workflow"
+            and workflow.itemtype_id != item_type_id
+        ):
+            current_app.logger.error(
+                "Item type and workflow do not match. "
+                f"ItemType ID must be {item_type_id}, "
+                f"but the workflow's ItemType ID was {workflow.itemtype_id}.")
+            error = check_result.get("error", "")
+            error += "; Item type and workflow do not match."
+            check_result.update({"error": error})
     else:
         raise WekoSwordserverException(
             f"Unsupported file format: {file_format}",

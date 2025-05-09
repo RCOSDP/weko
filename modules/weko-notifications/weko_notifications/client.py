@@ -30,7 +30,7 @@ class NotificationClient:
         notification.validate() if not notification._is_validated else None
         sender = ldnlib.Sender()
         sender.send(self.inbox, notification.payload)
-        return notification.id
+        return str(notification.id)
 
     def notifications(self):
         """

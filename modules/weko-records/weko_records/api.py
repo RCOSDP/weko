@@ -1489,8 +1489,8 @@ class JsonldMapping():
             WekoSwordserverException: When mapping not found.
             SQLAlchemyError: An error occurred while updating the mapping.
         """
-        obj = JsonldMapping.get_mapping_by_id(id)
-        if obj is None:
+        obj = cls.get_mapping_by_id(id)
+        if not isinstance(obj, ItemTypeJsonldMapping):
             return None
 
         obj.name = name
@@ -1519,14 +1519,15 @@ class JsonldMapping():
             ItemTypeJsonldMapping: Deleted mapping object.
         """
         obj = JsonldMapping.get_mapping_by_id(id)
-        if obj is not None:
-            obj.is_deleted = True
-            db.session.commit()
+        if not isinstance(obj, ItemTypeJsonldMapping):
+            return None
+        obj.is_deleted = True
+        db.session.commit()
         return obj
 
 
     @classmethod
-    def get_mapping_by_id(cls, id, include_deleted=False):
+    def get_mapping_by_id(cls, id, with_deleted=False):
         """Get mapping by mapping_id.
 
         Get mapping latest version by mapping_id.
@@ -1535,26 +1536,22 @@ class JsonldMapping():
 
         Args:
             id (int): Mapping ID.
-            include_deleted (bool, optional):
+            with_deleted (bool, optional):
                 Include deleted mapping. Default is False.
 
         Returns:
             ItemTypeJsonldMapping:
             Mapping object. If not found or deleted, return `None`.
         """
+        query = ItemTypeJsonldMapping.query.filter_by(id=id)
+        if not with_deleted:
+            query = query.filter_by(is_deleted=False)
+        obj = query.first()
 
-        obj = (
-            ItemTypeJsonldMapping.query
-            .filter_by(id=id)
-            .first()
-        )
-
-        if not include_deleted and obj is not None and obj.is_deleted:
-            return None
-        return obj
+        return obj if isinstance(obj, ItemTypeJsonldMapping) else None
 
     @classmethod
-    def get_by_itemtype_id(cls, item_type_id, include_deleted=False):
+    def get_by_itemtype_id(cls, item_type_id, with_deleted=False):
         """Get mapping by itemtype_id.
 
         Get mapping latest version by itemtype_id.
@@ -1567,21 +1564,24 @@ class JsonldMapping():
                 Include deleted mapping. Default is False.
 
         Returns:
-            ItemTypeJsonldMapping:
-            Mapping object. If not found or deleted, return `None`.
+            list[ItemTypeJsonldMapping]:
+            List of mapping objects. If not found or deleted, return empty list.
         """
         query = (
             ItemTypeJsonldMapping.query
             .filter_by(item_type_id=item_type_id)
             .order_by(ItemTypeJsonldMapping.updated.desc())
         )
-        if include_deleted:
-            query.filter_by(is_deleted=False)
+        if with_deleted:
+            query = query.filter_by(is_deleted=False)
 
-        return query.all()
+        return [
+            mapping for mapping in query.all()
+            if isinstance(mapping, ItemTypeJsonldMapping)
+        ]
 
     @classmethod
-    def get_all(cls, include_deleted=False):
+    def get_all(cls, with_deleted=False):
         """Get all mapping.
 
         Get all mapping. If include_deleted=False, return only active mapping.
@@ -1595,9 +1595,13 @@ class JsonldMapping():
             list[ItemTypeJsonldMapping]: List of mapping objects.
         """
         query = ItemTypeJsonldMapping.query
-        if not include_deleted:
+        if not with_deleted:
             query = query.filter_by(is_deleted=False)
-        return query.all()
+        return [
+            mapping for mapping in query.all()
+            if isinstance(mapping, ItemTypeJsonldMapping)
+        ]
+
 
 class ItemTypeProps(RecordBase):
     """Define API for Itemtype Property creation and manipulation."""

@@ -307,13 +307,13 @@ class AuthorDBManagementAPI(ContentNegotiatedMethodView):
         for auth_id in author_data.get("authorIdInfo", []):
             prefix_obj = get_author_prefix_obj(auth_id.get("idType"))
             if prefix_obj:
-                auth_id["idType"] = prefix_obj.id
+                auth_id["idType"] = str(prefix_obj.id)
         # `affiliationIdType` (scheme -> id)
         for affiliation in author_data.get("affiliationInfo", []):
             for identifier in affiliation.get("identifierInfo", []):
                 aff_obj = get_author_affiliation_obj(identifier.get("affiliationIdType"))
                 if aff_obj:
-                    identifier["affiliationIdType"] = aff_obj.id
+                    identifier["affiliationIdType"] = str(aff_obj.id)
         return author_data
 
     def process_authors_data_after(self, author_data):
