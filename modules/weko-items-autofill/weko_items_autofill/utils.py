@@ -285,31 +285,25 @@ def get_doi_with_original(doi, item_type_id, original_metadeta=None, **kwargs):
         if key == "Original":
             if original_metadeta is not None:
                 record_data_dict = original_metadeta
-                current_app.logger.info(
-                    "Successfully completed metadata retrieval for key '{}'.".format(key)
-                )
             else:
-                current_app.logger.info(
-                    "Key '{}' skipped as no original metadata is provided.".format(key)
-                )
+                current_app.logger.info("original metadata is not found.")
                 continue
         # case: APIs.
         # If some exception occurs, record_data_dict will be empty.
         # It means that skip this API.
         else:
             try:
-                record_data_list = record_funcs_map[key](doi, item_type_id) \
+                record_data_list = (
+                    record_funcs_map[key](doi, item_type_id)
                     if key in record_funcs_map else []
+                )
                 record_data_dict = list_to_dict(record_data_list)
                 current_app.logger.info(
-                    "Successfully completed metadata retrieval for key '{}'.".format(key)
+                    f"Successfully get metadata from {key}."
                 )
             except Exception as ex:
                 current_app.logger.warning(
-                    "Error in {}: {}".format(key, str(ex))
-                )
-                current_app.logger.info(
-                    "Key '{}' skipped due to an error.".format(key)
+                    f"Failed to get metadata from {key}."
                 )
                 record_data_dict = {}
                 traceback.print_exc()

@@ -419,6 +419,7 @@ class HeadlessActivity(WorkActivity):
                         "recid", cur_pid.pid_value.split(".")[0]
                     )
                     _deposit = WekoDeposit.get_record(parent_pid.object_uuid)
+                    _deposit.non_extract = non_extract
                     self._deposit = _deposit.newversion(parent_pid)
 
                     if self._deposit:
@@ -520,7 +521,7 @@ class HeadlessActivity(WorkActivity):
         bucket = Bucket.query.get(self._deposit["_buckets"]["deposit"])
         files_info = []
 
-        def upload(file_name, stream, size):
+        def upload(file_name, stream, size, is_thumbnail=False):
             size_limit = bucket.size_limit
             location_limit = bucket.location.max_file_size
             if location_limit is not None:
@@ -534,8 +535,8 @@ class HeadlessActivity(WorkActivity):
                 current_app.logger.error(desc)
                 raise FileSizeError(description=desc)
 
-            # TODO: support thumbnail
             obj = ObjectVersion.create(bucket, file_name, is_thumbnail=False)
+            obj.is_thumbnail = is_thumbnail
             obj.set_contents(stream, size=size, size_limit=size_limit)
             url = f"{request.url_root}api/files/{obj.bucket_id}/{obj.basename}"
             return {

@@ -230,8 +230,7 @@ def post_service_document():
     )
 
     filename = content_disposition_options.get("filename")
-    if (content_disposition != "attachment"
-            or filename is None):
+    if (content_disposition != "attachment" or filename is None):
         current_app.logger.error("Cannot get filename by Content-Disposition.")
         raise WekoSwordserverException(
             "Cannot get filename by Content-Disposition.",
@@ -520,8 +519,7 @@ def put_object(recid):
     )
 
     filename = content_disposition_options.get("filename")
-    if (content_disposition != "attachment"
-            or filename is None):
+    if content_disposition != "attachment" or filename is None:
         current_app.logger.error("Cannot get filename by Content-Disposition.")
         raise WekoSwordserverException(
             "Cannot get filename by Content-Disposition.",

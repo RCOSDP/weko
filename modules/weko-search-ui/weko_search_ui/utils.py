@@ -509,9 +509,7 @@ def check_tsv_import_items(
                         if os.sep != "/" and os.sep in info.filename:
                             info.filename = info.filename.replace(os.sep, "/")
                 except Exception:
-                    current_app.logger.warning("-" * 60)
                     traceback.print_exc(file=sys.stdout)
-                    current_app.logger.warning("-" * 60)
                 z.extract(info, path=data_path)
 
         data_path += "/data"
@@ -595,13 +593,16 @@ def check_tsv_import_items(
                 + " following formats: zip, tar, gztar, bztar,"
                 + " xztar."
             ).format(filename)
+            current_app.logger.warning("Failed to extract import file.")
         elif isinstance(ex, FileNotFoundError):
             error = _(
                 "The csv/tsv file was not found in the specified file {}."
                 + " Check if the directory structure is correct."
             ).format(filename)
+            current_app.logger.warning("Not found csv/tsv metadata file.")
         elif isinstance(ex, UnicodeDecodeError):
             error = ex.reason
+            current_app.logger.warning("Failed to decode metadata file.")
         elif (
             ex.args
             and len(ex.args)
@@ -610,9 +611,7 @@ def check_tsv_import_items(
         ):
             error = ex.args[0].get("error_msg")
         result["error"] = error
-        current_app.logger.error("-" * 60)
         traceback.print_exc(file=sys.stdout)
-        current_app.logger.error("-" * 60)
     return result
 
 
@@ -644,7 +643,11 @@ def check_xml_import_items(
     # check item type id
     item_type = ItemTypes.get_by_id(item_type_id)
     if not item_type or item_type.is_deleted:
-        result["error"] =  _("The item type of the item to be imported is missing or has already been deleted.")
+        result["error"] =  _(
+            "The item type of the item to be imported is missing or "
+            "has already been deleted."
+        )
+        current_app.logger.warning("Item type not found or already deleted.")
         return result
 
     try:
@@ -658,9 +661,7 @@ def check_xml_import_items(
                     if os.sep != "/" and os.sep in info.filename:
                         info.filename = info.filename.replace(os.sep, "/")
                 except Exception:
-                    current_app.logger.warning("-" * 60)
                     traceback.print_exc(file=sys.stdout)
-                    current_app.logger.warning("-" * 60)
                 z.extract(info, path=data_path)
 
         data_path += "/data"
@@ -702,31 +703,28 @@ def check_xml_import_items(
         result["list_record"] = list_record
     except zipfile.BadZipFile as ex:
         result["error"] =  _(
-            "The format of the specified file {} does not support import." \
-            " Please specify one of the following formats: zip, tar, gztar, bztar, xztar.").format(filename)
-        current_app.logger.error("-" * 60)
+            "The format of the specified file {} does not support import."
+            " Please specify one of the following formats: zip, tar, gztar, bztar, xztar."
+        ).format(filename)
+        current_app.logger.warning("Failed to extract import file.")
         traceback.print_exc(file=sys.stdout)
-        current_app.logger.error("-" * 60)
     except FileNotFoundError as ex:
         result["error"] =  _(
-            "The xml file was not found in the specified file {}." \
-            " Check if the directory structure is correct.").format(filename)
-        current_app.logger.error("-" * 60)
+            "The xml file was not found in the specified file {}."
+            " Check if the directory structure is correct."
+        ).format(filename)
+        current_app.logger.warning("Not found xml metadata file.")
         traceback.print_exc(file=sys.stdout)
-        current_app.logger.error("-" * 60)
     except UnicodeDecodeError as ex:
         result["error"] =  ex.reason
-        current_app.logger.error("-" * 60)
+        current_app.logger.warning("Failed to decode metadata file.")
         traceback.print_exc(file=sys.stdout)
-        current_app.logger.error("-" * 60)
     except Exception as ex:
         error = _("Internal server error")
         if (ex.args and len(ex.args) and isinstance(ex.args[0], dict) and ex.args[0].get("error_msg")):
             error = ex.args[0].get("error_msg")
         result["error"] = error
-        current_app.logger.error("-" * 60)
         traceback.print_exc(file=sys.stdout)
-        current_app.logger.error("-" * 60)
     return result
 
 
@@ -971,31 +969,24 @@ def check_jsonld_import_items(
         check_result.update({"list_record": list_record})
 
     except zipfile.BadZipFile as ex:
-        current_app.logger.error(
-            "An error occurred while extraction the file."
-        )
+        current_app.logger.warning("Failed to extract import file.")
         traceback.print_exc()
         check_result.update({
             "error": f"The format of the specified file {filename} dose not "
             + "support import. Please specify a zip file."
         })
-
     except bagit.BagValidationError as ex:
-        current_app.logger.error("Bag validation failed.")
+        current_app.logger.warning("Failed to validate import bagit file.")
         traceback.print_exc()
         check_result.update({
             "error": str(ex)
         })
-
     except (UnicodeDecodeError, UnicodeEncodeError) as ex:
-        current_app.logger.error(
-            "An error occurred while reading the file."
-        )
+        current_app.logger.warning("Failed to decode import file.")
         traceback.print_exc()
         check_result.update({
             "error": ex.reason
         })
-
     except Exception as ex:
         msg = ""
         if (
@@ -1420,6 +1411,9 @@ def handle_validate_item_import(list_record, schema) -> list:
             not represents_int(record_id) or re.search(r"([０-９])", record_id)
         ):
             errors.append(_("Please specify item ID by half-width number."))
+            current_app.logger.warning(
+                f"Specified item ID is not half-width number: {record_id}."
+            )
         if record.get("metadata"):
             if v2:
                 a = v2.iter_errors(record.get("metadata"))
@@ -1506,6 +1500,10 @@ def handle_check_exist_record(list_record) -> list:
             system_url = request.host_url + "records/" + str(item_id)
             if item.get("uri") != system_url:
                 errors.append(_("Specified URI and system URI do not match."))
+                current_app.logger.warning(
+                    "Specified URI and system URI do not match: {} != {}."
+                    .format(item.get("uri"), system_url)
+                )
                 item["status"] = None
             else:
                 item_exist = None
@@ -1514,14 +1512,21 @@ def handle_check_exist_record(list_record) -> list:
                 except PIDDoesNotExistError:
                     item["status"] = None
                     errors.append(_("Item does not exist in the system."))
+                    current_app.logger.warning(
+                        "Item does not exist in the system: {}.".format(item_id)
+                    )
                 if item_exist:
                     if item_exist.pid.is_deleted():
                         item["status"] = None
                         errors.append(_("Item already DELETED in the system."))
+                        current_app.logger.warning(
+                            "Item already DELETED in the system: {}."
+                            .format(item_id)
+                        )
                     else:
                         exist_url = (
-                                request.host_url + "records/" + str(item_exist.get("recid"))
-                            )
+                            request.host_url + "records/" + str(item_exist.get("recid"))
+                        )
 
                         if item.get("uri") == exist_url:
                             _edit_mode = item.get("edit_mode")
@@ -1530,11 +1535,12 @@ def handle_check_exist_record(list_record) -> list:
                                 "upgrade",
                             ]:
                                 errors.append(
-                                        _(
-                                            'Please specify either "Keep"'
-                                            ' or "Upgrade".'
-                                        )
-                                    )
+                                    _('Please specify either "Keep" or "Upgrade".')
+                                )
+                                current_app.logger.warning(
+                                    'Please specify either "Keep" or "Upgrade": {}.'
+                                    .format(_edit_mode)
+                                )
                                 item["status"] = None
                             else:
                                 item["status"] = _edit_mode.lower()
@@ -1702,13 +1708,14 @@ def get_file_name(file_path):
     return file_path.split("/")[-1] if file_path.split("/")[-1] else ""
 
 
-def register_item_metadata(item, root_path, owner, is_gakuninrdm=False, metadata_only=False, request_info=None):
+def register_item_metadata(item, root_path, owner, is_gakuninrdm=False, request_info=None):
     """Upload file content.
 
-    :argument
-        item        -- {dict} Information of item need to import.
-        root_path   -- {str} path of the folder include files.
-        is_gakuninrdm -- {bool} Is call by gakuninrdm api.
+    Args:
+        item (dict): Item metadata.
+        root_path (str): Path of the folder include files.
+        owner (int): Owner user id.
+        is_gakuninrdm (bool): Is call by gakuninrdm api.
     """
 
     def clean_file_metadata(item_type_id, data):
@@ -2018,17 +2025,19 @@ def send_item_created_event_to_es(item, request_info):
         )
 
 
-def import_items_to_system(item: dict, request_info=None, is_gakuninrdm=False, metadata_only=False, parent_id=None):
+def import_items_to_system(
+    item: dict, request_info=None, is_gakuninrdm=False, parent_id=None
+):
     """Validation importing zip file.
 
-    :argument
-        item        -- Items Metadata.
-        request_info -- Information from request.
-        is_gakuninrdm - Is call by gakuninrdm api.
-        parent_id   -- Parent ID of the log entry.
-    :return
-        return      -- Json response.
+    Args:
+        item (dict): Import item with metadata.
+        request_info (dict): Information from request. Default is None.
+        is_gakuninrdm (bool): Is call by gakuninrdm api. Default is False.
+        parent_id (str): Parent ID for the audit log entry. Default is None.
 
+    Returns:
+        dict: Json response.
     """
     owner = -1
     if request_info and 'user_id' in request_info:
@@ -2364,6 +2373,7 @@ def handle_item_title(list_record):
 
         if not title_val:
             error = _("Title is required item.")
+            current_app.logger.warning("Title is not found.")
             item["errors"] = item["errors"] + [error] if item.get("errors") else [error]
 
 
@@ -2380,9 +2390,13 @@ def handle_check_and_prepare_publish_status(list_record):
         publish_status = item.get("publish_status")
         if not publish_status:
             error = _("{} is required item.").format("PUBLISH_STATUS")
+            current_app.logger.warning("PUBLISH_STATUS is not found.")
         elif publish_status not in WEKO_IMPORT_PUBLISH_STATUS:
             error = _('Please set "public" or "private" for {}.').format(
                 "PUBLISH_STATUS"
+            )
+            current_app.logger.warning(
+                f"PUBLISH_STATUS is not public or private: {publish_status}"
             )
 
         if error:
@@ -2453,9 +2467,11 @@ def handle_check_and_prepare_index_tree(list_record, all_index_permission, can_e
                             errors.append(msg_not_exist.format("IndexID, POS_INDEX"))
                         else:
                             errors.append(msg_not_exist.format("POS_INDEX"))
+                        current_app.logger.warning("Index is not found.")
                     else:      # index exists by index path
                         if index_id:
                             errors.append(msg_not_exist.format("IndexID"))
+                            current_app.logger.warning("Index is not found.")
                         else:
                             temp_res.append(index_info.cid)
                 if temp_res:
@@ -2465,8 +2481,10 @@ def handle_check_and_prepare_index_tree(list_record, all_index_permission, can_e
                     errors.append(msg_not_exist.format("IndexID, POS_INDEX"))
                 else:
                     errors.append(msg_not_exist.format("POS_INDEX"))
+                current_app.logger.warning("Index is not found.")
         else:         # index does not exist by index id and index path
             errors.append(msg_not_exist.format("IndexID"))
+            current_app.logger.warning("Index is not found.")
         result = []
         if temp_res and not all_index_permission:
             msg_can_not_edit = _("Your role cannot register items in this index.")
@@ -2647,7 +2665,7 @@ def handle_check_cnri(list_record):
                         ).format("CNRI", "CNRI")
                 except Exception as ex:
                     current_app.logger.error("item id: %s not found." % item_id)
-                    current_app.logger.error(ex)
+                    traceback.print_exc(file=sys.stdout)
 
         if error:
             item["errors"] = item["errors"] + [error] if item.get("errors") else [error]
@@ -2716,7 +2734,7 @@ def handle_check_doi_ra(list_record):
                 )
         except Exception as ex:
             current_app.logger.error("item id: %s not found." % item_id)
-            current_app.logger.error(ex)
+            traceback.print_exc(file=sys.stdout)
 
         return error
 
