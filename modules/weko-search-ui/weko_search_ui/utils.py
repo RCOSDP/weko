@@ -1702,7 +1702,7 @@ def get_file_name(file_path):
     return file_path.split("/")[-1] if file_path.split("/")[-1] else ""
 
 
-def register_item_metadata(item, root_path, owner, is_gakuninrdm=False, metadata_only=False):
+def register_item_metadata(item, root_path, owner, is_gakuninrdm=False, metadata_only=False, request_info=None):
     """Upload file content.
 
     :argument
@@ -2072,7 +2072,7 @@ def import_items_to_system(item: dict, request_info=None, is_gakuninrdm=False, m
                 record_pid = pid
                 old_record = WekoRecord.get_record_by_pid(record_pid.pid_value)
 
-            register_item_metadata(item, root_path, owner, is_gakuninrdm)
+            register_item_metadata(item, root_path, owner, is_gakuninrdm, request_info)
 
 
             if not is_gakuninrdm:
@@ -2095,7 +2095,8 @@ def import_items_to_system(item: dict, request_info=None, is_gakuninrdm=False, m
             UserActivityLogger.info(
                 operation=opration,
                 parent_id=parent_id,
-                target_key=item["id"]
+                target_key=item["id"],
+                request_info=request_info,
             )
 
             # clean unuse file content in keep mode if import success
@@ -2132,7 +2133,8 @@ def import_items_to_system(item: dict, request_info=None, is_gakuninrdm=False, m
                 operation=opration,
                 target_key=item.get("id"),
                 parent_id=parent_id,
-                remarks=tb_info[0]
+                remarks=tb_info[0],
+                request_info=request_info,
             )
             error_id = None
             if (
@@ -2164,7 +2166,8 @@ def import_items_to_system(item: dict, request_info=None, is_gakuninrdm=False, m
             UserActivityLogger.error(
                 operation=opration,
                 target_key=item.get("id"),
-                remarks=tb_info[0]
+                remarks=tb_info[0],
+                request_info=request_info,
             )
             error_id = None
             if (
@@ -2196,7 +2199,8 @@ def import_items_to_system(item: dict, request_info=None, is_gakuninrdm=False, m
             UserActivityLogger.error(
                 operation=opration,
                 target_key=item.get("id"),
-                remarks=tb_info[0]
+                remarks=tb_info[0],
+                request_info=request_info,
             )
             error_id = None
             if (
@@ -2228,7 +2232,8 @@ def import_items_to_system(item: dict, request_info=None, is_gakuninrdm=False, m
             UserActivityLogger.error(
                 operation=opration,
                 target_key=item.get("id"),
-                remarks=tb_info[0]
+                remarks=tb_info[0],
+                request_info=request_info,
             )
             error_id = None
             if (

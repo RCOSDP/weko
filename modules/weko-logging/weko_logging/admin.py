@@ -25,7 +25,8 @@ class ExportLogAdminView(BaseView):
     def index(self):
         """Log export admin view.
 
-        :returns: Log export admin view template.
+        Returns:
+            str: Log export admin view template.
         """
         return self.render(
             current_app.config['WEKO_LOGGING_LOG_EXPORT_TEMPLATE']
@@ -35,12 +36,15 @@ class ExportLogAdminView(BaseView):
     def export_user_activity_log(self):
         """Start export user activity log task.
 
-        :returns: Responce (export task id.)
+        Returns:
+            str: Response (export task id).
         """
         # get current task running
         task_status = UserActivityLogUtils.get_export_task_status()
         if task_status and task_status.get('task_id'):
-            task = export_all_user_activity_logs.AsyncResult(task_status.get('task_id'))
+            task = export_all_user_activity_logs.AsyncResult(
+                task_status.get('task_id')
+            )
             if task.state == states.PENDING or task.state == states.STARTED:
                 return jsonify({
                     'code': 409,
@@ -57,15 +61,18 @@ class ExportLogAdminView(BaseView):
 
     @expose('/check_export_status', methods=['GET'])
     def check_export_status(self):
-        """Api check export status.
+        """API check export status.
 
-        :returns: Responce (export status.)
+        Returns:
+            str: Response (export status).
         """
         status = UserActivityLogUtils.get_export_task_status()
         check = check_celery_is_run()
         status['celery_is_run'] = check
         if status and status.get('task_id'):
-            task = export_all_user_activity_logs.AsyncResult(status.get('task_id'))
+            task = export_all_user_activity_logs.AsyncResult(
+                status.get('task_id')
+            )
             status['status'] = task.status
 
             if task.successful():
@@ -92,7 +99,8 @@ class ExportLogAdminView(BaseView):
     def cancel_export(self):
         """Check export status.
 
-        :returns: Responce (export cancel status.)
+        Returns:
+            str: Response (export cancel status).
         """
         result = UserActivityLogUtils.cancel_export_log()
         task_status = UserActivityLogUtils.get_export_task_status()
@@ -108,7 +116,8 @@ class ExportLogAdminView(BaseView):
     def download_user_activity_log(self):
         """Download log as zip (includes tsv).
 
-        : returns: Log zip file.
+        Returns:
+            byte: Log zip file.
         """
         url_info = UserActivityLogUtils.get_export_url()
         if url_info.get('file_uri'):

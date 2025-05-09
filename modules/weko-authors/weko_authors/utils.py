@@ -1302,7 +1302,7 @@ def prepare_import_data(max_page_for_import_tab):
                 count_for_json += 1
     return authors, reached_point, count
 
-def import_author_to_system(author, status, weko_id, force_change_mode):
+def import_author_to_system(author, status, weko_id, force_change_mode, request_info=None):
     """Import author to DB and ES.
 
     Args:
@@ -1357,11 +1357,13 @@ def import_author_to_system(author, status, weko_id, force_change_mode):
                 WekoAuthors.update(author['pk_id'], author, force_change_mode)
             db.session.commit()
             if status == "new":
-                UserActivityLogger.info(operation="AUTHOR_CREATE")
+                UserActivityLogger.info(operation="AUTHOR_CREATE", request_info=request_info)
             else:
                 UserActivityLogger.info(
                     operation="AUTHOR_UPDATE",
-                    target_key=author['pk_id'])
+                    target_key=author['pk_id'],
+                    request_info=request_info,
+                )
         except Exception as ex:
             db.session.rollback()
             current_app.logger.error(
@@ -1373,11 +1375,13 @@ def import_author_to_system(author, status, weko_id, force_change_mode):
                 UserActivityLogger.error(
                     operation="AUTHOR_UPDATE",
                     target_key=author['pk_id'],
+                    request_info=request_info,
                     remarks=tb_info[0]
                 )
             else:
                 UserActivityLogger.error(
                     operation="AUTHOR_CREATE",
+                    request_info=request_info,
                     remarks=tb_info[0]
                 )
             raise
