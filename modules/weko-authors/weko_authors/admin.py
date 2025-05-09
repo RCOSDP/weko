@@ -34,6 +34,7 @@ from flask_admin import BaseView, expose
 from flask_babelex import gettext as _
 from invenio_files_rest.models import FileInstance
 from invenio_cache import current_cache
+from weko_logging.activity_logger import UserActivityLogger
 
 from .config import WEKO_AUTHORS_EXPORT_FILE_NAME, \
     WEKO_AUTHORS_IMPORT_CACHE_KEY
@@ -475,8 +476,9 @@ class ImportView(BaseView):
             records, reached_point, count = prepare_import_data(max_page_for_import_tab)
             task_ids =[]
 
+            request_info = UserActivityLogger.get_summary_from_request()
             for author in records:
-                group_tasks.append(import_author.s(author, force_change_mode))
+                group_tasks.append(import_author.s(author, force_change_mode, request_info))
         else:
             return jsonify({'status': 'fail', 'message': 'Invalid target'})
 

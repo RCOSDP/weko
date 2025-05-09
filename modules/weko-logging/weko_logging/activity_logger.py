@@ -21,22 +21,25 @@ class UserActivityLogger:
     def __init__(self, app):
         """Initialize user logger.
 
-        :param app: The flask application.
+        Args:
+            app (Flask): The Flask application.
         """
         self.app = app
 
     @classmethod
-    def error(cls, operation=None, parent_id=None, target_key=None, remarks=None):
+    def error(cls, operation=None, parent_id=None,
+              target_key=None, request_info=None, remarks=None):
         """Output as error log.
 
-        :param operation: User operation type.
-        :param parent_id: Parent log id.
-        :param target_key: Operation target key(eg. id).
-        :param remarks: Remarks.
+        Args:
+            operation (str): User operation type.
+            parent_id (int): Parent log id.
+            target_key (str): Operation target key (e.g. id).
+            request_info (dict): Request information (Required if called by shared task).
+            remarks (str): Remarks.
         """
-
         user_id = UserActivityLogHandler.get_user_id()
-        community_id = UserActivityLogHandler.get_community_id_from_path()
+        community_id = UserActivityLogHandler.get_community_id_from_path(request_info)
 
         error_message = f"Error occurred: operation={operation}, parent_id={parent_id}, target_key={target_key}, "
         error_message += f"user_id={user_id}, community_id={community_id}"
@@ -44,20 +47,25 @@ class UserActivityLogger:
             "parent_id": parent_id,
             "operation": operation,
             "target_key": target_key,
+            "request_info": request_info,
+            "community_id": community_id,
             "remarks": remarks,
         })
 
     @classmethod
-    def info(cls, operation=None, parent_id=None, target_key=None, remarks=None):
+    def info(cls, operation=None, parent_id=None,
+             target_key=None, request_info=None, remarks=None):
         """Output as info log.
 
-        :param operation: User operation type.
-        :param parent_id: Parent log id.
-        :param target_key: Operation target key(eg. id).
-        :param remarks: Remarks.
+        Args:
+            operation (str): User operation type.
+            parent_id (int): Parent log id.
+            target_key (str): Operation target key (e.g. id).
+            request_info (dict): Request information (Required if called by shared task).
+            remarks (str): Remarks.
         """
         user_id = UserActivityLogHandler.get_user_id()
-        community_id = UserActivityLogHandler.get_community_id_from_path()
+        community_id = UserActivityLogHandler.get_community_id_from_path(request_info)
 
         error_message = f"Info: operation={operation}, parent_id={parent_id}, target_key={target_key}, "
         error_message += f"user_id={user_id}, community_id={community_id}"
@@ -66,14 +74,31 @@ class UserActivityLogger:
             "parent_id": parent_id,
             "operation": operation,
             "target_key": target_key,
+            "request_info": request_info,
+            "community_id": community_id,
             "remarks": remarks,
         })
 
     @classmethod
     def get_next_parent_id(cls, session):
-        """Get next parent id.
+        """Get the next parent ID.
 
-        :param session: The database session.
-        :return: The next log id.
+        Args:
+            session: The database session.
+
+        Returns:
+            int: The next log ID.
         """
         return UserActivityLog.get_sequence(session)
+
+    @classmethod
+    def get_summary_from_request(cls):
+        """Get the request summary.
+
+        Args:
+            request_info (dict): The request information.
+
+        Returns:
+            dict: The request summary.
+        """
+        return UserActivityLogHandler.get_summary_from_request()

@@ -141,7 +141,7 @@ class ItemManagementBulkDelete(BaseView):
                                         direct_child_trees.append(child_tree.id)
 
                         db.session.commit()
-                        parent_id = UserActivityLog.get_sequence()
+                        parent_id = UserActivityLogger.get_next_parent_id()
                         UserActivityLogger.info(operation="ITEM_BULK_DELETE")
                         for pid in delete_record_list:
                             UserActivityLogger.info(
@@ -477,6 +477,9 @@ class ItemImportView(BaseView):
             "user_id": user_id,
             "action": "IMPORT"
         }
+        request_info.update(
+            UserActivityLogger.get_summary_from_request()
+        )
         # update temp dir expire to 1 day from now
         expire = datetime.now() + timedelta(days=1)
         TempDirInfo().set(data_path, {"expire": expire.strftime("%Y-%m-%d %H:%M:%S")})
@@ -486,9 +489,10 @@ class ItemImportView(BaseView):
             item for item in data.get("list_record", []) if not item.get("errors")
         ]
         list_doi = data.get("list_doi")
+        UserActivityLogger.info(operation="ITEM_IMPORT")
         if list_record:
             group_tasks = []
-            parent_id = UserActivityLog.get_sequence(db.session)
+            parent_id = UserActivityLogger.get_next_parent_id(db.session)
             UserActivityLogger.info(operation="ITEM_BULK_CREATE")
             for idx, item in enumerate(list_record):
                 try:
@@ -907,6 +911,9 @@ class ItemRocrateImportView(BaseView):
             "user_id": user_id,
             "action": "IMPORT"
         }
+        request_info.update(
+            UserActivityLogger.get_summary_from_request()
+        )
         # update temp dir expire to 1 day from now
         expire = datetime.now() + timedelta(days=1)
         TempDirInfo().set(data_path, {"expire": expire.strftime("%Y-%m-%d %H:%M:%S")})
@@ -915,9 +922,13 @@ class ItemRocrateImportView(BaseView):
         list_record = [
             item for item in data.get("list_record", []) if not item.get("errors")
         ]
+        UserActivityLogger.info(
+            operation="ITEM_IMPORT",
+            remarks="RO-Crate Import"
+        )
         if list_record:
             group_tasks = []
-            parent_id = UserActivityLog.get_sequence(db.session)
+            parent_id = UserActivityLogger.get_next_parent_id(db.session)
             UserActivityLogger.info(
                 operation="ITEM_BULK_CREATE",
                 remarks="RO-Crate Import"

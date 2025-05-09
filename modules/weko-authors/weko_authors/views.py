@@ -21,6 +21,7 @@
 """Views for weko-authors."""
 
 import re
+import sys
 import traceback
 import uuid
 from flask import Response, Blueprint, current_app, json, jsonify, make_response, request
@@ -101,10 +102,16 @@ def create():
 
     try:
         WekoAuthors.create(data)
-
+        UserActivityLogger.info(operation="AUTHOR_CREATE")
     except Exception as ex:
         current_app.logger.error(ex)
         traceback.print_exc()
+        exec_info = sys.exc_info()
+        tb_info = traceback.format_tb(exec_info[2])
+        UserActivityLogger.error(
+            operation="AUTHOR_CREATE",
+            remarks=tb_info[0]
+        )
         return jsonify(msg=_('Failed')), 500
     return jsonify(msg=_('Success'))
 

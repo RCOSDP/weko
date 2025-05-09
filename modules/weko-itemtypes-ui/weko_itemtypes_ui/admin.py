@@ -244,7 +244,7 @@ class ItemTypeMetaDataView(BaseView):
             )
             
             db.session.commit()
-            next_id = UserActivityLog.get_sequence(db.session)
+            next_id = UserActivityLogger.get_next_parent_id(db.session)
             if item_type_id == 0:
                 UserActivityLogger.info(
                     operation="ITEM_TYPE_CREATE",
@@ -509,7 +509,7 @@ class ItemTypeMetaDataView(BaseView):
             )
 
             db.session.commit()
-            next_id = UserActivityLog.get_sequence(db.session)
+            next_id = UserActivityLogger.get_next_parent_id(db.session)
             UserActivityLogger.info(
                 operation="ITEM_TYPE_CREATE",
                 target_key=item_type_id

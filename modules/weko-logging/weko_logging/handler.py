@@ -23,7 +23,8 @@ class UserActivityLogHandler(logging.Handler):
     def __init__(self, app):
         """Initialize the handler.
 
-        :param app: The flask application.
+        Args:
+            app (Flask): The Flask application.
         """
         super(UserActivityLogHandler, self).__init__()
         self.app = app
@@ -31,8 +32,10 @@ class UserActivityLogHandler(logging.Handler):
     def emit(self, record):
         """Emit a log record.
 
-        :param record: The log record.
-        :raises: Exception if failed to create user activity log.
+        Args:
+            record (logging.LogRecord): The log record.
+        Raises:
+            Exception: If failed to create user activity log.
         """
         # if not has operation, skip create record
         if not hasattr(record, "operation"):
@@ -71,20 +74,25 @@ class UserActivityLogHandler(logging.Handler):
         ip_address = None
         source = None
         client_id = None
-        if request is not None:
-            # ip address
-            if hasattr(request, "remote_addr") and request.remote_addr:
-                ip_address = request.remote_addr
-            if request.headers.getlist("X-Forwarded-For"):
-                ip_address = request.headers.getlist("X-Forwarded-For")[0]
 
-            # source
-            if hasattr(request, "path") and request.path:
-                source = request.path
+        # get request info from extra     
+        request_summury = record.request_info if hasattr(record, "request_info") else None
+        if not request_summury:
+            request_summury = self.get_summary_from_request()
 
-            # get client id from request oauth
-            if hasattr(request, "oauth") and request.oauth:
-                client_id = request.oauth.client.client_id
+        # get community id from request
+        community_id = None
+        if hasattr(record, "community_id"):
+            community_id = record.community_id
+        else:
+            self.get_community_id_from_path(request_summury)
+
+        # ip address
+        ip_address = request_summury.get("ip_address")
+        # source
+        source = request_summury.get("path")
+        # client id
+        client_id = request_summury.get("client_id")
 
         # get other values from record
         target_key = record.target_key if hasattr(record, "target_key") else None
@@ -94,9 +102,6 @@ class UserActivityLogHandler(logging.Handler):
             raise ValueError("target and target_key must be set together")
 
         remarks = record.remarks if hasattr(record, "remarks") else None
-
-        # get community id from request
-        community_id = self.get_community_id_from_path()
 
         timestamp_seconds = record.created
         created_dt = datetime.fromtimestamp(timestamp_seconds)
@@ -138,41 +143,58 @@ class UserActivityLogHandler(logging.Handler):
             raise
 
     @classmethod
-    def get_community_id_from_path(cls):
+    def get_community_id_from_path(cls, request_info):
         """Get community id from request path.
+        
+        Args:
+            request_info (dict): The request path.
 
-        :return: The community id if community id exists else None.
+        Returns:
+            str: The community id if it exists, otherwise None.
         """
-        if request is None or not request.path:
+        if request_info:
+            request_path = request_info.get("path", "")
+            request_args = request_info.get("args", {})
+        elif request:
+            request_path = request.path
+            request_args = request.args
+        else:
             return None
         community_id = None
-        path_info = urllib.parse.urlparse(request.path)
+        path_info = urllib.parse.urlparse(request_path)
         if "/c/" in path_info.path:
             community_path = path_info.path.split("/c/")[1]
             community_id = community_path.split("/")[0]
-        elif "community" in request.args:
-            community_id = request.args.get("community")
+        elif "community" in request_args:
+            community_id = request_args.get("community")
         return community_id
 
     @classmethod
     def get_user_id(cls):
         """Get user id from current_user.
 
-        :return: The user id.
+        Returns:
+            str: The user id.
         """
         user_id = None
-        if current_user and current_user.is_authenticated and hasattr(current_user, "id"):
+        if current_user and current_user.is_authenticated and \
+            hasattr(current_user, "id"):
             user_id = current_user.id
         return user_id
 
     def _get_target_from_operation_id(self, operation):
         """Get target from operation id.
 
-        :param operation: The operation id.
-        :return: The operation type id, operation id, and target.
+        Args:
+            operation(str): The operation id.
+
+        Returns:
+            Tuple: The operation type id, operation id, and target.
         """
         # get target from config "WEKO_LOGGING_OPERATION_MASTER"
-        operation_master = self.app.config.get("WEKO_LOGGING_OPERATION_MASTER", {})
+        operation_master = self.app.config.get(
+            "WEKO_LOGGING_OPERATION_MASTER", {}
+        )
         for operation_category in operation_master.values():
             if operation not in operation_category.get("operation", {}).keys():
                 continue
@@ -183,3 +205,35 @@ class UserActivityLogHandler(logging.Handler):
             target = operation_info.get("target")
             return (operation_type_id, operation_id, target)
         return (None, None, None)
+
+    @classmethod
+    def get_summary_from_request(cls):
+        """Get request information from Flask request.
+
+        Returns:
+            dict: The request information.
+        """
+        if not request:
+            return {}
+    
+        request_summary = {}
+        # ip address
+        if hasattr(request, "remote_addr") and request.remote_addr:
+            request_summary["ip_address"] = request.remote_addr
+        elif request.headers.getlist("X-Forwarded-For"):
+            forwarded_list = request.headers.getlist("X-Forwarded-For")
+            request_summary["ip_address"] = forwarded_list[0]
+
+        # source
+        if hasattr(request, "path") and request.path:
+            request_summary["path"] = request.path
+
+        # get client id from request oauth
+        if hasattr(request, "oauth") and request.oauth:
+            request_summary["client_id"] = request.oauth.client.client_id
+
+        # get args from request
+        if hasattr(request, "args") and request.args:
+            request_summary["args"] = request.args
+        
+        return request_summary

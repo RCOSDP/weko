@@ -33,6 +33,7 @@ from celery.task.control import inspect
 from flask import current_app
 from flask_babelex import lazy_gettext as _
 from invenio_cache import current_cache
+from weko_logging.activity_logger import UserActivityLogger
 from weko_workflow.utils import delete_cache_data, get_cache_data
 
 from sqlalchemy.exc import SQLAlchemyError
@@ -66,7 +67,7 @@ def export_all(export_target):
 
 
 @shared_task
-def import_author(author, force_change_mode):
+def import_author(author, force_change_mode, request_info):
     """Import Author."""
     result = {'start_date': datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
     retrys = current_app.config["WEKO_AUTHORS_BULK_EXPORT_MAX_RETRY"]
@@ -80,7 +81,7 @@ def import_author(author, force_change_mode):
         # コネクションエラー時にリトライ処理を行う
         for attempt in range(retrys):
             try:
-                import_author_to_system(author, status, weko_id, force_change_mode)
+                import_author_to_system(author, status, weko_id, force_change_mode, request_info=request_info)
                 result['status'] = states.SUCCESS
                 break
             except SQLAlchemyError as ex:
@@ -247,8 +248,9 @@ def import_authors_for_over_max(authors):
     force_change_mode = current_cache.get(\
         current_app.config.get("WEKO_AUTHORS_IMPORT_CACHE_FORCE_CHANGE_MODE_KEY", False)
         )
+    request_info = UserActivityLogger.get_summary_from_request()
     for author in authors:
-        group_tasks.append(import_author.s(author, force_change_mode))
+        group_tasks.append(import_author.s(author, force_change_mode, request_info))
 
     # group_tasksを実行
     import_task = group(group_tasks).apply_async()

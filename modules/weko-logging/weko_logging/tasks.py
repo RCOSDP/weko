@@ -17,7 +17,8 @@ from .utils import UserActivityLogUtils
 def export_all_user_activity_logs():
     """Export all user activity logs task.
 
-    :raises: Exception if failed to export logs.
+    Raises:
+        Exception: If failed to export logs.
     """
     try:
         start_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -25,7 +26,9 @@ def export_all_user_activity_logs():
         zip_file_uri = UserActivityLogUtils.package_export_log()
         if zip_file_uri:
             end_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            UserActivityLogUtils.save_export_url(start_time, end_time, zip_file_uri)
+            UserActivityLogUtils.save_export_url(
+                start_time, end_time, zip_file_uri
+            )
         return zip_file_uri
     except Exception as ex:
         current_app.logger.error(ex)
