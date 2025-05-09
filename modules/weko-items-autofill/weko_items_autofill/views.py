@@ -8,6 +8,7 @@
 """Module of weko-items-autofill."""
 
 from __future__ import absolute_import, print_function
+import traceback
 
 from flask import Blueprint, current_app, jsonify, render_template, request
 from flask_babelex import gettext as _
@@ -117,8 +118,9 @@ def get_auto_fill_record_data():
         else:
             result['error'] = api_type + ' is NOT support autofill feature.'
     except Exception as e:
+        current_app.logger.error("Failed to get autofill data.")
+        traceback.print_exc()
         result['error'] = str(e)
-
     return jsonify(result)
 
 

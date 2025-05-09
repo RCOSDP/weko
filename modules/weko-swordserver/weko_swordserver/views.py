@@ -40,7 +40,6 @@ from weko_records_ui.utils import get_record_permalink, soft_delete
 from weko_search_ui.utils import import_items_to_system, import_items_to_activity
 from weko_workflow.utils import get_site_info_name
 from weko_workflow.scopes import activity_scope
-from weko_search_ui.mapper import JsonLdMapper
 
 from .config import WEKO_SWORDSERVER_DEPOSIT_ROLE_ENABLE
 from .decorators import check_on_behalf_of, check_package_contents
@@ -162,7 +161,7 @@ def get_service_document():
 @blueprint.route("/service-document", methods=["POST"])
 @oauth2.require_oauth()
 @limiter.limit("")
-@require_oauth_scopes(write_scope.id)
+@require_oauth_scopes(write_scope.id, actions_scope.id)
 @require_oauth_scopes(item_create_scope.id)
 @roles_required(WEKO_SWORDSERVER_DEPOSIT_ROLE_ENABLE)
 @check_on_behalf_of()
@@ -259,10 +258,7 @@ def post_service_document():
     client_id = request.oauth.client.client_id
 
     digest = request.headers.get("Digest")
-    if (
-        file_format == "JSON"
-        and current_app.config["WEKO_SWORDSERVER_DIGEST_VERIFICATION"]
-    ):
+    if current_app.config["WEKO_SWORDSERVER_DIGEST_VERIFICATION"]:
         if (
             not isinstance(digest, str)
             or not digest.startswith("SHA-256=")
@@ -451,7 +447,7 @@ def post_service_document():
 @blueprint.route("/deposit/<recid>", methods=["PUT"])
 @oauth2.require_oauth()
 @limiter.limit("")
-@require_oauth_scopes(write_scope.id)
+@require_oauth_scopes(write_scope.id, actions_scope.id)
 @require_oauth_scopes(item_update_scope.id)
 @roles_required(WEKO_SWORDSERVER_DEPOSIT_ROLE_ENABLE)
 @check_on_behalf_of()
@@ -552,10 +548,7 @@ def put_object(recid):
     client_id = request.oauth.client.client_id
 
     digest = request.headers.get("Digest")
-    if (
-        file_format == "JSON"
-        and current_app.config["WEKO_SWORDSERVER_DIGEST_VERIFICATION"]
-    ):
+    if current_app.config["WEKO_SWORDSERVER_DIGEST_VERIFICATION"]:
         if (
             not isinstance(digest, str)
             or not digest.startswith("SHA-256=")
@@ -885,7 +878,7 @@ def _get_status_workflow_document(activity_id, recid):
 @blueprint.route("/deposit/<recid>", methods=["DELETE"])
 @oauth2.require_oauth()
 @limiter.limit("")
-@require_oauth_scopes(write_scope.id)
+@require_oauth_scopes(write_scope.id, actions_scope.id)
 @require_oauth_scopes(item_delete_scope.id)
 @roles_required(WEKO_SWORDSERVER_DEPOSIT_ROLE_ENABLE)
 @check_on_behalf_of()
