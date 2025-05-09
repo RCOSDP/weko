@@ -93,7 +93,8 @@ class UserActivityLog(db.Model):
     def to_dict(self):
         """Serialize object to dictionary.
 
-        :return: Dictionary representation of the object.
+        Returns:
+            dict: Dictionary representation of the object.
         """
         return {
             'id': self.id,
@@ -107,10 +108,13 @@ class UserActivityLog(db.Model):
 
     @classmethod
     def get_sequence(cls, session):
-        """Get author id next sequence.
+        """Get the next sequence for the user activity logs.
 
-        :param session: Session
-        :return: Next sequence.
+        Args:
+            session: The database session.
+
+        Returns:
+            int: The next sequence.
         """
         if not session:
             session = db.session

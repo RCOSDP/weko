@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: weko-items-ui 0.1.0.dev20170000\n"
 "Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
-"POT-Creation-Date: 2022-01-25 23:50+0000\n"
+"POT-Creation-Date: 2025-05-09 15:32+0900\n"
 "PO-Revision-Date: 2018-01-22 15:20+0900\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ja_JP\n"
@@ -19,194 +19,352 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.5.1\n"
 
-#: weko_items_ui/utils.py:497 weko_items_ui/utils.py:2231
-#: weko_items_ui/utils.py:2252
+#: weko_items_ui/scopes.py:36
+msgid "Allow read item."
+msgstr ""
+
+#: weko_items_ui/scopes.py:43
+msgid "Allow create item."
+msgstr ""
+
+#: weko_items_ui/scopes.py:50
+msgid "Allow update item."
+msgstr ""
+
+#: weko_items_ui/scopes.py:57
+msgid "Allow delete item."
+msgstr ""
+
+#: weko_items_ui/scopes.py:65
+msgid "Allow read ranking."
+msgstr ""
+
+#: weko_items_ui/utils.py:1083 weko_items_ui/utils.py:1087
+#: weko_items_ui/utils.py:1091
+msgid "Title"
+msgstr ""
+
+#: weko_items_ui/utils.py:1113 weko_items_ui/utils.py:1117
+msgid "Alternative Title"
+msgstr ""
+
+#: weko_items_ui/utils.py:1142 weko_items_ui/utils.py:1146
+#: weko_items_ui/utils.py:1150
+msgid "Creator Given Name"
+msgstr ""
+
+#: weko_items_ui/utils.py:1171 weko_items_ui/utils.py:1175
+#: weko_items_ui/utils.py:1179
+msgid "Creator Family Name"
+msgstr ""
+
+#: weko_items_ui/utils.py:1200
+msgid "Creator Affiliation Name"
+msgstr ""
+
+#: weko_items_ui/utils.py:1219 weko_items_ui/utils.py:1223
+#: weko_items_ui/utils.py:1227
+msgid "Creator Name"
+msgstr ""
+
+#: weko_items_ui/utils.py:1247 weko_items_ui/utils.py:1251
+msgid "Creator Alternative Name"
+msgstr ""
+
+#: weko_items_ui/utils.py:1279 weko_items_ui/utils.py:1283
+#: weko_items_ui/utils.py:1287
+msgid "Contributor Given Name"
+msgstr ""
+
+#: weko_items_ui/utils.py:1308 weko_items_ui/utils.py:1312
+#: weko_items_ui/utils.py:1316
+msgid "Contributor Family Name"
+msgstr ""
+
+#: weko_items_ui/utils.py:1337
+msgid "Contributor Affiliation Name"
+msgstr ""
+
+#: weko_items_ui/utils.py:1356 weko_items_ui/utils.py:1360
+#: weko_items_ui/utils.py:1364
+msgid "Contributor Name"
+msgstr ""
+
+#: weko_items_ui/utils.py:1384 weko_items_ui/utils.py:1388
+msgid "Contributor Alternative Name"
+msgstr ""
+
+#: weko_items_ui/utils.py:1414
+msgid "Relation Related Title"
+msgstr ""
+
+#: weko_items_ui/utils.py:1439
+msgid "Funding Reference Funder Name"
+msgstr ""
+
+#: weko_items_ui/utils.py:1456
+msgid "Funding Reference Award Title"
+msgstr ""
+
+#: weko_items_ui/utils.py:1477
+msgid "Source Title"
+msgstr ""
+
+#: weko_items_ui/utils.py:1495
+msgid "Degree Name"
+msgstr ""
+
+#: weko_items_ui/utils.py:1514
+msgid "Degree Grantor Name"
+msgstr ""
+
+#: weko_items_ui/utils.py:1538
+msgid "Conference Date"
+msgstr ""
+
+#: weko_items_ui/utils.py:1558
+msgid "Conference Name"
+msgstr ""
+
+#: weko_items_ui/utils.py:1575
+msgid "Conference Place"
+msgstr ""
+
+#: weko_items_ui/utils.py:1592
+msgid "Conference Venue"
+msgstr ""
+
+#: weko_items_ui/utils.py:1609
+msgid "Conference Sponsor"
+msgstr ""
+
+#: weko_items_ui/utils.py:1635 weko_items_ui/utils.py:3835
+#: weko_items_ui/utils.py:3856
 msgid "Please input all required item."
 msgstr "必須項目は全て入力して下さい。"
 
-#: weko_items_ui/utils.py:499
+#: weko_items_ui/utils.py:1637
 msgid "Please input the correct data."
 msgstr "データを正しく入力して下さい。"
 
-#: weko_items_ui/utils.py:1387
+#: weko_items_ui/utils.py:2590 weko_items_ui/utils.py:2799
 msgid "Error occurred during item export."
 msgstr ""
 
-#: weko_items_ui/views.py:371
-#, fuzzy
+#: weko_items_ui/utils.py:2669
+msgid "Creating data directory"
+msgstr ""
+
+#: weko_items_ui/utils.py:2687
+msgid "Creating bag-info.txt"
+msgstr ""
+
+#: weko_items_ui/templates/weko_items_ui/edit.html:319
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:503
+#: weko_items_ui/views.py:297
+msgid "The same item may have been registered."
+msgstr "同一のアイテムが登録されている可能性があります。"
+
+#: weko_items_ui/views.py:483
 msgid "Invalid request"
 msgstr "無効なリクエスト"
 
-#: weko_items_ui/views.py:485
-#, fuzzy
+#: weko_items_ui/views.py:626
 msgid "Invalid Request"
 msgstr "無効なリクエスト"
 
-#: weko_items_ui/views.py:649 weko_items_ui/views.py:686
-#: weko_items_ui/views.py:790
+#: weko_items_ui/views.py:806 weko_items_ui/views.py:843
+#: weko_items_ui/views.py:951 weko_items_ui/views.py:1134
 msgid "Header Error"
 msgstr "ヘッダエラー"
 
-#: weko_items_ui/views.py:814
-msgid "You are not allowed to edit this item."
-msgstr "このアイテムを編集することは許可されていません"
+#: weko_items_ui/views.py:967 weko_items_ui/views.py:1034
+#: weko_items_ui/views.py:1150 weko_items_ui/views.py:1219
+msgid "This Item is being edited."
+msgstr "このアイテムを編集中のワークフローがあります。"
 
-#: weko_items_ui/views.py:821
-#, fuzzy
+#: weko_items_ui/views.py:993 weko_items_ui/views.py:1177
+msgid "You are not allowed to edit this item."
+msgstr "このアイテムを編集することは許可されていません。"
+
+#: weko_items_ui/views.py:1000 weko_items_ui/views.py:1184
 msgid "You do not even have an ItemType."
 msgstr "No itemtype"
 
-#: weko_items_ui/views.py:829
-#, fuzzy
+#: weko_items_ui/views.py:1008 weko_items_ui/views.py:1192
 msgid "Dependency ItemType not found."
 msgstr "このアイテムタイプは見つかりませんでした"
 
-#: weko_items_ui/views.py:835
-#, fuzzy
+#: weko_items_ui/views.py:1014 weko_items_ui/views.py:1198
 msgid "Record does not exist."
 msgstr "レコードが存在しません"
 
-#: weko_items_ui/views.py:842
+#: weko_items_ui/views.py:1021 weko_items_ui/views.py:1205
 msgid "Item cannot be edited because the import is in progress."
 msgstr "インポートを実行中のためアイテムの編集はできません。"
 
-#: weko_items_ui/views.py:854
-#, fuzzy
-msgid "This Item is being edited."
-msgstr "編集中のワークフローがあります"
-
-#: weko_items_ui/views.py:868
-#, fuzzy
+#: weko_items_ui/views.py:1051
 msgid "Workflow setting does not exist."
-msgstr "レコードが存在しません"
+msgstr "ワークフローの設定が存在しません"
 
-#: weko_items_ui/views.py:884 weko_items_ui/views.py:891
-#: weko_items_ui/views.py:911
+#: weko_items_ui/views.py:1069 weko_items_ui/views.py:1077
+#: weko_items_ui/views.py:1097 weko_items_ui/views.py:1258
+#: weko_items_ui/views.py:1266 weko_items_ui/views.py:1295
 msgid "An error has occurred."
 msgstr "エラーが発生しました"
 
-#: weko_items_ui/views.py:1081
+#: weko_items_ui/views.py:1495
 msgid "PID does not meet the conditions."
 msgstr "PID付与の条件を満たしていません。"
 
-#: weko_items_ui/views.py:1083
+#: weko_items_ui/views.py:1497
 msgid ""
 "The mapping of required items for DOI validation is not set. Please "
 "recheck the following mapping settings.<br/>{}"
 msgstr "DOIバリデーションにかかる必須項目のマッピングが設定されません。以下のマッピング設定を再確認して下さい。<br/>{}"
 
-#: weko_items_ui/views.py:1157
+#: weko_items_ui/views.py:1575
 msgid "Your session has timed out. Please login again."
 msgstr ""
 
-#: weko_items_ui/templates/weko_items_ui/edit.html:64
+#: weko_items_ui/templates/weko_items_ui/edit.html:65
 msgid "Itemtype List"
 msgstr "アイテムタイプリスト"
 
-#: weko_items_ui/templates/weko_items_ui/edit.html:104
-#: weko_items_ui/templates/weko_items_ui/edit.html:252
-#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:118
-#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:337
+#: weko_items_ui/templates/weko_items_ui/edit.html:105
+#: weko_items_ui/templates/weko_items_ui/edit.html:256
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:121
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:377
 msgid "Next"
 msgstr "次へ"
 
-#: weko_items_ui/templates/weko_items_ui/edit.html:118
-#: weko_items_ui/templates/weko_items_ui/edit.html:241
-#: weko_items_ui/templates/weko_items_ui/edit.html:262
-#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:130
-#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:284
-#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:326
+#: weko_items_ui/templates/weko_items_ui/edit.html:119
+#: weko_items_ui/templates/weko_items_ui/edit.html:245
+#: weko_items_ui/templates/weko_items_ui/edit.html:266
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:133
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:324
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:366
 msgid "Delete"
 msgstr "削除"
 
-#: weko_items_ui/templates/weko_items_ui/edit.html:164
-#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:185
+#: weko_items_ui/templates/weko_items_ui/edit.html:165
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:188
 msgid "Automatic Metadata Input"
 msgstr "メタデータ自動入力"
 
-#: weko_items_ui/templates/weko_items_ui/edit.html:239
+#: weko_items_ui/templates/weko_items_ui/edit.html:241
 msgid "フィードバックメール送信先"
 msgstr "フィードバックメール送信先"
 
-#: weko_items_ui/templates/weko_items_ui/edit.html:240
-#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:283
+#: weko_items_ui/templates/weko_items_ui/edit.html:242
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:321
+msgid "Display Request Mail Button"
+msgstr "リクエストボタンを表示"
+
+#: weko_items_ui/templates/weko_items_ui/edit.html:243
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:322
+msgid "Request Mail Destination"
+msgstr "リクエストメール送信先"
+
+#: weko_items_ui/templates/weko_items_ui/edit.html:244
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:323
 msgid "From author DB"
 msgstr "著者DBから入力"
 
-#: weko_items_ui/templates/weko_items_ui/edit.html:242
-#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:285
+#: weko_items_ui/templates/weko_items_ui/edit.html:246
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:325
 msgid "Input text"
 msgstr "テキスト入力可"
 
-#: weko_items_ui/templates/weko_items_ui/edit.html:243
-#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:286
+#: weko_items_ui/templates/weko_items_ui/edit.html:247
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:326
 msgid "Duplicate Email Addresses."
 msgstr "メールアドレスが重複しています。"
 
-#: weko_items_ui/templates/weko_items_ui/edit.html:244
-#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:287
+#: weko_items_ui/templates/weko_items_ui/edit.html:248
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:327
 msgid "Invalid email format."
 msgstr "メールアドレスのフォーマットが正しくありません。"
 
-#: weko_items_ui/templates/weko_items_ui/edit.html:290
-#: weko_items_ui/templates/weko_items_ui/edit.html:322
-#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:288
-#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:377
-#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:394
-#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:512
-#: weko_items_ui/templates/weko_items_ui/iframe/item_index.html:312
+#: weko_items_ui/templates/weko_items_ui/edit.html:294
+#: weko_items_ui/templates/weko_items_ui/edit.html:336
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:328
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:417
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:434
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:563
+#: weko_items_ui/templates/weko_items_ui/iframe/item_index.html:313
 #: weko_items_ui/templates/weko_items_ui/upload.html:100
 msgid "Close"
 msgstr "閉じる"
 
-#: weko_items_ui/templates/weko_items_ui/edit.html:302
-#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:443
+#: weko_items_ui/templates/weko_items_ui/edit.html:306
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:483
 msgid "Please select the ID."
 msgstr "IDを選択してください"
 
-#: weko_items_ui/templates/weko_items_ui/edit.html:304
-#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:444
+#: weko_items_ui/templates/weko_items_ui/edit.html:308
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:484
 msgid "Please input value."
 msgstr "値を入力してください"
 
-#: weko_items_ui/templates/weko_items_ui/edit.html:306
-#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:446
+#: weko_items_ui/templates/weko_items_ui/edit.html:310
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:486
 msgid "Specified ID does not exist."
 msgstr "指定されたIDが存在しません"
 
-#: weko_items_ui/templates/weko_items_ui/edit.html:308
-#: weko_items_ui/templates/weko_items_ui/edit.html:310
-#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:455
+#: weko_items_ui/templates/weko_items_ui/edit.html:312
+#: weko_items_ui/templates/weko_items_ui/edit.html:314
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:496
 msgid "Automatic metadata input"
 msgstr "メタデータ自動入力"
 
-#: weko_items_ui/templates/weko_items_ui/edit.html:311
-#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:458
+#: weko_items_ui/templates/weko_items_ui/edit.html:315
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:499
 msgid "Get"
 msgstr "取得"
 
-#: weko_items_ui/templates/weko_items_ui/edit.html:313
-#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:460
+#: weko_items_ui/templates/weko_items_ui/edit.html:317
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:501
 msgid "The following items is required. Please recheck and input."
 msgstr "以下の項目が入力必須となります。ご確認の上、再度入力してください。"
 
-#: weko_items_ui/templates/weko_items_ui/edit.html:316
-#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:464
-msgid "The same item may have been registered."
-msgstr "同一のアイテムが登録されている可能性があります。"
+#: weko_items_ui/templates/weko_items_ui/edit.html:321
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:505
+msgid "The following items cannot have same value. Please recheck and re-input."
+msgstr ""
 
-#: weko_items_ui/templates/weko_items_ui/edit.html:315
-#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:462
+#: weko_items_ui/templates/weko_items_ui/edit.html:323
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:507
+msgid ""
+"The following items that contains ja-Kana cannot be set without setting "
+"ja as well. Please recheck and re-input."
+msgstr ""
+
+#: weko_items_ui/templates/weko_items_ui/edit.html:325
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:509
+msgid ""
+"The following items that contains ja-Latn cannot be set without setting "
+"ja as well. Please recheck and re-input."
+msgstr ""
+
+#: weko_items_ui/templates/weko_items_ui/edit.html:327
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:511
+msgid ""
+"The following items contains an invalid date format. Please recheck and "
+"re-input."
+msgstr ""
+
+#: weko_items_ui/templates/weko_items_ui/edit.html:329
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:513
 msgid ""
 "The following email address is not registered in the system. Please "
 "recheck and input."
 msgstr "以下のメールアドレスがシステムに登録されていません。ご確認の上、再度入力してください。"
 
-#: weko_items_ui/templates/weko_items_ui/edit.html:317
-#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:466
-#, fuzzy
+#: weko_items_ui/templates/weko_items_ui/edit.html:331
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:517
 msgid "Please input email address."
-msgstr "値を入力してください"
+msgstr "メールアドレスを入力してください"
 
 #: weko_items_ui/templates/weko_items_ui/error.html:33
 #: weko_items_ui/templates/weko_items_ui/iframe/error.html:41
@@ -214,8 +372,8 @@ msgid "No itemtype to register."
 msgstr "登録するアイテムタイプがありません"
 
 #: weko_items_ui/templates/weko_items_ui/export.html:76
-#: weko_items_ui/templates/weko_items_ui/iframe/item_index.html:282
-#: weko_items_ui/templates/weko_items_ui/iframe/item_index.html:286
+#: weko_items_ui/templates/weko_items_ui/iframe/item_index.html:283
+#: weko_items_ui/templates/weko_items_ui/iframe/item_index.html:287
 msgid "Back"
 msgstr "戻る"
 
@@ -228,7 +386,7 @@ msgid "Loading..."
 msgstr ""
 
 #: weko_items_ui/templates/weko_items_ui/export_results_list.html:22
-#: weko_items_ui/templates/weko_items_ui/iframe/item_index.html:164
+#: weko_items_ui/templates/weko_items_ui/iframe/item_index.html:165
 msgid "Item"
 msgstr "アイテム"
 
@@ -304,140 +462,179 @@ msgstr "アイテムのログインに成功"
 msgid "item login fail"
 msgstr "アイテムのログインに失敗"
 
-#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:143
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:146
 msgid "Thumbnail"
 msgstr "サムネイル"
 
-#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:154
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:157
 msgid "OR"
 msgstr "または"
 
-#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:156
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:159
 msgid "Click to select"
 msgstr "ファイル選択"
 
-#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:158
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:161
 msgid "Registerable file: 「gif, jpg, jpe, jpeg, png, bmp」"
 msgstr "登録可能なファイルは「gif, jpg, jpe, jpeg, png, bmp」"
 
-#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:282
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:287
+msgid "oa_policy_label"
+msgstr "OA ポリシー情報"
+
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:295
+msgid "oa_policy_export"
+msgstr "OA ポリシー取得"
+
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:307
+msgid "Please enter ISSN, eISSN, or journal title"
+msgstr "ISSN、eISSN、または雑誌名を入力してください。"
+
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:308
+msgid "No Policy Information found"
+msgstr "一致するポリシー情報が見つかりませんでした。"
+
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:309
+msgid "Invalid parameters"
+msgstr "パラメータが不正です。"
+
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:310
+msgid "Authentication error occurred"
+msgstr "認証エラーが発生しました。"
+
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:311
+msgid "No matching policy"
+msgstr "一致するポリシー情報が見つかりませんでした。"
+
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:312
+msgid "Request limit exceeded"
+msgstr "リクエスト制限を超えました。"
+
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:313
+msgid "Internal server error"
+msgstr "サーバー内部エラーが発生しました。"
+
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:314
+msgid "An unknown error occurred"
+msgstr "不明なエラーが発生しました"
+
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:320
 msgid "Feedback Mail Destination"
 msgstr "フィードバックメール送信先"
 
-#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:289
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:329
 msgid "Search"
 msgstr ""
 
-#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:290
-#, fuzzy
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:330
 msgid "Name"
-msgstr "ファイル名"
+msgstr "名前"
 
-#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:291
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:331
 msgid "Mail address"
 msgstr ""
 
-#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:292
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:332
 msgid "Feedback Mail Import"
 msgstr "入力"
 
-#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:301
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:341
 msgid "Version Management"
 msgstr "バージョン管理"
 
-#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:306
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:346
 msgid "Upgrade Version"
 msgstr "バージョンを更新する"
 
-#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:310
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:350
 msgid "Keep Version"
 msgstr "バージョンを維持する"
 
-#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:333
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:373
 msgid "Save"
 msgstr "保存"
 
-#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:347
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:387
 msgid "QuitQO"
 msgstr "強制終了"
 
-#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:445
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:485
 msgid "Specified index does not exist"
 msgstr "指定されたインデックスが存在していません。お手数ですが、管理者の方へ問い合わせをお願いします。"
 
-#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:453
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:494
 msgid "Position not provided."
 msgstr ""
 
-#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:464
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:515
 msgid "Can not found the email address of approval."
 msgstr "承認者のメールアドレスを検出できません。"
 
-#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:468
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:519
 msgid ""
 "The specified number has been exceeded. You can only select up to two "
 "fields."
 msgstr "最大2つのフィールドを選択します"
 
-#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:470
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:521
 msgid "The same file name cannot be registered."
 msgstr "同一のファイル名は登録できません。"
 
-#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:472
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:523
 msgid "Thumbnail file type error message"
 msgstr "画像ファイル（gif, jpg, jpe, jpeg, png, bmp）以外のファイルはアップロードできません。"
 
-#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:474
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:525
 msgid "is too long."
 msgstr "の数が上限数を超えています。"
 
-#: weko_items_ui/templates/weko_items_ui/iframe/item_index.html:88
+#: weko_items_ui/templates/weko_items_ui/iframe/item_index.html:89
 msgid "Flow"
 msgstr "フロー"
 
-#: weko_items_ui/templates/weko_items_ui/iframe/item_index.html:96
+#: weko_items_ui/templates/weko_items_ui/iframe/item_index.html:97
 msgid "Activity"
 msgstr "アクティビティ"
 
-#: weko_items_ui/templates/weko_items_ui/iframe/item_index.html:105
+#: weko_items_ui/templates/weko_items_ui/iframe/item_index.html:106
 msgid "Status"
 msgstr "ステータス"
 
-#: weko_items_ui/templates/weko_items_ui/iframe/item_index.html:117
+#: weko_items_ui/templates/weko_items_ui/iframe/item_index.html:118
 msgid "Created"
 msgstr "作成"
 
-#: weko_items_ui/templates/weko_items_ui/iframe/item_index.html:125
+#: weko_items_ui/templates/weko_items_ui/iframe/item_index.html:126
 msgid "Creater"
 msgstr "作成者"
 
-#: weko_items_ui/templates/weko_items_ui/iframe/item_index.html:139
-#: weko_items_ui/templates/weko_items_ui/iframe/item_index.html:247
+#: weko_items_ui/templates/weko_items_ui/iframe/item_index.html:140
+#: weko_items_ui/templates/weko_items_ui/iframe/item_index.html:248
 msgid "Updated"
 msgstr "更新"
 
-#: weko_items_ui/templates/weko_items_ui/iframe/item_index.html:147
-#: weko_items_ui/templates/weko_items_ui/iframe/item_index.html:248
+#: weko_items_ui/templates/weko_items_ui/iframe/item_index.html:148
+#: weko_items_ui/templates/weko_items_ui/iframe/item_index.html:249
 msgid "Updater"
 msgstr "更新者"
 
-#: weko_items_ui/templates/weko_items_ui/iframe/item_index.html:173
+#: weko_items_ui/templates/weko_items_ui/iframe/item_index.html:174
 msgid "Step"
 msgstr "ステップ"
 
-#: weko_items_ui/templates/weko_items_ui/iframe/item_index.html:241
+#: weko_items_ui/templates/weko_items_ui/iframe/item_index.html:242
 msgid "History"
 msgstr "ヒストリー"
 
-#: weko_items_ui/templates/weko_items_ui/iframe/item_index.html:246
+#: weko_items_ui/templates/weko_items_ui/iframe/item_index.html:247
 msgid "Action"
 msgstr "アクション"
 
-#: weko_items_ui/templates/weko_items_ui/iframe/item_index.html:249
+#: weko_items_ui/templates/weko_items_ui/iframe/item_index.html:250
 msgid "Result"
 msgstr "結果"
 
-#: weko_items_ui/templates/weko_items_ui/iframe/item_index.html:250
+#: weko_items_ui/templates/weko_items_ui/iframe/item_index.html:251
 msgid "Comment"
 msgstr "コメント"
 
@@ -458,205 +655,42 @@ msgid "Actions"
 msgstr "アクション"
 
 #: weko_items_ui/templates/weko_items_ui/macros/export_controls.html:5
-#, fuzzy
 msgid "File contents cannot be exported."
-msgstr "同一のファイル名は登録できません。"
+msgstr "ファイルをエクスポートできません。"
 
-#: weko_items_ui/templates/weko_items_ui/macros/export_controls.html:12
-msgid "File Contents"
-msgstr ""
-
-#: weko_items_ui/templates/weko_items_ui/macros/export_controls.html:19
-#, fuzzy
-msgid "Do Not Export File Contents"
-msgstr "PID付与の条件を満たしていません。"
-
-#: weko_items_ui/templates/weko_items_ui/macros/export_controls.html:25
-msgid "Export File Contents"
-msgstr ""
-
-#: weko_items_ui/templates/weko_items_ui/macros/export_controls.html:31
+#: weko_items_ui/templates/weko_items_ui/macros/export_controls.html:13
 msgid "Export Format"
 msgstr ""
 
-#: weko_items_ui/templates/weko_items_ui/macros/export_controls.html:38
-msgid "JSON"
+#: weko_items_ui/templates/weko_items_ui/macros/export_controls.html:20
+msgid "TSV"
 msgstr ""
 
-#: weko_items_ui/templates/weko_items_ui/macros/export_controls.html:44
+#: weko_items_ui/templates/weko_items_ui/macros/export_controls.html:26
 msgid "BIBTEX"
 msgstr ""
 
+#: weko_items_ui/templates/weko_items_ui/macros/export_controls.html:34
+msgid "RO-Crate"
+msgstr ""
+
+#: weko_items_ui/templates/weko_items_ui/macros/export_controls.html:40
+msgid "File Contents"
+msgstr ""
+
+#: weko_items_ui/templates/weko_items_ui/macros/export_controls.html:48
+msgid "Do Not Export File Contents"
+msgstr ""
+
 #: weko_items_ui/templates/weko_items_ui/macros/export_controls.html:55
+msgid "Export File Contents"
+msgstr ""
+
+#: weko_items_ui/templates/weko_items_ui/macros/export_controls.html:66
 msgid "Max number of items able to export"
 msgstr ""
 
-#: weko_items_ui/templates/weko_items_ui/macros/export_controls.html:61
-#, fuzzy
+#: weko_items_ui/templates/weko_items_ui/macros/export_controls.html:72
 msgid "Export"
-msgstr "インポート"
+msgstr "エクスポート"
 
-#~ msgid "Item Test Data"
-#~ msgstr "アイテムテストデータ"
-
-#~ msgid "sending"
-#~ msgstr "送信"
-
-#~ msgid "Author_Add_Organization"
-#~ msgstr "組織追加"
-
-#~ msgid "Author_Add_Author"
-#~ msgstr "著者追加"
-
-#~ msgid "Author_Search"
-#~ msgstr "検索"
-
-#~ msgid "Author_Mail_Address"
-#~ msgstr "メールアドレス"
-
-#~ msgid "Author_Edit"
-#~ msgstr "編集"
-
-#~ msgid "Author_Search_No_Result"
-#~ msgstr "検索結果は0件です。"
-
-#~ msgid "Author_Page_Previous"
-#~ msgstr "前"
-
-#~ msgid "Author_Page_Next"
-#~ msgstr "次"
-
-#~ msgid "Author_On_1_Page"
-#~ msgstr "1ページに:"
-
-#~ msgid "Author_Name"
-#~ msgstr "氏名"
-
-#~ msgid "Author_Import"
-#~ msgstr "入力"
-
-#~ msgid "Designate_Index"
-#~ msgstr "インデックス指定"
-
-#~ msgid "Send"
-#~ msgstr "送信"
-
-#~ msgid "Index_Tree"
-#~ msgstr "インデックスツリー"
-
-#~ msgid "You do not even have an itemtype."
-#~ msgstr "アイテムタイプは存在しません"
-
-#~ msgid "Go to"
-#~ msgstr "移動"
-
-#~ msgid "Register Itemtype"
-#~ msgstr "アイテムタイプをレジストする"
-
-#~ msgid "Are you sure you want to quit the activity?"
-#~ msgstr "このアクティビティを強制終了してもよろしいでしょうか。"
-
-#~ msgid ""
-#~ "You cannot change the resource type "
-#~ "of items that have been grant a"
-#~ " DOI."
-#~ msgstr "DOI付与済みアイテムの資源タイプの変更はできません。"
-
-#~ msgid ""
-#~ "Since PMID is not subject to DOI"
-#~ " registration, please select another type."
-#~ msgstr "PMIDはDOI登録の対象外のため、他のタイプを選択してください。"
-
-#~ msgid ""
-#~ "Prefix/Suffix of Identifier is not "
-#~ "consistency with content of Identifier "
-#~ "Registration."
-#~ msgstr "識別子のプレフィックス・サフィックスがID登録の内容と一致しています。"
-
-#~ msgid "Please input location information (URL) for Identifier."
-#~ msgstr "識別子のURIを入力してください。"
-
-#~ msgid "place"
-#~ msgstr "位"
-
-#~ msgid "Drop files or folders here"
-#~ msgstr "該当欄にファイルをドラッグ＆ドロップすることで複数ファイルを登録できます"
-
-#~ msgid "Advisor"
-#~ msgstr "指導教員"
-
-#~ msgid "Guarantor"
-#~ msgstr "保証人"
-
-#~ msgid "Email (Advisor)"
-#~ msgstr "メール（指導教員）"
-
-#~ msgid "Email (Guarantor)"
-#~ msgstr "メール（保証人）"
-
-#~ msgid "Required item is not inputted"
-#~ msgstr "必須項目がありません。"
-
-#~ msgid "Cannot preview because the file size is too large."
-#~ msgstr "ファイルサイズが大きいためプレビューできません。"
-
-#~ msgid "Item cannot be deleted because the import is in progress."
-#~ msgstr "インポートを実行中のためアイテムの削除はできません。"
-
-#~ msgid "Guest"
-#~ msgstr "非ログインユーザー"
-
-#~ msgid "Free Input"
-#~ msgstr "自由入力"
-
-#~ msgid ""
-#~ "The item cannot be copied because "
-#~ "you do not have permission to view"
-#~ " it."
-#~ msgstr "該当アイテムの参照権限がないため流用できません。"
-
-msgid "Request Mail Destination"
-msgstr "リクエストメール送信先"
-
-msgid "Display Request Mail Button"
-msgstr "リクエストボタンを表示"
-
-#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:290
-msgid "oa_policy_label"
-msgstr "OA ポリシー情報"
-
-#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:298
-msgid "oa_policy_export"
-msgstr "OA ポリシー取得"
-
-#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:311
-msgid "Please enter ISSN, eISSN, or journal title"
-msgstr "ISSN、eISSN、または雑誌名を入力してください。"
-
-#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:312
-msgid "No Policy Information found"
-msgstr "一致するポリシー情報が見つかりませんでした。"
-
-#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:313
-msgid "Invalid parameters"
-msgstr "パラメータが不正です。"
-
-#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:314
-msgid "Authentication error occurred"
-msgstr "認証エラーが発生しました。"
-
-#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:315
-msgid "No matching policy"
-msgstr "一致するポリシー情報が見つかりませんでした。"
-
-#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:316
-msgid "Request limit exceeded"
-msgstr "リクエスト制限を超えました。"
-
-#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:317
-msgid "Internal server error"
-msgstr "サーバー内部エラーが発生しました。"
-
-#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:318
-msgid "An unknown error occurred"
-msgstr "不明なエラーが発生しました"

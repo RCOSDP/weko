@@ -2888,134 +2888,143 @@ class ItemLink(object):
     def update(self, items):
         """Update list item link of current record.
 
-        This method updates the relationships between the current item (self.org_item_id)
-        and a list of destination items (items). It handles creation, updating, and deletion
-        of relationships, including special logic for supplement relationships.
+        This method updates the relationships between the current item
+        (self.org_item_id) and a list of destination items (items).
+        It handles creation, updating, and deletionof relationships,
+        including special logic for supplement relationships.
 
-        :param items: List of dictionaries containing 'item_id' and 'sele_id' (relationship type).
-        :return: Error message if any, otherwise None.
+        Args:
+            items(list): List of dictionaries containing
+                'item_id' and 'sele_id' (relationship type).
+        Returns:
+            str: Error message if any, otherwise None.
         """
         from weko_logging.activity_logger import UserActivityLogger
+        from weko_records_ui.utils import get_latest_version
 
-        # Fetch all existing relationships where the current item is the source
+        src_without_ver = self.org_item_id.split('.')[0]
+        # Fetch all existing relationships where the current item is src
         dst_relations = ItemReference.get_src_references(self.org_item_id).all()
-        # Create a set of destination item IDs for quick lookup
-        dst_ids = {dst_item.dst_item_pid for dst_item in dst_relations}
+        # Fetch all existing relationships where the current item is dst
+        src_relations = ItemReference.get_dst_references(src_without_ver).all()
+
+        src_fixed_relations = {rel.dst_item_pid: rel for rel in dst_relations}
+        dst_fixed_relations = {rel.src_item_pid: rel for rel in src_relations}
         # Initialize lists to track changes:
-        # - updated: Items whose relationship type has changed
-        # - updated_deleted_supplement: Items with supplement relationships that need to be deleted
-        # - created: New items to be added
-        # - created_supplement: New supplement relationships to be created
-        updated = []
-        updated_deleted_supplement = []
+        # created: new items to be added
+        # updated: items whose relationship type has changed
+        # deleted: items to be deleted
         created = []
-        created_supplement = []
+        updated = []
+        deleted = []
         supplement_key = current_app.config["WEKO_RECORDS_REFERENCE_SUPPLEMENT"]
         # Iterate through each item in the input list
+        is_src_integer = (self.org_item_id == src_without_ver)
         for item in items:
-            item_id = item['item_id']
-            if item_id and not item_id.isdigit():
+            item_id = str(item['item_id'])
+            if item_id and not item_id.isdecimal():
                 continue
             sele_id = item['sele_id']
 
-            # Check if the item already has a relationship with the current item
-            if item_id in dst_ids:
-                # Find the corresponding destination item in the existing relationships
-                dst_item = next(
-                    (d for d in dst_relations if d.dst_item_pid == item_id),
-                    None
-                )
-                # If the relationship type has changed, handle the update
-                if dst_item and dst_item.reference_type != sele_id:
-                    # If the old relationship was a supplement type, mark it for deletion
-                    if dst_item.reference_type in (
-                        supplement_key[0],
-                        supplement_key[1]
-                    ):
-                        updated_deleted_supplement.append(item_id)
-                itemtmp = item.copy()
-                if sele_id == supplement_key[1]:
-                    itemtmp['sele_id'] = supplement_key[0]
-                    if self.bulk_select(itemtmp) == False:
-                        created_supplement.append({
-                            'item_id': item_id,
-                            'dst_item_id': self.org_item_id,
-                            'sele_id': supplement_key[0]
-                        })
-                elif sele_id == supplement_key[0]:
-                    itemtmp['sele_id'] = supplement_key[1]
-                    if self.bulk_select(itemtmp) == False:
-                        created_supplement.append({
-                            'item_id': item_id,
-                            'dst_item_id': self.org_item_id,
-                            'sele_id': supplement_key[1]
-                        })
-                # Mark the item as updated
-                updated.append(item)
-                # Remove the item from the set of existing relationships
-                dst_ids.remove(item_id)
+            relation = {
+                'src_item_pid': self.org_item_id,
+                'dst_item_pid': item_id,
+                'sele_id': sele_id
+            }
+            if item_id in src_fixed_relations:
+                dst_item = src_fixed_relations.pop(item_id)
+                if sele_id != dst_item.reference_type:
+                    updated.append(relation)
             else:
-                # If the item is new, add it to the created list
-                created.append({
-                            'item_id': self.org_item_id,
-                            'dst_item_id': item['item_id'],
-                            'sele_id': item['sele_id']
-                        })
-                # If the new relationship is a supplement type,
-                # create the inverse relationship
-                if sele_id == supplement_key[1]:
-                    item['sele_id'] = supplement_key[0]
-                    if self.bulk_select(item) == False:
-                        created_supplement.append({
-                            'item_id': item_id,
-                            'dst_item_id': self.org_item_id,
-                            'sele_id':  supplement_key[0]
-                        })
-                elif sele_id ==  supplement_key[0]:
-                    item['sele_id'] = supplement_key[1]
-                    if self.bulk_select(item) == False:
-                        created_supplement.append({
-                            'item_id': item_id,
-                            'dst_item_id': self.org_item_id,
-                            'sele_id': supplement_key[1]
-                        })
+                created.append(relation)
 
-        deleted = list(dst_ids)
-        if created_supplement:
-            created.extend(created_supplement)
+            # inverse link
+            if is_src_integer:
+                inv_src_ids = [
+                    item_id,
+                    f"{item_id}.0",
+                    get_latest_version(item_id)
+                ]
+                if sele_id in supplement_key:
+                    opposite_index = 0 if sele_id == supplement_key[1] else 1
+                    inv_relation = supplement_key[opposite_index]
+                    for inv_src_id in inv_src_ids:
+                        relation = {
+                            'src_item_pid': inv_src_id,
+                            'dst_item_pid': src_without_ver,
+                            'sele_id': inv_relation
+                        }
+                        if inv_src_id in dst_fixed_relations:
+                            if (inv_relation !=
+                                dst_fixed_relations[inv_src_id].reference_type):
+                                updated.append(relation)
+                        else:
+                            created.append(relation)
+                else:
+                    deleted.extend([
+                        {
+                            'src_item_pid': inv_src_id,
+                            'dst_item_pid': src_without_ver
+                        }
+                        for inv_src_id in inv_src_ids
+                        if (
+                            inv_src_id in dst_fixed_relations and
+                            dst_fixed_relations[inv_src_id].reference_type
+                            in supplement_key
+                        )
+                    ])
+
+        # delete
+        for deleted_dst, deleted_link in src_fixed_relations.items():
+            deleted.append({
+                'src_item_pid': self.org_item_id,
+                'dst_item_pid': deleted_dst
+            })
+            sele_id = deleted_link.reference_type
+            if sele_id in supplement_key and is_src_integer:
+                inv_src_ids = [
+                    deleted_dst,
+                    f"{deleted_dst}.0",
+                    get_latest_version(deleted_dst)
+                ]
+                deleted.extend([
+                    {
+                        'src_item_pid': inv_src_id,
+                        'dst_item_pid': src_without_ver,
+                    }
+                    for inv_src_id in inv_src_ids
+                        if inv_src_id in dst_fixed_relations
+                ])
+
         try:
             # Perform all database operations within a nested transaction
             with db.session.begin_nested():
                 # Delete relationships for removed items
                 if deleted:
                     self.bulk_delete(deleted)
-                    # Delete supplement relationships for deleted items
-                    self.bulk_delete_supplement(deleted)
-                # Create new relationships
                 # Update existing relationships
                 if updated:
-                    # Delete old supplement relationships for updated items
-                    self.bulk_delete_supplement(updated_deleted_supplement)
                     self.bulk_update(updated)
+                # Create new relationships
                 if created:
                     self.bulk_create(created)
 
             # Commit the transaction if all operations succeed
             db.session.commit()
-            for item_id in deleted:
+            for deleted_link in deleted:
                 UserActivityLogger.info(
                     operation="ITEM_DELETE_LINK",
-                    target_key=item_id
+                    target_key=deleted_link["dst_item_pid"]
                 )
-            for updated_item in updated:
+            for updated_link in updated:
                 UserActivityLogger.info(
                     operation="ITEM_UPDATE_LINK",
-                    target_key=updated_item["item_id"]
+                    target_key=updated_link["dst_item_pid"]
                 )
-            for created_info in created:
+            for created_link in created:
                 UserActivityLogger.info(
                     operation="ITEM_CREATE_LINK",
-                    target_key=created_info["item_id"]
+                    target_key=created_link["dst_item_pid"]
                 )
         except IntegrityError as ex:
             # Log and handle integrity errors (e.g., duplicate entries)
@@ -3043,89 +3052,48 @@ class ItemLink(object):
         return None
 
 
-    def bulk_select(self, item) :
-        """select a list of item links in bulk.
-        """
-        return ItemReference.query.filter_by(
-            src_item_pid=item['item_id'],
-            dst_item_pid=self.org_item_id.split(".")[0],
-            reference_type=item['sele_id']).count() > 0
-
-    def bulk_create(self, dst_items):
+    def bulk_create(self, items):
         """Create a list of item links in bulk.
 
-        :param dst_items: List of dictionaries containing 'item_id' and 'sele_id'.
+        Args:
+            dst_items: List of dictionaries containing
+                'src_item_pid', 'dst_item_pid' and 'sele_id' to be created.
         """
         # Create a list of ItemReference objects for bulk insertion
         objects = [
             ItemReference(
-                src_item_pid=item['item_id'],
-                dst_item_pid=item['dst_item_id'],
+                src_item_pid=item['src_item_pid'],
+                dst_item_pid=item['dst_item_pid'],
                 reference_type=item['sele_id']
-            ) for item in dst_items
+            ) for item in items
         ]
         # Save all objects in a single database operation
         db.session.bulk_save_objects(objects)
 
-    def bulk_update(self, dst_items):
+    def bulk_update(self, items):
         """Update a list of item links in bulk.
 
-        :param dst_items: List of dictionaries containing 'item_id' and 'sele_id'.
+        Args:
+            items(list): List of dictionaries containing
+                'src_item_pid', 'dst_item_pid' and 'sele_id' to be updated.
         """
         # Update each item relationship by merging changes into the database
-        for item in dst_items:
+        for item in items:
             db.session.merge(ItemReference(
-                src_item_pid=self.org_item_id,
-                dst_item_pid=item['item_id'],
+                src_item_pid=item['src_item_pid'],
+                dst_item_pid=item['dst_item_pid'],
                 reference_type=item['sele_id']
             ))
 
-    def bulk_create_supplement(self, dst_items):
-        """Create a list of supplement item links in bulk.
-
-        Args:
-            dst_items (list of dict): List of dictionaries containing 'src_item_id', 'dst_item_id', and 'sele_id'.
-                Each dictionary represents a supplement item link with the source item ID, destination item ID, and reference type.
-
-        Returns:
-            None
-        """
-        # Create a list of ItemReference objects for bulk insertion
-        objects = [
-            ItemReference(
-                src_item_pid=item['src_item_id'],
-                dst_item_pid=item['dst_item_id'],
-                reference_type=item['sele_id']
-            ) for item in dst_items
-        ]
-        # Save all objects in a single database operation
-        db.session.bulk_save_objects(objects)
-
-    def bulk_delete(self, dst_item_ids):
+    def bulk_delete(self, items):
         """Delete a list of item links in bulk.
 
-        :param dst_item_ids: List of destination item IDs to delete.
-        """
-        db.session.query(ItemReference).filter(
-            ItemReference.src_item_pid == self.org_item_id,
-            ItemReference.dst_item_pid.in_(dst_item_ids)
-        ).delete(synchronize_session='fetch')
-
-    def bulk_delete_supplement(self, dst_item_ids):
-        """Delete a list of supplement item links in bulk.
-
         Args:
-            dst_item_ids (list of int): List of destination item IDs to delete from the ItemReference table.
-                These IDs will be matched against the source item ID in the query.
-
-        Returns:
-            None
-
+            items(list): List of dictionaries containing
+                'src_item_pid', 'dst_item_pid' to be deleted.
         """
-        db.session.query(ItemReference).filter(
-            ItemReference.src_item_pid.in_(dst_item_ids),
-            ItemReference.dst_item_pid == self.org_item_id,
-            ItemReference.reference_type.in_(
-                current_app.config["WEKO_RECORDS_REFERENCE_SUPPLEMENT"]
-            )
-        ).delete(synchronize_session='fetch')
+        for item in items:
+            db.session.query(ItemReference).filter(
+                ItemReference.src_item_pid==item['src_item_pid'],
+                ItemReference.dst_item_pid==item['dst_item_pid'],
+            ).delete(synchronize_session='fetch')

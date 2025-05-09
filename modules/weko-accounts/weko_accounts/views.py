@@ -178,7 +178,7 @@ def shib_auto_login():
     """
     try:
         is_auto_bind = False
-        shib_session_id = request.args.get('SHIB_ATTR_SESSION_ID', None)
+        shib_session_id = request.args.get('Shib-Session-ID', None)
         session['next'] = request.args.get('next', '/')
 
         if not shib_session_id:
@@ -372,12 +372,12 @@ def shib_login():
     :return: confirm user page when relation is empty
     """
     try:
-        shib_session_id = request.args.get('SHIB_ATTR_SESSION_ID', None)
+        shib_session_id = request.args.get('Shib-Session-ID', None)
         session['next'] = request.args.get('next', '/')
 
         if not shib_session_id:
-            current_app.logger.error(_("Missing SHIB_ATTR_SESSION_ID!"))
-            flash(_("Missing SHIB_ATTR_SESSION_ID!"), category='error')
+            current_app.logger.error(_("Missing Shib-Session-ID!"))
+            flash(_("Missing Shib-Session-ID!"), category='error')
             return _redirect_method()
 
         redis_connection = RedisConnection()
@@ -438,9 +438,9 @@ def shib_sp_login():
         if current_app.config['WEKO_ACCOUNTS_SHIB_BIND_GAKUNIN_MAP_GROUPS']:
             sync_shib_gakunin_map_groups()
 
-        shib_session_id = request.form.get('SHIB_ATTR_SESSION_ID', None)
+        shib_session_id = request.form.get('Shib-Session-ID', None)
         if not shib_session_id and not _shib_enable:
-            flash(_("Missing SHIB_ATTR_SESSION_ID!"), category='error')
+            flash(_("Missing Shib-Session-ID!"), category='error')
             return redirect(url_for_security('login'))
 
         shib_attr, error = parse_attributes()
@@ -498,7 +498,7 @@ def shib_sp_login():
                 next_url = 'weko_accounts.shib_login'
 
         query_string = {
-            'SHIB_ATTR_SESSION_ID': shib_session_id,
+            'Shib-Session-ID': shib_session_id,
             'next': next,
             '_method': 'GET'
         }

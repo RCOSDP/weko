@@ -2,9 +2,11 @@
 from http import cookiejar
 import os
 import requests
-import requests.cookies
 import tempfile
 from urllib import parse
+import urllib3
+from urllib3.exceptions import InsecureRequestWarning
+urllib3.disable_warnings(InsecureRequestWarning)
 
 # Set the base URL
 base_url = os.environ.get('REQUEST_SCHEME') + '://' + os.environ.get('HTTP_HOST')
@@ -36,10 +38,8 @@ else:
         if os.environ.get(param):
             data[param] = os.environ.get(param)
 
-    headers = {
-        'HTTP_WEKOID': os.environ.get('HTTP_WEKOID'),
-        'HTTP_WEKOSOCIETYAFFILIATION': os.environ.get('HTTP_WEKOSOCIETYAFFILIATION'),
-    }
+    data['HTTP_WEKOID'] = os.environ.get('HTTP_WEKOID')
+    data['HTTP_WEKOSOCIETYAFFILIATION'] = os.environ.get('HTTP_WEKOSOCIETYAFFILIATION')
 
     # Create the cookie jar
     with tempfile.NamedTemporaryFile(prefix='cookie_', delete=False) as f:
@@ -47,12 +47,19 @@ else:
     cookie_jar = cookiejar.LWPCookieJar(temp_path)
 
     # Request to the Shibboleth login
-    response = requests.post(url, data=data, headers=headers, verify=False, cookies=cookie_jar)
+    response = requests.post(url, data=data, verify=False, cookies=cookie_jar)
     response.raise_for_status()
-    redirect_url = response.text
+    redirect = response.text
 
-    # Redirect to the Shibboleth login
-    print('HTTP:/1.1 302 Found')
-    print("Content-Type: text/html")
-    print('Location: ' + base_url + redirect_url)
-    print('')
+    if redirect.startswith('/'):
+        # Redirect to the Shibboleth login
+        print('HTTP/1.1 302 Found')
+        print('Content-Type: text/html')
+        print('Location: ' + base_url + redirect)
+        print('')
+    else:
+        # Display the login page or the page before login processing with flash message
+        print('HTTP/1.1 200 OK')
+        print('Content-Type: text/html')
+        print('')
+        print(redirect)
