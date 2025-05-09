@@ -1027,15 +1027,14 @@ def prepare_edit_item(id=None, community=None):
         latest_activity = work_activity.get_workflow_activity_by_item_id(item_uuid)
         current_app.logger.info(f"pid_value: {pid_value}, item_uuid: {item_uuid}, latest_activity: {latest_activity}")
 
-        if latest_activity:
-            is_begin_edit = check_item_is_being_edit(recid, latest_activity, work_activity)
-            if is_begin_edit:
-                current_app.logger.info(f"Item {pid_value} is being edited.")
-                return jsonify(
-                    code=err_code,
-                    msg=_('This Item is being edited.'),
-                    activity_id=is_begin_edit
-                )
+        is_begin_edit = check_item_is_being_edit(recid, latest_activity, work_activity)
+        if is_begin_edit:
+            current_app.logger.info(f"Item {pid_value} is being edited.")
+            return jsonify(
+                code=err_code,
+                msg=_('This Item is being edited.'),
+                activity_id=is_begin_edit
+            )
 
         if latest_activity:
             post_activity['workflow_id'] = latest_activity.workflow_id
@@ -1140,6 +1139,20 @@ def prepare_delete_item(id=None, community=None):
     pid_value = id or post_activity.get('pid_value')
     community = community or getargs.get('community', None)
 
+    del_ver = False
+    if not isinstance(pid_value, str):
+        pid_value = str(pid_value)
+    if pid_value.startswith("del_ver_"):
+        current_app.logger.info(f"delete version pid_value: {pid_value}")
+        pid_value = pid_value.split("del_ver_")[-1]
+        del_ver = True
+    if del_ver:
+        # TODO: delete version is not implemented yet.
+        return jsonify(
+            code=err_code,
+            msg="delete version is not implemented yet.",
+        )
+
     # Cache Storage
     redis_connection = RedisConnection()
     sessionstorage = redis_connection.connection(
@@ -1159,7 +1172,6 @@ def prepare_delete_item(id=None, community=None):
         )
 
     if pid_value:
-        pid_value = str(pid_value)
         record_class = import_string('weko_deposit.api:WekoDeposit')
         resolver = Resolver(
             pid_type='recid', object_type='rec',
@@ -1213,15 +1225,14 @@ def prepare_delete_item(id=None, community=None):
         item_uuid = latest_pid.object_uuid
         latest_activity = work_activity.get_workflow_activity_by_item_id(item_uuid)
 
-        if latest_activity:
-            is_begin_edit = check_item_is_being_edit(recid, latest_activity, work_activity)
-            if is_begin_edit:
-                current_app.logger.info(f"Item {pid_value} is being edited.")
-                return jsonify(
-                    code=err_code,
-                    msg=_('This Item is being edited.'),
-                    activity_id=is_begin_edit
-                )
+        is_begin_edit = check_item_is_being_edit(recid, latest_activity, work_activity)
+        if is_begin_edit:
+            current_app.logger.info(f"Item {pid_value} is being edited.")
+            return jsonify(
+                code=err_code,
+                msg=_('This Item is being edited.'),
+                activity_id=is_begin_edit
+            )
 
         if latest_activity:
             workflow = WorkFlows().get_workflow_by_id(latest_activity.workflow_id)
