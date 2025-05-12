@@ -1420,7 +1420,7 @@ msgid "Getting region failed."
 msgstr ""
 
 msgid "Uploading file failed."
-msgstr ""
+msgstr "Uploading file failed. Please make sure you have write permissions or that the bucket is writable."
 
 msgid "Chose bucket or input creating bucket name"
 msgstr ""
