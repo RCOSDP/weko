@@ -282,12 +282,12 @@ require([
       newRow = $('<div id="action_id" class="form-group">');
       cols += '<div class="col-sm-7">'
         + '<label class="checkbox-inline"><input type="checkbox" name="action" value="start" id="start">' + $('#action_start').val() + '</label>'
-        + '<label class="checkbox-inline"><input type="checkbox" name="action" value="end" id="end">' + $('#action_end').val() + '</label>'
         + '<label class="checkbox-inline"><input type="checkbox" name="action" value="itemregistration" id="itemregistration">' + $('#action_item_registration').val() + '</label>'
-        + '<label class="checkbox-inline"><input type="checkbox" name="action" value="approval" id="approval">' + $('#action_approval').val() + '</label>'
         + '<label class="checkbox-inline"><input type="checkbox" name="action" value="itemlink" id="itemlink">' + $('#action_item_link').val() + '</label>'
-        + '<label class="checkbox-inline"><input type="checkbox" name="action" value="oapolicyconfirmation" id="oapolicyconfirmation">' + $('#action_oa_policy_confirmation').val() + '</label>'
         + '<label class="checkbox-inline"><input type="checkbox" name="action" value="identifiergrant" id="identifiergrant">' + $('#action_identifier_grant').val() + '</label>'
+        + '<label class="checkbox-inline"><input type="checkbox" name="action" value="approval" id="approval">' + $('#action_approval').val() + '</label>'
+        + '<label class="checkbox-inline"><input type="checkbox" name="action" value="end" id="end">' + $('#action_end').val() + '</label>'
+        // + '<label class="checkbox-inline"><input type="checkbox" name="action" value="oapolicyconfirmation" id="oapolicyconfirmation">' + $('#action_oa_policy_confirmation').val() + '</label>'
         + '</div>';
     } else {
       newRow = $('<div class="form-group">');
