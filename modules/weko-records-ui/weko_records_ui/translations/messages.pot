@@ -1268,7 +1268,7 @@ msgid "This file is not from institutional storage."
 msgstr "このファイルは機関ストレージのものではありません。"
 
 msgid "Getitng Bucket List failed."
-msgstr "バケットリストの取得に失敗しました。
+msgstr "バケットリストの取得に失敗しました。"
 
 msgid "Creating Bucket failed."
 msgstr "バケットの作成に失敗しました。"
