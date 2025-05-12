@@ -8,6 +8,7 @@ import traceback
 import boto3
 import tempfile
 import shutil
+import copy
 from email_validator import validate_email
 from flask import current_app, request
 
@@ -637,7 +638,7 @@ def replace_file_bucket(org_pid, org_bucket_id, file=None,
                         else "item_missing"
                     )
                     current_app.logger.error(f"Error in check_import_items: {error_msg}")
-                import_result = import_items_to_system(item)
+                import_result = import_items_to_system(item, file_replace_owner=current_user.id)
                 if not import_result.get("success"):
                     current_app.logger.error(
                         f"Error in import_items_to_system: {item.get('error_id')}"
@@ -675,6 +676,7 @@ def replace_file_bucket(org_pid, org_bucket_id, file=None,
                 "link_data": {},
             }
         ]
+        formatted_data_copy = copy.deepcopy(formatted_data)
 
         try:
             check_result = check_replace_file_import_items(list_record)
@@ -691,7 +693,7 @@ def replace_file_bucket(org_pid, org_bucket_id, file=None,
                         else "item_missing"
                     )
                     current_app.logger.error(f"Error in check_import_items: {error_msg}")
-                import_result = import_items_to_system(item)
+                import_result = import_items_to_system(item, file_replace_owner=current_user.id)
                 if not import_result.get("success"):
                     current_app.logger.error(
                         f"Error in import_items_to_system: {item.get('error_id')}"
@@ -752,10 +754,10 @@ def replace_file_bucket(org_pid, org_bucket_id, file=None,
                 "id": org_pid,
                 "uri": request.host_url + "records/" + str(org_pid),
                 "_id": org_pid,
-                "metadata": formatted_data,
+                "metadata": formatted_data_copy,
                 "item_type_name": item_type.item_type_name.name,
                 "item_type_id": item_type.id,
-                "publish_status": "public" if formatted_data.get("publish_status") == "0" else "private",
+                "publish_status": "public" if formatted_data_copy.get("publish_status") == "0" else "private",
                 "edit_mode": "keep",
                 "link_data": {},
             }
@@ -776,7 +778,7 @@ def replace_file_bucket(org_pid, org_bucket_id, file=None,
                         else "item_missing"
                     )
                     current_app.logger.error(f"Error in check_import_items: {error_msg}")
-                import_result = import_items_to_system(item)
+                import_result = import_items_to_system(item, file_replace_owner=current_user.id)
                 if not import_result.get("success"):
                     current_app.logger.error(
                         f"Error in import_items_to_system: {item.get('error_id')}"

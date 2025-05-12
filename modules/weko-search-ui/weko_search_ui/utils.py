@@ -2026,7 +2026,7 @@ def send_item_created_event_to_es(item, request_info):
 
 
 def import_items_to_system(
-    item: dict, request_info=None, is_gakuninrdm=False, parent_id=None
+    item: dict, request_info=None, is_gakuninrdm=False, parent_id=None, file_replace_owner=None
 ):
     """Validation importing zip file.
 
@@ -2035,6 +2035,7 @@ def import_items_to_system(
         request_info (dict): Information from request. Default is None.
         is_gakuninrdm (bool): Is call by gakuninrdm api. Default is False.
         parent_id (str): Parent ID for the audit log entry. Default is None.
+        file_replace_owner (int): Owner user id for the file replace method. Default is None.
 
     Returns:
         dict: Json response.
@@ -2042,6 +2043,8 @@ def import_items_to_system(
     owner = -1
     if request_info and 'user_id' in request_info:
         owner = request_info['user_id']
+    elif file_replace_owner:
+        owner = file_replace_owner
     if not request_info and request:
         request_info = {
             "remote_addr": request.remote_addr,
