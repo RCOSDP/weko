@@ -895,6 +895,7 @@ class WorkActivity(object):
                 action_status=ActionStatusPolicy.ACTION_DOING,
                 activity_login_user=activity_login_user,
                 activity_update_user=activity_update_user,
+                shared_user_id=activity.get("shared_user_id"),
                 activity_status=ActivityStatusPolicy.ACTIVITY_MAKING,
                 activity_start=datetime.utcnow(),
                 activity_community_id=community_id,
