@@ -8,6 +8,7 @@ import traceback
 import boto3
 import tempfile
 import shutil
+import copy
 from email_validator import validate_email
 from flask import current_app, request
 
@@ -209,11 +210,17 @@ def get_s3_bucket_list():
 
     try:
         response = s3_client.list_buckets()
-        buckets = response['Buckets']
-
-        bucket_name_list = [bucket['Name'] for bucket in buckets]
+        if response['ResponseMetadata']['HTTPStatusCode'] != 200:
+            raise Exception
+        else:
+            buckets = response.get('Buckets')
+            if buckets:
+                bucket_name_list = [bucket['Name'] for bucket in buckets]
+            else:
+                bucket_name_list = []
         return bucket_name_list
     except Exception as e:
+        current_app.logger.info(f'response: {response}')
         traceback.print_exc()
         raise Exception(_('Getting Bucket List failed.'))
 
@@ -290,7 +297,15 @@ def copy_bucket_to_s3(pid, filename, org_bucket_id, checked, bucket_name):
         raise Exception(_('Getting region failed.'))
 
     #make uri
-    uri = 'https://' + bucket_name + '.s3.' + bucket_region + '.amazonaws.com/'
+    # ex: https://bucket_name.s3.us-east-1.amazonaws.com/
+    parts = endpoint_url.split('/')
+    sub_parts = parts[2].split('.')
+    if len(sub_parts) > 3:
+        end_uri = ".".join(sub_parts[3:])
+    else:
+        end_uri = sub_parts[3]
+
+    uri = parts[0] + '//' + bucket_name + '.' + sub_parts[1] + '.' + bucket_region + '.' + end_uri +'/'
 
     #upload file
     s3_client = boto3.client(
@@ -404,9 +419,9 @@ def get_file_place_info(org_pid, org_bucket_id, file_name):
         else:
             endpoint_url_list = location.s3_endpoint_url.split('/')
             detail_endpoint_url_list = endpoint_url_list[2].split('.')
-            region = detail_endpoint_url_list[2]
             if location.uri.startswith('https://s3'):
                 # ex: https://s3.amazonaws.com/bucket_name/file_name
+                region = None
                 parts = location.uri.split('/')
                 bucket_name = parts[3]
                 if len(parts) >= 5:
@@ -414,6 +429,7 @@ def get_file_place_info(org_pid, org_bucket_id, file_name):
                     directory_path = pre + directory_path
             else:
                 # ex: https://bucket_name.s3.us-east-1.amazonaws.com/file_name
+                region = detail_endpoint_url_list[2]
                 parts = location.uri.split('/')
                 sub_parts = parts[2].split('.')
                 bucket_name = sub_parts[0]
@@ -421,10 +437,15 @@ def get_file_place_info(org_pid, org_bucket_id, file_name):
                     pre = '/'.join(parts[3:]) + '/' * (not '/'.join(parts[3:]).endswith('/'))
                     directory_path = pre + directory_path
 
-        s3 = boto3.client('s3',
-                        aws_access_key_id=location.access_key,
-                        aws_secret_access_key=location.secret_key,
-                        region_name=region,)
+        if region is None:
+                s3 = boto3.client('s3',
+                                aws_access_key_id=location.access_key,
+                                aws_secret_access_key=location.secret_key,)
+        else:
+            s3 = boto3.client('s3',
+                            aws_access_key_id=location.access_key,
+                            aws_secret_access_key=location.secret_key,
+                            region_name=region,)
 
         try:
             # 署名付きURLの生成
@@ -617,7 +638,7 @@ def replace_file_bucket(org_pid, org_bucket_id, file=None,
                         else "item_missing"
                     )
                     current_app.logger.error(f"Error in check_import_items: {error_msg}")
-                import_result = import_items_to_system(item)
+                import_result = import_items_to_system(item, file_replace_owner=current_user.id)
                 if not import_result.get("success"):
                     current_app.logger.error(
                         f"Error in import_items_to_system: {item.get('error_id')}"
@@ -655,6 +676,7 @@ def replace_file_bucket(org_pid, org_bucket_id, file=None,
                 "link_data": {},
             }
         ]
+        formatted_data_copy = copy.deepcopy(formatted_data)
 
         try:
             check_result = check_replace_file_import_items(list_record)
@@ -671,7 +693,7 @@ def replace_file_bucket(org_pid, org_bucket_id, file=None,
                         else "item_missing"
                     )
                     current_app.logger.error(f"Error in check_import_items: {error_msg}")
-                import_result = import_items_to_system(item)
+                import_result = import_items_to_system(item, file_replace_owner=current_user.id)
                 if not import_result.get("success"):
                     current_app.logger.error(
                         f"Error in import_items_to_system: {item.get('error_id')}"
@@ -732,10 +754,10 @@ def replace_file_bucket(org_pid, org_bucket_id, file=None,
                 "id": org_pid,
                 "uri": request.host_url + "records/" + str(org_pid),
                 "_id": org_pid,
-                "metadata": formatted_data,
+                "metadata": formatted_data_copy,
                 "item_type_name": item_type.item_type_name.name,
                 "item_type_id": item_type.id,
-                "publish_status": "public" if formatted_data.get("publish_status") == "0" else "private",
+                "publish_status": "public" if formatted_data_copy.get("publish_status") == "0" else "private",
                 "edit_mode": "keep",
                 "link_data": {},
             }
@@ -756,7 +778,7 @@ def replace_file_bucket(org_pid, org_bucket_id, file=None,
                         else "item_missing"
                     )
                     current_app.logger.error(f"Error in check_import_items: {error_msg}")
-                import_result = import_items_to_system(item)
+                import_result = import_items_to_system(item, file_replace_owner=current_user.id)
                 if not import_result.get("success"):
                     current_app.logger.error(
                         f"Error in import_items_to_system: {item.get('error_id')}"

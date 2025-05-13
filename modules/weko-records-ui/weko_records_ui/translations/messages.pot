@@ -1268,7 +1268,7 @@ msgid "This file is not from institutional storage."
 msgstr "このファイルは機関ストレージのものではありません。"
 
 msgid "Getitng Bucket List failed."
-msgstr "バケットリストの取得に失敗しました。
+msgstr "バケットリストの取得に失敗しました。"
 
 msgid "Creating Bucket failed."
 msgstr "バケットの作成に失敗しました。"
@@ -1277,7 +1277,7 @@ msgid "Getting region failed."
 msgstr "リージョンの取得に失敗しました。"
 
 msgid "Uploading file failed."
-msgstr "ファイルのアップロードに失敗しました。"
+msgstr "ファイルのアップロードに失敗しました。書き込み権限や書き込み可能なバケットであることを確認してください。"
 
 msgid "Chose bucket or input creating bucket name"
 msgstr "バケット名を選択するか、新規に作成するバケット名を入力してください。"
@@ -1296,7 +1296,7 @@ msgid "Copy file to open bucket"
 msgstr "公開バケットにファイルをコピー"
 
 msgid "Replace the file content"
-msgstr "ファイルの実態を置き換え"
+msgstr "ファイルを置き換え"
 
 msgid "Please select the same named file as the original file."
 msgstr "元のファイルと同じ名前のファイルを選択してください。"

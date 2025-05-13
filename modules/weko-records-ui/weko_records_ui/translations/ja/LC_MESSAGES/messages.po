@@ -17,7 +17,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.8.0\n"
+"Generated-By: Babel 2.5.1\n"
 
 #: weko_records_ui/admin.py:87
 msgid "Author flag was updated."
@@ -49,68 +49,82 @@ msgstr ""
 msgid "Bulk Update"
 msgstr ""
 
+# WEKO_RECORDS_UI_LICENSE_DICT
 #: weko_records_ui/config.py:296
 msgid "write your own license"
 msgstr ""
 
+# WEKO_RECORDS_UI_LICENSE_DICT
 #: weko_records_ui/config.py:301
 msgid "Creative Commons CC0 1.0 Universal Public Domain Designation"
 msgstr ""
 
+# WEKO_RECORDS_UI_LICENSE_DICT
 #: weko_records_ui/config.py:316
 msgid "Creative Commons Attribution 3.0 Unported (CC BY 3.0)"
 msgstr ""
 
+# WEKO_RECORDS_UI_LICENSE_DICT
 #: weko_records_ui/config.py:328
 msgid "Creative Commons Attribution-ShareAlike 3.0 Unported (CC BY-SA 3.0)"
 msgstr ""
 
+# WEKO_RECORDS_UI_LICENSE_DICT
 #: weko_records_ui/config.py:342
 msgid "Creative Commons Attribution-NoDerivs 3.0 Unported (CC BY-ND 3.0)"
 msgstr ""
 
+# WEKO_RECORDS_UI_LICENSE_DICT
 #: weko_records_ui/config.py:356
 msgid "Creative Commons Attribution-NonCommercial 3.0 Unported (CC BY-NC 3.0)"
 msgstr ""
 
+# WEKO_RECORDS_UI_LICENSE_DICT
 #: weko_records_ui/config.py:370
 msgid ""
 "Creative Commons Attribution-NonCommercial-ShareAlike 3.0 Unported (CC "
 "BY-NC-SA 3.0)"
 msgstr ""
 
+# WEKO_RECORDS_UI_LICENSE_DICT
 #: weko_records_ui/config.py:384
 msgid ""
 "Creative Commons Attribution-NonCommercial-NoDerivs 3.0 Unported (CC BY-"
 "NC-ND 3.0)"
 msgstr ""
 
+# WEKO_RECORDS_UI_LICENSE_DICT
 #: weko_records_ui/config.py:399
 msgid "Creative Commons Attribution 4.0 International (CC BY 4.0)"
 msgstr ""
 
+# WEKO_RECORDS_UI_LICENSE_DICT
 #: weko_records_ui/config.py:411
 msgid "Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)"
 msgstr ""
 
+# WEKO_RECORDS_UI_LICENSE_DICT
 #: weko_records_ui/config.py:425
 msgid ""
 "Creative Commons Attribution-NoDerivatives 4.0 International (CC BY-ND "
 "4.0)"
 msgstr ""
 
+# WEKO_RECORDS_UI_LICENSE_DICT
 #: weko_records_ui/config.py:439
 msgid ""
 "Creative Commons Attribution-NonCommercial 4.0 International (CC BY-NC "
 "4.0)"
 msgstr ""
 
+# WEKO_RECORDS_UI_LICENSE_DICT
 #: weko_records_ui/config.py:453
 msgid ""
 "Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International "
 "(CC BY-NC-SA 4.0)"
 msgstr ""
 
+# WEKO_RECORDS_UI_LICENSE_DICT
 #: weko_records_ui/config.py:467
 msgid ""
 "Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 "
@@ -315,6 +329,9 @@ msgstr ""
 msgid "Publish"
 msgstr ""
 
+#: weko_records_ui/templates/weko_records_ui/tombstone.html:13
+msgid "This item has been deleted."
+msgstr "このアイテムは削除されています。"
 
 #: weko_records_ui/templates/weko_records_ui/admin/bulk_update_display.html:25
 msgid "Fields For Update"
@@ -522,6 +539,7 @@ msgid "I have read and agreed to the Terms of Use"
 msgstr "上記の条件に同意する"
 
 #: weko_records_ui/templates/weko_records_ui/box/analysis.html:79
+#: weko_records_ui/templates/weko_records_ui/box/preview_carousel.html:47
 msgid "Next"
 msgstr "次へ"
 
@@ -577,10 +595,6 @@ msgstr ""
 msgid "Previous"
 msgstr ""
 
-#: weko_records_ui/templates/weko_records_ui/box/preview_carousel.html:47
-msgid "Next"
-msgstr ""
-
 #: weko_records_ui/templates/weko_records_ui/box/preview_carousel.html:51
 msgid "Last"
 msgstr ""
@@ -625,13 +639,557 @@ msgstr ""
 msgid "Show All versions"
 msgstr ""
 
-msgid "This item has been deleted."
-msgstr "このアイテムは削除されています。"
+# WEKO_RECORDS_UI_ITEM_DETAIL
+msgid "Date (ISO-8601)"
+msgstr ""
+
+msgid "Subject"
+msgstr ""
+
+msgid "Subject Scheme"
+msgstr ""
+
+msgid "Subject URI"
+msgstr ""
+
+msgid "Alternative Title"
+msgstr ""
+
+msgid "Creator"
+msgstr ""
+
+msgid "Creator Name Identifier"
+msgstr ""
+
+msgid "Creator Name Identifier Scheme"
+msgstr ""
+
+msgid "Creator Name Identifier URI"
+msgstr ""
+
+msgid "Creator Name"
+msgstr ""
+
+msgid "Name_"
+msgstr ""
+
+msgid "Creator Family Name"
+msgstr ""
+
+msgid "Family Name"
+msgstr ""
+
+msgid "Creator Given Name"
+msgstr ""
+
+msgid "Given Name"
+msgstr ""
+
+msgid "Creator Alternative Name"
+msgstr ""
+
+msgid "Alternative Name"
+msgstr ""
+
+msgid "Affiliation Name Identifier"
+msgstr ""
+
+msgid "Affiliation Name Identifier Scheme"
+msgstr ""
+
+msgid "Affiliation Name Identifier URI"
+msgstr ""
+
+msgid "Affiliation Name"
+msgstr ""
+
+#, fuzzy
+msgid "Creator Email Address"
+msgstr "メールアドレスを入力してください。"
+
+msgid "Description Type"
+msgstr ""
+
+msgid "Bibliographic Information"
+msgstr ""
+
+msgid "Journal Title"
+msgstr ""
+
+msgid "Volume Number"
+msgstr ""
+
+msgid "Issue Number"
+msgstr ""
+
+msgid "Page Start"
+msgstr ""
+
+msgid "Page End"
+msgstr ""
+
+msgid "Publication year"
+msgstr ""
+
+msgid "Date Type"
+msgstr ""
+
+msgid "Publisher"
+msgstr ""
+
+msgid "Source Identifier"
+msgstr ""
+
+msgid "Source Identifier Type"
+msgstr ""
+
+msgid "Relation"
+msgstr ""
+
+msgid "RelationType"
+msgstr ""
+
+msgid "Related Identifier"
+msgstr ""
+
+msgid "Related Identifier Type"
+msgstr ""
+
+msgid "Identifier Type"
+msgstr ""
+
+msgid "Related Title"
+msgstr ""
+
+msgid "Rights"
+msgstr ""
+
+msgid "Resource"
+msgstr ""
+
+msgid "Fileinfo"
+msgstr ""
+
+#, fuzzy
+msgid "Text"
+msgstr "次へ"
+
+msgid "Version Type"
+msgstr ""
+
+msgid "URI"
+msgstr ""
+
+msgid "Label"
+msgstr ""
+
+msgid "Mime Type"
+msgstr ""
+
+msgid "Heading"
+msgstr ""
+
+msgid "Headline"
+msgstr ""
+
+msgid "Subheading"
+msgstr ""
+
+msgid "Access Right"
+msgstr ""
+
+msgid "Access Rights URI"
+msgstr ""
+
+msgid "Contributor"
+msgstr ""
+
+msgid "Contributor Type"
+msgstr ""
+
+msgid "Contributor Name Identifier"
+msgstr ""
+
+msgid "Contributor Name Identifier Scheme"
+msgstr ""
+
+msgid "Contributor Name Identifier URI"
+msgstr ""
+
+msgid "Contributor_Name"
+msgstr ""
+
+msgid "Contributor Family Name"
+msgstr ""
+
+msgid "Contributor Given Name"
+msgstr ""
+
+msgid "Contributor Alternative Name"
+msgstr ""
+
+msgid "Contributor Alternative"
+msgstr ""
+
+#, fuzzy
+msgid "Contributor Email Address"
+msgstr "メールアドレスを入力してください。"
+
+msgid "Degree Name"
+msgstr ""
+
+msgid "Degree Grantor"
+msgstr ""
+
+msgid "Degree Grantor Name Identifier"
+msgstr ""
+
+msgid "Degree Grantor Name"
+msgstr ""
+
+msgid "Date Granted"
+msgstr ""
+
+msgid "Dissertation Number"
+msgstr ""
+
+msgid "Contributor ID"
+msgstr ""
+
+msgid "Funding Reference"
+msgstr ""
+
+msgid "Funder Name"
+msgstr ""
+
+msgid "Award Number"
+msgstr ""
+
+msgid "Book Name"
+msgstr ""
+
+msgid "Date Reported"
+msgstr ""
+
+msgid "Name Identifier"
+msgstr ""
+
+msgid "Name Identifier Scheme"
+msgstr ""
+
+msgid "Description_"
+msgstr ""
+
+msgid "Rights Resource"
+msgstr ""
+
+msgid "Rights Holder"
+msgstr ""
+
+msgid "Rights Holder Name Identifier"
+msgstr ""
+
+msgid "Rights Holder Name Identifier Scheme"
+msgstr ""
+
+msgid "Rights Holder Name Identifier URI"
+msgstr ""
+
+msgid "Rights Holder Name"
+msgstr ""
+
+msgid "Resource Type"
+msgstr ""
+
+msgid "Temporal"
+msgstr ""
+
+msgid "Geo Location"
+msgstr ""
+
+msgid "Geo Location Point"
+msgstr ""
+
+msgid "Point Longitude"
+msgstr ""
+
+msgid "Point Latitude"
+msgstr ""
+
+msgid "Geo Location Box"
+msgstr ""
+
+msgid "West Bound Longitude"
+msgstr ""
+
+msgid "East Bound Longitude"
+msgstr ""
+
+msgid "South Bound Latitude"
+msgstr ""
+
+msgid "North Bound Latitude"
+msgstr ""
+
+msgid "Geo Location Place"
+msgstr ""
+
+msgid "funder Identifier"
+msgstr ""
+
+msgid "Funder Identifier Type"
+msgstr ""
+
+msgid "Award Number URI"
+msgstr ""
+
+msgid "Source Title"
+msgstr ""
+
+msgid "Number of Pages"
+msgstr ""
+
+msgid "Degree Grantor Name Identifier Scheme"
+msgstr ""
+
+msgid "Conference"
+msgstr ""
+
+msgid "Conference Name"
+msgstr ""
+
+msgid "Conference Sequence"
+msgstr ""
+
+msgid "Conference Place"
+msgstr ""
+
+msgid "Conference Country"
+msgstr ""
+
+msgid "URI Object Type"
+msgstr ""
+
+msgid "URI Label"
+msgstr ""
+
+msgid "Format"
+msgstr ""
+
+#, fuzzy
+msgid "Extent"
+msgstr "次へ"
+
+msgid "Issued Date"
+msgstr ""
+
+msgid "Issue"
+msgstr ""
+
+msgid "Volume"
+msgstr ""
+
+msgid "Content File"
+msgstr ""
+
+msgid "Billing File"
+msgstr ""
+
+msgid "ID Agency"
+msgstr ""
+
+msgid "Series"
+msgstr ""
+
+msgid "Version Date"
+msgstr ""
+
+msgid "DateType"
+msgstr ""
+
+msgid "Bibliographic Citation"
+msgstr ""
+
+msgid "Topic"
+msgstr ""
+
+msgid "topic vocabURI"
+msgstr ""
+
+msgid "subjectScheme"
+msgstr ""
+
+msgid "Topic J"
+msgstr ""
+
+msgid "Topic E"
+msgstr ""
+
+msgid "Time Period"
+msgstr ""
+
+msgid "Time Period Event"
+msgstr ""
+
+msgid "Date Of Collection Event"
+msgstr ""
+
+msgid "Geographic Coverage"
+msgstr ""
+
+#, fuzzy
+msgid "Unit of Analysis"
+msgstr "オンライン分析"
+
+#, fuzzy
+msgid "Unit of Analysis J"
+msgstr "オンライン分析"
+
+#, fuzzy
+msgid "Unit of Analysis E"
+msgstr "オンライン分析"
+
+msgid "Sampling Procedure E"
+msgstr ""
+
+msgid "Sampling Procedure J"
+msgstr ""
+
+msgid "Collection Method"
+msgstr ""
+
+msgid "Collection Method J"
+msgstr ""
+
+msgid "Collection Method E"
+msgstr ""
+
+msgid "Sampling Rate"
+msgstr ""
+
+msgid "Access"
+msgstr ""
+
+msgid "Rdf:Resource"
+msgstr ""
+
+msgid "Access E"
+msgstr ""
+
+msgid "Access J"
+msgstr ""
+
+msgid "Study ID"
+msgstr ""
+
+msgid "Copyright"
+msgstr ""
+
+msgid "Topic Vocab"
+msgstr ""
+
+msgid "Topic Vocab URI"
+msgstr ""
+
+msgid "Date Of Collection"
+msgstr ""
+
+msgid "Event"
+msgstr ""
+
+msgid "Universe"
+msgstr ""
+
+msgid "Data Type J"
+msgstr ""
+
+msgid "Data Type E"
+msgstr ""
+
+msgid "Sampling Procedure"
+msgstr ""
+
+msgid "Identifier Registration Type"
+msgstr ""
+
+msgid "Identifier Registration"
+msgstr ""
+
+msgid "Related Study"
+msgstr ""
+
+msgid "Related Study DOI"
+msgstr ""
+
+msgid "Related Publications"
+msgstr ""
+
+msgid "Related Publications DOI"
+msgstr ""
+
+msgid "Fund Agency"
+msgstr ""
+
+msgid "Fund Agency ID"
+msgstr ""
+
+msgid "GrantNo"
+msgstr ""
+
+msgid "Award Title"
+msgstr ""
+
+msgid "Distributor Abbreviation"
+msgstr ""
+
+msgid "Distributor Affiliation"
+msgstr ""
+
+msgid "Distributor URI"
+msgstr ""
+
+msgid "Contributor IdentifierType"
+msgstr ""
+
+msgid "Distributor Name"
+msgstr ""
+
+msgid "AwardTitle"
+msgstr ""
+
+msgid "Related Study Title"
+msgstr ""
+
+msgid "Related Study Identifier"
+msgstr ""
+
+msgid "Related Publications Title"
+msgstr ""
+
+msgid "Related Publications Identifier"
+msgstr ""
+
+msgid "Related Publications Identifier Type"
+msgstr ""
+
+msgid "GrantURI"
+msgstr ""
+
+msgid "Related Study Identifier Type"
+msgstr ""
+
+msgid "Grant No"
+msgstr ""
+
+msgid "Summary DDI"
+msgstr ""
 
 msgid "Apply JGSS"
 msgstr "申請"
 
-msgid "This data is not available for undergraduate students or those who do not register their positions."
+msgid ""
+"This data is not available for undergraduate students or those who do not"
+" register their positions."
 msgstr "このデータは利用できません（学部生または役職が登録されていないため）"
 
 msgid "Please input email address."
@@ -658,6 +1216,54 @@ msgstr "このデータは利用できません（権限がないため）。"
 msgid "Success Secret URL Generate"
 msgstr "成功: シークレットURLを生成し、あなたのメールアドレス宛に送信しました。"
 
+msgid "S3 setting none. Please check your profile."
+msgstr "S3に関する設定がありません。あなたのプロフィールを確認してください。"
+
+msgid "This file is not from institutional storage."
+msgstr "このファイルは機関ストレージのものではありません。"
+
+msgid "Getitng Bucket List failed."
+msgstr "バケットリストの取得に失敗しました。"
+
+msgid "Creating Bucket failed."
+msgstr "バケットの作成に失敗しました。"
+
+msgid "Getting region failed."
+msgstr "リージョンの取得に失敗しました。"
+
+msgid "Uploading file failed."
+msgstr "ファイルのアップロードに失敗しました。書き込み権限や書き込み可能なバケットであることを確認してください。"
+
+msgid "Chose bucket or input creating bucket name"
+msgstr "バケット名を選択するか、新規に作成するバケット名を入力してください。"
+
+msgid "Bucket"
+msgstr "バケット"
+
+msgid "New Creating Bucket Name"
+msgstr "新規作成バケット名"
+
+msgid ""
+"Copy Success. Take note of URL. This URL cannot be confirmed again once "
+"the screen is closed. If you have created a new bucket, please check that"
+" the bucket is set to public."
+msgstr "コピーに成功しました。URLを控えてください。この画面を閉じるとURLを再確認することはできません。バケットを新規作成した場合、該当のバケットが公開設定になっているかご確認ください。"
+
+msgid "Copy file to open bucket"
+msgstr "公開バケットにファイルをコピー"
+
+msgid "Replace the file content"
+msgstr "ファイルを置き換え"
+
+msgid "Please select the same named file as the original file."
+msgstr "元のファイルと同じ名前のファイルを選択してください。"
+
+msgid "File replacement successful."
+msgstr "ファイルの置き換えに成功しました。"
+
+msgid "Unable to update as no suitable workflow is available."
+msgstr "適切なワークフローが存在しないため、更新できませんでした。"
+
 msgid "Please enter the calculation result"
 msgstr "計算結果を入力してください"
 
@@ -676,47 +1282,3 @@ msgstr "入力項目に誤りがあります"
 msgid "Replacing file failed."
 msgstr "ファイルの置き換えに失敗しました。"
 
-msgid "S3 setting none. Please check your profile."
-msgstr "S3に関する設定がありません。あなたのプロフィールを確認してください。"
-
-msgid "This file is not from institutional storage."
-msgstr "このファイルは機関ストレージのものではありません。"
-
-msgid "Getitng Bucket List failed."
-msgstr "バケットリストの取得に失敗しました。
-
-msgid "Creating Bucket failed."
-msgstr "バケットの作成に失敗しました。"
-
-msgid "Getting region failed."
-msgstr "リージョンの取得に失敗しました。"
-
-msgid "Uploading file failed."
-msgstr "ファイルのアップロードに失敗しました。"
-
-msgid "Chose bucket or input creating bucket name"
-msgstr "バケット名を選択するか、新規に作成するバケット名を入力してください。"
-
-msgid "Bucket"
-msgstr "バケット"
-
-msgid "New Creating Bucket Name"
-msgstr "新規作成バケット名"
-
-msgid "Copy Success. Take note of URL. This URL cannot be confirmed again once the screen is closed. If you have created a new bucket, please check that the bucket is set to public."
-msgstr "コピーに成功しました。URLを控えてください。この画面を閉じるとURLを再確認することはできません。バケットを新規作成した場合、該当のバケットが公開設定になっているかご確認ください。"
-
-msgid "Copy file to open bucket"
-msgstr "公開バケットにファイルをコピー"
-
-msgid "Replace the file content"
-msgstr "ファイルの実態を置き換え"
-
-msgid "Please select the same named file as the original file."
-msgstr "元のファイルと同じ名前のファイルを選択してください。"
-
-msgid "File replacement successful."
-msgstr "ファイルの置き換えに成功しました。"
-
-msgid "Unable to update as no suitable workflow is available."
-msgstr "適切なワークフローが存在しないため、更新できませんでした。"
