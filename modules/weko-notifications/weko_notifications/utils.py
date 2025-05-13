@@ -201,7 +201,7 @@ def notify_item_imported(
     for target_id in set_target_id:
         try:
             Notification.create_item_registered(
-                target_id, recid.pid_value.split(".")[0], actor_id,
+                target_id, recid, actor_id,
                 actor_name=actor_name, object_name=object_name,
             ).send(NotificationClient(inbox_url()))
         except (ValidationError, HTTPError) as ex:
@@ -244,7 +244,7 @@ def notify_item_deleted(
     for target_id in set_target_id:
         try:
             Notification.create_item_deleted(
-                target_id, recid.pid_value.split(".")[0], actor_id,
+                target_id, recid, actor_id,
                 actor_name=actor_name, object_name=object_name
             ).send(NotificationClient(inbox_url()))
         except (ValidationError, HTTPError) as ex:
