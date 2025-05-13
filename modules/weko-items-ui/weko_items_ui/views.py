@@ -1249,6 +1249,8 @@ def prepare_delete_item(id=None, community=None):
         post_activity['itemtype_id'] = item_type_id
         post_activity['community'] = community
         post_activity['workflow_id'] = workflow_id
+        titles = deposit.get("title")
+        post_activity["title"] = titles[0] if titles and isinstance(titles, list) else None
 
         from .utils import send_mail_item_deleted, send_mail_delete_request
 
