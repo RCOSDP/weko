@@ -974,7 +974,7 @@ msgstr "更新"
 
 #: weko_workflow/templates/weko_workflow/admin/activity_settings.html:35
 msgid "Display Approver Email"
-msgstr ""
+msgstr "承認者メールアドレスを表示"
 
 #: weko_workflow/templates/weko_workflow/admin/activity_settings.html:40
 msgid "Display"
