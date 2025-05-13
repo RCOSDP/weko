@@ -220,3 +220,46 @@ def notify_item_imported(
         "{num} notification(s) sent for item import."
         .format(num=len(set_target_id))
     )
+
+
+def notify_item_deleted(
+    target_id, recid, actor_id, object_name=None, shared_id=-1
+):
+    """Notify item deleted.
+
+    Args:
+        target_id (int): The target ID.
+        recid (str): The record ID.
+        actor_id (int): The actor ID.
+        shared_id (str): The shared ID.
+
+    Returns:
+        dict: The notification.
+    """
+    set_target_id, actor_name = _get_params_for_registrant(
+        target_id, actor_id, shared_id
+    )
+
+    from .notifications import Notification
+    for target_id in set_target_id:
+        try:
+            Notification.create_item_deleted(
+                target_id, recid.pid_value.split(".")[0], actor_id,
+                actor_name=actor_name, object_name=object_name
+            ).send(NotificationClient(inbox_url()))
+        except (ValidationError, HTTPError) as ex:
+            current_app.logger.error(
+                "Failed to send notification for item delete."
+            )
+            traceback.print_exc()
+            return
+        except Exception as ex:
+            current_app.logger.error(
+                "Unexpected error occurred while sending notification for item delete."
+            )
+            traceback.print_exc()
+            return
+    current_app.logger.info(
+        "{num} notification(s) sent for item delete."
+        .format(num=len(set_target_id))
+    )
