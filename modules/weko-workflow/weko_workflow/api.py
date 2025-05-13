@@ -869,6 +869,7 @@ class WorkActivity(object):
                 item_id=item_id,
                 workflow_id=activity.get('workflow_id'),
                 flow_id=activity.get('flow_id'),
+                title=activity.get("title"),
                 action_id=next_action_id,
                 action_status=ActionStatusPolicy.ACTION_DOING,
                 activity_login_user=activity_login_user,
