@@ -1764,6 +1764,7 @@ def next_action(activity_id='0', action_id=0, json_data=None):
 
     if next_action_endpoint == "approval":
         if for_delete:
+            work_activity.notify_about_activity(activity_id, "deletion_request")
             send_mail_delete_request(work_activity.get_activity_by_id(activity_id))
         else:
             work_activity.notify_about_activity(activity_id, "request_approval")
@@ -1813,6 +1814,8 @@ def next_action(activity_id='0', action_id=0, json_data=None):
                 action_order=next_action_order
             )
             work_activity.end_activity(activity)
+            if action_endpoint == "approval":
+                work_activity.notify_about_activity(activity_id, "deletion_approved")
     else:
         flag = work_activity.upt_activity_action(
             activity_id=activity_id, action_id=next_action_id,

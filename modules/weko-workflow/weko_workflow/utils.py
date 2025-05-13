@@ -1933,6 +1933,10 @@ def prepare_delete_workflow(post_activity, recid, deposit):
     if rtn.action_id == 2:   # end_action
         from weko_records_ui.views import soft_delete
         soft_delete(recid.pid_value)
+        activity.notify_about_activity(rtn.activity_id, "deleted")
+
+    if rtn.action_id == 4:   # approval
+        activity.notify_about_activity(rtn.activity_id, "deletion_request")
 
     return rtn
 
