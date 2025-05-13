@@ -90,8 +90,8 @@ from weko_index_tree.utils import (
 from weko_index_tree.models import Index
 from weko_indextree_journal.api import Journals
 from weko_logging.activity_logger import UserActivityLogger
-from weko_records.api import FeedbackMailList, JsonldMapping, RequestMailList, ItemTypes, Mapping
-from weko_records.models import ItemMetadata
+from weko_records.api import FeedbackMailList, JsonldMapping, RequestMailList, ItemTypes, ItemLink
+from weko_records.models import ItemMetadata, ItemReference
 from weko_records.serializers.utils import get_full_mapping, get_mapping
 from weko_records_ui.external import call_external_system
 from weko_redis.redis import RedisConnection
@@ -965,7 +965,7 @@ def check_jsonld_import_items(
         handle_check_doi(list_record)
 
         handle_check_item_link(list_record)
-
+        handle_check_duplicate_item_link(list_record)
         check_result.update({"list_record": list_record})
 
     except zipfile.BadZipFile as ex:
@@ -1913,6 +1913,7 @@ def register_item_metadata(item, root_path, owner, is_gakuninrdm=False, request_
                     item_id=_deposit.id, request_maillist=request_mail_list
                 )
 
+            link_data = item.get("link_data")
             # Update draft version
             _draft_pid = PersistentIdentifier.query.filter_by(
                 pid_type='recid',
@@ -1926,7 +1927,12 @@ def register_item_metadata(item, root_path, owner, is_gakuninrdm=False, request_
                 _draft_deposit.merge_data_to_record_without_version(
                     pid, keep_version=True, is_import=True
                 )
-
+                item_link_draft_pid = ItemLink(_draft_pid.pid_value)
+                item_link_draft_pid.update(link_data)
+            item_link_latest_pid = ItemLink(_deposit.pid.pid_value)
+            item_link_latest_pid.update(link_data)
+            item_link_pid_without_ver = ItemLink(item_id)
+            item_link_pid_without_ver.update(link_data)
 
 def update_publish_status(item_id, status):
     """Handle get title.
@@ -2083,6 +2089,8 @@ def import_items_to_system(
                 )
                 record_pid = pid
                 old_record = WekoRecord.get_record_by_pid(record_pid.pid_value)
+            old_link_list = ItemReference.get_src_references(
+                record_pid.pid_value).all()
 
             register_item_metadata(item, root_path, owner, is_gakuninrdm, request_info)
 
@@ -2101,7 +2109,13 @@ def import_items_to_system(
                     send_item_created_event_to_es(item, request_info)
             db.session.commit()
             new_record = WekoRecord.get_record_by_pid(record_pid.pid_value)
-            call_external_system(old_record=old_record, new_record=new_record)
+            new_link_list = ItemReference.get_src_references(
+                record_pid.pid_value).all()
+            call_external_system(old_record=old_record,
+                                 new_record=new_record,
+                                 old_item_reference_list=old_link_list,
+                                 new_item_reference_list=new_link_list
+                                 )
 
             opration = "ITEM_CREATE" if item.get("status") == "new" else "ITEM_UPDATE"
             UserActivityLogger.info(
@@ -2913,7 +2927,7 @@ def handle_check_item_link(list_record):
 
             item_id = uri.split("/")[-1]
             if not item_id.isdecimal():
-                current_app.logger.error(f"item_id: {item_id}, uri: {uri}")
+                current_app.logger.info(f"item_id: {item_id}, uri: {uri}")
                 continue
 
             system_url = request.host_url + "records/" + item_id
@@ -2936,6 +2950,62 @@ def handle_check_item_link(list_record):
 
             link_info["item_id"] = item_id
 
+        if errors:
+            item["errors"] = (
+                item["errors"] + errors if item.get("errors") else errors
+            )
+
+
+def handle_check_duplicate_item_link(list_record):
+    """Check for duplicate item links in list_record.
+
+    Check if item link is valid.
+
+    Args:
+        list_record (list): List of records.
+            It is assumed to be sorted by priority.
+    """
+    item_link = {}
+    supplement = current_app.config["WEKO_RECORDS_REFERENCE_SUPPLEMENT"]
+    for item in reversed(list_record):
+        link_data = item.get("link_data")
+        reduced_index = []
+        errors = []
+        for idx, link_info in enumerate(link_data):
+            item_id = link_info["item_id"]
+            sele_id = link_info["sele_id"]
+
+            if not str(item_id).isdecimal() and sele_id not in supplement:
+                errors.append(_("It is not allowed to create links " \
+                "other than {} between split items.").format(supplement))
+            link = (item["_id"], item_id)
+            if link not in item_link:
+                item_link[link] = sele_id
+                reduced_index.append(idx)
+            elif item_link[link] != sele_id:
+                errors.append(
+                    _("Duplicate Item Link.") +
+                    " (src:{}, dst:{}, type:{}),"
+                    " (src:{}, dst:{}, type:{})".format(
+                        item["_id"], item_id, sele_id,
+                        item["_id"], item_id, item_link[link]))
+
+            # inverse link
+            if sele_id in supplement:
+                inv_link = (item_id, item["_id"])
+                opposite_index = 0 if sele_id == supplement[1] else 1
+                inv_sele = supplement[opposite_index]
+                if inv_link not in item_link:
+                    item_link[inv_link] = inv_sele
+                elif item_link[inv_link] != inv_sele:
+                    errors.append(
+                        _("Duplicate Item Link.") +
+                        " (src:{}, dst:{}, type:{}),"
+                        " (src:{}, dst:{}, type:{})".format(
+                            item_id, item["_id"], inv_sele,
+                            item_id, item["_id"], item_link[inv_link]))
+
+        item["link_data"] = [link_data[i] for i in reduced_index]
         if errors:
             item["errors"] = (
                 item["errors"] + errors if item.get("errors") else errors

@@ -2940,11 +2940,13 @@ class ItemLink(object):
 
             # inverse link
             if is_src_integer:
-                inv_src_ids = [
-                    item_id,
-                    f"{item_id}.0",
-                    get_latest_version(item_id)
-                ]
+                draft_pid = PersistentIdentifier.query.filter_by(
+                    pid_type='recid',
+                    pid_value=f"{item_id}.0"
+                ).one_or_none()
+                inv_src_ids = [item_id, get_latest_version(item_id)] + (
+                    [draft_pid.pid_value] if draft_pid else []
+                )
                 if sele_id in supplement_key:
                     opposite_index = 0 if sele_id == supplement_key[1] else 1
                     inv_relation = supplement_key[opposite_index]
