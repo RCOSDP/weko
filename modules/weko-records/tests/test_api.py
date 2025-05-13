@@ -1995,13 +1995,10 @@ def test_item_link_update(app, db, records):
             org_item_id = "999"
             # dst item pid
             dst_item_id_1 = "1"
-            dst_item_id_1_0 = "1.0"
             dst_item_id_1_1 = "1.1"
             dst_item_id_2 = "2"
-            dst_item_id_2_0 = "2.0"
             dst_item_id_2_1 = "2.1"
             dst_item_id_3 = "3"
-            dst_item_id_3_0 = "3.0"
             dst_item_id_3_1 = "3.1"
 
             # create test instance
@@ -2023,9 +2020,6 @@ def test_item_link_update(app, db, records):
                  'dst_item_pid': dst_item_id_2,
                  'reference_type': 'isSupplementTo'},
                 {'src_item_pid': dst_item_id_2,
-                 'dst_item_pid': org_item_id,
-                 'reference_type': 'isSupplementedBy'}, # inverse relation
-                {'src_item_pid': dst_item_id_2_0,
                  'dst_item_pid': org_item_id,
                  'reference_type': 'isSupplementedBy'}, # inverse relation
                 {'src_item_pid': dst_item_id_2_1,
@@ -2068,9 +2062,6 @@ def test_item_link_update(app, db, records):
                 {'src_item_pid': dst_item_id_2,
                  'dst_item_pid': org_item_id,
                  'reference_type': 'isSupplementTo'}, # inverse relation
-                {'src_item_pid': dst_item_id_2_0,
-                 'dst_item_pid': org_item_id,
-                 'reference_type': 'isSupplementTo'}, # inverse relation
                 {'src_item_pid': dst_item_id_2_1,
                  'dst_item_pid': org_item_id,
                  'reference_type': 'isSupplementTo'}, # inverse relation
@@ -2078,9 +2069,6 @@ def test_item_link_update(app, db, records):
                  'dst_item_pid': dst_item_id_1,
                  'reference_type': 'isSupplementedBy'},
                 {'src_item_pid': dst_item_id_1,
-                 'dst_item_pid': org_item_id,
-                 'reference_type': 'isSupplementTo'}, # inverse relation
-                {'src_item_pid': dst_item_id_1_0,
                  'dst_item_pid': org_item_id,
                  'reference_type': 'isSupplementTo'}, # inverse relation
                 {'src_item_pid': dst_item_id_1_1,
@@ -2175,9 +2163,6 @@ def test_item_link_update(app, db, records):
                 {'src_item_pid': dst_item_id_2,
                  'dst_item_pid': org_item_id,
                  'reference_type': 'isSupplementedBy'}, # inverse relation
-                {'src_item_pid': dst_item_id_2_0,
-                 'dst_item_pid': org_item_id,
-                 'reference_type': 'isSupplementedBy'}, # inverse relation
                 {'src_item_pid': dst_item_id_2_1,
                  'dst_item_pid': org_item_id,
                  'reference_type': 'isSupplementedBy'}, # inverse relation
@@ -2185,9 +2170,6 @@ def test_item_link_update(app, db, records):
                  'dst_item_pid': dst_item_id_3,
                  'reference_type': 'isSupplementedBy'},
                 {'src_item_pid': dst_item_id_3,
-                 'dst_item_pid': org_item_id,
-                 'reference_type': 'isSupplementTo'}, # inverse relation
-                {'src_item_pid': dst_item_id_3_0,
                  'dst_item_pid': org_item_id,
                  'reference_type': 'isSupplementTo'}, # inverse relation
                 {'src_item_pid': dst_item_id_3_1,
@@ -2235,13 +2217,10 @@ def test_item_link_update(app, db, records):
                 src_item_pid=org_item_id, dst_item_pid=dst_item_id_1).first()
             inverse_relation = ItemReference.query.filter_by(
                 src_item_pid=dst_item_id_1, dst_item_pid=org_item_id).first()
-            inverse_relation_0 = ItemReference.query.filter_by(
-                src_item_pid=dst_item_id_1_0, dst_item_pid=org_item_id).first()
             inverse_relation_1 = ItemReference.query.filter_by(
                 src_item_pid=dst_item_id_1_1, dst_item_pid=org_item_id).first()
             assert updated_relation.reference_type == 'isSupplementTo'
             assert inverse_relation.reference_type == 'isSupplementedBy'
-            assert inverse_relation_0.reference_type == 'isSupplementedBy'
             assert inverse_relation_1.reference_type == 'isSupplementedBy'
 
             items = [
@@ -2252,13 +2231,10 @@ def test_item_link_update(app, db, records):
                 src_item_pid=org_item_id, dst_item_pid=dst_item_id_1).first()
             inverse_relation = ItemReference.query.filter_by(
                 src_item_pid=dst_item_id_1, dst_item_pid=org_item_id).all()
-            inverse_relation_0 = ItemReference.query.filter_by(
-                src_item_pid=dst_item_id_1_0, dst_item_pid=org_item_id).all()
             inverse_relation_1 = ItemReference.query.filter_by(
                 src_item_pid=dst_item_id_1_1, dst_item_pid=org_item_id).all()
             assert updated_relation.reference_type == 'normal'
             assert len (inverse_relation) == 0
-            assert len (inverse_relation_0) == 0
             assert len (inverse_relation_1) == 0
 
             # test case 11: delete supplement relations
