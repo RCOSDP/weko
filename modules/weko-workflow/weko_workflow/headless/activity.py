@@ -171,6 +171,7 @@ class HeadlessActivity(WorkActivity):
             raise WekoWorkflowException("activity is already initialized.")
 
         activity_id = kwargs.get("activity_id")
+        shared_id = kwargs.get("shared_id", -1)
         if activity_id is not None:
             result = verify_deletion(activity_id).json
             if result.get("is_delete"):
@@ -208,7 +209,7 @@ class HeadlessActivity(WorkActivity):
             if not kwargs.get("for_delete", False):
                 response = prepare_edit_item(item_id, community)
             else:
-                response = prepare_delete_item(item_id, community)
+                response = prepare_delete_item(item_id, community, shared_id)
 
             if response.json.get("code") != 0:
                 current_app.logger.error(

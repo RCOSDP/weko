@@ -1101,7 +1101,7 @@ def prepare_edit_item(id=None, community=None):
 
 @blueprint.route('/prepare_delete_item', methods=['POST'])
 @login_required
-def prepare_delete_item(id=None, community=None):
+def prepare_delete_item(id=None, community=None, shared_user_id=-1):
     """Prepare_delete_item.
 
     Host the api which provide 2 service:
@@ -1260,6 +1260,7 @@ def prepare_delete_item(id=None, community=None):
             return jsonify(code=0, msg="success")
 
         post_activity['flow_id'] = workflow.delete_flow_id
+        post_activity['shared_user_id'] = shared_user_id
 
         try:
             rtn = prepare_delete_workflow(post_activity, recid, deposit)

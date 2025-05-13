@@ -939,6 +939,7 @@ def delete_object(recid):
         "referrer": request.referrer,
         "hostname": request.host,
         "user_id": owner,
+        "shared_id": shared_id,
         "action": "DELETE"
     }
 

@@ -413,12 +413,13 @@ def delete_items_with_activity(item_id, request_info):
     """
     user_id=request_info.get("user_id")
     community=request_info.get("community")
+    shared_id = request_info.get("shared_id")
 
     try:
         headless = HeadlessActivity()
         url = headless.init_activity(
             user_id=user_id, community=community,
-            item_id=item_id, for_delete=True
+            item_id=item_id, shared_id=shared_id, for_delete=True
         )
     except WekoWorkflowException as ex:
         traceback.print_exc()
