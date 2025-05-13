@@ -1,15 +1,15 @@
 # Japanese translations for weko-workflow.
-# Copyright (C) 2018 National Institute of Informatics
+# Copyright (C) 2025 National Institute of Informatics
 # This file is distributed under the same license as the weko-workflow
 # project.
-# FIRST AUTHOR <EMAIL@ADDRESS>, 2018.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2025.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: weko-workflow 0.1.0.dev20170000\n"
 "Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
-"POT-Creation-Date: 2025-05-04 02:41+0900\n"
-"PO-Revision-Date: 2018-08-06 13:44+0900\n"
+"POT-Creation-Date: 2025-05-13 09:22+0900\n"
+"PO-Revision-Date: 2025-05-13 09:23+0900\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ja\n"
 "Language-Team: ja <LL@li.org>\n"
@@ -17,7 +17,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.5.1\n"
+"Generated-By: Babel 2.9.1\n"
 
 #: tests/conftest.py:247
 msgid "write your own license"
@@ -97,11 +97,11 @@ msgstr "このDOIは取り下げられたため、他のDOIを入力してくだ
 
 #: tests/test_utils.py:1168 tests/test_views.py:1973 tests/test_views.py:2199
 #: tests/test_views.py:2254 weko_workflow/utils.py:2185
-#: weko_workflow/views.py:1414 weko_workflow/views.py:1419
-#: weko_workflow/views.py:1551 weko_workflow/views.py:1655
-#: weko_workflow/views.py:1680 weko_workflow/views.py:1847
-#: weko_workflow/views.py:2044 weko_workflow/views.py:2331
-#: weko_workflow/views.py:2435
+#: weko_workflow/views.py:1417 weko_workflow/views.py:1422
+#: weko_workflow/views.py:1554 weko_workflow/views.py:1658
+#: weko_workflow/views.py:1683 weko_workflow/views.py:1850
+#: weko_workflow/views.py:2047 weko_workflow/views.py:2334
+#: weko_workflow/views.py:2438
 msgid "success"
 msgstr "成功"
 
@@ -113,12 +113,12 @@ msgstr "指定したリンクはアクセス有効期限を超過しています
 msgid "Cannot register selected DOI for current Item Type of this item."
 msgstr "選択されたDOIをこのアイテムのアイテムタイプに登録できません。"
 
-#: tests/test_views.py:1929 weko_workflow/views.py:1215
+#: tests/test_views.py:1929 weko_workflow/views.py:1218
 msgid "Authorization required"
 msgstr "権限必須"
 
-#: tests/test_views.py:2150 weko_workflow/views.py:1744
-#: weko_workflow/views.py:1776 weko_workflow/views.py:1967
+#: tests/test_views.py:2150 weko_workflow/views.py:1747
+#: weko_workflow/views.py:1779 weko_workflow/views.py:1970
 msgid "error"
 msgstr "エラー"
 
@@ -134,16 +134,16 @@ msgstr "フローが使用されているため削除できません。"
 msgid "Updated flow action successfully"
 msgstr "フローアクションを更新しました。"
 
-#: weko_workflow/admin.py:598
+#: weko_workflow/admin.py:597
 msgid "Activity setting was updated."
 msgstr "アクティビティの設定を更新しました。"
 
-#: weko_workflow/admin.py:657
+#: weko_workflow/admin.py:654
 msgid "WorkSpace WorkFlow Setting was updated."
 msgstr "ワークスペースのワークフロー設定を更新しました。"
 
-#: weko_workflow/admin.py:671 weko_workflow/admin.py:680
-#: weko_workflow/admin.py:689
+#: weko_workflow/admin.py:669 weko_workflow/admin.py:678
+#: weko_workflow/admin.py:687
 #: weko_workflow/templates/weko_workflow/activity_list.html:92
 #: weko_workflow/templates/weko_workflow/activity_list.html:210
 #: weko_workflow/templates/weko_workflow/activity_list.html:367
@@ -153,30 +153,28 @@ msgstr "ワークスペースのワークフロー設定を更新しました。
 msgid "WorkFlow"
 msgstr "ワークフロー"
 
-#: weko_workflow/admin.py:672
+#: weko_workflow/admin.py:670
 msgid "WorkFlow List"
 msgstr "ワークフロー一覧"
 
-#: weko_workflow/admin.py:681
+#: weko_workflow/admin.py:679
 msgid "WorkSpaceWorkFlow Setting"
 msgstr "ワークスペース設定"
 
-#: weko_workflow/admin.py:690
+#: weko_workflow/admin.py:688
 msgid "Flow List"
 msgstr "フロー一覧"
 
-#: weko_workflow/admin.py:698
+#: weko_workflow/admin.py:696
 #: weko_workflow/templates/weko_workflow/admin/pop_page.html:96
 msgid "Setting"
 msgstr ""
 
-#: weko_workflow/admin.py:699
+#: weko_workflow/admin.py:697
 msgid "Activity List"
 msgstr "アクティビティ一覧表示"
 
-#: weko_workflow/api.py:2340
-#: weko_workflow/templates/weko_workflow/activity_list.html:153
-#: weko_workflow/utils.py:3542
+#: weko_workflow/api.py:2340 weko_workflow/utils.py:3542
 msgid "End"
 msgstr "終了"
 
@@ -363,7 +361,7 @@ msgstr "NDL JaLCに割り当てる場合、資源タイプは「doctoral thesis�
 msgid "Unlock success"
 msgstr "成功"
 
-#: weko_workflow/utils.py:4605 weko_workflow/views.py:2979
+#: weko_workflow/utils.py:4605 weko_workflow/views.py:2982
 msgid "Not unlock"
 msgstr ""
 
@@ -377,34 +375,34 @@ msgid "Token is invalid"
 msgstr ""
 
 #: weko_workflow/templates/weko_workflow/modal_withdraw_confirmation.html:50
-#: weko_workflow/views.py:2438
+#: weko_workflow/views.py:2441
 msgid "Invalid password"
 msgstr "無効なパスワード"
 
-#: weko_workflow/views.py:2442
+#: weko_workflow/views.py:2445
 msgid "Error!"
 msgstr "エラー"
 
-#: weko_workflow/views.py:2467 weko_workflow/views.py:2496
+#: weko_workflow/views.py:2470 weko_workflow/views.py:2499
 msgid "Header Error"
 msgstr ""
 
-#: weko_workflow/views.py:2477 weko_workflow/views.py:2508
-#: weko_workflow/views.py:2581 weko_workflow/views.py:2656
-#: weko_workflow/views.py:2750 weko_workflow/views.py:2914
+#: weko_workflow/views.py:2480 weko_workflow/views.py:2511
+#: weko_workflow/views.py:2584 weko_workflow/views.py:2659
+#: weko_workflow/views.py:2753 weko_workflow/views.py:2917
 msgid "Success"
 msgstr "成功"
 
-#: weko_workflow/views.py:2480 weko_workflow/views.py:2511
-#: weko_workflow/views.py:2588 weko_workflow/views.py:2666
+#: weko_workflow/views.py:2483 weko_workflow/views.py:2514
+#: weko_workflow/views.py:2591 weko_workflow/views.py:2669
 msgid "Error"
 msgstr "エラー"
 
-#: weko_workflow/views.py:2737
+#: weko_workflow/views.py:2740
 msgid "Opened"
 msgstr ""
 
-#: weko_workflow/views.py:2885
+#: weko_workflow/views.py:2888
 msgid "Locked"
 msgstr ""
 
@@ -518,7 +516,7 @@ msgstr "却下"
 #: weko_workflow/templates/weko_workflow/admin/flow_detail.html:115
 #: weko_workflow/templates/weko_workflow/admin/flow_detail.html:274
 #: weko_workflow/templates/weko_workflow/admin/workflow_detail.html:250
-#: weko_workflow/templates/weko_workflow/admin/workspace_workflow_setting.html:74
+#: weko_workflow/templates/weko_workflow/admin/workspace_workflow_setting.html:80
 #: weko_workflow/templates/weko_workflow/identifier_grant.html:115
 #: weko_workflow/templates/weko_workflow/item_link.html:150
 #: weko_workflow/templates/weko_workflow/item_login_success.html:230
@@ -526,7 +524,6 @@ msgid "Save"
 msgstr "保存"
 
 #: weko_workflow/templates/weko_workflow/activity_detail.html:293
-#: weko_workflow/templates/weko_workflow/activity_list.html:155
 msgid "Approval"
 msgstr "承認"
 
@@ -625,28 +622,6 @@ msgstr "ユーザー"
 #: weko_workflow/templates/weko_workflow/activity_list.html:117
 msgid "Send Mail"
 msgstr "メール通知"
-
-#: weko_workflow/templates/weko_workflow/activity_list.html:152
-msgid "Start"
-msgstr ""
-
-#: weko_workflow/templates/weko_workflow/activity_list.html:154
-msgid "Item Registration"
-msgstr ""
-
-#: weko_workflow/templates/weko_workflow/activity_list.html:156
-#: weko_workflow/templates/weko_workflow/item_link.html:59
-msgid "Item Link"
-msgstr "アイテムリンク"
-
-#: weko_workflow/templates/weko_workflow/activity_list.html:157
-msgid "OA Policy Confirmation"
-msgstr ""
-
-#: weko_workflow/templates/weko_workflow/activity_list.html:158
-#: weko_workflow/templates/weko_workflow/identifier_grant.html:36
-msgid "Identifier Grant"
-msgstr "識別子の付与"
 
 #: weko_workflow/templates/weko_workflow/activity_list.html:165
 #: weko_workflow/templates/weko_workflow/admin/action_list.html:58
@@ -765,6 +740,10 @@ msgstr ""
 msgid "Confirmation"
 msgstr ""
 
+#: weko_workflow/templates/weko_workflow/identifier_grant.html:36
+msgid "Identifier Grant"
+msgstr "識別子の付与"
+
 #: weko_workflow/templates/weko_workflow/identifier_grant.html:78
 msgid "Its able to input only haft-width alphanumeric or half-width symbol."
 msgstr "半角英数字または半角記号のみ入力できます"
@@ -806,6 +785,10 @@ msgstr "インデックスツリー"
 msgid "Designate Index"
 msgstr "インデックスを指定"
 
+#: weko_workflow/templates/weko_workflow/item_link.html:59
+msgid "Item Link"
+msgstr "アイテムリンク"
+
 #: weko_workflow/templates/weko_workflow/admin/flow_detail.html:120
 #: weko_workflow/templates/weko_workflow/admin/workflow_detail.html:256
 #: weko_workflow/templates/weko_workflow/item_link.html:81
@@ -835,7 +818,7 @@ msgstr "権限が必要です"
 
 #: weko_workflow/templates/weko_workflow/lock_activity.html:26
 msgid "This activity is being locked ({})."
-msgstr "このアクティビティはロック中です（{}）。"
+msgstr "このアクティビティはロック中です({})。"
 
 #: weko_workflow/templates/weko_workflow/lock_activity.html:30
 msgid "One user cannot open multiple activities simultaneously."
@@ -844,7 +827,7 @@ msgstr "一人のユーザーが同時に複数のアクティビティを開く
 #: weko_workflow/templates/weko_workflow/lock_activity.html:31
 #: weko_workflow/templates/weko_workflow/modal_user_lock_activity.html:33
 msgid "Already have another activity open ({}). Close any open activities."
-msgstr "他のアクティビティ（{}）を既に開いています。開いているアクティビティを閉じてください。"
+msgstr "他のアクティビティ({})を既に開いています。開いているアクティビティを閉じてください。"
 
 #: weko_workflow/templates/weko_workflow/lock_activity.html:54
 #: weko_workflow/templates/weko_workflow/lock_activity.html:60
@@ -1168,19 +1151,19 @@ msgstr "有効"
 msgid "Disable"
 msgstr "無効"
 
-#: weko_workflow/templates/weko_workflow/admin/workspace_workflow_setting.html:37
+#: weko_workflow/templates/weko_workflow/admin/workspace_workflow_setting.html:42
 msgid "Direct Registration"
 msgstr "直接登録"
 
-#: weko_workflow/templates/weko_workflow/admin/workspace_workflow_setting.html:41
-msgid "Item Type Select"
-msgstr "アイテムタイプ選択"
-
-#: weko_workflow/templates/weko_workflow/admin/workspace_workflow_setting.html:52
+#: weko_workflow/templates/weko_workflow/admin/workspace_workflow_setting.html:45
 msgid "WorkFlow Registration"
 msgstr "ワークフロー登録"
 
-#: weko_workflow/templates/weko_workflow/admin/workspace_workflow_setting.html:56
+#: weko_workflow/templates/weko_workflow/admin/workspace_workflow_setting.html:51
+msgid "Item Type Select"
+msgstr "アイテムタイプ選択"
+
+#: weko_workflow/templates/weko_workflow/admin/workspace_workflow_setting.html:62
 msgid "WorkFlow Select"
 msgstr "ワークフロー選択"
 
