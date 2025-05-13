@@ -284,6 +284,8 @@ class Notification(object):
         Returns:
             str: Notification ID sent.
         """
+        if not isinstance(client, NotificationClient):
+            raise TypeError("client must be an instance of NotificationClient")
         return client.send(self)
 
 

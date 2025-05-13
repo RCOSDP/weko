@@ -35,6 +35,8 @@ from weko_accounts.utils import roles_required
 from weko_admin.api import TempDirInfo
 from weko_deposit.api import WekoRecord
 from weko_items_ui.scopes import item_create_scope, item_update_scope, item_delete_scope
+from weko_items_ui.utils import send_mail_direct_registered, send_mail_item_deleted
+from weko_notifications.utils import notify_item_imported
 from weko_records.api import JsonldMapping
 from weko_records_ui.utils import get_record_permalink, soft_delete
 from weko_search_ui.utils import import_items_to_system, import_items_to_activity
@@ -370,7 +372,9 @@ def post_service_document():
                 error = str(item.get('error_id'))
             else:
                 recid = str(import_result.get("recid"))
-                from weko_items_ui.utils import send_mail_direct_registered
+                notify_item_imported(
+                    current_user.id, recid, current_user.id, shared_id=shared_id
+                )
                 send_mail_direct_registered(recid, current_user.id)
 
         elif register_type == "Workflow":
@@ -644,8 +648,10 @@ def put_object(recid):
                 f"Item import error:: {import_result.get('error_id')}",
                 ErrorType.ServerError
             )
-        from weko_items_ui.utils import send_mail_direct_registered
         send_mail_direct_registered(recid, current_user.id)
+        notify_item_imported(
+            current_user.id, recid, current_user.id, shared_id=shared_id
+        )
         response = jsonify(_get_status_document(recid))
 
     elif register_type == "Workflow":

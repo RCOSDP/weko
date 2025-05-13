@@ -169,11 +169,14 @@ class UserProfile(db.Model):
     def get_by_userid(cls, user_id):
         """Get profile by user identifier.
 
-        :param user_id: Identifier of a :class:`~invenio_accounts.models.User`.
-        :returns: A :class:`~invenio_userprofiles.models.UserProfile` instance
-            or ``None``.
+        Args:
+            user_id (int): user id.
+
+        Returns:
+            UserProfile: user profile object. If not found, return None.
         """
-        return cls.query.filter_by(user_id=user_id).one_or_none()
+        obj = cls.query.filter_by(user_id=user_id).one_or_none()
+        return obj if isinstance(obj, UserProfile) else None
 
     @property
     def is_anonymous(self):
