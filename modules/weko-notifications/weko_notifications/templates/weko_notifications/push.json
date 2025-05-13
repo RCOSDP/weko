@@ -1,7 +1,7 @@
 {
   "registered": {
     "name": "Registered",
-    "description": "Notification for new item registration",
+    "description": "Notification for new item registration.",
     "type": [
       "Announce",
       "coar-notify:IngestAction"
@@ -67,6 +67,81 @@
       "ja": {
         "title": "アイテムが却下されました",
         "body": "\"{{ object_name }}\" が {{ actor_name }} によって却下されました。"
+      }
+    }
+  },
+  "deleted": {
+    "name": "Deleted",
+    "description": "Notification for item deletion.",
+    "type": [
+      "Announce",
+      "coar-notify:IngestAction",
+      "Delete"
+    ],
+    "templates": {
+      "en": {
+        "title": "Your item is now deleted",
+        "body": "\"{{ object_name }}\" has been deleted by {{ actor_name }}."
+      },
+      "ja": {
+        "title": "アイテムが削除されました",
+        "body": "\"{{ object_name }}\" が {{ actor_name }} によって削除されました。"
+      }
+    }
+  },
+  "request_deletion": {
+    "name": "Request_deletion",
+    "description": "Notification for item deletion request received.",
+    "type": [
+      "Offer",
+      "coar-notify:EndorsementAction",
+      "Delete"
+    ],
+    "templates": {
+      "en": {
+        "title": "You have a new request for item deletion",
+        "body": "\"{{ object_name }}\" has been requested for deletion by {{ actor_name }}."
+      },
+      "ja": {
+        "title": "アイテム削除のリクエストが届きました",
+        "body": "\"{{ object_name }}\" の削除が {{ actor_name }} によってリクエストされました。"
+      }
+    }
+  },
+  "approved_deletion": {
+    "name": "Approved_deletion",
+    "description": "Notification for item deletion request approved.",
+    "type": [
+      "Announce",
+      "coar-notify:EndorsementAction",
+      "Delete"
+    ],
+    "templates": {
+      "en": {
+        "title": "Your item is now approved for deletion",
+        "body": "\"{{ object_name }}\" has been approved for deletion by {{ actor_name }}."
+      },
+      "ja": {
+        "title": "アイテム削除が承認されました",
+        "body": "\"{{ object_name }}\" の削除が {{ actor_name }} によって承認されました。"
+      }
+    }
+  },
+  "rejected_deletion": {
+    "name": "Rejected_deletion",
+    "description": "Notification for item deletion request rejected.",
+    "type": [
+      "Reject",
+      "Delete"
+    ],
+    "templates": {
+      "en": {
+        "title": "Your item is now rejected for deletion",
+        "body": "\"{{ object_name }}\" has been rejected for deletion by {{ actor_name }}."
+      },
+      "ja": {
+        "title": "アイテム削除が却下されました",
+        "body": "\"{{ object_name }}\" の削除が {{ actor_name }} によって却下されました。"
       }
     }
   }
