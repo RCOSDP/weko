@@ -401,10 +401,13 @@ class HeadlessActivity(WorkActivity):
 
             _old_metadata, _old_files = {}, []
             if self.recid is None:
+                location_name = None
+                if self.workflow and self.workflow.location:
+                    location_name = self.workflow.location.name
                 record_data = {}
                 record_uuid = uuid.uuid4()
                 pid = current_pidstore.minters["weko_deposit_minter"](record_uuid, data=record_data)
-                self._deposit = WekoDeposit.create(record_data, id_=record_uuid)
+                self._deposit = WekoDeposit.create(record_data, id_=record_uuid, workflow_location_name=location_name)
                 self._model.item_id = record_uuid
 
             else:
