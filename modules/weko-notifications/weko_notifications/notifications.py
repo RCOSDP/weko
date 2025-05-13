@@ -295,7 +295,7 @@ class Notification(object):
 
 
     @classmethod
-    def create_item_registared(
+    def create_item_registered(
             cls, target_id, object_id, actor_id, **kwargs
         ):
         """Create item registared notification.

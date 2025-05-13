@@ -200,7 +200,7 @@ def notify_item_imported(
     from .notifications import Notification
     for target_id in set_target_id:
         try:
-            Notification.create_item_registared(
+            Notification.create_item_registered(
                 target_id, recid.pid_value.split(".")[0], actor_id,
                 actor_name=actor_name, object_name=object_name,
             ).send(NotificationClient(inbox_url()))
