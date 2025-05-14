@@ -353,12 +353,13 @@ def check_import_items(
     return check_result
 
 
-def update_item_ids(list_record, new_id, _id):
+def update_item_ids(list_record, new_id, old_id):
     """Iterate through list_record, check and update item_id.
 
     Args:
         list_record (list): A list containing multiple ITEMs.
         new_id (str): The new ID used to overwrite item_id.
+        old_id (str): old (not number) ID of new_id.
 
     Returns:
         list: The updated list_record.
@@ -386,14 +387,12 @@ def update_item_ids(list_record, new_id, _id):
             if not isinstance(link_item, dict):
                 continue
 
-            item_id = link_item.get("item_id")
-            sele_id = link_item.get("sele_id")
-            if item_id == _id:
+            if link_item.get("item_id") == old_id:
                 # If a match is found, overwrite item_id with new_id
                 link_item["item_id"] = new_id
                 current_app.logger.info(
-                    f"Updated item_id {item_id} to {new_id} "
-                    f"in ITEM {item.get('identifier')}"
+                    f"Updated item_id {old_id} to {new_id} "
+                    f"in ITEM {item.get('_id')}"
                 )
 
     return list_record
@@ -414,12 +413,13 @@ def delete_items_with_activity(item_id, request_info):
     """
     user_id=request_info.get("user_id")
     community=request_info.get("community")
+    shared_id = request_info.get("shared_id")
 
     try:
         headless = HeadlessActivity()
         url = headless.init_activity(
             user_id=user_id, community=community,
-            item_id=item_id, for_delete=True
+            item_id=item_id, shared_id=shared_id, for_delete=True
         )
     except WekoWorkflowException as ex:
         traceback.print_exc()

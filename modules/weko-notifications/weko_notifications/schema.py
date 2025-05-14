@@ -44,7 +44,10 @@ def validate_activity_type(value):
             If the value is not a valid activity type.
     """
     from .notifications import ActivityType
-    if value not in (activity.value for activity in ActivityType):
+    if (
+        value not in (activity.value for activity in ActivityType)
+        and value not in (activity.deletion_value for activity in ActivityType)
+    ):
         raise ValidationError("Invalid activity type.")
     return
 

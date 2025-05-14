@@ -115,7 +115,7 @@ class TestNotifications:
         after_registration = json_notifications["after_registration"]
         after_registration.pop("id")
 
-        notification = Notification.create_item_registared(
+        notification = Notification.create_item_registered(
             target_id=3,
             actor_id=3,
             object_id=2000001,

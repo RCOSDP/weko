@@ -52,7 +52,6 @@
           <div class="col-sm-offset-4 col-sm-8">
             <div class="checkbox">
               <label>
-                <div class="hide" id="message-for-delete-checked">{{_('Deletion flow activated.')}}</div>
                 <input type="checkbox" id="chk_for_delete" name="for_delete" {% if actions and actions|length> 0 %}
                 disabled {% endif %}
                 {% if flow and flow.flow_type == 2 %} checked {% endif %}> {{_('for delete')}}
