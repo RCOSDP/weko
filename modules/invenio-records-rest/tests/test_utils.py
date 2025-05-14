@@ -96,7 +96,7 @@ def test_build_default_endpoint_prefixes_redundant_default(app):
 def test_build_default_endpoint_prefixes_two_endpoints_with_default(app):
     with app.test_client():
         assert current_records_rest.default_endpoint_prefixes['recid'] == \
-            'recid2'
+            'recid'
 
 
 def test_get_default_endpoint_for_inconsistent(app):

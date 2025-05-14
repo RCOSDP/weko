@@ -32,12 +32,13 @@ class SimpleSchema(Schema):
     identifier = fields.Nested(DOISchema, attribute='metadata')
 
 
+# .tox/c1/bin/pytest --cov=invenio_records_rest tests/test_serializer_datacite.py::test_serialize -vv -s -v --cov-branch --cov-report=term --basetemp=/code/modules/invenio-records-rest/.tox/c1/tmp
 @pytest.mark.parametrize('serializer', [DataCite31Serializer,
                                         DataCite40Serializer,
                                         DataCite41Serializer])
-def test_serialize(serializer):
+def test_serialize(serializer, item_type):
     pid = PersistentIdentifier(pid_type='recid', pid_value='2')
-    record = Record({'doi': '10.1234/foo'})
+    record = Record({'doi': '10.1234/foo', 'item_type_id': '15'})
     s = serializer(SimpleSchema)
     data = s.serialize(pid, record)
 

@@ -2,7 +2,6 @@
 
 from weko_workflow.cli import workflow,init_workflow_tables
 import pytest
-from invenio_accounts.testutils import create_test_user
 
 # def workflow():
 def test_workflow(app):
@@ -17,16 +16,12 @@ def test_workflow(app):
 #     def init_flow():
 #     def init_workflow():
 #     def init_gakuninrdm_data():
-def test_init_workflow_tables(app,db,users):
+def test_init_workflow_tables(app, db, db_itemtype, users):
     runner = app.test_cli_runner()
-    result = runner.invoke(init_workflow_tables,["Action,action_status"])
+    result = runner.invoke(init_workflow_tables,["action_status,Action,Flow"])
     assert result.output ==  'workflow db has been initialised.\n'
     assert result.exit_code == 0
-    
-    result = runner.invoke(init_workflow_tables,["gakuninrdm_data"])
-    assert result.output == ""
-    assert result.exit_code == 0
-    
-    
 
-    
+    result = runner.invoke(init_workflow_tables,["gakuninrdm_data"])
+    assert result.output == "workflow db has been initialised.\n"
+    assert result.exit_code == 0

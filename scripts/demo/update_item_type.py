@@ -1,4 +1,5 @@
 import json
+import pickle
 from datetime import datetime
 from sqlalchemy.orm.attributes import flag_modified
 from sqlalchemy.sql.expression import desc
@@ -197,7 +198,8 @@ def main():
             try:
                 itMapping = ItemTypeMapping.query.filter_by(item_type_id=_id).order_by(desc(ItemTypeMapping.created)).first()
                 if itMapping:
-                    _mapping = itMapping.mapping
+                    _mapping = pickle.loads(pickle.dumps(itMapping.mapping, -1))
+                    
                     if 'system_identifier_uri' in _mapping:
                         if not _mapping['system_identifier_uri'].get('oai_dc_mapping'):
                             _mapping['system_identifier_uri']['oai_dc_mapping'] = s_identifier_dc_data
@@ -402,7 +404,7 @@ def update_schema(value):
                 if k in change_id_reg_text_key:
                     for i, d in enumerate(v['enum']):
                         if d in ['PMID（現在不使用）', 'PMID(現在不使用)', 'PMID']:
-                            value['properties'][k]['enum'][i] = 'PMID【現在不使用】'
+                            value['properties'][k]['enum'][i] = 'PMID'
                             update_flag = True
                             break
                 if k in change_relation_text_key:
@@ -468,7 +470,7 @@ def update_form(form_data):
                     if subitem_key in change_id_reg_text_key:
                         for map_index, d in enumerate(value['titleMap']):
                             if d['name'] in ['PMID（現在不使用）', 'PMID(現在不使用)', 'PMID']:
-                                form_data[i]['titleMap'][map_index] = {'name': 'PMID【現在不使用】', 'value': 'PMID【現在不使用】'}
+                                form_data[i]['titleMap'][map_index] = {'name': 'PMID', 'value': 'PMID'}
                                 update_flag = True
                                 break
                     if subitem_key in change_relation_text_key:

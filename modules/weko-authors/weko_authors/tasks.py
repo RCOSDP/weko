@@ -74,7 +74,7 @@ def check_is_import_available(group_task_id=None):
         'is_available': True
     }
 
-    if not inspect().ping():
+    if not inspect(timeout=current_app.config.get("CELERY_GET_STATUS_TIMEOUT", 3.0)).ping():
         result['is_available'] = False
         result['celery_not_run'] = True
     else:

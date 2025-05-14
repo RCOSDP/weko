@@ -23,10 +23,11 @@ class SimpleSchema(Schema):
     titles = fields.Raw(attribute='metadata.titles')
 
 
-def test_serialize():
+# .tox/c1/bin/pytest --cov=invenio_records_rest tests/test_serializer_dc.py::test_serialize -vv -s -v --cov-branch --cov-report=term --basetemp=/code/modules/invenio-records-rest/.tox/c1/tmp
+def test_serialize(app, db, item_type):
     """Test JSON serialize."""
     pid = PersistentIdentifier(pid_type='recid', pid_value='2')
-    record = Record({'titles': ['DC test']})
+    record = Record({'titles': ['DC test'], 'item_type_id': '15'})
     data = DublinCoreSerializer(SimpleSchema).serialize(pid, record)
 
     assert """<dc:title>DC test</dc:title>""" in data

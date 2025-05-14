@@ -26,6 +26,7 @@ Blueprint.
 
 import json
 import sys
+from urllib.parse import quote_plus
 
 import redis
 from redis import sentinel
@@ -110,6 +111,7 @@ def shib_auto_login():
     try:
         is_auto_bind = False
         shib_session_id = request.args.get('SHIB_ATTR_SESSION_ID', None)
+        session['next'] = request.args.get('next', '/')
 
         if not shib_session_id:
             shib_session_id = session['shib_session_id']
@@ -225,6 +227,7 @@ def shib_login():
     """
     try:
         shib_session_id = request.args.get('SHIB_ATTR_SESSION_ID', None)
+        session['next'] = request.args.get('next', '/')
 
         if not shib_session_id:
             current_app.logger.error(_("Missing SHIB_ATTR_SESSION_ID!"))
@@ -278,6 +281,7 @@ def shib_sp_login():
     _shib_enable = current_app.config['WEKO_ACCOUNTS_SHIB_LOGIN_ENABLED']
     _shib_username_config = current_app.config[
         'WEKO_ACCOUNTS_SHIB_ALLOW_USERNAME_INST_EPPN']
+    next = request.args.get('next', '/')
     try:
         shib_session_id = request.form.get('SHIB_ATTR_SESSION_ID', None)
         if not shib_session_id and not _shib_enable:
@@ -314,6 +318,7 @@ def shib_sp_login():
 
         query_string = {
             'SHIB_ATTR_SESSION_ID': shib_session_id,
+            'next': next,
             '_method': 'GET'
         }
         return url_for(next_url, **query_string)
@@ -345,7 +350,7 @@ def shib_stub_login():
     
     # LOGIN USING JAIROCLOUD PAGE
     if current_app.config['WEKO_ACCOUNTS_SHIB_IDP_LOGIN_ENABLED']:
-        return redirect(_shib_login_url.format(request.url_root))
+        return redirect(_shib_login_url.format(request.url_root)+ '?next=' + request.args.get('next', '/'))
     else:
         return render_template(
             current_app.config[
@@ -355,6 +360,11 @@ def shib_stub_login():
             return_url = return_url,
             module_name=_('WEKO-Accounts'))
 
+
+@blueprint.app_template_filter('urlencode')
+def urlencode(value):
+    """Encode url value."""
+    return quote_plus(value)
 
 @blueprint.route('/shib/logout')
 def shib_logout():

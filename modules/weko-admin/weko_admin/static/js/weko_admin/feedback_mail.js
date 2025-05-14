@@ -176,7 +176,8 @@ class ComponentExclusionTarget extends React.Component {
       if (event.key =='Enter') {
         let new_email = {
           author_id: "",
-          email: event.target.value.trim()
+          email: event.target.value.trim(),
+          name: ""
         }
         if (!this.validateEmail(new_email.email)){
           alert("Pleased input a valid email.");
@@ -195,10 +196,17 @@ class ComponentExclusionTarget extends React.Component {
     generateSelectedBox(listEmail) {
       let innerHTML = [];
       for (let id in listEmail) {
-        innerHTML.push(<a className={`list-group-item list-group-item-action ${this.state.selectedId.includes(id) ? 'active' : ''}`}
+        if (listEmail[id].author_id) {
+          innerHTML.push(<a className={`list-group-item list-group-item-action ${this.state.selectedId.includes(id) ? 'active' : ''}`}
+                        onClick={() => { this.handleClick(id) }}
+                        key={id}
+                        value={listEmail[id].author_id}>{listEmail[id].email}&nbsp;&nbsp;(Author&nbsp;ID:&nbsp;{listEmail[id].author_id})</a>);
+        } else {
+          innerHTML.push(<a className={`list-group-item list-group-item-action ${this.state.selectedId.includes(id) ? 'active' : ''}`}
                         onClick={() => { this.handleClick(id) }}
                         key={id}
                         value={listEmail[id].author_id}>{listEmail[id].email}</a>);
+        }
       }
       return (
         <div ref={this.setWrapperRef} class="list-group" className="style-selected-box" id="sltBoxListEmail">
@@ -293,14 +301,20 @@ class TableUserEmailComponent extends React.Component {
           name = familyName + firstName;
         }
       }
-      if (row._source.emailInfo.length == 1) {
+      if (row._source.emailInfo.length >= 1) {
+        let mailData = [];
+        let mailList = [];
+        row._source.emailInfo.forEach(function(v, k) {
+          mailData.push(<p>{v.email}</p>);
+          mailList.push(v.email);
+        });
         return (
           <tr key = {row._source.pk_id.toString()}>
             <td>{name}</td>
-            <td>{row._source.emailInfo[0].email}</td>
+            <td>{mailData}</td>
             <td className="text-right">
               <button className="btn btn-info"
-                onClick={(event) => this.importEmail(event, row._source.pk_id, row._source.emailInfo[0].email)}>
+                onClick={(event) => this.importEmail(event, row._source.pk_id, mailList)}>
                 &nbsp;&nbsp;{IMPORT_BUTTON_NAME}&nbsp;&nbsp;
               </button>
             </td>
@@ -327,13 +341,16 @@ class TableUserEmailComponent extends React.Component {
       </tbody>
     )
   }
-  importEmail(event, pk_id, email){
+  importEmail(event, pk_id, emails){
     event.target.disabled=true;
-    let data = {
-      "author_id" : pk_id,
-      "email" : email
-    }
-    this.props.addEmailToList(data);
+    var props = this.props;
+    emails.forEach(function(v, k) {
+      let data = {
+        "author_id" : pk_id,
+        "email" : v
+      }
+      props.addEmailToList(data);
+    });
   }
   render(){
     return (

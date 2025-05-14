@@ -117,10 +117,10 @@ jpcoar_holding_agent_mapping = {
             },
             "subitem_holding_agent_name_identifier": {
                 "@attributes": {
-                    "nameIdentifierScheme": "subitem_holding_agent_name_idenfitier_scheme",
-                    "nameIdentifierURI": "subitem_holding_agent_name_idenfitier_uri",
+                    "nameIdentifierScheme": "subitem_holding_agent_name_identifier_scheme",
+                    "nameIdentifierURI": "subitem_holding_agent_name_identifier_uri",
                 },
-                "@value": "subitem_holding_agent_name_idenfitier_holding_agent_name_idenfitier",
+                "@value": "subitem_holding_agent_name_identifier_holding_agent_name_identifier",
             },
         }
     },

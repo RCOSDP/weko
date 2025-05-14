@@ -206,9 +206,16 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
                         ]
 
                         for j in kvl:
-                            name_dict = dict(operator="and")
-                            name_dict.update(dict(query=j))
-                            shud.append(Q("match", **{key: name_dict}))
+                            
+                            if j == "other" and k=="language":
+                                source = "boolean flg=false; for(lang in doc['language']){if (!params.param1.contains(lang)){flg=true;}} return flg;"
+                                params = {"param1":vlst}
+                                script = Q("script",script={"source":source,"params":params})
+                                shud.append(Q("bool",filter=script))
+                            else:
+                                name_dict = dict(operator="and")
+                                name_dict.update(dict(query=j))
+                                shud.append(Q("match", **{key: name_dict}))
 
                         if shud:
                             return Q("bool", should=shud)
@@ -298,7 +305,7 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
                                             if "=*" in alst[1]:
                                                 name = alst[0] + "." + val_attr_lst[0]
                                                 qt = [
-                                                    Q("term", **{name: val_attr_lst[1]})
+                                                    Q("term", **{name: key})
                                                 ]
 
                                             mut.extend(qt or [])
@@ -1269,71 +1276,3 @@ def item_search_factory(
     current_app.logger.debug(json.dumps((search.query()).to_dict()))
     return search, urlkwargs
 
-
-def feedback_email_search_factory(self, search):
-    """Factory for search feedback email list.
-
-    :param self:
-    :param search:
-    :return:
-    """
-
-    def _get_query():
-        query_string = "_type:{} AND " "relation_version_is_last:true ".format(
-            current_app.config["INDEXER_DEFAULT_DOC_TYPE"]
-        )
-        query_q = {
-            "query": {
-                "bool": {
-                    "must": [
-                        {
-                            "nested": {
-                                "path": "feedback_mail_list",
-                                "query": {
-                                    "bool": {
-                                        "must": [
-                                            {
-                                                "exists": {
-                                                    "field": "feedback_mail_list.email"
-                                                }
-                                            }
-                                        ]
-                                    }
-                                },
-                            }
-                        },
-                        {"query_string": {"query": query_string}},
-                    ]
-                }
-            },
-            "aggs": {
-                "feedback_mail_list": {
-                    "nested": {"path": "feedback_mail_list"},
-                    "aggs": {
-                        "email_list": {
-                            "terms": {
-                                "field": "feedback_mail_list.email",
-                                "size": config.WEKO_SEARCH_MAX_FEEDBACK_MAIL,
-                            }
-                        }
-                    },
-                }
-            },
-        }
-        return query_q
-
-    query_q = _get_query()
-
-    try:
-        # Aggregations.
-        extr = search._extra.copy()
-        search.update_from_dict(query_q)
-        search._extra.update(extr)
-    except SyntaxError:
-        current_app.logger.debug(
-            "Failed parsing query: {0}".format(query_q), exc_info=True
-        )
-        raise InvalidQueryRESTError()
-    # debug elastic search query
-    current_app.logger.debug(json.dumps((search.query()).to_dict()))
-    return search

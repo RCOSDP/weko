@@ -16,7 +16,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.9.1\n"
+"Generated-By: Babel 2.5.1\n"
 
 #: weko_admin/admin.py:105
 msgid "deny access"
@@ -172,6 +172,34 @@ msgstr "マッピング"
 #, fuzzy
 msgid "Active"
 msgstr "保存"
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:59
+msgid "UiType"
+msgstr "UI"
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:60
+msgid "DisplayNumber"
+msgstr "表示件数"
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:61
+msgid "OpenClose"
+msgstr "開閉状態"
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:62
+msgid "OpenClose Open"
+msgstr "開"
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:63
+msgid "OpenClose Close"
+msgstr "閉"
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:64
+msgid "DisplayNumber Validation1"
+msgstr "表示件数は1以上99以下の整数値で入力する必要があります。"
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:65
+msgid "DisplayNumber Validation2"
+msgstr "CheckboxListを選択した場合は表示件数を入力する必要があります。"
 
 #: weko_admin/admin.py:1210 weko_admin/admin.py:1237 weko_admin/admin.py:1246
 #: weko_admin/admin.py:1255 weko_admin/admin.py:1264 weko_admin/admin.py:1273
@@ -1283,6 +1311,7 @@ msgstr "座標"
 msgid "Search item setting"
 msgstr "検索項目設定"
 
+#: weko_admin/template/weko_admin/admin/search_management_setting.html
 #: weko_admin/templates/weko_admin/admin/search_management_settings.html:279
 msgid "Index Tree/Facet Display Setting"
 msgstr "インデックスツリー／ファセット表示設定"
@@ -1423,11 +1452,17 @@ msgstr " 同一言語を複数の注意書きに設定されています。"
 msgid "Maximum length of instruction is 1000 characters. "
 msgstr "注意書きの字数上限は1000字です。"
 
-#: weko_admin/templates/weko_admin/admin/site_license_send_mail_settings.html:37
-msgid ""
-"Please classify a check into the organization send a use of site license "
-"statistics eamil."
-msgstr ""
+#: weko_admin/template/weko_admin/admin/site_info.html:64
+msgid "Tracking ID"
+msgstr "トラッキングID"
+
+#: weko_admin/template/weko_admin/admin/site_info.html:65
+msgid "AddThis ID"
+msgstr "AddThis ID"
+
+#: weko_admin/template/weko_admin/admin/site_info.html:66
+msgid "OGP Image"
+msgstr "OGPイメージ"
 
 #: weko_admin/templates/weko_admin/admin/site_license_send_mail_settings.html:42
 #, fuzzy
@@ -1556,6 +1591,14 @@ msgstr "有効期間"
 msgid "Set lifetime for"
 msgstr "有効期間を設定"
 
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html
+msgid "Please select one aggregation mapping."
+msgstr "集計マッピングを１つ選択してください。"
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html
+msgid "Already exists."
+msgstr "既に存在しています。"
+
 #: weko_admin/templates/weko_admin/settings/lifetime.html:42
 msgid "Current"
 msgstr "現行"
@@ -1563,6 +1606,50 @@ msgstr "現行"
 #: weko_admin/templates/weko_admin/settings/lifetime.html:58
 msgid "Update"
 msgstr "更新"
+
+#: weko_admin/admin/reindex_elasticsearch.html
+msgid "reindex item_index"
+msgstr "アイテムインデックスの再作成"
+
+#: weko_admin/admin/reindex_elasticsearch.html
+msgid "reindex item"
+msgstr "アイテムの再インデックス"
+
+#: weko_admin/admin/reindex_elasticsearch.html
+msgid "execute"
+msgstr "実行"
+
+#: weko_admin/admin/reindex_elasticsearch.html
+msgid "Maintenance"
+msgstr "メンテナンス"
+
+#: weko_admin/admin/reindex_elasticsearch.html
+msgid "ElasticSearch Index"
+msgstr "インデックス再作成"
+
+#: weko_admin/admin/reindex_elasticsearch.html
+msgid "waiting..."
+msgstr "実行可能"
+
+#: weko_admin/admin/reindex_elasticsearch.html
+msgid "executing..."
+msgstr "実行中..."
+
+#: weko_admin/admin/reindex_elasticsearch.html
+msgid "haserror"
+msgstr "エラー発生中につき実行できません。"
+
+#: weko_admin/admin/reindex_elasticsearch.html
+msgid "validationMsg1"
+msgstr "実行モードが選ばれていません。"
+
+#: weko_admin/admin/reindex_elasticsearch.html
+msgid "confirmMessage"
+msgstr "本処理の実行にはかなりの時間がかかることが予想されます。インデックスの再作成処理を実行してよいですか？"
+
+#: weko_admin/admin/reindex_elasticsearch.html
+msgid "completed"
+msgstr "処理が完了しました。"
 
 #~ msgid "Title_Asc"
 #~ msgstr "タイトル（昇順）"
@@ -1678,276 +1765,18 @@ msgstr "更新"
 #~ msgid "Footer Setting"
 #~ msgstr "フッター設定"
 
-#: weko_admin/template/weko_admin/admin/site_info.html:54
-#: msgid "Error when get site infomation."
-#: msgstr ""
-
-#: weko_admin/template/weko_admin/admin/site_info.html:55
-#: msgid "Language is deleted from Registered Language of system."
-#: msgstr "削除された言語は利用できません"
-
-#: weko_admin/template/weko_admin/admin/site_info.html:56
-#: msgid "Site info is saved successfully."
-#: msgstr "サイト情報が正常に保存されました。"
-
-#: weko_admin/template/weko_admin/admin/site_info.html:59
-#: msgid "Log in Instructions"
-#: msgstr "ログインの注意書き"
-
-#: weko_admin/template/weko_admin/admin/site_info.html:60
-#: msgid "Add Instructions"
-#: msgstr "注意書きの追加"
-
-#: weko_admin/template/weko_admin/admin/site_info.html:61
-#: msgid "The same language is set for many instructions."
-#: msgstr " 同一言語を複数の注意書きに設定されています。"
-
-#: weko_admin/template/weko_admin/admin/site_info.html:61
-#: msgid "Maximum length of instruction is 1000 characters. "
-#: msgstr "注意書きの字数上限は1000字です。"
-
-#: weko_admin/template/weko_admin/admin/site_info.html:64
-msgid "Tracking ID"
-msgstr "トラッキングID"
-
-#: weko_admin/template/weko_admin/admin/site_info.html:65
-msgid "AddThis ID"
-msgstr "AddThis ID"
-
-#: weko_admin/template/weko_admin/admin/site_info.html:66
-msgid "OGP Image"
-msgstr "OGPイメージ"
-
-#: weko_admin/template/weko_admin/admin/search_management_setting.html
-#: msgid "Index Tree/Facet Display Setting"
-#: msgstr "インデックスツリー／ファセット表示設定"
-
-#: weko_admin/template/weko_admin/admin/search_management_setting.html
-#: msgid "Index Tree"
-#: msgstr "インデックスツリー"
-
-#: weko_admin/template/weko_admin/admin/search_management_setting.html
-#: msgid "Facet"
-#: msgstr "ファセット"
-
-#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:58
-#: msgid "_Display"
-#: msgstr "表示"
-
-#: weko_admin/template/weko_admin/admin/search_management_setting.html
-#: msgid "Main Screen Initial Display Setting"
-#: msgstr "初期表示設定"
-
-#: weko_admin/template/weko_admin/admin/search_management_setting.html
-#: msgid "Default Contents to Display"
-#: msgstr "初期表示画面設定"
-
-#: weko_admin/template/weko_admin/admin/search_management_setting.html
-#: msgid "Default Index to Display"
-#: msgstr "初期表示インデックス表示方法"
-
-#: weko_admin/template/weko_admin/admin/search_management_setting.html
-#: msgid "Initial Display Index"
-#: msgstr "初期表示インデックス"
-
-#: weko_admin/template/weko_admin/admin/search_management_setting.html
-#: msgid "An index which is not open in public cannot be selected"
-#: msgstr "非公開インデックス以下は選択できません"
-
-#: weko_admin/templates/weko_admin/admin/rest_settings.html:52
-#: msgid "Content File Download"
-#: msgstr "コンテンツファイルのダウンロード"
-
-#: weko_admin/templates/weko_admin/admin/rest_settings.html:53
-#: msgid "Expiration Date"
-#: msgstr "有効期限日数"
-
-#: weko_admin/templates/weko_admin/admin/rest_settings.html:64
-#: msgid "Download Limit"
-#: msgstr "ダウンロード回数"
-
-#: weko_admin/templates/weko_admin/admin/rest_settings.html:65
-#: msgid "Unlimited"
-#: msgstr "無制限"
-
-#: weko_admin/templates/weko_admin/admin/rest_settings.html:46
-#: msgid "Must set a positive integer for %(name)s."
-#: msgstr "%(name)sは1以上の整数を設定する必要があります。"
-
-#: weko_admin/templates/weko_admin/admin/rest_settings.html:49
-#: msgid "Please set %(name)s."
-#: msgstr "%(name)sを設定してください。"
-
-#: msgid "Restricted Access was successfully updated."
-#: msgstr "制限公開の設定を変更しました。"
-
-#: msgid "Please input the Terms and Conditions in English."
-#: msgstr "英語の利用規約を入力してください。"
-
-#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:65
-#: msgid "Usage Report Workflow Access"
-#: msgstr "利用報告ワークフローへのアクセス"
-
-#: msgid "Usage Report Reminder Email"
-#: msgstr "利用報告督促メール"
-
-#: msgid "Confirm Usage Mail"
-#: msgstr "確認"
-
-#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:46
-#: msgid "Item Name(EN)"
-#: msgstr "項目名（英）"
-
-#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:47
-#: msgid "Item Name(JP)"
-#: msgstr "項目名（日）"
-
-#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:48
-#: msgid "Mapping"
-#: msgstr "マッピング"
-
-#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:49
-#: msgid "Custom Aggregations"
-#: msgstr "カスタム集計"
-
-#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:50
-#: msgid "Aggregations List"
-#: msgstr "集計一覧"
-
-#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:51
-#: msgid "Aggregation Mapping"
-#: msgstr "集計マッピング"
-
-#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:52
-#: msgid "Aggregation Value"
-#: msgstr "集計値"
-
-#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:54
-msgid "Add_Agg"
-msgstr "追加"
-
-#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:55
-#: msgid "Display/Hide"
-#: msgstr "表示/非表示"
-
-#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:59
-#: msgid "_Hide"
-#: msgstr "非表示"
-
-#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:71
-#: msgid "Are you sure you want to delete it?"
-#: msgstr "削除してよろしいですか？"
-
-#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:64
-#: msgid "Add"
-#: msgstr "追加"
-
-#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:66
-#: msgid "List"
-#: msgstr "一覧"
-
-#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:67
-#: msgid "Create"
-#: msgstr "作成"
-
-#: weko_admin/templates/weko_admin/admin/facet_search_setting.htmll:68
-#: msgid "Edit"
-#: msgstr "編集"
-
-#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:
-msgid "Facet Search List"
-msgstr "ファセット検索一覧"
-
-#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:70
-#: msgid "Please input all required item."
-#: msgstr "必須項目は全て入力して下さい。"
-
-#: weko_admin/templates/weko_admin/admin/facet_search_setting.html
-msgid "Please select one aggregation mapping."
-msgstr "集計マッピングを１つ選択してください。"
-
-#: weko_admin/templates/weko_admin/admin/facet_search_setting.html
-msgid "Already exists."
-msgstr "既に存在しています。"
-
-#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:
-#: msgid "Failed to create due to server error."
-#: msgstr "サーバーエラーのため、作成に失敗しました。"
-
 #~ msgid "Mail Address"
 #~ msgstr "メールアドレス"
 
-#: #~ msgid "Add_Agg"
-#: #~ msgstr "追加"
+#~ msgid ""
+#~ "Please classify a check into the "
+#~ "organization send a use of site "
+#~ "license statistics eamil."
+#~ msgstr ""
 
-#: weko_admin/admin/reindex_elasticsearch.html
-msgid "reindex item_index"
-msgstr "アイテムインデックスの再作成"
+#~ msgid "Add_Agg"
+#~ msgstr "追加"
 
-#: weko_admin/admin/reindex_elasticsearch.html
-msgid "reindex item"
-msgstr "アイテムの再インデックス"
+#~ msgid "Facet Search List"
+#~ msgstr "ファセット検索一覧"
 
-#: weko_admin/admin/reindex_elasticsearch.html
-msgid "execute"
-msgstr "実行"
-
-#: weko_admin/admin/reindex_elasticsearch.html
-msgid "Maintenance"
-msgstr "メンテナンス"
-
-#: weko_admin/admin/reindex_elasticsearch.html
-msgid "ElasticSearch Index"
-msgstr "インデックス再作成"
-
-#: weko_admin/admin/reindex_elasticsearch.html
-msgid "waiting..."
-msgstr "実行可能"
-
-#: weko_admin/admin/reindex_elasticsearch.html
-msgid "executing..."
-msgstr "実行中..."
-
-#: weko_admin/admin/reindex_elasticsearch.html
-msgid "haserror"
-msgstr "エラー発生中につき実行できません。"
-
-#: weko_admin/admin/reindex_elasticsearch.html
-msgid "validationMsg1"
-msgstr "実行モードが選ばれていません。"
-
-#: weko_admin/admin/reindex_elasticsearch.html
-msgid "confirmMessage"
-msgstr "本処理の実行にはかなりの時間がかかることが予想されます。インデックスの再作成処理を実行してよいですか？"
-
-#: weko_admin/admin/reindex_elasticsearch.html
-msgid "completed"
-msgstr "処理が完了しました。"
-#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:59
-msgid "UiType"
-msgstr "UI"
-
-#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:60
-msgid "DisplayNumber"
-msgstr "表示件数"
-
-#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:61
-msgid "OpenClose"
-msgstr "開閉状態"
-
-#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:62
-msgid "OpenClose Open"
-msgstr "開"
-
-#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:63
-msgid "OpenClose Close"
-msgstr "閉"
-
-#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:64
-#, python-format
-msgid "DisplayNumber Validation1"
-msgstr "表示件数は1以上99以下の整数値で入力する必要があります。"
-
-#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:65
-msgid "DisplayNumber Validation2"
-msgstr "CheckboxListを選択した場合は表示件数を入力する必要があります。"

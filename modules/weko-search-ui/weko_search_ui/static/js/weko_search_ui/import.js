@@ -250,7 +250,6 @@ class MainLayout extends React.Component {
 
   handleCheckImportAvailable() {
     closeError();
-    const import_start_time = localStorage.getItem('import_start_time');
     let result = false;
     $.ajax({
       url: urlCheckImportAvailable,
@@ -259,7 +258,7 @@ class MainLayout extends React.Component {
       async: false,
       success: function (response) {
         if (!response.is_available) {
-          let error_msg = import_start_time === response.start_time ? not_available_error : not_available_error_another;
+          let error_msg = not_available_error;
           if (response.error_id === 'celery_not_run') {
             error_msg = celery_not_run;
           }
@@ -295,10 +294,6 @@ class MainLayout extends React.Component {
       contentType: "application/json; charset=utf-8",
       dataType: "json",
       success: function (response) {
-        const import_start_time = response.data.import_start_time;
-        if (import_start_time !== '') {
-          localStorage.setItem('import_start_time', import_start_time);
-        }
         that.setState(() => {
           return {
             step: step.RESULT_STEP,
@@ -894,7 +889,7 @@ class CheckComponent extends React.Component {
       contentType: "application/json; charset=utf-8",
       success: function (response) {
         const date = moment()
-        const fileName = 'check_' + date.format("YYYY-DD-MM") + '.' + file_format;
+        const fileName = 'check_' + date.format("YYYY-MM-DD") + '.' + file_format;
 
         const blob = new Blob([response], { type: 'text/' + file_format });
         if (window.navigator && window.navigator.msSaveOrOpenBlob) {
@@ -1059,7 +1054,7 @@ class ResultComponent extends React.Component {
       contentType: "application/json; charset=utf-8",
       success: function (response) {
         const date = moment()
-        const fileName = 'List_Download_' + date.format("YYYY-DD-MM") + '.' + file_format;
+        const fileName = 'List_Download_' + date.format("YYYY-MM-DD") + '.' + file_format;
 
         const blob = new Blob([response], { type: 'text/' + file_format });
         if (window.navigator && window.navigator.msSaveOrOpenBlob) {

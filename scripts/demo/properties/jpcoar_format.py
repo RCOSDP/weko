@@ -15,7 +15,7 @@ name_ja = "物理的形態"
 name_en = "Physical Format"
 mapping = {
     "display_lang_type": "",
-    "jpcoar_v1_mapping": {},
+    "jpcoar_v1_mapping": "",
     "jpcoar_mapping": {
         "format": {
             "@value": "jpcoar_format",

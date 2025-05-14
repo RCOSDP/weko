@@ -33,11 +33,11 @@ from datetime import datetime
 from collections import OrderedDict
 from unittest.mock import patch
 from datetime import timedelta
-from kombu import Exchange, Queue
+from sqlalchemy.sql import func
 
 import pytest
 from elasticsearch import Elasticsearch
-from flask import Flask ,request
+from flask import Flask
 from flask_babelex import Babel
 from flask_login import LoginManager, UserMixin
 from flask_menu import Menu
@@ -49,6 +49,7 @@ from invenio_accounts.testutils import create_test_user, login_user_via_session
 from invenio_admin import InvenioAdmin
 from invenio_assets import InvenioAssets
 from invenio_cache import InvenioCache
+from invenio_communities.models import Community
 from invenio_db import InvenioDB
 from invenio_db import db as db_
 from invenio_deposit import InvenioDeposit
@@ -105,12 +106,11 @@ from weko_index_tree.models import Index, IndexStyle
 from weko_items_ui import WekoItemsUI
 from weko_items_ui.config import WEKO_ITEMS_UI_MS_MIME_TYPE,WEKO_ITEMS_UI_FILE_SISE_PREVIEW_LIMIT
 from weko_records import WekoRecords
-from weko_records.api import ItemsMetadata
+from weko_records.api import ItemsMetadata, FilesMetadata
 from weko_records.models import ItemType, ItemTypeMapping, ItemTypeName, SiteLicenseInfo, FeedbackMailList,SiteLicenseIpAddress
 from weko_records.utils import get_options_and_order_list
 from weko_records_ui.config import WEKO_ADMIN_PDFCOVERPAGE_TEMPLATE,RECORDS_UI_ENDPOINTS,WEKO_RECORDS_UI_SECRET_KEY,WEKO_RECORDS_UI_ONETIME_DOWNLOAD_PATTERN
-from weko_records_ui.models import FileSecretDownload, PDFCoverPageSettings,FileOnetimeDownload, FilePermission
-from weko_records_ui.utils import _create_secret_download_url, _generate_secret_download_url
+from weko_records_ui.models import PDFCoverPageSettings,FileOnetimeDownload, FilePermission #RocrateMapping
 from weko_schema_ui.config import (
     WEKO_SCHEMA_DDI_SCHEMA_NAME,
     WEKO_SCHEMA_JPCOAR_V1_SCHEMA_NAME,
@@ -152,7 +152,8 @@ from weko_workflow.models import (
     FlowDefine,
     WorkFlow,
 )
-from weko_workflow.config import WEKO_WORKFLOW_DATE_FORMAT
+from werkzeug.utils import secure_filename
+
 
 @pytest.yield_fixture()
 def instance_path():
@@ -187,18 +188,16 @@ def base_app(instance_path):
         CELERY_CACHE_BACKEND="memory",
         CELERY_EAGER_PROPAGATES_EXCEPTIONS=True,
         CELERY_RESULT_BACKEND="cache",
-        CACHE_REDIS_URL="redis://redis:6379/0",
+        CACHE_REDIS_URL=os.environ.get("CACHE_REDIS_URL", "redis://redis:6379/0"),
         CACHE_REDIS_DB=0,
         CACHE_REDIS_HOST="redis",
         REDIS_PORT="6379",
         JSONSCHEMAS_URL_SCHEME="http",
         SECRET_KEY="CHANGE_ME",
         SECURITY_PASSWORD_SALT="CHANGE_ME_ALSO",
-        # SQLALCHEMY_DATABASE_URI=os.environ.get(
-        #     "SQLALCHEMY_DATABASE_URI", "sqlite:///test.db"
-        # ),
-        SQLALCHEMY_DATABASE_URI=os.getenv('SQLALCHEMY_DATABASE_URI',
-                                           'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest'),
+        SQLALCHEMY_DATABASE_URI=os.environ.get(
+            "SQLALCHEMY_DATABASE_URI", "sqlite:///test.db"
+        ),
         SQLALCHEMY_TRACK_MODIFICATIONS=True,
         SQLALCHEMY_ECHO=False,
         TESTING=True,
@@ -225,7 +224,7 @@ def base_app(instance_path):
         },
         WEKO_INDEX_TREE_UPATED=True,
         WEKO_INDEX_TREE_REST_ENDPOINTS=WEKO_INDEX_TREE_REST_ENDPOINTS,
-        I18N_LANGUAGES=[("ja", "Japanese"), ("en", "English")],
+        I18N_LANGUAGES=[("ja", "Japanese"), ("en", "English"), ('fr', 'French')],
         SERVER_NAME="TEST_SERVER",
         SEARCH_ELASTIC_HOSTS="elasticsearch",
         SEARCH_INDEX_PREFIX="test-",
@@ -267,8 +266,12 @@ def base_app(instance_path):
         WEKO_RECORDS_UI_SECRET_KEY=WEKO_RECORDS_UI_SECRET_KEY,
         WEKO_RECORDS_UI_ONETIME_DOWNLOAD_PATTERN=WEKO_RECORDS_UI_ONETIME_DOWNLOAD_PATTERN,
         WEKO_ADMIN_PDFCOVERPAGE_TEMPLATE=WEKO_ADMIN_PDFCOVERPAGE_TEMPLATE,
-        INDEXER_MQ_QUEUE = Queue("indexer", exchange=Exchange("indexer", type="direct"), routing_key="indexer",queue_arguments={"x-queue-type":"quorum"}),
-        WEKO_WORKFLOW_DATE_FORMAT = WEKO_WORKFLOW_DATE_FORMAT,
+        SEARCH_UI_SEARCH_INDEX="test-weko",
+        FILES_REST_ROLES_ENV = [
+            'INVENIO_ROLE_SYSTEM',
+            'INVENIO_ROLE_REPOSITORY',
+            'INVENIO_ROLE_COMMUNITY'
+        ]
     )
     # with ESTestServer(timeout=30) as server:
     Babel(app_)
@@ -297,7 +300,7 @@ def base_app(instance_path):
     WekoRecords(app_)
     WekoItemsUI(app_)
     WekoRecordsUI(app_)
-    # WekoRecordsCitesREST(app_)
+    WekoRecordsCitesREST(app_)
     WekoAdmin(app_)
     WekoSearchUI(app_)
     WekoTheme(app_)
@@ -383,9 +386,11 @@ def users(app, db):
         comadmin = User.query.filter_by(email="comadmin@test.org").first()
         repoadmin = User.query.filter_by(email="repoadmin@test.org").first()
         sysadmin = User.query.filter_by(email="sysadmin@test.org").first()
-        generaluser = User.query.filter_by(email="generaluser@test.org")
-        originalroleuser = create_test_user(email="originalroleuser@test.org")
-        originalroleuser2 = create_test_user(email="originalroleuser2@test.org")
+        generaluser = User.query.filter_by(email="generaluser@test.org").first()
+        # originalroleuser = create_test_user(email="originalroleuser@test.org")
+        # originalroleuser2 = create_test_user(email="originalroleuser2@test.org")
+        originalroleuser = User.query.filter_by(email="originalroleuser@test.org").first()
+        originalroleuser2 = User.query.filter_by(email="originalroleuser2@test.org").first()
 
     role_count = Role.query.filter_by(name="System Administrator").count()
     if role_count != 1:
@@ -763,7 +768,7 @@ def records(app, db, esindex, indextree, location, itemtypes, oaischema):
     filename = "helloworld.pdf"
     mimetype = "application/pdf"
     filepath = "tests/data/helloworld.pdf"
-    results.append(make_record(db, indexer, i, filepath, filename, mimetype, file_head=True))
+    results.append(make_record(db, indexer, i, filepath, filename, mimetype))
 
     i = 2
     filename = "helloworld.docx"
@@ -771,18 +776,65 @@ def records(app, db, esindex, indextree, location, itemtypes, oaischema):
         "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
     )
     filepath = "tests/data/helloworld.docx"
-    results.append(make_record(db, indexer, i, filepath, filename, mimetype, file_head=False))
+    results.append(make_record(db, indexer, i, filepath, filename, mimetype))
 
     i = 3
     filename = "helloworld.zip"
     mimetype = "application/zip"
     filepath = "tests/data/helloworld.zip"
-    results.append(make_record(db, indexer, i, filepath, filename, mimetype, file_head=False))
+    results.append(make_record(db, indexer, i, filepath, filename, mimetype))
+
+    i = 4
+    files = [
+        {
+            "filename": "helloworld.pdf",
+            "mimetype": "application/pdf",
+            "filepath": "tests/data/helloworld.pdf",
+            "accessrole": "open_access",
+        },
+        {
+            "filename": "helloworld.txt",
+            "mimetype": "text/plain",
+            "filepath": "tests/data/helloworld.txt",
+            "accessrole": "open_no",
+        },
+    ]
+    results.append(make_record_v2(db, indexer, i, files))
+
+    i = 5
+    files = [
+        {
+            "filename": "helloworld.pdf",
+            "mimetype": "application/pdf",
+            "filepath": "tests/data/helloworld.pdf",
+            "accessrole": "open_no",
+        },
+    ]
+    results.append(make_record_v2(db, indexer, i, files))
+
+    i = 6
+    files = []
+    results.append(make_record_v2(db, indexer, i, files))
+
+    i = 7
+    files = [
+        {
+            "filename": "helloworld.pdf",
+            "mimetype": "application/pdf",
+            "filepath": "tests/data/helloworld.pdf",
+            "accessrole": "open_access",
+        },
+    ]
+    thumbnail = {
+        "filename": "image01.jpg",
+        "filepath": "tests/data/image01.jpg",
+    }
+    results.append(make_record_v2(db, indexer, i, files, thumbnail))
 
     return indexer, results
 
 
-def make_record(db, indexer, i, filepath, filename, mimetype, file_head):
+def make_record(db, indexer, i, filepath, filename, mimetype):
     record_data = {
         "_oai": {"id": "oai:weko3.example.org:000000{:02d}".format(i), "sets": ["{}".format((i % 2) + 1)]},
         "path": ["{}".format((i % 2) + 1)],
@@ -1816,7 +1868,7 @@ def make_record(db, indexer, i, filepath, filename, mimetype, file_head):
         ).decode("utf-8")
     with open(filepath, "rb") as f:
         obj = ObjectVersion.create(bucket=bucket.id, key=filename, stream=f)
-        obj.is_head = file_head
+        FilesMetadata.create(data={'file': filename, 'display_name': filename}, id_=i, pid=i, con=bytes('test content {}'.format(i), 'utf-8'))
     deposit = aWekoDeposit(record, record.model)
     deposit.commit()
     record["item_1617605131499"]["attribute_value_mlt"][0]["version_id"] = str(
@@ -1850,7 +1902,6 @@ def make_record(db, indexer, i, filepath, filename, mimetype, file_head):
     # stream = BytesIO(b"Hello, World")
     record_v1.files[filename] = stream
     obj_v1 = ObjectVersion.create(bucket=bucket_v1.id, key=filename, stream=stream)
-    obj_v1.is_head = False
     record_v1["item_1617605131499"]["attribute_value_mlt"][0]["file"] = (
         base64.b64encode(stream.getvalue())
     ).decode("utf-8")
@@ -1896,6 +1947,774 @@ def make_record(db, indexer, i, filepath, filename, mimetype, file_head):
         "mimetype": mimetype,
         "obj": obj,
     }
+
+
+def make_record_v2(db, indexer, i, files, thumbnail=None):
+    record_data = {
+        "_oai": {"id": f"oai:weko3.example.org:000000{i:02}", "sets": [f"{(i % 2) + 1}"]},
+        "path": [f"{(i % 2) + 1}"],
+        "owner": "1",
+        "recid": f"{i}",
+        "title": [
+            "ja_conference paperITEM00000009(public_open_access_open_access_simple)"
+        ],
+        "pubdate": {"attribute_name": "PubDate", "attribute_value": "2024-02-15"},
+        "_buckets": {"deposit": "27202db8-aefc-4b85-b5ae-4921ac151ddf"},
+        "_deposit": {
+            "id": f"{i}",
+            "pid": {"type": "depid", "value": f"{i}", "revision_id": 0},
+            "owners": [1],
+            "status": "published",
+        },
+        "item_title": "ja_conference paperITEM00000009(public_open_access_open_access_simple)",
+        "author_link": ["4"],
+        "item_type_id": "1",
+        "publish_date": "2024-01-31",
+        "publish_status": "0",
+        "weko_shared_id": -1,
+        "item_1617186331708": {
+            "attribute_name": "Title",
+            "attribute_value_mlt": [
+                {
+                    "subitem_1551255647225": "ja_conference paperITEM00000009(public_open_access_open_access_simple)",
+                    "subitem_1551255648112": "ja",
+                },
+                {
+                    "subitem_1551255647225": "en_conference paperITEM00000009(public_open_access_simple)",
+                    "subitem_1551255648112": "en",
+                },
+            ],
+        },
+        "item_1617186385884": {
+            "attribute_name": "Alternative Title",
+            "attribute_value_mlt": [
+                {
+                    "subitem_1551255720400": "Alternative EN Title",
+                    "subitem_1551255721061": "en",
+                },
+                {
+                    "subitem_1551255720400": "Alternative JA Title",
+                    "subitem_1551255721061": "ja",
+                },
+            ],
+        },
+        "item_1617186419668": {
+            "attribute_name": "Creator",
+            "attribute_type": "creator",
+            "attribute_value_mlt": [
+                {
+                    "givenNames": [
+                        {"givenName": "太郎", "givenNameLang": "ja"},
+                        {"givenName": "タロウ", "givenNameLang": "ja-Kana"},
+                        {"givenName": "Taro", "givenNameLang": "en"},
+                    ],
+                    "familyNames": [
+                        {"familyName": "情報", "familyNameLang": "ja"},
+                        {"familyName": "ジョウホウ", "familyNameLang": "ja-Kana"},
+                        {"familyName": "Joho", "familyNameLang": "en"},
+                    ],
+                    "creatorMails": [{"creatorMail": "wekosoftware@nii.ac.jp"}],
+                    "creatorNames": [
+                        {"creatorName": "情報, 太郎", "creatorNameLang": "ja"},
+                        {"creatorName": "ジョウホウ, タロウ", "creatorNameLang": "ja-Kana"},
+                        {"creatorName": "Joho, Taro", "creatorNameLang": "en"},
+                    ],
+                    "nameIdentifiers": [
+                        {"nameIdentifier": "4", "nameIdentifierScheme": "WEKO"},
+                        {
+                            "nameIdentifier": "xxxxxxx",
+                            "nameIdentifierURI": "https://orcid.org/",
+                            "nameIdentifierScheme": "ORCID",
+                        },
+                        {
+                            "nameIdentifier": "xxxxxxx",
+                            "nameIdentifierURI": "https://ci.nii.ac.jp/",
+                            "nameIdentifierScheme": "CiNii",
+                        },
+                        {
+                            "nameIdentifier": "zzzzzzz",
+                            "nameIdentifierURI": "https://kaken.nii.ac.jp/",
+                            "nameIdentifierScheme": "KAKEN2",
+                        },
+                    ],
+                    "creatorAffiliations": [
+                        {
+                            "affiliationNames": [
+                                {
+                                    "affiliationName": "University",
+                                    "affiliationNameLang": "en",
+                                }
+                            ],
+                            "affiliationNameIdentifiers": [
+                                {
+                                    "affiliationNameIdentifier": "0000000121691048",
+                                    "affiliationNameIdentifierURI": "http://isni.org/isni/0000000121691048",
+                                    "affiliationNameIdentifierScheme": "ISNI",
+                                }
+                            ],
+                        }
+                    ],
+                },
+                {
+                    "givenNames": [
+                        {"givenName": "太郎", "givenNameLang": "ja"},
+                        {"givenName": "タロウ", "givenNameLang": "ja-Kana"},
+                        {"givenName": "Taro", "givenNameLang": "en"},
+                    ],
+                    "familyNames": [
+                        {"familyName": "情報", "familyNameLang": "ja"},
+                        {"familyName": "ジョウホウ", "familyNameLang": "ja-Kana"},
+                        {"familyName": "Joho", "familyNameLang": "en"},
+                    ],
+                    "creatorMails": [{"creatorMail": "wekosoftware@nii.ac.jp"}],
+                    "creatorNames": [
+                        {"creatorName": "情報, 太郎", "creatorNameLang": "ja"},
+                        {"creatorName": "ジョウホウ, タロウ", "creatorNameLang": "ja-Kana"},
+                        {"creatorName": "Joho, Taro", "creatorNameLang": "en"},
+                    ],
+                    "nameIdentifiers": [
+                        {
+                            "nameIdentifier": "xxxxxxx",
+                            "nameIdentifierURI": "https://orcid.org/",
+                            "nameIdentifierScheme": "ORCID",
+                        },
+                        {
+                            "nameIdentifier": "xxxxxxx",
+                            "nameIdentifierURI": "https://ci.nii.ac.jp/",
+                            "nameIdentifierScheme": "CiNii",
+                        },
+                        {
+                            "nameIdentifier": "zzzzzzz",
+                            "nameIdentifierURI": "https://kaken.nii.ac.jp/",
+                            "nameIdentifierScheme": "KAKEN2",
+                        },
+                    ],
+                },
+                {
+                    "givenNames": [
+                        {"givenName": "太郎", "givenNameLang": "ja"},
+                        {"givenName": "タロウ", "givenNameLang": "ja-Kana"},
+                        {"givenName": "Taro", "givenNameLang": "en"},
+                    ],
+                    "familyNames": [
+                        {"familyName": "情報", "familyNameLang": "ja"},
+                        {"familyName": "ジョウホウ", "familyNameLang": "ja-Kana"},
+                        {"familyName": "Joho", "familyNameLang": "en"},
+                    ],
+                    "creatorMails": [{"creatorMail": "wekosoftware@nii.ac.jp"}],
+                    "creatorNames": [
+                        {"creatorName": "情報, 太郎", "creatorNameLang": "ja"},
+                        {"creatorName": "ジョウホウ, タロウ", "creatorNameLang": "ja-Kana"},
+                        {"creatorName": "Joho, Taro", "creatorNameLang": "en"},
+                    ],
+                    "nameIdentifiers": [
+                        {
+                            "nameIdentifier": "xxxxxxx",
+                            "nameIdentifierURI": "https://orcid.org/",
+                            "nameIdentifierScheme": "ORCID",
+                        },
+                        {
+                            "nameIdentifier": "xxxxxxx",
+                            "nameIdentifierURI": "https://ci.nii.ac.jp/",
+                            "nameIdentifierScheme": "CiNii",
+                        },
+                        {
+                            "nameIdentifier": "zzzzzzz",
+                            "nameIdentifierURI": "https://kaken.nii.ac.jp/",
+                            "nameIdentifierScheme": "KAKEN2",
+                        },
+                    ],
+                },
+            ],
+        },
+        "item_1617186476635": {
+            "attribute_name": "Access Rights",
+            "attribute_value_mlt": [
+                {
+                    "subitem_1522299639480": "open access",
+                    "subitem_1600958577026": "http://purl.org/coar/access_right/c_abf2",
+                }
+            ],
+        },
+        "item_1617186626617": {
+            "attribute_name": "Description",
+            "attribute_value_mlt": [
+                {
+                    "subitem_description": "Description\nDescription<br/>Description",
+                    "subitem_description_type": "Abstract",
+                    "subitem_description_language": "en",
+                },
+                {
+                    "subitem_description": "概要\n概要\n概要\n概要",
+                    "subitem_description_type": "Abstract",
+                    "subitem_description_language": "ja",
+                },
+            ],
+        },
+        "item_1617186643794": {
+            "attribute_name": "Publisher",
+            "attribute_value_mlt": [
+                {"subitem_1522300295150": "en", "subitem_1522300316516": "Publisher"}
+            ],
+        },
+        "item_1617186660861": {
+            "attribute_name": "Date",
+            "attribute_value_mlt": [
+                {
+                    "subitem_1522300695726": "Available",
+                    "subitem_1522300722591": "2024-01-31",
+                }
+            ],
+        },
+        "item_1617186702042": {
+            "attribute_name": "Language",
+            "attribute_value_mlt": [{"subitem_1551255818386": "jpn"}],
+        },
+        "item_1617605131499": {
+            "attribute_name": "File",
+            "attribute_type": "file",
+            "attribute_value_mlt": [],
+        },
+        "relation_version_is_last": True,
+    }
+
+    item_data = {
+        "id": f"{i}",
+        "pid": {"type": "recid", "value": f"{i}", "revision_id": 0},
+        "path": [f"{(i % 2) + 1}"],
+        "owner": "1",
+        "title": "ja_conference paperITEM00000009(public_open_access_open_access_simple)",
+        "owners": [1],
+        "status": "draft",
+        "$schema": "https://localhost:8443/items/jsonschema/1",
+        "pubdate": "2021-08-06",
+        "feedback_mail_list": [{"email": "wekosoftware@nii.ac.jp", "author_id": ""}],
+        "item_1617186331708": [
+            {
+                "subitem_1551255647225": "ja_conference paperITEM00000009(public_open_access_open_access_simple)",
+                "subitem_1551255648112": "ja",
+            },
+            {
+                "subitem_1551255647225": "en_conference paperITEM00000009(public_open_access_simple)",
+                "subitem_1551255648112": "en",
+            },
+        ],
+        "item_1617186385884": [
+            {
+                "subitem_1551255720400": "Alternative Title",
+                "subitem_1551255721061": "en",
+            },
+            {
+                "subitem_1551255720400": "Alternative Title",
+                "subitem_1551255721061": "ja",
+            },
+        ],
+        "item_1617186419668": [
+            {
+                "givenNames": [
+                    {"givenName": "太郎", "givenNameLang": "ja"},
+                    {"givenName": "タロウ", "givenNameLang": "ja-Kana"},
+                    {"givenName": "Taro", "givenNameLang": "en"},
+                ],
+                "familyNames": [
+                    {"familyName": "情報", "familyNameLang": "ja"},
+                    {"familyName": "ジョウホウ", "familyNameLang": "ja-Kana"},
+                    {"familyName": "Joho", "familyNameLang": "en"},
+                ],
+                "creatorMails": [{"creatorMail": "wekosoftware@nii.ac.jp"}],
+                "creatorNames": [
+                    {"creatorName": "情報, 太郎", "creatorNameLang": "ja"},
+                    {"creatorName": "ジョウホウ, タロウ", "creatorNameLang": "ja-Kana"},
+                    {"creatorName": "Joho, Taro", "creatorNameLang": "en"},
+                ],
+                "nameIdentifiers": [
+                    {"nameIdentifier": "4", "nameIdentifierScheme": "WEKO"},
+                    {
+                        "nameIdentifier": "xxxxxxx",
+                        "nameIdentifierURI": "https://orcid.org/",
+                        "nameIdentifierScheme": "ORCID",
+                    },
+                    {
+                        "nameIdentifier": "xxxxxxx",
+                        "nameIdentifierURI": "https://ci.nii.ac.jp/",
+                        "nameIdentifierScheme": "CiNii",
+                    },
+                    {
+                        "nameIdentifier": "zzzzzzz",
+                        "nameIdentifierURI": "https://kaken.nii.ac.jp/",
+                        "nameIdentifierScheme": "KAKEN2",
+                    },
+                ],
+                "creatorAffiliations": [
+                    {
+                        "affiliationNames": [
+                            {
+                                "affiliationName": "University",
+                                "affiliationNameLang": "en",
+                            }
+                        ],
+                        "affiliationNameIdentifiers": [
+                            {
+                                "affiliationNameIdentifier": "0000000121691048",
+                                "affiliationNameIdentifierURI": "http://isni.org/isni/0000000121691048",
+                                "affiliationNameIdentifierScheme": "ISNI",
+                            }
+                        ],
+                    }
+                ],
+            },
+            {
+                "givenNames": [
+                    {"givenName": "太郎", "givenNameLang": "ja"},
+                    {"givenName": "タロ", "givenNameLang": "ja-Kana"},
+                    {"givenName": "Taro", "givenNameLang": "en"},
+                ],
+                "familyNames": [
+                    {"familyName": "情報", "familyNameLang": "ja"},
+                    {"familyName": "ジウホウ", "familyNameLang": "ja-Kana"},
+                    {"familyName": "Joho", "familyNameLang": "en"},
+                ],
+                "creatorMails": [{"creatorMail": "wekosoftware@nii.ac.jp"}],
+                "creatorNames": [
+                    {"creatorName": "情報, 太郎", "creatorNameLang": "ja"},
+                    {"creatorName": "ジョウホウ, タロウ", "creatorNameLang": "ja-Kana"},
+                    {"creatorName": "Joho, Taro", "creatorNameLang": "en"},
+                ],
+                "nameIdentifiers": [
+                    {
+                        "nameIdentifier": "xxxxxxx",
+                        "nameIdentifierURI": "https://orcid.org/",
+                        "nameIdentifierScheme": "ORCID",
+                    },
+                    {
+                        "nameIdentifier": "xxxxxxx",
+                        "nameIdentifierURI": "https://ci.nii.ac.jp/",
+                        "nameIdentifierScheme": "CiNii",
+                    },
+                    {
+                        "nameIdentifier": "zzzzzzz",
+                        "nameIdentifierURI": "https://kaken.nii.ac.jp/",
+                        "nameIdentifierScheme": "KAKEN2",
+                    },
+                ],
+            },
+            {
+                "givenNames": [
+                    {"givenName": "太郎", "givenNameLang": "ja"},
+                    {"givenName": "タロウ", "givenNameLang": "ja-Kana"},
+                    {"givenName": "Taro", "givenNameLang": "en"},
+                ],
+                "familyNames": [
+                    {"familyName": "情報", "familyNameLang": "ja"},
+                    {"familyName": "ジョウホウ", "familyNameLang": "ja-Kana"},
+                    {"familyName": "Joho", "familyNameLang": "en"},
+                ],
+                "creatorMails": [{"creatorMail": "wekosoftware@nii.ac.jp"}],
+                "creatorNames": [
+                    {"creatorName": "情報, 太郎", "creatorNameLang": "ja"},
+                    {"creatorName": "ジョウホウ, タロウ", "creatorNameLang": "ja-Kana"},
+                    {"creatorName": "Joho, Taro", "creatorNameLang": "en"},
+                ],
+                "nameIdentifiers": [
+                    {
+                        "nameIdentifier": "xxxxxxx",
+                        "nameIdentifierURI": "https://orcid.org/",
+                        "nameIdentifierScheme": "ORCID",
+                    },
+                    {
+                        "nameIdentifier": "xxxxxxx",
+                        "nameIdentifierURI": "https://ci.nii.ac.jp/",
+                        "nameIdentifierScheme": "CiNii",
+                    },
+                    {
+                        "nameIdentifier": "zzzzzzz",
+                        "nameIdentifierURI": "https://kaken.nii.ac.jp/",
+                        "nameIdentifierScheme": "KAKEN2",
+                    },
+                ],
+            },
+        ],
+        "item_1617186476635": {
+            "subitem_1522299639480": "open access",
+            "subitem_1600958577026": "http://purl.org/coar/access_right/c_abf2",
+        },
+        "item_1617186499011": [
+            {
+                "subitem_1522650717957": "ja",
+                "subitem_1522650727486": "http://localhost",
+                "subitem_1522651041219": "Rights Information",
+            }
+        ],
+        "item_1617186609386": [
+            {
+                "subitem_1522299896455": "ja",
+                "subitem_1522300014469": "Other",
+                "subitem_1522300048512": "http://localhost/",
+                "subitem_1523261968819": "Sibject1",
+            }
+        ],
+        "item_1617186626617": [
+            {
+                "subitem_description": "Description\nDescription<br/>Description",
+                "subitem_description_type": "Abstract",
+                "subitem_description_language": "en",
+            },
+            {
+                "subitem_description": "概要\n概要\n概要\n概要",
+                "subitem_description_type": "Abstract",
+                "subitem_description_language": "ja",
+            },
+        ],
+        "item_1617186643794": [
+            {"subitem_1522300295150": "en", "subitem_1522300316516": "Publisher"}
+        ],
+        "item_1617186660861": [
+            {
+                "subitem_1522300695726": "Available",
+                "subitem_1522300722591": "2021-06-30",
+            }
+        ],
+        "item_1617186702042": [{"subitem_1551255818386": "jpn"}],
+        "item_1617186783814": [
+            {
+                "subitem_identifier_uri": "http://localhost",
+                "subitem_identifier_type": "URI",
+            }
+        ],
+        "item_1617186859717": [
+            {"subitem_1522658018441": "en", "subitem_1522658031721": "Temporal"}
+        ],
+        "item_1617186882738": [
+            {"subitem_geolocation_place": [{"subitem_geolocation_place_text": "Japan"}]}
+        ],
+        "item_1617186901218": [
+            {
+                "subitem_1522399143519": {
+                    "subitem_1522399281603": "ISNI",
+                    "subitem_1522399333375": "http://xxx",
+                },
+                "subitem_1522399412622": [
+                    {
+                        "subitem_1522399416691": "en",
+                        "subitem_1522737543681": "Funder Name",
+                    }
+                ],
+                "subitem_1522399571623": {
+                    "subitem_1522399585738": "Award URI",
+                    "subitem_1522399628911": "Award Number",
+                },
+                "subitem_1522399651758": [
+                    {
+                        "subitem_1522721910626": "en",
+                        "subitem_1522721929892": "Award Title",
+                    }
+                ],
+            }
+        ],
+        "item_1617186920753": [
+            {"subitem_1522646500366": "ISSN", "subitem_1522646572813": "xxxx-xxxx-xxxx"}
+        ],
+        "item_1617186941041": [
+            {"subitem_1522650068558": "en", "subitem_1522650091861": "Source Title"}
+        ],
+        "item_1617186959569": {"subitem_1551256328147": "1"},
+        "item_1617186981471": {"subitem_1551256294723": "111"},
+        "item_1617186994930": {"subitem_1551256248092": "12"},
+        "item_1617187024783": {"subitem_1551256198917": "1"},
+        "item_1617187045071": {"subitem_1551256185532": "3"},
+        "item_1617187112279": [
+            {"subitem_1551256126428": "Degree Name", "subitem_1551256129013": "en"}
+        ],
+        "item_1617187136212": {"subitem_1551256096004": "2021-06-30"},
+        "item_1617187187528": [
+            {
+                "subitem_1599711633003": [
+                    {
+                        "subitem_1599711636923": "Conference Name",
+                        "subitem_1599711645590": "ja",
+                    }
+                ],
+                "subitem_1599711655652": "1",
+                "subitem_1599711660052": [
+                    {"subitem_1599711680082": "Sponsor", "subitem_1599711686511": "ja"}
+                ],
+                "subitem_1599711699392": {
+                    "subitem_1599711704251": "2020/12/11",
+                    "subitem_1599711712451": "1",
+                    "subitem_1599711727603": "12",
+                    "subitem_1599711731891": "2000",
+                    "subitem_1599711735410": "1",
+                    "subitem_1599711739022": "12",
+                    "subitem_1599711743722": "2020",
+                    "subitem_1599711745532": "ja",
+                },
+                "subitem_1599711758470": [
+                    {
+                        "subitem_1599711769260": "Conference Venue",
+                        "subitem_1599711775943": "ja",
+                    }
+                ],
+                "subitem_1599711788485": [
+                    {
+                        "subitem_1599711798761": "Conference Place",
+                        "subitem_1599711803382": "ja",
+                    }
+                ],
+                "subitem_1599711813532": "JPN",
+            }
+        ],
+        "item_1617258105262": {
+            "resourceuri": "http://purl.org/coar/resource_type/c_5794",
+            "resourcetype": "conference paper",
+        },
+        "item_1617265215918": {
+            "subitem_1522305645492": "AO",
+            "subitem_1600292170262": "http://purl.org/coar/version/c_b1a7d7d4d402bcce",
+        },
+        "item_1617349709064": [
+            {
+                "givenNames": [
+                    {"givenName": "太郎", "givenNameLang": "ja"},
+                    {"givenName": "タロウ", "givenNameLang": "ja-Kana"},
+                    {"givenName": "Taro", "givenNameLang": "en"},
+                ],
+                "familyNames": [
+                    {"familyName": "情報", "familyNameLang": "ja"},
+                    {"familyName": "ジョウホウ", "familyNameLang": "ja-Kana"},
+                    {"familyName": "Joho", "familyNameLang": "en"},
+                ],
+                "contributorType": "ContactPerson",
+                "nameIdentifiers": [
+                    {
+                        "nameIdentifier": "xxxxxxx",
+                        "nameIdentifierURI": "https://orcid.org/",
+                        "nameIdentifierScheme": "ORCID",
+                    },
+                    {
+                        "nameIdentifier": "xxxxxxx",
+                        "nameIdentifierURI": "https://ci.nii.ac.jp/",
+                        "nameIdentifierScheme": "CiNii",
+                    },
+                    {
+                        "nameIdentifier": "xxxxxxx",
+                        "nameIdentifierURI": "https://kaken.nii.ac.jp/",
+                        "nameIdentifierScheme": "KAKEN2",
+                    },
+                ],
+                "contributorMails": [{"contributorMail": "wekosoftware@nii.ac.jp"}],
+                "contributorNames": [
+                    {"lang": "ja", "contributorName": "情報, 太郎"},
+                    {"lang": "ja-Kana", "contributorName": "ジョウホ, タロウ"},
+                    {"lang": "en", "contributorName": "Joho, Taro"},
+                ],
+            }
+        ],
+        "item_1617349808926": {"subitem_1523263171732": "Version"},
+        "item_1617351524846": {"subitem_1523260933860": "Unknown"},
+        "item_1617353299429": [
+            {
+                "subitem_1522306207484": "isVersionOf",
+                "subitem_1522306287251": {
+                    "subitem_1522306382014": "arXiv",
+                    "subitem_1522306436033": "xxxxx",
+                },
+                "subitem_1523320863692": [
+                    {
+                        "subitem_1523320867455": "en",
+                        "subitem_1523320909613": "Related Title",
+                    }
+                ],
+            }
+        ],
+        "item_1617605131499": [],
+        "item_1617610673286": [
+            {
+                "nameIdentifiers": [
+                    {
+                        "nameIdentifier": "xxxxxx",
+                        "nameIdentifierURI": "https://orcid.org/",
+                        "nameIdentifierScheme": "ORCID",
+                    }
+                ],
+                "rightHolderNames": [
+                    {
+                        "rightHolderName": "Right Holder Name",
+                        "rightHolderLanguage": "ja",
+                    }
+                ],
+            }
+        ],
+        "item_1617620223087": [
+            {
+                "subitem_1565671149650": "ja",
+                "subitem_1565671169640": "Banner Headline",
+                "subitem_1565671178623": "Subheading",
+            },
+            {
+                "subitem_1565671149650": "en",
+                "subitem_1565671169640": "Banner Headline",
+                "subitem_1565671178623": "Subheding",
+            },
+        ],
+        "item_1617944105607": [
+            {
+                "subitem_1551256015892": [
+                    {
+                        "subitem_1551256027296": "xxxxxx",
+                        "subitem_1551256029891": "kakenhi",
+                    }
+                ],
+                "subitem_1551256037922": [
+                    {
+                        "subitem_1551256042287": "Degree Grantor Name",
+                        "subitem_1551256047619": "en",
+                    }
+                ],
+            }
+        ],
+    }
+
+    items = []
+    for file in files:
+        items.append({
+            "url": {"url": f"https://weko3.example.org/record/{i}/files/{file.get('filename')}"},
+            "date": [{"dateType": "Available", "dateValue": "2024-01-01"}],
+            "format": "text/plain",
+            "filename": f"{file.get('filename')}",
+            "filesize": [{"value": "1 KB"}],
+            "mimetype": f"{file.get('mimetype')}",
+            "accessrole": f"{file.get('accessrole', 'open_access')}",
+            "version_id": "c1502853-c2f9-455d-8bec-f6e630e54b21",
+            "displaytype": "simple",
+        })
+        FilesMetadata.create(data=file, id_=i, pid=i, con=bytes('test content {}'.format(i), 'utf-8'))
+    record_data["item_1617605131499"]["attribute_value_mlt"] = items
+    item_data["item_1617605131499"] = items
+
+    rec_uuid = uuid.uuid4()
+
+    recid = PersistentIdentifier.create(
+        "recid",
+        str(i),
+        object_type="rec",
+        object_uuid=rec_uuid,
+        status=PIDStatus.REGISTERED,
+    )
+    depid = PersistentIdentifier.create(
+        "depid",
+        str(i),
+        object_type="rec",
+        object_uuid=rec_uuid,
+        status=PIDStatus.REGISTERED,
+    )
+    parent = None
+    doi = None
+    hdl = None
+    recid_v1 = PersistentIdentifier.create(
+        "recid",
+        str(i + 0.1),
+        object_type="rec",
+        object_uuid=rec_uuid,
+        status=PIDStatus.REGISTERED,
+    )
+    rec_uuid2 = uuid.uuid4()
+    depid_v1 = PersistentIdentifier.create(
+        "depid",
+        str(i + 0.1),
+        object_type="rec",
+        object_uuid=rec_uuid2,
+        status=PIDStatus.REGISTERED,
+    )
+    parent = PersistentIdentifier.create(
+        "parent",
+        "parent:{}".format(i),
+        object_type="rec",
+        object_uuid=rec_uuid2,
+        status=PIDStatus.REGISTERED,
+    )
+
+    h1 = PIDVersioning(parent=parent)
+    h1.insert_child(child=recid)
+    h1.insert_child(child=recid_v1)
+    RecordDraft.link(recid, depid)
+    RecordDraft.link(recid_v1, depid_v1)
+
+    if i % 2 == 1:
+        doi = PersistentIdentifier.create(
+            "doi",
+            "https://doi.org/10.xyz/{}".format((str(i)).zfill(10)),
+            object_type="rec",
+            object_uuid=rec_uuid,
+            status=PIDStatus.REGISTERED,
+        )
+        hdl = PersistentIdentifier.create(
+            "hdl",
+            "https://hdl.handle.net/0000/{}".format((str(i)).zfill(10)),
+            object_type="rec",
+            object_uuid=rec_uuid,
+            status=PIDStatus.REGISTERED,
+        )
+
+    record = WekoRecord.create(record_data, id_=rec_uuid)
+    import base64
+
+    bucket = Bucket.create()
+    record_buckets = RecordsBuckets.create(record=record.model, bucket=bucket)
+
+    if thumbnail:
+        files.append(thumbnail)
+
+    obj = None
+    record_data["content"] = []
+    for num, file in enumerate(files):
+        filepath = file.get("filepath")
+        filename = file.get("filename")
+        mimetype = file.get("mimetype")
+        accessrole = file.get("accessrole", "open_access")
+
+        with open(filepath, "rb") as f:
+            stream = BytesIO(f.read())
+            record.files[filename] = stream
+            if len(record["item_1617605131499"]["attribute_value_mlt"]) > num:
+                record["item_1617605131499"]["attribute_value_mlt"][num]["file"] = (
+                    base64.b64encode(stream.getvalue())
+                ).decode("utf-8")
+
+        with open(filepath, "rb") as f:
+            obj = ObjectVersion.create(bucket=bucket.id, key=filename, stream=f)
+
+        record_data["content"].append(
+            {
+                "date": [{"dateValue": "2024-01-31", "dateType": "Available"}],
+                "accessrole": f"{accessrole}",
+                "displaytype": "simple",
+                "filename": f"{filename}",
+                "attachment": {},
+                "format": f"{mimetype}",
+                "mimetype": f"{mimetype}",
+                "filesize": [{"value": "1 KB"}],
+                "version_id": f"{obj.version_id}",
+                "url": {"url": f"http://localhost/record/{i}/files/{filename}"},
+                "file": (base64.b64encode(stream.getvalue())).decode("utf-8"),
+            }
+        )
+    indexer.upload_metadata(record_data, rec_uuid, 1, False)
+    item = ItemsMetadata.create(item_data, id_=rec_uuid, item_type_id=40001)
+    deposit = aWekoDeposit(record, record.model)
+    deposit.commit()
+
+    return {
+        "depid": depid,
+        "recid": recid,
+        "parent": parent,
+        "doi": doi,
+        "hdl": hdl,
+        "record": record,
+        "record_data": record_data,
+        "deposit": deposit,
+        "files": files,
+    }
+
 
 @pytest.fixture()
 def records_restricted(app, db, workflows_restricted,records ,users):
@@ -3036,6 +3855,7 @@ def make_record_restricted(db, indexer, i, filepath, filename, mimetype ,userId 
         "obj": obj,
     }
 
+
 @pytest.fixture()
 def workflows(app, db, itemtypes, users, records):
     action_datas = dict()
@@ -3188,6 +4008,7 @@ def workflows(app, db, itemtypes, users, records):
         "flow_action2": flow_action2,
         "flow_action3": flow_action3,
     }
+
 
 @pytest.fixture()
 def workflows_restricted(db ,itemtypes,users, records):
@@ -3517,16 +4338,15 @@ def db_fileonetimedownload(app, db):
         user_mail="wekosoftware@nii.ac.jp",
         record_id='1',
         download_count=10,
-        expiration_date=0,
-        extra_info=str({"is_guest": True, "send_usage_report": True, "usage_application_activity_id": ""})
-    )
-    db.session.add(record)
+        expiration_date=0)
+    with db.session.begin_nested():
+        db.session.add(record)
     return record
 
 
 @pytest.fixture()
-def db_file_permission(app, db,users,records_restricted):
-    indexer, results = records_restricted
+def db_file_permission(app, db,users,records):
+    indexer, results = records
     recid0 = results[0]["recid"]
     filename0 = results[0]["filename"]
     record0 = FilePermission(
@@ -3534,13 +4354,6 @@ def db_file_permission(app, db,users,records_restricted):
         usage_application_activity_id="usage_application_activity_id_dummy1",
         usage_report_activity_id=None, status=1, 
     )
-    email = list(filter(lambda x : x['email'] if x['id'] == record0.user_id else None,users))[0]['email']
-    record0_onetime=FileOnetimeDownload(user_mail=email
-                                        ,record_id=recid0.pid_value
-                                        ,file_name=filename0
-                                        ,download_count=1
-                                        ,expiration_date=1
-                                        ,extra_info=str({}))
     recid1 = results[1]["recid"]
     filename1 = results[1]["filename"]
     record1 = FilePermission(
@@ -3548,13 +4361,6 @@ def db_file_permission(app, db,users,records_restricted):
                  usage_application_activity_id="usage_application_activity_id_dummy1",
                  usage_report_activity_id="usage_report_activity_id_dummy1",status=1,
     )
-    email = list(filter(lambda x : x['email'] if x['id'] == record1.user_id else None,users))[0]['email']
-    record1_onetime=FileOnetimeDownload(user_mail=email
-                                        ,record_id=recid1.pid_value
-                                        ,file_name=filename1
-                                        ,download_count=1
-                                        ,expiration_date=1
-                                        ,extra_info=str({}))
     recid2 = results[2]["recid"]
     filename2 = results[2]["filename"]
     record2 = FilePermission(
@@ -3562,67 +4368,39 @@ def db_file_permission(app, db,users,records_restricted):
                  usage_application_activity_id="usage_application_activity_id_dummy1",
                  usage_report_activity_id="usage_report_activity_id_dummy1",status=1,
     )
-    email = list(filter(lambda x : x['email'] if x['id'] == record2.user_id else None,users))[0]['email']
-    record2_onetime=FileOnetimeDownload(user_mail=email
-                                        ,record_id=recid2.pid_value
-                                        ,file_name=filename2
-                                        ,download_count=1
-                                        ,expiration_date=1
-                                        ,extra_info=str({}))
-    
-    # not approved yet
-    recid3 = results[len(results)-1]["recid"]
-    filename3 = results[len(results)-1]["filename"]
-    record3 = FilePermission(
-        user_id=users[0]['id'], record_id=recid3.pid_value, file_name=filename3,
-        usage_application_activity_id="usage_application_activity_id_dummy1",
-        usage_report_activity_id=None, status=-1, 
-    )
-
-    recid4 = results[len(results)-1]["recid"]
-    filename4 = results[len(results)-1]["filename"]
-    record4 = FilePermission(
-        user_id=users[0]['id'], record_id=recid4.pid_value, file_name=filename4,
-        usage_application_activity_id="usage_application_activity_id_dummy1",
-        usage_report_activity_id=None, status=1, 
-    )
-    email = list(filter(lambda x : x['email'] if x['id'] == record4.user_id else None,users))[0]['email']
-    record4_onetime=FileOnetimeDownload(user_mail =email
-                                        ,record_id=recid4.pid_value
-                                        ,file_name=filename4
-                                        ,download_count =1
-                                        ,expiration_date=1
-                                        ,extra_info=str({}))
-    
-    recid5 = results[len(results)-1]["recid"]
-    filename5 = results[len(results)-1]["filename"]
-    record5 = FilePermission(
-        user_id=users[0]['id'], record_id=recid5.pid_value, file_name=filename5,
-        usage_application_activity_id="usage_application_activity_id_dummy1",
-        usage_report_activity_id=None, status=1, 
-    )
-    email = list(filter(lambda x : x['email'] if x['id'] == record5.user_id else None,users))[0]['email']
-    record5_onetime=FileOnetimeDownload(user_mail=email
-                                        ,record_id=recid5.pid_value
-                                        ,file_name=filename5
-                                        ,download_count=1
-                                        ,expiration_date=1
-                                        ,extra_info=str({}))
     with db.session.begin_nested():
         db.session.add(record0)
         db.session.add(record1)
         db.session.add(record2)
-        db.session.add(record3)
-        db.session.add(record4)
-        db.session.add(record5)
-        db.session.add(record0_onetime)
-        db.session.add(record1_onetime)
-        db.session.add(record2_onetime)
-        # db.session.add(record3_onetime)
-        db.session.add(record4_onetime)
-        db.session.add(record5_onetime)
-    
-    return [record0,record1,record2,record3,record4,record5]
+    return [record0,record1,record2]
+
+@pytest.fixture()
+def db_FilePermission(app, db):
+    file_permission = FilePermission(
+        user_id=1,
+        record_id=99,
+        file_name="test",
+        usage_application_activity_id="test",
+        usage_report_activity_id="test",
+        status=-1
+    )
+    with db.session.begin_nested():
+        db.session.add(file_permission)
+    return file_permission
+
+
+@pytest.fixture()
+def db_FileOneTimeDownload(app, db):
+    file_one_time_download = FileOnetimeDownload(
+        file_name="test",
+        user_mail="test@test",
+        record_id=99,
+        download_count=1,
+        expiration_date=99,
+    )
+    with db.session.begin_nested():
+        db.session.add(file_one_time_download)
+    return file_one_time_download
 
     
 @pytest.fixture()
@@ -3635,23 +4413,125 @@ def db_admin_settings(db):
         db.session.add(AdminSettings(id=5,name='item_export_settings',settings={"allow_item_exporting": True, "enable_contents_exporting": True}))
     db.session.commit()
 
-@pytest.fixture()
-def db_restricted_access_secret(db):
-    with db.session.begin_nested():
-        db.session.add(AdminSettings(id=6,name='restricted_access',settings={"secret_URL_file_download": {"secret_enable": True, "secret_download_limit": 1, "secret_expiration_date": 1, "secret_download_limit_unlimited_chk": False, "secret_expiration_date_unlimited_chk": False}}))
 
 @pytest.fixture()
-def db_community(db , users ,indextree):
-    from invenio_communities.models import Community
-    comm : Community
-    with db.session.begin_nested():
-        comm = Community(
-            id="community"
-            ,id_role = users[0]["id"]
-            ,root_node_id=Index.get_index_by_id(1).id
-            ,id_user = users[0]["id"]
-        )
-        db.session.add(comm)
-        db.session.flush()
+def records_rest(app, db):
+    rec_uuid = uuid.uuid4()
 
-    return comm
+    depid = PersistentIdentifier.create(
+        'depid',
+        '1',
+        object_type='rec',
+        object_uuid=rec_uuid,
+        status=PIDStatus.REGISTERED
+    )
+
+    with open('tests/data/rocrate/records_metadata.json', 'r') as f:
+        record_data = json.load(f)
+    record = WekoRecord.create(record_data, id_=rec_uuid)
+
+    return {
+        'depid': depid,
+        'record': record,
+    }
+
+
+@pytest.fixture()
+def db_rocrate_mapping(db):
+    item_type_name = ItemTypeName(id=40001, name='test item type', has_site_license=True, is_active=True)
+    with db.session.begin_nested():
+        db.session.add(item_type_name)
+    db.session.commit()
+
+    item_type_schema = dict()
+    with open('tests/data/itemtype_schema.json', 'r') as f:
+        item_type_schema = json.load(f)
+
+    item_type_form = dict()
+    with open('tests/data/itemtype_form.json', 'r') as f:
+        item_type_form = json.load(f)
+        item_type_form[10].pop('items')
+        item_type_form[11]['items'][1]['isHide'] = True
+        item_type_form[15]['items'][0].pop('title_i18n')
+        item_type_form[15]['items'][0]['title'] = ''
+        item_type_form[17]['items'][0].pop('title_i18n')
+
+    item_type_render = dict()
+    with open('tests/data/itemtype_render.json', 'r') as f:
+        item_type_render = json.load(f)
+        item_type_render['meta_list']['item_1617186385884']['option']['hidden'] = True
+
+
+    item_type = ItemType(
+        id=40001,
+        name_id=40001,
+        harvesting_type=True,
+        schema=item_type_schema,
+        form=item_type_form,
+        render=item_type_render,
+        tag=1,
+        version_id=1,
+        is_deleted=False,
+    )
+
+    with db.session.begin_nested():
+        db.session.add(item_type)
+    db.session.commit()
+
+    with open('tests/data/rocrate/rocrate_mapping.json', 'r') as f:
+        mapping = json.load(f)
+    rocrate_mapping = RocrateMapping(item_type_id=40001, mapping=mapping)
+
+    with db.session.begin_nested():
+        db.session.add(rocrate_mapping)
+    db.session.commit()
+
+
+@pytest.fixture()
+def indices(app, db):
+    """Create indices."""
+
+    latest_index = db.session.query(
+        func.max(Index.position).label("max_position")
+    ).one()
+        
+    index = Index(
+        id=1234567890,
+        index_name="index_name",
+        index_name_english="index_name_english",
+        display_no=1,
+        harvest_public_state=True,
+        image_name="image_name",
+        public_state=True,
+        position=latest_index.max_position + 1,
+    )
+
+    db.session.add(index)
+    db.session.commit()
+
+    return [index]
+
+
+@pytest.fixture()
+def communities(app, indices, users, db):
+    """Create communities."""
+    user_record = users[0]
+    user_obj = user_record["obj"]
+
+    community = Community(
+        id="community_sample",
+        id_role=user_obj.roles[0].id,
+        id_user=user_record["id"],
+        title='Community 1',
+        description='Community 1 description',
+        page=1,
+        curation_policy='curation_policy',
+        community_header='community_header',
+        community_footer='community_footer',
+        last_record_accepted=datetime.now(),
+        root_node_id=indices[0].id,
+    )
+
+    db.session.add(community)
+    db.session.commit()
+    return [community]

@@ -1,4 +1,12 @@
 {
+  "table_row": [
+    "item_test1_2",
+    "item_test1_3",
+    "item_test1_4",
+    "item_test1_5",
+    "item_test2_title",
+    "item_description"
+  ],
   "meta_fix":{
   },
   "meta_list":{
@@ -104,6 +112,16 @@
     },
     "item_test4_thumbnail":{
       "title":"Thumbnail",
+      "option": {
+        "crtf": true,
+        "hidden": false,
+        "multiple": true,
+        "required": true,
+        "showlist": true
+      }
+    },
+    "item_description":{
+      "title":"Description",
       "option": {
         "crtf": true,
         "hidden": false,

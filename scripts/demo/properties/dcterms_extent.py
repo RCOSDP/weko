@@ -15,7 +15,7 @@ name_ja = "大きさ"
 name_en = "Extent"
 mapping = {
     "display_lang_type": "",
-    "jpcoar_v1_mapping": {},
+    "jpcoar_v1_mapping": "",
     "jpcoar_mapping": {
         "extent": {
             "@value": "dcterms_extent",

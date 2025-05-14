@@ -42,7 +42,7 @@ from weko_gridlayout.utils import (
 from weko_index_tree.api import Indexes
 from weko_index_tree.models import IndexStyle
 from weko_index_tree.utils import get_index_link_list
-from weko_records.api import ItemLink
+from weko_records.api import ItemLink, FeedbackMailList
 from weko_records_ui.ipaddr import check_site_license_permission
 from weko_theme.utils import get_design_layout
 from weko_workflow.utils import (
@@ -58,7 +58,6 @@ from .config import WEKO_SEARCH_TYPE_DICT
 from .utils import (
     check_index_access_permissions,
     check_permission,
-    get_feedback_mail_list,
     get_journal_info,
 )
 
@@ -362,7 +361,7 @@ def journal_detail(index_id=0):
 @login_required
 def search_feedback_mail_list():
     """Render a check view."""
-    result = get_feedback_mail_list()
+    result = FeedbackMailList.get_feedback_mail_list()
     return jsonify(result)
 
 

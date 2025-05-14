@@ -1,7 +1,7 @@
 import pytest
 from mock import patch, MagicMock
 
-from weko_records.models import ItemType, ItemTypeEditHistory, ItemReference
+from weko_records.models import ItemType, ItemTypeEditHistory
 
 
 # class ItemType(object): 
@@ -34,32 +34,16 @@ def test_get_latest_by_item_type_id(app):
     assert test.get_latest_by_item_type_id(app) == None
 
 
-# class ItemReference(db.Model, Timestamp): 
-test = ItemReference(
-    src_item_pid=1,
-    dst_item_pid="1",
-    reference_type="reference_type"
-)
-
-
 # def get_src_references(cls, pid): 
-def test_get_src_references(app, db):
-    db.session.add(test)
-    db.session.commit()
-
-    assert test.get_src_references(1) != None
+def test_get_src_references(app, db, db_ItemReference):
+    assert db_ItemReference.get_src_references("1").all() == [db_ItemReference]
 
 # def get_dst_references(cls, pid): 
-def test_get_dst_references(app, db):
-    db.session.add(test)
-    db.session.commit()
-
-    assert test.get_dst_references("1") != None
+def test_get_dst_references(app, db, db_ItemReference):
+    assert db_ItemReference.get_dst_references("2").all() == [db_ItemReference]
 
 
 # def relation_exists(cls, src_pid, dst_pid, reference_type): 
-def test_relation_exists(app, db):
-    db.session.add(test)
-    db.session.commit()
-
-    assert test.relation_exists(1,"1","reference_type") != None
+# .tox/c1/bin/pytest --cov=weko_records tests/test_models.py::test_relation_exists -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records/.tox/c1/tmp
+def test_relation_exists(app, db, db_ItemReference):
+    assert db_ItemReference.relation_exists("1","2","reference_type") == True

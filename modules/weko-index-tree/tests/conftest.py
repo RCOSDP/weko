@@ -143,7 +143,7 @@ def base_app(instance_path):
             'S': 'Standard',
             'A': 'Archive',
         },
-        CACHE_REDIS_URL='redis://redis:6379/0',
+        CACHE_REDIS_URL=os.environ.get("CACHE_REDIS_URL", "redis://redis:6379/0"),
         CACHE_TYPE="redis",
         CACHE_REDIS_DB='0',
         CACHE_REDIS_HOST="redis",
@@ -170,6 +170,7 @@ def base_app(instance_path):
         ACCOUNTS_USERINFO_HEADERS=True,
         I18N_LANGUAGES=[("ja", "Japanese"), ("en", "English")],
         WEKO_INDEX_TREE_INDEX_LOCK_KEY_PREFIX="lock_index_",
+        WEKO_INDEX_TREE_DEFAULT_DISPLAY_NUMBER = 5,
         WEKO_PERMISSION_SUPER_ROLE_USER=WEKO_PERMISSION_SUPER_ROLE_USER,
         WEKO_PERMISSION_ROLE_COMMUNITY=WEKO_PERMISSION_ROLE_COMMUNITY,
         EMAIL_DISPLAY_FLG=EMAIL_DISPLAY_FLG,
@@ -409,6 +410,8 @@ def base_app(instance_path):
                 },
                 index_route='/index/',
                 tree_route='/index',
+                get_index_tree='/<string:version>/tree/index/<int:index_id>',
+                get_index_root_tree='/<string:version>/tree/index',
                 item_tree_route='/index/<string:pid_value>',
                 index_move_route='/index/move/<int:index_id>',
                 links_factory_imp='weko_search_ui.links:default_links_factory',
@@ -420,6 +423,9 @@ def base_app(instance_path):
             tid=dict(
                 record_class='weko_index_tree.api:Indexes',
                 index_route='/tree/index/<int:index_id>',
+                get_index_tree='/<string:version>/tree/index/<int:index_id>',
+                get_index_root_tree='/<string:version>/tree/index',
+                get_parent_index_tree='/<string:version>/tree/index/<int:index_id>/parent',
                 tree_route='/tree',
                 item_tree_route='/tree/<string:pid_value>',
                 index_move_route='/tree/move/<int:index_id>',
@@ -582,10 +588,10 @@ def users(app, db):
         comadmin = User.query.filter_by(email='comadmin@test.org').first()
         repoadmin = User.query.filter_by(email='repoadmin@test.org').first()
         sysadmin = User.query.filter_by(email='sysadmin@test.org').first()
-        generaluser = User.query.filter_by(email='generaluser@test.org')
-        originalroleuser = create_test_user(email='originalroleuser@test.org')
-        originalroleuser2 = create_test_user(email='originalroleuser2@test.org')
-        noroleuser = create_test_user(email='noroleuser@test.org')
+        generaluser = User.query.filter_by(email='generaluser@test.org').first()
+        originalroleuser = User.query.filter_by(email='originalroleuser@test.org').first()
+        originalroleuser2 = User.query.filter_by(email='originalroleuser2@test.org').first()
+        noroleuser = User.query.filter_by(email='noroleuser@test.org').first()
         
     role_count = Role.query.filter_by(name='System Administrator').count()
     if role_count != 1:
@@ -739,6 +745,13 @@ def indices(app, db):
             id=45,
             position=1
         )
+        testIndexSix = Index(
+            index_name="testIndexSix",
+            browsing_role="1,2,3,4,-98,-99",
+            public_state=True,
+            id=66,
+            position=4
+        )
 
 
         db.session.add(testIndexOne)
@@ -747,7 +760,8 @@ def indices(app, db):
         db.session.add(testIndexThreeChild)
         db.session.add(testIndexMore)
         db.session.add(testIndexPrivate)
-        
+        db.session.add(testIndexSix)
+
     return {
         'index_dict': dict(testIndexThree),
         'index_non_dict': testIndexThree,
@@ -763,9 +777,9 @@ def indices(app, db):
 
 @pytest.fixture
 def test_indices(app, db):
-    def base_index(id, parent, position, public_date=None, coverpage_state=False, recursive_browsing_role=False,
+    def base_index(id, parent, position, harvest_public_state=True, public_state=True, public_date=None, coverpage_state=False, recursive_browsing_role=False,
                    recursive_contribute_role=False, recursive_browsing_group=False,
-                   recursive_contribute_group=False, online_issn=''):
+                   recursive_contribute_group=False, online_issn='', is_deleted=False):
         _browsing_role = "3,-99"
         _contribute_role = "1,2,3,4,-98,-99"
         _group = "g1,g2"
@@ -773,15 +787,15 @@ def test_indices(app, db):
             id=id,
             parent=parent,
             position=position,
-            index_name="Test index {}_ja".format(id),
-            index_name_english="Test index {}_en".format(id),
+            index_name="テストインデックス {}".format(id),
+            index_name_english="Test index {}".format(id),
             index_link_name="Test index link {}_ja".format(id),
             index_link_name_english="Test index link {}_en".format(id),
             index_link_enabled=True,
             more_check=False,
             display_no=position,
-            harvest_public_state=True,
-            public_state=True,
+            harvest_public_state=harvest_public_state,
+            public_state=public_state,
             public_date=public_date,
             recursive_public_state=True if not public_date else False,
             coverpage_state=coverpage_state,
@@ -795,16 +809,26 @@ def test_indices(app, db):
             contribute_group=_group,
             recursive_contribute_group=recursive_contribute_group,
             biblio_flag=True if not online_issn else False,
-            online_issn=online_issn
+            online_issn=online_issn,
+            is_deleted=is_deleted,
         )
-    
+
     with db.session.begin_nested():
-        db.session.add(base_index(1, 0, 0, datetime(2022, 1, 1), True, True, True, True, True, '1234-5678'))
+        db.session.query(Index).delete()
+    db.session.commit()
+
+    with db.session.begin_nested():
+        db.session.add(base_index(1, 0, 0, True, True, datetime(2022, 1, 1), True, True, True, True, True, '1234-5678'))
         db.session.add(base_index(2, 0, 1))
         db.session.add(base_index(3, 0, 2))
         db.session.add(base_index(11, 1, 0))
         db.session.add(base_index(21, 2, 0))
         db.session.add(base_index(22, 2, 1))
+        db.session.add(base_index(31, 3, 0, public_state=False))
+        db.session.add(base_index(32, 3, 1, is_deleted=True))
+        db.session.add(base_index(33, 3, 2, harvest_public_state=False, is_deleted=True))
+        db.session.add(base_index(100, 0, 3, is_deleted=True))
+        db.session.add(base_index(101, 100, 0, coverpage_state=True, is_deleted=True))
     db.session.commit()
 
 @pytest.yield_fixture
@@ -1600,3 +1624,21 @@ def admin_lang_setting(db):
     AdminLangSettings.create("en","English", True, 0, True)
     AdminLangSettings.create("ja","日本語", True, 1, True)
     AdminLangSettings.create("zh","中文", False, 0, True)
+
+
+@pytest.fixture()
+def index_thumbnail(app,instance_path):
+    dir_path = os.path.join(instance_path,
+    app.config['WEKO_THEME_INSTANCE_DATA_DIR'],'indextree')
+    thumbnail_path = os.path.join(
+                        dir_path,
+                        "test_thumbnail.txt"
+                    )
+    if not os.path.isdir(dir_path):
+        os.makedirs(dir_path)
+    
+    with open(thumbnail_path, "w") as f:
+        f.write("test")
+    
+    return thumbnail_path
+    

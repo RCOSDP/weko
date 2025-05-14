@@ -60,7 +60,6 @@ from invenio_jsonschemas import InvenioJSONSchemas
 from invenio_records_ui import InvenioRecordsUI
 from weko_search_ui.config import WEKO_SYS_USER
 from weko_records_ui import WekoRecordsUI
-from weko_theme import WekoTheme
 from weko_admin import WekoAdmin
 from weko_admin.models import SessionLifetime,Identifier 
 from weko_admin.views import blueprint as weko_admin_blueprint
@@ -74,13 +73,13 @@ from weko_workflow import WekoWorkflow
 from weko_search_ui import WekoSearchUI
 from weko_workflow.models import Activity, ActionStatus, Action, ActivityAction, WorkFlow, FlowDefine, FlowAction, ActionFeedbackMail, ActionIdentifier,FlowActionRole, ActivityHistory,GuestActivity, WorkflowRole
 from weko_workflow.views import workflow_blueprint as weko_workflow_blueprint
-from weko_workflow.config import WEKO_WORKFLOW_GAKUNINRDM_DATA,WEKO_WORKFLOW_ACTION_START,WEKO_WORKFLOW_ACTION_END,WEKO_WORKFLOW_ACTION_ITEM_REGISTRATION,WEKO_WORKFLOW_ACTION_APPROVAL,WEKO_WORKFLOW_ACTION_ITEM_LINK,WEKO_WORKFLOW_ACTION_OA_POLICY_CONFIRMATION,WEKO_WORKFLOW_ACTION_IDENTIFIER_GRANT,WEKO_WORKFLOW_ACTION_ITEM_REGISTRATION_USAGE_APPLICATION,WEKO_WORKFLOW_ACTION_GUARANTOR,WEKO_WORKFLOW_ACTION_ADVISOR,WEKO_WORKFLOW_ACTION_ADMINISTRATOR,WEKO_WORKFLOW_ACTIVITYLOG_XLS_COLUMNS
+from weko_workflow.config import WEKO_WORKFLOW_ACTION_START,WEKO_WORKFLOW_ACTION_END,WEKO_WORKFLOW_ACTION_ITEM_REGISTRATION,WEKO_WORKFLOW_ACTION_APPROVAL,WEKO_WORKFLOW_ACTION_ITEM_LINK,WEKO_WORKFLOW_ACTION_OA_POLICY_CONFIRMATION,WEKO_WORKFLOW_ACTION_IDENTIFIER_GRANT,WEKO_WORKFLOW_ACTION_ITEM_REGISTRATION_USAGE_APPLICATION,WEKO_WORKFLOW_ACTION_GUARANTOR,WEKO_WORKFLOW_ACTION_ADVISOR,WEKO_WORKFLOW_ACTION_ADMINISTRATOR,WEKO_WORKFLOW_ACTIVITYLOG_XLS_COLUMNS, DOI_VALIDATION_INFO, DOI_VALIDATION_INFO_CROSSREF, DOI_VALIDATION_INFO_DATACITE, DOI_VALIDATION_INFO_JALC
 from weko_workflow.utils import generate_guest_activity_token_value
 from weko_theme.views import blueprint as weko_theme_blueprint
 from simplekv.memory.redisstore import RedisStore
 from sqlalchemy_utils.functions import create_database, database_exists, \
     drop_database
-from tests.helpers import json_data, create_record
+from tests.helpers import json_data, create_record, create_activity, create_flow
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session
 from sqlalchemy import event
@@ -489,7 +488,23 @@ def base_app(instance_path, search_class, cache_config):
         WEKO_WORKFLOW_ACTION_GUARANTOR=WEKO_WORKFLOW_ACTION_GUARANTOR,
         WEKO_WORKFLOW_ACTION_ADVISOR=WEKO_WORKFLOW_ACTION_ADVISOR,
         WEKO_WORKFLOW_ACTION_ADMINISTRATOR=WEKO_WORKFLOW_ACTION_ADMINISTRATOR,
-        WEKO_WORKFLOW_GAKUNINRDM_DATA=WEKO_WORKFLOW_GAKUNINRDM_DATA,
+        WEKO_WORKFLOW_GAKUNINRDM_DATA=[
+            {
+                'workflow_id': -1,
+                'workflow_name': 'GRDM_デフォルトワークフロー',
+                'item_type_id': 1,
+                'flow_id': -1,
+                'flow_name': 'GRDM_デフォルトフロー',
+                'action_endpoint_list': [
+                    'begin_action',
+                    'item_login',
+                    'item_link',
+                    'identifier_grant',
+                    'approval',
+                    'end_action'
+                ]
+            }
+        ],
         DELETE_ACTIVITY_LOG_ENABLE=True,
         WEKO_WORKFLOW_ACTIVITYLOG_XLS_COLUMNS=WEKO_WORKFLOW_ACTIVITYLOG_XLS_COLUMNS,
         WEKO_SYS_USER=WEKO_SYS_USER,
@@ -512,6 +527,8 @@ def base_app(instance_path, search_class, cache_config):
                 record_class='invenio_records_files.api:Record',
             ),
         ),
+        DOI_VALIDATION_INFO_JALC=DOI_VALIDATION_INFO_JALC,
+        WEKO_WORKFLOW_IDENTIFIER_GRANT_IS_WITHDRAWING = -2,
     )
     
     app_.testing = True
@@ -530,14 +547,13 @@ def base_app(instance_path, search_class, cache_config):
     InvenioPIDRelations(app_)
     InvenioJSONSchemas(app_)
     InvenioPIDStore(app_)
-    InvenioRecords
+    InvenioRecords(app_)
     InvenioRecordsUI(app_)
     WekoRecordsUI(app_)
     search = InvenioSearch(app_, client=MockEs())
     search.register_mappings(search_class.Meta.index, 'mock_module.mappings')
     # InvenioCommunities(app_)
     # WekoAdmin(app_)
-    WekoTheme(app_)
     WekoSearchUI(app_)
     WekoWorkflow(app_)
     WekoUserProfiles(app_)
@@ -573,7 +589,7 @@ def db(app):
     yield db_
     db_.session.remove()
     db_.drop_all()
-    # drop_database(str(db_.engine.url))
+    drop_database(str(db_.engine.url))
 
 
 @pytest.yield_fixture()
@@ -744,7 +760,153 @@ def users(app, db):
         {'email': student.email,'id': student.id, 'obj': student}
     ]
 
+@pytest.fixture()
+def activity_acl_users(app, db):
+    ds = app.extensions['invenio-accounts'].datastore
+    
+    sysadmin_role = ds.create_role(name='System Administrator')
+    repoadmin_role = ds.create_role(name='Repository Administrator')
+    comadmin_role = ds.create_role(name='Community Administrator')
+    test_role01 = ds.create_role(name='test_role01')
+    test_role02 = ds.create_role(name='test_role02')
+    test_role03 = ds.create_role(name='test_role03')
+    
+    sysadmin = create_test_user(email='sysadmin@test.org')
+    repoadmin = create_test_user(email='repoadmin@test.org')
+    test_role01_user = create_test_user(email='test_role01_user@test.org')
+    test_role01_comadmin = create_test_user(email='test_role01_comadmin@test.org')
+    test_role02_user = create_test_user(email='test_role02_user@test.org')
+    test_role03_comadmin = create_test_user(email='test_role03_comadmin@test.org')
+    no_role_user = create_test_user(email='no_role@test.org')
+    
+    ds.add_role_to_user(sysadmin,sysadmin_role)
+    ds.add_role_to_user(repoadmin, repoadmin_role)
+    ds.add_role_to_user(test_role01_user,test_role01)
+    ds.add_role_to_user(test_role01_comadmin,test_role01)
+    ds.add_role_to_user(test_role01_comadmin,comadmin_role)
+    ds.add_role_to_user(test_role02_user,test_role02)
+    ds.add_role_to_user(test_role03_comadmin, test_role03)
+    ds.add_role_to_user(test_role03_comadmin, comadmin_role)
+    
+    """
+    root
+      ┣━ com_index
+      ┃     ┣━ com_index_child01
+      ┃     ┗━ com_index_child02
+      ┗━ not_com_index
+    """
+    indexes = [
+        Index(id=1,parent=0,position=0,index_name="com_index",display_no=5,public_state=True),
+        Index(id=2,parent=1,position=0,index_name="com_index_child01",display_no=5,public_state=True),
+        Index(id=3,parent=1,position=1,index_name="com_index_child02",display_no=5,public_state=True),
+        Index(id=4,parent=0,position=1,index_name="not_com_index",display_no=5,public_state=True)
+    ]
+    db.session.add_all(indexes)
+    db.session.commit()
+    
+    test_role01_com = Community.create(community_id="test_role01_com", role_id=test_role01.id,
+                            id_user=sysadmin.id, title="test community",
+                            description=("this is test community"),
+                            root_node_id=indexes[0].id)
+    db.session.commit()
+    return {
+        "users":[sysadmin, repoadmin, test_role01_user, test_role01_comadmin, test_role02_user, test_role03_comadmin, no_role_user],
+        "roles":[sysadmin_role, repoadmin_role, comadmin_role, test_role01, test_role02, test_role03],
+        "indexes": indexes,
+        "comunities":[test_role01_com]
+    }
 
+@pytest.fixture()
+def workflow_with_action_role(db, action_data, item_type, activity_acl_users):
+    
+    users = activity_acl_users["users"]
+    roles = activity_acl_users["roles"]
+    
+    workflows = []
+    # no set action role(user)
+    workflows.append(create_flow(db, 1, "normal_flow","normal_workflow", None, None, item_type))
+    
+    # action_role of action with action_id 1 is test_role01
+    workflows.append(create_flow(db, 2, "test_role01_role_flow","test_role01_role_workfow",{5:{"value":roles[3].id,"flg":False}},None, item_type))
+    
+    # action_role of action with action_id 1 is test_role02
+    workflows.append(create_flow(db, 3, "test_role02_role_flow","test_role02_role_workfow",{5:{"value":roles[4].id,"flg":False}},None,item_type))
+    
+    # action_role of action with action_id 1 is test_role01 and deny
+    workflows.append(create_flow(db, 4, "test_role01_role_deny_flow","test_role01_role_deny_workfow",{5:{"value":roles[3].id,"flg":True}},None,item_type))
+    
+    # action_role of action with action_id 1 is test_role02 and deny
+    workflows.append(create_flow(db, 5, "test_role02_role_deny_flow","test_role02_role_deny_workfow",{5:{"value":roles[4].id,"flg":True}},None,item_type))
+    
+    # action_user of action with action_id 1 is test_role01_user
+    workflows.append(create_flow(db, 6,"test_role01_user_flow","test_role01_user_workflow",None,{5:{"value":users[2].id,"flg":False}},item_type))
+    
+    # action_user of action with action_id 1 is test_role02_user
+    workflows.append(create_flow(db, 7,"test_role02_user_flow","test_role02_user_workflow",None,{5:{"value":users[4].id,"flg":False}},item_type))
+    
+    # action_user of action with action_id 1 is test_role01_user and deny
+    workflows.append(create_flow(db, 8,"test_role01_user_deny_flow","test_role01_user_deny_workflow",None,{5:{"value":users[2].id,"flg":True}},item_type))
+    
+    # action_user of action with action_id 1 is test_role02_user and deny
+    workflows.append(create_flow(db, 9,"test_role02_user_deny_flow","test_role02_user_deny_workflow",None,{5:{"value":users[4].id,"flg":True}},item_type))
+    return workflows
+
+
+@pytest.fixture()
+def activity_acl(db, workflow_with_action_role, activity_acl_users):
+    users = activity_acl_users["users"]
+    workflows = workflow_with_action_role
+    activites = [
+        create_activity(db,"sysadmin_入力待ち",1,["4"],users[0],-1,workflows[0],'M',3),
+        create_activity(db,"sysadmin_承認待ち",2,["4"],users[0],-1,workflows[0],'M',4),
+        create_activity(db,"sysadmin_キャンセル",3,["4"],users[0],-1,workflows[0],'C',3),
+        create_activity(db,"sysadmin_完了",4,["4"],users[0],-1,workflows[0],'F',5),
+        create_activity(db,"sysadmin_入力中_actionrole(test_role01)",5,["4"],users[0],-1,workflows[1],'M',3),
+        create_activity(db,"test_role01_comadmin_入力中_権限内",6,["2"],users[3],-1,workflows[0],'M',3),
+        create_activity(db,"test_role01_comadmin_承認待ち_権限内",7,["2"],users[3],-1,workflows[0],'M',4),
+        create_activity(db,"test_role01_comadmin_キャンセル_権限内",8,["2"],users[3],-1,workflows[0],'C',3),
+        create_activity(db,"test_role01_comadmin_完了_権限内",9,["2"],users[3],-1,workflows[0],'F',5),
+        create_activity(db,"test_role01_comadmin_入力中_権限内_actionrole(test_role02)",10,["2"],users[3],-1,workflows[2],'M',3),
+        create_activity(db,"test_role01_comadmin_入力中_権限内_!actionrole(test_role01)",11,["2"],users[3],-1,workflows[3],'M',3),
+        create_activity(db,"test_role01_comadmin_入力中_権限外",12,["4"],users[3],-1,workflows[0],'M',3),
+        create_activity(db,"test_role01_comadmin_承認待ち_権限外",13,["4"],users[3],-1,workflows[0],'M',4),
+        create_activity(db,"test_role01_comadmin_入力中_権限外_actionrole(test_role01)",14,["4"],users[3],-1,workflows[1],'M',3),
+        create_activity(db,"test_role01_comadmin_入力中_権限外_actionrole(test_role02)",15,["4"],users[3],-1,workflows[2],'M',3),
+        create_activity(db,"test_role01_comadmin_入力中_権限外_代理(test_role01_user)",16,["4"],users[3],3,workflows[0],'M',3),
+        create_activity(db,"test_role01_comadmin_承認待ち_権限外_代理(test_role01_user)",17,["4"],users[3],3,workflows[0],'M',4),
+        create_activity(db,"test_role01_comadmin_入力中_権限外_actionrole(test_role01)_代理(test_role01_user)",18,["4"],users[3],3,workflows[1],'M',3),
+        create_activity(db,"test_role01_comadmin_入力中_権限外_actionrole(test_role02)_代理(test_role01_user)",19,["4"],users[3],3,workflows[2],'M',3),
+        create_activity(db,"test_role01_comadmin_入力中_権限外_!actionrole(test_role01)",20,["4"],users[3],-1,workflows[3],'M',3),
+        create_activity(db,"test_role01_comadmin_入力中_権限外_!actionrole(test_role01)_代理(test_role01_user)",21,["4"],users[3],3,workflows[3],'M',3),
+        create_activity(db,"test_role01_user_入力中_権限内",22,["2"],users[2],-1,workflows[0],'M',3),
+        create_activity(db,"test_role01_user_承認待ち_権限内",23,["2"],users[2],-1,workflows[0],'M',4),
+        create_activity(db,"test_role01_user_キャンセル_権限内",24,["2"],users[2],-1,workflows[0],'C',3),
+        create_activity(db,"test_role01_user_完了_権限内",25,["2"],users[2],-1,workflows[0],'F',5),
+        create_activity(db,"test_role01_user_入力中_権限内_!actionrole(test_role01)",26,["2"],users[2],-1,workflows[3],'M',3),
+        create_activity(db,"test_role01_user_入力中_権限外",27,["4"],users[2],-1,workflows[0],'M',3),
+        create_activity(db,"test_role01_user_承認待ち_権限外",28,["4"],users[2],-1,workflows[0],'M',4),
+        create_activity(db,"test_role01_user_キャンセル_権限外",29,["4"],users[2],-1,workflows[0],'C',3),
+        create_activity(db,"test_role01_user_完了_権限外",30,["4"],users[2],-1,workflows[0],'F',5),
+        create_activity(db,"test_role01_user_入力中_権限外_index未選択",31,[],users[2],-1,workflows[0],'M',2),
+        create_activity(db,"test_role01_user_入力中_権限外_index未選択_代理(test_role01_comadmin)",32,[],users[2],4,workflows[0],'M',2),
+        create_activity(db,"test_role01_user_入力前_権限外",33,None,users[2],-1,workflows[0],'M',2),
+        create_activity(db,"test_role01_user_入力中_権限外_actionrole(test_role01)",34,["4"],users[2],-1,workflows[1],'M',3),
+        create_activity(db,"test_role01_user_入力中_権限外_actionrole(test_role02)",35,["4"],users[2],-1,workflows[2],'M',3),
+        create_activity(db,"test_role01_user_入力中_権限外_!actionrole(test_role01)",36,["4"],users[2],-1,workflows[3],'M',3),
+        create_activity(db,"test_role01_user_入力中_権限外_!actionrole(test_role02)",37,["4"],users[2],-1,workflows[4],'M',3),
+        create_activity(db,"test_role01_user_入力中_権限外_代理(test_role01_comadmin)",38,["4"],users[2],4,workflows[0],'M',3),
+        create_activity(db,"test_role01_user_承認待ち_権限外_代理(test_role01_comadmin)",39,["4"],users[2],4,workflows[0],'M',4),
+        create_activity(db,"test_role01_user_入力中_権限外_actionrole(test_role02)_代理(test_role01_comadmin)",40,["4"],users[2],4,workflows[2],'M',3),
+        create_activity(db,"test_role01_user_入力中_権限外_!actionrole(test_role01)_代理(test_role01_comadmin)",41,["4"],users[2],4,workflows[3],'M',3),
+        create_activity(db,"test_role01_user_入力中_権限内+外",42,["2","4"],users[2],-1,workflows[0],'M',3),
+        create_activity(db,"test_role03_comadmin_入力中_com所属なし",43,["2"],users[5],-1,workflows[0],'M',3),
+        
+    ]
+
+    return activites
+    
+    
+    
 @pytest.fixture()
 def action_data(db):
     action_datas=dict()
@@ -1133,7 +1295,9 @@ def db_register(app, db, db_records, users, action_data, item_type):
             'action_feedback_mail1':activity_item4_feedbackmail,
             'action_feedback_mail2':activity_item5_feedbackmail,
             'action_feedback_mail3':activity_item6_feedbackmail,
-            "activities":[activity,activity_item1,activity_item2,activity_item3,activity_item7,activity_item8,activity_guest]}
+            'activities':[activity,activity_item1,activity_item2,activity_item3,activity_item7,activity_item8,activity_guest],
+            'activity_actions':[activity_action,activity_action1_item1,activity_action2_item1,activity_action3_item1],
+    }
 
 @pytest.fixture()
 def workflow(app, db, item_type, action_data, users):
@@ -2116,7 +2280,7 @@ def db_register_usage_application(app, db, db_records, users, action_data, item_
         ,user_mail = 'aaa@test.org'
         ,file_name = "aaa.txt"
         ,token="abc"
-        ,expiration_date=datetime.now()
+        ,expiration_date=5
         ,is_usage_report=False
     )
     with db.session.begin_nested():

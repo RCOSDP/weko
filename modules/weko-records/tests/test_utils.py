@@ -116,15 +116,15 @@ def test_json_loader(app, db, item_type, item_type2, item_type_mapping2, records
         "item_3":{"item_3_1":"item_3_1_v"},
         "item_4":{"item_4_1":"item_4_1_v"},
         "item_5":[{"filename":"item_5"}],
-        "item_6":[],
+        "item_6":[{}],
         "item_7":[{},{"nameIdentifiers":[{"nameIdentifierScheme":"WEKO","nameIdentifier":"1234"}]}],
         "item_8":{"nameIdentifiers":[{"nameIdentifierScheme":"WEKO","nameIdentifier":"5678"}]}
     }
     app.config['WEKO_SCHEMA_JPCOAR_V1_SCHEMA_NAME'] = 'jpcoar_v1_mapping'
     app.config['WEKO_SCHEMA_DDI_SCHEMA_NAME'] = 'ddi_mapping'
     dc, jrc, is_edit = json_loader(data3,_pid)
-    assert dc == OrderedDict([('pubdate', {'attribute_name': 'Publish Date', 'attribute_value': '2023-08-08'}), ('item_1', {'attribute_name': 'item_1', 'attribute_value': 'item_1_v'}), ('item_2', {'attribute_name': 'item_2', 'attribute_value': ''}), ('item_3', {'attribute_name': 'item_3', 'attribute_type': 'creator', 'attribute_value_mlt': [{'item_3_1': 'item_3_1_v'}]}), ('item_4', {'attribute_name': 'item_4', 'attribute_value_mlt': [{'item_4_1': 'item_4_1_v'}]}), ('item_5', {'attribute_name': 'item_5', 'attribute_type': 'file', 'attribute_value_mlt': [{'filename': 'item_5'}]}), ('item_6', {'attribute_name': 'item_6', 'attribute_value': []}), ('item_7', {'attribute_name': 'item_7', 'attribute_value_mlt': [{}, {'nameIdentifiers': [{'nameIdentifierScheme': 'WEKO', 'nameIdentifier': '1234'}]}]}), ('item_8', {'attribute_name': 'item_8', 'attribute_value_mlt': [{'nameIdentifiers': [{'nameIdentifierScheme': 'WEKO', 'nameIdentifier': '5678'}]}]}), ('item_title', 'test_item1'), ('item_type_id', '3'), ('control_number', '1'), ('author_link', ['1234', '5678']), ('_oai', {'id': '1'}), ('weko_shared_id', 1), ('owner', '1')])
-    assert jrc == {'creator1': {'nameIdentifier': ['1234', '5678']}, 'item_4': ['item_4_1_v'], 'item_3': ['item_3_1_v'], 'item_5': ['item_5'], 'control_number': '1', '_oai': {'id': '1'}, '_item_metadata': OrderedDict([('pubdate', {'attribute_name': 'Publish Date', 'attribute_value': '2023-08-08'}), ('item_1', {'attribute_name': 'item_1', 'attribute_value': 'item_1_v'}), ('item_2', {'attribute_name': 'item_2', 'attribute_value': ''}), ('item_3', {'attribute_name': 'item_3', 'attribute_type': 'creator', 'attribute_value_mlt': [{'item_3_1': 'item_3_1_v'}]}), ('item_4', {'attribute_name': 'item_4', 'attribute_value_mlt': [{'item_4_1': 'item_4_1_v'}]}), ('item_5', {'attribute_name': 'item_5', 'attribute_type': 'file', 'attribute_value_mlt': [{'filename': 'item_5'}]}), ('item_6', {'attribute_name': 'item_6', 'attribute_value': []}), ('item_7', {'attribute_name': 'item_7', 'attribute_value_mlt': [{}, {'nameIdentifiers': [{'nameIdentifierScheme': 'WEKO', 'nameIdentifier': '1234'}]}]}), ('item_8', {'attribute_name': 'item_8', 'attribute_value_mlt': [{'nameIdentifiers': [{'nameIdentifierScheme': 'WEKO', 'nameIdentifier': '5678'}]}]}), ('item_title', 'test_item1'), ('item_type_id', '3'), ('control_number', '1'), ('author_link', ['1234', '5678']), ('_oai', {'id': '1'}), ('weko_shared_id', 1), ('owner', '1')]), 'itemtype': 'test10', 'publish_date': '2023-08-08', 'author_link': ['1234', '5678'], 'weko_creator_id': '1', 'weko_shared_id': 1}
+    assert dc == OrderedDict([('pubdate', {'attribute_name': 'Publish Date', 'attribute_value': '2023-08-08'}), ('item_1', {'attribute_name': 'item_1', 'attribute_value': 'item_1_v'}), ('item_2', {'attribute_name': 'item_2', 'attribute_value': ''}), ('item_3', {'attribute_name': 'item_3', 'attribute_type': 'creator', 'attribute_value_mlt': [{'item_3_1': 'item_3_1_v'}]}), ('item_4', {'attribute_name': 'item_4', 'attribute_value_mlt': [{'item_4_1': 'item_4_1_v'}]}), ('item_5', {'attribute_name': 'item_5', 'attribute_type': 'file', 'attribute_value_mlt': [{'filename': 'item_5'}]}), ('item_6', {'attribute_name': 'item_6', 'attribute_value_mlt': [{}]}), ('item_7', {'attribute_name': 'item_7', 'attribute_value_mlt': [{}, {'nameIdentifiers': [{'nameIdentifierScheme': 'WEKO', 'nameIdentifier': '1234'}]}]}), ('item_8', {'attribute_name': 'item_8', 'attribute_value_mlt': [{'nameIdentifiers': [{'nameIdentifierScheme': 'WEKO', 'nameIdentifier': '5678'}]}]}), ('item_title', 'test_item1'), ('item_type_id', '3'), ('control_number', '1'), ('author_link', ['1234', '5678']), ('_oai', {'id': '1'})])
+    assert jrc == {'item_4': ['item_4_1_v'], 'creator1': {'nameIdentifier': ['1234', '5678']}, 'item_5': ['item_5'], 'item_3': ['item_3_1_v'], 'control_number': '1', '_oai': {'id': '1'}, '_item_metadata': OrderedDict([('pubdate', {'attribute_name': 'Publish Date', 'attribute_value': '2023-08-08'}), ('item_1', {'attribute_name': 'item_1', 'attribute_value': 'item_1_v'}), ('item_2', {'attribute_name': 'item_2', 'attribute_value': ''}), ('item_3', {'attribute_name': 'item_3', 'attribute_type': 'creator', 'attribute_value_mlt': [{'item_3_1': 'item_3_1_v'}]}), ('item_4', {'attribute_name': 'item_4', 'attribute_value_mlt': [{'item_4_1': 'item_4_1_v'}]}), ('item_5', {'attribute_name': 'item_5', 'attribute_type': 'file', 'attribute_value_mlt': [{'filename': 'item_5'}]}), ('item_6', {'attribute_name': 'item_6', 'attribute_value_mlt': [{}]}), ('item_7', {'attribute_name': 'item_7', 'attribute_value_mlt': [{}, {'nameIdentifiers': [{'nameIdentifierScheme': 'WEKO', 'nameIdentifier': '1234'}]}]}), ('item_8', {'attribute_name': 'item_8', 'attribute_value_mlt': [{'nameIdentifiers': [{'nameIdentifierScheme': 'WEKO', 'nameIdentifier': '5678'}]}]}), ('item_title', 'test_item1'), ('item_type_id', '3'), ('control_number', '1'), ('author_link', ['1234', '5678']), ('_oai', {'id': '1'})]), 'itemtype': 'test10', 'publish_date': '2023-08-08', 'author_link': ['1234', '5678']}
     assert is_edit == False
 
     
@@ -148,8 +148,8 @@ def test_json_loader(app, db, item_type, item_type2, item_type_mapping2, records
             "item_8":{"nameIdentifiers":[{"nameIdentifierScheme":"WEKO","nameIdentifier":"5678"}]}
         }
         dc, jrc, is_edit = json_loader(data4,_pid)
-        assert dc == OrderedDict([('pubdate', {'attribute_name': 'Publish Date', 'attribute_value': '2023-08-08'}), ('item_1', {'attribute_name': 'item_1', 'attribute_value': 'item_1_v'}), ('item_2', {'attribute_name': 'item_2', 'attribute_value': 'item_2_v'}), ('item_3', {'attribute_name': 'item_3', 'attribute_type': 'creator', 'attribute_value_mlt': [{'item_3_1': 'item_3_1_v'}]}), ('item_4', {'attribute_name': 'item_4', 'attribute_value_mlt': [{'item_4_1': 'item_4_1_v'}]}), ('item_5', {'attribute_name': 'item_5', 'attribute_type': 'file', 'attribute_value_mlt': [{'filename': 'item_5'}]}), ('item_6', {'attribute_name': 'item_6', 'attribute_value_mlt': [{'item_6_1': 'item_6_1_v'}]}), ('item_7', {'attribute_name': 'item_7', 'attribute_value_mlt': [{}, {'nameIdentifiers': [{'nameIdentifierScheme': 'WEKO', 'nameIdentifier': '1234'}]}]}), ('item_8', {'attribute_name': 'item_8', 'attribute_value_mlt': [{'nameIdentifiers': [{'nameIdentifierScheme': 'WEKO', 'nameIdentifier': '5678'}]}]}), ('item_title', 'test_item2'), ('item_type_id', '3'), ('control_number', '1'), ('author_link', ['1234', '5678']), ('weko_shared_id', 2), ('owner', '1')])
-        assert jrc == {'item_6': ['item_6_1_v'], 'item_4': ['item_4_1_v'], 'creator1': {'nameIdentifier': ['1234', '5678']}, 'item_3': ['item_3_1_v'], 'item_5': ['item_5'], 'control_number': '1', '_oai': {'id': '1'}, '_item_metadata': OrderedDict([('pubdate', {'attribute_name': 'Publish Date', 'attribute_value': '2023-08-08'}), ('item_1', {'attribute_name': 'item_1', 'attribute_value': 'item_1_v'}), ('item_2', {'attribute_name': 'item_2', 'attribute_value': 'item_2_v'}), ('item_3', {'attribute_name': 'item_3', 'attribute_type': 'creator', 'attribute_value_mlt': [{'item_3_1': 'item_3_1_v'}]}), ('item_4', {'attribute_name': 'item_4', 'attribute_value_mlt': [{'item_4_1': 'item_4_1_v'}]}), ('item_5', {'attribute_name': 'item_5', 'attribute_type': 'file', 'attribute_value_mlt': [{'filename': 'item_5'}]}), ('item_6', {'attribute_name': 'item_6', 'attribute_value_mlt': [{'item_6_1': 'item_6_1_v'}]}), ('item_7', {'attribute_name': 'item_7', 'attribute_value_mlt': [{}, {'nameIdentifiers': [{'nameIdentifierScheme': 'WEKO', 'nameIdentifier': '1234'}]}]}), ('item_8', {'attribute_name': 'item_8', 'attribute_value_mlt': [{'nameIdentifiers': [{'nameIdentifierScheme': 'WEKO', 'nameIdentifier': '5678'}]}]}), ('item_title', 'test_item2'), ('item_type_id', '3'), ('control_number', '1'), ('author_link', ['1234', '5678']), ('weko_shared_id', 2), ('owner', '1')]), 'itemtype': 'test10', 'publish_date': '2023-08-08', 'author_link': ['1234', '5678'], 'weko_creator_id': '1', 'weko_shared_id': 2}
+        assert dc == OrderedDict([('pubdate', {'attribute_name': 'Publish Date', 'attribute_value': '2023-08-08'}), ('item_1', {'attribute_name': 'item_1', 'attribute_value': 'item_1_v'}), ('item_2', {'attribute_name': 'item_2', 'attribute_value': 'item_2_v'}), ('item_3', {'attribute_name': 'item_3', 'attribute_type': 'creator', 'attribute_value_mlt': [{'item_3_1': 'item_3_1_v'}]}), ('item_4', {'attribute_name': 'item_4', 'attribute_value_mlt': [{'item_4_1': 'item_4_1_v'}]}), ('item_5', {'attribute_name': 'item_5', 'attribute_type': 'file', 'attribute_value_mlt': [{'filename': 'item_5'}]}), ('item_6', {'attribute_name': 'item_6', 'attribute_value_mlt': [{'item_6_1': 'item_6_1_v'}]}), ('item_7', {'attribute_name': 'item_7', 'attribute_value_mlt': [{}, {'nameIdentifiers': [{'nameIdentifierScheme': 'WEKO', 'nameIdentifier': '1234'}]}]}), ('item_8', {'attribute_name': 'item_8', 'attribute_value_mlt': [{'nameIdentifiers': [{'nameIdentifierScheme': 'WEKO', 'nameIdentifier': '5678'}]}]}), ('item_title', 'test_item2'), ('item_type_id', '3'), ('control_number', '1'), ('author_link', ['1234', '5678'])])
+        assert jrc == {'item_6': ['item_6_1_v'], 'item_5': ['item_5'], 'creator1': {'nameIdentifier': ['1234', '5678']}, 'item_3': ['item_3_1_v'], 'item_4': ['item_4_1_v'], 'control_number': '1', '_oai': {'id': '1'}, '_item_metadata': OrderedDict([('pubdate', {'attribute_name': 'Publish Date', 'attribute_value': '2023-08-08'}), ('item_1', {'attribute_name': 'item_1', 'attribute_value': 'item_1_v'}), ('item_2', {'attribute_name': 'item_2', 'attribute_value': 'item_2_v'}), ('item_3', {'attribute_name': 'item_3', 'attribute_type': 'creator', 'attribute_value_mlt': [{'item_3_1': 'item_3_1_v'}]}), ('item_4', {'attribute_name': 'item_4', 'attribute_value_mlt': [{'item_4_1': 'item_4_1_v'}]}), ('item_5', {'attribute_name': 'item_5', 'attribute_type': 'file', 'attribute_value_mlt': [{'filename': 'item_5'}]}), ('item_6', {'attribute_name': 'item_6', 'attribute_value_mlt': [{'item_6_1': 'item_6_1_v'}]}), ('item_7', {'attribute_name': 'item_7', 'attribute_value_mlt': [{}, {'nameIdentifiers': [{'nameIdentifierScheme': 'WEKO', 'nameIdentifier': '1234'}]}]}), ('item_8', {'attribute_name': 'item_8', 'attribute_value_mlt': [{'nameIdentifiers': [{'nameIdentifierScheme': 'WEKO', 'nameIdentifier': '5678'}]}]}), ('item_title', 'test_item2'), ('item_type_id', '3'), ('control_number', '1'), ('author_link', ['1234', '5678'])]), 'itemtype': 'test10', 'publish_date': '2023-08-08', 'author_link': ['1234', '5678']}
         assert is_edit == True
     with patch("weko_records.utils.COPY_NEW_FIELD",False):
         with patch("flask_login.utils._get_user", return_value=users[0]["obj"]):
@@ -169,8 +169,10 @@ def test_json_loader(app, db, item_type, item_type2, item_type_mapping2, records
             }
             dc, jrc, is_edit = json_loader(data5, _pid)
             assert dc == OrderedDict([('pubdate', {'attribute_name': 'Publish Date', 'attribute_value': '2023-08-08'}), ('item_1', {'attribute_name': 'item_1', 'attribute_value': 'item_1_v'}), ('item_2', {'attribute_name': 'item_2', 'attribute_value': 'item_2_v'}), ('item_3', {'attribute_name': 'item_3', 'attribute_type': 'creator', 'attribute_value_mlt': [{'item_3_1': 'item_3_1_v'}]}), ('item_4', {'attribute_name': 'item_4', 'attribute_value_mlt': [{'item_4_1': 'item_4_1_v'}]}), ('item_5', {'attribute_name': 'item_5', 'attribute_type': 'file', 'attribute_value_mlt': [{'filename': 'item_5'}]}), ('item_6', {'attribute_name': 'item_6', 'attribute_value_mlt': [{'item_6_1': 'item_6_1_v'}]}), ('item_7', {'attribute_name': 'item_7', 'attribute_value_mlt': [{}, {'nameIdentifiers': [{'nameIdentifierScheme': 'WEKO', 'nameIdentifier': '1234'}]}]}), ('item_8', {'attribute_name': 'item_8', 'attribute_value_mlt': [{'nameIdentifiers': [{'nameIdentifierScheme': 'WEKO', 'nameIdentifier': '5678'}]}]}), ('item_title', 'test_item2'), ('item_type_id', '3'), ('control_number', '1'), ('author_link', ['1234', '5678']), ('weko_shared_id', 2), ('owner', '5')])
-            assert jrc == {'item_6': ['item_6_1_v'], 'item_4': ['item_4_1_v'], 'creator1': {'nameIdentifier': ['1234', '5678']}, 'item_3': ['item_3_1_v'], 'item_5': ['item_5'], 'control_number': '1', '_oai': {'id': '1'}, '_item_metadata': OrderedDict([('pubdate', {'attribute_name': 'Publish Date', 'attribute_value': '2023-08-08'}), ('item_1', {'attribute_name': 'item_1', 'attribute_value': 'item_1_v'}), ('item_2', {'attribute_name': 'item_2', 'attribute_value': 'item_2_v'}), ('item_3', {'attribute_name': 'item_3', 'attribute_type': 'creator', 'attribute_value_mlt': [{'item_3_1': 'item_3_1_v'}]}), ('item_4', {'attribute_name': 'item_4', 'attribute_value_mlt': [{'item_4_1': 'item_4_1_v'}]}), ('item_5', {'attribute_name': 'item_5', 'attribute_type': 'file', 'attribute_value_mlt': [{'filename': 'item_5'}]}), ('item_6', {'attribute_name': 'item_6', 'attribute_value_mlt': [{'item_6_1': 'item_6_1_v'}]}), ('item_7', {'attribute_name': 'item_7', 'attribute_value_mlt': [{}, {'nameIdentifiers': [{'nameIdentifierScheme': 'WEKO', 'nameIdentifier': '1234'}]}]}), ('item_8', {'attribute_name': 'item_8', 'attribute_value_mlt': [{'nameIdentifiers': [{'nameIdentifierScheme': 'WEKO', 'nameIdentifier': '5678'}]}]}), ('item_title', 'test_item2'), ('item_type_id', '3'), ('control_number', '1'), ('author_link', ['1234', '5678']), ('weko_shared_id', 2), ('owner', '5')]), 'itemtype': 'test10', 'publish_date': '2023-08-08', 'author_link': ['1234', '5678'], 'weko_creator_id': '5', 'weko_shared_id': 2}
+            assert jrc == {'item_5': ['item_5'], 'item_4': ['item_4_1_v'], 'creator1': {'nameIdentifier': ['1234', '5678']}, 'item_6': ['item_6_1_v'], 'item_3': ['item_3_1_v'], 'control_number': '1', '_oai': {'id': '1'}, '_item_metadata': OrderedDict([('pubdate', {'attribute_name': 'Publish Date', 'attribute_value': '2023-08-08'}), ('item_1', {'attribute_name': 'item_1', 'attribute_value': 'item_1_v'}), ('item_2', {'attribute_name': 'item_2', 'attribute_value': 'item_2_v'}), ('item_3', {'attribute_name': 'item_3', 'attribute_type': 'creator', 'attribute_value_mlt': [{'item_3_1': 'item_3_1_v'}]}), ('item_4', {'attribute_name': 'item_4', 'attribute_value_mlt': [{'item_4_1': 'item_4_1_v'}]}), ('item_5', {'attribute_name': 'item_5', 'attribute_type': 'file', 'attribute_value_mlt': [{'filename': 'item_5'}]}), ('item_6', {'attribute_name': 'item_6', 'attribute_value_mlt': [{'item_6_1': 'item_6_1_v'}]}), ('item_7', {'attribute_name': 'item_7', 'attribute_value_mlt': [{}, {'nameIdentifiers': [{'nameIdentifierScheme': 'WEKO', 'nameIdentifier': '1234'}]}]}), ('item_8', {'attribute_name': 'item_8', 'attribute_value_mlt': [{'nameIdentifiers': [{'nameIdentifierScheme': 'WEKO', 'nameIdentifier': '5678'}]}]}), ('item_title', 'test_item2'), ('item_type_id', '3'), ('control_number', '1'), ('author_link', ['1234', '5678']), ('weko_shared_id', 2), ('owner', '5')]), 'itemtype': 'test10', 'publish_date': '2023-08-08', 'author_link': ['1234', '5678'], 'weko_creator_id': '5', 'weko_shared_id': 2}
             assert is_edit == True
+
+
 # def copy_field_test(dc, map, jrc, iid=None):
 # .tox/c1/bin/pytest --cov=weko_records tests/test_utils.py::test_copy_field_test -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
 def test_copy_field_test(app, meta, k_v):
@@ -546,6 +548,10 @@ def test_get_options_and_order_list(app, db, item_type):
     assert solst==[]
     assert meta_options=={}
 
+    solst, meta_options = get_options_and_order_list(1, item_type_data=item_type)
+    assert solst==[]
+    assert meta_options=={}
+
 # async def sort_meta_data_by_options(
 # .tox/c1/bin/pytest --cov=weko_records tests/test_utils.py::test_sort_meta_data_by_options -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
 params=[
@@ -595,17 +601,13 @@ async def test_sort_meta_data_by_options(i18n_app, db, admin_settings, mocker,
         form=json_data(form),
         tag=1
     )
-    item_type_mapping = Mapping.create(
-        item_type_id=item_type.id,
-        mapping=json_data(mapping)
-    )
     record_hit=json_data(hit)
     settings = AdminSettings.get('items_display_settings')
     if not licence:
         i18n_app.config.update(
             WEKO_RECORDS_UI_LICENSE_DICT=False
         )
-    await sort_meta_data_by_options(record_hit,settings,item_type_mapping,item_type)
+    await sort_meta_data_by_options(record_hit,settings,item_type)
 
     
 
@@ -626,13 +628,9 @@ async def test_sort_meta_data_by_options_exception(i18n_app, db, admin_settings)
         form={},
         tag=1
     )
-    item_type_mapping=Mapping.create(
-        item_type_id=item_type.id,
-        mapping={}
-    )
     settings = AdminSettings.get("items_display_settings")
     with patch("weko_records.serializers.utils.get_mapping",side_effect=Exception):
-        await sort_meta_data_by_options(record_hit,settings,item_type_mapping,item_type)
+        await sort_meta_data_by_options(record_hit,settings,item_type)
 
 @pytest.mark.asyncio
 async def test_sort_meta_data_by_options_no_item_type_id(i18n_app, db, admin_settings):
@@ -651,12 +649,8 @@ async def test_sort_meta_data_by_options_no_item_type_id(i18n_app, db, admin_set
         form={},
         tag=1
     )
-    item_type_mapping=Mapping.create(
-        item_type_id=item_type.id,
-        mapping={}
-    )
     settings = AdminSettings.get("items_display_settings")
-    await sort_meta_data_by_options(record_hit,settings,item_type_mapping,item_type)
+    await sort_meta_data_by_options(record_hit,settings,item_type)
 
 #     def convert_data_to_dict(solst):
 #     def get_author_comment(data_result, key, result, is_specify_newline_array):
@@ -699,10 +693,6 @@ async def test_sort_meta_data_by_options_sample_1(i18n_app, db, admin_settings):
         form={},
         tag=1
     )
-    item_type_mapping=Mapping.create(
-        item_type_id=item_type.id,
-        mapping={}
-    )
     settings = AdminSettings.get("items_display_settings")
     
     data1 = {
@@ -733,7 +723,7 @@ async def test_sort_meta_data_by_options_sample_1(i18n_app, db, admin_settings):
     
     with patch("weko_records.serializers.utils.get_mapping", return_value=data1):
         with patch("weko_search_ui.utils.get_data_by_property", return_value=("1", "2")):
-            await sort_meta_data_by_options(record_hit,settings,item_type_mapping,item_type)
+            await sort_meta_data_by_options(record_hit,settings,item_type)
 
             record_hit_2 = {
                 "_source": {
@@ -766,14 +756,12 @@ async def test_sort_meta_data_by_options_sample_1(i18n_app, db, admin_settings):
             await sort_meta_data_by_options(
                 record_hit=record_hit_2,
                 settings=settings,
-                item_type_mapping=item_type_mapping,
                 item_type_data=data3
             )
 
             await sort_meta_data_by_options(
                 record_hit=record_hit_2,
                 settings=settings,
-                item_type_mapping=item_type_mapping,
                 item_type_data=data2
             )
 
@@ -784,7 +772,6 @@ async def test_sort_meta_data_by_options_sample_1(i18n_app, db, admin_settings):
             await sort_meta_data_by_options(
                 record_hit=record_hit_2,
                 settings=settings,
-                item_type_mapping=item_type_mapping,
                 item_type_data=data2
             )
 
@@ -793,7 +780,6 @@ async def test_sort_meta_data_by_options_sample_1(i18n_app, db, admin_settings):
             await sort_meta_data_by_options(
                 record_hit=record_hit_2,
                 settings=settings,
-                item_type_mapping=item_type_mapping,
                 item_type_data=data2
             )
 
@@ -804,7 +790,6 @@ async def test_sort_meta_data_by_options_sample_1(i18n_app, db, admin_settings):
             await sort_meta_data_by_options(
                 record_hit=record_hit_2,
                 settings=settings,
-                item_type_mapping=item_type_mapping,
                 item_type_data=data2
             )
 
@@ -816,7 +801,6 @@ async def test_sort_meta_data_by_options_sample_1(i18n_app, db, admin_settings):
             await sort_meta_data_by_options(
                 record_hit=record_hit_2,
                 settings=settings,
-                item_type_mapping=item_type_mapping,
                 item_type_data=data2
             )
 
@@ -825,7 +809,6 @@ async def test_sort_meta_data_by_options_sample_1(i18n_app, db, admin_settings):
             await sort_meta_data_by_options(
                 record_hit=record_hit_2,
                 settings=settings,
-                item_type_mapping=item_type_mapping,
                 item_type_data=data2
             )
 
@@ -857,7 +840,6 @@ async def test_sort_meta_data_by_options_sample_1(i18n_app, db, admin_settings):
             await sort_meta_data_by_options(
                 record_hit=record_hit_2,
                 settings=settings,
-                item_type_mapping=item_type_mapping,
                 item_type_data=data4
             )
 
@@ -868,7 +850,6 @@ async def test_sort_meta_data_by_options_sample_1(i18n_app, db, admin_settings):
                 await sort_meta_data_by_options(
                     record_hit=record_hit_2,
                     settings=settings,
-                    item_type_mapping=item_type_mapping,
                     item_type_data=None
                 )
             except:
@@ -1179,8 +1160,7 @@ def test_remove_weko2_special_character():
     assert remove_weko2_special_character("HOGE,&EMPTY&,HOGE")=="HOGE,,HOGE"
 
     with patch("re.sub", return_value=","):
-        assert remove_weko2_special_character(",,,,") == None
-        raise BaseException
+        assert remove_weko2_special_character(",,,,") == ''
 
 #     def __remove_special_character(_s_str: str):
 
@@ -1188,22 +1168,78 @@ def test_remove_weko2_special_character():
 # .tox/c1/bin/pytest --cov=weko_records tests/test_utils.py::test_selected_value_by_language -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
 def test_selected_value_by_language(app, meta):
     res = selected_value_by_language([], [], '', '', None, {})
+    record = meta[0]
+    assert res==None
+    _val_id = 'item_1551264308487.subitem_1551255647225'
+    res = selected_value_by_language([], [], '', _val_id, None, {}, hide_list=['invalid_subitem_key'])
+    record = meta[0]
+    assert res==None
+
+    _val_id = 'item_1551264308487.subitem_1551255647225'
+    res = selected_value_by_language([], [], '', _val_id, 'en', {}, hide_list=['item_1551264308487.subitem_1551255647225'])
+    record = meta[0]
+    assert res==None
+
+    _val_id = 'item_1551264308487.subitem_1551255647225'
+    res = selected_value_by_language([], ['タイトル日本語', 'Title'], '', _val_id, 'en', {}, hide_list=['invalid_subitem_key'])
+    record = meta[0]
     assert res==None
     _lang_id = 'item_1551264308487.subitem_1551255648112'
     _val_id = 'item_1551264308487.subitem_1551255647225'
-    res = selected_value_by_language(['ja', 'en'], ['タイトル日本語', 'Title'], _lang_id, _val_id, 'en', meta[0])
+    res = selected_value_by_language(['ja', 'en'], ['タイトル日本語', 'Title'], _lang_id, _val_id, 'en', record)
     assert res=='Title'
     app.config['WEKO_RECORDS_UI_LANG_DISP_FLG'] = False
     _lang_id = 'item_1551264340087.subitem_1551255898956.subitem_1551255907416'
     _val_id = 'item_1551264340087.subitem_1551255898956.subitem_1551255905565'
-    res = selected_value_by_language(['ja'], ['作者'], _lang_id, _val_id, 'en', meta[0])
-    assert res=='作者'
+    res = selected_value_by_language(['ja'], ['作者'], _lang_id, _val_id, 'en', record)
+    assert res=='Creator'
+
+    with patch("weko_records.utils.check_info_in_metadata", return_value="Mocked Value"): 
+        res = selected_value_by_language(['ja'], ['作者'], _lang_id, _val_id, 'en', record)
+        assert res=='Mocked Value'
+
+    with patch("weko_records.utils.check_info_in_metadata", return_value='Creator'):
+        res = selected_value_by_language(['en'], ['作者'], _lang_id, _val_id, 'en', record)
+        assert res=='Creator'
+
     app.config['WEKO_RECORDS_UI_LANG_DISP_FLG'] = True
-    res = selected_value_by_language(['en'], ['Creator'], _lang_id, _val_id, 'en', meta[0])
+    res = selected_value_by_language(['ja'], ['作者'], _lang_id, _val_id, 'en', record)
     assert res=='Creator'
     with patch("weko_records.utils.check_info_in_metadata", return_value="en"):
-        res = selected_value_by_language(["ja-Latn"], ['ja-Latn'], _lang_id, _val_id, 'en', meta[0])
+        res = selected_value_by_language(["ja-Latn"], ['ja-Latn'], _lang_id, _val_id, 'en', record)
         assert res=='en'
+
+    app.config['WEKO_RECORDS_UI_LANG_DISP_FLG'] = False
+    _lang_id = 'item_1551264308487.subitem_1551255648112,item_1551264308488.subitem_1551255648113'
+    _val_id = 'item_1551264308487.subitem_1551255647225,item_1551264308488.subitem_1551255647226'
+    record['item_1551264308488'] = {
+        "attribute_name": "Title",
+        "attribute_value_mlt": [
+            {
+                "subitem_1551255647226": "タイトル日本語-2",
+                "subitem_1551255648113": "ja"
+            },
+            {
+                "subitem_1551255647226": "Title-2",
+                "subitem_1551255648113": "en"
+            }
+        ]
+    }
+    res = selected_value_by_language(['ja', 'en', 'ja', 'en'], ['タイトル日本語', 'Title', 'タイトル日本語-2', 'Title-2'], _lang_id, _val_id, 'en', record)
+    assert res=='Title'
+
+    record["item_1551264308487"]["attribute_value_mlt"][0].pop("subitem_1551255648112")
+    record["item_1551264308487"]["attribute_value_mlt"][1].pop("subitem_1551255648112")
+    res = selected_value_by_language(['ja', 'en'], ['タイトル日本語', 'Title', 'タイトル日本語-2', 'Title-2'], _lang_id, _val_id, 'en', record)
+    assert res=='タイトル日本語'
+
+    record.pop("item_1551264308487")
+    res = selected_value_by_language(['ja', 'en'], ['タイトル日本語-2', 'Title-2'], _lang_id, _val_id, 'en', record)
+    assert res=='Title-2'
+
+    with patch("weko_records.utils.check_info_in_metadata", return_value='Creator'):
+            res = selected_value_by_language(['en'], ['作者'], _lang_id, _val_id, 'en', record, hide_list=['en'])
+            assert res=='Creator'
 
 # .tox/c1/bin/pytest --cov=weko_records tests/test_utils.py::test_selected_value_by_language_2 -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
 def test_selected_value_by_language_2(app, meta):
@@ -1225,7 +1261,7 @@ def test_selected_value_by_language_3(app):
     
 
     with patch("weko_records.utils.check_info_in_metadata", return_value="en"):
-        res = selected_value_by_language(["ja-Latn"], ['ja-Latn'], _lang_id, _val_id, 'en', meta[0])
+        res = selected_value_by_language(["ja-Latn"], ['ja-Latn'], _lang_id, _val_id, 'en', meta)
         assert res=='en'
 
 def test_selected_value_by_language_2(app, meta):
@@ -1252,6 +1288,23 @@ def test_check_info_in_metadata(app, meta):
     _str_key_val = 'item_1551264418667.subitem_1551257245638.subitem_1551257276108'
     res = check_info_in_metadata(_str_key_lang, _str_key_val, 'en', meta[0])
     assert res=='Contributor'
+    _str_key_lang = 'item_30002_title0.subitem_title_language'
+    _str_key_val = 'item_30002_title0.subitem_title'
+    _lang = 'ja'
+    _meta = {'path': ['1623632832836'], 'pubdate': '2024-12-26', 'item_30002_title0': {'subitem_title': 'title', 'subitem_title_language': 'ja'}, 'item_30002_resource_type13': {'resourcetype': 'conference paper', 'resourceuri': 'http://purl.org/coar/resource_type/c_5794'}, 'item_30002_file35': [{'filename': '日本語.png'}], 'item_1735223788720': {'subitem_thumbnail': [{'thumbnail_label': 'jdcat.jsps.go.jp_about.png', 'thumbnail_url': '/api/files/d88a107f-c3a7-4ad6-81ca-4c34691682d1/jdcat.jsps.go.jp_about.png?versionId=37ad1676-9099-4f82-ba7a-35ef4f325b39'}]}}
+    res = check_info_in_metadata(_str_key_lang, _str_key_val, _lang, _meta)
+    assert res is not None
+    assert res=='title'
+    _str_key_lang = 'item_30002_title0.subitem_title_language'
+    _str_key_val = 'item_30002_title0.subitem_title'
+    _lang = 'ja'
+    _meta = {'path': ['1623632832836'], 'pubdate': '2024-12-26', 'item_30002_title0': [{'subitem_title': 'title', 'subitem_title_language': 'ja'}], 'item_30002_resource_type13': {'resourcetype': 'conference paper', 'resourceuri': 'http://purl.org/coar/resource_type/c_5794'}, 'item_30002_file35': [{'filename': '日本語.png'}], 'item_1735223788720': {'subitem_thumbnail': [{'thumbnail_label': 'jdcat.jsps.go.jp_about.png', 'thumbnail_url': '/api/files/d88a107f-c3a7-4ad6-81ca-4c34691682d1/jdcat.jsps.go.jp_about.png?versionId=37ad1676-9099-4f82-ba7a-35ef4f325b39'}]}}
+    res = check_info_in_metadata(_str_key_lang, _str_key_val, _lang, _meta)
+    assert res=='title'
+
+
+
+
 
 # def get_value_and_lang_by_key(key, data_json, data_result, stt_key):
 # .tox/c1/bin/pytest --cov=weko_records tests/test_utils.py::test_get_value_and_lang_by_key -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
@@ -1437,7 +1490,7 @@ def test_get_show_list_author(i18n_app):
     }]
 
     res = get_show_list_author(_solst_dict_array, False, _author_key, _creates)
-    assert res=={'creatorName': ['en_name'], 'familyName': ['en_fname']}
+    assert res== [{'creatorName': ['en_name'], 'familyName': ['en_fname']}]
     
 # .tox/c1/bin/pytest --cov=weko_records tests/test_utils.py::test_get_show_list_author_test0 -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
 def test_get_show_list_author_test0(i18n_app):    
@@ -1446,7 +1499,9 @@ def test_get_show_list_author_test0(i18n_app):
     author_key='item_1617186419668'
     creates=[{'creatorMails': [{'creatorMail': 'wekosoftware@nii.ac.jp'}], 'familyNames': [{'familyName': '情報', 'familyNameLang': 'ja'}, {'familyName': 'ジョウホウ', 'familyNameLang': 'ja-Kana'}, {'familyName': 'Joho', 'familyNameLang': 'en'}], 'creatorNames': [{'creatorName': '情報, 太郎', 'creatorNameLang': 'ja'}, {'creatorName': 'ジョウホウ\t タロウ', 'creatorNameLang': 'ja-Kana'}, {'creatorName': 'Joho\t Taro', 'creatorNameLang': 'en'}], 'creatorAffiliations': [{'affiliationNames': [{'affiliationName': 'University', 'affiliationNameLang': 'en'}], 'affiliationNameIdentifiers': [{'affiliationNameIdentifierURI': 'http://isni.org/isni/0000000121691048', 'affiliationNameIdentifier': '0000000121691048', 'affiliationNameIdentifierScheme': 'ISNI'}]}], 'givenNames': [{'givenName': '太郎', 'givenNameLang': 'ja'}, {'givenName': 'タロウ', 'givenNameLang': 'ja-Kana'}, {'givenName': 'Taro', 'givenNameLang': 'en'}], 'nameIdentifiers': [{'nameIdentifierScheme': 'WEKO', 'nameIdentifier': '4'}, {'nameIdentifierScheme': 'ORCID', 'nameIdentifierURI': 'https://orcid.org/', 'nameIdentifier': 'xxxxxxx'}, {'nameIdentifierScheme': 'CiNii', 'nameIdentifierURI': 'https://ci.nii.ac.jp/', 'nameIdentifier': 'xxxxxxx'}, {'nameIdentifierScheme': 'KAKEN2', 'nameIdentifierURI': 'https://nrid.nii.ac.jp/nrid/xxxxxxx', 'nameIdentifier': 'xxxxxxx'}]}, {'creatorMails': [{'creatorMail': 'wekosoftware@nii.ac.jp'}], 'familyNames': [{'familyName': '情報', 'familyNameLang': 'ja'}, {'familyName': 'ジョウホウ', 'familyNameLang': 'ja-Kana'}, {'familyName': 'Joho', 'familyNameLang': 'en'}], 'creatorNames': [{'creatorName': '情報, 太郎', 'creatorNameLang': 'ja'}, {'creatorName': 'ジョウホウ\t タロウ', 'creatorNameLang': 'ja-Kana'}, {'creatorName': 'Joho\t Taro', 'creatorNameLang': 'en'}], 'givenNames': [{'givenName': '太郎', 'givenNameLang': 'ja'}, {'givenName': 'タロウ', 'givenNameLang': 'ja-Kana'}, {'givenName': 'Taro', 'givenNameLang': 'en'}], 'nameIdentifiers': [{'nameIdentifierScheme': 'ORCID', 'nameIdentifierURI': 'https://orcid.org/yyyyyy', 'nameIdentifier': 'yyyyyy'}, {'nameIdentifierScheme': 'CiNii', 'nameIdentifierURI': 'https://ci.nii.ac.jp/author/yyyyyy', 'nameIdentifier': 'yyyyyy'}, {'nameIdentifierScheme': 'KAKEN2', 'nameIdentifierURI': 'https://nrid.nii.ac.jp/nrid/yyyyyy', 'nameIdentifier': 'yyyyyy'}]}, {'creatorMails': [{'creatorMail': 'wekosoftware@nii.ac.jp'}], 'familyNames': [{'familyName': '情報', 'familyNameLang': 'ja'}, {'familyName': 'ジョウホウ', 'familyNameLang': 'ja-Kana'}, {'familyName': 'Joho', 'familyNameLang': 'en'}], 'creatorNames': [{'creatorName': '情報, 太郎', 'creatorNameLang': 'ja'}, {'creatorName': 'ジョウホウ\t タロウ', 'creatorNameLang': 'ja-Kana'}, {'creatorName': 'Joho\t Taro', 'creatorNameLang': 'en'}], 'givenNames': [{'givenName': '太郎', 'givenNameLang': 'ja'}, {'givenName': 'タロウ', 'givenNameLang': 'ja-Kana'}, {'givenName': 'Taro', 'givenNameLang': 'en'}], 'nameIdentifiers': [{'nameIdentifierScheme': 'ORCID', 'nameIdentifierURI': 'https://orcid.org/zzzzzzz', 'nameIdentifier': 'zzzzzzz'}, {'nameIdentifierScheme': 'CiNii', 'nameIdentifierURI': 'https://ci.nii.ac.jp/author/zzzzzzz', 'nameIdentifier': 'zzzzzzz'}, {'nameIdentifierScheme': 'KAKEN2', 'nameIdentifierURI': 'https://kaken.nii.ac.jp/', 'nameIdentifier': 'zzzzzzz'}]}]
     res = get_show_list_author(solst_dict_array, hide_email_flag, author_key, creates)
-    assert res=={'creatorName': ['Joho\t Taro', 'Joho\t Taro', 'Joho\t Taro'], 'familyName': ['Joho', 'Joho', 'Joho'], 'givenName': ['Taro', 'Taro', 'Taro'], 'affiliationName': ['University']}
+    assert res==[{'creatorName': ['Joho\t Taro'], 'familyName': ['Joho'], 'givenName': ['Taro'], 'affiliationName': ['University']},
+                 {'creatorName': ['Joho\t Taro'], 'familyName': ['Joho'], 'givenName': ['Taro']},
+                 {'creatorName': ['Joho\t Taro'], 'familyName': ['Joho'], 'givenName': ['Taro']}]
 
 # def format_creates(creates, hide_creator_keys):
 # .tox/c1/bin/pytest --cov=weko_records tests/test_utils.py::test_format_creates -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
@@ -1500,7 +1555,7 @@ def test_format_creates(i18n_app):
     _hide_creator_keys = ['familyNames']
     
     res = format_creates(_creates, _hide_creator_keys)
-    assert res=={'creatorName': ['en_name'], 'affiliationName': ['en_af'], 'creatorAlternative': ['en_al']}
+    assert res==[{'creatorName': ['en_name'], 'affiliationName': ['en_af'], 'creatorAlternative': ['en_al']}]
 
 # def get_creator(create, result_end, hide_creator_keys, current_lang):
 # .tox/c1/bin/pytest --cov=weko_records tests/test_utils.py::test_get_creator -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
@@ -1633,7 +1688,7 @@ def test_get_author_has_language(app):
 
     with patch("weko_records.utils.get_value_by_selected_lang", return_value="test"):
         res = get_author_has_language(_create, {}, 'en', ['test1', 'test1'])
-        assert res=={}
+        assert res=={'test1': ['test']}
 
 # def add_author(author_data, stt_key, is_specify_newline_array, s, value, data_result, is_specify_newline, is_hide, is_show_list):
 # .tox/c1/bin/pytest --cov=weko_records tests/test_utils.py::test_add_author -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp

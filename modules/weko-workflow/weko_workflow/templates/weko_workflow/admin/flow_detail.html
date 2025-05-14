@@ -175,8 +175,9 @@
                     </label>
                   </div>
                   <br>
+<!--　mail for restricted access
                   {% if action.action.action_name == 'Approval'%}
-                    <div class="mail_setting_options">
+                  <div class="mail_setting_options">
                       <div class="form-inline">
                         <label style="font-weight: unset;">
                           <input type="checkbox" class="pointer" id="td_action_request_approval_{{action.action_id}}" {% if action.send_mail_setting.request_approval %}checked{% endif %} >
@@ -192,8 +193,9 @@
                           <input type="checkbox" class="pointer" id="td_action_approval_done_{{action.action_id}}" {% if action.send_mail_setting.inform_approval %}checked{% endif %}>
                           {{_('Approval Notification Email')}}</label>
                       </div>
-                    </div>
-                {% endif %}
+                    </div> 
+                  {% endif %}  
+-->
               </td>
               <td class="hide">{{_(action.action_status.value)}}</td>
               <td class="hide"><span id="td_action_date_{{action.action_id}}">{{action.action_date.date()}}</span></td>

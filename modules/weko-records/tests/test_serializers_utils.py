@@ -1,5 +1,6 @@
 import pytest
 import copy
+from lxml import etree
 from mock import patch, MagicMock
 from tests.helpers import json_data
 
@@ -18,11 +19,13 @@ from weko_records.serializers.utils import (
 
 # def get_mapping(item_type_mapping, mapping_type):
 # .tox/c1/bin/pytest --cov=weko_records tests/test_serializers_utils.py::test_get_mapping -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
-def test_get_mapping():
-    mapping = json_data("data/item_type_mapping.json")
-    result = get_mapping(mapping, 'jpcoar_mapping')
-    data = json_data("data/get_mapping.json")
-    assert result == data
+def test_get_mapping(app, db, item_type, item_type_mapping):
+    # mapping = json_data("data/item_type_mapping.json")
+    result = get_mapping(1, 'jpcoar_mapping')
+    assert result == {"item.@value": "item_1.interim"}
+
+    result = get_mapping(1, 'jpcoar_mapping', item_type=item_type)
+    assert result == {"item.@value": "item_1.interim"}
 
 # def get_full_mapping(item_type_mapping, mapping_type):
 # .tox/c1/bin/pytest --cov=weko_records tests/test_serializers_utils.py::test_get_full_mapping -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
@@ -160,29 +163,52 @@ sample = OpenSearchDetailData(
 
 # class OpenSearchDetailData:
 #     def output_open_search_detail_data(self): 
-def test_output_open_search_detail_data(app):
-    data0 = MagicMock()
-    data1 = MagicMock()
-    data1.query = MagicMock()
-    data1.args = {
-        "q": "test",
-        "index_id": 1,
+# .tox/c1/bin/pytest --cov=weko_records tests/test_serializers_utils.py::test_output_open_search_detail_data -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
+def test_output_open_search_detail_data(app, db_index, records, item_type, item_type_mapping):
+    with app.test_request_context():
+        res = sample.output_open_search_detail_data()
+        _tree = etree.fromstring(res)
+        assert _tree.find('title', namespaces=_tree.nsmap).text == 'WEKO OpenSearch: '
+
+    with app.test_request_context('/?index_id=1'):
+        res = sample.output_open_search_detail_data()
+        _tree = etree.fromstring(res)
+        assert _tree.find('title', namespaces=_tree.nsmap).text == 'WEKO OpenSearch: IndexA'
+
+    with app.test_request_context('/?index_id=99'):
+        res = sample.output_open_search_detail_data()
+        _tree = etree.fromstring(res)
+        assert _tree.find('title', namespaces=_tree.nsmap).text == 'WEKO OpenSearch: Nonexistent Index'
+
+    _search_result = {
+        '_source': {
+            '_item_metadata': {
+                'item_type_id': '1',
+                'item_title': 'Title',
+                'control_number': '1',
+                'path': ['99'], # deleted index
+                'pubdate': {
+                    'attribute_value': '2024-08-01',
+                },
+            },
+            '_oai': {
+                'id': '1',
+            },
+            'itemtype': 'test_itemtype',
+            '_created': '2024-08-01T00:00:00Z',
+            '_updated': '2024-08-01T00:00:00Z',
+        },
     }
 
-    def one_or_none():
-        return data0
+    sample_copy = copy.deepcopy(sample)
+    sample_copy.search_result = {'hits': {'total': 1, 'hits': [_search_result]}}
 
-    data2 = MagicMock()
-    data2.one_or_none = one_or_none
-
-    def filter_by(item):
-        return data2
-
-    with app.test_request_context():
-        with patch("weko_records.serializers.utils.request", return_value=data1):
-            with patch("weko_records.serializers.utils.Index", return_value=data1):
-                assert sample.output_open_search_detail_data() == None
-
+    with app.test_request_context('/?q=IndexA'):
+        res = sample_copy.output_open_search_detail_data()
+        _tree = etree.fromstring(res)
+        _entry = _tree.find('entry', namespaces=_tree.nsmap)
+        assert _tree.find('title', namespaces=_tree.nsmap).text == 'WEKO OpenSearch: IndexA'
+        assert _entry.find('dc:subject', namespaces=_entry.nsmap).text == 'Nonexistent Index'
 
 #     def _set_publication_date(self, fe, item_map, item_metadata):
 def test__set_publication_date(app):

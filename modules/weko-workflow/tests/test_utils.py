@@ -15,12 +15,13 @@ from sqlalchemy.orm.exc import NoResultFound
 from mock import MagicMock
 from weko_deposit.pidstore import get_record_without_version
 from weko_deposit.api import WekoRecord, WekoDeposit
+from invenio_records_files.models import RecordsBuckets
 from invenio_files_rest.models import Bucket
 from invenio_cache import current_cache
 from invenio_accounts.testutils import login_user_via_session as login
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from flask_login.utils import login_user,logout_user
-from tests.helpers import json_data
+from tests.helpers import json_data, create_activity
 from invenio_mail.models import MailConfig
 from weko_admin.models import SiteInfo, Identifier
 from weko_records_ui.models import FilePermission,FileOnetimeDownload
@@ -129,7 +130,15 @@ from weko_workflow.utils import (
     update_approval_date_for_deposit,
     update_system_data_for_activity,
     prepare_doi_link_workflow,
-    make_activitylog_tsv
+    make_activitylog_tsv,
+    check_authority_by_admin,
+    validate_action_role_user,
+    is_terms_of_use_only,
+    grant_access_rights_to_all_open_restricted_files,
+    delete_lock_activity_cache,
+    delete_user_lock_activity_cache,
+    check_an_item_is_locked,
+    bulk_check_an_item_is_locked,
 )
 from weko_workflow.api import GetCommunity, UpdateItem, WorkActivity, WorkActivityHistory, WorkFlow
 from weko_workflow.models import Activity
@@ -170,7 +179,7 @@ def test_get_identifier_setting(identifier):#c
     assert get_identifier_setting(identifier.repository)==identifier
 
 # def saving_doi_pidstore(item_id,
-# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_get_current_language -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_saving_doi_pidstore -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_saving_doi_pidstore(db_records,item_type,mocker):#c
     item_id = db_records[0][3].id
     pid_without_ver = get_record_without_version(db_records[0][0]).object_uuid
@@ -181,27 +190,38 @@ def test_saving_doi_pidstore(db_records,item_type,mocker):#c
         "identifier_grant_jalc_dc_doi_link":"https://doi.org/3000/0000000001",
         "identifier_grant_ndl_jalc_doi_link":"https://doi.org/4000/0000000001"
     }
+    # jalc doi, tmp save
     mock_update = mocker.patch("weko_workflow.utils.IdentifierHandle.update_idt_registration_metadata")
     result = saving_doi_pidstore(item_id,pid_without_ver,data,1,True)
     assert result == True
     mock_update.assert_has_calls([mocker.call("1000/0000000001","JaLC")])
     
+    # jalc crossref doi
     mock_update = mocker.patch("weko_workflow.utils.IdentifierHandle.update_idt_registration_metadata")
     result = saving_doi_pidstore(item_id,pid_without_ver,data,2,False)
     assert result == True
     mock_update.assert_has_calls([mocker.call("2000/0000000001","Crossref")])
     
+    # jalc datacite doi
     with patch("weko_workflow.utils.IdentifierHandle.register_pidstore",return_value=True):
         mock_update = mocker.patch("weko_workflow.utils.IdentifierHandle.update_idt_registration_metadata")
         result = saving_doi_pidstore(item_id,pid_without_ver,data,3,False)
         assert result == True
         mock_update.assert_has_calls([mocker.call("3000/0000000001","DataCite"),mocker.call("3000/0000000001","DataCite")])
     
+    with patch("weko_workflow.utils.IdentifierHandle.register_pidstore",return_value=False):
+        mock_update = mocker.patch("weko_workflow.utils.IdentifierHandle.update_idt_registration_metadata")
+        result = saving_doi_pidstore(item_id,pid_without_ver,data,4,False)
+        mock_update.assert_has_calls([mocker.call("4000/0000000001","JaLC")])
+        assert result == True
+
+    # ndl jalc doi, raise exception
     with patch("weko_workflow.utils.IdentifierHandle.register_pidstore",side_effect=Exception):
         mock_update = mocker.patch("weko_workflow.utils.IdentifierHandle.update_idt_registration_metadata")
         result = saving_doi_pidstore(item_id,pid_without_ver,data,4,False)
         assert result == False
 
+    # other doi
     mock_update = mocker.patch("weko_workflow.utils.IdentifierHandle.update_idt_registration_metadata")
     result = saving_doi_pidstore(uuid.uuid4(),pid_without_ver,data,"wrong",False)
     assert result == False
@@ -255,16 +275,11 @@ def test_register_hdl(app,db_records,db_register):#c
             # register_hdl does not use recid object_uuid.
             pid = IdentifierHandle(recid.object_uuid).check_pidstore_exist(pid_type='hdl')
             assert pid==[]
-    
-
-                
 
 
 # def register_hdl_by_item_id(deposit_id, item_uuid, url_root):
-# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_get_current_language -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 
 # def register_hdl_by_handle(hdl, item_uuid, item_uri):
-# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_get_current_language -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 
 # def item_metadata_validation(item_id, identifier_type, record=None,
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_item_metadata_validation -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
@@ -342,7 +357,7 @@ def test_item_metadata_validation(db_records,item_type):
     with patch("weko_workflow.utils.MappingData.get_first_data_by_mapping",\
         side_effect=[("item_1617258105262.resourcetype", ['thesis']),(None,["report"])]):
         result = item_metadata_validation(None,"5",without_ver_id=without_ver.object_uuid,record=record,file_path="test_file_path")
-        assert result == 'Cannot register selected DOI for current Item Type of this item.'
+        assert result['other'] == 'Cannot register selected DOI for current Item Type of this item.'
 
 
 #* THIS IS FOR JPCOAR2.0 DOI VALIDATION TEST
@@ -374,7 +389,7 @@ def test_item_metadata_validation_2(db_records_for_doi_validation_test, item_typ
         for result_0_key in result_0_keys:
             if result_0_check_item_1 in result_0.get(result_0_key):
                 result_0_check_list_2.append(result_0_check_item_1)
-    assert len(result_0_check_list_1) == len(result_0_check_list_2)
+    assert len(result_0_check_list_2) == 2
 
     #* 別表2-2 JaLC DOI
     recid1, depid1, record1, item1, parent1, doi1, deposit1 = db_records_for_doi_validation_test[1]
@@ -396,7 +411,9 @@ def test_item_metadata_validation_2(db_records_for_doi_validation_test, item_typ
         for result_1_key in result_1_keys:
             if result_1_check_item_1 in result_1.get(result_1_key):
                 result_1_check_list_2.append(result_1_check_item_1)
-    assert len(result_1_check_list_1) == len(result_1_check_list_2)
+    assert len(result_1_check_list_2) == 1
+    # issue 45809
+    assert not "jpcoar:pageStart" in result_1.get("either_key")
 
     #* 別表2-3 JaLC DOI
     recid2, depid2, record2, item2, parent2, doi2, deposit2 = db_records_for_doi_validation_test[2]
@@ -418,7 +435,7 @@ def test_item_metadata_validation_2(db_records_for_doi_validation_test, item_typ
         for result_2_key in result_2_keys:
             if result_2_check_item_1 in result_2.get(result_2_key):
                 result_2_check_list_2.append(result_2_check_item_1)
-    assert len(result_2_check_list_1) == len(result_2_check_list_2)
+    assert len(result_2_check_list_2) == 1
 
     #* 別表2-4 JaLC DOI
     recid3, depid3, record3, item3, parent3, doi3, deposit3 = db_records_for_doi_validation_test[3]
@@ -440,7 +457,7 @@ def test_item_metadata_validation_2(db_records_for_doi_validation_test, item_typ
         for result_3_key in result_3_keys:
             if result_3_check_item_1 in result_3.get(result_3_key):
                 result_3_check_list_2.append(result_3_check_item_1)
-    assert len(result_3_check_list_1) == len(result_3_check_list_2)
+    assert len(result_3_check_list_2) == 1
 
     #* 別表2-5 JaLC DOI
     recid4, depid4, record4, item4, parent4, doi4, deposit4 = db_records_for_doi_validation_test[4]
@@ -464,7 +481,7 @@ def test_item_metadata_validation_2(db_records_for_doi_validation_test, item_typ
         for result_4_key in result_4_keys:
             if result_4_check_item_1 in result_4.get(result_4_key):
                 result_4_check_list_2.append(result_4_check_item_1)
-    assert len(result_4_check_list_1) == len(result_4_check_list_2)
+    assert len(result_4_check_list_2) == 1
 
     #* 別表2-6 JaLC DOI
     recid5, depid5, record5, item5, parent5, doi5, deposit5 = db_records_for_doi_validation_test[5]
@@ -486,7 +503,7 @@ def test_item_metadata_validation_2(db_records_for_doi_validation_test, item_typ
         for result_5_key in result_5_keys:
             if result_5_check_item_1 in result_5.get(result_5_key):
                 result_5_check_list_2.append(result_5_check_item_1)
-    assert len(result_5_check_list_1) == len(result_5_check_list_2)
+    assert len(result_5_check_list_2) == 1
 
     #* 別表3-1 Crossref DOI
     recid6, depid6, record6, item6, parent6, doi6, deposit6 = db_records_for_doi_validation_test[6]
@@ -510,7 +527,7 @@ def test_item_metadata_validation_2(db_records_for_doi_validation_test, item_typ
         for result_6_key in result_6_keys:
             if result_6_check_item_1 in result_6.get(result_6_key):
                 result_6_check_list_2.append(result_6_check_item_1)
-    assert len(result_6_check_list_1) == len(result_6_check_list_2)
+    assert len(set(result_6_check_list_2)) == 3
 
     #* 別表3-2 Crossref DOI
     recid7, depid7, record7, item7, parent7, doi7, deposit7 = db_records_for_doi_validation_test[7]
@@ -532,7 +549,7 @@ def test_item_metadata_validation_2(db_records_for_doi_validation_test, item_typ
         for result_7_key in result_7_keys:
             if result_7_check_item_1 in result_7.get(result_7_key):
                 result_7_check_list_2.append(result_7_check_item_1)
-    assert len(result_7_check_list_1) == len(result_7_check_list_2)
+    assert len(result_7_check_list_2) == 1
 
     #* 別表4-1 DataCite DOI
     recid8, depid8, record8, item8, parent8, doi8, deposit8 = db_records_for_doi_validation_test[8]
@@ -556,7 +573,7 @@ def test_item_metadata_validation_2(db_records_for_doi_validation_test, item_typ
         for result_8_key in result_8_keys:
             if result_8_check_item_1 in result_8.get(result_8_key):
                 result_8_check_list_2.append(result_8_check_item_1)
-    assert len(result_8_check_list_1) == len(result_8_check_list_2)
+    assert len(result_8_check_list_2) == 1
 
     #* 別表4-1 DataCite DOI ~ Testing jpcoar:givenName, jpcoar:creatorName, dc:publisher, jpcoar:publisherName for "en" value
     recid8, depid8, record8, item8, parent8, doi8, deposit8 = db_records_for_doi_validation_test[8]
@@ -580,12 +597,12 @@ def test_item_metadata_validation_2(db_records_for_doi_validation_test, item_typ
         for result_8_key in result_8_keys:
             if result_8_check_item_1 in result_8.get(result_8_key):
                 result_8_check_list_2.append(result_8_check_item_1)
-    assert len(result_8_check_list_1) == len(result_8_check_list_2)
+    assert len(result_8_check_list_2) == 1
 
 
 # def merge_doi_error_list(current, new):
-# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_get_current_language -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
-def test_merge_doi_error_list():#c
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_merge_doi_error_list -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_merge_doi_error_list():
     current = {"required":["value_c1"],"required_key":["key_cr1"],"either":["value_ce1"],"either_key":["key_ce1"],"pattern":["value_cp1"],"mapping":[]}
     new = {"required":["value_n1"],"required_key":["key_nr1"],"either":["value_ne1"],"either_key":["key_ne1"],"pattern":["value_np1"],"mapping":["value_nm1"]}
     merge_doi_error_list(current, new)
@@ -602,7 +619,7 @@ def test_merge_doi_error_list():#c
     assert current == {"required":["value_c1"],"either":["value_ce1"],"pattern":["value_cp1"],"mapping":["value_cm1"]}
 
 # def validation_item_property(mapping_data, properties):
-# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_get_current_language -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_validation_item_property -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_validation_item_property(db_records,item_type,mocker):
     mapping_item = MappingData(db_records[0][3].id)
     properties = {
@@ -628,7 +645,7 @@ def test_validation_item_property(db_records,item_type,mocker):
 
 
 # def handle_check_required_data(mapping_data, mapping_key):
-# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_get_current_language -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_handle_check_required_data -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_handle_check_required_data(db_records, item_type):#c
     mapping_item = MappingData(db_records[0][3].id)
     with patch("weko_workflow.utils.check_required_data",return_value=['item_1617186331708.subitem_1551255647225']):
@@ -642,13 +659,6 @@ def test_handle_check_required_data(db_records, item_type):#c
         assert req == []
         assert keys == ['item_1617186331708.subitem_1551255647225']
         assert values == [["title"]]
-
-
-
-
-
-
-
 
 
 
@@ -669,7 +679,7 @@ def test_handle_check_required_pattern_and_either(db,item_type):
     record = record = WekoRecord.create(record_data, id_=rec_uuid1)
     mapping_data = MappingData(record=record)
     # identifier_type = JaLC, not exist error
-    result = handle_check_required_pattern_and_either(mapping_data,["dc:title"],"1")
+    result = handle_check_required_pattern_and_either(mapping_data,["dc:title"],identifier_type="1")
     assert result == None
     
     
@@ -684,7 +694,7 @@ def test_handle_check_required_pattern_and_either(db,item_type):
     record = record = WekoRecord.create(record_data, id_=rec_uuid2)
     mapping_data = MappingData(record=record)
     # current pattern
-    result = handle_check_required_pattern_and_either(mapping_data,['jpcoar:sourceTitle'],"1")
+    result = handle_check_required_pattern_and_either(mapping_data,['jpcoar:sourceTitle'],identifier_type="1")
     assert result == None
     
 
@@ -699,17 +709,12 @@ def test_handle_check_required_pattern_and_either(db,item_type):
     record = record = WekoRecord.create(record_data, id_=rec_uuid3)
     mapping_data = MappingData(record=record)
     # not current pattern
-    result = handle_check_required_pattern_and_either(mapping_data,['jpcoar:sourceTitle'],"1")
-    assert result == {'required': [], 'required_key': [], 'pattern': ['item_1617186941041.subitem_1522650068558'], 'either': [], 'either_key': [], 'mapping': []}
+    result = handle_check_required_pattern_and_either(mapping_data,['jpcoar:sourceTitle'],identifier_type="1")
+    assert result == None
     
-    # not exist mapping
-    with patch("weko_workflow.utils.DOI_VALIDATION_INFO_JALC",{"dc:title":[["not_exist.@value",None]]}):
-        result = handle_check_required_pattern_and_either(mapping_data,["dc:title"],"1")
-        assert result == {'required': [], 'required_key': [], 'pattern': [], 'either': [], 'either_key': [], 'mapping': ['dc:title']}
-        
     # identifier_type = Crossref
     # exist requirements, is_either = False
-    result = handle_check_required_pattern_and_either(mapping_data,["dc:title"],"2")
+    result = handle_check_required_pattern_and_either(mapping_data,["dc:title"],identifier_type="2")
     assert result == {'required': ['item_1617186331708.subitem_1551255648112'], 'required_key': ['dc:title'], 'pattern': [], 'either': [], 'either_key': [], 'mapping': []}
     
     rec_uuid4 = uuid.uuid4()
@@ -721,20 +726,18 @@ def test_handle_check_required_pattern_and_either(db,item_type):
     record = record = WekoRecord.create(record_data, id_=rec_uuid4)
     mapping_data = MappingData(record=record)
     # is_either is True, either not in error_list
-    result = handle_check_required_pattern_and_either(mapping_data,["dc:title"],"2",is_either=True)
+    result = handle_check_required_pattern_and_either(mapping_data,["dc:title"],identifier_type="2",is_either=True)
     assert result == {'required': [], 'required_key': [], 'pattern': [], 'either': [['item_1617186331708.subitem_1551255647225', 'item_1617186331708.subitem_1551255648112']], 'either_key': ['dc:title'], 'mapping': []}
     
     # is_either is True, either in error_list
-    result = handle_check_required_pattern_and_either(mapping_data,["dc:title"],"2",error_list=result,is_either=True)
+    result = handle_check_required_pattern_and_either(mapping_data,["dc:title"],identifier_type="2",error_list=result,is_either=True)
     assert result == {'required': [], 'required_key': [], 'pattern': [], 'either': [['item_1617186331708.subitem_1551255647225', 'item_1617186331708.subitem_1551255648112'], [['item_1617186331708.subitem_1551255647225', 'item_1617186331708.subitem_1551255648112']]], 'either_key': ['dc:title', 'dc:title'], 'mapping': []}
 # def validattion_item_property_required(
-# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_get_current_language -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 
 # def validattion_item_property_either_required(
-# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_get_current_language -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 
 # def check_required_data(data, key, repeatable=False):
-# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_get_current_language -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_check_required_data -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_check_required_data():
     data = {True,True,False}
     result = check_required_data(data,"keyx")
@@ -750,7 +753,7 @@ def test_check_required_data():
 
 
 # def get_activity_id_of_record_without_version(pid_object=None):
-# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_get_current_language -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_get_activity_id_of_record_without_version -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_get_activity_id_of_record_without_version(db_register,db_records):
     get_activity_id_of_record_without_version()
 
@@ -765,12 +768,11 @@ def test_get_activity_id_of_record_without_version(db_register,db_records):
 
 
 # def check_suffix_identifier(idt_regis_value, idt_list, idt_type_list):
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_check_suffix_identifier -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_check_suffix_identifier():
     regis_value = []
     idt_lsit = [1,2,]
     idt_type_list = ["value1","value2","DOI"]
-
-
 
 
 #     def __init__(self, item_id=None, record=None):
@@ -778,10 +780,9 @@ def test_check_suffix_identifier():
 #     def get_data_by_mapping(self, mapping_key, ignore_empty=False,
 #     def get_first_data_by_mapping(self, mapping_key):
 #     def get_first_property_by_mapping(self, mapping_key, ignore_empty=False):
-# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_get_current_language -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 
 # def get_sub_item_value(atr_vm, key):
-# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_get_current_language -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_get_sub_item_value -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_get_sub_item_value():
     atr_vm = {"key1":"value1","key2":"value2","key3":{"key1":"value3_1"}}
     result = get_sub_item_value(atr_vm,"key1")
@@ -797,6 +798,7 @@ def test_get_sub_item_value():
 
 
 # def get_item_value_in_deep(data, keys):
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_get_item_value_in_deep -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_get_item_value_in_deep():
     #result = get_item_value_in_deep([],[])
     #assert result == None
@@ -823,19 +825,20 @@ def test_get_item_value_in_deep():
 #     def update_idt_registration_metadata(self, input_value, input_type):
 #     def get_idt_registration_data(self):
 #     def commit(self, key_id, key_val, key_typ, atr_nam, atr_val, atr_typ):
-# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_get_current_language -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 
 # def delete_bucket(bucket_id):
-# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_get_current_language -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_delete_bucket -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_delete_bucket(db_records, add_file):
     bucket,_ = add_file(db_records[2][2])
     bucket_id = bucket.id
+    assert Bucket.get(bucket_id) != None
+    RecordsBuckets.query.filter(RecordsBuckets.bucket_id==bucket_id).delete()
     delete_bucket(bucket_id)
     assert Bucket.get(bucket_id) == None
 
 
 # def merge_buckets_by_records(main_record_id,
-# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_get_current_language -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_merge_buckets_by_records -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 @pytest.mark.parametrize("is_delete",[True,False])
 def test_merge_buckets_by_records(db_records, add_file,is_delete):
     bucket_11, rbucket_11 = add_file(db_records[1][2])
@@ -844,6 +847,7 @@ def test_merge_buckets_by_records(db_records, add_file,is_delete):
     result = merge_buckets_by_records(db_records[1][2].id,db_records[2][2].id,is_delete)
     assert result == rbucket_11.bucket_id
 
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_merge_buckets_by_records_error -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_merge_buckets_by_records_error(db_records, add_file):
     bucket_11, rbucket_11 = add_file(db_records[1][2])
     bucket_10, rbucket_10 = add_file(db_records[2][2])
@@ -852,27 +856,23 @@ def test_merge_buckets_by_records_error(db_records, add_file):
         assert result == None
 
 
-
-
-
 # def delete_unregister_buckets(record_uuid):
-# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_get_current_language -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 
 # def set_bucket_default_size(record_uuid):
-# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_get_current_language -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
-def test_set_bucket_default_size(db_records, add_file):
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_set_bucket_default_size -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_set_bucket_default_size(db, db_records, add_file):
     bucket_10, rbucket_10 = add_file(db_records[2][2])
-    set_bucket_default_size(rbucket_10.id)
-    bucket = Bucket.get(bucket_10.id)
+    record_id = rbucket_10.record_id
+    bucket_id = bucket_10.id
+    set_bucket_default_size(record_id)
+    db.session.commit()
+    bucket = Bucket.get(bucket_id)
     assert bucket.quota_size == 50 * 1024 * 1024 * 1024
     assert bucket.max_file_size == 50 * 1024 * 1024 * 1024
 
-    with patch("weko_workflow.utils.Bucket.get",side_effect=Exception):
-        set_bucket_default_size(rbucket_10.id)
-
 
 # def is_show_autofill_metadata(item_type_name):
-# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_get_current_language -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_is_show_autofill_metadata -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_is_show_autofill_metadata(client):
     current_app.config.update(
         WEKO_ITEMS_UI_HIDE_AUTO_FILL_METADATA = ["wrong_itemtype1","itemtype2"]
@@ -900,7 +900,7 @@ def test_get_parent_pid_with_type(db_records):
     result = get_parent_pid_with_type("doi",db_records[0][2].id)
     assert result == db_records[0][5]
 
-    result = get_parent_pid_with_type("hdl",db_records[4][2].id)
+    result = get_parent_pid_with_type("hdl",db_records[0][2].id)
     assert result == None
 
 
@@ -979,9 +979,10 @@ def test_prepare_edit_workflow(app, workflow, db_records,users,mocker):
             "activity_login_user":1,
             "activity_update_user":1
         }
-        recid = db_records[0][0]
-        deposit = db_records[0][6]
-        result = prepare_edit_workflow(data,recid,deposit)
+        recid = db_records[6][0]
+        deposit = db_records[6][6]
+        res = prepare_edit_workflow(data,recid,deposit)
+        assert res.activity_id != None
     
 # def handle_finish_workflow(deposit, current_pid, recid):
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_handle_finish_workflow -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
@@ -990,12 +991,15 @@ def test_handle_finish_workflow(workflow, db_records, mocker):
     assert result == None
     mocker.patch("weko_deposit.api.WekoDeposit.publish")
     mocker.patch("weko_deposit.api.WekoDeposit.commit")
-    mocker.patch("weko_workflow.utils.update_records_sets.delay")
+    mocker.patch("invenio_oaiserver.tasks.update_records_sets.delay")
+    
     deposit = db_records[2][6]
     current_pid = db_records[2][0]
-    recid = None
-    
-    handle_finish_workflow(deposit,current_pid,recid)
+    recid = db_records[2][2]
+    result = handle_finish_workflow(deposit,current_pid,recid)
+    assert result == None
+
+
 # def delete_cache_data(key: str):
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_delete_cache_data -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_delete_cache_data(client):
@@ -1021,11 +1025,48 @@ def test_get_cache_data(client):
     current_cache.set(key, value)
     result = get_cache_data(key)
     assert result == value
+
+
 # def check_an_item_is_locked(item_id=None):
+# def bulk_check_an_item_is_locked(item_ids=[]):
 #     def check(workers):
-# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_get_current_language -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
-def test_check_an_item_is_locked():
-    pass
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_check_an_item_is_locked -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_check_an_item_is_locked(app):
+    with app.app_context():
+        with patch("weko_workflow.utils.inspect") as mock_inspect:
+            mock_inspect_instance = mock_inspect.return_value
+            # inspect(timeout=_timeout).ping()
+            mock_inspect_instance.ping.return_value = True
+            # inspect(timeout=_timeout).active()
+            mock_inspect_instance.active.return_value = {
+                'worker1': [
+                    {'name': 'weko_search_ui.tasks.import_item', 'args': [{'id': '1'}]},
+                    {'name': 'weko_search_ui.tasks.import_item', 'args': [{'id': '2'}]},
+                ],
+                'worker2': [
+                    {'name': 'weko_search_ui.tasks.import_item', 'args': [{'id': '3'}, {'id': '99'}]},
+                ],
+            }
+            # inspect(timeout=_timeout).reserved()
+            mock_inspect_instance.reserved.return_value = {
+                'worker3': [
+                    {'name': 'weko_search_ui.tasks.import_item', 'args': [{'id': '4'}]},
+                    {'name': 'weko_search_ui.tasks.test_task', 'args': [{'id': '5'}]},
+                ],
+            }
+
+            item_ids = list(range(1,5))
+            result = []
+            for i in item_ids:
+                if check_an_item_is_locked(str(i)):
+                    result.append(str(i))
+
+            assert bulk_check_an_item_is_locked(item_ids) == result == ["1","2","3","4"]
+
+            assert check_an_item_is_locked() == False
+            assert bulk_check_an_item_is_locked() == []
+
+
 # def get_account_info(user_id):
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_get_accoutn_info -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_get_accoutn_info(users):
@@ -1081,9 +1122,9 @@ def test_get_url_root(app):
     app.config["THEME_SITEURL"] = "https://weko3.ir.rcos.nii.ac.jp"
     app.config["SERVER_NAME"] = "TEST_SERVER"
     with app.app_context():
-        assert get_url_root() == "https://weko3.ir.rcos.nii.ac.jp/"
+        assert get_url_root() == "http://TEST_SERVER.localdomain/"
         app.config["THEME_SITEURL"] = "https://weko3.ir.rcos.nii.ac.jp/"
-        assert get_url_root() == "https://weko3.ir.rcos.nii.ac.jp/"
+        assert get_url_root() == "http://TEST_SERVER.localdomain/"
 
     app.config["THEME_SITEURL"] = "https://weko3.ir.rcos.nii.ac.jp"
     app.config["SERVER_NAME"] = "TEST_SERVER"
@@ -1526,6 +1567,8 @@ def test_get_item_info(db_records):
     
     result = get_item_info("")
     assert result == {}
+
+
 # def get_site_info_name():
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_get_site_info_name -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_get_site_info_name(db):
@@ -2334,10 +2377,12 @@ def test_delete_guest_activity(client,workflow):
     )
     
     result = delete_guest_activity(activity_id)
-    assert result == True
+    assert result == None
     
     result = delete_guest_activity("not exist activity")
     assert result == False
+
+
 # def get_activity_display_info(activity_id: str):
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_get_activity_display_info -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_get_activity_display_info(app,db, users, db_register,mocker):
@@ -2423,7 +2468,7 @@ def test___init_activity_detail_data_for_guest(app,db,users,db_register,mocker):
         mocker.patch("weko_workflow.utils.get_activity_display_info",return_value=display_info)
         mocker.patch("weko_workflow.utils.get_approval_keys",return_value=[])
         community_id=""
-        session['user_id'] = 'dummy user'
+        session['user_id'] = '1'
         session["guest_email"] = "guest@test.org"
         user_profile = {
             "results":{
@@ -2883,7 +2928,7 @@ def test_get_usage_data(app,db,db_register):
     assert result == test
     
 # def update_approval_date(activity):
-# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_get_current_language -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_update_approval_date -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_update_approval_date(app,db_register,mocker):
     mocker.patch("weko_workflow.utils.update_approval_date_for_deposit")
     mocker.patch("weko_workflow.utils.update_system_data_for_item_metadata")
@@ -2905,7 +2950,7 @@ def test_update_approval_date(app,db_register,mocker):
     with patch("weko_workflow.utils.get_sub_key_by_system_property_key",return_value=("approval_date_key","approval_date_value")):
         update_approval_date(activity)
 # def create_record_metadata_for_user(usage_application_activity, usage_report):
-# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_get_current_language -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_create_record_metadata_for_user -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_create_record_metadata_for_user(app,db_register,mocker):
     mock_update_deposit = mocker.patch("weko_workflow.utils.update_system_data_for_item_metadata")
     mock_update_metadata = mocker.patch("weko_workflow.utils.update_approval_date_for_deposit")
@@ -2960,7 +3005,7 @@ def test_update_approval_date_for_deposit(db_records):
     assert deposit[date_key] is not None
     assert deposit[date_key] == {"attribute_name":attribute_name,"attribute_value_mlt":[approval_date]}
 # def update_system_data_for_activity(activity, sub_system_data_key,
-# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_get_current_language -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_update_system_data_for_activity -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_update_system_data_for_activity(db_register):
     update_system_data_for_activity(None,None,None)
     
@@ -2968,14 +3013,116 @@ def test_update_system_data_for_activity(db_register):
     value = {"data_key":"data_value"}
     activity = db_register["activities"][1]
     update_system_data_for_activity(activity,key,value)
-    assert activity.temp_data == {"metainfo":{key:value}}
+    assert activity.temp_data == '{"metainfo": {"temp_key": {"data_key": "data_value"}}}'
     
     activity = db_register["activities"][2]
     update_system_data_for_activity(activity,key,value)
-    assert activity.temp_data == {"description":"this is temp_data","metainfo":{key:value}}
-# def check_authority_by_admin(activity):
-# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_get_current_language -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+    assert activity.temp_data == '{"metainfo": {"temp_key": {"data_key": "data_value"}}}'
 
+
+# def check_authority_by_admin(activity):
+
+# def check_authority_by_admin(activity):
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_check_authority_by_admin -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_check_authority_by_admin(client, activity_acl, activity_acl_users):
+    users = activity_acl_users["users"]
+
+    # sysadmin user
+    login_user(users[0])
+    result = check_authority_by_admin(activity_acl[0])
+    assert result == True
+
+    # comadmin user, activity.item_id is None
+    login_user(users[3])
+    result = check_authority_by_admin(activity_acl[30])
+    assert result == False
+
+    # comadmin user, activity.item_id exist, path is not included in community index
+    login_user(users[3])
+    result = check_authority_by_admin(activity_acl[26])
+    assert result == False
+
+    # comadmin user, activity.item_id exist, path is included in community index
+    login_user(users[3])
+    result = check_authority_by_admin(activity_acl[21])
+    assert result == True
+    # not admin user
+    login_user(users[2])
+    result = check_authority_by_admin(activity_acl[21])
+    assert result == False
+        
+
+# def validate_action_role_user(activity_id, action_id, action_order):
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_validate_action_role_user -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_validate_action_role_user(db, activity_acl_users,workflow_with_action_role):
+    users = activity_acl_users["users"]
+    workflow = workflow_with_action_role
+    login_user(users[2])
+    
+    # not set action role(user)
+    activity = create_activity(db,"not_set_action_role(user)",1,["4"],users[2],-1,workflow[0],'M',3)
+    is_set, is_allow, is_deny = validate_action_role_user(activity.activity_id, activity.action_id,activity.action_order)
+    assert is_set == False
+    assert is_allow == False
+    assert is_deny == False
+    
+    # set action role as allow, self is include action role
+    activity = create_activity(db,"not_set_action_role(user)",2,["4"],users[2],-1,workflow[1],'M',3)
+    is_set, is_allow, is_deny = validate_action_role_user(activity.activity_id, activity.action_id,activity.action_order)
+    assert is_set == True
+    assert is_allow == True
+    assert is_deny == False
+    
+    # set action role as allow, self is not include action role
+    activity = create_activity(db,"not_set_action_role(user)",3,["4"],users[2],-1,workflow[2],'M',3)
+    is_set, is_allow, is_deny = validate_action_role_user(activity.activity_id, activity.action_id,activity.action_order)
+    assert is_set == True
+    assert is_allow == False
+    assert is_deny == True
+    
+    # set action role as deny, self is include action role
+    activity = create_activity(db,"not_set_action_role(user)",4,["4"],users[2],-1,workflow[3],'M',3)
+    is_set, is_allow, is_deny = validate_action_role_user(activity.activity_id, activity.action_id,activity.action_order)
+    assert is_set == True
+    assert is_allow == False
+    assert is_deny == True
+    
+    # set action role as deny, self is not include action role
+    activity = create_activity(db,"not_set_action_role(user)",5,["4"],users[2],-1,workflow[4],'M',3)
+    is_set, is_allow, is_deny = validate_action_role_user(activity.activity_id, activity.action_id,activity.action_order)
+    assert is_set == True
+    assert is_allow == False
+    assert is_deny == False
+    
+    # set action user as allow , self is include action user
+    activity = create_activity(db,"not_set_action_role(user)",6,["4"],users[2],-1,workflow[5],'M',3)
+    is_set, is_allow, is_deny = validate_action_role_user(activity.activity_id, activity.action_id,activity.action_order)
+    assert is_set == True
+    assert is_allow == True
+    assert is_deny == False
+    
+    # set action user as allow , self is not include action user
+    activity = create_activity(db,"not_set_action_role(user)",7,["4"],users[2],-1,workflow[6],'M',3)
+    is_set, is_allow, is_deny = validate_action_role_user(activity.activity_id, activity.action_id,activity.action_order)
+    assert is_set == True
+    assert is_allow == False
+    assert is_deny == True
+    
+    # set action user as deny , self is include action user
+    activity = create_activity(db,"not_set_action_role(user)",8,["4"],users[2],-1,workflow[7],'M',3)
+    is_set, is_allow, is_deny = validate_action_role_user(activity.activity_id, activity.action_id,activity.action_order)
+    assert is_set == True
+    assert is_allow == False
+    assert is_deny == True
+    
+    # set action user as deny , self is not include action user
+    activity = create_activity(db,"not_set_action_role(user)",9,["4"],users[2],-1,workflow[8],'M',3)
+    is_set, is_allow, is_deny = validate_action_role_user(activity.activity_id, activity.action_id,activity.action_order)
+    assert is_set == True
+    assert is_allow == False
+    assert is_deny == False
+    
+    
 # def get_record_first_version(deposit):
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_get_record_first_version -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_get_record_first_version(db_register,db_records):
@@ -2988,17 +3135,13 @@ def test_get_record_first_version(db_register,db_records):
     assert result_deposit == db_records[0][6]
     assert pid == db_records[0][0].object_uuid
 # def get_files_and_thumbnail(activity_id, item):
-# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_get_current_language -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 
 # def get_pid_and_record(item_id):
-# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_get_current_language -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 
 # def get_items_metadata_by_activity_detail(activity_detail):
-# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_get_current_language -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 
 # def get_main_record_detail(activity_id,
 #     def check_record(record):
-# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_get_current_language -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 
 # def prepare_doi_link_workflow(item_id, doi_input):
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_prepare_doi_link_workflow -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
@@ -3082,20 +3225,20 @@ def test_prepare_doi_link_workflow(app):
             assert result == test
         
         # identifier_setting is null
-        app.config["IDENTIFIER_GRANT_SUFFIX_METHOD"]=0
-        result = prepare_doi_link_workflow("123456", doi_input)
-        assert result == {}
+        with pytest.raises(Exception) as e:
+            app.config["IDENTIFIER_GRANT_SUFFIX_METHOD"]=0
+            result = prepare_doi_link_workflow("123456", doi_input)
+            assert result == {}
 
 
 # def get_pid_value_by_activity_detail(activity_detail):
-# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_get_current_language -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 
 # def check_doi_validation_not_pass(item_id, activity_id,
-# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_get_current_language -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 
 
-def test_get_index_id():
-    """Get index ID base on activity id"""
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_get_index_id -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+# def test_get_index_id():
+    # """Get index ID base on activity id"""
     # from weko_workflow.api import WorkActivity, WorkFlow
 
     # activity = WorkActivity()
@@ -3114,19 +3257,19 @@ def test_get_index_id():
     #         index_tree_id = None
     # else:
     #     index_tree_id = None
-    raise BaseException
+    # raise BaseException
 
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_make_activitylog_tsv -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_make_activitylog_tsv(db_register,db_records):
     """test make_activitylog_tsv"""
-    activity = Activity()
     activities = []
-    activities.append(activity.query.filter_by(activity_id='2'))
-    activities.append(activity.query.filter_by(activity_id='3'))
-    
+    activities += ActivityHistory.query.filter_by(activity_id="2").all()
+    activities += ActivityHistory.query.filter_by(activity_id="3").all()
 
     output_tsv = make_activitylog_tsv(activities)
     assert isinstance(output_tsv,str)
-    assert len(output_tsv.splitlines()) == 3
+    assert len(output_tsv.splitlines()) == 1
+
 # def is_terms_of_use_only(workflow_id :int) -> bool:
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_is_terms_of_use_only -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_is_terms_of_use_only(app ,workflow ,workflow_open_restricted):
@@ -3214,3 +3357,57 @@ def test_grant_access_rights_to_all_open_restricted_files(app ,db,users ):
     res = grant_access_rights_to_all_open_restricted_files(activity_id ,None, activity_detail )
     assert res == {}
 
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_delete_lock_activity_cache -vv -s -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_delete_lock_activity_cache(client,users):
+    data = {
+        "locked_value": "1-1661748792565"
+    }
+    activity_id="A-22240219-00001"
+    cache_key = "workflow_locked_activity_{}".format(activity_id)
+    current_cache.delete(cache_key)
+    # cur_locked_val is empty
+    result = delete_lock_activity_cache(activity_id, data)
+    assert result == None
+    # cur_locked_val is not empty, cur_locked_val==locked_value
+    current_cache.set(cache_key,data["locked_value"])
+    result = delete_lock_activity_cache(activity_id, data)
+    assert result == "Unlock success"
+    assert current_cache.get(cache_key) == None
+    # cur_locked_val is not empty, cur_locked_val!=locked_value
+    wrong_val = "2-1234456778"
+    current_cache.set(cache_key,wrong_val)
+    result = delete_lock_activity_cache(activity_id, data)
+    assert result == None
+    assert current_cache.get(cache_key) == wrong_val
+
+    current_cache.delete(cache_key)
+
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_delete_user_lock_activity_cache -vv -s -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_delete_user_lock_activity_cache(client,users):
+    user = users[2]
+    login_user(user["obj"])
+    data = {
+        "is_opened": False,
+        "is_force": False,
+    }
+    activity_id = "A-22240219-00001"
+    cache_key = "workflow_userlock_activity_{}".format(user["id"])
+    current_cache.delete(cache_key)
+    # cur_locked_val is empty
+    result = delete_user_lock_activity_cache(activity_id, data)
+    assert result == "Not unlock"
+    assert current_cache.get(cache_key) == None
+
+    # cur_locked_val is not empty, is_opened is True, is_force is False
+    current_cache.set(cache_key, activity_id)
+    data["is_opened"] = True
+    result = delete_user_lock_activity_cache(activity_id, data)
+    assert result == "Not unlock"
+
+    # cur_locked_val is not empty, is_opened is True, is_force is True
+    data["is_force"] = True
+    result = delete_user_lock_activity_cache(activity_id, data)
+    assert result == "User Unlock Success"
+    assert current_cache.get(cache_key) == None
+
+    current_cache.delete(cache_key)

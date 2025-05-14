@@ -24,6 +24,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from invenio_records.models import RecordMetadata
 
 
+# .tox/c1/bin/pytest --cov=invenio_records_rest tests/test_views_list_post.py -vv -s -v --cov-branch --cov-report=term --basetemp=/code/modules/invenio-records-rest/.tox/c1/tmp
 @pytest.mark.parametrize('content_type', [
     'application/json', 'application/json;charset=utf-8'
 ])
@@ -59,7 +60,7 @@ def test_valid_create(app, db, es, test_data, search_url, search_class,
         # Record can be retrieved.
         assert client.get(record_url(data['id'])).status_code == 200
 
-        IndexFlusher(search_class).flush_and_wait()
+        # IndexFlusher(search_class).flush_and_wait()
         # Record shows up in search
         #with patch('weko_search_ui.permissions.search_permission.can', return_value=True):
         #    res = client.get(search_url,

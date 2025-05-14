@@ -38,6 +38,7 @@ from weko_records.api import ItemsMetadata, ItemTypeEditHistory, \
 from weko_records.serializers.utils import get_mapping_inactive_show_list
 from weko_schema_ui.api import WekoSchema
 from weko_search_ui.utils import get_key_by_property
+from weko_search_ui.tasks import is_import_running
 from weko_workflow.api import WorkFlow
 
 from .config import WEKO_BILLING_FILE_ACCESS, WEKO_BILLING_FILE_PROP_ATT, \
@@ -118,9 +119,8 @@ class ItemTypeMetaDataView(BaseView):
     @item_type_permission.require(http_exception=403)
     def delete_itemtype(self, item_type_id=0):
         """Soft-delete an item type."""
-        from weko_workflow.utils import get_cache_data
-
-        if get_cache_data("import_start_time"):
+        check = is_import_running()
+        if check == "is_import_running":
             flash(_('Item type cannot be deleted becase import is in progress.'), 'error')
             return jsonify(code=-1)
         
@@ -174,20 +174,19 @@ class ItemTypeMetaDataView(BaseView):
     @item_type_permission.require(http_exception=403)
     def register(self, item_type_id=0):
         """Register an item type."""
-        from weko_workflow.utils import get_cache_data
-
         if request.headers['Content-Type'] != 'application/json':
             current_app.logger.debug(request.headers['Content-Type'])
             return jsonify(msg=_('Header Error'))
 
-        if get_cache_data("import_start_time"):
+        check = is_import_running()
+        if check == "is_import_running":
             response = jsonify(msg=_('Item type cannot be updated becase '
                                      'import is in progress.'))
             response.status_code = 400
             return response
 
         data = request.get_json()
-        # current_app.logger.error("data:{}".format(data))
+        # current_app.logger.eqrror("data:{}".format(data))
         try:
             table_row_map = data.get('table_row_map')
             json_schema = fix_json_schema(table_row_map.get('schema'))
@@ -705,14 +704,15 @@ class ItemTypeMappingView(BaseView):
         item_type = ItemTypes.get_by_id(data.get('item_type_id'))
         meta_system = item_type.render.get('meta_system')
         mapping_type = data.get('mapping_type')
+        data_mapping = data.get('mapping')
         lst_duplicate = check_duplicate_mapping(
-            data.get('mapping'), meta_system, item_type, mapping_type)
+            data_mapping, meta_system, item_type, mapping_type)
         if len(lst_duplicate) > 0:
             return jsonify(duplicate=True, err_items=lst_duplicate,
                            msg=_('Duplicate mapping as below:'))
         try:
             Mapping.create(item_type_id=data.get('item_type_id'),
-                           mapping=data.get('mapping'))
+                           mapping=data_mapping)
             db.session.commit()
         except BaseException:
             db.session.rollback()

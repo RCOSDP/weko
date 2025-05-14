@@ -356,7 +356,11 @@
         {% endif%}
         {% endif %}
           <div class="table-responsive" style="display: inline-block; _display: inline;">
+            {%- if community -%}
+              {{ output_item_detail(record, files, files_thumbnail, pid, record.items_show_list, true, is_logged_in, open_day_display_flg, m_community=community.id) }}
+            {%- else -%}
               {{ output_item_detail(record, files, files_thumbnail, pid, record.items_show_list, true, is_logged_in, open_day_display_flg) }}
+            {%- endif -%}
           </div>
           {%- if 'main_entry_personal_name' in record %}
           <p class="record_authors">

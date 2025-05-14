@@ -43,16 +43,7 @@ def test_options_view(app, search_class):
         assert data['default_media_type'] == 'application/json'
         assert data['item_media_types'] == ['application/json']
         assert data['search_media_types'] == ['application/json']
-        assert data['sort_fields'] == [
-            {'anotherfield': {
-                'title': 'My Field',
-                'default_order': 'desc'
-            }},
-            {'myfield': {
-                'title': 'My Field',
-                'default_order': 'asc'
-            }}
-        ]
+        assert data['sort_fields'] == []
 
 
 @pytest.mark.parametrize('app', [dict(

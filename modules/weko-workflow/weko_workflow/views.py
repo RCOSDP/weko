@@ -109,7 +109,9 @@ from .utils import IdentifierHandle, auto_fill_title, \
     save_activity_data, saving_doi_pidstore, \
     send_usage_application_mail_for_guest_user, set_files_display_type, \
     update_approval_date, update_cache_data, validate_guest_activity_expired, \
-    validate_guest_activity_token, make_activitylog_tsv
+    validate_guest_activity_token, make_activitylog_tsv, validate_action_role_user, \
+    validate_guest_activity_token, make_activitylog_tsv, \
+    delete_lock_activity_cache, delete_user_lock_activity_cache
 
 workflow_blueprint = Blueprint(
     'weko_workflow',
@@ -191,8 +193,7 @@ def index():
     tab = request.args.get('tab',WEKO_WORKFLOW_TODO_TAB)
     if 'community' in request.args:
         activities, maxpage, size, pages, name_param = activity \
-            .get_activity_list(community_id=request.args.get('community'),
-                               conditions=conditions)
+            .get_activity_list(conditions=conditions)
         comm = GetCommunity.get_community_by_id(request.args.get('community'))
         ctx = {'community': comm}
         if comm is not None:
@@ -716,6 +717,23 @@ def display_guest_activity(file_name=""):
     )
 
 
+@workflow_blueprint.route('/verify_deletion/<string:activity_id>', methods=['GET'])
+@login_required_customize
+def verify_deletion(activity_id="0"):
+    is_deleted = False
+    activity = WorkActivity().get_activity_by_id(activity_id)
+    if activity and activity.item_id:
+        item_id = str(activity.item_id)
+        
+        recid = PersistentIdentifier.query.filter_by(
+            pid_type='recid', object_type='rec', object_uuid=item_id
+        ).one_or_none()
+        if recid and recid.is_deleted():
+            is_deleted = True
+    res = {'code': 200, 'is_deleted':is_deleted}
+    
+    return jsonify(res), 200
+    
 @workflow_blueprint.route('/activity/detail/<string:activity_id>',
                  methods=['GET', 'POST'])
 @login_required_customize
@@ -1027,6 +1045,7 @@ def display_activity(activity_id="0"):
     if approval_record and files:
         files = set_files_display_type(approval_record, files)
 
+
     ctx.update(
         dict(
             files_thumbnail=files_thumbnail,
@@ -1115,23 +1134,14 @@ def check_authority(func):
         if check_authority_by_admin(activity_detail):
             return func(*args, **kwargs)
 
-        roles, users = work.get_activity_action_role(
+        is_set, is_allow, is_deny = validate_action_role_user(
             activity_id=kwargs.get('activity_id'),
             action_id=kwargs.get('action_id'),
             action_order=activity_detail.action_order
         )
-        cur_user = current_user.get_id()
-        cur_role = db.session.query(Role).join(userrole).filter_by(
-            user_id=cur_user).all()
         error_msg = _('Authorization required')
-        if users['deny'] and int(cur_user) in users['deny']:
-            return jsonify(code=403, msg=error_msg)
-        if users['allow'] and int(cur_user) not in users['allow']:
-            return jsonify(code=403, msg=error_msg)
-        for role in cur_role:
-            if roles['deny'] and role.id in roles['deny']:
-                return jsonify(code=403, msg=error_msg)
-            if roles['allow'] and role.id not in roles['allow']:
+        if is_set:
+            if is_deny:
                 return jsonify(code=403, msg=error_msg)
         return func(*args, **kwargs)
 
@@ -1151,55 +1161,46 @@ def check_authority_action(activity_id='0', action_id=0,
     if check_authority_by_admin(activity):
         return 0
 
-    roles, users = work.get_activity_action_role(activity_id, action_id,
-                                                 action_order)
     cur_user = current_user.get_id()
-    cur_role = db.session.query(Role).join(userrole).filter_by(
-        user_id=cur_user).all()
-
-    # If action_user is set:
-    # If current_user is in denied action_user
-    if users['deny'] and int(cur_user) in users['deny']:
-        return 1
-    # If current_user is in allowed action_user
-    if users['allow'] and int(cur_user) in users['allow']:
-        return 0
-    # Else if action_user is not set
-    # or action_user does not contain current_user:
-    for role in cur_role:
-        if roles['deny'] and role.id in roles['deny']:
-            return 1
-        if roles['allow'] and role.id not in roles['allow']:
-            return 1
-
-    # If action_roles is not set
-    # or action roles does not contain any role of current_user:
-    # Gather information
-    # If user is the author of activity
-    if int(cur_user) == activity.activity_login_user and \
-            not contain_login_item_application:
-        return 0
-
     if current_app.config['WEKO_WORKFLOW_ENABLE_CONTRIBUTOR']:
-        # Check if this activity has contributor equaling to current user
-        im = ItemMetadata.query.filter_by(id=activity.item_id) \
-            .filter(or_(
-            cast(ItemMetadata.json['shared_user_id'], types.INT)== int(cur_user),
-            cast(ItemMetadata.json['weko_shared_id'], types.INT)== int(cur_user))).one_or_none()
-        if im:
-            # There is an ItemMetadata with contributor equaling to current
-            # user, allow to access
+        if action_id!=4:
+           # Check if this activity has contributor equaling to current user
+            im = ItemMetadata.query.filter_by(id=activity.item_id) \
+                .filter(or_(
+                cast(ItemMetadata.json['shared_user_id'], types.INT)== int(cur_user),
+                cast(ItemMetadata.json['weko_shared_id'], types.INT)== int(cur_user))).one_or_none()
+            if im:
+                # There is an ItemMetadata with contributor equaling to current user, allow to access
+                # user, allow to access
+                return 0
+            if int(cur_user) == activity.shared_user_id:
+                return 0
+    
+    # Validation of action role(user)
+    # If action_roles is set
+    is_action_role_set, is_allow_action_role, is_deny_action_role = validate_action_role_user(activity_id, action_id, action_order)
+    if is_action_role_set:
+        # If allow roles(users) does not contain any role of current_user
+        # or deny roles(users) contains any role of curren_user,
+        # deny to access
+        if is_deny_action_role:
+            return 1
+        # If allow roles(users) contains any role of current_user,
+        # allow to access
+        elif is_allow_action_role:
             return 0
-        if int(cur_user) == activity.shared_user_id:
+    
+    # Activity creator validation
+    if contain_login_item_application:
+        activity_action_obj = work.get_activity_action_comment(
+            activity_id, action_id, action_order)
+        if activity_action_obj and activity_action_obj.action_handler \
+            and int(activity_action_obj.action_handler)==int(cur_user):
             return 0
-    # Check current user is action handler of activity
-    activity_action_obj = work.get_activity_action_comment(
-        activity_id, action_id, action_order)
-    if (activity_action_obj and activity_action_obj.action_handler
-            and int(activity_action_obj.action_handler) == int(cur_user)
-            and contain_login_item_application):
-        return 0
-
+    else:
+        if activity.activity_login_user == int(cur_user):
+            return 0
+    
     # Otherwise, user has no permission
     return 1
 
@@ -1327,7 +1328,7 @@ def next_action(activity_id='0', action_id=0):
         work_activity.end_activity(activity)
         res = ResponseMessageSchema().load({"code":0,"msg":_("success")})
         return jsonify(res.data), 200
-    if 'approval' == action_endpoint:
+    if 'approval' == action_endpoint and post_json.get('temporary_save') == 0:
         update_approval_date(activity_detail)
     item_id = None
     recid = None
@@ -1377,7 +1378,7 @@ def next_action(activity_id='0', action_id=0):
     next_action_order = next_flow_action[
         0].action_order if action_order else None
     # Start to send mail
-    if next_action_endpoint in ['approval' , 'end_action']:
+    if next_action_endpoint in ['approval' , 'end_action'] and post_json.get('temporary_save') == 0:
         current_flow_action = flow.get_flow_action_detail(
             activity_detail.flow_define.flow_id, action_id, action_order)
         if current_flow_action is None:
@@ -1529,7 +1530,6 @@ def next_action(activity_id='0', action_id=0):
             else:
                 FeedbackMailList.delete_by_list_item_id(item_ids)
 
-        deposit.update_feedback_mail()
 
     if action_endpoint == 'item_link' and item_id:
 
@@ -2393,14 +2393,20 @@ def get_feedback_maillist(activity_id='0'):
             if not isinstance(mail_list, list):
                 res = ResponseMessageSchema().load({"code":-1,"msg":"mail_list is not list"})
                 return jsonify(res.data), 400
-            for mail in mail_list:
-                if mail.get('author_id'):
-                    email = Authors.get_first_email_by_id(
-                        mail.get('author_id'))
-                    if email:
-                        mail['email'] = email
-                    else:
-                        mail_list.remove(mail)
+            temp_list = []
+            added_user = []
+            for mail in mail_list.copy():
+                aid = mail.get('author_id')
+                if aid:
+                    mail_list.remove(mail)
+                    if aid not in added_user:
+                        emails = Authors.get_emails_by_id(aid)
+                        temp_list += [
+                            {'email': e, 'author_id': mail.get('author_id')}
+                            for e in emails
+                        ]
+                        added_user.append(aid)
+            mail_list += temp_list
             res = GetFeedbackMailListSchema().load({'code':1,'msg':_('Success'),'data':mail_list})
             return jsonify(res.data), 200
         else:
@@ -2411,18 +2417,27 @@ def get_feedback_maillist(activity_id='0'):
     res = ResponseMessageSchema().load({'code':-1,'msg':_('Error')})
     return jsonify(res.data), 400
 
+@workflow_blueprint.route('/activity/unlocks/<string:activity_id>',methods=["POST"])
+@login_required
+def unlocks_activity(activity_id="0"):
+    data = json.loads(request.data.decode("utf-8"))
+    msg_lock = None
+    if data.get("locked_value") != 0:
+        msg_lock = delete_lock_activity_cache(activity_id, data)
+    msg_userlock = delete_user_lock_activity_cache(activity_id, data)
+    res = {"code":200, "msg_lock":msg_lock,"msg_userlock":msg_userlock}
+    return jsonify(res), 200
+
 @workflow_blueprint.route('/activity/user_lock', methods=["GET"])
 @login_required
 def is_user_locked():
     cache_key = "workflow_userlock_activity_{}".format(str(current_user.get_id()))
     cur_locked_val = str(get_cache_data(cache_key)) or str()
-    current_app.logger.error("is_user_locked:{}".format(cur_locked_val))
          
         
     if cur_locked_val:
         work_activity = WorkActivity()
         act = work_activity.get_activity_by_id(cur_locked_val)
-        current_app.logger.error(act.activity_status)
         if act is None or act.activity_status in [ActivityStatusPolicy.ACTIVITY_CANCEL,ActivityStatusPolicy.ACTIVITY_FORCE_END,ActivityStatusPolicy.ACTIVITY_FINALLY]:
             is_open = False
         else:
@@ -2482,8 +2497,7 @@ def user_lock_activity(activity_id="0"):
         # elif cur_locked_val==activity_id:
         #     delete_cache_data(cache_key)
             
-    locked_by_email, locked_by_username = get_account_info(str(current_user.get_id()))
-    res = {"code":200,"msg": "" if err else _("Success"),"err": err or "", "locked_by_username":locked_by_username}
+    res = {"code":200,"msg": "" if err else _("Success"),"err": err or "", "activity_id": cur_locked_val}
     return jsonify(res), 200
 
 @workflow_blueprint.route('/activity/user_unlock/<string:activity_id>', methods=["POST"])
@@ -2522,13 +2536,8 @@ def user_unlock_activity(activity_id="0"):
                             ResponseMessageSchema
                         example: {"code":200,"msg":"Unlock success"}
     """
-    cache_key = "workflow_userlock_activity_{}".format(str(current_user.get_id()))
-    cur_locked_val = str(get_cache_data(cache_key)) or str()
     data = json.loads(request.data.decode("utf-8"))
-    msg = _("Not unlock")
-    if cur_locked_val and not data["is_opened"] or (cur_locked_val == activity_id):
-        delete_cache_data(cache_key)
-        msg = "User Unlock Success"
+    msg = delete_user_lock_activity_cache(activity_id, data)
     res = {"code":200, "msg":msg}
     return jsonify(res), 200
 
@@ -2711,20 +2720,12 @@ def unlock_activity(activity_id="0"):
         current_app.logger.error("unlock_activity: argument error")
         res = ResponseMessageSchema().load({"code":-1, "msg":"arguments error"})
         return jsonify(res.data), 400
-    cache_key = 'workflow_locked_activity_{}'.format(activity_id)
     try:
         data = LockedValueSchema().load(json.loads(request.data.decode("utf-8")))
     except ValidationError as err:
         res = ResponseMessageSchema().load({'code':-1, 'msg':str(err)})
         return jsonify(res.data), 400
-    locked_value = str(data.data.get('locked_value'))
-    current_app.logger.debug("id:{}".format(str(data.data.get('id'))))
-    msg = None
-    # get lock activity from cache
-    cur_locked_val = str(get_cache_data(cache_key)) or str()
-    if cur_locked_val and cur_locked_val == locked_value:
-        delete_cache_data(cache_key)
-        msg = _('Unlock success')
+    msg = delete_lock_activity_cache(activity_id, data.data)    
     res = ResponseUnlockSchema().load({'code':200,'msg':msg or _('Not unlock')})
     return jsonify(res.data), 200
 
@@ -2869,6 +2870,7 @@ def save_activity():
 
 
 @workflow_blueprint.route('/usage-report', methods=['GET'])
+@login_required
 def usage_report():
     """
     Retrieves and returns the usage reports for the 'usage-report' route.

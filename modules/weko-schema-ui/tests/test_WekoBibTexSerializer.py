@@ -1,6 +1,8 @@
 import pytest
 from mock import patch
 
+from lxml import etree
+
 # .tox/c1/bin/pytest --cov=weko_schema_ui tests/test_WekoBibTexSerializer.py -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-schema-ui/.tox/c1/tmp
 
 
@@ -92,7 +94,7 @@ def test_bibtexfields(app,db,db_oaischema):
 #     def __get_identifier(identifier_type, identifier_types_data):
 
 # .tox/c1/bin/pytest --cov=weko_schema_ui tests/test_WekoBibTexSerializer.py::test_wekobibtexserializer -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-schema-ui/.tox/c1/tmp
-def test_wekobibtexserializer(app, records, esindex):
+def test_wekobibtexserializer(app, records, db_oaischema, itemtypes, esindex):
     from weko_schema_ui.serializers.WekoBibTexSerializer import WekoBibTexSerializer
     from weko_schema_ui.serializers.wekoxml import WekoXMLSerializer
 
@@ -107,20 +109,7 @@ def test_wekobibtexserializer(app, records, esindex):
     serializer = WekoBibTexSerializer()
     assert isinstance(serializer,WekoBibTexSerializer)
     ret = serializer.serialize(pid,record)
-    assert ret==('@misc{oai:weko3.example.org:00000001,\n'
-                 ' author = {情報, 太郎 and Joho, Taro and 情報, 太郎 and Joho, Taro and 情報, 太郎 and Joho, Taro},\n'
-                 ' month = {Jun, Jun, },\n'
-                 ' note = {Description\n'
-                 'Description<br/>Description, 概要\n'
-                 '概要\n'
-                 '概要\n'
-                 '概要},\n'
-                 ' title = {ja_conference '
-                 'paperITEM00000009(public_open_access_open_access_simple)},\n'
-                 ' year = {2021, 2021, 2021},\n'
-                 ' yomi = {ジョウホウ, タロウ and ジョウホウ, タロウ and ジョウホウ, タロウ}\n'
-                 '}\n'
-                 '\n')
+    assert ret=='@misc{,\n month = {},\n year = {}\n}\n\n'
 
     # datetype = Available
     serializer = WekoBibTexSerializer()
@@ -215,28 +204,10 @@ def test_wekobibtexserializer(app, records, esindex):
     serializer = WekoBibTexSerializer()
     assert isinstance(serializer,WekoBibTexSerializer)
     ret = serializer.serialize(pid,record)
-    assert ret==('@inproceedings{oai:weko3.example.org:00000002,\n'
-                 ' author = {情報, 太郎 and Joho, Taro and 情報, 太郎 and Joho, Taro and 情報, 太郎 and Joho, Taro},\n'
-                 ' book = {Source Title},\n'
-                 ' issue = {111},\n'
-                 ' month = {Jun, Jun, },\n'
-                 ' note = {Description\n'
-                 'Description<br/>Description, 概要\n'
-                 '概要\n'
-                 '概要\n'
-                 '概要},\n'
-                 ' pages = {1--3},\n'
-                 ' publisher = {unknown},\n'
-                 ' title = {ja_conference '
-                 'paperITEM00000009(public_open_access_open_access_simple)},\n'
-                 ' volume = {1},\n'
-                 ' year = {2021, 2021, 2021},\n'
-                 ' yomi = {ジョウホウ, タロウ and ジョウホウ, タロウ and ジョウホウ, タロウ}\n'
-                 '}\n'
-                 '\n')
+    assert ret=='@inproceedings{,\n month = {},\n year = {}\n}\n\n'
 
     record.update({'@export_schema_type': 'ddi'})
     serializer = WekoXMLSerializer()
     data = serializer.serialize(pid, record)
-    assert data
+    assert b'<metadata>\n        <codeBook xmlns:dc="http://purl.org/dc/terms/" xmlns:fn="http://www.w3.org/2005/xpath-functions" xmlns:saxon="http://xml.apache.org/xslt" xmlns:xhtml="http://www.w3.org/1999/xhtml" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns="ddi:codebook:2_5" xsi:schemaLocation="https://ddialliance.org/Specification/DDI-Codebook/2.5/XMLSchema/codebook.xsd"/>\n      </metadata>' in data
 

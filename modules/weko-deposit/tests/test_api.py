@@ -41,6 +41,7 @@ from invenio_pidstore.models import PersistentIdentifier, PIDStatus, Redirect
 from invenio_pidstore.errors import PIDInvalidAction
 from invenio_pidrelations.models import PIDRelation
 from invenio_records.errors import MissingModelError
+from invenio_records.models import RecordMetadata
 from invenio_records_rest.errors import PIDResolveRESTError
 from invenio_records_files.models import RecordsBuckets
 from invenio_records_files.api import Record
@@ -256,12 +257,31 @@ class TestWekoIndexer:
     #         def get_result(result):
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoIndexer::test_get_pid_by_es_scroll -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
     def test_get_pid_by_es_scroll(self,es_records):
+        def get_recids(ret):
+            recids = []
+            for obj_uuid in ret:
+                r = RecordMetadata.query.filter_by(id=obj_uuid).first()
+                recids.append(r.json['recid'])
+            return recids
+
         indexer, records = es_records
         ret = indexer.get_pid_by_es_scroll(1)
         assert isinstance(next(ret),list)
         assert isinstance(next(ret),dict)
         assert ret is not None
-        
+
+        # get all versions
+        ret = next(indexer.get_pid_by_es_scroll(4), [])
+        recids = get_recids(ret)
+        assert '10' in recids
+        assert '10.2' in recids
+
+        # get only latest version
+        ret = next(indexer.get_pid_by_es_scroll(4, only_latest_version=True), [])
+        recids = get_recids(ret)
+        assert '10' in recids
+        assert not '10.2' in recids
+
     #     def get_metadata_by_item_id(self, item_id):
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoIndexer::test_get_metadata_by_item_id -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
     def test_get_metadata_by_item_id(self,es_records):
@@ -523,6 +543,13 @@ class TestWekoDeposit:
     # def commit(self, *args, **kwargs):
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoDeposit::test_commit -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
     def test_commit(sel,app,db,location, db_index, db_itemtype):
+        app.config["WEKO_SCHEMA_JPCOAR_V2_SCHEMA_NAME"] = 'jpcoar_mapping'
+        app.config["WEKO_SCHEMA_JPCOAR_V2_RESOURCE_TYPE_REPLACE"] = {
+            'periodical':'journal',
+            'interview':'other',
+            'internal report':'other',
+            'report part':'other',
+        }
         with app.test_request_context():
             deposit = WekoDeposit.create({})
             assert deposit['_deposit']['id']=="1"
@@ -539,17 +566,18 @@ class TestWekoDeposit:
             index_obj = {'index': ['1'], 'actions': 'private'}
             data = {'pubdate': '2023-12-07', 'item_1617186331708': [{'subitem_1551255647225': 'test', 'subitem_1551255648112': 'ja'}], 'item_1617258105262': {'resourcetype': 'conference paper', 'resourceuri': 'http://purl.org/coar/resource_type/c_5794'}, 'shared_user_id': -1, 'title': 'test', 'lang': 'ja', 'deleted_items': ['item_1617186385884', 'item_1617186419668', 'item_1617186499011', 'item_1617186609386', 'item_1617186626617', 'item_1617186643794', 'item_1617186660861', 'item_1617186702042', 'item_1617186783814', 'item_1617186859717', 'item_1617186882738', 'item_1617186901218', 'item_1617186920753', 'item_1617186941041', 'item_1617187112279', 'item_1617187187528', 'item_1617349709064', 'item_1617353299429', 'item_1617605131499', 'item_1617610673286', 'item_1617620223087', 'item_1617944105607', 'item_1617187056579', 'approval1', 'approval2'], '$schema': '/items/jsonschema/1'}
             deposit.update(index_obj,data)
-            FeedbackMailList.update(item_id,[{"email":"test.taro@test.org","author_id":"1"}])
-            db.session.commit()
             deposit.commit()
-            es_data = deposit.indexer.get_metadata_by_item_id(item_id)
-            assert es_data["_source"]["feedback_mail_list"] == [{"email":"test.taro@test.org","author_id":"1"}]
+            FeedbackMailList.update(item_id,[{"email":"test.taro@test.org","author_id":""}])
+            db.session.commit()
+            fd = FeedbackMailList.get_mail_list_by_item_id(item_id)
+            assert fd == [{"email":"test.taro@test.org","author_id":""}]
  
             # not exist feedback_mail_list
             FeedbackMailList.delete(item_id)
             deposit.commit()
-            es_data = deposit.indexer.get_metadata_by_item_id(item_id)
-            assert es_data["_source"]["feedback_mail_list"] == []
+            db.session.commit()
+            fd = FeedbackMailList.get_mail_list_by_item_id(item_id)
+            assert fd == []
 
 
     # def newversion(self, pid=None, is_draft=False):
@@ -597,6 +625,15 @@ class TestWekoDeposit:
         record = records[0]
         deposit = record['deposit']
         ret = deposit.get_file_data()
+        assert ret==[]
+
+    # def get_file_data_with_item_type(self):
+    # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoDeposit::test_get_file_data_with_item_type -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
+    def test_get_file_data_with_item_type(sel,app,db,location,es_records,db_itemtype):
+        indexer, records = es_records
+        record = records[0]
+        deposit = record['deposit']
+        ret = deposit.get_file_data(item_type=db_itemtype["item_type"])
         assert ret==[]
 
     # def delete_old_file_index(self):
@@ -714,7 +751,7 @@ class TestWekoDeposit:
         deposit = record['deposit']
         record_data = record['item_data']
         index_obj = {'index': ['1'], 'actions': '1'}
-        test1 = OrderedDict([('pubdate', {'attribute_name': 'PubDate', 'attribute_value': '2022-08-20'}), ('item_1617186331708', {'attribute_name': 'Title', 'attribute_value_mlt': [{'subitem_1551255647225': 'タイトル', 'subitem_1551255648112': 'ja'}, {'subitem_1551255647225': 'title', 'subitem_1551255648112': 'en'}]}), ('item_1617258105262', {'attribute_name': 'Resource Type', 'attribute_value_mlt': [{'resourceuri': 'http://purl.org/coar/resource_type/c_5794', 'resourcetype': 'conference paper'}]}), ('item_title', 'title'), ('item_type_id', '1'), ('control_number', '1'), ('author_link', []), ('_oai', {'id': '1'}), ('weko_shared_id', -1), ('owner', '1'), ('publish_date', '2022-08-20'), ('title', ['title']), ('relation_version_is_last', True), ('path', ['1']), ('publish_status','0')])
+        test1 = OrderedDict([('pubdate', {'attribute_name': 'PubDate', 'attribute_value': '2022-08-20'}), ('item_1617186331708', {'attribute_name': 'Title', 'attribute_value_mlt': [{'subitem_1551255647225': 'タイトル', 'subitem_1551255648112': 'ja'}, {'subitem_1551255647225': 'title', 'subitem_1551255648112': 'en'}]}), ('item_1617258105262', {'attribute_name': 'Resource Type', 'attribute_value_mlt': [{'resourceuri': 'http://purl.org/coar/resource_type/c_5794', 'resourcetype': 'conference paper'}]}), ('item_title', 'title'), ('item_type_id', '1'), ('control_number', '1'), ('author_link', []), ('_oai', {'id': '1'}), ('publish_date', '2022-08-20'), ('title', ['title']), ('relation_version_is_last', True), ('path', ['1']), ('publish_status','0')])
         test2 = None
         ret1,ret2 = deposit.convert_item_metadata(index_obj,record_data)
         assert ret1 == test1
@@ -729,6 +766,9 @@ class TestWekoDeposit:
         with patch("weko_deposit.api.json_loader",side_effect=RuntimeError):
             with pytest.raises(RuntimeError):
                 ret = deposit.convert_item_metadata(index_obj,record_data)
+        with patch("weko_deposit.api.json_loader",side_effect=ValueError):
+            with pytest.raises(ValueError):
+                deposit.convert_item_metadata(index_obj,record_data)
         with patch("weko_deposit.api.json_loader",side_effect=BaseException("test_error")):
             with pytest.raises(HTTPException) as httperror:
                 ret = deposit.convert_item_metadata(index_obj,record_data)
@@ -807,11 +847,26 @@ class TestWekoDeposit:
     # def delete_by_index_tree_id(cls, index_id: str, ignore_items: list = []):
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoDeposit::test_delete_by_index_tree_id -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
     def test_delete_by_index_tree_id(sel,app,db,location,es_records):
+        def check_status(pid, status):
+            assert PersistentIdentifier.get('depid', pid).status == status
+
         indexer, records = es_records
         record = records[0]
         deposit = record['deposit']
-        deposit.delete_by_index_tree_id('1',[])
+        deposit.delete_by_index_tree_id('1',['2'])
+        check_status(2, "R")
 
+        time.sleep(1)
+        deposit.delete_by_index_tree_id('1',[])
+        check_status(2, "D")
+
+        # not delete item
+        deposit.delete_by_index_tree_id('3',[]) # 10.1 in 3
+        check_status(10, "R")
+
+        # delete item
+        deposit.delete_by_index_tree_id('4',[]) # 10, 10.2 in 4
+        check_status(10, "D")
 
     # def update_pid_by_index_tree_id(self, path):
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoDeposit::test_update_pid_by_index_tree_id -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
@@ -846,14 +901,6 @@ class TestWekoDeposit:
         deposit = record['deposit']
         assert deposit.update_author_link({})==None
 
-
-    # def update_feedback_mail(self):
-    # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoDeposit::test_update_feedback_mail -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
-    def test_update_feedback_mail(sel,app,db,location,es_records):
-        indexer, records = es_records
-        record = records[0]
-        deposit = record['deposit']
-        assert deposit.update_feedback_mail()==None
 
     # def remove_feedback_mail(self):
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoDeposit::test_remove_feedback_mail -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
@@ -1031,7 +1078,49 @@ class TestWekoRecord:
             data = [{"title":"en_title","language":"en"},{"title":"title"}]
             result = record.switching_language(data)
             assert result == "en_title"
-            
+
+
+    # def __get_titles_key(self):
+    # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoRecord::test_get_titles_key -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
+    def test_get_titles_key(self,app,es_records,db_itemtype,db_oaischema):
+        parent_key = ['item_1617186331708', 'item_1617186331709']
+        title_key = {'item_1617186331708': 'subitem_1551255647225', 'item_1617186331709': 'subitem_1551255647226'}
+        language_key = {'item_1617186331708': 'subitem_1551255648112', 'item_1617186331709': 'subitem_1551255648113'}
+        
+        item_type = db_itemtype["item_type"]
+        item_type_mapping = db_itemtype["item_type_mapping"]
+        
+        mapping = item_type_mapping.mapping
+        render = item_type.render
+        meta_options = {**render["meta_fix"], **render["meta_list"], **render["meta_system"]}
+        
+        record = WekoRecord({})
+        # Test Case 1: No hide list
+        actual = record._WekoRecord__get_titles_key(mapping, meta_options, [])
+        assert actual[0] == parent_key
+        assert actual[1] == title_key
+        assert actual[2] == language_key
+
+        # Test Case 2: With hide list (title_key)
+        hide_list = ["item_1617186331708.subitem_1551255647225"]
+        actual = record._WekoRecord__get_titles_key(mapping, meta_options, hide_list)
+        assert actual[0] == ['item_1617186331709']
+        assert actual[1] == {'item_1617186331709': 'subitem_1551255647226'}
+        assert actual[2] == {'item_1617186331709': 'subitem_1551255648113'}
+
+        # Test Case 3: With hide list (language_key)
+        hide_list = ["item_1617186331708.subitem_1551255648112"]
+        actual = record._WekoRecord__get_titles_key(mapping, meta_options, hide_list)
+        assert actual[0] == ['item_1617186331708', 'item_1617186331709']
+        assert actual[1] == {'item_1617186331708': 'subitem_1551255647225', 'item_1617186331709': 'subitem_1551255647226'}
+        assert actual[2] == {'item_1617186331708': None, 'item_1617186331709': 'subitem_1551255648113'}
+
+        # Test Case 4: With hide list (both title_key and language_key)
+        # hide_list = ["item_1617186331708.subitem_1551255647225", "item_1617186331709.subitem_1551255648113"]
+        # actual = record._WekoRecord__get_titles_key(mapping, meta_options, hide_list)
+        # assert actual[0] == ['item_1617186331709']
+        # assert actual[1] == {'item_1617186331709': 'subitem_1551255647226'}
+        # assert actual[2] == {'item_1617186331709': None}
 
     #     def __get_titles_key(item_type_mapping):
     #     def get_titles(self):
@@ -1039,14 +1128,11 @@ class TestWekoRecord:
     def test_get_titles(self,app,es_records,db_itemtype,db_oaischema):
         record = WekoRecord({})
         with app.test_request_context():
-            with pytest.raises(TypeError):
-                assert record.get_titles==""
+            assert record.get_titles==""
         indexer, results = es_records
         result = results[0]
         record = result['record']
         assert record['item_type_id']=="1"
-
-
 
         with app.test_request_context():
             assert record.get_titles=="title"
@@ -1064,6 +1150,28 @@ class TestWekoRecord:
         with app.test_request_context():
             assert record.get_titles=="title"
 
+        record["item_1617186331708"]["attribute_value_mlt"][0].pop("subitem_1551255648112")
+        record["item_1617186331708"]["attribute_value_mlt"][1].pop("subitem_1551255648112")
+        with app.test_request_context():
+            assert record.get_titles=="タイトル"
+
+        record["item_1617186331709"] = {"attribute_name": "Title", "attribute_value_mlt": [{"subitem_1551255647226": "タイトル-2", "subitem_1551255648113": "ja"},{"subitem_1551255647226": "title-2", "subitem_1551255648113": "en"}]}
+        with app.test_request_context():
+            assert record.get_titles=="タイトル"
+
+        record.pop("item_1617186331708")
+        app.config['BABEL_DEFAULT_LOCALE'] = 'ja'
+        with app.test_request_context():
+            assert record.get_titles=="タイトル-2"
+
+        app.config['BABEL_DEFAULT_LOCALE'] = 'fr'
+        with app.test_request_context():
+            assert record.get_titles=="title-2"
+
+        record["item_1617186331709"]["attribute_value_mlt"][0].pop("subitem_1551255648113")
+        record["item_1617186331709"]["attribute_value_mlt"][1].pop("subitem_1551255648113")
+        with app.test_request_context():
+            assert record.get_titles=="タイトル-2"
 
     #     def items_show_list(self):
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoRecord::test_items_show_list -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp

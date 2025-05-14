@@ -29,7 +29,7 @@ mapping = {
     "junii2_mapping": "",
     "lido_mapping": "",
     "lom_mapping": "",
-    "oai_dc_mapping": {"description": {"@value": "resourcetype"}},
+    "oai_dc_mapping": {"type": {"@value": "resourcetype"}},
     "spase_mapping": "",
 }
 resource_type = [

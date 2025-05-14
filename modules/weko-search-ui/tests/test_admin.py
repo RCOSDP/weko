@@ -12,6 +12,7 @@ from flask import Flask, json, jsonify, session, url_for,current_app, make_respo
 
 from invenio_accounts.testutils import login_user_via_session
 
+from weko_index_tree.models import Index
 from weko_search_ui.admin import (
     ItemManagementBulkDelete,
     ItemManagementCustomSort,
@@ -94,6 +95,25 @@ def test_ItemManagementCustomSort_save_sort(i18n_app, users, db_records2):
         with patch("flask.templating._render", return_value=""):
             assert test.save_sort()
 
+        with patch.object(request, "get_json", return_value={"q_id": "1", "sort": [{"custom_sort": {"1": 1}}, {"custom_sort": {"2": 2}}]}):
+            with patch("weko_index_tree.api.Indexes.set_item_sort_custom", return_value=Index(id=1)):
+                res = test.save_sort()
+                res_data = json.loads(res.get_data(as_text=True))
+                assert res.status_code == 200
+                assert res_data["message"] == "Data is successfully updated."
+
+            with patch("weko_index_tree.api.Indexes.set_item_sort_custom", return_value=None):
+                res = test.save_sort()
+                res_data = json.loads(res.get_data(as_text=True))
+                assert res.status_code == 405
+                assert res_data["message"] == "Data update failed."
+
+            with patch("weko_index_tree.api.Indexes.set_item_sort_custom", side_effect=Exception):
+                res = test.save_sort()
+                res_data = json.loads(res.get_data(as_text=True))
+                assert res.status_code == 405
+                assert res_data["message"] == "Error."
+
 
 # class ItemManagementBulkSearch(BaseView):
 class TestItemManagementBulkSearch:
@@ -109,8 +129,33 @@ class TestItemManagementBulkSearch:
 
         with patch("flask_login.utils._get_user", return_value=user):
             with patch("flask.templating._render", return_value=""):
-                res = client.get(url)
+                res = client.get(url, query_string={"item_management": "update"})
                 assert res.status == '200 OK'
+
+    # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_admin.py::TestItemManagementBulkSearch::test_index -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+    def test_index(self, i18n_app, users, indices2, mocker):
+        i18n_app.config['WEKO_SEARCH_TYPE_INDEX'] = 'index'
+        user = users[3]['obj']
+
+        with i18n_app.test_client() as client:
+            url = url_for("items/search.index", _external=True)
+            with patch("flask_login.utils._get_user", return_value=user):
+                with patch("flask.templating._render", return_value=""):
+                    mock_execute_search_with_pagination = mocker.patch("weko_search_ui.utils.execute_search_with_pagination")
+                    mock_execute_search_with_pagination.return_value = []
+                    
+                    # management_type is bulk delete
+                    res = client.get(url, query_string={"item_management": "delete", "q": 3})
+                    assert res.status == '200 OK'
+
+                    # management_type is bulk update
+                    res = client.get(url, query_string={"item_management": "update"})
+                    assert res.status == '200 OK'
+                    
+                    # management_type is not found
+                    res = client.get(url)
+                    assert res.status == '500 INTERNAL SERVER ERROR'
+
 
 #     def is_visible(): ~ GOOD
 # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_admin.py::test_ItemManagementBulkSearch_is_visible -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp

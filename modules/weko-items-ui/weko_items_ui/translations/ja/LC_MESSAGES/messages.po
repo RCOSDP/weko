@@ -475,7 +475,7 @@ msgid "Export Format"
 msgstr ""
 
 #: weko_items_ui/templates/weko_items_ui/macros/export_controls.html:38
-msgid "JSON"
+msgid "TSV"
 msgstr ""
 
 #: weko_items_ui/templates/weko_items_ui/macros/export_controls.html:44

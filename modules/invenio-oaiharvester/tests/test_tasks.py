@@ -173,17 +173,34 @@ def test_create_indexes(app, db):
 
 
 
+# .tox/c1/bin/pytest --cov=invenio_oaiharvester tests/test_tasks.py::test_map_indexes -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-oaiharvester/.tox/c1/tmp
 def test_map_indexes(app, db):
     """Check harvesting of records from multiple setspecs."""
     with app.app_context():
         index = Index()
         db.session.add(index)
+
+        index2 = Index()
+        index2.parent = 1
+        index2.position = 1
+        index2.harvest_spec = '1'
+        index2.is_deleted = True
+        db.session.add(index2)
+
+        index3 = Index()
+        index3.parent = 1
+        index3.position = 2
+        index3.harvest_spec = '2'
+        db.session.add(index3)
+
         db.session.commit()
 
-        map_indexes({
+        res = map_indexes({
             '1': 'set_name_1',
             '2': 'set_name_2'
         }, index.id)
+        assert not 2 in res
+        assert 3 in res
 
 
 def test_event_counter(app):

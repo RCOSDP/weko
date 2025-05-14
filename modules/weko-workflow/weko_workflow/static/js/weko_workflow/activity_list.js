@@ -44,7 +44,21 @@ require([
   });
   $('#cancel_clear_activitylog').on('click', function () {
     $('#activitylog_clear_modal').fadeOut();
-  });   
+  });
+
+  $(".activity-link").on("click", function(event){
+    $.ajax({
+      url:"/workflow/verify_deletion/"+$(this).text(),
+      method:"GET",
+      async:false,
+      success: function(data, status) {
+        if(data.is_deleted === true){
+          alert($('#item_deleted_msg').text());
+          event.preventDefault();
+        }
+      }
+    });
+  });
 
   function changeParamPages() {
     if ($('#change_page_param').length == 1) {

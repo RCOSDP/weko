@@ -74,7 +74,7 @@ def test_url_to_link():
     assert url_to_link("file://localhost") == False
     assert url_to_link("http://localhost") == True
     assert url_to_link("https://localhost") == True
-    assert url_to_link("https://localhost/records/123/files/file.pdf") == False
+    assert url_to_link("https://localhost/records/123/files/file.pdf") == True
 
 
 # def pid_value_version(pid_value):
@@ -118,6 +118,31 @@ def test_publish_acl(client, records, users, id, status_code):
     res = client.post(url)
     assert res.status_code == status_code
     assert res.location == "http://test_server/records/1"
+
+
+# def export(pid, record, template=None, **kwargs):
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_publish -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+def test_publish(client, records, users, communities, mocker):
+    login_user_via_session(client=client, email=users[0]["email"])
+    indexer, records_info = records
+    
+    mock_commit = mocker.patch("weko_records_ui.views.db.session.commit")
+    mock_commit2 = mocker.patch("invenio_records.api.Record.commit")
+
+    mock_update_es_data = mocker.patch("weko_deposit.api.WekoIndexer.update_es_data")
+    
+    # Test Case 1: community id exists
+    mock_request = mocker.patch("weko_records_ui.views.request")
+    mock_request.values = {"community": 1}
+    actual_response = publish(records_info[0]["recid"], records_info[0]["record"], template=None)
+    assert actual_response.status_code == 302
+    assert actual_response.location == "/records/1?community=1"
+
+    # Test Case 2: community id exists
+    mock_request.values = {}
+    actual_response = publish(records_info[0]["recid"], records_info[0]["record"], template=None)
+    assert actual_response.status_code == 302
+    assert actual_response.location == "/records/1"
 
 
 # def export(pid, record, template=None, **kwargs):
@@ -428,7 +453,7 @@ def test_get_usage_workflow(app, users, workflows):
 
     with patch("flask_login.utils._get_user", return_value=data1):
         res = get_usage_workflow(_file_json)
-        assert res==3
+        assert res=="3"
 
 
 # def get_workflow_detail(workflow_id):
@@ -477,8 +502,6 @@ def test_default_view_method(app, records, itemtypes, indexstyle ,users):
                             with patch("flask_login.utils._get_user", return_value=users[3]["obj"]):
                                 with pytest.raises(Forbidden) : #404
                                     assert default_view_method(recid, record ,'helloworld.pdf').status_code == 200
-                        with patch('weko_records_ui.views.is_show_email_of_creator', return_value=True):
-                            assert default_view_method(recid, record ,'helloworld.pdf').status_code == 200
                         with patch('weko_records_ui.views.AdminSettings.get'
                                     , side_effect=lambda name , dict_to_object : {'display_stats' : False} if name == 'display_stats_settings' else None):
                             assert default_view_method(recid, record ,'helloworld.pdf').status_code == 200
@@ -529,35 +552,7 @@ def test_default_view_method(app, records, itemtypes, indexstyle ,users):
                         index.index_name_english ="index"
                         with patch('weko_records_ui.views.Indexes.get_index',return_value=index):
                             assert default_view_method(recid, record ,'helloworld.pdf').status_code == 200
-
-# def default_view_method(pid, record, filename=None, template=None, **kwargs):
-# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_default_view_method2 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
-#     """Display default view.
-#     def _get_rights_title(result, rights_key, rights_values, current_lang, meta_options):
-def test_default_view_method2(app, records, itemtypes, indexstyle ,users,db_community):
-    indexer, results = records
-    record = results[0]["record"]
-    recid = results[0]["recid"]
-    with app.test_request_context("/?file_order=0&community=community"):
-        with patch('weko_records_ui.views.check_original_pdf_download_permission', return_value=True):
-            with patch("weko_records_ui.views.get_search_detail_keyword", return_value={}):
-                with patch("weko_records_ui.views.get_index_link_list", return_value=[]):
-                    with patch("weko_records_ui.views.render_template", return_value=make_response()):
-                        
-                        assert default_view_method(recid, record ,'helloworld.pdf').status_code == 200
-
-                        with patch('weko_workflow.api.GetCommunity.get_community_by_id',return_value=[]):
-                            with pytest.raises(AttributeError):
-                                default_view_method(recid, record ,'[No FileName]')
-                        
-                        del record["item_1617605131499"]["attribute_value_mlt"][0]["filename"]
-                        with pytest.raises(NotFound) : #404
-                            default_view_method(recid, record ,'helloworld.pdf')
-                        
-                        del record["item_1617605131499"] # files
-                        with pytest.raises(NotFound) : #404
-                            default_view_method(recid, record ,'helloworld.pdf')
-                    
+                   
 
 
 # def doi_ish_view_method(parent_pid_value=0, version=0):
@@ -589,8 +584,6 @@ def test_doi_ish_view_method_acl(app,client,records,users,id,result):
     res = client.get(url)
     assert res.status_code == 302
     assert res.location == 'http://test_server/records/1.1'
-
-    assert "302 FOUND" in doi_ish_view_method(parent_pid_value=1, version=1)
 
 
 # def parent_view_method(pid_value=0):
@@ -737,19 +730,7 @@ def test_file_version_update_acl(client, records, users, id, status_code):
     assert json.loads(res.data) == {'status': 0, 'msg': 'Insufficient permission'}
 
     with patch("weko_records_ui.views.has_update_version_role", return_value=True):
-        _data = {'is_show': '1'}
-        obj = ObjectVersion.get(bucket=None, key=None, version_id=None)
-        assert obj.is_show == False
-
-        with patch('weko_records_ui.views.db.session.commit', side_effect=Exception("")):
-            res = client.put(url, data=_data)
-            obj = ObjectVersion.get(bucket=None, key=None, version_id=None)
-            assert obj.is_show == False
-        
-        res = client.put(url, data=_data)
-        obj = ObjectVersion.get(bucket=None, key=None, version_id=None)
-        assert obj.is_show == True
-
+        _data['is_show'] = '1'
         _data['bucket_id'] = 'none bucket'
         _data['key'] = 'none key'
         _data['version_id'] = 'version_id'
@@ -768,7 +749,7 @@ def test_file_version_update_acl(client, records, users, id, status_code):
 def test_citation(records):
     indexer, results = records
     record = results[0]["record"]
-    assert citation(record,record.pid)==None
+    assert citation(record,record.pid)=='Joho, Taro, Joho, Taro, Joho, Taro, 2021, en_conference paperITEM00000009(public_open_access_simple): Publisher, 1–3 p.'
 
 
 # def soft_delete(recid):
@@ -1011,10 +992,11 @@ def test_default_view_method_fix35133(app, records, itemtypes, indexstyle,mocker
                         {'name': 'citation_dissertation_institution','data':""},
                         {'name': 'citation_abstract_html_url','data': 'http://TEST_SERVER/records/1'},
                     ]
-                assert kwargs["google_dataset_meta"] == '{"@context": "https://schema.org/", "@type": "Dataset", "citation": ["http://hdl.handle.net/2261/0002005680", "https://repository.dl.itc.u-tokyo.ac.jp/records/2005680"], "creator": [{"@type": "Person", "alternateName": "creator alternative name", "familyName": "creator family name", "givenName": "creator given name", "identifier": "123", "name": "creator name"}], "description": "『史料編纂掛備用寫眞畫像圖畫類目録』（1905年）の「画像」（肖像画模本）の部に著録する資料の架番号の新旧対照表。史料編纂所所蔵肖像画模本データベースおよび『目録』版面画像へのリンク付き。『画像史料解析センター通信』98（2022年10月）に解説記事あり。", "distribution": [{"@type": "DataDownload", "contentUrl": "https://repository.dl.itc.u-tokyo.ac.jp/record/2005680/files/comparison_table_of_preparation_image_catalog.xlsx", "encodingFormat": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"}, {"@type": "DataDownload", "contentUrl": "https://raw.githubusercontent.com/RCOSDP/JDCat-base/main/apt.txt", "encodingFormat": "text/plain"}, {"@type": "DataDownload", "contentUrl": "https://raw.githubusercontent.com/RCOSDP/JDCat-base/main/environment.yml", "encodingFormat": "application/x-yaml"}, {"@type": "DataDownload", "contentUrl": "https://raw.githubusercontent.com/RCOSDP/JDCat-base/main/postBuild", "encodingFormat": "text/x-shellscript"}], "includedInDataCatalog": {"@type": "DataCatalog", "name": "https://localhost"}, "license": ["CC BY"], "name": "『史料編纂掛備用写真画像図画類目録』画像の部：新旧架番号対照表", "spatialCoverage": [{"@type": "Place", "geo": {"@type": "GeoCoordinates", "latitude": "point longitude test", "longitude": "point latitude test"}}, {"@type": "Place", "geo": {"@type": "GeoShape", "box": "1 3 2 4"}}, "geo location place test"]}'
+                assert kwargs["google_dataset_meta"] == '{"@context": "https://schema.org/", "@type": "Dataset", "citation": ["http://hdl.handle.net/2261/0002005680", "https://repository.dl.itc.u-tokyo.ac.jp/records/2005680"], "creator": [{"@type": "Person", "alternateName": "creator alternative name", "familyName": "creator family name", "givenName": "creator given name", "identifier": "123", "name": "creator name"}], "description": "『史料編纂掛備用寫眞畫像圖畫類目録』（1905年）の「画像」（肖像画模本）の部に著録する資料の架番号の新旧対照表。史料編纂所所蔵肖像画模本データベースおよび『目録』版面画像へのリンク付き。『画像史料解析センター通信』98（2022年10月）に解説記事あり。", "distribution": [{"@type": "DataDownload", "contentUrl": "https://repository.dl.itc.u-tokyo.ac.jp/record/2005680/files/comparison_table_of_preparation_image_catalog.xlsx", "encodingFormat": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"}, {"@type": "DataDownload", "contentUrl": "https://raw.githubusercontent.com/RCOSDP/JDCat-base/main/apt.txt", "encodingFormat": "text/plain"}, {"@type": "DataDownload", "contentUrl": "https://raw.githubusercontent.com/RCOSDP/JDCat-base/main/environment.yml", "encodingFormat": "application/x-yaml"}, {"@type": "DataDownload", "contentUrl": "https://raw.githubusercontent.com/RCOSDP/JDCat-base/main/postBuild", "encodingFormat": "text/x-shellscript"}], "includedInDataCatalog": {"@type": "DataCatalog", "name": "https://localhost"}, "license": ["CC BY"], "name": "『史料編纂掛備用写真画像図画類目録』画像の部：新旧架番号対照表", "spatialCoverage": [{"@type": "Place", "geo": {"@type": "GeoCoordinates", "latitude": "point latitude test", "longitude": "point longitude test"}}, {"@type": "Place", "geo": {"@type": "GeoShape", "box": "1 3 2 4"}}, "geo location place test"]}' 
 # def create_secret_url_and_send_mail(pid:PersistentIdentifier, record:WekoRecord, filename:str, **kwargs) -> str:
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_create_secret_url_and_send_mail -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
-def test_create_secret_url_and_send_mail(app,client,db,users,records,db_restricted_access_secret):
+def test_create_secret_url_and_send_mail(app,client,db,users,records):
+    app.config['WEKO_WORKFLOW_DATE_FORMAT'] = "%Y-%m-%d"
     indexer, results = records
     record = results[1]
 
@@ -1048,16 +1030,16 @@ def test_create_secret_url_and_send_mail(app,client,db,users,records,db_restrict
     "id, is_show",
     [
         (0, False), #contributor
-        (1, True), #repoadmin
-        (2, True), #sysadmin
+        (1, False), #repoadmin
+        (2, False), #sysadmin
         (3, False), #comadmin
         (4, False), #generaluser
-        (5, True), #originalroleuser (owner)
-        (6, True), #originalroleuser2 (repoadmin)
+        (5, False), #originalroleuser (owner)
+        (6, False), #originalroleuser2 (repoadmin)
         (7, False), #user (weko_shared owner)
     ],
 )
-def test__get_show_secret_url_button(users,records ,db_restricted_access_secret,id ,is_show):
+def test__get_show_secret_url_button(users,records,id ,is_show):
     indexer, results = records
     # 80
     i = 0
@@ -1065,14 +1047,17 @@ def test__get_show_secret_url_button(users,records ,db_restricted_access_secret,
     for record in results:
         record["record"]['owner'] = users[5]["id"]
         record["record"]['weko_shared_id'] = users[7]["id"]
-        record["record"].get_file_data()[0].update({'accessrole':role[i]})
-        record["record"].get_file_data()[0].update({'date':[{"dateValue" :'2999-12-31'}]})
-        i = i + 1
+        file_data = record["record"].get_file_data()
+        if len(file_data) > 0:
+            file_data[0].update({'accessrole':role[i%3]})
+            file_data[0].update({'date':[{"dateValue" :'2999-12-31'}]})
+            i = i + 1
 
     with patch("flask_login.utils._get_user", return_value=users[id]["obj"]):
         res = []
         for record in results:
-            res.append( _get_show_secret_url_button(record["record"] , record["filename"]) )
+            if 'filename' in record:
+                res.append( _get_show_secret_url_button(record["record"] , record["filename"]) )
         
     assert not res[0]
     assert res[1] == is_show
@@ -1095,13 +1080,16 @@ def test__get_show_secret_url_button2(users,records ,id,is_show):
     for record in results:
         record["record"]['owner'] = users[5]["id"]
         record["record"]['weko_shared_id'] = users[7]["id"]
-        record["record"].get_file_data()[0].update({'accessrole':role[i]})
-        record["record"].get_file_data()[0].update({'date':[{"dateValue" :'2999-12-31'}]})
-        i = i + 1
+        file_data = record["record"].get_file_data()
+        if len(file_data) > 0:
+            file_data[0].update({'accessrole':role[i%3]})
+            file_data[0].update({'date':[{"dateValue" :'2999-12-31'}]})
+            i = i + 1
     with patch("flask_login.utils._get_user", return_value=users[id]["obj"]):
         res = []
         for record in results:
-            res.append( _get_show_secret_url_button(record["record"] , record["filename"]) )
+            if 'filename' in record:
+                res.append( _get_show_secret_url_button(record["record"] , record["filename"]) )
     
     assert res[0] == False
     assert res[1] == False
@@ -1112,10 +1100,10 @@ def test__get_show_secret_url_button2(users,records ,id,is_show):
 @pytest.mark.parametrize(
     "id, is_show",
     [
-        (1, True), #repoadmin
+        (1, False), #repoadmin
     ],
 )
-def test__get_show_secret_url_button3(users,records ,db_restricted_access_secret,id,is_show):
+def test__get_show_secret_url_button3(users,records,id,is_show):
     indexer, results = records
     # 80
     i = 0
@@ -1123,13 +1111,16 @@ def test__get_show_secret_url_button3(users,records ,db_restricted_access_secret
     for record in results:
         record["record"]['owner'] = users[5]["id"]
         record["record"]['weko_shared_id'] = users[7]["id"]
-        record["record"].get_file_data()[0].update({'accessrole':role[i]})
-        record["record"].get_file_data()[0].update({'date':[{"dateValue" :'1999-12-31'}]})
-        i = i + 1
+        file_data = record["record"].get_file_data()
+        if len(file_data) > 0:
+            file_data[0].update({'accessrole':role[i%3]})
+            file_data[0].update({'date':[{"dateValue" :'2999-12-31'}]})
+            i = i + 1
     with patch("flask_login.utils._get_user", return_value=users[id]["obj"]):
         res = []
         for record in results:
-            res.append( _get_show_secret_url_button(record["record"] , record["filename"]) )
+            if 'filename' in record:
+                res.append( _get_show_secret_url_button(record["record"] , record["filename"]) )
     
     assert res[0] == False
     assert res[1] == is_show

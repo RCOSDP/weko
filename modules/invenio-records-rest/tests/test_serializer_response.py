@@ -52,7 +52,8 @@ def test_record_responsify(app):
         rec_serializer(None, rec, code=201)
 
 
-def test_search_responsify(app):
+# .tox/c1/bin/pytest --cov=invenio_records_rest tests/test_serializer_response.py::test_search_responsify -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-records-rest/.tox/c1/tmp
+def test_search_responsify(app, item_type):
     """Test JSON serialize."""
     search_serializer = search_responsify(
         TestSerializer(), 'application/x-custom')
@@ -60,12 +61,13 @@ def test_search_responsify(app):
     def fetcher():
         pass
 
-    result = ['a'] * 5
+    tmp = [{'_source': {'item_type_id': '15', 'item_metadata': {'test': 'test'}}}]
+    result = {"hits": {"hits": tmp}}
 
     resp = search_serializer(fetcher, result)
     assert resp.status_code == 200
     assert resp.content_type == 'application/x-custom'
-    assert resp.get_data(as_text=True) == "5"
+    assert resp.get_data(as_text=True) == "1"
 
     resp = search_serializer(
         fetcher, result, code=201, headers=[('X-Test', 'test')])

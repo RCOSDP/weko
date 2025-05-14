@@ -15,7 +15,7 @@ name_ja = "データセットシリーズ"
 name_en = "Dataset Series"
 mapping = {
     "display_lang_type": "",
-    "jpcoar_v1_mapping": {},
+    "jpcoar_v1_mapping": "",
     "jpcoar_mapping": {"datasetSeries": {"@value": "jpcoar_dataset_series"}},
     "junii2_mapping": "",
     "lido_mapping": "",
@@ -44,15 +44,12 @@ def schema(title="", multi_flag=multiple_flag):
         _d = {
             "type": "object",
             "format": "object",
-            "title": "dataset_series",
             "properties": {
                 "jpcoar_dataset_series": {
-                    "type": "string",
+                    "type": ["null", "string"],
                     "format": "select",
-                    "enum": ["True", "False"],
-                    "currentEnum": [None, "True", "False"],
+                    "enum": [None, "True", "False"],
                     "title": "Dataset Series",
-                    "title_i18n": {"ja": "データセットシリーズ", "en": "Dataset Series"},
                 }
             },
         }
@@ -82,7 +79,6 @@ def form(
                 },
             ],
             "key": key.replace("[]", ""),
-            "type": "fieldset",
         }
         return _d
 

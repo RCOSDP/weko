@@ -1,0 +1,163 @@
+{
+  "_oai": {
+    "id": "oai:ams-dev.ir.rcos.nii.ac.jp:00000006",
+    "sets": []
+  },
+  "path": [
+    "1557819692844"
+  ],
+  "owner": "1",
+  "recid": "6",
+  "title": [
+    "test data"
+  ],
+  "pubdate": {
+    "attribute_name": "PubDate",
+    "attribute_value": "2023-10-13"
+  },
+  "_buckets": {
+    "deposit": "5123a174-5220-4ff1-8761-8d7a65b86bd1"
+  },
+  "_deposit": {
+    "id": "6",
+    "pid": {
+      "type": "depid",
+      "value": "6",
+      "revision_id": 0
+    },
+    "owner": "1",
+    "owners": [
+      1
+    ],
+    "status": "published",
+    "created_by": 1,
+    "owners_ext": {
+      "email": "wekosoftware@nii.ac.jp",
+      "username": "",
+      "displayname": ""
+    }
+  },
+  "item_title": "test data",
+  "author_link": [],
+  "item_type_id": "40001",
+  "publish_date": "2023-10-13",
+  "control_number": "6",
+  "publish_status": "0",
+  "weko_shared_id": -1,
+  "item_1617186331708": {
+    "attribute_name": "Title",
+    "attribute_value_mlt": [
+      {
+        "subitem_1551255647225": "test data",
+        "subitem_1551255648112": "ja"
+      }
+    ]
+  },
+  "item_1617186385884": {
+    "attribute_name": "Alternative Title",
+    "attribute_value_mlt": [
+      {
+        "subitem_1551255720400": "hide prop",
+        "subitem_1551255721061": "ja"
+      }
+    ]
+  },
+  "item_1617186626617": {
+    "attribute_name": "Description",
+    "attribute_value_mlt": [
+      {
+        "subitem_description": "no items"
+      }
+    ]
+  },
+  "item_1617186643794": {
+    "attribute_name": "Publisher",
+    "attribute_value_mlt": [
+      {
+        "subitem_1522300316516": "hide"
+      }
+    ]
+  },
+  "item_1617186783814": {
+    "attribute_name": "Identifier",
+    "attribute_value_mlt": [
+      {
+        "subitem_identifier_uri": "no title_i18n"
+      }
+    ]
+  },
+  "item_1617187024783": {
+    "attribute_name": "Page Start",
+    "attribute_value_mlt": [
+      {
+        "subitem_1551256198917": ""
+      }
+    ]
+  },
+  "item_1617258105262": {
+    "attribute_name": "Resource Type",
+    "attribute_value_mlt": [
+      {
+        "resourceuri": "http://purl.org/coar/resource_type/c_5794",
+        "resourcetype": "conference paper"
+      }
+    ]
+  },
+  "item_1617349808926": {
+    "attribute_name": "Version",
+    "attribute_value_mlt": [
+      {
+        "subitem_1523263171732": "no title"
+      }
+    ]
+  },
+  "item_1617605131499": {
+    "attribute_name": "File",
+    "attribute_type": "file",
+    "attribute_value_mlt": [
+      {
+        "url": {
+          "url": "https://ams-dev.ir.rcos.nii.ac.jp/record/6/files/dummy1.pdf"
+        },
+        "date": [
+          {
+            "dateType": "Available",
+            "dateValue": "2023-10-13"
+          }
+        ],
+        "format": "application/pdf",
+        "filename": "dummy1.pdf",
+        "filesize": [
+          {
+            "value": "47 KB"
+          }
+        ],
+        "mimetype": "application/pdf",
+        "accessrole": "open_access",
+        "version_id": "ad688496-038f-41d9-a177-5f6d68d049f0"
+      },
+      {
+        "url": {
+          "url": "https://ams-dev.ir.rcos.nii.ac.jp/record/6/files/dummy2.pdf"
+        },
+        "date": [
+          {
+            "dateType": "Available",
+            "dateValue": "2023-10-13"
+          }
+        ],
+        "format": "application/pdf",
+        "filename": "dummy2.pdf",
+        "filesize": [
+          {
+            "value": "47 KB"
+          }
+        ],
+        "mimetype": "application/pdf",
+        "accessrole": "open_access",
+        "version_id": "25c9d7e4-7d7c-40e8-9e90-aa2aeb212dd8"
+      }
+    ]
+  },
+  "relation_version_is_last": true
+}

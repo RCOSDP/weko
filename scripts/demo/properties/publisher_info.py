@@ -15,7 +15,7 @@ name_ja = "出版者情報"
 name_en = "Publisher Information"
 mapping = {
     "display_lang_type": "",
-    "jpcoar_v1_mapping": {},
+    "jpcoar_v1_mapping": "",
     "jpcoar_mapping": {
         "publisher_jpcoar": {
             "publisherDescription": {

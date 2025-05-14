@@ -43,7 +43,7 @@ def test_valid_put(app, es, test_records, content_type, search_url,
 
         # Check that the returned record matches the given data
         assert get_json(res)['metadata']['year'] == 1234
-        IndexFlusher(search_class).flush_and_wait()
+        # IndexFlusher(search_class).flush_and_wait()
         # res = client.get(search_url, query_string={"year": 1234})
         # assert_hits_len(res, 1)
         # Retrieve record via get request
@@ -79,7 +79,7 @@ def test_valid_put_etag(app, es, test_records, content_type, search_url,
         assert res.status_code == 200
         assert get_json(client.get(url))['metadata']['year'] == 1234
 
-        IndexFlusher(search_class).flush_and_wait()
+        # IndexFlusher(search_class).flush_and_wait()
         # res = client.get(search_url, query_string={"year": 1234})
         # assert_hits_len(res, 1)
 
@@ -104,7 +104,7 @@ def test_put_on_deleted(app, db, es, test_data, content_type, search_url,
 
         url = record_url(get_json(res)['id'])
         assert client.delete(url).status_code == 204
-        IndexFlusher(search_class).flush_and_wait()
+        # IndexFlusher(search_class).flush_and_wait()
         # res = client.get(search_url,
         #                  query_string={'title': test_data[0]['title']})
         # assert_hits_len(res, 0)

@@ -106,7 +106,8 @@ def create_blueprint(endpoints):
             default_media_type=options.get('default_media_type'),
         )
         blueprint.add_url_rule(
-            options.pop('cites_route'),
+            #options.pop('cites_route'),
+            options.get('cites_route'),
             view_func=cites,
             methods=['GET'],
         )

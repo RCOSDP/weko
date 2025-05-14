@@ -45,7 +45,7 @@ from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm.attributes import flag_modified
 from sqlalchemy.sql.expression import desc
 from werkzeug.local import LocalProxy
-
+from weko_authors.models import Authors
 
 
 from .fetchers import weko_record_fetcher
@@ -471,7 +471,7 @@ class ItemTypes(RecordBase):
             result = []
             for key in _delete_list:
                 prop_mapping = item_type_mapping.get(key, {}).get("jpcoar_mapping", {})
-                if prop_mapping:
+                if prop_mapping and isinstance(prop_mapping, dict):
                     result.extend(list(prop_mapping.keys()))
             return result
 
@@ -585,17 +585,14 @@ class ItemTypes(RecordBase):
         :param item_type_name: Item Type Name.
         :return: Record list.
         """
-        name = urllib.parse.quote_plus(item_type_name)
-        query_string = "itemtype:{}".format(
-            name)
+        from weko_search_ui.utils import execute_search_with_pagination
         result = []
         try:
             search = RecordsSearch(
                 index=current_app.config['SEARCH_UI_SEARCH_INDEX'])
-            search = search.query(QueryString(query=query_string))
+            search = search.query('term', **{"itemtype.keyword": item_type_name})
             search = search.sort('-publish_date', '-_updated')
-            search_result = search.execute().to_dict()
-            result = search_result.get('hits', {}).get('hits', [])
+            result = execute_search_with_pagination(search, -1)
         except NotFoundError as e:
             current_app.logger.debug("Indexes do not exist yet: ", str(e))
         return result
@@ -915,16 +912,19 @@ class ItemTypes(RecordBase):
         return RevisionsIterator(self.model)
 
     @classmethod
-    def reload(cls,itemtype_id):
+    def reload(cls, itemtype_id, specified_list=[], renew_value='None'):
         """reload itemtype properties.
 
         Args:
             itemtype_id (_type_): _description_
+            specified_list: renew properties id list
+            renew_value: None, ALL, VAL, LOC
         """
         # with db.session.begin_nested():
+        result = {"msg":"Update ItemType({})".format(itemtype_id),"code":0}
         item_type = ItemTypes.get_by_id(itemtype_id)
-        old_render = pickle.loads(pickle.dumps(item_type.render, -1))
         data = pickle.loads(pickle.dumps(item_type.render, -1))
+        
         pat1 = re.compile(r'cus_(\d+)')
         for idx, i in enumerate(data['table_row_map']['form']):
             if isinstance(i,dict) and 'key' in i:
@@ -934,40 +934,70 @@ class ItemTypes(RecordBase):
                     multiple_flg = data['meta_list'][_prop_id]['option']['multiple']
                     if pat1.match(_tmp):
                         _tmp = int(_tmp.replace('cus_', ''))
+                        if specified_list and _tmp not in specified_list:
+                            continue
                         _prop = ItemTypeProps.get_record(_tmp)
                         if _prop:
                             # data['meta_list'][_prop_id] = json.loads('{"input_maxItems": "9999","input_minItems": "1","input_type": "cus_'+str(_prop.id)+'","input_value": "","option": {"crtf": false,"hidden": false,"multiple": true,"oneline": false,"required": false,"showlist": false},"title": "'+_prop.name+'","title_i18n": {"en": "", "ja": "'+_prop.name+'"}}')
-                            data['schemaeditor']['schema'][_prop_id]=pickle.loads(pickle.dumps(_prop.schema, -1))
+                            # data['schemaeditor']['schema'][_prop_id]=pickle.loads(pickle.dumps(_prop.schema, -1))
                             if multiple_flg:
                                 data['table_row_map']['schema']['properties'][_prop_id]['items']=pickle.loads(pickle.dumps(_prop.schema, -1))
                                 data['table_row_map']['schema']['properties'][_prop_id]['type']="array"
+                                if 'maxItems' not in data['table_row_map']['schema']['properties'][_prop_id]:
+                                    data['table_row_map']['schema']['properties'][_prop_id]['maxItems']=9999
+                                if 'minItems' not in data['table_row_map']['schema']['properties'][_prop_id]:
+                                    data['table_row_map']['schema']['properties'][_prop_id]['minItems']=1
+                                if 'properties' in data['table_row_map']['schema']['properties'][_prop_id]:
+                                    data['table_row_map']['schema']['properties'][_prop_id].pop('properties')
+                                if 'format' in data['table_row_map']['schema']['properties'][_prop_id]:
+                                    data['table_row_map']['schema']['properties'][_prop_id].pop('format')
+
+                                tmp_data = pickle.loads(pickle.dumps(data['table_row_map']['form'][idx], -1))
                                 _forms = json.loads(json.dumps(pickle.loads(pickle.dumps(_prop.forms, -1))).replace('parentkey',_prop_id))
                                 data['table_row_map']['form'][idx]=pickle.loads(pickle.dumps(_forms, -1))
+
+                                _tmp_data = data['table_row_map']['form'][idx]
+                                cls.update_attribute_options(tmp_data, _tmp_data, renew_value)
+                                cls.update_property_enum(item_type.render['table_row_map']['schema']['properties'][_prop_id],data['table_row_map']['schema']['properties'][_prop_id])
                             else:
+                                tmp_data = pickle.loads(pickle.dumps(data['table_row_map']['form'][idx], -1))
                                 data['table_row_map']['schema']['properties'][_prop_id]=pickle.loads(pickle.dumps(_prop.schema, -1))
+                                # cls.update_property_enum(item_type.render['table_row_map']['schema']['properties'],data['table_row_map']['schema']['properties'][_prop_id])
                                 _form = json.loads(json.dumps(pickle.loads(pickle.dumps(_prop.form, -1))).replace('parentkey',_prop_id))
                                 data['table_row_map']['form'][idx]=pickle.loads(pickle.dumps(_form, -1))
-                                                       
+                                _tmp_data = data['table_row_map']['form'][idx]
+                                cls.update_attribute_options(tmp_data, _tmp_data, renew_value)
+                                cls.update_property_enum(item_type.render['table_row_map']['schema']['properties'][_prop_id],data['table_row_map']['schema']['properties'][_prop_id])
+                                                                               
         from weko_itemtypes_ui.utils import fix_json_schema,update_required_schema_not_exist_in_form, update_text_and_textarea
+        
         table_row_map = data.get('table_row_map')
         json_schema = fix_json_schema(table_row_map.get('schema'))
+        
         json_form = table_row_map.get('form')
         json_schema = update_required_schema_not_exist_in_form(
             json_schema, json_form)
-
+        
         if itemtype_id != 0:
             json_schema, json_form = update_text_and_textarea(
                 itemtype_id, json_schema, json_form)
         
-        # item_type.schema = json_schema
-        # item_type.form = json_form
-        # item_type.render = data
+        if 'schemaeditor' in data:
+            if 'schema' in data['schemaeditor']:
+                data['schemaeditor']['schema'] = json_schema
         
-        # flag_modified(item_type, 'schema')
-        # flag_modified(item_type, 'form')
-        # flag_modified(item_type, 'render')
+        # item_type_mapping = (
+        #             ItemTypeMapping.query.filter(ItemTypeMapping.item_type_id == itemtype_id)
+        #             .order_by(desc(ItemTypeMapping.created))
+        #             .first()
+        #         )
+        # data['table_row_map']['mapping'] = item_type_mapping.mapping if item_type_mapping else {}
+
+        # current_app.logger.error("Update ItemType({})".format(itemtype_id))
+        # current_app.logger.error("Update data({})".format(data))
+        # current_app.logger.error("Update json_schema({})".format(json_schema))
         
-        # db.session.merge(item_type)
+        # print(data)
 
         record = cls.update(id_=itemtype_id,
                                       name=item_type.item_type_name.name,
@@ -976,8 +1006,13 @@ class ItemTypes(RecordBase):
                                       render=data)
         mapping = Mapping.get_record(itemtype_id)
         if mapping:
-            mapping.model.mapping = table_row_map.get('mapping')
-            db.session.add(mapping.model)
+            _a = [p for p in data.get("table_row") if p in mapping]
+            if len(_a) is not len(data.get("table_row")):
+                mapping.model.mapping = table_row_map.get('mapping')
+                flag_modified(mapping.model, 'mapping')
+                db.session.add(mapping.model)
+                result['msg'] = "Fix ItemType({}) mapping".format(itemtype_id)
+                result['code'] = 0  
         
         ItemTypeEditHistory.create_or_update(
             item_type_id=record.model.id,
@@ -985,14 +1020,110 @@ class ItemTypes(RecordBase):
             notes=data.get('edit_notes', {})
         )
             
-        # return record
+        return result
 
+    @classmethod
+    def update_property_enum(cls, old_value, new_value):
+        managed_key_list = current_app.config.get("WEKO_RECORDS_MANAGED_KEYS")
+        if isinstance(old_value, dict):
+            for key, value in old_value.items():
+                if isinstance(old_value[key], dict):
+                    if key in new_value and key in old_value:
+                        if "enum" in old_value[key]:
+                            if key not in managed_key_list:
+                                if old_value[key]["enum"] != [None]:
+                                    new_value[key]["enum"] = old_value[key]["enum"]
+                        if "currentEnum" in old_value[key]:
+                            if key not in managed_key_list:
+                                if old_value[key]["currentEnum"] != [None]:
+                                    new_value[key]["currentEnum"] = old_value[key]["currentEnum"]
+                        # if "title" in old_value[key]:
+                        #     if old_value[key]["title"] != "":
+                        #         new_value[key]["title"] = old_value[key]["title"]
+                        # if "title_i18n" in old_value[key]:
+                        #     if old_value[key]["title_i18n"] != "":
+                        #         new_value[key]["title_i18n"] = old_value[key]["title_i18n"]
+                        if "enum" not in old_value[key] and "currentEnum" not in old_value[key]:
+                            if key in new_value and key in old_value:
+                                cls.update_property_enum(old_value[key], new_value[key])
 
+    @classmethod
+    def update_attribute_options(cls, old_value, new_value, renew_value = 'None'):
+        managed_key_list = current_app.config.get("WEKO_RECORDS_MANAGED_KEYS")
+        if isinstance(old_value, list):
+           for i in old_value:
+               cls.update_attribute_options(i, new_value, renew_value)     
+        elif isinstance(old_value, dict): 
+            if "key" in old_value:
+                key = old_value["key"]
+                new_item = cls.getItemByItemsKey(new_value,key)
+                if new_item is not None:    
+                    isHide = False
+                    isShowList = False
+                    isNonDisplay = False
+                    isSpecifyNewline = False
+                    isRequired = False
+                    title_i18n = None
+                    title_i18n_temp = None
+                    titleMap = None
+                    title = None
+                    
+                    if "title" in old_value:
+                        title = old_value["title"]
+                    if "isHide" in old_value:
+                        isHide = old_value["isHide"]
+                    if "isShowList" in old_value:
+                        isShowList = old_value["isShowList"]
+                    if "isNonDisplay" in old_value:
+                        isNonDisplay = old_value["isNonDisplay"]
+                    if "isSpecifyNewline" in old_value:
+                        isSpecifyNewline = old_value["isSpecifyNewline"]
+                    if "required" in old_value:
+                        isRequired = old_value["required"]
+                    if "title_i18n" in old_value and renew_value not in ["ALL", "LOC"]:
+                        title_i18n_temp = old_value["title_i18n"]
+                        title_i18n = title_i18n_temp
+                    if "title_i18n_temp" in old_value and renew_value not in ["ALL", "LOC"]:
+                        title_i18n_temp = old_value["title_i18n_temp"]
+                    if ("titleMap" in old_value and key.split(".")[-1] not in managed_key_list) or ("titleMap" in old_value and renew_value not in ["ALL", "VAL"]) :
+                        titleMap = old_value["titleMap"]
+                    
+                    new_item["isHide"] = isHide
+                    new_item["isShowList"] = isShowList
+                    new_item["isNonDisplay"] = isNonDisplay
+                    new_item["isSpecifyNewline"] = isSpecifyNewline
+                    new_item["required"] = isRequired
+                    if title:
+                        new_item["title"] = title
+                    if title_i18n:
+                        new_item["title_i18n"] = title_i18n
+                    if title_i18n_temp:
+                        new_item["title_i18n_temp"] = title_i18n_temp
+                    if titleMap:
+                        new_item["titleMap"] = titleMap
+                    if 'items' in old_value:
+                        cls.update_attribute_options(old_value["items"], new_item, renew_value)
 
-            
-            
-
-
+    @classmethod
+    def getItemByItemsKey(cls,prop,key):
+        if isinstance(prop, list):
+            for i in prop:
+                ret = cls.getItemByItemsKey(i,key)
+                if ret is not None:
+                    return ret
+        elif isinstance(prop, dict):
+            if "key" in prop and prop["key"] == key:
+                return prop
+            elif "items" in prop:
+                for item in prop["items"]:
+                    if "key" in item and item["key"] == key:
+                        return item
+                    if "items" in item:
+                        ret = cls.getItemByItemsKey(item,key)
+                        if ret is not None:
+                            return ret
+        return None
+ 
 class ItemTypeEditHistory(object):
     """Define API for Itemtype Property creation and manipulation."""
 
@@ -2107,13 +2238,33 @@ class FeedbackMailList(object):
             query_object = _FeedbackMailList.query.filter_by(
                 item_id=item_id).one_or_none()
             if not query_object:
+                mail_list = []
+                account_author_set = set()
+                for d in feedback_maillist:
+                    author_id = d.get("author_id")
+                    email = d.get("email")
+                    if author_id:
+                        account_author_set.add(str(author_id))
+                    elif email:
+                        mail_list.append({"email": email})
                 query_object = _FeedbackMailList(
                     item_id=item_id,
-                    mail_list=feedback_maillist
+                    mail_list=mail_list,
+                    account_author=",".join(list(account_author_set))
                 )
                 db.session.add(query_object)
             else:
-                query_object.mail_list = feedback_maillist
+                mail_list = []
+                account_author_set = set()
+                for d in feedback_maillist:
+                    author_id = d.get("author_id")
+                    email = d.get("email")
+                    if author_id:
+                        account_author_set.add(str(author_id))
+                    elif email:
+                        mail_list.append({"email": email})
+                query_object.mail_list = mail_list
+                query_object.account_author = ",".join(list(account_author_set))
                 db.session.merge(query_object)
 
     @classmethod
@@ -2138,12 +2289,91 @@ class FeedbackMailList(object):
             with db.session.no_autoflush:
                 query_object = _FeedbackMailList.query.filter_by(
                     item_id=item_id).one_or_none()
-                if query_object and query_object.mail_list:
-                    return query_object.mail_list
+                if query_object:
+                    data = []
+                    list_author_id = []
+                    if query_object.account_author:
+                        list_author_id = query_object.account_author.split(',')
+                        for author_id in list_author_id:
+                            emails = Authors.get_emails_by_id(author_id)
+                            for e in emails:
+                                data.append({"email": e, "author_id": author_id})
+                    if query_object.mail_list:
+                        for m in query_object.mail_list:
+                            author_id = m.get("author_id")
+                            email = m.get("email")
+                            if author_id: # if there is author_id (obsolete data formats only)
+                                if author_id not in list_author_id:
+                                    emails = Authors.get_emails_by_id(author_id)
+                                    for e in emails:
+                                        data.append({"email": e, "author_id": author_id})
+                            else:
+                                if email:
+                                    data.append({"email": email, "author_id": ""})
+                    return data
                 else:
                     return []
-        except SQLAlchemyError:
+        except SQLAlchemyError as e:
+            current_app.logger.error(e)
             return []
+
+    @classmethod
+    def get_feedback_mail_list(cls):
+        """Get feedback mail list for send mail."""
+        mail_list = {}
+        checked_author_id = {}
+
+        # get feedbak mail list from db
+        data = db.session.query(
+            _FeedbackMailList, PersistentIdentifier
+        ).join(
+            PersistentIdentifier,
+            _FeedbackMailList.item_id == PersistentIdentifier.object_uuid
+        ).filter(
+            PersistentIdentifier.pid_type == 'recid',
+            PersistentIdentifier.status == PIDStatus.REGISTERED,
+            PersistentIdentifier.pid_value.notlike("%.%")
+        ).all()
+
+        # create return data
+        for d in data:
+            item_id = str(d.FeedbackMailList.item_id)
+            emails_no_authorid = []
+            list_author_id = d.FeedbackMailList.account_author.split(',')
+            for m in d.FeedbackMailList.mail_list:
+                if m.get("author_id"):
+                    list_author_id.append(m.get("author_id"))
+                else:
+                    emails_no_authorid.append(m.get("email"))
+            # there is author id
+            for author_id in list(set(list_author_id)):
+                if not author_id:
+                    continue
+                if author_id in checked_author_id:
+                    emails = checked_author_id.get(author_id)
+                    for e in emails:
+                        mail_list[e]["items"].append(item_id)
+                else:
+                    emails = Authors.get_emails_by_id(author_id)
+                    for e in emails:
+                        if e and e not in mail_list:
+                            mail_list[e] = {
+                                "items": [item_id],
+                                "author_id": author_id
+                            }
+                    checked_author_id[author_id] = emails
+            # if no author id
+            for e in emails_no_authorid:
+                if e:
+                    if e not in mail_list:
+                        mail_list[e] = {
+                            "items": [item_id],
+                            "author_id": ""
+                        }
+                    else:
+                        mail_list[e]["items"].append(item_id)
+
+        return mail_list
 
     @classmethod
     def delete(cls, item_id):

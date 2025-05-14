@@ -588,11 +588,20 @@ msgstr "このアクティビティはロック中です（{}）。"
 msgid "already open another activity ({})."
 msgstr "既に別のアクティビティ({})を開いています。"
 
+msgid "One user cannot open multiple activities simultaneously."
+msgstr "一人のユーザーが同時に複数のアクティビティを開くことはできません。"
+
 msgid "Already have another activity open ({}). Close any open activities."
 msgstr "他のアクティビティ（{}）を既に開いています。開いているアクティビティを閉じてください。"
 
+msgid "Please confirm that no other windows or tabs have the activity open."
+msgstr "他のウィンドウ、タブでアクティビティを開いていないことを確認してください。"
+
 msgid "Do you want to unlock this activity?"
 msgstr "このアクティビティのロックを解除してよろしいでしょうか。"
+
+msgid "The item you are trying to edit has been deleted."
+msgstr "編集対象のアイテムが削除されています。"
 
 msgid "Your session has timed out. Please login again."
 msgstr "セッションが切れました。再度ログインしてください。"

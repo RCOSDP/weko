@@ -46,7 +46,7 @@ def test_default_permissions(app, default_permissions, indexed_10records,
         assert 401 == client.patch(rec_url, **pargs).status_code
         assert 401 == client.delete(rec_url).status_code
 
-        assert 403 == client.post(search_url, **uargs).status_code
-        assert 403 == client.put(rec_url, **uargs).status_code
-        assert 403 == client.patch(rec_url, **upargs).status_code
-        assert 403 == client.delete(rec_url, query_string=qs).status_code
+        assert 401 == client.post(search_url, **uargs).status_code
+        assert 401 == client.put(rec_url, **uargs).status_code
+        assert 401 == client.patch(rec_url, **upargs).status_code
+        assert 401 == client.delete(rec_url, query_string=qs).status_code

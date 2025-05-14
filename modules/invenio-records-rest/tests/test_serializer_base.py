@@ -21,7 +21,8 @@ from invenio_records_rest.serializers.base import PreprocessorMixin
 keys = ['pid', 'metadata', 'links', 'revision', 'created', 'updated']
 
 
-def test_preprocessor_mixin_record(app, db,item_type_mapping):
+# .tox/c1/bin/pytest --cov=invenio_records_rest tests/test_serializer_base.py::test_preprocessor_mixin_record -vv -s -v --cov-branch --cov-report=term --basetemp=/code/modules/invenio-records-rest/.tox/c1/tmp
+def test_preprocessor_mixin_record(app, db, item_type):
     """Test preprocessor mixin."""
     pid, record = create_record({'title': 'test', 'aref': {'$ref': '#/title'}})
     record.model.created = datetime(2015, 10, 1, 11, 11, 11, 1)
@@ -42,7 +43,7 @@ def test_preprocessor_mixin_record(app, db,item_type_mapping):
     assert data['updated'] is None
     assert data['metadata']['aref'] == 'test2'
     
-    pid, record = create_record({'title': 'test3', 'aref':{'$ref':'#/title'},'item_type_id':1})
+    pid, record = create_record({'title': 'test3', 'aref':{'$ref':'#/title'},'item_type_id':15})
     record.model.created = datetime(2015, 10, 1, 11, 11, 11, 1)
     db.session.commit()
     data = PreprocessorMixin().preprocess_record(pid, record)

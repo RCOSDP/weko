@@ -320,5 +320,45 @@
       ]
     },
     "relation_version_is_last": true
+  },
+  {
+    "_oai": { "id": "oai:weko3.example.org:00000003", "sets": [] },
+    "path": ["2"],
+    "owner": "1",
+    "recid": "3",
+    "title": ["title3"],
+    "pubdate": { "attribute_name": "PubDate", "attribute_value": "2022-08-20" },
+    "_buckets": { "deposit": "3cd49fde-d698-481f-9754-726812c86b0f" },
+    "_deposit": {
+      "id": "3",
+      "pid": { "type": "depid", "value": "3", "revision_id": 0 },
+      "owner": "1",
+      "owners": [1],
+      "status": "draft",
+      "created_by": 1
+    },
+    "item_title": "title3",
+    "author_link": [],
+    "item_type_id": "1",
+    "publish_date": "2022-08-20",
+    "publish_status": "0",
+    "weko_shared_id": -1,
+    "item_1617186331708": {
+      "attribute_name": "Title",
+      "attribute_value_mlt": [
+        { "subitem_1551255647225": "title3", "subitem_1551255648112": "ja" }
+      ]
+    },
+    "item_1617258105262": {
+      "attribute_name": "Resource Type",
+      "attribute_value_mlt": [
+        {
+          "resourceuri": "http://purl.org/coar/resource_type/c_5794",
+          "resourcetype": "conference paper"
+        }
+      ]
+    },
+    "relation_version_is_last": true
   }
+
 ]

@@ -218,7 +218,7 @@
                   {% set activity_url =  url_for('weko_workflow.display_activity', activity_id=activity.activity_id, status=activity.type) %}
                 {%- endif %}
                 <td>
-                  <a href="{{ activity_url }}">{{ activity.activity_id }}</a>
+                  <a class="activity-link" href="{{ activity_url }}">{{ activity.activity_id }}</a>
                 </td>
               {%-else %}
                 {%-if activity[column] %}
@@ -302,6 +302,7 @@
           {{_('New Activity')}}</button>
       {%- endif%}
     </div>
+    <span hidden id="item_deleted_msg">{{_("The item you are editing has already been deleted.")}}</span>
   </div>
 </div>
 

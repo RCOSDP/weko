@@ -67,8 +67,10 @@ from weko_user_profiles.config import \
     WEKO_USERPROFILES_INSTITUTE_POSITION_LIST, \
     WEKO_USERPROFILES_POSITION_LIST
 from weko_user_profiles.utils import get_user_profile_info
+from weko_index_tree.api import Indexes
 from werkzeug.utils import import_string
 from weko_deposit.pidstore import get_record_without_version
+from weko_schema_ui.models import PublishStatus
 
 from weko_workflow.config import IDENTIFIER_GRANT_LIST, \
     IDENTIFIER_GRANT_SUFFIX_METHOD, \
@@ -184,7 +186,7 @@ def saving_doi_pidstore(item_id,
         ndljalcdoi_dc_tail = (ndljalcdoi_dc_link.split('//')[1]).split('/')
         identifier_val = ndljalcdoi_dc_link
         doi_register_val = '/'.join(ndljalcdoi_dc_tail[1:])
-        doi_register_typ = 'NDL JaLC'
+        doi_register_typ = 'JaLC'
     else:
         current_app.logger.error(_('Identifier datas are empty!'))
         return False
@@ -315,10 +317,10 @@ def item_metadata_validation(item_id, identifier_type, record=None,
     """
     
     ddi_item_type_name = 'DDI'
-    journalarticle_type = ['other', 'conference paper',
+    journalarticle_type = ['conference paper',
                            'data paper', 'departmental bulletin paper',
-                           'editorial', 'journal article', 'periodical',
-                           'review article', 'article','newspaper', 'software paper']
+                           'editorial', 'journal','journal article',
+                           'review article', 'article','newspaper', 'software paper', 'periodical']
     thesis_types = ['thesis', 'bachelor thesis', 'master thesis',
                     'doctoral thesis']
     report_types = ['technical report', 'research report', 'report',
@@ -331,14 +333,15 @@ def item_metadata_validation(item_id, identifier_type, record=None,
                     'observational data', 'recorded data', 'simulation data',
                     'survey data', 'source code']
     datageneral_types = ['internal report', 'policy report', 'report part',
-                         'working paper', 'interactive resource',
-                         'musical notation', 'research proposal',
+                         'working paper', 'interactive resource','lecture',
+                         'musical notation', 'peer review','research proposal','research protocol',
                          'technical documentation', 'workflow',
-                         'other', 'sound', 'patent',
-                         'cartographic material', 'map', 'lecture', 'image',
-                         'still image', 'moving image', 'video',
-                         'conference object', 'conference proceedings',
-                         'conference poster','manuscript', 'data management plan', 'interview']
+                         'other', 'other periodical','sound', 'patent',
+                         'cartographic material', 'map', 'commentary','lecture', 'image',
+                         'utility model','transcription','trademark','still image', 'moving image', 'video',
+                         'conference output', 'conference object','conference proceedings',
+                         'conference poster','layout design','industrial design','design','design patent','PCT application','plant patent','plant variety protection','software patent',
+                         'conference presentation','manuscript', 'data management plan', 'interview','other']
     
     def _check_resource_type(identifier_type, resource_type, old_resource_type):
         """
@@ -451,7 +454,7 @@ def item_metadata_validation(item_id, identifier_type, record=None,
                 # 'identifier',
                 # 'identifierRegistration',
                 'pageStart',
-                'fileURI',
+                # 'fileURI',
             ]
             # remove 20220207
             # either_properties = ['version']
@@ -470,8 +473,7 @@ def item_metadata_validation(item_id, identifier_type, record=None,
                 'type',
                 # 'identifier',
                 # 'identifierRegistration',
-                'pageStart',
-                'fileURI',
+                # 'fileURI',
             ]
             # いずれか必須が動いていない
             # either_properties = ['date','degreeGrantor']
@@ -486,7 +488,7 @@ def item_metadata_validation(item_id, identifier_type, record=None,
                 'type',
                 # 'identifier',
                 # 'identifierRegistration',
-                'fileURI',
+                # 'fileURI',
             ]
             # いずれか必須が動いていない
             # either_properties = ['date','publisher']
@@ -501,7 +503,7 @@ def item_metadata_validation(item_id, identifier_type, record=None,
                 'type',
                 # 'identifier',
                 # 'identifierRegistration',
-                'fileURI',
+                # 'fileURI',
             ]
             # いずれか必須が動いていない
             # either_properties = ['date','publisher']
@@ -518,7 +520,7 @@ def item_metadata_validation(item_id, identifier_type, record=None,
                 'type',
                 # 'identifier',
                 # 'identifierRegistration',
-                'fileURI',
+                # 'fileURI',
             ]
             # いずれか必須が動いていない
             # either_properties = ['givenName','date','publisher']
@@ -536,7 +538,7 @@ def item_metadata_validation(item_id, identifier_type, record=None,
                 'type',
                 # 'identifier',
                 # 'identifierRegistration',
-                'fileURI',
+                # 'fileURI',
             ]
             # いずれか必須が動いていない
             # either_properties = ['date','publisher']
@@ -556,7 +558,7 @@ def item_metadata_validation(item_id, identifier_type, record=None,
                 # 'identifierRegistration',
                 'sourceIdentifier',
                 'sourceTitle',
-                'fileURI',
+                # 'fileURI',
             ]
             # いずれか必須が動いていない
             # either_properties = ['date','publisher']
@@ -571,7 +573,7 @@ def item_metadata_validation(item_id, identifier_type, record=None,
                 'type',
                 # 'identifier',
                 # 'identifierRegistration',
-                'fileURI',
+                # 'fileURI',
             ]
             # いずれか必須が動いていない
             # either_properties = ['date','publisher']
@@ -589,7 +591,7 @@ def item_metadata_validation(item_id, identifier_type, record=None,
                 'type',
                 # 'identifier',
                 # 'identifierRegistration',
-                'fileURI',
+                # 'fileURI',
             ]
             # いずれか必須が動いていない
             # either_properties = ['givenName','date','publisher']
@@ -631,8 +633,9 @@ def item_metadata_validation(item_id, identifier_type, record=None,
     if properties:
         return validation_item_property(metadata_item, properties, identifier_type=identifier_type)
     else:
-        return _('Cannot register selected DOI for current Item Type of this '
+        error_list['other'] = _('Cannot register selected DOI for current Item Type of this '
                  'item.')
+        return error_list
 
 
 def merge_doi_error_list(current, new):
@@ -743,10 +746,12 @@ def handle_check_required_pattern_and_either(mapping_data, mapping_keys,
             if num_map == 0:
                 num_map = len(check_required_info[1])
             if pattern and check_required_info[2]:
+                _required_value_check = False
                 for idx, values in enumerate(check_required_info[2]):
-                    if values and pattern not in values:
-                        error_list['pattern'].append(
-                            check_required_info[1][idx])
+                    if values and pattern in values:
+                        _required_value_check = True
+                if not _required_value_check:
+                    error_list['pattern'].append(mapping_key)
 
     if requirements:
         if num_map == 1 and not is_either:
@@ -1880,19 +1885,25 @@ def handle_finish_workflow(deposit, current_pid, recid):
                     item_id=item_id,
                     feedback_maillist=feedback_mail_list
                 )
-                ver_attaching_deposit.update_feedback_mail()
             ver_attaching_deposit.publish()
 
             weko_record = WekoRecord.get_record_by_pid(new_deposit.pid.pid_value)
             if weko_record:
                 weko_record.update_item_link(current_pid.pid_value)
-            updated_item.publish(deposit)
-            updated_item.publish(ver_attaching_deposit)
+            updated_item.publish(deposit, PublishStatus.PUBLIC.value)
+            updated_item.publish(ver_attaching_deposit, PublishStatus.PUBLIC.value)
         else:
             # update to record without version ID when editing
             if pid_without_ver:
+                _doi = PersistentIdentifier.query.filter_by(
+                    pid_type='doi',
+                    object_uuid=pid_without_ver.object_uuid,
+                    status=PIDStatus.REGISTERED
+                ).one_or_none()
                 _record = WekoDeposit.get_record(
                     pid_without_ver.object_uuid)
+                _publish_status = _record.get('publish_status', PublishStatus.PUBLIC.value) \
+                    if _doi is None else PublishStatus.PUBLIC.value
                 _deposit = WekoDeposit(_record, _record.model)
                 _deposit['path'] = deposit.get('path', [])
 
@@ -1916,9 +1927,8 @@ def handle_finish_workflow(deposit, current_pid, recid):
                     new_parent_record = maintain_deposit. \
                         merge_data_to_record_without_version(current_pid, True)
                     maintain_deposit.publish()
-                    new_parent_record.update_feedback_mail()
                     new_parent_record.commit()
-                    updated_item.publish(new_parent_record)
+                    updated_item.publish(new_parent_record, _publish_status)
                     # update item link info of main record
                     weko_record = WekoRecord.get_record_by_pid(
                         maintain_record.pid.pid_value)
@@ -1935,9 +1945,8 @@ def handle_finish_workflow(deposit, current_pid, recid):
                     new_draft_record = draft_deposit. \
                         merge_data_to_record_without_version(current_pid)
                     draft_deposit.publish()
-                    new_draft_record.update_feedback_mail()
                     new_draft_record.commit()
-                    updated_item.publish(new_draft_record)
+                    updated_item.publish(new_draft_record, PublishStatus.NEW.value)
                     # update item link info of draft record
                     weko_record = WekoRecord.get_record_by_pid(
                         draft_deposit.pid.pid_value)
@@ -1949,9 +1958,8 @@ def handle_finish_workflow(deposit, current_pid, recid):
                     pid_without_ver.pid_value)
                 if weko_record:
                     weko_record.update_item_link(current_pid.pid_value)
-                parent_record.update_feedback_mail()
                 parent_record.commit()
-                updated_item.publish(parent_record)
+                updated_item.publish(parent_record, _publish_status)
                 if ".0" in current_pid.pid_value and last_ver:
                     item_id = last_ver.object_uuid
                 else:
@@ -2015,10 +2023,36 @@ def check_an_item_is_locked(item_id=None):
                     return True
         return False
 
-    if not item_id or not inspect().ping():
+    _timeout = current_app.config.get("CELERY_GET_STATUS_TIMEOUT", 3.0)
+    if not item_id or not inspect(timeout=_timeout).ping():
         return False
 
-    return check(inspect().active()) or check(inspect().reserved())
+    return check(inspect(timeout=_timeout).active()) or \
+        check(inspect(timeout=_timeout).reserved())
+
+
+def bulk_check_an_item_is_locked(item_ids=[]):
+    """Check bulk if an item is locked.
+
+    :param item_ids: Item id list.
+
+    :return list: Locked item id list.
+    """
+    _timeout = current_app.config.get("CELERY_GET_STATUS_TIMEOUT", 3.0)
+    if not item_ids or not inspect(timeout=_timeout).ping():
+        return []
+
+    item_ids = [str(item_id) for item_id in item_ids]
+    result = []
+    for state in ['active', 'reserved']:
+        workers = getattr(inspect(timeout=_timeout), state)()
+        for worker in workers:
+            for task in workers[worker]:
+                if task['name'] == 'weko_search_ui.tasks.import_item' \
+                        and task['args'][0].get('id') in item_ids:
+                    result.append(task['args'][0].get('id'))
+
+    return result
 
 
 def get_account_info(user_id):
@@ -2533,7 +2567,7 @@ def get_item_info(item_id):
     try:
         item = ItemsMetadata.get_record(id_=item_id)
     except Exception as ex:
-        current_app.logger.exception('Cannot get item data:', ex)
+        current_app.logger.error('Cannot get item data: {}'.format(ex))
         temp = dict()
         return temp
     item_info = dict()
@@ -4013,32 +4047,93 @@ def check_authority_by_admin(activity):
     :param activity:
     :return:
     """
+    is_admin = False
+    is_comadmin = False
     # If user has admin role
     supers = current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER']
+    community_role_names = current_app.config['WEKO_PERMISSION_ROLE_COMMUNITY']
     for role in list(current_user.roles or []):
         if role.name in supers:
-            return True
+            is_admin = True
+        elif role.name in community_role_names:
+            is_comadmin = True
     # If user has community role
     # and the user who created activity is member of community
+    # and the index of the item in the activity belongs to the community
     # role -> has permission:
-    community_role_names = current_app.config['WEKO_PERMISSION_ROLE_COMMUNITY']
-    for community_role_name in community_role_names:
-        # Get the list of users who has the community role
-        community_users = User.query.outerjoin(userrole).outerjoin(Role) \
-            .filter(community_role_name == Role.name) \
-            .filter(userrole.c.role_id == Role.id) \
-            .filter(User.id == userrole.c.user_id) \
-            .all()
-        community_user_ids = [
-            community_user.id for community_user in community_users]
-        for role in list(current_user.roles or []):
-            if role.name in community_role_name:
-                # User has community role
-                if activity.activity_login_user in community_user_ids:
-                    return True
-                break
-    return False
+    if not is_admin and is_comadmin:
+        item_id = activity.item_id
+        if item_id:
+            index_ids = []
+            role_ids = [role.id for role in current_user.roles]
+            from invenio_communities.models import Community
+            comm_list = Community.query.filter(
+                Community.id_role.in_(role_ids)
+            ).all()
+            for comm in comm_list:
+                index_ids += [str(i.cid) for i in Indexes.get_self_list(comm.root_node_id)
+                              if i.cid not in index_ids]
+            dep = WekoDeposit.get_record(item_id)
+        
+            path = dep.get('path',[])
+            for p in path:
+                if str(p) in index_ids:
+                    is_admin = True
+                    break
+    return is_admin
 
+def validate_action_role_user(activity_id, action_id, action_order):
+    """validation action role, and action user
+
+    :param activity_id: activity_id
+    :type activity_id: str
+    :param action_id: action_id
+    :type action_id: int
+    :param action_order: action_order
+    :type action_order: int
+    :return: (Whether allow or deny is set for action role(user)), 
+             (allow roles(users) contain role(user) of current_user),
+             (role of current_user is not in allowed roles(users) or denied roles(users))
+    :rtype: bool, bool, bool
+    """
+    work = WorkActivity()
+    roles, users = work.get_activity_action_role(activity_id, action_id,
+                                             action_order)
+    
+    cur_user = current_user.get_id()
+    cur_role = db.session.query(Role).join(userrole).filter_by(
+        user_id=cur_user).all()
+    cur_role_id = [role.id for role in cur_role]
+    
+    is_set = False
+    is_set |= any(role for role in roles.values())
+    is_set |= any(user for user in users.values())
+    
+    is_deny = False
+    is_allow = False
+    if is_set:
+        if users['deny'] and int(cur_user) in users['deny']:
+            is_deny = True
+        if users['allow']:
+            if int(cur_user) not in users['allow']:
+                is_deny = True
+            if int(cur_user) in users['allow']:
+                is_allow = True
+        if roles['deny']:
+            for role in roles['deny']:
+                if role in cur_role_id:
+                    is_deny = True
+                    break
+        if roles['allow']:
+            is_role_allow = False
+            for role in roles['allow']:
+                if role in cur_role_id:
+                    is_role_allow = True
+            if not is_role_allow:
+                is_deny = True
+            else:
+                is_allow = True
+    return is_set, is_allow, is_deny#
 
 def get_record_first_version(deposit):
     """Get PID of record first version ID."""
@@ -4467,3 +4562,23 @@ def grant_access_rights_to_all_open_restricted_files(activity_id :str ,permissio
 
     #url_and_expired_date of a applyed content.
     return url_and_expired_date
+
+def delete_lock_activity_cache(activity_id, data):
+    cache_key = 'workflow_locked_activity_{}'.format(activity_id)
+    locked_value = str(data.get('locked_value'))
+    msg = None
+    cur_locked_val = str(get_cache_data(cache_key)) or str()
+    if cur_locked_val and cur_locked_val == locked_value:
+        delete_cache_data(cache_key)
+        msg = _('Unlock success')
+    return msg
+
+def delete_user_lock_activity_cache(activity_id, data):
+    cache_key = "workflow_userlock_activity_{}".format(str(current_user.get_id()))
+    cur_locked_val = str(get_cache_data(cache_key)) or str()
+    msg = _("Not unlock")
+
+    if cur_locked_val and not data["is_opened"] or (cur_locked_val == activity_id and data['is_force']):
+        delete_cache_data(cache_key)
+        msg = "User Unlock Success"
+    return msg

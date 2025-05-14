@@ -26,6 +26,7 @@ def test_get_service_document(client,users,tokens):
         "Authorization":"Bearer {}".format(token),
     }
     res = client.get(url,headers=headers)
+    assert res.status_code == 200
 
 
 # def post_service_document():
