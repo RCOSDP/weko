@@ -4138,19 +4138,6 @@ def check_duplicate(data, is_item=True):
     author_links = metadata.get("author_link", [])
     host = request.host
 
-    # Fallback: extract author_links from nameIdentifiers
-    if not author_links:
-        for key, value in metadata.items():
-            if "creator" in key and isinstance(value, list):
-                for entry in value:
-                    if isinstance(entry, dict):
-                        name_ids = entry.get("nameIdentifiers", [])
-                        for nid in name_ids:
-                            if isinstance(nid, dict):
-                                author_id = nid.get("nameIdentifier")
-                                if author_id:
-                                    author_links.append(author_id)
-
     # Extract other fields
     for key, value in metadata.items():
         if isinstance(value, dict) and "resourcetype" in value:
@@ -4175,7 +4162,6 @@ def check_duplicate(data, is_item=True):
             WHERE jsonb_path_exists(json, '$.**.subitem_identifier_uri ? (@ == "{identifier}")')
         """)
         result = db.session.execute(query).fetchall()
-        db.session.commit()
         if result:
             recid_list = [r[0] for r in result]
             return True, recid_list, [f"https://{host}/records/{r}" for r in recid_list]
@@ -4190,7 +4176,6 @@ def check_duplicate(data, is_item=True):
         WHERE jsonb_path_exists(json, '$.**.subitem_title')
     """)
     result = db.session.execute(query).fetchall()
-    db.session.commit()
 
     matched_recids = set()
     for recid, json_obj in result:
@@ -4215,7 +4200,6 @@ def check_duplicate(data, is_item=True):
         WHERE jsonb_path_exists(json, '$.**.resourcetype ? (@ == "{resource_type}")')
     """)
     result = db.session.execute(query).fetchall()
-    db.session.commit()
     recids_resource = {r[0] for r in result}
     matched_recids &= recids_resource
     matched_recids.discard(int(data.get("metainfo", {}).get("id") or 0))
@@ -4235,7 +4219,6 @@ def check_duplicate(data, is_item=True):
             AND jsonb_extract_path_text(json, 'authorIdInfo', '0', 'authorId') IN ({placeholders})
         """)
         result = db.session.execute(query, params).fetchall()
-        db.session.commit()
 
         author_names = set()
         for row in result:
@@ -4254,7 +4237,6 @@ def check_duplicate(data, is_item=True):
                 WHERE jsonb_path_exists(json, '$.**.creatorNames[*].creatorName')
             """)
             result = db.session.execute(query).fetchall()
-            db.session.commit()
             for recid, json_obj in result:
                 json_str = json.dumps(json_obj, ensure_ascii=False)
                 creators = re.findall(r'"creatorName"\s*:\s*"([^"]+)"', json_str)
@@ -4271,7 +4253,6 @@ def check_duplicate(data, is_item=True):
             WHERE jsonb_path_exists(json, '$.**.creatorNames[*].creatorName')
         """)
         result = db.session.execute(query).fetchall()
-        db.session.commit()
         for recid, json_obj in result:
             json_str = json.dumps(json_obj, ensure_ascii=False)
             creators = re.findall(r'"creatorName"\s*:\s*"([^"]+)"', json_str)
