@@ -1135,7 +1135,11 @@ class RecordResource(ContentNegotiatedMethodView):
                         if index.cid not in can_edit_indexes:
                             can_edit_indexes.append(str(index.cid))
                 path = record.get('path', [])
-                data['index'] = list(set(path) - set(can_edit_indexes)) + data.get('index', [])
+                data['index']  = list(
+                    set(path)
+                    .difference(set(can_edit_indexes))
+                    .union(set(data.get('index', [])))
+                )
             record.clear()
             record.update(data)
             record.commit()
