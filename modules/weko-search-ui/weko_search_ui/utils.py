@@ -21,6 +21,7 @@
 """Weko Search-UI admin."""
 
 import csv
+import mimetypes
 import chardet
 import json
 import math
@@ -1055,7 +1056,26 @@ def handle_save_bagit(list_record, file, data_path, filename):
     files_info = metadata.get("files_info")  # for Workflow registration
     key = files_info[0].get("key")
 
-    size = os.path.getsize(os.path.join(data_path, filename))
+    dataset_info = make_file_info(
+        data_path, filename, label=filename, object_type="dataset"
+    )
+
+    metadata[key] = [dataset_info]
+    files_info[0]["items"] = [dataset_info]
+
+def make_file_info(dir_path, filename, label=None, object_type=None):
+    """Make file info for the given directory and filename.
+
+    Args:
+        dir_path (str): Directory path.
+        filename (str): Filename.
+        label (str, optional): Label for the file. Defaults to None.
+        object_type (str, optional): Object type for the file. Defaults to None.
+
+    Returns:
+        dict: File information.
+    """
+    size = os.path.getsize(os.path.join(dir_path, filename))
     if size >= pow(1024, 4):
         size_str = "{} TB".format(round(size/(pow(1024, 4)), 1))
     elif size >= pow(1024, 3):
@@ -1066,17 +1086,24 @@ def handle_save_bagit(list_record, file, data_path, filename):
         size_str = "{} KB".format(round(size/1024, 1))
     else:
         size_str = "{} B".format(size)
-    dataset_info = {                         # replace metadata
-        "filesize": [{ "value": size_str }],
-        "filename":  filename,
-        "format": "application/zip",
-        "url": {
-            "objectType": "dataset",
-            "label": filename
-        },
+
+    format = mimetypes.guess_type(filename)[0]
+    
+    file_info = {
+        "filename": filename,
+        "filesize": size_str,
+        "format": format,
     }
-    metadata[key] = [dataset_info]
-    files_info[0]["items"] = [dataset_info]
+    if label:
+        if file_info.get("url") is None:
+            file_info["url"] = {}
+        file_info["url"]["label"] = label
+    if object_type:
+        if file_info.get("url") is None:
+            file_info["url"] = {}
+        file_info["url"]["objectType"] = object_type
+    
+    return file_info
 
 
 def get_priority(link_data):
@@ -2289,11 +2316,11 @@ def import_items_to_activity(item, request_info):
     metadata = item.get("metadata")
     metadata["$schema"] = item.get("$schema")
     index = metadata.get("path")
-    files_info = metadata.pop("files_info", [{}])
+    files_key = metadata.pop("files_info", [{}])[0].get("key")
     files = [
         os.path.join(item.get("root_path"), file_info.get("filename"))
             for file_info
-            in files_info[0].get("items", {})
+            in metadata.get(files_key, [])
     ]
     comment = metadata.get("comment")
     link_data = item.get("link_data")
