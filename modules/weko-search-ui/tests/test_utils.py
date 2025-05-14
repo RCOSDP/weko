@@ -1376,7 +1376,7 @@ def test_handle_check_doi(app,identifier):
     assert item == test
 
 # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_handle_check_duplicate_item_link -v -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
-def test_handle_check_duplicate_item_link(i18n_app):
+def test_handle_check_duplicate_item_link(app):
 
     # pattern of link dst is existing ID
     # expect reduction of duplicate link
@@ -1441,7 +1441,8 @@ def test_handle_check_duplicate_item_link(i18n_app):
     list_record = [item_1]
     list_record.sort(key=lambda x: get_priority(x["link_data"]))
     handle_check_duplicate_item_link(list_record)
-    assert "It is not allowed to create" in list_record[0]["errors"][0]
+    assert "It is not allowed to create links other than" \
+        in list_record[0]["errors"][0]
 
     # expect reduction of duplicate inverse link
     item_1 = {
@@ -1483,7 +1484,91 @@ def test_handle_check_duplicate_item_link(i18n_app):
     assert list_record[1]["_id"] == "journal"
     handle_check_duplicate_item_link(list_record)
     assert "Duplicate Item Link." in list_record[0]["errors"][0]
+    assert "Duplicate Item Link." in list_record[1]["errors"][0]
+
+    # error link to item itself
+    item_1 = {
+        "_id": "evidence",
+        "id": "100",
+        "link_data": [
+            {"item_id": "100", "sele_id": "hasPart"}
+        ]
+    }
+    item_2 = {
+        "_id": "journal",
+        "link_data": [
+            {"item_id": "journal", "sele_id": "isSupplementedBy"},
+        ]
+    }
+    list_record = [item_1, item_2]
+    list_record.sort(key=lambda x: get_priority(x["link_data"]))
+    assert list_record[0]["_id"] == "journal"
+    assert list_record[1]["_id"] == "evidence"
+    handle_check_duplicate_item_link(list_record)
+    assert "It is not allowed to create links to the item itself." \
+        in list_record[0]["errors"][0]
+    assert "It is not allowed to create links to the item itself." \
+        in list_record[1]["errors"][0]
+
+    # replace links with inverse links (isSupplementTo)
+    item_1 = {
+        "_id": "journal",
+        "link_data": [
+            {"item_id": "100", "sele_id": "hasPart"}
+        ]
+    }
+    item_2 = {
+        "_id": "evidence",
+        "link_data": [
+            {"item_id": "journal", "sele_id": "isSupplementTo"},
+        ]
+    }
+    list_record = [item_1, item_2]
+    list_record.sort(key=lambda x: get_priority(x["link_data"]))
+    assert list_record[0]["_id"] == "evidence"
+    assert list_record[1]["_id"] == "journal"
+    handle_check_duplicate_item_link(list_record)
+    assert not list_record[0].get("errors")
     assert not list_record[1].get("errors")
+    assert len(list_record[0]["link_data"]) == 0
+    assert len(list_record[1]["link_data"]) == 2
+
+    # replace links with inverse links (isSupplementedBy)
+    item_1 = {
+        "_id": "evidence",
+        "link_data": [
+            {"item_id": "100", "sele_id": "hasPart"}
+        ]
+    }
+    item_2 = {
+        "_id": "journal",
+        "link_data": [
+            {"item_id": "evidence", "sele_id": "isSupplementedBy"},
+        ]
+    }
+    list_record = [item_1, item_2]
+    list_record.sort(key=lambda x: get_priority(x["link_data"]))
+    assert list_record[0]["_id"] == "journal"
+    assert list_record[1]["_id"] == "evidence"
+    handle_check_duplicate_item_link(list_record)
+    assert not list_record[0].get("errors")
+    assert not list_record[1].get("errors")
+    assert len(list_record[0]["link_data"]) == 0
+    assert len(list_record[1]["link_data"]) == 2
+
+    # invaild input data
+    list_record = []
+    handle_check_duplicate_item_link(list_record)
+    item_1 = {
+        "_id": "evidence",
+        "link_data": None
+    }
+    item_2 = {
+    }
+    item_3 = None
+    list_record = [item_1, item_2, item_3]
+    handle_check_duplicate_item_link(list_record)
+    assert not list_record[0].get("errors")
 
 
 # def register_item_handle(item):
