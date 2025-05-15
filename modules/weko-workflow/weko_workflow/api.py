@@ -3505,7 +3505,8 @@ class WorkActivityHistory(object):
         activity = WorkActivity()
         activity = activity.get_activity_detail(db_history.activity_id)
         if activity.action_id != db_history.action_id or \
-                activity.action_status != db_history.action_status:
+                activity.action_status != db_history.action_status or \
+                    activity.action_order != db_history.action_order:
             new_history = True
             activity.action_id = db_history.action_id
             activity.action_status = db_history.action_status
@@ -3532,7 +3533,7 @@ class WorkActivityHistory(object):
         """
         with db.session.no_autoflush:
             query = ActivityHistory.query.filter_by(
-                activity_id=activity_id).order_by(asc(ActivityHistory.id))
+                activity_id=activity_id).order_by(asc(ActivityHistory.action_order))
             histories = query.all()
             for history in histories:
                 history.ActionName = _Action.query.filter_by(
