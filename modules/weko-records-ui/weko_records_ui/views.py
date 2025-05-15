@@ -1015,7 +1015,7 @@ def citation(record, pid, style=None, ln=None):
 def soft_delete(recid):
     """Soft delete item."""
     try:
-        if not check_created_id_by_recid(recid):
+        if not check_created_id_by_recid(recid.replace("del_ver_", "")):
             abort(403)
         starts_with_del_ver = True
         if recid.startswith('del_ver_'):
@@ -1033,7 +1033,8 @@ def soft_delete(recid):
         return make_response('PID: ' + str(recid) + ' DELETED', 200)
     except Exception as ex:
         db.session.rollback()
-        current_app.logger.error(ex)
+        current_app.logger.error('Failed to delete item: %s', recid)
+        traceback.print_exc()
         if ex.args and len(ex.args) and isinstance(ex.args[0], dict) \
                 and ex.args[0].get('is_locked'):
             return jsonify(

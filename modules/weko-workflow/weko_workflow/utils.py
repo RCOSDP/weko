@@ -1916,12 +1916,21 @@ def prepare_delete_workflow(post_activity, recid, deposit):
     community = post_activity['community']
     activity = WorkActivity()
 
+    pid_value = recid.pid_value.split('.')[0]
+    del_value = (
+        recid.pid_value
+        if not '.' in recid.pid_value
+        else "del_ver_{}".format(recid.pid_value)
+    )
+
     draft_pid = PersistentIdentifier.query.filter_by(
         pid_type='recid',
-        pid_value="{}.0".format(recid.pid_value)
+        pid_value="{}.0".format(pid_value)
     ).one_or_none()
 
-    if not draft_pid:
+    if del_value.startswith("del_ver_"):
+        item_id = recid.object_uuid
+    elif not draft_pid:
         draft_record = deposit.prepare_draft_item(recid)
         item_id = draft_record.model.id
     else:
@@ -1932,7 +1941,7 @@ def prepare_delete_workflow(post_activity, recid, deposit):
     )
     if rtn.action_id == 2:   # end_action
         from weko_records_ui.views import soft_delete
-        soft_delete(recid.pid_value)
+        soft_delete(del_value)
         activity.notify_about_activity(rtn.activity_id, "deleted")
 
     if rtn.action_id == 4:   # approval

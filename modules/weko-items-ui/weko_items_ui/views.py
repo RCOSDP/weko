@@ -1136,22 +1136,9 @@ def prepare_delete_item(id=None, community=None, shared_user_id=-1):
 
     post_activity = request.get_json() or {}
     getargs = request.args if request else {}
-    pid_value = id or post_activity.get('pid_value')
+    del_value = str(id or post_activity.get('pid_value'))
+    pid_value = del_value.replace("del_ver_", "")
     community = community or getargs.get('community', None)
-
-    del_ver = False
-    if not isinstance(pid_value, str):
-        pid_value = str(pid_value)
-    if pid_value.startswith("del_ver_"):
-        current_app.logger.info(f"delete version pid_value: {pid_value}")
-        pid_value = pid_value.split("del_ver_")[-1]
-        del_ver = True
-    if del_ver:
-        # TODO: delete version is not implemented yet.
-        return jsonify(
-            code=err_code,
-            msg="delete version is not implemented yet.",
-        )
 
     # Cache Storage
     redis_connection = RedisConnection()
@@ -1255,9 +1242,13 @@ def prepare_delete_item(id=None, community=None, shared_user_id=-1):
 
         if not workflow or workflow.delete_flow_id is None:
             from weko_records_ui.views import soft_delete
-            soft_delete(pid_value)
+            soft_delete(del_value)
             send_mail_item_deleted(pid_value, deposit, user_id)
-            return jsonify(code=0, msg="success")
+            return jsonify(
+                code=0,
+                msg="success",
+                data=dict(redirect=request.referrer)
+            )
 
         post_activity['flow_id'] = workflow.delete_flow_id
         post_activity['shared_user_id'] = shared_user_id
