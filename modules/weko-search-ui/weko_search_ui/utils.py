@@ -1612,18 +1612,20 @@ def make_stats_file(raw_stats, list_name):
     return file_output
 
 
-def create_deposit(item_id):
+def create_deposit(item_id, default_owner_id=None):
     """Create deposit.
 
-    :argument
-        item           -- {dict} item import.
-        item_exist     -- {dict} item in system.
+    Args:
+        item_id (str): Item ID.
+        default_owner_id (str): Owner user id. (Default: ``None``)
+    Returns:
+        WekoDeposit: Deposit object.
 
     """
     if item_id is not None:
-        dep = WekoDeposit.create({}, recid=int(item_id))
+        dep = WekoDeposit.create({}, recid=int(item_id), default_owner_id=default_owner_id)
     else:
-        dep = WekoDeposit.create({})
+        dep = WekoDeposit.create({}, default_owner_id=default_owner_id)
     return dep
 
 
@@ -1915,51 +1917,50 @@ def register_item_metadata(item, root_path, owner, is_gakuninrdm=False, request_
 
     if not is_gakuninrdm:
         deposit.publish_without_commit()
-        with current_app.test_request_context(get_url_root()):
-            if item["status"] in ["upgrade", "new"]:    # Create first version
-                _deposit = deposit.newversion(pid)
+        if item["status"] in ["upgrade", "new"]:    # Create first version
+            _deposit = deposit.newversion(pid)
+            _deposit.publish_without_commit()
+        else:    # Update last version
+            _pid = PIDVersioning(child=pid).last_child
+            _record = WekoDeposit.get_record(_pid.object_uuid)
+            _deposit = WekoDeposit(_record, _record.model)
+            _deposit["path"] = new_data.get("path")
+            _deposit.merge_data_to_record_without_version(
+                pid, keep_version=True, is_import=True
+            )
+            if not is_gakuninrdm:
                 _deposit.publish_without_commit()
-            else:    # Update last version
-                _pid = PIDVersioning(child=pid).last_child
-                _record = WekoDeposit.get_record(_pid.object_uuid)
-                _deposit = WekoDeposit(_record, _record.model)
-                _deposit["path"] = new_data.get("path")
-                _deposit.merge_data_to_record_without_version(
-                    pid, keep_version=True, is_import=True
-                )
-                if not is_gakuninrdm:
-                    _deposit.publish_without_commit()
 
-            if feedback_mail_list:
-                FeedbackMailList.update(
-                    item_id=_deposit.id, feedback_maillist=feedback_mail_list
-                )
+        if feedback_mail_list:
+            FeedbackMailList.update(
+                item_id=_deposit.id, feedback_maillist=feedback_mail_list
+            )
 
-            if request_mail_list:
-                RequestMailList.update(
-                    item_id=_deposit.id, request_maillist=request_mail_list
-                )
+        if request_mail_list:
+            RequestMailList.update(
+                item_id=_deposit.id, request_maillist=request_mail_list
+            )
 
-            link_data = item.get("link_data", [])
-            # Update draft version
-            _draft_pid = PersistentIdentifier.query.filter_by(
-                pid_type='recid',
-                pid_value="{}.0".format(item_id)
-            ).one_or_none()
-            if _draft_pid:
-                _draft_record = WekoDeposit.get_record(_draft_pid.object_uuid)
-                _draft_record["path"] = new_data.get("path")
-                _draft_deposit = WekoDeposit(_draft_record, _draft_record.model)
-                _draft_deposit.non_extract = item.get("non_extract")
-                _draft_deposit.merge_data_to_record_without_version(
-                    pid, keep_version=True, is_import=True
-                )
-                item_link_draft_pid = ItemLink(_draft_pid.pid_value)
-                item_link_draft_pid.update(link_data)
-            item_link_latest_pid = ItemLink(_deposit.pid.pid_value)
-            item_link_latest_pid.update(link_data)
-            item_link_pid_without_ver = ItemLink(item_id)
-            item_link_pid_without_ver.update(link_data)
+        link_data = item.get("link_data", [])
+        # Update draft version
+        _draft_pid = PersistentIdentifier.query.filter_by(
+            pid_type='recid',
+            pid_value="{}.0".format(item_id)
+        ).one_or_none()
+        if _draft_pid:
+            _draft_record = WekoDeposit.get_record(_draft_pid.object_uuid)
+            _draft_record["path"] = new_data.get("path")
+            _draft_deposit = WekoDeposit(_draft_record, _draft_record.model)
+            _draft_deposit.non_extract = item.get("non_extract")
+            _draft_deposit.merge_data_to_record_without_version(
+                pid, keep_version=True, is_import=True
+            )
+            item_link_draft_pid = ItemLink(_draft_pid.pid_value)
+            item_link_draft_pid.update(link_data)
+        item_link_latest_pid = ItemLink(_deposit.pid.pid_value)
+        item_link_latest_pid.update(link_data)
+        item_link_pid_without_ver = ItemLink(item_id)
+        item_link_pid_without_ver.update(link_data)
 
 def update_publish_status(item_id, status):
     """Handle get title.
@@ -2099,7 +2100,7 @@ def import_items_to_system(
             old_record = None
             record_pid = None
             if status == "new":
-                item_id = create_deposit(item.get("id"))
+                item_id = create_deposit(item.get("id"), default_owner_id=owner)
                 item["id"] = item_id["recid"]
                 item["pid"] = item_id.pid
                 record_pid = item_id.pid
