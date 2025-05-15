@@ -39,7 +39,10 @@ from weko_items_ui.utils import send_mail_direct_registered, send_mail_item_dele
 from weko_notifications.utils import notify_item_imported, notify_item_deleted
 from weko_records.api import JsonldMapping
 from weko_records_ui.utils import get_record_permalink, soft_delete
-from weko_search_ui.utils import import_items_to_system, import_items_to_activity
+from weko_search_ui.utils import (
+    import_items_to_system, import_items_to_activity,
+    delete_items_with_activity
+)
 from weko_workflow.utils import get_site_info_name
 from weko_workflow.scopes import activity_scope
 
@@ -50,7 +53,6 @@ from .utils import (
     check_import_file_format,
     is_valid_file_hash,
     check_import_items,
-    delete_items_with_activity,
     get_deletion_type,
     update_item_ids,
     get_shared_id_from_on_behalf_of
@@ -645,7 +647,7 @@ def put_object(recid):
         "referrer": request.referrer,
         "hostname": request.host,
         "user_id": owner,
-        "action": "IMPORT",
+        "action": "UPDATE",
         "workflow_id": check_result.get("workflow_id"),
     }
     response = {}
@@ -962,18 +964,22 @@ def delete_object(recid):
             abort(403)
 
         try:
-            url = delete_items_with_activity(recid, request_info=request_info)
+            url, current_action = delete_items_with_activity(
+                recid, request_info=request_info
+            )
         except Exception as ex:
             current_app.logger.error(
                 f"Failed to delete item with activity: {str(ex)}"
             )
             raise WekoSwordserverException(
-                f"Error in delete_items_with_activity: {str(ex)}",
+                f"Failed to delete item: {str(ex)}",
                 ErrorType.BadRequest
             )
 
-        response = Response(status=202, headers={"Location": url})
-
+        if current_action == "approval":
+            response = Response(status=202, headers={"Location": url})
+        else:
+            response = jsonify(status=204)
     else:
         soft_delete(recid)
         notify_item_deleted(
