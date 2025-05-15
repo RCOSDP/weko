@@ -86,22 +86,28 @@ from weko_workflow.models import Activity, FlowAction, FlowActionRole, \
     FlowDefine
 from weko_workflow.utils import IdentifierHandle
 
+def check_display_shared_user(user_id):
+    for role_id in current_app.config['WEKO_ITEMS_UI_SHARED_USER_ROLE_ID_LIST']:
+        recs = db.session.query(userrole).filter_by(role_id=role_id).all()
+        for rec in recs:
+            if user_id == rec.user_id:
+                return True
+    return False
 
 def get_list_username():
     """Get list username.
 
     Query database to get all available username
     return: list of username
-    TODO: 
     """
-    current_user_id = current_user.get_id()
-    current_app.logger.debug("current_user:{}".format(current_user))
     from weko_user_profiles.models import UserProfile
 
-    users = UserProfile.query.filter(UserProfile.user_id != current_user_id).all()
+    users = UserProfile.query.all()
     result = list()
     for user in users:
-        username = user.get_username
+        if not check_display_shared_user(user.user_id):
+            continue
+        username = user.username
         if username:
             result.append(username)
     
@@ -114,28 +120,14 @@ def get_list_email():
     Query database to get all available email
     return: list of email
     """
-    current_user_id = current_user.get_id()
     result = list()
-    users = User.query.filter(User.id != current_user_id).all()
+    users = User.query.all()
     for user in users:
+        if not check_display_shared_user(user.id):
+            continue
         email = user.email
         if email:
             result.append(email)
-    # try:
-    #     metadata = MetaData()
-    #     metadata.reflect(bind=db.engine)
-    #     table_name = 'accounts_user'
-
-    #     user_table = Table(table_name, metadata)
-    #     record = db.session.query(user_table)
-
-    #     data = record.all()
-
-    #     for item in data:
-    #         if not int(current_user_id) == item[0]:
-    #             result.append(item[1])
-    # except Exception as e:
-    #     result = str(e)
 
     return result
 
@@ -143,7 +135,7 @@ def get_list_email():
 def get_user_info_by_username(username):
     """Get user information by username.
 
-    Query database to get user id by using username
+    Query database to get user id by using displayname
     Get email from database using user id
     Pack response data: user id, user name, email
 
@@ -153,7 +145,7 @@ def get_user_info_by_username(username):
     """
     result = dict()
     try:
-        user = UserProfile.get_by_username(username)
+        user = UserProfile.get_by_displayname(username)
         user_id = user.user_id
 
         metadata = MetaData()
@@ -166,7 +158,7 @@ def get_user_info_by_username(username):
         data = record.all()
 
         for item in data:
-            if item[0] == user_id:
+            if item[0] == user_id and check_display_shared_user(user_id):
                 result['username'] = username
                 result['user_id'] = user_id
                 result['email'] = item[1]
@@ -198,7 +190,7 @@ def validate_user(username, email):
         'error': ''
     }
     try:
-        user = UserProfile.get_by_username(username)
+        user = UserProfile.get_by_displayname(username)
         user_id = 0
 
         metadata = MetaData()
@@ -214,8 +206,10 @@ def validate_user(username, email):
             if item[1] == email:
                 user_id = item[0]
                 break
-
-        if user.user_id == user_id:
+        if user is None:
+            result['error'] = 'User is not exist UserProfile'
+            return result
+        if user.user_id == user_id and check_display_shared_user(user_id):
             user_info = dict()
             user_info['username'] = username
             user_info['user_id'] = user_id
@@ -252,12 +246,12 @@ def get_user_info_by_email(email):
 
         data = record.all()
         for item in data:
-            if item[1] == email:
+            if item[1] == email and check_display_shared_user(item[0]):
                 user = UserProfile.get_by_userid(item[0])
                 if user is None:
                     result['username'] = ""
                 else:
-                    result['username'] = user.get_username
+                    result['username'] = user.username
                 result['user_id'] = item[0]
                 result['email'] = email
                 return result
@@ -266,27 +260,19 @@ def get_user_info_by_email(email):
         result['error'] = str(e)
 
 
-def get_user_information(user_id):
+def get_user_information(user_ids):
     """
-    Get user information user_id.
+    Get user information user_id list.
 
     Query database to get email by using user_id
     Get username from database using user id
-    Pack response data: user id, user name, email
+    Pack response data list: [ user id, user name, email ]
 
     parameter:
-        user_id: The user_id
+        user_ids: The user_id list
     return: response
     """
-    result = {
-        'username': '',
-        'email': '',
-        'fullname': '',
-    }
-    user_info = UserProfile.get_by_userid(user_id)
-    if user_info is not None:
-        result['username'] = user_info.get_username
-        result['fullname'] = user_info.fullname
+    result = []
 
     metadata = MetaData()
     metadata.reflect(bind=db.engine)
@@ -297,13 +283,34 @@ def get_user_information(user_id):
 
     data = record.all()
 
-    for item in data:
-        if item[0] == user_id:
-            result['email'] = item[1]
-            return result
+    if type(user_ids) is int:
+        user_ids = [user_ids]
+    for user_id in user_ids:
+        info = {
+            'userid':'',
+            'username': '',
+            'email': '',
+            'fullname': '',
+            'error': ''
+        }
+        user_info = UserProfile.get_by_userid(user_id)
+        if user_info is not None:
+            info['userid'] = user_id
+            info['username'] = user_info.get_username
+            info['fullname'] = user_info.fullname
+        else:
+            info['userid'] = user_id
+        
+        temp = list(map(lambda x : x[0], data))
+        if not user_id in temp:
+            info['error'] = "The specified user ID is incorrect"
+        
+        for item in data:
+            if int(item[0]) == int(user_id):
+                info['email'] = item[1]
+        result.append(info)
 
     return result
-
 
 def get_user_permission(user_id):
     """
@@ -321,7 +328,6 @@ def get_user_permission(user_id):
     if str(user_id) == current_id:
         return True
     return False
-
 
 def get_current_user():
     """
@@ -1051,15 +1057,22 @@ def validate_form_input_data(
         # Validate TITLE item values from data
         if mapping_title_item_key == data_key:
             for data_item_values in data_item_value_list:
-                keys_that_exist_in_data: list = _get_keys_that_exist_from_data(data_item_values)
-                for mapping_key in list(set(mapping_title_language_key)):
-                    if mapping_key in keys_that_exist_in_data:
-                        # Append TITLE LANGUAGE value to items_to_be_checked_for_duplication list
-                        items_to_be_checked_for_duplication.append(data_item_values.get(mapping_key))
-                        items_to_be_checked_for_ja_kana.append(data_item_values.get(mapping_key))
-                        items_to_be_checked_for_ja_latn.append(data_item_values.get(mapping_key))
-                    else:
-                        pass
+                if type(data_item_values) == str:
+                    # Append TITLE LANGUAGE value to items_to_be_checked_for_duplication list
+                    items_to_be_checked_for_duplication.append(data_item_value_list.get(data_item_values))
+                    items_to_be_checked_for_ja_kana.append(data_item_value_list.get(data_item_values))
+                    items_to_be_checked_for_ja_latn.append(data_item_value_list.get(data_item_values))
+                else:
+                    keys_that_exist_in_data: list = _get_keys_that_exist_from_data(data_item_values)
+                    for mapping_key in list(set(mapping_title_language_key)):
+                        if mapping_key in keys_that_exist_in_data:
+                            # Append TITLE LANGUAGE value to items_to_be_checked_for_duplication list
+                            items_to_be_checked_for_duplication.append(data_item_values.get(mapping_key))
+                            items_to_be_checked_for_ja_kana.append(data_item_values.get(mapping_key))
+                            items_to_be_checked_for_ja_latn.append(data_item_values.get(mapping_key))
+                        else:
+                            pass
+
             # Validation for TITLE
             validation_duplication_error_checker(
                 _("Title"),
@@ -1081,15 +1094,20 @@ def validate_form_input_data(
         # Validate ALTERNATIVE TITLE item values from data
         elif mapping_alternative_title_item_key == data_key:
             for data_item_values in data_item_value_list:
-                keys_that_exist_in_data: list = _get_keys_that_exist_from_data(data_item_values)
-                for mapping_key in list(set(mapping_alternative_title_language_key)):
-                    if mapping_key in keys_that_exist_in_data:
-                        # Append ALTERNATIVE TITLE LANGUAGE value to items_to_be_checked_for_duplication list
-                        items_to_be_checked_for_ja_kana.append(data_item_values.get(mapping_key))
-                        items_to_be_checked_for_ja_latn.append(data_item_values.get(mapping_key))
-                    else:
-                        pass
-            
+                if type(data_item_values) == str:
+                    # Append ALTERNATIVE TITLE LANGUAGE value to items_to_be_checked_for_duplication list
+                    items_to_be_checked_for_ja_kana.append(data_item_value_list.get(data_item_values))
+                    items_to_be_checked_for_ja_latn.append(data_item_value_list.get(data_item_values))
+                else:
+                    keys_that_exist_in_data: list = _get_keys_that_exist_from_data(data_item_values)
+                    for mapping_key in list(set(mapping_alternative_title_language_key)):
+                        if mapping_key in keys_that_exist_in_data:
+                            # Append ALTERNATIVE TITLE LANGUAGE value to items_to_be_checked_for_duplication list
+                            items_to_be_checked_for_ja_kana.append(data_item_values.get(mapping_key))
+                            items_to_be_checked_for_ja_latn.append(data_item_values.get(mapping_key))
+                        else:
+                            pass
+
             # Validation for ALTERNATIVE TITLE
             validation_ja_kana_error_checker(
                 _("Alternative Title"),
@@ -2637,7 +2655,7 @@ def _export_item(record_id,
         exported_item['name'] = 'recid_{}'.format(record_id)
         exported_item['files'] = []
         exported_item['path'] = 'recid_' + str(record_id)
-        exported_item['item_type_id'] = record.get('item_type_id')
+        exported_item['item_type_id'] = str(record.get('item_type_id')) if record.get('item_type_id') else None
         if not records_data:
             records_data = record
         if exported_item['item_type_id']:
@@ -2652,10 +2670,10 @@ def _export_item(record_id,
                                         False, False)
                 record_role_ids = {
                     'weko_creator_id': meta_data.get('weko_creator_id'),
-                    'weko_shared_id': meta_data.get('weko_shared_id')
+                    'weko_shared_ids': meta_data.get('weko_shared_ids')
                 }
                 list_item_role.update(
-                    {exported_item['item_type_id']: record_role_ids})
+                    {str(exported_item['item_type_id']): record_role_ids})
                 if hide_meta_data_for_role(record_role_ids):
                     for hide_key in list_hidden:
                         if isinstance(hide_key, str) \
@@ -3168,7 +3186,7 @@ def hide_meta_data_for_role(record):
     # Item Register users and Sharing users
     if record and current_user.get_id() in [
         record.get('weko_creator_id'),
-            str(record.get('weko_shared_id'))]:
+            str(record.get('weko_shared_ids'))]:
         is_hidden = False
 
     return is_hidden
@@ -3762,14 +3780,15 @@ def save_title(activity_id, request_data):
     """
     activity = WorkActivity()
     db_activity = activity.get_activity_detail(activity_id)
-    item_type_id = db_activity.workflow.itemtype.id
-    if item_type_id:
-        item_type_mapping = Mapping.get_record(item_type_id)
-        # current_app.logger.debug("item_type_mapping:{}".format(item_type_mapping))
-        key_list, key_child_dict = get_key_title_in_item_type_mapping(item_type_mapping)
-    if key_list and key_child_dict:
-        title = get_title_in_request(request_data, key_list, key_child_dict)
-        activity.update_title(activity_id, title)
+    if db_activity and db_activity.workflow:
+        item_type_id = db_activity.workflow.itemtype.id
+        if item_type_id:
+            item_type_mapping = Mapping.get_record(item_type_id)
+            # current_app.logger.debug("item_type_mapping:{}".format(item_type_mapping))
+            key_list, key_child_dict = get_key_title_in_item_type_mapping(item_type_mapping)
+        if key_list and key_child_dict:
+            title = get_title_in_request(request_data, key_list, key_child_dict)
+            activity.update_title(activity_id, title)
 
 
 def get_key_title_in_item_type_mapping(item_type_mapping):

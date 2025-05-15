@@ -609,6 +609,11 @@ class FlowActionRole(db.Model, TimestampMixin):
     specify_property = db.Column(
         db.String(255), nullable=True)
     """the name of flows."""
+    
+    action_item_registrant = db.Column(
+        db.Boolean(name='item_registrant'),
+        nullable=False, default=False, server_default='0')
+    """If set to True, item_registrant allow action"""
 
 
 class WorkFlow(db.Model, TimestampMixin):
@@ -783,7 +788,20 @@ class Activity(db.Model, TimestampMixin):
 
     title = db.Column(db.Text, nullable=True)
 
-    shared_user_id = db.Column(db.Integer(), nullable=True)
+    shared_user_ids = db.Column(
+        db.JSON().with_variant(
+            postgresql.JSONB(none_as_null=True),
+            'postgresql',
+        ).with_variant(
+            JSONType(),
+            'sqlite',
+        ).with_variant(
+            JSONType(),
+            'mysql',
+        ),
+        default=lambda: dict(),
+        nullable=True
+    )
 
     temp_data = db.Column(
         db.JSON().with_variant(

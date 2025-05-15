@@ -11,9 +11,10 @@ import uuid
 import pytest
 from elasticsearch import helpers
 from elasticsearch_dsl import Search
-from flask import current_app, make_response, request
+from flask import current_app, make_response, request, url_for
 from flask_babelex import Babel
 from flask_login import current_user
+from invenio_i18n.ext import current_i18n
 from invenio_i18n.babel import set_locale
 from invenio_records.api import Record
 from mock import MagicMock, Mock, patch
@@ -38,7 +39,9 @@ from weko_search_ui.utils import (
     check_import_items,
     check_index_access_permissions,
     check_permission,
+    check_provide_in_system,
     check_sub_item_is_system,
+    check_terms_in_system,
     clean_thumbnail_file,
     convert_nested_item_to_list,
     create_deposit,
@@ -89,6 +92,7 @@ from weko_search_ui.utils import (
     handle_check_id,
     handle_check_item_is_locked,
     handle_check_metadata_not_existed,
+    handle_check_restricted_access_property,
     handle_check_thumbnail,
     handle_check_thumbnail_file_type,
     handle_convert_validate_msg_to_jp,
@@ -409,12 +413,38 @@ def test_parse_to_json_form(i18n_app, record_with_metadata):
 
 # def check_import_items(file, is_change_identifier: bool, is_gakuninrdm=False,
 def test_check_import_items(i18n_app):
+    # is_gakuninrdm = False
     current_path = os.path.dirname(os.path.abspath(__file__))
     file_name = "sample_file.zip"
     file_path = os.path.join(current_path, "data", "sample_file", file_name)
+    ret = check_import_items(file_path, True, False)
 
-    assert check_import_items(file_path, True)
+    prefix = current_app.config["WEKO_SEARCH_UI_IMPORT_TMP_PREFIX"]
+    assert ret["data_path"].startswith(f'/tmp/{prefix}')
 
+    # is_gakuninrdm = True
+    ret = check_import_items(file_path, True, True)
+    '/tmp/weko_import_'
+    assert ret["data_path"].startswith('/tmp/deposit_activity_')
+
+    # current_pathがdict
+    class TestFile(object):
+        @property
+        def filename(self):
+            return 'test_file.txt'
+        
+    file = TestFile()
+    assert check_import_items(file, True, True)
+    """
+    # 例外
+    with pytest.raises(FileNotFoundError) as e:
+        ret = check_import_items("/var/abc/filename.zip", False, True)
+
+    with pytest.raises(UnicodeDecodeError) as e:
+        pass
+    with pytest.raises(FileExistsError) as e:
+        pass
+    """
 
 # def unpackage_import_file(data_path: str, file_name: str, file_format: str, force_new=False):
 # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_unpackage_import_file -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
@@ -2593,6 +2623,173 @@ def test_handle_check_file_metadata(i18n_app, record_with_metadata):
 
     # with patch("weko_search_ui.utils.handle_check_file_content", return_value=):
 
+# def handle_check_restricted_access_property(list_record)
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_handle_check_restricted_access_property_en -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_handle_check_restricted_access_property_en(app, db, users, record_restricted, terms, db_itemtype_restricted_access, db_workflow):
+    # 利用規約(terms)が設定されていない。提供(provide)が設定されていない。
+    list_record = [record_restricted[0]]
+    handle_check_restricted_access_property(list_record)
+    assert list_record[0]["errors"] == None
+
+    # 利用規約(terms)に存在する規約が設定されている。提供(provide)が設定されていない。
+    list_record = [record_restricted[1]]
+    handle_check_restricted_access_property(list_record)
+    assert list_record[0]["errors"] == None
+
+    # 利用規約(terms)が設定されていない。提供(provide)に存在するロールID、ワークフローが設定されている。
+    list_record = [record_restricted[2]]
+    handle_check_restricted_access_property(list_record)
+    assert list_record[0]["errors"] == None
+
+    restricted_access_json ={
+			"key": "168065611041",
+			"content": {
+				"en": {
+					"title": "Privacy Policy for WEKO3",
+					"content": "Privacy Policyobligations"
+				},
+				"ja": {
+					"title": "利用規約",
+					"content": "利用規約本文"
+				}
+			},
+			"existed": True
+		}
+    
+    ################################
+    # 英語モード
+    ################################
+    with app.test_request_context():
+        with set_locale("en"):
+            with patch("weko_admin.utils.get_restricted_access", return_value=restricted_access_json):
+                # 利用規約(terms)に存在しない利用規約が設定されている。提供(provide)が設定されていない。
+                list_record = [record_restricted[3]]
+                handle_check_restricted_access_property(list_record)
+                assert list_record[0]["errors"] == ["The specified terms does not exist in the system"]
+            
+                # 利用規約(terms)が設定されていない。提供(provide)に存在しないワークフローが設定されている。
+                list_record = [record_restricted[4]]
+                handle_check_restricted_access_property(list_record)
+                assert list_record[0]["errors"] == ["The specified provinding method does not exist in the system"]
+
+                # 利用規約(terms)が設定されていない。提供(provide)に存在しないロールが設定されている。
+                list_record = [record_restricted[5]]
+                handle_check_restricted_access_property(list_record)
+                assert list_record[0]["errors"] == ["The specified provinding method does not exist in the system"]
+
+# def handle_check_restricted_access_property(list_record)
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_handle_check_restricted_access_property_ja -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_handle_check_restricted_access_property_ja(app, db, users, record_restricted, terms, db_itemtype_restricted_access, db_workflow):
+    restricted_access_json ={
+			"key": "168065611041",
+			"content": {
+				"en": {
+					"title": "Privacy Policy for WEKO3",
+					"content": "Privacy Policyobligations"
+				},
+				"ja": {
+					"title": "利用規約",
+					"content": "利用規約本文"
+				}
+			},
+			"existed": True
+		}
+    ################################
+    # 日本語モード
+    ################################
+    with app.test_request_context():
+        with set_locale("ja"):
+            with patch("weko_admin.utils.get_restricted_access", return_value=restricted_access_json):
+                # 利用規約(terms)に存在しない利用規約が設定されている。提供(provide)が設定されていない。
+                list_record = [record_restricted[3]]
+                handle_check_restricted_access_property(list_record)
+                assert list_record[0]["errors"] == ["指定する利用規約はシステムに存在しません。"]
+                # 利用規約(terms)が設定されていない。提供(provide)に存在しないワークフローが設定されている。
+                list_record = [record_restricted[4]]
+                handle_check_restricted_access_property(list_record)
+                assert list_record[0]["errors"] == ["指定する提供方法はシステムに存在しません。"]
+
+                # 利用規約(terms)が設定されていない。提供(provide)に存在しないロールが設定されている。
+                list_record = [record_restricted[5]]
+                handle_check_restricted_access_property(list_record)
+                assert list_record[0]["errors"] == ["指定する提供方法はシステムに存在しません。"]
+
+# def check_terms_in_system(key, item_index, item)
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_check_terms_in_system -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_check_terms_in_system(terms, record_restricted):
+    # 正常系
+    key = "item_1685583796047"
+    item = record_restricted[1]
+    assert check_terms_in_system(key, item) == True
+
+    # metadataにkeyが存在しない
+    key = "item_111111111111"
+    item = record_restricted[1]
+    assert check_terms_in_system(key, item) == False
+
+    # metadataにtermsが存在しない
+    key = "item_1685583796047"
+    item = record_restricted[8]
+    assert check_terms_in_system(key, item) == True
+
+    # metadataにtermsが自由入力の場合
+    key = "item_1685583796047"
+    item = record_restricted[1]
+    item['metadata'][key][0]['terms'] = 'term_free'
+    assert check_terms_in_system(key, item) == True
+
+    # "terms": システムに存在しない適当な値
+    key = "item_1685583796047"
+    item = record_restricted[3]
+    assert check_terms_in_system(key, item) == False
+
+    # "terms": システムに存在しない適当な値
+    # get_restricted_accessをスタブにし、戻り値をNoneにする。
+    with patch('weko_admin.utils.get_restricted_access',return_value=None):
+        key = "item_1685583796047"
+        item = record_restricted[3]
+        assert check_terms_in_system(key, item) == False
+
+# def check_provide_in_system(key, item_index, item, provides)
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_check_provide_in_system -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_check_provide_in_system(users, db_workflow, record_restricted):
+    # "provide": [ {"workflow: システムに存在するワークフローID"},{"role", システムに存在するロールID} ]
+    # 引数のprovides= itemに設定したprovideを設定する。
+    key = "item_1685583796047"
+    item = record_restricted[2]
+    assert check_provide_in_system(key, item) == True
+
+    # "provide": [ {"workflow: システムに存在しないワークフローID"},{"role", システムに存在するロールID} ]
+    # 数のprovides= itemに設定したprovideを設定する。
+    key = "item_1685583796047"
+    item = record_restricted[4]
+    assert check_provide_in_system(key, item) == False
+
+    # "provide": [ {"workflow: システムに存在するワークフローID"},{"role", システムに存在しないロールID} ]
+    # 数のprovides= itemに設定したprovideを設定する。
+    key = "item_1685583796047"
+    item = record_restricted[5]
+    assert check_provide_in_system(key, item) == False
+
+    # "key"存在せず
+    key = "item_111111111111"
+    item = record_restricted[1]
+    assert check_provide_in_system(key, item) == False
+
+    # "provide"存在せず
+    key = "item_1685583796047"
+    item = record_restricted[1]
+    assert check_provide_in_system(key, item) == True
+
+    # "workflow"存在せず
+    key = "item_1685583796047"
+    item = record_restricted[6]
+    assert check_provide_in_system(key, item) == True
+
+    # "role"存在せず
+    key = "item_1685583796047"
+    item = record_restricted[7]
+    assert check_provide_in_system(key, item) == True
 
 # def handle_check_file_path(paths, data_path, is_new=False, is_thumbnail=False, is_single_thumbnail=False):
 def test_handle_check_file_path(i18n_app):
@@ -2818,8 +3015,8 @@ def test_function_issue34535(db,db_index,db_itemtype,location,db_oaischema,mocke
     # register item
     indexer = WekoIndexer()
     indexer.get_es_index()
-    record_data = {"_oai":{"id":"oai:weko3.example.org:00000004","sets":[]},"path":["1"],"owner":"1","recid":"4","title":["test item in br"],"pubdate":{"attribute_name":"PubDate","attribute_value":"2022-11-21"},"_buckets":{"deposit":"0796e490-6dcf-4e7d-b241-d7201c3de83a"},"_deposit":{"id":"4","pid":{"type":"depid","value":"4","revision_id":0},"owner":"1","owners":[1],"status":"published","created_by":1},"item_title":"test item in br","author_link":[],"item_type_id":"1","publish_date":"2022-11-21","publish_status":"0","weko_shared_id":-1,"item_1617186331708":{"attribute_name":"Title","attribute_value_mlt":[{"subitem_1551255647225":"test item in br","subitem_1551255648112":"ja"}]},"item_1617186626617":{"attribute_name":"Description","attribute_value_mlt":[{"subitem_description":"this is line1.\nthis is line2.","subitem_description_type":"Abstract","subitem_description_language":"en"}]},"item_1617258105262":{"attribute_name":"Resource Type","attribute_value_mlt":[{"resourceuri":"http://purl.org/coar/resource_type/c_5794","resourcetype":"conference paper"}]},"relation_version_is_last":True}
-    item_data = {"id":"4","pid":{"type":"depid","value":"4","revision_id":0},"lang":"ja","path":[1],"owner":"1","title":"test item in br","owners":[1],"status":"published","$schema":"https://192.168.56.103/items/jsonschema/1","pubdate":"2022-11-21","edit_mode":"keep","created_by":1,"owners_ext":{"email":"wekosoftware@nii.ac.jp","username":"","displayname":""},"deleted_items":["item_1617605131499"],"shared_user_id":-1,"weko_shared_id":-1,"item_1617186331708":[{"subitem_1551255647225":"test item in br","subitem_1551255648112":"ja"}],"item_1617186626617":[{"subitem_description":"this is line1.\nthis is line2.","subitem_description_type":"Abstract","subitem_description_language":"en"}],"item_1617258105262":{"resourceuri":"http://purl.org/coar/resource_type/c_5794","resourcetype":"conference paper"}}
+    record_data = {"_oai":{"id":"oai:weko3.example.org:00000004","sets":[]},"path":["1"],"owner":1,"recid":"4","title":["test item in br"],"pubdate":{"attribute_name":"PubDate","attribute_value":"2022-11-21"},"_buckets":{"deposit":"0796e490-6dcf-4e7d-b241-d7201c3de83a"},"_deposit":{"id":"4","pid":{"type":"depid","value":"4","revision_id":0},"owner":1,"owners":[1],"status":"published","created_by":1},"item_title":"test item in br","author_link":[],"item_type_id":"1","publish_date":"2022-11-21","publish_status":"0","weko_shared_ids":[],"item_1617186331708":{"attribute_name":"Title","attribute_value_mlt":[{"subitem_1551255647225":"test item in br","subitem_1551255648112":"ja"}]},"item_1617186626617":{"attribute_name":"Description","attribute_value_mlt":[{"subitem_description":"this is line1.\nthis is line2.","subitem_description_type":"Abstract","subitem_description_language":"en"}]},"item_1617258105262":{"attribute_name":"Resource Type","attribute_value_mlt":[{"resourceuri":"http://purl.org/coar/resource_type/c_5794","resourcetype":"conference paper"}]},"relation_version_is_last":True}
+    item_data = {"id":"4","pid":{"type":"depid","value":"4","revision_id":0},"lang":"ja","path":[1],"owner":1,"title":"test item in br","owners":[1],"status":"published","$schema":"https://192.168.56.103/items/jsonschema/1","pubdate":"2022-11-21","edit_mode":"keep","created_by":1,"owners_ext":{"email":"wekosoftware@nii.ac.jp","username":"","displayname":""},"deleted_items":["item_1617605131499"],"shared_user_ids":[],"weko_shared_ids":[],"item_1617186331708":[{"subitem_1551255647225":"test item in br","subitem_1551255648112":"ja"}],"item_1617186626617":[{"subitem_description":"this is line1.\nthis is line2.","subitem_description_type":"Abstract","subitem_description_language":"en"}],"item_1617258105262":{"resourceuri":"http://purl.org/coar/resource_type/c_5794","resourcetype":"conference paper"}}
     rec_uuid = uuid.uuid4()
     recid = PersistentIdentifier.create(
         "recid",
@@ -2849,7 +3046,7 @@ def test_function_issue34535(db,db_index,db_itemtype,location,db_oaischema,mocke
     
     register_item_metadata(new_item,root_path,True)
     record = WekoDeposit.get_record(recid.object_uuid)
-    assert record == {'_oai': {'id': 'oai:weko3.example.org:00000004', 'sets': ['1']}, 'path': ['1'], 'owner': '1', 'recid': '4', 'title': ['test item in br'], 'pubdate': {'attribute_name': 'PubDate', 'attribute_value': '2022-11-21'}, '_buckets': {'deposit': '0796e490-6dcf-4e7d-b241-d7201c3de83a'}, '_deposit': {'id': '4', 'pid': {'type': 'depid', 'value': '4', 'revision_id': 0}, 'owner': '1', 'owners': [1], 'status': 'draft', 'created_by': 1}, 'item_title': 'test item in br', 'author_link': [], 'item_type_id': '1', 'publish_date': '2022-11-21', 'publish_status': '0', 'weko_shared_id': -1, 'item_1617186331708': {'attribute_name': 'Title', 'attribute_value_mlt': [{'subitem_1551255647225': 'test item in br', 'subitem_1551255648112': 'ja'}]}, 'item_1617186626617': {'attribute_name': 'Description', 'attribute_value_mlt': [{'subitem_description': 'this is line1.\nthis is line2.', 'subitem_description_language': 'en', 'subitem_description_type': 'Abstract'}]}, 'item_1617258105262': {'attribute_name': 'Resource Type', 'attribute_value_mlt': [{'resourcetype': 'conference paper', 'resourceuri': 'http://purl.org/coar/resource_type/c_5794'}]}, 'relation_version_is_last': True, 'control_number': '4'}
+    assert record == {'_oai': {'id': 'oai:weko3.example.org:00000004', 'sets': ['1']}, 'path': ['1'], 'owner': 1, 'recid': '4', 'title': ['test item in br'], 'pubdate': {'attribute_name': 'PubDate', 'attribute_value': '2022-11-21'}, '_buckets': {'deposit': '0796e490-6dcf-4e7d-b241-d7201c3de83a'}, '_deposit': {'id': '4', 'pid': {'type': 'depid', 'value': '4', 'revision_id': 0}, 'owner': 1, 'owners': [1], 'status': 'draft', 'created_by': 1}, 'item_title': 'test item in br', 'author_link': [], 'item_type_id': '1', 'publish_date': '2022-11-21', 'publish_status': '0', 'weko_shared_ids': [], 'item_1617186331708': {'attribute_name': 'Title', 'attribute_value_mlt': [{'subitem_1551255647225': 'test item in br', 'subitem_1551255648112': 'ja'}]}, 'item_1617186626617': {'attribute_name': 'Description', 'attribute_value_mlt': [{'subitem_description': 'this is line1.\nthis is line2.', 'subitem_description_language': 'en', 'subitem_description_type': 'Abstract'}]}, 'item_1617258105262': {'attribute_name': 'Resource Type', 'attribute_value_mlt': [{'resourcetype': 'conference paper', 'resourceuri': 'http://purl.org/coar/resource_type/c_5794'}]}, 'relation_version_is_last': True, 'control_number': '4'}
 
 # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_function_issue34958 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
 def test_function_issue34958(app, make_itemtype):

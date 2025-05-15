@@ -14,7 +14,7 @@ from weko_index_tree.api import Indexes
 from weko_records.api import ItemTypes, SiteLicense,ItemsMetadata
 from weko_user_profiles import UserProfile
 
-from weko_admin.config import WEKO_ADMIN_MANAGEMENT_OPTIONS
+from weko_admin.config import WEKO_ADMIN_MANAGEMENT_OPTIONS, WEKO_ADMIN_RESTRICTED_ACCESS_SETTINGS
 from weko_admin.models import AdminLangSettings, FeedbackMailHistory, FeedbackMailFailed, SiteInfo
 from weko_admin.utils import (
     get_response_json,
@@ -1576,31 +1576,30 @@ def test_get_init_display_index(app,indexes,mocker):
 
 # def get_restricted_access(key: str = None):
 # .tox/c1/bin/pytest --cov=weko_admin tests/test_utils.py::test_get_restricted_access -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
-def test_get_restricted_access(client,admin_settings):
-    test = {
-        "content_file_download": {
-            "expiration_date": 30,
-            "expiration_date_unlimited_chk": False,
-            "download_limit": 10,
-            "download_limit_unlimited_chk": False,
-        },
-        "usage_report_workflow_access": {
-            "expiration_date_access": 500,
-            "expiration_date_access_unlimited_chk": False,
-        },
-        "terms_and_conditions": []
-    }
+def test_get_restricted_access(app, admin_settings):
+
+    #test No.3 (W2023-22 3(5))
     with patch("weko_admin.utils.AdminSettings.get",return_value=None):
         result = get_restricted_access("not exist key")
         assert result == {}
-    
+
+    #test No.3 (W2023-22 3(5))
     # not key
     result = get_restricted_access("")
     assert result == admin_settings[5].settings
     
+    #test No.3 (W2023-22 3(5))
     result = get_restricted_access("usage_report_workflow_access")
     assert result == admin_settings[5].settings["usage_report_workflow_access"]
 
+    #test No.1 (W2023-22 3(5))
+    with patch("weko_admin.utils.AdminSettings.get",return_value=admin_settings[9].settings):
+        result = get_restricted_access("error_msg")
+        assert result == admin_settings[5].settings["error_msg"]
+
+    #test No.2 (W2023-22 3(5))
+    result = get_restricted_access("error_msg")
+    assert result == admin_settings[5].settings["error_msg"]
 
 # def update_restricted_access(restricted_access: dict):
 #     def parse_content_file_download():
@@ -1660,6 +1659,17 @@ def test_update_restricted_access(admin_settings):
         "usage_report_workflow_access": {
             "expiration_date_access": 1,
             "expiration_date_access_unlimited_chk": False
+        },
+        "error_msg": {
+            "key" : "",
+            "content" : {
+                "ja" : {
+                    "content" : "このデータは利用できません（権限がないため）。"
+                },
+                "en":{
+                    "content" : "This data is not available for this user"
+                }
+            }
         }
     }
     result = update_restricted_access(data)
@@ -1683,6 +1693,17 @@ def test_update_restricted_access(admin_settings):
             "secret_expiration_date_unlimited_chk": True,
             "secret_download_limit": 10,
             "secret_download_limit_unlimited_chk": False,
+        },
+        "error_msg": {
+            "key" : "",
+            "content" : {
+                "ja" : {
+                    "content" : "このデータは利用できません（権限がないため）。"
+                },
+                "en":{
+                    "content" : "This data is not available for this user"
+                }
+            }
         }
     }
     result = update_restricted_access(param)
@@ -1706,6 +1727,17 @@ def test_update_restricted_access(admin_settings):
             "secret_expiration_date_unlimited_chk": False,
             "secret_download_limit": 9999999,
             "secret_download_limit_unlimited_chk": True,
+        },
+        "error_msg": {
+            "key" : "",
+            "content" : {
+                "ja" : {
+                    "content" : "このデータは利用できません（権限がないため）。"
+                },
+                "en":{
+                    "content" : "This data is not available for this user"
+                }
+            }
         }
     }
     result = update_restricted_access(param)
@@ -1956,8 +1988,9 @@ class TestUsageReport:
 #     def send_reminder_mail(self, activities_id: list,
 # .tox/c1/bin/pytest --cov=weko_admin tests/test_utils.py::TestUsageReport::test_send_reminder_mail -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
     def test_send_reminder_mail(self, app, activities, mocker):
-        mail_template = current_app.config.get(
-            "WEKO_WORKFLOW_REQUEST_FOR_REGISTER_USAGE_REPORT")
+        mail_id = current_app.config.get(
+            'WEKO_WORKFLOW_REQUEST_FOR_REGISTER_USAGE_REPORT'
+        )
         def mock_email_and_url(activity):
             url = "http://test_server/workflow/activity/detail/{}".format(activity.id)
             return url, "test.test@test.org"
@@ -1970,7 +2003,7 @@ class TestUsageReport:
             activities[3], # exist item_id, extra_info
         ]
         mocker.patch("weko_workflow.utils.send_mail", return_value=True)
-        result = usage_report.send_reminder_mail([],mail_template, acts)
+        result = usage_report.send_reminder_mail([],mail_id, acts)
         assert result == True
         
         # not exist activities and mail_template, failed send mail
@@ -2043,7 +2076,7 @@ class TestUsageReport:
 # .tox/c1/bin/pytest --cov=weko_admin tests/test_utils.py::TestUsageReport::test_build_user_info -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
     def test_build_user_info(self):
         record_data = {
-            "subitem_restricted_access_name":"test_value",
+            "subitem_fullname":"test_value",
             "subitem_test_item":["subitem_test_item1"]
         }
         usage_report = UsageReport()

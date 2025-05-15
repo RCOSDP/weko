@@ -50,6 +50,10 @@ from weko_user_profiles.forms import (
 
 from tests.helpers import login,logout
 
+# def test_register_form_factory_no_csrf(app):
+#     """Test CSRF token is not in reg. form and not in profile inner form."""
+#     security = app.extensions['security']
+#     rf = _get_form(app, security.register_form, register_form_factory)
 
 # def test_register_form_factory_no_csrf(app):
 #     """Test CSRF token is not in reg. form and not in profile inner form."""

@@ -31,6 +31,7 @@ from invenio_accounts.models import Role, User
 from invenio_db import db
 from invenio_files_rest.models import Location
 from invenio_i18n.ext import current_i18n
+from invenio_mail.models import MailTemplates
 from weko_index_tree.models import Index
 from weko_records.api import ItemTypes
 from weko_records.models import ItemTypeProperty
@@ -65,6 +66,8 @@ class FlowSettingView(BaseView):
         users = User.query.filter_by(active=True).all()
         roles = Role.query.all()
         actions = self.get_actions()
+        mail_templates = MailTemplates.get_templates()
+        use_restricted_item = current_app.config.get('WEKO_ADMIN_USE_MAIL_TEMPLATE_EDIT', False)
         if '0' == flow_id:
             flow = None
             return self.render(
@@ -75,7 +78,10 @@ class FlowSettingView(BaseView):
                 users=users,
                 roles=roles,
                 actions=None,
-                action_list=actions
+                action_list=actions,
+                mail_templates=mail_templates,
+                use_restricted_item=use_restricted_item,
+                workflow_registrant_id = current_app.config.get("WEKO_WORKFLOW_ITEM_REGISTRANT_ID")
             )
         UUID_PATTERN = re.compile(r'^[\da-f]{8}-([\da-f]{4}-){3}[\da-f]{12}$',
                                   re.IGNORECASE)
@@ -97,7 +103,10 @@ class FlowSettingView(BaseView):
             roles=roles,
             actions=flow.flow_actions,
             action_list=actions,
-            specifed_properties=specified_properties
+            specifed_properties=specified_properties,
+            mail_templates=mail_templates,
+            use_restricted_item=use_restricted_item,
+            workflow_registrant_id = current_app.config.get("WEKO_WORKFLOW_ITEM_REGISTRANT_ID")
         )
 
     @staticmethod
@@ -211,24 +220,18 @@ class FlowSettingView(BaseView):
     @expose('/action/<string:flow_id>', methods=['POST'])
     def upt_flow_action(self, flow_id=0):
         """Update FlowAction Info."""
-        try:
-            actions = request.get_json()
-            workflow = Flow()
-            workflow.upt_flow_action(flow_id, actions)
-            flow = workflow.get_flow_detail(flow_id)
-            actions = []
-            for action in flow.flow_actions:
-                actions.append({
-                    'id': action.id,
-                    'action_order': action.action_order,
-                })
-            db.session.commit()
-        except Exception as e:
-            db.session.rollback()
-            current_app.logger.error(e)
-            return jsonify(
-                code=400,
-                actions=actions), 400
+        if not self._check_auth(str(flow_id)) :
+            abort(403)
+        actions = request.get_json()
+        workflow = Flow()
+        workflow.upt_flow_action(flow_id, actions)
+        flow = workflow.get_flow_detail(flow_id)
+        actions = []
+        for action in flow.flow_actions:
+            actions.append({
+                'id': action.id,
+                'action_order': action.action_order,
+            })
         return jsonify(
             code=0,
             msg=_('Updated flow action successfully'),
@@ -332,6 +335,8 @@ class WorkFlowSettingView(BaseView):
                 is_sysadmin =True
                 break
 
+        is_display_restricted_access_checkbox = is_sysadmin and current_app.config.get('WEKO_ADMIN_DISPLAY_RESTRICTED_SETTINGS', False)
+
         if '0' == workflow_id:
             """Create new workflow"""
             return self.render(
@@ -347,6 +352,7 @@ class WorkFlowSettingView(BaseView):
                 hide_label=hide_label,
                 display_hide_label=display_hide,
                 is_sysadmin=is_sysadmin,
+                is_display_restricted_access_checkbox=is_display_restricted_access_checkbox,
             )
 
         """Update the workflow info"""
@@ -361,7 +367,7 @@ class WorkFlowSettingView(BaseView):
         else:
             display = role
             hide = []
-        
+
         if workflows.open_restricted and not is_sysadmin:
             abort(403)
 
@@ -377,7 +383,8 @@ class WorkFlowSettingView(BaseView):
             display_label=display_label,
             hide_label=hide_label,
             display_hide_label=display_hide,
-            is_sysadmin=is_sysadmin
+            is_sysadmin=is_sysadmin,
+            is_display_restricted_access_checkbox=is_display_restricted_access_checkbox,
         )
 
     @expose('/<string:workflow_id>', methods=['POST', 'PUT'])

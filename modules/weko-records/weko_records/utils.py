@@ -44,6 +44,27 @@ from weko_schema_ui.schema import SchemaTree
 from .api import ItemTypes, Mapping
 from .config import COPY_NEW_FIELD, WEKO_TEST_FIELD
 
+def get_author_link(author_link, value):
+    """Get author link data."""
+    if isinstance(value, list):
+        for v in value:
+            if (
+                "nameIdentifiers" in v
+                and len(v["nameIdentifiers"]) > 0
+                and "nameIdentifierScheme" in v["nameIdentifiers"][0]
+                and v["nameIdentifiers"][0]["nameIdentifierScheme"] == "WEKO"
+                and "nameIdentifier" in v["nameIdentifiers"][0]
+            ):
+                author_link.append(v["nameIdentifiers"][0]["nameIdentifier"])
+    elif (
+        isinstance(value, dict)
+        and "nameIdentifiers" in value
+        and len(value["nameIdentifiers"]) > 0
+        and "nameIdentifierScheme" in value["nameIdentifiers"][0]
+        and value["nameIdentifiers"][0]["nameIdentifierScheme"] == "WEKO"
+        and "nameIdentifier" in value["nameIdentifiers"][0]
+    ):
+        author_link.append(value["nameIdentifiers"][0]["nameIdentifier"])
 
 def json_loader(data, pid, owner_id=None, with_deleted=False, replace_field=True):
     """Convert the item data and mapping to jpcoar.
@@ -54,36 +75,6 @@ def json_loader(data, pid, owner_id=None, with_deleted=False, replace_field=True
     :return: dc, jrc, is_edit
     """
 
-    def _get_author_link(author_link, value):
-        """Get author link data."""
-        if isinstance(value, list):
-            for v in value:
-                if (
-                    "nameIdentifiers" in v
-                    and len(v["nameIdentifiers"]) > 0
-                    and "nameIdentifierScheme" in v["nameIdentifiers"][0]
-                    and v["nameIdentifiers"][0]["nameIdentifierScheme"] == "WEKO"
-                ):
-                    author_link.append(v["nameIdentifiers"][0]["nameIdentifier"])
-        elif (
-            isinstance(value, dict)
-            and "nameIdentifiers" in value
-            and len(value["nameIdentifiers"]) > 0
-            and "nameIdentifierScheme" in value["nameIdentifiers"][0]
-            and value["nameIdentifiers"][0]["nameIdentifierScheme"] == "WEKO"
-        ):
-            author_link.append(value["nameIdentifiers"][0]["nameIdentifier"])
-            
-    def _set_shared_id(data):
-        """set weko_shared_id from shared_user_id"""
-        if data.get("weko_shared_id",-1)==-1:
-            return dict(weko_shared_id=data.get("shared_user_id",-1))
-        else:
-            if data.get("shared_user_id",-1)==-1:
-                return dict(weko_shared_id=data.get("weko_shared_id"))
-            else:
-                return dict(weko_shared_id=data.get("shared_user_id"))
-            
     dc = OrderedDict()
     jpcoar = OrderedDict()
     item = dict()
@@ -116,9 +107,8 @@ def json_loader(data, pid, owner_id=None, with_deleted=False, replace_field=True
     data.get("$schema")
     author_link = []
     for k, v in data.items():
-        if k != "pubdate":
-            if k == "$schema" or mp.get(k) is None:
-                continue
+        if k == "$schema" or mp.get(k) is None:
+            continue
 
         item.clear()
         try:
@@ -161,14 +151,14 @@ def json_loader(data, pid, owner_id=None, with_deleted=False, replace_field=True
         if isinstance(v, list):
             if len(v) > 0 and isinstance(v[0], dict):
                 item["attribute_value_mlt"] = v
-                _get_author_link(author_link, v)
+                get_author_link(author_link, v)
             else:
                 item["attribute_value"] = v
         elif isinstance(v, dict):
             ar.append(v)
             item["attribute_value_mlt"] = ar
             ar = []
-            _get_author_link(author_link, v)
+            get_author_link(author_link, v)
         else:
             item["attribute_value"] = v
 
@@ -188,10 +178,12 @@ def json_loader(data, pid, owner_id=None, with_deleted=False, replace_field=True
     if list_key:
         for key in list_key:
             del jrc[key]
+
+    # このIF分は意味がない
     if dc:
         # get the tile name to detail page
         title = data.get("title")
-
+        weko_shared_ids = data.get("shared_user_ids", [])
         if "control_number" in dc:
             del dc["control_number"]
 
@@ -199,6 +191,7 @@ def json_loader(data, pid, owner_id=None, with_deleted=False, replace_field=True
         dc.update(dict(item_type_id=item_type_id))
         dc.update(dict(control_number=pid))
         dc.update(dict(author_link=author_link))
+        dc.update(dict(weko_shared_ids=weko_shared_ids))
 
         if COPY_NEW_FIELD:
             copy_field_test(dc, WEKO_TEST_FIELD, jrc)
@@ -249,31 +242,32 @@ def json_loader(data, pid, owner_id=None, with_deleted=False, replace_field=True
         jrc.update(dict(author_link=author_link))
 
         # save items's creator to check permission
-        if current_user:
+        if current_user and current_user.get_id() is not None:
             current_user_id = current_user.get_id()
         else:
             current_user_id = "1"
-        if current_user_id:
-            # jrc is saved on elastic
-            jrc_weko_creator_id = jrc.get("weko_creator_id", None)
-            if not jrc_weko_creator_id:
-                # in case first time create record
-                jrc.update(dict(weko_creator_id=owner_id or current_user_id))
-                jrc.update(_set_shared_id(data))
-            else:
-                # incase record is end and someone is updating record
-                if current_user_id == int(jrc_weko_creator_id):
-                    # just allow owner update shared_user_id
-                    jrc.update(_set_shared_id(data))
 
-            # dc js saved on postgresql
-            dc_owner = dc.get("owner", None)
-            if not dc_owner:
-                dc.update(_set_shared_id(data))
-                dc.update(dict(owner=owner_id or current_user_id))
-            else:
-                if current_user_id == int(dc_owner):
-                    dc.update(_set_shared_id(data))
+        # jrc is saved on elastic
+        jrc_weko_creator_id = jrc.get("weko_creator_id", None)
+        if not jrc_weko_creator_id:
+            # in case first time create record
+            jrc.update(dict(weko_creator_id=current_user_id))
+        else:
+            # just allow owner update shared_user_ids
+            jrc.update(dict(weko_creator_id=jrc_weko_creator_id))
+        jrc.update(dict(weko_shared_ids=weko_shared_ids))
+        if owner_id:
+            jrc.update(dict(owner=int(owner_id)))
+            jrc.update(dict(owners=[int(owner_id)]))
+
+        # dc js saved on postgresql
+        dc.update(dict(weko_shared_ids=weko_shared_ids))
+        if not owner_id:
+            dc.update(dict(owner=int(current_user_id)))
+            dc.update(dict(owners=[int(current_user_id)]))
+        else:
+            dc.update(dict(owner=int(owner_id)))
+            dc.update(dict(owners=[int(owner_id)]))
 
     del ojson, mjson, item
     return dc, jrc, is_edit

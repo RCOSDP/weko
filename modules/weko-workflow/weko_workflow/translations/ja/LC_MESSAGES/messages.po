@@ -661,14 +661,6 @@ msgstr "次へ"
 msgid "Quit_identifier_grand"
 msgstr "強制終了"
 
-#: weko_workflow/templates/weko_workflow/item_login_sucess.html:288
-msgid "Back"
-msgstr "戻る"
-
-#: weko_workflow/templates/weko_workflow/item_login_sucess.html:295
-msgid "The activity is forcibly canceled because the workflow settings have changed and the next step was not found."
-msgstr "ワークフローの設定が変更し、次のアクションが見つかないため、このアクティビティは強制的に中止します。"
-
 msgid "The specified link has expired."
 msgstr "指定したリンクはアクセス有効期限を超過しています。"
 
@@ -677,6 +669,18 @@ msgstr "プロパティを指定する"
 
 msgid "Specify property"
 msgstr "プロパティを指定"
+
+msgid "Item registrant"
+msgstr "アイテム登録者"
+
+msgid "Guest User"
+msgstr "非ログインユーザー"
+
+msgid "Login User"
+msgstr "ログインユーザー"
+
+msgid "Notification Email Setting"
+msgstr "通知メール設定"
 
 msgid "Approval Request Notification Email"
 msgstr "承認依頼通知メール"
@@ -704,3 +708,6 @@ msgstr "選択したアクティビティを削除してもよろしいですか
 
 msgid "Clear Confirm"
 msgstr "削除の確認"
+
+msgid "Send an email to the registrant"
+msgstr "登録者にメールを送信する"

@@ -70,6 +70,10 @@ msgstr "レコードが存在しません"
 msgid "Item cannot be edited because the import is in progress."
 msgstr "インポートを実行中のためアイテムの編集はできません。"
 
+#: weko_items_ui/views.py:848
+msgid "Logged-in user cannot be deleted."
+msgstr "ログインユーザーは削除できません。"
+
 #: weko_items_ui/views.py:854
 #, fuzzy
 msgid "This Item is being edited."
@@ -580,33 +584,73 @@ msgstr "インポート"
 #~ msgid "Advisor"
 #~ msgstr "指導教員"
 
-#~ msgid "Guarantor"
-#~ msgstr "保証人"
-
-#~ msgid "Email (Advisor)"
-#~ msgstr "メール（指導教員）"
-
-#~ msgid "Email (Guarantor)"
-#~ msgstr "メール（保証人）"
-
-#~ msgid "Required item is not inputted"
-#~ msgstr "必須項目がありません。"
-
 #~ msgid "Cannot preview because the file size is too large."
 #~ msgstr "ファイルサイズが大きいためプレビューできません。"
 
-#~ msgid "Item cannot be deleted because the import is in progress."
-#~ msgstr "インポートを実行中のためアイテムの削除はできません。"
+msgid "Guarantor"
+msgstr "保証人"
 
-#~ msgid "Guest"
-#~ msgstr "非ログインユーザー"
+msgid "Email (Advisor)"
+msgstr "メール（指導教員）"
 
-#~ msgid "Free Input"
-#~ msgstr "自由入力"
+msgid "Email (Guarantor)"
+msgstr "メール（保証人）"
 
-#~ msgid ""
-#~ "The item cannot be copied because "
-#~ "you do not have permission to view"
-#~ " it."
-#~ msgstr "該当アイテムの参照権限がないため流用できません。"
+msgid "The approver email address cannot be the same as the applicant. Please recheck and input."
+msgstr "承認者のメールアドレスが申請者と同じにすることはできません。ご確認の上、再度入力してください。"
 
+msgid "The following email address is not registered in the system. Please recheck and input."
+msgstr "以下のメールアドレスがシステムに登録されていません。ご確認の上、再度入力してください。"
+
+msgid "The specified number has been exceeded. You can only select up to two fields."
+msgstr "最大2つのフィールドを選択します"
+
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html
+msgid "Version Management"
+msgstr "バージョン管理"
+
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html
+msgid "Upgrade Version"
+msgstr "バージョンを更新する"
+
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html
+msgid "Keep Version"
+msgstr "バージョンを維持する"
+
+msgid "Required item is not inputted"
+msgstr "必須項目がありません。"
+
+msgid "Feedback Mail Import"
+msgstr "入力"
+
+msgid "Cannot preview because the file size is too large."
+msgstr "ファイルサイズが大きいためプレビューできません。"
+
+msgid "The same file name cannot be registered."
+msgstr "同一のファイル名は登録できません。"
+
+msgid "Item cannot be edited because the import is in progress."
+msgstr "インポートを実行中のためアイテムの編集はできません。"
+
+msgid "Item cannot be deleted because the import is in progress."
+msgstr "インポートを実行中のためアイテムの削除はできません。"
+
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:426
+msgid "Thumbnail file type error message"
+msgstr "画像ファイル（gif, jpg, jpe, jpeg, png, bmp）以外のファイルはアップロードできません。"
+
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:427
+msgid "is too long."
+msgstr "の数が上限数を超えています。"
+
+msgid "Guest"
+msgstr "非ログインユーザー"
+
+msgid "Free Input"
+msgstr "自由入力"
+
+msgid "Can not found the email address of approval."
+msgstr "承認者のメールアドレスを検出できません。"
+
+msgid "The item cannot be copied because you do not have permission to view it."
+msgstr "該当アイテムの参照権限がないため流用できません。"

@@ -125,7 +125,7 @@ from invenio_stats.contrib.event_builders import (
 
 from weko_admin import WekoAdmin
 from weko_admin.config import WEKO_ADMIN_DEFAULT_ITEM_EXPORT_SETTINGS, WEKO_ADMIN_MANAGEMENT_OPTIONS
-from weko_admin.models import FacetSearchSetting, Identifier, SessionLifetime
+from weko_admin.models import FacetSearchSetting, Identifier, SessionLifetime, AdminSettings
 from weko_deposit.api import WekoDeposit
 from weko_deposit.api import WekoDeposit as aWekoDeposit
 from weko_deposit.api import WekoIndexer, WekoRecord
@@ -233,6 +233,8 @@ class TestSearch(RecordsSearch):
 def search_class():
     """Search class."""
     yield TestSearch
+
+from weko_search_ui import WekoSearchUI
 
 
 @pytest.yield_fixture()
@@ -823,6 +825,47 @@ def client_request_args(app, file_instance_mock):
             )
         yield r
 
+@pytest.yield_fixture()
+def client_request_args_FULL_TEXT(app, file_instance_mock):
+    app.register_blueprint(
+        create_blueprint(app, app.config["WEKO_SEARCH_REST_ENDPOINTS"])
+    )
+
+    file_path = os.path.join(
+        os.path.dirname(os.path.abspath(__file__)),
+        "data",
+        "sample_file",
+        "sample_file.txt",
+    )
+
+    # files = {'upload_file': open(file_path,'rb')}
+    # values = {'DB': 'photcat', 'OUT': 'txt', 'SHORT': 'short'}
+
+    # r = requests.post(url, files=files, data=values)
+
+    with app.test_client() as client:
+        with patch("flask.templating._render", return_value=""):
+            r = client.get(
+                "/",
+                query_string={
+                    "index_id": "33",
+                    "page": 1,
+                    "count": 20,
+                    "term": 14,
+                    "lang": "en",
+                    "parent_id": 33,
+                    "index_info": {},
+                    "community": "comm1",
+                    "item_link": "1",
+                    "is_search": 1,
+                    "search_type": WEKO_SEARCH_TYPE_DICT["FULL_TEXT"],
+                    "is_change_identifier": True,
+                    "remote_addr": "0.0.0.0",
+                    "referrer": "test",
+                    "host": "127.0.0.1",
+                },
+            )
+        yield r
 
 @pytest.fixture()
 def location(app, db):
@@ -1306,7 +1349,7 @@ def db_register(app, db):
         activity_community_id=3,
         activity_confirm_term_of_use=True,
         title="test",
-        shared_user_id=-1,
+        shared_user_ids=[],
         extra_info={},
         action_order=6,
     )
@@ -1903,7 +1946,7 @@ def db_activity(db, db_records2, db_itemtype, db_workflow, users):
         ),
         activity_confirm_term_of_use=True,
         title="test",
-        shared_user_id=-1,
+        shared_user_ids=[],
         extra_info={},
         action_order=6,
     )
@@ -1922,11 +1965,23 @@ def db_itemtype(app, db, make_itemtype):
         "schema": "tests/data/itemtype_schema.json",
         "form": "tests/data/itemtype_form.json",
         "render": "tests/data/itemtype_render.json",
-        "mapping":"tests/data/itemtype_mapping.json"
+        "mapping": "tests/data/itemtype_mapping.json",
     }
     
     return make_itemtype(itemtype_id, itemtype_data)
 
+@pytest.fixture()
+def db_itemtype_restricted_access(app, db, make_itemtype):
+    itemtype_id = 5
+    itemtype_data = {
+        "name": "制限公開アイテムタイプ",
+        "schema": "tests/data/itemtype5_schema.json",
+        "form": "tests/data/itemtype5_form.json",
+        "render": "tests/data/itemtype5_render.json",
+        "mapping": "tests/data/itemtype5_mapping.json",
+    }
+    
+    return make_itemtype(itemtype_id, itemtype_data)
 
 @pytest.fixture()
 def db_workflow(app, db, db_itemtype, users):
@@ -2010,7 +2065,7 @@ def db_workflow(app, db, db_itemtype, users):
         activity_community_id=3,
         activity_confirm_term_of_use=True,
         title="test",
-        shared_user_id=-1,
+        shared_user_ids=[],
         extra_info={},
         action_order=6,
     )
@@ -2248,6 +2303,32 @@ def record_with_metadata():
     data = json_data("data/list_records/list_records_new_item_doira.json")
     return data
 
+@pytest.fixture()
+def record_restricted():
+    return json_data("data/list_records/list_records_restricted.json")
+
+@pytest.fixture()
+def terms(db):
+    """ admin_settings table """
+    settings = list()
+    settings.append(AdminSettings(id=1,name='items_display_settings',settings={"items_display_email": False, "items_search_author": "name", "item_display_open_date": False}))
+    settings.append(AdminSettings(id=2,name='storage_check_settings',settings={"day": 0, "cycle": "weekly", "threshold_rate": 80}))
+    settings.append(AdminSettings(id=3,name='site_license_mail_settings',settings={"auto_send_flag": False}))
+    settings.append(AdminSettings(id=4,name='default_properties_settings',settings={"show_flag": True}))
+    settings.append(AdminSettings(id=5,name='item_export_settings',settings={"allow_item_exporting": True, "enable_contents_exporting": True}))
+    settings.append(AdminSettings(id=6,name="restricted_access",
+                                  settings={"content_file_download": {"expiration_date": 30,"expiration_date_unlimited_chk": False,"download_limit": 10,"download_limit_unlimited_chk": False,},
+                                            "usage_report_workflow_access": {"expiration_date_access": 500,"expiration_date_access_unlimited_chk": False,},
+                                            "terms_and_conditions": [{"key": "168065611041",
+                                                                     "content": {"en":{"title": "Privacy Policy for WEKO3", "content": "Privacy Policy\nLast updated: April 05, 2023"}, 
+                                                                                 "ja":{"title": "利用規約", "content": "この利用規約（以下，「本規約」といいます。）"}}, 
+                                                                     "existed":True}]
+                                            }))
+    settings.append(AdminSettings(id=7,name="display_stats_settings",settings={"display_stats":False}))
+    settings.append(AdminSettings(id=8,name='convert_pdf_settings',settings={"path":"/tmp/file","pdf_ttl":1800}))
+    
+    db.session.add_all(settings)
+    db.session.commit()
 
 @pytest.fixture()
 def item_render():
@@ -2356,7 +2437,7 @@ def es_records(app, db, db_index, location, db_itemtype, db_oaischema):
                 "_deposit": {
                     "id": "{}".format(i),
                     "pid": {"type": "depid", "value": "{}".format(i), "revision_id": 0},
-                    "owner": "1",
+                    "owner": 1,
                     "owners": [1],
                     "status": "draft",
                     "created_by": 1,
@@ -2371,7 +2452,7 @@ def es_records(app, db, db_index, location, db_itemtype, db_oaischema):
                 "item_type_id": "1",
                 "publish_date": "2022-08-20",
                 "publish_status": "1",
-                "weko_shared_id": -1,
+                "weko_shared_ids": [],
                 "item_1617186331708": {
                     "attribute_name": "Title",
                     "attribute_value_mlt": [
@@ -2428,7 +2509,7 @@ def es_records(app, db, db_index, location, db_itemtype, db_oaischema):
                 "pid": {"type": "depid", "value": "{}".format(i), "revision_id": 0},
                 "lang": "ja",
                 "publish_status": "public",
-                "owner": "1",
+                "owner": 1,
                 "title": "title",
                 "owners": [1],
                 "item_type_id": 1,
@@ -2443,7 +2524,7 @@ def es_records(app, db, db_index, location, db_itemtype, db_oaischema):
                     "username": "",
                     "displayname": "",
                 },
-                "shared_user_id": -1,
+                "shared_user_ids": [],
                 "item_1617186331708": [
                     {"subitem_1551255647225": "タイトル", "subitem_1551255648112": "ja"},
                     {"subitem_1551255647225": "title", "subitem_1551255648112": "en"},
@@ -2796,7 +2877,7 @@ def make_record(db, indexer, i, filepath, filename, mimetype, doi_prefix=None):
             "sets": ["{}".format((i % 2) + 1)],
         },
         "path": ["{}".format((i % 2) + 1)],
-        "owner": "1",
+        "owner": 1,
         "recid": "{}".format(i),
         "title": [
             "ja_conference paperITEM00000009(public_open_access_open_access_simple)"
@@ -2814,7 +2895,7 @@ def make_record(db, indexer, i, filepath, filename, mimetype, doi_prefix=None):
         "item_type_id": "1",
         "publish_date": "2021-08-06",
         "publish_status": "0",
-        "weko_shared_id": -1,
+        "weko_shared_ids": [],
         "item_1617186331708": {
             "attribute_name": "Title",
             "attribute_value_mlt": [
@@ -3341,7 +3422,7 @@ def make_record(db, indexer, i, filepath, filename, mimetype, doi_prefix=None):
         "id": "{}".format(i),
         "pid": {"type": "recid", "value": "{}".format(i), "revision_id": 0},
         "path": ["{}".format((i % 2) + 1)],
-        "owner": "1",
+        "owner": 1,
         "title": "ja_conference paperITEM00000009(public_open_access_open_access_simple)",
         "owners": [1],
         "status": "draft",

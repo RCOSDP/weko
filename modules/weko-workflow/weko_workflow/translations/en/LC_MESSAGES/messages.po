@@ -596,14 +596,6 @@ msgstr "Next"
 msgid "Quit_identifier_grand"
 msgstr "Quit"
 
-#: weko_workflow/templates/weko_workflow/item_login_sucess.html:288
-msgid "Back"
-msgstr "Back"
-
-#: weko_workflow/templates/weko_workflow/item_login_sucess.html:295
-msgid "The activity is forcibly canceled because the workflow settings have changed and the next step was not found."
-msgstr ""
-
 msgid "The specified link has expired."
 msgstr ""
 
@@ -612,6 +604,18 @@ msgstr "Specify Property"
 
 msgid "Specify property"
 msgstr "Specify Property"
+
+msgid "Item registrant"
+msgstr "Item registrant"
+
+msgid "Guest User"
+msgstr ""
+
+msgid "Login User"
+msgstr ""
+
+msgid "Notification Email Setting"
+msgstr ""
 
 msgid "Approval Request Notification Email"
 msgstr ""

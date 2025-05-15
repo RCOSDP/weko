@@ -471,6 +471,44 @@
     </div><!-- /.modal-content -->
   </div><!-- /.modal-dialog -->
 </div><!-- /.modal -->
+{%-if mailcheckflag %}
+  <div class="modal fade" tabindex="-1" role="dialog" id="mailcheck_download_modal">
+    <div class="modal-dialog" role="document" style="display: table; width: 700px">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" id="close_btn" data-dismiss="modal"
+                    aria-label="Close"><span aria-hidden="true">&times;</span>
+            </button>
+            <h4 class="modal-title">{{ _('You must enter your email address to download the files below.') }}</h4>
+            <h4 class="modal-title">  {{_('File Name')}} :{{ onetime_file_name }}</h4>
+          </div>
+          <div class="modal-body">
+            <div class="form-group mail_form">
+              <label class="control-label"
+                    for="mail_form">{{ _('Email address') }}</label>
+              <input type="email" class="form-control" id="mail_form"
+                    aria-describedby="emailHelp"
+                    placeholder='{{ _("Email address") }}'>
+            </div>
+          </div>
+          <div class="modal-footer">
+                <button type="button" id="mailaddress_confirm_download" 
+                          class="btn btn-primary save-button">
+                  <span class="glyphicon glyphicon-check"></span>
+                {{ _('Send') }}
+                </button>
+                <button type="button" class="btn btn-info close-button"
+                      id="modal_close_btn" data-dismiss="modal">
+                  <span class="glyphicon glyphicon-remove"></span>
+                  {{ _('Cancel') }}
+                </button>
+            <input id= "url_element" type="hidden" data-onetime_file_url="{{ onetime_file_url }}">
+            <input id= "input_error_messsge" type="hidden" value="{{ _('Please input email address.') }}">
+          </div>
+        </div>
+    </div>
+  </div>
+{%- endif %}
 {% block css %}
 <style>
   #invenio-csl span.twitter-typeahead .tt-menu {
@@ -518,5 +556,12 @@
         $('#' + preview_id).click();
       }
     });
+    $(window).on('load', function () {
+    $("#mailcheck_download_modal").modal('toggle');
+     setTimeout(function () {
+       $("#mailcheck_download_modal").modal("show");
+    }, 0);
+    } 
+    );
   </script>
 {# {%- endblock javascript %} #}

@@ -194,6 +194,7 @@ msgid "OpenClose Close"
 msgstr "閉"
 
 #: weko_admin/templates/weko_admin/admin/facet_search_setting.html:64
+#, python-format
 msgid "DisplayNumber Validation1"
 msgstr "表示件数は1以上99以下の整数値で入力する必要があります。"
 
@@ -1464,6 +1465,12 @@ msgstr "AddThis ID"
 msgid "OGP Image"
 msgstr "OGPイメージ"
 
+#: weko_admin/templates/weko_admin/admin/site_license_send_mail_settings.html:37
+msgid ""
+"Please classify a check into the organization send a use of site license "
+"statistics eamil."
+msgstr ""
+
 #: weko_admin/templates/weko_admin/admin/site_license_send_mail_settings.html:42
 #, fuzzy
 msgid "Organization"
@@ -1651,6 +1658,9 @@ msgstr "本処理の実行にはかなりの時間がかかることが予想さ
 msgid "completed"
 msgstr "処理が完了しました。"
 
+msgid "restricted_error_message"
+msgstr "エラーメッセージ"
+
 #~ msgid "Title_Asc"
 #~ msgstr "タイトル（昇順）"
 
@@ -1768,15 +1778,9 @@ msgstr "処理が完了しました。"
 #~ msgid "Mail Address"
 #~ msgstr "メールアドレス"
 
-#~ msgid ""
-#~ "Please classify a check into the "
-#~ "organization send a use of site "
-#~ "license statistics eamil."
-#~ msgstr ""
 
 #~ msgid "Add_Agg"
 #~ msgstr "追加"
 
 #~ msgid "Facet Search List"
 #~ msgstr "ファセット検索一覧"
-
