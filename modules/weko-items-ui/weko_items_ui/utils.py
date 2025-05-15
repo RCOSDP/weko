@@ -5406,7 +5406,10 @@ def create_item_deleted_data(deposit, profile, target, url):
               - 'body' (str): The body of the email.
     """
     from weko_workflow.utils import load_template, fill_template
-    language = profile.language or "en"
+    language = (
+        profile.language if profile
+        else current_app.config.get("WEKO_WORKFLOW_MAIL_DEFAULT_LANGUAGE")
+    )
     timezone = profile.timezone or "UTC"
     registration_date = datetime.now(pytz.timezone(timezone))
 
@@ -5440,7 +5443,10 @@ def create_delete_request_data(activity, profile, target, url, actor):
             - 'body' (str): The body of the email.
     """
     from weko_workflow.utils import load_template, fill_template, convert_to_timezone
-    language = profile.language or "en"
+    language = (
+        profile.language if profile
+        else current_app.config.get("WEKO_WORKFLOW_MAIL_DEFAULT_LANGUAGE")
+    )
     timezone = profile.timezone or None
     submission_date = convert_to_timezone(activity.updated, timezone)
 
@@ -5476,7 +5482,10 @@ def create_delete_approved_data(deposit, profile, target, url, activity, approve
             - 'body' (str): The body of the email.
     """
     from weko_workflow.utils import load_template, fill_template, convert_to_timezone
-    language = profile.language or "en"
+    language = (
+        profile.language if profile
+        else current_app.config.get("WEKO_WORKFLOW_MAIL_DEFAULT_LANGUAGE")
+    )
     timezone = profile.timezone or "UTC"
     approval_date = convert_to_timezone(activity.updated, timezone)
     approver = User.query.filter_by(id=approver_id).one_or_none()
@@ -5513,7 +5522,10 @@ def create_direct_registered_data(deposit, profile, target, url):
             - 'body' (str): The body of the email.
     """
     from weko_workflow.utils import load_template, fill_template
-    language = profile.language or "en"
+    language = (
+        profile.language if profile
+        else current_app.config.get("WEKO_WORKFLOW_MAIL_DEFAULT_LANGUAGE")
+    )
     timezone = profile.timezone or "UTC"
     registration_date = datetime.now(pytz.timezone(timezone))
 
