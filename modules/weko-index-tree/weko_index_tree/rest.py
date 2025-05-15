@@ -1213,6 +1213,27 @@ class IndexManagementAPI(ContentNegotiatedMethodView):
                 }} if "contribute_group" in index_info else {})
             }
 
+            target_index = self.record_class.get_index(index_id)
+            parent = index_data.get("parent") if index_data.get("parent") is not None else target_index.parent
+            position = index_data.get("position") if index_data.get("position") is not None else target_index.position
+
+            if parent != target_index.parent or position != target_index.position:
+                # Move index if parent or position changed
+                arg_parent = parent if parent > 0 else "0"
+                arg_pre_parent = target_index.parent if target_index.parent > 0 else "0"
+                moved = self.record_class.move(
+                    index_id, pre_parent=arg_pre_parent,
+                    parent=arg_parent, position=position
+                )
+                index_data.pop("parent", None)
+                if not moved or not moved.get("is_ok"):
+                    current_app.logger.error(
+                        f"Failed to move index: {index_id}. {moved.get('msg')}"
+                    )
+                    raise InternalServerError(
+                        description=f"Internal Server Error: Failed to move index {index_id}."
+                    )
+
             updated_index = self.record_class.update(index_id, **index_data)
 
             if not updated_index:

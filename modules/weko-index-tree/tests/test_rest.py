@@ -1051,7 +1051,7 @@ class TestIndexManagementAPI:
             response = client_rest.put(url, headers=auth_headers_sysadmin, json=payload)
             assert response.status_code == 200
 
-            with patch("weko_index_tree.rest.can_user_access_index", return_value=False):
+            with patch("weko_index_tree.rest.can_admin_access_index", return_value=False):
                 url = "v1/tree/index/1740974554289"
                 response = client_rest.put(url, headers=auth_headers_sysadmin, json=payload)
                 assert response.status_code == 403
@@ -1079,6 +1079,34 @@ class TestIndexManagementAPI:
             with patch("weko_index_tree.rest.IndexManagementAPI.check_index_accessible", side_effect=PermissionError):
                 response = client_rest.put(url, headers=auth_headers_sysadmin, json=payload)
                 assert response.status_code == 403
+
+            # index move (child index)
+            payload_move = payload.copy()
+            payload_move["index"]["parent"] = 1740974499997
+            payload_move["index"]["position"] = 1
+            url = "v1/tree/index/1740974554289"
+
+            response = client_rest.put(url, headers=auth_headers_sysadmin, json=payload)
+            assert response.status_code == 200
+
+            # index move (root index)
+            payload_move["index"]["parent"] = 0
+            payload_move["index"]["position"] = 1
+
+            response = client_rest.put(url, headers=auth_headers_sysadmin, json=payload)
+            assert response.status_code == 200
+            
+            # index move exception
+            payload_move["index"]["parent"] = 1740974499997
+            payload_move["index"]["position"] = 0
+            
+            failed_result = {
+                "is_ok": False,
+                "msg": "Failed to move index.",
+            }
+            with patch("weko_index_tree.api.Indexes.move", return_value=failed_result):
+                response = client_rest.put(url, headers=auth_headers_sysadmin, json=payload_move)
+                assert response.status_code == 500
 
     def run_update_index_success(self, app, client_rest, auth_headers):
         """
