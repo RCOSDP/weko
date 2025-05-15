@@ -568,3 +568,6 @@ WEKO_WORKFLOW_REGISTRATION_FLOW_TYPE = 1
 
 WEKO_WORKFLOW_DELETION_FLOW_TYPE = 2
 """Deletion flow type"""
+
+WEKO_WORKFLOW_MAIL_DEFAULT_LANGUAGE = 'en'
+"""Default language for mail template"""

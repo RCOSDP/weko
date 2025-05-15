@@ -3038,7 +3038,10 @@ class WorkActivity(object):
                     continue
 
                 profile = profiles_dict.get(target.id)
-                language = profile.language if profile else None
+                language = (
+                    profile.language if profile
+                    else current_app.config.get("WEKO_WORKFLOW_MAIL_DEFAULT_LANGUAGE")
+                )
 
                 template = load_template(template_file, language)
                 data = data_callback(activity, target, profile)
