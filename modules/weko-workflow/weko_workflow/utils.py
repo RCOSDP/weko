@@ -1930,10 +1930,28 @@ def prepare_delete_workflow(post_activity, recid, deposit):
     rtn = activity.init_activity(
         post_activity, community, item_id
     )
+    activity_detail = activity.get_activity_detail(rtn.activity_id)
+    cur_action = activity_detail.action
     if rtn.action_id == 2:   # end_action
         from weko_records_ui.views import soft_delete
         soft_delete(recid.pid_value)
         activity.notify_about_activity(rtn.activity_id, "deleted")
+        activity.upt_activity_action_status(
+            activity_id=rtn.activity_id, 
+            action_id=rtn.action_id,
+            action_status=ActionStatusPolicy.ACTION_DONE,
+            action_order=rtn.action_order
+            )
+        act= dict(
+                activity_id=rtn.activity_id,
+                action_id=rtn.action_id,
+                action_version=cur_action.action_version,
+                action_status=ActionStatusPolicy.ACTION_DONE,
+                item_id=rtn.item_id,
+                action_order=rtn.action_order
+            )
+        
+        activity.end_activity(act)
 
     if rtn.action_id == 4:   # approval
         activity.notify_about_activity(rtn.activity_id, "deletion_request")
