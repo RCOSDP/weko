@@ -622,6 +622,17 @@ def put_object(recid):
             f"Item id does not match. item: {item.get('id')}, request: {recid}",
             ErrorType.BadRequest,
         )
+    if check_result.get("duplicate_check", False):
+        from weko_items_ui.utils import check_duplicate
+        result, list_id, list_url = check_duplicate(item["metadata"], is_item=True)
+        if result:
+            current_app.logger.error(
+                f"New item appears to be a duplicate: {list_id}"
+            )
+            raise WekoSwordserverException(
+                f"Some similar items are already registered: {list_url}.",
+                ErrorType.BadRequest,
+            )
 
     item["root_path"] = os.path.join(data_path, "data")
 
