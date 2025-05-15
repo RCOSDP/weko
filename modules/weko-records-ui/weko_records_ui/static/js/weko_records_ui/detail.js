@@ -99,6 +99,7 @@ require([
   $('#confirm_delete_button').on('click', function () {
     $('#confirm_delete').modal('hide');
     $('[role="alert"]').hide();
+    $('#btn_edit').attr("disabled", true);
     $('#btn_delete').attr("disabled", true);
     $('#btn_ver_delete').attr("disabled", true);
     $('[role="msg"]').css('display', 'inline-block');
@@ -151,6 +152,7 @@ require([
   $('#confirm_ver_delete_button').on('click', function () {
     $('#confirm_ver_delete').modal('hide');
     $('[role="alert"]').hide();
+    $('#btn_edit').attr("disabled", true);
     $('#btn_delete').attr("disabled", true);
     $('#btn_ver_delete').attr("disabled", true);
     $('[role="msg"]').css('display', 'inline-block');
