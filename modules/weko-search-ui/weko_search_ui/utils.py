@@ -1088,7 +1088,7 @@ def make_file_info(dir_path, filename, label=None, object_type=None):
         size_str = "{} B".format(size)
 
     format = mimetypes.guess_type(filename)[0]
-    
+
     file_info = {
         "filename": filename,
         "filesize": size_str,
@@ -1102,7 +1102,7 @@ def make_file_info(dir_path, filename, label=None, object_type=None):
         if file_info.get("url") is None:
             file_info["url"] = {}
         file_info["url"]["objectType"] = object_type
-    
+
     return file_info
 
 
@@ -2351,6 +2351,40 @@ def import_items_to_activity(item, request_info):
         error = str(ex)
 
     return url, recid, current_action, error
+
+
+def delete_items_with_activity(item_id, request_info):
+    """Delete items with activity.
+
+    Args:
+        item_id (str): Item ID.
+        request_info (dict): Request information.
+
+    Returns:
+        taple:
+            - url (str): URL for deletion.
+            - current_action (str): Current action.
+
+    Raises:
+        WekoWorkflowException: If any error occurs during deletion.
+    """
+    user_id=request_info.get("user_id")
+    community=request_info.get("community")
+    shared_id = request_info.get("shared_id")
+
+    try:
+        from weko_workflow.headless.activity import HeadlessActivity
+        headless = HeadlessActivity()
+        url = headless.init_activity(
+            user_id=user_id, community=community,
+            item_id=item_id, shared_id=shared_id, for_delete=True
+        )
+        current_action = headless.current_action
+    except WekoWorkflowException as ex:
+        traceback.print_exc()
+        raise
+
+    return url, current_action
 
 
 def handle_item_title(list_record):

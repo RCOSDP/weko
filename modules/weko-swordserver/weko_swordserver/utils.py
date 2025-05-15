@@ -27,8 +27,6 @@ from weko_search_ui.utils import (
     check_jsonld_import_items
 )
 from weko_workflow.api import WorkFlow as WorkFlows
-from weko_workflow.errors import WekoWorkflowException
-from weko_workflow.headless import HeadlessActivity
 
 from .api import SwordClient
 from .errors import ErrorType, WekoSwordserverException
@@ -396,36 +394,6 @@ def update_item_ids(list_record, new_id, old_id):
                 )
 
     return list_record
-
-
-def delete_items_with_activity(item_id, request_info):
-    """Delete items with activity.
-
-    Args:
-        item_id (str): Item ID.
-        request_info (dict): Request information.
-
-    Returns:
-        str: URL for deletion.
-
-    Raises:
-        WekoWorkflowException: If any error occurs during deletion.
-    """
-    user_id=request_info.get("user_id")
-    community=request_info.get("community")
-    shared_id = request_info.get("shared_id")
-
-    try:
-        headless = HeadlessActivity()
-        url = headless.init_activity(
-            user_id=user_id, community=community,
-            item_id=item_id, shared_id=shared_id, for_delete=True
-        )
-    except WekoWorkflowException as ex:
-        traceback.print_exc()
-        raise
-
-    return url
 
 
 def get_deletion_type(client_id):
