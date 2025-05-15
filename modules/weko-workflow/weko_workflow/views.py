@@ -1736,7 +1736,11 @@ def next_action(activity_id='0', action_id=0, json_data=None):
                     req=-1)
 
     if next_action_endpoint == "end_action"  and for_delete:
-        delete_item_id = current_pid.pid_value.split('.')[0]
+        parts = current_pid.pid_value.split('.')
+        if len(parts) > 1 and parts[1] != '0':
+            delete_item_id = "del_ver_{}".format(current_pid.pid_value)
+        else:
+            delete_item_id = parts[0]
         from weko_records_ui.views import soft_delete
         soft_delete(delete_item_id)
         if action_endpoint == "approval":
@@ -2218,8 +2222,14 @@ def cancel_action(activity_id='0', action_id=0):
                 res = ResponseMessageSchema().load({"code":-1, "msg":"can not get PersistIdentifier"})
                 return jsonify(res.data), 500
             cancel_item_id = pid.object_uuid
+    for_delete = activity_detail.flow_define.flow_type == WEKO_WORKFLOW_DELETION_FLOW_TYPE
+    cancel_record = None
     if cancel_item_id:
         cancel_record = WekoDeposit.get_record(cancel_item_id)
+    if (
+        cancel_record is None
+        or not (for_delete and not cancel_record.pid.pid_value.endswith('.0'))
+    ):
         try:
             with db.session.begin_nested():
                 if cancel_record:
