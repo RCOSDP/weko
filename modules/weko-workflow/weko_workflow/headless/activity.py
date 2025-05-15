@@ -296,8 +296,7 @@ class HeadlessActivity(WorkActivity):
                 self.item_registration(
                     params.get("metadata"), params.get("files"),
                     params.get("index"), params.get("comment"),
-                    params.get("non_extract"),
-                    params.get("workspace_register")
+                    params.get("non_extract")
                 )
             elif self.current_action == "item_link":
                 self.item_link(params.get("link_data"))
@@ -318,7 +317,7 @@ class HeadlessActivity(WorkActivity):
 
 
     def item_registration(
-            self, metadata, files=None, index=None, comment=None, non_extract=None, workspace_register=None):
+            self, metadata, files=None, index=None, comment=None, non_extract=None):
         """Manual action for item registration.
 
         Note:
@@ -343,14 +342,14 @@ class HeadlessActivity(WorkActivity):
             # it contains ""
             raise WekoWorkflowException(error)
 
-        self.recid = self._input_metadata(metadata, files, non_extract, workspace_register)
+        self.recid = self._input_metadata(metadata, files, non_extract)
         self._designate_index(index)
         self._comment(comment)
 
         return self.detail
 
 
-    def _input_metadata(self, metadata, files=None, non_extract=None, workspace_register=None):
+    def _input_metadata(self, metadata, files=None, non_extract=None):
         """input metadata."""
         locked_value = self._activity_lock()
 
@@ -408,7 +407,9 @@ class HeadlessActivity(WorkActivity):
                 record_data = {}
                 record_uuid = uuid.uuid4()
                 pid = current_pidstore.minters["weko_deposit_minter"](record_uuid, data=record_data)
-                self._deposit = WekoDeposit.create(record_data, id_=record_uuid, workflow_location_name=location_name)
+                self._deposit = WekoDeposit.create(record_data,
+                                                   id_=record_uuid,
+                                                   workflow_location_name=location_name)
                 self._model.item_id = record_uuid
 
             else:
@@ -458,32 +459,52 @@ class HeadlessActivity(WorkActivity):
                 metadata = {**_old_metadata, **metadata}
             # if metadata_replace is True, replace all metadata
 
-            data = {
-                "metainfo": metadata,
-                "files": [],
-                "endpoint": {
-                    "initialization": f"/api/deposits/redirect/{pid}",
-                }
-            }
-
             # TODO: update submited files and reuse other files
             if not self._files_inheritance:
-                data["files"] = self.files_info = self._upload_files(files)
+                self.files_info = self._upload_files(files)
             else:
                 _new_files = self._upload_files(files)
                 old_files_dict = {file["key"]: file for file in _old_files}
                 for new_file in _new_files:
                     old_files_dict[new_file["key"]] = new_file
-                data["files"] = self.files_info = list(old_files_dict.values())
+                self.files_info = list(old_files_dict.values())
 
             # to exclude from file text extraction
-            for file in data["files"]:
+            for file in self.files_info:
                 if isinstance(non_extract, list) and file["filename"] in non_extract:
                     file["non_extract"] = True
 
-            if workspace_register and data["files"]:
-                data_without_outer_list = data["files"][0]
-                data["files"] = data_without_outer_list
+            file_key_list = []
+            for key, value in metadata.items():
+                if not isinstance(value, list) or not len(value):
+                    continue
+                if isinstance(value[0], dict) and "filename" in value[0]:
+                    file_key_list.append(key)
+
+            for file_metadata, uploaded_file in (
+                (file_metadata, uploaded_file)
+                for file_key in file_key_list
+                for file_metadata in metadata[file_key]
+                for uploaded_file in self.files_info
+                if file_metadata["filename"] == uploaded_file["filename"]
+            ):
+                url_dict = file_metadata.get("url", {})
+                url_dict["url"] = "{}/record/{}/files/{}".format(
+                    current_app.config["THEME_SITEURL"],
+                    pid.pid_value,
+                    uploaded_file.get("filename")
+                )
+                file_metadata["url"]= url_dict
+                file_metadata["format"] = uploaded_file.get("mimetype")
+                file_metadata["version_id"] = uploaded_file.get("version_id")
+
+            data = {
+                "metainfo": metadata,
+                "files": self.files_info,
+                "endpoint": {
+                    "initialization": f"/api/deposits/redirect/{pid.pid_value}",
+                }
+            }
 
             data["endpoint"].update(base_factory(pid))
             self.upt_activity_metadata(self.activity_id, json.dumps(data))
@@ -572,7 +593,7 @@ class HeadlessActivity(WorkActivity):
                 "uri": False,
                 "multiple": False,
                 "progress": 100,
-                "cmonplete": True,
+                "complete": True,
                 "version_id": str(obj.version_id),
             }
 

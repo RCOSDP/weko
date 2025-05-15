@@ -3028,6 +3028,7 @@ class WorkActivity(object):
         """
         from .utils import send_mail, load_template, fill_template
 
+        send_count = 0
         for target in targets:
             try:
                 setting = settings_dict.get(target.id)
@@ -3045,13 +3046,17 @@ class WorkActivity(object):
                 mail_data = fill_template(template, data)
                 recipient = target.email
 
-                send_mail(mail_data.get("subject"), recipient, mail_data.get("body"))
+                res = send_mail(mail_data.get("subject"), recipient, mail_data.get("body"))
+
+                if res:
+                    send_count += 1
 
             except Exception as ex:
                 current_app.logger.error(
                     f"Unexpected error occurred during sending notification mail for activity: {activity.activity_id}"
                 )
                 traceback.print_exc()
+        return send_count
 
 
     def send_mail_item_registered(self, activity):
@@ -3136,10 +3141,10 @@ class WorkActivity(object):
             }
 
         template_file = 'email_nortification_item_registered_{language}.tpl'
-        self.send_notification_email(activity, targets, settings_dict, profiles_dict, template_file, item_registered_data)
+        send_count = self.send_notification_email(activity, targets, settings_dict, profiles_dict, template_file, item_registered_data)
         current_app.logger.info(
             "{num} mail(s) sent for item registered: {activity_id}"
-            .format(num=len(set_target_id), activity_id=activity.activity_id)
+            .format(num=send_count, activity_id=activity.activity_id)
         )
 
     def send_mail_request_approval(self, activity):
@@ -3179,7 +3184,10 @@ class WorkActivity(object):
                 ).one()
                 approval_action_role = None
                 for action in flow_detail.flow_actions:
-                    if action.action_id == approval_action.id:
+                    if (
+                        action.action_id == approval_action.id
+                        and action.action_order == activity.action_order + 1
+                    ):
                         approval_action_role = action.action_role
                         break
 

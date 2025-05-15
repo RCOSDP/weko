@@ -4138,19 +4138,6 @@ def check_duplicate(data, is_item=True):
     author_links = metadata.get("author_link", [])
     host = request.host
 
-    # Fallback: extract author_links from nameIdentifiers
-    if not author_links:
-        for key, value in metadata.items():
-            if "creator" in key and isinstance(value, list):
-                for entry in value:
-                    if isinstance(entry, dict):
-                        name_ids = entry.get("nameIdentifiers", [])
-                        for nid in name_ids:
-                            if isinstance(nid, dict):
-                                author_id = nid.get("nameIdentifier")
-                                if author_id:
-                                    author_links.append(author_id)
-
     # Extract other fields
     for key, value in metadata.items():
         if isinstance(value, dict) and "resourcetype" in value:
@@ -4175,7 +4162,6 @@ def check_duplicate(data, is_item=True):
             WHERE jsonb_path_exists(json, '$.**.subitem_identifier_uri ? (@ == "{identifier}")')
         """)
         result = db.session.execute(query).fetchall()
-        db.session.commit()
         if result:
             recid_list = [r[0] for r in result]
             return True, recid_list, [f"https://{host}/records/{r}" for r in recid_list]
@@ -4190,7 +4176,6 @@ def check_duplicate(data, is_item=True):
         WHERE jsonb_path_exists(json, '$.**.subitem_title')
     """)
     result = db.session.execute(query).fetchall()
-    db.session.commit()
 
     matched_recids = set()
     for recid, json_obj in result:
@@ -4215,7 +4200,6 @@ def check_duplicate(data, is_item=True):
         WHERE jsonb_path_exists(json, '$.**.resourcetype ? (@ == "{resource_type}")')
     """)
     result = db.session.execute(query).fetchall()
-    db.session.commit()
     recids_resource = {r[0] for r in result}
     matched_recids &= recids_resource
     matched_recids.discard(int(data.get("metainfo", {}).get("id") or 0))
@@ -4235,7 +4219,6 @@ def check_duplicate(data, is_item=True):
             AND jsonb_extract_path_text(json, 'authorIdInfo', '0', 'authorId') IN ({placeholders})
         """)
         result = db.session.execute(query, params).fetchall()
-        db.session.commit()
 
         author_names = set()
         for row in result:
@@ -4254,7 +4237,6 @@ def check_duplicate(data, is_item=True):
                 WHERE jsonb_path_exists(json, '$.**.creatorNames[*].creatorName')
             """)
             result = db.session.execute(query).fetchall()
-            db.session.commit()
             for recid, json_obj in result:
                 json_str = json.dumps(json_obj, ensure_ascii=False)
                 creators = re.findall(r'"creatorName"\s*:\s*"([^"]+)"', json_str)
@@ -4271,7 +4253,6 @@ def check_duplicate(data, is_item=True):
             WHERE jsonb_path_exists(json, '$.**.creatorNames[*].creatorName')
         """)
         result = db.session.execute(query).fetchall()
-        db.session.commit()
         for recid, json_obj in result:
             json_str = json.dumps(json_obj, ensure_ascii=False)
             creators = re.findall(r'"creatorName"\s*:\s*"([^"]+)"', json_str)
@@ -5283,7 +5264,10 @@ def get_notification_targets_approver(activity):
         ).one()
         approval_action_role = None
         for action in flow_detail.flow_actions:
-            if action.action_id == approval_action.id:
+            if (
+                action.action_id == approval_action.id
+                and action.action_order == activity.action_order + 1
+            ):
                 approval_action_role = action.action_role
                 break
 
@@ -5353,6 +5337,56 @@ def get_notification_targets_approver(activity):
         current_app.logger.exception("[get_notification_targets_approver] DB access failed")
         return dict()
 
+
+def get_notification_targets_approved(deposit, user_id, activity):
+    """
+    Retrieve notification targets for a given deposit and user.
+
+    Args:
+        deposit (dict): The deposit data containing information about owners
+                        and shared users.
+        user_id (int): The ID of the current user.
+        activity (Activity): The workflow activity instance.
+
+    Returns:
+        dict: A dictionary containing the following keys:
+            - "targets" (list): List of User objects who are the notification targets.
+            - "settings" (dict): A dictionary mapping user IDs to their notification settings.
+            - "profiles" (dict): A dictionary mapping user IDs to their user profiles.
+    """
+    owners = deposit.get("_deposit", {}).get("owners", [])
+    set_target_id = set(owners)
+    is_shared = deposit.get("weko_shared_id") != -1
+
+    actor_id = activity.activity_login_user
+    if actor_id:
+        set_target_id.add(actor_id)
+
+    if is_shared:
+        set_target_id.add(deposit.get("weko_shared_id"))
+    else:
+        set_target_id.discard(int(user_id))
+
+    target_ids = list(set_target_id)
+    current_app.logger.debug(f"[get_notification_targets_approved] target_ids: {target_ids}")
+
+    try:
+        targets = User.query.filter(User.id.in_(target_ids)).all()
+        settings = NotificationsUserSettings.query.filter(
+            NotificationsUserSettings.user_id.in_(target_ids)
+        ).all()
+        profiles = UserProfile.query.filter(
+            UserProfile.user_id.in_(target_ids)
+        ).all()
+
+        return {
+            "targets": targets,
+            "settings": {s.user_id: s for s in settings},
+            "profiles": {p.user_id: p for p in profiles}
+        }
+    except SQLAlchemyError:
+        current_app.logger.exception("[get_notification_targets_approved] DB access failed")
+        return dict()
 
 # --- メール本文生成関数 ---
 
@@ -5621,7 +5655,7 @@ def send_mail_delete_approved(pid_value, deposit, activity, user_id):
     record_url = request.host_url + f"records/{pid_value}"
     current_app.logger.debug(f"[send_mail_delete_approved] pid_value: {pid_value}, user_id: {user_id}")
     return send_mail_from_notification_info(
-        get_info_func=lambda obj: get_notification_targets(obj, user_id),
+        get_info_func=lambda obj: get_notification_targets_approved(obj, user_id, activity),
         context_obj=deposit,
         content_creator=lambda deposit, profile, target, url: create_delete_approved_data(deposit, profile, target, url, activity, user_id),
         record_url=record_url

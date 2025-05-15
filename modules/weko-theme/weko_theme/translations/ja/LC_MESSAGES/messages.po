@@ -794,7 +794,7 @@ msgstr "ワークフロー"
 
 #: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_WorkFlow_WorkSpaceWorkFlow Setting"
-msgstr "ワークスペースワークフロー設定"
+msgstr "ワークスペース設定"
 
 #: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_Communities_Community"

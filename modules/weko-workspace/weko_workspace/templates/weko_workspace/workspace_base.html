@@ -18,7 +18,8 @@
   # MA 02111-1307, USA.
   #}
 <!DOCTYPE html>
-<html lang="en">
+<html {% if html_css_classes %} class="{{ html_css_classes|join(' ') }}" {% endif %}
+  lang="{{ current_i18n.locale.language|safe }}" dir="{{ current_i18n.locale.text_direction }}">
   {%- block css %}
   {% assets "weko_theme_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
   {% assets "weko_theme_css_bootstrap" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
@@ -47,8 +48,10 @@
 
   <head>
     <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WEKO3</title>
+    {%- from "weko_theme/macros/site_info.html" import site_info %}
+    {{ site_info() }}
   </head>
   <body>
     {% include config.THEME_JAVASCRIPT_TEMPLATE %}

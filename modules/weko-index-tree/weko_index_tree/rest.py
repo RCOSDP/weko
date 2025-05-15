@@ -26,7 +26,7 @@ import json
 import time
 import traceback
 from functools import wraps
-from datetime import datetime, timezone, timedelta
+from datetime import date, datetime, timezone, timedelta
 
 from flask import (
     Blueprint, abort, current_app, jsonify, make_response,
@@ -931,6 +931,21 @@ class IndexManagementAPI(ContentNegotiatedMethodView):
 
     def get_v1(self, **kwargs):
         """Get index tree."""
+        
+        def json_serialize(obj):
+            """Serialize object to JSON.
+            
+            Args:
+                obj: The object to serialize.
+            
+            Returns:
+                str: The serialized JSON string.
+            """
+            if isinstance(obj, (datetime, date)):
+                return obj.strftime("%Y%m%d")
+            else:
+                return str(obj)
+        
         try:
             pid = kwargs.get('index_id')
 
@@ -1005,7 +1020,7 @@ class IndexManagementAPI(ContentNegotiatedMethodView):
             indent = 4 if request.args.get('pretty') == 'true' else None
 
             res = Response(
-                response=json.dumps(merged_tree, indent=indent),
+                response=json.dumps(merged_tree, indent=indent, default=json_serialize),
                 status=200,
                 content_type='application/json'
             )

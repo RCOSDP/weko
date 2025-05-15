@@ -1,6 +1,3 @@
-const ITEM_SAVE_URL = $("#item_save_uri").val();
-const ITEM_SAVE_FREQUENCY = $("#item_save_frequency").val();
-
 require([
   'jquery',
   'bootstrap'
@@ -478,8 +475,6 @@ function toObject(arr) {
 
   // Bootstrap it!
   angular.element(document).ready(function () {
-
-
     function WekoRecordsCtrl($scope, $rootScope, InvenioRecordsAPI, $filter) {
       $scope.currentUrl = window.location.pathname + window.location.search;
       $scope.resourceTypeKey = "";
@@ -533,9 +528,6 @@ function toObject(arr) {
       $scope.item_tile_key = "";
       $scope.corresponding_usage_data_type = {};
       $scope.original_title = {};
-      let saveTimer = setInterval(function () {
-        $scope.saveDataJsonCallback(ITEM_SAVE_URL, true)
-      }, ITEM_SAVE_FREQUENCY);
 
       $scope.listFileNeedRemoveAfterReplace = [];
       $scope.onBtnReplaceFileContentClick = function (fileKey) {
@@ -626,11 +618,8 @@ function toObject(arr) {
         if ($scope.filemeta_keys.length > 0) {
           return $scope.filemeta_keys;
         }
-        
         for (let key in $rootScope.recordsVM.invenioRecordsSchema.properties) {
           var value = $rootScope.recordsVM.invenioRecordsSchema.properties[key];
-          
-
           if (value.type == 'array') {
             let valueProperties = value.items.properties;
             if (valueProperties.hasOwnProperty('filename')) {
@@ -1293,21 +1282,6 @@ function toObject(arr) {
           }
         }
       }
-      $scope.translationsInstitutePosition = function (value) {
-          return $scope.findTextByElementId('institute_position_list', value)
-      };
-
-      $scope.translationsInstitutePositionByText = function (text) {
-          return $scope.findValueByElementId('institute_position_list', text)
-      };
-
-      $scope.translationsPosition = function (value) {
-          return $scope.findTextByElementId('position_list', value)
-      };
-
-      $scope.translationsPositionByText = function (text) {
-          return $scope.findValueByElementId('position_list', text)
-      };
 
       $scope.setFormReadOnly = function (key) {
         $rootScope["recordsVM"]["invenioRecordsForm"].forEach(function (item) {
@@ -1662,21 +1636,6 @@ function toObject(arr) {
         }
       }
 
-      $scope.autoFillInstitutionPosition = function () {
-        let key = 'subitem_restricted_access_institution_position';
-        let schemaProperties = $rootScope.recordsVM.invenioRecordsSchema.properties;
-        let formProperties = $rootScope.recordsVM.invenioRecordsForm;
-        //Get "Institution Position" from select html.
-        var enumData = [];
-        var options = document.getElementById('institute_position_list').options;
-        for (i=0; i< options.length; i++){
-          enumData.push([options[i].value, options[i].text]);
-        }
-        $scope.setEnumForSchemaByKey(key, schemaProperties, enumData);
-        $scope.setTitleMapForFormByKey(key, formProperties, enumData);
-        return true;
-      }
-
       // Auto fill for Usage Application
       $scope.autoFillUsageApplication = function () {
         let properties = [
@@ -2008,7 +1967,6 @@ function toObject(arr) {
         $scope.autoSetTitle();
         $scope.autoTitleData();
         $scope.updateNumFiles();
-        $scope.autoFillInstitutionPosition();
         let usage_type = $("#auto_fill_usage_data_usage_type").val();
         // Auto fill for Usage Application & Usage Report
         if (usage_type === 'Report') {
@@ -3662,29 +3620,36 @@ function toObject(arr) {
 
         const URL = "/workspace/workflow_registration";
         let recordModel = $rootScope["recordsVM"].invenioRecordsModel;
-        let index = $("#selected_indexs").text();
         let indexlist = [];
 
         $("#selected_indexs .list-group-item").each(function() {
           indexlist.push($(this).text().trim());
         });
+
+        let formData = new FormData();
         let requestData = {
           recordModel,
           indexlist: indexlist
         }
+        formData.append("requestData", JSON.stringify(requestData));
 
+        // add files
+        if ($rootScope.filesVM && $rootScope.filesVM.files) {
+          $rootScope.filesVM.files.forEach((file, index) => {
+            formData.append(`files[]`, file, file.name);
+          });
+        }
+        
         $.ajax({
           url: URL,
           method: "POST",
           async: false,
-          headers: {
-            "Content-Type": "application/json"
-          },
-          data: JSON.stringify(requestData),
-          dataType: "json",
+          data: formData,
+          processData: false, // FormDataをそのまま送信するためにfalse
+          contentType: false, // Content-Typeを自動設定
           success: function (data) {
               if (data.error) {
-                addAlert(data.msg, "alert-danger");
+                addAlert(data.error, "alert-danger");
                 result = false;
               } else if (!$.isEmptyObject(data.result)) {
                 $('#regist_confirm_modal').fadeIn();
@@ -3709,63 +3674,6 @@ function toObject(arr) {
         $(".lds-ring-background").addClass("hidden");
         $("#weko-records :button, #weko-records :input[type=button]").removeAttr("disabled");
       }
-
-
-      $scope.saveDataJsonCallback = function (item_save_uri, startLoading) {
-        $scope.unattachedSystemProperties();
-        var metainfo = { 'metainfo': $rootScope.recordsVM.invenioRecordsModel };
-        if (!angular.isUndefined($rootScope.filesVM)) {
-          this.updateFilenameFilesVM();
-          metainfo = angular.merge(
-            {},
-            metainfo,
-            {
-              'files': $rootScope.filesVM.files,
-              'endpoints': $rootScope.filesVM.invenioFilesEndpoints
-            }
-          );
-        }
-        var request = {
-          url: item_save_uri,
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          data: JSON.stringify(metainfo)
-        };
-        InvenioRecordsAPI.request(request).then(
-          function success(response) {
-            if (startLoading) {
-              $scope.endLoading();
-            }
-            //When save: date fields data is lost, so this will fill data.
-            let model = $rootScope.recordsVM.invenioRecordsModel;
-            CustomBSDatePicker.setDataFromFieldToModel(model, true);
-            message = response.data.msg
-            class_style = undefined
-            if (typeof message === 'undefined') {
-              class_style = 'alert-danger';
-              message = 'Your session has timed out. Please login again.';
-              clearInterval(saveTimer);
-            }
-            addAlert(message, class_style);
-          },
-          function error(response) {
-            if (startLoading) {
-              $scope.endLoading();
-            }
-            var modalcontent = response;
-            if (response.data.unauthorized) {
-              alert(response.data.error)
-              window.location.assign("/login/?next=" + window.location.pathname)
-            } else if (response.status == 400) {
-              window.location.reload();
-            }
-          }
-        );
-      }
-
-
 
       $scope.unattachedSystemProperties = function () {
         // Remove system file properties from metadata
