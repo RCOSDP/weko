@@ -1228,14 +1228,17 @@ class IndexManagementAPI(ContentNegotiatedMethodView):
                 }} if "contribute_group" in index_info else {})
             }
 
-            target_index = self.record_class.get_index(index_id)
-            parent = index_data.get("parent") if index_data.get("parent") is not None else target_index.parent
-            position = index_data.get("position") if index_data.get("position") is not None else target_index.position
+            source_index = self.record_class.get_index(index_id)
+            parent = index_data.get("parent") \
+                if index_data.get("parent") is not None else source_index.parent
+            position = index_data.get("position") \
+                if index_data.get("position") is not None else source_index.position
 
-            if parent != target_index.parent or position != target_index.position:
+            if parent != source_index.parent or position != source_index.position:
                 # Move index if parent or position changed
+                # Change int to string if parent is root node
                 arg_parent = parent if parent > 0 else "0"
-                arg_pre_parent = target_index.parent if target_index.parent > 0 else "0"
+                arg_pre_parent = source_index.parent if source_index.parent > 0 else "0"
                 moved = self.record_class.move(
                     index_id, pre_parent=arg_pre_parent,
                     parent=arg_parent, position=position
@@ -1245,8 +1248,8 @@ class IndexManagementAPI(ContentNegotiatedMethodView):
                     current_app.logger.error(
                         f"Failed to move index: {index_id}. {moved.get('msg')}"
                     )
-                    raise InternalServerError(
-                        description=f"Internal Server Error: Failed to move index {index_id}."
+                    raise IndexUpdatedRESTError(
+                        description=f"Failed to move index {index_id}: {moved.get('msg')}"
                     )
 
             updated_index = self.record_class.update(index_id, **index_data)
@@ -1267,7 +1270,12 @@ class IndexManagementAPI(ContentNegotiatedMethodView):
             raise InternalServerError(
                 description=f"Database Error: Failed to update index {index_id}."
             ) from ex
-
+        except IndexUpdatedRESTError as ex:
+            db.session.rollback()
+            current_app.logger.error(
+                f"Failed to update index: {index_id}. Index updated error.")
+            traceback.print_exc()
+            raise
         except Exception as ex:
             db.session.rollback()
             current_app.logger.error(

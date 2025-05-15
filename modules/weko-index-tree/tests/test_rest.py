@@ -1106,7 +1106,7 @@ class TestIndexManagementAPI:
             }
             with patch("weko_index_tree.api.Indexes.move", return_value=failed_result):
                 response = client_rest.put(url, headers=auth_headers_sysadmin, json=payload_move)
-                assert response.status_code == 500
+                assert response.status_code == 400
 
     def run_update_index_success(self, app, client_rest, auth_headers):
         """
