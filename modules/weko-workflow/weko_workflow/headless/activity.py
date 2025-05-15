@@ -182,7 +182,8 @@ class HeadlessActivity(WorkActivity):
             if self._model is None:
                 current_app.logger.error(f"activity({activity_id}) is not found.")
                 raise WekoWorkflowException(f"activity({activity_id}) is not found.")
-
+            self.workflow = self._model.workflow
+            self.item_type = ItemTypes.get_by_id(self.workflow.itemtype_id)
             # check user permission
             user = User.query.get(user_id)
             if (
@@ -386,6 +387,9 @@ class HeadlessActivity(WorkActivity):
             title, _ = get_data_by_property(metadata, item_map, title_value_key)
             weko_shared_id = metadata.get("weko_shared_id", -1)
             shared_user_id = metadata.get("shared_user_id", -1)
+            identifierRegistration_key = item_map.get(
+                "identifierRegistration.@attributes.identifierType", ""
+            ).split(".")[0]
 
             self.update_activity(self.activity_id, {
                 "title": title[0] if title else "",
@@ -449,7 +453,7 @@ class HeadlessActivity(WorkActivity):
                 ).first()
 
                 # get old metadata by record_uuid
-                _old_metadata = ItemsMetadata.get_by_object_id(record_uuid).json
+                _old_metadata = self._deposit.item_metadata
                 _old_files = to_files_js(self._deposit)
 
             db.session.commit()
@@ -458,6 +462,16 @@ class HeadlessActivity(WorkActivity):
                 # update old metadata partially
                 metadata = {**_old_metadata, **metadata}
             # if metadata_replace is True, replace all metadata
+
+            deleted_items = metadata.get("deleted_items") or []
+            item_type_render = self.item_type.render
+            for metadata_id in item_type_render["table_row"]:
+                # ignore Identifier Regstration (Import hasn't withdraw DOI)
+                if metadata_id == identifierRegistration_key:
+                    continue
+                if metadata_id not in metadata:
+                    deleted_items.append(metadata_id)
+            metadata["deleted_items"] = deleted_items
 
             # TODO: update submited files and reuse other files
             if not self._files_inheritance:
