@@ -524,38 +524,47 @@ class WorkFlow(object):
                 is_deleted=True).order_by(asc(_WorkFlow.flows_id))
             return query.all()
 
-    def get_workflow_detail(self, workflow_id):
-        """Get workflow detail info.
+    def get_workflow_detail(self, flow_id):
+        """Get workflow detail info by flow id.
 
-        :param workflow_id:
-        :return:
+        Args:
+            flow_id (str): flow id.
+
+        Returns:
+            WorkFlow: workflow model object.
         """
         with db.session.no_autoflush:
             query = _WorkFlow.query.filter_by(
-                flows_id=workflow_id)
+                flows_id=flow_id)
             return query.one_or_none()
 
     def get_workflow_by_id(self, workflow_id):
         """Get workflow detail info by workflow id.
 
-        :param workflow_id:
-        :return:
+        Args:
+            workflow_id (str): workflow id.
+
+        Returns:
+            WorkFlow: workflow model object.
         """
         with db.session.no_autoflush:
-            query = _WorkFlow.query.filter_by(
-                id=workflow_id)
-            return query.one_or_none()
+            obj = _WorkFlow.query.filter_by(
+                id=workflow_id).one_or_none()
+        return obj if isinstance(obj, _WorkFlow) else None
 
     @staticmethod
     def get_workflow_by_ids(ids: list):
-        """Get workflow detail info by workflow id.
+        """Get workflow detail info by list of workflow id.
 
-        :param ids:
-        :return:
+        Args:
+            ids (list): list of workflow id.
+
+        Returns:
+            list: workflow model object list.
         """
         with db.session.no_autoflush:
             query = _WorkFlow.query.filter(_WorkFlow.id.in_(ids))
-            return query.all()
+            return [obj for obj in query.all() if isinstance(obj, _WorkFlow)]
 
     def get_workflow_by_flows_id(self, flows_id):
         """Get workflow detail info by flows id.

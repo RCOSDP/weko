@@ -71,14 +71,14 @@ class HeadlessActivity(WorkActivity):
     http://weko3.example.org/workflow/activity/detail/A-EXAMPLE-0001 end_action 1
     """
     def __init__(
-            self, _lock_skip=True,
+            self, _lock_skip=False,
             _metadata_inheritance=False, _files_inheritance=False
         ):
         """Initialize.
 
         Args:
-            _lock_skip (bool, optional): Defaults to True.
-                If True, skips the user and activity lock/unlock process.
+            _lock_skip (bool, optional): Defaults to False.
+                If True, skips the activity lock/unlock process.
             _metadata_inheritance (bool, optional): Defaults to True.
                 If True, inherits metadata from the previous version.
                 If False, replaces all metadata.
