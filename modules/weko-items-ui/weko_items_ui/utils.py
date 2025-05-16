@@ -5410,7 +5410,7 @@ def create_item_deleted_data(deposit, profile, target, url):
         profile.language if profile
         else current_app.config.get("WEKO_WORKFLOW_MAIL_DEFAULT_LANGUAGE")
     )
-    timezone = profile.timezone or "UTC"
+    timezone = profile.timezone if profile else "UTC"
     registration_date = datetime.now(pytz.timezone(timezone))
 
     template_file = 'email_notification_item_deleted_{language}.tpl'
@@ -5418,7 +5418,7 @@ def create_item_deleted_data(deposit, profile, target, url):
 
     data = {
         "item_title": deposit.get("item_title", ""),
-        "submitter_name": profile.username or target.email,
+        "submitter_name": profile.username if profile else target.email,
         "registration_date": registration_date.strftime("%Y-%m-%d %H:%M:%S"),
         "record_url": url
     }
@@ -5447,14 +5447,14 @@ def create_delete_request_data(activity, profile, target, url, actor):
         profile.language if profile
         else current_app.config.get("WEKO_WORKFLOW_MAIL_DEFAULT_LANGUAGE")
     )
-    timezone = profile.timezone or None
+    timezone = profile.timezone if profile else None
     submission_date = convert_to_timezone(activity.updated, timezone)
 
     template_file = 'email_notification_delete_request_{language}.tpl'
     template = load_template(template_file, language)
 
     data = {
-        "approver_name": profile.username or target.email,
+        "approver_name": profile.username if profile else target.email,
         "item_title": activity.title,
         "submitter_name": actor.get("name") or actor.get("email"),
         "submission_date": submission_date.strftime("%Y-%m-%d %H:%M:%S"),
@@ -5486,7 +5486,7 @@ def create_delete_approved_data(deposit, profile, target, url, activity, approve
         profile.language if profile
         else current_app.config.get("WEKO_WORKFLOW_MAIL_DEFAULT_LANGUAGE")
     )
-    timezone = profile.timezone or "UTC"
+    timezone = profile.timezone if profile else "UTC"
     approval_date = convert_to_timezone(activity.updated, timezone)
     approver = User.query.filter_by(id=approver_id).one_or_none()
     approver_profile = UserProfile.get_by_userid(approver_id)
@@ -5497,8 +5497,8 @@ def create_delete_approved_data(deposit, profile, target, url, activity, approve
 
     data = {
         "item_title": deposit.get("item_title", "") or activity.title,
-        "submitter_name": profile.username or target.email,
-        "approver_name": approver_name or approver.email,
+        "submitter_name": profile.username if profile else target.email,
+        "approver_name": approver_name or (approver.email if approver else ""),
         "approval_date": approval_date.strftime("%Y-%m-%d %H:%M:%S"),
         "record_url": url
     }
@@ -5526,7 +5526,7 @@ def create_direct_registered_data(deposit, profile, target, url):
         profile.language if profile
         else current_app.config.get("WEKO_WORKFLOW_MAIL_DEFAULT_LANGUAGE")
     )
-    timezone = profile.timezone or "UTC"
+    timezone = profile.timezone if profile else "UTC"
     registration_date = datetime.now(pytz.timezone(timezone))
 
     template_file = 'email_nortification_item_registered_{language}.tpl'
@@ -5534,7 +5534,7 @@ def create_direct_registered_data(deposit, profile, target, url):
 
     data = {
         "item_title": deposit.get("item_title", ""),
-        "submitter_name": profile.username or target.email,
+        "submitter_name": profile.username if profile else target.email,
         "registration_date": registration_date.strftime("%Y-%m-%d %H:%M:%S"),
         "record_url": url
     }
