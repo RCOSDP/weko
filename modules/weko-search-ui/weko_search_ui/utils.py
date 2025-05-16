@@ -2381,7 +2381,6 @@ def delete_items_with_activity(item_id, request_info):
         )
         current_action = headless.current_action
     except WekoWorkflowException as ex:
-        traceback.print_exc()
         raise
 
     return url, current_action

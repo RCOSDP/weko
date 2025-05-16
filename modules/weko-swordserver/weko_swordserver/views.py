@@ -37,11 +37,12 @@ from weko_deposit.api import WekoRecord
 from weko_items_ui.scopes import item_create_scope, item_update_scope, item_delete_scope
 from weko_items_ui.utils import send_mail_direct_registered, send_mail_item_deleted
 from weko_notifications.utils import notify_item_imported, notify_item_deleted
-from weko_records_ui.utils import get_record_permalink, soft_delete
+from weko_records_ui.utils import get_record_permalink
 from weko_search_ui.utils import (
     import_items_to_system, import_items_to_activity,
     delete_items_with_activity
 )
+from weko_workflow.errors import WekoWorkflowException
 from weko_workflow.utils import get_site_info_name
 from weko_workflow.scopes import activity_scope
 
@@ -52,9 +53,10 @@ from .utils import (
     check_import_file_format,
     is_valid_file_hash,
     check_import_items,
-    get_deletion_type,
+    check_deletion_type,
     update_item_ids,
-    get_shared_id_from_on_behalf_of
+    get_shared_id_from_on_behalf_of,
+    delete_item_directly
 )
 from weko_accounts.utils import limiter
 
@@ -939,9 +941,14 @@ def delete_object(recid):
     on_behalf_of = request.headers.get("On-Behalf-Of")
     shared_id = get_shared_id_from_on_behalf_of(on_behalf_of)
     client_id = request.oauth.client.client_id
-    check_result = get_deletion_type(client_id)
+    check_result = check_deletion_type(client_id)
 
     deletion_type = check_result.get("deletion_type")
+    if deletion_type == "Workflow":
+        required_scopes = set([activity_scope.id])
+        token_scopes = set(request.oauth.access_token.scopes)
+        if not required_scopes.issubset(token_scopes):
+            abort(403)
 
     owner = -1
     if current_user.is_authenticated:
@@ -956,39 +963,39 @@ def delete_object(recid):
     }
 
     response = {}
-    if deletion_type == "Workflow":
-        required_scopes = set([activity_scope.id])
-        token_scopes = set(request.oauth.access_token.scopes)
-        if not required_scopes.issubset(token_scopes):
-            abort(403)
-
-        try:
+    try:
+        if deletion_type == "Workflow":
             url, current_action = delete_items_with_activity(
                 recid, request_info=request_info
             )
-        except Exception as ex:
-            current_app.logger.error(
-                f"Failed to delete item with activity: {str(ex)}"
-            )
-            raise WekoSwordserverException(
-                f"Failed to delete item: {str(ex)}",
-                ErrorType.BadRequest
-            )
-
-        if current_action == "approval":
-            response = Response(status=202, headers={"Location": url})
+            if current_action == "approval":
+                response = Response(status=202, headers={"Location": url})
+            else:
+                response = jsonify(status=204)
         else:
-            response = jsonify(status=204)
-    else:
-        soft_delete(recid)
-        notify_item_deleted(
-            current_user.id, recid, current_user.id, shared_id=shared_id
-        )
-        send_mail_item_deleted(recid, record, current_user.id)
-        current_app.logger.info(
-            f"Item deleted by sword from {request.oauth.client.name} (recid={recid})"
-        )
-        response = Response(status=204)
+            delete_item_directly(recid, request_info=request_info)
+            notify_item_deleted(
+                current_user.id, recid, current_user.id, shared_id=shared_id
+            )
+            send_mail_item_deleted(recid, record, current_user.id)
+            current_app.logger.info(
+                f"Item deleted by sword from {request.oauth.client.name} (recid={recid})"
+            )
+            response = Response(status=204)
+    except WekoSwordserverException as ex:
+        traceback.print_exc()
+        raise
+    except WekoWorkflowException as ex:
+        traceback.print_exc()
+        raise WekoSwordserverException(
+            f"Failed to delete item: {str(ex)}",
+            ErrorType.BadRequest
+        ) from ex
+    except Exception as ex:
+        msg = f"Unexpected error occurred during deletion: {ex}"
+        current_app.logger.error(msg)
+        traceback.print_exc()
+        raise WekoSwordserverException(msg, ErrorType.BadRequest)
 
     return response
 
