@@ -97,18 +97,17 @@ def list_records(
     requests.packages.urllib3.disable_warnings()
     requests.packages.urllib3.util.ssl_.DEFAULT_CIPHERS += 'HIGH:!DH:!aNULL'
 
-    if resumption_token is not None:
-        from_date = None
-        until_date = None
-
-    payload = {
-        'verb': 'ListRecords',
-        'from': from_date,
-        'until': until_date,
-        'metadataPrefix': metadata_prefix,
-        'set': setspecs}
-    if resumption_token:
-        payload['resumptionToken'] = resumption_token
+    if resumption_token is None:
+        payload = {
+            'verb': 'ListRecords',
+            'from': from_date,
+            'until': until_date,
+            'metadataPrefix': metadata_prefix,
+            'set': setspecs}
+    else:
+        payload = {
+            'verb': 'ListRecords',
+            'resumptionToken': resumption_token}
     records = []
     rtoken = None
 
@@ -121,9 +120,7 @@ def list_records(
         response = s.get(url, params=payload,
                          verify=OAIHARVESTER_VERIFY_TLS_CERTIFICATE)
 
-    # response = requests.get(url, params=payload,
-    #                        verify=OAIHARVESTER_VERIFY_TLS_CERTIFICATE)
-
+    response.raise_for_status()
     et = etree.XML(response.text.encode(encoding))
     records = records + et.findall('./ListRecords/record', namespaces=et.nsmap)
     resumptionToken = et.find(
