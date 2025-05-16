@@ -29,6 +29,7 @@ from flask_babelex import gettext as _
 from invenio_cache import current_cache
 from invenio_db import db
 from invenio_pidstore.models import PersistentIdentifier
+from jsonschema import validate, ValidationError
 from lxml import etree
 from weko_admin.utils import get_current_api_certification
 from weko_records.api import ItemTypes, Mapping
@@ -341,7 +342,7 @@ def get_crossref_record_data(pid, doi, item_type_id):
             get_autofill_key_tree(
                 items.form,
                 get_crossref_autofill_item(item_type_id)))
-        result = build_record_model(autofill_key_tree, api_data)
+        result = build_record_model(autofill_key_tree, api_data, items.schema)
     return result
 
 
@@ -365,7 +366,7 @@ def get_cinii_record_data(naid, item_type_id):
     elif items.form is not None:
         autofill_key_tree = get_autofill_key_tree(
             items.form, get_cinii_autofill_item(item_type_id))
-        result = build_record_model(autofill_key_tree, api_data)
+        result = build_record_model(autofill_key_tree, api_data, items.schema)
     return result
 
 
@@ -1144,7 +1145,7 @@ def get_specific_key_path(des_key, form):
     return existed, path_result
 
 
-def build_record_model(item_autofill_key, api_data):
+def build_record_model(item_autofill_key, api_data, schema=None):
     """Build record record_model.
 
     :param item_autofill_key: Item auto-fill key
@@ -1152,7 +1153,7 @@ def build_record_model(item_autofill_key, api_data):
     :return: Record model list
     """
     def _build_record_model(_api_data, _item_autofill_key, _record_model_lst,
-                            _filled_key):
+                            _filled_key, _schema):
         """Build record model.
 
         @param _api_data: Api data
@@ -1169,11 +1170,11 @@ def build_record_model(item_autofill_key, api_data):
             elif isinstance(v, list):
                 for mapping_data in v:
                     _build_record_model(_api_data, mapping_data,
-                                        _record_model_lst, _filled_key)
+                                        _record_model_lst, _filled_key, _schema)
             record_model = {}
             for key, value in data_model.items():
                 merge_dict(record_model, value)
-            new_record_model = fill_data(record_model, api_autofill_data)
+            new_record_model = fill_data(record_model, api_autofill_data, _schema)
             if new_record_model:
                 _record_model_lst.append(new_record_model)
                 _filled_key.append(k)
@@ -1183,7 +1184,7 @@ def build_record_model(item_autofill_key, api_data):
     if not api_data or not item_autofill_key:
         return record_model_lst
     _build_record_model(api_data, item_autofill_key, record_model_lst,
-                        filled_key)
+                        filled_key, schema)
 
     return record_model_lst
 
@@ -1283,7 +1284,7 @@ def deepcopy(original_object, new_object):
         return
 
 
-def fill_data(form_model, autofill_data):
+def fill_data(form_model, autofill_data, schema=None):
     """Fill data to form model.
 
     @param form_model: the form model.
@@ -1292,8 +1293,26 @@ def fill_data(form_model, autofill_data):
     """
     result = {} if isinstance(form_model, dict) else []
     is_multiple_data = is_multiple(form_model, autofill_data)
+
+    def validate_data(data, sub_schema):
+        if sub_schema is None:
+            return True
+        try:
+            current_app.logger.debug("Validating data: %s against schema: %s", data, sub_schema)
+            validate(instance=data, schema=sub_schema)
+            return True
+        except ValidationError as e:
+            current_app.logger.debug(f"Validation failed: {e.message}")
+            return False
+
     if isinstance(autofill_data, list):
         key = list(form_model.keys())[0] if len(form_model) != 0 else None
+        item_schema = None
+        if schema:
+            sub_schema = get_subschema(schema, key)
+            if sub_schema and sub_schema.get("type") == "array":
+                item_schema = sub_schema.get("items")
+
         if is_multiple_data or (not is_multiple_data and isinstance(form_model.get(key),list)):
             model_clone = {}
             deepcopy(form_model[key][0], model_clone)
@@ -1301,25 +1320,51 @@ def fill_data(form_model, autofill_data):
             for data in autofill_data:
                 model = {}
                 deepcopy(model_clone, model)
-                new_model = fill_data(model, data)
+                new_model = fill_data(model, data, item_schema)
                 result[key].append(new_model.copy())
         else:
-            result = fill_data(form_model, autofill_data[0])
+            result = fill_data(form_model, autofill_data[0], item_schema)
     elif isinstance(autofill_data, dict):
         if isinstance(form_model, dict):
             for k, v in form_model.items():
+                subschema = get_subschema(schema, k)
                 if isinstance(v, str):
-                    result[k] = autofill_data.get(v,'')
+                    value = autofill_data.get(v, '')
+                    if not validate_data(value, subschema):
+                        continue
+                    result[k] = value
                 else:
-                    new_v = fill_data(v, autofill_data)
+                    new_v = fill_data(v, autofill_data, subschema)
                     result[k] = new_v
         elif isinstance(form_model, list):
             for v in form_model:
-                new_v = fill_data(v, autofill_data)
+                new_v = fill_data(v, autofill_data, schema)
                 result.append(new_v)
     else:
         return
     return result
+
+
+def get_subschema(schema, key):
+    """Get sub schema.
+
+    Args:
+        schema (dict): The schema to search in.
+        key (str): The key to search for.
+    Returns:
+        dict: The sub schema if found, otherwise None.
+    """
+    if not schema:
+        return None
+
+    if schema.get("type") == "object" and "properties" in schema:
+        return schema["properties"].get(key)
+
+    if schema.get("type") == "array" and "items" in schema:
+        return get_subschema(schema["items"], key)
+
+    return None
+
 
 def is_multiple(form_model, autofill_data):
     """Check form model.
