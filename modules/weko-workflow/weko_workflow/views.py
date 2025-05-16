@@ -1776,6 +1776,8 @@ def next_action(activity_id='0', action_id=0, json_data=None):
         activity.update(
             action_status=ActionStatusPolicy.ACTION_THROWN_OUT
         )
+        work_activity.notify_about_activity(activity_id, "deletion_rejected")
+
         last_flow_action = flow.get_last_flow_action(
             activity_detail.flow_define.flow_id)
         next_action_endpoint = last_flow_action.action.action_endpoint
