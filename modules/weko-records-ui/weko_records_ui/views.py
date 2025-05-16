@@ -1020,6 +1020,7 @@ def soft_delete(recid):
         starts_with_del_ver = True
         if recid.startswith('del_ver_'):
             recid = recid.replace('del_ver_', '')
+            current_app.logger.info(f"Delete version: {recid}")
             delete_version(recid)
         else:
             soft_delete_imp(recid)

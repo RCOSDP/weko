@@ -1946,20 +1946,19 @@ def prepare_delete_workflow(post_activity, recid, deposit):
         soft_delete(del_value)
         activity.notify_about_activity(rtn.activity_id, "deleted")
         activity.upt_activity_action_status(
-            activity_id=rtn.activity_id, 
+            activity_id=rtn.activity_id,
             action_id=rtn.action_id,
             action_status=ActionStatusPolicy.ACTION_DONE,
             action_order=rtn.action_order
             )
-        act= dict(
-                activity_id=rtn.activity_id,
-                action_id=rtn.action_id,
-                action_version=cur_action.action_version,
-                action_status=ActionStatusPolicy.ACTION_DONE,
-                item_id=rtn.item_id,
-                action_order=rtn.action_order
-            )
-        
+        act = {
+            'activity_id': rtn.activity_id,
+            'action_id': rtn.action_id,
+            'action_version': cur_action.action_version,
+            'action_status': ActionStatusPolicy.ACTION_DONE,
+            'item_id': item_id,
+            'action_order': rtn.action_order
+        }
         activity.end_activity(act)
 
     if rtn.action_id == 4:   # approval
