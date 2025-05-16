@@ -262,6 +262,12 @@ msgstr ""
 msgid "Unapproved Items Exit."
 msgstr ""
 
+msgid "Item type mismatch"
+msgstr ""
+
+msgid "The workflow has been deleted"
+msgstr ""
+
 #: weko_admin/admin.py:2210 weko_admin/admin.py:2237 weko_admin/admin.py:2246
 #: weko_admin/admin.py:2255 weko_admin/admin.py:2264 weko_admin/admin.py:2273
 #: weko_admin/admin.py:2282 weko_admin/admin.py:2291 weko_admin/admin.py:2309

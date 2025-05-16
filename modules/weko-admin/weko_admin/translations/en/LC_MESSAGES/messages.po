@@ -266,6 +266,14 @@ msgstr ""
 "There are unapproved items in the workflow using this application. Until "
 "all are approved, no changes can be made to the configuration."
 
+msgid "Item type mismatch"
+msgstr ""
+"The item type set in the workflow does not match the item type in the "
+"mapping definition. Please select again."
+
+msgid "The workflow has been deleted"
+msgstr "The workflow has been deleted, please select it again."
+
 #: weko_admin/admin.py:2210 weko_admin/admin.py:2237 weko_admin/admin.py:2246
 #: weko_admin/admin.py:2255 weko_admin/admin.py:2264 weko_admin/admin.py:2273
 #: weko_admin/admin.py:2282 weko_admin/admin.py:2291 weko_admin/admin.py:2309

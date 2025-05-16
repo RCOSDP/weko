@@ -92,12 +92,16 @@ const item_required_alert = document.getElementById('items_required_alert').valu
 const workflow_deleted_alert = document.getElementById('workflow_deleted_alert').value;
 const registration_type_value = document.getElementById('registration_type_value').value;
 const workflow_value = document.getElementById('workflow_value').value;
-const deleted_workflows_name = JSON.parse(document.getElementById('deleted_workflows_name').value);
+const deleted_workflows_name_dict = JSON.parse(document.getElementById('deleted_workflows_name_dict').value);
 const jsonld_mappings = JSON.parse(document.getElementById('jsonld_mappings').value);
 const current_page_type = document.getElementById('current_page_type').value;
 const current_model_json = JSON.parse(document.getElementById('current_model_json').value);
 const can_edit = document.getElementById('can_edit').value;
 const item_type_names = JSON.parse(document.getElementById('item_type_names').value);
+const Unapproved_Items_Exit = document.getElementById('Unapproved_Items_Exit').value;
+const Item_Type = document.getElementById('Item_Type').value;
+const Item_type_mismatch = document.getElementById('Item_type_mismatch').value;
+const The_workflow_has_been_deleted = document.getElementById('The_workflow_has_been_deleted').value;
 let check_integrity_result = false;
 
 /** close ErrorMessage area */
@@ -125,9 +129,12 @@ function componentDidMount() {
 
 function isDeletedWorkflow(value){
   let is_deleted = false;
-  let keys = Object.keys(deleted_workflows_name)
-  if(keys.includes(value)){
-    is_deleted = true;
+  let keys = Object.keys(deleted_workflows_name_dict);
+  if (!isEmpty(value)) {
+    value = String(value);
+    if(keys.includes(value)){
+      is_deleted = true;
+    }
   }
   return is_deleted;
 }
@@ -163,7 +170,7 @@ function changeRegistrationType(value) {
     if (isDeletedWorkflow('workflow_current')) {
       workflowOption.value = 'deleted_workflow';
       workflowOption.textContent =
-        deleted_workflows_name['workflow_current'] + '(削除済みワークフロー)';
+        deleted_workflows_name_dict['workflow_current'] + '(削除済みワークフロー)';
       workflowOption.selected = true;
       workflowOption.setAttribute('hidden', 'hidden');
       workflowMenu.appendChild(workflowOption);
@@ -222,12 +229,12 @@ function handleMappingChange() {
       .then(result => {
         if (result.results) {
           $('#mapping-check').empty();
-          $('#mapping-check').append('Item type : ' + item_type_name + '<span class="text-success">✓</span>');
+          $('#mapping-check').append(Item_Type + ' : ' + item_type_name + '<span class="text-success">✓</span>');
           check_integrity_result = true;
           save_button_state_change();
         } else {
           $('#mapping-check').empty();
-          $('#mapping-check').append('Item type:' + item_type_name + '<span class="text-danger">✘</span>');
+          $('#mapping-check').append(Item_Type + ':' + item_type_name + '<span class="text-danger">✘</span>');
           check_integrity_result = false;
           save_button_state_change()
         }
@@ -250,13 +257,19 @@ $('#workflow').change(function(){
   // mapping set
   const selectedOption = $(this).find('option:selected');
   const select_item_type_id = selectedOption.data('itemtype');
+  const mapping_selectedOption = $('#mapping').find('option:selected');
+  const mapping_selectedValue = mapping_selectedOption.val();
+
   $('#mapping').children().remove();
   $('#mapping').append($('<option>').html("").val(""));
   for (let i = 0; i < jsonld_mappings.length; i++){
     if (jsonld_mappings[i]['item_type_id'] === select_item_type_id) {
-      $('#mapping').append($('<option>').html(jsonld_mappings[i]['name']).val(jsonld_mappings[i]['id']));
+      $('#mapping').append($('<option>')
+      .html(jsonld_mappings[i]['name']).val(jsonld_mappings[i]['id']));
     }
   }
+  $('#mapping').find(`option[value="${mapping_selectedValue}"]`).prop('selected', true);
+  handleMappingChange()
 
   // save button enable
   $('#mapping-check').empty();
@@ -283,8 +296,10 @@ function checke_save_button_enable() {
       }
     }
   } else {
-    if (check_integrity_result === true) {
+    if (!$('#workflow').find('option:selected').is(':disabled')) {
+      if (check_integrity_result === true) {
       result = true;
+      }
     }
   }
   return result;
@@ -416,6 +431,17 @@ window.onload = function () {
       // Workflow
       registration_type[1].checked = true;
       changeRegistrationType('Workflow');
+      if (isDeletedWorkflow(current_model_json['workflow_id'])) {
+        $('#workflow').append(
+        $('<option>')
+          .html(deleted_workflows_name_dict[current_model_json['workflow_id']]['name'])
+          .val(current_model_json['workflow_id'])
+          .prop('disabled', true)
+          .attr('data-itemtype', deleted_workflows_name_dict[current_model_json['workflow_id']]['itemtype_id'])
+        );
+        $('#error_modal').modal('show');
+        $('#modal_error_messagge').text(The_workflow_has_been_deleted);
+      }
       $('#workflow').val(current_model_json['workflow_id']);
       // mapping set
       const selectedOption = $('#workflow').find('option:selected');
@@ -434,6 +460,12 @@ window.onload = function () {
         }
       }
       $('#mapping').val(current_model_json['mapping_id']);
+      let result = jsonld_mappings.find(data => data.id === current_model_json['mapping_id']);
+      let mapping_item_type_id = result['item_type_id'];
+      if (mapping_item_type_id !== select_item_type_id) {
+        $('#error_modal').modal('show');
+        $('#modal_error_messagge').text(Item_type_mismatch);
+      }
     }
     if (current_model_json['duplicate_check'] === true) {
       $('#duplicate_check').prop('checked', true);
@@ -469,6 +501,7 @@ window.onload = function () {
     $('#save_button').prop('disabled', false);
     if (can_edit === 'False') {
       $('#error_modal').modal('show');
+      $('#modal_error_messagge').text(Unapproved_Items_Exit);
       $('#save_button').prop('disabled', true);
       $('#application').prop('disabled', true);
       $('#active').prop('disabled', true);
