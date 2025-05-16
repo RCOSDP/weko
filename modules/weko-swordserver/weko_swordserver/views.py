@@ -37,7 +37,6 @@ from weko_deposit.api import WekoRecord
 from weko_items_ui.scopes import item_create_scope, item_update_scope, item_delete_scope
 from weko_items_ui.utils import send_mail_direct_registered, send_mail_item_deleted
 from weko_notifications.utils import notify_item_imported, notify_item_deleted
-from weko_records.api import JsonldMapping
 from weko_records_ui.utils import get_record_permalink
 from weko_search_ui.utils import (
     import_items_to_system, import_items_to_activity,
@@ -999,23 +998,6 @@ def delete_object(recid):
         raise WekoSwordserverException(msg, ErrorType.BadRequest)
 
     return response
-
-
-@blueprint.route("/all_mappings", methods=["GET"])
-def all_mappings():
-    """Get all SwordItemTypeMapping list.
-
-    Returns:
-        SwordItemTypeMappingModel: All SwordItemTypeMapping list.
-    """
-    def convert(item):
-        return {
-            "id": item.id,
-            "name": item.name,
-            "item_type_id": item.item_type_id,
-        }
-    mappings = list(map(convert, JsonldMapping.get_all()))
-    return jsonify(mappings)
 
 
 def _create_error_document(type, error):

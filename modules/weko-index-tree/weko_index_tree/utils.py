@@ -731,6 +731,7 @@ def check_restrict_doi_with_indexes(index_ids):
     """
     from .api import Indexes
     full_path_index_ids = [Indexes.get_full_path(_id) for _id in index_ids]
+    full_path_index_ids = [idx for idx in full_path_index_ids if idx != '']
     is_public = Indexes.is_public_state(full_path_index_ids)
     is_harvest_public = Indexes.get_harvest_public_state(full_path_index_ids)
     return not (is_public and is_harvest_public)

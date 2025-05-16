@@ -110,7 +110,7 @@ def test_get_index_link_list(app, db, users):
     }]
     with patch("weko_index_tree.api.Indexes.get_browsing_tree_ignore_more", return_value=tree):
         assert get_index_link_list(10)==[(10, 'Index link 10'), (11, 'Index link 11')]
-        
+
 
 #+++ def is_index_tree_updated():
 def test_is_index_tree_updated(app):
@@ -162,11 +162,11 @@ def test_get_user_roles(i18n_app, client_rest, users):
         result = get_user_roles(is_super_role=True)
         assert result[0] == True
         assert result[1] == [1]
-        
+
         result = get_user_roles(is_super_role=False)
         assert result[0] == True
         assert result[1] == [1]
-        
+
     # comadmin
     with patch("flask_login.utils._get_user", return_value=users[4]['obj']):
         result = get_user_roles(is_super_role=True)
@@ -216,7 +216,7 @@ def test_check_roles(users):
     user_role = (True, [])
     roles = ["1","2"]
     check_roles(user_role, roles)
-    
+
     # not admin user
     ## not login
     ### not allow -99
@@ -248,7 +248,7 @@ def test_check_groups(i18n_app, users, db):
 
     user_group = ["group_test1", "group_test2"]
     groups = [v for k,v in Group.get_group_list().items()]
-    
+
     with patch("flask_login.utils._get_user", return_value=users[-1]['obj']):
         assert check_groups(user_group, groups)
 
@@ -371,7 +371,7 @@ def test_get_index_id_list(indices, db):
     index_list[0]['parent'] = str(index_list[0]['parent'])
 
     assert get_index_id_list(index_list)
-    
+
     index_list[0]['id'] = 'more'
 
     assert not get_index_id_list(index_list)
@@ -385,7 +385,7 @@ def test_get_publish_index_id_list(indices, db):
     index_list[0]['parent'] = str(index_list[0]['parent'])
 
     assert get_publish_index_id_list(index_list)
-    
+
     index_list[0]['id'] = 'more'
 
     assert not get_publish_index_id_list(index_list)
@@ -440,7 +440,7 @@ def test_get_elasticsearch_records_data_by_indexes(i18n_app, db_records, indices
     end_date = current_date.strftime("%Y-%m-%d")
 
     assert get_elasticsearch_records_data_by_indexes(idx_tree_ids, start_date, end_date)
-    
+
 
 #+++ def generate_path(index_ids):
 def test_generate_path(i18n_app, indices, esindex):
@@ -516,6 +516,8 @@ def test_check_doi_in_list_record_es(app, db, users):
 # .tox/c1/bin/pytest --cov=weko_index_tree tests/test_utils.py::test_check_restrict_doi_with_indexes -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-index-tree/.tox/c1/tmp
 def test_check_restrict_doi_with_indexes(i18n_app, indices, db_records):
     assert not check_restrict_doi_with_indexes([33,44])
+    assert check_restrict_doi_with_indexes([1000])
+    assert not check_restrict_doi_with_indexes([33,1000])
 
 
 #*** def check_has_any_item_in_index_is_locked(index_id):
@@ -566,7 +568,7 @@ def test_lock_all_child_index(i18n_app, indices):
     value = indices['index_non_dict'].index_name
 
     assert lock_all_child_index(index_id, value)
-    
+
 
 #+++ def unlock_index(index_key):
 def test_unlock_index(i18n_app, indices):
@@ -575,7 +577,7 @@ def test_unlock_index(i18n_app, indices):
     locked_key_non_dict = f"lock_index_{indices['index_non_dict'].index_name}_non_dict"
     datastore.put(locked_key_dict, json.dumps({'1':'a'}).encode('utf-8'), ttl_secs=30)
     datastore.put(locked_key_non_dict, json.dumps({'1':'a'}).encode('utf-8'), ttl_secs=30)
-    
+
     unlock_index(locked_key_dict)
     unlock_index([locked_key_non_dict])
 
@@ -593,7 +595,7 @@ def test_validate_before_delete_index(i18n_app, indices):
 #+++ def is_index_locked(index_id):
 def test_is_index_locked(i18n_app, indices, redis_connect):
     datastore = redis_connect
-    
+
     locked_key_dict = f"lock_index_{indices['index_dict']['index_name']}_dict"
     key = f"{indices['index_dict']['index_name']}_dict"
     datastore.put(locked_key_dict, json.dumps({'1':'a'}).encode('utf-8'), ttl_secs=30)
@@ -662,7 +664,7 @@ def test_get_editing_items_in_index(app):
             with patch("invenio_pidstore.models.PersistentIdentifier.get", return_value=True):
                 res = get_editing_items_in_index(0)
                 assert res == ["1", "2"]
-        
+
         with patch("weko_items_ui.utils.check_item_is_being_edit", return_value=False):
             with patch("invenio_pidstore.models.PersistentIdentifier.get", return_value=True):
                 with patch("weko_workflow.utils.check_an_item_is_locked", return_value=False):
@@ -680,11 +682,11 @@ def test_save_index_trees_to_redis(app, redis_connect,caplog):
         # lang is None
         save_index_trees_to_redis(tree)
         assert json.loads(redis_connect.get("index_tree_view_test_en")) == [{"id":"1"}]
-        
+
         # lang is not None
         save_index_trees_to_redis(tree, lang="ja")
         assert json.loads(redis_connect.get("index_tree_view_test_ja")) == [{"id":"1"}]
-        
+
         # except ConnectionError
         with patch("simplekv.memory.redisstore.RedisStore.put",side_effect=ConnectionError("test_error")):
             save_index_trees_to_redis(tree, lang="ja")
@@ -716,10 +718,10 @@ def test_get_descendant_index_names(app, db, test_indices):
     result = get_descendant_index_names(1)
     assert result[0] == "テストインデックス 1"
     assert result[1] == "テストインデックス 1-/-テストインデックス 11"
-    
+
     result = get_descendant_index_names(11)
     assert result[0] == "テストインデックス 1-/-テストインデックス 11"
-    
+
     result = get_descendant_index_names(999)
     assert result == []
 
@@ -729,15 +731,15 @@ def test_get_item_ids_in_index():
     return_value = [{'_source': {'control_number': 123}}, {'_source': {'control_number': 456}}]
     with patch("weko_index_tree.utils.get_all_records_in_index", return_value=return_value):
         assert get_item_ids_in_index(1)==[123, 456]
-    
+
     return_value = []
     with patch("weko_index_tree.utils.get_all_records_in_index", return_value=return_value):
         assert get_item_ids_in_index(1)==[]
-    
+
     return_value = [{'key': 'value'}]
     with patch("weko_index_tree.utils.get_all_records_in_index", return_value=return_value):
-        assert get_item_ids_in_index(1)==[]     
-    
+        assert get_item_ids_in_index(1)==[]
+
 # def get_all_records_in_index(index_id):
 # .tox/c1/bin/pytest --cov=weko_index_tree tests/test_utils.py::test_get_all_records_in_index -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-index-tree/.tox/c1/tmp
 def test_get_all_records_in_index(app, db, test_indices, mocker):
@@ -752,14 +754,14 @@ def test_get_all_records_in_index(app, db, test_indices, mocker):
     mock_search_instance = MagicMock()
     mock_search_instance.query.return_value.sort.return_value.params.return_value.execute.return_value.to_dict.return_value = first_page
     mocker.patch("weko_index_tree.utils.RecordsSearch", return_value=mock_search_instance)
-    
+
     index_id = 1
     result = get_all_records_in_index(index_id)
     assert result == [
         {'_source': {'control_number': 123}, 'sort': [1]},
         {'_source': {'control_number': 456}, 'sort': [2]}
     ]
-    
+
     first_page = {
         "hits": {
             "hits": [
