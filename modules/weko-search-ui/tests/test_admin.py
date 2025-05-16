@@ -14,6 +14,7 @@ from invenio_accounts.testutils import login_user_via_session
 
 from werkzeug.datastructures import FileStorage
 from weko_index_tree.models import Index
+from weko_records.models import ItemTypeJsonldMapping
 from weko_search_ui.admin import (
     ItemManagementBulkDelete,
     ItemManagementCustomSort,
@@ -448,18 +449,32 @@ def test_ItemRocrateImportView_get_disclaimer_text(i18n_app, users, client_reque
         test = ItemRocrateImportView()
         assert test.get_disclaimer_text()
 
-#     def export_template(self):
-# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_admin.py::test_ItemRocrateImportView_export_template -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
-def test_ItemRocrateImportView_export_template(i18n_app, users, item_type):
-    _data = {
-        'item_type_id': 1
-    }
+#     def all_mappings(self):
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_admin.py::test_ItemRocrateImportView_all_mappings -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_ItemRocrateImportView_all_mappings(i18n_app, users):
+    map1 = ItemTypeJsonldMapping(
+        id=1,
+        name="sample1",
+        mapping="{data:{}}",
+        item_type_id=30001,
+        version_id=6,
+        is_deleted=False
+    )
+    expect = [{
+                "id": 1,
+                "name": "sample1",
+                "item_type_id": 30001
+            }]
+
     with i18n_app.test_client() as client:
-        with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
-            res = client.post("/admin/items/rocrate_import/export_template",
-                            data=json.dumps(_data),
-                            content_type="application/json")
-            assert res.status_code==200
+        with patch("flask_login.utils._get_user",
+                   return_value=users[3]['obj']):
+            with patch("weko_search_ui.admin.JsonldMapping.get_all",
+                       return_value=[map1]):
+                res = client.get("/admin/items/rocrate_import/all_mappings",
+                                 content_type="application/json")
+                assert res.status_code==200
+                assert res.json == expect
 
 
 # class ItemBulkExport(BaseView):

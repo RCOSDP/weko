@@ -64,6 +64,7 @@ const urlDownloadCheck = window.location.origin + '/admin/items/rocrate_import/d
 const urlDownloadImport = window.location.origin + '/admin/items/rocrate_import/export_import'
 const urlImport = window.location.origin + '/admin/items/rocrate_import/import'
 const urlCheckImportAvailable = window.location.origin + '/admin/items/rocrate_import/check_import_is_available'
+const urlAllMappings = window.location.origin + '/admin/items/rocrate_import/all_mappings'
 const step = {
   "SELECT_STEP": 0,
   "IMPORT_STEP": 1,
@@ -1169,7 +1170,7 @@ class MappingComponent extends React.Component {
   getListMapping() {
     const that = this;
     $.ajax({
-      url: "/sword/all_mappings",
+      url: urlAllMappings,
       type: 'GET',
       dataType: "json",
       success: function (data) {

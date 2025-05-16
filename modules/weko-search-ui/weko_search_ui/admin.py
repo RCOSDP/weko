@@ -52,7 +52,7 @@ from weko_index_tree.utils import (
 )
 from weko_logging.activity_logger import UserActivityLogger
 from weko_logging.models import UserActivityLog
-from weko_records.api import ItemTypes
+from weko_records.api import ItemTypes, JsonldMapping
 from weko_workflow.api import WorkFlow
 from weko_records_ui.external import call_external_system
 from weko_deposit.api import WekoRecord
@@ -1049,162 +1049,6 @@ class ItemRocrateImportView(BaseView):
         data = get_change_identifier_mode_content()
         return jsonify(code=1, data=data)
 
-    @expose("/export_template", methods=["POST"])
-    def export_template(self):
-        """Download item type template.
-
-        :return: The response of the download.
-        """
-        file_format = current_app.config.get('WEKO_ADMIN_OUTPUT_FORMAT', 'tsv').lower()
-        file_name = None
-        output_file = None
-        data = request.get_json()
-        if data:
-            item_type_id = int(data.get("item_type_id", 0))
-            if item_type_id > 0:
-                item_type = ItemTypes.get_by_id(id_=item_type_id, with_deleted=True)
-                if item_type:
-                    file_name = "{}({}).{}".format(
-                        item_type.item_type_name.name, item_type.id, file_format
-                    )
-                    item_type_line = [
-                        "#ItemType",
-                        "{}({})".format(item_type.item_type_name.name, item_type.id),
-                        "{}items/jsonschema/{}".format(request.url_root, item_type.id),
-                    ]
-                    ids_line = pickle.loads(pickle.dumps(WEKO_EXPORT_TEMPLATE_BASIC_ID, -1))
-                    names_line = pickle.loads(pickle.dumps(WEKO_EXPORT_TEMPLATE_BASIC_NAME, -1))
-                    systems_line = ["#"] + ["" for _ in range(len(ids_line) - 1)]
-                    options_line = pickle.loads(pickle.dumps(WEKO_EXPORT_TEMPLATE_BASIC_OPTION, -1))
-
-                    item_type = item_type.render
-                    meta_list = {
-                        **item_type.get("meta_fix", {}),
-                        **item_type.get("meta_list", {}),
-                    }
-                    meta_system = [key for key in item_type.get("meta_system", {})]
-                    schema = (
-                        item_type.get("table_row_map", {})
-                        .get("schema", {})
-                        .get("properties", {})
-                    )
-                    form = item_type.get("table_row_map", {}).get("form", [])
-
-                    count_file = 0
-                    count_thumbnail = 0
-                    for key in ["pubdate", *item_type.get("table_row", [])]:
-                        if key in meta_system:
-                            continue
-
-                        item = schema.get(key)
-                        item_option = meta_list.get(key) if meta_list.get(key) else item
-                        sub_form = next(
-                            (x for x in form if key == x.get("key")), {"title_i18n": {}}
-                        )
-                        root_id, root_name, root_option = get_root_item_option(
-                            key, item_option, sub_form
-                        )
-                        # have not sub item
-                        if not (item.get("properties") or item.get("items")):
-                            ids_line.append(root_id)
-                            names_line.append(root_name)
-                            systems_line.append("")
-                            options_line.append(", ".join(root_option))
-                        else:
-                            # have sub item
-                            sub_items = (
-                                item.get("properties")
-                                if item.get("properties")
-                                else item.get("items").get("properties")
-                            )
-                            _ids, _names = handle_get_all_sub_id_and_name(
-                                sub_items, root_id, root_name, sub_form.get("items", [])
-                            )
-                            _options = []
-                            for _id in _ids:
-                                if "filename" in _id:
-                                    ids_line.append(".file_path[{}]".format(count_file))
-                                    file_path_name = (
-                                        "File Path"
-                                        if current_i18n.language == "en"
-                                        else "ファイルパス"
-                                    )
-                                    names_line.append(
-                                        ".{}[{}]".format(file_path_name, count_file)
-                                    )
-                                    systems_line.append("")
-                                    options_line.append("Allow Multiple")
-                                    count_file += 1
-                                if "thumbnail_label" in _id:
-                                    thumbnail_path_name = (
-                                        "Thumbnail Path"
-                                        if current_i18n.language == "en"
-                                        else "サムネイルパス"
-                                    )
-                                    if item.get("items"):
-                                        ids_line.append(
-                                            ".thumbnail_path[{}]".format(
-                                                count_thumbnail
-                                            )
-                                        )
-                                        names_line.append(
-                                            ".{}[{}]".format(
-                                                thumbnail_path_name, count_thumbnail
-                                            )
-                                        )
-                                        options_line.append("Allow Multiple")
-                                        count_thumbnail += 1
-                                    else:
-                                        ids_line.append(".thumbnail_path")
-                                        names_line.append(
-                                            ".{}".format(thumbnail_path_name)
-                                        )
-                                        options_line.append("")
-                                    systems_line.append("")
-
-                                clean_key = _id.replace(".metadata.", "").replace(
-                                    "[0]", "[]"
-                                )
-                                _options.append(
-                                    get_sub_item_option(clean_key, form) or []
-                                )
-                                systems_line.append(
-                                    "System"
-                                    if check_sub_item_is_system(clean_key, form)
-                                    else ""
-                                )
-
-                            ids_line += _ids
-                            names_line += _names
-                            for _option in _options:
-                                options_line.append(
-                                    ", ".join(list(set(root_option + _option)))
-                                )
-                    output_file = make_file_by_line(
-                        [
-                            item_type_line,
-                            ids_line,
-                            names_line,
-                            systems_line,
-                            options_line,
-                        ]
-                    )
-        return Response(
-            []
-            if not output_file
-            else codecs.BOM_UTF8.decode("utf8")
-            + codecs.BOM_UTF8.decode()
-            + output_file.getvalue(),
-            mimetype="text/{}".format(file_format),
-            headers={
-                "Content-type": "text/{}; charset=utf-8".format(file_format),
-                "Content-disposition": "attachment; "
-                + (
-                    "filename=" if not file_name else urlencode({"filename": file_name})
-                ),
-            },
-        )
-
     @expose("/check_import_is_available", methods=["GET"])
     def check_import_available(self):
         """Check import is available.
@@ -1221,6 +1065,24 @@ class ItemRocrateImportView(BaseView):
             )
         else:
             return jsonify({"is_available": True})
+
+    @expose("/all_mappings", methods=["GET"])
+    def all_mappings(self):
+        """Get all ItemTypeJsonldMapping as JSON.
+
+        Returns:
+            flask.Response: JSON list of dicts with id, name, item_type_id,
+            retrieved from ItemTypeJsonldMapping records that are not deleted.
+        """
+        mappings = [
+            {
+                "id": item.id,
+                "name": item.name,
+                "item_type_id": item.item_type_id
+            }
+            for item in JsonldMapping.get_all()
+        ]
+        return jsonify(mappings)
 
 
 class ItemBulkExport(BaseView):
