@@ -12,21 +12,29 @@ import traceback
 from hashlib import sha256
 from zipfile import ZipFile
 
-from flask import current_app, request
+from flask import current_app
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm.exc import NoResultFound
 
 from invenio_accounts.models import User
 from invenio_oauth2server.models import Token
+from invenio_pidrelations.contrib.versioning import PIDVersioning
+from invenio_pidstore.resolver import Resolver
+
 from weko_accounts.models import ShibbolethUser
 from weko_admin.models import AdminSettings
+from weko_deposit.api import WekoDeposit
+
+from weko_items_ui.utils import check_item_is_being_edit
+from weko_records_ui.utils import soft_delete
 from weko_search_ui.config import SWORD_METADATA_FILE, ROCRATE_METADATA_FILE
 from weko_search_ui.utils import (
     check_tsv_import_items,
     check_xml_import_items,
     check_jsonld_import_items
 )
-from weko_workflow.api import WorkFlow as WorkFlows
+from weko_workflow.api import WorkFlow as WorkFlows, WorkActivity
+from weko_workflow.utils import check_an_item_is_locked
 
 from .api import SwordClient
 from .errors import ErrorType, WekoSwordserverException
@@ -396,48 +404,116 @@ def update_item_ids(list_record, new_id, old_id):
     return list_record
 
 
-def get_deletion_type(client_id):
-    """Get deletion type.
+def check_deletion_type(client_id):
+    """Check deletion type.
 
-    Get deletion type for item deletion from client_id.
+    Check deletion type for item deletion from client_id.
 
     Args:
         client_id (str): Client ID.
 
     Returns:
-        dict: A dictionary containing register_format, workflow_id, and item_type_id.
+        dict: check result.
+            - deletion_type (str): Deletion type. "Direct" or "Workflow".
+            - workflow_id (int): Workflow ID if deletion_type is "Workflow".
+            - delete_flow_id (int): Delete flow ID if deletion_type is "Workflow".
 
     Raises:
-        WekoSwordserverException: If any validation fails.
+        WekoSwordserverException:
+            - If no SWORD API setting found for client ID.
+            - If workflow not found for registration item.
+            - If invalid registration type.
     """
-    client_id = request.oauth.client.client_id
     sword_client = SwordClient.get_client_by_id(client_id)
     if sword_client is None:
-        current_app.logger.error(f"No setting found for client ID: {client_id}")
+        current_app.logger.error(
+            f"No SWORD API setting foound for client ID: {client_id}"
+        )
         raise WekoSwordserverException(
-            "No setting found for client ID that you are using.",
-            errorType=ErrorType.ServerError
+            "No SWORD API setting found for client ID that you are using.",
+            errorType=ErrorType.BadRequest
         )
 
+    result = {}
     register_type = sword_client.registration_type
-    deletion_type = "Direct"
-    workflow = None
-    delete_flow_id = None
     if register_type == "Workflow":
         workflow = WorkFlows().get_workflow_by_id(sword_client.workflow_id)
         if workflow is None or workflow.is_deleted:
-            current_app.logger.error(f"Workflow not found for sword client.")
+            current_app.logger.error(
+                f"Workflow not found. Workflow ID: {sword_client.workflow_id}"
+            )
             raise WekoSwordserverException(
                 "Workflow not found for registration your item.",
-                errorType=ErrorType.ServerError
+                errorType=ErrorType.BadRequest
             )
 
         # Check if workflow has delete_flow_id
         delete_flow_id = workflow.delete_flow_id
         deletion_type = "Workflow" if delete_flow_id else "Direct"
+        result["deletion_type"] = deletion_type
+        if deletion_type == "Workflow":
+            result["workflow_id"] = sword_client.workflow_id
+            result["delete_flow_id"] = delete_flow_id
 
-    return {
-        "deletion_type": deletion_type,
-        "workflow_id": sword_client.workflow_id,
-        "delete_flow_id": delete_flow_id,
-    }
+    elif register_type == "Direct":
+        result["deletion_type"] = "Direct"
+
+    else:
+        current_app.logger.error(
+            f"Invalid registration type: {register_type}"
+        )
+        raise WekoSwordserverException(
+            f"Invalid registration type: {register_type}",
+            errorType=ErrorType.ServerError
+        )
+    return result
+
+
+def delete_item_directly(recid, request_info=None):
+    """Delete item directly.
+
+    Delete item directly by recid.
+
+    Args:
+        recid (str): Record ID.
+        request_info (dict, optional): Request information. Defaults to None.
+
+    Raises:
+        WekoSwordserverException:
+            - If item is in import progress.
+            - If item is being edited.
+    """
+    resolver = Resolver(
+        pid_type="recid", object_type="rec",
+        getter=WekoDeposit.get_record
+    )
+    pid, record = resolver.resolve(recid)
+
+    if not record:
+        current_app.logger.error(f"Record not found: {recid}.")
+        raise WekoSwordserverException(
+            "Record not found.",
+            errorType=ErrorType.NotFound
+        )
+
+    work_activity = WorkActivity()
+    latest_pid = PIDVersioning(child=pid).last_child
+
+    # Check Record is in import progress
+    if check_an_item_is_locked(recid):
+        current_app.logger.error(f"Item is in import progress: {recid}.")
+        raise WekoSwordserverException(
+            "Item cannot be deleted because it is in import progress.",
+            errorType=ErrorType.BadRequest
+        )
+
+    item_uuid = latest_pid.object_uuid
+    latest_activity = work_activity.get_workflow_activity_by_item_id(item_uuid)
+    if check_item_is_being_edit(pid, latest_activity, work_activity):
+        current_app.logger.error(f"Item is being edited: {recid}.")
+        raise WekoSwordserverException(
+            "Item cannot be deleted because it is being edited.",
+            errorType=ErrorType.BadRequest
+        )
+
+    soft_delete(recid)
