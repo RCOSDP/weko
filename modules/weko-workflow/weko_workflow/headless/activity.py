@@ -16,7 +16,6 @@ from flask import current_app, url_for, request
 from sqlalchemy.exc import SQLAlchemyError
 
 from invenio_accounts.models import User
-from invenio_cache import current_cache
 from invenio_db import db
 from invenio_files_rest.errors import FileSizeError
 from invenio_files_rest.models import Bucket, ObjectVersion
@@ -32,17 +31,15 @@ from weko_items_ui.utils import (
 from weko_items_ui.views import (
     check_validation_error_msg, prepare_edit_item, prepare_delete_item
 )
-from weko_records.api import ItemTypes, ItemsMetadata
+from weko_records.api import ItemTypes
 from weko_records.serializers.utils import get_mapping
 
-from ..api import Action, WorkActivity, WorkFlow, ActivityStatusPolicy
+from ..api import Action, WorkActivity, WorkFlow
 from ..errors import WekoWorkflowException
 from ..utils import (
     check_authority_by_admin,
     delete_lock_activity_cache,
-    delete_user_lock_activity_cache,
     get_identifier_setting,
-    update_cache_data
 )
 from ..views import (
     next_action,
@@ -287,7 +284,6 @@ class HeadlessActivity(WorkActivity):
 
         # skip locks temporarily even if skip flag is not True
         _lf = self._lock_skip
-        self._user_lock()
         locked_value = self._activity_lock()
         self._lock_skip = True
 
@@ -308,7 +304,6 @@ class HeadlessActivity(WorkActivity):
 
         self._lock_skip = _lf
         self._activity_unlock(locked_value)
-        self._user_unlock()
 
         returns = (str(self.detail), self.current_action, str(self.recid))
 
@@ -339,8 +334,6 @@ class HeadlessActivity(WorkActivity):
         error = check_validation_error_msg(self.activity_id).json
         if error.pop("code") == 1:
             current_app.logger.error(f"failed to input metadata: {error}")
-            # TODO: make message more easy to understand
-            # it contains ""
             raise WekoWorkflowException(error)
 
         self.recid = self._input_metadata(metadata, files, non_extract)
@@ -727,32 +720,6 @@ class HeadlessActivity(WorkActivity):
             current_app.logger.error(f"failed in Identifier Grant: {result.json.get('msg')}")
             raise WekoWorkflowException(result.json.get("msg"))
 
-    def approval(self, approve, reject):
-        """Action for Approval."""
-        locked_value = self._activity_lock()
-
-        try:
-            # TODO:
-            pass
-        except Exception as ex:
-            current_app.logger.error(f"failed in Approval: {ex}")
-            raise WekoWorkflowException("failed in Approval.") from ex
-        finally:
-            self._activity_unlock(locked_value)
-
-    def oa_policy(self, policy):
-        """Action for OA Policy Confirmation."""
-        locked_value = self._activity_lock()
-
-        try:
-            # TODO:
-            pass
-        except Exception as ex:
-            current_app.logger.error(f"failed in OA Policy Confirmation: {ex}")
-            raise WekoWorkflowException("failed in OA Policy Confirmation.") from ex
-        finally:
-            self._activity_unlock(locked_value)
-
     def end(self):
         """Action for End."""
         self.user = None
@@ -762,42 +729,6 @@ class HeadlessActivity(WorkActivity):
         self._model = None
         self._deposit = None
         self._lock_skip = None
-
-    def _user_lock(self):
-        """User lock."""
-        if self._lock_skip:
-            return
-
-        """weko_workflow.views.user_lock_activity"""
-        cache_key = f"workflow_userlock_activity_{self.user.id}"
-        timeout = current_app.permanent_session_lifetime.seconds
-        cur_locked_val = str(current_cache.get(cache_key) or str()) or str()
-        message = ""
-        if cur_locked_val:
-            message = "Opened"
-        else:
-            work_activity = WorkActivity()
-            act = work_activity.get_activity_by_id(self.activity_id)
-            if (act is None
-                or act.activity_status in [
-                    ActivityStatusPolicy.ACTIVITY_BEGIN,
-                    ActivityStatusPolicy.ACTIVITY_MAKING
-            ]):
-                update_cache_data(
-                    cache_key,
-                    self.activity_id,
-                    timeout
-                )
-            message = "Locked"
-
-        return message
-
-    def _user_unlock(self, data=None):
-        """User unlock."""
-        if self._lock_skip:
-            return
-        data = data or {"is_opened": False , "is_force" : False}
-        return delete_user_lock_activity_cache(self.activity_id, data)
 
     def _activity_lock(self):
         """Activity lock."""
