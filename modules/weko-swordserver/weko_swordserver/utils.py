@@ -176,68 +176,6 @@ def get_shared_id_from_on_behalf_of(on_behalf_of):
     return shared_id
 
 
-def check_registration_type(file_format, client_id):
-    """Check registration type.
-
-    Check registration type for item registration from client_id.
-
-    Args:
-        file_format (str): File format. "TSV/CSV", "XML" or "JSON-LD".
-        client_id (str): Client ID.
-
-    Returns:
-        dict: A dictionary containing register_format, workflow_id, and item_type_id.
-    """
-    sword_settings = AdminSettings.get("sword_api_setting", False) or {}
-    current_setting = sword_settings.get(file_format) or {}
-    registration_type = current_setting.get("registration_type") or "Direct"
-    duplicate_check = current_setting.get("duplicate_check") or False
-    is_active = current_setting.get("active", file_format != "XML")
-    if not is_active:
-        current_app.logger.error(f"{file_format} metadata import is not enabled.")
-        raise WekoSwordserverException(
-            f"{file_format} metadata import is not enabled.",
-            ErrorType.MetadataFormatNotAcceptable
-        )
-
-    check_result = {
-        "register_type": registration_type,
-        "duplicate_check": duplicate_check,
-    }
-
-    if file_format == "XML":
-        workflow_id = int(current_setting.get("workflow", "-1"))
-        workflow = WorkFlows().get_workflow_by_id(workflow_id)
-        if workflow is None or workflow.is_deleted:
-            current_app.logger.error(
-                f"Workflow not found. Workflow ID: {workflow_id}"
-            )
-            raise WekoSwordserverException(
-                "Workflow not found for registration your item.",
-                errorType=ErrorType.BadRequest
-            )
-        check_result["workflow_id"] = workflow_id
-    if file_format == "JSON":
-        sword_client = SwordClient.get_client_by_id(client_id)
-        if sword_client is None or not sword_client.active:
-            current_app.logger.error(
-                f"No SWORD API setting foound for client ID: {client_id}"
-            )
-            raise WekoSwordserverException(
-                "No SWORD API setting found for client ID that you are using.",
-                errorType=ErrorType.BadRequest
-            )
-        mapping_id = sword_client.mapping_id
-        workflow_id = sword_client.workflow_id
-        check_result.update({
-            "register_type": registration_type,
-            "workflow_id": workflow_id,
-            "duplicate_check": sword_client.duplicate_check,
-        })
-
-    return check_result
-
-
 def is_valid_file_hash(expected_hash, file):
     """Validate body hash.
 
