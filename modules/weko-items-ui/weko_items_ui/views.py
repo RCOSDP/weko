@@ -21,21 +21,19 @@
 """Blueprint for weko-items-ui."""
 
 import json
-import os
 import sys
 import traceback
 from copy import deepcopy
 from datetime import date, datetime, timedelta
 import requests
 
-import redis
-from redis import sentinel
 from flask import Blueprint, abort, current_app, flash, jsonify, redirect, \
     render_template, request, session, url_for
 from flask_babelex import gettext as _
 from flask_login import login_required
 from flask_security import current_user
 from flask_wtf import FlaskForm
+
 from invenio_db import db
 from invenio_i18n.ext import current_i18n
 from invenio_pidrelations.contrib.versioning import PIDVersioning
