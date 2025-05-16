@@ -528,7 +528,7 @@ class WorkFlow(object):
         """Get workflow detail info by flow id.
 
         Args:
-            flow_id (str): flow id.
+            flow_id (int): flow id.
 
         Returns:
             WorkFlow: workflow model object.
@@ -542,7 +542,7 @@ class WorkFlow(object):
         """Get workflow detail info by workflow id.
 
         Args:
-            workflow_id (str): workflow id.
+            workflow_id (int): workflow id.
 
         Returns:
             WorkFlow: workflow model object.
@@ -660,7 +660,7 @@ class WorkFlow(object):
         with db.session.no_autoflush:
             query = _WorkFlow.query.filter_by(
                 itemtype_id=item_type_id, is_deleted=False)
-            return query.all()
+            return [obj for obj in query.all() if isinstance(obj, _WorkFlow)]
 
     def get_workflows_by_roles(self, workflows):
         """Get list workflow.
