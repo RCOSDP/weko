@@ -263,6 +263,12 @@ msgstr "SWORD APIの設定の削除に失敗しました。"
 msgid "Unapproved Items Exit."
 msgstr "このアプリケーションを使用するワークフローに未承認のアイテムがあります。すべて承認されるまで、設定の変更はできません。"
 
+msgid "Item type mismatch"
+msgstr "ワークフローに設定されたアイテムタイプと、マッピング定義のアイテムタイプが一致しません。再度選択してください。"
+
+msgid "The workflow has been deleted"
+msgstr "ワークフローが削除されています。再度選択してください。"
+
 #: weko_admin/admin.py:2210 weko_admin/admin.py:2237 weko_admin/admin.py:2246
 #: weko_admin/admin.py:2255 weko_admin/admin.py:2264 weko_admin/admin.py:2273
 #: weko_admin/admin.py:2282 weko_admin/admin.py:2291 weko_admin/admin.py:2309

@@ -1572,7 +1572,7 @@ class SwordAPIJsonldSettingsView(ModelView):
     can_create = True
     can_edit = True
     can_delete = True
-    can_view_details = False
+    can_view_details = True
     column_display_all_relations = True
     create_template = WEKO_ADMIN_SWORD_API_JSONLD_TEMPLATE
     edit_template = WEKO_ADMIN_SWORD_API_JSONLD_TEMPLATE
@@ -1584,6 +1584,18 @@ class SwordAPIJsonldSettingsView(ModelView):
         "registration_type",
         "metadata_collection",
         "duplicate_check"
+    )
+    column_details_list = (
+        "id",
+        "created",
+        "updated",
+        "application",
+        "active",
+        "registration_type",
+        "workflow_name",
+        "mapping_name",
+        "duplicate_check",
+        "meta_data_api",
     )
 
 
@@ -1624,6 +1636,23 @@ class SwordAPIJsonldSettingsView(ModelView):
         else:
             return _("Inactive Message")
 
+    def _format_workflow_name(view, context, model, name):
+        if model.workflow_id is None:
+            return ""
+        workflow = WorkFlow()
+        wf = workflow.get_workflow_by_id(model.workflow_id)
+        if wf is None:
+            return ""
+        return wf.flows_name
+
+    def _format_mapping_name(view, context, model, name):
+        if model.mapping_id is None:
+            return ""
+        mapping = JsonldMapping.get_mapping_by_id(model.mapping_id)
+        if mapping is None:
+            return ""
+        return mapping.name
+
     column_formatters = {
         "application": _format_application_name,
         "active": _format_active,
@@ -1631,6 +1660,8 @@ class SwordAPIJsonldSettingsView(ModelView):
         "registration_type": _format_registration_type,
         "metadata_collection": _format_metadata_collection,
         "duplicate_check": _format_duplicate_check,
+        "workflow_name": _format_workflow_name,
+        "mapping_name": _format_mapping_name,
     }
 
     def get_query(self):
@@ -1811,8 +1842,13 @@ class SwordAPIJsonldSettingsView(ModelView):
             deleted_workflows = workflow.get_deleted_workflow_list()
             deleted_workflow_name_dict = {}
             for deleted_workflow in deleted_workflows:
-                deleted_workflow_name_dict[deleted_workflow.id] = deleted_workflow.flows_name
+                deleted_workflow_info = {
+                    "name": deleted_workflow.flows_name,
+                    "itemtype_id": deleted_workflow.itemtype_id,
+                }
+                deleted_workflow_name_dict[deleted_workflow.id] = deleted_workflow_info
             # Process exclude workflows
+            current_app.logger.info(deleted_workflow_name_dict)
             from weko_workflow.utils import exclude_admin_workflow
             exclude_admin_workflow(workflows)
 
@@ -1856,6 +1892,7 @@ class SwordAPIJsonldSettingsView(ModelView):
                 current_model_json=current_model_json,
                 can_edit=can_edit,
                 item_type_names=item_type_names,
+                id=model.id,
             )
         else:
             # POST
