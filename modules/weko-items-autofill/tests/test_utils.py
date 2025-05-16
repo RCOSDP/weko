@@ -1759,7 +1759,7 @@ def test_deepcopy():
 
 # def fill_data(form_model, autofill_data, is_multiple_data=False):
 # .tox/c1/bin/pytest --cov=weko_items_autofill tests/test_utils.py::test_fill_data -vv -v -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-autofill/.tox/c1/tmp
-def test_fill_data():
+def test_fill_data(app):
     # autofill_data is not dict, list
     form_model = ""
     autofill_data = ""
@@ -1837,6 +1837,59 @@ def test_fill_data():
     autofill_data = {"@value": "47"}
     form_model = "test"
     fill_data(form_model, autofill_data)
+
+     # with schema and validate success
+    autofill_data = [{'@value': 'タイトル', '@language': 'ja'}]
+    form_model = {'item_30001_title0': [{'subitem_title': '@value', 'subitem_title_language': '@language'}]}
+    schema ={
+        "type": "object",
+        "properties": {
+            "item_30001_title0": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "subitem_title": {
+                            "type": "string",
+                            "title": "タイトル",
+                            "title_i18n": {
+                                "en": "Title",
+                                "ja": "タイトル"
+                            }
+                        },
+                        "subitem_title_language": {
+                            "enum": [
+                                None,
+                                "ja",
+                            ],
+                            "type": [
+                                "null",
+                                "string"
+                            ],
+                            "title": "言語",
+                        }
+                    }
+                },
+                "title": "Title",
+            }
+        }
+    }
+    expected = {'item_30001_title0': [{'subitem_title': 'タイトル', 'subitem_title_language': 'ja'}]}
+    result = fill_data(form_model, autofill_data, schema)
+    assert result == expected
+
+    # with schema and validate fail
+    autofill_data = [{'@value': 'タイトル', '@language': ''}]
+    expected  = {'item_30001_title0': [{'subitem_title': 'タイトル'}]}
+    result = fill_data(form_model, autofill_data, schema)
+    assert result == expected
+
+    # with invalid schema and skip validate
+    autofill_data = [{'@value': 'タイトル', '@language': 'ja'}]
+    schema["properties"]["item_30001_title0"]["type"] = "object"
+    expected = {'item_30001_title0': [{'subitem_title': 'タイトル', 'subitem_title_language': 'ja'}]}
+    result = fill_data(form_model, autofill_data, schema)
+    assert result == expected
 
 
 # def is_multiple(form_model, autofill_data):
