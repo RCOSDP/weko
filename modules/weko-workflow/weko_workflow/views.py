@@ -1736,26 +1736,29 @@ def next_action(activity_id='0', action_id=0, json_data=None):
                     req=-1)
 
 
-    del_reject_flg =  json_data.get('approval_reject', False) if json_data else False
+    del_reject_flg = json_data.get('approval_reject', False) if json_data else False
     if next_action_endpoint == "end_action"  and for_delete and  del_reject_flg == False:
         parts = current_pid.pid_value.split('.')
         if len(parts) > 1 and parts[1] != '0':
-            delete_item_id = "del_ver_{}".format(current_pid.pid_value)
+            from weko_records_ui.utils import delete_version
+            delete_version(current_pid.pid_value)
         else:
-            delete_item_id = parts[0]
+            from weko_records_ui.utils import soft_delete
+            soft_delete(parts[0])
+        db.session.commit()
 
-        from weko_records_ui.views import soft_delete
-        soft_delete(delete_item_id)
         if action_endpoint == "approval":
-            send_mail_delete_approved(delete_item_id, deposit, activity_detail, current_user.id)
+            send_mail_delete_approved(parts[0], deposit, activity_detail, current_user.id)
 
     if for_delete and del_reject_flg:
         # skip action after thrown out action
         flow_detail = flow.get_flow_detail(activity_detail.flow_define.flow_id)
         skip_activity = activity.copy()
-        skip_acts = [act for act in flow_detail.flow_actions \
-                     if act.action.action_endpoint not in ('begin_action','end_action') and \
-                        act.action_order > action_order]
+        skip_acts = [
+            act for act in flow_detail.flow_actions
+            if act.action.action_endpoint not in ('begin_action','end_action')
+                and act.action_order > action_order
+        ]
         for skip_act in skip_acts:
             skip_activity.update(
                 action_id=skip_act.action_id,
@@ -1773,6 +1776,8 @@ def next_action(activity_id='0', action_id=0, json_data=None):
         activity.update(
             action_status=ActionStatusPolicy.ACTION_THROWN_OUT
         )
+        work_activity.notify_about_activity(activity_id, "deletion_rejected")
+
         last_flow_action = flow.get_last_flow_action(
             activity_detail.flow_define.flow_id)
         next_action_endpoint = last_flow_action.action.action_endpoint
@@ -2013,7 +2018,7 @@ def previous_action(activity_id='0', action_id=0, req=0):
         return next_action(activity_id=activity_id,
                                action_id=action_id,
                                json_data=jsondata)
-    
+
     flow = Flow()
     rtn = history.create_activity_history(activity, action_order)
     if rtn is None:

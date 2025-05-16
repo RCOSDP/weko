@@ -528,7 +528,7 @@ class WorkFlow(object):
         """Get workflow detail info by flow id.
 
         Args:
-            flow_id (str): flow id.
+            flow_id (int): flow id.
 
         Returns:
             WorkFlow: workflow model object.
@@ -542,7 +542,7 @@ class WorkFlow(object):
         """Get workflow detail info by workflow id.
 
         Args:
-            workflow_id (str): workflow id.
+            workflow_id (int): workflow id.
 
         Returns:
             WorkFlow: workflow model object.
@@ -660,7 +660,7 @@ class WorkFlow(object):
         with db.session.no_autoflush:
             query = _WorkFlow.query.filter_by(
                 itemtype_id=item_type_id, is_deleted=False)
-            return query.all()
+            return [obj for obj in query.all() if isinstance(obj, _WorkFlow)]
 
     def get_workflows_by_roles(self, workflows):
         """Get list workflow.
@@ -906,7 +906,7 @@ class WorkActivity(object):
                 activity_update_user=activity_update_user,
                 shared_user_id=activity.get("shared_user_id"),
                 activity_status=ActivityStatusPolicy.ACTIVITY_MAKING,
-                activity_start=datetime.utcnow(),
+                activity_start=datetime.now(timezone.utc),
                 activity_community_id=community_id,
                 activity_confirm_term_of_use=activity_confirm_term_of_use,
                 extra_info=extra_info,
@@ -3499,9 +3499,12 @@ class WorkActivityHistory(object):
     def create_activity_history(self, activity, action_order):
         """Create new activity history.
 
-        :param action_order:
-        :param activity:
-        :return:
+        Args:
+            activity (dict): The activity data.
+            action_order (int): The action order.
+
+        Returns:
+            ActivityHistory: The created activity history object.
         """
         db_history = ActivityHistory(
             activity_id=activity.get('activity_id'),
@@ -3509,21 +3512,23 @@ class WorkActivityHistory(object):
             action_version=activity.get('action_version'),
             action_status=activity.get('action_status'),
             action_user=current_user.get_id(),
-            action_date=datetime.utcnow(),
+            action_date=datetime.now(tz=timezone.utc),
             action_comment=activity.get('commond'),
             action_order=action_order,
         )
         new_history = False
         activity = WorkActivity()
         activity = activity.get_activity_detail(db_history.activity_id)
-        if activity.action_id != db_history.action_id or \
-                activity.action_status != db_history.action_status or \
-                    activity.action_order != db_history.action_order:
+        if (
+            activity.action_id != db_history.action_id
+            or activity.action_status != db_history.action_status
+            or activity.action_order != db_history.action_order
+        ):
             new_history = True
             activity.action_id = db_history.action_id
             activity.action_status = db_history.action_status
             activity.activity_update_user = db_history.action_user
-            activity.updated = datetime.utcnow()
+            activity.updated = datetime.now(tz=timezone.utc),
         try:
             with db.session.begin_nested():
                 if new_history:

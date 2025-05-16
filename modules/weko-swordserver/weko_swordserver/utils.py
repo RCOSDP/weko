@@ -176,6 +176,68 @@ def get_shared_id_from_on_behalf_of(on_behalf_of):
     return shared_id
 
 
+def check_registration_type(file_format, client_id):
+    """Check registration type.
+
+    Check registration type for item registration from client_id.
+
+    Args:
+        file_format (str): File format. "TSV/CSV", "XML" or "JSON-LD".
+        client_id (str): Client ID.
+
+    Returns:
+        dict: A dictionary containing register_format, workflow_id, and item_type_id.
+    """
+    sword_settings = AdminSettings.get("sword_api_setting", False) or {}
+    current_setting = sword_settings.get(file_format) or {}
+    registration_type = current_setting.get("registration_type") or "Direct"
+    duplicate_check = current_setting.get("duplicate_check") or False
+    is_active = current_setting.get("active", file_format != "XML")
+    if not is_active:
+        current_app.logger.error(f"{file_format} metadata import is not enabled.")
+        raise WekoSwordserverException(
+            f"{file_format} metadata import is not enabled.",
+            ErrorType.MetadataFormatNotAcceptable
+        )
+
+    check_result = {
+        "register_type": registration_type,
+        "duplicate_check": duplicate_check,
+    }
+
+    if file_format == "XML":
+        workflow_id = int(current_setting.get("workflow", "-1"))
+        workflow = WorkFlows().get_workflow_by_id(workflow_id)
+        if workflow is None or workflow.is_deleted:
+            current_app.logger.error(
+                f"Workflow not found. Workflow ID: {workflow_id}"
+            )
+            raise WekoSwordserverException(
+                "Workflow not found for registration your item.",
+                errorType=ErrorType.BadRequest
+            )
+        check_result["workflow_id"] = workflow_id
+    if file_format == "JSON":
+        sword_client = SwordClient.get_client_by_id(client_id)
+        if sword_client is None or not sword_client.active:
+            current_app.logger.error(
+                f"No SWORD API setting foound for client ID: {client_id}"
+            )
+            raise WekoSwordserverException(
+                "No SWORD API setting found for client ID that you are using.",
+                errorType=ErrorType.BadRequest
+            )
+        mapping_id = sword_client.mapping_id
+        workflow_id = sword_client.workflow_id
+        check_result.update({
+            "register_type": registration_type,
+            "workflow_id": workflow_id,
+            "duplicate_check": sword_client.duplicate_check,
+        })
+
+    return check_result
+
+
 def is_valid_file_hash(expected_hash, file):
     """Validate body hash.
 
@@ -221,23 +283,10 @@ def check_import_items(
     Returns:
         dict: Result of the check.
     """
-    settings = AdminSettings.get("sword_api_setting", False) or {}
-    register_type = settings.get(file_format, {}).get(
-        "registration_type", "Direct"
-    )
-    workflow_id = None
-    duplicate_check = settings.get(file_format, {}).get(
-        "duplicate_check", False
-    )
-    is_active = settings.get(file_format, {}).get(
-        "active", file_format != "XML"
-    )
+    sword_settings = AdminSettings.get("sword_api_setting", False) or {}
+    current_setting = sword_settings.get(file_format) or {}
 
-    check_result = {}
-    check_result.update({"register_type": register_type})
-    check_result.update({"duplicate_check": duplicate_check})
-    check_result.update({"weko_shared_id": shared_id})
-
+    is_active = current_setting.get("active", file_format != "XML")
     if not is_active:
         current_app.logger.error(f"{file_format} metadata import is not enabled.")
         raise WekoSwordserverException(
@@ -245,12 +294,21 @@ def check_import_items(
             ErrorType.MetadataFormatNotAcceptable
         )
 
+    registration_type = current_setting.get("registration_type") or "Direct"
+    duplicate_check = current_setting.get("duplicate_check") or False
+
+    check_result = {
+        "list_record": [],
+        "register_type": registration_type,
+        "duplicate_check": duplicate_check,
+    }
+
     if file_format == "TSV/CSV":
         check_result.update(
             check_tsv_import_items(file, is_change_identifier, shared_id=shared_id)
         )
 
-        if register_type == "Workflow":
+        if registration_type == "Workflow":
             item_type_id = check_result["list_record"][0].get("item_type_id")
             item_type_name = check_result["list_record"][0].get("item_type_name")
 
@@ -269,13 +327,13 @@ def check_import_items(
                 check_result.update({"workflow_id": workflow_id})
 
     elif file_format == "XML":
-        if register_type == "Direct":
+        if registration_type == "Direct":
             raise WekoSwordserverException(
                 "Direct registration is not allowed for XML metadata yet.",
                 ErrorType.MetadataFormatNotAcceptable
             )
 
-        workflow_id = int(settings.get(file_format, {}).get("workflow", "-1"))
+        workflow_id = int(current_setting.get("workflow", "-1"))
         workflow = WorkFlows().get_workflow_by_id(workflow_id)
 
         if workflow is None or workflow.is_deleted:
@@ -310,16 +368,17 @@ def check_import_items(
         workflow_id = sword_client.workflow_id
         meta_data_api = sword_client.meta_data_api
         # Check workflow and item type
-        register_type = sword_client.registration_type
-        check_result.update({"register_type": register_type})
+        registration_type = sword_client.registration_type
+        check_result.update({"register_type": registration_type})
 
         check_result.update({
-            "register_type": register_type,
+            "register_type": registration_type,
             "workflow_id": workflow_id,
             "duplicate_check": sword_client.duplicate_check,
         })
 
-        if register_type == "Workflow":
+        workflow = None
+        if registration_type == "Workflow":
             workflow = WorkFlows().get_workflow_by_id(workflow_id)
             if workflow is None or workflow.is_deleted:
                 current_app.logger.error(
@@ -340,7 +399,7 @@ def check_import_items(
         item_type_id = check_result.get("item_type_id")
         # Check if workflow and item type match
         if (
-            register_type == "Workflow"
+            registration_type == "Workflow"
             and workflow.itemtype_id != item_type_id
         ):
             current_app.logger.error(
