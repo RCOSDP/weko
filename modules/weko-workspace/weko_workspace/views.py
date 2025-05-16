@@ -41,10 +41,12 @@ from flask_menu import register_menu
 from weko_admin.api import TempDirInfo
 from weko_records.api import FeedbackMailList
 from invenio_db import db
+from invenio_i18n.ext import current_i18n
 from invenio_pidstore.errors import PIDDoesNotExistError
 from invenio_pidstore.models import PersistentIdentifier
 from sqlalchemy.exc import SQLAlchemyError
 from flask import session
+from weko_records.utils import selected_value_by_language
 
 from .utils import (
     extract_metadata_info,
@@ -72,7 +74,7 @@ from weko_accounts.utils import login_required_customize
 from weko_index_tree.models import Index
 from flask_login import current_user
 from weko_search_ui.utils import (
-    handle_check_exist_record, handle_check_file_metadata, handle_item_title, 
+    get_data_by_property, handle_check_exist_record, handle_check_file_metadata, handle_item_title, 
     handle_check_date, handle_check_id, handle_check_and_prepare_index_tree, 
     handle_check_and_prepare_publish_status, import_items_to_activity, 
     import_items_to_system
@@ -82,7 +84,7 @@ from weko_records.api import ItemTypeNames
 
 from .utils import get_datacite_record_data, get_jalc_record_data, \
     get_cinii_record_data, get_jamas_record_data
-from weko_records.serializers.utils import get_item_type_name
+from weko_records.serializers.utils import get_item_type_name, get_mapping
 from weko_records.api import ItemTypes
 from .defaultfilters import merge_default_filters
 
@@ -138,7 +140,24 @@ def get_workspace_itemlist():
     # 7,ユーザー名と所属情報取得処理
     userNm = get_userNm_affiliation()
 
-    # →ループ処理
+    # Get item_type
+    item_type_ids = set()
+    for record in recordsData:
+        item_type_ids.add(
+            record['_source'].get('item_type_id')
+            or record['_source']['_item_metadata'].get('item_type_id')
+        )
+    item_types = ItemTypes.get_records(list(item_type_ids))
+    item_type_dict = {
+        str(item_type.model.id): {
+            "obj": item_type,
+            "mapping": get_mapping(
+                item_type.model.id, 'jpcoar_mapping', item_type=item_type.model
+            )
+        } for item_type in item_types
+    }
+
+    # ループ処理
     for record in recordsData:
         source = record.get("_source", {})
         if not source or (
@@ -148,8 +167,34 @@ def get_workspace_itemlist():
             # If user ID does not match, skip this record
             current_app.logger.debug(f"[workspace] skip item \"_id\": {record.get('_id')}")
             continue
-
+        
         workspaceItem = copy.deepcopy(current_app.config["WEKO_WORKSPACE_ITEM"])
+
+        item_type_id = str(source.get("item_type_id") or source.get("_item_metadata", {}).get("item_type_id"))
+        item_type = item_type_dict[item_type_id]["obj"]
+        item_map = item_type_dict[item_type_id]["mapping"]
+
+        # get title info
+        title_value_key = 'title.@value'
+        title_lang_key = 'title.@attributes.xml:lang'
+        if title_value_key in item_map:
+            title_languages = []
+            _title_key_str = ''
+            if title_lang_key in item_map:
+                # get language
+                title_languages, _title_key_str = get_data_by_property(
+                    source.get("_item_metadata", {}), item_map, title_lang_key)
+            # get value
+            title_values, _title_key1_str = get_data_by_property(
+                source.get("_item_metadata", {}), item_map, title_value_key)
+            title_name = selected_value_by_language(
+                title_languages,
+                title_values,
+                _title_key_str,
+                _title_key1_str,
+                current_i18n.language,
+                source.get("_item_metadata", {}))
+        workspaceItem["title"] = title_name if title_name else source.get("title", [""])[0]
 
         # ファイルリストと査読状況を取得
         fileList, peerReviewed = extract_metadata_info(source.get("_item_metadata", {}))
@@ -158,14 +203,10 @@ def get_workspace_itemlist():
         try:
             pid = PersistentIdentifier.get_by_object("recid", "rec", record.get("_id"))
         except PIDDoesNotExistError as e:
-            print(f"Error: {e}")
+            current_app.logger.error(e)
             continue
         recid = pid.pid_value
         workspaceItem["recid"] = recid
-
-        # "title": None,  # タイトル
-        title = source.get("title", [])
-        workspaceItem["title"] = title[0] if title else ""
 
         # "favoriteSts": None,  # お気に入りステータス状況
         workspaceItem["favoriteSts"] = (
