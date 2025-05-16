@@ -215,6 +215,12 @@ class HeadlessActivity(WorkActivity):
                 raise WekoWorkflowException(response.json.get("msg"))
 
             url = response.json.get("data").get("redirect")
+            if not isinstance(url, str):
+                self.user = User.query.get(user_id)
+                current_app.logger.info(
+                    "action is done by user({user_id})."
+                )
+                return self.detail
             activity_id = url.split("/activity/detail/")[1]
             if "?" in activity_id:
                 activity_id = activity_id.split("?")[0]
