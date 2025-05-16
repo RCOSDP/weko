@@ -1842,7 +1842,6 @@ class SwordAPIJsonldSettingsView(ModelView):
             deleted_workflows = workflow.get_deleted_workflow_list()
             deleted_workflow_name_dict = {}
             for deleted_workflow in deleted_workflows:
-                # deleted_workflow_name_dict[deleted_workflow.id] = deleted_workflow.flows_name
                 deleted_workflow_info = {
                     "name": deleted_workflow.flows_name,
                     "itemtype_id": deleted_workflow.itemtype_id,
