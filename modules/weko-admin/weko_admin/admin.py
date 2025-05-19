@@ -1772,7 +1772,10 @@ class SwordAPIJsonldSettingsView(ModelView):
                 active = request.json.get("active") == "True"
                 duplicate_check = request.json.get("duplicate_check") == "True"
                 meta_data_api = request.json.get("metadata_api_selected")
-
+                if meta_data_api and "Original" not in meta_data_api:
+                    msg = "Cannot disable 'Original'."
+                    current_app.logger.error(msg)
+                    return jsonify({"error": msg}), 400
                 obj = JsonldMapping.get_mapping_by_id(mapping_id)
                 try:
                     if not JsonLdMapper(obj.item_type_id, obj.mapping).is_valid:
@@ -1913,7 +1916,10 @@ class SwordAPIJsonldSettingsView(ModelView):
 
                 if meta_data_api == ["Original"]:
                     meta_data_api = []
-
+                if meta_data_api and "Original" not in meta_data_api:
+                    msg = "Cannot disable 'Original'."
+                    current_app.logger.error(msg)
+                    return jsonify({"error": msg}), 400
                 obj = JsonldMapping.get_mapping_by_id(mapping_id)
                 try:
                     if not JsonLdMapper(obj.item_type_id, obj.mapping).is_valid:
