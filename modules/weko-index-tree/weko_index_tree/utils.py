@@ -1221,12 +1221,6 @@ def get_all_records_in_index(index_id):
         page = search.execute().to_dict()
     return records
 
-
-def create_limiter():
-    from .config import WEKO_INDEX_TREE_API_LIMIT_RATE_DEFAULT
-    return Limiter(app=Flask(__name__), key_func=get_remote_address, default_limits=WEKO_INDEX_TREE_API_LIMIT_RATE_DEFAULT)
-
-
 def check_comadmin(roles, index_id):
     """Check if the user is a community admin based on roles and group_id."""
     if roles is not None and any(

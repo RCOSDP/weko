@@ -266,6 +266,3 @@ WEKO_RECORDS_REST_ENDPOINTS = {
     }
 }
 """REST endpoints."""
-
-WEKO_RECORDS_API_LIMIT_RATE_DEFAULT = ['100 per minute']
-"""API rate limit."""

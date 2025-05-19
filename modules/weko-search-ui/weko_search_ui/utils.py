@@ -5320,11 +5320,6 @@ def combine_aggs(data, target="path"):
         data["aggregations"][target] = new_agg
     return data
 
-def create_limiter():
-    from .config import WEKO_SEARCH_UI_API_LIMIT_RATE_DEFAULT
-    return Limiter(app=Flask(__name__), key_func=get_remote_address, default_limits=WEKO_SEARCH_UI_API_LIMIT_RATE_DEFAULT)
-
-
 def result_download_ui(search_results, input_json, language='en'):
     """Search Result Download Ui.
 

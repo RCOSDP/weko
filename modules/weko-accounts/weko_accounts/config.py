@@ -182,8 +182,6 @@ WEKO_ACCOUNTS_REST_ENDPOINTS = {
     },
 }
 
-WEKO_ACCOUNTS_API_LIMIT_RATE_DEFAULT = ['100 per minute']
-
 WEKO_API_LIMIT_RATE_DEFAULT = ['100 per minute']
 """Default rate limit per endpoint for one user in the WEKO API."""
 

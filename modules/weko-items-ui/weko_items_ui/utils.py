@@ -5043,7 +5043,6 @@ def has_permission_edit_item(record, recid):
     can_edit = True if pid == get_record_without_version(pid) else False
     return can_edit and permission
 
-
 def lock_item_will_be_edit(pid_value):
     """Lock item will be edit.
 
@@ -5068,7 +5067,6 @@ def lock_item_will_be_edit(pid_value):
         ttl_secs=3
     )
     return True
-
 
 def get_file_download_data(item_id, record, filenames, query_date=None, size=None):
     """Get file download data.

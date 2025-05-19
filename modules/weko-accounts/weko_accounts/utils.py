@@ -211,8 +211,3 @@ def roles_required(roles, allow_anonymous=False):
             return func(*args, **kwargs)
         return decorated_view
     return decorator
-
-
-def create_limiter():
-    from .config import WEKO_ACCOUNTS_API_LIMIT_RATE_DEFAULT
-    return Limiter(app=Flask(__name__), key_func=get_remote_address, default_limits=WEKO_ACCOUNTS_API_LIMIT_RATE_DEFAULT)

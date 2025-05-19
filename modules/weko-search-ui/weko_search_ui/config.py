@@ -761,8 +761,6 @@ CHILD_INDEX_THUMBNAIL_WIDTH = 100
 CHILD_INDEX_THUMBNAIL_HEIGHT = 100
 """ child index thumbnail height in result index serch"""
 
-WEKO_SEARCH_UI_API_LIMIT_RATE_DEFAULT = ['100 per minute']
-
 WEKO_SEARCH_UI_RESULT_TMP_PREFIX = 'weko_search_result_list_'
 
 SWORD_METADATA_FILE = "metadata/sword.json"
