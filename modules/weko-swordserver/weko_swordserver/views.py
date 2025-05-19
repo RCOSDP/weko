@@ -12,6 +12,7 @@ from __future__ import absolute_import, print_function
 import os
 import shutil
 from datetime import datetime, timedelta
+import sys
 import traceback
 
 from flask import Blueprint, current_app, jsonify, request, url_for, abort, Response
@@ -1006,6 +1007,13 @@ def delete_object(recid):
             response = Response(status=204)
     except WekoSwordserverException as ex:
         traceback.print_exc()
+        exec_info = sys.exc_info()
+        tb_info = traceback.format_tb(exec_info[2])
+        UserActivityLogger.error(
+            operation="ITEM_DELETE",
+            target_key=recid,
+            remarks=tb_info[0]
+        )
         raise
     except WekoWorkflowException as ex:
         traceback.print_exc()
@@ -1017,6 +1025,13 @@ def delete_object(recid):
         msg = f"Unexpected error occurred during deletion: {ex}"
         current_app.logger.error(msg)
         traceback.print_exc()
+        exec_info = sys.exc_info()
+        tb_info = traceback.format_tb(exec_info[2])
+        UserActivityLogger.error(
+            operation="ITEM_DELETE",
+            target_key=recid,
+            remarks=tb_info[0]
+        )
         raise WekoSwordserverException(msg, ErrorType.BadRequest)
 
     return response

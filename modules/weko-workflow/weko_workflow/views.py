@@ -78,6 +78,7 @@ from weko_index_tree.utils import get_user_roles
 from weko_items_ui.api import item_login
 from weko_items_ui.utils import check_item_is_being_edit, get_workflow_by_item_type_id, \
     get_current_user, send_mail_delete_request, send_mail_delete_approved
+from weko_logging.activity_logger import UserActivityLogger
 from weko_records.api import FeedbackMailList, RequestMailList, ItemLink, ItemTypes
 from weko_records.models import ItemMetadata
 from weko_records.serializers.utils import get_item_type_name
@@ -1746,6 +1747,10 @@ def next_action(activity_id='0', action_id=0, json_data=None):
             from weko_records_ui.utils import soft_delete
             soft_delete(parts[0])
         db.session.commit()
+        UserActivityLogger.info(
+            operation="ITEM_DELETE",
+            target_key=current_pid.pid_value
+        )
 
         if action_endpoint == "approval":
             send_mail_delete_approved(parts[0], deposit, activity_detail, current_user.id)
