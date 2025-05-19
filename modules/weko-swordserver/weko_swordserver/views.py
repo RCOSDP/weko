@@ -12,6 +12,7 @@ from __future__ import absolute_import, print_function
 import os
 import shutil
 from datetime import datetime, timedelta
+import sys
 import traceback
 
 from flask import Blueprint, current_app, jsonify, request, url_for, abort, Response
@@ -38,6 +39,7 @@ from weko_items_ui.scopes import item_create_scope, item_update_scope, item_dele
 from weko_items_ui.utils import (
     lock_item_will_be_edit, send_mail_direct_registered, send_mail_item_deleted
 )
+from weko_logging.activity_logger import UserActivityLogger
 from weko_notifications.utils import notify_item_imported, notify_item_deleted
 from weko_records_ui.utils import get_record_permalink
 from weko_redis.redis import RedisConnection
@@ -998,9 +1000,20 @@ def delete_object(recid):
             current_app.logger.info(
                 f"Item deleted by sword from {request.oauth.client.name} (recid={recid})"
             )
+            UserActivityLogger.info(
+                operation="ITEM_DELETE",
+                target_key=recid
+            )
             response = Response(status=204)
     except WekoSwordserverException as ex:
         traceback.print_exc()
+        exec_info = sys.exc_info()
+        tb_info = traceback.format_tb(exec_info[2])
+        UserActivityLogger.error(
+            operation="ITEM_DELETE",
+            target_key=recid,
+            remarks=tb_info[0]
+        )
         raise
     except WekoWorkflowException as ex:
         traceback.print_exc()
@@ -1012,6 +1025,13 @@ def delete_object(recid):
         msg = f"Unexpected error occurred during deletion: {ex}"
         current_app.logger.error(msg)
         traceback.print_exc()
+        exec_info = sys.exc_info()
+        tb_info = traceback.format_tb(exec_info[2])
+        UserActivityLogger.error(
+            operation="ITEM_DELETE",
+            target_key=recid,
+            remarks=tb_info[0]
+        )
         raise WekoSwordserverException(msg, ErrorType.BadRequest)
 
     return response

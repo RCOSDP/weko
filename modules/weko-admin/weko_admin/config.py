@@ -1121,7 +1121,6 @@ WEKO_ADMIN_COMMUNITY_ACCESS_LIST = [
     'itemexportsettings',
     'items/import',
     'items/rocrate_import',
-    'logs/export'
     'items/bulk/update',
     'items/bulk/delete',
     'items/bulk-export',
@@ -1154,6 +1153,7 @@ WEKO_ADMIN_REPOSITORY_ACCESS_LIST = [
     'itemtypes',
     'language',
     'loganalysissetting',
+    'logs/export',
     'others',
     'pdfcoverpage',
     'rankingsettings',
