@@ -2795,8 +2795,3 @@ def replace_fqdn_of_file_metadata(file_metadata_lst: list, file_url: list = None
                 file["url"]["url"] = replace_fqdn(file["url"]["url"])
             elif isinstance(file_url, list):
                 file_url.append(file["url"]["url"])
-
-def create_limiter():
-    from .config import WEKO_RECORDS_API_LIMIT_RATE_DEFAULT
-    return Limiter(app=Flask(__name__), key_func=get_remote_address, default_limits=WEKO_RECORDS_API_LIMIT_RATE_DEFAULT)
-

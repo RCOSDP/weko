@@ -103,5 +103,3 @@ WEKO_INDEX_TREE_INDEX_LOCK_KEY_PREFIX = "lock_index_"
 
 WEKO_INDEX_TREE_PUBLIC_DEFAULT_TIMEZONE = 'Asia/Tokyo'
 """Default time zone for index publication date."""
-
-WEKO_INDEX_TREE_API_LIMIT_RATE_DEFAULT = ['100 per minute']

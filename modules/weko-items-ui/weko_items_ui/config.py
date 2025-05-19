@@ -275,5 +275,3 @@ WEKO_ITEMS_UI_REST_ENDPOINTS = {
         'max_result_window': 10000,
     },
 }
-
-WEKO_ITEMS_UI_API_LIMIT_RATE_DEFAULT = ['100 per minute']

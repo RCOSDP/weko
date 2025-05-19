@@ -5050,11 +5050,6 @@ def has_permission_edit_item(record, recid):
     can_edit = True if pid == get_record_without_version(pid) else False
     return can_edit and permission
 
-
-def create_limiter():
-    from .config import WEKO_ITEMS_UI_API_LIMIT_RATE_DEFAULT
-    return Limiter(app=Flask(__name__), key_func=get_remote_address, default_limits=WEKO_ITEMS_UI_API_LIMIT_RATE_DEFAULT)
-
 def get_file_download_data(item_id, record, filenames, query_date=None, size=None):
     """Get file download data.
 

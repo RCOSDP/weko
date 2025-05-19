@@ -32,14 +32,11 @@ from invenio_records_rest.views import create_error_handlers as records_rest_err
 from invenio_rest import ContentNegotiatedMethodView
 from invenio_rest.views import create_api_errorhandler
 from sqlalchemy.exc import SQLAlchemyError
+from weko_accounts.utils import limiter
 
 from .errors import InvalidRequestError, InternalServerError, VersionNotFoundRESTError
 from .models import OaStatus
 from .scopes import oa_status_update_scope
-from .utils import create_limiter
-
-limiter = create_limiter()
-
 
 def create_error_handlers(blueprint):
     """Create error handlers on blueprint."""
