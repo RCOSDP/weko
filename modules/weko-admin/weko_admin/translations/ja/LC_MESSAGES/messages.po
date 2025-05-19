@@ -1742,7 +1742,7 @@ msgstr "レコード統計の表示/非表示"
 
 #: weko_admin/templates/weko_admin/admin/sword_api_jsonld_settings.html:41
 msgid "Cannot disable 'Original'."
-msgstr "「オリジナル」を無効にすることはできません。"
+msgstr "「Original」を無効にすることはできません。"
 
 #: weko_admin/templates/weko_admin/admin/sword_api_jsonld_settings.html:52
 msgid "Item type mismatch"
@@ -2010,4 +2010,3 @@ msgstr "更新"
 
 #~ msgid "Display Numbe"
 #~ msgstr "表示件数"
-
