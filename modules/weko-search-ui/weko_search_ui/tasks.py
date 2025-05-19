@@ -159,8 +159,22 @@ def remove_temp_dir_task(path):
 
 
 @shared_task
-def delete_task_id_cache(task_id, cache_key):
-    """delete admin_cache_KEY_EXPORT_ALL_{user_id} from redis"""
+def delete_task_id_cache_on_revoke(task_id, cache_key):
+    """delete admin_cache_KEY_EXPORT_ALL_{user_id} from redis
+    
+    Delete the export task ID cache from Redis if the task has been revoked.
+
+    This task checks if the given cache key in Redis matches the provided task ID.
+    If the task state is "REVOKED", it deletes the cache key from Redis to clean up
+    any remaining task information.
+
+    Args:
+        task_id (str): The Celery task ID to check.
+        cache_key (str): The Redis cache key associated with the export task.
+
+    Returns:
+        None
+    """
     if get_redis_cache(cache_key) == task_id:
         state = AsyncResult(task_id).state
         if state == "REVOKED":
@@ -170,76 +184,106 @@ def delete_task_id_cache(task_id, cache_key):
 
 @shared_task
 def export_all_task(root_url, user_id, data, start_time):
-    """Export all items."""
+    """
+    Celery task to export all items for a user.
+
+    This task calls the export_all function to export all items for the specified user,
+    using the provided root URL, data, and start time.
+    Args:
+        root_url (str): The root URL for the export process.
+        user_id (str): The ID of the user performing the export.
+        data (dict): The data to be exported.
+        start_time (str): The start time of the export process.
+
+    Returns:
+        None
+    """
     export_all(root_url, user_id, data, start_time)
 
-@shared_task
-def write_files_task(export_path, pickle_file_name , user_id):
-    """Write files for export.
+@shared_task(bind=True)
+def write_files_task(self, export_path, pickle_file_name , user_id):
+    """
+    Celery task to process export data from a pickle file and write files.
+    This task reads export data from the specified pickle file, updates the export
+    status in Redis cache, and calls the write_files function to perform the actual
+    file writing process. The task also manages export progress and error states
+    in Redis, and removes the pickle file after processing.
 
     Args:
-        export_path (str): path of files where csv/tsv export to.
-        pickle_file_name (str): pickle file's name
-        user_id (int): a user who processed file output.
+        export_path (str): The directory path where export files will be written.
+        pickle_file_name (str): The name of the pickle file containing export data.
+        user_id (str): The ID of the user performing the export.
+
+    Raises:
+        Any exception during processing will be logged, and error status will be
+        updated in Redis cache.
     """
-    _msg_config = current_app.config["WEKO_SEARCH_UI_BULK_EXPORT_MSG"]
-    _msg_key = current_app.config["WEKO_ADMIN_CACHE_PREFIX"].format(
-        name=_msg_config,
-        user_id=user_id
-    )
-    _file_create_config = \
-        current_app.config["WEKO_SEARCH_UI_BULK_EXPORT_FILE_CREATE_RUN_MSG"]
-    _file_create_key = current_app.config["WEKO_ADMIN_CACHE_PREFIX"].format(
-        name=_file_create_config,
-        user_id=user_id
-    )
-
-    def _update_redis_status(json_data, file_name, status,item_type_id):
-        "Update status in redis cache."
-        part_name = os.path.splitext(file_name)[1]
-        part_index = part_name.find('part')
-        part_number = part_name[part_index + 4:] if part_index != -1 else 1
-        json_data['write_file_status'][item_type_id + '.' + str(part_number)] = status
-        reset_redis_cache(_file_create_key, json.dumps(json_data))
-        del part_name, part_index, part_number
-
-    with open(pickle_file_name, 'rb') as f:
-        import_datas = pickle.load(f)
-    json_data = json.loads(get_redis_cache(_file_create_key))
-    if not json_data['cancel_flg']:
-        _update_redis_status(json_data, import_datas['name'], 'started',import_datas['item_type_id'])
-        with open(pickle_file_name, 'rb') as f:
-            import_datas = pickle.load(f)
-        result = write_files(import_datas, export_path, user_id, 0)
-        json_data = json.loads(get_redis_cache(_file_create_key))
-        if result:
-            _update_redis_status(json_data, import_datas['name'], 'finished',import_datas['item_type_id'])
-        else:
-            reset_redis_cache(_msg_key, "Export failed.")
-            json_data['cancel_flg'] = True
-            _update_redis_status(json_data, import_datas['name'], 'error',import_datas['item_type_id'])
-    else:
-        _update_redis_status(json_data, import_datas['name'], 'canceled',import_datas['item_type_id'])
-    del import_datas,json_data
-    gc.collect()
-    os.remove(pickle_file_name)
-
-
-@shared_task
-def delete_exported_task(uri, cache_key, task_key, export_path):
-    """Delete expired exported file."""
-    shutil.rmtree(export_path)
-    redis_connection = RedisConnection()
-    datastore = redis_connection.connection(db=current_app.config['CACHE_REDIS_DB'], kv = True)
-    if datastore.redis.exists(cache_key):
-        datastore.delete(task_key)
     try:
-        delete_exported(uri, cache_key)
-        db.session.commit()
-    except Exception as e:
-        db.session.rollback()
-        current_app.logger.error(e)
+        _msg_config = current_app.config["WEKO_SEARCH_UI_BULK_EXPORT_MSG"]
+        _msg_key = current_app.config["WEKO_ADMIN_CACHE_PREFIX"].format(
+            name=_msg_config,
+            user_id=user_id
+        )
+        _file_create_config = \
+            current_app.config["WEKO_SEARCH_UI_BULK_EXPORT_FILE_CREATE_RUN_MSG"]
+        _file_create_key = current_app.config["WEKO_ADMIN_CACHE_PREFIX"].format(
+            name=_file_create_config,
+            user_id=user_id
+        )
+        
+        # update task_id in redis
+        _task_id_config = \
+            current_app.config["WEKO_SEARCH_UI_BULK_EXPORT_TASK"]
+        _task_id_key = current_app.config["WEKO_ADMIN_CACHE_PREFIX"].format(
+            name=_task_id_config,
+            user_id=user_id
+        )
+        reset_redis_cache(_task_id_key, str(self.request.id))
+        
+        item_type_id = pickle_file_name.split(".")[1]
+        part = pickle_file_name.split(".")[2]
+        json_data = json.loads(get_redis_cache(_file_create_key))
+        pickle_path = export_path + '/' + pickle_file_name
+        def _update_redis_status(json_data, file_name, status,item_type_id):
+            """Update status in redis cache.
+            Args:
+                json_data (dict): The cache to be updated
+                file_name (str): file name to be updated
+                status (str): Change to this status
+                item_type_id (str): Target item type ID
+            """
+            part_name = os.path.splitext(file_name)[1]
+            part_index = part_name.find('part')
+            part_number = part_name[part_index + 4:] if part_index != -1 else 1
+            json_data['write_file_status'][item_type_id + '.' + str(part_number)] = status
+            reset_redis_cache(_file_create_key, json.dumps(json_data))
+            del part_name, part_index, part_number
 
+        if not json_data['cancel_flg']:
+            with open(pickle_path, 'rb') as f:
+                import_datas = pickle.load(f)
+            _update_redis_status(json_data, import_datas['name'], 'started',import_datas['item_type_id'])
+            with open(pickle_path, 'rb') as f:
+                import_datas = pickle.load(f)
+            
+            result = write_files(import_datas, export_path, user_id, 0)
+            json_data = json.loads(get_redis_cache(_file_create_key))
+            if result:
+                _update_redis_status(json_data, import_datas['name'], 'finished',import_datas['item_type_id'])
+            else:
+                reset_redis_cache(_msg_key, "Export failed.")
+                json_data['cancel_flg'] = True
+                _update_redis_status(json_data, import_datas['name'], 'error',import_datas['item_type_id'])
+        else:
+            _update_redis_status(json_data, f"{item_type_id}.{part}", 'canceled',item_type_id)
+        os.remove(pickle_path)
+    except Exception as e:
+        import traceback
+        current_app.logger.error(traceback.format_exc())
+        reset_redis_cache(_msg_key, "Export failed.")
+        json_data['cancel_flg'] = True
+        _update_redis_status(json_data, f"{item_type_id}.{part}", 'error',item_type_id)
+        os.remove(pickle_path)
 
 def is_import_running():
     """Check import is running."""
