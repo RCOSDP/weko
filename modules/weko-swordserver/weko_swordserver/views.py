@@ -35,9 +35,12 @@ from weko_accounts.utils import roles_required
 from weko_admin.api import TempDirInfo
 from weko_deposit.api import WekoRecord
 from weko_items_ui.scopes import item_create_scope, item_update_scope, item_delete_scope
-from weko_items_ui.utils import send_mail_direct_registered, send_mail_item_deleted
+from weko_items_ui.utils import (
+    lock_item_will_be_edit, send_mail_direct_registered, send_mail_item_deleted
+)
 from weko_notifications.utils import notify_item_imported, notify_item_deleted
 from weko_records_ui.utils import get_record_permalink
+from weko_redis.redis import RedisConnection
 from weko_search_ui.utils import (
     import_items_to_system, import_items_to_activity,
     delete_items_with_activity
@@ -653,6 +656,13 @@ def put_object(recid):
     }
     response = {}
     if register_type == "Direct":
+        # Check cache if the item is being edited
+        if not lock_item_will_be_edit(recid):
+            current_app.logger.error(f"Item {recid} is being edited.")
+            raise WekoSwordserverException(
+                f"Item {recid} is being edited.",
+                ErrorType.BadRequest
+            )
         import_result = import_items_to_system(item, request_info=request_info)
         if not import_result.get("success"):
             current_app.logger.error(
@@ -973,6 +983,13 @@ def delete_object(recid):
             else:
                 response = jsonify(status=204)
         else:
+            # Check cache if the item is being edited
+            if not lock_item_will_be_edit(recid):
+                current_app.logger.error(f"Item {recid} is being edited.")
+                raise WekoSwordserverException(
+                    f"Item {recid} is being edited.",
+                    ErrorType.BadRequest
+                )
             delete_item_directly(recid, request_info=request_info)
             notify_item_deleted(
                 current_user.id, recid, current_user.id, shared_id=shared_id

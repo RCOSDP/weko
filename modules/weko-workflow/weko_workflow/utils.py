@@ -2151,9 +2151,11 @@ def get_cache_data(key: str):
 def check_an_item_is_locked(item_id=None):
     """Check if an item is locked.
 
-    :param item_id: Item id.
+    Args:
+        item_id (str): The ID of the item to check.
 
-    :return
+    Returns:
+        bool: If the item is locked, return True, else False.
     """
     def check(workers):
         for worker in workers:

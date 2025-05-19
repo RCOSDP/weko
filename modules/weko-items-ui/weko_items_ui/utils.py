@@ -29,28 +29,28 @@ import re
 import shutil
 import sys
 import tempfile
+import time
 import traceback
 import unicodedata
+import secrets
+import pytz
 from collections import OrderedDict
 from datetime import date, datetime, timedelta, timezone
 from io import StringIO
-import zipfile
-import secrets
-import pytz
 
 import bagit
-import redis
 from sqlalchemy.exc import SQLAlchemyError
-from redis import sentinel
 from elasticsearch.exceptions import NotFoundError
 from elasticsearch import exceptions as es_exceptions
-from flask import abort, current_app, flash, redirect, request, send_file, \
-    url_for,jsonify, Flask
+from flask import abort, current_app, flash, redirect, request, send_file, url_for
 from flask_babelex import gettext as _
-from flask_limiter import Limiter
-from flask_limiter.util import get_remote_address
 from flask_login import current_user
+from sqlalchemy import MetaData, Table
+from sqlalchemy.sql import text
+from jsonschema import SchemaError, ValidationError
+
 from invenio_accounts.models import Role, userrole
+from invenio_cache import current_cache
 from invenio_db import db
 from invenio_i18n.ext import current_i18n
 from invenio_indexer.api import RecordIndexer
@@ -59,48 +59,41 @@ from invenio_pidrelations.models import PIDRelation
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from invenio_pidstore.errors import PIDDoesNotExistError
 from invenio_records.api import RecordBase
-from sqlalchemy.dialects.postgresql import JSONB
-from sqlalchemy.sql import func, cast, text
-from sqlalchemy.types import Text, String
-from sqlalchemy.orm import aliased
-from invenio_records.models import RecordMetadata
 from invenio_accounts.models import User
 from invenio_search import RecordsSearch
-from invenio_stats.utils import QueryRankingHelper, QuerySearchReportHelper
-from invenio_stats.views import QueryRecordViewCount as _QueryRecordViewCount
-from invenio_stats.proxies import current_stats
-from invenio_stats import config
-#from invenio_stats.views import QueryRecordViewCount
-from jsonschema import SchemaError, ValidationError
-from simplekv.memory.redisstore import RedisStore
-from sqlalchemy import MetaData, Table
+from invenio_stats.utils import QueryRankingHelper
+
 from weko_authors.api import WekoAuthors
 from weko_deposit.api import WekoDeposit, WekoRecord
 from weko_deposit.pidstore import get_record_without_version
 from weko_index_tree.api import Indexes
-from weko_index_tree.utils import check_index_permissions, get_index_id, \
-    get_user_roles
+from weko_index_tree.utils import (
+    check_index_permissions, get_index_id, get_user_roles
+)
 from weko_notifications.models import NotificationsUserSettings
 from weko_records.api import FeedbackMailList, JsonldMapping, RequestMailList, ItemTypes, Mapping
 from weko_records.serializers.utils import get_item_type_name
 from weko_records.utils import replace_fqdn_of_file_metadata
 from weko_records_ui.errors import AvailableFilesNotFoundRESTError
-from weko_records_ui.permissions import check_created_id, \
-    check_file_download_permission, check_publish_status
+from weko_records_ui.permissions import (
+    check_created_id, check_file_download_permission, check_publish_status
+)
 from weko_redis.redis import RedisConnection
 from weko_search_ui.config import ROCRATE_METADATA_FILE, WEKO_IMPORT_DOI_TYPE
 from weko_search_ui.mapper import JsonLdMapper
 from weko_search_ui.query import item_search_factory
-from weko_search_ui.utils import check_sub_item_is_system, \
-    get_root_item_option, get_sub_item_option
+from weko_search_ui.utils import (
+    check_sub_item_is_system, get_root_item_option, get_sub_item_option
+)
 from weko_schema_ui.models import PublishStatus
 from weko_user_profiles import UserProfile
 from weko_workflow.api import WorkActivity
-from weko_workflow.config import IDENTIFIER_GRANT_LIST, \
-    WEKO_SERVER_CNRI_HOST_LINK
-from weko_workflow.models import ActionStatusPolicy as ASP
-from weko_workflow.models import Activity, FlowAction, FlowActionRole, \
-    FlowDefine
+from weko_workflow.config import (
+    IDENTIFIER_GRANT_LIST, WEKO_SERVER_CNRI_HOST_LINK
+)
+from weko_workflow.models import (
+    Activity, FlowAction, FlowActionRole, FlowDefine, ActionStatusPolicy as ASP
+)
 from weko_workflow.utils import IdentifierHandle
 from weko_admin.models import ApiCertificate
 
@@ -5051,9 +5044,31 @@ def has_permission_edit_item(record, recid):
     return can_edit and permission
 
 
-def create_limiter():
-    from .config import WEKO_ITEMS_UI_API_LIMIT_RATE_DEFAULT
-    return Limiter(app=Flask(__name__), key_func=get_remote_address, default_limits=WEKO_ITEMS_UI_API_LIMIT_RATE_DEFAULT)
+def lock_item_will_be_edit(pid_value):
+    """Lock item will be edit.
+
+    Lock the item to prevent some people from starting to edit it at the same time.
+
+    Args:
+        pid_value (str): recid of item.
+
+    Returns:
+        bool: If lock is successful, return True.
+    """
+    redis_connection = RedisConnection()
+    sessionstorage = redis_connection.connection(
+        db=current_app.config['ACCOUNTS_SESSION_REDIS_DB_NO'], kv = True
+    )
+    if sessionstorage.redis.exists("pid_{}_will_be_edit".format(pid_value)):
+        return False
+
+    sessionstorage.put(
+        "pid_{}_will_be_edit".format(pid_value),
+        str(current_user.get_id()).encode('utf-8'),
+        ttl_secs=3
+    )
+    return True
+
 
 def get_file_download_data(item_id, record, filenames, query_date=None, size=None):
     """Get file download data.

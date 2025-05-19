@@ -647,15 +647,19 @@ class ItemTypes(RecordBase):
     def get_by_id(cls, id_, with_deleted=False):
         """Retrieve the item type by id.
 
-        :param id_: Identifier of item type.
-        :param with_deleted: If `True` then it includes deleted item types.
-        :returns: The :class:`ItemTypes` instance.
+        Args:
+            id_ (int): Identifier of item type.
+            with_deleted (bool): If `True` then it includes deleted item types.
+
+        Returns:
+            ItemTypes: Item type model instance.
         """
         with db.session.no_autoflush:
             query = ItemType.query.filter_by(id=id_)
             if not with_deleted:
                 query = query.filter(ItemType.is_deleted.is_(False))  # noqa
-            return query.one_or_none()
+            obj = query.one_or_none()
+        return obj if isinstance(obj, ItemType) else None
 
     @classmethod
     def get_by_name(cls, name_, with_deleted=False):
