@@ -1987,6 +1987,7 @@ def handle_finish_workflow(deposit, current_pid, recid):
     record_pid = None
     old_item_reference_list = []
     new_item_reference_list = []
+    is_newversion = False
     try:
         pid_without_ver = get_record_without_version(current_pid)
         if ".0" in current_pid.pid_value:
@@ -1996,6 +1997,7 @@ def handle_finish_workflow(deposit, current_pid, recid):
         # publish record without version ID when registering newly
         if recid:
             # new record attached version ID
+            is_newversion = True
             new_deposit = deposit.newversion(current_pid)
             item_id = new_deposit.model.id
             ver_attaching_deposit = WekoDeposit(
@@ -2108,9 +2110,24 @@ def handle_finish_workflow(deposit, current_pid, recid):
 
         from invenio_oaiserver.tasks import update_records_sets
         update_records_sets.delay([str(pid_without_ver.object_uuid)])
+        opration = "ITEM_CREATE" if is_newversion else "ITEM_UPDATE"
+        target_key = recid.recid if is_newversion else pid_without_ver.pid_value
+        UserActivityLogger.info(
+            operation=opration,
+            target_key=target_key
+        )
     except Exception as ex:
         db.session.rollback()
         current_app.logger.exception(str(ex))
+        exec_info = sys.exc_info()
+        tb_info = traceback.format_tb(exec_info[2])
+        opration = "ITEM_CREATE" if is_newversion else "ITEM_UPDATE"
+        target_key = recid.recid if is_newversion else pid_without_ver.pid_value
+        UserActivityLogger.error(
+            operation=opration,
+            target_key=target_key,
+            remarks=tb_info[0]
+        )
         return item_id
     return item_id
 

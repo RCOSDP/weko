@@ -26,6 +26,7 @@ import os
 import traceback
 import uuid
 import copy
+import sys
 
 import six
 import werkzeug
@@ -1028,6 +1029,10 @@ def soft_delete(recid):
             starts_with_del_ver = False
 
         db.session.commit()
+        UserActivityLogger.info(
+            operation="ITEM_DELETE",
+            target_key=recid
+        )
         if not starts_with_del_ver:
             old_record = WekoRecord.get_record_by_pid(recid)
             call_external_system(old_record=old_record)
@@ -1036,6 +1041,13 @@ def soft_delete(recid):
         db.session.rollback()
         current_app.logger.error('Failed to delete item: %s', recid)
         traceback.print_exc()
+        exec_info = sys.exc_info()
+        tb_info = traceback.format_tb(exec_info[2])
+        UserActivityLogger.error(
+            operation="ITEM_DELETE",
+            target_key=recid,
+            remarks=tb_info[0]
+        )
         if ex.args and len(ex.args) and isinstance(ex.args[0], dict) \
                 and ex.args[0].get('is_locked'):
             return jsonify(
