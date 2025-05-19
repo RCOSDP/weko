@@ -5060,7 +5060,6 @@ def lock_item_will_be_edit(pid_value):
         db=current_app.config['ACCOUNTS_SESSION_REDIS_DB_NO'], kv = True
     )
     if sessionstorage.redis.exists("pid_{}_will_be_edit".format(pid_value)):
-        current_app.logger.error(f"Item {pid_value} is being edited.")
         return False
 
     sessionstorage.put(

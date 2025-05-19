@@ -642,14 +642,6 @@ def put_object(recid):
 
     item["root_path"] = os.path.join(data_path, "data")
 
-    # Check cache if the item is being edited
-    if not lock_item_will_be_edit(recid):
-        current_app.logger.error(f"Item {recid} is being edited.")
-        raise WekoSwordserverException(
-            f"Item {recid} is being edited.",
-            ErrorType.BadRequest
-        )
-
     # Prepare request information
     owner = -1
     if current_user.is_authenticated:
@@ -664,6 +656,13 @@ def put_object(recid):
     }
     response = {}
     if register_type == "Direct":
+        # Check cache if the item is being edited
+        if not lock_item_will_be_edit(recid):
+            current_app.logger.error(f"Item {recid} is being edited.")
+            raise WekoSwordserverException(
+                f"Item {recid} is being edited.",
+                ErrorType.BadRequest
+            )
         import_result = import_items_to_system(item, request_info=request_info)
         if not import_result.get("success"):
             current_app.logger.error(
@@ -961,14 +960,6 @@ def delete_object(recid):
         if not required_scopes.issubset(token_scopes):
             abort(403)
 
-    # Check cache if the item is being edited
-    if not lock_item_will_be_edit(recid):
-        current_app.logger.error(f"Item {recid} is being edited.")
-        raise WekoSwordserverException(
-            f"Item {recid} is being edited.",
-            ErrorType.BadRequest
-        )
-
     owner = -1
     if current_user.is_authenticated:
         owner = current_user.id
@@ -992,6 +983,13 @@ def delete_object(recid):
             else:
                 response = jsonify(status=204)
         else:
+            # Check cache if the item is being edited
+            if not lock_item_will_be_edit(recid):
+                current_app.logger.error(f"Item {recid} is being edited.")
+                raise WekoSwordserverException(
+                    f"Item {recid} is being edited.",
+                    ErrorType.BadRequest
+                )
             delete_item_directly(recid, request_info=request_info)
             notify_item_deleted(
                 current_user.id, recid, current_user.id, shared_id=shared_id
