@@ -20,19 +20,25 @@
 
 """Blueprint for weko-items-ui."""
 
-import json
 import sys
+import json
 import traceback
+import requests
 from copy import deepcopy
 from datetime import date, datetime, timedelta
-import requests
 
-from flask import Blueprint, abort, current_app, flash, jsonify, redirect, \
+from flask import (
+    Blueprint, abort, current_app, flash, jsonify, redirect,
     render_template, request, session, url_for
+)
 from flask_babelex import gettext as _
 from flask_login import login_required
 from flask_security import current_user
 from flask_wtf import FlaskForm
+from sqlalchemy.exc import SQLAlchemyError, StatementError
+from werkzeug.utils import import_string
+from webassets.exceptions import BuildError
+from werkzeug.exceptions import BadRequest
 
 from invenio_db import db
 from invenio_i18n.ext import current_i18n
@@ -40,45 +46,43 @@ from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidstore.resolver import Resolver
 from invenio_pidstore.errors import PIDDoesNotExistError
 from invenio_records_ui.signals import record_viewed
-from simplekv.memory.redisstore import RedisStore
-from sqlalchemy.exc import SQLAlchemyError
+
 from weko_accounts.utils import login_required_customize
 from weko_admin.models import AdminSettings, RankingSettings
 from weko_deposit.api import WekoRecord
 from weko_groups.api import Group
-from weko_index_tree.utils import check_index_permissions, get_index_id, \
-    get_user_roles
+from weko_index_tree.utils import (
+    check_index_permissions, get_index_id, get_user_roles
+)
 from weko_records.api import ItemTypes
 from weko_records_ui.ipaddr import check_site_license_permission
 from weko_records_ui.permissions import check_file_download_permission
 from weko_redis.redis import RedisConnection
-from weko_workflow.api import GetCommunity, WorkActivity, WorkFlow as WorkFlows
-from .utils import is_duplicate_record
-from weko_workflow.utils import check_an_item_is_locked, \
-    get_record_by_root_ver, get_thumbnails, prepare_edit_workflow, \
-    set_files_display_type, prepare_delete_workflow
 from weko_schema_ui.models import PublishStatus
-from werkzeug.utils import import_string
-from webassets.exceptions import BuildError
-from werkzeug.exceptions import BadRequest
+from weko_workflow.api import GetCommunity, WorkActivity, WorkFlow as WorkFlows
+from weko_workflow.utils import (
+    check_an_item_is_locked, get_record_by_root_ver, get_thumbnails,
+    prepare_edit_workflow, set_files_display_type, prepare_delete_workflow
+)
 
 from .permissions import item_permission
-from .utils import _get_max_export_items, check_item_is_being_edit, \
-    export_items, export_rocrate, get_current_user, get_data_authors_prefix_settings, \
-    get_data_authors_affiliation_settings, \
-    get_list_email, get_list_username, get_ranking, get_user_info_by_email, \
-    get_user_info_by_username, get_user_information, get_user_permission, \
-    get_workflow_by_item_type_id, hide_form_items, is_schema_include_key, \
-    remove_excluded_items_in_json_schema, sanitize_input_data, save_title, \
-    set_multi_language_name, to_files_js, translate_schema_form, \
-    translate_validation_message, update_index_tree_for_record, \
-    update_json_schema_by_activity_id, update_schema_form_by_activity_id, \
-    update_sub_items_by_user_role, validate_form_input_data, validate_user, \
-    validate_user_mail_and_index, get_weko_link, get_access_token
+from .utils import (
+    _get_max_export_items, check_item_is_being_edit,
+    export_items, export_rocrate, get_current_user, get_data_authors_prefix_settings,
+    get_data_authors_affiliation_settings, get_list_email, get_list_username,
+    get_ranking, get_user_info_by_email, get_user_info_by_username,
+    get_user_information, get_user_permission, get_workflow_by_item_type_id,
+    hide_form_items, is_schema_include_key, remove_excluded_items_in_json_schema,
+    sanitize_input_data, save_title, set_multi_language_name, to_files_js,
+    translate_schema_form, translate_validation_message, update_index_tree_for_record,
+    update_json_schema_by_activity_id, update_schema_form_by_activity_id,
+    update_sub_items_by_user_role, validate_form_input_data, validate_user,
+    validate_user_mail_and_index, get_weko_link, get_access_token,
+    is_duplicate_record, lock_item_will_be_edit
+)
 from .config import WEKO_ITEMS_UI_FORM_TEMPLATE,WEKO_ITEMS_UI_ERROR_TEMPLATE
 from weko_theme.config import WEKO_THEME_DEFAULT_COMMUNITY
 
-from sqlalchemy.exc import StatementError
 
 blueprint = Blueprint(
     'weko_items_ui',
@@ -953,22 +957,13 @@ def prepare_edit_item(id=None, community=None):
     pid_value = id or post_activity.get('pid_value')
     community = community or getargs.get('community', None)
 
-    # Cache Storage
-    redis_connection = RedisConnection()
-    sessionstorage = redis_connection.connection(
-        db=current_app.config['ACCOUNTS_SESSION_REDIS_DB_NO'], kv = True
-    )
-    if sessionstorage.redis.exists("pid_{}_will_be_edit".format(pid_value)):
+    # Check redis cache
+    if not lock_item_will_be_edit(pid_value):
         current_app.logger.error(f"Item {pid_value} is being edited.")
         return jsonify(
             code=err_code,
             msg=_('This Item is being edited.')
         )
-    else:
-        sessionstorage.put(
-            "pid_{}_will_be_edit".format(pid_value),
-            str(current_user.get_id()).encode('utf-8'),
-            ttl_secs=3)
 
     if pid_value:
         pid_value = str(pid_value)
@@ -1100,28 +1095,24 @@ def prepare_edit_item(id=None, community=None):
 @blueprint.route('/prepare_delete_item', methods=['POST'])
 @login_required
 def prepare_delete_item(id=None, community=None, shared_user_id=-1):
-    """Prepare_delete_item.
+    """Prepare delete item.
 
-    Host the api which provide 2 service:
-        Check permission: check if user is owner/admin/shared user
-        Create new activity for editing flow
-    request:
+    Delete item directly or create delete activity.
+
+    Request:
         header: Content type must be json
         data:
             pid_value: pid_value
+        query:
+            community: community id
 
-    return: The result json:
-        code: status code,
-        msg: meassage result,
-        data: url redirect
+    Args:
+        id (str): pid_value
+        community (str): community id
+        shared_user_id (int): shared user id
 
-    Check delete item.
-
-    direct or workflow
-
-    return: delete_type(direct or workflow)
-            workflow_id
-            flow_id
+    Returns:
+        Response: JSON response with code and message.
     """
     err_code = current_app.config.get(
         'WEKO_ITEMS_UI_API_RETURN_CODE_ERROR', -1
@@ -1138,22 +1129,12 @@ def prepare_delete_item(id=None, community=None, shared_user_id=-1):
     pid_value = del_value.replace("del_ver_", "")
     community = community or getargs.get('community', None)
 
-    # Cache Storage
-    redis_connection = RedisConnection()
-    sessionstorage = redis_connection.connection(
-        db=current_app.config['ACCOUNTS_SESSION_REDIS_DB_NO'], kv = True
-    )
-    if sessionstorage.redis.exists("pid_{}_will_be_edit".format(pid_value)):
-        current_app.logger.info(f"Item {pid_value} is being edited.")
+    # Check redis cache
+    if not lock_item_will_be_edit(pid_value.split(".")[0]):
+        current_app.logger.error(f"Item {pid_value} is being edited.")
         return jsonify(
             code=err_code,
             msg=_('This Item is being edited.')
-        )
-    else:
-        sessionstorage.put(
-            "pid_{}_will_be_edit".format(pid_value),
-            str(current_user.get_id()).encode('utf-8'),
-            ttl_secs=3
         )
 
     if pid_value:
