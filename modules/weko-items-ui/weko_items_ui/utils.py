@@ -5189,7 +5189,7 @@ def get_access_token(api_code):
 
 # --- 通知対象取得関数 ---
 
-def get_notification_targets(deposit, user_id):
+def get_notification_targets(deposit, user_id, shared_id):
     """
     Retrieve notification targets for a given deposit and user.
 
@@ -5206,12 +5206,10 @@ def get_notification_targets(deposit, user_id):
     """
     owners = deposit.get("_deposit", {}).get("owners", [])
     set_target_id = set(owners)
-    is_shared = deposit.get("weko_shared_id") != -1
-
+    is_shared = shared_id != -1
     if is_shared:
-        set_target_id.add(deposit.get("weko_shared_id"))
-    else:
-        set_target_id.discard(int(user_id))
+        set_target_id.add(shared_id)
+    set_target_id.discard(int(user_id))
 
     target_ids = list(set_target_id)
     current_app.logger.debug(f"[get_notification_targets] target_ids: {target_ids}")
@@ -5609,7 +5607,7 @@ def send_mail_from_notification_info(get_info_func, context_obj, content_creator
 
 # --- 各イベントから呼び出すエントリーポイント ---
 
-def send_mail_item_deleted(pid_value, deposit, user_id):
+def send_mail_item_deleted(pid_value, deposit, user_id, shared_id=-1):
     """
     Send a notification email when an item is deleted.
 
@@ -5624,7 +5622,7 @@ def send_mail_item_deleted(pid_value, deposit, user_id):
     record_url = request.host_url + f"records/{pid_value}"
     current_app.logger.debug(f"[send_mail_item_deleted] pid_value: {pid_value}, user_id: {user_id}")
     return send_mail_from_notification_info(
-        get_info_func=lambda obj: get_notification_targets(obj, user_id),
+        get_info_func=lambda obj: get_notification_targets(obj, user_id, shared_id),
         context_obj=deposit,
         content_creator=create_item_deleted_data,
         record_url=record_url
@@ -5673,13 +5671,14 @@ def send_mail_delete_approved(pid_value, deposit, activity, user_id):
         record_url=record_url
     )
 
-def send_mail_direct_registered(pid_value, user_id):
+def send_mail_direct_registered(pid_value, user_id, share_id=-1):
     """
     Send a notification email for a directly registered item.
 
     Args:
         pid_value (str): The persistent identifier (PID) of the registered item.
         user_id (int): The ID of the user who registered the item.
+        share_id (int): The shared ID of the user.
 
     Returns:
         int: The total number of successfully sent emails.
@@ -5688,7 +5687,7 @@ def send_mail_direct_registered(pid_value, user_id):
     record_url = request.host_url + f"records/{pid_value}"
     current_app.logger.debug(f"[send_mail_direct_registered] pid_value: {pid_value}, user_id: {user_id}")
     return send_mail_from_notification_info(
-        get_info_func=lambda obj: get_notification_targets(obj, user_id),
+        get_info_func=lambda obj: get_notification_targets(obj, user_id, share_id),
         context_obj=deposit,
         content_creator=create_direct_registered_data,
         record_url=record_url
