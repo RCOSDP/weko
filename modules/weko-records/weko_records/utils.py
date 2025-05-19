@@ -28,8 +28,6 @@ from collections import OrderedDict
 
 import pytz
 from flask import current_app, json, Flask
-from flask_limiter import Limiter
-from flask_limiter.util import get_remote_address
 from flask_security import current_user
 from invenio_i18n.ext import current_i18n
 from invenio_pidstore import current_pidstore
