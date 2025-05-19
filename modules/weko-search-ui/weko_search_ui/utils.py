@@ -275,7 +275,7 @@ def get_journal_info(index_id=0):
 
         cur_lang = current_i18n.language
         journal = Journals.get_journal_by_index_id(index_id)
-        if len(journal) <= 0 or journal.get("is_output") is False:
+        if not journal or len(journal) <= 0 or journal.get("is_output") is False:
             return None
 
         for value in schema_data:
@@ -3802,12 +3802,15 @@ def check_index_access_permissions(func):
             "search_type", WEKO_SEARCH_TYPE_DICT["FULL_TEXT"]
         )
         if search_type == WEKO_SEARCH_TYPE_DICT["INDEX"]:
-            cur_index_id = request.args.get("q", "0")
-            if not check_index_permissions(None, cur_index_id):
-                if not current_user.is_authenticated:
-                    return current_app.login_manager.unauthorized()
-                else:
-                    abort(403)
+            cur_index_id = request.args.get("q", "")
+            if cur_index_id.isdigit():
+                if not check_index_permissions(None, cur_index_id):
+                    if not current_user.is_authenticated:
+                        return current_app.login_manager.unauthorized()
+                    else:
+                        abort(403)
+            else:
+                abort(400)
         return func(*args, **kwargs)
 
     return decorated_view

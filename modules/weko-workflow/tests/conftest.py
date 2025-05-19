@@ -1255,6 +1255,58 @@ def workflow(app, db, item_type, action_data, users):
     }
 
 @pytest.fixture()
+def workflow_one(app, db, item_type, action_data, users):
+    flow_define = FlowDefine(id=2,flow_id=uuid.uuid4(),
+                             flow_name='Registration Flow2',
+                             flow_user=1)
+    with db.session.begin_nested():
+        db.session.add(flow_define)
+    db.session.commit()
+    
+    # setting flow action(start, item register, oa policy, item link, identifier grant, approval, end)
+    flow_actions = list()
+    # start
+    flow_actions.append(FlowAction(status='N',
+                     flow_id=flow_define.flow_id,
+                     action_id=1,
+                     action_version='1.0.0',
+                     action_order=1,
+                     action_condition='',
+                     action_status='A',
+                     action_date=datetime.strptime('2018/07/28 0:00:00','%Y/%m/%d %H:%M:%S'),
+                     send_mail_setting={}))
+    with db.session.begin_nested():
+        db.session.add_all(flow_actions)
+    db.session.commit()
+    workflow = WorkFlow(flows_id=uuid.uuid4(),
+                        flows_name='test workflow02',
+                        itemtype_id=1,
+                        index_tree_id=None,
+                        flow_id=2,
+                        is_deleted=False,
+                        open_restricted=False,
+                        location_id=None,
+                        is_gakuninrdm=False)
+    with db.session.begin_nested():
+        db.session.add(workflow)
+    db.session.commit()
+
+    return {
+        "flow":flow_define,
+        "flow_action":flow_actions,
+        "workflow":workflow
+    }
+
+@pytest.fixture()
+def no_begin_action(app, db):
+    """Set up the database without a 'begin_action' in the _Action table."""
+    actions_to_update = db.session.query(Action).filter_by(action_endpoint='begin_action').all()
+    if actions_to_update:
+        for action in actions_to_update:
+            action.action_endpoint = "other_action"
+        db.session.commit()
+    
+@pytest.fixture()
 def workflow_open_restricted(app, db, item_type, action_data, users):
     flow_define1 = FlowDefine(id=2,flow_id=uuid.uuid4(),
                                 flow_name='terms_of_use_only',

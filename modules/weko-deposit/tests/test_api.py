@@ -62,7 +62,7 @@ from invenio_accounts.models import User
 from weko_items_ui.config import WEKO_ITEMS_UI_MS_MIME_TYPE,WEKO_ITEMS_UI_FILE_SISE_PREVIEW_LIMIT
 from weko_workflow.models import Activity
 
-from tests.helpers import login
+from tests.helpers import login, create_record_with_pdf
 # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
 
 class MockClient():
@@ -580,6 +580,17 @@ class TestWekoDeposit:
         deposit = record['deposit']
         ret = deposit.get_content_files()
         assert ret==None
+
+    # def get_pdf_info(self):
+    # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoDeposit::test_get_pdf_info -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
+    def test_get_pdf_info(sel, app, db, location):
+        rec_uuid = uuid.uuid4()
+        pdf_files, deposit = create_record_with_pdf(rec_uuid, 1)
+        test = {}
+        for file_name, file_obj in pdf_files.items():
+            test[file_name]={"uri":file_obj.obj.file.uri,"size":file_obj.obj.file.size}
+        res = deposit.get_pdf_info()
+        assert res == test
 
     # def get_file_data(self):
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoDeposit::test_get_file_data -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp

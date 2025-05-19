@@ -670,39 +670,44 @@ class WorkActivity(object):
     def init_activity(self, activity, community_id=None, item_id=None):
         """Create new activity.
 
-        :param activity:
-        :param community_id:
-        :param item_id:
-        :return:
+        Args:
+            activity (dict): activity info
+            community_id (int): community id
+            item_id (int): item id
+        Returns:
+            _Activity: 
+                activity object
+        Raises:
+            Exception: 
+                unexpected error
         """
         try:
             action_id = 0
             next_action_id = 0
             action_has_term_of_use = False
             next_action_order = 0
-            with db.session.no_autoflush:
-                action = _Action.query.filter_by(
-                    action_endpoint='begin_action').one_or_none()
-                if action is not None:
-                    action_id = action.id
-                flow_define = _Flow.query.filter_by(
-                    id=activity.get('flow_id')).one_or_none()
-                if flow_define:
-                    flow_actions = _FlowAction.query.filter_by(
-                        flow_id=flow_define.flow_id).order_by(
-                        asc(_FlowAction.action_order)).all()
-                    if flow_actions and len(flow_actions) >= 2:
-                        next_action_id = flow_actions[1].action_id
-                        next_action_order = flow_actions[1].action_order
-                        enable_show_term_of_use = current_app.config[
-                            'WEKO_WORKFLOW_ENABLE_SHOWING_TERM_OF_USE']
-                        if enable_show_term_of_use:
-                            application_item_types = current_app.config[
-                                'WEKO_ITEMS_UI_SHOW_TERM_AND_CONDITION']
-                            item_type_name = \
-                                get_item_type_name(activity.get('itemtype_id'))
-                            if item_type_name in application_item_types:
-                                action_has_term_of_use = True
+            action = _Action.query.filter_by(
+                action_endpoint='begin_action').one_or_none()
+            if action is not None:
+                action_id = action.id
+            flow_define = _Flow.query.filter_by(
+                id=activity.get('flow_id')).one_or_none()
+            if flow_define:
+                flow_actions = _FlowAction.query.filter_by(
+                    flow_id=flow_define.flow_id).order_by(
+                    asc(_FlowAction.action_order)).all()
+                if flow_actions and len(flow_actions) >= 2:
+                    next_action_id = flow_actions[1].action_id
+                    next_action_order = flow_actions[1].action_order
+                    enable_show_term_of_use = current_app.config[
+                        'WEKO_WORKFLOW_ENABLE_SHOWING_TERM_OF_USE']
+                    if enable_show_term_of_use:
+                        application_item_types = current_app.config[
+                            'WEKO_ITEMS_UI_SHOW_TERM_AND_CONDITION']
+                        item_type_name = \
+                            get_item_type_name(activity.get('itemtype_id'))
+                        if item_type_name in application_item_types:
+                            action_has_term_of_use = True
             extra_info = dict()
             # Get extra info
             if activity.get('extra_info'):
@@ -746,7 +751,6 @@ class WorkActivity(object):
                 action_order=next_action_order
             )
             db.session.add(db_activity)
-            db.session.commit()
         except BaseException as ex:
             raise ex
         else:

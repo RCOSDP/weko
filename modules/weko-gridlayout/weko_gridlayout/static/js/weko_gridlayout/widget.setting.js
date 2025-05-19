@@ -892,6 +892,21 @@ class ExtendComponent extends React.Component {
       };
       this.props.getValueOfField(this.props.key_binding, newArrivalsData);
       settings = newArrivalsData;
+    } else if (this.props.type === ACCESS_COUNTER){
+      let newAccessCounterData = {};
+      if (this.props.data_load.preceding_message && this.props.data_load.preceding_message !== "None"){
+        newAccessCounterData["preceding_message"] = this.props.data_load.preceding_message;
+      }
+      if (this.props.data_load.following_message && this.props.data_load.following_message !== "None"){
+        newAccessCounterData["following_message"] = this.props.data_load.following_message;
+      }
+      if (this.props.data_load.other_message && this.props.data_load.other_message !== "None"){
+        newAccessCounterData["other_message"] = this.props.data_load.other_message;
+      }
+      newAccessCounterData["access_counter"] = this.props.data_load.access_counter;
+      newAccessCounterData["count_start_date"] = this.props.data_load.count_start_date;
+      this.props.getValueOfField(this.props.key_binding, newAccessCounterData);
+      settings = newAccessCounterData;
     }
     initState['settings'] = settings;
     this.state = initState;
@@ -900,6 +915,7 @@ class ExtendComponent extends React.Component {
     this.handleChangeHideTheRest = this.handleChangeHideTheRest.bind(this);
     this.handleChangeReadMore = this.handleChangeReadMore.bind(this);
     this.handleChangeAccessCounter = this.handleChangeAccessCounter.bind(this);
+    this.handleChangeCountStartDate = this.handleChangeCountStartDate.bind(this);
     this.handleChangeNewDates = this.handleChangeNewDates.bind(this);
     this.handleChangeDisplayResult = this.handleChangeDisplayResult.bind(this);
     this.handleChangeRssFeed = this.handleChangeRssFeed.bind(this);
@@ -911,8 +927,19 @@ class ExtendComponent extends React.Component {
   }
 
   componentDidUpdate(prevProps, prevState) {
-    if (prevState.type !== this.state.type && this.state.type === NEW_ARRIVALS) {
-      this.props.getValueOfField(this.props.key_binding, this.state.settings);
+    if (prevState.type !== this.state.type){
+      if (this.state.type === NEW_ARRIVALS){
+        this.props.getValueOfField(this.props.key_binding, this.state.settings);
+      } else if (this.state.type === ACCESS_COUNTER){
+        let initial_date = this.state.settings.count_start_date;
+        this.generateDatepicker(initial_date);
+      }
+    }
+  }
+  componentDidMount() {
+    if (this.state.type === ACCESS_COUNTER){
+      let initial_date = this.state.settings.count_start_date;
+      this.generateDatepicker(initial_date);
     }
   }
 
@@ -960,11 +987,31 @@ class ExtendComponent extends React.Component {
       }
       if (nextProps.type === ACCESS_COUNTER) {
         setting["access_counter"] = nextProps.init_value;
+        setting["count_start_date"] = nextProps.init_count;
       }
       newState['settings'] = setting;
       return newState
     }
     return null;
+  }
+
+  generateDatepicker(initial_date){
+    $('#count_start_date').datepicker({
+      format: "yyyy-mm-dd",
+      autoclose: true
+    });
+    let dates;
+    if (initial_date && initial_date.split("-").length === 3){
+      dates = initial_date.split("-");
+    }else {
+      dates = this.props.now_date.split("-");
+    }
+    let now = new Date(dates[0], parseInt(dates[1])-1, dates[2])
+    $('#count_start_date').datepicker("setDate", now);
+    this.props.getValueOfField('countStartDate', now.getFullYear()+"-"+("0"+(now.getMonth()+1)).slice(-2)+"-"+("0"+now.getDate()).slice(-2));
+    $('#count_start_date').on("changeDate", (e) => {
+      this.handleChangeCountStartDate(e)
+    });
   }
 
   generateNewDate() {
@@ -1050,6 +1097,15 @@ class ExtendComponent extends React.Component {
     this.setState({settings: setting});
     this.handleChange("access_counter", accessCounter);
     this.props.getValueOfField('accessInitValue', accessCounter);
+  }
+  
+  handleChangeCountStartDate(event){
+    let setting = this.state.settings;
+    let count_start_date = event.target.value;
+    setting['count_start_date'] = count_start_date;
+    this.setState({settings: setting});
+    this.handleChange('count_start_date', count_start_date);
+    this.props.getValueOfField('countStartDate', count_start_date);
   }
 
   handleChangeNewDates(event) {
@@ -1229,6 +1285,17 @@ class ExtendComponent extends React.Component {
                 onChange={this.handleChangeAccessCounter}
                 maxLength={9}
                 className="form-control"/>
+            </div>
+          </div>
+          <div className="form-group row">
+            <label htmlFor="input_type"
+              className="control-label col-xs-2 text-right">Count start date</label>
+            <div className="controls col-xs-6">
+              <input name="count_start_date" id="count_start_date" type="text"
+                className="form-control"
+                onChange={this.handleChangeCountStartDate}
+                placeholder="yyyy-mm-dd"
+                 />
             </div>
           </div>
           <div className="form-group">
@@ -1452,13 +1519,16 @@ class ComponentButtonLayout extends React.Component {
         if (multiLangData.hasOwnProperty(key)) {
           let value = multiLangData[key];
           value.description['access_counter'] = data.accessInitValue;
+          value.description['count_start_date'] = data.countStartDate;
         }
       }
     }
     this.props.getValueOfField('multiLangData', multiLangData);
     this.props.getValueOfField('accessInitValue', data.accessInitValue);
+    this.props.getValueOfField('countStartDate', data.countStartDate);
     data['multiLangSetting'] = multiLangData;
     delete data['accessInitValue'];
+    delete data['countStartDate'];
 
     let request = {
       flag_edit: this.props.is_edit,
@@ -1510,6 +1580,32 @@ class ComponentButtonLayout extends React.Component {
       '&times;</button>' + message + '</div>');
   }
 
+  daysInMonth(year, month) {
+    switch(month){
+      case 1:
+        return (year%4 == 0 && year%100) || year%400 == 0 ? 29:28;
+      case 8: case 3: case 5: case 10:
+        return 30;
+      default:
+        return 31;
+    }
+  }
+  validateDate(date_str){
+    if (date_str){
+      var dates = date_str.match(/^([0-9]{4})(0[1-9]|[1-9]|1[0-2])(0[1-9]|[1-9]|[1-2][0-9]|3[0-1])$/);
+      if (dates) {
+        const year = parseInt(dates[1]);
+        const month = parseInt(dates[2])-1;
+        const day = parseInt(dates[3]);
+        return day > this.daysInMonth(year, month);
+      }else{
+        return true;
+      }
+    }else{
+      return false;
+    }
+  }
+
   validateFieldIsValid(widget_type) {
     if (widget_type === ACCESS_COUNTER) {
       let access_val = $('#Access_counter').val() || "0";
@@ -1522,6 +1618,14 @@ class ComponentButtonLayout extends React.Component {
         return {
           status: false,
           error: "The input value exceeds 9 digits."
+        };
+      }
+
+      let count_start_date = $('count_start_date').val();
+      if (this.validateDate(count_start_date)){
+        return {
+          status: false,
+          error: "Count start date is in invalid format."
         };
       }
     }
@@ -1903,6 +2007,8 @@ class MainLayout extends React.Component {
   constructor(props) {
     super(props);
     let dataLoader = this.props.data_load;
+    let nowDate = this.generateNowDate(this);
+    let nowDateStr = nowDate.getFullYear()+"-"+("0"+(nowDate.getMonth()+1)).slice(-2)+"-"+("0"+nowDate.getDate()).slice(-2);
     this.state = {
       repository: dataLoader.repository_id,
       widget_type: dataLoader.widget_type,
@@ -1920,14 +2026,18 @@ class MainLayout extends React.Component {
       multiLangSetting: dataLoader.multiLangSetting,
       multiLanguageChange: false,
       accessInitValue: 0,
+      nowDate: nowDateStr,
+      countStartDate: nowDateStr,
       isDisableSaveBtn: false,
       fixedHeaderBackgroundColor: dataLoader.settings.fixedHeaderBackgroundColor || DEFAULT_BG_COLOR,
       fixedHeaderTextColor: dataLoader.settings.fixedHeaderTextColor || '#808080',
     };
+    
     this.getValueOfField = this.getValueOfField.bind(this);
     this.storeMultiLangSetting = this.storeMultiLangSetting.bind(this);
     this.initEditData = this.initEditData.bind(this);
     this.accessCounterValidation = this.accessCounterValidation.bind(this);
+    this.generateNowDate = this.generateNowDate.bind(this);
   }
 
   getValueOfField(key, value) {
@@ -1995,6 +2105,9 @@ class MainLayout extends React.Component {
       case 'accessInitValue':
         this.setState({accessInitValue: value});
         break;
+      case 'countStartDate':
+        this.setState({countStartDate: value});
+        break;
       case 'isDisableSaveBtn':
         this.setState({isDisableSaveBtn: value});
         break;
@@ -2013,8 +2126,10 @@ class MainLayout extends React.Component {
     }
     let multiLangData = this.state.multiLangSetting[selectedLang];
     let accessInitValue = 0;
+    let countStartDate = this.state.nowDate;
     if ((this.state.widget_type + "") === ACCESS_COUNTER && multiLangData.description) {
       accessInitValue = multiLangData.description.access_counter
+      countStartDate = multiLangData.description.count_start_date
     }
     if (multiLangData) {
       if ([FREE_DESCRIPTION_TYPE, NOTICE_TYPE, ACCESS_COUNTER, HEADER_TYPE, FOOTER_TYPE].indexOf(this.state.widget_type) > -1) {
@@ -2022,7 +2137,8 @@ class MainLayout extends React.Component {
           multiLanguageChange: true,
           label: multiLangData['label'],
           settings: multiLangData['description'],
-          accessInitValue: accessInitValue
+          accessInitValue: accessInitValue,
+          countStartDate: countStartDate
         });
       } else {
         this.setState({
@@ -2058,11 +2174,17 @@ class MainLayout extends React.Component {
       setting["description"] = this.state.settings;
     }
     let accessInitValue = this.state.accessInitValue;
+    let countStartDate = this.state.countStartDate;
     if ((this.state.widget_type + "") === ACCESS_COUNTER) {
       if (setting.description.access_counter) {
         accessInitValue = setting.description.access_counter;
       } else {
         setting.description.access_counter = accessInitValue;
+      }
+      if (setting.description.count_start_date){
+        countStartDate = setting.description.count_start_date;
+      }else{
+        setting.description.count_start_date = countStartDate;
       }
     }
     if ((this.state.widget_type + "") === ACCESS_COUNTER && this.accessCounterValidation(setting)) {
@@ -2090,14 +2212,16 @@ class MainLayout extends React.Component {
         settings: currentSetting,
         multiLanguageChange: true,
         language: newLanguage,
-        accessInitValue: accessInitValue
+        accessInitValue: accessInitValue,
+        countStartDate: countStartDate
       });
     } else {
       this.setState({
         label: currentLabel,
         multiLanguageChange: true,
         language: newLanguage,
-        accessInitValue: accessInitValue
+        accessInitValue: accessInitValue,
+        countStartDate: countStartDate
       });
     }
     this.setState({
@@ -2121,6 +2245,23 @@ class MainLayout extends React.Component {
       return false;
     }
     return !other_message;
+  }
+
+  generateNowDate() {
+    let now;
+    $.ajax({
+      url: '/api/admin/get_server_date',
+      method: 'GET',
+      async: false,
+      success: function (data, status) {
+        now = new Date(data.year,data.month-1,data.day);
+      },
+      error: function (data, status) {
+        now = new Date();
+        now.setFullYear(now.getFullYear() - 1);
+      }
+    });
+    return now;
   }
 
   render() {
@@ -2245,7 +2386,10 @@ class MainLayout extends React.Component {
                            data_load={this.state.settings}
                            language={this.state.language}
                            data_change={this.state.multiLanguageChange}
-                           init_value={this.state.accessInitValue}/>
+                           init_value={this.state.accessInitValue}
+                           init_count={this.state.countStartDate}
+                           now_date={this.state.nowDate}
+                           />
         </div>
         <div className="row">
           <ComponentButtonLayout isDisableSaveBtn={this.state.isDisableSaveBtn}

@@ -23,6 +23,7 @@
 from datetime import datetime
 import re
 import os
+import traceback
 import uuid
 
 import six
@@ -32,6 +33,7 @@ from flask import Blueprint, abort, current_app, escape, flash, json, \
 from flask_babelex import gettext as _
 from flask_login import login_required
 from flask_security import current_user
+from sqlalchemy.orm.exc import NoResultFound
 from invenio_cache import cached_unless_authenticated
 from invenio_db import db
 from invenio_files_rest.models import ObjectVersion, FileInstance
@@ -64,7 +66,7 @@ from weko_user_profiles.models import UserProfile
 from weko_workflow.api import WorkFlow
 
 from weko_records_ui.fd import add_signals_info
-from weko_records_ui.utils import check_items_settings, get_file_info_list
+from weko_records_ui.utils import check_items_settings, get_file_info_list, is_workflow_activity_work
 from weko_workflow.utils import get_item_info, process_send_mail, set_mail_info
 
 from .ipaddr import check_site_license_permission
@@ -972,7 +974,15 @@ def citation(record, pid, style=None, ln=None):
 @blueprint.route("/records/soft_delete/<recid>", methods=['POST'])
 @login_required
 def soft_delete(recid):
-    """Soft delete item."""
+    """
+    Soft delete item.
+    
+    Args:
+        recid (str): record id.
+    Returns:
+        object: response of delete result.
+            return json data
+    """
     try:
         if not has_update_version_role(current_user):
             abort(403)
@@ -980,6 +990,29 @@ def soft_delete(recid):
             recid = recid.replace('del_ver_', '')
             delete_version(recid)
         else:
+            is_editing = False
+            try:
+                ver_0 = PersistentIdentifier.get('recid', recid + '.0')
+            except PIDDoesNotExistError:
+                ver_0 = None
+            if ver_0 and is_workflow_activity_work(ver_0.object_uuid):
+                 is_editing = True
+            if not is_editing:
+                pid = PersistentIdentifier.get('recid', recid)
+                versioning = PIDVersioning(child=pid)
+                if versioning.exists:
+                   all_ver = versioning.children.all()
+                   for ver in all_ver:
+                        if is_workflow_activity_work(ver.object_uuid):
+                            is_editing = True
+                            break
+            if is_editing:
+                response_data = {
+                    "code": -1,
+                    "is_locked": True,
+                    "msg": _("MSG_WEKO_RECORDS_UI_IS_EDITING_TRUE")
+                }
+                return make_response(jsonify(response_data), 200)
             soft_delete_imp(recid)
         db.session.commit()
         return make_response('PID: ' + str(recid) + ' DELETED', 200)
@@ -1113,13 +1146,20 @@ def get_uri():
           200:
     """  
     data = request.get_json()
+    if not isinstance(data, dict):
+        current_app.logger.error('Invalid request data')
+        abort(400)
     uri = data.get('uri')
     pid_value = data.get('pid_value')
     accessrole = data.get('accessrole')
     pattern = re.compile('^/record/{}/files/.*'.format(pid_value))
     if not pattern.match(uri):
-        pid = PersistentIdentifier.get('recid', pid_value)
-        record = WekoRecord.get_record_by_pid(pid_value)
+        try:
+            record = WekoRecord.get_record_by_pid(pid_value)
+        except (NoResultFound, PIDDoesNotExistError):
+            current_app.logger.error(traceback.format_exc())
+            abort(404)
+
         bucket_id = record.get('_buckets', {}).get('deposit')
         file_id_key = '{}_{}'.format(bucket_id, uri)
 

@@ -126,6 +126,8 @@ setup(
             'widget_trumbowyg_css = weko_gridlayout.bundles:trumbowyg_css',
             'widget_react_trumbowyg_js = '
             'weko_gridlayout.bundles:react_trumbowyg_js',
+            'weko_gridlayout_date_picker_js = '
+            'weko_gridlayout.bundles:date_picker_js',
         ],
         # 'invenio_base.api_apps': [],
         # 'invenio_base.blueprints': [],

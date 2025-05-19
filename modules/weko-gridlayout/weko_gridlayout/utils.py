@@ -167,6 +167,7 @@ def update_access_counter_item(item, data_result):
     item['preceding_message'] = data_result.get('preceding_message')
     item['following_message'] = data_result.get('following_message')
     item['other_message'] = data_result.get('other_message')
+    item['count_start_date'] = data_result.get('count_start_date')
 
 
 def update_new_arrivals_item(item, data_result):
@@ -321,6 +322,8 @@ def _build_access_counter_setting_data(result, setting):
         setting.get('other_message')) or ''
     result['preceding_message'] = Markup.escape(
         setting.get('preceding_message')) or ''
+    result['count_start_date'] = Markup.escape(
+        setting.get('count_start_date')) or ''
 
 
 def _build_new_arrivals_setting_data(result, setting):
@@ -495,6 +498,7 @@ def convert_data_to_edit_pack(data):
         result_settings['following_message'] = settings.get(
             'following_message')
         result_settings['other_message'] = settings.get('other_message')
+        result_settings['count_start_date'] = settings.get('count_start_date')
     if widget_type == config.WEKO_GRIDLAYOUT_NEW_ARRIVALS_TYPE:
         result_settings['new_dates'] = settings.get('new_dates')
         result_settings['display_result'] = settings.get('display_result')

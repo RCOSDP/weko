@@ -12,6 +12,22 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Fixed
 ### Security
 
+## [v1.0.8] 2025-05-20
+### Changed
+- Improved an issue where the Tika process consumed excessive memory.
+- Optimized inefficient logic in index display processing to improve rendering speed.
+### Fixed
+- Fixed a problem where bulk import/export operations failed due to database connection timeouts.
+- Fixed a 500 error caused by citation formatting for records.
+- Resolved an issue where users could not edit items due to a message stating "Another activity is already open" caused by expired DB sessions.
+- Fixed a problem where Redis TTL was set to unlimited, causing activity locks.
+- Fixed an issue where accessing an activity sometimes showed a popup: "The item you are editing has already been deleted."
+- Fixed a 500 error caused by unexpected query parameters.
+- Fixed a 500 error occurring at /items/export.
+- Fixed a 500 error occurring at /admin/load_widget_design_setting.
+- Fixed a 500 error occurring at /get_uri.
+- Fixed a 500 error occurring at /api/stats/<record_id>.
+
 ## [v1.0.7b] 2025-01-06 
 ### Changed
 - Improved data compatibility with migrated institutions. 
