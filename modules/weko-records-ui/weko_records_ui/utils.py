@@ -36,8 +36,6 @@ from flask import abort, current_app, json, request, url_for, make_response, Fla
 from flask_babelex import get_locale
 from flask_babelex import gettext as _
 from flask_babelex import to_user_timezone, to_utc
-from flask_limiter import Limiter
-from flask_limiter.util import get_remote_address
 from flask_login import current_user
 from sqlalchemy import desc
 from invenio_accounts.models import Role, User

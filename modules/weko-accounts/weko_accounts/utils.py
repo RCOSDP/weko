@@ -25,7 +25,6 @@ from functools import wraps
 
 from flask import abort, current_app, request, session, Flask
 from flask_limiter import Limiter
-from flask_limiter.util import get_remote_address
 from flask_login import current_user
 from flask_login.config import EXEMPT_METHODS
 import hashlib

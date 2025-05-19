@@ -57,7 +57,7 @@ class CrossRefOpenURL:
         if not doi:
             raise ValueError(_('DOI is not specified.'))
         self._pid = pid
-        self._doi = doi.strip()
+        self._doi = "/".join(doi.strip().strip("/").split("/")[-2:])
         if response_format:
             self._response_format = response_format
         if timeout:
