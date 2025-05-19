@@ -128,9 +128,16 @@ class LocationModelView(ModelView):
 
     def on_model_change(self, form, model, is_created):
         if is_created:
-            if model.type == current_app.config['FILES_REST_LOCATION_TYPE_S3_PATH_VALUE'] or \
-                model.type == current_app.config['FILES_REST_LOCATION_TYPE_S3_VIRTUAL_HOST_VALUE']:
+            if model.type == current_app.config['FILES_REST_LOCATION_TYPE_S3_PATH_VALUE']:
                 model.s3_signature_version = None
+                if not model.uri.endswith('/'):
+                    model.uri = model.uri + '/'
+                if not model.s3_endpoint_url.endswith('/'):
+                    model.s3_endpoint_url = model.s3_endpoint_url + '/'
+            elif model.type == current_app.config['FILES_REST_LOCATION_TYPE_S3_VIRTUAL_HOST_VALUE']:
+                model.s3_signature_version = None
+                if not model.uri.endswith('/'):
+                    model.uri = model.uri + '/'
             else:
                 model.s3_default_block_size = None
                 model.s3_maximum_number_of_parts = None
@@ -138,9 +145,16 @@ class LocationModelView(ModelView):
                 model.s3_signature_version = None
                 model.s3_url_expiration = None
         else:
-            if model.type == current_app.config['FILES_REST_LOCATION_TYPE_S3_VIRTUAL_HOST_VALUE']:
-                model.s3_endpoint_url = ''
-            elif model.type != current_app.config['FILES_REST_LOCATION_TYPE_S3_PATH_VALUE']:
+            if model.type == current_app.config['FILES_REST_LOCATION_TYPE_S3_PATH_VALUE']:
+                if not model.uri.endswith('/'):
+                    model.uri = model.uri + '/'
+                if not model.s3_endpoint_url.endswith('/'):
+                    model.s3_endpoint_url = model.s3_endpoint_url + '/'
+            elif model.type == current_app.config['FILES_REST_LOCATION_TYPE_S3_VIRTUAL_HOST_VALUE']:
+                if not model.uri.endswith('/'):
+                    model.uri = model.uri + '/'
+            else:
+                # local
                 model.s3_default_block_size = None
                 model.s3_maximum_number_of_parts = None
                 model.s3_url_expiration = None
