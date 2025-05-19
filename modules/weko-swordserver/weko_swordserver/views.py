@@ -994,7 +994,7 @@ def delete_object(recid):
             notify_item_deleted(
                 current_user.id, recid, current_user.id, shared_id=shared_id
             )
-            send_mail_item_deleted(recid, record, current_user.id)
+            send_mail_item_deleted(recid, record, current_user.id, shared_id)
             current_app.logger.info(
                 f"Item deleted by sword from {request.oauth.client.name} (recid={recid})"
             )
