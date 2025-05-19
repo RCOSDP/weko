@@ -1241,7 +1241,7 @@ def prepare_delete_item(id=None, community=None, shared_user_id=-1):
         if not workflow or workflow.delete_flow_id is None:
             from weko_records_ui.views import soft_delete
             soft_delete(del_value)
-            send_mail_item_deleted(pid_value, deposit, user_id)
+            send_mail_item_deleted(pid_value, deposit, user_id, shared_user_id)
             return jsonify(
                 code=0,
                 msg="success",
@@ -1284,7 +1284,7 @@ def prepare_delete_item(id=None, community=None, shared_user_id=-1):
             )
 
         if rtn.action_id == 2:   # end_action
-            send_mail_item_deleted(pid_value, deposit, user_id)
+            send_mail_item_deleted(pid_value, deposit, user_id, shared_user_id)
 
         if rtn.action_id == 4:   # approval
             send_mail_delete_request(rtn)
