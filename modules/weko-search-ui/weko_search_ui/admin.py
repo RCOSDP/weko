@@ -42,7 +42,7 @@ from invenio_db import db
 from invenio_files_rest.models import FileInstance
 from invenio_i18n.ext import current_i18n
 from weko_admin.api import TempDirInfo
-from weko_admin.utils import reset_redis_cache
+from weko_admin.utils import get_redis_cache, reset_redis_cache
 from weko_index_tree.api import Indexes
 from weko_index_tree.models import IndexStyle
 from weko_index_tree.utils import (
@@ -68,6 +68,7 @@ from .config import (
     WEKO_ITEM_ADMIN_IMPORT_TEMPLATE,
     WEKO_ITEM_ADMIN_ROCRATE_IMPORT_TEMPLATE,
     WEKO_SEARCH_UI_ADMIN_EXPORT_TEMPLATE,
+    WEKO_SEARCH_UI_BULK_EXPORT_FILE_CREATE_RUN_MSG,
 )
 from .tasks import (
     check_celery_is_run,
@@ -1175,12 +1176,33 @@ class ItemBulkExport(BaseView):
     def download(self):
         """Funtion send file to Client.
 
-        path: it was load from FileInstance
+        Sends the exported file to the client for download.
+        Checks the download URI and file expiration, and if the conditions are met,
+        returns the file as an attachment. If the file is not available for download,
+        returns status 200.
         """
-        export_status, download_uri, message, run_message, \
+        file_msg = current_app.config["WEKO_ADMIN_CACHE_PREFIX"].format(
+            name=WEKO_SEARCH_UI_BULK_EXPORT_FILE_CREATE_RUN_MSG,
+            user_id=current_user.get_id()
+        )
+        export_info = json.loads(get_redis_cache(file_msg))
+        export_path = export_info["export_path"]
+        export_status, download_uri, _, _, \
             _, _, _ = get_export_status()
         if not export_status and download_uri is not None:
             file_instance = FileInstance.get_by_uri(download_uri)
+
+            # Check the TTL in the cache and extend it 
+            # if the remaining time is below a certain threshold.
+            tmp_cache = TempDirInfo().get(export_path)
+            expire = tmp_cache.get("expire") if tmp_cache else None
+            now = datetime.now()
+            if expire and \
+                (now-datetime.strptime(expire,"%Y-%m-%d %H:%M:%S")).total_seconds() <= current_app.config["WEKO_SEARCH_UI_FILE_DOWNLOAD_TTL_BUFFER"]:
+                expire = datetime.strptime(expire,"%Y-%m-%d %H:%M:%S")
+                new_expire = expire+timedelta(seconds=current_app.config["WEKO_SEARCH_UI_FILE_DOWNLOAD_TTL_BUFFER"])
+                tmp_cache["expire"] = new_expire.strftime("%Y-%m-%d %H:%M:%S")
+                TempDirInfo().set(export_path, tmp_cache)
             return file_instance.send_file(
                 "export-all.zip",
                 mimetype="application/octet-stream",

@@ -239,7 +239,11 @@ def clean_temp_info():
             if not expire:
                 continue
             if expire < datetime.now().strftime('%Y-%m-%d %H:%M:%S'):
-                can_delete = True
-                shutil.rmtree(temp_path)
+                if extra_info.get("is_export"):
+                    from weko_search_ui.utils import delete_exported
+                    can_delete = delete_exported(temp_path,extra_info)
+                else:
+                    shutil.rmtree(temp_path)
+                    can_delete = True
         if can_delete:
             temp_dir_api.delete(temp_path)
