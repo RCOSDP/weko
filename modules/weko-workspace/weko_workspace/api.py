@@ -49,8 +49,7 @@ class JamasURL:
         """
         if not doi:
             raise ValueError('DOI is required.')
-        self._doi = doi
-        self._doi = doi.strip()
+        self._doi = "/".join(doi.strip().strip("/").split("/")[-2:])
         if timeout:
             self._timeout = timeout
         if http_proxy:
@@ -131,8 +130,7 @@ class CiNiiURL:
         """
         if not doi:
             raise ValueError('DOI is required.')
-        self._doi = doi
-        self._doi = doi.strip()
+        self._doi = "/".join(doi.strip().strip("/").split("/")[-2:])
         if timeout:
             self._timeout = timeout
         if http_proxy:
@@ -207,8 +205,7 @@ class JALCURL:
         """
         if not doi:
             raise ValueError('DOI is required.')
-        self._doi = doi
-        self._doi = doi.strip()
+        self._doi = "/".join(doi.strip().strip("/").split("/")[-2:])
         if timeout:
             self._timeout = timeout
         if http_proxy:
@@ -281,8 +278,7 @@ class DATACITEURL:
         """
         if not doi:
             raise ValueError('DOI is required.')
-        self._doi = doi
-        self._doi = doi.strip()
+        self._doi = "/".join(doi.strip().strip("/").split("/")[-2:])
         if timeout:
             self._timeout = timeout
         if http_proxy:
