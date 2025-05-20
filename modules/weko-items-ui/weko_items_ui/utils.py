@@ -4945,49 +4945,75 @@ def check_item_is_being_edit(
     # current_app.logger.error("recid:{}".format(recid))
     # current_app.logger.error("post_workflow:{}".format(post_workflow))
     # current_app.logger.error("activity:{}".format(activity))
-    if not activity:
+    if not isinstance(activity, WorkActivity):
         activity = WorkActivity()
-    if not post_workflow:
+    if not isinstance(post_workflow, Activity):
         latest_pid = PIDVersioning(child=recid).last_child
         item_uuid = latest_pid.object_uuid
         post_workflow = activity.get_workflow_activity_by_item_id(item_uuid)
-    if post_workflow and post_workflow.action_status \
-            in [ASP.ACTION_BEGIN, ASP.ACTION_DOING]:
+    if (
+        post_workflow and post_workflow.action_status
+            in [ASP.ACTION_BEGIN, ASP.ACTION_DOING]
+    ):
         current_app.logger.debug("post_workflow: {0} status: {1}".format(
             post_workflow, post_workflow.action_status))
-        #return True
-        return post_workflow.activity_id
+        return str(post_workflow.activity_id)
 
     draft_pid = PersistentIdentifier.query.filter_by(
         pid_type='recid',
         pid_value="{}.0".format(recid.pid_value)
     ).one_or_none()
-    if draft_pid:
+    if isinstance(draft_pid, PersistentIdentifier):
         draft_workflow = activity.get_workflow_activity_by_item_id(
-            draft_pid.object_uuid)
-        if draft_workflow and \
-            draft_workflow.action_status in [ASP.ACTION_BEGIN,
-                                             ASP.ACTION_DOING]:
+            draft_pid.object_uuid
+        )
+        if (
+            draft_workflow
+            and draft_workflow.action_status in [ASP.ACTION_BEGIN, ASP.ACTION_DOING]
+        ):
             current_app.logger.debug("draft_workflow: {0} status: {1}".format(
-                draft_pid.object_uuid, draft_workflow.action_status))
-            #return True
-            return draft_workflow.activity_id
+                draft_pid.object_uuid, draft_workflow.action_status)
+            )
+            return str(draft_workflow.activity_id)
 
         pv = PIDVersioning(child=recid)
         latest_pid = PIDVersioning(parent=pv.parent,child=recid).get_children(
             pid_status=PIDStatus.REGISTERED
         ).filter(PIDRelation.relation_type == 2).order_by(
-            PIDRelation.index.desc()).first()
+            PIDRelation.index.desc()
+        ).first()
         latest_workflow = activity.get_workflow_activity_by_item_id(
-            latest_pid.object_uuid)
-        if latest_workflow and \
-            latest_workflow.action_status in [ASP.ACTION_BEGIN,
-                                              ASP.ACTION_DOING]:
+            latest_pid.object_uuid
+        )
+        if (
+            latest_workflow
+            and latest_workflow.action_status in [ASP.ACTION_BEGIN, ASP.ACTION_DOING]
+        ):
             current_app.logger.debug("latest_workflow: {0} status: {1}".format(
                 latest_pid.object_uuid, latest_workflow.action_status))
-            #return True
-            return latest_workflow.activity_id
-    #return False
+            return str(latest_workflow.activity_id)
+
+    pv = PIDVersioning(child=recid)
+    versions_uuid = [
+        record.object_uuid
+        for record in PIDVersioning(parent=pv.parent, child=recid)
+        .get_children(pid_status=PIDStatus.REGISTERED)
+        .filter(PIDRelation.relation_type == 2)
+        .order_by(PIDRelation.index.desc())
+        .all()
+    ]
+    last_activity = (
+        Activity.query
+        .filter(Activity.item_id.in_(versions_uuid))
+        .filter(Activity.action_status.in_([ASP.ACTION_BEGIN, ASP.ACTION_DOING]))
+        .order_by(Activity.updated.desc())
+        .first()
+    )
+    if isinstance(last_activity, Activity):
+        current_app.logger.debug("last_activity: {0} status: {1}".format(
+            last_activity.item_id, last_activity.action_status))
+        return str(last_activity.activity_id)
+
     return ""
 
 

@@ -526,6 +526,9 @@ def put_object(recid):
         Request format:
             Content-Disposition	attachment; filename=[filename]
     """
+    # check if the item exists
+    _ = _get_status_document(recid)
+
     content_disposition, content_disposition_options = parse_options_header(
         request.headers.get("Content-Disposition") or ""
     )
