@@ -274,36 +274,6 @@ WEKO_WORKSPACE_OA_STATUS_MAPPING = {
 }
 """Mapping of OA status to the OA status in WEKO."""
 
-
-WEKO_WORKSPACE_AUTOFILL_JAMAS_XML_DATA_KEYS = [
-    "dc:title",
-    "dc:creator",
-    "prism:organization",
-    "prism:publicationName",
-    "prism:volume",
-    "prism:number",
-    "prism:startingPage",
-    "prism:pageRange",
-    "prism:publicationDate",
-    "prism:issn",
-    "prism:eIssn",
-    "prism:doi",
-]
-"""Jamas XML data keys"""
-
-WEKO_WORKSPACE_AUTOFILL_JAMAS_REQUIRED_ITEM = [
-    "title",
-    "creator",
-    "sourceTitle",
-    "sourceIdentifier",
-    "volume",
-    "issue",
-    "pageStart",
-    "date",
-    "relation"
-]
-"""Jamas required item"""
-
 WEKO_WORKSPACE_ITEM_SEARCH_INDEX = "{}-weko".format(index_prefix)
 """Search index for WEKO workspace item."""
 WEKO_WORKSPACE_ITEM_SEARCH_TYPE = "item-v1.0.0"

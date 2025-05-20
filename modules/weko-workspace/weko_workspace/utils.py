@@ -450,7 +450,7 @@ def convert_jamas_xml_data_to_dictionary(api_data, encoding='utf-8'):
     }
     try:
         root = etree.XML(api_data.encode(encoding))
-        jamas_xml_data_keys = current_app.config['WEKO_ITEMS_AUTOFILL_CROSSREF_XML_DATA_KEYS']
+        jamas_xml_data_keys = current_app.config['WEKO_WORKSPACE_AUTOFILL_JAMAS_XML_DATA_KEYS']
         for elem in root.getiterator():
             if etree.QName(elem).localname in jamas_xml_data_keys:
                 if etree.QName(elem).localname == "contributor" or etree.QName(
