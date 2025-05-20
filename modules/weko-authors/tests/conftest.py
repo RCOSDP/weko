@@ -52,6 +52,7 @@ from weko_authors.models import Authors, AuthorsPrefixSettings, AuthorsAffiliati
 from weko_accounts import WekoAccounts
 from weko_theme import WekoTheme
 import weko_authors.mappings.v2
+from weko_logging.audit import WekoLoggingUserActivity
 
 
 sys.path.append(os.path.dirname(__file__))
@@ -200,6 +201,7 @@ def base_app(request, instance_path,search_class):
     WekoAccounts(app_)
     InvenioOAuth2Server(app_)
     InvenioOAuth2ServerREST(app_)
+    WekoLoggingUserActivity(app_)
 
 
     # app_.register_blueprint(blueprint)
