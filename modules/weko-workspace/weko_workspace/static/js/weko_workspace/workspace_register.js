@@ -2577,7 +2577,7 @@ function toObject(arr) {
 
         datacitDataEmpty = this.setRecordDataFromDataciteApi(param_api);
 
-        datacitDataEmpty = this.setRecordDataFromJamasApi(param_api);
+        // datacitDataEmpty = this.setRecordDataFromJamasApi(param_api);
         return crossrefDataEmpty,ciniiDataEmpty,jalcDataEmpty,datacitDataEmpty
 
     }

@@ -923,6 +923,16 @@ def item_register_save():
         
         # set metadata for item registration
         settings = AdminSettings.get("workspace_workflow_settings")
+        item_type_id = int(settings.item_type_id) if settings.item_type_id else None
+        if settings.workFlow_select_flg == "0":
+            if not settings.work_flow_id:
+                result['error'] = _("Workflow ID is not set.")
+                return jsonify(result)
+            workflow = WorkFlow().get_workflow_by_id(settings.work_flow_id)
+            item_type_id = workflow.itemtype_id
+        if not item_type_id:
+            result['error'] = _("Item type ID is not set.")
+            return jsonify(result)
         metadata = request_data.get("recordModel", {})
 
         index_id_list = []
@@ -943,18 +953,18 @@ def item_register_save():
                 continue
             if isinstance(value[0], dict) and "filename" in value[0]:
                 file_key_list.append({"key": key})
-        metadata["files_info"] = file_key_list
+        metadata["files_info"] = file_key_list if file_key_list else [{}]
 
-        item_type_name = ItemTypeNames.get_record(int(settings.item_type_id))
+        item_type_name = ItemTypeNames.get_record(item_type_id)
         item_dict = {
             "root_path": data_path,
             "file_path": file_path_list,
             "metadata": metadata,
             "pos_index": index_id_list,
             "publish_status": "public",
-            "item_type_id": int(settings.item_type_id),
+            "item_type_id": item_type_id,
             "item_type_name": item_type_name.name,
-            "$schema": "/items/jsonschema/{}".format(settings.item_type_id),
+            "$schema": "/items/jsonschema/{}".format(str(item_type_id)),
             "errors": None,
         }
         request_info = {"user_id": current_user.get_id()}
@@ -974,7 +984,7 @@ def item_register_save():
             result['error'] = ', '.join(list_record[0].get("errors", ["error!!"]))
             return result
         
-        if settings.workFlow_select_flg == '0':
+        if settings.workFlow_select_flg == "0":
             # registration by workflow
             request_info["workflow_id"] = settings.work_flow_id
             result["result"], _, _, result['error'] = import_items_to_activity(list_record[0], request_info)
