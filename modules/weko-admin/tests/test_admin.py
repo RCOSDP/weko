@@ -2113,7 +2113,7 @@ class TestSwordAPIJsonldSettingsView:
                     'registration_type': 'Direct',
                     'mapping_id': '1',
                     'active': 'True',
-                    'Meta_data_API_selected':[]
+                    'metadata_api_selected':[]
                 }),
                 content_type='application/json'
             )
@@ -2131,7 +2131,7 @@ class TestSwordAPIJsonldSettingsView:
                     'workflow_id': flows["workflow"][0].id,
                     'mapping_id': '1',
                     'active': 'False',
-                    'Meta_data_API_selected':[]
+                    'metadata_api_selected':[]
                 }),
                 content_type='application/json'
             )
@@ -2148,7 +2148,7 @@ class TestSwordAPIJsonldSettingsView:
                     'registration_type': 'Direct',
                     'mapping_id': '1',
                     'active': 'True',
-                    'Meta_data_API_selected':[]
+                    'metadata_api_selected':[]
                 }),
                 content_type='application/json'
             )
@@ -2165,15 +2165,15 @@ class TestSwordAPIJsonldSettingsView:
                     'registration_type': 'Direct',
                     'mapping_id': '1',
                     'active': 'True',
-                    'Meta_data_API_selected':[]
+                    'metadata_api_selected':[]
                 }),
                 content_type='application/json'
             )
         assert res.status_code == 400
 
 
-        # # post
-        # # Error
+        # post
+        # Error
         login_user_via_session(client,email=users[0]["email"])# sysadmin
         with patch("weko_admin.admin.JsonLdMapper.validate", return_value=None):
             with patch("weko_admin.admin.SwordClient.register", side_effect=SQLAlchemyError("test_db_error")):
@@ -2187,6 +2187,24 @@ class TestSwordAPIJsonldSettingsView:
                     }),
                     content_type='application/json'
                 )
+        assert res.status_code == 400
+
+        # post
+        # error original disabled
+        login_user_via_session(client,email=users[0]["email"])# sysadmin
+        with patch("weko_admin.admin.JsonLdMapper.validate", return_value=None):
+            res = client.post(
+                url,
+                data=json.dumps({
+                    'application': tokens[0]["client"].client_id,
+                    'registration_type': 'Direct',
+                    'mapping_id': '1',
+                    'active': 'True',
+                    'metadata_api_selected':["JaLC API"]
+                }),
+                content_type='application/json'
+            )
+        assert json.loads(res.data) == {"error": "Cannot disable 'Original'."}
         assert res.status_code == 400
 
     # def edit_view(self, id):
@@ -2288,7 +2306,6 @@ class TestSwordAPIJsonldSettingsView:
 
         # post
         # invalid mapping
-
         mock_can_edit.return_value = True
         login_user_via_session(client,email=users[0]["email"])# sysadmin
         with patch("weko_admin.admin.JsonLdMapper.validate", return_value=["test_error"]):
@@ -2335,6 +2352,23 @@ class TestSwordAPIJsonldSettingsView:
         assert res.status_code == 400
         assert json.loads(res.data) == {"error": "Failed to update application settings: Test name"}
 
+        # post
+        # error original disabled
+        login_user_via_session(client,email=users[0]["email"])# sysadmin
+        with patch("weko_admin.admin.JsonLdMapper.validate", return_value=None):
+            res = client.post(
+                url,
+                data=json.dumps({
+                    'registration_type': 'Direct',
+                    'workflow_id': 31001,
+                    'mapping_id': '1',
+                    'active': 'True',
+                    'metadata_api_selected':["JaLC API"]
+                }),
+                content_type='application/json'
+            )
+        assert res.status_code == 400
+        assert json.loads(res.data) == {"error": "Cannot disable 'Original'."}
 
     def test_get_query_in_role_ids(self, client, users, db, mocker):
         login_user_via_session(client,email=users[0]["email"])# sysadmin

@@ -90,6 +90,7 @@ const Successfully_Changed = document.getElementById('Successfully_Changed').val
 const Failed_Changed = document.getElementById('Failed_Changed').value;
 const item_required_alert = document.getElementById('items_required_alert').value;
 const workflow_deleted_alert = document.getElementById('workflow_deleted_alert').value;
+const original_disabled_alert = document.getElementById('original_disabled_alert').value;
 const registration_type_value = document.getElementById('registration_type_value').value;
 const workflow_value = document.getElementById('workflow_value').value;
 const deleted_workflows_name_dict = JSON.parse(document.getElementById('deleted_workflows_name_dict').value);
@@ -366,6 +367,9 @@ function saveDataFormat(type) {
     let element = children[index].value;
     no_selected_API.push(element);
   }
+  if (selected_API.length > 0 && !selected_API.includes("Original")) {
+    return showMsg(original_disabled_alert, false);
+  }
 
   const mapping = document.getElementById('mapping');
 
@@ -391,16 +395,22 @@ function saveDataFormat(type) {
     credentials: 'include',
     body: JSON.stringify(form),
   })
-    .then((res) => {
-      if (!res.ok) {
-        throw new Error('Failed to save data');
-      }
-      showMsg(Successfully_Changed, true);
-      window.location.href = '/admin/swordapi/jsonld/';
-    })
-    .catch((error) => {
-      showMsg(Failed_Changed, false);
-    });
+  .then((res) => {
+    if (!res.ok) {
+      return res.json().then(data => {
+        let errorMessage = '';
+        if (data && data.error) {
+          errorMessage = data.error
+        }
+        throw new Error(errorMessage);
+      });
+    }
+    showMsg(Successfully_Changed, true);
+    window.location.href = '/admin/swordapi/jsonld/';
+  })
+  .catch((error) => {
+    showMsg(error.message || Failed_Changed, false);
+  });
 }
 
 window.onload = function () {
