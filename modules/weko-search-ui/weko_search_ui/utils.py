@@ -1925,6 +1925,7 @@ def register_item_metadata(item, root_path, owner, is_gakuninrdm=False, request_
             _record = WekoDeposit.get_record(_pid.object_uuid)
             _deposit = WekoDeposit(_record, _record.model)
             _deposit["path"] = new_data.get("path")
+            _deposit.non_extract = item.get("non_extract")
             _deposit.merge_data_to_record_without_version(
                 pid, keep_version=True, is_import=True
             )

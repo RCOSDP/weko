@@ -1994,6 +1994,7 @@ def handle_finish_workflow(deposit, current_pid, recid):
             deposit.commit()
         deposit.publish()
         updated_item = UpdateItem()
+        non_extract = getattr(deposit, 'non_extract', None)
         # publish record without version ID when registering newly
         if recid:
             # new record attached version ID
@@ -2031,7 +2032,7 @@ def handle_finish_workflow(deposit, current_pid, recid):
                     pid_without_ver.object_uuid)
                 _deposit = WekoDeposit(_record, _record.model)
                 _deposit['path'] = deposit.get('path', [])
-
+                _deposit.non_extract = non_extract
                 parent_record = _deposit. \
                     merge_data_to_record_without_version(current_pid)
                 _deposit.publish()
@@ -2049,6 +2050,7 @@ def handle_finish_workflow(deposit, current_pid, recid):
                         maintain_record,
                         maintain_record.model)
                     maintain_deposit['path'] = deposit.get('path', [])
+                    maintain_deposit.non_extract = non_extract
                     record_pid = maintain_record.pid
                     old_record = WekoRecord.get_record_by_pid(record_pid.pid_value)
                     old_item_reference_list = ItemReference.get_src_references(record_pid.pid_value).all()
