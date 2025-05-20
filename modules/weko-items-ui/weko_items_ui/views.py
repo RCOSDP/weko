@@ -20,10 +20,10 @@
 
 """Blueprint for weko-items-ui."""
 
-import sys
 import json
-import traceback
 import requests
+import sys
+import traceback
 from copy import deepcopy
 from datetime import date, datetime, timedelta
 
@@ -46,7 +46,8 @@ from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidstore.resolver import Resolver
 from invenio_pidstore.errors import PIDDoesNotExistError
 from invenio_records_ui.signals import record_viewed
-
+from requests.adapters import HTTPAdapter
+from urllib3 import Retry
 from weko_accounts.utils import login_required_customize
 from weko_admin.models import AdminSettings, RankingSettings
 from weko_deposit.api import WekoRecord
@@ -55,6 +56,7 @@ from weko_index_tree.utils import (
     check_index_permissions, get_index_id, get_user_roles
 )
 from weko_records.api import ItemTypes
+from weko_records_ui.external import get_oa_token
 from weko_records_ui.ipaddr import check_site_license_permission
 from weko_records_ui.permissions import check_file_download_permission
 from weko_redis.redis import RedisConnection
@@ -77,8 +79,8 @@ from .utils import (
     translate_schema_form, translate_validation_message, update_index_tree_for_record,
     update_json_schema_by_activity_id, update_schema_form_by_activity_id,
     update_sub_items_by_user_role, validate_form_input_data, validate_user,
-    validate_user_mail_and_index, get_weko_link, get_access_token,
-    is_duplicate_record, lock_item_will_be_edit
+    validate_user_mail_and_index, get_weko_link, is_duplicate_record,
+    lock_item_will_be_edit
 )
 from .config import WEKO_ITEMS_UI_FORM_TEMPLATE,WEKO_ITEMS_UI_ERROR_TEMPLATE
 from weko_theme.config import WEKO_THEME_DEFAULT_COMMUNITY
@@ -116,46 +118,63 @@ def get_oa_policy():
         - 成功時: {"policy_url": "取得したポリシーURL"}
         - 失敗時: {"error": "エラーメッセージ"}, HTTPステータスコード
     """
-    try:
-        issn = request.args.get("issn", "").strip()
-        eissn = request.args.get("eissn", "").strip()
-        title = request.args.get("title", "").strip()
+    issn = request.args.get("issn", "").strip()
+    eissn = request.args.get("eissn", "").strip()
+    title = request.args.get("title", "").strip()
 
-        if not issn and not eissn and not title:
-            return jsonify({"error": "Please enter ISSN, eISSN, or journal title"}), 400
+    if not issn and not eissn and not title:
+        return jsonify({"error": "Please enter ISSN, eISSN, or journal title"}), 400
+    
+    # get oa token
+    token = get_oa_token()
+    if not token:
+        return jsonify({"error": "Authentication error occurred"}), 401
 
-        api_url = current_app.config.get("WEKO_ITEMS_UI_OA_POLICY_API_URL")
-        api_code = current_app.config.get("WEKO_ITEMS_UI_OA_POLICY_API_CODE")
+    headers = {"Authorization": f"Bearer {token}"}
+    params = {"issn": issn, "eissn": eissn, "title": title}
 
-        # アクセストークンを取得
-        token_info = get_access_token(api_code)
+    # APIリクエスト送信
+    api_url = current_app.config.get("WEKO_RECORDS_UI_OA_GET_OA_POLICIES_URL", "")
+    if api_url and isinstance(api_url, str):
+        current_app.logger.debug("call OA policy status api")
+        try:
+            with requests.Session() as s:
+                retries = Retry(
+                    total=current_app.config.get(
+                        "WEKO_RECORDS_UI_OA_API_RETRY_COUNT"),
+                    status_forcelist=[500, 502, 503, 504])
+                s.mount('https://', HTTPAdapter(max_retries=retries))
+                s.mount('http://', HTTPAdapter(max_retries=retries))
+                response = s.get(
+                    api_url, headers=headers,params=params
+                )
+                if response.status_code == 200:
+                    data = response.json()
+                    return jsonify({
+                        "policy_url": data.get(
+                            "url", "No Policy Information found"
+                        )
+                    })
+                elif response.status_code == 404:
+                    return jsonify({"error": "No matching policy"}), 404
+                elif response.status_code == 429:
+                    return jsonify({"error": "Request limit exceeded"}), 429
+                elif response.status_code == 500:
+                    return jsonify({"error": "Internal server error"}), 500
+                else:
+                    return jsonify({"error": "An unknown error occurred"}), 500
 
-        if not token_info or "access_token" not in token_info:
-            return jsonify({"error": "Authentication error occurred"}), 401
+        except requests.exceptions.RequestException as req_err:
+            current_app.logger.error(req_err)
+            current_app.logger.error(traceback.format_exc())
+            return jsonify({"error": "API Request Failed"}), 500
+        except Exception as e:
+            current_app.logger.error(req_err)
+            current_app.logger.error(traceback.format_exc())
+            return jsonify({"error": f"An unknown error occurred: {str(e)}"}), 500
+    else:
+        return jsonify({"error": "Invalid API URL"}), 400
 
-        token = token_info["access_token"]
-        headers = {"Authorization": f"Bearer {token}"}
-        params = {"issn": issn, "eissn": eissn, "title": title}
-
-        # APIリクエスト送信
-        response = requests.get(api_url, headers=headers, params=params)
-
-        if response.status_code == 200:
-            data = response.json()
-            return jsonify({"policy_url": data.get("url", "No Policy Information found")})
-        elif response.status_code == 404:
-            return jsonify({"error": "No matching policy"}), 404
-        elif response.status_code == 429:
-            return jsonify({"error": "Request limit exceeded"}), 429
-        elif response.status_code == 500:
-            return jsonify({"error": "Internal server error"}), 500
-        else:
-            return jsonify({"error": "An unknown error occurred"}), 500
-
-    except requests.exceptions.RequestException:
-        return jsonify({"error": "API Request Failed"}), 500
-    except Exception as e:
-        return jsonify({"error": f"An unknown error occurred: {str(e)}"}), 500
 
 @blueprint.route('/', methods=['GET'])
 @blueprint.route('/<int:item_type_id>', methods=['GET'])

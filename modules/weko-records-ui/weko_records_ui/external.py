@@ -67,41 +67,7 @@ def call_external_system(old_record=None,
     # case OA assist
     if EXTERNAL_SYSTEM.OA in external_system_list:
         # get oa token
-        headers = {
-            'Content-Type': 'application/json'
-        }
-        api_cert = ApiCertificate.select_by_api_code(
-            current_app.config.get("WEKO_RECORDS_UI_OA_API_CODE"))
-        if not api_cert:
-            return
-        client_id = api_cert.get("cert_data",{}).get("client_id")
-        client_secret = api_cert.get("cert_data",{}).get("secret")
-        if not client_secret or not client_id:
-            return
-        token = None
-        data = {
-            "grant_type": "client_credentials",
-            "client_id": client_id,
-            "client_secret": client_secret
-        }
-        get_token_url = current_app.config.get(
-            "WEKO_RECORDS_UI_OA_GET_TOKEN_URL")
-        if get_token_url:
-            current_app.logger.debug("call OA token api")
-            try:
-                with requests.Session() as s:
-                    retries = Retry(
-                        total=current_app.config.get(
-                            "WEKO_RECORDS_UI_OA_API_RETRY_COUNT"),
-                        status_forcelist=[500, 502, 503, 504])
-                    s.mount('https://', HTTPAdapter(max_retries=retries))
-                    s.mount('http://', HTTPAdapter(max_retries=retries))
-                    response = s.post(get_token_url, headers=headers, json=data)
-                token = response.text
-            except requests.exceptions.RequestException as req_err:
-                current_app.logger.error(req_err)
-                current_app.logger.error(traceback.format_exc())
-                return
+        token = get_oa_token()
         if not token:
             return
 
@@ -181,6 +147,44 @@ def call_external_system(old_record=None,
                 #     target_key = pid_value_without_ver,
                 #     remarks = remarks
                 # )
+
+def get_oa_token():
+    # get oa token
+    headers = {
+        'Content-Type': 'application/json'
+    }
+    api_cert = ApiCertificate.select_by_api_code(
+        current_app.config.get("WEKO_RECORDS_UI_OA_API_CODE"))
+    if not api_cert:
+        return
+    client_id = api_cert.get("cert_data",{}).get("client_id")
+    client_secret = api_cert.get("cert_data",{}).get("secret")
+    if not client_secret or not client_id:
+        return
+    token = None
+    data = {
+        "grant_type": "client_credentials",
+        "client_id": client_id,
+        "client_secret": client_secret
+    }
+    get_token_url = current_app.config.get(
+        "WEKO_RECORDS_UI_OA_GET_TOKEN_URL")
+    if get_token_url:
+        current_app.logger.debug("call OA token api")
+        try:
+            with requests.Session() as s:
+                retries = Retry(
+                    total=current_app.config.get(
+                        "WEKO_RECORDS_UI_OA_API_RETRY_COUNT"),
+                    status_forcelist=[500, 502, 503, 504])
+                s.mount('https://', HTTPAdapter(max_retries=retries))
+                s.mount('http://', HTTPAdapter(max_retries=retries))
+                response = s.post(get_token_url, headers=headers, json=data)
+            token = response.text
+        except requests.exceptions.RequestException as req_err:
+            current_app.logger.error(req_err)
+            current_app.logger.error(traceback.format_exc())
+    return token
 
 
 def select_call_external_system_list(old_record=None,

@@ -5152,53 +5152,6 @@ def get_file_download_data(item_id, record, filenames, query_date=None, size=Non
 
     return result
 
-def get_access_token(api_code):
-    """
-    OAuth2 トークンを取得するメソッド。
-
-    パラメータ:
-        api_code (str): API認証コード
-
-    戻り値:
-        dict:
-            - 成功時: {"access_token": "トークン", "token_type": "Bearer", "expires_in": 秒数}
-            - 失敗時: {"error": "エラーメッセージ"}, HTTPステータスコード
-    """
-    try:
-        if not api_code:
-            return {"error": "invalid_request", "message": "Required API Code"}, 400
-
-        certificate = ApiCertificate.select_by_api_code(api_code)
-        if not certificate:
-            return {"error": "invalid_client"}, 401
-
-        token = certificate.get("cert_data", {}).get("token")
-        expires_at = certificate.get("cert_data", {}).get("expires_at")
-
-        if token and expires_at:
-            expires_at_dt = datetime.strptime(expires_at, "%Y-%m-%dT%H:%M:%S")
-            if expires_at_dt > datetime.now():
-                return {
-                    "access_token": token,
-                    "token_type": "Bearer",
-                    "expires_in": (expires_at_dt - datetime.now()).seconds
-                }
-
-        # 新しいトークンを発行
-        new_access_token = secrets.token_urlsafe(40)
-        expires_in = 3600 # 1時間
-        expires_at = (datetime.now() + timedelta(seconds=expires_in)).isoformat()
-
-        return {
-            "access_token": new_access_token,
-            "token_type": "Bearer",
-            "expires_in": expires_in
-        }
-
-    except Exception as e:
-        current_app.logger.error(f"AccessToken Error: {str(e)}")
-        return {"error": "Internal server error"}, 500
-
 
 # --- 通知対象取得関数 ---
 
