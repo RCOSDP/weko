@@ -191,15 +191,15 @@ class TestAuthorDBManagementAPI:
 
         # 異常系テスト（リクエスト内容のバリデーション）
         # 不正なリクエストが適切に処理されることを確認
-        self.run_post_author(app, client_api, auth_headers_sysadmin, {}, 400, "Request body cannot be empty.")  # 空のリクエスト
-        self.run_post_author(app, client_api, auth_headers_sysadmin, {"author": None}, 400, "author can not be null.")  # authorがNone
+        self.run_post_author(app, client_api, auth_headers_sysadmin, {}, 400, "Bad Request: Invalid payload, {'author': ['Missing data for required field.']}")  # 空のリクエスト
+        self.run_post_author(app, client_api, auth_headers_sysadmin, {"author": None}, 400, "Bad Request: Invalid payload, {'author': ['Field may not be null.']}")  # authorがNone
         self.run_post_author(app, client_api, auth_headers_sysadmin, {"author": {"authorIdInfo": [{"idType": "ORCID"}]}}, 400, "Both 'idType' and 'authorId' must be provided together.")  # idTypeのみ指定
         self.run_post_author(app, client_api, auth_headers_sysadmin, {"author": {"authorIdInfo": [{"idType": "WEKO", "authorId": "A1"}]}}, 400, "The WEKO ID must be numeric characters only.")  # WEKO IDが数字以外
         self.run_post_author(app, client_api, auth_headers_sysadmin, {"author": {"authorIdInfo": [{"idType": "WEKO", "authorId": "1"}]}}, 400, "The value is already in use as WEKO ID.")  # 既存のWEKO ID
         self.run_post_author(app, client_api, auth_headers_sysadmin, {"author": {"authorNameInfo": [{"firstName": "John", "familyName": "Doe"}]}}, 400, "If 'firstName' or 'familyName' is provided, 'language' must also be specified.")  # language未指定
-        self.run_post_author(app, client_api, auth_headers_sysadmin, {"author": {"affiliationInfo": "InvalidFormat"}}, 400, "'affiliationInfo' should be a list.")  # affiliationInfoがリストでない
-        self.run_post_author(app, client_api, auth_headers_sysadmin, {"author": {"affiliationInfo": ["InvalidFormat"]}}, 400, "Invalid format in 'affiliationInfo'.")  # affiliationInfoのフォーマット不正
-        self.run_post_author(app, client_api, auth_headers_sysadmin, {"author": {"affiliationInfo": [{"affiliationPeriodInfo": [{"periodStart": "2025-03-21", "periodEnd": "2025-01-27"}]}]}}, 400, "affiliationPeriodInfo error: start is after end")  # 開始日が終了日より後
+        self.run_post_author(app, client_api, auth_headers_sysadmin, {"author": {"affiliationInfo": "InvalidFormat"}}, 400, "Bad Request: Invalid payload, {'author': {'affiliationInfo': ['Not a valid list.']}}")  # affiliationInfoがリストでない
+        self.run_post_author(app, client_api, auth_headers_sysadmin, {"author": {"affiliationInfo": ["InvalidFormat"]}}, 400, "Bad Request: Invalid payload, {'author': {'affiliationInfo': {0: {'_schema': ['Invalid input type.']}}}}")  # affiliationInfoのフォーマット不正
+        self.run_post_author(app, client_api, auth_headers_sysadmin, {"author": {"affiliationInfo": [{"affiliationPeriodInfo": [{"periodStart": "2025-03-21", "periodEnd": "2025-01-27"}]}]}}, 400, 'periodStart must be before periodEnd.')  # 開始日が終了日より後
         self.run_post_author(app, client_api, auth_headers_sysadmin, {"author": {"affiliationInfo": [{"identifierInfo": [{"affiliationId": "https://ror.org/##", "identifierShowFlg": "true"}]}]}}, 400, "Both 'affiliationIdType' and 'affiliationId' must be provided together.")  # affiliationIdType未指定
         self.run_post_author(app, client_api, auth_headers_sysadmin, {"author": {"affiliationInfo": [{"affiliationNameInfo": [{"affiliationName": "NII", "identifierShowFlg": "true"}]}]}}, 400, "Both 'affiliationName' and 'affiliationNameLang' must be provided together.")  # affiliationNameLang未指定
 
@@ -260,11 +260,11 @@ class TestAuthorDBManagementAPI:
         return {
             "author": {
                 "emailInfo": [{"email": "sample@xxx.co.jp"}],
-                "authorIdInfo": [{"idType": idType, "authorId": "5", "authorIdShowFlg": True}],
-                "authorNameInfo": [{"language": "en", "firstName": "John", "familyName": "Doe", "nameFormat": nameFormat, "nameShowFlg": True}],
+                "authorIdInfo": [{"idType": idType, "authorId": "5", "authorIdShowFlg": "true"}],
+                "authorNameInfo": [{"language": "en", "firstName": "John", "familyName": "Doe", "nameFormat": nameFormat, "nameShowFlg": "true"}],
                 "affiliationInfo": [{
-                    "identifierInfo": [{"affiliationId": "https://ror.org/5678", "affiliationIdType": "ISNI", "identifierShowFlg": True}],
-                    "affiliationNameInfo": [{"affiliationName": "NII", "affiliationNameLang": "en", "affiliationNameShowFlg": True}],
+                    "identifierInfo": [{"affiliationId": "https://ror.org/5678", "affiliationIdType": "ISNI", "identifierShowFlg": "true"}],
+                    "affiliationNameInfo": [{"affiliationName": "NII", "affiliationNameLang": "en", "affiliationNameShowFlg": "true"}],
                     "affiliationPeriodInfo": [{"periodStart": "2025-01-27", "periodEnd": "2025-03-21"}]
                 }]
             }
@@ -300,16 +300,16 @@ class TestAuthorDBManagementAPI:
                 "pk_id": "1",
                 "author": {
                     "emailInfo": [{"email": "updated@xxx.co.jp"}],
-                    "authorIdInfo": [{"idType": "ORCID", "authorId": "5", "authorIdShowFlg": True}],
-                    "authorNameInfo": [{"language": "en", "firstName": "Jane", "familyName": "Smith", "nameFormat": "familyNmAndNm", "nameShowFlg": True}],
+                    "authorIdInfo": [{"idType": "ORCID", "authorId": "5", "authorIdShowFlg": "true"}],
+                    "authorNameInfo": [{"language": "en", "firstName": "Jane", "familyName": "Smith", "nameFormat": "familyNmAndNm", "nameShowFlg": "true"}],
                     "affiliationInfo": [{
-                        "identifierInfo": [{"affiliationId": "https://ror.org/5678", "affiliationIdType": "ISNI", "identifierShowFlg": True}],
-                        "affiliationNameInfo": [{"affiliationName": "NII", "affiliationNameLang": "en", "affiliationNameShowFlg": True}],
+                        "identifierInfo": [{"affiliationId": "https://ror.org/5678", "affiliationIdType": "ISNI", "identifierShowFlg": "true"}],
+                        "affiliationNameInfo": [{"affiliationName": "NII", "affiliationNameLang": "en", "affiliationNameShowFlg": "true"}],
                         "affiliationPeriodInfo": [{"periodStart": "2025-02-01", "periodEnd": "2025-04-01"}]
                     }]
                 }
             }
-            self.run_put_author(app, client_api, auth_headers_sysadmin, data_no_weko, 400, "idType: WEKO (weko id) must be provided.")
+            self.run_put_author(app, client_api, auth_headers_sysadmin, data_no_weko, 400, "At least one WEKO ID must be provided in update.")
 
             # 認証なしのリクエストが拒否されることを確認
             self.run_put_author_unauthorized(app, client_api)
@@ -318,25 +318,25 @@ class TestAuthorDBManagementAPI:
             self.run_put_author(app, client_api, auth_headers_noroleuser, self.valid_update_data(), 403, None)
 
             # 異常系テスト（リクエスト内容のバリデーション）
-            self.run_put_author(app, client_api, auth_headers_sysadmin, {}, 400, "Request body cannot be empty.")
+            self.run_put_author(app, client_api, auth_headers_sysadmin, {}, 400, "'author': ['Missing data for required field.']")
             author_data = self.valid_update_data()
             author_data["author"]["authorNameInfo"][0]["language"] = "jp"
-            self.run_put_author(app, client_api, auth_headers_sysadmin, author_data, 400, "Invalid Author Data, 'idtype' or 'language' Not Allowed.")
+            self.run_put_author(app, client_api, auth_headers_sysadmin, author_data, 400, "Invalid authorNameInfo_language.")
             author_data = self.valid_update_data()
             author_data["author"]["affiliationInfo"][0]["affiliationNameInfo"][0]["affiliationNameLang"] = "jp"
-            self.run_put_author(app, client_api, auth_headers_sysadmin, author_data, 400, "Invalid Author Data, 'idtype' or 'language' Not Allowed.")
+            self.run_put_author(app, client_api, auth_headers_sysadmin, author_data, 400, "Invalid affiliationInfo_affiliationNameLang.")
             author_data = self.valid_update_data()
-            author_data["author"]["authorIdInfo"][0]["idType"] = "WEKO_WRONG"
-            self.run_put_author(app, client_api, auth_headers_sysadmin, author_data, 400, "Invalid Author Data, 'idtype' or 'language' Not Allowed.")
+            author_data["author"]["authorIdInfo"].append({"idType": "WEKO_WRONG", "authorId": "5"})
+            self.run_put_author(app, client_api, auth_headers_sysadmin, author_data, 400, "Invalid authorIdInfo_idType.")
             author_data = self.valid_update_data()
             author_data["author"]["affiliationInfo"][0]["identifierInfo"][0]["affiliationIdType"] = "Ringgold_WRONG"
-            self.run_put_author(app, client_api, auth_headers_sysadmin, author_data, 400, "Invalid Author Data, 'idtype' or 'language' Not Allowed.")
+            self.run_put_author(app, client_api, auth_headers_sysadmin, author_data, 400, "Invalid affiliationInfo_affiliationIdType.")
             author_data = self.valid_update_data()
             author_data.pop("pk_id")
-            self.run_put_author(app, client_api, auth_headers_sysadmin, author_data, 400, "Bad Request: Either 'id' or 'pk_id' must be specified.")
-            self.run_put_author(app, client_api, auth_headers_sysadmin, {"id": "123"}, 400, "author can not be null.")
-            self.run_put_author(app, client_api, auth_headers_sysadmin, {"pk_id": "123"}, 400, "author can not be null.")
-            self.run_put_author(app, client_api, auth_headers_sysadmin, {"id": "invalid", "pk_id": "invalid", "author": self.valid_update_data().get("author")}, 400, "Invalid author ID.")
+            self.run_put_author(app, client_api, auth_headers_sysadmin, author_data, 400, "Either 'id' or 'pk_id' must be specified.")
+            self.run_put_author(app, client_api, auth_headers_sysadmin, {"id": "123"}, 400, "'author': ['Missing data for required field.']")
+            self.run_put_author(app, client_api, auth_headers_sysadmin, {"pk_id": "123"}, 400, "'author': ['Missing data for required field.']")
+            self.run_put_author(app, client_api, auth_headers_sysadmin, {"id": "invalid", "pk_id": "invalid", "author": self.valid_update_data().get("author")}, 400, "'pk_id': ['Invalid value.']")
 
             self.run_put_author(app, client_api, auth_headers_sysadmin, {"id": "999", "pk_id": "999", "author": self.valid_update_data().get("author")}, 404, "Specified author does not exist.")
             self.run_put_author(app, client_api, auth_headers_sysadmin, {"pk_id": "999", "author": self.valid_update_data().get("author")}, 404, "Specified author does not exist.")
@@ -387,12 +387,12 @@ class TestAuthorDBManagementAPI:
         with patch("weko_authors.models.Authors.query", side_effect=SQLAlchemyError):
             response = client_api.put(url, json=request_data, headers=user_headers)
         assert response.status_code == 500
-        assert "Database error." in response.get_data(as_text=True)
+        assert "Failed to update author." in response.get_data(as_text=True)
 
         with patch("weko_authors.rest.AuthorDBManagementAPI.get_all_schemes", side_effect=Exception):
             response = client_api.put(url, json=request_data, headers=user_headers)
         assert response.status_code == 500
-        assert "Internal server error." in response.get_data(as_text=True)
+        assert "Failed to update author." in response.get_data(as_text=True)
 
     def valid_update_data(self):
         """
@@ -402,11 +402,11 @@ class TestAuthorDBManagementAPI:
             "pk_id": "1",
             "author": {
                 "emailInfo": [{"email": "updated@xxx.co.jp"}],
-                "authorIdInfo": [{"idType": "WEKO", "authorId": "5", "authorIdShowFlg": True}],
-                "authorNameInfo": [{"language": "en", "firstName": "Jane", "familyName": "Smith", "nameFormat": "familyNmAndNm", "nameShowFlg": True}],
+                "authorIdInfo": [{"idType": "WEKO", "authorId": "5", "authorIdShowFlg": "true"}],
+                "authorNameInfo": [{"language": "en", "firstName": "Jane", "familyName": "Smith", "nameFormat": "familyNmAndNm", "nameShowFlg": "true"}],
                 "affiliationInfo": [{
-                    "identifierInfo": [{"affiliationId": "https://ror.org/5678", "affiliationIdType": "ISNI", "identifierShowFlg": True}],
-                    "affiliationNameInfo": [{"affiliationName": "NII", "affiliationNameLang": "en", "affiliationNameShowFlg": True}],
+                    "identifierInfo": [{"affiliationId": "https://ror.org/5678", "affiliationIdType": "ISNI", "identifierShowFlg": "true"}],
+                    "affiliationNameInfo": [{"affiliationName": "NII", "affiliationNameLang": "en", "affiliationNameShowFlg": "true"}],
                     "affiliationPeriodInfo": [{"periodStart": "2025-02-01", "periodEnd": "2025-04-01"}]
                 }]
             }
