@@ -2518,16 +2518,20 @@ class WorkActivity(object):
             return None
 
     def get_workflow_activity_by_item_id(self, object_uuid):
-        """Get workflow activity status by item ID.
+        """Get latest activity by item id.
 
-        :param object_uuid:
+        Args:
+            object_uuid (str): Object UUID of the item.
+
+        Returns:
+            Activity: Activity model object if found, else None.
         """
         try:
             with db.session.no_autoflush:
                 activity = _Activity.query.filter_by(
                     item_id=object_uuid).order_by(
                     _Activity.updated.desc()).first()
-                return activity
+            return activity if isinstance(activity, _Activity) else None
         except Exception as ex:
             current_app.logger.error(ex)
             return None
