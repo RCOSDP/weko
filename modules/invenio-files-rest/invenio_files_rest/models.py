@@ -958,7 +958,7 @@ class FileInstance(db.Model, Timestamp):
                     tmp_uri = self.uri
                     if tmp_uri.startswith('https://'):
                         if tmp_uri.startswith('https://s3'):
-                            # ex: https://s3.amazonaws.com/bucket_name/file_name
+                            # ex: https://s3.us-east-1.amazonaws.com/bucket_name/file_name
                             parts = tmp_uri.split('/')
                             tmp_uri = 's3://' + '/'.join(parts[3:])
                             self.uri = tmp_uri
