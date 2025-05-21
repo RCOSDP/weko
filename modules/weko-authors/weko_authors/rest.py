@@ -22,6 +22,7 @@
 
 import json
 import traceback
+import uuid
 
 from flask import Blueprint, current_app, request, Response, jsonify
 from marshmallow.exceptions import ValidationError
@@ -98,7 +99,12 @@ def create_blueprint(endpoints):
             blueprint.add_url_rule(
                 options.get('api_route'),
                 view_func=author_api,
-                methods=['GET','POST','PUT','DELETE']
+                methods=['GET','POST']
+            )
+            blueprint.add_url_rule(
+                options.get('api_route_item'),
+                view_func=author_api,
+                methods=['PUT','DELETE']
             )
 
     return blueprint
@@ -518,12 +524,14 @@ class AuthorDBManagementAPI(ContentNegotiatedMethodView):
             ]
 
         try:
+            identifier = kwargs.get("identifier")
+            id_info = self.parse_identifier(identifier)
+            pk_id = id_info.get("pk_id")
+            es_id = id_info.get("es_id")
+
             data = self.validate_request(request, AuthorUpdateRequestSchema)
 
             author_data = data.get("author")
-
-            es_id = data.get("id")
-            pk_id = data.get("pk_id")
 
             for data_filed in ["emailInfo","authorIdInfo","authorNameInfo","affiliationInfo"]:
                 if not author_data.get(data_filed,False):
@@ -554,19 +562,6 @@ class AuthorDBManagementAPI(ContentNegotiatedMethodView):
                 current_app.logger.error("Specified author does not exist.")
                 raise AuthorNotFoundRESTError(
                     description="Specified author does not exist."
-                )
-
-            if pk_id and es_id and (bool(author_by_pk) ^ bool(author_by_es)):
-                current_app.logger.error("Parameters 'id' and 'pk_id' refer to different users.")
-                raise InvalidDataRESTError(
-                    description="Parameters 'id' and 'pk_id' refer to different users."
-                )
-
-
-            if author_by_pk and author_by_es and str(author_by_pk.id) != str(author_by_es.get("pk_id")):
-                current_app.logger.error("Parameters 'id' and 'pk_id' refer to different users.")
-                raise InvalidDataRESTError(
-                    description="Parameters 'id' and 'pk_id' refer to different users."
                 )
 
             if author_by_pk and not es_id:
@@ -645,36 +640,58 @@ class AuthorDBManagementAPI(ContentNegotiatedMethodView):
 
 
     def validate_request_data(self, extracted_data, lang_options_list, prefix_schemes, affiliation_schemes):
-        if not all(lang in lang_options_list for lang in extracted_data["authorNameInfo_language"]):
+        invalid_name_langs = [
+            lang for lang in extracted_data["authorNameInfo_language"]
+            if lang not in lang_options_list
+        ]
+        if invalid_name_langs:
             current_app.logger.error("Invalid authorNameInfo_language.")
-            raise InvalidDataRESTError(description="Invalid authorNameInfo_language.")
-        if not all(lang in lang_options_list for lang in extracted_data["affiliationInfo_affiliationNameLang"]):
-            current_app.logger.error("Invalid affiliationInfo_affiliationNameLang.")
-            raise InvalidDataRESTError(description="Invalid affiliationInfo_affiliationNameLang.")
-        if not all(scheme in prefix_schemes for scheme in extracted_data["authorIdInfo_idType"]):
-            current_app.logger.error("Invalid authorIdInfo_idType.")
-            raise InvalidDataRESTError(description="Invalid authorIdInfo_idType.")
-        if not all(scheme in affiliation_schemes for scheme in extracted_data["affiliationInfo_affiliationIdType"]):
-            current_app.logger.error("Invalid affiliationInfo_affiliationIdType.")
-            raise InvalidDataRESTError(description="Invalid affiliationInfo_affiliationIdType.")
+            raise InvalidDataRESTError(
+                description=f"Invalid authorNameInfo.language: {invalid_name_langs}. "
+                            f"Allowed values are {lang_options_list}."
+            )
 
+        invalid_affil_langs = [
+            lang for lang in extracted_data["affiliationInfo_affiliationNameLang"]
+            if lang not in lang_options_list
+        ]
+        if invalid_affil_langs:
+            current_app.logger.error("Invalid affiliationInfo_affiliationNameLang.")
+            raise InvalidDataRESTError(
+                description=f"Invalid affiliationInfo.affiliationNameLang:{invalid_affil_langs}. "
+                            f"Allowed values are {lang_options_list}."
+            )
+
+        invalid_name_types = [
+            scheme for scheme in extracted_data["authorIdInfo_idType"]
+            if scheme not in prefix_schemes
+        ]
+        if invalid_name_types:
+            current_app.logger.error("Invalid authorIdInfo_idType.")
+            raise InvalidDataRESTError(
+                description=f"Invalid authorIdInfo.idType: {invalid_name_types}. "
+                            f"Allowed values are {prefix_schemes}."
+            )
+
+        invalid_affili_types = [
+            scheme for scheme in extracted_data["affiliationInfo_affiliationIdType"]
+            if scheme not in affiliation_schemes
+        ]
+        if invalid_affili_types:
+            current_app.logger.error("Invalid affiliationInfo_affiliationIdType.")
+            raise InvalidDataRESTError(
+                description=f"Invalid affiliationInfo.affiliationIdType: {invalid_affili_types}. "
+                            f"Allowed values are {affiliation_schemes}."
+            )
 
     def delete_v1(self, **kwargs):
         """Handle DELETE request for author deletion."""
         from weko_authors.models import Authors
         try:
-            data = request.get_json()
-
-            if not data:
-                current_app.logger.error("Request body cannot be empty.")
-                raise BadRequest("Request body cannot be empty.")
-
-            es_id = data.get("id")
-            pk_id = data.get("pk_id")
-
-            if not es_id and not pk_id:
-                current_app.logger.error("Either 'id' or 'pk_id' must be specified.")
-                raise BadRequest("Either 'id' or 'pk_id' must be specified.")
+            identifier = kwargs.get("identifier")
+            id_info = self.parse_identifier(identifier)
+            pk_id = id_info.get("pk_id")
+            es_id = id_info.get("es_id")
 
             author_by_pk = None
             author_by_es = None
@@ -694,7 +711,9 @@ class AuthorDBManagementAPI(ContentNegotiatedMethodView):
 
             if not author_by_pk and not author_by_es:
                 current_app.logger.error("Specified author does not exist.")
-                raise NotFound("Specified author does not exist.")
+                raise AuthorNotFoundRESTError(
+                    description="Specified author does not exist."
+                )
 
             if author_by_pk and not es_id:
                 es_id = author_by_pk.json.get("id")
@@ -710,10 +729,6 @@ class AuthorDBManagementAPI(ContentNegotiatedMethodView):
                 pk_id = author_by_es.get("pk_id")
                 author_by_pk = Authors.query.filter_by(id=pk_id).first()
 
-            if author_by_pk and author_by_es and str(author_by_pk.id) != str(author_by_es.get("pk_id")):
-                current_app.logger.error("Parameters 'id' and 'pk_id' refer to different users.")
-                raise BadRequest("Parameters 'id' and 'pk_id' refer to different users.")
-
             if author_by_pk:
                 author_by_pk.is_deleted = True
                 db.session.commit()
@@ -727,17 +742,43 @@ class AuthorDBManagementAPI(ContentNegotiatedMethodView):
                 )
             return self.make_response(200)
 
-        except BadRequest as ex:
+        except AuthorBaseRESTError as ex:
             traceback.format_exc()
-            raise
-        except NotFound as ex:
             raise
         except SQLAlchemyError as ex:
             db.session.rollback()
             current_app.logger.error(f"Database error. {ex}")
             traceback.format_exc()
-            raise InternalServerError("Database error.")
+            raise AuthorInternalServerError(
+                description="Failed to delete author."
+            )
         except Exception as ex:
             current_app.logger.error(f"Unexpected error. {ex}")
             traceback.format_exc()
-            raise InternalServerError("Internal server error.")
+            raise AuthorInternalServerError(
+                description="Failed to delete author."
+            )
+
+    def parse_identifier(self, identifier):
+        """Parses the given identifier as either a UUID or an integer ID.
+
+        Args:
+            identifier (str): Identifier string (UUID or integer).
+
+        Returns:
+            dict: {'pk_id': str or None, 'es_id': str or None}
+
+        Raises:
+            InvalidDataRESTError: If the format is invalid.
+        """
+        try:
+            es_id = str(uuid.UUID(identifier))
+            return {"pk_id": None, "es_id": es_id}
+        except (ValueError, TypeError):
+            if identifier.isdigit():
+                return {"pk_id": identifier, "es_id": None}
+            else:
+                current_app.logger.error("Invalid identifier format.")
+                raise InvalidDataRESTError(
+                    description="Invalid identifier format. Must be an integer ID or UUID."
+                )
