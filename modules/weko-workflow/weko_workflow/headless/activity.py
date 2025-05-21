@@ -398,9 +398,6 @@ class HeadlessActivity(WorkActivity):
 
             result = {"is_valid": True}
             validate_form_input_data(result, self.item_type.id, deepcopy(metadata))
-            if not result.get("is_valid"):
-                current_app.logger.error(f"failed to input metadata: {result.get('error')}")
-                raise WekoWorkflowException(result.get("error"))
 
             _old_metadata, _old_files = {}, []
             if self.recid is None:
@@ -532,6 +529,9 @@ class HeadlessActivity(WorkActivity):
                 raise Exception(
                     "Index is not specified in workflow or item metadata."
                 )
+            if not result.get("is_valid"):
+                current_app.logger.error(f"failed to input metadata: {result.get('error')}")
+                raise WekoWorkflowException(result.get("error"))
 
             index = {
                 "index": list_index,
