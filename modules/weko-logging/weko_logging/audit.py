@@ -52,11 +52,7 @@ class WekoLoggingUserActivity(WekoLoggingBase):
         """
         user_logger = logging.getLogger("user-activity")
         user_logger.setLevel(logging.INFO)
-        for h in user_logger.handlers:
-            if isinstance(h, UserActivityLogHandler) or \
-                isinstance(h, logging.StreamHandler):
-                user_logger.removeHandler(h)
-                h.close()
+        user_logger.handlers.clear()
         stream_handler_settings = app.config.get(
             "WEKO_LOGGING_USER_ACTIVITY_STREAM_SETTING", {}
         )
