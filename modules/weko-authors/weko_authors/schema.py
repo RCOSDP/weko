@@ -200,7 +200,7 @@ class AuthorSchema(Schema):
     class Meta:
         strict = True
 
-    @validates_schema
+    @validates_schema(skip_on_field_errors=True)
     def validate_not_empty(self, data, **kwargs):
         """Ensure the author schema is not empty."""
         if not data:
@@ -215,7 +215,10 @@ class AuthorUpdateSchema(AuthorSchema):
         """Ensure at least one WEKO ID is included on update."""
         author_id_info = data.get("authorIdInfo", [])
         if not any(item.get("idType") == "WEKO" for item in author_id_info):
-            raise ValidationError("At least one WEKO ID must be provided in update.", field_name="authorIdInfo")
+            raise ValidationError(
+                "At least one WEKO ID must be provided in update.",
+                field_name="authorIdInfo"
+            )
 
 
 class AuthorCreateRequestSchema(Schema):
@@ -234,22 +237,8 @@ class AuthorUpdateRequestSchema(Schema):
     force_change = fields.Bool()
     """Flag to force change"""
 
-    id = fields.String()
-    """ElasticSearch document UUID."""
-
-    pk_id = fields.String()
-    """Primary key ID from the Authors table."""
-
     author = fields.Nested(AuthorUpdateSchema, required=True)
     """Updated author information."""
 
     class Meta:
         strict = True
-
-    @validates_schema
-    def validate_either_id_or_pk_id(self, data, **kwargs):
-        """Ensure either 'id' or 'pk_id' is specified."""
-        if data.get("id") is None and data.get("pk_id") is None:
-            raise ValidationError(
-                "Either 'id' or 'pk_id' must be specified.", field_name="id"
-            )
