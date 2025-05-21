@@ -51,7 +51,6 @@ from weko_index_tree.utils import (
     is_index_locked,
 )
 from weko_logging.activity_logger import UserActivityLogger
-from weko_logging.models import UserActivityLog
 from weko_records.api import ItemTypes, JsonldMapping
 from weko_workflow.api import WorkFlow
 from weko_records_ui.external import call_external_system
@@ -1192,15 +1191,22 @@ class ItemBulkExport(BaseView):
         if not export_status and download_uri is not None:
             file_instance = FileInstance.get_by_uri(download_uri)
 
-            # Check the TTL in the cache and extend it 
+            # Check the TTL in the cache and extend it
             # if the remaining time is below a certain threshold.
             tmp_cache = TempDirInfo().get(export_path)
             expire = tmp_cache.get("expire") if tmp_cache else None
             now = datetime.now()
-            if expire and \
-                (now-datetime.strptime(expire,"%Y-%m-%d %H:%M:%S")).total_seconds() <= current_app.config["WEKO_SEARCH_UI_FILE_DOWNLOAD_TTL_BUFFER"]:
+            if (
+                expire and
+                (now-datetime.strptime(expire,"%Y-%m-%d %H:%M:%S")).total_seconds()
+                    <= current_app.config["WEKO_SEARCH_UI_FILE_DOWNLOAD_TTL_BUFFER"]
+            ):
                 expire = datetime.strptime(expire,"%Y-%m-%d %H:%M:%S")
-                new_expire = expire+timedelta(seconds=current_app.config["WEKO_SEARCH_UI_FILE_DOWNLOAD_TTL_BUFFER"])
+                new_expire = (
+                    expire + timedelta(
+                        seconds=current_app.config["WEKO_SEARCH_UI_FILE_DOWNLOAD_TTL_BUFFER"]
+                    )
+                )
                 tmp_cache["expire"] = new_expire.strftime("%Y-%m-%d %H:%M:%S")
                 TempDirInfo().set(export_path, tmp_cache)
             return file_instance.send_file(

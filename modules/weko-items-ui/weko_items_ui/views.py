@@ -1037,7 +1037,6 @@ def prepare_edit_item(id=None, community=None):
         # ! Check Record is being edit
         item_uuid = latest_pid.object_uuid
         latest_activity = work_activity.get_workflow_activity_by_item_id(item_uuid)
-        current_app.logger.info(f"pid_value: {pid_value}, item_uuid: {item_uuid}, latest_activity: {latest_activity}")
 
         is_begin_edit = check_item_is_being_edit(recid, latest_activity, work_activity)
         if is_begin_edit:

@@ -5072,7 +5072,8 @@ def has_permission_edit_item(record, recid):
 def lock_item_will_be_edit(pid_value):
     """Lock item will be edit.
 
-    Lock the item to prevent some people from starting to edit it at the same time.
+    Lock the item to prevent double-click operation.
+    The lock will be released after 3 seconds.
 
     Args:
         pid_value (str): recid of item.
