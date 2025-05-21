@@ -435,10 +435,12 @@ def schema(title="", multi_flag=multiple_flag):
                 "catalog_file": {
                     "type": "object",
                     "format": "object",
+                    "title": "Thumbnail",
                     "properties": {
                         "catalog_file_uri": {
                             "type": "object",
                             "format": "object",
+                            "title": "Thumbnail URI",
                             "properties": {
                                 "catalog_file_uri_value": {
                                     "type": "string",
