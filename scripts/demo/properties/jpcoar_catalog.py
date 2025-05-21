@@ -435,6 +435,7 @@ def schema(title="", multi_flag=multiple_flag):
                 "catalog_file": {
                     "type": "object",
                     "format": "object",
+                    "title": "Thumbnail",
                     "properties": {
                         "catalog_file_uri": {
                             "type": "string",
