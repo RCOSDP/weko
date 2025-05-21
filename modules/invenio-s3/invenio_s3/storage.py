@@ -64,16 +64,14 @@ class S3FSFileStorage(PyFSFileStorage):
         url = self.fileurl
         if self.location.type == current_app.config.get('S3_LOCATION_TYPE_S3_VIRTUAL_HOST_VALUE'):
             if url.startswith('https://s3'):
-                # ex: https://s3.amazonaws.com/bucket_name/file_name
+                # ex: https://s3.us-east-1.amazonaws.com/bucket_name/file_name
                 parts = url.split('/')
                 url = 's3://' + '/'.join(parts[3:])
-                self.location.s3_endpoint_url = parts[0] + '//' + parts[2]
             else:
                 # ex: https://bucket_name.s3.us-east-1.amazonaws.com/file_name
                 parts = url.split('/')
                 sub_parts = parts[2].split('.')
                 url = 's3://' + sub_parts[0] + '/' + '/'.join(parts[3:])
-                self.location.s3_endpoint_url = parts[0] + '//' + parts[2]
 
         info = current_app.extensions['invenio-s3'].init_s3fs_info(location=self.location)
         fs = s3fs.S3FileSystem(default_block_size=self.block_size, **info)
@@ -189,7 +187,8 @@ class S3FSFileStorage(PyFSFileStorage):
         s3_send_file_directly = current_app.config.get('S3_SEND_FILE_DIRECTLY', None)
         default_location = Location.query.filter_by(default=True).first()
 
-        if default_location.type == 's3':
+        if (default_location.type == 's3'
+            or default_location.type == 's3_vh'):
             s3_send_file_directly = default_location.s3_send_file_directly
 
         if s3_send_file_directly:

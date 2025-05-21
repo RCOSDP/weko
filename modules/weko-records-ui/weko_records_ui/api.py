@@ -361,7 +361,8 @@ def get_file_place_info(org_pid, org_bucket_id, file_name):
             recid.object_uuid
         )
         workflow = get_workflow_by_item_type_id(item_type.name_id,
-                                                item_type_id)
+                                                item_type_id,
+                                                with_deleted=False)
 
     if workflow is None:
         location_id = None
@@ -408,20 +409,16 @@ def get_file_place_info(org_pid, org_bucket_id, file_name):
 
         # AWSクライアントの設定
         if location.type == "s3":
-            endpoint_url_list = location.s3_endpoint_url.split('/')
-            detail_endpoint_url_list = endpoint_url_list[2].split('.')
-            region = detail_endpoint_url_list[2]
+            region = location.s3_region_name
             uri_list = location.uri.split('/')
             bucket_name = uri_list[2]
             if len(uri_list) >= 4:
                 pre = '/'.join(uri_list[3:]) + '/' * (not '/'.join(uri_list[3:]).endswith('/'))
                 directory_path = pre + directory_path
         else:
-            endpoint_url_list = location.s3_endpoint_url.split('/')
-            detail_endpoint_url_list = endpoint_url_list[2].split('.')
+            region = location.s3_region_name
             if location.uri.startswith('https://s3'):
-                # ex: https://s3.amazonaws.com/bucket_name/file_name
-                region = None
+                # ex: https://s3.us-east-1.amazonaws.com/bucket_name/file_name
                 parts = location.uri.split('/')
                 bucket_name = parts[3]
                 if len(parts) >= 5:
@@ -429,7 +426,6 @@ def get_file_place_info(org_pid, org_bucket_id, file_name):
                     directory_path = pre + directory_path
             else:
                 # ex: https://bucket_name.s3.us-east-1.amazonaws.com/file_name
-                region = detail_endpoint_url_list[2]
                 parts = location.uri.split('/')
                 sub_parts = parts[2].split('.')
                 bucket_name = sub_parts[0]
@@ -449,12 +445,14 @@ def get_file_place_info(org_pid, org_bucket_id, file_name):
 
         try:
             # 署名付きURLの生成
-            url = s3.generate_presigned_url(  ClientMethod = 'put_object',
-                                                Params = {'Bucket' : bucket_name,
-                                                        'Key' : directory_path + "/" + 'data',
-                                                        'ContentType' : 'binary/octet-stream'},
-                                                ExpiresIn = 300,
-                                                HttpMethod = 'PUT')
+            url = s3.generate_presigned_url(
+                ClientMethod = 'put_object',
+                Params = {'Bucket' : bucket_name,
+                'Key' : bucket_name + "/" + directory_path + "/" + 'data',
+                'ContentType' : 'binary/octet-stream'},
+                ExpiresIn = 300,
+                HttpMethod = 'PUT'
+            )
         except Exception as e:
             traceback.print_exc()
             raise Exception(_("Unexpected error occurred."))

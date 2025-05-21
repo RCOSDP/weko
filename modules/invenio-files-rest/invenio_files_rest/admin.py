@@ -128,16 +128,38 @@ class LocationModelView(ModelView):
 
     def on_model_change(self, form, model, is_created):
         if is_created:
-            if model.type == current_app.config['FILES_REST_LOCATION_TYPE_S3_PATH_VALUE']:
+            if (model.type ==
+                current_app.config['FILES_REST_LOCATION_TYPE_S3_PATH_VALUE']):
                 model.s3_signature_version = None
                 if not model.uri.endswith('/'):
                     model.uri = model.uri + '/'
-                if not model.s3_endpoint_url.endswith('/'):
+                if (model.s3_endpoint_url and
+                    not model.s3_endpoint_url.endswith('/')):
                     model.s3_endpoint_url = model.s3_endpoint_url + '/'
-            elif model.type == current_app.config['FILES_REST_LOCATION_TYPE_S3_VIRTUAL_HOST_VALUE']:
+                if (not model.s3_region_name and
+                    model.s3_endpoint_url):
+                    model.s3_region_name = model.s3_endpoint_url.split('.')[2]
+            elif (model.type ==
+                  current_app.config['FILES_REST_LOCATION_TYPE_S3_VIRTUAL_HOST_VALUE']):
                 model.s3_signature_version = None
                 if not model.uri.endswith('/'):
                     model.uri = model.uri + '/'
+                if (model.uri and
+                    not model.s3_region_name):
+                    if (model.uri.startswith('https://s3')):
+                        # ex: https://s3.us-east-1.amazonaws.com/bucket_name/file_name
+                        model.s3_region_name = model.uri.split('.')[1]
+                        parts = model.uri.split('/')
+                        model.s3_endpoint_url = (
+                            parts[0] + '//' + parts[3] + '.' + parts[2] + '/'
+                        )
+                    else:
+                        # ex: https://bucket_name.s3.us-east-1.amazonaws.com/file_name
+                        model.s3_region_name = model.uri.split('.')[2]
+                        parts = model.uri.split('/')
+                        model.s3_endpoint_url = (
+                            parts[0] + '//' + parts[2] + '/'
+                        )
             else:
                 model.s3_default_block_size = None
                 model.s3_maximum_number_of_parts = None
@@ -145,14 +167,33 @@ class LocationModelView(ModelView):
                 model.s3_signature_version = None
                 model.s3_url_expiration = None
         else:
-            if model.type == current_app.config['FILES_REST_LOCATION_TYPE_S3_PATH_VALUE']:
+            if (model.type ==
+                current_app.config['FILES_REST_LOCATION_TYPE_S3_PATH_VALUE']):
                 if not model.uri.endswith('/'):
                     model.uri = model.uri + '/'
                 if not model.s3_endpoint_url.endswith('/'):
                     model.s3_endpoint_url = model.s3_endpoint_url + '/'
-            elif model.type == current_app.config['FILES_REST_LOCATION_TYPE_S3_VIRTUAL_HOST_VALUE']:
+                if (not model.s3_region_name and
+                    model.s3_endpoint_url):
+                    model.s3_region_name = model.s3_endpoint_url.split('.')[2]
+            elif (model.type ==
+                  current_app.config['FILES_REST_LOCATION_TYPE_S3_VIRTUAL_HOST_VALUE']):
                 if not model.uri.endswith('/'):
                     model.uri = model.uri + '/'
+                if (model.uri and
+                    not model.s3_region_name):
+                    if (model.uri.startswith('https://s3')):
+                        # ex: https://s3.us-east-1.amazonaws.com/bucket_name/file_name
+                        model.s3_region_name = model.uri.split('.')[1]
+                        model.s3_endpoint_url = (
+                            parts[0] + '//' + parts[3] + '.' + parts[2] + '/'
+                        )
+                    else:
+                        # ex: https://bucket_name.s3.us-east-1.amazonaws.com/file_name
+                        model.s3_region_name = model.uri.split('.')[2]
+                        model.s3_endpoint_url = (
+                            parts[0] + '//' + parts[2] + '/'
+                        )
             else:
                 # local
                 model.s3_default_block_size = None
