@@ -534,7 +534,10 @@ def check_tsv_import_items(
             list_record = list_record[:1]
 
         for item in list_record:
-            is_duplicate, recid_list, duplicate_links = is_duplicate_item(item.get("metadata", {}))
+            is_duplicate, recid_list, duplicate_links = is_duplicate_item(
+                item.get("metadata", {}),
+                exclude_ids=[int(item.get("id"))] if item.get("id") else []
+            )
             if is_duplicate:
                 duplicate_links = list(set(duplicate_links))
                 message = _('The same item may have been registered.') + '<br>'

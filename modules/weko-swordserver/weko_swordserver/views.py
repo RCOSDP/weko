@@ -333,8 +333,8 @@ def post_service_document():
             )
 
         if check_result.get("duplicate_check", False):
-            from weko_items_ui.utils import check_duplicate
-            result, list_id, list_url = check_duplicate(item["metadata"], is_item=True)
+            from weko_items_ui.utils import is_duplicate_item
+            result, list_id, list_url = is_duplicate_item(item["metadata"])
             if result:
                 current_app.logger.error(
                     f"New item appears to be a duplicate: {list_id}"
@@ -634,8 +634,11 @@ def put_object(recid):
             ErrorType.BadRequest,
         )
     if check_result.get("duplicate_check", False):
-        from weko_items_ui.utils import check_duplicate
-        result, list_id, list_url = check_duplicate(item["metadata"], is_item=True)
+        from weko_items_ui.utils import is_duplicate_item
+        result, list_id, list_url = is_duplicate_item(
+            item["metadata"],
+            exclude_ids=[int(recid)] if recid else []
+        )
         if result:
             current_app.logger.error(
                 f"New item appears to be a duplicate: {list_id}"

@@ -3751,7 +3751,7 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
                 let response = xhr.responseJSON;
                 if (response && response.is_duplicate) {
                     this.check_duplicate_items(response);
-                    isDuplicat = true;
+                    isDuplicate = true;
                 }
                 showErrorMsg("An error occurred while saving the item.");
             }

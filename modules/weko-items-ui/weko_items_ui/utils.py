@@ -4097,7 +4097,7 @@ def sanitize_input_data(data):
             else:
                 sanitize_input_data(data[i])
 
-def check_duplicate(data, is_item=True):
+def check_duplicate(data, is_item=True, exclude_ids=[]):
     """
     Check if a record or item is duplicate in records_metadata.
 
@@ -4115,7 +4115,7 @@ def check_duplicate(data, is_item=True):
         try:
             data = json.loads(data)
         except json.JSONDecodeError as e:
-            current_app.logger.error(f"[ERROR] JSON decode failed: {e}")
+            current_app.logger.error(f"JSON decode failed: {e}")
             return False, [], []
 
     if not isinstance(data, dict):
@@ -4181,7 +4181,7 @@ def check_duplicate(data, is_item=True):
                 matched_recids.add(recid)
                 break
 
-    matched_recids.discard(int(data.get("metainfo", {}).get("id") or 0))
+    matched_recids -= set(exclude_ids)
 
     if not matched_recids:
         return False, [], []
@@ -4195,7 +4195,7 @@ def check_duplicate(data, is_item=True):
     result = db.session.execute(query).fetchall()
     recids_resource = {r[0] for r in result}
     matched_recids &= recids_resource
-    matched_recids.discard(int(data.get("metainfo", {}).get("id") or 0))
+    matched_recids -= set(exclude_ids)
 
     if not matched_recids:
         return False, [], []
@@ -4265,14 +4265,14 @@ def check_duplicate(data, is_item=True):
 
 
 
-def is_duplicate_item(metadata):
+def is_duplicate_item(metadata, exclude_ids=[]):
     """Check if an item is duplicate in records_metadata."""
-    return check_duplicate(metadata, is_item=True)
+    return check_duplicate(metadata, is_item=True, exclude_ids=exclude_ids)
 
 
-def is_duplicate_record(data):
+def is_duplicate_record(data, exclude_ids=[]):
     """Check if a record is duplicate in records_metadata."""
-    return check_duplicate(data, is_item=False)
+    return check_duplicate(data, is_item=False, exclude_ids=exclude_ids)
 
 
 def save_title(activity_id, request_data):
