@@ -4266,12 +4266,34 @@ def check_duplicate(data, is_item=True, exclude_ids=[]):
 
 
 def is_duplicate_item(metadata, exclude_ids=[]):
-    """Check if an item is duplicate in records_metadata."""
+    """Check if an item is duplicate in records_metadata.
+    
+    Args:
+        metadata (dict): Metadata dictionary.
+        exclude_ids (list, Optional): List of record IDs to exclude from the check.
+
+    Returns:
+        tuple:
+            - bool: True if duplicate exists, False otherwise.
+            - list: List of duplicate record IDs.
+            - list: List of duplicate record URLs.
+    """
     return check_duplicate(metadata, is_item=True, exclude_ids=exclude_ids)
 
 
 def is_duplicate_record(data, exclude_ids=[]):
-    """Check if a record is duplicate in records_metadata."""
+    """Check if a record is duplicate in records_metadata.
+    
+    Args:
+        data (dict): Metadata dictionary.
+        exclude_ids (list, Optional): List of record IDs to exclude from the check.
+
+    Returns:
+        tuple:
+            - bool: True if duplicate exists, False otherwise.
+            - list: List of duplicate record IDs.
+            - list: List of duplicate record URLs.
+    """
     return check_duplicate(data, is_item=False, exclude_ids=exclude_ids)
 
 
