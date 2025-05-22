@@ -200,24 +200,6 @@ def merge_lists(list1, list2):
 
     return merged_list
 
-
-def list_to_dict(lst):
-    """If all elements in the list are dictionaries, merge them into a single dictionary"""
-    if isinstance(lst, list) and all(isinstance(item, dict) for item in lst):
-        merged_dict = {}
-        for item in lst:
-            merged_dict.update(item)  # Merge dictionaries
-        return merged_dict
-    return lst  # If the list does not meet the conditions, return
-
-
-def dict_to_list(d):
-    """Convert a dictionary to a list, with each key-value pair becoming a separate dictionary"""
-    if isinstance(d, dict):
-        return [{k: v} for k, v in d.items()]
-    return d  # If not a dictionary, return
-
-
 def get_crossref_record_data_default_pid(doi, item_type_id):
     """
     Get record data base on CrossRef default pid.
@@ -244,7 +226,7 @@ def get_doi_record_data(doi, item_type_id, activity_id):
         metadata = json.loads(metadata)
     metainfo = metadata.get("metainfo", {})
     doi_with_original = get_doi_with_original(doi, item_type_id, metainfo)
-    doi_response = dict_to_list(doi_with_original)
+    doi_response = [{k: v} for k, v in doi_with_original.items()]
     return doi_response
 
 
@@ -298,7 +280,10 @@ def get_doi_with_original(doi, item_type_id, original_metadeta=None, **kwargs):
                     record_funcs_map[key](doi, item_type_id)
                     if key in record_funcs_map else []
                 )
-                record_data_dict = list_to_dict(record_data_list)
+                record_data_dict = {
+                    k: v for item in record_data_list
+                    if isinstance(item, dict) for k, v in item.items()
+                }
                 current_app.logger.info(
                     f"Successfully get metadata from {key}."
                 )
