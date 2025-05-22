@@ -670,15 +670,18 @@ def add_file(schema, mapping, res, metadata):
     ]
 
     item_key, ret = parsing_metadata(mapping, schema, patterns, metadata, res)
+    file_path = []
     if ret and item_key:
         for file_info in ret:
             if not file_info.get("filename"):
                 file_info["filename"] = os.path.basename(
                     file_info.get("url", {}).get("url", "")
                 )
+            file_path.append(file_info["filename"])
         files_info = res.get("files_info", [])
         files_info.append({"key": item_key, "items": ret})
         res["files_info"] = files_info
+    res["file_path"] = file_path
 
 
 def add_identifier(schema, mapping, res, metadata):
@@ -1596,12 +1599,9 @@ class JsonLdMapper(JsonMapper):
                 if label.startswith("data/")
             ]
 
-            files_info.append({
-                "key": files_key,
-                "items": mapped_metadata.get(files_key, [])
-            })
+            files_info.append({"key": files_key})
         mapped_metadata["files_info"] = files_info
-        # result = {
+        # mapped_metadata = {
         #     "pubdate": "2021-10-15",
         #     "publish_status": "private",
         #     "path": [1623632832836],
