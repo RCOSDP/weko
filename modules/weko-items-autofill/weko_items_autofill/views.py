@@ -96,13 +96,14 @@ def get_auto_fill_record_data():
     search_data = data.get('search_data', '')
     item_type_id = data.get('item_type_id', '')
     activity_id = data.get('activity_id', '')
+    exclude_duplicate_lang = data.get('exclude_duplicate_lang', False)
 
     try:
         if api_type == 'CrossRef':
             pid_response = get_current_api_certification('crf')
             pid = pid_response['cert_data']
             api_response = get_crossref_record_data(
-                pid, search_data, item_type_id)
+                pid, search_data, item_type_id, exclude_duplicate_lang)
             result['result'] = api_response
         elif api_type == 'CiNii':
             api_response = get_cinii_record_data(
