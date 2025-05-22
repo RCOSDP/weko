@@ -442,7 +442,7 @@ class WorkFlow(object):
             db.session.commit()
             UserActivityLogger.info(
                 operation="WORKFLOW_CREATE",
-                remarks=json.dumps(workflow)
+                remarks=json.dumps(workflow, default=str)
             )
             return workflow
         except Exception as ex:
