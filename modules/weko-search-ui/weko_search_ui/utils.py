@@ -4400,7 +4400,7 @@ def export_all(root_url, user_id, data, start_time):
                 if not recids:
                     item_types.remove(it)
                     continue
-                record_ids = get_record_ids(recids)
+                record_ids = get_record_ids(recids, index_id_list)
 
                 # recidsを削除
                 del recids
@@ -4414,17 +4414,6 @@ def export_all(root_url, user_id, data, start_time):
                     _file_create_key,
                     json.dumps(write_file_json)
                 )
-
-                if index_id_list is None:
-                    record_ids = [(recid.pid_value, recid.object_uuid)
-                    for recid in recids if 'publish_status' in recid.json
-                    and recid.json['publish_status'] in [PublishStatus.PUBLIC.value, PublishStatus.PRIVATE.value]]
-                else:
-                    record_ids = [(recid.pid_value, recid.object_uuid)
-                    for recid in recids if 'publish_status' in recid.json
-                    and recid.json['publish_status'] in [PublishStatus.PUBLIC.value, PublishStatus.PRIVATE.value]
-                    and any(index in recid.json['path'] for index in  index_id_list)]
-
                 if len(record_ids) == 0:
                     item_types.remove(it)
                     continue
@@ -4672,18 +4661,27 @@ def get_retry_info(item_type_id, retry_info, fromid):
     return counter, file_part, from_pid
 
 
-def get_record_ids(recids):
+def get_record_ids(recids, index_id_list=None):
     """Get record ids.
 
     Args:
         recids (list): List of record ids.
+        index_id_list (list, optional): List of index ids. Defaults to None.
 
     Returns:
         list: List of record ids.
     """
-    record_ids = [(recid.pid_value, recid.object_uuid)
-        for recid in recids if recid.json and 'publish_status' in recid.json \
-        and recid.json['publish_status'] in [PublishStatus.PUBLIC.value, PublishStatus.PRIVATE.value]]
+    
+    status_ok = [PublishStatus.PUBLIC.value, PublishStatus.PRIVATE.value]
+    record_ids = [
+        (recid.pid_value, recid.object_uuid)
+        for recid in recids
+        if recid.json.get('publish_status') in status_ok
+        and (
+            index_id_list is None
+            or any(index in recid.json.get('path','') for index in index_id_list)
+        )
+    ]
     return record_ids
 
 
