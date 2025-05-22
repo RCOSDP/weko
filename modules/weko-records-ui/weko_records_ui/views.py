@@ -24,7 +24,7 @@ from datetime import datetime
 import re
 import os
 import uuid
-
+import types
 import six
 import werkzeug
 from flask import Blueprint, abort, current_app, escape, flash, json, \
@@ -574,7 +574,11 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
             if attribute and not prop_hidden and (subkey_list[0] not in hide_list or subkey_list[-1] not in hide_list):
                 data_result = get_sub_item_value(attribute, subkey_list[-1])
                 if data_result:
-                    if isinstance(data_result, list) and len(data_result) > 0:
+                    if isinstance(data_result, types.GeneratorType):
+                        for i in data_result:
+                            accessRight = i
+                            break
+                    elif isinstance(data_result, list) and len(data_result) > 0:
                         accessRight = data_result[0]
                         break
                     elif isinstance(data_result, str):

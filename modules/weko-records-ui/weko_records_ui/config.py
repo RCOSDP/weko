@@ -630,13 +630,13 @@ WEKO_RECORDS_UI_GOOGLE_DATASET_DISTRIBUTION_BUNDLE = [
 WEKO_RECORDS_UI_GOOGLE_DATASET_DISP_FLG = True
 """Enable function of google dataset metadata output."""
 
-WEKO_RECORDS_UI_DISPLAY_ONLINE_ANALYSIS_FLG = False
+WEKO_RECORDS_UI_DISPLAY_ONLINE_ANALYSIS_FLG = True
 """ Display online analysis button on item detail. """
 
 WEKO_RECORDS_UI_ONLINE_ANALYSIS_URL = 'https://binder.cs.rcos.nii.ac.jp/v2/weko3/'
 """ URL for online analysis button. """
 
-WEKO_RECORDS_UI_DISPLAY_SHARE_BOX_FLG = True
+WEKO_RECORDS_UI_DISPLAY_SHARE_BOX_FLG = False
 """ Display Share box on item detail. """
 
 WEKO_RECORDS_UI_DISPLAY_VERSION_BOX_FLG = True
@@ -648,5 +648,5 @@ WEKO_RECORDS_UI_DISPLAY_EXPORT_BOX_FLG = True
 WEKO_RECORDS_UI_DISPLAY_RESOURCE_TYPE = False 
 """ Display resource type on item detail. """
 
-WEKO_RECORDS_UI_DISPLAY_ITEM_TYPE = True
+WEKO_RECORDS_UI_DISPLAY_ITEM_TYPE = False
 """ Display item type name on item detail. """
