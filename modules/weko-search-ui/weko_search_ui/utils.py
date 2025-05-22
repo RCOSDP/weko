@@ -967,6 +967,9 @@ def check_jsonld_import_items(
 
         handle_check_item_link(list_record)
         handle_check_duplicate_item_link(list_record)
+        
+        handle_check_operation_flags(list_record)
+        
         check_result.update({"list_record": list_record})
 
     except zipfile.BadZipFile as ex:
@@ -1646,15 +1649,15 @@ def clean_thumbnail_file(deposit, root_path, thumbnail_path):
             file.obj.remove()
 
 
-def up_load_file(record, root_path, deposit, allow_upload_file_content, old_files):
+def up_load_file(record, root_path, deposit, old_files, allow_upload_file_content):
     """Upload thumbnail or file content.
 
     :argument
         record         -- {dict} item import.
         root_path      -- {str} root_path.
         deposit        -- {object} item deposit.
-        allow_upload_file_content   -- {bool} allow file content upload?
         old_files      -- {list} List of ObjectVersion in current bucket.
+        allow_upload_file_content   -- {bool} allow file content upload?
 
     """
 
@@ -1710,8 +1713,18 @@ def up_load_file(record, root_path, deposit, allow_upload_file_content, old_file
                 file.remove()
 
     file_size_dict = {}
-    file_path = record.get("file_path", []) if allow_upload_file_content else []
-    thumbnail_path = record.get("thumbnail_path", [])
+    
+    file_path = (
+        record.get("file_path", []) 
+        if allow_upload_file_content
+        else []
+    )
+    
+    thumbnail_path = (
+        record.get("thumbnail_path", []) 
+        if allow_upload_file_content
+        else []
+    )
     if isinstance(thumbnail_path, str):
         thumbnail_path = [thumbnail_path]
     else:
@@ -1853,15 +1866,10 @@ def register_item_metadata(item, root_path, owner, is_gakuninrdm=False, request_
                 old_file_list.append(None)
 
     # set delete flag for file metadata if is empty.
-    # Check metadata_replace flag
-    if item.get("metadata_replace"):
-        is_cleaned = False
-        file_key = None
-    else:
-        new_data, is_cleaned, file_key = clean_file_metadata(item["item_type_id"], new_data)
+    new_data, is_cleaned, file_key = clean_file_metadata(item["item_type_id"], new_data)
 
     # progress upload file, replace file contents.
-    file_size_dict = up_load_file(item, root_path, deposit, not is_cleaned, old_file_list)
+    file_size_dict = up_load_file(item, root_path, deposit, old_file_list, not is_cleaned)
     new_data = autofill_thumbnail_metadata(item["item_type_id"], new_data)
 
     # check location file
@@ -3105,6 +3113,24 @@ def handle_check_duplicate_item_link(list_record):
                 item["errors"] + errors if item.get("errors") else errors
             )
 
+def handle_check_operation_flags(list_record):
+    """
+    The handle_check_operation_flags method processes and updates metadata 
+    based on the specified flags.
+    It checks the status of each flag and modifies the metadata accordingly.
+
+    Args:
+        list_record (list): List of records.
+
+    Notes:
+        The 'metadata_replace' flag indicates whether to ignore the uploaded files.
+        If 'metadata_replace' is set to True, the uploaded files will be ignored.
+    """
+    
+    for record in list_record:
+        flg = record.get("metadata_replace")
+        if flg:
+            record["file_path"] = []
 
 def register_item_handle(item):
     """Register item handle (CNRI).

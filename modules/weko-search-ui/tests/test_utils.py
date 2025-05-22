@@ -121,6 +121,7 @@ from weko_search_ui.utils import (
     handle_validate_item_import,
     handle_workflow,
     handle_flatten_data_encode_filename,
+    handle_check_operation_flags,
     import_items_to_system,
     make_file_by_line,
     make_stats_file,
@@ -945,7 +946,7 @@ def test_up_load_file(i18n_app, deposit, db_activity):
 
     # Doesn't return a value
     assert not up_load_file(
-        record, root_path, deposit, allow_upload_file_content, old_files
+        record, root_path, deposit, old_files, allow_upload_file_content
     )
 
 
@@ -1570,6 +1571,22 @@ def test_handle_check_duplicate_item_link(app):
     handle_check_duplicate_item_link(list_record)
     assert not list_record[0].get("errors")
 
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_handle_check_operation_flags -v -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_handle_check_operation_flags():
+    list_record = [
+        {"metadata_replace": True, "file_path":["/test/test.txt", "test/test.csv"]},
+        {"metadata_replace": False, "file_path":["/test/test.txt", "test/test.csv"]},
+        {"file_path":["/test/test.txt", "test/test.csv"]},
+    ]
+    
+    test = [
+        {"metadata_replace": True, "file_path":[]},
+        {"metadata_replace": False, "file_path":["/test/test.txt", "test/test.csv"]},
+        {"file_path":["/test/test.txt", "test/test.csv"]},
+    ]
+    
+    handle_check_operation_flags(list_record)
+    assert list_record == test
 
 # def register_item_handle(item):
 def test_register_item_handle(i18n_app, es_item_file_pipeline, es_records):
