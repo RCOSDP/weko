@@ -74,9 +74,9 @@ from weko_accounts.utils import login_required_customize
 from weko_index_tree.models import Index
 from flask_login import current_user
 from weko_search_ui.utils import (
-    get_data_by_property, handle_check_exist_record, handle_check_file_metadata, handle_item_title, 
-    handle_check_date, handle_check_id, handle_check_and_prepare_index_tree, 
-    handle_check_and_prepare_publish_status, import_items_to_activity, 
+    get_data_by_property, handle_check_exist_record, handle_check_file_metadata, handle_item_title,
+    handle_check_date, handle_check_id, handle_check_and_prepare_index_tree,
+    handle_check_and_prepare_publish_status, import_items_to_activity,
     import_items_to_system
 )
 from weko_records.api import ItemTypeNames
@@ -167,7 +167,7 @@ def get_workspace_itemlist():
             # If user ID does not match, skip this record
             current_app.logger.debug(f"[workspace] skip item \"_id\": {record.get('_id')}")
             continue
-        
+
         workspaceItem = copy.deepcopy(current_app.config["WEKO_WORKSPACE_ITEM"])
 
         item_type_id = str(source.get("item_type_id") or source.get("_item_metadata", {}).get("item_type_id"))
@@ -605,7 +605,7 @@ def reset_filters():
         if record:
             db.session.delete(record)
             db.session.commit()
-            
+
             message = "Successfully reset default conditions."
             message = changeMsg(lang, 2, True, message)
             return (
@@ -920,7 +920,7 @@ def item_register_save():
             file_path = os.path.join(data_path, file.filename)
             file.save(file_path)
             file_path_list.append(file.filename)
-        
+
         # set metadata for item registration
         settings = AdminSettings.get("workspace_workflow_settings")
         item_type_id = int(settings.item_type_id) if settings.item_type_id else None
@@ -947,14 +947,6 @@ def item_register_save():
             ]
         metadata["path"] = index_id_list
 
-        file_key_list = []
-        for key, value in metadata.items():
-            if not isinstance(value, list) or not len(value):
-                continue
-            if isinstance(value[0], dict) and "filename" in value[0]:
-                file_key_list.append({"key": key})
-        metadata["files_info"] = file_key_list if file_key_list else [{}]
-
         item_type_name = ItemTypeNames.get_record(item_type_id)
         item_dict = {
             "root_path": data_path,
@@ -979,11 +971,11 @@ def item_register_save():
         handle_check_and_prepare_publish_status(list_record)
         if file_path_list:
             handle_check_file_metadata(list_record, data_path)
-        
+
         if list_record[0].get("errors"):
             result['error'] = ', '.join(list_record[0].get("errors", ["error!!"]))
             return result
-        
+
         if settings.workFlow_select_flg == "0":
             # registration by workflow
             request_info["workflow_id"] = settings.work_flow_id
@@ -997,7 +989,7 @@ def item_register_save():
                 )
                 result["error"] = "Error in import_items_to_system"
             result["result"] = register_result.get("recid")
-        
+
     except Exception as e:
         current_app.logger.error(e)
         current_app.logger.error(traceback.format_exc())

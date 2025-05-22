@@ -1057,17 +1057,13 @@ def handle_save_bagit(list_record, file, data_path, filename):
         file.save(os.path.join(data_path, filename))
 
     current_app.logger.info("Save the bagit file as is.")
-    list_record[0]["file_path"] = [filename] # for Direct registration
-
-    files_info = metadata.get("files_info")  # for Workflow registration
-    key = files_info[0].get("key")
+    list_record[0]["file_path"] = [filename]
+    key = metadata.get("files_info")[0].get("key")
 
     dataset_info = make_file_info(
         data_path, filename, label=filename, object_type="dataset"
     )
-
     metadata[key] = [dataset_info]
-    files_info[0]["items"] = [dataset_info]
 
 def make_file_info(dir_path, filename, label=None, object_type=None):
     """Make file info for the given directory and filename.
@@ -1097,7 +1093,9 @@ def make_file_info(dir_path, filename, label=None, object_type=None):
 
     file_info = {
         "filename": filename,
-        "filesize": size_str,
+        "filesize": [
+            {"value": size_str}
+        ],
         "format": format,
     }
     if label:
@@ -1385,6 +1383,7 @@ def read_jpcoar_xml_file(file_path, item_type_info) -> dict:
         "metadata": res,
         "item_type_name": item_type_info['name'],
         "item_type_id": item_type_info['item_type_id'],
+        "file_path": res.pop("file_path", []),
     })
     result['item_type_schema'] = item_type_info['schema']
     return result
@@ -2329,21 +2328,19 @@ def import_items_to_activity(item, request_info):
     metadata = item.get("metadata")
     metadata["$schema"] = item.get("$schema")
     index = metadata.get("path")
-    files_key = metadata.pop("files_info", [{}])[0].get("key")
     files = [
-        os.path.join(item.get("root_path"), file_info.get("filename"))
-            for file_info
-            in metadata.get(files_key, [])
+        os.path.join(item.get("root_path"), filename)
+            for filename in item.get("file_path", [])
     ]
-    comment = metadata.get("comment")
+    comment = item.get("comment")
     link_data = item.get("link_data")
     grant_data = item.get("grant_data")
     files_inheritance = item.get("metadata_replace", False)
 
     error = None
+    from weko_workflow.headless.activity import HeadlessActivity
+    headless = HeadlessActivity(_files_inheritance=files_inheritance)
     try:
-        from weko_workflow.headless.activity import HeadlessActivity
-        headless = HeadlessActivity(_files_inheritance=files_inheritance)
         url, current_action, recid = headless.auto(
             user_id=request_info.get("user_id"),
             workflow_id=workflow_id, item_id=item_id,
@@ -2358,7 +2355,7 @@ def import_items_to_activity(item, request_info):
         )
         traceback.print_exc()
         url = headless.detail
-        recid = str(headless.recid)
+        recid = str(headless.recid or "")
         current_action = headless.current_action
         error = str(ex)
 
@@ -5638,7 +5635,6 @@ def handle_metadata_amend_by_doi(list_record, meta_data_api):
         meta_data_api (list[str]): Metadata API.
     """
     for item in list_record:
-        metadata = item["metadata"]
         doi = item.get("amend_doi")
         if doi is None:
             continue
@@ -5654,50 +5650,44 @@ def handle_flatten_data_encode_filename(list_record, data_path):
     """
     for item in list_record:
         metadata = item.get("metadata")
-        files_info = metadata.get("files_info")
-        item["file_path"] = []
+        file_key_list = [
+            info.get("key")
+            for info in metadata.get("files_info")
+        ]
+        file_path = set(item.get("file_path", []))
 
-        # get filename from metadata
-        for file_info in files_info:
-            key = file_info.get("key")
-            new_file_list = []
-
-            for file in file_info["items"]:
+        for key in file_key_list:
+            for file_metadata in metadata.get(key, []):
                 filename = (
-                    file.get("url", {}).get("label")
-                    or file.get("filename")
+                    file_metadata.get("url", {}).get("label")
+                    or file_metadata.get("filename")
                 )
                 if not filename:
                     continue
 
                 # encode filename
                 encoded_filename = urllib.parse.quote(filename, safe='')
-                file["filename"] = encoded_filename
 
                 # copy file in directory to root under data_path
                 if (
                     encoded_filename != filename
                     and os.path.exists(os.path.join(data_path, filename))
                 ):
+                    file_metadata["filename"] = encoded_filename
                     shutil.copy(
                         os.path.join(data_path, filename),
                         os.path.join(data_path, encoded_filename)
                     )
                     current_app.logger.info(
-                        f"flattened and encoded file: {filename}"
+                        f"move file: {filename} to {encoded_filename}"
                     )
+                    file_path.discard(filename)
+                    file_path.add(encoded_filename)
 
-                # for Direct registration
-                item["file_path"].append(encoded_filename)
-
-                # for Workflow registration
-                new_file_list.append(file)
-            if new_file_list:
-                metadata[key] = new_file_list # replace metadata
-
+        item["file_path"] = list(file_path)
         item["non_extract"] = [
             urllib.parse.quote(filename, safe='')
-            for filename in item.get("non_extract")
+            for filename in item.get("non_extract", [])
         ]
 
 def check_replace_file_import_items(list_record, data_path=None, is_gakuninrdm=False,
