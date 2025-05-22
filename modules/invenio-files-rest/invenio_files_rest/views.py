@@ -679,6 +679,7 @@ class ObjectResource(ContentNegotiatedMethodView):
             )
         except Exception as e:
             db.session.rollback()
+            traceback.print_exc()
             current_app.logger.error(e)
             exec_info = sys.exc_info()
             tb_info = traceback.format_tb(exec_info[2])

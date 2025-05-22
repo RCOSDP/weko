@@ -351,18 +351,20 @@ def get_file_place_info(org_pid, org_bucket_id, file_name):
     item_type_id = deposit.get('item_type_id')
     item_type = ItemTypes.get_by_id(item_type_id)
 
-    post_workflow = activity.get_workflow_activity_by_item_id(item_uuid)
+    latest_activity = activity.get_workflow_activity_by_item_id(item_uuid)
 
-    if post_workflow:
-        workflow = WorkFlow().get_workflow_by_id(workflow_id=post_workflow.workflow_id)
+    if latest_activity:
+        workflow = WorkFlow().get_workflow_by_id(workflow_id=latest_activity.workflow_id)
 
     else:
-        post_workflow = activity.get_workflow_activity_by_item_id(
+        latest_activity = activity.get_workflow_activity_by_item_id(
             recid.object_uuid
         )
         workflow = get_workflow_by_item_type_id(item_type.name_id,
-                                                item_type_id,
-                                                with_deleted=False)
+                                                item_type_id)
+        current_app.logger.info(
+            f"workflow: {workflow}"
+        )
 
     if workflow is None:
         location_id = None
