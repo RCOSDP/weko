@@ -147,7 +147,8 @@ from weko_search_ui.utils import (
     result_download_ui,
     search_results_to_tsv,
     create_tsv_row,
-    get_priority
+    get_priority,
+    get_record_ids
 )
 from werkzeug.exceptions import NotFound
 
@@ -3038,6 +3039,40 @@ def test_delete_exported(i18n_app, file_instance_mock):
             # Doesn't return any value
             assert not delete_exported(file_path, "key")
 
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_get_record_ids -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_get_record_ids():
+    
+    # publish_status in status_ok
+    mock_recid1 = MagicMock()
+    mock_recid1.pid_value = "1"
+    mock_recid1.object_uuid = "uuid1"
+    mock_recid1.json = {"publish_status": "0", "path": ["100"]}
+    
+    # publish_status not in status_ok
+    mock_recid2 = MagicMock()
+    mock_recid2.pid_value = "2"
+    mock_recid2.object_uuid = "uuid2"
+    mock_recid2.json = {"publish_status": "-1", "path": ["100"]}
+    
+    res = get_record_ids([mock_recid1, mock_recid2])
+    assert res == [("1", "uuid1")]
+    
+    
+    # path in index_id_list
+    mock_recid3 = MagicMock()
+    mock_recid3.pid_value = "3"
+    mock_recid3.object_uuid = "uuid3"
+    mock_recid3.json = {"publish_status": "0", "path": ["100","200"]}
+
+    # path not in index_id_list
+    mock_recid4 = MagicMock()
+    mock_recid4.pid_value = "4"
+    mock_recid4.object_uuid = "uuid4"
+    mock_recid4.json = {"publish_status": "0", "path": ["300"]}
+    
+    res = get_record_ids([mock_recid3, mock_recid4],["100","200","500"])
+    assert res == [("3", "uuid3")]
+    
 
 # def write_files(item_datas, export_path, user_id, retrys):
 # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_write_files -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
