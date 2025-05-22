@@ -2955,7 +2955,8 @@ function toObject(arr) {
           let param_crossApi = {
             api_type: "CrossRef",
             search_data: $.trim(value),
-            item_type_id: itemTypeId
+            item_type_id: itemTypeId,
+            exclude_duplicate_lang: true
           }
           this.setRecordDataFromCrossRefSelectedApi(param_crossApi);
         } else if ($scope.selectedMetaData === 'JaLCMetaData') {

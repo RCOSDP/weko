@@ -313,7 +313,7 @@ def get_doi_with_original(doi, item_type_id, original_metadeta=None, **kwargs):
 
 
 @cached_api_json(timeout=50, key_prefix="crossref_data")
-def get_crossref_record_data(pid, doi, item_type_id):
+def get_crossref_record_data(pid, doi, item_type_id, exclude_duplicate_lang=True):
     """Get record data base on CrossRef API.
 
     :param pid: The PID
@@ -342,7 +342,9 @@ def get_crossref_record_data(pid, doi, item_type_id):
             get_autofill_key_tree(
                 items.form,
                 get_crossref_autofill_item(item_type_id)))
-        result = build_record_model(autofill_key_tree, api_data, items.schema)
+        result = build_record_model(
+            autofill_key_tree, api_data, items.schema,
+            exclude_duplicate_lang=exclude_duplicate_lang)
     return result
 
 
@@ -1145,7 +1147,7 @@ def get_specific_key_path(des_key, form):
     return existed, path_result
 
 
-def build_record_model(item_autofill_key, api_data, schema=None):
+def build_record_model(item_autofill_key, api_data, schema=None, exclude_duplicate_lang=False):
     """Build record record_model.
 
     :param item_autofill_key: Item auto-fill key
@@ -1153,7 +1155,7 @@ def build_record_model(item_autofill_key, api_data, schema=None):
     :return: Record model list
     """
     def _build_record_model(_api_data, _item_autofill_key, _record_model_lst,
-                            _filled_key, _schema):
+                            _filled_key, _schema, _exclude_duplicate_lang):
         """Build record model.
 
         @param _api_data: Api data
@@ -1169,12 +1171,16 @@ def build_record_model(item_autofill_key, api_data, schema=None):
                 build_form_model(data_model, v)
             elif isinstance(v, list):
                 for mapping_data in v:
-                    _build_record_model(_api_data, mapping_data,
-                                        _record_model_lst, _filled_key, _schema)
+                    _build_record_model(
+                        _api_data, mapping_data, _record_model_lst,
+                        _filled_key, _schema, _exclude_duplicate_lang
+                    )
             record_model = {}
             for key, value in data_model.items():
                 merge_dict(record_model, value)
-            new_record_model = fill_data(record_model, api_autofill_data, _schema)
+            new_record_model = fill_data(
+                record_model, api_autofill_data, _schema, _exclude_duplicate_lang
+            )
             if new_record_model:
                 _record_model_lst.append(new_record_model)
                 _filled_key.append(k)
@@ -1184,7 +1190,7 @@ def build_record_model(item_autofill_key, api_data, schema=None):
     if not api_data or not item_autofill_key:
         return record_model_lst
     _build_record_model(api_data, item_autofill_key, record_model_lst,
-                        filled_key, schema)
+                        filled_key, schema, exclude_duplicate_lang)
 
     return record_model_lst
 
@@ -1284,7 +1290,7 @@ def deepcopy(original_object, new_object):
         return
 
 
-def fill_data(form_model, autofill_data, schema=None):
+def fill_data(form_model, autofill_data, schema=None, exclude_duplicate_lang=False):
     """Fill data to form model.
 
     @param form_model: the form model.
@@ -1317,13 +1323,18 @@ def fill_data(form_model, autofill_data, schema=None):
             model_clone = {}
             deepcopy(form_model[key][0], model_clone)
             result[key]=[]
+            used_lang_set = set()
             for data in autofill_data:
+                if exclude_duplicate_lang and isinstance(data, dict) and data.get('@language'):
+                    if data.get('@language') in used_lang_set:
+                        continue
+                    used_lang_set.add(data.get('@language'))
                 model = {}
                 deepcopy(model_clone, model)
-                new_model = fill_data(model, data, item_schema)
+                new_model = fill_data(model, data, item_schema, exclude_duplicate_lang)
                 result[key].append(new_model.copy())
         else:
-            result = fill_data(form_model, autofill_data[0], item_schema)
+            result = fill_data(form_model, autofill_data[0], item_schema, exclude_duplicate_lang)
     elif isinstance(autofill_data, dict):
         if isinstance(form_model, dict):
             for k, v in form_model.items():
@@ -1334,11 +1345,11 @@ def fill_data(form_model, autofill_data, schema=None):
                         continue
                     result[k] = value
                 else:
-                    new_v = fill_data(v, autofill_data, subschema)
+                    new_v = fill_data(v, autofill_data, subschema, exclude_duplicate_lang)
                     result[k] = new_v
         elif isinstance(form_model, list):
             for v in form_model:
-                new_v = fill_data(v, autofill_data, schema)
+                new_v = fill_data(v, autofill_data, schema, exclude_duplicate_lang)
                 result.append(new_v)
     else:
         return
