@@ -5637,7 +5637,6 @@ def handle_metadata_amend_by_doi(list_record, meta_data_api):
         meta_data_api (list[str]): Metadata API.
     """
     for item in list_record:
-        metadata = item["metadata"]
         doi = item.get("amend_doi")
         if doi is None:
             continue

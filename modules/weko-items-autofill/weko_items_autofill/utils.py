@@ -230,13 +230,22 @@ def get_doi_record_data(doi, item_type_id, activity_id):
     return doi_response
 
 
-def get_doi_with_original(doi, item_type_id, original_metadeta=None, **kwargs):
+def get_doi_with_original(doi, item_type_id, original=None, **kwargs):
     """Get record data base on DOI API.
 
-    :param naid: The DOI ID
-    :param item_type_id: The item type ID
-    :param original_metadeta: The original metadata
-    :return: doi data
+    Get metadata from APIs by supclied DOI ID and fill in the metadata
+    in order of priority.
+
+    Args:
+        doi (str): DOI
+        item_type_id (int): Item type ID
+        original (dict): Original metadata
+        kwargs (dict): optional arguments
+            - meta_data_api (list): List of metadata APIs to use <br>
+                (e.g., ["JaLC API", "医中誌 Web API", "CrossRef", "DataCite"])
+
+    Returns:
+        dict: Merged metadata from APIs and original metadata
     """
     from weko_workspace.utils import (
         get_jalc_record_data,
@@ -244,7 +253,7 @@ def get_doi_with_original(doi, item_type_id, original_metadeta=None, **kwargs):
         get_datacite_record_data,
         get_cinii_record_data
     )
-    record_funcs_map = {
+    api_funcs = {
         "JaLC API": get_jalc_record_data,
         "医中誌 Web API": get_jamas_record_data,
         "CrossRef": get_crossref_record_data_default_pid,
@@ -252,22 +261,23 @@ def get_doi_with_original(doi, item_type_id, original_metadeta=None, **kwargs):
         "CiNii Research": get_cinii_record_data,
     }
 
-    result_dict = {}
     api_priority = kwargs.get("meta_data_api")
 
     # Check if api_priority is None.
     # api_priority is not None if it comes from SWORD API.
-    if api_priority is None:
+    if not isinstance(api_priority, list):
         api_priority = current_app.config["WEKO_ITEMS_AUTOFILL_TO_BE_USED"]
     # If api_priority is empty, apply original metadata.
     if not api_priority:
         api_priority = ["Original"]
-    for key in api_priority:
-        record_data_dict = {}
+
+    result = {}
+    for key in reversed(api_priority):
+        response_metadata = {}
         # case: Original.
         if key == "Original":
-            if original_metadeta is not None:
-                record_data_dict = original_metadeta
+            if isinstance(original, dict):
+                response_metadata = original
             else:
                 current_app.logger.info("original metadata is not found.")
                 continue
@@ -276,25 +286,24 @@ def get_doi_with_original(doi, item_type_id, original_metadeta=None, **kwargs):
         # It means that skip this API.
         else:
             try:
-                record_data_list = (
-                    record_funcs_map[key](doi, item_type_id)
-                    if key in record_funcs_map else []
+                response_list = (
+                    api_funcs[key](doi, item_type_id)
+                    if key in api_funcs else []
                 )
-                record_data_dict = {
-                    k: v for item in record_data_list
+                response_metadata = {
+                    k: v for item in response_list
                     if isinstance(item, dict) for k, v in item.items()
                 }
                 current_app.logger.info(
-                    f"Successfully get metadata from {key}."
+                    f"Successfully get metadata from {key} with DOI: {doi}."
                 )
             except Exception as ex:
                 current_app.logger.warning(
-                    f"Failed to get metadata from {key}."
+                    f"Failed to get metadata from {key}"
                 )
-                record_data_dict = {}
                 traceback.print_exc()
-        result_dict = deep_merge(result_dict, record_data_dict)
-    return result_dict
+        result.update(response_metadata)
+    return result
 
 
 @cached_api_json(timeout=50, key_prefix="crossref_data")
