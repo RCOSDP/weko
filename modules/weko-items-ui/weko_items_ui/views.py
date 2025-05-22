@@ -43,6 +43,7 @@ from werkzeug.exceptions import BadRequest
 from invenio_db import db
 from invenio_i18n.ext import current_i18n
 from invenio_pidrelations.contrib.versioning import PIDVersioning
+from invenio_pidstore.models import PersistentIdentifier
 from invenio_pidstore.resolver import Resolver
 from invenio_pidstore.errors import PIDDoesNotExistError
 from invenio_records_ui.signals import record_viewed
@@ -51,6 +52,7 @@ from urllib3 import Retry
 from weko_accounts.utils import login_required_customize
 from weko_admin.models import AdminSettings, RankingSettings
 from weko_deposit.api import WekoRecord
+from weko_deposit.pidstore import get_record_without_version
 from weko_groups.api import Group
 from weko_index_tree.utils import (
     check_index_permissions, get_index_id, get_user_roles
@@ -311,7 +313,24 @@ def iframe_save_model():
         if not data:
             return jsonify(code=1, msg="リクエストデータがありません"), 400
 
-        is_duplicate, recid_list, recid_links = is_duplicate_record(data)
+        recid = None
+        work_activity = WorkActivity()
+        activity_session = session.get('activity_info', {})
+        activity_id = activity_session.get('activity_id', None)
+        if activity_id:
+            activity = work_activity.get_activity_by_id(activity_id)
+            if activity and activity.item_id:
+                current_pid = PersistentIdentifier.get_by_object(
+                    pid_type="recid", object_type="rec", object_uuid=activity.item_id
+                )
+                pid_without_ver = get_record_without_version(current_pid)
+                recid = pid_without_ver.pid_value
+        if recid and data.get("metainfo"):
+            data["metainfo"]["id"] = recid
+
+        is_duplicate, recid_list, recid_links = is_duplicate_record(
+            data, exclude_ids=[int(recid)] if recid else []
+        )
         if is_duplicate:
             return jsonify({
                 "code": 1,
@@ -328,16 +347,13 @@ def iframe_save_model():
                     del data['metainfo'][key]
 
         # セッション取得
-        activity_session = session.get('activity_info', {})
-        activity_id = activity_session.get('activity_id', None)
         if activity_id:
             sanitize_input_data(data)
             save_title(activity_id, data)
             # メタデータからweko_linkを作成します。
             weko_link = get_weko_link(data)
             data["weko_link"] = weko_link
-            activity = WorkActivity()
-            activity.upt_activity_metadata(activity_id, json.dumps(data))
+            work_activity.upt_activity_metadata(activity_id, json.dumps(data))
             db.session.commit()
     except Exception as ex:
         db.session.rollback()
