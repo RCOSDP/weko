@@ -158,7 +158,7 @@ def get_oa_token():
     if not api_cert:
         return
     client_id = api_cert.get("cert_data",{}).get("client_id")
-    client_secret = api_cert.get("cert_data",{}).get("secret")
+    client_secret = api_cert.get("cert_data",{}).get("client_secret")
     if not client_secret or not client_id:
         return
     token = None
