@@ -3077,10 +3077,10 @@ def to_files_js(record):
     """List files in a deposit.
 
     Args:
-        record (WekoDeposit): _description_
+        record (WekoDeposit): record object.
 
     Returns:
-        _type_: _description_
+        list: File information taken from metadata
     """
     current_app.logger.debug("type: {}".format(type(record)))
     res = []
@@ -4267,7 +4267,7 @@ def check_duplicate(data, is_item=True, exclude_ids=[]):
 
 def is_duplicate_item(metadata, exclude_ids=[]):
     """Check if an item is duplicate in records_metadata.
-    
+
     Args:
         metadata (dict): Metadata dictionary.
         exclude_ids (list, Optional): List of record IDs to exclude from the check.
@@ -4283,7 +4283,7 @@ def is_duplicate_item(metadata, exclude_ids=[]):
 
 def is_duplicate_record(data, exclude_ids=[]):
     """Check if a record is duplicate in records_metadata.
-    
+
     Args:
         data (dict): Metadata dictionary.
         exclude_ids (list, Optional): List of record IDs to exclude from the check.
