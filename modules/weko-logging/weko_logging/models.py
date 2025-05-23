@@ -9,7 +9,7 @@
 
 from datetime import datetime, timezone
 
-from sqlalchemy import Sequence
+from sqlalchemy import text
 from sqlalchemy.dialects import mysql, postgresql
 from sqlalchemy_utils.types import JSONType
 
@@ -118,6 +118,7 @@ class UserActivityLog(db.Model):
         """
         if not session:
             session = db.session
-        seq = Sequence('user_activity_logs_id_seq')
-        next_id = session.execute(seq)
-        return next_id
+        # Get the current value of the sequence
+        result = session.execute(text("SELECT last_value FROM pg_sequences WHERE schemaname = 'public' AND sequencename = 'user_activity_logs_id_seq'"))
+        current_id = result.scalar()
+        return current_id + 1

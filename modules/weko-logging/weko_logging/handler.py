@@ -109,6 +109,7 @@ class UserActivityLogHandler(logging.Handler):
         user_activity_log = UserActivityLog(
             user_id=user_id,
             log={},
+            parent_id=parent_id,
             community_id=community_id,
             remarks=remarks,
         )
@@ -135,7 +136,8 @@ class UserActivityLogHandler(logging.Handler):
                 db.session.flush()
                 log["id"] = user_activity_log.id
                 user_activity_log.log = log
-            db.session.commit()
+            if hasattr(record, "required_commit") and record.required_commit:
+                db.session.commit()
         except Exception as e:
             db.session.rollback()
             current_app.logger.error(f"Failed to create user activity log: {e}")

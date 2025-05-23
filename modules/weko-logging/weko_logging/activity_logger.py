@@ -49,12 +49,14 @@ class UserActivityLogger:
             "target_key": target_key,
             "request_info": request_info,
             "community_id": community_id,
+            "required_commit": True,
             "remarks": remarks,
         })
 
     @classmethod
     def info(cls, operation=None, parent_id=None,
-             target_key=None, request_info=None, remarks=None):
+             target_key=None, request_info=None, 
+             required_commit=True, remarks=None):
         """Output as info log.
 
         Args:
@@ -62,6 +64,7 @@ class UserActivityLogger:
             parent_id (int): Parent log id.
             target_key (str): Operation target key (e.g. id).
             request_info (dict): Request information (Required if called by shared task).
+            required_commit (bool): Whether to commit the log.
             remarks (str): Remarks.
         """
         user_id = UserActivityLogHandler.get_user_id()
@@ -76,6 +79,7 @@ class UserActivityLogger:
             "target_key": target_key,
             "request_info": request_info,
             "community_id": community_id,
+            "required_commit": required_commit,
             "remarks": remarks,
         })
 

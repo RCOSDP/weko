@@ -31,6 +31,7 @@ from weko_items_ui.utils import (
 from weko_items_ui.views import (
     check_validation_error_msg, prepare_edit_item, prepare_delete_item
 )
+from weko_logging.activity_logger import UserActivityLogger
 from weko_records.api import ItemTypes
 from weko_records.serializers.utils import get_mapping
 
@@ -631,6 +632,12 @@ class HeadlessActivity(WorkActivity):
                 file_size = file.tell()
                 file.seek(0)
                 file_info = upload(file.filename, file.stream, file_size)
+
+            UserActivityLogger.info(
+                operation="FILE_CREATE",
+                target_key=file_info.get("filename"),
+                required_commit=False
+            )
             files_info.append(file_info)
 
         return files_info
