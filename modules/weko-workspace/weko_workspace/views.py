@@ -399,7 +399,7 @@ def get_workspace_itemlist():
                 ):
                     # public
                     publicCnt += 1
-                elif access_role in ["open_restricted", "open_login"]:
+                elif access_role in ["open_restricted", "open_login", 'open_no']:
                     # restricted
                     restrictedPublicationCnt += 1
                 else:
@@ -459,6 +459,7 @@ def get_workspace_itemlist():
     defaultconditions["funder_name"]["options"] = list(dict.fromkeys(funderNameList))
     defaultconditions["award_title"]["options"] = list(dict.fromkeys(awardTitleList))
 
+    print('koko')
     return render_template(
         current_app.config["WEKO_WORKSPACE_BASE_TEMPLATE"],
         username=userNm,
