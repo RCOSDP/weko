@@ -737,8 +737,10 @@ class WekoDeposit(Deposit):
         return deposit
 
     @classmethod
-    def create(cls, data, id_=None, recid=None, workflow_location_name=None,
-               default_owner_id=None):
+    def create(
+        cls, data, id_=None, recid=None, workflow_location_name=None,
+        default_owner_id=None
+    ):
         """
 
         Create a deposit.

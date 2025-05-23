@@ -37,7 +37,7 @@ import uuid
 import xml.etree.ElementTree as ET
 import zipfile
 import chardet
-import urllib
+import urllib.parse
 import gc
 from collections import Callable, OrderedDict, defaultdict
 from datetime import datetime, timezone, timedelta
@@ -970,9 +970,9 @@ def check_jsonld_import_items(
 
         handle_check_item_link(list_record)
         handle_check_duplicate_item_link(list_record)
-        
+
         handle_check_operation_flags(list_record)
-        
+
         check_result.update({"list_record": list_record})
 
     except zipfile.BadZipFile as ex:
@@ -1715,15 +1715,15 @@ def up_load_file(record, root_path, deposit, old_files, allow_upload_file_conten
                 file.remove()
 
     file_size_dict = {}
-    
+
     file_path = (
-        record.get("file_path", []) 
+        record.get("file_path", [])
         if allow_upload_file_content
         else []
     )
-    
+
     thumbnail_path = (
-        record.get("thumbnail_path", []) 
+        record.get("thumbnail_path", [])
         if allow_upload_file_content
         else []
     )
@@ -3115,7 +3115,7 @@ def handle_check_duplicate_item_link(list_record):
 
 def handle_check_operation_flags(list_record):
     """
-    The handle_check_operation_flags method processes and updates metadata 
+    The handle_check_operation_flags method processes and updates metadata
     based on the specified flags.
     It checks the status of each flag and modifies the metadata accordingly.
 
@@ -3126,7 +3126,7 @@ def handle_check_operation_flags(list_record):
         The 'metadata_replace' flag indicates whether to ignore the uploaded files.
         If 'metadata_replace' is set to True, the uploaded files will be ignored.
     """
-    
+
     for record in list_record:
         flg = record.get("metadata_replace")
         if flg:
@@ -4291,16 +4291,16 @@ def export_all(root_url, user_id, data, start_time):
             name (str): The original item type name.
 
         Returns:
-            str: The sanitized item type name with invalid characters 
+            str: The sanitized item type name with invalid characters
                  replaced by underscores.
         """
         return re.sub(r'[\/:*"<>|\s]', "_", name)
 
     def _get_item_type_list(item_type_id):
         """Get item type list.
-        If item_type_id is -1, it will get all item types, 
+        If item_type_id is -1, it will get all item types,
         otherwise it will get the specified item type.
-        
+
         Args:
             item_type_id (str): Item type ID to be retrieved
 
@@ -4345,16 +4345,16 @@ def export_all(root_url, user_id, data, start_time):
                 index_id_list.extend(index)
         return index_id_list
 
-    def _get_export_data(export_path, item_types, retrys, 
+    def _get_export_data(export_path, item_types, retrys,
                          fromid="", toid="", retry_info={}, user_id=None):
         """This function is responsible for exporting item data in bulk.
-        
-            It retrieves records to be exported for each specified item type, 
+
+            It retrieves records to be exported for each specified item type,
             splits them, and saves them as pickle files.
-            For each pickle file, file writing tasks are executed asynchronously 
-            in series in Celery. 
+            For each pickle file, file writing tasks are executed asynchronously
+            in series in Celery.
             It also records retry processing and progress informationin the Redis cache.
-            
+
         Args:
             export_path (str): Directory path where export files will be written.
             item_types (list): List of tuples (item_type_id, item_type_name) to export.
@@ -4431,7 +4431,7 @@ def export_all(root_url, user_id, data, start_time):
                         for record in records:
                             target_recid = target_ids[record.id]
                             item_datas["data"][target_recid] = record
-                        
+
                         with open(pickle_path, 'wb') as f:
                             pickle.dump(item_datas, f)
                         del item_datas
@@ -4466,10 +4466,10 @@ def export_all(root_url, user_id, data, start_time):
 
                 if file_part != 1:
                     item_datas["name"] = f"{item_datas['name']}.part{file_part}"
-                    
+
                     pickle_file_name = f"{user_id}.{item_type_id}.part{file_part}.pickle"
                     pickle_path = f"{export_path}/{pickle_file_name}"
-                    
+
                 item_datas["recids"].extend(list(target_ids.values()))
                 records = WekoRecord.get_records(list(target_ids.keys()))
                 for record in records:
@@ -4775,7 +4775,7 @@ def write_files(item_datas, export_path, user_id, retrys):
 
 def delete_exported_file(uri, cache_key):
     """Delete File instance after time in file config.
-    
+
     Args:
         uri (str): URI of the file to be deleted.
         cache_key (str): Cache key for the file.
@@ -4792,16 +4792,16 @@ def delete_exported_file(uri, cache_key):
 
 def delete_exported(export_path, export_info):
     """Delete expired exported file.
-    
+
     Delete the export result file from storage and cache.
-    
+
     Args:
         export_path (str): Path to the exported file.
         export_info (dict): Information about the exported file.
             - uri (str): Path to the exported zip file.
             - cache_key (str): Cache key storing the path to the exported zip file.
             - task_key (str): Cache key storing the export task ID.
-    
+
     """
 
     redis_connection = RedisConnection()
@@ -4998,7 +4998,7 @@ def get_export_status():
         finish_time = write_file_data.get("finish_time")
         if status_cond and write_file_status == 'SUCCESS':
             export_path = write_file_data['export_path']
-            
+
             if os.path.isdir(os.path.join(export_path, 'data')):
                 return export_status, download_uri, message, run_message, \
                         status, start_time, finish_time
@@ -5009,7 +5009,7 @@ def get_export_status():
                 src = FileInstance.create()
                 src.set_contents(file, default_location=Location.get_default().uri)
             db.session.commit()
-            
+
             download_uri = src.uri
             _timezone = current_app.config.get("WEKO_INDEX_TREE_PUBLIC_DEFAULT_TIMEZONE")
             finish_time = datetime.now(pytz.timezone(_timezone)).strftime('%Y/%m/%d %H:%M:%S')
@@ -5019,7 +5019,7 @@ def get_export_status():
             reset_redis_cache(file_msg, json.dumps(write_file_data))
             reset_redis_cache(cache_uri, download_uri)
             reset_redis_cache(run_msg, "")
-            
+
             # Create ttl for export results
             expire = datetime.now() + \
                 timedelta(days=current_app.config["WEKO_SEARCH_UI_EXPORT_FILE_RETENTION_DAYS"])
@@ -5616,10 +5616,12 @@ def handle_metadata_by_doi(item, doi, meta_data_api=None):
     :return
         doi_response (dict): Metadata complemented by DOI.
     """
-    from weko_items_autofill.utils import get_doi_with_original
+    from weko_items_autofill.utils import fetch_metadata_by_doi
     metadata = item.get("metadata")
     item_type_id = item.get("item_type_id")
-    doi_response = get_doi_with_original(doi, item_type_id, metadata, meta_data_api=meta_data_api)
+    doi_response = fetch_metadata_by_doi(
+        doi, item_type_id, metadata, meta_data_api=meta_data_api
+    )
     return doi_response
 
 
@@ -5670,7 +5672,8 @@ def handle_flatten_data_encode_filename(list_record, data_path):
 
                 # copy file in directory to root under data_path
                 if (
-                    encoded_filename != filename
+                    filename in file_path
+                    and encoded_filename != filename
                     and os.path.exists(os.path.join(data_path, filename))
                 ):
                     file_metadata["filename"] = encoded_filename

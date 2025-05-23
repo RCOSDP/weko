@@ -8,7 +8,7 @@ from weko_workflow.models import ActionJournal
 
 from weko_items_autofill.utils import (
     get_doi_record_data,
-    get_doi_with_original,
+    fetch_metadata_by_doi,
     is_update_cache,
     cached_api_json,
     get_item_id,
@@ -252,16 +252,16 @@ def test_get_doi_record_data(db, itemtypes, mocker):
     metainfo = '{"metainfo":"test_metadata"}'
     metadata = [{"id": "test_id"}]
     mock_activity = mocker.patch("weko_items_autofill.utils.WorkActivity.get_activity_metadata",return_value=metainfo)
-    mock_original = mocker.patch("weko_items_autofill.utils.get_doi_with_original",return_value=metadata)
+    mock_original = mocker.patch("weko_items_autofill.utils.fetch_metadata_by_doi",return_value=metadata)
     result = get_doi_record_data("doi","1","1")
     assert result == metadata
     mock_activity.assert_called_once()
     mock_original.assert_called_once()
 
 
-# def get_doi_with_original(doi, item_type_id, original_metadeta=None):
-# .tox/c1/bin/pytest --cov=weko_items_autofill tests/test_utils.py::test_get_doi_with_original -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-autofill/.tox/c1/tmp
-def test_get_doi_with_original(app,db,itemtypes,mocker):
+# def fetch_metadata_by_doi(doi, item_type_id, original_metadeta=None):
+# .tox/c1/bin/pytest --cov=weko_items_autofill tests/test_utils.py::test_fetch_metadata_by_doi -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-autofill/.tox/c1/tmp
+def test_fetch_metadata_by_doi(app,db,itemtypes,mocker):
 
     jalc_data = [{"id": "id_jalc"}, {"name_jalc": "test_name_jalc"}]
     ichushi_data = [{"id": "id_ichushi"}, {"name_ichushi": "test_name_ichushi"}]
@@ -299,7 +299,7 @@ def test_get_doi_with_original(app,db,itemtypes,mocker):
         ],
     )
     original_metadata = {"id": "test_original", "name_original": "test_name_original"}
-    result = get_doi_with_original("test_doi","test_item_type_id",original_metadata)
+    result = fetch_metadata_by_doi("test_doi","test_item_type_id",original_metadata)
     print(f"result: {result}")
     assert result == [
         {'id': 'id_jalc'},
@@ -318,7 +318,7 @@ def test_get_doi_with_original(app,db,itemtypes,mocker):
         ],
     )
     original_metadata = {"id": "test_original", "name_original": "test_name_original"}
-    result = get_doi_with_original("test_doi","test_item_type_id",original_metadata)
+    result = fetch_metadata_by_doi("test_doi","test_item_type_id",original_metadata)
     print(f"result: {result}")
     assert result == [
         {'id': 'id_jalc'},
@@ -333,7 +333,7 @@ def test_get_doi_with_original(app,db,itemtypes,mocker):
         ],
     )
     original_metadata = {"id": "test_original", "name_original": "test_name_original"}
-    result = get_doi_with_original("test_doi","test_item_type_id",original_metadata)
+    result = fetch_metadata_by_doi("test_doi","test_item_type_id",original_metadata)
     print(f"result: {result}")
     assert result == [
         {'id': 'id_jalc'},
@@ -349,7 +349,7 @@ def test_get_doi_with_original(app,db,itemtypes,mocker):
         ],
     )
     original_metadata = {}
-    result = get_doi_with_original("test_doi","test_item_type_id",original_metadata)
+    result = fetch_metadata_by_doi("test_doi","test_item_type_id",original_metadata)
     print(f"result: {result}")
     assert result == [
         {'id': 'id_jalc'},
@@ -364,7 +364,7 @@ def test_get_doi_with_original(app,db,itemtypes,mocker):
         ],
     )
     original_metadata = {"id": "test_original", "name_original": "test_name_original"}
-    result = get_doi_with_original("test_doi","test_item_type_id",original_metadata)
+    result = fetch_metadata_by_doi("test_doi","test_item_type_id",original_metadata)
     print(f"result: {result}")
     assert result == [
         {'id': 'id_jalc'},
@@ -381,7 +381,7 @@ def test_get_doi_with_original(app,db,itemtypes,mocker):
         ],
     )
     original_metadata = {}
-    result = get_doi_with_original("test_doi","test_item_type_id",original_metadata)
+    result = fetch_metadata_by_doi("test_doi","test_item_type_id",original_metadata)
     print(f"result: {result}")
     assert result == [
         {'id': 'id_jalc'},
@@ -398,7 +398,7 @@ def test_get_doi_with_original(app,db,itemtypes,mocker):
         ],
     )
     original_metadata = {"id": "test_original", "name_original": "test_name_original"}
-    result = get_doi_with_original("test_doi","test_item_type_id",original_metadata)
+    result = fetch_metadata_by_doi("test_doi","test_item_type_id",original_metadata)
     print(f"result: {result}")
     assert result == [
         {'id': 'id_jalc'},
@@ -420,7 +420,7 @@ def test_get_doi_with_original(app,db,itemtypes,mocker):
         "Original"
     ]
     original_metadata = {"id": "test_original", "name_original": "test_name_original"}
-    result = get_doi_with_original("test_doi","test_item_type_id",original_metadata,meta_data_api=meta_data_api)
+    result = fetch_metadata_by_doi("test_doi","test_item_type_id",original_metadata,meta_data_api=meta_data_api)
     print(f"result: {result}")
     assert result == [
         {'id': 'id_jalc'},
