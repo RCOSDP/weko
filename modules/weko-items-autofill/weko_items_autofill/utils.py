@@ -178,9 +178,8 @@ def get_doi_record_data(doi, item_type_id, activity_id):
     :return: The record data
     """
     activity = WorkActivity()
-    metadata = activity.get_activity_metadata(activity_id)
-    if not isinstance(metadata, dict):
-        metadata = json.loads(metadata)
+    temp_data = activity.get_activity_metadata(activity_id)
+    metadata = temp_data if isinstance(temp_data, dict) else json.loads(temp_data)
     metainfo = metadata.get("metainfo")
     doi_with_original = fetch_metadata_by_doi(doi, item_type_id, metainfo)
     doi_response = [{k: v} for k, v in doi_with_original.items()]

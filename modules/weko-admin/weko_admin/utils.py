@@ -205,6 +205,7 @@ def get_current_api_certification(api_code):
         results['cert_data'] = cert_data.get('cert_data')
 
     except Exception as e:
+        traceback.print_exc()
         return str(e)
 
     return results
