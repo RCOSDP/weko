@@ -459,7 +459,6 @@ def get_workspace_itemlist():
     defaultconditions["funder_name"]["options"] = list(dict.fromkeys(funderNameList))
     defaultconditions["award_title"]["options"] = list(dict.fromkeys(awardTitleList))
 
-    print('koko')
     return render_template(
         current_app.config["WEKO_WORKSPACE_BASE_TEMPLATE"],
         username=userNm,
