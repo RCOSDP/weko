@@ -1,4 +1,5 @@
 # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_tasks.py -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+import datetime
 import os
 import json
 import pytest
@@ -20,14 +21,39 @@ from weko_search_ui.tasks import (
 )
 
 # def check_import_items_task(file_path, is_change_identifier: bool, host_url, lang="en"):
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_tasks.py::test_check_import_items_task -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
 def test_check_import_items_task(i18n_app, users):
     file_path = "/test/test/test.txt"
     data = {"error": None}
-
-    with patch("weko_search_ui.utils.check_import_items", return_value=data):
+    date = datetime.datetime(2025, 1, 1)
+    with patch("weko_search_ui.tasks.check_import_items", return_value=data):
         with patch("shutil.rmtree", return_value=""):
-            with patch("weko_search_ui.tasks.remove_temp_dir_task.apply_async", return_value=""):
-                assert check_import_items_task(file_path=file_path,is_change_identifier=True,host_url="https://localhost")
+            with patch("weko_search_ui.tasks.remove_temp_dir_task.apply_async", return_value="") as mock_remove_temp_dir_task:
+                with patch('weko_search_ui.tasks.datetime') as mock_datetime:
+                    mock_datetime.now.return_value = date
+                    res = check_import_items_task(file_path=file_path, is_change_identifier=True, host_url="https://localhost")
+                    assert res == {'start_date': '2025-01-01 00:00:00', 'data_path': '', 'list_record': [], 'end_date': '2025-01-01 00:00:00'}
+                    assert mock_remove_temp_dir_task.called == 0
+    
+    data = {'error': None, 'list_record': [{'errors': None}, {'errors': 'error occurred'}]}
+    with patch("weko_search_ui.tasks.check_import_items", return_value=data):
+        with patch("shutil.rmtree", return_value=""):
+            with patch("weko_search_ui.tasks.remove_temp_dir_task.apply_async", return_value="") as mock_remove_temp_dir_task:
+                with patch('weko_search_ui.tasks.datetime') as mock_datetime:
+                    mock_datetime.now.return_value = date
+                    res = check_import_items_task(file_path=file_path, is_change_identifier=True, host_url="https://localhost")
+                    assert res == {'start_date': '2025-01-01 00:00:00', 'data_path': '', 'list_record': [{'errors': None}, {'errors': 'error occurred'}], 'end_date': '2025-01-01 00:00:00'}
+                    assert mock_remove_temp_dir_task.called == 1
+    
+    data = {'error': 'error occurrred'}
+    with patch("weko_search_ui.tasks.check_import_items", return_value=data):
+        with patch("shutil.rmtree", return_value=""):
+            with patch("weko_search_ui.tasks.remove_temp_dir_task.apply_async", return_value="") as mock_remove_temp_dir_task:
+                with patch('weko_search_ui.tasks.datetime') as mock_datetime:
+                    mock_datetime.now.return_value = date
+                    res = check_import_items_task(file_path=file_path, is_change_identifier=True, host_url="https://localhost")
+                    assert res == {'start_date': '2025-01-01 00:00:00', 'error': 'error occurrred', 'end_date': '2025-01-01 00:00:00'}
+                    assert mock_remove_temp_dir_task.called == 1
                 
 
 # def import_item(item, request_info):

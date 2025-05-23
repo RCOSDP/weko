@@ -1041,6 +1041,22 @@ def test_validate_form_input_data_2(app, db_itemtype_15):
         }
         validate_form_input_data(result_for_title_use, item_id, data_for_title_use)
         assert result_for_title_use["is_valid"] == True
+
+        data_for_title_use_2 = {
+            "item_1617186331708": {
+                "subitem_1551255647225": "test1",
+                "subitem_1551255648112": "ja"
+            },
+            "item_1617258105262": {
+                "resourcetype": "conference paper",
+                "resourceuri": "http://purl.org/coar/resource_type/c_5794",
+            },
+            "pubdate": "2023-06-27",
+            "shared_user_id": -1,
+            "$schema": "/items/jsonschema/15",
+        }
+        validate_form_input_data(result_for_title_use, item_id, data_for_title_use_2)
+        assert result_for_title_use["is_valid"] == False
         
         # TITLE TESTS
         data_for_title_use_copy = copy.deepcopy(data_for_title_use)
@@ -1083,6 +1099,26 @@ def test_validate_form_input_data_2(app, db_itemtype_15):
         }
         validate_form_input_data(result_for_alternative_title_use, item_id, data_for_alternative_title_use)
         assert result_for_alternative_title_use["is_valid"] == True
+
+        data_for_alternative_title_use2 = {
+            "item_1617186331708": [
+                {"subitem_1551255647225": "test1", "subitem_1551255648112": "ja"},
+                {"subitem_1551255647225": "test2", "subitem_1551255648112": "en"},
+            ],
+            "item_1617186385884": {
+                "subitem_1551255720400": "test1",
+                "subitem_1551255721061": "ja"
+            },
+            "item_1617258105262": {
+                "resourcetype": "conference paper",
+                "resourceuri": "http://purl.org/coar/resource_type/c_5794",
+            },
+            "pubdate": "2023-06-27",
+            "shared_user_id": -1,
+            "$schema": "/items/jsonschema/15",
+        }
+        validate_form_input_data(result_for_alternative_title_use, item_id, data_for_alternative_title_use2)
+        assert result_for_alternative_title_use["is_valid"] == False
         
         data_for_alternative_title_use_copy = copy.deepcopy(data_for_alternative_title_use)
         data_for_alternative_title_use_copy["item_1617186385884"][0]["subitem_1551255721061"] = "ja-Kana"

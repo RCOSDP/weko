@@ -4672,6 +4672,60 @@ def test_display_activity_1(client, users_1, db_register_1, mocker, redis_connec
                                     res = client.post(url, query_string=input)
                                     mock_render_template.assert_called()
 
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_display_activity_2 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_display_activity_2(client, users_1, db_register_1, mocker):
+    # ユーザー１でログイン
+    login(client=client, email=users_1[0]['email'])
+
+    workflow_detail = WorkFlow.query.filter_by(id=1).one_or_none()
+
+    activity_detail = Activity.query.filter_by(activity_id='A-00000001-00005').one_or_none()
+    activity_detail.shared_user_ids = []
+    #activity_detail = Activity.query.filter_by(activity_id='1').one_or_none()
+    cur_action = activity_detail.action
+    action_endpoint = 'item_login'
+    #action_endpoint = cur_action.action_endpoint
+    action_id = cur_action.id
+    histories = 1
+    item_metadata = ItemMetadata()
+    item_metadata.id = '37075580-8442-4402-beee-05f62e6e1dc2'
+
+    steps = 1
+    temporary_comment = 1
+
+    test_pid = PersistentIdentifier()
+    test_pid.pid_value = '100.0'
+
+    identifier = {'action_identifier_select': '',
+                'action_identifier_jalc_doi': '',
+                'action_identifier_jalc_cr_doi': '',
+                'action_identifier_jalc_dc_doi': '',
+                'action_identifier_ndl_jalc_doi': ''
+                }
+
+    files_thumbnail = []
+
+    # mocker.patch('weko_workflow.views.WorkActivity.get_activity_action_role',
+    #             return_value=(roles, action_users))
+    mocker.patch('weko_workflow.views.WorkActivity.get_action_identifier_grant',return_value=identifier)
+    mocker.patch('weko_workflow.views.WorkActivity.get_action_journal')
+    mocker.patch('weko_workflow.views.get_files_and_thumbnail',return_value=(["test1","test2"],files_thumbnail))
+
+    # PIDDeletedError
+    url = url_for('weko_workflow.display_activity', activity_id='A-00000001-00005')
+    input = {}
+    action_endpoint = cur_action.action_endpoint
+    item = item_metadata
+    owner_id = 1
+    shared_user_ids = []
+    with patch('weko_workflow.views.get_activity_display_info',
+               return_value=(action_endpoint, action_id, activity_detail, cur_action, histories, item, \
+               steps, temporary_comment, workflow_detail, owner_id, shared_user_ids)):
+        with patch('weko_workflow.views.get_pid_and_record',return_value=(test_pid,None)):
+            with patch('weko_workflow.views.get_contributors', side_effect=PIDDeletedError('test','test')):
+                res = client.post(url, query_string=input)
+                assert res.status_code == 404
+
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_check_authority -v -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_check_authority(client, activity_acl, activity_acl_users):
     users = activity_acl_users["users"]

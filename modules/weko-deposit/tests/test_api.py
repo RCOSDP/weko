@@ -351,13 +351,14 @@ class TestWekoDeposit:
     # def item_metadata(self):
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoDeposit::test_item_metadata -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
     def test_item_metadata(self, app, es_records):
-        _, records, item_metadata = es_records
+        _, records = es_records
         deposit = records[0]['deposit']
 
         expected = {'id': '1', 'pid': {'type': 'depid', 'value': '1', 'revision_id': 0}, 'lang': 'ja', 'owner': '1', 'title': 'title', 'owners': [1], 'status': 'published', '$schema': '/items/jsonschema/1', 'pubdate': '2022-08-20', 'created_by': 1, 'owners_ext': {'email': 'wekosoftware@nii.ac.jp', 'username': '', 'displayname': ''}, 'shared_user_ids': [], 'item_1617186331708': [{'subitem_1551255647225': 'タイトル', 'subitem_1551255648112': 'ja'}, {'subitem_1551255647225': 'title', 'subitem_1551255648112': 'en'}], 'item_1617258105262': {'resourceuri': 'http://purl.org/coar/resource_type/c_5794', 'resourcetype': 'conference paper'}}
 
-        print(json.loads(json.dumps(item_metadata)))
-        assert json.loads(json.dumps(item_metadata)) == json.loads(json.dumps(expected))
+        assert deposit.item_metadata == expected
+        # print(json.loads(json.dumps(item_metadata)))
+        # assert json.loads(json.dumps(item_metadata)) == json.loads(json.dumps(expected))
 
 
         deposit = WekoDeposit({})

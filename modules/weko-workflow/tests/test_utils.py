@@ -1319,21 +1319,21 @@ def test_send_mail_approval_done(mocker):
         send_mail_approval_done({})
     with patch("weko_workflow.utils.email_pattern_approval_done",return_value=(None,None)):
         send_mail_approval_done({})
+
 # def send_mail_registration_done(mail_info):
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_send_mail_registration_done -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
-#def test_send_mail_registration_done(app,users,mocker):
-#    mocker.patch("weko_workflow.utils.replace_characters",return_value="body")
-#    mocker.patch("weko_workflow.utils.send_mail")
-#    mail_info = {
-#        "item_type_name":"テストアイテムタイプ"
-#    }
-#    with app.test_request_context():
-#        login_user(users[2]["obj"])
-#        with patch("weko_workflow.utils.email_pattern_registration_done",return_value=("subject","body")):
-#            send_mail_registration_done(mail_info)
-#            
-#        with patch("weko_workflow.utils.email_pattern_registration_done",return_value=(None, None)):
-#            send_mail_registration_done(mail_info)
+def test_send_mail_registration_done(app,users,mocker,mail_templates):
+   mocker.patch("weko_workflow.utils.replace_characters",return_value="body")
+   mocker.patch("weko_workflow.utils.send_mail")
+   mail_info = {
+       "item_type_name":"テストアイテムタイプ"
+   }
+   with app.test_request_context():
+       login_user(users[2]["obj"])
+       send_mail_registration_done(mail_info, 1)
+
+       send_mail_registration_done(mail_info, 10)
+
 # def send_mail_request_approval(mail_info):
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_send_mail_request_approval -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_send_mail_request_approval(mocker):

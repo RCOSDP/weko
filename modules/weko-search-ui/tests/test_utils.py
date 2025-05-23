@@ -412,39 +412,43 @@ def test_parse_to_json_form(i18n_app, record_with_metadata):
 
 
 # def check_import_items(file, is_change_identifier: bool, is_gakuninrdm=False,
-def test_check_import_items(i18n_app):
-    # is_gakuninrdm = False
-    current_path = os.path.dirname(os.path.abspath(__file__))
-    file_name = "sample_file.zip"
-    file_path = os.path.join(current_path, "data", "sample_file", file_name)
-    ret = check_import_items(file_path, True, False)
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_check_import_items -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_check_import_items(i18n_app, mocker):
+    with patch('weko_search_ui.utils.unpackage_import_file', return_value=[]):
+        mocker.patch('os.listdir', return_value=['sample_file.csv'])
+        # is_gakuninrdm = False
+        current_path = os.path.dirname(os.path.abspath(__file__))
+        file_name = "sample_file.zip"
+        file_path = os.path.join(current_path, "data", "sample_file", file_name)
+    
+        ret = check_import_items(file_path, True, False)
 
-    prefix = current_app.config["WEKO_SEARCH_UI_IMPORT_TMP_PREFIX"]
-    assert ret["data_path"].startswith(f'/tmp/{prefix}')
+        prefix = current_app.config["WEKO_SEARCH_UI_IMPORT_TMP_PREFIX"]
+        assert ret["data_path"].startswith(f'/var/tmp/{prefix}')
 
-    # is_gakuninrdm = True
-    ret = check_import_items(file_path, True, True)
-    '/tmp/weko_import_'
-    assert ret["data_path"].startswith('/tmp/deposit_activity_')
+        # is_gakuninrdm = True
+        ret = check_import_items(file_path, True, True)
+        '/tmp/weko_import_'
+        assert ret["data_path"].startswith('/var/tmp/deposit_activity_')
 
-    # current_pathがdict
-    class TestFile(object):
-        @property
-        def filename(self):
-            return 'test_file.txt'
-        
-    file = TestFile()
-    assert check_import_items(file, True, True)
-    """
-    # 例外
-    with pytest.raises(FileNotFoundError) as e:
-        ret = check_import_items("/var/abc/filename.zip", False, True)
+        # current_pathがdict
+        class TestFile(object):
+            @property
+            def filename(self):
+                return 'test_file.txt'
+            
+        file = TestFile()
+        assert check_import_items(file, True, True)
+        """
+        # 例外
+        with pytest.raises(FileNotFoundError) as e:
+            ret = check_import_items("/var/abc/filename.zip", False, True)
 
-    with pytest.raises(UnicodeDecodeError) as e:
-        pass
-    with pytest.raises(FileExistsError) as e:
-        pass
-    """
+        with pytest.raises(UnicodeDecodeError) as e:
+            pass
+        with pytest.raises(FileExistsError) as e:
+            pass
+        """
 
 # def unpackage_import_file(data_path: str, file_name: str, file_format: str, force_new=False):
 # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_unpackage_import_file -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp

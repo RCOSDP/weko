@@ -111,7 +111,7 @@ from weko_index_tree.api import Indexes
 from kombu import Exchange, Queue
 from weko_index_tree.models import Index
 from weko_schema_ui.models import OAIServerSchema
-from weko_schema_ui.config import WEKO_SCHEMA_JPCOAR_V1_SCHEMA_NAME,WEKO_SCHEMA_DDI_SCHEMA_NAME
+from weko_schema_ui.config import WEKO_SCHEMA_JPCOAR_V1_SCHEMA_NAME,WEKO_SCHEMA_DDI_SCHEMA_NAME,WEKO_SCHEMA_JPCOAR_V2_SCHEMA_NAME
 from weko_index_tree.config import WEKO_INDEX_TREE_REST_ENDPOINTS,WEKO_INDEX_TREE_DEFAULT_DISPLAY_NUMBER
 from weko_user_profiles.models import UserProfile
 from weko_user_profiles.config import WEKO_USERPROFILES_ROLES,WEKO_USERPROFILES_GENERAL_ROLE
@@ -500,6 +500,7 @@ def base_app(instance_path, search_class, cache_config):
         WEKO_INDEX_TREE_DEFAULT_DISPLAY_NUMBER=WEKO_INDEX_TREE_DEFAULT_DISPLAY_NUMBER,
         WEKO_SCHEMA_JPCOAR_V1_SCHEMA_NAME=WEKO_SCHEMA_JPCOAR_V1_SCHEMA_NAME,
         WEKO_SCHEMA_DDI_SCHEMA_NAME=WEKO_SCHEMA_DDI_SCHEMA_NAME,
+        WEKO_SCHEMA_JPCOAR_V2_SCHEMA_NAME=WEKO_SCHEMA_JPCOAR_V2_SCHEMA_NAME,
         DEPOSIT_DEFAULT_JSONSCHEMA = 'deposits/deposit-v1.0.0.json',
         WEKO_RECORDS_UI_SECRET_KEY = "secret",
         WEKO_RECORDS_UI_ONETIME_DOWNLOAD_PATTERN = "filename={} record_id={} user_mail={} date={}",
@@ -535,6 +536,15 @@ def base_app(instance_path, search_class, cache_config):
         WEKO_WORKFLOW_ACTIVITYLOG_XLS_COLUMNS=WEKO_WORKFLOW_ACTIVITYLOG_XLS_COLUMNS,
         WEKO_SYS_USER=WEKO_SYS_USER,
         RECORDS_UI_ENDPOINTS=dict(
+            recid=dict(
+                pid_type='recid',
+                route='/records/<pid_value>',
+                view_imp='weko_records_ui.views.default_view_method',
+                template='weko_records_ui/detail.html',
+                record_class='weko_deposit.api:WekoRecord',
+                permission_factory_imp='weko_records_ui.permissions'
+                                    ':page_permission_factory',
+            ),
             recid_files=dict(
                 pid_type='recid',
                 route='/record/<pid_value>/files/<filename>',
@@ -554,6 +564,7 @@ def base_app(instance_path, search_class, cache_config):
         WEKO_WORKFLOW_APPROVAL_PREVIEW=WEKO_WORKFLOW_APPROVAL_PREVIEW,
         DOI_VALIDATION_INFO_JALC=DOI_VALIDATION_INFO_JALC,
         WEKO_WORKFLOW_IDENTIFIER_GRANT_IS_WITHDRAWING = -2,
+        WEKO_WORKFLOW_USAGE_REPORT_WORKFLOW_NAME='利用報告/Data Usage Report',
     )
     
     app_.testing = True
@@ -1147,7 +1158,7 @@ def identifier(db):
     return doi_identifier
 
 @pytest.fixture()
-def db_register(app, db, db_records, users, action_data, item_type):
+def db_register_full_action(app, db, db_records, users, action_data, item_type):
     flow_define = FlowDefine(flow_id=uuid.uuid4(),
                              flow_name='Registration Flow',
                              flow_user=1)
@@ -2987,7 +2998,7 @@ def db_register_activity(app, db, db_records, workflow_approval, users):
             activity_community_id=3,
             activity_confirm_term_of_use=True,
             title='contributor-todo',
-            shared_user_ids=[users[0]['id']],
+            shared_user_ids=[{'user': users[0]['id']}],
             extra_info={},
             action_order=5
         )
@@ -3006,7 +3017,7 @@ def db_register_activity(app, db, db_records, workflow_approval, users):
             activity_community_id=3,
             activity_confirm_term_of_use=True,
             title='sysadmin-todo',
-            shared_user_ids=[users[2]['id']],
+            shared_user_ids=[{'user': users[2]['id']}],
             extra_info={},
             action_order=7
         )
@@ -3025,7 +3036,7 @@ def db_register_activity(app, db, db_records, workflow_approval, users):
             activity_community_id=3,
             activity_confirm_term_of_use=True,
             title='contributor-wait',
-            shared_user_ids=[users[2]['id']],
+            shared_user_ids=[{'user': users[2]['id']}],
             extra_info={},
             action_order=5
         )
@@ -3109,9 +3120,9 @@ def get_mapping_data(db):
 
 
 @pytest.fixture()
-def db_guestactivity(app, db, db_register):
-    activity_id1 = db_register['activities'][1].activity_id
-    activity_id2 = db_register['activities'][0].activity_id
+def db_guestactivity(app, db, db_register_full_action):
+    activity_id1 = db_register_full_action['activities'][1].activity_id
+    activity_id2 = db_register_full_action['activities'][0].activity_id
     file_name = "Test_file"
     guest_mail = "user@test.com"
     
@@ -3282,7 +3293,7 @@ def activity_with_roles(app, workflow, db, item_type, users):
                 users[0]['obj'].id
             ],
             "status": "published",
-            "$schema": "/items/jsonschema/" + str(item_type.id),
+            "$schema": "/items/jsonschema/" + str(item_type[0]['id']),
             "pubdate": "2020-08-29",
             "created_by": users[0]['obj'].id,
             "owners_ext": {
@@ -3302,7 +3313,7 @@ def activity_with_roles(app, workflow, db, item_type, users):
                 "resourcetype": "conference paper"
             }
         },
-        item_type_id = item_type.id,
+        item_type_id = item_type[0]['id'],
     )
 
     # set activity
@@ -3584,7 +3595,7 @@ def db_register_for_application_api(app, db, users, db_register_for_application_
         ,user_mail = 'guest@example.org'
         ,file_name = "test.txt"
         ,token="abc123"
-        ,expiration_date=datetime.now()
+        ,expiration_date=10
         ,is_usage_report=False
     )
     
@@ -3683,7 +3694,7 @@ def db_register_for_application_api(app, db, users, db_register_for_application_
         ,user_mail = 'guest@example.org'
         ,file_name = "test.txt"
         ,token="abc123"
-        ,expiration_date=datetime.now()
+        ,expiration_date=10
         ,is_usage_report=False
     )
 
@@ -3723,7 +3734,7 @@ def db_register_for_application_api(app, db, users, db_register_for_application_
         ,user_mail = 'guest@example.org'
         ,file_name = "test.txt"
         ,token="abc123"
-        ,expiration_date=datetime.now()
+        ,expiration_date=10
         ,is_usage_report=False
     )
     
@@ -4223,3 +4234,105 @@ def make_record_restricted(db, indexer, id, index_id, item_type_id, userId):
         "rec_uuid": rec_uuid,
         "rec_uuid2": rec_uuid2,
     }
+
+@pytest.fixture()
+def mail_templates(db):
+    """Create mail templates."""
+    from invenio_mail.models import MailTemplates, MailTemplateGenres
+    genre = MailTemplateGenres(
+        id=1,
+        name="Notification of secret URL provision"
+    )
+    db.session.add(genre)
+    db.session.commit()
+    template = MailTemplates(
+        id=1,
+        mail_subject="test subject",
+        mail_body="test body",
+        default_mail=True,
+        mail_genre_id=genre.id,
+    )
+    db.session.add(template)
+    db.session.commit()
+    return template
+
+@pytest.fixture()
+def item_type_usage_report(db):
+    with db.session.begin_nested():
+        item_type_name = ItemTypeName(
+            id=31003,
+            name="利用報告-Data Usage Report",
+            has_site_license=True,
+            is_active=True
+        )
+        db.session.add(item_type_name)
+
+        item_type_schema = dict()
+        with open("tests/data/item_type/itemtype_schema_31003.json", "r") as f:
+            item_type_schema = json.load(f)
+        
+        item_type_form = dict()
+        with open("tests/data/item_type/itemtype_form_31003.json", "r") as f:
+            item_type_form = json.load(f)
+
+        item_type_render = dict()
+        with open("tests/data/item_type/itemtype_render_31003.json", "r") as f:
+            item_type_render = json.load(f)
+
+        item_type_mapping = dict()
+        with open("tests/data/item_type/itemtype_mapping_31003.json", "r") as f:
+            item_type_mapping = json.load(f)
+
+        item_type = ItemType(
+            id=31003,
+            name_id=31003,
+            harvesting_type=False,
+            schema=item_type_schema,
+            form=item_type_form,
+            render=item_type_render,
+            tag=1,
+            version_id=1,
+            is_deleted=False,
+        )
+
+        db.session.add(item_type)
+
+        item_type_mapping = ItemTypeMapping(
+            id=31003,
+            item_type_id=31003,
+            mapping=item_type_mapping
+        )
+
+        db.session.add(item_type_mapping)
+    return item_type
+
+@pytest.fixture()
+def workflow_usage_report(db, item_type_usage_report, action_data):
+    workflow = create_flow(
+        db,
+        31001,
+        "利用報告/Data Usage Report",
+        "利用報告/Data Usage Report",
+        None,
+        None,
+        item_type_usage_report
+    )
+    return workflow
+
+@pytest.fixture()
+def activity_usage_report(db, activity_acl_users, workflow_usage_report):
+    users = activity_acl_users["users"]
+    workflow = workflow_usage_report
+    activities = [
+        create_activity(db,"利用報告1",1,["4"],users[0],-1,workflow,'M',3),
+        create_activity(db,"利用報告2",2,["4"],users[0],-1,workflow,'M',3),
+        create_activity(db,"利用報告3",3,["4"],users[0],-1,workflow,'M',3),
+        create_activity(db,"利用報告4",4,["4"],users[0],-1,workflow,'M',3),
+        create_activity(db,"利用報告5",5,["4"],users[0],-1,workflow,'M',3),
+        create_activity(db,"利用報告6",6,["4"],users[0],-1,workflow,'M',3),
+        create_activity(db,"利用報告7",7,["4"],users[0],-1,workflow,'M',3),
+        create_activity(db,"利用報告8",8,["4"],users[0],-1,workflow,'M',3),
+        create_activity(db,"利用報告9",9,["4"],users[0],-1,workflow,'M',3),
+        create_activity(db,"利用報告10",10,["4"],users[0],-1,workflow,'M',3),
+    ]
+    return activities

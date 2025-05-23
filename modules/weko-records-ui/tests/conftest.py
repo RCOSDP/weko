@@ -33,6 +33,7 @@ from datetime import datetime
 from collections import OrderedDict
 from unittest.mock import patch
 from datetime import timedelta
+from kombu import Exchange, Queue
 from sqlalchemy.sql import func
 
 import pytest

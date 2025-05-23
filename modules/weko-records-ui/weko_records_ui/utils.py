@@ -23,6 +23,7 @@
 import base64
 import os
 import six
+import datetime
 from datetime import datetime as dt
 from datetime import timedelta
 from decimal import Decimal
@@ -971,9 +972,11 @@ def get_file_info_list(record, item_type=None):
             p_file['future_date_message'] = _("Restricted Access")
         elif access == "open_date":
             if date and isinstance(date, list) and date[0]:
-                adt = date[0].get('dateValue')
-                if adt is None:
-                    adt = dt.max
+                adtv = date[0].get('dateValue')
+                if adtv is None:
+                    adt = datetime.date.max
+                else:
+                    adt = dt.strptime(adtv, "%Y-%m-%d")
                 if is_future(adt):
                     message = "Download is available from {}/{}/{}."
                     p_file['future_date_message'] = _(message).format(

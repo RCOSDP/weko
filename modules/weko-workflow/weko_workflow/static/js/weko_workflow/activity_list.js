@@ -292,11 +292,11 @@ require([
   });
   $('#btn_approve').click(function () {
     $('#apply_spinner').append('<div class="spinner"></div>');
-    mail_template = $("#setTemplate").val();
+    mail_id = $("#setTemplate").val();
     has_error = false;
     lstSelectCheckboxes.forEach(function (activity_id) {
       $.ajax({
-        url: '/workflow/send_mail/' + activity_id + '/' + mail_template,
+        url: '/workflow/send_mail/' + activity_id + '/' + mail_id,
         method: 'POST',
         success: function (data) {
           if (data.msg == "Error") {
