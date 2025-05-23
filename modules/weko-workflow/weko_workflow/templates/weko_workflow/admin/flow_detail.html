@@ -34,6 +34,7 @@
 {%- block body %}
 {% from "weko_theme/macros/modal_page.html" import all_modal %}
 {{ all_modal() }}
+<input type="hidden" id="actions" name="actions" value='{{ actions }}'>
 <div id="alerts"></div>
 <div class="row">
   <div class="col-sm-offset-2">
@@ -168,34 +169,37 @@
                         {%- endif %}
                       {%- endfor %}
                     {%- endif %}
+                    <option class="{%- if action.action.action_name == 'Approval' %}item-registrant-option{%- else %}hide{%- endif %}" {% if action.action_role.action_item_registrant%} selected {% endif %}  value="{{workflow_registrant_id}}">{{_('Item registrant')}}</option>                                    
                   </select>
                   <div class="checkbox">
                     <label>
                       <input type="checkbox" class="td_action_user_deny" id="td_action_user_deny_{{action.action_id}}" data-action-id="{{action.action_id}}" data-row-order-user-deny="{{loop.index}}" {% if action.action_role.action_user_exclude %}checked{% endif %}> {{_('Deny')}}
                     </label>
                   </div>
-                  <br>
-<!--　mail for restricted access
-                  {% if action.action.action_name == 'Approval'%}
-                  <div class="mail_setting_options">
+                  {% if action.action.action_name == 'Approval' and use_restricted_item %}
+                  <div>
+                    <button class="btn btn-primary pull-right ten-pixel-top-margin btn_setting_nortification_mail" id="btn_setting_nortification_mail_{{loop.index}}" data-old-action-order="{{loop.index}}">
+                      {{_('Notification Email Setting')}}
+                    </button>
+                    <input type="hidden" id="loop_index" value='{{ loop.index }}'>
+                    {% include "weko_workflow/admin/mail_setting.html" %}
+                  </div>
+                  {% elif action.action.action_name == 'Item Registration' and use_restricted_item %}
+
+                    <div class="mail_setting_for_itemReg">
                       <div class="form-inline">
                         <label style="font-weight: unset;">
-                          <input type="checkbox" class="pointer" id="td_action_request_approval_{{action.action_id}}" {% if action.send_mail_setting.request_approval %}checked{% endif %} >
-                          {{_('Approval Request Notification Email')}}</label>
+                          <input type="checkbox" class="pointer checkbox_change" id="td_action_item_reg_done_{{action.action_id}}" {% if action.send_mail_setting.inform_itemReg and action.send_mail_setting.inform_itemReg.send %}checked{% endif %}>
+                          {{_('Send an email to the registrant')}}</label>
                       </div>
-                      <div class="form-inline">
-                        <label style="font-weight: unset;">
-                          <input type="checkbox" class="pointer" id="td_action_approval_reject_{{action.action_id}}" {% if action.send_mail_setting.inform_reject %}checked{% endif %}>
-                          {{_('Approval Rejection Notification Email')}}</label>
-                      </div>
-                      <div class="form-inline">
-                        <label style="font-weight: unset;">
-                          <input type="checkbox" class="pointer" id="td_action_approval_done_{{action.action_id}}" {% if action.send_mail_setting.inform_approval %}checked{% endif %}>
-                          {{_('Approval Notification Email')}}</label>
-                      </div>
-                    </div> 
-                  {% endif %}  
--->
+                       <select style="width: 200px" id="td_action_item_reg_done_mail_{{action.action_id}}" {% if not action.send_mail_setting.inform_itemReg or not action.send_mail_setting.inform_itemReg.send %}disabled{% endif %}>
+                         <option value="0"></option>
+                         {%- for mail_template in mail_templates %}
+                           <option value="{{mail_template['key']}}" {% if action.send_mail_setting.inform_itemReg and mail_template['key'] == action.send_mail_setting.inform_itemReg.mail %}selected{% endif %}>ID:{{mail_template['key']}} {{mail_template['content']['subject']}}</option>
+                         {%- endfor %}
+                       </select>
+                    </div>
+                  {% endif %}
               </td>
               <td class="hide">{{_(action.action_status.value)}}</td>
               <td class="hide"><span id="td_action_date_{{action.action_id}}">{{action.action_date.date()}}</span></td>
@@ -260,31 +264,134 @@
             <option value="{{user.id}}">{{user.email}}</option>
           {%- endfor -%}
           <option class="specify-property-option" value="-1">{{_('Specify property')}}</option>
+          <option class="item-registrant-option"  value="{{workflow_registrant_id}}">{{_('Item registrant')}}</option>     
         </select>
         <div class="checkbox">
           <input type="checkbox" class="td_action_user_deny" id="td_action_user_deny_apply_action.id" data-action-id="apply_action.id">
           {{_("Deny")}}
         </div>
-        <div class="mail_setting_options">
-          <div class="form-inline">
-            <label style="font-weight: unset;">
-              <input type="checkbox" class="pointer" id="td_action_request_approval_apply_action.id">
-              {{_('Approval Request Notification Email')}}</label>
-            </label>
-          </div>
-          <div class="form-inline">
-            <label style="font-weight: unset;">
-              <input type="checkbox" class="pointer" id="td_action_approval_reject_apply_action.id">
-              {{_('Approval Rejection Notification Email')}}</label>
-            </label>
-          </div>
-          <div class="form-inline">
-            <label style="font-weight: unset;">
-              <input type="checkbox" class="pointer" id="td_action_approval_done_apply_action.id">
-              {{_('Approval Notification Email')}}</label>
-            </label>
-          </div>
+
+        {% if use_restricted_item %}
+        <div class="mail_setting_for_approval">
+          <button class="btn btn-primary ten-pixel-top-margin pull-right btn_setting_nortification_mail" id="btn_setting_nortification_mail_loop.index" data-old-action-order="loop.index">
+            {{_('Notification Email Setting')}}
+          </button>
         </div>
+      </div>
+      <!-- /.modal -->
+      <div class="modal fade modal_for_setting_nortification_mail" id="settingModal_loop.index" tabindex="-1" role="dialog" aria-labelledby="setting_nortification_mail_Label">
+        <div class="modal-dialog" role="document">
+          <div class="modal-content">
+            <div class="modal-header">
+              <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+              </button>
+              <h4 class="modal-title" id="setting_nortification_mail_Label">{{_('Notification Email Setting')}}</h4>
+            </div>
+            <div class="modal-body">
+              <div class="panel panel-default panel-body" style="overflow-y: auto; max-height:400px;">
+                <div class="mail_setting_for_approval">
+                  <div class="form-inline">
+                    <label style="font-weight: unset;">
+                      <input type="checkbox" class="pointer checkbox_change" id="td_action_request_approval_apply_action.id">
+                      {{_('Approval Request Notification Email')}}
+                    </label>
+                  </div>
+                  <div style="display: flex; justify-content: flex-end;">
+                    <nobr>{{_('Login User')}}：</nobr>
+                    <select style="width: 250px" id="td_action_request_approval_mail_apply_action.id" disabled>
+                      <option value="0" selected></option>
+                      {%- for mail_template in mail_templates %}
+                      <option value="{{mail_template['key']}}">ID:{{mail_template['key']}} {{mail_template['content']['subject']}}</option>
+                      {%- endfor %}
+                    </select>
+                  </div>
+                  <div style="display: flex; justify-content: flex-end;">
+                    <nobr>{{_('Guest User')}}：</nobr>
+                    <select style="width: 250px" id="td_action_request_approval_mail_for_guest_apply_action.id" disabled>
+                      <option value="0" selected></option>
+                      {%- for mail_template in mail_templates %}
+                      <option value="{{mail_template['key']}}">ID:{{mail_template['key']}} {{mail_template['content']['subject']}}</option>
+                      {%- endfor %}
+                    </select>
+                  </div>
+                  <br>
+                  <div class="form-inline">
+                    <label style="font-weight: unset;">
+                      <input type="checkbox" class="pointer checkbox_change" id="td_action_approval_reject_apply_action.id">
+                      {{_('Approval Rejection Notification Email')}}</label>
+                    </label>
+                  </div>
+                  <div style="display: flex; justify-content: flex-end;">
+                    <nobr>{{_('Login User')}}：</nobr>
+                    <select style="width: 250px" id="td_action_approval_reject_mail_apply_action.id" disabled>
+                      <option value="0" selected></option>
+                      {%- for mail_template in mail_templates %}
+                      <option value="{{mail_template['key']}}">ID:{{mail_template['key']}} {{mail_template['content']['subject']}}</option>
+                      {%- endfor %}
+                    </select>
+                  </div>
+                  <div style="display: flex; justify-content: flex-end;">
+                    <nobr>{{_('Guest User')}}：</nobr>
+                    <select style="width: 250px" id="td_action_approval_reject_mail_for_guest_apply_action.id" disabled>
+                      <option value="0" selected></option>
+                      {%- for mail_template in mail_templates %}
+                      <option value="{{mail_template['key']}}">ID:{{mail_template['key']}} {{mail_template['content']['subject']}}</option>
+                      {%- endfor %}
+                    </select>
+                  </div>
+                  <br>
+                  <div class="form-inline">
+                    <label style="font-weight: unset;">
+                      <input type="checkbox" class="pointer checkbox_change" id="td_action_approval_done_apply_action.id">
+                      {{_('Approval Notification Email')}}</label>
+                    </label>
+                  </div>
+                  <div style="display: flex; justify-content: flex-end;">
+                    <nobr>{{_('Login User')}}：</nobr>
+                    <select style="width: 250px" id="td_action_approval_done_mail_apply_action.id" disabled>
+                      <option value="0" selected></option>
+                      {%- for mail_template in mail_templates %}
+                      <option value="{{mail_template['key']}}">ID:{{mail_template['key']}} {{mail_template['content']['subject']}}</option>
+                      {%- endfor %}
+                    </select>
+                  </div>
+                  <div style="display: flex; justify-content: flex-end;">
+                    <nobr>{{_('Guest User')}}：</nobr>
+                    <select style="width: 250px" id="td_action_approval_done_mail_for_guest_apply_action.id" disabled>
+                      <option value="0" selected></option>
+                      {%- for mail_template in mail_templates %}
+                      <option value="{{mail_template['key']}}">ID:{{mail_template['key']}} {{mail_template['content']['subject']}}</option>
+                      {%- endfor %}
+                    </select>
+                  </div>
+                </div>
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-info close-button" data-dismiss="modal">
+                  <span class="glyphicon glyphicon-remove"></span>
+                  {{_('Close')}}
+                </button>
+              </div>
+            </div>
+
+          </div>
+        </div><!-- /.modal -->
+        <div class="mail_setting_for_itemReg">
+          <div class="form-inline">
+            <label style="font-weight: unset;">
+              <input type="checkbox" class="pointer checkbox_change" id="td_action_item_reg_done_apply_action.id">
+              {{_('Send an email to the registrant')}}</label>
+            </label>
+          </div>
+           <select style="width: 200px" id="td_action_item_reg_done_mail_apply_action.id" disabled>
+             <option value="0" selected></option>
+             {%- for mail_template in mail_templates %}
+               <option value="{{mail_template['key']}}">{{mail_template['content']['subject']}}</option>
+             {%- endfor %}
+           </select>
+        </div>
+        {% endif %}
       </div>
     </td>
     <td class="hide">{{_("Usable")}}</td>

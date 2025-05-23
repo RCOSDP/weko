@@ -60,7 +60,9 @@ def check_import_items_task(file_path, is_change_identifier: bool, host_url,
     else:
         list_record = check_result.get("list_record", [])
         num_record_err = len([i for i in list_record if i.get("errors")])
-        if len(list_record) == num_record_err:
+        # 1件でもエラーが発生するとimport不可に変更 2023/08/26 ayumi.jin
+        #if len(list_record) == num_record_err:
+        if num_record_err > 0:
             remove_temp_dir_task.apply_async((data_path,))
         else:
             expire = datetime.now() + timedelta(seconds=get_lifetime())

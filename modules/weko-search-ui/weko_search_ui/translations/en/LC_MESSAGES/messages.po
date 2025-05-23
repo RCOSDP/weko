@@ -258,6 +258,14 @@ msgstr ""
 msgid "The file name specified in {} and {} do not match."
 msgstr ""
 
+#: weko_search_ui/utils.py:3900
+msgid "The specified provinding method does not exist in the system"
+msgstr ""
+
+#: weko_search_ui/utils.py:3910
+msgid "The specified terms does not exist in the system"
+msgstr ""
+
 #: weko_search_ui/static/js/weko_search_ui/moment.min.js:1
 msgid ": , "
 msgstr ""

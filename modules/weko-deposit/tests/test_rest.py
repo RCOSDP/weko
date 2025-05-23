@@ -104,7 +104,7 @@ def test_depid_item_put_acl_guest(client, deposit):
              "subitem_1551255648112": "en"}], "pubdate": "2021-01-01",
              "item_1617258105262": {"resourcetype": "conference paper",
                                     "resourceuri": "http://purl.org/coar/resource_type/c_5794"},
-             "shared_user_id": -1, "title": "tetest", "lang": "en",
+             "shared_user_ids": [], "title": "tetest", "lang": "en",
              "deleted_items": ["item_1617186385884", "item_1617186419668",
                                "approval1", "approval2"],
              "$schema": "/items/jsonschema/15"}
@@ -157,7 +157,7 @@ def test_depid_item_put(client, users,es_records):
             "resourcetype": "conference paper",
             "resourceuri": "http://purl.org/coar/resource_type/c_5794"
         },
-        "shared_user_id": -1, 
+        "shared_user_ids": [], 
         "title": "tetest", 
         "lang": "en",
         "deleted_items": ["item_1617186385884", "item_1617186419668",
@@ -176,7 +176,7 @@ def test_depid_item_put(client, users,es_records):
             "resourcetype": "conference paper",
             "resourceuri": "http://purl.org/coar/resource_type/c_5794"
         },
-        "shared_user_id": -1, 
+        "shared_user_ids": [], 
         "title": "tetest", 
         "lang": "en",
         "deleted_items": ["item_1617186385884", "item_1617186419668",

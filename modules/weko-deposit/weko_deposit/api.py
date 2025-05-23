@@ -488,7 +488,7 @@ class WekoDeposit(Deposit):
         Args:
             None
         Returns:
-            dict: item_metadata from item_id in instance "ex :OrderedDict([('pubdate', {'attribute_name': 'PubDate', 'attribute_value': '2022-06-03'}), ('item_1617186331708', {'attribute_name': 'Title', 'attribute_value_mlt': [{'subitem_1551255647225': 'test1', 'subitem_1551255648112': 'ja'}]}), ('item_1617258105262', {'attribute_name': 'Resource Type', 'attribute_value_mlt': [{'resourceuri': 'http://purl.org/coar/resource_type/c_5794', 'resourcetype': 'conference paper'}]}), ('item_title', 'test1'), ('item_type_id', '15'), ('control_number', '1.1'), ('author_link', []), ('weko_shared_id', -1), ('owner', '1'), ('publish_date', '2022-06-03'), ('title', ['test1']), ('relation_version_is_last', True), ('path', ['1557820086539']), ('publish_status', '0')])" 
+            dict: item_metadata from item_id in instance "ex :OrderedDict([('pubdate', {'attribute_name': 'PubDate', 'attribute_value': '2022-06-03'}), ('item_1617186331708', {'attribute_name': 'Title', 'attribute_value_mlt': [{'subitem_1551255647225': 'test1', 'subitem_1551255648112': 'ja'}]}), ('item_1617258105262', {'attribute_name': 'Resource Type', 'attribute_value_mlt': [{'resourceuri': 'http://purl.org/coar/resource_type/c_5794', 'resourcetype': 'conference paper'}]}), ('item_title', 'test1'), ('item_type_id', '15'), ('control_number', '1.1'), ('author_link', []), ('weko_shared_ids', []), ('owner', '1'), ('publish_date', '2022-06-03'), ('title', ['test1']), ('relation_version_is_last', True), ('path', ['1557820086539']), ('publish_status', '0')])" 
 
         Raises:
             sqlalchemy.orm.exc.NoResultFound
@@ -756,6 +756,9 @@ class WekoDeposit(Deposit):
         if '$schema' in data:
             data.pop('$schema')
         
+        # shared_user_ids -> [数値,数値,…]に変更
+        data = cls.convert_type_shared_user_ids(data)
+
         # Get workflow storage location
         location_name = None
         if session and 'activity_info' in session:
@@ -829,7 +832,7 @@ class WekoDeposit(Deposit):
                     "arg1 ex: {'index': ['1557820086539'], 'actions': '1'}
                 arg2:
                     item_metadata information
-                    arg2 ex: {'pid': {'type': 'depid', 'value': '34', 'revision_id': 0}, 'lang': 'ja', 'owner': '1', 'title': 'test deposit', 'owners': [1], 'status': 'published', '$schema': '/items/jsonschema/15', 'pubdate': '2022-06-07', 'created_by': 1, 'owners_ext': {'email': 'wekosoftware@nii.ac.jp', 'username': '', 'displayname': ''}, 'shared_user_id': -1, 'item_1617186331708': [{'subitem_1551255647225': 'test deposit', 'subitem_1551255648112': 'ja'}], 'item_1617258105262': {'resourceuri': 'http://purl.org/coar/resource_type/c_5794', 'resourcetype': 'conference paper'}, 'item_1617605131499': [{'url': {'url': 'https://weko3.example.org/record/34/files/tagmanifest-sha256.txt'}, 'date': [{'dateType': 'Available', 'dateValue': '2022-06-07'}], 'format': 'text/plain', 'filename': 'tagmanifest-sha256.txt', 'filesize': [{'value': '323 B'}], 'accessrole': 'open_access', 'version_id': 'b27b05d9-e19f-47fb-b6f5-7f031b1ef8fe'}]}"      
+                    arg2 ex: {'pid': {'type': 'depid', 'value': '34', 'revision_id': 0}, 'lang': 'ja', 'owner': '1', 'title': 'test deposit', 'owners': [1], 'status': 'published', '$schema': '/items/jsonschema/15', 'pubdate': '2022-06-07', 'created_by': 1, 'owners_ext': {'email': 'wekosoftware@nii.ac.jp', 'username': '', 'displayname': ''}, 'shared_user_ids': [], 'item_1617186331708': [{'subitem_1551255647225': 'test deposit', 'subitem_1551255648112': 'ja'}], 'item_1617258105262': {'resourceuri': 'http://purl.org/coar/resource_type/c_5794', 'resourcetype': 'conference paper'}, 'item_1617605131499': [{'url': {'url': 'https://weko3.example.org/record/34/files/tagmanifest-sha256.txt'}, 'date': [{'dateType': 'Available', 'dateValue': '2022-06-07'}], 'format': 'text/plain', 'filename': 'tagmanifest-sha256.txt', 'filesize': [{'value': '323 B'}], 'accessrole': 'open_access', 'version_id': 'b27b05d9-e19f-47fb-b6f5-7f031b1ef8fe'}]}"      
             **kwargs:
                 unused: (Default: ``empty``)
         
@@ -1002,104 +1005,117 @@ class WekoDeposit(Deposit):
             db.session.merge(record)
 
     def newversion(self, pid=None, is_draft=False):
-        """ 
+        """
         Create a new version of the deposit.
             1. Check if a newer version than the pid that is passed as an argument exists.
             2. Update the draft_id then call the create() method to generate a new deposit.
             3. Update both the database and elasticsearch.
         Args:
-            pid(dict): 
+            pid(dict):
                 Used to check for the lastest pid
                 (Default: ``None``)
-                "ex: {'path': ['1557820086539'], 'owner': '1', 'recid': '34.1', 'title': ['test deposit'], 'pubdate': {'attribute_name': 'PubDate', 'attribute_value': '2022-06-07'}, 'item_title': 'test deposit', 'author_link': [], 'item_type_id': '15', 'publish_date': '2022-06-07', 'publish_status': '1', 'weko_shared_id': -1, 'item_1617186331708': {'attribute_name': 'Title', 'attribute_value_mlt': [{'subitem_1551255647225': 'test deposit', 'subitem_1551255648112': 'ja'}]}, 'item_1617258105262': {'attribute_name': 'Resource Type', 'attribute_value_mlt': [{'resourceuri': 'http://purl.org/coar/resource_type/c_5794', 'resourcetype': 'conference paper'}]}, 'item_1617605131499': {'attribute_name': 'File', 'attribute_type': 'file', 'attribute_value_mlt': [{'url': {'url': 'https://192.168.56.48/record/34.1/files/tagmanifest-sha256.txt'}, 'date': [{'dateType': 'Available', 'dateValue': '2022-06-07'}], 'format': 'text/plain', 'filename': 'tagmanifest-sha256.txt', 'filesize': [{'value': '323 B'}], 'accessrole': 'open_access', 'version_id': 'cd317125-600e-4961-89b6-9bb520f342c7', 'mimetype': 'text/plain'}]}, 'relation_version_is_last': True, '$schema': 'https://127.0.0.1/schema/deposits/deposit-v1.0.0.json', '_deposit': {'id': '34.1', 'status': 'draft', 'owners': [1], 'created_by': 1}, '_buckets': {'deposit': '87a563d7-537f-41aa-afd6-fed5e3cb4dc2'}, 'control_number': '34.1', '_oai': {'id': 'oai:weko3.example.org:00000034.1', 'sets': ['1557820086539']}}" 
-        
+                "ex: {'path': ['1557820086539'], 'owner': '1', 'recid': '34.1', 'title': ['test deposit'], 'pubdate': {'attribute_name': 'PubDate', 'attribute_value': '2022-06-07'}, 'item_title': 'test deposit', 'author_link': [], 'item_type_id': '15', 'publish_date': '2022-06-07', 'publish_status': '1', 'weko_shared_ids': [], 'item_1617186331708': {'attribute_name': 'Title', 'attribute_value_mlt': [{'subitem_1551255647225': 'test deposit', 'subitem_1551255648112': 'ja'}]}, 'item_1617258105262': {'attribute_name': 'Resource Type', 'attribute_value_mlt': [{'resourceuri': 'http://purl.org/coar/resource_type/c_5794', 'resourcetype': 'conference paper'}]}, 'item_1617605131499': {'attribute_name': 'File', 'attribute_type': 'file', 'attribute_value_mlt': [{'url': {'url': 'https://192.168.56.48/record/34.1/files/tagmanifest-sha256.txt'}, 'date': [{'dateType': 'Available', 'dateValue': '2022-06-07'}], 'format': 'text/plain', 'filename': 'tagmanifest-sha256.txt', 'filesize': [{'value': '323 B'}], 'accessrole': 'open_access', 'version_id': 'cd317125-600e-4961-89b6-9bb520f342c7', 'mimetype': 'text/plain'}]}, 'relation_version_is_last': True, '$schema': 'https://127.0.0.1/schema/deposits/deposit-v1.0.0.json', '_deposit': {'id': '34.1', 'status': 'draft', 'owners': [1], 'created_by': 1}, '_buckets': {'deposit': '87a563d7-537f-41aa-afd6-fed5e3cb4dc2'}, 'control_number': '34.1', '_oai': {'id': 'oai:weko3.example.org:00000034.1', 'sets': ['1557820086539']}}" 
+
             is_draft (boolean, optional):
                 flag for registering the parent_id of pidverioning
                 (Default: ``False``)
-        
+
         Returns:
             deposit: newly created deposit object
-        
+
         Raises:
-           PIDInvalidAction(): Invalid operation on persistent identifier in current state. 
-           AttributeError: 
+            PIDInvalidAction(): Invalid operation on persistent identifier in current state.
+            AttributeError:
         """
         deposit = None
-        if not self.is_published():
-            raise PIDInvalidAction()
+        try:
+            if not self.is_published():
+                raise PIDInvalidAction()
 
-        # Check that there is not a newer draft version for this record
-        # and this is the latest version
-        versioning = PIDVersioning(child=pid)
-        record = WekoDeposit.get_record(pid.object_uuid)
+            # Check that there is not a newer draft version for this record
+            # and this is the latest version
+            versioning = PIDVersioning(child=pid)
+            record = WekoDeposit.get_record(pid.object_uuid)
 
-        assert PIDStatus.REGISTERED == pid.status
-        if not record or not versioning.exists or versioning.draft_child:
-            return None
+            assert PIDStatus.REGISTERED == pid.status
+            if not record or not versioning.exists or versioning.draft_child:
+                return None
 
-        data = record.dumps()
-        owners = data['_deposit']['owners']
-        keys_to_remove = ('_deposit', 'doi', '_oai',
-                        '_files', '_buckets', '$schema')
-        for k in keys_to_remove:
-            data.pop(k, None)
+            data = record.dumps()
+            owner = data['_deposit']['owner']
+            owners = data['_deposit']['owners']
+            weko_shared_ids = data['weko_shared_ids']
 
-        draft_id = '{0}.{1}'.format(
-            pid.pid_value,
-            0 if is_draft else get_latest_version_id(pid.pid_value))
+            keys_to_remove = ('_deposit', 'doi', '_oai',
+                              '_files', '_buckets', '$schema')
+            for k in keys_to_remove:
+                data.pop(k, None)
 
-        # NOTE: We call the superclass `create()` method, because
-        # we don't want a new empty bucket, but
-        # an unlocked snapshot of the old record's bucket.
-        deposit = super(
-            WekoDeposit,
-            self).create(data, recid=draft_id)
-        # Injecting owners is required in case of creating new
-        # version this outside of request context
+            draft_id = '{0}.{1}'.format(
+                pid.pid_value,
+                0 if is_draft else get_latest_version_id(pid.pid_value))
 
-        deposit['_deposit']['owners'] = owners
+            # NOTE: We call the superclass `create()` method, because
+            # we don't want a new empty bucket, but
+            # an unlocked snapshot of the old record's bucket.
+            deposit = super(
+                WekoDeposit,
+                self).create(data, recid=draft_id)
+            # Injecting owners is required in case of creating new
+            # version this outside of request context
 
-        recid = PersistentIdentifier.get(
-            'recid', str(data['_deposit']['id']))
-        depid = PersistentIdentifier.get(
-            'depid', str(data['_deposit']['id']))
+            deposit['_deposit']['owner'] = owner
+            deposit['_deposit']['owners'] = owners
+            deposit['_deposit']['weko_shared_ids'] = weko_shared_ids
+            deposit['owner'] = owner
+            deposit['owners'] = owners
+            deposit['weko_shared_ids'] = weko_shared_ids
 
-        PIDVersioning(
-            parent=versioning.parent).insert_draft_child(
-            child=recid)
-        RecordDraft.link(recid, depid)
+            recid = PersistentIdentifier.get(
+                'recid', str(data['_deposit']['id']))
+            depid = PersistentIdentifier.get(
+                'depid', str(data['_deposit']['id']))
 
-        if is_draft:
-            with db.session.begin_nested():
-                # Set relation type of draft record is 3: Draft
-                parent_pid = PIDVersioning(child=recid).parent
-                relation = PIDRelation.query. \
-                    filter_by(parent=parent_pid,
-                            child=recid).one_or_none()
-                relation.relation_type = 3
-            db.session.merge(relation)
+            PIDVersioning(
+                parent=versioning.parent).insert_draft_child(
+                child=recid)
+            RecordDraft.link(recid, depid)
 
-        snapshot = record.files.bucket. \
-            snapshot(lock=False)
-        snapshot.locked = False
-        deposit['_buckets'] = {'deposit': str(snapshot.id)}
-        RecordsBuckets.create(record=deposit.model,
-                            bucket=snapshot)
+            if is_draft:
+                with db.session.begin_nested():
+                    # Set relation type of draft record is 3: Draft
+                    parent_pid = PIDVersioning(child=recid).parent
+                    relation = PIDRelation.query. \
+                        filter_by(parent=parent_pid,
+                                  child=recid).one_or_none()
+                    relation.relation_type = 3
+                db.session.merge(relation)
 
-        index = {'index': self.get('path', []),
-                'actions': self.get('publish_status')}
-        if 'activity_info' in session:
-            del session['activity_info']
-        if is_draft:
-            from weko_workflow.utils import convert_record_to_item_metadata
-            item_metadata = convert_record_to_item_metadata(record)
-        else:
-            item_metadata = ItemsMetadata.get_record(
-                pid.object_uuid).dumps()
-        item_metadata.pop('id', None)
-        args = [index, item_metadata]
-        deposit.update(*args)
-        deposit.commit()
+            snapshot = record.files.bucket. \
+                snapshot(lock=False)
+            snapshot.locked = False
+            deposit['_buckets'] = {'deposit': str(snapshot.id)}
+            RecordsBuckets.create(record=deposit.model,
+                                  bucket=snapshot)
+
+            index = {'index': self.get('path', []),
+                     'actions': self.get('publish_status')}
+
+            if session and 'activity_info' in session:
+                del session['activity_info']
+            if is_draft:
+                from weko_workflow.utils import convert_record_to_item_metadata
+                item_metadata = convert_record_to_item_metadata(record)
+            else:
+                item_metadata = ItemsMetadata.get_record(
+                    pid.object_uuid).dumps()
+            item_metadata.pop('id', None)
+            args = [index, item_metadata]
+            deposit.update(*args)
+            deposit.commit()
+        except SQLAlchemyError as ex:
+            current_app.logger.debug(ex)
+            db.session.rollback()
         return deposit
 
     def get_content_files(self):
@@ -1205,12 +1221,15 @@ class WekoDeposit(Deposit):
             None
 
         """
-        deposit_owners = self.get('_deposit', {}).get('owners')
-        owner = str(deposit_owners[0] if deposit_owners else 1)
-        if owner:
-            dc_owner = self.data.get("owner", None)
-            if not dc_owner:
-                self.data.update(dict(owner=owner))
+        deposit_owners = self.get('_deposit', {}).get('owners', [])
+        owner_id = self.get('owner', None)
+        if len(deposit_owners)==0 and owner_id:
+            self.data.update(dict(owners=[owner_id]))
+        elif len(deposit_owners)>0 and not owner_id:
+            self.data.update(dict(owner=deposit_owners[0]))
+        elif len(deposit_owners)>0 and owner_id:
+            self.data.update(dict(owner=owner_id))
+            self.data.update(dict(owners=[owner_id]))
 
         if ItemMetadata.query.filter_by(id=self.id).first():
             obj = ItemsMetadata.get_record(self.id)
@@ -1256,7 +1275,7 @@ class WekoDeposit(Deposit):
         Args:
             data (dict):
             The item's metadata that will be deleted
-            "ex: {'pid': {'type': 'depid', 'value': '34', 'revision_id': 0}, 'lang': 'ja', 'owner': '1', 'title': 'test deposit', 'owners': [1], 'status': 'published', '$schema': '/items/jsonschema/15', 'pubdate': '2022-06-07', 'created_by': 1, 'owners_ext': {'email': 'wekosoftware@nii.ac.jp', 'username': '', 'displayname': ''}, 'shared_user_id': -1, 'item_1617186331708': [{'subitem_1551255647225': 'test deposit', 'subitem_1551255648112': 'ja'}], 'item_1617258105262': {'resourceuri': 'http://purl.org/coar/resource_type/c_5794', 'resourcetype': 'conference paper'}, 'item_1617605131499': [{'url': {'url': 'https://weko3.example.org/record/34/files/tagmanifest-sha256.txt'}, 'date': [{'dateType': 'Available', 'dateValue': '2022-06-07'}], 'format': 'text/plain', 'filename': 'tagmanifest-sha256.txt', 'filesize': [{'value': '323 B'}], 'accessrole': 'open_access', 'version_id': 'b27b05d9-e19f-47fb-b6f5-7f031b1ef8fe'}]}" 
+            "ex: {'pid': {'type': 'depid', 'value': '34', 'revision_id': 0}, 'lang': 'ja', 'owner': '1', 'title': 'test deposit', 'owners': [1], 'status': 'published', '$schema': '/items/jsonschema/15', 'pubdate': '2022-06-07', 'created_by': 1, 'owners_ext': {'email': 'wekosoftware@nii.ac.jp', 'username': '', 'displayname': ''}, 'shared_user_ids': [], 'item_1617186331708': [{'subitem_1551255647225': 'test deposit', 'subitem_1551255648112': 'ja'}], 'item_1617258105262': {'resourceuri': 'http://purl.org/coar/resource_type/c_5794', 'resourcetype': 'conference paper'}, 'item_1617605131499': [{'url': {'url': 'https://weko3.example.org/record/34/files/tagmanifest-sha256.txt'}, 'date': [{'dateType': 'Available', 'dateValue': '2022-06-07'}], 'format': 'text/plain', 'filename': 'tagmanifest-sha256.txt', 'filesize': [{'value': '323 B'}], 'accessrole': 'open_access', 'version_id': 'b27b05d9-e19f-47fb-b6f5-7f031b1ef8fe'}]}" 
         
         Returns:
             None
@@ -1374,7 +1393,7 @@ class WekoDeposit(Deposit):
                 "ex: {'index': ['1557820086539'], 'actions': '1'}" 
             data (dict):
                 The target item's metadata
-                "ex: {'pid': {'type': 'depid', 'value': '34', 'revision_id': 0}, 'lang': 'ja', 'owner': '1', 'title': 'test deposit', 'owners': [1], 'status': 'published', '$schema': '/items/jsonschema/15', 'pubdate': '2022-06-07', 'created_by': 1, 'owners_ext': {'email': 'wekosoftware@nii.ac.jp', 'username': '', 'displayname': ''}, 'shared_user_id': -1, 'item_1617186331708': [{'subitem_1551255647225': 'test deposit', 'subitem_1551255648112': 'ja'}], 'item_1617258105262': {'resourceuri': 'http://purl.org/coar/resource_type/c_5794', 'resourcetype': 'conference paper'}, 'item_1617605131499': [{'url': {'url': 'https://weko3.example.org/record/34/files/tagmanifest-sha256.txt'}, 'date': [{'dateType': 'Available', 'dateValue': '2022-06-07'}], 'format': 'text/plain', 'filename': 'tagmanifest-sha256.txt', 'filesize': [{'value': '323 B'}], 'accessrole': 'open_access', 'version_id': 'b27b05d9-e19f-47fb-b6f5-7f031b1ef8fe'}]}" 
+                "ex: {'pid': {'type': 'depid', 'value': '34', 'revision_id': 0}, 'lang': 'ja', 'owner': '1', 'title': 'test deposit', 'owners': [1], 'status': 'published', '$schema': '/items/jsonschema/15', 'pubdate': '2022-06-07', 'created_by': 1, 'owners_ext': {'email': 'wekosoftware@nii.ac.jp', 'username': '', 'displayname': ''}, 'shared_user_ids': [], 'item_1617186331708': [{'subitem_1551255647225': 'test deposit', 'subitem_1551255648112': 'ja'}], 'item_1617258105262': {'resourceuri': 'http://purl.org/coar/resource_type/c_5794', 'resourcetype': 'conference paper'}, 'item_1617605131499': [{'url': {'url': 'https://weko3.example.org/record/34/files/tagmanifest-sha256.txt'}, 'date': [{'dateType': 'Available', 'dateValue': '2022-06-07'}], 'format': 'text/plain', 'filename': 'tagmanifest-sha256.txt', 'filesize': [{'value': '323 B'}], 'accessrole': 'open_access', 'version_id': 'b27b05d9-e19f-47fb-b6f5-7f031b1ef8fe'}]}" 
         
         Returns:
             dc: OrderedDict item_metada
@@ -1417,19 +1436,28 @@ class WekoDeposit(Deposit):
             index_lst = index_id_lst
 
         plst = Indexes.get_path_list(index_lst)
-
         if not plst or len(index_lst) != len(plst):
             raise PIDResolveRESTError(
                 description='Any tree index has been deleted')
 
         # Convert item meta data
         try:
-            deposit_owners = self.get('_deposit', {}).get('owners')
-            owner_id = str(deposit_owners[0] if deposit_owners else 1)
+            data = self.convert_type_shared_user_ids(data)
+
+            # 更新パラメータが指定されない場合は、selfの内容を更新内容とする
+            if not data:
+                data = self.data
+            owner_id = data.get("owner", None)
             if str(self.pid.pid_value).endswith(".0"):
                 dc, jrc, is_edit = json_loader(data, self.pid, owner_id=owner_id,replace_field=False)
             else:
                 dc, jrc, is_edit = json_loader(data, self.pid, owner_id=owner_id)
+            
+            # dataのownerとownersを合わせる
+            if current_user and current_user.is_authenticated:
+                data['owners'] = [int(data.get('owner', current_user.id))]
+            else:
+                data['owners'] = [int(data.get('owner','1'))]
             dc['publish_date'] = data.get('pubdate')
             dc['title'] = [data.get('title')]
             dc['relation_version_is_last'] = True
@@ -1468,6 +1496,34 @@ class WekoDeposit(Deposit):
         ps = dict(publish_status=pubs)
         jrc.update(ps)
         dc.update(ps)
+
+        # # set pid data for item_matadata
+        # self.data["id"] = self.pid.pid_value
+        # self.data["pid"] = { "type":"recid", "value":self.pid.pid_value, "revision_id":0 }
+        # # set created_by owners_ext status for item_matadata
+        # if 'created_by' in self['_deposit']:
+        #     self.data['created_by'] = self['_deposit']['created_by']
+        # elif 'created_by' in self:
+        #     self.data['created_by'] = self['created_by']
+
+        # if 'owners_ext' in self['_deposit']:
+        #     self.data['owners_ext'] = self['_deposit']['owners_ext']
+        # elif 'owners_ext' in self:
+        #     self.data['owners_ext'] = self['owners_ext']
+
+        # if 'status' in self['_deposit']:
+        #     self.data['status'] = self['_deposit']['status']
+        # elif 'status' in self:
+        #     self.data['status'] = self['status']
+
+        if 'shared_user_ids' in self:
+            self.pop('shared_user_ids')
+        # update '_deposit':{'owners':[?]} by owner for record_metadata
+        self['_deposit']['owner'] = int(dc['owner'])
+        self['_deposit']['owners'] = [int(dc['owner'])]
+        self['_deposit']['weko_shared_ids'] = dc['weko_shared_ids']
+        self['_deposit']['created_by'] = int(current_user.id) if current_user and current_user.is_authenticated else 1
+
         if data:
             self.delete_item_metadata(data)
         return dc, data.get('deleted_items')
@@ -1870,6 +1926,22 @@ class WekoDeposit(Deposit):
                 if content.get('file'):
                     del content['file']
 
+    @classmethod
+    def convert_type_shared_user_ids(cls, data):
+        shared_user_ids = []
+        if data:
+            if 'shared_user_ids' in data:
+                tmp = data['shared_user_ids'] if data['shared_user_ids'] else []
+                for rec in tmp:
+                    if type(rec) == int:
+                        shared_user_ids.append(rec)
+                        continue
+                    if 'user' in rec:
+                        shared_user_ids.append(int(rec['user']))
+        else:
+            data = {}
+        data['shared_user_ids'] = shared_user_ids
+        return data
 
 class WekoRecord(Record):
     """Extend Record obj for record ui."""

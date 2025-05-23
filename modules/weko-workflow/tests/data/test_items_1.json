@@ -1,0 +1,69 @@
+[
+    {
+      "id": "196",
+      "pid": { "type": "depid", "value": "196", "revision_id": 0 },
+      "lang": "ja",
+      "owner": 1,
+      "title": "テスト タイトル3",
+      "owners": [1],
+      "status": "published",
+      "$schema": "/items/jsonschema/15",
+      "pubdate": "2023-04-25",
+      "created_by": 1,
+      "owners_ext": {
+        "email": "wekosoftware@nii.ac.jp",
+        "username": "",
+        "displayname": ""
+      },
+      "shared_user_ids": [],
+      "item_1617186331708": [
+        { "subitem_1551255647225": "テスト タイトル3", "subitem_1551255648112": "en" }
+      ],
+      "item_1617258105262": {
+        "resourceuri": "http://purl.org/coar/resource_type/c_5794",
+        "resourcetype": "conference paper"
+      }
+    },
+    {
+      "id": "197",
+      "pid": { "type": "depid", "value": "197", "revision_id": 0 },
+      "lang": "ja",
+      "owner": 1,
+      "title": "テスト タイトル4",
+      "owners": [1],
+      "status": "published",
+      "$schema": "/items/jsonschema/15",
+      "pubdate": "2023-04-25",
+      "created_by": 1,
+      "owners_ext": {
+        "email": "wekosoftware@nii.ac.jp",
+        "username": "",
+        "displayname": ""
+      },
+      "shared_user_ids": [100],
+      "item_1617186331708": [
+        { "subitem_1551255647225": "テスト タイトル4", "subitem_1551255648112": "en" }
+      ]
+    },
+    {
+      "id": "198",
+      "pid": { "type": "depid", "value": "198", "revision_id": 0 },
+      "lang": "ja",
+      "owner": 1,
+      "title": "テスト タイトル5",
+      "owners": [1],
+      "status": "published",
+      "$schema": "/items/jsonschema/15",
+      "pubdate": "2023-04-25",
+      "created_by": 1,
+      "owners_ext": {
+        "email": "wekosoftware@nii.ac.jp",
+        "username": "",
+        "displayname": ""
+      },
+      "shared_user_ids": [2],
+      "item_1617186331708": [
+        { "subitem_1551255647225": "テスト タイトル5", "subitem_1551255648112": "en" }
+      ]
+    }
+  ]

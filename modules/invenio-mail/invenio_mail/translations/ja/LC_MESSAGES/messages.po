@@ -91,3 +91,12 @@ msgstr "本文"
 msgid "Send"
 msgstr "送信"
 
+# Mail template genre table
+msgid "Notification of secret URL provision"
+msgstr "シークレットURL提供メール"
+
+msgid "Guidance to the application form"
+msgstr "ゲストユーザ申請フォーム案内メール"
+
+msgid "Others"
+msgstr "その他テンプレート"

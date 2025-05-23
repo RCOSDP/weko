@@ -88,7 +88,7 @@
         </div>
       </div>
       {%- if is_sysadmin %}
-        <div class="form-group">
+        <div class="form-group" {%- if not is_display_restricted_access_checkbox %} hidden {%- endif %}>
           <div class="col-sm-offset-2">
             <label class="col-sm-2 control-label">{{_('Restricted Access Flag')}}</label>
             <div class="col-sm-8" style="padding-top: 7px" >
