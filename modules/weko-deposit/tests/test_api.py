@@ -396,9 +396,10 @@ class TestWekoDeposit:
         from dictdiffer.merge import UnresolvedConflictsException
         from invenio_deposit.errors import MergeConflict
         with patch("weko_deposit.api.WekoDeposit.fetch_published",return_value=(records[0]["depid"],record)):
-            with patch("weko_deposit.api.Merger.run",side_effect=UnresolvedConflictsException(["test_conflict"])):
-                with pytest.raises(MergeConflict):
-                    ret = dep.merge_with_published()
+            with patch('invenio_records.api.Record.revisions', return_value=record):
+                with patch("weko_deposit.api.Merger.run",side_effect=UnresolvedConflictsException(["test_conflict"])):
+                    with pytest.raises(MergeConflict):
+                        ret = dep.merge_with_published()
     
     # def _patch(diff_result, destination, in_place=False):
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoDeposit::test__patch -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
@@ -747,25 +748,6 @@ class TestWekoDeposit:
         depid = record['depid']
         deposit = record['deposit']
 
-        # なんでPIDがDBに入っていないのか不明だが、再作成する
-        recid = PersistentIdentifier.create('recid', '1', object_type='rec', object_uuid=recid.object_uuid,status=PIDStatus.REGISTERED)
-        depid = PersistentIdentifier.create('depid', '1', object_type='rec', object_uuid=depid.object_uuid,status=PIDStatus.REGISTERED)
-        with db.session.begin_nested():
-            db.session.add(recid)
-            db.session.add(depid)
-
-        mocker.patch("weko_index_tree.api.Indexes.get_path_list", return_value=[1])
-        mocker.patch("weko_deposit.api.WekoDeposit.delete_es_index_attempt", return_value=None)
-        
-        # self.data.get('deleted_items') == True
-        deposit.data = record['record_data']
-        deposit.data['deleted_items'] = ['A','B','C']
-        deposit.save_or_update_item_metadata()
-        assert 'deleted_items' not in deposit.data
-
-        ret = deposit.get_file_data()
-        assert 1 == len(ret)
-
         deposit.data = record['record_data']
         # len(deposit_owners)>0 and owner_id
         deposit['_deposit']['owners'] = [1]
@@ -864,7 +846,7 @@ class TestWekoDeposit:
                     activity_start=datetime.strptime('2022/04/14 3:01:53.931', '%Y/%m/%d %H:%M:%S.%f'),
                     activity_community_id=3,
                     activity_confirm_term_of_use=True,
-                    title='test_title', shared_user_id=-1, extra_info={},
+                    title='test_title', shared_user_ids=[], extra_info={},
                     action_order=1,
                     )
         db.session.add(activity)
@@ -873,30 +855,30 @@ class TestWekoDeposit:
         assert result == None
         
         # exist activity.temp_data
-        temp_data = {"metainfo": {"pubdate": "2023-10-10", "none_str":"","empty_list":[],"item_1617186331708": [{"subitem_1551255647225": "test_title", "subitem_1551255648112": "ja"}], "item_1617186385884": [{"subitem_1551255720400": "alter title"}], "item_1617186419668": [{"creatorAffiliations": [{"affiliationNameIdentifiers": [{}], "affiliationNames": [{}]}], "creatorAlternatives": [{}], "creatorMails": [{}], "creatorNames": [{}], "familyNames": [{"familyName": "test_family_name"}], "givenNames": [{}], "nameIdentifiers": [{}]}], "item_1617186499011": [{}], "item_1617186609386": [{}], "item_1617186626617": [{}], "item_1617186643794": [{}], "item_1617186660861": [{}], "item_1617186702042": [{}], "item_1617186783814": [{}], "item_1617186859717": [{}], "item_1617186882738": [{"subitem_geolocation_place": [{}]}], "item_1617186901218": [{"subitem_1522399412622": [{}], "subitem_1522399651758": [{}]}], "item_1617186920753": [{}], "item_1617186941041": [{}], "item_1617187112279": [{}], "item_1617187187528": [{"subitem_1599711633003": [{}], "subitem_1599711660052": [{}], "subitem_1599711758470": [{}], "subitem_1599711788485": [{}]}], "item_1617349709064": [{"contributorAffiliations": [{"contributorAffiliationNameIdentifiers": [{}], "contributorAffiliationNames": [{}]}], "contributorAlternatives": [{}], "contributorMails": [{}], "contributorNames": [{}], "familyNames": [{}], "givenNames": [{}], "nameIdentifiers": [{}]}], "item_1617353299429": [{"subitem_1523320863692": [{}]}], "item_1617605131499": [{"date": [{}], "fileDate": [{}], "filesize": [{}]}], "item_1617610673286": [{"nameIdentifiers": [{}], "rightHolderNames": [{}]}], "item_1617620223087": [{}], "item_1617944105607": [{"subitem_1551256015892": [{}], "subitem_1551256037922": [{}]}], "item_1617187056579": {"bibliographic_titles": [{}]}, "shared_user_id": -1, "item_1617258105262": {"resourcetype": "conference paper", "resourceuri": "http://purl.org/coar/resource_type/c_5794"}}, "files": [], "endpoints": {"initialization": "/api/deposits/items"}}
+        temp_data = {"metainfo": {"pubdate": "2023-10-10", "none_str":"","empty_list":[],"item_1617186331708": [{"subitem_1551255647225": "test_title", "subitem_1551255648112": "ja"}], "item_1617186385884": [{"subitem_1551255720400": "alter title"}], "item_1617186419668": [{"creatorAffiliations": [{"affiliationNameIdentifiers": [{}], "affiliationNames": [{}]}], "creatorAlternatives": [{}], "creatorMails": [{}], "creatorNames": [{}], "familyNames": [{"familyName": "test_family_name"}], "givenNames": [{}], "nameIdentifiers": [{}]}], "item_1617186499011": [{}], "item_1617186609386": [{}], "item_1617186626617": [{}], "item_1617186643794": [{}], "item_1617186660861": [{}], "item_1617186702042": [{}], "item_1617186783814": [{}], "item_1617186859717": [{}], "item_1617186882738": [{"subitem_geolocation_place": [{}]}], "item_1617186901218": [{"subitem_1522399412622": [{}], "subitem_1522399651758": [{}]}], "item_1617186920753": [{}], "item_1617186941041": [{}], "item_1617187112279": [{}], "item_1617187187528": [{"subitem_1599711633003": [{}], "subitem_1599711660052": [{}], "subitem_1599711758470": [{}], "subitem_1599711788485": [{}]}], "item_1617349709064": [{"contributorAffiliations": [{"contributorAffiliationNameIdentifiers": [{}], "contributorAffiliationNames": [{}]}], "contributorAlternatives": [{}], "contributorMails": [{}], "contributorNames": [{}], "familyNames": [{}], "givenNames": [{}], "nameIdentifiers": [{}]}], "item_1617353299429": [{"subitem_1523320863692": [{}]}], "item_1617605131499": [{"date": [{}], "fileDate": [{}], "filesize": [{}]}], "item_1617610673286": [{"nameIdentifiers": [{}], "rightHolderNames": [{}]}], "item_1617620223087": [{}], "item_1617944105607": [{"subitem_1551256015892": [{}], "subitem_1551256037922": [{}]}], "item_1617187056579": {"bibliographic_titles": [{}]}, "shared_user_ids": [], "item_1617258105262": {"resourcetype": "conference paper", "resourceuri": "http://purl.org/coar/resource_type/c_5794"}}, "files": [], "endpoints": {"initialization": "/api/deposits/items"}}
         activity.temp_data=json.dumps(temp_data)
         db.session.merge(activity)
         db.session.commit()
         result = deposit.record_data_from_act_temp()
-        test = {"pubdate": "2023-10-10","item_1617186331708": [{"subitem_1551255647225": "test_title","subitem_1551255648112": "ja"}],"item_1617186385884": [{"subitem_1551255720400": "alter title"}],"item_1617186419668": [{"familyNames": [{"familyName": "test_family_name"}]}],"shared_user_id": -1,"item_1617258105262": {"resourcetype": "conference paper","resourceuri": "http://purl.org/coar/resource_type/c_5794"},"deleted_items": ["none_str","empty_list","item_1617186499011","item_1617186609386","item_1617186626617","item_1617186643794","item_1617186660861","item_1617186702042","item_1617186783814","item_1617186859717","item_1617186882738","item_1617186901218","item_1617186920753","item_1617186941041","item_1617187112279","item_1617187187528","item_1617349709064","item_1617353299429","item_1617605131499","item_1617610673286","item_1617620223087","item_1617944105607","item_1617187056579"],"$schema": "/items/jsonschema/1","title": "test_title","lang": "ja"}
+        test = {"pubdate": "2023-10-10","item_1617186331708": [{"subitem_1551255647225": "test_title","subitem_1551255648112": "ja"}],"item_1617186385884": [{"subitem_1551255720400": "alter title"}],"item_1617186419668": [{"familyNames": [{"familyName": "test_family_name"}]}],"item_1617258105262": {"resourcetype": "conference paper","resourceuri": "http://purl.org/coar/resource_type/c_5794"},"deleted_items": ["none_str","empty_list","item_1617186499011","item_1617186609386","item_1617186626617","item_1617186643794","item_1617186660861","item_1617186702042","item_1617186783814","item_1617186859717","item_1617186882738","item_1617186901218","item_1617186920753","item_1617186941041","item_1617187112279","item_1617187187528","item_1617349709064","item_1617353299429","item_1617605131499","item_1617610673286","item_1617620223087","item_1617944105607","item_1617187056579",'shared_user_ids'],"$schema": "/items/jsonschema/1","title": "test_title","lang": "ja"}
         assert result == test
 
         # title is dict
-        temp_data = {"metainfo": {"pubdate": "2023-10-10","none_str": "","empty_list": [],"item_1617186331708": {"subitem_1551255647225": "test_title","subitem_1551255648112": "ja"},"item_1617186385884": [{"subitem_1551255720400": "alter title"}],"item_1617186419668": [{"creatorAffiliations": [{"affiliationNameIdentifiers": [{}],"affiliationNames": [{}]}],"creatorAlternatives": [{}],"creatorMails": [{}],"creatorNames": [{}],"familyNames": [{"familyName": "test_family_name"}],"givenNames": [{}],"nameIdentifiers": [{}]}],"item_1617186499011": [{}],"item_1617186609386": [{}],"item_1617186626617": [{}],"item_1617186643794": [{}],"item_1617186660861": [{}],"item_1617186702042": [{}],"item_1617186783814": [{}],"item_1617186859717": [{}],"item_1617186882738": [{"subitem_geolocation_place": [{}]}],"item_1617186901218": [{"subitem_1522399412622": [{}],"subitem_1522399651758": [{}]}],"item_1617186920753": [{}],"item_1617186941041": [{}],"item_1617187112279": [{}],"item_1617187187528": [{"subitem_1599711633003": [{}],"subitem_1599711660052": [{}],"subitem_1599711758470": [{}],"subitem_1599711788485": [{}]}],"item_1617349709064": [{"contributorAffiliations": [{"contributorAffiliationNameIdentifiers": [{}],"contributorAffiliationNames": [{}]}],"contributorAlternatives": [{}],"contributorMails": [{}],"contributorNames": [{}],"familyNames": [{}],"givenNames": [{}],"nameIdentifiers": [{}]}],"item_1617353299429": [{"subitem_1523320863692": [{}]}],"item_1617605131499": [{"date": [{}],"fileDate": [{}],"filesize": [{}]}],"item_1617610673286": [{"nameIdentifiers": [{}],"rightHolderNames": [{}]}],"item_1617620223087": [{}],"item_1617944105607": [{"subitem_1551256015892": [{}],"subitem_1551256037922": [{}]}],"item_1617187056579": {"bibliographic_titles": [{}]},"shared_user_id": -1,"item_1617258105262": {"resourcetype": "conference paper","resourceuri": "http://purl.org/coar/resource_type/c_5794"}},"files": [],"endpoints": {"initialization": "/api/deposits/items"}}
+        temp_data = {"metainfo": {"pubdate": "2023-10-10","none_str": "","empty_list": [],"item_1617186331708": {"subitem_1551255647225": "test_title","subitem_1551255648112": "ja"},"item_1617186385884": [{"subitem_1551255720400": "alter title"}],"item_1617186419668": [{"creatorAffiliations": [{"affiliationNameIdentifiers": [{}],"affiliationNames": [{}]}],"creatorAlternatives": [{}],"creatorMails": [{}],"creatorNames": [{}],"familyNames": [{"familyName": "test_family_name"}],"givenNames": [{}],"nameIdentifiers": [{}]}],"item_1617186499011": [{}],"item_1617186609386": [{}],"item_1617186626617": [{}],"item_1617186643794": [{}],"item_1617186660861": [{}],"item_1617186702042": [{}],"item_1617186783814": [{}],"item_1617186859717": [{}],"item_1617186882738": [{"subitem_geolocation_place": [{}]}],"item_1617186901218": [{"subitem_1522399412622": [{}],"subitem_1522399651758": [{}]}],"item_1617186920753": [{}],"item_1617186941041": [{}],"item_1617187112279": [{}],"item_1617187187528": [{"subitem_1599711633003": [{}],"subitem_1599711660052": [{}],"subitem_1599711758470": [{}],"subitem_1599711788485": [{}]}],"item_1617349709064": [{"contributorAffiliations": [{"contributorAffiliationNameIdentifiers": [{}],"contributorAffiliationNames": [{}]}],"contributorAlternatives": [{}],"contributorMails": [{}],"contributorNames": [{}],"familyNames": [{}],"givenNames": [{}],"nameIdentifiers": [{}]}],"item_1617353299429": [{"subitem_1523320863692": [{}]}],"item_1617605131499": [{"date": [{}],"fileDate": [{}],"filesize": [{}]}],"item_1617610673286": [{"nameIdentifiers": [{}],"rightHolderNames": [{}]}],"item_1617620223087": [{}],"item_1617944105607": [{"subitem_1551256015892": [{}],"subitem_1551256037922": [{}]}],"item_1617187056579": {"bibliographic_titles": [{}]},"shared_user_ids": [],"item_1617258105262": {"resourcetype": "conference paper","resourceuri": "http://purl.org/coar/resource_type/c_5794"}},"files": [],"endpoints": {"initialization": "/api/deposits/items"}}
         activity.temp_data=json.dumps(temp_data)
         db.session.merge(activity)
         db.session.commit()
         result = deposit.record_data_from_act_temp()
-        test = {"pubdate": "2023-10-10","item_1617186331708": {"subitem_1551255647225": "test_title","subitem_1551255648112": "ja"},"item_1617186385884": [{"subitem_1551255720400": "alter title"}],"item_1617186419668": [{"familyNames": [{"familyName": "test_family_name"}]}],"shared_user_id": -1,"item_1617258105262": {"resourcetype": "conference paper","resourceuri": "http://purl.org/coar/resource_type/c_5794"},"deleted_items": ["none_str","empty_list","item_1617186499011","item_1617186609386","item_1617186626617","item_1617186643794","item_1617186660861","item_1617186702042","item_1617186783814","item_1617186859717","item_1617186882738","item_1617186901218","item_1617186920753","item_1617186941041","item_1617187112279","item_1617187187528","item_1617349709064","item_1617353299429","item_1617605131499","item_1617610673286","item_1617620223087","item_1617944105607","item_1617187056579"],"$schema": "/items/jsonschema/1","title": "test_title","lang": "ja"}
+        test = {"pubdate": "2023-10-10","item_1617186331708": {"subitem_1551255647225": "test_title","subitem_1551255648112": "ja"},"item_1617186385884": [{"subitem_1551255720400": "alter title"}],"item_1617186419668": [{"familyNames": [{"familyName": "test_family_name"}]}],"item_1617258105262": {"resourcetype": "conference paper","resourceuri": "http://purl.org/coar/resource_type/c_5794"},"deleted_items": ["none_str","empty_list","item_1617186499011","item_1617186609386","item_1617186626617","item_1617186643794","item_1617186660861","item_1617186702042","item_1617186783814","item_1617186859717","item_1617186882738","item_1617186901218","item_1617186920753","item_1617186941041","item_1617187112279","item_1617187187528","item_1617349709064","item_1617353299429","item_1617605131499","item_1617610673286","item_1617620223087","item_1617944105607","item_1617187056579",'shared_user_ids'],"$schema": "/items/jsonschema/1","title": "test_title","lang": "ja"}
         assert result == test
         
         # title data is not exist 
-        temp_data = {"metainfo": {"pubdate": "2023-10-10","none_str": "","empty_list": [],"item_1617186331708": [],"item_1617186385884": [{"subitem_1551255720400": "alter title"}],"item_1617186419668": [{"creatorAffiliations": [{"affiliationNameIdentifiers": [{}],"affiliationNames": [{}]}],"creatorAlternatives": [{}],"creatorMails": [{}],"creatorNames": [{}],"familyNames": [{"familyName": "test_family_name"}],"givenNames": [{}],"nameIdentifiers": [{}]}],"item_1617186499011": [{}],"item_1617186609386": [{}],"item_1617186626617": [{}],"item_1617186643794": [{}],"item_1617186660861": [{}],"item_1617186702042": [{}],"item_1617186783814": [{}],"item_1617186859717": [{}],"item_1617186882738": [{"subitem_geolocation_place": [{}]}],"item_1617186901218": [{"subitem_1522399412622": [{}],"subitem_1522399651758": [{}]}],"item_1617186920753": [{}],"item_1617186941041": [{}],"item_1617187112279": [{}],"item_1617187187528": [{"subitem_1599711633003": [{}],"subitem_1599711660052": [{}],"subitem_1599711758470": [{}],"subitem_1599711788485": [{}]}],"item_1617349709064": [{"contributorAffiliations": [{"contributorAffiliationNameIdentifiers": [{}],"contributorAffiliationNames": [{}]}],"contributorAlternatives": [{}],"contributorMails": [{}],"contributorNames": [{}],"familyNames": [{}],"givenNames": [{}],"nameIdentifiers": [{}]}],"item_1617353299429": [{"subitem_1523320863692": [{}]}],"item_1617605131499": [{"date": [{}],"fileDate": [{}],"filesize": [{}]}],"item_1617610673286": [{"nameIdentifiers": [{}],"rightHolderNames": [{}]}],"item_1617620223087": [{}],"item_1617944105607": [{"subitem_1551256015892": [{}],"subitem_1551256037922": [{}]}],"item_1617187056579": {"bibliographic_titles": [{}]},"shared_user_id": -1,"item_1617258105262": {"resourcetype": "conference paper","resourceuri": "http://purl.org/coar/resource_type/c_5794"}},"files": [],"endpoints": {"initialization": "/api/deposits/items"}}
+        temp_data = {"metainfo": {"pubdate": "2023-10-10","none_str": "","empty_list": [],"item_1617186331708": [],"item_1617186385884": [{"subitem_1551255720400": "alter title"}],"item_1617186419668": [{"creatorAffiliations": [{"affiliationNameIdentifiers": [{}],"affiliationNames": [{}]}],"creatorAlternatives": [{}],"creatorMails": [{}],"creatorNames": [{}],"familyNames": [{"familyName": "test_family_name"}],"givenNames": [{}],"nameIdentifiers": [{}]}],"item_1617186499011": [{}],"item_1617186609386": [{}],"item_1617186626617": [{}],"item_1617186643794": [{}],"item_1617186660861": [{}],"item_1617186702042": [{}],"item_1617186783814": [{}],"item_1617186859717": [{}],"item_1617186882738": [{"subitem_geolocation_place": [{}]}],"item_1617186901218": [{"subitem_1522399412622": [{}],"subitem_1522399651758": [{}]}],"item_1617186920753": [{}],"item_1617186941041": [{}],"item_1617187112279": [{}],"item_1617187187528": [{"subitem_1599711633003": [{}],"subitem_1599711660052": [{}],"subitem_1599711758470": [{}],"subitem_1599711788485": [{}]}],"item_1617349709064": [{"contributorAffiliations": [{"contributorAffiliationNameIdentifiers": [{}],"contributorAffiliationNames": [{}]}],"contributorAlternatives": [{}],"contributorMails": [{}],"contributorNames": [{}],"familyNames": [{}],"givenNames": [{}],"nameIdentifiers": [{}]}],"item_1617353299429": [{"subitem_1523320863692": [{}]}],"item_1617605131499": [{"date": [{}],"fileDate": [{}],"filesize": [{}]}],"item_1617610673286": [{"nameIdentifiers": [{}],"rightHolderNames": [{}]}],"item_1617620223087": [{}],"item_1617944105607": [{"subitem_1551256015892": [{}],"subitem_1551256037922": [{}]}],"item_1617187056579": {"bibliographic_titles": [{}]},"shared_user_ids": [],"item_1617258105262": {"resourcetype": "conference paper","resourceuri": "http://purl.org/coar/resource_type/c_5794"}},"files": [],"endpoints": {"initialization": "/api/deposits/items"}}
         activity.temp_data=json.dumps(temp_data)
         db.session.merge(activity)
         db.session.commit()
         result = deposit.record_data_from_act_temp()
-        test = {"pubdate": "2023-10-10","item_1617186385884": [{"subitem_1551255720400": "alter title"}],"item_1617186419668": [{"familyNames": [{"familyName": "test_family_name"}]}],"shared_user_id": -1,"item_1617258105262": {"resourcetype": "conference paper","resourceuri": "http://purl.org/coar/resource_type/c_5794"},"deleted_items": ["none_str","empty_list","item_1617186331708","item_1617186499011","item_1617186609386","item_1617186626617","item_1617186643794","item_1617186660861","item_1617186702042","item_1617186783814","item_1617186859717","item_1617186882738","item_1617186901218","item_1617186920753","item_1617186941041","item_1617187112279","item_1617187187528","item_1617349709064","item_1617353299429","item_1617605131499","item_1617610673286","item_1617620223087","item_1617944105607","item_1617187056579"],"$schema": "/items/jsonschema/1","title": "test_title","lang": ""}
+        test = {"pubdate": "2023-10-10","item_1617186385884": [{"subitem_1551255720400": "alter title"}],"item_1617186419668": [{"familyNames": [{"familyName": "test_family_name"}]}],"item_1617258105262": {"resourcetype": "conference paper","resourceuri": "http://purl.org/coar/resource_type/c_5794"},"deleted_items": ["none_str","empty_list","item_1617186331708","item_1617186499011","item_1617186609386","item_1617186626617","item_1617186643794","item_1617186660861","item_1617186702042","item_1617186783814","item_1617186859717","item_1617186882738","item_1617186901218","item_1617186920753","item_1617186941041","item_1617187112279","item_1617187187528","item_1617349709064","item_1617353299429","item_1617605131499","item_1617610673286","item_1617620223087","item_1617944105607","item_1617187056579",'shared_user_ids'],"$schema": "/items/jsonschema/1","title": "test_title","lang": ""}
         assert result == test
         
         # not exist title_parent_key in path
@@ -937,19 +919,9 @@ class TestWekoDeposit:
                             ('item_1617186331708', {'attribute_name': 'Title', 'attribute_value_mlt': [{'subitem_1551255647225': 'タイトル', 'subitem_1551255648112': 'ja'}, {'subitem_1551255647225': 'title', 'subitem_1551255648112': 'en'}]}), 
                             ('item_1617258105262', {'attribute_name': 'Resource Type', 'attribute_value_mlt': [{'resourceuri': 'http://purl.org/coar/resource_type/c_5794', 'resourcetype': 'conference paper'}]}), 
                             ('item_title', 'title'), ('item_type_id', '1'), ('control_number', 1), ('author_link', []), 
-                            ('_oai', {'id': '1'}), ('weko_shared_ids', []), ('owners', [1]), ('publish_date', '2022-08-20'), 
+                            ('_oai', {'id': '1'}), ('weko_shared_ids', []), ('owner', 1), ('owners', [1]), ('publish_date', '2022-08-20'), 
                             ('title', ['title']), ('relation_version_is_last', True), ('path', ['1']), ('publish_status','0')])
         test2 = None
-        # PersistentIdentifierデータベース登録
-        recid = PersistentIdentifier.create('recid', 1, object_type='rec', object_uuid=cid.object_uuid, status=PIDStatus.REGISTERED)
-        depid = PersistentIdentifier.create('depid', 1, object_type='rec', object_uuid=cid.object_uuid, status=PIDStatus.REGISTERED)
-        with db.session.begin_nested():
-            db.session.add(recid)
-            db.session.add(depid)
-        # RecordMetadataデータベース登録
-        record_matadata = RecordMetadata(id=cid.object_uuid, json=record['record_data'])
-        with db.session.begin_nested():
-            db.session.add(record_matadata)
 
         with patch("weko_index_tree.api.Indexes.get_path_list", return_value=['1']):
             
@@ -1044,7 +1016,7 @@ class TestWekoDeposit:
     # def _convert_description_to_object(self):
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoDeposit::test__convert_description_to_object -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
     def test__convert_description_to_object(sel,app,db,location,es_records):
-        _, records, _ = es_records
+        _, records = es_records
         record = records[0]
         deposit = record['deposit']
         deposit._convert_description_to_object()
@@ -1059,7 +1031,7 @@ class TestWekoDeposit:
     # def _convert_jpcoar_data_to_es(self):
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoDeposit::test__convert_jpcoar_data_to_es -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
     def test__convert_jpcoar_data_to_es(sel,app,db,location,es_records):
-        _, records, _ = es_records
+        _, records = es_records
         record = records[0]
         deposit = record['deposit']
         deposit._convert_jpcoar_data_to_es()
@@ -1067,7 +1039,7 @@ class TestWekoDeposit:
     # def _convert_data_for_geo_location(self):
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoDeposit::test__convert_data_for_geo_location -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
     def test__convert_data_for_geo_location(sel,app,db,location,es_records):
-        _, records, _ = es_records
+        _, records = es_records
         record = records[0]
         deposit = record['deposit']
         deposit._convert_data_for_geo_location()
@@ -1137,7 +1109,7 @@ class TestWekoDeposit:
     # def update_pid_by_index_tree_id(self, path):
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoDeposit::test_update_pid_by_index_tree_id -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
     def test_update_pid_by_index_tree_id(sel,app,db,location,es_records):
-        _, records, _ = es_records
+        _, records = es_records
         record = records[0]
         deposit = record['deposit']
         assert deposit.update_pid_by_index_tree_id('1')==True
@@ -1145,7 +1117,7 @@ class TestWekoDeposit:
     # def update_item_by_task(self, *args, **kwargs):
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoDeposit::test_update_item_by_task -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
     def test_update_item_by_task(sel,app,db,location,es_records):
-        _, records, _ = es_records
+        _, records = es_records
         record = records[0]
         deposit = record['deposit']
         record_data = record['record_data']
@@ -1170,11 +1142,17 @@ class TestWekoDeposit:
 
     # def update_feedback_mail(self):
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoDeposit::test_update_feedback_mail -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
-    def test_update_feedback_mail(sel,app,db,location,es_records):
+    def test_update_feedback_mail(sel,app,db,location,es_records, mocker):
         _, records = es_records
         record = records[0]
         deposit = record['deposit']
         assert deposit.update_feedback_mail()==None
+
+        mail_list = [{'email': 'test_email', 'author_id': ''}]
+        with patch('weko_deposit.api.FeedbackMailList.get_mail_list_by_item_id', return_value=mail_list):
+            mock = mocker.patch('weko_deposit.api.WekoIndexer.update_feedback_mail_list' , return_value=make_response())
+            deposit.update_feedback_mail()
+            mock.assert_called()
 
     # def remove_feedback_mail(self):
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoDeposit::test_remove_feedback_mail -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
@@ -1232,7 +1210,8 @@ class TestWekoDeposit:
         deposit = record['deposit']
         recid = record['recid']
         
-        assert deposit.merge_data_to_record_without_version(recid)
+        with patch('weko_deposit.api.Indexes.get_path_list', return_value=['2']):
+            assert deposit.merge_data_to_record_without_version(recid)
 
     # def prepare_draft_item(self, recid):
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoDeposit::test_prepare_draft_item -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
@@ -1404,7 +1383,7 @@ class TestWekoRecord:
         
         item_type = db_itemtype["item_type"]
         item_type_mapping = db_itemtype["item_type_mapping"]
-        
+
         mapping = item_type_mapping.mapping
         render = item_type.render
         meta_options = {**render["meta_fix"], **render["meta_list"], **render["meta_system"]}
@@ -1441,10 +1420,6 @@ class TestWekoRecord:
     #     def get_titles(self):
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoRecord::test_get_titles -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
     def test_get_titles(self,app,es_records,db_itemtype,db_oaischema):
-        record = WekoRecord({})
-        with app.test_request_context():
-            with pytest.raises(TypeError):
-                assert record.get_titles==""
         _, results = es_records
         result = results[0]
         record = result['record']

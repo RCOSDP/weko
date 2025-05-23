@@ -873,14 +873,16 @@ def find_and_update_location_size():
                 loc.size = row[1]
 """
 # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_register_item_metadata -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
-def test_register_item_metadata(i18n_app, es_item_file_pipeline, deposit, es_records):
+def test_register_item_metadata(i18n_app, es_item_file_pipeline, deposit, es_records, mocker):
     item = es_records["results"][0]["item"]
     root_path = os.path.dirname(os.path.abspath(__file__))
 
+    mock_commit = mocker.patch('weko_deposit.api.WekoDeposit.commit', return_value=None)
     with patch("invenio_files_rest.utils.find_and_update_location_size"):
-        assert register_item_metadata(item, root_path, is_gakuninrdm=False)
+        assert register_item_metadata(item, root_path, item['owner'], is_gakuninrdm=False)
         
 # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_register_item_metadata2 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+# @pytest.mark.parametrize('order_if', [1,2])
 @pytest.mark.parametrize('order_if', [1,2,3,4])
 def test_register_item_metadata2(i18n_app, es_item_file_pipeline, deposit, es_records2, db_index, es, db, mocker, order_if):
     item = es_records2["results"][0]["item"]
@@ -892,13 +894,13 @@ def test_register_item_metadata2(i18n_app, es_item_file_pipeline, deposit, es_re
                     with patch("weko_search_ui.utils.WekoDeposit.publish_without_commit", return_value=None):
                         remove_request = mocker.patch("weko_search_ui.utils.WekoDeposit.remove_request_mail")
                         delete_item_application = mocker.patch("weko_search_ui.utils.ItemApplication.delete_without_commit")
-                        register_item_metadata(item, root_path, is_gakuninrdm=False)
+                        register_item_metadata(item, root_path, item['owner'], is_gakuninrdm=False)
                         remove_request.assert_called()
                         delete_item_application.assert_called()
 
     item["metadata"]["request_mail_list"]={"email": "contributor@test.org", "author_id": ""}
     item["metadata"]["feedback_mail_list"]={"email": "contributor@test.org", "author_id": ""}
-    item["item_application"]={"workflow":"1", "terms":"term_free", "terms_description":"利用規約自由入力"}
+    item["item_application"]={"workflow":"1", "terms":"term_free", "termsDescription":"利用規約自由入力"}
     item["status"]="keep"
     
     item["identifier_key"]="item_1617186331708"
@@ -906,13 +908,16 @@ def test_register_item_metadata2(i18n_app, es_item_file_pipeline, deposit, es_re
         with patch("weko_deposit.api.Indexes.get_path_list", return_value={"","",""}):
             with patch("weko_search_ui.utils.WekoDeposit.commit", return_value=None):
                 with patch("weko_search_ui.utils.WekoDeposit.publish_without_commit", return_value=None):
+                    mock_feedback_mail = mocker.patch('weko_search_ui.utils.FeedbackMailList.update')
                     if order_if == 2:
                         mocker.patch("weko_search_ui.utils.WekoDeposit.get_file_data", return_value=[{"version_id":"1.2"}])
                         item["pid"]=None
-                        register_item_metadata(item, root_path, is_gakuninrdm=False)
+                        register_item_metadata(item, root_path, item['owner'], is_gakuninrdm=False)
+                        mock_feedback_mail.assert_called()
                     if order_if == 3:
                         mocker.patch("weko_search_ui.utils.WekoDeposit.get_file_data", return_value=[{"version_id":None}])
-                        register_item_metadata(item, root_path, is_gakuninrdm=False)
+                        register_item_metadata(item, root_path, item['owner'], is_gakuninrdm=False)
+                        mock_feedback_mail.assert_called()
                     if order_if == 4:
                         mocker.patch("weko_search_ui.utils.WekoDeposit.update_feedback_mail")
                         update_request = mocker.patch("weko_search_ui.utils.WekoDeposit.update_request_mail")
@@ -920,9 +925,10 @@ def test_register_item_metadata2(i18n_app, es_item_file_pipeline, deposit, es_re
                         mocker.patch("weko_search_ui.utils.WekoDeposit.newversion", return_value = WekoDeposit(0))
                         item["pid"]=None
                         item["status"]="new" 
-                        register_item_metadata(item, root_path, is_gakuninrdm=False)
+                        register_item_metadata(item, root_path, item['owner'], is_gakuninrdm=False)
                         update_request.assert_called()
                         update_item_application = mocker.patch("weko_search_ui.utils.ItemApplication.update")
+                        mock_feedback_mail.assert_called()
 
 
 # def update_publish_status(item_id, status):
@@ -1153,46 +1159,46 @@ def test_handle_check_and_prepare_item_application(i18n_app, record_with_metadat
     # 正常系
     workflow = WorkFlow(id=1)
     with patch("weko_search_ui.utils.WorkFlowApi.get_workflow_list", return_value=[workflow]):
-        record = {"metadata":{}, "item_application":{"workflow":"1", "terms":"term_free", "terms_description":"利用規約自由入力"}}
+        record = {"metadata":{}, "item_application":{"workflow":"1", "terms":"term_free", "termsDescription":"利用規約自由入力"}}
         handle_check_and_prepare_item_application([record])
         assert record["metadata"]["item_application"] == {"workflow":"1", "terms":"term_free", "termsDescription":"利用規約自由入力"}
 
     # 正常系 item_applicationのworkflowが存在しない
     workflow = WorkFlow(id=1)
     with patch("weko_search_ui.utils.WorkFlowApi.get_workflow_list", return_value=[workflow]):
-        record = {"metadata":{}, "item_application":{"terms":"term_free", "terms_description":"利用規約自由入力"}}
+        record = {"metadata":{}, "item_application":{"terms":"term_free", "termsDescription":"利用規約自由入力"}}
         handle_check_and_prepare_item_application([record])
         assert not record["metadata"].get("item_application", "")
 
     # 正常系 item_applicationのtermsが存在しない。
     workflow = WorkFlow(id=1)
     with patch("weko_search_ui.utils.WorkFlowApi.get_workflow_list", return_value=[workflow]):
-        record = {"metadata":{}, "item_application":{"workflow":"1", "terms_description":"利用規約自由入力"}}
+        record = {"metadata":{}, "item_application":{"workflow":"1", "termsDescription":"利用規約自由入力"}}
         handle_check_and_prepare_item_application([record])
         assert not record["metadata"].get("item_application", "")
 
     # 異常系 ファイル情報を持っている。
-    record = {"metadata":{}, "file_path":"/recid15/test.txt", "item_application":{"workflow":"1", "terms":"term_free", "terms_description":"利用規約自由入力"}}
+    record = {"metadata":{}, "file_path":"/recid15/test.txt", "item_application":{"workflow":"1", "terms":"term_free", "termsDescription":"利用規約自由入力"}}
     handle_check_and_prepare_item_application([record])
     assert record["errors"][0] == "If there is a info of content file, terms of use cannot be set."
 
     # 異常系 workflowが文字列である。
     workflow = WorkFlow(id=1)
     with patch("weko_search_ui.utils.WorkFlowApi.get_workflow_list", return_value=[workflow]):
-        record = {"metadata":{}, "item_application":{"workflow":"not_exist", "terms":"term_free", "terms_description":"利用規約自由入力"}}
+        record = {"metadata":{}, "item_application":{"workflow":"not_exist", "terms":"term_free", "termsDescription":"利用規約自由入力"}}
         handle_check_and_prepare_item_application([record])
         assert record["errors"][0] == "指定する提供方法はシステムに存在しません。"
 
     # 異常系 workflowがシステムに存在しないworkflowである。
     workflow = WorkFlow(id=1)
     with patch("weko_search_ui.utils.WorkFlowApi.get_workflow_list", return_value=[workflow]):
-        record = {"metadata":{}, "item_application":{"workflow":"999999999999", "terms":"term_free", "terms_description":"利用規約自由入力"}}
+        record = {"metadata":{}, "item_application":{"workflow":"999999999999", "terms":"term_free", "termsDescription":"利用規約自由入力"}}
         handle_check_and_prepare_item_application([record])
         assert record["errors"][0] == "指定する提供方法はシステムに存在しません。"
 
     # 異常系 termsが存在しないtermsである。
     with patch("weko_search_ui.utils.WorkFlowApi.get_workflow_list", return_value=[workflow]):
-        record = {"metadata":{}, "item_application":{"workflow":"1", "terms":"not_exist", "terms_description":"利用規約自由入力"}}
+        record = {"metadata":{}, "item_application":{"workflow":"1", "terms":"not_exist", "termsDescription":"利用規約自由入力"}}
         handle_check_and_prepare_item_application([record])
         assert record["errors"][0] == "指定する利用規約はシステムに存在しません。"
 

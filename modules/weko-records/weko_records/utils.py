@@ -80,10 +80,10 @@ def json_loader(data, pid, owner_id=None, with_deleted=False, replace_field=True
         if data.get("weko_shared_ids", []):
             return dict(weko_shared_ids=data.get("shared_user_ids",[]))
         else:
-            if data.get("shared_user_ids", []):
-                return dict(weko_shared_ids=data.get("weko_shared_ids"))
+            if not data.get("shared_user_ids", []):
+                return dict(weko_shared_ids=data.get("weko_shared_ids",[]))
             else:
-                return dict(weko_shared_ids=data.get("shared_user_ids"))
+                return dict(weko_shared_ids=data.get("shared_user_ids",[]))
 
     dc = OrderedDict()
     jpcoar = OrderedDict()

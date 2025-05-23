@@ -5534,7 +5534,7 @@ def db_fileonetimedownload(app, db):
         record_id='1',
         download_count=10,
         expiration_date=0,
-        extra_info=str({"is_guest": True, "send_usage_report": True, "usage_application_activity_id": "","password_for_download":"test_pass"})
+        extra_info={"is_guest": True, "send_usage_report": True, "usage_application_activity_id": "","password_for_download":"test_pass"}
     )
     db.session.add(record)
     return record

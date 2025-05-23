@@ -381,7 +381,7 @@ class TestWorkActivity:
         with app.test_request_context():
             login_user(users[0]['obj'])
             activities, max_page, size, page, name_param, count = \
-                activity.get_activity_list(None, conditions, False)
+                activity.get_activity_list(conditions, False)
             
             if conditions.get('tab')[0] == 'todo':
                 assert size == conditions.get('sizetodo')[0] if conditions.get('sizetodo') else '20'
@@ -414,7 +414,7 @@ class TestWorkActivity:
         with app.test_request_context():
             login_user(users[2]['obj'])
             activities, max_page, size, page, name_param, count = \
-                activity.get_activity_list(None, conditions, False)
+                activity.get_activity_list(conditions, False)
 
             if conditions.get('tab')[0] == 'todo':
                 assert size == conditions.get('sizetodo')[0] if conditions.get('sizetodo') else '20'
@@ -548,23 +548,25 @@ class TestWorkActivity:
         assert result == [3,4]
 
     # .tox/c1/bin/pytest --cov=weko_workflow tests/test_api.py::TestWorkActivity::test_get_activity_list -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
-    def test_get_activity_list(client, activity_acl, activity_acl_users):
+    def test_get_activity_list(client, activity_acl, activity_acl_users, db):
         # {user_id:{tab:[activity_id,...],...}}
         result = {
             1:{# sysadmin
                 "todo":[43, 42, 41, 40, 39, 38, 37, 36, 35, 34, 33, 32, 31, 28, 27, 26, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 7, 6, 5, 2, 1], 
-                "wait":[5,2], 
+                "wait":[], 
                 "all":[43, 42, 41, 40, 39, 38, 37, 36, 35, 34, 33, 32, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1]
             },
             3:{# test_role01_user
                 "todo":[42, 38, 37, 34, 33, 32, 31, 27, 22, 21, 19, 18, 16, 14, 5], 
-                "wait":[41, 40, 39, 36, 35, 28, 26, 23, 17], 
-                "all":[42, 41, 40, 39, 38, 37, 36, 35, 34, 33, 32, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 19, 18, 17, 16, 14, 5]
+                "wait":[17], 
+                # "wait":[41, 40, 39, 36, 35, 28, 26, 23, 17], 
+                "all":[42, 41, 40, 39, 38, 37, 36, 35, 34, 33, 32, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 19, 18, 16, 14, 5]
             },
             4:{# test_role01_comadmin
                 "todo":[42, 41, 40, 38, 34, 32, 26, 23, 22, 18, 16, 14, 12, 11, 10, 7, 6, 5], 
-                "wait":[39, 21, 20, 19, 17, 15, 13], 
-                "all":[42, 41, 40, 39, 38, 34, 32, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5]
+                "wait":[39], 
+                # "wait":[39, 21, 20, 19, 17, 15, 13], 
+                "all":[42, 41, 40, 38, 34, 32, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5]
             },
             5:{# test_role02_user
                 "todo":[40,35,19,15,10],
@@ -572,6 +574,15 @@ class TestWorkActivity:
                 "all":[40,35,19,15,10]
             },
         }
+
+        # with open('tests/data/test.sql', 'r') as f:
+        #     sql_query = f.read().replace('\n', ' ')
+
+        # result_db = db.session.execute(sql_query).fetchall()
+        # for row in result_db:
+        #     print('id:', row.id)
+        #     print('activity_login_user', row.activity_login_user)
+        #     print('row', row)
         
         size_list = [20, 50, 75]
         activity = WorkActivity()
@@ -588,38 +599,76 @@ class TestWorkActivity:
                             conditions["size{}".format(tab)]=[str(res_size)]
                         if res_page != 1:
                             conditions["pages{}".format(tab)]=[str(res_page)]
-                        activities, max_page, size, page, name_param = activity.get_activity_list(conditions=conditions)
+                        activities, max_page, size, page, name_param, count = activity.get_activity_list(conditions=conditions)
                         assert [ac.id for ac in activities] == acts[res_size*(res_page-1):res_size*res_page]
                         assert max_page == num_page
                         assert size == str(res_size)
                         assert page == str(res_page)
+                        assert count == len(acts)
                 
                 num_page = math.ceil(len(acts)/20)
                 conditions = {"tab":[tab]}
                 # is_get_all = True
-                activities, max_page, size, page, name_param = activity.get_activity_list(conditions=conditions,is_get_all=True)
+                activities, max_page, size, page, name_param, count = activity.get_activity_list(conditions=conditions,is_get_all=True)
                 assert [ac.id for ac in activities] == acts
                 assert max_page == num_page
                 assert size == '20'
                 assert page == '1'
+                assert count == len(acts)
 
                 # activitylog = True
-                activities, max_page, size, page, name_param = activity.get_activity_list(conditions=conditions,activitylog=True)
+                activities, max_page, size, page, name_param, count = activity.get_activity_list(conditions=conditions,activitylog=True)
                 assert [ac.id for ac in activities] == acts
                 assert max_page == math.ceil(len(acts)/100000)
                 assert size == 100000
                 assert page == 1
+                assert count == len(acts)
         
         # count = 0
         user = User.query.filter_by(id=7).one()
         login_user(user)
         conditions={"tab":["todo"]}
-        activities, max_page, size, page, name_param = activity.get_activity_list(conditions=conditions)
+        activities, max_page, size, page, name_param, count = activity.get_activity_list(conditions=conditions)
         assert activities == []
         assert max_page == 0
         assert size == '20'
         assert page == '1'
-        assert 1==2
+
+        current_app.config['WEKO_ITEMS_UI_MULTIPLE_APPROVALS'] = False
+        user = User.query.filter_by(id=7).one()
+        login_user(user)
+        conditions={"tab":["todo"]}
+        activities, max_page, size, page, name_param, count = activity.get_activity_list(conditions=conditions)
+        assert activities == []
+        assert max_page == 0
+        assert size == '20'
+        assert page == '1'
+    
+    # .tox/c1/bin/pytest --cov=weko_workflow tests/test_api.py::TestWorkActivity::test_get_usage_report_activities -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+    def test_get_usage_report_activities(app, activity_usage_report):
+        activity = WorkActivity()
+        result = activity.get_usage_report_activities([])
+        assert result == activity_usage_report
+
+        result = activity.get_usage_report_activities([str(activity.activity_id) for activity in activity_usage_report])
+        assert result == activity_usage_report
+
+        result = activity.get_usage_report_activities([], size=5, page=1)
+        assert len(result) == 5
+        assert result == activity_usage_report[:5]
+
+        result = activity.get_usage_report_activities([str(activity.activity_id) for activity in activity_usage_report], size=5, page=2)
+        assert len(result) == 5
+        assert result == activity_usage_report[5:10]
+    
+    # .tox/c1/bin/pytest --cov=weko_workflow tests/test_api.py::TestWorkActivity::test_count_all_usage_report_activities -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+    def test_count_all_usage_report_activities(app, activity_usage_report):
+        activity = WorkActivity()
+        result = activity.count_all_usage_report_activities([])
+        assert result == 10
+
+        result = activity.count_all_usage_report_activities([str(activity.activity_id) for activity in activity_usage_report[:5]])
+        assert result == 5
 
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_api.py::test_WorkActivity_get_activity_index_search -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_WorkActivity_get_activity_index_search(app, db_register):
@@ -787,7 +836,7 @@ def test_WorkActivity_get_activity_action_role(app, activity_with_roles, action_
     owner_id = int(item_metadata['owner'])
 
     workflow_activity = WorkActivity()
-    _, users = workflow_activity.get_activity_action_role(activity.id, action_id, action_order)
+    _, users = workflow_activity.get_activity_action_role(str(activity.id), action_id, action_order)
     print(users)
     assert (owner_id in users[expected_index]) == expected_included
 
@@ -803,11 +852,11 @@ def test_WorkActivity_get_activity_action_role2(app, activity_with_roles_for_req
     owner_id = int(item_metadata['owner'])
 
     workflow_activity = WorkActivity()
-    roles, _ = workflow_activity.get_activity_action_role(activity.id, action_id, action_order)
+    roles, _ = workflow_activity.get_activity_action_role(str(activity.id), action_id, action_order)
     assert (owner_id in roles[expected_index]) == expected_included
 
 # for request_mail
-# .tox/c1/bin/pytest --cov=weko_workflow tests/test_api.py::test_WorkActivity_get_activity_action_role2 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_api.py::test_WorkActivity_get_activity_action_role3 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 @pytest.mark.parametrize('action_id, action_order, expected_index, expected_included', [
     (7, 5, 'allow', True),
     (4, 6, 'deny', True),
@@ -819,7 +868,7 @@ def test_WorkActivity_get_activity_action_role3(app, activity_with_roles_for_req
     owner_id = int(item_metadata['owner'])
 
     workflow_activity = WorkActivity()
-    _, users = workflow_activity.get_activity_action_role(activity.id, action_id, action_order)
+    _, users = workflow_activity.get_activity_action_role(str(activity.id), action_id, action_order)
     assert (owner_id in users[expected_index]) == expected_included
 
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_api.py::test_WorkActivity_query_activities_by_tab_is_todo -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp

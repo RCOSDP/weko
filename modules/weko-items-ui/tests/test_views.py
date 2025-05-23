@@ -20979,10 +20979,16 @@ def test_get_current_login_user_id_acl(
         (7, 200),
     ],
 )
-def test_prepare_edit_item_login(client_api, users, db_records, id, status_code, db_sessionlifetime):
+def test_prepare_edit_item_login(app, client_api, users, db_records, id, status_code, db_sessionlifetime):
     depid, recid, parent, doi, record, item = db_records[0]
     deposit_id = record['_deposit']['id']
     login_user_via_session(client=client_api, email=users[id]["email"])
+    redis_connection = RedisConnection()
+    datastore = redis_connection.connection(db=app.config['ACCOUNTS_SESSION_REDIS_DB_NO'], kv = True)
+    key = 'pid_{}_will_be_edit'.format(deposit_id)
+    if datastore.redis.exists(key):
+        datastore.delete(key)
+
     res = client_api.post(
         "/api/items/prepare_edit_item",
         data=json.dumps({'pid_value': deposit_id}),
@@ -21027,6 +21033,31 @@ def test_prepare_edit_item_login_1(client_api, users, id, status_code):
         content_type="text/plain",
     )
     assert res.status_code == status_code
+
+# .tox/c1/bin/pytest --cov=weko_items_ui tests/test_views.py::test_prepare_edit_item_login_2 -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
+def test_prepare_edit_item_login_2(app, client_api, users, db_records, db_itemtype):
+    _, _, _, _, record, _ = db_records[0]
+    deposit_id = record['_deposit']['id']
+    login_user_via_session(client=client_api, email=users[0]["email"])
+    url = '/api/items/prepare_edit_item'
+    data_json = {'pid_value': deposit_id}
+    data = json.dumps(data_json)
+    content_type = 'application/json'
+    redis_connection = RedisConnection()
+    datastore = redis_connection.connection(db=app.config['ACCOUNTS_SESSION_REDIS_DB_NO'], kv = True)
+    datastore.put(
+        'pid_{}_will_be_edit'.format(deposit_id),
+        'test'.encode('utf-8'))
+    res = client_api.post(url, data=data, content_type=content_type)
+    assert json.loads(res.data) == {'code': -1, 'msg': 'This Item is being edited.'}
+    datastore.delete('pid_{}_will_be_edit'.format(deposit_id))
+    res = client_api.post(url, data=data, content_type=content_type)
+    assert json.loads(res.data) == {'code': -1, 'msg': 'You are not allowed to edit this item.'}
+    with patch('weko_deposit.api.WekoDeposit.get_record', return_value={'owner': str(users[0]['id']), 'weko_shared_ids': [users[0]['id']]}):
+        datastore.delete('pid_{}_will_be_edit'.format(deposit_id))
+        res = client_api.post(url, data=data, content_type=content_type)
+        assert json.loads(res.data) == {'code': -1, 'msg': 'Dependency ItemType not found.'} 
+
 
 # def ranking():
 # .tox/c1/bin/pytest --cov=weko_items_ui tests/test_views.py::test_ranking_acl_nologin -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp

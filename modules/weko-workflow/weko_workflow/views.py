@@ -1462,6 +1462,15 @@ def next_action(activity_id='0', action_id=0):
     next_action_id = next_flow_action[0].action_id
     next_action_order = next_flow_action[
         0].action_order if action_order else None
+    action_mails_setting = {"previous":
+                            current_flow_action.send_mail_setting
+                            if current_flow_action.send_mail_setting
+                            else {},
+                            "next": next_flow_action[0].send_mail_setting
+                            if next_flow_action[0].send_mail_setting
+                            else {},
+                            "approval": False,
+                            "reject": False}
     # Start to send mail
     if next_action_endpoint in ['approval' , 'end_action'] and post_json.get('temporary_save') == 0:
         next_action_detail = work_activity.get_activity_action_comment(
@@ -1495,15 +1504,7 @@ def next_action(activity_id='0', action_id=0):
             
             if not url_and_expired_date:
                 url_and_expired_date = {}
-        action_mails_setting = {"previous":
-                                current_flow_action.send_mail_setting
-                                if current_flow_action.send_mail_setting
-                                else {},
-                                "next": next_flow_action[0].send_mail_setting
-                                if next_flow_action[0].send_mail_setting
-                                else {},
-                                "approval": True,
-                                "reject": False}
+        action_mails_setting['approval'] = True
 
         next_action_handler = next_action_detail.action_handler
         # in case of current action has action user
@@ -1539,8 +1540,8 @@ def next_action(activity_id='0', action_id=0):
         current_user.is_authenticated and \
         (not activity_detail.extra_info or not
             activity_detail.extra_info.get('guest_mail')):
-        process_send_notification_mail(activity_detail,
-                                       action_endpoint, next_action_endpoint)
+        process_send_notification_mail(activity_detail, action_endpoint, 
+                                       next_action_endpoint, action_mails_setting)
 
     if post_json.get('temporary_save') == 1 \
             and action_endpoint not in ['identifier_grant', 'item_link']:
@@ -2792,7 +2793,7 @@ def get_request_maillist(activity_id='0'):
             for mail in request_mail_list:
                 # replace email address
                 if mail.get('author_id'):
-                    email = Authors.get_first_email_by_id(
+                    email = Authors.get_emails_by_id(
                         mail.get('author_id'))
                     if email:
                         mail['email'] = email

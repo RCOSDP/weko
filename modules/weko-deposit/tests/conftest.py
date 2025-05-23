@@ -679,7 +679,7 @@ def es_records(app, db, location, db_itemtype, db_oaischema):
                 doi = PersistentIdentifier.create('doi', "https://doi.org/10.xyz/{}".format(format_number(i, 10)),object_type='rec', object_uuid=rec_uuid,status=PIDStatus.REGISTERED)
                 hdl = PersistentIdentifier.create('hdl', "https://hdl.handle.net/0000/{}".format(format_number(i, 10)),object_type='rec', object_uuid=rec_uuid,status=PIDStatus.REGISTERED)
 
-            record = WekoRecord.create(record_data, id_=rec_uuid)
+            record = WekoRecord.create(record_data, id_=rec_uuid, recid=recid)
             # from six import BytesIO
             from invenio_files_rest.models import Bucket
             from invenio_records_files.models import RecordsBuckets

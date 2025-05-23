@@ -1062,7 +1062,7 @@ def test_default_view_method_fix35133(app, records, itemtypes, indexstyle,mocker
                 assert kwargs["google_dataset_meta"] == '{"@context": "https://schema.org/", "@type": "Dataset", "citation": ["http://hdl.handle.net/2261/0002005680", "https://repository.dl.itc.u-tokyo.ac.jp/records/2005680"], "creator": [{"@type": "Person", "alternateName": "creator alternative name", "familyName": "creator family name", "givenName": "creator given name", "identifier": "123", "name": "creator name"}], "description": "『史料編纂掛備用寫眞畫像圖畫類目録』（1905年）の「画像」（肖像画模本）の部に著録する資料の架番号の新旧対照表。史料編纂所所蔵肖像画模本データベースおよび『目録』版面画像へのリンク付き。『画像史料解析センター通信』98（2022年10月）に解説記事あり。", "distribution": [{"@type": "DataDownload", "contentUrl": "https://repository.dl.itc.u-tokyo.ac.jp/record/2005680/files/comparison_table_of_preparation_image_catalog.xlsx", "encodingFormat": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"}, {"@type": "DataDownload", "contentUrl": "https://raw.githubusercontent.com/RCOSDP/JDCat-base/main/apt.txt", "encodingFormat": "text/plain"}, {"@type": "DataDownload", "contentUrl": "https://raw.githubusercontent.com/RCOSDP/JDCat-base/main/environment.yml", "encodingFormat": "application/x-yaml"}, {"@type": "DataDownload", "contentUrl": "https://raw.githubusercontent.com/RCOSDP/JDCat-base/main/postBuild", "encodingFormat": "text/x-shellscript"}], "includedInDataCatalog": {"@type": "DataCatalog", "name": "https://localhost"}, "license": ["CC BY"], "name": "『史料編纂掛備用写真画像図画類目録』画像の部：新旧架番号対照表", "spatialCoverage": [{"@type": "Place", "geo": {"@type": "GeoCoordinates", "latitude": "point latitude test", "longitude": "point longitude test"}}, {"@type": "Place", "geo": {"@type": "GeoShape", "box": "1 3 2 4"}}, "geo location place test"]}' 
 # def create_secret_url_and_send_mail(pid:PersistentIdentifier, record:WekoRecord, filename:str, **kwargs) -> str:
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_create_secret_url_and_send_mail -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
-def test_create_secret_url_and_send_mail(app,client,db,users,records):
+def test_create_secret_url_and_send_mail(app,client,db,users,records, db_mailTemplateGenre, db_mailtemplates):
     app.config['WEKO_WORKFLOW_DATE_FORMAT'] = "%Y-%m-%d"
     indexer, results = records
     record = results[1]
@@ -1083,6 +1083,11 @@ def test_create_secret_url_and_send_mail(app,client,db,users,records):
                     #W2023-22-2 TestNo.4
                     res = client.post(secret_file_url ,data=json.dumps({}), content_type='application/json')
                     assert res.status_code == 200
+        
+        with patch('weko_records_ui.views.process_send_mail', return_value = False):
+            with patch("flask.templating._render", return_value=""):
+                res = client.post(secret_file_url ,data=json.dumps({}), content_type='application/json')
+                assert res.status_code == 500
 
         
     #W2023-22-2 TestNo.6

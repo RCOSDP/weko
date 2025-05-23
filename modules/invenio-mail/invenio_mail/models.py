@@ -150,7 +150,23 @@ class MailTemplates(db.Model):
             if data['key']:
                 db.session.merge(obj)
             else:
+                obj.mail_genre_id = '3'
                 db.session.add(obj)
             db.session.commit()
-        except:
+            return True
+        except Exception as ex:
             db.session.rollback()
+            current_app.logger.error(ex)
+            return False
+
+    @classmethod
+    def delete_by_id(cls, id):
+        """Delete mail template."""
+        try:
+            cls.query.filter_by(id=id).delete()
+            db.session.commit()
+            return True
+        except Exception as ex:
+            db.session.rollback()
+            current_app.logger.error(ex)
+            return False

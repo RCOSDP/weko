@@ -472,20 +472,19 @@
     },
     "relation_version_is_last": true
   },
-
   {
-    "_oai": { "id": "oai:weko3.example.org:00000003", "sets": ["3"] },
+    "_oai": { "id": "oai:weko3.example.org:00000004", "sets": ["4"] },
     "path": ["3"],
     "owner": 1,
     "owners": [1],
     "created_by": 1,
-    "recid": "3",
-    "title": ["title3"],
+    "recid": "4",
+    "title": ["title4"],
     "pubdate": { "attribute_name": "PubDate", "attribute_value": "2022-08-20" },
     "_buckets": { "deposit": "3e99cfca-098b-42ed-b8a0-20ddd09b3e02" },
     "_deposit": {
-      "id": "3",
-      "pid": { "type": "depid", "value": "3", "revision_id": 0 },
+      "id": "4",
+      "pid": { "type": "depid", "value": "4", "revision_id": 0 },
       "owner": 1,
       "owners": [1],
       "status": "published",
@@ -495,9 +494,10 @@
         "username": "",
         "displayname": ""
       },
-      "shared_user_ids":[1]
+      "shared_user_ids":[1],
+      "weko_shared_ids":[1]
     },
-    "item_title": "title3",
+    "item_title": "title4",
     "author_link": [],
     "item_type_id": "1",
     "publish_date": "2022-08-20",
@@ -506,7 +506,7 @@
     "item_1617186331708": {
       "attribute_name": "Title",
       "attribute_value_mlt": [
-        { "subitem_1551255647225": "title3", "subitem_1551255648112": "ja" }
+        { "subitem_1551255647225": "title4", "subitem_1551255648112": "ja" }
       ]
     },
     "item_1617258105262": {

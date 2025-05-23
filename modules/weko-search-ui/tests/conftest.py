@@ -660,7 +660,15 @@ def base_app(instance_path, search_class, request):
         WEKO_INDEX_TREE_API="/api/tree/index/",
         WEKO_SEARCH_UI_TO_NUMBER_FORMAT="99999999999999.99",
         WEKO_SEARCH_UI_BASE_TEMPLATE=WEKO_SEARCH_UI_BASE_TEMPLATE,
-        WEKO_SEARCH_KEYWORDS_DICT=WEKO_SEARCH_KEYWORDS_DICT
+        WEKO_SEARCH_KEYWORDS_DICT=WEKO_SEARCH_KEYWORDS_DICT,
+        WEKO_SCHEMA_JPCOAR_V2_SCHEMA_NAME="jpcoar_mapping",
+        WEKO_SCHEMA_JPCOAR_V2_RESOURCE_TYPE_REPLACE={
+            "periodical": "journal",
+            "interview": "other",
+            "internal report": "other",
+            "report part": "other",
+            "conference object": "conference output",
+        }
     )
     app_.url_map.converters["pid"] = PIDConverter
     app_.config["RECORDS_REST_ENDPOINTS"]["recid"]["search_class"] = search_class
@@ -2489,29 +2497,31 @@ def es_records(app, db, db_index, location, db_itemtype, db_oaischema):
                     ],
                 },
                 "relation_version_is_last": True,
-                "item_1617605131499": {
-                    "attribute_name": "File",
-                    "attribute_type": "file",
-                    "attribute_value_mlt": [
-                        {
-                            "url": {
-                                "url": "https://weko3.example.org/record/{}/files/hello.txt".format(
-                                    i
-                                )
-                            },
-                            "date": [
-                                {"dateType": "Available", "dateValue": "2022-09-07"}
-                            ],
-                            "format": "plain/text",
-                            "filename": "hello.txt",
-                            "filesize": [{"value": "146 KB"}],
-                            "accessrole": "open_access",
-                            "version_id": "",
-                            "mimetype": "application/pdf",
-                            "file": "",
-                        }
-                    ],
-                },
+                "item_1617605131499": [
+                    {
+                        "attribute_name": "File",
+                        "attribute_type": "file",
+                        "attribute_value_mlt": [
+                            {
+                                "url": {
+                                    "url": "https://weko3.example.org/record/{}/files/hello.txt".format(
+                                        i
+                                    )
+                                },
+                                "date": [
+                                    {"dateType": "Available", "dateValue": "2022-09-07"}
+                                ],
+                                "format": "plain/text",
+                                "filename": "hello.txt",
+                                "filesize": [{"value": "146 KB"}],
+                                "accessrole": "open_access",
+                                "version_id": "",
+                                "mimetype": "application/pdf",
+                                "file": "",
+                            }
+                        ],
+                    },
+                ]
             }
 
             item_data = {
@@ -2605,13 +2615,13 @@ def es_records(app, db, db_index, location, db_itemtype, db_oaischema):
             stream = BytesIO(b"Hello, World")
             # record.files['hello.txt'] = stream
             # obj=ObjectVersion.create(bucket=bucket.id, key='hello.txt', stream=stream)
-            record["item_1617605131499"]["attribute_value_mlt"][0]["file"] = (
+            record["item_1617605131499"][0]["attribute_value_mlt"][0]["file"] = (
                 base64.b64encode(stream.getvalue())
             ).decode("utf-8")
             deposit = WekoDeposit(record, record.model)
             deposit.commit()
             # record['item_1617605131499']['attribute_value_mlt'][0]['version_id'] = str(obj.version_id)
-            record["item_1617605131499"]["attribute_value_mlt"][0]["version_id"] = "1"
+            record["item_1617605131499"][0]["attribute_value_mlt"][0]["version_id"] = "1"
 
             record_data["content"] = [
                 {
@@ -2713,29 +2723,31 @@ def es_records2(app, db, db_index, location, db_itemtype, db_oaischema):
                     ],
                 },
                 "relation_version_is_last": True,
-                "item_1617605131499": {
-                    "attribute_name": "File",
-                    "attribute_type": "file",
-                    "attribute_value_mlt": [
-                        {
-                            "url": {
-                                "url": "https://weko3.example.org/record/{}/files/hello.txt".format(
-                                    i
-                                )
-                            },
-                            "date": [
-                                {"dateType": "Available", "dateValue": "2022-09-07"}
-                            ],
-                            "format": "plain/text",
-                            "filename": "hello.txt",
-                            "filesize": [{"value": "146 KB"}],
-                            "accessrole": "open_access",
-                            "version_id": "",
-                            "mimetype": "application/pdf",
-                            "file": "",
-                        }
-                    ],
-                }
+                "item_1617605131499": [
+                    {
+                        "attribute_name": "File",
+                        "attribute_type": "file",
+                        "attribute_value_mlt": [
+                            {
+                                "url": {
+                                    "url": "https://weko3.example.org/record/{}/files/hello.txt".format(
+                                        i
+                                    )
+                                },
+                                "date": [
+                                    {"dateType": "Available", "dateValue": "2022-09-07"}
+                                ],
+                                "format": "plain/text",
+                                "filename": "hello.txt",
+                                "filesize": [{"value": "146 KB"}],
+                                "accessrole": "open_access",
+                                "version_id": "",
+                                "mimetype": "application/pdf",
+                                "file": "",
+                            }
+                        ],
+                    }
+                ]
             }
 
             item_data = {
@@ -2830,13 +2842,13 @@ def es_records2(app, db, db_index, location, db_itemtype, db_oaischema):
             stream = BytesIO(b"Hello, World")
             # record.files['hello.txt'] = stream
             # obj=ObjectVersion.create(bucket=bucket.id, key='hello.txt', stream=stream)
-            record["item_1617605131499"]["attribute_value_mlt"][0]["file"] = (
+            record["item_1617605131499"][0]["attribute_value_mlt"][0]["file"] = (
                 base64.b64encode(stream.getvalue())
             ).decode("utf-8")
             deposit = WekoDeposit(record, record.model)
             deposit.commit()
             # record['item_1617605131499']['attribute_value_mlt'][0]['version_id'] = str(obj.version_id)
-            record["item_1617605131499"]["attribute_value_mlt"][0]["version_id"] = "1"
+            record["item_1617605131499"][0]["attribute_value_mlt"][0]["version_id"] = "1"
 
             record_data["content"] = [
                 {

@@ -62,6 +62,7 @@ from invenio_pidrelations import InvenioPIDRelations
 from invenio_pidstore import InvenioPIDStore
 from invenio_search import RecordsSearch,InvenioSearch,current_search_client
 from invenio_oaiserver.ext import InvenioOAIServer
+from invenio_oauth2server import InvenioOAuth2Server
 from invenio_records.ext import InvenioRecords
 from invenio_records.models import RecordMetadata
 from invenio_pidstore.models import PersistentIdentifier
@@ -183,6 +184,7 @@ def base_app(instance_path, cache_config,request ,search_class):
     InvenioAccess(app_)
     InvenioAdmin(app_)
     InvenioCache(app_)
+    InvenioOAuth2Server(app_)
     InvenioPIDRelations(app_)
     InvenioPIDStore(app_)
     InvenioFilesREST(app_)

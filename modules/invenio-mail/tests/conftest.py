@@ -28,7 +28,8 @@ from flask_babelex import Babel
 from sqlalchemy_utils.functions import create_database, database_exists, \
     drop_database
 
-
+from weko_admin.config import WEKO_ADMIN_RESTRICTED_ACCESS_SETTINGS
+from weko_admin.models import AdminSettings
 from weko_index_tree.models import Index
 from invenio_communities.models import Community
 from invenio_access import InvenioAccess
@@ -38,7 +39,7 @@ from invenio_accounts.models import User, Role
 from invenio_accounts.testutils import create_test_user
 
 from invenio_mail import InvenioMail, config
-from invenio_mail.admin import mail_adminview
+from invenio_mail.admin import mail_adminview, mail_templates_adminview
 from invenio_mail.models import MailConfig
 
 
@@ -60,6 +61,37 @@ def base_app(instance_path):
              'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'),
         #SQLALCHEMY_DATABASE_URI=os.getenv('SQLALCHEMY_DATABASE_URI',
         #                                  'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest'),
+        WEKO_RECORDS_UI_MAIL_TEMPLATE_SECRET_GENRE_ID=1,
+        WEKO_ADMIN_RESTRICTED_ACCESS_SETTINGS = {
+            "secret_URL_file_download": {
+                "secret_expiration_date": 30,
+                "secret_expiration_date_unlimited_chk": False,
+                "secret_download_limit": 10,
+                "secret_download_limit_unlimited_chk": False,
+            },
+            "content_file_download": {
+                "expiration_date": 30,
+                "expiration_date_unlimited_chk": False,
+                "download_limit": 10,
+                "download_limit_unlimited_chk": False,
+            },
+            "usage_report_workflow_access": {
+                "expiration_date_access": 500,
+                "expiration_date_access_unlimited_chk": False,
+            },
+            "terms_and_conditions": [],
+            "error_msg": {
+                "key" : "",
+                "content" : {
+                    "ja" : {
+                        "content" : "このデータは利用できません（権限がないため）。"
+                    },
+                    "en":{
+                        "content" : "This data is not available for this user"
+                    }
+                }
+            }
+        }
     )
     Babel(app_)
     InvenioDB(app_)
@@ -71,6 +103,8 @@ def base_app(instance_path):
     admin = Admin(app_)
     view_class = mail_adminview['view_class']
     admin.add_view(view_class(**mail_adminview['kwargs']))
+    templates_view_class = mail_templates_adminview['view_class']
+    admin.add_view(templates_view_class(**mail_templates_adminview['kwargs']))
     
     
     return app_
@@ -243,6 +277,40 @@ def mail_configs(db):
     db.session.commit()
     return config
 
+@pytest.fixture()
+def mail_templates(db):
+    """Create mail templates."""
+    from invenio_mail.models import MailTemplates
+    from invenio_mail.models import MailTemplateGenres
+    genres = []
+    genre1 = MailTemplateGenres(
+        id=1,
+        name="Notification of secret URL provision"
+    )
+    genres.append(genre1)
+    genre2 = MailTemplateGenres(
+        id=2,
+        name="Guidance to the application form"
+    )
+    genres.append(genre2)
+    genre3 = MailTemplateGenres(
+        id=3,
+        name="Others"
+    )
+    genres.append(genre3)
+    db.session.add_all(genres)
+    db.session.commit()
+    template = MailTemplates(
+        id=1,
+        mail_subject="test subject",
+        mail_body="test body",
+        default_mail=True,
+        mail_genre_id=genre1.id,
+    )
+    db.session.add(template)
+    db.session.commit()
+    return template
+
 @pytest.yield_fixture()
 def email_admin_app():
     """Flask application fixture."""
@@ -330,3 +398,12 @@ def email_ctx():
         'content': 'This a content.',
         'sender': 'sender',
     }
+
+@pytest.fixture
+def admin_settings(db):
+    restricted_access = AdminSettings(
+        name='restricted_access',
+        settings=WEKO_ADMIN_RESTRICTED_ACCESS_SETTINGS
+    )
+    db.session.add(restricted_access)
+    db.session.commit()

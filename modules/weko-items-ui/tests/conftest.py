@@ -184,6 +184,7 @@ def base_app(instance_path):
         #  WEKO_ITEMS_UI_INDEX_TEMPLATE= 'weko_items_ui/item_index.html',
         CACHE_TYPE="redis",
         ACCOUNTS_SESSION_REDIS_DB_NO=1,
+        CACHE_REDIS_HOST="redis",
         REDIS_PORT="6379",
         CACHE_REDIS_URL=os.environ.get("CACHE_REDIS_URL", "redis://redis:6379/0"),
         WEKO_BUCKET_QUOTA_SIZE=50 * 1024 * 1024 * 1024,

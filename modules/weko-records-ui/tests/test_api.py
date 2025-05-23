@@ -18,6 +18,7 @@ def test_send_request_mail(app, make_request_maillist):
 
     redis_connection = RedisConnection()
     datastore = redis_connection.connection(db=app.config['CACHE_REDIS_DB'])
+    datastore.delete(b'test_key')
     datastore.hmset(b'test_key',{b'authorization_token':b'token'})
 
     correct_mail_info = {
@@ -178,7 +179,7 @@ def test_validate_captcha_answer(app):
 
     redis_connection = RedisConnection()
     datastore = redis_connection.connection(db=app.config['CACHE_REDIS_DB'])
-
+    datastore.delete(b'test_key')
     datastore.hmset(b'test_key',{b'calculation_result':b'100'})
 
     # TestCase: missing 'key' in request body

@@ -147,7 +147,13 @@ def test_check_file_download_permission(app, records, users, db_file_permission,
             fjson['role'] = [{'role':'none_loggin'},{'role':'1'},{'role':'2'},{'role':'3'},{'role':'4'},{'role':'5'}]
             assert check_file_download_permission(record, fjson, False) == True
 
+            fjson['date'][0]['dateValue'] = (datetime.now() + timedelta(weeks=1)).strftime("%Y-%m-%d")
+            record['publish_date'] = "2023-01-01"
+            fjson['roles'] = [{'role':'Contributor'}]
+            assert check_file_download_permission(record, fjson, False) == True
+
             fjson['accessrole'] = 'open_login'
+            fjson['roles'] = [{'role':'none_loggin'},{'role':'1'},{'role':'2'},{'role':'3'},{'role':'4'},{'role':'5'}]
             assert check_file_download_permission(record, fjson, True) == True
 
             with patch("weko_records_ui.permissions.check_user_group_permission", return_value=True):
@@ -157,8 +163,20 @@ def test_check_file_download_permission(app, records, users, db_file_permission,
                 assert check_file_download_permission(record, fjson, False) == True
                 fjson['groupsprice'] = [MagicMock()]
                 assert check_file_download_permission(record, fjson, False) == True
+
+                fjson['groups'] = True
+                fjson['roles'] = [{'role': 'Contributor'}]
+                assert check_file_download_permission(record, fjson, False) == True
+
+                fjson['roles'] = []
+                assert check_file_download_permission(record, fjson, False) == True
+
+            with patch("weko_records_ui.permissions.check_user_group_permission", return_value=False):
+                fjson.pop('groupsprice')
+                assert check_file_download_permission(record, fjson, False) == False
     
             fjson['accessrole'] = 'open_no'
+            fjson['roles'] = [{'role':'none_loggin'},{'role':'1'},{'role':'2'},{'role':'3'},{'role':'4'},{'role':'5'}]
             assert check_file_download_permission(record, fjson, True) == False
             assert check_file_download_permission(record, fjson, False) == False
 

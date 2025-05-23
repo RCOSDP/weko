@@ -2281,7 +2281,7 @@ def send_mail_reminder(mail_info):
 
     :mail_info: object
     """
-    subject, body = (mail_info.get('mail_id'))
+    subject, body = get_mail_data(mail_info.get('mail_id'))
     if not body:
         raise ValueError('Cannot get email template')
     body = replace_characters(mail_info, body)
@@ -2451,94 +2451,6 @@ def get_file_path(file_name):
     else:
         return ""
 
-def get_subject_and_content(file_path):
-    """Get mail subject and content from template file.
-
-    :file_path: this is a full path
-    """
-    import os
-    if not os.path.exists(file_path):
-        return None, None
-    file = open(file_path, 'r')
-    subject = body = ''
-    index = 0
-    """ Get subject and content body from template file """
-    """ The first line is mail subject """
-    """ Exclude the first line is mail content """
-    for line in file:
-        if index == 0:
-            subject = line
-        else:
-            body += line
-        index += 1
-    """ Custom subject (remove 'Subject：' from subject) """
-    subject = subject.replace('Subject：', '')
-    subject = subject.replace('\n', '')
-    return subject, body
-
-
-def get_file_path(file_name):
-    """Get file path from file name.
-
-    :file_name: file name
-    """
-    config = current_app.config
-    template_folder_path = \
-        config.get("WEKO_WORKFLOW_MAIL_TEMPLATE_FOLDER_PATH")
-
-    # Get file path (template path + file name)
-    if template_folder_path is not None and file_name is not None:
-        return os.path.join(template_folder_path, file_name)
-    else:
-        return ""
-
-def get_mail_data_tpl(file_name):
-    """Get data of a email.
-
-    :file_name: file name template
-    """
-    file_path = get_file_path(file_name)
-    return get_subject_and_content(file_path)
-
-def get_subject_and_content(file_path):
-    """Get mail subject and content from template file.
-
-    :file_path: this is a full path
-    """
-    import os
-    if not os.path.exists(file_path):
-        return None, None
-    file = open(file_path, 'r')
-    subject = body = ''
-    index = 0
-    """ Get subject and content body from template file """
-    """ The first line is mail subject """
-    """ Exclude the first line is mail content """
-    for line in file:
-        if index == 0:
-            subject = line
-        else:
-            body += line
-        index += 1
-    """ Custom subject (remove 'Subject：' from subject) """
-    subject = subject.replace('Subject：', '')
-    subject = subject.replace('\n', '')
-    return subject, body
-
-def get_file_path(file_name):
-    """Get file path from file name.
-
-    :file_name: file name
-    """
-    config = current_app.config
-    template_folder_path = \
-        config.get("WEKO_WORKFLOW_MAIL_TEMPLATE_FOLDER_PATH")
-  
-    # Get file path (template path + file name)
-    if template_folder_path is not None and file_name is not None:        
-        return os.path.join(template_folder_path, file_name)
-    else:       
-        return ""
 
 def replace_characters(data, content):
     """Replace character for content.
@@ -2775,7 +2687,7 @@ def set_mail_info(item_info, activity_detail, guest_user=False):
         file_info = None
         if record:
             mail_info['landing_url'] = urljoin(request.url_root, url_for(
-                'invenio_records_ui.recid', pid_value=record.pid.pid_value))
+                'invenio_records_ui.recid', pid_value=record.pid))
             file_info = next((file_data for file_data in record.get_file_data()
                             if file_data.get('filename') == applying_filename),{})
         if file_info:
@@ -3342,7 +3254,7 @@ def send_mail_url_guest_user(mail_info: dict) -> bool:
 
     :mail_info: object
     """
-    subject, body = get_mail_data(mail_info.get('template'))
+    subject, body = get_mail_data(mail_info.get('mail_id'))
     if not body:
         return False
     body = replace_characters(mail_info, body)
@@ -3454,12 +3366,16 @@ def send_usage_application_mail_for_guest_user(guest_mail: str, temp_url: str, d
     site_name_en, site_name_ja = get_site_info_name()
     site_mail = get_default_mail_sender()
     site_url = current_app.config['THEME_SITEURL']
+    institution_name_ja = current_app.config['THEME_INSTITUTION_NAME']['ja']
+    institution_name_en = current_app.config['THEME_INSTITUTION_NAME']['en']
     mail_info = {
-        'template': current_app.config.get("WEKO_WORKFLOW_ACCESS_ACTIVITY_URL"),
+        'mail_id': current_app.config.get("WEKO_WORKFLOW_ACCESS_ACTIVITY_URL"),
         'mail_address': guest_mail,
         'url_guest_user': temp_url,
         "restricted_site_name_ja": site_name_ja,
         "restricted_site_name_en": site_name_en,
+        "restricted_institution_name_ja": institution_name_ja,
+        "restricted_institution_name_en": institution_name_en,
         "restricted_site_mail": site_mail,
         "restricted_site_url": site_url,
     }

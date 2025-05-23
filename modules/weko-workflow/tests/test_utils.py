@@ -25,6 +25,7 @@ from flask_login.utils import login_user,logout_user
 from tests.helpers import json_data, create_activity
 from invenio_mail.models import MailConfig
 from weko_admin.models import SiteInfo, Identifier
+from weko_records.models import FeedbackMailList, RequestMailList
 from weko_records_ui.models import FilePermission,FileOnetimeDownload
 from weko_records_ui.utils import get_list_licence
 from weko_user_profiles import UserProfile
@@ -85,6 +86,7 @@ from weko_workflow.utils import (
     email_pattern_request_approval,
     email_pattern_approval_done,
     get_mail_data,
+    get_mail_data_tpl,
     get_subject_and_content,
     get_file_path,
     replace_characters,
@@ -123,6 +125,7 @@ from weko_workflow.utils import (
     recursive_get_specified_properties,
     get_approval_keys,
     process_send_mail,
+    process_send_mail_tpl,
     cancel_expired_usage_reports,
     process_send_approval_mails,
     prepare_data_for_guest_activity,
@@ -1070,7 +1073,7 @@ def test_prepare_edit_workflow(app, workflow, db_records,users,mocker, order_if)
     
 # def handle_finish_workflow(deposit, current_pid, recid):
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_handle_finish_workflow -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
-def test_handle_finish_workflow(workflow, db_records, mocker):
+def test_handle_finish_workflow(workflow, db_records, item_type, mocker):
     result = handle_finish_workflow(None, None, None)
     assert result == None
     mocker.patch("weko_deposit.api.WekoDeposit.publish")
@@ -1080,8 +1083,34 @@ def test_handle_finish_workflow(workflow, db_records, mocker):
     deposit = db_records[2][6]
     current_pid = db_records[2][0]
     recid = db_records[2][2]
+    feedback_mail_list = FeedbackMailList()
+    request_mail_list = RequestMailList()
+    mock_deposit = mocker.patch('weko_workflow.utils.WekoDeposit.newversion', return_value=deposit)
+    mocker.patch('weko_workflow.utils.WekoDeposit.update_request_mail')
+    mocker.patch('weko_workflow.utils.FeedbackMailList.get_mail_list_by_item_id', return_value=[feedback_mail_list])
+    mock_feedback_mail = mocker.patch('weko_workflow.utils.FeedbackMailList.update')
+    mocker.patch('weko_workflow.utils.RequestMailList.get_mail_list_by_item_id', return_value=[request_mail_list])
+    mock_request_mail = mocker.patch('weko_workflow.utils.RequestMailList.update')
+    mock_update_item = mocker.patch('weko_workflow.utils.UpdateItem.publish')
     result = handle_finish_workflow(deposit,current_pid,recid)
-    assert result == None
+    assert result == deposit.model.id
+    mock_deposit.assert_called_once()
+    mock_feedback_mail.assert_called_once()
+    mock_request_mail.assert_called_once()
+    assert mock_update_item.call_count == 2
+
+    result = handle_finish_workflow(deposit,current_pid,None)
+    assert result == current_pid.object_uuid
+
+    deposit = db_records[1][6]
+    current_pid = db_records[1][0]
+    recid = db_records[1][2]
+    result = handle_finish_workflow(deposit,current_pid,None)
+    assert result == current_pid.object_uuid
+
+    with patch('weko_deposit.pidstore.get_record_without_version', side_effect=Exception):
+        result = handle_finish_workflow(deposit,current_pid,recid)
+        assert result == None
 
 
 # def delete_cache_data(key: str):
@@ -1351,21 +1380,21 @@ def test_send_mail_approval_done(mocker):
         send_mail_approval_done({})
     with patch("weko_workflow.utils.email_pattern_approval_done",return_value=(None,None)):
         send_mail_approval_done({})
+
 # def send_mail_registration_done(mail_info):
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_send_mail_registration_done -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
-#def test_send_mail_registration_done(app,users,mocker):
-#    mocker.patch("weko_workflow.utils.replace_characters",return_value="body")
-#    mocker.patch("weko_workflow.utils.send_mail")
-#    mail_info = {
-#        "item_type_name":"テストアイテムタイプ"
-#    }
-#    with app.test_request_context():
-#        login_user(users[2]["obj"])
-#        with patch("weko_workflow.utils.email_pattern_registration_done",return_value=("subject","body")):
-#            send_mail_registration_done(mail_info)
-#            
-#        with patch("weko_workflow.utils.email_pattern_registration_done",return_value=(None, None)):
-#            send_mail_registration_done(mail_info)
+def test_send_mail_registration_done(app,users,mocker,mail_templates):
+   mocker.patch("weko_workflow.utils.replace_characters",return_value="body")
+   mocker.patch("weko_workflow.utils.send_mail")
+   mail_info = {
+       "item_type_name":"テストアイテムタイプ"
+   }
+   with app.test_request_context():
+       login_user(users[2]["obj"])
+       send_mail_registration_done(mail_info, 1)
+
+       send_mail_registration_done(mail_info, 10)
+
 # def send_mail_request_approval(mail_info):
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_send_mail_request_approval -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_send_mail_request_approval(mocker):
@@ -1545,10 +1574,26 @@ def test_email_pattern_approval_done(client,mocker):
 
 # def get_mail_data(file_name):
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_get_mail_data -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
-def test_get_mail_data(mocker):
-    mocker.patch("weko_workflow.utils.get_file_path")
-    mocker.patch("weko_workflow.utils.get_subject_and_content")
-    get_mail_data("test_file")
+def test_get_mail_data(mail_templates):
+    subject, body = get_mail_data(1)
+    assert subject == mail_templates.mail_subject
+    assert body == mail_templates.mail_body
+
+    subject, body = get_mail_data(10)
+    assert subject == ''
+    assert body == ''
+
+# def get_mail_data_tpl(file_name):
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_get_mail_data_tpl -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_get_mail_data_tpl(mocker):
+    mock_file_path = mocker.patch('weko_workflow.utils.get_file_path', return_value='test_file_path')
+    mock_subject = mocker.patch('weko_workflow.utils.get_subject_and_content', return_value=('subject', 'body'))
+    subject, body = get_mail_data_tpl("test_file_name")
+    assert subject == 'subject'
+    assert body == 'body'
+    mock_file_path.assert_called_once_with("test_file_name")
+    mock_subject.assert_called_once_with('test_file_path')
+
 # def get_subject_and_content(file_path):
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_get_subject_and_content -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_get_subject_and_content():
@@ -1778,8 +1823,8 @@ def test_set_mail_info(app, db_register, mocker, records_restricted, db_records,
         "restricted_approver_affiliation":"",
         "restricted_site_name_ja":"name_ja",
         "restricted_site_name_en":"name_en",
-        "restricted_institution_name_ja":config["THEME_INSTITUTION_NAME"]["ja"],
-        "restricted_institution_name_en":config["THEME_INSTITUTION_NAME"]["en"],
+        # "restricted_institution_name_ja":config["THEME_INSTITUTION_NAME"]["ja"],
+        # "restricted_institution_name_en":config["THEME_INSTITUTION_NAME"]["en"],
         "restricted_site_mail":"default_sender",
         "restricted_site_url":"https://localhost",
         "mail_recipient":"test@test.org",
@@ -1824,8 +1869,8 @@ def test_set_mail_info(app, db_register, mocker, records_restricted, db_records,
         "restricted_approver_affiliation":"",
         "restricted_site_name_ja":"name_ja",
         "restricted_site_name_en":"name_en",
-        "restricted_institution_name_ja":config["THEME_INSTITUTION_NAME"]["ja"],
-        "restricted_institution_name_en":config["THEME_INSTITUTION_NAME"]["en"],
+        # "restricted_institution_name_ja":config["THEME_INSTITUTION_NAME"]["ja"],
+        # "restricted_institution_name_en":config["THEME_INSTITUTION_NAME"]["en"],
         "restricted_site_mail":"default_sender",
         "restricted_site_url":"https://localhost",
         "mail_recipient":"test@test.org",
@@ -1866,10 +1911,19 @@ def test_set_mail_info(app, db_register, mocker, records_restricted, db_records,
                     with db.session.begin_nested():
                         db.session.add(item_application_1)
                     db.session.commit()
-                    db_register["activities"][10]["extra_info"] = {"file_name":"recid/15"}
-                    mocker.patch("weko_workflow.utils.PersistentIdentifier.get", return_value = "123456789")
+                    db_register["activities"][10].extra_info = {"file_name":"recid/15"}
+                    persistent_identifier = PersistentIdentifier(
+                        pid_type="recid",
+                        pid_value=item_id_1,
+                        pid_provider="weko",
+                        status="R",
+                        object_type="item",
+                        object_uuid=uuid.uuid4(),
+                    )                        
+                    mocker.patch("weko_workflow.utils.PersistentIdentifier.get", return_value = persistent_identifier)
                     result = set_mail_info(item_info,db_register["activities"][10],False)
-                    assert result["terms_of_use_jp"] == "利用規約自由入力"
+                    assert result["terms_of_use_jp"] == ""
+                    assert result["terms_of_use_en"] == ""
 
     with app.test_request_context():
         record = WekoRecord.get_record(db_records[0][2].id)
@@ -2011,7 +2065,7 @@ def test_process_send_reminder_mail_1(db, db_register, mocker):
 
 # def process_send_notification_mail(
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_process_send_notification_mail -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
-def test_process_send_notification_mail(db,db_register, mocker):
+def test_process_send_notification_mail(db,db_register, mocker, users):
     mocker.patch("weko_workflow.utils.get_item_info",return_value={})
     mocker.patch("weko_workflow.utils.set_mail_info",return_value={})
     def mock_approval_date(data):
@@ -2030,9 +2084,22 @@ def test_process_send_notification_mail(db,db_register, mocker):
         "approval_date_after_7_days": "2022-10-17",
         "31_march_corresponding_year": "2023-03-31"
     }
+    action_mails_setting = {
+        'previous': {
+            'inform_itemReg': {
+                'mail': 'test_mail'
+            }
+        },
+        'next': {},
+        'approval': False,
+        'reject': False
+    }
     
-    process_send_notification_mail(activity,"item_login","next_step")
-    mock_send_registration.assert_called_with(data)
+    with patch('weko_workflow.utils._check_mail_setting', return_value=True):
+        process_send_notification_mail(activity,"item_login","next_step", action_mails_setting)
+        mock_send_registration.assert_called_with(data, 'test_mail')
+
+    login_user(users[2]["obj"])
     data = {
         "item_type_name":"テストアイテムタイプ",
         "next_step":"approval_",
@@ -2040,7 +2107,7 @@ def test_process_send_notification_mail(db,db_register, mocker):
         "approval_date_after_7_days": "2022-10-17",
         "31_march_corresponding_year": "2023-03-31"
     }
-    process_send_notification_mail(activity,"item_registration","approval_")
+    process_send_notification_mail(activity,"item_registration","approval_", action_mails_setting)
     mock_send_approval_req.assert_called_with(data)
     data = {
         "item_type_name":"テストアイテムタイプ",
@@ -2049,9 +2116,9 @@ def test_process_send_notification_mail(db,db_register, mocker):
         "approval_date_after_7_days": "2022-10-17",
         "31_march_corresponding_year": "2023-03-31"
     }
-    process_send_notification_mail(activity,"approval_administrator","next_step")
+    process_send_notification_mail(activity,"approval_administrator","next_step", action_mails_setting)
     mock_send_approval_done.assert_called_with(data)
-    process_send_notification_mail(activity,"other_step","next_step")
+    process_send_notification_mail(activity,"other_step","next_step", action_mails_setting)
 # def get_application_and_approved_date(activities, columns):
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_get_application_and_approval_date -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_get_application_and_approval_date(db,db_register,users):
@@ -3054,6 +3121,31 @@ def test_process_send_mail(app,mocker):
     with patch("weko_workflow.utils.get_mail_data",return_value=("body","subject")):
         result = process_send_mail(mail_info,mail_pattern_name)
 
+# def process_send_mail_tpl(mail_info, mail_pattern_name):
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_process_send_mail_tpl -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_process_send_mail_tpl(app, mocker):
+    mail_info = {
+        'mail_recipient': ''
+    }
+    mock_tpl = mocker.patch('weko_workflow.utils.get_mail_data_tpl', return_value=('subject', 'body'))
+    mock_replace = mocker.patch('weko_workflow.utils.replace_characters', return_value='replaced_body')
+    mock_send = mocker.patch('weko_workflow.utils.send_mail', return_value=True)
+
+    result = process_send_mail_tpl(mail_info, 'mail_pattern_name')
+    assert result == None
+    mock_tpl.assert_not_called()
+    mock_replace.assert_not_called()
+    mock_send.assert_not_called()
+
+    mail_info = {
+        'mail_recipient': 'value'
+    }
+    result = process_send_mail_tpl(mail_info, 'mail_pattern_name')
+    assert result == True
+    mock_tpl.assert_called_once_with('mail_pattern_name')
+    mock_replace.assert_called_once_with(mail_info, 'body')
+    mock_send.assert_called_once_with('subject', 'value', 'replaced_body')
+
 # def cancel_expired_usage_reports():
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_cancel_expired_usage_reports -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_cancel_expired_usage_reports(db_register,mocker):
@@ -3089,8 +3181,9 @@ def test_process_send_approval_mails(app,db_register,users,mocker):
     mocker.patch("weko_workflow.utils.set_mail_info",return_value=mail_info)
     activity = db_register["activities"][1]
     guest_activity = db_register["activities"][8]
-    guest_activity_2 = db_register["activities"][11]
-    guest_activity_3 = db_register["activities"][12]
+    guest_activity_2 = db_register["activities"][12]
+    guest_activity_3 = db_register["activities"][13]
+    guest_activity_4 = db_register["activities"][14]
     next_step_approver_id = users[2]["id"]
     not_next_step_approver_id = 9999
     file_data={
@@ -3266,7 +3359,7 @@ def test_process_send_approval_mails(app,db_register,users,mocker):
         "restricted_expiration_date":"",
         "restricted_expiration_date_ja":"無制限",
         "restricted_expiration_date_en":"Unlimited",
-        "mail_recipient":"wekosoftware@nii.ac.jp"
+        "mail_recipient":"user@test.org"
     }
 
     process_send_approval_mails(guest_activity_2, actions_mail_setting,next_step_approver_id,guest_file_data)
@@ -3313,6 +3406,22 @@ def test_process_send_approval_mails(app,db_register,users,mocker):
     }
     mocker.patch("weko_workflow.utils.set_mail_info",return_value=mail_info)
     process_send_approval_mails(activity, actions_mail_setting,next_step_approver_id,file_data)
+
+    actions_mail_setting={
+        "previous":{"inform_itemReg_for_registerPerson":{"mail": "0", "send": True}},
+        "next": {},
+        "approval": True,
+        "reject": False}
+    mail_info={
+        "restricted_download_link":"",
+        "restricted_expiration_date":"",
+        "restricted_expiration_date_ja":"",
+        "restricted_expiration_date_en":""
+    }
+    mocker.patch("weko_workflow.utils.set_mail_info",return_value=mail_info)
+    mock_sender = mocker.patch("weko_workflow.utils.process_send_mail")
+    process_send_approval_mails(guest_activity_4, actions_mail_setting,next_step_approver_id,file_data)
+    assert mock_sender.call_count == 2
 
     # no7, not guest, reject is True, previous.inform_reject is True
     actions_mail_setting={
@@ -3417,7 +3526,7 @@ def test_get_usage_data(app,db,db_register):
     result = get_usage_data(1,activity)
     assert result == {}
     
-    activity = db_register["activities"][6]
+    activity = db_register["activities"][8]
     result = get_usage_data(1,activity)
     assert result == {}
     

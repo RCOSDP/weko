@@ -1,6 +1,8 @@
 # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_tasks.py -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+import datetime
 import os
 import json
+import pathlib
 import pytest
 from flask import current_app, make_response, request
 from mock import patch, MagicMock, Mock
@@ -20,14 +22,48 @@ from weko_search_ui.tasks import (
 )
 
 # def check_import_items_task(file_path, is_change_identifier: bool, host_url, lang="en"):
-def test_check_import_items_task(i18n_app, users):
-    file_path = "/test/test/test.txt"
-    data = {"error": None}
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_tasks.py::test_check_import_items_task -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_check_import_items_task(i18n_app, users, mocker):
+    file_path = "tests/data/test.txt"
+    data = {"error": None, 'data_path': 'test_path', 'list_record': [{'errors': None}]}
 
-    with patch("weko_search_ui.utils.check_import_items", return_value=data):
+    p = pathlib.Path(file_path)
+    p.touch()
+
+    mock_datetime = mocker.patch('weko_search_ui.tasks.datetime', autospec=True)
+    mock_datetime.now.return_value = datetime.datetime(2025, 4, 1, 12, 0, 0)
+    mock_apply_async = mocker.patch('weko_search_ui.tasks.remove_temp_dir_task.apply_async', autospec=True)
+    with patch("weko_search_ui.tasks.check_import_items", return_value=data):
         with patch("shutil.rmtree", return_value=""):
-            with patch("weko_search_ui.tasks.remove_temp_dir_task.apply_async", return_value=""):
-                assert check_import_items_task(file_path=file_path,is_change_identifier=True,host_url="https://localhost")
+            result = check_import_items_task(file_path=file_path,is_change_identifier=True,host_url="https://localhost")
+            assert result["start_date"] == "2025-04-01 12:00:00"
+            assert result["end_date"] == "2025-04-01 12:00:00"
+            assert result["data_path"] == "test_path"
+            assert result["list_record"] == [{'errors': None}]
+            assert not result.get("error")
+            assert mock_apply_async.call_count == 0
+
+            data['list_record'] = [{'errors': "error"}]
+            result = check_import_items_task(file_path=file_path,is_change_identifier=True,host_url="https://localhost")
+            assert result["start_date"] == "2025-04-01 12:00:00"
+            assert result["end_date"] == "2025-04-01 12:00:00"
+            assert result["data_path"] == "test_path"
+            assert result["list_record"] == [{'errors': "error"}]
+            assert not result.get("error")
+            assert mock_apply_async.call_count == 1
+    
+    data = {"error": 'error', 'data_path': 'test_path', 'list_record': [{'errors': None}]}
+    with patch("weko_search_ui.tasks.check_import_items", return_value=data):
+        with patch("shutil.rmtree", return_value=""):
+            # with patch('weko_search_ui.tasks.get_lifetime', return_value=1800):
+            result = check_import_items_task(file_path=file_path,is_change_identifier=True,host_url="https://localhost")
+            assert result["start_date"] == "2025-04-01 12:00:00"
+            assert result["end_date"] == "2025-04-01 12:00:00"
+            assert not result.get("data_path")
+            assert not result.get("list_record")
+            assert result['error'] == 'error'
+    
+    p.unlink()
                 
 
 # def import_item(item, request_info):

@@ -1057,15 +1057,21 @@ def validate_form_input_data(
         # Validate TITLE item values from data
         if mapping_title_item_key == data_key:
             for data_item_values in data_item_value_list:
-                keys_that_exist_in_data: list = _get_keys_that_exist_from_data(data_item_values)
-                for mapping_key in list(set(mapping_title_language_key)):
-                    if mapping_key in keys_that_exist_in_data:
-                        # Append TITLE LANGUAGE value to items_to_be_checked_for_duplication list
-                        items_to_be_checked_for_duplication.append(data_item_values.get(mapping_key))
-                        items_to_be_checked_for_ja_kana.append(data_item_values.get(mapping_key))
-                        items_to_be_checked_for_ja_latn.append(data_item_values.get(mapping_key))
-                    else:
-                        pass
+                if type(data_item_values) == str:
+                    # Append TITLE LANGUAGE value to items_to_be_checked_for_duplication list
+                    items_to_be_checked_for_duplication.append(data_item_value_list.get(data_item_values))
+                    items_to_be_checked_for_ja_kana.append(data_item_value_list.get(data_item_values))
+                    items_to_be_checked_for_ja_latn.append(data_item_value_list.get(data_item_values))
+                else:
+                    keys_that_exist_in_data: list = _get_keys_that_exist_from_data(data_item_values)
+                    for mapping_key in list(set(mapping_title_language_key)):
+                        if mapping_key in keys_that_exist_in_data:
+                            # Append TITLE LANGUAGE value to items_to_be_checked_for_duplication list
+                            items_to_be_checked_for_duplication.append(data_item_values.get(mapping_key))
+                            items_to_be_checked_for_ja_kana.append(data_item_values.get(mapping_key))
+                            items_to_be_checked_for_ja_latn.append(data_item_values.get(mapping_key))
+                        else:
+                            pass
             # Validation for TITLE
             validation_duplication_error_checker(
                 _("Title"),
@@ -1087,14 +1093,19 @@ def validate_form_input_data(
         # Validate ALTERNATIVE TITLE item values from data
         elif mapping_alternative_title_item_key == data_key:
             for data_item_values in data_item_value_list:
-                keys_that_exist_in_data: list = _get_keys_that_exist_from_data(data_item_values)
-                for mapping_key in list(set(mapping_alternative_title_language_key)):
-                    if mapping_key in keys_that_exist_in_data:
-                        # Append ALTERNATIVE TITLE LANGUAGE value to items_to_be_checked_for_duplication list
-                        items_to_be_checked_for_ja_kana.append(data_item_values.get(mapping_key))
-                        items_to_be_checked_for_ja_latn.append(data_item_values.get(mapping_key))
-                    else:
-                        pass
+                if type(data_item_values) == str:
+                    # Append ALTERNATIVE TITLE LANGUAGE value to items_to_be_checked_for_duplication list
+                    items_to_be_checked_for_ja_kana.append(data_item_value_list.get(data_item_values))
+                    items_to_be_checked_for_ja_latn.append(data_item_value_list.get(data_item_values))
+                else:
+                    keys_that_exist_in_data: list = _get_keys_that_exist_from_data(data_item_values)
+                    for mapping_key in list(set(mapping_alternative_title_language_key)):
+                        if mapping_key in keys_that_exist_in_data:
+                            # Append ALTERNATIVE TITLE LANGUAGE value to items_to_be_checked_for_duplication list
+                            items_to_be_checked_for_ja_kana.append(data_item_values.get(mapping_key))
+                            items_to_be_checked_for_ja_latn.append(data_item_values.get(mapping_key))
+                        else:
+                            pass
             
             # Validation for ALTERNATIVE TITLE
             validation_ja_kana_error_checker(

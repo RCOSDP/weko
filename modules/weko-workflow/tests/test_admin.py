@@ -330,6 +330,10 @@ class TestFlowSettingView:
         q = FlowActionRole.query.all()
         assert len(q) == 1
 
+        with patch('weko_workflow.admin.FlowSettingView._check_auth',return_value=False):
+            res =  client.post(url, data=json.dumps(data), headers=[('Content-Type', 'application/json')])
+            assert res.status_code == 403
+
 # def _check_auth(flow_id:str ):
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_admin.py::TestFlowSettingView::test__check_auth -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
     def test__check_auth(self,app,users,workflow ,workflow_open_restricted):

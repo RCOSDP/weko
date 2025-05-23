@@ -65,6 +65,7 @@ from invenio_communities import InvenioCommunities
 from invenio_communities.views.ui import blueprint as invenio_communities_blueprint
 from invenio_communities.models import Community
 from invenio_jsonschemas import InvenioJSONSchemas
+from invenio_mail.models import MailTemplateGenres, MailTemplates
 from invenio_oauth2server import InvenioOAuth2Server, InvenioOAuth2ServerREST
 from invenio_oauth2server.models import Client, Token
 from invenio_oauth2server.views import settings_blueprint as oauth2server_settings_blueprint
@@ -505,6 +506,7 @@ def base_app(instance_path, search_class, cache_config):
         WEKO_INDEX_TREE_DEFAULT_DISPLAY_NUMBER=WEKO_INDEX_TREE_DEFAULT_DISPLAY_NUMBER,
         WEKO_SCHEMA_JPCOAR_V1_SCHEMA_NAME=WEKO_SCHEMA_JPCOAR_V1_SCHEMA_NAME,
         WEKO_SCHEMA_DDI_SCHEMA_NAME=WEKO_SCHEMA_DDI_SCHEMA_NAME,
+        WEKO_SCHEMA_JPCOAR_V2_SCHEMA_NAME = 'jpcoar_mapping',
         DEPOSIT_DEFAULT_JSONSCHEMA = 'deposits/deposit-v1.0.0.json',
         WEKO_RECORDS_UI_SECRET_KEY = "secret",
         WEKO_RECORDS_UI_ONETIME_DOWNLOAD_PATTERN = "filename={} record_id={} user_mail={} date={}",
@@ -541,11 +543,11 @@ def base_app(instance_path, search_class, cache_config):
         WEKO_WORKFLOW_ACTIVITYLOG_XLS_COLUMNS=WEKO_WORKFLOW_ACTIVITYLOG_XLS_COLUMNS,
         WEKO_SYS_USER=WEKO_SYS_USER,
         RECORDS_UI_ENDPOINTS=dict(
-            # recid=dict(
-            #     pid_type='recid',
-            #     route='/records/<pid_value>',
-            #     template='invenio_records_ui/detail.html',
-            # ),
+            recid=dict(
+                pid_type='recid',
+                route='/records/<pid_value>',
+                template='invenio_records_ui/detail.html',
+            ),
             # recid_previewer=dict(
             #     pid_type='recid',
             #     route='/records/<pid_value>/preview/<filename>',
@@ -570,7 +572,9 @@ def base_app(instance_path, search_class, cache_config):
             'Contributor',
             'Community Administrator'
         ],
-        WEKO_WORKFLOW_APPROVAL_PREVIEW=WEKO_WORKFLOW_APPROVAL_PREVIEW
+        WEKO_WORKFLOW_APPROVAL_PREVIEW=WEKO_WORKFLOW_APPROVAL_PREVIEW,
+        WEKO_WORKFLOW_USAGE_REPORT_WORKFLOW_NAME = '利用報告/Data Usage Report',
+        WEKO_WORKFLOW_TODO_TAB = 'todo'
     )
     
     app_.testing = True
@@ -930,31 +934,31 @@ def workflow_with_action_role(db, action_data, item_type, activity_acl_users):
     
     workflows = []
     # no set action role(user)
-    workflows.append(create_flow(db, 1, "normal_flow","normal_workflow", None, None, item_type))
+    workflows.append(create_flow(db, 1, "normal_flow","normal_workflow", None, None, item_type[0]['obj']))
     
     # action_role of action with action_id 1 is test_role01
-    workflows.append(create_flow(db, 2, "test_role01_role_flow","test_role01_role_workfow",{5:{"value":roles[3].id,"flg":False}},None, item_type))
+    workflows.append(create_flow(db, 2, "test_role01_role_flow","test_role01_role_workfow",{5:{"value":roles[3].id,"flg":False}},None, item_type[0]['obj']))
     
     # action_role of action with action_id 1 is test_role02
-    workflows.append(create_flow(db, 3, "test_role02_role_flow","test_role02_role_workfow",{5:{"value":roles[4].id,"flg":False}},None,item_type))
+    workflows.append(create_flow(db, 3, "test_role02_role_flow","test_role02_role_workfow",{5:{"value":roles[4].id,"flg":False}},None,item_type[0]['obj']))
     
     # action_role of action with action_id 1 is test_role01 and deny
-    workflows.append(create_flow(db, 4, "test_role01_role_deny_flow","test_role01_role_deny_workfow",{5:{"value":roles[3].id,"flg":True}},None,item_type))
+    workflows.append(create_flow(db, 4, "test_role01_role_deny_flow","test_role01_role_deny_workfow",{5:{"value":roles[3].id,"flg":True}},None,item_type[0]['obj']))
     
     # action_role of action with action_id 1 is test_role02 and deny
-    workflows.append(create_flow(db, 5, "test_role02_role_deny_flow","test_role02_role_deny_workfow",{5:{"value":roles[4].id,"flg":True}},None,item_type))
+    workflows.append(create_flow(db, 5, "test_role02_role_deny_flow","test_role02_role_deny_workfow",{5:{"value":roles[4].id,"flg":True}},None,item_type[0]['obj']))
     
     # action_user of action with action_id 1 is test_role01_user
-    workflows.append(create_flow(db, 6,"test_role01_user_flow","test_role01_user_workflow",None,{5:{"value":users[2].id,"flg":False}},item_type))
+    workflows.append(create_flow(db, 6,"test_role01_user_flow","test_role01_user_workflow",None,{5:{"value":users[2].id,"flg":False}},item_type[0]['obj']))
     
     # action_user of action with action_id 1 is test_role02_user
-    workflows.append(create_flow(db, 7,"test_role02_user_flow","test_role02_user_workflow",None,{5:{"value":users[4].id,"flg":False}},item_type))
+    workflows.append(create_flow(db, 7,"test_role02_user_flow","test_role02_user_workflow",None,{5:{"value":users[4].id,"flg":False}},item_type[0]['obj']))
     
     # action_user of action with action_id 1 is test_role01_user and deny
-    workflows.append(create_flow(db, 8,"test_role01_user_deny_flow","test_role01_user_deny_workflow",None,{5:{"value":users[2].id,"flg":True}},item_type))
+    workflows.append(create_flow(db, 8,"test_role01_user_deny_flow","test_role01_user_deny_workflow",None,{5:{"value":users[2].id,"flg":True}},item_type[0]['obj']))
     
     # action_user of action with action_id 1 is test_role02_user and deny
-    workflows.append(create_flow(db, 9,"test_role02_user_deny_flow","test_role02_user_deny_workflow",None,{5:{"value":users[4].id,"flg":True}},item_type))
+    workflows.append(create_flow(db, 9,"test_role02_user_deny_flow","test_role02_user_deny_workflow",None,{5:{"value":users[4].id,"flg":True}},item_type[0]['obj']))
     return workflows
 
 
@@ -1011,6 +1015,86 @@ def activity_acl(db, workflow_with_action_role, activity_acl_users):
 
     return activites
 
+@pytest.fixture()
+def item_type_usage_report(db):
+    with db.session.begin_nested():
+        item_type_name = ItemTypeName(
+            id=31003,
+            name="利用報告-Data Usage Report",
+            has_site_license=True,
+            is_active=True
+        )
+        db.session.add(item_type_name)
+
+        item_type_schema = dict()
+        with open("tests/data/item_type/itemtype_schema_31003.json", "r") as f:
+            item_type_schema = json.load(f)
+        
+        item_type_form = dict()
+        with open("tests/data/item_type/itemtype_form_31003.json", "r") as f:
+            item_type_form = json.load(f)
+
+        item_type_render = dict()
+        with open("tests/data/item_type/itemtype_render_31003.json", "r") as f:
+            item_type_render = json.load(f)
+
+        item_type_mapping = dict()
+        with open("tests/data/item_type/itemtype_mapping_31003.json", "r") as f:
+            item_type_mapping = json.load(f)
+
+        item_type = ItemType(
+            id=31003,
+            name_id=31003,
+            harvesting_type=False,
+            schema=item_type_schema,
+            form=item_type_form,
+            render=item_type_render,
+            tag=1,
+            version_id=1,
+            is_deleted=False,
+        )
+
+        db.session.add(item_type)
+
+        item_type_mapping = ItemTypeMapping(
+            id=31003,
+            item_type_id=31003,
+            mapping=item_type_mapping
+        )
+
+        db.session.add(item_type_mapping)
+    return item_type
+
+@pytest.fixture()
+def workflow_usage_report(db, item_type_usage_report, action_data):
+    workflow = create_flow(
+        db,
+        31001,
+        "利用報告/Data Usage Report",
+        "利用報告/Data Usage Report",
+        None,
+        None,
+        item_type_usage_report
+    )
+    return workflow
+
+@pytest.fixture()
+def activity_usage_report(db, activity_acl_users, workflow_usage_report):
+    users = activity_acl_users["users"]
+    workflow = workflow_usage_report
+    activities = [
+        create_activity(db,"利用報告1",1,["4"],users[0],-1,workflow,'M',3),
+        create_activity(db,"利用報告2",2,["4"],users[0],-1,workflow,'M',3),
+        create_activity(db,"利用報告3",3,["4"],users[0],-1,workflow,'M',3),
+        create_activity(db,"利用報告4",4,["4"],users[0],-1,workflow,'M',3),
+        create_activity(db,"利用報告5",5,["4"],users[0],-1,workflow,'M',3),
+        create_activity(db,"利用報告6",6,["4"],users[0],-1,workflow,'M',3),
+        create_activity(db,"利用報告7",7,["4"],users[0],-1,workflow,'M',3),
+        create_activity(db,"利用報告8",8,["4"],users[0],-1,workflow,'M',3),
+        create_activity(db,"利用報告9",9,["4"],users[0],-1,workflow,'M',3),
+        create_activity(db,"利用報告10",10,["4"],users[0],-1,workflow,'M',3),
+    ]
+    return activities
 
 @pytest.fixture()
 def action_data(db):
@@ -1444,6 +1528,16 @@ def db_register(app, db, db_records, users, action_data, item_type):
                     action_order=1,
                     extra_info={"guest_mail":"guest@test.org","record_id": 3,"related_title":"related_guest_activity","usage_record_id":str(db_records[1][2].id),"usage_activity_id":str(uuid.uuid4())}
                     )
+    activity_guest_4 = Activity(activity_id='guest_4', item_id=db_records[1][2].id,workflow_id=1, flow_id=flow_define.id,
+                    action_id=3, activity_login_user=users[3]["id"],
+                    activity_update_user=1,
+                    activity_start=datetime.strptime('2022/04/14 3:01:53.931', '%Y/%m/%d %H:%M:%S.%f'),
+                    activity_community_id=3,
+                    activity_confirm_term_of_use=True,
+                    title='test item11', shared_user_ids=[1],
+                    action_order=1,
+                    extra_info={"guest_mail":"guest@test.org","record_id": 4,"related_title":"related_guest_activity","usage_record_id":str(db_records[1][2].id),"usage_activity_id":str(uuid.uuid4())}
+                    )
     with db.session.begin_nested():
         db.session.add(workflow)
         db.session.add(activity)
@@ -1462,6 +1556,7 @@ def db_register(app, db, db_records, users, action_data, item_type):
         db.session.add(activity_guest)
         db.session.add(activity_guest_2)
         db.session.add(activity_guest_3)
+        db.session.add(activity_guest_4)
     db.session.commit()
 
     activity_action = ActivityAction(activity_id=activity.activity_id,
@@ -1572,7 +1667,7 @@ def db_register(app, db, db_records, users, action_data, item_type):
             'action_feedback_mail1':activity_item4_feedbackmail,
             'action_feedback_mail2':activity_item5_feedbackmail,
             'action_feedback_mail3':activity_item6_feedbackmail,
-            "activities":[activity,activity_item1,activity_item2,activity_item3,activity_item7,activity_item8,activity_item9,activity_item10,activity_guest,activity_landing_url,activity_terms_of_use,activity_no_contents,activity_guest_2,activity_guest_3],
+            "activities":[activity,activity_item1,activity_item2,activity_item3,activity_item7,activity_item8,activity_item9,activity_item10,activity_guest,activity_landing_url,activity_terms_of_use,activity_no_contents,activity_guest_2,activity_guest_3,activity_guest_4],
             'activity_actions':[activity_action,activity_action1_item1,activity_action2_item1,activity_action3_item1],
     }
 
@@ -3710,7 +3805,7 @@ def db_register_usage_application(app, db, db_records, users, action_data, item_
                     activity_community_id=None,
                     activity_confirm_term_of_use=True,
                     title='test'
-                    , shared_user_id=-1
+                    , shared_user_ids=[]
                     , extra_info={},
                     action_order=2)
     activity1_pre_action = ActivityAction(
@@ -3738,7 +3833,7 @@ def db_register_usage_application(app, db, db_records, users, action_data, item_
                     , activity_community_id=3
                     , activity_confirm_term_of_use=True
                     , title='test'
-                    , shared_user_id=-1
+                    , shared_user_ids=[]
                     , extra_info={}
                     , action_order=3)
     activity2_pre_action = ActivityAction(
@@ -3775,7 +3870,7 @@ def db_register_usage_application(app, db, db_records, users, action_data, item_
                         ,activity_community_id=3
                         ,activity_confirm_term_of_use=True
                         ,title='test'
-                        ,shared_user_id=-1
+                        ,shared_user_ids=[]
                         ,extra_info={"file_name": "aaa.txt", "record_id": "1", "user_mail": "aaa@test.org", "related_title": "test", "is_restricted_access": True}
                         ,action_order=3)
     activity3_pre_action = ActivityAction(
@@ -3803,7 +3898,7 @@ def db_register_usage_application(app, db, db_records, users, action_data, item_
                         ,activity_community_id=3
                         ,activity_confirm_term_of_use=True
                         ,title='test'
-                        ,shared_user_id=-1
+                        ,shared_user_ids=[]
                         ,extra_info={"file_name": "aaa.txt", "record_id": "1", "user_mail": "aaa@test.org", "related_title": "test", "is_restricted_access": True}
                         ,action_order=4)
     activity4_pre_action = ActivityAction(
@@ -4488,7 +4583,7 @@ def db_register_for_application_api(app, db, users, db_register_for_application_
         ,user_mail = 'guest@example.org'
         ,file_name = "test.txt"
         ,token="abc123"
-        ,expiration_date=datetime.now()
+        ,expiration_date=10
         ,is_usage_report=False
     )
     
@@ -4587,7 +4682,7 @@ def db_register_for_application_api(app, db, users, db_register_for_application_
         ,user_mail = 'guest@example.org'
         ,file_name = "test.txt"
         ,token="abc123"
-        ,expiration_date=datetime.now()
+        ,expiration_date=10
         ,is_usage_report=False
     )
 
@@ -4627,7 +4722,7 @@ def db_register_for_application_api(app, db, users, db_register_for_application_
         ,user_mail = 'guest@example.org'
         ,file_name = "test.txt"
         ,token="abc123"
-        ,expiration_date=datetime.now()
+        ,expiration_date=10
         ,is_usage_report=False
     )
     
@@ -5163,3 +5258,35 @@ def db_guestactivity_2(app, db, db_register):
     db.session.commit()
 
     return [token1, token2]
+
+@pytest.fixture()
+def mail_templates(db):
+    """Create mail templates."""
+    genres = []
+    genre1 = MailTemplateGenres(
+        id=1,
+        name="Notification of secret URL provision"
+    )
+    genres.append(genre1)
+    genre2 = MailTemplateGenres(
+        id=2,
+        name="Guidance to the application form"
+    )
+    genres.append(genre2)
+    genre3 = MailTemplateGenres(
+        id=3,
+        name="Others"
+    )
+    genres.append(genre3)
+    db.session.add_all(genres)
+    db.session.commit()
+    template = MailTemplates(
+        id=1,
+        mail_subject="test subject",
+        mail_body="test body",
+        default_mail=True,
+        mail_genre_id=genre1.id,
+    )
+    db.session.add(template)
+    db.session.commit()
+    return template

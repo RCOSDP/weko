@@ -961,6 +961,10 @@ msgid "Admin menu_Setting_Mail"
 msgstr "メール送信"
 
 #: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_Setting_Mail Templates"
+msgstr "メールテンプレート"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_Setting_WebAPI Account"
 msgstr "WebAPIアカウント"
 

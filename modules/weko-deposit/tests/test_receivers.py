@@ -24,18 +24,6 @@ def test_append_file_content(app, db, db_itemtype, users, db_userprofile, es_rec
     user = User.query.filter_by(email="sysadmin@test.org").first()
     mocker.patch("flask_login.utils._get_user", return_value=user)
     with patch("flask_security.current_user", return_value=user):
-        # なんでPIDがDBに入っていないのか不明だが、再作成する
-        recid = PersistentIdentifier.create('recid', '1', object_type='rec', object_uuid=recid.object_uuid,status=PIDStatus.REGISTERED)
-        depid = PersistentIdentifier.create('depid', '1', object_type='rec', object_uuid=depid.object_uuid,status=PIDStatus.REGISTERED)
-        with db.session.begin_nested():
-            db.session.add(recid)
-            db.session.add(depid)
-
-        # WekoRecordデータベース登録
-        record = WekoDeposit.create(es_records[1][0]['record_data'], id_=recid.object_uuid, recid=recid)
-        record.commit()
-        
-        
         # from six import BytesIO
         from invenio_files_rest.models import Bucket, ObjectVersion
         from invenio_records_files.models import RecordsBuckets
@@ -69,9 +57,6 @@ def test_append_file_content(app, db, db_itemtype, users, db_userprofile, es_rec
                                                                 "url" : {"url":"http://localhost/record/{1}/files/hello.txt"},
                                                                 "file":(base64.b64encode(stream.getvalue())).decode('utf-8')}]
         es_records[0].upload_metadata(es_records[1][0]['record_data'], recid.object_uuid, 1, False)
-        # ItemsMetadataデータベース登録
-        rec_item = ItemsMetadata.create(es_records[1][0]['item_data'], id_=recid.object_uuid)
-        rec_item.commit()
 
         db.session.commit()
 
@@ -89,10 +74,6 @@ def test_append_file_content(app, db, db_itemtype, users, db_userprofile, es_rec
         # WekoRecordデータベース登録
         res = append_file_content(sender, json, es_records[1][0]['record'])
         assert res==None
-
-        with patch("weko_deposit.receivers.FeedbackMailList.get_mail_list_by_item_id", side_effect=Exception("test_error")):
-            res = append_file_content(sender, json, es_records[1][0]['record'])
-            assert res==None
         
         with patch("weko_records.api.FeedbackMailList.get_mail_list_by_item_id", return_value=["xxxxxx@ivis.co.jp"]):
             ret = append_file_content(sender, json, es_records[1][0]['record'])

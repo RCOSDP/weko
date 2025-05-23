@@ -339,7 +339,7 @@ def test_file_download_onetime(app, records, itemtypes, users, db_fileonetimedow
             with patch("flask.templating._render", return_value=""):
                 with patch("weko_records_ui.fd.get_onetime_download", return_value=db_fileonetimedownload):
                     #with patch("weko_records_ui.fd.parse_one_time_download_token", return_value=(True, [1])):
-                        res = client.post('/record/1/file/onetime/helloworld.zip',
+                        res = client.post('/record/3/file/onetime/helloworld.zip',
                                     data={'input_password':'test_pass'},
                                     content_type='application/json')
                         assert res.status_code == 200
