@@ -45,6 +45,7 @@
     {% assets "invenio_deposit_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
 
     <script src="{{ url_for('static', filename='js/weko_workspace/workspace_register.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/weko_items_ui/oapolicy.js') }}"></script>
     <!-- {% assets "weko_items_authors_search_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %} -->
     {% assets "weko_items_ui_js_dependencies" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
   {%- endblock javascript %}
@@ -254,6 +255,35 @@
                     </invenio-records-form>
                     
                   </div>
+
+                  <!-- OA Policy リンク取得 -->
+                  <div class="panel panel-default" class="col-sm-12">
+                    <div class="panel-heading" style="background-color: #dff0d8;">
+                      <h3 class="panel-title" style="color: #000000; font-weight: bold;">{{ _('oa_policy_label') }}</h3>
+                    </div>
+                    <div class="panel-body">
+                      <div class="col-sm-12 col-md-12">
+                        <div class="row content-font">
+                            <div class="panel panel-default" style="margin-right: 10px;">
+                              <div class="panel-body panel-body">
+                                  <!-- Policy 取得ボタン -->
+                                  <button type="button" class="btn btn-primary" id="oapolicyurl">
+                                    {{ _('oa_policy_export') }}
+                                  </button>
+                                  <!-- URL 表示 -->
+                                  <a id="oaPolicyUrl" href="#" target="_blank" class="ml-2 d-none">
+                                    <span id="oaPolicyText"></span>
+                                  </a>
+          
+                                  <!-- エラーメッセージ -->
+                                  <span id="oaPolicyError" class="text-danger ml-2" aria-live="polite"></span>
+                              </div>
+                            </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
                   {%- if workflow_selected %}
                   {% else %}
                     <div class="panel panel-default" class="col-sm-12">
