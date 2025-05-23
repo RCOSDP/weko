@@ -1651,7 +1651,7 @@ def clean_thumbnail_file(deposit, root_path, thumbnail_path):
             file.obj.remove()
 
 
-def up_load_file(record, root_path, deposit, old_files, allow_upload_file_content):
+def up_load_file(record, root_path, deposit, old_files, allow_upload_file_content, request_info=None):
     """Upload thumbnail or file content.
 
     :argument
@@ -1660,6 +1660,7 @@ def up_load_file(record, root_path, deposit, old_files, allow_upload_file_conten
         deposit        -- {object} item deposit.
         old_files      -- {list} List of ObjectVersion in current bucket.
         allow_upload_file_content   -- {bool} allow file content upload?
+        request_info   -- (dict) request info.
 
     """
 
@@ -1686,7 +1687,8 @@ def up_load_file(record, root_path, deposit, old_files, allow_upload_file_conten
                     root_file_id = old_file.root_file_id
                     old_file.remove()
 
-                obj = ObjectVersion.create(deposit.files.bucket, get_file_name(path))
+                filename =  get_file_name(path)
+                obj = ObjectVersion.create(deposit.files.bucket, filename)
                 obj.is_thumbnail = is_thumbnail
                 obj.set_contents(
                     file, root_file_id=root_file_id, is_set_size_location=False
@@ -1707,6 +1709,14 @@ def up_load_file(record, root_path, deposit, old_files, allow_upload_file_conten
                         len(record["filenames"]) > idx and \
                         record["filenames"][idx].get("filename"):
                     file_size_dict[record["filenames"][idx]["filename"]] = [{'value': size_str}]
+
+                opration = "FILE_CREATE" if not old_file else "FILE_UPDATE"
+                UserActivityLogger.info(
+                    operation=opration,
+                    target_key=filename,
+                    request_info=request_info,
+                    required_commit=False,
+                )
 
     def clean_file_contents(delete_all):
         # clean file contents in bucket.
@@ -1871,7 +1881,7 @@ def register_item_metadata(item, root_path, owner, is_gakuninrdm=False, request_
     new_data, is_cleaned, file_key = clean_file_metadata(item["item_type_id"], new_data)
 
     # progress upload file, replace file contents.
-    file_size_dict = up_load_file(item, root_path, deposit, old_file_list, not is_cleaned)
+    file_size_dict = up_load_file(item, root_path, deposit, old_file_list, not is_cleaned, request_info=request_info)
     new_data = autofill_thumbnail_metadata(item["item_type_id"], new_data)
 
     # check location file
