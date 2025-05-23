@@ -165,6 +165,8 @@ setup(
             'invenio_communities_css = invenio_communities.bundles:css',
             'invenio_communities_css_tree = invenio_communities.bundles:css_tree',
             'invenio_communities_css_tree_display = invenio_communities.bundles:css_tree_display',
+            'invenio_communities_trumbowyg_js = invenio_communities.bundles:js_trumbowyg',
+            'invenio_communities_trumbowyg_css = invenio_communities.bundles:css_trumbowyg',
         ]
     },
     extras_require=extras_require,
