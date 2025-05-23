@@ -816,7 +816,7 @@ msgstr "上記の条件に同意する"
 
 #: weko_records_ui/templates/weko_records_ui/box/communities.html:2
 msgid "Communities"
-msgstr ""
+msgstr "コミュニティ"
 
 #: weko_records_ui/templates/weko_records_ui/box/export.html:40
 msgid "Other Formats"
