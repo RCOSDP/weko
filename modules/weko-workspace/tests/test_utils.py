@@ -36,7 +36,7 @@ from weko_workspace.models import WorkspaceDefaultConditions
 import requests
 
 from weko_workspace.utils import *
-from weko_workspace.defaultfilters import DEFAULT_FILTERS
+from weko_workspace.config import WEKO_WORKSPACE_DEFAULT_FILTERS
 
 # ===========================def get_workspace_filterCon():=====================================
 # ワークスペースのフィルター条件を取得する関数のテスト
@@ -47,15 +47,15 @@ from weko_workspace.defaultfilters import DEFAULT_FILTERS
 
     (0, 
      {'return_value': None},  
-     (DEFAULT_FILTERS, False)),
+     (WEKO_WORKSPACE_DEFAULT_FILTERS, False)),
 
     (0, 
      {'side_effect': SQLAlchemyError("Database error")},  
-     (DEFAULT_FILTERS, False)),
+     (WEKO_WORKSPACE_DEFAULT_FILTERS, False)),
 
     (0, 
      {'side_effect': Exception("Unexpected error")},  
-     (DEFAULT_FILTERS, False)),
+     (WEKO_WORKSPACE_DEFAULT_FILTERS, False)),
 ])
 def test_get_workspace_filterCon(users, users_index, mock_setup, expected_response, workspaceData, app):
     test_user = users[users_index]['obj']  

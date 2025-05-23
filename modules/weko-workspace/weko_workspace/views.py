@@ -399,7 +399,7 @@ def get_workspace_itemlist():
                 ):
                     # public
                     publicCnt += 1
-                elif access_role in ["open_restricted", "open_login"]:
+                elif access_role in ["open_restricted", "open_login", 'open_no']:
                     # restricted
                     restrictedPublicationCnt += 1
                 else:
