@@ -40,6 +40,19 @@ import pytest
 from flask import Flask
 from flask.cli import ScriptInfo
 from flask_celeryext import FlaskCeleryExt
+from invenio_accounts import InvenioAccounts
+from invenio_accounts.models import User
+from invenio_accounts.testutils import create_test_user
+from invenio_db import InvenioDB, db
+from invenio_files_rest.models import Location
+from invenio_i18n import InvenioI18N
+from invenio_jsonschemas import InvenioJSONSchemas
+from invenio_pidrelations import InvenioPIDRelations
+from invenio_records import InvenioRecords
+from sqlalchemy_utils.functions import create_database, database_exists
+from weko_index_tree.models import Index
+from weko_search_ui import WekoSearchUI
+from weko_theme import WekoTheme
 from invenio_access import InvenioAccess
 from invenio_access.models import ActionUsers, ActionRoles
 from invenio_accounts import InvenioAccounts

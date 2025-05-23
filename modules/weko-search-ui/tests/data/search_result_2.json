@@ -23,7 +23,7 @@
             "item_type_id": "15",
             "publish_date": "2021-02-13",
             "publish_status": "0",
-            "weko_shared_id": -1,
+            "weko_shared_ids": [],
             "item_1617186331708": {
                 "attribute_name": "Title",
                 "attribute_value_mlt": [
@@ -788,7 +788,7 @@
         ],
         "_created": "2022-05-24T08:28:07.807702+00:00",
         "control_number": "1",
-        "weko_shared_id": -1,
+        "weko_shared_ids": [],
         "relation_version_is_last": true,
         "accessRights": [
             "embargoed access"

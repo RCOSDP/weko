@@ -20,6 +20,7 @@ boto3==1.7.84
 botocore==1.10.84
 cachelib==0.1
 cachetools==4.2.4
+captcha==0.4
 cchardet==2.1.1
 celery==4.4.4
 certifi==2017.11.5
@@ -177,7 +178,7 @@ passlib==1.7.1
 pbr==5.11.1
 pexpect==4.3.0
 pickleshare==0.7.4
-Pillow==5.4.1
+Pillow==8.1.2
 platformdirs==2.4.0
 pluggy==0.13.1
 ply==3.11

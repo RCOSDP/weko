@@ -248,9 +248,15 @@
         <div class="panel panel-default hide" id="hide-res-check">{{ res_check }}</div>
         <div class="panel panel-default">
           {%- if 0 != res_check %}
-            <div class="panel-body" id="step_page_permission">
-              {% include 'weko_workflow/permission_required.html' %}
-            </div>
+            {%- if approval_pending %}
+              <div class="panel-body" id="step_page_pending">
+                {% include 'weko_workflow/approval_pending.html' %}
+              </div>
+            {%- else %}
+              <div class="panel-body" id="step_page_permission">
+                {% include 'weko_workflow/permission_required.html' %}
+              </div>
+            {%- endif %}
           {%- else %}
             <div class="panel-body" id="activity_locked">
               {% include 'weko_workflow/lock_activity.html' with context %}
@@ -319,6 +325,11 @@
               {%- endif %}
             </div>
           {%- endif %}
+        </div>
+      {%- endif %}
+      {%- if application_approved %}
+        <div class="panel panel-default">
+          {%- include "weko_workflow/after_approval.html" %}
         </div>
       {%- endif %}
       {%- block history_panel %}

@@ -355,7 +355,7 @@ msgstr ""
 #: weko_admin/config.py:153
 #, fuzzy
 msgid "No. Of Times Downloaded"
-msgstr "Number of  Downloads/Views"
+msgstr "Number of  Downloads/Views"
 
 #: weko_admin/config.py:153 weko_admin/config.py:158
 msgid "Non-Logged In User"
@@ -1617,48 +1617,58 @@ msgstr "Update"
 
 #: weko_admin/admin/reindex_elasticsearch.html
 msgid "reindex item_index"
-msgstr "アイテムインデックスの再作成"
+msgstr ""
 
 #: weko_admin/admin/reindex_elasticsearch.html
 msgid "reindex item"
-msgstr "アイテムの再インデックス"
+msgstr ""
 
 #: weko_admin/admin/reindex_elasticsearch.html
 msgid "execute"
-msgstr "実行"
+msgstr ""
 
 #: weko_admin/admin/reindex_elasticsearch.html
 msgid "Maintenance"
-msgstr "メンテナンス"
+msgstr ""
 
 #: weko_admin/admin/reindex_elasticsearch.html
 msgid "ElasticSearch Index"
-msgstr "インデックス再作成"
+msgstr ""
 
 #: weko_admin/admin/reindex_elasticsearch.html
 msgid "waiting..."
-msgstr "実行可能"
+msgstr ""
 
 #: weko_admin/admin/reindex_elasticsearch.html
 msgid "executing..."
-msgstr "実行中..."
+msgstr ""
 
 #: weko_admin/admin/reindex_elasticsearch.html
 msgid "haserror"
-msgstr "エラー発生中につき実行できません"
+msgstr ""
 
 #: weko_admin/admin/reindex_elasticsearch.html
 msgid "validationMsg1"
-msgstr "実行モードが選ばれていません。"
+msgstr ""
 
 #: weko_admin/admin/reindex_elasticsearch.html
 #, fuzzy
 msgid "confirmMessage"
-msgstr "Confirm"
+msgstr ""
 
 #: weko_admin/admin/reindex_elasticsearch.html
 msgid "completed"
-msgstr "処理が完了しました。"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:
+msgid "Facet Search List"
+msgstr "Facet Search List"
+
+msgid "restricted_error_message"
+msgstr "Error Message"
+
+msgid "password check function"
+msgstr "Password check function when downloading for guest user"
 
 #~ msgid "Title_Asc"
 #~ msgstr "Title (Asc)"
