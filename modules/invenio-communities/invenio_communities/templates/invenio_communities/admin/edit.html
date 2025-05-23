@@ -6,12 +6,14 @@
   {% assets "invenio_deposit_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
   {{ super() }}
   <link href="{{ url_for('static', filename='scss/invenio_communities/extra_fields.css') }}" rel="stylesheet">
+  {% assets "invenio_communities_trumbowyg_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
 {%- endblock css %}
 
 {%- block javascript %}
   {% assets "invenio_deposit_dependencies_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
   {{ super() }}
   {% assets "invenio_deposit_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+  {% assets "invenio_communities_trumbowyg_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
   <script src="{{ url_for('static', filename='js/invenio_communities/app.js') }}"></script>
 {%- endblock javascript %}
 

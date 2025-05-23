@@ -61,15 +61,9 @@
 
     {%- block page_body_main %}
     <div class="content-policy container py-5">
-      <div class="text-left mb-4">
-        <h1 class="display-4">コンテンツポリシー</h1>
-        <hr class="w-50 mx-auto">
-      </div>
       <div class="policy-content">
         {% if community.content_policy %}
-          {% for line in community.content_policy.split('\n') %}
-            <p class="mb-3">{{ line|e }}</p>
-          {% endfor %}
+          {{ community.content_policy | sanitize_html | safe }}
         {% endif %}
       </div>
     </div>

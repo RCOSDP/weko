@@ -321,3 +321,26 @@ var CustomBSDatePicker = {
     });
   }
 }
+
+$(document).ready(function () {
+  $('#content_policy').trumbowyg({
+    autogrow: true,
+    tagsToRemove: ['script', 'link'],
+    svgPath: '/static/node_modules/trumbowyg/dist/ui/icons.svg',
+    btns: [
+      ["viewHTML"],
+      ["undo", "redo"],
+      ["formatting"],
+      ['fontfamily', 'fontsize'],
+      ["strong", "em", "del", 'underline', "superscript", "subscript"],
+      ['foreColor', 'backColor'],
+      ["link"],
+      ['table'],
+      ["justifyLeft", "justifyCenter", "justifyRight", "justifyFull"],
+      ["unorderedList", "orderedList"],
+      ["horizontalRule"],
+      ["removeformat"],
+      ["fullscreen"]
+    ],
+  });
+});
