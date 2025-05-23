@@ -171,7 +171,7 @@
                           <!-- Show FileName/Label -->
                           {%- if access_permission and billing_file_access_permission -%}
                             <a class="forcewrap{{ billing_file_class }}" {{ billing_file_data }} {{ billing_file_url }}
-                              {% if text_url %} href="javascript:OnLinkClick('{{ text_url }}', {{ pid.pid_value }}, '{{ file.accessrole }}')" {% endif %}>
+                              {% if text_url %} href="#" onclick="OnLinkClick('{{ text_url }}', {{ pid.pid_value }}, '{{ file.accessrole }}'); return false;" {% endif %}>
                               {% autoescape false %}
                               {{ file_label | escape_str }} {{ filesize }}
                               {% endautoescape %}
