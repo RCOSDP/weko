@@ -126,7 +126,7 @@ def get_oa_policy():
 
     if not issn and not eissn and not title:
         return jsonify({"error": "Please enter ISSN, eISSN, or journal title"}), 400
-    
+
     # get oa token
     token = get_oa_token()
     if not token:
@@ -1023,12 +1023,6 @@ def prepare_edit_item(id=None, community=None):
             )
 
         # ! Check dependency ItemType
-        if not ItemTypes.get_latest():
-            return jsonify(
-                code=err_code,
-                msg=_("You do not even have an ItemType.")
-            )
-
         item_type_id = deposit.get('item_type_id')
         item_type = ItemTypes.get_by_id(item_type_id)
         if not item_type:
@@ -1193,12 +1187,6 @@ def prepare_delete_item(id=None, community=None, shared_user_id=-1):
             )
 
         # ! Check dependency ItemType
-        if not ItemTypes.get_latest():
-            return jsonify(
-                code=err_code,
-                msg=_("You do not even have an ItemType.")
-            )
-
         item_type_id = deposit.get('item_type_id')
         item_type = ItemTypes.get_by_id(item_type_id)
         if not item_type:
