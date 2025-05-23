@@ -2049,18 +2049,9 @@ class JsonldMappingView(ModelView):
 
     def _item_type_name(view, context, model, name):
         item_type_name = ""
-        obj = ItemTypeNames.get_record(id_=model.item_type_id, with_deleted=True)
-        if obj is not None and obj.is_active:
-            item_type_name = obj.name
-        elif obj is not None and not obj.is_active:
-            item_type_name = _("Deleted ItemType")
-            current_app.logger.info(
-                f"ItemType: {model.item_type_id} is deleted itemtype."
-            )
+        if model.item_type and model.item_type.item_type_name:
+            item_type_name = model.item_type.item_type_name.name
         else:
-            current_app.logger.info(
-                f"ItemType: {model.item_type_id} is not found."
-            )
             item_type_name = _("Not Found ItemType")
         return item_type_name
 
@@ -2075,10 +2066,20 @@ class JsonldMappingView(ModelView):
         "item_type": _item_type_name,
         "mapping": _formated_jsonld_mapping,
     }
-    column_searchable_list = ("id", "name", "item_type_id")
+    column_sortable_list = (
+        "id",
+        "name",
+        ('item_type', 'item_type.item_type_name.name'),
+        "updated",
+    )
+    column_searchable_list = (
+        "id",
+        "name",
+        "item_type.item_type_name.name"
+    )
 
     def get_query(self):
-        return super(JsonldMappingView, self).get_query().filter(
+        return super().get_query().filter(
             ItemTypeJsonldMapping.is_deleted == False
         )
 
