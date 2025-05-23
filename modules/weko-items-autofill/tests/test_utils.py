@@ -8,7 +8,7 @@ from weko_workflow.models import ActionJournal
 
 from weko_items_autofill.utils import (
     get_doi_record_data,
-    get_doi_with_original,
+    fetch_metadata_by_doi,
     is_update_cache,
     cached_api_json,
     get_item_id,
@@ -250,18 +250,30 @@ def test_get_title_pubdate_path(app, itemtypes):
 # .tox/c1/bin/pytest --cov=weko_items_autofill tests/test_utils.py::test_get_doi_record_data -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-autofill/.tox/c1/tmp
 def test_get_doi_record_data(db, itemtypes, mocker):
     metainfo = '{"metainfo":"test_metadata"}'
-    metadata = [{"id": "test_id"}]
+    metadata = {"id": "test_id", "name": "test_name"}
+    patch("weko_items_autofill.utils.cached_api_json")
     mock_activity = mocker.patch("weko_items_autofill.utils.WorkActivity.get_activity_metadata",return_value=metainfo)
-    mock_original = mocker.patch("weko_items_autofill.utils.get_doi_with_original",return_value=metadata)
+    mock_fetch_metadata = mocker.patch("weko_items_autofill.utils.fetch_metadata_by_doi",return_value=metadata)
     result = get_doi_record_data("doi","1","1")
-    assert result == metadata
+    assert result == [{"id": "test_id"}, {"name": "test_name"}]
     mock_activity.assert_called_once()
-    mock_original.assert_called_once()
+    mock_fetch_metadata.assert_called_once()
+
+    mock_activity.reset_mock()
+    mock_fetch_metadata.reset_mock()
+
+    result = get_doi_record_data("doi","1","1")
+    assert result == [{"id": "test_id"}, {"name": "test_name"}]
+    mock_activity.assert_not_called()
+    mock_fetch_metadata.assert_not_called()
+
+    from invenio_cache import current_cache
+    current_cache.delete("doi_datadoi11")
 
 
-# def get_doi_with_original(doi, item_type_id, original_metadeta=None):
-# .tox/c1/bin/pytest --cov=weko_items_autofill tests/test_utils.py::test_get_doi_with_original -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-autofill/.tox/c1/tmp
-def test_get_doi_with_original(app,db,itemtypes,mocker):
+# def fetch_metadata_by_doi(doi, item_type_id, original_metadeta=None):
+# .tox/c1/bin/pytest --cov=weko_items_autofill tests/test_utils.py::test_fetch_metadata_by_doi -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-autofill/.tox/c1/tmp
+def test_fetch_metadata_by_doi(app,db,itemtypes,mocker):
 
     jalc_data = [{"id": "id_jalc"}, {"name_jalc": "test_name_jalc"}]
     ichushi_data = [{"id": "id_ichushi"}, {"name_ichushi": "test_name_ichushi"}]
@@ -269,16 +281,12 @@ def test_get_doi_with_original(app,db,itemtypes,mocker):
     datacite_data = [{"id": "id_datacite"}, {"name_datacite": "test_name_datacite"}]
     cinii_data = [{"id": "id_cinii"}, {"name_cinii": "test_name_cinii"}]
 
-    # FIXME: fix method name after merge
-    mocker.patch("weko_items_autofill.utils.get_jalc_record_data_kari",return_value=jalc_data)
-    # FIXME: fix method name after merge
-    mocker.patch("weko_items_autofill.utils.get_jamas_record_data_kari",return_value=ichushi_data)
-    # FIXME: fix method name after merge
-    mocker.patch("weko_items_autofill.utils.get_crossref_record_data_kari",return_value=crossref_data)
-    # FIXME: fix method name after merge
-    mocker.patch("weko_items_autofill.utils.get_datacite_record_data_kari",return_value=datacite_data)
-    # FIXME: fix method name after merge
-    mocker.patch("weko_items_autofill.utils.get_cinii_record_data_kari",return_value=cinii_data)
+    mocker.patch("weko_items_autofill.utils.get_current_api_certification",return_value={"cert_data": "test_id"})
+    mocker.patch("weko_workspace.utils.get_jalc_record_data",return_value=jalc_data)
+    mocker.patch("weko_workspace.utils.get_jamas_record_data",return_value=ichushi_data)
+    mocker.patch("weko_items_autofill.utils.get_crossref_record_data",return_value=crossref_data)
+    mocker.patch("weko_workspace.utils.get_datacite_record_data",return_value=datacite_data)
+    mocker.patch("weko_workspace.utils.get_cinii_record_data",return_value=cinii_data)
 
     # with all api
     app.config.update(
@@ -299,17 +307,16 @@ def test_get_doi_with_original(app,db,itemtypes,mocker):
         ],
     )
     original_metadata = {"id": "test_original", "name_original": "test_name_original"}
-    result = get_doi_with_original("test_doi","test_item_type_id",original_metadata)
-    print(f"result: {result}")
-    assert result == [
-        {'id': 'id_jalc'},
-        {"name_jalc": "test_name_jalc"},
-        {"name_ichushi": "test_name_ichushi"},
-        {"name_crossref": "test_name_crossref"},
-        {"name_datacite": "test_name_datacite"},
-        {"name_cinii": "test_name_cinii"},
-        {"name_original": "test_name_original"},
-    ]
+    result = fetch_metadata_by_doi("test_doi","test_item_type_id",original_metadata)
+    assert result == {
+        'id': 'id_jalc',
+        "name_jalc": "test_name_jalc",
+        "name_ichushi": "test_name_ichushi",
+        "name_crossref": "test_name_crossref",
+        "name_datacite": "test_name_datacite",
+        "name_cinii": "test_name_cinii",
+        "name_original": "test_name_original"
+    }
 
     # with only jalc
     app.config.update(
@@ -318,12 +325,11 @@ def test_get_doi_with_original(app,db,itemtypes,mocker):
         ],
     )
     original_metadata = {"id": "test_original", "name_original": "test_name_original"}
-    result = get_doi_with_original("test_doi","test_item_type_id",original_metadata)
-    print(f"result: {result}")
-    assert result == [
-        {'id': 'id_jalc'},
-        {"name_jalc": "test_name_jalc"},
-    ]
+    result = fetch_metadata_by_doi("test_doi","test_item_type_id",original_metadata)
+    assert result == {
+        'id': 'id_jalc',
+        "name_jalc": "test_name_jalc",
+    }
 
     # with jalc & original
     app.config.update(
@@ -333,13 +339,12 @@ def test_get_doi_with_original(app,db,itemtypes,mocker):
         ],
     )
     original_metadata = {"id": "test_original", "name_original": "test_name_original"}
-    result = get_doi_with_original("test_doi","test_item_type_id",original_metadata)
-    print(f"result: {result}")
-    assert result == [
-        {'id': 'id_jalc'},
-        {"name_jalc": "test_name_jalc"},
-        {"name_original": "test_name_original"},
-    ]
+    result = fetch_metadata_by_doi("test_doi","test_item_type_id",original_metadata)
+    assert result == {
+        'id': 'id_jalc',
+        "name_jalc": "test_name_jalc",
+        "name_original": "test_name_original",
+    }
 
     # with jalc & original(empty)
     app.config.update(
@@ -349,12 +354,11 @@ def test_get_doi_with_original(app,db,itemtypes,mocker):
         ],
     )
     original_metadata = {}
-    result = get_doi_with_original("test_doi","test_item_type_id",original_metadata)
-    print(f"result: {result}")
-    assert result == [
-        {'id': 'id_jalc'},
-        {"name_jalc": "test_name_jalc"},
-    ]
+    result = fetch_metadata_by_doi("test_doi","test_item_type_id",original_metadata)
+    assert result == {
+        'id': 'id_jalc',
+        "name_jalc": "test_name_jalc",
+    }
 
     # with jalc & crossref
     app.config.update(
@@ -364,13 +368,12 @@ def test_get_doi_with_original(app,db,itemtypes,mocker):
         ],
     )
     original_metadata = {"id": "test_original", "name_original": "test_name_original"}
-    result = get_doi_with_original("test_doi","test_item_type_id",original_metadata)
-    print(f"result: {result}")
-    assert result == [
-        {'id': 'id_jalc'},
-        {"name_jalc": "test_name_jalc"},
-        {"name_crossref": "test_name_crossref"},
-    ]
+    result = fetch_metadata_by_doi("test_doi","test_item_type_id",original_metadata)
+    assert result == {
+        'id': 'id_jalc',
+        "name_jalc": "test_name_jalc",
+        "name_crossref": "test_name_crossref",
+    }
 
     # with jalc & crossref & original(empty)
     app.config.update(
@@ -381,13 +384,12 @@ def test_get_doi_with_original(app,db,itemtypes,mocker):
         ],
     )
     original_metadata = {}
-    result = get_doi_with_original("test_doi","test_item_type_id",original_metadata)
-    print(f"result: {result}")
-    assert result == [
-        {'id': 'id_jalc'},
-        {"name_jalc": "test_name_jalc"},
-        {"name_crossref": "test_name_crossref"},
-    ]
+    result = fetch_metadata_by_doi("test_doi","test_item_type_id",original_metadata)
+    assert result == {
+        'id': 'id_jalc',
+        "name_jalc": "test_name_jalc",
+        "name_crossref": "test_name_crossref",
+    }
 
     # with jalc & crossref & original
     app.config.update(
@@ -398,14 +400,13 @@ def test_get_doi_with_original(app,db,itemtypes,mocker):
         ],
     )
     original_metadata = {"id": "test_original", "name_original": "test_name_original"}
-    result = get_doi_with_original("test_doi","test_item_type_id",original_metadata)
-    print(f"result: {result}")
-    assert result == [
-        {'id': 'id_jalc'},
-        {"name_jalc": "test_name_jalc"},
-        {"name_crossref": "test_name_crossref"},
-        {"name_original": "test_name_original"},
-    ]
+    result = fetch_metadata_by_doi("test_doi","test_item_type_id",original_metadata)
+    assert result == {
+        'id': 'id_jalc',
+        "name_jalc": "test_name_jalc",
+        "name_crossref": "test_name_crossref",
+        "name_original": "test_name_original",
+    }
 
     # sword
     app.config.update(
@@ -420,17 +421,30 @@ def test_get_doi_with_original(app,db,itemtypes,mocker):
         "Original"
     ]
     original_metadata = {"id": "test_original", "name_original": "test_name_original"}
-    result = get_doi_with_original("test_doi","test_item_type_id",original_metadata,meta_data_api=meta_data_api)
-    print(f"result: {result}")
-    assert result == [
-        {'id': 'id_jalc'},
-        {"name_jalc": "test_name_jalc"},
-        {"name_ichushi": "test_name_ichushi"},
-        {"name_crossref": "test_name_crossref"},
-        {"name_datacite": "test_name_datacite"},
-        {"name_cinii": "test_name_cinii"},
-        {"name_original": "test_name_original"},
-    ]
+    result = fetch_metadata_by_doi("test_doi","test_item_type_id",original_metadata,meta_data_api=meta_data_api)
+    assert result == {
+        'id': 'id_jalc',
+        "name_jalc": "test_name_jalc",
+        "name_ichushi": "test_name_ichushi",
+        "name_crossref": "test_name_crossref",
+        "name_datacite": "test_name_datacite",
+        "name_cinii": "test_name_cinii",
+        "name_original": "test_name_original",
+    }
+
+    result = fetch_metadata_by_doi("test_doi","test_item_type_id",original_metadata)
+    assert result == {"id": "test_original", "name_original": "test_name_original"}
+
+    mocker.patch("weko_workspace.utils.get_jalc_record_data",side_effect=Exception("test_error"))
+    result = fetch_metadata_by_doi("test_doi","test_item_type_id",[],meta_data_api=meta_data_api)
+    assert result == {
+        "id": "id_ichushi",
+        "name_ichushi": "test_name_ichushi",
+        "name_crossref": "test_name_crossref",
+        "name_datacite": "test_name_datacite",
+        "name_cinii": "test_name_cinii",
+    }
+
 
 
 # def get_crossref_record_data(pid, doi, item_type_id):

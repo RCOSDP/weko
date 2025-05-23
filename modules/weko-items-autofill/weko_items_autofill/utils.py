@@ -20,17 +20,19 @@
 
 """Module of weko-items-autofill utils.."""
 import copy
-from functools import wraps
 import json
 import traceback
+from functools import wraps
 
 from flask import current_app
 from flask_babelex import gettext as _
+from lxml import etree
+from jsonschema import validate, ValidationError
+
 from invenio_cache import current_cache
 from invenio_db import db
 from invenio_pidstore.models import PersistentIdentifier
-from jsonschema import validate, ValidationError
-from lxml import etree
+
 from weko_admin.utils import get_current_api_certification
 from weko_records.api import ItemTypes, Mapping
 from weko_records.serializers.utils import get_mapping
@@ -166,51 +168,6 @@ def get_title_pubdate_path(item_type_id):
     return result
 
 
-def deep_merge(*dicts):
-    """Recursively merge multiple dictionaries, supporting deep list merging"""
-    merged_dict = {}
-    for d in dicts:
-        for key, value in d.items():
-            if key in merged_dict:
-                if isinstance(value, dict) and isinstance(merged_dict[key], dict):
-                    # Recursively merge sub-dictionaries
-                    merged_dict[key] = deep_merge(merged_dict[key], value)
-                elif isinstance(value, list) and isinstance(merged_dict[key], list):
-                    # Recursively merge elements in the list
-                    merged_dict[key] = merge_lists(merged_dict[key], value)
-                else:
-                    # Do not overwrite existing values
-                    pass
-            else:
-                # Directly add new value
-                merged_dict[key] = value
-    return merged_dict
-
-
-def merge_lists(list1, list2):
-    """Recursively merge dictionaries in the list and remove duplicates"""
-    merged_list = list1[:]
-
-    if (len(merged_list) != 1 or len(list2) != 1):
-        return merged_list + list2[:]
-
-    dict1, dict2 = merged_list[0], list2[0]
-    if all(not v for v in dict1.values()) and any(v for v in dict2.values()):
-        merged_list = list2[:]
-
-    return merged_list
-
-def get_crossref_record_data_default_pid(doi, item_type_id):
-    """
-    Get record data base on CrossRef default pid.
-
-    :return: The record data
-    """
-    pid_response = get_current_api_certification("crf")
-    pid = pid_response["cert_data"]
-    return get_crossref_record_data(pid, doi, item_type_id)
-
-
 @cached_api_json(timeout=50, key_prefix="doi_data")
 def get_doi_record_data(doi, item_type_id, activity_id):
     """Get record data base on DOI API.
@@ -221,16 +178,15 @@ def get_doi_record_data(doi, item_type_id, activity_id):
     :return: The record data
     """
     activity = WorkActivity()
-    metadata = activity.get_activity_metadata(activity_id)
-    if not isinstance(metadata, dict):
-        metadata = json.loads(metadata)
-    metainfo = metadata.get("metainfo", {})
-    doi_with_original = get_doi_with_original(doi, item_type_id, metainfo)
+    temp_data = activity.get_activity_metadata(activity_id)
+    metadata = temp_data if isinstance(temp_data, dict) else json.loads(temp_data)
+    metainfo = metadata.get("metainfo")
+    doi_with_original = fetch_metadata_by_doi(doi, item_type_id, metainfo)
     doi_response = [{k: v} for k, v in doi_with_original.items()]
     return doi_response
 
 
-def get_doi_with_original(doi, item_type_id, original=None, **kwargs):
+def fetch_metadata_by_doi(doi, item_type_id, original=None, **kwargs):
     """Get record data base on DOI API.
 
     Get metadata from APIs by supclied DOI ID and fill in the metadata
@@ -256,7 +212,7 @@ def get_doi_with_original(doi, item_type_id, original=None, **kwargs):
     api_funcs = {
         "JaLC API": get_jalc_record_data,
         "医中誌 Web API": get_jamas_record_data,
-        "CrossRef": get_crossref_record_data_default_pid,
+        "CrossRef": get_crossref_record_data_with_pid,
         "DataCite": get_datacite_record_data,
         "CiNii Research": get_cinii_record_data,
     }
@@ -304,6 +260,17 @@ def get_doi_with_original(doi, item_type_id, original=None, **kwargs):
                 traceback.print_exc()
         result.update(response_metadata)
     return result
+
+
+def get_crossref_record_data_with_pid(doi, item_type_id):
+    """
+    Get record data base on CrossRef default pid.
+
+    :return: The record data
+    """
+    pid_response = get_current_api_certification("crf")
+    pid = pid_response["cert_data"]
+    return get_crossref_record_data(pid, doi, item_type_id)
 
 
 @cached_api_json(timeout=50, key_prefix="crossref_data")

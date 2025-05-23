@@ -101,7 +101,9 @@
                             {%- endif -%}
                           {%- endif -%}
                           <a class="forcewrap{{billing_file_class}}" {{billing_file_data}} {{billing_file_url}}
-                          {% if file_url %} href="javascript:OnLinkClick('{{ file_url }}', {{ pid.pid_value }}, '{{ file.accessrole }}')" {% endif %}>{{ file.filename }} ({{ file.size|filesizeformat }})</a>
+                          {% if file_url %} href="#" onclick="OnLinkClick('{{ file_url }}', {{ pid.pid_value }}, '{{ file.accessrole }}'); return false;" {% endif %}>
+                          {{ file.filename }} ({{ file.size|filesizeformat }})
+                          </a>
 
                           <span>{{file.checksum.split(':')[0]}}</span>
                           <span class="break-word">{{file.checksum.split(':')[1]}}</span>

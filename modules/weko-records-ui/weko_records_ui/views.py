@@ -27,6 +27,7 @@ import traceback
 import uuid
 import copy
 import sys
+import urllib.parse
 
 import six
 import werkzeug
@@ -852,7 +853,7 @@ def _get_show_secret_url_button(record : WekoRecord, filename :str) -> bool:
 
     #3.check the file's accessrole is "open_no" ,or "open_date" and not open yet.
     is_secret_file = False
-    current_app.logger.info(record.get_file_data())
+    current_app.logger.debug(record.get_file_data())
     for content in record.get_file_data():
         if content.get('filename') == filename:
             if content.get('accessrole') == "open_no":
@@ -1120,6 +1121,26 @@ def escape_newline(s):
     s = '<br />'.join(s.splitlines())
 
     return s
+
+
+@blueprint.app_template_filter('encode_filename')
+def encode_filename(s):
+    """Encode filename to be URL safe.
+
+    If filename contains special characters, it will be encoded to be URL safe.
+
+    Args:
+        s (str): The url containing filename to be encoded.
+
+    Returns:
+        str: The encoded filename.
+    """
+    if s:
+        part = s.split('/')
+        part[-1] = urllib.parse.quote(part[-1], safe='')
+        s = "/".join(part)
+    return s
+
 
 def json_string_escape(s):
     opt = ''
