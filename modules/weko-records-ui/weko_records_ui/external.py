@@ -157,9 +157,11 @@ def get_oa_token():
         current_app.config.get("WEKO_RECORDS_UI_OA_API_CODE"))
     if not api_cert:
         return
-    client_id = api_cert.get("cert_data",{}).get("client_id")
-    client_secret = api_cert.get("cert_data",{}).get("client_secret")
+    cert_data = api_cert.get("cert_data", {})
+    client_id = cert_data.get("client_id") if cert_data else None
+    client_secret = cert_data.get("client_secret") if cert_data else None
     if not client_secret or not client_id:
+        current_app.logger.debug("client_id or client_secret is None")
         return
     token = None
     data = {
