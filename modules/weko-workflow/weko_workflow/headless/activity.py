@@ -19,6 +19,8 @@ from invenio_accounts.models import User
 from invenio_db import db
 from invenio_files_rest.errors import FileSizeError
 from invenio_files_rest.models import Bucket, ObjectVersion
+from invenio_files_rest.tasks import remove_file_data
+from invenio_files_rest.utils import delete_file_instance
 from invenio_pidstore import current_pidstore
 from invenio_pidstore.models import PersistentIdentifier
 
@@ -474,7 +476,6 @@ class HeadlessActivity(WorkActivity):
                     deleted_items.append(metadata_id)
             metadata["deleted_items"] = deleted_items
 
-            # TODO: update submited files and reuse other files
             if not self._files_inheritance:
                 self.files_info = self._upload_files(files)
             else:
@@ -513,6 +514,29 @@ class HeadlessActivity(WorkActivity):
                 file_metadata["format"] = uploaded_file.get("mimetype")
                 file_metadata["version_id"] = uploaded_file.get("version_id")
 
+            # Delete files not in metadata
+            delete_files = set()
+            current_filenames = [
+                file.get("filename")
+                for file_key in file_key_list
+                for file in metadata[file_key]
+            ]
+            # Updated metadata
+            for uploaded_file in self.files_info:
+                if uploaded_file.get("key") not in current_filenames:
+                    delete_files.add(uploaded_file.get("version_id"))
+
+            # Metadata before update
+            old_files_obj = [f.key for f in self._deposit.files]
+            for file_metadata in _old_files:
+                filename = file_metadata.get("key")
+                if filename not in current_filenames and filename in old_files_obj:
+                    delete_files.add(file_metadata.get("version_id"))
+            self._delete_file(delete_files)
+
+            self.files_info = [f for f in self.files_info if f.get("version_id") not in delete_files]
+
+            # create workflow_activity.tmp_data
             data = {
                 "metainfo": metadata,
                 "files": self.files_info,
@@ -520,7 +544,6 @@ class HeadlessActivity(WorkActivity):
                     "initialization": f"/api/deposits/redirect/{pid.pid_value}",
                 }
             }
-
             data["endpoint"].update(base_factory(pid))
             self.upt_activity_metadata(self.activity_id, json.dumps(data))
 
@@ -641,6 +664,28 @@ class HeadlessActivity(WorkActivity):
             files_info.append(file_info)
 
         return files_info
+
+    def _delete_file(self, version_ids):
+        """Delete ObjectVersions
+
+        Delete the target ObjectVersion and rewrite is_head. Optionally,
+        delete the FileInstance and file (asynchronous).
+
+        Args:
+            version_ids (list[str]): A list of version_ids to be deleted
+        """
+        for version_id in version_ids:
+            obj = ObjectVersion.get(version_id=version_id)
+            obj.remove()
+            if obj.is_head:
+                obj_to_restore = ObjectVersion.get_versions(
+                    obj.bucket, obj.key, desc=True
+                ).first()
+                if obj_to_restore:
+                    obj_to_restore.is_head = True
+            if obj.file_id and not delete_file_instance(obj.file_id):
+                remove_file_data.delay(str(obj.file_id))
+
 
     def _designate_index(self, index=None):
         """Designate Index.
