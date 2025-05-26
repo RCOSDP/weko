@@ -72,7 +72,7 @@ from weko_workflow.utils import (
 from .permissions import item_permission
 from .utils import (
     _get_max_export_items, check_item_is_being_edit,
-    export_items, export_rocrate, get_current_user, get_data_authors_prefix_settings,
+    export_items, get_current_user, get_data_authors_prefix_settings,
     get_data_authors_affiliation_settings, get_list_email, get_list_username,
     get_ranking, get_user_info_by_email, get_user_info_by_username,
     get_user_information, get_user_permission, get_workflow_by_item_type_id,
@@ -1408,10 +1408,7 @@ def export():
         return abort(403)
 
     if request.method == 'POST':
-        post_data = request.form.to_dict()
-        if (post_data["export_format_radio"] == "ROCRATE"):
-            return export_rocrate(post_data)
-        return export_items(post_data)
+        return export_items(request.form.to_dict())
 
     from weko_search_ui.api import SearchSetting
     search_type = request.args.get('search_type', '0')  # TODO: Refactor
