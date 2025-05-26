@@ -172,10 +172,13 @@ def get_title_pubdate_path(item_type_id):
 def get_doi_record_data(doi, item_type_id, activity_id):
     """Get record data base on DOI API.
 
-    :param naid: The DOI ID
-    :param item_type_id: The item type ID
-    :param activity_id: The activity ID
-    :return: The record data
+    Args:
+        doi (str): DOI
+        item_type_id (int): Item type ID
+        activity_id (int): Activity ID
+
+    Returns:
+        list: List of record data
     """
     activity = WorkActivity()
     temp_data = activity.get_activity_metadata(activity_id)
@@ -266,7 +269,12 @@ def get_crossref_record_data_with_pid(doi, item_type_id):
     """
     Get record data base on CrossRef default pid.
 
-    :return: The record data
+    Args:
+        doi (str): DOI
+        item_type_id (int): Item type ID
+
+    Returns:
+        list: List of record data
     """
     pid_response = get_current_api_certification("crf")
     pid = pid_response["cert_data"]
@@ -277,10 +285,14 @@ def get_crossref_record_data_with_pid(doi, item_type_id):
 def get_crossref_record_data(pid, doi, item_type_id, exclude_duplicate_lang=True):
     """Get record data base on CrossRef API.
 
-    :param pid: The PID
-    :param doi: The DOI ID
-    :param item_type_id: The item type ID
-    :return:
+    Args:
+        pid (str): PID
+        doi (str): DOI
+        item_type_id (int): Item type ID
+        exclude_duplicate_lang (bool): Exclude duplicate language
+
+    Returns:
+        list: List of record data
     """
     result = list()
     api_response = CrossRefOpenURL(pid, doi).get_data()
@@ -305,7 +317,8 @@ def get_crossref_record_data(pid, doi, item_type_id, exclude_duplicate_lang=True
                 get_crossref_autofill_item(item_type_id)))
         result = build_record_model(
             autofill_key_tree, api_data, items.schema,
-            exclude_duplicate_lang=exclude_duplicate_lang)
+            exclude_duplicate_lang=exclude_duplicate_lang
+        )
     return result
 
 
@@ -328,7 +341,8 @@ def get_cinii_record_data(naid, item_type_id):
         return result
     elif items.form is not None:
         autofill_key_tree = get_autofill_key_tree(
-            items.form, get_cinii_autofill_item(item_type_id))
+            items.form, get_cinii_autofill_item(item_type_id)
+        )
         result = build_record_model(autofill_key_tree, api_data, items.schema)
     return result
 
@@ -1108,20 +1122,33 @@ def get_specific_key_path(des_key, form):
     return existed, path_result
 
 
-def build_record_model(item_autofill_key, api_data, schema=None, exclude_duplicate_lang=False):
+def build_record_model(
+    item_autofill_key, api_data, schema=None, exclude_duplicate_lang=False
+):
     """Build record record_model.
 
-    :param item_autofill_key: Item auto-fill key
-    :param api_data: Api data
-    :return: Record model list
+    Args:
+        item_autofill_key (dict): Item auto-fill key
+        api_data (dict): Api data
+        schema (dict): Schema
+        exclude_duplicate_lang (bool): Exclude duplicate language
+
+    Returns:
+        list: Record model list
     """
-    def _build_record_model(_api_data, _item_autofill_key, _record_model_lst,
-                            _filled_key, _schema, _exclude_duplicate_lang):
+    def _build_record_model(
+        _api_data, _item_autofill_key, _record_model_lst,
+        _filled_key, _schema, _exclude_duplicate_lang
+    ):
         """Build record model.
 
-        @param _api_data: Api data
-        @param _item_autofill_key: Item auto-fill key
-        @param _record_model_lst: Record model list
+        Args:
+            _api_data (dict): Api data
+            _item_autofill_key (dict): Item auto-fill key
+            _record_model_lst (list): Record model list
+            _filled_key (list): Filled key list
+            _schema (dict): Schema
+            _exclude_duplicate_lang (bool): Exclude duplicate language
         """
         for k, v in _item_autofill_key.items():
             data_model = {}
@@ -1150,8 +1177,10 @@ def build_record_model(item_autofill_key, api_data, schema=None, exclude_duplica
     filled_key = list()
     if not api_data or not item_autofill_key:
         return record_model_lst
-    _build_record_model(api_data, item_autofill_key, record_model_lst,
-                        filled_key, schema, exclude_duplicate_lang)
+    _build_record_model(
+        api_data, item_autofill_key, record_model_lst,
+        filled_key, schema, exclude_duplicate_lang
+    )
 
     return record_model_lst
 

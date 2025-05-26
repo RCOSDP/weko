@@ -2506,8 +2506,9 @@ def export_items(post_data):
     :return: JSON, BIBTEX
     """
     current_app.logger.debug("post_data:{}".format(post_data))
-    include_contents = True if \
-        post_data.get('export_file_contents_radio') == 'True' else False
+    include_contents = (
+        True if post_data.get('export_file_contents_radio') == 'True' else False
+    )
     export_format = post_data['export_format_radio']
     record_ids = json.loads(post_data['record_ids'])
     invalid_record_ids = json.loads(post_data['invalid_record_ids'])
@@ -2516,8 +2517,11 @@ def export_items(post_data):
     else:
         invalid_record_ids = [invalid_record_ids]
     # Remove all invalid records
-    record_ids = set(record_ids) - set(invalid_record_ids)
-    record_metadata = json.loads(post_data['record_metadata'])
+    record_ids = list(set(record_ids) - set(invalid_record_ids))
+    record_metadata = (
+        json.loads(post_data['record_metadata'])
+        if post_data.get('record_metadata') else {}
+    )
     if len(record_ids) > _get_max_export_items():
         return abort(400)
     elif len(record_ids) == 0:
@@ -2525,61 +2529,67 @@ def export_items(post_data):
 
     result = {'items': []}
     temp_path = tempfile.TemporaryDirectory(
-        prefix=current_app.config['WEKO_ITEMS_UI_EXPORT_TMP_PREFIX'])
+        prefix=current_app.config['WEKO_ITEMS_UI_EXPORT_TMP_PREFIX']
+    )
     item_types_data = {}
 
     try:
         # Set export folder
-        export_path = temp_path.name + '/' + \
-            datetime.utcnow().strftime("%Y%m%d%H%M%S")
-        # Double check for limits
-        for record_id in record_ids:
-            record_path = export_path + '/recid_' + str(record_id)
-            os.makedirs(record_path, exist_ok=True)
-            exported_item, list_item_role = _export_item(
-                record_id,
-                export_format,
-                include_contents,
-                record_path,
-                record_metadata.get(str(record_id))
-            )
-            result['items'].append(exported_item)
+        datetime_now = datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S")
+        export_path = os.path.join(temp_path.name, datetime_now)
 
-            item_type_id = exported_item.get('item_type_id')
-            item_type = ItemTypes.get_by_id(item_type_id)
-            if not item_types_data.get(item_type_id):
-                item_type_name = check_item_type_name(
-                    item_type.item_type_name.name)
-                item_types_data[item_type_id] = {
-                    'item_type_id': item_type_id,
-                    'name': '{}({})'.format(
-                        item_type_name,
-                        item_type_id),
-                    'root_url': request.url_root,
-                    'jsonschema': 'items/jsonschema/' + item_type_id,
-                    'keys': [],
-                    'labels': [],
-                    'recids': [],
-                    'data': {},
-                }
-            item_types_data[item_type_id]['recids'].append(record_id)
-
-        # Create export info file
-        if export_format == 'BIBTEX':
-            write_bibtex_files(item_types_data, export_path)
+        if export_format == "ROCRATE":
+            make_rocrate(record_ids, export_path)
         else:
-            write_files(item_types_data, export_path, list_item_role)
+            # Double check for limits
+            for record_id in record_ids:
+                record_path = export_path + '/recid_' + str(record_id)
+                os.makedirs(record_path, exist_ok=True)
+                exported_item, list_item_role = _export_item(
+                    record_id,
+                    export_format,
+                    include_contents,
+                    record_path,
+                    record_metadata.get(str(record_id))
+                )
+                result['items'].append(exported_item)
 
-        # Create bag
-        bagit.make_bag(export_path)
+                item_type_id = exported_item.get('item_type_id')
+                item_type = ItemTypes.get_by_id(item_type_id)
+                if not item_types_data.get(item_type_id):
+                    item_type_name = check_item_type_name(
+                        item_type.item_type_name.name
+                    )
+                    item_types_data[item_type_id] = {
+                        'item_type_id': item_type_id,
+                        'name': f'{item_type_name}({item_type_id})',
+                        'root_url': request.url_root,
+                        'jsonschema': 'items/jsonschema/' + item_type_id,
+                        'keys': [],
+                        'labels': [],
+                        'recids': [],
+                        'data': {},
+                    }
+                item_types_data[item_type_id]['recids'].append(record_id)
+
+            # Create export info file
+            if export_format == 'BIBTEX':
+                write_bibtex_files(item_types_data, export_path)
+            else:
+                write_files(item_types_data, export_path, list_item_role)
+
+            # Create bag
+            bagit.make_bag(export_path)
         # Create download file
         # zip filename: export_{uuid}-{%Y%m%d%H%M%S}
-        zip_path = tempfile.gettempdir()+"/"+export_path.split("/")[-2]+"-"+export_path.split("/")[-1]
+        zip_path = os.path.join(
+            tempfile.gettempdir(),
+            export_path.split("/")[-2] + "-" + export_path.split("/")[-1]
+        )
         shutil.make_archive(zip_path, 'zip', export_path)
     except Exception:
-        current_app.logger.error('-' * 60)
-        traceback.print_exc(file=sys.stdout)
-        current_app.logger.error('-' * 60)
+        current_app.logger.error("Failed to export items.")
+        traceback.print_exc()
         flash(_('Error occurred during item export.'), 'error')
         return redirect(url_for('weko_items_ui.export'))
     resp = send_file(
@@ -2588,211 +2598,61 @@ def export_items(post_data):
         attachment_filename='export.zip'
     )
     os.remove(zip_path+".zip")
+    temp_path.cleanup()
     return resp
 
 
-def bagify(
-    bag_dir, bag_info=None, processes=1, checksums=None, encoding="utf-8"
-):
-    """ Give manifests and tag files to an existing directory.
-
-    This is a modified version of the make_bag function from the bagit library.
-    Give tag files and manifests to an existing directory.
-    It is required that the given directory contains data in data/.
-    If the directory does not have data/, use the bagit.make_bag function.
+def make_rocrate(record_ids, export_path):
+    """Make RO-Crate BagIt for export.
 
     Args:
-        bag_dir (str): The directory to bag.
-        bag_info (dict): A dictionary of tag file values.
-        processes (int): The number of processes to use when creating manifests.
-        checksums (list of str): The checksum algorithms to use when creating manifests.
-        encoding (str): The encoding to use when creating tag files.
-
-    Returns:
-        Bag: The bag created from the given directory.
+        record_ids (list): List of record IDs to export.
+        export_path (str): Path to export the RO-Crate.
     """
-
-    if checksums is None:
-        checksums = bagit.DEFAULT_CHECKSUMS
-
-    bag_dir = os.path.abspath(bag_dir)
-    cwd = os.path.abspath(os.path.curdir)
-
-    if cwd.startswith(bag_dir) and cwd != bag_dir:
-        raise RuntimeError(
-            "Bagging a parent of the current directory is not supported"
-        )
-
-    current_app.logger.info(f"Creating tag for directory {bag_dir}")
-
-    if not os.path.isdir(bag_dir):
-        current_app.logger.error(f"Bag directory {bag_dir} does not exist")
-        raise RuntimeError(f"Bag directory {bag_dir} does not exist")
-
-    old_dir = os.path.abspath(os.path.curdir)
-
-    if not os.path.exists(os.path.join(bag_dir, "data")):
-        current_app.logger.error(f"Bag directory {bag_dir} does not contain a data directory")
-        raise RuntimeError(f"Bag directory {bag_dir} does not contain a data directory")
-
-    try:
-        unbaggable = bagit._can_bag(bag_dir)
-
-        if unbaggable:
-            current_app.logger.error(
-                f"Unable to write to the following directories and files: {unbaggable}"
-            )
-            raise bagit.BagError("Missing permissions to move all files and directories")
-
-        unreadable_dirs, unreadable_files = bagit._can_read(bag_dir)
-
-        if unreadable_dirs or unreadable_files:
-            if unreadable_dirs:
-                current_app.logger.error(
-                    f"The following directories do not have read permissions: {unreadable_dirs}"
-                )
-            if unreadable_files:
-                current_app.logger.error(
-                    f"The following files do not have read permissions: {unreadable_files}"
-                )
-            raise bagit.BagError(
-                "Read permissions are required to calculate file fixities"
-            )
-        else:
-            current_app.logger.info(_("Creating data directory"))
-
-            os.chdir(bag_dir)
-            cwd = os.getcwd()
-
-            # permissions for the payload directory should match those of the
-            # original directory
-            os.chmod("data", os.stat(cwd).st_mode)
-
-            total_bytes, total_files = bagit.make_manifests(
-                "data", processes, algorithms=checksums, encoding=encoding
-            )
-
-            current_app.logger.info("Creating bagit.txt")
-            txt = """BagIt-Version: 0.97\nTag-File-Character-Encoding: UTF-8\n"""
-            with bagit.open_text_file("bagit.txt", "w") as bagit_file:
-                bagit_file.write(txt)
-
-            current_app.logger.info(_("Creating bag-info.txt"))
-            if bag_info is None:
-                bag_info = {}
-
-            # allow 'Bagging-Date' and 'Bag-Software-Agent' to be overidden
-            if "Bagging-Date" not in bag_info:
-                bag_info["Bagging-Date"] = date.strftime(date.today(), "%Y-%m-%d")
-            if "Bag-Software-Agent" not in bag_info:
-                bag_info["Bag-Software-Agent"] = "bagit.py v%s <%s>" % (
-                    bagit.VERSION,
-                    bagit.PROJECT_URL,
-                )
-
-            bag_info["Payload-Oxum"] = "%s.%s" % (total_bytes, total_files)
-            bagit._make_tag_file("bag-info.txt", bag_info)
-
-            for c in checksums:
-                bagit._make_tagmanifest_file(c, bag_dir, encoding="utf-8")
-    except Exception:
-        current_app.logger.error(f"An error occurred creating a bag in {bag_dir}")
-        raise
-    finally:
-        os.chdir(old_dir)
-
-    return bagit.Bag(bag_dir)
-
-
-def export_rocrate(post_data):
-    """Gather all the item data and export and return as a Crate BagIt.
-
-    :param post_data: Post Data
-    :return: Crate BagIt
-    """
-    current_app.logger.debug("post_data:{}".format(post_data))
-    record_ids = json.loads(post_data["record_ids"])
-    invalid_record_ids = json.loads(post_data["invalid_record_ids"])
-    if isinstance(invalid_record_ids,dict) or isinstance(invalid_record_ids,list):
-        invalid_record_ids = [int(i) for i in invalid_record_ids]
-    else:
-        invalid_record_ids = [invalid_record_ids]
-    # Remove all invalid records
-    record_ids = list(set(record_ids) - set(invalid_record_ids))
-    if len(record_ids) > _get_max_export_items():
-        return abort(400)
-    elif len(record_ids) == 0:
-        return "", 204
-
     # Get Metadata from ElasticSearch
     metadata_dict = _get_metadata_dict_in_es(record_ids)
 
-    # Create temporary directory
-    temp_path = tempfile.TemporaryDirectory(
-            prefix=current_app.config["WEKO_ITEMS_UI_EXPORT_TMP_PREFIX"])
+    for record_id in record_ids:
+        # crate each record directory
+        record_path = os.path.join(export_path, f"recid_{record_id}")
+        os.makedirs(record_path, exist_ok=True)
+        _export_file(record_id, record_path)
+        # Metadata
+        metadata, filenames = metadata_dict.get(str(record_id), ({}, []))
+        item_type_id = metadata.get("item_type_id")
+        mappings = JsonldMapping.get_by_itemtype_id(item_type_id)
+        mapper = JsonLdMapper(item_type_id, None)
+        for m in mappings:
+            mapper.json_mapping = m.mapping
+            if mapper.is_valid:
+                break
+        if mapper.json_mapping is None:
+            raise Exception("No valid mapping found for item type")
 
-    try:
-        # Set export folder
-        datetime_now = datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S")
-        export_path = os.path.join(temp_path.name, datetime_now)
-
-        # Outer zip file path
-        outer_zip_path = os.path.join(export_path, "out_zip")
-        for record_id in record_ids:
-            record_path = os.path.join(export_path, f"recid_{record_id}")
-            data_path = os.path.join(record_path, "data")
-            os.makedirs(data_path, exist_ok=True)
-            _export_file(record_id, data_path)
-            # Metadata
-            metadata, filenames = metadata_dict.get(str(record_id), ({}, []))
-            item_type_id = metadata.get("item_type_id")
-            mappings = JsonldMapping.get_by_itemtype_id(item_type_id)
-            mapper = JsonLdMapper(item_type_id, None)
-            for m in mappings:
-                mapper.json_mapping = m.mapping
-                if mapper.is_valid:
-                    break
-            if mapper.json_mapping is None:
-                raise Exception("No valid mapping found for item type")
-
-            # Create RO-Crate info file
-            rocrate = mapper.to_rocrate_metadata(metadata, extracted_files=filenames)
-            rocrate_path = os.path.join(record_path, ROCRATE_METADATA_FILE)
-            with open(rocrate_path, "w", encoding="utf8") as f:
-                # text garbling solves when using ensure_ascii=False
-                json.dump(rocrate.metadata.generate(), f, indent=2, sort_keys=True,
-                    ensure_ascii=False)
-            # Create bag
-            bagify(record_path, checksums=["sha256"])
-            # Create individual zip file
-            inner_zip_path = os.path.join(outer_zip_path, f"recid_{record_id}")
-            shutil.make_archive(inner_zip_path, "zip", record_path)
-        # Create README.md file
-        readme_path = os.path.join(outer_zip_path, "README.md")
-        current_dir = os.path.dirname(os.path.abspath(__file__))
-        source_path = current_app.config["WEKO_ITEMS_UI_README_MD"]
-        src_readme_path = os.path.join(current_dir, source_path)
-        with open(readme_path, "w", encoding="utf8") as dest_readme,\
-                    open(src_readme_path, "r", encoding="utf8") as src_readme:
-                dest_readme.write(src_readme.read())
-        # Create download file
-        zip_path = os.path.join(
-            export_path, f"{os.path.basename(temp_path.name)}-{datetime_now}"
+        # Create RO-Crate info file
+        rocrate = mapper.to_rocrate_metadata(
+            metadata, extracted_files=filenames
         )
-        shutil.make_archive(zip_path, 'zip', outer_zip_path)
-        resp = send_file(
-            f"{zip_path}.zip",
-            as_attachment = True,
-            attachment_filename = "export.zip"
+        jsonld_path = os.path.join(
+            record_path, ROCRATE_METADATA_FILE.split("/")[-1]
         )
-        return resp
-    except Exception as ex:
-        current_app.logger.error("Error occurred during item export.")
-        traceback.print_exc()
-        flash(_("Error occurred during item export."), "error")
-        return redirect(url_for("weko_items_ui.export"))
-    finally:
-        temp_path.cleanup()
+        with open(jsonld_path, "w", encoding="utf8") as f:
+            json.dump(
+                rocrate.metadata.generate(), f, indent=2, sort_keys=True,
+                ensure_ascii=False
+            )
+
+        bagit.make_bag(record_path, checksums=["sha256"])
+
+        shutil.make_archive(record_path, "zip", record_path)
+        shutil.rmtree(record_path)
+
+    # Create README.md file
+    readme_path = os.path.join(export_path, "README.md")
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    source_path = current_app.config["WEKO_ITEMS_UI_README_MD"]
+    src_readme_path = os.path.join(current_dir, source_path)
+    shutil.copyfile(src_readme_path, readme_path)
 
 
 def _get_metadata_dict_in_es(record_ids):
@@ -2920,12 +2780,12 @@ def _export_item(record_id,
                                 hide_key, records_data['metadata'])
 
         # Create metadata file.
-        with open('{}/{}_metadata.json'.format(tmp_path,
-                                               exported_item['name']),
-                  'w',
-                  encoding='utf8') as output_file:
-            json.dump(records_data, output_file, indent=2,
-                      sort_keys=True, ensure_ascii=False)
+        # with open('{}/{}_metadata.json'.format(tmp_path,
+        #                                        exported_item['name']),
+        #           'w',
+        #           encoding='utf8') as output_file:
+        #     json.dump(records_data, output_file, indent=2,
+        #               sort_keys=True, ensure_ascii=False)
         # First get all of the files, checking for permissions while doing so
         if include_contents:
             # Get files
@@ -3795,7 +3655,17 @@ def translate_validation_message(item_property, cur_lang):
 def get_workflow_by_item_type_id(
     item_type_name_id, item_type_id, with_deleted=True
 ):
-    """Get workflow settings by item type id."""
+    """Get workflow settings by item type id.
+
+    Args:
+        item_type_name_id (int): Item type name id.
+        item_type_id (int): Item type id.
+        with_deleted (bool): Whether to include deleted workflows. Defaults to True.
+
+    Returns:
+        WorkFlow: The workflow object if found, otherwise None.
+
+    """
     from weko_workflow.models import WorkFlow
 
     query = WorkFlow.query.filter_by(itemtype_id=item_type_id)
@@ -3815,7 +3685,7 @@ def get_workflow_by_item_type_id(
         if not with_deleted:
             query = query.filter_by(is_deleted=False)
         workflow = query.first()
-    return workflow
+    return workflow if isinstance(workflow, WorkFlow) else None
 
 
 def validate_bibtex(record_ids):
