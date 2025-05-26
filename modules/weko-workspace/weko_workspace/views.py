@@ -253,7 +253,8 @@ def get_workspace_itemlist():
         workspaceItem["downloadCnt"] = get_accessCnt_downloadCnt(recid)[1]
 
         # "itemStatus": None,  # アイテムステータス
-        workspaceItem["itemStatus"] = get_item_status(str(recid))
+        file_info = fileList[0] if len(fileList) > 0 else {}
+        workspaceItem["itemStatus"] = get_item_status(str(recid), file_info)
 
         # "publicationDate": None,  # 出版年月日
         workspaceItem["publicationDate"] = source.get("publish_date", "")

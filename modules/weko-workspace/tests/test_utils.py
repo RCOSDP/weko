@@ -22,7 +22,7 @@
 
 import pytest
 from mock import patch
-import datetime
+from datetime import datetime, timedelta, timezone
 from flask_babelex import gettext as _
 from flask_login.utils import login_user
 from weko_user_profiles import UserProfile
@@ -257,13 +257,35 @@ def test_get_accessCnt_downloadCnt(recid, mock_setup, expected_response, app):
                     mock_stat.assert_called_once_with("uuid_123", None, "")
 
 # ===========================def get_item_status():=====================================
-# TODO アイテムのステータスを取得する関数のテスト（未完成）
+# .tox/c1/bin/pytest tests/test_utils.py::test_get_item_status -vv -s --cov-branch --cov=weko_workspace --cov-report=term --basetemp=/code/modules/weko-workspace/tests/.tox/c1/tmp
 @pytest.mark.parametrize('recid, expected_response', [
-    (123, "Unlinked-testdata"),
+    ('1', "Embargo OA"),
+    ('2', 'Metadata Registered'),
+    ('3', 'Unlinked'),
 ])
-def test_get_item_status(recid, expected_response):
-    result = get_item_status(recid)
-    assert result == expected_response
+def test_get_item_status(app, oa_status, recid, expected_response):
+    file_info = {}
+    if recid == '1':
+        dt = datetime.now(timezone.utc)
+        file_info = {'date': [{'dateValue': dt.strftime('%Y-%m-%d')}]}
+        result = get_item_status(recid, file_info)
+        assert result == expected_response
+
+        dt = datetime.now(timezone.utc) + timedelta(days=1)
+        file_info = {'date': [{'dateValue': dt.strftime('%Y-%m-%d')}]}
+        result = get_item_status(recid, file_info)
+        assert result == expected_response
+
+        file_info = {'date': [{}]}
+        result = get_item_status(recid, file_info)
+        assert result == expected_response
+
+        file_info = {}
+        result = get_item_status(recid, file_info)
+        assert result == expected_response
+    else:
+        result = get_item_status(recid, file_info)
+        assert result == expected_response
 
 # ===========================def get_userNm_affiliation():=====================================
 # TODO ユーザー名と所属情報を取得する関数のテスト（未完成）

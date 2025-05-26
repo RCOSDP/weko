@@ -50,3 +50,60 @@ msgstr ""
 msgid "The Required items is required. Please recheck and input."
 msgstr ""
 
+#: weko_workspace/config.py:253
+#: weko_workspace/config.py:254
+#: weko_workspace/config.py:264
+#: weko_workspace/config.py:265
+#: weko_workspace/config.py:266
+#: weko_workspace/config.py:267
+#: weko_workspace/config.py:268
+#: weko_workspace/config.py:270
+#: weko_workspace/config.py:271
+#: weko_workspace/config.py:272
+#: weko_workspace/config.py:273
+msgid "Unlinked"
+msgstr ""
+
+#: weko_workspace/config.py:255
+msgid "Metadata Registered"
+msgstr ""
+
+#: weko_workspace/config.py:256
+msgid "Fulltext Requested"
+msgstr ""
+
+#: weko_workspace/config.py:257
+msgid "Fulltext Provided"
+msgstr ""
+
+#: weko_workspace/config.py:258
+msgid "Unlinked (Fulltext Requested)"
+msgstr ""
+
+#: weko_workspace/config.py:259
+msgid "Unlinked (Fulltext Provided)"
+msgstr ""
+
+#: weko_workspace/config.py:260
+msgid "OA"
+msgstr ""
+
+#: weko_workspace/config.py:261
+msgid "Embargo OA (within the period)"
+msgstr ""
+
+#: weko_workspace/config.py:261
+msgid "Embargo OA (outside the period)"
+msgstr ""
+
+#: weko_workspace/config.py:262
+msgid "Not OA"
+msgstr ""
+
+#: weko_workspace/config.py:263
+msgid "Opened Limitedly"
+msgstr ""
+
+#: weko_workspace/config.py:269
+msgid "Opened Elsewhere"
+msgstr ""
