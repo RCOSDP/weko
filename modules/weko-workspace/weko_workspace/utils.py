@@ -230,12 +230,13 @@ def get_accessCnt_downloadCnt(recid: str):
 
 
 # 2.1.2.5 アイテムステータス取得処理
-def get_item_status(recId: str):
+def get_item_status(recId: str, file_info: dict):
     """
     Get the converted OA status for a given recid.
 
     Args:
         recId (str): The record ID (WEKO item PID or related identifier).
+        file_info (dict): A dictionary containing file information.
 
     Returns:
         str: The converted OA status based on the mapping, defaults to "Unlinked" if not found.
@@ -248,11 +249,25 @@ def get_item_status(recId: str):
 
     # レコードが存在しない場合、"Unlinked"を返す
     if oaStatusRecord is None:
-        return "Unlinked"
+        return _("Unlinked")
 
     # 元の状態を取得し、変換を行う
     originalStatus = oaStatusRecord.oa_status
-    return current_app.config.get("WEKO_WORKSPACE_OA_STATUS_MAPPING").get(originalStatus, "Unlinked")
+    replaced_status = current_app.config.get("WEKO_WORKSPACE_OA_STATUS_MAPPING")\
+                                        .get(originalStatus, "Unlinked")
+
+    # Check embargo item status
+    if replaced_status == 'Embargo OA':
+        is_embargo = False
+        if file_info.get('date'):
+            date_value = file_info['date'][0].get('dateValue')
+            if date_value:
+                is_embargo =\
+                    date_value > datetime.now(timezone.utc).strftime('%Y-%m-%d')
+        replaced_status += ' (within the period)' if is_embargo\
+                            else ' (outside the period)'
+
+    return _(replaced_status)
 
 
 def get_userNm_affiliation():
