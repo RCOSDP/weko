@@ -1316,6 +1316,7 @@ class JsonLdMapper(JsonMapper):
             json_mapping (dict): mapping between json-ld and item type metadata.
         """
         self.json_mapping = json_mapping
+        """dict: mapping between json-ld and item type metadata."""
         super().__init__(None, itemtype_id)
 
     @property

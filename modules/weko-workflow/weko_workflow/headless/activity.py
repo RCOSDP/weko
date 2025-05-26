@@ -71,7 +71,7 @@ class HeadlessActivity(WorkActivity):
     ...     comment="comment", link_data=[{"item_id": 1, "sele_id": "isVersionOf"}],
     ... )
     >>> print(url, current_action, recid)
-    http://weko3.example.org/workflow/activity/detail/A-EXAMPLE-0001 end_action 1
+    'http://weko3.example.org/workflow/activity/detail/A-EXAMPLE-0001', 'end_action', 1
     """
     def __init__(
             self, _lock_skip=False,
@@ -274,19 +274,26 @@ class HeadlessActivity(WorkActivity):
     def auto(self, **params):
         """Automatically progressing the action.
 
+        Automatically progress the actions of an activity. <br>
+        If there is an approval action, it stops there. <br>
+        When registering a new item, specify workflow ID; <br>
+        when editing an existing item, specify item ID; <br>
+        when resuming an existing activity, specify activity ID; <br>
+
         Args:
             user_id (int): User ID <br>
-            workflow_id (int): Workflow ID <br>
+            metadata (dict): Metadata with item type format <br>
+            workflow_id (int, optional): Workflow ID <br>
             community (str, optional): Community ID <br>
             activity_id (str, optional): Activity ID <br>
             item_id (str, optional): Item ID <br>
-            metadata (dict): Metadata with item type format <br>
             files (list, optional): List of temporary file avsolute path <br>
             index (list, optional): List of index ID <br>
             comment (str, optional): Comment <br>
-            link_data (list, optional): List of item link information <br>
+            link_data (list, optional):
+                List of item link information <br>
                 e.g. [{"item_id": 1, "sele_id": "isVersionOf"}] <br>
-            grant_data (dict): data for identifier grant <br>
+            grant_data (dict, optional): data for identifier grant.
         """
 
         self.init_activity(**params)
@@ -322,7 +329,8 @@ class HeadlessActivity(WorkActivity):
 
 
     def item_registration(
-            self, metadata, files=None, index=None, comment=None, non_extract=None):
+            self, metadata, files=None, index=None, comment=None, non_extract=None
+        ):
         """Manual action for item registration.
 
         Note:
@@ -334,6 +342,16 @@ class HeadlessActivity(WorkActivity):
             index (list, optional): List of index ID.
                 if use workflow setting, do not specify this parameter.
             comment (str, optional): Comment
+            non_extract (list, optional):
+                List of file names to exclude from text extraction.
+                If specified, these files will not be processed for text extraction.
+
+        Returns:
+            str: Activity detail URL.
+
+        Raises:
+            WekoWorkflowException:
+                Something went wrong in the activity processing.
         """
         if self._model is None:
             current_app.logger.error("activity is not initialized.")
@@ -353,7 +371,27 @@ class HeadlessActivity(WorkActivity):
 
 
     def _input_metadata(self, metadata, files=None, non_extract=None):
-        """input metadata."""
+        """input metadata.
+
+        Inputs metadata to the deposit and uploads files. <br>
+        Item type of the metadata must match the workflow item type. <br>
+
+        Args:
+            metadata (dict): Metadata with item type format.
+            files (list, optional):
+                List of file paths or file objects to upload.
+            non_extract (list, optional):
+                List of file names to exclude from text extraction.
+                If specified, these files will not be processed for text extraction.
+
+        Returns:
+            str: Record ID (recid) of the item.
+
+        Raises:
+            WekoWorkflowException:
+                If the item type of the metadata does not match the workflow item type,
+                or if there is an error in processing the metadata input.
+        """
         locked_value = self._activity_lock()
 
         try:
@@ -534,7 +572,10 @@ class HeadlessActivity(WorkActivity):
                     delete_files.add(file_metadata.get("version_id"))
             self._delete_file(delete_files)
 
-            self.files_info = [f for f in self.files_info if f.get("version_id") not in delete_files]
+            self.files_info = [
+                file for file in self.files_info
+                if file.get("version_id") not in delete_files
+            ]
 
             # create workflow_activity.tmp_data
             data = {
@@ -558,7 +599,9 @@ class HeadlessActivity(WorkActivity):
                     "Index is not specified in workflow or item metadata."
                 )
             if not result.get("is_valid"):
-                current_app.logger.error(f"failed to input metadata: {result.get('error')}")
+                current_app.logger.error(
+                    "failed to input metadata: {}".format(result.get("error"))
+                )
                 raise WekoWorkflowException(result.get("error"))
 
             index = {
@@ -724,11 +767,23 @@ class HeadlessActivity(WorkActivity):
             self._activity_unlock(locked_value)
 
         if result.json.get("code") != 0:
-            current_app.logger.error(f"failed to set comment: {result.json.get('msg')}")
+            current_app.logger.error(
+                "failed to set comment: {}".format(result.json.get("msg"))
+            )
             raise WekoWorkflowException(result.json.get("msg"))
 
     def item_link(self, link_data=None):
-        """Action for Item Link."""
+        """Action for Item Link.
+
+        Args:
+            link_data (list, optional): List of item link information. <br>
+                e.g. [{"item_id": 1, "sele_id": "isVersionOf"}]
+
+        Raises:
+            WekoWorkflowException:
+                If the item link action fails or if the link data is invalid.
+
+        """
         link_data = link_data or []
         locked_value = self._activity_lock()
 
@@ -748,10 +803,19 @@ class HeadlessActivity(WorkActivity):
             raise WekoWorkflowException(result.json.get("msg"))
 
     def identifier_grant(self, grant_data=None):
-        """Action for Identifier Grant."""
+        """Action for Identifier Grant.
+
+        Args:
+            grant_data (dict, optional): Data for identifier grant. <br>
+                If not specified, default values will be used.
+
+        Raises:
+            WekoWorkflowException:
+                If the identifier grant action fails or if the grant data is invalid.
+        """
         locked_value = self._activity_lock()
 
-        grant_data = grant_data or {}
+        grant_data = grant_data if isinstance(grant_data, dict) else {}
         identifier_setting = get_identifier_setting(self.community or "Root Index")
         text_empty = "<Empty>"
 
@@ -793,7 +857,16 @@ class HeadlessActivity(WorkActivity):
         self._lock_skip = None
 
     def _activity_lock(self):
-        """Activity lock."""
+        """Activity lock.
+
+        Lock the activity to prevent concurrent modifications.
+
+        Returns:
+            str: Locked value if successful, None if lock is skipped.
+
+        Raises:
+            WekoWorkflowException: If the activity is already locked.
+        """
         locked_value = None
         if self._lock_skip:
             return None
@@ -804,12 +877,22 @@ class HeadlessActivity(WorkActivity):
             current_app.logger.error("Activity is already locked.")
             raise WekoWorkflowException("Activity is already locked.")
 
-        return locked_value.get_json().get("locked_value")
+        return str(locked_value.get_json().get("locked_value"))
 
     def _activity_unlock(self, locked_value):
-        """Activity unlock."""
+        """Activity unlock.
+
+        Unlock the activity after processing is complete.
+
+        Args:
+            locked_value (str): The value used to lock the activity.
+
+        Returns:
+            str: Message of the unlock response, or None if lock was skipped.
+        """
         if self._lock_skip:
             return None
 
         return delete_lock_activity_cache(
-            self.activity_id, {"locked_value":locked_value})
+            self.activity_id, {"locked_value":locked_value}
+        )
