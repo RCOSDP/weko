@@ -4678,7 +4678,7 @@ def get_record_ids(recids, index_id_list=None):
     Returns:
         list: List of record ids.
     """
-    
+
     status_ok = [PublishStatus.PUBLIC.value, PublishStatus.PRIVATE.value]
     record_ids = [
         (recid.pid_value, recid.object_uuid)
@@ -5031,7 +5031,7 @@ def get_export_status():
             reset_redis_cache(run_msg, "")
 
             # Create ttl for export results
-            expire = datetime.now() + \
+            expire = datetime.now(timezone.utc) + \
                 timedelta(days=current_app.config["WEKO_SEARCH_UI_EXPORT_FILE_RETENTION_DAYS"])
             export_info = {
                 "is_export": True,
