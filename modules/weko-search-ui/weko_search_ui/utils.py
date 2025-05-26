@@ -4447,7 +4447,6 @@ def export_all(root_url, user_id, data, start_time):
                         del item_datas
                         del records
                         tasks.append(write_files_task.si(export_path, pickle_file_name, user_id))
-                        write_files_task.apply_async(args=(export_path, pickle_file_name, user_id,))
                         item_datas = {}
                         target_ids = {}
                         file_part += 1
@@ -4678,7 +4677,7 @@ def get_record_ids(recids, index_id_list=None):
     Returns:
         list: List of record ids.
     """
-    
+
     status_ok = [PublishStatus.PUBLIC.value, PublishStatus.PRIVATE.value]
     record_ids = [
         (recid.pid_value, recid.object_uuid)
