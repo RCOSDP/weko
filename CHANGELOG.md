@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Changed
 - Improved an issue where the Tika process consumed excessive memory.
 - Optimized inefficient logic in index display processing to improve rendering speed.
+- Changed the timeout duration for Elasticsearch index creation from 30 seconds to 2 minutes.
 ### Fixed
 - Fixed a problem where bulk import/export operations failed due to database connection timeouts.
 - Fixed a 500 error caused by citation formatting for records.
