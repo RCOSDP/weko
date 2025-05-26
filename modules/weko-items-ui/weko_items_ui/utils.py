@@ -5439,85 +5439,6 @@ def create_item_deleted_data(deposit, profile, target, url):
     return fill_template(template, data)
 
 
-def create_delete_request_data(activity, profile, target, url, actor):
-    """
-    Generate email content for a delete request notification.
-
-    Args:
-        activity (Activity): The activity object containing details about the delete request.
-        profile (UserProfile): The profile of the recipient user.
-        target (User): The target user object receiving the notification.
-        url (str): The URL for the approval page.
-        actor (dict): Information about the actor initiating the delete request, including name or email.
-
-    Returns:
-        dict: A dictionary containing the email subject and body with the following keys:
-            - 'subject' (str): The subject of the email.
-            - 'body' (str): The body of the email.
-    """
-    from weko_workflow.utils import load_template, fill_template, convert_to_timezone
-    language = (
-        profile.language if profile
-        else current_app.config.get("WEKO_WORKFLOW_MAIL_DEFAULT_LANGUAGE")
-    )
-    timezone = profile.timezone if profile else None
-    submission_date = convert_to_timezone(activity.updated, timezone)
-
-    template_file = 'email_notification_delete_request_{language}.tpl'
-    template = load_template(template_file, language)
-
-    data = {
-        "approver_name": profile.username if profile else target.email,
-        "item_title": activity.title,
-        "submitter_name": actor.get("name") or actor.get("email"),
-        "submission_date": submission_date.strftime("%Y-%m-%d %H:%M:%S"),
-        "approval_url": url
-    }
-
-    return fill_template(template, data)
-
-
-def create_delete_approved_data(deposit, profile, target, url, activity, approver_id):
-    """
-    Generate email content for a delete approval notification.
-
-    Args:
-        deposit (dict): Data of the approved item.
-        profile (UserProfile): Profile information of the user receiving the notification.
-        target (User): User object of the recipient.
-        url (str): URL of the approved item.
-        activity (Activity): The activity object containing details about the delete approval.
-        approver_id (int): ID of the approver.
-
-    Returns:
-        dict: A dictionary containing the filled email subject and body with the following keys:
-            - 'subject' (str): The subject of the email.
-            - 'body' (str): The body of the email.
-    """
-    from weko_workflow.utils import load_template, fill_template, convert_to_timezone
-    language = (
-        profile.language if profile
-        else current_app.config.get("WEKO_WORKFLOW_MAIL_DEFAULT_LANGUAGE")
-    )
-    timezone = profile.timezone if profile else "UTC"
-    approval_date = convert_to_timezone(activity.updated, timezone)
-    approver = User.query.filter_by(id=approver_id).one_or_none()
-    approver_profile = UserProfile.get_by_userid(approver_id)
-    approver_name = approver_profile.username if approver_profile else None
-
-    template_file = 'email_notification_delete_approved_{language}.tpl'
-    template = load_template(template_file, language)
-
-    data = {
-        "item_title": deposit.get("item_title", "") or activity.title,
-        "submitter_name": profile.username if profile else target.email,
-        "approver_name": approver_name or (approver.email if approver else ""),
-        "approval_date": approval_date.strftime("%Y-%m-%d %H:%M:%S"),
-        "record_url": url
-    }
-
-    return fill_template(template, data)
-
 
 def create_direct_registered_data(deposit, profile, target, url):
     """
@@ -5542,7 +5463,7 @@ def create_direct_registered_data(deposit, profile, target, url):
     timezone = profile.timezone if profile else "UTC"
     registration_date = datetime.now(pytz.timezone(timezone))
 
-    template_file = 'email_nortification_item_registered_{language}.tpl'
+    template_file = 'email_notification_item_registered_{language}.tpl'
     template = load_template(template_file, language)
 
     data = {
@@ -5643,48 +5564,6 @@ def send_mail_item_deleted(pid_value, deposit, user_id, shared_id=-1):
         record_url=record_url
     )
 
-
-def send_mail_delete_request(activity):
-    """
-    Send a notification email for a delete request.
-
-    Args:
-        activity (Activity): The activity object containing details about the delete request.
-
-    Returns:
-        int: The total number of successfully sent emails.
-    """
-    record_url = request.host_url + f"workflow/activity/detail/{activity.activity_id}"
-    current_app.logger.debug(f"[send_mail_delete_request] activity: {activity.activity_id}")
-    return send_mail_from_notification_info(
-        get_info_func=get_notification_targets_approver,
-        context_obj=activity,
-        content_creator=create_delete_request_data,
-        record_url=record_url
-    )
-
-
-def send_mail_delete_approved(pid_value, deposit, activity, user_id):
-    """
-    Send a notification email when a delete request is approved.
-
-    Args:
-        pid_value (str): The persistent identifier (PID) of the approved item.
-        deposit (dict): The deposit data of the approved item.
-        activity (Activity): The activity object containing details about the delete approval.
-        user_id (int): The ID of the user who approved the delete request.
-
-    Returns:
-        int: The total number of successfully sent emails.
-    """
-    record_url = request.host_url + f"records/{pid_value}"
-    current_app.logger.debug(f"[send_mail_delete_approved] pid_value: {pid_value}, user_id: {user_id}")
-    return send_mail_from_notification_info(
-        get_info_func=lambda obj: get_notification_targets_approved(obj, user_id, activity),
-        context_obj=deposit,
-        content_creator=lambda deposit, profile, target, url: create_delete_approved_data(deposit, profile, target, url, activity, user_id),
-        record_url=record_url
-    )
 
 def send_mail_direct_registered(pid_value, user_id, share_id=-1):
     """

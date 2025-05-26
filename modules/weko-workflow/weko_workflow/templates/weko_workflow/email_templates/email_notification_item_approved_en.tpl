@@ -1,8 +1,8 @@
-【Deletion Approved】Your item "{{ target_title }}" has been approved for deletion
+【Approval Complete】Your item "{{ target_title }}" has been approved
 
 Dear {{ recipient_name }},
 
-The deletion of your item has been approved. Please find the details below.
+Your item has been approved. Please find the details below.
 
 Item Details:
 
