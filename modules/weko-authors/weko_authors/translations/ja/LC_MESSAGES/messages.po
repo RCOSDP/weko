@@ -346,7 +346,7 @@ msgstr "No."
 #: weko_authors/templates/weko_authors/admin/author_import.html:46
 #: weko_authors/templates/weko_authors/macros/tabs_selector.html:22
 msgid "Author ID"
-msgstr ""
+msgstr "著者ID"
 
 #: weko_authors/templates/weko_authors/admin/author_import.html:47
 msgid "Current WEKO ID"
