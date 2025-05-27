@@ -16,10 +16,9 @@ from weko_search_ui.tasks import (
     remove_temp_dir_task,
     export_all_task,
     write_files_task,
-    delete_exported_task,
     is_import_running,
     check_celery_is_run,
-    delete_task_id_cache,
+    # delete_task_id_cache,
     check_session_lifetime
 )
 
@@ -268,61 +267,6 @@ def test_write_files_task(redis_connect, users, mocker):
                     '1': 'started'
                 }
             }
-
-
-# def delete_exported_task(uri, cache_key):
-# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_tasks.py::test_delete_exported_task -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
-def test_delete_exported_task(i18n_app, db, users, file_instance_mock, redis_connect):
-    from invenio_files_rest.models import FileInstance, Location
-    # uri = file_instance_mock
-    def clear_test_data():
-        Location.query.delete()
-        db.session.commit()
-
-    clear_test_data()
-
-    cache_key = "test_cache_key"
-    task_key = "test_task_key"
-    export_path = "test_export_path"
-
-    file_uri = "test_location%test.txt"
-    datastore = redis_connect
-    datastore.put(cache_key, json.dumps({'1':'a'}).encode('utf-8'), ttl_secs=30)
-    datastore.put(task_key, "test_task_id".encode("utf-8"))
-
-    location=Location(name="testloc",uri="test_location")
-    db.session.add(location)
-    db.session.commit()
-    with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
-        with patch("weko_search_ui.utils.delete_exported", return_value=True):
-            with patch("shutil.rmtree") as mock_rmtree:  # shutil.rmtreeをモック
-                # exist cache_key
-                file_instance = FileInstance(uri=file_uri)
-                db.session.add(file_instance)
-                db.session.commit()
-                delete_exported_task(file_uri, cache_key, task_key, export_path)
-                assert redis_connect.redis.exists(task_key) == False
-                assert redis_connect.redis.exists(cache_key) == False
-                mock_rmtree.assert_called_once_with(export_path)  # rmtreeが呼ばれたことを確認
-
-                # not exist cache_key
-                file_instance = FileInstance(uri=file_uri)
-                db.session.add(file_instance)
-                db.session.commit()
-                delete_exported_task(file_uri, cache_key, task_key, export_path)
-                assert redis_connect.redis.exists(task_key) == False
-                assert redis_connect.redis.exists(cache_key) == False
-
-        # raise Exception
-        with patch("shutil.rmtree") as mock_rmtree:
-            with patch("weko_search_ui.utils.delete_exported", side_effect=Exception("Test exception")):
-                with patch("weko_search_ui.utils.FileInstance.get_by_uri", side_effect=Exception("Test exception")):
-                    file_instance = FileInstance(uri=file_uri)
-                    db.session.add(file_instance)
-                    db.session.commit()
-                    delete_exported_task(file_uri, cache_key, task_key, export_path)
-                    assert redis_connect.redis.exists(task_key) == False
-                    assert redis_connect.redis.exists(cache_key) == False
 
 
 # def is_import_running():
