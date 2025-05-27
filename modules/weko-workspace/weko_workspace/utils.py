@@ -253,21 +253,21 @@ def get_item_status(recId: str, file_info: dict):
 
     # 元の状態を取得し、変換を行う
     originalStatus = oaStatusRecord.oa_status
-    replaced_status = current_app.config.get("WEKO_WORKSPACE_OA_STATUS_MAPPING")\
-                                        .get(originalStatus, "Unlinked")
 
     # Check embargo item status
-    if replaced_status == 'Embargo OA':
+    if originalStatus == "Processed Fulltext Registered (Embargo)":
         is_embargo = False
         if file_info.get('date'):
             date_value = file_info['date'][0].get('dateValue')
             if date_value:
                 is_embargo =\
                     date_value > datetime.now(timezone.utc).strftime('%Y-%m-%d')
-        replaced_status += ' (within the period)' if is_embargo\
-                            else ' (outside the period)'
+        originalStatus = originalStatus if is_embargo \
+            else "Processed Fulltext Opened (OA)"
+    replaced_status = current_app.config.get("WEKO_WORKSPACE_OA_STATUS_MAPPING")\
+                                        .get(originalStatus, "Unlinked")
 
-    return _(replaced_status)
+    return replaced_status
 
 
 def get_userNm_affiliation():
