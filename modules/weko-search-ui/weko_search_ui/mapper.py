@@ -1478,7 +1478,10 @@ class JsonLdMapper(JsonMapper):
                     parent.update({prop_props[0]: meta_value})
                 return
 
-            parent_prop_key = re.split(rf"\.{prop_props[1]}(?=\.|$)", PROP_PATH)[0]
+            full_props = PROP_PATH.split(".")
+            parent_prop_key = ".".join(
+                full_props[:(len(full_props) - len(prop_props) + 1)]
+            )
             m_index = re.search(r"\[(\d+)\]", meta_props[0])
             index = int(m_index.group(1)) if m_index is not None else None
             if (

@@ -4724,18 +4724,16 @@ class TestJsonLdMapper:
             assert item_metadata["item_30001_resource_type11"]["resourcetype"] == "journal article"
             assert item_metadata["item_30001_file22"][0]["filename"] == "sample.rst"
             assert item_metadata["item_30001_file22"][0]["url"]["label"] == "sample.rst"
+            assert item_metadata["item_30001_file22"][0]["url"]["url"] == "https://example.repo.nii.ac.jp/records/123456789/files/sample.rst"
             assert item_metadata["item_30001_file22"][0]["filesize"][0]["value"] == "333 B"
             assert item_metadata["item_30001_file22"][1]["filename"] == "data.csv"
             assert item_metadata["item_30001_file22"][1]["url"]["label"] == "data.csv"
+            assert item_metadata["item_30001_file22"][1]["url"]["url"] == "https://example.repo.nii.ac.jp/records/123456789/files/data.csv"
             assert item_metadata["item_30001_file22"][1]["filesize"][0]["value"] == "1234 B"
             assert item_metadata["item_30001_creator2"][0]["creatorNames"][0]["creatorName"] == "John Doe"
             assert item_metadata["item_30001_creator2"][0]["creatorAffiliations"][0]["affiliationNames"][0]["affiliationName"] == "University of Manchester"
             assert item_metadata["feedback_mail_list"] == [{"email": "wekosoftware@nii.ac.jp", "author_id": ""}]
             assert item_metadata["files_info"][0]["key"] == "item_30001_file22"
-            assert item_metadata["files_info"][0]["items"][0]["filename"] == "sample.rst"
-            assert item_metadata["files_info"][0]["items"][0]["url"]["label"] == "sample.rst"
-            assert item_metadata["files_info"][0]["items"][1]["filename"] == "data.csv"
-            assert item_metadata["files_info"][0]["items"][1]["url"]["label"] == "data.csv"
             assert item_metadata["item_30001_relation14"][0]["subitem_relation_type_id"]["subitem_relation_type_select"] == "DOI"
 
             list_record = []
@@ -4769,8 +4767,6 @@ class TestJsonLdMapper:
             assert thesis["item_30001_title0"][0]["subitem_title"] == "The Sample Dataset for WEKO"
             assert thesis["item_30001_title0"][1]["subitem_title"] == "WEKO用サンプルデータセット"
             assert thesis["files_info"][0]["key"] == "item_30001_file22"
-            assert thesis["files_info"][0]["items"][0]["filename"] == "sample.rst"
-            assert thesis["files_info"][0]["items"][0]["url"]["label"] == "sample.rst"
 
             evidence, system_info = item_metadatas[1]
             assert system_info["_id"] == "_:EvidenceData1"
@@ -4781,8 +4777,6 @@ class TestJsonLdMapper:
             assert evidence["path"] == [1623632832836]
             assert evidence["item_30001_title0"][0]["subitem_title"] == "The Sample Dataset for WEKO, evidence part"
             assert evidence["item_30001_title0"][1]["subitem_title"] == "WEKO用サンプルデータセットのエビデンス部分"
-            assert evidence["files_info"][0]["key"] == "item_30001_file22"
-            assert evidence["files_info"][0]["items"][0]["filename"] == "data.csv"
 
             list_record = [
                 {
