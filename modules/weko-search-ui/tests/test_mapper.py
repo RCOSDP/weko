@@ -1,8 +1,9 @@
 import pytest
 import xmltodict
-import dateutil
+import uuid
 from datetime import date
-from mock import patch, Mock
+from mock import patch
+from unittest.mock import MagicMock
 from collections import OrderedDict
 
 from weko_records.api import Mapping
@@ -4862,7 +4863,7 @@ class TestJsonLdMapper:
 
     # def to_rocrate_metadata(self, metadata):
     # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_mapper.py::TestJsonLdMapper::test_to_rocrate_metadata -v -vv -s --cov-branch --cov-report=xml --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
-    def test_to_rocrate_metadata(self, app, db, item_type2, item_type_mapping2 ):
+    def test_to_rocrate_metadata(self, app, db, item_type2, item_type_mapping2, mocker):
         metadata = {
             "_oai": {
                 "id": "oai:weko3.example.org:02000007",
@@ -5114,6 +5115,12 @@ class TestJsonLdMapper:
             }
         }
 
+        mock_pid = MagicMock()
+        item_uuid = uuid.uuid4()
+        mock_pid.object_uuid = item_uuid
+        mock_pid_model = mocker.patch("weko_search_ui.mapper.PersistentIdentifier.get")
+        mock_pid_model.return_value = mock_pid
+
         # case without Extra
         schema = json_data("data/jsonld/item_type_schema.json")
         item_type2.model.schema = schema
@@ -5121,6 +5128,15 @@ class TestJsonLdMapper:
         item_type_mapping2.model.mapping = mapping
         db.session.commit()
         json_mapping = json_data("data/jsonld/ro-crate_mapping.json")
+
+        mock_mail_list = mocker.patch(
+            "weko_search_ui.mapper.FeedbackMailList.get_mail_list_by_item_id",
+            return_value=[{"email": "wekosoftware@nii.ac.jp"}]
+        )
+        mock_itemlink = mocker.patch(
+            "weko_search_ui.mapper.ItemLink.get_item_link_info",
+            return_value=[{"item_links": "2000011", "value": "isSupplementedBy"}]
+        )
 
         rocrate = JsonLdMapper(
             item_type2.model.id, json_mapping).to_rocrate_metadata(metadata)
@@ -5133,17 +5149,21 @@ class TestJsonLdMapper:
         assert graph["identifier"] == metadata["recid"]
 
         # wk-context
-        assert "wk:publishStatus" in graph
-        assert "wk:index" in graph
-        assert "wk:editMode" in graph
-        assert "wk:feedbackMail" in graph
-        assert "wk:itemLinks" in graph
-        assert "wk:metadataAutoFill" in graph
         assert graph["wk:index"] == metadata["path"]
+        assert graph["wk:editMode"] == "Keep"
+        assert graph["wk:feedbackMail"] == ["wekosoftware@nii.ac.jp"]
+        assert graph["wk:metadataAutoFill"] == False
         if metadata.get("publish_status") == "0":
             assert graph["wk:publishStatus"] == "public"
         elif metadata.get("publish_status") == "1":
             assert graph["wk:publishStatus"] == "private"
+        assert "wk:itemLinks" in graph
+        link = None
+        for item in ro_crate_metadata["@graph"]:
+            if item.get("@id") == graph.get("wk:itemLinks")[0]["@id"]:
+                link = item
+        assert link["identifier"] == "http://test_server/records/2000011"
+        assert link["value"] == "isSupplementedBy"
 
         # files
         haspart_0 = graph["hasPart"][0]["@id"]
@@ -5155,7 +5175,9 @@ class TestJsonLdMapper:
                 file_0 = item
             elif item.get("@id") == haspart_1:
                 file_1 = item
+        assert haspart_0 == "data/sample.rst"
         assert file_0["name"] == "sample.rst"
+        assert haspart_1 == "data/data.csv"
         assert file_1["name"] == "data.csv"
 
         # case no filename mapping
@@ -5201,8 +5223,8 @@ class TestJsonLdMapper:
 
         # case item_link
         mock_item_link_info = [
-            Mock(item_links="link_1", value="value_1"),
-            Mock(item_links="link_2", value="value_2")
+            dict(item_links="link_1", value="value_1"),
+            dict(item_links="link_2", value="value_2")
         ]
         with patch(
             "weko_search_ui.mapper.ItemLink.get_item_link_info",
