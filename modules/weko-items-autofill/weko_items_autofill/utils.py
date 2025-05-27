@@ -1292,10 +1292,11 @@ def fill_data(form_model, autofill_data, schema=None, exclude_duplicate_lang=Fal
 
     def validate_data(data, sub_schema):
         if sub_schema is None:
+            current_app.logger.debug("=== Validation skipped ===")
             return True
         try:
-            current_app.logger.debug("Validating data: %s against schema: %s", data, sub_schema)
             validate(instance=data, schema=sub_schema)
+            current_app.logger.debug(f"Validation passed: {data} matches schema {sub_schema}")
             return True
         except ValidationError as e:
             current_app.logger.debug(f"Validation failed: {e.message}")
@@ -1303,11 +1304,11 @@ def fill_data(form_model, autofill_data, schema=None, exclude_duplicate_lang=Fal
 
     if isinstance(autofill_data, list):
         key = list(form_model.keys())[0] if len(form_model) != 0 else None
-        item_schema = None
+        sub_schema = None
         if schema:
             sub_schema = get_subschema(schema, key)
             if sub_schema and sub_schema.get("type") == "array":
-                item_schema = sub_schema.get("items")
+                sub_schema = sub_schema.get("items")
 
         if is_multiple_data or (not is_multiple_data and isinstance(form_model.get(key),list)):
             model_clone = {}
@@ -1321,10 +1322,10 @@ def fill_data(form_model, autofill_data, schema=None, exclude_duplicate_lang=Fal
                     used_lang_set.add(data.get('@language'))
                 model = {}
                 deepcopy(model_clone, model)
-                new_model = fill_data(model, data, item_schema, exclude_duplicate_lang)
+                new_model = fill_data(model, data, sub_schema, exclude_duplicate_lang)
                 result[key].append(new_model.copy())
         else:
-            result = fill_data(form_model, autofill_data[0], item_schema, exclude_duplicate_lang)
+            result = fill_data(form_model, autofill_data[0], schema, exclude_duplicate_lang)
     elif isinstance(autofill_data, dict):
         if isinstance(form_model, dict):
             for k, v in form_model.items():
