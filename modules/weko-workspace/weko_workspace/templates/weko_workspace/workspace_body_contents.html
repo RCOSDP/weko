@@ -22,7 +22,7 @@
     <div id="search_res">
       <div class="panel panel-default">
         <div role="navigation" style="display: flex; flex-direction: column; width: 300px;">
-          <input type="button" id="btn_export" value="{{_('Export Items')}}"
+          <input type="button" id="btn_export" value="{{_('Export Item List')}}"
             style="margin-bottom: 10px; width: 50%; text-align: left;" />
             <input id="Option_Label" type="hidden" value="{{_('Please select the following option:')}}" />
             <input id="Item_Selected" type="hidden" value="{{_('Selected Items')}}" />
@@ -42,14 +42,14 @@
                 <div class="form-group">
                   <input type="checkbox" id="check_all">
                   <a href="{{ url_for('weko_workspace.itemregister') }}" class="btn btn-primary">
-                    <i class="bi bi-folder-plus" style="font-size: 20px;"></i>
+                    <i class="bi bi-folder-plus"></i>
                   </a>
                 </div>
               </div>
               <div class="pull-right">
                 <div class="form-group">
                   <a href="javascript:void(0)" class="btn btn-primary" id="groupYearicon">
-                    <i class="bi bi-diagram-3" style="font-size: 20px;"></i>
+                    <i class="bi bi-diagram-3"></i>
                   </a>
                   <a id="toggleButton" class="btn btn-primary" data-toggle="dropdown" href="javascript:void(0)" aria-expanded="false">{{_('Filter Display')}}<strong class="caret"></strong></a>
                   <select class="form-control" id="sort_item">

@@ -76,7 +76,7 @@ function showExportModal() {
         transform: translate(-50%, -50%);
         background: white;
         width: 400px;
-        height: 300px;
+        height: 150px;
         padding: 20px;
         border-radius: 8px;
         box-shadow: 0px 4px 8px rgba(0,0,0,0.15);
