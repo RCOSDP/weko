@@ -20,6 +20,7 @@
 
 """call external system"""
 
+import json
 import traceback
 from flask import current_app
 from urllib3.util.retry import Retry
@@ -149,7 +150,12 @@ def call_external_system(old_record=None,
                 # )
 
 def get_oa_token():
-    # get oa token
+    """ Get oa token
+
+    Returns:
+        str: oa token
+    """
+
     headers = {
         'Content-Type': 'application/json'
     }
@@ -182,7 +188,10 @@ def get_oa_token():
                 s.mount('https://', HTTPAdapter(max_retries=retries))
                 s.mount('http://', HTTPAdapter(max_retries=retries))
                 response = s.post(get_token_url, headers=headers, json=data)
-            token = response.text
+            if response.text:
+                res = json.loads(response.text)
+                token = res.get("access_token")
+
         except requests.exceptions.RequestException as req_err:
             current_app.logger.error(req_err)
             current_app.logger.error(traceback.format_exc())

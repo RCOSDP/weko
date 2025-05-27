@@ -652,6 +652,10 @@ def item_register():
     need_billing_file = False
     need_file = False
     settings = AdminSettings.get('workspace_workflow_settings')
+    if settings is None or not hasattr(settings, 'workFlow_select_flg') :
+        current_app.logger.error("workspace_workflow_settings is not set.")
+        return render_template("weko_theme/error.html",
+                error=_("The item type or workflow used for item registration has not been set."))
     if settings.workFlow_select_flg == '0':
         workflow = WorkFlow()
         workflow_detail = workflow.get_workflow_by_id(settings.work_flow_id)
