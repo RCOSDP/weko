@@ -173,6 +173,7 @@ class HeadlessActivity(WorkActivity):
         activity_id = kwargs.get("activity_id")
         shared_id = kwargs.get("shared_id", -1)
         if activity_id is not None:
+            # restart activity
             result = verify_deletion(activity_id).json
             if result.get("is_delete"):
                 current_app.logger.error(f"activity({activity_id}) is already deleted.")
@@ -294,6 +295,18 @@ class HeadlessActivity(WorkActivity):
                 List of item link information <br>
                 e.g. [{"item_id": 1, "sele_id": "isVersionOf"}] <br>
             grant_data (dict, optional): data for identifier grant.
+
+        Examples:
+
+        >>> headless = HeadlessActivity()
+        >>> url, current_action, recid = headless.auto(
+        ...     user_id=1, workflow_id=1,
+        ...     metadata={"pubdate": "2025-01-01", "item_30001_title0": {...}, ...},
+        ...     files=["/var/tmp/..."], index=[1623632832836],
+        ...     comment="comment", link_data=[{"item_id": 1, "sele_id": "isVersionOf"}],
+        ... )
+        >>> print(url, current_action, recid)
+        'http://weko3.example.org/workflow/activity/detail/A-EXAMPLE-0001', 'end_action', 1
         """
 
         self.init_activity(**params)
@@ -442,6 +455,7 @@ class HeadlessActivity(WorkActivity):
 
             _old_metadata, _old_files = {}, []
             if self.recid is None:
+                # create new item
                 location_name = None
                 if self.workflow and self.workflow.location:
                     location_name = self.workflow.location.name
@@ -458,6 +472,7 @@ class HeadlessActivity(WorkActivity):
                 self._model.item_id = record_uuid
 
             else:
+                # update existing item
                 record_uuid = self._model.item_id
                 self._deposit = WekoDeposit.get_record(record_uuid)
 
@@ -510,7 +525,7 @@ class HeadlessActivity(WorkActivity):
                 # ignore Identifier Regstration (Import hasn't withdraw DOI)
                 if metadata_id == identifierRegistration_key:
                     continue
-                if metadata_id not in metadata:
+                if metadata_id not in metadata and metadata_id not in deleted_items:
                     deleted_items.append(metadata_id)
             metadata["deleted_items"] = deleted_items
 
@@ -518,10 +533,11 @@ class HeadlessActivity(WorkActivity):
                 self.files_info = self._upload_files(files)
             else:
                 _new_files = self._upload_files(files)
-                old_files_dict = {file["key"]: file for file in _old_files}
+                files_dict = {file["key"]: file for file in _old_files}
+                # replace old files with new files if they have the same key
                 for new_file in _new_files:
-                    old_files_dict[new_file["key"]] = new_file
-                self.files_info = list(old_files_dict.values())
+                    files_dict[new_file["key"]] = new_file
+                self.files_info = list(files_dict.values())
 
             # to exclude from file text extraction
             for file in self.files_info:
@@ -535,6 +551,7 @@ class HeadlessActivity(WorkActivity):
                 if isinstance(value[0], dict) and "filename" in value[0]:
                     file_key_list.append(key)
 
+            # Update file metadata with uploaded file information
             for file_metadata, uploaded_file in (
                 (file_metadata, uploaded_file)
                 for file_key in file_key_list
@@ -559,12 +576,12 @@ class HeadlessActivity(WorkActivity):
                 for file_key in file_key_list
                 for file in metadata[file_key]
             ]
-            # Updated metadata
+            # from updated metadata
             for uploaded_file in self.files_info:
                 if uploaded_file.get("key") not in current_filenames:
                     delete_files.add(uploaded_file.get("version_id"))
 
-            # Metadata before update
+            # from metadata before update
             old_files_obj = [f.key for f in self._deposit.files]
             for file_metadata in _old_files:
                 filename = file_metadata.get("key")
@@ -572,12 +589,13 @@ class HeadlessActivity(WorkActivity):
                     delete_files.add(file_metadata.get("version_id"))
             self._delete_file(delete_files)
 
+            # remove files_info with deleted files
             self.files_info = [
                 file for file in self.files_info
                 if file.get("version_id") not in delete_files
             ]
 
-            # create workflow_activity.tmp_data
+            # save metadata into workflow_activity.tmp_data
             data = {
                 "metainfo": metadata,
                 "files": self.files_info,
@@ -854,7 +872,6 @@ class HeadlessActivity(WorkActivity):
         self.files_info = None
         self._model = None
         self._deposit = None
-        self._lock_skip = None
 
     def _activity_lock(self):
         """Activity lock.
