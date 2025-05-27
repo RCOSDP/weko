@@ -49,7 +49,7 @@ from weko_workflow.config import WEKO_WORKFLOW_TODO_TAB, WEKO_WORKFLOW_WAIT_TAB,
 from flask_security import login_user
 from invenio_accounts.testutils import login_user_via_session as login
 from weko_workflow.models import ActionStatusPolicy, ActionFeedbackMail, ActivityRequestMail, ActionJournal, ActionIdentifier, Activity, ActivityHistory, ActionStatus, Action, WorkFlow, FlowDefine, FlowAction,FlowActionRole, ActivityAction, GuestActivity
-from weko_workflow.views import unlock_activity, check_approval, get_feedback_maillist, save_activity, previous_action,_generate_download_url,check_authority_action
+from weko_workflow.views import unlock_activity, check_approval, get_feedback_maillist, save_activity, previous_action,_generate_download_url,check_authority_action,next_action
 from marshmallow.exceptions import ValidationError
 from weko_records_ui.models import FileOnetimeDownload, FilePermission
 from weko_records.models import ItemMetadata, ItemReference
@@ -1118,7 +1118,11 @@ def test_next_action_acl_guestlogin(guest, client, db_register_fullaction):
     (5, 200),
     (6, 200),
 ])
-def test_next_action(client, db, users, db_register_fullaction, db_records, users_index, status_code, mocker):
+def test_next_action(client, db, users, db_register_fullaction, db_records, users_index, status_code, mocker,logging_client):
+    current_app.config.update(
+        WEKO_RECORDS_REFERENCE_SUPPLEMENT=['isSupplementTo','isSupplementedBy'],
+        WEKO_NOTIFICATIONS=False
+        )
     def update_activity_order(activity_id, action_id, action_order, item_id=None, extra_info={}):
         with db.session.begin_nested():
             activity=Activity.query.filter_by(activity_id=activity_id).one_or_none()
@@ -1174,6 +1178,10 @@ def test_next_action(client, db, users, db_register_fullaction, db_records, user
     item_id5 = db_register_fullaction["activities"][4].item_id
     item_id6 = db_register_fullaction["activities"][5].item_id
     item_id7 = db_register_fullaction["activities"][6].item_id
+    item_id8 = db_register_fullaction["activities"][7].item_id
+    item_id9 = db_register_fullaction["activities"][8].item_id
+    item_id10 = db_register_fullaction["activities"][9].item_id
+    item_id11 = db_register_fullaction["activities"][10].item_id
     activity1 = db_register_fullaction["activities"][0]
 
     # argument error
@@ -2197,6 +2205,73 @@ def test_next_action(client, db, users, db_register_fullaction, db_records, user
     assert res.status_code == 200
     assert data["code"] == 0
     assert data["msg"] == _("success")
+
+    ###### not delete flow
+    # approval
+    update_activity_order("2",4,6,item_id2)
+    input = {}
+    url = url_for("weko_workflow.next_action",
+                  activity_id="2", action_id=4)
+    res = client.post(url, json=input)
+    data = response_data(res)
+    assert res.status_code == 200
+
+    ###### delete flow 
+    ## no approval
+    update_activity_order("A-00000001-10020",1,1,item_id8)
+    url = url_for("weko_workflow.next_action",
+            activity_id="A-00000001-10020", action_id=1)
+    res = client.post(url, json=input)
+    data = response_data(res)
+    assert res.status_code == status_code
+    assert data["code"] == 0
+    assert data["msg"] == "success"
+
+    ## approval
+    # delete reject
+    update_activity_order("A-00000001-10021",1,2,item_id9)
+    assert next_action(activity_id="A-00000001-10021", action_id=4, json_data={"approval_reject":1})
+    assert data["code"] == 0
+    assert data["msg"] == "success"
+
+    update_activity_order("A-00000001-10022",1,2,item_id10)
+    assert next_action(activity_id="A-00000001-10022", action_id=4, json_data={"approval_reject":1})
+    assert data["code"] == 0
+    assert data["msg"] == "success"
+
+    # delete approve
+    update_activity_order("A-00000001-10021",1,2,item_id9)
+    with patch("weko_records_ui.utils.soft_delete", return_value=True):
+        url = url_for("weko_workflow.next_action",
+                      activity_id="A-00000001-10021", action_id=4)
+        res = client.post(url, json=input)
+        data = response_data(res)
+        assert res.status_code == status_code
+        assert data["code"] == 0
+        assert data["msg"] == "success"
+
+    # delete two approve
+    update_activity_order("A-00000001-10022",1,2,item_id10)
+    with patch("weko_records_ui.utils.soft_delete", return_value=True):
+        with patch("weko_items_ui.utils.send_mail_from_notification_info", return_value=True):
+            url = url_for("weko_workflow.next_action",
+                        activity_id="A-00000001-10022", action_id=4)
+            res = client.post(url, json=input)
+            data = response_data(res)
+            assert res.status_code == status_code
+            assert data["code"] == 0
+            assert data["msg"] == "success"
+
+    # delete approve
+    update_activity_order("A-00000001-10023",1,3,item_id11)
+    with patch("weko_records_ui.utils.delete_version", return_value=True):
+        url = url_for("weko_workflow.next_action",
+                      activity_id="A-00000001-10023", action_id=4)
+        res = client.post(url, json=input)
+        data = response_data(res)
+        assert res.status_code == status_code
+        assert data["code"] == 0
+        assert data["msg"] == "success"
 
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_next_action_usage_application -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 @pytest.mark.parametrize('users_index, status_code', [
