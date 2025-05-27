@@ -1,13 +1,13 @@
-【登録完了】アイテム「{{ item_title }}」が登録されました
+【登録完了】アイテム「{{ target_title }}」が登録されました
 
-{{ submitter_name }}様
+{{ recipient_name }}様
 
 以下のアイテムについて、正常に登録されましたのでお知らせいたします。
 
 アイテム情報:
 
-タイトル: {{ item_title }}
-登録日時: {{ registration_date }}
-アイテムURL:{{ record_url }}
+タイトル: {{ target_title }}
+登録日時: {{ event_date }}
+アイテムURL:{{ target_url }}
 
 この通知は自動送信されています。本メールに返信しないようお願いいたします。

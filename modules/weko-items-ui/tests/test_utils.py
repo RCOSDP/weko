@@ -136,12 +136,8 @@ from weko_items_ui.utils import (
     get_access_token,
     check_duplicate,
     create_item_deleted_data,
-    create_delete_request_data,
-    create_delete_approved_data,
     create_direct_registered_data,
     send_mail_item_deleted,
-    send_mail_delete_request,
-    send_mail_delete_approved,
     send_mail_direct_registered,
     send_mail_from_notification_info,
     get_notification_targets,
@@ -10965,43 +10961,6 @@ def test_create_item_deleted_data(app, users, db_records2, db_userprofile):
         assert url in body
         assert users[0]["email"] in body
 
-# def create_delete_request_data(activity, profile, target, actor):
-# .tox/c1/bin/pytest --cov=weko_items_ui tests/test_utils.py::test_create_delete_request_data -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
-def test_create_delete_request_data(app, users, db_workflow, db_userprofile):
-    activity = db_workflow["activity"]
-    activity.updated = datetime(2025, 1, 1, 12, 0, 0, tzinfo=pytz.timezone("Asia/Tokyo"))
-    target = users[1]["obj"]
-    profile = db_userprofile.get(target.email)
-    actor = {"name": "actor_name", "email": users[0]["email"]}
-    url = "https://example.org"
-
-    res = create_delete_request_data(activity, profile, target, url, actor)
-    subject, body = res.get("subject"), res.get("body")
-    assert "test" in subject
-    assert "test" in body
-    assert "2025-01-01 12:00:00" in body
-    assert url in body
-    assert users[1]["email"] in body
-
-# def create_delete_approved_data(deposit, profile, target, url, activity, approver_id):
-# .tox/c1/bin/pytest --cov=weko_items_ui tests/test_utils.py::test_create_delete_approved_data -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
-def test_create_delete_approved_data(app, users, db_records2, db_workflow, db_userprofile):
-    record = db_records2[0][4]
-    activity = db_workflow["activity"]
-    activity.updated = datetime(2025, 1, 1, 12, 0, 0)
-    target = users[0]["obj"]
-    profile = db_userprofile.get(target.email)
-    profile.username = "test_user"
-    url = "https://example.org"
-    approver_id = users[1]["obj"].id
-
-    res = create_delete_approved_data(record, profile, target, url, activity, approver_id)
-    subject, body = res.get("subject"), res.get("body")
-    assert "タイトル" in subject
-    assert "タイトル" in body
-    assert "2025-01-01 12:00:00" in body
-    assert url in body
-    assert profile.username in body
 
 # def create_direct_registerd_data(deposit, profile, target, url):
 # .tox/c1/bin/pytest --cov=weko_items_ui tests/test_utils.py::test_create_direct_registerd_data -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
@@ -11052,74 +11011,6 @@ def test_send_mail_item_deleted(app, mocker):
 
     assert kwargs["context_obj"] == deposit
     assert kwargs["content_creator"] == create_item_deleted_data
-    assert kwargs["record_url"] == expected_url
-
-# def send_mail_delete_request(activity):
-# .tox/c1/bin/pytest --cov=weko_items_ui tests/test_utils.py::test_send_mail_delete_request -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
-def test_send_mail_delete_request(app, mocker, db_workflow):
-    mock_send_mail_from_notification_info = mocker.patch(
-        "weko_items_ui.utils.send_mail_from_notification_info", return_value=1
-    )
-    mock_get_notification_targets_approver = mocker.patch(
-        "weko_items_ui.utils.get_notification_targets_approver", return_value={"targets": []}
-    )
-
-    activity = db_workflow["activity"]
-
-    with app.test_request_context():
-        result = send_mail_delete_request(activity)
-
-    assert result == 1
-
-    expected_url = f"http://{app.config['SERVER_NAME']}/workflow/activity/detail/{activity.activity_id}"
-
-    _, kwargs = mock_send_mail_from_notification_info.call_args
-    get_info_func = kwargs["get_info_func"]
-    get_info_func(activity)
-    mock_get_notification_targets_approver.assert_called_once_with(activity)
-
-    assert kwargs["context_obj"] == activity
-    assert kwargs["content_creator"] == create_delete_request_data
-    assert kwargs["record_url"] == expected_url
-
-# def send_mail_delete_approved(pid_value, deposit, activity):
-# .tox/c1/bin/pytest --cov=weko_items_ui tests/test_utils.py::test_send_mail_delete_approved -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
-def test_send_mail_delete_approved(app, mocker, db_workflow, db_userprofile, users):
-    mock_send_mail_from_notification_info = mocker.patch(
-        "weko_items_ui.utils.send_mail_from_notification_info", return_value=1
-    )
-    mock_get_notification_targets = mocker.patch(
-        "weko_items_ui.utils.get_notification_targets", return_value={"targets": []}
-    )
-    mock_create_delete_approved_data = mocker.patch(
-        "weko_items_ui.utils.create_delete_approved_data", return_value={"subject": "subject", "body": "body"}
-    )
-
-    pid_value = "12345"
-    deposit = {"item_title": "Test Item"}
-    activity = db_workflow["activity"]
-    target = users[0]["obj"]
-    profile = db_userprofile.get(target.email)
-    user_id = users[0]["id"]
-
-    with app.test_request_context():
-        result = send_mail_delete_approved(pid_value, deposit, activity, user_id)
-        assert result == 1
-
-    expected_url = f"http://{app.config['SERVER_NAME']}/records/{pid_value}"
-
-    _, kwargs = mock_send_mail_from_notification_info.call_args
-    get_info_func = kwargs["get_info_func"]
-    get_info_func(deposit)
-    mock_get_notification_targets.assert_called_once_with(deposit, user_id)
-
-    content_creator = kwargs["content_creator"]
-    content_creator(deposit, profile, target, expected_url)
-    mock_create_delete_approved_data.assert_called_once_with(
-        deposit, profile, target, expected_url, activity, user_id
-    )
-
-    assert kwargs["context_obj"] == deposit
     assert kwargs["record_url"] == expected_url
 
 
