@@ -4641,6 +4641,15 @@ def grant_access_rights_to_all_open_restricted_files(activity_id :str ,permissio
     return url_and_expired_date
 
 def delete_lock_activity_cache(activity_id, data):
+    """Delete lock activity cache.
+
+    Args:
+        activity_id (str): The activity identifier.
+        data (dict): Data containing the locked value.
+
+    Returns:
+        str: Message indicating the result of the unlock operation.
+    """
     cache_key = 'workflow_locked_activity_{}'.format(activity_id)
     locked_value = str(data.get('locked_value'))
     msg = None

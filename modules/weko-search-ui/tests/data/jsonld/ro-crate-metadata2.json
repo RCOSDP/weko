@@ -391,12 +391,14 @@
     {
       "@id": "https://example.repo.nii.ac.jp/records/123456789/files/sample.rst",
       "@type": "URL",
-      "value": "abstract"
+      "value": "abstract",
+      "url": "https://example.repo.nii.ac.jp/records/123456789/files/sample.rst"
     },
     {
       "@id": "https://example.repo.nii.ac.jp/records/123456789/files/data.csv",
       "@type": "URL",
-      "value": "dataset"
+      "value": "dataset",
+      "url": "https://example.repo.nii.ac.jp/records/123456789/files/data.csv"
     },
     {
       "@id": "_:Organization_1",

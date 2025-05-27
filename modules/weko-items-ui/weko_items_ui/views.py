@@ -72,7 +72,7 @@ from weko_workflow.utils import (
 from .permissions import item_permission
 from .utils import (
     _get_max_export_items, check_item_is_being_edit,
-    export_items, export_rocrate, get_current_user, get_data_authors_prefix_settings,
+    export_items, get_current_user, get_data_authors_prefix_settings,
     get_data_authors_affiliation_settings, get_list_email, get_list_username,
     get_ranking, get_user_info_by_email, get_user_info_by_username,
     get_user_information, get_user_permission, get_workflow_by_item_type_id,
@@ -1239,7 +1239,7 @@ def prepare_delete_item(id=None, community=None, shared_user_id=-1):
         post_activity['workflow_id'] = workflow_id
         post_activity["title"] = deposit.get("item_title") or None
 
-        from .utils import send_mail_item_deleted, send_mail_delete_request
+        from .utils import send_mail_item_deleted
 
         if not workflow or workflow.delete_flow_id is None:
             from weko_records_ui.views import soft_delete
@@ -1285,12 +1285,6 @@ def prepare_delete_item(id=None, community=None, shared_user_id=-1):
                 'weko_workflow.display_activity',
                 activity_id=rtn.activity_id
             )
-
-        if rtn.action_id == 2:   # end_action
-            send_mail_item_deleted(pid_value, deposit, user_id, shared_user_id)
-
-        if rtn.action_id == 4:   # approval
-            send_mail_delete_request(rtn)
 
         return jsonify(
             code=0,
@@ -1408,10 +1402,7 @@ def export():
         return abort(403)
 
     if request.method == 'POST':
-        post_data = request.form.to_dict()
-        if (post_data["export_format_radio"] == "ROCRATE"):
-            return export_rocrate(post_data)
-        return export_items(post_data)
+        return export_items(request.form.to_dict())
 
     from weko_search_ui.api import SearchSetting
     search_type = request.args.get('search_type', '0')  # TODO: Refactor

@@ -49,33 +49,30 @@ from time import sleep
 import pickle
 
 import redis
-from redis import sentinel
 from celery import chain
 from celery.result import AsyncResult
 from celery.task.control import revoke
 from elasticsearch import ElasticsearchException
-from elasticsearch.exceptions import NotFoundError
-from flask import abort, current_app, has_request_context, request, Flask, send_file
+from jsonschema import Draft4Validator
+from flask import abort, current_app, request, send_file
 from flask_babelex import gettext as _
 from flask_login import current_user
+
 from invenio_db import db
 from invenio_files_rest.models import FileInstance, Location, ObjectVersion
 from invenio_files_rest.proxies import current_files_rest
 from invenio_files_rest.utils import find_and_update_location_size
 from invenio_i18n.ext import current_i18n
-from invenio_indexer.api import RecordIndexer
 from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidstore.errors import PIDDoesNotExistError
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
-
 from invenio_records.api import Record
 from invenio_records.models import RecordMetadata
-from invenio_records_rest.errors import InvalidQueryRESTError
 from invenio_search import RecordsSearch
-from jsonschema import Draft4Validator
+
 from sqlalchemy import func as _func
 from sqlalchemy.exc import SQLAlchemyError
-from weko_admin.models import AdminSettings, SessionLifetime
+from weko_admin.models import SessionLifetime
 from weko_admin.utils import get_redis_cache, reset_redis_cache
 from weko_admin.api import TempDirInfo
 from weko_authors.models import AuthorsAffiliationSettings, AuthorsPrefixSettings
@@ -93,12 +90,12 @@ from weko_indextree_journal.api import Journals
 from weko_logging.activity_logger import UserActivityLogger
 from weko_records.api import FeedbackMailList, JsonldMapping, RequestMailList, ItemTypes, ItemLink
 from weko_records.models import ItemMetadata, ItemReference
-from weko_records.serializers.utils import get_full_mapping, get_mapping
+from weko_records.serializers.utils import get_mapping
 from weko_records_ui.external import call_external_system
 from weko_redis.redis import RedisConnection
 from weko_schema_ui.config import WEKO_SCHEMA_RELATION_TYPE
 from weko_schema_ui.models import PublishStatus
-from weko_search_ui.mapper import BaseMapper, JPCOARV2Mapper, JsonLdMapper
+from weko_search_ui.mapper import JPCOARV2Mapper, JsonLdMapper
 from weko_workflow.api import Flow, WorkActivity
 from weko_workflow.errors import WekoWorkflowException
 from weko_workflow.config import (
@@ -468,15 +465,16 @@ def check_tsv_import_items(
 ):
     """Validation importing zip file.
 
-    :argument
-        file_name -- file name.
-        file_content -- content file's name.
-        is_change_identifier -- Change Identifier Mode.
-        is_gakuninrdm -- Is call by gakuninrdm api.
-        all_index_permission -- All indexes can be import.
-        can_edit_indexes -- Editable index list.
-    :return
-        return       -- PID object if exist.
+    Args:
+        file (str | FileStorage): file name or file object.
+        is_change_identifier (bool): Change Identifier Mode.
+        is_gakuninrdm (bool): Is call by gakuninrdm api.
+        all_index_permission (bool): All indexes can be import.
+        can_edit_indexes (list): Editable index list.
+        shared_id (int): weko shared ID.
+
+    Returns:
+        dict: result of check import items.
 
     """
     from weko_items_ui.utils import is_duplicate_item
@@ -624,13 +622,14 @@ def check_xml_import_items(
 ):
     """Validation importing zip file.
 
-    :argument
-        file -- zip file path.
-        item_id -- import item type id.
-        is_gakuninrdm -- Is call by gakuninrdm api.
-    :return
-        return       -- PID object if exist.
+    Args:
+        file (str | FileStorage): zip file path or file storage object.
+        item_type_id (int): item type id.
+        is_gakuninrdm (bool): Is call by gakuninrdm api.
+        shared_id (int): weko shared id.
 
+    Returns:
+        dict: result of check import items.
     """
     if isinstance(file, str):
         filename = os.path.basename(file)
@@ -815,7 +814,7 @@ def check_jsonld_import_items(
         file, packaging, mapping_id, meta_data_api=None,
         shared_id=-1, validate_bagit=True, is_change_identifier=False
 ):
-    """Check bagit import items.
+    """Validate and check JSON-LD import items.
 
     Check that the actual file contents match the recorded hashes stored
     in the manifest files and mapping metadata to the item type.
@@ -823,9 +822,9 @@ def check_jsonld_import_items(
     Args:
         file (FileStorage | str): File object or file path.
         packaging (str): Packaging type. SWORDBagIt or SimpleZip.
-        shared_id (int): Shared ID. Defaults to -1.
         mapping_id (int): Mapping ID. Defaults to None.
         meta_data_api (list): Metadata API. Defaults to None.
+        shared_id (int): Shared ID. Defaults to -1.
         validate_bagit (bool, optional):
             Validate BagIt. Defaults to True.
         is_change_identifier (bool, optional):
@@ -2081,7 +2080,8 @@ def send_item_created_event_to_es(item, request_info):
 
 
 def import_items_to_system(
-    item: dict, request_info=None, is_gakuninrdm=False, parent_id=None, file_replace_owner=None
+    item: dict, request_info=None, is_gakuninrdm=False, parent_id=None,
+    file_replace_owner=None
 ):
     """Validation importing zip file.
 
@@ -4447,7 +4447,6 @@ def export_all(root_url, user_id, data, start_time):
                         del item_datas
                         del records
                         tasks.append(write_files_task.si(export_path, pickle_file_name, user_id))
-                        write_files_task.apply_async(args=(export_path, pickle_file_name, user_id,))
                         item_datas = {}
                         target_ids = {}
                         file_part += 1
@@ -4678,7 +4677,7 @@ def get_record_ids(recids, index_id_list=None):
     Returns:
         list: List of record ids.
     """
-    
+
     status_ok = [PublishStatus.PUBLIC.value, PublishStatus.PRIVATE.value]
     record_ids = [
         (recid.pid_value, recid.object_uuid)
@@ -5031,7 +5030,7 @@ def get_export_status():
             reset_redis_cache(run_msg, "")
 
             # Create ttl for export results
-            expire = datetime.now() + \
+            expire = datetime.now(timezone.utc) + \
                 timedelta(days=current_app.config["WEKO_SEARCH_UI_EXPORT_FILE_RETENTION_DAYS"])
             export_info = {
                 "is_export": True,
@@ -5666,7 +5665,7 @@ def handle_flatten_data_encode_filename(list_record, data_path):
             info.get("key")
             for info in metadata.get("files_info")
         ]
-        file_path = set(item.get("file_path", []))
+        file_path = item.get("file_path", [])
 
         for key in file_key_list:
             for file_metadata in metadata.get(key, []):
@@ -5694,10 +5693,12 @@ def handle_flatten_data_encode_filename(list_record, data_path):
                     current_app.logger.info(
                         f"move file: {filename} to {encoded_filename}"
                     )
-                    file_path.discard(filename)
-                    file_path.add(encoded_filename)
+                    file_path = [
+                        encoded_filename if f == filename else f
+                        for f in file_path
+                    ]
 
-        item["file_path"] = list(file_path)
+        item["file_path"] = file_path
         item["non_extract"] = [
             urllib.parse.quote(filename, safe='')
             for filename in item.get("non_extract", [])

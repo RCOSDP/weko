@@ -77,7 +77,7 @@ from weko_deposit.signals import item_created
 from weko_index_tree.utils import get_user_roles
 from weko_items_ui.api import item_login
 from weko_items_ui.utils import check_item_is_being_edit, get_workflow_by_item_type_id, \
-    get_current_user, send_mail_delete_request, send_mail_delete_approved
+    get_current_user
 from weko_logging.activity_logger import UserActivityLogger
 from weko_records.api import FeedbackMailList, RequestMailList, ItemLink, ItemTypes
 from weko_records.models import ItemMetadata
@@ -1752,9 +1752,6 @@ def next_action(activity_id='0', action_id=0, json_data=None):
             target_key=current_pid.pid_value
         )
 
-        if action_endpoint == "approval":
-            send_mail_delete_approved(parts[0], deposit, activity_detail, current_user.id)
-
     if for_delete and del_reject_flg:
         # skip action after thrown out action
         flow_detail = flow.get_flow_detail(activity_detail.flow_define.flow_id)
@@ -1781,7 +1778,6 @@ def next_action(activity_id='0', action_id=0, json_data=None):
         activity.update(
             action_status=ActionStatusPolicy.ACTION_THROWN_OUT
         )
-        work_activity.notify_about_activity(activity_id, "deletion_rejected")
 
         last_flow_action = flow.get_last_flow_action(
             activity_detail.flow_define.flow_id)
@@ -1810,11 +1806,12 @@ def next_action(activity_id='0', action_id=0, json_data=None):
         comment='',
         action_order=action_order
     )
+    if for_delete and del_reject_flg:
+        work_activity.notify_about_activity(activity_id, "deletion_rejected")
 
     if next_action_endpoint == "approval":
         if for_delete:
             work_activity.notify_about_activity(activity_id, "deletion_request")
-            send_mail_delete_request(work_activity.get_activity_by_id(activity_id))
         else:
             work_activity.notify_about_activity(activity_id, "request_approval")
 
@@ -1864,7 +1861,8 @@ def next_action(activity_id='0', action_id=0, json_data=None):
                 action_order=next_action_order
             )
             work_activity.end_activity(activity)
-            if action_endpoint == "approval":
+
+            if action_endpoint == "approval" and not del_reject_flg:
                 work_activity.notify_about_activity(activity_id, "deletion_approved")
     else:
         flag = work_activity.upt_activity_action(

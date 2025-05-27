@@ -2834,22 +2834,25 @@ class WorkActivity(object):
                 activity, case, self._get_params_for_registrant,
                 Notification.create_item_deleted
             )
+            self.send_mail_item_deleted(activity)
         elif case == "deletion_request":
             self._notify_about_activity_wiht_case(
                 activity, case, self._get_params_for_approver,
                 Notification.create_request_delete_approval
             )
-            pass
+            self.send_mail_request_delete_approval(activity)
         elif case == "deletion_approved":
             self._notify_about_activity_wiht_case(
                 activity, case, self._get_params_for_registrant,
                 Notification.create_item_delete_approved
             )
+            self.send_mail_item_delete_approved(activity)
         elif case == "deletion_rejected":
             self._notify_about_activity_wiht_case(
                 activity, case, self._get_params_for_registrant,
                 Notification.create_item_delete_rejected
             )
+            self.send_mail_item_delete_rejected(activity)
 
     def _get_params_for_registrant(self, activity):
         """Get notification parameters for registrant."""
@@ -3034,7 +3037,7 @@ class WorkActivity(object):
             data_callback (function): A callback function to generate data for the email template.
 
         Returns:
-            None
+            int: The number of emails successfully sent.
 
         Raises:
             Exception: If an unexpected error occurs during the email sending process.
@@ -3100,16 +3103,12 @@ class WorkActivity(object):
         Args:
             activity (Activity): Activity object.
 
-        Returns:
-            None
-
         Raises:
             SQLAlchemyError: If an error occurs while querying the database.
             Exception: If an unexpected error occurs during the email sending process.
         """
-        from .utils import convert_to_timezone
         try:
-            set_target_id, recid, _, _ = self._get_params_for_registrant(activity)
+            set_target_id, recid, _, actor_name = self._get_params_for_registrant(activity)
             targets, settings, profiles, _ = self._get_settings_for_targets(set_target_id)
         except SQLAlchemyError as ex:
             current_app.logger.error(
@@ -3119,33 +3118,15 @@ class WorkActivity(object):
             traceback.print_exc()
             return
 
-        def item_registered_data(activity, target, profile):
-            """
-            Generate data for the item registered email template.
+        def data_callback(activity, target, profile):
+            return self._create_notification_context(
+                activity, target, profile, actor_name, recid
+            )
 
-            Args:
-                activity (Activity): The activity object containing details about the registered item.
-                target (User): The target user who will receive the email.
-                profile (UserProfile): The profile of the target user.
-
-            Returns:
-                dict: A dictionary containing the data to be used in the email template.
-            """
-            timezone = profile.timezone if profile else None
-            registration_date = convert_to_timezone(activity.updated, timezone)
-            url = request.host_url + f"records/{recid.pid_value.split('.')[0]}"
-
-            return {
-                "item_title": activity.title,
-                "submitter_name": profile.username if profile else target.email,
-                "registration_date": registration_date.strftime("%Y-%m-%d %H:%M:%S"),
-                "record_url": url
-            }
-
-        template_file = 'email_nortification_item_registered_{language}.tpl'
+        template_file = 'email_notification_item_registered_{language}.tpl'
         send_count = self.send_notification_email(
             activity, targets, settings,
-            profiles, template_file, item_registered_data
+            profiles, template_file, data_callback=data_callback
         )
         current_app.logger.info(
             "{num} mail(s) sent for item registered: {activity_id}"
@@ -3155,22 +3136,16 @@ class WorkActivity(object):
     def send_mail_request_approval(self, activity):
         """Notify request approval via email.
 
-        Send mail to user when request approval.
-        Users with the authority to approve will be notified.
-
         Args:
             activity (Activity): Activity object.
-
-        Returns:
-            None
 
         Raises:
             SQLAlchemyError: If an error occurs while querying the database.
             Exception: If an unexpected error occurs during the email sending process.
         """
         try:
-            target_id, _, actor_id, actor_name = self._get_params_for_approver(activity)
-            targets, settings, profiles, actor = self._get_settings_for_targets(target_id, actor_id)
+            target_id, _, _, actor_name = self._get_params_for_approver(activity)
+            targets, settings, profiles, _ = self._get_settings_for_targets(target_id)
         except SQLAlchemyError as ex:
             current_app.logger.error(
                 "Failed to get notification parameters for activity: {}"
@@ -3179,51 +3154,26 @@ class WorkActivity(object):
             traceback.print_exc()
             return
 
-        from .utils import convert_to_timezone
-        def request_approval_data(activity, target, profile):
-            """
-            Generate data for the request approval email template.
+        def data_callback(activity, target, profile):
+            return self._create_notification_context(
+                activity, target, profile, actor_name
+            )
 
-            Args:
-                activity (Activity): The activity object.
-                target (User): The target user who will receive the email.
-                profile (UserProfile): The profile of the target user.
-
-            Returns:
-                dict: A dictionary containing the data to be used in the email template.
-            """
-            timezone = profile.timezone if profile else None
-            submission_date = convert_to_timezone(activity.updated, timezone)
-            url = request.host_url + f"workflow/activity/detail/{activity.activity_id}"
-
-            return {
-                "approver_name": profile.username if profile else target.email,
-                "item_title": activity.title,
-                "submitter_name": actor_name if actor_name else actor.email,
-                "submission_date": submission_date.strftime("%Y-%m-%d %H:%M:%S"),
-                "approval_url": url
-            }
-        template_file = 'email_nortification_request_approval_{language}.tpl'
-        self.send_notification_email(
+        template_file = 'email_notification_request_approval_{language}.tpl'
+        send_count =self.send_notification_email(
             activity, targets, settings, profiles,
-            template_file, request_approval_data
+            template_file, data_callback=data_callback
         )
         current_app.logger.info(
             "{num} mail(s) sent for request approval: {activity_id}"
-            .format(num=len(target_id), activity_id=activity.activity_id)
+            .format(num=send_count, activity_id=activity.activity_id)
         )
 
     def send_mail_item_approved(self, activity):
         """Notify approved items via email.
 
-        Send mail to user when item approved.
-        Create user and shared user will be notified.
-
         Args:
             activity (Activity): Activity object.
-
-        Returns:
-            None
 
         Raises:
             SQLAlchemyError: If an error occurs while querying the database.
@@ -3240,34 +3190,15 @@ class WorkActivity(object):
             traceback.print_exc()
             return
 
-        from .utils import convert_to_timezone
-        def item_approved_data(activity, target, profile):
-            """
-            Generate data for the item approved email template.
+        def data_callback(activity, target, profile):
+            return self._create_notification_context(
+                activity, target, profile, actor_name, recid
+            )
 
-            Args:
-                activity (Activity): The activity object containing details about the approved item.
-                target (User): The target user who will receive the email.
-                profile (UserProfile): The profile of the target user.
-
-            Returns:
-                dict: A dictionary containing the data to be used in the email template.
-            """
-            timezone = profile.timezone if profile else None
-            approval_date = convert_to_timezone(activity.updated, timezone)
-            url = request.host_url + f"records/{recid.pid_value.split('.')[0]}"
-            return {
-                "approver_name": actor_name,
-                "item_title": activity.title,
-                "submitter_name": profile.username if profile else target.email,
-                "approval_date": approval_date.strftime("%Y-%m-%d %H:%M:%S"),
-                "record_url": url
-            }
-
-        template_file = 'email_nortification_item_approved_{language}.tpl'
+        template_file = 'email_notification_item_approved_{language}.tpl'
         self.send_notification_email(
             activity, targets, settings, profiles,
-            template_file, item_approved_data
+            template_file, data_callback
         )
         current_app.logger.info(
             "{num} mail(s) sent for item approved: {activity_id}"
@@ -3278,14 +3209,8 @@ class WorkActivity(object):
     def send_mail_item_rejected(self, activity):
         """Notify rejected items via email.
 
-        Send mail to user when item rejected.
-        Create user and shared user will be notified.
-
         Args:
             activity (Activity): Activity object.
-
-        Returns:
-            None
 
         Raises:
             SQLAlchemyError: If an error occurs while querying the database.
@@ -3302,39 +3227,194 @@ class WorkActivity(object):
             traceback.print_exc()
             return
 
-        from .utils import convert_to_timezone
-        def item_rejected_data(activity, target, profile):
-            """
-            Generate data for the item rejected email template.
+        def data_callback(activity, target, profile):
+            return self._create_notification_context(
+                activity, target, profile, actor_name
+            )
 
-            Args:
-                activity (Activity): The activity object containing details about the rejected item.
-                target (User): The target user who will receive the email.
-                profile (UserProfile): The profile of the target user.
-
-            Returns:
-                dict: A dictionary containing the data to be used in the email template.
-            """
-            timezone = profile.timezone if profile else None
-            rejected_date = convert_to_timezone(activity.updated, timezone)
-            url = request.host_url + f"workflow/activity/detail/{activity.activity_id}"
-            return {
-                "approver_name": actor_name,
-                "item_title": activity.title,
-                "submitter_name": profile.username if profile else target.email,
-                "rejection_date": rejected_date.strftime("%Y-%m-%d %H:%M:%S"),
-                "url": url
-            }
-
-        template_file = 'email_nortification_item_rejected_{language}.tpl'
+        template_file = 'email_notification_item_rejected_{language}.tpl'
         self.send_notification_email(
             activity, targets, settings, profiles,
-            template_file, item_rejected_data
+            template_file, data_callback
         )
         current_app.logger.info(
             "{num} mail(s) sent for item rejected: {activity_id}"
             .format(num=len(set_target_id), activity_id=activity.activity_id)
         )
+
+    def send_mail_item_deleted(self, activity):
+        """Notify delete items via email.
+
+        Args:
+            activity (Activity): Activity object.
+
+        Raises:
+            SQLAlchemyError: If an error occurs while querying the database.
+            Exception: If an unexpected error occurs during the email sending process.
+        """
+        try:
+            set_target_id, recid, _, actor_name = self._get_params_for_registrant(activity)
+            targets, settings, profiles, _ = self._get_settings_for_targets(set_target_id)
+        except SQLAlchemyError as ex:
+            current_app.logger.error(
+                "Failed to get notification parameters for activity: {}"
+                .format(activity.activity_id)
+            )
+            traceback.print_exc()
+            return
+
+        def data_callback(activity, target, profile):
+            return self._create_notification_context(
+                activity, target, profile, actor_name, recid
+            )
+
+        template_file = 'email_notification_item_deleted_{language}.tpl'
+        self.send_notification_email(
+            activity, targets, settings, profiles,
+            template_file, data_callback
+        )
+        current_app.logger.info(
+            "{num} mail(s) sent for item deleted: {activity_id}"
+            .format(num=len(set_target_id), activity_id=activity.activity_id)
+        )
+
+    def send_mail_request_delete_approval(self, activity):
+        """Notify request delete approval via email.
+
+        Args:
+            activity (Activity): Activity object.
+
+        Raises:
+            SQLAlchemyError: If an error occurs while querying the database.
+            Exception: If an unexpected error occurs during the email sending process.
+        """
+        try:
+            set_target_id, _, _, actor_name = self._get_params_for_approver(activity)
+            targets, settings, profiles, _ = self._get_settings_for_targets(set_target_id)
+        except SQLAlchemyError as ex:
+            current_app.logger.error(
+                "Failed to get notification parameters for activity: {}"
+                .format(activity.activity_id)
+            )
+            traceback.print_exc()
+            return
+
+        def data_callback(activity, target, profile):
+            return self._create_notification_context(
+                activity, target, profile, actor_name
+            )
+
+        template_file = 'email_notification_delete_request_{language}.tpl'
+        self.send_notification_email(
+            activity, targets, settings, profiles,
+            template_file, data_callback
+        )
+        current_app.logger.info(
+            "{num} mail(s) sent for request delete approval: {activity_id}"
+            .format(num=len(set_target_id), activity_id=activity.activity_id)
+        )
+
+    def send_mail_item_delete_approved(self, activity):
+        """Notify approved delete items via email.
+
+        Args:
+            activity (Activity): Activity object.
+
+        Raises:
+            SQLAlchemyError: If an error occurs while querying the database.
+            Exception: If an unexpected error occurs during the email sending process.
+        """
+        try:
+            set_target_id, recid, _, actor_name = self._get_params_for_registrant(activity)
+            targets, settings, profiles, _ = self._get_settings_for_targets(set_target_id)
+        except SQLAlchemyError as ex:
+            current_app.logger.error(
+                "Failed to get notification parameters for activity: {}"
+                .format(activity.activity_id)
+            )
+            traceback.print_exc()
+            return
+
+        def data_callback(activity, target, profile):
+            return self._create_notification_context(
+                activity, target, profile, actor_name, recid
+            )
+
+        template_file = 'email_notification_delete_approved_{language}.tpl'
+        self.send_notification_email(
+            activity, targets, settings, profiles,
+            template_file, data_callback
+        )
+        current_app.logger.info(
+            "{num} mail(s) sent for item delete approved: {activity_id}"
+            .format(num=len(set_target_id), activity_id=activity.activity_id)
+        )
+
+    def send_mail_item_delete_rejected(self, activity):
+        """Notify rejected delete items via email.
+
+        Args:
+            activity (Activity): Activity object.
+
+        Raises:
+            SQLAlchemyError: If an error occurs while querying the database.
+            Exception: If an unexpected error occurs during the email sending process.
+        """
+        try:
+            set_target_id, _, _, actor_name = self._get_params_for_registrant(activity)
+            targets, settings, profiles, _ = self._get_settings_for_targets(set_target_id)
+        except SQLAlchemyError as ex:
+            current_app.logger.error(
+                "Failed to get notification parameters for activity: {}"
+                .format(activity.activity_id)
+            )
+            traceback.print_exc()
+            return
+
+        def data_callback(activity, target, profile):
+            return self._create_notification_context(
+                activity, target, profile, actor_name
+            )
+
+        template_file = 'email_notification_item_delete_rejected_{language}.tpl'
+        self.send_notification_email(
+            activity, targets, settings, profiles,
+            template_file, data_callback
+        )
+        current_app.logger.info(
+            "{num} mail(s) sent for item delete rejected: {activity_id}"
+            .format(num=len(set_target_id), activity_id=activity.activity_id)
+        )
+
+    def _create_notification_context(self, activity, target, profile, actor_name, recid=None):
+        """
+        Generate data for the email template.
+
+        Args:
+            activity (Activity): The activity object containing details about the rejected item.
+            target (User): The target user who will receive the email.
+            profile (UserProfile): The profile of the target user.
+
+        Returns:
+            dict: A dictionary containing the data to be used in the email template.
+        """
+        from .utils import convert_to_timezone
+
+        timezone = profile.timezone if profile else None
+        event_date = convert_to_timezone(activity.updated, timezone)
+        if recid:
+            url = request.host_url + f"records/{recid.pid_value.split('.')[0]}"
+        else:
+            url = request.host_url + f"workflow/activity/detail/{activity.activity_id}"
+
+        return {
+            "recipient_name": profile.username if profile else target.email,
+            "actor_name": actor_name,
+            "target_title": activity.title,
+            "target_url": url,
+            "event_date": event_date.strftime("%Y-%m-%d %H:%M:%S"),
+        }
+
 
 class WorkActivityHistory(object):
     """Operated on the Activity."""

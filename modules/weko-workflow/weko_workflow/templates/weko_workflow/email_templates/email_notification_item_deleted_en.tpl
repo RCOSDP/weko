@@ -1,12 +1,12 @@
-【Deletion Complete】Item "{{ item_title }}" has been deleted
+【Deletion Complete】Item "{{ target_title }}" has been deleted
 
-Dear {{ submitter_name }},
+Dear {{ recipient_name }},
 
 The following item has been successfully deleted. Please find the details below.
 
 Item Details:
-Title: {{ item_title }}
-Deletion Date: {{ registration_date }}
-Item URL: {{ record_url }}
+Title: {{ target_title }}
+Deletion Date: {{ event_date }}
+Item URL: {{ target_url }}
 
 This is an automated notification. Please do not reply to this email.

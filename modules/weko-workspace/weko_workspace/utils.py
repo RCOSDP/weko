@@ -230,12 +230,13 @@ def get_accessCnt_downloadCnt(recid: str):
 
 
 # 2.1.2.5 アイテムステータス取得処理
-def get_item_status(recId: str):
+def get_item_status(recId: str, file_info: dict):
     """
     Get the converted OA status for a given recid.
 
     Args:
         recId (str): The record ID (WEKO item PID or related identifier).
+        file_info (dict): A dictionary containing file information.
 
     Returns:
         str: The converted OA status based on the mapping, defaults to "Unlinked" if not found.
@@ -248,11 +249,25 @@ def get_item_status(recId: str):
 
     # レコードが存在しない場合、"Unlinked"を返す
     if oaStatusRecord is None:
-        return "Unlinked"
+        return _("Unlinked")
 
     # 元の状態を取得し、変換を行う
     originalStatus = oaStatusRecord.oa_status
-    return current_app.config.get("WEKO_WORKSPACE_OA_STATUS_MAPPING").get(originalStatus, "Unlinked")
+
+    # Check embargo item status
+    if originalStatus == "Processed Fulltext Registered (Embargo)":
+        is_embargo = False
+        if file_info.get('date'):
+            date_value = file_info['date'][0].get('dateValue')
+            if date_value:
+                is_embargo =\
+                    date_value > datetime.now(timezone.utc).strftime('%Y-%m-%d')
+        originalStatus = originalStatus if is_embargo \
+            else "Processed Fulltext Opened (OA)"
+    replaced_status = current_app.config.get("WEKO_WORKSPACE_OA_STATUS_MAPPING")\
+                                        .get(originalStatus, "Unlinked")
+
+    return replaced_status
 
 
 def get_userNm_affiliation():
@@ -1402,10 +1417,11 @@ def fill_data(form_model, autofill_data, schema=None, exclude_duplicate_lang=Fal
 
     def validate_data(data, sub_schema):
         if sub_schema is None:
+            current_app.logger.debug("=== Validation skipped ===")
             return True
         try:
-            current_app.logger.debug("Validating data: %s against schema: %s", data, sub_schema)
             validate(instance=data, schema=sub_schema)
+            current_app.logger.debug(f"Validation passed: {data} matches schema {sub_schema}")
             return True
         except ValidationError as e:
             current_app.logger.debug(f"Validation failed: {e.message}")
@@ -1413,11 +1429,11 @@ def fill_data(form_model, autofill_data, schema=None, exclude_duplicate_lang=Fal
 
     if isinstance(autofill_data, list):
         key = list(form_model.keys())[0] if len(form_model) != 0 else None
-        item_schema = None
+        sub_schema = None
         if schema:
             sub_schema = get_subschema(schema, key)
             if sub_schema and sub_schema.get("type") == "array":
-                item_schema = sub_schema.get("items")
+                sub_schema = sub_schema.get("items")
 
         if is_multiple_data or (not is_multiple_data and isinstance(form_model.get(key),list)):
             model_clone = {}
@@ -1431,10 +1447,10 @@ def fill_data(form_model, autofill_data, schema=None, exclude_duplicate_lang=Fal
                     used_lang_set.add(data.get('@language'))
                 model = {}
                 deepcopy_API(model_clone, model)
-                new_model = fill_data(model, data, item_schema, exclude_duplicate_lang)
+                new_model = fill_data(model, data, sub_schema, exclude_duplicate_lang)
                 result[key].append(new_model.copy())
         else:
-            result = fill_data(form_model, autofill_data[0], item_schema, exclude_duplicate_lang)
+            result = fill_data(form_model, autofill_data[0], schema, exclude_duplicate_lang)
     elif isinstance(autofill_data, dict):
         if isinstance(form_model, dict):
             for k, v in form_model.items():
@@ -2007,13 +2023,11 @@ def get_datacite_description_data(data):
     default_type = 'Abstract'
     for item in data:
         if 'description' in item:
-            result_creator = list()
             new_data = dict()
             new_data['@value'] = item.get('description')
             new_data['@language'] = default_language
 
-            result_creator.append(new_data)
-            result.append(result_creator)
+            result.append(new_data)
     return result
 
 
@@ -2035,13 +2049,11 @@ def get_datacite_subject_data(data):
     default_language = 'ja'
     for sub in data:
         if 'subject' in sub:
-            result_creator = list()
             new_data = dict()
             new_data['@value'] = sub.get('subject')
-            new_data['@subjectScheme'] = sub.get('subjectScheme')
+            new_data['@scheme'] = sub.get('subjectScheme')
 
-            result_creator.append(new_data)
-            result.append(result_creator)
+            result.append(new_data)
     return result
 
 
