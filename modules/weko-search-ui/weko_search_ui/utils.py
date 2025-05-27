@@ -5665,7 +5665,7 @@ def handle_flatten_data_encode_filename(list_record, data_path):
             info.get("key")
             for info in metadata.get("files_info")
         ]
-        file_path = set(item.get("file_path", []))
+        file_path = item.get("file_path", [])
 
         for key in file_key_list:
             for file_metadata in metadata.get(key, []):
@@ -5693,10 +5693,12 @@ def handle_flatten_data_encode_filename(list_record, data_path):
                     current_app.logger.info(
                         f"move file: {filename} to {encoded_filename}"
                     )
-                    file_path.discard(filename)
-                    file_path.add(encoded_filename)
+                    file_path = [
+                        encoded_filename if f == filename else f
+                        for f in file_path
+                    ]
 
-        item["file_path"] = list(file_path)
+        item["file_path"] = file_path
         item["non_extract"] = [
             urllib.parse.quote(filename, safe='')
             for filename in item.get("non_extract", [])
