@@ -111,6 +111,7 @@ class ItemManagementBulkDelete(BaseView):
         if request.method == "PUT":
             # Do delete items inside the current index tree (maybe root tree)
             q = request.values.get("q")
+            UserActivityLogger.issue_log_group_id(db.session)
             if q is not None and q.isdigit():
                 current_tree = Indexes.get_index(q)
                 recursive_tree = Indexes.get_recursive_tree(q)
@@ -141,12 +142,10 @@ class ItemManagementBulkDelete(BaseView):
                                         direct_child_trees.append(child_tree.id)
 
                         db.session.commit()
-                        parent_id = UserActivityLogger.get_next_parent_id()
                         UserActivityLogger.info(operation="ITEM_BULK_DELETE")
                         for pid in delete_record_list:
                             UserActivityLogger.info(
                                 operation="ITEM_DELETE",
-                                parent_id=parent_id,
                                 target_key=pid
                             )
 
@@ -489,10 +488,12 @@ class ItemImportView(BaseView):
             item for item in data.get("list_record", []) if not item.get("errors")
         ]
         list_doi = data.get("list_doi")
+        if UserActivityLogger.issue_log_group_id(db.session):
+            log_group_id = UserActivityLogger.get_log_group_id(request_info)
+            request_info["log_group_id"] = log_group_id
         UserActivityLogger.info(operation="ITEM_IMPORT")
         if list_record:
             group_tasks = []
-            parent_id = UserActivityLogger.get_next_parent_id(db.session)
             UserActivityLogger.info(operation="ITEM_BULK_CREATE")
             for idx, item in enumerate(list_record):
                 try:
@@ -502,7 +503,7 @@ class ItemImportView(BaseView):
                     if (list_doi[idx]):
                         metadata_doi = handle_metadata_by_doi(item, list_doi[idx])
                         item["metadata"] = metadata_doi
-                    group_tasks.append(import_item.s(item, request_info, parent_id=parent_id))
+                    group_tasks.append(import_item.s(item, request_info))
                     db.session.commit()
                 except Exception as ex:
                     db.session.rollback()
@@ -922,13 +923,16 @@ class ItemRocrateImportView(BaseView):
         list_record = [
             item for item in data.get("list_record", []) if not item.get("errors")
         ]
+        if UserActivityLogger.issue_log_group_id(db.session):
+            log_group_id = UserActivityLogger.get_log_group_id(request_info)
+            request_info["log_group_id"] = log_group_id
+
         UserActivityLogger.info(
             operation="ITEM_IMPORT",
             remarks="RO-Crate Import"
         )
         if list_record:
             group_tasks = []
-            parent_id = UserActivityLogger.get_next_parent_id(db.session)
             UserActivityLogger.info(
                 operation="ITEM_BULK_CREATE",
                 remarks="RO-Crate Import"
@@ -938,7 +942,7 @@ class ItemRocrateImportView(BaseView):
                     item["root_path"] = os.path.join(data_path, "data")
                     create_flow_define()
                     handle_workflow(item)
-                    group_tasks.append(import_item.s(item, request_info, parent_id=parent_id))
+                    group_tasks.append(import_item.s(item, request_info))
                     db.session.commit()
                 except Exception as ex:
                     db.session.rollback()

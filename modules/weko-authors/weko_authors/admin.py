@@ -425,6 +425,12 @@ class ImportView(BaseView):
         group_tasks = []
         count=0
 
+        # get the request info for logging
+        request_info = UserActivityLogger.get_summary_from_request()
+        if not UserActivityLogger.get_log_group_id(request_info):
+            UserActivityLogger.issue_log_group_id(None)
+        request_info["log_group_id"] = UserActivityLogger.get_log_group_id(request_info)
+
         if is_target == "id_prefix":
             for id_prefix in records:
                 group_tasks.append(import_id_prefix.s(id_prefix))
@@ -476,7 +482,6 @@ class ImportView(BaseView):
             records, reached_point, count = prepare_import_data(max_page_for_import_tab)
             task_ids =[]
 
-            request_info = UserActivityLogger.get_summary_from_request()
             for author in records:
                 group_tasks.append(import_author.s(author, force_change_mode, request_info))
         else:
@@ -513,7 +518,9 @@ class ImportView(BaseView):
                     force_change_mode,
                     current_app.config.get("WEKO_AUTHORS_CACHE_TTL")
                 )
-                task = import_author_over_max.delay(reached_point ,task_ids, max_page_for_import_tab)
+                task = import_author_over_max.delay(
+                    reached_point, task_ids, max_page_for_import_tab,
+                    request_info=request_info)
                 update_cache_data(
                     current_app.config.get("WEKO_AUTHORS_IMPORT_CACHE_OVER_MAX_TASK_KEY"),
                     task.id,

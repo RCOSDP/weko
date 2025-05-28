@@ -141,7 +141,7 @@ def import_affiliation_id(affiliation_id):
     return result
 
 @shared_task
-def import_author_over_max(reached_point, task_ids ,max_part):
+def import_author_over_max(reached_point, task_ids ,max_part, request_info=None):
     """
     WEKO_AUTHORS_IMPORT_MAX_NUM_OF_DISPLAYSを超えた著者をインポートする場合の処理です。
     先に行っているインポートタスクが終了次第、reached_pointから一時ファイルを用いて
@@ -152,6 +152,7 @@ def import_author_over_max(reached_point, task_ids ,max_part):
                 データ例:{"part_number": 101, "count": 3}
         task_ids: 先に行っているmax_diplay分のタスクID.
         max_part: パート数の最大値
+        request_info: リクエスト情報
     """
 
     # task_idsの全てのtaskが終了するまで待つ
@@ -162,7 +163,7 @@ def import_author_over_max(reached_point, task_ids ,max_part):
     current_app.logger.info('import_author_over_max is start')
     result = {'start_date': datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
     try:
-        import_authors_from_temp_files(reached_point, max_part)
+        import_authors_from_temp_files(reached_point, max_part, request_info=request_info)
         result['status'] = states.SUCCESS
     except Exception as ex:
         current_app.logger.error(ex)
@@ -178,7 +179,7 @@ def import_author_over_max(reached_point, task_ids ,max_part):
     return result
 
 
-def import_authors_from_temp_files(reached_point, max_part):
+def import_authors_from_temp_files(reached_point, max_part, request_info=None):
     """
     一時ファイルから著者データを読み込み、インポートする処理を行います。
     Args:
@@ -186,6 +187,7 @@ def import_authors_from_temp_files(reached_point, max_part):
                 part_numberが一時ファイルのpart数で、countが一時ファイルの再開位置
                 データ例:{"part_number": 101, "count": 3}
         max_part: インポートする最大のpart数
+        request_info: リクエスト情報
     """
 
     # 結果ファイルのDL用に一時ファイルを作成
@@ -225,7 +227,7 @@ def import_authors_from_temp_files(reached_point, max_part):
                         authors.append(item)
         # authorsが長さWEKO_AUTHORS_IMPORT_BATCH_SIZEを超えた時点でインポート
         if len(authors) >= current_app.config.get("WEKO_AUTHORS_IMPORT_BATCH_SIZE"):
-            import_authors_for_over_max(authors)
+            import_authors_for_over_max(authors, request_info=request_info)
             authors = []
 
         # 一時ファイルの削除
@@ -237,20 +239,24 @@ def import_authors_from_temp_files(reached_point, max_part):
             current_app.logger.error(f"Error deleting {check_file_part_path}: {e}")
     # authorsが残っている場合
     if authors:
-        import_authors_for_over_max(authors)
+        import_authors_for_over_max(authors, request_info=request_info)
         authors = []
         gc.collect()
 
-def import_authors_for_over_max(authors):
+def import_authors_for_over_max(authors, request_info=None):
     group_tasks = []
     tasks = []
     task_ids = []
     force_change_mode = current_cache.get(\
         current_app.config.get("WEKO_AUTHORS_IMPORT_CACHE_FORCE_CHANGE_MODE_KEY", False)
         )
-    request_info = UserActivityLogger.get_summary_from_request()
+    _request_info = request_info or UserActivityLogger.get_summary_from_request() 
+    if not UserActivityLogger.get_log_group_id(request_info):
+        UserActivityLogger.issue_log_group_id(None)
+    _request_info["log_group_id"] = UserActivityLogger.get_log_group_id(request_info)
+
     for author in authors:
-        group_tasks.append(import_author.s(author, force_change_mode, request_info))
+        group_tasks.append(import_author.s(author, force_change_mode, _request_info))
 
     # group_tasksを実行
     import_task = group(group_tasks).apply_async()
