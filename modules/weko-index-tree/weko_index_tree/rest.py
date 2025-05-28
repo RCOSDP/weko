@@ -931,13 +931,13 @@ class IndexManagementAPI(ContentNegotiatedMethodView):
 
     def get_v1(self, **kwargs):
         """Get index tree."""
-        
+
         def json_serialize(obj):
             """Serialize object to JSON.
-            
+
             Args:
                 obj: The object to serialize.
-            
+
             Returns:
                 str: The serialized JSON string.
             """
@@ -945,7 +945,7 @@ class IndexManagementAPI(ContentNegotiatedMethodView):
                 return obj.strftime("%Y%m%d")
             else:
                 return str(obj)
-        
+
         try:
             pid = kwargs.get('index_id')
 
@@ -1228,17 +1228,21 @@ class IndexManagementAPI(ContentNegotiatedMethodView):
                 }} if "contribute_group" in index_info else {})
             }
 
-            source_index = self.record_class.get_index(index_id)
-            parent = index_data.get("parent") \
-                if index_data.get("parent") is not None else source_index.parent
-            position = index_data.get("position") \
-                if index_data.get("position") is not None else source_index.position
+            index = self.record_class.get_index(index_id)
+            parent = (
+                index_data.get("parent")
+                if index_data.get("parent") is not None else index.parent
+            )
+            position = (
+                index_data.get("position")
+                if index_data.get("position") is not None else index.position
+            )
 
-            if parent != source_index.parent or position != source_index.position:
+            if parent != index.parent or position != index.position:
                 # Move index if parent or position changed
                 # Change int to string if parent is root node
                 arg_parent = parent if parent > 0 else "0"
-                arg_pre_parent = source_index.parent if source_index.parent > 0 else "0"
+                arg_pre_parent = index.parent if index.parent > 0 else "0"
                 moved = self.record_class.move(
                     index_id, pre_parent=arg_pre_parent,
                     parent=arg_parent, position=position
@@ -1308,7 +1312,11 @@ class IndexManagementAPI(ContentNegotiatedMethodView):
 
 
     def delete_v1(self, index_id, **kwargs):
-        """Delete an existing index tree node."""
+        """Delete an existing index tree node.
+
+        Args:
+            index_id (int): The ID of the index to be deleted.
+        """
         try:
             index_obj = self.record_class.get_index(index_id)
             if not index_obj:

@@ -2329,7 +2329,11 @@ def import_items_to_activity(item, request_info):
         request_info (dict): Information from request.
 
     Returns:
-        tuple: URL, recid, current action, error message.
+        tuple(str, str, str, str):
+            - str: URL for the activity.
+            - str: Record ID (recid).
+            - str: Current action in the activity.
+            - str: Error message, if any.
     """
     workflow_id = request_info.get("workflow_id")
     item_id = item.get("id")

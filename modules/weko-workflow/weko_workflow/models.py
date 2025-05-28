@@ -503,7 +503,7 @@ class FlowDefine(db.Model, TimestampMixin):
 
     is_deleted = db.Column(db.Boolean(name='is_deleted'), nullable=False, default=False)
     """flow define delete flag."""
-    
+
     repository_id = db.Column(db.String(100), nullable=False, default="Root Index")
     """the repository id of flow."""
 
@@ -664,9 +664,10 @@ class WorkFlow(db.Model, TimestampMixin):
     flow_define = db.relationship(
         FlowDefine,
         primaryjoin="WorkFlow.flow_id == FlowDefine.id",
-        foreign_keys="[WorkFlow.flow_id]",
+        foreign_keys=[flow_id],
         backref=db.backref('workflows', lazy='dynamic')
     )
+    """Flow define relationship for register flow."""
 
     delete_flow_id = db.Column(db.Integer(), db.ForeignKey(FlowDefine.id),
                         nullable=True, default=None, unique=False)
@@ -675,9 +676,10 @@ class WorkFlow(db.Model, TimestampMixin):
     delete_flow_define = db.relationship(
         FlowDefine,
         primaryjoin="WorkFlow.delete_flow_id == FlowDefine.id",
-        foreign_keys="[WorkFlow.delete_flow_id]",
+        foreign_keys=[delete_flow_id],
         backref=db.backref('delete_workflows', lazy='dynamic')
     )
+    """Flow define relationship for delete flow."""
 
     is_deleted = db.Column(db.Boolean(name='is_deleted'), nullable=False, default=False)
     """workflow delete flag."""
@@ -696,7 +698,7 @@ class WorkFlow(db.Model, TimestampMixin):
 
     is_gakuninrdm = db.Column(db.Boolean(name='is_gakuninrdm'), nullable=False, default=False)
     """GakuninRDM flag."""
-    
+
     repository_id = db.Column(db.String(100), nullable=False, default="Root Index")
     """the repository id of workflow."""
 
