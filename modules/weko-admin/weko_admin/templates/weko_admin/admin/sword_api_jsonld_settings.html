@@ -56,16 +56,16 @@
 {% block navlinks %}
 <ul class="nav nav-tabs">
   <li>
-      <a href="{{ return_url }}">{{ _gettext('List') }}</a>
+      <a href="{{ get_url('.index_view') }}">{{ _gettext('List') }}</a>
   </li>
   {%- if admin_view.can_create and current_page_type == "add" -%}
   <li class="active">
-      <a href="{{ get_url('.create_view', url=return_url) }}">{{ _gettext('Create') }}</a>
+      <a href="{{ get_url('.create_view') }}">{{ _gettext('Create') }}</a>
   </li>
   {%- endif -%}
   {%- if admin_view.can_create and current_page_type != "add" -%}
   <li>
-      <a href="{{ get_url('.create_view', url=return_url) }}">{{ _gettext('Create') }}</a>
+      <a href="{{ get_url('.create_view') }}">{{ _gettext('Create') }}</a>
   </li>
   {%- endif -%}
   {%- if current_page_type == "edit" -%}
@@ -73,7 +73,7 @@
       <a href="javascript:void(0)">{{ _gettext('Edit') }}</a>
   </li>
   <li>
-    <a href="/admin/swordapi/jsonld/details/?id={{id}}&url=%2Fadmin%2Fswordapi%2Fjsonld%2F">{{ _gettext('Details') }}</a>
+    <a href="{{ get_url('.details_view', id=id) }}">{{ _gettext('Details') }}</a>
   </li>
   {%- endif -%}
 </ul>

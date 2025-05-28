@@ -1751,7 +1751,6 @@ class SwordAPIJsonldSettingsView(ModelView):
                 deleted_workflow_name_dict=json.dumps(deleted_workflow_name_dict),
                 workflows=workflows,
                 jsonld_mappings=jsonld_mappings,
-                return_url = request.args.get("url"),
                 current_page_type="add",
                 current_client_name=None,
                 current_model_json=None,
@@ -1851,7 +1850,7 @@ class SwordAPIJsonldSettingsView(ModelView):
                 }
                 deleted_workflow_name_dict[deleted_workflow.id] = deleted_workflow_info
             # Process exclude workflows
-            current_app.logger.info(deleted_workflow_name_dict)
+
             from weko_workflow.utils import exclude_admin_workflow
             exclude_admin_workflow(workflows)
 
@@ -1889,7 +1888,6 @@ class SwordAPIJsonldSettingsView(ModelView):
                 deleted_workflow_name_dict=json.dumps(deleted_workflow_name_dict),
                 workflows=workflows,
                 jsonld_mappings=jsonld_mappings,
-                return_url = request.args.get("url"),
                 current_page_type="edit",
                 current_client_name=model.oauth_client.name,
                 current_model_json=current_model_json,
@@ -1954,13 +1952,13 @@ class SwordAPIJsonldSettingsView(ModelView):
 
 
     @expose("/validate/<string:id>/", methods=["GET"])
-    def valedate_mapping(self, id):
+    def validate_mapping(self, id):
         obj = JsonldMapping.get_mapping_by_id(id)
         itemtype_id = obj.item_type_id
         try:
             return jsonify(results=JsonLdMapper(itemtype_id, obj.mapping).is_valid), 200
         except Exception as ex:
-            msg = f"Failed to validate jsonld mapping."
+            msg = "Failed to validate jsonld mapping."
             current_app.logger.error(msg)
             traceback.print_exc()
             return jsonify({"error": msg}), 400
@@ -1976,7 +1974,6 @@ class SwordAPIJsonldSettingsView(ModelView):
             abort(404)
 
         name = model.oauth_client.name
-        return_url = get_redirect_target() or self.get_url(".index_view")
 
         if self._is_editable(model.workflow_id):
             try:
@@ -1999,6 +1996,7 @@ class SwordAPIJsonldSettingsView(ModelView):
             )
             flash(_("Unapproved Items Exit."), "error")
 
+        return_url = get_redirect_target() or self.get_url(".index_view")
         return redirect(return_url)
 
 
@@ -2100,7 +2098,6 @@ class JsonldMappingView(ModelView):
             return self.render(
                 self.create_template,
                 form=form,
-                return_url = request.args.get("url"),
                 current_page_type="new",
                 item_types=item_types,
                 current_name=None,
@@ -2174,7 +2171,6 @@ class JsonldMappingView(ModelView):
             return self.render(
                 self.edit_template,
                 form=form,
-                return_url = request.args.get("url"),
                 current_page_type="edit",
                 item_types=item_types,
                 current_name=model.name,
