@@ -76,7 +76,7 @@ def call_external_system(old_record=None,
         record = new_record if new_record else old_record
         action = get_action(old_record, new_record)
         data = {}
-        data["action"] = action.value
+        data["status_action"] = action.value
         data["item_info"] = {}
         data["item_info"]["pub_date"] = \
             record.get("pubdate",{}).get("attribute_value")
