@@ -1355,7 +1355,7 @@ class JsonLdMapper(JsonMapper):
         Returns:
             errors (list[str] | None): list of errors.
         """
-        from flask_babelex import lazy_gettext as _
+        from flask_babelex import gettext as _
         errors = []
         item_map = self._create_item_map(detail=True)
         required_map = self.required_properties()
@@ -1934,7 +1934,7 @@ class JsonLdMapper(JsonMapper):
 
             current_size = len(parent[key])
             for i in range(current_size, size):
-                at_id = gen_id(key)
+                at_id = gen_id(key.split(":")[-1])
                 append_entity(parent, key, at_id, at_type)
             return
 
@@ -2042,7 +2042,7 @@ class JsonLdMapper(JsonMapper):
                     add_entity(parent, prop, at_id, at_type)
                     return
                 if prop not in parent:
-                    at_id = gen_id(prop)
+                    at_id = gen_id(prop.split(":")[-1])
                     add_entity(
                         parent, prop, at_id, at_type
                     )

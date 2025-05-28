@@ -3976,10 +3976,10 @@ def check_duplicate(data, is_item=True, exclude_ids=[]):
         is_item (bool): True if checking an item, False if checking a record.
 
     Returns:
-        tuple:
-            - bool: True if duplicate exists, False otherwise.
-            - list: List of duplicate record IDs.
-            - list: List of duplicate record URLs.
+        tuple(bool, list, list):
+            - True if duplicate exists, False otherwise.
+            - List of duplicate record IDs.
+            - List of duplicate record URLs.
     """
     if isinstance(data, str):
         try:

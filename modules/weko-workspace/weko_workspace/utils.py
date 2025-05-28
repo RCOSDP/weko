@@ -57,7 +57,7 @@ def get_workspace_filterCon():
     Retrieves the default filtering conditions for the current user.
 
     Returns:
-        tuple:
+        tuple(dict, bool):
             - default_con (dict): The user's default filtering conditions.
                 If the query fails or returns None, `DEFAULT_FILTERS` is returned.
             - isnotNone (bool): Indicates whether a non-null value was successfully retrieved from the database.
@@ -154,7 +154,7 @@ def get_es_itemlist():
             page = search.execute().to_dict()
             current_app.logger.debug(f"[workspace] search result: {page}")
         return records
-    
+
     except TransportError as e:
         traceback.print_exc()
         current_app.logger.error(f"Failed to get workflow item list from ES: {e} / {search.to_dict()}")

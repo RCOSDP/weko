@@ -366,7 +366,10 @@ def post_service_document():
             request_info (dict): Information about the request.
 
         Returns:
-            tuple: A tuple containing the response and the record ID.
+            tuple(str, str, str):
+                - str: Activity ID if applicable, otherwise None.
+                - str: Record ID if applicable, otherwise None.
+                - str: Error message if any, otherwise None.
         """
         activity_id, recid, error = None, None, None
         if register_type == "Direct":
