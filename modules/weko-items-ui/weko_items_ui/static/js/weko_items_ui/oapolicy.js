@@ -12,8 +12,8 @@ $(document).ready(function () {
    * エラーメッセージを表示
    * @param {string} errorKey - エラーコードに対応する
    */
-  function showError(errorKey) {
-      let message = $("#" + errorKey).val() || "不明なエラーが発生しました";
+  function showError(msgText="") {
+      let message = msgText || $("#error_api_generic").val();
       $("#oaPolicyError").text(message).css({
           "display": "inline-block",
           "color": "red",
@@ -38,7 +38,6 @@ $(document).ready(function () {
    * OAポリシー取得ボタンのクリックイベント
    */
   $(document).on("click", "#oapolicyurl", function () {
-      console.log("[OA Policy] ボタンがクリックされました");
       resetPolicyInfo();
 
       // メタデータ入力ISSN, eISSN, 雑誌名を取得
@@ -51,35 +50,32 @@ $(document).ready(function () {
 
       // 入力チェック
       if (!issn && !eissn && !title) {
-          showError("error_missing_input");
+          showError($("#error_missing_input").val());
           return;
       }
 
-      console.log(`[API] リクエスト送信: issn=${issn}, eissn=${eissn}, title=${title}`);
-
       // バックエンドへリクエストを送信
       $.ajax({
-          url: "/items/api/oa_policies",
-          type: "GET",
-          data: { issn: issn, eissn: eissn, title: title },
-          dataType: "json"
+        url: "/items/api/oa_policies",
+        type: "GET",
+        data: { issn: issn, eissn: eissn, title: title },
+        dataType: "json"
       }).done(function (data) {
           if (data.policy_url) {
               showResult(data.policy_url);
           } else {
-              showError("error_no_policy_found");
+              showError($("#error_no_policy_found").val());
           }
       }).fail(function (xhr) {
-          console.error("[API] リクエストエラー:", xhr);
-
-          const errorMap = {
-            400: "error_api_400",
-            401: "error_api_401",
-            404: "error_api_404",
-            429: "error_api_429",
-            500: "error_api_500"
-        };
-        showError(errorMap[xhr.status] || "error_api_generic");
+        let errMsg = "";
+        try {
+            const res = JSON.parse(xhr.responseText);
+            errMsg = res.error || $("#error_api_generic").val();
+        } catch (e) {
+            // parse error, fallback to generic message
+            errMsg = $("#error_api_generic").val();
+        }
+        showError(errMsg);
       });
   });
 });
