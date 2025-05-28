@@ -57,7 +57,7 @@ from weko_items_ui.utils import (
     check_item_is_deleted,
     check_item_type_name,
     export_items,
-    export_rocrate,
+    # export_rocrate,
     find_hidden_items,
     get_permission_record,
     get_current_user,
@@ -133,7 +133,6 @@ from weko_items_ui.utils import (
     write_files,
     get_file_download_data,
     get_weko_link,
-    get_access_token,
     check_duplicate,
     create_item_deleted_data,
     create_direct_registered_data,
@@ -10838,59 +10837,6 @@ def test_get_weko_link(app, client, users, db_records, mocker):
     res = get_weko_link({"metainfo": {"field1": [{"field2": {}}]}})
     assert res == {}
 
-# .tox/c1/bin/pytest --cov=weko_items_ui tests/test_utils.py::test_get_access_token -vv -s --cov-branch --cov-report=xml --cov-report=html --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
-def test_get_access_token(app, mock_certificate):
-    """get_access_tokenの全シナリオ（正常系と異常系）をテスト"""
-    with app.test_request_context():
-
-        # 1. api_codeが空の場合 (400)
-        result, status = get_access_token(None)
-        assert status == 400, "api_codeが空の場合、400が返るべき"
-        assert result == {"error": "invalid_request", "message": "Required API Code"}
-
-        # 2. 無効なapi_codeの場合 (401)
-        with patch.object(ApiCertificate, "select_by_api_code", return_value=None):
-            result, status = get_access_token("invalid_code")
-            assert status == 401, "無効なapi_codeの場合、401が返るべき"
-            assert result == {"error": "invalid_client"}
-
-        # 3. 有効な既存トークンが存在する場合 (200相当)
-        with patch.object(ApiCertificate, "select_by_api_code", return_value=mock_certificate):
-            result = get_access_token("valid_code")
-            assert "access_token" in result, "有効なトークンが返るべき"
-            assert result["access_token"] == "valid_token"
-            assert result["token_type"] == "Bearer"
-            assert isinstance(result["expires_in"], int)
-            assert result["expires_in"] > 0
-
-        # 4. 期限切れのトークンの場合 (新しいトークン発行)
-        expired_certificate = {
-            "cert_data": {
-                "token": "expired_token",
-                "expires_at": (datetime.now() - timedelta(seconds=3600)).strftime("%Y-%m-%dT%H:%M:%S")
-            }
-        }
-        with patch.object(ApiCertificate, "select_by_api_code", return_value=expired_certificate):
-            result = get_access_token("expired_code")
-            assert "access_token" in result, "新しいトークンが発行されるべき"
-            assert result["access_token"] != "expired_token"
-            assert result["token_type"] == "Bearer"
-            assert result["expires_in"] == 3600
-
-        # 5. 証明書にトークンがない場合 (新しいトークン発行)
-        no_token_certificate = {"cert_data": {}}
-        with patch.object(ApiCertificate, "select_by_api_code", return_value=no_token_certificate):
-            result = get_access_token("no_token_code")
-            assert "access_token" in result, "トークンがない場合、新しいトークンが発行されるべき"
-            assert len(result["access_token"]) == 54  # secrets.token_urlsafe(40)の長さ
-            assert result["token_type"] == "Bearer"
-            assert result["expires_in"] == 3600
-
-        # 6. 例外が発生した場合 (500)
-        with patch.object(ApiCertificate, "select_by_api_code", side_effect=Exception("テストエラー")):
-            result, status = get_access_token("error_code")
-            assert status == 500, "例外が発生した場合、500が返るべき"
-            assert result == {"error": "Internal server error"}
 # def check_duplicate(data, is_item=True):
 # .tox/c1/bin/pytest --cov=weko_items_ui tests/test_utils.py::test_check_duplicate -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
 def test_check_duplicate(app, users,db_records3):

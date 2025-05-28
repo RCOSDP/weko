@@ -271,12 +271,13 @@ webencodings==0.5.1
 -e ../weko-redis
 -e ../weko-schema-ui
 -e ../weko-search-ui
+-e ../weko-signposting
 -e ../weko-sitemap
 -e ../weko-swordserver
 -e ../weko-theme
 -e ../weko-user-profiles
 -e ../weko-workflow
--e ../weko-notifications
+-e ../weko-workspace
 Werkzeug==0.15.2
 whichcraft==0.4.1
 WTForms==2.1
