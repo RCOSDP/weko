@@ -14,6 +14,7 @@ import json
 import itertools
 import xmltodict
 from datetime import date
+from difflib import SequenceMatcher as SeqMatcher
 from functools import partial, reduce
 from rocrate.rocrate import ROCrate
 from rocrate.model.contextentity import ContextEntity
@@ -1361,9 +1362,28 @@ class JsonLdMapper(JsonMapper):
             if k not in self.json_mapping
         ]
 
+        string_list = item_map.keys()
+        def find_similar_key(target_key, threshold=0.5):
+            best_match_tuple = max(
+                (
+                    (s, ratio)
+                    for s in string_list
+                    for ratio in [SeqMatcher(None, target_key, s).quick_ratio()]
+                    if ratio >= threshold
+                ),
+                key=lambda t: t[1],
+                default=None
+            )
+
+            return best_match_tuple[0] if best_match_tuple else None
+
         errors += [
             _('"{key}" is not in itemtype.').format(key=k)
+            if similar_key is None
+            else _('"{key}" is not in itemtype, did you mean "{similar_key}"?')
+                .format(key=k, similar_key=similar_key)
             for k in self.json_mapping.keys()
+            for similar_key in [find_similar_key(k)]
             if k not in item_map
         ]
 
