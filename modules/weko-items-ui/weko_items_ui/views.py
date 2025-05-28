@@ -130,7 +130,7 @@ def get_oa_policy():
     # get oa token
     token = get_oa_token()
     if not token:
-        return jsonify({"error": "Authentication error occurred"}), 401
+        return jsonify({"error": _("Authentication error occurred")}), 401
 
     headers = {"Authorization": f"Bearer {token}"}
     params = {"issn": issn, "eissn": eissn, "title": title}
@@ -153,28 +153,27 @@ def get_oa_policy():
                 if response.status_code == 200:
                     data = response.json()
                     return jsonify({
-                        "policy_url": data.get(
-                            "url", "No Policy Information found"
-                        )
+                        "policy_url": data.get("url")
                     })
                 elif response.status_code == 404:
-                    return jsonify({"error": "No matching policy"}), 404
+                    return jsonify({"error": _("No matching policy")}), 404
                 elif response.status_code == 429:
-                    return jsonify({"error": "Request limit exceeded"}), 429
+                    return jsonify({"error": _("Request limit exceeded")}), 429
                 elif response.status_code == 500:
-                    return jsonify({"error": "Internal server error"}), 500
+                    return jsonify({"error": _("Internal server error")}), 500
                 else:
-                    return jsonify({"error": "An unknown error occurred"}), 500
+                    return jsonify({"error": _("An unknown error occurred")}), 500
 
         except requests.exceptions.RequestException as req_err:
             current_app.logger.error(req_err)
             current_app.logger.error(traceback.format_exc())
-            return jsonify({"error": "API Request Failed"}), 500
+            return jsonify({"error": _("API Request Failed")}), 500
         except Exception as e:
-            current_app.logger.error(req_err)
+            current_app.logger.error(e)
             current_app.logger.error(traceback.format_exc())
-            return jsonify({"error": f"An unknown error occurred: {str(e)}"}), 500
+            return jsonify({"error": _("An unknown error occurred")}), 500
     else:
+        current_app.logger.error("WEKO_RECORDS_UI_OA_GET_OA_POLICIES_URL is not set or invalid")
         return jsonify({"error": "Invalid API URL"}), 400
 
 

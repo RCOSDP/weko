@@ -256,7 +256,6 @@
                     
                   </div>
 
-                  <!-- OA Policy リンク取得 -->
                   <div class="panel panel-default" class="col-sm-12">
                     <div class="panel-heading" style="background-color: #dff0d8;">
                       <h3 class="panel-title" style="color: #000000; font-weight: bold;">{{ _('oa_policy_label') }}</h3>
@@ -266,17 +265,16 @@
                         <div class="row content-font">
                             <div class="panel panel-default" style="margin-right: 10px;">
                               <div class="panel-body panel-body">
-                                  <!-- Policy 取得ボタン -->
                                   <button type="button" class="btn btn-primary" id="oapolicyurl">
                                     {{ _('oa_policy_export') }}
                                   </button>
-                                  <!-- URL 表示 -->
                                   <a id="oaPolicyUrl" href="#" target="_blank" class="ml-2 d-none">
                                     <span id="oaPolicyText"></span>
                                   </a>
-          
-                                  <!-- エラーメッセージ -->
                                   <span id="oaPolicyError" class="text-danger ml-2" aria-live="polite"></span>
+                                  <input type="hidden" id="error_missing_input" value="{{ _('Please enter ISSN, eISSN, or journal title') }}">
+                                  <input type="hidden" id="error_no_policy_found" value="{{ _('No Policy Information found') }}">
+                                  <input type="hidden" id="error_api_generic" value="{{ _('An unknown error occurred') }}">
                               </div>
                             </div>
                         </div>

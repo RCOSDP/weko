@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: weko-workspace 0.1.0.dev20250201\n"
 "Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
-"POT-Creation-Date: 2025-05-27 14:27+0900\n"
+"POT-Creation-Date: 2025-05-28 19:09+0900\n"
 "PO-Revision-Date: 2018-08-06 13:44+0900\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ja\n"
@@ -139,7 +139,7 @@ msgstr ""
 #: weko_workspace/views.py:112
 #, python-format
 msgid "%(icon)s Workspace"
-msgstr ""
+msgstr "%(icon)s ワークスペース"
 
 #: weko_workspace/views.py:658
 msgid "The item type or workflow used for item registration has not been set."
@@ -168,7 +168,7 @@ msgstr "DOIを入力してください。"
 
 #: weko_workspace/templates/weko_workspace/item_register.html:136
 msgid "Get"
-msgstr ""
+msgstr "取得"
 
 #: weko_workspace/templates/weko_workspace/item_register.html:207
 #: weko_workspace/templates/weko_workspace/item_register.html:227
@@ -180,50 +180,62 @@ msgstr "ファイル"
 msgid "Metadata"
 msgstr "メタデータ"
 
-#: weko_workspace/templates/weko_workspace/item_register.html:262
+#: weko_workspace/templates/weko_workspace/item_register.html:261
 msgid "oa_policy_label"
-msgstr ""
+msgstr "OA ポリシー情報"
 
-#: weko_workspace/templates/weko_workspace/item_register.html:271
+#: weko_workspace/templates/weko_workspace/item_register.html:269
 msgid "oa_policy_export"
-msgstr ""
+msgstr "OA ポリシー取得"
 
-#: weko_workspace/templates/weko_workspace/item_register.html:291
+#: weko_workspace/templates/weko_workspace/item_register.html:275
+msgid "Please enter ISSN, eISSN, or journal title"
+msgstr "ISSN、eISSN、または雑誌名を入力してください。"
+
+#: weko_workspace/templates/weko_workspace/item_register.html:276
+msgid "No Policy Information found"
+msgstr "一致するポリシー情報が見つかりませんでした。"
+
+#: weko_workspace/templates/weko_workspace/item_register.html:277
+msgid "An unknown error occurred"
+msgstr "不明なエラーが発生しました"
+
+#: weko_workspace/templates/weko_workspace/item_register.html:289
 msgid "Index Tree"
-msgstr ""
+msgstr "インデックスツリー"
 
-#: weko_workspace/templates/weko_workspace/item_register.html:313
+#: weko_workspace/templates/weko_workspace/item_register.html:311
 msgid "Regist"
 msgstr "登録"
 
-#: weko_workspace/templates/weko_workspace/item_register.html:331
-#: weko_workspace/templates/weko_workspace/item_register.html:360
-#: weko_workspace/templates/weko_workspace/item_register.html:399
-#: weko_workspace/templates/weko_workspace/item_register.html:425
+#: weko_workspace/templates/weko_workspace/item_register.html:329
+#: weko_workspace/templates/weko_workspace/item_register.html:358
+#: weko_workspace/templates/weko_workspace/item_register.html:397
+#: weko_workspace/templates/weko_workspace/item_register.html:423
 msgid "WEKO"
 msgstr ""
 
-#: weko_workspace/templates/weko_workspace/item_register.html:337
-#: weko_workspace/templates/weko_workspace/item_register.html:431
+#: weko_workspace/templates/weko_workspace/item_register.html:335
+#: weko_workspace/templates/weko_workspace/item_register.html:429
 msgid "At least one index should be selected."
 msgstr "インデックスを指定してください。"
 
-#: weko_workspace/templates/weko_workspace/item_register.html:345
-#: weko_workspace/templates/weko_workspace/item_register.html:374
+#: weko_workspace/templates/weko_workspace/item_register.html:343
+#: weko_workspace/templates/weko_workspace/item_register.html:372
 #: weko_workspace/templates/weko_workspace/workspace_body_contents.html:30
 msgid "Cancel"
 msgstr "キャンセル"
 
-#: weko_workspace/templates/weko_workspace/item_register.html:366
-#: weko_workspace/templates/weko_workspace/item_register.html:390
+#: weko_workspace/templates/weko_workspace/item_register.html:364
+#: weko_workspace/templates/weko_workspace/item_register.html:388
 msgid "The Required items is required. Please recheck and input."
 msgstr "必須項目をご確認の上、再度入力してください。"
 
-#: weko_workspace/templates/weko_workspace/item_register.html:392
+#: weko_workspace/templates/weko_workspace/item_register.html:390
 msgid "The same file name cannot be registered."
 msgstr "同一のファイル名は登録できません。"
 
-#: weko_workspace/templates/weko_workspace/item_register.html:405
+#: weko_workspace/templates/weko_workspace/item_register.html:403
 msgid "The item is successfully registered."
 msgstr "アイテムが正常に登録されました。"
 
