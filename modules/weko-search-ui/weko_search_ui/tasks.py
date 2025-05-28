@@ -137,13 +137,11 @@ def check_rocrate_import_items_task(file_path, is_change_identifier: bool,
 
 
 @shared_task(ignore_results=False)
-def import_item(item, request_info, parent_id=None):
+def import_item(item, request_info):
     """Import Item."""
     try:
         start_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        result = import_items_to_system(
-            item, request_info, parent_id=parent_id
-        ) or dict()
+        result = import_items_to_system(item, request_info) or dict()
         result["start_date"] = start_date
         return result
     except Exception as ex:

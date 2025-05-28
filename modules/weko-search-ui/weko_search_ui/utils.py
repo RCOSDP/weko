@@ -2080,7 +2080,7 @@ def send_item_created_event_to_es(item, request_info):
 
 
 def import_items_to_system(
-    item: dict, request_info=None, is_gakuninrdm=False, parent_id=None,
+    item: dict, request_info=None, is_gakuninrdm=False,
     file_replace_owner=None
 ):
     """Validation importing zip file.
@@ -2089,7 +2089,6 @@ def import_items_to_system(
         item (dict): Import item with metadata.
         request_info (dict): Information from request. Default is None.
         is_gakuninrdm (bool): Is call by gakuninrdm api. Default is False.
-        parent_id (str): Parent ID for the audit log entry. Default is None.
         file_replace_owner (int): Owner user id for the file replace method. Default is None.
 
     Returns:
@@ -2141,7 +2140,7 @@ def import_items_to_system(
             old_link_list = ItemReference.get_src_references(
                 record_pid.pid_value).all()
 
-            register_item_metadata(item, root_path, owner, is_gakuninrdm, request_info)
+            register_item_metadata(item, root_path, owner, is_gakuninrdm, request_info=request_info)
 
 
             if not is_gakuninrdm:
@@ -2163,13 +2162,13 @@ def import_items_to_system(
             call_external_system(old_record=old_record,
                                  new_record=new_record,
                                  old_item_reference_list=old_link_list,
-                                 new_item_reference_list=new_link_list
+                                 new_item_reference_list=new_link_list,
+                                 request_info=request_info
                                  )
 
             opration = "ITEM_CREATE" if item.get("status") == "new" else "ITEM_UPDATE"
             UserActivityLogger.info(
                 operation=opration,
-                parent_id=parent_id,
                 target_key=item["id"],
                 request_info=request_info,
             )
@@ -2207,7 +2206,6 @@ def import_items_to_system(
             UserActivityLogger.error(
                 operation=opration,
                 target_key=item.get("id"),
-                parent_id=parent_id,
                 remarks=tb_info[0],
                 request_info=request_info,
             )

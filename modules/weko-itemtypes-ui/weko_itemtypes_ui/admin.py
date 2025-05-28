@@ -280,7 +280,6 @@ class ItemTypeMetaDataView(BaseView):
             )
 
             db.session.commit()
-            next_id = UserActivityLogger.get_next_parent_id(db.session)
             if item_type_id == 0:
                 UserActivityLogger.info(
                     operation="ITEM_TYPE_CREATE",
@@ -295,20 +294,17 @@ class ItemTypeMetaDataView(BaseView):
             if not upgrade_version or item_type_id != record.model.id:
                 UserActivityLogger.info(
                     operation="ITEM_TYPE_MAPING_CREATE",
-                    parent_id=next_id,
                     target_key=record.model.id
                 )
             else:
                 UserActivityLogger.info(
                     operation="ITEM_TYPE_MAPING_UPDATE",
-                    parent_id=next_id,
                     target_key=item_type_id
                 )
                 workflow_list = WorkFlow().get_workflow_by_itemtype_id(item_type_id)
                 for wf in workflow_list:
                     UserActivityLogger.info(
                         operation="WORKFLOW_UPDATE",
-                        parent_id=next_id,
                         target_key=wf.id
                     )
         except Exception as ex:
@@ -482,6 +478,11 @@ class ItemTypeMetaDataView(BaseView):
             current_app.logger.debug(input_file.mimetype)
             return jsonify(msg=_('Illegal mimetype Error'))
 
+        # Issue log group ID
+        if not UserActivityLogger.issue_log_group_id(db.session):
+            current_app.logger.error('Failed to issue log group ID.')
+            return jsonify(msg=_('Failed to issue log group ID.'))
+
         try:
             readable_files = ["ItemType.json", "ItemTypeName.json", "ItemTypeMapping.json", "ItemTypeProperty.json"]
             import_data = {
@@ -545,7 +546,6 @@ class ItemTypeMetaDataView(BaseView):
             )
 
             db.session.commit()
-            next_id = UserActivityLogger.get_next_parent_id(db.session)
             UserActivityLogger.info(
                 operation="ITEM_TYPE_CREATE",
                 target_key=item_type_id
@@ -553,7 +553,6 @@ class ItemTypeMetaDataView(BaseView):
             # log item type mapping and workflow
             UserActivityLogger.info(
                 operation="ITEM_TYPE_MAPING_CREATE",
-                parent_id=next_id,
                 target_key=item_type_id
             )
         except Exception as ex:
