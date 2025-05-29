@@ -24,7 +24,7 @@ def test_package_export_log(db, users, redis_connect, location):
         date=mock_date,
         user_id=users[0]["id"],
         community_id=None,
-        parent_id=None,
+        log_group_id=1,
         log={},
         remarks="test_remarks1"
     )
@@ -32,7 +32,7 @@ def test_package_export_log(db, users, redis_connect, location):
         date=mock_date,
         user_id=users[1]["id"],
         community_id=None,
-        parent_id=1,
+        log_group_id=2,
         log={},
         remarks="test_remarks2"
     )
@@ -335,7 +335,7 @@ def test_write_log_to_tsv(users):
             "date": mock_date,
             "user_id": users[0]["id"],
             "community_id": "test_community1",
-            "parent_id": 1,
+            "log_group_id": 1,
             "log": {},
             "remarks": "test_remarks1"
         },
@@ -344,13 +344,13 @@ def test_write_log_to_tsv(users):
             "date": mock_date,
             "user_id": users[1]["id"],
             "community_id": "test_community2",
-            "parent_id": 2,
+            "log_group_id": 2,
             "log": {},
             "remarks": "test_remarks2"
         }
     ]
     actual = UserActivityLogUtils._write_log_to_tsv(log_data)
-    expected_format = "id\tdate\tuser_id\tcommunity_id\tparent_id\tlog\tremarks\r\n" \
+    expected_format = "id\tdate\tuser_id\tcommunity_id\tlog_group_id\tlog\tremarks\r\n" \
                         "test_id1\t{}\t{}\ttest_community1\t1\t{}\ttest_remarks1\r\n" \
                         "test_id2\t{}\t{}\ttest_community2\t2\t{}\ttest_remarks2\r\n"
     assert actual == expected_format.format(

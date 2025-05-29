@@ -32,7 +32,7 @@ class UserActivityLog(db.Model):
     date = db.Column(
         db.DateTime().with_variant(mysql.DATETIME(fsp=6), 'mysql'),
         nullable=False,
-        default=datetime.now(timezone.utc)
+        default=lambda: datetime.now(timezone.utc),
     )
     """Date and time of the log entry."""
 

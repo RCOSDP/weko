@@ -206,7 +206,7 @@ def saving_doi_pidstore(item_id,
                 reg = identifier.register_pidstore('doi', identifier_val)
                 UserActivityLogger.info(
                     operation="ITEM_ASSIGN_DOI",
-                    target_key=item_id,
+                    target_key=str(item_id),
                 )
                 identifier.update_idt_registration_metadata(
                     doi_register_val,
@@ -225,7 +225,7 @@ def saving_doi_pidstore(item_id,
             tb_info = traceback.format_tb(exec_info[2])
             UserActivityLogger.error(
                 operation="ITEM_ASSIGN_DOI",
-                target_key=item_id,
+                target_key=str(item_id),
                 remarks=tb_info[0]
             )
         return False
