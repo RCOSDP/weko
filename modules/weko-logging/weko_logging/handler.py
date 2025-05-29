@@ -96,6 +96,8 @@ class UserActivityLogHandler(logging.Handler):
 
         # get other values from record
         target_key = record.target_key if hasattr(record, "target_key") else None
+        if target_key is not None:
+            target_key = str(target_key)
 
         if not target and target_key:
             current_app.logger.error("target and target_key must be set together")
