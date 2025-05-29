@@ -105,6 +105,7 @@ from weko_admin.models import SiteInfo
 from weko_admin import WekoAdmin
 from weko_deposit import WekoDeposit
 from weko_admin.models import AdminSettings
+from weko_notifications.models import NotificationsUserSettings
 
 sys.path.append(os.path.dirname(__file__))
 # @event.listens_for(Engine, "connect")
@@ -2924,3 +2925,26 @@ def db_guestactivity(app, db, db_register):
     db.session.commit()
 
     return [token1, token2]
+
+@pytest.fixture()
+def db_user_profile(app, db, users):
+    user_profile = UserProfile(
+        user_id=users[2]["id"],
+        _username="sysadmin",
+        _displayname="sysadmin user",
+        fullname="test taro",
+    )
+    db.session.add(user_profile)
+    db.session.commit()
+    return user_profile
+
+
+@pytest.fixture()
+def db_notification_user_settings(app, db, users):
+    notification_settings = NotificationsUserSettings(
+        user_id=users[2]["id"],
+        subscribe_email=True,
+    )
+    db.session.add(notification_settings)
+    db.session.commit()
+    return notification_settings

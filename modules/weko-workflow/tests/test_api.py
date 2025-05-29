@@ -410,284 +410,410 @@ def test_workactivity_notify_about_activity(app, db, db_register, mocker):
 
 
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_api.py::test_workactivity_send_mail_item_registered -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
-def test_workactivity_send_mail_item_registered(app, users, mocker):
-    mock_activity1 = MagicMock(
-        activity_login_user=users[0]["id"],
-        shared_user_id=users[1]["id"],
-        item_id=123,
-        activity_id=456,
-        title="Test Item",
-        updated=datetime.strptime('2025/03/28 12:00:00','%Y/%m/%d %H:%M:%S'),
-        flow_define=MagicMock(flow_id=789),
-        activity_community_id=None
+def test_workactivity_send_mail_item_registered(app, mocker):
+    set_target_id = set()
+    recid = MagicMock()
+    actor_id = 0
+    actor_name = "actor_name"
+    targets = list()
+    settings = dict()
+    profiles = dict()
+    actor = MagicMock()
+    send_count = 2
+    template_file = 'email_notification_item_registered_{language}.tpl'
+
+    # Mock dependent methods
+    mock_get_params = mocker.patch.object(
+        WorkActivity, '_get_params_for_registrant',
+        return_value=(set_target_id, recid, actor_id, actor_name)
     )
-    mock_activity2 = MagicMock(
-        activity_login_user=users[0]["id"],
-        shared_user_id=-1,
-        item_id=123,
-        activity_id=456,
-        title="Test Item",
-        updated=datetime.strptime('2025/03/28 12:00:00','%Y/%m/%d %H:%M:%S'),
-        flow_define=MagicMock(flow_id=789),
-        activity_community_id=None
+    mock_get_settings = mocker.patch.object(
+        WorkActivity, '_get_settings_for_targets',
+        return_value=(targets, settings, profiles, actor)
     )
-    mocker.patch("weko_workflow.api.PersistentIdentifier.get_by_object", return_value=MagicMock(pid_value="123.456"))
-    mocker.patch("weko_workflow.api.UserProfile.get_by_userid", return_value=MagicMock(username="test_user"))
-    mocker.patch("weko_workflow.api.NotificationsUserSettings.query.filter", return_value=MagicMock(all=lambda: []))
-    mocker.patch("weko_workflow.api.UserProfile.query.filter", return_value=MagicMock(all=lambda: []))
-    mock_send_notification_email = mocker.patch("weko_workflow.api.WorkActivity.send_notification_email")
+    mock_send_email = mocker.patch.object(
+        WorkActivity, 'send_notification_email',
+        return_value=send_count
+    )
+    mock_create_context = mocker.patch.object(
+        WorkActivity, '_create_notification_context',
+        return_value=MagicMock()
+    )
 
-    activity = WorkActivity()
-    activity.send_mail_item_registered(mock_activity1)
-    args, kwargs = mock_send_notification_email.call_args
-    assert args[0] == mock_activity1  # activity
-    assert args[1] == [users[0]["obj"], users[1]["obj"]]  # targets
-    assert args[2] == {}  # settings_dict
-    assert args[3] == {}  # profiles_dict
-    assert args[4] == 'email_nortification_item_registered_{language}.tpl'  # template_file
-    assert callable(args[5])  # data_callback
+    activity_obj = WorkActivity()
+    activity = MagicMock(activity_id=123)
+    activity_obj.send_mail_item_registered(activity)
 
-    mock_target = MagicMock(email="test@example.com")
-    mock_profile = MagicMock(username="test_user", timezone="Asia/Tokyo")
-    result = args[5](mock_activity1, mock_target, mock_profile)
-    assert result["item_title"] == "Test Item"
-    assert result["submitter_name"] == "test_user"
-    assert "record_url" in result
+    mock_get_params.assert_called_once_with(activity)
+    mock_get_settings.assert_called_once_with(set_target_id)
+    mock_send_email.assert_called_once()
+    args, kwargs = mock_send_email.call_args
+    assert args == (activity, targets, settings, profiles, template_file)
+    data_callback = kwargs.get('data_callback')
+    target = MagicMock()
+    profile = MagicMock()
+    data_callback(activity, target, profile)
+    mock_create_context.assert_called_once_with(activity, target, profile, actor_name, recid)
 
-    activity.send_mail_item_registered(mock_activity2)
-    args, kwargs = mock_send_notification_email.call_args
-    assert args[1] == []
-
-    mocker.patch("weko_workflow.api.PersistentIdentifier.get_by_object", side_effect=SQLAlchemyError)
-    res = activity.send_mail_item_registered(mock_activity2)
+    mock_get_params.side_effect = SQLAlchemyError
+    res = activity_obj.send_mail_item_registered(activity)
     assert res is None
+
 
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_api.py::test_workactivity_send_mail_request_approval -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_workactivity_send_mail_request_approval(app, users, db, db_register, mocker):
-    from invenio_communities.models import Community
-    from weko_index_tree.models import Index
-    with app.test_request_context():
-        index = Index(position=1, id=111)
-        db.session.add(index)
-        db.session.commit()
-        comm = Community(id="test_com11", id_role=users[3]["id"],
-                            id_user=users[3]["id"], title="test community",
-                            description="this is test community",
-                            root_node_id=index.id)
-        db.session.add(comm)
-        db.session.commit()
-        flow_define = db_register["flow_define"]
+    set_target_id = set()
+    recid = MagicMock()
+    actor_id = 0
+    actor_name = "actor_name"
+    targets = list()
+    settings = dict()
+    profiles = dict()
+    actor = MagicMock()
+    send_count = 2
+    template_file = 'email_notification_request_approval_{language}.tpl'
 
-        mock_activity1 = MagicMock(
-            activity_login_user=users[0]["id"],
-            shared_user_id=users[1]["id"],
-            item_id=123,
-            activity_id=456,
-            title="Test Item",
-            updated=datetime.strptime('2025/03/28 12:00:00','%Y/%m/%d %H:%M:%S'),
-            flow_define=flow_define,
-            activity_community_id=None
-        )
-        mock_activity2 = MagicMock(
-            activity_login_user=users[0]["id"],
-            shared_user_id=-1,
-            item_id=123,
-            activity_id=456,
-            title="Test Item",
-            updated=datetime.strptime('2025/03/28 12:00:00','%Y/%m/%d %H:%M:%S'),
-            flow_define=flow_define,
-            activity_community_id=None
-        )
-        mock_activity3 = MagicMock(
-            activity_login_user=users[0]["id"],
-            shared_user_id=-1,
-            item_id=123,
-            activity_id=456,
-            title="Test Item",
-            updated=datetime.strptime('2025/03/28 12:00:00','%Y/%m/%d %H:%M:%S'),
-            flow_define=flow_define,
-            activity_community_id="test_com11"
-        )
-        mocker.patch("weko_workflow.api.PersistentIdentifier.get_by_object", return_value=MagicMock(pid_value="123.456"))
-        mock_send_notification_email = mocker.patch("weko_workflow.api.WorkActivity.send_notification_email")
-        activity = WorkActivity()
-        activity.send_mail_request_approval(mock_activity1)
-        mock_send_notification_email.assert_called_once()
-        args, kwargs = mock_send_notification_email.call_args
-        assert callable(args[5])  # data_callback
+    # Mock dependent methods
+    mock_get_params = mocker.patch.object(
+        WorkActivity, '_get_params_for_approver',
+        return_value=(set_target_id, recid, actor_id, actor_name)
+    )
+    mock_get_settings = mocker.patch.object(
+        WorkActivity, '_get_settings_for_targets',
+        return_value=(targets, settings, profiles, actor)
+    )
+    mock_send_email = mocker.patch.object(
+        WorkActivity, 'send_notification_email',
+        return_value=send_count
+    )
+    mock_create_context = mocker.patch.object(
+        WorkActivity, '_create_notification_context',
+        return_value=MagicMock()
+    )
 
-        mock_target = MagicMock(email="test@example.com")
-        mock_profile = MagicMock(username="test_user", timezone="Asia/Tokyo")
-        result = args[5](mock_activity1, mock_target, mock_profile)
-        assert result["item_title"] == "Test Item"
-        assert result["approver_name"] == "test_user"
-        assert "approval_url" in result
+    activity_obj = WorkActivity()
+    activity = MagicMock(activity_id=123)
+    activity_obj.send_mail_request_approval(activity)
 
-        # self request
-        activity.send_mail_request_approval(mock_activity2)
-        args, kwargs = mock_send_notification_email.call_args
-        assert users[0]["obj"] not in args[1]
+    mock_get_params.assert_called_once_with(activity)
+    mock_get_settings.assert_called_once_with(set_target_id)
+    mock_send_email.assert_called_once()
+    args, kwargs = mock_send_email.call_args
+    assert args == (activity, targets, settings, profiles, template_file)
+    data_callback = kwargs.get('data_callback')
+    target = MagicMock()
+    profile = MagicMock()
+    data_callback(activity, target, profile)
+    mock_create_context.assert_called_once_with(activity, target, profile, actor_name)
 
-        # with community admin
-        with patch("weko_workflow.api.GetCommunity.get_community_by_id", return_value=MagicMock(id_role=4)):
-            activity.send_mail_request_approval(mock_activity3)
-            args, kwargs = mock_send_notification_email.call_args
-            assert users[3]["obj"] in args[1]
+    mock_get_params.side_effect = SQLAlchemyError
+    res = activity_obj.send_mail_request_approval(activity)
+    assert res is None
 
-        # with action_user
-        flow_action = FlowAction(status='N',
-                     flow_id=flow_define.flow_id,
-                     action_id=4,
-                     action_version='1.0.0',
-                     action_order=4,
-                     action_condition='',
-                     action_status='A',
-                     action_date=datetime.strptime('2018/07/28 0:00:00','%Y/%m/%d %H:%M:%S'),
-                     send_mail_setting={}
-                     )
-        db.session.add(flow_action)
-        db.session.commit()
-        flow_action_role = FlowActionRole(
-            action_user = users[7]["id"],
-            flow_action_id = flow_action.id,
-            action_user_exclude = False)
-        db.session.add(flow_action_role)
-        db.session.commit()
-        activity.send_mail_request_approval(mock_activity2)
-        args, kwargs = mock_send_notification_email.call_args
-        assert users[7]["obj"] in args[1]
-
-        # with action_user_exclude
-        flow_action_role.action_role_exclude = True
-        flow_action_role.action_role = 1
-        flow_action_role.action_user_exclude = True
-        flow_action_role.action_user = users[6]["id"]
-        db.session.commit()
-        activity.send_mail_request_approval(mock_activity2)
-        args, kwargs = mock_send_notification_email.call_args
-        assert users[6]["obj"] not in args[1]
-
-        # invalid action_user type
-        flow_action_role.action_user = 1.0
-        for action in flow_define.flow_actions:
-            action.action_role = flow_action_role
-        mocker.patch("weko_workflow.api.Flow.get_flow_detail", return_value=flow_define)
-        activity.send_mail_request_approval(mock_activity2)
-        args, kwargs = mock_send_notification_email.call_args
-        assert args[1] == [users[1]["obj"], users[6]["obj"]]
-
-        # exception
-        mocker.patch("weko_workflow.api.PersistentIdentifier.get_by_object", side_effect=SQLAlchemyError)
-        res = activity.send_mail_request_approval(mock_activity1)
-        assert res is None
 
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_api.py::test_workactivity_send_mail_item_approved -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_workactivity_send_mail_item_approved(app, users, mocker):
-    mock_activity1 = MagicMock(
-        activity_login_user=users[0]["id"],
-        shared_user_id=users[1]["id"],
-        item_id=123,
-        activity_id=456,
-        title="Test Item",
-        updated=datetime.strptime('2025/03/28 12:00:00','%Y/%m/%d %H:%M:%S'),
-        flow_define=MagicMock(flow_id=789),
-        activity_community_id=None
+    set_target_id = set()
+    recid = MagicMock()
+    actor_id = 0
+    actor_name = "actor_name"
+    targets = list()
+    settings = dict()
+    profiles = dict()
+    actor = MagicMock()
+    send_count = 2
+    template_file = 'email_notification_item_approved_{language}.tpl'
+
+    # Mock dependent methods
+    mock_get_params = mocker.patch.object(
+        WorkActivity, '_get_params_for_registrant',
+        return_value=(set_target_id, recid, actor_id, actor_name)
     )
-    mock_activity2 = MagicMock(
-        activity_login_user=users[0]["id"],
-        activity_update_user=users[0]["id"],
-        shared_user_id=-1,
-        item_id=123,
-        activity_id=456,
-        title="Test Item",
-        updated=datetime.strptime('2025/03/28 12:00:00','%Y/%m/%d %H:%M:%S'),
-        flow_define=MagicMock(flow_id=789),
-        activity_community_id=None
+    mock_get_settings = mocker.patch.object(
+        WorkActivity, '_get_settings_for_targets',
+        return_value=(targets, settings, profiles, actor)
     )
-    mocker.patch("weko_workflow.api.PersistentIdentifier.get_by_object", return_value=MagicMock(pid_value="123.456"))
-    mocker.patch("weko_workflow.api.UserProfile.get_by_userid", return_value=MagicMock(username="test_user"))
-    mocker.patch("weko_workflow.api.NotificationsUserSettings.query.filter", return_value=MagicMock(all=lambda: []))
-    mocker.patch("weko_workflow.api.UserProfile.query.filter", return_value=MagicMock(all=lambda: []))
-    mock_send_notification_email = mocker.patch("weko_workflow.api.WorkActivity.send_notification_email")
+    mock_send_email = mocker.patch.object(
+        WorkActivity, 'send_notification_email',
+        return_value=send_count
+    )
+    mock_create_context = mocker.patch.object(
+        WorkActivity, '_create_notification_context',
+        return_value=MagicMock()
+    )
 
-    activity = WorkActivity()
-    activity.send_mail_item_approved(mock_activity1)
-    args, kwargs = mock_send_notification_email.call_args
-    assert args[0] == mock_activity1  # activity
-    assert args[1] == [users[0]["obj"], users[1]["obj"]]  # targets
-    assert args[2] == {}  # settings_dict
-    assert args[3] == {}  # profiles_dict
-    assert args[4] == 'email_nortification_item_approved_{language}.tpl'  # template_file
-    assert callable(args[5])  # data_callback
+    activity_obj = WorkActivity()
+    activity = MagicMock(activity_id=123)
+    activity_obj.send_mail_item_approved(activity)
 
-    mock_target = MagicMock(email="test@example.com")
-    mock_profile = MagicMock(username="test_user", timezone="Asia/Tokyo")
-    result = args[5](mock_activity1, mock_target, mock_profile)
-    assert result["item_title"] == "Test Item"
-    assert result["submitter_name"] == "test_user"
-    assert "record_url" in result
+    mock_get_params.assert_called_once_with(activity)
+    mock_get_settings.assert_called_once_with(set_target_id)
+    mock_send_email.assert_called_once()
+    args, kwargs = mock_send_email.call_args
+    assert args == (activity, targets, settings, profiles, template_file, mocker.ANY)
+    data_callback = args[5]
+    target = MagicMock()
+    profile = MagicMock()
+    data_callback(activity, target, profile)
+    mock_create_context.assert_called_once_with(activity, target, profile, actor_name, recid)
 
-    activity.send_mail_item_approved(mock_activity2)
-    args, kwargs = mock_send_notification_email.call_args
-    assert args[1] == []  # targets
-
-    mocker.patch("weko_workflow.api.PersistentIdentifier.get_by_object", side_effect=SQLAlchemyError)
-    res = activity.send_mail_item_approved(mock_activity2)
+    mock_get_params.side_effect = SQLAlchemyError
+    res = activity_obj.send_mail_item_approved(activity)
     assert res is None
+
 
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_api.py::test_workactivity_send_mail_item_rejected -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_workactivity_send_mail_item_rejected(app, users, mocker):
-    mock_activity1 = MagicMock(
-        activity_login_user=users[0]["id"],
-        shared_user_id=users[1]["id"],
-        item_id=123,
-        activity_id=456,
-        title="Test Item",
-        updated=datetime.strptime('2025/03/28 12:00:00','%Y/%m/%d %H:%M:%S'),
-        flow_define=MagicMock(flow_id=789),
-        activity_community_id=None
+    set_target_id = set()
+    recid = MagicMock()
+    actor_id = 0
+    actor_name = "actor_name"
+    targets = list()
+    settings = dict()
+    profiles = dict()
+    actor = MagicMock()
+    send_count = 2
+    template_file = "email_notification_item_rejected_{language}.tpl"
+
+    # Mock dependent methods
+    mock_get_params = mocker.patch.object(
+        WorkActivity, "_get_params_for_registrant",
+        return_value=(set_target_id, recid, actor_id, actor_name)
     )
-    mock_activity2 = MagicMock(
-        activity_login_user=users[0]["id"],
-        activity_update_user=users[0]["id"],
-        shared_user_id=-1,
-        item_id=123,
-        activity_id=456,
-        title="Test Item",
-        updated=datetime.strptime('2025/03/28 12:00:00','%Y/%m/%d %H:%M:%S'),
-        flow_define=MagicMock(flow_id=789),
-        activity_community_id=None
+    mock_get_settings = mocker.patch.object(
+        WorkActivity, "_get_settings_for_targets",
+        return_value=(targets, settings, profiles, actor)
     )
-    mocker.patch("weko_workflow.api.PersistentIdentifier.get_by_object", return_value=MagicMock(pid_value="123.456"))
-    mocker.patch("weko_workflow.api.UserProfile.get_by_userid", return_value=MagicMock(username="test_user"))
-    mocker.patch("weko_workflow.api.NotificationsUserSettings.query.filter", return_value=MagicMock(all=lambda: []))
-    mocker.patch("weko_workflow.api.UserProfile.query.filter", return_value=MagicMock(all=lambda: []))
-    mock_send_notification_email = mocker.patch("weko_workflow.api.WorkActivity.send_notification_email")
+    mock_send_email = mocker.patch.object(
+        WorkActivity, "send_notification_email",
+        return_value=send_count
+    )
+    mock_create_context = mocker.patch.object(
+        WorkActivity, "_create_notification_context",
+        return_value=MagicMock()
+    )
 
-    activity = WorkActivity()
-    activity.send_mail_item_rejected(mock_activity1)
-    args, kwargs = mock_send_notification_email.call_args
-    assert args[0] == mock_activity1  # activity
-    assert args[1] == [users[0]["obj"], users[1]["obj"]]  # targets
-    assert args[2] == {}  # settings_dict
-    assert args[3] == {}  # profiles_dict
-    assert args[4] == 'email_nortification_item_rejected_{language}.tpl'  # template_file
-    assert callable(args[5])  # data_callback
+    activity_obj = WorkActivity()
+    activity = MagicMock(activity_id=123)
+    activity_obj.send_mail_item_rejected(activity)
 
-    mock_target = MagicMock(email="test@example.com")
-    mock_profile = MagicMock(username="test_user", timezone="Asia/Tokyo")
-    result = args[5](mock_activity1, mock_target, mock_profile)
-    assert result["item_title"] == "Test Item"
-    assert result["submitter_name"] == "test_user"
-    assert "url" in result
+    mock_get_params.assert_called_once_with(activity)
+    mock_get_settings.assert_called_once_with(set_target_id)
+    mock_send_email.assert_called_once()
+    args, kwargs = mock_send_email.call_args
+    assert args == (activity, targets, settings, profiles, template_file, mocker.ANY)
+    data_callback = args[5]
+    target = MagicMock()
+    profile = MagicMock()
+    data_callback(activity, target, profile)
+    mock_create_context.assert_called_once_with(activity, target, profile, actor_name)
 
-    activity.send_mail_item_rejected(mock_activity2)
-    args, kwargs = mock_send_notification_email.call_args
-    assert args[1] == []  # targets
-
-    mocker.patch("weko_workflow.api.PersistentIdentifier.get_by_object", side_effect=SQLAlchemyError)
-    res = activity.send_mail_item_rejected(mock_activity2)
+    mock_get_params.side_effect = SQLAlchemyError
+    res = activity_obj.send_mail_item_rejected(activity)
     assert res is None
+
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_api.py::test_workactivity_send_mail_item_deleted -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_workactivity_send_mail_item_deleted(app, mocker):
+    set_target_id = set()
+    recid = MagicMock()
+    actor_id = 0
+    actor_name = "actor_name"
+    targets = list()
+    settings = dict()
+    profiles = dict()
+    actor = MagicMock()
+    send_count = 2
+    template_file = "email_notification_item_deleted_{language}.tpl"
+
+    # Mock dependent methods
+    mock_get_params = mocker.patch.object(
+        WorkActivity, "_get_params_for_registrant",
+        return_value=(set_target_id, recid, actor_id, actor_name)
+    )
+    mock_get_settings = mocker.patch.object(
+        WorkActivity, "_get_settings_for_targets",
+        return_value=(targets, settings, profiles, actor)
+    )
+    mock_send_email = mocker.patch.object(
+        WorkActivity, "send_notification_email",
+        return_value=send_count
+    )
+    mock_create_context = mocker.patch.object(
+        WorkActivity, "_create_notification_context",
+        return_value=MagicMock()
+    )
+
+    activity_obj = WorkActivity()
+    activity = MagicMock(activity_id=123)
+    activity_obj.send_mail_item_deleted(activity)
+
+    mock_get_params.assert_called_once_with(activity)
+    mock_get_settings.assert_called_once_with(set_target_id)
+    mock_send_email.assert_called_once()
+    args, kwargs = mock_send_email.call_args
+    assert args == (activity, targets, settings, profiles, template_file, mocker.ANY)
+    data_callback = args[5]
+    target = MagicMock()
+    profile = MagicMock()
+    data_callback(activity, target, profile)
+    mock_create_context.assert_called_once_with(activity, target, profile, actor_name, recid)
+
+    mock_get_params.side_effect = SQLAlchemyError
+    res = activity_obj.send_mail_item_deleted(activity)
+    assert res is None
+
+
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_api.py::test_workactivity_send_mail_request_delete_approval -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_workactivity_send_mail_request_delete_approval(app, mocker):
+    set_target_id = set()
+    recid = MagicMock()
+    actor_id = 0
+    actor_name = "actor_name"
+    targets = list()
+    settings = dict()
+    profiles = dict()
+    actor = MagicMock()
+    send_count = 2
+    template_file = "email_notification_delete_request_{language}.tpl"
+
+    # Mock dependent methods
+    mock_get_params = mocker.patch.object(
+        WorkActivity, "_get_params_for_approver",
+        return_value=(set_target_id, recid, actor_id, actor_name)
+    )
+    mock_get_settings = mocker.patch.object(
+        WorkActivity, "_get_settings_for_targets",
+        return_value=(targets, settings, profiles, actor)
+    )
+    mock_send_email = mocker.patch.object(
+        WorkActivity, "send_notification_email",
+        return_value=send_count
+    )
+    mock_create_context = mocker.patch.object(
+        WorkActivity, "_create_notification_context",
+        return_value=MagicMock()
+    )
+
+    activity_obj = WorkActivity()
+    activity = MagicMock(activity_id=123)
+    activity_obj.send_mail_request_delete_approval(activity)
+
+    mock_get_params.assert_called_once_with(activity)
+    mock_get_settings.assert_called_once_with(set_target_id)
+    mock_send_email.assert_called_once()
+    args, kwargs = mock_send_email.call_args
+    assert args == (activity, targets, settings, profiles, template_file, mocker.ANY)
+    data_callback = args[5]
+    target = MagicMock()
+    profile = MagicMock()
+    data_callback(activity, target, profile)
+    mock_create_context.assert_called_once_with(activity, target, profile, actor_name)
+
+    mock_get_params.side_effect = SQLAlchemyError
+    res = activity_obj.send_mail_request_delete_approval(activity)
+    assert res is None
+
+
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_api.py::test_workactivity_send_mail_item_delete_approved -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_workactivity_send_mail_item_delete_approved(app, mocker):
+    set_target_id = set()
+    recid = MagicMock()
+    actor_id = 0
+    actor_name = "actor_name"
+    targets = list()
+    settings = dict()
+    profiles = dict()
+    actor = MagicMock()
+    send_count = 2
+    template_file = "email_notification_delete_approved_{language}.tpl"
+
+    # Mock dependent methods
+    mock_get_params = mocker.patch.object(
+        WorkActivity, "_get_params_for_registrant",
+        return_value=(set_target_id, recid, actor_id, actor_name)
+    )
+    mock_get_settings = mocker.patch.object(
+        WorkActivity, "_get_settings_for_targets",
+        return_value=(targets, settings, profiles, actor)
+    )
+    mock_send_email = mocker.patch.object(
+        WorkActivity, "send_notification_email",
+        return_value=send_count
+    )
+    mock_create_context = mocker.patch.object(
+        WorkActivity, "_create_notification_context",
+        return_value=MagicMock()
+    )
+
+    activity_obj = WorkActivity()
+    activity = MagicMock(activity_id=123)
+    activity_obj.send_mail_item_delete_approved(activity)
+
+    mock_get_params.assert_called_once_with(activity)
+    mock_get_settings.assert_called_once_with(set_target_id)
+    mock_send_email.assert_called_once()
+    args, kwargs = mock_send_email.call_args
+    assert args == (activity, targets, settings, profiles, template_file, mocker.ANY)
+    data_callback = args[5]
+    target = MagicMock()
+    profile = MagicMock()
+    data_callback(activity, target, profile)
+    mock_create_context.assert_called_once_with(activity, target, profile, actor_name, recid)
+
+    mock_get_params.side_effect = SQLAlchemyError
+    res = activity_obj.send_mail_item_delete_approved(activity)
+    assert res is None
+
+
+def test_workactivity_send_mail_item_delete_rejected(app, mocker):
+    set_target_id = set()
+    recid = MagicMock()
+    actor_id = 0
+    actor_name = "actor_name"
+    targets = list()
+    settings = dict()
+    profiles = dict()
+    actor = MagicMock()
+    send_count = 2
+    template_file = "email_notification_item_delete_rejected_{language}.tpl"
+
+    # Mock dependent methods
+    mock_get_params = mocker.patch.object(
+        WorkActivity, "_get_params_for_registrant",
+        return_value=(set_target_id, recid, actor_id, actor_name)
+    )
+    mock_get_settings = mocker.patch.object(
+        WorkActivity, "_get_settings_for_targets",
+        return_value=(targets, settings, profiles, actor)
+    )
+    mock_send_email = mocker.patch.object(
+        WorkActivity, "send_notification_email",
+        return_value=send_count
+    )
+    mock_create_context = mocker.patch.object(
+        WorkActivity, "_create_notification_context",
+        return_value=MagicMock()
+    )
+
+    activity_obj = WorkActivity()
+    activity = MagicMock(activity_id=123)
+    activity_obj.send_mail_item_delete_rejected(activity)
+
+    mock_get_params.assert_called_once_with(activity)
+    mock_get_settings.assert_called_once_with(set_target_id)
+    mock_send_email.assert_called_once()
+    args, kwargs = mock_send_email.call_args
+    assert args == (activity, targets, settings, profiles, template_file, mocker.ANY)
+    data_callback = args[5]
+    target = MagicMock()
+    profile = MagicMock()
+    data_callback(activity, target, profile)
+    mock_create_context.assert_called_once_with(activity, target, profile, actor_name)
+
+    mock_get_params.side_effect = SQLAlchemyError
+    res = activity_obj.send_mail_item_delete_rejected(activity)
+    assert res is None
+
 
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_api.py::test_send_notification_email -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_send_notification_email(app, mocker):
@@ -723,6 +849,66 @@ def test_send_notification_email(app, mocker):
     mock_fill_template = mocker.patch("weko_workflow.utils.fill_template", side_effect=Exception("Template error"))
     activity.send_notification_email(mock_activity, [mock_target], mock_settings, mock_profiles, mock_template, mock_data_callback)
     mock_logger.assert_called_once()
+
+
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_api.py::test_create_notification_context_with_recid -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_create_notification_context_with_recid(app, mocker):
+    activity = MagicMock(
+        updated=datetime.strptime("2025/03/28 12:00:00","%Y/%m/%d %H:%M:%S"),
+        title="Test Activity", activity_id="123"
+    )
+    target = MagicMock(email="test@example.com")
+    profile = MagicMock(timezone="Asia/Tokyo", username="test_user")
+    actor_name = "actor_name"
+    recid = MagicMock(pid_value="1234567890")
+
+    activity_obj = WorkActivity()
+    with app.test_request_context(base_url='http://example.org/'):
+        context = activity_obj._create_notification_context(activity, target, profile, actor_name, recid)
+        assert context.get("recipient_name") == profile.username
+        assert context.get("actor_name") == actor_name
+        assert context.get("target_title") == activity.title
+        assert context.get("target_url") == "http://example.org/records/1234567890"
+        assert context.get("event_date") == "2025-03-28 21:00:00"
+
+
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_api.py::test_create_notification_context_without_recid -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test__create_notification_context_without_recid(app, mocker):
+    activity = MagicMock(
+        updated=datetime.strptime("2025/03/28 12:00:00","%Y/%m/%d %H:%M:%S"),
+        title="Test Activity", activity_id="123"
+    )
+    target = MagicMock(email="test@example.com")
+    profile = MagicMock(timezone="Asia/Tokyo", username="test_user")
+    actor_name = "actor_name"
+
+    activity_obj = WorkActivity()
+    with app.test_request_context(base_url='http://example.org/'):
+        context = activity_obj._create_notification_context(activity, target, profile, actor_name)
+        assert context.get("recipient_name") == profile.username
+        assert context.get("actor_name") == actor_name
+        assert context.get("target_title") == activity.title
+        assert context.get("target_url") == "http://example.org/workflow/activity/detail/123"
+        assert context.get("event_date") == "2025-03-28 21:00:00"
+
+
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_api.py::test__get_settings_for_targets -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test__get_settings_for_targets(app, users, db_user_profile, db_notification_user_settings):
+    set_target_id = {users[2]["id"]}
+    activity_obj = WorkActivity()
+    targets, settings, profiles, actor = activity_obj._get_settings_for_targets(set_target_id)
+    assert targets == [users[2]["obj"]]
+    assert settings.get(users[2]["id"]) == db_notification_user_settings
+    assert profiles.get(users[2]["id"]) == db_user_profile
+    assert actor == None
+
+    actor_id = users[2]["id"]
+    targets, settings, profiles, actor = activity_obj._get_settings_for_targets(set_target_id, actor_id)
+    assert targets == [users[2]["obj"]]
+    assert settings.get(users[2]["id"]) == db_notification_user_settings
+    assert profiles.get(users[2]["id"]) == db_user_profile
+    assert actor == users[2]["obj"]
+
 
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_api.py::test_get_non_extract_files -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_get_non_extract_files(app, mocker):

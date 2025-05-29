@@ -3038,9 +3038,6 @@ class WorkActivity(object):
 
         Returns:
             int: The number of emails successfully sent.
-
-        Raises:
-            Exception: If an unexpected error occurs during the email sending process.
         """
         from .utils import send_mail, load_template, fill_template
 
