@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: weko-workspace 0.1.0.dev20250201\n"
 "Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
-"POT-Creation-Date: 2025-05-27 14:25+0900\n"
+"POT-Creation-Date: 2025-05-28 19:09+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -178,50 +178,62 @@ msgstr ""
 msgid "Metadata"
 msgstr ""
 
-#: weko_workspace/templates/weko_workspace/item_register.html:262
+#: weko_workspace/templates/weko_workspace/item_register.html:261
 msgid "oa_policy_label"
 msgstr ""
 
-#: weko_workspace/templates/weko_workspace/item_register.html:271
+#: weko_workspace/templates/weko_workspace/item_register.html:269
 msgid "oa_policy_export"
 msgstr ""
 
-#: weko_workspace/templates/weko_workspace/item_register.html:291
+#: weko_workspace/templates/weko_workspace/item_register.html:275
+msgid "Please enter ISSN, eISSN, or journal title"
+msgstr ""
+
+#: weko_workspace/templates/weko_workspace/item_register.html:276
+msgid "No Policy Information found"
+msgstr ""
+
+#: weko_workspace/templates/weko_workspace/item_register.html:277
+msgid "An unknown error occurred"
+msgstr ""
+
+#: weko_workspace/templates/weko_workspace/item_register.html:289
 msgid "Index Tree"
 msgstr ""
 
-#: weko_workspace/templates/weko_workspace/item_register.html:313
+#: weko_workspace/templates/weko_workspace/item_register.html:311
 msgid "Regist"
 msgstr ""
 
-#: weko_workspace/templates/weko_workspace/item_register.html:331
-#: weko_workspace/templates/weko_workspace/item_register.html:360
-#: weko_workspace/templates/weko_workspace/item_register.html:399
-#: weko_workspace/templates/weko_workspace/item_register.html:425
+#: weko_workspace/templates/weko_workspace/item_register.html:329
+#: weko_workspace/templates/weko_workspace/item_register.html:358
+#: weko_workspace/templates/weko_workspace/item_register.html:397
+#: weko_workspace/templates/weko_workspace/item_register.html:423
 msgid "WEKO"
 msgstr ""
 
-#: weko_workspace/templates/weko_workspace/item_register.html:337
-#: weko_workspace/templates/weko_workspace/item_register.html:431
+#: weko_workspace/templates/weko_workspace/item_register.html:335
+#: weko_workspace/templates/weko_workspace/item_register.html:429
 msgid "At least one index should be selected."
 msgstr ""
 
-#: weko_workspace/templates/weko_workspace/item_register.html:345
-#: weko_workspace/templates/weko_workspace/item_register.html:374
+#: weko_workspace/templates/weko_workspace/item_register.html:343
+#: weko_workspace/templates/weko_workspace/item_register.html:372
 #: weko_workspace/templates/weko_workspace/workspace_body_contents.html:30
 msgid "Cancel"
 msgstr ""
 
-#: weko_workspace/templates/weko_workspace/item_register.html:366
-#: weko_workspace/templates/weko_workspace/item_register.html:390
+#: weko_workspace/templates/weko_workspace/item_register.html:364
+#: weko_workspace/templates/weko_workspace/item_register.html:388
 msgid "The Required items is required. Please recheck and input."
 msgstr ""
 
-#: weko_workspace/templates/weko_workspace/item_register.html:392
+#: weko_workspace/templates/weko_workspace/item_register.html:390
 msgid "The same file name cannot be registered."
 msgstr ""
 
-#: weko_workspace/templates/weko_workspace/item_register.html:405
+#: weko_workspace/templates/weko_workspace/item_register.html:403
 msgid "The item is successfully registered."
 msgstr ""
 
@@ -276,7 +288,7 @@ msgid "Number of downloads"
 msgstr ""
 
 #: weko_workspace/templates/weko_workspace/workspace_body_contents.html:80
-msgid "※This item is excluded from the default condition save target."
+msgid "This item is excluded from the default condition save target."
 msgstr ""
 
 #: weko_workspace/templates/weko_workspace/workspace_body_contents.html:81

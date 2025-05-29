@@ -1019,6 +1019,10 @@ def soft_delete(recid):
     try:
         if not check_created_id_by_recid(recid.replace("del_ver_", "")):
             abort(403)
+        if not UserActivityLogger.issue_log_group_id(db.session):
+            current_app.logger.error(
+                'Failed to issue log group id for soft delete operation.')
+            abort(500)
         starts_with_del_ver = True
         if recid.startswith('del_ver_'):
             recid = recid.replace('del_ver_', '')

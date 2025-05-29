@@ -652,7 +652,7 @@ class ItemTypes(RecordBase):
             with_deleted (bool): If `True` then it includes deleted item types.
 
         Returns:
-            ItemTypes: Item type model instance.
+            ItemType: Item type model instance.
         """
         with db.session.no_autoflush:
             query = ItemType.query.filter_by(id=id_)
@@ -663,11 +663,14 @@ class ItemTypes(RecordBase):
 
     @classmethod
     def get_by_name(cls, name_, with_deleted=False):
-        """Retrieve the item type by id.
+        """Retrieve the item type by item type name.
 
-        :param name_: Name of item type.
-        :param with_deleted: If `True` then it includes deleted item types.
-        :returns: The :class:`ItemTypes` instance.
+        Args:
+            name_ (str): Name of item type.
+        with_deleted (bool): If `True` then it includes deleted item types.
+
+        Returns:
+            ItemType: Item type model instance.
         """
         with db.session.no_autoflush:
             query = ItemTypeName.query.filter_by(name=name_)
@@ -677,7 +680,8 @@ class ItemTypes(RecordBase):
             query = ItemType.query.filter_by(name_id=itemTypeName.id)
             if not with_deleted:
                 query = query.filter(ItemType.is_deleted.is_(False))  # noqa
-            return query.one_or_none()
+            obj = query.one_or_none()
+        return obj if isinstance(obj, ItemType) else None
 
     @classmethod
     def get_by_name_id(cls, name_id, with_deleted=False):
@@ -1522,7 +1526,7 @@ class JsonldMapping():
         Returns:
             ItemTypeJsonldMapping: Deleted mapping object.
         """
-        obj = JsonldMapping.get_mapping_by_id(id)
+        obj = cls.get_mapping_by_id(id)
         if not isinstance(obj, ItemTypeJsonldMapping):
             return None
         obj.is_deleted = True
@@ -1576,7 +1580,7 @@ class JsonldMapping():
             .filter_by(item_type_id=item_type_id)
             .order_by(ItemTypeJsonldMapping.updated.desc())
         )
-        if with_deleted:
+        if not with_deleted:
             query = query.filter_by(is_deleted=False)
 
         return [

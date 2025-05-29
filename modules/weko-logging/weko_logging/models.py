@@ -9,7 +9,7 @@
 
 from datetime import datetime, timezone
 
-from sqlalchemy import text
+from sqlalchemy import Sequence
 from sqlalchemy.dialects import mysql, postgresql
 from sqlalchemy_utils.types import JSONType
 
@@ -58,16 +58,11 @@ class UserActivityLog(db.Model):
     )
     """Community ID of the community where the action was performed."""
 
-    parent_id = db.Column(
+    log_group_id = db.Column(
         db.Integer(),
-        db.ForeignKey(
-            'user_activity_logs.id',
-            name='fk_user_activity_parent_id',
-            ondelete='SET NULL'
-        ),
         nullable=True
     )
-    """Parent ID of the log entry."""
+    """Log group ID for grouping related log entries."""
 
     log = db.Column(
         db.JSON().with_variant(
@@ -101,14 +96,14 @@ class UserActivityLog(db.Model):
             'date': self.date,
             'user_id': self.user_id if self.user_id else "",
             'community_id': self.community_id if self.community_id else "",
-            'parent_id': self.parent_id if self.parent_id else "",
+            "log_group_id": self.log_group_id if self.log_group_id else "",
             'log': self.log,
             'remarks': self.remarks
         }
 
     @classmethod
-    def get_sequence(cls, session):
-        """Get the next sequence for the user activity logs.
+    def get_log_group_sequence(cls, session):
+        """Get the next sequence for user activity log group.
 
         Args:
             session: The database session.
@@ -118,7 +113,6 @@ class UserActivityLog(db.Model):
         """
         if not session:
             session = db.session
-        # Get the current value of the sequence
-        result = session.execute(text("SELECT last_value FROM pg_sequences WHERE schemaname = 'public' AND sequencename = 'user_activity_logs_id_seq'"))
-        current_id = result.scalar()
-        return current_id + 1
+        seq = Sequence('user_activity_log_group_id_seq')
+        next_id = session.execute(seq)
+        return next_id

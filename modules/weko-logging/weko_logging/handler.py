@@ -53,10 +53,10 @@ class UserActivityLogHandler(logging.Handler):
             current_app.logger.error(f"Invalid operation: {operation}")
             raise ValueError(f"Invalid operation: {operation}")
 
-        # get log group uuid
-        parent_id = None
-        if hasattr(record, "parent_id"):
-            parent_id = record.parent_id or None
+        # get log group id
+        log_group_id = None
+        if hasattr(record, "log_group_id"):
+            log_group_id = record.log_group_id or None
 
         # get user_id from current_user
         user_id = self.get_user_id()
@@ -109,7 +109,7 @@ class UserActivityLogHandler(logging.Handler):
         user_activity_log = UserActivityLog(
             user_id=user_id,
             log={},
-            parent_id=parent_id,
+            log_group_id=log_group_id,
             community_id=community_id,
             remarks=remarks,
         )
@@ -123,7 +123,7 @@ class UserActivityLogHandler(logging.Handler):
             "client_id": client_id,
             "community_id": community_id or "",
             "source": source,
-            "parent_id": parent_id,
+            "log_group_id": log_group_id,
             "operation_type_id": operation_type_id,
             "operation_id": operation_id,
             "target": target,
@@ -164,7 +164,7 @@ class UserActivityLogHandler(logging.Handler):
             return None
         community_id = None
         path_info = urllib.parse.urlparse(request_path)
-        if "/c/" in path_info.path:
+        if "/c/" in str(path_info.path):
             community_path = path_info.path.split("/c/")[1]
             community_id = community_path.split("/")[0]
         elif "community" in request_args:
