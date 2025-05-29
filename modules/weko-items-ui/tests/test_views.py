@@ -443,13 +443,13 @@ def test_iframe_save_model(
             "action_status": "M",
             "commond": "",
         }
-    
+
     res = client.post(url, json={})
     assert res.status_code == 400
     ret = json.loads(res.data)
     assert ret["code"] == 1
     assert ret["msg"] == "リクエストデータがありません"
-    
+
     res = client.post(url, json=data)
     assert res.status_code == status_code
     ret = json.loads(res.data)
@@ -487,7 +487,7 @@ def test_iframe_save_model(
     ret = json.loads(res.data)
     assert ret["code"] == 0
     assert ret["msg"].startswith("Model save success at") == True
-        
+
     # is_duplicate True
     data["metainfo"]["item_1617186419668"][0]["creatorNames"] = [{"creatorName":"情報, 太郎"}]
     data["metainfo"]["item_1617258105262"]={}
@@ -504,15 +504,15 @@ def test_iframe_save_model(
     ret = json.loads(res.data)
     assert ret["code"] == 1
     assert ret["msg"] == "既に登録されているデータです"
-    
+
     # metainfo false
     res = client.post(url, json={'data':1})
     assert res.status_code == status_code
     ret = json.loads(res.data)
     assert ret["code"] == 0
     assert ret["msg"].startswith("Model save success at") == True
-    
-    # Exception 
+
+    # Exception
     with patch("weko_items_ui.views.is_duplicate_record", side_effect=Exception("Mocked Exception")):
         res = client.post(url, json=data)
 
@@ -20369,7 +20369,7 @@ def test_iframe_items_index_acl(app, client, users, id, status_code):
 
 
 # .tox/c1/bin/pytest --cov=weko_items_ui tests/test_views.py::test_iframe_items_index_get_error -v -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
-def test_iframe_items_index_get_error(app, client, db_itemtype, users, db_records, db_workflow, esindex):
+def test_iframe_items_index_get_error(app, client, db_itemtype, users, db_records, db_workflow, esindex, mocker):
     login_user_via_session(client=client, email=users[0]["email"])
     mocker.patch("weko_items_ui.views.set_files_display_type")
     mocker.patch("weko_items_ui.views.get_thumbnails",return_value=[])
@@ -21164,7 +21164,7 @@ def test_get_oa_policy(
     with patch("weko_items_ui.views.get_access_token") as mock_get_token, patch(
         "requests.get"
     ) as mock_requests_get:
-        
+
         # 各ケースに応じたモックの設定
         if status_code == 401:
             # トークン取得失敗ケース
