@@ -465,19 +465,21 @@ def convert_jamas_xml_data_to_dictionary(api_data, encoding='utf-8'):
     }
     try:
         root = etree.XML(api_data.encode(encoding))
-        jamas_xml_data_keys = current_app.config['WEKO_WORKSPACE_AUTOFILL_JAMAS_XML_DATA_KEYS']
+        jamas_xml_data_keys = current_app.config.get(
+            "WEKO_WORKSPACE_AUTOFILL_JAMAS_XML_DATA_KEYS", {}
+        )
         for elem in root.getiterator():
-            if etree.QName(elem).localname in jamas_xml_data_keys:
-                if etree.QName(elem).localname == "contributor" or etree.QName(
-                        elem).localname == "organization":
-                        pass
-                elif etree.QName(elem).localname == "year":
-                    pass
-                elif etree.QName(elem).localname in ["issn", "isbn"]:
-                    pass
-                else:
-                    result.update({etree.QName(elem).localname: elem.text})
-
+            localname = etree.QName(elem).localname
+            if elem.text and localname in jamas_xml_data_keys.keys():
+                data = result.get(localname, None)
+                is_multiple = jamas_xml_data_keys.get(localname)
+                if is_multiple:
+                    if not data:
+                        data = []
+                    data.append(elem.text)
+                elif not data:
+                    data = elem.text
+                result[localname] = data
         rtn_data['response'] = result
     except Exception as e:
         rtn_data['error'] = str(e)
@@ -549,164 +551,255 @@ def get_jamas_data_by_key(api, keyword):
         return None
 
     data = api['response']
+    language = get_jamas_language_data(data.get('language'))
     result = dict()
-    if keyword == 'title' and data.get('dc:title'):
-        result[keyword] = get_jamas_title_data(data.get('dc:title'))
-    elif keyword == 'creator' and data.get('dc:creator'):
-        result[keyword] = get_jamas_creator_data(data.get('dc:creator'))
-    elif keyword == 'sourceTitle' and data.get('prism:publicationName'):
-        result[keyword] = get_jamas_source_title_data(
-            data.get('prism:publicationName')
+    if keyword == 'title' and data.get('title'):
+        result[keyword] = pack_with_language_value_for_jamas(
+            data.get('title'), language
         )
-    elif keyword == 'volume' and data.get('prism:volume'):
-        result[keyword] = pack_single_value_as_dict(data.get('prism:volume'))
-    elif keyword == 'issue' and data.get('prism:number'):
-        result[keyword] = pack_single_value_as_dict(data.get('prism:number'))
-    elif keyword == 'pageStart' and data.get('prism:startingPage'):
-        result[keyword] = pack_single_value_as_dict(data.get('prism:startingPage'))
+    elif keyword == 'creator' and data.get('creator'):
+        result[keyword] = get_jamas_creator_data(
+            data.get('creator'), language
+        )
+    elif keyword == 'sourceTitle' and data.get('publicationName'):
+        result[keyword] = pack_with_language_value_for_jamas(
+            data.get('publicationName'), language
+        )
+    elif keyword == 'volume' and data.get('volume'):
+        result[keyword] = pack_single_value_for_jamas(data.get('volume'))
+    elif keyword == 'issue' and data.get('number'):
+        result[keyword] = pack_single_value_for_jamas(data.get('number'))
+    elif keyword == 'pageStart' and data.get('startingPage'):
+        result[keyword] = pack_single_value_for_jamas(data.get('startingPage'))
     elif keyword == 'numPages':
-        result[keyword] = pack_single_value_as_dict(data.get('prism:pageRange'))
-    elif keyword == 'date' and data.get('prism:publicationDate'):
-        result[keyword] = get_jamas_issue_date(data.get('prism:publicationDate'))
+        result[keyword] = pack_single_value_for_jamas(data.get('pageRange'))
+    elif keyword == 'date' and data.get('publicationDate'):
+        result[keyword] = get_jamas_issue_date(data.get('publicationDate'))
     elif keyword == 'relation':
         result[keyword] = get_jamas_relation_data(
-            data.get('prism:issn'),
-            data.get('prism:eIssn'),
-            data.get('prism:doi')
+            data.get('issn'),
+            data.get('eIssn'),
+            data.get('doi')
         )
     elif keyword == 'sourceIdentifier':
-        result[keyword] = get_jamas_source_data(data.get('prism:issn'))
+        result[keyword] = get_jamas_source_data(data.get('issn'))
+    elif keyword == 'publisher':
+        result[keyword] = pack_with_language_value_for_jamas(
+            data.get('publisher'), language
+        )
+    elif keyword == 'description' and data.get('description'):
+        result[keyword] = pack_with_language_value_for_jamas(
+            data.get('description'), language
+        )
     elif keyword == 'all':
         for key in current_app.config[
                 'WEKO_WORKSPACE_AUTOFILL_JAMAS_REQUIRED_ITEM']:
             result[key] = get_jamas_data_by_key(api, key).get(key)
     return result
 
+def pack_single_value_for_jamas(data):
+    """Pack single value for Jamas.
+
+    Args:
+        data (str or list): A single value or a list of values to be packed.
+
+    Returns:
+        list: A list containing dictionaries with the value.
+    """
+    result = []
+    if isinstance(data, str):
+        result.append({
+            '@value': data
+        })
+    elif isinstance(data, list):
+        for d in data:
+            new_data = {}
+            new_data['@value'] = d
+            result.append(new_data)
+    return result
+
+
+def pack_with_language_value_for_jamas(data, language="en"):
+    """Pack data with language value for Jamas.
+
+    Args:
+        data (str or list): A string or a list of strings to be packed.
+        language (str): The language of the article. Defaults to "en".
+
+    Returns:
+        list: A list containing dictionaries with value and language.
+    """
+    result = []
+    if isinstance(data, str):
+        result.append({
+            '@value': data,
+            '@language': language
+        })
+    elif isinstance(data, list):
+        for d in data:
+            result.append({
+                '@value': d,
+                '@language': language
+            })
+    return result
 
 def get_jamas_source_data(data):
     """Get Jamas source data.
 
-    :param data:
-    :return:
+    Args:
+        data (str or list): A source identifier string or a list of identifiers.
+
+    Returns:
+        list: A list containing dictionaries with source identifier values and their types.
     """
-    result = list()
-    if data:
-        new_data = dict()
-        new_data['@value'] = data
-        new_data['@type'] = 'ISSN'
-        result.append(new_data)
+    result = []
+    
+    if isinstance(data, str):
+        result.append({
+            '@value': data,
+            '@type': "ISSN"
+        })
+    elif isinstance(data, list):
+        for d in data:
+            result.append({
+                '@value': d,
+                '@type': "ISSN"
+            })
     return result
 
 
-def get_jamas_relation_data(issn, eIssn, doi):
+def get_jamas_relation_data(issn, eissn, doi):
     """Get Jamas relation data.
 
-    :param issn, eIssn, doi:
-    :return:
+    Args:
+        issn (str or list): ISSN or a list of ISSNs.
+        eissn (str or list): EISSN or a list of EISSNs.
+        doi (str or list): DOI or a list of DOIs.
+
+    Returns:
+        list: A list of dictionaries containing the relation data with types.
     """
-    result = list()
-    if doi:
-        new_data = dict()
-        new_data['@value'] = doi
-        new_data['@type'] = "DOI"
-        result.append(new_data)
-    if issn and len(result) == 0:
-        for element in issn:
-            new_data = dict()
-            new_data['@value'] = element
-            new_data['@type'] = "ISSN"
-            result.append(new_data)
-    if eIssn and len(result) == 0:
-        for element in eIssn:
-            new_data = dict()
-            new_data['@value'] = element
-            new_data['@type'] = "EISSN"
-            result.append(new_data)
-    if len(result) == 0:
-        return pack_single_value_as_dict(None)
+    result = []
+    # doi
+    if isinstance(doi, str):
+        result.append({
+            '@value': doi,
+            '@type': "DOI"
+        })
+    elif isinstance(doi, list):
+        for d in doi:
+            result.append({
+                '@value': d,
+                '@type': "DOI"
+            })
+
+    #issn
+    if isinstance(issn, str):
+        result.append({
+            '@value': issn,
+            '@type': "ISSN"
+        })
+    elif isinstance(issn, list):
+        for d in issn:
+            result.append({
+                '@value': d,
+                '@type': "ISSN"
+            })
+    
+    # eissn
+    if isinstance(eissn, str):
+        result.append({
+            '@value': eissn,
+            '@type': "EISSN"
+        })
+    elif isinstance(eissn, list):
+        for d in eissn:
+            result.append({
+                '@value': d,
+                '@type': "EISSN"
+            })
+    
     return result
 
 
 def get_jamas_issue_date(data):
     """Get Jamas issued date.
 
-    Arguments:
-        data -- issued data
+    Args:
+        data (str): The publication date string in the format "YYYY-MM-DD".
 
     Returns:
-        Issued date is packed
+        dict: A dictionary containing the issued date and its type.
 
     """
-    result = dict()
-    if data:
-        result['@value'] = data
-        result['@type'] = 'Issued'
-    else:
-        result['@value'] = None
-        result['@type'] = None
+    result = []
+    if isinstance(data, str):
+        result.append({
+            '@value': data.replace('.', '-').replace("年", "-")\
+                .replace("月", "-").replace("日", ""),
+            '@type': "Issued"
+        })
+    elif isinstance(data, list):
+        for d in data:
+            result.append({
+                '@value': d.replace('.', '-').replace("年", "-")\
+                    .replace("月", "-").replace("日", ""),
+                '@type': "Issued"
+            })
     return result
 
 
-def get_jamas_source_title_data(data):
-    """Get source title information.
-
-    Arguments:
-        data -- created data
-
-    Returns:
-        Source title  data
-
-    """
-    new_data = dict()
-    default_language = 'en'
-    new_data['@value'] = data
-    new_data['@language'] = data['dc:language'] if data['dc:language'] else default_language
-    return new_data
-
-
-def get_jamas_creator_data(data):
+def get_jamas_creator_data(data, language="en"):
     """Get creator name from Jamas data.
 
-    Arguments:
-        data -- Jamas data
+    Args:
+        data (str or list): A creator name string or a list of creator names.
+        language (str): The language of the article. Defaults to "en".
+
+    Returns:
+        list: A list containing dictionaries with creator names and their languages.
 
     """
-    result = list()
-    default_language = 'en'
-    for name_data in data:
-        full_name = ''
-        full_name = name_data.get('dc:creator')
-
-        new_data = dict()
-        new_data['@value'] = full_name
-        new_data['@language'] = data['dc:language'] if data['dc:language'] else default_language
-        result.append(new_data)
+    result = []
+    if isinstance(data, str):
+        result.append({
+            '@value': data,
+            '@language': language
+        })
+    elif isinstance(data, list):
+        for d in data:
+            result.append([{
+                '@value': d,
+                '@language': language
+            }])
     return result
 
 
-def get_jamas_title_data(data):
-    """Get title data from Jamas.
+def get_jamas_language_data(data):
+    """Get language data from Jamas.
 
-    Arguments:
-        data -- title data
+    Args:
+        data (list or str): A list of languages or a single language string.
 
     Returns:
-        Packed title data
-
+        list: A list containing a dictionary with the language.
     """
-    result = list()
     default_language = 'en'
-    if isinstance(data, list):
-        for title in data:
-            new_data = dict()
-            new_data['@value'] = title
-            new_data['@language'] = data.get('dc:language') if data.get('dc:language', None) else default_language
-            result.append(new_data)
+    if isinstance(data, str):
+        result = data if data else default_language
+    elif isinstance(data, list) and len(data) > 0:
+        result = data[0] if data[0] else default_language
     else:
-        new_data = dict()
-        new_data['@value'] = data
-        new_data['@language'] = data.get('dc:language') if data.get('dc:language', None) else default_language
-        result.append(new_data)
+        result = default_language
+
+    # Convert language codes to standard format
+    if result in ["jpn", "japanese", "日本語"]:
+        result = "ja"
+    elif result in ["eng", "English", "英語"]:
+        result = "en"
+    else:
+        pass
+
     return result
 
 
