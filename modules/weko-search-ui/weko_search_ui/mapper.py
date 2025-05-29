@@ -1241,7 +1241,7 @@ class JsonMapper(BaseMapper):
             This process is part of “_create_item_map” and is not
             intended for any other use.
         """
-        if "title" in prop_v:
+        if prop_k and "title" in prop_v:
             key = key + "." + prop_v["title"] if key else prop_v["title"]
             value = value + "." + prop_k if value else prop_k
 
@@ -1253,7 +1253,7 @@ class JsonMapper(BaseMapper):
         elif prop_v["type"] == "array":
             item_map.update({key: value}) if detail else None
             self._apply_property(
-                item_map, key, value, "items", prop_v["items"], detail)
+                item_map, key, value, None, prop_v["items"], detail)
         else:
             item_map[key] = value
 
@@ -1368,7 +1368,7 @@ class JsonLdMapper(JsonMapper):
         ]
 
         string_list = item_map.keys()
-        def find_similar_key(target_key, threshold=0.5):
+        def find_similar_key(target_key, threshold=0.8):
             best_match_tuple = max(
                 (
                     (s, ratio)
