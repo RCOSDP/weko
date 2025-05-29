@@ -1909,8 +1909,8 @@ class TestsReindexElasticSearchView:
             assert res.status_code == 500
             assert res.data != str(dict({ "isError":False ,"isExecuting":False,"disabled_Btn":False }))
 
-#class SwordAPISettingsView(BaseView):
-#
+# class SwordAPISettingsView(BaseView):
+# .tox/c1/bin/pytest --cov=weko_admin tests/test_admin.py::TestSwordAPISettingsView -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
 class TestSwordAPISettingsView:
 #    def index(self):
 # .tox/c1/bin/pytest --cov=weko_admin tests/test_admin.py::TestSwordAPISettingsView::test_index -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp --full-trace
@@ -2069,7 +2069,7 @@ class TestSwordAPISettingsView:
 
 
 # class SwordAPIJsonldSettingsView(ModelView):
-# .tox/c1/bin/pytest --cov=weko_admin tests/test_admin.py::TestSwordAPIJsonldSettingsView::test_create_view -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
+# .tox/c1/bin/pytest --cov=weko_admin tests/test_admin.py::TestSwordAPIJsonldSettingsView -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
 class TestSwordAPIJsonldSettingsView:
     # def create_view(self):
     # .tox/c1/bin/pytest --cov=weko_admin tests/test_admin.py::TestSwordAPIJsonldSettingsView::test_create_view -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
@@ -2373,13 +2373,39 @@ class TestSwordAPIJsonldSettingsView:
     def test_get_query_in_role_ids(self, client, users, db, mocker):
         login_user_via_session(client,email=users[0]["email"])# sysadmin
         current_app.config['WEKO_ADMIN_SWORD_API_JSON_LD_FULL_AUTHORITY_ROLE'] = users[0]["id"]
-        SwordAPIJsonldSettingsView.get_query(SwordAPIJsonldSettingsView)
+        SwordAPIJsonldSettingsView().get_query()
 
-    def test_get_query(self, client, users, db, mocker):
-        login_user_via_session(client,email=users[0]["email"])# sysadmin
         current_app.config['WEKO_ADMIN_SWORD_API_JSON_LD_FULL_AUTHORITY_ROLE'] = 1
-        SwordAPIJsonldSettingsView.get_query(SwordAPIJsonldSettingsView)
+        SwordAPIJsonldSettingsView().get_query()
 
+    def test_get_count_query(self, client, users, db, mocker):
+        login_user_via_session(client,email=users[0]["email"])# sysadmin
+        current_app.config['WEKO_ADMIN_SWORD_API_JSON_LD_FULL_AUTHORITY_ROLE'] = users[0]["id"]
+        SwordAPIJsonldSettingsView().get_count_query()
+
+    # def validate_mapping(self, id):
+    # .tox/c1/bin/pytest --cov=weko_admin tests/test_admin.py::TestSwordAPIJsonldSettingsView::test_validate_mapping -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
+    def test_validate_mapping(self, client, users, db, sword_mapping, mocker):
+        login_user_via_session(client,email=users[0]["email"])
+        current_app.config['WEKO_ADMIN_SWORD_API_JSON_LD_FULL_AUTHORITY_ROLE'] = 1
+
+        with patch("weko_admin.admin.JsonLdMapper.validate", return_value=None):
+            url = url_for("swordapi/jsonld.validate_mapping", id=1)
+            res = client.get(url)
+        assert res.status_code == 200
+        assert json.loads(res.data) == {"results": True}
+
+        with patch("weko_admin.admin.JsonLdMapper.validate", return_value=["test_error"]):
+            url = url_for("swordapi/jsonld.validate_mapping", id=1)
+            res = client.get(url)
+        assert res.status_code == 200
+        assert json.loads(res.data) == {"results": False}
+
+        with patch("weko_admin.admin.JsonLdMapper.validate", side_effect=KeyError("test_key_error")):
+            url = url_for("swordapi/jsonld.validate_mapping", id=1)
+            res = client.get(url)
+        assert res.status_code == 400
+        assert json.loads(res.data) == {"error": "Failed to validate jsonld mapping."}
 
 
 # class JsonldMappingView(ModelView):

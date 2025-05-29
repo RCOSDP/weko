@@ -1021,6 +1021,7 @@ def is_index_locked(index_id):
     if is_exists_key_in_redis(
         current_app.config['WEKO_INDEX_TREE_INDEX_LOCK_KEY_PREFIX'] + str(
             index_id)):
+        current_app.logger.info(f"Index with ID {index_id} is locked.")
         return True
     return False
 
@@ -1044,17 +1045,23 @@ def perform_delete_index(index_id, record_class, action: str):
     """
     is_unlock = True
     locked_key = []
+    errors = []
     try:
         msg = ''
         is_unlock, errors, locked_key = validate_before_delete_index(index_id)
         if len(errors) == 0:
             res = record_class.get_self_path(index_id)
             if not res:
+                current_app.logger.error(
+                    f"Index with ID {index_id} does not exist."
+                )
                 raise IndexDeletedRESTError()
             if action in ('move', 'all'):
-                result = record_class. \
-                    delete_by_action(action, index_id)
+                result = record_class.delete_by_action(action, index_id)
                 if not result:
+                    current_app.logger.error(
+                        f"Failed to delete index with ID {index_id}."
+                    )
                     raise IndexBaseRESTError(
                         description='Could not delete data.')
             msg = 'Index deleted successfully.'
@@ -1065,7 +1072,11 @@ def perform_delete_index(index_id, record_class, action: str):
         )
     except Exception as e:
         db.session.rollback()
-        current_app.logger.error(e)
+        current_app.logger.error(
+            f"Unexpected error: Failed to delete index: {index_id}"
+        )
+        traceback.print_exc()
+
         exec_info = sys.exc_info()
         tb_info = traceback.format_tb(exec_info[2])
         UserActivityLogger.error(

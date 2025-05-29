@@ -616,7 +616,7 @@ class TestIndexManagementAPI:
         return Index.query.count()
 
     # .tox/c1/bin/pytest --cov=weko_index_tree tests/test_rest.py::TestIndexManagementAPI::test_get_v1 -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko_index_tree/.tox/c1/tmp --full-trace -p no:warnings
-    def test_get_v1(self, app, client_rest, auth_headers_noroleuser, auth_headers_sysadmin, auth_headers_sysadmin_without_scope, create_auth_headers, indices_for_api):
+    def test_get_v1(self, app, client_rest, auth_headers_noroleuser, auth_headers_sysadmin, auth_headers_sysadmin_without_scope, create_auth_headers, indices_for_api, mocker):
         """
         インデックス管理API-インデクス取得
         - 全インデックス取得: ユーザー権限に応じた取得可否を確認
@@ -624,11 +624,13 @@ class TestIndexManagementAPI:
         - インデックスツリー取得: 親インデックスから子インデックスが正しく取得できるかを確認
         - 認証なしアクセス: 認証が必要なAPIに対してUnauthorized(401)が返るか確認
         """
-
+        mock_weko_logging = mocker.patch("weko_logging.activity_logger.UserActivityLogger.info")
+        mock_weko_logging = mocker.patch("weko_logging.activity_logger.UserActivityLogger.error")
         oauth2 = OAuth2Provider()
         oauth2.after_request(login_oauth2_user)
 
         default_indices = [0, 1740974499997, 1740974612379]
+        com_admin_indices = [0, 1740974499997, 1740974612379]
         admin_indices = [0, 1623632832836, 1740974499997, 1740974554289, 1740974612379, 1740974612380]
 
         # 全インデックス取得テスト（ユーザー権限に応じた取得可否を確認）
@@ -636,11 +638,14 @@ class TestIndexManagementAPI:
         self.run_get_all_indices(app, client_rest, auth_headers_sysadmin, 200, expected_indices=admin_indices)
 
         for role, headers in create_auth_headers.items():
-            print(f"Testing get indices for {role}")
-            if role in ["sysadmin", "repoadmin", "comadmin"]:
+            if role in ["sysadmin", "repoadmin"]:
                 self.run_get_all_indices(app, client_rest, headers, 200, expected_indices=admin_indices)
                 self.run_get_specific_index(app, client_rest, 1740974499997, headers, 200)
                 self.run_get_specific_index(app, client_rest, 1740974554289, headers, 200)
+            elif role == "comadmin":
+                self.run_get_all_indices(app, client_rest, headers, 200, expected_indices=com_admin_indices)
+                self.run_get_specific_index(app, client_rest, 1740974499997, headers, 200)
+                self.run_get_specific_index(app, client_rest, 1740974554289, headers, 403)
             else:
                 self.run_get_all_indices(app, client_rest, headers, 200, expected_indices=default_indices)
                 self.run_get_specific_index(app, client_rest, 1740974499997, headers, 200)
@@ -749,12 +754,11 @@ class TestIndexManagementAPI:
         """
         url = "v1/tree"
         response = client_rest.get(url, headers={})
-        assert response.status_code == 401
-        print(f"Unauthorizedアクセスエラー: {response.get_data(as_text=True)}")
+        assert response.status_code == 401, f"{response.json}"
 
 
     # .tox/c1/bin/pytest --cov=weko_index_tree tests/test_rest.py::TestIndexManagementAPI::test_post_v1 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko_index_tree/.tox/c1/tmp --full-trace -p no:warnings
-    def test_post_v1(self, app, db, client_rest, auth_headers_sysadmin, auth_headers_noroleuser, auth_headers_sysadmin_without_scope,create_auth_headers,admin_lang_setting, indices_for_api):
+    def test_post_v1(self, app, db, client_rest, auth_headers_sysadmin, auth_headers_noroleuser, auth_headers_sysadmin_without_scope,create_auth_headers,admin_lang_setting, indices_for_api, mocker):
         """
         インデックス管理API-インデックス登録
         - 正常系: インデックスの作成が成功するか確認
@@ -764,7 +768,8 @@ class TestIndexManagementAPI:
           - 必須パラメータなしのリクエストで400エラーを返すか
           - サーバーエラー時に500を返すか
         """
-
+        mock_weko_logging = mocker.patch("weko_logging.activity_logger.UserActivityLogger.info")
+        mock_weko_logging = mocker.patch("weko_logging.activity_logger.UserActivityLogger.error")
         json_ = {
             "index": {
                 "parent": 0,
@@ -841,7 +846,7 @@ class TestIndexManagementAPI:
             private_parrent_id = deepcopy(json_)
             private_parrent_id["index"]["parent"] = 1740974499997
 
-            with patch("weko_index_tree.rest.can_user_access_index", return_value=False):
+            with patch("weko_index_tree.rest.can_admin_access_index", return_value=False):
                 url = "v1/tree/index/"
                 response = client_rest.post(url, headers=auth_headers_sysadmin, json=private_parrent_id)
                 assert response.status_code == 403
@@ -996,7 +1001,7 @@ class TestIndexManagementAPI:
             assert self.count_indices == count_before, "Index has been created when it should not have been"
 
     # .tox/c1/bin/pytest --cov=weko_index_tree tests/test_rest.py::TestIndexManagementAPI::test_put_v1 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko_index_tree/.tox/c1/tmp --full-trace -p no:warnings
-    def test_put_v1(self, app, db, client_rest, auth_headers_sysadmin, auth_headers_noroleuser,auth_headers_noroleuser_1,auth_headers_sysadmin_without_scope, create_auth_headers, indices_for_api):
+    def test_put_v1(self, app, db, client_rest, auth_headers_sysadmin, auth_headers_noroleuser,auth_headers_noroleuser_1,auth_headers_sysadmin_without_scope, create_auth_headers, indices_for_api, mocker):
         """
         インデックス管理API - インデックス更新
         - 正常系: インデックスの更新が成功するか確認
@@ -1015,7 +1020,8 @@ class TestIndexManagementAPI:
                 "index_link_name_english": "Updated Link"
             }
         }
-
+        mock_weko_logging = mocker.patch("weko_logging.activity_logger.UserActivityLogger.info")
+        mock_weko_logging = mocker.patch("weko_logging.activity_logger.UserActivityLogger.error")
         with patch("weko_index_tree.tasks.update_oaiset_setting.delay",side_effect = MagicMock()):
             # 正常にインデックスを更新できるか（200）
             self.run_update_index_success(app, client_rest, auth_headers_sysadmin)
@@ -1095,11 +1101,11 @@ class TestIndexManagementAPI:
 
             response = client_rest.put(url, headers=auth_headers_sysadmin, json=payload)
             assert response.status_code == 200
-            
+
             # index move exception
             payload_move["index"]["parent"] = 1740974499997
             payload_move["index"]["position"] = 0
-            
+
             failed_result = {
                 "is_ok": False,
                 "msg": "Failed to move index.",
@@ -1195,7 +1201,8 @@ class TestIndexManagementAPI:
             assert response.status_code == 500, "DBエラー発生時のリクエストが500にならなかった"
 
     # .tox/c1/bin/pytest --cov=weko_index_tree tests/test_rest.py::TestIndexManagementAPI::test_delete_v1 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko_index_tree/.tox/c1/tmp --full-trace
-    def test_delete_v1(self, app, client_rest, auth_headers_sysadmin, auth_headers_noroleuser, auth_headers_sysadmin_without_scope, create_auth_headers, indices_for_api):
+     # def test_put_v1(self, app, db, client_rest, auth_headers_sysadmin, auth_headers_noroleuser,auth_headers_noroleuser_1,auth_headers_sysadmin_without_scope, create_auth_headers, indices_for_api, mocker):
+    def test_delete_v1(self, app, client_rest, auth_headers_sysadmin, auth_headers_noroleuser, auth_headers_sysadmin_without_scope, create_auth_headers, indices_for_api, mocker):
         """
         インデックス管理API - インデックス削除
         - 正常系: インデックスの削除が成功するか確認
@@ -1205,6 +1212,12 @@ class TestIndexManagementAPI:
           - 存在しないIDを指定した場合 404 を返すか
           - サーバーエラー時に 500 を返すか
         """
+        mock_import_running = mocker.patch("weko_search_ui.tasks.is_import_running", return_value="celery_not_run")
+        mock_doi_in_index = mocker.patch("weko_index_tree.utils.validate_before_delete_index", return_value=(False , [], []))
+        mock_doi_in_index = mocker.patch("weko_index_tree.api.Indexes.delete_set_info")
+        mock_weko_deposit = mocker.patch("weko_deposit.api.WekoDeposit.delete_by_index_tree_id")
+        mock_weko_logging = mocker.patch("weko_logging.activity_logger.UserActivityLogger.info")
+        mock_weko_logging = mocker.patch("weko_logging.activity_logger.UserActivityLogger.error")
         with patch("weko_index_tree.tasks.delete_oaiset_setting.delay",side_effect = MagicMock()):
             with patch("weko_index_tree.tasks.update_oaiset_setting.delay",side_effect = MagicMock()):
                 # 認証なしのリクエストが拒否されるか（401）
@@ -1213,15 +1226,17 @@ class TestIndexManagementAPI:
                 allowed_roles = ["sysadmin", "repoadmin"]
                 for role, headers in create_auth_headers.items():
                     if role in allowed_roles:
-                        print(f"{role} should be able to delete index (200)")
+                        # print(f"{role} should be able to delete index (200)")
                         url = "v1/tree/index/"
-                        response = client_rest.post(url, headers=auth_headers_sysadmin, json={"index":{"parent_id": "1623632832836"}})
+                        response = client_rest.post(url, headers=auth_headers_sysadmin, json={"index":{"parent": "1623632832836"}})
                         id = response.json["index"]["id"]
-                        print(id)
                         self.run_delete_index_success(app, client_rest, headers, id)
                     else:
-                        print(f"{role} should NOT be able to delete index (403)")
+                        # print(f"{role} should NOT be able to delete index (403)")
                         self.run_delete_index_forbidden(app, client_rest, headers)
+
+                # cant delete root index
+                self.run_delete_index_bad_request(app, client_rest, auth_headers_sysadmin, 0)
 
                 # 権限のないユーザーが403エラーを受け取るか
                 self.run_delete_index_forbidden(app, client_rest, auth_headers_noroleuser)
@@ -1240,7 +1255,7 @@ class TestIndexManagementAPI:
 
                 url = "v1/tree/index/1740974612379"
 
-                with patch("weko_index_tree.rest.can_user_access_index", return_value=False):
+                with patch("weko_index_tree.rest.can_admin_access_index", return_value=False):
                     url = "v1/tree/index/1740974612379"
                     response = client_rest.delete(url, headers=auth_headers_sysadmin)
                     assert response.status_code == 403
@@ -1250,29 +1265,45 @@ class TestIndexManagementAPI:
                     response = client_rest.delete(url, headers=auth_headers_sysadmin)
                     assert response.status_code == 500
 
-                with patch("weko_index_tree.api.Indexes.delete", side_effect=PermissionError):
+                with patch("weko_index_tree.rest.perform_delete_index", return_value=("", ["Test Problem"])):
                     response = client_rest.delete(url, headers=auth_headers_sysadmin)
-                    assert response.status_code == 403
+                    assert response.status_code == 400
 
-                with patch("weko_index_tree.api.Indexes.delete", side_effect=Exception):
+                with patch("weko_index_tree.rest.perform_delete_index", side_effect=SQLAlchemyError):
                     response = client_rest.delete(url, headers=auth_headers_sysadmin)
                     assert response.status_code == 500
 
+                with patch("weko_index_tree.rest.perform_delete_index", side_effect=Exception):
+                    response = client_rest.delete(url, headers=auth_headers_sysadmin)
+                    assert response.status_code == 500
+
+                url = "v1/tree/index/"
+                response = client_rest.post(url, headers=auth_headers_sysadmin, json={"index":{"parent": "1623632832836"}})
+                id = response.json["index"]["id"]
+                mock_import_running.return_value = "is_import_running"
+                # cant delete index when import is running
+                self.run_delete_index_bad_request(app, client_rest, auth_headers_sysadmin, id)
+
+
     def run_delete_index_success(self, app, client_rest, auth_headers, index_id):
         """
-        正常にインデックスを削除できるか確認（200）
+        正常にインデックスを削除できるか確認（204）
         """
         url = f"v1/tree/index/{index_id}"
 
         # 削除APIを呼び出す
         response = client_rest.delete(url, headers=auth_headers)
-        assert response.status_code == 200, f"削除APIのレスポンスコードが200ではなく {response.status_code}"
-        assert json.loads(response.data)["message"] == "Index deleted successfully."
+        assert response.status_code == 204, f"{response.json}"
 
         # DBからデータを再取得して検証
         with app.app_context():
             deleted_index = Indexes.get_index(index_id)
             assert deleted_index is None, f"削除後もインデックスID {index_id} がDBに存在する"
+
+    def run_delete_index_bad_request(self, app, client_rest, auth_headers, index_id):
+        url = f"v1/tree/index/{index_id}"
+        response = client_rest.delete(url, headers=auth_headers)
+        assert response.status_code == 400, f"{response.json}"
 
     def run_delete_index_unauthorized(self, app, client_rest):
         """
@@ -1314,4 +1345,4 @@ class TestIndexManagementAPI:
         # DBエラーを発生させるために `Indexes.delete` をモック
         with patch.object(Indexes, "delete", side_effect=SQLAlchemyError):
             response = client_rest.delete(url, headers=auth_headers)
-            assert response.status_code == 500, "DBエラー発生時のリクエストが500にならなかった"
+            assert response.status_code == 500, f"{response.json}"
