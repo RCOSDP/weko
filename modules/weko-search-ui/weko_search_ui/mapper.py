@@ -27,7 +27,7 @@ from weko_records.api import (
 )
 from weko_records.serializers.utils import get_full_mapping
 
-from .config import ROCRATE_METADATA_FILE
+from .config import ROCRATE_METADATA_FILE, ROCRATE_METADATA_WK_CONTEXT_V1
 
 DEFAULT_FIELD = [
     "title",
@@ -1324,6 +1324,8 @@ class JsonLdMapper(JsonMapper):
         "Publisher": "Organization"
     }
 
+    WK_CONTEXT = ROCRATE_METADATA_WK_CONTEXT_V1
+
     def __init__(self, itemtype_id, json_mapping):
         """Initilize JsonLdMapper.
 
@@ -1360,6 +1362,8 @@ class JsonLdMapper(JsonMapper):
         errors = []
         item_map = self._create_item_map(detail=True)
         required_map = self.required_properties()
+        import json
+        current_app.logger.info(json.dumps(item_map, ensure_ascii=False))
 
         errors += [
             _('"{key}" is required.').format(key=k)
@@ -2111,6 +2115,7 @@ class JsonLdMapper(JsonMapper):
         }
 
         rocrate = ROCrate()
+        rocrate.metadata.extra_terms.update(wk=self.WK_CONTEXT)
 
         # metadata for system
         rocrate.name = metadata["item_title"]
