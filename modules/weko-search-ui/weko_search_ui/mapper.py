@@ -1601,6 +1601,9 @@ class JsonLdMapper(JsonMapper):
                 PROP_PATH = properties_mapping[META_PATH]
                 prop_props = PROP_PATH.split(".")
                 meta_value = metadata.get(META_KEY)
+                if meta_value is None or meta_value == "":
+                    # If the value is None or empty, skip setting metadata
+                    continue
                 if not isinstance(meta_value, (str, int, float, bool)):
                     meta_value = str(meta_value)
                 # META_KEY="dc:type.@id", meta_props=["dc:type","@id"],
