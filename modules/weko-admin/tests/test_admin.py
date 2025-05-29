@@ -2384,8 +2384,8 @@ class TestSwordAPIJsonldSettingsView:
         SwordAPIJsonldSettingsView().get_count_query()
 
     # def validate_mapping(self, id):
-    # .tox/c1/bin/pytest --cov=weko_admin tests/test_admin.py::TestSwordAPIJsonldSettingsView::test_valedate_mapping -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
-    def test_valedate_mapping(self, client, users, db, sword_mapping, mocker):
+    # .tox/c1/bin/pytest --cov=weko_admin tests/test_admin.py::TestSwordAPIJsonldSettingsView::test_validate_mapping -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
+    def test_validate_mapping(self, client, users, db, sword_mapping, mocker):
         login_user_via_session(client,email=users[0]["email"])
         current_app.config['WEKO_ADMIN_SWORD_API_JSON_LD_FULL_AUTHORITY_ROLE'] = 1
 

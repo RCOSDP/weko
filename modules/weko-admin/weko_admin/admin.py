@@ -2238,7 +2238,7 @@ class JsonldMappingView(ModelView):
 
 
     @expose("/validate", methods=["POST"])
-    def valedate_mapping(self):
+    def validate_mapping(self):
         data = request.get_json()
         itemtype_id = data.get("itemtype_id")
         mapping_id = data.get("mapping_id")
