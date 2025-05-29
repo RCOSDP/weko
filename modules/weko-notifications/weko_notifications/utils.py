@@ -166,7 +166,9 @@ def _get_params_for_registrant(target_id, actor_id, shared_id):
         shared_id (int): The shared ID.
 
     Returns:
-        tuple: The parameters for registrant.
+        tuple(set, str):
+            - str: Set of target IDs.
+            - str: The actor's name.
     """
     set_target_id = {target_id}
     is_shared = shared_id != -1

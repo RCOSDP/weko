@@ -112,30 +112,56 @@ require([
     if (community) {
       post_uri = post_uri + "?community=" + community;
     }
+    // Added DOI check process
+    let check_doi_uri = "/api/items/check_record_doi/" + pid_val;
     $.ajax({
-      url: post_uri,
-      method: 'POST',
+      url: check_doi_uri,
+      method: 'GET',
       async: true,
-      contentType: 'application/json',
-      data: JSON.stringify(post_data),
-      success: function (res, status) {
-        $('[role="msg"]').hide();
+      success: function (res) {
         if (0 == res.code) {
-          let uri = res.data.redirect.replace('api/', '')
-          document.location.href = uri;
-        } else {
+          $('[role="msg"]').hide();
+          $('[role="alert"]').css('display', 'inline-block');
+          $('[role="alert"]').text($("#delete_message").val());
           $('#btn_edit').removeAttr("disabled");
           $('#btn_delete').removeAttr("disabled");
           $('#btn_ver_delete').removeAttr("disabled");
-          $('[role="alert"]').css('display', 'inline-block');
-          $('[role="alert"]').text(res.msg);
-          if ("activity_id" in res) {
-            url = "/workflow/activity/detail/"+res.activity_id;
-            if (community) {
-              url = url + "?community=" + community;
+        } else {
+          $.ajax({
+            url: post_uri,
+            method: 'POST',
+            async: true,
+            contentType: 'application/json',
+            data: JSON.stringify(post_data),
+            success: function (res, status) {
+              $('[role="msg"]').hide();
+              if (0 == res.code) {
+                let uri = res.data.redirect.replace('api/', '')
+                document.location.href = uri;
+              } else {
+                $('#btn_edit').removeAttr("disabled");
+                $('#btn_delete').removeAttr("disabled");
+                $('#btn_ver_delete').removeAttr("disabled");
+                $('[role="alert"]').css('display', 'inline-block');
+                $('[role="alert"]').text(res.msg);
+                if ("activity_id" in res) {
+                  url = "/workflow/activity/detail/"+res.activity_id;
+                  if (community) {
+                    url = url + "?community=" + community;
+                  }
+                  $('[role="alert"]').append(' <a href=' + url + '>' + res.activity_id + '</a>')
+                }
+              }
+            },
+            error: function (jqXHE, status) {
+              $('[role="msg"]').hide();
+              $('#btn_edit').removeAttr("disabled");
+              $('#btn_delete').removeAttr("disabled");
+              $('#btn_ver_delete').removeAttr("disabled");
+              $('[role="alert"]').css('display', 'inline-block');
+              $('[role="alert"]').text("INTERNAL SERVER ERROR");
             }
-            $('[role="alert"]').append(' <a href=' + url + '>' + res.activity_id + '</a>')
-          }
+          });
         }
       },
       error: function (jqXHE, status) {
@@ -144,7 +170,7 @@ require([
         $('#btn_delete').removeAttr("disabled");
         $('#btn_ver_delete').removeAttr("disabled");
         $('[role="alert"]').css('display', 'inline-block');
-        $('[role="alert"]').text("INTERNAL SERVER ERROR");
+        $('[role="alert"]').text("Error api /api/items/check_record_doi/");
       }
     });
   });
@@ -165,39 +191,62 @@ require([
     if (community) {
       post_uri = post_uri + "?community=" + community;
     }
+    // Extract PID
+    // pid_val has del_ver and version information, so remove them here
+    let pidParts = pid_val.split('_');
+    let pidWithVer = pidParts[pidParts.length - 1];
+    let pid = pidWithVer.split('.')[0];
+    // Added DOI check process
+    let check_doi_uri = "/api/items/check_record_doi/" + pid;
     $.ajax({
-      url: post_uri,
-      method: 'POST',
+      url: check_doi_uri,
+      method: 'GET',
       async: true,
-      contentType: 'application/json',
-      data: JSON.stringify(post_data),
-      success: function (res, status) {
-        $('[role="msg"]').hide();
+      success: function (res) {
         if (0 == res.code) {
-          let uri = res.data.redirect.replace('api/', '')
-          document.location.href = uri;
-        } else {
+          $('[role="msg"]').hide();
+          $('[role="alert"]').css('display', 'inline-block');
+          $('[role="alert"]').text($("#delete_message").val());
           $('#btn_edit').removeAttr("disabled");
           $('#btn_delete').removeAttr("disabled");
           $('#btn_ver_delete').removeAttr("disabled");
-          $('[role="alert"]').css('display', 'inline-block');
-          $('[role="alert"]').text(res.msg);
-          if ("activity_id" in res) {
-            url = "/workflow/activity/detail/"+res.activity_id;
-            if (community) {
-              url = url + "?community=" + community;
+        } else {
+          $.ajax({
+            url: post_uri,
+            method: 'POST',
+            async: true,
+            contentType: 'application/json',
+            data: JSON.stringify(post_data),
+            success: function (res, status) {
+              $('[role="msg"]').hide();
+              if (0 == res.code) {
+                let uri = res.data.redirect.replace('api/', '')
+                document.location.href = uri;
+              } else {
+                $('#btn_edit').removeAttr("disabled");
+                $('#btn_delete').removeAttr("disabled");
+                $('#btn_ver_delete').removeAttr("disabled");
+                $('[role="alert"]').css('display', 'inline-block');
+                $('[role="alert"]').text(res.msg);
+                if ("activity_id" in res) {
+                  url = "/workflow/activity/detail/"+res.activity_id;
+                  if (community) {
+                    url = url + "?community=" + community;
+                  }
+                  $('[role="alert"]').append(' <a href=' + url + '>' + res.activity_id + '</a>')
+                }
+              }
+            },
+            error: function (jqXHE, status) {
+              $('[role="msg"]').hide();
+              $('#btn_edit').removeAttr("disabled");
+              $('#btn_delete').removeAttr("disabled");
+              $('#btn_ver_delete').removeAttr("disabled");
+              $('[role="alert"]').css('display', 'inline-block');
+              $('[role="alert"]').text("Error api /api/items/check_record_doi/");
             }
-            $('[role="alert"]').append(' <a href=' + url + '>' + res.activity_id + '</a>')
-          }
+          });
         }
-      },
-      error: function (jqXHE, status) {
-        $('[role="msg"]').hide();
-        $('#btn_edit').removeAttr("disabled");
-        $('#btn_delete').removeAttr("disabled");
-        $('#btn_ver_delete').removeAttr("disabled");
-        $('[role="alert"]').css('display', 'inline-block');
-        $('[role="alert"]').text("INTERNAL SERVER ERROR");
       }
     });
   });

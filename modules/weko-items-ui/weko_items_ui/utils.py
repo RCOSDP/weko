@@ -3974,12 +3974,13 @@ def check_duplicate(data, is_item=True, exclude_ids=[]):
     Args:
         data (dict or str): Metadata dictionary (or JSON string).
         is_item (bool): True if checking an item, False if checking a record.
+        exclude_ids (list): List of record IDs to exclude from the check.
 
     Returns:
-        tuple:
-            - bool: True if duplicate exists, False otherwise.
-            - list: List of duplicate record IDs.
-            - list: List of duplicate record URLs.
+        tuple(bool, list, list):
+            - True if duplicate exists, False otherwise.
+            - List of duplicate record IDs.
+            - List of duplicate record URLs.
     """
     if isinstance(data, str):
         try:
@@ -4019,12 +4020,18 @@ def check_duplicate(data, is_item=True, exclude_ids=[]):
 
     # 1. Check identifier
     if identifier:
+        escaped_identifier = identifier.replace('"', '\\"')
         query = text(f"""
-            SELECT COALESCE(CAST(SPLIT_PART(jsonb_extract_path_text(json, 'recid'), '.', 1) AS INTEGER), 0)
+            SELECT jsonb_extract_path_text(json, 'recid')
             FROM records_metadata
-            WHERE jsonb_path_exists(json, '$.**.subitem_identifier_uri ? (@ == "{identifier}")')
+            WHERE jsonb_path_exists(json, :jsonpath_query)
+            AND jsonb_extract_path_text(json, 'publish_status') = '0'
+            AND jsonb_extract_path_text(json, 'recid') NOT LIKE '%.%'
         """)
-        result = db.session.execute(query).fetchall()
+        params = {
+            "jsonpath_query": f'$.**.subitem_identifier_uri ? (@ == "{escaped_identifier}")'
+        }
+        result = db.session.execute(query, params).fetchall()
         if result:
             recid_list = [r[0] for r in result]
             return True, recid_list, [f"https://{host}/records/{r}" for r in recid_list]
@@ -4034,9 +4041,11 @@ def check_duplicate(data, is_item=True, exclude_ids=[]):
     normalized_title = re.sub(r'[\s,　]', '', normalized_title)
 
     query = text("""
-        SELECT COALESCE(CAST(SPLIT_PART(jsonb_extract_path_text(json, 'recid'), '.', 1) AS INTEGER), 0), json
+        SELECT jsonb_extract_path_text(json, 'recid'), json
         FROM records_metadata
         WHERE jsonb_path_exists(json, '$.**.subitem_title')
+        AND jsonb_extract_path_text(json, 'publish_status') = '0'
+        AND jsonb_extract_path_text(json, 'recid') NOT LIKE '%.%'
     """)
     result = db.session.execute(query).fetchall()
 
@@ -4057,12 +4066,18 @@ def check_duplicate(data, is_item=True, exclude_ids=[]):
         return False, [], []
 
     # 3. Match resource_type
+    escaped_resource_type = resource_type.replace('"', '\\"')
     query = text(f"""
-        SELECT COALESCE(CAST(SPLIT_PART(jsonb_extract_path_text(json, 'recid'), '.', 1) AS INTEGER), 0)
+        SELECT jsonb_extract_path_text(json, 'recid')
         FROM records_metadata
-        WHERE jsonb_path_exists(json, '$.**.resourcetype ? (@ == "{resource_type}")')
+        WHERE jsonb_path_exists(json, :jsonpath_query)
+        AND jsonb_extract_path_text(json, 'publish_status') = '0'
+        AND jsonb_extract_path_text(json, 'recid') NOT LIKE '%.%'
     """)
-    result = db.session.execute(query).fetchall()
+    params = {
+        "jsonpath_query": f'$.**.resourcetype ? (@ == "{escaped_resource_type}")'
+    }
+    result = db.session.execute(query, params).fetchall()
     recids_resource = {r[0] for r in result}
     matched_recids &= recids_resource
     matched_recids -= set(exclude_ids)
@@ -4095,9 +4110,11 @@ def check_duplicate(data, is_item=True, exclude_ids=[]):
 
         if author_names:
             query = text("""
-                SELECT COALESCE(CAST(SPLIT_PART(jsonb_extract_path_text(json, 'recid'), '.', 1) AS INTEGER), 0), json
+                SELECT jsonb_extract_path_text(json, 'recid'), json
                 FROM records_metadata
                 WHERE jsonb_path_exists(json, '$.**.creatorNames[*].creatorName')
+                AND jsonb_extract_path_text(json, 'publish_status') = '0'
+                AND jsonb_extract_path_text(json, 'recid') NOT LIKE '%.%'
             """)
             result = db.session.execute(query).fetchall()
             for recid, json_obj in result:
@@ -4111,9 +4128,11 @@ def check_duplicate(data, is_item=True, exclude_ids=[]):
     else:
         normalized_creator = re.sub(r'[\s,　]', '', creator)
         query = text("""
-            SELECT COALESCE(CAST(SPLIT_PART(jsonb_extract_path_text(json, 'recid'), '.', 1) AS INTEGER), 0), json
+            SELECT jsonb_extract_path_text(json, 'recid'), json
             FROM records_metadata
             WHERE jsonb_path_exists(json, '$.**.creatorNames[*].creatorName')
+            AND jsonb_extract_path_text(json, 'publish_status') = '0'
+            AND jsonb_extract_path_text(json, 'recid') NOT LIKE '%.%'
         """)
         result = db.session.execute(query).fetchall()
         for recid, json_obj in result:

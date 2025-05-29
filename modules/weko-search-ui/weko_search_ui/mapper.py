@@ -10,9 +10,9 @@
 
 import os
 import re
-import json
 import itertools
 import xmltodict
+import traceback
 from datetime import date
 from difflib import SequenceMatcher as SeqMatcher
 from functools import partial, reduce
@@ -1186,16 +1186,21 @@ class JsonMapper(BaseMapper):
         self.json = json
         if itemtype_id is not None:
             self.itemtype = ItemTypes.get_by_id(itemtype_id)
-            self.itemtype_name = self.itemtype.item_type_name.name
+            self.itemtype_name = str(self.itemtype.item_type_name.name)
+
+        elif itemtype_name is not None:
+            self.itemtype_name = str(itemtype_name)
+            self.itemtype = ItemTypes.get_by_name(itemtype_name)
 
         else:
-            self.itemtype_name = itemtype_name
-            if not BaseMapper.itemtype_map:
-                BaseMapper.update_itemtype_map()
+            raise ValueError(
+                "Either itemtype_id or itemtype_name must be provided."
+            )
 
-            for item in BaseMapper.itemtype_map:
-                if self.itemtype_name == item:
-                    self.itemtype = BaseMapper.itemtype_map.get(item)
+        if self.itemtype is None:
+            raise ValueError(
+                f"ItemType with id {itemtype_id} or name {itemtype_name} not found."
+            )
 
     def _create_item_map(self, detail=False):
         """Create schema information about ItemType.
@@ -1351,7 +1356,7 @@ class JsonLdMapper(JsonMapper):
         Returns:
             errors (list[str] | None): list of errors.
         """
-        from flask_babelex import lazy_gettext as _
+        from flask_babelex import gettext as _
         errors = []
         item_map = self._create_item_map(detail=True)
         required_map = self.required_properties()
@@ -1424,7 +1429,7 @@ class JsonLdMapper(JsonMapper):
         properties_mapping = {
             # make map of json-ld key to itemtype metadata key
             # e.g. { "dc:title.value": "item_30001_title0.subitem_title" }
-            ld_key: item_map.get(prop_name)
+            str(ld_key): str(item_map.get(prop_name))
                 for prop_name, ld_key in self.json_mapping.items()
                 if prop_name in item_map
         }
@@ -1462,24 +1467,20 @@ class JsonLdMapper(JsonMapper):
         def _empty_metadata(parent_prop_key):
             return fixed_properties.get(parent_prop_key, {})
 
-        def _set_metadata(
-            parent, META_KEY, meta_props, PROP_PATH, prop_props
-        ):
+        def _set_metadata(parent, meta_props, prop_props):
             """
             Args:
                 parent (dict): parent metadata.
-                META_KEY (str): deconstructed json-ld key.
-                meta_props (list[str]): json-ld hierarchy split by ".".
-                PROP_PATH (str): itemtype metadata hierarchy.
+                meta_props (list[str]):
+                    json-ld hierarchy split by ".".
                 prop_props (list[str]):
                     itemtype metadata metadata split by ".".
             """
-            # meta_key="dc:type.@id", meta_path="dc:type.@id, meta_props=["dc:type", "@id"]
-            # prop_path=item_30001_resource_type11.resourceuri, prop_props=["item_30001_resource_type11","resourceuri"]
+            # META_KEY="dc:type.@id", meta_props=["dc:type", "@id"]
+            # PROP_PATH=item_30001_resource_type11.resourceuri, prop_props=["item_30001_resource_type11","resourceuri"]
             if len(prop_props) == 0:
-                raise Exception()
+                raise Exception("Unexpected error: prop_props is empty.")
             if len(prop_props) == 1:
-                meta_value = metadata.get(META_KEY)
                 if self._get_property_type(PROP_PATH) == "array":
                     schema = self.itemtype.schema["properties"]
                     for prop in PROP_PATH:
@@ -1519,8 +1520,7 @@ class JsonLdMapper(JsonMapper):
                         prop_props[1], _empty_metadata(sub_prop_key)
                     )
                     _set_metadata(
-                        sub_sub_object, META_KEY, meta_props[1:],
-                        PROP_PATH, prop_props[1:]
+                        sub_sub_object, meta_props[1:], prop_props[1:]
                     )
                     sub_prop_object.update({prop_props[1]: sub_sub_object})
                     parent.update({prop_props[0]: sub_prop_object})
@@ -1533,9 +1533,7 @@ class JsonLdMapper(JsonMapper):
                             for _ in range(index - len(sub_prop_array) + 1)
                         ])
                     sub_sub_object = _empty_metadata(sub_prop_key)
-                    _set_metadata(
-                        sub_sub_object, META_KEY, meta_props,
-                        PROP_PATH, prop_props[1:]
+                    _set_metadata(sub_sub_object, meta_props, prop_props[1:]
                     )
                     sub_prop_array[index].update(sub_sub_object)
                     parent.update({prop_props[0]: sub_prop_array})
@@ -1546,9 +1544,7 @@ class JsonLdMapper(JsonMapper):
                 )
                 if index is not None and index > 1:
                     return
-                _set_metadata(
-                    sub_prop_object, META_KEY, meta_props[1:],
-                    PROP_PATH, prop_props[1:]
+                _set_metadata(sub_prop_object, meta_props[1:], prop_props[1:]
                 )
                 parent.update({prop_props[0]: sub_prop_object})
 
@@ -1561,14 +1557,16 @@ class JsonLdMapper(JsonMapper):
                         for _ in range(index - len(sub_prop_array) + 1)
                     ])
                 _set_metadata(
-                    sub_prop_array[index], META_KEY, meta_props[1:],
-                    PROP_PATH, prop_props[1:]
+                    sub_prop_array[index], meta_props[1:], prop_props[1:]
                 )
                 parent.update({prop_props[0]: sub_prop_array})
             return
 
         for META_KEY in metadata:
+            if not isinstance(META_KEY, str):
+                continue
             META_PATH = re.sub(r"\[\d+\]", "", META_KEY)
+            # metadata for system
             if "wk:index" in META_PATH:
                 path = mapped_metadata.get("path", [])
                 path.append(int(metadata.get(META_KEY)))
@@ -1594,15 +1592,22 @@ class JsonLdMapper(JsonMapper):
             elif META_PATH not in properties_mapping:
                 missing_metadata[META_KEY] = metadata[META_KEY]
             else:
+                # item metadata
                 meta_props = META_KEY.split(".")
                 PROP_PATH = properties_mapping[META_PATH]
                 prop_props = PROP_PATH.split(".")
-                # meta_key="dc:type.@id", meta_path="dc:type.@id", meta_props=["dc:type","@id"],
-                # prop_path=item_30001_resource_type11.resourceuri, prop_props=["item_30001_resource_type11","resourceuri"]
-                _set_metadata(
-                    mapped_metadata, META_KEY, meta_props,
-                    PROP_PATH, prop_props
-                )
+                meta_value = metadata.get(META_KEY)
+                if not isinstance(meta_value, (str, int, float, bool)):
+                    meta_value = str(meta_value)
+                # META_KEY="dc:type.@id", meta_props=["dc:type","@id"],
+                # PROP_PATH=item_30001_resource_type11.resourceuri, prop_props=["item_30001_resource_type11","resourceuri"]
+                try:
+                    _set_metadata(mapped_metadata, meta_props, prop_props)
+                except Exception as ex:
+                    current_app.logger.warning(
+                        f"Failed to set metadata for {META_KEY}: {meta_value}"
+                    )
+                    traceback.print_exc()
 
         # Check if "Extra" prepared in itemtype schema form item_map
         if "Extra" in item_map:
@@ -1952,7 +1957,7 @@ class JsonLdMapper(JsonMapper):
 
             current_size = len(parent[key])
             for i in range(current_size, size):
-                at_id = gen_id(key)
+                at_id = gen_id(key.split(":")[-1])
                 append_entity(parent, key, at_id, at_type)
             return
 
@@ -1994,7 +1999,7 @@ class JsonLdMapper(JsonMapper):
 
         def gen_type(meta_path):
             """Generate "@type" of entity by using AT_TYPE_MAP."""
-            for k, v in self._create_item_map(detail=True).items():
+            for k, v in item_map.items():
                 if v == meta_path:
                     meta_key = k
                     break
@@ -2005,8 +2010,7 @@ class JsonLdMapper(JsonMapper):
             return "PropertyValue"
 
         def _set_rocrate_metadata(
-            parent, record_key, META_PATH, META_KEY, meta_props,
-            PROP_PATH, prop_props
+            parent, record_key, meta_props, prop_props
         ):
             # Get list_index
             list_index = extract_list_indices(
@@ -2014,45 +2018,36 @@ class JsonLdMapper(JsonMapper):
             )
             # case: prop_props = []
             if len(prop_props) == 0:
-                raise Exception("prop_props is empty")
+                raise Exception("Unexpected error: prop_props is empty.")
 
             # case: prop_props = [prop]
             if len(prop_props) == 1:
                 index = list_index[0] if list_index else None
                 prop = prop_props[0]
                 at_type = gen_type(META_PATH)
-                # at_type = type_map[prop] if prop in type_map else "PropertyValue"
 
                 # dict
                 if index is None:
                     # If prop is "@id", do nothing.
-                    if prop == "@id":
-                        pass
-                    # If prop is under root, add property directly.
-                    else:
+                    if prop != "@id":
                         parent[prop] = deconstructed[record_key]
+                    # If prop is under root, add property directly.
+                    return
                 # list
-                else:
-                    ensure_entity_list_size(parent, prop, at_type, index + 1)
-                    parent[prop][index] = deconstructed[record_key]
-
+                ensure_entity_list_size(parent, prop, at_type, index + 1)
+                parent[prop][index] = deconstructed[record_key]
                 return
 
             _set_child_rocrate_metadata(
-                parent, record_key, META_PATH, META_KEY, meta_props,
-                PROP_PATH, prop_props, list_index
+                parent, record_key, meta_props, prop_props, list_index
                 )
             return
 
         def _set_child_rocrate_metadata(
-            parent, record_key, META_PATH, META_KEY, meta_props,
-            PROP_PATH, prop_props, list_index
+            parent, record_key, meta_props, prop_props, list_index
         ):
             if len(prop_props) == 0:
-                current_app.logger.error(
-                    "Failed to create ro-crate metadata: prop_props is empty."
-                )
-                raise Exception("Failed to create ro-crate metadata.")
+                raise Exception(f"Unexpected error: prop_props is empty.")
 
             prop = prop_props[0]
             index = list_index[0] if list_index else None
@@ -2065,23 +2060,20 @@ class JsonLdMapper(JsonMapper):
                         parent[prop] = deconstructed[record_key]
                         rocrate.add(parent)
                     return
-
                 if "@id" in prop_props:
                     at_id = deconstructed[record_key]
                     add_entity(parent, prop, at_id, at_type)
                     return
-
                 if prop not in parent:
-                    at_id = gen_id(prop)
+                    at_id = gen_id(prop.split(":")[-1])
                     add_entity(
                         parent, prop, at_id, at_type
                     )
                 _set_child_rocrate_metadata(
-                    parent[prop], record_key, META_PATH, META_KEY, meta_props[1:],
-                    PROP_PATH, prop_props[1:], list_index[1:],
+                    parent[prop], record_key,
+                    meta_props[1:], prop_props[1:], list_index[1:],
                 )
                 return
-
             # list
             if len(prop_props) == 1:
                 if prop not in parent:
@@ -2100,8 +2092,8 @@ class JsonLdMapper(JsonMapper):
             ensure_entity_list_size(parent, prop, at_type, index + 1)
             if isinstance(parent[prop], list):
                 _set_child_rocrate_metadata(
-                    parent[prop][index], record_key, META_PATH, META_KEY,
-                    meta_props[1:], PROP_PATH, prop_props[1:], list_index[1:]
+                    parent[prop][index], record_key,
+                    meta_props[1:], prop_props[1:], list_index[1:]
                 )
             else:
                 raise Exception(
@@ -2120,7 +2112,7 @@ class JsonLdMapper(JsonMapper):
 
         rocrate = ROCrate()
 
-        # systematic metadata
+        # metadata for system
         rocrate.name = metadata["item_title"]
         rocrate.description = (
             "Item metadata for Item ID: {}. Title: {}."
@@ -2177,13 +2169,19 @@ class JsonLdMapper(JsonMapper):
 
         deconstructed = self._deconstruct_dict(metadata)
 
-        # Main mapping
+        # item metadata
         for record_key in deconstructed:
-            if "attribute_value" not in record_key:
+            if (
+                not isinstance(record_key, str)
+                or "attribute_value" not in record_key
+            ):
                 continue
 
-            META_KEY = record_key.replace(
-                ".attribute_value_mlt", "").replace(".attribute_value", "")
+            META_KEY = (
+                record_key
+                .replace(".attribute_value_mlt", "")
+                .replace(".attribute_value", "")
+            )
             META_PATH = re.sub(r"\[\d+\]", "", META_KEY)
             meta_props = META_KEY.split(".")
             if META_PATH not in properties_mapping:
@@ -2191,10 +2189,17 @@ class JsonLdMapper(JsonMapper):
             PROP_PATH = properties_mapping[META_PATH] # attribute_value
             prop_props = PROP_PATH.split(".")
 
-            _set_rocrate_metadata(
-                rocrate.root_dataset, record_key, META_PATH, META_KEY,
-                meta_props, PROP_PATH, prop_props
-            )
+            try:
+                _set_rocrate_metadata(
+                    rocrate.root_dataset, record_key,
+                    meta_props, prop_props
+                )
+            except Exception as ex:
+                current_app.logger.warning(
+                    "Failed to set metadata for {}: {}"
+                    .format(META_KEY, deconstructed[record_key])
+                )
+                traceback.print_exc()
 
         # files entity reconstruction
         # "@id" in files entity is format like "data/sample.txt"

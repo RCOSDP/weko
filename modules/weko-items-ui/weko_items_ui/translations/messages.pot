@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: weko-items-ui 0.1.0.dev20170000\n"
 "Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
-"POT-Creation-Date: 2025-05-09 15:32+0900\n"
+"POT-Creation-Date: 2025-05-28 17:48+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -38,191 +38,204 @@ msgstr ""
 msgid "Allow read ranking."
 msgstr ""
 
-#: weko_items_ui/utils.py:1083 weko_items_ui/utils.py:1087
-#: weko_items_ui/utils.py:1091
+#: weko_items_ui/utils.py:1076 weko_items_ui/utils.py:1080
+#: weko_items_ui/utils.py:1084
 msgid "Title"
 msgstr ""
 
-#: weko_items_ui/utils.py:1113 weko_items_ui/utils.py:1117
+#: weko_items_ui/utils.py:1106 weko_items_ui/utils.py:1110
 msgid "Alternative Title"
 msgstr ""
 
-#: weko_items_ui/utils.py:1142 weko_items_ui/utils.py:1146
-#: weko_items_ui/utils.py:1150
+#: weko_items_ui/utils.py:1135 weko_items_ui/utils.py:1139
+#: weko_items_ui/utils.py:1143
 msgid "Creator Given Name"
 msgstr ""
 
-#: weko_items_ui/utils.py:1171 weko_items_ui/utils.py:1175
-#: weko_items_ui/utils.py:1179
+#: weko_items_ui/utils.py:1164 weko_items_ui/utils.py:1168
+#: weko_items_ui/utils.py:1172
 msgid "Creator Family Name"
 msgstr ""
 
-#: weko_items_ui/utils.py:1200
+#: weko_items_ui/utils.py:1193
 msgid "Creator Affiliation Name"
 msgstr ""
 
-#: weko_items_ui/utils.py:1219 weko_items_ui/utils.py:1223
-#: weko_items_ui/utils.py:1227
+#: weko_items_ui/utils.py:1212 weko_items_ui/utils.py:1216
+#: weko_items_ui/utils.py:1220
 msgid "Creator Name"
 msgstr ""
 
-#: weko_items_ui/utils.py:1247 weko_items_ui/utils.py:1251
+#: weko_items_ui/utils.py:1240 weko_items_ui/utils.py:1244
 msgid "Creator Alternative Name"
 msgstr ""
 
-#: weko_items_ui/utils.py:1279 weko_items_ui/utils.py:1283
-#: weko_items_ui/utils.py:1287
+#: weko_items_ui/utils.py:1272 weko_items_ui/utils.py:1276
+#: weko_items_ui/utils.py:1280
 msgid "Contributor Given Name"
 msgstr ""
 
-#: weko_items_ui/utils.py:1308 weko_items_ui/utils.py:1312
-#: weko_items_ui/utils.py:1316
+#: weko_items_ui/utils.py:1301 weko_items_ui/utils.py:1305
+#: weko_items_ui/utils.py:1309
 msgid "Contributor Family Name"
 msgstr ""
 
-#: weko_items_ui/utils.py:1337
+#: weko_items_ui/utils.py:1330
 msgid "Contributor Affiliation Name"
 msgstr ""
 
-#: weko_items_ui/utils.py:1356 weko_items_ui/utils.py:1360
-#: weko_items_ui/utils.py:1364
+#: weko_items_ui/utils.py:1349 weko_items_ui/utils.py:1353
+#: weko_items_ui/utils.py:1357
 msgid "Contributor Name"
 msgstr ""
 
-#: weko_items_ui/utils.py:1384 weko_items_ui/utils.py:1388
+#: weko_items_ui/utils.py:1377 weko_items_ui/utils.py:1381
 msgid "Contributor Alternative Name"
 msgstr ""
 
-#: weko_items_ui/utils.py:1414
+#: weko_items_ui/utils.py:1407
 msgid "Relation Related Title"
 msgstr ""
 
-#: weko_items_ui/utils.py:1439
+#: weko_items_ui/utils.py:1432
 msgid "Funding Reference Funder Name"
 msgstr ""
 
-#: weko_items_ui/utils.py:1456
+#: weko_items_ui/utils.py:1449
 msgid "Funding Reference Award Title"
 msgstr ""
 
-#: weko_items_ui/utils.py:1477
+#: weko_items_ui/utils.py:1470
 msgid "Source Title"
 msgstr ""
 
-#: weko_items_ui/utils.py:1495
+#: weko_items_ui/utils.py:1488
 msgid "Degree Name"
 msgstr ""
 
-#: weko_items_ui/utils.py:1514
+#: weko_items_ui/utils.py:1507
 msgid "Degree Grantor Name"
 msgstr ""
 
-#: weko_items_ui/utils.py:1538
+#: weko_items_ui/utils.py:1531
 msgid "Conference Date"
 msgstr ""
 
-#: weko_items_ui/utils.py:1558
+#: weko_items_ui/utils.py:1551
 msgid "Conference Name"
 msgstr ""
 
-#: weko_items_ui/utils.py:1575
+#: weko_items_ui/utils.py:1568
 msgid "Conference Place"
 msgstr ""
 
-#: weko_items_ui/utils.py:1592
+#: weko_items_ui/utils.py:1585
 msgid "Conference Venue"
 msgstr ""
 
-#: weko_items_ui/utils.py:1609
+#: weko_items_ui/utils.py:1602
 msgid "Conference Sponsor"
 msgstr ""
 
-#: weko_items_ui/utils.py:1635 weko_items_ui/utils.py:3835
-#: weko_items_ui/utils.py:3856
+#: weko_items_ui/utils.py:1628 weko_items_ui/utils.py:3698
+#: weko_items_ui/utils.py:3719
 msgid "Please input all required item."
 msgstr ""
 
-#: weko_items_ui/utils.py:1637
+#: weko_items_ui/utils.py:1630
 msgid "Please input the correct data."
 msgstr ""
 
-#: weko_items_ui/utils.py:2590 weko_items_ui/utils.py:2799
+#: weko_items_ui/utils.py:2593
 msgid "Error occurred during item export."
 msgstr ""
 
-#: weko_items_ui/utils.py:2669
-msgid "Creating data directory"
+#: weko_items_ui/views.py:133
+msgid "Authentication error occurred"
 msgstr ""
 
-#: weko_items_ui/utils.py:2687
-msgid "Creating bag-info.txt"
+#: weko_items_ui/views.py:159
+msgid "No matching policy"
+msgstr ""
+
+#: weko_items_ui/views.py:161
+msgid "Request limit exceeded"
+msgstr ""
+
+#: weko_items_ui/views.py:163
+msgid "Internal server error"
+msgstr ""
+
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:299
+#: weko_items_ui/views.py:165 weko_items_ui/views.py:174
+msgid "An unknown error occurred"
+msgstr ""
+
+#: weko_items_ui/views.py:170
+msgid "API Request Failed"
 msgstr ""
 
 #: weko_items_ui/templates/weko_items_ui/edit.html:319
-#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:503
-#: weko_items_ui/views.py:297
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:490
+#: weko_items_ui/views.py:335
 msgid "The same item may have been registered."
 msgstr ""
 
-#: weko_items_ui/views.py:483
+#: weko_items_ui/views.py:518
 msgid "Invalid request"
 msgstr ""
 
-#: weko_items_ui/views.py:626
+#: weko_items_ui/views.py:661
 msgid "Invalid Request"
 msgstr ""
 
-#: weko_items_ui/views.py:806 weko_items_ui/views.py:843
-#: weko_items_ui/views.py:951 weko_items_ui/views.py:1134
+#: weko_items_ui/views.py:841 weko_items_ui/views.py:878
+#: weko_items_ui/views.py:986 weko_items_ui/views.py:1150
 msgid "Header Error"
 msgstr ""
 
-#: weko_items_ui/views.py:967 weko_items_ui/views.py:1034
-#: weko_items_ui/views.py:1150 weko_items_ui/views.py:1219
+#: weko_items_ui/views.py:998 weko_items_ui/views.py:1054
+#: weko_items_ui/views.py:1163 weko_items_ui/views.py:1219
 msgid "This Item is being edited."
 msgstr ""
 
-#: weko_items_ui/views.py:993 weko_items_ui/views.py:1177
+#: weko_items_ui/views.py:1020 weko_items_ui/views.py:1184
 msgid "You are not allowed to edit this item."
 msgstr ""
 
-#: weko_items_ui/views.py:1000 weko_items_ui/views.py:1184
-msgid "You do not even have an ItemType."
-msgstr ""
-
-#: weko_items_ui/views.py:1008 weko_items_ui/views.py:1192
+#: weko_items_ui/views.py:1029 weko_items_ui/views.py:1193
 msgid "Dependency ItemType not found."
 msgstr ""
 
-#: weko_items_ui/views.py:1014 weko_items_ui/views.py:1198
+#: weko_items_ui/views.py:1035 weko_items_ui/views.py:1199
 msgid "Record does not exist."
 msgstr ""
 
-#: weko_items_ui/views.py:1021 weko_items_ui/views.py:1205
+#: weko_items_ui/views.py:1042 weko_items_ui/views.py:1206
 msgid "Item cannot be edited because the import is in progress."
 msgstr ""
 
-#: weko_items_ui/views.py:1051
+#: weko_items_ui/views.py:1071
 msgid "Workflow setting does not exist."
 msgstr ""
 
-#: weko_items_ui/views.py:1069 weko_items_ui/views.py:1077
-#: weko_items_ui/views.py:1097 weko_items_ui/views.py:1258
-#: weko_items_ui/views.py:1266 weko_items_ui/views.py:1295
+#: weko_items_ui/views.py:1089 weko_items_ui/views.py:1097
+#: weko_items_ui/views.py:1117 weko_items_ui/views.py:1264
+#: weko_items_ui/views.py:1272 weko_items_ui/views.py:1295
 msgid "An error has occurred."
 msgstr ""
 
-#: weko_items_ui/views.py:1495
+#: weko_items_ui/views.py:1492
 msgid "PID does not meet the conditions."
 msgstr ""
 
-#: weko_items_ui/views.py:1497
+#: weko_items_ui/views.py:1494
 msgid ""
 "The mapping of required items for DOI validation is not set. Please "
 "recheck the following mapping settings.<br/>{}"
 msgstr ""
 
-#: weko_items_ui/views.py:1575
+#: weko_items_ui/views.py:1572
 msgid "Your session has timed out. Please login again."
 msgstr ""
 
@@ -233,7 +246,7 @@ msgstr ""
 #: weko_items_ui/templates/weko_items_ui/edit.html:105
 #: weko_items_ui/templates/weko_items_ui/edit.html:256
 #: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:121
-#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:377
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:364
 msgid "Next"
 msgstr ""
 
@@ -241,8 +254,8 @@ msgstr ""
 #: weko_items_ui/templates/weko_items_ui/edit.html:245
 #: weko_items_ui/templates/weko_items_ui/edit.html:266
 #: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:133
-#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:324
-#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:366
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:311
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:353
 msgid "Delete"
 msgstr ""
 
@@ -256,112 +269,112 @@ msgid "フィードバックメール送信先"
 msgstr ""
 
 #: weko_items_ui/templates/weko_items_ui/edit.html:242
-#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:321
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:308
 msgid "Display Request Mail Button"
 msgstr ""
 
 #: weko_items_ui/templates/weko_items_ui/edit.html:243
-#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:322
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:309
 msgid "Request Mail Destination"
 msgstr ""
 
 #: weko_items_ui/templates/weko_items_ui/edit.html:244
-#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:323
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:310
 msgid "From author DB"
 msgstr ""
 
 #: weko_items_ui/templates/weko_items_ui/edit.html:246
-#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:325
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:312
 msgid "Input text"
 msgstr ""
 
 #: weko_items_ui/templates/weko_items_ui/edit.html:247
-#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:326
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:313
 msgid "Duplicate Email Addresses."
 msgstr ""
 
 #: weko_items_ui/templates/weko_items_ui/edit.html:248
-#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:327
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:314
 msgid "Invalid email format."
 msgstr ""
 
 #: weko_items_ui/templates/weko_items_ui/edit.html:294
 #: weko_items_ui/templates/weko_items_ui/edit.html:336
-#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:328
-#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:417
-#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:434
-#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:563
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:315
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:404
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:421
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:550
 #: weko_items_ui/templates/weko_items_ui/iframe/item_index.html:313
 #: weko_items_ui/templates/weko_items_ui/upload.html:100
 msgid "Close"
 msgstr ""
 
 #: weko_items_ui/templates/weko_items_ui/edit.html:306
-#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:483
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:470
 msgid "Please select the ID."
 msgstr ""
 
 #: weko_items_ui/templates/weko_items_ui/edit.html:308
-#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:484
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:471
 msgid "Please input value."
 msgstr ""
 
 #: weko_items_ui/templates/weko_items_ui/edit.html:310
-#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:486
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:473
 msgid "Specified ID does not exist."
 msgstr ""
 
 #: weko_items_ui/templates/weko_items_ui/edit.html:312
 #: weko_items_ui/templates/weko_items_ui/edit.html:314
-#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:496
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:483
 msgid "Automatic metadata input"
 msgstr ""
 
 #: weko_items_ui/templates/weko_items_ui/edit.html:315
-#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:499
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:486
 msgid "Get"
 msgstr ""
 
 #: weko_items_ui/templates/weko_items_ui/edit.html:317
-#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:501
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:488
 msgid "The following items is required. Please recheck and input."
 msgstr ""
 
 #: weko_items_ui/templates/weko_items_ui/edit.html:321
-#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:505
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:492
 msgid "The following items cannot have same value. Please recheck and re-input."
 msgstr ""
 
 #: weko_items_ui/templates/weko_items_ui/edit.html:323
-#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:507
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:494
 msgid ""
 "The following items that contains ja-Kana cannot be set without setting "
 "ja as well. Please recheck and re-input."
 msgstr ""
 
 #: weko_items_ui/templates/weko_items_ui/edit.html:325
-#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:509
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:496
 msgid ""
 "The following items that contains ja-Latn cannot be set without setting "
 "ja as well. Please recheck and re-input."
 msgstr ""
 
 #: weko_items_ui/templates/weko_items_ui/edit.html:327
-#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:511
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:498
 msgid ""
 "The following items contains an invalid date format. Please recheck and "
 "re-input."
 msgstr ""
 
 #: weko_items_ui/templates/weko_items_ui/edit.html:329
-#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:513
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:500
 msgid ""
 "The following email address is not registered in the system. Please "
 "recheck and input."
 msgstr ""
 
 #: weko_items_ui/templates/weko_items_ui/edit.html:331
-#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:517
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:504
 msgid "Please input email address."
 msgstr ""
 
@@ -477,113 +490,89 @@ msgstr ""
 msgid "Registerable file: 「gif, jpg, jpe, jpeg, png, bmp」"
 msgstr ""
 
-#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:287
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:286
 msgid "oa_policy_label"
 msgstr ""
 
-#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:295
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:290
 msgid "oa_policy_export"
 msgstr ""
 
-#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:307
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:297
 msgid "Please enter ISSN, eISSN, or journal title"
 msgstr ""
 
-#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:308
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:298
 msgid "No Policy Information found"
 msgstr ""
 
-#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:309
-msgid "Invalid parameters"
-msgstr ""
-
-#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:310
-msgid "Authentication error occurred"
-msgstr ""
-
-#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:311
-msgid "No matching policy"
-msgstr ""
-
-#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:312
-msgid "Request limit exceeded"
-msgstr ""
-
-#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:313
-msgid "Internal server error"
-msgstr ""
-
-#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:314
-msgid "An unknown error occurred"
-msgstr ""
-
-#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:320
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:307
 msgid "Feedback Mail Destination"
 msgstr ""
 
-#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:329
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:316
 msgid "Search"
 msgstr ""
 
-#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:330
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:317
 msgid "Name"
 msgstr ""
 
-#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:331
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:318
 msgid "Mail address"
 msgstr ""
 
-#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:332
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:319
 msgid "Feedback Mail Import"
 msgstr ""
 
-#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:341
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:328
 msgid "Version Management"
 msgstr ""
 
-#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:346
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:333
 msgid "Upgrade Version"
 msgstr ""
 
-#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:350
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:337
 msgid "Keep Version"
 msgstr ""
 
-#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:373
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:360
 msgid "Save"
 msgstr ""
 
-#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:387
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:374
 msgid "QuitQO"
 msgstr ""
 
-#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:485
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:472
 msgid "Specified index does not exist"
 msgstr ""
 
-#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:494
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:481
 msgid "Position not provided."
 msgstr ""
 
-#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:515
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:502
 msgid "Can not found the email address of approval."
 msgstr ""
 
-#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:519
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:506
 msgid ""
 "The specified number has been exceeded. You can only select up to two "
 "fields."
 msgstr ""
 
-#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:521
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:508
 msgid "The same file name cannot be registered."
 msgstr ""
 
-#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:523
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:510
 msgid "Thumbnail file type error message"
 msgstr ""
 
-#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:525
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:512
 msgid "is too long."
 msgstr ""
 
