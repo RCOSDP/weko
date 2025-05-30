@@ -168,7 +168,35 @@ def get_title_pubdate_path(item_type_id):
     return result
 
 
-@cached_api_json(timeout=50, key_prefix="doi_data")
+def remove_empty(data):
+    """
+    Recursively remove empty values from dictionaries and lists.
+
+    This function traverses the input data structure 
+    (which can be a dictionary, list, or other type)
+    and removes any elements that are considered "empty". 
+    Empty values include: None, empty strings,
+    empty dictionaries, empty lists, and lists containing 
+    only an empty dictionary ([{}]).
+
+    Args:
+        data (Any): The input data structure to be cleaned.
+
+    Returns:
+        Any: The cleaned data structure with all empty values removed.
+    """
+    if isinstance(data, dict):
+        return {k: v for k, v in ((k, remove_empty(v)) for k, v in data.items())
+                if v not in (None, '', {}, [], [{}])}
+    elif isinstance(data, list):
+        cleaned = [remove_empty(item) for item in data]
+        cleaned = [
+            item for item in cleaned if item not in (None, '', {}, [], [{}])
+        ]
+        return cleaned
+    else:
+        return data
+
 def get_doi_record_data(doi, item_type_id, activity_id):
     """Get record data base on DOI API.
 
@@ -184,8 +212,10 @@ def get_doi_record_data(doi, item_type_id, activity_id):
     temp_data = activity.get_activity_metadata(activity_id)
     metadata = temp_data if isinstance(temp_data, dict) else json.loads(temp_data)
     metainfo = metadata.get("metainfo")
+    metainfo_cleaned = remove_empty(metainfo)
     doi_with_original = fetch_metadata_by_doi(doi, item_type_id, metainfo)
     doi_response = [{k: v} for k, v in doi_with_original.items()]
+
     return doi_response
 
 
@@ -236,7 +266,21 @@ def fetch_metadata_by_doi(doi, item_type_id, original=None, **kwargs):
         # case: Original.
         if key == "Original":
             if isinstance(original, dict):
-                response_metadata = original
+                for k, v in original.items():
+                    if isinstance(v, dict):
+                        filtered = {kk: vv for kk, vv in v.items() if vv}
+                        if filtered:
+                            response_metadata[k] = filtered
+                    elif isinstance(v, list):
+                        filtered = [
+                            item for item in v 
+                                if item and 
+                                    (not isinstance(item, dict) or any(item.values()))
+                        ]
+                        if filtered:
+                            response_metadata[k] = filtered
+                    elif v:
+                        response_metadata[k] = v
             else:
                 current_app.logger.info("original metadata is not found.")
                 continue
