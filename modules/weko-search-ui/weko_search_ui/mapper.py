@@ -1362,8 +1362,6 @@ class JsonLdMapper(JsonMapper):
         errors = []
         item_map = self._create_item_map(detail=True)
         required_map = self.required_properties()
-        import json
-        current_app.logger.info(json.dumps(item_map, ensure_ascii=False))
 
         errors += [
             _('"{key}" is required.').format(key=k)
