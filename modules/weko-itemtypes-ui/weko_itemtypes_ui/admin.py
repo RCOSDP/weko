@@ -185,7 +185,7 @@ class ItemTypeMetaDataView(BaseView):
                     current_app.logger.error(
                         "Unexpected error: {}".format(exec_info))
                     UserActivityLogger.error(
-                        operation='ITEM_TYPE_DELETE',
+                        operation="ITEM_TYPE_DELETE",
                         target_key=item_type_id,
                         remarks=tb_info[0]
                     )
@@ -212,7 +212,7 @@ class ItemTypeMetaDataView(BaseView):
                 current_app.logger.debug(
                     'Itemtype delete: {}'.format(item_type_id))
                 UserActivityLogger.info(
-                    operation='ITEM_TYPE_DELETE',
+                    operation="ITEM_TYPE_DELETE",
                     target_key=item_type_id
                 )
                 flash(_('Deleted Item type successfully.'))
@@ -293,12 +293,12 @@ class ItemTypeMetaDataView(BaseView):
             # log item type mapping and workflow
             if not upgrade_version or item_type_id != record.model.id:
                 UserActivityLogger.info(
-                    operation="ITEM_TYPE_MAPING_CREATE",
+                    operation="ITEM_TYPE_MAPPING_CREATE",
                     target_key=record.model.id
                 )
             else:
                 UserActivityLogger.info(
-                    operation="ITEM_TYPE_MAPING_UPDATE",
+                    operation="ITEM_TYPE_MAPPING_UPDATE",
                     target_key=item_type_id
                 )
                 workflow_list = WorkFlow().get_workflow_by_itemtype_id(item_type_id)
@@ -317,13 +317,13 @@ class ItemTypeMetaDataView(BaseView):
             tb_info = traceback.format_tb(exec_info[2])
             if item_type_id != 0:
                 UserActivityLogger.error(
-                    operation='ITEM_TYPE_UPDATE',
+                    operation="ITEM_TYPE_UPDATE",
                     target_key=item_type_id,
                     remarks=tb_info[0]
                 )
             else:
                 UserActivityLogger.error(
-                    operation='ITEM_TYPE_CREATE',
+                    operation="ITEM_TYPE_CREATE",
                     remarks=tb_info[0]
                 )
             default_msg = _('Failed to register Item type.')
@@ -557,7 +557,7 @@ class ItemTypeMetaDataView(BaseView):
             )
             # log item type mapping and workflow
             UserActivityLogger.info(
-                operation="ITEM_TYPE_MAPING_CREATE",
+                operation="ITEM_TYPE_MAPPING_CREATE",
                 target_key=item_type_id
             )
         except Exception as ex:
@@ -825,7 +825,7 @@ class ItemTypeMappingView(BaseView):
                            mapping=data_mapping)
             db.session.commit()
             UserActivityLogger.info(
-                operation="ITEM_TYPE_MAPING_UPDATE",
+                operation="ITEM_TYPE_MAPPING_UPDATE",
                 target_key=data.get('item_type_id')
             )
         except BaseException:
@@ -835,7 +835,7 @@ class ItemTypeMappingView(BaseView):
             exec_info = sys.exc_info()
             tb_info = traceback.format_tb(exec_info[2])
             UserActivityLogger.error(
-                operation='ITEM_TYPE_MAPING_UPDATE',
+                operation="ITEM_TYPE_MAPPING_UPDATE",
                 target_key=data.get('item_type_id'),
                 remarks=tb_info[0]
             )
