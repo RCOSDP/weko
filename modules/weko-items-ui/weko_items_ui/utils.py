@@ -2616,9 +2616,10 @@ def make_rocrate(record_ids, export_path):
         # crate each record directory
         record_path = os.path.join(export_path, f"recid_{record_id}")
         os.makedirs(record_path, exist_ok=True)
-        _export_file(record_id, record_path)
+        cannot_export = _export_file(record_id, record_path)
         # Metadata
-        metadata, filenames = metadata_dict.get(str(record_id), ({}, []))
+        metadata, extracted_files = metadata_dict.get(str(record_id), ({}, []))
+
         item_type_id = metadata.get("item_type_id")
         mappings = JsonldMapping.get_by_itemtype_id(item_type_id)
         mapper = JsonLdMapper(item_type_id, None)
@@ -2629,9 +2630,17 @@ def make_rocrate(record_ids, export_path):
         if mapper.json_mapping is None:
             raise Exception("No valid mapping found for item type")
 
+        for key, value in metadata.items():
+            if not isinstance(value, dict) or value.get("attribute_type") != "file":
+                continue
+            value["attribute_value_mlt"] = [
+                file_metadata for file_metadata in value.get("attribute_value_mlt", [])
+                if file_metadata.get("filename") not in cannot_export
+            ]
+
         # Create RO-Crate info file
         rocrate = mapper.to_rocrate_metadata(
-            metadata, extracted_files=filenames
+            metadata, extracted_files=extracted_files
         )
         jsonld_path = os.path.join(
             record_path, ROCRATE_METADATA_FILE.split("/")[-1]
@@ -2664,13 +2673,14 @@ def _get_metadata_dict_in_es(record_ids):
     metadata_dict = {}
     try:
         # Get metadata from ElasticSearch
-        search = RecordsSearch(
-            index=current_app.config["SEARCH_UI_SEARCH_INDEX"])
-        search = search.filter("terms", control_number=record_ids)
-        search = search.filter("term", relation_version_is_last=True)
-        search = search.sort("control_number")
-        search = search.source(["_item_metadata", "content"])
-        search = search.params(from_=0, size=100)
+        search = (
+            RecordsSearch(index=current_app.config["SEARCH_UI_SEARCH_INDEX"])
+            .filter("terms", control_number=record_ids)
+            .filter("term", relation_version_is_last=True)
+            .sort("control_number")
+            .source(["_item_metadata", "content"])
+            .params(from_=0, size=100)
+        )
         search_result = search.execute().to_dict()
         record_list = search_result.get("hits", {}).get("hits", [])
         for record in record_list:
@@ -2804,12 +2814,18 @@ def _export_item(record_id,
     return exported_item, list_item_role
 
 
-def _export_file(record_id, data_path=None):
+def _export_file(record_id, data_path):
     """Exports files for record according to view permissions.
 
-    :param record_id: Record ID
-    :param data_path: Data Path. Defaults to None.
+    Args:
+        record_id (int): Record ID to export files from.
+        data_path (str): Path to save exported files.
+
+    Returns:
+        list(str):
+            List of files that cannot be exported due to permissions.
     """
+    cannot_export = []
     record = WekoRecord.get_record_by_pid(record_id)
     if record:
         # Get files
@@ -2834,6 +2850,9 @@ def _export_file(record_id, data_path=None):
                     tmp_path = os.path.join(data_path, file.obj.basename)
                     with open(tmp_path, "wb") as temp_file:
                         temp_file.write(file_buffered.read())
+            else:
+                cannot_export.append(file.info().get("filename", "Unknown file"))
+    return cannot_export
 
 
 def _custom_export_metadata(record_metadata: dict, hide_item: bool = True,
@@ -4149,7 +4168,7 @@ def check_duplicate(data, is_item=True, exclude_ids=[]):
         links = [f"https://{host}/records/{r}" for r in final_matched]
         return True, list(final_matched), links
 
-    current_app.logger.info("No duplicates found.")
+    current_app.logger.debug("No duplicates found.")
     return False, [], []
 
 
