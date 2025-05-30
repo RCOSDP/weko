@@ -90,7 +90,7 @@ def init_push_templates():
 @register_breadcrumb(
     blueprint_ui, "breadcrumbs.settings.notifications", _("Notifications")
 )
-def notifications():
+def user_settings():
     """View for settings notifications."""
     notifications_form = notifications_form_factory()
     form_action = request.form.to_dict()
@@ -105,41 +105,52 @@ def notifications():
             current_app.logger.error(
                 f"Error updating notifications settings. user_id={current_user.id}"
             )
-
-        endpoint = notifications_form.webpush_endpoint.data
-        try:
-            if endpoint == "":
-                pass
-            elif notifications_form.subscribe_webpush.data:
-                subscripsion = create_subscription(
-                    current_user.id,
-                    notifications_form.webpush_endpoint.data,
-                    notifications_form.webpush_expiration_time.data,
-                    notifications_form.webpush_p256dh.data,
-                    notifications_form.webpush_auth.data
-                )
-                userprofile = create_userprofile(current_userprofile)
-
-                current_app.logger.info(
-                    "Updating push subscription for user %s: %s",
-                    current_user.id,
-                    endpoint[:24] + "..." + endpoint[-8:]
-                )
-                requests.post(inbox_url("/subscribe"), json=subscripsion)
-                requests.post(inbox_url("/userprofile"), json=userprofile)
-            else:
-                current_app.logger.info(
-                    "Unsubscribing push subscription for user %s: %s",
-                    current_user.id,
-                    endpoint[:24] + "..." + endpoint[-8:]
-                )
-                requests.post(inbox_url("/unsubscribe"), json={"endpoint": endpoint})
-        except Exception as ex:
-            traceback.print_exc()
-            current_app.logger.error(
-                f"Error updating push subscription. user_id={current_user.id}"
-            )
             flash(_("Failed to update push subscription."), category="error")
+
+        else:
+            endpoint = notifications_form.webpush_endpoint.data
+            try:
+                if endpoint == "":
+                    current_app.logger.info(
+                        "No push subscription for user %s.",
+                        current_user.id
+                    )
+                    flash(
+                        _("Failed to get subscription information. Please try again."),
+                        category="error"
+                    )
+                elif notifications_form.subscribe_webpush.data:
+                    subscripsion = create_subscription(
+                        current_user.id,
+                        notifications_form.webpush_endpoint.data,
+                        notifications_form.webpush_expiration_time.data,
+                        notifications_form.webpush_p256dh.data,
+                        notifications_form.webpush_auth.data
+                    )
+                    userprofile = create_userprofile(current_userprofile)
+
+                    current_app.logger.info(
+                        "Updating push subscription for user %s: %s",
+                        current_user.id,
+                        endpoint[:24] + "..." + endpoint[-8:]
+                    )
+                    requests.post(inbox_url("/subscribe"), json=subscripsion)
+                    requests.post(inbox_url("/userprofile"), json=userprofile)
+                else:
+                    current_app.logger.info(
+                        "Unsubscribing push subscription for user %s: %s",
+                        current_user.id,
+                        endpoint[:24] + "..." + endpoint[-8:]
+                    )
+                    requests.post(
+                        inbox_url("/unsubscribe"), json={"endpoint": endpoint}
+                    )
+            except Exception as ex:
+                traceback.print_exc()
+                current_app.logger.error(
+                    f"Error updating push subscription. user_id={current_user.id}"
+                )
+                flash(_("Failed to update push subscription."), category="error")
 
     return render_template(
         current_app.config["WEKO_NOTIFICATIONS_TEMPLATE"],
@@ -172,10 +183,14 @@ def notifications_form_factory():
 
 
 @blueprint_api.route("/notifications", methods=["GET"])
-@login_required
 def notifications():
-    """
-    """
+    """Retrieve notifications for the current user."""
+    if not current_user.is_authenticated:
+        return jsonify(
+            code=401,
+            message=_("Unauthorized access."),
+        ), 401
+
     user_id = current_user.id
     client = NotificationClient(inbox_url())
     notifications = [

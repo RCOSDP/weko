@@ -267,17 +267,17 @@ def notify_item_deleted(
             ).send(NotificationClient(inbox_url()))
         except (ValidationError, HTTPError) as ex:
             current_app.logger.error(
-                "Failed to send notification for item delete."
+                "Failed to send notification for item deletion."
             )
             traceback.print_exc()
             return
         except Exception as ex:
             current_app.logger.error(
-                "Unexpected error occurred while sending notification for item delete."
+                "Unexpected error occurred while sending notification for item deletion."
             )
             traceback.print_exc()
             return
     current_app.logger.info(
-        "{num} notification(s) sent for item delete."
+        "{num} notification(s) sent for item deletion."
         .format(num=len(set_target_id))
     )
