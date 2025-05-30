@@ -20,14 +20,15 @@
 
 """Module of weko-workspace utils."""
 
-import json
+from functools import wraps
 from datetime import datetime,timezone
 import traceback
 from elasticsearch_dsl.query import Q
 from elasticsearch.exceptions import TransportError
+from invenio_cache import current_cache
 from invenio_search import RecordsSearch
-import requests
-from flask import current_app, request
+from jsonschema import validate, ValidationError
+from flask import current_app
 from flask_babelex import gettext as _
 from flask_security import current_user
 from invenio_db import db
@@ -50,13 +51,52 @@ from weko_records.api import (
 from .api import CiNiiURL, JALCURL, DATACITEURL, JamasURL
 from lxml import etree
 
+def is_update_cache():
+    """Return True if Autofill Api has been updated.
+    
+    Returns:
+        bool: True if the Autofill API has been updated, False otherwise.
+    """
+    return current_app.config['WEKO_WORKSPACE_AUTOFILL_API_UPDATED']
+
+def cached_api_json(timeout=50, key_prefix="cached_api_json"):
+    """Cache Api response data.
+
+    Args:
+        timeout (int): Cache timeout in seconds.
+        key_prefix (str): Prefix for the cache key.
+    Returns:
+        function: Decorator function to cache API responses.
+    """
+    def caching(f):
+        @wraps(f)
+        def wrapper(*args, **kwargs):
+            key = key_prefix
+            for value in args:
+                key += str(value)
+            cache_fun = current_cache.cached(
+                timeout=timeout,
+                key_prefix=key,
+                forced_update=is_update_cache,
+            )
+            if current_cache.get(key) is None:
+                data = cache_fun(f)(*args, **kwargs)
+                current_cache.set(key, data)
+                return data
+            else:
+                return current_cache.get(key)
+
+        return wrapper
+
+    return caching
+
 
 def get_workspace_filterCon():
     """
     Retrieves the default filtering conditions for the current user.
 
     Returns:
-        tuple:
+        tuple(dict, bool):
             - default_con (dict): The user's default filtering conditions.
                 If the query fails or returns None, `DEFAULT_FILTERS` is returned.
             - isnotNone (bool): Indicates whether a non-null value was successfully retrieved from the database.
@@ -153,7 +193,7 @@ def get_es_itemlist():
             page = search.execute().to_dict()
             current_app.logger.debug(f"[workspace] search result: {page}")
         return records
-    
+
     except TransportError as e:
         traceback.print_exc()
         current_app.logger.error(f"Failed to get workflow item list from ES: {e} / {search.to_dict()}")
@@ -229,12 +269,13 @@ def get_accessCnt_downloadCnt(recid: str):
 
 
 # 2.1.2.5 アイテムステータス取得処理
-def get_item_status(recId: str):
+def get_item_status(recId: str, file_info: dict):
     """
     Get the converted OA status for a given recid.
 
     Args:
         recId (str): The record ID (WEKO item PID or related identifier).
+        file_info (dict): A dictionary containing file information.
 
     Returns:
         str: The converted OA status based on the mapping, defaults to "Unlinked" if not found.
@@ -247,11 +288,25 @@ def get_item_status(recId: str):
 
     # レコードが存在しない場合、"Unlinked"を返す
     if oaStatusRecord is None:
-        return "Unlinked"
+        return _("Unlinked")
 
     # 元の状態を取得し、変換を行う
     originalStatus = oaStatusRecord.oa_status
-    return current_app.config.get("WEKO_WORKSPACE_OA_STATUS_MAPPING").get(originalStatus, "Unlinked")
+
+    # Check embargo item status
+    if originalStatus == "Processed Fulltext Registered (Embargo)":
+        is_embargo = False
+        if file_info.get('date'):
+            date_value = file_info['date'][0].get('dateValue')
+            if date_value:
+                is_embargo =\
+                    date_value > datetime.now(timezone.utc).strftime('%Y-%m-%d')
+        originalStatus = originalStatus if is_embargo \
+            else "Processed Fulltext Opened (OA)"
+    replaced_status = current_app.config.get("WEKO_WORKSPACE_OA_STATUS_MAPPING")\
+                                        .get(originalStatus, "Unlinked")
+
+    return replaced_status
 
 
 def get_userNm_affiliation():
@@ -449,31 +504,38 @@ def convert_jamas_xml_data_to_dictionary(api_data, encoding='utf-8'):
     }
     try:
         root = etree.XML(api_data.encode(encoding))
-        jamas_xml_data_keys = current_app.config['WEKO_ITEMS_AUTOFILL_CROSSREF_XML_DATA_KEYS']
+        jamas_xml_data_keys = current_app.config.get(
+            "WEKO_WORKSPACE_AUTOFILL_JAMAS_XML_DATA_KEYS", {}
+        )
         for elem in root.getiterator():
-            if etree.QName(elem).localname in jamas_xml_data_keys:
-                if etree.QName(elem).localname == "contributor" or etree.QName(
-                        elem).localname == "organization":
-                        pass
-                elif etree.QName(elem).localname == "year":
-                    pass
-                elif etree.QName(elem).localname in ["issn", "isbn"]:
-                    pass
-                else:
-                    result.update({etree.QName(elem).localname: elem.text})
-
+            localname = etree.QName(elem).localname
+            if elem.text and localname in jamas_xml_data_keys.keys():
+                data = result.get(localname, None)
+                is_multiple = jamas_xml_data_keys.get(localname)
+                if is_multiple:
+                    if not data:
+                        data = []
+                    data.append(elem.text)
+                elif not data:
+                    data = elem.text
+                result[localname] = data
         rtn_data['response'] = result
     except Exception as e:
         rtn_data['error'] = str(e)
     return rtn_data
 
 
-def get_jamas_record_data(doi, item_type_id):
+@cached_api_json(timeout=50, key_prefix="jamas_data")
+def get_jamas_record_data(doi, item_type_id, exclude_duplicate_lang=True):
     """Get record data base on Jamas API.
 
-    :param doi: The Jamas doi
-    :param item_type_id: The item type ID
-    :return:
+    Args:
+        doi (str): The Jamas DOI.
+        item_type_id (int): The item type ID.
+        exclude_duplicate_lang (bool): Whether to exclude duplicate languages in the result.
+
+    Returns:
+        list: A list of dictionaries containing the record data.
     """
     result = list()
     api_response = JamasURL(doi).get_data()
@@ -496,18 +558,23 @@ def get_jamas_record_data(doi, item_type_id):
             get_autofill_key_tree(
                 items.form,
                 get_jamas_autofill_item(item_type_id)))
-        result = build_record_model(autofill_key_tree, api_data)
+        result = build_record_model(
+            autofill_key_tree, api_data, items.schema, exclude_duplicate_lang
+        )
 
     return result
 
 
-def get_jamas_autofill_item(item_id):
+def get_jamas_autofill_item(item_type_id):
     """Get Jamas autofill item.
 
-    :param item_id: Item ID
-    :return:
+    Args:
+        item_type_id (int): The item type ID.
+    
+    Returns:
+        dict: A dictionary containing the Jamas required item data.
     """
-    jpcoar_item = get_item_id(item_id)
+    jpcoar_item = get_item_id(item_type_id)
     jamas_req_item = dict()
     for key in current_app.config[
             'WEKO_WORKSPACE_AUTOFILL_JAMAS_REQUIRED_ITEM']:
@@ -519,185 +586,281 @@ def get_jamas_autofill_item(item_id):
 def get_jamas_data_by_key(api, keyword):
     """Get Jamas data based on keyword.
 
-    Arguments:
-        api: Jamas data
-        keyword: search keyword
+    Args:
+        api (dict): Jamas data response.
+        keyword (str): Keyword for search.
 
     Returns:
-        Jamas data for keyword
+        dict: Jamas data for the specified keyword.
 
     """
     if api['error'] or api['response'] is None:
         return None
 
     data = api['response']
+    language = get_jamas_language_data(data.get('language'))
     result = dict()
-    if keyword == 'title' and data.get('dc:title'):
-        result[keyword] = get_jamas_title_data(data.get('dc:title'))
-    elif keyword == 'creator' and data.get('dc:creator'):
-        result[keyword] = get_jamas_creator_data(data.get('dc:creator'))
-    elif keyword == 'sourceTitle' and data.get('prism:publicationName'):
-        result[keyword] = get_jamas_source_title_data(
-            data.get('prism:publicationName')
+    if keyword == 'title' and data.get('title'):
+        result[keyword] = pack_with_language_value_for_jamas(
+            data.get('title'), language
         )
-    elif keyword == 'volume' and data.get('prism:volume'):
-        result[keyword] = pack_single_value_as_dict(data.get('prism:volume'))
-    elif keyword == 'issue' and data.get('prism:number'):
-        result[keyword] = pack_single_value_as_dict(data.get('prism:number'))
-    elif keyword == 'pageStart' and data.get('prism:startingPage'):
-        result[keyword] = pack_single_value_as_dict(data.get('prism:startingPage'))
+    elif keyword == 'creator' and data.get('creator'):
+        result[keyword] = get_jamas_creator_data(
+            data.get('creator'), language
+        )
+    elif keyword == 'sourceTitle' and data.get('publicationName'):
+        result[keyword] = pack_with_language_value_for_jamas(
+            data.get('publicationName'), language
+        )
+    elif keyword == 'volume' and data.get('volume'):
+        result[keyword] = pack_single_value_for_jamas(data.get('volume'))
+    elif keyword == 'issue' and data.get('number'):
+        result[keyword] = pack_single_value_for_jamas(data.get('number'))
+    elif keyword == 'pageStart' and data.get('startingPage'):
+        result[keyword] = pack_single_value_for_jamas(data.get('startingPage'))
     elif keyword == 'numPages':
-        result[keyword] = pack_single_value_as_dict(data.get('prism:pageRange'))
-    elif keyword == 'date' and data.get('prism:publicationDate'):
-        result[keyword] = get_jamas_issue_date(data.get('prism:publicationDate'))
+        result[keyword] = pack_single_value_for_jamas(data.get('pageRange'))
+    elif keyword == 'date' and data.get('publicationDate'):
+        result[keyword] = get_jamas_issue_date(data.get('publicationDate'))
     elif keyword == 'relation':
         result[keyword] = get_jamas_relation_data(
-            data.get('prism:issn'),
-            data.get('prism:eIssn'),
-            data.get('prism:doi')
+            data.get('issn'),
+            data.get('eIssn'),
+            data.get('doi')
         )
     elif keyword == 'sourceIdentifier':
-        result[keyword] = get_jamas_source_data(data.get('prism:issn'))
+        result[keyword] = get_jamas_source_data(data.get('issn'))
+    elif keyword == 'publisher':
+        result[keyword] = pack_with_language_value_for_jamas(
+            data.get('publisher'), language
+        )
+    elif keyword == 'description' and data.get('description'):
+        result[keyword] = pack_with_language_value_for_jamas(
+            data.get('description'), language
+        )
     elif keyword == 'all':
         for key in current_app.config[
                 'WEKO_WORKSPACE_AUTOFILL_JAMAS_REQUIRED_ITEM']:
             result[key] = get_jamas_data_by_key(api, key).get(key)
     return result
 
+def pack_single_value_for_jamas(data):
+    """Pack single value for Jamas.
+
+    Args:
+        data (str or list): A single value or a list of values to be packed.
+
+    Returns:
+        list: A list containing dictionaries with the value.
+    """
+    result = []
+    if isinstance(data, str):
+        result.append({
+            '@value': data
+        })
+    elif isinstance(data, list):
+        for d in data:
+            new_data = {}
+            new_data['@value'] = d
+            result.append(new_data)
+    return result
+
+
+def pack_with_language_value_for_jamas(data, language="en"):
+    """Pack data with language value for Jamas.
+
+    Args:
+        data (str or list): A string or a list of strings to be packed.
+        language (str): The language of the article. Defaults to "en".
+
+    Returns:
+        list: A list containing dictionaries with value and language.
+    """
+    result = []
+    if isinstance(data, str):
+        result.append({
+            '@value': data,
+            '@language': language
+        })
+    elif isinstance(data, list):
+        for d in data:
+            result.append({
+                '@value': d,
+                '@language': language
+            })
+    return result
 
 def get_jamas_source_data(data):
     """Get Jamas source data.
 
-    :param data:
-    :return:
+    Args:
+        data (str or list): A source identifier string or a list of identifiers.
+
+    Returns:
+        list: A list containing dictionaries with source identifier values and their types.
     """
-    result = list()
-    if data:
-        new_data = dict()
-        new_data['@value'] = data
-        new_data['@type'] = 'ISSN'
-        result.append(new_data)
+    result = []
+    
+    if isinstance(data, str):
+        result.append({
+            '@value': data,
+            '@type': "ISSN"
+        })
+    elif isinstance(data, list):
+        for d in data:
+            result.append({
+                '@value': d,
+                '@type': "ISSN"
+            })
     return result
 
 
-def get_jamas_relation_data(issn, eIssn, doi):
+def get_jamas_relation_data(issn, eissn, doi):
     """Get Jamas relation data.
 
-    :param issn, eIssn, doi:
-    :return:
+    Args:
+        issn (str or list): ISSN or a list of ISSNs.
+        eissn (str or list): EISSN or a list of EISSNs.
+        doi (str or list): DOI or a list of DOIs.
+
+    Returns:
+        list: A list of dictionaries containing the relation data with types.
     """
-    result = list()
-    if doi:
-        new_data = dict()
-        new_data['@value'] = doi
-        new_data['@type'] = "DOI"
-        result.append(new_data)
-    if issn and len(result) == 0:
-        for element in issn:
-            new_data = dict()
-            new_data['@value'] = element
-            new_data['@type'] = "ISSN"
-            result.append(new_data)
-    if eIssn and len(result) == 0:
-        for element in eIssn:
-            new_data = dict()
-            new_data['@value'] = element
-            new_data['@type'] = "EISSN"
-            result.append(new_data)
-    if len(result) == 0:
-        return pack_single_value_as_dict(None)
+    result = []
+    # doi
+    if isinstance(doi, str):
+        result.append({
+            '@value': doi,
+            '@type': "DOI"
+        })
+    elif isinstance(doi, list):
+        for d in doi:
+            result.append({
+                '@value': d,
+                '@type': "DOI"
+            })
+
+    #issn
+    if isinstance(issn, str):
+        result.append({
+            '@value': issn,
+            '@type': "ISSN"
+        })
+    elif isinstance(issn, list):
+        for d in issn:
+            result.append({
+                '@value': d,
+                '@type': "ISSN"
+            })
+    
+    # eissn
+    if isinstance(eissn, str):
+        result.append({
+            '@value': eissn,
+            '@type': "EISSN"
+        })
+    elif isinstance(eissn, list):
+        for d in eissn:
+            result.append({
+                '@value': d,
+                '@type': "EISSN"
+            })
+    
     return result
 
 
 def get_jamas_issue_date(data):
     """Get Jamas issued date.
 
-    Arguments:
-        data -- issued data
+    Args:
+        data (str): The publication date string in the format "YYYY-MM-DD".
 
     Returns:
-        Issued date is packed
+        dict: A dictionary containing the issued date and its type.
 
     """
-    result = dict()
-    if data:
-        result['@value'] = data
-        result['@type'] = 'Issued'
-    else:
-        result['@value'] = None
-        result['@type'] = None
+    result = []
+    if isinstance(data, str):
+        result.append({
+            '@value': data.replace('.', '-').replace("年", "-")\
+                .replace("月", "-").replace("日", ""),
+            '@type': "Issued"
+        })
+    elif isinstance(data, list):
+        for d in data:
+            result.append({
+                '@value': d.replace('.', '-').replace("年", "-")\
+                    .replace("月", "-").replace("日", ""),
+                '@type': "Issued"
+            })
     return result
 
 
-def get_jamas_source_title_data(data):
-    """Get source title information.
-
-    Arguments:
-        data -- created data
-
-    Returns:
-        Source title  data
-
-    """
-    new_data = dict()
-    default_language = 'en'
-    new_data['@value'] = data
-    new_data['@language'] = data['dc:language'] if data['dc:language'] else default_language
-    return new_data
-
-
-def get_jamas_creator_data(data):
+def get_jamas_creator_data(data, language="en"):
     """Get creator name from Jamas data.
 
-    Arguments:
-        data -- Jamas data
-
-    """
-    result = list()
-    default_language = 'en'
-    for name_data in data:
-        full_name = ''
-        full_name = name_data.get('dc:creator')
-
-        new_data = dict()
-        new_data['@value'] = full_name
-        new_data['@language'] = data['dc:language'] if data['dc:language'] else default_language
-        result.append(new_data)
-    return result
-
-
-def get_jamas_title_data(data):
-    """Get title data from Jamas.
-
-    Arguments:
-        data -- title data
+    Args:
+        data (str or list): A creator name string or a list of creator names.
+        language (str): The language of the article. Defaults to "en".
 
     Returns:
-        Packed title data
+        list: A list containing dictionaries with creator names and their languages.
 
     """
-    result = list()
-    default_language = 'en'
-    if isinstance(data, list):
-        for title in data:
-            new_data = dict()
-            new_data['@value'] = title
-            new_data['@language'] = data.get('dc:language') if data.get('dc:language', None) else default_language
-            result.append(new_data)
-    else:
-        new_data = dict()
-        new_data['@value'] = data
-        new_data['@language'] = data.get('dc:language') if data.get('dc:language', None) else default_language
-        result.append(new_data)
+    result = []
+    if isinstance(data, str):
+        result.append({
+            '@value': data,
+            '@language': language
+        })
+    elif isinstance(data, list):
+        for d in data:
+            result.append([{
+                '@value': d,
+                '@language': language
+            }])
     return result
 
 
-def get_cinii_record_data(doi, item_type_id):
+def get_jamas_language_data(data):
+    """Get language data from Jamas.
+
+    Args:
+        data (list or str): A list of languages or a single language string.
+
+    Returns:
+        list: A list containing a dictionary with the language.
+    """
+    default_language = 'en'
+    if isinstance(data, str):
+        result = data if data else default_language
+    elif isinstance(data, list) and len(data) > 0:
+        result = data[0] if data[0] else default_language
+    else:
+        result = default_language
+
+    # Convert language codes to standard format
+    if result in ["jpn", "japanese", "日本語"]:
+        result = "ja"
+    elif result in ["eng", "English", "英語"]:
+        result = "en"
+    else:
+        pass
+
+    return result
+
+
+@cached_api_json(timeout=50, key_prefix="cinii_data")
+def get_cinii_record_data(doi, item_type_id, exclude_duplicate_lang=True):
     """Get record data base on CiNii API.
 
-    :param doi: The CiNii doi
-    :param item_type_id: The item type ID
-    :return:
+    Args:
+        doi (str): The CiNii DOI.
+        item_type_id (int): The item type ID.
+        exclude_duplicate_lang (bool): Whether to exclude duplicate languages in the result.
+
+    Returns:
+        list: A list of dictionaries containing the record data.
     """
     result = list()
     api_response = CiNiiURL(doi).get_data()
@@ -713,18 +876,22 @@ def get_cinii_record_data(doi, item_type_id):
     elif items.form is not None:
         autofill_key_tree = get_autofill_key_tree(
             items.form, get_cinii_autofill_item(item_type_id))
-        result = build_record_model(autofill_key_tree, api_data)
+        result = build_record_model(
+            autofill_key_tree, api_data, items.schema, exclude_duplicate_lang
+        )
     return result
 
 
 def get_cinii_data_by_key(api, keyword):
     """Get data from CiNii based on keyword.
 
-    :param: api: CiNii data
-    :param: keyword: keyword for search
-    :return: data for keyword
+    Args:
+        api (dict): CiNii data response.
+        keyword (str): Keyword for search.
+
+    Returns:
+        dict: CiNii data for the specified keyword.
     """
-    import json
     data_response = api['response']
     result = dict()
     if data_response is None:
@@ -780,9 +947,13 @@ def get_cinii_data_by_key(api, keyword):
 def get_cinii_product_identifier(data, type1, type2):
     """Identifier Mapping.
 
-    :param: api: CiNii data
-    :param: keyword: keyword for search
-    :return: Identifier
+    Args:
+        data (list): A list of identifiers.
+        type1 (str): The first identifier type (e.g., 'cir:DOI').
+        type2 (str): The second identifier type (e.g., 'cir:NAID').
+
+    Returns:
+        list: A list of dictionaries containing the identifiers with their types.
     """
     result = list()
     for item in data:
@@ -802,14 +973,11 @@ def get_cinii_product_identifier(data, type1, type2):
 def pack_data_with_multiple_type_cinii(data):
     """Map CiNii multi data with type.
 
-    Arguments:
-        data1
-        type1
-        data2
-        type2
+    Args:
+        data (str or list): A string or a list of ISSNs.
 
     Returns:
-        packed data
+        list: A list of dictionaries containing the ISSN values and their type.
 
     """
     result = list()
@@ -831,8 +999,11 @@ def get_cinii_date_data(data):
         '@type': type of date
     }
 
-    :param: data: date
-    :return: date and date type is packed
+    Args:
+        data (str): The publication date string in the format "YYYY-MM-DD".
+
+    Returns:
+        dict: A dictionary containing the issued date and its type.
     """
     result = dict()
     if len(data.split('-')) != 3:
@@ -850,8 +1021,12 @@ def get_cinii_numpage(startingPage, endingPage):
     If CiNii have pageRange, get number of page
     If not, number of page equals distance between start and end page
 
-    :param: data: CiNii data
-    :return: number of page is packed
+    Args:
+        startingPage (str): The starting page number.
+        endingPage (str): The ending page number.
+
+    Returns:
+        dict: A dictionary containing the number of pages.
     """
     if startingPage and endingPage:
         try:
@@ -874,8 +1049,11 @@ def get_cinii_page_data(data):
         '@value': number
     }
 
-    :param: data: No of page
-    :return: packed data
+    Args:
+        data (str): The page number as a string.
+
+    Returns:
+        dict: A dictionary containing the page number.
     """
     try:
         result = int(data)
@@ -894,8 +1072,11 @@ def pack_single_value_as_dict(data):
         '@value': value
     }
 
-    :param: data: data need to pack
-    :return: dictionary contain packed data
+    Args:
+        data (str): The value to be packed.
+    
+    Returns:
+        dict: A dictionary containing the value.
     """
     new_data = dict()
     new_data['@value'] = data
@@ -908,13 +1089,17 @@ def get_cinii_subject_data(data, title):
     Get subject and form it as format:
     {
         '@value': title,
-        '2language': language,
+        '@language': language,
         '@scheme': scheme of subject
         '@URI': source of subject
     }
 
-    :param: data: subject data
-    :return: packed data
+    Args:
+        data (list): A list of subjects.
+        title (str): The title of the item.
+    
+    Returns:
+        list: A list of dictionaries containing the subject data.
     """
     result = list()
     default_language = 'ja'
@@ -936,8 +1121,11 @@ def get_cinii_creator_data(data):
         '@language': language
     }
 
-    :param: data: creator data
-    :return: list of creator name
+    Args:
+        data (list): A list of creator names.
+    
+    Returns:
+        list: A list of lists, each containing a dictionary with the creator name and language.
     """
     result = list()
     default_language = 'ja'
@@ -962,8 +1150,11 @@ def get_cinii_contributor_data(data):
         '@language': language
     }
 
-    :param: data: marker data
-    :return:packed data
+    Args:
+        data (list): A list of contributor names.
+
+    Returns:
+        list: A list of dictionaries, each containing a contributor name and language.
     """
     result = list()
     for item in data:
@@ -983,8 +1174,11 @@ def get_cinii_title_data(data):
         '@language': language
     }
 
-    :param: data: marker data
-    :return:packed data
+    Args:
+        data (str): The title of the item.
+
+    Returns:
+        list: A list containing a dictionary with the title and its language.
     """
     result = list()
     default_language = 'ja'
@@ -1004,8 +1198,11 @@ def get_basic_cinii_data(data):
             '@language': language
         }
 
-    :param: data: CiNii data
-    :return: list converted data
+    Args:
+        data (str): The basic value to be packed.
+
+    Returns:
+        list: A list containing a dictionary with the value and its language.
     """
     result = list()
     default_language = 'ja'
@@ -1028,8 +1225,11 @@ def get_cinii_description_data(data):
         '@type': type of description
     }
 
-    :param: description data
-    :return: packed data
+    Args:
+        data (str): The description of the item.
+
+    Returns:
+        list: A list containing a dictionary with the description, language, and type.
     """
     result = list()
     default_language = 'ja'
@@ -1046,10 +1246,13 @@ def get_cinii_description_data(data):
 def get_autofill_key_tree(schema_form, item, result=None):
     """Get auto fill key tree.
 
-    :param schema_form: schema form
-    :param item: The mapping items
-    :param result: The key result
-    :return: Autofill key tree
+    Args:
+        schema_form (dict): The schema form.
+        item (dict): The item data to be processed.
+        result (dict, optional): The result dictionary to store the processed data. Defaults to None.
+
+    Returns:
+        dict: A dictionary containing the processed data based on the schema form and item.
     """
     if result is None:
         result = dict()
@@ -1095,10 +1298,13 @@ def get_autofill_key_tree(schema_form, item, result=None):
 def get_key_value(schema_form, val, parent_key):
     """Get key value.
 
-    :param schema_form: Schema form
-    :param val: Schema form value
-    :param parent_key: The parent key
-    :return: The key value
+    Args:
+        schema_form (dict): The schema form.
+        val (dict): The value to be processed.
+        parent_key (str): The parent key for the value.
+
+    Returns:
+        dict: A dictionary containing the key data based on the schema form and value.
     """
     key_data = dict()
     if val.get("@value") is not None:
@@ -1155,8 +1361,12 @@ def get_item_id(item_type_id):
     """Get dictionary contain item id.
 
     Get from mapping between item type and jpcoar
-    :param item_type_id: The item type id
-    :return: dictionary
+    
+    Args:
+        item_type_id (int): The item type ID.
+    
+    Returns:
+        dict: A dictionary containing the item ID and its corresponding jpcoar mapping.
     """
     def _get_jpcoar_mapping(rtn_results, jpcoar_data):
         for u, s in jpcoar_data.items():
@@ -1191,8 +1401,11 @@ def get_item_id(item_type_id):
 def get_cinii_autofill_item(item_id):
     """Get CiNii autofill item.
 
-    :param item_id: Item ID.
-    :return:
+    Args:
+        item_id (int): The item ID.
+
+    Returns:
+        dict: A dictionary containing the CiNii required item data.
     """
     jpcoar_item = get_item_id(item_id)
     cinii_req_item = dict()
@@ -1203,15 +1416,20 @@ def get_cinii_autofill_item(item_id):
     return cinii_req_item
 
 
-def build_record_model(item_autofill_key, api_data):
+def build_record_model(item_autofill_key, api_data, schema=None, exclude_duplicate_lang=False):
     """Build record record_model.
 
-    :param item_autofill_key: Item auto-fill key
-    :param api_data: Api data
-    :return: Record model list
+    Args:
+        item_autofill_key (dict): The item auto-fill key.
+        api_data (dict): The API data to be processed.
+        schema (dict, optional): The schema for the record model. Defaults to None.
+        exclude_duplicate_lang (bool, optional): Whether to exclude duplicate languages in the result. Defaults to False.
+
+    Returns:
+        list: A list of dictionaries containing the record model data.
     """
     def _build_record_model(_api_data, _item_autofill_key, _record_model_lst,
-                            _filled_key):
+                            _filled_key, _schema, _exclude_duplicate_lang):
         """Build record model.
 
         @param _api_data: Api data
@@ -1227,12 +1445,16 @@ def build_record_model(item_autofill_key, api_data):
                 build_form_model(data_model, v)
             elif isinstance(v, list):
                 for mapping_data in v:
-                    _build_record_model(_api_data, mapping_data,
-                                        _record_model_lst, _filled_key)
+                    _build_record_model(
+                        _api_data, mapping_data, _record_model_lst,
+                        _filled_key, _schema, _exclude_duplicate_lang
+                    )
             record_model = {}
             for key, value in data_model.items():
                 merge_dict(record_model, value)
-            new_record_model = fill_data(record_model, api_autofill_data)
+            new_record_model = fill_data(
+                record_model, api_autofill_data, _schema, _exclude_duplicate_lang
+            )
             if new_record_model:
                 _record_model_lst.append(new_record_model)
                 _filled_key.append(k)
@@ -1242,7 +1464,7 @@ def build_record_model(item_autofill_key, api_data):
     if not api_data or not item_autofill_key:
         return record_model_lst
     _build_record_model(api_data, item_autofill_key, record_model_lst,
-                        filled_key)
+                        filled_key, schema, exclude_duplicate_lang)
 
     return record_model_lst
 
@@ -1250,9 +1472,13 @@ def build_record_model(item_autofill_key, api_data):
 def merge_dict(original_dict, merged_dict, over_write=True):
     """Merge dictionary.
 
-    @param original_dict: the original dictionary.
-    @param merged_dict: the merged dictionary.
-    @param over_write: the over write flag.
+    Args:
+        original_dict (dict or list): The original dictionary or list to be merged.
+        merged_dict (dict or list): The dictionary or list to merge into the original.
+        over_write (bool, optional): Whether to overwrite existing values. Defaults to True.
+
+    Returns:
+        None: The function modifies the original_dict in place.
     """
     if isinstance(original_dict, list) and isinstance(merged_dict, list):
         for data in merged_dict:
@@ -1278,10 +1504,13 @@ def merge_dict(original_dict, merged_dict, over_write=True):
 def get_autofill_key_path(schema_form, parent_key, child_key):
     """Get auto fill key path.
 
-    :param schema_form: Schema form
-    :param parent_key: Parent key
-    :param child_key: Child key
-    :return: The key path
+    Args:
+        schema_form (list): The schema form list.
+        parent_key (str): The parent key to search in the schema form.
+        child_key (str): The child key to find the specific path.
+
+    Returns:
+        dict: A dictionary containing the key path result or an error message.
     """
     result = dict()
     key_result = ''
@@ -1307,9 +1536,13 @@ def get_autofill_key_path(schema_form, parent_key, child_key):
 def get_specific_key_path(des_key, form):
     """Get specific path of des_key on form.
 
-    @param des_key: Destination key
-    @param form: The form key list
-    @return: Existed flag and path result
+    Args:
+        des_key (list): The desired key path to search for.
+        form (dict or list): The form data to search in.
+    
+    Returns:
+        tuple (existed, path_result):
+            A tuple where `existed` is a boolean indicating if the key exists,
     """
     existed = False
     path_result = None
@@ -1336,9 +1569,13 @@ def get_specific_key_path(des_key, form):
 def build_form_model(form_model, form_key, autofill_key=None):
     """Build form model.
 
-    @param form_model:
-    @param form_key:
-    @param autofill_key:
+    Args:
+        form_model (dict or list): The form model to be built.
+        form_key (list or dict): The keys to build the form model.
+        autofill_key (str, optional): The key to autofill the form model. Defaults to None.
+
+    Returns:
+        None: The function modifies the form_model in place.
     """
     if isinstance(form_key, dict):
         for k, v in form_key.items():
@@ -1368,8 +1605,12 @@ def build_form_model(form_model, form_key, autofill_key=None):
 def build_model(form_model, form_key):
     """Build model.
 
-    @param form_model:
-    @param form_key:
+    Args:
+        form_model (dict or list): The form model to be built.
+        form_key (str): The key to build the model.
+
+    Returns:
+        None: The function modifies the form_model in place.
     """
     child_model = {}
     if '[]' in form_key:
@@ -1381,50 +1622,108 @@ def build_model(form_model, form_key):
         form_model.append({form_key: child_model})
 
 
-def fill_data(form_model, autofill_data):
+def fill_data(form_model, autofill_data, schema=None, exclude_duplicate_lang=False):
     """Fill data to form model.
 
-    @param form_model: the form model.
-    @param autofill_data: the autofill data
-    @param is_multiple_data: multiple flag.
+    Args:
+        form_model (dict or list): The form model to be filled.
+        autofill_data (dict or list): The data to fill into the form model.
+        schema (dict, optional): The schema for validation. Defaults to None.
+        exclude_duplicate_lang (bool, optional): Whether to exclude duplicate languages in the result. Defaults to False.
+
+    Returns:
+        dict or list: The filled form model with the autofill data.
     """
     result = {} if isinstance(form_model, dict) else []
     is_multiple_data = is_multiple(form_model, autofill_data)
+
+    def validate_data(data, sub_schema):
+        if sub_schema is None:
+            current_app.logger.debug("=== Validation skipped ===")
+            return True
+        try:
+            validate(instance=data, schema=sub_schema)
+            current_app.logger.debug(f"Validation passed: {data} matches schema {sub_schema}")
+            return True
+        except ValidationError as e:
+            current_app.logger.debug(f"Validation failed: {e.message}")
+            return False
+
     if isinstance(autofill_data, list):
         key = list(form_model.keys())[0] if len(form_model) != 0 else None
+        sub_schema = None
+        if schema:
+            sub_schema = get_subschema(schema, key)
+            if sub_schema and sub_schema.get("type") == "array":
+                sub_schema = sub_schema.get("items")
+
         if is_multiple_data or (not is_multiple_data and isinstance(form_model.get(key),list)):
             model_clone = {}
             deepcopy_API(form_model[key][0], model_clone)
             result[key]=[]
+            used_lang_set = set()
             for data in autofill_data:
+                if exclude_duplicate_lang and isinstance(data, dict) and data.get('@language'):
+                    if data.get('@language') in used_lang_set:
+                        continue
+                    used_lang_set.add(data.get('@language'))
                 model = {}
                 deepcopy_API(model_clone, model)
-                new_model = fill_data(model, data)
+                new_model = fill_data(model, data, sub_schema, exclude_duplicate_lang)
                 result[key].append(new_model.copy())
         else:
-            result = fill_data(form_model, autofill_data[0])
+            result = fill_data(form_model, autofill_data[0], schema, exclude_duplicate_lang)
     elif isinstance(autofill_data, dict):
         if isinstance(form_model, dict):
             for k, v in form_model.items():
+                subschema = get_subschema(schema, k)
                 if isinstance(v, str):
-                    result[k] = autofill_data.get(v,'')
+                    value = autofill_data.get(v, '')
+                    if not validate_data(value, subschema):
+                        continue
+                    result[k] = value
                 else:
-                    new_v = fill_data(v, autofill_data)
+                    new_v = fill_data(v, autofill_data, subschema, exclude_duplicate_lang)
                     result[k] = new_v
         elif isinstance(form_model, list):
             for v in form_model:
-                new_v = fill_data(v, autofill_data)
+                new_v = fill_data(v, autofill_data, schema, exclude_duplicate_lang)
                 result.append(new_v)
     else:
         return
     return result
 
+
+def get_subschema(schema, key):
+    """Get sub schema.
+
+    Args:
+        schema (dict): The schema to search in.
+        key (str): The key to search for.
+    Returns:
+        dict: The sub schema if found, otherwise None.
+    """
+    if not schema:
+        return None
+
+    if schema.get("type") == "object" and "properties" in schema:
+        return schema["properties"].get(key)
+
+    if schema.get("type") == "array" and "items" in schema:
+        return get_subschema(schema["items"], key)
+
+    return None
+
+
 def deepcopy_API(original_object, new_object):
     """Copy dictionary object.
 
-    @param original_object: the original object.
-    @param new_object: the new object.
-    @return:
+    Args:
+        original_object (dict or list): The original object to be copied.
+        new_object (dict or list): The new object to store the copied data.
+
+    Returns:
+        None: The function modifies the new_object in place.
     """
     import copy
     if isinstance(original_object, dict):
@@ -1441,9 +1740,12 @@ def deepcopy_API(original_object, new_object):
 def is_multiple(form_model, autofill_data):
     """Check form model.
 
-    @param form_model: Form model data.
-    @param autofill_data: Autofill data.
-    @return: True if form model can auto-fill with multiple data.
+    Args:
+        form_model (dict or list): The form model to check.
+        autofill_data (list): The data to check against the form model.
+
+    Returns:
+        bool: True if the form model is a list and has more than one item, False otherwise.
     """
     if isinstance(autofill_data, list) and len(autofill_data) > 1:
         for key in form_model:
@@ -1452,12 +1754,17 @@ def is_multiple(form_model, autofill_data):
         return False
 
 
-def get_jalc_record_data(doi, item_type_id):
+@cached_api_json(timeout=50, key_prefix="jalc_data")
+def get_jalc_record_data(doi, item_type_id, exclude_duplicate_lang=True):
     """Get record data base on jalc API.
 
-    :param doi: The jalc doi
-    :param item_type_id: The item type ID
-    :return:
+    Args:
+        doi (str): The DOI of the item.
+        item_type_id (int): The item type ID.
+        exclude_duplicate_lang (bool, optional): Whether to exclude duplicate languages in the result. Defaults to True.
+
+    Returns:
+        list: A list of dictionaries containing the record data from JALC.
     """
     result = list()
     api_response = JALCURL(doi).get_data()
@@ -1472,16 +1779,23 @@ def get_jalc_record_data(doi, item_type_id):
     elif items.form is not None:
         autofill_key_tree = get_autofill_key_tree(
             items.form, get_cinii_autofill_item(item_type_id))
-        result = build_record_model(autofill_key_tree, api_data)
+        result = build_record_model(
+            autofill_key_tree, api_data, schema=items.schema,
+            exclude_duplicate_lang=exclude_duplicate_lang
+        )
+    current_app.logger.debug(f"[get_jalc_record_data] result={result}")
     return result
 
 
 def get_jalc_data_by_key(api, keyword):
     """Get data from jalc based on keyword.
 
-    :param: api: jalc data
-    :param: keyword: keyword for search
-    :return: data for keyword
+    Args:
+        api (dict): The API response data.
+        keyword (str): The keyword to search for in the API data.
+
+    Returns:
+        dict: A dictionary containing the data for the specified keyword.
     """
     import json
     data_response = api['response']
@@ -1534,8 +1848,11 @@ def get_jalc_publisher_data(data):
         '@language': language
     }
 
-    :param: data: marker data
-    :return:packed data
+    Args:
+        data (list): A list of publisher names.
+    
+    Returns:
+        list: A list of dictionaries containing the publisher names and their languages.
     """
     result = list()
     default_language = 'en'
@@ -1555,8 +1872,11 @@ def get_jalc_title_data(data):
         '@language': language
     }
 
-    :param: data: marker data
-    :return:packed data
+    Args:
+        data (dict): The title data containing the title and language.
+
+    Returns:
+        list: A list containing a dictionary with the title and its language.
     """
     result = list()
     default_language = 'en'
@@ -1576,8 +1896,11 @@ def get_jalc_creator_data(data):
         '@language': language
     }
 
-    :param: data: creator data
-    :return: list of creator name
+    Args:
+        data (list): A list of creator names.
+
+    Returns:
+        list: A list of lists, each containing a dictionary with the creator names and languages.
     """
     result = list()
     default_language = 'ja'
@@ -1604,8 +1927,11 @@ def get_jalc_contributor_data(data):
         '@language': language
     }
 
-    :param: data: marker data
-    :return:packed data
+    Args:
+        data (list): A list of contributor names.
+
+    Returns:
+        list: A list of dictionaries, each containing a contributor name and language.
     """
     result = list()
     for item in data:
@@ -1625,8 +1951,11 @@ def get_jalc_description_data(data):
         '@type': type of description
     }
 
-    :param: description data
-    :return: packed data
+    Args:
+        data (str): The description of the item.
+    
+    Returns:
+        list: A list containing a dictionary with the description, language, and type.
     """
     result = list()
     default_language = 'ja'
@@ -1651,8 +1980,11 @@ def get_jalc_subject_data(data):
         '@URI': source of subject
     }
 
-    :param: data: subject data
-    :return: packed data
+    Args:
+        data (list): A list of subjects.
+
+    Returns:
+        list: A list of dictionaries containing the subject data.
     """
     result = list()
     default_language = 'ja'
@@ -1673,8 +2005,11 @@ def get_jalc_page_data(data):
         '@value': number
     }
 
-    :param: data: No of page
-    :return: packed data
+    Args:
+        data (str): The page number as a string.
+
+    Returns:
+        dict: A dictionary containing the page number packed as '@value'.
     """
     try:
         result = int(data)
@@ -1690,8 +2025,12 @@ def get_jalc_numpage(startingPage, endingPage):
     If jalc have pageRange, get number of page
     If not, number of page equals distance between start and end page
 
-    :param: data: jalc data
-    :return: number of page is packed
+    Args:
+        startingPage (str): The starting page number as a string.
+        endingPage (str): The ending page number as a string.
+    
+    Returns:
+        dict: A dictionary containing the number of pages packed as '@value'.
     """
     if startingPage and endingPage:
         try:
@@ -1715,8 +2054,11 @@ def get_jalc_date_data(data):
         '@type': type of date
     }
 
-    :param: data: date
-    :return: date and date type is packed
+    Args:
+        data (str): The publication date in the format 'YYYY-MM-DD'.
+
+    Returns:
+        dict: A dictionary containing the publication date packed as '@value' and its type as '@type'.
     """
     result = dict()
     if len(data.split('-')) != 3:
@@ -1731,14 +2073,11 @@ def get_jalc_date_data(data):
 def pack_data_with_multiple_type_jalc(data):
     """Map jalc multi data with type.
 
-    Arguments:
-        data1
-        type1
-        data2
-        type2
+   Args:
+        data (list): A list of dictionaries containing journal IDs and their types.
 
     Returns:
-        packed data
+        list: A list of dictionaries, each containing the type and journal ID.
 
     """
     result = list()
@@ -1753,6 +2092,14 @@ def pack_data_with_multiple_type_jalc(data):
 
 
 def get_jalc_product_identifier(data):
+    """Get product identifier from jalc.
+
+    Args:
+        data (str): The DOI of the item.
+    
+    Returns:
+        list: A list containing a dictionary with the product identifier packed as '@value'.
+    """
     result = list()
     new_data = dict()
     new_data['@value'] = data
@@ -1760,12 +2107,17 @@ def get_jalc_product_identifier(data):
     return result
 
 
-def get_datacite_record_data(doi, item_type_id):
+@cached_api_json(timeout=50, key_prefix="datacite_data")
+def get_datacite_record_data(doi, item_type_id, exclude_duplicate_lang=True):
     """Get record data base on DATACITE API.
 
-    :param doi: The DATACITE doi
-    :param item_type_id: The item type ID
-    :return:
+    Args:
+        doi (str): The DOI of the item.
+        item_type_id (int): The item type ID.
+        exclude_duplicate_lang (bool, optional): Whether to exclude duplicate languages in the result. Defaults to True.
+
+    Returns:
+        list: A list of dictionaries containing the record data from DATACITE.
     """
     result = list()
 
@@ -1780,16 +2132,21 @@ def get_datacite_record_data(doi, item_type_id):
     elif items.form is not None:
         autofill_key_tree = get_autofill_key_tree(
             items.form, get_cinii_autofill_item(item_type_id))
-        result = build_record_model(autofill_key_tree, api_data)
+        result = build_record_model(
+            autofill_key_tree, api_data, items.schema, exclude_duplicate_lang
+        )
     return result
 
 
 def get_datacite_data_by_key(api, keyword):
     """Get data from DATACITE based on keyword.
 
-    :param: api: DATACITE data
-    :param: keyword: keyword for search
-    :return: data for keyword
+    Args:
+        api (dict): The API response data.
+        keyword (str): The keyword to search for in the API data.
+
+    Returns:
+        dict: A dictionary containing the data for the specified keyword.
     """
     import json
     data_response = api['response']
@@ -1836,8 +2193,11 @@ def get_datacite_publisher_data(data):
         '@language': language
     }
 
-    :param: data: marker data
-    :return:packed data
+    Args:
+        data (str): The publisher name.
+
+    Returns:
+        list: A list containing a dictionary with the publisher name and its language.
     """
     result = list()
     default_language = 'en'
@@ -1859,8 +2219,11 @@ def get_datacite_title_data(data):
         '@language': language
     }
 
-    :param: data: marker data
-    :return:packed data
+    Args:
+        data (list): A list of dictionaries containing title information.
+    
+    Returns:
+        list: A list of dictionaries, each containing a title and its language.
     """
     result = list()
     default_language = 'ja'
@@ -1882,8 +2245,11 @@ def get_datacite_creator_data(data):
         '@language': language
     }
 
-    :param: data: creator data
-    :return: list of creator name
+    Args:
+        data (list): A list of dictionaries containing creator names and languages.
+    
+    Returns:
+        list: A list of lists, each containing a dictionary with the creator names and languages.
     """
     result = list()
     default_language = 'ja'
@@ -1908,8 +2274,11 @@ def get_datacite_contributor_data(data):
         '@language': language
     }
 
-    :param: data: marker data
-    :return:packed data
+    Args:
+        data (list): A list of dictionaries containing contributor names and languages.
+
+    Returns:
+        list: A list of lists, each containing a dictionary with the contributor names and languages.
     """
     result = list()
     default_language = 'ja'
@@ -1935,21 +2304,22 @@ def get_datacite_description_data(data):
         '@type': type of description
     }
 
-    :param: description data
-    :return: packed data
+    Args:
+        data (list): A list of dictionaries containing description information.
+
+    Returns:
+        list: A list of dictionaries, each containing a description, its language, and type.
     """
     result = list()
     default_language = 'ja'
     default_type = 'Abstract'
     for item in data:
         if 'description' in item:
-            result_creator = list()
             new_data = dict()
             new_data['@value'] = item.get('description')
             new_data['@language'] = default_language
 
-            result_creator.append(new_data)
-            result.append(result_creator)
+            result.append(new_data)
     return result
 
 
@@ -1964,20 +2334,21 @@ def get_datacite_subject_data(data):
         '@URI': source of subject
     }
 
-    :param: data: subject data
-    :return: packed data
+    Args:
+        data (list): A list of dictionaries containing subject information.
+
+    Returns:
+        list: A list of dictionaries, each containing a subject, its language, and scheme.
     """
     result = list()
     default_language = 'ja'
     for sub in data:
         if 'subject' in sub:
-            result_creator = list()
             new_data = dict()
             new_data['@value'] = sub.get('subject')
-            new_data['@subjectScheme'] = sub.get('subjectScheme')
+            new_data['@scheme'] = sub.get('subjectScheme')
 
-            result_creator.append(new_data)
-            result.append(result_creator)
+            result.append(new_data)
     return result
 
 
@@ -1991,8 +2362,11 @@ def get_datacite_date_data(data):
         '@type': type of date
     }
 
-    :param: data: date
-    :return: date and date type is packed
+    Args:
+        data (str): The publication date in the format 'YYYY-MM-DD'.
+
+    Returns:
+        dict: A dictionary containing the publication date packed as '@value' and its type as '@type'.
     """
     result = dict()
 
@@ -2009,11 +2383,11 @@ def get_datacite_date_data(data):
 def pack_data_with_multiple_type_datacite(data):
     """Map datacite multi data with type.
 
-    Arguments:
-        data
+    Args:
+        data (list): A list of dictionaries containing identifiers and their types.
 
     Returns:
-        packed data
+        list: A list of dictionaries, each containing the type and identifier.
 
     """
     result = list()
@@ -2031,6 +2405,14 @@ def pack_data_with_multiple_type_datacite(data):
 
 
 def get_datacite_product_identifier(data):
+    """Get product identifier from datacite.
+
+    Args:
+        data (str): The DOI of the item.
+
+    Returns:
+        list: A list containing a dictionary with the product identifier packed as '@value'.
+    """
 
     result = list()
     if data:

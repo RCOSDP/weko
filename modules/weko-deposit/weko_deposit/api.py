@@ -737,7 +737,10 @@ class WekoDeposit(Deposit):
         return deposit
 
     @classmethod
-    def create(cls, data, id_=None, recid=None):
+    def create(
+        cls, data, id_=None, recid=None, workflow_location_name=None,
+        default_owner_id=None
+    ):
         """
 
         Create a deposit.
@@ -747,6 +750,8 @@ class WekoDeposit(Deposit):
             data (dict): new create record data "ex: {'recid': '34', '_deposit': {'id': '34', 'status': 'draft'}}"
             id_ (str): Force the new uuid value as deposit id. (Default: ``None``)
             recid (str): new recid value
+            workflow_location_name (str): workflow location name used for SWORD API. (Default: ``None``)
+            default_owner_id (str): default owner id. (Default: ``None``)
 
         Returns:
             dict: pubilshed deposit dict
@@ -765,6 +770,9 @@ class WekoDeposit(Deposit):
             activity = WorkActivity.get_activity_by_id(activity_info['activity_id'])
             if activity and activity.workflow and activity.workflow.location:
                 location_name = activity.workflow.location.name
+        elif workflow_location_name:
+            # for SWORD API workflow import
+            location_name = workflow_location_name
 
         bucket = Bucket.create(
             location=location_name,
@@ -791,6 +799,9 @@ class WekoDeposit(Deposit):
             )
         else:
             deposit = super(WekoDeposit, cls).create(data, id_=id_)
+
+        if not current_user and default_owner_id:
+            deposit['_deposit']['owners'] = [int(default_owner_id)]
 
         record_id = 0
         if data.get('_deposit'):
@@ -1092,7 +1103,7 @@ class WekoDeposit(Deposit):
 
         index = {'index': self.get('path', []),
                 'actions': self.get('publish_status')}
-        if 'activity_info' in session:
+        if session and 'activity_info' in session:
             del session['activity_info']
         if is_draft:
             from weko_workflow.utils import convert_record_to_item_metadata

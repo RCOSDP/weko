@@ -34,6 +34,7 @@ from flask_admin import BaseView, expose
 from flask_babelex import gettext as _
 from invenio_files_rest.models import FileInstance
 from invenio_cache import current_cache
+from weko_logging.activity_logger import UserActivityLogger
 
 from .config import WEKO_AUTHORS_EXPORT_FILE_NAME, \
     WEKO_AUTHORS_IMPORT_CACHE_KEY
@@ -424,6 +425,12 @@ class ImportView(BaseView):
         group_tasks = []
         count=0
 
+        # get the request info for logging
+        request_info = UserActivityLogger.get_summary_from_request()
+        if not UserActivityLogger.get_log_group_id(request_info):
+            UserActivityLogger.issue_log_group_id(None)
+        request_info["log_group_id"] = UserActivityLogger.get_log_group_id(request_info)
+
         if is_target == "id_prefix":
             for id_prefix in records:
                 group_tasks.append(import_id_prefix.s(id_prefix))
@@ -476,7 +483,7 @@ class ImportView(BaseView):
             task_ids =[]
 
             for author in records:
-                group_tasks.append(import_author.s(author, force_change_mode))
+                group_tasks.append(import_author.s(author, force_change_mode, request_info))
         else:
             return jsonify({'status': 'fail', 'message': 'Invalid target'})
 
@@ -511,7 +518,9 @@ class ImportView(BaseView):
                     force_change_mode,
                     current_app.config.get("WEKO_AUTHORS_CACHE_TTL")
                 )
-                task = import_author_over_max.delay(reached_point ,task_ids, max_page_for_import_tab)
+                task = import_author_over_max.delay(
+                    reached_point, task_ids, max_page_for_import_tab,
+                    request_info=request_info)
                 update_cache_data(
                     current_app.config.get("WEKO_AUTHORS_IMPORT_CACHE_OVER_MAX_TASK_KEY"),
                     task.id,

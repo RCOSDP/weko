@@ -17,8 +17,8 @@ from weko_notifications.forms import handle_notifications_form, NotificationsFor
 def test_handle_notifications_form(app, db, users, mocker):
     """Test handle_notifications_form."""
     form = {
-        "notifications-subscribe_webpush": "",
-        "notifications-webpush_endpoint": "",
+        "notifications-subscribe_webpush": "y",
+        "notifications-webpush_endpoint": "test_endpoint",
         "notifications-webpush_expiration_time": "",
         "notifications-webpush_p256dh": "",
         "notifications-webpush_auth": "",
@@ -47,7 +47,6 @@ def test_handle_notifications_form(app, db, users, mocker):
     mock_flash.assert_called_with("Notifications settings updated.", category="success")
     mock_settings.assert_called_with(
         user_id=users[0]["obj"].id,
-        subscribe_webpush=False,
         subscribe_email=True
     )
 
@@ -93,7 +92,42 @@ def test_handle_notifications_form(app, db, users, mocker):
         handle_notifications_form(notifications_form)
     mock_settings.assert_not_called()
     mock_flash.assert_called_with(
-        "There was an error updating your notifications settings.", category="error"
+        "Failed to update your notifications settings.", category="error"
     )
+    mock_flash.reset_mock()
+    mock_settings.reset_mock()
+
+
+    with pytest.raises(TypeError):
+        handle_notifications_form(None)
+
+    mock_settings.reset_mock()
+
+    form = {
+        "notifications-subscribe_webpush": "y",
+        "notifications-webpush_endpoint": "",
+        "notifications-webpush_expiration_time": "",
+        "notifications-webpush_p256dh": "",
+        "notifications-webpush_auth": "",
+        "notifications-subscribe_email": "",
+    }
+    with app.test_request_context(method="POST", data=form):
+        notifications_form = NotificationsForm(
+            subscribe_webpush=False,
+            webpush_endpoint="",
+            webpush_expiration_time="",
+            webpush_p256dh="",
+            webpush_auth="",
+            subscribe_email="",
+            prefix="notifications"
+        )
+        notifications_form.subscribe_webpush.errors = []
+        mocker.patch.object(notifications_form, "validate_on_submit", return_value=True)
+        login_user(users[0]["obj"])
+        handle_notifications_form(notifications_form)
+    mock_settings.assert_not_called()
+    assert notifications_form.subscribe_webpush.errors == [
+        "Failed to get subscription information. Please try again."
+    ]
     mock_flash.reset_mock()
     mock_settings.reset_mock()

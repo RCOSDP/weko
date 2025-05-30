@@ -407,7 +407,6 @@ class WorkFlowSettingView(BaseView):
             display_hide_label=display_hide,
             is_sysadmin=is_sysadmin,
             repositories=repositories
-            
         )
 
     @expose('/<string:workflow_id>', methods=['POST', 'PUT'])
@@ -616,22 +615,20 @@ class WorkSpaceWorkFlowSettingView(BaseView):
     @expose('/', methods=['GET', 'POST'])
     def index(self):
         """Index."""
-        default_workspace_workflowselect_api = { "item_type_id": "30002",
-                            "work_flow_id": "1", "workFlow_select_flg":"1"}  # Default
-
         current_settings = AdminSettings.get(
                 name='workspace_workflow_settings',
                 dict_to_object=False)
 
-        if not current_settings:  
-            AdminSettings.update('workspace_workflow_settings', default_workspace_workflowselect_api)
-            current_settings = AdminSettings.get(
-                name='workspace_workflow_settings',
-                dict_to_object=False)
+        if not current_settings:
+            current_settings = {
+                "item_type_id": "",
+                "work_flow_id": "",
+                "workFlow_select_flg":""
+            }
 
         try:
             form = FlaskForm(request.form)
-            item_type_list = ItemTypes.get_latest_with_item_type(True)
+            item_type_list = ItemTypes.get_latest_with_item_type()
 
             item_type_list = [item for item in item_type_list if item[3] != True]
             workflow = WorkFlow()
@@ -639,8 +636,8 @@ class WorkSpaceWorkFlowSettingView(BaseView):
 
             if request.method == 'POST' and form.validate():
                 # Process forms
-                form = request.form.get('submit', None)
-                if form == 'set_workspace_workflow_setting_form':
+                submit_form = request.form.get('submit', None)
+                if submit_form == 'set_workspace_workflow_setting_form':
                     workFlow_select_flg = request.form.get('registrationRadio', '')
 
                     # Direct registration
@@ -659,7 +656,8 @@ class WorkSpaceWorkFlowSettingView(BaseView):
             return self.render('weko_workflow/admin/workspace_workflow_setting.html',
                                item_type_list=item_type_list,
                                work_flow_list=workflows,
-                               form=form)
+                               form=form,
+                               current_settings=current_settings)
         except BaseException:
             current_app.logger.error(
                 'Unexpected error: {}'.format(sys.exc_info()))
@@ -696,7 +694,7 @@ activity_settings_adminview = {
     'view_class': ActivitySettingsView,
     'kwargs': {
         'category': _('Setting'),
-        'name': _('Activity'),
+        'name': _('Activity List'),
         'endpoint': 'activity'
     }
 }

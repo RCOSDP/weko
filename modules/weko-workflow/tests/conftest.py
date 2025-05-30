@@ -68,7 +68,7 @@ from weko_records.api import Mapping
 from weko_records_ui.models import FilePermission
 from weko_user_profiles import WekoUserProfiles
 from weko_index_tree.models import Index
-
+from weko_logging.audit import WekoLoggingUserActivity
 from weko_workflow import WekoWorkflow
 from weko_search_ui import WekoSearchUI
 from weko_workflow.models import Activity, ActionStatus, Action, ActivityAction, WorkFlow, FlowDefine, FlowAction, ActionFeedbackMail, ActionIdentifier,FlowActionRole, ActivityHistory,GuestActivity, WorkflowRole
@@ -105,6 +105,7 @@ from weko_admin.models import SiteInfo
 from weko_admin import WekoAdmin
 from weko_deposit import WekoDeposit
 from weko_admin.models import AdminSettings
+from weko_notifications.models import NotificationsUserSettings
 
 sys.path.append(os.path.dirname(__file__))
 # @event.listens_for(Engine, "connect")
@@ -609,6 +610,17 @@ def db(app):
     db_.drop_all()
     # drop_database(str(db_.engine.url))
 
+@pytest.yield_fixture()
+def logging_client(app):
+    """make a test client.
+    Args:
+        app (Flask): flask app.
+    Yields:
+        FlaskClient: test client
+    """
+    test = WekoLoggingUserActivity()
+    test.init_app(app)
+    yield app
 
 @pytest.yield_fixture()
 def client(app):
@@ -935,8 +947,18 @@ def db_register(app, db, db_records, users, action_data, item_type):
     flow_define = FlowDefine(flow_id=uuid.uuid4(),
                              flow_name='Registration Flow',
                              flow_user=1)
+    del_flow_define = FlowDefine(flow_id=uuid.uuid4(),
+                                flow_name='Delete Flow',
+                                flow_user=1,
+                                flow_type='2')
+    app_flow_define = FlowDefine(flow_id=uuid.uuid4(),
+                                flow_name='Delete Approval Flow',
+                                flow_user=1,
+                                flow_type='2')
     with db.session.begin_nested():
         db.session.add(flow_define)
+        db.session.add(del_flow_define)
+        db.session.add(app_flow_define)
     db.session.commit()
     flow_action1 = FlowAction(status='N',
                      flow_id=flow_define.flow_id,
@@ -965,16 +987,87 @@ def db_register(app, db, db_records, users, action_data, item_type):
                      action_status='A',
                      action_date=datetime.strptime('2018/07/28 0:00:00','%Y/%m/%d %H:%M:%S'),
                      send_mail_setting={})
+    del_flow_action1 = FlowAction(status='N',
+                     flow_id=del_flow_define.flow_id,
+                     action_id=1,
+                     action_version='1.0.0',
+                     action_order=1,
+                     action_condition='',
+                     action_status='A',
+                     action_date=datetime.strptime('2025/05/01 0:00:00','%Y/%m/%d %H:%M:%S'),
+                     send_mail_setting={})
+    del_flow_action2 = FlowAction(status='N',
+                     flow_id=del_flow_define.flow_id,
+                     action_id=2,
+                     action_version='1.0.0',
+                     action_order=2,
+                     action_condition='',
+                     action_status='A',
+                     action_date=datetime.strptime('2025/05/01 0:00:00','%Y/%m/%d %H:%M:%S'),
+                     send_mail_setting={})
+    app_flow_action1 = FlowAction(status='N',
+                     flow_id=app_flow_define.flow_id,
+                     action_id=1,
+                     action_version='1.0.0',
+                     action_order=1,
+                     action_condition='',
+                     action_status='A',
+                     action_date=datetime.strptime('2025/05/01 0:00:00','%Y/%m/%d %H:%M:%S'),
+                     send_mail_setting={})
+    app_flow_action2 = FlowAction(status='N',
+                     flow_id=app_flow_define.flow_id,
+                     action_id=4,
+                     action_version='1.0.0',
+                     action_order=2,
+                     action_condition='',
+                     action_status='A',
+                     action_date=datetime.strptime('2025/05/01 0:00:00','%Y/%m/%d %H:%M:%S'),
+                     send_mail_setting={})
+    app_flow_action3 = FlowAction(status='N',
+                     flow_id=app_flow_define.flow_id,
+                     action_id=2,
+                     action_version='1.0.0',
+                     action_order=3,
+                     action_condition='',
+                     action_status='A',
+                     action_date=datetime.strptime('2025/05/01 0:00:00','%Y/%m/%d %H:%M:%S'),
+                     send_mail_setting={})
+
     with db.session.begin_nested():
         db.session.add(flow_action1)
         db.session.add(flow_action2)
         db.session.add(flow_action3)
+        db.session.add(del_flow_action1)
+        db.session.add(del_flow_action2)
+        db.session.add(app_flow_action1)
+        db.session.add(app_flow_action2)
+        db.session.add(app_flow_action3)
     db.session.commit()
     workflow = WorkFlow(flows_id=uuid.uuid4(),
                         flows_name='test workflow1',
                         itemtype_id=1,
                         index_tree_id=None,
                         flow_id=1,
+                        is_deleted=False,
+                        open_restricted=False,
+                        location_id=None,
+                        is_gakuninrdm=False)
+    del_workflow = WorkFlow(flows_id=uuid.uuid4(),
+                        flows_name='test delete workflow',
+                        itemtype_id=1,
+                        index_tree_id=None,
+                        flow_id=1,
+                        delete_flow_id=del_flow_define.id,
+                        is_deleted=False,
+                        open_restricted=False,
+                        location_id=None,
+                        is_gakuninrdm=False)
+    app_del_workflow = WorkFlow(flows_id=uuid.uuid4(),
+                        flows_name='test delete approval workflow',
+                        itemtype_id=1,
+                        index_tree_id=None,
+                        flow_id=1,
+                        delete_flow_id=app_flow_define.id,
                         is_deleted=False,
                         open_restricted=False,
                         location_id=None,
@@ -1007,6 +1100,24 @@ def db_register(app, db, db_records, users, action_data, item_type):
                     activity_confirm_term_of_use=True,
                     title='test', shared_user_id=-1, extra_info={},
                     action_order=6)
+    del_activity = Activity(activity_id='A-00000001-10010',workflow_id=2, flow_id=del_flow_define.id,
+                    action_id=1, activity_login_user=1,
+                    activity_update_user=1,
+                    activity_start=datetime.strptime('2025/05/02 3:01:53.931', '%Y/%m/%d %H:%M:%S.%f'),
+                    activity_community_id=3,
+                    activity_confirm_term_of_use=True,
+                    title='test', shared_user_id=-1, extra_info={},
+                    action_order=1,
+                    )
+    app_del_activity = Activity(activity_id='A-00000001-10011',workflow_id=3, flow_id=app_flow_define.id,
+                    action_id=1, activity_login_user=1,
+                    activity_update_user=1,
+                    activity_start=datetime.strptime('2025/05/02 3:01:53.931', '%Y/%m/%d %H:%M:%S.%f'),
+                    activity_community_id=3,
+                    activity_confirm_term_of_use=True,
+                    title='test', shared_user_id=-1, extra_info={},
+                    action_order=1,
+                    )
     activity_item1 = Activity(activity_id='2',item_id=db_records[2][2].id,workflow_id=1, flow_id=flow_define.id,
                     action_id=1, activity_login_user=users[3]["id"],
                     activity_update_user=1,
@@ -1091,9 +1202,13 @@ def db_register(app, db, db_records, users, action_data, item_type):
                     )
     with db.session.begin_nested():
         db.session.add(workflow)
+        db.session.add(del_workflow)
+        db.session.add(app_del_workflow)
         db.session.add(activity)
         db.session.add(activity2)
         db.session.add(activity3)
+        db.session.add(del_activity)
+        db.session.add(app_del_activity)
         db.session.add(activity_item1)
         db.session.add(activity_item2)
         db.session.add(activity_item3)
@@ -1212,7 +1327,7 @@ def db_register(app, db, db_records, users, action_data, item_type):
             'action_feedback_mail1':activity_item4_feedbackmail,
             'action_feedback_mail2':activity_item5_feedbackmail,
             'action_feedback_mail3':activity_item6_feedbackmail,
-            "activities":[activity,activity_item1,activity_item2,activity_item3,activity_item7,activity_item8,activity_guest]}
+            "activities":[activity,activity_item1,activity_item2,activity_item3,activity_item7,activity_item8,activity_guest,del_activity,app_del_activity]}
 
 @pytest.fixture()
 def workflow(app, db, item_type, action_data, users):
@@ -1534,12 +1649,30 @@ def db_register_fullaction(app, db, db_records, users, action_data, item_type):
     flow_define = FlowDefine(flow_id=uuid.uuid4(),
                              flow_name='Registration Flow',
                              flow_user=1)
+    del_flow_define = FlowDefine(flow_id=uuid.uuid4(),
+                                flow_name='Delete Flow',
+                                flow_user=1,
+                                flow_type='2')
+    app_flow_define = FlowDefine(flow_id=uuid.uuid4(),
+                                flow_name='Delete Approval Flow',
+                                flow_user=1,
+                                flow_type='2')
+    two_app_flow_define = FlowDefine(flow_id=uuid.uuid4(),
+                                flow_name='Delete two Approval Flow',
+                                flow_user=1,
+                                flow_type='2')
     with db.session.begin_nested():
         db.session.add(flow_define)
+        db.session.add(del_flow_define)
+        db.session.add(app_flow_define)
+        db.session.add(two_app_flow_define)
     db.session.commit()
 
     # setting flow action(start, item register, oa policy, item link, identifier grant, approval, end)
     flow_actions = list()
+    del_flow_actions = list()
+    del_app_flow_actions = list()
+    two_app_flow_actions = list()
     # start
     flow_actions.append(FlowAction(status='N',
                      flow_id=flow_define.flow_id,
@@ -1610,8 +1743,104 @@ def db_register_fullaction(app, db, db_records, users, action_data, item_type):
                      action_status='A',
                      action_date=datetime.strptime('2018/07/28 0:00:00','%Y/%m/%d %H:%M:%S'),
                      send_mail_setting={}))
+    # delete flow action
+    # start
+    del_flow_actions.append(FlowAction(status='N',
+                     flow_id=del_flow_define.flow_id,
+                     action_id=1,
+                     action_version='1.0.0',
+                     action_order=1,
+                     action_condition='',
+                     action_status='A',
+                     action_date=datetime.strptime('2025/05/01 0:00:00','%Y/%m/%d %H:%M:%S'),
+                     send_mail_setting={}))
+    # end
+    del_flow_actions.append(FlowAction(status='N',
+                     flow_id=del_flow_define.flow_id,
+                     action_id=2,
+                     action_version='1.0.0',
+                     action_order=2,
+                     action_condition='',
+                     action_status='A',
+                     action_date=datetime.strptime('2025/05/01 0:00:00','%Y/%m/%d %H:%M:%S'),
+                     send_mail_setting={}))
+    # delete aooroval flow action
+    # start
+    del_app_flow_actions.append(FlowAction(status='N',
+                     flow_id=app_flow_define.flow_id,
+                     action_id=1,
+                     action_version='1.0.0',
+                     action_order=1,
+                     action_condition='',
+                     action_status='A',
+                     action_date=datetime.strptime('2025/05/01 0:00:00','%Y/%m/%d %H:%M:%S'),
+                     send_mail_setting={}))
+    # approval
+    del_app_flow_actions.append(FlowAction(status='N',
+                     flow_id=app_flow_define.flow_id,
+                     action_id=4,
+                     action_version='1.0.0',
+                     action_order=2,
+                     action_condition='',
+                     action_status='A',
+                     action_date=datetime.strptime('2025/05/01 0:00:00','%Y/%m/%d %H:%M:%S'),
+                     send_mail_setting={}))
+    # end
+    del_app_flow_actions.append(FlowAction(status='N',
+                     flow_id=app_flow_define.flow_id,
+                     action_id=2,
+                     action_version='1.0.0',
+                     action_order=3,
+                     action_condition='',
+                     action_status='A',
+                     action_date=datetime.strptime('2025/05/01 0:00:00','%Y/%m/%d %H:%M:%S'),
+                     send_mail_setting={}))
+    # delete two aooroval flow action
+    # start
+    two_app_flow_actions.append(FlowAction(status='N',
+                     flow_id=two_app_flow_define.flow_id,
+                     action_id=1,
+                     action_version='1.0.0',
+                     action_order=1,
+                     action_condition='',
+                     action_status='A',
+                     action_date=datetime.strptime('2025/05/01 0:00:00','%Y/%m/%d %H:%M:%S'),
+                     send_mail_setting={}))
+    # approval
+    two_app_flow_actions.append(FlowAction(status='N',
+                     flow_id=two_app_flow_define.flow_id,
+                     action_id=4,
+                     action_version='1.0.0',
+                     action_order=2,
+                     action_condition='',
+                     action_status='A',
+                     action_date=datetime.strptime('2025/05/01 0:00:00','%Y/%m/%d %H:%M:%S'),
+                     send_mail_setting={}))
+    # second approval
+    two_app_flow_actions.append(FlowAction(status='N',
+                     flow_id=two_app_flow_define.flow_id,
+                     action_id=4,
+                     action_version='1.0.0',
+                     action_order=3,
+                     action_condition='',
+                     action_status='A',
+                     action_date=datetime.strptime('2025/05/01 0:00:00','%Y/%m/%d %H:%M:%S'),
+                     send_mail_setting={}))
+    # end
+    two_app_flow_actions.append(FlowAction(status='N',
+                     flow_id=two_app_flow_define.flow_id,
+                     action_id=2,
+                     action_version='1.0.0',
+                     action_order=4,
+                     action_condition='',
+                     action_status='A',
+                     action_date=datetime.strptime('2025/05/01 0:00:00','%Y/%m/%d %H:%M:%S'),
+                     send_mail_setting={}))
     with db.session.begin_nested():
         db.session.add_all(flow_actions)
+        db.session.add_all(del_flow_actions)
+        db.session.add_all(del_app_flow_actions)
+        db.session.add_all(two_app_flow_actions)
     db.session.commit()
 
     # setting workflow, activity(not exist item, exist item)
@@ -1620,6 +1849,36 @@ def db_register_fullaction(app, db, db_records, users, action_data, item_type):
                         itemtype_id=1,
                         index_tree_id=None,
                         flow_id=1,
+                        is_deleted=False,
+                        open_restricted=False,
+                        location_id=None,
+                        is_gakuninrdm=False)
+    del_workflow = WorkFlow(flows_id=uuid.uuid4(),
+                        flows_name='test delete workflow',
+                        itemtype_id=1,
+                        index_tree_id=None,
+                        flow_id=1,
+                        delete_flow_id=del_flow_define.id,
+                        is_deleted=False,
+                        open_restricted=False,
+                        location_id=None,
+                        is_gakuninrdm=False)
+    app_del_workflow = WorkFlow(flows_id=uuid.uuid4(),
+                        flows_name='test delete approval workflow',
+                        itemtype_id=1,
+                        index_tree_id=None,
+                        flow_id=1,
+                        delete_flow_id=app_flow_define.id,
+                        is_deleted=False,
+                        open_restricted=False,
+                        location_id=None,
+                        is_gakuninrdm=False)
+    two_app_del_workflow = WorkFlow(flows_id=uuid.uuid4(),
+                        flows_name='test delete two approval workflow',
+                        itemtype_id=1,
+                        index_tree_id=None,
+                        flow_id=1,
+                        delete_flow_id=two_app_flow_define.id,
                         is_deleted=False,
                         open_restricted=False,
                         location_id=None,
@@ -1712,8 +1971,51 @@ def db_register_fullaction(app, db, db_records, users, action_data, item_type):
                 title='test item1', shared_user_id=-1, extra_info={"guest_mail":"guest@test.org"},
                 action_order=1,
                 )
+    # delete flow activity
+    del_activity = Activity(activity_id='A-00000001-10020',workflow_id=2, flow_id=del_flow_define.id,
+                    action_id=1, activity_login_user=1,
+                    activity_update_user=1,
+                    activity_start=datetime.strptime('2025/05/02 3:01:53.931', '%Y/%m/%d %H:%M:%S.%f'),
+                    activity_community_id=3,
+                    activity_confirm_term_of_use=True,
+                    title='test', shared_user_id=-1, extra_info={},
+                    action_order=1,
+                    )
+    # delete approval flow activity
+    app_del_activity = Activity(activity_id='A-00000001-10021',item_id=db_records[7][2].id,workflow_id=3, flow_id=app_flow_define.id,
+                    action_id=1, activity_login_user=1,
+                    activity_update_user=1,
+                    activity_start=datetime.strptime('2025/05/02 3:01:53.931', '%Y/%m/%d %H:%M:%S.%f'),
+                    activity_community_id=3,
+                    activity_confirm_term_of_use=True,
+                    title='test', shared_user_id=-1, extra_info={},
+                    action_order=1,
+                    )
+    # delete two approval flow activity
+    two_app_del_activity = Activity(activity_id='A-00000001-10022',item_id=db_records[8][2].id,workflow_id=4, flow_id=two_app_flow_define.id,
+                    action_id=1, activity_login_user=1,
+                    activity_update_user=1,
+                    activity_start=datetime.strptime('2025/05/02 3:01:53.931', '%Y/%m/%d %H:%M:%S.%f'),
+                    activity_community_id=3,
+                    activity_confirm_term_of_use=True,
+                    title='test', shared_user_id=-1, extra_info={},
+                    action_order=1,
+                    )
+    # delete flow activity
+    two_app_del_activity2 = Activity(activity_id='A-00000001-10023',item_id=db_records[9][2].id,workflow_id=4, flow_id=two_app_flow_define.id,
+                    action_id=1, activity_login_user=1,
+                    activity_update_user=1,
+                    activity_start=datetime.strptime('2025/05/02 3:01:53.931', '%Y/%m/%d %H:%M:%S.%f'),
+                    activity_community_id=3,
+                    activity_confirm_term_of_use=True,
+                    title='test', shared_user_id=-1, extra_info={},
+                    action_order=1,
+                    )
     with db.session.begin_nested():
         db.session.add(workflow)
+        db.session.add(del_workflow)
+        db.session.add(app_del_workflow)
+        db.session.add(two_app_del_workflow)
         db.session.add(activity)
         db.session.add(activity2)
         db.session.add(activity3)
@@ -1723,6 +2025,10 @@ def db_register_fullaction(app, db, db_records, users, action_data, item_type):
         db.session.add(activity_item4)
         db.session.add(activity_item5)
         db.session.add(activity_item6)
+        db.session.add(del_activity)
+        db.session.add(app_del_activity)
+        db.session.add(two_app_del_activity)
+        db.session.add(two_app_del_activity2)
     db.session.commit()
 
     feedbackmail_action1 = ActionFeedbackMail(
@@ -1780,6 +2086,20 @@ def db_register_fullaction(app, db, db_records, users, action_data, item_type):
         set_activityaction(activity_item5, action, flow_action)
         set_activityaction(activity_item6, action, flow_action)
 
+    # setting activity_action in activity existed item
+    for flow_action in del_flow_actions:
+        action = action_data[0][flow_action.action_id-1]
+        set_activityaction(del_activity, action, flow_action)
+    # setting activity_action in activity existed item
+    for flow_action in del_app_flow_actions:
+        action = action_data[0][flow_action.action_id-1]
+        set_activityaction(app_del_activity, action, flow_action)
+    # setting activity_action in activity existed item
+    for flow_action in two_app_flow_actions:
+        action = action_data[0][flow_action.action_id-1]
+        set_activityaction(two_app_del_activity, action, flow_action)
+        set_activityaction(two_app_del_activity2, action, flow_action)
+    
 
     # flow_action_role = FlowActionRole(
     #     flow_action_id=flow_actions[5].id,
@@ -1842,7 +2162,7 @@ def db_register_fullaction(app, db, db_records, users, action_data, item_type):
     db.session.commit()
 
     return {"flow_actions":flow_actions,
-            "activities":[activity,activity_item1,activity_item2,activity_item3,activity_item4,activity_item5,activity_item6]}
+            "activities":[activity,activity_item1,activity_item2,activity_item3,activity_item4,activity_item5,activity_item6,del_activity,app_del_activity,two_app_del_activity,two_app_del_activity2]}
 
 @pytest.fixture()
 def db_register_usage_application(app, db, db_records, users, action_data, item_type ):
@@ -2605,3 +2925,26 @@ def db_guestactivity(app, db, db_register):
     db.session.commit()
 
     return [token1, token2]
+
+@pytest.fixture()
+def db_user_profile(app, db, users):
+    user_profile = UserProfile(
+        user_id=users[2]["id"],
+        _username="sysadmin",
+        _displayname="sysadmin user",
+        fullname="test taro",
+    )
+    db.session.add(user_profile)
+    db.session.commit()
+    return user_profile
+
+
+@pytest.fixture()
+def db_notification_user_settings(app, db, users):
+    notification_settings = NotificationsUserSettings(
+        user_id=users[2]["id"],
+        subscribe_email=True,
+    )
+    db.session.add(notification_settings)
+    db.session.commit()
+    return notification_settings

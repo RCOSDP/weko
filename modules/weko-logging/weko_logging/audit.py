@@ -12,16 +12,17 @@ import logging
 from weko_logging import config
 from weko_logging.views import blueprint
 from weko_logging.handler import UserActivityLogHandler
-from .ext import WekoLoggingBase
+from weko_logging.ext import WekoLoggingBase
 
 class WekoLoggingUserActivity(WekoLoggingBase):
     """WEKO-Logging extension. Filesystem handler."""
 
     def init_app(self, app):
         """
-        Flask application initialization.
+        Initialize the Flask application.
 
-        :param app: The flask application.
+        Args:
+            app (Flask): The Flask application.
         """
         self.init_config(app)
         app.register_blueprint(blueprint)
@@ -32,7 +33,8 @@ class WekoLoggingUserActivity(WekoLoggingBase):
         """
         Initialize configuration.
 
-        :param app: The flask application.
+        Args:
+            app (Flask): The Flask application.
         """
         for k in dir(config):
             if k.startswith("WEKO_LOGGING") and not k.startswith("WEKO_LOGGING_FS"):
@@ -42,18 +44,23 @@ class WekoLoggingUserActivity(WekoLoggingBase):
         """
         Install log handler on Flask application.
 
-        :param app: The flask application.
+        Args:
+            app (Flask): The Flask application.
+
+        Returns:
+            logging.Logger: The user activity logger.
         """
         user_logger = logging.getLogger("user-activity")
         user_logger.setLevel(logging.INFO)
-        for h in user_logger.handlers:
-            if isinstance(h, UserActivityLogHandler) or isinstance(h, logging.StreamHandler):
-                user_logger.removeHandler(h)
-                h.close()
-        stream_handler_settings = app.config.get("WEKO_LOGGING_USER_ACTIVITY_STREAM_SETTING", {})
+        user_logger.handlers.clear()
+        stream_handler_settings = app.config.get(
+            "WEKO_LOGGING_USER_ACTIVITY_STREAM_SETTING", {}
+        )
 
         stream_handler = logging.StreamHandler()
-        stream_log_level = get_level_from_string(stream_handler_settings.get("log_level", "ERROR"))
+        stream_log_level = get_level_from_string(
+            stream_handler_settings.get("log_level", "ERROR")
+        )
         stream_handler.setLevel(stream_log_level)
         stream_handler.setFormatter(
             logging.Formatter(
@@ -64,8 +71,12 @@ class WekoLoggingUserActivity(WekoLoggingBase):
         user_logger.addHandler(stream_handler)
 
         db_handler = UserActivityLogHandler(app)
-        db_handler_settings = app.config.get("WEKO_LOGGING_USER_ACTIVITY_DB_SETTING", {})
-        db_log_level = get_level_from_string(db_handler_settings.get("log_level", "ERROR"))
+        db_handler_settings = app.config.get(
+            "WEKO_LOGGING_USER_ACTIVITY_DB_SETTING", {}
+        )
+        db_log_level = get_level_from_string(
+            db_handler_settings.get("log_level", "ERROR")
+        )
         db_handler.setLevel(db_log_level)
 
         # Add handler to application logger
@@ -77,7 +88,10 @@ def get_level_from_string(level):
     """
     Get log level from string.
 
-    :param level: The log level string.
-    :return: The log level.
+    Args:
+        level (str): The log level string.
+
+    Returns:
+        int: The log level.
     """
     return getattr(logging, level.upper(), logging.ERROR)

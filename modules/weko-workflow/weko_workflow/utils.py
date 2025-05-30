@@ -206,7 +206,7 @@ def saving_doi_pidstore(item_id,
                 reg = identifier.register_pidstore('doi', identifier_val)
                 UserActivityLogger.info(
                     operation="ITEM_ASSIGN_DOI",
-                    target_key=item_id,
+                    target_key=str(item_id),
                 )
                 identifier.update_idt_registration_metadata(
                     doi_register_val,
@@ -225,7 +225,7 @@ def saving_doi_pidstore(item_id,
             tb_info = traceback.format_tb(exec_info[2])
             UserActivityLogger.error(
                 operation="ITEM_ASSIGN_DOI",
-                target_key=item_id,
+                target_key=str(item_id),
                 remarks=tb_info[0]
             )
         return False
@@ -1904,74 +1904,65 @@ def prepare_delete_workflow(post_activity, recid, deposit):
     Create new workflow activity.
     Clone Identifier and Feedbackmail relation to last activity.
 
-    parameter:
-        post_activity: latest activity information.
-        recid: current record id.
-        deposit: current deposit data.
-    return:
-        rtn: new activity
+    Args:
+        post_activity (dict): latest activity information.
+        recid (PersistentIdentifier): current record id.
+        deposit (WekoDeposit): current deposit data.
 
+    Returns:
+        Activity: new activity object.
     """
     # ! Check pid's version
     community = post_activity['community']
     activity = WorkActivity()
 
+    pid_value = recid.pid_value.split('.')[0]
+    del_value = (
+        recid.pid_value
+        if not '.' in recid.pid_value
+        else "del_ver_{}".format(recid.pid_value)
+    )
+
     draft_pid = PersistentIdentifier.query.filter_by(
         pid_type='recid',
-        pid_value="{}.0".format(recid.pid_value)
+        pid_value="{}.0".format(pid_value)
     ).one_or_none()
 
-    if not draft_pid:
+    if del_value.startswith("del_ver_"):
+        item_id = recid.object_uuid
+    elif not draft_pid:
         draft_record = deposit.prepare_draft_item(recid)
-        rtn = activity.init_activity(
-            post_activity, community, draft_record.model.id
-        )
-        # create item link info of draft record from parent record
-        weko_record = WekoRecord.get_record_by_pid(
-            draft_record.pid.pid_value
-        )
-        if weko_record:
-            weko_record.update_item_link(recid.pid_value)
+        item_id = draft_record.model.id
     else:
-        # Clone org bucket into draft record.
-        try:
-            _parent = WekoDeposit.get_record(recid.object_uuid)
-            _deposit = WekoDeposit.get_record(draft_pid.object_uuid)
-            _deposit['path'] = _parent.get('path')
-            _deposit.merge_data_to_record_without_version(recid, True)
-            _deposit.publish()
-            _bucket = Bucket.get(_deposit.files.bucket.id)
+        item_id = draft_pid.object_uuid
 
-            if not _bucket:
-                _bucket = Bucket.create(
-                    quota_size=current_app.config['WEKO_BUCKET_QUOTA_SIZE'],
-                    max_file_size=current_app.config['WEKO_MAX_FILE_SIZE'],
-                )
-                RecordsBuckets.create(record=_deposit.model, bucket=_bucket)
-                _deposit.files.bucket.id = _bucket
+    rtn = activity.init_activity(
+        post_activity, community, item_id
+    )
+    activity_detail = activity.get_activity_detail(rtn.activity_id)
+    cur_action = activity_detail.action
+    if rtn.action_id == 2:   # end_action
+        from weko_records_ui.views import soft_delete
+        soft_delete(del_value)
+        activity.notify_about_activity(rtn.activity_id, "deleted")
+        activity.upt_activity_action_status(
+            activity_id=rtn.activity_id,
+            action_id=rtn.action_id,
+            action_status=ActionStatusPolicy.ACTION_DONE,
+            action_order=rtn.action_order
+            )
+        act = {
+            'activity_id': rtn.activity_id,
+            'action_id': rtn.action_id,
+            'action_version': cur_action.action_version,
+            'action_status': ActionStatusPolicy.ACTION_DONE,
+            'item_id': item_id,
+            'action_order': rtn.action_order
+        }
+        activity.end_activity(act)
 
-            bucket = deposit.files.bucket
-
-            sync_bucket = RecordsBuckets.query.filter_by(
-                bucket_id=_deposit.files.bucket.id
-            ).first()
-
-            snapshot = bucket.snapshot(lock=False)
-            snapshot.locked = False
-            _bucket.locked = False
-
-            sync_bucket.bucket_id = snapshot.id
-            _deposit['_buckets']['deposit'] = str(snapshot.id)
-
-            db.session.add(sync_bucket)
-            _bucket.remove()
-
-        except SQLAlchemyError as ex:
-            raise ex
-
-        rtn = activity.init_activity(
-            post_activity, community, draft_pid.object_uuid
-        )
+    if rtn.action_id == 4:   # approval
+        activity.notify_about_activity(rtn.activity_id, "deletion_request")
 
     return rtn
 
@@ -1996,15 +1987,18 @@ def handle_finish_workflow(deposit, current_pid, recid):
     record_pid = None
     old_item_reference_list = []
     new_item_reference_list = []
+    is_newversion = False
     try:
         pid_without_ver = get_record_without_version(current_pid)
         if ".0" in current_pid.pid_value:
             deposit.commit()
         deposit.publish()
         updated_item = UpdateItem()
+        non_extract = getattr(deposit, 'non_extract', None)
         # publish record without version ID when registering newly
         if recid:
             # new record attached version ID
+            is_newversion = True
             new_deposit = deposit.newversion(current_pid)
             item_id = new_deposit.model.id
             ver_attaching_deposit = WekoDeposit(
@@ -2038,7 +2032,7 @@ def handle_finish_workflow(deposit, current_pid, recid):
                     pid_without_ver.object_uuid)
                 _deposit = WekoDeposit(_record, _record.model)
                 _deposit['path'] = deposit.get('path', [])
-
+                _deposit.non_extract = non_extract
                 parent_record = _deposit. \
                     merge_data_to_record_without_version(current_pid)
                 _deposit.publish()
@@ -2056,6 +2050,7 @@ def handle_finish_workflow(deposit, current_pid, recid):
                         maintain_record,
                         maintain_record.model)
                     maintain_deposit['path'] = deposit.get('path', [])
+                    maintain_deposit.non_extract = non_extract
                     record_pid = maintain_record.pid
                     old_record = WekoRecord.get_record_by_pid(record_pid.pid_value)
                     old_item_reference_list = ItemReference.get_src_references(record_pid.pid_value).all()
@@ -2117,9 +2112,24 @@ def handle_finish_workflow(deposit, current_pid, recid):
 
         from invenio_oaiserver.tasks import update_records_sets
         update_records_sets.delay([str(pid_without_ver.object_uuid)])
+        opration = "ITEM_CREATE" if is_newversion else "ITEM_UPDATE"
+        target_key = recid.recid if is_newversion else pid_without_ver.pid_value
+        UserActivityLogger.info(
+            operation=opration,
+            target_key=target_key
+        )
     except Exception as ex:
         db.session.rollback()
         current_app.logger.exception(str(ex))
+        exec_info = sys.exc_info()
+        tb_info = traceback.format_tb(exec_info[2])
+        opration = "ITEM_CREATE" if is_newversion else "ITEM_UPDATE"
+        target_key = recid.recid if is_newversion else pid_without_ver.pid_value
+        UserActivityLogger.error(
+            operation=opration,
+            target_key=target_key,
+            remarks=tb_info[0]
+        )
         return item_id
     return item_id
 
@@ -2160,9 +2170,11 @@ def get_cache_data(key: str):
 def check_an_item_is_locked(item_id=None):
     """Check if an item is locked.
 
-    :param item_id: Item id.
+    Args:
+        item_id (str): The ID of the item to check.
 
-    :return
+    Returns:
+        bool: If the item is locked, return True, else False.
     """
     def check(workers):
         for worker in workers:
@@ -4629,6 +4641,15 @@ def grant_access_rights_to_all_open_restricted_files(activity_id :str ,permissio
     return url_and_expired_date
 
 def delete_lock_activity_cache(activity_id, data):
+    """Delete lock activity cache.
+
+    Args:
+        activity_id (str): The activity identifier.
+        data (dict): Data containing the locked value.
+
+    Returns:
+        str: Message indicating the result of the unlock operation.
+    """
     cache_key = 'workflow_locked_activity_{}'.format(activity_id)
     locked_value = str(data.get('locked_value'))
     msg = None

@@ -28,8 +28,6 @@ from collections import OrderedDict
 
 import pytz
 from flask import current_app, json, Flask
-from flask_limiter import Limiter
-from flask_limiter.util import get_remote_address
 from flask_security import current_user
 from invenio_i18n.ext import current_i18n
 from invenio_pidstore import current_pidstore
@@ -102,7 +100,7 @@ def json_loader(data, pid, owner_id=None, with_deleted=False, replace_field=True
         shared_user_id = data.get("shared_user_id", -1)
 
         return {
-            "weko_shared_id": weko_shared_id 
+            "weko_shared_id": weko_shared_id
             if shared_user_id == -1 else shared_user_id
         }
 
@@ -1308,14 +1306,28 @@ async def sort_meta_data_by_options(
             label, extension, date = __get_label_extension()
             if "open_restricted" == f.get("accessrole", ""):
                 if label:
-                    result.append({"label": label, "extention": extension, "url": "", "date": date})
+                    result.append(
+                        {
+                            "label": label,
+                            "extention": extension,
+                            "url": "",
+                            "date": date
+                        }
+                    )
             elif label and (
                 not extension or check_file_download_permission(record, f, False)
             ):
                 file_url = f.get("url", {}).get("url", "")
                 if extension and file_url:
                     file_url = replace_fqdn(file_url)
-                result.append({"label": label, "extention": extension, "url": file_url, "date": date})
+                result.append(
+                    {
+                        "label": label,
+                        "extention": extension,
+                        "url": file_url,
+                        "date": date
+                    }
+                )
         return result
 
     def get_file_thumbnail(thumbnails):
@@ -1335,7 +1347,15 @@ async def sort_meta_data_by_options(
     def get_description(description):
         """Get reference."""
         result = []
+        current_lang = current_i18n.language
         if description and len(description) > 0:
+            description = [
+                get_value_by_selected_language(
+                    description,
+                    "subitem_description_language",
+                    current_lang
+                    )
+            ]
             for des in description:
                 subitem_description = des.get("subitem_description")
                 subitem_description_type = des.get("subitem_description_type")
@@ -1343,11 +1363,14 @@ async def sort_meta_data_by_options(
 
                 description_json = {}
                 if subitem_description:
-                    description_json["subitem_description"] = subitem_description
+                    description_json["subitem_description"] = \
+                        subitem_description
                 if subitem_description_type:
-                    description_json["subitem_description_type"] = subitem_description_type
+                    description_json["subitem_description_type"] = \
+                        subitem_description_type
                 if subitem_description_language:
-                    description_json["subitem_description_language"] = subitem_description_language
+                    description_json["subitem_description_language"] = \
+                        subitem_description_language
                 if any(description_json):
                     result.append(description_json)
         return result
@@ -1355,16 +1378,32 @@ async def sort_meta_data_by_options(
     def get_reference(reference):
         """Get reference."""
         result = []
+        current_lang = current_i18n.language
         if reference and len(reference) > 0:
             for ref in reference:
                 subitem_relation_name_array = []
                 subitem_relation_name = ref.get("subitem_relation_name")
                 if subitem_relation_name and len(subitem_relation_name) > 0:
                     subitem_relation_name_json = {}
+                    subitem_relation_name = [
+                        get_value_by_selected_language(
+                            subitem_relation_name,
+                            "subitem_relation_name_language",
+                            current_lang
+                        )
+                    ]
                     for relation_name in subitem_relation_name:
                         subitem_relation_name_json = {
-                            "subitem_relation_name_text": relation_name.get("subitem_relation_name_text", ""),
-                            "subitem_relation_name_language": relation_name.get("subitem_relation_name_language", "")
+                            "subitem_relation_name_text":
+                                relation_name.get(
+                                    "subitem_relation_name_text",
+                                    ""
+                                ),
+                            "subitem_relation_name_language":
+                                relation_name.get(
+                                    "subitem_relation_name_language",
+                                    ""
+                                )
                         }
                         subitem_relation_name_array.append(subitem_relation_name_json)
 
@@ -1374,8 +1413,16 @@ async def sort_meta_data_by_options(
                 subitem_relation_type_id = ref.get("subitem_relation_type_id")
                 if subitem_relation_type_id and len(subitem_relation_type_id) > 0:
                     subitem_relation_type_id_json = {
-                        "subitem_relation_type_select": subitem_relation_type_id.get("subitem_relation_type_select", ""),
-                        "subitem_relation_type_id_text": subitem_relation_type_id.get("subitem_relation_type_id_text", "")
+                        "subitem_relation_type_select":
+                            subitem_relation_type_id.get(
+                                "subitem_relation_type_select",
+                                ""
+                            ),
+                        "subitem_relation_type_id_text":
+                            subitem_relation_type_id.get(
+                                "subitem_relation_type_id_text",
+                                ""
+                            )
                     }
 
                 reference_json = {}
@@ -2795,8 +2842,3 @@ def replace_fqdn_of_file_metadata(file_metadata_lst: list, file_url: list = None
                 file["url"]["url"] = replace_fqdn(file["url"]["url"])
             elif isinstance(file_url, list):
                 file_url.append(file["url"]["url"])
-
-def create_limiter():
-    from .config import WEKO_RECORDS_API_LIMIT_RATE_DEFAULT
-    return Limiter(app=Flask(__name__), key_func=get_remote_address, default_limits=WEKO_RECORDS_API_LIMIT_RATE_DEFAULT)
-

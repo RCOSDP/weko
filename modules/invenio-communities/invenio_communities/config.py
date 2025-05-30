@@ -151,16 +151,30 @@ COMMUNITIES_ALLOWED_TAGS = [
     'sup',
     'u',
     'ul',
+    'hr',
+    'table',
+    'thead',
+    'tbody',
+    'tfoot',
+    'tr',
+    'th',
+    'td',
 ]
 """List of allowed tags used to sanitize HTML output for communities."""
 
 COMMUNITIES_ALLOWED_ATTRS = {
-    '*': ['class'],
+    '*': ['class', 'style'],
     'a': ['href', 'title', 'name', 'class', 'rel'],
     'abbr': ['title'],
     'acronym': ['title'],
 }
 """List of allowed attributes used to sanitize HTML output for communities."""
+
+COMMUNITIES_ALLOWED_STYLES = [
+    'font-family', 'font-size', 'color', 'background-color',
+    'text-align', 'font-weight', 'font-style', 'text-decoration',
+]
+"""List of allowed styles used to sanitize HTML output for communities."""
 
 COMMUNITIES_LIMITED_ROLE_ACCESS_PERMIT = 2
 """Allowed Role's id higher than this number full access to list Indexes."""

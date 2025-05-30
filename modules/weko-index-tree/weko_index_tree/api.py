@@ -25,7 +25,6 @@ import os
 import sys
 from datetime import date, datetime, timezone
 from functools import partial
-from socketserver import DatagramRequestHandler
 import traceback
 
 from b2handle.clientcredentials import PIDClientCredentials
@@ -45,7 +44,6 @@ from invenio_indexer.api import RecordIndexer
 
 from weko_groups.api import Group
 from weko_redis.redis import RedisConnection
-from weko_logging.activity_logger import UserActivityLogger
 from weko_handle.api import Handle
 
 from .models import Index
@@ -69,6 +67,7 @@ class Indexes(object):
 
         # delay import
         from weko_workflow.config import WEKO_SERVER_CNRI_HOST_LINK
+        from weko_logging.activity_logger import UserActivityLogger
 
         def _add_index(data):
             with db.session.begin_nested():
@@ -94,9 +93,12 @@ class Indexes(object):
             data["index_link_name_english"] = data["index_name_english"]
             data["owner_user_id"] = current_user.get_id()
             role = cls.get_account_role()
+            browsing_role = cls.bind_roles_including_permission(role, current_app.config.get('WEKO_INDEXTREE_GAKUNIN_GROUP_DEFAULT_BROWSING_PERMISSION', False))
             data["browsing_role"] = \
-                ",".join(list(map(lambda x: str(x["id"]), role)))
-            data["contribute_role"] = data["browsing_role"]
+                ",".join(list(map(lambda x: str(x['id']), browsing_role)))
+            contribute_role = cls.bind_roles_including_permission(role, current_app.config.get('WEKO_INDEXTREE_GAKUNIN_GROUP_DEFAULT_CONTRIBUTE_PERMISSION', False))
+            data["contribute_role"] = \
+                ",".join(list(map(lambda x: str(x['id']), contribute_role)))
 
             data["more_check"] = False
             data["display_no"] = current_app.config[
@@ -211,6 +213,8 @@ class Indexes(object):
         :param detail: new index info for update.
         :return: Updated index info
         """
+        from weko_logging.activity_logger import UserActivityLogger
+
         try:
             with db.session.begin_nested():
                 index = cls.get_index(index_id)
@@ -815,7 +819,7 @@ class Indexes(object):
 
             return allow, deny
 
-        def _get_firter_gakuni_map_groups_allow_deny(filtered_role_ids=[], filtered_roles=[]):
+        def _get_filter_gakunin_map_groups_allow_deny(filtered_role_ids=[], filtered_roles=[]):
             """
             フィルタリングされたロールIDとロールリストに基づいて、許可リストと拒否リストを生成します。
 
@@ -865,7 +869,7 @@ class Indexes(object):
         browsing_group = dict(allow=allow_browsing_groups, deny=deny_browsing_groups)
 
         # _get_group_allow_deny_2の結果をbrowsing_groupに追加
-        allow_browsing_map_groups, deny_browsing_map_groups = _get_firter_gakuni_map_groups_allow_deny(allow_browsing_roles_ids, roles_gakunin_map_group)
+        allow_browsing_map_groups, deny_browsing_map_groups = _get_filter_gakunin_map_groups_allow_deny(allow_browsing_roles_ids, roles_gakunin_map_group)
         browsing_group["allow"].extend(allow_browsing_map_groups)
         browsing_group["deny"].extend(deny_browsing_map_groups)
 
@@ -880,7 +884,7 @@ class Indexes(object):
         contribute_group = dict(allow=allow_contribute_groups, deny=deny_contributes_groups)
 
         # _get_group_allow_deny_2の結果をcontribute_groupに追加
-        allow_contribute_map_groups, deny_contribute_map_groups = _get_firter_gakuni_map_groups_allow_deny(allow_browsing_roles_ids, roles_gakunin_map_group)
+        allow_contribute_map_groups, deny_contribute_map_groups = _get_filter_gakunin_map_groups_allow_deny(allow_contribute_role_ids, roles_gakunin_map_group)
         contribute_group["allow"].extend(allow_contribute_map_groups)
         contribute_group["deny"].extend(deny_contribute_map_groups)
 
@@ -2091,3 +2095,21 @@ class Indexes(object):
 
         handle = weko_handle.register_handle(location=index_url, hdl=hdl)
         return handle, index_url
+
+    @classmethod
+    def bind_roles_including_permission(cls, roles, permission):
+        """Bind roles including permissions.
+        
+        Args:
+            roles (list): List of roles.
+            permission (bool): Permission of default browsing or contribute.
+        
+        Returns:
+            list: List of roles what binded.
+        """
+        bind_roles = []
+        for role in roles:
+            if role.get('name').startswith('jc_') and not permission:
+                continue
+            bind_roles.append(role)
+        return bind_roles

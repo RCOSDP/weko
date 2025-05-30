@@ -29,28 +29,28 @@ import re
 import shutil
 import sys
 import tempfile
+import time
 import traceback
 import unicodedata
+import secrets
+import pytz
 from collections import OrderedDict
 from datetime import date, datetime, timedelta, timezone
 from io import StringIO
-import zipfile
-import secrets
-import pytz
 
 import bagit
-import redis
 from sqlalchemy.exc import SQLAlchemyError
-from redis import sentinel
 from elasticsearch.exceptions import NotFoundError
 from elasticsearch import exceptions as es_exceptions
-from flask import abort, current_app, flash, redirect, request, send_file, \
-    url_for,jsonify, Flask
+from flask import abort, current_app, flash, redirect, request, send_file, url_for
 from flask_babelex import gettext as _
-from flask_limiter import Limiter
-from flask_limiter.util import get_remote_address
 from flask_login import current_user
+from sqlalchemy import MetaData, Table
+from sqlalchemy.sql import text
+from jsonschema import SchemaError, ValidationError
+
 from invenio_accounts.models import Role, userrole
+from invenio_cache import current_cache
 from invenio_db import db
 from invenio_i18n.ext import current_i18n
 from invenio_indexer.api import RecordIndexer
@@ -59,48 +59,41 @@ from invenio_pidrelations.models import PIDRelation
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from invenio_pidstore.errors import PIDDoesNotExistError
 from invenio_records.api import RecordBase
-from sqlalchemy.dialects.postgresql import JSONB
-from sqlalchemy.sql import func, cast, text
-from sqlalchemy.types import Text, String
-from sqlalchemy.orm import aliased
-from invenio_records.models import RecordMetadata
 from invenio_accounts.models import User
 from invenio_search import RecordsSearch
-from invenio_stats.utils import QueryRankingHelper, QuerySearchReportHelper
-from invenio_stats.views import QueryRecordViewCount as _QueryRecordViewCount
-from invenio_stats.proxies import current_stats
-from invenio_stats import config
-#from invenio_stats.views import QueryRecordViewCount
-from jsonschema import SchemaError, ValidationError
-from simplekv.memory.redisstore import RedisStore
-from sqlalchemy import MetaData, Table
+from invenio_stats.utils import QueryRankingHelper
+
 from weko_authors.api import WekoAuthors
 from weko_deposit.api import WekoDeposit, WekoRecord
 from weko_deposit.pidstore import get_record_without_version
 from weko_index_tree.api import Indexes
-from weko_index_tree.utils import check_index_permissions, get_index_id, \
-    get_user_roles
+from weko_index_tree.utils import (
+    check_index_permissions, get_index_id, get_user_roles
+)
 from weko_notifications.models import NotificationsUserSettings
 from weko_records.api import FeedbackMailList, JsonldMapping, RequestMailList, ItemTypes, Mapping
 from weko_records.serializers.utils import get_item_type_name
 from weko_records.utils import replace_fqdn_of_file_metadata
 from weko_records_ui.errors import AvailableFilesNotFoundRESTError
-from weko_records_ui.permissions import check_created_id, \
-    check_file_download_permission, check_publish_status
+from weko_records_ui.permissions import (
+    check_created_id, check_file_download_permission, check_publish_status
+)
 from weko_redis.redis import RedisConnection
 from weko_search_ui.config import ROCRATE_METADATA_FILE, WEKO_IMPORT_DOI_TYPE
 from weko_search_ui.mapper import JsonLdMapper
 from weko_search_ui.query import item_search_factory
-from weko_search_ui.utils import check_sub_item_is_system, \
-    get_root_item_option, get_sub_item_option
+from weko_search_ui.utils import (
+    check_sub_item_is_system, get_root_item_option, get_sub_item_option
+)
 from weko_schema_ui.models import PublishStatus
 from weko_user_profiles import UserProfile
 from weko_workflow.api import WorkActivity
-from weko_workflow.config import IDENTIFIER_GRANT_LIST, \
-    WEKO_SERVER_CNRI_HOST_LINK
-from weko_workflow.models import ActionStatusPolicy as ASP
-from weko_workflow.models import Activity, FlowAction, FlowActionRole, \
-    FlowDefine
+from weko_workflow.config import (
+    IDENTIFIER_GRANT_LIST, WEKO_SERVER_CNRI_HOST_LINK
+)
+from weko_workflow.models import (
+    Activity, FlowAction, FlowActionRole, FlowDefine, ActionStatusPolicy as ASP
+)
 from weko_workflow.utils import IdentifierHandle
 from weko_admin.models import ApiCertificate
 
@@ -2513,8 +2506,9 @@ def export_items(post_data):
     :return: JSON, BIBTEX
     """
     current_app.logger.debug("post_data:{}".format(post_data))
-    include_contents = True if \
-        post_data.get('export_file_contents_radio') == 'True' else False
+    include_contents = (
+        True if post_data.get('export_file_contents_radio') == 'True' else False
+    )
     export_format = post_data['export_format_radio']
     record_ids = json.loads(post_data['record_ids'])
     invalid_record_ids = json.loads(post_data['invalid_record_ids'])
@@ -2523,8 +2517,11 @@ def export_items(post_data):
     else:
         invalid_record_ids = [invalid_record_ids]
     # Remove all invalid records
-    record_ids = set(record_ids) - set(invalid_record_ids)
-    record_metadata = json.loads(post_data['record_metadata'])
+    record_ids = list(set(record_ids) - set(invalid_record_ids))
+    record_metadata = (
+        json.loads(post_data['record_metadata'])
+        if post_data.get('record_metadata') else {}
+    )
     if len(record_ids) > _get_max_export_items():
         return abort(400)
     elif len(record_ids) == 0:
@@ -2532,61 +2529,67 @@ def export_items(post_data):
 
     result = {'items': []}
     temp_path = tempfile.TemporaryDirectory(
-        prefix=current_app.config['WEKO_ITEMS_UI_EXPORT_TMP_PREFIX'])
+        prefix=current_app.config['WEKO_ITEMS_UI_EXPORT_TMP_PREFIX']
+    )
     item_types_data = {}
 
     try:
         # Set export folder
-        export_path = temp_path.name + '/' + \
-            datetime.utcnow().strftime("%Y%m%d%H%M%S")
-        # Double check for limits
-        for record_id in record_ids:
-            record_path = export_path + '/recid_' + str(record_id)
-            os.makedirs(record_path, exist_ok=True)
-            exported_item, list_item_role = _export_item(
-                record_id,
-                export_format,
-                include_contents,
-                record_path,
-                record_metadata.get(str(record_id))
-            )
-            result['items'].append(exported_item)
+        datetime_now = datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S")
+        export_path = os.path.join(temp_path.name, datetime_now)
 
-            item_type_id = exported_item.get('item_type_id')
-            item_type = ItemTypes.get_by_id(item_type_id)
-            if not item_types_data.get(item_type_id):
-                item_type_name = check_item_type_name(
-                    item_type.item_type_name.name)
-                item_types_data[item_type_id] = {
-                    'item_type_id': item_type_id,
-                    'name': '{}({})'.format(
-                        item_type_name,
-                        item_type_id),
-                    'root_url': request.url_root,
-                    'jsonschema': 'items/jsonschema/' + item_type_id,
-                    'keys': [],
-                    'labels': [],
-                    'recids': [],
-                    'data': {},
-                }
-            item_types_data[item_type_id]['recids'].append(record_id)
-
-        # Create export info file
-        if export_format == 'BIBTEX':
-            write_bibtex_files(item_types_data, export_path)
+        if export_format == "ROCRATE":
+            make_rocrate(record_ids, export_path)
         else:
-            write_files(item_types_data, export_path, list_item_role)
+            # Double check for limits
+            for record_id in record_ids:
+                record_path = export_path + '/recid_' + str(record_id)
+                os.makedirs(record_path, exist_ok=True)
+                exported_item, list_item_role = _export_item(
+                    record_id,
+                    export_format,
+                    include_contents,
+                    record_path,
+                    record_metadata.get(str(record_id))
+                )
+                result['items'].append(exported_item)
 
-        # Create bag
-        bagit.make_bag(export_path)
+                item_type_id = exported_item.get('item_type_id')
+                item_type = ItemTypes.get_by_id(item_type_id)
+                if not item_types_data.get(item_type_id):
+                    item_type_name = check_item_type_name(
+                        item_type.item_type_name.name
+                    )
+                    item_types_data[item_type_id] = {
+                        'item_type_id': item_type_id,
+                        'name': f'{item_type_name}({item_type_id})',
+                        'root_url': request.url_root,
+                        'jsonschema': 'items/jsonschema/' + item_type_id,
+                        'keys': [],
+                        'labels': [],
+                        'recids': [],
+                        'data': {},
+                    }
+                item_types_data[item_type_id]['recids'].append(record_id)
+
+            # Create export info file
+            if export_format == 'BIBTEX':
+                write_bibtex_files(item_types_data, export_path)
+            else:
+                write_files(item_types_data, export_path, list_item_role)
+
+            # Create bag
+            bagit.make_bag(export_path)
         # Create download file
         # zip filename: export_{uuid}-{%Y%m%d%H%M%S}
-        zip_path = tempfile.gettempdir()+"/"+export_path.split("/")[-2]+"-"+export_path.split("/")[-1]
+        zip_path = os.path.join(
+            tempfile.gettempdir(),
+            export_path.split("/")[-2] + "-" + export_path.split("/")[-1]
+        )
         shutil.make_archive(zip_path, 'zip', export_path)
     except Exception:
-        current_app.logger.error('-' * 60)
-        traceback.print_exc(file=sys.stdout)
-        current_app.logger.error('-' * 60)
+        current_app.logger.error("Failed to export items.")
+        traceback.print_exc()
         flash(_('Error occurred during item export.'), 'error')
         return redirect(url_for('weko_items_ui.export'))
     resp = send_file(
@@ -2595,211 +2598,70 @@ def export_items(post_data):
         attachment_filename='export.zip'
     )
     os.remove(zip_path+".zip")
+    temp_path.cleanup()
     return resp
 
 
-def bagify(
-    bag_dir, bag_info=None, processes=1, checksums=None, encoding="utf-8"
-):
-    """ Give manifests and tag files to an existing directory.
-
-    This is a modified version of the make_bag function from the bagit library.
-    Give tag files and manifests to an existing directory.
-    It is required that the given directory contains data in data/.
-    If the directory does not have data/, use the bagit.make_bag function.
+def make_rocrate(record_ids, export_path):
+    """Make RO-Crate BagIt for export.
 
     Args:
-        bag_dir (str): The directory to bag.
-        bag_info (dict): A dictionary of tag file values.
-        processes (int): The number of processes to use when creating manifests.
-        checksums (list of str): The checksum algorithms to use when creating manifests.
-        encoding (str): The encoding to use when creating tag files.
-
-    Returns:
-        Bag: The bag created from the given directory.
+        record_ids (list): List of record IDs to export.
+        export_path (str): Path to export the RO-Crate.
     """
-
-    if checksums is None:
-        checksums = bagit.DEFAULT_CHECKSUMS
-
-    bag_dir = os.path.abspath(bag_dir)
-    cwd = os.path.abspath(os.path.curdir)
-
-    if cwd.startswith(bag_dir) and cwd != bag_dir:
-        raise RuntimeError(
-            "Bagging a parent of the current directory is not supported"
-        )
-
-    current_app.logger.info(f"Creating tag for directory {bag_dir}")
-
-    if not os.path.isdir(bag_dir):
-        current_app.logger.error(f"Bag directory {bag_dir} does not exist")
-        raise RuntimeError(f"Bag directory {bag_dir} does not exist")
-
-    old_dir = os.path.abspath(os.path.curdir)
-
-    if not os.path.exists(os.path.join(bag_dir, "data")):
-        current_app.logger.error(f"Bag directory {bag_dir} does not contain a data directory")
-        raise RuntimeError(f"Bag directory {bag_dir} does not contain a data directory")
-
-    try:
-        unbaggable = bagit._can_bag(bag_dir)
-
-        if unbaggable:
-            current_app.logger.error(
-                f"Unable to write to the following directories and files: {unbaggable}"
-            )
-            raise bagit.BagError("Missing permissions to move all files and directories")
-
-        unreadable_dirs, unreadable_files = bagit._can_read(bag_dir)
-
-        if unreadable_dirs or unreadable_files:
-            if unreadable_dirs:
-                current_app.logger.error(
-                    f"The following directories do not have read permissions: {unreadable_dirs}"
-                )
-            if unreadable_files:
-                current_app.logger.error(
-                    f"The following files do not have read permissions: {unreadable_files}"
-                )
-            raise bagit.BagError(
-                "Read permissions are required to calculate file fixities"
-            )
-        else:
-            current_app.logger.info(_("Creating data directory"))
-
-            os.chdir(bag_dir)
-            cwd = os.getcwd()
-
-            # permissions for the payload directory should match those of the
-            # original directory
-            os.chmod("data", os.stat(cwd).st_mode)
-
-            total_bytes, total_files = bagit.make_manifests(
-                "data", processes, algorithms=checksums, encoding=encoding
-            )
-
-            current_app.logger.info("Creating bagit.txt")
-            txt = """BagIt-Version: 0.97\nTag-File-Character-Encoding: UTF-8\n"""
-            with bagit.open_text_file("bagit.txt", "w") as bagit_file:
-                bagit_file.write(txt)
-
-            current_app.logger.info(_("Creating bag-info.txt"))
-            if bag_info is None:
-                bag_info = {}
-
-            # allow 'Bagging-Date' and 'Bag-Software-Agent' to be overidden
-            if "Bagging-Date" not in bag_info:
-                bag_info["Bagging-Date"] = date.strftime(date.today(), "%Y-%m-%d")
-            if "Bag-Software-Agent" not in bag_info:
-                bag_info["Bag-Software-Agent"] = "bagit.py v%s <%s>" % (
-                    bagit.VERSION,
-                    bagit.PROJECT_URL,
-                )
-
-            bag_info["Payload-Oxum"] = "%s.%s" % (total_bytes, total_files)
-            bagit._make_tag_file("bag-info.txt", bag_info)
-
-            for c in checksums:
-                bagit._make_tagmanifest_file(c, bag_dir, encoding="utf-8")
-    except Exception:
-        current_app.logger.error(f"An error occurred creating a bag in {bag_dir}")
-        raise
-    finally:
-        os.chdir(old_dir)
-
-    return bagit.Bag(bag_dir)
-
-
-def export_rocrate(post_data):
-    """Gather all the item data and export and return as a Crate BagIt.
-
-    :param post_data: Post Data
-    :return: Crate BagIt
-    """
-    current_app.logger.debug("post_data:{}".format(post_data))
-    record_ids = json.loads(post_data["record_ids"])
-    invalid_record_ids = json.loads(post_data["invalid_record_ids"])
-    if isinstance(invalid_record_ids,dict) or isinstance(invalid_record_ids,list):
-        invalid_record_ids = [int(i) for i in invalid_record_ids]
-    else:
-        invalid_record_ids = [invalid_record_ids]
-    # Remove all invalid records
-    record_ids = list(set(record_ids) - set(invalid_record_ids))
-    if len(record_ids) > _get_max_export_items():
-        return abort(400)
-    elif len(record_ids) == 0:
-        return "", 204
-
     # Get Metadata from ElasticSearch
     metadata_dict = _get_metadata_dict_in_es(record_ids)
 
-    # Create temporary directory
-    temp_path = tempfile.TemporaryDirectory(
-            prefix=current_app.config["WEKO_ITEMS_UI_EXPORT_TMP_PREFIX"])
+    for record_id in record_ids:
+        # crate each record directory
+        record_path = os.path.join(export_path, f"recid_{record_id}")
+        os.makedirs(record_path, exist_ok=True)
+        cannot_export = _export_file(record_id, record_path)
+        # Metadata
+        metadata, extracted_files = metadata_dict.get(str(record_id), ({}, []))
 
-    try:
-        # Set export folder
-        datetime_now = datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S")
-        export_path = os.path.join(temp_path.name, datetime_now)
+        item_type_id = metadata.get("item_type_id")
+        mappings = JsonldMapping.get_by_itemtype_id(item_type_id)
+        mapper = JsonLdMapper(item_type_id, None)
+        for m in mappings:
+            mapper.json_mapping = m.mapping
+            if mapper.is_valid:
+                break
+        if mapper.json_mapping is None:
+            raise Exception("No valid mapping found for item type")
 
-        # Outer zip file path
-        outer_zip_path = os.path.join(export_path, "out_zip")
-        for record_id in record_ids:
-            record_path = os.path.join(export_path, f"recid_{record_id}")
-            data_path = os.path.join(record_path, "data")
-            os.makedirs(data_path, exist_ok=True)
-            _export_file(record_id, data_path)
-            # Metadata
-            metadata, filenames = metadata_dict.get(str(record_id), ({}, []))
-            item_type_id = metadata.get("item_type_id")
-            mappings = JsonldMapping.get_by_itemtype_id(item_type_id)
-            mapper = JsonLdMapper(item_type_id, None)
-            for m in mappings:
-                mapper.json_mapping = m.mapping
-                if mapper.is_valid:
-                    break
-            if mapper.json_mapping is None:
-                raise Exception("No valid mapping found for item type")
+        for key, value in metadata.items():
+            if not isinstance(value, dict) or value.get("attribute_type") != "file":
+                continue
+            value["attribute_value_mlt"] = [
+                file_metadata for file_metadata in value.get("attribute_value_mlt", [])
+                if file_metadata.get("filename") not in cannot_export
+            ]
 
-            # Create RO-Crate info file
-            rocrate = mapper.to_rocrate_metadata(metadata, extracted_files=filenames)
-            rocrate_path = os.path.join(record_path, ROCRATE_METADATA_FILE)
-            with open(rocrate_path, "w", encoding="utf8") as f:
-                # text garbling solves when using ensure_ascii=False
-                json.dump(rocrate.metadata.generate(), f, indent=2, sort_keys=True,
-                    ensure_ascii=False)
-            # Create bag
-            bagify(record_path, checksums=["sha256"])
-            # Create individual zip file
-            inner_zip_path = os.path.join(outer_zip_path, f"recid_{record_id}")
-            shutil.make_archive(inner_zip_path, "zip", record_path)
-        # Create README.md file
-        readme_path = os.path.join(outer_zip_path, "README.md")
-        current_dir = os.path.dirname(os.path.abspath(__file__))
-        source_path = current_app.config["WEKO_ITEMS_UI_README_MD"]
-        src_readme_path = os.path.join(current_dir, source_path)
-        with open(readme_path, "w", encoding="utf8") as dest_readme,\
-                    open(src_readme_path, "r", encoding="utf8") as src_readme:
-                dest_readme.write(src_readme.read())
-        # Create download file
-        zip_path = os.path.join(
-            export_path, f"{os.path.basename(temp_path.name)}-{datetime_now}"
+        # Create RO-Crate info file
+        rocrate = mapper.to_rocrate_metadata(
+            metadata, extracted_files=extracted_files
         )
-        shutil.make_archive(zip_path, 'zip', outer_zip_path)
-        resp = send_file(
-            f"{zip_path}.zip",
-            as_attachment = True,
-            attachment_filename = "export.zip"
+        jsonld_path = os.path.join(
+            record_path, ROCRATE_METADATA_FILE.split("/")[-1]
         )
-        return resp
-    except Exception as ex:
-        current_app.logger.error("Error occurred during item export.")
-        traceback.print_exc()
-        flash(_("Error occurred during item export."), "error")
-        return redirect(url_for("weko_items_ui.export"))
-    finally:
-        temp_path.cleanup()
+        with open(jsonld_path, "w", encoding="utf8") as f:
+            json.dump(
+                rocrate.metadata.generate(), f, indent=2, sort_keys=True,
+                ensure_ascii=False
+            )
+
+        bagit.make_bag(record_path, checksums=["sha256"])
+
+        shutil.make_archive(record_path, "zip", record_path)
+        shutil.rmtree(record_path)
+
+    # Create README.md file
+    readme_path = os.path.join(export_path, "README.md")
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    source_path = current_app.config["WEKO_ITEMS_UI_README_MD"]
+    src_readme_path = os.path.join(current_dir, source_path)
+    shutil.copyfile(src_readme_path, readme_path)
 
 
 def _get_metadata_dict_in_es(record_ids):
@@ -2811,13 +2673,14 @@ def _get_metadata_dict_in_es(record_ids):
     metadata_dict = {}
     try:
         # Get metadata from ElasticSearch
-        search = RecordsSearch(
-            index=current_app.config["SEARCH_UI_SEARCH_INDEX"])
-        search = search.filter("terms", control_number=record_ids)
-        search = search.filter("term", relation_version_is_last=True)
-        search = search.sort("control_number")
-        search = search.source(["_item_metadata", "content"])
-        search = search.params(from_=0, size=100)
+        search = (
+            RecordsSearch(index=current_app.config["SEARCH_UI_SEARCH_INDEX"])
+            .filter("terms", control_number=record_ids)
+            .filter("term", relation_version_is_last=True)
+            .sort("control_number")
+            .source(["_item_metadata", "content"])
+            .params(from_=0, size=100)
+        )
         search_result = search.execute().to_dict()
         record_list = search_result.get("hits", {}).get("hits", [])
         for record in record_list:
@@ -2927,12 +2790,12 @@ def _export_item(record_id,
                                 hide_key, records_data['metadata'])
 
         # Create metadata file.
-        with open('{}/{}_metadata.json'.format(tmp_path,
-                                               exported_item['name']),
-                  'w',
-                  encoding='utf8') as output_file:
-            json.dump(records_data, output_file, indent=2,
-                      sort_keys=True, ensure_ascii=False)
+        # with open('{}/{}_metadata.json'.format(tmp_path,
+        #                                        exported_item['name']),
+        #           'w',
+        #           encoding='utf8') as output_file:
+        #     json.dump(records_data, output_file, indent=2,
+        #               sort_keys=True, ensure_ascii=False)
         # First get all of the files, checking for permissions while doing so
         if include_contents:
             # Get files
@@ -2951,12 +2814,18 @@ def _export_item(record_id,
     return exported_item, list_item_role
 
 
-def _export_file(record_id, data_path=None):
+def _export_file(record_id, data_path):
     """Exports files for record according to view permissions.
 
-    :param record_id: Record ID
-    :param data_path: Data Path. Defaults to None.
+    Args:
+        record_id (int): Record ID to export files from.
+        data_path (str): Path to save exported files.
+
+    Returns:
+        list(str):
+            List of files that cannot be exported due to permissions.
     """
+    cannot_export = []
     record = WekoRecord.get_record_by_pid(record_id)
     if record:
         # Get files
@@ -2981,6 +2850,9 @@ def _export_file(record_id, data_path=None):
                     tmp_path = os.path.join(data_path, file.obj.basename)
                     with open(tmp_path, "wb") as temp_file:
                         temp_file.write(file_buffered.read())
+            else:
+                cannot_export.append(file.info().get("filename", "Unknown file"))
+    return cannot_export
 
 
 def _custom_export_metadata(record_metadata: dict, hide_item: bool = True,
@@ -3084,10 +2956,10 @@ def to_files_js(record):
     """List files in a deposit.
 
     Args:
-        record (WekoDeposit): _description_
+        record (WekoDeposit): record object.
 
     Returns:
-        _type_: _description_
+        list: File information taken from metadata
     """
     current_app.logger.debug("type: {}".format(type(record)))
     res = []
@@ -3799,21 +3671,40 @@ def translate_validation_message(item_property, cur_lang):
             translate_validation_message(value, cur_lang)
 
 
-def get_workflow_by_item_type_id(item_type_name_id, item_type_id):
-    """Get workflow settings by item type id."""
+def get_workflow_by_item_type_id(
+    item_type_name_id, item_type_id, with_deleted=True
+):
+    """Get workflow settings by item type id.
+
+    Args:
+        item_type_name_id (int): Item type name id.
+        item_type_id (int): Item type id.
+        with_deleted (bool): Whether to include deleted workflows. Defaults to True.
+
+    Returns:
+        WorkFlow: The workflow object if found, otherwise None.
+
+    """
     from weko_workflow.models import WorkFlow
 
-    workflow = WorkFlow.query.filter_by(
-        itemtype_id=item_type_id).first()
+    query = WorkFlow.query.filter_by(itemtype_id=item_type_id)
+    if not with_deleted:
+        query = query.filter_by(is_deleted=False)
+    workflow = query.first()
+
     if not workflow:
         item_type_list = ItemTypes.get_by_name_id(item_type_name_id)
         id_list = [x.id for x in item_type_list]
-        workflow = (
+        query = (
             WorkFlow.query
             .filter(WorkFlow.itemtype_id.in_(id_list))
             .order_by(WorkFlow.itemtype_id.desc())
-            .order_by(WorkFlow.flow_id.asc()).first())
-    return workflow
+            .order_by(WorkFlow.flow_id.asc())
+        )
+        if not with_deleted:
+            query = query.filter_by(is_deleted=False)
+        workflow = query.first()
+    return workflow if isinstance(workflow, WorkFlow) else None
 
 
 def validate_bibtex(record_ids):
@@ -4095,24 +3986,26 @@ def sanitize_input_data(data):
             else:
                 sanitize_input_data(data[i])
 
-def check_duplicate(data, is_item=True):
+def check_duplicate(data, is_item=True, exclude_ids=[]):
     """
     Check if a record or item is duplicate in records_metadata.
 
-    Parameters:
-    - data (dict or str): Metadata dictionary (or JSON string).
-    - is_item (bool): True if checking an item, False if checking a record.
+    Args:
+        data (dict or str): Metadata dictionary (or JSON string).
+        is_item (bool): True if checking an item, False if checking a record.
+        exclude_ids (list): List of record IDs to exclude from the check.
 
     Returns:
-    - bool: True if duplicate exists, False otherwise.
-    - list: List of duplicate record IDs.
-    - list: List of duplicate record URLs.
+        tuple(bool, list, list):
+            - True if duplicate exists, False otherwise.
+            - List of duplicate record IDs.
+            - List of duplicate record URLs.
     """
     if isinstance(data, str):
         try:
             data = json.loads(data)
         except json.JSONDecodeError as e:
-            current_app.logger.error(f"[ERROR] JSON decode failed: {e}")
+            current_app.logger.error(f"JSON decode failed: {e}")
             return False, [], []
 
     if not isinstance(data, dict):
@@ -4127,19 +4020,6 @@ def check_duplicate(data, is_item=True):
     identifier = title = resource_type = creator = ""
     author_links = metadata.get("author_link", [])
     host = request.host
-
-    # Fallback: extract author_links from nameIdentifiers
-    if not author_links:
-        for key, value in metadata.items():
-            if "creator" in key and isinstance(value, list):
-                for entry in value:
-                    if isinstance(entry, dict):
-                        name_ids = entry.get("nameIdentifiers", [])
-                        for nid in name_ids:
-                            if isinstance(nid, dict):
-                                author_id = nid.get("nameIdentifier")
-                                if author_id:
-                                    author_links.append(author_id)
 
     # Extract other fields
     for key, value in metadata.items():
@@ -4159,28 +4039,35 @@ def check_duplicate(data, is_item=True):
 
     # 1. Check identifier
     if identifier:
+        escaped_identifier = identifier.replace('"', '\\"')
         query = text(f"""
-            SELECT COALESCE(CAST(SPLIT_PART(jsonb_extract_path_text(json, 'recid'), '.', 1) AS INTEGER), 0)
+            SELECT CAST(jsonb_extract_path_text(json, 'recid') AS INTEGER)
             FROM records_metadata
-            WHERE jsonb_path_exists(json, '$.**.subitem_identifier_uri ? (@ == "{identifier}")')
+            WHERE jsonb_path_exists(json, :jsonpath_query)
+            AND jsonb_extract_path_text(json, 'publish_status') = '0'
+            AND jsonb_extract_path_text(json, 'recid') NOT LIKE '%.%'
         """)
-        result = db.session.execute(query).fetchall()
-        db.session.commit()
+        params = {
+            "jsonpath_query": f'$.**.subitem_identifier_uri ? (@ == "{escaped_identifier}")'
+        }
+        result = db.session.execute(query, params).fetchall()
         if result:
-            recid_list = [r[0] for r in result]
-            return True, recid_list, [f"https://{host}/records/{r}" for r in recid_list]
+            recid_list = [r[0] for r in result if r[0] not in exclude_ids]
+            if recid_list:
+                return True, recid_list, [f"https://{host}/records/{r}" for r in recid_list]
 
     # 2. Normalize title
     normalized_title = unicodedata.normalize("NFKC", title).lower()
     normalized_title = re.sub(r'[\s,　]', '', normalized_title)
 
     query = text("""
-        SELECT COALESCE(CAST(SPLIT_PART(jsonb_extract_path_text(json, 'recid'), '.', 1) AS INTEGER), 0), json
+        SELECT  CAST(jsonb_extract_path_text(json, 'recid') AS INTEGER), json
         FROM records_metadata
         WHERE jsonb_path_exists(json, '$.**.subitem_title')
+        AND jsonb_extract_path_text(json, 'publish_status') = '0'
+        AND jsonb_extract_path_text(json, 'recid') NOT LIKE '%.%'
     """)
     result = db.session.execute(query).fetchall()
-    db.session.commit()
 
     matched_recids = set()
     for recid, json_obj in result:
@@ -4193,23 +4080,28 @@ def check_duplicate(data, is_item=True):
                 matched_recids.add(recid)
                 break
 
-    matched_recids.discard(int(data.get("metainfo", {}).get("id") or 0))
+    matched_recids -= set(exclude_ids)
 
     if not matched_recids:
         return False, [], []
 
     # 3. Match resource_type
+    escaped_resource_type = resource_type.replace('"', '\\"')
     query = text(f"""
-        SELECT COALESCE(CAST(SPLIT_PART(jsonb_extract_path_text(json, 'recid'), '.', 1) AS INTEGER), 0)
+        SELECT CAST(jsonb_extract_path_text(json, 'recid') AS INTEGER)
         FROM records_metadata
-        WHERE jsonb_path_exists(json, '$.**.resourcetype ? (@ == "{resource_type}")')
+        WHERE jsonb_path_exists(json, :jsonpath_query)
+        AND jsonb_extract_path_text(json, 'publish_status') = '0'
+        AND jsonb_extract_path_text(json, 'recid') NOT LIKE '%.%'
     """)
-    result = db.session.execute(query).fetchall()
-    db.session.commit()
+    params = {
+        "jsonpath_query": f'$.**.resourcetype ? (@ == "{escaped_resource_type}")'
+    }
+    result = db.session.execute(query, params).fetchall()
     recids_resource = {r[0] for r in result}
     matched_recids &= recids_resource
-    matched_recids.discard(int(data.get("metainfo", {}).get("id") or 0))
-    
+    matched_recids -= set(exclude_ids)
+
     if not matched_recids:
         return False, [], []
 
@@ -4225,7 +4117,6 @@ def check_duplicate(data, is_item=True):
             AND jsonb_extract_path_text(json, 'authorIdInfo', '0', 'authorId') IN ({placeholders})
         """)
         result = db.session.execute(query, params).fetchall()
-        db.session.commit()
 
         author_names = set()
         for row in result:
@@ -4239,12 +4130,13 @@ def check_duplicate(data, is_item=True):
 
         if author_names:
             query = text("""
-                SELECT COALESCE(CAST(SPLIT_PART(jsonb_extract_path_text(json, 'recid'), '.', 1) AS INTEGER), 0), json
+                SELECT CAST(jsonb_extract_path_text(json, 'recid') AS INTEGER), json
                 FROM records_metadata
                 WHERE jsonb_path_exists(json, '$.**.creatorNames[*].creatorName')
+                AND jsonb_extract_path_text(json, 'publish_status') = '0'
+                AND jsonb_extract_path_text(json, 'recid') NOT LIKE '%.%'
             """)
             result = db.session.execute(query).fetchall()
-            db.session.commit()
             for recid, json_obj in result:
                 json_str = json.dumps(json_obj, ensure_ascii=False)
                 creators = re.findall(r'"creatorName"\s*:\s*"([^"]+)"', json_str)
@@ -4256,12 +4148,13 @@ def check_duplicate(data, is_item=True):
     else:
         normalized_creator = re.sub(r'[\s,　]', '', creator)
         query = text("""
-            SELECT COALESCE(CAST(SPLIT_PART(jsonb_extract_path_text(json, 'recid'), '.', 1) AS INTEGER), 0), json
+            SELECT CAST(jsonb_extract_path_text(json, 'recid') AS INTEGER), json
             FROM records_metadata
             WHERE jsonb_path_exists(json, '$.**.creatorNames[*].creatorName')
+            AND jsonb_extract_path_text(json, 'publish_status') = '0'
+            AND jsonb_extract_path_text(json, 'recid') NOT LIKE '%.%'
         """)
         result = db.session.execute(query).fetchall()
-        db.session.commit()
         for recid, json_obj in result:
             json_str = json.dumps(json_obj, ensure_ascii=False)
             creators = re.findall(r'"creatorName"\s*:\s*"([^"]+)"', json_str)
@@ -4276,19 +4169,41 @@ def check_duplicate(data, is_item=True):
         links = [f"https://{host}/records/{r}" for r in final_matched]
         return True, list(final_matched), links
 
-    current_app.logger.info("No duplicates found.")
+    current_app.logger.debug("No duplicates found.")
     return False, [], []
 
 
 
-def is_duplicate_item(metadata):
-    """Check if an item is duplicate in records_metadata."""
-    return check_duplicate(metadata, is_item=True)
+def is_duplicate_item(metadata, exclude_ids=[]):
+    """Check if an item is duplicate in records_metadata.
+
+    Args:
+        metadata (dict): Metadata dictionary.
+        exclude_ids (list, Optional): List of record IDs to exclude from the check.
+
+    Returns:
+        tuple:
+            - bool: True if duplicate exists, False otherwise.
+            - list: List of duplicate record IDs.
+            - list: List of duplicate record URLs.
+    """
+    return check_duplicate(metadata, is_item=True, exclude_ids=exclude_ids)
 
 
-def is_duplicate_record(data):
-    """Check if a record is duplicate in records_metadata."""
-    return check_duplicate(data, is_item=False)
+def is_duplicate_record(data, exclude_ids=[]):
+    """Check if a record is duplicate in records_metadata.
+
+    Args:
+        data (dict): Metadata dictionary.
+        exclude_ids (list, Optional): List of record IDs to exclude from the check.
+
+    Returns:
+        tuple:
+            - bool: True if duplicate exists, False otherwise.
+            - list: List of duplicate record IDs.
+            - list: List of duplicate record URLs.
+    """
+    return check_duplicate(data, is_item=False, exclude_ids=exclude_ids)
 
 
 def save_title(activity_id, request_data):
@@ -4961,49 +4876,75 @@ def check_item_is_being_edit(
     # current_app.logger.error("recid:{}".format(recid))
     # current_app.logger.error("post_workflow:{}".format(post_workflow))
     # current_app.logger.error("activity:{}".format(activity))
-    if not activity:
+    if not isinstance(activity, WorkActivity):
         activity = WorkActivity()
-    if not post_workflow:
+    if not isinstance(post_workflow, Activity):
         latest_pid = PIDVersioning(child=recid).last_child
         item_uuid = latest_pid.object_uuid
         post_workflow = activity.get_workflow_activity_by_item_id(item_uuid)
-    if post_workflow and post_workflow.action_status \
-            in [ASP.ACTION_BEGIN, ASP.ACTION_DOING]:
+    if (
+        post_workflow and post_workflow.action_status
+            in [ASP.ACTION_BEGIN, ASP.ACTION_DOING]
+    ):
         current_app.logger.debug("post_workflow: {0} status: {1}".format(
             post_workflow, post_workflow.action_status))
-        #return True
-        return post_workflow.activity_id
+        return str(post_workflow.activity_id)
 
     draft_pid = PersistentIdentifier.query.filter_by(
         pid_type='recid',
         pid_value="{}.0".format(recid.pid_value)
     ).one_or_none()
-    if draft_pid:
+    if isinstance(draft_pid, PersistentIdentifier):
         draft_workflow = activity.get_workflow_activity_by_item_id(
-            draft_pid.object_uuid)
-        if draft_workflow and \
-            draft_workflow.action_status in [ASP.ACTION_BEGIN,
-                                             ASP.ACTION_DOING]:
+            draft_pid.object_uuid
+        )
+        if (
+            draft_workflow
+            and draft_workflow.action_status in [ASP.ACTION_BEGIN, ASP.ACTION_DOING]
+        ):
             current_app.logger.debug("draft_workflow: {0} status: {1}".format(
-                draft_pid.object_uuid, draft_workflow.action_status))
-            #return True
-            return draft_workflow.activity_id
+                draft_pid.object_uuid, draft_workflow.action_status)
+            )
+            return str(draft_workflow.activity_id)
 
         pv = PIDVersioning(child=recid)
         latest_pid = PIDVersioning(parent=pv.parent,child=recid).get_children(
             pid_status=PIDStatus.REGISTERED
         ).filter(PIDRelation.relation_type == 2).order_by(
-            PIDRelation.index.desc()).first()
+            PIDRelation.index.desc()
+        ).first()
         latest_workflow = activity.get_workflow_activity_by_item_id(
-            latest_pid.object_uuid)
-        if latest_workflow and \
-            latest_workflow.action_status in [ASP.ACTION_BEGIN,
-                                              ASP.ACTION_DOING]:
+            latest_pid.object_uuid
+        )
+        if (
+            latest_workflow
+            and latest_workflow.action_status in [ASP.ACTION_BEGIN, ASP.ACTION_DOING]
+        ):
             current_app.logger.debug("latest_workflow: {0} status: {1}".format(
                 latest_pid.object_uuid, latest_workflow.action_status))
-            #return True
-            return latest_workflow.activity_id
-    #return False
+            return str(latest_workflow.activity_id)
+
+    pv = PIDVersioning(child=recid)
+    versions_uuid = [
+        record.object_uuid
+        for record in PIDVersioning(parent=pv.parent, child=recid)
+        .get_children(pid_status=PIDStatus.REGISTERED)
+        .filter(PIDRelation.relation_type == 2)
+        .order_by(PIDRelation.index.desc())
+        .all()
+    ]
+    last_activity = (
+        Activity.query
+        .filter(Activity.item_id.in_(versions_uuid))
+        .filter(Activity.action_status.in_([ASP.ACTION_BEGIN, ASP.ACTION_DOING]))
+        .order_by(Activity.updated.desc())
+        .first()
+    )
+    if isinstance(last_activity, Activity):
+        current_app.logger.debug("last_activity: {0} status: {1}".format(
+            last_activity.item_id, last_activity.action_status))
+        return str(last_activity.activity_id)
+
     return ""
 
 
@@ -5059,10 +5000,31 @@ def has_permission_edit_item(record, recid):
     can_edit = True if pid == get_record_without_version(pid) else False
     return can_edit and permission
 
+def lock_item_will_be_edit(pid_value):
+    """Lock item will be edit.
 
-def create_limiter():
-    from .config import WEKO_ITEMS_UI_API_LIMIT_RATE_DEFAULT
-    return Limiter(app=Flask(__name__), key_func=get_remote_address, default_limits=WEKO_ITEMS_UI_API_LIMIT_RATE_DEFAULT)
+    Lock the item to prevent double-click operation.
+    The lock will be released after 3 seconds.
+
+    Args:
+        pid_value (str): recid of item.
+
+    Returns:
+        bool: If lock is successful, return True.
+    """
+    redis_connection = RedisConnection()
+    sessionstorage = redis_connection.connection(
+        db=current_app.config['ACCOUNTS_SESSION_REDIS_DB_NO'], kv = True
+    )
+    if sessionstorage.redis.exists("pid_{}_will_be_edit".format(pid_value)):
+        return False
+
+    sessionstorage.put(
+        "pid_{}_will_be_edit".format(pid_value),
+        str(current_user.get_id()).encode('utf-8'),
+        ttl_secs=3
+    )
+    return True
 
 def get_file_download_data(item_id, record, filenames, query_date=None, size=None):
     """Get file download data.
@@ -5148,57 +5110,10 @@ def get_file_download_data(item_id, record, filenames, query_date=None, size=Non
 
     return result
 
-def get_access_token(api_code):
-    """
-    OAuth2 トークンを取得するメソッド。
-
-    パラメータ:
-        api_code (str): API認証コード
-
-    戻り値:
-        dict:
-            - 成功時: {"access_token": "トークン", "token_type": "Bearer", "expires_in": 秒数}
-            - 失敗時: {"error": "エラーメッセージ"}, HTTPステータスコード
-    """
-    try:
-        if not api_code:
-            return {"error": "invalid_request", "message": "Required API Code"}, 400
-
-        certificate = ApiCertificate.select_by_api_code(api_code)
-        if not certificate:
-            return {"error": "invalid_client"}, 401
-
-        token = certificate.get("cert_data", {}).get("token")
-        expires_at = certificate.get("cert_data", {}).get("expires_at")
-
-        if token and expires_at:
-            expires_at_dt = datetime.strptime(expires_at, "%Y-%m-%dT%H:%M:%S")
-            if expires_at_dt > datetime.now():
-                return {
-                    "access_token": token,
-                    "token_type": "Bearer",
-                    "expires_in": (expires_at_dt - datetime.now()).seconds
-                }
-
-        # 新しいトークンを発行
-        new_access_token = secrets.token_urlsafe(40)
-        expires_in = 3600 # 1時間
-        expires_at = (datetime.now() + timedelta(seconds=expires_in)).isoformat()
-
-        return {
-            "access_token": new_access_token,
-            "token_type": "Bearer",
-            "expires_in": expires_in
-        }
-
-    except Exception as e:
-        current_app.logger.error(f"AccessToken Error: {str(e)}")
-        return {"error": "Internal server error"}, 500
-
 
 # --- 通知対象取得関数 ---
 
-def get_notification_targets(deposit, user_id):
+def get_notification_targets(deposit, user_id, shared_id):
     """
     Retrieve notification targets for a given deposit and user.
 
@@ -5215,12 +5130,10 @@ def get_notification_targets(deposit, user_id):
     """
     owners = deposit.get("_deposit", {}).get("owners", [])
     set_target_id = set(owners)
-    is_shared = deposit.get("weko_shared_id") != -1
-
+    is_shared = shared_id != -1
     if is_shared:
-        set_target_id.add(deposit.get("weko_shared_id"))
-    else:
-        set_target_id.discard(int(user_id))
+        set_target_id.add(shared_id)
+    set_target_id.discard(int(user_id))
 
     target_ids = list(set_target_id)
     current_app.logger.debug(f"[get_notification_targets] target_ids: {target_ids}")
@@ -5273,7 +5186,10 @@ def get_notification_targets_approver(activity):
         ).one()
         approval_action_role = None
         for action in flow_detail.flow_actions:
-            if action.action_id == approval_action.id:
+            if (
+                action.action_id == approval_action.id
+                and action.action_order == activity.action_order + 1
+            ):
                 approval_action_role = action.action_role
                 break
 
@@ -5344,6 +5260,56 @@ def get_notification_targets_approver(activity):
         return dict()
 
 
+def get_notification_targets_approved(deposit, user_id, activity):
+    """
+    Retrieve notification targets for a given deposit and user.
+
+    Args:
+        deposit (dict): The deposit data containing information about owners
+                        and shared users.
+        user_id (int): The ID of the current user.
+        activity (Activity): The workflow activity instance.
+
+    Returns:
+        dict: A dictionary containing the following keys:
+            - "targets" (list): List of User objects who are the notification targets.
+            - "settings" (dict): A dictionary mapping user IDs to their notification settings.
+            - "profiles" (dict): A dictionary mapping user IDs to their user profiles.
+    """
+    owners = deposit.get("_deposit", {}).get("owners", [])
+    set_target_id = set(owners)
+    is_shared = deposit.get("weko_shared_id") != -1
+
+    actor_id = activity.activity_login_user
+    if actor_id:
+        set_target_id.add(actor_id)
+
+    if is_shared:
+        set_target_id.add(deposit.get("weko_shared_id"))
+    else:
+        set_target_id.discard(int(user_id))
+
+    target_ids = list(set_target_id)
+    current_app.logger.debug(f"[get_notification_targets_approved] target_ids: {target_ids}")
+
+    try:
+        targets = User.query.filter(User.id.in_(target_ids)).all()
+        settings = NotificationsUserSettings.query.filter(
+            NotificationsUserSettings.user_id.in_(target_ids)
+        ).all()
+        profiles = UserProfile.query.filter(
+            UserProfile.user_id.in_(target_ids)
+        ).all()
+
+        return {
+            "targets": targets,
+            "settings": {s.user_id: s for s in settings},
+            "profiles": {p.user_id: p for p in profiles}
+        }
+    except SQLAlchemyError:
+        current_app.logger.exception("[get_notification_targets_approved] DB access failed")
+        return dict()
+
 # --- メール本文生成関数 ---
 
 def create_item_deleted_data(deposit, profile, target, url):
@@ -5362,8 +5328,11 @@ def create_item_deleted_data(deposit, profile, target, url):
               - 'body' (str): The body of the email.
     """
     from weko_workflow.utils import load_template, fill_template
-    language = profile.language or "en"
-    timezone = profile.timezone or "UTC"
+    language = (
+        profile.language if profile
+        else current_app.config.get("WEKO_WORKFLOW_MAIL_DEFAULT_LANGUAGE")
+    )
+    timezone = profile.timezone if profile else "UTC"
     registration_date = datetime.now(pytz.timezone(timezone))
 
     template_file = 'email_notification_item_deleted_{language}.tpl'
@@ -5371,86 +5340,13 @@ def create_item_deleted_data(deposit, profile, target, url):
 
     data = {
         "item_title": deposit.get("item_title", ""),
-        "submitter_name": profile.username or target.email,
+        "submitter_name": profile.username if profile else target.email,
         "registration_date": registration_date.strftime("%Y-%m-%d %H:%M:%S"),
         "record_url": url
     }
 
     return fill_template(template, data)
 
-
-def create_delete_request_data(activity, profile, target, url, actor):
-    """
-    Generate email content for a delete request notification.
-
-    Args:
-        activity (Activity): The activity object containing details about the delete request.
-        profile (UserProfile): The profile of the recipient user.
-        target (User): The target user object receiving the notification.
-        url (str): The URL for the approval page.
-        actor (dict): Information about the actor initiating the delete request, including name or email.
-
-    Returns:
-        dict: A dictionary containing the email subject and body with the following keys:
-            - 'subject' (str): The subject of the email.
-            - 'body' (str): The body of the email.
-    """
-    from weko_workflow.utils import load_template, fill_template, convert_to_timezone
-    language = profile.language or "en"
-    timezone = profile.timezone or None
-    submission_date = convert_to_timezone(activity.updated, timezone)
-
-    template_file = 'email_notification_delete_request_{language}.tpl'
-    template = load_template(template_file, language)
-
-    data = {
-        "approver_name": profile.username or target.email,
-        "item_title": activity.title,
-        "submitter_name": actor.get("name") or actor.get("email"),
-        "submission_date": submission_date.strftime("%Y-%m-%d %H:%M:%S"),
-        "approval_url": url
-    }
-
-    return fill_template(template, data)
-
-
-def create_delete_approved_data(deposit, profile, target, url, activity, approver_id):
-    """
-    Generate email content for a delete approval notification.
-
-    Args:
-        deposit (dict): Data of the approved item.
-        profile (UserProfile): Profile information of the user receiving the notification.
-        target (User): User object of the recipient.
-        url (str): URL of the approved item.
-        activity (Activity): The activity object containing details about the delete approval.
-        approver_id (int): ID of the approver.
-
-    Returns:
-        dict: A dictionary containing the filled email subject and body with the following keys:
-            - 'subject' (str): The subject of the email.
-            - 'body' (str): The body of the email.
-    """
-    from weko_workflow.utils import load_template, fill_template, convert_to_timezone
-    language = profile.language or "en"
-    timezone = profile.timezone or "UTC"
-    approval_date = convert_to_timezone(activity.updated, timezone)
-    approver = User.query.filter_by(id=approver_id).one_or_none()
-    approver_profile = UserProfile.get_by_userid(approver_id)
-    approver_name = approver_profile.username if approver_profile else None
-
-    template_file = 'email_notification_delete_approved_{language}.tpl'
-    template = load_template(template_file, language)
-
-    data = {
-        "item_title": deposit.get("item_title", "") or activity.title,
-        "submitter_name": profile.username or target.email,
-        "approver_name": approver_name or approver.email,
-        "approval_date": approval_date.strftime("%Y-%m-%d %H:%M:%S"),
-        "record_url": url
-    }
-
-    return fill_template(template, data)
 
 
 def create_direct_registered_data(deposit, profile, target, url):
@@ -5469,16 +5365,19 @@ def create_direct_registered_data(deposit, profile, target, url):
             - 'body' (str): The body of the email.
     """
     from weko_workflow.utils import load_template, fill_template
-    language = profile.language or "en"
-    timezone = profile.timezone or "UTC"
+    language = (
+        profile.language if profile
+        else current_app.config.get("WEKO_WORKFLOW_MAIL_DEFAULT_LANGUAGE")
+    )
+    timezone = profile.timezone if profile else "UTC"
     registration_date = datetime.now(pytz.timezone(timezone))
 
-    template_file = 'email_nortification_item_registered_{language}.tpl'
+    template_file = 'email_notification_item_registered_{language}.tpl'
     template = load_template(template_file, language)
 
     data = {
         "item_title": deposit.get("item_title", ""),
-        "submitter_name": profile.username or target.email,
+        "submitter_name": profile.username if profile else target.email,
         "registration_date": registration_date.strftime("%Y-%m-%d %H:%M:%S"),
         "record_url": url
     }
@@ -5553,7 +5452,7 @@ def send_mail_from_notification_info(get_info_func, context_obj, content_creator
 
 # --- 各イベントから呼び出すエントリーポイント ---
 
-def send_mail_item_deleted(pid_value, deposit, user_id):
+def send_mail_item_deleted(pid_value, deposit, user_id, shared_id=-1):
     """
     Send a notification email when an item is deleted.
 
@@ -5568,62 +5467,21 @@ def send_mail_item_deleted(pid_value, deposit, user_id):
     record_url = request.host_url + f"records/{pid_value}"
     current_app.logger.debug(f"[send_mail_item_deleted] pid_value: {pid_value}, user_id: {user_id}")
     return send_mail_from_notification_info(
-        get_info_func=lambda obj: get_notification_targets(obj, user_id),
+        get_info_func=lambda obj: get_notification_targets(obj, user_id, shared_id),
         context_obj=deposit,
         content_creator=create_item_deleted_data,
         record_url=record_url
     )
 
 
-def send_mail_delete_request(activity):
-    """
-    Send a notification email for a delete request.
-
-    Args:
-        activity (Activity): The activity object containing details about the delete request.
-
-    Returns:
-        int: The total number of successfully sent emails.
-    """
-    record_url = request.host_url + f"workflow/activity/detail/{activity.activity_id}"
-    current_app.logger.debug(f"[send_mail_delete_request] activity: {activity.activity_id}")
-    return send_mail_from_notification_info(
-        get_info_func=get_notification_targets_approver,
-        context_obj=activity,
-        content_creator=create_delete_request_data,
-        record_url=record_url
-    )
-
-
-def send_mail_delete_approved(pid_value, deposit, activity, user_id):
-    """
-    Send a notification email when a delete request is approved.
-
-    Args:
-        pid_value (str): The persistent identifier (PID) of the approved item.
-        deposit (dict): The deposit data of the approved item.
-        activity (Activity): The activity object containing details about the delete approval.
-        user_id (int): The ID of the user who approved the delete request.
-
-    Returns:
-        int: The total number of successfully sent emails.
-    """
-    record_url = request.host_url + f"records/{pid_value}"
-    current_app.logger.debug(f"[send_mail_delete_approved] pid_value: {pid_value}, user_id: {user_id}")
-    return send_mail_from_notification_info(
-        get_info_func=lambda obj: get_notification_targets(obj, user_id),
-        context_obj=deposit,
-        content_creator=lambda deposit, profile, target, url: create_delete_approved_data(deposit, profile, target, url, activity, user_id),
-        record_url=record_url
-    )
-
-def send_mail_direct_registered(pid_value, user_id):
+def send_mail_direct_registered(pid_value, user_id, share_id=-1):
     """
     Send a notification email for a directly registered item.
 
     Args:
         pid_value (str): The persistent identifier (PID) of the registered item.
         user_id (int): The ID of the user who registered the item.
+        share_id (int): The shared ID of the user.
 
     Returns:
         int: The total number of successfully sent emails.
@@ -5632,7 +5490,7 @@ def send_mail_direct_registered(pid_value, user_id):
     record_url = request.host_url + f"records/{pid_value}"
     current_app.logger.debug(f"[send_mail_direct_registered] pid_value: {pid_value}, user_id: {user_id}")
     return send_mail_from_notification_info(
-        get_info_func=lambda obj: get_notification_targets(obj, user_id),
+        get_info_func=lambda obj: get_notification_targets(obj, user_id, share_id),
         context_obj=deposit,
         content_creator=create_direct_registered_data,
         record_url=record_url

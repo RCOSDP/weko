@@ -57,7 +57,7 @@ from weko_items_ui.utils import (
     check_item_is_deleted,
     check_item_type_name,
     export_items,
-    export_rocrate,
+    # export_rocrate,
     find_hidden_items,
     get_permission_record,
     get_current_user,
@@ -133,15 +133,10 @@ from weko_items_ui.utils import (
     write_files,
     get_file_download_data,
     get_weko_link,
-    get_access_token,
     check_duplicate,
     create_item_deleted_data,
-    create_delete_request_data,
-    create_delete_approved_data,
     create_direct_registered_data,
     send_mail_item_deleted,
-    send_mail_delete_request,
-    send_mail_delete_approved,
     send_mail_direct_registered,
     send_mail_from_notification_info,
     get_notification_targets,
@@ -10842,59 +10837,6 @@ def test_get_weko_link(app, client, users, db_records, mocker):
     res = get_weko_link({"metainfo": {"field1": [{"field2": {}}]}})
     assert res == {}
 
-# .tox/c1/bin/pytest --cov=weko_items_ui tests/test_utils.py::test_get_access_token -vv -s --cov-branch --cov-report=xml --cov-report=html --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
-def test_get_access_token(app, mock_certificate):
-    """get_access_tokenの全シナリオ（正常系と異常系）をテスト"""
-    with app.test_request_context():
-
-        # 1. api_codeが空の場合 (400)
-        result, status = get_access_token(None)
-        assert status == 400, "api_codeが空の場合、400が返るべき"
-        assert result == {"error": "invalid_request", "message": "Required API Code"}
-
-        # 2. 無効なapi_codeの場合 (401)
-        with patch.object(ApiCertificate, "select_by_api_code", return_value=None):
-            result, status = get_access_token("invalid_code")
-            assert status == 401, "無効なapi_codeの場合、401が返るべき"
-            assert result == {"error": "invalid_client"}
-
-        # 3. 有効な既存トークンが存在する場合 (200相当)
-        with patch.object(ApiCertificate, "select_by_api_code", return_value=mock_certificate):
-            result = get_access_token("valid_code")
-            assert "access_token" in result, "有効なトークンが返るべき"
-            assert result["access_token"] == "valid_token"
-            assert result["token_type"] == "Bearer"
-            assert isinstance(result["expires_in"], int)
-            assert result["expires_in"] > 0
-
-        # 4. 期限切れのトークンの場合 (新しいトークン発行)
-        expired_certificate = {
-            "cert_data": {
-                "token": "expired_token",
-                "expires_at": (datetime.now() - timedelta(seconds=3600)).strftime("%Y-%m-%dT%H:%M:%S")
-            }
-        }
-        with patch.object(ApiCertificate, "select_by_api_code", return_value=expired_certificate):
-            result = get_access_token("expired_code")
-            assert "access_token" in result, "新しいトークンが発行されるべき"
-            assert result["access_token"] != "expired_token"
-            assert result["token_type"] == "Bearer"
-            assert result["expires_in"] == 3600
-
-        # 5. 証明書にトークンがない場合 (新しいトークン発行)
-        no_token_certificate = {"cert_data": {}}
-        with patch.object(ApiCertificate, "select_by_api_code", return_value=no_token_certificate):
-            result = get_access_token("no_token_code")
-            assert "access_token" in result, "トークンがない場合、新しいトークンが発行されるべき"
-            assert len(result["access_token"]) == 54  # secrets.token_urlsafe(40)の長さ
-            assert result["token_type"] == "Bearer"
-            assert result["expires_in"] == 3600
-
-        # 6. 例外が発生した場合 (500)
-        with patch.object(ApiCertificate, "select_by_api_code", side_effect=Exception("テストエラー")):
-            result, status = get_access_token("error_code")
-            assert status == 500, "例外が発生した場合、500が返るべき"
-            assert result == {"error": "Internal server error"}
 # def check_duplicate(data, is_item=True):
 # .tox/c1/bin/pytest --cov=weko_items_ui tests/test_utils.py::test_check_duplicate -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
 def test_check_duplicate(app, users,db_records3):
@@ -10965,43 +10907,6 @@ def test_create_item_deleted_data(app, users, db_records2, db_userprofile):
         assert url in body
         assert users[0]["email"] in body
 
-# def create_delete_request_data(activity, profile, target, actor):
-# .tox/c1/bin/pytest --cov=weko_items_ui tests/test_utils.py::test_create_delete_request_data -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
-def test_create_delete_request_data(app, users, db_workflow, db_userprofile):
-    activity = db_workflow["activity"]
-    activity.updated = datetime(2025, 1, 1, 12, 0, 0, tzinfo=pytz.timezone("Asia/Tokyo"))
-    target = users[1]["obj"]
-    profile = db_userprofile.get(target.email)
-    actor = {"name": "actor_name", "email": users[0]["email"]}
-    url = "https://example.org"
-
-    res = create_delete_request_data(activity, profile, target, url, actor)
-    subject, body = res.get("subject"), res.get("body")
-    assert "test" in subject
-    assert "test" in body
-    assert "2025-01-01 12:00:00" in body
-    assert url in body
-    assert users[1]["email"] in body
-
-# def create_delete_approved_data(deposit, profile, target, url, activity, approver_id):
-# .tox/c1/bin/pytest --cov=weko_items_ui tests/test_utils.py::test_create_delete_approved_data -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
-def test_create_delete_approved_data(app, users, db_records2, db_workflow, db_userprofile):
-    record = db_records2[0][4]
-    activity = db_workflow["activity"]
-    activity.updated = datetime(2025, 1, 1, 12, 0, 0)
-    target = users[0]["obj"]
-    profile = db_userprofile.get(target.email)
-    profile.username = "test_user"
-    url = "https://example.org"
-    approver_id = users[1]["obj"].id
-
-    res = create_delete_approved_data(record, profile, target, url, activity, approver_id)
-    subject, body = res.get("subject"), res.get("body")
-    assert "タイトル" in subject
-    assert "タイトル" in body
-    assert "2025-01-01 12:00:00" in body
-    assert url in body
-    assert profile.username in body
 
 # def create_direct_registerd_data(deposit, profile, target, url):
 # .tox/c1/bin/pytest --cov=weko_items_ui tests/test_utils.py::test_create_direct_registerd_data -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
@@ -11052,74 +10957,6 @@ def test_send_mail_item_deleted(app, mocker):
 
     assert kwargs["context_obj"] == deposit
     assert kwargs["content_creator"] == create_item_deleted_data
-    assert kwargs["record_url"] == expected_url
-
-# def send_mail_delete_request(activity):
-# .tox/c1/bin/pytest --cov=weko_items_ui tests/test_utils.py::test_send_mail_delete_request -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
-def test_send_mail_delete_request(app, mocker, db_workflow):
-    mock_send_mail_from_notification_info = mocker.patch(
-        "weko_items_ui.utils.send_mail_from_notification_info", return_value=1
-    )
-    mock_get_notification_targets_approver = mocker.patch(
-        "weko_items_ui.utils.get_notification_targets_approver", return_value={"targets": []}
-    )
-
-    activity = db_workflow["activity"]
-
-    with app.test_request_context():
-        result = send_mail_delete_request(activity)
-
-    assert result == 1
-
-    expected_url = f"http://{app.config['SERVER_NAME']}/workflow/activity/detail/{activity.activity_id}"
-
-    _, kwargs = mock_send_mail_from_notification_info.call_args
-    get_info_func = kwargs["get_info_func"]
-    get_info_func(activity)
-    mock_get_notification_targets_approver.assert_called_once_with(activity)
-
-    assert kwargs["context_obj"] == activity
-    assert kwargs["content_creator"] == create_delete_request_data
-    assert kwargs["record_url"] == expected_url
-
-# def send_mail_delete_approved(pid_value, deposit, activity):
-# .tox/c1/bin/pytest --cov=weko_items_ui tests/test_utils.py::test_send_mail_delete_approved -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
-def test_send_mail_delete_approved(app, mocker, db_workflow, db_userprofile, users):
-    mock_send_mail_from_notification_info = mocker.patch(
-        "weko_items_ui.utils.send_mail_from_notification_info", return_value=1
-    )
-    mock_get_notification_targets = mocker.patch(
-        "weko_items_ui.utils.get_notification_targets", return_value={"targets": []}
-    )
-    mock_create_delete_approved_data = mocker.patch(
-        "weko_items_ui.utils.create_delete_approved_data", return_value={"subject": "subject", "body": "body"}
-    )
-
-    pid_value = "12345"
-    deposit = {"item_title": "Test Item"}
-    activity = db_workflow["activity"]
-    target = users[0]["obj"]
-    profile = db_userprofile.get(target.email)
-    user_id = users[0]["id"]
-
-    with app.test_request_context():
-        result = send_mail_delete_approved(pid_value, deposit, activity, user_id)
-        assert result == 1
-
-    expected_url = f"http://{app.config['SERVER_NAME']}/records/{pid_value}"
-
-    _, kwargs = mock_send_mail_from_notification_info.call_args
-    get_info_func = kwargs["get_info_func"]
-    get_info_func(deposit)
-    mock_get_notification_targets.assert_called_once_with(deposit, user_id)
-
-    content_creator = kwargs["content_creator"]
-    content_creator(deposit, profile, target, expected_url)
-    mock_create_delete_approved_data.assert_called_once_with(
-        deposit, profile, target, expected_url, activity, user_id
-    )
-
-    assert kwargs["context_obj"] == deposit
     assert kwargs["record_url"] == expected_url
 
 

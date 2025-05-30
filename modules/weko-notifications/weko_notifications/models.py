@@ -23,7 +23,6 @@ class NotificationsUserSettings(db.Model, Timestamp):
     Columns:
         `user_id` (int): ID of the settings. Primary key, foreign key
             referencing `User.id`.
-        `subscribe_webpush` (bool): Web push notification subscription status.
         `subscribe_email` (bool): Email notification subscription status.
     Relationship:
         `user` (User): Foreign key relationship to `User`.
@@ -65,12 +64,6 @@ class NotificationsUserSettings(db.Model, Timestamp):
     )
     """User profile relationship."""
 
-    subscribe_webpush = db.Column(
-        db.Boolean,
-        nullable=True
-    )
-    """Web push notification subscription status."""
-
     subscribe_email = db.Column(
         db.Boolean,
         nullable=False,
@@ -87,11 +80,12 @@ class NotificationsUserSettings(db.Model, Timestamp):
         Returns:
             NotificationsUserSettings: Settings.
         """
-        return cls.query.filter_by(user_id=user_id).one_or_none()
+        obj = cls.query.filter_by(user_id=user_id).one_or_none()
+        return obj if isinstance(obj, cls) else None
 
     @classmethod
     def create_or_update(
-        cls, user_id, subscribe_webpush=None, subscribe_email=None
+        cls, user_id, subscribe_email=None
     ):
         """Create or update settings.
 
@@ -105,8 +99,6 @@ class NotificationsUserSettings(db.Model, Timestamp):
         settings = cls.get_by_user_id(user_id)
         if settings is None:
             settings = cls(user_id=user_id)
-        if subscribe_webpush is not None:
-            settings.subscribe_webpush = subscribe_webpush
         if subscribe_email is not None:
             settings.subscribe_email = subscribe_email
 

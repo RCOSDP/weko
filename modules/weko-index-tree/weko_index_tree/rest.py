@@ -26,7 +26,7 @@ import json
 import time
 import traceback
 from functools import wraps
-from datetime import datetime, timezone, timedelta
+from datetime import date, datetime, timezone, timedelta
 
 from flask import (
     Blueprint, abort, current_app, jsonify, make_response,
@@ -44,12 +44,13 @@ from invenio_db import db
 from invenio_oauth2server import require_api_auth, require_oauth_scopes
 from invenio_records_rest.utils import obj_or_import_string
 from invenio_rest import ContentNegotiatedMethodView
-from invenio_rest.errors import SameContentException
+from invenio_rest.errors import SameContentException, RESTException
 
 from weko_accounts.utils import limiter, roles_required
 from weko_admin.config import (
     WEKO_ADMIN_PERMISSION_ROLE_SYSTEM,
-    WEKO_ADMIN_PERMISSION_ROLE_REPO
+    WEKO_ADMIN_PERMISSION_ROLE_REPO,
+    WEKO_ADMIN_PERMISSION_ROLE_COMMUNITY,
 )
 from weko_admin.models import AdminLangSettings
 
@@ -64,7 +65,7 @@ from .scopes import (
     create_index_scope, read_index_scope, update_index_scope, delete_index_scope
 )
 from .utils import (
-    check_doi_in_index, check_index_permissions, can_user_access_index,
+    check_doi_in_index, check_index_permissions, can_admin_access_index,
     is_index_locked, perform_delete_index, save_index_trees_to_redis, reset_tree
 )
 from .schema import IndexCreateRequestSchema, IndexUpdateRequestSchema
@@ -888,7 +889,11 @@ class IndexManagementAPI(ContentNegotiatedMethodView):
             raise VersionNotFoundRESTError()
 
     @require_api_auth(allow_anonymous=False)
-    @roles_required([WEKO_ADMIN_PERMISSION_ROLE_SYSTEM,WEKO_ADMIN_PERMISSION_ROLE_REPO])
+    @roles_required([
+        WEKO_ADMIN_PERMISSION_ROLE_SYSTEM,
+        WEKO_ADMIN_PERMISSION_ROLE_REPO,
+        WEKO_ADMIN_PERMISSION_ROLE_COMMUNITY
+    ])
     @require_oauth_scopes(create_index_scope.id)
     @limiter.limit('')
     def post(self, **kwargs):
@@ -901,7 +906,11 @@ class IndexManagementAPI(ContentNegotiatedMethodView):
             raise VersionNotFoundRESTError()
 
     @require_api_auth(allow_anonymous=False)
-    @roles_required([WEKO_ADMIN_PERMISSION_ROLE_SYSTEM,WEKO_ADMIN_PERMISSION_ROLE_REPO])
+    @roles_required([
+        WEKO_ADMIN_PERMISSION_ROLE_SYSTEM,
+        WEKO_ADMIN_PERMISSION_ROLE_REPO,
+        WEKO_ADMIN_PERMISSION_ROLE_COMMUNITY
+    ])
     @require_oauth_scopes(update_index_scope.id)
     @limiter.limit('')
     def put(self, **kwargs):
@@ -915,7 +924,11 @@ class IndexManagementAPI(ContentNegotiatedMethodView):
             raise VersionNotFoundRESTError()
 
     @require_api_auth(allow_anonymous=False)
-    @roles_required([WEKO_ADMIN_PERMISSION_ROLE_SYSTEM,WEKO_ADMIN_PERMISSION_ROLE_REPO])
+    @roles_required([
+        WEKO_ADMIN_PERMISSION_ROLE_SYSTEM,
+        WEKO_ADMIN_PERMISSION_ROLE_REPO,
+        WEKO_ADMIN_PERMISSION_ROLE_COMMUNITY
+    ])
     @require_oauth_scopes(delete_index_scope.id)
     @limiter.limit('')
     def delete(self, **kwargs):
@@ -930,6 +943,21 @@ class IndexManagementAPI(ContentNegotiatedMethodView):
 
     def get_v1(self, **kwargs):
         """Get index tree."""
+
+        def json_serialize(obj):
+            """Serialize object to JSON.
+
+            Args:
+                obj: The object to serialize.
+
+            Returns:
+                str: The serialized JSON string.
+            """
+            if isinstance(obj, (datetime, date)):
+                return obj.strftime("%Y%m%d")
+            else:
+                return str(obj)
+
         try:
             pid = kwargs.get('index_id')
 
@@ -1004,7 +1032,7 @@ class IndexManagementAPI(ContentNegotiatedMethodView):
             indent = 4 if request.args.get('pretty') == 'true' else None
 
             res = Response(
-                response=json.dumps(merged_tree, indent=indent),
+                response=json.dumps(merged_tree, indent=indent, default=json_serialize),
                 status=200,
                 content_type='application/json'
             )
@@ -1212,12 +1240,39 @@ class IndexManagementAPI(ContentNegotiatedMethodView):
                 }} if "contribute_group" in index_info else {})
             }
 
+            index = self.record_class.get_index(index_id)
+            parent = parent_id if parent_id is not None else index.parent
+            position = (
+                index_data.get("position")
+                if index_data.get("position") is not None else index.position
+            )
+
+            if parent != index.parent or position != index.position:
+                # Move index if parent or position changed
+                # Change int to string if parent is root node
+                arg_parent = parent if parent > 0 else "0"
+                arg_pre_parent = index.parent if index.parent > 0 else "0"
+                moved = self.record_class.move(
+                    index_id, pre_parent=arg_pre_parent,
+                    parent=arg_parent, position=position
+                )
+                index_data.pop("parent", None)
+                if not moved or not moved.get("is_ok"):
+                    msg = moved.get("msg")
+                    current_app.logger.error(
+                        f"Failed to move index {index_id}: {msg}."
+                    )
+                    raise IndexUpdatedRESTError(
+                        description=f"Failed to move index {index_id}: {msg}"
+                    )
+
             updated_index = self.record_class.update(index_id, **index_data)
 
             if not updated_index:
-                current_app.logger.error(f"Failed to update index: {index_id}.")
+                msg = f"Failed to update index {index_id}."
+                current_app.logger.error(msg)
                 raise InternalServerError(
-                    description=f"Internal Server Error: Failed to update index {index_id}."
+                    description=f"Internal Server Error: {msg}"
                 )
 
             current_app.logger.info(f"Update index: {index_id}")
@@ -1230,7 +1285,12 @@ class IndexManagementAPI(ContentNegotiatedMethodView):
             raise InternalServerError(
                 description=f"Database Error: Failed to update index {index_id}."
             ) from ex
-
+        except IndexUpdatedRESTError as ex:
+            db.session.rollback()
+            current_app.logger.error(
+                f"Failed to update index: {index_id}. Index updated error.")
+            traceback.print_exc()
+            raise
         except Exception as ex:
             db.session.rollback()
             current_app.logger.error(
@@ -1263,42 +1323,67 @@ class IndexManagementAPI(ContentNegotiatedMethodView):
 
 
     def delete_v1(self, index_id, **kwargs):
-        """Delete an existing index tree node."""
+        """Delete an existing index tree node.
+
+        Args:
+            index_id (int): The ID of the index to be deleted.
+        """
+        if index_id == 0:
+            current_app.logger.error("Bad Request: Cannot update root index.")
+            raise IndexBaseRESTError(
+                description="Bad Request: Cannot update root index."
+            )
+        self.check_index_accessible(index_id)
+
         try:
-            index_obj = self.record_class.get_index(index_id)
-            if not index_obj:
-                current_app.logger.error(f"Index not found: {index_id}")
-                return make_response(jsonify({'status': 404, 'error': 'Index not found'}), 404)
-            else:
-                lst = {column.name: getattr(index_obj, column.name) for column in index_obj.__table__.columns}
-                if not can_user_access_index(lst):
-                    current_app.logger.error(f"Permission denied for index: {index_id}")
-                    return make_response(jsonify({'status': 403, 'error': f'Permission denied: You do not have access to index {index_id}.'}), 403)
+            from weko_search_ui.tasks import is_import_running
+            check = is_import_running()
+            if check == "is_import_running":
+                current_app.logger.error(
+                    f"Failed to delete index: {index_id}. Import is in progress."
+                )
+                raise IndexBaseRESTError(
+                    description="Bad Request: Failed to delete index. "
+                                "Import is in progress."
+                )
 
-            delete_result = self.record_class.delete(index_id)
+            msg, errors = perform_delete_index(index_id, self.record_class, "all")
+            if errors:
+                current_app.logger.error(
+                    f"Failed to delete index: {index_id}. Errors: {errors}"
+                )
+                raise IndexBaseRESTError(
+                    description=f"Failed to delete index: {errors}"
+                )
+            if "Failed" in msg:
+                raise InternalServerError(description=f"Unexpected Error: {msg}")
 
-            if not delete_result:
-                current_app.logger.error(f"Failed to delete index: {index_id}")
-                return make_response(jsonify({'status': 500, 'error': 'Internal Server Error: Failed to delete index'}), 500)
-            current_app.logger.info(f"Delete index: {index_id}")
             self.save_redis()
-            return make_response(jsonify({'status': 200, 'message': 'Index deleted successfully.'}), 200)
 
-        except (SameContentException, PermissionError, IndexNotFound404Error) as ex:
-            current_app.logger.error(f"Error occurred while deleting index: {index_id}")
+        except RESTException as ex:
             traceback.print_exc()
             raise
 
         except SQLAlchemyError:
             db.session.rollback()
-            current_app.logger.error(f"Database error occurred while deleting index: {index_id}")
+            current_app.logger.error(
+                f"Database error occurred while deleting index: {index_id}"
+            )
             traceback.print_exc()
-            raise InternalServerError()
+            raise InternalServerError(
+                description="Database Error: Failed to delete index."
+            )
 
         except Exception:
-            current_app.logger.error(f"Unexpected error occurred while deleting index: {index_id}")
+            current_app.logger.error(
+                f"Unexpected error occurred while deleting index: {index_id}"
+            )
             traceback.print_exc()
-            raise InternalServerError()
+            raise InternalServerError(
+                description="Internal Server Error: Failed to delete index."
+            )
+
+        return make_response(jsonify(status=204), 204)
 
 
     def validate_request(self, request, schema):
@@ -1357,6 +1442,20 @@ class IndexManagementAPI(ContentNegotiatedMethodView):
 
         """
         if not id:
+            if (
+                id == 0
+                and any(
+                    role.name == current_app.config.get(
+                        "WEKO_ADMIN_PERMISSION_ROLE_COMMUNITY"
+                    )
+                    for role in getattr(current_user, 'roles', [])
+                )
+            ):
+                msg = "Community Administrators cannot access root index."
+                current_app.logger.error(msg)
+                raise PermissionError(
+                    description=f"Permission denied: {msg}"
+                )
             return None
 
         index = self.record_class.get_index(id, with_deleted=True)
@@ -1373,7 +1472,7 @@ class IndexManagementAPI(ContentNegotiatedMethodView):
             column.name: getattr(index, column.name)
             for column in index.__table__.columns
         }
-        if not can_user_access_index(lst):
+        if not can_admin_access_index(lst):
             current_app.logger.error(
                 f"User does not have access to index: {id}"
             )

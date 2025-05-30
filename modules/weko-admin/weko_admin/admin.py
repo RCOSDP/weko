@@ -1572,7 +1572,7 @@ class SwordAPIJsonldSettingsView(ModelView):
     can_create = True
     can_edit = True
     can_delete = True
-    can_view_details = False
+    can_view_details = True
     column_display_all_relations = True
     create_template = WEKO_ADMIN_SWORD_API_JSONLD_TEMPLATE
     edit_template = WEKO_ADMIN_SWORD_API_JSONLD_TEMPLATE
@@ -1582,15 +1582,27 @@ class SwordAPIJsonldSettingsView(ModelView):
         "active",
         "creator",
         "registration_type",
-        "input_support",
+        "metadata_collection",
         "duplicate_check"
     )
-    column_searchable_list = ("registration_type_id", "client_id", "workflow_id")
+    column_details_list = (
+        "id",
+        "created",
+        "updated",
+        "application",
+        "active",
+        "registration_type",
+        "workflow_name",
+        "mapping_name",
+        "duplicate_check",
+        "meta_data_api",
+    )
 
 
     def _format_application_name(view, context, model, name):
-        result = Client.get_name_by_client_id(model.client_id)
-        return result.name
+        if not isinstance(model, SwordClientModel):
+            return ""
+        return model.oauth_client.name
 
     def _format_active(view, context, model, name):
         if model.active:
@@ -1599,21 +1611,24 @@ class SwordAPIJsonldSettingsView(ModelView):
             return _("Inactive Message")
 
     def _format_creator(view, context, model, name):
-        client = Client.get_user_id_by_client_id(model.client_id)
-        result = User.get_email_by_id(client.user_id)
-        return result.email
+        if not isinstance(model, SwordClientModel):
+            return ""
+
+        return model.oauth_client.user.email
 
     def _format_registration_type(view, context, model, name):
-        if model.registration_type_id == 1:
-            return "Direct"
-        else:
-            return "Workflow"
+        if not isinstance(model, SwordClientModel):
+            return ""
+        if model.registration_type == "Direct":
+            return _("Direct_Registration")
+        elif model.registration_type == "Workflow":
+            return _("WorkFlow_Registration")
 
-    def _format_input_support(view, context, model, name):
+    def _format_metadata_collection(view, context, model, name):
         if len(model.meta_data_api) > 0:
-            return "ON"
+            return _("Active Message")
         else:
-            return "OFF"
+            return _("Inactive Message")
 
     def _format_duplicate_check(view, context, model, name):
         if model.duplicate_check:
@@ -1621,13 +1636,32 @@ class SwordAPIJsonldSettingsView(ModelView):
         else:
             return _("Inactive Message")
 
+    def _format_workflow_name(view, context, model, name):
+        if model.workflow_id is None:
+            return ""
+        workflow = WorkFlow()
+        wf = workflow.get_workflow_by_id(model.workflow_id)
+        if wf is None:
+            return ""
+        return wf.flows_name
+
+    def _format_mapping_name(view, context, model, name):
+        if model.mapping_id is None:
+            return ""
+        mapping = JsonldMapping.get_mapping_by_id(model.mapping_id)
+        if mapping is None:
+            return ""
+        return mapping.name
+
     column_formatters = {
         "application": _format_application_name,
         "active": _format_active,
         "creator": _format_creator,
         "registration_type": _format_registration_type,
-        "input_support": _format_input_support,
+        "metadata_collection": _format_metadata_collection,
         "duplicate_check": _format_duplicate_check,
+        "workflow_name": _format_workflow_name,
+        "mapping_name": _format_mapping_name,
     }
 
     def get_query(self):
@@ -1660,18 +1694,16 @@ class SwordAPIJsonldSettingsView(ModelView):
             form = FlaskForm(request.form)
 
             # GET current user oauth clients
-            current_user_clients = [
+            list_cur_user_client = [
                 client
-                for client in Client.get_client_id_by_user_id(current_user.get_id())
+                for client in Client.get_by_user_id(current_user.get_id())
                 # exclude personal clients
                 if not client.is_internal
             ]
-            list_sword_clients = [
-                client.client_id for client in SwordClient.get_client_id_all()
-            ]
+            list_sword_clients = SwordClient.get_client_id_all()
             # exclude already registered clients
             client_list = [
-                client for client in current_user_clients
+                client for client in list_cur_user_client
                 if client.client_id not in list_sword_clients
             ]
 
@@ -1719,7 +1751,6 @@ class SwordAPIJsonldSettingsView(ModelView):
                 deleted_workflow_name_dict=json.dumps(deleted_workflow_name_dict),
                 workflows=workflows,
                 jsonld_mappings=jsonld_mappings,
-                return_url = request.args.get("url"),
                 current_page_type="add",
                 current_client_name=None,
                 current_model_json=None,
@@ -1740,11 +1771,13 @@ class SwordAPIJsonldSettingsView(ModelView):
                 active = request.json.get("active") == "True"
                 duplicate_check = request.json.get("duplicate_check") == "True"
                 meta_data_api = request.json.get("metadata_api_selected")
-
+                if meta_data_api and "Original" not in meta_data_api:
+                    msg = "Cannot disable 'Original'."
+                    current_app.logger.error(msg)
+                    return jsonify({"error": msg}), 400
                 obj = JsonldMapping.get_mapping_by_id(mapping_id)
-                itemtype_id = obj.item_type_id
                 try:
-                    if not JsonLdMapper(itemtype_id, obj.mapping).is_valid:
+                    if not JsonLdMapper(obj.item_type_id, obj.mapping).is_valid:
                         msg = f"Invalid jsonld mapping."
                         current_app.logger.error(msg)
                         return jsonify({"error": msg}), 400
@@ -1811,8 +1844,13 @@ class SwordAPIJsonldSettingsView(ModelView):
             deleted_workflows = workflow.get_deleted_workflow_list()
             deleted_workflow_name_dict = {}
             for deleted_workflow in deleted_workflows:
-                deleted_workflow_name_dict[deleted_workflow.id] = deleted_workflow.flows_name
+                deleted_workflow_info = {
+                    "name": deleted_workflow.flows_name,
+                    "itemtype_id": deleted_workflow.itemtype_id,
+                }
+                deleted_workflow_name_dict[deleted_workflow.id] = deleted_workflow_info
             # Process exclude workflows
+
             from weko_workflow.utils import exclude_admin_workflow
             exclude_admin_workflow(workflows)
 
@@ -1850,12 +1888,12 @@ class SwordAPIJsonldSettingsView(ModelView):
                 deleted_workflow_name_dict=json.dumps(deleted_workflow_name_dict),
                 workflows=workflows,
                 jsonld_mappings=jsonld_mappings,
-                return_url = request.args.get("url"),
                 current_page_type="edit",
                 current_client_name=model.oauth_client.name,
                 current_model_json=current_model_json,
                 can_edit=can_edit,
                 item_type_names=item_type_names,
+                id=model.id,
             )
         else:
             # POST
@@ -1874,15 +1912,20 @@ class SwordAPIJsonldSettingsView(ModelView):
                 duplicate_check = request.json.get("duplicate_check") == "True"
                 meta_data_api = request.json.get("metadata_api_selected")
 
+                if meta_data_api == ["Original"]:
+                    meta_data_api = []
+                if meta_data_api and "Original" not in meta_data_api:
+                    msg = "Cannot disable 'Original'."
+                    current_app.logger.error(msg)
+                    return jsonify({"error": msg}), 400
                 obj = JsonldMapping.get_mapping_by_id(mapping_id)
-                itemtype_id = obj.item_type_id
                 try:
-                    if not JsonLdMapper(itemtype_id, obj.mapping).is_valid:
-                        msg = f"Invalid jsonld mapping."
+                    if not JsonLdMapper(obj.item_type_id, obj.mapping).is_valid:
+                        msg = "Invalid jsonld mapping."
                         current_app.logger.error(msg)
                         return jsonify({"error": msg}), 400
                 except Exception as ex:
-                    msg = f"Failed to validate jsonld mapping."
+                    msg = "Failed to validate jsonld mapping."
                     current_app.logger.error(msg)
                     traceback.print_exc()
                     return jsonify({"error": msg}), 400
@@ -1909,13 +1952,13 @@ class SwordAPIJsonldSettingsView(ModelView):
 
 
     @expose("/validate/<string:id>/", methods=["GET"])
-    def valedate_mapping(self, id):
+    def validate_mapping(self, id):
         obj = JsonldMapping.get_mapping_by_id(id)
         itemtype_id = obj.item_type_id
         try:
             return jsonify(results=JsonLdMapper(itemtype_id, obj.mapping).is_valid), 200
         except Exception as ex:
-            msg = f"Failed to validate jsonld mapping."
+            msg = "Failed to validate jsonld mapping."
             current_app.logger.error(msg)
             traceback.print_exc()
             return jsonify({"error": msg}), 400
@@ -1931,7 +1974,6 @@ class SwordAPIJsonldSettingsView(ModelView):
             abort(404)
 
         name = model.oauth_client.name
-        return_url = get_redirect_target() or self.get_url(".index_view")
 
         if self._is_editable(model.workflow_id):
             try:
@@ -1954,6 +1996,7 @@ class SwordAPIJsonldSettingsView(ModelView):
             )
             flash(_("Unapproved Items Exit."), "error")
 
+        return_url = get_redirect_target() or self.get_url(".index_view")
         return redirect(return_url)
 
 
@@ -1992,24 +2035,49 @@ class JsonldMappingView(ModelView):
         "item_type",
         "updated",
     )
+    column_details_list = (
+        "id",
+        "created",
+        "updated",
+        "name",
+        "item_type",
+        "mapping",
+        "version_id",
+    )
 
     def _item_type_name(view, context, model, name):
-        result = ItemTypeNames.get_record(id_=model.item_type_id)
-        return result.name
+        item_type_name = ""
+        if model.item_type and model.item_type.item_type_name:
+            item_type_name = model.item_type.item_type_name.name
+        else:
+            item_type_name = _("Not Found ItemType")
+        return item_type_name
 
-    def _formatting_mapping_json(view, context, model, name):
+    def _formated_jsonld_mapping(view, context, model, name):
         format_json =json.dumps(model.mapping, indent=4, ensure_ascii=False)
-        return Markup(f'<pre style="white-space: pre; border: none; \
-                      background-color: transparent;">{format_json}</pre>')
+        return Markup(
+            '<pre style="white-space: pre; border: none; '
+            f'background-color: transparent;">{format_json}</pre>'
+        )
 
     column_formatters = {
         "item_type": _item_type_name,
-        "mapping": _formatting_mapping_json,
+        "mapping": _formated_jsonld_mapping,
     }
-    column_searchable_list = ("id", "name", "item_type_id")
+    column_sortable_list = (
+        "id",
+        "name",
+        ('item_type', 'item_type.item_type_name.name'),
+        "updated",
+    )
+    column_searchable_list = (
+        "id",
+        "name",
+        "item_type.item_type_name.name"
+    )
 
     def get_query(self):
-        return super(JsonldMappingView, self).get_query().filter(
+        return super().get_query().filter(
             ItemTypeJsonldMapping.is_deleted == False
         )
 
@@ -2030,7 +2098,6 @@ class JsonldMappingView(ModelView):
             return self.render(
                 self.create_template,
                 form=form,
-                return_url = request.args.get("url"),
                 current_page_type="new",
                 item_types=item_types,
                 current_name=None,
@@ -2076,8 +2143,8 @@ class JsonldMappingView(ModelView):
             )
 
         # check if this mapping is using sword_clients
-        can_change_itemtype = not bool(SwordClient.get_clients_by_mapping_id(model.id))
-        if can_change_itemtype:
+        can_change_itemtype = not SwordClient.get_clients_by_mapping_id(model.id)
+        if not can_change_itemtype:
             current_app.logger.info(
                 "Cannot edit JSON-LD mapping because this mapping is using "
                 "SWORD API JSON-LD settings."
@@ -2104,7 +2171,6 @@ class JsonldMappingView(ModelView):
             return self.render(
                 self.edit_template,
                 form=form,
-                return_url = request.args.get("url"),
                 current_page_type="edit",
                 item_types=item_types,
                 current_name=model.name,
@@ -2127,7 +2193,7 @@ class JsonldMappingView(ModelView):
 
             if (
                 not can_change_itemtype
-                and item_type_id != model.item_type_id
+                and int(item_type_id) != model.item_type_id
             ):
                 return jsonify("Cannot change item type"), 400
             try:
@@ -2172,7 +2238,7 @@ class JsonldMappingView(ModelView):
 
 
     @expose("/validate", methods=["POST"])
-    def valedate_mapping(self):
+    def validate_mapping(self):
         data = request.get_json()
         itemtype_id = data.get("itemtype_id")
         mapping_id = data.get("mapping_id")

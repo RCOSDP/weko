@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: weko-workspace 0.1.0.dev20250201\n"
 "Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
-"POT-Creation-Date: 2019-07-02 09:20+0000\n"
+"POT-Creation-Date: 2025-05-28 19:09+0900\n"
 "PO-Revision-Date: 2018-08-06 13:44+0900\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ja\n"
@@ -19,144 +19,318 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.5.1\n"
 
+#: weko_workspace/config.py:253 weko_workspace/config.py:254
+#: weko_workspace/config.py:264 weko_workspace/config.py:265
+#: weko_workspace/config.py:266 weko_workspace/config.py:267
+#: weko_workspace/config.py:268 weko_workspace/config.py:270
+#: weko_workspace/config.py:271 weko_workspace/config.py:272
+#: weko_workspace/config.py:273 weko_workspace/utils.py:252
+msgid "Unlinked"
+msgstr "未連携"
 
-msgid "Workspace"
-msgstr ""
+#: weko_workspace/config.py:255
+msgid "Metadata Registered"
+msgstr "メタデータ登録済"
 
-#: modules/weko-workspace/weko_workspace/templates/weko_workspace/workspace_body_contents.html:xxx
-msgid "Filter Display"
-msgstr "絞込み表示"
+#: weko_workspace/config.py:256
+msgid "Fulltext Requested"
+msgstr "本文依頼中"
 
-#: modules/weko-workspace/weko_workspace/templates/weko_workspace/workspace_body_contents.html:xxx
-msgid "Publication Date"
-msgstr "出版年月"
+#: weko_workspace/config.py:257
+msgid "Fulltext Provided"
+msgstr "本文提供済"
 
-#: modules/weko-workspace/weko_workspace/templates/weko_workspace/workspace_body_contents.html:xxx
-msgid "Title"
-msgstr "タイトル"
+#: weko_workspace/config.py:258
+msgid "Unlinked (Fulltext Requested)"
+msgstr "未連携（本文依頼中）"
 
-#: modules/weko-workspace/weko_workspace/templates/weko_workspace/workspace_body_contents.html:xxx
-msgid "Number of accesses"
-msgstr "アクセス数"
+#: weko_workspace/config.py:259
+msgid "Unlinked (Fulltext Provided)"
+msgstr "未連携（本文提供済）"
 
-#: modules/weko-workspace/weko_workspace/templates/weko_workspace/workspace_body_contents.html:xxx
-msgid "Number of downloads"
-msgstr "ダウンロード数"
+#: weko_workspace/config.py:260
+msgid "OA"
+msgstr "OA済"
 
-#: modules/weko-workspace/weko_workspace/templates/weko_workspace/workspace_body_contents.html:xxx
-msgid "Filter"
-msgstr "絞込"
-
-#: modules/weko-workspace/weko_workspace/templates/weko_workspace/workspace_body_contents.html:xxx
-msgid "Clear"
-msgstr "クリア"
-
-#: modules/weko-workspace/weko_workspace/templates/weko_workspace/workspace_body_contents.html:xxx
-msgid "Save"
-msgstr "保存"
-
-#: modules/weko-workspace/weko_workspace/templates/weko_workspace/workspace_body_contents.html:xxx
-msgid "Reset"
-msgstr "リセット"
-
-#: modules/weko-workspace/weko_workspace/templates/weko_workspace/workspace_body_contents.html:xxx
-msgid "Please press Enter after inputting to search."
-msgstr "入力後、Enterを押下し検索してください"
-
-#: modules/weko-workspace/weko_workspace/templates/weko_workspace/workspace_body_contents.html:xxx
-msgid "No results found matching your search criteria."
-msgstr "検索条件と十分に一致する結果が見つかりません"
-
-#: modules/weko-workspace/weko_workspace/templates/weko_workspace/workspace_body_contents.html:xxx
-msgid "※This item is excluded from the default condition save target."
-msgstr "※この項目はデフォルト条件の保存対象外です"
-
-#: modules/weko-workspace/weko_workspace/templates/weko_workspace/workspace_body_contents.html:xxx
-msgid "Would you like to remove the filter conditions?"
-msgstr "フィルタ条件を削除しますか？"
-
-#: modules/weko-workspace/weko_workspace/templates/weko_workspace/workspace_body_contents.html:xxx
-msgid "Relation"
-msgstr "関連"
-
-#: modules/weko-workspace/weko_workspace/templates/weko_workspace/workspace_body_contents.html:xxx
-msgid "Document file"
-msgstr "本文ファイル"
-
-#: modules/weko-workspace/weko_workspace/templates/weko_workspace/workspace_body_contents.html:xxx
-msgid "Published"
-msgstr "公開"
-
-#: modules/weko-workspace/weko_workspace/templates/weko_workspace/workspace_body_contents.html:xxx
-msgid "Embargo"
+#: weko_workspace/config.py:261
+msgid "Embargo OA"
 msgstr "エンバーゴ"
 
-#: modules/weko-workspace/weko_workspace/templates/weko_workspace/workspace_body_contents.html:xxx
-msgid "Restricted"
+#: weko_workspace/config.py:262
+msgid "Not OA"
+msgstr "非OA"
+
+#: weko_workspace/config.py:263
+msgid "Opened Limitedly"
 msgstr "制限公開"
 
-msgid "Deleted activities cannot be restored."
-msgstr "削除したアクティビティは元に戻せません。"
+#: weko_workspace/config.py:269
+msgid "Opened Elsewhere"
+msgstr "OA済み（外部サイト）"
 
-msgid "Are you sure you want to delete filtered activities?"
-msgstr "フィルターされたアクティビティを削除してもよろしいですか？"
+#: tests/conftest.py:200 weko_workspace/config.py:847
+msgid "write your own license"
+msgstr ""
 
-msgid "Deleted activity cannot be restored."
-msgstr "削除したアクティビティは元に戻せません。"
+#: tests/conftest.py:205 weko_workspace/config.py:852
+msgid "Creative Commons CC0 1.0 Universal Public Domain Designation"
+msgstr ""
 
-msgid "Are you sure you want to delete the filtered activity?"
-msgstr "選択したアクティビティを削除してもよろしいですか？"
+#: tests/conftest.py:220 weko_workspace/config.py:867
+msgid "Creative Commons Attribution 3.0 Unported (CC BY 3.0)"
+msgstr ""
 
-msgid "Clear Confirm"
-msgstr "削除の確認"
+#: tests/conftest.py:232 weko_workspace/config.py:879
+msgid "Creative Commons Attribution-ShareAlike 3.0 Unported (CC BY-SA 3.0)"
+msgstr ""
 
-#: weko-workspace/weko_workspace/templates/weko_workspace/workspace_body_contents.html:25
-msgid "btn_export"
-msgstr "アイテム出力"
+#: tests/conftest.py:246 weko_workspace/config.py:893
+msgid "Creative Commons Attribution-NoDerivs 3.0 Unported (CC BY-ND 3.0)"
+msgstr ""
 
-msgid "Please select the following option:"
-msgstr "以下のオプションを選択してください:"
+#: tests/conftest.py:260 weko_workspace/config.py:907
+msgid "Creative Commons Attribution-NonCommercial 3.0 Unported (CC BY-NC 3.0)"
+msgstr ""
 
-msgid "Selected Items"
-msgstr "選択アイテム出力"
+#: tests/conftest.py:274 weko_workspace/config.py:921
+msgid ""
+"Creative Commons Attribution-NonCommercial-ShareAlike 3.0 Unported (CC "
+"BY-NC-SA 3.0)"
+msgstr ""
 
-msgid "All Items"
-msgstr "全て出力"
+#: tests/conftest.py:288 weko_workspace/config.py:935
+msgid ""
+"Creative Commons Attribution-NonCommercial-NoDerivs 3.0 Unported (CC BY-"
+"NC-ND 3.0)"
+msgstr ""
 
-msgid "Cancel"
-msgstr "キャンセル"
+#: tests/conftest.py:303 weko_workspace/config.py:950
+msgid "Creative Commons Attribution 4.0 International (CC BY 4.0)"
+msgstr ""
 
-msgid "Error: There is no Selected items. Please check the item you want to export"
-msgstr "エラー: 選択されたアイテムがありません。チェックボックスを選択してください。"
+#: tests/conftest.py:315 weko_workspace/config.py:962
+msgid "Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)"
+msgstr ""
 
-#: weko_workspace/item_register.html:148
-msgid "Please enter the DOI."
-msgstr "DOIを入力してください。"
+#: tests/conftest.py:329 weko_workspace/config.py:976
+msgid ""
+"Creative Commons Attribution-NoDerivatives 4.0 International (CC BY-ND "
+"4.0)"
+msgstr ""
 
-#: weko_workspace/item_register.html:143
+#: tests/conftest.py:343 weko_workspace/config.py:990
+msgid ""
+"Creative Commons Attribution-NonCommercial 4.0 International (CC BY-NC "
+"4.0)"
+msgstr ""
+
+#: tests/conftest.py:357 weko_workspace/config.py:1004
+msgid ""
+"Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International "
+"(CC BY-NC-SA 4.0)"
+msgstr ""
+
+#: tests/conftest.py:371 weko_workspace/config.py:1018
+msgid ""
+"Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 "
+"International (CC BY-NC-ND 4.0)"
+msgstr ""
+
+#: weko_workspace/views.py:112
+#, python-format
+msgid "%(icon)s Workspace"
+msgstr "%(icon)s ワークスペース"
+
+#: weko_workspace/views.py:658
+msgid "The item type or workflow used for item registration has not been set."
+msgstr "アイテム登録に使用するアイテムタイプまたはワークフローが設定されていません。"
+
+#: weko_workspace/views.py:777 weko_workspace/views.py:810
+#: weko_workspace/views.py:842 weko_workspace/views.py:873
+msgid "Header Error"
+msgstr ""
+
+#: weko_workspace/views.py:934
+msgid "Workflow ID is not set."
+msgstr ""
+
+#: weko_workspace/views.py:939
+msgid "Item type ID is not set."
+msgstr ""
+
+#: weko_workspace/templates/weko_workspace/item_register.html:125
 msgid "DOI Input"
 msgstr "DOI入力"
 
-#: weko_workspace/item_register.html:226
+#: weko_workspace/templates/weko_workspace/item_register.html:130
+msgid "Please enter the DOI."
+msgstr "DOIを入力してください。"
+
+#: weko_workspace/templates/weko_workspace/item_register.html:136
+msgid "Get"
+msgstr "取得"
+
+#: weko_workspace/templates/weko_workspace/item_register.html:207
+#: weko_workspace/templates/weko_workspace/item_register.html:227
+#, fuzzy
+msgid "File"
+msgstr "ファイル"
+
+#: weko_workspace/templates/weko_workspace/item_register.html:248
 msgid "Metadata"
 msgstr "メタデータ"
 
-#: weko_workspace/item_register.html:303
+#: weko_workspace/templates/weko_workspace/item_register.html:261
+msgid "oa_policy_label"
+msgstr "OA ポリシー情報"
+
+#: weko_workspace/templates/weko_workspace/item_register.html:269
+msgid "oa_policy_export"
+msgstr "OA ポリシー取得"
+
+#: weko_workspace/templates/weko_workspace/item_register.html:275
+msgid "Please enter ISSN, eISSN, or journal title"
+msgstr "ISSN、eISSN、または雑誌名を入力してください。"
+
+#: weko_workspace/templates/weko_workspace/item_register.html:276
+msgid "No Policy Information found"
+msgstr "一致するポリシー情報が見つかりませんでした。"
+
+#: weko_workspace/templates/weko_workspace/item_register.html:277
+msgid "An unknown error occurred"
+msgstr "不明なエラーが発生しました"
+
+#: weko_workspace/templates/weko_workspace/item_register.html:289
+msgid "Index Tree"
+msgstr "インデックスツリー"
+
+#: weko_workspace/templates/weko_workspace/item_register.html:311
 msgid "Regist"
 msgstr "登録"
 
-#: weko_workspace/item_register.html:397
-msgid "The item is successfully registered."
-msgstr "アイテムが正常に登録されました。"
+#: weko_workspace/templates/weko_workspace/item_register.html:329
+#: weko_workspace/templates/weko_workspace/item_register.html:358
+#: weko_workspace/templates/weko_workspace/item_register.html:397
+#: weko_workspace/templates/weko_workspace/item_register.html:423
+msgid "WEKO"
+msgstr ""
 
-#: weko_workspace/item_register.html:327
+#: weko_workspace/templates/weko_workspace/item_register.html:335
+#: weko_workspace/templates/weko_workspace/item_register.html:429
 msgid "At least one index should be selected."
 msgstr "インデックスを指定してください。"
 
-#: weko_workspace/item_register.html:335
+#: weko_workspace/templates/weko_workspace/item_register.html:343
+#: weko_workspace/templates/weko_workspace/item_register.html:372
+#: weko_workspace/templates/weko_workspace/workspace_body_contents.html:30
 msgid "Cancel"
-msgstr "取消"
+msgstr "キャンセル"
 
-#: weko_workspace/item_register.html:356
+#: weko_workspace/templates/weko_workspace/item_register.html:364
+#: weko_workspace/templates/weko_workspace/item_register.html:388
 msgid "The Required items is required. Please recheck and input."
 msgstr "必須項目をご確認の上、再度入力してください。"
+
+#: weko_workspace/templates/weko_workspace/item_register.html:390
+msgid "The same file name cannot be registered."
+msgstr "同一のファイル名は登録できません。"
+
+#: weko_workspace/templates/weko_workspace/item_register.html:403
+msgid "The item is successfully registered."
+msgstr "アイテムが正常に登録されました。"
+
+#: weko_workspace/templates/weko_workspace/workspace_body_contents.html:25
+msgid "Export Item List"
+msgstr ""
+
+#: weko_workspace/templates/weko_workspace/workspace_body_contents.html:27
+msgid "Please select the following option:"
+msgstr "以下のオプションを選択してください:"
+
+#: weko_workspace/templates/weko_workspace/workspace_body_contents.html:28
+msgid "Selected Items"
+msgstr "選択アイテム出力"
+
+#: weko_workspace/templates/weko_workspace/workspace_body_contents.html:29
+msgid "All Items"
+msgstr "全て出力"
+
+#: weko_workspace/templates/weko_workspace/workspace_body_contents.html:31
+msgid ""
+"Error: There is no Selected items. Please check the item you want to "
+"export"
+msgstr "エラー: 選択されたアイテムがありません。チェックボックスを選択してください。"
+
+#: weko_workspace/templates/weko_workspace/workspace_body_contents.html:33
+msgid "Please press Enter after inputting to search."
+msgstr "入力後、Enterを押下し検索してください"
+
+#: weko_workspace/templates/weko_workspace/workspace_body_contents.html:34
+msgid "No results found matching your search criteria."
+msgstr "検索条件と十分に一致する結果が見つかりません"
+
+#: weko_workspace/templates/weko_workspace/workspace_body_contents.html:54
+msgid "Filter Display"
+msgstr "絞込み表示"
+
+#: weko_workspace/templates/weko_workspace/workspace_body_contents.html:56
+msgid "Publication Date"
+msgstr "出版年月"
+
+#: weko_workspace/templates/weko_workspace/workspace_body_contents.html:57
+msgid "Title"
+msgstr "タイトル"
+
+#: weko_workspace/templates/weko_workspace/workspace_body_contents.html:58
+msgid "Number of accesses"
+msgstr "アクセス数"
+
+#: weko_workspace/templates/weko_workspace/workspace_body_contents.html:59
+msgid "Number of downloads"
+msgstr "ダウンロード数"
+
+#: weko_workspace/templates/weko_workspace/workspace_body_contents.html:80
+#, fuzzy
+msgid "This item is excluded from the default condition save target."
+msgstr "※この項目はデフォルト条件の保存対象外です"
+
+#: weko_workspace/templates/weko_workspace/workspace_body_contents.html:81
+msgid "Would you like to remove the filter conditions?"
+msgstr "フィルタ条件を削除しますか？"
+
+#: weko_workspace/templates/weko_workspace/workspace_body_contents.html:85
+msgid "Filter"
+msgstr "絞込"
+
+#: weko_workspace/templates/weko_workspace/workspace_body_contents.html:89
+msgid "Clear"
+msgstr "クリア"
+
+#: weko_workspace/templates/weko_workspace/workspace_body_contents.html:93
+msgid "Save"
+msgstr "保存"
+
+#: weko_workspace/templates/weko_workspace/workspace_body_contents.html:97
+msgid "Reset"
+msgstr "リセット"
+
+#: weko_workspace/templates/weko_workspace/workspace_body_contents.html:118
+msgid "Relation"
+msgstr "関連"
+
+#: weko_workspace/templates/weko_workspace/workspace_body_contents.html:119
+msgid "Document file"
+msgstr "本文ファイル"
+
+#: weko_workspace/templates/weko_workspace/workspace_body_contents.html:120
+msgid "Published"
+msgstr "公開"
+
+#: weko_workspace/templates/weko_workspace/workspace_body_contents.html:121
+msgid "Embargo"
+msgstr "エンバーゴ"
+
+#: weko_workspace/templates/weko_workspace/workspace_body_contents.html:122
+msgid "Restricted"
+msgstr "制限公開"
+

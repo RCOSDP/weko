@@ -116,6 +116,9 @@ class IndexUpdateSchema(IndexesSchemaBase):
 
     parent = fields.Integer()
     """Parent Information of the index."""
+    
+    position = fields.Integer()
+    """Index order of parent index."""
 
     class Meta:
         strict = True

@@ -480,6 +480,7 @@ WEKO_AUTHORS_REST_ENDPOINTS = {
     'authors': {
         'route': '/<string:version>/authors/count',
         'api_route': '/<string:version>/authors',
+        'api_route_item': '/<string:version>/authors/<string:identifier>',
         'default_media_type': 'application/json',
         'record_serializers': {
             'application/json': ('invenio_records_rest.serializers'

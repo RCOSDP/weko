@@ -16,10 +16,9 @@ from weko_search_ui.tasks import (
     remove_temp_dir_task,
     export_all_task,
     write_files_task,
-    delete_exported_task,
     is_import_running,
     check_celery_is_run,
-    delete_task_id_cache,
+    delete_task_id_cache_on_revoke,
     check_session_lifetime
 )
 
@@ -139,17 +138,17 @@ def test_delete_task_id_cache(app, users, redis_connect, mocker):
 
     # cache_data != task_id
     redis_connect.put(cache_key, "success_task".encode("utf-8"))
-    delete_task_id_cache("revoked_task", cache_key)
+    delete_task_id_cache_on_revoke("revoked_task", cache_key)
     assert redis_connect.redis.exists(cache_key) == True
 
     # cache_data==task_id, state != REVOKED
-    delete_task_id_cache("success_task", cache_key)
+    delete_task_id_cache_on_revoke("success_task", cache_key)
     assert redis_connect.redis.exists(cache_key) == True
 
     # cache_data==task_id, state == REVOKED
     redis_connect.redis.delete(cache_key)
     redis_connect.put(cache_key, "revoked_task".encode("utf-8"))
-    delete_task_id_cache("revoked_task", cache_key)
+    delete_task_id_cache_on_revoke("revoked_task", cache_key)
     assert redis_connect.redis.exists(cache_key) == False
 
 
@@ -203,7 +202,8 @@ def test_write_files_task(redis_connect, users, mocker):
 
     with patch('flask_login.utils._get_user', return_value=users[3]['obj']):
         mocker.patch('builtins.open', side_effect=mock_open)
-        mocker.patch('weko_search_ui.tasks.os.remove')
+        mock_remove=mocker.patch('weko_search_ui.tasks.os.remove')
+        current_app.config["WEKO_ADMIN_CACHE_PREFIX"]="test_cache_prefix_{name}_{user_id}_"
         msg_key = current_app.config['WEKO_ADMIN_CACHE_PREFIX'].format(
             name='MSG_EXPORT_ALL',
             user_id=current_user.get_id()
@@ -212,14 +212,20 @@ def test_write_files_task(redis_connect, users, mocker):
             name='RUN_MSG_EXPORT_ALL_FILE_CREATE',
             user_id=current_user.get_id()
         )
+        task_cache_key = current_app.config["WEKO_ADMIN_CACHE_PREFIX"].format(
+            name='KEY_EXPORT_ALL',
+            user_id=current_user.get_id()
+        )
         datastore = redis_connect
+        pickle_filename = 'test_path/test_file.part1.pickle'
+
         # cancel_flg is False, result of write_files is True, export_file's name includes 'part'
         file_json = create_file_json(False)
         file_json['write_file_status']['2'] = 'waiting'
         datastore.put(file_cache_key, json.dumps(file_json).encode('utf-8'), ttl_secs=30)
         with patch('weko_search_ui.tasks.write_files', return_value=True), \
                 patch('weko_search_ui.tasks.pickle.load', return_value=create_pickle_data('test.part1')):
-            write_files_task('export_path', 'test_path/test_file.pickle', current_user.get_id())
+            write_files_task('export_path',pickle_filename, current_user.get_id())
             result_data = datastore.get(file_cache_key).decode('utf-8')
             assert json.loads(result_data) == {
                 'start_time': start_time_str,
@@ -232,13 +238,16 @@ def test_write_files_task(redis_connect, users, mocker):
                     '2': 'waiting'
                 }
             }
+            assert datastore.get(task_cache_key).decode('utf-8') == "None"
+            mock_remove.assert_called_with(f"{'export_path'}/{pickle_filename}")
+            mock_remove.reset_mock()
 
         # cancel_flg is False, result of write_files is False, export_file's name doesn't include 'part'
         datastore.delete(file_cache_key)
         datastore.put(file_cache_key, json.dumps(create_file_json(False)).encode('utf-8'), ttl_secs=30)
         with patch('weko_search_ui.tasks.write_files', return_value=False), \
                 patch('weko_search_ui.tasks.pickle.load', return_value=create_pickle_data('test')):
-            write_files_task('export_path', 'test_path/test_file.pickle', current_user.get_id())
+            write_files_task('export_path', pickle_filename, current_user.get_id())
             result_data = datastore.get(file_cache_key).decode('utf-8')
             assert json.loads(result_data) == {
                 'start_time': start_time_str,
@@ -251,78 +260,9 @@ def test_write_files_task(redis_connect, users, mocker):
                 }
             }
             assert datastore.get(msg_key).decode('utf-8') == 'Export failed.'
-
-        # cancel_flg is True, export_file's name doesn't include 'part'
-        datastore.delete(file_cache_key)
-        datastore.put(file_cache_key, json.dumps(create_file_json(True)).encode('utf-8'), ttl_secs=30)
-        with patch('weko_search_ui.tasks.pickle.load', return_value=create_pickle_data('test')):
-            write_files_task('export_path', 'test_path/test_file.pickle', current_user.get_id())
-            result_data = datastore.get(file_cache_key).decode('utf-8')
-            assert json.loads(result_data) == {
-                'start_time': start_time_str,
-                'finish_time': '',
-                'export_path': '',
-                'cancel_flg': True,
-                'write_file_status': {
-                    '.1': 'canceled',
-                    '1': 'started'
-                }
-            }
-
-
-# def delete_exported_task(uri, cache_key):
-# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_tasks.py::test_delete_exported_task -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
-def test_delete_exported_task(i18n_app, db, users, file_instance_mock, redis_connect):
-    from invenio_files_rest.models import FileInstance, Location
-    # uri = file_instance_mock
-    def clear_test_data():
-        Location.query.delete()
-        db.session.commit()
-
-    clear_test_data()
-
-    cache_key = "test_cache_key"
-    task_key = "test_task_key"
-    export_path = "test_export_path"
-
-    file_uri = "test_location%test.txt"
-    datastore = redis_connect
-    datastore.put(cache_key, json.dumps({'1':'a'}).encode('utf-8'), ttl_secs=30)
-    datastore.put(task_key, "test_task_id".encode("utf-8"))
-
-    location=Location(name="testloc",uri="test_location")
-    db.session.add(location)
-    db.session.commit()
-    with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
-        with patch("weko_search_ui.utils.delete_exported", return_value=True):
-            with patch("shutil.rmtree") as mock_rmtree:  # shutil.rmtreeをモック
-                # exist cache_key
-                file_instance = FileInstance(uri=file_uri)
-                db.session.add(file_instance)
-                db.session.commit()
-                delete_exported_task(file_uri, cache_key, task_key, export_path)
-                assert redis_connect.redis.exists(task_key) == False
-                assert redis_connect.redis.exists(cache_key) == False
-                mock_rmtree.assert_called_once_with(export_path)  # rmtreeが呼ばれたことを確認
-
-                # not exist cache_key
-                file_instance = FileInstance(uri=file_uri)
-                db.session.add(file_instance)
-                db.session.commit()
-                delete_exported_task(file_uri, cache_key, task_key, export_path)
-                assert redis_connect.redis.exists(task_key) == False
-                assert redis_connect.redis.exists(cache_key) == False
-
-        # raise Exception
-        with patch("shutil.rmtree") as mock_rmtree:
-            with patch("weko_search_ui.utils.delete_exported", side_effect=Exception("Test exception")):
-                with patch("weko_search_ui.utils.FileInstance.get_by_uri", side_effect=Exception("Test exception")):
-                    file_instance = FileInstance(uri=file_uri)
-                    db.session.add(file_instance)
-                    db.session.commit()
-                    delete_exported_task(file_uri, cache_key, task_key, export_path)
-                    assert redis_connect.redis.exists(task_key) == False
-                    assert redis_connect.redis.exists(cache_key) == False
+            assert datastore.get(task_cache_key).decode('utf-8') == "None"
+            mock_remove.assert_called_with(f"{'export_path'}/{pickle_filename}")
+            mock_remove.reset_mock()
 
 
 # def is_import_running():

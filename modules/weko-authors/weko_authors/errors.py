@@ -26,15 +26,36 @@
 from invenio_rest.errors import RESTException
 
 
-class VersionNotFoundRESTError(RESTException):
+class AuthorBaseRESTError(RESTException):
+    """Invalid request body."""
+
+    code = 400
+    description = 'Invalid request body.'
+
+
+class VersionNotFoundRESTError(AuthorBaseRESTError):
     """API Version error."""
 
     code = 400
     description = 'This API version does not found.'
 
 
-class AuthorNotFoundRESTError(RESTException):
+class AuthorNotFoundRESTError(AuthorBaseRESTError):
     """Author Not Found error."""
 
     code = 404
     description = 'This author does not found.'
+
+
+class InvalidDataRESTError(AuthorBaseRESTError):
+    """Invalid request body."""
+
+    code = 400
+    description = 'Could not load data.'
+
+
+class AuthorInternalServerError(AuthorBaseRESTError):
+    """Internal Server Error."""
+
+    code = 500
+    description = 'Internal Server Error'

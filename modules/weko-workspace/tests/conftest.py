@@ -74,12 +74,13 @@ from weko_schema_ui.config import WEKO_SCHEMA_JPCOAR_V1_SCHEMA_NAME,WEKO_SCHEMA_
 from weko_items_ui import WekoItemsUI
 from weko_admin import WekoAdmin
 from weko_deposit import WekoDeposit
-
+from weko_records.models import OaStatus
+ 
 from weko_workspace.views import workspace_blueprint as weko_workspace_blueprint
 from weko_workspace.views import blueprint_itemapi as weko_workspace_blueprint_itemapi
 
 from weko_workspace.models import WorkspaceDefaultConditions,WorkspaceStatusManagement
-from weko_workspace.config import WEKO_ITEMS_AUTOFILL_CINII_REQUIRED_ITEM
+from weko_workspace.config import WEKO_ITEMS_AUTOFILL_CINII_REQUIRED_ITEM, WEKO_WORKSPACE_OA_STATUS_MAPPING
 from weko_redis.redis import RedisConnection
 
 sys.path.append(os.path.dirname(__file__))
@@ -482,6 +483,7 @@ def base_app(instance_path, search_class, cache_config):
         ),
         DOI_VALIDATION_INFO_JALC=DOI_VALIDATION_INFO_JALC,
         WEKO_WORKFLOW_IDENTIFIER_GRANT_IS_WITHDRAWING = -2,
+        WEKO_WORKSPACE_OA_STATUS_MAPPING=WEKO_WORKSPACE_OA_STATUS_MAPPING,
     )
     
     app_.testing = True
@@ -789,3 +791,21 @@ def workspaceData(db):
 
     return [workspace_default_conditions, workspace_status_management_0]
 
+@pytest.fixture()
+def oa_status(db):
+    """Create OA status data."""
+    oa_status_1 = OaStatus(
+        oa_article_id=1,
+        oa_status='Processed　Fulltext Registered (Embargo)',
+        weko_item_pid='1'
+    )
+    oa_status_2 = OaStatus(
+        oa_article_id=2,
+        oa_status='Processing　Metadata Registered',
+        weko_item_pid='2'
+    )
+    
+    with db.session.begin_nested():
+        db.session.add(oa_status_1)
+        db.session.add(oa_status_2)
+    db.session.commit()

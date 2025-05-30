@@ -705,8 +705,6 @@ WEKO_RECORDS_UI_REST_ENDPOINTS = {
     }
 }
 
-WEKO_RECORDS_UI_API_LIMIT_RATE_DEFAULT = ['100 per minute']
-
 WEKO_RECORDS_UI_API_ACCEPT_LANGUAGES = ['en', 'ja']
 
 WEKO_RECORDS_UI_CAPTCHA_EXPIRATION_SECONDS = 900
@@ -730,6 +728,9 @@ WEKO_RECORDS_UI_OA_GET_TOKEN_URL = ""
 
 # The API URL to update the status of an OA article. example: "<OA URL>/api/articles/{}/status"
 WEKO_RECORDS_UI_OA_UPDATE_STATUS_URL = ""
+
+# The API URL to get OA policies. example: "<OA URL>/api/oa_policies"
+WEKO_RECORDS_UI_OA_GET_OA_POLICIES_URL = ""
 
 WEKO_RECORDS_UI_OA_API_RETRY_COUNT = 3
 

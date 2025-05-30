@@ -77,7 +77,8 @@ from weko_deposit.signals import item_created
 from weko_index_tree.utils import get_user_roles
 from weko_items_ui.api import item_login
 from weko_items_ui.utils import check_item_is_being_edit, get_workflow_by_item_type_id, \
-    get_current_user, send_mail_delete_request, send_mail_delete_approved
+    get_current_user
+from weko_logging.activity_logger import UserActivityLogger
 from weko_records.api import FeedbackMailList, RequestMailList, ItemLink, ItemTypes
 from weko_records.models import ItemMetadata
 from weko_records.serializers.utils import get_item_type_name
@@ -766,7 +767,16 @@ def display_guest_activity(file_name=""):
 @workflow_blueprint.route('/verify_deletion/<string:activity_id>', methods=['GET'])
 @login_required_customize
 def verify_deletion(activity_id="0"):
+    """Verify if the activity is deleted.
+
+    Args:
+        activity_id (str, optional): Activity ID. Defaults to "0".
+
+    Returns:
+        dict: JSON response with code, is_deleted, and for_delete status.
+    """
     is_deleted = False
+    for_delete = False
     activity = WorkActivity().get_activity_by_id(activity_id)
     if activity and activity.item_id:
         item_id = str(activity.item_id)
@@ -776,7 +786,9 @@ def verify_deletion(activity_id="0"):
         ).one_or_none()
         if recid and recid.is_deleted():
             is_deleted = True
-    res = {'code': 200, 'is_deleted':is_deleted}
+
+        for_delete = activity.flow_define.flow_type == WEKO_WORKFLOW_DELETION_FLOW_TYPE
+    res = {'code': 200, 'is_deleted':is_deleted, 'for_delete':for_delete}
 
     return jsonify(res), 200
 
@@ -1066,7 +1078,7 @@ def display_activity(activity_id="0", community_id=None):
         ctx['item_link'] = item_link
 
     # Get item link info.
-    if not for_delete:
+    try:
         if activity_detail.activity_status != ActivityStatusPolicy.ACTIVITY_CANCEL:
             record_detail_alt = get_main_record_detail(
                 activity_id, activity_detail, action_endpoint, item,
@@ -1083,6 +1095,9 @@ def display_activity(activity_id="0", community_id=None):
                     thumbnails_org=record_detail_alt.get('files_thumbnail')
                 )
             )
+    except PIDDeletedError as ex:
+        current_app.logger.info("Item is already deleted.")
+        traceback.print_exc()
 
     # Get email approval key
     approval_email_key = get_approval_keys()
@@ -1721,12 +1736,55 @@ def next_action(activity_id='0', action_id=0, json_data=None):
                     action_id=action_id,
                     req=-1)
 
-    if next_action_endpoint == "end_action"  and for_delete:
-        delete_item_id = current_pid.pid_value.split('.')[0]
-        from weko_records_ui.views import soft_delete
-        soft_delete(delete_item_id)
-        if action_endpoint == "approval":
-            send_mail_delete_approved(delete_item_id, deposit, activity_detail, current_user.id)
+
+    del_reject_flg = json_data.get('approval_reject', False) if json_data else False
+    if next_action_endpoint == "end_action"  and for_delete and  del_reject_flg == False:
+        parts = current_pid.pid_value.split('.')
+        if len(parts) > 1 and parts[1] != '0':
+            from weko_records_ui.utils import delete_version
+            delete_version(current_pid.pid_value)
+        else:
+            from weko_records_ui.utils import soft_delete
+            soft_delete(parts[0])
+        db.session.commit()
+        UserActivityLogger.info(
+            operation="ITEM_DELETE",
+            target_key=current_pid.pid_value
+        )
+
+    if for_delete and del_reject_flg:
+        # skip action after thrown out action
+        flow_detail = flow.get_flow_detail(activity_detail.flow_define.flow_id)
+        skip_activity = activity.copy()
+        skip_acts = [
+            act for act in flow_detail.flow_actions
+            if act.action.action_endpoint not in ('begin_action','end_action')
+                and act.action_order > action_order
+        ]
+        for skip_act in skip_acts:
+            skip_activity.update(
+                action_id=skip_act.action_id,
+                action_status=ActionStatusPolicy.ACTION_SKIPPED,
+                action_order=skip_act.action_order
+            )
+            work_activity.upt_activity_action_status(
+                activity_id=activity_id, action_id=skip_act.action_id,
+                action_status=ActionStatusPolicy.ACTION_SKIPPED,
+                action_order=skip_act.action_order
+            )
+            history.create_activity_history(skip_activity, skip_act.action_order)
+
+        # thrown out action and set end action to next action
+        activity.update(
+            action_status=ActionStatusPolicy.ACTION_THROWN_OUT
+        )
+
+        last_flow_action = flow.get_last_flow_action(
+            activity_detail.flow_define.flow_id)
+        next_action_endpoint = last_flow_action.action.action_endpoint
+        next_action_id = last_flow_action.action_id
+        next_action_order = last_flow_action.action_order if action_order else None
+        next_flow_action[0]=last_flow_action
 
     rtn = history.create_activity_history(activity, action_order)
     if not rtn:
@@ -1735,7 +1793,8 @@ def next_action(activity_id='0', action_id=0, json_data=None):
     # next action
     flag = work_activity.upt_activity_action_status(
         activity_id=activity_id, action_id=action_id,
-        action_status=ActionStatusPolicy.ACTION_DONE,
+        action_status=ActionStatusPolicy.ACTION_THROWN_OUT \
+            if del_reject_flg and for_delete else ActionStatusPolicy.ACTION_DONE,
         action_order=action_order
     )
     if not flag:
@@ -1747,10 +1806,12 @@ def next_action(activity_id='0', action_id=0, json_data=None):
         comment='',
         action_order=action_order
     )
+    if for_delete and del_reject_flg:
+        work_activity.notify_about_activity(activity_id, "deletion_rejected")
 
     if next_action_endpoint == "approval":
         if for_delete:
-            send_mail_delete_request(work_activity.get_activity_by_id(activity_id))
+            work_activity.notify_about_activity(activity_id, "deletion_request")
         else:
             work_activity.notify_about_activity(activity_id, "request_approval")
 
@@ -1796,9 +1857,13 @@ def next_action(activity_id='0', action_id=0, json_data=None):
                 action_id=next_action_id,
                 action_version=next_flow_action[0].action_version,
                 item_id=current_pid.object_uuid,
+                action_status=ActionStatusPolicy.ACTION_DONE,
                 action_order=next_action_order
             )
             work_activity.end_activity(activity)
+
+            if action_endpoint == "approval" and not del_reject_flg:
+                work_activity.notify_about_activity(activity_id, "deletion_approved")
     else:
         flag = work_activity.upt_activity_action(
             activity_id=activity_id, action_id=next_action_id,
@@ -1950,6 +2015,13 @@ def previous_action(activity_id='0', action_id=0, req=0):
         res = ResponseMessageSchema().load({"code":-1, "msg":"can not get activity detail"})
         return jsonify(res.data), 500
     action_order = activity_detail.action_order
+    for_delete = activity_detail.flow_define.flow_type == WEKO_WORKFLOW_DELETION_FLOW_TYPE
+    if req == 0 and for_delete and action_id == 4:
+        jsondata = {'approval_reject': 1}
+        return next_action(activity_id=activity_id,
+                               action_id=action_id,
+                               json_data=jsondata)
+
     flow = Flow()
     rtn = history.create_activity_history(activity, action_order)
     if rtn is None:
@@ -2201,8 +2273,14 @@ def cancel_action(activity_id='0', action_id=0):
                 res = ResponseMessageSchema().load({"code":-1, "msg":"can not get PersistIdentifier"})
                 return jsonify(res.data), 500
             cancel_item_id = pid.object_uuid
+    for_delete = activity_detail.flow_define.flow_type == WEKO_WORKFLOW_DELETION_FLOW_TYPE
+    cancel_record = None
     if cancel_item_id:
         cancel_record = WekoDeposit.get_record(cancel_item_id)
+    if (
+        cancel_record is None
+        or not (for_delete and not cancel_record.pid.pid_value.endswith('.0'))
+    ):
         try:
             with db.session.begin_nested():
                 if cancel_record:

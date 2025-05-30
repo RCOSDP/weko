@@ -728,10 +728,18 @@ WEKO_SEARCH_UI_BULK_EXPORT_FILE_CREATE_RUN_MSG = "RUN_MSG_EXPORT_ALL_FILE_CREATE
 WEKO_SEARCH_UI_BULK_EXPORT_EXPIRED_TIME = 1440
 """Template for the Admin Bulk Export page."""
 
+WEKO_SEARCH_UI_EXPORT_FILE_RETENTION_DAYS = 7
+"""Retention period for export files in days."""
+
+WEKO_SEARCH_UI_FILE_DOWNLOAD_TTL_BUFFER = 3600
+"""Time (in seconds) to extend file TTL during download."""
+
 WEKO_SEARCH_UI_BULK_EXPORT_TASKID_EXPIRED_TIME = 1
 
-WEKO_SEARCH_UI_BULK_EXPORT_LIMIT = 1000
-"""The number of items exported to tsv/csv file each once."""
+WEKO_SEARCH_UI_BULK_EXPORT_LIMIT = 300
+"""The number of items exported to tsv/csv file each once.
+Note: If set to 500 or more, errors may occur during export processing.
+"""
 
 WEKO_SEARCH_UI_BULK_EXPORT_RETRY = 5
 """Number of export retries."""
@@ -761,8 +769,6 @@ CHILD_INDEX_THUMBNAIL_WIDTH = 100
 CHILD_INDEX_THUMBNAIL_HEIGHT = 100
 """ child index thumbnail height in result index serch"""
 
-WEKO_SEARCH_UI_API_LIMIT_RATE_DEFAULT = ['100 per minute']
-
 WEKO_SEARCH_UI_RESULT_TMP_PREFIX = 'weko_search_result_list_'
 
 SWORD_METADATA_FILE = "metadata/sword.json"
@@ -770,3 +776,6 @@ SWORD_METADATA_FILE = "metadata/sword.json"
 
 ROCRATE_METADATA_FILE = "data/ro-crate-metadata.json"
 """ Metadata file name for RO-Crate+Bagit. """
+
+ROCRATE_METADATA_WK_CONTEXT_V1 = "http://purl.org/wk/v1/wk-context.jsonld"
+""" Metadata context file name for RO-Crate+Bagit. """

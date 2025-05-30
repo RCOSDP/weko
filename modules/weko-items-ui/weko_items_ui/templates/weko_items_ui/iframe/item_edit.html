@@ -183,7 +183,7 @@
                   <div class="col-sm-12">
                   <p class="text-center">
                     <button class="btn btn-success"
-                        ng-click="getItemMetadata()">
+                        ng-click="saveActivityData('{{item_save_uri}}',{{action_id}},'{{enable_contributor}}','{{enable_feedback_maillist}}', '{{enable_request_maillist}}', true, false);getItemMetadata()">
                         <span class="glyphicon glyphicon-plus"></span>&nbsp
                       {{_('Automatic Metadata Input')}}
                   </button>
@@ -280,40 +280,27 @@
                     form-templates-base="{{ url_for('static', filename=config.DEPOSIT_FORM_TEMPLATES_BASE) }}"
                     template="{{ url_for('static', filename=config.DEPOSIT_UI_JSTEMPLATE_FORM) }}">
                   </invenio-records-form>
-                    <!-- OA Policy リンク取得 -->
+                  
                   <div class="form-group row">
-                    <!-- ラベル -->
-                    <label for="policy" class="col-sm-3 col-form-label text-right">
-                      {{ _('oa_policy_label') }}
-                    </label>
-
-                    <!-- ボタン + URL + エラーメッセージ -->
-                    <div class="col-sm-9">
-                      <div class="input-group">
-                        <!-- Policy 取得ボタン -->
-                        <button type="button" class="btn btn-primary" id="oapolicyurl">
-                          {{ _('oa_policy_export') }}
-                        </button>
-                        <!-- URL 表示 -->
-                        <a id="oaPolicyUrl" href="#" target="_blank" class="ml-2 d-none">
-                          <span id="oaPolicyText"></span>
-                        </a>
-
-                        <!-- エラーメッセージ -->
-                        <span id="oaPolicyError" class="text-danger ml-2" aria-live="polite"></span>
+                    <div class="col-sm-12 style-component">
+                      <label class="col-sm-3 col-form-label text-right">{{ _('oa_policy_label') }}</label>
+                      <div class="col-sm-9">
+                        <div class="input-group">
+                          <button type="button" class="btn btn-primary" id="oapolicyurl">
+                            {{ _('oa_policy_export') }}
+                          </button>
+                          <a id="oaPolicyUrl" href="#" target="_blank" class="ml-2 d-none">
+                            <span id="oaPolicyText"></span>
+                          </a>
+                          <span id="oaPolicyError" class="text-danger ml-2" aria-live="polite"></span>
+                        </div>
+                        <input type="hidden" id="error_missing_input" value="{{ _('Please enter ISSN, eISSN, or journal title') }}">
+                        <input type="hidden" id="error_no_policy_found" value="{{ _('No Policy Information found') }}">
+                        <input type="hidden" id="error_api_generic" value="{{ _('An unknown error occurred') }}">
                       </div>
-
-                      <!-- エラーメッセージ（翻訳適用） -->
-                      <input type="hidden" id="error_missing_input" value="{{ _('Please enter ISSN, eISSN, or journal title') }}">
-                      <input type="hidden" id="error_no_policy_found" value="{{ _('No Policy Information found') }}">
-                      <input type="hidden" id="error_api_400" value="{{ _('Invalid parameters') }}">
-                      <input type="hidden" id="error_api_401" value="{{ _('Authentication error occurred') }}">
-                      <input type="hidden" id="error_api_404" value="{{ _('No matching policy') }}">
-                      <input type="hidden" id="error_api_429" value="{{ _('Request limit exceeded') }}">
-                      <input type="hidden" id="error_api_500" value="{{ _('Internal server error') }}">
-                      <input type="hidden" id="error_api_generic" value="{{ _('An unknown error occurred') }}">
                     </div>
                   </div>
+
                   {%- block feedback_mail_list %}
                     <div id="react"></div>
                     <div id="request-maillist"></div>

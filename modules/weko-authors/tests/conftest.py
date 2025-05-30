@@ -52,6 +52,7 @@ from weko_authors.models import Authors, AuthorsPrefixSettings, AuthorsAffiliati
 from weko_accounts import WekoAccounts
 from weko_theme import WekoTheme
 import weko_authors.mappings.v2
+from weko_logging.audit import WekoLoggingUserActivity
 
 
 sys.path.append(os.path.dirname(__file__))
@@ -200,6 +201,7 @@ def base_app(request, instance_path,search_class):
     WekoAccounts(app_)
     InvenioOAuth2Server(app_)
     InvenioOAuth2ServerREST(app_)
+    WekoLoggingUserActivity(app_)
 
 
     # app_.register_blueprint(blueprint)
@@ -863,6 +865,14 @@ def auth_headers_sysadmin_without_scope(client_api, json_headers, create_token_u
     It uses the token associated with the first user.
     """
     return fill_oauth2_headers(json_headers, create_token_user_sysadmin_without_scope)
+
+@pytest.fixture()
+def auth_headers_bad_content_type(client_api, json_headers, create_token_user_sysadmin):
+    """Authentication headers with a bad content type."""
+    headers = fill_oauth2_headers(json_headers, create_token_user_sysadmin)
+    headers[0] = ('Content-Type', 'text/plain')
+    return headers
+
 
 @pytest.fixture
 def author_records_for_test(app, esindex, db):

@@ -46,8 +46,6 @@ WEKO_INDEX_TREE_API = "/api/tree/index/"
 
 WEKO_INDEX_TREE_LIST_API = "/api/tree"
 
-_IID = 'iid(tid,record_class="weko_index_tree.api:Indexes")'
-
 WEKO_INDEX_TREE_REST_ENDPOINTS = dict(
     tid=dict(
         record_class='weko_index_tree.api:Indexes',
@@ -103,5 +101,3 @@ WEKO_INDEX_TREE_INDEX_LOCK_KEY_PREFIX = "lock_index_"
 
 WEKO_INDEX_TREE_PUBLIC_DEFAULT_TIMEZONE = 'Asia/Tokyo'
 """Default time zone for index publication date."""
-
-WEKO_INDEX_TREE_API_LIMIT_RATE_DEFAULT = ['100 per minute']

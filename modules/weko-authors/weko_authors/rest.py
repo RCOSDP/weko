@@ -22,8 +22,10 @@
 
 import json
 import traceback
+import uuid
 
 from flask import Blueprint, current_app, request, Response, jsonify
+from marshmallow.exceptions import ValidationError
 from sqlalchemy.exc import SQLAlchemyError
 from werkzeug.exceptions import BadRequest, InternalServerError, NotFound
 from invenio_db import db
@@ -38,12 +40,18 @@ from weko_admin.config import (
 from weko_authors.api import WekoAuthors
 from weko_authors.utils import validate_weko_id, check_period_date
 
-from .errors import VersionNotFoundRESTError
+from .errors import (
+    VersionNotFoundRESTError, InvalidDataRESTError, AuthorBaseRESTError, AuthorNotFoundRESTError, AuthorInternalServerError
+)
 from .scopes import (
     author_search_scope,
     author_create_scope,
     author_update_scope,
     author_delete_scope
+)
+from .schema import (
+    AuthorCreateRequestSchema,
+    AuthorUpdateRequestSchema
 )
 
 
@@ -91,7 +99,12 @@ def create_blueprint(endpoints):
             blueprint.add_url_rule(
                 options.get('api_route'),
                 view_func=author_api,
-                methods=['GET','POST','PUT','DELETE']
+                methods=['GET','POST']
+            )
+            blueprint.add_url_rule(
+                options.get('api_route_item'),
+                view_func=author_api,
+                methods=['PUT','DELETE']
             )
 
     return blueprint
@@ -307,13 +320,23 @@ class AuthorDBManagementAPI(ContentNegotiatedMethodView):
         for auth_id in author_data.get("authorIdInfo", []):
             prefix_obj = get_author_prefix_obj(auth_id.get("idType"))
             if prefix_obj:
-                auth_id["idType"] = prefix_obj.id
+                auth_id["idType"] = str(prefix_obj.id)
+            else:
+                current_app.logger.error("Internal Server Error: Database access failed.")
+                raise AuthorInternalServerError(
+                    description="Internal Server Error: Database access failed."
+                )
         # `affiliationIdType` (scheme -> id)
         for affiliation in author_data.get("affiliationInfo", []):
             for identifier in affiliation.get("identifierInfo", []):
                 aff_obj = get_author_affiliation_obj(identifier.get("affiliationIdType"))
                 if aff_obj:
-                    identifier["affiliationIdType"] = aff_obj.id
+                    identifier["affiliationIdType"] = str(aff_obj.id)
+                else:
+                    current_app.logger.error("Internal Server Error: Database access failed.")
+                    raise AuthorInternalServerError(
+                        description="Internal Server Error: Database access failed."
+                    )
         return author_data
 
     def process_authors_data_after(self, author_data):
@@ -346,22 +369,15 @@ class AuthorDBManagementAPI(ContentNegotiatedMethodView):
                 "el", "ko"
             ]
         try:
-            data = request.get_json()
-
-            if not data:
-                current_app.logger.error("Request body cannot be empty.")
-                raise BadRequest("Request body cannot be empty.")
+            data = self.validate_request(request, AuthorCreateRequestSchema)
             author_data = data.get("author")
-            if not author_data:
-                current_app.logger.error("author can not be null.")
-                raise BadRequest("author can not be null.")
-
             prefix_schemes,affiliation_schemes = self.get_all_schemes()
-            if not self.validate_request_data(self.extract_data(author_data), lang_options_list, prefix_schemes, affiliation_schemes):
-                current_app.logger.error("Invalid Author Data, 'idtype' or 'language' Not Allowed.")
-                raise BadRequest("Invalid Author Data, 'idtype' or 'language' Not Allowed.")
+            self.validate_request_data(
+                self.extract_data(author_data), lang_options_list,
+                prefix_schemes, affiliation_schemes
+            )
 
-            self.validate_author_data(author_data,author_data.get("pk_id"))
+            self.validate_author_data(author_data, author_data.get("pk_id"))
 
             author_data = self.process_authors_data_before(author_data)
 
@@ -388,8 +404,8 @@ class AuthorDBManagementAPI(ContentNegotiatedMethodView):
                             content_type='application/json'
                         )
 
-        except BadRequest as ex:
-            raise
+        except AuthorBaseRESTError as ex:
+            raise ex
         except SQLAlchemyError as ex:
             db.session.rollback()
             current_app.logger.error(f"Database error. {ex}")
@@ -400,70 +416,72 @@ class AuthorDBManagementAPI(ContentNegotiatedMethodView):
             traceback.format_exc()
             raise InternalServerError("Internal server error.")
 
-    def validate_author_data(self, author_data, pk_id=None, is_update=False):
-        have_weko_id = False
+    def validate_author_data(self, author_data, pk_id=None):
+        """Validate author data.
+        Args:
+            author_data (dict): The author data to validate.
+            pk_id (str, optional): The primary key ID of the author.
+
+        Raises:
+            InvalidDataRESTError: If the author data is invalid.
+        """
         for auth_id in author_data.get("authorIdInfo", []):
             id_type = auth_id.get("idType")
             author_id = auth_id.get("authorId")
-
-            if bool(id_type) ^ bool(author_id):
-                current_app.logger.error("Both 'idType' and 'authorId' must be provided together.")
-                raise BadRequest("Both 'idType' and 'authorId' must be provided together.")
-
+            current_app.logger.debug(f"Validating author ID: {author_id} with type: {id_type}")
             if id_type == "WEKO":
-                have_weko_id = True
+                current_app.logger.debug(f"Validating WEKO ID: {author_id}")
                 is_valid, error_msg = validate_weko_id(author_id, pk_id)
                 if not is_valid and error_msg == "not half digit":
                     current_app.logger.error("The WEKO ID must be numeric characters only.")
-                    raise BadRequest("The WEKO ID must be numeric characters only.")
+                    raise InvalidDataRESTError(
+                        description="Bad Request: The WEKO ID must be numeric characters only."
+                    )
                 if not is_valid and error_msg == "already exists":
                     current_app.logger.error("The value is already in use as WEKO ID.")
-                    raise BadRequest("The value is already in use as WEKO ID.")
-        if not have_weko_id and is_update:
-            current_app.logger.error("idType: WEKO (weko id) must be provided.")
-            raise BadRequest(f"idType: WEKO (weko id) must be provided.")
+                    raise InvalidDataRESTError(
+                        description="Bad Request: The value is already in use as WEKO ID."
+                    )
 
-        for name_info in author_data.get("authorNameInfo", []):
-            first_name = name_info.get("firstName")
-            family_name = name_info.get("familyName")
-            language = name_info.get("language")
 
-            if (first_name or family_name) and not language:
-                current_app.logger.error("If 'firstName' or 'familyName' is provided, 'language' must also be specified.")
-                raise BadRequest("If 'firstName' or 'familyName' is provided, 'language' must also be specified.")
+    def validate_request(self, request, schema):
+        """Validate the request.
 
-            if language and first_name and family_name and not name_info.get("nameFormat"):
-                name_info["nameFormat"] = "familyNmAndNm"
+        Args:
+            request (Request): The incoming request.
+            schema (Schema): The schema to validate against.
 
-        if not isinstance(author_data.get("affiliationInfo", []), list):
-            current_app.logger.error("'affiliationInfo' should be a list.")
-            raise BadRequest("'affiliationInfo' should be a list.")
+        Returns:
+            dict: The validated data.
 
-        for affiliation in author_data.get("affiliationInfo", []):
-            if not isinstance(affiliation, dict):
-                current_app.logger.error("Invalid format in 'affiliationInfo'.")
-                raise BadRequest("Invalid format in 'affiliationInfo'.")
+        Raises:
+            InvalidDataRESTError: If the request data is invalid.
+            AuthorBaseRESTError: If the Content-Type is not application/json.
 
-            for identifier in affiliation.get("identifierInfo", []):
-                id_type = identifier.get("affiliationIdType")
-                aff_id = identifier.get("affiliationId")
+        """
+        if request.headers.get("Content-Type") != "application/json":
+            current_app.logger.error("Invalid Content-Type for author creation.")
+            raise AuthorBaseRESTError(
+                description="Bad Request: Content-Type must be application/json."
+            )
 
-                if bool(id_type) ^ bool(aff_id):
-                    current_app.logger.error("Both 'affiliationIdType' and 'affiliationId' must be provided together.")
-                    raise BadRequest("Both 'affiliationIdType' and 'affiliationId' must be provided together.")
+        try:
+            request_data = schema().load(request.json).data
+        except ValidationError as ex:
+            current_app.logger.error("Invalid payload for author creation.")
+            traceback.print_exc()
+            raise InvalidDataRESTError(
+                description=f"Bad Request: Invalid payload, {ex}"
+            ) from ex
 
-            for name_info in affiliation.get("affiliationNameInfo", []):
-                aff_name = name_info.get("affiliationName")
-                aff_lang = name_info.get("affiliationNameLang")
+        except BadRequest as ex:
+            current_app.logger.error("Failed to parse JSON data for author creation.")
+            traceback.print_exc()
+            raise InvalidDataRESTError(
+                description=f"Bad Request: Failed to parse provided."
+            ) from ex
 
-                if bool(aff_name) ^ bool(aff_lang):
-                    current_app.logger.error("Both 'affiliationName' and 'affiliationNameLang' must be provided together.")
-                    raise BadRequest("Both 'affiliationName' and 'affiliationNameLang' must be provided together.")
-
-        is_valid, error_msg = check_period_date(author_data)
-        if not is_valid:
-            current_app.logger.error(f"affiliationPeriodInfo error: {error_msg}")
-            raise BadRequest(f"affiliationPeriodInfo error: {error_msg}")
+        return request_data
 
     def handle_weko_id(self, author_data):
         author_id_info = author_data.get("authorIdInfo", [])
@@ -524,35 +542,24 @@ class AuthorDBManagementAPI(ContentNegotiatedMethodView):
             ]
 
         try:
-            data = request.get_json()
+            identifier = kwargs.get("identifier")
+            id_info = self.parse_identifier(identifier)
+            pk_id = id_info.get("pk_id")
+            es_id = id_info.get("es_id")
 
-            if not data:
-                current_app.logger.error("Request body cannot be empty.")
-                raise BadRequest("Request body cannot be empty.")
+            data = self.validate_request(request, AuthorUpdateRequestSchema)
+
             author_data = data.get("author")
-            if not author_data:
-                current_app.logger.error("author can not be null.")
-                raise BadRequest("author can not be null.")
-
-            es_id = data.get("id")
-            pk_id = data.get("pk_id")
-
-            if pk_id:
-                if not pk_id.isdigit():
-                    current_app.logger.error("Invalid author ID.")
-                    raise BadRequest("Invalid author ID.")
 
             for data_filed in ["emailInfo","authorIdInfo","authorNameInfo","affiliationInfo"]:
                 if not author_data.get(data_filed,False):
                     author_data[data_filed] = []
 
             prefix_schemes,affiliation_schemes = self.get_all_schemes()
-            if not self.validate_request_data(self.extract_data(author_data), lang_options_list, prefix_schemes, affiliation_schemes):
-                current_app.logger.error("Invalid Author Data, 'idtype' or 'language' Not Allowed.")
-                raise BadRequest("Invalid Author Data, 'idtype' or 'language' Not Allowed.")
-
-            if not es_id and not pk_id:
-                raise BadRequest("Either 'id' or 'pk_id' must be specified.")
+            self.validate_request_data(
+                self.extract_data(author_data), lang_options_list,
+                prefix_schemes, affiliation_schemes
+            )
 
             author_by_pk = None
             author_by_es = None
@@ -571,23 +578,16 @@ class AuthorDBManagementAPI(ContentNegotiatedMethodView):
 
             if not author_by_pk and not author_by_es:
                 current_app.logger.error("Specified author does not exist.")
-                raise NotFound("Specified author does not exist.")
-
-            if pk_id and es_id and (bool(author_by_pk) ^ bool(author_by_es)):
-                current_app.logger.error("Parameters 'id' and 'pk_id' refer to different users.")
-                raise BadRequest("Parameters 'id' and 'pk_id' refer to different users.")
-
-
-            if author_by_pk and author_by_es and str(author_by_pk.id) != str(author_by_es.get("pk_id")):
-                current_app.logger.error("Parameters 'id' and 'pk_id' refer to different users.")
-                raise BadRequest("Parameters 'id' and 'pk_id' refer to different users.")
+                raise AuthorNotFoundRESTError(
+                    description="Specified author does not exist."
+                )
 
             if author_by_pk and not es_id:
                 es_id = author_by_pk.json.get("id")
             if author_by_es and not pk_id:
                 pk_id = author_by_es.get("pk_id")
 
-            self.validate_author_data(author_data, pk_id, is_update=True)
+            self.validate_author_data(author_data, pk_id)
 
             # scheme -> id
             author_data = self.process_authors_data_before(author_data)
@@ -613,20 +613,21 @@ class AuthorDBManagementAPI(ContentNegotiatedMethodView):
                 content_type='application/json'
             )
 
-        except BadRequest as ex:
+        except AuthorBaseRESTError as ex:
             traceback.format_exc()
             raise
-        except NotFound as ex:
-            raise
-        except SQLAlchemyError:
+        except SQLAlchemyError as ex:
             db.session.rollback()
-            current_app.logger.error(f"Databese error. {ex}")
-            traceback.format_exc()
-            raise InternalServerError("Database error.")
+            current_app.logger.exception(f"Database error. {ex}")
+            raise AuthorInternalServerError(
+                description="Failed to update author."
+            )
         except Exception as ex:
-            current_app.logger.error(f"Unexpected error. {ex}")
+            current_app.logger.exception(f"Unexpected error. {ex}")
             traceback.format_exc()
-            raise InternalServerError("Internal server error.")
+            raise AuthorInternalServerError(
+                description="Failed to update author."
+            )
 
     def extract_data(self, data):
         result = {
@@ -657,37 +658,68 @@ class AuthorDBManagementAPI(ContentNegotiatedMethodView):
 
 
     def validate_request_data(self, extracted_data, lang_options_list, prefix_schemes, affiliation_schemes):
-        if not all(lang in lang_options_list for lang in extracted_data["authorNameInfo_language"]):
-            current_app.logger.error("Invalid authorNameInfo_language.")
-            return False
-        if not all(lang in lang_options_list for lang in extracted_data["affiliationInfo_affiliationNameLang"]):
-            current_app.logger.error("Invalid affiliationInfo_affiliationNameLang.")
-            return False
-        if not all(scheme in prefix_schemes for scheme in extracted_data["authorIdInfo_idType"]):
-            current_app.logger.error("Invalid authorIdInfo_idType.")
-            return False
-        if not all(scheme in affiliation_schemes for scheme in extracted_data["affiliationInfo_affiliationIdType"]):
-            current_app.logger.error("Invalid affiliationInfo_affiliationIdType.")
-            return False
-        return True
+        """Validate the extracted data from the request.
+        Args:
+            extracted_data (dict): The data extracted from the request.
+            lang_options_list (list): List of allowed language options.
+            prefix_schemes (list): List of allowed author ID schemes.
+            affiliation_schemes (list): List of allowed affiliation ID schemes.
 
+        Raises:
+            InvalidDataRESTError: If any of the extracted data is invalid.
+        """
+        invalid_name_langs = [
+            lang for lang in extracted_data["authorNameInfo_language"]
+            if lang not in lang_options_list
+        ]
+        if invalid_name_langs:
+            current_app.logger.error("Invalid authorNameInfo_language.")
+            raise InvalidDataRESTError(
+                description=f"Invalid authorNameInfo.language: {invalid_name_langs}. "
+                            f"Allowed values are {lang_options_list}."
+            )
+
+        invalid_affil_langs = [
+            lang for lang in extracted_data["affiliationInfo_affiliationNameLang"]
+            if lang not in lang_options_list
+        ]
+        if invalid_affil_langs:
+            current_app.logger.error("Invalid affiliationInfo_affiliationNameLang.")
+            raise InvalidDataRESTError(
+                description=f"Invalid affiliationInfo.affiliationNameLang:{invalid_affil_langs}. "
+                            f"Allowed values are {lang_options_list}."
+            )
+
+        invalid_name_types = [
+            scheme for scheme in extracted_data["authorIdInfo_idType"]
+            if scheme not in prefix_schemes
+        ]
+        if invalid_name_types:
+            current_app.logger.error("Invalid authorIdInfo_idType.")
+            raise InvalidDataRESTError(
+                description=f"Invalid authorIdInfo.idType: {invalid_name_types}. "
+                            f"Allowed values are {prefix_schemes}."
+            )
+
+        invalid_affili_types = [
+            scheme for scheme in extracted_data["affiliationInfo_affiliationIdType"]
+            if scheme not in affiliation_schemes
+        ]
+        if invalid_affili_types:
+            current_app.logger.error("Invalid affiliationInfo_affiliationIdType.")
+            raise InvalidDataRESTError(
+                description=f"Invalid affiliationInfo.affiliationIdType: {invalid_affili_types}. "
+                            f"Allowed values are {affiliation_schemes}."
+            )
 
     def delete_v1(self, **kwargs):
         """Handle DELETE request for author deletion."""
         from weko_authors.models import Authors
         try:
-            data = request.get_json()
-
-            if not data:
-                current_app.logger.error("Request body cannot be empty.")
-                raise BadRequest("Request body cannot be empty.")
-
-            es_id = data.get("id")
-            pk_id = data.get("pk_id")
-
-            if not es_id and not pk_id:
-                current_app.logger.error("Either 'id' or 'pk_id' must be specified.")
-                raise BadRequest("Either 'id' or 'pk_id' must be specified.")
+            identifier = kwargs.get("identifier")
+            id_info = self.parse_identifier(identifier)
+            pk_id = id_info.get("pk_id")
+            es_id = id_info.get("es_id")
 
             author_by_pk = None
             author_by_es = None
@@ -707,7 +739,9 @@ class AuthorDBManagementAPI(ContentNegotiatedMethodView):
 
             if not author_by_pk and not author_by_es:
                 current_app.logger.error("Specified author does not exist.")
-                raise NotFound("Specified author does not exist.")
+                raise AuthorNotFoundRESTError(
+                    description="Specified author does not exist."
+                )
 
             if author_by_pk and not es_id:
                 es_id = author_by_pk.json.get("id")
@@ -723,10 +757,6 @@ class AuthorDBManagementAPI(ContentNegotiatedMethodView):
                 pk_id = author_by_es.get("pk_id")
                 author_by_pk = Authors.query.filter_by(id=pk_id).first()
 
-            if author_by_pk and author_by_es and str(author_by_pk.id) != str(author_by_es.get("pk_id")):
-                current_app.logger.error("Parameters 'id' and 'pk_id' refer to different users.")
-                raise BadRequest("Parameters 'id' and 'pk_id' refer to different users.")
-
             if author_by_pk:
                 author_by_pk.is_deleted = True
                 db.session.commit()
@@ -740,17 +770,43 @@ class AuthorDBManagementAPI(ContentNegotiatedMethodView):
                 )
             return self.make_response(200)
 
-        except BadRequest as ex:
+        except AuthorBaseRESTError as ex:
             traceback.format_exc()
-            raise
-        except NotFound as ex:
             raise
         except SQLAlchemyError as ex:
             db.session.rollback()
             current_app.logger.error(f"Database error. {ex}")
             traceback.format_exc()
-            raise InternalServerError("Database error.")
+            raise AuthorInternalServerError(
+                description="Failed to delete author."
+            )
         except Exception as ex:
             current_app.logger.error(f"Unexpected error. {ex}")
             traceback.format_exc()
-            raise InternalServerError("Internal server error.")
+            raise AuthorInternalServerError(
+                description="Failed to delete author."
+            )
+
+    def parse_identifier(self, identifier):
+        """Parses the given identifier as either a UUID or an integer ID.
+
+        Args:
+            identifier (str): Identifier string (UUID or integer).
+
+        Returns:
+            dict: {'pk_id': str or None, 'es_id': str or None}
+
+        Raises:
+            InvalidDataRESTError: If the format is invalid.
+        """
+        try:
+            es_id = str(uuid.UUID(identifier))
+            return {"pk_id": None, "es_id": es_id}
+        except (ValueError, TypeError):
+            if identifier.isdigit():
+                return {"pk_id": identifier, "es_id": None}
+            else:
+                current_app.logger.error("Invalid identifier format.")
+                raise InvalidDataRESTError(
+                    description="Invalid identifier format. Must be an integer ID or UUID."
+                )

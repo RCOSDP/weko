@@ -77,6 +77,7 @@
         <th>{{_('WorkFlow')}}</th>
         <th>{{_('Item Type')}}</th>
         <th>{{_('Flow')}}</th>
+        <th>{{_('Deletion Flow')}}</th>
         <th></th>
         <th class="hide">{{_('Next Flow')}}</th>
       </tr>
@@ -88,6 +89,13 @@
         <td>{{workflow.flows_name}}</td>
         <td><span id="item_type_{{workflow.id}}" data-itemtype-id="{{workflow.itemtype_id}}">{{_(workflow.itemtype.item_type_name.name)}}</span></td>
         <td><span id="flow_{{workflow.id}}" data-flow-id="{{workflow.flow_id}}">{{_(workflow.flow_define.flow_name)}}</span></td>
+        <td>
+          {% if workflow.delete_flow_define %}
+            {{ workflow.delete_flow_define.flow_name }}
+          {% else %}
+            None
+          {% endif %}
+        </td>
         {%-if community%}
         <td class="text-center"><a href="#" class="btn btn-primary btn-begin align-middle"
                 id="btn-begin-{{workflow.id}}"

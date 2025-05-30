@@ -8,6 +8,7 @@
 """Module of weko-items-autofill."""
 
 from __future__ import absolute_import, print_function
+import traceback
 
 from flask import Blueprint, current_app, jsonify, render_template, request
 from flask_babelex import gettext as _
@@ -95,13 +96,20 @@ def get_auto_fill_record_data():
     search_data = data.get('search_data', '')
     item_type_id = data.get('item_type_id', '')
     activity_id = data.get('activity_id', '')
+    exclude_duplicate_lang = data.get('exclude_duplicate_lang', False)
 
     try:
         if api_type == 'CrossRef':
             pid_response = get_current_api_certification('crf')
             pid = pid_response['cert_data']
-            api_response = get_crossref_record_data(
-                pid, search_data, item_type_id)
+            if pid:
+                api_response = get_crossref_record_data(
+                    pid, search_data, item_type_id, exclude_duplicate_lang)
+            else:
+                current_app.logger.error(
+                    "CrossRef API certification is not set."
+                )
+                api_response = []
             result['result'] = api_response
         elif api_type == 'CiNii':
             api_response = get_cinii_record_data(
@@ -117,8 +125,9 @@ def get_auto_fill_record_data():
         else:
             result['error'] = api_type + ' is NOT support autofill feature.'
     except Exception as e:
+        current_app.logger.error("Failed to get autofill data.")
+        traceback.print_exc()
         result['error'] = str(e)
-
     return jsonify(result)
 
 

@@ -21,23 +21,41 @@ class SwordClientModel(db.Model, Timestamp):
 
     client whitch is register items through the sword api.
 
-    Columns:
-        `client_id` (str): ID of the client. Primary key.\
+    Attributes:
+        id (int):
+            ID of the Sword Client Setting. Primary key. Auto incremented.
+        client_id (str):
+            ID of the client. Primary key.
             Foreign key referencing `Client.client_id`.
-        `registration_type_id` (int): Type of registration to register an item.
-        `mapping_id` (int): Mapping ID of the client.\
-            Foreign key referencing `SwordItemTypeMapping.id`.
-        `workflow_id` (int, optional): Workflow ID of the client.\
+        oauth_client (Client):
+            Relationship to OAuth Client.
+        active (bool):
+            Active status of the application.
+        registration_type_id (int):
+            Type of registration to register an item.
+        registration_type (str):
+            Registration type name of the client.
+            Can be either "Direct" or "Workflow".
+        mapping_id (int):
+            Mapping ID of the client.
+            Foreign key referencing `ItemTypeJsonldMapping.id`.
+        mapping (ItemTypeJsonldMapping):
+            Relationship to ItemTypeJsonldMapping.
+        workflow_id (int, optional): Workflow ID of the client.\
             Foreign key referencing `WorkFlow.id`.
-
-    Nested Classes:
-        `RegistrationType` (enum.IntEnum): Enum class for registration type.
-            - `Direct` (1): Direct registration.
-            - `Workfolw` (2): Workflow registration.
+        duplicate_check (bool):
+            Duplicate check status of the application.
+        meta_data_api (list):
+            Priority of use for metadata collection web API.
     """
 
     class RegistrationType:
-        """Solution to register item."""
+        """Solution to register item.
+
+        Attributes:
+            DIRECT (int): Direct registration; 1.
+            WORKFLOW (int): Workflow registration; 2.
+        """
 
         DIRECT = 1
         WORKFLOW = 2
@@ -50,7 +68,7 @@ class SwordClientModel(db.Model, Timestamp):
         unique=True,
         autoincrement=True
     )
-    """ID of the Sword Client Setting."""
+    """int: ID of the Sword Client Setting. Primary key. Auto incremented."""
 
     client_id = db.Column(
         db.String(255),
@@ -59,47 +77,54 @@ class SwordClientModel(db.Model, Timestamp):
         nullable=False,
         index=True
     )
-    """Id of the clients. Foreign key from Client."""
+    """str: Id of the clients. Foreign key from Client."""
 
     oauth_client = db.relationship(
         Client, backref=db.backref("sword_client", lazy="dynamic")
     )
-    """OAuth client of the client. Foreign key from Client."""
+    """Relationship to OAuth Client."""
 
     active = db.Column(
         db.Boolean(name="active"),
         unique=False,
         nullable=True
     )
-    """Active status of the application."""
+    """bool: Active status of the application."""
 
     registration_type_id = db.Column(
         db.SmallInteger,
         unique=False,
         nullable=False
     )
-    """Type of registration to register an item."""
+    """int: Type of registration to register an item."""
 
     mapping_id = db.Column(
         db.Integer,
         db.ForeignKey(ItemTypeJsonldMapping.id),
         unique=False,
         nullable=False)
-    """Mapping ID of the client. Foreign key from SwordItemTypeMapping."""
+    """int: Mapping ID of the client. Foreign key from SwordItemTypeMapping."""
+
+    mapping = db.relationship(
+        ItemTypeJsonldMapping,
+        backref=db.backref("sword_client", lazy="dynamic")
+    )
+    """Relationship to ItemTypeJsonldMapping."""
 
     workflow_id = db.Column(
         db.Integer,
         db.ForeignKey(WorkFlow.id),
         unique=False,
-        nullable=True)
-    """Workflow ID of the client. Foreign key from WorkFlow."""
+        nullable=True
+    )
+    """int: Workflow ID of the client. Foreign key from WorkFlow."""
 
     duplicate_check = db.Column(
         db.Boolean(name="duplicate_check"),
         unique=False,
         nullable=False
     )
-    """Duplicate check status of the application."""
+    """bool: Duplicate check status of the application."""
 
     meta_data_api = db.Column(
         db.JSON().with_variant(
@@ -115,7 +140,7 @@ class SwordClientModel(db.Model, Timestamp):
         default=lambda: {},
         nullable=True
     )
-    """Priority of use for metadata collection web API."""
+    """list: Priority of use for metadata collection web API."""
 
     @property
     def registration_type(self):

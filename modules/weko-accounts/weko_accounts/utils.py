@@ -25,9 +25,9 @@ from functools import wraps
 
 from flask import abort, current_app, request, session, Flask
 from flask_limiter import Limiter
-from flask_limiter.util import get_remote_address
 from flask_login import current_user
 from flask_login.config import EXEMPT_METHODS
+import hashlib
 
 from .config import WEKO_API_LIMIT_RATE_DEFAULT
 
@@ -119,6 +119,14 @@ def parse_attributes():
         if required and not value:
             error = True
 
+    if not error and not attrs.get('shib_user_name') and attrs.get('shib_eppn'):
+        if len(attrs['shib_eppn']) > current_app.config[
+                'WEKO_ACCOUNTS_SHIB_USER_NAME_NO_HASH_LENGTH']:
+            eppn = hashlib.sha256(attrs['shib_eppn'].encode('utf-8')).hexdigest()
+        else:
+            eppn = attrs['shib_eppn']
+        attrs['shib_user_name'] = current_app.config['WEKO_ACCOUNTS_GAKUNIN_USER_NAME_PREFIX'] + eppn
+
     return attrs, error
 
 
@@ -202,8 +210,3 @@ def roles_required(roles, allow_anonymous=False):
             return func(*args, **kwargs)
         return decorated_view
     return decorator
-
-
-def create_limiter():
-    from .config import WEKO_ACCOUNTS_API_LIMIT_RATE_DEFAULT
-    return Limiter(app=Flask(__name__), key_func=get_remote_address, default_limits=WEKO_ACCOUNTS_API_LIMIT_RATE_DEFAULT)

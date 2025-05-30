@@ -34,6 +34,7 @@ counter-robots==2018.6
 cryptography==2.1.4
 datacite==1.0.1
 DateTime==4.9
+dcxml==0.1.0
 decorator==4.1.2
 defusedxml==0.5.0
 dictdiffer==0.7.0
@@ -270,12 +271,14 @@ webencodings==0.5.1
 -e ../weko-redis
 -e ../weko-schema-ui
 -e ../weko-search-ui
+-e ../weko-signposting
 -e ../weko-sitemap
 -e ../weko-swordserver
 -e ../weko-theme
 -e ../weko-user-profiles
 -e ../weko-workflow
 -e ../weko-notifications
+-e ../weko-workspace
 Werkzeug==0.15.2
 whichcraft==0.4.1
 WTForms==2.1

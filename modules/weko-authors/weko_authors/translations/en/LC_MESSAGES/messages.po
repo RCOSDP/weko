@@ -1,15 +1,15 @@
-# English translations for weko-groups.
-# Copyright (C) 2018 National Institute of Informatics
+# English translations for weko-authors.
+# Copyright (C) 2025 National Institute of Informatics
 # This file is distributed under the same license as the weko-authors
 # project.
-# FIRST AUTHOR <EMAIL@ADDRESS>, 2018.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2025.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: weko-groups 0.1.0.dev20170000\n"
+"Project-Id-Version: weko-authors 0.1.0.dev20170000\n"
 "Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
-"POT-Creation-Date: 2022-02-08 06:26+0000\n"
-"PO-Revision-Date: 2018-01-17 15:20+0900\n"
+"POT-Creation-Date: 2025-05-26 17:37+0900\n"
+"PO-Revision-Date: 2025-05-26 17:52+0900\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
 "Language-Team: en <LL@li.org>\n"
@@ -17,392 +17,492 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.5.1\n"
+"Generated-By: Babel 2.9.1\n"
 
-#: weko_authors/admin.py:292 weko_authors/admin.py:301
-#: weko_authors/admin.py:310
+#: weko_authors/admin.py:408 weko_authors/admin.py:631 weko_authors/views.py:93
+#: weko_authors/views.py:115 weko_authors/views.py:162
+#: weko_authors/views.py:208
+msgid "Failed"
+msgstr ""
+
+#: weko_authors/admin.py:637 weko_authors/admin.py:646
+#: weko_authors/admin.py:655
 msgid "Author Management"
 msgstr ""
 
-#: weko_authors/admin.py:293
+#: weko_authors/admin.py:638
 msgid "Edit"
 msgstr ""
 
-#: weko_authors/admin.py:302
+#: weko_authors/admin.py:647
+#: weko_authors/templates/weko_authors/admin/author_export.html:45
 msgid "Export"
 msgstr ""
 
-#: weko_authors/admin.py:311
+#: weko_authors/admin.py:656
+#: weko_authors/templates/weko_authors/admin/author_import.html:42
 msgid "Import"
 msgstr ""
 
-#: weko_authors/utils.py:198
-msgid "Internal server error"
+#: weko_authors/scopes.py:20
+msgid "Allow search authors."
 msgstr ""
 
-#: weko_authors/utils.py:240
-msgid "The following metadata keys are duplicated.<br/>{}"
+#: weko_authors/scopes.py:26
+msgid "Allow create authors."
 msgstr ""
 
-#: weko_authors/utils.py:252
-msgid "Specified item does not consistency with DB item.<br/>{}"
+#: weko_authors/scopes.py:32
+msgid "Allow update authors."
 msgstr ""
 
-#: weko_authors/utils.py:268
-msgid "Cannot read {} file correctly."
+#: weko_authors/scopes.py:38
+msgid "Allow delete authors."
 msgstr ""
 
-#: weko_authors/utils.py:275
-msgid "There is no data to import."
+#: weko_authors/tasks.py:310
+msgid "TimeOut"
 msgstr ""
 
-#: weko_authors/utils.py:278
-msgid ""
-"{} could not be read. Make sure the file format is {} and that"
-" the file is UTF-8 encoded."
+#: weko_authors/tasks.py:404
+#: weko_authors/templates/weko_authors/admin/author_import.html:96
+msgid "Error"
 msgstr ""
 
-#: weko_authors/utils.py:315
-msgid "There is duplicated data in the {} file."
-msgstr ""
-
-#: weko_authors/utils.py:338
-msgid "{} is required item."
-msgstr ""
-
-#: weko_authors/utils.py:347
-msgid "{} should be set by one of {}."
-msgstr ""
-
-#: weko_authors/utils.py:462
-msgid "Specified Author ID does not exist."
-msgstr ""
-
-#: weko_authors/utils.py:470 weko_authors/views.py:140
+#: weko_authors/tasks.py:405
+#: weko_authors/templates/weko_authors/admin/author_import.html:105
+#: weko_authors/utils.py:1227 weko_authors/views.py:178
 msgid "The author is linked to items and cannot be deleted."
 msgstr ""
 
-#: weko_authors/utils.py:475
-msgid ""
-"The specified author has been deleted. Update author information with {}"
-" content, but author remains deleted as it is."
+#: weko_authors/tasks.py:406
+#: weko_authors/templates/weko_authors/admin/author_import.html:104
+msgid "Failed to import."
 msgstr ""
 
-#: weko_authors/views.py:59 weko_authors/views.py:102 weko_authors/views.py:135
+#: weko_authors/tasks.py:411
+#: weko_authors/templates/weko_authors/admin/author_import.html:91
+msgid "Register Success"
+msgstr ""
+
+#: weko_authors/tasks.py:412
+#: weko_authors/templates/weko_authors/admin/author_import.html:92
+msgid "Update Success"
+msgstr ""
+
+#: weko_authors/tasks.py:413
+#: weko_authors/templates/weko_authors/admin/author_import.html:93
+msgid "Delete Success"
+msgstr ""
+
+#: weko_authors/templates/weko_authors/admin/author_export.html:52
+#: weko_authors/templates/weko_authors/admin/author_import.html:106
+#: weko_authors/utils.py:608 weko_authors/utils.py:646
+msgid "Internal server error"
+msgstr ""
+
+#: weko_authors/utils.py:734 weko_authors/utils.py:947
+msgid "The following metadata keys are duplicated.<br/>{}"
+msgstr ""
+
+#: weko_authors/utils.py:746 weko_authors/utils.py:958
+msgid "Specified item does not consistency with DB item.<br/>{}"
+msgstr ""
+
+#: weko_authors/utils.py:762 weko_authors/utils.py:976
+msgid "Cannot read {} file correctly."
+msgstr ""
+
+#: weko_authors/utils.py:777
+msgid "There is no data to import."
+msgstr ""
+
+#: weko_authors/utils.py:780 weko_authors/utils.py:980
+msgid ""
+"{} could not be read. Make sure the file format is {} and that the file "
+"is UTF-8 encoded."
+msgstr ""
+
+#: weko_authors/utils.py:843
+msgid "There is duplicated data in the {} file."
+msgstr ""
+
+#: weko_authors/utils.py:866
+msgid "{} is required item."
+msgstr ""
+
+#: weko_authors/utils.py:875
+msgid "{} should be set by one of {}."
+msgstr ""
+
+#: weko_authors/utils.py:1033
+msgid "Scheme is required item."
+msgstr ""
+
+#: weko_authors/utils.py:1036
+msgid "The scheme WEKO cannot be used."
+msgstr ""
+
+#: weko_authors/utils.py:1039
+msgid "Name is required item."
+msgstr ""
+
+#: weko_authors/utils.py:1042
+msgid "URL is not URL format."
+msgstr ""
+
+#: weko_authors/utils.py:1045
+msgid "The specified scheme does not exist."
+msgstr ""
+
+#: weko_authors/utils.py:1049
+msgid "The specified scheme is used in the author ID."
+msgstr ""
+
+#: weko_authors/utils.py:1064
+msgid "The specified scheme is duplicated."
+msgstr ""
+
+#: weko_authors/templates/weko_authors/admin/author_import.html:98
+#: weko_authors/utils.py:1137
+msgid "Register"
+msgstr ""
+
+#: weko_authors/templates/weko_authors/admin/author_import.html:99
+#: weko_authors/utils.py:1139
+msgid "Update"
+msgstr ""
+
+#: weko_authors/templates/weko_authors/admin/author_import.html:100
+#: weko_authors/utils.py:1141
+msgid "Delete"
+msgstr ""
+
+#: weko_authors/utils.py:1220
+msgid "Specified Author ID does not exist."
+msgstr ""
+
+#: weko_authors/utils.py:1232
+msgid ""
+"The specified author has been deleted. Update author information with {} "
+"content, but author remains deleted as it is."
+msgstr ""
+
+#: weko_authors/views.py:68 weko_authors/views.py:126 weko_authors/views.py:173
 msgid "Header Error"
 msgstr ""
 
-#: weko_authors/views.py:91 weko_authors/views.py:125 weko_authors/views.py:164
-#: weko_authors/views.py:576 weko_authors/views.py:619
+#: weko_authors/views.py:79 weko_authors/views.py:137
+msgid "Please set WEKO ID."
+msgstr ""
+
+#: weko_authors/views.py:86 weko_authors/views.py:146
+msgid "Please set the WEKOID in the half digit."
+msgstr ""
+
+#: weko_authors/views.py:89 weko_authors/views.py:149
+msgid "The value is already in use as WEKO ID."
+msgstr ""
+
+#: weko_authors/views.py:99 weko_authors/views.py:154
+msgid ""
+"Please set the affiliation start date and end date in the format yyyy-MM-"
+"dd."
+msgstr ""
+
+#: weko_authors/views.py:101 weko_authors/views.py:156
+msgid "The end date must be after the start date."
+msgstr ""
+
+#: weko_authors/templates/weko_authors/admin/author_import.html:88
+#: weko_authors/views.py:116 weko_authors/views.py:164
+#: weko_authors/views.py:210 weko_authors/views.py:700
+#: weko_authors/views.py:745
 msgid "Success"
 msgstr ""
 
-#: weko_authors/contrib/validation.py:106
+#: weko_authors/contrib/validation.py:111
+msgid "WEKO ID is Half-width digits only"
+msgstr ""
+
+#: weko_authors/contrib/validation.py:112
+msgid "WEKO ID is required item."
+msgstr ""
+
+#: weko_authors/contrib/validation.py:133
 msgid "Specified Identifier Scheme '{}' does not exist."
 msgstr ""
 
-#: weko_authors/contrib/validation.py:132
+#: weko_authors/contrib/validation.py:154
+msgid "Specified Affiliation Identifier Scheme '{}' does not exist."
+msgstr ""
+
+#: weko_authors/contrib/validation.py:179
+#: weko_authors/contrib/validation.py:204
+msgid "External Affiliation Period must be in the format: yyyy-MM-dd, blank. {}"
+msgstr ""
+
+#: weko_authors/contrib/validation.py:205
+msgid "Period end must be after Period start."
+msgstr ""
+
+#: weko_authors/contrib/validation.py:243
 msgid "External author identifier exists in DB.<br/>{}"
 msgstr ""
 
-#: weko_authors/templates/weko_authors/macros/tabs_selector.html:22
-msgid "Author ID"
+#: weko_authors/contrib/validation.py:274
+msgid "Specified WEKO ID already exist."
 msgstr ""
 
+#: weko_authors/static/js/weko_authors/app-author-import.chunk.js:2
+msgid "TYPED_ARRAY_TAG"
+msgstr ""
+
+#: weko_authors/templates/weko_authors/admin/author_export.html:39
+msgid "Export target"
+msgstr ""
+
+#: weko_authors/templates/weko_authors/admin/author_export.html:40
+msgid "Export all"
+msgstr ""
+
+#: weko_authors/templates/weko_authors/admin/author_export.html:41
+#: weko_authors/templates/weko_authors/admin/author_export.html:49
+#: weko_authors/templates/weko_authors/admin/author_import.html:66
+msgid "Author DB"
+msgstr ""
+
+#: weko_authors/templates/weko_authors/admin/author_export.html:42
+#: weko_authors/templates/weko_authors/admin/author_import.html:67
 #: weko_authors/templates/weko_authors/macros/tabs_selector.html:23
 msgid "ID Prefix"
 msgstr ""
 
+#: weko_authors/templates/weko_authors/admin/author_export.html:43
+#: weko_authors/templates/weko_authors/admin/author_import.html:68
 #: weko_authors/templates/weko_authors/macros/tabs_selector.html:24
 msgid "Affiliation ID"
 msgstr ""
 
-#~ msgid "Author_Add_New_Author"
-#~ msgstr "Author"
+#: weko_authors/templates/weko_authors/admin/author_export.html:44
+msgid "Download URL"
+msgstr ""
+
+#: weko_authors/templates/weko_authors/admin/author_export.html:46
+msgid "Are you sure you want to export all?"
+msgstr ""
+
+#: weko_authors/templates/weko_authors/admin/author_export.html:47
+msgid "Confirm"
+msgstr ""
+
+#: weko_authors/templates/weko_authors/admin/author_export.html:48
+msgid "Resume"
+msgstr ""
+
+#: weko_authors/templates/weko_authors/admin/author_export.html:50
+msgid "Execute"
+msgstr ""
+
+#: weko_authors/templates/weko_authors/admin/author_export.html:51
+#: weko_authors/templates/weko_authors/admin/author_import.html:56
+msgid "Cancel"
+msgstr ""
+
+#: weko_authors/templates/weko_authors/admin/author_export.html:53
+msgid "Are you sure you want to cancel process of exporting all?"
+msgstr ""
+
+#: weko_authors/templates/weko_authors/admin/author_export.html:54
+msgid "Export is failed."
+msgstr ""
+
+#: weko_authors/templates/weko_authors/admin/author_export.html:55
+msgid "Export is in progress on another device."
+msgstr ""
+
+#: weko_authors/templates/weko_authors/admin/author_export.html:56
+msgid "Failed to cancel export."
+msgstr ""
+
+#: weko_authors/templates/weko_authors/admin/author_import.html:41
+msgid "Select"
+msgstr ""
+
+#: weko_authors/templates/weko_authors/admin/author_import.html:43
+msgid "Result"
+msgstr ""
+
+#: weko_authors/templates/weko_authors/admin/author_import.html:44
+msgid "Download"
+msgstr ""
+
+#: weko_authors/templates/weko_authors/admin/author_import.html:45
+msgid "No."
+msgstr ""
+
+#: weko_authors/templates/weko_authors/admin/author_import.html:46
+#: weko_authors/templates/weko_authors/macros/tabs_selector.html:22
+msgid "Author ID"
+msgstr ""
+
+#: weko_authors/templates/weko_authors/admin/author_import.html:47
+msgid "Current WEKO ID"
+msgstr ""
+
+#: weko_authors/templates/weko_authors/admin/author_import.html:48
+msgid "New WEKO ID"
+msgstr ""
+
+#: weko_authors/templates/weko_authors/admin/author_import.html:49
+msgid "Previous WEKO ID"
+msgstr ""
+
+#: weko_authors/templates/weko_authors/admin/author_import.html:50
+msgid "full_name"
+msgstr ""
+
+#: weko_authors/templates/weko_authors/admin/author_import.html:53
+msgid "Select File"
+msgstr ""
+
+#: weko_authors/templates/weko_authors/admin/author_import.html:54
+msgid "Selected file name"
+msgstr ""
+
+#: weko_authors/templates/weko_authors/admin/author_import.html:55
+msgid "Next"
+msgstr ""
+
+#: weko_authors/templates/weko_authors/admin/author_import.html:57
+msgid "Force Change Mode"
+msgstr ""
+
+#: weko_authors/templates/weko_authors/admin/author_import.html:58
+msgid "Disclaimer:"
+msgstr ""
+
+#: weko_authors/templates/weko_authors/admin/author_import.html:59
+msgid ""
+"- When using this function, all metadata using author information is "
+"forcibly changed to match the author DB when updating."
+msgstr ""
+
+#: weko_authors/templates/weko_authors/admin/author_import.html:60
+msgid ""
+"- If not used, only the author and affiliation identifiers are changed "
+"when updating."
+msgstr ""
+
+#: weko_authors/templates/weko_authors/admin/author_import.html:61
+msgid ""
+"- Before starting this operation, you need fully understand the contents "
+"and metadata using AuthorDB at your institution."
+msgstr ""
+
+#: weko_authors/templates/weko_authors/admin/author_import.html:62
+msgid "- Use this function on your own responsibility."
+msgstr ""
+
+#: weko_authors/templates/weko_authors/admin/author_import.html:63
+msgid ""
+"- National Institute of Informatics (NII) does not take any "
+"responsibility for damages caused by using this function."
+msgstr ""
+
+#: weko_authors/templates/weko_authors/admin/author_import.html:64
+msgid "I agree to the terms of use."
+msgstr ""
+
+#: weko_authors/templates/weko_authors/admin/author_import.html:65
+msgid "Import target"
+msgstr ""
+
+#: weko_authors/templates/weko_authors/admin/author_import.html:71
+msgid "Summary"
+msgstr ""
+
+#: weko_authors/templates/weko_authors/admin/author_import.html:72
+msgid "Total"
+msgstr ""
+
+#: weko_authors/templates/weko_authors/admin/author_import.html:73
+msgid "New Creator"
+msgstr ""
+
+#: weko_authors/templates/weko_authors/admin/author_import.html:74
+msgid "Update Creator"
+msgstr ""
+
+#: weko_authors/templates/weko_authors/admin/author_import.html:75
+msgid "Delete Creator"
+msgstr ""
+
+#: weko_authors/templates/weko_authors/admin/author_import.html:76
+msgid "Result Error"
+msgstr ""
+
+#: weko_authors/templates/weko_authors/admin/author_import.html:77
+msgid "Mail Address"
+msgstr ""
+
+#: weko_authors/templates/weko_authors/admin/author_import.html:78
+msgid "Check Result"
+msgstr ""
+
+#: weko_authors/templates/weko_authors/admin/author_import.html:79
+msgid "Scheme"
+msgstr ""
+
+#: weko_authors/templates/weko_authors/admin/author_import.html:80
+msgid "Scheme Name"
+msgstr ""
+
+#: weko_authors/templates/weko_authors/admin/author_import.html:81
+msgid "URL"
+msgstr ""
+
+#: weko_authors/templates/weko_authors/admin/author_import.html:84
+msgid "Start Date"
+msgstr ""
+
+#: weko_authors/templates/weko_authors/admin/author_import.html:85
+msgid "End Date"
+msgstr ""
+
+#: weko_authors/templates/weko_authors/admin/author_import.html:86
+msgid "Status"
+msgstr ""
+
+#: weko_authors/templates/weko_authors/admin/author_import.html:87
+msgid "To Do"
+msgstr ""
+
+#: weko_authors/templates/weko_authors/admin/author_import.html:89
+msgid "Failure"
+msgstr ""
+
+#: weko_authors/templates/weko_authors/admin/author_import.html:90
+msgid "Pending"
+msgstr ""
+
+#: weko_authors/templates/weko_authors/admin/author_import.html:97
+msgid "Warning"
+msgstr ""
+
+#: weko_authors/templates/weko_authors/admin/author_import.html:103
+msgid "The selected target table and the import file format are different."
+msgstr ""
+
+#: weko_authors/templates/weko_authors/admin/author_import.html:107
+msgid "Celery is not running."
+msgstr ""
+
+#: weko_authors/templates/weko_authors/admin/author_import.html:108
+msgid "Import is in progress."
+msgstr ""
+
+#: weko_authors/templates/weko_authors/admin/author_import.html:109
+msgid "Import is in progress on another device."
+msgstr ""
 
-#~ msgid "Author_Name"
-#~ msgstr "Name"
-
-#~ msgid "Author_Display"
-#~ msgstr "Display"
-
-#~ msgid "Author_Hide"
-#~ msgstr "Hide"
-
-#~ msgid "Author_Add_Author_Item"
-#~ msgstr "Add author item"
-
-#~ msgid "Author_ID"
-#~ msgstr "Author ID"
-
-#~ msgid "Author_Placeholder_authorId"
-#~ msgstr "Author ID"
-
-#~ msgid "Author_Confirm"
-#~ msgstr "Confirm"
-
-#~ msgid "Author_Add_Author_ID"
-#~ msgstr "Add a new ID"
-
-#~ msgid "Author_EMail"
-#~ msgstr "E-Mail"
-
-#~ msgid "Author_Add_EMail"
-#~ msgstr "Add E-mail"
-
-#~ msgid "Author_Button_Clear"
-#~ msgstr "Clear"
-
-#~ msgid "Author_Button_Save"
-#~ msgstr "Save"
-
-#~ msgid "Author_familyNmAndNm"
-#~ msgstr "First and Last Name"
-
-#~ msgid "Author_fullNm"
-#~ msgstr "Full Name"
-
-#~ msgid "Author_Add_Organization"
-#~ msgstr "Add Organization"
-
-#~ msgid "Author_Add_Author"
-#~ msgstr "Add Author"
-
-#~ msgid "Author_Search"
-#~ msgstr "Search"
-
-#~ msgid "Author_Mail_Address"
-#~ msgstr "Mail Address"
-
-#~ msgid "Author_Edit"
-#~ msgstr "Edit"
-
-#~ msgid "Author_Search_No_Result"
-#~ msgstr "Sorry，No results."
-
-#~ msgid "Author_Page_Previous"
-#~ msgstr "Previous"
-
-#~ msgid "Author_Page_Next"
-#~ msgstr "Next"
-
-#~ msgid "Author_On_1_Page"
-#~ msgstr "On 1 Page:"
-
-#~ msgid "Export target"
-#~ msgstr ""
-
-#~ msgid "Export all"
-#~ msgstr ""
-
-#~ msgid "Download URL"
-#~ msgstr ""
-
-#~ msgid "Are you sure you want to export all?"
-#~ msgstr ""
-
-#~ msgid "Confirm"
-#~ msgstr ""
-
-#~ msgid "Execute"
-#~ msgstr ""
-
-#~ msgid "Cancel"
-#~ msgstr ""
-
-#~ msgid "Are you sure you want to cancel process of exporting all?"
-#~ msgstr ""
-
-#~ msgid "Resume"
-#~ msgstr ""
-
-#~ msgid "Author DB"
-#~ msgstr ""
-
-#~ msgid "Are you sure you want to cancel process of exporting all creator?"
-#~ msgstr ""
-
-#~ msgid "Failed to cancel export."
-#~ msgstr ""
-
-#~ msgid "Export is in progress on another device."
-#~ msgstr ""
-
-#~ msgid "Export is failed."
-#~ msgstr ""
-
-# Import authors
-#~ msgid "Select"
-#~ msgstr ""
-
-#~ msgid "Result"
-#~ msgstr ""
-
-#~ msgid "Download"
-#~ msgstr ""
-
-#~ msgid "No."
-#~ msgstr ""
-
-#~ msgid "WEKO ID"
-#~ msgstr ""
-
-#~ msgid "full_name"
-#~ msgstr "Name"
-
-#~ msgid "Select File"
-#~ msgstr ""
-
-#~ msgid "Selected file name"
-#~ msgstr ""
-
-#~ msgid "Next"
-#~ msgstr ""
-
-#~ msgid "Summary"
-#~ msgstr ""
-
-#~ msgid "Total"
-#~ msgstr ""
-
-#~ msgid "New Creator"
-#~ msgstr ""
-
-#~ msgid "Update Creator"
-#~ msgstr ""
-
-#~ msgid "Delete Creator"
-#~ msgstr ""
-
-#~ msgid "Result Error"
-#~ msgstr ""
-
-#~ msgid "Mail Address"
-#~ msgstr ""
-
-#~ msgid "Check Result"
-#~ msgstr ""
-
-#~ msgid "Start Date"
-#~ msgstr ""
-
-#~ msgid "End Date"
-#~ msgstr ""
-
-#~ msgid "Status"
-#~ msgstr ""
-
-#~ msgid "To Do"
-#~ msgstr ""
-
-#~ msgid "Error"
-#~ msgstr ""
-
-#~ msgid "Success"
-#~ msgstr ""
-
-#~ msgid "Failure"
-#~ msgstr ""
-
-#~ msgid "Pending"
-#~ msgstr ""
-
-
-#~ msgid "Warning"
-#~ msgstr ""
-
-#~ msgid "Register"
-#~ msgstr ""
-
-#~ msgid "Update"
-#~ msgstr ""
-
-#~ msgid "Delete"
-#~ msgstr ""
-
-#~ msgid "Celery is not running."
-#~ msgstr ""
-
-#~ msgid "Import is in progress."
-#~ msgstr ""
-
-#~ msgid "Import is in progress on another device."
-#~ msgstr ""
-
-#~ msgid "Register Success"
-#~ msgstr ""
-
-#~ msgid "Update Success"
-#~ msgstr ""
-
-#~ msgid "Delete Success"
-#~ msgstr ""
-
-#~ msgid "Failed to import."
-#~ msgstr ""
-
-#~ msgid "Cannot read tsv file correctly."
-#~ msgstr ""
-
-#~ msgid ""
-#~ "The TSV file could not be read."
-#~ " Make sure the file format is "
-#~ "TSV and that the file is UTF-8 "
-#~ "encoded."
-#~ msgstr ""
-
-#~ msgid "There is duplicated data in the TSV file."
-#~ msgstr ""
-
-#~ msgid "The selected target table and the import file format are different."
-#~ msgstr ""
-
-#~ msgid ""
-#~ "The specified author has been deleted."
-#~ " Update author information with tsv "
-#~ "content, but author remains deleted as"
-#~ " it is."
-#~ msgstr ""
-
-#~ msgid "Force Change Mode"
-#~ msgstr ""
-
-#~ msgid "Disclaimer:"
-#~ msgstr ""
-
-#~ msgid "- When using this function, all metadata using author information is forcibly changed to match the author DB when updating."
-#~ msgstr ""
-
-#~ msgid "- If not used, only the author and affiliation identifiers are changed when updating."
-#~ msgstr ""
-
-#~ msgid "- Before starting this operation, you need fully understand the contents and metadata using AuthorDB at your institution."
-#~ msgstr ""
-
-#~ msgid "- Use this function on your own responsibility."
-#~ msgstr ""
-
-#~ msgid "- National Institute of Informatics (NII) does not take any responsibility for damages caused by using this function."
-#~ msgstr ""
-
-#~ msgid "I agree to the terms of use."
-#~ msgid "The selected target table and the import file format are different."
-#~ msgstr ""
-
-#~ msgid "Scheme is required item."
-#~ msgstr ""
-
-#~ msgid "Name is required item."
-#~ msgstr ""
-
-#~ msgid "url is not URL format."
-#~ msgstr ""
-
-#~ msgid "Specified identifier does not exist."
-#~ msgstr ""
-
-#~ msgid "The scheme WEKO cannot be used."
-#~ msgstr ""
-
-#~ msgid "The specified scheme is used in the author ID."
-#~ msgstr ""

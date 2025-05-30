@@ -686,10 +686,11 @@ document.addEventListener('DOMContentLoaded', function () {
         <td style="width: auto;">
           <strong><a href="/records/${item.recid}">${item.title}</a></strong><br><br>
           ${item.authorlist && item.authorlist.length > 0 ? `<span>${item.authorlist.join(', ')}</span><br><br>` : ''}
-          <span>${item.magazineName}／${item.conferenceName}</span><span> </span>
-          <span>${item.volume}（${item.issue}）</span><span> </span>
-          <span>${item.funderName || ''} | ${item.awardTitle || ''}</span><span> </span><br><br>
-          <span>${item.publicationDate}</span><span> </span>
+          <span>${item.magazineName || ''} ${(item.magazineName && item.conferenceName) ? '/' : ''} ${item.conferenceName || ''}</span>
+          <span>${item.volume || ''} ${item.issue ? '('+item.issue+')' : ''}</span>
+          <span>${item.funderName || ''} ${(item.funderName && item.awardTitle) ? '|' : ''} ${item.awardTitle || ''}</span>
+          ${(item.magazineName || item.conferenceName || item.volume || item.issue || item.funderName || item.awardTitle) ? '<br><br>' : ''}
+          <span>${item.publicationDate}</span>
           ${item.relation && item.relation.length > 0 ? `<span><a href="javascript:void(0)" class="relatedButton"><strong>${relation}</strong></a></span><span> </span>` : ''}
           ${item.fileSts
             ? `<span>${documentfile} (${item.fileCnt || 0})： ${published}（${item.publicCnt || 0}）、${embargo}（${item.embargoedCnt || 0}）、 ${restricted}（${item.restrictedPublicationCnt || 0}）</span>`
@@ -697,7 +698,9 @@ document.addEventListener('DOMContentLoaded', function () {
           ${relatedInfoHtml}
         </td>
         <td style="text-align: center; vertical-align: top;">
-          <span><a href="${item.doi}">DOI</a></span><br><br>
+          <span>
+          ${item.doi ? `<a href="${item.doi}">DOI</a>` : 'DOI'}
+          </span><br><br>
           <span>
             <i class="bi bi-eye-fill" style="font-size: 20px;"></i>${item.accessCnt}
           </span><br><br>

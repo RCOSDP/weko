@@ -36,8 +36,11 @@ class UserActivityLogUtils:
     def package_export_log(cls):
         """Get log data as tsv format.
 
-        :returns: File uri.
-        :raises: Exception if failed to write log data to tsv.
+        Returns:
+            str: File uri.
+        
+        Raises:
+            Exception: if failed to write log data to tsv.
         """
         file_uri = None
         try:
@@ -50,15 +53,17 @@ class UserActivityLogUtils:
                 "data": log_data
             }]
 
-            log_zip = zipfile.ZipFile(zip_stream, "w")
+            log_zip = zipfile.ZipFile(zip_stream, "w", zipfile.ZIP_DEFLATED)
             for file in output_files:
                 log_zip.writestr(
                     file["filename"],
                     cls._write_log_to_tsv(file["data"])
                 )
+            log_zip.close()
 
             # set bufferd reader
-            reader = BufferedReader(BytesIO(zip_stream.getvalue()))
+            zip_stream.seek(0)
+            reader = BufferedReader(zip_stream)
 
             # save data into location
             cache_url = cls.get_export_url()
@@ -75,7 +80,6 @@ class UserActivityLogUtils:
                 file.writable = True
                 file.set_contents(reader)
 
-            log_zip.close()
             file_uri = file.uri if file else None
             db.session.commit()
         except Exception as e:
@@ -90,10 +94,10 @@ class UserActivityLogUtils:
     def cancel_export_log(cls):
         """Cancel export log.
 
-        :returns: True if success, False if failed.
+        Returns:
+            bool: True if success, False if failed.
         """
 
-        # _expired_time=current_app.config["WEKO_SEARCH_UI_BULK_EXPORT_TASKID_EXPIRED_TIME"]
         try:
             export_status = cls.get_export_task_status()
             if export_status:
@@ -114,7 +118,8 @@ class UserActivityLogUtils:
     def delete_log(cls):
         """Delete logs.
 
-        raise: Exception if failed to delete logs.
+        Raises:
+            Exception: if failed to delete logs.
         """
         # get config from current_app
         config = current_app.config.get("WEKO_LOGGING_USER_ACTIVITY_SETTING")
@@ -146,7 +151,8 @@ class UserActivityLogUtils:
     def get_export_task_status(cls):
         """Get export status from cache.
 
-        :returns: The export status.
+        Returns:
+            dict: The export status.
         """
         json_data = get_redis_cache(cls.USER_ACTIVITY_LOG_EXPORT_CACHE_STATUS_KEY)
         return json.loads(json_data) if json_data else {}
@@ -155,9 +161,12 @@ class UserActivityLogUtils:
     def set_export_status(cls, start_time=None, task_id=None):
         """Set export status into cache.
 
-        :param start_time: The start time.
-        :param task_id: The task id.
-        :returns: The export status.
+        Args:
+            start_time (datetime): The start time.
+            task_id (str): The task id.
+
+        Returns:
+            dict: The export status.
         """
         cache_data = cls.get_export_task_status() or dict()
         if start_time:
@@ -175,7 +184,8 @@ class UserActivityLogUtils:
     def get_export_url(cls):
         """Get export status from cache.
 
-        :returns: The download url info.
+        Returns:
+            dict: The download url info.
         """
         json_data = get_redis_cache(cls.USER_ACTIVITY_LOG_EXPORT_CACHE_URL_KEY)
         return json.loads(json_data) if json_data else {}
@@ -184,9 +194,10 @@ class UserActivityLogUtils:
     def save_export_url(cls, start_time, end_time, file_uri):
         """Save export url to cache.
 
-        :param start_time: The start time.
-        :param end_time: The end time.
-        :param file_uri: The file uri.
+        Args:
+            start_time (datetime): The start time.
+            end_time (datetime): The end time.
+            file_uri (str): The file uri.
         """
         export_result = dict(
             start_time=start_time,
@@ -208,14 +219,20 @@ class UserActivityLogUtils:
     def _write_log_to_tsv(cls, log_data: list):
         """Write log data to tsv format.
 
-        :param log_data: The log data.
+        Args:
+            log_data (list): The log data.
+        
+        Returns:
+            str: The log data in TSV format.
         """
         tsv = ""
         if not log_data:
             return tsv
         stream = StringIO()
         fieldsnames = log_data[0].keys()
-        tsv_writer = csv.DictWriter(stream, fieldnames=fieldsnames, delimiter='\t')
+        tsv_writer = csv.DictWriter(
+            stream, fieldnames=fieldsnames, delimiter='\t'
+        )
         tsv_writer.writeheader()
         tsv_writer.writerows(log_data)
         tsv = stream.getvalue()

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: weko-admin 0.1.0.dev20170000\n"
 "Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
-"POT-Creation-Date: 2025-04-25 01:35+0900\n"
+"POT-Creation-Date: 2025-05-19 19:58+0900\n"
 "PO-Revision-Date: 2025-04-24 10:54+0900\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ja\n"
@@ -18,18 +18,18 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.5.1\n"
 
-#: tests/test_admin.py:1766 tests/test_admin.py:1772 tests/test_admin.py:1774
-#: tests/test_admin.py:1791 tests/test_admin.py:1799 tests/test_admin.py:1807
-#: tests/test_admin.py:1815 weko_admin/admin.py:143
+#: tests/test_admin.py:1769 tests/test_admin.py:1775 tests/test_admin.py:1777
+#: tests/test_admin.py:1794 tests/test_admin.py:1802 tests/test_admin.py:1810
+#: tests/test_admin.py:1818 weko_admin/admin.py:143
 msgid "completed"
 msgstr "処理が完了しました。"
 
-#: tests/test_admin.py:1824 weko_admin/admin.py:136
+#: tests/test_admin.py:1827 weko_admin/admin.py:136
 #: weko_admin/templates/weko_admin/admin/reindex_elasticsearch.html:43
 msgid "executing..."
 msgstr "実行中..."
 
-#: tests/test_admin.py:1834 weko_admin/admin.py:134
+#: tests/test_admin.py:1837 weko_admin/admin.py:134
 #: weko_admin/templates/weko_admin/admin/reindex_elasticsearch.html:42
 msgid "haserror"
 msgstr "エラー発生中につき実行できません。"
@@ -227,7 +227,7 @@ msgstr "項目名（日）"
 #: weko_admin/admin.py:1366
 #: weko_admin/templates/weko_admin/admin/facet_search_setting.html:52
 #: weko_admin/templates/weko_admin/admin/jsonld_mapping_settings.html:111
-#: weko_admin/templates/weko_admin/admin/sword_api_jsonld_settings.html:146
+#: weko_admin/templates/weko_admin/admin/sword_api_jsonld_settings.html:155
 msgid "Mapping"
 msgstr "マッピング"
 
@@ -236,143 +236,163 @@ msgid "UI"
 msgstr ""
 
 #: weko_admin/admin.py:1368
-#: weko_admin/templates/weko_admin/admin/sword_api_jsonld_settings.html:104
+#: weko_admin/templates/weko_admin/admin/sword_api_jsonld_settings.html:113
 #: weko_admin/templates/weko_admin/admin/sword_api_settings.html:61
 msgid "Active"
 msgstr "アクティブ"
 
-#: weko_admin/admin.py:1596 weko_admin/admin.py:1619
+#: weko_admin/admin.py:1609 weko_admin/admin.py:1629 weko_admin/admin.py:1635
 msgid "Active Message"
 msgstr "有効"
 
-#: weko_admin/admin.py:1598 weko_admin/admin.py:1621
+#: weko_admin/admin.py:1611 weko_admin/admin.py:1631 weko_admin/admin.py:1637
 msgid "Inactive Message"
 msgstr "無効"
 
-#: weko_admin/admin.py:1939
+#: weko_admin/admin.py:1623
+#: weko_admin/templates/weko_admin/admin/sword_api_jsonld_settings.html:126
+#: weko_admin/templates/weko_admin/admin/sword_api_settings.html:74
+msgid "Direct_Registration"
+msgstr "直接登録"
+
+#: weko_admin/admin.py:1625
+#: weko_admin/templates/weko_admin/admin/sword_api_jsonld_settings.html:128
+#: weko_admin/templates/weko_admin/admin/sword_api_settings.html:76
+msgid "WorkFlow_Registration"
+msgstr "ワークフロー登録"
+
+#: weko_admin/admin.py:1987
 msgid "SWORD API JSON-LD settings deleted."
 msgstr "SWORD APIの設定が削除されました。"
 
-#: weko_admin/admin.py:1945
+#: weko_admin/admin.py:1993
 msgid "Failed to delete SWORD API JSON-LD settings."
 msgstr "SWORD APIの設定の削除に失敗しました。"
 
-#: weko_admin/admin.py:1952
+#: weko_admin/admin.py:2000
 #: weko_admin/templates/weko_admin/admin/jsonld_mapping_settings.html:41
-#: weko_admin/templates/weko_admin/admin/sword_api_jsonld_settings.html:250
+#: weko_admin/templates/weko_admin/admin/sword_api_jsonld_settings.html:50
 msgid "Unapproved Items Exit."
 msgstr "このアプリケーションを使用するワークフローに未承認のアイテムがあります。すべて承認されるまで、設定の変更はできません。"
 
-#: weko_admin/admin.py:2210 weko_admin/admin.py:2237 weko_admin/admin.py:2246
-#: weko_admin/admin.py:2255 weko_admin/admin.py:2264 weko_admin/admin.py:2273
-#: weko_admin/admin.py:2282 weko_admin/admin.py:2291 weko_admin/admin.py:2309
-#: weko_admin/admin.py:2318 weko_admin/admin.py:2327 weko_admin/admin.py:2336
-#: weko_admin/admin.py:2344 weko_admin/admin.py:2352
+#: weko_admin/admin.py:2056
+msgid "Deleted ItemType"
+msgstr "削除済みアイテムタイプ"
+
+#: weko_admin/admin.py:2064
+msgid "Not Found ItemType"
+msgstr ""
+
+#: weko_admin/admin.py:2283 weko_admin/admin.py:2310 weko_admin/admin.py:2319
+#: weko_admin/admin.py:2328 weko_admin/admin.py:2337 weko_admin/admin.py:2346
+#: weko_admin/admin.py:2355 weko_admin/admin.py:2364 weko_admin/admin.py:2382
+#: weko_admin/admin.py:2391 weko_admin/admin.py:2400 weko_admin/admin.py:2409
+#: weko_admin/admin.py:2417 weko_admin/admin.py:2425
 msgid "Setting"
 msgstr "設定"
 
-#: weko_admin/admin.py:2211
+#: weko_admin/admin.py:2284
 msgid "Style"
 msgstr "様式"
 
-#: weko_admin/admin.py:2219 weko_admin/admin.py:2228 weko_admin/admin.py:2300
+#: weko_admin/admin.py:2292 weko_admin/admin.py:2301 weko_admin/admin.py:2373
 msgid "Statistics"
 msgstr "統計"
 
-#: weko_admin/admin.py:2220
+#: weko_admin/admin.py:2293
 msgid "Report"
 msgstr "レポート"
 
-#: weko_admin/admin.py:2229
+#: weko_admin/admin.py:2302
 msgid "Feedback Mail"
 msgstr "フィードバックメール"
 
-#: weko_admin/admin.py:2238
+#: weko_admin/admin.py:2311
 msgid "Stats"
 msgstr "統計"
 
-#: weko_admin/admin.py:2247
+#: weko_admin/admin.py:2320
 #: weko_admin/templates/weko_admin/admin/log_analysis_settings.html:45
 msgid "Log Analysis"
 msgstr "ログ分析"
 
-#: weko_admin/admin.py:2256
+#: weko_admin/admin.py:2329
 #: weko_admin/templates/weko_admin/admin/site_info.html:50
 msgid "Language"
 msgstr "言語"
 
-#: weko_admin/admin.py:2265
+#: weko_admin/admin.py:2338
 msgid "WebAPI Account"
 msgstr "WebAPIアカウント"
 
-#: weko_admin/admin.py:2274
+#: weko_admin/admin.py:2347
 msgid "Ranking"
 msgstr "ランキング"
 
-#: weko_admin/admin.py:2283
+#: weko_admin/admin.py:2356
 #: weko_admin/templates/weko_admin/admin/feedback_mail.html:61
 msgid "Search"
 msgstr "検索"
 
-#: weko_admin/admin.py:2292 weko_admin/admin.py:2301 weko_admin/config.py:177
+#: weko_admin/admin.py:2365 weko_admin/admin.py:2374 weko_admin/config.py:177
 #: weko_admin/config.py:182
 msgid "Site License"
 msgstr "サイトライセンス"
 
-#: weko_admin/admin.py:2310
+#: weko_admin/admin.py:2383
 msgid "File Preview"
 msgstr "ファイルプレビュー"
 
-#: weko_admin/admin.py:2319
+#: weko_admin/admin.py:2392
 #, fuzzy
 msgid "Item Export"
 msgstr "アイテム一括出力"
 
-#: weko_admin/admin.py:2328
+#: weko_admin/admin.py:2401
 msgid "Site Info"
 msgstr "サイト情報"
 
-#: weko_admin/admin.py:2337
+#: weko_admin/admin.py:2410
 msgid "Restricted Access"
 msgstr "サイトアクセス"
 
-#: weko_admin/admin.py:2345
+#: weko_admin/admin.py:2418
 msgid "Identifier"
 msgstr "識別子"
 
-#: weko_admin/admin.py:2353
+#: weko_admin/admin.py:2426
 msgid "Faceted Search"
 msgstr "ファセット検索"
 
-#: weko_admin/admin.py:2360
+#: weko_admin/admin.py:2433
 msgid "Maintenance"
 msgstr "メンテナンス"
 
-#: weko_admin/admin.py:2361
+#: weko_admin/admin.py:2434
 msgid "ElasticSearch Index"
 msgstr "インデックス再作成"
 
-#: weko_admin/admin.py:2369 weko_admin/admin.py:2377
+#: weko_admin/admin.py:2442 weko_admin/admin.py:2450
 msgid "SWORD API"
 msgstr ""
 
-#: weko_admin/admin.py:2370
+#: weko_admin/admin.py:2443
 msgid "TSV/XML"
 msgstr ""
 
-#: weko_admin/admin.py:2378
+#: weko_admin/admin.py:2451
 msgid "JSON-LD"
 msgstr "JSON-LD"
 
-#: weko_admin/admin.py:2385
+#: weko_admin/admin.py:2458
 msgid "Item Types"
 msgstr "アイテムタイプ管理"
 
-#: weko_admin/admin.py:2386
+#: weko_admin/admin.py:2459
 msgid "JSON-LD Mapping"
 msgstr "JSON-LDマッピング"
 
-#: weko_admin/api.py:127
+#: weko_admin/api.py:129
 msgid "statistics report"
 msgstr "統計設定"
 
@@ -708,7 +728,7 @@ msgstr "ようこそ"
 #: weko_admin/templates/weko_admin/admin/site_license_send_mail_settings.html:181
 #: weko_admin/templates/weko_admin/admin/site_license_settings.html:204
 #: weko_admin/templates/weko_admin/admin/stats_settings.html:71
-#: weko_admin/templates/weko_admin/admin/sword_api_jsonld_settings.html:234
+#: weko_admin/templates/weko_admin/admin/sword_api_jsonld_settings.html:243
 #: weko_admin/templates/weko_admin/admin/sword_api_settings.html:113
 #: weko_admin/templates/weko_admin/admin/web_api_account.html:71
 #: weko_admin/templates/weko_admin/partials/email_schedule.html:88
@@ -932,7 +952,7 @@ msgstr "再送信"
 #: weko_admin/templates/weko_admin/admin/log_analysis_settings.html:196
 #: weko_admin/templates/weko_admin/admin/report.html:288
 #: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:75
-#: weko_admin/templates/weko_admin/admin/sword_api_jsonld_settings.html:255
+#: weko_admin/templates/weko_admin/admin/sword_api_jsonld_settings.html:264
 msgid "Close"
 msgstr "閉じる"
 
@@ -1005,6 +1025,7 @@ msgid "This Mapping is using SWORD API."
 msgstr "このマッピングはSWORD API JSON-LDで使用されています。アイテムタイプの選択を変更することはできません。"
 
 #: weko_admin/templates/weko_admin/admin/jsonld_mapping_settings.html:95
+#: weko_admin/templates/weko_admin/admin/sword_api_jsonld_settings.html:51
 msgid "Item Type"
 msgstr "アイテムタイプ"
 
@@ -1306,9 +1327,10 @@ msgid "Item"
 msgstr "タイトル"
 
 #: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:70
-#: weko_admin/templates/weko_admin/admin/sword_api_jsonld_settings.html:126
+#: weko_admin/templates/weko_admin/admin/sword_api_jsonld_settings.html:135
+#: weko_admin/templates/weko_admin/admin/sword_api_settings.html:83
 msgid "WorkFlow"
-msgstr ""
+msgstr "ワークフロー"
 
 #: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:71
 #, fuzzy
@@ -1718,56 +1740,56 @@ msgstr "統計設定"
 msgid "Show/Hide Record Stats"
 msgstr "レコード統計の表示/非表示"
 
-#: weko_admin/templates/weko_admin/admin/sword_api_jsonld_settings.html:77
+#: weko_admin/templates/weko_admin/admin/sword_api_jsonld_settings.html:41
+msgid "Cannot disable 'Original'."
+msgstr "「Original」を無効にすることはできません。"
+
+#: weko_admin/templates/weko_admin/admin/sword_api_jsonld_settings.html:52
+msgid "Item type mismatch"
+msgstr "ワークフローに設定されたアイテムタイプと、マッピング定義のアイテムタイプが一致しません。再度選択してください。"
+
+#: weko_admin/templates/weko_admin/admin/sword_api_jsonld_settings.html:53
+msgid "The workflow has been deleted"
+msgstr "ワークフローが削除されています。再度選択してください。"
+
+#: weko_admin/templates/weko_admin/admin/sword_api_jsonld_settings.html:86
 msgid "Application"
 msgstr "アプリケーション"
 
-#: weko_admin/templates/weko_admin/admin/sword_api_jsonld_settings.html:113
+#: weko_admin/templates/weko_admin/admin/sword_api_jsonld_settings.html:122
 #: weko_admin/templates/weko_admin/admin/sword_api_settings.html:70
 msgid "Registration Type"
 msgstr "登録方式"
 
-#: weko_admin/templates/weko_admin/admin/sword_api_jsonld_settings.html:139
+#: weko_admin/templates/weko_admin/admin/sword_api_jsonld_settings.html:148
 #: weko_admin/templates/weko_admin/admin/sword_api_settings.html:96
 msgid "WorkFlow Cautionary Note"
 msgstr "選択したワークフローに紐づくアイテムタイプのみ登録可能となります。"
 
-#: weko_admin/templates/weko_admin/admin/sword_api_jsonld_settings.html:162
+#: weko_admin/templates/weko_admin/admin/sword_api_jsonld_settings.html:171
 #: weko_admin/templates/weko_admin/admin/sword_api_settings.html:102
 msgid "Duplicate Check"
 msgstr "重複チェック"
 
-#: weko_admin/templates/weko_admin/admin/sword_api_jsonld_settings.html:171
-#, fuzzy
-msgid "Meta data API"
-msgstr "メタデータAPI"
+#: weko_admin/templates/weko_admin/admin/sword_api_jsonld_settings.html:180
+msgid "Metadata Collection API"
+msgstr "メタデータ補完API"
 
-#: weko_admin/templates/weko_admin/admin/sword_api_jsonld_settings.html:182
+#: weko_admin/templates/weko_admin/admin/sword_api_jsonld_settings.html:191
 msgid "Disable"
 msgstr "無効"
 
-#: weko_admin/templates/weko_admin/admin/sword_api_jsonld_settings.html:198
+#: weko_admin/templates/weko_admin/admin/sword_api_jsonld_settings.html:207
 msgid "Enable"
 msgstr "有効"
 
-#: weko_admin/templates/weko_admin/admin/sword_api_jsonld_settings.html:228
+#: weko_admin/templates/weko_admin/admin/sword_api_jsonld_settings.html:237
 msgid "\"Original\" means the original metadata received via the SWORD API."
-msgstr "\"Original\"はSWORD API経由で受信したもともとのメタデータを指します。"
+msgstr "「Original」はSWORD API経由で受信したもともとのメタデータを指します。"
 
 #: weko_admin/templates/weko_admin/admin/sword_api_settings.html:43
 msgid "Required item is not inputted"
 msgstr ""
-
-#: weko_admin/templates/weko_admin/admin/sword_api_settings.html:74
-#, fuzzy
-msgid "Direct"
-msgstr "直接登録"
-
-#: weko_admin/templates/weko_admin/admin/sword_api_settings.html:76
-#: weko_admin/templates/weko_admin/admin/sword_api_settings.html:83
-#, fuzzy
-msgid "Workflow"
-msgstr "ワークフロー"
 
 #: weko_admin/templates/weko_admin/admin/web_api_account.html:39
 msgid "Input Type"
@@ -1838,154 +1860,3 @@ msgstr "現行"
 #: weko_admin/templates/weko_admin/settings/lifetime.html:59
 msgid "Update"
 msgstr "更新"
-
-#~ msgid "Title_Asc"
-#~ msgstr "タイトル（昇順）"
-
-#~ msgid "Title_Desc"
-#~ msgstr "タイトル（降順）"
-
-#~ msgid "Creator_Asc"
-#~ msgstr "登録者（昇順）"
-
-#~ msgid "Creator_Desc"
-#~ msgstr "登録者（降順）"
-
-#~ msgid "itemType_Desc"
-#~ msgstr "アイテムタイプ（昇順）"
-
-#~ msgid "itemType_Asc"
-#~ msgstr "アイテムタイプ（降順）"
-
-#~ msgid "ID_Asc"
-#~ msgstr "ID（昇順）"
-
-#~ msgid "ID_Desc"
-#~ msgstr "ID（降順）"
-
-#~ msgid "Update_Asc"
-#~ msgstr "更新日時（昇順）"
-
-#~ msgid "Update_Desc"
-#~ msgstr "更新日時（降順）"
-
-#~ msgid "Create_Asc"
-#~ msgstr "作成日時（昇順）"
-
-#~ msgid "Create_Desc"
-#~ msgstr "作成日時（降順）"
-
-#~ msgid "Date_of_Issued_Asc"
-#~ msgstr "出版年（昇順）"
-
-#~ msgid "Date_of_Issued_Desc"
-#~ msgstr "出版年（降順）"
-
-#~ msgid "Custom_Asc"
-#~ msgstr "カスタム（昇順）"
-
-#~ msgid "Custom_Desc"
-#~ msgstr "カスタム（降順）"
-
-#~ msgid "Organization name"
-#~ msgstr ""
-
-#~ msgid "Aggregation Monh"
-#~ msgstr ""
-
-#~ msgid "Site License setting"
-#~ msgstr ""
-
-#~ msgid "File Preview Report"
-#~ msgstr ""
-
-#~ msgid "01"
-#~ msgstr ""
-
-#~ msgid "02"
-#~ msgstr ""
-
-#~ msgid "03"
-#~ msgstr ""
-
-#~ msgid "04"
-#~ msgstr ""
-
-#~ msgid "05"
-#~ msgstr ""
-
-#~ msgid "06"
-#~ msgstr ""
-
-#~ msgid "07"
-#~ msgstr ""
-
-#~ msgid "08"
-#~ msgstr ""
-
-#~ msgid "09"
-#~ msgstr ""
-
-#~ msgid "10"
-#~ msgstr ""
-
-#~ msgid "11"
-#~ msgstr ""
-
-#~ msgid "12"
-#~ msgstr ""
-
-#~ msgid "Background2"
-#~ msgstr "背景2"
-
-#~ msgid "Frame Border"
-#~ msgstr "枠線"
-
-#~ msgid "Header"
-#~ msgstr "ヘッダ"
-
-#~ msgid "Footer"
-#~ msgstr "フッター"
-
-#~ msgid "Header Setting"
-#~ msgstr "ヘッダ設定"
-
-#~ msgid "Footer Setting"
-#~ msgstr "フッター設定"
-
-#~ msgid "Mail Address"
-#~ msgstr "メールアドレス"
-
-#~ msgid ""
-#~ "Please classify a check into the "
-#~ "organization send a use of site "
-#~ "license statistics eamil."
-#~ msgstr ""
-
-#~ msgid "Add_Agg"
-#~ msgstr "追加"
-
-#~ msgid "Facet Search List"
-#~ msgstr "ファセット検索一覧"
-
-#~ msgid "Required item is not inputted"
-#~ msgstr "必須項目がありません。"
-
-#~ msgid "The selected Workflow has been deleted. Please recheck and input."
-#~ msgstr "選択されたワークフローは削除されました。ご確認の上、再度入力してください。"
-
-#~ msgid "Accept"
-#~ msgstr "受け入れ"
-
-#~ msgid "active"
-#~ msgstr "有効"
-
-#~ msgid "Day"
-#~ msgstr "日"
-
-#~ msgid "Add Setting"
-#~ msgstr "設定追加"
-
-#~ msgid "Display Numbe"
-#~ msgstr "表示件数"
-

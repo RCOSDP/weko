@@ -1,6 +1,7 @@
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_rest.py -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
 
 import json
+import uuid
 from mock import patch
 from flask import Blueprint, Response
 
@@ -84,7 +85,7 @@ def test_Authors(app):
 
 
 
-# .tox/c1/bin/pytest --cov=weko_index_tree tests/test_rest.py::TestAuthorDBManagementAPI -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko_index_tree/.tox/c1/tmp --full-trace -p no:warnings
+# .tox/c1/bin/pytest --cov=weko_authors tests/test_rest.py::TestAuthorDBManagementAPI -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko_index_tree/.tox/c1/tmp --full-trace -p no:warnings
 
 class TestAuthorDBManagementAPI:
     @pytest.mark.parametrize('base_app',[dict(
@@ -110,6 +111,7 @@ class TestAuthorDBManagementAPI:
         self.run_get_authors(app, client_api, auth_headers_sysadmin, {"idtype": "ORCID", "authorid": "1"}, 200, [])  # ID タイプが WEKO で ID が 1 の著者が正しく取得できるか確認
 
         # 異常系テスト（不正なアクセスや無効なパラメータの確認）
+        self.run_get_authors_invalid_version(app, client_api, auth_headers_sysadmin)  # 無効なAPIバージョンでのアクセスが 400（Bad Request） となることを確認
         self.run_get_authors_unauthorized(app, client_api)  # 認証なしでのアクセスが 401（Unauthorized） となることを確認
         self.run_get_authors(app, client_api, auth_headers_sysadmin_without_scope, {"fullname": "Test_1 "}, 403, [])  # スコープ権限のないシステム管理者が検索した場合、403（Forbidden）となることを確認
         self.run_get_authors(app, client_api, auth_headers_noroleuser, {"fullname": "Test_1 "}, 403, [])  # 権限のないユーザーが検索した場合、403（Forbidden）となることを確認
@@ -157,6 +159,16 @@ class TestAuthorDBManagementAPI:
         assert response.status_code == 401
         print(f"Unauthorizedアクセスエラー: {response.get_data(as_text=True)}")
 
+    def run_get_authors_invalid_version(self, app, client_api, headers):
+        """
+        無効なAPIバージョンで著者情報取得を試みるテスト
+        - 無効なバージョンのAPIにアクセスし、Bad Request(400)が返ることを確認
+        """
+        url = "v0/authors"
+        response = client_api.get(url, headers=headers)
+        assert response.status_code == 400
+        assert "This API version does not found." in response.get_json().get("message", "")
+
     def build_query_string(self, params):
         """
         クエリパラメータをURLエンコードするヘルパー関数
@@ -167,7 +179,7 @@ class TestAuthorDBManagementAPI:
     @pytest.mark.parametrize('base_app',[dict(
         is_es=True
     )],indirect=['base_app'])
-    def test_post_v1(self, app, client_api, auth_headers_noroleuser, auth_headers_sysadmin, author_records_for_test, authors_affiliation_settings, authors_prefix_settings):
+    def test_post_v1(self, app, client_api, auth_headers_noroleuser, auth_headers_sysadmin, author_records_for_test, authors_affiliation_settings, authors_prefix_settings, auth_headers_bad_content_type):
         """
         著者情報登録API - 著者情報の登録テスト
         - 正常系: 正しく登録できるか確認
@@ -191,15 +203,18 @@ class TestAuthorDBManagementAPI:
 
         # 異常系テスト（リクエスト内容のバリデーション）
         # 不正なリクエストが適切に処理されることを確認
-        self.run_post_author(app, client_api, auth_headers_sysadmin, {}, 400, "Request body cannot be empty.")  # 空のリクエスト
-        self.run_post_author(app, client_api, auth_headers_sysadmin, {"author": None}, 400, "author can not be null.")  # authorがNone
+        self.run_post_authors_invalid_version(app, client_api, auth_headers_sysadmin)  # 無効なAPIバージョンでのリクエスト
+        self.run_post_author(app, client_api, auth_headers_bad_content_type, self.valid_author_data(), 400, "Content-Type must be application/json.")  # 不正なContent-Type
+        self.run_post_author_bad_json(app, client_api, auth_headers_sysadmin)  # 不正なJSONフォーマット
+        self.run_post_author(app, client_api, auth_headers_sysadmin, {}, 400, "Bad Request: Invalid payload, {'author': ['Missing data for required field.']}")  # 空のリクエスト
+        self.run_post_author(app, client_api, auth_headers_sysadmin, {"author": None}, 400, "Bad Request: Invalid payload, {'author': ['Field may not be null.']}")  # authorがNone
         self.run_post_author(app, client_api, auth_headers_sysadmin, {"author": {"authorIdInfo": [{"idType": "ORCID"}]}}, 400, "Both 'idType' and 'authorId' must be provided together.")  # idTypeのみ指定
         self.run_post_author(app, client_api, auth_headers_sysadmin, {"author": {"authorIdInfo": [{"idType": "WEKO", "authorId": "A1"}]}}, 400, "The WEKO ID must be numeric characters only.")  # WEKO IDが数字以外
         self.run_post_author(app, client_api, auth_headers_sysadmin, {"author": {"authorIdInfo": [{"idType": "WEKO", "authorId": "1"}]}}, 400, "The value is already in use as WEKO ID.")  # 既存のWEKO ID
         self.run_post_author(app, client_api, auth_headers_sysadmin, {"author": {"authorNameInfo": [{"firstName": "John", "familyName": "Doe"}]}}, 400, "If 'firstName' or 'familyName' is provided, 'language' must also be specified.")  # language未指定
-        self.run_post_author(app, client_api, auth_headers_sysadmin, {"author": {"affiliationInfo": "InvalidFormat"}}, 400, "'affiliationInfo' should be a list.")  # affiliationInfoがリストでない
-        self.run_post_author(app, client_api, auth_headers_sysadmin, {"author": {"affiliationInfo": ["InvalidFormat"]}}, 400, "Invalid format in 'affiliationInfo'.")  # affiliationInfoのフォーマット不正
-        self.run_post_author(app, client_api, auth_headers_sysadmin, {"author": {"affiliationInfo": [{"affiliationPeriodInfo": [{"periodStart": "2025-03-21", "periodEnd": "2025-01-27"}]}]}}, 400, "affiliationPeriodInfo error: start is after end")  # 開始日が終了日より後
+        self.run_post_author(app, client_api, auth_headers_sysadmin, {"author": {"affiliationInfo": "InvalidFormat"}}, 400, "Bad Request: Invalid payload, {'author': {'affiliationInfo': ['Not a valid list.']}}")  # affiliationInfoがリストでない
+        self.run_post_author(app, client_api, auth_headers_sysadmin, {"author": {"affiliationInfo": ["InvalidFormat"]}}, 400, "Bad Request: Invalid payload, {'author': {'affiliationInfo': {0: {'_schema': ['Invalid input type.']}}}}")  # affiliationInfoのフォーマット不正
+        self.run_post_author(app, client_api, auth_headers_sysadmin, {"author": {"affiliationInfo": [{"affiliationPeriodInfo": [{"periodStart": "2025-03-21", "periodEnd": "2025-01-27"}]}]}}, 400, 'periodStart must be before periodEnd.')  # 開始日が終了日より後
         self.run_post_author(app, client_api, auth_headers_sysadmin, {"author": {"affiliationInfo": [{"identifierInfo": [{"affiliationId": "https://ror.org/##", "identifierShowFlg": "true"}]}]}}, 400, "Both 'affiliationIdType' and 'affiliationId' must be provided together.")  # affiliationIdType未指定
         self.run_post_author(app, client_api, auth_headers_sysadmin, {"author": {"affiliationInfo": [{"affiliationNameInfo": [{"affiliationName": "NII", "identifierShowFlg": "true"}]}]}}, 400, "Both 'affiliationName' and 'affiliationNameLang' must be provided together.")  # affiliationNameLang未指定
 
@@ -208,6 +223,10 @@ class TestAuthorDBManagementAPI:
         self.run_post_author_db_error(app, client_api, auth_headers_sysadmin, self.valid_author_data())  # DBエラー発生時
         with patch("invenio_search.current_search_client.search", side_effect=Exception):
             self.run_post_author(app, client_api, auth_headers_sysadmin, self.valid_author_data(), 500)  # 検索時に例外が発生した場合
+        with patch("weko_authors.utils.get_author_prefix_obj", return_value=None):
+            self.run_post_author(app, client_api, auth_headers_sysadmin, self.valid_author_data(), 500)  # 著者プレフィックス取得時に例外が発生した場合
+        with patch("weko_authors.utils.get_author_affiliation_obj", return_value=None):
+            self.run_post_author(app, client_api, auth_headers_sysadmin, self.valid_author_data(), 500)  # 著者所属情報取得時に例外が発生した場合
 
     def run_post_author(self, app, client_api, user_headers, request_data, expected_status, expected_message=None):
         """
@@ -228,6 +247,30 @@ class TestAuthorDBManagementAPI:
                 response_json = json.loads(response.data.decode('utf-8'))
                 message = response_json.get("message")
                 assert expected_message in message, f"Expected message: {expected_message}, got: {message}"
+
+    def run_post_author_bad_json(self, app, client_api, user_headers):
+        """
+        JSONとして無効なリクエストデータを送信するテスト
+        - Bad Request (400) が返されることを確認
+        """
+        url = "v1/authors"
+        request_data = "invalid-json"
+        response = client_api.post(url, data=request_data, headers=user_headers)
+        assert response.status_code == 400, f"Expected 400, got {response.status_code}"
+
+        response_json = response.get_json()
+        message = response_json.get("message")
+        assert "Bad Request: Failed to parse provided." in message, f"Expected message: Bad Request: Failed to parse provided., got: {message}"
+
+    def run_post_authors_invalid_version(self, app, client_api, user_headers):
+        """
+        無効なAPIバージョンで著者情報登録を試みるテスト
+        - 無効なバージョンのAPIにアクセスし、Bad Request(400)が返ることを確認
+        """
+        url = "v0/authors"
+        response = client_api.post(url, json=self.valid_author_data(), headers=user_headers)
+        assert response.status_code == 400
+        assert "This API version does not found." in response.get_json().get("message", "")
 
     def run_post_author_unauthorized(self, app, client_api):
         """
@@ -260,11 +303,11 @@ class TestAuthorDBManagementAPI:
         return {
             "author": {
                 "emailInfo": [{"email": "sample@xxx.co.jp"}],
-                "authorIdInfo": [{"idType": idType, "authorId": "5", "authorIdShowFlg": True}],
-                "authorNameInfo": [{"language": "en", "firstName": "John", "familyName": "Doe", "nameFormat": nameFormat, "nameShowFlg": True}],
+                "authorIdInfo": [{"idType": idType, "authorId": "5", "authorIdShowFlg": "true"}],
+                "authorNameInfo": [{"language": "en", "firstName": "John", "familyName": "Doe", "nameFormat": nameFormat, "nameShowFlg": "true"}],
                 "affiliationInfo": [{
-                    "identifierInfo": [{"affiliationId": "https://ror.org/5678", "affiliationIdType": "ISNI", "identifierShowFlg": True}],
-                    "affiliationNameInfo": [{"affiliationName": "NII", "affiliationNameLang": "en", "affiliationNameShowFlg": True}],
+                    "identifierInfo": [{"affiliationId": "https://ror.org/5678", "affiliationIdType": "ISNI", "identifierShowFlg": "true"}],
+                    "affiliationNameInfo": [{"affiliationName": "NII", "affiliationNameLang": "en", "affiliationNameShowFlg": "true"}],
                     "affiliationPeriodInfo": [{"periodStart": "2025-01-27", "periodEnd": "2025-03-21"}]
                 }]
             }
@@ -275,41 +318,41 @@ class TestAuthorDBManagementAPI:
         is_es=True
     )],indirect=['base_app'])
     # .tox/c1/bin/pytest --cov=weko_authors tests/test_rest.py::TestAuthorDBManagementAPI::test_put_v1 -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko_index_tree/.tox/c1/tmp --full-trace | tee log.log
-    def test_put_v1(self, app, client_api, auth_headers_noroleuser, auth_headers_sysadmin, author_records_for_test, authors_affiliation_settings, authors_prefix_settings):
+    def test_put_v1(self, app, client_api, auth_headers_noroleuser, auth_headers_sysadmin, author_records_for_test, authors_affiliation_settings, authors_prefix_settings, auth_headers_bad_content_type):
         """
         著者情報更新API - 著者情報の更新テスト
         - 正常系: 正しく更新できるか確認
         - 異常系: 不正なリクエストや認証なしでのアクセス制御確認
         """
-        with patch("weko_deposit.tasks.update_items_by_authorInfo.delay",side_effect = MagicMock()):
+        with patch("weko_deposit.tasks.update_items_by_authorInfo.delay",side_effect = MagicMock()), \
+                patch("weko_logging.activity_logger.UserActivityLogger", return_value=MagicMock()):
             oauth2 = OAuth2Provider()
             oauth2.after_request(login_oauth2_user)
 
             # 正常系テスト
             # 正しく著者情報を更新できることを確認
-            self.run_put_author(app, client_api, auth_headers_sysadmin, self.valid_update_data(), 200, "Author successfully updated.")
+            self.run_put_author(app, client_api, auth_headers_sysadmin, self.valid_update_data(), 1, 200, "Author successfully updated.")
             author_data = self.valid_update_data()
             del author_data["author"]["emailInfo"]
-            self.run_put_author(app, client_api, auth_headers_sysadmin, author_data, 200, "Author successfully updated.")
+            self.run_put_author(app, client_api, auth_headers_sysadmin, author_data, 1, 200, "Author successfully updated.")
             es_id = author_records_for_test["1"]
-            self.run_put_author(app, client_api, auth_headers_sysadmin, {"id": es_id, "author": self.valid_update_data().get("author")}, 200, "Author successfully updated.")
-            self.run_put_author(app, client_api, auth_headers_sysadmin, {"id": es_id, "force_change": True, "author": self.valid_update_data().get("author")}, 200, "Author successfully updated.")
-            self.run_put_author(app, client_api, auth_headers_sysadmin, {"id": es_id, "pk_id": "1", "author": self.valid_update_data().get("author")}, 200, "Author successfully updated.")
+            self.run_put_author(app, client_api, auth_headers_sysadmin, {"author": self.valid_update_data().get("author")}, es_id, 200, "Author successfully updated.")
+            self.run_put_author(app, client_api, auth_headers_sysadmin, {"force_change": True, "author": self.valid_update_data().get("author")}, es_id, 200, "Author successfully updated.")
+            self.run_put_author(app, client_api, auth_headers_sysadmin, {"author": self.valid_update_data().get("author")}, es_id, 200, "Author successfully updated.")
 
             data_no_weko = {
-                "pk_id": "1",
                 "author": {
                     "emailInfo": [{"email": "updated@xxx.co.jp"}],
-                    "authorIdInfo": [{"idType": "ORCID", "authorId": "5", "authorIdShowFlg": True}],
-                    "authorNameInfo": [{"language": "en", "firstName": "Jane", "familyName": "Smith", "nameFormat": "familyNmAndNm", "nameShowFlg": True}],
+                    "authorIdInfo": [{"idType": "ORCID", "authorId": "5", "authorIdShowFlg": "true"}],
+                    "authorNameInfo": [{"language": "en", "firstName": "Jane", "familyName": "Smith", "nameFormat": "familyNmAndNm", "nameShowFlg": "true"}],
                     "affiliationInfo": [{
-                        "identifierInfo": [{"affiliationId": "https://ror.org/5678", "affiliationIdType": "ISNI", "identifierShowFlg": True}],
-                        "affiliationNameInfo": [{"affiliationName": "NII", "affiliationNameLang": "en", "affiliationNameShowFlg": True}],
+                        "identifierInfo": [{"affiliationId": "https://ror.org/5678", "affiliationIdType": "ISNI", "identifierShowFlg": "true"}],
+                        "affiliationNameInfo": [{"affiliationName": "NII", "affiliationNameLang": "en", "affiliationNameShowFlg": "true"}],
                         "affiliationPeriodInfo": [{"periodStart": "2025-02-01", "periodEnd": "2025-04-01"}]
                     }]
                 }
             }
-            self.run_put_author(app, client_api, auth_headers_sysadmin, data_no_weko, 400, "idType: WEKO (weko id) must be provided.")
+            self.run_put_author(app, client_api, auth_headers_sysadmin, data_no_weko, 1, 400, "At least one WEKO ID must be provided in update.")
 
             # 認証なしのリクエストが拒否されることを確認
             self.run_put_author_unauthorized(app, client_api)
@@ -318,46 +361,40 @@ class TestAuthorDBManagementAPI:
             self.run_put_author(app, client_api, auth_headers_noroleuser, self.valid_update_data(), 403, None)
 
             # 異常系テスト（リクエスト内容のバリデーション）
-            self.run_put_author(app, client_api, auth_headers_sysadmin, {}, 400, "Request body cannot be empty.")
+            self.run_put_authors_invalid_version(app, client_api, auth_headers_sysadmin)  # invalid API version
+            self.run_put_author(app, client_api, auth_headers_bad_content_type, self.valid_author_data(), 400, "Content-Type must be application/json.")  # invalid Content-Type
+            self.run_put_author_bad_json(app, client_api, auth_headers_sysadmin)  # invalid JSON format
+            self.run_put_author(app, client_api, auth_headers_sysadmin, {}, 1, 400, "'author': ['Missing data for required field.']")
             author_data = self.valid_update_data()
             author_data["author"]["authorNameInfo"][0]["language"] = "jp"
-            self.run_put_author(app, client_api, auth_headers_sysadmin, author_data, 400, "Invalid Author Data, 'idtype' or 'language' Not Allowed.")
+            self.run_put_author(app, client_api, auth_headers_sysadmin, author_data, 1, 400, "Invalid authorNameInfo.language: ['jp'].")
             author_data = self.valid_update_data()
             author_data["author"]["affiliationInfo"][0]["affiliationNameInfo"][0]["affiliationNameLang"] = "jp"
-            self.run_put_author(app, client_api, auth_headers_sysadmin, author_data, 400, "Invalid Author Data, 'idtype' or 'language' Not Allowed.")
+            self.run_put_author(app, client_api, auth_headers_sysadmin, author_data, 1, 400, "Invalid affiliationInfo.affiliationNameLang:['jp'].")
             author_data = self.valid_update_data()
-            author_data["author"]["authorIdInfo"][0]["idType"] = "WEKO_WRONG"
-            self.run_put_author(app, client_api, auth_headers_sysadmin, author_data, 400, "Invalid Author Data, 'idtype' or 'language' Not Allowed.")
+            author_data["author"]["authorIdInfo"].append({"idType": "WEKO_WRONG", "authorId": "5"})
+            self.run_put_author(app, client_api, auth_headers_sysadmin, author_data, 1, 400, "Invalid authorIdInfo.idType: ['WEKO_WRONG'].")
             author_data = self.valid_update_data()
             author_data["author"]["affiliationInfo"][0]["identifierInfo"][0]["affiliationIdType"] = "Ringgold_WRONG"
-            self.run_put_author(app, client_api, auth_headers_sysadmin, author_data, 400, "Invalid Author Data, 'idtype' or 'language' Not Allowed.")
-            author_data = self.valid_update_data()
-            author_data.pop("pk_id")
-            self.run_put_author(app, client_api, auth_headers_sysadmin, author_data, 400, "Bad Request: Either 'id' or 'pk_id' must be specified.")
-            self.run_put_author(app, client_api, auth_headers_sysadmin, {"id": "123"}, 400, "author can not be null.")
-            self.run_put_author(app, client_api, auth_headers_sysadmin, {"pk_id": "123"}, 400, "author can not be null.")
-            self.run_put_author(app, client_api, auth_headers_sysadmin, {"id": "invalid", "pk_id": "invalid", "author": self.valid_update_data().get("author")}, 400, "Invalid author ID.")
+            self.run_put_author(app, client_api, auth_headers_sysadmin, author_data, 1, 400, "Invalid affiliationInfo.affiliationIdType: ['Ringgold_WRONG'].")
 
-            self.run_put_author(app, client_api, auth_headers_sysadmin, {"id": "999", "pk_id": "999", "author": self.valid_update_data().get("author")}, 404, "Specified author does not exist.")
-            self.run_put_author(app, client_api, auth_headers_sysadmin, {"pk_id": "999", "author": self.valid_update_data().get("author")}, 404, "Specified author does not exist.")
-            self.run_put_author(app, client_api, auth_headers_sysadmin, {"id": "999", "author": self.valid_update_data().get("author")}, 404, "Specified author does not exist.")
+            self.run_put_author(app, client_api, auth_headers_sysadmin, {}, 123, 400, "'author': ['Missing data for required field.']")
+            self.run_put_author(app, client_api, auth_headers_sysadmin, {"author": self.valid_update_data().get("author")}, "invalid", 400,  "Invalid identifier format. Must be an integer ID or UUID.")
 
-            # IDが異なるケース
-            self.run_put_author(app, client_api, auth_headers_sysadmin, {"id": "123", "pk_id": "1", "author": self.valid_update_data()["author"]}, 400, "Parameters 'id' and 'pk_id' refer to different users.")
-            self.run_put_author(app, client_api, auth_headers_sysadmin, {"id": "123", "pk_id": "1", "author": self.valid_update_data()["author"]}, 400, "Parameters 'id' and 'pk_id' refer to different users.")
-            self.run_put_author(app, client_api, auth_headers_sysadmin, {"id": es_id, "pk_id": "2", "author": self.valid_update_data().get("author")}, 400, "Parameters 'id' and 'pk_id' refer to different users.")
+            self.run_put_author(app, client_api, auth_headers_sysadmin, {"author": self.valid_update_data().get("author")}, 999, 404, "Specified author does not exist.")
+            self.run_put_author(app, client_api, auth_headers_sysadmin, {"author": self.valid_update_data().get("author")}, str(uuid.uuid4()), 404, "Specified author does not exist.")
 
             # システムエラーの確認
             self.run_put_author_db_error(app, client_api, auth_headers_sysadmin, self.valid_update_data())
 
-    def run_put_author(self, app, client_api, user_headers, request_data, expected_status, expected_message=None):
+    def run_put_author(self, app, client_api, user_headers, request_data, id, expected_status, expected_message=None):
         """
         著者情報更新APIのテスト
         """
         print(1111111111111111111111111111)
         print(request_data)
         print(1111111111111111111111111111)
-        url = "v1/authors"
+        url = f"v1/authors/{id}"
         response = client_api.put(url, json=request_data, headers=user_headers)
         # assert response.status_code == expected_status, f"Expected {expected_status}, got {response.status_code}"
 
@@ -371,11 +408,35 @@ class TestAuthorDBManagementAPI:
                 message = response_json.get("message")
                 assert expected_message in message, f"Expected message: {expected_message}, got: {message}"
 
+    def run_put_author_bad_json(self, app, client_api, user_headers):
+        """
+        JSONとして無効なリクエストデータを送信するテスト
+        - Bad Request (400) が返されることを確認
+        """
+        url = "v1/authors/1"
+        request_data = "invalid-json"
+        response = client_api.put(url, data=request_data, headers=user_headers)
+        assert response.status_code == 400, f"Expected 400, got {response.status_code}"
+
+        response_json = response.get_json()
+        message = response_json.get("message")
+        assert "Bad Request: Failed to parse provided." in message, f"Expected message: Bad Request: Failed to parse provided., got: {message}"
+
+    def run_put_authors_invalid_version(self, app, client_api, user_headers):
+        """
+        無効なAPIバージョンで著者情報更新を試みるテスト
+        - 無効なバージョンのAPIにアクセスし、Bad Request(400)が返ることを確認
+        """
+        url = "v0/authors/1"
+        response = client_api.put(url, json=self.valid_update_data(), headers=user_headers)
+        assert response.status_code == 400
+        assert "This API version does not found." in response.get_json().get("message", "")
+
     def run_put_author_unauthorized(self, app, client_api):
         """
         認証なしで著者情報を更新しようとした場合のテスト
         """
-        url = "v1/authors"
+        url = "v1/authors/1"
         response = client_api.put(url, json=self.valid_update_data(), headers={})
         assert response.status_code == 401
 
@@ -383,30 +444,29 @@ class TestAuthorDBManagementAPI:
         """
         データベースエラー時のテスト
         """
-        url = "v1/authors"
+        url = "v1/authors/1"
         with patch("weko_authors.models.Authors.query", side_effect=SQLAlchemyError):
             response = client_api.put(url, json=request_data, headers=user_headers)
         assert response.status_code == 500
-        assert "Database error." in response.get_data(as_text=True)
+        assert "Failed to update author." in response.get_data(as_text=True)
 
         with patch("weko_authors.rest.AuthorDBManagementAPI.get_all_schemes", side_effect=Exception):
             response = client_api.put(url, json=request_data, headers=user_headers)
         assert response.status_code == 500
-        assert "Internal server error." in response.get_data(as_text=True)
+        assert "Failed to update author." in response.get_data(as_text=True)
 
     def valid_update_data(self):
         """
         正常な更新データ
         """
         return {
-            "pk_id": "1",
             "author": {
                 "emailInfo": [{"email": "updated@xxx.co.jp"}],
-                "authorIdInfo": [{"idType": "WEKO", "authorId": "5", "authorIdShowFlg": True}],
-                "authorNameInfo": [{"language": "en", "firstName": "Jane", "familyName": "Smith", "nameFormat": "familyNmAndNm", "nameShowFlg": True}],
+                "authorIdInfo": [{"idType": "WEKO", "authorId": "5", "authorIdShowFlg": "true"}],
+                "authorNameInfo": [{"language": "en", "firstName": "Jane", "familyName": "Smith", "nameFormat": "familyNmAndNm", "nameShowFlg": "true"}],
                 "affiliationInfo": [{
-                    "identifierInfo": [{"affiliationId": "https://ror.org/5678", "affiliationIdType": "ISNI", "identifierShowFlg": True}],
-                    "affiliationNameInfo": [{"affiliationName": "NII", "affiliationNameLang": "en", "affiliationNameShowFlg": True}],
+                    "identifierInfo": [{"affiliationId": "https://ror.org/5678", "affiliationIdType": "ISNI", "identifierShowFlg": "true"}],
+                    "affiliationNameInfo": [{"affiliationName": "NII", "affiliationNameLang": "en", "affiliationNameShowFlg": "true"}],
                     "affiliationPeriodInfo": [{"periodStart": "2025-02-01", "periodEnd": "2025-04-01"}]
                 }]
             }
@@ -423,63 +483,73 @@ class TestAuthorDBManagementAPI:
         - 異常系: 認証なし、権限なし、存在しないデータ削除時の動作確認
         """
         es_ids = author_records_for_test
-        self.run_delete_author(app, client_api, auth_headers_sysadmin, {"pk_id": "1"}, 200)
-        self.run_delete_author(app, client_api, auth_headers_sysadmin, {"id": es_ids["2"]}, 200)
-        self.run_delete_author(app, client_api, auth_headers_sysadmin, {"pk_id": "1", "id": es_ids["3"]}, 400, "Parameters 'id' and 'pk_id' refer to different users.")
-        self.run_delete_author(app, client_api, auth_headers_sysadmin, {"pk_id": "3", "id": es_ids["3"]}, 200)
+        self.run_delete_author(app, client_api, auth_headers_sysadmin, 1, 200)
+        self.run_delete_author(app, client_api, auth_headers_sysadmin, es_ids["2"], 200)
 
-        self.run_delete_author(app, client_api, auth_headers_sysadmin, {}, 400, "Request body cannot be empty.")
-        self.run_delete_author(app, client_api, auth_headers_sysadmin, {"abc":"abc"}, 400, "Either 'id' or 'pk_id' must be specified.")
-        self.run_delete_author(app, client_api, auth_headers_sysadmin, {"pk_id": "999"}, 404, "Specified author does not exist.")
-        self.run_delete_author(app, client_api, auth_headers_sysadmin, {"id": "es_not_found"}, 404, "Specified author does not exist.")
+        self.run_delete_author(app, client_api, auth_headers_sysadmin, "invalid", 400, "Invalid identifier format. Must be an integer ID or UUID.")
+        self.run_delete_author(app, client_api, auth_headers_sysadmin, 999, 404, "Specified author does not exist.")
+        self.run_delete_author(app, client_api, auth_headers_sysadmin, uuid.uuid4(), 404, "Specified author does not exist.")
 
         # 認証エラー
-        # self.run_delete_author_unauthorized(app, client_api)
+        self.run_delete_author_unauthorized(app, client_api)
 
         # 権限なし
-        self.run_delete_author(app, client_api, auth_headers_noroleuser, {"pk_id": "1"}, 403)
+        self.run_delete_author(app, client_api, auth_headers_noroleuser, 1, 403)
 
         # エラー
-        self.run_delete_author_error(app, client_api, auth_headers_sysadmin, {"pk_id": "4"})
+        self.run_delete_author_error(app, client_api, auth_headers_sysadmin, 4)
 
-    def run_delete_author(self, app, client_api, user_headers, request_data, expected_status, expected_message=None):
+        # 無効なバージョン
+        self.run_delete_authors_invalid_version(app, client_api, auth_headers_sysadmin)
+
+    def run_delete_author(self, app, client_api, user_headers, id, expected_status, expected_message=None):
         """
         著者削除APIのテスト
         - 指定したリクエストデータでAPIを実行し、期待するレスポンスを検証
         """
-        url = "v1/authors"
-        response = client_api.delete(url, json=request_data, headers=user_headers)
+        url = f"v1/authors/{id}"
+        response = client_api.delete(url, headers=user_headers)
         print(response.get_data(as_text=True))
         assert response.status_code == expected_status, f"Expected {expected_status}, got {response.status_code}"
         if expected_message:
             assert expected_message in response.get_data(as_text=True)
+
+    def run_delete_authors_invalid_version(self, app, client_api, user_headers):
+        """
+        無効なAPIバージョンで著者情報削除を試みるテスト
+        - 無効なバージョンのAPIにアクセスし、Bad Request(400)が返ることを確認
+        """
+        url = "v0/authors/1"
+        response = client_api.delete(url, headers=user_headers)
+        assert response.status_code == 400
+        assert "This API version does not found." in response.get_json().get("message", "")
 
     def run_delete_author_unauthorized(self, app, client_api):
         """
         認証なしで著者情報を削除しようとした場合のテスト
         - 認証が必要なAPIにアクセスし、Unauthorized(401)が返ることを確認
         """
-        url = "v1/authors"
-        response = client_api.delete(url, json={"pk_id": "1"}, headers={})
+        url = "v1/authors/1"
+        response = client_api.delete(url, headers={})
 
         assert response.status_code == 401
-        assert "OAuth2 authentication failed" in response.get_data(as_text=True)
+        # assert "OAuth2 authentication failed" in response.get_data(as_text=True)
 
-    def run_delete_author_error(self, app, client_api, user_headers, request_data):
+    def run_delete_author_error(self, app, client_api, user_headers, id):
         """
         データベースエラー時のテスト
         - DBエラー発生時に500 (Internal Server Error) が返されることを確認
         """
-        url = "v1/authors"
+        url = f"v1/authors/{id}"
 
         with patch("weko_authors.models.db.session.commit", side_effect=SQLAlchemyError):
-            response = client_api.delete(url, json=request_data, headers=user_headers)
+            response = client_api.delete(url, headers=user_headers)
 
         assert response.status_code == 500
-        assert "Database error." in response.get_data(as_text=True)
+        assert "Failed to delete author." in response.get_data(as_text=True)
 
         with patch("weko_authors.models.db.session.commit", side_effect=Exception):
-            response = client_api.delete(url, json=request_data, headers=user_headers)
+            response = client_api.delete(url, headers=user_headers)
 
         assert response.status_code == 500
-        assert "Internal server error." in response.get_data(as_text=True)
+        assert "Failed to delete author." in response.get_data(as_text=True)

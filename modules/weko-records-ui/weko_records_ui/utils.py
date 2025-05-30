@@ -36,8 +36,6 @@ from flask import abort, current_app, json, request, url_for, make_response, Fla
 from flask_babelex import get_locale
 from flask_babelex import gettext as _
 from flask_babelex import to_user_timezone, to_utc
-from flask_limiter import Limiter
-from flask_limiter.util import get_remote_address
 from flask_login import current_user
 from sqlalchemy import desc
 from invenio_accounts.models import Role, User
@@ -2281,11 +2279,6 @@ class RoCrateConverter:
         """Get RO-Crate metadata."""
 
         return self.crate.metadata.generate()
-
-
-def create_limiter():
-    from .config import WEKO_RECORDS_UI_API_LIMIT_RATE_DEFAULT
-    return Limiter(app=Flask(__name__), key_func=get_remote_address, default_limits=WEKO_RECORDS_UI_API_LIMIT_RATE_DEFAULT)
 
 def create_tsv(files, language='en'):
     """Create TSV file from files information.

@@ -25,8 +25,9 @@ import shutil
 import tempfile
 import uuid
 import json
-from datetime import datetime
+from datetime import datetime, timedelta
 from elasticsearch import Elasticsearch
+from invenio_accounts.utils import jwt_create_token
 from invenio_indexer import InvenioIndexer
 import pytest
 from invenio_indexer.api import RecordIndexer
@@ -66,7 +67,7 @@ from invenio_oaiserver.ext import InvenioOAIServer
 from invenio_records.ext import InvenioRecords
 from invenio_records.models import RecordMetadata
 from invenio_pidstore.models import PersistentIdentifier
-from invenio_oauth2server.models import Client
+from invenio_oauth2server.models import Client, Token
 
 from weko_authors import WekoAuthors
 from weko_authors.models import Authors
@@ -77,6 +78,7 @@ from weko_records_ui.config import WEKO_PERMISSION_SUPER_ROLE_USER
 from weko_records import WekoRecords
 from weko_records.models import SiteLicenseInfo, SiteLicenseIpAddress,ItemType,ItemTypeName,ItemTypeJsonldMapping
 from weko_redis.redis import RedisConnection
+from weko_swordserver.models import SwordClientModel
 from weko_theme import WekoTheme
 from weko_schema_ui import WekoSchemaUI
 from weko_search_ui import WekoSearchUI
@@ -92,9 +94,8 @@ from weko_admin.models import SessionLifetime,SiteInfo,SearchManagement,\
         LogAnalysisRestrictedCrawlerList,StatisticsEmail,RankingSettings, Identifier
 from weko_admin.views import blueprint_api
 
-from tests.helpers import json_data, create_record
+from .helpers import json_data, create_record
 from weko_admin.models import FacetSearchSetting
-from tests.helpers import json_data
 
 @pytest.yield_fixture()
 def instance_path():
@@ -1221,3 +1222,116 @@ def community(db, users, indexes):
     db.session.add(comm1)
     db.session.commit()
     return comm1
+
+@pytest.fixture
+def tokens(app,users,db):
+    scopes = [
+        "deposit:write deposit:actions item:create",
+        "deposit:write deposit:actions item:create user:activity",
+        "deposit:write user:activity",
+        ""
+    ]
+    tokens = []
+
+    for i, scope in enumerate(scopes):
+        user = users[i]
+        user_id = str(user["id"])
+
+        test_client = Client(
+            client_id=f"dev{user_id}",
+            client_secret=f"dev{user_id}",
+            name="Test name",
+            description="test description",
+            is_confidential=False,
+            user_id=user_id,
+            _default_scopes="deposit:write"
+        )
+        test_token = Token(
+            client=test_client,
+            user_id=user_id,
+            token_type="bearer",
+            access_token=jwt_create_token(user_id=user_id),
+            expires=datetime.now() + timedelta(hours=10),
+            is_personal=False,
+            is_internal=False,
+            _scopes=scope
+        )
+
+        db.session.add(test_client)
+        db.session.add(test_token)
+        tokens.append({"token":test_token, "client":test_client, "scope":scope})
+
+    db.session.commit()
+
+    return tokens
+
+
+@pytest.fixture
+def sword_mapping(db, item_type):
+    sword_mapping = []
+    for i in range(1, 4):
+        obj = ItemTypeJsonldMapping(
+            name=f"test{i}",
+            mapping=json_data("data/ro-crate_mapping.json"),
+            item_type_id=item_type[1]["obj"].id,
+            is_deleted=False
+        )
+        with db.session.begin_nested():
+            db.session.add(obj)
+
+        sword_mapping.append({
+            "id": obj.id,
+            "sword_mapping": obj,
+            "name": obj.name,
+            "mapping": obj.mapping,
+            "item_type_id": obj.item_type_id,
+            "version_id": obj.version_id,
+            "is_deleted": obj.is_deleted
+        })
+
+    db.session.commit()
+
+    return sword_mapping
+
+@pytest.fixture
+def sword_client(db, tokens, sword_mapping, flows):
+    client = tokens[0]["client"]
+    sword_client1 = SwordClientModel(
+        client_id=client.client_id,
+        active=True,
+        registration_type_id=SwordClientModel.RegistrationType.DIRECT,
+        mapping_id=sword_mapping[0]["sword_mapping"].id,
+        duplicate_check=False,
+        meta_data_api=[],
+    )
+    client = tokens[1]["client"]
+    sword_client2 = SwordClientModel(
+        client_id=client.client_id,
+        active=True,
+        registration_type_id=SwordClientModel.RegistrationType.WORKFLOW,
+        mapping_id=sword_mapping[1]["sword_mapping"].id,
+        workflow_id=flows["workflow"][1].id,
+        duplicate_check=True,
+        meta_data_api=[],
+    )
+    client = tokens[2]["client"]
+    sword_client3 = SwordClientModel(
+        client_id=client.client_id,
+        active=False,
+        registration_type_id=SwordClientModel.RegistrationType.DIRECT,
+        mapping_id=sword_mapping[0]["sword_mapping"].id,
+        duplicate_check=False,
+        meta_data_api=[],
+    )
+
+    with db.session.begin_nested():
+        db.session.add(sword_client1)
+        db.session.add(sword_client2)
+        db.session.add(sword_client3)
+    db.session.commit()
+
+    return [
+        {"sword_client": sword_client1},
+        {"sword_client": sword_client2},
+        {"sword_client": sword_client3}
+    ]

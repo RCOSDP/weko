@@ -20,6 +20,7 @@
 
 """call external system"""
 
+import json
 import traceback
 from flask import current_app
 from urllib3.util.retry import Retry
@@ -29,12 +30,14 @@ from requests.adapters import HTTPAdapter
 from weko_deposit.api import WekoRecord
 from weko_records.models import ItemReference, OaStatus
 from weko_admin.models import ApiCertificate
+from weko_logging.activity_logger import UserActivityLogger
 
 
 def call_external_system(old_record=None,
                          new_record=None,
                          old_item_reference_list=None,
-                         new_item_reference_list=None):
+                         new_item_reference_list=None,
+                         request_info=None):
     """call external system if needed
     Args:
         old_record(WekoRocord): record before update
@@ -43,6 +46,7 @@ def call_external_system(old_record=None,
             item reference list before update
         new_item_reference_list(list(ItemReference)):
             item reference list after update
+        request_info(dict): request information
     """
     EXTERNAL_SYSTEM = current_app.config.get("EXTERNAL_SYSTEM")
     if EXTERNAL_SYSTEM is None:
@@ -67,41 +71,7 @@ def call_external_system(old_record=None,
     # case OA assist
     if EXTERNAL_SYSTEM.OA in external_system_list:
         # get oa token
-        headers = {
-            'Content-Type': 'application/json'
-        }
-        api_cert = ApiCertificate.select_by_api_code(
-            current_app.config.get("WEKO_RECORDS_UI_OA_API_CODE"))
-        if not api_cert:
-            return
-        client_id = api_cert.get("cert_data",{}).get("client_id")
-        client_secret = api_cert.get("cert_data",{}).get("secret")
-        if not client_secret or not client_id:
-            return
-        token = None
-        data = {
-            "grant_type": "client_credentials",
-            "client_id": client_id,
-            "client_secret": client_secret
-        }
-        get_token_url = current_app.config.get(
-            "WEKO_RECORDS_UI_OA_GET_TOKEN_URL")
-        if get_token_url:
-            current_app.logger.debug("call OA token api")
-            try:
-                with requests.Session() as s:
-                    retries = Retry(
-                        total=current_app.config.get(
-                            "WEKO_RECORDS_UI_OA_API_RETRY_COUNT"),
-                        status_forcelist=[500, 502, 503, 504])
-                    s.mount('https://', HTTPAdapter(max_retries=retries))
-                    s.mount('http://', HTTPAdapter(max_retries=retries))
-                    response = s.post(get_token_url, headers=headers, json=data)
-                token = response.text
-            except requests.exceptions.RequestException as req_err:
-                current_app.logger.error(req_err)
-                current_app.logger.error(traceback.format_exc())
-                return
+        token = get_oa_token()
         if not token:
             return
 
@@ -109,7 +79,7 @@ def call_external_system(old_record=None,
         record = new_record if new_record else old_record
         action = get_action(old_record, new_record)
         data = {}
-        data["action"] = action.value
+        data["status_action"] = action.value
         data["item_info"] = {}
         data["item_info"]["pub_date"] = \
             record.get("pubdate",{}).get("attribute_value")
@@ -166,21 +136,67 @@ def call_external_system(old_record=None,
 
             finally:
                 remarks[EXTERNAL_SYSTEM.OA.value] = oa_result
-                # TODO 基本監査ログ機能が実装されたらそちらに出力する
-                current_app.logger.info(remarks)
-                # 基本監査ログに機能ID、処理ID、対象キー、備考を渡して出力する
 
-                # operation_type_id: 機能ID
-                # operation_id: 処理ID
+                # 基本監査ログに機能ID、対象キー、備考を渡して出力する
+                # operation: 処理ID
                 # target: 対象キー
                 # remarks: 備考
 
-                # user_log.info(
-                #     operation_type_id = "ITEM",
-                #     operation_id = "ITEM_EXTERNAL_LINK"
-                #     target_key = pid_value_without_ver,
-                #     remarks = remarks
-                # )
+                UserActivityLogger.info(
+                    operation="ITEM_EXTERNAL_LINK",
+                    target_key=pid_value_without_ver,
+                    request_info=request_info,
+                    remarks=remarks,
+                    required_commit=False,
+                )
+
+def get_oa_token():
+    """ Get oa token
+
+    Returns:
+        str: oa token
+    """
+
+    headers = {
+        'Content-Type': 'application/json'
+    }
+    api_cert = ApiCertificate.select_by_api_code(
+        current_app.config.get("WEKO_RECORDS_UI_OA_API_CODE"))
+    if not api_cert:
+        return
+    cert_data = api_cert.get("cert_data", {})
+    client_id = cert_data.get("client_id") if cert_data else None
+    client_secret = cert_data.get("client_secret") if cert_data else None
+    if not client_secret or not client_id:
+        current_app.logger.debug("client_id or client_secret is None")
+        return
+    token = None
+    data = {
+        "grant_type": "client_credentials",
+        "client_id": client_id,
+        "client_secret": client_secret
+    }
+    get_token_url = current_app.config.get(
+        "WEKO_RECORDS_UI_OA_GET_TOKEN_URL")
+    if get_token_url:
+        current_app.logger.debug("call OA token api")
+        try:
+            with requests.Session() as s:
+                retries = Retry(
+                    total=current_app.config.get(
+                        "WEKO_RECORDS_UI_OA_API_RETRY_COUNT"),
+                    status_forcelist=[500, 502, 503, 504])
+                s.mount('https://', HTTPAdapter(max_retries=retries))
+                s.mount('http://', HTTPAdapter(max_retries=retries))
+                response = s.post(get_token_url, headers=headers, json=data)
+            if response.text:
+                res = json.loads(response.text)
+                token = res.get("access_token")
+
+        except requests.exceptions.RequestException as req_err:
+            current_app.logger.error(req_err)
+            current_app.logger.error(traceback.format_exc())
+    return token
 
 
 def select_call_external_system_list(old_record=None,

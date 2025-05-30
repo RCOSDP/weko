@@ -511,56 +511,83 @@ def sync_shib_gakunin_map_groups():
         raise
 
 
-def update_roles(map_group_list, roles):
+def update_roles(map_group_list, roles, indices=[]):
     """Update roles based on map group list."""
     role_names = set({role.name for role in roles})
 
-    with db.session.begin_nested():
-        # add new roles
-        for map_group_name in map_group_list:
-            if not map_group_name or map_group_name in role_names:
-                continue
-            new_role = Role(name=map_group_name, description="")
-            db.session.add(new_role)
-            db.session.flush()  # new_role.idを取得するためにフラッシュ
+    new_role_names = [role_name for role_name in map_group_list if not role_name or role_name in role_names]
+    roles_to_remove = [role_name for role_name in role_names if role_name not in map_group_list and role_name.statswith('jc_')]
 
-            # WEKO_INNDEXTREE_GAKUNIN_GROUP_DEFAULT_BROWSING_PERMISSIONがTrueの場合、Indexクラスのbrowsing_roleに追加
-            if current_app.config.get('WEKO_INNDEXTREE_GAKUNIN_GROUP_DEFAULT_BROWSING_PERMISSION', False):
-                index = Index.query.filter_by(id=new_role.id).one_or_none()
-                if index:
-                    update_browsing_role(new_role.id)
-                    db.session.add(index)
+    
+    new_roles = []
+    remove_role_ids = []
+    try:
+        with db.session.begin_nested():
+            for new_role_name in new_role_names:
+                # add new roles to the database
+                role = Role(name=new_role_name, description="")
+                db.session.add(role)
+                db.session.flush()
+                new_roles.append(role)
+            for role_name in roles_to_remove:
+                # remove roles that are not in map_group_list
+                role_to_remove = Role.query.filter_by(name=role_name).one()
+                remove_role_ids.append(role_to_remove.id)
+                db.session.delete(role_to_remove)
+            db.session.commit()
+    except Exception as ex:
+        current_app.logger.error(f"Error adding new roles: {ex}")
+        db.session.rollback()
+        raise
 
-            # WEKO_INNDEXTREE_GAKUNIN_GROUP_DEFAULT_CONTRIBUTE_PERMISSIONがTrueの場合、Indexクラスのcontribute_roleに追加
-            if current_app.config.get('WEKO_INNDEXTREE_GAKUNIN_GROUP_DEFAULT_CONTRIBUTE_PERMISSION', False):
-                index = Index.query.filter_by(id=new_role.id).one_or_none()
-                if index:
-                    update_contribute_role(new_role.id)
-                    db.session.add(index)
+    # bind new roles to indices
+    bind_roles_to_indices(indices, new_roles, remove_role_ids)
 
+def bind_roles_to_indices(indices=[], new_roles=[], remove_role_ids=[]):
+    """Bind roles to indices."""
+    try:
+        with db.session.begin_nested():
+            for index in indices:
+                browsing_roles = set()
+                if index.browsing_role:
+                    browsing_roles = set(index.browsing_role.split(','))
+                # unbind roles from indices removed from the database
+                for role_id in remove_role_ids:
+                    if role_id in browsing_roles:
+                        browsing_roles.remove(role_id)
+            
+                # bind new roles
+                browsing_default_permission = current_app.config.get('WEKO_INDEXTREE_GAKUNIN_GROUP_DEFAULT_BROWSING_PERMISSION', False)
+                for role in new_roles:
+                    if role.id in browsing_roles:
+                        if browsing_default_permission:
+                            browsing_roles.add(role.id)
+                        elif not browsing_default_permission and role.id in browsing_roles:
+                            browsing_roles.remove(role.id)
+                index.browsing_role = ','.join(browsing_roles)
 
-        # delete roles that are not in map_group_list
-        for role_name in role_names:
-            if role_name in map_group_list:
-                continue
-            role_to_remove = Role.query.filter_by(name=role_name).one()
-            db.session.delete(role_to_remove)
+                contributing_roles = set()
+                if index.contribute_role:
+                    contributing_roles = set(index.contribute_role.split(','))
+                # unbind roles from indices removed from the database
+                for role_id in remove_role_ids:
+                    if role_id in contributing_roles:
+                        contributing_roles.remove(role_id)
 
-            # WEKO_INNDEXTREE_GAKUNIN_GROUP_DEFAULT_BROWSING_PERMISSIONがTrueの場合、Indexクラスのbrowsing_roleから削除
-            if current_app.config.get('WEKO_INNDEXTREE_GAKUNIN_GROUP_DEFAULT_BROWSING_PERMISSION', False):
-                index = Index.query.filter_by(id=role_to_remove.id).one_or_none()
-                if index:
-                    remove_browsing_role(index,role_to_remove.id)
-                    db.session.add(index)
-
-            # WEKO_INNDEXTREE_GAKUNIN_GROUP_DEFAULT_CONTRIBUTE_PERMISSIONがTrueの場合、Indexクラスのcontribute_roleから削除
-            if current_app.config.get('WEKO_INNDEXTREE_GAKUNIN_GROUP_DEFAULT_CONTRIBUTE_PERMISSION', False):
-                index = Index.query.filter_by(id=role_to_remove.id).one_or_none()
-                if index:
-                    remove_contribute_role(index,role_to_remove.id)
-                    db.session.add(index)
-
-    db.session.commit()
+                # bind new roles
+                contribute_default_permission = current_app.config.get('WEKO_INDEXTREE_GAKUNIN_GROUP_DEFAULT_CONTRIBUTE_PERMISSION', False)
+                for role in new_roles:
+                    if role.id in contributing_roles:
+                        if contribute_default_permission:
+                            contributing_roles.add(role.id)
+                        elif not contribute_default_permission and role.id in contributing_roles:
+                            contributing_roles.remove(role.id)
+                index.contribute_role = ','.join(contributing_roles)
+        db.session.commit()
+    except Exception as ex:
+        current_app.logger.error(f"Error binding roles to indices: {ex}")
+        db.session.rollback()
+        raise
 
 def update_browsing_role(self, role_id):
         """Update browsing_role with the given role_id."""

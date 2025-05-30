@@ -129,17 +129,17 @@ WEKO_LOGGING_OPERATION_MASTER = {
             "label": "アイテムタイプ削除",
             "target": "itemtype"
          },
-         "ITEM_MAPPING_CREATE": {
+         "ITEM_TYPE_MAPPING_CREATE": {
             "id": 4,
             "label": "マッピング登録",
             "target": "itemtype"
          },
-         "ITEM_MAPPING_UPDATE": {
+         "ITEM_TYPE_MAPPING_UPDATE": {
             "id": 5,
             "label": "マッピング編集",
             "target": "itemtype"
          },
-         "ITEM_MAPPING_DELETE": {
+         "ITEM_TYPE_MAPPING_DELETE": {
             "id": 6,
             "label": "マッピング削除",
             "target": "itemtype"

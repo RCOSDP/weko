@@ -208,8 +208,14 @@ class Flow(object):
     def get_flow_detail(self, flow_id):
         """Get flow detail info.
 
-        :param flow_id:
-        :return:
+        Get flow detail info by flow id.
+        It has flow actions with action roles.
+
+        Args:
+            flow_id (str): flow id.
+
+        Returns:
+            Flow: flow object with action roles.
         """
         with db.session.no_autoflush:
             query = _Flow.query.filter_by(
@@ -436,7 +442,7 @@ class WorkFlow(object):
             db.session.commit()
             UserActivityLogger.info(
                 operation="WORKFLOW_CREATE",
-                remarks=json.dumps(workflow)
+                remarks=json.dumps(workflow, default=str)
             )
             return workflow
         except Exception as ex:
@@ -518,38 +524,47 @@ class WorkFlow(object):
                 is_deleted=True).order_by(asc(_WorkFlow.flows_id))
             return query.all()
 
-    def get_workflow_detail(self, workflow_id):
-        """Get workflow detail info.
+    def get_workflow_detail(self, flow_id):
+        """Get workflow detail info by flow id.
 
-        :param workflow_id:
-        :return:
+        Args:
+            flow_id (int): flow id.
+
+        Returns:
+            WorkFlow: workflow model object.
         """
         with db.session.no_autoflush:
             query = _WorkFlow.query.filter_by(
-                flows_id=workflow_id)
+                flows_id=flow_id)
             return query.one_or_none()
 
     def get_workflow_by_id(self, workflow_id):
         """Get workflow detail info by workflow id.
 
-        :param workflow_id:
-        :return:
+        Args:
+            workflow_id (int): workflow id.
+
+        Returns:
+            WorkFlow: workflow model object.
         """
         with db.session.no_autoflush:
-            query = _WorkFlow.query.filter_by(
-                id=workflow_id)
-            return query.one_or_none()
+            obj = _WorkFlow.query.filter_by(
+                id=workflow_id).one_or_none()
+        return obj if isinstance(obj, _WorkFlow) else None
 
     @staticmethod
     def get_workflow_by_ids(ids: list):
-        """Get workflow detail info by workflow id.
+        """Get workflow detail info by list of workflow id.
 
-        :param ids:
-        :return:
+        Args:
+            ids (list): list of workflow id.
+
+        Returns:
+            list: workflow model object list.
         """
         with db.session.no_autoflush:
             query = _WorkFlow.query.filter(_WorkFlow.id.in_(ids))
-            return query.all()
+            return [obj for obj in query.all() if isinstance(obj, _WorkFlow)]
 
     def get_workflow_by_flows_id(self, flows_id):
         """Get workflow detail info by flows id.
@@ -634,13 +649,18 @@ class WorkFlow(object):
     def get_workflow_by_itemtype_id(self, item_type_id):
         """Get workflow detail info by item type id.
 
-        :param item_type_id:
-        :return:
+        Get workflows which are not deleted by item type id.
+
+        Args:
+            item_type_id (int): item type id.
+
+        Returns:
+            list: workflow object list.
         """
         with db.session.no_autoflush:
             query = _WorkFlow.query.filter_by(
                 itemtype_id=item_type_id, is_deleted=False)
-            return query.all()
+            return [obj for obj in query.all() if isinstance(obj, _WorkFlow)]
 
     def get_workflows_by_roles(self, workflows):
         """Get list workflow.
@@ -674,18 +694,29 @@ class WorkFlow(object):
     def reduce_workflows_for_registration(self, workflows):
         """Reduce workflows for registration.
 
-        :param workflows.
+        Get workflows which are not deleted and have item registration action.
 
-        :return: wfs.
+        Args:
+            workflows (list): workflow model object list.
+
+        Returns:
+            list(workflow): filtered
+                workflow model object list with item registration action.
         """
-        wfs = []
-        item_registration_id = current_app.config.get("WEKO_WORKFLOW_ITEM_REGISTRATION_ACTION_ID")
-        if isinstance(workflows, list):
-            for workflow in workflows:
-                actions = workflow.flow_define.flow_actions
-                if item_registration_id in [action.action_id for action in actions]:
-                    wfs.append(workflow)
-        return wfs
+        if not isinstance(workflows, list):
+            return workflows
+        registration_action_id = (
+            current_app.config.get("WEKO_WORKFLOW_ITEM_REGISTRATION_ACTION_ID")
+        )
+
+        filtered_workflows = [
+            wf for wf in workflows
+            if isinstance(wf, _WorkFlow)
+            if registration_action_id in [
+                action.action_id for action in wf.flow_define.flow_actions
+            ]
+        ]
+        return filtered_workflows
 
 class Action(object):
     """Operated on the Action."""
@@ -725,6 +756,21 @@ class Action(object):
         with db.session.no_autoflush:
             query = _Action.query.filter_by(id=action_id)
             return query.one_or_none()
+
+    def get_action_by_endpoint(self, action_endpoint):
+        """Get action by endpoint.
+
+        Args:
+            action_endpoint (str): action endpoint.
+
+        Returns:
+            Action: action object.
+        """
+        with db.session.no_autoflush:
+            obj = _Action.query.filter_by(
+                action_endpoint=action_endpoint
+            ).first()
+        return obj if isinstance(obj, _Action) else None
 
     def del_action(self, action_id):
         """Delete the action info.
@@ -785,11 +831,13 @@ class WorkActivity(object):
     def init_activity(self, activity, community_id=None, item_id=None):
         """Create new activity.
 
-        :param activity:
-        :param community_id:
-        :param item_id:
-        :param for_delete:
-        :return:
+        Args:
+            activity (dict): activity info.
+            community_id (int): community id.
+            item_id (int): item id.
+
+        Returns:
+            Activity: activity object.
         """
         try:
             action_id = 0
@@ -853,12 +901,14 @@ class WorkActivity(object):
                 item_id=item_id,
                 workflow_id=activity.get('workflow_id'),
                 flow_id=activity.get('flow_id'),
+                title=activity.get("title"),
                 action_id=next_action_id,
                 action_status=ActionStatusPolicy.ACTION_DOING,
                 activity_login_user=activity_login_user,
                 activity_update_user=activity_update_user,
+                shared_user_id=activity.get("shared_user_id"),
                 activity_status=ActivityStatusPolicy.ACTIVITY_MAKING,
-                activity_start=datetime.utcnow(),
+                activity_start=datetime.now(timezone.utc),
                 activity_community_id=community_id,
                 activity_confirm_term_of_use=activity_confirm_term_of_use,
                 extra_info=extra_info,
@@ -2470,16 +2520,20 @@ class WorkActivity(object):
             return None
 
     def get_workflow_activity_by_item_id(self, object_uuid):
-        """Get workflow activity status by item ID.
+        """Get latest activity by item id.
 
-        :param object_uuid:
+        Args:
+            object_uuid (str): Object UUID of the item.
+
+        Returns:
+            Activity: Activity model object if found, else None.
         """
         try:
             with db.session.no_autoflush:
                 activity = _Activity.query.filter_by(
                     item_id=object_uuid).order_by(
                     _Activity.updated.desc()).first()
-                return activity
+            return activity if isinstance(activity, _Activity) else None
         except Exception as ex:
             current_app.logger.error(ex)
             return None
@@ -2488,10 +2542,14 @@ class WorkActivity(object):
     def get_activity_by_id(activity_id):
         """Get activity by identifier.
 
-        @param activity_id: Activity identifier.
-        @return:
+        Args:
+            activity_id (str): Activity ID.
+
+        Returns:
+            Activity: Activity object. if not found, return None.
         """
-        return _Activity.query.filter_by(activity_id=activity_id).one_or_none()
+        obj = _Activity.query.filter_by(activity_id=activity_id).one_or_none()
+        return obj if isinstance(obj, _Activity) else None
 
     def update_activity(self, activity_id: str, activity_data: dict):
         """Update activity.
@@ -2746,356 +2804,230 @@ class WorkActivity(object):
         if not current_app.config["WEKO_NOTIFICATIONS"]:
             return
         activity = self.get_activity_by_id(activity_id)
-        if activity.workflow.open_restricted:
+        if activity is None or activity.workflow.open_restricted:
             return
 
         if case == "registered":
-            self.notify_item_registered(activity)
+            self._notify_about_activity_wiht_case(
+                activity, case, self._get_params_for_registrant,
+                Notification.create_item_registered
+            )
             self.send_mail_item_registered(activity)
         elif case == "request_approval":
-            self.notify_request_approval(activity)
+            self._notify_about_activity_wiht_case(
+                activity, case, self._get_params_for_approver,
+                Notification.create_request_approval
+            )
             self.send_mail_request_approval(activity)
         elif case == "approved":
-            self.notify_item_approved(activity)
+            self._notify_about_activity_wiht_case(
+                activity, case, self._get_params_for_registrant,
+                Notification.create_item_approved
+            )
             self.send_mail_item_approved(activity)
         elif case == "rejected":
-            self.notify_item_rejected(activity)
-            self.send_mail_item_rejected(activity)
-
-
-    def notify_item_registered(self, activity):
-        """Notify item registered.
-
-        Make notification and send to user when item registered.
-        Create user and shared user will be notified.
-
-        Args:
-            activity_id (str): Activity ID.
-        """
-        try:
-            with db.session.begin_nested():
-                set_target_id = {activity.activity_login_user}
-                is_shared = activity.shared_user_id != -1
-                if is_shared:
-                    set_target_id.add(activity.shared_user_id)
-
-                recid = (
-                    PersistentIdentifier
-                    .get_by_object("recid", "rec", activity.item_id)
-                )
-                actor_id = activity.activity_login_user
-
-                actor_profile = UserProfile.get_by_userid(actor_id)
-                actor_name = (
-                    actor_profile.username
-                    if actor_profile is not None else None
-                )
-
-                if not is_shared:
-                    # if self registration, not notify
-                    set_target_id.discard(actor_id)
-
-        except SQLAlchemyError as ex:
-            current_app.logger.error(
-                "Error had orrured in database during getting notification "
-                f"parameters for activity: {activity.activity_id}"
+            self._notify_about_activity_wiht_case(
+                activity, case, self._get_params_for_registrant,
+                Notification.create_item_rejected
             )
-            traceback.print_exc()
-            return
+            self.send_mail_item_rejected(activity)
+        elif case == "deleted":
+            self._notify_about_activity_wiht_case(
+                activity, case, self._get_params_for_registrant,
+                Notification.create_item_deleted
+            )
+            self.send_mail_item_deleted(activity)
+        elif case == "deletion_request":
+            self._notify_about_activity_wiht_case(
+                activity, case, self._get_params_for_approver,
+                Notification.create_request_delete_approval
+            )
+            self.send_mail_request_delete_approval(activity)
+        elif case == "deletion_approved":
+            self._notify_about_activity_wiht_case(
+                activity, case, self._get_params_for_registrant,
+                Notification.create_item_delete_approved
+            )
+            self.send_mail_item_delete_approved(activity)
+        elif case == "deletion_rejected":
+            self._notify_about_activity_wiht_case(
+                activity, case, self._get_params_for_registrant,
+                Notification.create_item_delete_rejected
+            )
+            self.send_mail_item_delete_rejected(activity)
 
-        for target_id in set_target_id:
-            try:
-                Notification.create_item_registared(
-                    target_id, recid.pid_value.split(".")[0], actor_id,
-                    actor_name=actor_name, object_name=activity.title
-                ).send(NotificationClient(inbox_url()))
-            except (ValidationError, HTTPError) as ex:
-                current_app.logger.error(
-                    "Error had orrured during sending notification "
-                    f"for activity: {activity.activity_id}"
-                )
-                traceback.print_exc()
-                return
-            except Exception as ex:
-                current_app.logger.error(
-                    "Unexpected error had orrured during sending notification "
-                    f"for activity: {activity.activity_id}"
-                )
-                traceback.print_exc()
-                return
-        current_app.logger.info(
-            "{num} notification(s) sent for item registered: {activity_id}"
-            .format(num=len(set_target_id), activity_id=activity.activity_id)
-        )
+    def _get_params_for_registrant(self, activity):
+        """Get notification parameters for registrant."""
+        with db.session.begin_nested():
+            set_target_id = {activity.activity_login_user}
+            is_shared = not activity.shared_user_id in [-1, None]
+            if is_shared:
+                set_target_id.add(activity.shared_user_id)
 
+            recid = (
+                PersistentIdentifier
+                .get_by_object("recid", "rec", activity.item_id)
+            )
+            actor_id = activity.activity_update_user
 
-    def notify_request_approval(self, activity):
-        """Notify request approval.
+            actor_profile = UserProfile.get_by_userid(actor_id)
+            actor_name = (
+                actor_profile.username
+                if actor_profile is not None else None
+            )
 
-        Make notification and send to user when request approval.
-        Users with the authority to approve will be notified.
+            # if self delete, not notify
+            set_target_id.discard(actor_id)
 
-        Args:
-            activity_id (str): Activity ID.
-        """
-        try:
-            with db.session.begin_nested():
-                recid = (
-                    PersistentIdentifier
-                    .get_by_object("recid", "rec", activity.item_id)
-                )
-                actor_id = activity.activity_login_user
+        return set_target_id, recid, actor_id, actor_name
 
-                actor_profile = UserProfile.get_by_userid(actor_id)
-                actor_name = (
-                    actor_profile.username
-                    if actor_profile is not None else None
-                )
+    def _get_params_for_approver(self, activity):
+        with db.session.begin_nested():
+            recid = (
+                PersistentIdentifier
+                .get_by_object("recid", "rec", activity.item_id)
+            )
+            actor_id = activity.activity_login_user
+            is_shared = not activity.shared_user_id in [-1, None]
+            if is_shared:
+                actor_id = activity.shared_user_id
 
-                flow_id = activity.flow_define.flow_id
-                flow_detail = Flow().get_flow_detail(flow_id)
-                approval_action = _Action.query.filter_by(
-                    action_endpoint="approval"
-                ).one()
-                approval_action_role = None
-                for action in flow_detail.flow_actions:
-                    if action.action_id == approval_action.id:
-                        approval_action_role = action.action_role
-                        break
+            actor_profile = UserProfile.get_by_userid(actor_id)
+            actor_name = (
+                actor_profile.username
+                if actor_profile is not None else None
+            )
 
-                admin_role_id = Role.query.filter_by(
-                    name=current_app.config.get("WEKO_ADMIN_PERMISSION_ROLE_REPO")
+            flow_id = activity.flow_define.flow_id
+            flow_detail = Flow().get_flow_detail(flow_id)
+            approval_action = Action().get_action_by_endpoint("approval")
+            approval_action_role = None
+            for action in flow_detail.flow_actions:
+                if (
+                    action.action_order == activity.action_order + 1
+                    and action.action_id == approval_action.id
+                ):
+                    current_app.logger.info(f"action: {action}, type: {type(action)}")
+                    approval_action_role = action.action_role
+                    break
+
+            admin_role_id = Role.query.filter_by(
+                name=current_app.config.get("WEKO_ADMIN_PERMISSION_ROLE_REPO")
+            ).one().id
+
+            target_role = {admin_role_id}
+            if approval_action_role is not None:
+                action_role_id = approval_action_role.action_role
+                if (
+                    isinstance(action_role_id, int)
+                    and approval_action_role.action_role_exclude
+                ):
+                    target_role.discard(action_role_id)
+                # approval_action_role is not None and not exclude
+                # nothing to do
+
+            set_target_id = {
+                user_id[0] for user_id in
+                db.session.query(userrole.c.user_id)
+                .filter(userrole.c.role_id.in_(target_role))
+                .distinct()
+                .all()
+            }
+            if approval_action_role is not None:
+                action_user_id = approval_action_role.action_user
+                if not isinstance(action_user_id, int):
+                    pass
+                elif approval_action_role.action_user_exclude:
+                    set_target_id.discard(action_user_id)
+                else:
+                    set_target_id.add(action_user_id)
+
+            # add community admin
+            community_id = activity.activity_community_id
+            if community_id is not None:
+                community_admin_role_id = Role.query.filter_by(
+                    name=current_app.config.get("WEKO_ADMIN_PERMISSION_ROLE_COMMUNITY")
                 ).one().id
+                community_owner_role_id = (
+                    GetCommunity.get_community_by_id(community_id).id_role
+                )
 
-                target_role = {admin_role_id}
-                if approval_action_role is not None:
-                    action_role_id = approval_action_role.action_role
-                    if (
-                        isinstance(action_role_id, int)
-                        and approval_action_role.action_role_exclude
-                    ):
-                        target_role.discard(action_role_id)
-                    # approval_action_role is not None and not exclude
-                    # nothing to do
-
-                set_target_id = {
+                role_left = userrole.alias("role_left")
+                role_right = userrole.alias("role_right")
+                # who has Community Admin role and Community Owner role.
+                set_community_admin_id = {
                     user_id[0] for user_id in
-                    db.session.query(userrole.c.user_id)
-                    .filter(userrole.c.role_id.in_(target_role))
+                    db.session.query(role_left.c.user_id)
+                    .join(
+                        role_right,
+                        role_left.c.role_id == role_right.c.role_id
+                    )
+                    .filter(
+                        role_left.c.role_id == community_admin_role_id,
+                        role_right.c.role_id == community_owner_role_id,
+                    )
                     .distinct()
                     .all()
                 }
-                if approval_action_role is not None:
-                    action_user_id = approval_action_role.action_user
-                    if not isinstance(action_user_id, int):
-                        pass
-                    elif approval_action_role.action_user_exclude:
-                        set_target_id.discard(action_user_id)
-                    else:
-                        set_target_id.add(action_user_id)
+                set_target_id.update(set_community_admin_id)
 
-                # add community admin
-                community_id = activity.activity_community_id
-                if community_id is not None:
-                    community_admin_role_id = Role.query.filter_by(
-                        name=current_app.config.get("WEKO_ADMIN_PERMISSION_ROLE_COMMUNITY")
-                    ).one().id
-                    community_owner_role_id = (
-                        GetCommunity.get_community_by_id(community_id).id_role
-                    )
-
-                    role_left = userrole.alias("role_left")
-                    role_right = userrole.alias("role_right")
-                    # who has Community Admin role and Community Owner role.
-                    set_community_admin_id = {
-                        user_id[0] for user_id in
-                        db.session.query(role_left.c.user_id)
-                        .join(
-                            role_right,
-                            role_left.c.role_id == role_right.c.role_id
-                        )
-                        .filter(
-                            role_left.c.role_id == community_admin_role_id,
-                            role_right.c.role_id == community_owner_role_id,
-                        )
-                        .distinct()
-                        .all()
-                    }
-                    set_target_id.update(set_community_admin_id)
-
-                is_shared = activity.shared_user_id != -1
-                if not is_shared:
-                    # if self request, not notify
-                    set_target_id.discard(actor_id)
-
-        except SQLAlchemyError as ex:
-            current_app.logger.error(
-                "Error had orrured in database during getting notification "
-                f"parameters for activity: {activity.activity_id}"
-            )
-            traceback.print_exc()
-            return
-
-        for target_id in set_target_id:
-            try:
-                Notification.create_request_approval(
-                    target_id, recid.pid_value.split(".")[0], actor_id,
-                    activity.activity_id, actor_name=actor_name,
-                    object_name=activity.title
-                ).send(NotificationClient(inbox_url()))
-            except (ValidationError, HTTPError) as ex:
-                current_app.logger.error(
-                    "Error had orrured during sending notification "
-                    f"for activity: {activity.activity_id}"
-                )
-                traceback.print_exc()
-                return
-            except Exception as ex:
-                current_app.logger.error(
-                    "Unexpected error had orrured during sending notification "
-                    f"for activity: {activity.activity_id}"
-                )
-                traceback.print_exc()
-                return
-        current_app.logger.info(
-            "{num} notification(s) sent for request approval: {activity_id}"
-            .format(num=len(set_target_id), activity_id=activity.activity_id)
-        )
+            if not is_shared:
+                # if self request, not notify
+                set_target_id.discard(actor_id)
+        return set_target_id, recid, actor_id, actor_name
 
 
-    def notify_item_approved(self, activity):
-        """Notify approved items.
-
-        Make notification and send to user when item approved.
-        Create user and shared user will be notified.
+    def _notify_about_activity_wiht_case(self, activity, case, getter, creater):
+        """Notify about activity with case.
 
         Args:
-            activity_id (str): Activity ID.
+            activity (Activity): The activity object.
+            case (str): Case of notification.
+            getter (function): Function to get parameters for notification.
+            creater (function): Function to create notification.
         """
+        if not isinstance(activity, _Activity):
+            return
+
         try:
-            with db.session.begin_nested():
-                set_target_id = {activity.activity_login_user}
-                is_shared = activity.shared_user_id != -1
-                if is_shared:
-                    set_target_id.add(activity.shared_user_id)
-
-                recid = (
-                    PersistentIdentifier
-                    .get_by_object("recid", "rec", activity.item_id)
-                )
-                actor_id = activity.activity_update_user
-
-                actor_profile = UserProfile.get_by_userid(actor_id)
-                actor_name = (
-                    actor_profile.username
-                    if actor_profile is not None else None
-                )
-
-                if not is_shared:
-                    # if self approval, not notify
-                    set_target_id.discard(actor_id)
-
+            set_target_id, recid, actor_id, actor_name = getter(activity)
         except SQLAlchemyError as ex:
             current_app.logger.error(
-                "Error had orrured in database during getting notification "
-                f"parameters for activity: {activity.activity_id}"
+                "Failed to get notification parameters for activity: {}"
+                .format(activity.activity_id)
             )
             traceback.print_exc()
             return
 
         for target_id in set_target_id:
             try:
-                Notification.create_item_approved(
+                creater(
                     target_id, recid.pid_value.split(".")[0], actor_id,
-                    activity.activity_id, actor_name=actor_name,
+                    context_id=activity.activity_id, actor_name=actor_name,
                     object_name=activity.title
                 ).send(NotificationClient(inbox_url()))
             except (ValidationError, HTTPError) as ex:
                 current_app.logger.error(
-                    "Error had orrured during sending notification "
-                    f"for activity: {activity.activity_id}"
+                    "Failed to send notification for {case}: {activity_id}"
+                    .format(case=case, activity_id=activity.activity_id)
                 )
                 traceback.print_exc()
                 return
             except Exception as ex:
                 current_app.logger.error(
-                    "Unexpected error had orrured during sending notification "
-                    f"for activity: {activity.activity_id}"
+                    "Unexpected error had occurred during sending notification "
+                    "for activity: {}".format(activity.activity_id)
                 )
                 traceback.print_exc()
                 return
         current_app.logger.info(
-            "{num} notification(s) sent for item approved: {activity_id}"
-            .format(num=len(set_target_id), activity_id=activity.activity_id)
-        )
-
-
-    def notify_item_rejected(self, activity):
-        """Notify rejected items.
-
-        Make notification and send to user when item rejected.
-        Create user and shared user will be notified.
-
-        Args:
-            activity_id (str): Activity ID.
-        """
-        try:
-            with db.session.begin_nested():
-                set_target_id = {activity.activity_login_user}
-                is_shared = activity.shared_user_id != -1
-                if is_shared:
-                    set_target_id.add(activity.shared_user_id)
-
-                recid = (
-                    PersistentIdentifier
-                    .get_by_object("recid", "rec", activity.item_id)
-                )
-                actor_id = activity.activity_update_user
-
-                actor_profile = UserProfile.get_by_userid(actor_id)
-                actor_name = (
-                    actor_profile.username
-                    if actor_profile is not None else None
-                )
-
-                if not is_shared:
-                    # if self reject, not notify
-                    set_target_id.discard(actor_id)
-        except SQLAlchemyError as ex:
-            current_app.logger.error(
-                "Error had orrured in database during getting notification "
-                f"parameters for activity: {activity.activity_id}"
+            "{num} notification(s) sent for {case}: {activity_id}".format(
+            num=len(set_target_id), case=case, activity_id=activity.activity_id
             )
-            traceback.print_exc()
-            return
-
-        for target_id in set_target_id:
-            try:
-                Notification.create_item_rejected(
-                    target_id, recid.pid_value.split(".")[0], actor_id,
-                    activity.activity_id, actor_name=actor_name,
-                    object_name=activity.title
-                ).send(NotificationClient(inbox_url()))
-            except (ValidationError, HTTPError) as ex:
-                current_app.logger.error(
-                    "Error had orrured during sending notification "
-                    f"for activity: {activity.activity_id}"
-                )
-                traceback.print_exc()
-                return
-            except Exception as ex:
-                current_app.logger.error(
-                    "Unexpected error had orrured during sending notification "
-                    f"for activity: {activity.activity_id}"
-                )
-                traceback.print_exc()
-                return
-        current_app.logger.info(
-            "{num} notification(s) sent for item rejected: {activity_id}"
-            .format(num=len(set_target_id), activity_id=activity.activity_id)
         )
 
-    def send_notification_email(self, activity, targets, settings_dict, profiles_dict, template_file, data_callback):
+
+    def send_notification_email(self, activity, targets, settings, profiles, template_file, data_callback):
         """Common email creation and sending process.
 
         Args:
@@ -3107,23 +3039,24 @@ class WorkActivity(object):
             data_callback (function): A callback function to generate data for the email template.
 
         Returns:
-            None
-
-        Raises:
-            Exception: If an unexpected error occurs during the email sending process.
+            int: The number of emails successfully sent.
         """
         from .utils import send_mail, load_template, fill_template
 
+        send_count = 0
         for target in targets:
             try:
-                setting = settings_dict.get(target.id)
+                setting = settings.get(target.id)
                 if not setting or not setting.subscribe_email:
                     continue
                 if not target.confirmed_at:
                     continue
 
-                profile = profiles_dict.get(target.id)
-                language = profile.language if profile else None
+                profile = profiles.get(target.id)
+                language = (
+                    profile.language if profile
+                    else current_app.config.get("WEKO_WORKFLOW_MAIL_DEFAULT_LANGUAGE")
+                )
 
                 template = load_template(template_file, language)
                 data = data_callback(activity, target, profile)
@@ -3131,13 +3064,45 @@ class WorkActivity(object):
                 mail_data = fill_template(template, data)
                 recipient = target.email
 
-                send_mail(mail_data.get("subject"), recipient, mail_data.get("body"))
+                res = send_mail(mail_data.get("subject"), recipient, mail_data.get("body"))
+
+                if res:
+                    send_count += 1
 
             except Exception as ex:
                 current_app.logger.error(
                     f"Unexpected error occurred during sending notification mail for activity: {activity.activity_id}"
                 )
                 traceback.print_exc()
+        return send_count
+
+
+    def _get_settings_for_targets(self, set_target_id, actor_id=None):
+        """"Get settings for targets.
+        Args:
+            set_target_id (set): Set of target user IDs.
+            actor_id (int, optional): ID of the actor. Defaults to None.
+
+        Returns:
+            tuple: A tuple containing:
+            - targets (List[User]): List of User objects for the target IDs.
+            - settings_dict (dict): A dictionary mapping user IDs to NotificationsUserSettings.
+            - profiles_dict (dict): A dictionary mapping user IDs to UserProfile objects.
+            - actor (User or None): User object for the actor ID, or None if not provided.
+        """
+        targets = User.query.filter(User.id.in_(list(set_target_id))).all()
+        settings = NotificationsUserSettings.query.filter(
+            NotificationsUserSettings.user_id.in_(list(set_target_id))
+        ).all()
+        settings_dict = {setting.user_id: setting for setting in settings}
+        user_profiles = UserProfile.query.filter(
+            UserProfile.user_id.in_(list(set_target_id))
+        ).all()
+        profiles_dict = {profile.user_id: profile for profile in user_profiles}
+        actor = None
+        if actor_id is not None:
+            actor = User.query.filter_by(id=actor_id).one_or_none()
+        return targets, settings_dict, profiles_dict, actor
 
 
     def send_mail_item_registered(self, activity):
@@ -3149,323 +3114,103 @@ class WorkActivity(object):
         Args:
             activity (Activity): Activity object.
 
-        Returns:
-            None
-
         Raises:
             SQLAlchemyError: If an error occurs while querying the database.
             Exception: If an unexpected error occurs during the email sending process.
         """
-        from .utils import convert_to_timezone
         try:
-            with db.session.begin_nested():
-                set_target_id = {activity.activity_login_user}
-                is_shared = activity.shared_user_id != -1
-                if is_shared:
-                    set_target_id.add(activity.shared_user_id)
-
-                recid = (
-                    PersistentIdentifier
-                    .get_by_object("recid", "rec", activity.item_id)
-                )
-                actor_id = activity.activity_login_user
-
-                actor_profile = UserProfile.get_by_userid(actor_id)
-                actor_name = (
-                    actor_profile.username
-                    if actor_profile is not None else None
-                )
-
-                if not is_shared:
-                    # if self registration, not notify
-                    set_target_id.discard(actor_id)
-
-                targets = User.query.filter(User.id.in_(list(set_target_id))).all()
-                settings = NotificationsUserSettings.query.filter(
-                    NotificationsUserSettings.user_id.in_(list(set_target_id))
-                ).all()
-                settings_dict = {setting.user_id: setting for setting in settings}
-                user_profiles = UserProfile.query.filter(
-                    UserProfile.user_id.in_(list(set_target_id))
-                ).all()
-                profiles_dict = {profile.user_id: profile for profile in user_profiles}
-
+            set_target_id, recid, _, actor_name = self._get_params_for_registrant(activity)
+            targets, settings, profiles, _ = self._get_settings_for_targets(set_target_id)
         except SQLAlchemyError as ex:
             current_app.logger.error(
-                "Error had orrured in database during getting notification "
-                f"parameters for activity: {activity.activity_id}"
+                "Failed to get notification parameters for activity: {}"
+                .format(activity.activity_id)
             )
             traceback.print_exc()
             return
 
-        def item_registered_data(activity, target, profile):
-            """
-            Generate data for the item registered email template.
+        def data_callback(activity, target, profile):
+            return self._create_notification_context(
+                activity, target, profile, actor_name, recid
+            )
 
-            Args:
-                activity (Activity): The activity object containing details about the registered item.
-                target (User): The target user who will receive the email.
-                profile (UserProfile): The profile of the target user.
-
-            Returns:
-                dict: A dictionary containing the data to be used in the email template.
-            """
-            timezone = profile.timezone if profile else None
-            registration_date = convert_to_timezone(activity.updated, timezone)
-            url = request.host_url + f"records/{recid.pid_value.split('.')[0]}"
-
-            return {
-                "item_title": activity.title,
-                "submitter_name": profile.username if profile else target.email,
-                "registration_date": registration_date.strftime("%Y-%m-%d %H:%M:%S"),
-                "record_url": url
-            }
-
-        template_file = 'email_nortification_item_registered_{language}.tpl'
-        self.send_notification_email(activity, targets, settings_dict, profiles_dict, template_file, item_registered_data)
+        template_file = 'email_notification_item_registered_{language}.tpl'
+        send_count = self.send_notification_email(
+            activity, targets, settings,
+            profiles, template_file, data_callback=data_callback
+        )
         current_app.logger.info(
             "{num} mail(s) sent for item registered: {activity_id}"
-            .format(num=len(set_target_id), activity_id=activity.activity_id)
+            .format(num=send_count, activity_id=activity.activity_id)
         )
 
     def send_mail_request_approval(self, activity):
         """Notify request approval via email.
 
-        Send mail to user when request approval.
-        Users with the authority to approve will be notified.
-
         Args:
             activity (Activity): Activity object.
-
-        Returns:
-            None
 
         Raises:
             SQLAlchemyError: If an error occurs while querying the database.
             Exception: If an unexpected error occurs during the email sending process.
         """
         try:
-            with db.session.begin_nested():
-                recid = (
-                    PersistentIdentifier
-                    .get_by_object("recid", "rec", activity.item_id)
-                )
-                actor_id = activity.activity_login_user
-
-                actor_profile = UserProfile.get_by_userid(actor_id)
-                actor_name = (
-                    actor_profile.username
-                    if actor_profile is not None else None
-                )
-
-                flow_id = activity.flow_define.flow_id
-                flow_detail = Flow().get_flow_detail(flow_id)
-                approval_action = _Action.query.filter_by(
-                    action_endpoint="approval"
-                ).one()
-                approval_action_role = None
-                for action in flow_detail.flow_actions:
-                    if action.action_id == approval_action.id:
-                        approval_action_role = action.action_role
-                        break
-
-                admin_role_id = Role.query.filter_by(
-                    name=current_app.config.get("WEKO_ADMIN_PERMISSION_ROLE_REPO")
-                ).one().id
-
-                target_role = {admin_role_id}
-                if approval_action_role is not None:
-                    action_role_id = approval_action_role.action_role
-                    if (
-                        isinstance(action_role_id, int)
-                        and approval_action_role.action_role_exclude
-                    ):
-                        target_role.discard(action_role_id)
-                    # approval_action_role is not None and not exclude
-                    # nothing to do
-
-                set_target_id = {
-                    user_id[0] for user_id in
-                    db.session.query(userrole.c.user_id)
-                    .filter(userrole.c.role_id.in_(target_role))
-                    .distinct()
-                    .all()
-                }
-                if approval_action_role is not None:
-                    action_user_id = approval_action_role.action_user
-                    if not isinstance(action_user_id, int):
-                        pass
-                    elif approval_action_role.action_user_exclude:
-                        set_target_id.discard(action_user_id)
-                    else:
-                        set_target_id.add(action_user_id)
-
-                # add community admin
-                community_id = activity.activity_community_id
-                if community_id is not None:
-                    community_admin_role_id = Role.query.filter_by(
-                        name=current_app.config.get("WEKO_ADMIN_PERMISSION_ROLE_COMMUNITY")
-                    ).one().id
-                    community_owner_role_id = (
-                        GetCommunity.get_community_by_id(community_id).id_role
-                    )
-
-                    role_left = userrole.alias("role_left")
-                    role_right = userrole.alias("role_right")
-                    # who has Community Admin role and Community Owner role.
-                    set_community_admin_id = {
-                        user_id[0] for user_id in
-                        db.session.query(role_left.c.user_id)
-                        .join(
-                            role_right,
-                            role_left.c.role_id == role_right.c.role_id
-                        )
-                        .filter(
-                            role_left.c.role_id == community_admin_role_id,
-                            role_right.c.role_id == community_owner_role_id,
-                        )
-                        .distinct()
-                        .all()
-                    }
-                    set_target_id.update(set_community_admin_id)
-
-                is_shared = activity.shared_user_id != -1
-                if not is_shared:
-                    # if self request, not notify
-                    set_target_id.discard(actor_id)
-
-                targets = User.query.filter(User.id.in_(list(set_target_id))).all()
-                settings = NotificationsUserSettings.query.filter(
-                    NotificationsUserSettings.user_id.in_(list(set_target_id))
-                ).all()
-                settings_dict = {setting.user_id: setting for setting in settings}
-                user_profiles = UserProfile.query.filter(
-                    UserProfile.user_id.in_(list(set_target_id))
-                ).all()
-                profiles_dict = {profile.user_id: profile for profile in user_profiles}
-                actor = User.query.filter_by(id=actor_id).one_or_none()
-
+            target_id, _, _, actor_name = self._get_params_for_approver(activity)
+            targets, settings, profiles, _ = self._get_settings_for_targets(target_id)
         except SQLAlchemyError as ex:
             current_app.logger.error(
-                "Error had orrured in database during getting notification "
-                f"parameters for activity: {activity.activity_id}"
+                "Failed to get notification parameters for activity: {}"
+                .format(activity.activity_id)
             )
             traceback.print_exc()
             return
 
-        from .utils import convert_to_timezone
-        def request_approval_data(activity, target, profile):
-            """
-            Generate data for the request approval email template.
+        def data_callback(activity, target, profile):
+            return self._create_notification_context(
+                activity, target, profile, actor_name
+            )
 
-            Args:
-                activity (Activity): The activity object.
-                target (User): The target user who will receive the email.
-                profile (UserProfile): The profile of the target user.
-
-            Returns:
-                dict: A dictionary containing the data to be used in the email template.
-            """
-            timezone = profile.timezone if profile else None
-            submission_date = convert_to_timezone(activity.updated, timezone)
-            url = request.host_url + f"workflow/activity/detail/{activity.activity_id}"
-
-            return {
-                "approver_name": profile.username if profile else target.email,
-                "item_title": activity.title,
-                "submitter_name": actor_name if actor_name else actor.email,
-                "submission_date": submission_date.strftime("%Y-%m-%d %H:%M:%S"),
-                "approval_url": url
-            }
-        template_file = 'email_nortification_request_approval_{language}.tpl'
-        self.send_notification_email(activity, targets, settings_dict, profiles_dict, template_file, request_approval_data)
+        template_file = 'email_notification_request_approval_{language}.tpl'
+        send_count =self.send_notification_email(
+            activity, targets, settings, profiles,
+            template_file, data_callback=data_callback
+        )
         current_app.logger.info(
             "{num} mail(s) sent for request approval: {activity_id}"
-            .format(num=len(set_target_id), activity_id=activity.activity_id)
+            .format(num=send_count, activity_id=activity.activity_id)
         )
 
     def send_mail_item_approved(self, activity):
         """Notify approved items via email.
 
-        Send mail to user when item approved.
-        Create user and shared user will be notified.
-
         Args:
             activity (Activity): Activity object.
-
-        Returns:
-            None
 
         Raises:
             SQLAlchemyError: If an error occurs while querying the database.
             Exception: If an unexpected error occurs during the email sending process.
         """
         try:
-            with db.session.begin_nested():
-                set_target_id = {activity.activity_login_user}
-                is_shared = activity.shared_user_id != -1
-                if is_shared:
-                    set_target_id.add(activity.shared_user_id)
-
-                recid = (
-                    PersistentIdentifier
-                    .get_by_object("recid", "rec", activity.item_id)
-                )
-                actor_id = activity.activity_update_user
-
-                actor_profile = UserProfile.get_by_userid(actor_id)
-                actor_name = (
-                    actor_profile.username
-                    if actor_profile is not None else None
-                )
-
-                if not is_shared:
-                    # if self approval, not notify
-                    set_target_id.discard(actor_id)
-
-                targets = User.query.filter(User.id.in_(list(set_target_id))).all()
-                settings = NotificationsUserSettings.query.filter(
-                    NotificationsUserSettings.user_id.in_(list(set_target_id))
-                ).all()
-                settings_dict = {setting.user_id: setting for setting in settings}
-                user_profiles = UserProfile.query.filter(
-                    UserProfile.user_id.in_(list(set_target_id))
-                ).all()
-                profiles_dict = {profile.user_id: profile for profile in user_profiles}
-
+            set_target_id, recid, _, actor_name = self._get_params_for_registrant(activity)
+            targets, settings, profiles, _ = self._get_settings_for_targets(set_target_id)
         except SQLAlchemyError as ex:
             current_app.logger.error(
-                "Error had orrured in database during getting notification "
-                f"parameters for activity: {activity.activity_id}"
+                "Failed to get notification parameters for activity: {}"
+                .format(activity.activity_id)
             )
             traceback.print_exc()
             return
-        from .utils import convert_to_timezone
-        def item_approved_data(activity, target, profile):
-            """
-            Generate data for the item approved email template.
 
-            Args:
-                activity (Activity): The activity object containing details about the approved item.
-                target (User): The target user who will receive the email.
-                profile (UserProfile): The profile of the target user.
+        def data_callback(activity, target, profile):
+            return self._create_notification_context(
+                activity, target, profile, actor_name, recid
+            )
 
-            Returns:
-                dict: A dictionary containing the data to be used in the email template.
-            """
-            timezone = profile.timezone if profile else None
-            approval_date = convert_to_timezone(activity.updated, timezone)
-            url = request.host_url + f"records/{recid.pid_value.split('.')[0]}"
-            return {
-                "approver_name": actor_name,
-                "item_title": activity.title,
-                "submitter_name": profile.username if profile else target.email,
-                "approval_date": approval_date.strftime("%Y-%m-%d %H:%M:%S"),
-                "record_url": url
-            }
-
-        template_file = 'email_nortification_item_approved_{language}.tpl'
-        self.send_notification_email(activity, targets, settings_dict, profiles_dict, template_file, item_approved_data)
+        template_file = 'email_notification_item_approved_{language}.tpl'
+        self.send_notification_email(
+            activity, targets, settings, profiles,
+            template_file, data_callback
+        )
         current_app.logger.info(
             "{num} mail(s) sent for item approved: {activity_id}"
             .format(num=len(set_target_id), activity_id=activity.activity_id)
@@ -3475,89 +3220,212 @@ class WorkActivity(object):
     def send_mail_item_rejected(self, activity):
         """Notify rejected items via email.
 
-        Send mail to user when item rejected.
-        Create user and shared user will be notified.
-
         Args:
             activity (Activity): Activity object.
-
-        Returns:
-            None
 
         Raises:
             SQLAlchemyError: If an error occurs while querying the database.
             Exception: If an unexpected error occurs during the email sending process.
         """
         try:
-            with db.session.begin_nested():
-                set_target_id = {activity.activity_login_user}
-                is_shared = activity.shared_user_id != -1
-                if is_shared:
-                    set_target_id.add(activity.shared_user_id)
-
-                recid = (
-                    PersistentIdentifier
-                    .get_by_object("recid", "rec", activity.item_id)
-                )
-                actor_id = activity.activity_update_user
-
-                actor_profile = UserProfile.get_by_userid(actor_id)
-                actor_name = (
-                    actor_profile.username
-                    if actor_profile is not None else None
-                )
-
-                if not is_shared:
-                    # if self reject, not notify
-                    set_target_id.discard(actor_id)
-
-                targets = User.query.filter(User.id.in_(list(set_target_id))).all()
-                settings = NotificationsUserSettings.query.filter(
-                    NotificationsUserSettings.user_id.in_(list(set_target_id))
-                ).all()
-                settings_dict = {setting.user_id: setting for setting in settings}
-                user_profiles = UserProfile.query.filter(
-                    UserProfile.user_id.in_(list(set_target_id))
-                ).all()
-                profiles_dict = {profile.user_id: profile for profile in user_profiles}
+            set_target_id, _, _, actor_name = self._get_params_for_registrant(activity)
+            targets, settings, profiles, _ = self._get_settings_for_targets(set_target_id)
         except SQLAlchemyError as ex:
             current_app.logger.error(
-                "Error had orrured in database during getting notification "
-                f"parameters for activity: {activity.activity_id}"
+                "Failed to get notification parameters for activity: {}"
+                .format(activity.activity_id)
             )
             traceback.print_exc()
             return
 
-        from .utils import convert_to_timezone
-        def item_rejected_data(activity, target, profile):
-            """
-            Generate data for the item rejected email template.
+        def data_callback(activity, target, profile):
+            return self._create_notification_context(
+                activity, target, profile, actor_name
+            )
 
-            Args:
-                activity (Activity): The activity object containing details about the rejected item.
-                target (User): The target user who will receive the email.
-                profile (UserProfile): The profile of the target user.
-
-            Returns:
-                dict: A dictionary containing the data to be used in the email template.
-            """
-            timezone = profile.timezone if profile else None
-            rejected_date = convert_to_timezone(activity.updated, timezone)
-            url = request.host_url + f"workflow/activity/detail/{activity.activity_id}"
-            return {
-                "approver_name": actor_name,
-                "item_title": activity.title,
-                "submitter_name": profile.username if profile else target.email,
-                "rejection_date": rejected_date.strftime("%Y-%m-%d %H:%M:%S"),
-                "url": url
-            }
-
-        template_file = 'email_nortification_item_rejected_{language}.tpl'
-        self.send_notification_email(activity, targets, settings_dict, profiles_dict, template_file, item_rejected_data)
+        template_file = 'email_notification_item_rejected_{language}.tpl'
+        self.send_notification_email(
+            activity, targets, settings, profiles,
+            template_file, data_callback
+        )
         current_app.logger.info(
             "{num} mail(s) sent for item rejected: {activity_id}"
             .format(num=len(set_target_id), activity_id=activity.activity_id)
         )
+
+    def send_mail_item_deleted(self, activity):
+        """Notify delete items via email.
+
+        Args:
+            activity (Activity): Activity object.
+
+        Raises:
+            SQLAlchemyError: If an error occurs while querying the database.
+            Exception: If an unexpected error occurs during the email sending process.
+        """
+        try:
+            set_target_id, recid, _, actor_name = self._get_params_for_registrant(activity)
+            targets, settings, profiles, _ = self._get_settings_for_targets(set_target_id)
+        except SQLAlchemyError as ex:
+            current_app.logger.error(
+                "Failed to get notification parameters for activity: {}"
+                .format(activity.activity_id)
+            )
+            traceback.print_exc()
+            return
+
+        def data_callback(activity, target, profile):
+            return self._create_notification_context(
+                activity, target, profile, actor_name, recid
+            )
+
+        template_file = 'email_notification_item_deleted_{language}.tpl'
+        self.send_notification_email(
+            activity, targets, settings, profiles,
+            template_file, data_callback
+        )
+        current_app.logger.info(
+            "{num} mail(s) sent for item deleted: {activity_id}"
+            .format(num=len(set_target_id), activity_id=activity.activity_id)
+        )
+
+    def send_mail_request_delete_approval(self, activity):
+        """Notify request delete approval via email.
+
+        Args:
+            activity (Activity): Activity object.
+
+        Raises:
+            SQLAlchemyError: If an error occurs while querying the database.
+            Exception: If an unexpected error occurs during the email sending process.
+        """
+        try:
+            set_target_id, _, _, actor_name = self._get_params_for_approver(activity)
+            targets, settings, profiles, _ = self._get_settings_for_targets(set_target_id)
+        except SQLAlchemyError as ex:
+            current_app.logger.error(
+                "Failed to get notification parameters for activity: {}"
+                .format(activity.activity_id)
+            )
+            traceback.print_exc()
+            return
+
+        def data_callback(activity, target, profile):
+            return self._create_notification_context(
+                activity, target, profile, actor_name
+            )
+
+        template_file = 'email_notification_delete_request_{language}.tpl'
+        self.send_notification_email(
+            activity, targets, settings, profiles,
+            template_file, data_callback
+        )
+        current_app.logger.info(
+            "{num} mail(s) sent for request delete approval: {activity_id}"
+            .format(num=len(set_target_id), activity_id=activity.activity_id)
+        )
+
+    def send_mail_item_delete_approved(self, activity):
+        """Notify approved delete items via email.
+
+        Args:
+            activity (Activity): Activity object.
+
+        Raises:
+            SQLAlchemyError: If an error occurs while querying the database.
+            Exception: If an unexpected error occurs during the email sending process.
+        """
+        try:
+            set_target_id, recid, _, actor_name = self._get_params_for_registrant(activity)
+            targets, settings, profiles, _ = self._get_settings_for_targets(set_target_id)
+        except SQLAlchemyError as ex:
+            current_app.logger.error(
+                "Failed to get notification parameters for activity: {}"
+                .format(activity.activity_id)
+            )
+            traceback.print_exc()
+            return
+
+        def data_callback(activity, target, profile):
+            return self._create_notification_context(
+                activity, target, profile, actor_name, recid
+            )
+
+        template_file = 'email_notification_delete_approved_{language}.tpl'
+        self.send_notification_email(
+            activity, targets, settings, profiles,
+            template_file, data_callback
+        )
+        current_app.logger.info(
+            "{num} mail(s) sent for item delete approved: {activity_id}"
+            .format(num=len(set_target_id), activity_id=activity.activity_id)
+        )
+
+    def send_mail_item_delete_rejected(self, activity):
+        """Notify rejected delete items via email.
+
+        Args:
+            activity (Activity): Activity object.
+
+        Raises:
+            SQLAlchemyError: If an error occurs while querying the database.
+            Exception: If an unexpected error occurs during the email sending process.
+        """
+        try:
+            set_target_id, _, _, actor_name = self._get_params_for_registrant(activity)
+            targets, settings, profiles, _ = self._get_settings_for_targets(set_target_id)
+        except SQLAlchemyError as ex:
+            current_app.logger.error(
+                "Failed to get notification parameters for activity: {}"
+                .format(activity.activity_id)
+            )
+            traceback.print_exc()
+            return
+
+        def data_callback(activity, target, profile):
+            return self._create_notification_context(
+                activity, target, profile, actor_name
+            )
+
+        template_file = 'email_notification_item_delete_rejected_{language}.tpl'
+        self.send_notification_email(
+            activity, targets, settings, profiles,
+            template_file, data_callback
+        )
+        current_app.logger.info(
+            "{num} mail(s) sent for item delete rejected: {activity_id}"
+            .format(num=len(set_target_id), activity_id=activity.activity_id)
+        )
+
+    def _create_notification_context(self, activity, target, profile, actor_name, recid=None):
+        """
+        Generate data for the email template.
+
+        Args:
+            activity (Activity): The activity object containing details about the rejected item.
+            target (User): The target user who will receive the email.
+            profile (UserProfile): The profile of the target user.
+
+        Returns:
+            dict: A dictionary containing the data to be used in the email template.
+        """
+        from .utils import convert_to_timezone
+
+        timezone = profile.timezone if profile else None
+        event_date = convert_to_timezone(activity.updated, timezone)
+        if recid:
+            url = request.host_url + f"records/{recid.pid_value.split('.')[0]}"
+        else:
+            url = request.host_url + f"workflow/activity/detail/{activity.activity_id}"
+
+        return {
+            "recipient_name": profile.username if profile else target.email,
+            "actor_name": actor_name,
+            "target_title": activity.title,
+            "target_url": url,
+            "event_date": event_date.strftime("%Y-%m-%d %H:%M:%S"),
+        }
+
 
 class WorkActivityHistory(object):
     """Operated on the Activity."""
@@ -3565,9 +3433,12 @@ class WorkActivityHistory(object):
     def create_activity_history(self, activity, action_order):
         """Create new activity history.
 
-        :param action_order:
-        :param activity:
-        :return:
+        Args:
+            activity (dict): The activity data.
+            action_order (int): The action order.
+
+        Returns:
+            ActivityHistory: The created activity history object.
         """
         db_history = ActivityHistory(
             activity_id=activity.get('activity_id'),
@@ -3575,20 +3446,23 @@ class WorkActivityHistory(object):
             action_version=activity.get('action_version'),
             action_status=activity.get('action_status'),
             action_user=current_user.get_id(),
-            action_date=datetime.utcnow(),
+            action_date=datetime.now(tz=timezone.utc),
             action_comment=activity.get('commond'),
             action_order=action_order,
         )
         new_history = False
         activity = WorkActivity()
         activity = activity.get_activity_detail(db_history.activity_id)
-        if activity.action_id != db_history.action_id or \
-                activity.action_status != db_history.action_status:
+        if (
+            activity.action_id != db_history.action_id
+            or activity.action_status != db_history.action_status
+            or activity.action_order != db_history.action_order
+        ):
             new_history = True
             activity.action_id = db_history.action_id
             activity.action_status = db_history.action_status
             activity.activity_update_user = db_history.action_user
-            activity.updated = datetime.utcnow()
+            activity.updated = datetime.now(tz=timezone.utc),
         try:
             with db.session.begin_nested():
                 if new_history:
@@ -3610,7 +3484,7 @@ class WorkActivityHistory(object):
         """
         with db.session.no_autoflush:
             query = ActivityHistory.query.filter_by(
-                activity_id=activity_id).order_by(asc(ActivityHistory.id))
+                activity_id=activity_id).order_by(asc(ActivityHistory.action_order))
             histories = query.all()
             for history in histories:
                 history.ActionName = _Action.query.filter_by(

@@ -10,12 +10,19 @@
 import os
 import re
 import json
+import traceback
+from marshmallow import ValidationError
 import pytz
 from datetime import datetime
 
 from flask import current_app, request
+from requests import HTTPError
 
 from weko_user_profiles.config import USERPROFILES_TIMEZONE_LIST
+from weko_user_profiles.models import UserProfile
+
+from .client import NotificationClient
+from .config import WEKO_NOTIFICATIONS_USERS_URI
 
 def inbox_url(endpoint=None, _external=False):
     """Return the inbox URL.
@@ -33,11 +40,26 @@ def inbox_url(endpoint=None, _external=False):
         else current_app.config["WEKO_NOTIFICATIONS_INBOX_ADDRESS"]
     )
     if endpoint is not None:
-        url += endpoint
+        url += endpoint if endpoint.startswith("/") else f"/{endpoint}"
     else:
         url += current_app.config["WEKO_NOTIFICATIONS_INBOX_ENDPOINT"]
 
-    return url
+    return str(url)
+
+
+def user_uri(user_id, _external=False):
+    """Return the user URI.
+
+    Args:
+        user_id (int): The user ID.
+        _external (bool): Whether to return the URI with the full domain.
+
+    Returns:
+        str: The user URI.
+    """
+    uri = current_app.config["THEME_SITEURL"] if _external else ""
+    uri += WEKO_NOTIFICATIONS_USERS_URI
+    return str(uri).format(user_id=user_id)
 
 
 def rfc3339(timezone=None):
@@ -70,7 +92,7 @@ def create_subscription(user_id, endpoint, expiration_time, p256dh, auth):
     root_url = request.host_url
 
     subscription = {
-        "target": f"{root_url}user/{user_id}",
+        "target": user_uri(user_id, _external=True),
         "endpoint": endpoint,
         "expirationTime": expiration_time,
         "keys": {
@@ -101,7 +123,7 @@ def create_userprofile(userprofile):
             iana_tz = re.search(pattern, str(iana)).group(1)
 
     userprofile = {
-        "uri": f"{root_url}user/{userprofile.user_id}",
+        "uri": user_uri(userprofile.user_id, _external=True),
         "displayname": userprofile._displayname,
         "language": userprofile.language,
         "timezone": iana_tz,
@@ -149,3 +171,113 @@ def get_push_template():
         for lang, tpl in value.get("templates", {}).items()
     ]
     return templates
+
+
+def _get_params_for_registrant(target_id, actor_id, shared_id):
+    """Get parameters for registrant.
+
+    Args:
+        target_id (int): The target ID.
+        actor_id (int): The actor ID.
+        shared_id (int): The shared ID.
+
+    Returns:
+        tuple(set, str):
+            - str: Set of target IDs.
+            - str: The actor's name.
+    """
+    set_target_id = {target_id}
+    is_shared = shared_id != -1
+    if is_shared:
+        set_target_id.add(shared_id)
+    set_target_id.discard(actor_id)
+
+    actor_profile = UserProfile.get_by_userid(actor_id)
+    actor_name = actor_profile.username if actor_profile else None
+
+    return set_target_id, actor_name
+
+def notify_item_imported(
+    target_id, recid, actor_id, object_name=None, shared_id=-1
+):
+    """Notify item imported.
+
+    Args:
+        target_id (int): The target ID.
+        recid (str): The record ID.
+        actor_id (int): The actor ID.
+        shared_id (str): The shared ID.
+
+    Returns:
+        dict: The notification.
+    """
+    set_target_id, actor_name = _get_params_for_registrant(
+        target_id, actor_id, shared_id
+    )
+
+    from .notifications import Notification
+    for target_id in set_target_id:
+        try:
+            Notification.create_item_registered(
+                target_id, recid, actor_id,
+                actor_name=actor_name, object_name=object_name,
+            ).send(NotificationClient(inbox_url()))
+        except (ValidationError, HTTPError) as ex:
+            current_app.logger.error(
+                "Failed to send notification for item import."
+            )
+            traceback.print_exc()
+            return
+        except Exception as ex:
+            current_app.logger.error(
+                "Unexpected error occurred while sending notification for item import."
+            )
+            traceback.print_exc()
+            return
+    current_app.logger.info(
+        "{num} notification(s) sent for item import."
+        .format(num=len(set_target_id))
+    )
+
+
+def notify_item_deleted(
+    target_id, recid, actor_id, object_name=None, shared_id=-1
+):
+    """Notify item deleted.
+
+    Args:
+        target_id (int): The target ID.
+        recid (str): The record ID.
+        actor_id (int): The actor ID.
+        shared_id (str): The shared ID.
+
+    Returns:
+        dict: The notification.
+    """
+    set_target_id, actor_name = _get_params_for_registrant(
+        target_id, actor_id, shared_id
+    )
+
+    from .notifications import Notification
+    for target_id in set_target_id:
+        try:
+            Notification.create_item_deleted(
+                target_id, recid, actor_id,
+                actor_name=actor_name, object_name=object_name
+            ).send(NotificationClient(inbox_url()))
+        except (ValidationError, HTTPError) as ex:
+            current_app.logger.error(
+                "Failed to send notification for item deletion."
+            )
+            traceback.print_exc()
+            return
+        except Exception as ex:
+            current_app.logger.error(
+                "Unexpected error occurred while sending notification for item deletion."
+            )
+            traceback.print_exc()
+            return
+    current_app.logger.info(
+        "{num} notification(s) sent for item deletion."
+        .format(num=len(set_target_id))
+    )

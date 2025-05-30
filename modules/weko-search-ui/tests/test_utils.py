@@ -7,7 +7,7 @@ import os
 import re
 import time
 import unittest
-from datetime import datetime
+from datetime import datetime,timedelta
 import uuid
 import zipfile
 from elasticsearch import NotFoundError
@@ -18,7 +18,7 @@ from flask_babelex import Babel
 from flask_login import current_user
 from sqlalchemy import func as _func
 from sqlalchemy.exc import SQLAlchemyError
-from invenio_files_rest.models import FileInstance
+from invenio_files_rest.models import FileInstance,Location
 from invenio_i18n.babel import set_locale
 from invenio_records.api import Record
 from invenio_records.models import RecordMetadata
@@ -28,17 +28,22 @@ from invenio_db import db as iv_db
 from invenio_pidrelations.models import PIDRelation
 from tests.test_rest import DummySearchResult
 from weko_admin.config import WEKO_ADMIN_MANAGEMENT_OPTIONS
+from weko_admin.api import TempDirInfo
 from weko_deposit.api import WekoDeposit, WekoIndexer, WekoRecord as d_wekorecord
 from weko_authors.models import AuthorsPrefixSettings, AuthorsAffiliationSettings
 from weko_records.api import ItemsMetadata, WekoRecord
 from weko_records.models import ItemMetadata
 from weko_records.models import ItemType
+from weko_redis.redis import RedisConnection
+
 
 from weko_search_ui import WekoSearchUI
 from weko_search_ui.config import (
     ACCESS_RIGHT_TYPE_URI,
     RESOURCE_TYPE_URI,
     VERSION_TYPE_URI,
+    WEKO_SEARCH_UI_BULK_EXPORT_URI,
+    WEKO_SEARCH_UI_BULK_EXPORT_TASK,
     WEKO_IMPORT_SYSTEM_ITEMS,
     WEKO_REPO_USER,
     WEKO_SYS_USER,
@@ -58,7 +63,9 @@ from weko_search_ui.utils import (
     create_work_flow,
     defaultify,
     define_default_dict,
+    delete_exported_file,
     delete_exported,
+    delete_task_id_cache_on_missing_meta,
     delete_records,
     export_all,
     get_retry_info,
@@ -95,6 +102,7 @@ from weko_search_ui.utils import (
     handle_check_doi_indexes,
     handle_check_doi_ra,
     handle_check_duplication_item_id,
+    handle_check_duplicate_item_link,
     handle_check_exist_record,
     handle_check_file_content,
     handle_check_file_metadata,
@@ -120,6 +128,7 @@ from weko_search_ui.utils import (
     handle_validate_item_import,
     handle_workflow,
     handle_flatten_data_encode_filename,
+    handle_check_operation_flags,
     import_items_to_system,
     make_file_by_line,
     make_stats_file,
@@ -145,7 +154,8 @@ from weko_search_ui.utils import (
     result_download_ui,
     search_results_to_tsv,
     create_tsv_row,
-    get_priority
+    get_priority,
+    get_record_ids
 )
 from werkzeug.exceptions import NotFound
 
@@ -944,7 +954,7 @@ def test_up_load_file(i18n_app, deposit, db_activity):
 
     # Doesn't return a value
     assert not up_load_file(
-        record, root_path, deposit, allow_upload_file_content, old_files
+        record, root_path, deposit, old_files, allow_upload_file_content
     )
 
 
@@ -1374,7 +1384,217 @@ def test_handle_check_doi(app,identifier):
     handle_check_doi(item)
     assert item == test
 
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_handle_check_duplicate_item_link -v -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_handle_check_duplicate_item_link(app):
 
+    # pattern of link dst is existing ID
+    # expect reduction of duplicate link
+    item_1 = {
+        "_id": "journal1",
+        "link_data": [
+            {"item_id": "100", "sele_id": "ccc"},
+            {"item_id": "100", "sele_id": "ccc"}
+        ]
+    }
+    item_2 = {
+        "_id": "journal2",
+        "link_data": [
+            {"item_id": "100", "sele_id": "isSupplementTo"},
+            {"item_id": "100", "sele_id": "isSupplementTo"}
+        ]
+    }
+    list_record = [item_1, item_2]
+    list_record.sort(key=lambda x: get_priority(x["link_data"]))
+    handle_check_duplicate_item_link(list_record)
+    assert not list_record[0].get("errors")
+    assert not list_record[1].get("errors")
+    assert len(list_record[0]["link_data"]) == 1
+    assert len(list_record[1]["link_data"]) == 1
+
+    # duplicate link error
+    item_1 = {
+        "_id": "journal1",
+        "link_data": [
+            {"item_id": "100", "sele_id": "ccc"},
+            {"item_id": "100", "sele_id": "ddd"}
+        ]
+    }
+    item_2 = {
+        "_id": "journal2",
+        "link_data": [
+            {"item_id": "100", "sele_id": "ccc"},
+            {"item_id": "100", "sele_id": "isSupplementTo"}
+        ]
+    }
+    item_3 = {
+        "_id": "journal3",
+        "link_data": [
+            {"item_id": "100", "sele_id": "isSupplementTo"},
+            {"item_id": "100", "sele_id": "isSupplementedBy"}
+        ]
+    }
+    list_record = [item_1, item_2, item_3]
+    list_record.sort(key=lambda x: get_priority(x["link_data"]))
+    handle_check_duplicate_item_link(list_record)
+    assert "Duplicate Item Link." in list_record[0]["errors"][0]
+    assert "Duplicate Item Link." in list_record[1]["errors"][0]
+    assert "Duplicate Item Link." in list_record[2]["errors"][0]
+
+    # pattern of link dst is split item
+    item_1 = {
+        "_id": "journal",
+        "link_data": [
+            {"item_id": "evidence", "sele_id": "ccc"}
+        ]
+    }
+    list_record = [item_1]
+    list_record.sort(key=lambda x: get_priority(x["link_data"]))
+    handle_check_duplicate_item_link(list_record)
+    assert "It is not allowed to create links other than" \
+        in list_record[0]["errors"][0]
+
+    # expect reduction of duplicate inverse link
+    item_1 = {
+        "_id": "journal",
+        "link_data": [
+            {"item_id": "evidence", "sele_id": "isSupplementedBy"}
+        ]
+    }
+    item_2 = {
+        "_id": "evidence",
+        "link_data": [
+            {"item_id": "journal", "sele_id": "isSupplementTo"}
+        ]
+    }
+    list_record = [item_1, item_2]
+    list_record.sort(key=lambda x: get_priority(x["link_data"]))
+    assert list_record[0]["_id"] == "evidence"
+    assert list_record[1]["_id"] == "journal"
+    handle_check_duplicate_item_link(list_record)
+    assert len(list_record[0]["link_data"]) == 0
+    assert len(list_record[1]["link_data"]) == 1
+
+    # duplicate link error
+    item_1 = {
+        "_id": "evidence",
+        "link_data": [
+            {"item_id": "journal", "sele_id": "isSupplementedBy"}
+        ]
+    }
+    item_2 = {
+        "_id": "journal",
+        "link_data": [
+            {"item_id": "evidence", "sele_id": "isSupplementedBy"}
+        ]
+    }
+    list_record = [item_1, item_2]
+    list_record.sort(key=lambda x: get_priority(x["link_data"]))
+    assert list_record[0]["_id"] == "evidence"
+    assert list_record[1]["_id"] == "journal"
+    handle_check_duplicate_item_link(list_record)
+    assert "Duplicate Item Link." in list_record[0]["errors"][0]
+    assert "Duplicate Item Link." in list_record[1]["errors"][0]
+
+    # error link to item itself
+    item_1 = {
+        "_id": "evidence",
+        "id": "100",
+        "link_data": [
+            {"item_id": "100", "sele_id": "hasPart"}
+        ]
+    }
+    item_2 = {
+        "_id": "journal",
+        "link_data": [
+            {"item_id": "journal", "sele_id": "isSupplementedBy"},
+        ]
+    }
+    list_record = [item_1, item_2]
+    list_record.sort(key=lambda x: get_priority(x["link_data"]))
+    assert list_record[0]["_id"] == "journal"
+    assert list_record[1]["_id"] == "evidence"
+    handle_check_duplicate_item_link(list_record)
+    assert "It is not allowed to create links to the item itself." \
+        in list_record[0]["errors"][0]
+    assert "It is not allowed to create links to the item itself." \
+        in list_record[1]["errors"][0]
+
+    # replace links with inverse links (isSupplementTo)
+    item_1 = {
+        "_id": "journal",
+        "link_data": [
+            {"item_id": "100", "sele_id": "hasPart"}
+        ]
+    }
+    item_2 = {
+        "_id": "evidence",
+        "link_data": [
+            {"item_id": "journal", "sele_id": "isSupplementTo"},
+        ]
+    }
+    list_record = [item_1, item_2]
+    list_record.sort(key=lambda x: get_priority(x["link_data"]))
+    assert list_record[0]["_id"] == "evidence"
+    assert list_record[1]["_id"] == "journal"
+    handle_check_duplicate_item_link(list_record)
+    assert not list_record[0].get("errors")
+    assert not list_record[1].get("errors")
+    assert len(list_record[0]["link_data"]) == 0
+    assert len(list_record[1]["link_data"]) == 2
+
+    # replace links with inverse links (isSupplementedBy)
+    item_1 = {
+        "_id": "evidence",
+        "link_data": [
+            {"item_id": "100", "sele_id": "hasPart"}
+        ]
+    }
+    item_2 = {
+        "_id": "journal",
+        "link_data": [
+            {"item_id": "evidence", "sele_id": "isSupplementedBy"},
+        ]
+    }
+    list_record = [item_1, item_2]
+    list_record.sort(key=lambda x: get_priority(x["link_data"]))
+    assert list_record[0]["_id"] == "journal"
+    assert list_record[1]["_id"] == "evidence"
+    handle_check_duplicate_item_link(list_record)
+    assert not list_record[0].get("errors")
+    assert not list_record[1].get("errors")
+    assert len(list_record[0]["link_data"]) == 0
+    assert len(list_record[1]["link_data"]) == 2
+
+    # invaild input data
+    list_record = []
+    handle_check_duplicate_item_link(list_record)
+    item_1 = {
+        "_id": "evidence",
+        "link_data": None
+    }
+    item_2 = {
+    }
+    item_3 = None
+    list_record = [item_1, item_2, item_3]
+    handle_check_duplicate_item_link(list_record)
+    assert not list_record[0].get("errors")
+
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_handle_check_operation_flags -v -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_handle_check_operation_flags():
+    list_record = [
+        {"metadata_replace": True, "file_path":["/test/test.txt", "test/test.csv"]},
+        {"metadata_replace": False, "file_path":["/test/test.txt", "test/test.csv"]},
+        {"file_path":["/test/test.txt", "test/test.csv"]},
+    ]
+
+    test = [
+        {"metadata_replace": True, "file_path":[]},
+        {"metadata_replace": False, "file_path":["/test/test.txt", "test/test.csv"]},
+        {"file_path":["/test/test.txt", "test/test.csv"]},
+    ]
+
+    handle_check_operation_flags(list_record)
+    assert list_record == test
 
 # def register_item_handle(item):
 def test_register_item_handle(i18n_app, es_item_file_pipeline, es_records):
@@ -2662,12 +2882,7 @@ def test_handle_check_duplication_item_id(i18n_app):
 # def export_all(root_url, user_id, data): *** not yet done
 # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_export_all -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
 def test_export_all(db_activity, i18n_app, users, item_type, db_records2, redis_connect, db, create_export_all_data, mocker):
-    clear_test_data()
-
-    # Delete existing data to avoid IntegrityError
-    db.session.query(PersistentIdentifier).delete()
-    db.session.commit()
-
+    i18n_app.config["WEKO_ADMIN_CACHE_PREFIX"] = "test_admin_cache_{name}_{user_id}"
     with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
         with patch("weko_search_ui.utils.os.getenv", return_value="/tmp/bulk_export"):
             with patch("weko_search_ui.utils.os.makedirs") as mock_makedirs:
@@ -2683,6 +2898,9 @@ def test_export_all(db_activity, i18n_app, users, item_type, db_records2, redis_
                 uri_key = i18n_app.config["WEKO_ADMIN_CACHE_PREFIX"].format(
                     name="URI_EXPORT_ALL", user_id=current_user.get_id()
                 )
+                file_key = i18n_app.config["WEKO_ADMIN_CACHE_PREFIX"].format(
+                    name="RUN_MSG_EXPORT_ALL_FILE_CREATE", user_id=current_user.get_id()
+                )
                 datastore = redis_connect
 
                 task = MagicMock()
@@ -2697,10 +2915,11 @@ def test_export_all(db_activity, i18n_app, users, item_type, db_records2, redis_
                 msg = datastore.get(msg_key)
                 assert msg.decode() == ""
 
-                with patch("weko_search_ui.utils.delete_exported", return_value=None):
+                with patch("weko_search_ui.utils.delete_exported_file", return_value=None) as mock_delete_file:
                     datastore.put(uri_key, 'test_uri'.encode('utf-8'))
                     export_all(root_url, user_id, data2, start_time_str)
                     msg = datastore.get(msg_key)
+                    mock_delete_file.assert_called_with("test_uri",uri_key)
                     assert msg.decode() == ""
 
                 datastore.delete(uri_key)
@@ -2709,29 +2928,8 @@ def test_export_all(db_activity, i18n_app, users, item_type, db_records2, redis_
                 export_all(root_url, user_id, data_no_range, start_time_str)
 
                 recid_data_1 = [
-                    {
-                        "pid_value": "1",
-                        "object_uuid": "uuid1",
-                        "json": {"publish_status": "public"}
-                    },
-                    {
-                        "pid_value": "2",
-                        "object_uuid": "uuid2",
-                        "json": {"publish_status": "private"}
-                    }
-                ]
-
-                recid_data_2 = [
-                    {
-                        "pid_value": "1",
-                        "object_uuid": "uuid1",
-                        "json": {"publish_status": "public"}
-                    },
-                    {
-                        "pid_value": "2",
-                        "object_uuid": "uuid2",
-                        "json": {"publish_status": "private"}
-                    }
+                    MagicMock(pid_value=str(1), object_uuid="uuid1", json= {"publish_status": "public"}),  # json属性が存在しない
+                    MagicMock(pid_value=str(2), object_uuid="uuid2", json={"publish_status": "private"}),  # publish_statusがPUBLICまたはPRIVATEでない
                 ]
 
                 with patch("weko_search_ui.utils.get_all_record_id", return_value=recid_data_1):
@@ -2772,7 +2970,14 @@ def test_export_all(db_activity, i18n_app, users, item_type, db_records2, redis_
                     # # raise Exception in _get_export_data
                     with patch("weko_search_ui.tasks.write_files_task", side_effect=Exception("test_error")):
                         export_all(root_url, user_id, data_no_range, start_time_str)
+                with patch("weko_search_ui.utils.get_all_record_id", return_value=[]):
+                    export_all(root_url, user_id, data, start_time_str)
 
+                with patch("weko_search_ui.utils.get_all_record_id", side_effect=SQLAlchemyError("test_error")) as mock_get:
+                    export_all(root_url, user_id, data, start_time_str)
+                    assert mock_get.call_count==6
+                    assert json.loads(datastore.get(file_key).decode()).get("cancel_flg")==True
+                    assert datastore.get(msg_key).decode() == "Export failed."
 
 def test_get_retry_info():
     # Test case 1: When item_type_id is included in retry_info
@@ -2814,17 +3019,134 @@ def test_get_retry_info():
     assert file_part == 1
     assert from_pid == "1"
 
+# def delete_exported_file(uri, cache_key):
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_delete_exported_file -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_delete_exported_file(db,redis_connect,location):
+
+    location.size = 100
+    db.session.merge(location)
+    db.session.commit()
+
+    loc_uri = location.uri
+    loc_id=location.id
+    id = uuid.uuid4()
+    uri = f"{loc_uri}/test/tmp/dir"
+    cache_key="test_cache_key"
+
+    # not exist cache_key in redis
+    fi = FileInstance(
+        id=id,
+        uri=uri,
+        size=5,
+        updated=None
+    )
+    db.session.add(fi)
+    db.session.commit()
+    delete_exported_file(uri, cache_key)
+    db.session.commit()
+    assert Location.query.filter_by(id=loc_id).one().size == 95
+    assert FileInstance.query.filter_by(id=id).one_or_none() == None
+
+    # exist cache_key in redis
+    fi = FileInstance(
+        id=id,
+        uri=uri,
+        size=5,
+        updated=None
+    )
+    db.session.add(fi)
+    db.session.commit()
+    redis_connect.put(cache_key,"test_cache_value".encode("utf-8"),ttl_secs=30)
+    delete_exported_file(uri, cache_key)
+    db.session.commit()
+    assert redis_connect.redis.exists(cache_key) == False
+    assert Location.query.filter_by(id=loc_id).one().size == 90
+    assert FileInstance.query.filter_by(id=id).one_or_none() == None
+
 
 # def delete_exported(uri, cache_key):
-def test_delete_exported(i18n_app, file_instance_mock):
-    file_path = '/code/modules/weko-search-ui/tests/data/sample_file/sample_file.txt'
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_delete_exported -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_delete_exported(i18n_app, file_instance_mock,redis_connect,mocker):
+    import tempfile, shutil
+    mock_delete = mocker.patch("weko_search_ui.utils.delete_exported_file")
 
-    mock_file_instance = FileInstance(uri=file_path)
+    cache_prefix="test_admin_cache_{name}_1"
+    uri = "/test/export/tmp_dir"
+    export_info = {
+        "uri":uri,
+        "cache_key":cache_prefix.format(name=WEKO_SEARCH_UI_BULK_EXPORT_URI),
+        "task_key":cache_prefix.format(name=WEKO_SEARCH_UI_BULK_EXPORT_TASK),
+    }
+    task_id = str(uuid.uuid4())
+    redis_connect.put(export_info["task_key"],task_id.encode("utf-8"),ttl_secs=30)
+    try:
+        # not exist cache_key in redis
+        export_path = tempfile.mkdtemp()
+        result = delete_exported(export_path, export_info)
+        assert result == True
+        assert os.path.isdir(export_path) is False
+        assert redis_connect.redis.exists(export_info["task_key"]) == True
+        mock_delete.assert_called_with(uri, export_info["cache_key"])
+        mock_delete.reset_mock()
 
-    with patch("invenio_files_rest.models.FileInstance.get_by_uri", return_value=mock_file_instance):
-        with patch("invenio_files_rest.models.FileInstance.delete", return_value=None):
-            # Doesn't return any value
-            assert not delete_exported(file_path, "key")
+        # exist cache_key in redis
+        redis_connect.put(export_info["cache_key"],"/test/download/uri".encode("utf-8"),ttl_secs=30)
+        export_path = tempfile.mkdtemp()
+        result = delete_exported(export_path, export_info)
+        assert result == True
+        assert os.path.isdir(export_path) is False
+        assert redis_connect.redis.exists(export_info["task_key"]) == False
+        mock_delete.assert_called_with(uri, export_info["cache_key"])
+        mock_delete.reset_mock()
+
+        # raise exception
+        with patch("weko_search_ui.utils.delete_exported_file",side_effect=Exception("test_error")):
+            export_path = tempfile.mkdtemp()
+            result = delete_exported(export_path, export_info)
+            assert result == False
+            assert os.path.isdir(export_path) is True
+            assert redis_connect.redis.exists(export_info["task_key"]) == False
+            shutil.rmtree(export_path)
+    finally:
+        if redis_connect.redis.exists(export_info["task_key"]):
+            redis_connect.delete(export_info["task_key"])
+        if redis_connect.redis.exists(export_info["cache_key"]):
+            redis_connect.delete(export_info["cache_key"])
+
+
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_get_record_ids -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_get_record_ids():
+
+    # publish_status in status_ok
+    mock_recid1 = MagicMock()
+    mock_recid1.pid_value = "1"
+    mock_recid1.object_uuid = "uuid1"
+    mock_recid1.json = {"publish_status": "0", "path": ["100"]}
+
+    # publish_status not in status_ok
+    mock_recid2 = MagicMock()
+    mock_recid2.pid_value = "2"
+    mock_recid2.object_uuid = "uuid2"
+    mock_recid2.json = {"publish_status": "-1", "path": ["100"]}
+
+    res = get_record_ids([mock_recid1, mock_recid2])
+    assert res == [("1", "uuid1")]
+
+
+    # path in index_id_list
+    mock_recid3 = MagicMock()
+    mock_recid3.pid_value = "3"
+    mock_recid3.object_uuid = "uuid3"
+    mock_recid3.json = {"publish_status": "0", "path": ["100","200"]}
+
+    # path not in index_id_list
+    mock_recid4 = MagicMock()
+    mock_recid4.pid_value = "4"
+    mock_recid4.object_uuid = "uuid4"
+    mock_recid4.json = {"publish_status": "0", "path": ["300"]}
+
+    res = get_record_ids([mock_recid3, mock_recid4],["100","200","500"])
+    assert res == [("3", "uuid3")]
 
 
 # def write_files(item_datas, export_path, user_id, retrys):
@@ -2918,11 +3240,31 @@ def test_cancel_export_all(i18n_app, users, redis_connect, mocker):
             result = cancel_export_all()
             assert result == False
 
+# def delete_task_id_cache_on_missing_meta(task_id, cache_key):
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_delete_task_id_cache_on_missing_meta -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_delete_task_id_cache_on_missing_meta(redis_connect):
+    cache_key = "test_cache_key"
+    redis_connect.put(cache_key, "test_value".encode("utf-8"), ttl_secs=30)
+    task_id=str(uuid.uuid4())
+    redis_celery = RedisConnection().connection(db=current_app.config['CELERY_RESULT_BACKEND_DB_NO'], kv = True)
+    celery_task_key = f"celery-task-meta-{task_id}"
+
+    # exist celery-status in redis
+    redis_celery.put(celery_task_key, "test_value".encode("utf-8"), ttl_secs=30)
+    result = delete_task_id_cache_on_missing_meta(task_id, cache_key)
+    assert result == False
+    assert redis_connect.redis.exists(cache_key) == True
+
+    # not exist celery-status in redis
+    redis_celery.delete(celery_task_key)
+    result = delete_task_id_cache_on_missing_meta(task_id, cache_key)
+    assert result == True
+    assert redis_connect.redis.exists(cache_key) == False
 
 # def get_export_status():
 # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_get_export_status -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
 def test_get_export_status(i18n_app, users, redis_connect,mocker, location):
-    import pytz
+    import pytz,tempfile
     class MockAsyncResult:
         def __init__(self,task_id):
             self.task_id=task_id
@@ -2976,7 +3318,10 @@ def test_get_export_status(i18n_app, users, redis_connect,mocker, location):
 
     mocker.patch("weko_search_ui.utils.AsyncResult",side_effect=MockAsyncResult)
     with patch("flask_login.utils._get_user", return_value=users[3]["obj"]):
-        cache_key = i18n_app.config["WEKO_ADMIN_CACHE_PREFIX"].format(
+        current_app.config["WEKO_ADMIN_CACHE_PREFIX"] = "test_admin_cache_{name}_{user_id}"
+        tmp_cache_key = "cache::test_temp_dir_info"
+        current_app.config["WEKO_ADMIN_CACHE_TEMP_DIR_INFO_KEY_DEFAULT"] = tmp_cache_key
+        cache_key = current_app.config["WEKO_ADMIN_CACHE_PREFIX"].format(
             name="KEY_EXPORT_ALL", user_id=current_user.get_id()
         )
         cache_uri = current_app.config["WEKO_ADMIN_CACHE_PREFIX"].format(
@@ -3001,6 +3346,16 @@ def test_get_export_status(i18n_app, users, redis_connect,mocker, location):
         result=get_export_status()
         assert result == (False, "test_uri", "test_msg", "test_run_msg", "", "", "")
 
+        # exist task_id, celery_result_cache is not exist
+        with patch("weko_search_ui.utils.delete_task_id_cache_on_missing_meta",
+                   return_value=True):
+            datastore.put(cache_key, "PENDING_task".encode("utf-8"), ttl_secs=30)
+            result=get_export_status()
+            assert result == (False, "test_uri", "test_msg", "test_run_msg", "", "", "")
+
+        mocker.patch("weko_search_ui.utils.delete_task_id_cache_on_missing_meta",
+                    return_value=False)
+
         # task is not success, failed, revoked (write_file_data is not exist)
         datastore.put(cache_key, "PENDING_task".encode("utf-8"), ttl_secs=30)
         datastore.delete(file_msg)
@@ -3009,22 +3364,46 @@ def test_get_export_status(i18n_app, users, redis_connect,mocker, location):
         assert result == (False, "test_uri", "test_msg", "test_run_msg", "", "", "")
 
         # task is not success, failed, revoked (write_file_status is not exist)
+        # write_file_status=BEFORE
         datastore.put(cache_key, "PENDING_task".encode("utf-8"), ttl_secs=30)
         datastore.put(file_msg, json.dumps(create_not_param_file_json()).encode('utf-8'), ttl_secs=30)
         result=get_export_status()
         assert result == (True, "test_uri", "test_msg", "test_run_msg", "", start_time_str, "")
 
         # task is not success, failed, revoked (write_file_status is started)
+        # write_file_status=STARTED
         datastore.put(cache_key, "PENDING_task".encode("utf-8"), ttl_secs=30)
         datastore.put(file_msg, json.dumps(create_file_json('started')).encode('utf-8'), ttl_secs=30)
         result=get_export_status()
         assert result == (True, "test_uri", "test_msg", "test_run_msg", "STARTED", start_time_str, "")
 
         # task is not success, failed, revoked (cancel_flg is True)
+        # write_file_status=REVOKED
         datastore.put(cache_key, "PENDING_task".encode("utf-8"), ttl_secs=30)
         datastore.put(file_msg, json.dumps(create_file_cancel_json('started')).encode('utf-8'), ttl_secs=30)
         result=get_export_status()
         assert result == (True, "test_uri", "test_msg", "test_run_msg", "REVOKED", start_time_str, "")
+
+        # write_file_status is canceled
+        with patch("weko_search_ui.utils.AsyncResult",return_value=MockAsyncResult("REVOKED_task")):
+            export_path = tempfile.mkdtemp()
+            datastore.delete(file_msg)
+            file_json = create_file_json('canceled')
+            file_json['export_path'] = export_path
+            datastore.put(file_msg, json.dumps(file_json).encode('utf-8'), ttl_secs=30)
+            result = get_export_status()
+            assert result == (False, "test_uri", "test_msg", "test_run_msg", "REVOKED", start_time_str, "")
+            assert os.path.isdir(export_path) is False
+
+        # write_file_status is errorwith patch("weko_search_ui.utils.AsyncResult",return_value=MockAsyncResult("FAILED_task")):
+        with patch("weko_search_ui.utils.AsyncResult",return_value=MockAsyncResult("FAILED_task")):
+            datastore.delete(file_msg)
+            file_json = create_file_json('error')
+            file_json['export_path'] = export_path
+            datastore.put(file_msg, json.dumps(file_json).encode('utf-8'), ttl_secs=30)
+            result = get_export_status()
+            assert result == (False, "test_uri", "test_msg", "test_run_msg", "ERROR", start_time_str, "")
+            assert os.path.isdir(export_path) is False
 
         # task is success, failed, revoked (write_file_status is finished)
         mocker.patch("os.path.isdir", return_value=False)
@@ -3032,9 +3411,11 @@ def test_get_export_status(i18n_app, users, redis_connect,mocker, location):
         datastore.put(cache_key, "SUCCESS_task".encode("utf-8"), ttl_secs=30)
         datastore.delete(file_msg)
         file_json = create_file_json('finished')
-        file_json['export_path'] = 'tests/data/import'
+        export_path = 'tests/data/import'
+        file_json['export_path'] = export_path
         datastore.put(file_msg, json.dumps(file_json).encode('utf-8'), ttl_secs=30)
         now = datetime.now()
+        expire = now+timedelta(days=current_app.config["WEKO_SEARCH_UI_EXPORT_FILE_RETENTION_DAYS"])
         mocker_datetime = mocker.patch('weko_search_ui.utils.datetime')
         mocker_datetime.now.return_value = now
         mocker.patch('weko_search_ui.utils.bagit.make_bag')
@@ -3044,12 +3425,19 @@ def test_get_export_status(i18n_app, users, redis_connect,mocker, location):
         mocker.patch("weko_search_ui.utils.Location.get_default", return_value=MagicMock(uri="test_location"))
         task = MagicMock()
         task.task_id = 1
-        mocker.patch("weko_search_ui.tasks.delete_exported_task", return_value=task)
         with patch('weko_search_ui.utils.pytz.timezone', return_value=pytz.UTC):
             result = get_export_status()
             uri = datastore.get(cache_uri)
+            temp_cache_test = {
+                "is_export":True,
+                "uri":uri.decode(),
+                "cache_key":cache_uri,
+                "task_key":cache_key,
+                "expire": expire.strftime("%Y-%m-%d %H:%M:%S")
+            }
             assert result == (False, uri.decode(), "test_msg", "test_run_msg", "SUCCESS", start_time_str, now.strftime('%Y/%m/%d %H:%M:%S'))
-
+            assert TempDirInfo().get(export_path) == temp_cache_test
+            TempDirInfo().delete(export_path)
         # os.path.isdir is True
         with patch("weko_search_ui.utils.os.path.isdir", return_value=True):
             datastore.delete(file_msg)
@@ -3078,7 +3466,6 @@ def test_get_export_status(i18n_app, users, redis_connect,mocker, location):
         mocker.patch('weko_search_ui.utils.shutil.make_archive')
         task = MagicMock()
         task.task_id = 1
-        mocker.patch("weko_search_ui.tasks.delete_exported_task", return_value=task)
         result=get_export_status()
         uri = datastore.get(cache_uri)
         assert result == (True, uri.decode(), "test_msg", "test_run_msg", "SUCCESS", start_time_str, "")
@@ -3094,19 +3481,7 @@ def test_get_export_status(i18n_app, users, redis_connect,mocker, location):
             result=get_export_status()
             assert result == (False, "test_uri", "test_msg", "test_run_msg", "", "", "")
 
-        # write_file_status is canceled
-        with patch("weko_search_ui.utils.AsyncResult",return_value=MockAsyncResult("REVOKED_task")):
-            datastore.delete(file_msg)
-            datastore.put(file_msg, json.dumps(create_file_json('canceled')).encode('utf-8'), ttl_secs=30)
-            result = get_export_status()
-            assert result == (False, "test_uri", "test_msg", "test_run_msg", "REVOKED", start_time_str, "")
 
-        # write_file_status is errorwith patch("weko_search_ui.utils.AsyncResult",return_value=MockAsyncResult("FAILED_task")):
-        with patch("weko_search_ui.utils.AsyncResult",return_value=MockAsyncResult("FAILED_task")):
-            datastore.delete(file_msg)
-            datastore.put(file_msg, json.dumps(create_file_json('error')).encode('utf-8'), ttl_secs=30)
-            result = get_export_status()
-            assert result == (False, "test_uri", "test_msg", "test_run_msg", "", start_time_str, "")
 
 
 # def handle_check_item_is_locked(item):

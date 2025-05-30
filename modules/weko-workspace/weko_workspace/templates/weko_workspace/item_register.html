@@ -45,6 +45,7 @@
     {% assets "invenio_deposit_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
 
     <script src="{{ url_for('static', filename='js/weko_workspace/workspace_register.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/weko_items_ui/oapolicy.js') }}"></script>
     <!-- {% assets "weko_items_authors_search_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %} -->
     {% assets "weko_items_ui_js_dependencies" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
   {%- endblock javascript %}
@@ -64,25 +65,6 @@
   {%- block page_body_main %}
   {% from "weko_theme/macros/modal_page.html" import all_modal %}
   {{ all_modal() }}
-  <input type="hidden" id="warning_message" name="warning_message"
-    value="{{_('Use of JGSS data is considered as Continue. If you approve, this usage report will end. It is not able to restore an usage report that has ended. Do you want to continue?')}}">
-  <input type="hidden" id="a" name="a" value="{{_('Stop_Continue')}}">
-  {%-if position_list %}
-  <select style="display:None" autofocus="" class="form-control"
-  id="position_list" name="position_list">
-  {% for item in position_list %}
-  <option value="{{ item[0] }}">{{ item[1] }}</option>
-  {% endfor %}
-  </select>
-  {%- endif %}
-  {%-if institute_position_list %}
-  <select style="display:None" autofocus="" class="form-control"
-  id="institute_position_list" name="institute_position_list">
-  {% for item in institute_position_list %}
-  <option value="{{ item[0] }}">{{ item[1] }}</option>
-  {% endfor %}
-  </select>
-  {%- endif %}
   <div id="alerts"></div>
   <div class="container-fluid container-fluid2">
     <div class="row row-4">
@@ -219,6 +201,46 @@
                 <div ng-show="false" type="text" id="weko_id" ></div>
                 <button ng-show="false" id="btn_setAuthorInfo" class="btn btn-default" type="button" ng-click="setAuthorInfo()"></button>
                 <button ng-show="false" id="btn_setItemMetadata" class="btn btn-default" type="button" ng-click="setItemMetadata()"></button>
+                {%- if need_file %}
+                <div class="panel panel-default" class="col-sm-12">
+                  <div class="panel-heading" style="background-color: #dff0d8;">
+                    <h3 class="panel-title" style="color: #000000; font-weight: bold;">{{_('File')}}</h3>
+                  </div>&nbsp;
+                  <div id="file_upload" class="row row-4" ng-cloak="" ng-hide="recordsVM.invenioRecordsLoading">
+                    <div class="col-sm-12">
+                      <invenio-files-error
+                        template="{{ url_for('static', filename='node_modules/invenio-files-js/dist/templates/error.html') }}">
+                      </invenio-files-error>
+                      <invenio-files-upload-zone
+                        template="{{ url_for('static', filename='templates/weko_items_ui/upload.html') }}">
+                      </invenio-files-upload-zone>
+                      <invenio-files-list
+                        template="{{ url_for('static', filename='templates/weko_items_ui/upload_file_list.html') }}"
+                      ></invenio-files-list>
+                    </div>
+                  </div>
+                </div>
+                {%- endif %}
+                {%- if need_billing_file %}
+                <div class="panel panel-default" class="col-sm-12">
+                  <div class="panel-heading" style="background-color: #dff0d8;">
+                    <h3 class="panel-title" style="color: #3c763d;">{{_('File')}}</h3>
+                  </div>
+                  <div id="billing_file_upload" class="row row-4" ng-cloak="" ng-hide="recordsVM.invenioRecordsLoading">
+                    <div class="col-sm-12">
+                      <invenio-files-error
+                        template="{{ url_for('static', filename='node_modules/invenio-files-js/dist/templates/error.html') }}">
+                      </invenio-files-error>
+                      <invenio-files-upload-zone
+                        template="{{ url_for('static', filename='templates/weko_items_ui/upload.html') }}">
+                      </invenio-files-upload-zone>
+                      <invenio-files-list
+                        template="{{ url_for('static', filename='templates/weko_items_ui/upload_file_list.html') }}"
+                      ></invenio-files-list>
+                    </div>
+                  </div>
+                </div>
+                {%- endif %}
                 <div ng-cloak="" ng-hide="recordsVM.invenioRecordsLoading">
 
                   <div class="panel panel-default" class="col-sm-12">
@@ -232,48 +254,34 @@
                       template="{{ url_for('static', filename=config.DEPOSIT_UI_JSTEMPLATE_FORM) }}">
                     </invenio-records-form>
                     
+                  </div>
 
-                  </div>
-                  {%- if need_file %}
                   <div class="panel panel-default" class="col-sm-12">
                     <div class="panel-heading" style="background-color: #dff0d8;">
-                      <h3 class="panel-title" style="color: #000000; font-weight: bold;">{{_('File')}}</h3>
-                    </div>&nbsp;
-                    <div id="file_upload" class="row row-4" ng-cloak="" ng-hide="recordsVM.invenioRecordsLoading">
-                      <div class="col-sm-12">
-                        <invenio-files-error
-                          template="{{ url_for('static', filename='node_modules/invenio-files-js/dist/templates/error.html') }}">
-                        </invenio-files-error>
-                        <invenio-files-upload-zone
-                          template="{{ url_for('static', filename='templates/weko_items_ui/upload.html') }}">
-                        </invenio-files-upload-zone>
-                        <invenio-files-list
-                          template="{{ url_for('static', filename='templates/weko_items_ui/upload_file_list.html') }}"
-                        ></invenio-files-list>
+                      <h3 class="panel-title" style="color: #000000; font-weight: bold;">{{ _('oa_policy_label') }}</h3>
+                    </div>
+                    <div class="panel-body">
+                      <div class="col-sm-12 col-md-12">
+                        <div class="row content-font">
+                            <div class="panel panel-default" style="margin-right: 10px;">
+                              <div class="panel-body panel-body">
+                                  <button type="button" class="btn btn-primary" id="oapolicyurl">
+                                    {{ _('oa_policy_export') }}
+                                  </button>
+                                  <a id="oaPolicyUrl" href="#" target="_blank" class="ml-2 d-none">
+                                    <span id="oaPolicyText"></span>
+                                  </a>
+                                  <span id="oaPolicyError" class="text-danger ml-2" aria-live="polite"></span>
+                                  <input type="hidden" id="error_missing_input" value="{{ _('Please enter ISSN, eISSN, or journal title') }}">
+                                  <input type="hidden" id="error_no_policy_found" value="{{ _('No Policy Information found') }}">
+                                  <input type="hidden" id="error_api_generic" value="{{ _('An unknown error occurred') }}">
+                              </div>
+                            </div>
+                        </div>
                       </div>
                     </div>
                   </div>
-                  {%- endif %}
-                  {%- if need_billing_file %}
-                  <div class="panel panel-default" class="col-sm-12">
-                    <div class="panel-heading" style="background-color: #dff0d8;">
-                      <h3 class="panel-title" style="color: #3c763d;">{{_('File')}}</h3>
-                    </div>
-                    <div id="billing_file_upload" class="row row-4" ng-cloak="" ng-hide="recordsVM.invenioRecordsLoading">
-                      <div class="col-sm-12">
-                        <invenio-files-error
-                          template="{{ url_for('static', filename='node_modules/invenio-files-js/dist/templates/error.html') }}">
-                        </invenio-files-error>
-                        <invenio-files-upload-zone
-                          template="{{ url_for('static', filename='templates/weko_items_ui/upload.html') }}">
-                        </invenio-files-upload-zone>
-                        <invenio-files-list
-                          template="{{ url_for('static', filename='templates/weko_items_ui/upload_file_list.html') }}"
-                        ></invenio-files-list>
-                      </div>
-                    </div>
-                  </div>
-                  {%- endif %}
+
                   {%- if workflow_selected %}
                   {% else %}
                     <div class="panel panel-default" class="col-sm-12">
@@ -359,7 +367,7 @@
                         </div>
                       </div>
                       <div class="modal-footer">
-                        <button type="button" class="btn btn-info cancel-button" data-dismiss="modal" onclick="window.location.href=window.location.href;">
+                        <button type="button" class="btn btn-info cancel-button" data-dismiss="modal" onclick="$('#metadata_input_check_modal').css('display', ''); return false;">
                           <span class="glyphicon glyphicon-remove"></span>
                               {{_('Cancel')}}
                         </button>
@@ -381,8 +389,6 @@
   <input type="hidden" id="duplicate_files_error" name="duplicate_files_error"
       value="{{_('The same file name cannot be registered.')}}">
   <input type="hidden" id="autofill_item_type_id" name="autofill_item_type_id" value="{{id}}">
-  <input type="hidden" id="item_save_uri" name="item_save_uri" value='{{item_save_uri}}'>
-  <input type="hidden" id="item_save_frequency" name="item_save_frequency" value='{{config.WEKO_ITEMS_UI_SAVE_FREQUENCY}}'>
   
   <div role="dialog" tabindex="-1" class="fade in modal" id='regist_confirm_modal'>
     <div class="modal-dialog row popup_notice">

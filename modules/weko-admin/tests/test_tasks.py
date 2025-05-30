@@ -110,14 +110,17 @@ def test_clean_temp_info(instance_path, mocker):
     dir_not_expire = os.path.join(instance_path,"not_expire")
     dir_expire_after_now = os.path.join(instance_path,"expire_after_now")
     dir_expire_before_now = os.path.join(instance_path,"expire_before_now")
+    dir_export_tmp = os.path.join(instance_path,"export_tmp")
     os.makedirs(dir_not_expire, exist_ok=True)
     os.makedirs(dir_expire_after_now, exist_ok=True)
     os.makedirs(dir_expire_before_now, exist_ok=True)
+    os.makedirs(dir_export_tmp, exist_ok=True)
     data = {"test_key":{
         "/not_exist_path": {},# not exist path
         dir_not_expire: {},
         dir_expire_after_now: {"expire":(datetime.now()+timedelta(days=10)).strftime("%Y-%m-%d %H:%M:%S")},
-        dir_expire_before_now: {"expire":(datetime.now()+timedelta(days=-10)).strftime("%Y-%m-%d %H:%M:%S")}
+        dir_expire_before_now: {"expire":(datetime.now()+timedelta(days=-10)).strftime("%Y-%m-%d %H:%M:%S")},
+        dir_export_tmp: {"expire":(datetime.now()+timedelta(days=-10)).strftime("%Y-%m-%d %H:%M:%S"), "is_export": True}
     }}
     class MockTempDirInfo():
         def __init__(self):
@@ -133,10 +136,16 @@ def test_clean_temp_info(instance_path, mocker):
             self.data[self.key].pop(path)
     mock_temp_dir_info = MockTempDirInfo()
     mocker.patch("weko_admin.tasks.TempDirInfo", return_value=mock_temp_dir_info)
-    clean_temp_info()
-    result = mock_temp_dir_info.get_all()
-    assert list(result.keys()) == [dir_not_expire, dir_expire_after_now]
-    assert os.path.exists(dir_expire_before_now) is False
+    with patch("weko_search_ui.utils.delete_exported",return_value=True) as mock_delete_exported:
+
+        clean_temp_info()
+        result = mock_temp_dir_info.get_all()
+        assert list(result.keys()) == [dir_not_expire, dir_expire_after_now]
+        assert os.path.exists(dir_expire_before_now) is False
+        mock_delete_exported.assert_called_with(dir_export_tmp,
+            {"expire":(datetime.now()+timedelta(days=-10)).strftime("%Y-%m-%d %H:%M:%S"), "is_export": True})
+
+
 from mock import patch, MagicMock, Mock
 from requests.models import Response
 from invenio_oaiserver.models import OAISet

@@ -11,8 +11,10 @@ from enum import Enum
 
 from flask import url_for
 
+from weko_notifications.client import NotificationClient
+
 from .config import COAR_NOTIFY_CONTEXT
-from .utils import inbox_url
+from .utils import inbox_url, user_uri
 
 
 class ActivityType(Enum):
@@ -34,13 +36,16 @@ class ActivityType(Enum):
 
     UNDO = ["Undo"]
 
+    @property
+    def deletion_value(self):
+        return self.value + ["Delete"]
 
 class Notification(object):
     """Notification class."""
     def __init__(self):
         """Initialize notification."""
         self.activity_type = None
-        """ActivityType | str: Activity type."""
+        """ActivityType | list[str]: Activity type."""
 
         self.origin = {}
         """dict: Origin entity."""
@@ -68,17 +73,17 @@ class Notification(object):
 
     def __eq__(self, other):
         """Return True if the value is equal to the current id."""
-        return self.id == other.id
+        return isinstance(other, self.__class__) and self.id == other.id
 
     @property
     def id(self):
         """str: Notification ID."""
-        return self.payload["id"] if "id" in self.payload else None
+        return str(self.payload["id"]) if "id" in self.payload else None
 
     @property
     def updated(self):
         """str: Updated timestamp. """
-        return self.payload["updated"] if "updated" in self.payload else None
+        return str(self.payload["updated"]) if "updated" in self.payload else None
 
     @property
     def current_body(self):
@@ -131,6 +136,7 @@ class Notification(object):
 
         Args:
             payload (dict): Notification payload.
+
         Returns:
             Notification: Notification instance with payload.
         """
@@ -145,9 +151,14 @@ class Notification(object):
 
         Returns:
             Notification: Notification instance with payload.
+
+        Raises:
+            ValidationError: If the payload is not valid.
         """
         from .schema import NotificationSchema
         self.payload = NotificationSchema().load(self.current_body).data
+        self._is_validated = True
+        return self
 
     def set_type(self, activity_type):
         """Set activity type.
@@ -155,6 +166,7 @@ class Notification(object):
         Args:
             activity_type (ActivityType):
                 One of the Activity Stream 2.0 Activity Types
+
         Returns:
             Notification: Notification instance
         """
@@ -172,6 +184,7 @@ class Notification(object):
                 Inbox URL of the origin entity.
             entity_type (list[str] | str):
                 Type of the origin entity.
+
         Returns:
             Notification: Notification instance
         """
@@ -190,6 +203,7 @@ class Notification(object):
                 Inbox URL of the target entity.
             entity_type (list[str] | str):
                 Type of the target entity.
+
         Returns:
             Notification: Notification instance
         """
@@ -216,6 +230,7 @@ class Notification(object):
                 URL of the object entity.
             name (str | None):
                 Name of the object entity.
+
         Returns:
             Notification: Notification instance
         """
@@ -238,6 +253,7 @@ class Notification(object):
                 Type of the actor entity.
             name (str):
                 Name of the actor entity.
+
         Returns:
             Notification: Notification instance
         """
@@ -255,6 +271,7 @@ class Notification(object):
                 IETF Cite As of the context entity. alias of 'ietf:cite-as'.
             entity_type (list[str] | str):
                 Type of the context entity.
+
         Returns:
             Notification: Notification instance
         """
@@ -264,6 +281,68 @@ class Notification(object):
         self._is_validated = False
         return self
 
+
+    def set_all(
+            self, activity_type, target_id, object_id, actor_id,
+            context_id=None, in_reply_to=None, **kwargs
+        ):
+        """Set all entities.
+        Args:
+            activity_type (ActivityType | list[str]):
+                Activity type of the notification.
+            target_id (int): ID of the target user.
+            object_id (int): ID of the object item.
+            actor_id (int): ID of the actor user.
+            context_id (int | None): ID of the context page.
+            in_reply_to (str | None): ID of the inReplyTo notification.
+            **kwargs (dict):
+                - object_name (str): Name of the object item. <br>
+                - ietf_cite_as (str): IETF Cite As of the object item. <br>
+                - actor_name (str): Name of the actor user.
+
+        Returns:
+            Notification: Notification instance
+        """
+        site_index_url = url_for('weko_theme.index', _external=True)
+        item_url = url_for(
+            "invenio_records_ui.recid", pid_value=object_id, _external=True
+        )
+        self.set_type(activity_type)
+        self.set_origin(
+            id=site_index_url,
+            inbox=inbox_url(_external=True),
+            entity_type="Service"
+        )
+        self.set_target(
+            id=user_uri(target_id, _external=True),
+            inbox=inbox_url(_external=True),
+            entity_type="Person"
+        )
+        self.set_object(
+            id=item_url,
+            ietf_cite_as=kwargs.get("ietf_cite_as"),
+            object_type=["Page", "sorg:WebPage"],
+            name=kwargs.get("object_name")
+        )
+        self.set_actor(
+            id=user_uri(actor_id, _external=True),
+            entity_type="Person",
+            name=kwargs.get("actor_name") or "Unknown"
+        )
+        if context_id:
+            activity_url = url_for(
+                "weko_workflow.display_activity", activity_id=context_id,
+                _external=True
+            )
+            self.set_context(
+                id=activity_url,
+                entity_type=["Page", "sorg:WebPage"]
+            )
+        if in_reply_to:
+            self.in_reply_to = in_reply_to
+
+        return self.create()
+
     def send(self, client):
         """Send notification.
 
@@ -272,11 +351,13 @@ class Notification(object):
         Returns:
             str: Notification ID sent.
         """
+        if not isinstance(client, NotificationClient):
+            raise TypeError("client must be an instance of NotificationClient")
         return client.send(self)
 
 
     @classmethod
-    def create_item_registared(
+    def create_item_registered(
             cls, target_id, object_id, actor_id, **kwargs
         ):
         """Create item registared notification.
@@ -296,32 +377,13 @@ class Notification(object):
         Returns:
             Notification: Notification instance
         """
-        site_index_url = url_for('weko_theme.index', _external=True)
-        item_url = url_for(
-            "invenio_records_ui.recid", pid_value=object_id, _external=True
-        )
         obj = cls()
-        obj.set_type(ActivityType.ANNOUNCE_INGEST)
-        obj.set_origin(
-            id=site_index_url,
-            inbox=inbox_url(_external=True),
-            entity_type="Service"
-        )
-        obj.set_target(
-            id=f"{site_index_url}user/{target_id}",
-            inbox=inbox_url(_external=True),
-            entity_type="Person"
-        )
-        obj.set_object(
-            id=item_url,
-            ietf_cite_as=kwargs.get("ietf_cite_as"),
-            object_type=["Page", "sorg:WebPage"],
-            name=kwargs.get("object_name")
-        )
-        obj.set_actor(
-            id=f"{site_index_url}user/{actor_id}",
-            entity_type="Person",
-            name=kwargs.get("actor_name") or "Unknown"
+        obj.set_all(
+            activity_type=ActivityType.ANNOUNCE_INGEST,
+            target_id=target_id,
+            object_id=object_id,
+            actor_id=actor_id,
+            **kwargs
         )
         return obj.create()
 
@@ -346,40 +408,14 @@ class Notification(object):
         Returns:
             Notification: Notification instance
         """
-        site_index_url = url_for('weko_theme.index', _external=True)
-        item_url = url_for(
-            "invenio_records_ui.recid", pid_value=object_id, _external=True
-        )
-        activity_url = url_for(
-            "weko_workflow.display_activity", activity_id=context_id,
-            _external=True
-        )
-
         obj = cls()
-        obj.set_type(ActivityType.OFFER_ENDORSE)
-        obj.set_origin(
-            id=site_index_url,
-            inbox=inbox_url(_external=True),
-            entity_type="Service"
-        )
-        obj.set_target(
-            id=f"{site_index_url}user/{target_id}",
-            inbox=inbox_url(_external=True),
-            entity_type="Person"
-        )
-        obj.set_object(
-            id=item_url,
-            object_type=["Page", "sorg:WebPage"],
-            name=kwargs.get("object_name")
-        )
-        obj.set_actor(
-            id=f"{site_index_url}user/{actor_id}",
-            entity_type="Person",
-            name=kwargs.get("actor_name") or "Unknown"
-        )
-        obj.set_context(
-            id=activity_url,
-            entity_type=["Page", "sorg:WebPage"]
+        obj.set_all(
+            activity_type=ActivityType.OFFER_ENDORSE,
+            target_id=target_id,
+            object_id=object_id,
+            actor_id=actor_id,
+            context_id=context_id,
+            **kwargs
         )
         return obj.create()
 
@@ -405,40 +441,14 @@ class Notification(object):
         Returns:
             Notification: Notification instance
         """
-        site_index_url = url_for('weko_theme.index', _external=True)
-        item_url = url_for(
-            "invenio_records_ui.recid", pid_value=object_id, _external=True
-        )
-        activity_url = url_for(
-            "weko_workflow.display_activity", activity_id=context_id,
-            _external=True
-        )
         obj = cls()
-        obj.set_type(ActivityType.ANNOUNCE_ENDORSE)
-        obj.set_origin(
-            id=site_index_url,
-            inbox=inbox_url(_external=True),
-            entity_type="Service"
-        )
-        obj.set_target(
-            id=f"{site_index_url}user/{target_id}",
-            inbox=inbox_url(_external=True),
-            entity_type="Person"
-        )
-        obj.set_object(
-            id=item_url,
-            ietf_cite_as=kwargs.get("ietf_cite_as"),
-            object_type=["Page", "sorg:WebPage"],
-            name=kwargs.get("object_name")
-        )
-        obj.set_actor(
-            id=f"{site_index_url}user/{actor_id}",
-            entity_type="Person",
-            name=kwargs.get("actor_name") or "Unknown"
-        )
-        obj.set_context(
-            id=activity_url,
-            entity_type=["Page", "sorg:WebPage"]
+        obj.set_all(
+            activity_type=ActivityType.ANNOUNCE_ENDORSE,
+            target_id=target_id,
+            object_id=object_id,
+            actor_id=actor_id,
+            context_id=context_id,
+            **kwargs
         )
         return obj.create()
 
@@ -463,39 +473,142 @@ class Notification(object):
         Returns:
             Notification: Notification instance
         """
-        site_index_url = url_for('weko_theme.index', _external=True)
-        item_url = url_for(
-            "invenio_records_ui.recid", pid_value=object_id, _external=True
-        )
-        activity_url = url_for(
-            "weko_workflow.display_activity", activity_id=context_id,
-            _external=True
-        )
         obj = cls()
-        obj.set_type(ActivityType.ACKNOWLEDGE_AND_REJECT)
-        obj.set_origin(
-            id=site_index_url,
-            inbox=inbox_url(_external=True),
-            entity_type="Service"
+        obj.set_all(
+            activity_type=ActivityType.ACKNOWLEDGE_AND_REJECT,
+            target_id=target_id,
+            object_id=object_id,
+            actor_id=actor_id,
+            context_id=context_id,
+            **kwargs
         )
-        obj.set_target(
-            id=f"{site_index_url}user/{target_id}",
-            inbox=inbox_url(_external=True),
-            entity_type="Person"
+        return obj.create()
+
+
+    @classmethod
+    def create_item_deleted(
+            cls, target_id, object_id, actor_id, **kwargs
+        ):
+        """Create item deleted notification.
+
+        Create a notification of type Announce,coar-notify::IngestAction,Delete
+        for the item had deleted.
+
+        Args:
+            target_id (int): ID of the target user.
+            object_id (int): ID of the object item.
+            actor_id (int): ID of the actor user.
+            kwargs (dict):
+                object_name (str): Name of the object item. <br>
+                ietf_cite_as (str): IETF Cite As of the object item. <br>
+                actor_name (str): Name of the actor user.
+
+        Returns:
+            Notification: Notification instance
+        """
+        obj = cls()
+        obj.set_all(
+            activity_type=ActivityType.ANNOUNCE_INGEST.deletion_value,
+            target_id=target_id,
+            object_id=object_id,
+            actor_id=actor_id,
+            **kwargs
         )
-        obj.set_object(
-            id=item_url,
-            ietf_cite_as=kwargs.get("ietf_cite_as"),
-            object_type=["Page", "sorg:WebPage"],
-            name=kwargs.get("object_name")
+        return obj.create()
+
+    @classmethod
+    def create_request_delete_approval(
+            cls, target_id, object_id, actor_id, context_id, **kwargs
+        ):
+        """Create offer notification.
+
+        Create a notification of type Offer,coar-notify::EndorsementAction,Delete
+        to request approval for the item deletion.
+
+        Args:
+            target_id (int): ID of the target user.
+            object_id (int): ID of the object item.
+            actor_id (int): ID of the actor user.
+            context_id (int): ID of the context page.
+            kwargs (dict):
+                object_name (str): Name of the object item. <br>
+                actor_name (str): Name of the actor user.
+
+        Returns:
+            Notification: Notification instance
+        """
+        obj = cls()
+        obj.set_all(
+            activity_type=ActivityType.OFFER_ENDORSE.deletion_value,
+            target_id=target_id,
+            object_id=object_id,
+            actor_id=actor_id,
+            context_id=context_id,
+            **kwargs
         )
-        obj.set_actor(
-            id=f"{site_index_url}user/{actor_id}",
-            entity_type="Person",
-            name=kwargs.get("actor_name") or "Unknown"
+        return obj.create()
+
+    @classmethod
+    def create_item_delete_approved(
+            cls, target_id, object_id, actor_id, context_id, **kwargs
+        ):
+        """Create item deletion approved notification.
+
+        Create a notification of type Announce,coar-notify:EndorsementAction,Delete
+        for the item had approved.
+
+        Args:
+            target_id (int): ID of the target user.
+            object_id (int): ID of the object item.
+            actor_id (int): ID of the actor user.
+            context_id (int): ID of the context page.
+            kwargs (dict):
+                object_name (str): Name of the object item. <br>
+                ietf_cite_as (str): IETF Cite As of the object item. <br>
+                actor_name (str): Name of the actor user.
+
+        Returns:
+            Notification: Notification instance
+        """
+        obj = cls()
+        obj.set_all(
+            activity_type=ActivityType.ANNOUNCE_ENDORSE.deletion_value,
+            target_id=target_id,
+            object_id=object_id,
+            actor_id=actor_id,
+            context_id=context_id,
+            **kwargs
         )
-        obj.set_context(
-            id=activity_url,
-            entity_type=["Page", "sorg:WebPage"]
+        return obj.create()
+
+    @classmethod
+    def create_item_delete_rejected(
+            cls, target_id, object_id, actor_id, context_id, **kwargs
+        ):
+        """Create item deletion rejected notification.
+
+        Create a notification of type Reject,Delete for the item had rejected.
+
+        Args:
+            target_id (int): ID of the target user.
+            object_id (int): ID of the object item.
+            actor_id (int): ID of the actor user.
+            context_id (int): ID of the context page.
+            kwargs (dict):
+                object_name (str): Name of the object item. <br>
+                ietf_cite_as (str): IETF Cite As of the object item. <br>
+                actor_name (str): Name of the actor user.
+
+        Returns:
+            Notification: Notification instance
+        """
+        obj = cls()
+        obj.set_all(
+            activity_type=ActivityType.ACKNOWLEDGE_AND_REJECT.deletion_value,
+            target_id=target_id,
+            object_id=object_id,
+            actor_id=actor_id,
+            context_id=context_id,
+            **kwargs
         )
         return obj.create()

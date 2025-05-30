@@ -18,7 +18,7 @@ require([
 
   $('#filter_form_clear').on('click', function () {
     $('#activitylogs_clear_modal').fadeIn();
-  });   
+  });
 
   $('#confirm_clear_activitylogs').on('click', function () {
     $('#activitylogs_clear_modal').fadeOut();
@@ -27,7 +27,7 @@ require([
 
   $('#cancel_clear_activitylogs').on('click', function () {
     $('#activitylogs_clear_modal').fadeOut();
-  });  
+  });
 
   $('.clear-activitylog').on('click', function () {
     $('#activitylog_clear_modal').fadeIn();
@@ -52,7 +52,7 @@ require([
       method:"GET",
       async:false,
       success: function(data, status) {
-        if(data.is_deleted === true){
+        if(data.is_deleted === true && data.for_delete === false){
           alert($('#item_deleted_msg').text());
           event.preventDefault();
         }
@@ -282,12 +282,12 @@ require([
       newRow = $('<div id="action_id" class="form-group">');
       cols += '<div class="col-sm-7">'
         + '<label class="checkbox-inline"><input type="checkbox" name="action" value="start" id="start">' + $('#action_start').val() + '</label>'
-        + '<label class="checkbox-inline"><input type="checkbox" name="action" value="end" id="end">' + $('#action_end').val() + '</label>'
         + '<label class="checkbox-inline"><input type="checkbox" name="action" value="itemregistration" id="itemregistration">' + $('#action_item_registration').val() + '</label>'
-        + '<label class="checkbox-inline"><input type="checkbox" name="action" value="approval" id="approval">' + $('#action_approval').val() + '</label>'
         + '<label class="checkbox-inline"><input type="checkbox" name="action" value="itemlink" id="itemlink">' + $('#action_item_link').val() + '</label>'
-        + '<label class="checkbox-inline"><input type="checkbox" name="action" value="oapolicyconfirmation" id="oapolicyconfirmation">' + $('#action_oa_policy_confirmation').val() + '</label>'
         + '<label class="checkbox-inline"><input type="checkbox" name="action" value="identifiergrant" id="identifiergrant">' + $('#action_identifier_grant').val() + '</label>'
+        + '<label class="checkbox-inline"><input type="checkbox" name="action" value="approval" id="approval">' + $('#action_approval').val() + '</label>'
+        + '<label class="checkbox-inline"><input type="checkbox" name="action" value="end" id="end">' + $('#action_end').val() + '</label>'
+        // + '<label class="checkbox-inline"><input type="checkbox" name="action" value="oapolicyconfirmation" id="oapolicyconfirmation">' + $('#action_oa_policy_confirmation').val() + '</label>'
         + '</div>';
     } else {
       newRow = $('<div class="form-group">');
@@ -681,7 +681,7 @@ async function downloadActivities(activity_id=''){
     }
   }
   return  setActivitylogSubmit(paramsAfterFilter);
-    
+
 }
 
 //clear all filtered activities
@@ -711,7 +711,7 @@ function clearActivities(){
         }
       }
     }
-  
+
     let urlEncodedDataPairs = [];
     for (let key in paramsAfterFilter) {
       paramsAfterFilter[key].name = decodeURIComponent(paramsAfterFilter[key].name.replace(/\+/g, ' '));
@@ -719,7 +719,7 @@ function clearActivities(){
       urlEncodedDataPairs.push(encodeURIComponent(paramsAfterFilter[key].name) + '=' + encodeURIComponent(paramsAfterFilter[key].value));
     }
     clearURL = window.location.pathname + 'clear_activitylog/?' + urlEncodedDataPairs.join('&').replace(/%20/g, '+');
-  
+
     $.ajax({
       url: clearURL,
       method: 'GET',
@@ -732,7 +732,7 @@ function clearActivities(){
       }
     });
   });
-    
+
 
 }
 
@@ -742,7 +742,7 @@ function clearActivity(activity_id){
   downloadActivities(activity_id).then(()=>{
 
     clearURL = window.location.pathname + 'clear_activitylog/?activity_id=' + activity_id;
-  
+
     $.ajax({
       url: clearURL,
       method: 'GET',

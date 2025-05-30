@@ -278,6 +278,7 @@ def base_app(instance_path, search_class, request):
         },
         CACHE_REDIS_URL=os.environ.get("CACHE_REDIS_URL", "redis://redis:6379/0"),
         CACHE_REDIS_DB="0",
+        CELERY_RESULT_BACKEND_DB_NO="2",
         CACHE_REDIS_HOST="redis",
         WEKO_INDEX_TREE_STATE_PREFIX="index_tree_expand_state",
         REDIS_PORT="6379",
@@ -1958,7 +1959,7 @@ def facet_search_setting(db):
 @pytest.fixture()
 def db_activity(db, db_records2, db_itemtype, db_workflow, users):
     user = users[3]["id"]
-    depid, recid, parent, doi, record, item = db_records2[0]
+    recid, depid, record, item, parent, doi, deposit = db_records2[0]
     rec_uuid = uuid.uuid4()
     draft = PersistentIdentifier.create(
         "recid",

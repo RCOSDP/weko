@@ -30,16 +30,21 @@ class NotificationClient:
         notification.validate() if not notification._is_validated else None
         sender = ldnlib.Sender()
         sender.send(self.inbox, notification.payload)
-        return notification.id
+        return str(notification.id)
 
-    def notifications(self):
-        """
+    def notifications(self, target=None):
+        """Get notifications.
+
+        Args:
+            target (str | None): Target uri to filter notifications.
+
         Returns:
-            list[str]: List of notification IDs.
+            list(str): List of notification IDs.
         """
+        url = self.inbox if not target else f"{self.inbox}?target={target}"
         consumer = ldnlib.Consumer()
         notifications = consumer.notifications(
-            self.inbox, accept="application/ld+json"
+            url, accept="application/ld+json"
         )
         return notifications
 

@@ -68,21 +68,32 @@ WEKO_WORKSPACE_ITEM = {
 }
 """Default item template for the workspace item list page."""
 
-WEKO_WORKSPACE_AUTOFILL_JAMAS_XML_DATA_KEYS = [
-    "dc:title",
-    "dc:creator",
-    "prism:organization",
-    "prism:publicationName",
-    "prism:volume",
-    "prism:number",
-    "prism:startingPage",
-    "prism:pageRange",
-    "prism:publicationDate",
-    "prism:issn",
-    "prism:eIssn",
-    "prism:doi",
-]
-"""Jamas XML data keys"""
+WEKO_WORKSPACE_AUTOFILL_API_UPDATED = True
+"""Flag to indicate if the autofill API is updated."""
+
+WEKO_WORKSPACE_AUTOFILL_JAMAS_XML_DATA_KEYS = {
+    "identifier": False,
+    "title": False,
+    "creator": True,
+    "type": True,
+    "language": False,
+    "publisher": False,
+    "description": True,
+    "organization": True,
+    "publicationName": False,
+    "issn": False,
+    "eIssn": False,
+    "isbn": True,
+    "volume": False,
+    "number": False,
+    "startingPage": False,
+    "pageRange": False,
+    "publicationDate": True,
+    "keyword": True,
+    "doi": False,
+    "postDate": True,
+}
+"""Jamas XML data keys and multiple flags."""
 
 WEKO_WORKSPACE_AUTOFILL_JAMAS_REQUIRED_ITEM = [
     "title",
@@ -93,7 +104,9 @@ WEKO_WORKSPACE_AUTOFILL_JAMAS_REQUIRED_ITEM = [
     "issue",
     "pageStart",
     "date",
-    "relation"
+    "relation",
+    "publisher",
+    "description",
 ]
 """Jamas required item"""
 
@@ -250,59 +263,29 @@ WEKO_WORKSPACE_DEFAULT_FILTERS = {
 """Default filter options for the workspace item list page."""
 
 WEKO_WORKSPACE_OA_STATUS_MAPPING = {
-    "Unprocessed": "Unlinked",
-    "Unprocessed Pending": "Unlinked",
-    "Processing Metadata Registered": "Metadata Registered",
-    "Processing Metadata Registered (Fulltext Requested)": "Fulltext Requested",
-    "Processing Metadata Registered (Fulltext Obtained)": "Fulltext Provided",
-    "Processing Metadata Not Registered (Fulltext Requested)": "Unlinked (Fulltext Requested)",
-    "Processing Metadata Not Registered (Fulltext Obtained)": "Unlinked (Fulltext Provided)",
-    "Processed Fulltext Opened (OA)": "OA",
-    "Processed Fulltext Registered (Embargo)": "Embargo OA",
-    "Processed (Not OA) Metadata Opened (Fulltext Not Opened)": "Not OA",
-    "Processed (Not OA) Metadata Opened (Fulltext Opened Limitedly)": "Opened Limitedly",
-    "Unregistrable No Contact Information/Undeliverable": "Unlinked",
-    "Unregistrable No Reply": "Unlinked",
-    "Unregistrable No Permission": "Unlinked",
-    "Unregistrable No Fulltext": "Unlinked",
-    "Unregistrable Other Reasons": "Unlinked",
-    "Excluded Already Opened Elsewhere": "Opened Elsewhere",
-    "Excluded Not Funded by Designated FA": "Unlinked",
-    "Excluded Not Affiliated First Author": "Unlinked",
-    "Excluded Overlapped Content": "Unlinked",
-    "Excluded Other Reasons": "Unlinked"
+    "Unprocessed": _("Unlinked"),
+    "Unprocessed Pending": _("Unlinked"),
+    "Processing Metadata Registered": _("Metadata Registered"),
+    "Processing Metadata Registered (Fulltext Requested)": _("Fulltext Requested"),
+    "Processing Metadata Registered (Fulltext Obtained)": _("Fulltext Provided"),
+    "Processing Metadata Not Registered (Fulltext Requested)": _("Unlinked (Fulltext Requested)"),
+    "Processing Metadata Not Registered (Fulltext Obtained)": _("Unlinked (Fulltext Provided)"),
+    "Processed Fulltext Opened (OA)": _("OA"),
+    "Processed Fulltext Registered (Embargo)": _("Embargo OA"),
+    "Processed (Not OA) Metadata Opened (Fulltext Not Opened)": _("Not OA"),
+    "Processed (Not OA) Metadata Opened (Fulltext Opened Limitedly)": _("Opened Limitedly"),
+    "Unregistrable No Contact Information/Undeliverable": _("Unlinked"),
+    "Unregistrable No Reply": _("Unlinked"),
+    "Unregistrable No Permission": _("Unlinked"),
+    "Unregistrable No Fulltext": _("Unlinked"),
+    "Unregistrable Other Reasons": _("Unlinked"),
+    "Excluded Already Opened Elsewhere": _("Opened Elsewhere"),
+    "Excluded Not Funded by Designated FA": _("Unlinked"),
+    "Excluded Not Affiliated First Author": _("Unlinked"),
+    "Excluded Overlapped Content": _("Unlinked"),
+    "Excluded Other Reasons": _("Unlinked")
 }
 """Mapping of OA status to the OA status in WEKO."""
-
-
-WEKO_WORKSPACE_AUTOFILL_JAMAS_XML_DATA_KEYS = [
-    "dc:title",
-    "dc:creator",
-    "prism:organization",
-    "prism:publicationName",
-    "prism:volume",
-    "prism:number",
-    "prism:startingPage",
-    "prism:pageRange",
-    "prism:publicationDate",
-    "prism:issn",
-    "prism:eIssn",
-    "prism:doi",
-]
-"""Jamas XML data keys"""
-
-WEKO_WORKSPACE_AUTOFILL_JAMAS_REQUIRED_ITEM = [
-    "title",
-    "creator",
-    "sourceTitle",
-    "sourceIdentifier",
-    "volume",
-    "issue",
-    "pageStart",
-    "date",
-    "relation"
-]
-"""Jamas required item"""
 
 WEKO_WORKSPACE_ITEM_SEARCH_INDEX = "{}-weko".format(index_prefix)
 """Search index for WEKO workspace item."""
