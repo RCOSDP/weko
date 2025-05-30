@@ -278,6 +278,11 @@ def get_crossref_record_data_with_pid(doi, item_type_id):
     """
     pid_response = get_current_api_certification("crf")
     pid = pid_response["cert_data"]
+    if not pid:
+        current_app.logger.error(
+            "CrossRef PID is not set. Please set CrossRef PID in the configuration."
+        )
+        return []
     return get_crossref_record_data(pid, doi, item_type_id)
 
 

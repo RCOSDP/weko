@@ -20,15 +20,15 @@
 
 """Module of weko-workspace utils."""
 
-import json
+from functools import wraps
 from datetime import datetime,timezone
 import traceback
 from elasticsearch_dsl.query import Q
 from elasticsearch.exceptions import TransportError
+from invenio_cache import current_cache
 from invenio_search import RecordsSearch
-import requests
 from jsonschema import validate, ValidationError
-from flask import current_app, request
+from flask import current_app
 from flask_babelex import gettext as _
 from flask_security import current_user
 from invenio_db import db
@@ -50,6 +50,45 @@ from weko_records.api import (
 )
 from .api import CiNiiURL, JALCURL, DATACITEURL, JamasURL
 from lxml import etree
+
+def is_update_cache():
+    """Return True if Autofill Api has been updated.
+    
+    Returns:
+        bool: True if the Autofill API has been updated, False otherwise.
+    """
+    return current_app.config['WEKO_WORKSPACE_AUTOFILL_API_UPDATED']
+
+def cached_api_json(timeout=50, key_prefix="cached_api_json"):
+    """Cache Api response data.
+
+    Args:
+        timeout (int): Cache timeout in seconds.
+        key_prefix (str): Prefix for the cache key.
+    Returns:
+        function: Decorator function to cache API responses.
+    """
+    def caching(f):
+        @wraps(f)
+        def wrapper(*args, **kwargs):
+            key = key_prefix
+            for value in args:
+                key += str(value)
+            cache_fun = current_cache.cached(
+                timeout=timeout,
+                key_prefix=key,
+                forced_update=is_update_cache,
+            )
+            if current_cache.get(key) is None:
+                data = cache_fun(f)(*args, **kwargs)
+                current_cache.set(key, data)
+                return data
+            else:
+                return current_cache.get(key)
+
+        return wrapper
+
+    return caching
 
 
 def get_workspace_filterCon():
@@ -486,6 +525,7 @@ def convert_jamas_xml_data_to_dictionary(api_data, encoding='utf-8'):
     return rtn_data
 
 
+@cached_api_json(timeout=50, key_prefix="jamas_data")
 def get_jamas_record_data(doi, item_type_id, exclude_duplicate_lang=True):
     """Get record data base on Jamas API.
 
@@ -803,6 +843,7 @@ def get_jamas_language_data(data):
     return result
 
 
+@cached_api_json(timeout=50, key_prefix="cinii_data")
 def get_cinii_record_data(doi, item_type_id, exclude_duplicate_lang=True):
     """Get record data base on CiNii API.
 
@@ -837,7 +878,6 @@ def get_cinii_data_by_key(api, keyword):
     :param: keyword: keyword for search
     :return: data for keyword
     """
-    import json
     data_response = api['response']
     result = dict()
     if data_response is None:
@@ -1619,6 +1659,7 @@ def is_multiple(form_model, autofill_data):
         return False
 
 
+@cached_api_json(timeout=50, key_prefix="jalc_data")
 def get_jalc_record_data(doi, item_type_id, exclude_duplicate_lang=True):
     """Get record data base on jalc API.
 
@@ -1931,6 +1972,7 @@ def get_jalc_product_identifier(data):
     return result
 
 
+@cached_api_json(timeout=50, key_prefix="datacite_data")
 def get_datacite_record_data(doi, item_type_id, exclude_duplicate_lang=True):
     """Get record data base on DATACITE API.
 

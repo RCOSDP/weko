@@ -68,6 +68,9 @@ WEKO_WORKSPACE_ITEM = {
 }
 """Default item template for the workspace item list page."""
 
+WEKO_WORKSPACE_AUTOFILL_API_UPDATED = True
+"""Flag to indicate if the autofill API is updated."""
+
 WEKO_WORKSPACE_AUTOFILL_JAMAS_XML_DATA_KEYS = {
     "identifier": False,
     "title": False,
