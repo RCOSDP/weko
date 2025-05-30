@@ -321,12 +321,22 @@ class AuthorDBManagementAPI(ContentNegotiatedMethodView):
             prefix_obj = get_author_prefix_obj(auth_id.get("idType"))
             if prefix_obj:
                 auth_id["idType"] = str(prefix_obj.id)
+            else:
+                current_app.logger.error("Internal Server Error: Database access failed.")
+                raise AuthorInternalServerError(
+                    description="Internal Server Error: Database access failed."
+                )
         # `affiliationIdType` (scheme -> id)
         for affiliation in author_data.get("affiliationInfo", []):
             for identifier in affiliation.get("identifierInfo", []):
                 aff_obj = get_author_affiliation_obj(identifier.get("affiliationIdType"))
                 if aff_obj:
                     identifier["affiliationIdType"] = str(aff_obj.id)
+                else:
+                    current_app.logger.error("Internal Server Error: Database access failed.")
+                    raise AuthorInternalServerError(
+                        description="Internal Server Error: Database access failed."
+                    )
         return author_data
 
     def process_authors_data_after(self, author_data):
