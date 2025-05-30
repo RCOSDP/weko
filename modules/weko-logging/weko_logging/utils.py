@@ -53,15 +53,17 @@ class UserActivityLogUtils:
                 "data": log_data
             }]
 
-            log_zip = zipfile.ZipFile(zip_stream, "w")
+            log_zip = zipfile.ZipFile(zip_stream, "w", zipfile.ZIP_DEFLATED)
             for file in output_files:
                 log_zip.writestr(
                     file["filename"],
                     cls._write_log_to_tsv(file["data"])
                 )
+            log_zip.close()
 
             # set bufferd reader
-            reader = BufferedReader(BytesIO(zip_stream.getvalue()))
+            zip_stream.seek(0)
+            reader = BufferedReader(zip_stream)
 
             # save data into location
             cache_url = cls.get_export_url()
@@ -78,7 +80,6 @@ class UserActivityLogUtils:
                 file.writable = True
                 file.set_contents(reader)
 
-            log_zip.close()
             file_uri = file.uri if file else None
             db.session.commit()
         except Exception as e:
