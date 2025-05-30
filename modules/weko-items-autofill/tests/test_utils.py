@@ -1482,7 +1482,7 @@ def test_get_specific_key_path():
 
 # def build_record_model(item_autofill_key, api_data):
 # .tox/c1/bin/pytest --cov=weko_items_autofill tests/test_utils.py::test_build_record_model -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-autofill/.tox/c1/tmp
-def test_build_record_model():
+def test_build_record_model(app):
     # not api_data,not item_autofill_key
     result = build_record_model([], [])
     assert result == []
@@ -1904,6 +1904,19 @@ def test_fill_data(app):
     expected = {'item_30001_title0': [{'subitem_title': 'タイトル', 'subitem_title_language': 'ja'}]}
     result = fill_data(form_model, autofill_data, schema)
     assert result == expected
+
+    # duplicate language
+    autofill_data = [{"@value": "Title1", "@language": "en"}, {"@value": "Title2", "@language": "en"}]
+    expected = {'item_30001_title0': [{'subitem_title': 'Title1', 'subitem_title_language': 'en'}]}
+    result = fill_data(form_model, autofill_data, None, True)
+    assert result == expected
+
+    # schema with array items
+    schema = {"type": "array", "items": {"type": "object", "properties": {"prop1": {"type": "string"}}}}
+    autofill_data = [{"@value": "Title1"}]
+    form_model = {"prop1": "@value"}
+    result = fill_data(form_model, autofill_data, schema)
+    assert result == {"prop1": "Title1"}
 
 
 # def is_multiple(form_model, autofill_data):

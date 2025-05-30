@@ -14,7 +14,7 @@
     "type": "Service"
   },
   "target": {
-    "id": "http://test_server.localdomain/user/3",
+    "id": "http://test_server.localdomain/users/3",
     "inbox": "http://test_server.localdomain/inbox",
     "type": "Person"
   },
@@ -30,7 +30,7 @@
     "name": "A new record"
   },
   "actor": {
-    "id": "http://test_server.localdomain/user/3",
+    "id": "http://test_server.localdomain/users/3",
     "type": "Person",
     "name": "Alex"
   }

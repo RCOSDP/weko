@@ -88,9 +88,9 @@ msgstr "S3に関する設定がありません。あなたのプロフィール�
 msgid "Getting Bucket List failed."
 msgstr "バケットリストの取得に失敗しました。"
 
-#: weko_records_ui/api.py:251
-msgid "This file is not from institutional storage."
-msgstr "このファイルは機関ストレージのものではありません。"
+#: weko_records_ui/api.py:402
+msgid "The source file cannot be found."
+msgstr "コピー元のファイルが見つかりません。"
 
 #: weko_records_ui/api.py:280
 msgid "Creating Bucket failed."

@@ -27,7 +27,7 @@ from weko_records.api import (
 )
 from weko_records.serializers.utils import get_full_mapping
 
-from .config import ROCRATE_METADATA_FILE
+from .config import ROCRATE_METADATA_FILE, ROCRATE_METADATA_WK_CONTEXT_V1
 
 DEFAULT_FIELD = [
     "title",
@@ -1241,7 +1241,7 @@ class JsonMapper(BaseMapper):
             This process is part of “_create_item_map” and is not
             intended for any other use.
         """
-        if "title" in prop_v:
+        if prop_k and "title" in prop_v:
             key = key + "." + prop_v["title"] if key else prop_v["title"]
             value = value + "." + prop_k if value else prop_k
 
@@ -1253,7 +1253,7 @@ class JsonMapper(BaseMapper):
         elif prop_v["type"] == "array":
             item_map.update({key: value}) if detail else None
             self._apply_property(
-                item_map, key, value, "items", prop_v["items"], detail)
+                item_map, key, value, None, prop_v["items"], detail)
         else:
             item_map[key] = value
 
@@ -1324,6 +1324,8 @@ class JsonLdMapper(JsonMapper):
         "Publisher": "Organization"
     }
 
+    WK_CONTEXT = ROCRATE_METADATA_WK_CONTEXT_V1
+
     def __init__(self, itemtype_id, json_mapping):
         """Initilize JsonLdMapper.
 
@@ -1368,7 +1370,7 @@ class JsonLdMapper(JsonMapper):
         ]
 
         string_list = item_map.keys()
-        def find_similar_key(target_key, threshold=0.5):
+        def find_similar_key(target_key, threshold=0.8):
             best_match_tuple = max(
                 (
                     (s, ratio)
@@ -1597,6 +1599,9 @@ class JsonLdMapper(JsonMapper):
                 PROP_PATH = properties_mapping[META_PATH]
                 prop_props = PROP_PATH.split(".")
                 meta_value = metadata.get(META_KEY)
+                if meta_value is None or meta_value == "":
+                    # If the value is None or empty, skip setting metadata
+                    continue
                 if not isinstance(meta_value, (str, int, float, bool)):
                     meta_value = str(meta_value)
                 # META_KEY="dc:type.@id", meta_props=["dc:type","@id"],
@@ -2111,6 +2116,7 @@ class JsonLdMapper(JsonMapper):
         }
 
         rocrate = ROCrate()
+        rocrate.metadata.extra_terms.update(wk=self.WK_CONTEXT)
 
         # metadata for system
         rocrate.name = metadata["item_title"]

@@ -18,7 +18,7 @@ from weko_search_ui.tasks import (
     write_files_task,
     is_import_running,
     check_celery_is_run,
-    # delete_task_id_cache,
+    delete_task_id_cache_on_revoke,
     check_session_lifetime
 )
 
@@ -138,17 +138,17 @@ def test_delete_task_id_cache(app, users, redis_connect, mocker):
 
     # cache_data != task_id
     redis_connect.put(cache_key, "success_task".encode("utf-8"))
-    delete_task_id_cache("revoked_task", cache_key)
+    delete_task_id_cache_on_revoke("revoked_task", cache_key)
     assert redis_connect.redis.exists(cache_key) == True
 
     # cache_data==task_id, state != REVOKED
-    delete_task_id_cache("success_task", cache_key)
+    delete_task_id_cache_on_revoke("success_task", cache_key)
     assert redis_connect.redis.exists(cache_key) == True
 
     # cache_data==task_id, state == REVOKED
     redis_connect.redis.delete(cache_key)
     redis_connect.put(cache_key, "revoked_task".encode("utf-8"))
-    delete_task_id_cache("revoked_task", cache_key)
+    delete_task_id_cache_on_revoke("revoked_task", cache_key)
     assert redis_connect.redis.exists(cache_key) == False
 
 
@@ -202,7 +202,8 @@ def test_write_files_task(redis_connect, users, mocker):
 
     with patch('flask_login.utils._get_user', return_value=users[3]['obj']):
         mocker.patch('builtins.open', side_effect=mock_open)
-        mocker.patch('weko_search_ui.tasks.os.remove')
+        mock_remove=mocker.patch('weko_search_ui.tasks.os.remove')
+        current_app.config["WEKO_ADMIN_CACHE_PREFIX"]="test_cache_prefix_{name}_{user_id}_"
         msg_key = current_app.config['WEKO_ADMIN_CACHE_PREFIX'].format(
             name='MSG_EXPORT_ALL',
             user_id=current_user.get_id()
@@ -211,14 +212,20 @@ def test_write_files_task(redis_connect, users, mocker):
             name='RUN_MSG_EXPORT_ALL_FILE_CREATE',
             user_id=current_user.get_id()
         )
+        task_cache_key = current_app.config["WEKO_ADMIN_CACHE_PREFIX"].format(
+            name='KEY_EXPORT_ALL',
+            user_id=current_user.get_id()
+        )
         datastore = redis_connect
+        pickle_filename = 'test_path/test_file.part1.pickle'
+
         # cancel_flg is False, result of write_files is True, export_file's name includes 'part'
         file_json = create_file_json(False)
         file_json['write_file_status']['2'] = 'waiting'
         datastore.put(file_cache_key, json.dumps(file_json).encode('utf-8'), ttl_secs=30)
         with patch('weko_search_ui.tasks.write_files', return_value=True), \
                 patch('weko_search_ui.tasks.pickle.load', return_value=create_pickle_data('test.part1')):
-            write_files_task('export_path', 'test_path/test_file.pickle', current_user.get_id())
+            write_files_task('export_path',pickle_filename, current_user.get_id())
             result_data = datastore.get(file_cache_key).decode('utf-8')
             assert json.loads(result_data) == {
                 'start_time': start_time_str,
@@ -231,13 +238,16 @@ def test_write_files_task(redis_connect, users, mocker):
                     '2': 'waiting'
                 }
             }
+            assert datastore.get(task_cache_key).decode('utf-8') == "None"
+            mock_remove.assert_called_with(f"{'export_path'}/{pickle_filename}")
+            mock_remove.reset_mock()
 
         # cancel_flg is False, result of write_files is False, export_file's name doesn't include 'part'
         datastore.delete(file_cache_key)
         datastore.put(file_cache_key, json.dumps(create_file_json(False)).encode('utf-8'), ttl_secs=30)
         with patch('weko_search_ui.tasks.write_files', return_value=False), \
                 patch('weko_search_ui.tasks.pickle.load', return_value=create_pickle_data('test')):
-            write_files_task('export_path', 'test_path/test_file.pickle', current_user.get_id())
+            write_files_task('export_path', pickle_filename, current_user.get_id())
             result_data = datastore.get(file_cache_key).decode('utf-8')
             assert json.loads(result_data) == {
                 'start_time': start_time_str,
@@ -250,23 +260,9 @@ def test_write_files_task(redis_connect, users, mocker):
                 }
             }
             assert datastore.get(msg_key).decode('utf-8') == 'Export failed.'
-
-        # cancel_flg is True, export_file's name doesn't include 'part'
-        datastore.delete(file_cache_key)
-        datastore.put(file_cache_key, json.dumps(create_file_json(True)).encode('utf-8'), ttl_secs=30)
-        with patch('weko_search_ui.tasks.pickle.load', return_value=create_pickle_data('test')):
-            write_files_task('export_path', 'test_path/test_file.pickle', current_user.get_id())
-            result_data = datastore.get(file_cache_key).decode('utf-8')
-            assert json.loads(result_data) == {
-                'start_time': start_time_str,
-                'finish_time': '',
-                'export_path': '',
-                'cancel_flg': True,
-                'write_file_status': {
-                    '.1': 'canceled',
-                    '1': 'started'
-                }
-            }
+            assert datastore.get(task_cache_key).decode('utf-8') == "None"
+            mock_remove.assert_called_with(f"{'export_path'}/{pickle_filename}")
+            mock_remove.reset_mock()
 
 
 # def is_import_running():

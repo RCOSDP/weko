@@ -68,21 +68,29 @@ WEKO_WORKSPACE_ITEM = {
 }
 """Default item template for the workspace item list page."""
 
-WEKO_WORKSPACE_AUTOFILL_JAMAS_XML_DATA_KEYS = [
-    "dc:title",
-    "dc:creator",
-    "prism:organization",
-    "prism:publicationName",
-    "prism:volume",
-    "prism:number",
-    "prism:startingPage",
-    "prism:pageRange",
-    "prism:publicationDate",
-    "prism:issn",
-    "prism:eIssn",
-    "prism:doi",
-]
-"""Jamas XML data keys"""
+WEKO_WORKSPACE_AUTOFILL_JAMAS_XML_DATA_KEYS = {
+    "identifier": False,
+    "title": False,
+    "creator": True,
+    "type": True,
+    "language": False,
+    "publisher": False,
+    "description": True,
+    "organization": True,
+    "publicationName": False,
+    "issn": False,
+    "eIssn": False,
+    "isbn": True,
+    "volume": False,
+    "number": False,
+    "startingPage": False,
+    "pageRange": False,
+    "publicationDate": True,
+    "keyword": True,
+    "doi": False,
+    "postDate": True,
+}
+"""Jamas XML data keys and multiple flags."""
 
 WEKO_WORKSPACE_AUTOFILL_JAMAS_REQUIRED_ITEM = [
     "title",
@@ -93,7 +101,9 @@ WEKO_WORKSPACE_AUTOFILL_JAMAS_REQUIRED_ITEM = [
     "issue",
     "pageStart",
     "date",
-    "relation"
+    "relation",
+    "publisher",
+    "description",
 ]
 """Jamas required item"""
 

@@ -39,6 +39,8 @@ class JamasURL:
         'http': config.WEKO_WORKSPACE_SYS_HTTP_PROXY,
         'https': config.WEKO_WORKSPACE_SYS_HTTPS_PROXY
     }
+    _cookie = None
+
     def __init__(self, doi, timeout=None, http_proxy=None, https_proxy=None):
         """Init JamasURL API.
 
@@ -62,7 +64,7 @@ class JamasURL:
 
         :return: endpoint string.
         """
-        endpoint_encode = 'prism.doi==' + self._doi
+        endpoint_encode = 'prism.doi=' + self._doi
         encoded_string = urllib.parse.quote(endpoint_encode, encoding='utf-8', safe='')
         endpoint_url = self.ENDPOINT + self.POST_FIX + encoded_string
         return endpoint_url
@@ -75,7 +77,7 @@ class JamasURL:
         """
         endpoint = self._create_endpoint()
 
-        url =  config.WEKO_WORKSPACE_JAMAS_API_URL + endpoint
+        url =  current_app.config.get("WEKO_WORKSPACE_JAMAS_API_URL") + endpoint
         return url
 
     @property
@@ -88,8 +90,92 @@ class JamasURL:
 
     def _do_http_request(self):
         
-        return requests.get(self.url, timeout=self._timeout,
-                            proxies=self._proxy)
+        return requests.get(
+            self.url, cookies=self._cookie,
+            timeout=self._timeout, proxies=self._proxy
+        )
+    
+    def _login(self):
+        """
+        Login to Jamas if needed.
+        
+        Returns:
+            tuple: (success, cookies)
+                success (bool): True if login was successful, False otherwise.
+        """
+        url = current_app.config.get(
+            "WEKO_WORKSPACE_JAMAS_API_URL", ""
+        ).strip("/") + "/api/login"
+
+        try:
+            current_app.logger.debug(f"Jamas login URL: {url}")
+            response = requests.post(
+                url, timeout=self._timeout, proxies=self._proxy
+            )
+            current_app.logger.debug(f"Jamas login response: {response}")
+            if response.status_code != 200:
+                current_app.logger.error(
+                    f"Jamas login failed with status code: {response.status_code}"
+                )
+                return False
+            if response.text.strip() == "login ng":
+                current_app.logger.error(
+                    "Jamas login failed: Invalid credentials"
+                )
+                return False
+
+            # Get cookies from the response
+            self._cookie = response.cookies.get_dict()
+
+            # Successful login
+            current_app.logger.debug(
+                f"Jamas login successful, cookies: {self._cookie}"
+            )
+            return True
+
+        except requests.RequestException as e:
+            # error occurred during the HTTP request
+            current_app.logger.error(f"HTTP Request failed: {e}")
+            return False
+
+
+    def _logout(self):
+        """
+        Logout from Jamas if needed.
+        
+        Returns:
+            bool: True if logout was successful, False otherwise.
+        """
+        url = current_app.config.get(
+            "WEKO_WORKSPACE_JAMAS_API_URL", ""
+        ).strip("/") + "/api/logout"
+        current_app.logger.debug(f"Jamas logout URL: {url}, cookies: {self._cookie}")
+
+        try:
+            response = requests.post(
+                url, cookies=self._cookie,
+                timeout=self._timeout, proxies=self._proxy
+            )
+            if response.status_code != 200:
+                current_app.logger.error(
+                    f"Jamas logout failed with status code: {response.status_code}"
+                )
+                return False
+            if response.text.strip() != "logout ok":
+                current_app.logger.error(
+                    "Jamas logout failed: Invalid response"
+                )
+                return False
+            
+            # Successful logout
+            current_app.logger.debug("Jamas logout successful")
+            return True
+
+        except requests.RequestException as e:
+            # error occurred during the HTTP request
+            current_app.logger.error(f"HTTP Request failed: {e}")
+            return False
+
 
     def get_data(self):
         """This method retrieves the metadata from Jamas."""
@@ -98,10 +184,14 @@ class JamasURL:
             'error': ''
         }
         try:
+            if not self._login():
+                response['error'] = "Login to Jamas failed."
+                return response
             result = self._do_http_request()
             if result.status_code == 200:
                 response['response'] = result.text
-                current_app.logger.debug(f"jamas result: {response['response']}")
+            current_app.logger.debug(f"jamas result: {response['response']}")
+            self._logout()
         except Exception as e:
             current_app.logger.error(e)
             current_app.logger.error(traceback.format_exc())

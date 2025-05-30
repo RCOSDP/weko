@@ -2315,12 +2315,35 @@
             "en": "Version Type Resource",
             "ja": "出版タイプResource"
           }
+        },
+        "subitem_peer_reviewed": {
+          "editAble": true,
+          "type": [
+            "null",
+            "string"
+          ],
+          "format": "select",
+          "enum": [
+            null,
+            "Peer reviewed",
+            "Not peer reviewed"
+          ],
+          "currentEnum": [
+            "Peer reviewed",
+            "Not peer reviewed"
+          ],
+          "title": "査読の有無",
+          "title_i18n": {
+            "en": "Peer reviewed/Not peer reviewed",
+            "ja": "査読の有無"
+          }
         }
       },
       "system_prop": true
     },
     "item_30001_resource_type11": {
       "type": "object",
+      "title": "Resource Type",
       "format": "object",
       "required": [
         "resourceuri",
@@ -2362,7 +2385,6 @@
           ]
         }
       },
-      "title": "Resource Type",
       "system_prop": true
     },
     "item_30001_degree_grantor21": {

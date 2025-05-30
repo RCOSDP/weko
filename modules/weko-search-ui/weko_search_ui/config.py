@@ -776,3 +776,6 @@ SWORD_METADATA_FILE = "metadata/sword.json"
 
 ROCRATE_METADATA_FILE = "data/ro-crate-metadata.json"
 """ Metadata file name for RO-Crate+Bagit. """
+
+ROCRATE_METADATA_WK_CONTEXT_V1 = "http://purl.org/wk/v1/wk-context.jsonld"
+""" Metadata context file name for RO-Crate+Bagit. """

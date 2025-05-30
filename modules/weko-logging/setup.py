@@ -79,6 +79,9 @@ setup(
         "invenio_admin.views": [
             "weko_logging_admin_log_export = weko_logging.admin:log_export_admin_view",
         ],
+        "invenio_db.alembic": [
+            "weko_logging = weko_logging:alembic",
+        ],
         "invenio_db.models": [
             "weko_logging = weko_logging.models",
         ],

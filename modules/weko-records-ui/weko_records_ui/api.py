@@ -9,6 +9,7 @@ import boto3
 import tempfile
 import shutil
 import copy
+import json
 from email_validator import validate_email
 from flask import current_app, request
 
@@ -224,7 +225,9 @@ def get_s3_bucket_list():
         traceback.print_exc()
         raise Exception(_('Getting Bucket List failed.'))
 
-def copy_bucket_to_s3(pid, filename, org_bucket_id, checked, bucket_name):
+def copy_bucket_to_s3(
+        pid, filename, org_bucket_id, checked, bucket_name
+    ):
     #get progfile
     profile = UserProfile.get_by_userid(current_user.id)
     if not profile:
@@ -247,8 +250,33 @@ def copy_bucket_to_s3(pid, filename, org_bucket_id, checked, bucket_name):
     org_fileinstance = FileInstance.get(org_obj.file_id)
 
     file_path = org_fileinstance.uri
-    if os.path.exists(file_path) == False:
-        raise Exception(_('This file is not from institutional storage.'))
+    location = None
+    if file_path.startswith('http'):
+        # ex: https://bucket_name.s3.us-east-1.amazonaws.com/
+        parts = file_path.split('/')
+        location_url = parts[0] + '//' + parts[2]
+        location = Location.query.filter(
+            Location.uri.like(f"{location_url}%")
+        ).first()
+    elif file_path.startswith('s3://'):
+        # s3://bucket_name/file_name
+        parts = file_path.split('/')
+        location_url = parts[0] + '//' + parts[2]
+        location = Location.query.filter(
+            Location.uri.like(f"{location_url}%")
+        ).first()
+    else:
+        # local
+        parts = file_path.split('/')
+        if len(parts) > 1:
+            location_url = parts[0] + '/'
+            location = Location.query.filter(
+                Location.uri.like(f"{location_url}%")
+            ).first()
+        if location is None:
+            # use default location
+            location = Location.get_default()
+    current_app.logger.info(f'location: {location}')
 
     # create bucket
     if checked == 'create':
@@ -261,6 +289,33 @@ def copy_bucket_to_s3(pid, filename, org_bucket_id, checked, bucket_name):
                     region_name='us-east-1',
                 )
                 response = s3_client.create_bucket(Bucket=bucket_name) # default region（us-east-1）
+                public_access_block_config = {
+                    'BlockPublicAcls': False,
+                    'IgnorePublicAcls': False,
+                    'BlockPublicPolicy': False,
+                    'RestrictPublicBuckets': False
+                }
+                s3_client.put_public_access_block(
+                    Bucket=bucket_name,
+                    PublicAccessBlockConfiguration=public_access_block_config
+                )
+                public_policy = {
+                    "Version": "2012-10-17",
+                    "Statement": [
+                        {
+                            "Sid": "Public",
+                            "Effect": "Allow",
+                            "Principal": "*",
+                            "Action": ["s3:*"],
+                            "Resource": f"arn:aws:s3:::{bucket_name}/*"
+                        }
+                    ]
+                }
+
+                s3_client.put_bucket_policy(
+                    Bucket=bucket_name,
+                    Policy=json.dumps(public_policy)
+                )
             else:
                 s3_client = boto3.client(
                     's3',
@@ -274,7 +329,33 @@ def copy_bucket_to_s3(pid, filename, org_bucket_id, checked, bucket_name):
                     'LocationConstraint': region_name
                     }
                 )
+                public_access_block_config = {
+                    'BlockPublicAcls': False,
+                    'IgnorePublicAcls': False,
+                    'BlockPublicPolicy': False,
+                    'RestrictPublicBuckets': False
+                }
+                s3_client.put_public_access_block(
+                    Bucket=bucket_name,
+                    PublicAccessBlockConfiguration=public_access_block_config
+                )
+                public_policy = {
+                    "Version": "2012-10-17",
+                    "Statement": [
+                        {
+                            "Sid": "Public",
+                            "Effect": "Allow",
+                            "Principal": "*",
+                            "Action": ["s3:*"],
+                            "Resource": f"arn:aws:s3:::{bucket_name}/*"
+                        }
+                    ]
+                }
 
+                s3_client.put_bucket_policy(
+                    Bucket=bucket_name,
+                    Policy=json.dumps(public_policy)
+                )
         except Exception as e:
             traceback.print_exc()
             raise Exception(_('Creating Bucket failed.'))
@@ -307,18 +388,91 @@ def copy_bucket_to_s3(pid, filename, org_bucket_id, checked, bucket_name):
 
     uri = parts[0] + '//' + bucket_name + '.' + sub_parts[1] + '.' + bucket_region + '.' + end_uri +'/'
 
-    #upload file
-    s3_client = boto3.client(
-        's3',
-        aws_access_key_id=access_key,
-        aws_secret_access_key=secret_key,
-    )
-    try:
-        s3_client.upload_file(file_path, bucket_name, filename)
-        return uri + filename
-    except Exception as e:
-        traceback.print_exc()
-        raise Exception(_('Uploading file failed.'))
+    current_app.logger.info(f'location: {location}')
+
+    if location.type is None:
+        # local to S3
+
+        #upload file
+        s3_client = boto3.client(
+            's3',
+            aws_access_key_id=access_key,
+            aws_secret_access_key=secret_key,
+        )
+        try:
+            s3_client.upload_file(file_path, bucket_name, filename)
+            return uri + filename
+        except Exception as e:
+            traceback.print_exc()
+            raise Exception(_('Uploading file failed.'))
+
+    else:
+        # S3 to S3
+
+        s3_client = boto3.client(
+            's3',
+            aws_access_key_id=location.access_key,
+            aws_secret_access_key=location.secret_key,
+        )
+        # コピー元とコピー先の情報
+        org_bucket_name = None
+        if location.type == "s3":
+            # S3のバケット名を取得
+            org_bucket_name = location.uri.split('/')[2]
+            base = location.uri.split('/')[0] + '//' + org_bucket_name
+            file_path = org_bucket_name + org_fileinstance.uri.replace(base, '')
+        elif location.type == "s3_vh":
+            if location.uri.startswith('https://s3.'):
+                # ex: https://s3.us-east-1.amazonaws.com/bucket_name/file_name
+                parts = location.uri.split('/')
+                org_bucket_name = parts[3]
+                base = parts[0] + '//' + parts[2] + '/' + org_bucket_name
+                file_path = (
+                    org_bucket_name
+                    + org_fileinstance.uri.replace(base, '')
+                )
+            else:
+                # ex: https://bucket_name.s3.us-east-1.amazonaws.com/file_name
+                parts = location.uri.split('/')
+                sub_parts = parts[2].split('.')
+                org_bucket_name = sub_parts[0]
+                base = parts[0] + '//' + parts[2]
+                file_path = (
+                    org_bucket_name
+                    + org_fileinstance.uri.replace(base, '')
+                )
+
+        current_app.logger.info(f'org_bucket_name: {org_bucket_name}')
+        current_app.logger.info(f'base: {base}')
+        current_app.logger.info(f'file_path: {file_path}')
+        source_bucket = org_bucket_name
+        source_key = file_path
+        destination_bucket = bucket_name
+        destination_key = filename
+
+        # コピーの実行
+        copy_source = {
+            'Bucket': source_bucket,
+            'Key': source_key
+        }
+        current_app.logger.info(f'copy_source: {copy_source}')
+
+        try:
+            s3_client.head_object(Bucket=source_bucket, Key=source_key)
+        except s3_client.exceptions.NoSuchKey:
+            traceback.print_exc()
+            raise Exception(_('The source file cannot be found.'))
+        try:
+            s3_client.copy(
+                copy_source,
+                destination_bucket,
+                destination_key
+            )
+            return uri + filename
+        except Exception as e:
+            traceback.print_exc()
+            current_app.logger.error(e)
+            raise Exception(_('Uploading file failed.'))
 
 
 def get_file_place_info(org_pid, org_bucket_id, file_name):
