@@ -260,9 +260,19 @@ def check_import_items(
                 error += f"; {error_}" if error else error_
                 check_result.update({"error": error})
             else:
-                workflow = list_workflow[0]
-                workflow_id = workflow.id
-                check_result.update({"workflow_id": workflow_id})
+                list_workflow = WorkFlows().reduce_workflows_for_registration(list_workflow)
+                if not list_workflow:
+                    current_app.logger.error(
+                        f"No workflow found for item registration."
+                    )
+                    error = check_result.get("error", "")
+                    error_ = "No workflow found for item type ID."
+                    error += f"; {error_}" if error else error_
+                    check_result.update({"error": error})
+                else:
+                    workflow = list_workflow[0]
+                    workflow_id = workflow.id
+                    check_result.update({"workflow_id": workflow_id})
 
     elif file_format == "XML":
         if registration_type == "Direct":
@@ -280,6 +290,15 @@ def check_import_items(
             )
             raise WekoSwordserverException(
                 "Workflow not found for registration your item.",
+                errorType=ErrorType.BadRequest
+            )
+
+        if not WorkFlows().reduce_workflows_for_registration([workflow]):
+            current_app.logger.error(
+                f"Workflow is not for item registration: {workflow_id}"
+            )
+            raise WekoSwordserverException(
+                "Workflow is not for item registration.",
                 errorType=ErrorType.BadRequest
             )
 
@@ -326,6 +345,15 @@ def check_import_items(
                     "Workflow not found for registration your item.",
                     errorType=ErrorType.BadRequest
                 )
+
+        if not WorkFlows().reduce_workflows_for_registration([workflow]):
+            current_app.logger.error(
+                f"Workflow is not for item registration: {workflow_id}"
+            )
+            raise WekoSwordserverException(
+                "Workflow is not for item registration.",
+                errorType=ErrorType.BadRequest
+            )
 
         check_result.update(
             check_jsonld_import_items(
