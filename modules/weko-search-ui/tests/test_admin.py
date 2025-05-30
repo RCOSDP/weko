@@ -5,6 +5,7 @@ import csv
 import os
 import json
 import pytest
+from datetime import datetime, timedelta
 from unittest.mock import patch, MagicMock, Mock
 from flask_login import current_user
 from jinja2.exceptions import TemplateNotFound
@@ -13,6 +14,7 @@ from flask import Flask, json, jsonify, session, url_for,current_app, make_respo
 from invenio_accounts.testutils import login_user_via_session
 
 from werkzeug.datastructures import FileStorage
+from weko_admin.api import TempDirInfo
 from weko_index_tree.models import Index
 from weko_records.models import ItemTypeJsonldMapping
 from weko_search_ui.admin import (
@@ -657,17 +659,52 @@ class TestItemBulkExport:
             assert json.loads(res.data) == {"data":{"cancel_status":True,"export_status":False,"status":"REVOKED"}}
 
 # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_admin.py::TestItemBulkExport::test_download -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
-    def test_download(self, client, users, mocker, create_file_instance):
+    def test_download(self, client, users, mocker, create_file_instance,redis_connect):
+        current_app.config["WEKO_ADMIN_CACHE_PREFIX"] = "test_admin_cache_{name}_{user_id}"
+        file_msg = current_app.config["WEKO_ADMIN_CACHE_PREFIX"].format(
+            name="RUN_MSG_EXPORT_ALL_FILE_CREATE",
+            user_id=current_user.get_id()
+        )
+        export_path = "/test/export/path"
+        redis_connect.put(file_msg, json.dumps({"export_path":export_path}).encode("utf-8"),ttl_secs=30)
         url = url_for('items/bulk-export.download')
+        now = datetime.now()
+
+        download_buffer = current_app.config.get("WEKO_SEARCH_UI_FILE_DOWNLOAD_TTL_BUFFER", 60)
         with patch('flask_login.utils._get_user', return_value=users[3]['obj']):
             file_path = create_file_instance
             # export_status is False, download_uri is not None
             with patch('weko_search_ui.admin.get_export_status',
                        return_value=(False, file_path, '', '', '', '', '')):
+                expire = datetime.now()+timedelta(secounds=download_buffer-1000)
+                TempDirInfo().set(
+                    export_path,
+                    {"is_export":True,
+                    "expire":expire
+                    }
+                )
                 res = client.get(url)
                 assert res.headers['Content-Disposition'].split('; ')[1].replace('filename=', '') == 'export-all.zip'
                 assert res.headers['Content-Type'] == 'application/octet-stream'
                 assert res.status_code == 200
+                test_expire = (expire+timedelta(seconds=download_buffer)).strftime("%Y-%m-%d %H:%M:%WS")
+                assert TempDirInfo().get(export_path).get("expire") == test_expire
+
+
+                expire = datetime.now()+timedelta(secounds=download_buffer+1000)
+                TempDirInfo().set(
+                    export_path,
+                    {"is_export":True,
+                    "expire":expire
+                    }
+                )
+                res = client.get(url)
+                assert res.headers['Content-Disposition'].split('; ')[1].replace('filename=', '') == 'export-all.zip'
+                assert res.headers['Content-Type'] == 'application/octet-stream'
+                assert res.status_code == 200
+                test_expire = expire.strftime("%Y-%m-%d %H:%M:%WS")
+                assert TempDirInfo().get(export_path).get("expire") == test_expire
+
             # export_status is False, download_uri is None
             with patch('weko_search_ui.admin.get_export_status',
                        return_value=(False, None, '', '', '', '', '')):
