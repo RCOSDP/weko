@@ -700,21 +700,23 @@ class WorkFlow(object):
             workflows (list): workflow model object list.
 
         Returns:
-            list: workflow model object list with item registration action.
+            list(workflow): filtered
+                workflow model object list with item registration action.
         """
         if not isinstance(workflows, list):
             return workflows
-        action_id = (
+        registration_action_id = (
             current_app.config.get("WEKO_WORKFLOW_ITEM_REGISTRATION_ACTION_ID")
         )
 
-        wfs = []
-        for workflow in workflows:
-            if isinstance(workflow, _WorkFlow):
-                actions = workflow.flow_define.flow_actions
-                if action_id in [action.action_id for action in actions]:
-                    wfs.append(workflow)
-        return wfs
+        filtered_workflows = [
+            wf for wf in workflows
+            if isinstance(wf, _WorkFlow)
+            if registration_action_id in [
+                action.action_id for action in wf.flow_define.flow_actions
+            ]
+        ]
+        return filtered_workflows
 
 class Action(object):
     """Operated on the Action."""
