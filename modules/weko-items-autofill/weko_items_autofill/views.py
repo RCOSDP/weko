@@ -102,8 +102,14 @@ def get_auto_fill_record_data():
         if api_type == 'CrossRef':
             pid_response = get_current_api_certification('crf')
             pid = pid_response['cert_data']
-            api_response = get_crossref_record_data(
-                pid, search_data, item_type_id, exclude_duplicate_lang)
+            if pid:
+                api_response = get_crossref_record_data(
+                    pid, search_data, item_type_id, exclude_duplicate_lang)
+            else:
+                current_app.logger.error(
+                    "CrossRef API certification is not set."
+                )
+                api_response = []
             result['result'] = api_response
         elif api_type == 'CiNii':
             api_response = get_cinii_record_data(

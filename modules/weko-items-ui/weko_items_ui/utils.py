@@ -4041,7 +4041,7 @@ def check_duplicate(data, is_item=True, exclude_ids=[]):
     if identifier:
         escaped_identifier = identifier.replace('"', '\\"')
         query = text(f"""
-            SELECT jsonb_extract_path_text(json, 'recid')
+            SELECT CAST(jsonb_extract_path_text(json, 'recid') AS INTEGER)
             FROM records_metadata
             WHERE jsonb_path_exists(json, :jsonpath_query)
             AND jsonb_extract_path_text(json, 'publish_status') = '0'
@@ -4052,15 +4052,16 @@ def check_duplicate(data, is_item=True, exclude_ids=[]):
         }
         result = db.session.execute(query, params).fetchall()
         if result:
-            recid_list = [r[0] for r in result]
-            return True, recid_list, [f"https://{host}/records/{r}" for r in recid_list]
+            recid_list = [r[0] for r in result if r[0] not in exclude_ids]
+            if recid_list:
+                return True, recid_list, [f"https://{host}/records/{r}" for r in recid_list]
 
     # 2. Normalize title
     normalized_title = unicodedata.normalize("NFKC", title).lower()
     normalized_title = re.sub(r'[\s,　]', '', normalized_title)
 
     query = text("""
-        SELECT jsonb_extract_path_text(json, 'recid'), json
+        SELECT  CAST(jsonb_extract_path_text(json, 'recid') AS INTEGER), json
         FROM records_metadata
         WHERE jsonb_path_exists(json, '$.**.subitem_title')
         AND jsonb_extract_path_text(json, 'publish_status') = '0'
@@ -4087,7 +4088,7 @@ def check_duplicate(data, is_item=True, exclude_ids=[]):
     # 3. Match resource_type
     escaped_resource_type = resource_type.replace('"', '\\"')
     query = text(f"""
-        SELECT jsonb_extract_path_text(json, 'recid')
+        SELECT CAST(jsonb_extract_path_text(json, 'recid') AS INTEGER)
         FROM records_metadata
         WHERE jsonb_path_exists(json, :jsonpath_query)
         AND jsonb_extract_path_text(json, 'publish_status') = '0'
@@ -4129,7 +4130,7 @@ def check_duplicate(data, is_item=True, exclude_ids=[]):
 
         if author_names:
             query = text("""
-                SELECT jsonb_extract_path_text(json, 'recid'), json
+                SELECT CAST(jsonb_extract_path_text(json, 'recid') AS INTEGER), json
                 FROM records_metadata
                 WHERE jsonb_path_exists(json, '$.**.creatorNames[*].creatorName')
                 AND jsonb_extract_path_text(json, 'publish_status') = '0'
@@ -4147,7 +4148,7 @@ def check_duplicate(data, is_item=True, exclude_ids=[]):
     else:
         normalized_creator = re.sub(r'[\s,　]', '', creator)
         query = text("""
-            SELECT jsonb_extract_path_text(json, 'recid'), json
+            SELECT CAST(jsonb_extract_path_text(json, 'recid') AS INTEGER), json
             FROM records_metadata
             WHERE jsonb_path_exists(json, '$.**.creatorNames[*].creatorName')
             AND jsonb_extract_path_text(json, 'publish_status') = '0'
