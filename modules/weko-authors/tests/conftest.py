@@ -866,6 +866,14 @@ def auth_headers_sysadmin_without_scope(client_api, json_headers, create_token_u
     """
     return fill_oauth2_headers(json_headers, create_token_user_sysadmin_without_scope)
 
+@pytest.fixture()
+def auth_headers_bad_content_type(client_api, json_headers, create_token_user_sysadmin):
+    """Authentication headers with a bad content type."""
+    headers = fill_oauth2_headers(json_headers, create_token_user_sysadmin)
+    headers[0] = ('Content-Type', 'text/plain')
+    return headers
+
+
 @pytest.fixture
 def author_records_for_test(app, esindex, db):
     record_1_data = {

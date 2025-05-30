@@ -321,12 +321,22 @@ class AuthorDBManagementAPI(ContentNegotiatedMethodView):
             prefix_obj = get_author_prefix_obj(auth_id.get("idType"))
             if prefix_obj:
                 auth_id["idType"] = str(prefix_obj.id)
+            else:
+                current_app.logger.error("Internal Server Error: Database access failed.")
+                raise AuthorInternalServerError(
+                    description="Internal Server Error: Database access failed."
+                )
         # `affiliationIdType` (scheme -> id)
         for affiliation in author_data.get("affiliationInfo", []):
             for identifier in affiliation.get("identifierInfo", []):
                 aff_obj = get_author_affiliation_obj(identifier.get("affiliationIdType"))
                 if aff_obj:
                     identifier["affiliationIdType"] = str(aff_obj.id)
+                else:
+                    current_app.logger.error("Internal Server Error: Database access failed.")
+                    raise AuthorInternalServerError(
+                        description="Internal Server Error: Database access failed."
+                    )
         return author_data
 
     def process_authors_data_after(self, author_data):
@@ -407,6 +417,14 @@ class AuthorDBManagementAPI(ContentNegotiatedMethodView):
             raise InternalServerError("Internal server error.")
 
     def validate_author_data(self, author_data, pk_id=None):
+        """Validate author data.
+        Args:
+            author_data (dict): The author data to validate.
+            pk_id (str, optional): The primary key ID of the author.
+
+        Raises:
+            InvalidDataRESTError: If the author data is invalid.
+        """
         for auth_id in author_data.get("authorIdInfo", []):
             id_type = auth_id.get("idType")
             author_id = auth_id.get("authorId")
@@ -640,6 +658,16 @@ class AuthorDBManagementAPI(ContentNegotiatedMethodView):
 
 
     def validate_request_data(self, extracted_data, lang_options_list, prefix_schemes, affiliation_schemes):
+        """Validate the extracted data from the request.
+        Args:
+            extracted_data (dict): The data extracted from the request.
+            lang_options_list (list): List of allowed language options.
+            prefix_schemes (list): List of allowed author ID schemes.
+            affiliation_schemes (list): List of allowed affiliation ID schemes.
+
+        Raises:
+            InvalidDataRESTError: If any of the extracted data is invalid.
+        """
         invalid_name_langs = [
             lang for lang in extracted_data["authorNameInfo_language"]
             if lang not in lang_options_list

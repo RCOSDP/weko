@@ -111,6 +111,7 @@ class TestAuthorDBManagementAPI:
         self.run_get_authors(app, client_api, auth_headers_sysadmin, {"idtype": "ORCID", "authorid": "1"}, 200, [])  # ID タイプが WEKO で ID が 1 の著者が正しく取得できるか確認
 
         # 異常系テスト（不正なアクセスや無効なパラメータの確認）
+        self.run_get_authors_invalid_version(app, client_api, auth_headers_sysadmin)  # 無効なAPIバージョンでのアクセスが 400（Bad Request） となることを確認
         self.run_get_authors_unauthorized(app, client_api)  # 認証なしでのアクセスが 401（Unauthorized） となることを確認
         self.run_get_authors(app, client_api, auth_headers_sysadmin_without_scope, {"fullname": "Test_1 "}, 403, [])  # スコープ権限のないシステム管理者が検索した場合、403（Forbidden）となることを確認
         self.run_get_authors(app, client_api, auth_headers_noroleuser, {"fullname": "Test_1 "}, 403, [])  # 権限のないユーザーが検索した場合、403（Forbidden）となることを確認
@@ -158,6 +159,16 @@ class TestAuthorDBManagementAPI:
         assert response.status_code == 401
         print(f"Unauthorizedアクセスエラー: {response.get_data(as_text=True)}")
 
+    def run_get_authors_invalid_version(self, app, client_api, headers):
+        """
+        無効なAPIバージョンで著者情報取得を試みるテスト
+        - 無効なバージョンのAPIにアクセスし、Bad Request(400)が返ることを確認
+        """
+        url = "v0/authors"
+        response = client_api.get(url, headers=headers)
+        assert response.status_code == 400
+        assert "This API version does not found." in response.get_json().get("message", "")
+
     def build_query_string(self, params):
         """
         クエリパラメータをURLエンコードするヘルパー関数
@@ -168,7 +179,7 @@ class TestAuthorDBManagementAPI:
     @pytest.mark.parametrize('base_app',[dict(
         is_es=True
     )],indirect=['base_app'])
-    def test_post_v1(self, app, client_api, auth_headers_noroleuser, auth_headers_sysadmin, author_records_for_test, authors_affiliation_settings, authors_prefix_settings):
+    def test_post_v1(self, app, client_api, auth_headers_noroleuser, auth_headers_sysadmin, author_records_for_test, authors_affiliation_settings, authors_prefix_settings, auth_headers_bad_content_type):
         """
         著者情報登録API - 著者情報の登録テスト
         - 正常系: 正しく登録できるか確認
@@ -192,6 +203,9 @@ class TestAuthorDBManagementAPI:
 
         # 異常系テスト（リクエスト内容のバリデーション）
         # 不正なリクエストが適切に処理されることを確認
+        self.run_post_authors_invalid_version(app, client_api, auth_headers_sysadmin)  # 無効なAPIバージョンでのリクエスト
+        self.run_post_author(app, client_api, auth_headers_bad_content_type, self.valid_author_data(), 400, "Content-Type must be application/json.")  # 不正なContent-Type
+        self.run_post_author_bad_json(app, client_api, auth_headers_sysadmin)  # 不正なJSONフォーマット
         self.run_post_author(app, client_api, auth_headers_sysadmin, {}, 400, "Bad Request: Invalid payload, {'author': ['Missing data for required field.']}")  # 空のリクエスト
         self.run_post_author(app, client_api, auth_headers_sysadmin, {"author": None}, 400, "Bad Request: Invalid payload, {'author': ['Field may not be null.']}")  # authorがNone
         self.run_post_author(app, client_api, auth_headers_sysadmin, {"author": {"authorIdInfo": [{"idType": "ORCID"}]}}, 400, "Both 'idType' and 'authorId' must be provided together.")  # idTypeのみ指定
@@ -209,6 +223,10 @@ class TestAuthorDBManagementAPI:
         self.run_post_author_db_error(app, client_api, auth_headers_sysadmin, self.valid_author_data())  # DBエラー発生時
         with patch("invenio_search.current_search_client.search", side_effect=Exception):
             self.run_post_author(app, client_api, auth_headers_sysadmin, self.valid_author_data(), 500)  # 検索時に例外が発生した場合
+        with patch("weko_authors.utils.get_author_prefix_obj", return_value=None):
+            self.run_post_author(app, client_api, auth_headers_sysadmin, self.valid_author_data(), 500)  # 著者プレフィックス取得時に例外が発生した場合
+        with patch("weko_authors.utils.get_author_affiliation_obj", return_value=None):
+            self.run_post_author(app, client_api, auth_headers_sysadmin, self.valid_author_data(), 500)  # 著者所属情報取得時に例外が発生した場合
 
     def run_post_author(self, app, client_api, user_headers, request_data, expected_status, expected_message=None):
         """
@@ -229,6 +247,30 @@ class TestAuthorDBManagementAPI:
                 response_json = json.loads(response.data.decode('utf-8'))
                 message = response_json.get("message")
                 assert expected_message in message, f"Expected message: {expected_message}, got: {message}"
+
+    def run_post_author_bad_json(self, app, client_api, user_headers):
+        """
+        JSONとして無効なリクエストデータを送信するテスト
+        - Bad Request (400) が返されることを確認
+        """
+        url = "v1/authors"
+        request_data = "invalid-json"
+        response = client_api.post(url, data=request_data, headers=user_headers)
+        assert response.status_code == 400, f"Expected 400, got {response.status_code}"
+
+        response_json = response.get_json()
+        message = response_json.get("message")
+        assert "Bad Request: Failed to parse provided." in message, f"Expected message: Bad Request: Failed to parse provided., got: {message}"
+
+    def run_post_authors_invalid_version(self, app, client_api, user_headers):
+        """
+        無効なAPIバージョンで著者情報登録を試みるテスト
+        - 無効なバージョンのAPIにアクセスし、Bad Request(400)が返ることを確認
+        """
+        url = "v0/authors"
+        response = client_api.post(url, json=self.valid_author_data(), headers=user_headers)
+        assert response.status_code == 400
+        assert "This API version does not found." in response.get_json().get("message", "")
 
     def run_post_author_unauthorized(self, app, client_api):
         """
@@ -276,13 +318,14 @@ class TestAuthorDBManagementAPI:
         is_es=True
     )],indirect=['base_app'])
     # .tox/c1/bin/pytest --cov=weko_authors tests/test_rest.py::TestAuthorDBManagementAPI::test_put_v1 -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko_index_tree/.tox/c1/tmp --full-trace | tee log.log
-    def test_put_v1(self, app, client_api, auth_headers_noroleuser, auth_headers_sysadmin, author_records_for_test, authors_affiliation_settings, authors_prefix_settings):
+    def test_put_v1(self, app, client_api, auth_headers_noroleuser, auth_headers_sysadmin, author_records_for_test, authors_affiliation_settings, authors_prefix_settings, auth_headers_bad_content_type):
         """
         著者情報更新API - 著者情報の更新テスト
         - 正常系: 正しく更新できるか確認
         - 異常系: 不正なリクエストや認証なしでのアクセス制御確認
         """
-        with patch("weko_deposit.tasks.update_items_by_authorInfo.delay",side_effect = MagicMock()):
+        with patch("weko_deposit.tasks.update_items_by_authorInfo.delay",side_effect = MagicMock()), \
+                patch("weko_logging.activity_logger.UserActivityLogger", return_value=MagicMock()):
             oauth2 = OAuth2Provider()
             oauth2.after_request(login_oauth2_user)
 
@@ -318,19 +361,22 @@ class TestAuthorDBManagementAPI:
             self.run_put_author(app, client_api, auth_headers_noroleuser, self.valid_update_data(), 403, None)
 
             # 異常系テスト（リクエスト内容のバリデーション）
+            self.run_put_authors_invalid_version(app, client_api, auth_headers_sysadmin)  # invalid API version
+            self.run_put_author(app, client_api, auth_headers_bad_content_type, self.valid_author_data(), 400, "Content-Type must be application/json.")  # invalid Content-Type
+            self.run_put_author_bad_json(app, client_api, auth_headers_sysadmin)  # invalid JSON format
             self.run_put_author(app, client_api, auth_headers_sysadmin, {}, 1, 400, "'author': ['Missing data for required field.']")
             author_data = self.valid_update_data()
             author_data["author"]["authorNameInfo"][0]["language"] = "jp"
-            self.run_put_author(app, client_api, auth_headers_sysadmin, author_data, 1, 400, "Invalid authorNameInfo_language.")
+            self.run_put_author(app, client_api, auth_headers_sysadmin, author_data, 1, 400, "Invalid authorNameInfo.language: ['jp'].")
             author_data = self.valid_update_data()
             author_data["author"]["affiliationInfo"][0]["affiliationNameInfo"][0]["affiliationNameLang"] = "jp"
-            self.run_put_author(app, client_api, auth_headers_sysadmin, author_data, 1, 400, "Invalid affiliationInfo_affiliationNameLang.")
+            self.run_put_author(app, client_api, auth_headers_sysadmin, author_data, 1, 400, "Invalid affiliationInfo.affiliationNameLang:['jp'].")
             author_data = self.valid_update_data()
             author_data["author"]["authorIdInfo"].append({"idType": "WEKO_WRONG", "authorId": "5"})
-            self.run_put_author(app, client_api, auth_headers_sysadmin, author_data, 1, 400, "Invalid authorIdInfo_idType.")
+            self.run_put_author(app, client_api, auth_headers_sysadmin, author_data, 1, 400, "Invalid authorIdInfo.idType: ['WEKO_WRONG'].")
             author_data = self.valid_update_data()
             author_data["author"]["affiliationInfo"][0]["identifierInfo"][0]["affiliationIdType"] = "Ringgold_WRONG"
-            self.run_put_author(app, client_api, auth_headers_sysadmin, author_data, 1, 400, "Invalid affiliationInfo_affiliationIdType.")
+            self.run_put_author(app, client_api, auth_headers_sysadmin, author_data, 1, 400, "Invalid affiliationInfo.affiliationIdType: ['Ringgold_WRONG'].")
 
             self.run_put_author(app, client_api, auth_headers_sysadmin, {}, 123, 400, "'author': ['Missing data for required field.']")
             self.run_put_author(app, client_api, auth_headers_sysadmin, {"author": self.valid_update_data().get("author")}, "invalid", 400,  "Invalid identifier format. Must be an integer ID or UUID.")
@@ -361,6 +407,30 @@ class TestAuthorDBManagementAPI:
                 response_json = json.loads(response.data.decode('utf-8'))
                 message = response_json.get("message")
                 assert expected_message in message, f"Expected message: {expected_message}, got: {message}"
+
+    def run_put_author_bad_json(self, app, client_api, user_headers):
+        """
+        JSONとして無効なリクエストデータを送信するテスト
+        - Bad Request (400) が返されることを確認
+        """
+        url = "v1/authors/1"
+        request_data = "invalid-json"
+        response = client_api.put(url, data=request_data, headers=user_headers)
+        assert response.status_code == 400, f"Expected 400, got {response.status_code}"
+
+        response_json = response.get_json()
+        message = response_json.get("message")
+        assert "Bad Request: Failed to parse provided." in message, f"Expected message: Bad Request: Failed to parse provided., got: {message}"
+
+    def run_put_authors_invalid_version(self, app, client_api, user_headers):
+        """
+        無効なAPIバージョンで著者情報更新を試みるテスト
+        - 無効なバージョンのAPIにアクセスし、Bad Request(400)が返ることを確認
+        """
+        url = "v0/authors/1"
+        response = client_api.put(url, json=self.valid_update_data(), headers=user_headers)
+        assert response.status_code == 400
+        assert "This API version does not found." in response.get_json().get("message", "")
 
     def run_put_author_unauthorized(self, app, client_api):
         """
@@ -429,6 +499,9 @@ class TestAuthorDBManagementAPI:
         # エラー
         self.run_delete_author_error(app, client_api, auth_headers_sysadmin, 4)
 
+        # 無効なバージョン
+        self.run_delete_authors_invalid_version(app, client_api, auth_headers_sysadmin)
+
     def run_delete_author(self, app, client_api, user_headers, id, expected_status, expected_message=None):
         """
         著者削除APIのテスト
@@ -440,6 +513,16 @@ class TestAuthorDBManagementAPI:
         assert response.status_code == expected_status, f"Expected {expected_status}, got {response.status_code}"
         if expected_message:
             assert expected_message in response.get_data(as_text=True)
+
+    def run_delete_authors_invalid_version(self, app, client_api, user_headers):
+        """
+        無効なAPIバージョンで著者情報削除を試みるテスト
+        - 無効なバージョンのAPIにアクセスし、Bad Request(400)が返ることを確認
+        """
+        url = "v0/authors/1"
+        response = client_api.delete(url, headers=user_headers)
+        assert response.status_code == 400
+        assert "This API version does not found." in response.get_json().get("message", "")
 
     def run_delete_author_unauthorized(self, app, client_api):
         """
