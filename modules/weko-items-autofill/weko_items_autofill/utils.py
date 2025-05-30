@@ -1283,14 +1283,28 @@ def deepcopy(original_object, new_object):
 def fill_data(form_model, autofill_data, schema=None, exclude_duplicate_lang=False):
     """Fill data to form model.
 
-    @param form_model: the form model.
-    @param autofill_data: the autofill data
-    @param is_multiple_data: multiple flag.
+    Args:
+        form_model (dict | list): The form model to be filled. Can be a dictionary representing the form
+                                  structure or a list for repeated/nested items.
+        autofill_data (dict | list): The source data to autofill into the form. Can be a dictionary or a list
+                                     of dictionaries for multiple entries.
+        schema (dict, optional): A JSON schema used to validate the autofilled data. If None, validation is skipped.
+        exclude_duplicate_lang (bool, optional): If True, skips autofill entries with duplicate '@language' fields.
+
+    Returns:
+        dict | list: The filled form model, matching the structure of the original form_model.
     """
     result = {} if isinstance(form_model, dict) else []
     is_multiple_data = is_multiple(form_model, autofill_data)
 
     def validate_data(data, sub_schema):
+        """Validate data against the schema.
+        Args:
+            data (Any): The data to validate.
+            sub_schema (dict): The schema to validate against.
+        Returns:
+            bool: True if validation passes, False otherwise.
+        """
         if sub_schema is None:
             current_app.logger.debug("=== Validation skipped ===")
             return True
