@@ -28,7 +28,9 @@ from weko_search_ui.admin import (
 # class ItemManagementBulkDelete(BaseView):
 #     def index(self):
 # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_admin.py::test_ItemManagementBulkDelete_index -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
-def test_ItemManagementBulkDelete_index(i18n_app, es, users, indices):
+def test_ItemManagementBulkDelete_index(i18n_app, es, users, indices, mocker):
+    mocker.patch("weko_logging.models.UserActivityLog.get_log_group_sequence", return_value=1)
+
     i18n_app.config['WEKO_SEARCH_TYPE_INDEX'] = 'index'
     with i18n_app.test_client() as client:
         with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
@@ -175,7 +177,10 @@ class TestItemImportView:
 
 # def check(self) -> jsonify: ~ UnboundLocalError: local variable 'task' referenced before assignment request.form needed
 # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_admin.py::test_ItemImportView_check -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
-def test_ItemImportView_check(i18n_app, users, client,client_request_args):
+def test_ItemImportView_check(i18n_app, users, client,client_request_args, mocker):
+    mocker.patch("weko_logging.models.UserActivityLog.get_log_group_sequence", return_value=1)
+    mocker.patch("weko_search_ui.admin.validate_csrf_header")
+
     file_path = os.path.join(
         os.path.dirname(os.path.abspath(__file__)),
         'data',
@@ -292,7 +297,9 @@ def test_ItemImportView_download_check(i18n_app, users, client_request_args, db_
 
 #     def import_items(self) -> jsonify: ~ GOOD
 # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_admin.py::test_ItemImportView_import_items -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
-def test_ItemImportView_import_items(i18n_app, users, client_request_args, db_records2):
+def test_ItemImportView_import_items(i18n_app, users, client_request_args, db_records2,mocker):
+    mocker.patch("weko_logging.models.UserActivityLog.get_log_group_sequence", return_value=1)
+
     with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
         test = ItemImportView()
         assert test.import_items()
@@ -300,7 +307,8 @@ def test_ItemImportView_import_items(i18n_app, users, client_request_args, db_re
 
 #     def import_items(self) -> jsonify: ~ GOOD
 # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_admin.py::test_ItemImportView_import_items_doi -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
-def test_ItemImportView_import_items_doi(i18n_app, users, client, client_request_args, db_records2):
+def test_ItemImportView_import_items_doi(i18n_app, users, client, client_request_args, db_records2, mocker):
+    mocker.patch("weko_logging.models.UserActivityLog.get_log_group_sequence", return_value=1)
     with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
         data = {"list_record": [{"id": "1"}], "data_path": "/tmp/weko_import_20250319102601371", "list_doi": ["10.5109/16119"]}
         with patch("flask.request.get_json", return_value=data):
@@ -370,111 +378,112 @@ class TestItemRocrateImportView:
                 res = client.get(url)
                 assert res.status == '200 OK'
 
-# def check(self) -> jsonify: ~ UnboundLocalError: local variable 'task' referenced before assignment request.form needed
-# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_admin.py::test_ItemRocrateImportView_check -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
-def test_ItemRocrateImportView_check(i18n_app, users, client, client_request_args, mocker):
-    file_path = os.path.join(
-        os.path.dirname(os.path.abspath(__file__)),
-        "data",
-        "rocrate_import",
-        "new_crate_v2.zip"
-    )
-    url = url_for("items/rocrate_import.check")
-    print(f"url: {url}")
-    with open(file_path, "rb") as f:
-        zip_storage = FileStorage(
-            filename="new_crate_v2.zip",
-            stream=io.BytesIO(f.read()),
-            content_type="application/zip"
+    # def check(self) -> jsonify: ~ UnboundLocalError: local variable 'task' referenced before assignment request.form needed
+    # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_admin.py::test_ItemRocrateImportView_check -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+    def test_ItemRocrateImportView_check(self, i18n_app, users, client, client_request_args, mocker):
+        file_path = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)),
+            "data",
+            "rocrate_import",
+            "new_crate_v2.zip"
         )
-        data = {
-            "file": zip_storage,
-            "is_change_identifier": "false",
-            "mapping_id": 1
-        }
-        headers = {
-            "Content-Disposition":"attachment; filename=new_crate_v2.zip",
-            "Packaging":"http://purl.org/net/sword/3.0/package/SimpleZip"
-        }
+        url = url_for("items/rocrate_import.check")
+        with open(file_path, "rb") as f:
+            zip_storage = FileStorage(
+                filename="new_crate_v2.zip",
+                stream=io.BytesIO(f.read()),
+                content_type="application/zip"
+            )
+            data = {
+                "file": zip_storage,
+                "is_change_identifier": "false",
+                "mapping_id": 1
+            }
+            headers = {
+                "Content-Disposition":"attachment; filename=new_crate_v2.zip",
+                "Packaging":"http://purl.org/net/sword/3.0/package/SimpleZip"
+            }
 
-        mocker.patch("flask_login.utils._get_user", return_value=users[3]['obj'])
+            mocker.patch("flask_login.utils._get_user", return_value=users[3]['obj'])
+            mocker.patch("weko_search_ui.admin.validate_csrf_header")
+            task = MagicMock()
+            task.task_id = 1
+            mock_check = mocker.patch("weko_search_ui.admin.check_rocrate_import_items_task.apply_async",return_value=task)
+            res = client.post(
+                url,
+                data=data,
+                content_type="multipart/form-data",
+                headers=headers
+            )
+            mock_check.assert_called_once()
+            assert res.status_code == 200
+
+    #     def get_check_status(self) -> jsonify: ~ GOOD
+    def test_ItemRocrateImportView_get_check_status(self, i18n_app, users, client_request_args, db_records2, mocker):
         mocker.patch("weko_search_ui.admin.validate_csrf_header")
-        task = MagicMock()
-        task.task_id = 1
-        mock_check = mocker.patch("weko_search_ui.admin.check_rocrate_import_items_task.apply_async",return_value=task)
-        res = client.post(
-            url,
-            data=data,
-            content_type="multipart/form-data",
-            headers=headers
+        with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
+            test = ItemRocrateImportView()
+            assert test.get_check_status()
+
+    #     def download_check(self): ~ GOOD
+    def test_ItemRocrateImportView_download_check(self, i18n_app, users, client_request_args, db_records2):
+        with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
+            test = ItemRocrateImportView()
+            assert test.download_check()
+
+    #     def import_items(self) -> jsonify: ~ GOOD
+    # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_admin.py::test_ItemRocrateImportView_import_items -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+    def test_ItemRocrateImportView_import_items(self, i18n_app, users, client_request_args, db_records2, mocker):
+        mocker.patch("weko_logging.models.UserActivityLog.get_log_group_sequence", return_value=1)
+        mocker.patch("weko_logging.activity_logger.UserActivityLogger.info")
+        with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
+            test = ItemRocrateImportView()
+            assert test.import_items()
+
+    #     def get_status(self): ~ GOOD
+    def test_ItemRocrateImportView_get_status(self, i18n_app, users, client_request_args, db_records2):
+        with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
+            test = ItemRocrateImportView()
+            assert test.get_status()
+
+    #     def download_import(self): ~ GOOD
+    def test_ItemRocrateImportView_download_import(self, i18n_app, users, client_request_args, db_records2):
+        with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
+            test = ItemRocrateImportView()
+            assert test.download_import()
+
+    #     def get_disclaimer_text(self): ~ GOOD
+    def test_ItemRocrateImportView_get_disclaimer_text(self, i18n_app, users, client_request_args, db_records2):
+        with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
+            test = ItemRocrateImportView()
+            assert test.get_disclaimer_text()
+
+    #     def all_mappings(self):
+    # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_admin.py::test_ItemRocrateImportView_all_mappings -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+    def test_ItemRocrateImportView_all_mappings(self, i18n_app, users):
+        map1 = ItemTypeJsonldMapping(
+            id=1,
+            name="sample1",
+            mapping="{data:{}}",
+            item_type_id=30001,
+            version_id=6,
+            is_deleted=False
         )
-        mock_check.assert_called_once()
-        print(f"res.data: {res.data}")
-        assert res.status_code == 200
+        expect = [{
+                    "id": 1,
+                    "name": "sample1",
+                    "item_type_id": 30001
+                }]
 
-#     def get_check_status(self) -> jsonify: ~ GOOD
-def test_ItemRocrateImportView_get_check_status(i18n_app, users, client_request_args, db_records2):
-    with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
-        test = ItemRocrateImportView()
-        assert test.get_check_status()
-
-#     def download_check(self): ~ GOOD
-def test_ItemRocrateImportView_download_check(i18n_app, users, client_request_args, db_records2):
-    with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
-        test = ItemRocrateImportView()
-        assert test.download_check()
-
-#     def import_items(self) -> jsonify: ~ GOOD
-# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_admin.py::test_ItemRocrateImportView_import_items -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
-def test_ItemRocrateImportView_import_items(i18n_app, users, client_request_args, db_records2):
-    with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
-        test = ItemRocrateImportView()
-        assert test.import_items()
-
-#     def get_status(self): ~ GOOD
-def test_ItemRocrateImportView_get_status(i18n_app, users, client_request_args, db_records2):
-    with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
-        test = ItemRocrateImportView()
-        assert test.get_status()
-
-#     def download_import(self): ~ GOOD
-def test_ItemRocrateImportView_download_import(i18n_app, users, client_request_args, db_records2):
-    with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
-        test = ItemRocrateImportView()
-        assert test.download_import()
-
-#     def get_disclaimer_text(self): ~ GOOD
-def test_ItemRocrateImportView_get_disclaimer_text(i18n_app, users, client_request_args, db_records2):
-    with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
-        test = ItemRocrateImportView()
-        assert test.get_disclaimer_text()
-
-#     def all_mappings(self):
-# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_admin.py::test_ItemRocrateImportView_all_mappings -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
-def test_ItemRocrateImportView_all_mappings(i18n_app, users):
-    map1 = ItemTypeJsonldMapping(
-        id=1,
-        name="sample1",
-        mapping="{data:{}}",
-        item_type_id=30001,
-        version_id=6,
-        is_deleted=False
-    )
-    expect = [{
-                "id": 1,
-                "name": "sample1",
-                "item_type_id": 30001
-            }]
-
-    with i18n_app.test_client() as client:
-        with patch("flask_login.utils._get_user",
-                   return_value=users[3]['obj']):
-            with patch("weko_search_ui.admin.JsonldMapping.get_all",
-                       return_value=[map1]):
-                res = client.get("/admin/items/rocrate_import/all_mappings",
-                                 content_type="application/json")
-                assert res.status_code==200
-                assert res.json == expect
+        with i18n_app.test_client() as client:
+            with patch("flask_login.utils._get_user",
+                    return_value=users[3]['obj']):
+                with patch("weko_search_ui.admin.JsonldMapping.get_all",
+                        return_value=[map1]):
+                    res = client.get("/admin/items/rocrate_import/all_mappings",
+                                    content_type="application/json")
+                    assert res.status_code==200
+                    assert res.json == expect
 
 
 # class ItemBulkExport(BaseView):
