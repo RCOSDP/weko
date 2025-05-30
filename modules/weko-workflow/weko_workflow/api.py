@@ -3076,6 +3076,18 @@ class WorkActivity(object):
 
 
     def _get_settings_for_targets(self, set_target_id, actor_id=None):
+        """"Get settings for targets.
+        Args:
+            set_target_id (set): Set of target user IDs.
+            actor_id (int, optional): ID of the actor. Defaults to None.
+
+        Returns:
+            tuple: A tuple containing:
+            - targets (List[User]): List of User objects for the target IDs.
+            - settings_dict (dict): A dictionary mapping user IDs to NotificationsUserSettings.
+            - profiles_dict (dict): A dictionary mapping user IDs to UserProfile objects.
+            - actor (User or None): User object for the actor ID, or None if not provided.
+        """
         targets = User.query.filter(User.id.in_(list(set_target_id))).all()
         settings = NotificationsUserSettings.query.filter(
             NotificationsUserSettings.user_id.in_(list(set_target_id))
