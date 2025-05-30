@@ -992,7 +992,7 @@ def delete_object(recid):
             if current_action == "approval":
                 response = Response(status=202, headers={"Location": url})
             else:
-                response = jsonify(status=204)
+                response = Response(status=204, headers={"Location": url})
         else:
             # Check cache if the item is being edited
             if not lock_item_will_be_edit(recid):
