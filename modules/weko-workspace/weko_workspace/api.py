@@ -103,8 +103,9 @@ class JamasURL:
             tuple: (success, cookies)
                 success (bool): True if login was successful, False otherwise.
         """
-        url = current_app.config.get("WEKO_WORKSPACE_JAMAS_API_URL", "")
-        url += "/api/login"
+        url = current_app.config.get(
+            "WEKO_WORKSPACE_JAMAS_API_URL", ""
+        ).strip("/") + "/api/login"
 
         try:
             current_app.logger.debug(f"Jamas login URL: {url}")
@@ -145,8 +146,9 @@ class JamasURL:
         Returns:
             bool: True if logout was successful, False otherwise.
         """
-        url = current_app.config.get("WEKO_WORKSPACE_JAMAS_API_URL", "")
-        url += "/api/logout"
+        url = current_app.config.get(
+            "WEKO_WORKSPACE_JAMAS_API_URL", ""
+        ).strip("/") + "/api/logout"
         current_app.logger.debug(f"Jamas logout URL: {url}, cookies: {self._cookie}")
 
         try:
