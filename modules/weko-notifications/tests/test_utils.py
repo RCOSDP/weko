@@ -7,12 +7,17 @@
 
 import json
 import pytest
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 from datetime import datetime
 import pytz
+from marshmallow import ValidationError
 
-from weko_notifications.utils import inbox_url, rfc3339, create_subscription, create_userprofile, get_push_template
+from weko_notifications.notifications import Notification
+from weko_notifications.utils import (
+    _get_params_for_registrant, inbox_url, notify_item_deleted, notify_item_imported,
+    rfc3339, create_subscription, create_userprofile, get_push_template, user_uri
+    )
 
 # .tox/c1/bin/pytest --cov=weko_notifications tests/test_utils.py -v -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-notifications/.tox/c1/tmp --full-trace
 
@@ -25,6 +30,13 @@ def test_inbox_url(app):
     assert inbox_url("/test") == "http://inbox:8080/test"
     assert inbox_url("/test", _external=True) == f"{app.config['THEME_SITEURL']}/test"
 
+
+# def user_uri():
+# .tox/c1/bin/pytest --cov=weko_notifications tests/test_utils.py::test_user_uri -v -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-notifications/.tox/c1/tmp --full-trace
+def test_user_uri(app, user_profiles):
+    user_id = user_profiles[0].user_id
+    assert user_uri(user_id) == f"{app.config['WEKO_NOTIFICATIONS_USERS_URI'].format(user_id=user_id)}"
+    assert user_uri(user_id, _external=True) == f"{app.config['THEME_SITEURL']}/users/{user_id}"
 
 # def rfc3339():
 # .tox/c1/bin/pytest --cov=weko_notifications tests/test_utils.py::test_rfc3339 -v -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-notifications/.tox/c1/tmp --full-trace
@@ -49,11 +61,11 @@ def test_create_subscription(app, client):
     p256dh = "test_p256dh_key"
     auth = "test_auth_key"
 
-    root_url = client.application.config["SERVER_NAME"]
+    root_url = client.application.config["THEME_SITEURL"]
     with app.test_request_context():
         subscription = create_subscription(user_id, endpoint, expiration_time, p256dh, auth)
 
-    assert subscription["target"] == f"http://{root_url}/user/{user_id}"
+    assert subscription["target"] == f"{root_url}/users/{user_id}"
     assert subscription["endpoint"] == endpoint
     assert subscription["expirationTime"] == expiration_time
     assert subscription["keys"]["p256dh"] == p256dh
@@ -64,11 +76,11 @@ def test_create_subscription(app, client):
 # .tox/c1/bin/pytest --cov=weko_notifications tests/test_utils.py::test_create_userprofile -v -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-notifications/.tox/c1/tmp --full-trace
 def test_create_userprofile(app, user_profiles, client, mocker):
 
-    root_url = client.application.config["SERVER_NAME"]
+    root_url = client.application.config["THEME_SITEURL"]
     with app.test_request_context():
         userprofile = create_userprofile(user_profiles[0])
 
-    assert userprofile["uri"] == f"http://{root_url}/user/{user_profiles[0].user_id}"
+    assert userprofile["uri"] == f"{root_url}/users/{user_profiles[0].user_id}"
     assert userprofile["displayname"] == user_profiles[0]._displayname
     assert userprofile["language"] == user_profiles[0].language
     assert userprofile["timezone"] == "GMT+9:00"
@@ -97,6 +109,14 @@ def test_get_push_template(app, mocker):
         mocker.patch("json.load", side_effect=TypeError("Invalid JSON"))
         with pytest.raises(TypeError):
             get_push_template()
+
+    with patch("flask.current_app.logger") as mock_logger:
+    # Template file exists but contains invalid JSON
+        mocker.patch("os.path.isfile", return_value=True)
+        mocker.patch("builtins.open", mocker.mock_open(read_data=[{"test": "not dict"}]))
+        mocker.patch("json.load", return_value=[{"test": "not dict"}])
+
+        assert get_push_template() is None
 
 
     # Template file exists and contains valid JSON
@@ -135,3 +155,96 @@ def test_get_push_template(app, mocker):
         },
     ]
 
+
+# def _get_params_for_registrant(target_id, actor_id, shared_id):
+# .tox/c1/bin/pytest --cov=weko_notifications tests/test_utils.py::test__get_params_for_registrant -v -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-notifications/.tox/c1/tmp --full-trace
+def test__get_params_for_registrant():
+    # Test with shared_id == -1
+    target_id = 1
+    actor_id = 2
+    shared_id = -1
+    with patch("weko_notifications.utils.UserProfile.get_by_userid") as mock_get_params:
+        mock_get_params.return_value = MagicMock()
+        mock_get_params.return_value.username = "Test User"
+        set_target_id, actor_name = _get_params_for_registrant(target_id, actor_id, shared_id)
+        assert set_target_id == {target_id}
+        assert actor_name == "Test User"
+
+    # Test with shared_id != -1
+        shared_id = 3
+    # with patch("weko_notifications.utils.UserProfile.get_by_userid") as mock_get_params:
+    #     mock_get_params.return_value = MagicMock()
+    #     mock_get_params.return_value.username = "Test User"
+        set_target_id, actor_name = _get_params_for_registrant(target_id, actor_id, shared_id)
+        assert set_target_id == {target_id, shared_id}
+        assert actor_name == "Test User"
+
+
+# def notify_item_imported(target_id, recid, actor_id, object_name=None, shared_id=-1):
+# ./tox/c1/bin/pytest --cov=weko_notifications tests/test_utils.py::test_notify_item_imported -v -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-notifications/.tox/c1/tmp --full-trace
+def test_notify_item_imported(app, mocker):
+    target_id = 1
+    recid = 12345
+    actor_id = 2
+    object_name = "Test Object"
+    shared_id = -1
+
+    mocker.patch("weko_notifications.utils._get_params_for_registrant", return_value=({target_id}, "Test User"))
+    mocker.patch("weko_notifications.notifications.Notification.send")
+
+    mock_create_notification = mocker.patch("weko_notifications.notifications.Notification.create_item_registered", side_effect=Notification.create_item_registered)
+    notify_item_imported(target_id, recid, actor_id, object_name, shared_id)
+
+    mock_create_notification.assert_called_once_with(target_id, recid, actor_id, actor_name="Test User", object_name=object_name)
+
+    mock_create_notification.reset_mock()
+
+    mock_create_notification.side_effect = ValidationError("Validation error")
+    mock_logger = mocker.patch("flask.current_app.logger")
+    notify_item_imported(target_id, recid, actor_id, object_name, shared_id=3)
+
+    mock_create_notification.assert_called_once_with(target_id, recid, actor_id, actor_name="Test User", object_name=object_name)
+    mock_logger.error.assert_called_with("Failed to send notification for item import.")
+
+    mock_create_notification.reset_mock()
+
+    mock_create_notification.side_effect = Exception("Unexpected error")
+    mock_logger = mocker.patch("flask.current_app.logger")
+    notify_item_imported(target_id, recid, actor_id, object_name, shared_id=3)
+    mock_create_notification.assert_called_once_with(target_id, recid, actor_id, actor_name="Test User", object_name=object_name)
+    mock_logger.error.assert_called_with("Unexpected error occurred while sending notification for item import.")
+
+
+# def notify_item_deleted(target_id, recid, actor_id, object_name=None, shared_id=-1):
+# ./tox/c1/bin/pytest --cov=weko_notifications tests/test_utils.py::test_notify_item_deleted -v -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-notifications/.tox/c1/tmp --full-trace
+def test_notify_item_deleted(app, mocker):
+    target_id = 1
+    recid = 12345
+    actor_id = 2
+    object_name = "Test Object"
+    shared_id = -1
+
+    mocker.patch("weko_notifications.utils._get_params_for_registrant", return_value=({target_id}, "Test User"))
+    mocker.patch("weko_notifications.notifications.Notification.send")
+
+    mock_create_notification = mocker.patch("weko_notifications.notifications.Notification.create_item_deleted", side_effect=Notification.create_item_deleted)
+    notify_item_deleted(target_id, recid, actor_id, object_name, shared_id)
+
+    mock_create_notification.assert_called_once_with(target_id, recid, actor_id, actor_name="Test User", object_name=object_name)
+
+    mock_create_notification.reset_mock()
+
+    mock_create_notification.side_effect = ValidationError("Validation error")
+    mock_logger = mocker.patch("flask.current_app.logger")
+    notify_item_deleted(target_id, recid, actor_id, object_name, shared_id=3)
+
+    mock_create_notification.assert_called_once_with(target_id, recid, actor_id, actor_name="Test User", object_name=object_name)
+    mock_logger.error.assert_called_with("Failed to send notification for item deletion.")
+
+    mock_create_notification.reset_mock()
+
+    mock_create_notification.side_effect = Exception("Unexpected error")
+    mock_logger = mocker.patch("flask.current_app.logger")
+    notify_item_deleted(target_id, recid, actor_id, object_name, shared_id=3)
+    mock_create_notification.assert_called_once_with(target_id, recid, actor_id, actor_name="Test User", object_name=object_name)
+    mock_logger.error.assert_called_with("Unexpected error occurred while sending notification for item deletion.")

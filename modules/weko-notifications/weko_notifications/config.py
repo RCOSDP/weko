@@ -25,6 +25,8 @@ WEKO_NOTIFICATIONS_INBOX_ADDRESS = "http://inbox:8080"
 WEKO_NOTIFICATIONS_INBOX_ENDPOINT = "/inbox"
 """Endpoint of the inbox."""
 
+WEKO_NOTIFICATIONS_USERS_URI = "/users/{user_id}"
+
 COAR_NOTIFY_CONTEXT = [
     "https://www.w3.org/ns/activitystreams",
     "https://coar-notify.net"
