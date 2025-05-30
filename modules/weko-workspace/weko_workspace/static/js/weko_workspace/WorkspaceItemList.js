@@ -698,7 +698,9 @@ document.addEventListener('DOMContentLoaded', function () {
           ${relatedInfoHtml}
         </td>
         <td style="text-align: center; vertical-align: top;">
-          <span><a href="${item.doi}">DOI</a></span><br><br>
+          <span>
+          ${item.doi ? `<a href="${item.doi}">DOI</a>` : 'DOI'}
+          </span><br><br>
           <span>
             <i class="bi bi-eye-fill" style="font-size: 20px;"></i>${item.accessCnt}
           </span><br><br>
