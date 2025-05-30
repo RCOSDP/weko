@@ -74,6 +74,7 @@ options.forEach(option => {
 async function copyFileToBucket() {
   $('#execution').prop("disabled", true);
   $('#modal-result-message').text('executing...');
+  $('#modal-result-uri').text('');
 
   const copy_success_message = document.getElementById('copy_success_message').value
   const pid = document.getElementById('pid').value
