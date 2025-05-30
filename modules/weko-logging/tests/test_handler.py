@@ -50,7 +50,7 @@ def test_emit(app, users, mocker, caplog, communities):
     records = UserActivityLog.query.all()
     assert len(records) == 0
 
-    # Test Case 3: When parent_id is None
+    # Test Case 3: When request_info is None
     logger = logging.getLogger("user-activity")
     logger.error("test", extra={
         "operation": "ITEM_CREATE",
@@ -82,6 +82,7 @@ def test_emit(app, users, mocker, caplog, communities):
         "request_info": {
             "path": "https://test_server/cc/sample",
             "args": {"community": "community_sample2"},
+            "log_group_id": "log_group_123",
         },
     })
     assert len(caplog.records) == 5

@@ -14,7 +14,7 @@
     "type": "Service"
   },
   "target": {
-    "id": "https://example.repo.nii.ac.jp/user/3",
+    "id": "https://example.repo.nii.ac.jp/users/3",
     "inbox": "https://example.repo.nii.ac.jp/inbox",
     "type": "Person"
   },
@@ -27,7 +27,7 @@
     ]
   },
   "actor": {
-    "id": "https://example.repo.nii.ac.jp/user/4",
+    "id": "https://example.repo.nii.ac.jp/users/4",
     "type": "Person",
     "name": "ADMIN"
   }

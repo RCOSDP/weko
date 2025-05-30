@@ -14,7 +14,7 @@ from flask import url_for
 from weko_notifications.client import NotificationClient
 
 from .config import COAR_NOTIFY_CONTEXT
-from .utils import inbox_url
+from .utils import inbox_url, user_uri
 
 
 class ActivityType(Enum):
@@ -281,6 +281,68 @@ class Notification(object):
         self._is_validated = False
         return self
 
+
+    def set_all(
+            self, activity_type, target_id, object_id, actor_id,
+            context_id=None, in_reply_to=None, **kwargs
+        ):
+        """Set all entities.
+        Args:
+            activity_type (ActivityType | list[str]):
+                Activity type of the notification.
+            target_id (int): ID of the target user.
+            object_id (int): ID of the object item.
+            actor_id (int): ID of the actor user.
+            context_id (int | None): ID of the context page.
+            in_reply_to (str | None): ID of the inReplyTo notification.
+            **kwargs (dict):
+                - object_name (str): Name of the object item. <br>
+                - ietf_cite_as (str): IETF Cite As of the object item. <br>
+                - actor_name (str): Name of the actor user.
+
+        Returns:
+            Notification: Notification instance
+        """
+        site_index_url = url_for('weko_theme.index', _external=True)
+        item_url = url_for(
+            "invenio_records_ui.recid", pid_value=object_id, _external=True
+        )
+        self.set_type(activity_type)
+        self.set_origin(
+            id=site_index_url,
+            inbox=inbox_url(_external=True),
+            entity_type="Service"
+        )
+        self.set_target(
+            id=user_uri(target_id, _external=True),
+            inbox=inbox_url(_external=True),
+            entity_type="Person"
+        )
+        self.set_object(
+            id=item_url,
+            ietf_cite_as=kwargs.get("ietf_cite_as"),
+            object_type=["Page", "sorg:WebPage"],
+            name=kwargs.get("object_name")
+        )
+        self.set_actor(
+            id=user_uri(actor_id, _external=True),
+            entity_type="Person",
+            name=kwargs.get("actor_name") or "Unknown"
+        )
+        if context_id:
+            activity_url = url_for(
+                "weko_workflow.display_activity", activity_id=context_id,
+                _external=True
+            )
+            self.set_context(
+                id=activity_url,
+                entity_type=["Page", "sorg:WebPage"]
+            )
+        if in_reply_to:
+            self.in_reply_to = in_reply_to
+
+        return self.create()
+
     def send(self, client):
         """Send notification.
 
@@ -315,32 +377,13 @@ class Notification(object):
         Returns:
             Notification: Notification instance
         """
-        site_index_url = url_for('weko_theme.index', _external=True)
-        item_url = url_for(
-            "invenio_records_ui.recid", pid_value=object_id, _external=True
-        )
         obj = cls()
-        obj.set_type(ActivityType.ANNOUNCE_INGEST)
-        obj.set_origin(
-            id=site_index_url,
-            inbox=inbox_url(_external=True),
-            entity_type="Service"
-        )
-        obj.set_target(
-            id=f"{site_index_url}user/{target_id}",
-            inbox=inbox_url(_external=True),
-            entity_type="Person"
-        )
-        obj.set_object(
-            id=item_url,
-            ietf_cite_as=kwargs.get("ietf_cite_as"),
-            object_type=["Page", "sorg:WebPage"],
-            name=kwargs.get("object_name")
-        )
-        obj.set_actor(
-            id=f"{site_index_url}user/{actor_id}",
-            entity_type="Person",
-            name=kwargs.get("actor_name") or "Unknown"
+        obj.set_all(
+            activity_type=ActivityType.ANNOUNCE_INGEST,
+            target_id=target_id,
+            object_id=object_id,
+            actor_id=actor_id,
+            **kwargs
         )
         return obj.create()
 
@@ -365,40 +408,14 @@ class Notification(object):
         Returns:
             Notification: Notification instance
         """
-        site_index_url = url_for('weko_theme.index', _external=True)
-        item_url = url_for(
-            "invenio_records_ui.recid", pid_value=object_id, _external=True
-        )
-        activity_url = url_for(
-            "weko_workflow.display_activity", activity_id=context_id,
-            _external=True
-        )
-
         obj = cls()
-        obj.set_type(ActivityType.OFFER_ENDORSE)
-        obj.set_origin(
-            id=site_index_url,
-            inbox=inbox_url(_external=True),
-            entity_type="Service"
-        )
-        obj.set_target(
-            id=f"{site_index_url}user/{target_id}",
-            inbox=inbox_url(_external=True),
-            entity_type="Person"
-        )
-        obj.set_object(
-            id=item_url,
-            object_type=["Page", "sorg:WebPage"],
-            name=kwargs.get("object_name")
-        )
-        obj.set_actor(
-            id=f"{site_index_url}user/{actor_id}",
-            entity_type="Person",
-            name=kwargs.get("actor_name") or "Unknown"
-        )
-        obj.set_context(
-            id=activity_url,
-            entity_type=["Page", "sorg:WebPage"]
+        obj.set_all(
+            activity_type=ActivityType.OFFER_ENDORSE,
+            target_id=target_id,
+            object_id=object_id,
+            actor_id=actor_id,
+            context_id=context_id,
+            **kwargs
         )
         return obj.create()
 
@@ -424,40 +441,14 @@ class Notification(object):
         Returns:
             Notification: Notification instance
         """
-        site_index_url = url_for('weko_theme.index', _external=True)
-        item_url = url_for(
-            "invenio_records_ui.recid", pid_value=object_id, _external=True
-        )
-        activity_url = url_for(
-            "weko_workflow.display_activity", activity_id=context_id,
-            _external=True
-        )
         obj = cls()
-        obj.set_type(ActivityType.ANNOUNCE_ENDORSE)
-        obj.set_origin(
-            id=site_index_url,
-            inbox=inbox_url(_external=True),
-            entity_type="Service"
-        )
-        obj.set_target(
-            id=f"{site_index_url}user/{target_id}",
-            inbox=inbox_url(_external=True),
-            entity_type="Person"
-        )
-        obj.set_object(
-            id=item_url,
-            ietf_cite_as=kwargs.get("ietf_cite_as"),
-            object_type=["Page", "sorg:WebPage"],
-            name=kwargs.get("object_name")
-        )
-        obj.set_actor(
-            id=f"{site_index_url}user/{actor_id}",
-            entity_type="Person",
-            name=kwargs.get("actor_name") or "Unknown"
-        )
-        obj.set_context(
-            id=activity_url,
-            entity_type=["Page", "sorg:WebPage"]
+        obj.set_all(
+            activity_type=ActivityType.ANNOUNCE_ENDORSE,
+            target_id=target_id,
+            object_id=object_id,
+            actor_id=actor_id,
+            context_id=context_id,
+            **kwargs
         )
         return obj.create()
 
@@ -482,40 +473,14 @@ class Notification(object):
         Returns:
             Notification: Notification instance
         """
-        site_index_url = url_for('weko_theme.index', _external=True)
-        item_url = url_for(
-            "invenio_records_ui.recid", pid_value=object_id, _external=True
-        )
-        activity_url = url_for(
-            "weko_workflow.display_activity", activity_id=context_id,
-            _external=True
-        )
         obj = cls()
-        obj.set_type(ActivityType.ACKNOWLEDGE_AND_REJECT)
-        obj.set_origin(
-            id=site_index_url,
-            inbox=inbox_url(_external=True),
-            entity_type="Service"
-        )
-        obj.set_target(
-            id=f"{site_index_url}user/{target_id}",
-            inbox=inbox_url(_external=True),
-            entity_type="Person"
-        )
-        obj.set_object(
-            id=item_url,
-            ietf_cite_as=kwargs.get("ietf_cite_as"),
-            object_type=["Page", "sorg:WebPage"],
-            name=kwargs.get("object_name")
-        )
-        obj.set_actor(
-            id=f"{site_index_url}user/{actor_id}",
-            entity_type="Person",
-            name=kwargs.get("actor_name") or "Unknown"
-        )
-        obj.set_context(
-            id=activity_url,
-            entity_type=["Page", "sorg:WebPage"]
+        obj.set_all(
+            activity_type=ActivityType.ACKNOWLEDGE_AND_REJECT,
+            target_id=target_id,
+            object_id=object_id,
+            actor_id=actor_id,
+            context_id=context_id,
+            **kwargs
         )
         return obj.create()
 
@@ -541,32 +506,13 @@ class Notification(object):
         Returns:
             Notification: Notification instance
         """
-        site_index_url = url_for('weko_theme.index', _external=True)
-        item_url = url_for(
-            "invenio_records_ui.recid", pid_value=object_id, _external=True
-        )
         obj = cls()
-        obj.set_type(ActivityType.ANNOUNCE_INGEST.deletion_value)
-        obj.set_origin(
-            id=site_index_url,
-            inbox=inbox_url(_external=True),
-            entity_type="Service"
-        )
-        obj.set_target(
-            id=f"{site_index_url}user/{target_id}",
-            inbox=inbox_url(_external=True),
-            entity_type="Person"
-        )
-        obj.set_object(
-            id=item_url,
-            ietf_cite_as=kwargs.get("ietf_cite_as"),
-            object_type=["Page", "sorg:WebPage"],
-            name=kwargs.get("object_name")
-        )
-        obj.set_actor(
-            id=f"{site_index_url}user/{actor_id}",
-            entity_type="Person",
-            name=kwargs.get("actor_name") or "Unknown"
+        obj.set_all(
+            activity_type=ActivityType.ANNOUNCE_INGEST.deletion_value,
+            target_id=target_id,
+            object_id=object_id,
+            actor_id=actor_id,
+            **kwargs
         )
         return obj.create()
 
@@ -591,40 +537,14 @@ class Notification(object):
         Returns:
             Notification: Notification instance
         """
-        site_index_url = url_for('weko_theme.index', _external=True)
-        item_url = url_for(
-            "invenio_records_ui.recid", pid_value=object_id, _external=True
-        )
-        activity_url = url_for(
-            "weko_workflow.display_activity", activity_id=context_id,
-            _external=True
-        )
-
         obj = cls()
-        obj.set_type(ActivityType.OFFER_ENDORSE.deletion_value)
-        obj.set_origin(
-            id=site_index_url,
-            inbox=inbox_url(_external=True),
-            entity_type="Service"
-        )
-        obj.set_target(
-            id=f"{site_index_url}user/{target_id}",
-            inbox=inbox_url(_external=True),
-            entity_type="Person"
-        )
-        obj.set_object(
-            id=item_url,
-            object_type=["Page", "sorg:WebPage"],
-            name=kwargs.get("object_name")
-        )
-        obj.set_actor(
-            id=f"{site_index_url}user/{actor_id}",
-            entity_type="Person",
-            name=kwargs.get("actor_name") or "Unknown"
-        )
-        obj.set_context(
-            id=activity_url,
-            entity_type=["Page", "sorg:WebPage"]
+        obj.set_all(
+            activity_type=ActivityType.OFFER_ENDORSE.deletion_value,
+            target_id=target_id,
+            object_id=object_id,
+            actor_id=actor_id,
+            context_id=context_id,
+            **kwargs
         )
         return obj.create()
 
@@ -650,40 +570,14 @@ class Notification(object):
         Returns:
             Notification: Notification instance
         """
-        site_index_url = url_for('weko_theme.index', _external=True)
-        item_url = url_for(
-            "invenio_records_ui.recid", pid_value=object_id, _external=True
-        )
-        activity_url = url_for(
-            "weko_workflow.display_activity", activity_id=context_id,
-            _external=True
-        )
         obj = cls()
-        obj.set_type(ActivityType.ANNOUNCE_ENDORSE.deletion_value)
-        obj.set_origin(
-            id=site_index_url,
-            inbox=inbox_url(_external=True),
-            entity_type="Service"
-        )
-        obj.set_target(
-            id=f"{site_index_url}user/{target_id}",
-            inbox=inbox_url(_external=True),
-            entity_type="Person"
-        )
-        obj.set_object(
-            id=item_url,
-            ietf_cite_as=kwargs.get("ietf_cite_as"),
-            object_type=["Page", "sorg:WebPage"],
-            name=kwargs.get("object_name")
-        )
-        obj.set_actor(
-            id=f"{site_index_url}user/{actor_id}",
-            entity_type="Person",
-            name=kwargs.get("actor_name") or "Unknown"
-        )
-        obj.set_context(
-            id=activity_url,
-            entity_type=["Page", "sorg:WebPage"]
+        obj.set_all(
+            activity_type=ActivityType.ANNOUNCE_ENDORSE.deletion_value,
+            target_id=target_id,
+            object_id=object_id,
+            actor_id=actor_id,
+            context_id=context_id,
+            **kwargs
         )
         return obj.create()
 
@@ -708,39 +602,13 @@ class Notification(object):
         Returns:
             Notification: Notification instance
         """
-        site_index_url = url_for('weko_theme.index', _external=True)
-        item_url = url_for(
-            "invenio_records_ui.recid", pid_value=object_id, _external=True
-        )
-        activity_url = url_for(
-            "weko_workflow.display_activity", activity_id=context_id,
-            _external=True
-        )
         obj = cls()
-        obj.set_type(ActivityType.ACKNOWLEDGE_AND_REJECT.deletion_value)
-        obj.set_origin(
-            id=site_index_url,
-            inbox=inbox_url(_external=True),
-            entity_type="Service"
-        )
-        obj.set_target(
-            id=f"{site_index_url}user/{target_id}",
-            inbox=inbox_url(_external=True),
-            entity_type="Person"
-        )
-        obj.set_object(
-            id=item_url,
-            ietf_cite_as=kwargs.get("ietf_cite_as"),
-            object_type=["Page", "sorg:WebPage"],
-            name=kwargs.get("object_name")
-        )
-        obj.set_actor(
-            id=f"{site_index_url}user/{actor_id}",
-            entity_type="Person",
-            name=kwargs.get("actor_name") or "Unknown"
-        )
-        obj.set_context(
-            id=activity_url,
-            entity_type=["Page", "sorg:WebPage"]
+        obj.set_all(
+            activity_type=ActivityType.ACKNOWLEDGE_AND_REJECT.deletion_value,
+            target_id=target_id,
+            object_id=object_id,
+            actor_id=actor_id,
+            context_id=context_id,
+            **kwargs
         )
         return obj.create()

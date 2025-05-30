@@ -309,6 +309,10 @@ class ItemTypeMetaDataView(BaseView):
                     )
         except Exception as ex:
             db.session.rollback()
+            current_app.logger.error(
+                f"Failed to register item type: {item_type_id}"
+            )
+            traceback.print_exc()
             exec_info = sys.exc_info()
             tb_info = traceback.format_tb(exec_info[2])
             if item_type_id != 0:
@@ -359,6 +363,7 @@ class ItemTypeMetaDataView(BaseView):
                         db.session.rollback()
                         current_app.logger.error(
                             "Unexpected error: {}".format(sys.exc_info()))
+                        traceback.print_exc()
                         return jsonify(code=-1,
                                        msg=_('Failed to restore Item type.'))
 
@@ -557,6 +562,7 @@ class ItemTypeMetaDataView(BaseView):
             )
         except Exception as ex:
             db.session.rollback()
+            traceback.print_exc()
             default_msg = _('Failed to import Item type.')
             response = jsonify(msg='{} {}'.format(default_msg, str(ex)))
             response.status_code = 400

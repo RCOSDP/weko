@@ -5183,6 +5183,9 @@ class TestJsonLdMapper:
         ).to_rocrate_metadata(metadata)
         ro_crate_metadata = rocrate.metadata.generate()
 
+        context = ro_crate_metadata["@context"]
+        assert context[1]["wk"] == "http://purl.org/wk/v1/wk-context.jsonld"
+
         # mapped metadata
         graph = ro_crate_metadata["@graph"][0]
         assert graph["datePublished"] == metadata["pubdate"]["attribute_value"]

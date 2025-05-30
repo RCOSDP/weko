@@ -58,7 +58,7 @@ from weko_user_profiles.config import USERPROFILES_LANGUAGE_DEFAULT, USERPROFILE
 from weko_workflow import WekoWorkflow
 
 from weko_notifications import WekoNotifications
-from weko_notifications.views import blueprint as weko_notifications_blueprint
+from weko_notifications.views import blueprint_api as weko_notifications_api_blueprint
 
 from .helpers import json_data
 
@@ -123,7 +123,7 @@ def base_app(instance_path):
 def app(base_app):
     """Flask application fixture."""
     WekoNotifications(base_app)
-    base_app.register_blueprint(weko_notifications_blueprint)
+    base_app.register_blueprint(weko_notifications_api_blueprint)
     with base_app.app_context():
         yield base_app
 

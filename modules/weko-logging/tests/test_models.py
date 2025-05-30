@@ -36,7 +36,7 @@ def test_to_dict(db, users):
         date=datetime.now(),
         user_id=users[0]["id"],
         community_id=None,
-        parent_id=None,
+        log_group_id=None,
         log={"operation": "test"},
         remarks="test"
     )
@@ -47,7 +47,7 @@ def test_to_dict(db, users):
         "date": user_activity_log.date,
         "user_id": user_activity_log.user_id,
         "community_id": "",
-        "parent_id": "",
+        "log_group_id": "",
         "log": user_activity_log.log,
         "remarks": user_activity_log.remarks
     }
