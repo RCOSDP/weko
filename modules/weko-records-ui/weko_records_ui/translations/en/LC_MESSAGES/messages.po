@@ -87,8 +87,8 @@ msgstr ""
 msgid "Getting Bucket List failed."
 msgstr ""
 
-#: weko_records_ui/api.py:251
-msgid "This file is not from institutional storage."
+#: weko_records_ui/api.py:402
+msgid "The source file cannot be found."
 msgstr ""
 
 #: weko_records_ui/api.py:280

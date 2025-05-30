@@ -48,7 +48,6 @@ window.onload = function(){
       secretKeyInput.required = true
       s3EndpointUrlField.style.display = ''
       s3SendFileDirectlyField.style.display = ''
-      s3SendFileDirectlyInput.checked = true
       if (s3DefaultBlockSizeInput.value === ''){
         s3DefaultBlockSizeInput.value = 5242880
       }
@@ -65,7 +64,6 @@ window.onload = function(){
       secretKeyInput.required = true
       s3EndpointUrlField.style.display = 'none'
       s3SendFileDirectlyField.style.display = ''
-      s3SendFileDirectlyInput.checked = true
       if (s3DefaultBlockSizeInput.value === ''){
         s3DefaultBlockSizeInput.value = 5242880
       }
@@ -90,7 +88,6 @@ window.onload = function(){
       secretKeyInput.value = null
       secretKeyInput.required = false
       s3EndpointUrlInput.value = null
-      s3SendFileDirectlyInput.checked = true
       s3DefaultBlockSizeInput.value = null
       s3MaximumNumberOfPartsInput.value = null
       s3RegionNameInput.value = null

@@ -128,6 +128,7 @@ class LocationModelView(ModelView):
 
     def on_model_change(self, form, model, is_created):
         if is_created:
+            model.s3_send_file_directly = True
             if (model.type ==
                 current_app.config['FILES_REST_LOCATION_TYPE_S3_PATH_VALUE']):
                 model.s3_signature_version = None

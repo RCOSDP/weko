@@ -29,6 +29,7 @@ import os
 import json
 import re
 import sys
+import traceback
 
 from flask import request, abort, jsonify, redirect, url_for, flash
 from flask.globals import current_app
@@ -251,8 +252,10 @@ class CommunityModelView(ModelView):
                 else:
                     return redirect(url_for('.index_view'))
             except Exception as e:
+                traceback.print_exc()
+                current_app.logger.error(e)
                 db.session.rollback()
-                return jsonify({"error": str(e)}), 400
+                return jsonify({"Unexpected error": str(e)}), 400
 
         else:
             form.login_menu_enabled.data = 'False'
@@ -369,8 +372,10 @@ class CommunityModelView(ModelView):
                 db.session.commit()
                 return redirect(url_for('.index_view'))
             except Exception as e:
+                traceback.print_exc()
+                current_app.logger.error(e)
                 db.session.rollback()
-                return jsonify({"error": str(e)}), 400
+                return jsonify({"Unexpected error": str(e)}), 400
 
         else:
             # request method GET
