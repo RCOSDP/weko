@@ -22,6 +22,7 @@ from weko_user_profiles.config import USERPROFILES_TIMEZONE_LIST
 from weko_user_profiles.models import UserProfile
 
 from .client import NotificationClient
+from .config import WEKO_NOTIFICATIONS_USERS_URI
 
 def inbox_url(endpoint=None, _external=False):
     """Return the inbox URL.
@@ -39,11 +40,26 @@ def inbox_url(endpoint=None, _external=False):
         else current_app.config["WEKO_NOTIFICATIONS_INBOX_ADDRESS"]
     )
     if endpoint is not None:
-        url += endpoint
+        url += endpoint if endpoint.startswith("/") else f"/{endpoint}"
     else:
         url += current_app.config["WEKO_NOTIFICATIONS_INBOX_ENDPOINT"]
 
     return str(url)
+
+
+def user_uri(user_id, _external=False):
+    """Return the user URI.
+
+    Args:
+        user_id (int): The user ID.
+        _external (bool): Whether to return the URI with the full domain.
+
+    Returns:
+        str: The user URI.
+    """
+    uri = current_app.config["THEME_SITEURL"] if _external else ""
+    uri += WEKO_NOTIFICATIONS_USERS_URI
+    return str(uri).format(user_id=user_id)
 
 
 def rfc3339(timezone=None):
@@ -76,7 +92,7 @@ def create_subscription(user_id, endpoint, expiration_time, p256dh, auth):
     root_url = request.host_url
 
     subscription = {
-        "target": f"{root_url}user/{user_id}",
+        "target": user_uri(user_id, _external=True),
         "endpoint": endpoint,
         "expirationTime": expiration_time,
         "keys": {
@@ -107,7 +123,7 @@ def create_userprofile(userprofile):
             iana_tz = re.search(pattern, str(iana)).group(1)
 
     userprofile = {
-        "uri": f"{root_url}user/{userprofile.user_id}",
+        "uri": user_uri(userprofile.user_id, _external=True),
         "displayname": userprofile._displayname,
         "language": userprofile.language,
         "timezone": iana_tz,

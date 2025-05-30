@@ -49,11 +49,11 @@ def test_create_subscription(app, client):
     p256dh = "test_p256dh_key"
     auth = "test_auth_key"
 
-    root_url = client.application.config["SERVER_NAME"]
+    root_url = client.application.config["THEME_SITEURL"]
     with app.test_request_context():
         subscription = create_subscription(user_id, endpoint, expiration_time, p256dh, auth)
 
-    assert subscription["target"] == f"http://{root_url}/user/{user_id}"
+    assert subscription["target"] == f"{root_url}/users/{user_id}"
     assert subscription["endpoint"] == endpoint
     assert subscription["expirationTime"] == expiration_time
     assert subscription["keys"]["p256dh"] == p256dh
@@ -64,11 +64,11 @@ def test_create_subscription(app, client):
 # .tox/c1/bin/pytest --cov=weko_notifications tests/test_utils.py::test_create_userprofile -v -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-notifications/.tox/c1/tmp --full-trace
 def test_create_userprofile(app, user_profiles, client, mocker):
 
-    root_url = client.application.config["SERVER_NAME"]
+    root_url = client.application.config["THEME_SITEURL"]
     with app.test_request_context():
         userprofile = create_userprofile(user_profiles[0])
 
-    assert userprofile["uri"] == f"http://{root_url}/user/{user_profiles[0].user_id}"
+    assert userprofile["uri"] == f"{root_url}/users/{user_profiles[0].user_id}"
     assert userprofile["displayname"] == user_profiles[0]._displayname
     assert userprofile["language"] == user_profiles[0].language
     assert userprofile["timezone"] == "GMT+9:00"
