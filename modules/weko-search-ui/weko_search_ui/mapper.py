@@ -2210,9 +2210,21 @@ class JsonLdMapper(JsonMapper):
         # files entity reconstruction
         # "@id" in files entity is format like "data/sample.txt"
         filename_mapping = ""
+        file_url_mapping = ""
+        file_url_url_mapping = ""
         for k, v in properties_mapping.items():
             if k.endswith(".filename"):
                 filename_mapping = v
+                break
+        for k, v in properties_mapping.items():
+            if k.endswith(".url.url"):
+                continue
+            if v.endswith(".url"):
+                file_url_mapping = v
+                break
+        for k, v in properties_mapping.items():
+            if k.endswith(".url.url"):
+                file_url_url_mapping = v
                 break
         file_key = filename_mapping.split(".")[0]
 
@@ -2229,10 +2241,29 @@ class JsonLdMapper(JsonMapper):
                 lambda acc, key: acc.get(key) if isinstance(acc, dict) else None,
                 filename_mapping.split('.')[1:], file_metadata
             )
-            rocrate.add_file(
-                dest_path=f"data/{filename}",
-                properties=file_metadata
-            )
+
+            if filename:
+                rocrate.add_file(
+                    dest_path=f"data/{filename}",
+                    properties=file_metadata
+                )
+            else:
+                url = file_metadata
+                for url_key in file_url_mapping.split(".")[1:]:
+                    if url:
+                        url = url.get(url_key)
+                if url:
+                    url_id = url["@id"]
+                    url = rocrate.dereference(url_id)._jsonld
+                    file_url_url_mapping = (
+                        file_url_url_mapping
+                        .split(".")[len(file_url_mapping.split(".")):]
+                    )
+                    for url_key in file_url_url_mapping:
+                        if url:
+                            url = url.get(url_key)
+                    if isinstance(url, str):
+                        rocrate.add_file(url, properties=file_metadata)
 
         # wk:textExtraction
         list_k_file = None
@@ -2245,8 +2276,9 @@ class JsonLdMapper(JsonMapper):
             extracted_files = kwargs.get("extracted_files", [])
             for file in rocrate.root_dataset.get("hasPart", []):
                 for k_file in list_k_file[:-1]:
-                    file = file[k_file]
-                if file[list_k_file[-1]] not in extracted_files:
+                    if file:
+                        file = file.get(k_file)
+                if file and file.get(list_k_file[-1]) not in extracted_files:
                     file["wk:textExtraction"] = False
                     rocrate.add(file)
 
