@@ -12,7 +12,10 @@ from __future__ import absolute_import, print_function
 
 import traceback
 import requests
-from flask import Blueprint, current_app, flash, render_template, request
+
+from flask import (
+    Blueprint, current_app, flash, jsonify, render_template, request
+)
 from flask_babelex import lazy_gettext as _
 from flask_breadcrumbs import register_breadcrumb
 from flask_login import current_user, login_required
@@ -21,18 +24,11 @@ from invenio_db import db
 
 from weko_user_profiles.utils import current_userprofile
 
+from .client import NotificationClient
 from .forms import NotificationsForm, handle_notifications_form
 from .models import NotificationsUserSettings
 from .utils import (
-    create_userprofile, inbox_url, create_subscription, get_push_template
-)
-
-
-blueprint = Blueprint(
-    "weko_notifications",
-    __name__,
-    template_folder="templates",
-    static_folder="static"
+    create_userprofile, inbox_url, create_subscription, get_push_template, user_uri
 )
 
 blueprint_ui = Blueprint(
@@ -42,8 +38,27 @@ blueprint_ui = Blueprint(
     static_folder="static",
     url_prefix="/account/settings/notifications/"
 )
+"""Blueprint for weko-notifications settings.
 
-@blueprint.before_app_first_request
+registered in .views module.
+
+>>> from .views import blueprint_ui
+>>> if app.config["WEKO_NOTIFICATIONS"]:
+        app.register_blueprint(blueprint_ui)
+"""
+
+blueprint_api = Blueprint(
+    "weko_notifications",
+    __name__,
+    template_folder="templates",
+    static_folder="static"
+)
+"""Blueprint for weko-notifications API.
+registered in .setup.py
+"""
+
+
+@blueprint_ui.before_app_first_request
 def init_push_templates():
     """Initialize push template."""
     templates = get_push_template()
@@ -153,3 +168,25 @@ def notifications_form_factory():
         prefix="notifications"
     )
     return form
+
+
+
+@blueprint_api.route("/notifications", methods=["GET"])
+@login_required
+def notifications():
+    """
+    """
+    user_id = current_user.id
+    client = NotificationClient(inbox_url())
+    notifications = [
+        notification.replace(inbox_url(), inbox_url(_external=True))
+        for notification in
+        client.notifications(target=user_uri(user_id, _external=True))
+    ]
+
+    return jsonify(
+        code=200,
+        message=_("Notifications retrieved successfully."),
+        count=len(notifications),
+        notifications=notifications
+    )

@@ -72,9 +72,6 @@ setup(
         'invenio_base.apps': [
             'weko_notifications = weko_notifications:WekoNotifications',
         ],
-        'invenio_base.blueprints': [
-            'weko_notifications = weko_notifications.views:blueprint',
-        ],
         'invenio_i18n.translations': [
             'messages = weko_notifications',
         ],
@@ -89,7 +86,9 @@ setup(
             'weko_sw_js = weko_notifications.bundles:sw_js',
         ],
         # 'invenio_base.api_apps': [],
-        # 'invenio_base.api_blueprints': [],
+        'invenio_base.api_blueprints': [
+            'weko_notifications = weko_notifications.views:blueprint_api',
+        ],
         # 'invenio_base.blueprints': [],
         # 'invenio_celery.tasks': [],
         'invenio_db.alembic': [
