@@ -24,40 +24,44 @@ import sys
 import io
 import traceback
 
-from flask import abort, current_app, flash, json, jsonify, redirect, \
-    request, session, url_for, make_response, send_file
+from flask import (
+    abort, current_app, flash, json, jsonify, redirect,
+    request, session, url_for, send_file
+)
 from sqlalchemy.sql.expression import null
 from flask_admin import BaseView, expose
 from flask_babelex import gettext as _
 from flask_login import current_user
+from zipfile import ZipFile, ZIP_DEFLATED
+from marshmallow_sqlalchemy import SQLAlchemyAutoSchema
+
 from invenio_db import db
 from invenio_i18n.ext import current_i18n
 from weko_admin.models import AdminSettings, BillingPermission, AdminLangSettings
 from weko_logging.activity_logger import UserActivityLogger
-from weko_logging.models import UserActivityLog
-from weko_records.api import ItemsMetadata, ItemTypeEditHistory, \
-    ItemTypeNames, ItemTypeProps, ItemTypes, Mapping
+from weko_records.api import (
+    ItemsMetadata, ItemTypeEditHistory, ItemTypeNames,
+    ItemTypeProps, ItemTypes, JsonldMapping, Mapping
+)
+from weko_records.models import ItemType, ItemTypeName, ItemTypeMapping, ItemTypeProperty
 from weko_records.serializers.utils import get_mapping_inactive_show_list
 from weko_records_ui.models import RocrateMapping
-from weko_records.api import JsonldMapping
 from weko_schema_ui.api import WekoSchema
 from weko_search_ui.utils import get_key_by_property
 from weko_search_ui.tasks import is_import_running
 from weko_swordserver.api import SwordClient
 from weko_workflow.api import WorkFlow
 
-from .config import WEKO_BILLING_FILE_ACCESS, WEKO_BILLING_FILE_PROP_ATT, \
+from .config import (
+    WEKO_BILLING_FILE_ACCESS, WEKO_BILLING_FILE_PROP_ATT,
     WEKO_ITEMTYPES_UI_DEFAULT_PROPERTIES_ATT
+)
 from .permissions import item_type_permission
-from .utils import check_duplicate_mapping, fix_json_schema, \
-    has_system_admin_access, remove_xsd_prefix, \
+from .utils import (
+    check_duplicate_mapping, fix_json_schema,
+    has_system_admin_access, remove_xsd_prefix,
     update_required_schema_not_exist_in_form, update_text_and_textarea
-from zipfile import ZipFile, ZIP_DEFLATED
-from marshmallow import fields, missing, post_dump, Schema
-from weko_records.models import ItemType, ItemTypeName, ItemTypeMapping, ItemTypeProperty
-from flask_marshmallow import Marshmallow, sqla
-from marshmallow_sqlalchemy import ModelSchema, SQLAlchemyAutoSchema
-from invenio_files_rest.models import FileInstance
+)
 
 class ItemTypeMetaDataView(BaseView):
     """ItemTypeMetaDataView."""
