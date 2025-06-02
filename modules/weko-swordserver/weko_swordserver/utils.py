@@ -346,14 +346,14 @@ def check_import_items(
                     errorType=ErrorType.BadRequest
                 )
 
-        if not WorkFlows().reduce_workflows_for_registration([workflow]):
-            current_app.logger.error(
-                f"Workflow is not for item registration: {workflow_id}"
-            )
-            raise WekoSwordserverException(
-                "Workflow is not for item registration.",
-                errorType=ErrorType.BadRequest
-            )
+            if not WorkFlows().reduce_workflows_for_registration([workflow]):
+                current_app.logger.error(
+                    f"Workflow is not for item registration: {workflow_id}"
+                )
+                raise WekoSwordserverException(
+                    "Workflow is not for item registration.",
+                    errorType=ErrorType.BadRequest
+                )
 
         check_result.update(
             check_jsonld_import_items(
