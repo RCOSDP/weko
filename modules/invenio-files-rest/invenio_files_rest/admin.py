@@ -151,15 +151,16 @@ class LocationModelView(ModelView):
                         model.s3_region_name = model.uri.split('.')[1]
                     parts = model.uri.split('/')
                     model.s3_endpoint_url = (
-                        parts[0] + '//' + parts[3] + '.' + parts[2] + '/'
+                        parts[0] + '//' + parts[2] + '/'
                     )
                 else:
                     # ex: https://bucket_name.s3.us-east-1.amazonaws.com/file_name
                     if not model.s3_region_name:
                         model.s3_region_name = model.uri.split('.')[2]
                     parts = model.uri.split('/')
+                    sub_parts = parts[2].split('.')
                     model.s3_endpoint_url = (
-                        parts[0] + '//' + parts[2] + '/'
+                        parts[0] + '//' + parts[2].replace(sub_parts[0] + '.', '') + '/'
                     )
             else:
                 model.s3_default_block_size = None
@@ -187,15 +188,16 @@ class LocationModelView(ModelView):
                         model.s3_region_name = model.uri.split('.')[1]
                     parts = model.uri.split('/')
                     model.s3_endpoint_url = (
-                        parts[0] + '//' + parts[3] + '.' + parts[2] + '/'
+                        parts[0] + '//' + parts[2] + '/'
                     )
                 else:
                     # ex: https://bucket_name.s3.us-east-1.amazonaws.com/file_name
                     if not model.s3_region_name:
                         model.s3_region_name = model.uri.split('.')[2]
                     parts = model.uri.split('/')
+                    sub_parts = parts[2].split('.')
                     model.s3_endpoint_url = (
-                        parts[0] + '//' + parts[2] + '/'
+                        parts[0] + '//' + parts[2].replace(sub_parts[0] + '.', '') + '/'
                     )
             else:
                 # local
