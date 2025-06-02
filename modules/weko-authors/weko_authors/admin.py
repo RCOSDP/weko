@@ -192,7 +192,7 @@ class ExportView(BaseView):
         if export_target == "author_db":
             # 一時ファイルの作成
             temp_folder_path = current_app.config.get(
-                "WEKO_AUTHORS_EXPORT_TEMP_FOLDER_PATH"
+                "WEKO_AUTHORS_EXPORT_TEMP_DIR"
             )
             os.makedirs(temp_folder_path, exist_ok=True)
             prefix = (
@@ -258,7 +258,7 @@ class ExportView(BaseView):
         """Resume export progress."""
 
         delete_export_url()
-        temp_folder_path = current_app.config.get("WEKO_AUTHORS_EXPORT_TEMP_FOLDER_PATH")
+        temp_folder_path = current_app.config.get("WEKO_AUTHORS_EXPORT_TEMP_DIR")
         os.makedirs(temp_folder_path, exist_ok=True)
         prefix = (
             current_app.config["WEKO_AUTHORS_EXPORT_TMP_PREFIX"]
@@ -319,8 +319,9 @@ class ImportView(BaseView):
                 )
                 list_import_data = result.get('list_import_data')
             elif target == 'author_db':
-                temp_folder_path = current_app.config.get(
-                    "WEKO_AUTHORS_IMPORT_TEMP_FOLDER_PATH"
+                temp_folder_path = os.path.join(
+                    tempfile.gettempdir(),
+                    current_app.config.get("WEKO_AUTHORS_IMPORT_TMP_DIR")
                 )
                 os.makedirs(temp_folder_path, exist_ok=True)
                 prefix = (
@@ -378,7 +379,10 @@ class ImportView(BaseView):
         temp_file_path = current_cache.get(
                 current_app.config["WEKO_AUTHORS_IMPORT_CACHE_USER_TSV_FILE_KEY"]
         )
-        temp_folder_path = current_app.config.get("WEKO_AUTHORS_IMPORT_TEMP_FOLDER_PATH")
+        temp_folder_path = os.path.join(
+            tempfile.gettempdir(),
+            current_app.config.get("WEKO_AUTHORS_IMPORT_TMP_DIR")
+        )
 
         # checkファイルパスの作成
         base_file_name = os.path.splitext(os.path.basename(temp_file_path))[0]

@@ -561,7 +561,10 @@ def check_import_data(file_name: str):
             file_format, file_name, temp_file_path, flat_mapping_ids
         )
         list_import_id=[]
-        temp_folder_path = current_app.config.get("WEKO_AUTHORS_IMPORT_TEMP_FOLDER_PATH")
+        temp_folder_path = os.path.join(
+            tempfile.gettempdir(),
+            current_app.config.get("WEKO_AUTHORS_IMPORT_TMP_DIR")
+        )
         base_file_name = os.path.splitext(os.path.basename(temp_file_path))[0]
         check_file_name = f"{base_file_name}-check"
         num_total = 0
@@ -793,7 +796,10 @@ def write_tmp_part_file(part_num, file_data, temp_file_path):
         file_data(list): Author data from tsv/csv.
         temp_file_path(str): path of basefile
     """
-    temp_folder_path = current_app.config.get("WEKO_AUTHORS_IMPORT_TEMP_FOLDER_PATH")
+    temp_folder_path = os.path.join(
+        tempfile.gettempdir(),
+        current_app.config.get("WEKO_AUTHORS_IMPORT_TMP_DIR")
+    )
     base_name = os.path.splitext(os.path.basename(temp_file_path))[0]
     part_file_name = f"{base_name}-part{part_num}"
     part_file_path = os.path.join(temp_folder_path, part_file_name)
@@ -1076,7 +1082,10 @@ def band_check_file_for_user(max_page):
 
     # checkファイルパスの作成
     check_file_name = get_check_base_name()
-    temp_folder_path = current_app.config.get("WEKO_AUTHORS_IMPORT_TEMP_FOLDER_PATH")
+    temp_folder_path = os.path.join(
+        tempfile.gettempdir(),
+        current_app.config.get("WEKO_AUTHORS_IMPORT_TMP_DIR")
+    )
     check_file_download_name = "{}_{}.{}".format(
         "import_author_check_result",
         datetime.datetime.now().strftime("%Y%m%d%H%M"),
@@ -1272,8 +1281,10 @@ def prepare_import_data(max_page_for_import_tab):
     check_file_name = get_check_base_name()
 
     max_display = current_app.config.get("WEKO_AUTHORS_IMPORT_MAX_NUM_OF_DISPLAYS")
-    temp_folder_path = current_app.config.get("WEKO_AUTHORS_IMPORT_TEMP_FOLDER_PATH")
-
+    temp_folder_path = os.path.join(
+        tempfile.gettempdir(),
+        current_app.config.get("WEKO_AUTHORS_IMPORT_TMP_DIR")
+    )
     # フロント表示用の著者データ
     authors = []
     # インポートが実行される総数用の変数
@@ -1388,12 +1399,20 @@ def import_author_to_system(author, status, weko_id, force_change_mode, request_
 
 def create_result_file_for_user(json):
     """
-    ユーザー用の結果ファイルを作成します。
-    フロントに表示されている分とバックエンドで管理されている部分を別々に持ってきて合体させます。
-    args:
-        json (dict): フロントに表示される著者データ
+    Create a result file for the user.
+    The part displayed on the front end and the part managed on the back end
+    are taken separately and merged.
+
+    Args:
+        json (dict): Author data displayed at the front end.
+
+    Returns:
+        str: Path to the result file.
     """
-    temp_folder_path = current_app.config.get("WEKO_AUTHORS_IMPORT_TEMP_FOLDER_PATH")
+    temp_folder_path = os.path.join(
+        tempfile.gettempdir(),
+        current_app.config.get("WEKO_AUTHORS_IMPORT_TMP_DIR")
+    )
     result_over_max_file_path = current_cache.get(\
             current_app.config["WEKO_AUTHORS_IMPORT_CACHE_RESULT_OVER_MAX_FILE_PATH_KEY"])
     result_file_name = "{}_{}.{}".format(

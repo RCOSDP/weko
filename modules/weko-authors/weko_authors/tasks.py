@@ -23,6 +23,7 @@ import os
 import glob
 import gc, json, csv
 import sys
+import tempfile
 import traceback
 from datetime import datetime, timezone
 from time import sleep
@@ -191,7 +192,10 @@ def import_authors_from_temp_files(reached_point, max_part, request_info=None):
     """
 
     # 結果ファイルのDL用に一時ファイルを作成
-    temp_folder_path = current_app.config.get("WEKO_AUTHORS_IMPORT_TEMP_FOLDER_PATH")
+    temp_folder_path = os.path.join(
+        tempfile.gettempdir(),
+        current_app.config.get("WEKO_AUTHORS_IMPORT_TMP_DIR")
+    )
     result_file_download_name = "{}_{}.{}".format(
         "import_author_result_for_over_max",
         datetime.now().strftime("%Y%m%d%H%M"),
@@ -250,7 +254,7 @@ def import_authors_for_over_max(authors, request_info=None):
     force_change_mode = current_cache.get(\
         current_app.config.get("WEKO_AUTHORS_IMPORT_CACHE_FORCE_CHANGE_MODE_KEY", False)
         )
-    _request_info = request_info or UserActivityLogger.get_summary_from_request() 
+    _request_info = request_info or UserActivityLogger.get_summary_from_request()
     if not UserActivityLogger.get_log_group_id(request_info):
         UserActivityLogger.issue_log_group_id(None)
     _request_info["log_group_id"] = UserActivityLogger.get_log_group_id(request_info)
@@ -470,34 +474,44 @@ def check_tmp_file_time_for_author():
     """Check the storage time of the author temp file."""
     # 1日
     ttl = current_app.config.get("WEKO_AUTHORS_IMPORT_TEMP_FILE_RETENTION_PERIOD")
-    author_export_temp_dirc_path = current_app.config.get("WEKO_AUTHORS_EXPORT_TEMP_FOLDER_PATH")
-    author_import_temp_dirc_path = current_app.config.get("WEKO_AUTHORS_IMPORT_TEMP_FOLDER_PATH")
-    author_export_temp_file_path = os.path.join(author_export_temp_dirc_path, "**")
-    author_import_temp_file_path = os.path.join(author_import_temp_dirc_path, "**")
+    export_temp_dir = os.path.join(
+        tempfile.gettempdir(),
+        current_app.config.get("WEKO_AUTHORS_EXPORT_TEMP_DIR")
+    )
+    import_temp_dir = os.path.join(
+        tempfile.gettempdir(),
+        current_app.config.get("WEKO_AUTHORS_IMPORT_TMP_DIR")
+    )
+    export_temp_file = os.path.join(export_temp_dir, "**")
+    import_temp_file = os.path.join(import_temp_dir, "**")
 
     now = datetime.now(timezone.utc)
-    # 著者エクスポートの一時ファイルの削除
-    for d in glob.glob(author_export_temp_file_path):
+    # Delete temporary files for author export
+    for d in glob.glob(export_temp_file):
         tLog = os.path.getmtime(d)
         if (now - datetime.fromtimestamp(tLog, timezone.utc)).total_seconds() >= ttl:
             try:
                 os.remove(d)
             except OSError as e:
                 current_app.logger.error(e)
-    # ディレクトリが空かどうかを確認し、空の場合はディレクトリを削除
-    if os.path.exists(author_export_temp_dirc_path) and \
-        not os.listdir(author_export_temp_file_path):
-        os.rmdir(author_export_temp_file_path)
+    # Check if the directory is empty, and if it is, remove the directory
+    if (
+        os.path.exists(export_temp_dir)
+        and not os.listdir(export_temp_file)
+    ):
+        os.rmdir(export_temp_file)
 
-    # 著者インポートの一時ファイルの削除
-    for d in glob.glob(author_import_temp_file_path):
+    # Delete temporary files for author import
+    for d in glob.glob(import_temp_file):
         tLog = os.path.getmtime(d)
         if (now - datetime.fromtimestamp(tLog, timezone.utc)).total_seconds() >= ttl:
             try:
                 os.remove(d)
             except OSError as e:
                 current_app.logger.error(e)
-    # ディレクトリが空かどうかを確認し、空の場合はディレクトリを削除
-    if os.path.exists(author_import_temp_dirc_path) and \
-        not os.listdir(author_import_temp_file_path):
-        os.rmdir(author_import_temp_file_path)
+    # Check if the directory is empty, and if it is, remove the directory
+    if (
+        os.path.exists(import_temp_dir)
+        and not os.listdir(import_temp_file)
+    ):
+        os.rmdir(import_temp_file)
