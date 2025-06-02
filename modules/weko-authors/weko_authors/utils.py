@@ -48,19 +48,20 @@ from invenio_cache import current_cache
 from invenio_db import db
 from invenio_indexer.api import RecordIndexer
 
-from weko_authors.contrib.validation import validate_by_extend_validator, \
-    validate_external_author_identifier, validate_map, validate_required, \
-        check_weko_id_is_exits_for_import
-
+from .contrib.validation import (
+    validate_by_extend_validator, validate_external_author_identifier,
+    validate_map, validate_required, check_weko_id_is_exits_for_import
+)
 from .api import WekoAuthors
 from .models import AuthorsPrefixSettings, AuthorsAffiliationSettings, Authors
 
 def update_cache_data(key: str, value: str, timeout=None):
     """Create or Update cache data.
 
-    :param key: Cache key.
-    :param value: Cache value.
-    :param timeout: Cache expired.
+    Args:
+        key (str): Cache key.
+        value (str): Cache value.
+        timeout (optional): Cache expired.
     """
     if timeout is not None:
         current_cache.set(key, value, timeout=timeout)
@@ -77,14 +78,21 @@ def get_author_prefix_obj(scheme):
     return None
 
 def get_author_prefix_obj_by_id(id):
-    """Check item Scheme exist in DB."""
+    """Check if the item Scheme exists in the DB by ID.
+
+    Args:
+        id (int): author_prefix record ID.
+
+    Returns:
+        AuthorsPrefixSettings: The prefix object if exists, else None.
+    """
     try:
-        return db.session.query(AuthorsPrefixSettings).filter(
+        obj = AuthorsPrefixSettings.query.filter(
             AuthorsPrefixSettings.id == id).one_or_none()
     except Exception as ex:
         current_app.logger.error(ex)
         traceback.print_exc()
-    return None
+    return obj if isinstance(obj, AuthorsPrefixSettings) else None
 
 def get_author_affiliation_obj(scheme):
     """Check item Scheme exist in DB."""
@@ -97,14 +105,21 @@ def get_author_affiliation_obj(scheme):
     return None
 
 def get_author_affiliation_obj_by_id(id):
-    """Check item Scheme exist in DB."""
+    """Check if the item Scheme exists in the DB by ID.
+
+    Args:
+        id (int): ID value.
+
+    Returns:
+        AuthorsAffiliationSettings: The affiliation object if exists, else None.
+    """
     try:
-        return db.session.query(AuthorsAffiliationSettings).filter(
+        obj = AuthorsAffiliationSettings.query.filter(
             AuthorsAffiliationSettings.id == id).one_or_none()
     except Exception as ex:
         current_app.logger.error(ex)
         traceback.print_exc()
-    return None
+    return obj if isinstance(obj, AuthorsAffiliationSettings) else None
 
 
 def check_email_existed(email: str):
@@ -143,37 +158,43 @@ def check_email_existed(email: str):
         }
 
 def validate_weko_id(weko_id, pk_id = None):
-    """Validate WEKO ID."""
+    """Validate WEKO ID.
+
+    Args:
+        weko_id (str): WEKO ID.
+        pk_id (str, optional): Primary key ID.
+
+    Returns:
+        tuple: (bool, str or None)
+    """
     if not bool(re.fullmatch(r'[0-9]+', weko_id)):
         return False, "not half digit"
-    # jsonify(msg=_('The author ID must be the half digit.')), 500
 
     try:
         result = check_weko_id_is_exists(weko_id, pk_id)
     except Exception as ex:
         current_app.logger.error(ex)
         raise ex
-    # 存在するならエラーを返す
+
     if result == True:
         return False, "already exists"
-    # jsonify(msg=_('The value is already in use as WEKO ID.')), 500
     return True, None
 
 def check_weko_id_is_exists(weko_id, pk_id = None):
-    """
-    weko_idが既に存在するかチェック
-    author_idが同じ場合はスキップする
-    ※weko_idはauthorIdInfo.Idtypeが1であるAuthorIdの値のことです。
+    """Check if weko_id exists in Elasticsearch.
 
-    args:
-        weko_id: weko_id
-    return:
-        True: weko_idが存在する
-        False: weko_idが存在しない
+    If author_id is the same as pk_id, skip checking.
+    weko_id is the value of authorId where authorIdInfo.Idtype is 1.
+
+    Args:
+        weko_id (str): WEKO ID.
+        pk_id (str, optional): Primary key ID.
+
+    Returns:
+        bool: True if exists, False otherwise.
     """
-    # 同じweko_idが存在するかチェック
     query = {
-        "_source": ["pk_id", "authorIdInfo"],  # authorIdInfoフィールドのみを取得
+        "_source": ["pk_id", "authorIdInfo"],  # Get Author id info field only
         "query": {
             "bool": {
                 "must": [
@@ -191,16 +212,16 @@ def check_weko_id_is_exists(weko_id, pk_id = None):
         }
     }
 
-    # 検索
+    # search from elasticsearch
     indexer = RecordIndexer()
     result = indexer.client.search(
         index=current_app.config['WEKO_AUTHORS_ES_INDEX_NAME'],
         body=query
     )
 
-    # 同じweko_idが存在する場合はエラー
+    # if same weko_id exists, return True
     for res in result['hits']['hits']:
-        # 同じauthor_idの場合はスキップ
+        # if same author_id exists, skip checking
         if pk_id and pk_id == res['_source']['pk_id']:
             continue
         author_id_info_from_es = res['_source']['authorIdInfo']
@@ -213,13 +234,15 @@ def check_weko_id_is_exists(weko_id, pk_id = None):
 
 
 def check_period_date(data):
-    """
-        dataのperiodを確認します。
-        args:
-            data: dict, 著者DBのjsonカラムのデータ
-        return:
-            True or False: 期間が正しいかどうか
-            String: エラーの種別
+    """Check period date.
+
+    Args:
+        data (dict): json data of author DB.
+
+    Returns:
+        tuple: (bool, str or None)
+            - bool: True if period date is valid, False otherwise.
+            - str: Error type if period date is invalid, None otherwise.
     """
     from datetime import datetime
     if data.get("affiliationInfo"):
@@ -285,22 +308,21 @@ def save_export_url(start_time, end_time, file_uri):
     return data
 
 def delete_export_url():
-    """Delete exported url."""
+    """Delete exported URL from cache."""
     current_cache.delete(current_app.config.get("WEKO_AUTHORS_EXPORT_CACHE_URL_KEY"))
 
 def handle_exception(ex, attempt, retrys, interval, stop_point=0):
-    """
-    エラーをログで流し、スリープとリトライ回数の管理を行います.
-    args:
-        ex(Exception): Exception object
-        attempt(int): Number of attempts
-        retrys(int): Number of retries
-        interval(int): Retry interval
-        stop_point(int): Stop point
+    """Manage sleep and retries.
 
+    Args:
+        ex (Exception): Exception object.
+        attempt (int): Number of attempts.
+        retrys (int): Number of retries.
+        interval (int): Retry interval.
+        stop_point (int, optional): Stop point. Defaults to 0.
     """
     current_app.logger.error(ex)
-    # 最後のリトライの場合は例外をraise
+    # Raise the exception for the last retry
     if attempt == retrys - 1:
         current_app.logger.info(f"Connection failed, Stop export.")
         if stop_point != 0:
@@ -314,7 +336,11 @@ def handle_exception(ex, attempt, retrys, interval, stop_point=0):
     sleep(interval)
 
 def export_authors():
-    """Export all authors."""
+    """Export all authors.
+
+    Returns:
+        str: File URI.
+    """
     from invenio_files_rest.models import FileInstance, Location
     file_uri = None
     retrys = current_app.config["WEKO_AUTHORS_BULK_EXPORT_MAX_RETRY"]
@@ -330,27 +356,23 @@ def export_authors():
 
     try:
 
-    # ある程度の処理をまとめてリトライ処理
         for attempt in range(retrys):
             try:
-                # マッピングを取得
+                # get mapping
                 mappings = deepcopy(current_app.config["WEKO_AUTHORS_FILE_MAPPING"])
                 affiliation_mappings = deepcopy(current_app.config["WEKO_AUTHORS_FILE_MAPPING_FOR_AFFILIATION"])
 
-                # 著者の数を取得（削除、統合された著者は除く）
+                # get the number of authors (excluding deleted and merged authors)
                 records_count = WekoAuthors.get_records_count(False, False)
-                # マッピング上の複数が可能となる項目の最大値を取得
+                # Get the maximum value of multiple items on the mapping
                 mappings, affiliation_mappings = \
                     WekoAuthors.mapping_max_item(mappings, affiliation_mappings, records_count)
 
-                # 著者識別子の対応を取得
                 schemes = WekoAuthors.get_identifier_scheme_info()
-
-                # 所属機関識別子の対応を取得
                 aff_schemes = WekoAuthors.get_affiliation_identifier_scheme_info()
 
-                # 一時ファイルのパスを取得
-                temp_file_path=current_cache.get(\
+                # Get the path of the temporary file
+                temp_file_path=current_cache.get(
                     current_app.config["WEKO_AUTHORS_EXPORT_CACHE_TEMP_FILE_PATH_KEY"])
                 break
             except SQLAlchemyError as ex:
@@ -363,12 +385,12 @@ def export_authors():
                 traceback.print_exc(file=stdout)
                 handle_exception(ex, attempt, retrys, interval)
 
-        # stop_pointがあればstart_pointに代入
+        # If stop_point is not None, set start_point to stop_point
         start_point = stop_point if stop_point else 0
-        # 読み込み後削除
-        current_cache.delete(\
+
+        current_cache.delete(
             current_app.config["WEKO_AUTHORS_EXPORT_CACHE_STOP_POINT_KEY"])
-        # 1000ずつ著者を取得し、データを書き込む
+        # Get authors 1000 at a time and write data
         for i in range(start_point, records_count, size):
             current_app.logger.info(f"Export authors start_point：{start_point}")
             row_header = []
@@ -376,11 +398,11 @@ def export_authors():
             row_label_jp = []
             row_data = []
 
-            # 著者情報取得のリトライ処理
+            # Retry process for obtaining author information
             for attempt in range(retrys):
                 current_app.logger.info(f"Export authors retry count：{attempt}")
                 try:
-                    # 著者情報をstartからWEKO_EXPORT_BATCH_SIZE分取得
+                    # Get author information from start in WEKO_EXPORT_BATCH_SIZE units
                     authors = WekoAuthors.get_by_range(i, size, False, False)
                     row_header, row_label_en, row_label_jp, row_data =\
                         WekoAuthors.prepare_export_data(mappings, affiliation_mappings, authors, schemes, aff_schemes, i, size)
@@ -394,9 +416,9 @@ def export_authors():
                 except TimeoutError as ex:
                     traceback.print_exc(file=stdout)
                     handle_exception(ex, attempt, retrys, interval, stop_point=i)
-            # 一時ファイルに書き込み
+            # Write to temporary file
             write_to_tempfile(i, row_header, row_label_en, row_label_jp, row_data)
-        # 完成した一時ファイルをファイルインスタンスに保存
+        # Save the completed temporary file to file instance
         with open(temp_file_path, 'rb') as f:
             reader = io.BufferedReader(f)
             # save data into location
@@ -410,11 +432,12 @@ def export_authors():
                 file.writable = True
                 file.set_contents(reader)
         file_uri = file.uri if file else None
-        # 完了時一時ファイルを削除
+        # Delete temporary file after completion
         os.remove(temp_file_path)
         db.session.commit()
     except Exception as ex:
         db.session.rollback()
+        # If stop_point is not set, delete the temporary file
         if not current_cache.get(current_app.config["WEKO_AUTHORS_EXPORT_CACHE_STOP_POINT_KEY"]):
             os.remove(temp_file_path)
         current_app.logger.error(ex)
@@ -428,12 +451,13 @@ def export_authors():
     return file_uri
 
 def export_prefix(target):
-    """
-    id_prefixまたはaffiliation_idをエクスポートする
-    args:
-        target(str): エクスポート対象
-    return:
-        file_uri(str): ファイルURI
+    """Export id_prefix or affiliation_id.
+
+    Args:
+        target (str): Export target. 'id_prefix' or 'affiliation_id'.
+
+    Returns:
+        str: File URI.
     """
     from invenio_files_rest.models import FileInstance, Location
     file_uri = None
@@ -495,12 +519,14 @@ def export_prefix(target):
     return file_uri
 
 def check_file_name(export_target):
-    """
-    ファイル名を取得する
-    args:
-        export_target(str): エクスポート対象
-    return:
-        file_base_name(str): ファイル名
+    """Get file name.
+
+    Args:
+        export_target (str):
+            Export target. "author_db" or "id_prefix" or "affiliation_id".
+
+    Returns:
+        str: File base name.
     """
     file_base_name = ""
     if export_target == "author_db":
@@ -512,24 +538,24 @@ def check_file_name(export_target):
     return file_base_name
 
 def write_to_tempfile(start, row_header, row_label_en, row_label_jp, row_data):
+    """Write data to a temporary file.
+
+    Args:
+        start (int): Start position of data.
+        row_header (list): Header.
+        row_label_en (list): English labels.
+        row_label_jp (list): Japanese labels.
+        row_data (list): Data.
     """
-    一時ファイルにデータを書き込む
-    args:
-        start(int): データの開始位置
-        row_header(array): ヘッダー
-        row_label_en(array): ラベル(英語)
-        row_label_jp(array): ラベル(日本語)
-        row_data(array): データ
-    """
-    # 一時ファイルのパスを取得
+    # Get the path of the temporary file
     temp_file_path=current_cache.get( \
         current_app.config["WEKO_AUTHORS_EXPORT_CACHE_TEMP_FILE_PATH_KEY"])
 
-    # ファイルを開いてデータを書き込む
+    # Open the file and write data
     try:
         with open(temp_file_path, 'a', newline='', encoding='utf-8-sig') as file:
             writer = csv.writer(file, delimiter='\t', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-            # 1行目のみヘッダー、ラベルを書き込む
+            # Write header and labels only on the first line
             if start == 0:
                 writer.writerow(row_header)
                 writer.writerow(row_label_en)
@@ -539,13 +565,14 @@ def write_to_tempfile(start, row_header, row_label_en, row_label_jp, row_data):
         current_app.logger.error(ex)
         traceback.print_exc(file=stdout)
 
-def check_import_data(file_name: str):
-    """Validation importing tsv/csv file.
+def check_import_data(file_name):
+    """Validate importing tsv/csv file.
 
-    :argument
-        file_name(str) -- file name.
-    :return
-        return       -- check information.
+    Args:
+        file_name (str): File name.
+
+    Returns:
+        dict: Check information.
     """
     result = {}
     temp_file_path = current_cache.get(
@@ -561,7 +588,10 @@ def check_import_data(file_name: str):
             file_format, file_name, temp_file_path, flat_mapping_ids
         )
         list_import_id=[]
-        temp_folder_path = current_app.config.get("WEKO_AUTHORS_IMPORT_TEMP_FOLDER_PATH")
+        temp_folder_path = os.path.join(
+            tempfile.gettempdir(),
+            current_app.config.get("WEKO_AUTHORS_IMPORT_TMP_DIR")
+        )
         base_file_name = os.path.splitext(os.path.basename(temp_file_path))[0]
         check_file_name = f"{base_file_name}-check"
         num_total = 0
@@ -623,12 +653,15 @@ def check_import_data(file_name: str):
     return result
 
 def check_import_data_for_prefix(target, file_name: str, file_content: str):
-    """id_prefixかaffiliation_idのインポート用 tsv/csvファイルをバリデーションチェックする.
-    :argument
-        file_name(str) -- file name.
-        file_content(b64) -- content file.
-    :return
-        return       -- check information.
+    """Validate tsv/csv file for id_prefix or affiliation_id import.
+
+    Args:
+        target (str): Import target.
+        file_name (str): File name.
+        file_content (str): File content (base64).
+
+    Returns:
+        dict: Check information.
     """
     tmp_prefix = current_app.config['WEKO_AUTHORS_IMPORT_TMP_PREFIX']
     temp_file = tempfile.NamedTemporaryFile(prefix=tmp_prefix)
@@ -759,27 +792,29 @@ def unpackage_and_check_import_file(file_format, file_name, temp_file_path, mapp
 
                     if not data_parse_metadata:
                         raise Exception({
-                            'error_msg': _('Cannot read {} file correctly.').format(file_format.upper())
+                            'error_msg': _('Cannot read {} file correctly.')
+                                .format(file_format.upper())
                         })
 
                     file_data.append(dict(**data_parse_metadata))
-                    # file_dataがjson_sizeと同じになったら一時ファイルに書き込む
+                    # Write to a temporary file when File data is the same as json size
                     if len(file_data) == json_size:
                         write_tmp_part_file(math.ceil((num-3)/json_size), file_data, temp_file_path)
                         file_data = []
-            # 書き込まれていないfile_dataを書き込む
+            # Write file_data that has not been written yet
             if len(file_data) != 0:
                 write_tmp_part_file(math.ceil((count-3)/json_size), file_data, temp_file_path)
-            # ファイルの行数が3行未満の場合エラー
+            # Error if the number of lines in the file is less than 3
             elif not file_data and count <= 3:
                 current_app.logger.error("There is no data to import.")
                 raise Exception({
                     'error_msg': _('There is no data to import.')
                 })
         except UnicodeDecodeError as ex:
-            ex.reason = _('{} could not be read. Make sure the file'
-                          + ' format is {} and that the file is'
-                          + ' UTF-8 encoded.').format(file_name, file_format.upper())
+            ex.reason = _(
+                '{} could not be read. Make sure the file format is '
+                '{} and that the file is UTF-8 encoded.'
+            ).format(file_name, file_format.upper())
             raise
         except Exception as ex:
             raise
@@ -788,12 +823,16 @@ def unpackage_and_check_import_file(file_format, file_name, temp_file_path, mapp
 
 def write_tmp_part_file(part_num, file_data, temp_file_path):
     """Write data to temp file for Import.
+
     Args:
-        part_num(int): count of list
-        file_data(list): Author data from tsv/csv.
-        temp_file_path(str): path of basefile
+        part_num (int): Count of list.
+        file_data (list): Author data from tsv/csv.
+        temp_file_path (str): Path of base file.
     """
-    temp_folder_path = current_app.config.get("WEKO_AUTHORS_IMPORT_TEMP_FOLDER_PATH")
+    temp_folder_path = os.path.join(
+        tempfile.gettempdir(),
+        current_app.config.get("WEKO_AUTHORS_IMPORT_TMP_DIR")
+    )
     base_name = os.path.splitext(os.path.basename(temp_file_path))[0]
     part_file_name = f"{base_name}-part{part_num}"
     part_file_path = os.path.join(temp_folder_path, part_file_name)
@@ -974,7 +1013,7 @@ def unpackage_and_check_import_file_for_prefix(file_format, file_name, temp_file
                         traceback.print_exc()
                         raise Exception({
                             'error_msg': _('Cannot read {} file correctly.').format(file_format.upper())
-                        }) from export_authors
+                        }) from ex
                     file_data.append(tmp_data)
         except UnicodeDecodeError as ex:
             ex.reason = _('{} could not be read. Make sure the file'
@@ -987,7 +1026,15 @@ def unpackage_and_check_import_file_for_prefix(file_format, file_name, temp_file
 
 
 def handle_check_consistence_with_mapping_for_prefix(keys, header):
-    """Check consistence with mapping."""
+    """Check consistence with mapping.
+
+    Args:
+        keys (list): Mapping keys.
+        header (list): Header row.
+
+    Returns:
+        list: Not consistent items.
+    """
     not_consistent_list = []
     for item in header:
         if item not in keys:
@@ -995,23 +1042,27 @@ def handle_check_consistence_with_mapping_for_prefix(keys, header):
     return not_consistent_list
 
 def validate_import_data_for_prefix(file_data, target):
-    """
-    tsvからのデータを以下の観点でチェックする。
-    ・キーschemeが空かどうか
-    ・キーnameが空かどうか
-    ・urlがURLの記述でない
-    ・作成か更新か削除か
-        ・schemeが既に存在する場合、更新
-        ・存在しないschemeの場合、作成
-        ・is_deletedがDの場合、削除
-    ・targetがid_prefixの時、schemeにWEKOが入力がされているか
-    ・schemeで同じ値が二回出てきているか
-    ・削除の際に、そのschemeが存在するかどうか
-    ・削除の際に、その指定されたschemeが使用されているかどうか
+    """Validate data from tsv for prefix import.
+
+    Checks:
+        - Whether 'scheme' key is empty.
+        - Whether 'name' key is empty.
+        - Whether 'url' is not a valid URL.
+        - Whether it is create, update, or delete.
+          if scheme is existing, it is update,
+          if scheme is not existing, it is create,
+          if is_deleted is 'D', it is delete.
+        - For id_prefix, whether 'scheme' is 'WEKO'.
+        - Whether the same value appears twice 'scheme'.
+        - For deletion, whether the specified scheme exists.
+        - For deletion, whether the specified scheme is used.
 
     Args:
-        file_data (json): unpackage_and_check_import_file_for_prefixの戻り値
-        target (str): id_prefix or affiliation_id
+        file_data (list): Data from unpackage_and_check_import_file_for_prefix.
+        target (str): 'id_prefix' or 'affiliation_id'.
+
+    Returns:
+        list: Validated data.
     """
     if target == "id_prefix":
         existed_prefix = WekoAuthors.get_scheme_of_id_prefix()
@@ -1028,30 +1079,31 @@ def validate_import_data_for_prefix(file_data, target):
         name = item.get('name', "")
         url = item.get('url', "")
         is_deleted = item.get('is_deleted')
-        # キーschemeが空かどうか
+        # Check if the 'scheme' key is empty
         if not scheme:
             errors.append(_("Scheme is required item."))
-        # targetがid_prefixの時、schemeにWEKOが入力がされているか
+        # For id_prefix, check if 'scheme' is 'WEKO'
         if target == "id_prefix" and scheme == "WEKO":
             errors.append(_("The scheme WEKO cannot be used."))
-        # キーnameが空かどうか
+        # Check if the 'name' key is empty
         if not name:
             errors.append(_("Name is required item."))
-        # urlがあるとき、urlがURLの記述でない
+        # If url exists, check if url is not a valid URL
         if url and not url.startswith("http"):
             errors.append(_("URL is not URL format."))
         if is_deleted == "D":
+            # For deletion, check if the specified scheme exists
             if scheme not in existed_prefix:
                 errors.append(_("The specified scheme does not exist."))
             else:
-                # schemeが著者DBで使用されている場合、削除しない
+                # For deletion, check if the specified scheme is used in author DB
                 if scheme in used_scheme:
                     errors.append(_("The specified scheme is used in the author ID."))
                 id = [k for k, v in id_type_and_scheme.items() if v == scheme]
                 item['id'] = id[0]
                 item['status'] = 'deleted'
         else:
-            # existed_prefixに含まれていれば更新、ないなら作成
+            # If scheme exists in existed_prefix, it's update; otherwise, create
             if scheme in existed_prefix:
                 id = [k for k, v in id_type_and_scheme.items() if v == scheme]
                 item['id'] = id[0]
@@ -1059,7 +1111,7 @@ def validate_import_data_for_prefix(file_data, target):
             else:
                 item['status'] = 'new'
 
-        # schemeで同じ値が二回出てきているか
+        # Check if the same value appears twice in 'scheme'
         if scheme in list_import_scheme:
             errors.append(_("The specified scheme is duplicated."))
         else:
@@ -1070,13 +1122,19 @@ def validate_import_data_for_prefix(file_data, target):
     return file_data
 
 def band_check_file_for_user(max_page):
-    """
-    分割されているチェック結果をユーザー用に編集した後くっつけます。
-    """
+    """Merge split check results for user download.
 
-    # checkファイルパスの作成
+    Args:
+        max_page (int): Maximum page number.
+
+    Returns:
+        str: Path to the merged check file.
+    """
     check_file_name = get_check_base_name()
-    temp_folder_path = current_app.config.get("WEKO_AUTHORS_IMPORT_TEMP_FOLDER_PATH")
+    temp_folder_path = os.path.join(
+        tempfile.gettempdir(),
+        current_app.config.get("WEKO_AUTHORS_IMPORT_TMP_DIR")
+    )
     check_file_download_name = "{}_{}.{}".format(
         "import_author_check_result",
         datetime.datetime.now().strftime("%Y%m%d%H%M"),
@@ -1126,7 +1184,14 @@ def band_check_file_for_user(max_page):
     return check_file_path
 
 def get_check_result(entry):
-    """jsonのstatus,errorsをチェックし、それに合ったラベルを返します。"""
+    """Check status and errors in JSON and return a label.
+
+    Args:
+        entry (dict): Entry data.
+
+    Returns:
+        str: Check result label.
+    """
     errors = entry.get("errors", [])
     status = entry.get("status", "")
 
@@ -1263,29 +1328,36 @@ def flatten_authors_mapping(mapping, parent_key=None):
     return result_all, result_keys
 
 def prepare_import_data(max_page_for_import_tab):
-    """
-    Prepare import data.
+    """Prepare import data for display and import.
 
+    Args:
+        max_page_for_import_tab (int): Maximum page number for import tab.
+
+    Returns:
+        tuple (list, dict, int):
     """
 
-    # checkファイルパスの作成
+    # Create check file path
     check_file_name = get_check_base_name()
 
     max_display = current_app.config.get("WEKO_AUTHORS_IMPORT_MAX_NUM_OF_DISPLAYS")
-    temp_folder_path = current_app.config.get("WEKO_AUTHORS_IMPORT_TEMP_FOLDER_PATH")
-
-    # フロント表示用の著者データ
+    temp_folder_path = os.path.join(
+        tempfile.gettempdir(),
+        current_app.config.get("WEKO_AUTHORS_IMPORT_TMP_DIR")
+    )
+    # Author data for front display
     authors = []
-    # インポートが実行される総数用の変数
+    # Variable for the total number of imports to be executed
     count = 0
-    # フロントに表示される著者データの最大数に達したポイントを記録
+    # Record the point where the maximum number of author data displayed on
+    # the front is reached
     reached_point = {}
     for i in range(1, max_page_for_import_tab+1):
         part_check_file_name = f"{check_file_name}-part{i}"
         check_file_part_path = os.path.join(temp_folder_path, part_check_file_name)
         with open(check_file_part_path, "r", encoding="utf-8-sig") as check_part_file:
             data = json.load(check_part_file)
-            # jsonの中で何番目のデータかをカウント
+            # Count which data in json
             count_for_json = 0
             for item in data:
                 check_result = False if item.get("errors", []) else True
@@ -1302,11 +1374,20 @@ def prepare_import_data(max_page_for_import_tab):
                 count_for_json += 1
     return authors, reached_point, count
 
-def import_author_to_system(author, status, weko_id, force_change_mode, request_info=None):
+def import_author_to_system(
+    author, status, weko_id, force_change_mode, request_info=None
+):
     """Import author to DB and ES.
 
     Args:
-        author (object): Author metadata from tsv/csv.
+        author (dict): Author metadata from tsv/csv.
+        status (str): Import status.
+        weko_id (str): WEKO ID.
+        force_change_mode (bool): Force change mode.
+        request_info (dict, optional): Request info for logging.
+
+    Raises:
+        Exception: If import fails.
     """
     from weko_logging.activity_logger import UserActivityLogger
     if author:
@@ -1387,13 +1468,20 @@ def import_author_to_system(author, status, weko_id, force_change_mode, request_
             raise
 
 def create_result_file_for_user(json):
+    """Create a result file for the user.
+    The part displayed on the front end and the part managed on the back end
+    are taken separately and merged.
+
+    Args:
+        json (list): Author data displayed at the front end.
+
+    Returns:
+        str: Path to the result file.
     """
-    ユーザー用の結果ファイルを作成します。
-    フロントに表示されている分とバックエンドで管理されている部分を別々に持ってきて合体させます。
-    args:
-        json (dict): フロントに表示される著者データ
-    """
-    temp_folder_path = current_app.config.get("WEKO_AUTHORS_IMPORT_TEMP_FOLDER_PATH")
+    temp_folder_path = os.path.join(
+        tempfile.gettempdir(),
+        current_app.config.get("WEKO_AUTHORS_IMPORT_TMP_DIR")
+    )
     result_over_max_file_path = current_cache.get(\
             current_app.config["WEKO_AUTHORS_IMPORT_CACHE_RESULT_OVER_MAX_FILE_PATH_KEY"])
     result_file_name = "{}_{}.{}".format(
@@ -1409,8 +1497,11 @@ def create_result_file_for_user(json):
         with open(result_file_path, "w", encoding="utf-8") as result_file:
             writer = csv.writer(result_file, delimiter='\t')
             # write header
-            writer.writerow(["No.", "Start Date", "End Date", "Previous WEKO ID", "New WEKO ID", "full_name", "Status"])
-            # まずフロントから送られてきたjsonを書き込む
+            writer.writerow([
+                "No.", "Start Date", "End Date",
+                "Previous WEKO ID", "New WEKO ID", "full_name", "Status"
+            ])
+            # write the json sent from the front desk.
             for data in json:
                 number = data.get("No.", "")
                 start_date = data.get("Start Date", "")
@@ -1438,7 +1529,14 @@ def create_result_file_for_user(json):
     return result_file_path
 
 def get_count_item_link(pk_id):
-    """Get count of item link of author."""
+    """Get count of item link of author.
+
+    Args:
+        pk_id (str): Author primary key ID.
+
+    Returns:
+        int: Count of linked items.
+    """
     count = 0
     query_q = {
         "query": {"term": {"author_link.raw": pk_id}},
@@ -1458,7 +1556,11 @@ def get_count_item_link(pk_id):
 
 
 def count_authors():
-    """Count authors from Elasticsearch."""
+    """Count authors from Elasticsearch.
+
+    Returns:
+        dict: Count result.
+    """
     should = [
         {'bool': {'must': [{'term': {'is_deleted': {'value': 'false'}}}]}},
         {'bool': {'must_not': {'exists': {'field': 'is_deleted'}}}}
@@ -1477,10 +1579,13 @@ def count_authors():
     return result
 
 def import_id_prefix_to_system(id_prefix):
-    """
-    tsv/csvからのid_prefixをDBにインポートする.
+    """Import id_prefix from tsv/csv to DB.
+
     Args:
-        id_prefix (object): id_prefix metadata from tsv/csv.
+        id_prefix (dict): id_prefix metadata from tsv/csv.
+
+    Raises:
+        Exception: If import fails.
     """
     if id_prefix:
         retrys = current_app.config["WEKO_AUTHORS_BULK_IMPORT_MAX_RETRY"]
@@ -1523,10 +1628,13 @@ def import_id_prefix_to_system(id_prefix):
             raise
 
 def import_affiliation_id_to_system(affiliation_id):
-    """
-    tsv/csvからのaffiliation_idをDBにインポートする.
+    """Import affiliation_id from tsv/csv to DB.
+
     Args:
-        affiliation_id (object): affiliation_id metadata from tsv/csv.
+        affiliation_id (dict): affiliation_id metadata from tsv/csv.
+
+    Raises:
+        Exception: If import fails.
     """
     if affiliation_id:
         retrys = current_app.config["WEKO_AUTHORS_BULK_IMPORT_MAX_RETRY"]
@@ -1567,28 +1675,26 @@ def import_affiliation_id_to_system(affiliation_id):
             raise
 
 def update_data_for_weko_link(data, weko_link):
-    """
-        authorsテーブルを元にweko_linkを更新し、
-        違いがある場合は、dataをauthorsテーブルのweko_idを元に更新します。
-        args:
-            data: dict メタデータ、特にworkflowactivityのtemp_dataカラムのもの
-            weko_link: list weko_link
+    """Update weko_link based on authors table and update data if different.
 
+    Args:
+        data (dict): Metadata, especially from workflowactivity temp_data column.
+        weko_link (dict): weko_link mapping.
     """
     old_weko_link = weko_link
     weko_link = copy.deepcopy(old_weko_link)
-    # weko_linkを新しくする。
+    # Update weko_link with new values.
     for pk_id in weko_link.keys():
         author = Authors.get_author_by_id(pk_id)
         if author:
-            # weko_idを取得する。
+            # Get weko_id.
             author_id_info = author["authorIdInfo"]
             for i in author_id_info:
-                # idTypeが1の場合、weko_idを取得し、weko_linkを更新する。
+                # If idType is 1, get weko_id and update weko_link.
                 if i.get('idType') == '1':
                     weko_link[pk_id] = i.get('authorId')
                     break
-    # weko_linkが変更された場合、メタデータを更新する。
+    # If weko_link has changed, update metadata.
     if weko_link != old_weko_link:
         for x_key, x_value in data.items():
             if not isinstance(x_value, list):
@@ -1602,11 +1708,19 @@ def update_data_for_weko_link(data, weko_link):
                     for z_index, z in enumerate(y_value, start=0):
                         if z.get("nameIdentifierScheme","") == "WEKO":
                             if z.get("nameIdentifier") in old_weko_link.values():
-                                # weko_linkから値がweko_idと一致するpk_idを取得する。
-                                pk_id = [k for k, v in old_weko_link.items() if v == z.get("nameIdentifier")][0]
+                                # Get pk_id whose value matches weko_id from weko_link.
+                                pk_id = [
+                                    k for k, v in old_weko_link.items()
+                                    if v == z.get("nameIdentifier")
+                                ][0]
                                 data[x_key][y_index][y_key][z_index]["nameIdentifier"] = weko_link.get(pk_id)
 
 def get_check_base_name():
+    """Get base name for check file.
+
+    Returns:
+        str: Base file name for check.
+    """
     temp_file_path = current_cache.get(\
         current_app.config["WEKO_AUTHORS_IMPORT_CACHE_USER_TSV_FILE_KEY"])
     base_file_name = os.path.splitext(os.path.basename(temp_file_path))[0]
