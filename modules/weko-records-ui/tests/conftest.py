@@ -104,6 +104,7 @@ from weko_index_tree.config import (
 from weko_index_tree.models import Index, IndexStyle
 from weko_items_ui import WekoItemsUI
 from weko_items_ui.config import WEKO_ITEMS_UI_MS_MIME_TYPE,WEKO_ITEMS_UI_FILE_SISE_PREVIEW_LIMIT
+from weko_logging.audit import WekoLoggingUserActivity
 from weko_records import WekoRecords
 from weko_records.api import ItemsMetadata, FilesMetadata
 from weko_records.models import ItemType, ItemTypeMapping, ItemTypeName, SiteLicenseInfo, FeedbackMailList,SiteLicenseIpAddress, RequestMailList
@@ -330,6 +331,7 @@ def base_app(instance_path):
     # app_.register_blueprint(rest_blueprint)
     WekoDeposit(app_)
     WekoDepositREST(app_)
+    WekoLoggingUserActivity(app_)
 
     current_assets = LocalProxy(lambda: app_.extensions["invenio-assets"])
     current_assets.collect.collect()
