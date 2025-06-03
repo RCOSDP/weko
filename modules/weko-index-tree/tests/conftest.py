@@ -443,6 +443,7 @@ def base_app(instance_path):
         WEKO_INDEX_TREE_API = "/api/tree/index/",
         WEKO_THEME_INSTANCE_DATA_DIR="data",
         WEKO_HANDLE_ALLOW_REGISTER_CNRI=False,
+        WEKO_ADMIN_PERMISSION_ROLE_COMMUNITY="Community Administrator"
     )
     app_.url_map.converters['pid'] = PIDConverter
 
@@ -912,11 +913,47 @@ def indices_for_api(app, db):
             updated=datetime(2025, 3, 3, 4, 3, 58, 104842)
         )
 
+        comm_index = Index(
+            id=1745385873579,
+            parent=0,
+            position=2,
+            index_name="コミュニティインデックス",
+            index_name_english="Community Index",
+            browsing_role="",
+            contribute_role="",
+            browsing_group="",
+            contribute_group="",
+            public_state=True,
+            harvest_public_state=True,
+            owner_user_id=1,
+            created=datetime(2025, 3, 3, 4, 3, 33, 316001),
+            updated=datetime(2025, 3, 3, 4, 3, 58, 104842)
+        )
+
+        comm_child_index = Index(
+            id=1745385873580,
+            parent=1745385873579,
+            position=0,
+            index_name="コミュニティ子インデックス",
+            index_name_english="Community Child Index",
+            browsing_role="3,4,-98,-99",
+            contribute_role="3,4,-98,-99",
+            browsing_group="",
+            contribute_group="",
+            public_state=True,
+            harvest_public_state=True,
+            owner_user_id=1,
+            created=datetime(2025, 3, 3, 4, 3, 33, 316001),
+            updated=datetime(2025, 3, 3, 4, 3, 58, 104842)
+        )
+
         db.session.add(sample_index)
         db.session.add(parent_index)
         db.session.add(child_index_1)
         db.session.add(child_index_2)
         db.session.add(child_index_3)
+        db.session.add(comm_index)
+        db.session.add(comm_child_index)
 
     return {
         'sample_index': sample_index,
@@ -924,6 +961,8 @@ def indices_for_api(app, db):
         'child_index_1': child_index_1,
         'child_index_2': child_index_2,
         "child_index_3": child_index_3,
+        "comm_index": comm_index,
+        "comm_child_index": comm_child_index
     }
 
 @pytest.yield_fixture
@@ -1634,7 +1673,7 @@ def create_tokens(client_api, client, users):
         "contributor": "index:read",
         "repoadmin": "index:update index:delete index:read index:create",
         "sysadmin": "index:update index:delete index:read index:create",
-        "comadmin": "index:read"
+        "comadmin": "index:update index:delete index:read index:create"
     }
 
     with db_.session.begin_nested():
@@ -1744,3 +1783,16 @@ def index_thumbnail(app,instance_path):
 
     return thumbnail_path
 
+
+@pytest.fixture()
+def community_for_api(db, users, indices_for_api):
+    comm = Community(
+        id='comm_for_api',
+        id_user=users[4]['id'],
+        title='Test Comm Title',
+        root_node_id=indices_for_api['comm_index'].id,
+        id_role=users[4]['obj'].roles[0].id,
+        group_id=users[4]['obj'].roles[0].id
+    )
+    db.session.add(comm)
+    db.session.commit()
