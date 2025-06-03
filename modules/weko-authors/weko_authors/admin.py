@@ -191,7 +191,7 @@ class ExportView(BaseView):
         delete_export_url()
         if export_target == "author_db":
             temp_folder_path = current_app.config.get(
-                "WEKO_AUTHORS_EXPORT_TEMP_DIR"
+                "WEKO_AUTHORS_EXPORT_TMP_DIR"
             )
             os.makedirs(temp_folder_path, exist_ok=True)
             prefix = (
@@ -256,7 +256,7 @@ class ExportView(BaseView):
         """Resume export progress."""
 
         delete_export_url()
-        temp_folder_path = current_app.config.get("WEKO_AUTHORS_EXPORT_TEMP_DIR")
+        temp_folder_path = current_app.config.get("WEKO_AUTHORS_EXPORT_TMP_DIR")
         os.makedirs(temp_folder_path, exist_ok=True)
         prefix = (
             current_app.config["WEKO_AUTHORS_EXPORT_TMP_PREFIX"]
