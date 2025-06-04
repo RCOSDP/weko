@@ -237,7 +237,7 @@ class WekoAuthors(object):
             }
         }
 
-        # 検索
+        # Search
         indexer = RecordIndexer()
         result = indexer.client.search(
             index=current_app.config['WEKO_AUTHORS_ES_INDEX_NAME'],
@@ -256,7 +256,7 @@ class WekoAuthors(object):
 
     @classmethod
     def get_weko_id_by_pk_id(cls, pk_id):
-        """pk_idからweko_idを取得します。
+        """Get weko_id from pk_id.
 
         Args:
             pk_id (str): pk_id
@@ -399,13 +399,13 @@ class WekoAuthors(object):
                 )
             if not records_count:
                 records_count = cls.get_records_count(False, False)
-            # 削除されておらず、統合されていない著者の合計を取得
+            # Get the total number of authors who are not deleted and not merged
             affiliation_mappings["max"] = []
 
-            # AUTHOR_EXPORT_BATCH_SIZE分の数だけauthorを取得して、maxを計算する
+            # Get authors by AUTHOR_EXPORT_BATCH_SIZE and calculate max
             for i in range(0, records_count, size):
                 authors = cls.get_by_range(i, size, False, False)
-                # 通常のマッピングの処理
+                # Normal mapping processing
                 for mapping in mappings:
                     if mapping.get('child'):
                         if not authors:
@@ -421,18 +421,18 @@ class WekoAuthors(object):
                             if mapping['max'] == 0:
                                 mapping['max'] = 1
 
-                # 所属情報のマッピングの処理
+                # Affiliation info mapping processing
                 mapping_max = affiliation_mappings["max"]
-                # 著者DBの所属情報の最大値をそれぞれとる
+                # Get the maximum value of affiliation info in the author DB
                 for author in authors:
                     json_data = author.json
-                    # affiliation_mappings配下に以下を作る。
-                    # affiliationInfoの列数だけこれが作られるものとする。
+                    # Under affiliation_mappings, create the following.
+                    # This is created for each column of affiliationInfo.
                     # max:[
                     #       {
-                    #         "identifierInfo" : affiliationInfo[i]identifierInfoの長さ,
-                    #         "affiliationNameInfo" : affiliationInfo[i]affiliationNameInfoの長さ,
-                    #         "affiliationPeriodInfo" : affiliationInfo[i]affiliationPeriodInfoの長さ
+                    #         "identifierInfo" : length of affiliationInfo[i].identifierInfo,
+                    #         "affiliationNameInfo" : length of affiliationInfo[i].affiliationNameInfo,
+                    #         "affiliationPeriodInfo" : length of affiliationInfo[i].affiliationPeriodInfo
                     #       },
                     #     ]
                     for index, affiliation in enumerate(json_data.get(affiliation_mappings["json_id"], [])):
@@ -447,7 +447,7 @@ class WekoAuthors(object):
                             if child_length > mapping_max[index][child["json_id"]]:
                                 mapping_max[index][child["json_id"]] = child_length
 
-            # 最後にWEKOIDの分を最大値から引く
+            # Finally, subtract the WEKOID part from the maximum value
             for mapping in mappings:
                 if mapping['json_id'] == 'authorIdInfo':
                     if mapping['max'] > 1:
@@ -582,11 +582,11 @@ class WekoAuthors(object):
                     else:
                         row.append(json_data.get(mapping['json_id']))
 
-            # 各affilitionInfo
+            # Process mapping for each affiliationInfo
             aff_data = json_data.get(affiliation_mappings['json_id'], [])
             affiliation_idx_start = 0
             affiliation_idx_size = len(aff_mapping_max)
-            # affilaitionのマックスだけ繰り返す
+            # Repeat for the maximum number of affiliations
             for i in range(affiliation_idx_start, affiliation_idx_size):
                 for child in affiliation_mappings.get('child'):
                     aff_child_idx_start = 0
@@ -628,7 +628,7 @@ class WekoAuthors(object):
         row_data = []
 
         for prefix in prefixes:
-            # 著者識別子のプレフィックスはWEKOのものは除外
+            # Exclude WEKO's own prefix for author identifier prefixes
             if target_prefix == "id_prefix" and prefix.scheme == "WEKO":
                 continue
             row = [prefix.scheme, prefix.name, prefix.url]
