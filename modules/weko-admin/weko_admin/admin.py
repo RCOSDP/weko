@@ -2208,7 +2208,7 @@ class JsonldMappingView(ModelView):
                 return jsonify({"error": msg}), 400
 
     @expose("/delete/<string:id>/", methods=["DELETE"])
-    def delte(self, id):
+    def delete(self, id):
         """Delete JSON-LD mapping."""
         model = self.get_one(id)
         if model is None:
