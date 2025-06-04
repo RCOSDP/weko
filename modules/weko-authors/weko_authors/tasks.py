@@ -476,7 +476,7 @@ def check_tmp_file_time_for_author():
     ttl = current_app.config.get("WEKO_AUTHORS_IMPORT_TEMP_FILE_RETENTION_PERIOD")
     export_temp_dir = os.path.join(
         tempfile.gettempdir(),
-        current_app.config.get("WEKO_AUTHORS_EXPORT_TEMP_DIR")
+        current_app.config.get("WEKO_AUTHORS_EXPORT_TMP_DIR")
     )
     import_temp_dir = os.path.join(
         tempfile.gettempdir(),

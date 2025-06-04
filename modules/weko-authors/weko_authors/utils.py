@@ -688,16 +688,13 @@ def check_import_data_for_prefix(target, file_name: str, file_content: str):
     return result
 
 def getEncode(filepath):
-    """
-    getEncode [summary]
-
-    [extended_summary]
+    """Detect file encoding.
 
     Args:
-        filepath ([type]): [description]
+        filepath (str): File path.
 
     Returns:
-        [type]: [description]
+        str: Detected encoding.
     """
     with open(filepath, mode='rb') as fr:
         b = fr.read()
@@ -705,19 +702,22 @@ def getEncode(filepath):
     return enc.get('encoding', 'utf-8-sig')
 
 def clean_deep(data):
-    """
-    dataをクリーニングします。
-    例えば{'fullname': 'Jane Doe',
-        'warnings': None,
-        'email': {"test":"","test2":"test2"},
-        'test': [{"test":""},{"test2":"test2"}]}
-    のようなデータを
-    {'fullname': 'Jane Doe', 'email': {"test2":"test2"},
-    'test': [{"test2":"test2"}]}に変換します。
-    args:
-        data (dict): data to clean
-    return:
-        data (dict): cleaned data
+    """Clean data recursively.
+
+    Example:
+        {'fullname': 'Jane Doe',
+         'warnings': None,
+         'email': {"test":"","test2":"test2"},
+         'test': [{"test":""},{"test2":"test2"}]}
+        becomes
+        {'fullname': 'Jane Doe', 'email': {"test2":"test2"},
+         'test': [{"test2":"test2"}]}
+
+    Args:
+        data (dict): Data to clean.
+
+    Returns:
+        dict: Cleaned data.
     """
     if isinstance(data, dict):
         return {k: clean_deep(v) for k, v in data.items() if v is not None and v != ''}
@@ -848,7 +848,8 @@ def validate_import_data(file_format, file_data, mapping_ids, mapping, list_impo
         mapping_ids (list): List only mapping ids.
         mapping (list): List mapping.
         list_import_id (list): List import id.
-    return:
+
+    Returns:
         list: Author data after validation.
     """
     authors_prefix = {}
@@ -1694,26 +1695,31 @@ def update_data_for_weko_link(data, weko_link):
                 if i.get('idType') == '1':
                     weko_link[pk_id] = i.get('authorId')
                     break
+    if weko_link == old_weko_link:
+        # If weko_link has not changed, do nothing.
+        return
     # If weko_link has changed, update metadata.
-    if weko_link != old_weko_link:
-        for x_key, x_value in data.items():
-            if not isinstance(x_value, list):
+    for x_key, x_value in data.items():
+        if not isinstance(x_value, list):
+            continue
+        for y_index, y in enumerate(x_value, start=0):
+            if not isinstance(y, dict):
                 continue
-            for y_index, y in enumerate(x_value, start=0):
-                if not isinstance(y, dict):
+            for y_key, y_value in y.items():
+                if not y_key == "nameIdentifiers":
                     continue
-                for y_key, y_value in y.items():
-                    if not y_key == "nameIdentifiers":
+                for z_index, z in enumerate(y_value, start=0):
+                    if (
+                        z.get("nameIdentifierScheme","") != "WEKO"
+                        or z.get("nameIdentifier") not in old_weko_link.values()
+                    ):
                         continue
-                    for z_index, z in enumerate(y_value, start=0):
-                        if z.get("nameIdentifierScheme","") == "WEKO":
-                            if z.get("nameIdentifier") in old_weko_link.values():
-                                # Get pk_id whose value matches weko_id from weko_link.
-                                pk_id = [
-                                    k for k, v in old_weko_link.items()
-                                    if v == z.get("nameIdentifier")
-                                ][0]
-                                data[x_key][y_index][y_key][z_index]["nameIdentifier"] = weko_link.get(pk_id)
+                    # Get pk_id whose value matches weko_id from weko_link.
+                    pk_id = [
+                        k for k, v in old_weko_link.items()
+                        if v == z.get("nameIdentifier")
+                    ][0]
+                    z["nameIdentifier"] = weko_link.get(pk_id)
 
 def get_check_base_name():
     """Get base name for check file.
