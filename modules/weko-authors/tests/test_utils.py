@@ -5,6 +5,7 @@ import copy
 from mock import patch, MagicMock, Mock
 from flask import current_app
 import datetime
+import json
 from unittest.mock import mock_open
 
 from invenio_indexer.api import RecordIndexer
@@ -1398,17 +1399,18 @@ def test_get_count_item_link(app,mocker):
 
 # def count_authors():
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_utils.py::test_count_authors -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-authors/.tox/c1/tmp
-def test_count_authors(app2, esindex):
-    import json
+def test_count_authors(app2, esindex2):
     index = app2.config["WEKO_AUTHORS_ES_INDEX_NAME"]
     doc_type = "author-v1.0.0"
 
     def register(i):
         with open(f"tests/data/test_authors/author{i:02}.json","r") as f:
-            esindex.index(index=index, doc_type=doc_type, id=f"{i}", body=json.load(f), refresh="true")
+            esindex2.index(index=index, doc_type=doc_type,
+                           id=f"{i}", body=json.load(f), refresh="true")
 
     def delete(i):
-        esindex.delete(index=index, doc_type=doc_type, id=f"{i}", refresh="true")
+        esindex2.delete(index=index, doc_type=doc_type,
+                        id=f"{i}", refresh="true")
 
     # 3 Register 1 author data
     register(1)
@@ -3254,4 +3256,3 @@ def test_create_result_file_for_user(app, mocker):
     current_cache.delete(result_path_key)
     res = create_result_file_for_user(json)
     assert res == None
-
