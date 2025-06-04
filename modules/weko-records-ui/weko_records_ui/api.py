@@ -381,12 +381,12 @@ def copy_bucket_to_s3(
     # ex: https://bucket_name.s3.us-east-1.amazonaws.com/
     parts = endpoint_url.split('/')
     sub_parts = parts[2].split('.')
-    if len(sub_parts) > 3:
-        end_uri = ".".join(sub_parts[3:])
+    if len(sub_parts) > 2:
+        end_uri = ".".join(sub_parts[2:])
     else:
-        end_uri = sub_parts[3]
+        end_uri = sub_parts[2]
 
-    uri = parts[0] + '//' + bucket_name + '.' + sub_parts[1] + '.' + bucket_region + '.' + end_uri +'/'
+    uri = parts[0] + '//' + bucket_name + '.' + sub_parts[0] + '.' + bucket_region + '.' + end_uri +'/'
 
     current_app.logger.info(f'location: {location}')
 

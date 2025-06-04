@@ -77,16 +77,6 @@ def check_length_100_characters(form, field):
     if len(field.data) > 100:
         raise ValidationError(_("Text field must be less than 100 characters."))
 
-def check_s3_endpoint_url(form, field):
-    """Check s3_endpoint_url.
-
-    :param form:
-    :param field:
-    """
-    if field.data.startswith('https://s3.'):
-        raise ValidationError(_("Endpoint URL must not begin with https://s3."))
-
-
 def check_other_position(form, field):
     """Check other position.
 
@@ -178,8 +168,7 @@ class ProfileForm(FlaskForm):
         _('endpoint url'),
         # NOTE: Form field help text
         description=_('Please enter if you use your own S3 Bucket.'),
-        validators=[check_length_100_characters,
-                    check_s3_endpoint_url],
+        validators=[check_length_100_characters],
         filters=[strip_filter],
     )
 
