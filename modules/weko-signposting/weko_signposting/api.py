@@ -45,14 +45,14 @@ def requested_signposting(pid, record, template=None, **kwargs):
     permalink = get_record_permalink(recid)
 
     if permalink is not None:
-        links.append('<{url}> ; rel="cite-as"'.format(url=permalink))
+        links.append('<{url}>; rel="cite-as"'.format(url=permalink))
 
     links.append(
-        '<{url}> ; rel="describedby" ; type="application/json"'
+        '<{url}>; rel="describedby"; type="application/json"'
         .format(url=f'{record_link}/export/json')
     )
     links.append(
-        '<{url}> ; rel="describedby" ; type="application/x-bibtex"'
+        '<{url}>; rel="describedby"; type="application/x-bibtex"'
         .format(url=f'{record_link}/export/bibtex')
     )
 
@@ -64,12 +64,12 @@ def requested_signposting(pid, record, template=None, **kwargs):
             f'&identifier={record["_oai"]["id"]}'
         )
         links.append(
-            f'<{url}> ; rel="describedby" ; '
+            f'<{url}>; rel="describedby"; '
             f'type="application/xml" ; formats="{_object["namespace"]}"'
         )
 
     resp = Response()
-    resp.headers['Link'] = ','.join(links)
+    resp.headers['Link'] = ', '.join(links)
     return resp
 
 

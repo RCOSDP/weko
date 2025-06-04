@@ -33,5 +33,8 @@ COAR_NOTIFY_CONTEXT = [
 ]
 """COAR-Notify context."""
 
+COAR_NOTIFY_LINK_REL = "http://www.w3.org/ns/ldp#inbox"
+"""COAR-Notify link relation type."""
+
 WEKO_NOTIFICATIONS_PUSH_TEMPLATE_PATH = ""
 """Path to the push template."""

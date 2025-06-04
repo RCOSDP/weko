@@ -27,8 +27,8 @@ def test_inbox_url(app):
     assert inbox_url() == "http://inbox:8080/inbox"
     assert inbox_url(_external=True) == f"{app.config['THEME_SITEURL']}/inbox"
 
-    assert inbox_url("/test") == "http://inbox:8080/test"
-    assert inbox_url("/test", _external=True) == f"{app.config['THEME_SITEURL']}/test"
+    assert inbox_url(endpoint="/test") == "http://inbox:8080/test"
+    assert inbox_url(endpoint="/test", _external=True) == f"{app.config['THEME_SITEURL']}/test"
 
 
 # def user_uri():

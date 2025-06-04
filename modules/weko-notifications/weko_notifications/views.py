@@ -68,7 +68,7 @@ def init_push_templates():
     for template in templates:
         try:
             requests.post(
-                inbox_url("/push-template"),
+                inbox_url(endpoint="/push-template"),
                 json=template
             )
         except requests.RequestException as ex:
@@ -134,8 +134,8 @@ def user_settings():
                         current_user.id,
                         endpoint[:24] + "..." + endpoint[-8:]
                     )
-                    requests.post(inbox_url("/subscribe"), json=subscripsion)
-                    requests.post(inbox_url("/userprofile"), json=userprofile)
+                    requests.post(inbox_url(endpoint="/subscribe"), json=subscripsion)
+                    requests.post(inbox_url(endpoint="/userprofile"), json=userprofile)
                 else:
                     current_app.logger.info(
                         "Unsubscribing push subscription for user %s: %s",
@@ -143,7 +143,7 @@ def user_settings():
                         endpoint[:24] + "..." + endpoint[-8:]
                     )
                     requests.post(
-                        inbox_url("/unsubscribe"), json={"endpoint": endpoint}
+                        inbox_url(endpoint="/unsubscribe"), json={"endpoint": endpoint}
                     )
             except Exception as ex:
                 traceback.print_exc()
