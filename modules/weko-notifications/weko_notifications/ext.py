@@ -48,7 +48,7 @@ class WekoNotifications(object):
                     link.strip()
                     for link in response.headers.get("Link", "").split(",")
                     if link
-                ] + [f'<{inbox_link}>; rel="http://www.w3.org/ns/ldp#inbox"']
+                ] + [f'<{inbox_link}>; rel="{config.COAR_NOTIFY_LINK_REL}"']
                 response.headers["Link"] = ", ".join(links)
 
                 return response
