@@ -39,7 +39,7 @@ from invenio_db import db as db_
 from invenio_files_rest import InvenioFilesREST
 from invenio_files_rest.models import Location, FileInstance
 from invenio_indexer import InvenioIndexer
-from invenio_search import InvenioSearch,RecordsSearch
+from invenio_search import InvenioSearch,RecordsSearch, current_search_client
 from weko_authors.config import WEKO_AUTHORS_REST_ENDPOINTS
 from weko_search_ui import WekoSearchUI
 from weko_index_tree.models import Index
@@ -436,7 +436,6 @@ def client(app):
     with app.test_client() as client:
         yield client
 
-from invenio_search import current_search_client
 @pytest.fixture()
 def esindex(app):
     current_search_client.indices.delete(index='test-*')
@@ -723,24 +722,31 @@ def file_instance(db):
     db.session.commit()
 
 
-# @pytest.fixture()
-# def esindex(app2):
-#     from invenio_search import current_search_client as client
-#     index_name = app2.config["INDEXER_DEFAULT_INDEX"]
-#     alias_name = "test-author-alias"
+@pytest.fixture()
+def esindex2(app2):
+    index_name = app2.config["INDEXER_DEFAULT_INDEX"]
+    alias_name = "test-author-alias"
 
-#     with open("tests/data/mappings/author-v1.0.0.json","r") as f:
-#         mapping = json.load(f)
+    with open("tests/data/mappings/author-v1.0.0.json","r") as f:
+        mapping = json.load(f)
 
-#     with app2.test_request_context():
-#         client.indices.create(index=index_name, body=mapping, ignore=[400])
-#         client.indices.put_alias(index=index_name, name=alias_name)
+    with app2.test_request_context():
+        current_search_client.indices.create(
+            index=index_name, body=mapping, ignore=[400]
+        )
+        current_search_client.indices.put_alias(
+            index=index_name, name=alias_name
+        )
 
-#     yield client
+    yield current_search_client
 
-#     with app2.test_request_context():
-#         client.indices.delete_alias(index=index_name, name=alias_name)
-#         client.indices.delete(index=index_name, ignore=[400, 404])
+    with app2.test_request_context():
+        current_search_client.indices.delete_alias(
+            index=index_name, name=alias_name
+        )
+        current_search_client.indices.delete(
+            index=index_name, ignore=[400, 404]
+        )
 
 from invenio_oauth2server.models import Client
 
