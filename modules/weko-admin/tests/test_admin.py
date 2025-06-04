@@ -2373,15 +2373,31 @@ class TestSwordAPIJsonldSettingsView:
     def test_get_query_in_role_ids(self, client, users, db, mocker):
         login_user_via_session(client,email=users[0]["email"])# sysadmin
         current_app.config['WEKO_ADMIN_SWORD_API_JSON_LD_FULL_AUTHORITY_ROLE'] = users[0]["id"]
-        SwordAPIJsonldSettingsView().get_query()
+        view = SwordAPIJsonldSettingsView(SwordClientModel, db.session)
+        view().get_query()
 
         current_app.config['WEKO_ADMIN_SWORD_API_JSON_LD_FULL_AUTHORITY_ROLE'] = 1
-        SwordAPIJsonldSettingsView().get_query()
+        view().get_query()
 
     def test_get_count_query(self, client, users, db, mocker):
         login_user_via_session(client,email=users[0]["email"])# sysadmin
         current_app.config['WEKO_ADMIN_SWORD_API_JSON_LD_FULL_AUTHORITY_ROLE'] = users[0]["id"]
-        SwordAPIJsonldSettingsView().get_count_query()
+        view = SwordAPIJsonldSettingsView(SwordClientModel, db.session)
+        view().get_count_query()
+
+    def test_format(self, app, client, users, db, sword_client, sword_mapping, mocker):
+        login_user_via_session(client,email=users[0]["email"])# sysadmin
+        current_app.config['WEKO_ADMIN_SWORD_API_JSON_LD_FULL_AUTHORITY_ROLE'] = users[0]["id"]
+        view = SwordAPIJsonldSettingsView(SwordClientModel, db.session)
+        view._format_application_name(view)
+        view._format_active(view)
+        view._format_creator(view)
+        view._format_registration_type(view)
+        view._format_metadata_collection(view)
+        view._format_duplicate_check(view)
+        view._format_workflow_name(view)
+        view._format_mapping_name(view)
+
 
     # def validate_mapping(self, id):
     # .tox/c1/bin/pytest --cov=weko_admin tests/test_admin.py::TestSwordAPIJsonldSettingsView::test_validate_mapping -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
@@ -2406,6 +2422,65 @@ class TestSwordAPIJsonldSettingsView:
             res = client.get(url)
         assert res.status_code == 400
         assert json.loads(res.data) == {"error": "Failed to validate jsonld mapping."}
+
+    # def delete_data(self):
+    # .tox/c1/bin/pytest --cov=weko_admin tests/test_admin.py::TestSwordAPIJsonldSettingsView::delete_data -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
+    def test_delete_data(self, app, client, users, db, sword_client, sword_mapping, mocker):
+        url = url_for("swordapi/jsonld.delete_data")
+        login_user_via_session(client,email=users[0]["email"])
+
+        # model is none
+        res = client.post(
+            url,
+            data={
+                'id': '9999',
+            },
+            content_type='application/x-www-form-urlencoded'
+        )
+        assert res.status_code == 404
+
+        # editable
+        res = client.post(
+            url,
+            data={
+                'id': '1',
+            },
+            content_type='application/x-www-form-urlencoded'
+        )
+        assert res.status_code == 302
+
+        # editable and error
+        with patch("weko_admin.admin.SwordClient.remove", side_effect=SQLAlchemyError("test_db_error")):
+            res = client.post(
+                url,
+                data={
+                    'id': '2',
+                },
+                content_type='application/x-www-form-urlencoded'
+            )
+        assert res.status_code == 302
+
+        # not editable
+        with patch("weko_admin.admin.SwordAPIJsonldSettingsView._is_editable", return_value=False):
+            res = client.post(
+                url,
+                data={
+                    'id': '3',
+                },
+                content_type='application/x-www-form-urlencoded'
+            )
+            assert res.status_code == 302
+
+
+    # def _is_editable(self, workflow_id):
+    # .tox/c1/bin/pytest --cov=weko_admin tests/test_admin.py::TestSwordAPIJsonldSettingsView::_is_editable -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
+    def test_is_editable(self, app, client, users, db, sword_client, sword_mapping, mocker):
+        login_user_via_session(client,email=users[0]["email"])# sysadmin
+        current_app.config['WEKO_ADMIN_SWORD_API_JSON_LD_FULL_AUTHORITY_ROLE'] = users[0]["id"]
+        view = SwordAPIJsonldSettingsView(SwordClientModel, db.session)
+        view._is_editable(1)
+
+        view._is_editable(None)
 
 
 # class JsonldMappingView(ModelView):
@@ -2444,13 +2519,13 @@ class TestJsonldMappingView:
         # post
         # Error
         login_user_via_session(client,email=users[0]["email"])# sysadmin
-        with patch("weko_admin.admin.JsonldMapping.create", side_effect=Exception("test_error")):
+        with patch("weko_admin.admin.JsonldMapping.create", side_effect=SQLAlchemyError("test_error")):
             res = client.post(url,
                 data=json.dumps({'name': '1',
                                     'mapping': {},
                                     'item_type_id': item_type[0]["obj"].id}),
                 content_type='application/json')
-        assert res.status_code == 400
+        assert res.status_code == 500
 
 
     def test_edit_view(self, client, users, item_type, flows, db, mocker):
@@ -2500,6 +2575,12 @@ class TestJsonldMappingView:
                 with patch("weko_admin.admin.WorkActivity.count_waiting_approval_by_workflow_id", return_value=0):
                     res = client.get(url)
         assert res.status_code == 200
+        with patch("weko_admin.admin.WorkFlow.get_workflows_by_roles", return_value=["workflow 1"]):
+            with patch("weko_admin.admin.WorkFlow.get_deleted_workflow_list", return_value=[deleted_workflow]):
+                with patch("weko_admin.admin.JsonldMappingView._is_editable", return_value=False):
+                    with patch("weko_admin.admin.SwordClient.get_clients_by_mapping_id", return_value=True):
+                       res = client.get(url)
+        assert res.status_code == 200
 
         # post
         # success registration_type:Direct, active:True
@@ -2512,9 +2593,9 @@ class TestJsonldMappingView:
         assert res.status_code == 200
 
         # post
-        # error
+        # not can_edit error
         login_user_via_session(client,email=users[0]["email"])# sysadmin
-        with patch("weko_admin.admin.db.session.commit", side_effect=Exception("test_error")):
+        with patch("weko_admin.admin.JsonldMappingView._is_editable", return_value=False):
             res = client.post(url,
             data=json.dumps({'name': '1',
                             'mapping':{},
@@ -2522,37 +2603,93 @@ class TestJsonldMappingView:
                 content_type='application/json')
         assert res.status_code == 400
 
-    def test_delte_data(self, client, users, item_type, db, mocker):
-        url = url_for("jsonld-mapping.delte_data", id=1)
+        # post
+        # not can_change_item_type error
+        login_user_via_session(client,email=users[0]["email"])# sysadmin
+        with patch("weko_admin.admin.JsonldMappingView._is_editable", return_value=True):
+            with patch("weko_admin.admin.SwordClient.get_clients_by_mapping_id", return_value=True):
+                res = client.post(url,
+                data=json.dumps({'name': '1',
+                                'mapping':{},
+                                'item_type_id': '0'}),
+                    content_type='application/json')
+        assert res.status_code == 400
+
+        # post
+        # error
+        login_user_via_session(client,email=users[0]["email"])# sysadmin
+        with patch("weko_admin.admin.JsonldMappingView._is_editable", return_value=True):
+            with patch("weko_admin.admin.db.session.commit", side_effect=SQLAlchemyError ("test_error")):
+                res = client.post(url,
+                data=json.dumps({'name': '1',
+                                'mapping':{},
+                                'item_type_id': item_type[0]["obj"].id}),
+                    content_type='application/json')
+        assert res.status_code == 400
+
+    def test_delete(self, client, users, item_type, db, mocker, sword_client, sword_mapping):
+        url = url_for("jsonld-mapping.delete", id=1)
 
         #no administrator
-        res = client.post(url)
+        res = client.delete(url)
         assert res.status_code == 302
 
         login_user_via_session(client,email=users[7]["email"])
-        res = client.post(url)
+        res = client.delete(url)
         assert res.status_code == 403
+
+        # not editable
+        login_user_via_session(client,email=users[0]["email"])# sysadmin
+        with patch("weko_admin.admin.JsonldMappingView._is_editable", return_value=False):
+            res = client.delete(url)
+        assert res.status_code == 400
 
         # delete
         # work_flow_id exit
-        settings = list()
-        settings.append(Client(name=1,description=1,website=1,user_id=1,client_id="1",client_secret="KDjy6ntGKUX",is_confidential=True,is_internal=False,_redirect_uris="https://" ,_default_scopes="NULL"))
-        db.session.add_all(settings)
-        db.session.commit()
-        settings = list()
-        settings.append(ItemTypeJsonldMapping(id=1,name="sample1",mapping="{data:{}}",item_type_id=item_type[0]["obj"].id,version_id=6,is_deleted=False))
-        db.session.add_all(settings)
-        db.session.commit()
-        login_user_via_session(client,email=users[0]["email"])# sysadmin
-        res = client.post(url)
+        with patch("weko_admin.admin.JsonldMappingView._is_editable", return_value=True):
+            res = client.delete(url)
         assert res.status_code == 200
 
         # error
         login_user_via_session(client,email=users[0]["email"])# sysadmin
-        with patch("weko_admin.admin.JsonldMapping.delete", side_effect=Exception("test_error")):
-            res = client.post(url)
+        with patch("weko_admin.admin.JsonldMapping.delete", side_effect=SQLAlchemyError("test_error")):
+            res = client.delete(url)
         assert res.status_code == 400
+
+        # model_none
+        url_none = url_for("jsonld-mapping.delete", id=0)
+        res = client.delete(url_none)
+        assert res.status_code == 404
+
 
     def test_get_query(self, client, users, db, mocker):
         login_user_via_session(client,email=users[0]["email"])# sysadmin
-        JsonldMappingView.get_query(JsonldMappingView)
+        view = JsonldMappingView(JsonldMapping, db.session)
+        view.get_query()
+
+    def test_is_editable(self, app, client, users, db, sword_client, sword_mapping, mocker):
+        login_user_via_session(client,email=users[0]["email"])# sysadmin
+        view = JsonldMappingView(JsonldMapping, db.session)
+        view._is_editable(1)
+
+    def test_validate_mapping(self, app, client, users, db, sword_client, sword_mapping, mocker):
+        login_user_via_session(client,email=users[0]["email"])
+        current_app.config['WEKO_ADMIN_SWORD_API_JSON_LD_FULL_AUTHORITY_ROLE'] = users[0]["id"]
+        url = url_for("jsonld-mapping.validate_mapping")
+        with patch("weko_admin.admin.JsonLdMapper.validate", return_value=1):
+            res = client.post(
+                    url,
+                    data=json.dumps({'itemtype_id': '1',
+                                    'mapping':{},
+                                    'mapping_id': '1'}),
+                        content_type='application/json')
+        assert res.status_code == 200
+
+        with patch("weko_admin.admin.JsonLdMapper.validate", return_value=1):
+            res = client.post(
+                    url,
+                    data=json.dumps({'itemtype_id': '1',
+                                    'mapping':None,
+                                    'mapping_id': '1'}),
+                        content_type='application/json')
+        assert res.status_code == 200
