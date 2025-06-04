@@ -35,8 +35,8 @@ def test_init_push_templates(app, mocker):
         init_push_templates()
         assert mock_post.call_count == 2
         mock_post.assert_has_calls([
-            mocker.call(inbox_url("/push-template"), json={"template": "test1"}),
-            mocker.call(inbox_url("/push-template"), json={"template": "test2"})
+            mocker.call(inbox_url(endpoint="/push-template"), json={"template": "test1"}),
+            mocker.call(inbox_url(endpoint="/push-template"), json={"template": "test2"})
         ])
 
         mock_post.reset_mock()
@@ -92,7 +92,7 @@ def test_user_settings(app, users, client, mocker):
 
         response = client.post("/account/settings/notifications/", data=form)
         assert response.status_code == 200
-        mock_inbox_url.assert_called_once_with("/subscribe")
+        mock_inbox_url.assert_called_once_with(endpoint="/subscribe")
         mock_post.assert_not_called()
         mock_flash.assert_called_with("Failed to update push subscription.", category="error")
 
@@ -111,7 +111,7 @@ def test_user_settings(app, users, client, mocker):
 
         response = client.post("/account/settings/notifications/", data=form)
         assert response.status_code == 200
-        mock_inbox_url.assert_called_once_with("/unsubscribe")
+        mock_inbox_url.assert_called_once_with(endpoint="/unsubscribe")
         mock_post.assert_called_once()
 
     mock_flash.reset_mock()

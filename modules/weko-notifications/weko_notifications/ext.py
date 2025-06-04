@@ -12,6 +12,7 @@ from __future__ import absolute_import, print_function
 from flask_babelex import gettext as _
 
 from . import config
+from .utils import inbox_url
 from .views import blueprint_ui
 
 
@@ -38,6 +39,19 @@ class WekoNotifications(object):
 
         if app.config["WEKO_NOTIFICATIONS"]:
             app.register_blueprint(blueprint_ui)
+
+            @app.after_request
+            def inbox_link(response):
+                """Add inbox link to the response headers."""
+                inbox_link = inbox_url(app=app, _external=True)
+                links = [
+                    link.strip()
+                    for link in response.headers.get("Link", "").split(",")
+                    if link
+                ] + [f'<{inbox_link}>; rel="http://www.w3.org/ns/ldp#inbox"']
+                response.headers["Link"] = ", ".join(links)
+
+                return response
 
     def init_config(self, app):
         """Initialize configuration.
