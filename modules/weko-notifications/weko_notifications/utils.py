@@ -24,25 +24,27 @@ from weko_user_profiles.models import UserProfile
 from .client import NotificationClient
 from .config import WEKO_NOTIFICATIONS_USERS_URI
 
-def inbox_url(endpoint=None, _external=False):
+def inbox_url(app=None, endpoint=None, _external=False):
     """Return the inbox URL.
 
     Args:
+        app (Flask | None): The Flask application. Defaults to current_app.
         endpoint (str | None): The endpoint to append to the URL.
         _external (bool): Whether to return the URL with the full domain.
 
     Returns:
         str: The inbox URL.
     """
+    app = app or current_app
     url = (
-        current_app.config["THEME_SITEURL"]
+        app.config["THEME_SITEURL"]
         if _external
-        else current_app.config["WEKO_NOTIFICATIONS_INBOX_ADDRESS"]
+        else app.config["WEKO_NOTIFICATIONS_INBOX_ADDRESS"]
     )
     if endpoint is not None:
         url += endpoint if endpoint.startswith("/") else f"/{endpoint}"
     else:
-        url += current_app.config["WEKO_NOTIFICATIONS_INBOX_ENDPOINT"]
+        url += app.config["WEKO_NOTIFICATIONS_INBOX_ENDPOINT"]
 
     return str(url)
 

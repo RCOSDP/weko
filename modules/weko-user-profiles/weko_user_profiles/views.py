@@ -145,7 +145,7 @@ def profile():
             from weko_notifications.utils import create_userprofile, inbox_url
             create_userprofile(current_userprofile)
             requests.post(
-                inbox_url("/userprofile"),
+                inbox_url(endpoint="/userprofile"),
                 json=create_userprofile(current_userprofile)
             )
         except Exception as ex:
