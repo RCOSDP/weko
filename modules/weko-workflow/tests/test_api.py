@@ -1,19 +1,16 @@
-from datetime import datetime
-from unittest.mock import MagicMock, patch
-from sqlalchemy.exc import SQLAlchemyError
-
-from flask_login.utils import login_user
 import json
 import uuid
+from datetime import datetime
+from unittest.mock import MagicMock, call, patch
 
-from flask_login.utils import login_user
 import pytest
-from unittest.mock import patch, call
-from weko_notifications.notifications import Notification
+from flask_login.utils import login_user
 from marshmallow import ValidationError
 from requests import HTTPError
+from sqlalchemy.exc import SQLAlchemyError
 
-from weko_workflow.api import Flow, WorkActivity, WorkFlow, GetCommunity
+from weko_notifications.notifications import Notification
+from weko_workflow.api import Flow, GetCommunity, WorkActivity, WorkFlow
 
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_api.py::test_Flow_create_flow -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_Flow_create_flow(app, client, users, db, action_data):
