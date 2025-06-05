@@ -42,9 +42,11 @@ from elasticsearch import ElasticsearchException
 
 from weko_authors.config import WEKO_AUTHORS_IMPORT_CACHE_KEY
 
-from .utils import export_authors, import_author_to_system, save_export_url, \
-    set_export_status, export_prefix, import_id_prefix_to_system, import_affiliation_id_to_system, \
+from .utils import (
+    export_authors, import_author_to_system, save_export_url, set_export_status,
+    export_prefix, import_id_prefix_to_system, import_affiliation_id_to_system,
     get_check_base_name, handle_exception, update_cache_data
+)
 
 @shared_task
 def export_all(export_target):
@@ -69,7 +71,17 @@ def export_all(export_target):
 
 @shared_task
 def import_author(author, force_change_mode, request_info):
-    """Import Author."""
+    """Import Author.
+
+    Args:
+        author (dict): Author data to import.
+        force_change_mode (bool): Whether to force change mode.
+        request_info (dict): Request information for logging.
+
+    Returns:
+        dict: Result of the import operation.
+
+    """
     result = {'start_date': datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
     retrys = current_app.config["WEKO_AUTHORS_BULK_EXPORT_MAX_RETRY"]
     interval = current_app.config["WEKO_AUTHORS_BULK_EXPORT_RETRY_INTERVAL"]
@@ -79,10 +91,13 @@ def import_author(author, force_change_mode, request_info):
     del author["weko_id"]
     del author["current_weko_id"]
     try:
-        # コネクションエラー時にリトライ処理を行う
+        # Retry processing in case of connection error
         for attempt in range(retrys):
             try:
-                import_author_to_system(author, status, weko_id, force_change_mode, request_info=request_info)
+                import_author_to_system(
+                    author, status, weko_id, force_change_mode,
+                    request_info=request_info
+                )
                 result['status'] = states.SUCCESS
                 break
             except SQLAlchemyError as ex:
@@ -107,7 +122,14 @@ def import_author(author, force_change_mode, request_info):
 
 @shared_task
 def import_id_prefix(prefix):
-    """Import ID Prefix."""
+    """Import ID Prefix.
+
+    Args:
+        prefix (dict): id_prefix metadata from tsv/csv.
+
+    Returns:
+        dict: Result of the import operation.
+    """
     result = {'start_date': datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
     try:
         import_id_prefix_to_system(prefix)
@@ -125,7 +147,14 @@ def import_id_prefix(prefix):
 
 @shared_task
 def import_affiliation_id(affiliation_id):
-    """Import Affiliation ID."""
+    """Import Affiliation ID.
+
+    Args:
+        affiliation_id (dict): affiliation_id metadata from tsv/csv.
+
+    Returns:
+        dict: Result of the import operation.
+    """
     result = {'start_date': datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
     try:
         import_affiliation_id_to_system(affiliation_id)
@@ -142,21 +171,28 @@ def import_affiliation_id(affiliation_id):
     return result
 
 @shared_task
-def import_author_over_max(reached_point, task_ids ,max_part, request_info=None):
+def import_author_over_max(reached_point, task_ids, max_part, request_info=None):
     """
-    WEKO_AUTHORS_IMPORT_MAX_NUM_OF_DISPLAYSを超えた著者をインポートする場合の処理です。
-    先に行っているインポートタスクが終了次第、reached_pointから一時ファイルを用いて
-    著者インポートを開始します。
+    Processing for importing authors when exceeding max display.
+    After the preceding import tasks are completed, author import will start
+    from reached_point using temporary files.
+
     Args:
-        reached_point: 一時ファイルにおいてmax_displayに達した位置
-                part_numberが一時ファイルのpart数で、countが一時ファイルの再開位置
-                データ例:{"part_number": 101, "count": 3}
-        task_ids: 先に行っているmax_diplay分のタスクID.
-        max_part: パート数の最大値
-        request_info: リクエスト情報
+        reached_point (dict[str, int]):
+            The position in the temporary file where max_display was reached.
+                - part_number: the number of parts in the temporary file,
+                - count: the restart position in the temporary file.
+
+            Example data: {"part_number": 101, "count": 3}
+        task_ids (list): List of task IDs that have been executed before max_display.
+        max_part (int): Maximum number of parts.
+        request_info (dict): Request information for logging.
+
+    Returns:
+        dict: Result of the import operation.
     """
 
-    # task_idsの全てのtaskが終了するまで待つ
+    # Wait until all tasks in task_ids are finished
     check_task_end(task_ids)
     del task_ids
     gc.collect()
@@ -182,16 +218,19 @@ def import_author_over_max(reached_point, task_ids ,max_part, request_info=None)
 
 def import_authors_from_temp_files(reached_point, max_part, request_info=None):
     """
-    一時ファイルから著者データを読み込み、インポートする処理を行います。
+    Reads author data from temporary files and imports them.
     Args:
-        reached_point: 一時ファイルにおいてmax_displayに達した位置
-                part_numberが一時ファイルのpart数で、countが一時ファイルの再開位置
-                データ例:{"part_number": 101, "count": 3}
-        max_part: インポートする最大のpart数
-        request_info: リクエスト情報
+        reached_point (dict[str, int]):
+            The position in the temporary file where max_display was reached.
+                - part_number: the number of parts in the temporary file,
+                - count: the restart position in the temporary file.
+
+            Example data: {"part_number": 101, "count": 3}
+        max_part (int): Maximum number of parts.
+        request_info (dict): Request information for logging.
     """
 
-    # 結果ファイルのDL用に一時ファイルを作成
+    # Create a temporary file for downloading the result file
     temp_folder_path = os.path.join(
         tempfile.gettempdir(),
         current_app.config.get("WEKO_AUTHORS_IMPORT_TMP_DIR")
@@ -210,38 +249,38 @@ def import_authors_from_temp_files(reached_point, max_part, request_info=None):
         current_app.config["WEKO_AUTHORS_CACHE_TTL"]
     )
 
-    # すべてのtaskが終了したら、max_display以降のtaskを実行
-    # part_numberから始めて、max_partまでのpartをインポートする。
+    # After all tasks are finished, execute tasks after max_display.
+    # Start from part_number and import up to max_part.
     authors = []
     for i in range(1, max_part+1):
         part_check_file_name = f"{check_file_name}-part{i}"
         check_file_part_path = os.path.join(temp_folder_path, part_check_file_name)
-        # iがreached_pointのpart_number以上の時にauthorsを追加
+        # Add authors when i is greater than or equal to reached_point's part_number
         if i >= reached_point.get("part_number"):
-            #一時ファイルからインポートできるファイルを取得
+            # Get importable files from temporary files
             with open(check_file_part_path, "r", encoding="utf-8-sig") as check_part_file:
                 data = json.load(check_part_file)
                 for index, item in enumerate(data):
-                    # max_display以降のところまで飛ばす
+                    # Skip up to the position after max_display
                     if i == reached_point.get("part_number") and index < reached_point.get("count"):
                         continue
                     check_result = False if item.get("errors", []) else True
                     if check_result:
                         item.pop("warnings", None)
                         authors.append(item)
-        # authorsが長さWEKO_AUTHORS_IMPORT_BATCH_SIZEを超えた時点でインポート
+        # Import when authors exceeds WEKO_AUTHORS_IMPORT_BATCH_SIZE
         if len(authors) >= current_app.config.get("WEKO_AUTHORS_IMPORT_BATCH_SIZE"):
             import_authors_for_over_max(authors, request_info=request_info)
             authors = []
 
-        # 一時ファイルの削除
+        # Delete temporary file
         try:
             os.remove(check_file_part_path)
             current_app.logger.debug(f"Deleted: {check_file_part_path}")
         except Exception as e:
             traceback.print_exc(file=sys.stdout)
             current_app.logger.error(f"Error deleting {check_file_part_path}: {e}")
-    # authorsが残っている場合
+    # If authors remain
     if authors:
         import_authors_for_over_max(authors, request_info=request_info)
         authors = []
@@ -262,12 +301,12 @@ def import_authors_for_over_max(authors, request_info=None):
     for author in authors:
         group_tasks.append(import_author.s(author, force_change_mode, _request_info))
 
-    # group_tasksを実行
+    # Execute group_tasks
     import_task = group(group_tasks).apply_async()
     import_task.save()
     for idx, task in enumerate(import_task.children):
         full_name_info =""
-        # フルネーム生成
+        # Generate full name
         for author_name_info in authors[idx].get("authorNameInfo", [{}]):
             family_name = author_name_info.get("familyName", "")
             first_name = author_name_info.get("firstName", "")
@@ -288,7 +327,7 @@ def import_authors_for_over_max(authors, request_info=None):
         })
         task_ids.append(task.task_id)
 
-    # task_idsの全てのtaskが終了するまで待つ
+    # Wait until all tasks in task_ids are finished
     check_task_end(task_ids)
     del task_ids
     gc.collect()
@@ -311,7 +350,7 @@ def import_authors_for_over_max(authors, request_info=None):
                 success_count += 1
             elif status == states.FAILURE:
                 failure_count += 1
-        # ここにはいる_taskは時間がかかりすぎているもの,何かしらの問題が起きている。
+        # _task here is for tasks that took too long or had some problem.
         else:
             start_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             end_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -328,11 +367,11 @@ def import_authors_for_over_max(authors, request_info=None):
             "status": status,
             "error_id": error_id
         })
-        # 完了した時点でtaskを削除
+        # Delete task after completion
         task.forget()
     del tasks
     write_result_temp_file(result)
-    # インポート結果をサマリーに追加する処理
+    # Add import results to summary
     update_summary(success_count, failure_count)
 
     del authors
@@ -340,19 +379,24 @@ def import_authors_for_over_max(authors, request_info=None):
     gc.collect()
 
 def write_result_temp_file(result):
-    """
-        引数resultからtaskの結果を取得し、一時ファイルに書き込む
-    args:
-        result: taskの結果とweko_idとfull_nameをまとめたもの
-            例：[{
-            "start_date": start_date,
-            "end_date": end_date,
-            "weko_id": 1,
-            "full_name": "kimura,shinji",
-            "type": "new",
-            "status": SUCCESS,
-            "error_id": "delete_author_link"
+    """Write the result of the task to a temporary file.
+
+    Get the result of the task from the argument result and write it to a temporary file.
+
+    Args:
+        result: Contains the result of the task, weko_id, and full_name.
+
+    Example:
+        >>> result =  [{
+        ...    "start_date": start_date,
+                "end_date": end_date,
+                "weko_id": 1,
+                "full_name": "kimura,shinji",
+                "type": "new",
+                "status": SUCCESS,
+                "error_id": "delete_author_link"
             }, ...]
+        >>> write_result_temp_file(result)
 
     """
     result_file_path = current_cache.get(current_app.config["WEKO_AUTHORS_IMPORT_CACHE_RESULT_OVER_MAX_FILE_PATH_KEY"])
@@ -379,11 +423,11 @@ def write_result_temp_file(result):
         raise e
 
 def update_summary(success_count, failure_count):
-    """
-        インポート結果をサマリーに追加する処理
-    args:
-        success_count: 成功したインポート数
-        failure_count: 失敗したインポート数
+    """Add import results to summary.
+
+    Args:
+        success_count: Number of successful imports.
+        failure_count: Number of failed imports.
     """
     summary = get_cache_data(current_app.config["WEKO_AUTHORS_IMPORT_CACHE_RESULT_SUMMARY_KEY"])
     if summary:
@@ -417,6 +461,14 @@ def prepare_display_status(status, type, error_id):
     return msg
 
 def prepare_success_msg(type):
+    """Prepare success message based on type.
+
+    Args:
+        type (str): Type of success message ('new', 'update', 'deleted').
+
+    Returns:
+        str: Success message with translation.
+    """
     switcher = {
         'new': _('Register Success'),
         'update': _('Update Success'),
@@ -424,7 +476,7 @@ def prepare_success_msg(type):
     }
     return switcher.get(type, '')
 
-# 3秒ごとにtask_idsを確認し、全てのtaskが終了したらループを抜ける
+# Check task_ids every 3 seconds, and exit the loop when all tasks are finished
 def check_task_end(task_ids):
     length = len(task_ids)
     sleep_time = current_app.config.get("WEKO_AUTHORS_BULK_IMPORT_RETRY_INTERVAL")

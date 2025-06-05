@@ -100,6 +100,11 @@ def check_rocrate_import_items_task(file_path, is_change_identifier: bool,
         lang (str): Language code(default is "en").
     Returns:
         dict: Check Result.
+            - start_date (str): Start date of the check.
+            - end_date (str): End date of the check.
+            - data_path (str): Path to the data.
+            - list_record (list): List of records with their metadata.
+            - error (str): Error message if any error occurs.
     """
     result = {"start_date": datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
     with current_app.test_request_context(
@@ -159,7 +164,7 @@ def remove_temp_dir_task(path):
 @shared_task
 def delete_task_id_cache_on_revoke(task_id, cache_key):
     """delete admin_cache_KEY_EXPORT_ALL_{user_id} from redis
-    
+
     Delete the export task ID cache from Redis if the task has been revoked.
 
     This task checks if the given cache key in Redis matches the provided task ID.
@@ -228,7 +233,7 @@ def write_files_task(self, export_path, pickle_file_name , user_id):
             name=_file_create_config,
             user_id=user_id
         )
-        
+
         # update task_id in redis
         _task_id_config = \
             current_app.config["WEKO_SEARCH_UI_BULK_EXPORT_TASK"]
@@ -237,7 +242,7 @@ def write_files_task(self, export_path, pickle_file_name , user_id):
             user_id=user_id
         )
         reset_redis_cache(_task_id_key, str(self.request.id))
-        
+
         item_type_id = pickle_file_name.split(".")[1]
         part = pickle_file_name.split(".")[2]
         json_data = json.loads(get_redis_cache(_file_create_key))
@@ -263,7 +268,7 @@ def write_files_task(self, export_path, pickle_file_name , user_id):
             _update_redis_status(json_data, import_datas['name'], 'started',import_datas['item_type_id'])
             with open(pickle_path, 'rb') as f:
                 import_datas = pickle.load(f)
-            
+
             result = write_files(import_datas, export_path, user_id, 0)
             json_data = json.loads(get_redis_cache(_file_create_key))
             if result:

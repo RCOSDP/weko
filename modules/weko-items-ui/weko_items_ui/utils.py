@@ -2593,16 +2593,16 @@ def export_items(post_data):
             export_path.split("/")[-2] + "-" + export_path.split("/")[-1]
         )
         shutil.make_archive(zip_path, 'zip', export_path)
+        resp = send_file(
+            zip_path+".zip",
+            as_attachment=True,
+            attachment_filename='export.zip'
+        )
     except Exception:
         current_app.logger.error("Failed to export items.")
         traceback.print_exc()
         flash(_('Error occurred during item export.'), 'error')
-        return redirect(url_for('weko_items_ui.export'))
-    resp = send_file(
-        zip_path+".zip",
-        as_attachment=True,
-        attachment_filename='export.zip'
-    )
+        resp = redirect(url_for('weko_items_ui.export'))
     os.remove(zip_path+".zip")
     temp_path.cleanup()
     return resp
