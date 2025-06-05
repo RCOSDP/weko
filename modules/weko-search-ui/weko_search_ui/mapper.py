@@ -1318,6 +1318,8 @@ class JsonLdMapper(JsonMapper):
     """JsonLdMapper."""
 
     AT_TYPE_MAP = {
+        "date": "Date",
+        "URL": "URL",
         "File": "File",
         "Contributor": "Person",
         "Creator": "Person",
@@ -1792,13 +1794,13 @@ class JsonLdMapper(JsonMapper):
                 if not isinstance(grant, dict):
                     continue
                 if grant.get("jpcoar:identifier") == "HDL":
-                    system_info["cnri"] = grant.get("@id")
+                    system_info["cnri"] = grant.get("@id").lstrip("#")
                     break
             for grant in extracted.get("wk:grant", []):
                 if not isinstance(grant, dict):
                     continue
                 if grant.get("jpcoar:identifier") == "DOI":
-                    system_info["doi"] = grant.get("@id")
+                    system_info["doi"] = grant.get("@id").lstrip("#")
                     system_info["doi_ra"] = grant.get("jpcoar:identifierRegistration")
                     break
 
@@ -1870,8 +1872,13 @@ class JsonLdMapper(JsonMapper):
     ):
         """Map to RO-Crate format.
 
+        It requires eather record_metadata or tsv_row_metadata to be provided.
+
         Args:
-            metadata (dict): metadata with item type format.
+            record_metadata (dict):
+                metadata from record_metadata or elasticsearch.
+            tsv_row_metadata (dict):
+                metadata with tsv row format. it has header as metadata value.
         Returns:
             dict: metadata with RO-Crate format.
         """
@@ -2003,15 +2010,10 @@ class JsonLdMapper(JsonMapper):
                     list_index.insert(i, None)
             return list_index
 
-        def gen_type(meta_path):
+        def gen_type():
             """Generate "@type" of entity by using AT_TYPE_MAP."""
-            for k, v in item_map.items():
-                if v == meta_path:
-                    meta_key = k
-                    break
-
             for k, v in self.AT_TYPE_MAP.items():
-                if k in meta_key:
+                if k.lower() in META_KEY.lower():
                     return v
             return "PropertyValue"
 
@@ -2028,7 +2030,7 @@ class JsonLdMapper(JsonMapper):
             if len(prop_props) == 1:
                 index = list_index[0] if list_index else None
                 prop = prop_props[0]
-                at_type = gen_type(META_PATH)
+                at_type = gen_type()
 
                 # dict
                 if index is None:
@@ -2055,7 +2057,7 @@ class JsonLdMapper(JsonMapper):
 
             prop = prop_props[0]
             index = list_index[0] if list_index else None
-            at_type = gen_type(META_PATH)
+            at_type = gen_type()
 
             # dict
             if index is None:
@@ -2112,7 +2114,7 @@ class JsonLdMapper(JsonMapper):
         }
 
         column_metadata = {
-            k.lstrip(".").lstrip("metadata."): v
+            k.lstrip(".").replace("metadata.", ""): v
             for k, v in zip(tsv_row_metadata["header"], tsv_row_metadata["value"])
             if isinstance(k, str) and isinstance(v, (str, int))
         } if tsv_row_metadata else {}
@@ -2128,11 +2130,15 @@ class JsonLdMapper(JsonMapper):
                 "Item metadata for Item ID: {}. Title: {}."
                 .format(recid, record_metadata["item_title"])
             )
-            rocrate.datePublished = record_metadata["publish_date"]
+            rocrate.root_dataset["identifier"] = recid
+            rocrate.root_dataset["uri"] = url_for(
+                "invenio_records_ui.recid",
+                pid_value=recid, _external=True
+            )
+            rocrate.root_dataset["wk:index"] = record_metadata.get("path", [])
             rocrate.root_dataset["wk:publishStatus"] = (
                 "public" if record_metadata["publish_status"] == "0" else "private"
             )
-            rocrate.root_dataset["wk:index"] = record_metadata.get("path", [])
             # wk:feedbackMail
             pid = PersistentIdentifier.get("recid", recid)
             feedback_mail_list = FeedbackMailList.get_mail_list_by_item_id(
@@ -2146,6 +2152,8 @@ class JsonLdMapper(JsonMapper):
             )
             request_mail_list = [mail.get("email") for mail in request_mail_list]
             rocrate.root_dataset["wk:requestMail"] = request_mail_list
+            rocrate.root_dataset["wk:editMode"] = "Keep"
+            rocrate.datePublished = record_metadata["publish_date"]
         else:
             recid = tsv_row_metadata["recid"]
             rocrate.name = tsv_row_metadata["item_title"]
@@ -2153,13 +2161,16 @@ class JsonLdMapper(JsonMapper):
                 "Item metadata for Item ID: {}. Title: {}."
                 .format(recid, tsv_row_metadata["item_title"])
             )
-            rocrate.datePublished = column_metadata["pubdate"]
-
-            rocrate.root_dataset["wk:publishStatus"] = column_metadata["publish_status"]
+            rocrate.root_dataset["identifier"] = recid
+            rocrate.root_dataset["uri"] = url_for(
+                "invenio_records_ui.recid",
+                pid_value=recid, _external=True
+            )
             rocrate.root_dataset["wk:index"] = [
                 str(v) for k, v in column_metadata.items()
                 if k.startswith("path")
             ]
+            rocrate.root_dataset["wk:publishStatus"] = column_metadata["publish_status"]
             rocrate.root_dataset["wk:feedbackMail"] = [
                 v for k, v in column_metadata.items()
                 if k.startswith("feedback_mail") and v
@@ -2168,35 +2179,23 @@ class JsonLdMapper(JsonMapper):
                 v for k, v in column_metadata.items()
                 if k.startswith("request_mail") and v
             ]
-
-        rocrate.root_dataset["identifier"] = recid
-        rocrate.root_dataset["uri"] = url_for(
-            "invenio_records_ui.recid",
-            pid_value=recid, _external=True
-        )
-
-        # wk:itemLinks
-        list_item_link_info = ItemLink.get_item_link_info(recid)
-        list_link_data = []
-        list_at_id = []
-        for item_link_info in list_item_link_info:
-            dict_item_link = {
-                "identifier": url_for(
-                    "invenio_records_ui.recid",
-                    pid_value=item_link_info["item_links"], _external=True
-                ),
-                "value": item_link_info["value"]
-            }
-            list_link_data.append(dict_item_link)
-            list_at_id.append(gen_id("itemLinks"))
-        add_list_entity(
-            rocrate.root_dataset, "wk:itemLinks", list_at_id, "PropertyValue",
-            list_link_data
-        )
-        # wk:editMode
-        rocrate.root_dataset["wk:editMode"] = "Keep"
-        # wk:metadaAutoFill
-        rocrate.root_dataset["wk:metadataAutoFill"] = False
+            grant_id = []
+            grant_data = []
+            if column_metadata["cnri"]:
+                grant_id.append(column_metadata["cnri"])
+                grant_data.append({"jpcoar:identifier": "HDL"})
+            if column_metadata["doi"]:
+                grant_id.append(column_metadata["doi"])
+                grant_data.append({
+                    "jpcoar:identifier": "DOI",
+                    "jpcoar:identifierRegistration": column_metadata["doi_ra"]
+                })
+            add_list_entity(
+                rocrate.root_dataset, "wk:grant", grant_id,
+                "PropertyValue", grant_data
+            )
+            rocrate.root_dataset["wk:editMode"] = "Keep"
+            rocrate.datePublished = column_metadata["pubdate"]
 
         metadata_to_map = {
             record_key.replace(".attribute_value_mlt", "")
@@ -2313,5 +2312,26 @@ class JsonLdMapper(JsonMapper):
                 rocrate.root_dataset, "additionalProperty", gen_id("extra"),
                 "PropertyValue", extra_entity
             )
+
+        # wk:itemLinks
+        list_item_link_info = ItemLink.get_item_link_info(recid)
+        list_link_data = []
+        list_at_id = []
+        for item_link_info in list_item_link_info:
+            dict_item_link = {
+                "identifier": url_for(
+                    "invenio_records_ui.recid",
+                    pid_value=item_link_info["item_links"], _external=True
+                ),
+                "value": item_link_info["value"]
+            }
+            list_link_data.append(dict_item_link)
+            list_at_id.append(gen_id("itemLinks"))
+        add_list_entity(
+            rocrate.root_dataset, "wk:itemLinks", list_at_id, "PropertyValue",
+            list_link_data
+        )
+        # wk:metadaAutoFill
+        rocrate.root_dataset["wk:metadataAutoFill"] = False
 
         return rocrate

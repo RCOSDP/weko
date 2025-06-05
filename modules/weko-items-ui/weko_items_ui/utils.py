@@ -2661,7 +2661,7 @@ def write_rocrate(item_types_data, export_path, list_item_role):
             )
             with open(jsonld_path, "w", encoding="utf8") as f:
                 json.dump(
-                    rocrate.metadata.generate(), f, indent=2, sort_keys=True,
+                    rocrate.metadata.generate(), f, indent=2,
                     ensure_ascii=False
                 )
 
