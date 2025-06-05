@@ -1491,14 +1491,14 @@ class JsonLdMapper(JsonMapper):
                     interim = list(schema.keys())[0]
                     if parent.get(prop_props[0]) is None:
                         parent[prop_props[0]] = [
-                            {interim: meta_value}
+                            {interim: META_VALUE}
                         ]
                     else:
                         parent[prop_props[0]].append(
-                            {interim: meta_value}
+                            {interim: META_VALUE}
                         )
                 else:
-                    parent.update({prop_props[0]: meta_value})
+                    parent.update({prop_props[0]: META_VALUE})
                 return
 
             full_props = PROP_PATH.split(".")
@@ -1564,53 +1564,53 @@ class JsonLdMapper(JsonMapper):
                 parent.update({prop_props[0]: sub_prop_array})
             return
 
-        for META_KEY in metadata:
+        for META_KEY, META_VALUE in metadata.items():
             if not isinstance(META_KEY, str):
                 continue
             META_PATH = re.sub(r"\[\d+\]", "", META_KEY)
             # metadata for system
             if "wk:index" in META_PATH:
                 path = mapped_metadata.get("path", [])
-                path.append(int(metadata.get(META_KEY)))
+                path.append(int(META_VALUE))
                 mapped_metadata["path"] = path
             elif "wk:publishStatus" in META_PATH:
-                mapped_metadata["publish_status"] = metadata.get(META_KEY)
+                mapped_metadata["publish_status"] = META_VALUE
             elif "wk:editMode" in META_PATH:
-                mapped_metadata["edit_mode"] = metadata.get(META_KEY)
+                mapped_metadata["edit_mode"] = META_VALUE
             elif "wk:feedbackMail" in META_PATH:
                 feedback_mail_list = mapped_metadata.get(
                     "feedback_mail_list", [])
                 feedback_mail_list.append(
-                    {"email": metadata.get(META_KEY), "author_id": ""}
+                    {"email": META_VALUE, "author_id": ""}
                 )
                 mapped_metadata["feedback_mail_list"] = feedback_mail_list
             elif "wk:requestMail" in META_PATH:
                 request_mail_list = mapped_metadata.get(
                     "request_mail_list", [])
                 request_mail_list.append(
-                    {"email": metadata.get(META_KEY), "author_id": ""}
+                    {"email": META_VALUE, "author_id": ""}
                 )
                 mapped_metadata["request_mail_list"] = request_mail_list
             elif META_PATH not in properties_mapping:
-                missing_metadata[META_KEY] = metadata[META_KEY]
+                if not META_KEY.endswith("@id"):
+                    missing_metadata[META_KEY] = META_VALUE
             else:
                 # item metadata
                 meta_props = META_KEY.split(".")
                 PROP_PATH = properties_mapping[META_PATH]
                 prop_props = PROP_PATH.split(".")
-                meta_value = metadata.get(META_KEY)
-                if meta_value is None or meta_value == "":
+                if META_VALUE is None or META_VALUE == "":
                     # If the value is None or empty, skip setting metadata
                     continue
-                if not isinstance(meta_value, (str, int, float, bool)):
-                    meta_value = str(meta_value)
+                if not isinstance(META_VALUE, (str, int, float, bool)):
+                    META_VALUE = str(META_VALUE)
                 # META_KEY="dc:type.@id", meta_props=["dc:type","@id"],
                 # PROP_PATH=item_30001_resource_type11.resourceuri, prop_props=["item_30001_resource_type11","resourceuri"]
                 try:
                     _set_metadata(mapped_metadata, meta_props, prop_props)
                 except Exception as ex:
                     current_app.logger.warning(
-                        f"Failed to set metadata for {META_KEY}: {meta_value}"
+                        f"Failed to set metadata for {META_KEY}: {META_VALUE}"
                     )
                     traceback.print_exc()
 
@@ -1627,7 +1627,6 @@ class JsonLdMapper(JsonMapper):
                 ]
             else:
                 mapped_metadata[item_map.get("Extra")] = str(missing_metadata)
-
 
         files_info = []
         for v in item_map.values():
