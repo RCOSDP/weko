@@ -378,9 +378,9 @@ def post_service_document():
             )
             if not import_result.get("success"):
                 current_app.logger.error(
-                    f"Error in import_items_to_system: {item.get('error_id')}"
+                    f"Error in import_items_to_system: {import_result.get('error_id')}"
                 )
-                error = str(item.get('error_id'))
+                error = str(import_result.get('error_id'))
             else:
                 recid = str(import_result.get("recid"))
                 notify_item_imported(

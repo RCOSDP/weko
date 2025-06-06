@@ -5436,14 +5436,20 @@ def send_mail_item_deleted(pid_value, deposit, user_id, shared_id=-1):
     Returns:
         int: The total number of successfully sent emails.
     """
-    record_url = request.host_url + f"records/{pid_value}"
-    current_app.logger.debug(f"[send_mail_item_deleted] pid_value: {pid_value}, user_id: {user_id}")
-    return send_mail_from_notification_info(
-        get_info_func=lambda obj: get_notification_targets(obj, user_id, shared_id),
-        context_obj=deposit,
-        content_creator=create_item_deleted_data,
-        record_url=record_url
-    )
+    try:
+        record_url = request.host_url + f"records/{pid_value}"
+        current_app.logger.debug(f"[send_mail_item_deleted] pid_value: {pid_value}, user_id: {user_id}")
+        return send_mail_from_notification_info(
+            get_info_func=lambda obj: get_notification_targets(obj, user_id, shared_id),
+            context_obj=deposit,
+            content_creator=create_item_deleted_data,
+            record_url=record_url
+        )
+    except Exception as e:
+        current_app.logger.exception(
+            "Unexpected error occurred while sending mail for item deletion"
+        )
+        return
 
 
 def send_mail_direct_registered(pid_value, user_id, share_id=-1):
@@ -5458,12 +5464,18 @@ def send_mail_direct_registered(pid_value, user_id, share_id=-1):
     Returns:
         int: The total number of successfully sent emails.
     """
-    deposit = WekoRecord.get_record_by_pid(pid_value)
-    record_url = request.host_url + f"records/{pid_value}"
-    current_app.logger.debug(f"[send_mail_direct_registered] pid_value: {pid_value}, user_id: {user_id}")
-    return send_mail_from_notification_info(
-        get_info_func=lambda obj: get_notification_targets(obj, user_id, share_id),
-        context_obj=deposit,
-        content_creator=create_direct_registered_data,
-        record_url=record_url
-    )
+    try:
+        deposit = WekoRecord.get_record_by_pid(pid_value)
+        record_url = request.host_url + f"records/{pid_value}"
+        current_app.logger.debug(f"[send_mail_direct_registered] pid_value: {pid_value}, user_id: {user_id}")
+        return send_mail_from_notification_info(
+            get_info_func=lambda obj: get_notification_targets(obj, user_id, share_id),
+            context_obj=deposit,
+            content_creator=create_direct_registered_data,
+            record_url=record_url
+        )
+    except Exception as e:
+        current_app.logger.exception(
+            "Unexpected error occurred while sending mail for item registration"
+        )
+        return
