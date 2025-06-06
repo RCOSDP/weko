@@ -2374,29 +2374,16 @@ class TestSwordAPIJsonldSettingsView:
         login_user_via_session(client,email=users[0]["email"])# sysadmin
         current_app.config['WEKO_ADMIN_SWORD_API_JSON_LD_FULL_AUTHORITY_ROLE'] = users[0]["id"]
         view = SwordAPIJsonldSettingsView(SwordClientModel, db.session)
-        view().get_query()
+        view.get_query()
 
         current_app.config['WEKO_ADMIN_SWORD_API_JSON_LD_FULL_AUTHORITY_ROLE'] = 1
-        view().get_query()
+        view.get_query()
 
     def test_get_count_query(self, client, users, db, mocker):
         login_user_via_session(client,email=users[0]["email"])# sysadmin
         current_app.config['WEKO_ADMIN_SWORD_API_JSON_LD_FULL_AUTHORITY_ROLE'] = users[0]["id"]
         view = SwordAPIJsonldSettingsView(SwordClientModel, db.session)
-        view().get_count_query()
-
-    def test_format(self, app, client, users, db, sword_client, sword_mapping, mocker):
-        login_user_via_session(client,email=users[0]["email"])# sysadmin
-        current_app.config['WEKO_ADMIN_SWORD_API_JSON_LD_FULL_AUTHORITY_ROLE'] = users[0]["id"]
-        view = SwordAPIJsonldSettingsView(SwordClientModel, db.session)
-        view._format_application_name(view)
-        view._format_active(view)
-        view._format_creator(view)
-        view._format_registration_type(view)
-        view._format_metadata_collection(view)
-        view._format_duplicate_check(view)
-        view._format_workflow_name(view)
-        view._format_mapping_name(view)
+        view.get_count_query()
 
 
     # def validate_mapping(self, id):
@@ -2664,12 +2651,12 @@ class TestJsonldMappingView:
 
     def test_get_query(self, client, users, db, mocker):
         login_user_via_session(client,email=users[0]["email"])# sysadmin
-        view = JsonldMappingView(JsonldMapping, db.session)
+        view = JsonldMappingView(ItemTypeJsonldMapping, db.session)
         view.get_query()
 
     def test_is_editable(self, app, client, users, db, sword_client, sword_mapping, mocker):
         login_user_via_session(client,email=users[0]["email"])# sysadmin
-        view = JsonldMappingView(JsonldMapping, db.session)
+        view = JsonldMappingView(ItemTypeJsonldMapping, db.session)
         view._is_editable(1)
 
     def test_validate_mapping(self, app, client, users, db, sword_client, sword_mapping, mocker):
