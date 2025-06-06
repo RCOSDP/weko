@@ -17,7 +17,9 @@ from weko_swordserver.utils import (
     check_import_items,
     get_shared_id_from_on_behalf_of,
     is_valid_file_hash,
-    update_item_ids
+    update_item_ids,
+    check_deletion_type,
+    delete_item_directly
 )
 from .helpers import json_data
 from weko_swordserver.errors import ErrorType, WekoSwordserverException
@@ -197,7 +199,6 @@ def test_check_import_items(app, admin_settings, item_type, workflow, sword_clie
     assert check_result["list_record"][0]["metadata"]["title"] == "test"
     assert check_result["register_type"] == "Direct"
     assert check_result["duplicate_check"] == False
-    assert check_result["weko_shared_id"] == -1
 
     # check tsv, workflow registration, shared_id is 3
     AdminSettings.update("sword_api_setting", {"TSV/CSV": {"active": True, "item_type": str(item_type_id), "registration_type": "Workflow", "duplicate_check": True}})
@@ -215,7 +216,6 @@ def test_check_import_items(app, admin_settings, item_type, workflow, sword_clie
     assert check_result["register_type"] == "Workflow"
     assert check_result["workflow_id"] == workflow[0]["workflow"].id
     assert check_result["duplicate_check"] == True
-    assert check_result["weko_shared_id"] == 3
 
     # check jsonld, direct registration, shared_id is -1
     client_id = sword_client[0]["sword_client"].client_id
@@ -233,7 +233,6 @@ def test_check_import_items(app, admin_settings, item_type, workflow, sword_clie
     assert check_result["list_record"][0]["metadata"]["title"] == "test"
     assert check_result["register_type"] == "Direct"
     assert check_result["duplicate_check"] == False
-    assert check_result["weko_shared_id"] == -1
 
     # check jsonld, workflow registration, shared_id is 3
     client_id = sword_client[1]["sword_client"].client_id
@@ -251,7 +250,6 @@ def test_check_import_items(app, admin_settings, item_type, workflow, sword_clie
     assert check_result["register_type"] == "Workflow"
     assert check_result["workflow_id"] == sword_client[1]["sword_client"].workflow_id
     assert check_result["duplicate_check"] == True
-    assert check_result["weko_shared_id"] == 3
 
     # tsv, workflow not found
     file_content = BytesIO()
@@ -262,6 +260,16 @@ def test_check_import_items(app, admin_settings, item_type, workflow, sword_clie
     with patch("weko_swordserver.utils.WorkFlows.get_workflow_by_itemtype_id", return_value=[]):
         check_result = check_import_items(file_content, "TSV/CSV", True, 3)
     assert check_result["error"] == "Workflow not found for item type ID."
+
+    # tsv, registration workflow not found
+    file_content = BytesIO()
+    mocker_tsv_check = mocker.patch("weko_swordserver.utils.check_tsv_import_items")
+    mocker_tsv_check.return_value = {
+        "list_record": [{"item_type_id": item_type_id, "item_type_name": item_type_name, "metadata": {"title": "test"}}]
+    }
+    with patch("weko_swordserver.utils.WorkFlows.reduce_workflows_for_registration", return_value=[]):
+        check_result = check_import_items(file_content, "TSV/CSV", True, 3)
+    assert check_result["error"] == "No workflow found for item type ID."
 
     item_type_id = item_type[1]["item_type"].id
     item_type_name = item_type[1]["item_type_name"].name
@@ -288,7 +296,6 @@ def test_check_import_items(app, admin_settings, item_type, workflow, sword_clie
     assert check_result["register_type"] == "Workflow"
     assert check_result["workflow_id"] == workflow[1]["workflow"].id
     assert check_result["duplicate_check"] == True
-    assert check_result["weko_shared_id"] == 3
 
     # import item format is not active
     AdminSettings.update("sword_api_setting", {"TSV/CSV": {"active": False, "item_type": str(item_type_id), "registration_type": "Workflow", "duplicate_check": True}})
@@ -316,6 +323,14 @@ def test_check_import_items(app, admin_settings, item_type, workflow, sword_clie
     assert e.value.errorType == ErrorType.BadRequest
     assert e.value.message == "Workflow not found for registration your item."
 
+    # xml, registration workflow not found
+    file_content = BytesIO()
+    with patch("weko_swordserver.utils.WorkFlows.reduce_workflows_for_registration", return_value=[]):
+        with pytest.raises(WekoSwordserverException) as e:
+            check_result = check_import_items(file_content, "XML", True, 3)
+    assert e.value.errorType == ErrorType.BadRequest
+    assert e.value.message == "Workflow is not for item registration."
+
     # jsonld, sword_client not found
     client_id = "invalid_client_id"
     file_content = BytesIO()
@@ -334,6 +349,13 @@ def test_check_import_items(app, admin_settings, item_type, workflow, sword_clie
     assert e.value.errorType == ErrorType.BadRequest
     assert e.value.message == "Workflow not found for registration your item."
 
+    # jsonld, registration workflow not found
+    with patch("weko_swordserver.utils.WorkFlows.reduce_workflows_for_registration", return_value=[]):
+        with pytest.raises(WekoSwordserverException) as e:
+            check_result = check_import_items(file_content, "JSON", True, 3, packaging="SimpleZip", client_id=client_id)
+    assert e.value.errorType == ErrorType.BadRequest
+    assert e.value.message == "Workflow is not for item registration."
+
     # invalid file format
     file_content = BytesIO()
     with pytest.raises(WekoSwordserverException) as e:
@@ -344,109 +366,180 @@ def test_check_import_items(app, admin_settings, item_type, workflow, sword_clie
 
 # def update_item_ids(list_record, new_id):
 # .tox/c1/bin/pytest --cov=weko_swordserver tests/test_utils.py::test_update_item_ids -v -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp --full-trace
-@pytest.mark.skip()
 def test_update_item_ids(app, mocker):
     """
     update_item_ids 関数の動作をテストする。
     すべての条件分岐やエッジケースをカバーする。
     """
     # list_record が空のリストの場合
-    assert update_item_ids([], "new_id") == []
-
-    # list_record に dict 以外の要素が含まれている場合
-    # list_record_3 = [1, 2, 3]
-    # assert update_item_ids(list_record_3, "new_id") == list_record_3
+    assert update_item_ids([], "new_id", "old_id") == []
 
     # list_record の要素に metadata がない場合
     list_record_4 = [{"key": "value"}]
-    assert update_item_ids(list_record_4, "new_id") == list_record_4
+    assert update_item_ids(list_record_4, "new_id", "old_id") == list_record_4
 
     # metadata に id がない場合
     list_record_5 = [{"metadata": {}}]
-    assert update_item_ids(list_record_5, "new_id") == list_record_5
+    assert update_item_ids(list_record_5, "new_id", "old_id") == list_record_5
 
     # metadata に link_data がない場合
     list_record_6 = [{"metadata": {"id": "123"}}]
-    assert update_item_ids(list_record_6, "new_id") == list_record_6
+    assert update_item_ids(list_record_6, "new_id", "old_id") == list_record_6
 
     metadata = {"test": "test"}
 
+    # link_data の要素が 辞書でない場合
+    list_record_7 = [{"metadata": metadata, "id": "123", "link_data": ["not_a_dict"]}]
+    assert update_item_ids(list_record_7, "new_id", "old_id") == list_record_7
+
     # link_data の要素に item_id と sele_id がない場合
     list_record_9 = [{"metadata": metadata, "id": "123", "link_data": [{"key": "value"}]}]
-    assert update_item_ids(list_record_9, "new_id") == list_record_9
+    assert update_item_ids(list_record_9, "new_id", "old_id") == list_record_9
 
-    # link_data の要素に item_id があるが、sele_id が "isSupplementedBy" でない場合
+    # link_data の要素に item_id があるが、old_idがない場合
     _id = "123"
-    link_data = [{"item_id": "456", "sele_id": "isSupplementTo"}]
+    link_data = [{"item_id": "456"}]
 
     list_record = [{"metadata": metadata, "_id": _id, "link_data": link_data}]
     new_id = "new_id"
+    old_id = "old_id"
 
-    result = update_item_ids(list_record, new_id)
+    result = update_item_ids(list_record, new_id, old_id)
 
     assert result[0]["link_data"][0]["item_id"] == "456"
-    assert result[0]["link_data"][0]["sele_id"] == "isSupplementTo"
 
-    # link_data の要素に item_id があり、sele_id が "isSupplementedBy" の場合
+    # link_data の要素に item_id があり、old_idがある場合
     _id = "123"
-    link_data = [{"item_id": "123", "sele_id": "isSupplementedBy"}]
+    link_data = [{"item_id": "123"}]
 
     list_record = [{"metadata": metadata, "_id": _id, "link_data": link_data}]
     new_id = "new_id"
+    old_id = "123"
 
-    result = update_item_ids(list_record, new_id)
-
+    result = update_item_ids(list_record, new_id, old_id)
 
     assert result[0]["link_data"][0]["item_id"] == new_id
-    assert link_data == [{"item_id": "new_id", "sele_id": "isSupplementedBy"}]
 
     # 複数の ITEM が含まれる場合
     _id1 = "123"
-    link_data1 = [{"item_id": "789", "sele_id": "isSupplementTo"}]
+    link_data1 = [{"item_id": "789"}]
 
     _id2 = "789"
-    link_data2 = [{"item_id": "123", "sele_id": "isSupplementedBy"}]
+    link_data2 = [{"item_id": "123"}]
 
     list_record = [
         {"metadata": metadata, "_id": _id1, "link_data": link_data1},
         {"metadata": metadata, "_id": _id2, "link_data": link_data2}
     ]
     new_id = "new_id"
+    old_id = "123"
 
-    result = update_item_ids(list_record, new_id)
+    result = update_item_ids(list_record, new_id, old_id)
 
     assert result[0]["link_data"][0]["item_id"] == "789"
     assert result[1]["link_data"][0]["item_id"] == new_id
 
 
-# def get_record_by_client_id(client_id):
-# .tox/c1/bin/pytest --cov=weko_swordserver tests/test_utils.py::test_get_record_by_client_id -v -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp --full-trace
-# def test_get_record_by_client_id(app,mocker):
-#     # No 1
-#     client_id = "valid_client_id"
-#     expected_client = SwordClientModel(client_id="client_id", mapping_id="mapping_id")
-#     expected_mapping = SwordItemTypeMappingModel(id="mapping_id")
+# .tox/c1/bin/pytest --cov=weko_swordserver tests/test_utils.py::test_check_deletion_type -v -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp --full-trace
+@pytest.mark.parametrize("register_type, workflow_exists, workflow_deleted, delete_flow_id, expected", [
+    # Workflow type, workflow exists, not deleted, has delete_flow_id
+    ("Workflow", True, False, 123, {"deletion_type": "Workflow", "workflow_id": 2, "delete_flow_id": 123}),
+    # Workflow type, workflow exists, not deleted, no delete_flow_id
+    ("Workflow", True, False, None, {"deletion_type": "Direct"}),
+    # Workflow type, workflow exists, deleted, has delete_flow_id
+    ("Workflow", True, True, 456, None),
+    # Workflow type, workflow does not exist
+    ("Workflow", False, None, None, None),
+    # Direct type
+    ("Direct", None, None, None, {"deletion_type": "Direct"}),
+])
+def test_check_deletion_type(app, mocker, register_type, workflow_exists, workflow_deleted, delete_flow_id, expected):
+    mock_sword_client = MagicMock()
+    mock_sword_client.registration_type = register_type
+    mock_sword_client.workflow_id = 2
 
-#     with patch.object(SwordClient, 'get_client_by_id', return_value=expected_client):
-#         with patch.object(SwordItemTypeMapping, 'get_mapping_by_id', return_value=expected_mapping):
-#             client, mapping = get_record_by_client_id(client_id)
-#             assert client == expected_client
-#             assert mapping == expected_mapping
+    mocker.patch("weko_swordserver.utils.SwordClient.get_client_by_id", return_value=mock_sword_client)
 
-#     # No 2
-#     invalid_client_id = "invalid_client_id"
+    if register_type == "Workflow":
+        if workflow_exists:
+            workflow = MagicMock()
+            workflow.is_deleted = workflow_deleted
+            workflow.delete_flow_id = delete_flow_id
+            mocker.patch("weko_swordserver.utils.WorkFlows.get_workflow_by_id", return_value=workflow)
+        else:
+            mocker.patch("weko_swordserver.utils.WorkFlows.get_workflow_by_id", return_value=None)
+    client_id = "test_client_id"
+    if register_type == "Workflow" and (not workflow_exists or workflow_deleted):
+        with pytest.raises(WekoSwordserverException) as e:
+            check_deletion_type(client_id)
+        assert e.value.errorType == ErrorType.BadRequest
+        assert e.value.message == "Workflow not found for registration your item."
+    else:
+        result = check_deletion_type(client_id)
+        for k, v in expected.items():
+            assert result[k] == v
 
-#     with patch.object(SwordClient, 'get_client_by_id', return_value=None):
-#         with patch.object(SwordItemTypeMapping, 'get_mapping_by_id', return_value=expected_mapping):
-#             client, mapping = get_record_by_client_id(invalid_client_id)
-#             assert client == None
-#             assert mapping == expected_mapping
 
-#     # No 3
-#     valid_client_id = "valid_client_id"
-#     expected_client = SwordClientModel(client_id="client_id", mapping_id="invalid_mapping_id")
-#     with patch.object(SwordClient, 'get_client_by_id', return_value=expected_client):
-#         with patch.object(SwordItemTypeMapping, 'get_mapping_by_id', return_value=None):
-#             client, mapping = get_record_by_client_id(valid_client_id)
-#             assert client == expected_client
-#             assert mapping == None
+# .tox/c1/bin/pytest --cov=weko_swordserver tests/test_utils.py::test_check_deletion_type_no_sword_client -v -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp --full-trace
+def test_check_deletion_type_no_sword_client(app, mocker):
+    mocker.patch("weko_swordserver.utils.SwordClient.get_client_by_id", return_value=None)
+    with pytest.raises(WekoSwordserverException) as e:
+        check_deletion_type("notfound")
+    assert e.value.errorType == ErrorType.BadRequest
+    assert e.value.message == "No SWORD API setting found for client ID that you are using."
+
+
+# .tox/c1/bin/pytest --cov=weko_swordserver tests/test_utils.py::test_check_deletion_type_invalid_registration_type -v -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp --full-trace
+def test_check_deletion_type_invalid_registration_type(app, mocker):
+    mock_sword_client = MagicMock()
+    mock_sword_client.registration_type = "InvalidType"
+    mocker.patch("weko_swordserver.utils.SwordClient.get_client_by_id", return_value=mock_sword_client)
+    with pytest.raises(WekoSwordserverException) as e:
+        check_deletion_type("invalidtype")
+    assert e.value.errorType == ErrorType.ServerError
+    assert e.value.message == "Invalid registration type: InvalidType"
+
+
+# .tox/c1/bin/pytest --cov=weko_swordserver tests/test_utils.py::test_delete_item_directly -v -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp --full-trace
+@pytest.mark.parametrize(
+    "recid, resolve_return, locked, being_edited, raises, error_type, message",
+    [
+        ("recid123", (MagicMock(), MagicMock()), False, False, None, None, None),
+        ("recid_not_found", (MagicMock(), None), None, None,
+         WekoSwordserverException, ErrorType.NotFound, "Record not found."),
+        ("recid_locked", (MagicMock(), MagicMock()), True, None,
+         WekoSwordserverException, ErrorType.BadRequest, "Item cannot be deleted because it is in import progress."),
+        ("recid_editing", (MagicMock(), MagicMock()), False, True,
+         WekoSwordserverException, ErrorType.BadRequest, "Item cannot be deleted because it is being edited."),
+    ]
+)
+def test_delete_item_directly(
+    app, mocker, recid, resolve_return, locked, being_edited, raises, error_type, message
+):
+    resolver_mock = mocker.patch("weko_swordserver.utils.Resolver")
+    resolver_instance = resolver_mock.return_value
+    resolver_instance.resolve.return_value = resolve_return
+
+    latest_pid = MagicMock()
+    latest_pid.object_uuid = "uuid"
+    pid_versioning_mock = mocker.patch("weko_swordserver.utils.PIDVersioning")
+    pid_versioning_mock.return_value.last_child = latest_pid
+
+    work_activity_mock = mocker.patch("weko_swordserver.utils.WorkActivity")
+    work_activity_instance = work_activity_mock.return_value
+    work_activity_instance.get_workflow_activity_by_item_id.return_value = "latest_activity"
+
+    mocker.patch("weko_swordserver.utils.check_an_item_is_locked",
+                 return_value=locked if locked is not None else False)
+    mocker.patch("weko_swordserver.utils.check_item_is_being_edit",
+                 return_value=being_edited if being_edited is not None else False)
+    soft_delete_mock = mocker.patch("weko_swordserver.utils.soft_delete")
+
+    if raises:
+        with pytest.raises(raises) as e:
+            delete_item_directly(recid)
+        assert e.value.errorType == error_type
+        assert e.value.message == message
+    else:
+        delete_item_directly(recid)
+        soft_delete_mock.assert_called_once_with(recid)

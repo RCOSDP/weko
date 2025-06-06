@@ -398,15 +398,6 @@ def update_item_ids(list_record, new_id, old_id):
     Raises:
         ValueError: If list_record is not a list.
     """
-    # Create a dictionary to map identifiers to their respective items
-    for item in list_record:
-        if not isinstance(item, dict):
-            continue
-
-        metadata = item.get("metadata")
-        if not metadata or not item.get("_id"):
-            continue  # Skip if metadata is missing or doesn't have "_id"
-
     # Iterate through each ITEM in list_record
     for item in list_record:
         metadata = item.get("metadata")
