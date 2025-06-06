@@ -1064,7 +1064,7 @@ def prepare_edit_item(id=None, community=None):
                 recid.object_uuid
             )
             workflow = get_workflow_by_item_type_id(
-                item_type.name_id, item_type_id
+                item_type.name_id, item_type_id, with_deleted=False
             )
             if not workflow:
                 return jsonify(
