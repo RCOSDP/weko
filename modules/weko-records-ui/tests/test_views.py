@@ -639,6 +639,7 @@ def test_set_pdfcoverpage_header_acl_guest(app, client, records, pdfcoverpageset
         # (7, True),
     ],
 )
+@pytest.mark.timeout(300)
 def test_set_pdfcoverpage_header_acl_error(app, client, records, users, id, result, pdfcoverpagesetting):
     login_user_via_session(client=client, email=users[id]["email"])
     url = url_for("weko_records_ui.set_pdfcoverpage_header",_external=True)
