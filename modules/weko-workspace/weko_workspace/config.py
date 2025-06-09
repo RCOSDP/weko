@@ -103,6 +103,7 @@ WEKO_WORKSPACE_AUTOFILL_JAMAS_REQUIRED_ITEM = [
     "volume",
     "issue",
     "pageStart",
+    "numPages",
     "date",
     "relation",
     "publisher",
@@ -836,24 +837,54 @@ WEKO_WORKSPACE_JALC_API_URL = 'https://api.japanlinkcenter.org/dois/'
 WEKO_WORKSPACE_DATACITE_API_URL = 'https://api.datacite.org/dois/'
 """DataCite API URL"""
 
-WEKO_ITEMS_AUTOFILL_CINII_REQUIRED_ITEM = [
-    "title",
-    "alternative",
-    "creator",
-    "contributor",
-    "description",
-    "subject",
-    "sourceTitle",
-    "volume",
-    "issue",
-    "pageStart",
-    "pageEnd",
-    "numPages",
-    "date",
-    "publisher",
-    "sourceIdentifier",
-    "relation"
+WEKO_WORKSPACE_CINII_REQUIRED_ITEM = [
+    'title',
+    'creator',
+    'description',
+    'subject',
+    'sourceTitle',
+    'volume',
+    'issue',
+    'pageStart',
+    'pageEnd',
+    'numPages',
+    'date',
+    'publisher',
+    'sourceIdentifier',
+    'relation'
 ]
+"""CiNii required item"""
+
+WEKO_WORKSPACE_JALC_REQUIRED_ITEM = [
+    'title',
+    'creator',
+    'sourceTitle',
+    'volume',
+    'issue',
+    'pageStart',
+    'pageEnd',
+    'numPages',
+    'date',
+    'publisher',
+    'sourceIdentifier',
+    'relation'
+]
+"""JaLC required item"""
+
+WEKO_WORKSPACE_DATACITE_REQUIRED_ITEM = [
+    'title',
+    'creator',
+    'contributor',
+    'description',
+    'subject',
+    'sourceTitle',
+    'sourceIdentifier',
+    'relation'
+]
+"""DataCite required item"""
+
+WEKO_WORKSPACE_DATA_DEFAULT_LANGUAGE = 'en'
+"""Default language for data"""
 
 WEKO_RECORDS_UI_LICENSE_DICT = [
     {
