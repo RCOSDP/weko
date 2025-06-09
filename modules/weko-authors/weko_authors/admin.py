@@ -134,8 +134,8 @@ class ExportView(BaseView):
     def check_status(self):
         """Api check export status."""
 
-        # stop_pointを確認
-        stop_point= current_cache.get(
+        # Get the point where processing paused
+        stop_point = current_cache.get(
             current_app.config["WEKO_AUTHORS_EXPORT_CACHE_STOP_POINT_KEY"]
         )
 
@@ -161,7 +161,7 @@ class ExportView(BaseView):
         status['filename'] = ''
         file_instance = FileInstance.get_by_uri(status.get('file_uri', ''))
         if file_instance:
-            # export_targetによってfilenameを変更
+            # Change filename with export_target
             export_target = current_cache.get(
                 current_app.config['WEKO_AUTHORS_EXPORT_TARGET_CACHE_KEY']
             )
@@ -187,12 +187,11 @@ class ExportView(BaseView):
         """Process export authors."""
         data = request.get_json()
         export_target = data.get("isTarget", "")
-        #実行時に以前のexport_urlを削除
+        # Remove previous export url.
         delete_export_url()
         if export_target == "author_db":
-            # 一時ファイルの作成
             temp_folder_path = current_app.config.get(
-                "WEKO_AUTHORS_EXPORT_TEMP_FOLDER_PATH"
+                "WEKO_AUTHORS_EXPORT_TMP_DIR"
             )
             os.makedirs(temp_folder_path, exist_ok=True)
             prefix = (
@@ -205,7 +204,7 @@ class ExportView(BaseView):
             ) as temp_file:
                 temp_file_path = temp_file.name
 
-            # redisに一時ファイルのパスを保存
+            # cache the temporary file path
             update_cache_data(
                 current_app.config["WEKO_AUTHORS_EXPORT_CACHE_TEMP_FILE_PATH_KEY"],
                 temp_file_path,
@@ -225,7 +224,7 @@ class ExportView(BaseView):
         result = {'status': 'fail'}
         try:
             status = get_export_status()
-            # stop_pointがあるならstop_pointとtemp_file_pathを削除
+            # if stop_point is exists, delete stop_point and temp_file_path
             if current_cache.get(
                 current_app.config["WEKO_AUTHORS_EXPORT_CACHE_STOP_POINT_KEY"]
             ):
@@ -251,14 +250,13 @@ class ExportView(BaseView):
         })
 
 
-    # 再開用メソッド
     @author_permission.require(http_exception=403)
     @expose('/resume', methods=['POST'])
     def resume(self):
         """Resume export progress."""
 
         delete_export_url()
-        temp_folder_path = current_app.config.get("WEKO_AUTHORS_EXPORT_TEMP_FOLDER_PATH")
+        temp_folder_path = current_app.config.get("WEKO_AUTHORS_EXPORT_TMP_DIR")
         os.makedirs(temp_folder_path, exist_ok=True)
         prefix = (
             current_app.config["WEKO_AUTHORS_EXPORT_TMP_PREFIX"]
@@ -319,8 +317,9 @@ class ImportView(BaseView):
                 )
                 list_import_data = result.get('list_import_data')
             elif target == 'author_db':
-                temp_folder_path = current_app.config.get(
-                    "WEKO_AUTHORS_IMPORT_TEMP_FOLDER_PATH"
+                temp_folder_path = os.path.join(
+                    tempfile.gettempdir(),
+                    current_app.config.get("WEKO_AUTHORS_IMPORT_TMP_DIR")
                 )
                 os.makedirs(temp_folder_path, exist_ok=True)
                 prefix = (
@@ -349,7 +348,7 @@ class ImportView(BaseView):
                 counts = result.get("counts")
                 max_page = result.get("max_page")
 
-                # インポートタブのチェック結果一時ファイルがあれば削除
+                # Delete temporary files if checked results
                 band_file_path = current_cache.get(
                     current_app.config["WEKO_AUTHORS_IMPORT_CACHE_BAND_CHECK_USER_FILE_PATH_KEY"]
                 )
@@ -378,9 +377,11 @@ class ImportView(BaseView):
         temp_file_path = current_cache.get(
                 current_app.config["WEKO_AUTHORS_IMPORT_CACHE_USER_TSV_FILE_KEY"]
         )
-        temp_folder_path = current_app.config.get("WEKO_AUTHORS_IMPORT_TEMP_FOLDER_PATH")
+        temp_folder_path = os.path.join(
+            tempfile.gettempdir(),
+            current_app.config.get("WEKO_AUTHORS_IMPORT_TMP_DIR")
+        )
 
-        # checkファイルパスの作成
         base_file_name = os.path.splitext(os.path.basename(temp_file_path))[0]
         check_file_name = f"{base_file_name}-check"
         part_check_file_name = f"{check_file_name}-part{page_number}"
@@ -393,7 +394,7 @@ class ImportView(BaseView):
     @author_permission.require(http_exception=403)
     @expose('/check_file_download', methods=['POST'])
     def check_file_download(self):
-        """インポートチェック画面でダウンロード処理"""
+        """Download process on the import check screen."""
         band_file_path = current_cache.get(
             current_app.config["WEKO_AUTHORS_IMPORT_CACHE_BAND_CHECK_USER_FILE_PATH_KEY"]
         )
@@ -438,7 +439,7 @@ class ImportView(BaseView):
             for affiliation_id in records:
                 group_tasks.append(import_affiliation_id.s(affiliation_id))
         elif is_target == "author_db":
-            # 既にある結果一時ファイルの削除
+            # Delete existing result temporary files
             result_over_max_file_path = current_cache.get(
                 current_app.config["WEKO_AUTHORS_IMPORT_CACHE_RESULT_OVER_MAX_FILE_PATH_KEY"]
             )
@@ -467,7 +468,7 @@ class ImportView(BaseView):
                     current_app.logger.error(f"Error deleting {result_file_path}: {e}")
                     traceback.print_exc()
 
-            # 前回のimport結果サマリーを削除
+            # Delete previous import result summary
             result_summary = current_cache.get(
                 current_app.config["WEKO_AUTHORS_IMPORT_CACHE_RESULT_SUMMARY_KEY"]
             )
@@ -478,7 +479,7 @@ class ImportView(BaseView):
 
             max_page_for_import_tab = data.get("max_page")
 
-            # フロントの最大表示数分だけrecordsを確保
+            # Ensure records for the maximum number of front views
             records, reached_point, count = prepare_import_data(max_page_for_import_tab)
             task_ids =[]
 
@@ -511,7 +512,6 @@ class ImportView(BaseView):
                 })
                 task_ids.append(task.task_id)
 
-            # WEKO_AUTHORS_IMPORT_MAX_NUM_OF_DISPLAYSを超えた分を別のタスクで処理
             if count > current_app.config.get("WEKO_AUTHORS_IMPORT_MAX_NUM_OF_DISPLAYS"):
                 update_cache_data(
                     current_app.config.get("WEKO_AUTHORS_IMPORT_CACHE_FORCE_CHANGE_MODE_KEY"),
@@ -621,7 +621,7 @@ class ImportView(BaseView):
     @author_permission.require(http_exception=403)
     @expose('/result_download', methods=['POST'])
     def result_file_download(self):
-        """インポート結果画面でダウンロード処理"""
+        """Download process on the import result screen."""
         json = request.get_json().get("json")
         result_file_path = current_cache.get(
             current_app.config["WEKO_AUTHORS_IMPORT_CACHE_RESULT_FILE_PATH_KEY"]

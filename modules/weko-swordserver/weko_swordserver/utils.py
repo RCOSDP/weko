@@ -346,14 +346,14 @@ def check_import_items(
                     errorType=ErrorType.BadRequest
                 )
 
-        if not WorkFlows().reduce_workflows_for_registration([workflow]):
-            current_app.logger.error(
-                f"Workflow is not for item registration: {workflow_id}"
-            )
-            raise WekoSwordserverException(
-                "Workflow is not for item registration.",
-                errorType=ErrorType.BadRequest
-            )
+            if not WorkFlows().reduce_workflows_for_registration([workflow]):
+                current_app.logger.error(
+                    f"Workflow is not for item registration: {workflow_id}"
+                )
+                raise WekoSwordserverException(
+                    "Workflow is not for item registration.",
+                    errorType=ErrorType.BadRequest
+                )
 
         check_result.update(
             check_jsonld_import_items(
@@ -398,15 +398,6 @@ def update_item_ids(list_record, new_id, old_id):
     Raises:
         ValueError: If list_record is not a list.
     """
-    # Create a dictionary to map identifiers to their respective items
-    for item in list_record:
-        if not isinstance(item, dict):
-            continue
-
-        metadata = item.get("metadata")
-        if not metadata or not item.get("_id"):
-            continue  # Skip if metadata is missing or doesn't have "_id"
-
     # Iterate through each ITEM in list_record
     for item in list_record:
         metadata = item.get("metadata")

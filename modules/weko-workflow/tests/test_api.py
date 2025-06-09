@@ -1,17 +1,16 @@
-from datetime import datetime
-from unittest.mock import MagicMock, patch
-from sqlalchemy.exc import SQLAlchemyError
-
-from flask_login.utils import login_user
 import json
 import uuid
+from datetime import datetime
+from unittest.mock import MagicMock, call, patch
 
-from flask_login.utils import login_user
 import pytest
-from unittest.mock import patch
-from weko_notifications import Notification
+from flask_login.utils import login_user
+from marshmallow import ValidationError
+from requests import HTTPError
+from sqlalchemy.exc import SQLAlchemyError
 
-from weko_workflow.api import Flow, WorkActivity, WorkFlow, GetCommunity
+from weko_notifications.notifications import Notification
+from weko_workflow.api import Flow, GetCommunity, WorkActivity, WorkFlow
 
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_api.py::test_Flow_create_flow -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_Flow_create_flow(app, client, users, db, action_data):
@@ -435,6 +434,147 @@ def test_workactivity_get_params_for_registrant(app, users, db_register, db_reco
     assert recid == db_records[2][0]
     assert actor_id == users[2]["id"]
     assert actor_name == db_user_profile.username
+
+
+@pytest.fixture
+def mock_create_item_registered(mocker):
+    return mocker.patch.object(
+        Notification, "create_item_registered",
+        return_value=Notification()
+    )
+
+
+@pytest.fixture
+def mock_send(mocker):
+    return mocker.patch.object(Notification, "send")
+
+
+@pytest.fixture
+def mock_inbox_url(mocker):
+    return mocker.patch(
+        "weko_workflow.api.inbox_url",
+        return_value="http://example.com/inbox"
+    )
+
+
+@pytest.fixture
+def mock_logger(mocker):
+    return mocker.patch("weko_workflow.api.current_app.logger")
+
+
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_api.py::test_workactivity_notify_about_activity_wiht_case_success -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_workactivity_notify_about_activity_wiht_case_success(
+    app, mock_create_item_registered, mock_send, mock_inbox_url, mock_logger
+):
+    activity = _Activity(activity_id=1, title="test")
+    recid = MagicMock(pid_value="123.4")
+    getter = MagicMock(return_value=({1, 2}, recid, 1, "actor_name"))
+    expected_calls = [
+        call(1, "123", 1, context_id=1, actor_name="actor_name", object_name="test"),
+        call(2, "123", 1, context_id=1, actor_name="actor_name", object_name="test"),
+    ]
+    instance = WorkActivity()
+    instance._notify_about_activity_wiht_case(
+        activity, "test_case", getter, Notification.create_item_registered
+    )
+
+    assert mock_create_item_registered.call_args_list == expected_calls
+    assert mock_send.call_count == 2
+    mock_logger.info.assert_called_once_with(
+        "2 notification(s) sent for test_case: 1"
+    )
+
+
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_api.py::test_workactivity_notify_about_activity_wiht_case_sql_error -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_workactivity_notify_about_activity_wiht_case_sql_error(
+    app, mock_create_item_registered, mock_send, mock_inbox_url, mock_logger
+):
+    activity = _Activity(activity_id=1, title="test")
+    getter = MagicMock(side_effect=SQLAlchemyError)
+
+    instance = WorkActivity()
+    instance._notify_about_activity_wiht_case(
+        activity, "test_case", getter, Notification.create_item_registered
+    )
+
+    mock_logger.error.assert_called_once_with(
+        "Failed to get notification parameters for activity: 1"
+    )
+
+
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_api.py::test_workactivity_notify_about_activity_wiht_case_valid_error -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_workactivity_notify_about_activity_wiht_case_valid_error(
+    app, mock_create_item_registered, mock_send, mock_inbox_url, mock_logger
+):
+    activity = _Activity(activity_id=1, title="test")
+    recid = MagicMock(pid_value="123.4")
+    getter = MagicMock(return_value=({1, 2}, recid, 1, "actor_name"))
+    mock_create_item_registered.side_effect = ValidationError("Invalid data")
+
+    instance = WorkActivity()
+    instance._notify_about_activity_wiht_case(
+        activity, "test_case", getter, Notification.create_item_registered
+    )
+    mock_logger.error.assert_called_once_with(
+        "Failed to send notification for test_case: 1"
+    )
+
+
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_api.py::test_workactivity_notify_about_activity_wiht_case_http_error -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_workactivity_notify_about_activity_wiht_case_http_error(
+    app, mock_create_item_registered, mock_send, mock_inbox_url, mock_logger
+):
+    activity = _Activity(activity_id=1, title="test")
+    recid = MagicMock(pid_value="123.4")
+    getter = MagicMock(return_value=({1, 2}, recid, 1, "actor_name"))
+    mock_send.side_effect = HTTPError("HTTP error occurred")
+
+    instance = WorkActivity()
+    instance._notify_about_activity_wiht_case(
+        activity, "test_case", getter, Notification.create_item_registered
+    )
+
+    mock_logger.error.assert_called_once_with(
+        "Failed to send notification for test_case: 1"
+    )
+
+
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_api.py::test_workactivity_notify_about_activity_wiht_case_exception -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_workactivity_notify_about_activity_wiht_case_exception(
+    app, mock_create_item_registered, mock_send, mock_inbox_url, mock_logger
+):
+    activity = _Activity(activity_id=1, title="test")
+    recid = MagicMock(pid_value="123.4")
+    getter = MagicMock(return_value=({1, 2}, recid, 1, "actor_name"))
+    mock_create_item_registered.side_effect = Exception("Unexpected error")
+
+    instance = WorkActivity()
+    instance._notify_about_activity_wiht_case(
+        activity, "test_case", getter, Notification.create_item_registered
+    )
+
+    mock_logger.error.assert_called_once_with(
+        "Unexpected error had occurred during sending notification for activity: 1"
+    )
+
+
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_api.py::test_workactivity_notify_about_activity_wiht_case_invalid_activity -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_workactivity_notify_about_activity_wiht_case_invalid_activity(
+    app, mock_create_item_registered, mock_send, mock_inbox_url, mock_logger
+):
+    activity = MagicMock()
+    recid = MagicMock(pid_value="123.4")
+    getter = MagicMock(return_value=({1, 2}, recid, 1, "actor_name"))
+
+    instance = WorkActivity()
+    instance._notify_about_activity_wiht_case(
+        activity, "test_case", getter, Notification.create_item_registered
+    )
+
+    mock_create_item_registered.assert_not_called()
+    mock_send.assert_not_called()
+    mock_logger.info.assert_not_called()
+    mock_logger.error.assert_not_called()
 
 
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_api.py::test_workactivity_get_params_for_approver -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp

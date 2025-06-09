@@ -274,10 +274,10 @@ def post_service_document():
             or not is_valid_file_hash(digest.split("SHA-256=")[-1], file)
         ):
             current_app.logger.error(
-                "Request body and digest verification failed."
+                "Failed to verify request body and digest."
             )
             raise WekoSwordserverException(
-                "Request body and digest verification failed.",
+                "Failed to verify request body and digest.",
                 ErrorType.DigestMismatch
             )
 
@@ -371,49 +371,49 @@ def post_service_document():
                 - str: Record ID if applicable, otherwise None.
                 - str: Error message if any, otherwise None.
         """
-        activity_id, recid, error = None, None, None
+        activity_id, recid, action, error = None, None, None, None
         if register_type == "Direct":
             import_result = import_items_to_system(
                 item, request_info=request_info
             )
             if not import_result.get("success"):
                 current_app.logger.error(
-                    f"Error in import_items_to_system: {item.get('error_id')}"
+                    f"Error in import_items_to_system: {import_result.get('error_id')}"
                 )
-                error = str(item.get('error_id'))
+                error = str(import_result.get('error_id'))
             else:
                 recid = str(import_result.get("recid"))
                 notify_item_imported(
                     current_user.id, recid, current_user.id, shared_id=shared_id
                 )
-                send_mail_direct_registered(recid, current_user.id)
+                send_mail_direct_registered(recid, current_user.id, shared_id)
 
         elif register_type == "Workflow":
-            url, recid, _ , error = import_items_to_activity(
+            url, recid, action , error = import_items_to_activity(
                 item, request_info=request_info
             )
             activity_id = str(url.split("/")[-1])
 
-        return activity_id, recid, error
+        return activity_id, recid, action, error
 
-    response = {}
     warns = []
     activity_id = None
     recid = None
+    action = None
     # Process and register items
     for item in check_result["list_record"]:
         item["root_path"] = os.path.join(data_path, "data")
         try:
-            activity_id, recid, error = process_item(item, request_info)
+            activity_id, recid, action, error = process_item(item, request_info)
             if error:
-                warns.append((error, activity_id, recid))
+                warns.append((activity_id, recid, error))
             if file_format == "JSON":
                 update_item_ids(
                     check_result["list_record"], recid, item.get("_id"))
         except Exception as ex:
             current_app.logger.error(f"Unexpected error: {ex}")
             traceback.print_exc()
-            warns.append(("Unexpected error: {ex}", activity_id, recid))
+            warns.append((activity_id, recid, "Unexpected error"))
             continue  # Skip to the next iteration
 
     # Clean up temporary directory
@@ -421,40 +421,43 @@ def post_service_document():
         shutil.rmtree(data_path)
         TempDirInfo().delete(data_path)
 
-    current_app.logger.info(
-        f"Items imported via SWORD api by {request.oauth.client.name} (recid={recid})"
-    )
+    response = {}
     if len(warns) > 0:
         if register_type == "Direct":
-            raise WekoSwordserverException(
-                "Failed to import item.", ErrorType.ServerError)
+            message = ", ".join([error for _, _, error in warns if error])
         else:
-            error_messages = "; ".join(
+            message = "; ".join(
                 [
                     "{error} Please open the following URL to continue "
-                    "with the remaining operations.{url}: Item id: {recid}."
+                    "with the remaining operations: {url}."
                     .format(
                         error=error,
                         url=url_for(
                             "weko_workflow.display_activity",
                             activity_id=activity_id, _external=True
-                        ),
-                        recid=recid
+                        )
                     )
-                    for error, activity_id, recid in warns
+                    for activity_id, recid, error in warns
                 ]
             )
-
-        response = jsonify(
-            _create_error_document(
-                ErrorType.ContentMalformed.type, error_messages
-            )
+        current_app.logger.error(
+            "Failed to import item; {}. via SWORD api by {}."
+            .format(message, request.oauth.client.name)
         )
+        raise WekoSwordserverException(
+                f"Failed to import item; {message}", ErrorType.BadRequest
+            )
+
+    current_app.logger.info(
+        "Items imported via SWORD api by {} (recid={})"
+        .format(request.oauth.client.name, recid)
+    )
+    if register_type == "Direct":
+        response = jsonify(_get_status_document(recid)), 201
     else:
-        if register_type == "Direct":
-            response = jsonify(_get_status_document(recid))
-        elif register_type == "Workflow":
-            response = jsonify(_get_status_workflow_document(activity_id,recid))
+        response = jsonify(
+            _get_status_workflow_document(activity_id, recid)
+        ), 201 if action == "end_action" else 202
 
     return response
 
@@ -571,10 +574,10 @@ def put_object(recid):
             or not is_valid_file_hash(digest.split("SHA-256=")[-1], file)
         ):
             current_app.logger.error(
-                "Request body and digest verification failed."
+                "Failed to verify request body and digest."
             )
             raise WekoSwordserverException(
-                "Request body and digest verification failed.",
+                "Failed to verify request body and digest.",
                 ErrorType.DigestMismatch
             )
 
@@ -606,6 +609,14 @@ def put_object(recid):
             f"Item check error: {check_result.get('error')}",
             ErrorType.ContentMalformed
         )
+
+    if len(check_result.get("list_record", [])) > 1:
+        msg = (
+            "Multiple items found in import file. "
+            "Only one item is allowed for PUT requests."
+        )
+        current_app.logger.error(msg)
+        raise WekoSwordserverException(msg, ErrorType.ContentMalformed)
 
     # only first item
     item = (check_result.get("list_record") or [{}])[0]
@@ -669,44 +680,51 @@ def put_object(recid):
     if register_type == "Direct":
         # Check cache if the item is being edited
         if not lock_item_will_be_edit(recid):
-            current_app.logger.error(f"Item {recid} is being edited.")
-            raise WekoSwordserverException(
-                f"Item {recid} is being edited.",
-                ErrorType.BadRequest
-            )
+            msg = f"Item {recid} will be edited by another process."
+            current_app.logger.error(msg)
+            raise WekoSwordserverException(msg, ErrorType.BadRequest)
+
         import_result = import_items_to_system(item, request_info=request_info)
         if not import_result.get("success"):
             current_app.logger.error(
-                f"Error in import_items_to_system: {item.get('error_id')}"
+                "Failed to update item {}: {}; via SWORD api by {}."
+                .format(recid, item.get("error_id"), request.oauth.client.name)
             )
             raise WekoSwordserverException(
-                f"Item import error:: {import_result.get('error_id')}",
-                ErrorType.ServerError
+                "Failed to update item {}: {}."
+                .format(recid, import_result.get("error_id")),
+                ErrorType.BadRequest
             )
-        send_mail_direct_registered(recid, current_user.id)
+        send_mail_direct_registered(recid, current_user.id, shared_id)
         notify_item_imported(
             current_user.id, recid, current_user.id, shared_id=shared_id
         )
-        response = jsonify(_get_status_document(recid))
+        response = jsonify(_get_status_document(recid)), 200
 
     elif register_type == "Workflow":
-        url, _, _, error = import_items_to_activity(
+        url, _, action, error = import_items_to_activity(
             item, request_info=request_info
         )
         activity_id = url.split("/")[-1]
 
         if error and url:
+            current_app.logger.error(
+                "Failed to update item {recid}: {error}; via SWORD api by {name}."
+                .format(recid=recid, error=error, name=request.oauth.client.name)
+            )
             raise WekoSwordserverException(
-                "Error: {error}. Please open the following URL to continue "
-                "with the remaining operations.{url}: Item id: {recid}."
-                .format(error=error, url=url, recid=recid),
+                "Failed to update item {recid}: {error}. Please open the "
+                "following URL to continue with the remaining operations: {url}."
+                .format(recid=recid, error=error, url=url),
                 ErrorType.BadRequest
             )
         if error:
             raise WekoSwordserverException(
                 f"Unexpected error: {error}.", ErrorType.ServerError
             )
-        response = jsonify(_get_status_workflow_document(activity_id, recid))
+        response = jsonify(
+            _get_status_workflow_document(activity_id, recid)
+        ), 200 if action == "end_action" else 202
     else:
         if os.path.exists(data_path):
             shutil.rmtree(data_path)
@@ -721,7 +739,8 @@ def put_object(recid):
         TempDirInfo().delete(data_path)
 
     current_app.logger.info(
-        f"Item updated via SWORD api by {request.oauth.client.name} (recid={recid})"
+        "Item updated via SWORD api by {} (recid={})"
+        .format(request.oauth.client.name, recid)
     )
 
     return response
@@ -765,9 +784,13 @@ def get_status_document(recid):
     return jsonify(status_document)
 
 def _get_status_document(recid):
-    """
-    :param recid: Record Identifier.
-    :returns: A :class:`sword3common.StatusDocument` instance.
+    """Generate a Status Document for a given record.
+
+    Args:
+        recid (str): Item identifier (recid).
+
+    Returns:
+        dict: A Status Document.
     """
 
     # Get record
@@ -816,11 +839,11 @@ def _get_status_document(recid):
             "deleteObject" : True,
         },
         "eTag" : str(record.revision_id),
-        "fileSet" : {
+        "fileSet" : {                   # Not implemented
             # "@id" : "",
             # "eTag" : ""
         },
-        "metadata" : {
+        "metadata" : {                  # Not implemented
             # "@id" : "",
             # "eTag" : ""
         },
@@ -996,11 +1019,10 @@ def delete_object(recid):
         else:
             # Check cache if the item is being edited
             if not lock_item_will_be_edit(recid):
-                current_app.logger.error(f"Item {recid} is being edited.")
-                raise WekoSwordserverException(
-                    f"Item {recid} is being edited.",
-                    ErrorType.BadRequest
-                )
+                msg = f"Item {recid} will be edited by another process."
+                current_app.logger.error(msg)
+                raise WekoSwordserverException(msg, ErrorType.BadRequest)
+
             delete_item_directly(recid, request_info=request_info)
             notify_item_deleted(
                 current_user.id, recid, current_user.id, shared_id=shared_id

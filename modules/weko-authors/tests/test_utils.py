@@ -5,6 +5,7 @@ import copy
 from mock import patch, MagicMock, Mock
 from flask import current_app
 import datetime
+import json
 from unittest.mock import mock_open
 
 from invenio_indexer.api import RecordIndexer
@@ -426,22 +427,21 @@ def test_getEncode():
     assert result == "utf-8"
 
     class MockOpen:
-        def __init__(self, path, encoding=None):
+        def __init__(self, path, mode, encoding=None):
             self.path=path
             self.encoding = encoding
         def read(self):
-            if self.encoding!="not_exist_encode":
-                raise UnicodeDecodeError(self.encoding,b"test",0,1,"test_reason")
+            return b"test"
         def __enter__(self):
             return self
         def __exit__(self, exc_type, exc_value, traceback):
             pass
-    def mock_open(path, encoding=None):
-        return MockOpen(path,encoding)
+    def mock_open(path, mode, encoding=None):
+        return MockOpen(path, mode,encoding)
 
     with patch("builtins.open",side_effect=mock_open):
         result = getEncode("test_path")
-        assert result == ""
+        assert result == "ascii"
 
 
 # def unpackage_and_check_import_file(file_format, file_name, temp_file, mapping_ids):
@@ -1243,8 +1243,6 @@ def test_flatten_authors_mapping():
                  "is_deleted"
                  ]
     all,keys = flatten_authors_mapping(data)
-    print(all)
-    print(keys)
     assert all == test_all
     assert keys == test_keys
 
@@ -1274,7 +1272,6 @@ def test_import_author_to_system(app, mocker):
         mock_check_weko_id.assert_called_once_with(weko_id, '1')
         mock_weko_authors.create.assert_called_once()
         actual_author = mock_weko_authors.create.call_args[0][0]
-        print(actual_author)
 
         assert actual_author == {'pk_id': '1', 'authorNameInfo': [{'familyName': 'テスト', 'firstName': '太郎', 'fullName': 'テスト 太郎'}], 'is_deleted': False, 'authorIdInfo': [{'idType': '1', 'authorId': '1234', 'authorIdShowFlg': 'true'}], 'emailInfo': []}
         mock_session.commit.assert_called_once()
@@ -1402,17 +1399,18 @@ def test_get_count_item_link(app,mocker):
 
 # def count_authors():
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_utils.py::test_count_authors -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-authors/.tox/c1/tmp
-def test_count_authors(app2, esindex):
-    import json
+def test_count_authors(app2, esindex2):
     index = app2.config["WEKO_AUTHORS_ES_INDEX_NAME"]
     doc_type = "author-v1.0.0"
 
     def register(i):
         with open(f"tests/data/test_authors/author{i:02}.json","r") as f:
-            esindex.index(index=index, doc_type=doc_type, id=f"{i}", body=json.load(f), refresh="true")
+            esindex2.index(index=index, doc_type=doc_type,
+                           id=f"{i}", body=json.load(f), refresh="true")
 
     def delete(i):
-        esindex.delete(index=index, doc_type=doc_type, id=f"{i}", refresh="true")
+        esindex2.delete(index=index, doc_type=doc_type,
+                        id=f"{i}", refresh="true")
 
     # 3 Register 1 author data
     register(1)
@@ -2353,7 +2351,7 @@ def test_update_cache_data(app):
 def test_write_tmp_part_file(app):
 
     with patch("weko_authors.utils.open") as mock_writer:
-        update_cache_data(current_app.config.get("WEKO_AUTHORS_IMPORT_TEMP_FOLDER_PATH"), "/data/test_over_max")
+        update_cache_data(current_app.config.get("WEKO_AUTHORS_IMPORT_TMP_DIR"), "/data/test_over_max")
         write_tmp_part_file(1, [{"key": "value"}], "temp_file_path")
         mock_writer.assert_called()
 
@@ -2717,7 +2715,7 @@ def test_band_check_file_for_user(authors_affiliation_settings):
         mock_check.return_value = "test_over_max-check"
         mock_json.return_value = data
         result = band_check_file_for_user(1)
-        assert result == "var/tmp/authors_import/import_author_check_result_{}.tsv".format(datetime.datetime.now().strftime("%Y%m%d%H%M"))
+        assert result == "/var/tmp/authors_import/import_author_check_result_{}.tsv".format(datetime.datetime.now().strftime("%Y%m%d%H%M"))
 
     data_2 = [
         {"pk_id": 1, "authorNameInfo":[{"familyName": "a", "firstName": ""}, {"familyName": "b", "firstName": ""}],},
@@ -2729,7 +2727,7 @@ def test_band_check_file_for_user(authors_affiliation_settings):
         mock_check.return_value = "test_over_max-check"
         mock_json.return_value = data_2
         result = band_check_file_for_user(1)
-        assert result == "var/tmp/authors_import/import_author_check_result_{}.tsv".format(datetime.datetime.now().strftime("%Y%m%d%H%M"))
+        assert result == "/var/tmp/authors_import/import_author_check_result_{}.tsv".format(datetime.datetime.now().strftime("%Y%m%d%H%M"))
 
     with patch('weko_authors.utils.get_check_base_name') as mock_check,\
         patch("weko_authors.utils.open") as mock_open:
@@ -3258,4 +3256,3 @@ def test_create_result_file_for_user(app, mocker):
     current_cache.delete(result_path_key)
     res = create_result_file_for_user(json)
     assert res == None
-

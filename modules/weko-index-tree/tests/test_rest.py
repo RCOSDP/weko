@@ -616,7 +616,7 @@ class TestIndexManagementAPI:
         return Index.query.count()
 
     # .tox/c1/bin/pytest --cov=weko_index_tree tests/test_rest.py::TestIndexManagementAPI::test_get_v1 -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko_index_tree/.tox/c1/tmp --full-trace -p no:warnings
-    def test_get_v1(self, app, client_rest, auth_headers_noroleuser, auth_headers_sysadmin, auth_headers_sysadmin_without_scope, create_auth_headers, indices_for_api, mocker):
+    def test_get_v1(self, app, client_rest, auth_headers_noroleuser, auth_headers_sysadmin, auth_headers_sysadmin_without_scope, create_auth_headers, indices_for_api, mocker, community_for_api):
         """
         インデックス管理API-インデクス取得
         - 全インデックス取得: ユーザー権限に応じた取得可否を確認
@@ -630,8 +630,8 @@ class TestIndexManagementAPI:
         oauth2.after_request(login_oauth2_user)
 
         default_indices = [0, 1740974499997, 1740974612379]
-        com_admin_indices = [0, 1740974499997, 1740974612379]
-        admin_indices = [0, 1623632832836, 1740974499997, 1740974554289, 1740974612379, 1740974612380]
+        com_admin_indices = [0, 1740974499997, 1740974612379, 1745385873579, 1745385873580]
+        admin_indices = [0, 1623632832836, 1740974499997, 1740974554289, 1740974612379, 1740974612380, 1745385873579, 1745385873580]
 
         # 全インデックス取得テスト（ユーザー権限に応じた取得可否を確認）
         self.run_get_all_indices(app, client_rest, auth_headers_noroleuser, 200, expected_indices=default_indices)
@@ -758,7 +758,7 @@ class TestIndexManagementAPI:
 
 
     # .tox/c1/bin/pytest --cov=weko_index_tree tests/test_rest.py::TestIndexManagementAPI::test_post_v1 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko_index_tree/.tox/c1/tmp --full-trace -p no:warnings
-    def test_post_v1(self, app, db, client_rest, auth_headers_sysadmin, auth_headers_noroleuser, auth_headers_sysadmin_without_scope,create_auth_headers,admin_lang_setting, indices_for_api, mocker):
+    def test_post_v1(self, app, db, client_rest, auth_headers_sysadmin, auth_headers_noroleuser, auth_headers_sysadmin_without_scope,create_auth_headers,admin_lang_setting, indices_for_api, mocker, community_for_api):
         """
         インデックス管理API-インデックス登録
         - 正常系: インデックスの作成が成功するか確認
@@ -806,6 +806,16 @@ class TestIndexManagementAPI:
                 if role in allowed_roles:
                     # print(f"{role} should be able to create index (200)")
                     self.run_create_index_success(app, client_rest, headers, json_)
+                elif role == "comadmin":
+                    # self.run_create_index_permission_error(app, client_rest, headers, json_)
+                    self.run_create_index_forbidden(app, client_rest, headers)
+                    json_comadmin = json_.copy()
+                    json_comadmin["index"]["parent"] = 1745385873579  # コミュニティインデックスの親を指定
+                    self.run_create_index_success(app, client_rest, headers, json_comadmin)
+                    json_comadmin["index"]["parent"] = 1745385873580  # コミュニティインデックスの子を指定
+                    self.run_create_index_success(app, client_rest, headers, json_comadmin)
+                    json_comadmin["index"]["parent"] = 1740974554289  # コミュニティ以外の子を指定
+                    self.run_create_index_forbidden(app, client_rest, headers, json=json_comadmin)
                 else:
                     # print(f"{role} should NOT be able to create index (403)")
                     self.run_create_index_forbidden(app, client_rest, headers)
@@ -967,18 +977,20 @@ class TestIndexManagementAPI:
         assert response.status_code == 401, "認証なしのリクエストが401にならなかった"
         # print(f"Unauthorizedアクセスエラー: {response.get_data(as_text=True)}")
 
-    def run_create_index_forbidden(self, app, client_rest, auth_headers):
+    def run_create_index_forbidden(self, app, client_rest, auth_headers, json=None):
         """
         権限のないユーザーが403エラーを受け取るか確認
         """
         url = "v1/tree/index/"
         payload = {
             "index": {
-                "index_name": "Forbidden Test"
+                "index_name": "Forbidden Test",
+                "parent": "0"
             }
         }
+        json = json or payload
 
-        response = client_rest.post(url, headers=auth_headers, json=payload)
+        response = client_rest.post(url, headers=auth_headers, json=json)
         assert response.status_code == 403, "権限なしユーザーのリクエストが403にならなかった"
 
     def run_create_index_server_error(self, app, client_rest, auth_headers):

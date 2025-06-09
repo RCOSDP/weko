@@ -1,11 +1,12 @@
 from smtplib import SMTPException
 from mock import patch
 import pytest
-from flask import current_app
+from flask import url_for,current_app,make_response
 import uuid
 from pytest_mock import mocker
 from sqlalchemy.exc import SQLAlchemyError
 
+from invenio_accounts.testutils import login_user_via_session, create_test_user
 from weko_records_ui.api import send_request_mail, create_captcha_image, validate_captcha_answer
 from weko_records_ui.api import send_request_mail, create_captcha_image, get_s3_bucket_list, copy_bucket_to_s3, get_file_place_info, replace_file_bucket
 from weko_records_ui.errors import AuthenticationRequiredError, ContentsNotFoundError, InternalServerError, InvalidCaptchaError, InvalidEmailError, RequiredItemNotExistError
@@ -249,13 +250,6 @@ def test_get_s3_bucket_list(app, db, users, client):
     # login for using currentuser
     login(client,obj=users[0]["obj"])
 
-    mock_response = {
-    'Buckets': [
-    {'Name': 'bucket1'},
-    {'Name': 'bucket2'},
-    {'Name': 'bucket3'}
-    ]
-    }
     with db.session.begin_nested():
         p = UserProfile()
         p.user_id = '1'
@@ -272,12 +266,48 @@ def test_get_s3_bucket_list(app, db, users, client):
                 result_list = get_s3_bucket_list()
 
             # success
+            mock_response_success = {
+                'ResponseMetadata': {
+                    'HTTPStatusCode': 200
+                },
+                'Buckets': [
+                    {'Name': 'bucket1'},
+                    {'Name': 'bucket2'},
+                    {'Name': 'bucket3'}
+                ]
+            }
             with patch('boto3.client') as mock_client:
                 instance = mock_client.return_value
-                instance.list_buckets.return_value = mock_response
+                instance.list_buckets.return_value = mock_response_success
 
                 result_list = get_s3_bucket_list()
                 assert result_list == ['bucket1', 'bucket2', 'bucket3']
+
+            # success no buckets
+            mock_response_success_no_buckets = {
+                'ResponseMetadata': {
+                    'HTTPStatusCode': 200
+                }
+            }
+            with patch('boto3.client') as mock_client:
+                instance = mock_client.return_value
+                instance.list_buckets.return_value = mock_response_success_no_buckets
+
+                result_list = get_s3_bucket_list()
+                assert result_list == []
+
+            # response_error
+            mock_response_error = {
+                'ResponseMetadata': {
+                    'HTTPStatusCode': 500
+                }
+            }
+            with patch('boto3.client') as mock_client:
+                with pytest.raises(Exception):
+                    instance = mock_client.return_value
+                    instance.list_buckets.return_value = mock_response_error
+
+                    result_list = get_s3_bucket_list()
 
         # no profile
         with pytest.raises(Exception):
@@ -314,23 +344,25 @@ def test_copy_bucket_to_s3(app, db, users, client, records):
         p.user_id = '1'
         p.access_key = '1'
         p.secret_key = '1'
-        p.s3_endpoint_url = '1'
+        p.s3_endpoint_url = 'https://s3.ap-southeast-2.amazonaws.com/'
         db.session.add(p)
 
         user_profile = p
 
+        # local to s3
         with patch("weko_user_profiles.models.UserProfile.get_by_userid", return_value=user_profile):
             with patch('boto3.client') as mock_client:
                 instance = mock_client.return_value
-                instance.create_bucket.return_value = mock_response
                 instance.get_bucket_location.return_value = mock_response
-                instance.upload_file.return_value = mock_response
 
                 pid = PersistentIdentifier.query.filter_by(
                     pid_type="recid", pid_value='1'
                 ).first()
                 records_buckets = RecordsBuckets.query.filter_by(
                     record_id=pid.object_uuid).first()
+                org_bucket = Bucket.query.get(records_buckets.bucket_id)
+                org_obj = ObjectVersion.get(bucket=org_bucket, key='helloworld.pdf')
+                org_fileinstance = FileInstance.get(org_obj.file_id)
 
                 # success create
                 uri = copy_bucket_to_s3(pid=1, filename='helloworld.pdf',
@@ -344,18 +376,78 @@ def test_copy_bucket_to_s3(app, db, users, client, records):
                                         checked='select', bucket_name='sample1')
                 assert uri
 
-                # file not exists
-                with patch("os.path.exists", return_value=False):
-                    with pytest.raises(Exception):
-                        uri = copy_bucket_to_s3(pid=1, filename='helloworld.pdf',
-                                                org_bucket_id=records_buckets.bucket_id,
-                                                checked='create', bucket_name='sample1')
+                with pytest.raises(Exception):
+                    # bucket create error
+                    instance.create_bucket.side_effect = Exception("error")
+                    uri = copy_bucket_to_s3(pid=1, filename='helloworld.pdf',
+                                            org_bucket_id=records_buckets.bucket_id,
+                                            checked='create', bucket_name='sample1')
+
+                with pytest.raises(Exception):
+                    # upload file error
+                    instance.upload_file.side_effect = Exception("error")
+                    uri = copy_bucket_to_s3(pid=1, filename='helloworld.pdf',
+                                            org_bucket_id=records_buckets.bucket_id,
+                                            checked='select', bucket_name='sample1')
+
+                with pytest.raises(Exception):
+                    # get bucket location error
+                    instance.get_bucket_location.side_effect = Exception("error")
+                    uri = copy_bucket_to_s3(pid=1, filename='helloworld.pdf',
+                                            org_bucket_id=records_buckets.bucket_id,
+                                            checked='select', bucket_name='sample1')
+
 
         # no profile
         with pytest.raises(Exception):
                 uri = copy_bucket_to_s3(pid=1, filename='helloworld.pdf',
                                         org_bucket_id=records_buckets.bucket_id,
                                         checked='create', bucket_name='sample1')
+
+        # s3 to s3
+        with patch("weko_user_profiles.models.UserProfile.get_by_userid", return_value=user_profile):
+            with patch('boto3.client') as mock_client:
+                pid = PersistentIdentifier.query.filter_by(
+                    pid_type="recid", pid_value='1'
+                ).first()
+                records_buckets = RecordsBuckets.query.filter_by(
+                    record_id=pid.object_uuid).first()
+                org_bucket = Bucket.query.get(records_buckets.bucket_id)
+                org_obj = ObjectVersion.get(bucket=org_bucket, key='helloworld.pdf')
+                org_fileinstance = FileInstance.get(org_obj.file_id)
+                loc_s3 = Location(
+                    name="testloc-s3",
+                    uri="s3://bucket-name/",
+                    default=False,
+                    type="s3",
+                    s3_endpoint_url="https://s3.us-west-2.amazonaws.com/",
+                )
+                db.session.add(loc_s3)
+                parts = loc_s3.uri.split('/')
+                org_fileinstance.uri = 's3://bucket-name/' + "/".join(parts[2:])
+                instance = mock_client.return_value
+                instance.get_bucket_location.return_value = mock_response
+
+                # success create
+                uri = copy_bucket_to_s3(pid=1, filename='helloworld.pdf',
+                                        org_bucket_id=records_buckets.bucket_id,
+                                        checked='create', bucket_name='sample1')
+                assert uri
+
+                with pytest.raises(Exception):
+                    # copy error
+                    instance.copy.side_effect = Exception("error")
+                    uri = copy_bucket_to_s3(pid=1, filename='helloworld.pdf',
+                                            org_bucket_id=records_buckets.bucket_id,
+                                            checked='select', bucket_name='sample1')
+
+                with pytest.raises(Exception):
+                    # head_object error
+                    instance.head_object.side_effect = Exception("error")
+                    uri = copy_bucket_to_s3(pid=1, filename='helloworld.pdf',
+                                            org_bucket_id=records_buckets.bucket_id,
+                                            checked='select', bucket_name='sample1')
+
 
 
     # profile exists but no access_key
@@ -364,7 +456,7 @@ def test_copy_bucket_to_s3(app, db, users, client, records):
         p2.user_id = '2'
         p2.access_key = ''
         p2.secret_key = '2'
-        p2.s3_endpoint_url = '2'
+        p2.s3_endpoint_url = 'https://s3.us-west-2.amazonaws.com/'
         db.session.add(p2)
 
         user_profile2 = p2
@@ -380,7 +472,7 @@ def test_copy_bucket_to_s3(app, db, users, client, records):
         p3.user_id = '3'
         p3.access_key = '3'
         p3.secret_key = '3'
-        p3.s3_endpoint_url = '3'
+        p3.s3_endpoint_url = 'https://s3.us-west-2.amazonaws.com/'
         p3.s3_region_name = 'us-west-2'
         db.session.add(p3)
 
@@ -498,35 +590,53 @@ def test_replace_file_bucket(app, db, users, client, records):
     mock_response = 'http:return_url'
 
 
-    with db.session.begin_nested():
+    url = url_for("weko_records_ui.replace_file")
+    login_user_via_session(client,email=users[0]["email"])
 
-        # location weko local
-        # success
+    with patch("weko_search_ui.utils.check_replace_file_import_items", return_value={}):
+        with patch("weko_search_ui.utils.import_items_to_system", return_value={'success': True}):
 
-        with patch("weko_search_ui.utils.check_replace_file_import_items", return_value={}):
-            with patch("weko_search_ui.utils.import_items_to_system", return_value={'success': True}):
+            # location weko local
+            res = client.post(
+                url,
+                data={
+                    'pid': '1',
+                    'bucket_id': records_buckets.bucket_id,
+                    'file_name': 'helloworld.pdf',
+                    'file_size': 2000,
+                    'file_checksum': None,
+                    'new_bucket_id': None,
+                    'new_version_id': None,
+                    'file': file,
+                    'return_file_place': 'local',
+                },
+            )
+            assert res.status_code == 200
 
-                result  = replace_file_bucket(org_pid='1', org_bucket_id=records_buckets.bucket_id,
-                                            file=file,
-                                            file_name='helloworld.pdf', file_size=2000,
-                                            file_checksum=None,
-                                            new_bucket_id=None, new_version_id=None)
-                assert result
+            with patch("invenio_pidstore.models.PersistentIdentifier.get", return_value=pid):
 
-        # # location type:s3
-        l2=Location.get_default()
-        l2.uri='s3://test/'
-        l2.access_key='access_key'
-        l2.secret_key='secret_key'
-        l2.type='s3'
-        l2.s3_endpoint_url='https://test.s3.ap-southeast-2.amazonaws.com/'
+                with db.session.begin_nested():
+                    # location type:s3
+                    l2=Location.get_default()
+                    l2.uri='s3://test/'
+                    l2.access_key='access_key'
+                    l2.secret_key='secret_key'
+                    l2.type='s3'
+                    l2.s3_endpoint_url='https://s3.ap-southeast-2.amazonaws.com/'
 
-        with patch("invenio_pidstore.models.PersistentIdentifier.get", return_value=pid):
-
-            result  = replace_file_bucket(org_pid='1', org_bucket_id=records_buckets.bucket_id,
-                                        file=None,
-                                        file_name='helloworld.pdf', file_size=100,
-                                        file_checksum='86266081366d3c950c1cb31fbd9e1c38e4834fa52b568753ce28c87bc31252cd',
-                                        new_bucket_id=records_buckets.bucket_id, new_version_id=file_obj.version_id)
-            assert result
+                    res = client.post(
+                        url,
+                        data={
+                            'return_file_place': 'S3',
+                            'pid': '1',
+                            'bucket_id': records_buckets.bucket_id,
+                            'file_name': 'helloworld.pdf',
+                            'file_size': 100,
+                            'file_checksum': '86266081366d3c950c1cb31fbd9e1c38e4834fa52b568753ce28c87bc31252cd',
+                            'new_bucket_id': records_buckets.bucket_id,
+                            'new_version_id': file_obj.version_id,
+                            'file': None,
+                        },
+                    )
+                    assert res.status_code == 200
 

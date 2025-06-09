@@ -1665,26 +1665,28 @@ class SwordAPIJsonldSettingsView(ModelView):
     }
 
     def get_query(self):
+        """Get query for SWORD API JSON-LD settings."""
+        query = super().get_query().order_by(SwordClientModel.id)
         list_role = [role.name for role in current_user.roles]
-        if current_app.config["WEKO_ADMIN_PERMISSION_ROLE_SYSTEM"] in list_role:
-            return super(SwordAPIJsonldSettingsView, self).get_query()
-        else:
-            return (
-                super(SwordAPIJsonldSettingsView, self).get_query()
-                .join(Client)
+        if current_app.config["WEKO_ADMIN_PERMISSION_ROLE_SYSTEM"] not in list_role:
+            query = (
+                query.join(Client)
                 .filter(Client.client_id == SwordClientModel.client_id)
                 .filter(Client.user_id == current_user.get_id())
             )
+        return query
 
     def get_count_query(self):
+        """Get count query for SWORD API JSON-LD settings."""
+        query = super().get_count_query()
         list_role = [role.name for role in current_user.roles]
-        if current_app.config["WEKO_ADMIN_PERMISSION_ROLE_SYSTEM"] in list_role:
-            return super(SwordAPIJsonldSettingsView, self).get_count_query()
-        else:
-            return (super(SwordAPIJsonldSettingsView, self).get_count_query()
-            .join(Client)
-            .filter(Client.client_id == SwordClientModel.client_id)
-            .filter(Client.user_id == current_user.get_id()))
+        if current_app.config["WEKO_ADMIN_PERMISSION_ROLE_SYSTEM"] not in list_role:
+            query = (
+                query.join(Client)
+                .filter(Client.client_id == SwordClientModel.client_id)
+                .filter(Client.user_id == current_user.get_id())
+            )
+        return query
 
     @expose("/add/", methods=["GET", "POST"])
     def create_view(self):
@@ -2025,18 +2027,16 @@ class JsonldMappingView(ModelView):
     edit_template = WEKO_ADMIN_SWORD_API_JSONLD_MAPPING_TEMPLATE
 
     column_filters = (
-        "id",
         "name",
+        "item_type.item_type_name.name"
     )
 
     column_list = (
-        "id",
         "name",
         "item_type",
         "updated",
     )
     column_details_list = (
-        "id",
         "created",
         "updated",
         "name",
@@ -2065,20 +2065,21 @@ class JsonldMappingView(ModelView):
         "mapping": _formated_jsonld_mapping,
     }
     column_sortable_list = (
-        "id",
         "name",
         ('item_type', 'item_type.item_type_name.name'),
         "updated",
     )
     column_searchable_list = (
-        "id",
         "name",
         "item_type.item_type_name.name"
     )
 
     def get_query(self):
-        return super().get_query().filter(
-            ItemTypeJsonldMapping.is_deleted == False
+        """Get query for JSON-LD mapping."""
+        return (
+            super().get_query()
+            .filter(ItemTypeJsonldMapping.is_deleted == False)
+            .order_by(ItemTypeJsonldMapping.id)
         )
 
     @expose("/new/", methods=["GET", "POST"])
@@ -2208,7 +2209,7 @@ class JsonldMappingView(ModelView):
                 return jsonify({"error": msg}), 400
 
     @expose("/delete/<string:id>/", methods=["DELETE"])
-    def delte(self, id):
+    def delete(self, id):
         """Delete JSON-LD mapping."""
         model = self.get_one(id)
         if model is None:

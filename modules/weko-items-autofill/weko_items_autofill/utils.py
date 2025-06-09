@@ -213,7 +213,7 @@ def get_doi_record_data(doi, item_type_id, activity_id):
     metadata = temp_data if isinstance(temp_data, dict) else json.loads(temp_data)
     metainfo = metadata.get("metainfo")
     metainfo_cleaned = remove_empty(metainfo)
-    doi_with_original = fetch_metadata_by_doi(doi, item_type_id, metainfo)
+    doi_with_original = fetch_metadata_by_doi(doi, item_type_id, metainfo_cleaned)
     doi_response = [{k: v} for k, v in doi_with_original.items()]
 
     return doi_response
@@ -266,21 +266,7 @@ def fetch_metadata_by_doi(doi, item_type_id, original=None, **kwargs):
         # case: Original.
         if key == "Original":
             if isinstance(original, dict):
-                for k, v in original.items():
-                    if isinstance(v, dict):
-                        filtered = {kk: vv for kk, vv in v.items() if vv}
-                        if filtered:
-                            response_metadata[k] = filtered
-                    elif isinstance(v, list):
-                        filtered = [
-                            item for item in v 
-                                if item and 
-                                    (not isinstance(item, dict) or any(item.values()))
-                        ]
-                        if filtered:
-                            response_metadata[k] = filtered
-                    elif v:
-                        response_metadata[k] = v
+                response_metadata = original
             else:
                 current_app.logger.info("original metadata is not found.")
                 continue

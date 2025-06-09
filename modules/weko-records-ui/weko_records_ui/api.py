@@ -281,7 +281,7 @@ def copy_bucket_to_s3(
     # create bucket
     if checked == 'create':
         try:
-            if region_name is None:
+            if region_name is None or region_name == 'us-east-1':
                 s3_client = boto3.client(
                     's3',
                     aws_access_key_id=access_key,
@@ -381,12 +381,12 @@ def copy_bucket_to_s3(
     # ex: https://bucket_name.s3.us-east-1.amazonaws.com/
     parts = endpoint_url.split('/')
     sub_parts = parts[2].split('.')
-    if len(sub_parts) > 3:
-        end_uri = ".".join(sub_parts[3:])
+    if len(sub_parts) > 2:
+        end_uri = ".".join(sub_parts[2:])
     else:
-        end_uri = sub_parts[3]
+        end_uri = sub_parts[2]
 
-    uri = parts[0] + '//' + bucket_name + '.' + sub_parts[1] + '.' + bucket_region + '.' + end_uri +'/'
+    uri = parts[0] + '//' + bucket_name + '.' + sub_parts[0] + '.' + bucket_region + '.' + end_uri +'/'
 
     current_app.logger.info(f'location: {location}')
 
@@ -420,7 +420,7 @@ def copy_bucket_to_s3(
             # S3のバケット名を取得
             org_bucket_name = location.uri.split('/')[2]
             base = location.uri.split('/')[0] + '//' + org_bucket_name
-            file_path = org_bucket_name + org_fileinstance.uri.replace(base, '')
+            file_path = org_fileinstance.uri.replace(base + '/', '')
         elif location.type == "s3_vh":
             if location.uri.startswith('https://s3.'):
                 # ex: https://s3.us-east-1.amazonaws.com/bucket_name/file_name
@@ -428,8 +428,7 @@ def copy_bucket_to_s3(
                 org_bucket_name = parts[3]
                 base = parts[0] + '//' + parts[2] + '/' + org_bucket_name
                 file_path = (
-                    org_bucket_name
-                    + org_fileinstance.uri.replace(base, '')
+                    org_fileinstance.uri.replace(base + '/', '')
                 )
             else:
                 # ex: https://bucket_name.s3.us-east-1.amazonaws.com/file_name
@@ -438,8 +437,7 @@ def copy_bucket_to_s3(
                 org_bucket_name = sub_parts[0]
                 base = parts[0] + '//' + parts[2]
                 file_path = (
-                    org_bucket_name
-                    + org_fileinstance.uri.replace(base, '')
+                    org_fileinstance.uri.replace(base + '/', '')
                 )
 
         current_app.logger.info(f'org_bucket_name: {org_bucket_name}')
@@ -459,7 +457,7 @@ def copy_bucket_to_s3(
 
         try:
             s3_client.head_object(Bucket=source_bucket, Key=source_key)
-        except s3_client.exceptions.NoSuchKey:
+        except Exception as e:
             traceback.print_exc()
             raise Exception(_('The source file cannot be found.'))
         try:
@@ -588,6 +586,8 @@ def get_file_place_info(org_pid, org_bucket_id, file_name):
                 if len(sub_parts) >= 3:
                     pre = '/'.join(parts[3:]) + '/' * (not '/'.join(parts[3:]).endswith('/'))
                     directory_path = pre + directory_path
+        if directory_path.startswith('/'):
+            directory_path = directory_path[1:]
 
         if region is None:
                 s3 = boto3.client('s3',
@@ -600,11 +600,12 @@ def get_file_place_info(org_pid, org_bucket_id, file_name):
                             region_name=region,)
 
         try:
+            current_app.logger.info(f'directory_path: {directory_path}')
             # 署名付きURLの生成
             url = s3.generate_presigned_url(
                 ClientMethod = 'put_object',
                 Params = {'Bucket' : bucket_name,
-                'Key' : bucket_name + "/" + directory_path + "/" + 'data',
+                'Key' : directory_path + "/" + 'data',
                 'ContentType' : 'binary/octet-stream'},
                 ExpiresIn = 300,
                 HttpMethod = 'PUT'

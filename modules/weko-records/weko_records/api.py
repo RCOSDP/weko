@@ -2782,8 +2782,14 @@ class ItemLink(object):
     def get_item_link_info(cls, recid):
         """Get item link info of recid.
 
-        :param recid: Record Identifier.
-        :return ret: List destination records.
+        Args:
+            recid (str): Record Identifier.
+
+        Returns:
+            list(dict): Destination records info.
+                - item_links: Destination item PID
+                - item_title: Title of the destination item
+                - value: Reference type
         """
         from weko_deposit.api import WekoRecord
 

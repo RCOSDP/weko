@@ -27,12 +27,9 @@ import json
 import os
 import re
 import shutil
-import sys
 import tempfile
-import time
 import traceback
 import unicodedata
-import secrets
 import pytz
 from collections import OrderedDict
 from datetime import date, datetime, timedelta, timezone
@@ -50,7 +47,6 @@ from sqlalchemy.sql import text
 from jsonschema import SchemaError, ValidationError
 
 from invenio_accounts.models import Role, userrole
-from invenio_cache import current_cache
 from invenio_db import db
 from invenio_i18n.ext import current_i18n
 from invenio_indexer.api import RecordIndexer
@@ -95,7 +91,6 @@ from weko_workflow.models import (
     Activity, FlowAction, FlowActionRole, FlowDefine, ActionStatusPolicy as ASP
 )
 from weko_workflow.utils import IdentifierHandle
-from weko_admin.models import ApiCertificate
 
 
 def get_list_username():
@@ -1924,7 +1919,7 @@ def make_stats_file(item_type_id, recids, list_item_role, export_path=""):
         NameError: name '_' is not defined
 
     """
-    from weko_records_ui.views import escape_newline, escape_str
+    from weko_records_ui.views import escape_newline
 
     item_type = ItemTypes.get_by_id(item_type_id)
     if item_type:
@@ -2501,9 +2496,20 @@ def check_item_type_name(name):
 
 
 def export_items(post_data):
-    """Gather all the item data and export and return as a JSON or BIBTEX.
+    """Gather all the item data and export
 
-    :return: JSON, BIBTEX
+    Export items in the selected format, such as a TSV, BIBTEX or RO-CRATE.
+
+    Args:
+        post_data (dict): Data from the export form.
+            - export_file_contents_radio (str): Whether to include file contents.
+            - export_format_radio (str): The format to export (e.g., JSON, BIBTEX).
+            - record_ids (list): List of record IDs to export.
+            - invalid_record_ids (list): List of invalid record IDs.
+            - record_metadata (dict): Metadata for the records.
+
+    Returns:
+        Response: A file download response with the exported data.
     """
     current_app.logger.debug("post_data:{}".format(post_data))
     include_contents = (
@@ -2538,46 +2544,46 @@ def export_items(post_data):
         datetime_now = datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S")
         export_path = os.path.join(temp_path.name, datetime_now)
 
-        if export_format == "ROCRATE":
-            make_rocrate(record_ids, export_path)
-        else:
             # Double check for limits
-            for record_id in record_ids:
-                record_path = export_path + '/recid_' + str(record_id)
-                os.makedirs(record_path, exist_ok=True)
-                exported_item, list_item_role = _export_item(
-                    record_id,
-                    export_format,
-                    include_contents,
-                    record_path,
-                    record_metadata.get(str(record_id))
+        for record_id in record_ids:
+            record_path = os.path.join(export_path, f"recid_{record_id}")
+            os.makedirs(record_path, exist_ok=True)
+            exported_item, list_item_role = _export_item(
+                record_id,
+                export_format,
+                include_contents,
+                record_path,
+                record_metadata.get(str(record_id))
+            )
+            result['items'].append(exported_item)
+
+            item_type_id = exported_item.get('item_type_id')
+            item_type = ItemTypes.get_by_id(item_type_id)
+            if not item_types_data.get(item_type_id):
+                item_type_name = check_item_type_name(
+                    item_type.item_type_name.name
                 )
-                result['items'].append(exported_item)
+                item_types_data[item_type_id] = {
+                    'item_type_id': item_type_id,
+                    'name': f'{item_type_name}({item_type_id})',
+                    'root_url': request.url_root,
+                    'jsonschema': 'items/jsonschema/' + item_type_id,
+                    'keys': [],
+                    'labels': [],
+                    'recids': [],
+                    'data': {},
+                }
+            item_types_data[item_type_id]['recids'].append(record_id)
 
-                item_type_id = exported_item.get('item_type_id')
-                item_type = ItemTypes.get_by_id(item_type_id)
-                if not item_types_data.get(item_type_id):
-                    item_type_name = check_item_type_name(
-                        item_type.item_type_name.name
-                    )
-                    item_types_data[item_type_id] = {
-                        'item_type_id': item_type_id,
-                        'name': f'{item_type_name}({item_type_id})',
-                        'root_url': request.url_root,
-                        'jsonschema': 'items/jsonschema/' + item_type_id,
-                        'keys': [],
-                        'labels': [],
-                        'recids': [],
-                        'data': {},
-                    }
-                item_types_data[item_type_id]['recids'].append(record_id)
+        # Create export info file
+        if export_format == 'BIBTEX':
+            write_bibtex_files(item_types_data, export_path)
+        elif export_format == 'ROCRATE':
+            write_rocrate(item_types_data, export_path, list_item_role)
+        else:
+            write_files(item_types_data, export_path, list_item_role)
 
-            # Create export info file
-            if export_format == 'BIBTEX':
-                write_bibtex_files(item_types_data, export_path)
-            else:
-                write_files(item_types_data, export_path, list_item_role)
-
+        if export_format != 'ROCRATE':
             # Create bag
             bagit.make_bag(export_path)
         # Create download file
@@ -2587,40 +2593,38 @@ def export_items(post_data):
             export_path.split("/")[-2] + "-" + export_path.split("/")[-1]
         )
         shutil.make_archive(zip_path, 'zip', export_path)
+        resp = send_file(
+            zip_path+".zip",
+            as_attachment=True,
+            attachment_filename='export.zip'
+        )
     except Exception:
         current_app.logger.error("Failed to export items.")
         traceback.print_exc()
         flash(_('Error occurred during item export.'), 'error')
-        return redirect(url_for('weko_items_ui.export'))
-    resp = send_file(
-        zip_path+".zip",
-        as_attachment=True,
-        attachment_filename='export.zip'
-    )
+        resp = redirect(url_for('weko_items_ui.export'))
     os.remove(zip_path+".zip")
     temp_path.cleanup()
     return resp
 
 
-def make_rocrate(record_ids, export_path):
+def write_rocrate(item_types_data, export_path, list_item_role):
     """Make RO-Crate BagIt for export.
 
     Args:
-        record_ids (list): List of record IDs to export.
+        item_types_data (dict): Item types data for export.
         export_path (str): Path to export the RO-Crate.
+        list_item_role (dict): List of item roles for export.
     """
+    all_record_ids = [
+        str(recid)
+        for data in item_types_data.values()
+        for recid in data['recids']
+    ]
     # Get Metadata from ElasticSearch
-    metadata_dict = _get_metadata_dict_in_es(record_ids)
+    metadata_dict = _get_metadata_dict_in_es(all_record_ids)
 
-    for record_id in record_ids:
-        # crate each record directory
-        record_path = os.path.join(export_path, f"recid_{record_id}")
-        os.makedirs(record_path, exist_ok=True)
-        cannot_export = _export_file(record_id, record_path)
-        # Metadata
-        metadata, extracted_files = metadata_dict.get(str(record_id), ({}, []))
-
-        item_type_id = metadata.get("item_type_id")
+    for item_type_id, item_type_data in item_types_data.items():
         mappings = JsonldMapping.get_by_itemtype_id(item_type_id)
         mapper = JsonLdMapper(item_type_id, None)
         for m in mappings:
@@ -2630,31 +2634,41 @@ def make_rocrate(record_ids, export_path):
         if mapper.json_mapping is None:
             raise Exception("No valid mapping found for item type")
 
-        for key, value in metadata.items():
-            if not isinstance(value, dict) or value.get("attribute_type") != "file":
-                continue
-            value["attribute_value_mlt"] = [
-                file_metadata for file_metadata in value.get("attribute_value_mlt", [])
-                if file_metadata.get("filename") not in cannot_export
-            ]
+        record_ids = item_type_data['recids']
+        headers, records = make_stats_file(
+            item_type_id, item_type_data['recids'], list_item_role,
+        )
 
-        # Create RO-Crate info file
-        rocrate = mapper.to_rocrate_metadata(
-            metadata, extracted_files=extracted_files
-        )
-        jsonld_path = os.path.join(
-            record_path, ROCRATE_METADATA_FILE.split("/")[-1]
-        )
-        with open(jsonld_path, "w", encoding="utf8") as f:
-            json.dump(
-                rocrate.metadata.generate(), f, indent=2, sort_keys=True,
-                ensure_ascii=False
+        for record_id in record_ids:
+            # crate each record directory
+            record_path = os.path.join(export_path, f"recid_{record_id}")
+            os.makedirs(record_path, exist_ok=True)
+            title, extracted_files = metadata_dict.get(str(record_id), ("", []))
+
+            row_metadata = {
+                "recid": str(record_id),
+                "item_title": title,
+                "header": headers[0][2:],
+                "value": records[record_id],
+            }
+
+            # Create RO-Crate info file
+            rocrate = mapper.to_rocrate_metadata(
+                tsv_row_metadata=row_metadata, extracted_files=extracted_files
             )
+            jsonld_path = os.path.join(
+                record_path, ROCRATE_METADATA_FILE.split("/")[-1]
+            )
+            with open(jsonld_path, "w", encoding="utf8") as f:
+                json.dump(
+                    rocrate.metadata.generate(), f, indent=2,
+                    ensure_ascii=False
+                )
 
-        bagit.make_bag(record_path, checksums=["sha256"])
+            bagit.make_bag(record_path, checksums=["sha256"])
 
-        shutil.make_archive(record_path, "zip", record_path)
-        shutil.rmtree(record_path)
+            shutil.make_archive(record_path, "zip", record_path)
+            shutil.rmtree(record_path)
 
     # Create README.md file
     readme_path = os.path.join(export_path, "README.md")
@@ -2678,19 +2692,20 @@ def _get_metadata_dict_in_es(record_ids):
             .filter("terms", control_number=record_ids)
             .filter("term", relation_version_is_last=True)
             .sort("control_number")
-            .source(["_item_metadata", "content"])
+            .source(["title", "content"])
             .params(from_=0, size=100)
         )
         search_result = search.execute().to_dict()
         record_list = search_result.get("hits", {}).get("hits", [])
         for record in record_list:
             [key] = record.get("sort")
-            metadata = record.get("_source", {}).get("_item_metadata", {})
+            title = record.get("_source", {}).get("title", [""])[0]
             content = record.get("_source", {}).get("content", [])
             extraction_file_list = [
                 file_content.get("filename") for file_content in content
+                if file_content.get("attachment")
             ]
-            metadata_dict.update({key: (metadata, extraction_file_list)})
+            metadata_dict.update({key: (title, extraction_file_list)})
     except NotFoundError as e:
         current_app.logger.error("Index do not exist yet: ", str(e))
 
@@ -2805,54 +2820,11 @@ def _export_item(record_id,
                         exported_item['files'].append(file.info())
                         # TODO: Then convert the item into the desired format
                         if file:
-                            file_buffered = file.obj.file.storage().open()
-                            temp_file = open(
-                                tmp_path + '/' + file.obj.basename, 'wb')
-                            temp_file.write(file_buffered.read())
-                            temp_file.close()
+                            with file.obj.file.storage().open() as file_buffered, \
+                                open(tmp_path + '/' + file.obj.basename, 'wb') as temp_file:
+                                temp_file.write(file_buffered.read())
 
     return exported_item, list_item_role
-
-
-def _export_file(record_id, data_path):
-    """Exports files for record according to view permissions.
-
-    Args:
-        record_id (int): Record ID to export files from.
-        data_path (str): Path to save exported files.
-
-    Returns:
-        list(str):
-            List of files that cannot be exported due to permissions.
-    """
-    cannot_export = []
-    record = WekoRecord.get_record_by_pid(record_id)
-    if record:
-        # Get files
-        for file in record.files:
-            if check_file_download_permission(record, file.info()):
-                accessrole = file.info().get("accessrole")
-                if accessrole == "open_restricted":
-                    continue
-                if accessrole == "open_date":
-                    file_date = file.info().get("date", {})
-                    date_value = (
-                        file_date[0].get("dateValue")
-                            if isinstance(file_date, list) and file_date
-                        else file_date.get("dateValue")
-                            if isinstance(file_date, dict)
-                        else None
-                    )
-                    open_date = datetime.strptime(date_value, "%Y-%m-%d")
-                    if open_date.date() > datetime.now().date():
-                        continue
-                with file.obj.file.storage().open() as file_buffered:
-                    tmp_path = os.path.join(data_path, file.obj.basename)
-                    with open(tmp_path, "wb") as temp_file:
-                        temp_file.write(file_buffered.read())
-            else:
-                cannot_export.append(file.info().get("filename", "Unknown file"))
-    return cannot_export
 
 
 def _custom_export_metadata(record_metadata: dict, hide_item: bool = True,
@@ -5464,14 +5436,20 @@ def send_mail_item_deleted(pid_value, deposit, user_id, shared_id=-1):
     Returns:
         int: The total number of successfully sent emails.
     """
-    record_url = request.host_url + f"records/{pid_value}"
-    current_app.logger.debug(f"[send_mail_item_deleted] pid_value: {pid_value}, user_id: {user_id}")
-    return send_mail_from_notification_info(
-        get_info_func=lambda obj: get_notification_targets(obj, user_id, shared_id),
-        context_obj=deposit,
-        content_creator=create_item_deleted_data,
-        record_url=record_url
-    )
+    try:
+        record_url = request.host_url + f"records/{pid_value}"
+        current_app.logger.debug(f"[send_mail_item_deleted] pid_value: {pid_value}, user_id: {user_id}")
+        return send_mail_from_notification_info(
+            get_info_func=lambda obj: get_notification_targets(obj, user_id, shared_id),
+            context_obj=deposit,
+            content_creator=create_item_deleted_data,
+            record_url=record_url
+        )
+    except Exception as e:
+        current_app.logger.exception(
+            "Unexpected error occurred while sending mail for item deletion"
+        )
+        return
 
 
 def send_mail_direct_registered(pid_value, user_id, share_id=-1):
@@ -5486,12 +5464,18 @@ def send_mail_direct_registered(pid_value, user_id, share_id=-1):
     Returns:
         int: The total number of successfully sent emails.
     """
-    deposit = WekoRecord.get_record_by_pid(pid_value)
-    record_url = request.host_url + f"records/{pid_value}"
-    current_app.logger.debug(f"[send_mail_direct_registered] pid_value: {pid_value}, user_id: {user_id}")
-    return send_mail_from_notification_info(
-        get_info_func=lambda obj: get_notification_targets(obj, user_id, share_id),
-        context_obj=deposit,
-        content_creator=create_direct_registered_data,
-        record_url=record_url
-    )
+    try:
+        deposit = WekoRecord.get_record_by_pid(pid_value)
+        record_url = request.host_url + f"records/{pid_value}"
+        current_app.logger.debug(f"[send_mail_direct_registered] pid_value: {pid_value}, user_id: {user_id}")
+        return send_mail_from_notification_info(
+            get_info_func=lambda obj: get_notification_targets(obj, user_id, share_id),
+            context_obj=deposit,
+            content_creator=create_direct_registered_data,
+            record_url=record_url
+        )
+    except Exception as e:
+        current_app.logger.exception(
+            "Unexpected error occurred while sending mail for item registration"
+        )
+        return

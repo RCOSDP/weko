@@ -80,7 +80,9 @@ from weko_workspace.views import workspace_blueprint as weko_workspace_blueprint
 from weko_workspace.views import blueprint_itemapi as weko_workspace_blueprint_itemapi
 
 from weko_workspace.models import WorkspaceDefaultConditions,WorkspaceStatusManagement
-from weko_workspace.config import WEKO_ITEMS_AUTOFILL_CINII_REQUIRED_ITEM, WEKO_WORKSPACE_OA_STATUS_MAPPING
+from weko_workspace.config import WEKO_WORKSPACE_CINII_REQUIRED_ITEM,\
+    WEKO_WORKSPACE_JALC_REQUIRED_ITEM, WEKO_WORKSPACE_DATACITE_REQUIRED_ITEM,\
+    WEKO_WORKSPACE_OA_STATUS_MAPPING
 from weko_redis.redis import RedisConnection
 
 sys.path.append(os.path.dirname(__file__))
@@ -452,7 +454,9 @@ def base_app(instance_path, search_class, cache_config):
         WEKO_WORKFLOW_ACTION_GUARANTOR=WEKO_WORKFLOW_ACTION_GUARANTOR,
         WEKO_WORKFLOW_ACTION_ADVISOR=WEKO_WORKFLOW_ACTION_ADVISOR,
         WEKO_WORKFLOW_ACTION_ADMINISTRATOR=WEKO_WORKFLOW_ACTION_ADMINISTRATOR,
-        WEKO_ITEMS_AUTOFILL_CINII_REQUIRED_ITEM=WEKO_ITEMS_AUTOFILL_CINII_REQUIRED_ITEM,
+        WEKO_WORKSPACE_CINII_REQUIRED_ITEM=WEKO_WORKSPACE_CINII_REQUIRED_ITEM,
+        WEKO_WORKSPACE_JALC_REQUIRED_ITEM=WEKO_WORKSPACE_JALC_REQUIRED_ITEM,
+        WEKO_WORKSPACE_DATACITE_REQUIRED_ITEM=WEKO_WORKSPACE_DATACITE_REQUIRED_ITEM,
         WEKO_WORKFLOW_GAKUNINRDM_DATA=[
             {
                 'workflow_id': -1,
@@ -556,23 +560,30 @@ def mocker_itemtype(mocker):
     item_type.render = render
 
     filepath = os.path.join(
-        os.path.dirname(os.path.realpath(__file__)), "data/item_type/15_render.json"
+        os.path.dirname(os.path.realpath(__file__)), "data/item_type/15_schema.json"
     )
     with open(filepath, encoding="utf-8") as f:
         schema = json.load(f)
     item_type.schema = schema
 
     filepath = os.path.join(
-        os.path.dirname(os.path.realpath(__file__)), "data/item_type/15_render.json"
+        os.path.dirname(os.path.realpath(__file__)), "data/item_type/15_form.json"
     )
     with open(filepath, encoding="utf-8") as f:
         form = json.load(f)
     item_type.form = form
 
+    filepath = os.path.join(
+        os.path.dirname(os.path.realpath(__file__)), "data/item_type/item_type_mapping.json"
+    )
+    with open(filepath, encoding="utf-8") as f:
+        item_type_mapping = json.load(f)
+
     item_type.item_type_name.name = "デフォルトアイテムタイプ（フル）"
     item_type.item_type_name.item_type.first().id = 15
 
     mocker.patch("weko_records.api.ItemTypes.get_by_id", return_value=item_type)
+    mocker.patch('weko_records.api.Mapping.get_record', return_value=item_type_mapping)
 
 
 @pytest.yield_fixture()
@@ -796,12 +807,12 @@ def oa_status(db):
     """Create OA status data."""
     oa_status_1 = OaStatus(
         oa_article_id=1,
-        oa_status='Processed　Fulltext Registered (Embargo)',
+        oa_status='Processed Fulltext Registered (Embargo)',
         weko_item_pid='1'
     )
     oa_status_2 = OaStatus(
         oa_article_id=2,
-        oa_status='Processing　Metadata Registered',
+        oa_status='Processing Metadata Registered',
         weko_item_pid='2'
     )
     

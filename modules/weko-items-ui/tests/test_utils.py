@@ -48,7 +48,6 @@ from weko_workflow.schema.marshmallow import ActivitySchema, ResponseMessageSche
 from weko_items_ui.utils import (
     __sanitize_string,
     _custom_export_metadata,
-    _export_file,
     _export_item,
     _get_max_export_items,
     check_approval_email,
@@ -8190,50 +8189,6 @@ def test_export_items_issue32943(app,db_itemtype,db_itemtype2,db_records,users,d
             assert res.status_code == 200
 
 
-# def _export_file(record_id, data_path=None):
-# .tox/c1/bin/pytest --cov=weko_items_ui tests/test_utils.py::test__export_file -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
-def test__export_file(app,db_records,mocker):
-    _, _, _, _, record, _ = db_records[0]
-    data_path= "./tests/"
-    with app.test_request_context():
-        record_return_data = MagicMock()
-        record_data_1 = MagicMock()
-        record_data_1.info.return_value = {"accessrole": "close_restricted"}
-        # Mock file.obj.file.storage()
-        storage_mock = MagicMock()
-        record_data_1.obj.file.storage.return_value = storage_mock
-        record_data_1.obj.basename = "test.txt"
-        # Mock open()
-        open_mock = MagicMock()
-        open_mock.read.return_value = b"mocked file content"
-        storage_mock.open.return_value.__enter__.return_value = open_mock
-
-        record_return_data.files = [record_data_1]
-        mocker.patch("weko_items_ui.utils.WekoRecord.get_record_by_pid", return_value=record_return_data)
-        with patch("weko_items_ui.utils.check_file_download_permission", return_value=True):
-            with patch("builtins.open", mock_open(read_data="data")) as mock_file:
-                mock_file.return_value = MagicMock()
-                mock_file.return_value.write.return_value = "data"
-                _export_file(record.id, data_path)
-                mock_file.assert_called_once_with("./tests/test.txt", "wb")
-
-        with patch("weko_items_ui.utils.check_file_download_permission", return_value=False):
-            with patch("builtins.open", mock_open(read_data="data")) as mock_file:
-                mock_file.return_value = MagicMock()
-                mock_file.return_value.write.return_value = "data"
-                _export_file(record.id, data_path)
-                mock_file.assert_not_called()
-
-        record_data_2 = MagicMock()
-        record_data_2.info.return_value = {"accessrole": "open_restricted"}
-        record_return_data.files = [record_data_2]
-        with patch("weko_items_ui.utils.check_file_download_permission", return_value=True):
-            with patch("builtins.open", mock_open(read_data="data")) as mock_file:
-                mock_file.return_value = MagicMock()
-                mock_file.return_value.write.return_value = "data"
-                _export_file(record.id, data_path)
-                mock_file.assert_not_called()
-
 # def export_rocrate(post_data):
 # .tox/c1/bin/pytest --cov=weko_items_ui tests/test_utils.py::test_export_rocrate -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
 def test_export_rocrate(app,client,db_itemtype,db_records,users,mocker):
@@ -10757,7 +10712,7 @@ def test_get_file_download_data(app, client, records):
         record = results[5]["record"]
         with pytest.raises(AvailableFilesNotFoundRESTError):
             get_file_download_data(record.id, record, filenames)
-            
+
 # def get_weko_link(metadata):
 # .tox/c1/bin/pytest --cov=weko_items_ui tests/test_utils.py::test_get_weko_link -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
 def test_get_weko_link(app, client, users, db_records, mocker):
@@ -10824,15 +10779,15 @@ def test_get_weko_link(app, client, users, db_records, mocker):
         }
     )
     assert res == {}
-    
+
     # not isinstance(x, list) is true
     res = get_weko_link({"metainfo": {"field1": "string_value"}})
     assert res == {}
-    
+
     # not isinstance(y, dict) is true
     res = get_weko_link({"metainfo": {"field1": ["string_value"]}})
     assert res == {}
-    
+
     # not key == "nameIdentifiers" is true
     res = get_weko_link({"metainfo": {"field1": [{"field2": {}}]}})
     assert res == {}
@@ -10851,27 +10806,27 @@ def test_check_duplicate(app, users,db_records3):
     # metadata format NG
     res, [], [] =  check_duplicate({"metainfo":123},False)
     assert res == False
-    
+
     # first_item not dict
     res, [], [] =  check_duplicate({"subitem_identifier_uri":[{"subitem_identifier_uri"}]},True)
     assert res == False
-    
+
     # subitem_identifier_uri NG
     res, [], [] =  check_duplicate({"subitem_identifier_uri":[{"subitem_identifier_uri":"noexists"}]},True)
     assert res == False
-    
+
     # subitem_identifier_uri OK
     res, recid_list, item_links =  check_duplicate({"subitem_identifier_uri":[{"subitem_identifier_uri":"http://localhost"}]},True)
     assert recid_list[0] == 8
-    
+
     # subitem_title NG
     res, [], [] =  check_duplicate({"subitem_title":[{"subitem_title":"title"}]},True)
     assert res == False
-    
+
     # subitem_title:T  resource_type:T
     res, [], [] =  check_duplicate({"subitem_title":[{"subitem_title":"タイトル"}],"resourcetype":{"resourcetype":"Resource Type"}},True)
     assert res == False
-    
+
     # creatorNames NG
     res, [], [] =  check_duplicate({"creatorNames":[{"creatorNames":[{"creatorName":"test"}]}]},True)
     assert res == False

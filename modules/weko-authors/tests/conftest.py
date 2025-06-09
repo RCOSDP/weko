@@ -39,7 +39,7 @@ from invenio_db import db as db_
 from invenio_files_rest import InvenioFilesREST
 from invenio_files_rest.models import Location, FileInstance
 from invenio_indexer import InvenioIndexer
-from invenio_search import InvenioSearch,RecordsSearch
+from invenio_search import InvenioSearch,RecordsSearch, current_search_client
 from weko_authors.config import WEKO_AUTHORS_REST_ENDPOINTS
 from weko_search_ui import WekoSearchUI
 from weko_index_tree.models import Index
@@ -156,9 +156,9 @@ def base_app(request, instance_path,search_class):
         CELERY_ALWAYS_EAGER=True,
         CELERY_CACHE_BACKEND="memory",
         WEKO_AUTHORS_IMPORT_CACHE_RESULT_OVER_MAX_FILE_PATH_KEY = "authors_import_result_file_of_over_path",
-        WEKO_AUTHORS_EXPORT_TEMP_FOLDER_PATH =   "/var/tmp/authors_export",
+        WEKO_AUTHORS_EXPORT_TMP_DIR =   "authors_export",
         WEKO_AUTHORS_IMPORT_CACHE_USER_TSV_FILE_KEY = 'authors_import_user_file_key',
-        WEKO_AUTHORS_IMPORT_TEMP_FOLDER_PATH = "var/tmp/authors_import",
+        WEKO_AUTHORS_IMPORT_TMP_DIR = "authors_import",
         WEKO_AUTHORS_FILE_MAPPING_FOR_PREFIX =["scheme", "name", "url", "is_deleted"],
         WEKO_AUTHORS_IMPORT_TMP_PREFIX = 'authors_import_',
         WEKO_AUTHORS_IMPORT_BATCH_SIZE = 100,
@@ -379,7 +379,7 @@ def base_app2(instance_path,search_class):
         WEKO_AUTHORS_FILE_MAPPING_FOR_AFFILIATION=WEKO_AUTHORS_FILE_MAPPING_FOR_AFFILIATION,
         WEKO_AUTHORS_BULK_EXPORT_MAX_RETRY=2,
         WEKO_AUTHORS_BULK_EXPORT_RETRY_INTERVAL=1,
-        WEKO_AUTHORS_IMPORT_TEMP_FOLDER_PATH='/data',
+        WEKO_AUTHORS_IMPORT_TMP_DIR='/data',
         WEKO_AUTHORS_CACHE_TTL=100,
         WEKO_AUTHORS_IMPORT_BATCH_SIZE=2,
         WEKO_AUTHORS_IMPORT_MAX_RETRY=2,
@@ -436,7 +436,6 @@ def client(app):
     with app.test_client() as client:
         yield client
 
-from invenio_search import current_search_client
 @pytest.fixture()
 def esindex(app):
     current_search_client.indices.delete(index='test-*')
@@ -723,24 +722,31 @@ def file_instance(db):
     db.session.commit()
 
 
-# @pytest.fixture()
-# def esindex(app2):
-#     from invenio_search import current_search_client as client
-#     index_name = app2.config["INDEXER_DEFAULT_INDEX"]
-#     alias_name = "test-author-alias"
+@pytest.fixture()
+def esindex2(app2):
+    index_name = app2.config["INDEXER_DEFAULT_INDEX"]
+    alias_name = "test-author-alias"
 
-#     with open("tests/data/mappings/author-v1.0.0.json","r") as f:
-#         mapping = json.load(f)
+    with open("tests/data/mappings/author-v1.0.0.json","r") as f:
+        mapping = json.load(f)
 
-#     with app2.test_request_context():
-#         client.indices.create(index=index_name, body=mapping, ignore=[400])
-#         client.indices.put_alias(index=index_name, name=alias_name)
+    with app2.test_request_context():
+        current_search_client.indices.create(
+            index=index_name, body=mapping, ignore=[400]
+        )
+        current_search_client.indices.put_alias(
+            index=index_name, name=alias_name
+        )
 
-#     yield client
+    yield current_search_client
 
-#     with app2.test_request_context():
-#         client.indices.delete_alias(index=index_name, name=alias_name)
-#         client.indices.delete(index=index_name, ignore=[400, 404])
+    with app2.test_request_context():
+        current_search_client.indices.delete_alias(
+            index=index_name, name=alias_name
+        )
+        current_search_client.indices.delete(
+            index=index_name, ignore=[400, 404]
+        )
 
 from invenio_oauth2server.models import Client
 
