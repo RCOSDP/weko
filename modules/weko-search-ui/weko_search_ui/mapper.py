@@ -2232,24 +2232,49 @@ class JsonLdMapper(JsonMapper):
                 )
                 traceback.print_exc()
 
+        def dereference(keys, initial_entity=None):
+            """Dereference a chained key in the rocrate.
+
+            Args:
+                keys (list[str]): List of keys to dereference.
+                initial_entity (ContextEntity | None):
+                    Initial entity to start dereferencing from.
+            Returns:
+                object:
+                    The dereferenced value or None if not found.
+            """
+            if (
+                initial_entity is not None
+                and not isinstance(initial_entity, ContextEntity)
+            ):
+                raise TypeError(
+                    "Unexpected type for dereference base entity: {}"
+                    .format(type(initial_entity))
+                )
+            value = reduce(
+                lambda acc, key: (
+                    rocrate.dereference(acc[key]["@id"])
+                    if isinstance(acc, ContextEntity) and acc.get(key)
+                        and isinstance(acc[key], ContextEntity)
+                    else acc.get(key)
+                        if isinstance(acc, ContextEntity) and acc.get(key)
+                        else None
+                ),
+                keys, initial_entity or rocrate.root_dataset
+            )
+            return value
+
         # files entity reconstruction
         # "@id" in files entity is format like "data/sample.txt"
         filename_mapping = ""
-        file_url_mapping = ""
         file_url_url_mapping = ""
-        for k, v in properties_mapping.items():
+        for k, m in properties_mapping.items():
             if k.endswith(".filename"):
-                filename_mapping = v
+                filename_mapping = m
                 break
-        for k, v in properties_mapping.items():
+        for k, m in properties_mapping.items():
             if k.endswith(".url.url"):
-                continue
-            if v.endswith(".url"):
-                file_url_mapping = v
-                break
-        for k, v in properties_mapping.items():
-            if k.endswith(".url.url"):
-                file_url_url_mapping = v
+                file_url_url_mapping = m
                 break
         file_key = filename_mapping.split(".")[0]
 
@@ -2260,37 +2285,21 @@ class JsonLdMapper(JsonMapper):
         extracted_files = kwargs.get("extracted_files", [])
         for entity in files_entity:
             file_metadata = entity._jsonld
-            entity.delete()
             del file_metadata["@id"]
             del file_metadata["@type"]
-            filename = reduce(
-                lambda acc, key: acc.get(key) if isinstance(acc, dict) else None,
-                filename_mapping.split('.')[1:], file_metadata
-            )
+            filename = dereference(filename_mapping.split(".")[1:], entity)
+            url = dereference(file_url_url_mapping.split(".")[1:], entity)
+            entity.delete()
 
-            if filename:
+            host_url = current_app.config["THEME_SITEURL"]
+            if isinstance(url, str) and host_url not in url:
+                rocrate.add_file(url, properties=file_metadata)
+            else:
                 file_metadata["wk:textExtraction"] = filename in extracted_files
                 rocrate.add_file(
                     dest_path=f"data/{filename}",
                     properties=file_metadata
                 )
-            else:
-                url = file_metadata
-                for url_key in file_url_mapping.split(".")[1:]:
-                    if url:
-                        url = url.get(url_key)
-                if url:
-                    url_id = url["@id"]
-                    url = rocrate.dereference(url_id)._jsonld
-                    file_url_url_mapping = (
-                        file_url_url_mapping
-                        .split(".")[len(file_url_mapping.split(".")):]
-                    )
-                    for url_key in file_url_url_mapping:
-                        if url:
-                            url = url.get(url_key)
-                    if isinstance(url, str):
-                        rocrate.add_file(url, properties=file_metadata)
 
         # Extra
         if "Extra" in item_map:
