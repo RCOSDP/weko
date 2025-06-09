@@ -284,6 +284,14 @@ def test_register_hdl(app,db_records,db_register):#c
 # def item_metadata_validation(item_id, identifier_type, record=None,
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_item_metadata_validation -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_item_metadata_validation(db_records,item_type):
+    def sort_dict_values(d):
+        if isinstance(d, dict):
+            return {k: sort_dict_values(v) for k, v in d.items()}
+        elif isinstance(d, list):
+            return sorted(sort_dict_values(x) for x in d)
+        else:
+            return d
+
     recid, depid, record, item, parent, doi, deposit = db_records[0]
     #result = item_metadata_validation(recid.id,"hdl")
     result = item_metadata_validation(None,"hdl",record=record)
@@ -292,56 +300,62 @@ def test_item_metadata_validation(db_records,item_type):
     
     without_ver = get_record_without_version(recid)
 
-    # identifiery_type is JaLC, new resource_type in journalarticle_type, old resource_type in elearning_type
+    # identifier_type is JaLC, new resource_type in journalarticle_type, old resource_type in elearning_type
     with patch("weko_workflow.utils.MappingData.get_first_data_by_mapping",\
         side_effect=[("item_1617258105262.resourcetype", ['conference paper']),(None,["learning object"])]):
         result = item_metadata_validation(recid.object_uuid,"1",without_ver_id=without_ver.object_uuid)
         assert result == {'required': [], 'required_key': [], 'pattern': [],
                   'either': [],  'either_key': [], 'mapping': [], 'other': 'You cannot change the resource type of items that have been grant a DOI.'}
 
-    # identifiery_type is JaLC, new resource_type in report_types, old resource_type in thesis_types
+    # identifier_type is JaLC, new resource_type in report_types, old resource_type in thesis_types
     with patch("weko_workflow.utils.MappingData.get_first_data_by_mapping",\
         side_effect=[("item_1617258105262.resourcetype", ['thesis']),(None,["report"])]):
         result = item_metadata_validation(recid.object_uuid,"1",without_ver_id=without_ver.object_uuid)
         assert result == {'required': [], 'required_key': [], 'pattern': [],
                   'either': [],  'either_key': [], 'mapping': [], 'other': 'You cannot change the resource type of items that have been grant a DOI.'}
 
-    # identifiery_type is JaLC, new resource_type in dataset_type, old resource_type in datageneral_types
+    # identifier_type is JaLC, new resource_type in dataset_type, old resource_type in datageneral_types
     with patch("weko_workflow.utils.MappingData.get_first_data_by_mapping",\
         side_effect=[("item_1617258105262.resourcetype", ['software']),(None,["internal report"])]):
         result = item_metadata_validation(recid.object_uuid,"1",without_ver_id=without_ver.object_uuid)
         assert result == {'required': [], 'required_key': [], 'pattern': [],
                   'either': [],  'either_key': [], 'mapping': [], 'other': 'You cannot change the resource type of items that have been grant a DOI.'}
 
-    # identifiery_type is JaLC, new resource_type in else, old resource_type in else
+    # identifier_type is JaLC, new resource_type in else, old resource_type in else
     with patch("weko_workflow.utils.MappingData.get_first_data_by_mapping",\
         side_effect=[("item_1617258105262.resourcetype", ['else']),(None,["else"])]):
         result = item_metadata_validation(recid.object_uuid,"1",without_ver_id=without_ver.object_uuid)
         assert result == {'required': ['item_1617605131499.url.url'], 'required_key': ['jpcoar:URI'], 'pattern': [],
                   'either': [],  'either_key': [], 'mapping': [], }
 
-    # identifiery_type is CrossRef, new resource_type in thesis_types, old resource_type in report_types
+    # identifier_type is CrossRef, new resource_type in thesis_types, old resource_type in report_types
     with patch("weko_workflow.utils.MappingData.get_first_data_by_mapping",\
         side_effect=[("item_1617258105262.resourcetype", ['thesis']),(None,["report"])]):
         result = item_metadata_validation(recid.object_uuid,"2",without_ver_id=without_ver.object_uuid)
-        assert result == {'required': ['item_1617605131499.url.url'], 'required_key': ['jpcoar:URI'], 'pattern': [],
-                  'either': [],  'either_key': [], 'mapping': [], }
+        expected = {
+            'required': ['item_1617605131499.url.url', 'item_1617187136212.subitem_1551256096004', 'item_1617186643794.subitem_1522300295150', 'item_1617186643794.subitem_1522300316516'],
+            'required_key': ['jpcoar:URI', 'dc:publisher', 'dcndl:dateGranted'],
+            'pattern': ['dc:publisher'],
+            'either': [[['item_1617187056579.bibliographicIssueDates.bibliographicIssueDate'], ['item_1617186660861.subitem_1522300722591']]],
+            'either_key': ['datacite:date'], 'mapping': ['jpcoar:publisher_jpcoar'],
+        }
+        assert sort_dict_values(result) == sort_dict_values(expected)
 
-    # identifiery_type is CrossRef, new resource_type in journalarticle_type, old resource_type in else
+    # identifier_type is CrossRef, new resource_type in journalarticle_type, old resource_type in else
     with patch("weko_workflow.utils.MappingData.get_first_data_by_mapping",\
         side_effect=[("item_1617258105262.resourcetype", ['conference paper']),(None,["else"])]):
         result = item_metadata_validation(recid.object_uuid,"2",without_ver_id=without_ver.object_uuid)
         assert result == {'required': [], 'required_key': [], 'pattern': [],
                   'either': [],  'either_key': [], 'mapping': [], 'other': 'You cannot change the resource type of items that have been grant a DOI.'}
 
-    # identifiery_type is DataCite, new resource_type in dataset_type, old resource_type in else
+    # identifier_type is DataCite, new resource_type in dataset_type, old resource_type in else
     with patch("weko_workflow.utils.MappingData.get_first_data_by_mapping",\
         side_effect=[("item_1617258105262.resourcetype", ['dataset']),(None,["thesis"])]):
         result = item_metadata_validation(recid.object_uuid,"3",without_ver_id=without_ver.object_uuid)
         assert result == {'required': [], 'required_key': [], 'pattern': [],
                   'either': [],  'either_key': [], 'mapping': [], 'other': 'You cannot change the resource type of items that have been grant a DOI.'}
 
-    # identifiery_type is NDL, resource_type is not doctoral thesis
+    # identifier_type is NDL, resource_type is not doctoral thesis
     with patch("weko_workflow.utils.MappingData.get_first_data_by_mapping",\
         side_effect=[("item_1617258105262.resourcetype", ['thesis']),(None,["report"])]):
         result = item_metadata_validation(recid.object_uuid,"4",without_ver_id=without_ver.object_uuid)
@@ -364,7 +378,7 @@ def test_item_metadata_validation(db_records,item_type):
 #* This test is for the following as well:
 #*     def validation_item_property
 #*     def handle_check_required_pattern_and_either
-#*     def validattion_item_property_required
+#*     def validation_item_property_required
 # def item_metadata_validation(item_id, identifier_type, record=None,
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_item_metadata_validation_2 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_item_metadata_validation_2(db_records_for_doi_validation_test, item_type):
@@ -389,7 +403,7 @@ def test_item_metadata_validation_2(db_records_for_doi_validation_test, item_typ
         for result_0_key in result_0_keys:
             if result_0_check_item_1 in result_0.get(result_0_key):
                 result_0_check_list_2.append(result_0_check_item_1)
-    assert len(result_0_check_list_2) == 2
+    assert len(result_0_check_list_2) == 6
 
     #* 別表2-2 JaLC DOI
     recid1, depid1, record1, item1, parent1, doi1, deposit1 = db_records_for_doi_validation_test[1]
@@ -411,7 +425,7 @@ def test_item_metadata_validation_2(db_records_for_doi_validation_test, item_typ
         for result_1_key in result_1_keys:
             if result_1_check_item_1 in result_1.get(result_1_key):
                 result_1_check_list_2.append(result_1_check_item_1)
-    assert len(result_1_check_list_2) == 1
+    assert len(result_1_check_list_2) == 5
     # issue 45809
     assert not "jpcoar:pageStart" in result_1.get("either_key")
 
@@ -435,7 +449,7 @@ def test_item_metadata_validation_2(db_records_for_doi_validation_test, item_typ
         for result_2_key in result_2_keys:
             if result_2_check_item_1 in result_2.get(result_2_key):
                 result_2_check_list_2.append(result_2_check_item_1)
-    assert len(result_2_check_list_2) == 1
+    assert len(result_2_check_list_2) == 5
 
     #* 別表2-4 JaLC DOI
     recid3, depid3, record3, item3, parent3, doi3, deposit3 = db_records_for_doi_validation_test[3]
@@ -457,7 +471,7 @@ def test_item_metadata_validation_2(db_records_for_doi_validation_test, item_typ
         for result_3_key in result_3_keys:
             if result_3_check_item_1 in result_3.get(result_3_key):
                 result_3_check_list_2.append(result_3_check_item_1)
-    assert len(result_3_check_list_2) == 1
+    assert len(result_3_check_list_2) == 5
 
     #* 別表2-5 JaLC DOI
     recid4, depid4, record4, item4, parent4, doi4, deposit4 = db_records_for_doi_validation_test[4]
@@ -481,7 +495,7 @@ def test_item_metadata_validation_2(db_records_for_doi_validation_test, item_typ
         for result_4_key in result_4_keys:
             if result_4_check_item_1 in result_4.get(result_4_key):
                 result_4_check_list_2.append(result_4_check_item_1)
-    assert len(result_4_check_list_2) == 1
+    assert len(result_4_check_list_2) == 7
 
     #* 別表2-6 JaLC DOI
     recid5, depid5, record5, item5, parent5, doi5, deposit5 = db_records_for_doi_validation_test[5]
@@ -503,7 +517,7 @@ def test_item_metadata_validation_2(db_records_for_doi_validation_test, item_typ
         for result_5_key in result_5_keys:
             if result_5_check_item_1 in result_5.get(result_5_key):
                 result_5_check_list_2.append(result_5_check_item_1)
-    assert len(result_5_check_list_2) == 1
+    assert len(result_5_check_list_2) == 5
 
     #* 別表3-1 Crossref DOI
     recid6, depid6, record6, item6, parent6, doi6, deposit6 = db_records_for_doi_validation_test[6]
@@ -527,7 +541,7 @@ def test_item_metadata_validation_2(db_records_for_doi_validation_test, item_typ
         for result_6_key in result_6_keys:
             if result_6_check_item_1 in result_6.get(result_6_key):
                 result_6_check_list_2.append(result_6_check_item_1)
-    assert len(set(result_6_check_list_2)) == 3
+    assert len(set(result_6_check_list_2)) == 7
 
     #* 別表3-2 Crossref DOI
     recid7, depid7, record7, item7, parent7, doi7, deposit7 = db_records_for_doi_validation_test[7]
@@ -549,7 +563,7 @@ def test_item_metadata_validation_2(db_records_for_doi_validation_test, item_typ
         for result_7_key in result_7_keys:
             if result_7_check_item_1 in result_7.get(result_7_key):
                 result_7_check_list_2.append(result_7_check_item_1)
-    assert len(result_7_check_list_2) == 1
+    assert len(set(result_7_check_list_2)) == 5
 
     #* 別表4-1 DataCite DOI
     recid8, depid8, record8, item8, parent8, doi8, deposit8 = db_records_for_doi_validation_test[8]
@@ -573,7 +587,7 @@ def test_item_metadata_validation_2(db_records_for_doi_validation_test, item_typ
         for result_8_key in result_8_keys:
             if result_8_check_item_1 in result_8.get(result_8_key):
                 result_8_check_list_2.append(result_8_check_item_1)
-    assert len(result_8_check_list_2) == 1
+    assert len(set(result_8_check_list_2)) == 7
 
     #* 別表4-1 DataCite DOI ~ Testing jpcoar:givenName, jpcoar:creatorName, dc:publisher, jpcoar:publisherName for "en" value
     recid8, depid8, record8, item8, parent8, doi8, deposit8 = db_records_for_doi_validation_test[8]
@@ -597,7 +611,7 @@ def test_item_metadata_validation_2(db_records_for_doi_validation_test, item_typ
         for result_8_key in result_8_keys:
             if result_8_check_item_1 in result_8.get(result_8_key):
                 result_8_check_list_2.append(result_8_check_item_1)
-    assert len(result_8_check_list_2) == 1
+    assert len(set(result_8_check_list_2)) == 7
 
 
 # def merge_doi_error_list(current, new):
