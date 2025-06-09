@@ -831,7 +831,9 @@ def get_jamas_language_data(data):
     Returns:
         list: A list containing a dictionary with the language.
     """
-    default_language = 'en'
+    default_language = current_app.config.get(
+        "WEKO_WORKSPACE_DATA_DEFAULT_LANGUAGE", "en"
+    )
     if isinstance(data, str):
         result = data if data else default_language
     elif isinstance(data, list) and len(data) > 0:
@@ -939,7 +941,7 @@ def get_cinii_data_by_key(api, keyword):
             'cir:NAID'
         )
     elif keyword == 'all':
-        for key in current_app.config.get("WEKO_ITEMS_AUTOFILL_CINII_REQUIRED_ITEM"):
+        for key in current_app.config.get("WEKO_WORKSPACE_CINII_REQUIRED_ITEM"):
             result[key] = get_cinii_data_by_key(api, key).get(key)
     return result
 
@@ -1102,12 +1104,13 @@ def get_cinii_subject_data(data, title):
         list: A list of dictionaries containing the subject data.
     """
     result = list()
-    default_language = 'ja'
     for sub in data:
         new_data = dict()
         new_data["@scheme"] = "Other"
         new_data["@value"] = sub
-        new_data["@language"] = default_language
+        new_data["@language"] = current_app.config.get(
+            "WEKO_WORKSPACE_DATA_DEFAULT_LANGUAGE", "en"
+        )
         result.append(new_data)
     return result
 
@@ -1128,40 +1131,17 @@ def get_cinii_creator_data(data):
         list: A list of lists, each containing a dictionary with the creator name and language.
     """
     result = list()
-    default_language = 'ja'
     for item in data:
         name_data = item
         if name_data:
             result_creator = list()
             new_data = dict()
             new_data['@value'] = name_data
-            new_data['@language'] = default_language
+            new_data['@language'] = current_app.config.get(
+                "WEKO_WORKSPACE_DATA_DEFAULT_LANGUAGE", "en"
+            )
             result_creator.append(new_data)
             result.append(result_creator)
-    return result
-
-
-def get_cinii_contributor_data(data):
-    """Get contributor data from CiNii.
-
-    Get contributor name and form it as format:
-    {
-        '@value': name,
-        '@language': language
-    }
-
-    Args:
-        data (list): A list of contributor names.
-
-    Returns:
-        list: A list of dictionaries, each containing a contributor name and language.
-    """
-    result = list()
-    for item in data:
-        name_data = item
-        if name_data:
-
-            result.append(get_basic_cinii_data(name_data))
     return result
 
 
@@ -1181,37 +1161,12 @@ def get_cinii_title_data(data):
         list: A list containing a dictionary with the title and its language.
     """
     result = list()
-    default_language = 'ja'
     new_data = dict()
     new_data['@value'] = data
-    new_data['@language'] = default_language
+    new_data['@language'] = current_app.config.get(
+        "WEKO_WORKSPACE_DATA_DEFAULT_LANGUAGE", "en"
+    )
     result.append(new_data)
-    return result
-
-
-def get_basic_cinii_data(data):
-    """Get basic data template from CiNii.
-
-        Basic value format:
-        {
-            '@value': value,
-            '@language': language
-        }
-
-    Args:
-        data (str): The basic value to be packed.
-
-    Returns:
-        list: A list containing a dictionary with the value and its language.
-    """
-    result = list()
-    default_language = 'ja'
-
-    for item in data:
-        new_data = dict()
-        new_data['@value'] = item
-        new_data['@language'] = default_language
-        result.append(new_data)
     return result
 
 
@@ -1232,13 +1187,14 @@ def get_cinii_description_data(data):
         list: A list containing a dictionary with the description, language, and type.
     """
     result = list()
-    default_language = 'ja'
     default_type = 'Abstract'
     new_data = dict()
 
     new_data['@value'] = data
     new_data['@type'] = default_type
-    new_data["@language"] = default_language
+    new_data["@language"] = current_app.config.get(
+        "WEKO_WORKSPACE_DATA_DEFAULT_LANGUAGE", "en"
+    )
     result.append(new_data)
     return result
 
@@ -1410,7 +1366,7 @@ def get_cinii_autofill_item(item_id):
     jpcoar_item = get_item_id(item_id)
     cinii_req_item = dict()
 
-    for key in current_app.config.get("WEKO_ITEMS_AUTOFILL_CINII_REQUIRED_ITEM"):
+    for key in current_app.config.get("WEKO_WORKSPACE_CINII_REQUIRED_ITEM"):
         if jpcoar_item.get(key) is not None:
             cinii_req_item[key] = jpcoar_item.get(key)
     return cinii_req_item
@@ -1778,7 +1734,7 @@ def get_jalc_record_data(doi, item_type_id, exclude_duplicate_lang=True):
         return result
     elif items.form is not None:
         autofill_key_tree = get_autofill_key_tree(
-            items.form, get_cinii_autofill_item(item_type_id))
+            items.form, get_jalc_autofill_item(item_type_id))
         result = build_record_model(
             autofill_key_tree, api_data, schema=items.schema,
             exclude_duplicate_lang=exclude_duplicate_lang
@@ -1797,18 +1753,19 @@ def get_jalc_data_by_key(api, keyword):
     Returns:
         dict: A dictionary containing the data for the specified keyword.
     """
-    import json
     data_response = api['response']
     result = dict()
     if data_response is None:
         return result
     data = data_response
-    if keyword == 'title' and data['data']['title_list'][0]:
+    if keyword == 'title'\
+        and data['data'].get('title_list')\
+        and data['data']['title_list'][0]:
         result[keyword] = get_jalc_title_data(data['data']['title_list'][0])
-    elif keyword == 'creator' and data['data']['creator_list']:
+    elif keyword == 'creator' and data['data'].get('creator_list'):
         result[keyword] = get_jalc_creator_data(data['data']['creator_list'])
-    elif keyword == 'sourceTitle' and data['data']['journal_title_name_list']:
-        result[keyword] = get_jalc_subject_data(data['data']['journal_title_name_list'])
+    elif keyword == 'sourceTitle' and data['data'].get('journal_title_name_list'):
+        result[keyword] = get_jalc_source_title_data(data['data']['journal_title_name_list'])
     elif keyword == 'volume' and data['data'].get('volume'):
         result[keyword] = pack_single_value_as_dict(data['data'].get('volume'))
     elif keyword == 'issue' and data['data'].get('issue'):
@@ -1834,7 +1791,7 @@ def get_jalc_data_by_key(api, keyword):
             data['data'].get('doi')
         )
     elif keyword == 'all':
-        for key in current_app.config.get("WEKO_ITEMS_AUTOFILL_CINII_REQUIRED_ITEM"):
+        for key in current_app.config.get("WEKO_WORKSPACE_JALC_REQUIRED_ITEM"):
             result[key] = get_jalc_data_by_key(api, key).get(key)
     return result
 
@@ -1855,12 +1812,15 @@ def get_jalc_publisher_data(data):
         list: A list of dictionaries containing the publisher names and their languages.
     """
     result = list()
-    default_language = 'en'
+    default_language = current_app.config.get(
+        "WEKO_WORKSPACE_DATA_DEFAULT_LANGUAGE", "en"
+    )
     for item in data:
         new_data = dict()
         new_data['@value'] = item.get('publisher_name')
-        new_data['@language'] = item.get('lang') if item.get('lang', None) else default_language
+        new_data['@language'] = item.get('lang', default_language)
         result.append(new_data)
+    return result
 
 
 def get_jalc_title_data(data):
@@ -1879,10 +1839,12 @@ def get_jalc_title_data(data):
         list: A list containing a dictionary with the title and its language.
     """
     result = list()
-    default_language = 'en'
+    default_language = current_app.config.get(
+        "WEKO_WORKSPACE_DATA_DEFAULT_LANGUAGE", "en"
+    )
     new_data = dict()
     new_data['@value'] = data.get('title')
-    new_data['@language'] = data.get('lang') if data.get('lang', None) else default_language
+    new_data['@language'] = data.get('lang', default_language)
     result.append(new_data)
     return result
 
@@ -1903,7 +1865,9 @@ def get_jalc_creator_data(data):
         list: A list of lists, each containing a dictionary with the creator names and languages.
     """
     result = list()
-    default_language = 'ja'
+    default_language = current_app.config.get(
+        "WEKO_WORKSPACE_DATA_DEFAULT_LANGUAGE", "en"
+    )
 
     for item in data:
         if 'names' in item:
@@ -1912,87 +1876,35 @@ def get_jalc_creator_data(data):
                 new_data = dict()
                 full_name = name_entry.get('last_name',"") + ' ' + name_entry.get('first_name',"")
                 new_data['@value'] = full_name
-                new_data['@language'] = name_entry.get('lang') if name_entry.get('lang', None) else default_language
+                new_data['@language'] = name_entry.get('lang', default_language)
                 result_creator.append(new_data)
             result.append(result_creator)
     return result
 
 
-def get_jalc_contributor_data(data):
-    """Get contributor data from jalc.
+def get_jalc_source_title_data(data):
+    """Get source title data from jalc.
 
-    Get contributor name and form it as format:
-    {
-        '@value': name,
-        '@language': language
-    }
-
-    Args:
-        data (list): A list of contributor names.
-
-    Returns:
-        list: A list of dictionaries, each containing a contributor name and language.
-    """
-    result = list()
-    for item in data:
-        name_data = item
-        if name_data:
-            result.append(get_basic_cinii_data(name_data))
-    return result
-
-
-def get_jalc_description_data(data):
-    """Get description data from jalc.
-
-    Get description and form it as format:
-    {
-        '@value': description,
-        '@language': language,
-        '@type': type of description
-    }
-
-    Args:
-        data (str): The description of the item.
-    
-    Returns:
-        list: A list containing a dictionary with the description, language, and type.
-    """
-    result = list()
-    default_language = 'ja'
-    default_type = 'Abstract'
-
-    new_data = dict()
-    new_data['@value'] = data
-    new_data['@type'] = default_type
-    new_data["@language"] = default_language
-    result.append(new_data)
-    return result
-
-
-def get_jalc_subject_data(data):
-    """Get subject data from jalc.
-
-    Get subject and form it as format:
+    Get title and form it as format:
     {
         '@value': title,
-        '2language': language,
-        '@scheme': scheme of subject
-        '@URI': source of subject
+        '@language': language,
     }
 
     Args:
-        data (list): A list of subjects.
+        data (list): A list of source titles.
 
     Returns:
-        list: A list of dictionaries containing the subject data.
+        list: A list of dictionaries containing the source title data.
     """
     result = list()
-    default_language = 'ja'
+    default_language = current_app.config.get(
+        "WEKO_WORKSPACE_DATA_DEFAULT_LANGUAGE", "en"
+    )
     for sub in data:
         new_data = dict()
-        new_data["@type"] = sub.get('type')
         new_data["@value"] = sub.get('journal_title_name')
-        new_data['@language'] = sub.get('lang') if sub.get('lang', None) else default_language
+        new_data['@language'] = sub.get('lang', default_language)
         result.append(new_data)
     return result
 
@@ -2073,7 +1985,7 @@ def get_jalc_date_data(data):
 def pack_data_with_multiple_type_jalc(data):
     """Map jalc multi data with type.
 
-   Args:
+    Args:
         data (list): A list of dictionaries containing journal IDs and their types.
 
     Returns:
@@ -2107,6 +2019,24 @@ def get_jalc_product_identifier(data):
     return result
 
 
+def get_jalc_autofill_item(item_id):
+    """Get JaLC autofill item.
+    
+    Args:
+        item_id (int): The item ID.
+        
+    Returns:
+        dict: A dictionary containing the JaLC required item data.
+    """
+    jpcoar_item = get_item_id(item_id)
+    jalc_req_item = dict()
+
+    for key in current_app.config.get("WEKO_WORKSPACE_JALC_REQUIRED_ITEM"):
+        if jpcoar_item.get(key) is not None:
+            jalc_req_item[key] = jpcoar_item.get(key)
+    return jalc_req_item
+
+
 @cached_api_json(timeout=50, key_prefix="datacite_data")
 def get_datacite_record_data(doi, item_type_id, exclude_duplicate_lang=True):
     """Get record data base on DATACITE API.
@@ -2131,7 +2061,7 @@ def get_datacite_record_data(doi, item_type_id, exclude_duplicate_lang=True):
         return result
     elif items.form is not None:
         autofill_key_tree = get_autofill_key_tree(
-            items.form, get_cinii_autofill_item(item_type_id))
+            items.form, get_datacite_autofill_item(item_type_id))
         result = build_record_model(
             autofill_key_tree, api_data, items.schema, exclude_duplicate_lang
         )
@@ -2179,7 +2109,7 @@ def get_datacite_data_by_key(api, keyword):
             data['data'].get('id')
         )
     elif keyword == 'all':
-        for key in current_app.config.get("WEKO_ITEMS_AUTOFILL_CINII_REQUIRED_ITEM"):
+        for key in current_app.config.get("WEKO_WORKSPACE_DATACITE_REQUIRED_ITEM"):
             result[key] = get_datacite_data_by_key(api, key).get(key)
     return result
 
@@ -2200,11 +2130,11 @@ def get_datacite_publisher_data(data):
         list: A list containing a dictionary with the publisher name and its language.
     """
     result = list()
-    default_language = 'en'
     new_data = dict()
-    new_data["@type"] = data
-
-    new_data['@language'] = default_language
+    new_data["@value"] = data
+    new_data['@language'] = current_app.config.get(
+        "WEKO_WORKSPACE_DATA_DEFAULT_LANGUAGE", "en"
+    )
 
     result.append(new_data)
     return result
@@ -2226,7 +2156,9 @@ def get_datacite_title_data(data):
         list: A list of dictionaries, each containing a title and its language.
     """
     result = list()
-    default_language = 'ja'
+    default_language = current_app.config.get(
+        "WEKO_WORKSPACE_DATA_DEFAULT_LANGUAGE", "en"
+    )
     for title in data:
         new_data = dict()
         new_data["@value"] = title.get('title')
@@ -2252,13 +2184,15 @@ def get_datacite_creator_data(data):
         list: A list of lists, each containing a dictionary with the creator names and languages.
     """
     result = list()
-    default_language = 'ja'
+    default_language = current_app.config.get(
+        "WEKO_WORKSPACE_DATA_DEFAULT_LANGUAGE", "en"
+    )
     for item in data:
         if 'name' in item:
             result_creator = list()
             new_data = dict()
             new_data['@value'] = item.get('name')
-            new_data['@language'] = default_language
+            new_data['@language'] = item.get('lang', default_language)
 
             result_creator.append(new_data)
             result.append(result_creator)
@@ -2281,13 +2215,15 @@ def get_datacite_contributor_data(data):
         list: A list of lists, each containing a dictionary with the contributor names and languages.
     """
     result = list()
-    default_language = 'ja'
+    default_language = current_app.config.get(
+        "WEKO_WORKSPACE_DATA_DEFAULT_LANGUAGE", "en"
+    )
     for item in data:
         if 'name' in item:
             result_creator = list()
             new_data = dict()
             new_data['@value'] = item.get('name')
-            new_data['@language'] = default_language
+            new_data['@language'] = item.get('lang', default_language)
 
             result_creator.append(new_data)
             result.append(result_creator)
@@ -2311,13 +2247,15 @@ def get_datacite_description_data(data):
         list: A list of dictionaries, each containing a description, its language, and type.
     """
     result = list()
-    default_language = 'ja'
+    default_language = current_app.config.get(
+        "WEKO_WORKSPACE_DATA_DEFAULT_LANGUAGE", "en"
+    )
     default_type = 'Abstract'
     for item in data:
         if 'description' in item:
             new_data = dict()
             new_data['@value'] = item.get('description')
-            new_data['@language'] = default_language
+            new_data['@language'] = item.get('lang', default_language)
 
             result.append(new_data)
     return result
@@ -2329,7 +2267,7 @@ def get_datacite_subject_data(data):
     Get subject and form it as format:
     {
         '@value': title,
-        '2language': language,
+        '@language': language,
         '@scheme': scheme of subject
         '@URI': source of subject
     }
@@ -2341,42 +2279,17 @@ def get_datacite_subject_data(data):
         list: A list of dictionaries, each containing a subject, its language, and scheme.
     """
     result = list()
-    default_language = 'ja'
+    default_language = current_app.config.get(
+        "WEKO_WORKSPACE_DATA_DEFAULT_LANGUAGE", "en"
+    )
     for sub in data:
         if 'subject' in sub:
             new_data = dict()
             new_data['@value'] = sub.get('subject')
             new_data['@scheme'] = sub.get('subjectScheme')
+            new_data['@language'] = sub.get('lang', default_language)
 
             result.append(new_data)
-    return result
-
-
-def get_datacite_date_data(data):
-    """Get publication date.
-
-    Get publication date from datacite data
-    format:
-    {
-        '@value': date
-        '@type': type of date
-    }
-
-    Args:
-        data (str): The publication date in the format 'YYYY-MM-DD'.
-
-    Returns:
-        dict: A dictionary containing the publication date packed as '@value' and its type as '@type'.
-    """
-    result = dict()
-
-    result = dict()
-    if len(data.split('-')) != 3:
-        result['@value'] = None
-        result['@type'] = None
-    else:
-        result['@value'] = data
-        result['@type'] = 'Issued'
     return result
 
 
@@ -2391,15 +2304,10 @@ def pack_data_with_multiple_type_datacite(data):
 
     """
     result = list()
-    if data:
+    for d in data:
         new_data = dict()
-        new_data['@value'] = data
-        new_data['@type'] = "DOI"
-        result.append(new_data)
-    else:
-        new_data = dict()
-        new_data['@value'] = None
-        new_data['@type'] = None
+        new_data['@value'] = d.get('identifier')
+        new_data['@type'] = d.get('identifierType')
         result.append(new_data)
     return result
 
@@ -2426,3 +2334,21 @@ def get_datacite_product_identifier(data):
         new_data['@type'] = None
         result.append(new_data)
     return result
+
+
+def get_datacite_autofill_item(item_id):
+    """Get DataCite autofill item.
+    
+    Args:
+        item_id (int): The item ID.
+        
+    Returns:
+        dict: A dictionary containing the DataCite required item data.
+    """
+    jpcoar_item = get_item_id(item_id)
+    datacite_req_item = dict()
+
+    for key in current_app.config.get("WEKO_WORKSPACE_DATACITE_REQUIRED_ITEM"):
+        if jpcoar_item.get(key) is not None:
+            datacite_req_item[key] = jpcoar_item.get(key)
+    return datacite_req_item

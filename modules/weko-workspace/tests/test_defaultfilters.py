@@ -21,12 +21,12 @@
 """Module tests."""
 import pytest
 from flask_babelex import gettext as _
-from weko_workspace.utils import *
 from weko_workspace.defaultfilters import merge_default_filters
 from weko_workspace.config import WEKO_WORKSPACE_DEFAULT_FILTERS as DEFAULT_FILTERS
 
 
 # ===========================def merge_default_filters():=====================================
+# .tox/c1/bin/pytest --cov=weko_workspace tests/test_defaultfilters.py::test_merge_default_filters -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workspace/.tox/c1/tmp
 @pytest.mark.parametrize('default_con, expected_response', [
     # シナリオ1: default_conが空の場合、デフォルトテンプレートを返す
     (
@@ -41,8 +41,8 @@ from weko_workspace.config import WEKO_WORKSPACE_DEFAULT_FILTERS as DEFAULT_FILT
         },
         {
             **{key: dict(value) for key, value in DEFAULT_FILTERS.items()},
-            "favorite": {**DEFAULT_FILTERS["favorite"], "default": "あり"},
-            "peer_review": {**DEFAULT_FILTERS["peer_review"], "default": "なし"}
+            "favorite": {**DEFAULT_FILTERS["favorite"], "default": "Yes"},
+            "peer_review": {**DEFAULT_FILTERS["peer_review"], "default": "No"}
         }
     ),
     # シナリオ3: 複数選択フィールドを更新
@@ -69,11 +69,11 @@ from weko_workspace.config import WEKO_WORKSPACE_DEFAULT_FILTERS as DEFAULT_FILT
         },
         {
             **{key: dict(value) for key, value in DEFAULT_FILTERS.items()},
-            "peer_review": {**DEFAULT_FILTERS["peer_review"], "default": "あり"},
-            "related_to_paper": {**DEFAULT_FILTERS["related_to_paper"], "default": "なし"},
+            "peer_review": {**DEFAULT_FILTERS["peer_review"], "default": "Yes"},
+            "related_to_paper": {**DEFAULT_FILTERS["related_to_paper"], "default": "No"},
             "related_to_data": {**DEFAULT_FILTERS["related_to_data"], "default": None},
-            "file_present": {**DEFAULT_FILTERS["file_present"], "default": "あり"},
-            "favorite": {**DEFAULT_FILTERS["favorite"], "default": "なし"}
+            "file_present": {**DEFAULT_FILTERS["file_present"], "default": "Yes"},
+            "favorite": {**DEFAULT_FILTERS["favorite"], "default": "No"}
         }
     ),
     # シナリオ5: default_conに存在しないキーを含む場合、無視する
@@ -84,7 +84,7 @@ from weko_workspace.config import WEKO_WORKSPACE_DEFAULT_FILTERS as DEFAULT_FILT
         },
         {
             **{key: dict(value) for key, value in DEFAULT_FILTERS.items()},
-            "favorite": {**DEFAULT_FILTERS["favorite"], "default": "あり"}
+            "favorite": {**DEFAULT_FILTERS["favorite"], "default": "Yes"}
         }
     ),
     # シナリオ6: None値を含む場合
@@ -100,7 +100,7 @@ from weko_workspace.config import WEKO_WORKSPACE_DEFAULT_FILTERS as DEFAULT_FILT
         }
     ),
 ])
-def test_merge_default_filters(default_con, expected_response):
+def test_merge_default_filters(app, default_con, expected_response):
     result = merge_default_filters(default_con)
     assert result == expected_response
 
