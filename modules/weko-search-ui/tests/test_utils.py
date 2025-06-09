@@ -3,11 +3,14 @@
 import copy
 import json
 import os
+import time
 import unittest
-from datetime import datetime
+from datetime import datetime, timedelta
 import uuid
 
 import pytest
+from elasticsearch import helpers
+from elasticsearch_dsl import Search
 from flask import current_app, make_response, request
 from flask_babelex import Babel
 from flask_login import current_user
@@ -45,6 +48,7 @@ from weko_search_ui.utils import (
     define_default_dict,
     delete_exported,
     delete_records,
+    execute_search_with_pagination,
     export_all,
     get_change_identifier_mode_content,
     get_content_workflow,
@@ -174,9 +178,62 @@ class MockSearchPerm:
     
     def can(self):
         return True
+
+# def execute_search_with_pagination(search_instance, get_all=False, size=None):
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_execute_search_with_pagination -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_execute_search_with_pagination(i18n_app, indices, users, db_records, mocker, esindex):
+    i18n_app.config['WEKO_SEARCH_TYPE_INDEX'] = 'index'
+    i18n_app.config['OAISERVER_ES_MAX_CLAUSE_COUNT'] = 1
+    i18n_app.config['WEKO_ADMIN_MANAGEMENT_OPTIONS'] = WEKO_ADMIN_MANAGEMENT_OPTIONS
+
+    mocker.patch("weko_search_ui.query.search_permission",side_effect=MockSearchPerm)
+
+    def _generate_es_data(num, start_datetime=datetime.now()):
+        for i in range(num):
+            doc = {
+                "_index": i18n_app.config.get("INDEXER_DEFAULT_INDEX", "test-weko-item-v1.0.0"),
+                "_type": "item-v1.0.0",
+                "_id": f"2d1a2520-9080-437f-a304-230adc8{i:05d}",
+                "_source": {
+                    "_item_metadata": {
+                        "title": [f"test_title_{i}"],
+                    },
+                    "relation_version_is_last": True,
+                    "path": ["66"],
+                    "control_number": f"{i:05d}",
+                    "_created": (start_datetime + timedelta(seconds=i)).isoformat(),
+                    "publish_status": "0",
+                },
+                "sort": i,
+            }
+            yield doc
+
+    generate_data_num = 20005
+    preset_records_num = len(db_records)
+    expected_data_num = generate_data_num + preset_records_num + 3
+    helpers.bulk(esindex, _generate_es_data(generate_data_num), refresh='true')
+    i18n_app.config['RECORDS_REST_SORT_OPTIONS'] = {"test-weko":{"controlnumber":{"title":"ID","fields": ["control_number"],"default_order": "asc","order": 2}}}
+    search = Search(using=esindex)
+    search._sort.append( {"_created": {"order": "asc", "unmapped_type": "long"}})
+
+    with i18n_app.test_request_context(query_string={"sort": "control_number", "q": "66"}):
+        with patch("flask_login.utils._get_user", return_value=users[3]["obj"]):
+            # max_result_size < 0
+            assert len(execute_search_with_pagination(search, max_result_size=-1)) == expected_data_num
+            # max_result_size   default
+            assert len(execute_search_with_pagination(search)) == 10000
+            # max_result_size = 1
+            assert len(execute_search_with_pagination(search, max_result_size=1)) == 1
+            # max_result_size = 15000
+            assert len(execute_search_with_pagination(search, max_result_size=15000)) == 15000
+            # max_result_size = 30000
+            assert len(execute_search_with_pagination(search, max_result_size=30000)) == expected_data_num
+
+
+# def execute_search_with_pagination(search_instance, get_all=False, size=None):
 # def get_tree_items(index_tree_id): ERROR ~ AttributeError: '_AppCtxGlobals' object has no attribute 'identity'
 # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_get_tree_items -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
-def test_get_tree_items(i18n_app, indices, users, mocker):
+def test_get_tree_items(i18n_app, indices, users, mocker, esindex):
     i18n_app.config['WEKO_SEARCH_TYPE_INDEX'] = 'index'
     i18n_app.config['OAISERVER_ES_MAX_CLAUSE_COUNT'] = 1
     i18n_app.config['WEKO_ADMIN_MANAGEMENT_OPTIONS'] = WEKO_ADMIN_MANAGEMENT_OPTIONS
@@ -192,6 +249,8 @@ def test_get_tree_items(i18n_app, indices, users, mocker):
                 return self.data
         def __init__(self,data):
             self.data=data
+        def extra(self,size):
+            return self
         def execute(self):
             return self.MockExecute(self.data)
     def mock_search_factory(self, search,index_id=None):
@@ -201,6 +260,42 @@ def test_get_tree_items(i18n_app, indices, users, mocker):
     ):
         # with patch("weko_search_ui.query.item_path_search_factory", return_value="{'abc': 123}"):
         assert get_tree_items(33)
+
+    def _generate_es_data(num, start_datetime=datetime.now()):
+        for i in range(num):
+            doc = {
+                "_index": i18n_app.config.get("INDEXER_DEFAULT_INDEX", "test-weko-item-v1.0.0"),
+                "_type": "item-v1.0.0",
+                "_id": f"2d1a2520-9080-437f-a304-230adc8{i:05d}",
+                "_source": {
+                    "_item_metadata": {
+                        "title": [f"test_title_{i}"],
+                    },
+                    "relation_version_is_last": True,
+                    "path": ["66"],
+                    "control_number": f"{i:05d}",
+                    "_created": (start_datetime + timedelta(seconds=i)).isoformat(),
+                    "publish_status": "0",
+                },
+            }
+            yield doc
+
+    generate_data_num = 20005
+    helpers.bulk(esindex, _generate_es_data(generate_data_num), refresh='true')
+    i18n_app.config['RECORDS_REST_SORT_OPTIONS'] = {"test-weko":{"controlnumber":{"title":"ID","fields": ["control_number"],"default_order": "asc","order": 2}}}
+
+    with i18n_app.test_request_context(query_string={"sort": "control_number", "q": "66"}):
+        with patch("flask_login.utils._get_user", return_value=users[3]["obj"]):
+            # max_result_size < 0
+            assert len(get_tree_items(66, max_result_size=-1)) == generate_data_num
+            # max_result_size   default
+            assert len(get_tree_items(66)) == 10000
+            # max_result_size = 1
+            assert len(get_tree_items(66, max_result_size=1)) == 1
+            # max_result_size = 15000
+            assert len(get_tree_items(66, max_result_size=15000)) == 15000
+            # max_result_size = 30000
+            assert len(get_tree_items(66, max_result_size=30000)) == generate_data_num
 
 
 # def delete_records(index_tree_id, ignore_items):
@@ -900,7 +995,8 @@ def test_handle_check_doi_indexes(i18n_app, es_item_file_pipeline, es_records):
 
 
 # def handle_check_doi_ra(list_record):
-def test_handle_check_doi_ra(i18n_app, es_item_file_pipeline, es_records):
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_handle_check_doi_ra -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_handle_check_doi_ra(i18n_app, db,es_item_file_pipeline, es_records,identifier):
     # list_record = [es_records['results'][0]['item']]
     item = MagicMock()
 
@@ -913,7 +1009,54 @@ def test_handle_check_doi_ra(i18n_app, es_item_file_pipeline, es_records):
         with patch("weko_deposit.api.WekoRecord.get_record_by_pid", return_value="1"):
             # Doesn't return any value
             assert not handle_check_doi_ra([item])
-
+    
+    def create_record_with_doi(recid, doi_type, doi_value=""):
+        """create item with doi"""
+        from tests.helpers import create_record
+        doi_prefix = identifier["Root Index"].get(doi_type,"")
+        if not doi_value:
+            doi_value = "{prefix}/{suffix}".format(
+                prefix=doi_prefix,
+                suffix="{:010}".format(recid)
+            )
+        record_tmp = {"_oai": {"id": "oai:weko3.example.org:{:08}".format(recid), "sets": ["1"]}, "path": ["1"], "owner": "1", "recid": str(recid), "title": [f"record_with_doi: {recid}"], "pubdate": {"attribute_name": "PubDate", "attribute_value": "2022-08-20"}, "_buckets": {"deposit": "3e99cfca-098b-42ed-b8a0-20ddd09b3e02"}, "_deposit": {"id": str(recid), "pid": {"type": "depid", "value": str(recid), "revision_id": 0}, "owner": "1", "owners": [1], "status": "draft", "created_by": 1, "owners_ext": {"email": "wekosoftware@nii.ac.jp", "username": "", "displayname": ""}}, "item_title": f"record_with_doi: {recid}", "author_link": [], "item_type_id": "1", "publish_date": "2022-08-20", "publish_status": "0", "weko_shared_id": -1, "item_1617186331708": {"attribute_name": "Title", "attribute_value_mlt": [{"subitem_1551255647225": f"record_with_doi: {recid}", "subitem_1551255648112": "ja"}]}, "item_1617258105262": {"attribute_name": "Resource Type", "attribute_value_mlt": [{"resourceuri": "http://purl.org/coar/resource_type/c_5794", "resourcetype": "conference paper"}]}, "item_1617186819068":{"attribute_name":"","attribute_value_mlt":[{"subitem_identifier_reg_text":doi_value,"subitem_identifier_reg_type":doi_type}]},"relation_version_is_last": True}
+        item_tmp = {"id": str(recid), "pid": {"type": "depid", "value": str(recid), "revision_id": 0}, "lang": "ja", "owner": "1", "title": f"record_with_doi: {recid}", "owners": [1], "status": "published", "$schema": "/items/jsonschema/1", "pubdate": "2022-08-20", "created_by": 1, "owners_ext": {"email": "wekosoftware@nii.ac.jp", "username": "", "displayname": ""}, "shared_user_id": -1, "item_1617186331708": [{"subitem_1551255647225": f"record_with_doi: {recid}", "subitem_1551255648112": "ja"}], "item_1617258105262": {"resourceuri": "http://purl.org/coar/resource_type/c_5794", "resourcetype": "conference paper"},"item_1617186819068":[{"subitem_identifier_reg_text":doi_value,"subitem_identifier_reg_type":doi_type}]}
+        _,pid_recid,_,_,_,_ = create_record(record_tmp, item_tmp)
+        doi = PersistentIdentifier.query.filter_by(pid_type="doi",pid_value="https://doi.org/10.xyz/{:010}".format(recid)).one_or_none()
+        doi_url = f"https://doi.org/{doi_value}"
+        if doi:
+            doi.pid_value = doi_url
+            db.session.merge(doi)
+        else:
+            doi = PersistentIdentifier.create("doi",doi_url,object_type="rec",object_uuid=pid_recid.object_uuid,status=PIDStatus.REGISTERED)
+            db.session.add(doi)
+        db.session.commit()
+    
+    create_record_with_doi(10, "JaLC") # JaLC DOI
+    create_record_with_doi(11, "Crossref") # Crossref
+    create_record_with_doi(12, "DataCite") # DataCite
+    create_record_with_doi(13, "NDL JaLC") # NDL JaLC
+    create_record_with_doi(14, "JaLC","xyz.jalc/0000000014") # JaLC, NDL JaLC prefix
+    
+    item = [
+        {"errors":[],"doi":"xyz.jalc/0000000010"}, # exist doi, not exist doi_ra
+        {"errors":[],"doi":"xyz.jalc/0000000010", "doi_ra":"wrong doi"},# wrong doi_ra
+        {"errors":[],"id":"10","doi":"xyz.jalc/000000010", "doi_ra":"JaLC","is_change_identifier":False,"status":"keep"}, # exist doi, exist doi_ra
+        {"errors":[],"id":"10","doi":"xyz.crossref/000000010", "doi_ra":"Crossref","is_change_identifier":False,"status":"keep"}, # exist doi, exist doi_ra
+        {"errors":[],"id":"14","doi":"xyz.ndl/0000000014", "doi_ra":"NDL LaLC","is_change_identifier":False,"status":"keep"}, # exist doi, exist doi_ra
+    ]
+    
+    test = [
+        {"errors":["Please specify DOI_RA."],"doi":"xyz.jalc/0000000010"}, # exist doi, not exist doi_ra
+        {"errors":["DOI_RA should be set by on of JaLC, Crossref, DataCite, NDL JaLC"],"doi":"xyz.jalc/0000000010", "doi_ra":"wrong doi"},# wrong doi_ra
+        {"errors":["Specified DOI_RA is different from existing DOI_RA"],"id":"10","doi":"xyz.jalc/000000010", "doi_ra":"JaLC","is_change_identifier":False,"status":"keep"}, # exist doi, exist doi_ra
+        {"errors":[],"id":"10","doi":"xyz.crossref/000000010", "doi_ra":"Crossref","is_change_identifier":False,"status":"keep"}, # exist doi, exist doi_ra
+        {"errors":[],"id":"14","doi":"xyz.ndl/0000000014", "doi_ra":"NDL LaLC","is_change_identifier":False,"status":"keep"}, # exist doi, exist doi_ra
+    ]
+    with patch("weko_search_ui.utils.handle_doi_required_check",return_value=False):
+        handle_check_doi_ra(item)
+        assert item == test
+    
 
 # def handle_check_doi(list_record):
 # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_handle_check_doi -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
@@ -1220,6 +1363,7 @@ def test_register_item_doi(i18n_app, db_activity, identifier, mocker):
                 assert args[2] == test_data
     
     # is_change_identifier is False, doi_ra is NDL, doi_duplicated is True
+    mock_without_version.pid_doi = None
     item = {
         "id":"7",
         "is_change_identifier":False,
@@ -1388,6 +1532,7 @@ def test_get_list_key_of_iso_date():
         "item_1617187056579.bibliographicIssueDates.bibliographicIssueDate",
         "item_1617187136212.subitem_1551256096004",
         "item_1617605131499.fileDate.fileDateValue",
+        "item_1617605131499.date[0].dateValue"
     ]
     with open(form, encoding="utf-8") as f:
         df = json.load(f)
@@ -2490,18 +2635,31 @@ def test_get_key_by_property(i18n_app):
 
 
 # def get_data_by_property(item_metadata, item_map, mapping_key):
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_get_data_by_property -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
 def test_get_data_by_property(i18n_app):
     item_metadata = {}
     item_map = {"mapping_key": "test.test"}
     mapping_key = "mapping_key"
 
-    assert get_data_by_property(item_metadata, item_map, mapping_key)
-    assert get_data_by_property(item_metadata, {}, mapping_key)
+    data, key_list = get_data_by_property(item_metadata, item_map, mapping_key)
+    assert data == None
+    assert key_list == "test.test"
+    data, key_list = get_data_by_property(item_metadata, {}, mapping_key)
+    assert data == None
+    assert key_list == None
 
     with patch(
         "weko_workflow.utils.get_sub_item_value", return_value=[True, ["value"]]
     ):
-        assert get_data_by_property(item_metadata, item_map, mapping_key)
+        data, key_list = get_data_by_property(item_metadata, item_map, mapping_key)
+        assert data == ["value"]
+        assert key_list == "test.test"
+
+        item_map = {"mapping_key": "test.test,test1.test1"}
+        mapping_key = "mapping_key"
+        data, key_list = get_data_by_property(item_metadata, item_map, mapping_key)
+        assert data == ["value", "value"]
+        assert key_list == "test.test,test1.test1"
 
 
 # def get_filenames_from_metadata(metadata):

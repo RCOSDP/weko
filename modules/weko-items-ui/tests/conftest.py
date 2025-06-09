@@ -90,7 +90,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy_utils.functions import create_database, database_exists
 from weko_admin import WekoAdmin
 from weko_admin.config import WEKO_ADMIN_DEFAULT_ITEM_EXPORT_SETTINGS
-from weko_admin.models import SessionLifetime,RankingSettings
+from weko_admin.models import SessionLifetime,RankingSettings,Identifier
 from weko_deposit import WekoDeposit
 from weko_deposit.api import WekoIndexer
 from weko_deposit.config import DEPOSIT_RECORDS_API,WEKO_DEPOSIT_ITEMS_CACHE_PREFIX
@@ -513,6 +513,38 @@ def users(app, db):
         {"email": user.email, "id": user.id, "obj": user},
     ]
 
+
+@pytest.fixture()
+def identifier(db):
+    identifier_info = {
+        "Root Index":{
+            "JaLC": "1234",
+            "Crossref": "2345",
+            "DataCite": "3456",
+            "NDL JaLC": "4567",
+        }
+    }
+    identifiers = []
+    for index, info in identifier_info.items():
+        identifiers.append(Identifier(
+            repository=index,
+            jalc_flag=True,
+            jalc_crossref_flag=True,
+            jalc_datacite_flag=True,
+            ndl_jalc_flag=True,
+            jalc_doi=info["JaLC"],
+            jalc_crossref_doi=info["Crossref"],
+            jalc_datacite_doi=info["DataCite"],
+            ndl_jalc_doi=info["NDL JaLC"],
+            suffix="",
+            created_userId=1,
+            created_date=datetime.strptime("2018/07/28 0:00:00", "%Y/%m/%d %H:%M:%S"),
+            updated_userId=1,
+            updated_date=datetime.strptime("2018/07/28 0:00:00", "%Y/%m/%d %H:%M:%S"),
+        ))
+    db.session.add_all(identifiers)
+    db.session.commit()
+    return identifier_info
 
 
 @pytest.fixture()

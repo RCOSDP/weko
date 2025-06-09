@@ -27,6 +27,7 @@ from weko_records_ui.utils import (
     get_billing_file_download_permission,
     get_list_licence,
     restore,
+    delete_version,
     soft_delete,
     is_billing_item,
     get_groups_price,
@@ -43,6 +44,8 @@ from weko_records_ui.utils import (
     get_terms,
     get_roles,
     check_items_settings,
+    get_values_by_selected_lang,
+    export_preprocess,
     #RoCrateConverter,
     #create_tsv
     )
@@ -61,7 +64,7 @@ from flask_security.utils import login_user
 from invenio_accounts.testutils import login_user_via_session
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from mock import patch
-from weko_deposit.api import WekoRecord
+from weko_deposit.api import WekoRecord, WekoDeposit
 from weko_records_ui.models import FileOnetimeDownload, FileSecretDownload
 from weko_records.api import ItemTypes,Mapping
 from werkzeug.exceptions import NotFound
@@ -70,6 +73,7 @@ from weko_records.serializers.utils import get_mapping
 from weko_records.models import ItemType, ItemTypeMapping, ItemTypeName
 from flask_babelex import gettext as _
 from datetime import datetime ,timedelta
+from werkzeug.exceptions import Gone, NotFound
 
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
 
@@ -217,6 +221,20 @@ def test_get_min_price_billing_file_download(users):
 def test_is_billing_item(app,itemtypes):
     assert is_billing_item(1)==False
 
+
+# def delete_version(recid):
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_delete_version -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+def test_delete_version(app, records, users):
+    indexer, results = records
+    record = results[0]["record"]
+    recid = results[0]["recid"]
+
+    with patch("flask_login.utils._get_user", return_value=users[2]["obj"]):
+        delete_version(record.pid.pid_value + '.1')
+        pid = PersistentIdentifier.query.filter_by(
+            pid_type='recid', pid_value=record.pid.pid_value + '.1').first()
+        assert pid.status == PIDStatus.DELETED
+
 # def soft_delete(recid):
 #     def get_cache_data(key: str):
 #     def check_an_item_is_locked(item_id=None):
@@ -293,6 +311,65 @@ def test_get_pair_value(app):
         assert name== ('ja_conference paperITEM00000001(public_open_access_open_access_simple)', 'ja')
         assert lang== ('en_conference paperITEM00000001(public_open_access_simple)', 'en')
 
+        name_keys = ['subitem_1551255647225', 'subitem_1551255647225']
+        lang_keys = ['subitem_1551255648112', 'subitem_1551255647225']
+        name,lang =  get_pair_value(name_keys,lang_keys,datas)
+
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_get_values_by_selected_lang -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+def test_get_values_by_selected_lang(app):
+    # cur_lang
+    cur_lang = "ja"
+    source_title = [('ja',''),('','test0'),('ja','テスト1'), ('en','test'), ('ja','テスト2')]
+    test = ['テスト1', 'テスト2']
+    result = get_values_by_selected_lang(source_title, cur_lang)
+    assert result == test
+    
+    # not cur_lang, none language is first
+    source_title = [('None Language', 'test1'), ('en', 'test2'), ('None Language', 'test3'), ('fr', 'test4')]
+    test = ['test1', 'test3']
+    result = get_values_by_selected_lang(source_title, cur_lang)
+    assert result == test
+    
+    # not cur_lang, none language is not first, exist ja-Latn
+    source_title = [('en', 'test1'), ('en', 'test2'), ('ja-Latn', 'test3'), ('ja-Latn', 'test4')]
+    test = ['test3', 'test4']
+    result = get_values_by_selected_lang(source_title, cur_lang)
+    assert result == test
+    
+    # not cur_lang, none language is not first, not exist ja-Latn, exist en
+    source_title = [('en', 'test1'), ('en', 'test2'), ('None Language', 'test3'), ('None Language', 'test4')]
+    test = ['test1', 'test2']
+    result = get_values_by_selected_lang(source_title, cur_lang)
+    assert result == test
+    
+    # cur_lang=en, exist title_data_langs
+    cur_lang = 'en'
+    source_title = [('fr','test1'),('ch','test2'),('ch','test3'),('fr','test4')]
+    test = ['test1', 'test4']
+    result = get_values_by_selected_lang(source_title, cur_lang)
+    assert result == test
+    
+    # cur_lang !=en, exist title_data_langs
+    cur_lang = "ja"
+    source_title = [('fr','test1'),('ch','test2'),('ch','test3'),('fr','test4')]
+    test = ['test1', 'test4']
+    result = get_values_by_selected_lang(source_title, cur_lang)
+    assert result == test
+    
+    # return title_data_langs_none
+    app.config["WEKO_RECORDS_UI_LANG_DISP_FLG"] = True
+    cur_lang = "en"
+    source_title = [('ja','test0'),('None Language', 'test1'),('None Language', 'test2')]
+    test = ['test1', 'test2']
+    result = get_values_by_selected_lang(source_title, cur_lang)
+    assert result == test
+    
+    # enとja-latnがない、noneがない、
+    cur_lang = 'en'
+    source_title = []
+    test = None
+    result = get_values_by_selected_lang(source_title, cur_lang)
+    assert result == test
 
 # def hide_item_metadata(record, settings=None, item_type_mapping=None,
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_hide_item_metadata -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
@@ -943,98 +1020,38 @@ def test_get_data_usage_application_data(app ,db):
         assert res[0].download_count == 100
 
 
-# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_RoCrateConverter_convert -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
-def test_RoCrateConverter_convert(app, db):
-    with open('tests/data/rocrate/rocrate_mapping.json', 'r') as f:
-        mapping = json.load(f)
-    with open('tests/data/rocrate/records_metadata.json', 'r') as f:
-        record_data = json.load(f)
-    converter = RoCrateConverter()
-    rocrate = converter.convert(record_data, mapping)
-    assert rocrate
-    assert type(rocrate) == dict
-
-    with open('tests/data/rocrate/test_mapping_rocrate_mapping.json', 'r') as f:
-        mapping = json.load(f)
-    with open('tests/data/rocrate/test_mapping_records_metadata.json', 'r') as f:
-        record_data = json.load(f)
-    rocrate = converter.convert(record_data, mapping)
-    assert rocrate['@graph'][0]['prop1'] == 'value1'
-    assert rocrate['@graph'][0]['prop2'] == ['value2']
-    assert rocrate['@graph'][0]['prop3'] == ['value3_1', 'value3_2']
-    assert rocrate['@graph'][0]['prop4_1'] == 'value4_1'
-    assert rocrate['@graph'][0]['prop4_2'] == 'value4_2'
-    assert 'prop4_3' not in rocrate['@graph'][0]
-    assert rocrate['@graph'][0]['prop5'] == ['value5_1', 'value5_2', 'value5_3']
-    assert rocrate['@graph'][0]['prop6'] == ['value6_2']
-    assert rocrate['@graph'][0]['prop7'] == ['value7_1']
-    assert 'prop8' not in rocrate['@graph'][0]
-    assert 'prop9' not in rocrate['@graph'][0]
-    assert rocrate['@graph'][0]['prop10'] == ['value10_1_en', 'value10_2_1_en']
-    assert rocrate['@graph'][0]['prop_static'] == 'value_static'
-    assert 'prop_none' not in rocrate['@graph'][0]
-    assert 'prop_none_lang' not in rocrate['@graph'][0]
-
-    assert rocrate['@graph'][5]['name'] == 'name_en'
-    assert rocrate['@graph'][5]['additionalType'] == 'tab'
-    assert rocrate['@graph'][2]['fileprop1'] == 'filevalue1_1'
-    assert rocrate['@graph'][2]['fileprop2'] == 'filevalue2_1'
-    assert rocrate['@graph'][2]['fileprop3'] == ['filevalue3_1_1', 'filevalue3_2_1_1_1', 'filevalue3_2_1_1_2']
-    assert rocrate['@graph'][2]['fileprop_static'] == 'filevalue_static'
-    assert rocrate['@graph'][3]['fileprop1'] == 'filevalue1_2'
-    assert rocrate['@graph'][3]['fileprop2'] == 'filevalue2_2'
-    assert rocrate['@graph'][3]['fileprop3'] == ['filevalue3_1_2', 'filevalue3_2_1_2_1', 'filevalue3_2_1_2_2']
-    assert rocrate['@graph'][3]['fileprop_static'] == 'filevalue_static'
-    assert rocrate['@graph'][4]['fileprop1'] == 'filevalue1_3'
-    assert rocrate['@graph'][4]['fileprop2'] == 'filevalue2_3'
-    assert rocrate['@graph'][4]['fileprop3'] == ['filevalue3_1_3', 'filevalue3_2_1_3_1', 'filevalue3_2_1_3_2']
-    assert rocrate['@graph'][4]['fileprop_static'] == 'filevalue_static'
-
-    rocrate = converter.convert(record_data, mapping, 'ja')
-    assert rocrate['@graph'][0]['prop6'] == ['value6_3']
-    assert rocrate['@graph'][0]['prop7'] == ['value7_2']
-    assert rocrate['@graph'][0]['prop10'] == ['value10_1_ja', 'value10_2_1_ja']
-    assert rocrate['@graph'][5]['name'] == 'name_ja'
-
-    rocrate = converter.convert(record_data, mapping, 'other')
-    assert rocrate['@graph'][0]['prop6'] == ['value6_2']
-    assert rocrate['@graph'][0]['prop7'] == ['value7_1']
-    assert rocrate['@graph'][0]['prop10'] == ['value10_1_en', 'value10_2_1_en']
-    assert rocrate['@graph'][5]['name'] == 'name'
-
-
-# def create_tsv(files, language='en'):
-# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_create_tsv -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
-def test_create_tsv(app, records):
-    from weko_records_ui.config import (
-        WEKO_RECORDS_UI_TSV_FIELD_NAMES_DEFAULT,
-        WEKO_RECORDS_UI_TSV_FIELD_NAMES_EN,
-        WEKO_RECORDS_UI_TSV_FIELD_NAMES_JA,
-    )
+# def update_secret_download(**kwargs) -> Optional[List[FileSecretDownload]]:
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_export_preprocess -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+def test_export_preprocess(app, records, esindex):
     indexer, results = records
     record = results[0]["record"]
+    recid = results[0]["recid"]
 
-    # 16 set language en
-    res_tsv = create_tsv(record.files, 'en')
-    for field in WEKO_RECORDS_UI_TSV_FIELD_NAMES_EN:
-        assert field in res_tsv.getvalue()
+    with app.test_request_context():
+        schema_type = 'json'
+        # export json
+        res = export_preprocess(recid, record, schema_type)
+        res_dict = json.loads(res)
+        assert 'created' in res_dict
+        assert res_dict['id'] == 1
+        assert res_dict['links'] == {}
+        assert res_dict['metadata'] == record
+        assert 'updated' in res_dict
 
-    # 17 set language ja
-    res_tsv = create_tsv(record.files, 'ja')
-    for field in WEKO_RECORDS_UI_TSV_FIELD_NAMES_JA:
-        assert field in res_tsv.getvalue()
+        # export BibTeX
+        export_preprocess(recid, record, 'bibtex')
 
-    # 18 shortage of fieldnames
-    fieldnames = ['名前', 'サイズ', 'ライセンス']
-    with patch("weko_records_ui.config.WEKO_RECORDS_UI_TSV_FIELD_NAMES_EN", fieldnames):
-        res_tsv = create_tsv(record.files)
-        for field in fieldnames:
-            assert field in res_tsv.getvalue()
-        assert WEKO_RECORDS_UI_TSV_FIELD_NAMES_DEFAULT[3] in res_tsv.getvalue()
-        assert WEKO_RECORDS_UI_TSV_FIELD_NAMES_DEFAULT[4] in res_tsv.getvalue()
+        # record update '@export_schema_type'
+        export_preprocess(recid, record, 'jpcoar_2.0')
 
-    # 19 not exist fieldnames
-    with patch("weko_records_ui.config.WEKO_RECORDS_UI_TSV_FIELD_NAMES_EN", None):
-        res_tsv = create_tsv(record.files)
-        for field in WEKO_RECORDS_UI_TSV_FIELD_NAMES_DEFAULT:
-            assert field in res_tsv.getvalue()
+        # fmt is False
+        mock_config = {'RECORDS_UI_EXPORT_FORMATS': {recid.pid_type: {schema_type: False}}}
+        with patch('flask.current_app.config', mock_config), \
+                pytest.raises(Gone):
+            export_preprocess(recid, record, schema_type)
+
+        # fmt is None
+        mock_config = {}
+        with patch('flask.current_app.config', mock_config), \
+                pytest.raises(NotFound):
+            export_preprocess(recid, record, schema_type)

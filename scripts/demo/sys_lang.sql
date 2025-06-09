@@ -2,7 +2,10 @@ INSERT INTO admin_lang_settings (lang_code, lang_name, is_registered, sequence, 
 VALUES ('en', 'English', 'true', 002, 'true');
 
 INSERT INTO admin_lang_settings (lang_code, lang_name, is_registered, sequence, is_active)
-VALUES ('zh', '中文', 'false', 000, 'true');
+VALUES ('zh-cn', '中文 (簡体)', 'false', 000, 'true');
+
+INSERT INTO admin_lang_settings (lang_code, lang_name, is_registered, sequence, is_active)
+VALUES ('zh-tw', '中文 (繁体)', 'false', 000, 'true');
 
 INSERT INTO admin_lang_settings (lang_code, lang_name, is_registered, sequence, is_active)
 VALUES ('id', 'Indonesia', 'false', 000, 'true');

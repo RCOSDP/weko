@@ -68,7 +68,7 @@ def get_mapping(item_type_id, mapping_type, item_type=None):
     for item_id in item_type_list:
         if item_id in item_type_mapping:
             maps = item_type_mapping.get(item_id)
-            if isinstance(maps,dict) and mapping_type in maps.keys() and isinstance(maps[mapping_type], dict):
+            if isinstance(maps, dict) and mapping_type in maps.keys() and isinstance(maps[mapping_type], dict):
                 item_schema = get_schema_key_info(maps[mapping_type], '', {})
                 for k, v in item_schema.items():
                     if k in schema:

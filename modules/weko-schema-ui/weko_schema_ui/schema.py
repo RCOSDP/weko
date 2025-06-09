@@ -304,10 +304,11 @@ class SchemaTree:
                     mp = mjson.dumps()
                     if isinstance(mp, dict):
                         for k, v in mp.items():
-                            if k in self._record:
-                                self._record[k].update({self._schema_name: v.get(self._schema_name)})
-                            else:
-                                self._record[k] = {self._schema_name: v.get(self._schema_name)}
+                            if isinstance(v, dict):
+                                if k in self._record:
+                                    self._record[k].update({self._schema_name: v.get(self._schema_name)})
+                                else:
+                                    self._record[k] = {self._schema_name: v.get(self._schema_name)}
                 return _id
 
 
@@ -979,7 +980,7 @@ class SchemaTree:
                     'RESOURCE_TYPE_URI'][new_type]
 
         def replace_nameIdentifierScheme_for_jpcoar_v1(atr_vm_item):
-            if 'nameIdentifiers' in atr_vm_item and atr_vm_item['nameIdentifiers'] is not None:
+            if 'nameIdentifiers' in atr_vm_item and isinstance(atr_vm_item['nameIdentifiers'], dict):
                 for idx,val in enumerate(atr_vm_item['nameIdentifiers']):
                     if 'nameIdentifierScheme' in val and val['nameIdentifierScheme'] in current_app.config['WEKO_SCHEMA_JPCOAR_V1_NAMEIDSCHEME_REPLACE']:
                         new_type = current_app.config[
@@ -987,7 +988,7 @@ class SchemaTree:
                         val['nameIdentifierScheme'] = new_type
 
         def replace_nameIdentifierScheme_for_jpcoar_v2(atr_vm_item):
-            if 'nameIdentifiers' in atr_vm_item and atr_vm_item['nameIdentifiers'] is not None:
+            if 'nameIdentifiers' in atr_vm_item and isinstance(atr_vm_item['nameIdentifiers'], dict):
                 for idx,val in enumerate(atr_vm_item['nameIdentifiers']):
                     if 'nameIdentifierScheme' in val and val['nameIdentifierScheme'] in current_app.config['WEKO_SCHEMA_JPCOAR_V2_NAMEIDSCHEME_REPLACE']:
                         new_type = current_app.config[
@@ -1046,11 +1047,8 @@ class SchemaTree:
                     else:
                         # current_app.logger.error(item_type.schema["properties"][key_item_parent])
                         atr_name = ""
-                        if self._item_type and self._item_type.schema:
-                            if "properties" in self._item_type.schema:
-                                if key_item_parent in self._item_type.schema.get("properties"):
-                                    if "title" in  self._item_type.schema.get("properties").get(key_item_parent):
-                                        atr_name = self._item_type.schema["properties"][key_item_parent]["title"]
+                        if self._item_type and self._item_type.schema and "title" in self._item_type.schema.get("properties", {}).get(key_item_parent, {}):
+                             atr_name = self._item_type.schema["properties"][key_item_parent]["title"]
                         vlst_child = get_mapping_value(mpdic, {},
                                                            key_item_parent,
                                                            atr_name)

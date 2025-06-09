@@ -41,7 +41,7 @@ def create_record(record_data, item_data):
             rel = PIDRelation.create(parent,recid,2,0)
             db.session.add(rel)
             if(int(record_data["recid"])%2==1):
-                doi = PersistentIdentifier.create('doi', " https://doi.org/10.xyz/{}".format((str(record_data["recid"])).zfill(10)),object_type='rec', object_uuid=rec_uuid,status=PIDStatus.REGISTERED)
+                doi = PersistentIdentifier.create('doi', "https://doi.org/10.xyz/{}".format((str(record_data["recid"])).zfill(10)),object_type='rec', object_uuid=rec_uuid,status=PIDStatus.REGISTERED)
         else:
             parent = PersistentIdentifier.get('parent','parent:{}'.format((str(record_data["recid"])).split('.')[0]))
             rel = PIDRelation.create(parent,recid,2,(str(record_data["recid"])).split('.')[1])

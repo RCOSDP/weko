@@ -121,6 +121,31 @@ def test_publish_acl(client, records, users, id, status_code):
 
 
 # def export(pid, record, template=None, **kwargs):
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_publish -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+def test_publish(client, records, users, communities, mocker):
+    login_user_via_session(client=client, email=users[0]["email"])
+    indexer, records_info = records
+    
+    mock_commit = mocker.patch("weko_records_ui.views.db.session.commit")
+    mock_commit2 = mocker.patch("invenio_records.api.Record.commit")
+
+    mock_update_es_data = mocker.patch("weko_deposit.api.WekoIndexer.update_es_data")
+    
+    # Test Case 1: community id exists
+    mock_request = mocker.patch("weko_records_ui.views.request")
+    mock_request.values = {"community": 1}
+    actual_response = publish(records_info[0]["recid"], records_info[0]["record"], template=None)
+    assert actual_response.status_code == 302
+    assert actual_response.location == "/records/1?community=1"
+
+    # Test Case 2: community id exists
+    mock_request.values = {}
+    actual_response = publish(records_info[0]["recid"], records_info[0]["record"], template=None)
+    assert actual_response.status_code == 302
+    assert actual_response.location == "/records/1"
+
+
+# def export(pid, record, template=None, **kwargs):
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_export_acl_guest -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
 def test_export_acl_guest(client, records):
     url = url_for(

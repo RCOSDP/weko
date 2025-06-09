@@ -33,6 +33,7 @@ from datetime import datetime
 from collections import OrderedDict
 from unittest.mock import patch
 from datetime import timedelta
+from sqlalchemy.sql import func
 
 import pytest
 from elasticsearch import Elasticsearch
@@ -48,6 +49,7 @@ from invenio_accounts.testutils import create_test_user, login_user_via_session
 from invenio_admin import InvenioAdmin
 from invenio_assets import InvenioAssets
 from invenio_cache import InvenioCache
+from invenio_communities.models import Community
 from invenio_db import InvenioDB
 from invenio_db import db as db_
 from invenio_deposit import InvenioDeposit
@@ -223,7 +225,7 @@ def base_app(instance_path):
         },
         WEKO_INDEX_TREE_UPATED=True,
         WEKO_INDEX_TREE_REST_ENDPOINTS=WEKO_INDEX_TREE_REST_ENDPOINTS,
-        I18N_LANGUAGE=[("ja", "Japanese"), ("en", "English")],
+        I18N_LANGUAGES=[("ja", "Japanese"), ("en", "English"), ('fr', 'French')],
         SERVER_NAME="TEST_SERVER",
         SEARCH_ELASTIC_HOSTS="elasticsearch",
         SEARCH_INDEX_PREFIX="test-",
@@ -250,9 +252,9 @@ def base_app(instance_path):
         PDF_COVERPAGE_LANG_FILENAME=PDF_COVERPAGE_LANG_FILENAME,
         # JPAEXG_TTF_FILEPATH=JPAEXG_TTF_FILEPATH,
         # JPAEXG_TTF_FILEPATH = "/code/modules/weko-records-ui/weko_records_ui/fonts/ipaexg00201/ipaexg.ttf",
-        JPAEXG_TTF_FILEPATH="/../tests/fonts/ipaexg.ttf",
+        JPAEXG_TTF_FILEPATH="tests/fonts/ipaexg.ttf",
         # JPAEXM_TTF_FILEPATH=JPAEXM_TTF_FILEPATH,
-        JPAEXM_TTF_FILEPATH="/../tests/fonts/ipaexm.ttf",
+        JPAEXM_TTF_FILEPATH="tests/fonts/ipaexm.ttf",
         URL_OA_POLICY_HEIGHT=URL_OA_POLICY_HEIGHT,
         HEADER_HEIGHT=HEADER_HEIGHT,
         TITLE_HEIGHT=TITLE_HEIGHT,
@@ -4484,3 +4486,53 @@ def db_rocrate_mapping(db):
     with db.session.begin_nested():
         db.session.add(rocrate_mapping)
     db.session.commit()
+
+
+@pytest.fixture()
+def indices(app, db):
+    """Create indices."""
+
+    latest_index = db.session.query(
+        func.max(Index.position).label("max_position")
+    ).one()
+        
+    index = Index(
+        id=1234567890,
+        index_name="index_name",
+        index_name_english="index_name_english",
+        display_no=1,
+        harvest_public_state=True,
+        image_name="image_name",
+        public_state=True,
+        position=latest_index.max_position + 1,
+    )
+
+    db.session.add(index)
+    db.session.commit()
+
+    return [index]
+
+
+@pytest.fixture()
+def communities(app, indices, users, db):
+    """Create communities."""
+    user_record = users[0]
+    user_obj = user_record["obj"]
+
+    community = Community(
+        id="community_sample",
+        id_role=user_obj.roles[0].id,
+        id_user=user_record["id"],
+        title='Community 1',
+        description='Community 1 description',
+        page=1,
+        curation_policy='curation_policy',
+        community_header='community_header',
+        community_footer='community_footer',
+        last_record_accepted=datetime.now(),
+        root_node_id=indices[0].id,
+    )
+
+    db.session.add(community)
+    db.session.commit()
+    return [community]

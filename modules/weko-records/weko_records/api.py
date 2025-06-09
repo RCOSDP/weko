@@ -585,17 +585,14 @@ class ItemTypes(RecordBase):
         :param item_type_name: Item Type Name.
         :return: Record list.
         """
-        name = urllib.parse.quote_plus(item_type_name)
-        query_string = "itemtype:{}".format(
-            name)
+        from weko_search_ui.utils import execute_search_with_pagination
         result = []
         try:
             search = RecordsSearch(
                 index=current_app.config['SEARCH_UI_SEARCH_INDEX'])
-            search = search.query(QueryString(query=query_string))
+            search = search.query('term', **{"itemtype.keyword": item_type_name})
             search = search.sort('-publish_date', '-_updated')
-            search_result = search.execute().to_dict()
-            result = search_result.get('hits', {}).get('hits', [])
+            result = execute_search_with_pagination(search, -1)
         except NotFoundError as e:
             current_app.logger.debug("Indexes do not exist yet: ", str(e))
         return result
@@ -922,7 +919,6 @@ class ItemTypes(RecordBase):
             itemtype_id (_type_): _description_
             specified_list: renew properties id list
             renew_value: None, ALL, VAL, LOC
-
         """
         # with db.session.begin_nested():
         result = {"msg":"Update ItemType({})".format(itemtype_id),"code":0}
@@ -955,11 +951,13 @@ class ItemTypes(RecordBase):
                                     data['table_row_map']['schema']['properties'][_prop_id].pop('properties')
                                 if 'format' in data['table_row_map']['schema']['properties'][_prop_id]:
                                     data['table_row_map']['schema']['properties'][_prop_id].pop('format')
-                                
-                                tmp_data = pickle.loads(pickle.dumps(data['table_row_map']['form'][idx], -1))                            
+
+                                tmp_data = pickle.loads(pickle.dumps(data['table_row_map']['form'][idx], -1))
                                 _forms = json.loads(json.dumps(pickle.loads(pickle.dumps(_prop.forms, -1))).replace('parentkey',_prop_id))
                                 data['table_row_map']['form'][idx]=pickle.loads(pickle.dumps(_forms, -1))
-                                cls.update_attribute_options(tmp_data, data['table_row_map']['form'][idx], renew_value)
+
+                                _tmp_data = data['table_row_map']['form'][idx]
+                                cls.update_attribute_options(tmp_data, _tmp_data, renew_value)
                                 cls.update_property_enum(item_type.render['table_row_map']['schema']['properties'][_prop_id],data['table_row_map']['schema']['properties'][_prop_id])
                             else:
                                 tmp_data = pickle.loads(pickle.dumps(data['table_row_map']['form'][idx], -1))
@@ -967,7 +965,8 @@ class ItemTypes(RecordBase):
                                 # cls.update_property_enum(item_type.render['table_row_map']['schema']['properties'],data['table_row_map']['schema']['properties'][_prop_id])
                                 _form = json.loads(json.dumps(pickle.loads(pickle.dumps(_prop.form, -1))).replace('parentkey',_prop_id))
                                 data['table_row_map']['form'][idx]=pickle.loads(pickle.dumps(_form, -1))
-                                cls.update_attribute_options(tmp_data, data['table_row_map']['form'][idx], renew_value)
+                                _tmp_data = data['table_row_map']['form'][idx]
+                                cls.update_attribute_options(tmp_data, _tmp_data, renew_value)
                                 cls.update_property_enum(item_type.render['table_row_map']['schema']['properties'][_prop_id],data['table_row_map']['schema']['properties'][_prop_id])
                                                                                
         from weko_itemtypes_ui.utils import fix_json_schema,update_required_schema_not_exist_in_form, update_text_and_textarea
@@ -1125,8 +1124,6 @@ class ItemTypes(RecordBase):
                             return ret
         return None
  
-            
-
 class ItemTypeEditHistory(object):
     """Define API for Itemtype Property creation and manipulation."""
 

@@ -49,7 +49,7 @@ entrypoints==0.2.3
 feedgen==0.7.0
 filelock==3.4.1
 Flask==1.1.0
-Flask-Admin==1.5.3
+flask-admin==1.5.4
 Flask-Alembic==2.0.1
 Flask-Assets==0.12
 Flask-BabelEx==0.9.4
@@ -191,7 +191,7 @@ Pygments==2.2.0
 PyJWT==1.5.3
 PyLD==2.0.3
 pyparsing==3.1.0
--e git+https://github.com/RCOSDP/PyPDF2.git@fefc684a3a74aff6f99e5dff24f9b4dd1c95169d#egg=PyPDF2
+pypdf==4.3.1
 pyPEG2==2.15.2
 pytest==4.2.0
 pytest-mock
