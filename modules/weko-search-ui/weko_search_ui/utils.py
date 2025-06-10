@@ -812,7 +812,8 @@ def generate_metadata_from_jpcoar(data_path: str, filenames: list, item_type_id:
 
 def check_jsonld_import_items(
         file, packaging, mapping_id, meta_data_api=None,
-        shared_id=-1, validate_bagit=True, is_change_identifier=False
+        shared_id=-1, validate_bagit=True, is_change_identifier=False,
+        can_edit_indexes=[]
 ):
     """Validate and check JSON-LD import items.
 
@@ -829,6 +830,7 @@ def check_jsonld_import_items(
             Validate BagIt. Defaults to True.
         is_change_identifier (bool, optional):
             Change Identifier Mode. Defaults to False.
+        can_edit_indexes (list): List of editable indexes.
 
     Returns:
         dict: Result of mapping to item type
@@ -951,7 +953,7 @@ def check_jsonld_import_items(
         handle_item_title(list_record)
         list_record = handle_check_date(list_record)
         handle_check_id(list_record)
-        handle_check_and_prepare_index_tree(list_record, True, [])
+        handle_check_and_prepare_index_tree(list_record, True, can_edit_indexes)
         handle_check_and_prepare_publish_status(list_record)
 
         handle_check_and_prepare_feedback_mail(list_record)
