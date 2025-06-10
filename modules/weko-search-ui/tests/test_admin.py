@@ -410,7 +410,10 @@ class TestItemRocrateImportView:
             mocker.patch("weko_search_ui.admin.validate_csrf_header")
             task = MagicMock()
             task.task_id = 1
-            mock_check = mocker.patch("weko_search_ui.admin.check_rocrate_import_items_task.apply_async",return_value=task)
+            mock_check = mocker.patch(
+                "weko_search_ui.admin.check_rocrate_import_items_task.apply_async",
+                return_value=task
+            )
             res = client.post(
                 url,
                 data=data,
@@ -420,45 +423,319 @@ class TestItemRocrateImportView:
             mock_check.assert_called_once()
             assert res.status_code == 200
 
-    #     def get_check_status(self) -> jsonify: ~ GOOD
-    def test_ItemRocrateImportView_get_check_status(self, i18n_app, users, client_request_args, db_records2, mocker):
+            # comadmin
+            zip_storage = FileStorage(
+                filename="new_crate_v2.zip",
+                stream=io.BytesIO(f.read()),
+                content_type="application/zip"
+            )
+            data = {
+                "file": zip_storage,
+                "is_change_identifier": "false",
+                "mapping_id": 1
+            }
+            mocker.patch("flask_login.utils._get_user", return_value=users[4]['obj'])
+            mock_check = mocker.patch(
+                "weko_search_ui.admin.check_rocrate_import_items_task.apply_async",
+                return_value=task
+            )
+            mock_query = mocker.patch('invenio_communities.models.Community.query')
+            mock_filter = mock_query.filter.return_value
+            mock_filter.all.return_value = [MagicMock(root_node_id=123)]
+
+            res = client.post(
+                url,
+                data=data,
+                content_type="multipart/form-data",
+                headers=headers
+            )
+            mock_check.assert_called_once()
+            assert res.status_code == 200
+
+        # ファイル未指定
+        mocker.patch("flask_login.utils._get_user", return_value=users[3]['obj'])
         mocker.patch("weko_search_ui.admin.validate_csrf_header")
-        with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
-            test = ItemRocrateImportView()
-            assert test.get_check_status()
+        res = client.post(url, data={}, content_type="multipart/form-data", headers=headers)
+        assert res.status_code == 400
+
+    #     def get_check_status(self) -> jsonify: ~ GOOD
+    # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_admin.py::TestItemRocrateImportView::test_ItemRocrateImportView_get_check_status -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+    def test_ItemRocrateImportView_get_check_status(self, i18n_app, users, client, mocker):
+        _data = {'task_id': 1}
+        url = url_for("items/rocrate_import.get_check_status")
+
+        mocker.patch("flask_login.utils._get_user", return_value=users[3]['obj'])
+        # data false
+        res = client.post(
+            url, data=json.dumps({}), content_type="application/json"
+        )
+        assert res.status_code == 200
+
+        # 正常系: resultがdict
+        mock_result = {"start_date": "2025-03-19", "end_date": "2025-03-19"}
+        mock_async_result = MagicMock()
+        mock_async_result.status = "SUCCESS"
+        mock_async_result.result = mock_result
+        mocker.patch("weko_search_ui.admin.import_item.AsyncResult", return_value=mock_async_result)
+        res = client.post(
+            url, data=json.dumps(_data), content_type="application/json"
+        )
+        result = json.loads(res.data)
+        assert result["start_date"] == "2025-03-19"
+        assert result["end_date"] == "2025-03-19"
+
+        # エラー系: resultがNone, status!=PENDING
+        mock_async_result.result = None
+        mock_async_result.status = "FAILURE"
+        res = client.post(
+            url, data=json.dumps(_data), content_type="application/json"
+        )
+        result = json.loads(res.data)
+        assert "error" in result
+
+        # PENDING: resultがNone, status==PENDING
+        mock_async_result.result = None
+        mock_async_result.status = "PENDING"
+        res = client.post(
+            url, data=json.dumps(_data), content_type="application/json"
+        )
+        assert res.status_code == 200
 
     #     def download_check(self): ~ GOOD
-    def test_ItemRocrateImportView_download_check(self, i18n_app, users, client_request_args, db_records2):
-        with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
-            test = ItemRocrateImportView()
-            assert test.download_check()
+    # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_admin.py::TestItemRocrateImportView::test_ItemRocrateImportView_download_check -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+    def test_ItemRocrateImportView_download_check(self, i18n_app, users, mocker):
+        url = url_for("items/rocrate_import.download_check")
+        mocker.patch("flask_login.utils._get_user", return_value=users[3]['obj'])
+        # 正常系: list_resultあり
+        mock_make_stats_file = mocker.patch(
+            "weko_search_ui.admin.make_stats_file",
+            return_value=io.BytesIO(b"testdata")
+        )
+        data = {"list_result": [1, 2, 3]}
+        with i18n_app.test_client() as client:
+            res = client.post(url, data=json.dumps(data), content_type="application/json")
+            assert res.status_code == 200
+            assert res.data == b"testdata"
+            assert res.headers["Content-disposition"].startswith("attachment; filename=check_")
+            mock_make_stats_file.assert_called_once()
+
+        # 異常系: list_resultなし
+        with i18n_app.test_client() as client:
+            res = client.post(url, data=json.dumps({}), content_type="application/json")
+            assert res.status_code == 200
+            assert res.data == b""
+            assert res.headers["Content-disposition"].startswith("attachment; filename=check_")
 
     #     def import_items(self) -> jsonify: ~ GOOD
-    # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_admin.py::test_ItemRocrateImportView_import_items -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
-    def test_ItemRocrateImportView_import_items(self, i18n_app, users, client_request_args, db_records2, mocker):
-        mocker.patch("weko_logging.models.UserActivityLog.get_log_group_sequence", return_value=1)
+    # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_admin.py::TestItemRocrateImportView::test_ItemRocrateImportView_import_items -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+    def test_ItemRocrateImportView_import_items(self, i18n_app, users, client, mocker):
         mocker.patch("weko_logging.activity_logger.UserActivityLogger.info")
-        with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
-            test = ItemRocrateImportView()
-            assert test.import_items()
+        mocker.patch("weko_logging.activity_logger.UserActivityLogger.error")
+        mocker.patch("weko_logging.models.UserActivityLog.get_log_group_sequence", return_value=1)
+        mocker.patch("flask_login.utils._get_user", return_value=users[3]['obj'])
+        mocker.patch("weko_search_ui.admin.create_flow_define")
+        mocker.patch("weko_search_ui.admin.handle_workflow")
+        mock_import_item = mocker.patch("weko_search_ui.admin.import_item")
+        mock_chord = mocker.patch("weko_search_ui.admin.chord")
+        mocker.patch("weko_search_ui.admin.remove_temp_dir_task")
+
+        mock_task_1 = MagicMock(task_id="task-111")
+        mock_task_2 = MagicMock(task_id="task-222")
+        mock_import_item.s.side_effect = [mock_task_1, mock_task_2]
+
+        mock_chord_call_obj = MagicMock()
+        mock_chord_call_obj.return_value.parent.results = [mock_task_1, mock_task_2]
+        mock_chord.return_value = mock_chord_call_obj
+
+        # success
+        data = {
+            "list_record": [{"id": 1}, {"id": 2}],
+            "data_path": "/tmp/test",
+        }
+        expected = {"tasks": [
+            {"task_id": "task-111", "item_id": 1},
+            {"task_id": "task-222", "item_id": 2}
+        ]}
+        url = url_for("items/rocrate_import.import_items")
+        res = client.post(url, data=json.dumps(data), content_type="application/json")
+        assert res.status_code == 200
+        json_data = res.get_json()
+        assert json_data["status"] == "success"
+        assert json_data["data"] == expected
+
+        # error in create_flow_define
+        with patch("weko_search_ui.admin.create_flow_define", side_effect=Exception()):
+            mock_chord_call_obj.return_value.parent.results = []
+            res = client.post(url, data=json.dumps(data), content_type="application/json")
+            assert res.status_code == 200
+            json_data = res.get_json()
+            assert json_data["status"] == "success"
+            assert json_data["data"] == {"tasks": []}
+
+        # log group id is False
+        with patch("weko_logging.activity_logger.UserActivityLogger.issue_log_group_id",
+                   return_value=False):
+            res = client.post(url, data=json.dumps({}), content_type="application/json")
+            assert res.status_code == 200
+            json_data = res.get_json()
+            assert json_data["status"] == "success"
+            assert json_data["data"] == {"tasks": []}
 
     #     def get_status(self): ~ GOOD
-    def test_ItemRocrateImportView_get_status(self, i18n_app, users, client_request_args, db_records2):
-        with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
-            test = ItemRocrateImportView()
-            assert test.get_status()
+    # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_admin.py::TestItemRocrateImportView::test_ItemRocrateImportView_get_status -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+    def test_ItemRocrateImportView_get_status(self, i18n_app, users, client, mocker):
+        url = url_for("items/rocrate_import.get_status")
+        mocker.patch("flask_login.utils._get_user", return_value=users[3]['obj'])
+
+        # --- データなし（エラー）
+        resp = client.post(url, data=json.dumps({}), content_type="application/json")
+        assert resp.status_code == 200
+        json_data = resp.get_json()
+        assert json_data["status"] == "error"
+        assert json_data["result"] == []
+
+        # --- 正常系: item_idがtask_itemに存在
+        with patch("weko_search_ui.admin.import_item.AsyncResult") as mock_async_result:
+            mock_task = MagicMock()
+            mock_task.status = "SUCCESS"
+            mock_task.result = {"start_date": "2025-01-01 12:00:00", "recid": 123}
+            mock_task.successful.return_value = True
+            mock_task.failed.return_value = False
+            mock_async_result.return_value = mock_task
+
+            data = {"tasks": [{"task_id": "task-1", "item_id": 999}]}
+            resp = client.post(url, data=json.dumps(data), content_type="application/json")
+            assert resp.status_code == 200
+            json_data = resp.get_json()
+            assert json_data["status"] == "done"
+            assert json_data["result"][0]["task_status"] == "SUCCESS"
+            assert json_data["result"][0]["item_id"] == 999
+            assert json_data["result"][0]["start_date"] == "2025-01-01 12:00:00"
+            assert json_data["result"][0]["end_date"] != ""  # 日時が入る
+
+        # --- 正常系: item_idがtask.resultから取得
+        with patch("weko_search_ui.admin.import_item.AsyncResult") as mock_async_result:
+            mock_task = MagicMock()
+            mock_task.status = "SUCCESS"
+            mock_task.result = {"start_date": "2025-01-01 12:00:00", "recid": 456}
+            mock_task.successful.return_value = True
+            mock_task.failed.return_value = False
+            mock_async_result.return_value = mock_task
+
+            data = {"tasks": [{"task_id": "task-2"}]}  # item_idなし
+            resp = client.post(url, data=json.dumps(data), content_type="application/json")
+            assert resp.status_code == 200
+            json_data = resp.get_json()
+            assert json_data["result"][0]["item_id"] == 456
+
+        # --- 進行中: successful/failedがFalse
+        with patch("weko_search_ui.admin.import_item.AsyncResult") as mock_async_result:
+            mock_task = MagicMock()
+            mock_task.status = "PROGRESS"
+            mock_task.result = {"start_date": "2025-01-01 12:00:00", "recid": 789}
+            mock_task.successful.return_value = False
+            mock_task.failed.return_value = False
+            mock_async_result.return_value = mock_task
+
+            data = {"tasks": [{"task_id": "task-3", "item_id": 789}]}
+            resp = client.post(url, data=json.dumps(data), content_type="application/json")
+            assert resp.status_code == 200
+            json_data = resp.get_json()
+            assert json_data["status"] == "doing"
+            assert json_data["result"][0]["end_date"] == ""
+
+        # --- 複数タスク: doing優先
+        with patch("weko_search_ui.admin.import_item.AsyncResult") as mock_async_result:
+            # 1つ目はdoing, 2つ目はdone
+            mock_task1 = MagicMock()
+            mock_task1.status = "PROGRESS"
+            mock_task1.result = {"start_date": "2025-01-01 12:00:00", "recid": 1}
+            mock_task1.successful.return_value = False
+            mock_task1.failed.return_value = False
+            mock_task2 = MagicMock()
+            mock_task2.status = "SUCCESS"
+            mock_task2.result = {"start_date": "2025-01-01 12:00:00", "recid": 2}
+            mock_task2.successful.return_value = True
+            mock_task2.failed.return_value = False
+            mock_async_result.side_effect = [mock_task1, mock_task2]
+
+            data = {"tasks": [{"task_id": "task-1", "item_id": 1}, {"task_id": "task-2", "item_id": 2}]}
+            resp = client.post(url, data=json.dumps(data), content_type="application/json")
+            assert resp.status_code == 200
+            json_data = resp.get_json()
+            assert json_data["status"] == "doing"
+            assert len(json_data["result"]) == 2
+
+        # --- tasksキーが空
+        resp = client.post(url, data=json.dumps({"tasks": []}), content_type="application/json")
+        assert resp.status_code == 200
+        json_data = resp.get_json()
+        assert json_data["status"] == "error"
+        assert json_data["result"] == []
 
     #     def download_import(self): ~ GOOD
-    def test_ItemRocrateImportView_download_import(self, i18n_app, users, client_request_args, db_records2):
-        with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
-            test = ItemRocrateImportView()
-            assert test.download_import()
+    # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_admin.py::TestItemRocrateImportView::test_ItemRocrateImportView_download_import -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+    def test_ItemRocrateImportView_download_import(self, i18n_app, users, client, mocker):
+        mock_make_stats_file = mocker.patch(
+            "weko_search_ui.admin.make_stats_file",
+            return_value=io.BytesIO(b"testdata")
+        )
+        mock_datetime = mocker.patch("weko_search_ui.admin.datetime")
+        mock_datetime.now.return_value.strftime.return_value = "2025-01-01"
+        url = url_for("items/rocrate_import.download_import")
+        data = {"list_result": [1, 2, 3]}
+        mocker.patch("flask_login.utils._get_user", return_value=users[3]['obj'])
+
+        # valid data
+        data = {"list_result": [1, 2, 3]}
+        res = client.post(url, data=json.dumps(data), content_type="application/json")
+        assert res.status_code == 200
+        assert res.data == b"testdata"
+        assert res.headers["Content-disposition"] == ("attachment; filename=List_Download 2025-01-01.tsv")
+        mock_make_stats_file.assert_called_once()
+
+        # empty data
+        res = client.post(url, data=json.dumps({}), content_type="application/json")
+        mock_make_stats_file.reset_mock()
+        assert res.status_code == 200
+        assert res.data == b""
+        assert res.headers["Content-disposition"] == ("attachment; filename=List_Download 2025-01-01.tsv")
+        mock_make_stats_file.assert_not_called()
 
     #     def get_disclaimer_text(self): ~ GOOD
-    def test_ItemRocrateImportView_get_disclaimer_text(self, i18n_app, users, client_request_args, db_records2):
-        with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
-            test = ItemRocrateImportView()
-            assert test.get_disclaimer_text()
+    # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_admin.py::TestItemRocrateImportView::test_ItemRocrateImportView_get_disclaimer_text -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+    def test_ItemRocrateImportView_get_disclaimer_text(self, i18n_app, users, client, mocker):
+        expected = ["Disclaimer:",
+                    "- This function forcibly changes the identifier regardless of the setting.",
+                    "- Before starting this operation, you need fully understand the contents and identifier registered at your institution.",
+                    "- Use this function on your own responsibility.",
+                    "- National Institute of Informatics (NII) does not take any responsibility for damages caused by using this function."
+        ]
+        url = url_for("items/rocrate_import.get_disclaimer_text")
+
+        mocker.patch("flask_login.utils._get_user", return_value=users[3]['obj'])
+        res = client.get(url, content_type="application/json")
+        assert res.status_code == 200
+        json = res.get_json()
+        assert json["code"] == 1
+        assert json["data"] == expected
+
+    # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_admin.py::TestItemRocrateImportView::test_ItemRocrateImportView_check_import_available -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+    def test_ItemRocrateImportView_check_import_available(self, i18n_app, users, client, mocker):
+        url = url_for("items/rocrate_import.check_import_available")
+        mocker.patch("flask_login.utils._get_user", return_value=users[3]['obj'])
+
+        # available
+        with patch("weko_search_ui.admin.is_import_running", return_value=None):
+            res = client.get(url, content_type="application/json")
+            assert res.status_code == 200
+            assert res.json == { "is_available": True}
+
+        # not available
+        with patch("weko_search_ui.admin.is_import_running", return_value="celery_not_run"):
+            res = client.get(url, content_type="application/json")
+            assert res.status_code == 200
+            assert res.json == {"is_available": False, "error_id": "celery_not_run"}
 
     #     def all_mappings(self):
     # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_admin.py::test_ItemRocrateImportView_all_mappings -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
