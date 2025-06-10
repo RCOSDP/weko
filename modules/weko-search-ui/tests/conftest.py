@@ -52,7 +52,7 @@ from sqlalchemy_utils.functions import create_database, database_exists, drop_da
 from werkzeug.local import LocalProxy
 from invenio_records.api import Record
 from invenio_stats.processors import EventsIndexer
-from tests.helpers import create_record, json_data
+from .helpers import create_record, json_data
 
 from invenio_access import InvenioAccess
 from invenio_access.models import ActionRoles, ActionUsers

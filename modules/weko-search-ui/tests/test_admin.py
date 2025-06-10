@@ -972,14 +972,14 @@ class TestItemBulkExport:
                 TempDirInfo().set(
                     export_path,
                     {"is_export":True,
-                    "expire":expire
+                    "expire":expire.strftime("%Y-%m-%d %H:%M:%S")
                     }
                 )
                 res = client.get(url)
                 assert res.headers['Content-Disposition'].split('; ')[1].replace('filename=', '') == 'export-all.zip'
                 assert res.headers['Content-Type'] == 'application/octet-stream'
                 assert res.status_code == 200
-                test_expire = (expire+timedelta(seconds=download_buffer)).strftime("%Y-%m-%d %H:%M:%WS")
+                test_expire = (expire+timedelta(seconds=download_buffer)).strftime("%Y-%m-%d %H:%M:%S")
                 assert TempDirInfo().get(export_path).get("expire") == test_expire
 
 
@@ -987,14 +987,14 @@ class TestItemBulkExport:
                 TempDirInfo().set(
                     export_path,
                     {"is_export":True,
-                    "expire":expire
+                    "expire":expire.strftime("%Y-%m-%d %H:%M:%S")
                     }
                 )
                 res = client.get(url)
                 assert res.headers['Content-Disposition'].split('; ')[1].replace('filename=', '') == 'export-all.zip'
                 assert res.headers['Content-Type'] == 'application/octet-stream'
                 assert res.status_code == 200
-                test_expire = expire.strftime("%Y-%m-%d %H:%M:%WS")
+                test_expire = expire.strftime("%Y-%m-%d %H:%M:%S")
                 assert TempDirInfo().get(export_path).get("expire") == test_expire
 
             # export_status is False, download_uri is None
