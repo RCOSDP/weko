@@ -1,4 +1,5 @@
 # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_tasks.py -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+from datetime import datetime
 import os
 import json
 import pytest
@@ -19,7 +20,9 @@ from weko_search_ui.tasks import (
     is_import_running,
     check_celery_is_run,
     delete_task_id_cache_on_revoke,
-    check_session_lifetime
+    check_session_lifetime,
+    check_flag_metadata_replace,
+    check_import_item_splited
 )
 
 # def check_import_items_task(file_path, is_change_identifier: bool, host_url, lang="en"):
@@ -27,7 +30,7 @@ def test_check_import_items_task(i18n_app, users):
     file_path = "/test/test/test.txt"
     data = {"error": None}
 
-    with patch("weko_search_ui.utils.check_import_items", return_value=data):
+    with patch("weko_search_ui.utils.check_tsv_import_items", return_value=data):
         with patch("shutil.rmtree", return_value=""):
             with patch("weko_search_ui.tasks.remove_temp_dir_task.apply_async", return_value=""):
                 assert check_import_items_task(file_path=file_path,is_change_identifier=True,host_url="https://localhost")
@@ -35,65 +38,87 @@ def test_check_import_items_task(i18n_app, users):
 
 # def check_rocrate_import_items_task(file_path, is_change_identifier: bool, host_url, packaging, mapping_id, lang="en"):
 # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_tasks.py::test_check_rocrate_import_items_task -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
-def test_check_rocrate_import_items_task(i18n_app, users):
-    file_path = os.path.join(
-        os.path.dirname(os.path.abspath(__file__)),
-        'data',
-        'rocrate_import',
-        'new_crate_v2.zip'
+def test_check_rocrate_import_items_task(i18n_app, users, mocker):
+    # Fixed datetime for mocking
+    fixed_dt = datetime(2024, 6, 1, 12, 0, 0)
+    fixed_dt_str = fixed_dt.strftime("%Y-%m-%d %H:%M:%S")
+
+    # Patch datetime.now() to return fixed_dt
+    mocker.patch("weko_search_ui.tasks.datetime")
+    weko_search_ui_tasks_datetime = __import__("weko_search_ui.tasks", fromlist=["datetime"]).datetime
+    weko_search_ui_tasks_datetime.now.return_value = fixed_dt
+
+    # Patch dependencies
+    mocker.patch("weko_search_ui.tasks.shutil.rmtree")
+    mocker.patch("weko_search_ui.tasks.remove_temp_dir_task.apply_async")
+    mocker.patch("weko_search_ui.tasks.get_lifetime", return_value=3600)
+    mocker.patch("weko_search_ui.tasks.TempDirInfo.set")
+    mocker.patch("weko_search_ui.tasks.check_flag_metadata_replace")
+    mocker.patch("weko_search_ui.tasks.check_import_item_splited")
+
+    file_path = "/tmp/test/rocrate.zip"
+    packaging = "ro-crate"
+    mapping_id = 123
+    host_url = "http://localhost"
+    lang = "en"
+    can_edit_indexes = []
+
+    # Case 1: No error in check_result
+    list_record = [{"id": 1, "errors": []}]
+    check_result = {"list_record": list_record, "data_path": "/tmp/data"}
+    mocker.patch("weko_search_ui.tasks.check_jsonld_import_items", return_value=check_result)
+
+    result = check_rocrate_import_items_task(
+        file_path=file_path,
+        is_change_identifier=True,
+        host_url=host_url,
+        packaging=packaging,
+        mapping_id=mapping_id,
+        lang=lang,
+        can_edit_indexes=can_edit_indexes
     )
-    list_record = [
-        {
-            "$schema": "/items/jsonschema/30001",
-            "metadata": {
-                "publish_status": "public",
-                "edit_mode": "Keep",
-                "feedback_mail_list": [
-                    {
-                        "mail": "wekosoftware@nii.ac.jp",
-                        "author_id": ""
-                    }
-                ],
-                "path": [
-                    1623632832836
-                ],
-                "files_info": [
-                    {
-                        "key": "item_30001_file22",
-                        "items": []
-                    }
-                ]
-            },
-            "item_type_name": "デフォルトアイテムタイプ（シンプル）",
-            "item_type_id": 30001,
-            "publish_status": "public",
-            "file_path": [
-                "sample.rst",
-                "data.csv"
-            ],
-            "non_extract": [
-                "data.csv"
-            ],
-            "is_change_identifier": False,
-            "identifier_key": "item_30001_identifier_registration13",
-            "errors": [
-                "Please specify PubDate with YYYY-MM-DD.",
-                "'item_30001_title0' is a required property",
-                "'item_30001_resource_type11' is a required property",
-                "Title is required item.",
-                "'pubdate' is a required property"
-            ],
-            "warnings": [],
-            "status": "new",
-            "id": None
-        }
-    ]
+    assert result["start_date"] == fixed_dt_str
+    assert result["end_date"] == fixed_dt_str
+    assert result["data_path"] == "/tmp/data"
+    assert result["list_record"] == list_record
+    assert "error" not in result
 
-    with patch("weko_search_ui.utils.check_jsonld_import_items", return_value=list_record):
-        with patch("shutil.rmtree", return_value=""):
-            with patch("weko_search_ui.tasks.remove_temp_dir_task.apply_async", return_value=""):
-                assert check_rocrate_import_items_task(file_path=file_path,is_change_identifier=True,host_url="https://localhost",packaging="ro-crate",mapping_id="30001",lang="en")
+    # Case 2: All records have errors, triggers remove_temp_dir_task
+    list_record_err = [{"id": 1, "errors": ["err1"]}]
+    check_result_err = {"list_record": list_record_err, "data_path": "/tmp/data2"}
+    mocker.patch("weko_search_ui.tasks.check_jsonld_import_items", return_value=check_result_err)
 
+    result = check_rocrate_import_items_task(
+        file_path=file_path,
+        is_change_identifier=True,
+        host_url=host_url,
+        packaging=packaging,
+        mapping_id=mapping_id,
+        lang=lang,
+        can_edit_indexes=can_edit_indexes
+    )
+    assert result["start_date"] == fixed_dt_str
+    assert result["end_date"] == fixed_dt_str
+    assert result["data_path"] == "/tmp/data2"
+    assert result["list_record"] == list_record_err
+
+    # Case 3: check_result has error key
+    check_result_with_error = {"list_record": [], "data_path": "/tmp/data3", "error": "some error"}
+    mocker.patch("weko_search_ui.tasks.check_jsonld_import_items", return_value=check_result_with_error)
+
+    result = check_rocrate_import_items_task(
+        file_path=file_path,
+        is_change_identifier=True,
+        host_url=host_url,
+        packaging=packaging,
+        mapping_id=mapping_id,
+        lang=lang,
+        can_edit_indexes=can_edit_indexes
+    )
+    assert result["start_date"] == fixed_dt_str
+    assert result["end_date"] == fixed_dt_str
+    assert result["error"] == "some error"
+    assert "list_record" not in result or result["list_record"] == []
 
 # def import_item(item, request_info):
 def test_import_item(i18n_app, users):
