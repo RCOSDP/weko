@@ -17,6 +17,8 @@ from invenio_accounts.models import User
 from invenio_communities.models import Community
 from invenio_db import db
 
+group_id_seq = Sequence('user_activity_log_group_id_seq', metadata=db.metadata)
+
 class UserActivityLog(db.Model):
     """User activity log model."""
 
@@ -113,6 +115,5 @@ class UserActivityLog(db.Model):
         """
         if not session:
             session = db.session
-        seq = Sequence('user_activity_log_group_id_seq')
-        next_id = session.execute(seq)
+        next_id = session.execute(group_id_seq)
         return next_id
