@@ -5,12 +5,13 @@ import os
 import shutil
 from mock import patch, MagicMock
 
-from invenio_accounts.testutils import login_user_via_session
-from redis.exceptions import RedisError
-from sqlalchemy.exc import SQLAlchemyError
-from redis.exceptions import RedisError
+from flask_oauthlib.provider import OAuth2Provider
 from sqlalchemy.exc import SQLAlchemyError
 
+from invenio_accounts.testutils import login_user_via_session
+from invenio_oauth2server.views.server import login_oauth2_user
+from weko_index_tree.api import Indexes
+from weko_index_tree.errors import PermissionError
 from weko_admin.models import AdminLangSettings
 from weko_index_tree.models import Index
 from weko_index_tree.rest import (
@@ -597,12 +598,8 @@ def test_get_parent_index_tree_error(client_rest, users, communities, test_indic
         res = client_rest.get('/v1/tree/index/11/parent')
         assert res.status_code == 500
 
-from flask_oauthlib.provider import OAuth2Provider
-from invenio_oauth2server.views.server import login_oauth2_user
-from weko_index_tree.api import Indexes
-from weko_index_tree.errors import PermissionError
+# class IndexManagementAPI:
 # .tox/c1/bin/pytest --cov=weko_index_tree tests/test_rest.py::TestIndexManagementAPI -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko_index_tree/.tox/c1/tmp --full-trace -p no:warnings
-
 class TestIndexManagementAPI:
     # インデックスツリーの構造（indices_for_api）
     # Root Index 0
@@ -624,8 +621,6 @@ class TestIndexManagementAPI:
         - インデックスツリー取得: 親インデックスから子インデックスが正しく取得できるかを確認
         - 認証なしアクセス: 認証が必要なAPIに対してUnauthorized(401)が返るか確認
         """
-        mock_weko_logging = mocker.patch("weko_logging.activity_logger.UserActivityLogger.info")
-        mock_weko_logging = mocker.patch("weko_logging.activity_logger.UserActivityLogger.error")
         oauth2 = OAuth2Provider()
         oauth2.after_request(login_oauth2_user)
 
@@ -768,8 +763,6 @@ class TestIndexManagementAPI:
           - 必須パラメータなしのリクエストで400エラーを返すか
           - サーバーエラー時に500を返すか
         """
-        mock_weko_logging = mocker.patch("weko_logging.activity_logger.UserActivityLogger.info")
-        mock_weko_logging = mocker.patch("weko_logging.activity_logger.UserActivityLogger.error")
         json_ = {
             "index": {
                 "parent": 0,
@@ -865,7 +858,7 @@ class TestIndexManagementAPI:
             # parent is not deleted
             count_before = self.count_indices
             response = client_rest.post(url, headers=auth_headers_sysadmin, json=private_parrent_id)
-            assert response.status_code == 200
+            assert response.status_code == 201
             data = response.json
             assert data["index"]["parent"] == 1740974499997
             assert self.count_indices == count_before + 1, "Index has not been created successfully"
@@ -918,7 +911,7 @@ class TestIndexManagementAPI:
         json_ = {"index": {"parent": 0}}
         url = "v1/tree/index/"
         response = client_rest.post(url, headers=auth_headers, json=json_)
-        assert response.status_code == 200
+        assert response.status_code == 201
         created_index = response.json
         from weko_index_tree.models import Index
         from weko_index_tree.api import Indexes
@@ -949,12 +942,12 @@ class TestIndexManagementAPI:
 
     def run_create_index_success(self, app, client_rest, auth_headers, json_):
         """
-        正常にインデックスを作成できるか確認（200）
+        正常にインデックスを作成できるか確認（201）
         """
         count_before = self.count_indices
         url = "v1/tree/index/"
         response = client_rest.post(url, headers=auth_headers, json=json_)
-        assert response.status_code == 200
+        assert response.status_code == 201
         data = response.json
         assert "index" in data, "レスポンスに 'index' キーが含まれていない"
         assert data["index"]["index_name"] == "テストインデックス", "インデックス名が一致しない"
@@ -1032,8 +1025,6 @@ class TestIndexManagementAPI:
                 "index_link_name_english": "Updated Link"
             }
         }
-        mock_weko_logging = mocker.patch("weko_logging.activity_logger.UserActivityLogger.info")
-        mock_weko_logging = mocker.patch("weko_logging.activity_logger.UserActivityLogger.error")
         with patch("weko_index_tree.tasks.update_oaiset_setting.delay",side_effect = MagicMock()):
             # 正常にインデックスを更新できるか（200）
             self.run_update_index_success(app, client_rest, auth_headers_sysadmin)
@@ -1228,8 +1219,6 @@ class TestIndexManagementAPI:
         mock_doi_in_index = mocker.patch("weko_index_tree.utils.validate_before_delete_index", return_value=(False , [], []))
         mock_doi_in_index = mocker.patch("weko_index_tree.api.Indexes.delete_set_info")
         mock_weko_deposit = mocker.patch("weko_deposit.api.WekoDeposit.delete_by_index_tree_id")
-        mock_weko_logging = mocker.patch("weko_logging.activity_logger.UserActivityLogger.info")
-        mock_weko_logging = mocker.patch("weko_logging.activity_logger.UserActivityLogger.error")
         with patch("weko_index_tree.tasks.delete_oaiset_setting.delay",side_effect = MagicMock()):
             with patch("weko_index_tree.tasks.update_oaiset_setting.delay",side_effect = MagicMock()):
                 # 認証なしのリクエストが拒否されるか（401）

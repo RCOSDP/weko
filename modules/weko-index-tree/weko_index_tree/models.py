@@ -255,11 +255,20 @@ class Index(db.Model, Timestamp):
 
     @classmethod
     def get_index_by_id(cls, index, with_deleted=False):
-        """Get all Indexes."""
-        query_result = cls.query.filter_by(id=index)
+        """Get all Indexes.
+
+        Args:
+            index (int): Identifier of the index.
+            with_deleted (bool): If True, include deleted indexes.
+
+        Returns:
+            Index: The index model object if found, otherwise None.
+        """
+        query = cls.query.filter_by(id=index)
         if not with_deleted:
-            query_result = query_result.filter_by(is_deleted=False)
-        return query_result.one_or_none()
+            query = query.filter_by(is_deleted=False)
+        obj = query.one_or_none()
+        return obj if isinstance(obj, cls) else None
 
 
 class IndexStyle(db.Model, Timestamp):

@@ -52,8 +52,10 @@ from .utils import (
 
 
 @shared_task
-def check_import_items_task(file_path, is_change_identifier: bool, host_url,
-                            lang="en", all_index_permission=True, can_edit_indexes=[]):
+def check_import_items_task(
+    file_path, is_change_identifier: bool, host_url,
+    lang="en", all_index_permission=True, can_edit_indexes=[]
+):
     """Check import items."""
     result = {"start_date": datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
     with current_app.test_request_context(
@@ -86,8 +88,10 @@ def check_import_items_task(file_path, is_change_identifier: bool, host_url,
 
 
 @shared_task
-def check_rocrate_import_items_task(file_path, is_change_identifier: bool,
-                                host_url, packaging, mapping_id, lang="en", can_edit_indexes=[]):
+def check_rocrate_import_items_task(
+    file_path, is_change_identifier: bool, host_url,
+    packaging, mapping_id, lang="en", can_edit_indexes=[]
+):
     """Check RO-Crate import items.
     Check the contents of an RO-Crate file and processes its metadata.
 

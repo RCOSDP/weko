@@ -821,7 +821,7 @@ def check_jsonld_import_items(
     in the manifest files and mapping metadata to the item type.
 
     Args:
-        file (FileStorage | str): File object or file path.
+        file (werkzeug.FileStorage | str): File object or file path.
         packaging (str): Packaging type. SWORDBagIt or SimpleZip.
         mapping_id (int): Mapping ID. Defaults to None.
         meta_data_api (list): Metadata API. Defaults to None.
@@ -1043,7 +1043,7 @@ def handle_save_bagit(list_record, file, data_path, filename):
         data_path (str): Path to save the bagit file.
         filename (str): Name of the bagit file.
     """
-    if not list_record or len(list_record) > 2:
+    if not list_record or len(list_record) > 1:
         # item split flag takes precedence over save Bag flag
         return
 
@@ -2189,7 +2189,7 @@ def import_items_to_system(
                 delete_cache_data(cache_key)
 
         except SQLAlchemyError as ex:
-            current_app.logger.error("sqlalchemy error: ", ex)
+            current_app.logger.error(f"sqlalchemy error: {ex}")
             db.session.rollback()
             if item.get("id"):
                 pid = PersistentIdentifier.query.filter_by(
@@ -2255,7 +2255,7 @@ def import_items_to_system(
 
             return {"success": False, "error_id": error_id}
         except redis.RedisError as ex:
-            current_app.logger.error("redis  error: ", ex)
+            current_app.logger.error(f"redis  error: {ex}")
             db.session.rollback()
             if item.get("id"):
                 pid = PersistentIdentifier.query.filter_by(
@@ -2386,7 +2386,9 @@ def delete_items_with_activity(item_id, request_info):
     Returns:
         taple:
             - url (str): URL for deletion.
-            - current_action (str): Current action.
+            - current_action (str):  Current action. <br>
+            if current_action is "end_action", item is already deleted. <br>
+            if current_action is "approval", item is not deleted yet.
 
     Raises:
         WekoWorkflowException: If any error occurs during deletion.
@@ -2402,6 +2404,8 @@ def delete_items_with_activity(item_id, request_info):
             user_id=user_id, community=community,
             item_id=item_id, shared_id=shared_id, for_delete=True
         )
+        # if current_action is "end_action", item is already deleted.
+        # if current_action is "approval", item is not deleted yet.
         current_action = headless.current_action
     except WekoWorkflowException as ex:
         raise

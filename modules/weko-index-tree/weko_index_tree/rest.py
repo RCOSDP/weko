@@ -1197,7 +1197,7 @@ class IndexManagementAPI(ContentNegotiatedMethodView):
             }
         }
 
-        return make_response(jsonify(response_data), 200)
+        return make_response(jsonify(response_data), 201)
 
 
     def put_v1(self, index_id, **kwargs):
