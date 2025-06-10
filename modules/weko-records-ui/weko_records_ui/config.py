@@ -650,3 +650,6 @@ WEKO_RECORDS_UI_DISPLAY_RESOURCE_TYPE = False
 
 WEKO_RECORDS_UI_DISPLAY_ITEM_TYPE = True
 """ Display item type name on item detail. """
+
+WEKO_GAKUNIN_RDM_URL = "https://rdm.nii.ac.jp"
+"""URL of GakuNin RDM."""

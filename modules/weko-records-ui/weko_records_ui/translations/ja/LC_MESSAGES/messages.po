@@ -660,3 +660,15 @@ msgstr "成功: シークレットURLを生成し、あなたのメールアド�
 
 msgid "MSG_WEKO_RECORDS_UI_IS_EDITING_TRUE"
 msgstr "該当アイテムは編集中のため、削除できません。"
+
+msgid "Import to GakuNin RDM"
+msgstr "GakuNin RDMにインポート"
+
+msgid "Item is not published"
+msgstr "アイテムが公開されていません"
+
+msgid "File is not publicly accessible"
+msgstr "ファイルが公開されていません"
+
+msgid "Item is not published and file is not publicly accessible"
+msgstr "アイテムとファイルが公開されていません"

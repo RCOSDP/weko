@@ -1388,3 +1388,15 @@ msgstr "Success: Secret URL Generate is succeed. Sent the URL to your email adre
 
 msgid "MSG_WEKO_RECORDS_UI_IS_EDITING_TRUE"
 msgstr "Cannot delete because it is being edited."
+
+msgid "Import to GakuNin RDM"
+msgstr "Import to GakuNin RDM"
+
+msgid "Item is not published"
+msgstr "Item is not published"
+
+msgid "File is not publicly accessible"
+msgstr "File is not publicly accessible"
+
+msgid "Item is not published and file is not publicly accessible"
+msgstr "Item is not published and file is not publicly accessible"
