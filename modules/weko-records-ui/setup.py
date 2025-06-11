@@ -90,6 +90,7 @@ setup(
             'weko_records_ui = weko_records_ui:WekoRecordsUI',
         ],
         'invenio_base.api_apps': [
+            'weko_records_ui_rest = weko_records_ui:WekoRecordsREST',
             'weko_records_ui_cites_rest = weko_records_ui:WekoRecordsCitesREST',
         ],
         'invenio_admin.views': [
@@ -123,6 +124,9 @@ setup(
         ],
         'invenio_db.models': [
             'weko_records_ui = weko_records_ui.models',
+        ],
+        'invenio_oauth2server.scopes': [
+            'item_read_scope = weko_records_ui.scopes:item_read_scope',
         ],
     },
     extras_require=extras_require,

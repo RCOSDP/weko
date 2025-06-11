@@ -19,7 +19,7 @@ from .api import WekoDeposit
 from .pidstore import get_record_without_version
 
 
-def append_file_content(sender, json=None, record=None, index=None, **kwargs):
+def append_file_content(sender, json={}, record=None, index=None, **kwargs):
     """Append file content to ES record."""
     try:
         dep = WekoDeposit.get_record(record.id)
@@ -43,7 +43,7 @@ def append_file_content(sender, json=None, record=None, index=None, **kwargs):
         dep.jrc = jrc
 
         # Update data based on data from DB
-        dep.jrc['weko_shared_id'] = im.get('weko_shared_id')
+        dep.jrc['weko_shared_ids'] = im.get('weko_shared_ids')
         dep.jrc['weko_creator_id'] = im.get('owner')
         dep.jrc['_item_metadata'] = im
         dep.jrc['control_number'] = im.get('recid')

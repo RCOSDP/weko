@@ -173,31 +173,32 @@ msgstr "Save"
 
 #: weko_admin/templates/weko_admin/admin/facet_search_setting.html:59
 msgid "UiType"
-msgstr ""
+msgstr "UI"
 
 #: weko_admin/templates/weko_admin/admin/facet_search_setting.html:60
 msgid "DisplayNumber"
-msgstr ""
+msgstr "Display Number"
 
 #: weko_admin/templates/weko_admin/admin/facet_search_setting.html:61
 msgid "OpenClose"
-msgstr ""
+msgstr "Open/Close"
 
 #: weko_admin/templates/weko_admin/admin/facet_search_setting.html:62
 msgid "OpenClose Open"
-msgstr ""
+msgstr "Open"
 
 #: weko_admin/templates/weko_admin/admin/facet_search_setting.html:63
 msgid "OpenClose Close"
-msgstr ""
+msgstr "Close"
 
 #: weko_admin/templates/weko_admin/admin/facet_search_setting.html:64
+#, python-format
 msgid "DisplayNumber Validation1"
-msgstr ""
+msgstr "Display Number must be an integer value from 1 to 99."
 
 #: weko_admin/templates/weko_admin/admin/facet_search_setting.html:65
 msgid "DisplayNumber Validation2"
-msgstr ""
+msgstr "If CheckboxList is selected, Display Number must be entered."
 
 #: weko_admin/admin.py:1210 weko_admin/admin.py:1237 weko_admin/admin.py:1246
 #: weko_admin/admin.py:1255 weko_admin/admin.py:1264 weko_admin/admin.py:1273
@@ -1617,48 +1618,51 @@ msgstr "Update"
 
 #: weko_admin/admin/reindex_elasticsearch.html
 msgid "reindex item_index"
-msgstr "アイテムインデックスの再作成"
+msgstr "reindex item Types"
 
 #: weko_admin/admin/reindex_elasticsearch.html
 msgid "reindex item"
-msgstr "アイテムの再インデックス"
+msgstr "reindex items"
 
 #: weko_admin/admin/reindex_elasticsearch.html
 msgid "execute"
-msgstr "実行"
+msgstr "execute"
 
 #: weko_admin/admin/reindex_elasticsearch.html
 msgid "Maintenance"
-msgstr "メンテナンス"
+msgstr "Maintenance"
 
 #: weko_admin/admin/reindex_elasticsearch.html
 msgid "ElasticSearch Index"
-msgstr "インデックス再作成"
+msgstr "ElasticSearch Index"
 
 #: weko_admin/admin/reindex_elasticsearch.html
 msgid "waiting..."
-msgstr "実行可能"
+msgstr "waiting..."
 
 #: weko_admin/admin/reindex_elasticsearch.html
 msgid "executing..."
-msgstr "実行中..."
+msgstr "executing..."
 
 #: weko_admin/admin/reindex_elasticsearch.html
 msgid "haserror"
-msgstr "エラー発生中につき実行できません"
+msgstr "Execution prohibited due to an error"
 
 #: weko_admin/admin/reindex_elasticsearch.html
 msgid "validationMsg1"
-msgstr "実行モードが選ばれていません。"
+msgstr "Execution mode not selected"
 
 #: weko_admin/admin/reindex_elasticsearch.html
 #, fuzzy
 msgid "confirmMessage"
-msgstr "Confirm"
+msgstr "We expect this process to take a considerable amount of time to execute. May I run the reindexing process?"
 
 #: weko_admin/admin/reindex_elasticsearch.html
 msgid "completed"
-msgstr "処理が完了しました。"
+msgstr "Completed!"
+
+msgid "restricted_error_message"
+msgstr "Error Message"
 
 #~ msgid "Title_Asc"
 #~ msgstr "Title (Asc)"
@@ -1783,3 +1787,5 @@ msgstr "処理が完了しました。"
 #~ msgid "An index which is not open in public cannot be selected."
 #~ msgstr ""
 
+#~ msgid "Facet Search List"
+#~ msgstr "Facet Search List"

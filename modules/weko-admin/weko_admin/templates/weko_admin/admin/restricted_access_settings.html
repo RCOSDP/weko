@@ -44,6 +44,7 @@
   {% from "weko_theme/macros/modal_page.html" import all_modal %}
   {% set download_limit = _("Download Limit") %}
   {% set expiration_date = _("Expiration Date") %}
+  {% set error_message = _("restricted_error_message")%}
   <input id="init_data" type="hidden" value='{{ data }}'/>
   <input id="content_file_download_label" type="hidden" value='{{ _("Content File Download") }}'/>
   <input id="download_limit_label" type="hidden" value='{{ download_limit }}'/>
@@ -57,12 +58,15 @@
          value='{{ _("Must set a positive integer for %(name)s.", name=expiration_date) }}'/>
   <input id="empty_download" type="hidden" value='{{ _("Please set %(name)s.", name=download_limit) }}'/>
   <input id="empty_expiration_date" type="hidden" value='{{ _("Please set %(name)s.", name=expiration_date) }}'/>
+  <input id="error_message" type="hidden" value="{{error_message}}">
 
   <input type="hidden" id="english" value='{{_("English")}}'/>
   <input type="hidden" id="japanese" value='{{_("Japanese")}}'/>
   <input type="hidden" id="terms_and_conditions" value='{{_("Terms and Conditions")}}'/>
   <input type="hidden" id="new" value='{{_("Add")}}'/>
   <input type="hidden" id="message_miss_data" value='{{_("Please input the Terms and Conditions in English.")}}'/>
+  <input id="empty_error_message" type="hidden" value='{{ _("Please set %(name)s.", name=error_message) }}'>
+
 
   <input type="hidden" id="const_items_per_page" value='{{ items_per_page}}'/>
   <input type="hidden" id="label_activity" value='{{_("Activity")}}'/>
