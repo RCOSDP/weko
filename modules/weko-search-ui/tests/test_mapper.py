@@ -386,7 +386,7 @@ def test_subitem_recs2(schema, keys, value, metadata, expected_result):
 
 # def parsing_metadata(mappin, props, patterns, metadata, res):
 # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_mapper.py::test_parsing_metadata -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
-def test_parsing_metadata(db_itemtype):
+def test_parsing_metadata(app, db_itemtype):
     item_type = db_itemtype['item_type']
     item_type_mapping = Mapping.get_record(item_type.id)
     mappin = get_full_mapping(item_type_mapping, "jpcoar_mapping")
@@ -3057,6 +3057,7 @@ def test_add_file(mapper_jpcoar):
                 }
             }
         ],
+        "file_path": ['test1.txt', 'test2', 'test3.png'],
         "files_info": [{
             "key": "item_1570069138259",
             "items": [
@@ -4593,112 +4594,117 @@ class TestJsonMapper:
     # def _create_item_map(self):
     # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_mapper.py::TestJsonMapper::test_create_item_map -v -vv -s --cov-branch --cov-report=xml --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
     def test_create_item_map(self, app, db, item_type2):
-        schema = json_data("data/jsonld/item_type_schema.json")
+        schema = json_data("data/jsonld/item_type_schema_full.json")
         item_type2.model.schema = schema
         db.session.commit()
 
         item_map = JsonMapper({}, item_type2.model.id)._create_item_map()
 
         assert item_map["PubDate"] == "pubdate"
-        assert item_map["Title.タイトル"] == "item_30001_title0.subitem_title"
-        assert item_map["Title.言語"] == "item_30001_title0.subitem_title_language"
-        assert item_map["Resource Type.資源タイプ識別子"] == "item_30001_resource_type11.resourceuri"
-        assert item_map["Resource Type.資源タイプ"] == "item_30001_resource_type11.resourcetype"
-        assert item_map["Creator.作成者姓名.姓名"] == "item_30001_creator2.creatorNames.creatorName"
-        assert item_map["Creator.作成者所属.所属機関名.所属機関名"] == "item_30001_creator2.creatorAffiliations.affiliationNames.affiliationName"
-        assert item_map["File.本文URL.ラベル"] == "item_30001_file22.url.label"
-        assert item_map["File.ファイル名"] == "item_30001_file22.filename"
+        assert item_map["Title.タイトル"] == "item_30002_title0.subitem_title"
+        assert item_map["Title.言語"] == "item_30002_title0.subitem_title_language"
+        assert item_map["Resource Type.資源タイプ識別子"] == "item_30002_resource_type13.resourceuri"
+        assert item_map["Resource Type.資源タイプ"] == "item_30002_resource_type13.resourcetype"
+        assert item_map["Creator.作成者姓名.姓名"] == "item_30002_creator2.creatorNames.creatorName"
+        assert item_map["Creator.作成者所属.所属機関名.所属機関名"] == "item_30002_creator2.creatorAffiliations.affiliationNames.affiliationName"
+        assert item_map["File.本文URL.ラベル"] == "item_30002_file35.url.label"
+        assert item_map["File.ファイル名"] == "item_30002_file35.filename"
 
         item_map = JsonMapper({}, item_type2.model.id)._create_item_map(detail=True)
 
-        assert item_map["Title"] == "item_30001_title0"
-        assert item_map["Resource Type"] == "item_30001_resource_type11"
-        assert item_map["Creator"] == "item_30001_creator2"
-        assert item_map["Creator.作成者姓名"] == "item_30001_creator2.creatorNames"
-        assert item_map["Creator.作成者所属"] == "item_30001_creator2.creatorAffiliations"
-        assert item_map["Creator.作成者所属.所属機関名"] == "item_30001_creator2.creatorAffiliations.affiliationNames"
-        assert item_map["File"] == "item_30001_file22"
-        assert item_map["File.本文URL"] == "item_30001_file22.url"
+        assert item_map["PubDate"] == "pubdate"
+        assert item_map["Title"] == "item_30002_title0"
+        assert item_map["Resource Type"] == "item_30002_resource_type13"
+        assert item_map["Creator"] == "item_30002_creator2"
+        assert item_map["Creator.作成者姓名"] == "item_30002_creator2.creatorNames"
+        assert item_map["Creator.作成者所属"] == "item_30002_creator2.creatorAffiliations"
+        assert item_map["Creator.作成者所属.所属機関名"] == "item_30002_creator2.creatorAffiliations.affiliationNames"
+        assert item_map["File"] == "item_30002_file35"
+        assert item_map["File.本文URL"] == "item_30002_file35.url"
 
     # def _get_property_type(self, path):
     # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_mapper.py::TestJsonMapper::test_get_property_type -v -vv -s --cov-branch --cov-report=xml --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
     def test_get_property_type(self, app, db, item_type2):
-        schema = json_data("data/jsonld/item_type_schema.json")
+        schema = json_data("data/jsonld/item_type_schema_full.json")
         item_type2.model.schema = schema
         db.session.commit()
 
         mapper = JsonMapper({}, item_type2.model.id)
 
-        assert "string" in mapper._get_property_type("pubdate")
-        assert "array" in mapper._get_property_type("item_30001_title0")
-        assert "string" in mapper._get_property_type("item_30001_title0.subitem_title")
-        assert "string" in mapper._get_property_type("item_30001_title0.subitem_title_language")
-        assert "object" in mapper._get_property_type("item_30001_resource_type11")
-        assert "string" in mapper._get_property_type("item_30001_resource_type11.resourceuri")
-        assert "string" in mapper._get_property_type("item_30001_resource_type11.resourcetype")
-        assert "array" in mapper._get_property_type("item_30001_creator2")
-        assert "array" in mapper._get_property_type("item_30001_creator2.creatorNames")
-        assert "string" in mapper._get_property_type("item_30001_creator2.creatorNames.creatorName")
-        assert "array" in mapper._get_property_type("item_30001_creator2.creatorAffiliations")
-        assert "array" in mapper._get_property_type("item_30001_creator2.creatorAffiliations.affiliationNames")
-        assert "string" in mapper._get_property_type("item_30001_creator2.creatorAffiliations.affiliationNames.affiliationName")
-        assert "array" in mapper._get_property_type("item_30001_file22")
-        assert "object" in mapper._get_property_type("item_30001_file22.url")
-        assert "string" in mapper._get_property_type("item_30001_file22.url.label")
-        assert "string" in mapper._get_property_type("item_30001_file22.filename")
+        assert mapper._get_property_type("pubdate") == "string"
+        assert mapper._get_property_type("item_30002_title0") == "array"
+        assert mapper._get_property_type("item_30002_title0.subitem_title") == "string"
+        assert mapper._get_property_type("item_30002_title0.subitem_title_language") == ["null", "string"]
+        assert mapper._get_property_type("item_30002_resource_type13") == "object"
+        assert mapper._get_property_type("item_30002_resource_type13.resourceuri") == "string"
+        assert mapper._get_property_type("item_30002_resource_type13.resourcetype") == ["null", "string"]
+        assert mapper._get_property_type("item_30002_creator2") == "array"
+        assert mapper._get_property_type("item_30002_creator2.creatorNames") == "array"
+        assert mapper._get_property_type("item_30002_creator2.creatorNames.creatorName") == "string"
+        assert mapper._get_property_type("item_30002_creator2.creatorAffiliations") == "array"
+        assert mapper._get_property_type("item_30002_creator2.creatorAffiliations.affiliationNames") == "array"
+        assert mapper._get_property_type("item_30002_creator2.creatorAffiliations.affiliationNames.affiliationName") == "string"
+        assert mapper._get_property_type("item_30002_file35") == "array"
+        assert mapper._get_property_type("item_30002_file35.url") == "object"
+        assert mapper._get_property_type("item_30002_file35.url.label") == "string"
+        assert mapper._get_property_type("item_30002_file35.filename") == "string"
 
     # def required_properties(self):
     # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_mapper.py::TestJsonMapper::test_required_properties -v -vv -s --cov-branch --cov-report=xml --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
     def test_required_properties(self, app, db, item_type2):
-        schema = json_data("data/jsonld/item_type_schema.json")
+        schema = json_data("data/jsonld/item_type_schema_full.json")
         item_type2.model.schema = schema
         db.session.commit()
 
-        json_mapping = json_data("data/jsonld/ro-crate_mapping.json")
-
-        required = JsonLdMapper(item_type2.model.id, json_mapping).required_properties()
+        required = JsonLdMapper(item_type2.model.id, {}).required_properties()
         assert required["PubDate"] == "pubdate"
-        assert required["Title"] == "item_30001_title0"
-        assert required["Title.タイトル"] == "item_30001_title0.subitem_title"
-        assert required["Title.言語"] == "item_30001_title0.subitem_title_language"
-        assert required["Resource Type"] == "item_30001_resource_type11"
-        assert required["Resource Type.資源タイプ識別子"] == "item_30001_resource_type11.resourceuri"
-        assert required["Resource Type.資源タイプ"] == "item_30001_resource_type11.resourcetype"
+        assert required["Title"] == "item_30002_title0"
+        assert required["Title.タイトル"] == "item_30002_title0.subitem_title"
+        assert required["Title.言語"] == "item_30002_title0.subitem_title_language"
+        assert required["Resource Type"] == "item_30002_resource_type13"
+        assert required["Resource Type.資源タイプ識別子"] == "item_30002_resource_type13.resourceuri"
+        assert required["Resource Type.資源タイプ"] == "item_30002_resource_type13.resourcetype"
 
 
 # def JsonLdMapper:
 # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_mapper.py::TestJsonLdMapper -v -vv -s --cov-branch --cov-report=xml --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
 class TestJsonLdMapper:
+    # def is_valid(self):
+    # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_mapper.py::TestJsonLdMapper::test_is_valid -v -vv -s --cov-branch --cov-report=xml --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
     def test_is_valid(self, app, db, item_type2):
-        schema = json_data("data/jsonld/item_type_schema.json")
+        schema = json_data("data/jsonld/item_type_schema_full.json")
         item_type2.model.schema = schema
         db.session.commit()
 
-        json_mapping = json_data("data/jsonld/ro-crate_mapping.json")
+        json_mapping = json_data("data/jsonld/jsonld_mapping.json")
 
         assert JsonLdMapper(item_type2.model.id, json_mapping).is_valid
 
     # def validate(self):
     # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_mapper.py::TestJsonLdMapper::test_validate -v -vv -s --cov-branch --cov-report=xml --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
     def test_validate(self, app, db, item_type2):
-        schema = json_data("data/jsonld/item_type_schema.json")
+        schema = json_data("data/jsonld/item_type_schema_full.json")
         item_type2.model.schema = schema
         db.session.commit()
 
-        json_mapping = json_data("data/jsonld/ro-crate_mapping.json")
+        json_mapping = json_data("data/jsonld/jsonld_mapping.json")
 
         assert JsonLdMapper(item_type2.model.id, json_mapping).validate() is None
+
+        json_mapping["invalid_property"] = "invalid_value"
+
+        assert JsonLdMapper(item_type2.model.id, json_mapping).validate()
 
     # def to_item_metadata(self, json_ld):
     # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_mapper.py::TestJsonLdMapper::test_to_item_metadata -v -vv -s --cov-branch --cov-report=xml --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
     def test_to_item_metadata(self, app, db, item_type2, item_type_mapping2):
         app.config.update({"WEKO_SWORDSERVER_METADATA_FILE_ROCRATE": "ro-crate-metadata.json"})
-        schema = json_data("data/jsonld/item_type_schema.json")
+        schema = json_data("data/jsonld/item_type_schema_full.json")
         item_type2.model.schema = schema
-        mapping = json_data("data/jsonld/item_type_mapping.json")
+        mapping = json_data("data/jsonld/item_type_mapping_full.json")
         item_type_mapping2.model.mapping = mapping
         db.session.commit()
-        json_mapping = json_data("data/jsonld/ro-crate_mapping.json")
+        json_mapping = json_data("data/jsonld/jsonld_mapping.json")
         json_ld = json_data("data/jsonld/ro-crate-metadata.json")
 
         with app.test_request_context():
@@ -4712,29 +4718,30 @@ class TestJsonLdMapper:
             assert system_info["doi"] == "10.1234/5678"
             assert system_info["non_extract"] == ["data.csv"]
             assert system_info["save_as_is"] == False
-            assert item_metadata["pubdate"] == "2021-10-15"
+            assert system_info["amend_doi"] == "10.2964/jsik_2021_067"
+            assert item_metadata["pubdate"] == "2025-06-06"
             assert item_metadata["path"] == [1623632832836]
             assert item_metadata["publish_status"] == "public"
             assert item_metadata["edit_mode"] == "Keep"
-            assert item_metadata["item_30001_title0"][0]["subitem_title"] == "The Sample Dataset for WEKO"
-            assert item_metadata["item_30001_title0"][0]["subitem_title_language"] == "en"
-            assert item_metadata["item_30001_title0"][1]["subitem_title"] == "WEKO用サンプルデータセット"
-            assert item_metadata["item_30001_title0"][1]["subitem_title_language"] == "ja"
-            assert item_metadata["item_30001_resource_type11"]["resourceuri"] == "http://purl.org/coar/resource_type/c_6501"
-            assert item_metadata["item_30001_resource_type11"]["resourcetype"] == "journal article"
-            assert item_metadata["item_30001_file22"][0]["filename"] == "sample.rst"
-            assert item_metadata["item_30001_file22"][0]["url"]["label"] == "sample.rst"
-            assert item_metadata["item_30001_file22"][0]["url"]["url"] == "https://example.repo.nii.ac.jp/records/123456789/files/sample.rst"
-            assert item_metadata["item_30001_file22"][0]["filesize"][0]["value"] == "333 B"
-            assert item_metadata["item_30001_file22"][1]["filename"] == "data.csv"
-            assert item_metadata["item_30001_file22"][1]["url"]["label"] == "data.csv"
-            assert item_metadata["item_30001_file22"][1]["url"]["url"] == "https://example.repo.nii.ac.jp/records/123456789/files/data.csv"
-            assert item_metadata["item_30001_file22"][1]["filesize"][0]["value"] == "1234 B"
-            assert item_metadata["item_30001_creator2"][0]["creatorNames"][0]["creatorName"] == "John Doe"
-            assert item_metadata["item_30001_creator2"][0]["creatorAffiliations"][0]["affiliationNames"][0]["affiliationName"] == "University of Manchester"
+            assert item_metadata["item_30002_title0"][0]["subitem_title"] == "RO-Crate Sample Dataset"
+            assert item_metadata["item_30002_title0"][0]["subitem_title_language"] == "en"
+            assert item_metadata["item_30002_title0"][1]["subitem_title"] == "RO-Crateサンプルデータセット"
+            assert item_metadata["item_30002_title0"][1]["subitem_title_language"] == "ja"
+            assert item_metadata["item_30002_resource_type13"]["resourceuri"] == "http://purl.org/coar/resource_type/c_ddb1"
+            assert item_metadata["item_30002_resource_type13"]["resourcetype"] == "dataset"
+            assert item_metadata["item_30002_file35"][0]["filename"] == "sample.txt"
+            assert item_metadata["item_30002_file35"][0]["url"]["label"] == "sample.txt"
+            assert item_metadata["item_30002_file35"][0]["url"]["url"] == "https://weko3.example.org/record/2000001/files/sample.txt"
+            assert item_metadata["item_30002_file35"][0]["filesize"][0]["value"] == "333 B"
+            assert item_metadata["item_30002_file35"][1]["filename"] == "data.csv"
+            assert item_metadata["item_30002_file35"][1]["url"]["label"] == "data.csv"
+            assert item_metadata["item_30002_file35"][1]["url"]["url"] == "https://weko3.example.org/record/2000001/files/data.csv"
+            assert item_metadata["item_30002_file35"][1]["filesize"][0]["value"] == "475 B"
+            assert item_metadata["item_30002_creator2"][0]["creatorNames"][0]["creatorName"] == "Weko, Taro"
             assert item_metadata["feedback_mail_list"] == [{"email": "wekosoftware@nii.ac.jp", "author_id": ""}]
-            assert item_metadata["files_info"][0]["key"] == "item_30001_file22"
-            assert item_metadata["item_30001_relation14"][0]["subitem_relation_type_id"]["subitem_relation_type_select"] == "DOI"
+            assert item_metadata["files_info"][0]["key"] == "item_30002_file35"
+            assert item_metadata["item_30002_relation18"][0]["subitem_relation_type_id"]["subitem_relation_type_select"] == "DOI"
+            assert item_metadata["item_30002_relation18"][0]["subitem_relation_type_id"]["subitem_relation_type_id_text"] == "https://doi.org/10.2964/jsik_2021_067"
 
             list_record = []
             list_record.append({
@@ -4749,6 +4756,12 @@ class TestJsonLdMapper:
 
             assert list_record[0].get("errors") is None
 
+        schema = json_data("data/jsonld/item_type_schema.json")
+        item_type2.model.schema = schema
+        mapping = json_data("data/jsonld/item_type_mapping.json")
+        item_type_mapping2.model.mapping = mapping
+        db.session.commit()
+        json_mapping = json_data("data/jsonld/ro-crate_mapping.json")
         json_ld = json_data("data/jsonld/ro-crate-metadata2.json")
 
         with app.test_request_context():
@@ -4809,18 +4822,19 @@ class TestJsonLdMapper:
         assert system_info["save_as_is"] == False
         assert metadata["@id"] == "./"
         assert metadata["name"] == "The Sample Dataset for WEKO"
-        assert metadata["description"] == "This is a sample dataset for WEKO in order to demonstrate the RO-Crate metadata."
-        assert metadata["datePublished"] == "2021-10-15"
-        assert metadata["dc:title[0].value"] == "The Sample Dataset for WEKO"
+        assert metadata["description"] == "Item metadata for Item ID: 2000001. Title: The Sample Dataset for WEKO."
+        assert metadata["datePublished"] == "2025-06-06"
+        assert metadata["dc:title[0].value"] == "RO-Crate Sample Dataset"
         assert metadata["dc:title[0].language"] == "en"
-        assert metadata["dc:title[1].value"] == "WEKO用サンプルデータセット"
+        assert metadata["dc:title[1].value"] == "RO-Crateサンプルデータセット"
         assert metadata["dc:title[1].language"] == "ja"
-        assert metadata["dc:type.@id"] == "http://purl.org/coar/resource_type/c_6501"
-        assert metadata["dc:type.name"] == "journal article"
-        assert metadata["creator[0].affiliation.name"] == "University of Manchester"
-        assert metadata["hasPart[0].@id"] == "data/sample.rst"
-        assert metadata["hasPart[0].name"] == "sample.rst"
-        assert metadata["hasPolicy[0].permission[0].duty[0].assignee"] == "http://example.org/rightsholder"
+        assert metadata["dc:type.rdf:resource"] == "http://purl.org/coar/resource_type/c_ddb1"
+        assert metadata["dc:type.value"] == "dataset"
+        assert metadata["hasPart[0].@id"] == "data/sample.txt"
+        assert metadata["hasPart[0].name"] == "sample.txt"
+        assert metadata["hasPart[1].@id"] == "data/data.csv"
+        assert metadata["hasPart[1].name"] == "data.csv"
+        assert metadata["dcterms:accessRights.value"] == "embargoed access"
         assert not any("@type" in key for key in metadata.keys())
 
         json_ld = json_data("data/jsonld/ro-crate-metadata2.json")
@@ -4858,7 +4872,7 @@ class TestJsonLdMapper:
     # def to_rocrate_metadata(self, metadata):
     # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_mapper.py::TestJsonLdMapper::test_to_rocrate_metadata -v -vv -s --cov-branch --cov-report=xml --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
     def test_to_rocrate_metadata(self, app, db, item_type2, item_type_mapping2, mocker):
-        metadata = json_data("data/jsonld/record_metadata.json")
+        metadata = json_data("data/jsonld/record_metadata_full.json")
 
         mock_pid = MagicMock()
         item_uuid = uuid.uuid4()
@@ -4867,12 +4881,12 @@ class TestJsonLdMapper:
         mock_pid_model.return_value = mock_pid
 
         # case without Extra
-        schema = json_data("data/jsonld/item_type_schema.json")
+        schema = json_data("data/jsonld/item_type_schema_full.json")
         item_type2.model.schema = schema
-        mapping = json_data("data/jsonld/item_type_mapping.json")
+        mapping = json_data("data/jsonld/item_type_mapping_full.json")
         item_type_mapping2.model.mapping = mapping
         db.session.commit()
-        json_mapping = json_data("data/jsonld/ro-crate_mapping.json")
+        json_mapping = json_data("data/jsonld/jsonld_mapping.json")
 
         mock_mail_list = mocker.patch(
             "weko_search_ui.mapper.FeedbackMailList.get_mail_list_by_item_id",
@@ -4884,9 +4898,9 @@ class TestJsonLdMapper:
         )
 
         rocrate = JsonLdMapper(
-            item_type2.model.id, json_mapping).to_rocrate_metadata(metadata)
+            item_type2.model.id, json_mapping
+        ).to_rocrate_metadata(record_metadata=metadata)
         ro_crate_metadata = rocrate.metadata.generate()
-
         # mapped metadata
         graph = ro_crate_metadata["@graph"][0]
         assert graph["datePublished"] == metadata["pubdate"]["attribute_value"]
@@ -4916,14 +4930,43 @@ class TestJsonLdMapper:
         haspart_1 = graph["hasPart"][1]["@id"]
         file_1 = rocrate.dereference(haspart_1)
 
-        assert haspart_0 == "data/sample.rst"
-        assert file_0["name"] == "sample.rst"
-        assert rocrate.dereference(file_0["url"]["@id"])["url"] == "https://localhost/record/2000007/files/sample.rst"
+        assert haspart_0 == "data/sample.txt"
+        assert file_0["name"] == "sample.txt"
+        assert rocrate.dereference(file_0["jpcoar:URI"]["@id"])["value"] == "https://localhost/record/2000001/files/sample.txt"
         assert haspart_1 == "data/data.csv"
         assert file_1["name"] == "data.csv"
-        assert rocrate.dereference(file_1["url"]["@id"])["url"] == "https://localhost/record/2000007/files/data.csv"
+        assert rocrate.dereference(file_1["jpcoar:URI"]["@id"])["value"] == "https://localhost/record/2000001/files/data.csv"
+
+
+        row_metadata = {"recid": "2000001", "item_title": "RO-Crate Sample Dataset"}
+        row_metadata["header"] = [".metadata.path[0]", ".pos_index[0]", ".publish_status", ".feedback_mail[0]", ".request_mail[0]", ".cnri", ".doi_ra", ".doi", ".edit_mode", ".metadata.pubdate", ".metadata.item_30002_title0[0].subitem_title", ".metadata.item_30002_title0[0].subitem_title_language", ".metadata.item_30002_title0[1].subitem_title", ".metadata.item_30002_title0[1].subitem_title_language", ".metadata.item_30002_alternative_title1[0].subitem_alternative_title", ".metadata.item_30002_alternative_title1[0].subitem_alternative_title_language", ".metadata.item_30002_creator2[0].creatorAffiliations[0].affiliationNameIdentifiers[0].affiliationNameIdentifier", ".metadata.item_30002_creator2[0].creatorAffiliations[0].affiliationNameIdentifiers[0].affiliationNameIdentifierScheme", ".metadata.item_30002_creator2[0].creatorAffiliations[0].affiliationNameIdentifiers[0].affiliationNameIdentifierURI", ".metadata.item_30002_creator2[0].creatorAffiliations[0].affiliationNames[0].affiliationName", ".metadata.item_30002_creator2[0].creatorAffiliations[0].affiliationNames[0].affiliationNameLang", ".metadata.item_30002_creator2[0].creatorAlternatives[0].creatorAlternative", ".metadata.item_30002_creator2[0].creatorAlternatives[0].creatorAlternativeLang", ".metadata.item_30002_creator2[0].creatorMails[0].creatorMail", ".metadata.item_30002_creator2[0].creatorNames[0].creatorName", ".metadata.item_30002_creator2[0].creatorNames[0].creatorNameLang", ".metadata.item_30002_creator2[0].creatorNames[0].creatorNameType", ".metadata.item_30002_creator2[0].creatorType", ".metadata.item_30002_creator2[0].familyNames[0].familyName", ".metadata.item_30002_creator2[0].familyNames[0].familyNameLang", ".metadata.item_30002_creator2[0].givenNames[0].givenName", ".metadata.item_30002_creator2[0].givenNames[0].givenNameLang", ".metadata.item_30002_creator2[0].nameIdentifiers[0].nameIdentifier", ".metadata.item_30002_creator2[0].nameIdentifiers[0].nameIdentifierScheme", ".metadata.item_30002_creator2[0].nameIdentifiers[0].nameIdentifierURI", ".metadata.item_30002_contributor3[0].contributorAffiliations[0].contributorAffiliationNameIdentifiers[0].contributorAffiliationNameIdentifier", ".metadata.item_30002_contributor3[0].contributorAffiliations[0].contributorAffiliationNameIdentifiers[0].contributorAffiliationScheme", ".metadata.item_30002_contributor3[0].contributorAffiliations[0].contributorAffiliationNameIdentifiers[0].contributorAffiliationURI", ".metadata.item_30002_contributor3[0].contributorAffiliations[0].contributorAffiliationNames[0].contributorAffiliationName", ".metadata.item_30002_contributor3[0].contributorAffiliations[0].contributorAffiliationNames[0].contributorAffiliationNameLang", ".metadata.item_30002_contributor3[0].contributorAlternatives[0].contributorAlternative", ".metadata.item_30002_contributor3[0].contributorAlternatives[0].contributorAlternativeLang", ".metadata.item_30002_contributor3[0].contributorMails[0].contributorMail", ".metadata.item_30002_contributor3[0].contributorNames[0].contributorName", ".metadata.item_30002_contributor3[0].contributorNames[0].lang", ".metadata.item_30002_contributor3[0].contributorNames[0].nameType", ".metadata.item_30002_contributor3[0].contributorType", ".metadata.item_30002_contributor3[0].familyNames[0].familyName", ".metadata.item_30002_contributor3[0].familyNames[0].familyNameLang", ".metadata.item_30002_contributor3[0].givenNames[0].givenName", ".metadata.item_30002_contributor3[0].givenNames[0].givenNameLang", ".metadata.item_30002_contributor3[0].nameIdentifiers[0].nameIdentifier", ".metadata.item_30002_contributor3[0].nameIdentifiers[0].nameIdentifierScheme", ".metadata.item_30002_contributor3[0].nameIdentifiers[0].nameIdentifierURI", ".metadata.item_30002_access_rights4.subitem_access_right", ".metadata.item_30002_access_rights4.subitem_access_right_uri", ".metadata.item_30002_apc5.subitem_apc", ".metadata.item_30002_rights6[0].subitem_rights", ".metadata.item_30002_rights6[0].subitem_rights_language", ".metadata.item_30002_rights6[0].subitem_rights_resource", ".metadata.item_30002_rights_holder7[0].nameIdentifiers[0].nameIdentifier", ".metadata.item_30002_rights_holder7[0].nameIdentifiers[0].nameIdentifierScheme", ".metadata.item_30002_rights_holder7[0].nameIdentifiers[0].nameIdentifierURI", ".metadata.item_30002_rights_holder7[0].rightHolderNames[0].rightHolderLanguage", ".metadata.item_30002_rights_holder7[0].rightHolderNames[0].rightHolderName", ".metadata.item_30002_subject8[0].subitem_subject", ".metadata.item_30002_subject8[0].subitem_subject_language", ".metadata.item_30002_subject8[0].subitem_subject_scheme", ".metadata.item_30002_subject8[0].subitem_subject_uri", ".metadata.item_30002_description9[0].subitem_description", ".metadata.item_30002_description9[0].subitem_description_language", ".metadata.item_30002_description9[0].subitem_description_type", ".metadata.item_30002_description9[1].subitem_description", ".metadata.item_30002_description9[1].subitem_description_language", ".metadata.item_30002_description9[1].subitem_description_type", ".metadata.item_30002_publisher10[0].subitem_publisher", ".metadata.item_30002_publisher10[0].subitem_publisher_language", ".metadata.item_30002_date11[0].subitem_date_issued_datetime", ".metadata.item_30002_date11[0].subitem_date_issued_type", ".metadata.item_30002_language12[0].subitem_language", ".metadata.item_30002_resource_type13.resourcetype", ".metadata.item_30002_resource_type13.resourceuri", ".metadata.item_30002_version14.subitem_version", ".metadata.item_30002_version_type15.subitem_peer_reviewed", ".metadata.item_30002_version_type15.subitem_version_resource", ".metadata.item_30002_version_type15.subitem_version_type", ".metadata.item_30002_identifier16[0].subitem_identifier_type", ".metadata.item_30002_identifier16[0].subitem_identifier_uri", ".metadata.item_30002_identifier_registration17.subitem_identifier_reg_text", ".metadata.item_30002_identifier_registration17.subitem_identifier_reg_type", ".metadata.item_30002_relation18[0].subitem_relation_name[0].subitem_relation_name_language", ".metadata.item_30002_relation18[0].subitem_relation_name[0].subitem_relation_name_text", ".metadata.item_30002_relation18[0].subitem_relation_type", ".metadata.item_30002_relation18[0].subitem_relation_type_id.subitem_relation_type_id_text", ".metadata.item_30002_relation18[0].subitem_relation_type_id.subitem_relation_type_select", ".metadata.item_30002_relation18[1].subitem_relation_name[0].subitem_relation_name_language", ".metadata.item_30002_relation18[1].subitem_relation_name[0].subitem_relation_name_text", ".metadata.item_30002_relation18[1].subitem_relation_type", ".metadata.item_30002_relation18[1].subitem_relation_type_id.subitem_relation_type_id_text", ".metadata.item_30002_relation18[1].subitem_relation_type_id.subitem_relation_type_select", ".metadata.item_30002_temporal19[0].subitem_temporal_language", ".metadata.item_30002_temporal19[0].subitem_temporal_text", ".metadata.item_30002_geolocation20[0].subitem_geolocation_box.subitem_east_longitude", ".metadata.item_30002_geolocation20[0].subitem_geolocation_box.subitem_north_latitude", ".metadata.item_30002_geolocation20[0].subitem_geolocation_box.subitem_south_latitude", ".metadata.item_30002_geolocation20[0].subitem_geolocation_box.subitem_west_longitude", ".metadata.item_30002_geolocation20[0].subitem_geolocation_place[0].subitem_geolocation_place_text", ".metadata.item_30002_geolocation20[0].subitem_geolocation_point.subitem_point_latitude", ".metadata.item_30002_geolocation20[0].subitem_geolocation_point.subitem_point_longitude", ".metadata.item_30002_funding_reference21[0].subitem_award_numbers.subitem_award_number", ".metadata.item_30002_funding_reference21[0].subitem_award_numbers.subitem_award_number_type", ".metadata.item_30002_funding_reference21[0].subitem_award_numbers.subitem_award_uri", ".metadata.item_30002_funding_reference21[0].subitem_award_titles[0].subitem_award_title", ".metadata.item_30002_funding_reference21[0].subitem_award_titles[0].subitem_award_title_language", ".metadata.item_30002_funding_reference21[0].subitem_funder_identifiers.subitem_funder_identifier", ".metadata.item_30002_funding_reference21[0].subitem_funder_identifiers.subitem_funder_identifier_type", ".metadata.item_30002_funding_reference21[0].subitem_funder_names[0].subitem_funder_name", ".metadata.item_30002_funding_reference21[0].subitem_funder_names[0].subitem_funder_name_language", ".metadata.item_30002_funding_reference21[0].subitem_funding_stream_identifiers.subitem_funding_stream_identifier", ".metadata.item_30002_funding_reference21[0].subitem_funding_stream_identifiers.subitem_funding_stream_identifier_type", ".metadata.item_30002_funding_reference21[0].subitem_funding_stream_identifiers.subitem_funding_stream_identifier_type_uri", ".metadata.item_30002_funding_reference21[0].subitem_funding_streams[0].subitem_funding_stream", ".metadata.item_30002_funding_reference21[0].subitem_funding_streams[0].subitem_funding_stream_language", ".metadata.item_30002_source_identifier22[0].subitem_source_identifier", ".metadata.item_30002_source_identifier22[0].subitem_source_identifier_type", ".metadata.item_30002_source_title23[0].subitem_source_title", ".metadata.item_30002_source_title23[0].subitem_source_title_language", ".metadata.item_30002_volume_number24.subitem_volume", ".metadata.item_30002_issue_number25.subitem_issue", ".metadata.item_30002_number_of_pages26.subitem_number_of_pages", ".metadata.item_30002_page_start27.subitem_start_page", ".metadata.item_30002_page_end28.subitem_end_page", ".metadata.item_30002_bibliographic_information29.bibliographicIssueDates.bibliographicIssueDate", ".metadata.item_30002_bibliographic_information29.bibliographicIssueDates.bibliographicIssueDateType", ".metadata.item_30002_bibliographic_information29.bibliographicIssueNumber", ".metadata.item_30002_bibliographic_information29.bibliographicNumberOfPages", ".metadata.item_30002_bibliographic_information29.bibliographicPageEnd", ".metadata.item_30002_bibliographic_information29.bibliographicPageStart", ".metadata.item_30002_bibliographic_information29.bibliographicVolumeNumber", ".metadata.item_30002_bibliographic_information29.bibliographic_titles[0].bibliographic_title", ".metadata.item_30002_bibliographic_information29.bibliographic_titles[0].bibliographic_titleLang", ".metadata.item_30002_dissertation_number30.subitem_dissertationnumber", ".metadata.item_30002_degree_name31[0].subitem_degreename", ".metadata.item_30002_degree_name31[0].subitem_degreename_language", ".metadata.item_30002_date_granted32.subitem_dategranted", ".metadata.item_30002_degree_grantor33[0].subitem_degreegrantor[0].subitem_degreegrantor_language", ".metadata.item_30002_degree_grantor33[0].subitem_degreegrantor[0].subitem_degreegrantor_name", ".metadata.item_30002_degree_grantor33[0].subitem_degreegrantor_identifier[0].subitem_degreegrantor_identifier_name", ".metadata.item_30002_degree_grantor33[0].subitem_degreegrantor_identifier[0].subitem_degreegrantor_identifier_scheme", ".metadata.item_30002_conference34[0].subitem_conference_country", ".metadata.item_30002_conference34[0].subitem_conference_date.subitem_conference_date_language", ".metadata.item_30002_conference34[0].subitem_conference_date.subitem_conference_end_day", ".metadata.item_30002_conference34[0].subitem_conference_date.subitem_conference_end_month", ".metadata.item_30002_conference34[0].subitem_conference_date.subitem_conference_end_year", ".metadata.item_30002_conference34[0].subitem_conference_date.subitem_conference_period", ".metadata.item_30002_conference34[0].subitem_conference_date.subitem_conference_start_day", ".metadata.item_30002_conference34[0].subitem_conference_date.subitem_conference_start_month", ".metadata.item_30002_conference34[0].subitem_conference_date.subitem_conference_start_year", ".metadata.item_30002_conference34[0].subitem_conference_names[0].subitem_conference_name", ".metadata.item_30002_conference34[0].subitem_conference_names[0].subitem_conference_name_language", ".metadata.item_30002_conference34[0].subitem_conference_places[0].subitem_conference_place", ".metadata.item_30002_conference34[0].subitem_conference_places[0].subitem_conference_place_language", ".metadata.item_30002_conference34[0].subitem_conference_sequence", ".metadata.item_30002_conference34[0].subitem_conference_sponsors[0].subitem_conference_sponsor", ".metadata.item_30002_conference34[0].subitem_conference_sponsors[0].subitem_conference_sponsor_language", ".metadata.item_30002_conference34[0].subitem_conference_venues[0].subitem_conference_venue", ".metadata.item_30002_conference34[0].subitem_conference_venues[0].subitem_conference_venue_language", ".file_path[0]", ".metadata.item_30002_file35[0].accessrole", ".metadata.item_30002_file35[0].date[0].dateType", ".metadata.item_30002_file35[0].date[0].dateValue", ".metadata.item_30002_file35[0].displaytype", ".metadata.item_30002_file35[0].fileDate[0].fileDateType", ".metadata.item_30002_file35[0].fileDate[0].fileDateValue", ".metadata.item_30002_file35[0].fileDate[1].fileDateType", ".metadata.item_30002_file35[0].fileDate[1].fileDateValue", ".metadata.item_30002_file35[0].filename", ".metadata.item_30002_file35[0].filesize[0].value", ".metadata.item_30002_file35[0].format", ".metadata.item_30002_file35[0].groups", ".metadata.item_30002_file35[0].licensefree", ".metadata.item_30002_file35[0].licensetype", ".metadata.item_30002_file35[0].url.label", ".metadata.item_30002_file35[0].url.objectType", ".metadata.item_30002_file35[0].url.url", ".metadata.item_30002_file35[0].version", ".file_path[1]", ".metadata.item_30002_file35[1].accessrole", ".metadata.item_30002_file35[1].date[0].dateType", ".metadata.item_30002_file35[1].date[0].dateValue", ".metadata.item_30002_file35[1].displaytype", ".metadata.item_30002_file35[1].fileDate[0].fileDateType", ".metadata.item_30002_file35[1].fileDate[0].fileDateValue", ".metadata.item_30002_file35[1].filename", ".metadata.item_30002_file35[1].filesize[0].value", ".metadata.item_30002_file35[1].format", ".metadata.item_30002_file35[1].groups", ".metadata.item_30002_file35[1].licensefree", ".metadata.item_30002_file35[1].licensetype", ".metadata.item_30002_file35[1].url.label", ".metadata.item_30002_file35[1].url.objectType", ".metadata.item_30002_file35[1].url.url", ".metadata.item_30002_file35[1].version", ".file_path[2]", ".metadata.item_30002_file35[2].accessrole", ".metadata.item_30002_file35[2].date[0].dateType", ".metadata.item_30002_file35[2].date[0].dateValue", ".metadata.item_30002_file35[2].displaytype", ".metadata.item_30002_file35[2].fileDate[0].fileDateType", ".metadata.item_30002_file35[2].fileDate[0].fileDateValue", ".metadata.item_30002_file35[2].filename", ".metadata.item_30002_file35[2].filesize[0].value", ".metadata.item_30002_file35[2].format", ".metadata.item_30002_file35[2].groups", ".metadata.item_30002_file35[2].licensefree", ".metadata.item_30002_file35[2].licensetype", ".metadata.item_30002_file35[2].url.label", ".metadata.item_30002_file35[2].url.objectType", ".metadata.item_30002_file35[2].url.url", ".metadata.item_30002_file35[2].version", ".file_path[3]", ".metadata.item_30002_file35[3].accessrole", ".metadata.item_30002_file35[3].date[0].dateType", ".metadata.item_30002_file35[3].date[0].dateValue", ".metadata.item_30002_file35[3].displaytype", ".metadata.item_30002_file35[3].fileDate[0].fileDateType", ".metadata.item_30002_file35[3].fileDate[0].fileDateValue", ".metadata.item_30002_file35[3].fileDate[1].fileDateType", ".metadata.item_30002_file35[3].fileDate[1].fileDateValue", ".metadata.item_30002_file35[3].filename", ".metadata.item_30002_file35[3].filesize[0].value", ".metadata.item_30002_file35[3].format", ".metadata.item_30002_file35[3].groups", ".metadata.item_30002_file35[3].licensefree", ".metadata.item_30002_file35[3].licensetype", ".metadata.item_30002_file35[3].url.label", ".metadata.item_30002_file35[3].url.objectType", ".metadata.item_30002_file35[3].url.url", ".metadata.item_30002_file35[3].version", ".metadata.item_30002_heading36[0].subitem_heading_banner_headline", ".metadata.item_30002_heading36[0].subitem_heading_headline", ".metadata.item_30002_heading36[0].subitem_heading_language", ".metadata.item_30002_holding_agent_name37[0].holding_agent_name_identifier.holding_agent_name_identifier_scheme", ".metadata.item_30002_holding_agent_name37[0].holding_agent_name_identifier.holding_agent_name_identifier_uri", ".metadata.item_30002_holding_agent_name37[0].holding_agent_name_identifier.holding_agent_name_identifier_value", ".metadata.item_30002_holding_agent_name37[0].holding_agent_names[0].holding_agent_name", ".metadata.item_30002_holding_agent_name37[0].holding_agent_names[0].holding_agent_name_language", ".metadata.item_30002_original_language43[0].subitem_dcterms_date", ".metadata.item_30002_original_language43[0].subitem_dcterms_date_language", ".metadata.item_30002_dataset_series42[0].jpcoar_dataset_series", ".metadata.item_30002_dcterms_extent46[0].publication_places[0].publication_place", ".metadata.item_30002_dcterms_extent46[0].publisher_descriptions[0].publisher_description", ".metadata.item_30002_dcterms_extent46[0].publisher_descriptions[0].publisher_description_language", ".metadata.item_30002_dcterms_extent46[0].publisher_locations[0].publisher_location", ".metadata.item_30002_dcterms_extent46[0].publisher_names[0].publisher_name", ".metadata.item_30002_dcterms_extent46[0].publisher_names[0].publisher_name_language", ".metadata.item_30002_publisher_information45[0].dcterms_extent", ".metadata.item_30002_publisher_information45[0].dcterms_extent_language", ".metadata.item_30002_catalog39[0].catalog_access_rights[0].catalog_access_right", ".metadata.item_30002_catalog39[0].catalog_access_rights[0].catalog_access_right_rdf_resource", ".metadata.item_30002_catalog39[0].catalog_contributors[0].contributor_names[0].contributor_name", ".metadata.item_30002_catalog39[0].catalog_contributors[0].contributor_names[0].contributor_name_language", ".metadata.item_30002_catalog39[0].catalog_contributors[0].contributor_type", ".metadata.item_30002_catalog39[0].catalog_descriptions.catalog_description", ".metadata.item_30002_catalog39[0].catalog_descriptions.catalog_description_language", ".metadata.item_30002_catalog39[0].catalog_descriptions.catalog_description_type", ".metadata.item_30002_catalog39[0].catalog_file.catalog_file_object_type", ".metadata.item_30002_catalog39[0].catalog_file.catalog_file_uri", ".metadata.item_30002_catalog39[0].catalog_identifiers[0].catalog_identifier", ".metadata.item_30002_catalog39[0].catalog_identifiers[0].catalog_identifier_type", ".metadata.item_30002_catalog39[0].catalog_licenses[0].catalog_license", ".metadata.item_30002_catalog39[0].catalog_licenses[0].catalog_license_language", ".metadata.item_30002_catalog39[0].catalog_licenses[0].catalog_license_rdf_resource", ".metadata.item_30002_catalog39[0].catalog_licenses[0].catalog_license_type", ".metadata.item_30002_catalog39[0].catalog_rights[0].catalog_right_language", ".metadata.item_30002_catalog39[0].catalog_rights[0].catalog_right_rdf_resource", ".metadata.item_30002_catalog39[0].catalog_rights[0].catalog_rights_right", ".metadata.item_30002_catalog39[0].catalog_subjects[0].catalog_subject", ".metadata.item_30002_catalog39[0].catalog_subjects[0].catalog_subject_language", ".metadata.item_30002_catalog39[0].catalog_subjects[0].catalog_subject_scheme", ".metadata.item_30002_catalog39[0].catalog_subjects[0].catalog_subject_uri", ".metadata.item_30002_catalog39[0].catalog_titles[0].catalog_title", ".metadata.item_30002_catalog39[0].catalog_titles[0].catalog_title_language", ".metadata.item_30002_jpcoar_format40[0].original_language", ".metadata.item_30002_jpcoar_format40[0].original_language_language", ".metadata.item_30002_volume_title44[0].volume_title", ".metadata.item_30002_volume_title44[0].volume_title_language", ".metadata.item_30002_edition41[0].edition", ".metadata.item_30002_edition41[0].edition_language", ".metadata.item_30002_dcterms_date38[0].jpcoar_format", ".metadata.item_30002_dcterms_date38[0].jpcoar_format_language"]
+        row_metadata["value"] = [1623632832836, "Sample Index", "public", "wekosoftware@nii.ac.jp", "repoadmin@example.org", "", "DataCite", "10.1234/5678", "Keep", "2025-06-06", "RO-Crate Sample Dataset", "en", "RO-Crateサンプルデータセット", "ja", "", "", "", "", "", "", "", "Sato, Taro", "en", "test@test.com", "Weko, Taro", "en", "", "", "Weko", "en", "Taro", "en", "1", "WEKO", "", "", "", "", "", "", "", "", "jiro@sample.ac.jp", "Doe, John", "en", "", "", "Doe", "en", "John", "en", "2", "WEKO", "", "embargoed access", "http://purl.org/coar/access_right/c_f1cf", "", "", "", "", "", "", "", "ja", "国立情報学研究所（NII）", "", "", "", "", "This is a sample file for the WEKO3 import feature for RO-Crate format items.", "en", "Abstract", "これはWEKO3でRO-Crate形式のアイテムをインポートする機能のためのサンプルファイルです。", "ja", "Abstract", "", "", "", "", "jpn", "dataset", "http://purl.org/coar/resource_type/c_ddb1", "", "", "", "", "", "", "", "", "ja", "RO-Crateを用いた材料研究データのデータリポジトリへの登録", "isVersionOf", "https://doi.org/10.2964/jsik_2021_067", "DOI", "en", "ResearchObject/ro-crate: Research Object Crate", "requires", "https://github.com/ResearchObject/ro-crate", "URI", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "open_access", "Available", "2025-06-06", "", "Created", "2024-11-11", "Issued", "2024-09-01", "sample.txt", "333 B", "text/plain", "", "", "", "sample.txt", "", "https://weko3.example.org/record/2000001/files/sample.txt", "", "", "open_login", "Available", "2025-06-06", "", "Collected", "2024-11-10", "data.csv", "475 B", "text/csv", "", "", "", "data.csv", "", "https://weko3.example.org/record/2000001/files/data.csv", "", "", "open_date", "Available", "2025-06-25", "", "Collected", "2025-06-06", "0606%2Fdata.csv", "475 B", "text/csv", "", "", "", "0606/data.csv", "", "https://weko3.example.org/record/2000001/files/0606%2Fdata.csv", "", "", "open_no", "Available", "2025-06-06", "", "Issued", "2025-05-05", "Updated", "2025-06-05", "reference sample", "", "", "", "", "", "https://example.com/test/sample/1", "", "https://example.com/test/sample/1", "", "", "", "", "", "", "", "Example Organization", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""]
+
+        rocrate = JsonLdMapper(
+            item_type2.model.id, json_mapping
+        ).to_rocrate_metadata(tsv_row_metadata=row_metadata)
+        ro_crate_metadata = rocrate.metadata.generate()
+        # mapped metadata
+        graph = ro_crate_metadata["@graph"][0]
+        assert graph["datePublished"] == "2025-06-06"
+        assert graph["name"] == row_metadata["item_title"]
+        assert graph["identifier"] == row_metadata["recid"]
+        assert graph["wk:index"] == ["1623632832836"]
+        assert graph["wk:editMode"] == "Keep"
+        assert graph["wk:feedbackMail"] == ["wekosoftware@nii.ac.jp"]
+        assert graph["wk:requestMail"] == ["repoadmin@example.org"]
+        assert graph["wk:publishStatus"] == "public"
+        assert graph["wk:grant"][0]["@id"] == "#10.1234/5678"
+        assert rocrate.dereference(graph["wk:grant"][0]["@id"])["jpcoar:identifierRegistration"] == "DataCite"
+        assert rocrate.dereference(graph["wk:grant"][0]["@id"])["jpcoar:identifier"] == "DOI"
 
         # case no filename mapping
+        metadata = json_data("data/jsonld/record_metadata.json")
+        schema = json_data("data/jsonld/item_type_schema.json")
+        item_type2.model.schema = schema
+        mapping = json_data("data/jsonld/item_type_mapping.json")
+        item_type_mapping2.model.mapping = mapping
+        db.session.commit()
         json_mapping_no_filename = json_data(
             "data/jsonld/ro-crate_mapping_no_filename.json")
 

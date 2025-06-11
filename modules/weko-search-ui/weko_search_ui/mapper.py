@@ -1820,8 +1820,14 @@ class JsonLdMapper(JsonMapper):
             system_info["metadata_replace"] = extracted.get("wk:metadataReplace", False)
 
             for relation in extracted.get("jpcoar:relation", []):
-                if relation.get("relationType") == "isVersionOf":
-                    system_info["amend_doi"] = relation.get("cite-as")
+                relation_id = relation.get("jpcoar:relatedIdentifier") or {}
+                if (
+                    extracted.get("wk:metadataAutoFill")
+                    and relation.get("relationType") == "isVersionOf"
+                    and relation_id.get("identifierType") == "DOI"
+                ):
+                    relation_doi = relation_id.get("value", "")
+                    system_info["amend_doi"] = "/".join(relation_doi.split("/")[-2:])
                     break
             list_deconstructed.append((metadata, system_info))
 

@@ -41,7 +41,7 @@ from flask_babelex import lazy_gettext as _
 from flask_celeryext import FlaskCeleryExt
 from flask_login import LoginManager, current_user, login_user
 from flask_menu import Menu
-from mock import Mock, patch, MagicMock
+from unittest.mock import Mock, patch, MagicMock
 from pytest_mock import mocker
 from simplekv.memory.redisstore import RedisStore
 from six import BytesIO
