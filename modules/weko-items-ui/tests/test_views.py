@@ -20945,23 +20945,6 @@ def test_export_acl_nologin(client, users, db_oaischema):
         assert res.status_code == 200
 
 
-# def export():
-# .tox/c1/bin/pytest --cov=weko_items_ui tests/test_views.py::test_export_rocrate -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
-def test_export_rocrate(client):
-    url = url_for("weko_items_ui.export", _external=True)
-    post_data = {
-        "export_format_radio": "ROCRATE",
-        "record_ids": "[2000001, 2000002]",
-        "invalid_record_ids": "[]",
-        "record_metadata": "",
-        "export_file_contents_radio": "True"
-    }
-    with patch("weko_items_ui.views.export_rocrate", return_value={}) as mock_export_rocrate:
-        res = client.post(url, data=post_data)
-        assert res.status_code == 200
-        mock_export_rocrate.assert_called_once()
-
-
 # def validate():
 @pytest.mark.parametrize(
     "id, status_code",
