@@ -102,7 +102,7 @@ def database(app):
 def location_path():
     """Temporary directory for location path."""
     tmppath = tempfile.mkdtemp()
-    yield tmppath
+    yield str(tmppath)
     shutil.rmtree(tmppath)
 
 
@@ -116,8 +116,11 @@ def location(location_path, database):
         type='s3',
         access_key='',
         secret_key='',
-        s3_endpoint_url="",
-        s3_send_file_directly=True
+        s3_endpoint_url="https://s3.amazonaws.com",
+        s3_send_file_directly=True,
+        s3_maximum_number_of_parts=1000,
+        s3_default_block_size=10*1024*1024,
+        s3_url_expiration=3600
     )
     database.session.add(loc)
     database.session.commit()
@@ -126,11 +129,12 @@ def location(location_path, database):
 @pytest.fixture(scope='function')
 def s3_bucket(app):
     """S3 bucket fixture."""
+    os.environ['AWS_ACCESS_KEY_ID'] = 'test'
+    os.environ['AWS_SECRET_ACCESS_KEY'] = 'test'
     with mock_s3():
         session = boto3.Session(
-            aws_access_key_id=current_app.config.get('S3_ACCESS_KEY_ID'),
-            aws_secret_access_key=current_app.config.get(
-                'S3_SECRET_ACCESS_KEY'),
+            aws_access_key_id='test',
+            aws_secret_access_key='test',
         )
         s3 = session.resource('s3')
         bucket = s3.create_bucket(Bucket='test_invenio_s3')
@@ -149,9 +153,15 @@ def s3fs_testpath(s3_bucket):
 
 
 @pytest.fixture(scope='function')
-def s3fs(s3_bucket, s3fs_testpath):
+def s3fs(s3_bucket, s3fs_testpath, location):
     """Instance of S3FSFileStorage."""
-    s3_storage = S3FSFileStorage(s3fs_testpath)
+    s3_storage = S3FSFileStorage(
+        s3fs_testpath,
+        size=0,
+        modified=None,
+        clean_dir=True,
+        location=location
+    )
     return s3_storage
 
 
