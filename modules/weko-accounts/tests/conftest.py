@@ -48,6 +48,7 @@ from weko_records_ui import WekoRecordsUI
 from weko_redis.redis import RedisConnection
 from weko_search_ui import WekoSearchUI
 from weko_user_profiles import WekoUserProfiles
+from weko_logging.audit import WekoLoggingUserActivity
 
 from weko_accounts import WekoAccounts, WekoAccountsREST
 from weko_accounts.views import blueprint
@@ -104,6 +105,7 @@ def base_app(instance_path):
     app_.register_blueprint(blueprint)
     WekoAccountsREST(app_)
     WekoSearchUI(app_)
+    WekoLoggingUserActivity(app_)
     return app_
 
 
