@@ -13,12 +13,13 @@ from __future__ import absolute_import, print_function
 from functools import wraps
 
 from flask import Blueprint, _request_ctx_stack, abort, current_app, jsonify, \
-    redirect, render_template, request, session
+    redirect, render_template, request, session, make_response
 from flask_babelex import lazy_gettext as _
 from flask_breadcrumbs import register_breadcrumb
 from flask_login import login_required
 from flask_principal import Identity, identity_changed
-from oauthlib.oauth2.rfc6749.errors import InvalidClientError, OAuth2Error
+from oauthlib.oauth2.rfc6749.errors import InvalidClientError, OAuth2Error, AccessDeniedError
+
 from invenio_db import db
 
 from ..models import Client
@@ -81,10 +82,14 @@ def authorize(*args, **kwargs):
             abort(404)
 
         scopes = current_oauth2server.scopes
+        scopes_list = [scopes[x] for x in kwargs.get('scopes', [])]
+        if not scopes_list:
+            return redirect('/oauth/errors?error=invalid_scope')
+
         ctx = dict(
             client=client,
             oauth_request=kwargs.get('request'),
-            scopes=[scopes[x] for x in kwargs.get('scopes', [])],
+            scopes=scopes_list
         )
         return render_template('invenio_oauth2server/authorize.html', **ctx)
 
@@ -121,13 +126,17 @@ def access_token():
 def errors():
     """Error view in case of invalid oauth requests."""
     from oauthlib.oauth2.rfc6749.errors import raise_from_error
+    status_code = 200
     try:
         error = None
         raise_from_error(request.values.get('error'), params=dict())
     except OAuth2Error as raised:
         error = raised
-    return render_template('invenio_oauth2server/errors.html', error=error)
-
+        if not isinstance(error, AccessDeniedError):
+            status_code = 400
+    # return render_template('invenio_oauth2server/errors.html', error=error)
+    response = make_response(render_template('invenio_oauth2server/errors.html', error=error), status_code)
+    return response
 
 @blueprint.route('/ping', methods=['GET', 'POST'])
 @oauth2.require_oauth()
