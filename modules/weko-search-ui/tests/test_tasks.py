@@ -309,6 +309,45 @@ def test_write_files_task(redis_connect, users, mocker):
             mock_remove.assert_called_with(f"{'export_path'}/{pickle_filename}")
             mock_remove.reset_mock()
 
+        # cancel_flg is True
+        datastore.delete(file_cache_key)
+        datastore.put(file_cache_key, json.dumps(create_file_json(True)).encode('utf-8'), ttl_secs=30)
+        write_files_task('export_path', pickle_filename, current_user.get_id())
+        result_data = datastore.get(file_cache_key).decode('utf-8')
+        assert json.loads(result_data) == {
+            'start_time': start_time_str,
+            'finish_time': '',
+            'export_path': '',
+            'cancel_flg': True,
+            'write_file_status': {
+                'part1.1': 'canceled',
+                '1': 'started',
+            }
+        }
+        mock_remove.assert_called_with(f"{'export_path'}/{pickle_filename}")
+        mock_remove.reset_mock()
+
+        # raise exception in write_files
+        datastore.delete(file_cache_key)
+        datastore.put(file_cache_key, json.dumps(create_file_json(False)).encode('utf-8'), ttl_secs=30)
+        with patch('weko_search_ui.tasks.write_files', side_effect=Exception("test error")):
+            write_files_task('export_path', pickle_filename, current_user.get_id())
+            result_data = datastore.get(file_cache_key).decode('utf-8')
+            assert json.loads(result_data) == {
+                'start_time': start_time_str,
+                'finish_time': '',
+                'export_path': '',
+                'cancel_flg': True,
+                'write_file_status': {
+                    'part1.1': 'error',
+                    '1': 'started',
+                }
+            }
+            assert datastore.get(msg_key).decode('utf-8') == 'Export failed.'
+            assert datastore.get(task_cache_key).decode('utf-8') == "None"
+            mock_remove.assert_called_with(f"{'export_path'}/{pickle_filename}")
+            mock_remove.reset_mock()
+
 
 # def is_import_running():
 # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_tasks.py::test_is_import_running -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
