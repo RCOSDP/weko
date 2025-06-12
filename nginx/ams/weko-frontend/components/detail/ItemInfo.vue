@@ -110,7 +110,7 @@
           <p class="data-note text-14px">
             {{ $t('field') + '：' }}
             <span v-if="itemInfo.hasOwnProperty(appConf.roCrate.root.field)">
-              {{ $t(itemInfo[appConf.roCrate.root.field][0]) }}
+              {{ $t(itemInfo[appConf.roCrate.root.field]) }}
             </span>
             <span v-else class="text-14px">{{ $t('notSet') }}</span>
           </p>
