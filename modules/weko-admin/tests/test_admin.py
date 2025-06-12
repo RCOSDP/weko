@@ -5,6 +5,7 @@ import json
 import pytest
 from datetime import datetime
 from mock import MagicMock, patch
+from .helpers import login, logout
 
 from flask import url_for,current_app,make_response
 from flask_admin import Admin
@@ -2371,8 +2372,7 @@ class TestSwordAPIJsonldSettingsView:
         assert json.loads(res.data) == {"error": "Cannot disable 'Original'."}
 
     def test_get_query_in_role_ids(self, client, users, db, mocker):
-        login_user_via_session(client,email=users[0]["email"])# sysadmin
-        current_app.config['WEKO_ADMIN_SWORD_API_JSON_LD_FULL_AUTHORITY_ROLE'] = users[0]["id"]
+        login(client,obj=users[0]["obj"])
         view = SwordAPIJsonldSettingsView(SwordClientModel, db.session)
         view.get_query()
 
@@ -2380,10 +2380,41 @@ class TestSwordAPIJsonldSettingsView:
         view.get_query()
 
     def test_get_count_query(self, client, users, db, mocker):
-        login_user_via_session(client,email=users[0]["email"])# sysadmin
-        current_app.config['WEKO_ADMIN_SWORD_API_JSON_LD_FULL_AUTHORITY_ROLE'] = users[0]["id"]
+        login(client,obj=users[0]["obj"])
         view = SwordAPIJsonldSettingsView(SwordClientModel, db.session)
         view.get_count_query()
+
+    def test_format(self, app, client, users, db, sword_client, sword_mapping, mocker):
+        login(client,obj=users[0]["obj"])
+        view = SwordAPIJsonldSettingsView(SwordClientModel, db.session)
+        model = SwordClientModel.query.filter_by(id=1).one()
+        view._format_application_name(None, model, None)
+        view._format_application_name(None, None, None)
+        view._format_active(None, model, None)
+        model.active = False
+        view._format_active(None, model, None)
+        view._format_creator(None, model, None)
+        view._format_creator(None, None, None)
+        view._format_registration_type(None, model, None)
+        view._format_registration_type(None, None, None)
+        model.registration_type_id = 2
+        view._format_registration_type(None, model, None)
+        model.registration_type_id = 3
+        view._format_registration_type(None, model, None)
+        view._format_metadata_collection(None, model, None)
+        model.meta_data_api = "['test']"
+        view._format_metadata_collection(None, model, None)
+        view._format_duplicate_check(None, model, None)
+        model.duplicate_check = True
+        view._format_duplicate_check(None, model, None)
+        view._format_workflow_name(None, model, None)
+        model.workflow_id = 1
+        view._format_workflow_name(None, model, None)
+        view._format_mapping_name(None, model, None)
+        model.mapping_id = None
+        view._format_mapping_name(None, model, None)
+        model.mapping_id = 9999
+        view._format_mapping_name(None, model, None)
 
 
     # def validate_mapping(self, id):
@@ -2658,6 +2689,14 @@ class TestJsonldMappingView:
         login_user_via_session(client,email=users[0]["email"])# sysadmin
         view = JsonldMappingView(ItemTypeJsonldMapping, db.session)
         view._is_editable(1)
+        view._is_editable(2)
+
+    def test_format(self, app, client, users, db, sword_client, sword_mapping, mocker):
+        login_user_via_session(client,email=users[0]["email"])# sysadmin
+        view = JsonldMappingView(ItemTypeJsonldMapping, db.session)
+        model = ItemTypeJsonldMapping.query.filter_by(id=1).one()
+        view._item_type_name(None, model, None)
+        view._formated_jsonld_mapping(None, model, None)
 
     def test_validate_mapping(self, app, client, users, db, sword_client, sword_mapping, mocker):
         login_user_via_session(client,email=users[0]["email"])
