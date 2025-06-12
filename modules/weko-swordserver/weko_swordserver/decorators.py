@@ -95,11 +95,11 @@ def check_package_contents():
             if int(content_length or content_size) > max_upload_size:
                 current_app.logger.error(
                     "Content size is too large. "
-                    + f"(request:{content_length}, maxUploadSize:{max_upload_size})"
+                    f"(request:{content_length}, maxUploadSize:{max_upload_size})"
                 )
                 raise WekoSwordserverException(
                     "Content size is too large. "
-                    + f"(request:{content_length}, maxUploadSize:{max_upload_size})",
+                    f"(request:{content_length}, maxUploadSize:{max_upload_size})",
                     ErrorType.MaxUploadSizeExceeded
                 )
 

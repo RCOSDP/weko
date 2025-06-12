@@ -362,7 +362,7 @@ def test_post_service_document(app,client,db,users,make_crate,esindex,location,i
 
     result = client.post(url, data={"file": storage}, content_type="multipart/form-data", headers=headers)
     assert result.status_code == 412
-    assert result.json.get("error") == "Request body and digest verification failed."
+    assert result.json.get("error") == "Failed to verify request body and digest."
 
 
 # def put_object(recid):
@@ -634,7 +634,7 @@ def test_put_object(
     with patch("weko_swordserver.views.lock_item_will_be_edit", return_value=False):
         result = client.put(url, data={"file": storage}, content_type="multipart/form-data", headers=headers)
         assert result.status_code == 400
-        assert result.json.get("error") == "Item 1 is being edited."
+        assert result.json.get("error") == "Item 1 will be edited by another process."
 
     # failed to import to system
     login_user_via_session(client=client, email=users[0]["email"])
@@ -750,7 +750,7 @@ def test_put_object(
 
     result = client.put(url, data={"file": storage}, content_type="multipart/form-data", headers=headers)
     assert result.status_code == 412
-    assert result.json.get("error") == "Request body and digest verification failed."
+    assert result.json.get("error") == "Failed to verify request body and digest."
 
     # invalid registration type
     login_user_via_session(client=client, email=users[0]["email"])
@@ -1019,7 +1019,7 @@ def test_delete_item(app, client, db, tokens, sword_client, users,es_records, mo
     mocker.patch("weko_swordserver.views.lock_item_will_be_edit", return_value=False)
     res = client.delete(url, headers=headers)
     assert res.status_code == 400
-    assert res.json.get("error") == "Item 2000001 is being edited."
+    assert res.json.get("error") == "Item 2000001 will be edited by another process."
 
     # workflow deletion, not have activity scope
     login_user_via_session(client=client,email=users[1]["email"])
