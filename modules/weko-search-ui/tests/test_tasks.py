@@ -25,15 +25,29 @@ from weko_search_ui.tasks import (
     check_import_item_splited
 )
 
-# def check_import_items_task(file_path, is_change_identifier: bool, host_url, lang="en"):
-def test_check_import_items_task(i18n_app, users):
+# def check_import_items_task(file_path, is_change_identifier: bool, host_url, lang="en", all_index_permission=True, can_edit_indexes=[]):
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_tasks.py::test_check_import_items_task -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_check_import_items_task(i18n_app, users, mocker):
     file_path = "/test/test/test.txt"
-    data = {"error": None}
+    check_result_has_error = {"error": "some_error"}
+    check_result_valid  = {"list_record": [{"id": 1, "errors": []}], "data_path": "/tmp/data"}
+    list_record_has_error  = {"list_record": [{"id": 1, "errors": ["test_error"]}], "data_path": "/tmp/data"}
 
-    with patch("weko_search_ui.utils.check_tsv_import_items", return_value=data):
-        with patch("shutil.rmtree", return_value=""):
-            with patch("weko_search_ui.tasks.remove_temp_dir_task.apply_async", return_value=""):
-                assert check_import_items_task(file_path=file_path,is_change_identifier=True,host_url="https://localhost")
+    mocker.patch("shutil.rmtree", return_value="")
+    mocker.patch("weko_search_ui.tasks.remove_temp_dir_task.apply_async", return_value="")
+
+    with patch("weko_search_ui.tasks.check_tsv_import_items", return_value=check_result_has_error):
+        res = check_import_items_task(file_path=file_path, is_change_identifier=True, host_url="https://localhost")
+        assert res["error"] == "some_error"
+    with patch("weko_search_ui.tasks.check_tsv_import_items", return_value=check_result_valid):
+        res = check_import_items_task(file_path=file_path, is_change_identifier=True ,host_url="https://localhost")
+        assert res["data_path"] == "/tmp/data"
+        assert res["list_record"] == [{"id": 1, "errors": []}]
+    with patch("weko_search_ui.tasks.check_tsv_import_items", return_value=list_record_has_error):
+        res = check_import_items_task(file_path=file_path, is_change_identifier=True, host_url="https://localhost")
+        assert "error" not in res
+        assert res["data_path"] == "/tmp/data"
+        assert res["list_record"] == [{"id": 1, "errors": ["test_error"]}]
 
 
 # def check_rocrate_import_items_task(file_path, is_change_identifier: bool, host_url, packaging, mapping_id, lang="en"):
@@ -121,11 +135,17 @@ def test_check_rocrate_import_items_task(i18n_app, users, mocker):
     assert "list_record" not in result or result["list_record"] == []
 
 # def import_item(item, request_info):
-def test_import_item(i18n_app, users):
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_tasks.py::test_import_item -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_import_item(i18n_app, users, mocker):
+    mock_datetime = mocker.patch("weko_search_ui.tasks.datetime")
+    mock_datetime.now.return_value = datetime(2025, 1, 1, 12, 00, 00)
     with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
-        # Doesn't return a value
-        assert not import_item("item", "request_info")
-
+        with patch("weko_search_ui.tasks.import_items_to_system", return_value={}):
+            res = import_item({"item"}, "request_info")
+            assert res == {"start_date": "2025-01-01 12:00:00"}
+        with patch("weko_search_ui.tasks.import_items_to_system", side_effect=Exception("test error")):
+            res = import_item({"item"}, "request_info")
+            assert res == None
 
 # def remove_temp_dir_task(path):
 def test_remove_temp_dir_task(i18n_app, users, indices):
@@ -289,14 +309,66 @@ def test_write_files_task(redis_connect, users, mocker):
             mock_remove.assert_called_with(f"{'export_path'}/{pickle_filename}")
             mock_remove.reset_mock()
 
+        # cancel_flg is True
+        datastore.delete(file_cache_key)
+        datastore.put(file_cache_key, json.dumps(create_file_json(True)).encode('utf-8'), ttl_secs=30)
+        write_files_task('export_path', pickle_filename, current_user.get_id())
+        result_data = datastore.get(file_cache_key).decode('utf-8')
+        assert json.loads(result_data) == {
+            'start_time': start_time_str,
+            'finish_time': '',
+            'export_path': '',
+            'cancel_flg': True,
+            'write_file_status': {
+                'part1.1': 'canceled',
+                '1': 'started',
+            }
+        }
+        mock_remove.assert_called_with(f"{'export_path'}/{pickle_filename}")
+        mock_remove.reset_mock()
+
+        # raise exception in write_files
+        datastore.delete(file_cache_key)
+        datastore.put(file_cache_key, json.dumps(create_file_json(False)).encode('utf-8'), ttl_secs=30)
+        with patch('weko_search_ui.tasks.write_files', side_effect=Exception("test error")):
+            write_files_task('export_path', pickle_filename, current_user.get_id())
+            result_data = datastore.get(file_cache_key).decode('utf-8')
+            assert json.loads(result_data) == {
+                'start_time': start_time_str,
+                'finish_time': '',
+                'export_path': '',
+                'cancel_flg': True,
+                'write_file_status': {
+                    'part1.1': 'error',
+                    '1': 'started',
+                }
+            }
+            assert datastore.get(msg_key).decode('utf-8') == 'Export failed.'
+            assert datastore.get(task_cache_key).decode('utf-8') == "None"
+            mock_remove.assert_called_with(f"{'export_path'}/{pickle_filename}")
+            mock_remove.reset_mock()
+
 
 # def is_import_running():
 # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_tasks.py::test_is_import_running -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
 def test_is_import_running(i18n_app):
-    with patch("weko_search_ui.tasks.check_celery_is_run",return_Value=True):
-        with patch("celery.task.control.inspect.active",return_Value=MagicMock()):
-            with patch("celery.task.control.inspect.reserved",return_Value=MagicMock()):
-                assert is_import_running()==None
+    mock_task_valid = {"celery@worker1": [{"name": "weko_search_ui.tasks.import_item"}]}
+    mock_task_invalid = {"celery@worker1": [{"name": "invalid_task_name"}]}
+    with patch("weko_search_ui.tasks.check_celery_is_run", return_value=True):
+        with patch("celery.task.control.inspect.active", return_value=MagicMock()):
+            with patch("celery.task.control.inspect.reserved", return_value=MagicMock()):
+                assert is_import_running() == None
+            with patch("celery.task.control.inspect.reserved", return_value=mock_task_valid):
+                assert is_import_running() == "is_import_running"
+            with patch("celery.task.control.inspect.reserved", return_value=mock_task_invalid):
+                assert is_import_running() == None
+        with patch("celery.task.control.inspect.active", return_value=mock_task_valid):
+            assert is_import_running() == "is_import_running"
+        with patch("celery.task.control.inspect.active", return_value=mock_task_invalid):
+            with patch("celery.task.control.inspect.reserved", return_value=MagicMock()):
+                assert is_import_running() == None
+    with patch("weko_search_ui.tasks.check_celery_is_run", return_value=False):
+        assert is_import_running() == "celery_not_run"
 
 
 # def check_celery_is_run():
@@ -322,3 +394,38 @@ class TestCheckSessionLifetime(unittest.TestCase):
         # Test when session lifetime is less than one day
         mock_get_lifetime.return_value = 86399
         self.assertFalse(check_session_lifetime())
+
+
+# def check_flag_metadata_replace(list_record):
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_tasks.py::test_check_flag_metadata_replace -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_check_flag_metadata_replace(i18n_app):
+    # not metadata_replace
+    list_record = [{"id": 1, "errors": [], "metadata_replace": False}]
+    check_flag_metadata_replace(list_record)
+    assert list_record == [{"id": 1, "errors": [], "metadata_replace": False}]
+
+    # metadata_replace
+    list_record = [{"id": 1, "errors": ["test_error."], "metadata_replace": True}]
+    check_flag_metadata_replace(list_record)
+    assert list_record == [{
+        "id": 1, "metadata_replace": True,
+        "errors": ["test_error.",
+                   "RO-Crate インポートでは、`wk:metadata_replace`フラグを有効にできません。"]
+    }]
+
+
+# def check_import_item_splited(check_result):
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_tasks.py::test_check_import_item_splited -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_check_import_item_splited(i18n_app):
+    # not splited
+    check_result = {"list_record": [{"id": 1}]}
+    check_import_item_splited(check_result)
+    assert check_result == {"list_record": [{"id": 1}]}
+
+    # splited
+    check_result = {"list_record": [{"id": 1}, {"id": 2}]}
+    check_import_item_splited(check_result)
+    assert check_result == {
+        "list_record": [{"id": 1}, {"id": 2}],
+        "error": "RO-Crate インポートでは、`wk:isSplited`フラグを有効にできません。"
+    }
