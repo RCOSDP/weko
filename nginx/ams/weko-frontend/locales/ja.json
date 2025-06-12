@@ -294,5 +294,6 @@
   "conflictOfInterestYes": "利益相反の有無（有の場合）",
   "remarks": "備考",
   "identifierText": "識別子",
-  "identifierType": "識別子タイプ"
+  "identifierType": "識別子タイプ",
+  "Institutional Login for institutions in Japan.": "所属機関のIdPでログインする方"
 }

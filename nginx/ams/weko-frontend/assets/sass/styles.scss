@@ -182,3 +182,26 @@
     }
   }
 }
+
+
+.text-divider {
+  display: flex;
+  align-items: center;
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+  padding-left: 40px;
+  padding-right: 40px;
+}
+.text-divider::before,
+.text-divider::after {
+  content: '';
+  height: 1px;
+  background-color: #a3a3a3;
+  flex-grow: 1;
+}
+.text-divider::before {
+  margin-right: 1rem;
+}
+.text-divider::after {
+  margin-left: 1rem;
+}

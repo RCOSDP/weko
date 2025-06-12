@@ -11,6 +11,16 @@
       <h1 class="text-3xl text-center font-medium">
         {{ $t('login') }}
       </h1>
+      <div class="flex justify-center items-center">
+        <label>{{ $t('Institutional Login for institutions in Japan.') }}</label>
+        <img src="https://www.gakunin.jp/themes/custom/gakunin/logo.svg" style="vertical-align: baseline; width: 100px !important" />
+      </div>
+
+      <!-- EMBEDDED-WAYF-START -->
+      <div id="wayf_div" ref="scriptContainer"></div>
+      <!-- EMBEDDED-WAYF-END -->
+
+      <div class="text-divider">OR</div>
       <Form class="space-y-2 mt-3" @submit="login">
         <!-- メールアドレス -->
         <label class="label flex-col">
@@ -276,5 +286,76 @@ function throughDblClick() {
 
 definePageMeta({
   layout: false
+});
+
+onMounted(() => {
+  // 埋め込みDS用のiframeを作成
+  const wayfContainer = document.getElementById('wayf_div');
+
+  if (wayfContainer && wayfContainer.parentNode) {
+    const iframe = document.createElement('iframe');
+
+    // 本番とテスト環境を切り替える
+    const dsURL = 'https://ds.gakunin.nii.ac.jp/WAYF';
+    // const dsURL = 'https://test-ds.gakunin.nii.ac.jp/WAYF';
+
+    const webHostName = 'weko3.ir.rcos.nii.ac.jp';
+    // const webHostName = useAppConfig().wekoOrigin;
+    const entityID = 'https://' + webHostName + '/shibboleth';
+    const handlerURL = 'https://' + webHostName + '/Shibboleth.sso';
+    const returnURL = "https://" + webHostName + "/secure/login.py";
+
+    // iframe内に埋め込むHTML
+    iframe.srcdoc = `
+      <script>
+        window.wayf_URL = "${dsURL}";
+        window.wayf_sp_entityID = "${entityID}";
+        window.wayf_sp_handlerURL = "${handlerURL}";
+        window.wayf_return_url = "${returnURL}";
+        window.wayf_width = "auto";
+        window.wayf_height = "auto";
+        window.wayf_show_remember_checkbox = true;
+        window.wayf_force_remember_for_session = false;
+        window.wayf_use_small_logo = true;
+        window.wayf_font_size = 12;
+        window.wayf_font_color = "#000000";
+        window.wayf_border_color = "#00247d";
+        window.wayf_background_color = "#f4f7f7";
+        window.wayf_auto_login = true;
+        window.wayf_hide_after_login = false;
+        window.wayf_show_categories = true;
+        window.addEventListener('load', () => {
+          let iHeight = document.documentElement.offsetHeight;
+          if (!"${dsURL}".includes('test')) {
+            const extraHeight = window.innerHeight * 0.3; // NOTE:テスト環境ではない場合、画面高さの30%を加算する
+            iHeight += extraHeight;
+          }
+          window.parent.document.querySelector('iframe').style.height = iHeight + 'px';
+        });
+      <\/script>
+      <script src="${dsURL}/embedded-wayf.js"><\/script>
+      <noscript>
+        <!--
+        Fallback to Shibboleth DS session initiator for non-JavaScript users
+        You should set the value of the target GET parameter to an URL-encoded
+        absolute URL that points to a Shibboleth protected web page where the user
+        is logged in into your application.
+        -->
+        <p>
+          <strong>Login:</strong> Javascript is not available for your web browser. Therefore, please <a
+            href="/Shibboleth.sso/DS?target=">proceed manually</a>.
+        <\/p>
+      <\/noscript>
+      <style>
+        #view_incsearch_animate,
+        #view_incsearch_scroll {
+          font-size: 12px;
+          max-height: 5rem;
+        }
+      <\/style>
+      `;
+    wayfContainer.parentNode.replaceChild(iframe, wayfContainer);
+    iframe.width = '100%';
+  }
 });
 </script>
