@@ -11,6 +11,7 @@ import unittest
 from datetime import datetime,timedelta
 import uuid
 import zipfile
+import bagit
 from elasticsearch import NotFoundError
 
 import pytest
@@ -34,7 +35,7 @@ from weko_admin.config import WEKO_ADMIN_MANAGEMENT_OPTIONS
 from weko_admin.api import TempDirInfo
 from weko_deposit.api import WekoDeposit, WekoIndexer, WekoRecord as d_wekorecord
 from weko_authors.models import AuthorsPrefixSettings, AuthorsAffiliationSettings
-from weko_records.api import ItemsMetadata, WekoRecord
+from weko_records.api import ItemsMetadata, JsonldMapping, WekoRecord
 from weko_records.models import ItemMetadata
 from weko_records.models import ItemType
 from weko_redis.redis import RedisConnection
@@ -54,6 +55,7 @@ from weko_search_ui.config import (
 from weko_search_ui.utils import (
     DefaultOrderedDict,
     cancel_export_all,
+    check_jsonld_import_items,
     check_tsv_import_items,
     check_xml_import_items,
     check_index_access_permissions,
@@ -167,7 +169,10 @@ from weko_search_ui.utils import (
 from werkzeug.exceptions import NotFound
 
 from weko_workflow.errors import WekoWorkflowException
-from weko_workflow.headless.activity import HeadlessActivity
+
+from .helpers import json_data
+
+
 
 FIXTURE_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), "data")
 
@@ -419,17 +424,17 @@ def test_check_tsv_import_items(i18n_app):
 def test_check_tsv_import_items2(app,test_importdata,mocker,db, order_if):
     app.config['WEKO_SEARCH_UI_IMPORT_TMP_PREFIX'] = 'importtest'
     filepath = os.path.join(os.path.dirname(os.path.realpath(__file__)),"data", "item_map.json")
-    print(filepath)
+    print("")
     with open(filepath,encoding="utf-8") as f:
         item_map = json.load(f)
 
     mocker.patch("weko_records.serializers.utils.get_mapping",return_value=item_map)
     with app.test_request_context():
         with set_locale('en'):
-            mocker.patch("weko_search_ui.utils.unpackage_import_file", return_value={"item_type_id":1})
-            mocker.patch("weko_search_ui.utils.handle_check_exist_record", return_value={"item_type_id":1})
+            mocker.patch("weko_search_ui.utils.unpackage_import_file", return_value=[{"item_type_id":1}])
+            mocker.patch("weko_search_ui.utils.handle_check_exist_record", return_value=[{"item_type_id":1}])
             mocker.patch("weko_search_ui.utils.handle_item_title")
-            mocker.patch("weko_search_ui.utils.handle_check_date", return_value={"item_type_id":1})
+            mocker.patch("weko_search_ui.utils.handle_check_date", return_value=[{"item_type_id":1}])
             mocker.patch("weko_search_ui.utils.handle_check_id")
             mocker.patch("weko_search_ui.utils.handle_check_and_prepare_index_tree")
             mocker.patch("weko_search_ui.utils.handle_check_and_prepare_publish_status")
@@ -440,6 +445,8 @@ def test_check_tsv_import_items2(app,test_importdata,mocker,db, order_if):
             mocker.patch("weko_search_ui.utils.handle_check_doi_indexes")
             mocker.patch("weko_search_ui.utils.handle_check_doi_ra")
             mocker.patch("weko_search_ui.utils.handle_check_doi")
+            mocker.patch("weko_search_ui.utils.handle_check_authors_prefix")
+            mocker.patch("weko_search_ui.utils.handle_check_authors_affiliation")
 
             for file in test_importdata:
 
@@ -474,16 +481,16 @@ def test_check_tsv_import_items2(app,test_importdata,mocker,db, order_if):
                 if order_if == 6:
                     with patch("weko_search_ui.utils.list",return_value=['items.tsv']):
                         ret = check_tsv_import_items(file,False,False)
-                        assert ret["error"]
+                        assert "error" not in ret
 
                 # for gakuninrdm is False
                 if order_if == 7:
                     ret = check_tsv_import_items(file,False,False)
-                    assert ret["error"]
+                    assert "error" not in ret
                 # for gakuninrdm is True
                 if order_if == 8:
                     ret = check_tsv_import_items(file,False,True)
-                    assert ret["error"]
+                    assert "error" not in ret
 
                 # for os.sep is not "/"
                 if order_if == 9:
@@ -654,9 +661,76 @@ def test_generate_metadata_from_jpcoar(app, db_itemtype_jpcoar):
 
 # def check_jsonld_import_items(file, packaging, mapping_id, meta_data_api=None,shared_id=-1, validate_bagit=True, is_change_identifier=False):
 # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_check_jsonld_import_items -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
-def test_check_jsonld_import_items(i18n_app, db_itemtype_jpcoar):
-    pass
+def test_check_jsonld_import_items(i18n_app, db, test_indices, item_type2, item_type_mapping2, ro_crate, mocker):
+    schema = json_data("data/jsonld/item_type_schema_full.json")
+    item_type2.model.schema = schema
+    mapping = json_data("data/jsonld/item_type_mapping_full.json")
+    item_type_mapping2.model.mapping = mapping
+    db.session.commit()
 
+    jsonld_mapping = json_data("data/jsonld/jsonld_mapping.json")
+    obj = JsonldMapping.create(name="test_full", mapping=jsonld_mapping, item_type_id=item_type2.id)
+
+    print("")
+
+    mocker.patch("weko_search_ui.utils.handle_metadata_amend_by_doi")
+    mocker.patch("weko_search_ui.utils.handle_item_title")
+    mocker.patch("weko_search_ui.utils.handle_check_doi_ra")
+    mocker.patch("weko_search_ui.utils.handle_check_doi")
+    mocker.patch("weko_search_ui.utils.handle_check_authors_prefix")
+    mocker.patch("weko_search_ui.utils.handle_check_authors_affiliation")
+
+    result = check_jsonld_import_items(ro_crate, "SimpleZip", obj.id, shared_id=-1)
+    assert result["data_path"].startswith('/var/tmp/weko_import_')
+    assert result["item_type_id"] == item_type2.id
+    assert result["list_record"][0]["item_type_id"] == item_type2.id
+    assert result["list_record"][0]["item_type_name"] == item_type2.model.item_type_name.name
+    assert result["list_record"][0]["metadata"]
+    assert result["list_record"][0].get("errors") is None
+    assert result.get("error") is None
+
+    with patch("weko_search_ui.utils.zipfile.ZipFile",side_effect=zipfile.BadZipFile):
+        result = check_jsonld_import_items(ro_crate, "SimpleZip", obj.id, shared_id=-1)
+        assert result["error"] == "The format of the specified file {filename} dose not support import. Please specify a zip file.".format(filename=os.path.basename(ro_crate))
+
+    with patch("weko_search_ui.utils.zipfile.ZipFile",side_effect=UnicodeDecodeError("uni", b'\xe3\x81\xad\xe3\x81\x93',2,4,"cp932 cant decode")):
+        result = check_jsonld_import_items(ro_crate, "SimpleZip", obj.id, shared_id=-1)
+        assert result["error"] == "cp932 cant decode"
+
+    with patch("weko_search_ui.utils.bagit.Bag.validate",side_effect=bagit.BagValidationError("Bag validation error")):
+        result = check_jsonld_import_items(ro_crate, "SimpleZip", obj.id, shared_id=-1, validate_bagit=False)
+        assert result["data_path"].startswith('/var/tmp/weko_import_')
+        assert result["item_type_id"] == item_type2.id
+        assert result["list_record"][0]["item_type_id"] == item_type2.id
+        assert result["list_record"][0]["item_type_name"] == item_type2.model.item_type_name.name
+        assert result["list_record"][0]["metadata"]
+        assert result["list_record"][0].get("errors") is None
+        assert result.get("error") is None
+
+        result = check_jsonld_import_items(ro_crate, "SimpleZip", obj.id, shared_id=-1)
+        assert result["error"] == "Bag validation error"
+
+    from werkzeug.datastructures import FileStorage
+    with open(ro_crate, "br") as f:
+        file = FileStorage(
+            stream=f, filename=os.path.basename(ro_crate), content_type="application/zip"
+        )
+        result = check_jsonld_import_items(file, "SimpleZip", obj.id, shared_id=-1)
+        assert result["data_path"].startswith('/var/tmp/weko_import_')
+        assert result["item_type_id"] == item_type2.id
+        assert result["list_record"][0]["item_type_id"] == item_type2.id
+        assert result["list_record"][0]["item_type_name"] == item_type2.model.item_type_name.name
+        assert result["list_record"][0]["metadata"]
+        assert result["list_record"][0].get("errors") is None
+        assert result.get("error") is None
+
+    with patch("weko_search_ui.utils.JsonLdMapper.validate", return_value=["something wrong"]):
+        result = check_jsonld_import_items(ro_crate, "SimpleZip", obj.id, shared_id=-1)
+        assert result["error"] == "Mapping is invalid for item type {}.".format(item_type2.model.item_type_name.name)
+
+    # with patch("weko_search_ui.utils.JsonLdMapper.ZipFile",side_effect=Exception()):
+    #     pass
+    #     print(f"result: {json.dumps(result, indent=2, ensure_ascii=False)}")
 
 # def handle_shared_id(list_record, shared_id=-1):
 # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_handle_shared_id -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp

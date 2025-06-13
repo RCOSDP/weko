@@ -271,7 +271,7 @@ def test_subitem_recs(app):
             "test.#text",
             ["test_key"],
             {"#text": "value"},
-            None
+            {}
         ),
         pytest.param(
             # Case08: "properties" in schema (len(keys) == 1 and "." in value, len(value.split(".")) > 2)
@@ -288,8 +288,8 @@ def test_subitem_recs(app):
             {"properties":{"test_key":"value"}},
             "test.#text",
             ["test_key"],
-            {"test": [{"#text","value"}, {"#text","value2"}]},
-            None
+            {"test": [{"#text": "value"}, {"#text": "value2"}]},
+            {}
         ),
         pytest.param(
             # Case10: "properties" in schema (len(keys) == 1 and "." in value, len(value.split(".")) > 2)
@@ -298,7 +298,7 @@ def test_subitem_recs(app):
             "test.#text",
             ["test_key"],
             {"test": {"#text","value"}},
-            None
+            {}
         ),
         pytest.param(
             # Case11: "properties" in schema (len(keys) == 1 and "." in value, len(value.split(".")) > 2)
@@ -307,7 +307,7 @@ def test_subitem_recs(app):
             "test.#text",
             ["test_key"],
             {"test": 1},
-            None
+            {}
         ),
         pytest.param(
             # Case12: "properties" in schema (len(keys) == 1 and "." in value, len(value.split(".")) > 2)
@@ -344,7 +344,7 @@ def test_subitem_recs(app):
             {'type': 'string', 'title': 'Version', 'format': 'text', 'title_i18n': {'en': 'Version', 'ja': 'バージョン情報'}, 'title_i18n_temp': {'en': 'Version', 'ja': 'バージョン情報'}},
             "datacite:version.#text",
             [],
-            {"datacite:version": [{"#text": "1.2"}, {"#text","1.3"}]},
+            {"datacite:version": [{"#text": "1.2"}, {"#text": "1.3"}]},
             "1.2"
         ),
         pytest.param(
@@ -353,7 +353,7 @@ def test_subitem_recs(app):
             {'type': 'string', 'title': 'Version', 'format': 'text', 'title_i18n': {'en': 'Version', 'ja': 'バージョン情報'}, 'title_i18n_temp': {'en': 'Version', 'ja': 'バージョン情報'}},
             "datacite:version.#text",
             [],
-            {"datacite:version": {"#text","1.2"}},
+            {"datacite:version": {"#text": "1.2"}},
             "1.2"
         ),
         pytest.param(
@@ -362,7 +362,7 @@ def test_subitem_recs(app):
             {'type': 'string', 'title': 'Version', 'format': 'text', 'title_i18n': {'en': 'Version', 'ja': 'バージョン情報'}, 'title_i18n_temp': {'en': 'Version', 'ja': 'バージョン情報'}},
             "datacite:version.#text",
             [],
-            {"datacite:version",1},
+            {"datacite:version": 1},
             None
         ),
         pytest.param(
@@ -371,12 +371,12 @@ def test_subitem_recs(app):
             {'type': 'string', 'title': 'Version', 'format': 'text', 'title_i18n': {'en': 'Version', 'ja': 'バージョン情報'}, 'title_i18n_temp': {'en': 'Version', 'ja': 'バージョン情報'}},
             "datacite:version.#text",
             ["test_key"],
-            {"datacite:version",1},
+            {"datacite:version": 1},
             None
         ),
     ],
 )
-def test_subitem_recs2(schema, keys, value, metadata, expected_result):
+def test_subitem_recs2(app, schema, keys, value, metadata, expected_result):
     result = subitem_recs(schema, keys, value, metadata)
     if expected_result is None:
         assert result is None
@@ -3262,6 +3262,7 @@ def test_add_file(mapper_jpcoar):
                 },
             }
         ],
+        "file_path": ["70_5_331.pdf"],
         "files_info": [{
             "key": "item_1570069138259",
             "items": [
@@ -4698,7 +4699,6 @@ class TestJsonLdMapper:
     # def to_item_metadata(self, json_ld):
     # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_mapper.py::TestJsonLdMapper::test_to_item_metadata -v -vv -s --cov-branch --cov-report=xml --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
     def test_to_item_metadata(self, app, db, item_type2, item_type_mapping2):
-        app.config.update({"WEKO_SWORDSERVER_METADATA_FILE_ROCRATE": "ro-crate-metadata.json"})
         schema = json_data("data/jsonld/item_type_schema_full.json")
         item_type2.model.schema = schema
         mapping = json_data("data/jsonld/item_type_mapping_full.json")
@@ -4808,8 +4808,6 @@ class TestJsonLdMapper:
     # def deconstruct_json_ld(json_ld):
     # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_mapper.py::TestJsonLdMapper::test__deconstruct_json_ld -v -vv -s --cov-branch --cov-report=xml --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
     def test__deconstruct_json_ld(self, app):
-        app.config.update({"WEKO_SWORDSERVER_METADATA_FILE_ROCRATE": "ro-crate-metadata.json"})
-
         json_ld = json_data("data/jsonld/ro-crate-metadata.json")
         deconstructed_metadata, format = JsonLdMapper._deconstruct_json_ld(json_ld)
         metadata, system_info =  deconstructed_metadata[0]

@@ -863,6 +863,7 @@ def check_jsonld_import_items(
     if isinstance(file, str):
         filename = os.path.basename(file)
     else:
+        "werkzeug.datastructures.FileStorage"
         filename = file.filename
 
     try:
@@ -996,20 +997,8 @@ def check_jsonld_import_items(
             "error": ex.reason
         })
     except Exception as ex:
-        msg = ""
-        if (
-            ex.args
-            and len(ex.args)
-            and isinstance(ex.args[0], dict)
-            and ex.args[0].get("error_msg")
-        ):
-            msg = ex.args[0].get("error_msg")
-            check_result.update({"error": msg})
-        else:
-            msg = str(ex)
-            check_result.update({"error": str(ex)})
-        current_app.logger.error(
-            f"Check items error: {msg}")
+        check_result.update({"error": str(ex)})
+        current_app.logger.error("Unexpected error occurred during import.")
         traceback.print_exc()
 
     return check_result
