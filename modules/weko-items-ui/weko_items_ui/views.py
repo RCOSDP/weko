@@ -991,15 +991,15 @@ def prepare_edit_item(id=None, community=None):
     pid_value = id or post_activity.get('pid_value')
     community = community or getargs.get('community', None)
 
-    # Check redis cache
-    if not lock_item_will_be_edit(pid_value):
-        current_app.logger.error(f"Item {pid_value} is being edited.")
-        return jsonify(
-            code=err_code,
-            msg=_('This Item is being edited.')
-        )
-
     if pid_value:
+        # Check redis cache
+        if not lock_item_will_be_edit(pid_value):
+            current_app.logger.error(f"Item {pid_value} is being edited.")
+            return jsonify(
+                code=err_code,
+                msg=_('This Item is being edited.')
+            )
+
         pid_value = str(pid_value)
         record_class = import_string('weko_deposit.api:WekoDeposit')
         resolver = Resolver(pid_type='recid',
@@ -1153,25 +1153,34 @@ def prepare_delete_item(id=None, community=None, shared_user_id=-1):
 
     post_activity = request.get_json() or {}
     getargs = request.args if request else {}
-    del_value = str(id or post_activity.get('pid_value'))
-    pid_value = del_value.replace("del_ver_", "")
+    del_value = id or post_activity.get('pid_value')
     community = community or getargs.get('community', None)
 
-    # Check redis cache
-    if not lock_item_will_be_edit(pid_value.split(".")[0]):
-        current_app.logger.error(f"Item {pid_value} is being edited.")
-        return jsonify(
-            code=err_code,
-            msg=_('This Item is being edited.')
-        )
+    if del_value:
+        del_value = str(del_value)
+        pid_value = del_value.replace("del_ver_", "")
 
-    if pid_value:
+        # Check redis cache
+        if not lock_item_will_be_edit(pid_value.split(".")[0]):
+            current_app.logger.error(f"Item {pid_value} is being edited.")
+            return jsonify(
+                code=err_code,
+                msg=_('This Item is being edited.')
+            )
+        
         record_class = import_string('weko_deposit.api:WekoDeposit')
         resolver = Resolver(
             pid_type='recid', object_type='rec',
             getter=record_class.get_record
         )
         recid, deposit = resolver.resolve(pid_value)
+
+        if not deposit:
+            return jsonify(
+                code=err_code,
+                msg=_('Record does not exist.')
+            )
+        
         authenticators = [
             str(deposit.get('owner')), str(deposit.get('weko_shared_id'))
         ]
@@ -1193,12 +1202,6 @@ def prepare_delete_item(id=None, community=None, shared_user_id=-1):
             return jsonify(
                 code=err_code,
                 msg=_("Dependency ItemType not found.")
-            )
-
-        if not deposit:
-            return jsonify(
-                code=err_code,
-                msg=_('Record does not exist.')
             )
 
         # Check Record is in import progress
