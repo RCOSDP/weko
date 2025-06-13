@@ -1,21 +1,20 @@
 # .tox/c1/bin/pytest --cov=weko_items_ui tests/test_views.py -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
 import json
-from collections import Iterable, OrderedDict
-from datetime import datetime
 from unittest.mock import MagicMock
-from time import sleep
+import uuid
 import requests
+from unittest.mock import patch, MagicMock
 
 import pytest
-from flask import Flask, json, jsonify, session, url_for, make_response
-from flask_security.utils import login_user
+from sqlalchemy.exc import SQLAlchemyError
+from flask import json, url_for, make_response
 from jinja2.exceptions import TemplateNotFound
+
 from invenio_accounts.testutils import login_user_via_session
-from invenio_i18n.babel import set_locale
-from invenio_pidstore.errors import PIDDoesNotExistError
-from mock import patch, MagicMock
+from invenio_pidstore.models import PersistentIdentifier
+from invenio_communities.models import Community
 from weko_redis.redis import RedisConnection
-from weko_deposit.api import WekoRecord
+from weko_deposit.api import WekoDeposit, WekoRecord
 from weko_workflow.api import WorkActivity
 from weko_workflow.models import Activity,WorkFlow
 
@@ -25,6 +24,7 @@ from weko_items_ui.views import (
     iframe_index,
     iframe_items_index,
     iframe_save_model,
+    prepare_edit_item,
     to_links_js,
 )
 
@@ -20801,37 +20801,140 @@ def test_get_current_login_user_id_acl(
 
 # def prepare_edit_item():
 # .tox/c1/bin/pytest --cov=weko_items_ui tests/test_views.py::test_prepare_edit_item_login -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
-@pytest.mark.parametrize(
-    "id, status_code",
-    [
-        (0, 200),
-        (1, 200),
-        (2, 200),
-        (3, 200),
-        (4, 200),
-        (5, 200),
-        (6, 200),
-        (7, 200),
-    ],
-)
-def test_prepare_edit_item_login(client_api, users, id, status_code, db_sessionlifetime):
-    login_user_via_session(client=client_api, email=users[id]["email"])
-    res = client_api.post(
-        "/api/items/prepare_edit_item",
-        data=json.dumps({}),
-        content_type="application/json",
-    )
-    assert res.status_code == status_code
+def test_prepare_edit_item_login(client_api, users, db_itemtype_15, mocker):
+    mocker.patch("weko_items_ui.views.dbsession_clean")
+    itemtype_id = db_itemtype_15["item_type"].id
+    mock_will_be_edit = mocker.patch("weko_items_ui.views.lock_item_will_be_edit")
+    mock_will_be_edit.return_value = True
+    mock_item_locked = mocker.patch("weko_items_ui.views.check_an_item_is_locked")
 
-    if id == 2:
-        res = client_api.post(
-            "/api/items/prepare_edit_item",
-            data=json.dumps({}),
-            content_type="application/json",
-        )
-        assert res.status_code == status_code
-        assert json.loads(res.data)['msg'] == 'This Item is being edited.'
-    sleep(3)
+    url = url_for("weko_items_ui.prepare_edit_item")
+
+    login_user_via_session(client=client_api, email=users[1]["email"])
+    # invalid content type
+    res = client_api.post(url, data=json.dumps({}), content_type="multipart/form-data")
+    assert res.status_code == 200
+    assert json.loads(res.data)['msg'] == "Header Error"
+
+    # no post data
+    res = client_api.post(url, data=json.dumps({}), content_type="application/json")
+    assert res.status_code == 200
+    assert json.loads(res.data)['msg'] == "An error has occurred."
+
+    post_data = {"pid_value": "1"}
+
+    # failed to lock item
+    mock_will_be_edit.return_value = False
+    res = client_api.post(url, data=json.dumps(post_data), content_type="application/json")
+    assert res.status_code == 200
+    assert json.loads(res.data)['msg'] == 'This Item is being edited.'
+
+    # success to lock item
+    # record not found
+    mock_will_be_edit.return_value = True
+    mock_pid = MagicMock(spec=PersistentIdentifier)
+    mock_resolver = mocker.patch("weko_items_ui.views.Resolver.resolve")
+    mock_resolver.return_value = (mock_pid, None)
+    mock_latest_pid = MagicMock(spec=PersistentIdentifier)
+    mock_versioning = MagicMock()
+    mock_versioning.object_uuid = str(uuid.uuid4())
+    mock_versioning.last_child = mock_latest_pid
+    mocker.patch("weko_items_ui.views.PIDVersioning.__new__", return_value=mock_versioning)
+    mocker.patch("weko_items_ui.views.PIDVersioning.__init__")
+    mock_user_roles = mocker.patch("weko_items_ui.views.get_user_roles")
+    mock_user_roles.return_value = False, None
+
+    res = client_api.post(url, data=json.dumps(post_data), content_type="application/json")
+    assert res.status_code == 200
+    assert json.loads(res.data)['msg'] == "Record does not exist."
+
+    # record found
+    # no permission to edit
+    mock_deposit = {"owner": users[2]["id"], "weko_shared_id": users[0]["id"]}
+    mock_resolver.return_value = (mock_pid, mock_deposit)
+    res = client_api.post(url, data=json.dumps(post_data), content_type="application/json")
+    assert res.status_code == 200
+    assert json.loads(res.data)['msg'] == "You are not allowed to edit this item."
+
+    # item type not found
+    mock_deposit = {"owner": users[1]["id"], "weko_shared_id": users[0]["id"], "item_type_id": 999}
+    mock_resolver.return_value = (mock_pid, mock_deposit)
+    mock_user_roles.return_value = True, []
+    res = client_api.post(url, data=json.dumps(post_data), content_type="application/json")
+    assert res.status_code == 200
+    assert json.loads(res.data)['msg'] == "Dependency ItemType not found."
+
+
+    mock_deposit = {"owner": users[1]["id"], "weko_shared_id": users[0]["id"], "item_type_id": itemtype_id}
+    mock_resolver.return_value = (mock_pid, mock_deposit)
+    mock_item_locked.return_value = True
+    res = client_api.post(url, data=json.dumps(post_data), content_type="application/json")
+    assert res.status_code == 200
+    assert json.loads(res.data)['msg'] == "Item cannot be edited because the import is in progress."
+
+    mock_item_locked.return_value = False
+    mock_being_edit = mocker.patch("weko_items_ui.views.check_item_is_being_edit")
+    mock_being_edit.return_value = "TestActivity"
+    res = client_api.post(url, data=json.dumps(post_data), content_type="application/json")
+    assert res.status_code == 200
+    assert json.loads(res.data)['msg'] == "This Item is being edited."
+
+    mock_being_edit.return_value = ""
+    mock_activity = MagicMock(spec=Activity)
+    mock_activity.workflow_id = 1
+    mock_activity.flow_id = 1
+    mock_latest_activity = mocker.patch("weko_items_ui.views.WorkActivity.get_workflow_activity_by_item_id")
+    mock_latest_activity.return_value = mock_activity
+
+    with patch("weko_items_ui.views.prepare_edit_workflow") as mock_edit_workflow:
+        res = client_api.post(url, data=json.dumps(post_data), content_type="application/json")
+        mock_edit_workflow.assert_called_once()
+        assert res.status_code == 200
+        assert json.loads(res.data)["msg"] == "success"
+
+    url = url_for("weko_items_ui.prepare_edit_item", community="Test Community")
+    mock_latest_activity.reset_mock()
+    mock_latest_activity.side_effect = [None, mock_activity]
+    res = client_api.post(url, data=json.dumps(post_data), content_type="application/json")
+    assert res.status_code == 200
+    assert json.loads(res.data)["msg"] == "Workflow setting does not exist."
+
+    mock_latest_activity.side_effect = [None, mock_activity]
+    mock_workflow = MagicMock(spec=WorkFlow)
+    mock_workflow.id = 1
+    mock_workflow.flow_id = 1
+    mock_get_workflow = mocker.patch("weko_items_ui.views.get_workflow_by_item_type_id")
+    mock_get_workflow.return_value = mock_workflow
+
+    with patch("weko_items_ui.views.prepare_edit_workflow") as mock_edit_workflow:
+        mock_community = MagicMock(spec=Community)
+        mock_community.id = "Test Community"
+        mock_get_community = mocker.patch("weko_items_ui.views.GetCommunity.get_community_by_id")
+        mock_get_community.return_value = mock_community
+
+        res = client_api.post(url, data=json.dumps(post_data), content_type="application/json")
+        assert res.status_code == 200
+        assert json.loads(res.data)["msg"] == "success"
+        mock_edit_workflow.assert_called_once()
+
+    mock_latest_activity.side_effect = [None, mock_activity]
+    with patch("weko_items_ui.views.prepare_edit_workflow") as mock_edit_workflow:
+        ret = prepare_edit_item(1, "Test Community")
+        assert ret.status_code == 200
+        assert ret.json["msg"] == "success"
+        mock_edit_workflow.assert_called_once()
+
+    mock_latest_activity.side_effect = [None, mock_activity]
+    with patch("weko_items_ui.views.prepare_edit_workflow") as mock_edit_workflow:
+        mock_edit_workflow.side_effect = SQLAlchemyError("Test Error")
+        ret = prepare_edit_item(1, "Test Community")
+        assert ret.json["msg"] == "An error has occurred."
+
+    mock_latest_activity.side_effect = [None, mock_activity]
+    with patch("weko_items_ui.views.prepare_edit_workflow") as mock_edit_workflow:
+        mock_edit_workflow.side_effect = Exception("Unexpected Error")
+        ret = prepare_edit_item(1, "Test Community")
+        assert ret.json["msg"] == "An error has occurred."
 
 
 def test_prepare_edit_item_guest(client_api, users):

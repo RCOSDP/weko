@@ -1006,6 +1006,13 @@ def prepare_edit_item(id=None, community=None):
                             object_type='rec',
                             getter=record_class.get_record)
         recid, deposit = resolver.resolve(pid_value)
+
+        if not deposit:
+            return jsonify(
+                code=err_code,
+                msg=_('Record does not exist.')
+            )
+
         authenticators = [
             str(deposit.get('owner')),
             str(deposit.get('weko_shared_id'))
@@ -1028,12 +1035,6 @@ def prepare_edit_item(id=None, community=None):
             return jsonify(
                 code=err_code,
                 msg=_("Dependency ItemType not found.")
-            )
-
-        if not deposit:
-            return jsonify(
-                code=err_code,
-                msg=_('Record does not exist.')
             )
 
         # Check Record is in import progress
@@ -1089,7 +1090,7 @@ def prepare_edit_item(id=None, community=None):
                 code=err_code,
                 msg=_('An error has occurred.')
             )
-        except BaseException as ex:
+        except Exception as ex:
             current_app.logger.error('Unexpected error: {}'.format(ex))
             traceback.format_exc()
             db.session.rollback()

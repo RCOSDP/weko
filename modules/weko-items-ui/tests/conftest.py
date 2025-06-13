@@ -23,39 +23,25 @@
 from io import BytesIO
 import json
 import os
-from re import T
 import shutil
 import tempfile
 import uuid
-import time
-from datetime import datetime,timedelta
-from os.path import dirname, exists, join
-import copy
 import pytest
+from datetime import datetime,timedelta
+from unittest.mock import patch
 from kombu import Exchange, Queue
-from mock import patch
-from click.testing import CliRunner
-from flask import Blueprint, Flask
-from flask_assets import assets
-from flask_babelex import Babel
+from flask import Flask
 from flask_menu import Menu
+from celery.messaging import establish_connection
 from invenio_access import InvenioAccess
 from invenio_access.models import ActionRoles, ActionUsers
 from invenio_accounts import InvenioAccounts
 from invenio_accounts.models import Role, User
-from invenio_accounts.testutils import create_test_user, login_user_via_session
-from invenio_accounts.views.settings import blueprint as invenio_accounts_blueprint
-from invenio_admin import InvenioAdmin
-from invenio_admin.views import blueprint as invenio_admin_blueprint
+from invenio_accounts.testutils import create_test_user
 from invenio_assets import InvenioAssets
-from invenio_assets.cli import collect, npm
-from invenio_cache import InvenioCache
-from invenio_communities import InvenioCommunities
 from invenio_communities.models import Community
-from invenio_communities.views.ui import blueprint as invenio_communities_blueprint
 from invenio_db import InvenioDB
 from invenio_db import db as db_
-from invenio_deposit import InvenioDeposit
 from invenio_deposit.config import (
     DEPOSIT_DEFAULT_STORAGE_CLASS,
     DEPOSIT_RECORDS_UI_ENDPOINTS,
@@ -63,43 +49,31 @@ from invenio_deposit.config import (
     DEPOSIT_DEFAULT_JSONSCHEMA,
     DEPOSIT_JSONSCHEMAS_PREFIX,
 )
-from invenio_files_rest.models import Location, Bucket,ObjectVersion,FileInstance
+from invenio_files_rest.models import Location, Bucket,ObjectVersion
 from invenio_records_files.api import RecordsBuckets
-from invenio_deposit.ext import InvenioDeposit, InvenioDepositREST
 from invenio_files_rest import InvenioFilesREST
 from invenio_files_rest.config import FILES_REST_STORAGE_CLASS_LIST
 from invenio_files_rest.models import Location
 from invenio_i18n import InvenioI18N
 from invenio_indexer import InvenioIndexer
 from invenio_jsonschemas import InvenioJSONSchemas
-from invenio_oaiserver import InvenioOAIServer
-from invenio_pidrelations import InvenioPIDRelations
-from celery.messaging import establish_connection
 from invenio_pidrelations.models import PIDRelation
 from invenio_pidstore import InvenioPIDStore
-from invenio_pidstore.models import PersistentIdentifier, PIDStatus, Redirect
+from invenio_pidstore.models import PersistentIdentifier, PIDStatus
+from invenio_pidrelations.config import PIDRELATIONS_RELATION_TYPES
 from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidrelations.contrib.records import RecordDraft
 from invenio_records import InvenioRecords
-from invenio_records_rest import InvenioRecordsREST
 from weko_redis.redis import RedisConnection
-from invenio_rest import InvenioREST
-from invenio_search import InvenioSearch, RecordsSearch, current_search, current_search_client
+from invenio_search import InvenioSearch
 from invenio_stats import InvenioStats
-from invenio_stats.config import SEARCH_INDEX_PREFIX as index_prefix
-from invenio_theme import InvenioTheme
-from sqlalchemy import event
-from sqlalchemy.engine import Engine
-from sqlalchemy.orm import Session
 from sqlalchemy_utils.functions import create_database, database_exists
-from weko_admin import WekoAdmin
 from weko_admin.config import WEKO_ADMIN_DEFAULT_ITEM_EXPORT_SETTINGS
 from weko_admin.models import SessionLifetime,RankingSettings
 from weko_deposit import WekoDeposit
 from weko_deposit.api import WekoIndexer, WekoRecord
 from weko_deposit.api import WekoDeposit as aWekoDeposit
 from weko_deposit.config import DEPOSIT_RECORDS_API,WEKO_DEPOSIT_ITEMS_CACHE_PREFIX
-from weko_index_tree import WekoIndexTree, WekoIndexTreeREST
 from weko_index_tree.api import Indexes
 from weko_index_tree.models import Index
 from weko_index_tree.config import WEKO_INDEX_TREE_REST_ENDPOINTS,WEKO_INDEX_TREE_DEFAULT_DISPLAY_NUMBER
@@ -107,17 +81,12 @@ from weko_notifications.models import NotificationsUserSettings
 from weko_records import WekoRecords
 from weko_records.models import ItemType, ItemTypeMapping, ItemTypeName
 from weko_records.api import ItemsMetadata
-from weko_records_ui import WekoRecordsUI
 from weko_records_ui.config import WEKO_RECORDS_UI_LICENSE_DICT
-from weko_schema_ui import WekoSchemaUI
 from weko_schema_ui.models import OAIServerSchema
-from weko_search_ui import WekoSearchREST, WekoSearchUI
+from weko_search_ui import WekoSearchUI
 from weko_search_ui.config import WEKO_SEARCH_REST_ENDPOINTS,RECORDS_REST_SORT_OPTIONS,INDEXER_DEFAULT_DOCTYPE,INDEXER_FILE_DOC_TYPE
-from weko_theme import WekoTheme
-from weko_theme.views import blueprint as weko_theme_blueprint
 from weko_user_profiles.models import UserProfile
 from weko_user_profiles.config import WEKO_USERPROFILES_ROLES,WEKO_USERPROFILES_GENERAL_ROLE
-from weko_search_ui.config import SEARCH_UI_SEARCH_INDEX
 from weko_workflow import WekoWorkflow
 from weko_authors.models import AuthorsPrefixSettings,Authors,AuthorsAffiliationSettings
 from weko_workflow.models import (
@@ -130,16 +99,13 @@ from weko_workflow.models import (
     FlowDefine,
     WorkFlow,
 )
-from weko_workflow.views import workflow_blueprint as weko_workflow_blueprint
 from werkzeug.local import LocalProxy
 
-from tests.helpers import create_record, json_data
 from weko_items_ui import WekoItemsUI, WekoItemsREST
 from weko_items_ui.views import blueprint as weko_items_ui_blueprint
 from weko_items_ui.views import blueprint_api as weko_items_ui_blueprint_api
 from weko_groups import WekoGroups
-
-from invenio_pidrelations.config import PIDRELATIONS_RELATION_TYPES
+from .helpers import create_record, json_data
 
 
 # @event.listens_for(Engine, "connect")
@@ -168,7 +134,7 @@ def base_app(instance_path):
     app_ = Flask(
         "testapp",
         instance_path=instance_path,
-        static_folder=join(instance_path, "static"),
+        static_folder=os.path.join(instance_path, "static"),
     )
     app_.config.update(
         SECRET_KEY="SECRET_KEY",
@@ -176,8 +142,8 @@ def base_app(instance_path):
         SERVER_NAME="test_server",
         # SQLALCHEMY_DATABASE_URI=os.environ.get(
         #      'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'),
-        SQLALCHEMY_DATABASE_URI=os.getenv('SQLALCHEMY_DATABASE_URI',
-                                          'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest'),
+        SQLALCHEMY_DATABASE_URI=os.getenv(
+            'SQLALCHEMY_DATABASE_URI', 'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest'),
         SQLALCHEMY_TRACK_MODIFICATIONS=True,
         ACCOUNTS_USERINFO_HEADERS=True,
         WEKO_PERMISSION_SUPER_ROLE_USER=[
@@ -261,64 +227,27 @@ def base_app(instance_path):
     'display_rank': 10,
     'rankings': {"new_items": True, "most_reviewed_items": True, "most_downloaded_items": False, "most_searched_keywords": True, "created_most_items_user": True}
     }
-    # tmp = app_.config['RECORDS_REST_SORT_OPTIONS']['tenant1-weko']
-    # app_.config['RECORDS_REST_SORT_OPTIONS']['test-weko']=tmp
-    # Babel(app_)
     InvenioI18N(app_)
     InvenioAssets(app_)
     InvenioDB(app_)
     InvenioAccounts(app_)
     InvenioAccess(app_)
-    # InvenioTheme(app_)
-    # InvenioREST(app_)
-
-    # InvenioCache(app_)
-
-    # InvenioDeposit(app_)
     InvenioPIDStore(app_)
-    # InvenioPIDRelations(app_)
     InvenioRecords(app_)
-    # InvenioRecordsREST(app_)
     InvenioFilesREST(app_)
     InvenioJSONSchemas(app_)
-    # InvenioOAIServer(app_)
-
-    search = InvenioSearch(app_)
-
-    # WekoSchemaUI(app_)
+    InvenioSearch(app_)
     InvenioStats(app_)
-
-    # InvenioAdmin(app_)
     Menu(app_)
     WekoRecords(app_)
     WekoDeposit(app_)
     WekoWorkflow(app_)
     WekoGroups(app_)
-    # WekoAdmin(app_)
-    # WekoTheme(app_)
-    # WekoRecordsUI(app_)
-    # InvenioCommunities(app_)
-
     InvenioIndexer(app_)
-    # WekoSearchREST(app_)
-    # WekoIndexTree(app_)
-    # WekoIndexTreeREST(app_)
     WekoRecords(app_)
     WekoSearchUI(app_)
-    # ext.init_config(app_)
     WekoItemsUI(app_)
     WekoItemsREST(app_)
-    # app_.register_blueprint(invenio_accounts_blueprint)
-    # app_.register_blueprint(weko_theme_blueprint)
-    # app_.register_blueprint(weko_items_ui_blueprint)
-    # app_.register_blueprint(invenio_communities_blueprint)
-    # app_.register_blueprint(weko_workflow_blueprint)
-
-    # runner = CliRunner()
-    # result = runner.invoke(collect, [],obj=weko_items_ui_blueprint)
-    # Run build
-    # result = runner.invoke(assets, ['build'],obj=weko_items_ui_blueprint)
-    # result = runner.invoke(npm,obj=weko_items_ui_blueprint)
 
     current_assets = LocalProxy(lambda: app_.extensions["invenio-assets"])
     current_assets.collect.collect()
