@@ -5167,12 +5167,6 @@ class TestJsonLdMapper:
         # Extra(attribute_value)
         assert extra["value"] == single_metadata["attribute_value"]
 
-    # data/ams/item_type_schema_single.json: 未病アイテムタイプのスキーマ(プロジェクトURL:単数)
-    # data/ams/item_type_schema_multi.json: 未病アイテムタイプのスキーマ(プロジェクトURL:複数)
-    # data/ams/ro-crate-metadata_str.json: ro-crate(ams:projectid: str)
-    # data/ams/ro-crate-metadata_dict.json: ro-crate(ams:projectid: dict)
-    # data/ams/jsonld_mapping_str.json: ams:projectidがstr用のマッピング
-    # data/ams/jsonld_mapping_dict.json: ams:projectidがdict用のマッピング
 
     # def is_valid(self):
     # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_mapper.py::TestJsonLdMapper::test_is_valid_ams -v -vv -s --cov-branch --cov-report=xml --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
