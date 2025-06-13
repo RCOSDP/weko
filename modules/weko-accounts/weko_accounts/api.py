@@ -515,8 +515,8 @@ def update_roles(map_group_list, roles, indices=[]):
     """Update roles based on map group list."""
     role_names = set({role.name for role in roles})
 
-    new_role_names = [role_name for role_name in map_group_list if not role_name or role_name in role_names]
-    roles_to_remove = [role_name for role_name in role_names if role_name not in map_group_list and role_name.statswith('jc_')]
+    new_role_names = [role_name for role_name in map_group_list if role_name and role_name not in role_names]
+    roles_to_remove = [role_name for role_name in role_names if role_name not in map_group_list and role_name.startswith('jc_')]
 
     
     new_roles = []
@@ -534,7 +534,7 @@ def update_roles(map_group_list, roles, indices=[]):
                 role_to_remove = Role.query.filter_by(name=role_name).one()
                 remove_role_ids.append(role_to_remove.id)
                 db.session.delete(role_to_remove)
-            db.session.commit()
+        db.session.commit()
     except Exception as ex:
         current_app.logger.error(f"Error adding new roles: {ex}")
         db.session.rollback()
