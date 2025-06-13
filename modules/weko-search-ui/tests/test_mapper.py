@@ -5193,7 +5193,6 @@ class TestJsonLdMapper:
     # def validate(self):
     # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_mapper.py::TestJsonLdMapper::test_validate_ams -v -vv -s --cov-branch --cov-report=xml --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
     def test_validate_ams(self, app, db, item_type2):
-
         json_mapping_dict = json_data("data/ams/jsonld_mapping_dict.json")
 
         schema = json_data("data/ams/item_type_schema_single.json")
