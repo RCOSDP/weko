@@ -5166,3 +5166,78 @@ class TestJsonLdMapper:
         assert file_1["name"] == "data.csv"
         # Extra(attribute_value)
         assert extra["value"] == single_metadata["attribute_value"]
+
+
+    # def is_valid(self):
+    # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_mapper.py::TestJsonLdMapper::test_is_valid_ams -v -vv -s --cov-branch --cov-report=xml --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+    def test_is_valid_ams(self, app, db, item_type2):
+        json_mapping_dict = json_data("data/ams/jsonld_mapping_dict.json")
+
+        schema = json_data("data/ams/item_type_schema_single.json")
+        item_type2.model.schema = schema
+        db.session.commit()
+        assert JsonLdMapper(item_type2.model.id, json_mapping_dict).is_valid
+
+        schema = json_data("data/ams/item_type_schema_multi.json")
+        item_type2.model.schema = schema
+        db.session.commit()
+        assert JsonLdMapper(item_type2.model.id, json_mapping_dict).is_valid
+
+
+    # def validate(self):
+    # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_mapper.py::TestJsonLdMapper::test_validate_ams -v -vv -s --cov-branch --cov-report=xml --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+    def test_validate_ams(self, app, db, item_type2):
+        json_mapping_dict = json_data("data/ams/jsonld_mapping_dict.json")
+
+        schema = json_data("data/ams/item_type_schema_single.json")
+        item_type2.model.schema = schema
+        db.session.commit()
+        assert JsonLdMapper(item_type2.model.id, json_mapping_dict).validate() is None
+
+        schema = json_data("data/ams/item_type_schema_multi.json")
+        item_type2.model.schema = schema
+        db.session.commit()
+        assert JsonLdMapper(item_type2.model.id, json_mapping_dict).validate() is None
+
+
+    # def to_item_metadata(self, json_ld):
+    # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_mapper.py::TestJsonLdMapper::test_to_item_metadata_ams_dict -v -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+    def test_to_item_metadata_ams_dict(self, app, db, item_type2):
+        app.config.update({"WEKO_SWORDSERVER_METADATA_FILE_ROCRATE": "ro-crate-metadata.json"})
+        json_mapping = json_data("data/ams/jsonld_mapping_dict.json")
+        json_ld = json_data("data/ams/ro-crate-metadata_dict.json")
+
+        with app.test_request_context():
+            schema = json_data("data/ams/item_type_schema_multi.json")
+            item_type2.model.schema = schema
+            db.session.commit()
+
+            mapper = JsonLdMapper(item_type2.model.id, json_mapping)
+            item_metadatas, format = mapper.to_item_metadata(json_ld)
+
+            item_metadata, _ = item_metadatas[0]
+            assert format == "ro-crate"
+            assert item_metadata["pubdate"] == "2025-06-12"
+            assert item_metadata["path"] == [1623632832836]
+            assert item_metadata["publish_status"] == "public"
+            assert item_metadata["item_1736145554459"]["subitem_date_issued_type"] == "Accepted"
+            assert item_metadata["item_1736145554459"]["subitem_date_issued_datetime"] == "2025-06-11"
+            assert item_metadata["item_1749689698804"][0]["subitem_relation_type_id"]["subitem_relation_type_id_text"] == "grdm"
+            assert item_metadata["item_1749689698804"][0]["subitem_relation_type"] == "isVersionOf"
+
+            schema = json_data("data/ams/item_type_schema_single.json")
+            item_type2.model.schema = schema
+            db.session.commit()
+
+            mapper = JsonLdMapper(item_type2.model.id, json_mapping)
+            item_metadatas, format = mapper.to_item_metadata(json_ld)
+
+            item_metadata, _ = item_metadatas[0]
+            assert format == "ro-crate"
+            assert item_metadata["pubdate"] == "2025-06-12"
+            assert item_metadata["path"] == [1623632832836]
+            assert item_metadata["publish_status"] == "public"
+            assert item_metadata["item_1736145554459"]["subitem_date_issued_type"] == "Accepted"
+            assert item_metadata["item_1736145554459"]["subitem_date_issued_datetime"] == "2025-06-11"
+            assert item_metadata["item_1749689698804"]["subitem_relation_type_id"]["subitem_relation_type_id_text"] == "grdm"
+            assert item_metadata["item_1749689698804"]["subitem_relation_type"] == "isVersionOf"
