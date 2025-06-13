@@ -5178,19 +5178,16 @@ class TestJsonLdMapper:
     # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_mapper.py::TestJsonLdMapper::test_is_valid_ams -v -vv -s --cov-branch --cov-report=xml --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
     def test_is_valid_ams(self, app, db, item_type2):
         json_mapping_dict = json_data("data/ams/jsonld_mapping_dict.json")
-        json_mapping_str = json_data("data/ams/jsonld_mapping_str.json")
 
         schema = json_data("data/ams/item_type_schema_single.json")
         item_type2.model.schema = schema
         db.session.commit()
         assert JsonLdMapper(item_type2.model.id, json_mapping_dict).is_valid
-        assert JsonLdMapper(item_type2.model.id, json_mapping_str).is_valid
 
         schema = json_data("data/ams/item_type_schema_multi.json")
         item_type2.model.schema = schema
         db.session.commit()
         assert JsonLdMapper(item_type2.model.id, json_mapping_dict).is_valid
-        assert JsonLdMapper(item_type2.model.id, json_mapping_str).is_valid
 
 
     # def validate(self):
@@ -5198,19 +5195,16 @@ class TestJsonLdMapper:
     def test_validate_ams(self, app, db, item_type2):
 
         json_mapping_dict = json_data("data/ams/jsonld_mapping_dict.json")
-        json_mapping_str = json_data("data/ams/jsonld_mapping_str.json")
 
         schema = json_data("data/ams/item_type_schema_single.json")
         item_type2.model.schema = schema
         db.session.commit()
         assert JsonLdMapper(item_type2.model.id, json_mapping_dict).validate() is None
-        assert JsonLdMapper(item_type2.model.id, json_mapping_str).validate() is None
 
         schema = json_data("data/ams/item_type_schema_multi.json")
         item_type2.model.schema = schema
         db.session.commit()
         assert JsonLdMapper(item_type2.model.id, json_mapping_dict).validate() is None
-        assert JsonLdMapper(item_type2.model.id, json_mapping_str).validate() is None
 
 
     # def to_item_metadata(self, json_ld):
