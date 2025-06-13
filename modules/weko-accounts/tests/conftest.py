@@ -81,6 +81,7 @@ def base_app(instance_path):
         CACHE_REDIS_HOST="redis",
         CACHE_TYPE="redis",
         REDIS_PORT='6379',
+        WEB_HOST_NAME='localhost',
         WEKO_ACCOUNTS_SSO_ATTRIBUTE_MAP = {
             'eppn': (False, 'shib_eppn'),
             'HTTP_WEKOSOCIETYAFFILIATION': (False, 'shib_role_authority_name'),

@@ -210,3 +210,28 @@ def roles_required(roles, allow_anonymous=False):
             return func(*args, **kwargs)
         return decorated_view
     return decorator
+
+def get_sp_info():
+    """Get Service Provider (SP) information for Shibboleth login.
+    
+    Returns:
+        dict: A dictionary containing SP entityID, handlerURL, and return URL.
+    """
+    _shib_login_url = current_app.config['WEKO_ACCOUNTS_SHIB_IDP_LOGIN_URL']
+
+    session['next'] = request.args.get('next', '/')
+    return_url = _shib_login_url.format(request.url_root)
+
+    sp_entityID = 'https://' + current_app.config['WEB_HOST_NAME'] + '/shibboleth-sp'
+    if 'SP_ENTITYID' in current_app.config:
+        sp_entityID = current_app.config['SP_ENTITYID']
+    
+    sp_handlerURL = 'https://' + current_app.config['WEB_HOST_NAME'] + '/Shibboleth.sso'
+    if 'SP_HANDLERURL' in current_app.config:
+        sp_handlerURL = current_app.config['SP_HANDLERURL']
+
+    return {
+        'sp_entityID': sp_entityID,
+        'sp_handlerURL': sp_handlerURL,
+        'return_url': return_url,
+    }
