@@ -30,6 +30,7 @@ from invenio_records.models import RecordMetadata
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus, Redirect
 from invenio_db import db as iv_db
 from invenio_pidrelations.models import PIDRelation
+from invenio_pidstore.errors import PIDDoesNotExistError
 
 from weko_admin.config import WEKO_ADMIN_MANAGEMENT_OPTIONS
 from weko_admin.api import TempDirInfo
@@ -39,6 +40,7 @@ from weko_records.api import ItemsMetadata, JsonldMapping, WekoRecord
 from weko_records.models import ItemMetadata
 from weko_records.models import ItemType
 from weko_redis.redis import RedisConnection
+from weko_schema_ui.config import WEKO_SCHEMA_RELATION_TYPE
 
 
 from weko_search_ui import WekoSearchUI
@@ -70,6 +72,7 @@ from weko_search_ui.utils import (
     define_default_dict,
     delete_exported_file,
     delete_exported,
+    delete_items_with_activity,
     delete_task_id_cache_on_missing_meta,
     delete_records,
     export_all,
@@ -115,12 +118,14 @@ from weko_search_ui.utils import (
     handle_check_filename_consistence,
     handle_check_id,
     handle_check_item_is_locked,
+    handle_check_item_link,
     handle_check_metadata_not_existed,
     handle_check_thumbnail,
     handle_check_thumbnail_file_type,
     handle_check_authors_prefix,
     handle_check_authors_affiliation,
     handle_convert_validate_msg_to_jp,
+    handle_metadata_amend_by_doi,
     handle_metadata_by_doi,
     handle_doi_required_check,
     handle_fill_system_item,
@@ -671,8 +676,6 @@ def test_check_jsonld_import_items(i18n_app, db, test_indices, item_type2, item_
     jsonld_mapping = json_data("data/jsonld/jsonld_mapping.json")
     obj = JsonldMapping.create(name="test_full", mapping=jsonld_mapping, item_type_id=item_type2.id)
 
-    print("")
-
     mocker.patch("weko_search_ui.utils.handle_metadata_amend_by_doi")
     mocker.patch("weko_search_ui.utils.handle_item_title")
     mocker.patch("weko_search_ui.utils.handle_check_doi_ra")
@@ -692,10 +695,17 @@ def test_check_jsonld_import_items(i18n_app, db, test_indices, item_type2, item_
     with patch("weko_search_ui.utils.zipfile.ZipFile",side_effect=zipfile.BadZipFile):
         result = check_jsonld_import_items(ro_crate, "SimpleZip", obj.id, shared_id=-1)
         assert result["error"] == "The format of the specified file {filename} dose not support import. Please specify a zip file.".format(filename=os.path.basename(ro_crate))
+        assert "data_path" not in result
+        assert "item_type_id" not in result
+        assert "list_record" not in result
+
 
     with patch("weko_search_ui.utils.zipfile.ZipFile",side_effect=UnicodeDecodeError("uni", b'\xe3\x81\xad\xe3\x81\x93',2,4,"cp932 cant decode")):
         result = check_jsonld_import_items(ro_crate, "SimpleZip", obj.id, shared_id=-1)
         assert result["error"] == "cp932 cant decode"
+        assert "data_path" not in result
+        assert "item_type_id" not in result
+        assert "list_record" not in result
 
     with patch("weko_search_ui.utils.bagit.Bag.validate",side_effect=bagit.BagValidationError("Bag validation error")):
         result = check_jsonld_import_items(ro_crate, "SimpleZip", obj.id, shared_id=-1, validate_bagit=False)
@@ -728,9 +738,12 @@ def test_check_jsonld_import_items(i18n_app, db, test_indices, item_type2, item_
         result = check_jsonld_import_items(ro_crate, "SimpleZip", obj.id, shared_id=-1)
         assert result["error"] == "Mapping is invalid for item type {}.".format(item_type2.model.item_type_name.name)
 
-    # with patch("weko_search_ui.utils.JsonLdMapper.ZipFile",side_effect=Exception()):
-    #     pass
-    #     print(f"result: {json.dumps(result, indent=2, ensure_ascii=False)}")
+    JsonldMapping.delete(obj.id)
+    result = check_jsonld_import_items(ro_crate, "SimpleZip", obj.id, shared_id=-1)
+    assert result["error"] == "Metadata mapping not defined for registration your item."
+
+    # print(f"result: {json.dumps(result, indent=2, ensure_ascii=False)}")
+
 
 # def handle_shared_id(list_record, shared_id=-1):
 # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_handle_shared_id -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
@@ -1211,15 +1224,31 @@ def test_handle_workflow(i18n_app, es_item_file_pipeline, es_records, db):
 
 
 # def handle_metadata_by_doi(item: dict):
-# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_handle_doi -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_handle_metadata_by_doi -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
 def test_handle_metadata_by_doi():
     item = {"metadata": {"test": "test"}, "item_type_id": 1}
     doi = "test"
     meta_data_api = ["CrossRef", "DataCite", "Original"]
-    with patch("weko_items_autofill.utils.fetch_metadata_by_doi", return_value=item["metadata"]):
+    fetched_metadata = {**item["metadata"], "fetched_metadata": "test"}
+    with patch("weko_items_autofill.utils.fetch_metadata_by_doi", return_value=fetched_metadata):
         metadata = handle_metadata_by_doi(item, doi, meta_data_api)
-        assert metadata == item["metadata"]
+        assert metadata == fetched_metadata
 
+# def handle_metadata_amend_by_doi(list_record, meta_data_api):
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_handle_metadata_amend_by_doi -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_handle_metadata_amend_by_doi():
+    metadata = {"test": "test"}
+    item = {"metadata": {"test": "test"}, "item_type_id": 1, "amend_doi": "123.4567/test"}
+    meta_data_api = ["CrossRef", "DataCite", "Original"]
+    fetched_metadata = {**metadata, "fetched_metadata": "test"}
+    with patch("weko_items_autofill.utils.fetch_metadata_by_doi", return_value=fetched_metadata):
+        handle_metadata_amend_by_doi([item], meta_data_api)
+        assert item["metadata"] == fetched_metadata
+
+    item = {"metadata": {"test": "test"}, "item_type_id": 1, "amend_doi": ""}
+    with patch("weko_items_autofill.utils.fetch_metadata_by_doi", return_value=fetched_metadata):
+        handle_metadata_amend_by_doi([item], meta_data_api)
+        assert item["metadata"] == metadata
 
 # def create_work_flow(item_type_id):
 # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_update_publish_status -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
@@ -1329,13 +1358,13 @@ def test_import_items_to_activity(i18n_app, es_item_file_pipeline, es_records, d
     mock_activity = MagicMock()
     mock_activity.activity_id = "A-TEST-2"
     mock_activity.activity_community_id = "com"
-    mock_activity.action_id = 3
     mock_headless = MagicMock()
     mock_headless._model = mock_activity
     mock_headless.current_action = "item_login"
     mock_headless.recid = "2000001"
     mock_headless.auto = mock_auto
     mocker.patch("weko_workflow.headless.HeadlessActivity.__new__", return_value=mock_headless)
+    mocker.patch("weko_workflow.headless.HeadlessActivity", return_value=mock_headless)
     mocker.patch("weko_workflow.headless.HeadlessActivity.__init__")
 
     with i18n_app.test_request_context():
@@ -1344,6 +1373,46 @@ def test_import_items_to_activity(i18n_app, es_item_file_pipeline, es_records, d
     assert recid == "2000001"
     assert action == "item_login"
     assert error == "test error"
+
+
+# def delete_items_with_activity(item_id, request_info):
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_delete_items_with_activity -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_delete_items_with_activity(i18n_app, es_item_file_pipeline, es_records, db_workflow, mocker):
+    request_info = {
+        "user_id": 1,
+        "shared_id": -1,
+        "community": "test_community",
+    }
+
+    with patch("weko_workflow.headless.HeadlessActivity.init_activity") as mock_init_activity:
+        mock_init_activity.side_effect = WekoWorkflowException("test error")
+
+        with pytest.raises(WekoWorkflowException) as exc_info:
+            delete_items_with_activity("2000001", request_info)
+        assert str(exc_info.value) == "test error"
+
+    with patch("weko_workflow.headless.HeadlessActivity.init_activity") as mock_init_activity:
+        mock_init_activity.return_value = "https://TEST_SEVER/activity/A-TEST-1"
+
+        mock_activity = MagicMock()
+        mock_activity.activity_id = "A-TEST-1"
+        mock_activity.activity_community_id = "com"
+        mock_headless = MagicMock()
+        mock_headless._model = mock_activity
+        mock_headless.current_action = "end_action"
+        mock_headless.recid = "2000001"
+        mock_headless.init_activity = mock_init_activity
+        mocker.patch("weko_workflow.headless.HeadlessActivity.__new__", return_value=mock_headless)
+        mocker.patch("weko_workflow.headless.HeadlessActivity.__init__")
+
+        url, action = delete_items_with_activity("2000001", request_info)
+        assert url == mock_init_activity.return_value
+        assert action == "end_action"
+        mock_init_activity.assert_called_once_with(
+            user_id=request_info["user_id"], community=request_info["community"], item_id="2000001",
+            shared_id=request_info["shared_id"], for_delete=True
+        )
+
 
 # def handle_item_title(list_record):
 def test_handle_item_title(i18n_app, es_item_file_pipeline, es_records):
@@ -1601,6 +1670,97 @@ def test_handle_check_doi(app,identifier):
     ]
     handle_check_doi(item)
     assert item == test
+
+
+# def handle_check_item_link(list_record):
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_handle_check_item_link -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_handle_check_item_link(app, mocker):
+    list_record = [{
+        "_id": "item1",
+        "link_data": [
+            {"item_id": "http://TEST_SERVER/records/1", "sele_id": "isSupplementTo"}
+        ]
+    }]
+
+    mock_item = MagicMock()
+    mock_item.pid.is_deleted.return_value = False
+    mock_record = mocker.patch("weko_search_ui.utils.WekoRecord.get_record_by_pid")
+    mock_record.return_value = mock_item
+
+    with app.test_request_context():
+        handle_check_item_link(list_record)
+
+    assert list_record[0].get("errors") is None
+    assert list_record[0].get("link_data")[0].get("item_id") == "1"
+
+    list_record = [{
+        "_id": "item1",
+        "link_data": [
+            {"item_id": "http://TEST_SERVER/records/1", "sele_id": "isSupplementTo"}
+        ]
+    }]
+    mock_item.pid.is_deleted.return_value = True
+    with app.test_request_context():
+        handle_check_item_link(list_record)
+
+    assert list_record[0]["errors"][0] == "Linking item already deleted in the system."
+
+    list_record = [{
+        "_id": "item1",
+        "link_data": [
+            {"item_id": "http://TEST_SERVER/records/1", "sele_id": "isSupplementTo"}
+        ]
+    }]
+    mock_record.reset_mock()
+    mock_record.side_effect = PIDDoesNotExistError("depid", 1)
+    with app.test_request_context():
+        handle_check_item_link(list_record)
+    assert list_record[0]["errors"][0] == "Linking item does not exist in the system."
+
+    mock_record.reset_mock()
+    mock_item.pid.is_deleted.return_value = False
+    mock_record.return_value = mock_item
+    list_record = [{
+        "_id": "item2",
+        "link_data": [
+            {"item_id": "http://INVALID_SERVER/records/1", "sele_id": "invalidSeleId"}
+        ]
+    }]
+
+    with app.test_request_context():
+        handle_check_item_link(list_record)
+
+    assert list_record[0]["errors"][0] == "Item Link type: '{}' is not one of {}.".format("invalidSeleId", WEKO_SCHEMA_RELATION_TYPE)
+    assert list_record[0]["errors"][1] == "Specified Item Link URI and system URI do not match."
+
+    list_record = [
+        {
+            "_id": "item3",
+            "link_data": [
+                {"item_id": 1, "sele_id": "isSupplementTo"}
+            ]
+        },
+        {
+            "_id": "item4",
+            "link_data": [
+                {"item_id": "item3", "sele_id": "isSupplementedBy"}
+            ]
+        },
+        {
+            "_id": "item5",
+            "link_data": ["http://TEST_SERVER/records/1"]
+        },
+        {
+            "_id": "item6",
+            "link_data": "http://TEST_SERVER/records/1"
+        }
+    ]
+    with app.test_request_context():
+        handle_check_item_link(list_record)
+    assert list_record[0]["errors"][0] == "Please specify Item URL for item link."
+    assert list_record[0]["link_data"][0]["item_id"] == 1
+    assert list_record[1].get("errors") is None
+    assert list_record[1]["link_data"][0]["item_id"] == "item3"
 
 # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_handle_check_duplicate_item_link -v -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
 def test_handle_check_duplicate_item_link(app):
