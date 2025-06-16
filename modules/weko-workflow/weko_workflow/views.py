@@ -2015,12 +2015,13 @@ def previous_action(activity_id='0', action_id=0, req=0):
         res = ResponseMessageSchema().load({"code":-1, "msg":"can not get activity detail"})
         return jsonify(res.data), 500
     action_order = activity_detail.action_order
+
     for_delete = activity_detail.flow_define.flow_type == WEKO_WORKFLOW_DELETION_FLOW_TYPE
     if req == 0 and for_delete and action_id == 4:
         jsondata = {'approval_reject': 1}
-        return next_action(activity_id=activity_id,
-                               action_id=action_id,
-                               json_data=jsondata)
+        return next_action(
+            activity_id=activity_id, action_id=action_id, json_data=jsondata
+        )
 
     flow = Flow()
     rtn = history.create_activity_history(activity, action_order)

@@ -92,10 +92,12 @@ class HeadlessActivity(WorkActivity):
         super().__init__()
         self.user = None
         """ User: User model """
+        self.workflow = None
+        """ WorkFlow: Workflow model """
         self.item_type = None
         """ ItemType: Item type model """
         self.recid = None
-        """ int: Record ID """
+        """ str: Record ID """
         self.files_info = None
         """ list: List of file information """
         self._model = None
@@ -112,7 +114,7 @@ class HeadlessActivity(WorkActivity):
     @property
     def activity_id(self):
         """str: activity id."""
-        return self._model.activity_id if self._model is not None else None
+        return str(self._model.activity_id) if self._model is not None else None
 
     @property
     def current_action_id(self):
@@ -131,7 +133,11 @@ class HeadlessActivity(WorkActivity):
     @property
     def community(self):
         """str: community id."""
-        return self._model.activity_community_id if self._model is not None else None
+        return (
+            str(self._model.activity_community_id)
+            if self._model is not None and self._model.activity_community_id
+            else None
+        )
 
     @property
     def detail(self):
@@ -174,8 +180,8 @@ class HeadlessActivity(WorkActivity):
         shared_id = kwargs.get("shared_id", -1)
         if activity_id is not None:
             # restart activity
-            result = verify_deletion(activity_id).json
-            if result.get("is_delete"):
+            result, _ = verify_deletion(activity_id)
+            if result.json.get("is_delete"):
                 current_app.logger.error(f"activity({activity_id}) is already deleted.")
                 raise WekoWorkflowException(f"activity({activity_id}) is already deleted.")
 
@@ -193,22 +199,28 @@ class HeadlessActivity(WorkActivity):
                     and not check_authority_by_admin(self.activity_id, user)
             ):
                 current_app.logger.error(
-                    f"user({user_id}) cannot restart activity({activity_id}).")
+                    f"user({user_id}) cannot access activity({activity_id}).")
                 raise WekoWorkflowException(
-                    f"user({user_id}) cannot restart activity({activity_id}).")
+                    f"user({user_id}) cannot access activity({activity_id}).")
 
             locked_value = self._activity_lock()
             current_app.logger.info(
                 f"activity({self.activity_id}) is restarted by user({user_id}).")
             self.user = user
+            pid = PersistentIdentifier.get_by_object(
+                "recid", object_type="rec", object_uuid=self._model.item_id
+            )
+            self.recid = pid.pid_value
             self._activity_unlock(locked_value)
             return self.detail
 
         item_id = kwargs.get("item_id")
         community = kwargs.get("community")
+        for_delete = kwargs.get("for_delete") or False
         if item_id is not None:
+            item_id = str(item_id)
             # edit or delete item
-            if not kwargs.get("for_delete", False):
+            if not for_delete:
                 response = prepare_edit_item(item_id, community)
             else:
                 response = prepare_delete_item(item_id, community, shared_id)
@@ -218,19 +230,17 @@ class HeadlessActivity(WorkActivity):
                     f"failed to create activity: {response.json.get('msg')}")
                 raise WekoWorkflowException(response.json.get("msg"))
 
-            url = response.json.get("data").get("redirect")
-            if not isinstance(url, str):
+            self.recid = item_id
+            url = str(response.json.get("data").get("redirect"))
+            if "/records/" in url and for_delete:
+                # item delete directly
                 self.user = User.query.get(user_id)
-                current_app.logger.info(
-                    "action is done by user({user_id})."
-                )
-                return self.detail
+                return url
             activity_id = url.split("/activity/detail/")[1]
             if "?" in activity_id:
                 activity_id = activity_id.split("?")[0]
 
-            self.recid = item_id
-            self._model = super().get_activity_by_id(activity_id)
+            self._model = self.get_activity_by_id(activity_id)
             self.workflow = self._model.workflow
             self.item_type = ItemTypes.get_by_id(self.workflow.itemtype_id)
 
@@ -265,7 +275,7 @@ class HeadlessActivity(WorkActivity):
             activity_id = url.split("/activity/detail/")[1]
             if "?" in activity_id:
                 activity_id = activity_id.split("?")[0]
-            self._model = super().get_activity_by_id(activity_id)
+            self._model = self.get_activity_by_id(activity_id)
 
         self.user = User.query.get(user_id)
         current_app.logger.info(
@@ -328,13 +338,15 @@ class HeadlessActivity(WorkActivity):
                 self.item_link(params.get("link_data"))
             elif self.current_action == "identifier_grant":
                 self.identifier_grant(params.get("grant_data"))
-            elif self.current_action == "oa_policy":
-                self.oa_policy(params.get("policy"))
+            else:
+                raise NotImplementedError(
+                    f"Action {self.current_action} is not implemented."
+                )
 
         self._lock_skip = _lf
         self._activity_unlock(locked_value)
 
-        returns = (str(self.detail), self.current_action, str(self.recid))
+        returns = self.detail, self.current_action, self.recid
 
         self.end()
 
@@ -708,10 +720,9 @@ class HeadlessActivity(WorkActivity):
                 with open(file, "rb") as f:
                     file_info = upload(os.path.basename(file), f, size)
             elif isinstance(file, dict):
-                file_info = files
+                file_info = file
             else:
-                """werkzeug.datastructures.FileStorage"""
-
+                "werkzeug.datastructures.FileStorage"
                 file.seek(0, 2)
                 file_size = file.tell()
                 file.seek(0)
@@ -865,13 +876,12 @@ class HeadlessActivity(WorkActivity):
             raise WekoWorkflowException(result.json.get("msg"))
 
     def end(self):
-        """Action for End."""
-        self.user = None
-        self.item_type = None
-        self.recid = None
-        self.files_info = None
-        self._model = None
-        self._deposit = None
+        """Reset."""
+        self.__init__(
+            _lock_skip=self._lock_skip,
+            _metadata_inheritance=self._metadata_inheritance,
+            _files_inheritance=self._files_inheritance
+        )
 
     def _activity_lock(self):
         """Activity lock.
