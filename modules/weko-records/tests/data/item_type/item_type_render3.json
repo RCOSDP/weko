@@ -18,5 +18,8 @@
       "input_maxItems": "9999",
       "input_minItems": "1"
     }
-  }
+  },
+  "table_row":[
+    "item_test2_title"
+  ]
 }

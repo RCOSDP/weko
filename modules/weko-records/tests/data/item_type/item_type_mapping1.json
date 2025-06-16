@@ -127,6 +127,9 @@
       }
     }
   },
+  "item_test5_creator2":{
+    "jpcoar_mapping":""
+  },
   "item_test6_bibliographic":{
     "jpcoar_mapping":{
       "volume": "bibliographic_volume",

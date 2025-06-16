@@ -28,5 +28,9 @@
           "showlist": true
         }
       }
-    }
+    },
+    "table_row":[
+      "item_test2_title",
+      "item_test2_title.test_title"
+    ]
   }

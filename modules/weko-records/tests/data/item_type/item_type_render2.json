@@ -33,10 +33,15 @@
       "option": {
         "crtf": true,
         "hidden": false,
-        "multiple": true,
+        "multiple": false,
         "required": true,
         "showlist": true
       }
     }
-  }
+  },
+  "table_row":[
+    "item_test1_creator",
+    "item_test2_title",
+    "item_test3_bibliographic"
+  ]
 }

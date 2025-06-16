@@ -193,9 +193,10 @@ PyLD==2.0.3
 pyparsing==3.1.0
 pypdf==4.3.1
 pyPEG2==2.15.2
-pytest==4.2.0
+pytest>=4.2.0
 pytest-mock
 pytest-invenio
+pytest-asyncio==0.16.0
 python-dateutil==2.6.1
 python-editor==1.0.3
 python-geoip==1.2
@@ -280,3 +281,4 @@ xmlschema==0.9.30
 xmltodict==0.12.0
 zipp==3.6.0
 zope.interface==5.5.2
+tika==2.6.0

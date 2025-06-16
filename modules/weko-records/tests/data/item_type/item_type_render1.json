@@ -150,12 +150,22 @@
         "showlist": true
       }
     },
+    "item_test5_creator2":{
+      "title":"Creator2",
+      "option": {
+        "crtf": true,
+        "hidden": false,
+        "multiple": true,
+        "required": true,
+        "showlist": true
+      }
+    },
     "item_test6_bibliographic":{
       "title":"bibliographic test",
       "option": {
         "crtf": true,
         "hidden": false,
-        "multiple": true,
+        "multiple": false,
         "required": true,
         "showlist": true
       }
@@ -204,5 +214,24 @@
         "showlist": true
       }
     }
-  }
+  },
+  "table_row":[
+    "item_test1_1",
+    "item_test1_2",
+    "item_test1_3",
+    "item_test1_4",
+    "item_test1_5",
+    "item_test2_title",
+    "item_test3_file",
+    "item_test4_thumbnail",
+    "item_test4_2_thumbnail",
+    "item_test5_creator",
+    "item_test5_creator2",
+    "item_test6_bibliographic",
+    "item_test7_not_option",
+    "item_test8_not_mlt",
+    "item_test9",
+    "item_test11",
+    "item_test12.indot_item"
+  ]
 }
