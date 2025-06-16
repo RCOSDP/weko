@@ -32,11 +32,20 @@
               @click-prev="changeDetail"
               @click-next="changeDetail" />
             <!-- アイテム情報 -->
-            <ItemInfo v-if="renderFlag" :item="itemDetail" :item-id="currentNumber" />
+            <ItemInfo v-if="renderFlag" :item="itemDetail" :item-id="currentNumber" :oauth-error="oauthError" />
+            <!-- アイテム内容 -->
+            <div v-if="showPopup" class="popup">
+              <p>{{ $t('message.popup.loginRequiredMessage') }}</p>
+              <p>{{ $t('message.popup.transitionToLogin', { time: transitionSecond }) }}</p>
+              <p>　</p>
+              <p
+                >{{ $t('message.popup.loginScreen') }} <a :href="loginPage" class="link">{{ loginPage }}</a></p
+              >
+            </div>
             <!-- アイテム内容 -->
             <ItemContent v-if="renderFlag" :item="itemDetail" />
             <!-- 前/次 -->
-            <div class="pt-2.5 pb-28">
+            <div v-if="!oauthError" class="pt-2.5 pb-28">
               <Switcher
                 :sess="beforePage"
                 :prev-num="prevNum"
@@ -210,6 +219,10 @@ const isLoading = ref(true);
 const isLogin = ref(false);
 const checkMailAddress = ref(false);
 const checkProjectId = ref(false);
+const showPopup = ref(false);
+const transitionSecond = appConf.transitionTime / 1000;
+const loginPage = window.location.origin + '/login?source=detail';
+let oauthError = ref(false);
 
 /* ///////////////////////////////////
 // function
@@ -259,9 +272,9 @@ async function getDetail(number: string) {
     onResponseError({ response }) {
       alertCode.value = 0;
       statusCode = response.status;
-      if (statusCode === 401) {
+      if (statusCode === 401 || statusCode === 403) {
         // 認証エラー
-        alertMessage.value = 'message.error.auth';
+        oauthErrorRedirect();
       } else if (statusCode >= 500 && statusCode < 600) {
         // サーバーエラー
         alertMessage.value = 'message.error.server';
@@ -335,9 +348,9 @@ async function search(searchPage: string) {
       statusCode = response.status;
       switcherFlag.value = false;
       searchResult = [];
-      if (statusCode === 401) {
+      if (oauthError || statusCode === 401 || statusCode === 403) {
         // 認証エラー
-        alertMessage.value = 'message.error.auth';
+        oauthErrorRedirect();
       } else if (statusCode >= 500 && statusCode < 600) {
         // サーバーエラー
         alertMessage.value = 'message.error.server';
@@ -392,9 +405,9 @@ async function getParentIndex() {
     onResponseError({ response }) {
       alertCode.value = 0;
       statusCode = response.status;
-      if (statusCode === 401) {
+      if (oauthError || statusCode === 401 || statusCode === 403) {
         // 認証エラー
-        alertMessage.value = 'message.error.auth';
+        oauthErrorRedirect();
       } else if (statusCode >= 500 && statusCode < 600) {
         // サーバーエラー
         alertMessage.value = 'message.error.server';
@@ -719,6 +732,25 @@ function checkSendingResponse(val: boolean) {
  */
 function scrollToTop() {
   scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+/**
+ * 認証エラー時のリダイレクト処理
+ */
+function oauthErrorRedirect() {
+  showPopup.value = true;
+  alertMessage.value = 'message.popup.oauthError';
+  oauthError.value = true;
+  alertType.value = 'error';
+  sessionStorage.removeItem('item-url');
+  sessionStorage.setItem('item-url', window.location.pathname + window.location.search);
+  setTimeout(() => {
+    // 認証エラーの場合はログイン画面に遷移
+     navigateTo({
+       path: '/login',
+       query: { source: 'detail' }
+     });
+  }, appConf.transitionTime);
 }
 
 /* ///////////////////////////////////

@@ -186,6 +186,12 @@
       "getItemViewsNumber": "Failed to get the number of views for the item.",
       "getDownloadRanking": "Failed to get download ranking.",
       "getFileDlNumber": "Failed to get the number of downloaded."
+    },
+    "popup": {
+      "loginRequiredMessage": "Login is required to view items.",
+      "transitionToLogin": "You will be automatically redirected to the login screen in {time} seconds.",
+      "loginScreen": "Login screen:",
+      "oauthError": "Login is required to view items. You will be automatically redirected to the login screen in {time} seconds. Login screen:"
     }
   },
   "overview": "Overview",

@@ -187,6 +187,12 @@
       "getItemViewsNumber": "アイテムの閲覧数取得に失敗しました。",
       "getDownloadRanking": "ダウンロードランキングの取得に失敗しました。",
       "getFileDlNumber": "ファイルのダウンロード数取得に失敗しました。"
+    },
+    "popup": {
+      "loginRequiredMessage": "アイテム閲覧にはログインが必要です。",
+      "transitionToLogin": "{time} 秒後にログイン画面に遷移します。",
+      "loginScreen": "ログイン画面：",
+      "oauthError": "アイテム閲覧にはログインが必要です。{time} 秒後にログイン画面に遷移します。ログイン画面："
     }
   },
   "overview": "概要",
