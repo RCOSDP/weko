@@ -3528,7 +3528,7 @@ def get_options_list(item_type_id, json_item=None):
     if json_item is None:
         json_item = ItemTypes.get_record(item_type_id)
     if json_item:
-        meta_options = json_item.model.render.get('meta_fix')
+        meta_options = json_item.model.render.get('meta_fix', {})
         meta_options.update(json_item.model.render.get('meta_list'))
     return meta_options
 

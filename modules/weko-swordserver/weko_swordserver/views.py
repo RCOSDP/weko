@@ -42,7 +42,6 @@ from weko_items_ui.utils import (
 from weko_logging.activity_logger import UserActivityLogger
 from weko_notifications.utils import notify_item_imported, notify_item_deleted
 from weko_records_ui.utils import get_record_permalink
-from weko_redis.redis import RedisConnection
 from weko_search_ui.utils import (
     import_items_to_system, import_items_to_activity,
     delete_items_with_activity

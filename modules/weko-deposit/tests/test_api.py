@@ -541,7 +541,7 @@ class TestWekoDeposit:
 
     # def commit(self, *args, **kwargs):
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoDeposit::test_commit -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
-    def test_commit(sel,app,db,location, db_index, db_itemtype):
+    def test_commit(sel,app,db,location, db_index, db_itemtype, mocker):
         app.config["WEKO_SCHEMA_JPCOAR_V2_SCHEMA_NAME"] = 'jpcoar_mapping'
         app.config["WEKO_SCHEMA_JPCOAR_V2_RESOURCE_TYPE_REPLACE"] = {
             'periodical':'journal',
@@ -549,6 +549,8 @@ class TestWekoDeposit:
             'internal report':'other',
             'report part':'other',
         }
+        mock_task = mocker.patch("weko_deposit.tasks.extract_pdf_and_update_file_contents")
+        mock_task.apply_async = MagicMock()
         with app.test_request_context():
             deposit = WekoDeposit.create({})
             assert deposit['_deposit']['id']=="1"
