@@ -18,6 +18,7 @@ from weko_accounts.views import (
     _redirect_method,
     find_user_by_email,
     shib_sp_login,
+    _adjust_shib_admin_DB
 )
 from weko_admin.models import AdminSettings
 
@@ -42,6 +43,34 @@ def test_init_menu(request_context):
     assert current_menu.submenu("setting.admin").active == True
     assert current_menu.submenu("settings.admin").url == "/admin/"
     assert current_menu.submenu("settings.admin").text == '<i class="fa fa-cogs fa-fw"></i> Administration'
+
+
+# .tox/c1/bin/pytest --cov=weko_accounts tests/test_views.py::test_adjust_shib_admin_DB -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_adjust_shib_admin_DB(app, db, mocker):
+    # TESTING=True
+    with patch("weko_accounts.views.AdminSettings.query.filter_by") as mock_filter:
+        _adjust_shib_admin_DB()
+        assert mock_filter.call_count == 0
+
+    # TESTING=False, AdminSettings not exist
+    app.config.update(TESTING=False)
+    adminsettings = AdminSettings(id=1, name="test")
+    db.session.add(adminsettings)
+    db.session.commit()
+    _adjust_shib_admin_DB()
+    assert AdminSettings.query.filter_by(name="blocked_user_settings").first() is not None
+    assert AdminSettings.query.filter_by(name="shib_login_enable").first() is not None
+    assert AdminSettings.query.filter_by(name="shib_login_enable").first() is not None
+    assert AdminSettings.query.filter_by(name="default_role_settings").first() is not None
+
+    # TESTING=False, AdminSettings exist
+    app.config.update(WEKO_ACCOUNTS_SHIB_LOGIN_ENABLED=True)
+    with patch("weko_accounts.views.db.session.add") as db_add, \
+            patch("weko_accounts.views.db.session.commit") as db_commit:
+        _adjust_shib_admin_DB()
+        assert db_add.call_count == 0
+        assert db_commit.call_count == 3
+
 
 #def _redirect_method(has_next=False):
 # .tox/c1/bin/pytest --cov=weko_accounts tests/test_views.py::test_redirect_method -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
