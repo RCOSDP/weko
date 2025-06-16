@@ -7,7 +7,8 @@ from weko_accounts.utils import (
     generate_random_str,
     parse_attributes,
     login_required_customize,
-    roles_required
+    roles_required,
+    get_sp_info
 )
 
 
@@ -322,3 +323,26 @@ def test_roles_required(app,users,mocker):
     with app.test_request_context(method="GET"):
         result = roles_required(roles)(lambda x,y:x+y)(x=1,y=2)
         assert result == 3
+
+#def get_sp_info():
+# .tox/c1/bin/pytest --cov=weko_accounts tests/test_utils.py::test_get_sp_info -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_get_sp_info(app):
+    with app.test_request_context('/?next=next_url'):
+        result = get_sp_info()
+        assert result == {
+            'sp_entityID': 'https://localhost/shibboleth-sp',
+            'sp_handlerURL': 'https://localhost/Shibboleth.sso',
+            'return_url': 'http://TEST_SERVER.localdomain/secure/login.py'
+        }
+        assert session['next'] == 'next_url'
+
+    with app.test_request_context():
+        app.config['SP_ENTITYID'] = 'https://test-sp/shibboleth-sp'
+        app.config['SP_HANDLERURL'] = 'https://test-sp/Shibboleth.sso'
+        result = get_sp_info()
+        assert result == {
+            'sp_entityID': 'https://test-sp/shibboleth-sp',
+            'sp_handlerURL': 'https://test-sp/Shibboleth.sso',
+            'return_url': 'http://TEST_SERVER.localdomain/secure/login.py'
+        }
+        assert session['next'] == '/'

@@ -3,30 +3,26 @@
 
 from datetime import datetime
 from unittest.mock import patch
+from sqlalchemy import Sequence
 from weko_logging.models import UserActivityLog
 
 
-# UserActivityLog.get_sequence(session):
-# .tox/c1/bin/pytest --cov=weko_logging tests/test_models.py::test_get_sequence -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-logging/.tox/c1/tmp
-def test_get_sequence(db):
+# UserActivityLog.get_log_group_sequence(session):
+# .tox/c1/bin/pytest --cov=weko_logging tests/test_models.py::test_get_log_group_sequence -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-logging/.tox/c1/tmp
+def test_get_log_group_sequence(db):
     """Test get sequence."""
-    class MockSession:
-        def __init__(self):
-            self.id = {"user_activity_logs_id_seq":1}
-        def execute(self, sequence):
-            name = sequence.name
-            self.id[name] += 1
-            return self.id[name]
-    session = MockSession()
-
-    # Test session is None
-    with patch("weko_logging.models.db.session.execute", side_effect=session.execute):
-        sequence = UserActivityLog.get_sequence(None)
-        assert sequence == 2
+    sequence = UserActivityLog.get_log_group_sequence(None)
+    assert sequence == 1
 
     # Test session is not None
-    sequence = UserActivityLog.get_sequence(session)
-    assert sequence == 3
+    sequence = UserActivityLog.get_log_group_sequence(db.session)
+    assert sequence == 2
+
+    seq = Sequence('user_activity_log_group_id_seq')
+    db.session.execute(seq)
+
+    sequence = UserActivityLog.get_log_group_sequence(None)
+    assert sequence == 4
 
 # UserActivityLog.to_dict(self):
 # .tox/c1/bin/pytest --cov=weko_logging tests/test_models.py::test_to_dict -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-logging/.tox/c1/tmp

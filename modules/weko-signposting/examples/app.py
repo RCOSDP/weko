@@ -47,11 +47,11 @@ from __future__ import absolute_import, print_function
 from flask import Flask
 from flask_babelex import Babel
 
-from weko_signposting import WekoSignpostingserver
+from weko_signposting import WekoSignposting
 from weko_signposting.views import blueprint
 
 # Create Flask application
 app = Flask(__name__)
 Babel(app)
-WekoSignpostingserver(app)
+WekoSignposting(app)
 app.register_blueprint(blueprint)

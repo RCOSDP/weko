@@ -48,6 +48,7 @@ from weko_records_ui import WekoRecordsUI
 from weko_redis.redis import RedisConnection
 from weko_search_ui import WekoSearchUI
 from weko_user_profiles import WekoUserProfiles
+from weko_logging.audit import WekoLoggingUserActivity
 
 from weko_accounts import WekoAccounts, WekoAccountsREST
 from weko_accounts.views import blueprint
@@ -68,10 +69,10 @@ def base_app(instance_path):
         SECRET_KEY='SECRET_KEY',
         TESTING=True,
         SERVER_NAME='TEST_SERVER.localdomain',
-        SQLALCHEMY_DATABASE_URI=os.environ.get(
-         'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'),
-        #SQLALCHEMY_DATABASE_URI=os.getenv('SQLALCHEMY_DATABASE_URI',
-        #                                   'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest'),
+        # SQLALCHEMY_DATABASE_URI=os.environ.get(
+        #  'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'),
+        SQLALCHEMY_DATABASE_URI=os.getenv('SQLALCHEMY_DATABASE_URI',
+                                          'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest'),
         THEME_SITEURL = 'https://localhost',
         CACHE_REDIS_URL=os.environ.get(
             "CACHE_REDIS_URL", "redis://redis:6379/0"
@@ -80,6 +81,7 @@ def base_app(instance_path):
         CACHE_REDIS_HOST="redis",
         CACHE_TYPE="redis",
         REDIS_PORT='6379',
+        WEB_HOST_NAME='localhost',
         WEKO_ACCOUNTS_SSO_ATTRIBUTE_MAP = {
             'eppn': (False, 'shib_eppn'),
             'HTTP_WEKOSOCIETYAFFILIATION': (False, 'shib_role_authority_name'),
@@ -104,6 +106,7 @@ def base_app(instance_path):
     app_.register_blueprint(blueprint)
     WekoAccountsREST(app_)
     WekoSearchUI(app_)
+    WekoLoggingUserActivity(app_)
     return app_
 
 

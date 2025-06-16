@@ -52,14 +52,14 @@ def test_access_key(location, base_app):
     """Test correct access key works together with flawed one."""
 
     default_location = Location.query.filter_by(default=True).first()
-    base_app.config['S3_ACCESS_KEY_ID'] = 'secret'
+    base_app.config['S3_ACCESS_KEY_ID'] = 'accesskey'
     try:
         # Delete the cached value in case it's there already
         del base_app.extensions['invenio-s3'].__dict__['init_s3fs_info']
     except KeyError:
         pass
     s3_connection_info = base_app.extensions['invenio-s3'].init_s3fs_info(default_location)
-    assert s3_connection_info['key'] == 'secret'
+    assert s3_connection_info['key'] == 'accesskey'
 
 
 # .tox/c1/bin/pytest --cov=invenio_s3 tests/test_invenio_s3.py::test_secret_key -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-s3/.tox/c1/tmp
@@ -67,11 +67,11 @@ def test_secret_key(location, base_app):
     """Test correct secret key works together with flawed one."""
 
     default_location = Location.query.filter_by(default=True).first()
-    base_app.config['S3_SECRET_ACCESS_KEY'] = 'secret'
+    base_app.config['S3_SECRET_ACCESS_KEY'] = 'secretkey'
     try:
         # Delete the cached value in case it's there already
         del base_app.extensions['invenio-s3'].__dict__['init_s3fs_info']
     except KeyError:
         pass
     s3_connection_info = base_app.extensions['invenio-s3'].init_s3fs_info(default_location)
-    assert s3_connection_info['secret'] == 'secret'
+    assert s3_connection_info['secret'] == 'secretkey'
