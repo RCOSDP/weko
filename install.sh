@@ -15,8 +15,6 @@ docker cp scripts/demo/defaultworkflow.sql $(docker-compose -f docker-compose2.y
 docker-compose -f docker-compose2.yml exec postgresql psql -U invenio -d invenio -f /tmp/defaultworkflow.sql
 docker cp scripts/demo/doi_identifier.sql $(docker-compose -f docker-compose2.yml ps -q postgresql):/tmp/doi_identifier.sql
 docker-compose -f docker-compose2.yml exec postgresql psql -U invenio -d invenio -f /tmp/doi_identifier.sql
-docker cp postgresql/ddl/W-OA-user_activity_log.sql $(docker-compose -f docker-compose2.yml ps -q postgresql):/tmp/W-OA-user_activity_log.sql
-docker-compose -f docker-compose2.yml exec postgresql psql -U invenio -d invenio -f /tmp/W-OA-user_activity_log.sql
 
 docker-compose -f docker-compose2.yml run --rm web invenio assets build
 docker-compose -f docker-compose2.yml run --rm web invenio collect -v

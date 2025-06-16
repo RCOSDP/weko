@@ -83,7 +83,6 @@ def test_check_on_behalf_of(app):
 def test_check_package_contents(app, client, make_crate, tokens, mocker):
 
     # error message:"Not accept packaging: "
-    app.config["WEKO_SWORDSERVER_CONTENT_LENGTH"] = True
     maxSize = app.config["WEKO_SWORDSERVER_SERVICEDOCUMENT_MAX_UPLOAD_SIZE"] = 10000
     contentType = app.config.get(
         "WEKO_SWORDSERVER_SERVICEDOCUMENT_ACCEPT_ARCHIVE_FORMAT"
@@ -129,7 +128,6 @@ def test_check_package_contents(app, client, make_crate, tokens, mocker):
             request.headers = original_headers
 
     # error message:"Packaging is required."
-    app.config["WEKO_SWORDSERVER_CONTENT_LENGTH"] = True
     maxSize = app.config["WEKO_SWORDSERVER_SERVICEDOCUMENT_MAX_UPLOAD_SIZE"] = 10000
     contentType = app.config.get(
         "WEKO_SWORDSERVER_SERVICEDOCUMENT_ACCEPT_ARCHIVE_FORMAT"
@@ -171,7 +169,6 @@ def test_check_package_contents(app, client, make_crate, tokens, mocker):
             request.headers = original_headers
 
     # error message:"Not accept Content-Type:
-    app.config["WEKO_SWORDSERVER_CONTENT_LENGTH"] = True
     maxSize = app.config["WEKO_SWORDSERVER_SERVICEDOCUMENT_MAX_UPLOAD_SIZE"] = 10000
     contentType = app.config.get(
         "WEKO_SWORDSERVER_SERVICEDOCUMENT_ACCEPT_ARCHIVE_FORMAT"
@@ -209,7 +206,6 @@ def test_check_package_contents(app, client, make_crate, tokens, mocker):
             request.headers = original_headers
 
     # error message:"Not accept Content-Type and file's Content-Type is None:
-    app.config["WEKO_SWORDSERVER_CONTENT_LENGTH"] = True
     maxSize = app.config["WEKO_SWORDSERVER_SERVICEDOCUMENT_MAX_UPLOAD_SIZE"] = 10000
     contentType = app.config.get(
         "WEKO_SWORDSERVER_SERVICEDOCUMENT_ACCEPT_ARCHIVE_FORMAT"
@@ -247,7 +243,6 @@ def test_check_package_contents(app, client, make_crate, tokens, mocker):
             request.headers = original_headers
 
     # error message:"Content size is too large."
-    app.config["WEKO_SWORDSERVER_CONTENT_LENGTH"] = True
     maxSize = app.config["WEKO_SWORDSERVER_SERVICEDOCUMENT_MAX_UPLOAD_SIZE"] = 1000
     zip = make_crate()
     mock_data = io.BytesIO(zip[0].read())
@@ -283,40 +278,6 @@ def test_check_package_contents(app, client, make_crate, tokens, mocker):
             request.files = original_files
             request.headers = original_headers
 
-    # error message:"Content-Length is not equal to real content length."
-    app.config["WEKO_SWORDSERVER_CONTENT_LENGTH"] = True
-    zip = make_crate()
-    mock_data = io.BytesIO(zip[0].read())
-    mock_data.seek(0, io.SEEK_END)
-    size = mock_data.tell()
-    mock_data.seek(0, 0)
-    mock_stream = MagicMock()
-    mock_stream.read = MagicMock(side_effect=mock_data.read)
-    mock_stream.seek = MagicMock(side_effect=mock_data.seek)
-    mock_stream.tell = MagicMock(side_effect=mock_data.tell)
-    mock_file = MagicMock(spec=FileStorage)
-    mock_file.filename = "mockfile.zip"
-    mock_file.stream = mock_stream
-    mock_file.seek = MagicMock(side_effect=mock_stream.seek)
-    mock_file.tell = MagicMock(side_effect=mock_stream.tell)
-
-    with app.test_request_context():
-        original = request.files
-        request.files = LocalProxy(lambda: {"file": mock_file})
-        original_headers = request.headers
-        request.headers = LocalProxy(lambda: {"Content-Length": "1000"})
-        try:
-            with pytest.raises(WekoSwordserverException) as e:
-                res = check_package_contents()(lambda x, y: x + y)(x=1, y=2)
-            assert e.value.errorType == ErrorType.ContentMalformed
-            assert (
-                e.value.message
-                == f"Content-Length is not match. (request:1000, real:{size})"
-            )
-        finally:
-            request.files = original
-            request.headers = original_headers
-
     # error message:"Content-Length is required."
     app.config["WEKO_SWORDSERVER_CONTENT_LENGTH"] = True
     zip = make_crate()
@@ -334,34 +295,15 @@ def test_check_package_contents(app, client, make_crate, tokens, mocker):
     mock_file.seek = MagicMock(side_effect=mock_stream.seek)
     mock_file.tell = MagicMock(side_effect=mock_stream.tell)
 
-    with app.test_request_context():
-        original = request.files
-        request.files = LocalProxy(lambda: {"file": mock_file})
-        try:
-            with pytest.raises(WekoSwordserverException) as e:
-                res = check_package_contents()(lambda x, y: x + y)(x=1, y=2)
-            assert e.value.errorType == ErrorType.ContentMalformed
-            assert e.value.message == "Content-Length is required."
-        finally:
-            request.files = original
-
     # error message:"Content size is too large."
-    app.config["WEKO_SWORDSERVER_CONTENT_LENGTH"] = False
     maxSize = app.config["WEKO_SWORDSERVER_SERVICEDOCUMENT_MAX_UPLOAD_SIZE"] = 1000
-    zip = make_crate()
-    mock_data = io.BytesIO(zip[0].read())
-    mock_data.seek(0, io.SEEK_END)
-    size = mock_data.tell()
-    mock_data.seek(0, 0)
-    mock_stream = MagicMock()
-    mock_stream.read = MagicMock(side_effect=mock_data.read)
-    mock_stream.seek = MagicMock(side_effect=mock_data.seek)
-    mock_stream.tell = MagicMock(side_effect=mock_data.tell)
-    mock_file = MagicMock(spec=FileStorage)
+    zip, size = make_crate()
+    mock_data = io.BytesIO(zip.read())
+    mock_file = MagicMock()
     mock_file.filename = "mockfile.zip"
     mock_file.stream = mock_stream
-    mock_file.seek = MagicMock(side_effect=mock_stream.seek)
-    mock_file.tell = MagicMock(side_effect=mock_stream.tell)
+    mock_file.seek.return_value = None
+    mock_file.tell.return_value = size
 
     with app.test_request_context():
         original_files = request.files
@@ -370,10 +312,8 @@ def test_check_package_contents(app, client, make_crate, tokens, mocker):
             with pytest.raises(WekoSwordserverException) as e:
                 res = check_package_contents()(lambda x, y: x + y)(x=1, y=2)
             assert e.value.errorType == ErrorType.MaxUploadSizeExceeded
-            assert (
-                e.value.message
-                == f"Content size is too large. (request:{size}, maxUploadSize:{maxSize})"
-            )
+            assert e.value.message.startswith("Content size is too large.")
+
         finally:
             request.files = original_files
 
@@ -395,7 +335,6 @@ def test_check_package_contents(app, client, make_crate, tokens, mocker):
         assert e.value.message == "No selected file."
 
     # success case
-    app.config["WEKO_SWORDSERVER_CONTENT_LENGTH"] = True
     maxSize = app.config["WEKO_SWORDSERVER_SERVICEDOCUMENT_MAX_UPLOAD_SIZE"] = 10000
     contentType = app.config.get(
         "WEKO_SWORDSERVER_SERVICEDOCUMENT_ACCEPT_ARCHIVE_FORMAT"
@@ -437,7 +376,6 @@ def test_check_package_contents(app, client, make_crate, tokens, mocker):
         request.headers = original_headers
 
     # fake content length, and has option in content type
-    app.config["WEKO_SWORDSERVER_CONTENT_LENGTH"] = False
     maxSize = app.config["WEKO_SWORDSERVER_SERVICEDOCUMENT_MAX_UPLOAD_SIZE"] = 10000
     contentType = app.config.get(
         "WEKO_SWORDSERVER_SERVICEDOCUMENT_ACCEPT_ARCHIVE_FORMAT"

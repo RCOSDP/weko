@@ -10,11 +10,11 @@
 
 import traceback
 from flask import Response, current_app
+from sqlalchemy.exc import SQLAlchemyError
 
 from invenio_db import db
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from invenio_pidstore.errors import PIDDoesNotExistError
-from invenio_records.api import Record
 
 
 def requested_signposting(pid, record, template=None, **kwargs):
@@ -42,7 +42,7 @@ def requested_signposting(pid, record, template=None, **kwargs):
     links = []
     recid = record['recid']
     record_link = f"{host_url}/records/{recid}"
-    permalink = get_record_permalink(recid)
+    permalink = get_record_doi(recid)
 
     if permalink is not None:
         links.append('<{url}>; rel="cite-as"'.format(url=permalink))
@@ -65,7 +65,7 @@ def requested_signposting(pid, record, template=None, **kwargs):
         )
         links.append(
             f'<{url}>; rel="describedby"; '
-            f'type="application/xml" ; formats="{_object["namespace"]}"'
+            f'type="application/xml"; formats="{_object["namespace"]}"'
         )
 
     resp = Response()
@@ -73,7 +73,7 @@ def requested_signposting(pid, record, template=None, **kwargs):
     return resp
 
 
-def get_record_permalink(recid):
+def get_record_doi(recid):
     """Get the uuid of the parent element of the record
     and get the uri of the doi associated with it
 
@@ -81,9 +81,9 @@ def get_record_permalink(recid):
     :return: uri of doi
     :rtype: string | None
     """
-    item_uuid =  PersistentIdentifier.get('recid', str(recid)).object_uuid
 
     try:
+        item_uuid =  PersistentIdentifier.get('recid', str(recid)).object_uuid
         pid = (
             PersistentIdentifier
             .query.filter_by(
@@ -97,7 +97,10 @@ def get_record_permalink(recid):
             return  pid.pid_value
 
     except PIDDoesNotExistError as ex:
-        current_app.logger.error(f"Error getting doi for recid: {recid}")
+        current_app.logger.error(f"PID does not exist: {recid}")
+        traceback.print_exc()
+    except SQLAlchemyError as ex:
+        current_app.logger.error(f"Failed to get DOI for {recid}.")
         traceback.print_exc()
 
     return None

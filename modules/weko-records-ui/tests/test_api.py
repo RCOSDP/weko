@@ -5,6 +5,7 @@ from flask import url_for,current_app,make_response
 import uuid
 from pytest_mock import mocker
 from sqlalchemy.exc import SQLAlchemyError
+from unittest.mock import patch, MagicMock
 
 from invenio_accounts.testutils import login_user_via_session, create_test_user
 from weko_records_ui.api import send_request_mail, create_captcha_image, validate_captcha_answer
@@ -14,11 +15,12 @@ from weko_redis.redis import RedisConnection
 from weko_user_profiles.models import UserProfile
 from .helpers import login, logout
 from invenio_records_files.models import RecordsBuckets
-from invenio_pidstore.models import PersistentIdentifier
+from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from invenio_files_rest.models import Location
 from werkzeug.datastructures import FileStorage
 from io import BytesIO
 from invenio_files_rest.models import Bucket, ObjectVersion, FileInstance
+from invenio_records.api import Record
 
 # def send_request_mail(item_id, mail_info):
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_api.py::test_send_request_mail -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
@@ -506,9 +508,7 @@ def test_get_file_place_info(app, db, users, client, records):
     records_buckets = RecordsBuckets.query.filter_by(
         record_id=pid.object_uuid).first()
 
-
     mock_response = 'http:return_url'
-
 
     with db.session.begin_nested():
 
@@ -571,7 +571,7 @@ def test_get_file_place_info(app, db, users, client, records):
 
 
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_api.py::test_replace_file_bucket -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
-def test_replace_file_bucket(app, db, users, client, records):
+def test_replace_file_bucket_local(app, db, users, client, records):
 
     pid = PersistentIdentifier.query.filter_by(
         pid_type="recid", pid_value='1'
@@ -587,56 +587,71 @@ def test_replace_file_bucket(app, db, users, client, records):
     # FileStorageオブジェクトを作成
     file = FileStorage(stream=virtual_file, filename='helloworld.pdf', content_type='application/pdf')
 
-    mock_response = 'http:return_url'
+    url = url_for("weko_records_ui.replace_file")
 
+    with patch("weko_records_ui.api.import_items_to_system", return_value={"success": True, "recid": {}}):
+
+        login(client,obj=users[0]["obj"])
+
+        # location weko local
+        res = client.post(
+            url,
+            data={
+                'pid': '1',
+                'bucket_id': records_buckets.bucket_id,
+                'file_name': 'helloworld.pdf',
+                'file_size': 2000,
+                'file_checksum': None,
+                'new_bucket_id': None,
+                'new_version_id': None,
+                'file': file,
+                'return_file_place': 'local',
+            },
+        )
+        assert res.status_code == 200
+
+def test_replace_file_bucket_S3(app, db, users, client, records):
+
+    pid = PersistentIdentifier.query.filter_by(
+        pid_type="recid", pid_value='1'
+    ).first()
+    records_buckets = RecordsBuckets.query.filter_by(
+        record_id=pid.object_uuid).first()
+    file_obj = ObjectVersion.get(bucket=records_buckets.bucket_id, key='helloworld.pdf')
+
+    # テスト用のデータを用意
+    test_data = b'Hello, World!' # バイナリデータ
+    # BytesIOオブジェクトを作成
+    virtual_file = BytesIO(test_data)
+    # FileStorageオブジェクトを作成
+    file = FileStorage(stream=virtual_file, filename='helloworld.pdf', content_type='application/pdf')
 
     url = url_for("weko_records_ui.replace_file")
-    login_user_via_session(client,email=users[0]["email"])
 
-    with patch("weko_search_ui.utils.check_replace_file_import_items", return_value={}):
-        with patch("weko_search_ui.utils.import_items_to_system", return_value={'success': True}):
+    with patch("weko_records_ui.api.import_items_to_system", return_value={"success": True, "recid": {}}):
 
-            # location weko local
-            res = client.post(
-                url,
-                data={
-                    'pid': '1',
-                    'bucket_id': records_buckets.bucket_id,
-                    'file_name': 'helloworld.pdf',
-                    'file_size': 2000,
-                    'file_checksum': None,
-                    'new_bucket_id': None,
-                    'new_version_id': None,
-                    'file': file,
-                    'return_file_place': 'local',
-                },
-            )
-            assert res.status_code == 200
+        login(client,obj=users[0]["obj"])
+        # location type:s3
+        l2=Location.get_default()
+        l2.uri='s3://test/'
+        l2.access_key='access_key'
+        l2.secret_key='secret_key'
+        l2.type='s3'
+        l2.s3_endpoint_url='https://s3.ap-southeast-2.amazonaws.com/'
 
-            with patch("invenio_pidstore.models.PersistentIdentifier.get", return_value=pid):
-
-                with db.session.begin_nested():
-                    # location type:s3
-                    l2=Location.get_default()
-                    l2.uri='s3://test/'
-                    l2.access_key='access_key'
-                    l2.secret_key='secret_key'
-                    l2.type='s3'
-                    l2.s3_endpoint_url='https://s3.ap-southeast-2.amazonaws.com/'
-
-                    res = client.post(
-                        url,
-                        data={
-                            'return_file_place': 'S3',
-                            'pid': '1',
-                            'bucket_id': records_buckets.bucket_id,
-                            'file_name': 'helloworld.pdf',
-                            'file_size': 100,
-                            'file_checksum': '86266081366d3c950c1cb31fbd9e1c38e4834fa52b568753ce28c87bc31252cd',
-                            'new_bucket_id': records_buckets.bucket_id,
-                            'new_version_id': file_obj.version_id,
-                            'file': None,
-                        },
-                    )
-                    assert res.status_code == 200
+        res = client.post(
+            url,
+            data={
+                'return_file_place': 'S3',
+                'pid': '1',
+                'bucket_id': records_buckets.bucket_id,
+                'file_name': 'helloworld.pdf',
+                'file_size': 100,
+                'file_checksum': '86266081366d3c950c1cb31fbd9e1c38e4834fa52b568753ce28c87bc31252cd',
+                'new_bucket_id': records_buckets.bucket_id,
+                'new_version_id': file_obj.version_id,
+                'file': None,
+            },
+        )
+        assert res.status_code == 200
 
