@@ -147,6 +147,8 @@ class ShibUser(object):
                     shib_user.shib_active_flag = self.shib_attr['shib_active_flag']
                 if self.shib_attr['shib_ip_range_flag']:
                     shib_user.shib_ip_range_flag = self.shib_attr['shib_ip_range_flag']
+                if self.shib_attr['shib_organization']:
+                    shib_user.shib_organization = self.shib_attr['shib_organization']
             db.session.commit()
         except SQLAlchemyError as ex:
             current_app.logger.error("SQLAlchemyError: {}".format(ex))

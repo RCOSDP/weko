@@ -71,6 +71,9 @@ class ShibbolethUser(db.Model):
     shib_ip_range_flag = db.Column(db.String(255), nullable=True)
     """SHIB_ATTR_SITE_USER_WITHIN_IP_RANGE_FLAG"""
 
+    shib_organization = db.Column(db.String(255), nullable=True)
+    """SHIB_ATTR_ORGANIZATION"""
+
     shib_roles = db.relationship(
         'Role',
         secondary=shibuserrole,
