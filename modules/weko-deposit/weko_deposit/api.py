@@ -1031,14 +1031,14 @@ class WekoDeposit(Deposit):
                         for content in self.jrc['content']:
                             if 'attachment' in content and 'content' in content.get('attachment'):
                                 del content['attachment']['content']
-            
+
                 try:
                     feedback_mail_list = FeedbackMailList.get_mail_list_by_item_id(self.id)
                     if feedback_mail_list:
                         self.update_feedback_mail()
                     else:
                         self.remove_feedback_mail()
-                except TransportError as err:    
+                except TransportError as err:
                     raise err
 
                 # Remove large base64 files for release memory
@@ -1286,8 +1286,8 @@ class WekoDeposit(Deposit):
                         }
                         pdf_files[filename] = file_info
         return pdf_files
-    
-    
+
+
     def get_file_data(self):
         """
         Get file data.
@@ -2948,7 +2948,7 @@ class _FormatSysCreator:
                                                   formatted_creator_list)
 
             rtn_value.update({'order_lang': formatted_creator_list})
-        
+
         except KeyError as e:
             current_app.logger.error("KeyError in format_creator: {}".format(e))
             current_app.logger.error(traceback.format_exc())
