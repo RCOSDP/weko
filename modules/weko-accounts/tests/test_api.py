@@ -664,7 +664,8 @@ def test_get_user_info_by_role_name(users):
 
 # .tox/c1/bin/pytest --cov=weko_accounts tests/test_api.py::test_sync_shib_gakunin_map_groups_success -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_sync_shib_gakunin_map_groups_success(app, client):
-    with app.test_request_context('/sync', method='POST', data={'WEKO_ACCOUNTS_IDP_ENTITY_ID': 'https://example.com'}):
+    with app.test_request_context('/sync', method='POST'):
+        app.config['WEKO_ACCOUNTS_IDP_ENTITY_ID'] = 'https://example.com'
         with patch('weko_accounts.api.RedisConnection') as mock_redis_conn, \
              patch('weko_accounts.api.Role') as mock_role, \
              patch('weko_accounts.api.update_roles') as mock_update_roles:
@@ -684,7 +685,8 @@ def test_sync_shib_gakunin_map_groups_success(app, client):
 
 # .tox/c1/bin/pytest --cov=weko_accounts tests/test_api.py::test_sync_shib_gakunin_map_groups_no_update_needed -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_sync_shib_gakunin_map_groups_no_update_needed(app, client):
-    with app.test_request_context('/sync', method='POST', data={'WEKO_ACCOUNTS_IDP_ENTITY_ID': 'https://example.com'}):
+    with app.test_request_context('/sync', method='POST'):
+        app.config['WEKO_ACCOUNTS_IDP_ENTITY_ID'] = 'https://example.com'
         with patch('weko_accounts.api.RedisConnection') as mock_redis_conn, \
              patch('weko_accounts.api.Role') as mock_role, \
              patch('weko_accounts.api.update_roles') as mock_update_roles:
@@ -704,35 +706,37 @@ def test_sync_shib_gakunin_map_groups_no_update_needed(app, client):
 
 # .tox/c1/bin/pytest --cov=weko_accounts tests/test_api.py::test_sync_shib_gakunin_map_groups_key_error -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_sync_shib_gakunin_map_groups_key_error(app, client):
-    with app.test_request_context('/sync', method='POST', data={}):
-        with patch('weko_accounts.api.current_app') as mock_current_app:
+    with app.test_request_context('/sync', method='POST'):
+        with patch('weko_accounts.api.current_app.logger') as mock_logger:
             with pytest.raises(KeyError):
                 sync_shib_gakunin_map_groups()
-            mock_current_app.logger.error.assert_called_once()
+            mock_logger.error.assert_called_once()
 
 # .tox/c1/bin/pytest --cov=weko_accounts tests/test_api.py::test_sync_shib_gakunin_map_groups_redis_connection_error -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_sync_shib_gakunin_map_groups_redis_connection_error(app, client):
-    with app.test_request_context('/sync', method='POST', data={'WEKO_ACCOUNTS_IDP_ENTITY_ID': 'https://example.com'}):
+    with app.test_request_context('/sync', method='POST'):
+        app.config['WEKO_ACCOUNTS_IDP_ENTITY_ID'] = 'https://example.com'
         with patch('weko_accounts.api.RedisConnection') as mock_redis_conn, \
-             patch('weko_accounts.api.current_app') as mock_current_app:
+             patch('weko_accounts.api.current_app.logger') as mock_logger:
 
             mock_redis_conn().connection.side_effect = redis.ConnectionError
 
             with pytest.raises(redis.ConnectionError):
                 sync_shib_gakunin_map_groups()
-            mock_current_app.logger.error.assert_called_once()
+            mock_logger.error.assert_called_once()
 
 #.tox/c1/bin/pytest --cov=weko_accounts tests/test_api.py::test_sync_shib_gakunin_map_groups_unexpected_error -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_sync_shib_gakunin_map_groups_unexpected_error(app, client):
-    with app.test_request_context('/sync', method='POST', data={'WEKO_ACCOUNTS_IDP_ENTITY_ID': 'https://example.com'}):
+    with app.test_request_context('/sync', method='POST'):
+        app.config['WEKO_ACCOUNTS_IDP_ENTITY_ID'] = 'https://example.com'
         with patch('weko_accounts.api.RedisConnection') as mock_redis_conn, \
-             patch('weko_accounts.api.current_app') as mock_current_app:
+             patch('weko_accounts.api.current_app.logger') as mock_logger:
 
             mock_redis_conn().connection.side_effect = Exception
 
             with pytest.raises(Exception):
                 sync_shib_gakunin_map_groups()
-            mock_current_app.logger.error.assert_called_once()
+            mock_logger.error.assert_called_once()
 
 #.tox/c1/bin/pytest --cov=weko_accounts tests/test_api.py::test_update_roles_add_new_roles -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_update_roles_add_new_roles(app, db, mocker):

@@ -481,7 +481,7 @@ def sync_shib_gakunin_map_groups():
     """Handle SHIB_BIND_GAKUNIN_MAP_GROUPS logic."""
     try:
         # Entity ID → Redisのキーに変換
-        idp_entity_id = request.form.get('WEKO_ACCOUNTS_IDP_ENTITY_ID')
+        idp_entity_id = current_app.config.get('WEKO_ACCOUNTS_IDP_ENTITY_ID')
         if not idp_entity_id:
             raise KeyError('WEKO_ACCOUNTS_IDP_ENTITY_ID is missing in config')
 
