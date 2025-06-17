@@ -9,6 +9,7 @@
 
 import os
 import json
+import traceback
 import uuid
 from copy import deepcopy
 from datetime import datetime
@@ -60,6 +61,17 @@ class HeadlessActivity(WorkActivity):
     `item_registration`, `item_link`, `identifier_grant`, `approval`. <br>
     But, this is not recommended because the order of actions is different for each flow.
 
+    Attributes:
+        user (User): Activity operator user model
+        workflow (WorkFlow): Workflow model
+        item_type (ItemType): Item type model
+        files_info (list): List of file information uploaded in the activity
+        activity_id (str): Activity ID
+        current_action_id (int): Current action ID
+        current_action (str): Current action endpoint
+        community (str): Community ID
+        detail (str): Activity detail URL
+        recid (str): Record ID
 
     Examples:
 
@@ -96,10 +108,9 @@ class HeadlessActivity(WorkActivity):
         """ WorkFlow: Workflow model """
         self.item_type = None
         """ ItemType: Item type model """
-        self.recid = None
-        """ str: Record ID """
         self.files_info = None
         """ list: List of file information """
+        self._recid = None
         self._model = None
         self._deposit = None
         self._lock_skip = _lock_skip
@@ -147,6 +158,11 @@ class HeadlessActivity(WorkActivity):
             activity_id=self.activity_id, community=self.community,
             _external=True
         )) if self._model is not None else ""
+
+    @property
+    def recid(self):
+        """str: Record ID."""
+        return self._recid if isinstance(self._recid, str) else None
 
     def init_activity(self, user_id, **kwargs):
         """Manual initialization of activity.
@@ -210,7 +226,7 @@ class HeadlessActivity(WorkActivity):
             pid = PersistentIdentifier.get_by_object(
                 "recid", object_type="rec", object_uuid=self._model.item_id
             )
-            self.recid = pid.pid_value
+            self._recid = pid.pid_value
             self._activity_unlock(locked_value)
             return self.detail
 
@@ -230,11 +246,11 @@ class HeadlessActivity(WorkActivity):
                     f"failed to create activity: {response.json.get('msg')}")
                 raise WekoWorkflowException(response.json.get("msg"))
 
-            self.recid = item_id
             url = str(response.json.get("data").get("redirect"))
             if "/records/" in url and for_delete:
                 # item delete directly
                 self.user = User.query.get(user_id)
+                self._recid = item_id
                 return url
             activity_id = url.split("/activity/detail/")[1]
             if "?" in activity_id:
@@ -243,6 +259,10 @@ class HeadlessActivity(WorkActivity):
             self._model = self.get_activity_by_id(activity_id)
             self.workflow = self._model.workflow
             self.item_type = ItemTypes.get_by_id(self.workflow.itemtype_id)
+            pid = PersistentIdentifier.get_by_object(
+                "recid", object_type="rec", object_uuid=self._model.item_id
+            )
+            self._recid = pid.pid_value
 
         else:
             workflow_id = kwargs.get("workflow_id")
@@ -388,7 +408,7 @@ class HeadlessActivity(WorkActivity):
             current_app.logger.error(f"failed to input metadata: {error}")
             raise WekoWorkflowException(error)
 
-        self.recid = self._input_metadata(metadata, files, non_extract)
+        self._recid = self._input_metadata(metadata, files, non_extract)
         self._designate_index(index)
         self._comment(comment)
 
@@ -418,6 +438,7 @@ class HeadlessActivity(WorkActivity):
                 or if there is an error in processing the metadata input.
         """
         locked_value = self._activity_lock()
+        non_extract = non_extract if isinstance(non_extract, list) else []
 
         try:
             itemtype_id = metadata.get("$schema", "").split("/")[-1]
@@ -458,12 +479,9 @@ class HeadlessActivity(WorkActivity):
 
             self.update_activity(self.activity_id, {
                 "title": title[0] if title else "",
-                "shared_user_id": weko_shared_id
-                    if shared_user_id == -1 else shared_user_id
+                "shared_user_id": shared_user_id
+                    if shared_user_id != -1 else weko_shared_id
             })
-
-            result = {"is_valid": True}
-            validate_form_input_data(result, self.item_type.id, deepcopy(metadata))
 
             _old_metadata, _old_files = {}, []
             if self.recid is None:
@@ -489,9 +507,9 @@ class HeadlessActivity(WorkActivity):
                 self._deposit = WekoDeposit.get_record(record_uuid)
 
                 if metadata.get("edit_mode").lower() == "upgrade":
-                    cur_pid = PersistentIdentifier.query.filter_by(
-                        pid_type="recid", object_uuid=record_uuid
-                    ).first()
+                    cur_pid = PersistentIdentifier.get_by_object(
+                        "recid", object_type="rec", object_uuid=record_uuid
+                    )
                     parent_pid = PersistentIdentifier.get(
                         "recid", cur_pid.pid_value.split(".")[0]
                     )
@@ -499,7 +517,7 @@ class HeadlessActivity(WorkActivity):
                     _deposit.non_extract = non_extract
                     self._deposit = _deposit.newversion(parent_pid)
 
-                    if self._deposit:
+                    if cur_pid.pid_value.endswith(".0"):
                         self._deposit.merge_data_to_record_without_version(cur_pid)
                         record_uuid = self._model.item_id = self._deposit.model.id
                         db.session.merge(self._model)
@@ -516,9 +534,9 @@ class HeadlessActivity(WorkActivity):
                         )
                     )
 
-                pid = PersistentIdentifier.query.filter_by(
-                    pid_type="recid", object_uuid=record_uuid
-                ).first()
+                pid = PersistentIdentifier.get_by_object(
+                    "recid", object_type="rec", object_uuid=record_uuid
+                )
 
                 # get old metadata by record_uuid
                 _old_metadata = self._deposit.item_metadata
@@ -553,8 +571,7 @@ class HeadlessActivity(WorkActivity):
 
             # to exclude from file text extraction
             for file in self.files_info:
-                if isinstance(non_extract, list) and file["filename"] in non_extract:
-                    file["non_extract"] = True
+                file["non_extract"] = file["filename"] in non_extract
 
             file_key_list = []
             for key, value in metadata.items():
@@ -625,12 +642,15 @@ class HeadlessActivity(WorkActivity):
                 if workflow_index is not None else metadata.get("path", [])
             )
             if not isinstance(list_index, list) or not list_index:
-                raise Exception(
+                raise WekoWorkflowException(
                     "Index is not specified in workflow or item metadata."
                 )
+
+            result = {"is_valid": True}
+            validate_form_input_data(result, self.item_type.id, deepcopy(metadata))
             if not result.get("is_valid"):
                 current_app.logger.error(
-                    "failed to input metadata: {}".format(result.get("error"))
+                    "Failed to input metadata: {}".format(result.get("error"))
                 )
                 raise WekoWorkflowException(result.get("error"))
 
@@ -640,14 +660,19 @@ class HeadlessActivity(WorkActivity):
             }
             self._deposit.update(index, metadata)
             self._deposit.commit()
+        except WekoWorkflowException as ex:
+            traceback.print_exc()
+            raise
         except SQLAlchemyError as ex:
             db.session.rollback()
             msg = f"Failed to input metadata to deposit: {ex}"
             current_app.logger.error(msg)
+            traceback.print_exc()
             raise WekoWorkflowException(msg) from ex
         except Exception as ex:
             msg = f"Failed to input metadata to deposit: {ex}"
             current_app.logger.error(msg)
+            traceback.print_exc()
             raise WekoWorkflowException(msg) from ex
         finally:
             self._activity_unlock(locked_value)
