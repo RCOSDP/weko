@@ -49,7 +49,10 @@ def check_site_license_permission():
                     return True
 
     user_domain = None
-    if getattr(current_user, "is_authenticated", False) and getattr(current_user, "shib_weko_user", None):
+    if (
+        getattr(current_user, "is_authenticated", False)
+        and getattr(current_user, "shib_weko_user", None)
+    ):
         for shib_user in current_user.shib_weko_user:
             user_domain = shib_user.shib_organization
             for lst in sl_lst:
