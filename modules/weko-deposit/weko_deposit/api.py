@@ -1573,8 +1573,12 @@ class WekoDeposit(Deposit):
         except RuntimeError:
             raise
         except ValueError as ex:
+<<<<<<< HEAD
             traceback.print_exc()
             raise
+=======
+            raise ex
+>>>>>>> ebdbd4689 (weko#46668 fix type change issue)
         except BaseException:
             traceback.print_exc()
             abort(500, 'MAPPING_ERROR')
