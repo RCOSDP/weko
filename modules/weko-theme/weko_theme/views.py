@@ -30,6 +30,7 @@ from invenio_i18n.ext import current_i18n
 from invenio_db import db
 from weko_admin.models import SiteInfo
 from weko_admin.utils import get_search_setting
+from weko_gridlayout.utils import get_widget_design_page_with_main, main_design_has_main_widget
 from weko_records_ui.ipaddr import check_site_license_permission
 
 from .utils import MainScreenInitDisplaySetting, get_design_layout, \
@@ -45,6 +46,20 @@ blueprint = Blueprint(
     static_folder='static',
 )
 
+def get_top_page_url(community_id=None):
+    """Get Top tags url."""
+    repository_id = "Root Index" if not community_id else community_id
+    top_url = None
+    if main_design_has_main_widget(repository_id):
+        top_url = "/"
+    else:
+        page = get_widget_design_page_with_main(repository_id)
+        if page:
+            top_url = page.url
+    top_url = top_url if top_url else "/"
+    if community_id:
+        top_url = "{}?community={}".format(top_url, community_id)
+    return top_url
 
 @blueprint.route('/')
 def index():
