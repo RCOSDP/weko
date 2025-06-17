@@ -299,41 +299,41 @@ onMounted(() => {
     const dsURL = 'https://ds.gakunin.nii.ac.jp/WAYF';
     // const dsURL = 'https://test-ds.gakunin.nii.ac.jp/WAYF';
 
-    const webHostName = 'weko3.ir.rcos.nii.ac.jp';
+    const webHostName = 'https://weko3.ir.rcos.nii.ac.jp';
     // const webHostName = useAppConfig().wekoOrigin;
-    const entityID = 'https://' + webHostName + '/shibboleth';
-    const handlerURL = 'https://' + webHostName + '/Shibboleth.sso';
-    const returnURL = "https://" + webHostName + "/secure/login.py";
+    const entityID = webHostName + '/shibboleth';
+    const handlerURL = webHostName + '/Shibboleth.sso';
+    const returnURL = webHostName + '/secure/login.py?next=ams';
 
     // iframe内に埋め込むHTML
     iframe.srcdoc = `
       <script>
-        window.wayf_URL = "${dsURL}";
-        window.wayf_sp_entityID = "${entityID}";
-        window.wayf_sp_handlerURL = "${handlerURL}";
-        window.wayf_return_url = "${returnURL}";
-        window.wayf_width = "auto";
-        window.wayf_height = "auto";
+        window.wayf_URL = '${dsURL}';
+        window.wayf_sp_entityID = '${entityID}';
+        window.wayf_sp_handlerURL = '${handlerURL}';
+        window.wayf_return_url = '${returnURL}';
+        window.wayf_width = 'auto';
+        window.wayf_height = 'auto';
         window.wayf_show_remember_checkbox = true;
         window.wayf_force_remember_for_session = false;
         window.wayf_use_small_logo = true;
         window.wayf_font_size = 12;
-        window.wayf_font_color = "#000000";
-        window.wayf_border_color = "#00247d";
-        window.wayf_background_color = "#f4f7f7";
+        window.wayf_font_color = '#000000';
+        window.wayf_border_color = '#00247d';
+        window.wayf_background_color = '#f4f7f7';
         window.wayf_auto_login = true;
         window.wayf_hide_after_login = false;
         window.wayf_show_categories = true;
         window.addEventListener('load', () => {
           let iHeight = document.documentElement.offsetHeight;
-          if (!"${dsURL}".includes('test')) {
+          if (!'${dsURL}'.includes('test')) {
             const extraHeight = window.innerHeight * 0.3; // NOTE:テスト環境ではない場合、画面高さの30%を加算する
             iHeight += extraHeight;
           }
           window.parent.document.querySelector('iframe').style.height = iHeight + 'px';
         });
       <\/script>
-      <script src="${dsURL}/embedded-wayf.js"><\/script>
+      <script src='${dsURL}/embedded-wayf.js'><\/script>
       <noscript>
         <!--
         Fallback to Shibboleth DS session initiator for non-JavaScript users
@@ -343,7 +343,7 @@ onMounted(() => {
         -->
         <p>
           <strong>Login:</strong> Javascript is not available for your web browser. Therefore, please <a
-            href="/Shibboleth.sso/DS?target=">proceed manually</a>.
+            href='/Shibboleth.sso/DS?target='>proceed manually</a>.
         <\/p>
       <\/noscript>
       <style>
@@ -356,6 +356,14 @@ onMounted(() => {
       `;
     wayfContainer.parentNode.replaceChild(iframe, wayfContainer);
     iframe.width = '100%';
+  }
+});
+
+onBeforeMount(() => {
+  const route = useRoute();
+  // アイテム詳細画面以外からのログインの場合、sessionStorage を削除
+  if (route.query.source !== 'detail') {
+    sessionStorage.removeItem("item-url");
   }
 });
 </script>

@@ -95,6 +95,23 @@ try {
   const query = useRoute().query;
   const state = String(query.state);
 
+  // Shibbolethログインの場合、TOP画面でOAuth認証を実行
+  const next = query.next === 'ams' ? 'ams' : '';
+  if (next == 'ams') {
+    const url = new URL(useAppConfig().wekoOrigin + '/oauth/authorize');
+    const random = Math.random().toString(36);
+    url.searchParams.append('response_type', 'code');
+    url.searchParams.append('client_id', useRuntimeConfig().public.clientId);
+    url.searchParams.append('scope', 'item:read index:read ranking:read file:read user:email');
+    url.searchParams.append('state', random);
+    sessionStorage.setItem('login:state', random);
+    window.open(url.href, '_self');
+  }
+
+  const baseURI = useRuntimeConfig().public.redirectURI;
+  const itemURL = sessionStorage.getItem('item-url');
+  const redirectURL = itemURL ? itemURL : baseURI;
+
   // アクセストークン取得
   if (state) {
     if (sessionStorage.getItem('login:state') === state) {
@@ -113,7 +130,20 @@ try {
           }
         })
         .finally(() => {
-          useRouter().replace({ query: {} });
+          const params = new URLSearchParams(redirectURL.replace(baseURI, ''));
+          const number = params.get('number');
+          if (!number) {
+            useRouter().replace({ query: {} });
+          } else {
+            sessionStorage.removeItem('item-url');
+            useRouter().replace({
+              path: redirectURL,
+              query: {
+                sess: 'top',
+                number: number,
+              }
+            });
+          }
           setTimeout(() => {
             location.reload();
           }, 100);

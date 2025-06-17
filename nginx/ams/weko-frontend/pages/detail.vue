@@ -53,6 +53,7 @@
                 @click-prev="changeDetail"
                 @click-next="changeDetail" />
             </div>
+            <div v-else class="pt-2.5 pb-28"></div>
             <!-- 最上部に戻る -->
             <button id="page-top" class="hidden lg:block w-10 h-10 absolute right-5 bottom-[60px]" @click="scrollToTop">
               <img src="/img/btn/btn-gototop.svg" alt="Top" />
@@ -68,7 +69,7 @@
             </p>
           </div>
           <ViewsNumber
-            v-if="renderFlag"
+            v-if="renderFlag && !oauthError"
             :current-number="currentNumber"
             :created-date="createdDate"
             @error="setError" />
@@ -348,7 +349,7 @@ async function search(searchPage: string) {
       statusCode = response.status;
       switcherFlag.value = false;
       searchResult = [];
-      if (oauthError || statusCode === 401 || statusCode === 403) {
+      if (oauthError.value || statusCode === 401 || statusCode === 403) {
         // 認証エラー
         oauthErrorRedirect();
       } else if (statusCode >= 500 && statusCode < 600) {
@@ -405,7 +406,7 @@ async function getParentIndex() {
     onResponseError({ response }) {
       alertCode.value = 0;
       statusCode = response.status;
-      if (oauthError || statusCode === 401 || statusCode === 403) {
+      if (oauthError.value || statusCode === 401 || statusCode === 403) {
         // 認証エラー
         oauthErrorRedirect();
       } else if (statusCode >= 500 && statusCode < 600) {
