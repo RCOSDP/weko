@@ -294,3 +294,45 @@ def users_login(users):
     inactive_user = create_test_user(email='inactive_user@test.org', active=False)
     users.append({'email': inactive_user.email, 'id': inactive_user.id, 'obj': inactive_user})
     return users
+
+@pytest.fixture()
+def indices(db):
+    """Create indices."""
+    index_1 = Index(
+        index_name='Index 1',
+        comment='This is index 1',
+        position=0,
+        browsing_role='1,2,3',
+        contribute_role='1,2,3',
+        is_deleted=False
+    )
+    index_2 = Index(
+        index_name='Index 2',
+        comment='This is index 2',
+        position=1,
+        browsing_role='1,2,3',
+        contribute_role='',
+        is_deleted=False
+    )
+    index_3 = Index(
+        index_name='Index 3',
+        comment='This is index 3',
+        position=2,
+        browsing_role='',
+        contribute_role='1,2,3',
+        is_deleted=False
+    )
+    index_4 = Index(
+        index_name='Index 4',
+        comment='This is index 4',
+        position=3,
+        browsing_role='',
+        contribute_role='',
+        is_deleted=False
+    )
+    db.session.add(index_1)
+    db.session.add(index_2)
+    db.session.add(index_3)
+    db.session.add(index_4)
+    db.session.commit()
+    return [index_1, index_2, index_3, index_4]

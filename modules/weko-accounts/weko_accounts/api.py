@@ -491,12 +491,12 @@ def sync_shib_gakunin_map_groups():
 
         # create Redis key
         redis_key = fqdn + suffix
-        datastore = RedisConnection().connection(db=current_app.config['CACHE_REDIS_DB'], kv=True)
-        map_group_list = set(datastore.lrange(redis_key, 0, -1))
+        datastore = RedisConnection().connection(db=current_app.config['CACHE_REDIS_DB'])
+        map_group_list = set(id.decode('utf-8') for id in datastore.lrange(redis_key, 0, -1))
 
         # get roles
         roles = Role.query.all()
-        role_names = set({role.name for role in Role.query.all()})
+        role_names = set({role.name for role in roles})
 
         if map_group_list != role_names:
             update_roles(map_group_list, roles)
@@ -547,10 +547,12 @@ def bind_roles_to_indices(indices=[], new_roles=[], remove_role_ids=[]):
     """Bind roles to indices."""
     try:
         with db.session.begin_nested():
+            if not indices:
+                indices = Index.query.all()
             for index in indices:
                 browsing_roles = set()
                 if index.browsing_role:
-                    browsing_roles = set(index.browsing_role.split(','))
+                    browsing_roles = set(int(x) for x in index.browsing_role.split(','))
                 # unbind roles from indices removed from the database
                 for role_id in remove_role_ids:
                     if role_id in browsing_roles:
@@ -559,16 +561,14 @@ def bind_roles_to_indices(indices=[], new_roles=[], remove_role_ids=[]):
                 # bind new roles
                 browsing_default_permission = current_app.config.get('WEKO_INDEXTREE_GAKUNIN_GROUP_DEFAULT_BROWSING_PERMISSION', False)
                 for role in new_roles:
-                    if role.id in browsing_roles:
-                        if browsing_default_permission:
-                            browsing_roles.add(role.id)
-                        elif not browsing_default_permission and role.id in browsing_roles:
-                            browsing_roles.remove(role.id)
-                index.browsing_role = ','.join(browsing_roles)
+                    if role.id not in browsing_roles and browsing_default_permission:
+                        browsing_roles.add(role.id)
+                sorted_browsing_roles = sorted(browsing_roles)
+                index.browsing_role = ','.join(str(x) for x in sorted_browsing_roles)
 
                 contributing_roles = set()
                 if index.contribute_role:
-                    contributing_roles = set(index.contribute_role.split(','))
+                    contributing_roles = set(int(x) for x in index.contribute_role.split(','))
                 # unbind roles from indices removed from the database
                 for role_id in remove_role_ids:
                     if role_id in contributing_roles:
@@ -577,12 +577,10 @@ def bind_roles_to_indices(indices=[], new_roles=[], remove_role_ids=[]):
                 # bind new roles
                 contribute_default_permission = current_app.config.get('WEKO_INDEXTREE_GAKUNIN_GROUP_DEFAULT_CONTRIBUTE_PERMISSION', False)
                 for role in new_roles:
-                    if role.id in contributing_roles:
-                        if contribute_default_permission:
-                            contributing_roles.add(role.id)
-                        elif not contribute_default_permission and role.id in contributing_roles:
-                            contributing_roles.remove(role.id)
-                index.contribute_role = ','.join(contributing_roles)
+                    if role.id not in contributing_roles and contribute_default_permission:
+                        contributing_roles.add(role.id)
+                sorted_contributing_roles = sorted(contributing_roles)
+                index.contribute_role = ','.join(str(x) for x in sorted_contributing_roles)
         db.session.commit()
     except Exception as ex:
         current_app.logger.error(f"Error binding roles to indices: {ex}")
