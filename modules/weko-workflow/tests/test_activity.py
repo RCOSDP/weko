@@ -2,13 +2,13 @@ import copy
 import pytest
 import uuid
 from flask import jsonify, url_for
-from unittest.mock import Mock, MagicMock, PropertyMock, patch, mock_open
+from unittest.mock import Mock, MagicMock, patch, mock_open
 from sqlalchemy.exc import SQLAlchemyError
 from werkzeug.datastructures import FileStorage
 import json
 
 from invenio_files_rest.errors import FileSizeError
-from invenio_files_rest.models import Bucket, ObjectVersion
+from invenio_files_rest.models import Bucket, Location, ObjectVersion
 from invenio_pidstore.models import PersistentIdentifier
 
 from invenio_db.shared import SQLAlchemy
@@ -17,7 +17,7 @@ from weko_admin.models import Identifier
 from weko_deposit.api import WekoDeposit, WekoRecord
 from weko_workflow.errors import WekoWorkflowException
 from weko_workflow.headless import HeadlessActivity
-from weko_workflow.models import Activity
+from weko_workflow.models import Activity, WorkFlow
 
 
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_activity.py -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
@@ -48,8 +48,8 @@ class TestHeadlessActivity:
         assert activity._actions.get(7) == "identifier_grant"
 
     # def init_activity(self, user_id, workflow_id=None, ...):
-    # .tox/c1/bin/pytest --cov=weko_workflow tests/test_activity.py::TestHeadlessActivity::test_init_activity -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
-    def test_init_activity(self, app, db, item_type, workflow, users, client):
+    # .tox/c1/bin/pytest --cov=weko_workflow tests/test_activity.py::TestHeadlessActivity::test_init_activity_new -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+    def test_init_activity_new(self, app, db, item_type, workflow, users, client):
         # success to initialize activity for new item registration
         mock_activity = MagicMock(spec=Activity)
         mock_activity.activity_id = "A-TEST-00001"
@@ -135,6 +135,9 @@ class TestHeadlessActivity:
             activity.init_activity(users[0]["id"], workflow_id=999)
         assert ex.value.args[0] == "workflow(id=999) is not found."
 
+    # def init_activity(self, user_id, workflow_id=None, ...):
+    # .tox/c1/bin/pytest --cov=weko_workflow tests/test_activity.py::TestHeadlessActivity::test_init_activity_exist_item -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+    def test_init_activity_exist_item(self, app, db, item_type, workflow, users, client):
         # success to initialize activity for item edit
         # without community
         mock_activity = MagicMock(spec=Activity)
@@ -251,6 +254,9 @@ class TestHeadlessActivity:
             assert activity.user == users[0]["obj"]
             assert activity.workflow is None
 
+    # def init_activity(self, user_id, workflow_id=None, ...):
+    # .tox/c1/bin/pytest --cov=weko_workflow tests/test_activity.py::TestHeadlessActivity::test_init_activity_resume -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+    def test_init_activity_resume(self, app, db, item_type, workflow, users, client):
         # success to initialize activity for existing activity
         mock_activity = MagicMock(spec=Activity)
         mock_activity.activity_id = "A-TEST-00006"
@@ -398,7 +404,9 @@ class TestHeadlessActivity:
                 patch("weko_workflow.headless.activity.HeadlessActivity._designate_index") as mock_designate_index, \
                 patch("weko_workflow.headless.activity.HeadlessActivity._comment") as mock_comment:
             mock_validation_msg.return_value = jsonify(code=0)
-            mock_input_metadata.return_value = "200001"
+            def se_input(*args, **kwargs):
+                activity._recid = "200001"
+            mock_input_metadata.side_effect = se_input
             activity = HeadlessActivity()
             mock_activity = MagicMock(spec=Activity, activity_id="A-TEST-00001", activity_community_id=None)
             activity._model = mock_activity
@@ -489,8 +497,9 @@ class TestHeadlessActivity:
         mock_activity.action_id = 3  # "item_login"
         mock_activity.activity_community_id = None
         activity._model = mock_activity
-        activity.workflow = workflow["workflow"]
+        activity.workflow = MagicMock(**workflow["workflow"].__dict__, spec=WorkFlow)
         activity.workflow.index_tree_id = "1"
+        activity.workflow.location = MagicMock(name="local", spec=Location)
         activity.item_type = item_type
 
         metadata = {
@@ -503,23 +512,26 @@ class TestHeadlessActivity:
 
         # success to input metadata
         with patch("weko_workflow.headless.activity.validate_form_input_data") as mock_validate, \
+                patch("weko_workflow.headless.activity.uuid.uuid4") as mock_uuid, \
                 patch("weko_workflow.headless.activity.HeadlessActivity.update_activity") as mock_update_activity, \
                 patch("weko_workflow.headless.activity.HeadlessActivity._upload_files") as mock_upload, \
                 patch("weko_workflow.headless.activity.HeadlessActivity._delete_file") as mock_delete, \
                 patch("weko_workflow.headless.activity.HeadlessActivity.upt_activity_metadata") as mock_upt_meta:
             mock_validate.side_effect = lambda result, itemtype_id, metadata: result.update({"is_valid": True})
+            mock_uuid.return_value = uuid.uuid4()
             mock_upload.return_value = copy.deepcopy(files_info)
             non_extract = ["ignore.txt"]
-            recid = activity._input_metadata(metadata, files, non_extract)
+            activity._input_metadata(metadata, files, non_extract)
 
-            assert recid == "200001"
+            assert activity.recid == "200001"
             mock_feedback_mail.assert_called_once()
             mock_request_mail.assert_called_once()
             mock_update_activity.call_args[0][0] == mock_activity.activity_id
             mock_update_activity.call_args[0][1]["shared_user_id"] == users[1]["id"]
-            mock_deposit_create.assert_called_once()
-            mock_upload.assert_called_once_with(files)
-            mock_delete.assert_called_once()
+            mock_deposit_create.assert_called_once_with({}, id_=mock_uuid.return_value, workflow_location_name=activity.workflow.location.name)
+            mock_upload.assert_called_once_with(files, {})
+            mock_delete.assert_called_once_with(set())
+            mock_upt_meta.assert_called_once()
 
             args, _ = mock_upt_meta.call_args
             assert args[0] == mock_activity.activity_id
@@ -534,7 +546,7 @@ class TestHeadlessActivity:
 
         activity = HeadlessActivity(_lock_skip=True)
         mock_activity = MagicMock(spec=Activity)
-        mock_activity.activity_id = "A-TEST-00001"
+        mock_activity.activity_id = "A-TEST-00002"
         mock_activity.action_id = 3  # "item_login"
         mock_activity.activity_community_id = None
         activity._model = mock_activity
@@ -546,7 +558,8 @@ class TestHeadlessActivity:
             "pubdate": "2024-01-01",
             "weko_shared_id": users[1]["id"],
             "item_title":[{"subitem_title":"Test Title"}],
-            "item_files": [{"filename": "test.txt"}, {"filename": "ignore.txt"}]
+            "item_files": [{"filename": "test.txt"}, {"filename": "ignore.txt"}],
+            "item_1617186783814": []
         }
 
         with patch("weko_workflow.headless.activity.validate_form_input_data") as mock_validate, \
@@ -556,13 +569,15 @@ class TestHeadlessActivity:
                 patch("weko_workflow.headless.activity.HeadlessActivity.upt_activity_metadata") as mock_upt_meta:
             mock_validate.side_effect = lambda result, *args: result.update({"is_valid": True})
             mock_upload.return_value = copy.deepcopy(files_info)
+
             # non_extract not specified
-            recid = activity._input_metadata(metadata, files)
-            assert recid == "200001"
+            activity._input_metadata(metadata, files)
+
+            assert activity.recid == "200001"
             mock_update_activity.call_args[0][0] == mock_activity.activity_id
             mock_update_activity.call_args[0][1]["shared_user_id"] == users[1]["id"]
-            mock_upload.assert_called_once_with(files)
-            mock_delete.assert_called_once()
+            mock_upload.assert_called_once_with(files, {})
+            mock_delete.assert_called_once_with(set())
             mock_upt_meta.assert_called_once()
 
             args, _ = mock_upt_meta.call_args
@@ -572,8 +587,18 @@ class TestHeadlessActivity:
             assert updated_data["files"][1]["filename"] == "ignore.txt"
             assert updated_data["files"][1]["non_extract"] is False
 
+        activity = HeadlessActivity(_lock_skip=True)
+        mock_activity = MagicMock(spec=Activity)
+        mock_activity.activity_id = "A-TEST-0000"
+        mock_activity.action_id = 3  # "item_login"
+        mock_activity.activity_community_id = None
+        activity._model = mock_activity
+        activity.workflow = workflow["workflow"]
+        activity.item_type = item_type
+
         workflow_index_tree_id = workflow["workflow"].index_tree_id
         activity.workflow.index_tree_id = None
+
         metadata = {
             "pubdate": "2024-01-01",
             "path": [str(workflow_index_tree_id)],
@@ -587,12 +612,13 @@ class TestHeadlessActivity:
                 patch("weko_workflow.headless.activity.HeadlessActivity.upt_activity_metadata") as mock_upt_meta:
             mock_validate.side_effect = lambda result, *args: result.update({"is_valid": True})
 
-            recid = activity._input_metadata(metadata)
-            assert recid == "200001"
+            activity._input_metadata(metadata)
+
+            assert activity.recid == "200001"
             mock_update_activity.call_args[0][0] == mock_activity.activity_id
             mock_update_activity.call_args[0][1]["shared_user_id"] == -1
-            mock_upload.assert_called_once_with(None)
-            mock_delete.assert_called_once()
+            mock_upload.assert_called_once_with(None, {})
+            mock_delete.assert_called_once_with(set())
             mock_upt_meta.assert_called_once()
 
         args, _ = mock_upt_meta.call_args
@@ -600,6 +626,14 @@ class TestHeadlessActivity:
         assert updated_data["files"] == []
         assert updated_data["metainfo"]["pubdate"] == "2024-01-01"
 
+        activity = HeadlessActivity(_lock_skip=True)
+        mock_activity = MagicMock(spec=Activity)
+        mock_activity.activity_id = "A-TEST-00004"
+        mock_activity.action_id = 3  # "item_login"
+        mock_activity.activity_community_id = None
+        activity._model = mock_activity
+        activity.workflow = workflow["workflow"]
+        activity.item_type = item_type
         # no index tree id, shared_user_id and weko_shared_id are specified
         metadata = {
             "pubdate": "2024-01-01",
@@ -621,13 +655,22 @@ class TestHeadlessActivity:
             mock_update_activity.call_args[0][0] == mock_activity.activity_id
             mock_update_activity.call_args[0][1]["shared_user_id"] == users[1]["id"]    # shared_user_id is used
 
+
+        activity = HeadlessActivity(_lock_skip=True)
+        mock_activity = MagicMock(spec=Activity)
+        mock_activity.activity_id = "A-TEST-00002"
+        mock_activity.action_id = 3  # "item_login"
+        mock_activity.activity_community_id = None
+        activity._model = mock_activity
+        activity.workflow = workflow["workflow"]
+        activity.item_type = item_type
+
         metadata = {
             "pubdate": "2024-01-01",
             "path": [str(workflow_index_tree_id)],
             "item_title":[{"subitem_title":"Test Title"}],
         }
 
-        activity.workflow.index_tree_id = workflow_index_tree_id
         # input_metadata_invalid
         with patch("weko_workflow.headless.activity.validate_form_input_data") as mock_validate, \
                 patch("weko_workflow.headless.activity.HeadlessActivity.update_activity") as mock_update_activity, \
@@ -641,6 +684,8 @@ class TestHeadlessActivity:
             assert ex.value.args[0] == "Invalid metadata"
             mock_upt_meta.assert_called_once()
 
+        activity._recid = None
+
         # upt_activity_metadata raises Exception
         with patch("weko_workflow.headless.activity.validate_form_input_data") as mock_validate, \
                 patch("weko_workflow.headless.activity.HeadlessActivity.update_activity") as mock_update_activity, \
@@ -653,6 +698,8 @@ class TestHeadlessActivity:
                 activity._input_metadata(metadata, files)
             assert ex.value.args[0] == "Failed to input metadata to deposit: Database error"
 
+        activity._recid = None
+
         # upt_activity_metadata raises Exception
         with patch("weko_workflow.headless.activity.validate_form_input_data") as mock_validate, \
                 patch("weko_workflow.headless.activity.HeadlessActivity.update_activity") as mock_update_activity, \
@@ -660,10 +707,10 @@ class TestHeadlessActivity:
                 patch("weko_workflow.headless.activity.HeadlessActivity._delete_file") as mock_delete, \
                 patch("weko_workflow.headless.activity.HeadlessActivity.upt_activity_metadata") as mock_upt_meta:
             mock_validate.side_effect = lambda result, *args: result.update({"is_valid": False, "error": "Invalid metadata"})
-            mock_upt_meta.side_effect = ValueError("Unexpected Error")
+            mock_upt_meta.side_effect = FileSizeError(description="File size limit exceeded")
             with pytest.raises(WekoWorkflowException) as ex:
                 activity._input_metadata(metadata, files)
-            assert ex.value.args[0] == "Failed to input metadata to deposit: Unexpected Error"
+            assert ex.value.args[0] == f"Failed to input metadata to deposit: {mock_upt_meta.side_effect}"
 
         # item type mismatch
         metadata["$schema"] = "/items/jsonschema/999"
@@ -699,27 +746,27 @@ class TestHeadlessActivity:
             "pubdate": "2023-01-01",
             "item_title":[{"subitem_title":"Old Title"}],
             "item_files": [{"filename": "old.txt"}, {"filename": "ignore.txt"}],
-            "item_1617186819068": "Old Data"
+            "item_1617186783814": "Old Data"
         }
         metadata = {
             "pubdate": "2024-01-01",
             "edit_mode": "Keep",
             "item_title":[{"subitem_title":"Test Title"}],
             "item_files": [{"filename": "test.txt"}, {"filename": "ignore.txt"}],
-            "item_1617186845099": "New Data"
+            "item_1617186981471": "New Data"
         }
-        _uuid = uuid.uuid4()
+        _uuid0 = uuid.uuid4()
         old_files_info = [
-            {"filename": "old.txt", "key": "old.txt", "version_id": str(uuid.uuid4())},
-            {"filename": "ignore.txt", "key": "ignore.txt", "version_id": str(_uuid)}
+            {"filename": "old.txt", "key": "old.txt", "version_id": str(_uuid0)},
+            {"filename": "ignore.txt", "key": "ignore.txt", "version_id": str(uuid.uuid4())}
         ]
         files_info = [
             {"filename": "test.txt", "key": "test.txt", "version_id": str(uuid.uuid4())},
-            {"filename": "ignore.txt", "key": "ignore.txt", "version_id": str(_uuid)}
+            {"filename": "ignore.txt", "key": "ignore.txt", "version_id": str(uuid.uuid4())}
         ]
         files = ["test.txt", "ignore.txt"]
 
-        # success to input metadata
+        # success to input metadata; inherit old metadata
         with patch("weko_workflow.headless.activity.validate_form_input_data") as mock_validate, \
                 patch("weko_workflow.headless.activity.HeadlessActivity.update_activity") as mock_update_activity, \
                 patch("weko_workflow.headless.activity.WekoDeposit.get_record") as mock_get_record, \
@@ -733,20 +780,24 @@ class TestHeadlessActivity:
 
             mock_deposit = MagicMock(spec=WekoDeposit)
             mock_deposit.item_metadata = copy.deepcopy(old_metadata)
+            mock_deposit.files = [
+                MagicMock(**old_files_info[0], obj=MagicMock(spec=ObjectVersion, key="old.txt")),
+                MagicMock(**old_files_info[1], obj=MagicMock(spec=ObjectVersion, key="ignore.txt"))
+            ]
             mock_get_record.return_value = mock_deposit
             mock_pid = MagicMock(spec=PersistentIdentifier, pid_value="200001.0")
             mock_get_pid.return_value = mock_pid
             mock_files_js.return_value = copy.deepcopy(old_files_info)
 
-            recid = activity._input_metadata(metadata, files)
+            activity._input_metadata(metadata, files)
 
-            assert recid == mock_pid.pid_value
+            assert activity.recid == mock_pid.pid_value
             mock_feedback_mail.assert_called_once()
             mock_request_mail.assert_called_once()
             mock_update_activity.call_args[0][0] == mock_activity.activity_id
             mock_update_activity.call_args[0][1]["shared_user_id"] == users[1]["id"]
-            mock_upload.assert_called_once_with(files)
-            mock_delete.assert_called_once()
+            mock_upload.assert_called_once_with(files, {"old.txt": mock_deposit.files[0].obj, "ignore.txt": mock_deposit.files[1].obj})
+            mock_delete.assert_called_once_with(set([str(_uuid0)]))             # Delete old files
 
             args, _ = mock_upt_meta.call_args
             assert args[0] == mock_activity.activity_id
@@ -754,10 +805,172 @@ class TestHeadlessActivity:
 
             assert updated_data["metainfo"]["pubdate"] == "2024-01-01"
             assert updated_data["metainfo"]["item_title"][0]["subitem_title"] == "Test Title"
-            assert updated_data["metainfo"]["item_1617186819068"] == "Old Data"  # Keep old data
-            assert updated_data["metainfo"]["item_1617186845099"] == "New Data"
+            assert updated_data["metainfo"]["item_1617186783814"] == "Old Data"  # Keep old data
+            assert updated_data["metainfo"]["item_1617186981471"] == "New Data"
+            assert "item_1617186783814" not in updated_data["metainfo"]["deleted_items"]
+            assert "item_1617186981471" not in updated_data["metainfo"]["deleted_items"]
             assert updated_data["files"][0]["filename"] == "test.txt"
             assert updated_data["files"][1]["filename"] == "ignore.txt"
+            assert len(updated_data["files"]) == 2                              # Only new files are added
+
+        activity = HeadlessActivity(_lock_skip=True, _files_inheritance=True)
+        mock_activity = MagicMock(spec=Activity)
+        mock_activity.activity_id = "A-TEST-00002"
+        mock_activity.action_id = 3  # "item_login"
+        mock_activity.activity_community_id = None
+        mock_activity.item_id = uuid.uuid4()
+        activity._recid = "200002.0"
+        activity._model = mock_activity
+        activity.workflow = workflow["workflow"]
+        activity.workflow.index_tree_id = "1"
+        activity.item_type = item_type
+
+        old_metadata = {
+            "pubdate": "2023-01-01",
+            "item_title":[{"subitem_title":"Old Title"}],
+            "item_files": [{"filename": "old.txt"}, {"filename": "ignore.txt"}],
+            "item_1617186783814": "Old Data"
+        }
+        metadata = {
+            "pubdate": "2024-01-01",
+            "edit_mode": "Keep",
+            "item_title":[{"subitem_title":"Test Title"}],
+            "item_files": [{"filename": "old.txt"}, {"filename": "test.txt"}, {"filename": "ignore.txt"}],
+            "item_1617186981471": "New Data"
+        }
+        old_files_info = [
+            {"filename": "old.txt", "key": "old.txt", "version_id": str(uuid.uuid4())},
+            {"filename": "ignore.txt", "key": "ignore.txt", "version_id": str(uuid.uuid4())}
+        ]
+        files_info = [
+            {"filename": "test.txt", "key": "test.txt", "version_id": str(uuid.uuid4())},
+            {"filename": "ignore.txt", "key": "ignore.txt", "version_id": str(uuid.uuid4())}
+        ]
+        files = ["test.txt", "ignore.txt"]
+
+        # success to input metadata; inherit old files
+        with patch("weko_workflow.headless.activity.validate_form_input_data") as mock_validate, \
+                patch("weko_workflow.headless.activity.HeadlessActivity.update_activity") as mock_update_activity, \
+                patch("weko_workflow.headless.activity.WekoDeposit.get_record") as mock_get_record, \
+                patch("weko_workflow.headless.activity.PersistentIdentifier.get_by_object") as mock_get_pid, \
+                patch("weko_workflow.headless.activity.to_files_js") as mock_files_js, \
+                patch("weko_workflow.headless.activity.HeadlessActivity._upload_files") as mock_upload, \
+                patch("weko_workflow.headless.activity.HeadlessActivity._delete_file") as mock_delete, \
+                patch("weko_workflow.headless.activity.HeadlessActivity.upt_activity_metadata") as mock_upt_meta:
+            mock_validate.side_effect = lambda result, itemtype_id, metadata: result.update({"is_valid": True})
+            mock_upload.return_value = copy.deepcopy(files_info)
+
+            mock_deposit = MagicMock(spec=WekoDeposit)
+            mock_deposit.item_metadata = copy.deepcopy(old_metadata)
+            mock_deposit.files = [
+                MagicMock(**old_files_info[0], obj=MagicMock(spec=ObjectVersion, key="old.txt")),
+                MagicMock(**old_files_info[1], obj=MagicMock(spec=ObjectVersion, key="ignore.txt"))
+            ]
+            mock_get_record.return_value = mock_deposit
+            mock_pid = MagicMock(spec=PersistentIdentifier, pid_value="200002.0")
+            mock_get_pid.return_value = mock_pid
+            mock_files_js.return_value = copy.deepcopy(old_files_info)
+
+            activity._input_metadata(metadata, files)
+
+            assert activity.recid== mock_pid.pid_value
+            mock_update_activity.call_args[0][0] == mock_activity.activity_id
+            mock_update_activity.call_args[0][1]["shared_user_id"] == users[1]["id"]
+            mock_upload.assert_called_once_with(files, {"old.txt": mock_deposit.files[0].obj, "ignore.txt": mock_deposit.files[1].obj})
+            mock_delete.assert_called_once_with(set())                               # No old files to delete
+
+            args, _ = mock_upt_meta.call_args
+            assert args[0] == mock_activity.activity_id
+            updated_data = json.loads(args[1])
+
+            assert updated_data["metainfo"]["pubdate"] == "2024-01-01"
+            assert updated_data["metainfo"]["item_title"][0]["subitem_title"] == "Test Title"
+            assert updated_data["metainfo"]["item_1617186981471"] == "New Data"
+            assert "item_1617186783814" not in updated_data["metainfo"]         # Old data is not kept
+            assert "item_1617186783814" in updated_data["metainfo"]["deleted_items"]
+            assert "item_1617186981471" not in updated_data["metainfo"]["deleted_items"]
+            assert updated_data["files"][0]["filename"] == "old.txt"            # Old file is kept
+            assert updated_data["files"][1]["filename"] == "ignore.txt"
+            assert updated_data["files"][2]["filename"] == "test.txt"
+
+        # success to input metadata; inherit old files but ole file metadata is not kept
+        activity = HeadlessActivity(_lock_skip=True, _files_inheritance=True)
+        mock_activity = MagicMock(spec=Activity)
+        mock_activity.activity_id = "A-TEST-00003"
+        mock_activity.action_id = 3  # "item_login"
+        mock_activity.activity_community_id = None
+        mock_activity.item_id = uuid.uuid4()
+        activity._recid = "200003.0"
+        activity._model = mock_activity
+        activity.workflow = workflow["workflow"]
+        activity.workflow.index_tree_id = "1"
+        activity.item_type = item_type
+        old_metadata = {
+            "pubdate": "2023-01-01",
+            "item_title":[{"subitem_title":"Old Title"}],
+            "item_files": [{"filename": "old.txt"}, {"filename": "ignore.txt"}],
+            "item_1617186783814": "Old Data"
+        }
+        metadata = {
+            "pubdate": "2024-01-01",
+            "edit_mode": "Keep",
+            "item_title":[{"subitem_title":"Test Title"}],
+            "item_files": [{"filename": "test.txt"}, {"filename": "ignore.txt"}],
+            "item_1617186981471": "New Data"
+        }
+        uuid1 = uuid.uuid4()
+        old_files_info = [
+            {"filename": "old.txt", "key": "old.txt", "version_id": str(uuid1)},
+            {"filename": "ignore.txt", "key": "ignore.txt", "version_id": str(uuid.uuid4())}
+        ]
+        files_info = [
+            {"filename": "test.txt", "key": "test.txt", "version_id": str(uuid.uuid4())},
+            {"filename": "ignore.txt", "key": "ignore.txt", "version_id": str(uuid.uuid4())}
+        ]
+        files = ["test.txt", "ignore.txt"]
+        with patch("weko_workflow.headless.activity.validate_form_input_data") as mock_validate, \
+                patch("weko_workflow.headless.activity.HeadlessActivity.update_activity") as mock_update_activity, \
+                patch("weko_workflow.headless.activity.WekoDeposit.get_record") as mock_get_record, \
+                patch("weko_workflow.headless.activity.PersistentIdentifier.get_by_object") as mock_get_pid, \
+                patch("weko_workflow.headless.activity.to_files_js") as mock_files_js, \
+                patch("weko_workflow.headless.activity.HeadlessActivity._upload_files") as mock_upload, \
+                patch("weko_workflow.headless.activity.HeadlessActivity._delete_file") as mock_delete, \
+                patch("weko_workflow.headless.activity.HeadlessActivity.upt_activity_metadata") as mock_upt_meta:
+            mock_validate.side_effect = lambda result, itemtype_id, metadata: result.update({"is_valid": True})
+            mock_upload.return_value = copy.deepcopy(files_info)
+
+            mock_deposit = MagicMock(spec=WekoDeposit)
+            mock_deposit.item_metadata = copy.deepcopy(old_metadata)
+            mock_deposit.files = [
+                MagicMock(**old_files_info[0], obj=MagicMock(spec=ObjectVersion, key="old.txt")),
+                MagicMock(**old_files_info[1], obj=MagicMock(spec=ObjectVersion, key="ignore.txt"))
+            ]
+            mock_get_record.return_value = mock_deposit
+            mock_pid = MagicMock(spec=PersistentIdentifier, pid_value="200003.0")
+            mock_get_pid.return_value = mock_pid
+            mock_files_js.return_value = copy.deepcopy(old_files_info)
+
+            activity._input_metadata(metadata, files)
+
+            assert activity.recid== mock_pid.pid_value
+            mock_update_activity.call_args[0][0] == mock_activity.activity_id
+            mock_update_activity.call_args[0][1]["shared_user_id"] == users[1]["id"]
+            mock_upload.assert_called_once_with(files, {"old.txt": mock_deposit.files[0].obj, "ignore.txt": mock_deposit.files[1].obj})
+            mock_delete.assert_called_once_with(set([str(uuid1)]))         # Delete old files
+
+            args, _ = mock_upt_meta.call_args
+            assert args[0] == mock_activity.activity_id
+            updated_data = json.loads(args[1])
+            assert updated_data["metainfo"]["pubdate"] == "2024-01-01"
+            assert updated_data["metainfo"]["item_title"][0]["subitem_title"] == "Test Title"
+            assert updated_data["metainfo"]["item_1617186981471"] == "New Data"
+            assert "item_1617186783814" not in updated_data["metainfo"]         # Old data is not kept
+            assert "item_1617186783814" in updated_data["metainfo"]["deleted_items"]
+            assert "item_1617186981471" not in updated_data["metainfo"]["deleted_items"]
+            assert updated_data["files"][0]["filename"] == "ignore.txt"         # Old file is kept
+            assert updated_data["files"][1]["filename"] == "test.txt"           # New file is added
+            assert len(updated_data["files"]) == 2                              # No file with deleted metadata
+
 
     # def _input_metadata(self, metadata, files=None, non_extract=None):
     # .tox/c1/bin/pytest --cov=weko_workflow tests/test_activity.py::TestHeadlessActivity::test__input_metadata_upgrade -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
@@ -789,27 +1002,27 @@ class TestHeadlessActivity:
             "pubdate": "2023-01-01",
             "item_title":[{"subitem_title":"Old Title"}],
             "item_files": [{"filename": "old.txt"}, {"filename": "ignore.txt"}],
-            "item_1617186819068": "Old Data"
+            "item_1617186783814": "Old Data"
         }
         metadata = {
             "pubdate": "2024-01-01",
             "edit_mode": "Upgrade",
             "item_title":[{"subitem_title":"Test Title"}],
             "item_files": [{"filename": "test.txt"}, {"filename": "ignore.txt"}],
-            "item_1617186845099": "New Data"
+            "item_1617186981471": "New Data"
         }
-        _uuid = uuid.uuid4()
+        _uuid0 = uuid.uuid4()
         old_files_info = [
-            {"filename": "old.txt", "key": "old.txt", "version_id": str(uuid.uuid4())},
-            {"filename": "ignore.txt", "key": "ignore.txt", "version_id": str(_uuid)}
+            {"filename": "old.txt", "key": "old.txt", "version_id": str(_uuid0)},
+            {"filename": "ignore.txt", "key": "ignore.txt", "version_id": str(uuid.uuid4())}
         ]
         files_info = [
             {"filename": "test.txt", "key": "test.txt", "version_id": str(uuid.uuid4())},
-            {"filename": "ignore.txt", "key": "ignore.txt", "version_id": str(_uuid)}
+            {"filename": "ignore.txt", "key": "ignore.txt", "version_id": str(uuid.uuid4())}
         ]
         files = ["test.txt", "ignore.txt"]
 
-        # success to input metadata
+        # success to input metadata; inherit old metadata
         with patch("weko_workflow.headless.activity.validate_form_input_data") as mock_validate, \
                 patch("weko_workflow.headless.activity.HeadlessActivity.update_activity") as mock_update_activity, \
                 patch("weko_workflow.headless.activity.WekoDeposit.get_record") as mock_get_record, \
@@ -827,6 +1040,10 @@ class TestHeadlessActivity:
             mock_deposit.pid = MagicMock(spec=PersistentIdentifier, pid_value="200001.2")
             mock_deposit.model = MagicMock(spec=RecordMetadata, id=uuid.uuid4())
             mock_deposit.item_metadata = copy.deepcopy(old_metadata)
+            mock_deposit.files = [
+                MagicMock(**old_files_info[0], obj=MagicMock(spec=ObjectVersion, key="old.txt")),
+                MagicMock(**old_files_info[1], obj=MagicMock(spec=ObjectVersion, key="ignore.txt"))
+            ]
             mock_draft_deposit = MagicMock(spec=WekoDeposit)
             mock_parent_deposit = MagicMock(spec=WekoDeposit)
             mock_parent_deposit.newversion.return_value = mock_deposit
@@ -840,15 +1057,15 @@ class TestHeadlessActivity:
 
             mock_files_js.return_value = copy.deepcopy(old_files_info)
 
-            recid = activity._input_metadata(metadata, files)
+            activity._input_metadata(metadata, files)
 
-            assert recid == mock_deposit.pid.pid_value
+            assert activity.recid== mock_deposit.pid.pid_value
             mock_feedback_mail.assert_called_once()
             mock_request_mail.assert_called_once()
             mock_update_activity.call_args[0][0] == mock_activity.activity_id
             mock_update_activity.call_args[0][1]["shared_user_id"] == users[1]["id"]
-            mock_upload.assert_called_once_with(files)
-            mock_delete.assert_called_once()
+            mock_upload.assert_called_once_with(files, {"old.txt": mock_deposit.files[0].obj, "ignore.txt": mock_deposit.files[1].obj})
+            mock_delete.assert_called_once_with(set([str(_uuid0)]))             # Delete old files
 
             args, _ = mock_upt_meta.call_args
             assert args[0] == mock_activity.activity_id
@@ -856,10 +1073,191 @@ class TestHeadlessActivity:
 
             assert updated_data["metainfo"]["pubdate"] == "2024-01-01"
             assert updated_data["metainfo"]["item_title"][0]["subitem_title"] == "Test Title"
-            assert updated_data["metainfo"]["item_1617186819068"] == "Old Data"  # Keep old data
-            assert updated_data["metainfo"]["item_1617186845099"] == "New Data"
+            assert updated_data["metainfo"]["item_1617186783814"] == "Old Data"  # Keep old data
+            assert updated_data["metainfo"]["item_1617186981471"] == "New Data"
             assert updated_data["files"][0]["filename"] == "test.txt"
             assert updated_data["files"][1]["filename"] == "ignore.txt"
+            assert len(updated_data["files"]) == 2                              # Only new files are added
+
+        # success to input metadata; inherit old files
+        activity = HeadlessActivity(_lock_skip=True, _files_inheritance=True)
+        mock_activity = MagicMock(spec=Activity)
+        mock_activity.activity_id = "A-TEST-00002"
+        mock_activity.action_id = 3  # "item_login"
+        mock_activity.activity_community_id = None
+        mock_activity.item_id = uuid.uuid4()
+        activity._recid = "200002.0"
+        activity._model = mock_activity
+        activity.workflow = workflow["workflow"]
+        activity.workflow.index_tree_id = "1"
+        activity.item_type = item_type
+
+        old_metadata = {
+            "pubdate": "2023-01-01",
+            "item_title":[{"subitem_title":"Old Title"}],
+            "item_files": [{"filename": "old.txt"}, {"filename": "ignore.txt"}],
+            "item_1617186783814": "Old Data"
+        }
+        metadata = {
+            "pubdate": "2024-01-01",
+            "edit_mode": "Upgrade",
+            "item_title":[{"subitem_title":"Test Title"}],
+            "item_files": [{"filename": "old.txt"}, {"filename": "test.txt"}, {"filename": "ignore.txt"}],
+            "item_1617186981471": "New Data"
+        }
+        old_files_info = [
+            {"filename": "old.txt", "key": "old.txt", "version_id": str(uuid.uuid4())},
+            {"filename": "ignore.txt", "key": "ignore.txt", "version_id": str(uuid.uuid4())}
+        ]
+        files_info = [
+            {"filename": "test.txt", "key": "test.txt", "version_id": str(uuid.uuid4())},
+            {"filename": "ignore.txt", "key": "ignore.txt", "version_id": str(uuid.uuid4())}
+        ]
+        files = ["test.txt", "ignore.txt"]
+
+        with patch("weko_workflow.headless.activity.validate_form_input_data") as mock_validate, \
+                patch("weko_workflow.headless.activity.HeadlessActivity.update_activity") as mock_update_activity, \
+                patch("weko_workflow.headless.activity.WekoDeposit.get_record") as mock_get_record, \
+                patch("weko_workflow.headless.activity.PersistentIdentifier.get_by_object") as mock_get_pid, \
+                patch("weko_workflow.headless.activity.PersistentIdentifier.get") as mock_get, \
+                patch("weko_workflow.headless.activity.WekoRecord.get_record_by_pid") as mock_get_weko_record, \
+                patch("weko_workflow.headless.activity.to_files_js") as mock_files_js, \
+                patch("weko_workflow.headless.activity.HeadlessActivity._upload_files") as mock_upload, \
+                patch("weko_workflow.headless.activity.HeadlessActivity._delete_file") as mock_delete, \
+                patch("weko_workflow.headless.activity.HeadlessActivity.upt_activity_metadata") as mock_upt_meta:
+            mock_validate.side_effect = lambda result, itemtype_id, metadata: result.update({"is_valid": True})
+            mock_upload.return_value = copy.deepcopy(files_info)
+
+            mock_deposit = MagicMock(spec=WekoDeposit)
+            mock_deposit.pid = MagicMock(spec=PersistentIdentifier, pid_value="200002.2")
+            mock_deposit.model = MagicMock(spec=RecordMetadata, id=uuid.uuid4())
+            mock_deposit.item_metadata = copy.deepcopy(old_metadata)
+            mock_deposit.files = [
+                MagicMock(**old_files_info[0], obj=MagicMock(spec=ObjectVersion, key="old.txt")),
+                MagicMock(**old_files_info[1], obj=MagicMock(spec=ObjectVersion, key="ignore.txt"))
+            ]
+            mock_draft_deposit = MagicMock(spec=WekoDeposit)
+            mock_parent_deposit = MagicMock(spec=WekoDeposit)
+            mock_parent_deposit.newversion.return_value = mock_deposit
+            mock_get_record.side_effect = [mock_draft_deposit, mock_parent_deposit]
+
+            mock_cur_pid = MagicMock(spec=PersistentIdentifier, pid_value="200002.0")
+            mock_parent_pid = MagicMock(spec=PersistentIdentifier, pid_value="200002")
+            mock_get.return_value = mock_parent_pid
+            mock_get_pid.side_effect = [mock_cur_pid, mock_deposit.pid]
+            mock_get_weko_record.return_value = MagicMock(spec=WekoRecord, pid=mock_deposit.pid)
+
+            mock_files_js.return_value = copy.deepcopy(old_files_info)
+
+            activity._input_metadata(metadata, files)
+
+            assert activity.recid== mock_deposit.pid.pid_value
+            mock_update_activity.call_args[0][0] == mock_activity.activity_id
+            mock_update_activity.call_args[0][1]["shared_user_id"] == users[1]["id"]
+            mock_upload.assert_called_once_with(files, {"old.txt": mock_deposit.files[0].obj, "ignore.txt": mock_deposit.files[1].obj})
+            mock_delete.assert_called_once_with(set())                          # No old files to delete
+
+            args, _ = mock_upt_meta.call_args
+            assert args[0] == mock_activity.activity_id
+            updated_data = json.loads(args[1])
+
+            assert updated_data["metainfo"]["pubdate"] == "2024-01-01"
+            assert updated_data["metainfo"]["item_title"][0]["subitem_title"] == "Test Title"
+            assert updated_data["metainfo"]["item_1617186981471"] == "New Data"
+            assert "item_1617186783814" not in updated_data["metainfo"]         # Old data is not kept
+            assert "item_1617186783814" in updated_data["metainfo"]["deleted_items"]
+            assert "item_1617186981471" not in updated_data["metainfo"]["deleted_items"]
+            assert updated_data["files"][0]["filename"] == "old.txt"            # Old file is kept
+            assert updated_data["files"][1]["filename"] == "ignore.txt"
+            assert updated_data["files"][2]["filename"] == "test.txt"
+
+        # success to input metadata; activity item_id is not draft already
+        activity = HeadlessActivity(_lock_skip=True, _files_inheritance=True)
+        mock_activity = MagicMock(spec=Activity)
+        mock_activity.activity_id = "A-TEST-00002"
+        mock_activity.action_id = 3  # "item_login"
+        mock_activity.activity_community_id = None
+        mock_activity.item_id = uuid.uuid4()
+        activity._recid = "200002.2"
+        activity._model = mock_activity
+        activity.workflow = workflow["workflow"]
+        activity.workflow.index_tree_id = "1"
+        activity.item_type = item_type
+
+        old_metadata = {
+            "pubdate": "2023-01-01",
+            "item_title":[{"subitem_title":"Old Title"}],
+            "item_files": [{"filename": "old.txt"}, {"filename": "ignore.txt"}],
+            "item_1617186783814": "Old Data"
+        }
+        metadata = {
+            "pubdate": "2024-01-01",
+            "edit_mode": "Upgrade",
+            "item_title":[{"subitem_title":"Test Title"}],
+            "item_files": [{"filename": "old.txt"}, {"filename": "test.txt"}, {"filename": "ignore.txt"}],
+            "item_1617186981471": "New Data"
+        }
+        old_files_info = [
+            {"filename": "old.txt", "key": "old.txt", "version_id": str(uuid.uuid4())},
+            {"filename": "ignore.txt", "key": "ignore.txt", "version_id": str(uuid.uuid4())}
+        ]
+        files_info = [
+            {"filename": "test.txt", "key": "test.txt", "version_id": str(uuid.uuid4())},
+            {"filename": "ignore.txt", "key": "ignore.txt", "version_id": str(uuid.uuid4())}
+        ]
+        files = ["test.txt", "ignore.txt"]
+
+        with patch("weko_workflow.headless.activity.validate_form_input_data") as mock_validate, \
+                patch("weko_workflow.headless.activity.HeadlessActivity.update_activity") as mock_update_activity, \
+                patch("weko_workflow.headless.activity.WekoDeposit.get_record") as mock_get_record, \
+                patch("weko_workflow.headless.activity.PersistentIdentifier.get_by_object") as mock_get_pid, \
+                patch("weko_workflow.headless.activity.PersistentIdentifier.get") as mock_get, \
+                patch("weko_workflow.headless.activity.WekoRecord.get_record_by_pid") as mock_get_weko_record, \
+                patch("weko_workflow.headless.activity.to_files_js") as mock_files_js, \
+                patch("weko_workflow.headless.activity.HeadlessActivity._upload_files") as mock_upload, \
+                patch("weko_workflow.headless.activity.HeadlessActivity._delete_file") as mock_delete, \
+                patch("weko_workflow.headless.activity.HeadlessActivity.upt_activity_metadata") as mock_upt_meta:
+            mock_validate.side_effect = lambda result, itemtype_id, metadata: result.update({"is_valid": True})
+            mock_upload.return_value = copy.deepcopy(files_info)
+
+            mock_deposit = MagicMock(spec=WekoDeposit)
+            mock_deposit.pid = MagicMock(spec=PersistentIdentifier, pid_value="200002.2")
+            mock_deposit.model = MagicMock(spec=RecordMetadata, id=uuid.uuid4())
+            mock_deposit.item_metadata = copy.deepcopy(old_metadata)
+            mock_deposit.files = [
+                MagicMock(**old_files_info[0], obj=MagicMock(spec=ObjectVersion, key="old.txt")),
+                MagicMock(**old_files_info[1], obj=MagicMock(spec=ObjectVersion, key="ignore.txt"))
+            ]
+
+            mock_get_record.return_value = mock_deposit
+            mock_cur_pid = MagicMock(spec=PersistentIdentifier, pid_value="200002.2")
+            mock_get_pid.return_value = mock_cur_pid
+            mock_files_js.return_value = copy.deepcopy(old_files_info)
+
+            activity._input_metadata(metadata, files)
+
+            assert activity.recid== mock_deposit.pid.pid_value
+            mock_update_activity.call_args[0][0] == mock_activity.activity_id
+            mock_update_activity.call_args[0][1]["shared_user_id"] == users[1]["id"]
+            mock_upload.assert_called_once_with(files, {"old.txt": mock_deposit.files[0].obj, "ignore.txt": mock_deposit.files[1].obj})
+            mock_delete.assert_called_once_with(set())                          # No old files to delete
+
+            args, _ = mock_upt_meta.call_args
+            assert args[0] == mock_activity.activity_id
+            updated_data = json.loads(args[1])
+
+            assert updated_data["metainfo"]["pubdate"] == "2024-01-01"
+            assert updated_data["metainfo"]["item_title"][0]["subitem_title"] == "Test Title"
+            assert updated_data["metainfo"]["item_1617186981471"] == "New Data"
+            assert "item_1617186783814" not in updated_data["metainfo"]         # Old data is not kept
+            assert "item_1617186783814" in updated_data["metainfo"]["deleted_items"]
+            assert "item_1617186981471" not in updated_data["metainfo"]["deleted_items"]
+            assert updated_data["files"][0]["filename"] == "old.txt"            # Old file is kept
+            assert updated_data["files"][1]["filename"] == "ignore.txt"
+            assert updated_data["files"][2]["filename"] == "test.txt"
+            mock_get.assert_not_called()
+            mock_get_weko_record.assert_not_called()
+
 
     # def _upload_files(self, files=None):
     # .tox/c1/bin/pytest --cov=weko_workflow tests/test_activity.py::TestHeadlessActivity::test__upload_files -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
@@ -871,20 +1269,37 @@ class TestHeadlessActivity:
         mock_bucket.size_limit = 1000
         mock_bucket.location.max_file_size = 500
         mocker.patch.object(Bucket.query, "get", return_value=mock_bucket)
-        mock_object_version = MagicMock()
+        mock_object_version = MagicMock(spec=ObjectVersion)
         mock_object_version.basename = "test.txt"
+        def mock_set_contents(*args, **kwargs):
+            mock_object_version.root_file_id = kwargs.get("root_file_id", str(uuid.uuid4()))
+        mock_object_version.set_contents = mock_set_contents
         mocker.patch("weko_workflow.headless.activity.ObjectVersion.create", return_value=mock_object_version,)
-        mocker.patch("weko_workflow.headless.activity.ObjectVersion.set_contents")
 
         # Test case: successful upload with file path
         with app.test_request_context(), \
             patch("os.path.isfile", return_value=True), \
             patch("os.path.getsize", return_value=10):
             with patch("builtins.open", mock_open(read_data="data")):
-                files_info = activity._upload_files(["/temp/test.txt"])
+                files_info = activity._upload_files(["/temp/test.txt"], {})
                 assert len(files_info) == 1
                 assert files_info[0]["filename"] == "test.txt"
+        old_files = {
+            "test.txt": MagicMock(spec=ObjectVersion, key="test.txt", root_file_id=str(uuid.uuid4())),
+        }
+        # Test case: successful update with file path
+        with app.test_request_context(), \
+            patch("os.path.isfile", return_value=True), \
+            patch("os.path.getsize", return_value=10):
+            with patch("builtins.open", mock_open(read_data="data")):
+                files_info = activity._upload_files(["/temp/test.txt"], old_files)
+                assert len(files_info) == 1
+                assert files_info[0]["filename"] == "test.txt"
+                old_files["test.txt"].remove.assert_called_once()
+                assert mock_object_version.root_file_id == old_files["test.txt"].root_file_id
 
+        mock_bucket.size_limit = 500
+        mock_bucket.location.max_file_size = None
         # Test case: successful upload with FileStorage object, dict
         with app.test_request_context():
             mock_file = MagicMock(spec=FileStorage)
@@ -893,7 +1308,7 @@ class TestHeadlessActivity:
             mock_file.content_length = 400
             mock_file.tell = lambda: 400
             mock_file.seek = lambda *pos: None
-            files_info = activity._upload_files([mock_file, {"filename": "test2.txt", "size": 200}])
+            files_info = activity._upload_files([mock_file, {"filename": "test2.txt", "size": 200}], {})
             assert len(files_info) == 2
             assert files_info[0]["filename"] == "test.txt"
             assert files_info[1]["filename"] == "test2.txt"
@@ -906,12 +1321,12 @@ class TestHeadlessActivity:
             mock_file.content_length = 501
             mock_file.tell = lambda: 501
             mock_file.seek = lambda *pos: None
-            activity._upload_files([mock_file])
+            activity._upload_files([mock_file], {})
         assert ex.value.description.startswith("File size limit exceeded.")
 
         # Test case: file not found
         with pytest.raises(WekoWorkflowException) as ex:
-            activity._upload_files(["non_existent_file.txt"])
+            activity._upload_files(["non_existent_file.txt"], {})
         assert ex.value.args[0] == "file(non_existent_file.txt) is not found."
 
     # def _delete_file(self, version_ids):

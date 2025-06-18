@@ -171,9 +171,8 @@ class HeadlessActivity(WorkActivity):
             Please use `auto` method to automatically progress the action.
 
         user_id and workflow_id are required to create a new activity. <br>
-        When activity_id is specified, it restarts the activity already exists. <br>
-        Additionally, item_id is required when creating an activity
-        for an existing item edit.
+        If activity_id is specified, an existing activity will be resumed. <br>
+        If creating an activity to edit an existing item, item_id is required.
 
         Args:
             user_id (int): User ID
@@ -408,7 +407,7 @@ class HeadlessActivity(WorkActivity):
             current_app.logger.error(f"failed to input metadata: {error}")
             raise WekoWorkflowException(error)
 
-        self._recid = self._input_metadata(metadata, files, non_extract)
+        self._input_metadata(metadata, files, non_extract)
         self._designate_index(index)
         self._comment(comment)
 
@@ -510,30 +509,31 @@ class HeadlessActivity(WorkActivity):
                     cur_pid = PersistentIdentifier.get_by_object(
                         "recid", object_type="rec", object_uuid=record_uuid
                     )
-                    parent_pid = PersistentIdentifier.get(
-                        "recid", cur_pid.pid_value.split(".")[0]
-                    )
-                    _deposit = WekoDeposit.get_record(parent_pid.object_uuid)
-                    _deposit.non_extract = non_extract
-                    self._deposit = _deposit.newversion(parent_pid)
 
                     if cur_pid.pid_value.endswith(".0"):
+                        parent_pid = PersistentIdentifier.get(
+                            "recid", cur_pid.pid_value.split(".")[0]
+                        )
+                        _deposit = WekoDeposit.get_record(parent_pid.object_uuid)
+                        _deposit.non_extract = non_extract
+                        self._deposit = _deposit.newversion(parent_pid)
                         self._deposit.merge_data_to_record_without_version(cur_pid)
                         record_uuid = self._model.item_id = self._deposit.model.id
                         db.session.merge(self._model)
 
-                    weko_record = WekoRecord.get_record_by_pid(
-                        self._deposit.pid.pid_value
-                    )
-                    weko_record.update_item_link(parent_pid.pid_value)
-                    current_app.logger.info(
-                        "Item {} is upgraded to {}."
-                        .format(
-                            parent_pid.pid_value,
-                            self._deposit.pid.pid_value.split(".")[1]
+                        weko_record = WekoRecord.get_record_by_pid(
+                            self._deposit.pid.pid_value
                         )
-                    )
+                        weko_record.update_item_link(parent_pid.pid_value)
+                        current_app.logger.info(
+                            "Item {} is upgraded to {}."
+                            .format(
+                                parent_pid.pid_value,
+                                self._deposit.pid.pid_value.split(".")[1]
+                            )
+                        )
 
+                self._deposit.non_extract = non_extract
                 pid = PersistentIdentifier.get_by_object(
                     "recid", object_type="rec", object_uuid=record_uuid
                 )
@@ -543,6 +543,7 @@ class HeadlessActivity(WorkActivity):
                 _old_files = to_files_js(self._deposit)
 
             db.session.commit()
+            self._recid = pid.pid_value
 
             if self._metadata_inheritance:
                 # update old metadata partially
@@ -559,10 +560,16 @@ class HeadlessActivity(WorkActivity):
                     deleted_items.append(metadata_id)
             metadata["deleted_items"] = deleted_items
 
+            # from metadata before update
+            old_files_obj = {
+                f.key: f.obj for f in self._deposit.files
+                if f.key in [_.get("key") for _ in _old_files]
+            }
+
             if not self._files_inheritance:
-                self.files_info = self._upload_files(files)
+                self.files_info = self._upload_files(files, old_files_obj)
             else:
-                _new_files = self._upload_files(files)
+                _new_files = self._upload_files(files, old_files_obj)
                 files_dict = {file["key"]: file for file in _old_files}
                 # replace old files with new files if they have the same key
                 for new_file in _new_files:
@@ -610,8 +617,6 @@ class HeadlessActivity(WorkActivity):
                 if uploaded_file.get("key") not in current_filenames:
                     delete_files.add(uploaded_file.get("version_id"))
 
-            # from metadata before update
-            old_files_obj = [f.key for f in self._deposit.files]
             for file_metadata in _old_files:
                 filename = file_metadata.get("key")
                 if filename not in current_filenames and filename in old_files_obj:
@@ -677,9 +682,8 @@ class HeadlessActivity(WorkActivity):
         finally:
             self._activity_unlock(locked_value)
 
-        return pid.pid_value
 
-    def _upload_files(self, files=None):
+    def _upload_files(self, files, old_files):
         """upload files."""
         files = files or []
         bucket = Bucket.query.get(self._deposit["_buckets"]["deposit"])
@@ -690,7 +694,7 @@ class HeadlessActivity(WorkActivity):
             location_limit = bucket.location.max_file_size
             if location_limit is not None:
                 size_limit = min(size_limit, location_limit)
-            if location_limit and size_limit and size > size_limit:
+            if size and size_limit and size > size_limit:
                 desc = (
                     "File size limit exceeded."
                     if isinstance(size_limit, int)
@@ -699,9 +703,17 @@ class HeadlessActivity(WorkActivity):
                 current_app.logger.error(desc)
                 raise FileSizeError(description=desc)
 
+            root_file_id = None
+            if file_name in old_files:
+                obj = old_files[file_name]
+                root_file_id = obj.root_file_id
+                obj.remove()
+
             obj = ObjectVersion.create(bucket, file_name, is_thumbnail=False)
             obj.is_thumbnail = is_thumbnail
-            obj.set_contents(stream, size=size, size_limit=size_limit)
+            obj.set_contents(
+                stream, size=size, size_limit=size_limit, root_file_id=root_file_id
+            )
             url = f"{request.url_root}api/files/{obj.bucket_id}/{obj.basename}"
             return {
                 "created": obj.created.isoformat(),
@@ -773,6 +785,7 @@ class HeadlessActivity(WorkActivity):
         """
         for version_id in version_ids:
             obj = ObjectVersion.get(version_id=version_id)
+            file_key = obj.key
             obj.remove()
             if obj.is_head:
                 obj_to_restore = ObjectVersion.get_versions(
@@ -783,6 +796,11 @@ class HeadlessActivity(WorkActivity):
             if obj.file_id and not delete_file_instance(obj.file_id):
                 remove_file_data.delay(str(obj.file_id))
 
+            UserActivityLogger.info(
+                operation="FILE_DELETE",
+                target_key=file_key,
+                required_commit=False
+            )
 
     def _designate_index(self, index=None):
         """Designate Index.
