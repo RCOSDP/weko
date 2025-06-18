@@ -2649,7 +2649,7 @@ def write_rocrate(item_types_data, export_path, list_item_role):
             row_metadata = {
                 "recid": str(record_id),
                 "item_title": title,
-                # no use headers[0][0:2] >> ["#.id", ".uri"]
+                # no use headers[0][0:2] >>> ["#.id", ".uri"]
                 "header": headers[0][2:],
                 "value": records[record_id],
             }

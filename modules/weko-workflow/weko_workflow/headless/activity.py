@@ -125,12 +125,12 @@ class HeadlessActivity(WorkActivity):
     @property
     def activity_id(self):
         """str: activity id."""
-        return str(self._model.activity_id) if self._model is not None else None
+        return str(self._model.activity_id) if self._model else None
 
     @property
     def current_action_id(self):
         """int: current action id."""
-        return int(self._model.action_id) if self._model is not None else None
+        return int(self._model.action_id) if self._model else None
 
     @property
     def current_action(self):
@@ -139,14 +139,14 @@ class HeadlessActivity(WorkActivity):
         It can be `begin_action`, `login_item`, `link_item`, `identifier_grant`,
         `approval` or `end_action`.
         """
-        return self._actions.get(self.current_action_id) if self._model is not None else None
+        return self._actions.get(self.current_action_id) if self._model else None
 
     @property
     def community(self):
         """str: community id."""
         return (
             str(self._model.activity_community_id)
-            if self._model is not None and self._model.activity_community_id
+            if self._model and self._model.activity_community_id
             else None
         )
 
@@ -157,7 +157,7 @@ class HeadlessActivity(WorkActivity):
             "weko_workflow.display_activity",
             activity_id=self.activity_id, community=self.community,
             _external=True
-        )) if self._model is not None else ""
+        )) if self._model else ""
 
     @property
     def recid(self):
