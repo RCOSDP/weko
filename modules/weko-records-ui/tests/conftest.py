@@ -5770,7 +5770,7 @@ def site_license_info(app, db):
         organization_name='test',
         domain_name='domain',
         mail_address='nii@nii.co.jp',
-        receive_mail_flag=False)
+        receive_mail_flag='Y',)
     with db.session.begin_nested():
         db.session.add(record)
     return record
