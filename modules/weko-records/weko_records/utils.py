@@ -1709,9 +1709,9 @@ def get_attribute_value_all_items(
     def change_date_format(value):
         """Change date format from yyyy-MM-dd to yyyy/MM/dd."""
         result = None
-        y_re = re.compile(r"^\d{4}$")
-        ym_re = re.compile(r"^\d{4}-(0[1-9]|1[0-2])$")
-        ymd_re = re.compile(r"^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$")
+        y_re = re.compile(r"^(\d{4}|\d{3})$")
+        ym_re = re.compile(r"^(\d{4}|\d{3})-(0[1-9]|1[0-2])$")
+        ymd_re = re.compile(r"^(\d{4}|\d{3})-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$")
         if y_re.match(value) or ym_re.match(value) or ymd_re.match(value):
             result = value.replace("-", "/")
         return result
