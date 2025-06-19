@@ -39,12 +39,13 @@ from flask_babelex import gettext as _
 from flask_login import current_user, login_required
 from flask_menu import register_menu
 from weko_admin.api import TempDirInfo
-from weko_records.api import FeedbackMailList
+from weko_records.api import FeedbackMailList, ItemLink
 from invenio_db import db
 from invenio_i18n.ext import current_i18n
 from invenio_pidstore.errors import PIDDoesNotExistError
 from invenio_pidstore.models import PersistentIdentifier
 from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.sql import text
 from flask import session
 from weko_records.utils import selected_value_by_language
 
@@ -317,52 +318,53 @@ def get_workspace_itemlist():
         if workspaceItem["authorlist"] and userNm in workspaceItem["authorlist"]:
             workspaceItem["fbEmailSts"] = True
 
+        # Get item links
+        link_articles = []
+        link_datasets = []
+        item_links = ItemLink.get_item_link_info(recid)
+        item_links_dict = {v['item_links']: v for v in item_links}
+        if item_links_dict:
+            placeholders = ','.join([f':rid{i}' for i in range(len(item_links_dict))])
+            params = {f'rid{i}': rid for i, rid in enumerate(item_links_dict.keys())}
+            query = text(f"""
+                SELECT jsonb_extract_path_text(json, 'recid'),
+                    jsonb_path_query_first(json, '$.**.resourcetype')
+                FROM records_metadata
+                WHERE jsonb_extract_path_text(json, 'recid') IN ({placeholders})
+            """)
+            result = db.session.execute(query, params).fetchall()
+            for rid, type in result:
+                if (type in current_app.config["WEKO_WORKSPACE_ARTICLE_TYPES"]):
+                    link_articles.append(item_links_dict[rid])
+                elif (type in current_app.config["WEKO_WORKSPACE_DATASET_TYPES"]):
+                    link_datasets.append(item_links_dict[rid])
+
         # "connectionToPaperSts": None,  # 論文への関連チェック状況
         workspaceItem["connectionToPaperSts"] = (
             True
-            if workspaceItem["resourceType"]
-            in current_app.config["WEKO_WORKSPACE_ARTICLE_TYPES"]
-            else None
+            if link_articles and len(link_articles) > 0
+            else False
         )
 
         # "connectionToDatasetSts": None,  # 根拠データへの関連チェック状況
         workspaceItem["connectionToDatasetSts"] = (
             True
-            if workspaceItem["resourceType"]
-            in current_app.config["WEKO_WORKSPACE_DATASET_TYPES"]
-            else None
+            if link_datasets and len(link_datasets) > 0
+            else False
         )
 
         # "relation": None,  # 関連情報リスト
         relations = []
-        relationLen = (
-            len(source["relation"]["relatedTitle"])
-            if "relation" in source
-            else 0
-        )
-
-        if "relation" in source:
-            for i in range(relationLen):
-                # "relationType": None,  # 関連情報タイプ
-                workspaceItem["relationType"] = source.get("relation", [])[
-                    "@attributes"
-                ]["relationType"][i][0]
-
-                # # "relationTitle": None,  # 関連情報タイトル
-                workspaceItem["relationTitle"] = source.get("relation", [])[
-                    "relatedTitle"
-                ][i]
-
-                # # "relationUrl": None,  # 関連情報URLやDOI
-                workspaceItem["relationUrl"] = source.get("relation", [])["relatedIdentifier"][i]["value"]
-
-                relation = {
-                    "relationType": workspaceItem["relationType"],
-                    "relationTitle": workspaceItem["relationTitle"],
-                    "relationUrl": workspaceItem["relationUrl"],
-                }
-                relations.append(relation)
-
+        for item_link in item_links:
+            relation = {
+                "relationType": item_link.get("value"),
+                "relationTitle": item_link.get("item_title"),
+                "relationUrl": (
+                    request.url_root.strip("/") + 
+                    "/records/" + item_link.get("item_links")
+                ),
+            }
+            relations.append(relation)
         workspaceItem["relation"] = relations
 
         # file情報
