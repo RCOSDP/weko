@@ -106,6 +106,7 @@ from weko_admin import WekoAdmin
 from weko_deposit import WekoDeposit
 from weko_admin.models import AdminSettings
 from weko_notifications.models import NotificationsUserSettings
+from weko_logging.audit import WekoLoggingUserActivity
 
 sys.path.append(os.path.dirname(__file__))
 # @event.listens_for(Engine, "connect")
@@ -528,11 +529,13 @@ def base_app(instance_path, search_class, cache_config):
         WEKO_WORKFLOW_ACTIVITYLOG_XLS_COLUMNS=WEKO_WORKFLOW_ACTIVITYLOG_XLS_COLUMNS,
         WEKO_SYS_USER=WEKO_SYS_USER,
         RECORDS_UI_ENDPOINTS=dict(
-            # recid=dict(
-            #     pid_type='recid',
-            #     route='/records/<pid_value>',
-            #     template='invenio_records_ui/detail.html',
-            # ),
+            recid=dict(
+                pid_type='recid',
+                route='/records/<pid_value>',
+                view_imp='weko_records_ui.views.default_view_method',
+                template='invenio_records_ui/detail.html',
+                record_class='weko_deposit.api:WekoRecord',
+            ),
             # recid_previewer=dict(
             #     pid_type='recid',
             #     route='/records/<pid_value>/preview/<filename>',
@@ -580,6 +583,7 @@ def base_app(instance_path, search_class, cache_config):
     WekoItemsUI(app_)
     WekoAdmin(app_)
     InvenioOAuth2Server(app_)
+    WekoLoggingUserActivity(app_)
     # WekoRecordsUI(app_)
     # app_.register_blueprint(invenio_theme_blueprint)
     app_.register_blueprint(invenio_communities_blueprint)
