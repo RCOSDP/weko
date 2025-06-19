@@ -2330,7 +2330,7 @@ def get_allow_multi_thumbnail(item_type_id, activity_id=None):
     """Get Multi Thumbnail from file."""
     if activity_id:
         from weko_items_ui.api import item_login
-        _, _, _, _, _, _, _, _, _, _, _, allow_multi_thumbnail \
+        _, _, _, _, _, _, _, _, _, _, _, allow_multi_thumbnail,_ \
             = item_login(item_type_id=item_type_id)
         return allow_multi_thumbnail
     else:
@@ -3653,7 +3653,7 @@ def __init_activity_detail_data_for_guest(activity_id: str, community_id: str):
     step_item_login_url, need_file, need_billing_file, \
         record, json_schema, schema_form, \
         item_save_uri, files, endpoints, need_thumbnail, files_thumbnail, \
-        allow_multi_thumbnail \
+        allow_multi_thumbnail ,cris_linkage \
         = item_login(item_type_id=workflow_detail.itemtype_id)
     if not record and item:
         record = item

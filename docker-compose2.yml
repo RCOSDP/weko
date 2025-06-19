@@ -69,8 +69,8 @@ services:
       - INVENIO_ROLE_CONTRIBUTOR=Contributor
       - INVENIO_ROLE_COMMUNITY=Community Administrator
       # production or development
-      # - FLASK_ENV=development
-      - FLASK_ENV=production
+      - FLASK_ENV=development
+      # - FLASK_ENV=production
       # - FLASK_DEBUG=True
       - SEARCH_INDEX_PREFIX=tenant1
       #- INVENIO_DB_POOL_CLASS=QueuePool

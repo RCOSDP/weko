@@ -2680,3 +2680,89 @@ class TestJsonldMappingView:
                                     'mapping_id': '1'}),
                         content_type='application/json')
         assert res.status_code == 200
+
+#class CrisLinkageSettingView(BaseView):
+# .tox/c1/bin/pytest --cov=weko_admin tests/test_admin.py::TestCrisLinkageSettingView -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
+class TestCrisLinkageSettingView:
+    #    def index(self):
+    # .tox/c1/bin/pytest --cov=weko_admin tests/test_admin.py::TestCrisLinkageSettingView::test_index -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
+    def test_index(self, client, users, admin_settings, mocker):
+        login_user_via_session(client,email=users[0]["email"])
+        url = url_for("cris_linkage.index")
+        mock_render = mocker.patch("weko_admin.admin.CrisLinkageSettingView.render", return_value=make_response())
+        res = client.get(url)
+        assert res.status_code == 200
+        args, kwargs = mock_render.call_args
+        assert args[0] == "weko_admin/admin/cris_linkage_setting.html"
+        assert kwargs["default_merge_mode"] == "similar_merge_similar_data"
+
+    #   def save_keys
+    # .tox/c1/bin/pytest --cov=weko_admin tests/test_admin.py::TestCrisLinkageSettingView::test_save_keys -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
+    def test_save_keys(self, client, users, admin_settings, mocker):
+        login_user_via_session(client,email=users[0]["email"])
+        url = url_for("cris_linkage.save_keys")
+        mock_flash = mocker.patch("weko_admin.admin.flash")
+        data = {'researchmap_cidkey_contents':'','researchmap_pkey_contents':''}
+        client.post(url,data=data)
+        mock_flash.assert_called_with('Please input at least one of client id key or private key',"error")
+
+        outlenge_str = 'a'
+        for i in range(10):
+            outlenge_str = outlenge_str + '1234567890'
+        data = {'researchmap_cidkey_contents':outlenge_str,'researchmap_pkey_contents':''}
+        client.post(url,data=data)
+        mock_flash.assert_called_with('client id key size too large.',"error")
+
+        outlenge_str = 'a'
+        for i in range(500):
+            outlenge_str = outlenge_str + '1234567890'
+        data = {'researchmap_cidkey_contents':'','researchmap_pkey_contents':outlenge_str}
+        client.post(url,data=data)
+        mock_flash.assert_called_with('private key size too large.',"error")
+
+
+        with patch("weko_admin.admin.AdminSettings.get",return_value=""):
+            data = {'researchmap_cidkey_contents':'test_cidkey','researchmap_pkey_contents':'test_pkey'}
+            test = {'researchmap_cidkey_contents':'test_cidkey','researchmap_pkey_contents':'test_pkey','merge_mode':''}
+            client.post(url,data=data)
+            mock_flash.assert_called_with('Successfully Changed Settings.',"success")
+            assert AdminSettings.query.filter_by(name="researchmap_linkage_settings").one_or_none().settings == test
+
+        data = {'researchmap_cidkey_contents':'test_cidkey','researchmap_pkey_contents':'test_pkey'}
+        test = {'researchmap_cidkey_contents':'test_cidkey','researchmap_pkey_contents':'test_pkey','merge_mode':''}
+        client.post(url,data=data)
+        mock_flash.assert_called_with('Successfully Changed Settings.',"success")
+        assert AdminSettings.query.filter_by(name="researchmap_linkage_settings").one_or_none().settings == test
+
+        with patch("weko_admin.models.AdminSettings.update",side_effect=Exception()):
+            with pytest.raises(Exception):
+                client.post(url,data=data)
+                mock_flash.assert_called_with('Failurely Changed Settings.','error')
+
+    #   def save_merge_mode
+    # .tox/c1/bin/pytest --cov=weko_admin tests/test_admin.py::TestCrisLinkageSettingView::test_save_merge_mode -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
+    def test_save_merge_mode(self, client, users, admin_settings, mocker):
+        login_user_via_session(client,email=users[0]["email"])
+        url = url_for('cris_linkage.save_merge_mode')
+        mock_flash = mocker.patch("weko_admin.admin.flash")
+        data = {'merge_mode':''}
+        client.post(url,data=data)
+        mock_flash.assert_called_with('Please input Merge Mode','error')
+
+        with patch("weko_admin.admin.AdminSettings.get",return_value=""):
+            data = {'merge_mode':'test_merge_mode'}
+            test = {'researchmap_cidkey_contents':'','researchmap_pkey_contents':'','merge_mode':'test_merge_mode'}
+            client.post(url,data=data)
+            mock_flash.assert_called_with('Successfully Changed Settings.',"success")
+            assert AdminSettings.query.filter_by(name="researchmap_linkage_settings").one_or_none().settings == test
+
+        data = {'merge_mode':'test_merge_mode'}
+        test = {'researchmap_cidkey_contents':'','researchmap_pkey_contents':'','merge_mode':'test_merge_mode'}
+        client.post(url,data=data)
+        mock_flash.assert_called_with('Successfully Changed Settings.',"success")
+        assert AdminSettings.query.filter_by(name="researchmap_linkage_settings").one_or_none().settings == test
+
+        with patch("weko_admin.admin.AdminSettings.update",side_effect=Exception()):
+            with pytest.raises(Exception):
+                client.post(url,data=data)
+                mock_flash.assert_called_with('Failurely Changed Settings.','error')

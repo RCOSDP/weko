@@ -123,6 +123,12 @@ setup(
             'item_delete_scope = weko_items_ui.scopes:item_delete_scope',
             'ranking_read_scope = weko_items_ui.scopes:ranking_read_scope'
         ],
+        'invenio_db.models': [
+            'weko_items_ui = weko_items_ui.models',
+        ],
+        'invenio_celery.tasks': [
+            'weko_items_ui = weko_items_ui.tasks',
+        ],
     },
     extras_require=extras_require,
     install_requires=install_requires,

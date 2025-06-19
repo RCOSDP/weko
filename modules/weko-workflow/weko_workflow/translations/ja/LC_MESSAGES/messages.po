@@ -22,6 +22,8 @@ msgstr ""
 #: tests/conftest.py:247
 msgid "write your own license"
 msgstr ""
+msgid "Running"
+msgstr "実行中"
 
 #: tests/conftest.py:252
 msgid "Creative Commons CC0 1.0 Universal Public Domain Designation"

@@ -183,6 +183,53 @@ msgid "The same item may have been registered."
 msgstr "同一のアイテムが登録されている可能性があります。"
 
 #: weko_items_ui/views.py:518
+msgid "Auto Linkage to CRIS Institution"
+msgstr "CRIS機関へ自動連携"
+
+msgid "Latest Linkage Result："
+msgstr "前回連携結果："
+
+msgid "Nothing"
+msgstr "なし"
+
+msgid "parmalink"
+msgstr "parmalink"
+
+msgid "achievement type"
+msgstr "業績種別"
+
+msgid "achievement id"
+msgstr "業績ID"
+
+msgid "published papers"
+msgstr "論文"
+
+msgid "MISC"
+msgstr "MISC"
+
+msgid "book etc"
+msgstr "書籍等出版物"
+
+msgid "presentations"
+msgstr "講演・口頭発表等"
+
+msgid "Works"
+msgstr "Works(作品等)"
+
+msgid "others"
+msgstr "その他"
+
+msgid "Nothing API keys"
+msgstr "API キーが未設定です"
+
+msgid "Invalid parmalink"
+msgstr "parmalinkが不正です"
+
+msgid "Invalid achievement id"
+msgstr "業績IDが不正です"
+
+#: weko_items_ui/views.py:371
+#, fuzzy
 msgid "Invalid request"
 msgstr "無効なリクエスト"
 

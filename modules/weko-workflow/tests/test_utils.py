@@ -2655,6 +2655,25 @@ def test___init_activity_detail_data_for_guest(app,db,users,db_register,mocker):
         result = __init_activity_detail_data_for_guest(activity_id,community_id)
         assert result == test
 
+        test_item_login_data = (
+            "weko_items_ui/iframe/item_edit.html",
+            True,
+            False,
+            item,
+            "/items/jsonschema/1",
+            "/items/schemaform/1",
+            "/items/iframe/model/save",
+            [],
+            {},
+            False,
+            [],
+            False,
+            {"researchmap" : False}
+        )
+        mocker.patch("weko_items_ui.api.item_login",return_value=test_item_login_data)
+        result = __init_activity_detail_data_for_guest(activity_id,community_id)
+        assert result == test
+
 # def prepare_data_for_guest_activity(activity_id: str) -> dict:
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_prepare_data_for_guest_activity -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_prepare_data_for_guest_activity(app,db,users,db_register,mocker):

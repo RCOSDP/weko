@@ -46,6 +46,7 @@ def item_login(item_type_id: int = 0):
     record = {}
     schema_form = ""
     template_url = "weko_items_ui/iframe/item_edit.html"
+    cris_linkage = {"researchmap" : False}
     try:
         item_type = (
             ItemTypes.get_by_id(item_type_id)
@@ -76,7 +77,11 @@ def item_login(item_type_id: int = 0):
                 if "weko_link" in item_json:
                     weko_link = item_json.get("weko_link")
                     update_data_for_weko_link(item_json.get("metainfo"), weko_link)
-        need_file, need_billing_file = is_schema_include_key(item_type.schema)
+                if "cris_linkage" in item_json:
+                    cris_linkage = item_json.get("cris_linkage")
+
+
+        need_file, need_billing_file = is_schema_include_key(item_type.schema)        
 
         if "subitem_thumbnail" in json.dumps(item_type.schema):
             need_thumbnail = True
@@ -110,4 +115,5 @@ def item_login(item_type_id: int = 0):
         need_thumbnail,
         files_thumbnail,
         allow_multi_thumbnail,
+        cris_linkage,
     )
