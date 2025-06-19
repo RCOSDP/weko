@@ -200,7 +200,7 @@ class HeadlessActivity(WorkActivity):
                 current_app.logger.error(f"activity({activity_id}) is already deleted.")
                 raise WekoWorkflowException(f"activity({activity_id}) is already deleted.")
 
-            self._model = super().get_activity_by_id(activity_id)
+            self._model = self.get_activity_by_id(activity_id)
             if self._model is None:
                 current_app.logger.error(f"activity({activity_id}) is not found.")
                 raise WekoWorkflowException(f"activity({activity_id}) is not found.")

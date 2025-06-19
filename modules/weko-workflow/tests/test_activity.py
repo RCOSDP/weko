@@ -267,7 +267,7 @@ class TestHeadlessActivity:
         mock_activity.activity_login_user = users[0]["id"]
         mock_activity.shared_user_id = users[3]["id"]
         with patch("weko_workflow.headless.activity.verify_deletion") as mock_verify_deletion, \
-                patch("weko_workflow.api.WorkActivity.get_activity_by_id") as mock_get_activity_by_id, \
+                patch("weko_workflow.headless.activity.HeadlessActivity.get_activity_by_id") as mock_get_activity_by_id, \
                 patch("weko_workflow.headless.activity.PersistentIdentifier.get_by_object") as mock_get_pid, \
                 patch("weko_workflow.headless.activity.HeadlessActivity._activity_lock") as mock_activity_lock, \
                 patch("weko_workflow.headless.activity.HeadlessActivity._activity_unlock") as mock_activity_unlock:
@@ -294,7 +294,7 @@ class TestHeadlessActivity:
 
         # shared user matches
         with patch("weko_workflow.headless.activity.verify_deletion") as mock_verify_deletion, \
-                patch("weko_workflow.api.WorkActivity.get_activity_by_id") as mock_get_activity_by_id, \
+                patch("weko_workflow.headless.activity.HeadlessActivity.get_activity_by_id") as mock_get_activity_by_id, \
                 patch("weko_workflow.headless.activity.PersistentIdentifier.get_by_object") as mock_get_pid, \
                 patch("weko_workflow.headless.activity.HeadlessActivity._activity_lock") as mock_activity_lock, \
                 patch("weko_workflow.headless.activity.HeadlessActivity._activity_unlock") as mock_activity_unlock:
@@ -321,7 +321,7 @@ class TestHeadlessActivity:
 
         # admin user
         with patch("weko_workflow.headless.activity.verify_deletion") as mock_verify_deletion, \
-                patch("weko_workflow.api.WorkActivity.get_activity_by_id") as mock_get_activity_by_id, \
+                patch("weko_workflow.headless.activity.HeadlessActivity.get_activity_by_id") as mock_get_activity_by_id, \
                 patch("weko_workflow.headless.activity.PersistentIdentifier.get_by_object") as mock_get_pid, \
                 patch("weko_workflow.headless.activity.HeadlessActivity._activity_lock") as mock_activity_lock, \
                 patch("weko_workflow.headless.activity.HeadlessActivity._activity_unlock") as mock_activity_unlock:
@@ -349,7 +349,7 @@ class TestHeadlessActivity:
 
         # no authority to access activity
         with patch("weko_workflow.headless.activity.verify_deletion") as mock_verify_deletion, \
-                patch("weko_workflow.api.WorkActivity.get_activity_by_id") as mock_get_activity_by_id:
+                patch("weko_workflow.headless.activity.HeadlessActivity.get_activity_by_id") as mock_get_activity_by_id:
             mock_verify_deletion.return_value = jsonify({"code": 200, "is_delete": False}), 200
             mock_get_activity_by_id.return_value = mock_activity
             activity = HeadlessActivity()
@@ -368,7 +368,7 @@ class TestHeadlessActivity:
             mock_verify_deletion.assert_called_once_with(activity_id)
 
         with patch("weko_workflow.headless.activity.verify_deletion") as mock_verify_deletion, \
-                patch("weko_workflow.api.WorkActivity.get_activity_by_id") as mock_get_activity_by_id:
+                patch("weko_workflow.headless.activity.HeadlessActivity.get_activity_by_id") as mock_get_activity_by_id:
             activity_id = "A-TEST-00008"
             mock_verify_deletion.return_value = jsonify({"code": 200, "is_delete": False}), 200
             mock_get_activity_by_id.return_value = None
