@@ -2534,6 +2534,7 @@ function toObject(arr) {
         // $('#meta-search').modal('show');
         if (!$('#doiInput').val()) {
           alert('please input the DOI');
+          $scope.isButtonDisabled = false;
           return;
         }
 
@@ -2542,6 +2543,7 @@ function toObject(arr) {
         if (!value.length) {
           $scope.enableAutofillButton();
           this.setAutoFillErrorMessage($("#autofill_error_input_value").val());
+          $scope.isButtonDisabled = false;
           return;
         }
 
@@ -2551,7 +2553,6 @@ function toObject(arr) {
           item_type_id: itemTypeId
         }
         
-        
         let param_api = {
           search_data: $.trim(value),
           item_type_id: itemTypeId
@@ -2559,26 +2560,25 @@ function toObject(arr) {
         $scope.getItemMetadataAPI(param_crossApi,param_api)
         
         $scope.isButtonDisabled = false
-
-
       }
 
-      $scope.checkBothDataEmpty = function (crossrefDataEmpty, ciniiDataEmpty, jalcDataEmpty, datacitDataEmpty) {
+      $scope.checkBothDataEmpty = function () {
         if ($scope.crossrefDataEmpty && $scope.ciniiDataEmpty && $scope.jalcDataEmpty && $scope.datacitDataEmpty) {
           alert("No metadata was found that matches the DOI!");
         }
       }
 
       $scope.getItemMetadataAPI = function (param_crossApi,param_api) {
-        crossrefDataEmpty = this.setRecordDataFromCrossRefApi(param_crossApi);
-        ciniiDataEmpty = this.setRecordDataFromCINIIApi(param_api);
+        res_crossref_data = this.setRecordDataFromCrossRefApi(param_crossApi);
+        res_cinii_data = this.setRecordDataFromCINIIApi(param_api);
+        res_jalc_data = this.setRecordDataFromJalcApi(param_api);
+        res_datacite_data = this.setRecordDataFromDataciteApi(param_api);
 
-        jalcDataEmpty = this.setRecordDataFromJalcApi(param_api);
+        Promise.all([res_crossref_data, res_cinii_data, res_jalc_data, res_datacite_data]).then(function (responses) {
+          $scope.checkBothDataEmpty();
+        });
 
-        datacitDataEmpty = this.setRecordDataFromDataciteApi(param_api);
-
-        // datacitDataEmpty = this.setRecordDataFromJamasApi(param_api);
-        return crossrefDataEmpty,ciniiDataEmpty,jalcDataEmpty,datacitDataEmpty
+        return
 
     }
 
@@ -2644,15 +2644,11 @@ function toObject(arr) {
             } else if (!$.isEmptyObject(data.result)) {
               $scope.clearAllField();
               $("#metaDataSelectJamas").prop('disabled', false);
-              $("#metaDataSelectJamas").val(JSON.stringify(data.result))
+              $("#metaDataSelectJamas").val(JSON.stringify(data.result));
             } else {
               $scope.enableAutofillButton();
-              $scope.crossrefDataEmpty = true;
-              $scope.crossrefDataEmpty = true;
               $scope.setAutoFillErrorMessage($("#autofill_error_doi").val());
             }
-            $scope.checkBothDataEmpty($scope.crossrefDataEmpty, $scope.ciniiDataEmpty, $scope.jalcDataEmpty, $scope.datacitDataEmpty);
-            $scope.checkBothDataEmpty($scope.crossrefDataEmpty, $scope.ciniiDataEmpty, $scope.jalcDataEmpty, $scope.datacitDataEmpty);
           },
           function error(response) {
             $scope.enableAutofillButton();
@@ -2673,7 +2669,10 @@ function toObject(arr) {
           dataType: "json"
         };
         
-        InvenioRecordsAPI.request(request).then(
+        $scope.crossrefDataEmpty = true;
+        $("#crossref_box").addClass("select_site_disabled");
+        $("#metaDataSelectCrossRef").prop('disabled', true);
+        return InvenioRecordsAPI.request(request).then(
           function success(response) {
             let data = response.data;
             if (data.error) {
@@ -2681,14 +2680,14 @@ function toObject(arr) {
               $scope.setAutoFillErrorMessage("An error have occurred!\nDetail: " + data.error);
             } else if (!$.isEmptyObject(data.result)) {
               $scope.clearAllField();
+              $("#crossref_box").removeClass("select_site_disabled");
               $("#metaDataSelectCrossRef").prop('disabled', false);
-              $("#metaDataSelectCrossRef").val(JSON.stringify(data.result))
+              $("#metaDataSelectCrossRef").val(JSON.stringify(data.result));
+              $scope.crossrefDataEmpty = false;
             } else {
               $scope.enableAutofillButton();
-              $scope.crossrefDataEmpty = true;
               $scope.setAutoFillErrorMessage($("#autofill_error_doi").val());
             }
-            $scope.checkBothDataEmpty($scope.crossrefDataEmpty, $scope.ciniiDataEmpty, $scope.jalcDataEmpty, $scope.datacitDataEmpty);
           },
           function error(response) {
             $scope.enableAutofillButton();
@@ -2709,7 +2708,7 @@ function toObject(arr) {
           dataType: "json"
         };
         
-        InvenioRecordsAPI.request(request).then(
+        return InvenioRecordsAPI.request(request).then(
           function success(response) {
             let data = response.data;
             if (data.error) {
@@ -2744,7 +2743,10 @@ function toObject(arr) {
           data: JSON.stringify(param_api)
         };
         
-        InvenioRecordsAPI.request(request).then(
+        $scope.ciniiDataEmpty = true;
+        $("#cinii_box").addClass("select_site_disabled");
+        $("#metaDataSelectCinii").prop('disabled', true);
+        return InvenioRecordsAPI.request(request).then(
           function success(response) {
             let data = response.data;
             if (data.error) {
@@ -2752,15 +2754,14 @@ function toObject(arr) {
               $scope.setAutoFillErrorMessage("An error have occurred!\nDetail: " + data.error);
             } else if (!$.isEmptyObject(data.result)) {
               $scope.clearAllField();
+              $("#cinii_box").removeClass("select_site_disabled");
               $("#metaDataSelectCinii").prop('disabled', false);
-              $("#metaDataSelectCinii").val(JSON.stringify(data.result))
+              $("#metaDataSelectCinii").val(JSON.stringify(data.result));
+              $scope.ciniiDataEmpty = false;
             } else {
-              $scope.ciniiDataEmpty = true;
               $scope.enableAutofillButton();
               $scope.setAutoFillErrorMessage($("#autofill_error_doi").val());
             }
-            $scope.checkBothDataEmpty($scope.crossrefDataEmpty, $scope.ciniiDataEmpty, $scope.jalcDataEmpty, $scope.datacitDataEmpty);
-
           },
           function error(response) {
             $scope.enableAutofillButton();
@@ -2815,7 +2816,10 @@ function toObject(arr) {
           data: JSON.stringify(param_api)
         };
         
-        InvenioRecordsAPI.request(request).then(
+        $scope.jalcDataEmpty = true;
+        $("#jalc_box").addClass("select_site_disabled");
+        $("#metaDataSelectJalc").prop('disabled', true);
+        return InvenioRecordsAPI.request(request).then(
           function success(response) {
             let data = response.data;
             if (data.error) {
@@ -2823,15 +2827,14 @@ function toObject(arr) {
               $scope.setAutoFillErrorMessage("An error have occurred!\nDetail: " + data.error);
             } else if (!$.isEmptyObject(data.result)) {
               $scope.clearAllField();
+              $("#jalc_box").removeClass("select_site_disabled");
               $("#metaDataSelectJalc").prop('disabled', false);
-              $("#metaDataSelectJalc").val(JSON.stringify(data.result))
+              $("#metaDataSelectJalc").val(JSON.stringify(data.result));
+              $scope.jalcDataEmpty = false;
             } else {
-              $scope.jalcDataEmpty = true;
               $scope.enableAutofillButton();
               $scope.setAutoFillErrorMessage($("#autofill_error_doi").val());
             }
-            $scope.checkBothDataEmpty($scope.crossrefDataEmpty, $scope.ciniiDataEmpty, $scope.jalcDataEmpty, $scope.datacitDataEmpty);
-
           },
           function error(response) {
             $scope.enableAutofillButton();
@@ -2886,7 +2889,10 @@ function toObject(arr) {
           data: JSON.stringify(param_api)
         };
         
-        InvenioRecordsAPI.request(request).then(
+        $scope.datacitDataEmpty = true;
+        $("#datacite_box").addClass("select_site_disabled");
+        $("#metaDataSelectDataCite").prop('disabled', true);
+        return InvenioRecordsAPI.request(request).then(
           function success(response) {
             let data = response.data;
 
@@ -2895,15 +2901,14 @@ function toObject(arr) {
               $scope.setAutoFillErrorMessage("An error have occurred!\nDetail: " + data.error);
             } else if (!$.isEmptyObject(data.result)) {
               $scope.clearAllField();
+              $("#datacite_box").removeClass("select_site_disabled");
               $("#metaDataSelectDataCite").prop('disabled', false);
               $("#metaDataSelectDataCite").val(JSON.stringify(data.result));
+              $scope.datacitDataEmpty = false;
             } else {
-              $scope.datacitDataEmpty = true;
               $scope.enableAutofillButton();
               $scope.setAutoFillErrorMessage($("#autofill_error_doi").val());
             }
-            $scope.checkBothDataEmpty($scope.crossrefDataEmpty, $scope.ciniiDataEmpty, $scope.jalcDataEmpty, $scope.datacitDataEmpty);
-
           },
           function error(response) {
             $scope.enableAutofillButton();
