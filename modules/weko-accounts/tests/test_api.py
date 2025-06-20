@@ -453,7 +453,7 @@ class TestShibUserExtra:
             with pytest.raises(KeyError, match='WEKO_ACCOUNTS_IDP_ENTITY_ID is missing in config'):
                 shibuser._get_roles_to_add()
 
-#.tox/c1/bin/pytest --cov=weko_accounts tests/test_api.py::TestShibUserExtra::test_find_organization_name -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+# .tox/c1/bin/pytest --cov=weko_accounts tests/test_api.py::TestShibUserExtra::test_find_organization_name -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
     def test_find_organization_name(self, shib_user_a, app, mocker):
         with app.app_context():
             with patch('weko_accounts.api.db.session') as mock_db_session, \
@@ -484,28 +484,51 @@ class TestShibUserExtra:
                 mocker.patch("weko_accounts.api.ShibUser.get_organization_from_api", return_value="Gakunin2")
                 result = shib_user_a._find_organization_name(group_ids)
                 assert result == True
+                assert mock_db_session.commit.call_count == 0
+                assert mock_db_session.rollback.call_count == 0
+                mock_db_session.commit.reset_mock()
 
                 # 機関内のOrthrosのorganizationNameに登録がある場合のテスト
                 mocker.patch("weko_accounts.api.ShibUser.get_organization_from_api", return_value="Orthros")
                 result = shib_user_a._find_organization_name(group_ids)
                 assert result == True
+                assert mock_db_session.commit.call_count == 0
+                assert mock_db_session.rollback.call_count == 0
+                mock_db_session.commit.reset_mock()
 
                 # 機関外のOrthrosのorganizationNameに登録がある場合のテスト
                 mocker.patch("weko_accounts.api.ShibUser.get_organization_from_api", return_value="OutsideOrthros")
                 result = shib_user_a._find_organization_name(group_ids)
                 assert result == True
+                assert mock_db_session.commit.call_count == 0
+                assert mock_db_session.rollback.call_count == 0
+                mock_db_session.commit.reset_mock()
 
                 # その他のorganizationNameに登録がある場合のテスト
                 mocker.patch("weko_accounts.api.ShibUser.get_organization_from_api", return_value="Extra")
                 result = shib_user_a._find_organization_name(group_ids)
                 assert result == True
+                assert mock_db_session.commit.call_count == 0
+                assert mock_db_session.rollback.call_count == 0
+                mock_db_session.commit.reset_mock()
 
                 # organizationNameに登録がない場合のテスト
                 mocker.patch("weko_accounts.api.ShibUser.get_organization_from_api", return_value="invalid")
                 result = shib_user_a._find_organization_name(group_ids)
                 assert result == False
+                assert mock_db_session.commit.call_count == 1
+                assert mock_db_session.rollback.call_count == 0
+                mock_db_session.commit.reset_mock()
 
-#.tox/c1/bin/pytest --cov=weko_accounts tests/test_api.py::TestShibUserExtra::test_assign_roles_to_user -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+                # Exception Test
+                mock_db_session.commit.side_effect = Exception("Test exception")
+                with pytest.raises(Exception):
+                    shib_user_a._find_organization_name(group_ids)
+                assert mock_db_session.commit.call_count == 1
+                assert mock_db_session.rollback.call_count == 1
+                assert mock_current_app.logger.error.call_count == 1
+
+# .tox/c1/bin/pytest --cov=weko_accounts tests/test_api.py::TestShibUserExtra::test_assign_roles_to_user -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
     def test_assign_roles_to_user(self, shib_user_a, app, mocker):
         with app.app_context():
             with patch('weko_accounts.api.Role') as mock_role, \
@@ -538,7 +561,8 @@ class TestShibUserExtra:
                 assert mock_role.query.filter_by.call_count == 6
                 assert mock_datastore.add_role_to_user.call_count == 0
                 assert mock_db_session.commit.call_count == 1
-#.tox/c1/bin/pytest --cov=weko_accounts tests/test_api.py::TestShibUserExtra::test_assign_roles_to_user_with_roles -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+
+# .tox/c1/bin/pytest --cov=weko_accounts tests/test_api.py::TestShibUserExtra::test_assign_roles_to_user_with_roles -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
     def test_assign_roles_to_user_with_roles(self,shib_user_a, app):
         with app.app_context():
             with patch('weko_accounts.api.Role') as mock_role, \
@@ -573,7 +597,7 @@ class TestShibUserExtra:
                 assert mock_datastore.add_role_to_user.call_count == 5
                 assert mock_db_session.commit.call_count == 1
 
-#.tox/c1/bin/pytest --cov=weko_accounts tests/test_api.py::TestShibUserExtra::test_assign_roles_to_user_exception -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+# .tox/c1/bin/pytest --cov=weko_accounts tests/test_api.py::TestShibUserExtra::test_assign_roles_to_user_exception -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
     def test_assign_roles_to_user_exception(self, shib_user_a, app, mocker):
         with app.app_context():
             with patch('weko_accounts.api.Role') as mock_role, \
