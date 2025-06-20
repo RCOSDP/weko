@@ -97,7 +97,7 @@ try {
 
   // Shibbolethログインの場合、TOP画面でOAuth認証を実行
   const next = query.next === 'ams' ? 'ams' : '';
-  if (next == 'ams') {
+  if (next === 'ams') {
     const url = new URL(useAppConfig().wekoOrigin + '/oauth/authorize');
     const random = Math.random().toString(36);
     url.searchParams.append('response_type', 'code');

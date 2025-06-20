@@ -417,11 +417,11 @@ def confirm_user_without_page():
 
         # bind relation info
         if not shib_user.bind_relation_info(cache_val.get('shib_mail')):
+            datastore.delete(cache_key)
             if ams_login:
                 return _redirect_method(True, error=_("FAILED bind_relation_info!"))
             else:
                 flash('FAILED bind_relation_info!', category='error')
-                datastore.delete(cache_key)
                 return _redirect_method()
 
         # check in
