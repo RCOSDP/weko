@@ -220,7 +220,6 @@ def test_shib_auto_login(client,redis_connect,mocker):
             mock_shib_login.assert_called_once()
             assert redis_connect.redis.exists("Shib-Session-1111") == False
 
-
     # raise BaseException
     with patch("weko_accounts.views.RedisConnection",side_effect=BaseException("test_error")):
         res = client.get(url+"?Shib-Session-ID=1111")
@@ -256,7 +255,6 @@ def test_confirm_user(client,redis_connect,mocker):
     called_args, called_kwargs = mock_redirect_.call_args
     assert called_args[0] == True
     assert "csrf_random" in called_kwargs.get("error", "")
-
 
     # not exist shib_session_id
     set_session(client,{"csrf_random":"test_csrf","shib_session_id":None})
@@ -393,6 +391,7 @@ def test_confirm_user(client,redis_connect,mocker):
                     called_args, _ = mock_redirect.call_args
                     mock_redirect.assert_called_with("http://test_server.localdomain/ams/login?next=ams")
                     assert redis_connect.redis.exists("Shib-Session-1111") == False
+
     # raise BaseException
     with patch("weko_accounts.views._redirect_method",side_effect=BaseException("test_error")):
         res = client.post(url,data=form)
@@ -509,7 +508,6 @@ def test_confirm_user_without_page(client,redis_connect,mocker):
                     mock_redirect.assert_called_with("/next_page")
                     assert redis_connect.redis.exists("Shib-Session-1111") is False
 
-
     redis_connect.put("Shib-Session-1111",bytes('{"shib_eppn":"test_eppn"}',"utf-8"))
     with patch("weko_accounts.views.ShibUser.check_weko_user",return_value=True):
         # shib_user.bind_relation_info is false
@@ -583,9 +581,6 @@ def test_confirm_user_without_page(client,redis_connect,mocker):
         called_args, called_kwargs = mock_redirect_.call_args
         assert called_args[0] == True
         assert "Server error has occurred. Please contact server administrator." in called_kwargs.get("error", "")
-
-
-
 
 #def shib_login():
 # .tox/c1/bin/pytest --cov=weko_accounts tests/test_views.py::test_shib_login -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
@@ -840,8 +835,6 @@ def test_shib_sp_login(client, redis_connect,mocker, db, users):
         assert called_args[0] == True
         assert "Server error has occurred. Please contact server administrator." in called_kwargs.get("error", "")
 
-
-
     # all attributes have value and some shibboleth_user records don't have target eppn
     current_app.config.update(
         WEKO_ACCOUNTS_SHIB_LOGIN_ENABLED=True,
@@ -1010,7 +1003,6 @@ def test_shib_sp_login(client, redis_connect,mocker, db, users):
     res = client.post(url, data=form, headers=headers)
     assert res.status_code == 302
     assert res.headers['Location'] == url_for("security.login", _external=True)
-
 
 #def shib_stub_login():
 # .tox/c1/bin/pytest --cov=weko_accounts tests/test_views.py::test_shib_stub_login -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp

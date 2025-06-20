@@ -196,7 +196,8 @@ def shib_auto_login():
         if not shib_session_id:
             if ams_login:
                 return _redirect_method(True, error=_("Missing Shib-Session-ID!"))
-            return _redirect_method()
+            else:
+                return _redirect_method()
 
         redis_connection = RedisConnection()
         datastore = redis_connection.connection(db=current_app.config['CACHE_REDIS_DB'], kv = True)
@@ -205,14 +206,16 @@ def shib_auto_login():
         if not datastore.redis.exists(cache_key):
             if ams_login:
                 return _redirect_method(True, error=_("Missing SHIB_CACHE_PREFIX!"))
-            return _redirect_method()
+            else:
+                return _redirect_method()
 
         cache_val = datastore.get(cache_key)
         if not cache_val:
             datastore.delete(cache_key)
             if ams_login:
                 return _redirect_method(True, error=_("Missing SHIB_ATTR!"))
-            return _redirect_method()
+            else:
+                return _redirect_method()
 
         cache_val = json.loads(str(cache_val, encoding='utf-8'))
         shib_user = ShibUser(cache_val)
@@ -228,8 +231,9 @@ def shib_auto_login():
             current_app.logger.error(error)
             if ams_login:
                 return _redirect_method(True, error=error)
-            flash(error, category='error')
-            return _redirect_method()
+            else:
+                flash(error, category='error')
+                return _redirect_method()
 
         if shib_user.shib_user:
             shib_user.shib_user_login()
@@ -275,15 +279,17 @@ def confirm_user():
         if request.form.get('csrf_random', '') != session['csrf_random']:
             if ams_login:
                 return _redirect_method(True, error=_("csrf_random"))
-            flash('csrf_random', category='error')
-            return _redirect_method()
+            else:
+                flash('csrf_random', category='error')
+                return _redirect_method()
 
         shib_session_id = session['shib_session_id']
         if not shib_session_id:
             if ams_login:
                 return _redirect_method(True, error=_("Missing Shib-Session-ID!"))
-            flash('shib_session_id', category='error')
-            return _redirect_method()
+            else:
+                flash('shib_session_id', category='error')
+                return _redirect_method()
 
         redis_connection = RedisConnection()
         datastore = redis_connection.connection(db=current_app.config['CACHE_REDIS_DB'], kv = True)
@@ -293,16 +299,18 @@ def confirm_user():
         if not datastore.redis.exists(cache_key):
             if ams_login:
                 return _redirect_method(True, error=_("Missing SHIB_CACHE_PREFIX"))
-            flash('cache_key', category='error')
-            return _redirect_method()
+            else:
+                flash('cache_key', category='error')
+                return _redirect_method()
 
         cache_val = datastore.get(cache_key)
         if not cache_val:
             if ams_login:
                 return _redirect_method(True, error=_("Missing SHIB_ATTR!"))
-            flash('cache_val', category='error')
-            datastore.delete(cache_key)
-            return _redirect_method()
+            else:
+                flash('cache_val', category='error')
+                datastore.delete(cache_key)
+                return _redirect_method()
 
         cache_val = json.loads(str(cache_val, encoding='utf-8'))
         shib_user = ShibUser(cache_val)
@@ -311,15 +319,17 @@ def confirm_user():
         if not shib_user.check_weko_user(account, password):
             if ams_login:
                 return _redirect_method(True, error=_("There is no user information."))
-            flash('check_weko_user', category='error')
-            datastore.delete(cache_key)
-            return _redirect_method()
+            else:
+                flash('check_weko_user', category='error')
+                datastore.delete(cache_key)
+                return _redirect_method()
 
         if not shib_user.bind_relation_info(account):
             if ams_login:
                 return _redirect_method(True, error=_("FAILED bind_relation_info!"))
-            flash('FAILED bind_relation_info!', category='error')
-            return _redirect_method()
+            else:
+                flash('FAILED bind_relation_info!', category='error')
+                return _redirect_method()
 
         error = shib_user.check_in()
 
@@ -327,8 +337,9 @@ def confirm_user():
             datastore.delete(cache_key)
             if ams_login:
                 return _redirect_method(True, error=error)
-            flash(error, category='error')
-            return _redirect_method()
+            else:
+                flash(error, category='error')
+                return _redirect_method()
 
         if shib_user.shib_user:
             shib_user.shib_user_login()
@@ -374,8 +385,9 @@ def confirm_user_without_page():
         if not shib_session_id:
             if ams_login:
                 return _redirect_method(True, error=_("Missing Shib-Session-ID!"))
-            flash('shib_session_id', category='error')
-            return _redirect_method()
+            else:
+                flash('shib_session_id', category='error')
+                return _redirect_method()
 
         # get cache from redis
         redis_connection = RedisConnection()
@@ -387,16 +399,18 @@ def confirm_user_without_page():
         if not datastore.redis.exists(cache_key):
             if ams_login:
                 return _redirect_method(True, error=_("Missing SHIB_CACHE_PREFIX"))
-            flash('cache_key', category='error')
-            return _redirect_method()
+            else:
+                flash('cache_key', category='error')
+                return _redirect_method()
 
         cache_val = datastore.get(cache_key)
         if not cache_val:
             if ams_login:
                 return _redirect_method(True, error=_("Missing SHIB_ATTR!"))
-            flash('cache_val', category='error')
-            datastore.delete(cache_key)
-            return _redirect_method()
+            else:
+                flash('cache_val', category='error')
+                datastore.delete(cache_key)
+                return _redirect_method()
 
         cache_val = json.loads(str(cache_val, encoding='utf-8'))
         shib_user = ShibUser(cache_val)
@@ -405,9 +419,10 @@ def confirm_user_without_page():
         if not shib_user.bind_relation_info(cache_val.get('shib_mail')):
             if ams_login:
                 return _redirect_method(True, error=_("FAILED bind_relation_info!"))
-            flash('FAILED bind_relation_info!', category='error')
-            datastore.delete(cache_key)
-            return _redirect_method()
+            else:
+                flash('FAILED bind_relation_info!', category='error')
+                datastore.delete(cache_key)
+                return _redirect_method()
 
         # check in
         error = shib_user.check_in()
@@ -416,8 +431,9 @@ def confirm_user_without_page():
             datastore.delete(cache_key)
             if ams_login:
                 return _redirect_method(True, error=error)
-            flash(error, category='error')
-            return _redirect_method()
+            else:
+                flash(error, category='error')
+                return _redirect_method()
 
         if shib_user.shib_user:
             shib_user.shib_user_login()
@@ -451,8 +467,9 @@ def shib_login():
             current_app.logger.error(_('Missing Shib-Session-ID!'))
             if ams_login:
                 return _redirect_method(True, error=_('Missing Shib-Session-ID!'))
-            flash(_('Missing Shib-Session-ID!'), category='error')
-            return _redirect_method()
+            else:
+                flash(_('Missing Shib-Session-ID!'), category='error')
+                return _redirect_method()
 
         redis_connection = RedisConnection()
         datastore = redis_connection.connection(db=current_app.config['CACHE_REDIS_DB'], kv = True)
@@ -464,7 +481,8 @@ def shib_login():
             flash(_('Missing SHIB_CACHE_PREFIX!'), category='error')
             if ams_login:
                 return _redirect_method(True, error=_('Missing SHIB_CACHE_PREFIX!'))
-            return _redirect_method()
+            else:
+                return _redirect_method()
 
         cache_val = datastore.get(cache_key)
 
@@ -473,8 +491,9 @@ def shib_login():
             datastore.delete(cache_key)
             if ams_login:
                 return _redirect_method(True, error=_('Missing SHIB_ATTR!'))
-            flash(_('Missing SHIB_ATTR!'), category='error')
-            return _redirect_method()
+            else:
+                flash(_('Missing SHIB_ATTR!'), category='error')
+                return _redirect_method()
 
         cache_val = json.loads(str(cache_val, encoding='utf-8'))
         session['shib_session_id'] = shib_session_id
@@ -489,9 +508,9 @@ def shib_login():
             email=user.email if user else ''
         )
     except BaseException:
+        current_app.logger.error("Unexpected error: {}".format(sys.exc_info()))
         if ams_login:
             return _redirect_method(True, error=_("Server error has occurred. Please contact server administrator."))
-        current_app.logger.error("Unexpected error: {}".format(sys.exc_info()))
     return abort(400)
 
 def find_user_by_email(shib_attributes):
@@ -524,8 +543,9 @@ def shib_sp_login():
         if not shib_session_id and not _shib_enable:
             if ams_login:
                 return _redirect_method(True, error=_('Missing Shib-Session-ID!'))
-            flash(_('Missing Shib-Session-ID!'), category='error')
-            return redirect(url_for_security('login'))
+            else:
+                flash(_('Missing Shib-Session-ID!'), category='error')
+                return redirect(url_for_security('login'))
 
         shib_attr, error = parse_attributes()
 
@@ -535,8 +555,9 @@ def shib_sp_login():
                 or _shib_username_config and shib_attr.get('shib_user_name')):
             if ams_login:
                 return _redirect_method(True, error=_('Missing SHIB_ATTRs!'))
-            flash(_('Missing SHIB_ATTRs!'), category='error')
-            return _redirect_method()
+            else:
+                flash(_('Missing SHIB_ATTRs!'), category='error')
+                return _redirect_method()
 
         # Check if shib_eppn is not included in the blocked user list
         if AdminSettings.query.filter_by(name='blocked_user_settings').first():
@@ -556,8 +577,9 @@ def shib_sp_login():
             if blocked:
                 if ams_login:
                     return _redirect_method(True, error=_('Login is blocked.'))
-                flash(_('Failed to login.'), category='error')
-                return _redirect_method()
+                else:
+                    flash(_('Failed to login.'), category='error')
+                    return _redirect_method()
 
         # Redis connection
         redis_connection = RedisConnection()
@@ -595,7 +617,8 @@ def shib_sp_login():
         current_app.logger.error("Unexpected error: {}".format(sys.exc_info()))
         if ams_login:
             return _redirect_method(True, error=_("Server error has occurred. Please contact server administrator."))
-        return _redirect_method()
+        else:
+            return _redirect_method()
 
 
 @blueprint.route('/shib/sp/login', methods=['GET'])
