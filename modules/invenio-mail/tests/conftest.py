@@ -56,10 +56,10 @@ def base_app(instance_path):
         SECRET_KEY='SECRET_KEY',
         TESTING=True,
         SERVER_NAME='app',
-        SQLALCHEMY_DATABASE_URI=os.environ.get(
-             'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'),
-        #SQLALCHEMY_DATABASE_URI=os.getenv('SQLALCHEMY_DATABASE_URI',
-        #                                  'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest'),
+        # SQLALCHEMY_DATABASE_URI=os.environ.get(
+        #      'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'),
+        SQLALCHEMY_DATABASE_URI=os.getenv('SQLALCHEMY_DATABASE_URI',
+                                         'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest'),
     )
     Babel(app_)
     InvenioDB(app_)

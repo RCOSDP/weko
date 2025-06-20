@@ -971,11 +971,14 @@ def prepare_edit_item(id=None, community=None):
         data:
             pid_value: pid_value
     Args:
-        id: pid_value
-    return: The result json:
-        code: status code,
-        msg: meassage result,
-        data: url redirect
+        id (str): pid_value
+        community (str): community id
+
+    Returns:
+        Response: JSON response with code and message.
+            - code: status code,
+            - msg: meassage result,
+            - data: url redirect
     """
     err_code = current_app.config.get(
         'WEKO_ITEMS_UI_API_RETURN_CODE_ERROR', -1
@@ -1167,7 +1170,7 @@ def prepare_delete_item(id=None, community=None, shared_user_id=-1):
                 code=err_code,
                 msg=_('This Item is being edited.')
             )
-        
+
         record_class = import_string('weko_deposit.api:WekoDeposit')
         resolver = Resolver(
             pid_type='recid', object_type='rec',
@@ -1180,7 +1183,7 @@ def prepare_delete_item(id=None, community=None, shared_user_id=-1):
                 code=err_code,
                 msg=_('Record does not exist.')
             )
-        
+
         authenticators = [
             str(deposit.get('owner')), str(deposit.get('weko_shared_id'))
         ]
