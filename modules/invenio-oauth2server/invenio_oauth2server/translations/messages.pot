@@ -9,14 +9,14 @@ msgid ""
 msgstr ""
 "Project-Id-Version: invenio-oauth2server 1.0.0\n"
 "Report-Msgid-Bugs-To: info@inveniosoftware.org\n"
-"POT-Creation-Date: 2025-05-07 17:40+0900\n"
+"POT-Creation-Date: 2025-06-20 14:26+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.5.1\n"
+"Generated-By: Babel 2.9.1\n"
 
 #: invenio_oauth2server/admin.py:60
 msgid "OAuth Applications"
@@ -112,7 +112,7 @@ msgstr ""
 #: invenio_oauth2server/templates/invenio_oauth2server/authorize.html:18
 #: invenio_oauth2server/templates/invenio_oauth2server/authorize.html:19
 #: invenio_oauth2server/templates/invenio_oauth2server/authorize.html:58
-#: invenio_oauth2server/views/server.py:69
+#: invenio_oauth2server/views/server.py:70
 msgid "Authorize application"
 msgstr ""
 
@@ -154,7 +154,33 @@ msgid ""
 "request (error code: %(x_error)s)."
 msgstr ""
 
-#: invenio_oauth2server/templates/invenio_oauth2server/errors.html:31
+#: invenio_oauth2server/templates/invenio_oauth2server/errors.html:28
+msgid ""
+"You cannot access the service because there is an error in the "
+"authentication request."
+msgstr ""
+
+#: invenio_oauth2server/templates/invenio_oauth2server/errors.html:30
+msgid "unsupported_response_type"
+msgstr ""
+
+#: invenio_oauth2server/templates/invenio_oauth2server/errors.html:33
+msgid "invalid_client_id"
+msgstr ""
+
+#: invenio_oauth2server/templates/invenio_oauth2server/errors.html:35
+msgid "invalid_request"
+msgstr ""
+
+#: invenio_oauth2server/templates/invenio_oauth2server/errors.html:38
+msgid "invalid_scope"
+msgstr ""
+
+#: invenio_oauth2server/templates/invenio_oauth2server/errors.html:40
+msgid "access_denied"
+msgstr ""
+
+#: invenio_oauth2server/templates/invenio_oauth2server/errors.html:48
 msgid "Get me out of here!"
 msgstr ""
 

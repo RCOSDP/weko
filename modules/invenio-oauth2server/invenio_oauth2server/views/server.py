@@ -129,12 +129,17 @@ def errors():
     status_code = 200
     try:
         error = None
-        raise_from_error(request.values.get('error'), params=dict())
+        error_code = request.values.get('error')
+        description = request.values.get('error_description')
+        params = {}
+        if description:
+            params['error_description'] = description
+
+        raise_from_error(error_code, params=params)
     except OAuth2Error as raised:
         error = raised
         if not isinstance(error, AccessDeniedError):
             status_code = 400
-    # return render_template('invenio_oauth2server/errors.html', error=error)
     response = make_response(render_template('invenio_oauth2server/errors.html', error=error), status_code)
     return response
 
