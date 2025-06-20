@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: invenio-oauth2server 1.0.0\n"
 "Report-Msgid-Bugs-To: info@inveniosoftware.org\n"
-"POT-Creation-Date: 2025-06-20 14:26+0900\n"
+"POT-Creation-Date: 2025-06-20 16:30+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -143,44 +143,36 @@ msgid "Reject"
 msgstr ""
 
 #: invenio_oauth2server/templates/invenio_oauth2server/errors.html:18
-#: invenio_oauth2server/templates/invenio_oauth2server/errors.html:22
 msgid "Invalid authorization request"
 msgstr ""
 
-#: invenio_oauth2server/templates/invenio_oauth2server/errors.html:24
-#, python-format
-msgid ""
-"The service that redirected your here made an invalid authorization "
-"request (error code: %(x_error)s)."
-msgstr ""
-
-#: invenio_oauth2server/templates/invenio_oauth2server/errors.html:28
+#: invenio_oauth2server/templates/invenio_oauth2server/errors.html:23
 msgid ""
 "You cannot access the service because there is an error in the "
 "authentication request."
 msgstr ""
 
-#: invenio_oauth2server/templates/invenio_oauth2server/errors.html:30
+#: invenio_oauth2server/templates/invenio_oauth2server/errors.html:25
 msgid "unsupported_response_type"
 msgstr ""
 
-#: invenio_oauth2server/templates/invenio_oauth2server/errors.html:33
+#: invenio_oauth2server/templates/invenio_oauth2server/errors.html:28
 msgid "invalid_client_id"
 msgstr ""
 
-#: invenio_oauth2server/templates/invenio_oauth2server/errors.html:35
+#: invenio_oauth2server/templates/invenio_oauth2server/errors.html:30
 msgid "invalid_request"
 msgstr ""
 
-#: invenio_oauth2server/templates/invenio_oauth2server/errors.html:38
+#: invenio_oauth2server/templates/invenio_oauth2server/errors.html:33
 msgid "invalid_scope"
 msgstr ""
 
-#: invenio_oauth2server/templates/invenio_oauth2server/errors.html:40
+#: invenio_oauth2server/templates/invenio_oauth2server/errors.html:35
 msgid "access_denied"
 msgstr ""
 
-#: invenio_oauth2server/templates/invenio_oauth2server/errors.html:48
+#: invenio_oauth2server/templates/invenio_oauth2server/errors.html:43
 msgid "Get me out of here!"
 msgstr ""
 
