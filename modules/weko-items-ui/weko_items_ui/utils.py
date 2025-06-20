@@ -2513,8 +2513,9 @@ def export_items(post_data):
     """
     try:
         current_app.logger.debug("post_data:{}".format(post_data))
-        include_contents = True if \
-            post_data.get('export_file_contents_radio') == 'True' else False
+        include_contents = (
+            True if post_data.get('export_file_contents_radio') == 'True' else False
+        )
         export_format = post_data['export_format_radio']
         record_ids = json.loads(post_data['record_ids'])
         invalid_record_ids = json.loads(post_data['invalid_record_ids'])
@@ -2523,8 +2524,11 @@ def export_items(post_data):
         else:
             invalid_record_ids = [invalid_record_ids]
         # Remove all invalid records
-        record_ids = set(record_ids) - set(invalid_record_ids)
-        record_metadata = json.loads(post_data['record_metadata'])
+        record_ids = list(set(record_ids) - set(invalid_record_ids))
+        record_metadata = (
+            json.loads(post_data['record_metadata'])
+            if post_data.get('record_metadata') else {}
+        )
         if len(record_ids) > _get_max_export_items():
             return abort(400)
         elif len(record_ids) == 0:
@@ -2532,14 +2536,15 @@ def export_items(post_data):
 
         result = {'items': []}
         temp_path = tempfile.TemporaryDirectory(
-            prefix=current_app.config['WEKO_ITEMS_UI_EXPORT_TMP_PREFIX'])
+            prefix=current_app.config['WEKO_ITEMS_UI_EXPORT_TMP_PREFIX']
+        )
         item_types_data = {}
 
         # Set export folder
         datetime_now = datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S")
         export_path = os.path.join(temp_path.name, datetime_now)
 
-            # Double check for limits
+        # Double check for limits
         for record_id in record_ids:
             record_path = os.path.join(export_path, f"recid_{record_id}")
             os.makedirs(record_path, exist_ok=True)
@@ -2588,11 +2593,17 @@ def export_items(post_data):
             export_path.split("/")[-2] + "-" + export_path.split("/")[-1]
         )
         shutil.make_archive(zip_path, 'zip', export_path)
+        resp = send_file(
+            zip_path+".zip",
+            as_attachment=True,
+            attachment_filename='export.zip'
+        )
     except (json.JSONDecodeError, KeyError, TypeError, ValueError):
         current_app.logger.error(traceback.print_exc())
         return abort(400)
     except Exception:
         current_app.logger.error(traceback.print_exc())
+        traceback.print_exc()
         flash(_('Error occurred during item export.'), 'error')
         resp = redirect(url_for('weko_items_ui.export'))
     os.remove(zip_path+".zip")

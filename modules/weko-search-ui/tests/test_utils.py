@@ -1,25 +1,25 @@
 # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
 
 import copy
-from io import StringIO
 import json
 import os
 import re
 import tempfile
 import time
 import unittest
-from datetime import datetime,timedelta
 import uuid
 import zipfile
+from datetime import datetime, timedelta
 from elasticsearch import NotFoundError
+from io import StringIO
 
 import pytest
 from mock import MagicMock, Mock, patch, mock_open
 from werkzeug.datastructures import FileStorage
+from werkzeug.exceptions import BadRequest
 from flask import current_app, make_response, request
 from flask_babelex import Babel
 from flask_login import current_user
-from werkzeug.exceptions import BadRequest
 
 from sqlalchemy import func as _func
 from sqlalchemy.exc import SQLAlchemyError
@@ -39,7 +39,6 @@ from weko_records.api import ItemsMetadata, WekoRecord
 from weko_records.models import ItemMetadata
 from weko_records.models import ItemType
 from weko_redis.redis import RedisConnection
-
 
 from weko_search_ui import WekoSearchUI
 from weko_search_ui.config import (
@@ -1886,7 +1885,6 @@ def test_register_item_doi(i18n_app, db_activity, identifier, mocker):
             register_item_doi(item)
             mock_save.assert_not_called()
 
-
     # is_change_identifier is True, pid_value.endswith is False, doi_duplicated is True
     item = {
         "id":"2",
@@ -3631,8 +3629,6 @@ def test_get_export_status(i18n_app, users, redis_connect,mocker, location):
             datastore.put(run_msg, "test_run_msg".encode("utf-8"), ttl_secs=30)
             result=get_export_status()
             assert result == (False, "test_uri", "test_msg", "test_run_msg", "", "", "")
-
-
 
 
 # def handle_check_item_is_locked(item):

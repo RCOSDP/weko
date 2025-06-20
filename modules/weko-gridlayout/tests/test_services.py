@@ -17,7 +17,7 @@ from weko_gridlayout.services import (
     WidgetDesignServices,
     WidgetDesignPageServices,
     WidgetDataLoaderServices
-) 
+)
 from weko_gridlayout.models import WidgetDesignPage, WidgetDesignSetting, WidgetItem, WidgetMultiLangData
 
 

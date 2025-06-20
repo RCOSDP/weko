@@ -536,12 +536,12 @@ def es(app):
         index='{}stats-top-view-0001'.format(app.config['SEARCH_INDEX_PREFIX']),
         body=aggr_top_view_mapping, ignore=[400, 404]
     )
-    
+
     try:
         yield current_search_client
     finally:
         current_search_client.indices.delete(index="test-*")
-    
+
 @pytest.fixture
 def redis_connect(app):
     redis_connection = RedisConnection().connection(db=app.config['CACHE_REDIS_DB'], kv = True)
@@ -569,7 +569,6 @@ def widget_upload(app,db,location):
                             location=location,
                             default_storage_class=storage_class)
     db.session.add(bucket)
-
 
     img = Image.new("L", (128, 128))
     img_bytes = io.BytesIO()

@@ -25,6 +25,7 @@ import uuid
 import os
 from tests.helpers import json_data, create_record_with_pdf
 from mock import patch, MagicMock
+from invenio_pidstore.errors import PIDDoesNotExistError
 from weko_authors.models import AuthorsAffiliationSettings,AuthorsPrefixSettings
 from weko_deposit.api import WekoIndexer
 from weko_deposit.tasks import update_items_by_authorInfo, extract_pdf_and_update_file_contents, update_file_content
@@ -822,6 +823,58 @@ class TestUpdateAuthorData:
         assert result ==  ('uuid1', ['uuid1'], {'1'}, {'1': 'weko_id_1'})
         assert process_counter["success_items"] == [{"record_id": "1", "author_ids": [], "message": ""}]
 
+# .tox/c1/bin/pytest --cov=weko_deposit tests/test_tasks.py::TestUpdateAuthorData::test_update_author_data_pid_not_exist -v -s -vv --cov-branch --cov-report=html --cov-config=tox.ini --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
+    @patch('weko_deposit.tasks.PersistentIdentifier.get')
+    @patch('weko_deposit.tasks.WekoDeposit.get_record')
+    @patch('weko_deposit.tasks.ItemsMetadata.get_record')
+    def test_update_author_data_pid_not_exist(self, mock_get_record_items, mock_get_record, mock_get_pid, app, db):
+        # 条件
+        item_id = "1"
+        record_ids = []
+        process_counter = {"success_items": [], "fail_items": []}
+        target = {"pk_id": "1", "authorIdInfo": [{"idType": "1", "authorId": "weko_id_1"}]}
+        origin_pkid_list = ["1"]
+        key_map = {"creator": {}, "contributor": {}, "full_name": {}}
+        author_prefix = {}
+        affiliation_id = {}
+        force_change = False
+
+        # モックの設定
+        mock_get_pid.side_effect = PIDDoesNotExistError("pid_type", "pid_value")
+
+        # 実行
+        result = _update_author_data(item_id, record_ids, process_counter, target, origin_pkid_list, key_map, author_prefix, affiliation_id, force_change)
+
+        # 期待結果
+        assert result == (None, set(), {})
+        assert process_counter["fail_items"] == [{"record_id": "1", "author_ids": [], "message": "PID 1 does not exist."}]
+
+    @patch('weko_deposit.tasks.PersistentIdentifier.get')
+    @patch('weko_deposit.tasks.WekoDeposit.get_record')
+    @patch('weko_deposit.tasks.ItemsMetadata.get_record')
+    def test_update_author_data_exception(self, mock_get_record_items, mock_get_record, mock_get_pid, app, db):
+        # 条件
+        item_id = "1"
+        record_ids = []
+        process_counter = {"success_items": [], "fail_items": []}
+        target = {"pk_id": "1", "authorIdInfo": [{"idType": "1", "authorId": "weko_id_1"}]}
+        origin_pkid_list = ["1"]
+        key_map = {"creator": {}, "contributor": {}, "full_name": {}}
+        author_prefix = {}
+        affiliation_id = {}
+        force_change = False
+
+        # モックの設定
+        mock_get_pid.side_effect = Exception("Test Exception")
+
+        # 実行
+        result = _update_author_data(item_id, record_ids, process_counter, target, origin_pkid_list, key_map, author_prefix, affiliation_id, force_change)
+
+        # 期待結果
+        assert result == (None, set(), {})
+        assert process_counter["fail_items"] == [{"record_id": "1", "author_ids": [], "message": "Test Exception"}]
+
+
 # .tox/c1/bin/pytest --cov=weko_deposit tests/test_tasks.py::test_extract_pdf_and_update_file_contents -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
 def test_extract_pdf_and_update_file_contents(app, db, location, caplog):
     app.config["TIKA_JAE_FILE_PARH"] = "/code/tika/tika-app-2.6.0.jar"
@@ -966,53 +1019,3 @@ def test_update_file_content(app, db, location):
         {"content":"this is not_exist.pdf"},
     ]
     assert attachments == test
-# .tox/c1/bin/pytest --cov=weko_deposit tests/test_tasks.py::TestUpdateAuthorData::test_update_author_data_pid_not_exist -v -s -vv --cov-branch --cov-report=html --cov-config=tox.ini --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
-    @patch('weko_deposit.tasks.PersistentIdentifier.get')
-    @patch('weko_deposit.tasks.WekoDeposit.get_record')
-    @patch('weko_deposit.tasks.ItemsMetadata.get_record')
-    def test_update_author_data_pid_not_exist(self, mock_get_record_items, mock_get_record, mock_get_pid, app, db):
-        # 条件
-        item_id = "1"
-        record_ids = []
-        process_counter = {"success_items": [], "fail_items": []}
-        target = {"pk_id": "1", "authorIdInfo": [{"idType": "1", "authorId": "weko_id_1"}]}
-        origin_pkid_list = ["1"]
-        key_map = {"creator": {}, "contributor": {}, "full_name": {}}
-        author_prefix = {}
-        affiliation_id = {}
-        force_change = False
-
-        # モックの設定
-        mock_get_pid.side_effect = PIDDoesNotExistError("pid_type", "pid_value")
-
-        # 実行
-        result = _update_author_data(item_id, record_ids, process_counter, target, origin_pkid_list, key_map, author_prefix, affiliation_id, force_change)
-
-        # 期待結果
-        assert result == (None, set(), {})
-        assert process_counter["fail_items"] == [{"record_id": "1", "author_ids": [], "message": "PID 1 does not exist."}]
-
-    @patch('weko_deposit.tasks.PersistentIdentifier.get')
-    @patch('weko_deposit.tasks.WekoDeposit.get_record')
-    @patch('weko_deposit.tasks.ItemsMetadata.get_record')
-    def test_update_author_data_exception(self, mock_get_record_items, mock_get_record, mock_get_pid, app, db):
-        # 条件
-        item_id = "1"
-        record_ids = []
-        process_counter = {"success_items": [], "fail_items": []}
-        target = {"pk_id": "1", "authorIdInfo": [{"idType": "1", "authorId": "weko_id_1"}]}
-        origin_pkid_list = ["1"]
-        key_map = {"creator": {}, "contributor": {}, "full_name": {}}
-        author_prefix = {}
-        affiliation_id = {}
-        force_change = False
-
-        # モックの設定
-        mock_get_pid.side_effect = Exception("Test Exception")
-
-        # 実行
-        result = _update_author_data(item_id, record_ids, process_counter, target, origin_pkid_list, key_map, author_prefix, affiliation_id, force_change)
-
-        # 期待結果
-        assert result == (None, set(), {})
-        assert process_counter["fail_items"] == [{"record_id": "1", "author_ids": [], "message": "Test Exception"}]
