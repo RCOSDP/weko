@@ -57,6 +57,9 @@ WEKO_ITEMS_UI_INDEX_URL = '/items/index/{pid_value}'
 
 WEKO_ITEMS_UI_RANKING_TEMPLATE = 'weko_items_ui/ranking.html'
 
+WEKO_ITEMS_UI_README_MD = 'templates/README.md'
+"""README.md for RO-Crate Export."""
+
 WEKO_ITEMS_UI_DEFAULT_MAX_EXPORT_NUM = 100
 """Default max number of allowed to be exported."""
 
@@ -257,3 +260,12 @@ WEKO_ITEMS_UI_RANKING_QUERY = dict(
         )
     )
 )
+
+WEKO_ITEMS_UI_REST_ENDPOINTS = {
+    'ranking': {
+        'rank_route': '/<string:version>/ranking/<string:ranking_type>',
+        'rank_files_route': '/<string:version>/ranking/<int:pid_value>/files',
+        'default_media_type': 'application/json',
+        'max_result_window': 10000,
+    },
+}

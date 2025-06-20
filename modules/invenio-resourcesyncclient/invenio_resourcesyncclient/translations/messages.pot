@@ -1,0 +1,78 @@
+# Translations template for invenio-resourcesyncclient.
+# Copyright (C) 2019 National Institute of Informatics
+# This file is distributed under the same license as the
+# invenio-resourcesyncclient project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2019.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: invenio-resourcesyncclient 1.0.0a4.dev20171205\n"
+"Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
+"POT-Creation-Date: 2019-06-13 07:47+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.5.1\n"
+
+#: invenio_resourcesyncclient\templates\invenio_resourcesyncclient\resync_client.html
+msgid "List"
+msgstr ""
+
+#: invenio_resourcesyncclient\templates\invenio_resourcesyncclient\resync_client.html
+msgid "Create"
+msgstr ""
+
+#: invenio_resourcesyncclient\templates\invenio_resourcesyncclient\resync_client.html
+msgid "Edit"
+msgstr ""
+
+#: invenio_resourcesyncclient\templates\invenio_resourcesyncclient\resync_client.html
+msgid "Detail"
+msgstr ""
+
+#: invenio_resourcesyncclient\templates\invenio_resourcesyncclient\resync_client.html
+msgid "Start Time"
+msgstr ""
+
+#: invenio_resourcesyncclient\templates\invenio_resourcesyncclient\resync_client.html
+msgid "End Time"
+msgstr ""
+
+#: invenio_resourcesyncclient\templates\invenio_resourcesyncclient\resync_client.html
+msgid "Status"
+msgstr ""
+
+#: invenio_resourcesyncclient\templates\invenio_resourcesyncclient\resync_client.html
+msgid "Log Type"
+msgstr ""
+
+#: invenio_resourcesyncclient\templates\invenio_resourcesyncclient\resync_client.html
+msgid "Processed Items"
+msgstr ""
+
+#: invenio_resourcesyncclient\templates\invenio_resourcesyncclient\resync_client.html
+msgid "Created Items"
+msgstr ""
+
+#: invenio_resourcesyncclient\templates\invenio_resourcesyncclient\resync_client.html
+msgid "Updated Items"
+msgstr ""
+
+#: invenio_resourcesyncclient\templates\invenio_resourcesyncclient\resync_client.html
+msgid "Deleted Items"
+msgstr ""
+
+#: invenio_resourcesyncclient\templates\invenio_resourcesyncclient\resync_client.html
+msgid "Error Items"
+msgstr ""
+
+#: invenio_resourcesyncclient\templates\invenio_resourcesyncclient\resync_client.html
+msgid "The input value for From Date is incorrect."
+msgstr ""
+
+#: invenio_resourcesyncclient\templates\invenio_resourcesyncclient\resync_client.html
+msgid "The input value for Until Date is incorrect."
+msgstr ""

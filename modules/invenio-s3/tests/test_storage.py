@@ -10,6 +10,7 @@ from __future__ import absolute_import, print_function
 
 import errno
 import os
+import io
 import shutil
 import tempfile
 from io import BytesIO
@@ -24,7 +25,7 @@ from invenio_files_rest.models import Location
 from invenio_files_rest.storage import PyFSFileStorage
 from mock import patch
 from s3fs import S3File, S3FileSystem
-
+from unittest.mock import MagicMock, patch
 from invenio_s3 import S3FSFileStorage, config, s3fs_storage_factory
 
 
@@ -386,19 +387,19 @@ def test_send_file(base_app, location, s3fs, database):
 
         default_location.type = 's3'
         database.session.commit()
-        
+
         base_app.config['S3_SEND_FILE_DIRECTLY'] = True
         test_send_directly()
-        
+
         base_app.config['S3_SEND_FILE_DIRECTLY'] = False
         test_send_directly()
 
         default_location.s3_send_file_directly = False
         database.session.commit()
-        
+
         base_app.config['S3_SEND_FILE_DIRECTLY'] = True
         test_send_indirectly()
-        
+
         base_app.config['S3_SEND_FILE_DIRECTLY'] = False
         test_send_indirectly()
 
@@ -487,3 +488,4 @@ def test_non_unicode_filename(base_app, location, s3fs):
             'żółć.txt', mimetype='text/plain', checksum=checksum)
         assert res.status_code == 200
         assert res.headers['Content-Disposition'] == 'inline'
+

@@ -60,3 +60,11 @@ class DeleteActivityFailedRESTError(RESTException):
 
     code = 404
     description = _('登録アクティビティを削除エラー。')
+
+
+class WekoWorkflowException(Exception):
+    """Base class for all exceptions raised by weko_workflow."""
+
+    def __init__(self, *args, **kwargs):
+        """Initialize the exception with a message."""
+        super().__init__(*args, **kwargs)

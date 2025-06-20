@@ -20,16 +20,23 @@
 
 """Module of weko-items-autofill utils.."""
 import copy
+import json
+import traceback
 from functools import wraps
 
 from flask import current_app
 from flask_babelex import gettext as _
+from lxml import etree
+from jsonschema import validate, ValidationError
+
 from invenio_cache import current_cache
 from invenio_db import db
 from invenio_pidstore.models import PersistentIdentifier
-from lxml import etree
+
+from weko_admin.utils import get_current_api_certification
 from weko_records.api import ItemTypes, Mapping
 from weko_records.serializers.utils import get_mapping
+from weko_workflow.api import WorkActivity
 from weko_workflow.models import ActionJournal
 from weko_workflow.utils import MappingData
 
@@ -104,7 +111,8 @@ def get_item_id(item_type_id):
                 if isinstance(jpcoar, dict):
                     _get_jpcoar_mapping(results, jpcoar)
     except Exception as e:
-        current_app.logger.debug(e)
+        current_app.logger.error(e)
+        traceback.print_exc()
         results['error'] = str(e)
 
     return results
@@ -133,7 +141,8 @@ def _get_title_data(jpcoar_data, key, rtn_title):
             #current_app.logger.debug("not contain 'item' in key:{}".format(key))
             return
     except Exception as e:
-        current_app.logger.debug(e)
+        current_app.logger.error(e)
+        traceback.print_exc()
 
 
 def get_title_pubdate_path(item_type_id):
@@ -159,14 +168,166 @@ def get_title_pubdate_path(item_type_id):
     return result
 
 
+def remove_empty(data):
+    """
+    Recursively remove empty values from dictionaries and lists.
+
+    This function traverses the input data structure 
+    (which can be a dictionary, list, or other type)
+    and removes any elements that are considered "empty". 
+    Empty values include: None, empty strings,
+    empty dictionaries, empty lists, and lists containing 
+    only an empty dictionary ([{}]).
+
+    Args:
+        data (Any): The input data structure to be cleaned.
+
+    Returns:
+        Any: The cleaned data structure with all empty values removed.
+    """
+    if isinstance(data, dict):
+        return {k: v for k, v in ((k, remove_empty(v)) for k, v in data.items())
+                if v not in (None, '', {}, [], [{}])}
+    elif isinstance(data, list):
+        cleaned = [remove_empty(item) for item in data]
+        cleaned = [
+            item for item in cleaned if item not in (None, '', {}, [], [{}])
+        ]
+        return cleaned
+    else:
+        return data
+
+def get_doi_record_data(doi, item_type_id, activity_id):
+    """Get record data base on DOI API.
+
+    Args:
+        doi (str): DOI
+        item_type_id (int): Item type ID
+        activity_id (int): Activity ID
+
+    Returns:
+        list: List of record data
+    """
+    activity = WorkActivity()
+    temp_data = activity.get_activity_metadata(activity_id)
+    metadata = temp_data if isinstance(temp_data, dict) else json.loads(temp_data)
+    metainfo = metadata.get("metainfo")
+    metainfo_cleaned = remove_empty(metainfo)
+    doi_with_original = fetch_metadata_by_doi(doi, item_type_id, metainfo_cleaned)
+    doi_response = [{k: v} for k, v in doi_with_original.items()]
+
+    return doi_response
+
+
+def fetch_metadata_by_doi(doi, item_type_id, original=None, **kwargs):
+    """Get record data base on DOI API.
+
+    Get metadata from APIs by supclied DOI ID and fill in the metadata
+    in order of priority.
+
+    Args:
+        doi (str): DOI
+        item_type_id (int): Item type ID
+        original (dict): Original metadata
+        kwargs (dict): optional arguments
+            - meta_data_api (list): List of metadata APIs to use <br>
+                (e.g., ["JaLC API", "医中誌 Web API", "CrossRef", "DataCite"])
+
+    Returns:
+        dict: Merged metadata from APIs and original metadata
+    """
+    from weko_workspace.utils import (
+        get_jalc_record_data,
+        get_jamas_record_data,
+        get_datacite_record_data,
+        get_cinii_record_data
+    )
+    api_funcs = {
+        "JaLC API": get_jalc_record_data,
+        "医中誌 Web API": get_jamas_record_data,
+        "CrossRef": get_crossref_record_data_with_pid,
+        "DataCite": get_datacite_record_data,
+        "CiNii Research": get_cinii_record_data,
+    }
+
+    api_priority = kwargs.get("meta_data_api")
+
+    # Check if api_priority is None.
+    # api_priority is not None if it comes from SWORD API.
+    if not isinstance(api_priority, list):
+        api_priority = current_app.config["WEKO_ITEMS_AUTOFILL_TO_BE_USED"]
+    # If api_priority is empty, apply original metadata.
+    if not api_priority:
+        api_priority = ["Original"]
+
+    result = {}
+    for key in reversed(api_priority):
+        response_metadata = {}
+        # case: Original.
+        if key == "Original":
+            if isinstance(original, dict):
+                response_metadata = original
+            else:
+                current_app.logger.info("original metadata is not found.")
+                continue
+        # case: APIs.
+        # If some exception occurs, record_data_dict will be empty.
+        # It means that skip this API.
+        else:
+            try:
+                response_list = (
+                    api_funcs[key](doi, item_type_id)
+                    if key in api_funcs else []
+                )
+                response_metadata = {
+                    k: v for item in response_list
+                    if isinstance(item, dict) for k, v in item.items()
+                }
+                current_app.logger.info(
+                    f"Successfully get metadata from {key} with DOI: {doi}."
+                )
+            except Exception as ex:
+                current_app.logger.warning(
+                    f"Failed to get metadata from {key}"
+                )
+                traceback.print_exc()
+        result.update(response_metadata)
+    return result
+
+
+def get_crossref_record_data_with_pid(doi, item_type_id):
+    """
+    Get record data base on CrossRef default pid.
+
+    Args:
+        doi (str): DOI
+        item_type_id (int): Item type ID
+
+    Returns:
+        list: List of record data
+    """
+    pid_response = get_current_api_certification("crf")
+    pid = pid_response["cert_data"]
+    if not pid:
+        current_app.logger.error(
+            "CrossRef PID is not set. Please set CrossRef PID in the configuration."
+        )
+        return []
+    return get_crossref_record_data(pid, doi, item_type_id)
+
+
 @cached_api_json(timeout=50, key_prefix="crossref_data")
-def get_crossref_record_data(pid, doi, item_type_id):
+def get_crossref_record_data(pid, doi, item_type_id, exclude_duplicate_lang=True):
     """Get record data base on CrossRef API.
 
-    :param pid: The PID
-    :param doi: The DOI ID
-    :param item_type_id: The item type ID
-    :return:
+    Args:
+        pid (str): PID
+        doi (str): DOI
+        item_type_id (int): Item type ID
+        exclude_duplicate_lang (bool): Exclude duplicate language
+
+    Returns:
+        list: List of record data
     """
     result = list()
     api_response = CrossRefOpenURL(pid, doi).get_data()
@@ -189,7 +350,10 @@ def get_crossref_record_data(pid, doi, item_type_id):
             get_autofill_key_tree(
                 items.form,
                 get_crossref_autofill_item(item_type_id)))
-        result = build_record_model(autofill_key_tree, api_data)
+        result = build_record_model(
+            autofill_key_tree, api_data, items.schema,
+            exclude_duplicate_lang=exclude_duplicate_lang
+        )
     return result
 
 
@@ -212,8 +376,9 @@ def get_cinii_record_data(naid, item_type_id):
         return result
     elif items.form is not None:
         autofill_key_tree = get_autofill_key_tree(
-            items.form, get_cinii_autofill_item(item_type_id))
-        result = build_record_model(autofill_key_tree, api_data)
+            items.form, get_cinii_autofill_item(item_type_id)
+        )
+        result = build_record_model(autofill_key_tree, api_data, items.schema)
     return result
 
 
@@ -393,7 +558,7 @@ def get_cinii_page_data(data):
         result = int(data)
         return pack_single_value_as_dict(str(result))
     except Exception as e:
-        current_app.logger.debug(e)
+        current_app.logger.error(e)
         return pack_single_value_as_dict(None)
 
 
@@ -415,7 +580,7 @@ def get_cinii_numpage(data):
             num_pages = end - start + 1
             return pack_single_value_as_dict(str(num_pages))
         except Exception as e:
-            current_app.logger.debug(e)
+            current_app.logger.error(e)
             return pack_single_value_as_dict(None)
     return {"@value": None}
 
@@ -446,7 +611,7 @@ def get_cinii_product_identifier(data, type1, type2):
     _data = [item.get('identifier') for item in data]
     result = pack_data_with_multiple_type_cinii(_data, type1, type2)
     return result
-    
+
 def get_cinii_data_by_key(api, keyword):
     """Get data from CiNii based on keyword.
 
@@ -605,7 +770,7 @@ def get_start_and_end_page(data):
         result = int(data)
         return pack_single_value_as_dict(str(result))
     except ValueError as e:
-        current_app.logger.debug(e)
+        current_app.logger.error(e)
         return pack_single_value_as_dict(None)
 
 
@@ -955,7 +1120,8 @@ def get_autofill_key_path(schema_form, parent_key, child_key):
                         child_key.split('.'), item_data)
         result['key'] = key_result
     except Exception as e:
-        current_app.logger.debug(e)
+        current_app.logger.error(e)
+        traceback.print_exc()
         result['key'] = None
         result['error'] = str(e)
 
@@ -991,20 +1157,33 @@ def get_specific_key_path(des_key, form):
     return existed, path_result
 
 
-def build_record_model(item_autofill_key, api_data):
+def build_record_model(
+    item_autofill_key, api_data, schema=None, exclude_duplicate_lang=False
+):
     """Build record record_model.
 
-    :param item_autofill_key: Item auto-fill key
-    :param api_data: Api data
-    :return: Record model list
+    Args:
+        item_autofill_key (dict): Item auto-fill key
+        api_data (dict): Api data
+        schema (dict): Schema
+        exclude_duplicate_lang (bool): Exclude duplicate language
+
+    Returns:
+        list: Record model list
     """
-    def _build_record_model(_api_data, _item_autofill_key, _record_model_lst,
-                            _filled_key):
+    def _build_record_model(
+        _api_data, _item_autofill_key, _record_model_lst,
+        _filled_key, _schema, _exclude_duplicate_lang
+    ):
         """Build record model.
 
-        @param _api_data: Api data
-        @param _item_autofill_key: Item auto-fill key
-        @param _record_model_lst: Record model list
+        Args:
+            _api_data (dict): Api data
+            _item_autofill_key (dict): Item auto-fill key
+            _record_model_lst (list): Record model list
+            _filled_key (list): Filled key list
+            _schema (dict): Schema
+            _exclude_duplicate_lang (bool): Exclude duplicate language
         """
         for k, v in _item_autofill_key.items():
             data_model = {}
@@ -1015,12 +1194,16 @@ def build_record_model(item_autofill_key, api_data):
                 build_form_model(data_model, v)
             elif isinstance(v, list):
                 for mapping_data in v:
-                    _build_record_model(_api_data, mapping_data,
-                                        _record_model_lst, _filled_key)
+                    _build_record_model(
+                        _api_data, mapping_data, _record_model_lst,
+                        _filled_key, _schema, _exclude_duplicate_lang
+                    )
             record_model = {}
             for key, value in data_model.items():
                 merge_dict(record_model, value)
-            new_record_model = fill_data(record_model, api_autofill_data)
+            new_record_model = fill_data(
+                record_model, api_autofill_data, _schema, _exclude_duplicate_lang
+            )
             if new_record_model:
                 _record_model_lst.append(new_record_model)
                 _filled_key.append(k)
@@ -1029,8 +1212,10 @@ def build_record_model(item_autofill_key, api_data):
     filled_key = list()
     if not api_data or not item_autofill_key:
         return record_model_lst
-    _build_record_model(api_data, item_autofill_key, record_model_lst,
-                        filled_key)
+    _build_record_model(
+        api_data, item_autofill_key, record_model_lst,
+        filled_key, schema, exclude_duplicate_lang
+    )
 
     return record_model_lst
 
@@ -1130,43 +1315,107 @@ def deepcopy(original_object, new_object):
         return
 
 
-def fill_data(form_model, autofill_data):
+def fill_data(form_model, autofill_data, schema=None, exclude_duplicate_lang=False):
     """Fill data to form model.
 
-    @param form_model: the form model.
-    @param autofill_data: the autofill data
-    @param is_multiple_data: multiple flag.
+    Args:
+        form_model (dict | list): The form model to be filled. Can be a dictionary representing the form
+                                  structure or a list for repeated/nested items.
+        autofill_data (dict | list): The source data to autofill into the form. Can be a dictionary or a list
+                                     of dictionaries for multiple entries.
+        schema (dict, optional): A JSON schema used to validate the autofilled data. If None, validation is skipped.
+        exclude_duplicate_lang (bool, optional): If True, skips autofill entries with duplicate '@language' fields.
+
+    Returns:
+        dict | list: The filled form model, matching the structure of the original form_model.
     """
     result = {} if isinstance(form_model, dict) else []
     is_multiple_data = is_multiple(form_model, autofill_data)
+
+    def validate_data(data, sub_schema):
+        """Validate data against the schema.
+        Args:
+            data (Any): The data to validate.
+            sub_schema (dict): The schema to validate against.
+        Returns:
+            bool: True if validation passes, False otherwise.
+        """
+        if sub_schema is None:
+            current_app.logger.debug("=== Validation skipped ===")
+            return True
+        try:
+            validate(instance=data, schema=sub_schema)
+            current_app.logger.debug(f"Validation passed: {data} matches schema {sub_schema}")
+            return True
+        except ValidationError as e:
+            current_app.logger.debug(f"Validation failed: {e.message}")
+            return False
+
     if isinstance(autofill_data, list):
         key = list(form_model.keys())[0] if len(form_model) != 0 else None
+        sub_schema = None
+        if schema:
+            sub_schema = get_subschema(schema, key)
+            if sub_schema and sub_schema.get("type") == "array":
+                sub_schema = sub_schema.get("items")
+
         if is_multiple_data or (not is_multiple_data and isinstance(form_model.get(key),list)):
             model_clone = {}
             deepcopy(form_model[key][0], model_clone)
             result[key]=[]
+            used_lang_set = set()
             for data in autofill_data:
+                if exclude_duplicate_lang and isinstance(data, dict) and data.get('@language'):
+                    if data.get('@language') in used_lang_set:
+                        continue
+                    used_lang_set.add(data.get('@language'))
                 model = {}
                 deepcopy(model_clone, model)
-                new_model = fill_data(model, data)
+                new_model = fill_data(model, data, sub_schema, exclude_duplicate_lang)
                 result[key].append(new_model.copy())
         else:
-            result = fill_data(form_model, autofill_data[0])
+            result = fill_data(form_model, autofill_data[0], schema, exclude_duplicate_lang)
     elif isinstance(autofill_data, dict):
         if isinstance(form_model, dict):
             for k, v in form_model.items():
+                subschema = get_subschema(schema, k)
                 if isinstance(v, str):
-                    result[k] = autofill_data.get(v,'')
+                    value = autofill_data.get(v, '')
+                    if not validate_data(value, subschema):
+                        continue
+                    result[k] = value
                 else:
-                    new_v = fill_data(v, autofill_data)
+                    new_v = fill_data(v, autofill_data, subschema, exclude_duplicate_lang)
                     result[k] = new_v
         elif isinstance(form_model, list):
             for v in form_model:
-                new_v = fill_data(v, autofill_data)
+                new_v = fill_data(v, autofill_data, schema, exclude_duplicate_lang)
                 result.append(new_v)
     else:
         return
     return result
+
+
+def get_subschema(schema, key):
+    """Get sub schema.
+
+    Args:
+        schema (dict): The schema to search in.
+        key (str): The key to search for.
+    Returns:
+        dict: The sub schema if found, otherwise None.
+    """
+    if not schema:
+        return None
+
+    if schema.get("type") == "object" and "properties" in schema:
+        return schema["properties"].get(key)
+
+    if schema.get("type") == "array" and "items" in schema:
+        return get_subschema(schema["items"], key)
+
+    return None
+
 
 def is_multiple(form_model, autofill_data):
     """Check form model.
@@ -1232,6 +1481,7 @@ def convert_crossref_xml_data_to_dictionary(api_data, encoding='utf-8'):
         rtn_data['response'] = result
     except Exception as e:
         rtn_data['error'] = str(e)
+        traceback.print_exc()
     return rtn_data
 
 

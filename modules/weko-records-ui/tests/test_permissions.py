@@ -31,7 +31,8 @@ from weko_records_ui.permissions import (
     file_permission_factory,
     page_permission_factory,
     is_open_restricted,
-    is_owners_or_superusers
+    is_owners_or_superusers,
+    has_comadmin_permission
 )
 
 
@@ -669,6 +670,88 @@ def test_check_created_id(app, users, index, status):
 
     with patch("flask_login.utils._get_user", return_value=users[index]["obj"]):
         assert check_created_id(record) == status
+
+
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_permissions.py::test_check_created_id_comadmin -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+def test_check_created_id_comadmin(app, users, db):
+    record = {
+        "_oai": {"id": "oai:weko3.example.org:00000001", "sets": ["1657555088462"]},
+        "path": ["1657555088462"],
+        "owner": "1",
+        "recid": "1",
+        "title": ["a"],
+        "pubdate": {"attribute_name": "PubDate", "attribute_value": "2022-07-12"},
+        "_buckets": {"deposit": "35004d51-8938-4e77-87d7-0c9e176b8e7b"},
+        "_deposit": {
+            "id": "1",
+            "pid": {"type": "depid", "value": "1", "revision_id": 0},
+            "owner": "1",
+            "owners": [1],
+            "status": "published",
+            "created_by": 1,
+            "owners_ext": {
+                "email": "wekosoftware@nii.ac.jp",
+                "username": "",
+                "displayname": "",
+            },
+        },
+        "item_title": "a",
+        "author_link": [],
+        "item_type_id": "15",
+        "publish_date": "2022-07-12",
+        "publish_status": "0",
+        "weko_shared_id": 2,
+        "item_1617186331708": {
+            "attribute_name": "Title",
+            "attribute_value_mlt": [
+                {"subitem_1551255647225": "a", "subitem_1551255648112": "ja"}
+            ],
+        },
+        "item_1617258105262": {
+            "attribute_name": "Resource Type",
+            "attribute_value_mlt": [
+                {
+                    "resourceuri": "http://purl.org/coar/resource_type/c_5794",
+                    "resourcetype": "conference paper",
+                }
+            ],
+        },
+        "relation_version_is_last": True,
+    }
+    with patch("flask_login.utils._get_user", return_value=users[3]["obj"]), \
+         patch("weko_records_ui.permissions.has_comadmin_permission", return_value=True):
+        assert check_created_id(record) == True
+
+
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_permissions.py::test_has_comadmin_permission -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+def test_has_comadmin_permission(app, users, mocker):
+    mocker.patch("flask_login.utils._get_user", return_value=users[3]["obj"])
+    mock_get_repos = mocker.patch("invenio_communities.models.Community.get_repositories_by_user")
+    mock_get_children =  mocker.patch("weko_index_tree.api.Indexes.get_child_list_recursive")
+
+    # with permmission
+    mock_get_repos.return_value = [MagicMock(root_node_id=1)]
+    mock_get_children.return_value = ["12345", "67890"]
+    record = {"path": ["12345"]}
+    result = has_comadmin_permission(record)
+    assert result is True
+
+    #without permission
+    record = {"path": ["11111"]}
+    result = has_comadmin_permission(record)
+    assert result is False
+
+    # with no community
+    mock_get_repos.return_value = []
+    record = {"path": ["12345"]}
+    result = has_comadmin_permission(record)
+    assert result is False
+
+    # with no index
+    mock_get_repos.return_value = [MagicMock(root_node_id=1)]
+    record = {"path": []}
+    result = has_comadmin_permission(record)
+    assert result is False
 
 
 # def check_usage_report_in_permission(permission):

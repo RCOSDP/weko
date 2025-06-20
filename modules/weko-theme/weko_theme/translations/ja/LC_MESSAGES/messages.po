@@ -243,9 +243,8 @@ msgid "Log out"
 msgstr "ログアウト"
 
 #: weko_theme/templates/weko_theme/page_setting.html:33
-#, fuzzy
 msgid "Settings"
-msgstr "会議発表用資料"
+msgstr "設定"
 
 #: weko_theme/templates/weko_theme/macros/edit_tree_tabs_selector.html:22
 msgid "Index Edit"
@@ -260,7 +259,6 @@ msgid "Custom Sort"
 msgstr "カスタムソート"
 
 #: weko_theme/templates/weko_theme/macros/item_management_tabs_selector.html:23
-#, fuzzy
 msgid "Bulk Update"
 msgstr "一括更新"
 
@@ -295,354 +293,14 @@ msgstr "ワークフロー"
 msgid "Ranking"
 msgstr "ランキング"
 
-#~ msgid "Add Links"
-#~ msgstr "追加のリンク"
-
-#~ msgid "Author or Author id"
-#~ msgstr "著者又は著者のID"
-
-#~ msgid "Abstract"
-#~ msgstr "抽象"
-
-#~ msgid "Contributors or Author id"
-#~ msgstr "貢献者又は作者ID"
-
-#~ msgid "Item type"
-#~ msgstr "アイテムタイプ"
-
-#~ msgid "Other languages"
-#~ msgstr "その他"
-
-#~ msgid "DetailSearch"
-#~ msgstr "詳細検索"
-
-#~ msgid "Edit"
-#~ msgstr "編集"
-
-#~ msgid "Review/Accept"
-#~ msgstr "査読/承認"
-
-#~ msgid "Import"
-#~ msgstr "インポート"
-
-#~ msgid "Block style"
-#~ msgstr "ブロックスタイル"
-
-#~ msgid "Item Registration"
-#~ msgstr "アイテム登録"
-
-#~ msgid ""
-#~ "<p>Powered by <a href=\"%(link)s\" "
-#~ "style=\"color: #ffffff;\">CERN Data Centre &"
-#~ " Invenio</a><p>"
-#~ msgstr ""
-
-#~ msgid "ＩＤ"
-#~ msgstr ""
-
-#~ msgid "Menu"
-#~ msgstr ""
-
-#~ msgid "Schema Management"
-#~ msgstr "スキーマ管理"
-
-#~ msgid "Item Management"
-#~ msgstr "アイテム管理"
-
-#~ msgid "Search Management"
-#~ msgstr "検索管理"
-
-#~ msgid "Edit Tree"
-#~ msgstr "ツリー編集"
-
-#~ msgid "Management"
-#~ msgstr "管理"
-
-#~ msgid "Author Management"
-#~ msgstr "著者ＤＢ"
-
-#~ msgid "Detail Search"
-#~ msgstr "詳細検索"
-
-#~ msgid "Title"
-#~ msgstr "タイトル"
-
-#~ msgid "Author Name"
-#~ msgstr "著者名"
-
-#~ msgid "Subject"
-#~ msgstr "件名"
-
-#~ msgid "Region"
-#~ msgstr "地域"
-
-#~ msgid "Subject Scheme"
-#~ msgstr "件名"
-
-#~ msgid "BSH"
-#~ msgstr ""
-
-#~ msgid "DDC"
-#~ msgstr ""
-
-#~ msgid "LCC"
-#~ msgstr ""
-
-#~ msgid "LCSH"
-#~ msgstr ""
-
-#~ msgid "MeSH"
-#~ msgstr ""
-
-#~ msgid "NDC"
-#~ msgstr ""
-
-#~ msgid "NDLC"
-#~ msgstr ""
-
-#~ msgid "NDLSH"
-#~ msgstr ""
-
-#~ msgid "UDC"
-#~ msgstr ""
-
-#~ msgid "Scival"
-#~ msgstr ""
-
-msgid "Other"
-msgstr "その他"
-
-#~ msgid "Description"
-#~ msgstr "内容記述"
-
-#~ msgid "Publisher"
-#~ msgstr "出版者"
-
-#~ msgid "Contributors"
-#~ msgstr "寄与者"
-
-#~ msgid "Contents created date"
-#~ msgstr "コンテンツ作成日"
-
-#~ msgid "Contents property"
-#~ msgstr "コンテンツプロパティ"
-
-#~ msgid "Accepted"
-#~ msgstr "受理日"
-
-#~ msgid "Available"
-#~ msgstr "公開日"
-
-#~ msgid "Collected"
-#~ msgstr "収集日"
-
-#~ msgid "Copyrighted"
-#~ msgstr "著作権発効日"
-
-#~ msgid "Created"
-#~ msgstr "作成日"
-
-#~ msgid "Issued"
-#~ msgstr "出版日"
-
-#~ msgid "Submitted"
-#~ msgstr "提出日"
-
-#~ msgid "Updated"
-#~ msgstr "最終更新日"
-
-#~ msgid "Valid"
-#~ msgstr "有効期日"
-
-#~ msgid "Format"
-#~ msgstr "フォーマット"
-
-#~ msgid "Journal Title"
-#~ msgstr "雑誌名"
-
-#~ msgid "ID"
-#~ msgstr ""
-
-#~ msgid "identifier"
-#~ msgstr "識別子"
-
-#~ msgid "URI"
-#~ msgstr ""
-
-#~ msgid "fullTextURL"
-#~ msgstr "フルテキストURL"
-
-#~ msgid "selfDOI"
-#~ msgstr ""
-
-#~ msgid "ISBN"
-#~ msgstr ""
-
-#~ msgid "ISSN"
-#~ msgstr ""
-
-#~ msgid "NCID"
-#~ msgstr ""
-
-#~ msgid "pmid"
-#~ msgstr ""
-
-#~ msgid "doi"
-#~ msgstr ""
-
-#~ msgid "NAID"
-#~ msgstr ""
-
-#~ msgid "ichushi"
-#~ msgstr ""
-
-#~ msgid "Resource Type"
-#~ msgstr "資源タイプ"
-
-#~ msgid "Conference Paper"
-#~ msgstr "会議発表論文"
-
-#~ msgid "Departmental Bulletin Paper"
-#~ msgstr "紀要論文"
-
-#~ msgid "Journal Article"
-#~ msgstr "学術雑誌論文"
-
-#~ msgid "Article"
-#~ msgstr "記事"
-
-#~ msgid "Book"
-#~ msgstr "図書"
-
-#~ msgid "Data or Dataset"
-#~ msgstr "データ・データベース"
-
-#~ msgid "Research Paper"
-#~ msgstr "研究報告書"
-
-#~ msgid "Technical Report"
-#~ msgstr "テクニカルレポート"
-
-#~ msgid "Thesis or Dissertation"
-#~ msgstr "学位論文"
-
-#~ msgid "Learning Material"
-#~ msgstr "教材"
-
-#~ msgid "Software"
-#~ msgstr "ソフトウェア"
-
-#~ msgid "Item Type"
-#~ msgstr "アイテムタイプ"
-
-#~ msgid "Language"
-#~ msgstr "言語"
-
-#~ msgid "Japanese"
-#~ msgstr "日本語"
-
-#~ msgid "English"
-#~ msgstr "英語"
-
-#~ msgid "French"
-#~ msgstr "フランス語"
-
-#~ msgid "Italian"
-#~ msgstr "イタリア語"
-
-#~ msgid "German"
-#~ msgstr "ドイツ語"
-
-#~ msgid "Spanish"
-#~ msgstr "スペイン語"
-
-#~ msgid "Chinese"
-#~ msgstr "中国語"
-
-#~ msgid "Russian"
-#~ msgstr "ロシア語"
-
-#~ msgid "Latin"
-#~ msgstr "ラテン語"
-
-#~ msgid "Malay"
-#~ msgstr "マレー語"
-
-#~ msgid "Esperanto"
-#~ msgstr "エスペラント語"
-
-#~ msgid "Arabic"
-#~ msgstr "アラビア語"
-
-#~ msgid "Greek"
-#~ msgstr "ギリシャ語"
-
-#~ msgid "Korean"
-#~ msgstr "韓国語"
-
-#~ msgid "Period"
-#~ msgstr "期間"
-
-#~ msgid "Academic degree date"
-#~ msgstr "学位取得日"
-
-#~ msgid "Author version flag"
-#~ msgstr "著者版フラグ"
-
-#~ msgid "accepted"
-#~ msgstr "著者最終稿"
-
-#~ msgid "published"
-#~ msgstr "出版社版"
-
-#~ msgid "draft"
-#~ msgstr "草稿"
-
-#~ msgid "submitted"
-#~ msgstr "提出日"
-
-#~ msgid "updated"
-#~ msgstr "最終更新日"
-
-#~ msgid "Academic degree number"
-#~ msgstr "学位番号"
-
-#~ msgid "Degree name"
-#~ msgstr "学位名"
-
-#~ msgid "Institution for academic degree"
-#~ msgstr "学位授与機関"
-
-#~ msgid "Author ID"
-#~ msgstr "著者ID"
-
-#~ msgid "Index"
-#~ msgstr "インデックス"
-
-#~ msgid "Rights"
-#~ msgstr "権利"
-
-#~ msgid "CC BY"
-#~ msgstr ""
-
-#~ msgid "CC BY-SA"
-#~ msgstr ""
-
-#~ msgid "CC BY-ND"
-#~ msgstr ""
-
-#~ msgid "CC BY-NC"
-#~ msgstr ""
-
-#~ msgid "CC BY-NC-SA"
-#~ msgstr ""
-
-#~ msgid "ANY"
-#~ msgstr "任意"
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_Home"
+msgstr ""
 
 #: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_ホーム"
 msgstr "ホーム"
+
 
 #: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_Item Types"
@@ -717,6 +375,10 @@ msgid "Admin menu_Item Types_Properties"
 msgstr "プロパティ"
 
 #: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_Item Types_RO-Crate Mapping"
+msgstr "RO-Crate マッピング"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_Items_Bulk Update"
 msgstr "一括更新"
 
@@ -731,6 +393,10 @@ msgstr "一括エクスポート"
 #: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_Items_Import"
 msgstr "インポート"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_Items_RO-Crate Import"
+msgstr "RO-Crate インポート"
 
 #: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_Index Tree_Edit Tree"
@@ -783,6 +449,10 @@ msgstr "フロー"
 #: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_WorkFlow_WorkFlow List"
 msgstr "ワークフロー"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_WorkFlow_WorkSpaceWorkFlow Setting"
+msgstr "ワークスペース設定"
 
 #: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_Communities_Community"
@@ -901,6 +571,10 @@ msgid "Admin menu_Setting_Items"
 msgstr "アイテム表示"
 
 #: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_Setting_Activity List"
+msgstr "アクティビティ一覧表示"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_Setting_Index Link"
 msgstr "インデックスリンク表示"
 
@@ -973,6 +647,22 @@ msgid "Admin menu_Setting_Shibboleth"
 msgstr "Shibboleth"
 
 #: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_SWORD API"
+msgstr "SWORD API"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_SWORD API_TSV/XML"
+msgstr "TSV/XML"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_SWORD API_JSON-LD"
+msgstr "JSON-LD"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_Item Types_JSON-LD Mapping"
+msgstr "JSON-LDマッピング"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_Setting_Others"
 msgstr "その他"
 
@@ -983,6 +673,14 @@ msgstr "制限公開"
 #: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_Setting_Faceted Search"
 msgstr "ファセット検索"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_Logs"
+msgstr "ログ管理"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_Logs_Export"
+msgstr "エクスポート"
 
 #: weko_admin/
 #: msgid "Maintenance"

@@ -1,15 +1,15 @@
 # Japanese translations for weko-user-profiles.
-# Copyright (C) 2018 National Institute of Informatics
+# Copyright (C) 2019 National Institute of Informatics
 # This file is distributed under the same license as the weko-user-profiles
 # project.
-# FIRST AUTHOR <EMAIL@ADDRESS>, 2018.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2019.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: weko-user-profiles 0.1.0.dev20170000\n"
 "Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
 "POT-Creation-Date: 2019-07-02 02:08+0000\n"
-"PO-Revision-Date: 2018-04-12 10:55+0900\n"
+"PO-Revision-Date: 2025-04-21 09:27+0900\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ja\n"
 "Language-Team: ja <LL@li.org>\n"
@@ -244,15 +244,6 @@ msgstr "プロフィールを更新しました %(email)s に確認メールを�
 msgid "Profile was updated."
 msgstr "プロフィールを更新しました"
 
-#~ msgid "You have not yet verified your email address."
-#~ msgstr "あなたはまだあなたのメールアドレスを確認していません。"
-
-#~ msgid "Cancel"
-#~ msgstr "キャンセル"
-
-#~ msgid "Update profile"
-#~ msgstr "プロフィールを更新"
-
 ### Label on 'Profile' screen
 msgid "University/Institution"
 msgstr "大学・機関"
@@ -372,3 +363,12 @@ msgstr "氏名が指定されていません"
 
 msgid "Position (Others)"
 msgstr "役職（その他）"
+
+msgid "Endpoint URL must not begin with https://s3."
+msgstr "エンドポイントURLは https://s3. で始まる形式でないものにしてください。"
+
+msgid "Please enter if you use your own S3 Bucket."
+msgstr "自身のS3バケット使用する場合は入力してください。"
+
+msgid "Please enter if you specify your own S3 Bucket region."
+msgstr "自身のS3バケットリージョン指定する場合は入力してください。"

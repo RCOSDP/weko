@@ -101,6 +101,8 @@ from weko_deposit.config import (
     WEKO_DEPOSIT_REST_ENDPOINTS as _WEKO_DEPOSIT_REST_ENDPOINTS,
     _PID,
     DEPOSIT_REST_ENDPOINTS as _DEPOSIT_REST_ENDPOINTS,
+    WEKO_DEPOSIT_TEXTMIMETYPE_WHITELIST_FOR_ES as _WEKO_DEPOSIT_TEXTMIMETYPE_WHITELIST_FOR_ES,
+    WEKO_MIMETYPE_WHITELIST_FOR_ES as _WEKO_MIMETYPE_WHITELIST_FOR_ES
 )
 from weko_index_tree.config import (
     WEKO_INDEX_TREE_REST_ENDPOINTS as _WEKO_INDEX_TREE_REST_ENDPOINTS,
@@ -194,7 +196,10 @@ def base_app(instance_path):
             "System Administrator",
             "Repository Administrator",
         ],
+        WEKO_DEPOSIT_MAX_BACK_OFF_TIME=2,
         WEKO_PERMISSION_ROLE_COMMUNITY=["Community Administrator"],
+        WEKO_DEPOSIT_TEXTMIMETYPE_WHITELIST_FOR_ES = _WEKO_DEPOSIT_TEXTMIMETYPE_WHITELIST_FOR_ES,
+        WEKO_MIMETYPE_WHITELIST_FOR_ES = _WEKO_MIMETYPE_WHITELIST_FOR_ES
     )
     # with ESTestServer(timeout=30) as server:
     Babel(app_)
@@ -462,7 +467,7 @@ def users(app, db):
         ds.add_role_to_user(originalroleuser, originalrole)
         ds.add_role_to_user(originalroleuser2, originalrole)
         ds.add_role_to_user(originalroleuser2, repoadmin_role)
-        
+
     index = Index()
     db.session.add(index)
     db.session.commit()
@@ -613,11 +618,21 @@ def es_records(app, db, db_index, location, db_itemtype,db_oaischema):
     indexer.get_es_index()
     results = []
     with app.test_request_context():
-        for i in range(1, 10):
-            record_data =  {"_oai": {"id": "oai:weko3.example.org:000000{:02d}".format(i), "sets": ["{}".format((i % 2) + 1)]}, "path": ["{}".format((i % 2) + 1)], "owner": "1", "recid": "{}".format(i), "title": ["title"], "pubdate": {"attribute_name": "PubDate", "attribute_value": "2022-08-20"}, "_buckets": {"deposit": "3e99cfca-098b-42ed-b8a0-20ddd09b3e02"}, "_deposit": {"id": "{}".format(i), "pid": {"type": "depid", "value": "{}".format(i), "revision_id": 0}, "owner": "1", "owners": [1], "status": "draft", "created_by": 1, "owners_ext": {"email": "wekosoftware@nii.ac.jp", "username": "", "displayname": ""}}, "item_title": "title", "author_link": [], "item_type_id": "1", "publish_date": "2022-08-20", "publish_status": "0", "weko_shared_id": -1, "item_1617186331708": {"attribute_name": "Title", "attribute_value_mlt": [{"subitem_1551255647225": "タイトル", "subitem_1551255648112": "ja"},{"subitem_1551255647225": "title", "subitem_1551255648112": "en"}]}, "item_1617258105262": {"attribute_name": "Resource Type", "attribute_value_mlt": [{"resourceuri": "http://purl.org/coar/resource_type/c_5794", "resourcetype": "conference paper"}]}, "relation_version_is_last": True, 'item_1617605131499': {'attribute_name': 'File', 'attribute_type': 'file', 'attribute_value_mlt': [{'url': {'url': 'https://weko3.example.org/record/{}/files/hello.txt'.format(i)}, 'date': [{'dateType': 'Available', 'dateValue': '2022-09-07'}], 'format': 'plain/text', 'filename': 'hello.txt', 'filesize': [{'value': '146 KB'}], 'accessrole': 'open_access', 'version_id': '', 'mimetype': 'application/pdf',"file": "",}]}}
- 
+        def format_number(i, fill_num=None):
+            int_part, decimal_part = divmod(i, 1)
+            if fill_num:
+                int_part_str = str(int(int_part)).zfill(fill_num)
+            else:
+                int_part_str = str(int(int_part))
+            if decimal_part != 0:
+                int_part_str += f".{decimal_part:.10f}".strip('0')
+            return int_part_str
+
+        def create_record(i, index_id):
+            record_data =  {"_oai": {"id": "oai:weko3.example.org:000000{}".format(format_number(i, 2)), "sets": ["{}".format(index_id)]}, "path": ["{}".format(index_id)], "owner": "1", "recid": "{}".format(i), "title": ["title"], "pubdate": {"attribute_name": "PubDate", "attribute_value": "2022-08-20"}, "_buckets": {"deposit": "3e99cfca-098b-42ed-b8a0-20ddd09b3e02"}, "_deposit": {"id": "{}".format(i), "pid": {"type": "depid", "value": "{}".format(i), "revision_id": 0}, "owner": "1", "owners": [1], "status": "draft", "created_by": 1, "owners_ext": {"email": "wekosoftware@nii.ac.jp", "username": "", "displayname": ""}}, "item_title": "title", "author_link": [], "item_type_id": "1", "publish_date": "2022-08-20", "publish_status": "0", "weko_shared_id": -1, "item_1617186331708": {"attribute_name": "Title", "attribute_value_mlt": [{"subitem_1551255647225": "タイトル", "subitem_1551255648112": "ja"},{"subitem_1551255647225": "title", "subitem_1551255648112": "en"}]}, "item_1617258105262": {"attribute_name": "Resource Type", "attribute_value_mlt": [{"resourceuri": "http://purl.org/coar/resource_type/c_5794", "resourcetype": "conference paper"}]}, "relation_version_is_last": True if not "." in str(i) else False, 'item_1617605131499': {'attribute_name': 'File', 'attribute_type': 'file', 'attribute_value_mlt': [{'url': {'url': 'https://weko3.example.org/record/{}/files/hello.txt'.format(i)}, 'date': [{'dateType': 'Available', 'dateValue': '2022-09-07'}], 'format': 'plain/text', 'filename': 'hello.txt', 'filesize': [{'value': '146 KB'}], 'accessrole': 'open_access', 'version_id': '', 'mimetype': 'application/pdf',"file": "",}]}}
+
             item_data = {"id": "{}".format(i), "pid": {"type": "depid", "value": "{}".format(i), "revision_id": 0}, "lang": "ja", "owner": "1", "title": "title", "owners": [1], "status": "published", "$schema": "/items/jsonschema/1", "pubdate": "2022-08-20", "created_by": 1, "owners_ext": {"email": "wekosoftware@nii.ac.jp", "username": "", "displayname": ""}, "shared_user_id": -1, "item_1617186331708": [{"subitem_1551255647225": "タイトル", "subitem_1551255648112": "ja"},{"subitem_1551255647225": "title", "subitem_1551255648112": "en"}], "item_1617258105262": {"resourceuri": "http://purl.org/coar/resource_type/c_5794", "resourcetype": "conference paper"}}
-   
+
             rec_uuid = uuid.uuid4()
 
             recid = PersistentIdentifier.create('recid', str(i),object_type='rec', object_uuid=rec_uuid,status=PIDStatus.REGISTERED)
@@ -626,13 +641,14 @@ def es_records(app, db, db_index, location, db_itemtype,db_oaischema):
             db.session.add(rel)
             parent = None
             doi = None
+            hdl = None
             parent = PersistentIdentifier.create('parent', "parent:{}".format(i),object_type='rec', object_uuid=rec_uuid,status=PIDStatus.REGISTERED)
             rel = PIDRelation.create(parent,recid,2,0)
             db.session.add(rel)
             if(i%2==1):
-                doi = PersistentIdentifier.create('doi', "https://doi.org/10.xyz/{}".format((str(i)).zfill(10)),object_type='rec', object_uuid=rec_uuid,status=PIDStatus.REGISTERED)
-                hdl = PersistentIdentifier.create('hdl', "https://hdl.handle.net/0000/{}".format((str(i)).zfill(10)),object_type='rec', object_uuid=rec_uuid,status=PIDStatus.REGISTERED)
-            
+                doi = PersistentIdentifier.create('doi', "https://doi.org/10.xyz/{}".format(format_number(i, 10)),object_type='rec', object_uuid=rec_uuid,status=PIDStatus.REGISTERED)
+                hdl = PersistentIdentifier.create('hdl', "https://hdl.handle.net/0000/{}".format(format_number(i, 10)),object_type='rec', object_uuid=rec_uuid,status=PIDStatus.REGISTERED)
+
             record = WekoRecord.create(record_data, id_=rec_uuid)
             # from six import BytesIO
             from invenio_files_rest.models import Bucket
@@ -647,12 +663,18 @@ def es_records(app, db, db_index, location, db_itemtype,db_oaischema):
             deposit = aWekoDeposit(record, record.model)
             deposit.commit()
             record['item_1617605131499']['attribute_value_mlt'][0]['version_id'] = str(obj.version_id)
-            
+
             record_data['content']= [{"date":[{"dateValue":"2021-07-12","dateType":"Available"}],"accessrole":"open_access","displaytype" : "simple","filename" : "hello.txt","attachment" : {},"format" : "text/plain","mimetype" : "text/plain","filesize" : [{"value" : "1 KB"}],"version_id" : "{}".format(obj.version_id),"url" : {"url":"http://localhost/record/{}/files/hello.txt".format(i)},"file":(base64.b64encode(stream.getvalue())).decode('utf-8')}]
             indexer.upload_metadata(record_data, rec_uuid, 1, False)
             item = ItemsMetadata.create(item_data, id_=rec_uuid)
-            
+
             results.append({"depid":depid, "recid":recid, "parent": parent, "doi":doi, "hdl": hdl,"record":record, "record_data":record_data,"item":item , "item_data":item_data,"deposit": deposit})
+
+        for i in range(1, 10):
+            create_record(i, (i % 2) + 1)
+        create_record(10, 4)
+        create_record(10.1, 3)
+        create_record(10.2, 4)
 
     time.sleep(3)
     # es = Elasticsearch("http://{}:9200".format(app.config["SEARCH_ELASTIC_HOSTS"]))
@@ -732,7 +754,7 @@ def db_admin_settings(db):
 @pytest.fixture()
 def db_userprofile(app, db,users):
     profiles = {}
-    with db.session.begin_nested(): 
+    with db.session.begin_nested():
         user = users[1]['obj']
         p = UserProfile()
         p.user_id = user.id
@@ -849,9 +871,9 @@ def db_activity(app, db,users,location,db_itemtype,db_actions):
     with db.session.begin_nested():
         db.session.add(no_location_activity)
         db.session.add(location_activity)
-    
+
     db.session.commit()
-    
+
     return no_location_activity, location_activity
 
 @pytest.fixture()

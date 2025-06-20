@@ -408,7 +408,8 @@ function RestrictedAccessLayout({
                                   secret_URL_file_download,
                                   content_file_download,
                                   terms_and_conditions,
-                                  usage_report_workflow_access
+                                  usage_report_workflow_access,
+                                  restricted_access_display_flag
                                 }) {
   const [secretURLFileDownload , setSecretURLFileDownload] = useState(secret_URL_file_download)
   const [contentFileDownload, setContentFileDownload] = useState(content_file_download);
@@ -574,28 +575,43 @@ function RestrictedAccessLayout({
     return errorMessage;
   }
 
-  return (
-    <div>
-      <SecretURLFileDownloadLayout value={secretURLFileDownload}
-                                 setValue={setSecretURLFileDownload}/>
-      <ContentFileDownloadLayout value={contentFileDownload}
-                                 setValue={setContentFileDownload}/>
-      <UsageReportWorkflowAccessLayout value={usageReportWorkflowAccess}
-                                       setValue={setUsageReportWorkflowAccess}/>
-      <TermsConditions termList={termList} setTermList={setTermList}
-                       currentTerm={currentTerm}
-                       setCurrentTerm={setCurrentTerm}/>
-      <div className="form-group">
-        <button id="save-btn" className="btn btn-primary pull-right" style={{marginBottom: "15px"}}
-                onClick={handleSave}>
-          <span className="glyphicon glyphicon-save"></span>&nbsp;{SAVE_LABEL}
-        </button>
-      </div>
+  if (restricted_access_display_flag) {
+    return (
       <div>
-        <UsageReportList/>
+        <SecretURLFileDownloadLayout value={secretURLFileDownload}
+                                   setValue={setSecretURLFileDownload}/>
+        <ContentFileDownloadLayout value={contentFileDownload}
+                                   setValue={setContentFileDownload}/>
+        <UsageReportWorkflowAccessLayout value={usageReportWorkflowAccess}
+                                         setValue={setUsageReportWorkflowAccess}/>
+        <TermsConditions termList={termList} setTermList={setTermList}
+                         currentTerm={currentTerm}
+                         setCurrentTerm={setCurrentTerm}/>
+        <div className="form-group">
+          <button id="save-btn" className="btn btn-primary pull-right" style={{marginBottom: "15px"}}
+                  onClick={handleSave}>
+            <span className="glyphicon glyphicon-save"></span>&nbsp;{SAVE_LABEL}
+          </button>
+        </div>
+        <div>
+          <UsageReportList/>
+        </div>
       </div>
-    </div>
-  )
+    )
+  } else {
+    return (
+      <div>
+        <SecretURLFileDownloadLayout value={secretURLFileDownload}
+                                   setValue={setSecretURLFileDownload}/>
+        <div className="form-group">
+          <button id="save-btn" className="btn btn-primary pull-right" style={{marginBottom: "15px"}}
+                  onClick={handleSave}>
+            <span className="glyphicon glyphicon-save"></span>&nbsp;{SAVE_LABEL}
+          </button>
+        </div>
+      </div>
+    )
+  }
 }
 
 function showErrorMessage(errorMessage) {

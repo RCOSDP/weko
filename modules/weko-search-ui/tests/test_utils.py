@@ -1,31 +1,53 @@
 # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
 
 import copy
+from io import StringIO
 import json
 import os
+import re
+import tempfile
+import time
 import unittest
-from datetime import datetime
+from datetime import datetime,timedelta
 import uuid
+import zipfile
+from elasticsearch import NotFoundError
 
 import pytest
+from mock import MagicMock, Mock, patch, mock_open
+from werkzeug.datastructures import FileStorage
 from flask import current_app, make_response, request
 from flask_babelex import Babel
 from flask_login import current_user
 from werkzeug.exceptions import BadRequest
+
+from sqlalchemy import func as _func
+from sqlalchemy.exc import SQLAlchemyError
+from invenio_files_rest.models import FileInstance,Location
 from invenio_i18n.babel import set_locale
 from invenio_records.api import Record
-from mock import MagicMock, Mock, patch
-from invenio_pidstore.models import PersistentIdentifier, PIDStatus
+from invenio_records.models import RecordMetadata
+from invenio_pidstore.models import PersistentIdentifier, PIDStatus, Redirect
+from invenio_db import db as iv_db
 from invenio_pidrelations.models import PIDRelation
+
 from weko_admin.config import WEKO_ADMIN_MANAGEMENT_OPTIONS
-from weko_deposit.api import WekoDeposit, WekoIndexer
+from weko_admin.api import TempDirInfo
+from weko_deposit.api import WekoDeposit, WekoIndexer, WekoRecord as d_wekorecord
+from weko_authors.models import AuthorsPrefixSettings, AuthorsAffiliationSettings
 from weko_records.api import ItemsMetadata, WekoRecord
+from weko_records.models import ItemMetadata
+from weko_records.models import ItemType
+from weko_redis.redis import RedisConnection
+
 
 from weko_search_ui import WekoSearchUI
 from weko_search_ui.config import (
     ACCESS_RIGHT_TYPE_URI,
     RESOURCE_TYPE_URI,
     VERSION_TYPE_URI,
+    WEKO_SEARCH_UI_BULK_EXPORT_URI,
+    WEKO_SEARCH_UI_BULK_EXPORT_TASK,
     WEKO_IMPORT_SYSTEM_ITEMS,
     WEKO_REPO_USER,
     WEKO_SYS_USER,
@@ -33,7 +55,8 @@ from weko_search_ui.config import (
 from weko_search_ui.utils import (
     DefaultOrderedDict,
     cancel_export_all,
-    check_import_items,
+    check_tsv_import_items,
+    check_xml_import_items,
     check_index_access_permissions,
     check_permission,
     check_sub_item_is_system,
@@ -44,9 +67,13 @@ from weko_search_ui.utils import (
     create_work_flow,
     defaultify,
     define_default_dict,
+    delete_exported_file,
     delete_exported,
+    delete_task_id_cache_on_missing_meta,
     delete_records,
     export_all,
+    get_retry_info,
+    generate_metadata_from_jpcoar,
     get_change_identifier_mode_content,
     get_content_workflow,
     get_current_language,
@@ -55,7 +82,6 @@ from weko_search_ui.utils import (
     get_doi_link,
     get_doi_prefix,
     get_export_status,
-    get_feedback_mail_list,
     get_file_name,
     get_filenames_from_metadata,
     get_item_type,
@@ -70,6 +96,7 @@ from weko_search_ui.utils import (
     get_tree_items,
     getEncode,
     handle_check_and_prepare_feedback_mail,
+    handle_check_and_prepare_request_mail,
     handle_check_and_prepare_index_tree,
     handle_check_and_prepare_publish_status,
     handle_check_cnri,
@@ -79,6 +106,7 @@ from weko_search_ui.utils import (
     handle_check_doi_indexes,
     handle_check_doi_ra,
     handle_check_duplication_item_id,
+    handle_check_duplicate_item_link,
     handle_check_exist_record,
     handle_check_file_content,
     handle_check_file_metadata,
@@ -89,7 +117,10 @@ from weko_search_ui.utils import (
     handle_check_metadata_not_existed,
     handle_check_thumbnail,
     handle_check_thumbnail_file_type,
+    handle_check_authors_prefix,
+    handle_check_authors_affiliation,
     handle_convert_validate_msg_to_jp,
+    handle_metadata_by_doi,
     handle_doi_required_check,
     handle_fill_system_item,
     handle_generate_key_path,
@@ -97,15 +128,22 @@ from weko_search_ui.utils import (
     handle_get_all_sub_id_and_name,
     handle_item_title,
     handle_remove_es_metadata,
+    handle_save_bagit,
     handle_set_change_identifier_flag,
+    handle_shared_id,
     handle_validate_item_import,
     handle_workflow,
+    handle_flatten_data_encode_filename,
+    handle_check_operation_flags,
+    import_items_to_activity,
     import_items_to_system,
     make_file_by_line,
+    make_file_info,
     make_stats_file,
     parse_to_json_form,
     prepare_doi_link,
     prepare_doi_setting,
+    read_jpcoar_xml_file,
     read_stats_file,
     register_item_doi,
     register_item_handle,
@@ -119,8 +157,18 @@ from weko_search_ui.utils import (
     update_publish_status,
     validation_date_property,
     validation_file_open_date,
-    combine_aggs
+    write_files,
+    combine_aggs,
+    result_download_ui,
+    search_results_to_tsv,
+    create_tsv_row,
+    get_priority,
+    get_record_ids
 )
+from werkzeug.exceptions import NotFound
+
+from weko_workflow.errors import WekoWorkflowException
+from weko_workflow.headless.activity import HeadlessActivity
 
 FIXTURE_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), "data")
 
@@ -173,9 +221,17 @@ def test_DefaultOrderDict_deepcopy():
 class MockSearchPerm:
     def __init__(self):
         pass
-    
+
     def can(self):
         return True
+
+def clear_test_data():
+    Redirect.query.delete()
+    iv_db.session.commit()
+
+    PersistentIdentifier.query.delete()
+    iv_db.session.commit()
+
 # def get_tree_items(index_tree_id): ERROR ~ AttributeError: '_AppCtxGlobals' object has no attribute 'identity'
 # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_get_tree_items -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
 def test_get_tree_items(i18n_app, indices, users, mocker):
@@ -260,24 +316,6 @@ def test_get_journal_info(i18n_app, indices, client_request_args, mocker):
         assert get_journal_info(33) == None
 
 
-# def get_feedback_mail_list(): *** not yet done
-def test_get_feedback_mail_list(i18n_app, db_records2, es):
-    search_instance = '{"size": 1, "query": {"bool": {"filter": [{"bool": {"must": [{"match": {"publish_status": "0"}}, {"range": {"publish_date": {"lte": "now/d"}}}, {"terms": {"path": ["1031", "1029", "1025", "952", "953", "943", "940", "1017", "1015", "1011", "881", "893", "872", "869", "758", "753", "742", "530", "533", "502", "494", "710", "702", "691", "315", "351", "288", "281", "759", "754", "744", "531", "534", "503", "495", "711", "704", "692", "316", "352", "289", "282", "773", "771", "767", "538", "539", "519", "510", "756", "745", "733", "337", "377", "308", "299", "2063", "2061", "2057", "1984", "1985", "1975", "1972", "2049", "2047", "2043", "1913", "1925", "1904", "1901", "1790", "1785", "1774", "1562", "1565", "1534", "1526", "1742", "1734", "1723", "1347", "1383", "1320", "1313", "1791", "1786", "1776", "1563", "1566", "1535", "1527", "1743", "1736", "1724", "1348", "1384", "1321", "1314", "1805", "1803", "1799", "1570", "1571", "1551", "1542", "1788", "1777", "1765", "1369", "1409", "1340", "1331", "4127", "4125", "4121", "4048", "4049", "4039", "4036", "4113", "4111", "4107", "3977", "3989", "3968", "3965", "3854", "3849", "3838", "3626", "3629", "3598", "3590", "3806", "3798", "3787", "3411", "3447", "3384", "3377", "3855", "3850", "3840", "3627", "3630", "3599", "3591", "3807", "3800", "3788", "3412", "3448", "3385", "3378", "3869", "3867", "3863", "3634", "3635", "3615", "3606", "3852", "3841", "3829", "3433", "3473", "3404", "3395", "1631495207665", "1631495247023", "1631495289664", "1631495340640", "1631510190230", "1631510251689", "1631510324260", "1631510380602", "1631510415574", "1631511387362", "1631511432362", "1631511521954", "1631511525655", "1631511606115", "1631511735866", "1631511740808", "1631511841882", "1631511874428", "1631511843164", "1631511845163", "1631512253601", "1633380618401", "1638171727119", "1638171753803", "1634120530242", "1636010714174", "1636010749240", "1638512895916", "1638512971664"]}}, {"bool": {"must": [{"match": {"publish_status": "0"}}, {"match": {"relation_version_is_last": "true"}}]}}, {"bool": {"should": [{"nested": {"query": {"multi_match": {"query": "simple", "operator": "and", "fields": ["content.attachment.content"]}}, "path": "content"}}, {"query_string": {"query": "simple", "default_operator": "and", "fields": ["search_*", "search_*.ja"]}}]}}]}}], "must": [{"match_all": {}}]}}, "aggs": {"Data Language": {"filter": {"bool": {"must": [{"term": {"publish_status": "0"}}]}}, "aggs": {"Data Language": {"terms": {"field": "language", "size": 1000}}}}, "Access": {"filter": {"bool": {"must": [{"term": {"publish_status": "0"}}]}}, "aggs": {"Access": {"terms": {"field": "accessRights", "size": 1000}}}}, "Location": {"filter": {"bool": {"must": [{"term": {"publish_status": "0"}}]}}, "aggs": {"Location": {"terms": {"field": "geoLocation.geoLocationPlace", "size": 1000}}}}, "Temporal": {"filter": {"bool": {"must": [{"term": {"publish_status": "0"}}]}}, "aggs": {"Temporal": {"terms": {"field": "temporal", "size": 1000}}}}, "Topic": {"filter": {"bool": {"must": [{"term": {"publish_status": "0"}}]}}, "aggs": {"Topic": {"terms": {"field": "subject.value", "size": 1000}}}}, "Distributor": {"filter": {"bool": {"must": [{"term": {"contributor.@attributes.contributorType": "Distributor"}}, {"term": {"publish_status": "0"}}]}}, "aggs": {"Distributor": {"terms": {"field": "contributor.contributorName", "size": 1000}}}}, "Data Type": {"filter": {"bool": {"must": [{"term": {"description.descriptionType": "Other"}}, {"term": {"publish_status": "0"}}]}}, "aggs": {"Data Type": {"terms": {"field": "description.value", "size": 1000}}}}}, "sort": [{"_id": {"order": "desc", "unmapped_type": "long"}}], "_source": {"excludes": ["content"]}}'
-    execute_result = {
-        "aggregations": {"doc_count": 1, "key": 2},
-        "feedback_mail_list": {},
-        "email_list": {},
-        "buckets": [],
-    }
-    # mock_recordssearch = MagicMock(side_effect=MockRecordsSearch)
-    # side_effect=mock_recordssearch
-    with patch(
-        "weko_search_ui.query.feedback_email_search_factory",
-        return_value=search_instance,
-    ):
-        assert get_feedback_mail_list() == {}
-
-
 # def check_permission():
 def test_check_permission(i18n_app, users):
     with patch("flask_login.utils._get_user", return_value=users[3]["obj"]):
@@ -338,13 +376,214 @@ def test_parse_to_json_form(i18n_app, record_with_metadata):
     assert parse_to_json_form(data)
 
 
-# def check_import_items(file, is_change_identifier: bool, is_gakuninrdm=False,
-def test_check_import_items(i18n_app):
+# def check_tsv_import_items(file, is_change_identifier: bool, is_gakuninrdm=False,
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_check_tsv_import_items -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_check_tsv_import_items(i18n_app):
     current_path = os.path.dirname(os.path.abspath(__file__))
     file_name = "sample_file.zip"
     file_path = os.path.join(current_path, "data", "sample_file", file_name)
 
-    assert check_import_items(file_path, True)
+    ret = check_tsv_import_items(file_path, True)
+    prefix = current_app.config["WEKO_SEARCH_UI_IMPORT_TMP_PREFIX"]
+    assert ret
+    assert ret["data_path"].startswith(f'/var/tmp/{prefix}')
+
+    # test case is_gakuninrdm = True
+    ret = check_tsv_import_items(file_path, True, True)
+    assert ret["data_path"].startswith('/var/tmp/deposit_activity_')
+
+    # current_pathがdict
+    class TestFile(object):
+        @property
+        def filename(self):
+            return 'test_file.txt'
+
+    file = TestFile()
+    assert check_tsv_import_items(file, True, True)
+
+    time.sleep(1)
+    file_name = "sample_file.zip"
+    file_path = os.path.join(current_path, "data", "sample_file", file_name)
+    prefix = current_app.config["WEKO_SEARCH_UI_IMPORT_TMP_PREFIX"]
+
+    with patch("weko_search_ui.utils.chardet.detect", return_value = {'encoding': 'cp932'}):
+        ret = check_tsv_import_items(file_path, True)
+        assert ret
+
+    with patch("weko_search_ui.utils.chardet.detect", return_value = {'encoding': 'cp437'}):
+        ret = check_tsv_import_items(file_path, True)
+        assert ret
+
+        with patch("weko_search_ui.utils.os") as o:
+            type(o).sep = "_"
+            ret = check_tsv_import_items(file_path, True)
+            assert ret
+
+
+@pytest.mark.parametrize('order_if', [1,2,3,4,5,6,7,8,9])
+#def check_tsv_import_items(file, is_change_identifier: bool, is_gakuninrdm=False):
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_check_tsv_import_items2 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_check_tsv_import_items2(app,test_importdata,mocker,db, order_if):
+    app.config['WEKO_SEARCH_UI_IMPORT_TMP_PREFIX'] = 'importtest'
+    filepath = os.path.join(os.path.dirname(os.path.realpath(__file__)),"data", "item_map.json")
+    print(filepath)
+    with open(filepath,encoding="utf-8") as f:
+        item_map = json.load(f)
+
+    mocker.patch("weko_records.serializers.utils.get_mapping",return_value=item_map)
+    with app.test_request_context():
+        with set_locale('en'):
+            mocker.patch("weko_search_ui.utils.unpackage_import_file", return_value={"item_type_id":1})
+            mocker.patch("weko_search_ui.utils.handle_check_exist_record", return_value={"item_type_id":1})
+            mocker.patch("weko_search_ui.utils.handle_item_title")
+            mocker.patch("weko_search_ui.utils.handle_check_date", return_value={"item_type_id":1})
+            mocker.patch("weko_search_ui.utils.handle_check_id")
+            mocker.patch("weko_search_ui.utils.handle_check_and_prepare_index_tree")
+            mocker.patch("weko_search_ui.utils.handle_check_and_prepare_publish_status")
+            mocker.patch("weko_search_ui.utils.handle_check_and_prepare_feedback_mail")
+            check_request_mail = mocker.patch("weko_search_ui.utils.handle_check_and_prepare_request_mail")
+            mocker.patch("weko_search_ui.utils.handle_check_file_metadata")
+            mocker.patch("weko_search_ui.utils.handle_check_cnri")
+            mocker.patch("weko_search_ui.utils.handle_check_doi_indexes")
+            mocker.patch("weko_search_ui.utils.handle_check_doi_ra")
+            mocker.patch("weko_search_ui.utils.handle_check_doi")
+
+            for file in test_importdata:
+
+                # for exception
+                if order_if == 1:
+                    with patch("weko_search_ui.utils.zipfile.ZipFile.infolist",return_value=[1,2]):
+                        ret = check_tsv_import_items(file, False, False)
+
+                # for badzipfile exception
+                if order_if == 2:
+                    with patch("weko_search_ui.utils.zipfile.ZipFile",side_effect=zipfile.BadZipFile):
+                        ret = check_tsv_import_items(file, False, False)
+                        assert ret["error"] == 'The format of the specified file import00.zip does not support import. Please specify one of the following formats: zip, tar, gztar, bztar, xztar.'
+
+                # for FileNotFoundError
+                if order_if == 3:
+                    with patch("weko_search_ui.utils.list",return_value=None):
+                        ret = check_tsv_import_items(file, False, False)
+                        assert ret["error"]=='The csv/tsv file was not found in the specified file import00.zip. Check if the directory structure is correct.'
+
+                # for UnicodeDecodeError
+                if order_if == 4:
+                    with patch("weko_search_ui.utils.zipfile.ZipFile",side_effect=UnicodeDecodeError("uni", b'\xe3\x81\xad\xe3\x81\x93',2,4,"cp932 cant decode")):
+                        ret = check_tsv_import_items(file, False, False)
+
+                # for error is ex.args
+                if order_if == 5:
+                    with patch("weko_search_ui.utils.zipfile.ZipFile",side_effect=Exception({"error_msg":"エラーメッセージ"})):
+                        ret = check_tsv_import_items(file, False, False)
+
+                # for tsv
+                if order_if == 6:
+                    with patch("weko_search_ui.utils.list",return_value=['items.tsv']):
+                        ret = check_tsv_import_items(file,False,False)
+                        assert ret["error"]
+
+                # for gakuninrdm is False
+                if order_if == 7:
+                    ret = check_tsv_import_items(file,False,False)
+                    assert ret["error"]
+                # for gakuninrdm is True
+                if order_if == 8:
+                    ret = check_tsv_import_items(file,False,True)
+                    assert ret["error"]
+
+                # for os.sep is not "/"
+                if order_if == 9:
+                    with patch("weko_search_ui.utils.os") as o:
+                        with patch("weko_search_ui.utils.zipfile.ZipFile.infolist", return_value = [zipfile.ZipInfo(filename = filepath.replace("/","\\"))]):
+                            type(o).sep = "\\"
+                            ret = check_tsv_import_items(file,False,False)
+                            assert ret["error"]
+
+# def check_xml_import_items(file, item_type_id, is_gakuninrdm=False)
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_check_xml_import_items -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_check_xml_import_items(i18n_app, db_itemtype_jpcoar):
+    file_name = "sample_file_jpcoar_xml.zip"
+    file_path = os.path.join('tests', "data", "jpcoar", "v2", file_name)
+
+    item_type = db_itemtype_jpcoar["item_type_multiple"]
+
+    # Case01: Call with file path as argument
+    with i18n_app.test_request_context():
+        result = check_xml_import_items(file_path, item_type.id)
+        print(result["data_path"])
+        assert re.fullmatch(r'^/var/tmp/weko_import_\d{17}', result['data_path']) is not None
+        assert 'error' not in result
+        assert 'list_record' in result
+
+    # Case02: Call with if is_gakuninrdm = True
+    with i18n_app.test_request_context():
+        result = check_xml_import_items(file_path, item_type.id, is_gakuninrdm=True)
+        assert re.fullmatch(r'^/var/tmp/deposit_activity_\d{17}', result['data_path']) is not None
+        assert 'error' not in result
+        assert 'list_record' in result
+
+    # Case03: zip files is broken
+    with i18n_app.test_request_context():
+        broken_file_name = "sample_zip_broken.zip"
+        broken_file_path = os.path.join('tests', "data", "jpcoar", "v2", broken_file_name)
+        time.sleep(2)
+        result = check_xml_import_items(broken_file_path, item_type.id)
+        assert result["error"] == "The format of the specified file sample_zip_broken.zip does not support import." \
+            " Please specify one of the following formats: zip, tar, gztar, bztar, xztar."
+
+    # Case04: Xml files not included
+    with i18n_app.test_request_context():
+        zip_file_path = os.path.join('tests', "data", "helloworld.zip")
+        time.sleep(2)
+        result = check_xml_import_items(zip_file_path, item_type.id)
+        assert result["error"] ==  "The xml file was not found in the specified file helloworld.zip." \
+            " Check if the directory structure is correct."
+
+    with i18n_app.test_request_context():
+        failed_file_name = "no_jpcoar_xml_file.zip"
+        failed_file_path = os.path.join('tests', "data", "jpcoar", "v2", failed_file_name)
+        time.sleep(2)
+        print("Case04")
+        result = check_xml_import_items(failed_file_path, item_type.id)
+        assert result["error"] ==  "The xml file was not found in the specified file no_jpcoar_xml_file.zip." \
+            " Check if the directory structure is correct."
+
+
+    # Case05: UnicodeDecodeError occured
+    with i18n_app.test_request_context():
+        with patch("weko_search_ui.utils.handle_check_file_metadata", side_effect=lambda x,y: "foo".encode('utf-16').decode('utf-8')):
+            time.sleep(2)
+            result = check_xml_import_items(file_path, item_type.id)
+            assert result["error"] == "invalid start byte"
+
+    # Case06: Other exception occured (without args)
+    with i18n_app.test_request_context():
+        with patch("weko_search_ui.utils.handle_check_file_metadata", side_effect=Exception()):
+            time.sleep(2)
+            result = check_xml_import_items(file_path, item_type.id)
+            assert result["error"] == "Internal server error"
+
+    # Case07: Other exception occured (with args)
+    with i18n_app.test_request_context():
+        with patch("weko_search_ui.utils.handle_check_file_metadata", side_effect=Exception({"error_msg": "error_msg_sample"})):
+            time.sleep(2)
+            result = check_xml_import_items(file_path, item_type.id)
+            assert result["error"] == "error_msg_sample"
+
+    # Case08: item_type is not found
+    with i18n_app.test_request_context():
+        result = check_xml_import_items(file_path, 9999)
+        assert result["error"] == "The item type of the item to be imported is missing or has already been deleted."
+
+    # Case09: item_type has been already deleted
+    with i18n_app.test_request_context():
+        item_type = MagicMock(spec=ItemType)
+        item_type.is_deleted = True
+
+        with patch("weko_search_ui.utils.ItemTypes.get_by_id", return_value=item_type):
+            result = check_xml_import_items(file_path, 9999)
+            assert result["error"] == "The item type of the item to be imported is missing or has already been deleted."
 
 
 # def unpackage_import_file(data_path: str, file_name: str, file_format: str, force_new=False):
@@ -391,6 +630,116 @@ def test_unpackage_import_file(app, db,mocker, mocker_itemtype):
             )
 
 
+# def generate_metadata_from_jpcoar(data_path: str, filenames: list, item_type_id: int, is_change_identifier=False)
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_generate_metadata_from_jpcoar -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_generate_metadata_from_jpcoar(app, db_itemtype_jpcoar):
+    item_type = db_itemtype_jpcoar['item_type_multiple']
+
+    with app.test_request_context():
+        # Case01: parse and mapping metadata success
+        result = generate_metadata_from_jpcoar('tests/data/jpcoar/v2', ['test_base.xml'], item_type.id)
+        for record in result:
+            assert '$schema' in record
+            assert 'metadata' in record
+            assert record['item_type_name'] == item_type.item_type_name.name
+            assert record['item_type_id'] == item_type.id
+            assert record['errors'] is None
+            assert record['is_change_identifier'] == False
+
+        # Case02: schema validation error happend
+        result = generate_metadata_from_jpcoar('tests/data/jpcoar/v2', ['test_base_failed.xml'], item_type.id)
+        for record in result:
+            assert len(record['errors']) > 0
+
+        # Case03: item type not found
+        with pytest.raises(Exception) as ex:
+            result = generate_metadata_from_jpcoar('tests/data/jpcoar/v2', ['test_base.xml'], item_type.id+1)
+        assert ex.value.args[0] == {
+            "error_msg": "The item type ID specified in the XML file does not exist."
+        }
+
+
+# def check_jsonld_import_items(file, packaging, mapping_id, meta_data_api=None,shared_id=-1, validate_bagit=True, is_change_identifier=False):
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_check_jsonld_import_items -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_check_jsonld_import_items(i18n_app, db_itemtype_jpcoar):
+    pass
+
+
+# def handle_shared_id(list_record, shared_id=-1):
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_handle_shared_id -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_handle_shared_id():
+    with open("tests/data/list_records/list_records.json", "r") as json_file:
+        list_record = json.load(json_file)
+
+    assert "weko_shared_id" not in list_record[0]["metadata"]
+
+    handle_shared_id(list_record, shared_id="3")
+    assert "weko_shared_id" not in list_record[0]["metadata"]
+
+    handle_shared_id(list_record)
+    assert list_record[0]["metadata"]["weko_shared_id"] == -1
+
+    handle_shared_id(list_record, shared_id=3)
+    assert list_record[0]["metadata"]["weko_shared_id"] == 3
+
+
+# def handle_save_bagit(list_record, file, data_path, filename):
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_handle_save_bagit -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_handle_save_bagit(i18n_app, db_itemtype_jpcoar, tmpdir):
+
+    tmp_dir = tmpdir.mkdir("test")
+    # create file
+    file_path = os.path.join(tmp_dir, "payload.zip")
+    with open(file_path, "w") as f:
+        f.write("This is a placeholder for payload.zip")
+    data_path = tmpdir.mkdir("test／data")
+
+    with open("tests/data/list_records/list_records.json", "r") as json_file:
+        list_record = json.load(json_file)
+    handle_save_bagit(list_record, file_path, data_path, "payload.zip")
+    assert list_record[0]["metadata"]["item_1617605131499"][0]["filename"] == "1KB.pdf"
+
+    list_record[0]["save_as_is"] = True
+    list_record[0]["metadata"]["files_info"] = [{"key": "item_1617605131499"}]
+    list_record2 = [list_record[0], list_record[0].copy()]
+    handle_save_bagit(list_record2, file_path, data_path, "payload.zip")
+    assert list_record2[0]["metadata"]["item_1617605131499"][0]["filename"] == "1KB.pdf"
+
+    handle_save_bagit(list_record, file_path, data_path, "payload.zip")
+    assert list_record[0]["metadata"]["item_1617605131499"][0]["filename"] == "payload.zip"
+    assert os.path.exists(os.path.join(data_path, "payload.zip"))
+
+    file_path = os.path.join(tmp_dir, "instance.zip")
+    with open("tests/data/list_records/list_records.json", "r") as json_file:
+        list_record = json.load(json_file)
+    list_record[0]["save_as_is"] = True
+    list_record[0]["metadata"]["files_info"] = [{"key": "item_1617605131499"}]
+
+    from werkzeug.datastructures import FileStorage
+    with open(file_path, "w") as f:
+        f.write("This is a placeholder for instance.zip")
+    with open(file_path, "br") as f:
+        file = FileStorage(
+            stream=f, filename="instance.zip", content_type="application/zip"
+        )
+        handle_save_bagit(list_record, file, data_path, "instance.zip")
+    assert list_record[0]["metadata"]["item_1617605131499"][0]["filename"] == "instance.zip"
+
+
+# def make_file_info(dir_path, filename, label=None, object_type=None):
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_make_file_info -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_make_file_info(tmpdir):
+    tmp_dir = tmpdir.mkdir("test")
+    # create file
+    file_path = os.path.join(tmp_dir, "payload.zip")
+    with open(file_path, "w") as f:
+        f.write("This is a placeholder for payload.zip")
+
+    result = make_file_info(tmp_dir, "payload.zip")
+    assert result["filename"] == "payload.zip"
+    assert result["format"] == "application/zip"
+
+
 # def getEncode(filepath):
 def test_getEncode():
     csv_files = [
@@ -400,19 +749,19 @@ def test_getEncode():
         {"file": "utf8_cr_items.csv", "enc": "utf-8"},
         {"file": "utf8_crlf_items.csv", "enc": "utf-8"},
         {"file": "utf8_lf_items.csv", "enc": "utf-8"},
-        {"file": "utf8bom_lf_items.csv", "enc": "utf-8"},
-        {"file": "utf16be_bom_lf_items.csv", "enc": "utf-16be"},
-        {"file": "utf16le_bom_lf_items.csv", "enc": "utf-16le"},
+        {"file": "utf8bom_lf_items.csv", "enc": "utf-8-sig"},
+        {"file": "utf16be_bom_lf_items.csv", "enc": "utf-16"},
+        {"file": "utf16le_bom_lf_items.csv", "enc": "utf-16"},
         # {"file":"utf32be_bom_lf_items.csv","enc":"utf-32"},
         # {"file":"utf32le_bom_lf_items.csv","enc":"utf-32"},
-        {"file": "big5.txt", "enc": ""},
+        {"file": "big5.txt", "enc": "tis-620"},
     ]
 
     for f in csv_files:
         filepath = os.path.join(
             os.path.dirname(os.path.realpath(__file__)), "data", "csv", f["file"]
         )
-        assert getEncode(filepath) == f["enc"]
+        assert getEncode(filepath).lower() == f["enc"]
 
 
 # def read_stats_file(file_path: str, file_name: str, file_format: str) -> dict:
@@ -439,6 +788,53 @@ def test_read_stats_file(i18n_app, db_itemtype, users):
             assert read_stats_file(file_path_tsv, file_name_tsv, "tsv")
             assert read_stats_file(file_path_csv, file_name_csv, "csv")
             assert read_stats_file(file_path_tsv_2, file_name_tsv_2, "tsv")
+
+
+# def read_jpcoar_xml_file(file_path, item_type_info) -> dict:
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_read_jpcoar_xml_file -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_read_jpcoar_xml_file(i18n_app, db_itemtype, users):
+    xml_file_name = "test_base.xml"
+    xml_file_path = os.path.join("tests", "data", "jpcoar", "v2", xml_file_name)
+
+    item_type_info = {
+        "schema": "/items/jsonschema/test",
+        "is_lastest": "test",
+        "name": "テストアイテムタイプ",
+        "item_type_id": "test",
+    }
+
+    # Case01: read JPCOAR xml correctly
+    with patch("flask_login.utils._get_user", return_value=users[3]["obj"]):
+        result = read_jpcoar_xml_file(xml_file_path, item_type_info)
+        assert 'metadata' in result['data_list'][0]
+        metadata = result['data_list'][0].pop('metadata')
+        assert result == {
+            'error': False,
+            'error_code': 0,
+            'data_list': [
+                {
+                    "$schema": item_type_info['schema'],
+                    "item_type_name": item_type_info['name'],
+                    "item_type_id": item_type_info['item_type_id'],
+                    "file_path": [],
+                }
+            ],
+            'item_type_schema': item_type_info['schema']
+        }
+
+    # Case02: UnicodeDecodeError occured
+    with patch("flask_login.utils._get_user", return_value=users[3]["obj"]):
+        with patch("weko_search_ui.mapper.JPCOARV2Mapper.map", side_effect=lambda x: "foo".encode('utf-16').decode('utf-8')):
+            try:
+                result = read_jpcoar_xml_file(xml_file_path, item_type_info)
+                pytest.fail()
+            except UnicodeDecodeError as ex:
+                assert ex.reason == "The XML file could not be read. Make sure the file format is XML and that the file is UTF-8 encoded."
+
+    with patch("flask_login.utils._get_user", return_value=users[3]["obj"]):
+        with patch("weko_search_ui.mapper.JPCOARV2Mapper.map", side_effect=Exception()):
+            with pytest.raises(Exception) as ex:
+                result = read_jpcoar_xml_file(xml_file_path, item_type_info)
 
 
 # def handle_convert_validate_msg_to_jp(message: str):
@@ -655,7 +1051,7 @@ def test_up_load_file(i18n_app, deposit, db_activity):
 
     # Doesn't return a value
     assert not up_load_file(
-        record, root_path, deposit, allow_upload_file_content, old_files
+        record, root_path, deposit, old_files, allow_upload_file_content
     )
 
 
@@ -690,7 +1086,30 @@ def test_register_item_metadata(i18n_app, es_item_file_pipeline, deposit, es_rec
     root_path = os.path.dirname(os.path.abspath(__file__))
 
     with patch("invenio_files_rest.utils.find_and_update_location_size"):
-        assert register_item_metadata(item, root_path, is_gakuninrdm=False)
+        assert register_item_metadata(item, root_path, -1, is_gakuninrdm=False)
+
+
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_register_item_metadata2 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_register_item_metadata2(i18n_app, es_item_file_pipeline, deposit, es_records, db_index, es, db, mocker):
+    item = es_records["results"][0]["item"]
+    item["item_type_id"] = 1000
+    item["$schema"] = "/items/jsonschema/1000"
+    item["metadata"]["item_1617605131499"] = item["metadata"]["item_1617605131499"]["attribute_value_mlt"]
+    root_path = os.path.dirname(os.path.abspath(__file__))
+
+    with patch("weko_search_ui.utils.find_and_update_location_size"):
+        with patch("weko_search_ui.utils.WekoDeposit.commit", return_value=None):
+            with patch("weko_search_ui.utils.WekoDeposit.publish_without_commit", return_value=None):
+                with patch("weko_search_ui.utils.RequestMailList.delete_without_commit") as delete_request_mail:
+                        register_item_metadata(item, root_path, -1, is_gakuninrdm=False)
+                        delete_request_mail.assert_called()
+
+                item["metadata"]["request_mail_list"]=[{"email": "contributor@test.org", "author_id": ""}]
+                item["metadata"]["feedback_mail_list"]=[{"email": "contributor@test.org", "author_id": ""}]
+                with patch("weko_search_ui.utils.WekoDeposit.merge_data_to_record_without_version"):
+                    with patch("weko_search_ui.utils.RequestMailList.update") as update_request_mail:
+                        register_item_metadata(item, root_path, -1, is_gakuninrdm=False)
+                        update_request_mail.assert_called()
 
 
 # def update_publish_status(item_id, status):
@@ -722,6 +1141,17 @@ def test_handle_workflow(i18n_app, es_item_file_pipeline, es_records, db):
         item = {"id": "test", "item_type_id": 2}
         # Doesn't return any value
         assert not handle_workflow(item)
+
+
+# def handle_metadata_by_doi(item: dict):
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_handle_doi -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_handle_metadata_by_doi():
+    item = {"metadata": {"test": "test"}, "item_type_id": 1}
+    doi = "test"
+    meta_data_api = ["CrossRef", "DataCite", "Original"]
+    with patch("weko_items_autofill.utils.fetch_metadata_by_doi", return_value=item["metadata"]):
+        metadata = handle_metadata_by_doi(item, doi, meta_data_api)
+        assert metadata == item["metadata"]
 
 
 # def create_work_flow(item_type_id):
@@ -758,8 +1188,7 @@ def test_send_item_created_event_to_es(
 
 # def import_items_to_system(item: dict, request_info=None, is_gakuninrdm=False): ERROR = TypeError: handle_remove_es_metadata() missing 2 required positional arguments: 'bef_metadata' and 'bef_las...
 # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_import_items_to_system -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
-def test_import_items_to_system(i18n_app, es_item_file_pipeline, es_records):
-    # item = dict(db_activity['item'])
+def test_import_items_to_system(i18n_app, es_item_file_pipeline, es_records, mocker):
     item = es_records["results"][0]
 
     with patch("weko_search_ui.utils.register_item_metadata", return_value={}):
@@ -778,14 +1207,76 @@ def test_import_items_to_system(i18n_app, es_item_file_pipeline, es_records):
                         with patch(
                             "weko_workflow.utils.get_cache_data", return_value=True
                         ):
-                            assert import_items_to_system(item["item"])
-                            item["item"]["status"] = "new"
-                            assert import_items_to_system(item["item"])
-
+                            with patch("weko_search_ui.utils.call_external_system") as mock_external:
+                                assert import_items_to_system(item["item"])
+                                mock_external.assert_called()
+                                assert mock_external.call_args[1]["old_record"] is not None
+                                assert mock_external.call_args[1]["new_record"] is not None
+                            with patch("weko_search_ui.utils.call_external_system") as mock_external:
+                                item["item"]["status"] = "new"
+                                assert import_items_to_system(item["item"])
+                                assert mock_external.call_args[1]["old_record"] is None
+                                assert mock_external.call_args[1]["new_record"] is not None
+                                mock_external.assert_called()
                     assert import_items_to_system(
                         item["item"]
                     )  # Will result in error but will cover exception part
 
+
+# def import_items_to_activity(item, request_info):
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_import_items_to_activity -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_import_items_to_activity(i18n_app, es_item_file_pipeline, es_records, db_workflow, mocker):
+    mock_auto = mocker.patch("weko_workflow.headless.HeadlessActivity.auto", return_value=("test/A-TEST-1", "end_action", "2000001"))
+
+    item = es_records["results"][0]["item"]
+    item["id"] = "2000001"
+    item["root_path"] = tempfile.gettempdir()
+    item["file_path"] = ["hello.txt"]
+    item["comment"] = "test comment"
+    item["non_extract"] = ["hello.txt"]
+
+    request_info = {
+        "workflow_id": 1,
+        "user_id": 1,
+    }
+    url, recid, action, error = import_items_to_activity(item, request_info)
+    mock_auto.assert_called_once_with(
+        user_id=request_info["user_id"],
+        workflow_id=request_info["workflow_id"],
+        item_id=item["id"],
+        index=item["metadata"]["path"],
+        metadata=item["metadata"],
+        files=[tempfile.gettempdir()+"/hello.txt"],
+        comment="test comment",
+        link_data=None, grant_data=None,
+        non_extract=["hello.txt"]
+    )
+    assert url == "test/A-TEST-1"
+    assert recid == "2000001"
+    assert action == "end_action"
+    assert error == None
+
+    mock_auto.reset_mock()
+    mock_auto.side_effect = WekoWorkflowException("test error")
+
+    mock_activity = MagicMock()
+    mock_activity.activity_id = "A-TEST-2"
+    mock_activity.activity_community_id = "com"
+    mock_activity.action_id = 3
+    mock_headless = MagicMock()
+    mock_headless._model = mock_activity
+    mock_headless.current_action = "item_login"
+    mock_headless.recid = "2000001"
+    mock_headless.auto = mock_auto
+    mocker.patch("weko_workflow.headless.HeadlessActivity.__new__", return_value=mock_headless)
+    mocker.patch("weko_workflow.headless.HeadlessActivity.__init__")
+
+    with i18n_app.test_request_context():
+        url, recid, action, error = import_items_to_activity(item, request_info)
+    assert url.endswith("A-TEST-2")
+    assert recid == "2000001"
+    assert action == "item_login"
+    assert error == "test error"
 
 # def handle_item_title(list_record):
 def test_handle_item_title(i18n_app, es_item_file_pipeline, es_records):
@@ -867,7 +1358,9 @@ def test_handle_check_and_prepare_index_tree2(i18n_app, record_with_metadata, in
 
 
 # def handle_check_and_prepare_feedback_mail(list_record):
-def test_handle_check_and_prepare_feedback_mail(i18n_app, record_with_metadata):
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_handle_check_and_prepare_feedback_mail -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_handle_check_and_prepare_feedback_mail(i18n_app, record_with_metadata, es_authors_index):
+    i18n_app.config["WEKO_AUTHORS_ES_INDEX_NAME"] = "test-authors"
     list_record = [record_with_metadata[0]]
 
     # Doesn't return any value
@@ -885,6 +1378,31 @@ def test_handle_check_and_prepare_feedback_mail(i18n_app, record_with_metadata):
 
     # Doesn't return any value
     assert not handle_check_and_prepare_feedback_mail([record])
+
+
+# def handle_check_and_prepare_request_mail(list_record):
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_handle_check_and_prepare_request_mail -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_handle_check_and_prepare_request_mail(i18n_app, record_with_metadata, es_authors_index):
+    i18n_app.config["WEKO_AUTHORS_ES_INDEX_NAME"] = "test-authors"
+    list_record = [record_with_metadata[0]]
+
+    # Doesn't return any value
+    assert not handle_check_and_prepare_request_mail(list_record)
+
+    record = {
+        "request_mail": ["wekosoftware@test.com"],
+        "metadata": {"request_mail_list": ""},
+    }
+
+    # Doesn't return any value
+    assert not handle_check_and_prepare_request_mail([record])
+    assert record["metadata"]["request_mail_list"] == [{'email': 'wekosoftware@test.com', 'author_id': ''}]
+
+    record["request_mail"] = ["test"]
+
+    # Doesn't return any value
+    assert not handle_check_and_prepare_request_mail([record])
+    assert record["errors"] == ['指定されたtestは不正です。']
 
 
 # def handle_set_change_identifier_flag(list_record, is_change_identifier):
@@ -987,7 +1505,7 @@ def test_handle_check_doi(app,identifier):
     #with patch("weko_deposit.api.WekoRecord.get_record_by_pid", return_value=mock):
     #    # with patch("weko_workflow.utils.IdentifierHandle", return_value=mock):
     #    assert not handle_check_doi([item2])
-    
+
     item = [
         {"id":"1","doi":"","doi_ra":"JaLC","is_change_identifier":True},
         {"id":"2","doi":"a"*300,"doi_ra":"JaLC","is_change_identifier":True},
@@ -1017,7 +1535,217 @@ def test_handle_check_doi(app,identifier):
     handle_check_doi(item)
     assert item == test
 
-    
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_handle_check_duplicate_item_link -v -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_handle_check_duplicate_item_link(app):
+
+    # pattern of link dst is existing ID
+    # expect reduction of duplicate link
+    item_1 = {
+        "_id": "journal1",
+        "link_data": [
+            {"item_id": "100", "sele_id": "ccc"},
+            {"item_id": "100", "sele_id": "ccc"}
+        ]
+    }
+    item_2 = {
+        "_id": "journal2",
+        "link_data": [
+            {"item_id": "100", "sele_id": "isSupplementTo"},
+            {"item_id": "100", "sele_id": "isSupplementTo"}
+        ]
+    }
+    list_record = [item_1, item_2]
+    list_record.sort(key=lambda x: get_priority(x["link_data"]))
+    handle_check_duplicate_item_link(list_record)
+    assert not list_record[0].get("errors")
+    assert not list_record[1].get("errors")
+    assert len(list_record[0]["link_data"]) == 1
+    assert len(list_record[1]["link_data"]) == 1
+
+    # duplicate link error
+    item_1 = {
+        "_id": "journal1",
+        "link_data": [
+            {"item_id": "100", "sele_id": "ccc"},
+            {"item_id": "100", "sele_id": "ddd"}
+        ]
+    }
+    item_2 = {
+        "_id": "journal2",
+        "link_data": [
+            {"item_id": "100", "sele_id": "ccc"},
+            {"item_id": "100", "sele_id": "isSupplementTo"}
+        ]
+    }
+    item_3 = {
+        "_id": "journal3",
+        "link_data": [
+            {"item_id": "100", "sele_id": "isSupplementTo"},
+            {"item_id": "100", "sele_id": "isSupplementedBy"}
+        ]
+    }
+    list_record = [item_1, item_2, item_3]
+    list_record.sort(key=lambda x: get_priority(x["link_data"]))
+    handle_check_duplicate_item_link(list_record)
+    assert "Duplicate Item Link." in list_record[0]["errors"][0]
+    assert "Duplicate Item Link." in list_record[1]["errors"][0]
+    assert "Duplicate Item Link." in list_record[2]["errors"][0]
+
+    # pattern of link dst is split item
+    item_1 = {
+        "_id": "journal",
+        "link_data": [
+            {"item_id": "evidence", "sele_id": "ccc"}
+        ]
+    }
+    list_record = [item_1]
+    list_record.sort(key=lambda x: get_priority(x["link_data"]))
+    handle_check_duplicate_item_link(list_record)
+    assert "It is not allowed to create links other than" \
+        in list_record[0]["errors"][0]
+
+    # expect reduction of duplicate inverse link
+    item_1 = {
+        "_id": "journal",
+        "link_data": [
+            {"item_id": "evidence", "sele_id": "isSupplementedBy"}
+        ]
+    }
+    item_2 = {
+        "_id": "evidence",
+        "link_data": [
+            {"item_id": "journal", "sele_id": "isSupplementTo"}
+        ]
+    }
+    list_record = [item_1, item_2]
+    list_record.sort(key=lambda x: get_priority(x["link_data"]))
+    assert list_record[0]["_id"] == "evidence"
+    assert list_record[1]["_id"] == "journal"
+    handle_check_duplicate_item_link(list_record)
+    assert len(list_record[0]["link_data"]) == 0
+    assert len(list_record[1]["link_data"]) == 1
+
+    # duplicate link error
+    item_1 = {
+        "_id": "evidence",
+        "link_data": [
+            {"item_id": "journal", "sele_id": "isSupplementedBy"}
+        ]
+    }
+    item_2 = {
+        "_id": "journal",
+        "link_data": [
+            {"item_id": "evidence", "sele_id": "isSupplementedBy"}
+        ]
+    }
+    list_record = [item_1, item_2]
+    list_record.sort(key=lambda x: get_priority(x["link_data"]))
+    assert list_record[0]["_id"] == "evidence"
+    assert list_record[1]["_id"] == "journal"
+    handle_check_duplicate_item_link(list_record)
+    assert "Duplicate Item Link." in list_record[0]["errors"][0]
+    assert "Duplicate Item Link." in list_record[1]["errors"][0]
+
+    # error link to item itself
+    item_1 = {
+        "_id": "evidence",
+        "id": "100",
+        "link_data": [
+            {"item_id": "100", "sele_id": "hasPart"}
+        ]
+    }
+    item_2 = {
+        "_id": "journal",
+        "link_data": [
+            {"item_id": "journal", "sele_id": "isSupplementedBy"},
+        ]
+    }
+    list_record = [item_1, item_2]
+    list_record.sort(key=lambda x: get_priority(x["link_data"]))
+    assert list_record[0]["_id"] == "journal"
+    assert list_record[1]["_id"] == "evidence"
+    handle_check_duplicate_item_link(list_record)
+    assert "It is not allowed to create links to the item itself." \
+        in list_record[0]["errors"][0]
+    assert "It is not allowed to create links to the item itself." \
+        in list_record[1]["errors"][0]
+
+    # replace links with inverse links (isSupplementTo)
+    item_1 = {
+        "_id": "journal",
+        "link_data": [
+            {"item_id": "100", "sele_id": "hasPart"}
+        ]
+    }
+    item_2 = {
+        "_id": "evidence",
+        "link_data": [
+            {"item_id": "journal", "sele_id": "isSupplementTo"},
+        ]
+    }
+    list_record = [item_1, item_2]
+    list_record.sort(key=lambda x: get_priority(x["link_data"]))
+    assert list_record[0]["_id"] == "evidence"
+    assert list_record[1]["_id"] == "journal"
+    handle_check_duplicate_item_link(list_record)
+    assert not list_record[0].get("errors")
+    assert not list_record[1].get("errors")
+    assert len(list_record[0]["link_data"]) == 0
+    assert len(list_record[1]["link_data"]) == 2
+
+    # replace links with inverse links (isSupplementedBy)
+    item_1 = {
+        "_id": "evidence",
+        "link_data": [
+            {"item_id": "100", "sele_id": "hasPart"}
+        ]
+    }
+    item_2 = {
+        "_id": "journal",
+        "link_data": [
+            {"item_id": "evidence", "sele_id": "isSupplementedBy"},
+        ]
+    }
+    list_record = [item_1, item_2]
+    list_record.sort(key=lambda x: get_priority(x["link_data"]))
+    assert list_record[0]["_id"] == "journal"
+    assert list_record[1]["_id"] == "evidence"
+    handle_check_duplicate_item_link(list_record)
+    assert not list_record[0].get("errors")
+    assert not list_record[1].get("errors")
+    assert len(list_record[0]["link_data"]) == 0
+    assert len(list_record[1]["link_data"]) == 2
+
+    # invaild input data
+    list_record = []
+    handle_check_duplicate_item_link(list_record)
+    item_1 = {
+        "_id": "evidence",
+        "link_data": None
+    }
+    item_2 = {
+    }
+    item_3 = None
+    list_record = [item_1, item_2, item_3]
+    handle_check_duplicate_item_link(list_record)
+    assert not list_record[0].get("errors")
+
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_handle_check_operation_flags -v -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_handle_check_operation_flags():
+    list_record = [
+        {"metadata_replace": True, "file_path":["/test/test.txt", "test/test.csv"]},
+        {"metadata_replace": False, "file_path":["/test/test.txt", "test/test.csv"]},
+        {"file_path":["/test/test.txt", "test/test.csv"]},
+    ]
+
+    test = [
+        {"metadata_replace": True, "file_path":[]},
+        {"metadata_replace": False, "file_path":["/test/test.txt", "test/test.csv"]},
+        {"file_path":["/test/test.txt", "test/test.csv"]},
+    ]
+
+    handle_check_operation_flags(list_record)
+    assert list_record == test
 
 # def register_item_handle(item):
 def test_register_item_handle(i18n_app, es_item_file_pipeline, es_records):
@@ -1136,18 +1864,18 @@ def test_prepare_doi_link(i18n_app, communities2, db):
 def test_register_item_doi(i18n_app, db_activity, identifier, mocker):
 
     mocker.patch("weko_search_ui.utils.WekoDeposit.get_record",return_value=MagicMock())
-    
+
     mock_without_version = MagicMock()
     mock_recid=MagicMock()
     mock_without_version.pid_recid=mock_recid
     mock_pid_doi = MagicMock()
     mock_pid_doi.pid_value = "https://doi.org/xyz.jalc/0000022222" # path delete
     mock_without_version.pid_doi = mock_pid_doi
-    
+
     mock_lasted=MagicMock()
     mock_lasted_pid=MagicMock()
     mock_lasted.pid_recid=mock_lasted_pid
-    
+
     # is_change_identifier is True, not doi_ra and doi
     item = {
         "id":"1",
@@ -1157,8 +1885,8 @@ def test_register_item_doi(i18n_app, db_activity, identifier, mocker):
         with patch("weko_search_ui.utils.saving_doi_pidstore") as mock_save:
             register_item_doi(item)
             mock_save.assert_not_called()
-    
-    
+
+
     # is_change_identifier is True, pid_value.endswith is False, doi_duplicated is True
     item = {
         "id":"2",
@@ -1174,7 +1902,7 @@ def test_register_item_doi(i18n_app, db_activity, identifier, mocker):
                 with pytest.raises(Exception) as e:
                     register_item_doi(item)
                 assert e.value.args[0] == {"error_id":"is_withdraw_doi"}
-    
+
     # is_change_identifier is True, pid_value.endswith is False, called saving_doi_pidstore
     item = {
         "id":"3",
@@ -1195,7 +1923,7 @@ def test_register_item_doi(i18n_app, db_activity, identifier, mocker):
                 register_item_doi(item)
                 args, kwargs = mock_save.call_args
                 assert args[2] == test_data
-    
+
     # is_change_identifier is True, pid_value.endswith is True
     item = {
         "id":"4",
@@ -1209,7 +1937,7 @@ def test_register_item_doi(i18n_app, db_activity, identifier, mocker):
             with patch("weko_search_ui.utils.saving_doi_pidstore") as mock_save:
                 register_item_doi(item)
                 mock_save.assert_not_called()
-    
+
     # is_change_identifier is False, doi_ra not NDL, doi_duplicated is True
     item = {
         "id":"5",
@@ -1223,7 +1951,7 @@ def test_register_item_doi(i18n_app, db_activity, identifier, mocker):
                 with pytest.raises(Exception) as e:
                     register_item_doi(item)
                 assert e.value.args[0] == {"error_id":"is_duplicated_doi"}
-    
+
     # is_change_identifier is False, doi_ra not NDL, called saving_doi_pidstore
     item = {
         "id":"6",
@@ -1243,7 +1971,7 @@ def test_register_item_doi(i18n_app, db_activity, identifier, mocker):
                 register_item_doi(item)
                 args, kwargs = mock_save.call_args
                 assert args[2] == test_data
-    
+
     # is_change_identifier is False, doi_ra is NDL, doi_duplicated is True
     item = {
         "id":"7",
@@ -1258,7 +1986,7 @@ def test_register_item_doi(i18n_app, db_activity, identifier, mocker):
                 with pytest.raises(Exception) as e:
                     register_item_doi(item)
                 assert e.value.args[0] == {"error_id": "is_withdraw_doi"}
-    
+
     # is_change_identifier is False, doi_ra is NDL, called saving_doi_pidstore
     item = {
         "id":"8",
@@ -1279,7 +2007,7 @@ def test_register_item_doi(i18n_app, db_activity, identifier, mocker):
                 register_item_doi(item)
                 args, kwargs = mock_save.call_args
                 assert args[2] == test_data
-    
+
     # data is None
     item = {
         "id":"9",
@@ -1289,7 +2017,7 @@ def test_register_item_doi(i18n_app, db_activity, identifier, mocker):
         with patch("weko_search_ui.utils.check_existed_doi",return_value=return_check):
             with patch("weko_search_ui.utils.saving_doi_pidstore") as mock_save:
                 register_item_doi(item)
-                
+
 # def register_item_update_publish_status(item, status):
 def test_register_item_update_publish_status(
     i18n_app, es_item_file_pipeline, es_records
@@ -1635,7 +2363,7 @@ def test_handle_fill_system_item(app, test_list_records,identifier, mocker):
     item2["metadata"]["item_1617186476635"]["subitem_1600958577026"] = ""
     item2["metadata"]["item_1617258105262"]["resourceuri"] = ""
     items.append(item2)
-    
+
     # identifier_type is NDL JaLC, not suffix
     item = copy.deepcopy(list_record[0])
     item["metadata"]["item_1617186819068"]={'subitem_identifier_reg_type':"NDL JaLC", 'subitem_identifier_reg_text': ""}
@@ -1663,7 +2391,7 @@ def test_handle_fill_system_item(app, test_list_records,identifier, mocker):
     item2["metadata"]["item_1617186476635"]["subitem_1600958577026"] = ""
     item2["metadata"]["item_1617258105262"]["resourceuri"] = ""
     items.append(item2)
-    
+
     # identifier_type is NDL JaLC, not suffix
     item = copy.deepcopy(list_record[0])
     item["metadata"]["item_1617186819068"]={'subitem_identifier_reg_type':"NDL JaLC", 'subitem_identifier_reg_text': "xyz.ndl/"}
@@ -1691,7 +2419,7 @@ def test_handle_fill_system_item(app, test_list_records,identifier, mocker):
     item2["metadata"]["item_1617186476635"]["subitem_1600958577026"] = ""
     item2["metadata"]["item_1617258105262"]["resourceuri"] = ""
     items.append(item2)
-    
+
     mock_record = MagicMock()
     mock_doi = MagicMock()
     mock_record.pid_doi=None
@@ -1726,12 +2454,12 @@ def test_handle_fill_system_item(app, test_list_records,identifier, mocker):
         (1,{"doi": "","doi_ra":"", "doi2": "","doi_ra2":""},{"doi": "xyz.jalc/0000000001","doi_ra":"JaLC","doi2": "xyz.jalc/0000000001","doi_ra2":"JaLC"},['The specified DOI is wrong and fixed with the registered DOI.', 'The specified DOI RA is wrong and fixed with the correct DOI RA of the registered DOI.'],[],False,False),
         (1,{"doi": "xyz.jalc/0000000001","doi_ra":"", "doi2": "","doi_ra2":""},{"doi": "xyz.jalc/0000000001","doi_ra":"JaLC","doi2": None,"doi_ra2":None},['The specified DOI RA is wrong and fixed with the correct DOI RA of the registered DOI.'],['DOI_RA should be set by one of JaLC, Crossref, DataCite, NDL JaLC.'],False,False),
         (1,{"doi": "xyz.jalc/0000000001","doi_ra":"JaLC", "doi2": "","doi_ra2":""},{"doi": "xyz.jalc/0000000001","doi_ra":"JaLC","doi2": "xyz.jalc/0000000001","doi_ra2":"JaLC"},[],[],False,False),
-        (1,{"doi": "xyz.jalc/0000000001","doi_ra":"JaLC", "doi2": "xyz.jalc/0000000001","doi_ra2":""},{"doi": "xyz.jalc/0000000001","doi_ra":"JaLC","doi2": "xyz.jalc/0000000001","doi_ra2":"JaLC"},[],[],False,False), 
-        (1,{"doi": "xyz.jalc/0000000001","doi_ra":"JaLC", "doi2": "","doi_ra2":"JaLC"},{"doi": "xyz.jalc/0000000001","doi_ra":"JaLC","doi2": "xyz.jalc/0000000001","doi_ra2":"JaLC"},[],[],False,False), 
-        (1,{"doi": "xyz.jalc/0000000001","doi_ra":"JaLC", "doi2": "","doi_ra2":"DataCite"},{"doi": "xyz.jalc/0000000001","doi_ra":"JaLC","doi2": "xyz.jalc/0000000001","doi_ra2":"JaLC"},['The specified DOI RA is wrong and fixed with the correct DOI RA of the registered DOI.'],[],False,False), 
-        (1,{"doi": "xyz.jalc/0000000001","doi_ra":"JaLC", "doi2": "xyz.jalc/0000000001","doi_ra2":"DataCite"},{"doi": "xyz.jalc/0000000001","doi_ra":"JaLC","doi2": "xyz.jalc/0000000001","doi_ra2":"JaLC"},['The specified DOI RA is wrong and fixed with the correct DOI RA of the registered DOI.'],[],False,False), 
-        (1,{"doi": "xyz.jalc/0000000001","doi_ra":"JaLC", "doi2": "xyz.jalc/0000000002","doi_ra2":"DataCite"},{"doi": "xyz.jalc/0000000001","doi_ra":"JaLC","doi2": "xyz.jalc/0000000001","doi_ra2":"JaLC"},['The specified DOI is wrong and fixed with the registered DOI.', 'The specified DOI RA is wrong and fixed with the correct DOI RA of the registered DOI.'],[],False,False), 
-        (1,{"doi": "xyz.jalc/0000000001","doi_ra":"JaLC", "doi2": "","doi_ra2":"JaLC2"},{"doi": "xyz.jalc/0000000001","doi_ra":"JaLC","doi2": "xyz.jalc/0000000001","doi_ra2":"JaLC"},['The specified DOI RA is wrong and fixed with the correct DOI RA of the registered DOI.'],[],False,False), 
+        (1,{"doi": "xyz.jalc/0000000001","doi_ra":"JaLC", "doi2": "xyz.jalc/0000000001","doi_ra2":""},{"doi": "xyz.jalc/0000000001","doi_ra":"JaLC","doi2": "xyz.jalc/0000000001","doi_ra2":"JaLC"},[],[],False,False),
+        (1,{"doi": "xyz.jalc/0000000001","doi_ra":"JaLC", "doi2": "","doi_ra2":"JaLC"},{"doi": "xyz.jalc/0000000001","doi_ra":"JaLC","doi2": "xyz.jalc/0000000001","doi_ra2":"JaLC"},[],[],False,False),
+        (1,{"doi": "xyz.jalc/0000000001","doi_ra":"JaLC", "doi2": "","doi_ra2":"DataCite"},{"doi": "xyz.jalc/0000000001","doi_ra":"JaLC","doi2": "xyz.jalc/0000000001","doi_ra2":"JaLC"},['The specified DOI RA is wrong and fixed with the correct DOI RA of the registered DOI.'],[],False,False),
+        (1,{"doi": "xyz.jalc/0000000001","doi_ra":"JaLC", "doi2": "xyz.jalc/0000000001","doi_ra2":"DataCite"},{"doi": "xyz.jalc/0000000001","doi_ra":"JaLC","doi2": "xyz.jalc/0000000001","doi_ra2":"JaLC"},['The specified DOI RA is wrong and fixed with the correct DOI RA of the registered DOI.'],[],False,False),
+        (1,{"doi": "xyz.jalc/0000000001","doi_ra":"JaLC", "doi2": "xyz.jalc/0000000002","doi_ra2":"DataCite"},{"doi": "xyz.jalc/0000000001","doi_ra":"JaLC","doi2": "xyz.jalc/0000000001","doi_ra2":"JaLC"},['The specified DOI is wrong and fixed with the registered DOI.', 'The specified DOI RA is wrong and fixed with the correct DOI RA of the registered DOI.'],[],False,False),
+        (1,{"doi": "xyz.jalc/0000000001","doi_ra":"JaLC", "doi2": "","doi_ra2":"JaLC2"},{"doi": "xyz.jalc/0000000001","doi_ra":"JaLC","doi2": "xyz.jalc/0000000001","doi_ra2":"JaLC"},['The specified DOI RA is wrong and fixed with the correct DOI RA of the registered DOI.'],[],False,False),
         (1,{"doi": "xyz.jalc/0000000002","doi_ra":"JaLC","doi2": "","doi_ra2":""},{"doi": "xyz.jalc/0000000001","doi_ra":"JaLC","doi2": "xyz.jalc/0000000001","doi_ra2":"JaLC"},['The specified DOI is wrong and fixed with the registered DOI.'],[],False,False),
         (1,{"doi": "xyz.jalc/0000000002","doi_ra":"JaLC","doi2": "xyz.jalc/0000000001","doi_ra2":"JaLC"},{"doi": "xyz.jalc/0000000001","doi_ra":"JaLC","doi2": "xyz.jalc/0000000001","doi_ra2":"JaLC"},['The specified DOI is wrong and fixed with the registered DOI.'],[],False,False),
         (1,{"doi": "xyz.jalc/0000000002","doi_ra":"JaLC2","doi2": "xyz.jalc/0000000001","doi_ra2":"JaLC"},{"doi": "xyz.jalc/0000000001","doi_ra":"JaLC","doi2": None,"doi_ra2":None},['The specified DOI is wrong and fixed with the registered DOI.', 'The specified DOI RA is wrong and fixed with the correct DOI RA of the registered DOI.'],['DOI_RA should be set by one of JaLC, Crossref, DataCite, NDL JaLC.'],False,False),
@@ -1742,14 +2470,14 @@ def test_handle_fill_system_item(app, test_list_records,identifier, mocker):
         (1,{"doi": "xyz.jalc/0000000001","doi_ra":"JaLC","doi2": "xyz.jalc/0000000001","doi_ra2":"JaLC"},{"doi": "xyz.jalc/0000000001","doi_ra":"JaLC","doi2": "xyz.jalc/0000000001","doi_ra2":"JaLC"},[],[],True,False),
         (1,{"doi": "","doi_ra":"", "doi2": "","doi_ra2":""},{"doi": "","doi_ra":"","doi2": "","doi_ra2":""},[],['Please specify DOI prefix/suffix.'],True,False),
         (1,{"doi": "xyz.jalc/0000000001","doi_ra":"", "doi2": "","doi_ra2":""},{"doi": "xyz.jalc/0000000001","doi_ra":"","doi2": None,"doi_ra2":None},[],['DOI_RA should be set by one of JaLC, Crossref, DataCite, NDL JaLC.'],True,False),
-        
+
         (1,{"doi": "xyz.jalc/0000000001","doi_ra":"JaLC", "doi2": "","doi_ra2":""},{"doi": "xyz.jalc/0000000001","doi_ra":"JaLC","doi2": "xyz.jalc/0000000001","doi_ra2":"JaLC"},[],[],True,False),
-        (1,{"doi": "xyz.jalc/0000000001","doi_ra":"JaLC", "doi2": "xyz.jalc/0000000001","doi_ra2":""},{"doi": "xyz.jalc/0000000001","doi_ra":"JaLC","doi2": "xyz.jalc/0000000001","doi_ra2":"JaLC"},[],[],True,False), 
-        (1,{"doi": "xyz.jalc/0000000001","doi_ra":"JaLC", "doi2": "","doi_ra2":"JaLC"},{"doi": "xyz.jalc/0000000001","doi_ra":"JaLC","doi2": "xyz.jalc/0000000001","doi_ra2":"JaLC"},[],[],True,False), 
-        (1,{"doi": "xyz.jalc/0000000001","doi_ra":"JaLC", "doi2": "","doi_ra2":"DataCite"},{"doi": "xyz.jalc/0000000001","doi_ra":"JaLC","doi2": "xyz.jalc/0000000001","doi_ra2":"JaLC"},['The specified DOI RA is wrong and fixed with the correct DOI RA of the registered DOI.'],[],True,False), 
-        (1,{"doi": "xyz.jalc/0000000001","doi_ra":"JaLC", "doi2": "xyz.jalc/0000000001","doi_ra2":"DataCite"},{"doi": "xyz.jalc/0000000001","doi_ra":"JaLC","doi2": "xyz.jalc/0000000001","doi_ra2":"JaLC"},['The specified DOI RA is wrong and fixed with the correct DOI RA of the registered DOI.'],[],True,False), 
-        (1,{"doi": "xyz.jalc/0000000001","doi_ra":"JaLC", "doi2": "xyz.jalc/0000000002","doi_ra2":"DataCite"},{"doi": "xyz.jalc/0000000001","doi_ra":"JaLC","doi2": "xyz.jalc/0000000001","doi_ra2":"JaLC"},['The specified DOI is wrong and fixed with the registered DOI.', 'The specified DOI RA is wrong and fixed with the correct DOI RA of the registered DOI.'],[],True,False), 
-        (1,{"doi": "xyz.jalc/0000000001","doi_ra":"JaLC", "doi2": "","doi_ra2":"JaLC2"},{"doi": "xyz.jalc/0000000001","doi_ra":"JaLC","doi2": "xyz.jalc/0000000001","doi_ra2":"JaLC"},['The specified DOI RA is wrong and fixed with the correct DOI RA of the registered DOI.'],[],True,False), 
+        (1,{"doi": "xyz.jalc/0000000001","doi_ra":"JaLC", "doi2": "xyz.jalc/0000000001","doi_ra2":""},{"doi": "xyz.jalc/0000000001","doi_ra":"JaLC","doi2": "xyz.jalc/0000000001","doi_ra2":"JaLC"},[],[],True,False),
+        (1,{"doi": "xyz.jalc/0000000001","doi_ra":"JaLC", "doi2": "","doi_ra2":"JaLC"},{"doi": "xyz.jalc/0000000001","doi_ra":"JaLC","doi2": "xyz.jalc/0000000001","doi_ra2":"JaLC"},[],[],True,False),
+        (1,{"doi": "xyz.jalc/0000000001","doi_ra":"JaLC", "doi2": "","doi_ra2":"DataCite"},{"doi": "xyz.jalc/0000000001","doi_ra":"JaLC","doi2": "xyz.jalc/0000000001","doi_ra2":"JaLC"},['The specified DOI RA is wrong and fixed with the correct DOI RA of the registered DOI.'],[],True,False),
+        (1,{"doi": "xyz.jalc/0000000001","doi_ra":"JaLC", "doi2": "xyz.jalc/0000000001","doi_ra2":"DataCite"},{"doi": "xyz.jalc/0000000001","doi_ra":"JaLC","doi2": "xyz.jalc/0000000001","doi_ra2":"JaLC"},['The specified DOI RA is wrong and fixed with the correct DOI RA of the registered DOI.'],[],True,False),
+        (1,{"doi": "xyz.jalc/0000000001","doi_ra":"JaLC", "doi2": "xyz.jalc/0000000002","doi_ra2":"DataCite"},{"doi": "xyz.jalc/0000000001","doi_ra":"JaLC","doi2": "xyz.jalc/0000000001","doi_ra2":"JaLC"},['The specified DOI is wrong and fixed with the registered DOI.', 'The specified DOI RA is wrong and fixed with the correct DOI RA of the registered DOI.'],[],True,False),
+        (1,{"doi": "xyz.jalc/0000000001","doi_ra":"JaLC", "doi2": "","doi_ra2":"JaLC2"},{"doi": "xyz.jalc/0000000001","doi_ra":"JaLC","doi2": "xyz.jalc/0000000001","doi_ra2":"JaLC"},['The specified DOI RA is wrong and fixed with the correct DOI RA of the registered DOI.'],[],True,False),
         (1,{"doi": "xyz.jalc/0000000002","doi_ra":"JaLC","doi2": "","doi_ra2":""},{"doi": "xyz.jalc/0000000002","doi_ra":"JaLC","doi2": "xyz.jalc/0000000002","doi_ra2":"JaLC"},[],[],True,False),
         (1,{"doi": "xyz.jalc/0000000002","doi_ra":"JaLC","doi2": "xyz.jalc/0000000001","doi_ra2":"JaLC"},{"doi": "xyz.jalc/0000000002","doi_ra":"JaLC","doi2": "xyz.jalc/0000000002","doi_ra2":"JaLC"},['The specified DOI is wrong and fixed with the registered DOI.'],[],True,False),
         (1,{"doi": "xyz.jalc/0000000002","doi_ra":"JaLC2","doi2": "xyz.jalc/0000000001","doi_ra2":"JaLC"},{"doi": "xyz.jalc/0000000002","doi_ra":"JaLC2","doi2": None,"doi_ra2":None},[],['DOI_RA should be set by one of JaLC, Crossref, DataCite, NDL JaLC.'],True,False),
@@ -1757,17 +2485,17 @@ def test_handle_fill_system_item(app, test_list_records,identifier, mocker):
         (1,{"doi": None,"doi_ra":None,"doi2": None,"doi_ra2":None},{"doi": "","doi_ra":"","doi2": None,"doi_ra2":None},[],['Please specify DOI prefix/suffix.'],True,False),
         (1,{"doi": "xyz.jalc/0000000001","doi_ra":None,"doi2": None,"doi_ra2":None},{"doi": "xyz.jalc/0000000001","doi_ra":"","doi2": None,"doi_ra2":None},[],['DOI_RA should be set by one of JaLC, Crossref, DataCite, NDL JaLC.'],True,False),
         (1,{"doi": None,"doi_ra":"JaLC","doi2": None,"doi_ra2":None},{"doi": "","doi_ra":"JaLC","doi2": "","doi_ra2":"JaLC"},[],['Please specify DOI prefix/suffix.'],True,False),
-        
+
         (2,{"doi": "xyz.crossref/0000000002","doi_ra":"Crossref","doi2": "xyz.crossref/0000000002","doi_ra2":"Crossref"},{"doi": "xyz.crossref/0000000002","doi_ra":"Crossref","doi2": "xyz.crossref/0000000002","doi_ra2":"Crossref"},[],[],False,False),
         (2,{"doi": "","doi_ra":"", "doi2": "","doi_ra2":""},{"doi": "xyz.crossref/0000000002","doi_ra":"Crossref","doi2": "xyz.crossref/0000000002","doi_ra2":"Crossref"},['The specified DOI is wrong and fixed with the registered DOI.', 'The specified DOI RA is wrong and fixed with the correct DOI RA of the registered DOI.'],[],False,False),
         (2,{"doi": "xyz.crossref/0000000002","doi_ra":"", "doi2": "","doi_ra2":""},{"doi": "xyz.crossref/0000000002","doi_ra":"Crossref","doi2": None,"doi_ra2":None},['The specified DOI RA is wrong and fixed with the correct DOI RA of the registered DOI.'],['DOI_RA should be set by one of JaLC, Crossref, DataCite, NDL JaLC.'],False,False),
         (2,{"doi": "xyz.crossref/0000000002","doi_ra":"Crossref", "doi2": "","doi_ra2":""},{"doi": "xyz.crossref/0000000002","doi_ra":"Crossref","doi2": "xyz.crossref/0000000002","doi_ra2":"Crossref"},[],[],False,False),
-        (2,{"doi": "xyz.crossref/0000000002","doi_ra":"Crossref", "doi2": "xyz.crossref/0000000002","doi_ra2":""},{"doi": "xyz.crossref/0000000002","doi_ra":"Crossref","doi2": "xyz.crossref/0000000002","doi_ra2":"Crossref"},[],[],False,False), 
-        (2,{"doi": "xyz.crossref/0000000002","doi_ra":"Crossref", "doi2": "","doi_ra2":"Crossref"},{"doi": "xyz.crossref/0000000002","doi_ra":"Crossref","doi2": "xyz.crossref/0000000002","doi_ra2":"Crossref"},[],[],False,False), 
-        (2,{"doi": "xyz.crossref/0000000002","doi_ra":"Crossref", "doi2": "","doi_ra2":"DataCite"},{"doi": "xyz.crossref/0000000002","doi_ra":"Crossref","doi2": "xyz.crossref/0000000002","doi_ra2":"Crossref"},['The specified DOI RA is wrong and fixed with the correct DOI RA of the registered DOI.'],[],False,False), 
-        (2,{"doi": "xyz.crossref/0000000002","doi_ra":"Crossref", "doi2": "xyz.crossref/0000000002","doi_ra2":"DataCite"},{"doi": "xyz.crossref/0000000002","doi_ra":"Crossref","doi2": "xyz.crossref/0000000002","doi_ra2":"Crossref"},['The specified DOI RA is wrong and fixed with the correct DOI RA of the registered DOI.'],[],False,False), 
-        (2,{"doi": "xyz.crossref/0000000002","doi_ra":"Crossref", "doi2": "xyz.crossref/0000000003","doi_ra2":"DataCite"},{"doi": "xyz.crossref/0000000002","doi_ra":"Crossref","doi2": "xyz.crossref/0000000002","doi_ra2":"Crossref"},['The specified DOI is wrong and fixed with the registered DOI.', 'The specified DOI RA is wrong and fixed with the correct DOI RA of the registered DOI.'],[],False,False), 
-        (2,{"doi": "xyz.crossref/0000000002","doi_ra":"Crossref", "doi2": "","doi_ra2":"JaLC2"},{"doi": "xyz.crossref/0000000002","doi_ra":"Crossref","doi2": "xyz.crossref/0000000002","doi_ra2":"Crossref"},['The specified DOI RA is wrong and fixed with the correct DOI RA of the registered DOI.'],[],False,False), 
+        (2,{"doi": "xyz.crossref/0000000002","doi_ra":"Crossref", "doi2": "xyz.crossref/0000000002","doi_ra2":""},{"doi": "xyz.crossref/0000000002","doi_ra":"Crossref","doi2": "xyz.crossref/0000000002","doi_ra2":"Crossref"},[],[],False,False),
+        (2,{"doi": "xyz.crossref/0000000002","doi_ra":"Crossref", "doi2": "","doi_ra2":"Crossref"},{"doi": "xyz.crossref/0000000002","doi_ra":"Crossref","doi2": "xyz.crossref/0000000002","doi_ra2":"Crossref"},[],[],False,False),
+        (2,{"doi": "xyz.crossref/0000000002","doi_ra":"Crossref", "doi2": "","doi_ra2":"DataCite"},{"doi": "xyz.crossref/0000000002","doi_ra":"Crossref","doi2": "xyz.crossref/0000000002","doi_ra2":"Crossref"},['The specified DOI RA is wrong and fixed with the correct DOI RA of the registered DOI.'],[],False,False),
+        (2,{"doi": "xyz.crossref/0000000002","doi_ra":"Crossref", "doi2": "xyz.crossref/0000000002","doi_ra2":"DataCite"},{"doi": "xyz.crossref/0000000002","doi_ra":"Crossref","doi2": "xyz.crossref/0000000002","doi_ra2":"Crossref"},['The specified DOI RA is wrong and fixed with the correct DOI RA of the registered DOI.'],[],False,False),
+        (2,{"doi": "xyz.crossref/0000000002","doi_ra":"Crossref", "doi2": "xyz.crossref/0000000003","doi_ra2":"DataCite"},{"doi": "xyz.crossref/0000000002","doi_ra":"Crossref","doi2": "xyz.crossref/0000000002","doi_ra2":"Crossref"},['The specified DOI is wrong and fixed with the registered DOI.', 'The specified DOI RA is wrong and fixed with the correct DOI RA of the registered DOI.'],[],False,False),
+        (2,{"doi": "xyz.crossref/0000000002","doi_ra":"Crossref", "doi2": "","doi_ra2":"JaLC2"},{"doi": "xyz.crossref/0000000002","doi_ra":"Crossref","doi2": "xyz.crossref/0000000002","doi_ra2":"Crossref"},['The specified DOI RA is wrong and fixed with the correct DOI RA of the registered DOI.'],[],False,False),
         (2,{"doi": "xyz.crossref/0000000003","doi_ra":"Crossref","doi2": "","doi_ra2":""},{"doi": "xyz.crossref/0000000002","doi_ra":"Crossref","doi2": "xyz.crossref/0000000002","doi_ra2":"Crossref"},['The specified DOI is wrong and fixed with the registered DOI.'],[],False,False),
         (2,{"doi": "xyz.crossref/0000000003","doi_ra":"Crossref","doi2": "xyz.crossref/0000000002","doi_ra2":"Crossref"},{"doi": "xyz.crossref/0000000002","doi_ra":"Crossref","doi2": "xyz.crossref/0000000002","doi_ra2":"Crossref"},['The specified DOI is wrong and fixed with the registered DOI.'],[],False,False),
         (2,{"doi": "xyz.crossref/0000000003","doi_ra":"JaLC2","doi2": "xyz.crossref/0000000002","doi_ra2":"Crossref"},{"doi": "xyz.crossref/0000000002","doi_ra":"Crossref","doi2": None,"doi_ra2":None},['The specified DOI is wrong and fixed with the registered DOI.', 'The specified DOI RA is wrong and fixed with the correct DOI RA of the registered DOI.'],['DOI_RA should be set by one of JaLC, Crossref, DataCite, NDL JaLC.'],False,False),
@@ -1775,18 +2503,18 @@ def test_handle_fill_system_item(app, test_list_records,identifier, mocker):
         (2,{"doi": None,"doi_ra":None,"doi2": None,"doi_ra2":None},{"doi": "xyz.crossref/0000000002","doi_ra":"Crossref","doi2": "xyz.crossref/0000000002","doi_ra2":"Crossref"},['The specified DOI is wrong and fixed with the registered DOI.','The specified DOI RA is wrong and fixed with the correct DOI RA of the registered DOI.'],[],False,False),
         (2,{"doi": "xyz.crossref/0000000002","doi_ra":None,"doi2": None,"doi_ra2":None},{"doi": "xyz.crossref/0000000002","doi_ra":"Crossref","doi2": "xyz.crossref/0000000002","doi_ra2":"Crossref"},['The specified DOI RA is wrong and fixed with the correct DOI RA of the registered DOI.'],['DOI_RA should be set by one of JaLC, Crossref, DataCite, NDL JaLC.'],False,False),
         (2,{"doi": None,"doi_ra":"Crossref","doi2": None,"doi_ra2":None},{"doi": "xyz.crossref/0000000002","doi_ra":"Crossref","doi2": "xyz.crossref/0000000002","doi_ra2":"Crossref"},['The specified DOI is wrong and fixed with the registered DOI.'],[],False,False),
-        
+
         (2,{"doi": "xyz.crossref/0000000002","doi_ra":"Crossref","doi2": "xyz.crossref/0000000002","doi_ra2":"Crossref"},{"doi": "xyz.crossref/0000000002","doi_ra":"Crossref","doi2": "xyz.crossref/0000000002","doi_ra2":"Crossref"},[],[],True,False),
         (2,{"doi": "","doi_ra":"", "doi2": "","doi_ra2":""},{"doi": "","doi_ra":"","doi2": "","doi_ra2":""},[],['Please specify DOI prefix/suffix.'],True,False),
         (2,{"doi": "xyz.crossref/0000000002","doi_ra":"", "doi2": "","doi_ra2":""},{"doi": "xyz.crossref/0000000002","doi_ra":"","doi2": None,"doi_ra2":None},[],['DOI_RA should be set by one of JaLC, Crossref, DataCite, NDL JaLC.'],True,False),
-        
+
         (2,{"doi": "xyz.crossref/0000000002","doi_ra":"Crossref", "doi2": "","doi_ra2":""},{"doi": "xyz.crossref/0000000002","doi_ra":"Crossref","doi2": "xyz.crossref/0000000002","doi_ra2":"Crossref"},[],[],True,False),
-        (2,{"doi": "xyz.crossref/0000000002","doi_ra":"Crossref", "doi2": "xyz.crossref/0000000002","doi_ra2":""},{"doi": "xyz.crossref/0000000002","doi_ra":"Crossref","doi2": "xyz.crossref/0000000002","doi_ra2":"Crossref"},[],[],True,False), 
-        (2,{"doi": "xyz.crossref/0000000002","doi_ra":"Crossref", "doi2": "","doi_ra2":"Crossref"},{"doi": "xyz.crossref/0000000002","doi_ra":"Crossref","doi2": "xyz.crossref/0000000002","doi_ra2":"Crossref"},[],[],True,False), 
-        (2,{"doi": "xyz.crossref/0000000002","doi_ra":"Crossref", "doi2": "","doi_ra2":"DataCite"},{"doi": "xyz.crossref/0000000002","doi_ra":"Crossref","doi2": "xyz.crossref/0000000002","doi_ra2":"Crossref"},['The specified DOI RA is wrong and fixed with the correct DOI RA of the registered DOI.'],[],True,False), 
-        (2,{"doi": "xyz.crossref/0000000002","doi_ra":"Crossref", "doi2": "xyz.crossref/0000000002","doi_ra2":"DataCite"},{"doi": "xyz.crossref/0000000002","doi_ra":"Crossref","doi2": "xyz.crossref/0000000002","doi_ra2":"Crossref"},['The specified DOI RA is wrong and fixed with the correct DOI RA of the registered DOI.'],[],True,False), 
-        (2,{"doi": "xyz.crossref/0000000002","doi_ra":"Crossref", "doi2": "xyz.crossref/0000000003","doi_ra2":"DataCite"},{"doi": "xyz.crossref/0000000002","doi_ra":"Crossref","doi2": "xyz.crossref/0000000002","doi_ra2":"Crossref"},['The specified DOI is wrong and fixed with the registered DOI.', 'The specified DOI RA is wrong and fixed with the correct DOI RA of the registered DOI.'],[],True,False), 
-        (2,{"doi": "xyz.crossref/0000000002","doi_ra":"Crossref", "doi2": "","doi_ra2":"JaLC2"},{"doi": "xyz.crossref/0000000002","doi_ra":"Crossref","doi2": "xyz.crossref/0000000002","doi_ra2":"Crossref"},['The specified DOI RA is wrong and fixed with the correct DOI RA of the registered DOI.'],[],True,False), 
+        (2,{"doi": "xyz.crossref/0000000002","doi_ra":"Crossref", "doi2": "xyz.crossref/0000000002","doi_ra2":""},{"doi": "xyz.crossref/0000000002","doi_ra":"Crossref","doi2": "xyz.crossref/0000000002","doi_ra2":"Crossref"},[],[],True,False),
+        (2,{"doi": "xyz.crossref/0000000002","doi_ra":"Crossref", "doi2": "","doi_ra2":"Crossref"},{"doi": "xyz.crossref/0000000002","doi_ra":"Crossref","doi2": "xyz.crossref/0000000002","doi_ra2":"Crossref"},[],[],True,False),
+        (2,{"doi": "xyz.crossref/0000000002","doi_ra":"Crossref", "doi2": "","doi_ra2":"DataCite"},{"doi": "xyz.crossref/0000000002","doi_ra":"Crossref","doi2": "xyz.crossref/0000000002","doi_ra2":"Crossref"},['The specified DOI RA is wrong and fixed with the correct DOI RA of the registered DOI.'],[],True,False),
+        (2,{"doi": "xyz.crossref/0000000002","doi_ra":"Crossref", "doi2": "xyz.crossref/0000000002","doi_ra2":"DataCite"},{"doi": "xyz.crossref/0000000002","doi_ra":"Crossref","doi2": "xyz.crossref/0000000002","doi_ra2":"Crossref"},['The specified DOI RA is wrong and fixed with the correct DOI RA of the registered DOI.'],[],True,False),
+        (2,{"doi": "xyz.crossref/0000000002","doi_ra":"Crossref", "doi2": "xyz.crossref/0000000003","doi_ra2":"DataCite"},{"doi": "xyz.crossref/0000000002","doi_ra":"Crossref","doi2": "xyz.crossref/0000000002","doi_ra2":"Crossref"},['The specified DOI is wrong and fixed with the registered DOI.', 'The specified DOI RA is wrong and fixed with the correct DOI RA of the registered DOI.'],[],True,False),
+        (2,{"doi": "xyz.crossref/0000000002","doi_ra":"Crossref", "doi2": "","doi_ra2":"JaLC2"},{"doi": "xyz.crossref/0000000002","doi_ra":"Crossref","doi2": "xyz.crossref/0000000002","doi_ra2":"Crossref"},['The specified DOI RA is wrong and fixed with the correct DOI RA of the registered DOI.'],[],True,False),
         (2,{"doi": "xyz.crossref/0000000003","doi_ra":"Crossref","doi2": "","doi_ra2":""},{"doi": "xyz.crossref/0000000003","doi_ra":"Crossref","doi2": "xyz.crossref/0000000003","doi_ra2":"Crossref"},[],[],True,False),
         (2,{"doi": "xyz.crossref/0000000003","doi_ra":"Crossref","doi2": "xyz.crossref/0000000002","doi_ra2":"Crossref"},{"doi": "xyz.crossref/0000000003","doi_ra":"Crossref","doi2": "xyz.crossref/0000000003","doi_ra2":"Crossref"},['The specified DOI is wrong and fixed with the registered DOI.'],[],True,False),
         (2,{"doi": "xyz.crossref/0000000003","doi_ra":"JaLC2","doi2": "xyz.crossref/0000000002","doi_ra2":"Crossref"},{"doi": "xyz.crossref/0000000003","doi_ra":"JaLC2","doi2": None,"doi_ra2":None},[],['DOI_RA should be set by one of JaLC, Crossref, DataCite, NDL JaLC.'],True,False),
@@ -1794,17 +2522,17 @@ def test_handle_fill_system_item(app, test_list_records,identifier, mocker):
         (2,{"doi": None,"doi_ra":None,"doi2": None,"doi_ra2":None},{"doi": "","doi_ra":"","doi2": None,"doi_ra2":None},[],['Please specify DOI prefix/suffix.'],True,False),
         (2,{"doi": "xyz.crossref/0000000002","doi_ra":None,"doi2": None,"doi_ra2":None},{"doi": "xyz.crossref/0000000002","doi_ra":"","doi2": None,"doi_ra2":None},[],['DOI_RA should be set by one of JaLC, Crossref, DataCite, NDL JaLC.'],True,False),
         (2,{"doi": None,"doi_ra":"Crossref","doi2": None,"doi_ra2":None},{"doi": "","doi_ra":"Crossref","doi2": "","doi_ra2":"Crossref"},[],['Please specify DOI prefix/suffix.'],True,False),
-        
+
         (3,{"doi": "xyz.datacite/0000000003","doi_ra":"DataCite","doi2": "xyz.datacite/0000000003","doi_ra2":"DataCite"},{"doi": "xyz.datacite/0000000003","doi_ra":"DataCite","doi2": "xyz.datacite/0000000003","doi_ra2":"DataCite"},[],[],False,False),
         (3,{"doi": "","doi_ra":"", "doi2": "","doi_ra2":""},{"doi": "xyz.datacite/0000000003","doi_ra":"DataCite","doi2": "xyz.datacite/0000000003","doi_ra2":"DataCite"},['The specified DOI is wrong and fixed with the registered DOI.', 'The specified DOI RA is wrong and fixed with the correct DOI RA of the registered DOI.'],[],False,False),
         (3,{"doi": "xyz.datacite/0000000003","doi_ra":"", "doi2": "","doi_ra2":""},{"doi": "xyz.datacite/0000000003","doi_ra":"DataCite","doi2": None,"doi_ra2":None},['The specified DOI RA is wrong and fixed with the correct DOI RA of the registered DOI.'],['DOI_RA should be set by one of JaLC, Crossref, DataCite, NDL JaLC.'],False,False),
         (3,{"doi": "xyz.datacite/0000000003","doi_ra":"DataCite", "doi2": "","doi_ra2":""},{"doi": "xyz.datacite/0000000003","doi_ra":"DataCite","doi2": "xyz.datacite/0000000003","doi_ra2":"DataCite"},[],[],False,False),
-        (3,{"doi": "xyz.datacite/0000000003","doi_ra":"DataCite", "doi2": "xyz.datacite/0000000003","doi_ra2":""},{"doi": "xyz.datacite/0000000003","doi_ra":"DataCite","doi2": "xyz.datacite/0000000003","doi_ra2":"DataCite"},[],[],False,False), 
-        (3,{"doi": "xyz.datacite/0000000003","doi_ra":"DataCite", "doi2": "","doi_ra2":"DataCite"},{"doi": "xyz.datacite/0000000003","doi_ra":"DataCite","doi2": "xyz.datacite/0000000003","doi_ra2":"DataCite"},[],[],False,False), 
-        (3,{"doi": "xyz.datacite/0000000003","doi_ra":"DataCite", "doi2": "","doi_ra2":"JaLC"},{"doi": "xyz.datacite/0000000003","doi_ra":"DataCite","doi2": "xyz.datacite/0000000003","doi_ra2":"DataCite"},['The specified DOI RA is wrong and fixed with the correct DOI RA of the registered DOI.'],[],False,False), 
-        (3,{"doi": "xyz.datacite/0000000003","doi_ra":"DataCite", "doi2": "xyz.datacite/0000000003","doi_ra2":"JaLC"},{"doi": "xyz.datacite/0000000003","doi_ra":"DataCite","doi2": "xyz.datacite/0000000003","doi_ra2":"DataCite"},['The specified DOI RA is wrong and fixed with the correct DOI RA of the registered DOI.'],[],False,False), 
-        (3,{"doi": "xyz.datacite/0000000003","doi_ra":"DataCite", "doi2": "xyz.datacite/0000000004","doi_ra2":"JaLC"},{"doi": "xyz.datacite/0000000003","doi_ra":"DataCite","doi2": "xyz.datacite/0000000003","doi_ra2":"DataCite"},['The specified DOI is wrong and fixed with the registered DOI.', 'The specified DOI RA is wrong and fixed with the correct DOI RA of the registered DOI.'],[],False,False), 
-        (3,{"doi": "xyz.datacite/0000000003","doi_ra":"DataCite", "doi2": "","doi_ra2":"JaLC2"},{"doi": "xyz.datacite/0000000003","doi_ra":"DataCite","doi2": "xyz.datacite/0000000003","doi_ra2":"DataCite"},['The specified DOI RA is wrong and fixed with the correct DOI RA of the registered DOI.'],[],False,False), 
+        (3,{"doi": "xyz.datacite/0000000003","doi_ra":"DataCite", "doi2": "xyz.datacite/0000000003","doi_ra2":""},{"doi": "xyz.datacite/0000000003","doi_ra":"DataCite","doi2": "xyz.datacite/0000000003","doi_ra2":"DataCite"},[],[],False,False),
+        (3,{"doi": "xyz.datacite/0000000003","doi_ra":"DataCite", "doi2": "","doi_ra2":"DataCite"},{"doi": "xyz.datacite/0000000003","doi_ra":"DataCite","doi2": "xyz.datacite/0000000003","doi_ra2":"DataCite"},[],[],False,False),
+        (3,{"doi": "xyz.datacite/0000000003","doi_ra":"DataCite", "doi2": "","doi_ra2":"JaLC"},{"doi": "xyz.datacite/0000000003","doi_ra":"DataCite","doi2": "xyz.datacite/0000000003","doi_ra2":"DataCite"},['The specified DOI RA is wrong and fixed with the correct DOI RA of the registered DOI.'],[],False,False),
+        (3,{"doi": "xyz.datacite/0000000003","doi_ra":"DataCite", "doi2": "xyz.datacite/0000000003","doi_ra2":"JaLC"},{"doi": "xyz.datacite/0000000003","doi_ra":"DataCite","doi2": "xyz.datacite/0000000003","doi_ra2":"DataCite"},['The specified DOI RA is wrong and fixed with the correct DOI RA of the registered DOI.'],[],False,False),
+        (3,{"doi": "xyz.datacite/0000000003","doi_ra":"DataCite", "doi2": "xyz.datacite/0000000004","doi_ra2":"JaLC"},{"doi": "xyz.datacite/0000000003","doi_ra":"DataCite","doi2": "xyz.datacite/0000000003","doi_ra2":"DataCite"},['The specified DOI is wrong and fixed with the registered DOI.', 'The specified DOI RA is wrong and fixed with the correct DOI RA of the registered DOI.'],[],False,False),
+        (3,{"doi": "xyz.datacite/0000000003","doi_ra":"DataCite", "doi2": "","doi_ra2":"JaLC2"},{"doi": "xyz.datacite/0000000003","doi_ra":"DataCite","doi2": "xyz.datacite/0000000003","doi_ra2":"DataCite"},['The specified DOI RA is wrong and fixed with the correct DOI RA of the registered DOI.'],[],False,False),
         (3,{"doi": "xyz.datacite/0000000004","doi_ra":"DataCite","doi2": "","doi_ra2":""},{"doi": "xyz.datacite/0000000003","doi_ra":"DataCite","doi2": "xyz.datacite/0000000003","doi_ra2":"DataCite"},['The specified DOI is wrong and fixed with the registered DOI.'],[],False,False),
         (3,{"doi": "xyz.datacite/0000000004","doi_ra":"DataCite","doi2": "xyz.datacite/0000000003","doi_ra2":"DataCite"},{"doi": "xyz.datacite/0000000003","doi_ra":"DataCite","doi2": "xyz.datacite/0000000003","doi_ra2":"DataCite"},['The specified DOI is wrong and fixed with the registered DOI.'],[],False,False),
         (3,{"doi": "xyz.datacite/0000000004","doi_ra":"JaLC2","doi2": "xyz.datacite/0000000003","doi_ra2":"DataCite"},{"doi": "xyz.datacite/0000000003","doi_ra":"DataCite","doi2": None,"doi_ra2":None},['The specified DOI is wrong and fixed with the registered DOI.', 'The specified DOI RA is wrong and fixed with the correct DOI RA of the registered DOI.'],['DOI_RA should be set by one of JaLC, Crossref, DataCite, NDL JaLC.'],False,False),
@@ -1812,17 +2540,17 @@ def test_handle_fill_system_item(app, test_list_records,identifier, mocker):
         (3,{"doi": None,"doi_ra":None,"doi2": None,"doi_ra2":None},{"doi": "xyz.datacite/0000000003","doi_ra":"DataCite","doi2": "xyz.datacite/0000000003","doi_ra2":"DataCite"},['The specified DOI is wrong and fixed with the registered DOI.','The specified DOI RA is wrong and fixed with the correct DOI RA of the registered DOI.'],[],False,False),
         (3,{"doi": "xyz.datacite/0000000003","doi_ra":None,"doi2": None,"doi_ra2":None},{"doi": "xyz.datacite/0000000003","doi_ra":"DataCite","doi2": "xyz.datacite/0000000003","doi_ra2":"DataCite"},['The specified DOI RA is wrong and fixed with the correct DOI RA of the registered DOI.'],['DOI_RA should be set by one of JaLC, Crossref, DataCite, NDL JaLC.'],False,False),
         (3,{"doi": None,"doi_ra":"DataCite","doi2": None,"doi_ra2":None},{"doi": "xyz.datacite/0000000003","doi_ra":"DataCite","doi2": "xyz.datacite/0000000003","doi_ra2":"DataCite"},['The specified DOI is wrong and fixed with the registered DOI.'],[],False,False),
-        
+
         (3,{"doi": "xyz.datacite/0000000003","doi_ra":"DataCite","doi2": "xyz.datacite/0000000003","doi_ra2":"DataCite"},{"doi": "xyz.datacite/0000000003","doi_ra":"DataCite","doi2": "xyz.datacite/0000000003","doi_ra2":"DataCite"},[],[],True,False),
         (3,{"doi": "","doi_ra":"", "doi2": "","doi_ra2":""},{"doi": "","doi_ra":"","doi2": "","doi_ra2":""},[],['Please specify DOI prefix/suffix.'],True,False),
         (3,{"doi": "xyz.datacite/0000000003","doi_ra":"", "doi2": "","doi_ra2":""},{"doi": "xyz.datacite/0000000003","doi_ra":"","doi2": None,"doi_ra2":None},[],['DOI_RA should be set by one of JaLC, Crossref, DataCite, NDL JaLC.'],True,False),
         (3,{"doi": "xyz.datacite/0000000003","doi_ra":"DataCite", "doi2": "","doi_ra2":""},{"doi": "xyz.datacite/0000000003","doi_ra":"DataCite","doi2": "xyz.datacite/0000000003","doi_ra2":"DataCite"},[],[],True,False),
-        (3,{"doi": "xyz.datacite/0000000003","doi_ra":"DataCite", "doi2": "xyz.datacite/0000000003","doi_ra2":""},{"doi": "xyz.datacite/0000000003","doi_ra":"DataCite","doi2": "xyz.datacite/0000000003","doi_ra2":"DataCite"},[],[],True,False), 
-        (3,{"doi": "xyz.datacite/0000000003","doi_ra":"DataCite", "doi2": "","doi_ra2":"DataCite"},{"doi": "xyz.datacite/0000000003","doi_ra":"DataCite","doi2": "xyz.datacite/0000000003","doi_ra2":"DataCite"},[],[],True,False), 
-        (3,{"doi": "xyz.datacite/0000000003","doi_ra":"DataCite", "doi2": "","doi_ra2":"JaLC"},{"doi": "xyz.datacite/0000000003","doi_ra":"DataCite","doi2": "xyz.datacite/0000000003","doi_ra2":"DataCite"},['The specified DOI RA is wrong and fixed with the correct DOI RA of the registered DOI.'],[],True,False), 
-        (3,{"doi": "xyz.datacite/0000000003","doi_ra":"DataCite", "doi2": "xyz.datacite/0000000003","doi_ra2":"JaLC"},{"doi": "xyz.datacite/0000000003","doi_ra":"DataCite","doi2": "xyz.datacite/0000000003","doi_ra2":"DataCite"},['The specified DOI RA is wrong and fixed with the correct DOI RA of the registered DOI.'],[],True,False), 
-        (3,{"doi": "xyz.datacite/0000000003","doi_ra":"DataCite", "doi2": "xyz.datacite/0000000004","doi_ra2":"JaLC"},{"doi": "xyz.datacite/0000000003","doi_ra":"DataCite","doi2": "xyz.datacite/0000000003","doi_ra2":"DataCite"},['The specified DOI is wrong and fixed with the registered DOI.', 'The specified DOI RA is wrong and fixed with the correct DOI RA of the registered DOI.'],[],True,False), 
-        (3,{"doi": "xyz.datacite/0000000003","doi_ra":"DataCite", "doi2": "","doi_ra2":"JaLC2"},{"doi": "xyz.datacite/0000000003","doi_ra":"DataCite","doi2": "xyz.datacite/0000000003","doi_ra2":"DataCite"},['The specified DOI RA is wrong and fixed with the correct DOI RA of the registered DOI.'],[],True,False), 
+        (3,{"doi": "xyz.datacite/0000000003","doi_ra":"DataCite", "doi2": "xyz.datacite/0000000003","doi_ra2":""},{"doi": "xyz.datacite/0000000003","doi_ra":"DataCite","doi2": "xyz.datacite/0000000003","doi_ra2":"DataCite"},[],[],True,False),
+        (3,{"doi": "xyz.datacite/0000000003","doi_ra":"DataCite", "doi2": "","doi_ra2":"DataCite"},{"doi": "xyz.datacite/0000000003","doi_ra":"DataCite","doi2": "xyz.datacite/0000000003","doi_ra2":"DataCite"},[],[],True,False),
+        (3,{"doi": "xyz.datacite/0000000003","doi_ra":"DataCite", "doi2": "","doi_ra2":"JaLC"},{"doi": "xyz.datacite/0000000003","doi_ra":"DataCite","doi2": "xyz.datacite/0000000003","doi_ra2":"DataCite"},['The specified DOI RA is wrong and fixed with the correct DOI RA of the registered DOI.'],[],True,False),
+        (3,{"doi": "xyz.datacite/0000000003","doi_ra":"DataCite", "doi2": "xyz.datacite/0000000003","doi_ra2":"JaLC"},{"doi": "xyz.datacite/0000000003","doi_ra":"DataCite","doi2": "xyz.datacite/0000000003","doi_ra2":"DataCite"},['The specified DOI RA is wrong and fixed with the correct DOI RA of the registered DOI.'],[],True,False),
+        (3,{"doi": "xyz.datacite/0000000003","doi_ra":"DataCite", "doi2": "xyz.datacite/0000000004","doi_ra2":"JaLC"},{"doi": "xyz.datacite/0000000003","doi_ra":"DataCite","doi2": "xyz.datacite/0000000003","doi_ra2":"DataCite"},['The specified DOI is wrong and fixed with the registered DOI.', 'The specified DOI RA is wrong and fixed with the correct DOI RA of the registered DOI.'],[],True,False),
+        (3,{"doi": "xyz.datacite/0000000003","doi_ra":"DataCite", "doi2": "","doi_ra2":"JaLC2"},{"doi": "xyz.datacite/0000000003","doi_ra":"DataCite","doi2": "xyz.datacite/0000000003","doi_ra2":"DataCite"},['The specified DOI RA is wrong and fixed with the correct DOI RA of the registered DOI.'],[],True,False),
         (3,{"doi": "xyz.datacite/0000000004","doi_ra":"DataCite","doi2": "","doi_ra2":""},{"doi": "xyz.datacite/0000000004","doi_ra":"DataCite","doi2": "xyz.datacite/0000000004","doi_ra2":"DataCite"},[],[],True,False),
         (3,{"doi": "xyz.datacite/0000000004","doi_ra":"DataCite","doi2": "xyz.datacite/0000000003","doi_ra2":"DataCite"},{"doi": "xyz.datacite/0000000004","doi_ra":"DataCite","doi2": "xyz.datacite/0000000004","doi_ra2":"DataCite"},['The specified DOI is wrong and fixed with the registered DOI.'],[],True,False),
         (3,{"doi": "xyz.datacite/0000000004","doi_ra":"JaLC2","doi2": "xyz.datacite/0000000003","doi_ra2":"DataCite"},{"doi": "xyz.datacite/0000000004","doi_ra":"JaLC2","doi2": None,"doi_ra2":None},[],['DOI_RA should be set by one of JaLC, Crossref, DataCite, NDL JaLC.'],True,False),
@@ -1830,18 +2558,18 @@ def test_handle_fill_system_item(app, test_list_records,identifier, mocker):
         (3,{"doi": None,"doi_ra":None,"doi2": None,"doi_ra2":None},{"doi": "","doi_ra":"","doi2": None,"doi_ra2":None},[],['Please specify DOI prefix/suffix.'],True,False),
         (3,{"doi": "xyz.datacite/0000000003","doi_ra":None,"doi2": None,"doi_ra2":None},{"doi": "xyz.datacite/0000000003","doi_ra":"","doi2": None,"doi_ra2":None},[],['DOI_RA should be set by one of JaLC, Crossref, DataCite, NDL JaLC.'],True,False),
         (3,{"doi": None,"doi_ra":"DataCite","doi2": None,"doi_ra2":None},{"doi": "","doi_ra":"DataCite","doi2": "","doi_ra2":"DataCite"},[],['Please specify DOI prefix/suffix.'],True,False),
-        
-               
+
+
         (4,{"doi": "xyz.ndl/0000000004","doi_ra":"NDL JaLC","doi2": "xyz.ndl/0000000004","doi_ra2":"NDL JaLC"},{"doi": "xyz.ndl/0000000004","doi_ra":"NDL JaLC","doi2": "xyz.ndl/0000000004","doi_ra2":"NDL JaLC"},[],[],False,False),
         (4,{"doi": "","doi_ra":"", "doi2": "","doi_ra2":""},{"doi": "xyz.ndl/0000000004","doi_ra":"NDL JaLC","doi2": "xyz.ndl/0000000004","doi_ra2":"NDL JaLC"},['The specified DOI is wrong and fixed with the registered DOI.', 'The specified DOI RA is wrong and fixed with the correct DOI RA of the registered DOI.'],[],False,False),
         (4,{"doi": "xyz.ndl/0000000004","doi_ra":"", "doi2": "","doi_ra2":""},{"doi": "xyz.ndl/0000000004","doi_ra":"NDL JaLC","doi2": None,"doi_ra2":None},['The specified DOI RA is wrong and fixed with the correct DOI RA of the registered DOI.'],['DOI_RA should be set by one of JaLC, Crossref, DataCite, NDL JaLC.'],False,False),
         (4,{"doi": "xyz.ndl/0000000004","doi_ra":"NDL JaLC", "doi2": "","doi_ra2":""},{"doi": "xyz.ndl/0000000004","doi_ra":"NDL JaLC","doi2": "xyz.ndl/0000000004","doi_ra2":"NDL JaLC"},[],[],False,False),
-        (4,{"doi": "xyz.ndl/0000000004","doi_ra":"NDL JaLC", "doi2": "xyz.ndl/0000000004","doi_ra2":""},{"doi": "xyz.ndl/0000000004","doi_ra":"NDL JaLC","doi2": "xyz.ndl/0000000004","doi_ra2":"NDL JaLC"},[],[],False,False), 
-        (4,{"doi": "xyz.ndl/0000000004","doi_ra":"NDL JaLC", "doi2": "","doi_ra2":"NDL JaLC"},{"doi": "xyz.ndl/0000000004","doi_ra":"NDL JaLC","doi2": "xyz.ndl/0000000004","doi_ra2":"NDL JaLC"},[],[],False,False), 
-        (4,{"doi": "xyz.ndl/0000000004","doi_ra":"NDL JaLC", "doi2": "","doi_ra2":"DataCite"},{"doi": "xyz.ndl/0000000004","doi_ra":"NDL JaLC","doi2": "xyz.ndl/0000000004","doi_ra2":"NDL JaLC"},['The specified DOI RA is wrong and fixed with the correct DOI RA of the registered DOI.'],[],False,False), 
-        (4,{"doi": "xyz.ndl/0000000004","doi_ra":"NDL JaLC", "doi2": "xyz.ndl/0000000004","doi_ra2":"DataCite"},{"doi": "xyz.ndl/0000000004","doi_ra":"NDL JaLC","doi2": "xyz.ndl/0000000004","doi_ra2":"NDL JaLC"},['The specified DOI RA is wrong and fixed with the correct DOI RA of the registered DOI.'],[],False,False), 
-        (4,{"doi": "xyz.ndl/0000000004","doi_ra":"NDL JaLC", "doi2": "xyz.ndl/0000000005","doi_ra2":"DataCite"},{"doi": "xyz.ndl/0000000004","doi_ra":"NDL JaLC","doi2": "xyz.ndl/0000000004","doi_ra2":"NDL JaLC"},['The specified DOI is wrong and fixed with the registered DOI.', 'The specified DOI RA is wrong and fixed with the correct DOI RA of the registered DOI.'],[],False,False), 
-        (4,{"doi": "xyz.ndl/0000000004","doi_ra":"NDL JaLC", "doi2": "","doi_ra2":"JaLC2"},{"doi": "xyz.ndl/0000000004","doi_ra":"NDL JaLC","doi2": "xyz.ndl/0000000004","doi_ra2":"NDL JaLC"},['The specified DOI RA is wrong and fixed with the correct DOI RA of the registered DOI.'],[],False,False), 
+        (4,{"doi": "xyz.ndl/0000000004","doi_ra":"NDL JaLC", "doi2": "xyz.ndl/0000000004","doi_ra2":""},{"doi": "xyz.ndl/0000000004","doi_ra":"NDL JaLC","doi2": "xyz.ndl/0000000004","doi_ra2":"NDL JaLC"},[],[],False,False),
+        (4,{"doi": "xyz.ndl/0000000004","doi_ra":"NDL JaLC", "doi2": "","doi_ra2":"NDL JaLC"},{"doi": "xyz.ndl/0000000004","doi_ra":"NDL JaLC","doi2": "xyz.ndl/0000000004","doi_ra2":"NDL JaLC"},[],[],False,False),
+        (4,{"doi": "xyz.ndl/0000000004","doi_ra":"NDL JaLC", "doi2": "","doi_ra2":"DataCite"},{"doi": "xyz.ndl/0000000004","doi_ra":"NDL JaLC","doi2": "xyz.ndl/0000000004","doi_ra2":"NDL JaLC"},['The specified DOI RA is wrong and fixed with the correct DOI RA of the registered DOI.'],[],False,False),
+        (4,{"doi": "xyz.ndl/0000000004","doi_ra":"NDL JaLC", "doi2": "xyz.ndl/0000000004","doi_ra2":"DataCite"},{"doi": "xyz.ndl/0000000004","doi_ra":"NDL JaLC","doi2": "xyz.ndl/0000000004","doi_ra2":"NDL JaLC"},['The specified DOI RA is wrong and fixed with the correct DOI RA of the registered DOI.'],[],False,False),
+        (4,{"doi": "xyz.ndl/0000000004","doi_ra":"NDL JaLC", "doi2": "xyz.ndl/0000000005","doi_ra2":"DataCite"},{"doi": "xyz.ndl/0000000004","doi_ra":"NDL JaLC","doi2": "xyz.ndl/0000000004","doi_ra2":"NDL JaLC"},['The specified DOI is wrong and fixed with the registered DOI.', 'The specified DOI RA is wrong and fixed with the correct DOI RA of the registered DOI.'],[],False,False),
+        (4,{"doi": "xyz.ndl/0000000004","doi_ra":"NDL JaLC", "doi2": "","doi_ra2":"JaLC2"},{"doi": "xyz.ndl/0000000004","doi_ra":"NDL JaLC","doi2": "xyz.ndl/0000000004","doi_ra2":"NDL JaLC"},['The specified DOI RA is wrong and fixed with the correct DOI RA of the registered DOI.'],[],False,False),
         (4,{"doi": "xyz.ndl/0000000005","doi_ra":"NDL JaLC","doi2": "","doi_ra2":""},{"doi": "xyz.ndl/0000000004","doi_ra":"NDL JaLC","doi2": "xyz.ndl/0000000004","doi_ra2":"NDL JaLC"},['The specified DOI is wrong and fixed with the registered DOI.'],[],False,False),
         (4,{"doi": "xyz.ndl/0000000005","doi_ra":"NDL JaLC","doi2": "xyz.ndl/0000000004","doi_ra2":"NDL JaLC"},{"doi": "xyz.ndl/0000000004","doi_ra":"NDL JaLC","doi2": "xyz.ndl/0000000004","doi_ra2":"NDL JaLC"},['The specified DOI is wrong and fixed with the registered DOI.'],[],False,False),
         (4,{"doi": "xyz.ndl/0000000005","doi_ra":"JaLC2","doi2": "xyz.ndl/0000000004","doi_ra2":"NDL JaLC"},{"doi": "xyz.ndl/0000000004","doi_ra":"NDL JaLC","doi2": None,"doi_ra2":None},['The specified DOI is wrong and fixed with the registered DOI.', 'The specified DOI RA is wrong and fixed with the correct DOI RA of the registered DOI.'],['DOI_RA should be set by one of JaLC, Crossref, DataCite, NDL JaLC.'],False,False),
@@ -1849,17 +2577,17 @@ def test_handle_fill_system_item(app, test_list_records,identifier, mocker):
         (4,{"doi": None,"doi_ra":None,"doi2": None,"doi_ra2":None},{"doi": "xyz.ndl/0000000004","doi_ra":"NDL JaLC","doi2": "xyz.ndl/0000000004","doi_ra2":"NDL JaLC"},['The specified DOI is wrong and fixed with the registered DOI.','The specified DOI RA is wrong and fixed with the correct DOI RA of the registered DOI.'],[],False,False),
         (4,{"doi": "xyz.ndl/0000000004","doi_ra":None,"doi2": None,"doi_ra2":None},{"doi": "xyz.ndl/0000000004","doi_ra":"NDL JaLC","doi2": "xyz.ndl/0000000004","doi_ra2":"NDL JaLC"},['The specified DOI RA is wrong and fixed with the correct DOI RA of the registered DOI.'],['DOI_RA should be set by one of JaLC, Crossref, DataCite, NDL JaLC.'],False,False),
         (4,{"doi": None,"doi_ra":"NDL JaLC","doi2": None,"doi_ra2":None},{"doi": "xyz.ndl/0000000004","doi_ra":"NDL JaLC","doi2": "xyz.ndl/0000000004","doi_ra2":"NDL JaLC"},['The specified DOI is wrong and fixed with the registered DOI.'],[],False,False),
-        
+
         (4,{"doi": "xyz.ndl/0000000004","doi_ra":"NDL JaLC","doi2": "xyz.ndl/0000000004","doi_ra2":"NDL JaLC"},{"doi": "xyz.ndl/0000000004","doi_ra":"NDL JaLC","doi2": "xyz.ndl/0000000004","doi_ra2":"NDL JaLC"},[],[],True,False),
         (4,{"doi": "","doi_ra":"", "doi2": "","doi_ra2":""},{"doi": "","doi_ra":"","doi2": "","doi_ra2":""},[],['Please specify DOI prefix/suffix.'],True,False),
         (4,{"doi": "xyz.ndl/0000000004","doi_ra":"", "doi2": "","doi_ra2":""},{"doi": "xyz.ndl/0000000004","doi_ra":"","doi2": None,"doi_ra2":None},[],['DOI_RA should be set by one of JaLC, Crossref, DataCite, NDL JaLC.'],True,False),
         (4,{"doi": "xyz.ndl/0000000004","doi_ra":"NDL JaLC", "doi2": "","doi_ra2":""},{"doi": "xyz.ndl/0000000004","doi_ra":"NDL JaLC","doi2": "xyz.ndl/0000000004","doi_ra2":"NDL JaLC"},[],[],True,False),
-        (4,{"doi": "xyz.ndl/0000000004","doi_ra":"NDL JaLC", "doi2": "xyz.ndl/0000000004","doi_ra2":""},{"doi": "xyz.ndl/0000000004","doi_ra":"NDL JaLC","doi2": "xyz.ndl/0000000004","doi_ra2":"NDL JaLC"},[],[],True,False), 
-        (4,{"doi": "xyz.ndl/0000000004","doi_ra":"NDL JaLC", "doi2": "","doi_ra2":"NDL JaLC"},{"doi": "xyz.ndl/0000000004","doi_ra":"NDL JaLC","doi2": "xyz.ndl/0000000004","doi_ra2":"NDL JaLC"},[],[],True,False), 
-        (4,{"doi": "xyz.ndl/0000000004","doi_ra":"NDL JaLC", "doi2": "","doi_ra2":"DataCite"},{"doi": "xyz.ndl/0000000004","doi_ra":"NDL JaLC","doi2": "xyz.ndl/0000000004","doi_ra2":"NDL JaLC"},['The specified DOI RA is wrong and fixed with the correct DOI RA of the registered DOI.'],[],True,False), 
-        (4,{"doi": "xyz.ndl/0000000004","doi_ra":"NDL JaLC", "doi2": "xyz.ndl/0000000004","doi_ra2":"DataCite"},{"doi": "xyz.ndl/0000000004","doi_ra":"NDL JaLC","doi2": "xyz.ndl/0000000004","doi_ra2":"NDL JaLC"},['The specified DOI RA is wrong and fixed with the correct DOI RA of the registered DOI.'],[],True,False), 
-        (4,{"doi": "xyz.ndl/0000000004","doi_ra":"NDL JaLC", "doi2": "xyz.ndl/0000000005","doi_ra2":"DataCite"},{"doi": "xyz.ndl/0000000004","doi_ra":"NDL JaLC","doi2": "xyz.ndl/0000000004","doi_ra2":"NDL JaLC"},['The specified DOI is wrong and fixed with the registered DOI.', 'The specified DOI RA is wrong and fixed with the correct DOI RA of the registered DOI.'],[],True,False), 
-        (4,{"doi": "xyz.ndl/0000000004","doi_ra":"NDL JaLC", "doi2": "","doi_ra2":"JaLC2"},{"doi": "xyz.ndl/0000000004","doi_ra":"NDL JaLC","doi2": "xyz.ndl/0000000004","doi_ra2":"NDL JaLC"},['The specified DOI RA is wrong and fixed with the correct DOI RA of the registered DOI.'],[],True,False), 
+        (4,{"doi": "xyz.ndl/0000000004","doi_ra":"NDL JaLC", "doi2": "xyz.ndl/0000000004","doi_ra2":""},{"doi": "xyz.ndl/0000000004","doi_ra":"NDL JaLC","doi2": "xyz.ndl/0000000004","doi_ra2":"NDL JaLC"},[],[],True,False),
+        (4,{"doi": "xyz.ndl/0000000004","doi_ra":"NDL JaLC", "doi2": "","doi_ra2":"NDL JaLC"},{"doi": "xyz.ndl/0000000004","doi_ra":"NDL JaLC","doi2": "xyz.ndl/0000000004","doi_ra2":"NDL JaLC"},[],[],True,False),
+        (4,{"doi": "xyz.ndl/0000000004","doi_ra":"NDL JaLC", "doi2": "","doi_ra2":"DataCite"},{"doi": "xyz.ndl/0000000004","doi_ra":"NDL JaLC","doi2": "xyz.ndl/0000000004","doi_ra2":"NDL JaLC"},['The specified DOI RA is wrong and fixed with the correct DOI RA of the registered DOI.'],[],True,False),
+        (4,{"doi": "xyz.ndl/0000000004","doi_ra":"NDL JaLC", "doi2": "xyz.ndl/0000000004","doi_ra2":"DataCite"},{"doi": "xyz.ndl/0000000004","doi_ra":"NDL JaLC","doi2": "xyz.ndl/0000000004","doi_ra2":"NDL JaLC"},['The specified DOI RA is wrong and fixed with the correct DOI RA of the registered DOI.'],[],True,False),
+        (4,{"doi": "xyz.ndl/0000000004","doi_ra":"NDL JaLC", "doi2": "xyz.ndl/0000000005","doi_ra2":"DataCite"},{"doi": "xyz.ndl/0000000004","doi_ra":"NDL JaLC","doi2": "xyz.ndl/0000000004","doi_ra2":"NDL JaLC"},['The specified DOI is wrong and fixed with the registered DOI.', 'The specified DOI RA is wrong and fixed with the correct DOI RA of the registered DOI.'],[],True,False),
+        (4,{"doi": "xyz.ndl/0000000004","doi_ra":"NDL JaLC", "doi2": "","doi_ra2":"JaLC2"},{"doi": "xyz.ndl/0000000004","doi_ra":"NDL JaLC","doi2": "xyz.ndl/0000000004","doi_ra2":"NDL JaLC"},['The specified DOI RA is wrong and fixed with the correct DOI RA of the registered DOI.'],[],True,False),
         (4,{"doi": "xyz.ndl/0000000005","doi_ra":"NDL JaLC","doi2": "","doi_ra2":""},{"doi": "xyz.ndl/0000000005","doi_ra":"NDL JaLC","doi2": "xyz.ndl/0000000005","doi_ra2":"NDL JaLC"},[],[],True,False),
         (4,{"doi": "xyz.ndl/0000000005","doi_ra":"NDL JaLC","doi2": "xyz.ndl/0000000004","doi_ra2":"NDL JaLC"},{"doi": "xyz.ndl/0000000005","doi_ra":"NDL JaLC","doi2": "xyz.ndl/0000000005","doi_ra2":"NDL JaLC"},['The specified DOI is wrong and fixed with the registered DOI.'],[],True,False),
         (4,{"doi": "xyz.ndl/0000000005","doi_ra":"JaLC2","doi2": "xyz.ndl/0000000004","doi_ra2":"NDL JaLC"},{"doi": "xyz.ndl/0000000005","doi_ra":"JaLC2","doi2": None,"doi_ra2":None},[],['DOI_RA should be set by one of JaLC, Crossref, DataCite, NDL JaLC.'],True,False),
@@ -1867,7 +2595,7 @@ def test_handle_fill_system_item(app, test_list_records,identifier, mocker):
         (4,{"doi": None,"doi_ra":None,"doi2": None,"doi_ra2":None},{"doi": "","doi_ra":"","doi2": None,"doi_ra2":None},[],['Please specify DOI prefix/suffix.'],True,False),
         (4,{"doi": "xyz.ndl/0000000004","doi_ra":None,"doi2": None,"doi_ra2":None},{"doi": "xyz.ndl/0000000004","doi_ra":"","doi2":None,"doi_ra2":None},[],['DOI_RA should be set by one of JaLC, Crossref, DataCite, NDL JaLC.'],True,False),
         (4,{"doi": None,"doi_ra":"NDL JaLC","doi2": None,"doi_ra2":None},{"doi": "","doi_ra":"NDL JaLC","doi2": "","doi_ra2":"NDL JaLC"},[],['Please specify DOI prefix/suffix.'],True,False),
-        
+
         (5,{"doi":"","doi_ra":"","doi2":None,"doi_ra2":None},{"doi":"","doi_ra":"","doi2":None,"doi_ra2":None},[],[],False,False),
         (5,{"doi":"","doi_ra":"JaLC","doi2":None,"doi_ra2":None},{"doi":"","doi_ra":"JaLC","doi2":None,"doi_ra2":None},[],[],False,False),
         (5,{"doi":"xyz.jalc","doi_ra":"JaLC","doi2":None,"doi_ra2":None},{"doi":"xyz.jalc","doi_ra":"JaLC","doi2":None,"doi_ra2":None},[],[],False,False),
@@ -1878,7 +2606,7 @@ def test_handle_fill_system_item(app, test_list_records,identifier, mocker):
         (5,{"doi":"xyz.crossref","doi_ra":"Crossref","doi2":None,"doi_ra2":None},{"doi":"xyz.crossref","doi_ra":"Crossref","doi2":None,"doi_ra2":None},[],[],False,False),
         (5,{"doi":"xyz.crossref/","doi_ra":"Crossref","doi2":None,"doi_ra2":None},{"doi":"xyz.crossref/","doi_ra":"Crossref","doi2":None,"doi_ra2":None},[],[],False,False),
         (5,{"doi":"xyz.crossref","doi_ra":"","doi2":None,"doi_ra2":None},{"doi":"xyz.crossref","doi_ra":"","doi2":None,"doi_ra2":None},[],['DOI_RA should be set by one of JaLC, Crossref, DataCite, NDL JaLC.'],False,False),
-        (5,{"doi":"xyz.crossref/","doi_ra":"","doi2":None,"doi_ra2":None},{"doi":"xyz.crossref/","doi_ra":"","doi2":None,"doi_ra2":None},[],['DOI_RA should be set by one of JaLC, Crossref, DataCite, NDL JaLC.'],False,False),       
+        (5,{"doi":"xyz.crossref/","doi_ra":"","doi2":None,"doi_ra2":None},{"doi":"xyz.crossref/","doi_ra":"","doi2":None,"doi_ra2":None},[],['DOI_RA should be set by one of JaLC, Crossref, DataCite, NDL JaLC.'],False,False),
         (5,{"doi":"","doi_ra":"DataCite","doi2":None,"doi_ra2":None},{"doi":"","doi_ra":"DataCite","doi2":None,"doi_ra2":None},[],[],False,False),
         (5,{"doi":"xyz.datacite","doi_ra":"DataCite","doi2":None,"doi_ra2":None},{"doi":"xyz.datacite","doi_ra":"DataCite","doi2":None,"doi_ra2":None},[],[],False,False),
         (5,{"doi":"xyz.datacite/","doi_ra":"DataCite","doi2":None,"doi_ra2":None},{"doi":"xyz.datacite/","doi_ra":"DataCite","doi2":None,"doi_ra2":None},[],[],False,False),
@@ -1973,7 +2701,7 @@ def test_handle_fill_system_item3(app,doi_records,item_id,before_doi,after_doi,w
             "item_type_id": 1,
             "$schema": "https://localhost:8443/items/jsonschema/1",
         }
-    
+
     if item_id:
         before["id"] = "{}".format(item_id)
         before["uri"] = "https://localhost:8443/records/{}".format(item_id)
@@ -1982,20 +2710,20 @@ def test_handle_fill_system_item3(app,doi_records,item_id,before_doi,after_doi,w
     if before_doi["doi_ra2"] is not None:
         before["metadata"]["item_1617186819068"]=before["metadata"].get("item_1617186819068",{})
         before["metadata"]["item_1617186819068"]["subitem_identifier_reg_type"]= "{}".format(before_doi['doi_ra2'])
-    
+
     if before_doi["doi2"] is not None:
         before["metadata"]["item_1617186819068"]=before["metadata"].get("item_1617186819068",{})
         before["metadata"]["item_1617186819068"]["subitem_identifier_reg_text"]= "{}".format(before_doi['doi2'])
 
     if before_doi['doi_ra'] is not None:
         before["doi_ra"]="{}".format(before_doi['doi_ra'])
-    
+
     if before_doi['doi'] is not None:
         before["doi"]="{}".format(before_doi['doi'])
-    
+
     if "cnri" in before_doi and before_doi["cnri"] is not None:
         before["cnri"] = "{}".format(before_doi["cnri"])
-    
+
     before_list = [before]
     after = {
             "metadata": {
@@ -2034,26 +2762,26 @@ def test_handle_fill_system_item3(app,doi_records,item_id,before_doi,after_doi,w
         after["id"] = "{}".format(item_id)
         after["uri"] = "https://localhost:8443/records/{}".format(item_id)
         after["metadata"]["item_1617605131499"][0]["url"] = {"url": "https://weko3.example.org/record/{}/files/a.zip".format(item_id)}
-    
+
     if after_doi["doi_ra"] is not None:
         after["doi_ra"]="{}".format(after_doi['doi_ra'])
-    
+
     if after_doi["doi"] is not None:
-        after["doi"]="{}".format(after_doi["doi"]) 
-        
+        after["doi"]="{}".format(after_doi["doi"])
+
     if after_doi["doi_ra2"] is not None:
         after["metadata"]["item_1617186819068"]=after["metadata"].get("item_1617186819068",{})
         after["metadata"]["item_1617186819068"]["subitem_identifier_reg_type"]= "{}".format(after_doi['doi_ra2'])
-    
+
     if after_doi["doi2"] is not None:
         after["metadata"]["item_1617186819068"]= after["metadata"].get("item_1617186819068",{})
         after["metadata"]["item_1617186819068"]["subitem_identifier_reg_text"]= "{}".format(after_doi['doi2'])
 
     if "cnri" in after_doi and after_doi["cnri"] is not None:
         after["cnri"] = after_doi["cnri"]
-    
+
     after_list = [after]
-    
+
     if is_change_identifier:
         before_list[0]['is_change_identifier']=True
         after_list[0]['is_change_identifier']=True
@@ -2303,30 +3031,304 @@ def test_handle_check_duplication_item_id(i18n_app):
 
 
 # def export_all(root_url, user_id, data): *** not yet done
-def test_export_all(db_activity, i18n_app, users, item_type, db_records2):
-    root_url = "/"
-    user_id = users[3]["obj"].id
-    data = {"item_type_id": "1", "item_id_range": "1"}
-    data2 = {"item_type_id": "-1", "item_id_range": "1-9"}
-    data3 = {"item_type_id": -1, "item_id_range": "1"}
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_export_all -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_export_all(db_activity, i18n_app, users, item_type, db_records2, redis_connect, db, create_export_all_data, mocker):
+    i18n_app.config["WEKO_ADMIN_CACHE_PREFIX"] = "test_admin_cache_{name}_{user_id}"
+    with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
+        with patch("weko_search_ui.utils.os.getenv", return_value="/tmp/bulk_export"):
+            with patch("weko_search_ui.utils.os.makedirs") as mock_makedirs:
+                mock_makedirs.return_value = None  # モックの戻り値を設定
+                root_url = "/"
+                user_id = users[3]["obj"].id
+                data = {"item_type_id": "1", "item_id_range": "1"}
+                data2 = {"item_type_id": "-1", "item_id_range": "1-9"}
+                start_time_str = '2024/05/21 23:44:12'
+                msg_key = i18n_app.config["WEKO_ADMIN_CACHE_PREFIX"].format(
+                    name="MSG_EXPORT_ALL", user_id=current_user.get_id()
+                )
+                uri_key = i18n_app.config["WEKO_ADMIN_CACHE_PREFIX"].format(
+                    name="URI_EXPORT_ALL", user_id=current_user.get_id()
+                )
+                file_key = i18n_app.config["WEKO_ADMIN_CACHE_PREFIX"].format(
+                    name="RUN_MSG_EXPORT_ALL_FILE_CREATE", user_id=current_user.get_id()
+                )
+                datastore = redis_connect
 
-    assert not export_all(root_url, user_id, data)
-    assert not export_all(root_url, user_id, data2)
-    assert not export_all(root_url, user_id, data3)
+                task = MagicMock()
+                task.task_id = 1
+                mocker.patch("weko_search_ui.tasks.write_files_task", return_value=task)
+                mocker.patch('builtins.open', side_effect=unittest.mock.mock_open())
+                mocker.patch("weko_search_ui.utils.pickle.dump")
+
+                # datastore.put(uri_key, "testuri".encode('utf-8'))
+                datastore.delete(uri_key)
+                export_all(root_url, user_id, data, start_time_str)
+                msg = datastore.get(msg_key)
+                assert msg.decode() == ""
+
+                with patch("weko_search_ui.utils.delete_exported_file", return_value=None) as mock_delete_file:
+                    datastore.put(uri_key, 'test_uri'.encode('utf-8'))
+                    export_all(root_url, user_id, data2, start_time_str)
+                    msg = datastore.get(msg_key)
+                    mock_delete_file.assert_called_with("test_uri",uri_key)
+                    assert msg.decode() == ""
+
+                datastore.delete(uri_key)
+
+                data_no_range = {"item_type_id": "1", "item_id_range": ""}
+                export_all(root_url, user_id, data_no_range, start_time_str)
+
+                recid_data_1 = [
+                    MagicMock(pid_value=str(1), object_uuid="uuid1", json= {"publish_status": "public"}),  # json属性が存在しない
+                    MagicMock(pid_value=str(2), object_uuid="uuid2", json={"publish_status": "private"}),  # publish_statusがPUBLICまたはPRIVATEでない
+                ]
+
+                with patch("weko_search_ui.utils.get_all_record_id", return_value=recid_data_1):
+                    export_all(root_url, user_id, data, start_time_str)
+
+                    data_err = {"item_type_id": "1", "item_id_range": "10-1"}
+                    export_all(root_url, user_id, data_err, start_time_str)
+                    msg = datastore.get(msg_key)
+                    assert msg.decode() == "Export failed. Please check item id range."
+
+                    with patch("weko_search_ui.utils.get_record_ids", return_value={}):
+                        export_all(root_url, user_id, data, start_time_str)
+
+                    with patch("builtins.open", side_effect=SQLAlchemyError("Test SQLAlchemyError")):
+                        export_all(root_url, user_id, data, start_time_str)
+
+                    with patch("weko_search_ui.tasks.write_files_task.apply_async", return_value=None):
+                        with patch("weko_search_ui.utils.WekoRecord.get_record_by_uuid", side_effect=SQLAlchemyError("test_error")):
+                            export_all(root_url, user_id, data, start_time_str)
+
+                    # recidsをモックして、record_idsが空になるように設定
+                    recids = [
+                        MagicMock(pid_value=str(uuid.uuid4()), object_uuid="uuid1", json=None),  # json属性が存在しない
+                        MagicMock(pid_value=str(uuid.uuid4()), object_uuid="uuid2", json={"publish_status": "draft"}),  # publish_statusがPUBLICまたはPRIVATEでない
+                        MagicMock(pid_value=str(uuid.uuid4()), object_uuid="uuid3", json={})  # json属性にpublish_statusが含まれていない
+                    ]
+
+                    with patch("weko_search_ui.utils.db.session.query", return_value=recids):
+                        export_all(root_url, user_id, data, start_time_str)
+
+                    with patch("weko_search_ui.utils.math.ceil", side_effect=Exception("test_error")):
+                        export_all(root_url, user_id, data, start_time_str)
+
+                    # raise Exception in _get_item_type_list
+                    with patch("weko_search_ui.utils.ItemTypes.get_by_id", side_effect=Exception("test_error")):
+                        export_all(root_url, user_id, data, start_time_str)
+
+                    # # raise Exception in _get_export_data
+                    with patch("weko_search_ui.tasks.write_files_task", side_effect=Exception("test_error")):
+                        export_all(root_url, user_id, data_no_range, start_time_str)
+                with patch("weko_search_ui.utils.get_all_record_id", return_value=[]):
+                    export_all(root_url, user_id, data, start_time_str)
+
+                with patch("weko_search_ui.utils.get_all_record_id", side_effect=SQLAlchemyError("test_error")) as mock_get:
+                    export_all(root_url, user_id, data, start_time_str)
+                    assert mock_get.call_count==6
+                    assert json.loads(datastore.get(file_key).decode()).get("cancel_flg")==True
+                    assert datastore.get(msg_key).decode() == "Export failed."
+
+def test_get_retry_info():
+    # Test case 1: When item_type_id is included in retry_info
+    item_type_id = "1"
+    retry_info = {
+        "1": {
+            "counter": 5,
+            "part": 2,
+            "max": "10"
+        }
+    }
+    fromid = "1"
+
+    counter, file_part, from_pid = get_retry_info(item_type_id, retry_info, fromid)
+
+    assert counter == 5
+    assert file_part == 2
+    assert from_pid == "10"
+
+    # Test case 2: When item_type_id is not included in retry_info
+    item_type_id = "2"
+    retry_info = {}
+    fromid = "1"
+
+    counter, file_part, from_pid = get_retry_info(item_type_id, retry_info, fromid)
+
+    assert counter == 0
+    assert file_part == 1
+    assert from_pid == "1"
+
+    # Test case 3: When fromid is empty
+    item_type_id = "2"
+    retry_info = {}
+    fromid = ""
+
+    counter, file_part, from_pid = get_retry_info(item_type_id, retry_info, fromid)
+
+    assert counter == 0
+    assert file_part == 1
+    assert from_pid == "1"
+
+# def delete_exported_file(uri, cache_key):
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_delete_exported_file -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_delete_exported_file(db,redis_connect,location):
+
+    location.size = 100
+    db.session.merge(location)
+    db.session.commit()
+
+    loc_uri = location.uri
+    loc_id=location.id
+    id = uuid.uuid4()
+    uri = f"{loc_uri}/test/tmp/dir"
+    cache_key="test_cache_key"
+
+    # not exist cache_key in redis
+    fi = FileInstance(
+        id=id,
+        uri=uri,
+        size=5,
+        updated=None
+    )
+    db.session.add(fi)
+    db.session.commit()
+    delete_exported_file(uri, cache_key)
+    db.session.commit()
+    assert Location.query.filter_by(id=loc_id).one().size == 95
+    assert FileInstance.query.filter_by(id=id).one_or_none() == None
+
+    # exist cache_key in redis
+    fi = FileInstance(
+        id=id,
+        uri=uri,
+        size=5,
+        updated=None
+    )
+    db.session.add(fi)
+    db.session.commit()
+    redis_connect.put(cache_key,"test_cache_value".encode("utf-8"),ttl_secs=30)
+    delete_exported_file(uri, cache_key)
+    db.session.commit()
+    assert redis_connect.redis.exists(cache_key) == False
+    assert Location.query.filter_by(id=loc_id).one().size == 90
+    assert FileInstance.query.filter_by(id=id).one_or_none() == None
 
 
 # def delete_exported(uri, cache_key):
-def test_delete_exported(i18n_app, file_instance_mock):
-    file_path = os.path.join(
-        os.path.dirname(os.path.abspath(__file__)),
-        "data",
-        "sample_file",
-        "sample_file.txt",
-    )
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_delete_exported -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_delete_exported(i18n_app, file_instance_mock,redis_connect,mocker):
+    import tempfile, shutil
+    mock_delete = mocker.patch("weko_search_ui.utils.delete_exported_file")
 
-    with patch("invenio_files_rest.models.FileInstance.delete", return_value=None):
-        # Doesn't return any value
-        assert not delete_exported(file_path, "key")
+    cache_prefix="test_admin_cache_{name}_1"
+    uri = "/test/export/tmp_dir"
+    export_info = {
+        "uri":uri,
+        "cache_key":cache_prefix.format(name=WEKO_SEARCH_UI_BULK_EXPORT_URI),
+        "task_key":cache_prefix.format(name=WEKO_SEARCH_UI_BULK_EXPORT_TASK),
+    }
+    task_id = str(uuid.uuid4())
+    redis_connect.put(export_info["task_key"],task_id.encode("utf-8"),ttl_secs=30)
+    try:
+        # not exist cache_key in redis
+        export_path = tempfile.mkdtemp()
+        result = delete_exported(export_path, export_info)
+        assert result == True
+        assert os.path.isdir(export_path) is False
+        assert redis_connect.redis.exists(export_info["task_key"]) == True
+        mock_delete.assert_called_with(uri, export_info["cache_key"])
+        mock_delete.reset_mock()
+
+        # exist cache_key in redis
+        redis_connect.put(export_info["cache_key"],"/test/download/uri".encode("utf-8"),ttl_secs=30)
+        export_path = tempfile.mkdtemp()
+        result = delete_exported(export_path, export_info)
+        assert result == True
+        assert os.path.isdir(export_path) is False
+        assert redis_connect.redis.exists(export_info["task_key"]) == False
+        mock_delete.assert_called_with(uri, export_info["cache_key"])
+        mock_delete.reset_mock()
+
+        # raise exception
+        with patch("weko_search_ui.utils.delete_exported_file",side_effect=Exception("test_error")):
+            export_path = tempfile.mkdtemp()
+            result = delete_exported(export_path, export_info)
+            assert result == False
+            assert os.path.isdir(export_path) is True
+            assert redis_connect.redis.exists(export_info["task_key"]) == False
+            shutil.rmtree(export_path)
+    finally:
+        if redis_connect.redis.exists(export_info["task_key"]):
+            redis_connect.delete(export_info["task_key"])
+        if redis_connect.redis.exists(export_info["cache_key"]):
+            redis_connect.delete(export_info["cache_key"])
+
+
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_get_record_ids -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_get_record_ids():
+
+    # publish_status in status_ok
+    mock_recid1 = MagicMock()
+    mock_recid1.pid_value = "1"
+    mock_recid1.object_uuid = "uuid1"
+    mock_recid1.json = {"publish_status": "0", "path": ["100"]}
+
+    # publish_status not in status_ok
+    mock_recid2 = MagicMock()
+    mock_recid2.pid_value = "2"
+    mock_recid2.object_uuid = "uuid2"
+    mock_recid2.json = {"publish_status": "-1", "path": ["100"]}
+
+    res = get_record_ids([mock_recid1, mock_recid2])
+    assert res == [("1", "uuid1")]
+
+
+    # path in index_id_list
+    mock_recid3 = MagicMock()
+    mock_recid3.pid_value = "3"
+    mock_recid3.object_uuid = "uuid3"
+    mock_recid3.json = {"publish_status": "0", "path": ["100","200"]}
+
+    # path not in index_id_list
+    mock_recid4 = MagicMock()
+    mock_recid4.pid_value = "4"
+    mock_recid4.object_uuid = "uuid4"
+    mock_recid4.json = {"publish_status": "0", "path": ["300"]}
+
+    res = get_record_ids([mock_recid3, mock_recid4],["100","200","500"])
+    assert res == [("3", "uuid3")]
+
+
+# def write_files(item_datas, export_path, user_id, retrys):
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_write_files -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_write_files(db_activity, i18n_app, users, redis_connect, mocker, item_type, db_records2):
+    import pytz
+    with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
+        # result is True
+        record = d_wekorecord.get_record_by_pid(1)
+        item_datas = {
+            "item_type_id": "1",
+            "name": "test_item_type",
+            "recids": ["1"],
+            "root_url":"https://localhost/",
+            "jsonschema":'items/jsonschema/1',
+            "data": {
+                "1": record
+            }
+        }
+
+        mocker.patch("weko_search_ui.utils.os.makedirs")
+        mocker.patch('builtins.open', side_effect=unittest.mock.mock_open())
+        now = datetime.now()
+        mocker_datetime = mocker.patch('weko_search_ui.utils.datetime')
+        mocker_datetime.now.return_value = now
+        with patch('weko_search_ui.utils.pytz.timezone', return_value=pytz.UTC):
+            assert write_files(item_datas, "tests/data/write_files", current_user.get_id(), 0)
+
+        # result is False
+        with patch("weko_items_ui.utils.make_stats_file_with_permission", side_effect=SQLAlchemyError("test_error")):
+            assert not write_files(item_datas, "tests/data/write_files", current_user.get_id(), 0)
 
 
 # def cancel_export_all():
@@ -2336,36 +3338,84 @@ def test_cancel_export_all(i18n_app, users, redis_connect, mocker):
         cache_key = i18n_app.config["WEKO_ADMIN_CACHE_PREFIX"].format(
             name="KEY_EXPORT_ALL", user_id=current_user.get_id()
         )
+        file_cache_key = i18n_app.config["WEKO_ADMIN_CACHE_PREFIX"].format(
+            name="RUN_MSG_EXPORT_ALL_FILE_CREATE", user_id=current_user.get_id()
+        )
+        file_json = {
+            'start_time': '2024/05/21 14:23:46',
+            'finish_time': '',
+            'export_path': '',
+            'cancel_flg': False,
+            'write_file_status': {
+                '1': 'started'
+            }
+        }
+        file_result_json = {
+            'start_time': '2024/05/21 14:23:46',
+            'finish_time': '',
+            'export_path': '',
+            'cancel_flg': True,
+            'write_file_status': {
+                '1': 'started'
+            }
+        }
         datastore = redis_connect
         datastore.put(cache_key, "test_task_key".encode("utf-8"), ttl_secs=30)
 
         # export_status is True
-        with patch("weko_search_ui.utils.get_export_status", return_value=(True,None,None,None,None)):
+        with patch("weko_search_ui.utils.get_export_status", return_value=(True,None,None,None,None,None,None)):
+            datastore.put(file_cache_key, json.dumps(file_json).encode('utf-8'), ttl_secs=30)
             mock_revoke = mocker.patch("weko_search_ui.utils.revoke")
             mock_delete_id = mocker.patch("weko_search_ui.utils.delete_task_id_cache.apply_async")
             result = cancel_export_all()
             assert result == True
+            ds_file_json = datastore.get(file_cache_key).decode('utf-8')
+            assert json.loads(ds_file_json) == file_result_json
             mock_revoke.assert_called_with("test_task_key",terminate=True)
             mock_delete_id.assert_called_with(args=("test_task_key","admin_cache_KEY_EXPORT_ALL_5"),countdown=60)
-        
+
         # export_status is False
-        with patch("weko_search_ui.utils.get_export_status", return_value=(False,None,None,None,None)):
+        with patch("weko_search_ui.utils.get_export_status", return_value=(False,None,None,None,None,None,None)):
+            datastore.put(file_cache_key, json.dumps(file_json).encode('utf-8'), ttl_secs=30)
             mock_revoke = mocker.patch("weko_search_ui.utils.revoke")
             mock_delete_id = mocker.patch("weko_search_ui.utils.delete_task_id_cache.apply_async")
             result = cancel_export_all()
             assert result == True
+            ds_file_json = datastore.get(file_cache_key).decode('utf-8')
+            assert json.loads(ds_file_json) == file_json
             mock_revoke.assert_not_called()
             mock_delete_id.assert_not_called()
-        
+
         # raise Exception
         with patch("weko_search_ui.utils.get_export_status",side_effect=Exception("test_error")):
             result = cancel_export_all()
             assert result == False
 
+# def delete_task_id_cache_on_missing_meta(task_id, cache_key):
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_delete_task_id_cache_on_missing_meta -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_delete_task_id_cache_on_missing_meta(redis_connect):
+    cache_key = "test_cache_key"
+    redis_connect.put(cache_key, "test_value".encode("utf-8"), ttl_secs=30)
+    task_id=str(uuid.uuid4())
+    redis_celery = RedisConnection().connection(db=current_app.config['CELERY_RESULT_BACKEND_DB_NO'], kv = True)
+    celery_task_key = f"celery-task-meta-{task_id}"
+
+    # exist celery-status in redis
+    redis_celery.put(celery_task_key, "test_value".encode("utf-8"), ttl_secs=30)
+    result = delete_task_id_cache_on_missing_meta(task_id, cache_key)
+    assert result == False
+    assert redis_connect.redis.exists(cache_key) == True
+
+    # not exist celery-status in redis
+    redis_celery.delete(celery_task_key)
+    result = delete_task_id_cache_on_missing_meta(task_id, cache_key)
+    assert result == True
+    assert redis_connect.redis.exists(cache_key) == False
 
 # def get_export_status():
 # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_get_export_status -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
-def test_get_export_status(i18n_app, users, redis_connect,mocker):
+def test_get_export_status(i18n_app, users, redis_connect,mocker, location):
+    import pytz,tempfile
     class MockAsyncResult:
         def __init__(self,task_id):
             self.task_id=task_id
@@ -2376,9 +3426,53 @@ def test_get_export_status(i18n_app, users, redis_connect,mocker):
             return self.state == "SUCCESS"
         def failed(self):
             return self.state == "FAILED"
+
+    start_time_str = '2024/05/21 14:23:46'
+    def create_file_json(status):
+        return {
+            'start_time': start_time_str,
+            'finish_time': '',
+            'export_path': '',
+            'cancel_flg': False,
+            'write_file_status': {
+                '1': status
+            }
+        }
+
+    def create_file_cancel_json(status):
+        return {
+            'start_time': start_time_str,
+            'finish_time': '',
+            'export_path': '',
+            'cancel_flg': True,
+            'write_file_status': {
+                '1': status
+            }
+        }
+
+    def create_not_status_file_json():
+        return {
+            'start_time': start_time_str,
+            'finish_time': '',
+            'export_path': '',
+            'cancel_flg': False,
+            'write_file_status': {}
+        }
+
+    def create_not_param_file_json():
+        return {
+            'start_time': start_time_str,
+            'finish_time': '',
+            'export_path': '',
+            'cancel_flg': False
+        }
+
     mocker.patch("weko_search_ui.utils.AsyncResult",side_effect=MockAsyncResult)
     with patch("flask_login.utils._get_user", return_value=users[3]["obj"]):
-        cache_key = i18n_app.config["WEKO_ADMIN_CACHE_PREFIX"].format(
+        current_app.config["WEKO_ADMIN_CACHE_PREFIX"] = "test_admin_cache_{name}_{user_id}"
+        tmp_cache_key = "cache::test_temp_dir_info"
+        current_app.config["WEKO_ADMIN_CACHE_TEMP_DIR_INFO_KEY_DEFAULT"] = tmp_cache_key
+        cache_key = current_app.config["WEKO_ADMIN_CACHE_PREFIX"].format(
             name="KEY_EXPORT_ALL", user_id=current_user.get_id()
         )
         cache_uri = current_app.config["WEKO_ADMIN_CACHE_PREFIX"].format(
@@ -2390,31 +3484,155 @@ def test_get_export_status(i18n_app, users, redis_connect,mocker):
         run_msg = current_app.config["WEKO_ADMIN_CACHE_PREFIX"].format(
             name="RUN_MSG_EXPORT_ALL", user_id=current_user.get_id()
         )
+        file_msg = current_app.config["WEKO_ADMIN_CACHE_PREFIX"].format(
+            name='RUN_MSG_EXPORT_ALL_FILE_CREATE', user_id=current_user.get_id()
+        )
         datastore = redis_connect
-        
+
         datastore.put(cache_uri, "test_uri".encode("utf-8"), ttl_secs=30)
         datastore.put(cache_msg, "test_msg".encode("utf-8"), ttl_secs=30)
         datastore.put(run_msg, "test_run_msg".encode("utf-8"), ttl_secs=30)
-        # task is success, failed, revoked
-        datastore.put(cache_key, "SUCCESS_task".encode("utf-8"), ttl_secs=30)
-        result=get_export_status()
-        assert result == (False, "test_uri", "test_msg", "test_run_msg", "SUCCESS")
-        
-        # task is not success, failed, revoked
-        datastore.delete(cache_key)
-        datastore.put(cache_key, "PENDING_task".encode("utf-8"), ttl_secs=30)
-        result=get_export_status()
-        assert result == (True, "test_uri", "test_msg", "test_run_msg", "PENDING")
-        
         # not exist task_id
         datastore.delete(cache_key)
         result=get_export_status()
-        assert result == (False, "test_uri", "test_msg", "test_run_msg", "")
-        
+        assert result == (False, "test_uri", "test_msg", "test_run_msg", "", "", "")
+
+        # exist task_id, celery_result_cache is not exist
+        with patch("weko_search_ui.utils.delete_task_id_cache_on_missing_meta",
+                   return_value=True):
+            datastore.put(cache_key, "PENDING_task".encode("utf-8"), ttl_secs=30)
+            result=get_export_status()
+            assert result == (False, "test_uri", "test_msg", "test_run_msg", "", "", "")
+
+        mocker.patch("weko_search_ui.utils.delete_task_id_cache_on_missing_meta",
+                    return_value=False)
+
+        # task is not success, failed, revoked (write_file_data is not exist)
+        datastore.put(cache_key, "PENDING_task".encode("utf-8"), ttl_secs=30)
+        datastore.delete(file_msg)
+        datastore.put(file_msg, json.dumps({}).encode('utf-8'), ttl_secs=30)
+        result=get_export_status()
+        assert result == (False, "test_uri", "test_msg", "test_run_msg", "", "", "")
+
+        # task is not success, failed, revoked (write_file_status is not exist)
+        # write_file_status=BEFORE
+        datastore.put(cache_key, "PENDING_task".encode("utf-8"), ttl_secs=30)
+        datastore.put(file_msg, json.dumps(create_not_param_file_json()).encode('utf-8'), ttl_secs=30)
+        result=get_export_status()
+        assert result == (True, "test_uri", "test_msg", "test_run_msg", "", start_time_str, "")
+
+        # task is not success, failed, revoked (write_file_status is started)
+        # write_file_status=STARTED
+        datastore.put(cache_key, "PENDING_task".encode("utf-8"), ttl_secs=30)
+        datastore.put(file_msg, json.dumps(create_file_json('started')).encode('utf-8'), ttl_secs=30)
+        result=get_export_status()
+        assert result == (True, "test_uri", "test_msg", "test_run_msg", "STARTED", start_time_str, "")
+
+        # task is not success, failed, revoked (cancel_flg is True)
+        # write_file_status=REVOKED
+        datastore.put(cache_key, "PENDING_task".encode("utf-8"), ttl_secs=30)
+        datastore.put(file_msg, json.dumps(create_file_cancel_json('started')).encode('utf-8'), ttl_secs=30)
+        result=get_export_status()
+        assert result == (True, "test_uri", "test_msg", "test_run_msg", "REVOKED", start_time_str, "")
+
+        # write_file_status is canceled
+        with patch("weko_search_ui.utils.AsyncResult",return_value=MockAsyncResult("REVOKED_task")):
+            export_path = tempfile.mkdtemp()
+            datastore.delete(file_msg)
+            file_json = create_file_json('canceled')
+            file_json['export_path'] = export_path
+            datastore.put(file_msg, json.dumps(file_json).encode('utf-8'), ttl_secs=30)
+            result = get_export_status()
+            assert result == (False, "test_uri", "test_msg", "test_run_msg", "REVOKED", start_time_str, "")
+            assert os.path.isdir(export_path) is False
+
+        # write_file_status is errorwith patch("weko_search_ui.utils.AsyncResult",return_value=MockAsyncResult("FAILED_task")):
+        with patch("weko_search_ui.utils.AsyncResult",return_value=MockAsyncResult("FAILED_task")):
+            datastore.delete(file_msg)
+            file_json = create_file_json('error')
+            file_json['export_path'] = export_path
+            datastore.put(file_msg, json.dumps(file_json).encode('utf-8'), ttl_secs=30)
+            result = get_export_status()
+            assert result == (False, "test_uri", "test_msg", "test_run_msg", "ERROR", start_time_str, "")
+            assert os.path.isdir(export_path) is False
+
+        # task is success, failed, revoked (write_file_status is finished)
+        mocker.patch("os.path.isdir", return_value=False)
+        datastore.delete(cache_key)
+        datastore.put(cache_key, "SUCCESS_task".encode("utf-8"), ttl_secs=30)
+        datastore.delete(file_msg)
+        file_json = create_file_json('finished')
+        export_path = 'tests/data/import'
+        file_json['export_path'] = export_path
+        datastore.put(file_msg, json.dumps(file_json).encode('utf-8'), ttl_secs=30)
+        now = datetime.now()
+        expire = now+timedelta(days=current_app.config["WEKO_SEARCH_UI_EXPORT_FILE_RETENTION_DAYS"])
+        mocker_datetime = mocker.patch('weko_search_ui.utils.datetime')
+        mocker_datetime.now.return_value = now
+        mocker.patch('weko_search_ui.utils.bagit.make_bag')
+        mocker.patch('weko_search_ui.utils.shutil.make_archive')
+        mocker.patch("builtins.open", mock_open(read_data=b"data"))
+        mocker.patch("weko_search_ui.utils.FileInstance.create", return_value=MagicMock(uri="test_uri"))
+        mocker.patch("weko_search_ui.utils.Location.get_default", return_value=MagicMock(uri="test_location"))
+        task = MagicMock()
+        task.task_id = 1
+        with patch('weko_search_ui.utils.pytz.timezone', return_value=pytz.UTC):
+            result = get_export_status()
+            uri = datastore.get(cache_uri)
+            temp_cache_test = {
+                "is_export":True,
+                "uri":uri.decode(),
+                "cache_key":cache_uri,
+                "task_key":cache_key,
+                "expire": expire.strftime("%Y-%m-%d %H:%M:%S")
+            }
+            assert result == (False, uri.decode(), "test_msg", "test_run_msg", "SUCCESS", start_time_str, now.strftime('%Y/%m/%d %H:%M:%S'))
+            assert TempDirInfo().get(export_path) == temp_cache_test
+            TempDirInfo().delete(export_path)
+        # os.path.isdir is True
+        with patch("weko_search_ui.utils.os.path.isdir", return_value=True):
+            datastore.delete(file_msg)
+            file_json = create_file_json('finished')
+            file_json['export_path'] = 'tests/data/import'
+            mocker.patch('weko_search_ui.utils.bagit.make_bag')
+            mocker.patch('weko_search_ui.utils.shutil.make_archive')
+            mocker.patch("builtins.open", mock_open(read_data=b"data"))
+            mocker.patch("weko_search_ui.utils.FileInstance.create", return_value=MagicMock(uri="test_uri"))
+            mocker.patch("weko_search_ui.utils.Location.get_default", return_value=MagicMock(uri="test_location"))
+            datastore.put(file_msg, json.dumps(file_json).encode('utf-8'), ttl_secs=30)
+            datastore.delete(run_msg)
+            datastore.put(run_msg, "test_run_msg".encode("utf-8"), ttl_secs=30)
+            result=get_export_status()
+            assert result == (False, uri.decode(), "test_msg", "test_run_msg", "SUCCESS", start_time_str, "")
+
+        # task is success, failed, revoked (write_file_status is not value)
+        datastore.put(cache_key, "PENDING_task".encode("utf-8"), ttl_secs=30)
+        file_json = create_not_status_file_json()
+        file_json['export_path'] = 'tests/data/import'
+        datastore.put(file_msg, json.dumps(file_json).encode('utf-8'), ttl_secs=30)
+        now = datetime.now()
+        mocker_datetime = mocker.patch('weko_search_ui.utils.datetime')
+        mocker_datetime.now.return_value = now
+        mocker.patch('weko_search_ui.utils.bagit.make_bag')
+        mocker.patch('weko_search_ui.utils.shutil.make_archive')
+        task = MagicMock()
+        task.task_id = 1
+        result=get_export_status()
+        uri = datastore.get(cache_uri)
+        assert result == (True, uri.decode(), "test_msg", "test_run_msg", "SUCCESS", start_time_str, "")
+
         # raise Exception
         with patch("weko_search_ui.utils.AsyncResult",side_effect=Exception("test_error")):
+            datastore.delete(cache_uri)
+            datastore.put(cache_uri, "test_uri".encode("utf-8"), ttl_secs=30)
+            datastore.delete(cache_msg)
+            datastore.put(cache_msg, "test_msg".encode("utf-8"), ttl_secs=30)
+            datastore.delete(run_msg)
+            datastore.put(run_msg, "test_run_msg".encode("utf-8"), ttl_secs=30)
             result=get_export_status()
-            assert result == (False, "test_uri", "test_msg", "test_run_msg", "")
+            assert result == (False, "test_uri", "test_msg", "test_run_msg", "", "", "")
+
+
 
 
 # def handle_check_item_is_locked(item):
@@ -2616,7 +3834,7 @@ def test_function_issue34520(app, doi_records, item_id, before_doi, after_doi, w
             "item_type_id": 1,
             "$schema": "https://localhost/items/jsonschema/1",
         }
-    
+
     if item_id:
         before["id"] = "{}".format(item_id)
         before["uri"] = "https://localhost/records/{}".format(item_id)
@@ -2625,17 +3843,17 @@ def test_function_issue34520(app, doi_records, item_id, before_doi, after_doi, w
     if before_doi["doi_ra2"] is not None:
         before["metadata"]["item_1617186819068"]=before["metadata"].get("item_1617186819068",{})
         before["metadata"]["item_1617186819068"]["subitem_identifier_reg_type"]= "{}".format(before_doi['doi_ra2'])
-    
+
     if before_doi["doi2"] is not None:
         before["metadata"]["item_1617186819068"]=before["metadata"].get("item_1617186819068",{})
         before["metadata"]["item_1617186819068"]["subitem_identifier_reg_text"]= "{}".format(before_doi['doi2'])
 
     if before_doi['doi_ra'] is not None:
         before["doi_ra"]="{}".format(before_doi['doi_ra'])
-    
+
     if before_doi['doi'] is not None:
-        before["doi"]="{}".format(before_doi['doi'])                       
-    
+        before["doi"]="{}".format(before_doi['doi'])
+
     before_list = [before]
     after = {
             "metadata": {
@@ -2674,23 +3892,23 @@ def test_function_issue34520(app, doi_records, item_id, before_doi, after_doi, w
         after["id"] = "{}".format(item_id)
         after["uri"] = "https://localhost/records/{}".format(item_id)
         after["metadata"]["item_1617605131499"][0]["url"] = {"url": "https://weko3.example.org/record/{}/files/a.zip".format(item_id)}
-    
+
     if after_doi["doi_ra"] is not None:
         after["doi_ra"]="{}".format(after_doi['doi_ra'])
-    
+
     if after_doi["doi"] is not None:
-        after["doi"]="{}".format(after_doi["doi"]) 
-        
+        after["doi"]="{}".format(after_doi["doi"])
+
     if after_doi["doi_ra2"] is not None:
         after["metadata"]["item_1617186819068"]=after["metadata"].get("item_1617186819068",{})
         after["metadata"]["item_1617186819068"]["subitem_identifier_reg_type"]= "{}".format(after_doi['doi_ra2'])
-    
+
     if after_doi["doi2"] is not None:
         after["metadata"]["item_1617186819068"]= after["metadata"].get("item_1617186819068",{})
         after["metadata"]["item_1617186819068"]["subitem_identifier_reg_text"]= "{}".format(after_doi['doi2'])
 
     after_list = [after]
-    
+
     if is_change_identifier:
         before_list[0]['is_change_identifier']=True
         after_list[0]['is_change_identifier']=True
@@ -2699,7 +3917,7 @@ def test_function_issue34520(app, doi_records, item_id, before_doi, after_doi, w
         assert before_list != after_list
         handle_fill_system_item(before_list)
         assert after_list == before_list
-        
+
 # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_function_issue34535 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search_ui/.tox/c1/tmp
 def test_function_issue34535(db,db_index,db_itemtype,location,db_oaischema,mocker):
     mocker.patch("weko_search_ui.utils.find_and_update_location_size")
@@ -2734,7 +3952,7 @@ def test_function_issue34535(db,db_index,db_itemtype,location,db_oaischema,mocke
     # new item
     root_path = os.path.dirname(os.path.abspath(__file__))
     new_item = {'$schema': 'https://192.168.56.103/items/jsonschema/1', 'edit_mode': 'Keep', 'errors': None, 'file_path': [''], 'filenames': [{'filename': '', 'id': '.metadata.item_1617605131499[0].filename'}], 'id': '4', 'identifier_key': 'item_1617186819068', 'is_change_identifier': False, 'item_title': 'test item in br', 'item_type_id': 1, 'item_type_name': 'デフォルトアイテムタイプ（フル）', 'metadata': {'item_1617186331708': [{'subitem_1551255647225': 'test item in br', 'subitem_1551255648112': 'ja'}], 'item_1617186626617': [{'subitem_description': 'this is line1.<br/>this is line2.', 'subitem_description_language': 'en', 'subitem_description_type': 'Abstract'}], 'item_1617258105262': {'resourcetype': 'conference paper', 'resourceuri': 'http://purl.org/coar/resource_type/c_5794'}, 'path': [1], 'pubdate': '2022-11-21'}, 'pos_index': ['Faculty of Humanities and Social Sciences'], 'publish_status': 'public', 'status': 'keep', 'uri': 'https://192.168.56.103/records/4', 'warnings': [], 'root_path': root_path}
-    
+
     register_item_metadata(new_item,root_path,True)
     record = WekoDeposit.get_record(recid.object_uuid)
     assert record == {'_oai': {'id': 'oai:weko3.example.org:00000004', 'sets': ['1']}, 'path': ['1'], 'owner': '1', 'recid': '4', 'title': ['test item in br'], 'pubdate': {'attribute_name': 'PubDate', 'attribute_value': '2022-11-21'}, '_buckets': {'deposit': '0796e490-6dcf-4e7d-b241-d7201c3de83a'}, '_deposit': {'id': '4', 'pid': {'type': 'depid', 'value': '4', 'revision_id': 0}, 'owner': '1', 'owners': [1], 'status': 'draft', 'created_by': 1}, 'item_title': 'test item in br', 'author_link': [], 'item_type_id': '1', 'publish_date': '2022-11-21', 'publish_status': '0', 'weko_shared_id': -1, 'item_1617186331708': {'attribute_name': 'Title', 'attribute_value_mlt': [{'subitem_1551255647225': 'test item in br', 'subitem_1551255648112': 'ja'}]}, 'item_1617186626617': {'attribute_name': 'Description', 'attribute_value_mlt': [{'subitem_description': 'this is line1.\nthis is line2.', 'subitem_description_language': 'en', 'subitem_description_type': 'Abstract'}]}, 'item_1617258105262': {'attribute_name': 'Resource Type', 'attribute_value_mlt': [{'resourcetype': 'conference paper', 'resourceuri': 'http://purl.org/coar/resource_type/c_5794'}]}, 'relation_version_is_last': True, 'control_number': '4'}
@@ -2755,11 +3973,11 @@ def test_function_issue34958(app, make_itemtype):
             os.path.dirname(os.path.realpath(__file__)), "data/import_file/34958"
         )
         csv_path = "issue34958_import.csv"
-        
-    
+
+
         test = [{"publish_status": "public", "pos_index": ["Index A"], "metadata": {"pubdate": "2022-11-11", "item_1671508244520": {"subitem_1551255647225": "Extra items test", "subitem_1551255648112": "en"}, "item_1671508260839": {"resourcetype": "conference paper", "resourceuri": "http://purl.org/coar/resource_type/c_5794"}, "item_1671508308460": [{"interim": "test_text_value0"}, {"interim": "test_text_value1"}], "item_1671606815997": "test_text", "item_1617186626617": {"subitem_description": "test_description"}}, "edit_mode": "keep", "item_type_name": "test_import", "item_type_id": 34958, "$schema": "http://TEST_SERVER/items/jsonschema/34958", "warnings": ["The following items are not registered because they do not exist in the specified item type. item_1617186626617.subitem_description"], "is_change_identifier": False, "errors": None}]
         result = unpackage_import_file(data_path,csv_path,"csv",False,False)
-        
+
         assert result == test
 
 # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_function_issue34520 -v -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
@@ -2815,7 +4033,7 @@ def test_handle_fill_system_item_issue34520(app, doi_records, item_id, before_do
             "item_type_id": 1,
             "$schema": "https://localhost/items/jsonschema/1",
         }
-    
+
     if item_id:
         before["id"] = "{}".format(item_id)
         before["uri"] = "https://localhost/records/{}".format(item_id)
@@ -2824,17 +4042,17 @@ def test_handle_fill_system_item_issue34520(app, doi_records, item_id, before_do
     if before_doi.get("doi_ra2") is not None:
         before["metadata"]["item_1617186819068"]=before["metadata"].get("item_1617186819068",{})
         before["metadata"]["item_1617186819068"]["subitem_identifier_reg_type"]= "{}".format(before_doi['doi_ra2'])
-    
+
     if before_doi.get("doi2") is not None:
         before["metadata"]["item_1617186819068"]=before["metadata"].get("item_1617186819068",{})
         before["metadata"]["item_1617186819068"]["subitem_identifier_reg_text"]= "{}".format(before_doi['doi2'])
 
     if before_doi.get('doi_ra') is not None:
         before["doi_ra"]="{}".format(before_doi['doi_ra'])
-    
+
     if before_doi.get('doi') is not None:
-        before["doi"]="{}".format(before_doi['doi'])                       
-    
+        before["doi"]="{}".format(before_doi['doi'])
+
     before_list = [before]
     after = {
             "metadata": {
@@ -2873,17 +4091,17 @@ def test_handle_fill_system_item_issue34520(app, doi_records, item_id, before_do
         after["id"] = "{}".format(item_id)
         after["uri"] = "https://localhost/records/{}".format(item_id)
         after["metadata"]["item_1617605131499"][0]["url"] = {"url": "https://weko3.example.org/record/{}/files/a.zip".format(item_id)}
-    
+
     if after_doi.get("doi_ra") is not None:
         after["doi_ra"]="{}".format(after_doi['doi_ra'])
-    
+
     if after_doi.get("doi") is not None:
-        after["doi"]="{}".format(after_doi["doi"]) 
-        
+        after["doi"]="{}".format(after_doi["doi"])
+
     if after_doi.get("doi_ra2") is not None:
         after["metadata"]["item_1617186819068"]=after["metadata"].get("item_1617186819068",{})
         after["metadata"]["item_1617186819068"]["subitem_identifier_reg_type"]= "{}".format(after_doi['doi_ra2'])
-    
+
     if after_doi.get("doi2") is not None:
         after["metadata"]["item_1617186819068"]= after["metadata"].get("item_1617186819068",{})
         after["metadata"]["item_1617186819068"]["subitem_identifier_reg_text"]= "{}".format(after_doi['doi2'])
@@ -2936,7 +4154,7 @@ def test_handle_check_exist_record_issue35315(app, doi_records, id, uri, warning
     if uri is not None:
         before["uri"] = uri
     before_list = [before]
-    
+
     after = {
         "metadata": {
             "path": ["1667004052852"],
@@ -2963,9 +4181,9 @@ def test_handle_check_exist_record_issue35315(app, doi_records, id, uri, warning
     if uri is not None:
         after["uri"] = uri
     after["status"] = status
-    
+
     after_list = [after]
-    
+
     with app.test_request_context():
         assert before_list != after_list
         result = handle_check_exist_record(before_list)
@@ -2978,17 +4196,838 @@ def test_conbine_aggs():
     test = {"took": "215","time_out": False,"_shards": {"total": "1","successful": "1","skipped": "0","failed": "0"},"hits": {"total": "0","max_score": None,"hits": []},"aggregations": {"path": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": [{"key": "1234567891011","doc_count": "1","date_range": {"doc_count": "1","available": {"buckets": [{"key": "*-2023-07-25","to": "1690243200000.0","to_as_string": "2023-07-25","doc_count": "1"},{"key": "2023-07-25-*","from": "1690243200000.0","from_as_string": "2023-07-25","doc_count": "0"}]}},"Data Type": {"doc_count": "0","Data Type": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"Distributor": {"doc_count": "0","Distributor": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"Data Language": {"doc_count": "1","Data Language": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"Temporal": {"doc_count": "1","Temporal": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"Access": {"doc_count": "1","Access": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"no_available": {"doc_count": "0"},"Topic": {"doc_count": "1","Topic": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"Location": {"doc_count": "1","Location": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}}},{"key": "1234567891012","doc_count": "2","date_range": {"doc_count": "2","available": {"buckets": [{"key": "*-2023-07-25","to": "1690243200000.0","to_as_string": "2023-07-25","doc_count": "2"},{"key": "2023-07-25-*","from": "1690243200000.0","from_as_string": "2023-07-25","doc_count": "0"}]}},"Data Type": {"doc_count": "0","Data Type": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"Distributor": {"doc_count": "0","Distributor": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"Data Language": {"doc_count": "1","Data Language": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"Temporal": {"doc_count": "1","Temporal": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"Access": {"doc_count": "1","Access": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"no_available": {"doc_count": "0"},"Topic": {"doc_count": "1","Topic": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"Location": {"doc_count": "1","Location": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}}},{"key": "1234567891013","doc_count": "3","date_range": {"doc_count": "1","available": {"buckets": [{"key": "*-2023-07-25","to": "1690243200000.0","to_as_string": "2023-07-25","doc_count": "3"},{"key": "2023-07-25-*","from": "1690243200000.0","from_as_string": "2023-07-25","doc_count": "0"}]}},"Data Type": {"doc_count": "0","Data Type": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"Distributor": {"doc_count": "0","Distributor": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"Data Language": {"doc_count": "1","Data Language": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"Temporal": {"doc_count": "1","Temporal": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"Access": {"doc_count": "1","Access": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"no_available": {"doc_count": "0"},"Topic": {"doc_count": "1","Topic": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"Location": {"doc_count": "1","Location": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}}}]}}}
     result = combine_aggs(some_path)
     assert test == result
-    
+
     one_path = {"took": "215","time_out": False,"_shards": {"total": "1","successful": "1","skipped": "0","failed": "0"},"hits": {"total": "0","max_score": None,"hits": []},"aggregations": {"path": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": [{"key": "1234567891011","doc_count": "1","date_range": {"doc_count": "1","available": {"buckets": [{"key": "*-2023-07-25","to": "1690243200000.0","to_as_string": "2023-07-25","doc_count": "1"},{"key": "2023-07-25-*","from": "1690243200000.0","from_as_string": "2023-07-25","doc_count": "0"}]}},"Data Type": {"doc_count": "0","Data Type": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"Distributor": {"doc_count": "0","Distributor": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"Data Language": {"doc_count": "1","Data Language": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"Temporal": {"doc_count": "1","Temporal": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"Access": {"doc_count": "1","Access": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"no_available": {"doc_count": "0"},"Topic": {"doc_count": "1","Topic": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"Location": {"doc_count": "1","Location": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}}},{"key": "1234567891012","doc_count": "2","date_range": {"doc_count": "2","available": {"buckets": [{"key": "*-2023-07-25","to": "1690243200000.0","to_as_string": "2023-07-25","doc_count": "2"},{"key": "2023-07-25-*","from": "1690243200000.0","from_as_string": "2023-07-25","doc_count": "0"}]}},"Data Type": {"doc_count": "0","Data Type": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"Distributor": {"doc_count": "0","Distributor": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"Data Language": {"doc_count": "1","Data Language": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"Temporal": {"doc_count": "1","Temporal": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"Access": {"doc_count": "1","Access": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"no_available": {"doc_count": "0"},"Topic": {"doc_count": "1","Topic": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"Location": {"doc_count": "1","Location": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}}},{"key": "1234567891013","doc_count": "3","date_range": {"doc_count": "1","available": {"buckets": [{"key": "*-2023-07-25","to": "1690243200000.0","to_as_string": "2023-07-25","doc_count": "3"},{"key": "2023-07-25-*","from": "1690243200000.0","from_as_string": "2023-07-25","doc_count": "0"}]}},"Data Type": {"doc_count": "0","Data Type": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"Distributor": {"doc_count": "0","Distributor": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"Data Language": {"doc_count": "1","Data Language": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"Temporal": {"doc_count": "1","Temporal": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"Access": {"doc_count": "1","Access": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"no_available": {"doc_count": "0"},"Topic": {"doc_count": "1","Topic": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"Location": {"doc_count": "1","Location": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}}}]}}}
     result = combine_aggs(one_path)
     assert test == result
-    
+
     not_agg = {"took": "215","time_out": False,"_shards": { "total": "1", "successful": "1", "skipped": "0", "failed": "0" },"hits": { "total": "0", "max_score": None, "hits": [] }}
     test = {'took': '215', 'time_out': False, '_shards': {'total': '1', 'successful': '1', 'skipped': '0', 'failed': '0'}, 'hits': {'total': '0', 'max_score': None, 'hits': []}}
     result = combine_aggs(not_agg)
     assert test == result
-    
+
     other_agg = {"took": "215","time_out": False,"_shards": { "total": "1", "successful": "1", "skipped": "0", "failed": "0" },"hits": { "total": "0", "max_score": None, "hits": [] },"aggregations":{"path_0":{"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": [],},"path_1":{"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets":[{"key": "1234567891011","doc_count": "1","date_range":{"doc_count": "1","available":{"buckets":[{"key": "*-2023-07-25","to": "1690243200000.0","to_as_string": "2023-07-25","doc_count": "1",},{"key": "2023-07-25-*","from": "1690243200000.0","from_as_string": "2023-07-25","doc_count": "0",},],},},"Data Type":{"doc_count": "0","Data Type":{"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": [],},},"Distributor":{"doc_count": "0","Distributor":{"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": [],},},"Data Language":{"doc_count": "1","Data Language":{"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": [],},},"Temporal":{"doc_count": "1","Temporal":{"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": [],},},"Access":{"doc_count": "1","Access":{"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": [],},},"no_available": { "doc_count": "0" },"Topic":{"doc_count": "1","Topic":{"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": [],},},"Location":{"doc_count": "1","Location":{"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": [],},},},],},"path_2":{"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets":[{"key": "1234567891012","doc_count": "2","date_range":{"doc_count": "2","available":{"buckets":[{"key": "*-2023-07-25","to": "1690243200000.0","to_as_string": "2023-07-25","doc_count": "2",},{"key": "2023-07-25-*","from": "1690243200000.0","from_as_string": "2023-07-25","doc_count": "0",},],},},"Data Type":{"doc_count": "0","Data Type":{"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": [],},},"Distributor":{"doc_count": "0","Distributor":{"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": [],},},"Data Language":{"doc_count": "1","Data Language":{"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": [],},},"Temporal":{"doc_count": "1","Temporal":{"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": [],},},"Access":{"doc_count": "1","Access":{"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": [],},},"no_available": { "doc_count": "0" },"Topic":{"doc_count": "1","Topic":{"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": [],},},"Location":{"doc_count": "1","Location":{"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": [],},},},{"key": "1234567891013","doc_count": "3","date_range":{"doc_count": "1","available":{"buckets":[{"key": "*-2023-07-25","to": "1690243200000.0","to_as_string": "2023-07-25","doc_count": "3",},{"key": "2023-07-25-*","from": "1690243200000.0","from_as_string": "2023-07-25","doc_count": "0",},],},},"Data Type":{"doc_count": "0","Data Type":{"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": [],},},"Distributor":{"doc_count": "0","Distributor":{"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": [],},},"Data Language":{"doc_count": "1","Data Language":{"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": [],},},"Temporal":{"doc_count": "1","Temporal":{"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": [],},},"Access":{"doc_count": "1","Access":{"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": [],},},"no_available": { "doc_count": "0" },"Topic":{"doc_count": "1","Topic":{"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": [],},},"Location":{"doc_count": "1","Location":{"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": [],},},},],},"other":{"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets":[{"key": "1234567891012","doc_count": "2","date_range":{"doc_count": "2","available":{"buckets":[{"key": "*-2023-07-25","to": "1690243200000.0","to_as_string": "2023-07-25","doc_count": "2",},{"key": "2023-07-25-*","from": "1690243200000.0","from_as_string": "2023-07-25","doc_count": "0",},],},},}]}},}
     test = {"took": "215","time_out": False,"_shards": {"total": "1","successful": "1","skipped": "0","failed": "0"},"hits": {"total": "0","max_score": None,"hits": []},"aggregations": {"other": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": [{"key": "1234567891012","doc_count": "2","date_range": {"doc_count": "2","available": {"buckets": [{"key": "*-2023-07-25","to": "1690243200000.0","to_as_string": "2023-07-25","doc_count": "2"},{"key": "2023-07-25-*","from": "1690243200000.0","from_as_string": "2023-07-25","doc_count": "0"}]}}}]},"path": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": [{"key": "1234567891011","doc_count": "1","date_range": {"doc_count": "1","available": {"buckets": [{"key": "*-2023-07-25","to": "1690243200000.0","to_as_string": "2023-07-25","doc_count": "1"},{"key": "2023-07-25-*","from": "1690243200000.0","from_as_string": "2023-07-25","doc_count": "0"}]}},"Data Type": {"doc_count": "0","Data Type": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"Distributor": {"doc_count": "0","Distributor": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"Data Language": {"doc_count": "1","Data Language": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"Temporal": {"doc_count": "1","Temporal": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"Access": {"doc_count": "1","Access": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"no_available": {"doc_count": "0"},"Topic": {"doc_count": "1","Topic": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"Location": {"doc_count": "1","Location": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}}},{"key": "1234567891012","doc_count": "2","date_range": {"doc_count": "2","available": {"buckets": [{"key": "*-2023-07-25","to": "1690243200000.0","to_as_string": "2023-07-25","doc_count": "2"},{"key": "2023-07-25-*","from": "1690243200000.0","from_as_string": "2023-07-25","doc_count": "0"}]}},"Data Type": {"doc_count": "0","Data Type": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"Distributor": {"doc_count": "0","Distributor": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"Data Language": {"doc_count": "1","Data Language": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"Temporal": {"doc_count": "1","Temporal": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"Access": {"doc_count": "1","Access": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"no_available": {"doc_count": "0"},"Topic": {"doc_count": "1","Topic": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"Location": {"doc_count": "1","Location": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}}},{"key": "1234567891013","doc_count": "3","date_range": {"doc_count": "1","available": {"buckets": [{"key": "*-2023-07-25","to": "1690243200000.0","to_as_string": "2023-07-25","doc_count": "3"},{"key": "2023-07-25-*","from": "1690243200000.0","from_as_string": "2023-07-25","doc_count": "0"}]}},"Data Type": {"doc_count": "0","Data Type": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"Distributor": {"doc_count": "0","Distributor": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"Data Language": {"doc_count": "1","Data Language": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"Temporal": {"doc_count": "1","Temporal": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"Access": {"doc_count": "1","Access": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"no_available": {"doc_count": "0"},"Topic": {"doc_count": "1","Topic": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}},"Location": {"doc_count": "1","Location": {"doc_count_error_upper_bound": "0","sum_order_doc_count": "0","buckets": []}}}]}}}
     result = combine_aggs(other_agg)
     assert test == result
+
+
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_result_download_ui -v -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_result_download_ui(app):
+    valid_json = [{
+        "id": 0,
+        "name": {
+            "i18n": "title",
+            "en": "Title",
+            "ja": "タイトル"
+        },
+        "roCrateKey": "title"
+    }]
+    with open('tests/data/rocrate/rocrate_list.json', 'r') as f:
+        search_result = json.load(f)
+
+    with app.test_request_context():
+        with patch('weko_search_ui.utils.search_results_to_tsv', return_value=StringIO('test')):
+            # 9 execute
+            res = result_download_ui(search_result, valid_json)
+            assert res.status_code == 200
+
+            # 10 Empty search_result
+            with pytest.raises(NotFound):
+                res = result_download_ui(None, valid_json)
+
+
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_search_results_to_tsv -v -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_search_results_to_tsv(app):
+    valid_json = [
+        {
+            "id": 0,
+            "name": {
+                "i18n": "title",
+                "en": "Title",
+                "ja": "タイトル"
+            },
+            "roCrateKey": "title"
+        },
+        {
+            "id": 1,
+            "name": {
+                "i18n": "field",
+                "en": "Field",
+                "ja": "分野"
+            },
+            "roCrateKey": "genre"
+        },
+    ]
+    with open('tests/data/rocrate/rocrate_list.json', 'r') as f:
+        search_result = json.load(f)
+
+    with app.test_request_context():
+        # 11 Execute
+        with patch('weko_search_ui.utils.create_tsv_row', return_value={"Title": "Sample Title","Field": "Sample Field"}):
+            res = search_results_to_tsv(search_result, valid_json)
+            assert res.getvalue() == "Title\tField\nSample Title\tSample Field\n"
+
+        # 12 Empty json
+        input_json = [{}]
+        with patch('weko_search_ui.utils.create_tsv_row', return_value={}):
+            try:
+                search_results_to_tsv(search_result, input_json)
+                assert True
+            except:
+                assert False
+
+
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_create_tsv_row -v -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_create_tsv_row(app):
+    field_rocrate_dict = {'Title': 'title', 'Field': 'genre'}
+    with open('tests/data/rocrate/rocrate_list.json', 'r') as f:
+        search_result = json.load(f)
+
+    data_response = [
+        graph for graph in search_result[0]['metadata']['@graph']
+        if graph.get('@id') == './'
+    ][0]
+
+    with app.test_request_context():
+        # 13 Execute
+        res = create_tsv_row(field_rocrate_dict, data_response)
+        assert res == {
+            'Title': 'メタボリックシンドロームモデルマウスの多臓器遺伝子発現量データ',
+            'Field': '生物学'
+        }
+
+
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_handle_flatten_data_encode_filename -v -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_handle_flatten_data_encode_filename(app, tmpdir):
+    # Arrange
+    def _create_files_from_files_info(list_record, data_path):
+        for item in list_record:
+            metadata = item.get("metadata")
+            files_info = metadata.get("files_info")
+            for file_info in files_info:
+                key = file_info.get("key")
+                for file in metadata.get(key, []):
+                    filename = file.get("filename")
+                    if not filename:
+                        continue
+                    # get file directory
+                    file_dir = os.path.join(data_path, os.path.dirname(filename))
+                    # create directory if not exists
+                    os.makedirs(file_dir, exist_ok=True)
+                    # create file
+                    file_path = os.path.join(data_path, filename)
+                    with open(file_path, "w") as f:
+                        f.write(f"This is a placeholder for {filename}")
+
+    data_path = tmpdir.mkdir("data")
+    with open("tests/data/list_records/list_record_handle_flatten_data_encode_filename.json", "r") as json_file:
+        list_record = json.load(json_file)
+    with open("tests/data/list_records/list_record_handle_flatten_data_encode_filename_expected.json", "r") as json_file:
+        expected_list_record = json.load(json_file)
+
+    # Create files from files_info
+    _create_files_from_files_info(list_record, data_path)
+
+    # Act
+    with patch("weko_search_ui.utils.current_app.logger") as mock_logger:
+        handle_flatten_data_encode_filename(list_record, data_path)
+
+    # Assert
+    assert list_record == expected_list_record
+    for filepath in list_record[0].get("file_path"):
+        assert os.path.exists(os.path.join(data_path, filepath))
+
+
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_get_priority -v -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_get_priority():
+    """
+    get_priority 関数の動作をテストする。
+    各ケースで期待される優先度が返されることを確認する。
+    """
+    # テストケース 1: すべての sele_id が 'isSupplementTo' で、すべての item_id が数字でない場合
+    link_data_1 = [
+        {'sele_id': 'isSupplementTo', 'item_id': 'abc'},
+        {'sele_id': 'isSupplementTo', 'item_id': 'def'}
+    ]
+    assert get_priority(link_data_1) == 1  # 最高優先度
+
+    # テストケース 2: すべての sele_id が 'isSupplementTo' で、一部の item_id が数字でない場合
+    link_data_2 = [
+        {'sele_id': 'isSupplementTo', 'item_id': '123'},
+        {'sele_id': 'isSupplementTo', 'item_id': 'abc'}
+    ]
+    assert get_priority(link_data_2) == 2  # 第二優先度
+
+    # テストケース 3: 一部の sele_id が 'isSupplementTo' で、対応する item_id が数字でない場合
+    link_data_3 = [
+        {'sele_id': 'isSupplementTo', 'item_id': 'abc'},
+        {'sele_id': 'isSupplementedBy', 'item_id': '123'}
+    ]
+    assert get_priority(link_data_3) == 3  # 第三優先度
+
+    # テストケース 4: すべての sele_id が 'isSupplementTo' で、すべての item_id が数字の場合
+    link_data_4 = [
+        {'sele_id': 'isSupplementTo', 'item_id': '123'},
+        {'sele_id': 'isSupplementTo', 'item_id': '456'}
+    ]
+    assert get_priority(link_data_4) == 4  # 第四優先度
+
+    # テストケース 5: すべての sele_id が 'isSupplementedBy' の場合
+    link_data_5 = [
+        {'sele_id': 'isSupplementedBy', 'item_id': '123'},
+        {'sele_id': 'isSupplementedBy', 'item_id': '456'}
+    ]
+    assert get_priority(link_data_5) == 5  # 最低優先度
+
+    # テストケース 6: その他の場合
+    link_data_6 = [
+        {'sele_id': 'normal', 'item_id': '123'},
+        {'sele_id': 'isSupplementTo', 'item_id': '456'}
+    ]
+    assert get_priority(link_data_6) == 6  # その他のケース
+
+
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::TestHandleCheckAuthorsPrefix -v -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+class TestHandleCheckAuthorsPrefix:
+
+    @pytest.fixture()
+    def authors_prefix_settings(self, db):
+        apss = list()
+        apss.append(AuthorsPrefixSettings(name="WEKO",scheme="WEKO"))
+        apss.append(AuthorsPrefixSettings(name="ORCID",scheme="ORCID",url="https://orcid.org/##"))
+        apss.append(AuthorsPrefixSettings(name="CiNii",scheme="CiNii",url="https://ci.nii.ac.jp/author/##"))
+        apss.append(AuthorsPrefixSettings(name="KAKEN2",scheme="KAKEN2",url="https://nrid.nii.ac.jp/nrid/##"))
+        apss.append(AuthorsPrefixSettings(name="ROR",scheme="ROR",url="https://ror.org/##"))
+        db.session.add_all(apss)
+        db.session.commit()
+        return apss
+
+    def test_handle_check_authors_prefix_no_nameidentifiers(self, db, authors_prefix_settings):
+        """
+        正常系
+        条件：nameIdentifiersを含まないレコードの場合
+        入力：nameIdentifiersがないレコードのリスト
+        期待結果：errorsが追加されない
+        """
+        # モックデータ
+        list_record = [
+            {
+                "metadata": {
+                    "authors": [{"name": "Author 1"}, {"name": "Author 2"}]
+                }
+            }
+        ]
+
+        # AuthorsPrefixSettingsのモック
+        with patch('weko_authors.models.AuthorsPrefixSettings') as MockSettings:
+            mock_setting = MagicMock()
+            mock_setting.scheme = "ORCID"
+            MockSettings.query.all.return_value = [mock_setting]
+
+            # テスト対象関数を実行
+            handle_check_authors_prefix(list_record)
+
+            # 検証
+            assert "errors" not in list_record[0]
+
+
+    def test_handle_check_authors_prefix_valid_scheme(self, db, authors_prefix_settings):
+        """
+        正常系
+        条件：すべてのnameIdentifierSchemeが許可されたスキームである場合
+        入力：有効なスキームを持つレコードのリスト
+        期待結果：errorsが追加されない
+        """
+        # モックデータ
+        list_record = [
+            {
+                "metadata": {
+                    "authors": [
+                        {
+                            "name": "Author 1",
+                            "nameIdentifiers": [
+                                {"nameIdentifierScheme": "ORCID", "nameIdentifier": "0000-0001-2345-6789"}
+                            ]
+                        }
+                    ]
+                }
+            }
+        ]
+
+        # AuthorsPrefixSettingsのモック
+        with patch('weko_authors.models.AuthorsPrefixSettings') as MockSettings:
+            mock_setting = MagicMock()
+            mock_setting.scheme = "ORCID"
+            MockSettings.query.all.return_value = [mock_setting]
+
+            # テスト対象関数を実行
+            handle_check_authors_prefix(list_record)
+
+            # 検証
+            assert "errors" not in list_record[0]
+
+
+    def test_handle_check_authors_prefix_invalid_scheme(self, db, authors_prefix_settings):
+        """
+        異常系
+        条件：nameIdentifierSchemeが許可されていないスキームである場合
+        入力：無効なスキームを持つレコードのリスト
+        期待結果：errorsに該当するエラーメッセージが追加される
+        """
+        # モックデータ
+        list_record = [
+            {
+                "metadata": {
+                    "authors": [
+                        {
+                            "name": "Author 1",
+                            "nameIdentifiers": [
+                                {"nameIdentifierScheme": "INVALID", "nameIdentifier": "0000-0001-2345-6789"}
+                            ]
+                        }
+                    ]
+                }
+            }
+        ]
+
+        # AuthorsPrefixSettingsのモック
+        with patch('weko_authors.models.AuthorsPrefixSettings') as MockSettings:
+            mock_setting = MagicMock()
+            mock_setting.scheme = "ORCID"
+            MockSettings.query.all.return_value = [mock_setting]
+
+            # テスト対象関数を実行
+            handle_check_authors_prefix(list_record)
+
+            # 検証
+            assert "errors" in list_record[0]
+            assert '"INVALID" is not one of [\'WEKO\', \'ORCID\', \'CiNii\', \'KAKEN2\', \'ROR\'] in authors' in list_record[0]["errors"]
+
+
+    def test_handle_check_authors_prefix_dict_instead_of_list(self, db, authors_prefix_settings):
+        """
+        正常系
+        条件：authorsが配列ではなくオブジェクト（辞書）である場合
+        入力：authorsがオブジェクトのレコードのリスト
+        期待結果：正しく処理され、無効なスキームがあればエラーが追加される
+        """
+        # モックデータ
+        list_record = [
+            {
+                "metadata": {
+                    "authors": {
+                        "name": "Author 1",
+                        "nameIdentifiers": [
+                            {"nameIdentifierScheme": "INVALID", "nameIdentifier": "0000-0001-2345-6789"}
+                        ]
+                    }
+                }
+            }
+        ]
+
+        # AuthorsPrefixSettingsのモック
+        with patch('weko_authors.models.AuthorsPrefixSettings') as MockSettings:
+            mock_setting = MagicMock()
+            mock_setting.scheme = "ORCID"
+            MockSettings.query.all.return_value = [mock_setting]
+
+            # テスト対象関数を実行
+            handle_check_authors_prefix(list_record)
+
+            # 検証
+            assert "errors" in list_record[0]
+            assert '"INVALID" is not one of [\'WEKO\', \'ORCID\', \'CiNii\', \'KAKEN2\', \'ROR\'] in authors' in list_record[0]["errors"]
+
+
+    def test_handle_check_authors_prefix_nested_structure(self, db, authors_prefix_settings):
+        """
+        正常系
+        条件：複雑なネスト構造を持つメタデータの場合
+        入力：複雑なネスト構造を持つレコードのリスト
+        期待結果：すべてのエラーが正しく検出される
+        """
+        # モックデータ
+        list_record = [
+            {
+                "metadata": {
+                    "contributors": [
+                        {
+                            "name": "Contributor 1",
+                            "nameIdentifiers": [
+                                {"nameIdentifierScheme": "INVALID1", "nameIdentifier": "0000-0001-2345-6789"}
+                            ]
+                        }
+                    ],
+                    "creator": {
+                        "name": "Creator 1",
+                        "nameIdentifiers": [
+                            {"nameIdentifierScheme": "INVALID2", "nameIdentifier": "0000-0001-2345-6789"}
+                        ]
+                    }
+                }
+            }
+        ]
+
+        # AuthorsPrefixSettingsのモック
+        with patch('weko_authors.models.AuthorsPrefixSettings') as MockSettings:
+            mock_setting = MagicMock()
+            mock_setting.scheme = "ORCID"
+            MockSettings.query.all.return_value = [mock_setting]
+
+            # テスト対象関数を実行
+            handle_check_authors_prefix(list_record)
+
+            # 検証
+            assert "errors" in list_record[0]
+            assert len(list_record[0]["errors"]) == 2
+            assert '"INVALID1" is not one of [\'WEKO\', \'ORCID\', \'CiNii\', \'KAKEN2\', \'ROR\'] in contributors' in list_record[0]["errors"]
+            assert '"INVALID2" is not one of [\'WEKO\', \'ORCID\', \'CiNii\', \'KAKEN2\', \'ROR\'] in creator' in list_record[0]["errors"]
+
+
+    def test_handle_check_authors_prefix_existing_errors(self, db, authors_prefix_settings):
+        """
+        正常系
+        条件：既にエラーがあるレコードの場合
+        入力：既存のエラーを持つレコードのリスト
+        期待結果：既存のエラーに新しいエラーが追加される
+        """
+        # モックデータ
+        list_record = [
+            {
+                "metadata": {
+                    "authors": [
+                        {
+                            "name": "Author 1",
+                            "nameIdentifiers": [
+                                {"nameIdentifierScheme": "INVALID", "nameIdentifier": "0000-0001-2345-6789"}
+                            ]
+                        }
+                    ],
+                    "test1":{"test":"test"},
+                    "test2":"test2"
+                },
+                "errors": ["Existing error"]
+            }
+        ]
+
+        # AuthorsPrefixSettingsのモック
+        with patch('weko_authors.models.AuthorsPrefixSettings') as MockSettings:
+            mock_setting = MagicMock()
+            mock_setting.scheme = "ORCID"
+            MockSettings.query.all.return_value = [mock_setting]
+
+            # テスト対象関数を実行
+            handle_check_authors_prefix(list_record)
+
+            # 検証
+            assert "errors" in list_record[0]
+            assert len(list_record[0]["errors"]) == 2
+            assert "Existing error" in list_record[0]["errors"]
+            assert '"INVALID" is not one of [\'WEKO\', \'ORCID\', \'CiNii\', \'KAKEN2\', \'ROR\'] in authors' in list_record[0]["errors"]
+
+
+    def test_handle_check_authors_prefix_none_scheme(self, db, authors_prefix_settings):
+        """
+        正常系
+        条件：nameIdentifierSchemeがNoneの場合
+        入力：nameIdentifierSchemeがNoneのレコードのリスト
+        期待結果：エラーが追加されない
+        """
+        # モックデータ
+        list_record = [
+            {
+                "metadata": {
+                    "authors": [
+                        {
+                            "name": "Author 1",
+                            "nameIdentifiers": [
+                                {"nameIdentifierScheme": None, "nameIdentifier": "0000-0001-2345-6789"}
+                            ]
+                        }
+                    ]
+                }
+            }
+        ]
+
+        # AuthorsPrefixSettingsのモック
+        with patch('weko_authors.models.AuthorsPrefixSettings') as MockSettings:
+            mock_setting = MagicMock()
+            mock_setting.scheme = "ORCID"
+            MockSettings.query.all.return_value = [mock_setting]
+
+            # テスト対象関数を実行
+            handle_check_authors_prefix(list_record)
+
+            # 検証
+            assert "errors" not in list_record[0]
+
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::TestHandleCheckAuthorsAffiliation -v -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+class TestHandleCheckAuthorsAffiliation:
+
+    @pytest.fixture()
+    def authors_affiliation_settings(self, db):
+        aass = list()
+        aass.append(AuthorsAffiliationSettings(name="ISNI",scheme="ISNI",url="http://www.isni.org/isni/##"))
+        aass.append(AuthorsAffiliationSettings(name="ROR",scheme="ROR",url="https://ror.org/##"))
+        db.session.add_all(aass)
+        db.session.commit()
+
+        return aass
+
+    @pytest.fixture
+    def mock_settings(self, app, db):
+        """AuthorsAffiliationSettingsをモックする"""
+        setting1 = MagicMock()
+        setting1.scheme = "ROR"
+        setting2 = MagicMock()
+        setting2.scheme = "ISNI"
+
+        with patch('weko_authors.models.AuthorsAffiliationSettings') as mock_settings:
+            mock_settings.query.all.return_value = [setting1, setting2]
+            yield mock_settings
+
+    def test_no_affiliations(self, mock_settings, app, db):
+        """
+        正常系
+        条件：所属機関情報がない場合
+        入力：所属機関情報を含まないレコード
+        期待結果：errorsフィールドが追加されない
+        """
+        list_record = [
+            {
+                "metadata": {
+                    "title": "Test Title",
+                    "authors": []
+                }
+            }
+        ]
+
+        handle_check_authors_affiliation(list_record)
+
+        assert "errors" not in list_record[0]
+
+    def test_creator_valid_scheme(self, mock_settings, app, db, authors_affiliation_settings):
+        """
+        正常系
+        条件：creatorAffiliationsに有効なスキームがある場合
+        入力：RORスキームを持つcreatorAffiliations
+        期待結果：errorsフィールドが追加されない
+        """
+        list_record = [
+            {
+                "metadata": {
+                    "creator": {
+                        "creatorName": "Test Author",
+                        "creatorAffiliations": [
+                            {
+                                "affiliationName": "Test University",
+                                "affiliationNameIdentifiers": [
+                                    {
+                                        "affiliationNameIdentifier": "https://ror.org/12345",
+                                        "affiliationNameIdentifierScheme": "ROR"
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                }
+            }
+        ]
+
+        handle_check_authors_affiliation(list_record)
+
+        assert "errors" not in list_record[0]
+
+    def test_creator_invalid_scheme(self, mock_settings, app, db):
+        """
+        異常系
+        条件：creatorAffiliationsに無効なスキームがある場合
+        入力：無効なDOIスキームを持つcreatorAffiliations
+        期待結果：errorsフィールドにエラーメッセージが追加される
+        """
+        list_record = [
+            {
+                "metadata": {
+                    "creator": {
+                        "creatorName": "Test Author",
+                        "creatorAffiliations": [
+                            {
+                                "affiliationName": "Test University",
+                                "affiliationNameIdentifiers": [
+                                    {
+                                        "affiliationNameIdentifier": "10.12345/67890",
+                                        "affiliationNameIdentifierScheme": "DOI"
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                }
+            }
+        ]
+
+        handle_check_authors_affiliation(list_record)
+
+        assert "errors" in list_record[0]
+        assert len(list_record[0]["errors"]) == 1
+        assert '"DOI" is not one of' in list_record[0]["errors"][0]
+        assert "creator" in list_record[0]["errors"][0]
+
+    def test_creator_list_invalid_scheme(self, mock_settings, app, db):
+        """
+        異常系
+        条件：リスト形式のcreatorに無効なスキームがある場合
+        入力：無効なスキームを持つcreatorのリスト
+        期待結果：errorsフィールドにエラーメッセージが追加される
+        """
+        list_record = [
+            {
+                "metadata": {
+                    "creators": [
+                        {
+                            "creatorName": "Test Author 1",
+                            "creatorAffiliations": [
+                                {
+                                    "affiliationName": "Test University",
+                                    "affiliationNameIdentifiers": [
+                                        {
+                                            "affiliationNameIdentifier": "12345",
+                                            "affiliationNameIdentifierScheme": "GRID"
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                }
+            }
+        ]
+
+        handle_check_authors_affiliation(list_record)
+
+        assert "errors" in list_record[0]
+        assert len(list_record[0]["errors"]) == 1
+        assert '"GRID" is not one of' in list_record[0]["errors"][0]
+        assert "creators" in list_record[0]["errors"][0]
+
+    def test_contributor_valid_scheme(self, mock_settings, app, db, authors_affiliation_settings):
+        """
+        正常系
+        条件：contributorAffiliationsに有効なスキームがある場合
+        入力：ISNIスキームを持つcontributorAffiliations
+        期待結果：errorsフィールドが追加されない
+        """
+        list_record = [
+            {
+                "metadata": {
+                    "contributor": {
+                        "contributorName": "Test Contributor",
+                        "contributorAffiliations": [
+                            {
+                                "affiliationName": "Test Organization",
+                                "affiliationNameIdentifiers": [
+                                    {
+                                        "affiliationNameIdentifier": "0000-0001-2345-6789",
+                                        "affiliationNameIdentifierScheme": "ISNI"
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                }
+            }
+        ]
+
+        handle_check_authors_affiliation(list_record)
+
+        assert "errors" not in list_record[0]
+
+    def test_contributor_invalid_scheme(self, mock_settings, app, db):
+        """
+        異常系
+        条件：contributorAffiliationsに無効なスキームがある場合
+        入力：無効なスキームを持つcontributorAffiliations
+        期待結果：errorsフィールドにエラーメッセージが追加される
+        """
+        list_record = [
+            {
+                "metadata": {
+                    "contributor": {
+                        "contributorName": "Test Contributor",
+                        "contributorAffiliations": [
+                            {
+                                "affiliationName": "Test Organization",
+                                "affiliationNameIdentifiers": [
+                                    {
+                                        "affiliationNameIdentifier": "12345",
+                                        "affiliationNameIdentifierScheme": "ORCID"
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                }
+            }
+        ]
+
+        handle_check_authors_affiliation(list_record)
+
+        assert "errors" in list_record[0]
+        assert len(list_record[0]["errors"]) == 1
+        assert '"ORCID" is not one of' in list_record[0]["errors"][0]
+        assert "contributor" in list_record[0]["errors"][0]
+
+    def test_contributor_list_invalid_scheme(self, mock_settings, app, db):
+        """
+        異常系
+        条件：リスト形式のcontributorに無効なスキームがある場合
+        入力：無効なスキームを持つcontributorのリスト
+        期待結果：errorsフィールドにエラーメッセージが追加される
+        """
+        list_record = [
+            {
+                "metadata": {
+                    "contributors": [
+                        {
+                            "contributorName": "Test Contributor 1",
+                            "contributorAffiliations": [
+                                {
+                                    "affiliationName": "Test Organization",
+                                    "affiliationNameIdentifiers": [
+                                        {
+                                            "affiliationNameIdentifier": "12345",
+                                            "affiliationNameIdentifierScheme": "Scopus"
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                }
+            }
+        ]
+
+        handle_check_authors_affiliation(list_record)
+
+        assert "errors" in list_record[0]
+        assert len(list_record[0]["errors"]) == 1
+        assert '"Scopus" is not one of' in list_record[0]["errors"][0]
+        assert "contributors" in list_record[0]["errors"][0]
+
+    def test_existing_errors(self, mock_settings, app, db):
+        """
+        正常系
+        条件：既存のerrorsフィールドがある場合に新しいエラーを追加する
+        入力：既存のerrorsフィールドと無効なスキーム
+        期待結果：既存のerrorsに新しいエラーが追加される
+        """
+        list_record = [
+            {
+                "metadata": {
+                    "creator": {
+                        "creatorName": "Test Author",
+                        "creatorAffiliations": [
+                            {
+                                "affiliationName": "Test University",
+                                "affiliationNameIdentifiers": [
+                                    {
+                                        "affiliationNameIdentifier": "12345",
+                                        "affiliationNameIdentifierScheme": "Wikidata"
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                },
+                "errors": ["Existing error"]
+            }
+        ]
+
+        handle_check_authors_affiliation(list_record)
+
+        assert "errors" in list_record[0]
+        assert len(list_record[0]["errors"]) == 2
+        assert "Existing error" == list_record[0]["errors"][0]
+        assert '"Wikidata" is not one of' in list_record[0]["errors"][1]
+
+    def test_multiple_invalid_schemes(self, mock_settings, app, db):
+        """
+        異常系
+        条件：複数の無効なスキームがある場合
+        入力：複数の無効なスキームを持つクリエイターとコントリビューター
+        期待結果：すべてのエラーがerrorsフィールドに追加される
+        """
+        list_record = [
+            {
+                "metadata": {
+                    "creator": {
+                        "creatorName": "Test Author",
+                        "creatorAffiliations": [
+                            {
+                                "affiliationName": "Test University",
+                                "affiliationNameIdentifiers": [
+                                    {
+                                        "affiliationNameIdentifier": "12345",
+                                        "affiliationNameIdentifierScheme": "Wikidata"
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    "contributor": {
+                        "contributorName": "Test Contributor",
+                        "contributorAffiliations": [
+                            {
+                                "affiliationName": "Test Organization",
+                                "affiliationNameIdentifiers": [
+                                    {
+                                        "affiliationNameIdentifier": "12345",
+                                        "affiliationNameIdentifierScheme": "ORCID"
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                }
+            }
+        ]
+
+        handle_check_authors_affiliation(list_record)
+
+        assert "errors" in list_record[0]
+        assert len(list_record[0]["errors"]) == 2
+        assert any('"Wikidata" is not one of' in error for error in list_record[0]["errors"])
+        assert any('"ORCID" is not one of' in error for error in list_record[0]["errors"])
+
+    def test_none_scheme(self, mock_settings, app, db):
+        """
+        正常系
+        条件：スキームがNoneの場合
+        入力：affiliationNameIdentifierSchemeがNoneのレコード
+        期待結果：エラーは追加されない（条件にscheme is not Noneがあるため）
+        """
+        list_record = [
+            {
+                "metadata": {
+                    "creator": {
+                        "creatorName": "Test Author",
+                        "creatorAffiliations": [
+                            {
+                                "affiliationName": "Test University",
+                                "affiliationNameIdentifiers": [
+                                    {
+                                        "affiliationNameIdentifier": "12345",
+                                        "affiliationNameIdentifierScheme": None
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                }
+            }
+        ]
+
+        handle_check_authors_affiliation(list_record)
+
+        assert "errors" not in list_record[0]
