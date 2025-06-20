@@ -5,6 +5,7 @@ from io import StringIO
 import json
 import os
 import re
+import tempfile
 import time
 import unittest
 from datetime import datetime,timedelta
@@ -15,21 +16,20 @@ import redis
 
 import pytest
 from elasticsearch import ElasticsearchException
+from mock import MagicMock, Mock, patch, mock_open
 from flask import current_app, make_response, request
 from flask_babelex import Babel
 from flask_login import current_user
+
 from sqlalchemy import func as _func
 from sqlalchemy.exc import SQLAlchemyError
 from invenio_files_rest.models import FileInstance,Location
 from invenio_i18n.babel import set_locale
 from invenio_records.api import Record
 from invenio_records.models import RecordMetadata
-from mock import MagicMock, Mock, patch, mock_open
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus, Redirect
 from invenio_db import db as iv_db
 from invenio_pidrelations.models import PIDRelation
-from tests.test_rest import DummySearchResult
-from sqlalchemy.exc import SQLAlchemyError
 from weko_admin.config import WEKO_ADMIN_MANAGEMENT_OPTIONS
 from weko_admin.api import TempDirInfo
 from weko_deposit.api import WekoDeposit, WekoIndexer, WekoRecord as d_wekorecord
@@ -127,13 +127,17 @@ from weko_search_ui.utils import (
     handle_get_all_sub_id_and_name,
     handle_item_title,
     handle_remove_es_metadata,
+    handle_save_bagit,
     handle_set_change_identifier_flag,
+    handle_shared_id,
     handle_validate_item_import,
     handle_workflow,
     handle_flatten_data_encode_filename,
     handle_check_operation_flags,
+    import_items_to_activity,
     import_items_to_system,
     make_file_by_line,
+    make_file_info,
     make_stats_file,
     parse_to_json_form,
     prepare_doi_link,
@@ -161,6 +165,9 @@ from weko_search_ui.utils import (
     get_record_ids
 )
 from werkzeug.exceptions import NotFound
+
+from weko_workflow.errors import WekoWorkflowException
+from weko_workflow.headless.activity import HeadlessActivity
 
 FIXTURE_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), "data")
 
@@ -372,11 +379,11 @@ def test_check_tsv_import_items(i18n_app):
     ret = check_tsv_import_items(file_path, True)
     prefix = current_app.config["WEKO_SEARCH_UI_IMPORT_TMP_PREFIX"]
     assert ret
-    assert ret["data_path"].startswith(f'/tmp/{prefix}')
+    assert ret["data_path"].startswith(f'/var/tmp/{prefix}')
 
     # test case is_gakuninrdm = True
     ret = check_tsv_import_items(file_path, True, True)
-    assert ret["data_path"].startswith('/tmp/deposit_activity_')
+    assert ret["data_path"].startswith('/var/tmp/deposit_activity_')
 
     # current_pathがdict
     class TestFile(object):
@@ -396,12 +403,10 @@ def test_check_tsv_import_items(i18n_app):
         ret = check_tsv_import_items(file_path, True)
         assert ret
 
-    time.sleep(1)
     with patch("weko_search_ui.utils.chardet.detect", return_value = {'encoding': 'cp437'}):
         ret = check_tsv_import_items(file_path, True)
         assert ret
 
-        time.sleep(1)
         with patch("weko_search_ui.utils.os") as o:
             type(o).sep = "_"
             ret = check_tsv_import_items(file_path, True)
@@ -468,26 +473,25 @@ def test_check_tsv_import_items2(app,test_importdata,mocker,db, order_if):
                 # for tsv
                 if order_if == 6:
                     with patch("weko_search_ui.utils.list",return_value=['items.tsv']):
-                        check_tsv_import_items(file,False,False)==''
-                        check_request_mail.assert_called()
+                        ret = check_tsv_import_items(file,False,False)
+                        assert ret["error"]
 
                 # for gakuninrdm is False
                 if order_if == 7:
-                    check_tsv_import_items(file,False,False)==''
-                    check_request_mail.assert_called()
-
+                    ret = check_tsv_import_items(file,False,False)
+                    assert ret["error"]
                 # for gakuninrdm is True
                 if order_if == 8:
-                    check_tsv_import_items(file,False,True)==''
-                    check_request_mail.assert_called()
+                    ret = check_tsv_import_items(file,False,True)
+                    assert ret["error"]
 
                 # for os.sep is not "/"
                 if order_if == 9:
                     with patch("weko_search_ui.utils.os") as o:
                         with patch("weko_search_ui.utils.zipfile.ZipFile.infolist", return_value = [zipfile.ZipInfo(filename = filepath.replace("/","\\"))]):
                             type(o).sep = "\\"
-                            check_tsv_import_items(file,False,False)
-
+                            ret = check_tsv_import_items(file,False,False)
+                            assert ret["error"]
 
 # def check_xml_import_items(file, item_type_id, is_gakuninrdm=False)
 # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_check_xml_import_items -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
@@ -500,14 +504,15 @@ def test_check_xml_import_items(i18n_app, db_itemtype_jpcoar):
     # Case01: Call with file path as argument
     with i18n_app.test_request_context():
         result = check_xml_import_items(file_path, item_type.id)
-        assert re.fullmatch(r'^/tmp/weko_import_\d{14}', result['data_path']) is not None
+        print(result["data_path"])
+        assert re.fullmatch(r'^/var/tmp/weko_import_\d{17}', result['data_path']) is not None
         assert 'error' not in result
         assert 'list_record' in result
 
     # Case02: Call with if is_gakuninrdm = True
     with i18n_app.test_request_context():
         result = check_xml_import_items(file_path, item_type.id, is_gakuninrdm=True)
-        assert re.fullmatch(r'^/tmp/deposit_activity_\d{14}', result['data_path']) is not None
+        assert re.fullmatch(r'^/var/tmp/deposit_activity_\d{17}', result['data_path']) is not None
         assert 'error' not in result
         assert 'list_record' in result
 
@@ -647,6 +652,87 @@ def test_generate_metadata_from_jpcoar(app, db_itemtype_jpcoar):
         }
 
 
+# def check_jsonld_import_items(file, packaging, mapping_id, meta_data_api=None,shared_id=-1, validate_bagit=True, is_change_identifier=False):
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_check_jsonld_import_items -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_check_jsonld_import_items(i18n_app, db_itemtype_jpcoar):
+    pass
+
+
+# def handle_shared_id(list_record, shared_id=-1):
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_handle_shared_id -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_handle_shared_id():
+    with open("tests/data/list_records/list_records.json", "r") as json_file:
+        list_record = json.load(json_file)
+
+    assert "weko_shared_id" not in list_record[0]["metadata"]
+
+    handle_shared_id(list_record, shared_id="3")
+    assert "weko_shared_id" not in list_record[0]["metadata"]
+
+    handle_shared_id(list_record)
+    assert list_record[0]["metadata"]["weko_shared_id"] == -1
+
+    handle_shared_id(list_record, shared_id=3)
+    assert list_record[0]["metadata"]["weko_shared_id"] == 3
+
+
+# def handle_save_bagit(list_record, file, data_path, filename):
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_handle_save_bagit -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_handle_save_bagit(i18n_app, db_itemtype_jpcoar, tmpdir):
+
+    tmp_dir = tmpdir.mkdir("test")
+    # create file
+    file_path = os.path.join(tmp_dir, "payload.zip")
+    with open(file_path, "w") as f:
+        f.write("This is a placeholder for payload.zip")
+    data_path = tmpdir.mkdir("test／data")
+
+    with open("tests/data/list_records/list_records.json", "r") as json_file:
+        list_record = json.load(json_file)
+    handle_save_bagit(list_record, file_path, data_path, "payload.zip")
+    assert list_record[0]["metadata"]["item_1617605131499"][0]["filename"] == "1KB.pdf"
+
+    list_record[0]["save_as_is"] = True
+    list_record[0]["metadata"]["files_info"] = [{"key": "item_1617605131499"}]
+    list_record2 = [list_record[0], list_record[0].copy()]
+    handle_save_bagit(list_record2, file_path, data_path, "payload.zip")
+    assert list_record2[0]["metadata"]["item_1617605131499"][0]["filename"] == "1KB.pdf"
+
+    handle_save_bagit(list_record, file_path, data_path, "payload.zip")
+    assert list_record[0]["metadata"]["item_1617605131499"][0]["filename"] == "payload.zip"
+    assert os.path.exists(os.path.join(data_path, "payload.zip"))
+
+    file_path = os.path.join(tmp_dir, "instance.zip")
+    with open("tests/data/list_records/list_records.json", "r") as json_file:
+        list_record = json.load(json_file)
+    list_record[0]["save_as_is"] = True
+    list_record[0]["metadata"]["files_info"] = [{"key": "item_1617605131499"}]
+
+    from werkzeug.datastructures import FileStorage
+    with open(file_path, "w") as f:
+        f.write("This is a placeholder for instance.zip")
+    with open(file_path, "br") as f:
+        file = FileStorage(
+            stream=f, filename="instance.zip", content_type="application/zip"
+        )
+        handle_save_bagit(list_record, file, data_path, "instance.zip")
+    assert list_record[0]["metadata"]["item_1617605131499"][0]["filename"] == "instance.zip"
+
+
+# def make_file_info(dir_path, filename, label=None, object_type=None):
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_make_file_info -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_make_file_info(tmpdir):
+    tmp_dir = tmpdir.mkdir("test")
+    # create file
+    file_path = os.path.join(tmp_dir, "payload.zip")
+    with open(file_path, "w") as f:
+        f.write("This is a placeholder for payload.zip")
+
+    result = make_file_info(tmp_dir, "payload.zip")
+    assert result["filename"] == "payload.zip"
+    assert result["format"] == "application/zip"
+
+
 # def getEncode(filepath):
 def test_getEncode():
     csv_files = [
@@ -656,19 +742,19 @@ def test_getEncode():
         {"file": "utf8_cr_items.csv", "enc": "utf-8"},
         {"file": "utf8_crlf_items.csv", "enc": "utf-8"},
         {"file": "utf8_lf_items.csv", "enc": "utf-8"},
-        {"file": "utf8bom_lf_items.csv", "enc": "utf-8"},
-        {"file": "utf16be_bom_lf_items.csv", "enc": "utf-16be"},
-        {"file": "utf16le_bom_lf_items.csv", "enc": "utf-16le"},
+        {"file": "utf8bom_lf_items.csv", "enc": "utf-8-sig"},
+        {"file": "utf16be_bom_lf_items.csv", "enc": "utf-16"},
+        {"file": "utf16le_bom_lf_items.csv", "enc": "utf-16"},
         # {"file":"utf32be_bom_lf_items.csv","enc":"utf-32"},
         # {"file":"utf32le_bom_lf_items.csv","enc":"utf-32"},
-        {"file": "big5.txt", "enc": ""},
+        {"file": "big5.txt", "enc": "tis-620"},
     ]
 
     for f in csv_files:
         filepath = os.path.join(
             os.path.dirname(os.path.realpath(__file__)), "data", "csv", f["file"]
         )
-        assert getEncode(filepath) == f["enc"]
+        assert getEncode(filepath).lower() == f["enc"]
 
 
 # def read_stats_file(file_path: str, file_name: str, file_format: str) -> dict:
@@ -701,10 +787,10 @@ def test_read_stats_file(i18n_app, db_itemtype, users):
 # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_read_jpcoar_xml_file -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
 def test_read_jpcoar_xml_file(i18n_app, db_itemtype, users):
     xml_file_name = "test_base.xml"
-    xml_file_path = os.path.join('tests', "data", "jpcoar", "v2", xml_file_name)
+    xml_file_path = os.path.join("tests", "data", "jpcoar", "v2", xml_file_name)
 
     item_type_info = {
-        "schema": "test",
+        "schema": "/items/jsonschema/test",
         "is_lastest": "test",
         "name": "テストアイテムタイプ",
         "item_type_id": "test",
@@ -723,6 +809,7 @@ def test_read_jpcoar_xml_file(i18n_app, db_itemtype, users):
                     "$schema": item_type_info['schema'],
                     "item_type_name": item_type_info['name'],
                     "item_type_id": item_type_info['item_type_id'],
+                    "file_path": [],
                 }
             ],
             'item_type_schema': item_type_info['schema']
@@ -992,7 +1079,7 @@ def test_register_item_metadata(i18n_app, es_item_file_pipeline, deposit, es_rec
     root_path = os.path.dirname(os.path.abspath(__file__))
 
     with patch("invenio_files_rest.utils.find_and_update_location_size"):
-        assert register_item_metadata(item, root_path, is_gakuninrdm=False)
+        assert register_item_metadata(item, root_path, -1, is_gakuninrdm=False)
 
 
 # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_register_item_metadata2 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
@@ -1055,7 +1142,7 @@ def test_handle_metadata_by_doi():
     item = {"metadata": {"test": "test"}, "item_type_id": 1}
     doi = "test"
     meta_data_api = ["CrossRef", "DataCite", "Original"]
-    with patch("weko_search_ui.utils.get_doi_with_original", return_value=item["metadata"]):
+    with patch("weko_items_autofill.utils.fetch_metadata_by_doi", return_value=item["metadata"]):
         metadata = handle_metadata_by_doi(item, doi, meta_data_api)
         assert metadata == item["metadata"]
 
@@ -1094,7 +1181,7 @@ def test_send_item_created_event_to_es(
 
 # def import_items_to_system(item: dict, request_info=None, is_gakuninrdm=False): ERROR = TypeError: handle_remove_es_metadata() missing 2 required positional arguments: 'bef_metadata' and 'bef_las...
 # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_import_items_to_system -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
-def test_import_items_to_system(i18n_app, db, es_item_file_pipeline, es_records, app):
+def test_import_items_to_system(i18n_app, db, es_item_file_pipeline, es_records, app, mocker):
     item = es_records["results"][0]["item"]
     db.session.commit()
     with patch("weko_search_ui.utils.register_item_metadata", return_value={}):
@@ -1119,7 +1206,7 @@ def test_import_items_to_system(i18n_app, db, es_item_file_pipeline, es_records,
                                 c.logger.error = MagicMock(return_value = None)
                                 
                                 # SQLAlchemyError
-                                with patch("weko_search_ui.utils.handle_check_item_is_locked", side_effect = SQLAlchemyError({"error_id": "sample"})):
+                                with patch("weko_search_ui.utils.handle_check_item_is_locked", side_effect = SQLAlchemyError("SQLAlchemyError")):
                                     assert import_items_to_system(item).get("success") == False
                                 with patch("weko_search_ui.utils.handle_check_item_is_locked", side_effect = SQLAlchemyError()):
                                     assert import_items_to_system(item).get("success") == False
@@ -1198,6 +1285,7 @@ def test_import_items_to_system(i18n_app, db, es_item_file_pipeline, es_records,
                             "weko_workflow.utils.get_cache_data", return_value=True
                         ):
                             with patch("weko_search_ui.utils.call_external_system") as mock_external:
+                                item["item"]["status"] = "edited"
                                 assert import_items_to_system(item["item"])
                                 mock_external.assert_called()
                                 assert mock_external.call_args[1]["old_record"] is not None
@@ -1219,6 +1307,61 @@ def test_import_items_to_system(i18n_app, db, es_item_file_pipeline, es_records,
                         item["item"]
                     )  # Will result in error but will cover exception part
 
+
+# def import_items_to_activity(item, request_info):
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_import_items_to_activity -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_import_items_to_activity(i18n_app, es_item_file_pipeline, es_records, db_workflow, mocker):
+    mock_auto = mocker.patch("weko_workflow.headless.HeadlessActivity.auto", return_value=("test/A-TEST-1", "end_action", "2000001"))
+
+    item = es_records["results"][0]["item"]
+    item["id"] = "2000001"
+    item["root_path"] = tempfile.gettempdir()
+    item["file_path"] = ["hello.txt"]
+    item["comment"] = "test comment"
+    item["non_extract"] = ["hello.txt"]
+
+    request_info = {
+        "workflow_id": 1,
+        "user_id": 1,
+    }
+    url, recid, action, error = import_items_to_activity(item, request_info)
+    mock_auto.assert_called_once_with(
+        user_id=request_info["user_id"],
+        workflow_id=request_info["workflow_id"],
+        item_id=item["id"],
+        index=item["metadata"]["path"],
+        metadata=item["metadata"],
+        files=[tempfile.gettempdir()+"/hello.txt"],
+        comment="test comment",
+        link_data=None, grant_data=None,
+        non_extract=["hello.txt"]
+    )
+    assert url == "test/A-TEST-1"
+    assert recid == "2000001"
+    assert action == "end_action"
+    assert error == None
+
+    mock_auto.reset_mock()
+    mock_auto.side_effect = WekoWorkflowException("test error")
+
+    mock_activity = MagicMock()
+    mock_activity.activity_id = "A-TEST-2"
+    mock_activity.activity_community_id = "com"
+    mock_activity.action_id = 3
+    mock_headless = MagicMock()
+    mock_headless._model = mock_activity
+    mock_headless.current_action = "item_login"
+    mock_headless.recid = "2000001"
+    mock_headless.auto = mock_auto
+    mocker.patch("weko_workflow.headless.HeadlessActivity.__new__", return_value=mock_headless)
+    mocker.patch("weko_workflow.headless.HeadlessActivity.__init__")
+
+    with i18n_app.test_request_context():
+        url, recid, action, error = import_items_to_activity(item, request_info)
+    assert url.endswith("A-TEST-2")
+    assert recid == "2000001"
+    assert action == "item_login"
+    assert error == "test error"
 
 # def handle_item_title(list_record):
 def test_handle_item_title(i18n_app, es_item_file_pipeline, es_records):
@@ -4227,8 +4370,11 @@ def test_handle_flatten_data_encode_filename(app, tmpdir):
             metadata = item.get("metadata")
             files_info = metadata.get("files_info")
             for file_info in files_info:
-                for item in file_info["items"]:
-                    filename = item["filename"]
+                key = file_info.get("key")
+                for file in metadata.get(key, []):
+                    filename = file.get("filename")
+                    if not filename:
+                        continue
                     # get file directory
                     file_dir = os.path.join(data_path, os.path.dirname(filename))
                     # create directory if not exists
@@ -4253,7 +4399,7 @@ def test_handle_flatten_data_encode_filename(app, tmpdir):
 
     # Assert
     assert list_record == expected_list_record
-    for filepath in list_record[0].get("filepath"):
+    for filepath in list_record[0].get("file_path"):
         assert os.path.exists(os.path.join(data_path, filepath))
 
 

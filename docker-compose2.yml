@@ -403,7 +403,7 @@ services:
     ports:
       - "8080:8080"
     environment:
-      - ENABLE_PUSH_NOTIFICATIONS=False
+      - ENABLE_PUSH_NOTIFICATIONS=True
       - ICON=/static/images/weko-logo-256.png
       - MONGO_DB_URI=mongodb://inbox:ibpass123@mongo:27017
       - MONGO_DB_NAME=inbox

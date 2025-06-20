@@ -1623,6 +1623,8 @@ class SwordAPIJsonldSettingsView(ModelView):
             return _("Direct_Registration")
         elif model.registration_type == "Workflow":
             return _("WorkFlow_Registration")
+        else:
+            return ""
 
     def _format_metadata_collection(view, context, model, name):
         if len(model.meta_data_api) > 0:

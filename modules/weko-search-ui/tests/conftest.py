@@ -41,7 +41,7 @@ from flask_babelex import lazy_gettext as _
 from flask_celeryext import FlaskCeleryExt
 from flask_login import LoginManager, current_user, login_user
 from flask_menu import Menu
-from mock import Mock, patch, MagicMock
+from unittest.mock import Mock, patch, MagicMock
 from pytest_mock import mocker
 from simplekv.memory.redisstore import RedisStore
 from six import BytesIO
@@ -52,7 +52,7 @@ from sqlalchemy_utils.functions import create_database, database_exists, drop_da
 from werkzeug.local import LocalProxy
 from invenio_records.api import Record
 from invenio_stats.processors import EventsIndexer
-from tests.helpers import create_record, json_data
+from .helpers import create_record, json_data
 
 from invenio_access import InvenioAccess
 from invenio_access.models import ActionRoles, ActionUsers
@@ -142,6 +142,7 @@ from weko_index_tree.api import Indexes
 from weko_index_tree.config import WEKO_INDEX_TREE_REST_ENDPOINTS as _WEKO_INDEX_TREE_REST_ENDPOINTS
 from weko_index_tree.models import Index, IndexStyle
 from weko_items_ui.config import WEKO_ITEMS_UI_FILE_SISE_PREVIEW_LIMIT, WEKO_ITEMS_UI_MS_MIME_TYPE
+from weko_logging.audit import WekoLoggingUserActivity
 from weko_records import WekoRecords
 from weko_records.api import ItemsMetadata, ItemTypes, Mapping, ItemTypeNames
 from weko_records.config import WEKO_ITEMTYPE_EXCLUDED_KEYS
@@ -387,7 +388,7 @@ def base_app(instance_path, search_class, request):
         WEKO_SEARCH_UI_IMPORT_TMP_PREFIX="weko_import_",
         WEKO_AUTHORS_ES_INDEX_NAME="{}-authors".format(index_prefix),
         WEKO_AUTHORS_ES_DOC_TYPE="author-v1.0.0",
-        WEKO_HANDLE_ALLOW_REGISTER_CNRI=True,
+        WEKO_HANDLE_ALLOW_REGISTER_CNRI=False,
         WEKO_PERMISSION_ROLE_USER=[
             "System Administrator",
             "Repository Administrator",
@@ -741,6 +742,7 @@ def base_app(instance_path, search_class, request):
     WekoAdmin(app_)
     WekoIndexTree(app_)
     WekoIndexTreeREST(app_)
+    WekoLoggingUserActivity(app_)
     # WekoTheme(app_)
     # InvenioCommunities(app_)
 
@@ -1245,7 +1247,7 @@ def db_records3(db):
     result = []
     with db.session.begin_nested():
         for d in range(record_num):
-            result.append(create_record(record_data[d], item_data[d]))
+            result.append(create_record(db, record_data[d], item_data[d]))
     db.session.commit()
 
     yield result
@@ -2012,6 +2014,7 @@ def db_itemtype(app, db, make_itemtype):
 
 @pytest.fixture()
 def db_workflow(app, db, db_itemtype, users):
+    item_type_id = db_itemtype["item_type"].id
     action_datas = dict()
     with open("tests/data/actions.json", "r") as f:
         action_datas = json.load(f)
@@ -2071,7 +2074,7 @@ def db_workflow(app, db, db_itemtype, users):
     workflow = WorkFlow(
         flows_id=uuid.uuid4(),
         flows_name="test workflow1",
-        itemtype_id=1,
+        itemtype_id=item_type_id,
         index_tree_id=None,
         flow_id=1,
         is_deleted=False,
@@ -2643,7 +2646,7 @@ def es_records(app, db, db_index, location, db_itemtype, db_oaischema):
 
 
 @pytest.fixture()
-def indextree(client, users):
+def indextree(app, client, users):
     from weko_index_tree.api import Indexes
 
     index_metadata = {
@@ -2651,12 +2654,12 @@ def indextree(client, users):
         "parent": 0,
         "value": "Index(public_state = True,harvest_public_state = True)",
     }
-
-    with patch("flask_login.utils._get_user", return_value=users[2]["obj"]):
-        ret = Indexes.create(0, index_metadata)
-        index = Index.get_index_by_id(1)
-        index.public_state = True
-        index.harvest_public_state = True
+    with app.test_request_context():
+        with patch("flask_login.utils._get_user", return_value=users[2]["obj"]):
+            ret = Indexes.create(0, index_metadata)
+            index = Index.get_index_by_id(1)
+            index.public_state = True
+            index.harvest_public_state = True
 
     index_metadata = {
         "id": 2,
@@ -4003,6 +4006,7 @@ def make_itemtype(app,db):
 
 
         item_type = ItemType(
+            id=id,
             name_id=item_type_name.id,
             harvesting_type=True,
             schema=item_type_schema,

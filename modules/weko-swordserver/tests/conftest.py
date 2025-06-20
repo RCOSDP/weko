@@ -79,6 +79,7 @@ from weko_workflow import WekoWorkflow
 from weko_workflow.models import Action, ActionStatus, FlowAction, FlowDefine, WorkFlow
 from weko_swordserver import WekoSWORDServer
 from weko_swordserver.views import blueprint as weko_swordserver_blueprint
+from weko_logging.audit import WekoLoggingUserActivity
 
 from .helpers import json_data, create_record
 
@@ -172,6 +173,7 @@ def base_app(instance_path):
     WekoItemsUI(app_)
     WekoSchemaUI(app_)
     WekoTheme(app_)
+    WekoLoggingUserActivity(app_)
 
     # InvenioCommunities(app_)
     app_.register_blueprint(invenio_communities_blueprint)

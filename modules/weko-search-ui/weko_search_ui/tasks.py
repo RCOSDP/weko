@@ -52,8 +52,10 @@ from .utils import (
 
 
 @shared_task
-def check_import_items_task(file_path, is_change_identifier: bool, host_url,
-                            lang="en", all_index_permission=True, can_edit_indexes=[]):
+def check_import_items_task(
+    file_path, is_change_identifier: bool, host_url,
+    lang="en", all_index_permission=True, can_edit_indexes=[]
+):
     """Check import items."""
     result = {"start_date": datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
     with current_app.test_request_context(
@@ -86,8 +88,10 @@ def check_import_items_task(file_path, is_change_identifier: bool, host_url,
 
 
 @shared_task
-def check_rocrate_import_items_task(file_path, is_change_identifier: bool,
-                                host_url, packaging, mapping_id, lang="en"):
+def check_rocrate_import_items_task(
+    file_path, is_change_identifier: bool, host_url,
+    packaging, mapping_id, lang="en", can_edit_indexes=[]
+):
     """Check RO-Crate import items.
     Check the contents of an RO-Crate file and processes its metadata.
 
@@ -98,6 +102,7 @@ def check_rocrate_import_items_task(file_path, is_change_identifier: bool,
         packaging (str): Packaging.
         mapping_id (int): Mapping ID.
         lang (str): Language code(default is "en").
+        can_edit_indexes (list): List of editable indexes.
     Returns:
         dict: Check Result.
             - start_date (str): Start date of the check.
@@ -113,7 +118,8 @@ def check_rocrate_import_items_task(file_path, is_change_identifier: bool,
         check_result = check_jsonld_import_items(
             file_path, packaging, mapping_id,
             validate_bagit=False,
-            is_change_identifier=is_change_identifier
+            is_change_identifier=is_change_identifier,
+            can_edit_indexes=can_edit_indexes
         )
         list_record = check_result.get("list_record", [])
         check_flag_metadata_replace(list_record)

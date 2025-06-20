@@ -843,9 +843,12 @@ class ItemRocrateImportView(BaseView):
                     packaging,
                     mapping_id,
                     current_i18n.language,
+                    can_edit_indexes
                 ),
             )
-        return jsonify(code=1, check_rocrate_import_task_id=task.task_id)
+            return jsonify(code=1, check_rocrate_import_task_id=task.task_id)
+        else:
+            return make_response(jsonify({"error": "No file or data provided."}), 400)
 
     @expose("/get_check_status", methods=["POST"])
     def get_check_status(self) -> jsonify:
@@ -1202,7 +1205,7 @@ class ItemBulkExport(BaseView):
             now = datetime.now()
             if (
                 expire and
-                (now-datetime.strptime(expire,"%Y-%m-%d %H:%M:%S")).total_seconds()
+                (datetime.strptime(expire,"%Y-%m-%d %H:%M:%S") - now).total_seconds()
                     <= current_app.config["WEKO_SEARCH_UI_FILE_DOWNLOAD_TTL_BUFFER"]
             ):
                 expire = datetime.strptime(expire,"%Y-%m-%d %H:%M:%S")

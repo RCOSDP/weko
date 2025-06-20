@@ -1,4 +1,4 @@
-FROM python:3.12 as base
+FROM python:3.12-slim as base
 
 ENV PYTHONUNBUFFERED True
 ENV APP_HOME /app
