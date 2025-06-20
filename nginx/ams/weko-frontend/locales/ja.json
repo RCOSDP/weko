@@ -186,7 +186,9 @@
       "getItemDetail": "アイテム詳細情報の取得に失敗しました。",
       "getItemViewsNumber": "アイテムの閲覧数取得に失敗しました。",
       "getDownloadRanking": "ダウンロードランキングの取得に失敗しました。",
-      "getFileDlNumber": "ファイルのダウンロード数取得に失敗しました。"
+      "getFileDlNumber": "ファイルのダウンロード数取得に失敗しました。",
+      "loginFailed": "ログインに失敗しました。管理者に連絡してください。",
+      "noUserInformation": "ユーザ情報がありません。"
     },
     "popup": {
       "loginRequiredMessage": "アイテム閲覧にはログインが必要です。",

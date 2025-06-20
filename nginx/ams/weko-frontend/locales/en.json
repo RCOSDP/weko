@@ -185,7 +185,9 @@
       "getItemDetail": "Failed to get item details.",
       "getItemViewsNumber": "Failed to get the number of views for the item.",
       "getDownloadRanking": "Failed to get download ranking.",
-      "getFileDlNumber": "Failed to get the number of downloaded."
+      "getFileDlNumber": "Failed to get the number of downloaded.",
+      "loginFailed": "Failed to Login. Please contact server administrator.",
+      "noUserInformation": "There is no user information."
     },
     "popup": {
       "loginRequiredMessage": "Login is required to view items.",

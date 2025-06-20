@@ -280,6 +280,31 @@ function throughDblClick() {
   }
 }
 
+/**
+ * Shibbolethログインエラーの処理
+  * @param route
+ */
+function shibbolethLoginError(route: any) {
+  const error = route.query.error || '';
+  if (error) {
+    if (error === "Login is blocked.") {
+      alertCode.value = 403;
+      alertMessage.value = 'message.error.loginFailed';
+    } else if (error === 'There is no user information.') {
+      alertCode.value = 403;
+      alertMessage.value = 'message.error.noUserInformation';
+    } else if (error === 'Server error has occurred. Please contact server administrator.') {
+      alertCode.value = 500;
+      alertMessage.value = 'message.error.server';
+    } else {
+      alertCode.value = 400;
+      alertMessage.value = 'message.error.loginFailed';
+    }
+    alertType.value = 'error';
+    visibleAlert.value = true;
+  }
+}
+
 /* ///////////////////////////////////
 // life cycle
 /////////////////////////////////// */
@@ -299,8 +324,7 @@ onMounted(() => {
     const dsURL = 'https://ds.gakunin.nii.ac.jp/WAYF';
     // const dsURL = 'https://test-ds.gakunin.nii.ac.jp/WAYF';
 
-    const webHostName = 'https://weko3.ir.rcos.nii.ac.jp';
-    // const webHostName = useAppConfig().wekoOrigin;
+    const webHostName = useAppConfig().wekoOrigin;
     const entityID = webHostName + '/shibboleth';
     const handlerURL = webHostName + '/Shibboleth.sso';
     const returnURL = webHostName + '/secure/login.py?next=ams';
@@ -365,5 +389,7 @@ onBeforeMount(() => {
   if (route.query.source !== 'detail') {
     sessionStorage.removeItem("item-url");
   }
+
+  shibbolethLoginError(route);
 });
 </script>
