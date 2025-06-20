@@ -369,12 +369,12 @@ class ShibUser(object):
                         self.shib_user.shib_roles.append(role)
                         return True
 
-                db.session.commit()
-                return False
+            db.session.commit()
+            return False
         except Exception as ex:
-                db.session.rollback()
-                current_app.logger.error(f"Error assigning roles: {ex}")
-                raise
+            db.session.rollback()
+            current_app.logger.error(f"Error assigning roles: {ex}")
+            raise
 
 
     def _assign_roles_to_user(self, map_group_names):
@@ -415,7 +415,7 @@ class ShibUser(object):
                         # Shibbolethユーザーのロールリストに追加
                         self.shib_user.shib_roles.append(role)
 
-                db.session.commit()
+            db.session.commit()
         except Exception as ex:
             current_app.logger.error(f"Error assigning roles: {ex}")
             db.session.rollback()
