@@ -1577,44 +1577,47 @@ class SwordAPIJsonldSettingsView(ModelView):
     create_template = WEKO_ADMIN_SWORD_API_JSONLD_TEMPLATE
     edit_template = WEKO_ADMIN_SWORD_API_JSONLD_TEMPLATE
 
+    column_labels = {
+        "oauth_client.name": _("Application"),
+        "oauth_client.user.email": _("Creator"),
+        "registration_type_id": _("Registration Type"),
+        "mapping.name": _("Mapping"),
+        "workflow.flows_name": _("Workflow"),
+
+    }
     column_list = (
-        "application",
+        "oauth_client.name",
         "active",
-        "creator",
-        "registration_type",
+        "oauth_client.user.email",
+        "registration_type_id",
         "metadata_collection",
         "duplicate_check"
+    )
+    column_filters = (
+        "oauth_client.name",
+        "active",
+        "oauth_client.user.email",
+        "registration_type_id",
+        "duplicate_check",
     )
     column_details_list = (
         "id",
         "created",
         "updated",
-        "application",
+        "oauth_client.name",
         "active",
-        "registration_type",
-        "workflow_name",
-        "mapping_name",
+        "registration_type_id",
+        "workflow.flows_name",
+        "mapping.name",
         "duplicate_check",
         "meta_data_api",
     )
-
-
-    def _format_application_name(view, context, model, name):
-        if not isinstance(model, SwordClientModel):
-            return ""
-        return model.oauth_client.name
 
     def _format_active(view, context, model, name):
         if model.active:
             return _("Active Message")
         else:
             return _("Inactive Message")
-
-    def _format_creator(view, context, model, name):
-        if not isinstance(model, SwordClientModel):
-            return ""
-
-        return model.oauth_client.user.email
 
     def _format_registration_type(view, context, model, name):
         if not isinstance(model, SwordClientModel):
@@ -1623,6 +1626,8 @@ class SwordAPIJsonldSettingsView(ModelView):
             return _("Direct_Registration")
         elif model.registration_type == "Workflow":
             return _("WorkFlow_Registration")
+        else:
+            return ""
 
     def _format_metadata_collection(view, context, model, name):
         if len(model.meta_data_api) > 0:
@@ -1636,33 +1641,19 @@ class SwordAPIJsonldSettingsView(ModelView):
         else:
             return _("Inactive Message")
 
-    def _format_workflow_name(view, context, model, name):
-        if model.workflow_id is None:
-            return ""
-        workflow = WorkFlow()
-        wf = workflow.get_workflow_by_id(model.workflow_id)
-        if wf is None:
-            return ""
-        return wf.flows_name
-
-    def _format_mapping_name(view, context, model, name):
-        if model.mapping_id is None:
-            return ""
-        mapping = JsonldMapping.get_mapping_by_id(model.mapping_id)
-        if mapping is None:
-            return ""
-        return mapping.name
-
     column_formatters = {
-        "application": _format_application_name,
         "active": _format_active,
-        "creator": _format_creator,
-        "registration_type": _format_registration_type,
+        "registration_type_id": _format_registration_type,
         "metadata_collection": _format_metadata_collection,
         "duplicate_check": _format_duplicate_check,
-        "workflow_name": _format_workflow_name,
-        "mapping_name": _format_mapping_name,
+        "created": lambda v, c, m, n: m.created.strftime("%Y-%m-%d %H:%M:%S"),
+        "updated": lambda v, c, m, n: m.updated.strftime("%Y-%m-%d %H:%M:%S"),
     }
+    column_sortable_list = ()
+    column_searchable_list = (
+        "oauth_client.name",
+        "oauth_client.user.email",
+    )
 
     def get_query(self):
         """Get query for SWORD API JSON-LD settings."""
@@ -2036,6 +2027,11 @@ class JsonldMappingView(ModelView):
         "item_type",
         "updated",
     )
+    column_labels = {
+        "name": _("Name"),
+        "item_type.item_type_name.name": _("Item Type"),
+        "updated": _("Updated"),
+    }
     column_details_list = (
         "created",
         "updated",
@@ -2063,6 +2059,8 @@ class JsonldMappingView(ModelView):
     column_formatters = {
         "item_type": _item_type_name,
         "mapping": _formated_jsonld_mapping,
+        "created": lambda v, c, m, n: m.created.strftime("%Y-%m-%d %H:%M:%S"),
+        "updated": lambda v, c, m, n: m.updated.strftime("%Y-%m-%d %H:%M:%S"),
     }
     column_sortable_list = (
         "name",

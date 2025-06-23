@@ -46,10 +46,12 @@ class TestShibSettingView:
             role_list = current_app.config['WEKO_ACCOUNTS_ROLE_LIST']
             attr_list = current_app.config['WEKO_ACCOUNTS_ATTRIBUTE_LIST']
             block_user_list = admin_settings[0].settings['blocked_ePPNs']
-            roles = admin_settings[2].settings
+            role_order = ["gakunin_role", "orthros_outside_role", "extra_role"]
+            roles = {key: admin_settings[2].settings[key] for key in role_order}
             set_language = "en"
             shib_flg = "1"
-            attributes = admin_settings[3].settings
+            attr_order = ["shib_eppn", "shib_role_authority_name", "shib_mail", "shib_user_name"]
+            attributes = {key: admin_settings[3].settings[key] for key in attr_order}
 
             data = {
                 "submit": "shib_form",

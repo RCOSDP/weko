@@ -48,9 +48,6 @@ class ShibSettingView(BaseView):
             attr_list = current_app.config['WEKO_ACCOUNTS_ATTRIBUTE_LIST']
             set_language = _('language')
 
-            block_user_settings = AdminSettings.get('blocked_user_settings')
-            block_user_list = block_user_settings.__dict__['blocked_ePPNs']
-
             shib_eppns = db.session.query(ShibbolethUser.shib_eppn).all()
             enable_login_user_list = [shib_eppn[0] for shib_eppn in shib_eppns]
 

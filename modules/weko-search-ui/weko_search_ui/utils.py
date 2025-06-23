@@ -812,7 +812,8 @@ def generate_metadata_from_jpcoar(data_path: str, filenames: list, item_type_id:
 
 def check_jsonld_import_items(
         file, packaging, mapping_id, meta_data_api=None,
-        shared_id=-1, validate_bagit=True, is_change_identifier=False
+        shared_id=-1, validate_bagit=True, is_change_identifier=False,
+        can_edit_indexes=[]
 ):
     """Validate and check JSON-LD import items.
 
@@ -820,7 +821,7 @@ def check_jsonld_import_items(
     in the manifest files and mapping metadata to the item type.
 
     Args:
-        file (FileStorage | str): File object or file path.
+        file (werkzeug.FileStorage | str): File object or file path.
         packaging (str): Packaging type. SWORDBagIt or SimpleZip.
         mapping_id (int): Mapping ID. Defaults to None.
         meta_data_api (list): Metadata API. Defaults to None.
@@ -829,6 +830,7 @@ def check_jsonld_import_items(
             Validate BagIt. Defaults to True.
         is_change_identifier (bool, optional):
             Change Identifier Mode. Defaults to False.
+        can_edit_indexes (list): List of editable indexes.
 
     Returns:
         dict: Result of mapping to item type
@@ -861,6 +863,7 @@ def check_jsonld_import_items(
     if isinstance(file, str):
         filename = os.path.basename(file)
     else:
+        "werkzeug.datastructures.FileStorage"
         filename = file.filename
 
     try:
@@ -951,7 +954,7 @@ def check_jsonld_import_items(
         handle_item_title(list_record)
         list_record = handle_check_date(list_record)
         handle_check_id(list_record)
-        handle_check_and_prepare_index_tree(list_record, True, [])
+        handle_check_and_prepare_index_tree(list_record, True, can_edit_indexes)
         handle_check_and_prepare_publish_status(list_record)
 
         handle_check_and_prepare_feedback_mail(list_record)
@@ -994,20 +997,8 @@ def check_jsonld_import_items(
             "error": ex.reason
         })
     except Exception as ex:
-        msg = ""
-        if (
-            ex.args
-            and len(ex.args)
-            and isinstance(ex.args[0], dict)
-            and ex.args[0].get("error_msg")
-        ):
-            msg = ex.args[0].get("error_msg")
-            check_result.update({"error": msg})
-        else:
-            msg = str(ex)
-            check_result.update({"error": str(ex)})
-        current_app.logger.error(
-            f"Check items error: {msg}")
+        check_result.update({"error": str(ex)})
+        current_app.logger.error("Unexpected error occurred during import.")
         traceback.print_exc()
 
     return check_result
@@ -1041,7 +1032,7 @@ def handle_save_bagit(list_record, file, data_path, filename):
         data_path (str): Path to save the bagit file.
         filename (str): Name of the bagit file.
     """
-    if not list_record or len(list_record) > 2:
+    if not list_record or len(list_record) > 1:
         # item split flag takes precedence over save Bag flag
         return
 
@@ -2187,7 +2178,7 @@ def import_items_to_system(
                 delete_cache_data(cache_key)
 
         except SQLAlchemyError as ex:
-            current_app.logger.error("sqlalchemy error: ", ex)
+            current_app.logger.error(f"sqlalchemy error: {ex}")
             db.session.rollback()
             if item.get("id"):
                 pid = PersistentIdentifier.query.filter_by(
@@ -2253,7 +2244,7 @@ def import_items_to_system(
 
             return {"success": False, "error_id": error_id}
         except redis.RedisError as ex:
-            current_app.logger.error("redis  error: ", ex)
+            current_app.logger.error(f"redis  error: {ex}")
             db.session.rollback()
             if item.get("id"):
                 pid = PersistentIdentifier.query.filter_by(
@@ -2367,7 +2358,7 @@ def import_items_to_activity(item, request_info):
         )
         traceback.print_exc()
         url = headless.detail
-        recid = str(headless.recid or "")
+        recid = headless.recid
         current_action = headless.current_action
         error = str(ex)
 
@@ -2384,7 +2375,9 @@ def delete_items_with_activity(item_id, request_info):
     Returns:
         taple:
             - url (str): URL for deletion.
-            - current_action (str): Current action.
+            - current_action (str):  Current action. <br>
+            if current_action is "end_action", item is already deleted. <br>
+            if current_action is "approval", item is not deleted yet.
 
     Raises:
         WekoWorkflowException: If any error occurs during deletion.
@@ -2400,6 +2393,8 @@ def delete_items_with_activity(item_id, request_info):
             user_id=user_id, community=community,
             item_id=item_id, shared_id=shared_id, for_delete=True
         )
+        # if current_action is "end_action", item is already deleted.
+        # if current_action is "approval", item is not deleted yet.
         current_action = headless.current_action
     except WekoWorkflowException as ex:
         raise
@@ -5649,7 +5644,7 @@ def handle_metadata_amend_by_doi(list_record, meta_data_api):
     """
     for item in list_record:
         doi = item.get("amend_doi")
-        if doi is None:
+        if not doi:
             continue
         item["metadata"] = handle_metadata_by_doi(item, doi, meta_data_api)
 

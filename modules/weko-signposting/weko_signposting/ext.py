@@ -15,7 +15,7 @@ from flask_babelex import gettext as _
 from . import config
 
 
-class WekoSignpostingserver(object):
+class WekoSignposting(object):
     """WEKO-Signposting extension."""
 
     def __init__(self, app=None):
@@ -23,7 +23,7 @@ class WekoSignpostingserver(object):
         # TODO: This is an example of translation string with comment. Please
         # remove it.
         # NOTE: This is a note to a translator.
-        _('A translation string')
+        # _('A translation string')
         if app:
             self.init_app(app)
 

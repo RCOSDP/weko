@@ -2553,7 +2553,6 @@ def export_items(post_data):
                 export_format,
                 include_contents,
                 record_path,
-                record_metadata.get(str(record_id))
             )
             result['items'].append(exported_item)
 
@@ -2611,6 +2610,8 @@ def export_items(post_data):
 def write_rocrate(item_types_data, export_path, list_item_role):
     """Make RO-Crate BagIt for export.
 
+    Write ro-crate-metadata.json file and create a zip file for each record.
+
     Args:
         item_types_data (dict): Item types data for export.
         export_path (str): Path to export the RO-Crate.
@@ -2621,7 +2622,7 @@ def write_rocrate(item_types_data, export_path, list_item_role):
         for data in item_types_data.values()
         for recid in data['recids']
     ]
-    # Get Metadata from ElasticSearch
+    # Get item title and extraction file list from ElasticSearch
     metadata_dict = _get_metadata_dict_in_es(all_record_ids)
 
     for item_type_id, item_type_data in item_types_data.items():
@@ -2648,6 +2649,7 @@ def write_rocrate(item_types_data, export_path, list_item_role):
             row_metadata = {
                 "recid": str(record_id),
                 "item_title": title,
+                # no use headers[0][0:2] >>> ["#.id", ".uri"]
                 "header": headers[0][2:],
                 "value": records[record_id],
             }
@@ -2679,10 +2681,14 @@ def write_rocrate(item_types_data, export_path, list_item_role):
 
 
 def _get_metadata_dict_in_es(record_ids):
-    """Get metadata by record id from ElasticSearch.
+    """Get item title and extraction file list from ElasticSearch.
 
-    :param record_ids: Record IDs
-    :return: Metadata
+    Args:
+        record_ids (list[str]): List of record IDs to fetch metadata for.
+
+    Returns:
+        dict:
+            record_id (str): (title, [extraction_file_list])
     """
     metadata_dict = {}
     try:
@@ -3528,7 +3534,7 @@ def get_options_list(item_type_id, json_item=None):
     if json_item is None:
         json_item = ItemTypes.get_record(item_type_id)
     if json_item:
-        meta_options = json_item.model.render.get('meta_fix')
+        meta_options = json_item.model.render.get('meta_fix', {})
         meta_options.update(json_item.model.render.get('meta_list'))
     return meta_options
 
