@@ -76,7 +76,7 @@
               </button>
             </div>
           </div>
-          <!-- リクエストメール（フィードバックアドレス有&プロジェクトURL無） -->
+          <!-- リクエストメール（リクエストメールアドレス有&プロジェクトURL無） -->
           <div v-else-if="checkMailAddress">
             <div class="bg-miby-light-blue py-3 pl-5">
               <p class="icons icon-mail text-white font-bold">
@@ -247,7 +247,7 @@ async function getDetail(number: string) {
         // プロジェクトURLの登録があるかどうか確認する
         projectUrl = findProjectURL(itemDetail)[0] ?? '';
 
-        // フィードバックメールアドレスがあるかどうか確認する
+        // リクエストメールアドレスがあるかどうか確認する
         // @ts-ignore
         checkMailAddress.value = !!itemDetail.metadata.hasRequestmailAddress;
       }
