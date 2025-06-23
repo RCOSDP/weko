@@ -34,15 +34,6 @@
             <!-- アイテム情報 -->
             <ItemInfo v-if="renderFlag" :item="itemDetail" :item-id="currentNumber" :oauth-error="oauthError" />
             <!-- アイテム内容 -->
-            <div v-if="showPopup" class="popup">
-              <p>{{ $t('message.popup.loginRequiredMessage') }}</p>
-              <p>{{ $t('message.popup.transitionToLogin', { time: transitionSecond }) }}</p>
-              <p>　</p>
-              <p
-                >{{ $t('message.popup.loginScreen') }} <a :href="loginPage" class="link">{{ loginPage }}</a></p
-              >
-            </div>
-            <!-- アイテム内容 -->
             <ItemContent v-if="renderFlag" :item="itemDetail" />
             <!-- 前/次 -->
             <div v-if="!oauthError" class="pt-2.5 pb-28">
@@ -217,10 +208,9 @@ const alertCode = ref(0);
 const alertPosition = ref('');
 const alertWidth = ref('');
 const isLoading = ref(true);
-const isLogin = ref(false);
+const isLogin = !!sessionStorage.getItem('login:state');
 const checkMailAddress = ref(false);
 const checkProjectId = ref(false);
-const showPopup = ref(false);
 const transitionSecond = appConf.transitionTime / 1000;
 const loginPage = window.location.origin + '/login?source=detail';
 let oauthError = ref(false);
@@ -257,7 +247,6 @@ async function getDetail(number: string) {
             createdDate = obj[appConf.roCrate.root.createDate][0];
           }
         }
-
         // ログイン状況を取得する
         isLogin.value = !!sessionStorage.getItem('login:state');
 
@@ -275,7 +264,11 @@ async function getDetail(number: string) {
       statusCode = response.status;
       if (statusCode === 401 || statusCode === 403) {
         // 認証エラー
-        oauthErrorRedirect();
+        if (isLogin) {
+          alertMessage.value = 'message.error.auth';
+        } else {
+          oauthErrorRedirect();
+        }
       } else if (statusCode >= 500 && statusCode < 600) {
         // サーバーエラー
         alertMessage.value = 'message.error.server';
@@ -351,7 +344,11 @@ async function search(searchPage: string) {
       searchResult = [];
       if (oauthError.value || statusCode === 401 || statusCode === 403) {
         // 認証エラー
-        oauthErrorRedirect();
+        if (isLogin) {
+          alertMessage.value = 'message.error.auth';
+        } else {
+          oauthErrorRedirect();
+        }
       } else if (statusCode >= 500 && statusCode < 600) {
         // サーバーエラー
         alertMessage.value = 'message.error.server';
@@ -408,7 +405,11 @@ async function getParentIndex() {
       statusCode = response.status;
       if (oauthError.value || statusCode === 401 || statusCode === 403) {
         // 認証エラー
-        oauthErrorRedirect();
+        if (isLogin) {
+          alertMessage.value = 'message.error.auth';
+        } else {
+          oauthErrorRedirect();
+        }
       } else if (statusCode >= 500 && statusCode < 600) {
         // サーバーエラー
         alertMessage.value = 'message.error.server';
