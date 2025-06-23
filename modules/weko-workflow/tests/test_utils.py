@@ -973,9 +973,6 @@ def test_prepare_edit_workflow(app, workflow, db_records,users,mocker):
             "activity_login_user":1,
             "activity_update_user":1
         }
-        current_app.config.update(
-        WEKO_RECORDS_REFERENCE_SUPPLEMENT=['isSupplementTo','isSupplementedBy']
-        )
         recid = db_records[6][0]
         deposit = db_records[6][6]
         res = prepare_edit_workflow(data,recid,deposit)
@@ -1024,19 +1021,19 @@ def test_prepare_delete_workflow(app, db_records,users,db_register,mocker):
     del_flow_id = db_register["activities"][7].flow_id
     del_title = db_register["activities"][7].title
     del_post_activity = {
-        'pid_value': del_recid, 'itemtype_id': '1', 
-        'community': None, 'workflow_id': del_workflow_id, 
+        'pid_value': del_recid, 'itemtype_id': '1',
+        'community': None, 'workflow_id': del_workflow_id,
         'title': del_title, 'flow_id': del_flow_id, 'shared_user_id': '-1'
     }
-    
+
     # not delete flow item
     recid_1,  _, _, _, _, _, deposit_1 = db_records[2]
     workflow_id_1 = db_register["activities"][0].workflow_id
     flow_id_1 = db_register["activities"][0].flow_id
     title_1 = db_register["activities"][0].title
     post_activity_1 = {
-        'pid_value': recid_1, 'itemtype_id': '1', 
-        'community': None, 'workflow_id': workflow_id_1, 
+        'pid_value': recid_1, 'itemtype_id': '1',
+        'community': None, 'workflow_id': workflow_id_1,
         'title': title_1, 'flow_id': flow_id_1, 'shared_user_id': '-1'
     }
 
@@ -1046,8 +1043,8 @@ def test_prepare_delete_workflow(app, db_records,users,db_register,mocker):
     app_flow_id = db_register["activities"][8].flow_id
     app_title = db_register["activities"][8].title
     app_post_activity = {
-        'pid_value': app_recid, 'itemtype_id': '1', 
-        'community': None, 'workflow_id': app_workflow_id, 
+        'pid_value': app_recid, 'itemtype_id': '1',
+        'community': None, 'workflow_id': app_workflow_id,
         'title': app_title, 'flow_id': app_flow_id, 'shared_user_id': '-1'
     }
 

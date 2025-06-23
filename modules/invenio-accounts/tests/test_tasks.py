@@ -25,8 +25,10 @@ from invenio_accounts.tasks import clean_session_table, send_security_email
 from invenio_accounts.testutils import create_test_user
 
 
-def test_send_message_outbox(task_app):
+# .tox/c1/bin/pytest --cov=invenio_accounts tests/test_tasks.py::test_send_message_outbox -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-accounts/.tox/c1/tmp
+def test_send_message_outbox(task_app, mocker):
     """Test sending a security message using Task module."""
+    mocker.patch('invenio_accounts.tasks._set_flask_mail_cfg')
     with task_app.app_context():
         with task_app.extensions['mail'].record_messages() as outbox:
             msg = Message('Test1',
@@ -41,9 +43,10 @@ def test_send_message_outbox(task_app):
             assert sent_msg.sender == 'test1@test1.test1'
             assert sent_msg.recipients == ['test1@test1.test1']
 
-
-def test_send_message_through_security(task_app):
+# .tox/c1/bin/pytest --cov=invenio_accounts tests/test_tasks.py::test_send_message_through_security -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-accounts/.tox/c1/tmp
+def test_send_message_through_security(task_app, mocker):
     """Test sending a message through security extension."""
+    mocker.patch('invenio_accounts.tasks._set_flask_mail_cfg')
     with task_app.app_context():
         with task_app.extensions['mail'].record_messages() as outbox:
             msg = Message('Test1',
