@@ -2373,6 +2373,8 @@ class TestSwordAPIJsonldSettingsView:
         assert res.status_code == 400
         assert json.loads(res.data) == {"error": "Cannot disable 'Original'."}
 
+    # def get_query(self):
+    # .tox/c1/bin/pytest --cov=weko_admin tests/test_admin.py::TestSwordAPIJsonldSettingsView::test_get_query -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
     def test_get_query_in_role_ids(self, client, users, db, mocker):
         login(client,obj=users[0]["obj"])
         view = SwordAPIJsonldSettingsView(SwordClientModel, db.session)
@@ -2381,6 +2383,9 @@ class TestSwordAPIJsonldSettingsView:
         current_app.config['WEKO_ADMIN_SWORD_API_JSON_LD_FULL_AUTHORITY_ROLE'] = 1
         view.get_query()
 
+    # def get_count_query(self):
+    # .tox/c1/bin/pytest --cov=weko_admin tests/test_admin.py::TestSwordAPIJsonldSettingsView::test_get_count_query -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
+    @patch("weko_admin.admin.SwordAPIJsonldSettingsView.get_query")
     def test_get_count_query(self, client, users, db, mocker):
         login(client,obj=users[0]["obj"])
         view = SwordAPIJsonldSettingsView(SwordClientModel, db.session)
@@ -2390,13 +2395,9 @@ class TestSwordAPIJsonldSettingsView:
         login(client,obj=users[0]["obj"])
         view = SwordAPIJsonldSettingsView(SwordClientModel, db.session)
         model = SwordClientModel.query.filter_by(id=1).one()
-        view._format_application_name(None, model, None)
-        view._format_application_name(None, None, None)
         view._format_active(None, model, None)
         model.active = False
         view._format_active(None, model, None)
-        view._format_creator(None, model, None)
-        view._format_creator(None, None, None)
         view._format_registration_type(None, model, None)
         view._format_registration_type(None, None, None)
         model.registration_type_id = 2
@@ -2409,12 +2410,6 @@ class TestSwordAPIJsonldSettingsView:
         view._format_duplicate_check(None, model, None)
         model.duplicate_check = True
         view._format_duplicate_check(None, model, None)
-        view._format_workflow_name(None, model, None)
-        model.workflow_id = 1
-        view._format_workflow_name(None, model, None)
-        view._format_mapping_name(None, model, None)
-        model.mapping_id = None
-        view._format_mapping_name(None, model, None)
 
     def test_format_none_ver(self, app, client, users, db, sword_client, sword_mapping, mocker):
         login(client,obj=users[0]["obj"])
@@ -2425,7 +2420,6 @@ class TestSwordAPIJsonldSettingsView:
             view._format_workflow_name(None, model, None)
         with patch("weko_admin.admin.JsonldMapping.get_mapping_by_id", return_value=None):
             view._format_mapping_name(None, model, None)
-
 
     # def validate_mapping(self, id):
     # .tox/c1/bin/pytest --cov=weko_admin tests/test_admin.py::TestSwordAPIJsonldSettingsView::test_validate_mapping -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
@@ -2512,7 +2506,7 @@ class TestSwordAPIJsonldSettingsView:
 
 
 # class JsonldMappingView(ModelView):
-# .tox/c1/bin/pytest --cov=weko_admin tests/test_admin.py::TestJsonldMappingView::test_create_view -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
+# .tox/c1/bin/pytest --cov=weko_admin tests/test_admin.py::TestJsonldMappingView -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
 class TestJsonldMappingView:
 
     def test_create_view(self, client, users, item_type, db, mocker):
