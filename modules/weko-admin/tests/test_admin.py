@@ -190,7 +190,7 @@ class TestStyleSettingView:
 class TestReportView:
 #    def index(self):
 # .tox/c1/bin/pytest --cov=weko_admin tests/test_admin.py::TestReportView::test_index -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
-    def test_index(self,db,client,indexes,users,admin_settings,statistic_email_addrs,mocker):
+    def test_index(self,db,client,indexes,users,statistic_email_addrs,mocker):
         login_user_via_session(client,email=users[0]["email"])
         url = url_for("report.index")
         agg={
@@ -237,7 +237,7 @@ class TestReportView:
         result = client.get(url, query_string={"repo_id": "invalid_id"})
         assert result.status_code == 403
 
-        setting = AdminSettings(id=10,name='report_email_schedule_settings',settings={"Root Index": {"details": "", "enabled": False, "frequency": "daily"}})
+        setting = AdminSettings(name='report_email_schedule_settings',settings={"Root Index": {"details": "", "enabled": False, "frequency": "daily"}})
         db.session.add(setting)
         db.session.commit()
         client.get(url, query_string={"repo_id": "comm1"})
@@ -631,6 +631,8 @@ class TestLogAnalysisSettings:
             assert kwargs["shared_crawlers"] == []
 
         # post
+        LogAnalysisRestrictedCrawlerList.query.delete()
+        db.session.commit()
         data = {
             "ip_address_0_id":"1",
             "address_list_0":["987","654","321","098"],
@@ -2408,6 +2410,16 @@ class TestSwordAPIJsonldSettingsView:
         view._format_duplicate_check(None, model, None)
         model.duplicate_check = True
         view._format_duplicate_check(None, model, None)
+
+    def test_format_none_ver(self, app, client, users, db, sword_client, sword_mapping, mocker):
+        login(client,obj=users[0]["obj"])
+        view = SwordAPIJsonldSettingsView(SwordClientModel, db.session)
+        model = SwordClientModel.query.filter_by(id=1).one()
+        model.workflow_id = 1
+        with patch("weko_admin.admin.WorkFlow.get_workflow_by_id", return_value=None):
+            view._format_workflow_name(None, model, None)
+        with patch("weko_admin.admin.JsonldMapping.get_mapping_by_id", return_value=None):
+            view._format_mapping_name(None, model, None)
 
     # def validate_mapping(self, id):
     # .tox/c1/bin/pytest --cov=weko_admin tests/test_admin.py::TestSwordAPIJsonldSettingsView::test_validate_mapping -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
