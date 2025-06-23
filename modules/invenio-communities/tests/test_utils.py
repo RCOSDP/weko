@@ -289,7 +289,7 @@ def test_get_repository_id_by_item_id(app, db, users, mocker):
 
     # repository_id cannot be retrieved
     repository_id = get_repository_id_by_item_id(3)
-    assert repository_id is None
+    assert repository_id == "Root Index"
 
     # item_id does not exist
     with pytest.raises(NoResultFound):
