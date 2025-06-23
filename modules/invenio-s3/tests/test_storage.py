@@ -562,4 +562,55 @@ def test_remove_file(location, s3fs):
     fs_mock.rm = MagicMock()
     s3fs.remove(fs_mock, path)
 
+@pytest.fixture
+def location_2():
+    """Locationモデルのモックを作成。"""
+    location = MagicMock()
+    location.type = None  # typeをNoneに設定
+    return location
 
+
+@pytest.fixture
+def s3fs_2(location_2):
+    """S3FSFileStorageのインスタンスを作成。"""
+    return S3FSFileStorage(
+        fileurl="s3://testbucket/testfile",
+        size=0,
+        modified=None,
+        clean_dir=True,
+        location=location_2
+    )
+
+
+def test_copy_with_local_repository(s3fs_2):
+    """self.location.typeがNoneの場合のcopyメソッドのテスト。"""
+    # モックのソースファイルを作成
+    src = MagicMock()
+    src.fileurl = "s3://testbucket/srcfile"
+
+    s3fs_2.copy(src)
+
+@pytest.fixture
+def s3fs_3():
+    """S3FSFileStorageのインスタンスを作成（location=None）。"""
+    return S3FSFileStorage(
+        fileurl="s3://testbucket/testfile",
+        size=0,
+        modified=None,
+        clean_dir=True,
+        location=None  # locationをNoneに設定
+    )
+
+
+def test_copy_with_no_location(s3fs_3):
+    """self.locationがNoneの場合のcopyメソッドのテスト。"""
+    # モックのソースファイルを作成
+    src = MagicMock()
+    src.fileurl = "s3://testbucket/srcfile"
+
+    # 親クラスのcopyメソッドをモック
+    with patch("invenio_files_rest.storage.PyFSFileStorage.copy") as mock_copy:
+        s3fs_3.copy(src)
+
+        # 親クラスのcopyメソッドが呼び出されたことを確認
+        mock_copy.assert_called_once_with(src)
