@@ -2413,8 +2413,16 @@ class TestSwordAPIJsonldSettingsView:
         view._format_mapping_name(None, model, None)
         model.mapping_id = None
         view._format_mapping_name(None, model, None)
-        model.mapping_id = 9999
-        view._format_mapping_name(None, model, None)
+
+    def test_format_none_ver(self, app, client, users, db, sword_client, sword_mapping, mocker):
+        login(client,obj=users[0]["obj"])
+        view = SwordAPIJsonldSettingsView(SwordClientModel, db.session)
+        model = SwordClientModel.query.filter_by(id=1).one()
+        model.workflow_id = 1
+        with patch("weko_admin.admin.WorkFlow.get_workflow_by_id", return_value=None):
+            view._format_workflow_name(None, model, None)
+        with patch("weko_admin.admin.JsonldMapping.get_mapping_by_id", return_value=None):
+            view._format_mapping_name(None, model, None)
 
 
     # def validate_mapping(self, id):
