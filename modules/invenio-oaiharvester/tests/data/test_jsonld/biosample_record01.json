@@ -1,0 +1,333 @@
+{
+	"$schema": 32102,
+	"pubdate": "2023-01-18",
+	"item_1723710738307": {
+		"subitem_1586228465211": "SAMN19993849"
+	},
+	"item_1723710793029": {
+		"subitem_1586228465211": "biosample"
+	},
+	"item_1723710826523": {
+		"subitem_1551255647225": "MIMARKS Survey related sample from ant fungus garden metagenome"
+	},
+	"item_1723712188781": [
+		{
+			"subitem_1523320863692": [
+				{
+					"subitem_1523320909613": "SRS9365947"
+				},
+				{
+					"subitem_1523320909613": "sra-sample"
+				}
+			],
+			"subitem_1522306287251": {
+				"subitem_1522306436033": "https://ddbj.nig.ac.jp/resource/sra-sample/SRS9365947"
+			}
+		}
+	],
+	"item_1723713259937": {
+		"subitem_1723355974639": "797283",
+		"subitem_1723355975615": "ant fungus garden metagenome"
+	},
+	"item_1723715465116": [
+		{
+			"subitem_1723715398530": "collection_date",
+			"subitem_1723715410482": "collection date",
+			"subitem_1723715414997": "collection_date",
+			"subitem_1723715419658": "2018-07-30"
+		},
+		{
+			"subitem_1723715398530": "env_broad_scale",
+			"subitem_1723715410482": "broad-scale environmental context",
+			"subitem_1723715414997": "env_broad_scale",
+			"subitem_1723715419658": "laboratory environment [ENVO:01001405]|environmental system determined by an organism [ENVO:01001000]|fungi-associated environment [ENVO:01001041]|temperate savanna biome [ENVO:01000189]"
+		},
+		{
+			"subitem_1723715398530": "env_local_scale",
+			"subitem_1723715410482": "local-scale environmental context",
+			"subitem_1723715414997": "env_local_scale",
+			"subitem_1723715419658": "laboratory environment [ENVO:01001405]|environmental system determined by an organism [ENVO:01001000]|fungi-associated environment [ENVO:01001041]|temperate savanna biome [ENVO:01000189]"
+		},
+		{
+			"subitem_1723715398530": "env_medium",
+			"subitem_1723715410482": "environmental medium",
+			"subitem_1723715414997": "env_medium",
+			"subitem_1723715419658": "air [ENVO:00002005]|humid air [ENVO:01000828]"
+		},
+		{
+			"subitem_1723715398530": "geo_loc_name",
+			"subitem_1723715410482": "geographic location",
+			"subitem_1723715414997": "geo_loc_name",
+			"subitem_1723715419658": "USA:New Jersey,Wharton State Forest,Batona Field"
+		},
+		{
+			"subitem_1723715398530": "host",
+			"subitem_1723715410482": "host",
+			"subitem_1723715414997": "host",
+			"subitem_1723715419658": "Trachymyrmex septentrionalis"
+		},
+		{
+			"subitem_1723715398530": "lat_lon",
+			"subitem_1723715410482": "latitude and longitude",
+			"subitem_1723715414997": "lat_lon",
+			"subitem_1723715419658": "39.78 N 74.63 W"
+		},
+		{
+			"subitem_1723715398530": "treatment",
+			"subitem_1723715410482": "treatment",
+			"subitem_1723715414997": "treatment",
+			"subitem_1723715419658": "PBS"
+		},
+		{
+			"subitem_1723715398530": "replicate",
+			"subitem_1723715419658": "r1"
+		},
+		{
+			"subitem_1723715398530": "day_p_treat",
+			"subitem_1723715419658": "0"
+		},
+		{
+			"subitem_1723715398530": "ants",
+			"subitem_1723715419658": "+"
+		},
+		{
+			"subitem_1723715398530": "sample_type",
+			"subitem_1723715410482": "sample type",
+			"subitem_1723715414997": "sample_type",
+			"subitem_1723715419658": "fungus garden"
+		}
+	],
+	"item_1723715572050": {
+		"subitem_1586253392325": "Keywords: GSC:MIxS;MIMARKS:5.0"
+	},
+	"item_1723715616571": [
+		{
+			"subitem_1586228465211": "MIMARKS.survey"
+		},
+		{
+			"subitem_1586228465211": "MIGS/MIMS/MIMARKS.host-associated"
+		}
+	],
+	"item_1723715662390": {
+		"subitem_1723359397816": "MIMARKS: survey, host-associated; version 5.0",
+		"subitem_1723359398479": "MIMARKS.survey.host-associated.5.0"
+	},
+	"item_1723715701432": [
+		{
+			"subitem_1523320863692": [
+				{
+					"subitem_1523320909613": "PRJNA743060"
+				},
+				{
+					"subitem_1523320909613": "bioproject"
+				}
+			],
+			"subitem_1522306287251": {
+				"subitem_1522306436033": "https://ddbj.nig.ac.jp/resource/bioproject/PRJNA743060"
+			}
+		},
+		{
+			"subitem_1523320863692": [
+				{
+					"subitem_1523320909613": "PRJNA743045"
+				},
+				{
+					"subitem_1523320909613": "bioproject"
+				}
+			],
+			"subitem_1522306287251": {
+				"subitem_1522306436033": "https://ddbj.nig.ac.jp/resource/bioproject/PRJNA743045"
+			}
+		},
+		{
+			"subitem_1523320863692": [
+				{
+					"subitem_1523320909613": "SRA1253724"
+				},
+				{
+					"subitem_1523320909613": "sra-submission"
+				}
+			],
+			"subitem_1522306287251": {
+				"subitem_1522306436033": "https://ddbj.nig.ac.jp/resource/sra-submission/SRA1253724"
+			}
+		},
+		{
+			"subitem_1523320863692": [
+				{
+					"subitem_1523320909613": "SRA1253761"
+				},
+				{
+					"subitem_1523320909613": "sra-submission"
+				}
+			],
+			"subitem_1522306287251": {
+				"subitem_1522306436033": "https://ddbj.nig.ac.jp/resource/sra-submission/SRA1253761"
+			}
+		},
+		{
+			"subitem_1523320863692": [
+				{
+					"subitem_1523320909613": "SRX11329880"
+				},
+				{
+					"subitem_1523320909613": "sra-experiment"
+				}
+			],
+			"subitem_1522306287251": {
+				"subitem_1522306436033": "https://ddbj.nig.ac.jp/resource/sra-experiment/SRX11329880"
+			}
+		},
+		{
+			"subitem_1523320863692": [
+				{
+					"subitem_1523320909613": "SRX11331026"
+				},
+				{
+					"subitem_1523320909613": "sra-experiment"
+				}
+			],
+			"subitem_1522306287251": {
+				"subitem_1522306436033": "https://ddbj.nig.ac.jp/resource/sra-experiment/SRX11331026"
+			}
+		},
+		{
+			"subitem_1523320863692": [
+				{
+					"subitem_1523320909613": "SRR15017940"
+				},
+				{
+					"subitem_1523320909613": "sra-run"
+				}
+			],
+			"subitem_1522306287251": {
+				"subitem_1522306436033": "https://ddbj.nig.ac.jp/resource/sra-run/SRR15017940"
+			}
+		},
+		{
+			"subitem_1523320863692": [
+				{
+					"subitem_1523320909613": "SRR15019116"
+				},
+				{
+					"subitem_1523320909613": "sra-run"
+				}
+			],
+			"subitem_1522306287251": {
+				"subitem_1522306436033": "https://ddbj.nig.ac.jp/resource/sra-run/SRR15019116"
+			}
+		},
+		{
+			"subitem_1523320863692": [
+				{
+					"subitem_1523320909613": "SRP326529"
+				},
+				{
+					"subitem_1523320909613": "sra-study"
+				}
+			],
+			"subitem_1522306287251": {
+				"subitem_1522306436033": "https://ddbj.nig.ac.jp/resource/sra-study/SRP326529"
+			}
+		},
+		{
+			"subitem_1523320863692": [
+				{
+					"subitem_1523320909613": "SRP326582"
+				},
+				{
+					"subitem_1523320909613": "sra-study"
+				}
+			],
+			"subitem_1522306287251": {
+				"subitem_1522306436033": "https://ddbj.nig.ac.jp/resource/sra-study/SRP326582"
+			}
+		},
+		{
+			"subitem_1523320863692": [
+				{
+					"subitem_1523320909613": "SRS9365947"
+				},
+				{
+					"subitem_1523320909613": "sra-sample"
+				}
+			],
+			"subitem_1522306287251": {
+				"subitem_1522306436033": "https://ddbj.nig.ac.jp/resource/sra-sample/SRS9365947"
+			}
+		}
+	],
+	"item_1723717131900": [
+		{
+			"subitem_1723716944751": "2",
+			"subitem_1723716945709": "bioproject"
+		},
+		{
+			"subitem_1723716944751": "2",
+			"subitem_1723716945709": "sra-run"
+		},
+		{
+			"subitem_1723716944751": "2",
+			"subitem_1723716945709": "sra-submission"
+		},
+		{
+			"subitem_1723716944751": "2",
+			"subitem_1723716945709": "sra-study"
+		},
+		{
+			"subitem_1723716944751": "1",
+			"subitem_1723716945709": "sra-sample"
+		},
+		{
+			"subitem_1723716944751": "2",
+			"subitem_1723716945709": "sra-experiment"
+		}
+	],
+	"item_1723717172348": [
+		{
+			"subitem_1723717025761": "https://ddbj.nig.ac.jp/resource/biosample/SAMN19993849.json",
+			"subitem_1723717026449": "JSON",
+			"subitem_1723717027092": "DataDownload"
+		},
+		{
+			"subitem_1723717025761": "https://ddbj.nig.ac.jp/resource/biosample/SAMN19993849.jsonld",
+			"subitem_1723717026449": "JSON-LD",
+			"subitem_1723717027092": "DataDownload"
+		}
+	],
+	"item_1723717213389": [
+		{
+			"subitem_1723716974389": "biosample_set.xml.gz",
+			"subitem_1723716975164": "ftp://ftp.ddbj.nig.ac.jp/ddbj_database/biosample/biosample_set.xml.gz",
+			"subitem_1723716975837": "meta",
+			"subitem_1723716976542": "https://ddbj.nig.ac.jp/public/ddbj_database/biosample/biosample_set.xml.gz"
+		}
+	],
+	"item_1723717255859": {
+		"subitem_1586228465211": "public"
+	},
+	"item_1723717287628": {
+		"subitem_1586228465211": "unrestricted-access"
+	},
+	"item_1723717312803": {
+		"subitem_1522300722591": "2021-07-01T16:38:36Z"
+	},
+	"item_1723717324843": {
+		"subitem_1522300722591": "2021-07-02T01:28:33Z"
+	},
+	"item_1723717325923": {
+		"subitem_1522300722591": "2021-07-01T00:00:00Z"
+	},
+	"item_1723717407500": {
+		"subitem_1586228465211": "BioSample"
+	},
+	"item_1723717426267": {
+		"subitem_1586228465211": "TEST_NAME"
+	},
+	"item_1723717449410": {
+		"subitem_identifier_uri": "https://ddbj.nig.ac.jp/search/entry/biosample/SAMN19993849"
+	},
+	"item_1723721669989": {
+		"resourcetype": "dataset"
+	}
+}

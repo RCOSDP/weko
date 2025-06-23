@@ -54,6 +54,27 @@ ckeditor = Bundle(
     output='gen/communities_editor.%(version)s.js'
 )
 
+js_trumbowyg = NpmBundle(
+    "node_modules/trumbowyg/dist/trumbowyg.min.js",
+    "node_modules/trumbowyg/dist/plugins/colors/trumbowyg.colors.min.js",
+    "node_modules/trumbowyg/dist/plugins/fontfamily/trumbowyg.fontfamily.min.js",
+    "node_modules/trumbowyg/dist/plugins/fontsize/trumbowyg.fontsize.min.js",
+    "node_modules/trumbowyg/dist/plugins/table/trumbowyg.table.min.js",
+
+    npm={
+        'trumbowyg': '~2.25.1'
+    },
+    output='gen/communities_trumbowyg.%(version)s.js'
+)
+
+css_trumbowyg = Bundle(
+    "node_modules/trumbowyg/dist/ui/trumbowyg.min.css",
+    "node_modules/trumbowyg/dist/plugins/colors/ui/trumbowyg.colors.min.css",
+    "node_modules/trumbowyg/dist/plugins/table/ui/trumbowyg.table.min.css",
+    filters='cleancss',
+    output='gen/communities_trumbowyg.%(version)s.css'
+)
+
 css = NpmBundle(
     'scss/invenio_communities/communities.scss',
     filters='scss, cleancss',

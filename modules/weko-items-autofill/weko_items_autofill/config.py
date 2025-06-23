@@ -15,10 +15,34 @@ WEKO_ITEMS_AUTOFILL_BASE_TEMPLATE = 'weko_items_autofill/base.html'
 
 WEKO_ITEMS_AUTOFILL_API_UPDATED = True
 
+WEKO_ITEMS_AUTOFILL_API_LIST = [
+    "JaLC API",
+    "医中誌 Web API",
+    "CrossRef",
+    "DataCite",
+    "CiNii Research"
+]
+"""API list"""
+
+WEKO_ITEMS_AUTOFILL_TO_BE_USED = []
+"""API list to be used.
+
+This list should be ordered by priority.
+
+Choose from the following:
+    - JaLC API
+    - 医中誌 Web API
+    - CrossRef
+    - DataCite
+    - CiNii Research
+    - Original  -->  Original metadata, not from API.
+"""
+
 WEKO_ITEMS_AUTOFILL_CROSSREF_API_URL = 'https://doi.crossref.org'
 """Crossref API URL"""
 
 WEKO_ITEMS_AUTOFILL_CiNii_API_URL = 'https://cir.nii.ac.jp'
+"""CiNii Research API URL"""
 
 WEKO_ITEMS_AUTOFILL_DEFAULT_LANGUAGE = 'en'
 """Crossref default language"""
@@ -35,6 +59,7 @@ WEKO_ITEMS_AUTOFILL_REQUEST_TIMEOUT = 5
 WEKO_ITEMS_AUTOFILL_API_CACHE_TIMEOUT = 50
 
 WEKO_ITEMS_AUTOFILL_SELECT_OPTION = [
+    {'value': 'DOI', 'text': 'DOI'},
     {'value': 'CrossRef', 'text': 'CrossRef'},
     {'value': 'CiNii', 'text': 'CiNii'},
     {'value': 'WEKOID', 'text': 'WEKOID'}

@@ -64,7 +64,27 @@
             {%- if flow_list %}
             <select class="form-control" id="txt_flow_name">
               {%- for flow in flow_list if flow %}
-              <option value="{{flow.id}}" {%- if workflow.flow_id == flow.id %} selected {%- endif %}>{{flow.flow_name}}</option>
+                {%- if flow.flow_type == 1 %}
+                  <option value="{{flow.id}}" {%- if workflow.flow_id == flow.id %} selected {%- endif %}>{{flow.flow_name}}</option>
+                {%- endif %}
+              {%- endfor %}
+            </select>
+            {%- endif %}
+          </div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <div class="col-sm-offset-2">
+          <label class="col-sm-2 control-label" for="txt_for_delete">{{_('(For Delete)')}}</label>
+          <div class="col-sm-8">
+            {%- if flow_list %}
+            <select class="form-control" id="txt_flow_delete">
+              <option></option>
+              {%- for flow in flow_list if flow %}
+                {%- if flow.flow_type == 2 %}
+                  <option value="{{flow.id}}" {%- if workflow.delete_flow_id == flow.id %} selected {%- endif %}>{{flow.flow_name}}</option>
+                {%- endif %}
               {%- endfor %}
             </select>
             {%- endif %}
@@ -79,6 +99,22 @@
             {%- if itemtype_list %}
               {%- for itemtype in itemtype_list if itemtype %}
               <option value="{{itemtype.item_type.0.id}}" {%- if workflow.itemtype_id == itemtype.item_type.0.id %} selected {%- endif %}>{{itemtype.name}}</option>
+              {%- endfor %}
+            {%- else %}
+              <option value=""></option>
+            {%- endif %}
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="form-group">
+        <div class="col-sm-offset-2">
+          <label class="col-sm-2 control-label" for="txt_repo_id">Repository</label>
+          <div class="col-sm-8">
+            <select class="form-control" id="txt_repo_id">
+            {%- if repositories %}
+              {%- for repository in repositories if repository %}
+              <option value="{{repository.id}}" {%- if workflow.repository_id == repository.id %} selected {%- endif %}>{{repository.id}}</option>
               {%- endfor %}
             {%- else %}
               <option value=""></option>

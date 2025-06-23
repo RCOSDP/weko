@@ -132,6 +132,9 @@ setup(
             'weko_admin_item_export_settings = weko_admin.admin:item_export_settings_adminview',
             'weko_admin_site_info = weko_admin.admin:site_info_settings_adminview',
             'weko_admin_identifier = weko_admin.admin:identifier_adminview',
+            'weko_admin_sword_api = weko_admin.admin:sword_api_settings_adminview',
+            'weko_admin_sword_jsonld_api = weko_admin.admin:sword_api_settings_jsonld_adminview',
+            'weko_admin_sword_jsonld_mapping_api = weko_admin.admin:sword_api_jsonld_mapping_adminview',
             'restricted_access_adminview = weko_admin.admin:restricted_access_adminview',
             'facet_search_adminview = weko_admin.admin:facet_search_adminview',
             'reindex_elasticsearch_adminview = weko_admin.admin:reindex_elasticsearch_adminview'
@@ -160,6 +163,8 @@ setup(
             'weko_admin_admin_lte_js_dependecies = weko_admin.bundles:admin_lte_js_dependecies',
             'weko_admin_admin_lte_js = weko_admin.bundles:admin_lte_js',
             'weko_admin_angular_js = weko_admin.bundles:angular_js',
+            'weko_admin_sword_api_jsonld_js = weko_admin.bundles:weko_admin_sword_api_jsonld_js',
+            'weko_admin_jsonld_mapping_js = weko_admin.bundles:weko_admin_jsonld_mapping_js',
             'weko_admin_site_info = weko_admin.bundles:weko_admin_site_info_js',
             'weko_admin_site_info_css = weko_admin.bundles:weko_admin_site_info_css',
             'weko_admin_ng_js_tree = weko_admin.bundles:weko_admin_ng_js_tree_js',

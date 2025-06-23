@@ -22,25 +22,29 @@
 
 import pickle
 import os
-from copy import deepcopy
-from datetime import date, datetime
+import sys
+from datetime import date, datetime, timezone
 from functools import partial
-from socketserver import DatagramRequestHandler
+import traceback
 
+from b2handle.clientcredentials import PIDClientCredentials
 from redis.exceptions import RedisError
-from flask import current_app, json
+from flask import current_app, json, request
 from flask_babelex import gettext as _
 from flask_login import current_user
-from invenio_accounts.models import Role
-from invenio_db import db
-from invenio_i18n.ext import current_i18n
-from invenio_indexer.api import RecordIndexer
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm import aliased
 from sqlalchemy.orm.attributes import flag_modified
 from sqlalchemy.sql.expression import case, func, literal_column, and_
+
+from invenio_accounts.models import Role
+from invenio_db import db
+from invenio_i18n.ext import current_i18n
+from invenio_indexer.api import RecordIndexer
+
 from weko_groups.api import Group
 from weko_redis.redis import RedisConnection
+from weko_handle.api import Handle
 
 from .models import Index
 from .utils import cached_index_tree_json, check_doi_in_index, \
@@ -60,6 +64,11 @@ class Indexes(object):
         :param indexes: the index information.
         :returns: The :class:`Index` instance lists or None.
         """
+
+        # delay import
+        from weko_workflow.config import WEKO_SERVER_CNRI_HOST_LINK
+        from weko_logging.activity_logger import UserActivityLogger
+
         def _add_index(data):
             with db.session.begin_nested():
                 index = Index(**data)
@@ -69,44 +78,55 @@ class Indexes(object):
         if not isinstance(indexes, dict):
             return
 
-        data = dict()
+        data = {}
         is_ok = True
         try:
-            cid = indexes.get('id')
+            cid = indexes.get("id")
 
             if not cid:
                 return
 
             data["id"] = cid
             data["parent"] = pid
-            data["index_name"] = indexes.get('value')
-            data["index_name_english"] = indexes.get('value')
+            data["index_name"] = indexes.get("value")
+            data["index_name_english"] = indexes.get("value")
             data["index_link_name_english"] = data["index_name_english"]
             data["owner_user_id"] = current_user.get_id()
             role = cls.get_account_role()
+            browsing_role = cls.bind_roles_including_permission(role, current_app.config.get('WEKO_INDEXTREE_GAKUNIN_GROUP_DEFAULT_BROWSING_PERMISSION', False))
             data["browsing_role"] = \
-                ",".join(list(map(lambda x: str(x['id']), role)))
-            data["contribute_role"] = data["browsing_role"]
+                ",".join(list(map(lambda x: str(x['id']), browsing_role)))
+            contribute_role = cls.bind_roles_including_permission(role, current_app.config.get('WEKO_INDEXTREE_GAKUNIN_GROUP_DEFAULT_CONTRIBUTE_PERMISSION', False))
+            data["contribute_role"] = \
+                ",".join(list(map(lambda x: str(x['id']), contribute_role)))
 
             data["more_check"] = False
             data["display_no"] = current_app.config[
-                'WEKO_INDEX_TREE_DEFAULT_DISPLAY_NUMBER']
+                "WEKO_INDEX_TREE_DEFAULT_DISPLAY_NUMBER"]
 
             data["coverpage_state"] = False
             data["recursive_coverpage_check"] = False
-            
-            group_list = ''
+
+            group_list = ""
             groups = Group.query.all()
             for group in groups:
                 if not group_list:
                     group_list = str(group.id)
                 else:
-                    group_list = group_list + ',' + str(group.id)
+                    group_list = group_list + "," + str(group.id)
 
             data["browsing_group"] = group_list
             data["contribute_group"] = group_list
 
-            
+            """register handle if ALLOW"""
+            if current_app.config.get("WEKO_HANDLE_ALLOW_REGISTER_CNRI"):
+                handle, index_url = cls.get_handle_index_url(cid)
+
+                if handle is None:
+                    raise Exception("Handle registration failed")
+                data["cnri"] = WEKO_SERVER_CNRI_HOST_LINK + handle
+                data["index_url"] = index_url
+
             if int(pid) == 0:
                 pid_info = cls.get_root_index_count()
                 data["position"] = 0 if not pid_info else \
@@ -148,8 +168,19 @@ class Indexes(object):
                 else:
                     return
             _add_index(data)
+            UserActivityLogger.info(
+                operation="INDEX_CREATE",
+                target_key=data["id"]
+            )
         except IntegrityError as ie:
-            if 'uix_position' in ''.join(ie.args):
+            current_app.logger.error(f"Error occurred while creating index: {cid}")
+            exec_info = sys.exc_info()
+            tb_info = traceback.format_tb(exec_info[2])
+            UserActivityLogger.error(
+                operation="INDEX_CREATE",
+                remarks=tb_info[0]
+            )
+            if "uix_position" in "".join(ie.args):
                 try:
                     pid_info = cls.get_index(pid, with_count=True)
                     data["position"] = 0 if not pid_info else \
@@ -157,14 +188,16 @@ class Indexes(object):
                          if pid_info.position_max is not None else 0)
                     _add_index(data)
                 except SQLAlchemyError as ex:
+                    current_app.logger.error(ex)
+                    traceback.print_exc()
                     is_ok = False
-                    current_app.logger.debug(ex)
             else:
                 is_ok = False
-                current_app.logger.debug(ie)
+                current_app.logger.error(ie)
         except Exception as ex:
             is_ok = False
-            current_app.logger.debug(ex)
+            current_app.logger.error(ex)
+            traceback.print_exc()
         finally:
             del data
             if not is_ok:
@@ -180,6 +213,8 @@ class Indexes(object):
         :param detail: new index info for update.
         :return: Updated index info
         """
+        from weko_logging.activity_logger import UserActivityLogger
+
         try:
             with db.session.begin_nested():
                 index = cls.get_index(index_id)
@@ -193,9 +228,9 @@ class Indexes(object):
                             continue
                     if isinstance(v, dict):
                         v = ",".join(map(lambda x: str(x["id"]), v["allow"]))
-                    if "public_date" in k:
+                    if isinstance(v, str) and "public_date" in k:
                         if len(v) > 0:
-                            v = datetime.strptime(v, '%Y%m%d')
+                            v = datetime.strptime(v, "%Y%m%d")
                         else:
                             v = None
                     if v is not None and (
@@ -204,27 +239,53 @@ class Indexes(object):
                     if "have_children" in k:
                         continue
                     setattr(index, k, v)
+
+                # browsing_group と contribute_group の allow リストから "gr" を削除して browsing_role と contribute_role に追加
+                browsing_group_allow = data.get("browsing_group", {}).get("allow", [])
+                contribute_group_allow = data.get("contribute_group", {}).get("allow", [])
+
+                browsing_role_ids = [str(group["id"]).replace("gr", "") for group in browsing_group_allow if "gr" in str(group["id"])]
+                contribute_role_ids = [str(group["id"]).replace("gr", "") for group in contribute_group_allow if "gr" in str(group["id"])]
+
+                # 現在の browsing_role と contribute_role に追加
+                current_browsing_role = index.browsing_role.split(",") if index.browsing_role else []
+                current_contribute_role = index.contribute_role.split(",") if index.contribute_role else []
+
+                updated_browsing_role = list(set(current_browsing_role + browsing_role_ids))
+                updated_contribute_role = list(set(current_contribute_role + contribute_role_ids))
+
+                index.browsing_role = ",".join(updated_browsing_role)
+                index.contribute_role = ",".join(updated_contribute_role)
+
+                # browsing_group と contribute_group の allow リストから "gr" を除外
+                updated_browsing_group_allow = [group for group in browsing_group_allow if "gr" not in str(group["id"])]
+                updated_contribute_group_allow = [group for group in contribute_group_allow if "gr" not in str(group["id"])]
+
+                # 更新された browsing_group と contribute_group をインデックスに設定
+                index.browsing_group = ",".join([str(group["id"]) for group in updated_browsing_group_allow])
+                index.contribute_group = ",".join([str(group["id"]) for group in updated_contribute_group_allow])
+
                 recs_group = {
-                    'recursive_coverpage_check': partial(
+                    "recursive_coverpage_check": partial(
                         cls.set_coverpage_state_resc, index_id,
                         getattr(index, "coverpage_state")),
-                    'recursive_public_state': partial(
+                    "recursive_public_state": partial(
                         cls.set_public_state_resc, index_id,
                         getattr(index, "public_state"),
                         getattr(index, "public_date")),
-                    'recursive_browsing_group': partial(
+                    "recursive_browsing_group": partial(
                         cls.set_browsing_group_resc, index_id,
                         getattr(index, "browsing_group")),
-                    'recursive_browsing_role': partial(
+                    "recursive_browsing_role": partial(
                         cls.set_browsing_role_resc, index_id,
                         getattr(index, "browsing_role")),
-                    'recursive_contribute_group': partial(
+                    "recursive_contribute_group": partial(
                         cls.set_contribute_group_resc, index_id,
                         getattr(index, "contribute_group")),
-                    'recursive_contribute_role': partial(
+                    "recursive_contribute_role": partial(
                         cls.set_contribute_role_resc, index_id,
                         getattr(index, "contribute_role")),
-                    'biblio_flag': partial(
+                    "biblio_flag": partial(
                         cls.set_online_issn_resc, index_id,
                         getattr(index, "online_issn"))
                 }
@@ -236,10 +297,24 @@ class Indexes(object):
                 db.session.merge(index)
             db.session.commit()
             cls.update_set_info(index)
+            UserActivityLogger.info(
+                operation="INDEX_UPDATE",
+                target_key=index_id
+            )
             return index
         except Exception as ex:
-            current_app.logger.debug(ex)
             db.session.rollback()
+            current_app.logger.error(
+                f"Error occurred while updating index: {index_id}"
+            )
+            traceback.print_exc()
+            exec_info = sys.exc_info()
+            tb_info = traceback.format_tb(exec_info[2])
+            UserActivityLogger.error(
+                operation="INDEX_UPDATE",
+                target_key=index_id,
+                remarks=tb_info[0]
+            )
         return
 
     @classmethod
@@ -259,14 +334,16 @@ class Indexes(object):
                 query = db.session.query(Index).filter(
                     Index.parent == index_id)
                 obj_list = query.all()
-                dct = query.update(
+                updated = datetime.now(timezone.utc)
+                query.update(
                     {
                         Index.parent: slf.parent,
                         Index.owner_user_id: current_user.get_id(),
-                        Index.updated: datetime.utcnow()
+                        Index.updated: updated
                     },
                     synchronize_session='fetch')
-                db.session.delete(slf)
+                slf.updated = updated
+                slf.is_deleted = True
                 p_lst = [o.id for o in obj_list]
                 cls.delete_set_info('move', index_id, p_lst)
                 return p_lst
@@ -287,8 +364,12 @@ class Indexes(object):
                         Index.comment,
                         Index.browsing_role,
                         Index.browsing_group,
-                        Index.harvest_public_state
-                    ).filter(Index.id == index_id)).all()
+                        Index.harvest_public_state,
+                        Index.is_deleted,
+                    ).filter(
+                        Index.id == index_id,
+                        Index.is_deleted == False
+                    )).all()
 
             if obj:
                 p_lst = [o.cid for o in obj]
@@ -298,11 +379,18 @@ class Indexes(object):
                     while e <= len(p_lst):
                         s = e
                         e = e + batch
-                        dct = db.session.query(Index).filter(
-                            Index.id.in_(p_lst[s:e])). \
-                            delete(synchronize_session='fetch')
+                        db.session.query(Index). \
+                            filter(Index.id.in_(p_lst[s:e])). \
+                            update(
+                                {
+                                    Index.updated: datetime.now(timezone.utc),
+                                    Index.is_deleted: True
+                                },
+                                synchronize_session='fetch'
+                            )
                 cls.delete_set_info('delete', index_id, p_lst)
                 return p_lst
+
         return 0
 
     @classmethod
@@ -331,7 +419,6 @@ class Indexes(object):
         """Move."""
         def _update_index(new_position, parent=None):
             with db.session.begin_nested():
-                index = Index.query.filter_by(id=index_id).one()
                 index.position = new_position
                 index.owner_user_id = user_id
                 flag_modified(index, 'position')
@@ -404,6 +491,12 @@ class Indexes(object):
                 return ret
 
             try:
+                index = cls.get_index(index_id)
+                if not index:
+                    ret['is_ok'] = False
+                    ret['msg'] = _('Fail move an index.')
+                    return ret
+
                 role_ids = []
                 if current_user and current_user.is_authenticated:
                     for role in current_user.roles:
@@ -437,6 +530,10 @@ class Indexes(object):
                 else:
                     parent_info = cls.get_index(parent,
                                                 with_count=True)
+                if not parent_info:
+                    ret['is_ok'] = False
+                    ret['msg'] = _('Fail move an index.')
+                    return ret
                 position_max = parent_info.position_max + 1 \
                     if parent_info.position_max is not None else 0
 
@@ -494,7 +591,6 @@ class Indexes(object):
                             if not ret['is_ok']:
                                 db.session.rollback()
                 else:
-                    index = Index.query.filter_by(id=index_id).one()
                     try:
                         _update_index(position_max, parent)
                         _re_order_tree(new_position)
@@ -536,9 +632,9 @@ class Indexes(object):
 
     @classmethod
     @cached_index_tree_json(timeout=None,)
-    def get_index_tree(cls, pid=0, lang=None):
+    def get_index_tree(cls, pid=0, lang=None, with_deleted=False):
         """Get index tree json."""
-        return get_tree_json(cls.get_recursive_tree(pid, lang), pid)
+        return get_tree_json(cls.get_recursive_tree(pid, lang, with_deleted=with_deleted), pid)
 
     @classmethod
     def get_browsing_info(cls):
@@ -620,7 +716,7 @@ class Indexes(object):
 
     @classmethod
     def get_contribute_tree(cls, pid, root_node_id=0):
-        """Get Contrbute tree."""
+        """Get Contribute tree."""
         from weko_deposit.api import WekoRecord
         record = WekoRecord.get_record_by_pid(pid)
         tree = cls.get_index_tree(root_node_id)
@@ -632,12 +728,13 @@ class Indexes(object):
         return tree
 
     @classmethod
-    def get_recursive_tree(cls, pid: int = 0, lang: str = None):
+    def get_recursive_tree(cls, pid: int = 0, lang: str = None, with_deleted: bool = False):
         """Get recursive tree."""
         with db.session.begin_nested():
-            recursive_t = cls.recs_tree_query(pid, lang)
-            if pid != 0:
-                recursive_t = cls.recs_root_tree_query(pid, lang)
+            if pid == 0:
+                recursive_t = cls.recs_tree_query(pid, lang, with_deleted=with_deleted)
+            else:
+                recursive_t = cls.recs_root_tree_query(pid, lang, with_deleted=with_deleted)
             qlst = [
                 recursive_t.c.pid,
                 recursive_t.c.cid,
@@ -654,7 +751,9 @@ class Indexes(object):
                 recursive_t.c.more_check,
                 recursive_t.c.display_no,
                 recursive_t.c.coverpage_state,
-                recursive_t.c.recursive_coverpage_check]
+                recursive_t.c.recursive_coverpage_check,
+                recursive_t.c.is_deleted,
+            ]
             obj = db.session.query(*qlst). \
                 order_by(recursive_t.c.lev,
                          recursive_t.c.pid,
@@ -662,12 +761,42 @@ class Indexes(object):
         return obj
 
     @classmethod
+    def filter_roles(cls, roles):
+        """特定の条件に基づいてロールをフィルタリングします。
+
+        Args:
+            roles (list): フィルタリング対象のロールのリスト。
+
+        Returns:
+            tuple: 2つのリストを含むタプル。
+                - filtered_roles: 特定の条件を満たすロールのリスト。
+                - excluded_roles: 特定の条件を満たさないロールのリスト。
+        """
+        if not isinstance(roles, list):
+            raise TypeError("roles must be a list")
+
+        roles_gakunin_map_group = []
+        other_roles = []
+
+        gakunin_map_prefix = current_app.config['WEKO_ACCOUNTS_GAKUNIN_GROUP_PATTERN_DICT']['prefix']
+        role_keyword = current_app.config['WEKO_ACCOUNTS_GAKUNIN_GROUP_PATTERN_DICT']['role_keyword']
+        default_weko_role_names = current_app.config['WEKO_PERMISSION_ROLE_USER'] + ['Authenticated User', 'Guest']
+        for role in roles:
+            # ロール名が設定されたキーワードに含まれていない、かつロール名が設定されたプレフィックスに含まれていない、かつロール名が'WEKO_PERMISSION_ROLE_USER','Authenticated User','Guest'のいずれでもないことを確認します。
+            if not (role["name"].startswith(gakunin_map_prefix) and role_keyword in role["name"]) and \
+                    role["name"] not in default_weko_role_names:
+                roles_gakunin_map_group.append({'id': role['id'], 'name': role['name']})
+            else:
+                other_roles.append({'id': role['id'], 'name': role['name']})
+        return roles_gakunin_map_group, other_roles
+
+    @classmethod
     def get_index_with_role(cls, index_id):
         """Get Index with role."""
         def _get_allow_deny(allow, role, browse_flag=False):
             alw = []
             deny = []
-            if isinstance(role, list):
+            if role:
                 while role:
                     tmp = role.pop(0)
                     if tmp["name"] not in current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER']:
@@ -690,40 +819,80 @@ class Indexes(object):
 
             return allow, deny
 
+        def _get_filter_gakunin_map_groups_allow_deny(filtered_role_ids=[], filtered_roles=[]):
+            """
+            フィルタリングされたロールIDとロールリストに基づいて、許可リストと拒否リストを生成します。
+
+            :param filtered_role_ids: 許可リストに含めるロールIDのリスト。
+            :param filtered_roles: フィルタリングされたロールのリスト。各ロールは辞書またはオブジェクトとして表されます。
+            :return: 許可リストと拒否リストを含むタプル。各リストの要素は辞書形式で、'id' と 'name' を含みます。
+            """
+            allow = []
+            deny = []
+            if not filtered_roles:
+                return allow, deny
+            for group in filtered_roles:
+                group_id = str(group['id']) if isinstance(group, dict) else str(group.id)
+                group_name = group['name'] if isinstance(group, dict) else group.name
+                if group_id in filtered_role_ids:
+                    allow.append({'id': group_id + "gr", 'name': group_name})
+                else:
+                    deny.append({'id': group_id + "gr", 'name': group_name})
+            return allow, deny
+
         index = dict(cls.get_index(index_id))
 
-        role = cls.get_account_role()
-        allow = index["browsing_role"].split(',') \
-            if len(index["browsing_role"]) else []
-        allow, deny = _get_allow_deny(allow, pickle.loads(pickle.dumps(role, -1)), True)
-        index["browsing_role"] = dict(allow=allow, deny=deny)
+        roles = cls.get_account_role()
+        roles_gakunin_map_group, other_roles = cls.filter_roles(roles)
 
-        allow = index["contribute_role"].split(',') \
+        # browsing_role の処理に excluded_roles を使用
+        allow_browsing_roles_ids = index["browsing_role"].split(',') \
+            if len(index["browsing_role"]) else []
+        allow_browsing_roles, deny_browsing_roles = _get_allow_deny(allow_browsing_roles_ids, pickle.loads(pickle.dumps(other_roles, -1)), True)
+        index["browsing_role"] = dict(allow=allow_browsing_roles, deny=deny_browsing_roles)
+
+        # contribute_role の処理に excluded_roles を使用
+        allow_contribute_role_ids = index["contribute_role"].split(',') \
             if len(index["contribute_role"]) else []
-        allow, deny = _get_allow_deny(allow, role)
-        index["contribute_role"] = dict(allow=allow, deny=deny)
+        allow_contribute_roles, deny_contribute_roles = _get_allow_deny(allow_contribute_role_ids, other_roles)
+        index["contribute_role"] = dict(allow=allow_contribute_roles, deny=deny_contribute_roles)
 
         if index["public_date"]:
             index["public_date"] = index["public_date"].strftime('%Y%m%d')
 
         group_list = Group.query.all()
-
-        allow_group_id = index["browsing_group"].split(',') \
+        #browsing_groupとcontribute_groupの値を取得して、browsing_groupとcontribute_groupの辞書の値を保持します。
+        allow_browsing_group_ids = index["browsing_group"].split(',') \
             if len(index["browsing_group"]) else []
-        allow_group, deny_group = _get_group_allow_deny(allow_group_id,
+        allow_browsing_groups, deny_browsing_groups = _get_group_allow_deny(allow_browsing_group_ids,
                                                         pickle.loads(pickle.dumps(group_list, -1)))
-        index["browsing_group"] = dict(allow=allow_group, deny=deny_group)
+        browsing_group = dict(allow=allow_browsing_groups, deny=deny_browsing_groups)
 
-        allow_group_id = index["contribute_group"].split(',') \
+        # _get_group_allow_deny_2の結果をbrowsing_groupに追加
+        allow_browsing_map_groups, deny_browsing_map_groups = _get_filter_gakunin_map_groups_allow_deny(allow_browsing_roles_ids, roles_gakunin_map_group)
+        browsing_group["allow"].extend(allow_browsing_map_groups)
+        browsing_group["deny"].extend(deny_browsing_map_groups)
+
+        index["browsing_group"] = browsing_group
+
+
+        # contribute_groupの値を取得して、辞書の値を保持します。
+        allow_contribute_group_ids = index["contribute_group"].split(',') \
             if len(index["contribute_group"]) else []
-        allow_group, deny_group = _get_group_allow_deny(allow_group_id,
+        allow_contribute_groups, deny_contributes_groups = _get_group_allow_deny(allow_contribute_group_ids,
                                                         pickle.loads(pickle.dumps(group_list, -1)))
-        index["contribute_group"] = dict(allow=allow_group, deny=deny_group)
+        contribute_group = dict(allow=allow_contribute_groups, deny=deny_contributes_groups)
 
+        # _get_group_allow_deny_2の結果をcontribute_groupに追加
+        allow_contribute_map_groups, deny_contribute_map_groups = _get_filter_gakunin_map_groups_allow_deny(allow_contribute_role_ids, roles_gakunin_map_group)
+        contribute_group["allow"].extend(allow_contribute_map_groups)
+        contribute_group["deny"].extend(deny_contribute_map_groups)
+
+        index["contribute_group"] = contribute_group
         return index
 
     @classmethod
-    def get_index(cls, index_id, with_count=False):
+    def get_index(cls, index_id, with_count=False, with_deleted=False):
         """Get index."""
         with db.session.begin_nested():
             if with_count:
@@ -733,35 +902,43 @@ class Indexes(object):
                     .group_by(Index.parent).subquery()
                 obj = db.session.query(Index, stmt.c.position_max). \
                     outerjoin(stmt, Index.id == stmt.c.parent). \
-                    filter(Index.id == index_id).one_or_none()
+                    filter(Index.id == index_id)
             else:
-                obj = db.session.query(Index). \
-                    filter_by(id=index_id).one_or_none()
+                obj = db.session.query(Index).filter_by(id=index_id)
 
-        return obj
+            if not with_deleted:
+                obj = obj.filter(Index.is_deleted == False)
+
+        return obj.one_or_none()
 
     @classmethod
-    def get_index_by_name(cls, index_name="", pid=0):
+    def get_index_by_name(cls, index_name="", pid=0, with_deleted=False):
         """Validation importing zip file.
 
         :argument
             index_name   -- {str} index_name query
             pid          -- {number} parent index id
+            with_deleted -- {bool} Include deleted index
         :return
             return       -- index id import item
 
         """
         with db.session.begin_nested():
             obj = db.session.query(Index). \
-                filter_by(index_name=index_name, parent=pid).one_or_none()
-        return obj
+                filter_by(index_name=index_name, parent=pid)
+
+            if not with_deleted:
+                obj = obj.filter(Index.is_deleted == False)
+
+        return obj.one_or_none()
 
     @classmethod
-    def get_index_by_all_name(cls, index_name=""):
+    def get_index_by_all_name(cls, index_name="", with_deleted=False):
         """Get index by index name (jp, eng).
 
         :argument
             index_name   -- {str} Index name.
+            with_deleted -- {bool} Include deleted index.
         :return
             return       -- index object
 
@@ -769,8 +946,12 @@ class Indexes(object):
         with db.session.begin_nested():
             obj = db.session.query(Index). \
                 filter(db.or_(Index.index_name_english == index_name,
-                              Index.index_name == index_name)).all()
-        return obj
+                              Index.index_name == index_name))
+
+            if not with_deleted:
+                obj = obj.filter(Index.is_deleted == False)
+
+        return obj.all()
 
     @classmethod
     def get_root_index_count(cls):
@@ -806,145 +987,168 @@ class Indexes(object):
             return
 
     @classmethod
-    def get_path_list(cls, node_lst):
+    def get_path_list(cls, node_lst, with_deleted=False):
         """
         Get index tree info.
 
         :param node_lst: Identifier list of the index.
+        :param with_deleted: Include deleted index.
         :return: the list of index.
         """
-        recursive_t = cls.recs_query()
+        for index_id in node_lst:
+            if not index_id:
+                node_lst.remove(index_id)
+
+        recursive_t = cls.recs_query(with_deleted=with_deleted)
         q = db.session.query(recursive_t).filter(
             recursive_t.c.cid.in_(node_lst)).all()
         return q
 
     @classmethod
-    def get_path_name(cls, index_ids):
+    def get_path_name(cls, index_ids, with_deleted=False):
         """
         Get index title info.
 
-        :param node_path: List of the Index Identifiers.
+        :param index_ids: List of the Index Identifiers.
+        :param with_deleted: Include deleted index.
         :return: the list of index.
         """
-        node_paths = [cls.get_full_path(item) for item in index_ids]
-        recursive_t = cls.recs_query()
+        node_paths = [cls.get_full_path(item, with_deleted=with_deleted) for item in index_ids]
+        recursive_t = cls.recs_query(with_deleted=with_deleted)
         q = db.session.query(recursive_t).filter(
             recursive_t.c.path.in_(node_paths)). \
             order_by(recursive_t.c.path).all()
         return filter_index_list_by_role(q)
 
     @classmethod
-    def get_self_list(cls, index_id, community_id=None):
+    def get_self_list(cls, index_id, community_id=None, with_deleted=False):
         """
         Get index list info.
 
-        :param node_path: Identifier of the index.
+        :param index_id: Identifier of the index.
+        :param community_id: Identifier of the community.
+        :param with_deleted: Include deleted index.
         :return: the list of index.
         """
+        def _get_index_list():
+            recursive_t = cls.recs_query(with_deleted=with_deleted)
+            query = db.session.query(recursive_t).filter(
+                db.or_(recursive_t.c.cid == index_id,
+                        recursive_t.c.pid == index_id))
+            if not get_user_roles(is_super_role=True)[0]:
+                query = query.filter(recursive_t.c.public_state)
+            return query.order_by(recursive_t.c.path).all()
+
         if community_id:
             from invenio_communities.models import Community
             community_obj = Community.get(community_id)
-            recursive_t = cls.recs_query()
-            query = db.session.query(recursive_t).filter(db.or_(
-                recursive_t.c.cid == index_id, recursive_t.c.pid == index_id))
-            if not get_user_roles(is_super_role=True)[0]:
-                query = query.filter(recursive_t.c.public_state)
-            q = query.order_by(recursive_t.c.path).all()
             lst = list()
-            if index_id != '0':
-                for item in q:
+            if str(index_id) != '0':
+                for item in _get_index_list():
                     if item.cid == community_obj.root_node_id \
-                            and item.pid == '0':
+                            and str(item.pid) == '0':
                         lst.append(item)
-                    if item.pid != '0':
+                    if str(item.pid) != '0':
                         lst.append(item)
-                return lst
         else:
-            recursive_t = cls.recs_query()
-            query = db.session.query(recursive_t).filter(
-                db.or_(recursive_t.c.pid == index_id,
-                       recursive_t.c.cid == index_id))
-            if not get_user_roles(is_super_role=True)[0]:
-                query = query.filter(recursive_t.c.public_state)
-            q = query.order_by(recursive_t.c.path).all()
-            return q
+            lst = _get_index_list()
+
+        return lst
 
     @classmethod
-    def get_self_path(cls, node_id):
+    def get_self_path(cls, node_id, with_deleted=False):
         """Get index view path info.
 
         :param node_id: Identifier of the index.
+        :param with_deleted: Include deleted index.
         :return: the type of Index.
         """
-        try:
-            recursive_t = cls.recs_query()
-            return db.session.query(recursive_t).filter(
-                recursive_t.c.cid == str(node_id)).one_or_none()
-        except Exception as ex:
-            current_app.logger.debug(ex)
-            db.session.rollback()
-            return False
+        recursive_t = cls.recs_query(with_deleted=with_deleted)
+        return db.session.query(recursive_t).filter(
+            recursive_t.c.cid == str(node_id)).one_or_none()
 
     @classmethod
-    def get_child_list_recursive(cls, pid):
+    def get_child_list_recursive(cls, pid, with_deleted=False):
         """
         Get index list info.
 
         :param pid: pid of the index.
+        :param with_deleted: Include deleted index.
         :return: the list of index.
         """
         def recursive_p():
-            recursive_p = db.session.query(
+            query_p = db.session.query(
                 Index.parent.label("pid"),
                 Index.id.label("cid"),
                 func.cast(Index.id, db.Text).label("path"),
-            ).filter(Index.id == pid). \
-                cte(name="recursive_p", recursive=True)
+            ).filter(Index.id == pid)
+
+            if not with_deleted:
+                query_p = query_p.filter(Index.is_deleted == False)
+
+            recursive_p = query_p.cte(name="recursive_p", recursive=True)
 
             rec_alias = aliased(recursive_p, name="recursive")
             test_alias = aliased(Index, name="test")
-            recursive_p = recursive_p.union_all(
-                db.session.query(
-                    test_alias.parent,
-                    test_alias.id,
-                    func.cast(test_alias.id, db.Text) + '/' + rec_alias.c.path,
-                ).filter(test_alias.id == rec_alias.c.pid)
-            )
+            union_query_p = db.session.query(
+                test_alias.parent,
+                test_alias.id,
+                func.cast(test_alias.id, db.Text) + '/' + rec_alias.c.path,
+            ).filter(test_alias.id == rec_alias.c.pid)
+
+            if not with_deleted:
+                union_query_p = union_query_p.filter(
+                    test_alias.is_deleted == False
+                )
+
+            recursive_p = recursive_p.union_all(union_query_p)
             path_index_searchs = db.session.query(recursive_p).filter_by(
                 pid=0).one()
             return path_index_searchs.path
+
         path_index_searchs = recursive_p()
 
-        recursive_t = db.session.query(
+        query_t = db.session.query(
             Index.parent.label("pid"),
             Index.id.label("cid"),
             func.cast(path_index_searchs, db.Text).label("path"),
             Index.public_state.label("public_state"),
-        ).filter(Index.id == pid). \
-            cte(name="recursive_t", recursive=True)
+        ).filter(Index.id == pid)
+
+        if not with_deleted:
+            query_t = query_t.filter(
+                Index.is_deleted == False
+            )
+
+        recursive_t = query_t.cte(name="recursive_t", recursive=True)
 
         rec_alias = aliased(recursive_t, name="rec")
         test_alias = aliased(Index, name="t")
-        recursive_t = recursive_t.union_all(
-            db.session.query(
+        union_query_t = db.session.query(
                 test_alias.parent,
                 test_alias.id,
                 rec_alias.c.path + '/' + func.cast(test_alias.id, db.Text),
                 test_alias.public_state,
             ).filter(test_alias.parent == rec_alias.c.cid)
-        )
+
+        if not with_deleted:
+            union_query_t = union_query_t.filter(
+                test_alias.is_deleted == False
+            )
+
+        recursive_t = recursive_t.union_all(union_query_t)
         query = db.session.query(recursive_t)
         q = query.order_by(recursive_t.c.path).all()
         return [str(item.cid) for item in q]
 
     @classmethod
-    def recs_reverse_query(cls, pid=0):
+    def recs_reverse_query(cls, pid=0, with_deleted=False):
         """Init select condition of index.
 
         :return: the query of db.session.
         """
         _id = str(pid)
-        recursive_t = db.session.query(
+        query = db.session.query(
             Index.parent.label("pid"),
             Index.id.label("cid"),
             func.cast(Index.id, db.Text).label("path"),
@@ -956,32 +1160,41 @@ class Indexes(object):
             Index.comment.label("comment"),
             Index.browsing_role.label("browsing_role"),
             Index.browsing_group.label("browsing_group"),
-            Index.harvest_public_state.label("harvest_public_state")
-        ).filter(Index.id == pid). \
-            cte(name='recursive_t_' + _id, recursive=True)
+            Index.harvest_public_state.label("harvest_public_state"),
+            Index.is_deleted.label("is_deleted"),
+        ).filter(Index.id == pid)
+
+        if not with_deleted:
+            query = query.filter(Index.is_deleted == False)
+
+        recursive_t = query.cte(name='recursive_t_' + _id, recursive=True)
 
         rec_alias = aliased(recursive_t, name="rec_" + _id)
         test_alias = aliased(Index, name="t_" + _id)
-        return recursive_t.union_all(
-            db.session.query(
-                test_alias.parent,
-                test_alias.id,
-                rec_alias.c.path + '/' + func.cast(test_alias.id, db.Text),
-                case([(func.length(test_alias.index_name) == 0, None)],
-                     else_=rec_alias.c.name + '-/-' + test_alias.index_name),
-                rec_alias.c.name_en + '-/-' + test_alias.index_name_english,
-                rec_alias.c.lev + 1,
-                test_alias.public_state,
-                test_alias.public_date,
-                test_alias.comment,
-                test_alias.browsing_role,
-                test_alias.browsing_group,
-                test_alias.harvest_public_state,
-            ).filter(test_alias.id == rec_alias.c.pid)
-        )
+        union_query = db.session.query(
+            test_alias.parent,
+            test_alias.id,
+            rec_alias.c.path + '/' + func.cast(test_alias.id, db.Text),
+            case([(func.length(test_alias.index_name) == 0, None)],
+                    else_=rec_alias.c.name + '-/-' + test_alias.index_name),
+            rec_alias.c.name_en + '-/-' + test_alias.index_name_english,
+            rec_alias.c.lev + 1,
+            test_alias.public_state,
+            test_alias.public_date,
+            test_alias.comment,
+            test_alias.browsing_role,
+            test_alias.browsing_group,
+            test_alias.harvest_public_state,
+            test_alias.is_deleted,
+        ).filter(test_alias.id == rec_alias.c.pid)
+
+        if not with_deleted:
+            union_query = union_query.filter(test_alias.is_deleted == False)
+
+        return recursive_t.union_all(union_query)
 
     @classmethod
-    def recs_query(cls, pid=0):
+    def recs_query(cls, pid=0, with_deleted=False):
         """
         Init select condition of index.
 
@@ -990,7 +1203,7 @@ class Indexes(object):
         # !!! Important !!!
         # If add/delete columns in here,
         # please add/delete columns in Indexes.delete function, too.
-        recursive_t = db.session.query(
+        query = db.session.query(
             Index.parent.label("pid"),
             Index.id.label("cid"),
             func.cast(Index.id, db.Text).label("path"),
@@ -1004,42 +1217,185 @@ class Indexes(object):
             Index.comment.label("comment"),
             Index.browsing_role.label("browsing_role"),
             Index.browsing_group.label("browsing_group"),
-            Index.harvest_public_state.label("harvest_public_state")
-        ).filter(Index.parent == pid). \
-            cte(name="recursive_t", recursive=True)
+            Index.harvest_public_state.label("harvest_public_state"),
+            Index.is_deleted.label("is_deleted"),
+        ).filter(Index.parent == pid)
+
+        if not with_deleted:
+            query = query.filter(Index.is_deleted == False)
+
+        recursive_t = query.cte(name="recursive_t", recursive=True)
 
         rec_alias = aliased(recursive_t, name="rec")
         test_alias = aliased(Index, name="t")
-        recursive_t = recursive_t.union_all(
-            db.session.query(
+        union_query = db.session.query(
+            test_alias.parent,
+            test_alias.id,
+            rec_alias.c.path + '/' + func.cast(test_alias.id, db.Text),
+            case(
+                [
+                    (and_((func.length(rec_alias.c.name) > 0), (func.length(test_alias.index_name) == 0)), rec_alias.c.name + '-/-' + test_alias.index_name_english),
+                    (and_((func.length(rec_alias.c.name) == 0), (func.length(test_alias.index_name) > 0)), rec_alias.c.name_en + '-/-' + test_alias.index_name),
+                    (and_((func.length(rec_alias.c.name) > 0), (func.length(test_alias.index_name) > 0)), rec_alias.c.name + '-/-' + test_alias.index_name),
+                ],
+                else_=rec_alias.c.name_en + '-/-' + test_alias.index_name_english
+            ),
+            # add by ryuu at 1108 start
+            rec_alias.c.name_en + '-/-' + test_alias.index_name_english,
+            # add by ryuu at 1108 end
+            rec_alias.c.lev + 1,
+            test_alias.public_state,
+            test_alias.public_date,
+            test_alias.comment,
+            test_alias.browsing_role,
+            test_alias.browsing_group,
+            test_alias.harvest_public_state,
+            test_alias.is_deleted,
+        ).filter(test_alias.parent == rec_alias.c.cid)
+
+        if not with_deleted:
+            union_query = union_query.filter(test_alias.is_deleted == False)
+
+        return recursive_t.union_all(union_query)
+
+    @classmethod
+    def recs_tree_query(cls, pid=0, lang=None, with_deleted=False):
+        """
+        Init select condition of index.
+
+        :return: the query of db.session.
+        """
+        if lang is None:
+            lang = current_i18n.language
+        if lang == 'ja':
+            query = db.session.query(
+                Index.parent.label("pid"),
+                Index.id.label("cid"),
+                func.cast(
+                    Index.id,
+                    db.Text).label("path"),
+                case([(func.length(func.coalesce(Index.index_name, '')) == 0,
+                       Index.index_name_english)],
+                     else_=Index.index_name).label('name'),
+                case([(func.length(func.coalesce(Index.index_link_name, '')) == 0,
+                       Index.index_link_name_english)],
+                     else_=Index.index_link_name).label('link_name'),
+                Index.index_link_enabled,
+                Index.position,
+                Index.public_state,
+                Index.public_date,
+                Index.browsing_role,
+                Index.contribute_role,
+                Index.browsing_group,
+                Index.contribute_group,
+                Index.more_check,
+                Index.display_no,
+                Index.coverpage_state,
+                Index.recursive_coverpage_check,
+                Index.is_deleted,
+                literal_column("1",db.Integer).label("lev")
+            ).filter(Index.parent == pid)
+
+            if not with_deleted:
+                query = query.filter(Index.is_deleted == False)
+
+            recursive_t = query.cte(name="recursive_t", recursive=True)
+
+            rec_alias = aliased(recursive_t, name="rec")
+            test_alias = aliased(Index, name="t")
+            union_query = db.session.query(
                 test_alias.parent,
                 test_alias.id,
                 rec_alias.c.path + '/' + func.cast(test_alias.id, db.Text),
-                case(
-                    [
-                        (and_((func.length(rec_alias.c.name) > 0), (func.length(test_alias.index_name) == 0)), rec_alias.c.name + '-/-' + test_alias.index_name_english),
-                        (and_((func.length(rec_alias.c.name) == 0), (func.length(test_alias.index_name) > 0)), rec_alias.c.name_en + '-/-' + test_alias.index_name),
-                        (and_((func.length(rec_alias.c.name) > 0), (func.length(test_alias.index_name) > 0)), rec_alias.c.name + '-/-' + test_alias.index_name),
-                    ],
-                    else_=rec_alias.c.name_en + '-/-' + test_alias.index_name_english
-                ),
-                # add by ryuu at 1108 start
-                rec_alias.c.name_en + '-/-' + test_alias.index_name_english,
-                # add by ryuu at 1108 end
-                rec_alias.c.lev + 1,
+                case([(func.length(
+                    func.coalesce(test_alias.index_name, '')) == 0,
+                    test_alias.index_name_english)],
+                    else_=test_alias.index_name).label('name'),
+                case([(func.length(
+                    func.coalesce(test_alias.index_link_name, '')) == 0,
+                    test_alias.index_link_name_english)],
+                    else_=test_alias.index_link_name).label('link_name'),
+                test_alias.index_link_enabled,
+                test_alias.position,
                 test_alias.public_state,
                 test_alias.public_date,
-                test_alias.comment,
                 test_alias.browsing_role,
+                test_alias.contribute_role,
                 test_alias.browsing_group,
-                test_alias.harvest_public_state,
+                test_alias.contribute_group,
+                test_alias.more_check,
+                test_alias.display_no,
+                test_alias.coverpage_state,
+                test_alias.recursive_coverpage_check,
+                test_alias.is_deleted,
+                rec_alias.c.lev + 1
             ).filter(test_alias.parent == rec_alias.c.cid)
-        )
 
-        return recursive_t
+            if not with_deleted:
+                union_query = union_query.filter(
+                    test_alias.is_deleted == False
+                )
+        else:
+            query = db.session.query(
+                Index.parent.label("pid"),
+                Index.id.label("cid"),
+                func.cast(Index.id, db.Text).label("path"),
+                Index.index_name_english.label("name"),
+                Index.index_link_name_english.label("link_name"),
+                Index.index_link_enabled,
+                Index.position,
+                Index.public_state,
+                Index.public_date,
+                Index.browsing_role,
+                Index.contribute_role,
+                Index.browsing_group,
+                Index.contribute_group,
+                Index.more_check,
+                Index.display_no,
+                Index.coverpage_state,
+                Index.recursive_coverpage_check,
+                Index.is_deleted,
+                literal_column("1", db.Integer).label("lev")
+            ).filter(Index.parent == pid)
+
+            if not with_deleted:
+                query = query.filter(Index.is_deleted == False)
+
+            recursive_t = query.cte(name="recursive_t", recursive=True)
+
+            rec_alias = aliased(recursive_t, name="rec")
+            test_alias = aliased(Index, name="t")
+            union_query = db.session.query(
+                test_alias.parent,
+                test_alias.id,
+                rec_alias.c.path + '/' + func.cast(test_alias.id, db.Text),
+                test_alias.index_name_english,
+                test_alias.index_link_name_english,
+                test_alias.index_link_enabled,
+                test_alias.position,
+                test_alias.public_state,
+                test_alias.public_date,
+                test_alias.browsing_role,
+                test_alias.contribute_role,
+                test_alias.browsing_group,
+                test_alias.contribute_group,
+                test_alias.more_check,
+                test_alias.display_no,
+                test_alias.coverpage_state,
+                test_alias.recursive_coverpage_check,
+                test_alias.is_deleted,
+                rec_alias.c.lev + 1
+            ).filter(test_alias.parent == rec_alias.c.cid)
+
+            if not with_deleted:
+                union_query = union_query.filter(
+                    test_alias.is_deleted == False
+                )
+
+        return recursive_t.union_all(union_query)
 
     @classmethod
-    def recs_tree_query(cls, pid=0, lang=None):
+    def recs_root_tree_query(cls, pid=0, lang=None, with_deleted=False):
         """
         Init select condition of index.
 
@@ -1048,7 +1404,7 @@ class Indexes(object):
         if lang is None:
             lang = current_i18n.language
         if lang == 'ja':
-            recursive_t = db.session.query(
+            query = db.session.query(
                 Index.parent.label("pid"),
                 Index.id.label("cid"),
                 func.cast(
@@ -1072,49 +1428,51 @@ class Indexes(object):
                 Index.display_no,
                 Index.coverpage_state,
                 Index.recursive_coverpage_check,
-                literal_column(
-                    "1",
-                    db.Integer).label("lev")).filter(
-                Index.parent == pid). cte(
-                        name="recursive_t",
-                recursive=True)
+                Index.is_deleted,
+                literal_column("1", db.Integer).label("lev")
+            ).filter(Index.id == pid)
+
+            if not with_deleted:
+                query = query.filter(Index.is_deleted == False)
+
+            recursive_t = query.cte(name="recursive_t", recursive=True)
 
             rec_alias = aliased(recursive_t, name="rec")
             test_alias = aliased(Index, name="t")
-            recursive_t = recursive_t.union_all(
-                db.session.query(
-                    test_alias.parent,
-                    test_alias.id,
-                    rec_alias.c.path
-                    + '/'
-                    + func.cast(
-                        test_alias.id,
-                        db.Text),
-                    case([(func.length(
-                        func.coalesce(test_alias.index_name, '')) == 0,
-                        test_alias.index_name_english)],
-                        else_=test_alias.index_name).label('name'),
-                    case([(func.length(
-                        func.coalesce(test_alias.index_link_name, '')) == 0,
-                        test_alias.index_link_name_english)],
-                        else_=test_alias.index_link_name).label('link_name'),
-                    test_alias.index_link_enabled,
-                    test_alias.position,
-                    test_alias.public_state,
-                    test_alias.public_date,
-                    test_alias.browsing_role,
-                    test_alias.contribute_role,
-                    test_alias.browsing_group,
-                    test_alias.contribute_group,
-                    test_alias.more_check,
-                    test_alias.display_no,
-                    test_alias.coverpage_state,
-                    test_alias.recursive_coverpage_check,
-                    rec_alias.c.lev
-                    + 1).filter(
-                    test_alias.parent == rec_alias.c.cid))
+            union_query = db.session.query(
+                test_alias.parent,
+                test_alias.id,
+                rec_alias.c.path + '/' + func.cast(test_alias.id, db.Text),
+                case([(func.length(func.coalesce(
+                    test_alias.index_name, '')) == 0,
+                    test_alias.index_name_english)],
+                    else_=test_alias.index_name),
+                case([(func.length(func.coalesce(
+                    test_alias.index_link_name, '')) == 0,
+                    test_alias.index_link_name_english)],
+                    else_=test_alias.index_link_name),
+                test_alias.index_link_enabled,
+                test_alias.position,
+                test_alias.public_state,
+                test_alias.public_date,
+                test_alias.browsing_role,
+                test_alias.contribute_role,
+                test_alias.browsing_group,
+                test_alias.contribute_group,
+                test_alias.more_check,
+                test_alias.display_no,
+                test_alias.coverpage_state,
+                test_alias.recursive_coverpage_check,
+                test_alias.is_deleted,
+                rec_alias.c.lev + 1
+            ).filter(test_alias.parent == rec_alias.c.cid)
+
+            if not with_deleted:
+                union_query = union_query.filter(
+                    test_alias.is_deleted == False
+                )
         else:
-            recursive_t = db.session.query(
+            query = db.session.query(
                 Index.parent.label("pid"),
                 Index.id.label("cid"),
                 func.cast(Index.id, db.Text).label("path"),
@@ -1132,173 +1490,61 @@ class Indexes(object):
                 Index.display_no,
                 Index.coverpage_state,
                 Index.recursive_coverpage_check,
-                literal_column("1", db.Integer).label("lev")).filter(
-                Index.parent == pid). \
-                cte(name="recursive_t", recursive=True)
+                Index.is_deleted,
+                literal_column("1", db.Integer).label("lev")
+            ).filter(Index.id == pid)
+
+            if not with_deleted:
+                query = query.filter(Index.is_deleted == False)
+
+            recursive_t = query.cte(name="recursive_t", recursive=True)
 
             rec_alias = aliased(recursive_t, name="rec")
             test_alias = aliased(Index, name="t")
-            recursive_t = recursive_t.union_all(
-                db.session.query(
-                    test_alias.parent,
-                    test_alias.id,
-                    rec_alias.c.path + '/' + func.cast(test_alias.id, db.Text),
-                    test_alias.index_name_english,
-                    test_alias.index_link_name_english,
-                    test_alias.index_link_enabled,
-                    test_alias.position,
-                    test_alias.public_state,
-                    test_alias.public_date,
-                    test_alias.browsing_role,
-                    test_alias.contribute_role,
-                    test_alias.browsing_group,
-                    test_alias.contribute_group,
-                    test_alias.more_check,
-                    test_alias.display_no,
-                    test_alias.coverpage_state,
-                    test_alias.recursive_coverpage_check,
-                    rec_alias.c.lev + 1).filter(
-                    test_alias.parent == rec_alias.c.cid)
-            )
+            union_query = db.session.query(
+                test_alias.parent,
+                test_alias.id,
+                rec_alias.c.path + '/' + func.cast(test_alias.id, db.Text),
+                test_alias.index_name_english,
+                test_alias.index_link_name_english,
+                test_alias.index_link_enabled,
+                test_alias.position,
+                test_alias.public_state,
+                test_alias.public_date,
+                test_alias.browsing_role,
+                test_alias.contribute_role,
+                test_alias.browsing_group,
+                test_alias.contribute_group,
+                test_alias.more_check,
+                test_alias.display_no,
+                test_alias.coverpage_state,
+                test_alias.recursive_coverpage_check,
+                test_alias.is_deleted,
+                rec_alias.c.lev + 1
+            ).filter(test_alias.parent == rec_alias.c.cid)
 
-        return recursive_t
+            if not with_deleted:
+                union_query = union_query.filter(
+                    test_alias.is_deleted == False
+                )
+
+        return recursive_t.union_all(union_query)
 
     @classmethod
-    def recs_root_tree_query(cls, pid=0, lang=None):
-        """
-        Init select condition of index.
-
-        :return: the query of db.session.
-        """
-        if lang is None:
-            lang = current_i18n.language
-        if lang == 'ja':
-            recursive_t = db.session.query(
-                Index.parent.label("pid"),
-                Index.id.label("cid"),
-                func.cast(
-                    Index.id,
-                    db.Text).label("path"),
-                case([(func.length(func.coalesce(Index.index_name, '')) == 0,
-                       Index.index_name_english)],
-                     else_=Index.index_name).label('name'),
-                case([(func.length(func.coalesce(Index.index_link_name, '')) == 0,
-                       Index.index_link_name_english)],
-                     else_=Index.index_link_name).label('link_name'),
-                Index.index_link_enabled,
-                Index.position,
-                Index.public_state,
-                Index.public_date,
-                Index.browsing_role,
-                Index.contribute_role,
-                Index.browsing_group,
-                Index.contribute_group,
-                Index.more_check,
-                Index.display_no,
-                Index.coverpage_state,
-                Index.recursive_coverpage_check,
-                literal_column(
-                    "1",
-                    db.Integer).label("lev")).filter(
-                Index.id == pid). cte(
-                        name="recursive_t",
-                recursive=True)
-
-            rec_alias = aliased(recursive_t, name="rec")
-            test_alias = aliased(Index, name="t")
-            recursive_t = recursive_t.union_all(
-                db.session.query(
-                    test_alias.parent,
-                    test_alias.id,
-                    rec_alias.c.path
-                    + '/'
-                    + func.cast(
-                        test_alias.id,
-                        db.Text),
-                    case([(func.length(func.coalesce(
-                        test_alias.index_name, '')) == 0,
-                        test_alias.index_name_english)],
-                        else_=test_alias.index_name),
-                    case([(func.length(func.coalesce(
-                        test_alias.index_link_name, '')) == 0,
-                        test_alias.index_link_name_english)],
-                        else_=test_alias.index_link_name),
-                    test_alias.index_link_enabled,
-                    test_alias.position,
-                    test_alias.public_state,
-                    test_alias.public_date,
-                    test_alias.browsing_role,
-                    test_alias.contribute_role,
-                    test_alias.browsing_group,
-                    test_alias.contribute_group,
-                    test_alias.more_check,
-                    test_alias.display_no,
-                    test_alias.coverpage_state,
-                    test_alias.recursive_coverpage_check,
-                    rec_alias.c.lev
-                    + 1).filter(
-                    test_alias.parent == rec_alias.c.cid))
-        else:
-            recursive_t = db.session.query(
-                Index.parent.label("pid"),
-                Index.id.label("cid"),
-                func.cast(Index.id, db.Text).label("path"),
-                Index.index_name_english.label("name"),
-                Index.index_link_name_english.label("link_name"),
-                Index.index_link_enabled,
-                Index.position,
-                Index.public_state,
-                Index.public_date,
-                Index.browsing_role,
-                Index.contribute_role,
-                Index.browsing_group,
-                Index.contribute_group,
-                Index.more_check,
-                Index.display_no,
-                Index.coverpage_state,
-                Index.recursive_coverpage_check,
-                literal_column("1", db.Integer).label("lev")).filter(
-                Index.id == pid). \
-                cte(name="recursive_t", recursive=True)
-
-            rec_alias = aliased(recursive_t, name="rec")
-            test_alias = aliased(Index, name="t")
-            recursive_t = recursive_t.union_all(
-                db.session.query(
-                    test_alias.parent,
-                    test_alias.id,
-                    rec_alias.c.path + '/' + func.cast(test_alias.id, db.Text),
-                    test_alias.index_name_english,
-                    test_alias.index_link_name_english,
-                    test_alias.index_link_enabled,
-                    test_alias.position,
-                    test_alias.public_state,
-                    test_alias.public_date,
-                    test_alias.browsing_role,
-                    test_alias.contribute_role,
-                    test_alias.browsing_group,
-                    test_alias.contribute_group,
-                    test_alias.more_check,
-                    test_alias.display_no,
-                    test_alias.coverpage_state,
-                    test_alias.recursive_coverpage_check,
-                    rec_alias.c.lev + 1).filter(
-                    test_alias.parent == rec_alias.c.cid)
-            )
-
-        return recursive_t
-
-    @classmethod
-    def get_harvest_public_state(cls, paths):
+    def get_harvest_public_state(cls, paths, with_deleted=False):
         """Check harvest_public_state of recursive index tree.
 
         Args:
             paths ([type]): [description]
+            with_deleted (bool, optional): Include deleted index.
         """
         def _query(path):
-            return db.session. \
+            query = db.session. \
                 query(func.every(Index.harvest_public_state).label(
                     'parent_state')).filter(Index.id.in_(path))
+            if not with_deleted:
+                query = query.filter(Index.is_deleted == False)
+            return query
 
         try:
             _paths = pickle.loads(pickle.dumps(paths, -1))
@@ -1337,12 +1583,15 @@ class Indexes(object):
         return ret
 
     @classmethod
-    def is_public_state(cls, paths):
+    def is_public_state(cls, paths, with_deleted=False):
         """Check have public state."""
         def _query(path):
-            return db.session. \
+            query = db.session. \
                 query(func.every(Index.public_state).label(
                     'parent_state')).filter(Index.id.in_(path))
+            if not with_deleted:
+                query = query.filter(Index.is_deleted == False)
+            return query
 
         try:
             _paths = pickle.loads(pickle.dumps(paths, -1))
@@ -1361,10 +1610,13 @@ class Indexes(object):
             return False
 
     @classmethod
-    def is_public_state_and_not_in_future(cls, ids):
+    def is_public_state_and_not_in_future(cls, ids, with_deleted=False):
         """Check have public state and open date not in future."""
         def _query(_id):
-            recursive_t = cls.recs_reverse_query(_id)
+            recursive_t = cls.recs_reverse_query(
+                _id,
+                with_deleted=with_deleted
+            )
             return db.session.query(func.every(db.and_(
                 recursive_t.c.public_state,
                 db.or_(
@@ -1400,19 +1652,11 @@ class Indexes(object):
             except BaseException:
                 pass
 
-        try:
-            with db.session.begin_nested():
-                index = cls.get_index(index_id)
-                if not index:
-                    return
-                index.item_custom_sort = sort_dict_db
-                db.session.merge(index)
-            db.session.commit()
-            return index
-        except Exception as ex:
-            current_app.logger.debug(ex)
-            db.session.rollback()
-        return
+        index = cls.get_index(index_id)
+        if index:
+            index.item_custom_sort = sort_dict_db
+            db.session.merge(index)
+        return index
 
     @classmethod
     def update_item_sort_custom_es(cls, index_path, sort_json=[]):
@@ -1462,33 +1706,45 @@ class Indexes(object):
         return
 
     @classmethod
-    def get_item_sort(cls, index_id):
+    def get_item_sort(cls, index_id, with_deleted=False):
         """Get items sort.
 
         :param index_id: search index id
+        :param with_deleted: Include deleted index
         :return: sort list
 
         """
         item_custom_sort = db.session.query(
-            Index.item_custom_sort).filter(
-            Index.id == index_id).one_or_none()
+            Index.item_custom_sort
+        ).filter(Index.id == index_id)
+
+        if not with_deleted:
+            item_custom_sort = item_custom_sort.filter(
+                Index.is_deleted == False
+            )
+
+        item_custom_sort = item_custom_sort.one_or_none()
 
         return item_custom_sort[0] if item_custom_sort else None
 
     @classmethod
-    def have_children(cls, index_id):
+    def have_children(cls, index_id, with_deleted=False):
         """Have children."""
-        return Index.have_children(index_id)
+        return Index.have_children(index_id, with_deleted=with_deleted)
 
     @classmethod
-    def get_coverpage_state(cls, indexes: list):
+    def get_coverpage_state(cls, indexes: list, with_deleted=False):
         """
         Get coverpage state from indexes id.
 
         :param indexes: item's indexes id.
+        :param with_deleted: Include deleted index.
         """
         try:
-            for item in Index.query.filter(Index.id.in_(indexes)).all():
+            query = Index.query.filter(Index.id.in_(indexes))
+            if not with_deleted:
+                query = query.filter(Index.is_deleted == False)
+            for item in query.all():
                 if item.coverpage_state:
                     return True
 
@@ -1596,19 +1852,23 @@ class Indexes(object):
             cls.set_online_issn_resc(index.id, online_issn)
 
     @classmethod
-    def get_index_count(cls):
+    def get_index_count(cls, with_deleted=False):
         """Get the total number of indexes."""
-        return Index.query.count()
+        result = Index.query
+        if not with_deleted:
+            result = result.filter(Index.is_deleted == False)
+        return result.count()
 
     @classmethod
-    def get_child_list(cls, index_id):
+    def get_child_list(cls, index_id, with_deleted=False):
         """
         Get index list info.
 
         :param index_id: Index identifier number.
+        :param with_deleted: Include deleted index.
         :return: The list of index.
         """
-        recursive_t = cls.recs_query()
+        recursive_t = cls.recs_query(with_deleted=with_deleted)
         query = db.session.query(recursive_t).filter(
             db.or_(recursive_t.c.pid == index_id,
                    recursive_t.c.cid == index_id))
@@ -1618,11 +1878,13 @@ class Indexes(object):
         return q
 
     @classmethod
-    def get_child_id_list(cls, index_id=0):
+    def get_child_id_list(cls, index_id=0, with_deleted=False):
         """Get child id list without recursive."""
         q = Index.query.filter_by(parent=index_id). \
-            order_by(Index.position).all()
-        return [x.id for x in filter_index_list_by_role(q)]
+            order_by(Index.position)
+        if not with_deleted:
+            q = q.filter(Index.is_deleted == False)
+        return [x.id for x in filter_index_list_by_role(q.all())]
 
     @classmethod
     def get_list_path_publish(cls, index_id):
@@ -1637,24 +1899,29 @@ class Indexes(object):
         return tree_path
 
     @classmethod
-    def get_public_indexes(cls):
+    def get_public_indexes(cls, with_deleted=False):
         """Get child id list without recursive."""
         query = Index.query.filter_by(public_state=True).order_by(
             Index.updated.desc())
+        if not with_deleted:
+            query = query.filter(Index.is_deleted == False)
         return query.all()
 
     @classmethod
-    def get_all_indexes(cls):
+    def get_all_indexes(cls, with_deleted=False):
         """Get all indexes."""
-        query = Index.query.all()
-        return query
+        query = Index.query
+        if not with_deleted:
+            query = query.filter(Index.is_deleted == False)
+        return query.all()
 
     @classmethod
-    def get_all_parent_indexes(cls, index_id) -> list:
+    def get_all_parent_indexes(cls, index_id, with_deleted=False) -> list:
         """Get all parent indexes.
 
         Args:
             index_id ():
+            with_deleted ():
 
         Returns:
             [list]: parent indexes list.
@@ -1662,9 +1929,13 @@ class Indexes(object):
         """
         # Define a CTE with recursive=True for the top portion of the query
         topq = Index.query.filter(Index.id == index_id)
+        if not with_deleted:
+            topq = topq.filter(Index.is_deleted == False)
         topq = topq.cte('cte', recursive=True)
         # Define the bottom part of the query by joining it with the top part
         bottomq = Index.query.join(topq, Index.id == topq.c.parent)
+        if not with_deleted:
+            bottomq = bottomq.filter(Index.is_deleted == False)
         # applying a union function
         recursive_q = topq.union(bottomq)
         # Get index data
@@ -1673,51 +1944,61 @@ class Indexes(object):
         return index_list
 
     @classmethod
-    def get_full_path_reverse(cls, index_id=0):
+    def get_full_path_reverse(cls, index_id=0, with_deleted=False):
         """Get full path of index.
 
         :param index_id: Identifier of the index.
         :return: path.
         """
-        recursive_t = cls.recs_reverse_query(index_id)
+        recursive_t = cls.recs_reverse_query(index_id, with_deleted=with_deleted)
         qlst = [recursive_t.c.path]
         obj = db.session.query(*qlst).order_by(recursive_t.c.pid).first()
         return obj.path if obj else ''
 
     @classmethod
-    def get_full_path(cls, index_id=0):
+    def get_full_path(cls, index_id=0, with_deleted=False):
         """Get full path of index.
 
         :param index_id: Identifier of the index.
         :return: path.
         """
-        reverse_path = cls.get_full_path_reverse(index_id)
+        reverse_path = cls.get_full_path_reverse(index_id, with_deleted=with_deleted)
         return '/'.join(reversed(reverse_path.split('/')))
 
     @classmethod
-    def get_harverted_index_list(cls):
+    def get_harvested_index_list(cls, with_deleted=False):
         """Get full path of index.
 
+        :param with_deleted: Include deleted index.
         :return: path.
         """
-        recursive_t = db.session.query(
+        query = db.session.query(
             Index.parent.label("pid"),
             Index.id.label("cid")
         ).filter(
             Index.parent == 0,
             Index.harvest_public_state.is_(True)
-        ).cte(name="recursive_t", recursive=True)
+        )
+
+        if not with_deleted:
+            query = query.filter(Index.is_deleted == False)
+
+        recursive_t = query.cte(name="recursive_t", recursive=True)
 
         rec_alias = aliased(recursive_t, name="rec")
         test_alias = aliased(Index, name="t")
-        recursive_t = recursive_t.union_all(
-            db.session.query(
-                test_alias.parent,
-                test_alias.id
-            ).filter(
-                test_alias.parent == rec_alias.c.cid,
-                test_alias.harvest_public_state.is_(True))
+        union_query = db.session.query(
+            test_alias.parent,
+            test_alias.id
+        ).filter(
+            test_alias.parent == rec_alias.c.cid,
+            test_alias.harvest_public_state.is_(True)
         )
+
+        if not with_deleted:
+            union_query = union_query.filter(test_alias.is_deleted == False)
+
+        recursive_t = recursive_t.union_all(union_query)
 
         ret = []
         with db.session.begin_nested():
@@ -1745,16 +2026,17 @@ class Indexes(object):
         if action == 'move':  # move items to parent index
             pass
         else:  # delete all index
-            from .tasks import delete_oaiset_setting
+            from .tasks import delete_oaiset_setting, delete_index_handle
             delete_oaiset_setting.delay(id_list)
+            delete_index_handle.delay(id_list)
 
     @classmethod
-    def get_public_indexes_list(cls):
+    def get_public_indexes_list(cls, with_deleted=False):
         """Get list id of public indexes.
 
         :return: path.
         """
-        recursive_t = db.session.query(
+        query = db.session.query(
             Index.parent.label("pid"),
             Index.id.label("cid")
         ).filter(
@@ -1762,22 +2044,31 @@ class Indexes(object):
             Index.public_state.is_(True)
         ).filter(
             db.or_(Index.public_date.is_(None),
-                   Index.public_date <= datetime.utcnow())
-        ).cte(name="recursive_t", recursive=True)
+                   Index.public_date <= datetime.now(timezone.utc))
+        )
+
+        if not with_deleted:
+            query = query.filter(Index.is_deleted == False)
+
+        recursive_t = query.cte(name="recursive_t", recursive=True)
 
         rec_alias = aliased(recursive_t, name="rec")
         test_alias = aliased(Index, name="t")
-        recursive_t = recursive_t.union_all(
-            db.session.query(
-                test_alias.parent,
-                test_alias.id
-            ).filter(
-                test_alias.parent == rec_alias.c.cid,
-                test_alias.public_state.is_(True)
-            ).filter(
-                db.or_(test_alias.public_date.is_(None),
-                       test_alias.public_date <= datetime.utcnow()))
+        union_query = db.session.query(
+            test_alias.parent,
+            test_alias.id
+        ).filter(
+            test_alias.parent == rec_alias.c.cid,
+            test_alias.public_state.is_(True)
+        ).filter(
+            db.or_(test_alias.public_date.is_(None),
+                    test_alias.public_date <= datetime.now(timezone.utc))
         )
+
+        if not with_deleted:
+            union_query = union_query.filter(test_alias.is_deleted == False)
+
+        recursive_t = recursive_t.union_all(union_query)
 
         ids = []
         with db.session.begin_nested():
@@ -1787,3 +2078,38 @@ class Indexes(object):
             for idx in indexes:
                 ids.append(str(idx[0]))
         return ids
+
+    @classmethod
+    def get_handle_index_url(cls, indexid):
+        """register Handle and get index_url
+
+        :param indexid: index id.
+        :return: cnri, index_url
+        """
+        index_url = request.url.split('/admin/')[0] + '/index/' + str(indexid)
+        credential = PIDClientCredentials.load_from_JSON(
+            current_app.config.get('WEKO_HANDLE_CREDS_JSON_PATH')
+        )
+        hdl = credential.get_prefix() + '/index/' + str(indexid)
+        weko_handle = Handle()
+
+        handle = weko_handle.register_handle(location=index_url, hdl=hdl)
+        return handle, index_url
+
+    @classmethod
+    def bind_roles_including_permission(cls, roles, permission):
+        """Bind roles including permissions.
+        
+        Args:
+            roles (list): List of roles.
+            permission (bool): Permission of default browsing or contribute.
+        
+        Returns:
+            list: List of roles what binded.
+        """
+        bind_roles = []
+        for role in roles:
+            if role.get('name').startswith('jc_') and not permission:
+                continue
+            bind_roles.append(role)
+        return bind_roles

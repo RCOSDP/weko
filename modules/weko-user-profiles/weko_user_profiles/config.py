@@ -166,7 +166,7 @@ WEKO_USERPROFILES_ROLE_MAPPING = {}
 """Role mapping"""
 
 WEKO_USERPROFILES_FORM_COLUMN = ["username", "timezone", "language", "email",
-                                 "email_repeat"]
+                                 "email_repeat", "access_key", "secret_key", "s3_endpoint_url", "s3_region_name"]
 """User profile form column"""
 
-WEKO_USERPROFILES_READONLY_EMAILFIELD = False 
+WEKO_USERPROFILES_READONLY_EMAILFIELD = False

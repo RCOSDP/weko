@@ -75,6 +75,22 @@ class Authors(db.Model, Timestamp):
     )
     """json for author info"""
 
+    repository_id = db.Column(
+        db.JSON().with_variant(
+            postgresql.JSONB(none_as_null=True),
+            'postgresql',
+        ).with_variant(
+            JSONType(),
+            'sqlite',
+        ).with_variant(
+            JSONType(),
+            'mysql',
+        ),
+        default=lambda: dict(),
+        nullable=True
+    )
+    """repository_id of the authors"""
+
     @classmethod
     def get_sequence(cls, session):
         """Get author id next sequence.
@@ -89,25 +105,25 @@ class Authors(db.Model, Timestamp):
         return next_id
 
     @classmethod
-    def get_first_email_by_id(cls, author_id):
-        """Get first email of author by id.
+    def get_emails_by_id(cls, author_id):
+        """Get emails of author by id.
 
         Arguments:
             author_id {int} -- author id
 
         Returns:
-            string -- first email
+            list -- emails
 
         """
         try:
             author = cls.query.filter_by(id=author_id).one_or_none()
             if not author:
-                return None
+                return []
             json_data = author.json
             email_info = json_data.get('emailInfo')
-            return email_info[0].get('email')
+            return [e.get('email') for e in email_info if e.get('email')]
         except Exception:
-            return None
+            return []
 
     @classmethod
     def get_author_by_id(cls, author_id):
@@ -121,11 +137,12 @@ class Authors(db.Model, Timestamp):
 
         """
         try:
-            author = cls.query.filter_by(id=author_id).one_or_none()
-            if not author:
-                return None
-            json_data = author.json
-            return json_data
+            with db.session.begin_nested():
+                author = cls.query.filter_by(id=author_id).one_or_none()
+                if not author:
+                    return None
+                json_data = author.json
+                return json_data
         except Exception:
             return None
 
@@ -156,6 +173,22 @@ class AuthorsPrefixSettings(db.Model, Timestamp):
         default=datetime.utcnow,
         onupdate=datetime.utcnow)
     """ Updated date."""
+
+    repository_id = db.Column(
+        db.JSON().with_variant(
+            postgresql.JSONB(none_as_null=True),
+            'postgresql',
+        ).with_variant(
+            JSONType(),
+            'sqlite',
+        ).with_variant(
+            JSONType(),
+            'mysql',
+        ),
+        default=lambda: dict(),
+        nullable=True
+    )
+    """repository_id of prefix settings"""
 
     @classmethod
     def create(cls, name, scheme, url):
@@ -233,6 +266,22 @@ class AuthorsAffiliationSettings(db.Model, Timestamp):
         default=datetime.utcnow,
         onupdate=datetime.utcnow)
     """ Updated date."""
+
+    repository_id = db.Column(
+        db.JSON().with_variant(
+            postgresql.JSONB(none_as_null=True),
+            'postgresql',
+        ).with_variant(
+            JSONType(),
+            'sqlite',
+        ).with_variant(
+            JSONType(),
+            'mysql',
+        ),
+        default=lambda: dict(),
+        nullable=True
+    )
+    """repository_id of affiliation organization."""
 
     @classmethod
     def create(cls, name, scheme, url):

@@ -1,0 +1,51 @@
+{
+    "id": "",
+    "pk_id": "1",
+    "authorNameInfo": [
+        {
+            "familyName": "テスト",
+            "firstName": "太郎",
+            "fullName": "テスト 太郎",
+            "language": "ja",
+            "nameFormat": "familyNmAndNm",
+            "nameShowFlg": "true"
+        }
+    ],
+    "authorIdInfo": [
+        {
+            "idType": "1",
+            "authorId": "1",
+            "authorIdShowFlg": "true"
+        },
+        {
+            "idType": "2",
+            "authorId": "q",
+            "authorIdShowFlg": "true"
+        }
+    ],
+    "emailInfo": [
+        {
+            "email": "test.taro@test.org"
+        }
+    ],
+    "affiliationInfo": [
+        {
+            "identifierInfo": [
+                {
+                    "affiliationIdType": "1",
+                    "affiliationId": "aaaaaa",
+                    "identifierShowFlg": "true"
+                }
+            ],
+            "affiliationNameInfo": [
+                {
+                    "affiliationName": "aaaaaaaaaaaa",
+                    "affiliationNameLang": "ja",
+                    "affiliationNameShowFlg": "true"
+                }
+            ]
+        }
+    ],
+    "gather_flg": 1,
+    "is_deleted": "false"
+}

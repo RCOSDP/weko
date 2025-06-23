@@ -282,7 +282,9 @@ def base_app(instance_path, mock_gethostbyaddr):
         STATS_QUERIES=STATS_QUERIES,
         STATS_EVENTS=stats_events,
         STATS_AGGREGATIONS=STATS_AGGREGATIONS,
-        INDEXER_MQ_QUEUE = Queue("indexer", exchange=Exchange("indexer", type="direct"), routing_key="indexer",queue_arguments={"x-queue-type":"quorum"})
+        INDEXER_MQ_QUEUE = Queue("indexer", exchange=Exchange("indexer", type="direct"), routing_key="indexer",queue_arguments={"x-queue-type":"quorum"}),
+        OAISERVER_ES_MAX_CLAUSE_COUNT = 3,
+        INDEXER_DEFAULT_INDEX="test-events-stats-file-download-0001"
     ))
     FlaskCeleryExt(app_)
     InvenioAccess(app_)
@@ -399,6 +401,7 @@ def role_users(app, db):
             ActionRoles(action="download-original-pdf-access", role=comadmin_role),
             ActionRoles(action="author-access", role=comadmin_role),
             ActionRoles(action="items-autofill", role=comadmin_role),
+            ActionRoles(action="stats-api-access", role=comadmin_role),
             ActionRoles(action="detail-page-acces", role=comadmin_role),
             ActionRoles(action="detail-page-acces", role=comadmin_role),
             ActionRoles(action="item-access", role=contributor_role),
@@ -425,7 +428,7 @@ def role_users(app, db):
         ds.add_role_to_user(originalroleuser, originalrole)
         ds.add_role_to_user(originalroleuser2, originalrole)
         ds.add_role_to_user(originalroleuser2, repoadmin_role)
-        
+
 
     return [
         {"email": contributor.email, "id": contributor.id, "obj": contributor},
@@ -489,7 +492,7 @@ class MockEs():
                 return False
         def flush(self,index):
             pass
-        
+
         def search(self,index,doc_type,body,**kwargs):
             pass
 
@@ -945,7 +948,7 @@ def stats_events_for_db(app, db):
             source=json.dumps({'test': 'test'}),
             date=datetime.datetime(2023, 1, 1, 1, 0, 0)
         )
-    
+
     try:
         with db.session.begin_nested():
             db.session.add(base_event(1, 'top-view'))
@@ -1071,3 +1074,23 @@ class CustomQuery:
         """Sample response."""
         return dict(bucket_id='test_bucket',
                     value=100)
+
+
+@pytest.fixture()
+def esindex(app):
+    from invenio_search import current_search_client as client
+    index_name = app.config["INDEXER_DEFAULT_INDEX"]
+    alias_name = "test-events-stats-file-download"
+
+    with open("tests/data/mappings/stats-file-download.json","r") as f:
+        mapping = json.load(f)
+
+    with app.test_request_context():
+        client.indices.create(index=index_name, body=mapping, ignore=[400])
+        client.indices.put_alias(index=index_name, name=alias_name)
+
+    yield client
+
+    with app.test_request_context():
+        client.indices.delete_alias(index=index_name, name=alias_name)
+        client.indices.delete(index=index_name, ignore=[400, 404])

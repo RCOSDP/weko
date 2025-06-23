@@ -25,8 +25,9 @@ import shutil
 import tempfile
 import uuid
 import json
-from datetime import datetime
+from datetime import datetime, timedelta
 from elasticsearch import Elasticsearch
+from invenio_accounts.utils import jwt_create_token
 from invenio_indexer import InvenioIndexer
 import pytest
 from invenio_indexer.api import RecordIndexer
@@ -52,6 +53,7 @@ from invenio_access.models import ActionUsers, ActionRoles
 from invenio_access import InvenioAccess
 from invenio_admin import InvenioAdmin
 from invenio_cache import InvenioCache
+from invenio_communities.models import Community
 from invenio_db import InvenioDB
 from invenio_db import db as db_
 from invenio_files_rest import InvenioFilesREST
@@ -65,20 +67,24 @@ from invenio_oaiserver.ext import InvenioOAIServer
 from invenio_records.ext import InvenioRecords
 from invenio_records.models import RecordMetadata
 from invenio_pidstore.models import PersistentIdentifier
+from invenio_oauth2server.models import Client, Token
 
 from weko_authors import WekoAuthors
 from weko_authors.models import Authors
 from weko_index_tree import WekoIndexTree
 from weko_index_tree.models import Index, IndexStyle
 from weko_records_ui import WekoRecordsUI
+from weko_records_ui.config import WEKO_PERMISSION_SUPER_ROLE_USER
 from weko_records import WekoRecords
-from weko_records.models import SiteLicenseInfo, SiteLicenseIpAddress,ItemType,ItemTypeName
+from weko_records.models import SiteLicenseInfo, SiteLicenseIpAddress,ItemType,ItemTypeName,ItemTypeJsonldMapping
 from weko_redis.redis import RedisConnection
+from weko_swordserver.models import SwordClientModel
 from weko_theme import WekoTheme
 from weko_schema_ui import WekoSchemaUI
 from weko_search_ui import WekoSearchUI
 from weko_workflow import WekoWorkflow
 from weko_workflow.models import Action, ActionStatus,FlowDefine,FlowAction,WorkFlow,Activity,ActivityAction
+
 
 from weko_admin import WekoAdmin
 from weko_admin.models import SessionLifetime,SiteInfo,SearchManagement,\
@@ -88,9 +94,8 @@ from weko_admin.models import SessionLifetime,SiteInfo,SearchManagement,\
         LogAnalysisRestrictedCrawlerList,StatisticsEmail,RankingSettings, Identifier
 from weko_admin.views import blueprint_api
 
-from tests.helpers import json_data, create_record
+from .helpers import json_data, create_record
 from weko_admin.models import FacetSearchSetting
-from tests.helpers import json_data
 
 @pytest.yield_fixture()
 def instance_path():
@@ -130,10 +135,10 @@ def base_app(instance_path, cache_config,request ,search_class):
         SERVER_NAME='test_server',
         ACCOUNTS_USE_CELERY=False,
         SECRET_KEY='SECRET_KEY',
-        SQLALCHEMY_DATABASE_URI=os.environ.get(
-             'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'),
-        #SQLALCHEMY_DATABASE_URI=os.getenv('SQLALCHEMY_DATABASE_URI',
-        #                                   'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest'),
+        # SQLALCHEMY_DATABASE_URI=os.environ.get(
+        #      'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'),
+        SQLALCHEMY_DATABASE_URI=os.getenv('SQLALCHEMY_DATABASE_URI',
+                                          'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest'),
         SEARCH_ELASTIC_HOSTS=os.environ.get(
             'SEARCH_ELASTIC_HOSTS', None),
         SQLALCHEMY_TRACK_MODIFICATIONS=True,
@@ -162,6 +167,7 @@ def base_app(instance_path, cache_config,request ,search_class):
         WEKO_THEME_INSTANCE_DATA_DIR="data",
         SEARCH_INDEX_PREFIX="test-",
         INDEXER_DEFAULT_DOC_TYPE="item-v1.0.0",
+        WEKO_PERMISSION_SUPER_ROLE_USER=WEKO_PERMISSION_SUPER_ROLE_USER
     )
     app_.testing = True
     app_.login_manager = dict(_login_disabled=True)
@@ -184,7 +190,7 @@ def base_app(instance_path, cache_config,request ,search_class):
     WekoRecordsUI(app_)
     WekoIndexTree(app_)
     WekoTheme(app_)
-    
+
     FlaskCeleryExt(app_)
     WekoSearchUI(app_)
     WekoSchemaUI(app_)
@@ -199,7 +205,7 @@ def base_app(instance_path, cache_config,request ,search_class):
 @pytest.yield_fixture()
 def app(base_app):
     """Flask application fixture."""
-    
+
     with base_app.app_context():
         yield base_app
 
@@ -263,19 +269,21 @@ def admin_app(instance_path):
         SECRET_KEY='SECRET KEY',
         SESSION_TYPE='memcached',
         SERVER_NAME='test_server',
-        SQLALCHEMY_DATABASE_URI=os.environ.get(
-            'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'),
-        WEKO_ADMIN_FACET_SEARCH_SETTING={"name_en": "","name_jp": "","mapping": "","active": True,"aggregations": []},
+        # SQLALCHEMY_DATABASE_URI=os.environ.get(
+        #     'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'),
+        SQLALCHEMY_DATABASE_URI=os.getenv('SQLALCHEMY_DATABASE_URI',
+                                          'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest'),
+        WEKO_ADMIN_FACET_SEARCH_SETTING={"name_en": "","name_jp": "","mapping": "","active": True,"aggregations": [],"display_number": 5,"is_open": True,"search_condition": "OR","ui_type": "CheckboxList"},
         WEKO_ADMIN_FACET_SEARCH_SETTING_TEMPLATE="weko_admin/admin/facet_search_setting.html"
     )
     base_app.testing = True
     InvenioDB(base_app)
     InvenioAccounts(base_app)
     InvenioAccess(base_app)
-    
+
     with base_app.app_context():
         yield base_app
-        
+
 @pytest.yield_fixture()
 def admin_db(admin_app):
     if not database_exists(str(db_.engine.url)):
@@ -319,7 +327,7 @@ def users(app, db):
         originalroleuser = create_test_user(email='originalroleuser@test.org')
         originalroleuser2 = create_test_user(email='originalroleuser2@test.org')
         student = User.query.filter_by(email='student@test.org').first()
-        
+
     role_count = Role.query.filter_by(name='System Administrator').count()
     if role_count != 1:
         sysadmin_role = ds.create_role(name='System Administrator')
@@ -444,7 +452,7 @@ def site_info(db):
         ogp_image_name="test ogp image name1"
     )
     db.session.add(siteinfo1)
-    
+
     siteinfos.append(siteinfo1)
     siteinfo2 = SiteInfo(
         copy_right="test_copy_right2",
@@ -523,7 +531,7 @@ def item_type(db):
     with db.session.begin_nested():
         db.session.add(item_type1)
         db.session.add(item_type2)
-    
+
     return [{"obj":item_type1,"name":item_type_name1},{"obj":item_type2,"name":item_type_name2}]
 
 @pytest.fixture()
@@ -629,7 +637,7 @@ def location(app, db, instance_path):
 def records(db,location):
     record_data = json_data("data/test_records.json")
     item_data = json_data("data/test_items.json")
-    
+
     record_num = len(record_data)
     result = []
     for d in range(record_num):
@@ -654,7 +662,8 @@ def feedback_mail_settings(db,authors):
         account_author="{},{},".format(authors[0].id,authors[1].id),
         manual_mail={"email":["test.manual1@test.org","test.manual2@test.org"]},
         is_sending_feedback=True,
-        root_url="http://test_server"
+        root_url="http://test_server",
+        repository_id="Root Index"
     )
     db.session.add(setting)
     db.session.commit()
@@ -662,7 +671,8 @@ def feedback_mail_settings(db,authors):
         account_author="{}".format(authors[1].id),
         manual_mail={"email":[]},
         is_sending_feedback=True,
-        root_url="http://test_server"
+        root_url="http://test_server",
+        repository_id="Root Index"
     )
     return [setting, setting_not_manual]
 
@@ -687,7 +697,7 @@ def site_infos(db):
 
 @pytest.fixture()
 def feedback_mail_histories(db):
-    
+
     history1 = FeedbackMailHistory(
         start_time=datetime(2022,10,1,1,2,3,45678),
         end_time=datetime(2022,10,1,2,3,4,56789),
@@ -697,7 +707,7 @@ def feedback_mail_histories(db):
         is_latest=True
     )
     db.session.add(history1)
-    
+
     history2 = FeedbackMailHistory(
         start_time=datetime(2022,10,1,1,2,3,45678),
         end_time=datetime(2022,10,1,2,3,4,56789),
@@ -748,16 +758,32 @@ def admin_settings(db):
     settings = list()
     settings.append(AdminSettings(id=1,name='items_display_settings',settings={"items_display_email": False, "items_search_author": "name", "item_display_open_date": False}))
     settings.append(AdminSettings(id=2,name='storage_check_settings',settings={"day": 0, "cycle": "weekly", "threshold_rate": 80}))
-    settings.append(AdminSettings(id=3,name='site_license_mail_settings',settings={"auto_send_flag": False}))
+    settings.append(AdminSettings(id=3,name='site_license_mail_settings',settings={"Root Index": {"auto_send_flag": False}}))
     settings.append(AdminSettings(id=4,name='default_properties_settings',settings={"show_flag": True}))
     settings.append(AdminSettings(id=5,name='item_export_settings',settings={"allow_item_exporting": True, "enable_contents_exporting": True}))
     settings.append(AdminSettings(id=6,name="restricted_access",settings={"content_file_download": {"expiration_date": 30,"expiration_date_unlimited_chk": False,"download_limit": 10,"download_limit_unlimited_chk": False,},"usage_report_workflow_access": {"expiration_date_access": 500,"expiration_date_access_unlimited_chk": False,},"terms_and_conditions": []}))
     settings.append(AdminSettings(id=7,name="display_stats_settings",settings={"display_stats":False}))
     settings.append(AdminSettings(id=8,name='convert_pdf_settings',settings={"path":"/tmp/file","pdf_ttl":1800}))
     settings.append(AdminSettings(id=9,name="elastic_reindex_settings",settings={"has_errored": False}))
+    settings.append(AdminSettings(id=10,name="sword_api_setting",settings={ "default_format": "TSV","data_format":{ "TSV":{"register_format": "Direct"},"XML":{"workflow": '31001',  "register_format": "Workflow"}}}))
     db.session.add_all(settings)
     db.session.commit()
     return settings
+
+@pytest.fixture()
+def oauth2server_client(db):
+    oauth2server_clients = list()
+    oauth2server_clients.append(Client(name=1,description=1,website=1,user_id=1,client_id="1",client_secret="KDjy6ntGKUX",is_confidential=True,is_internal=False,_redirect_uris="https://" ,_default_scopes="NULL"))
+    oauth2server_clients.append(Client(name=2,description=2,website=2,user_id=2,client_id="2",client_secret="KDjy6ntGKUX",is_confidential=True,is_internal=False,_redirect_uris="https://" ,_default_scopes="NULL"))
+
+@pytest.fixture()
+def sword_item_type_mappings(db, item_type):
+    sword_item_type_mappings = list()
+    sword_item_type_mappings.append(ItemTypeJsonldMapping(id=1,name="sample1",mapping="{data:{}}",item_type_id=item_type[0]["obj"].id,version_id=6,is_deleted=False))
+    sword_item_type_mappings.append(ItemTypeJsonldMapping(id=2,name="sample2",mapping="{data:{}}",item_type_id=item_type[0]["obj"].id,version_id=6,is_deleted=False))
+    db.session.add_all(sword_item_type_mappings)
+    db.session.commit()
+    return sword_item_type_mappings
 
 @pytest.fixture()
 def actions(db):
@@ -766,15 +792,15 @@ def actions(db):
     for data in action_datas:
         action_db.append(Action(**data))
     db.session.add_all(action_db)
-    
+
     status_datas = json_data("data/action_status.json")
     status_db = list()
     for data in status_datas:
         status_db.append(ActionStatus(**data))
     db.session.add_all(status_db)
-    
+
     db.session.commit()
-    
+
     return action_db, status_db
 
 @pytest.fixture()
@@ -870,7 +896,7 @@ def activities(db,flows,records,users):
                     title='test item1', shared_user_id=-1, extra_info={"is_guest":True,"guest_mail":"test.guest@test.org","file_name":"test_file"},
                     action_order=1,
                     )
-    
+
     db.session.add(activity_item_guest)
     activity_usage = Activity(activity_id='3',item_id=records[0][2].id,workflow_id=flows["workflow"][0].id, flow_id=flows["flow"].id,
                     action_id=1, activity_login_user=users[3]["id"],
@@ -878,7 +904,7 @@ def activities(db,flows,records,users):
                     activity_start=datetime.strptime('2022/04/14 3:01:53.931', '%Y/%m/%d %H:%M:%S.%f'),
                     activity_community_id=3,
                     activity_confirm_term_of_use=True,
-                    title='test item1', shared_user_id=-1, 
+                    title='test item1', shared_user_id=-1,
                     extra_info={"usage_activity_id":"3","usage_application_record_data":{"subitem_restricted_access_name":"test_access_name",}},
                     action_order=1,
                     )
@@ -896,9 +922,9 @@ def activities(db,flows,records,users):
     db.session.add(activity_action1_1)
     db.session.add(activity_action1_2)
     db.session.add(activity_action1_3)
-    
+
     db.session.commit()
-    
+
     return [activity_item1, activity_31001, activity_item_guest, activity_usage]
 
 @pytest.fixture()
@@ -909,9 +935,11 @@ def facet_search_settings(db):
         mapping="language",
         aggregations=[],
         active=True,
-        ui_type="SelectBox",
-        display_number=1,
-        is_open=True
+        ui_type='SelectBox',
+        display_number="1",
+        is_open=True,
+        search_condition='OR'
+
     )
     access = FacetSearchSetting(
         name_en="Access",
@@ -919,9 +947,10 @@ def facet_search_settings(db):
         mapping="accessRights",
         aggregations=[],
         active=False,
-        ui_type="SelectBox",
-        display_number=2,
-        is_open=True
+        ui_type='CheckboxList',
+        display_number="1",
+        is_open=True,
+        search_condition='AND'
     )
     data_type = FacetSearchSetting(
         name_en="Data Type",
@@ -929,25 +958,40 @@ def facet_search_settings(db):
         mapping="description.value",
         aggregations=[{"agg_value":"Other","agg_mapping":"description.descriptionType"}],
         active=True,
-        ui_type="SelectBox",
-        display_number=3,
-        is_open=True
+        ui_type='CheckboxList',
+        display_number="1",
+        is_open=True,
+        search_condition='AND'
     )
-    
+
     fields_raw = FacetSearchSetting(
         name_en="raw_test",
         name_jp="raw_test",
-        mapping="test.fields.raw",
+        mapping="fields.raw",
         aggregations=[],
         active=True,
-        ui_type="SelectBox",
-        display_number=4,
-        is_open=True
+        ui_type='CheckboxList',
+        display_number="1",
+        is_open=True,
+        search_condition='AND'
+    )
+
+    temporal = FacetSearchSetting(
+        name_en="Time Period(s)",
+        name_jp="対象時期",
+        mapping="temporal",
+        aggregations=[],
+        active=True,
+        ui_type='RangeSlider',
+        display_number="1",
+        is_open=True,
+        search_condition='AND'
     )
     db.session.add(language)
     db.session.add(access)
     db.session.add(data_type)
     db.session.add(fields_raw)
+    db.session.add(temporal)
     db.session.commit()
 
 @pytest.fixture()
@@ -975,7 +1019,7 @@ def log_crawler_list(db):
         list_url="https://bitbucket.org/niijp/jairo-crawler-list/raw/master/test_Crawler-List_useragent.txt",
         is_active=True
     )
-    
+
     db.session.add(crawler1)
     db.session.add(crawler2)
     db.session.commit()
@@ -1025,7 +1069,7 @@ def mail_config(db):
     )
     db.session.add(config)
     db.session.commit()
-    
+
     return config
 
 @pytest.fixture()
@@ -1104,7 +1148,7 @@ class MockEs():
         #     pass
         def put_mapping(self,index="",doc_type="", body={}, ignore=""):
             pass
-        
+
     class MockCluster():
         def __init__(self,**kwargs):
             pass
@@ -1164,3 +1208,130 @@ def facet_search_setting(db):
         settings.append(FacetSearchSetting(**datas[setting]))
     with db.session.begin_nested():
         db.session.add_all(settings)
+
+@pytest.fixture()
+def community(db, users, indexes):
+    user1 = users[2]["obj"]
+    index = indexes[0]
+    db.session.commit()
+    comm1 = Community.create(community_id='comm1', role_id=user1.roles[0].id,
+                             id_user=user1.id, title='Title1',
+                             description='Description1',
+                             root_node_id=index.id,
+                             group_id=user1.roles[0].id)
+    db.session.add(comm1)
+    db.session.commit()
+    return comm1
+
+@pytest.fixture
+def tokens(app,users,db):
+    scopes = [
+        "deposit:write deposit:actions item:create",
+        "deposit:write deposit:actions item:create user:activity",
+        "deposit:write user:activity",
+        ""
+    ]
+    tokens = []
+
+    for i, scope in enumerate(scopes):
+        user = users[i]
+        user_id = str(user["id"])
+
+        test_client = Client(
+            client_id=f"dev{user_id}",
+            client_secret=f"dev{user_id}",
+            name="Test name",
+            description="test description",
+            is_confidential=False,
+            user_id=user_id,
+            _default_scopes="deposit:write"
+        )
+        test_token = Token(
+            client=test_client,
+            user_id=user_id,
+            token_type="bearer",
+            access_token=jwt_create_token(user_id=user_id),
+            expires=datetime.now() + timedelta(hours=10),
+            is_personal=False,
+            is_internal=False,
+            _scopes=scope
+        )
+
+        db.session.add(test_client)
+        db.session.add(test_token)
+        tokens.append({"token":test_token, "client":test_client, "scope":scope})
+
+    db.session.commit()
+
+    return tokens
+
+
+@pytest.fixture
+def sword_mapping(db, item_type):
+    sword_mapping = []
+    for i in range(1, 4):
+        obj = ItemTypeJsonldMapping(
+            name=f"test{i}",
+            mapping=json_data("data/ro-crate_mapping.json"),
+            item_type_id=item_type[1]["obj"].id,
+            is_deleted=False
+        )
+        with db.session.begin_nested():
+            db.session.add(obj)
+
+        sword_mapping.append({
+            "id": obj.id,
+            "sword_mapping": obj,
+            "name": obj.name,
+            "mapping": obj.mapping,
+            "item_type_id": obj.item_type_id,
+            "version_id": obj.version_id,
+            "is_deleted": obj.is_deleted
+        })
+
+    db.session.commit()
+
+    return sword_mapping
+
+@pytest.fixture
+def sword_client(db, tokens, sword_mapping, flows):
+    client = tokens[0]["client"]
+    sword_client1 = SwordClientModel(
+        client_id=client.client_id,
+        active=True,
+        registration_type_id=SwordClientModel.RegistrationType.DIRECT,
+        mapping_id=sword_mapping[0]["sword_mapping"].id,
+        duplicate_check=False,
+        meta_data_api=[],
+    )
+    client = tokens[1]["client"]
+    sword_client2 = SwordClientModel(
+        client_id=client.client_id,
+        active=True,
+        registration_type_id=SwordClientModel.RegistrationType.WORKFLOW,
+        mapping_id=sword_mapping[1]["sword_mapping"].id,
+        workflow_id=flows["workflow"][1].id,
+        duplicate_check=True,
+        meta_data_api=[],
+    )
+    client = tokens[2]["client"]
+    sword_client3 = SwordClientModel(
+        client_id=client.client_id,
+        active=False,
+        registration_type_id=SwordClientModel.RegistrationType.DIRECT,
+        mapping_id=sword_mapping[0]["sword_mapping"].id,
+        duplicate_check=False,
+        meta_data_api=[],
+    )
+
+    with db.session.begin_nested():
+        db.session.add(sword_client1)
+        db.session.add(sword_client2)
+        db.session.add(sword_client3)
+    db.session.commit()
+
+    return [
+        {"sword_client": sword_client1},
+        {"sword_client": sword_client2},
+        {"sword_client": sword_client3}
+    ]

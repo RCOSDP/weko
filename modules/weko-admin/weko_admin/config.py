@@ -51,6 +51,15 @@ WEKO_ADMIN_SITE_LICENSE_TEMPLATE = 'weko_admin/admin/site_license_settings.html'
 WEKO_ADMIN_SITE_LICENSE_SEND_MAIL_TEMPLATE = 'weko_admin/admin/site_license_send_mail_settings.html'
 """Site-license send mail settings templates."""
 
+WEKO_ADMIN_SWORD_API_TEMPLATE = 'weko_admin/admin/sword_api_settings.html'
+"""SWORD API template."""
+
+WEKO_ADMIN_SWORD_API_JSONLD_TEMPLATE = 'weko_admin/admin/sword_api_jsonld_settings.html'
+"""SWORD API JSONLD template."""
+
+WEKO_ADMIN_SWORD_API_JSONLD_MAPPING_TEMPLATE = 'weko_admin/admin/jsonld_mapping_settings.html'
+"""SWORD API JSONLD template."""
+
 WEKO_ADMIN_BlOCK_STYLE_TEMPLATE = 'weko_admin/admin/block_style.html'
 """Block-style template."""
 
@@ -1110,7 +1119,25 @@ WEKO_ADMIN_COMMUNITY_ACCESS_LIST = [
     'indexjournal',
     'report',
     'itemexportsettings',
-    'items/import'
+    'items/import',
+    'items/rocrate_import',
+    'items/bulk/update',
+    'items/bulk/delete',
+    'items/bulk-export',
+    'authors',
+    'authors/export',
+    'authors/import',
+    'feedbackmail',
+    'sitelicensesendmail',
+    'flowsetting',
+    'workflowsetting',
+    'community',
+    'user',
+    'resource_list',
+    'change_list',
+    'resync',
+    'sitelicensesettings',
+    'oaiset',
 ]
 """Classes Community Administrator can access."""
 
@@ -1120,12 +1147,13 @@ WEKO_ADMIN_REPOSITORY_ACCESS_LIST = [
     'authors/import',
     'flowsetting',
     'identify',
-    # 'items/bulk/delete',
+    'items/bulk/delete',
     'items/bulk/update',
     'items/search',
     'itemtypes',
     'language',
     'loganalysissetting',
+    'logs/export',
     'others',
     'pdfcoverpage',
     'rankingsettings',
@@ -1133,6 +1161,7 @@ WEKO_ADMIN_REPOSITORY_ACCESS_LIST = [
     'site-license',
     'search-management',
     'sitemap',
+    'activity',
     'indexlink',
     'itemsetting',
     'statssettings',
@@ -1144,6 +1173,7 @@ WEKO_ADMIN_REPOSITORY_ACCESS_LIST = [
     'sitelicensesettings',
     'itemtypesregister',
     'itemtypesmapping',
+    'itemtypesrocratemapping',
     'itemtypes/mapping',
     'items/bulk-export',
     'feedbackmail',
@@ -1155,6 +1185,11 @@ WEKO_ADMIN_REPOSITORY_ACCESS_LIST = [
     'location',
     'facet-search',
     'community',
+    'workspaceworkflowsetting',
+    'swordapi',
+    'swordapi/jsonld',
+    'jsonld-mapping',
+    'shibboleth',
     # 'restricted_access'
 ] + WEKO_ADMIN_COMMUNITY_ACCESS_LIST
 """Classes Repository Administrator can access."""
@@ -1230,6 +1265,13 @@ WEKO_INDEX_TREE_STYLE_OPTIONS = {
     'widths': ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11']
 }
 
+WEKO_ADMIN_RESTRICTED_ACCESS_DISPLAY_FLAG = False
+"""
+Restricted access feature display flag.
+True: display all feature
+False: only display secret url download
+"""
+
 WEKO_ADMIN_RESTRICTED_ACCESS_SETTINGS = {
     "secret_URL_file_download": {
         "secret_expiration_date": 30,
@@ -1270,7 +1312,8 @@ WEKO_ADMIN_FACET_SEARCH_SETTING = {
     "aggregations": [],
     "ui_type": "CheckboxList",
     "display_number": 5,
-    "is_open": True
+    "is_open": True,
+    "search_condition": "OR"
 }
 """Default Facet Search settings."""
 
@@ -1282,6 +1325,7 @@ WEKO_ADMIN_FACET_SEARCH_SETTING_QUERY_KEY_NO_PERMISSION = 'facet_search_query_no
 
 WEKO_ADMIN_FACET_SEARCH_SETTING_BUCKET_SIZE = 1000
 """Default Facet Search bucket size."""
+
 
 WEKO_ADMIN_CACHE_TEMP_DIR_INFO_KEY_DEFAULT = 'cache::temp_dir_info'
 """Default Cache Temporary Directory Information Key."""

@@ -11,12 +11,14 @@
 from __future__ import absolute_import, print_function
 
 import calendar
+from itertools import islice
 import operator
 import os
 import re
 from base64 import b64encode
 from datetime import datetime, timedelta
 from math import ceil
+import traceback
 from typing import Generator, NoReturn, Union
 
 import click
@@ -27,10 +29,11 @@ from elasticsearch import VERSION as ES_VERSION
 from elasticsearch import exceptions as es_exceptions
 from elasticsearch_dsl.aggs import A
 from elasticsearch.helpers import bulk
-from elasticsearch_dsl import Search
+from elasticsearch_dsl import Search, Q
 from flask import current_app, request, session
 from flask_login import current_user
 from geolite2 import geolite2
+from invenio_accounts.utils import get_user_ids_by_role
 from invenio_cache import current_cache
 from invenio_search import current_search_client
 from weko_accounts.utils import get_remote_addr
@@ -213,6 +216,26 @@ def is_valid_access():
     return True
 
 
+def chunk_list(iterable, size):
+    """
+    Split a List into chunks of a specified size.
+
+    Args:
+        iterable (list): The List to be split.
+        size (int): The size of each chunk.
+
+    Yields:
+        list: A chunk of the original List with the specified size.
+
+    """
+    it = iter(iterable)
+    while True:
+        chunk = list(islice(it, size))
+        if not chunk:
+            break
+        yield chunk
+
+
 class QueryFileReportsHelper(object):
     """Helper for parsing elasticsearch aggregations."""
 
@@ -269,7 +292,7 @@ class QueryFileReportsHelper(object):
                 group_list = i['user_group_names']
                 data['group_counts'] = cls.calc_per_group_counts(
                     group_list, data['group_counts'], count)
-            
+
             # Keep track of groups seen
             all_groups.update(data['group_counts'].keys())
 
@@ -304,6 +327,9 @@ class QueryFileReportsHelper(object):
     @classmethod
     def get_file_stats_report(cls, is_billing_item=False, **kwargs):
         """Get file download/preview report."""
+        from weko_index_tree.utils import get_descendant_index_names
+        from invenio_communities.models import Community
+
         result = {}
         all_list = []
         open_access_list = []
@@ -312,6 +338,11 @@ class QueryFileReportsHelper(object):
         event = kwargs.get('event')
         year = kwargs.get('year')
         month = kwargs.get('month')
+        repository_id = kwargs.get('repository_id')
+
+        if repository_id and repository_id != 'Root Index':
+            repository = Community.query.get(repository_id)
+            index_list = get_descendant_index_names(repository.root_node_id) if repository else []
 
         try:
             query_month = str(year) + '-' + str(month).zfill(2)
@@ -325,6 +356,12 @@ class QueryFileReportsHelper(object):
                       query_month + '-' + str(lastday).zfill(2)
                       + 'T23:59:59',
                       'accessrole': 'open_access'}
+            if repository_id and repository_id != 'Root Index':
+                all_params['index_list'] = index_list
+                params['index_list'] = index_list
+            else:
+                all_params['index_list'] = None
+                params['index_list'] = None
 
             all_query_name = ''
             open_access_query_name = ''
@@ -352,7 +389,8 @@ class QueryFileReportsHelper(object):
                 open_access_res = open_access.run(**params)
                 cls.Calculation(open_access_res, open_access_list)
         except Exception as e:
-            current_app.logger.debug(e)
+            current_app.logger.error(e)
+            traceback.print_exc()
 
         result['date'] = query_month
         result['all'] = all_list
@@ -363,12 +401,14 @@ class QueryFileReportsHelper(object):
     @classmethod
     def get_file_per_using_report(cls, **kwargs):
         """Get File Using Per User report."""
+        from invenio_communities.models import Community
         result = {}
         all_list = {}
         all_res = {}
 
         year = kwargs.get('year')
         month = kwargs.get('month')
+        repository_id = kwargs.get('repository_id')
 
         try:
             query_month = str(year) + '-' + str(month).zfill(2)
@@ -376,6 +416,12 @@ class QueryFileReportsHelper(object):
             params = {'start_date': query_month + '-01',
                       'end_date': query_month + '-' + str(lastday).zfill(2)
                       + 'T23:59:59'}
+            if repository_id and repository_id != 'Root Index':
+                repository = Community.query.get(repository_id)
+                user_ids = get_user_ids_by_role(repository.group_id) if repository_id else []
+                params['user_ids'] = user_ids
+            else:
+                params['user_ids'] = None
 
             all_query_name = ['get-file-download-per-user-report',
                               'get-file-preview-per-user-report']
@@ -387,7 +433,8 @@ class QueryFileReportsHelper(object):
             cls.Calculation(all_res, all_list)
 
         except Exception as e:
-            current_app.logger.debug(e)
+            current_app.logger.error(e)
+            traceback.print_exc()
 
         result['date'] = query_month
         result['all'] = all_list
@@ -431,6 +478,7 @@ class QuerySearchReportHelper(object):
         month = kwargs.get('month')
         start_date = kwargs.get('start_date')
         end_date = kwargs.get('end_date')
+        repository_id = kwargs.get('repository_id')
 
         try:
             if not start_date or not end_date:
@@ -440,6 +488,8 @@ class QuerySearchReportHelper(object):
                       'end_date': end_date + 'T23:59:59',
                       'agg_size': kwargs.get('agg_size', 0),
                       'agg_filter': kwargs.get('agg_filter', None)}
+            if repository_id and repository_id != 'Root Index':
+                params['wildcard'] = {"referrer": f"*{repository_id}*"}
 
             # Run query
             keyword_query_cfg = current_stats.queries['get-search-report']
@@ -453,7 +503,7 @@ class QuerySearchReportHelper(object):
                 current_report['search_key'] = report['search_key']
                 current_report['count'] = report['count']
                 all.append(current_report)
-            all = sorted(all, key=lambda x:x['count'], reverse=True) 
+            all = sorted(all, key=lambda x:x['count'], reverse=True)
             result['all'] = all
         except es_exceptions.NotFoundError as e:
             current_app.logger.debug(
@@ -472,10 +522,13 @@ class QueryCommonReportsHelper(object):
     @classmethod
     def get_common_params(cls, **kwargs):
         """Get common params."""
+        from invenio_communities.models import Community
+        from weko_index_tree.utils import get_descendant_index_names
         year = kwargs.get('year')
         month = kwargs.get('month')
         start_date = kwargs.get('start_date')
         end_date = kwargs.get('end_date')
+        repository_id = kwargs.get('repository_id')
         if not start_date or not end_date:
             if month > 0 and month <= 12:
                 query_date = str(year) + '-' + str(month).zfill(2)
@@ -492,6 +545,13 @@ class QueryCommonReportsHelper(object):
                       'end_date': end_date + 'T23:59:59',
                       'agg_size': kwargs.get('agg_size', 0),
                       'agg_sort': kwargs.get('agg_sort', {'_term': 'desc'})}
+        if repository_id and repository_id != 'Root Index':
+            repository = Community.query.get(repository_id)
+            index_list = get_descendant_index_names(repository.root_node_id)
+            params['index_list'] = index_list
+            params['wildcard'] = {"referrer": f"*{repository_id}*"}
+        else:
+            params['index_list'] = None
         return query_date, params
 
     @classmethod
@@ -661,7 +721,7 @@ class QueryRecordViewPerIndexReportHelper(object):
     index_name_field = 'record_index_list.index_name'
 
     @classmethod
-    def build_query(cls, start_date, end_date, after_key=None):
+    def build_query(cls, start_date, end_date, after_key=None, index_list=None):
         """Get nested aggregation by index id."""
         agg_query = Search(
             using=current_search_client,
@@ -676,6 +736,13 @@ class QueryRecordViewPerIndexReportHelper(object):
             agg_query = agg_query.filter(
                 'range', **{'timestamp': time_range}).filter(
                 'term', **{'is_restricted': False})
+        if index_list:
+            nested_query = Q(
+                'nested',
+                path=cls.nested_path,
+                query=Q('terms', **{cls.index_name_field: index_list})
+            )
+            agg_query = agg_query.filter(nested_query)
 
         size = current_app.config['STATS_ES_INTEGER_MAX_VALUE']
         sources = [{cls.index_id_field: A('terms', field=cls.index_id_field)},
@@ -704,22 +771,30 @@ class QueryRecordViewPerIndexReportHelper(object):
 
         Nested aggregations are currently unsupported so manually aggregating.
         """
+        from weko_index_tree.utils import get_descendant_index_names
+        from invenio_communities.models import Community
+
         result = {}
         year = kwargs.get('year')
         month = kwargs.get('month')
+        repository_id = kwargs.get('repository_id')
 
         try:
             query_month = str(year) + '-' + str(month).zfill(2)
             _, lastday = calendar.monthrange(year, month)
             start_date = query_month + '-01'
             end_date = query_month + '-' + str(lastday).zfill(2) + 'T23:59:59'
+            index_list = None
+            if repository_id and repository_id != 'Root Index':
+                repository = Community.query.get(repository_id)
+                index_list = get_descendant_index_names(repository.root_node_id) if repository else []
             result = {'date': query_month, 'all': [], 'total': 0}
             first_search = True
             after_key = None
             total = 1
             count = 0
             while count < total and (after_key or first_search):
-                agg_query = cls.build_query(start_date, end_date, after_key)
+                agg_query = cls.build_query(start_date, end_date, after_key, index_list)
                 current_app.logger.debug(agg_query.to_dict())
                 temp_res = agg_query.execute().to_dict()
                 aggs = temp_res['aggregations'][cls.nested_path]
@@ -734,7 +809,8 @@ class QueryRecordViewPerIndexReportHelper(object):
                 count += cls.parse_bucket_response(aggs, result)
 
         except Exception as e:
-            current_app.logger.debug(e)
+            current_app.logger.error(e)
+            traceback.print_exc()
             return {}
 
         return result
@@ -746,8 +822,8 @@ class QueryRecordViewReportHelper(object):
     @classmethod
     def Calculation(cls, res, data_list):
         """Create response object."""
-        for item in res['buckets']: 
-            data = { 
+        for item in res['buckets']:
+            data = {
                 'record_id': item['record_id'],
                 'record_name': item['record_name'],
                 'index_names': item['record_index_names'],
@@ -820,6 +896,8 @@ class QueryRecordViewReportHelper(object):
     @classmethod
     def get(cls, **kwargs):
         """Get record view report."""
+        from weko_index_tree.utils import get_descendant_index_names
+        from invenio_communities.models import Community
         result = {}
         all_list = []
         query_date = ''
@@ -840,6 +918,11 @@ class QueryRecordViewReportHelper(object):
             if not kwargs.get('ranking', False):
                 # Limit size
                 params.update({'agg_size': kwargs.get('agg_size', 0)})
+            repository_id = kwargs.get('repository_id')
+            if repository_id and repository_id != 'Root Index':
+                repository = Community.query.get(repository_id)
+                index_list = get_descendant_index_names(repository.root_node_id) if repository else []
+                params['agg_filter'] = {'record_index_names': index_list}
             all_query_cfg = current_stats.queries['get-record-view-report']
             all_query = all_query_cfg.query_class(**all_query_cfg.query_config)
 
@@ -847,10 +930,12 @@ class QueryRecordViewReportHelper(object):
             cls.Calculation(all_res, all_list)
 
         except es_exceptions.NotFoundError as e:
-            current_app.logger.debug(e)
+            current_app.logger.error(e)
+            traceback.print_exc()
             result['all'] = []
         except Exception as e:
-            current_app.logger.debug(e)
+            current_app.logger.error(e)
+            traceback.print_exc()
 
         result['date'] = query_date
         result['all'] = all_list
@@ -864,6 +949,9 @@ class QueryItemRegReportHelper(object):
     @classmethod
     def get(cls, **kwargs):
         """Get item registration report."""
+        from weko_index_tree.utils import get_descendant_index_names, get_item_ids_in_index
+        from invenio_communities.models import Community
+
         target_report = kwargs.get('target_report').title()
         start_date = datetime.strptime(kwargs.get('start_date'), '%Y-%m-%d') \
             if kwargs.get('start_date') != '0' else None
@@ -904,12 +992,22 @@ class QueryItemRegReportHelper(object):
         # get page_index from request params
         page_index = kwargs.get('page_index', 0)
 
+        repository_id = kwargs.get('repository_id')
+        if repository_id and repository_id != 'Root Index':
+            repository = Community.query.get(repository_id)
+            index_list = get_descendant_index_names(repository.root_node_id) if repository else []
+            item_ids = get_item_ids_in_index(repository.root_node_id) if repository else []
+
         result = []
         if empty_date_flg or end_date >= start_date:
             try:
                 if unit == 'Day':
                     if empty_date_flg:
                         params = {'interval': 'day'}
+                        if repository_id and repository_id != 'Root Index':
+                            params.update({'index_list': index_list,'item_ids': item_ids})
+                        else:
+                            params.update({'index_list': None,'item_ids': None})
                         res_total = query_total.run(**params)
                         # Get valuable items
                         items = []
@@ -952,6 +1050,11 @@ class QueryItemRegReportHelper(object):
                                           'end_date': end_date_string,
                                           'is_restricted': False
                                           }
+                                if repository_id and repository_id != 'Root Index':
+                                    params.update({'index_list': index_list,
+                                                    'agg_filter': {'pid_value': item_ids}})
+                                else:
+                                    params.update({'index_list': None})
                                 res_total = query_total.run(**params)
                                 result.append({
                                     'count': res_total[count_keyname],
@@ -965,6 +1068,10 @@ class QueryItemRegReportHelper(object):
                     delta1 = timedelta(days=1)
                     if empty_date_flg:
                         params = {'interval': 'week', 'is_restricted': False}
+                        if repository_id and repository_id != 'Root Index':
+                            params.update({'index_list': index_list, 'item_ids': item_ids})
+                        else:
+                            params.update({'index_list': None, 'item_ids': None})
                         res_total = query_total.run(**params)
                         # Get valuable items
                         items = []
@@ -1027,6 +1134,11 @@ class QueryItemRegReportHelper(object):
                                           'end_date': temp['end_date'],
                                           'is_restricted': False
                                           }
+                                if repository_id and repository_id != 'Root Index':
+                                    params.update({'index_list': index_list,
+                                                    'agg_filter': {'pid_value': item_ids}})
+                                else:
+                                    params.update({'index_list': None})
                                 res_total = query_total.run(**params)
                                 temp['count'] = res_total[count_keyname]
                                 result.append(temp)
@@ -1035,6 +1147,10 @@ class QueryItemRegReportHelper(object):
                 elif unit == 'Year':
                     if empty_date_flg:
                         params = {'interval': 'year', 'is_restricted': False}
+                        if repository_id and repository_id != 'Root Index':
+                            params.update({'index_list': index_list, 'item_ids': item_ids})
+                        else:
+                            params.update({'index_list': None, 'item_ids': None})
                         res_total = query_total.run(**params)
                         # Get start day and end day
                         start_date_string = '{}-01-01'.format(
@@ -1081,6 +1197,11 @@ class QueryItemRegReportHelper(object):
                                           'end_date': end_date_string,
                                           'is_restricted': False
                                           }
+                                if repository_id and repository_id != 'Root Index':
+                                    params.update({'index_list': index_list,
+                                                    'agg_filter': {'pid_value': item_ids}})
+                                else:
+                                    params.update({'index_list': None})
                                 res_total = query_total.run(**params)
                                 result.append({
                                     'count': res_total[count_keyname],
@@ -1105,6 +1226,10 @@ class QueryItemRegReportHelper(object):
                     else:
                         params.update({'agg_sort': kwargs.get(
                             'agg_sort', {'_count': 'desc'})})
+                    if repository_id and repository_id != 'Root Index':
+                        params.update({'index_list': index_list})
+                    else:
+                        params.update({'index_list': None})
                     res_total = query_total.run(**params)  # pass args
                     i = 0
                     for item in res_total['buckets']:
@@ -1143,6 +1268,12 @@ class QueryItemRegReportHelper(object):
                     if end_date is not None:
                         end_date_string = end_date.strftime('%Y-%m-%d 23:59:59')
                         params.update({'end_date': end_date_string})
+                    if repository_id and repository_id != 'Root Index':
+                        params.update({'index_list': index_list,
+                                        'item_ids': item_ids,
+                                        'agg_filter': {'pid_value': item_ids}})
+                    else:
+                        params.update({'index_list': None, 'item_ids': None})
                     res_total = query_total.run(**params)
                     i = 0
                     for item in res_total['buckets']:
@@ -1190,10 +1321,12 @@ class QueryItemRegReportHelper(object):
                 else:
                     result = []
             except es_exceptions.NotFoundError as e:
-                current_app.logger.debug(e)
+                current_app.logger.error(e)
+                traceback.print_exc()
                 result = []
             except Exception as e:
-                current_app.logger.debug(e)
+                current_app.logger.error(e)
+                traceback.print_exc()
 
         response = {
             'num_page': ceil(float(total_results) / reports_per_page),
@@ -1228,8 +1361,8 @@ class QueryRankingHelper(object):
     @classmethod
     def Calculation(cls, res, data_list):
         """Create response object."""
-        for item in res['aggregations']['my_buckets']['buckets']: 
-            data = { 
+        for item in res['aggregations']['my_buckets']['buckets']:
+            data = {
                 'key': item['key'],
                 'count': int(item['my_sum']['value'])
             }

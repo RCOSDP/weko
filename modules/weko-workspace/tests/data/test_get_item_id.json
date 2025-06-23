@@ -1,0 +1,557 @@
+{
+    "system_file": {
+        "URI": {
+            "@value": "subitem_systemfile_filename_uri",
+            "@attributes": {
+                "label": "subitem_systemfile_filename_label",
+                "objectType": "subitem_systemfile_filename_type"
+            }
+        },
+        "date": {
+            "@value": "subitem_systemfile_datetime_date",
+            "@attributes": {
+                "dateType": "subitem_systemfile_datetime_type"
+            }
+        },
+        "extent": {
+            "@value": "subitem_systemfile_size"
+        },
+        "version": {
+            "@value": "subitem_systemfile_version"
+        },
+        "mimeType": {
+            "@value": "subitem_systemfile_mimetype"
+        },
+        "model_id": "system_file"
+    },
+    "title": {
+        "@value": "subitem_1551255647225",
+        "@attributes": {
+            "xml:lang": "subitem_1551255648112"
+        },
+        "model_id": "item_1617186331708"
+    },
+    "alternative": {
+        "@value": "subitem_1551255720400",
+        "@attributes": {
+            "xml:lang": "subitem_1551255721061"
+        },
+        "model_id": "item_1617186385884"
+    },
+    "creator": {
+        "givenName": {
+            "@value": "givenNames.givenName",
+            "@attributes": {
+                "xml:lang": "givenNames.givenNameLang"
+            }
+        },
+        "familyName": {
+            "@value": "familyNames.familyName",
+            "@attributes": {
+                "xml:lang": "familyNames.familyNameLang"
+            }
+        },
+        "affiliation": {
+            "nameIdentifier": {
+                "@value": "creatorAffiliations.affiliationNameIdentifiers.affiliationNameIdentifier",
+                "@attributes": {
+                    "nameIdentifierURI": "creatorAffiliations.affiliationNameIdentifiers.affiliationNameIdentifierURI",
+                    "nameIdentifierScheme": "creatorAffiliations.affiliationNameIdentifiers.affiliationNameIdentifierScheme"
+                }
+            },
+            "affiliationName": {
+                "@value": "creatorAffiliations.affiliationNames.affiliationName",
+                "@attributes": {
+                    "xml:lang": "creatorAffiliations.affiliationNames.affiliationNameLang"
+                }
+            }
+        },
+        "creatorName": {
+            "@value": "creatorNames.creatorName",
+            "@attributes": {
+                "xml:lang": "creatorNames.creatorNameLang"
+            }
+        },
+        "nameIdentifier": {
+            "@value": "nameIdentifiers.nameIdentifier",
+            "@attributes": {
+                "nameIdentifierURI": "nameIdentifiers.nameIdentifierURI",
+                "nameIdentifierScheme": "nameIdentifiers.nameIdentifierScheme"
+            }
+        },
+        "creatorAlternative": {
+            "@value": "creatorAlternatives.creatorAlternative",
+            "@attributes": {
+                "xml:lang": "creatorAlternatives.creatorAlternativeLang"
+            }
+        },
+        "model_id": "item_1617186419668"
+    },
+    "accessRights": {
+        "@value": "subitem_1522299639480",
+        "@attributes": {
+            "rdf:resource": "subitem_1600958577026"
+        },
+        "model_id": "item_1617186476635"
+    },
+    "rights": {
+        "@value": "subitem_1522651041219",
+        "@attributes": {
+            "xml:lang": "subitem_1522650717957",
+            "rdf:resource": "subitem_1522650727486"
+        },
+        "model_id": "item_1617186499011"
+    },
+    "subject": {
+        "@value": "subitem_1523261968819",
+        "@attributes": {
+            "xml:lang": "subitem_1522299896455",
+            "subjectURI": "subitem_1522300048512",
+            "subjectScheme": "subitem_1522300014469"
+        },
+        "model_id": "item_1617186609386"
+    },
+    "description": {
+        "@value": "subitem_description",
+        "@attributes": {
+            "xml:lang": "subitem_description_language",
+            "descriptionType": "subitem_description_type"
+        },
+        "model_id": "item_1617186626617"
+    },
+    "publisher": {
+        "@value": "subitem_1522300316516",
+        "@attributes": {
+            "xml:lang": "subitem_1522300295150"
+        },
+        "model_id": "item_1617186643794"
+    },
+    "date": [
+        {
+            "date": {
+                "@value": "subitem_1522300722591",
+                "@attributes": {
+                    "dateType": "subitem_1522300695726"
+                },
+                "model_id": "item_1617186660861"
+            }
+        },
+        {
+            "date": {
+                "@value": "bibliographicIssueDates.bibliographicIssueDate",
+                "@attributes": {
+                    "dateType": "bibliographicIssueDates.bibliographicIssueDateType"
+                },
+                "model_id": "item_1617187056579"
+            }
+        }
+    ],
+    "language": {
+        "@value": "subitem_1551255818386",
+        "model_id": "item_1617186702042"
+    },
+    "identifier": {
+        "@value": "subitem_identifier_uri",
+        "@attributes": {
+            "identifierType": "subitem_identifier_type"
+        },
+        "model_id": "item_1617186783814"
+    },
+    "identifierRegistration": {
+        "@value": "subitem_identifier_reg_text",
+        "@attributes": {
+            "identifierType": "subitem_identifier_reg_type"
+        },
+        "model_id": "item_1617186819068"
+    },
+    "temporal": {
+        "@value": "subitem_1522658031721",
+        "@attributes": {
+            "xml:lang": "subitem_1522658018441"
+        },
+        "model_id": "item_1617186859717"
+    },
+    "geoLocation": {
+        "geoLocationBox": {
+            "eastBoundLongitude": {
+                "@value": "subitem_geolocation_box.subitem_east_longitude"
+            },
+            "northBoundLatitude": {
+                "@value": "subitem_geolocation_box.subitem_north_latitude"
+            },
+            "southBoundLatitude": {
+                "@value": "subitem_geolocation_box.subitem_south_latitude"
+            },
+            "westBoundLongitude": {
+                "@value": "subitem_geolocation_box.subitem_west_longitude"
+            }
+        },
+        "geoLocationPlace": {
+            "@value": "subitem_geolocation_place.subitem_geolocation_place_text"
+        },
+        "geoLocationPoint": {
+            "pointLatitude": {
+                "@value": "subitem_geolocation_point.subitem_point_latitude"
+            },
+            "pointLongitude": {
+                "@value": "subitem_geolocation_point.subitem_point_longitude"
+            }
+        },
+        "model_id": "item_1617186882738"
+    },
+    "fundingReference": {
+        "awardTitle": {
+            "@value": "subitem_1522399651758.subitem_1522721929892",
+            "@attributes": {
+                "xml:lang": "subitem_1522399651758.subitem_1522721910626"
+            }
+        },
+        "funderName": {
+            "@value": "subitem_1522399412622.subitem_1522737543681",
+            "@attributes": {
+                "xml:lang": "subitem_1522399412622.subitem_1522399416691"
+            }
+        },
+        "awardNumber": {
+            "@value": "subitem_1522399571623.subitem_1522399628911",
+            "@attributes": {
+                "awardURI": "subitem_1522399571623.subitem_1522399585738"
+            }
+        },
+        "funderIdentifier": {
+            "@value": "subitem_1522399143519.subitem_1522399333375",
+            "@attributes": {
+                "funderIdentifierType": "subitem_1522399143519.subitem_1522399281603"
+            }
+        },
+        "model_id": "item_1617186901218"
+    },
+    "sourceIdentifier": {
+        "@value": "subitem_1522646572813",
+        "@attributes": {
+            "identifierType": "subitem_1522646500366"
+        },
+        "model_id": "item_1617186920753"
+    },
+    "sourceTitle": [
+        {
+            "sourceTitle": {
+                "@value": "subitem_1522650091861",
+                "@attributes": {
+                    "xml:lang": "subitem_1522650068558"
+                },
+                "model_id": "item_1617186941041"
+            }
+        },
+        {
+            "sourceTitle": {
+                "@value": "bibliographic_titles.bibliographic_title",
+                "@attributes": {
+                    "xml:lang": "bibliographic_titles.bibliographic_titleLang"
+                },
+                "model_id": "item_1617187056579"
+            }
+        }
+    ],
+    "volume": [
+        {
+            "volume": {
+                "@value": "subitem_1551256328147",
+                "model_id": "item_1617186959569"
+            }
+        },
+        {
+            "volume": {
+                "@value": "bibliographicVolumeNumber",
+                "model_id": "item_1617187056579"
+            }
+        }
+    ],
+    "issue": [
+        {
+            "issue": {
+                "@value": "subitem_1551256294723",
+                "model_id": "item_1617186981471"
+            }
+        },
+        {
+            "issue": {
+                "@value": "bibliographicIssueNumber",
+                "model_id": "item_1617187056579"
+            }
+        }
+    ],
+    "numPages": [
+        {
+            "numPages": {
+                "@value": "subitem_1551256248092",
+                "model_id": "item_1617186994930"
+            }
+        },
+        {
+            "numPages": {
+                "@value": "bibliographicNumberOfPages",
+                "model_id": "item_1617187056579"
+            }
+        }
+    ],
+    "pageStart": [
+        {
+            "pageStart": {
+                "@value": "subitem_1551256198917",
+                "model_id": "item_1617187024783"
+            }
+        },
+        {
+            "pageStart": {
+                "@value": "bibliographicPageStart",
+                "model_id": "item_1617187056579"
+            }
+        }
+    ],
+    "pageEnd": [
+        {
+            "pageEnd": {
+                "@value": "subitem_1551256185532",
+                "model_id": "item_1617187045071"
+            }
+        },
+        {
+            "pageEnd": {
+                "@value": "bibliographicPageEnd",
+                "model_id": "item_1617187056579"
+            }
+        }
+    ],
+    "dissertationNumber": {
+        "@value": "subitem_1551256171004",
+        "model_id": "item_1617187087799"
+    },
+    "degreeName": {
+        "@value": "subitem_1551256126428",
+        "@attributes": {
+            "xml:lang": "subitem_1551256129013"
+        },
+        "model_id": "item_1617187112279"
+    },
+    "dateGranted": {
+        "@value": "subitem_1551256096004",
+        "model_id": "item_1617187136212"
+    },
+    "conference": {
+        "conferenceDate": {
+            "@value": "subitem_1599711699392.subitem_1599711704251",
+            "@attributes": {
+                "endDay": "subitem_1599711699392.subitem_1599711735410",
+                "endYear": "subitem_1599711699392.subitem_1599711743722",
+                "endMonth": "subitem_1599711699392.subitem_1599711739022",
+                "startDay": "subitem_1599711699392.subitem_1599711712451",
+                "xml:lang": "subitem_1599711699392.subitem_1599711745532",
+                "startYear": "subitem_1599711699392.subitem_1599711731891",
+                "startMonth": "subitem_1599711699392.subitem_1599711727603"
+            }
+        },
+        "conferenceName": {
+            "@value": "subitem_1599711633003.subitem_1599711636923",
+            "@attributes": {
+                "xml:lang": "subitem_1599711633003.subitem_1599711645590"
+            }
+        },
+        "conferenceVenue": {
+            "@value": "subitem_1599711758470.subitem_1599711769260",
+            "@attributes": {
+                "xml:lang": "subitem_1599711758470.subitem_1599711775943"
+            }
+        },
+        "conferenceCountry": {
+            "@value": "subitem_1599711813532"
+        },
+        "conferenceSponsor": {
+            "@value": "subitem_1599711660052.subitem_1599711680082",
+            "@attributes": {
+                "xml:lang": "subitem_1599711660052.subitem_1599711686511"
+            }
+        },
+        "conferenceSequence": {
+            "@value": "subitem_1599711655652"
+        },
+        "model_id": "item_1617187187528"
+    },
+    "type": {
+        "@value": "resourcetype",
+        "@attributes": {
+            "rdf:resource": "resourceuri"
+        },
+        "model_id": "item_1617258105262"
+    },
+    "versiontype": {
+        "@value": "subitem_1522305645492",
+        "@attributes": {
+            "rdf:resource": "subitem_1600292170262"
+        },
+        "model_id": "item_1617265215918"
+    },
+    "contributor": {
+        "givenName": {
+            "@value": "givenNames.givenName",
+            "@attributes": {
+                "xml:lang": "givenNames.givenNameLang"
+            }
+        },
+        "familyName": {
+            "@value": "familyNames.familyName",
+            "@attributes": {
+                "xml:lang": "familyNames.familyNameLang"
+            }
+        },
+        "@attributes": {
+            "contributorType": "contributorType"
+        },
+        "affiliation": {
+            "nameIdentifier": {
+                "@value": "contributorAffiliations.contributorAffiliationNameIdentifiers.contributorAffiliationNameIdentifier",
+                "@attributes": {
+                    "nameIdentifierURI": "contributorAffiliations.contributorAffiliationNameIdentifiers.contributorAffiliationURI",
+                    "nameIdentifierScheme": "contributorAffiliations.contributorAffiliationNameIdentifiers.contributorAffiliationScheme"
+                }
+            },
+            "affiliationName": {
+                "@value": "contributorAffiliations.contributorAffiliationNames.contributorAffiliationName",
+                "@attributes": {
+                    "xml:lang": "contributorAffiliations.contributorAffiliationNames.contributorAffiliationNameLang"
+                }
+            }
+        },
+        "nameIdentifier": {
+            "@value": "nameIdentifiers.nameIdentifier",
+            "@attributes": {
+                "nameIdentifierURI": "nameIdentifiers.nameIdentifierURI",
+                "nameIdentifierScheme": "nameIdentifiers.nameIdentifierScheme"
+            }
+        },
+        "contributorName": {
+            "@value": "contributorNames.contributorName",
+            "@attributes": {
+                "xml:lang": "contributorNames.lang"
+            }
+        },
+        "contributorAlternative": {
+            "@value": "contributorAlternatives.contributorAlternative",
+            "@attributes": {
+                "xml:lang": "contributorAlternatives.contributorAlternativeLang"
+            }
+        },
+        "model_id": "item_1617349709064"
+    },
+    "version": {
+        "@value": "subitem_1523263171732",
+        "model_id": "item_1617349808926"
+    },
+    "apc": {
+        "@value": "subitem_1523260933860",
+        "model_id": "item_1617351524846"
+    },
+    "relation": {
+        "@attributes": {
+            "relationType": "subitem_1522306207484"
+        },
+        "relatedTitle": {
+            "@value": "subitem_1523320863692.subitem_1523320909613",
+            "@attributes": {
+                "xml:lang": "subitem_1523320863692.subitem_1523320867455"
+            }
+        },
+        "relatedIdentifier": {
+            "@value": "subitem_1522306287251.subitem_1522306436033",
+            "@attributes": {
+                "identifierType": "subitem_1522306287251.subitem_1522306382014"
+            }
+        },
+        "model_id": "item_1617353299429"
+    },
+    "file": {
+        "URI": {
+            "@value": "url.url",
+            "@attributes": {
+                "label": "url.label",
+                "objectType": "url.objectType"
+            }
+        },
+        "date": {
+            "@value": "fileDate.fileDateValue",
+            "@attributes": {
+                "dateType": "fileDate.fileDateType"
+            }
+        },
+        "extent": {
+            "@value": "filesize.value"
+        },
+        "version": {
+            "@value": "version"
+        },
+        "mimeType": {
+            "@value": "format"
+        },
+        "model_id": "item_1617605131499"
+    },
+    "rightsHolder": {
+        "nameIdentifier": {
+            "@value": "nameIdentifiers.nameIdentifier",
+            "@attributes": {
+                "nameIdentifierURI": "nameIdentifiers.nameIdentifierURI",
+                "nameIdentifierScheme": "nameIdentifiers.nameIdentifierScheme"
+            }
+        },
+        "rightsHolderName": {
+            "@value": "rightHolderNames.rightHolderName",
+            "@attributes": {
+                "xml:lang": "rightHolderNames.rightHolderLanguage"
+            }
+        },
+        "model_id": "item_1617610673286"
+    },
+    "degreeGrantor": {
+        "nameIdentifier": {
+            "@value": "subitem_1551256015892.subitem_1551256027296",
+            "@attributes": {
+                "nameIdentifierScheme": "subitem_1551256015892.subitem_1551256029891"
+            }
+        },
+        "degreeGrantorName": {
+            "@value": "subitem_1551256037922.subitem_1551256042287",
+            "@attributes": {
+                "xml:lang": "subitem_1551256037922.subitem_1551256047619"
+            }
+        },
+        "model_id": "item_1617944105607"
+    },
+    "system_identifier": [
+        {
+            "system_identifier": {
+                "@value": "subitem_systemidt_identifier",
+                "@attributes": {
+                    "identifierType": "subitem_systemidt_identifier_type"
+                },
+                "model_id": "system_identifier_doi"
+            }
+        },
+        {
+            "system_identifier": {
+                "@value": "subitem_systemidt_identifier",
+                "@attributes": {
+                    "identifierType": "subitem_systemidt_identifier_type"
+                },
+                "model_id": "system_identifier_hdl"
+            }
+        },
+        {
+            "system_identifier": {
+                "@value": "subitem_systemidt_identifier",
+                "@attributes": {
+                    "identifierType": "subitem_systemidt_identifier_type"
+                },
+                "model_id": "system_identifier_uri"
+            }
+        }
+    ]
+}

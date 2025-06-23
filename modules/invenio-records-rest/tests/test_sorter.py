@@ -14,7 +14,7 @@ from __future__ import absolute_import, print_function
 
 import pytest
 from elasticsearch_dsl import Search
-
+from invenio_i18n.ext import InvenioI18N, current_i18n
 from invenio_records_rest.sorter import default_sorter_factory, eval_field, \
     geolocation_sort, parse_sort_field, reverse_order
 
@@ -36,15 +36,25 @@ def test_reverse_order():
 
 
 def test_eval_field_string(app):
+    """Test getting locales."""
+    app.config["I18N_LANGUAGES"] = [("ja", "Japanese"), ("en", "English")]
+    
     """Test string evaluation."""
     assert eval_field("myfield", True) == dict(myfield=dict(order='asc',unmapped_type='long'))
     assert eval_field("myfield", False) == dict(myfield=dict(order='desc',unmapped_type='long'))
     assert eval_field("-myfield", True) == dict(myfield=dict(order='desc',unmapped_type='long'))
     assert eval_field("-myfield", False) == dict(myfield=dict(order='asc',unmapped_type='long'))
     assert eval_field("myfield", True, True) == dict(myfield=dict(order='asc',unmapped_type='long',nested=True))
-    assert eval_field("date_range", True) == {"_script":{"type":"number", "script":{"lang":"painless","source":"def x = params._source.date_range1;Date dt = new Date();if (x != null && x instanceof List) { if (x[0] != null && x[0] instanceof Map){ def st = x[0].getOrDefault(\"gte\",\"\");SimpleDateFormat format = new SimpleDateFormat();if (st.length()>7) {format.applyPattern(\"yyyy-MM-dd\");}else if (st.length()>4){format.applyPattern(\"yyyy-MM\");}else if (st.length()==4){format.applyPattern(\"yyyy\");} try { dt = format.parse(st);} catch (Exception e){}}} return dt.getTime()"},"order": 'asc'}}
-    assert eval_field("control_number", True) == {"_script":{"type":"number", "script": "Float.parseFloat(doc['control_number'].value)", "order": "asc"}}
-
+    with app.test_request_context(
+        headers=[('Accept-Language','ja')]):
+            assert eval_field("title", True) == dict(title=dict(order='asc',unmapped_type='long',mode='max'))
+            assert eval_field("title", False) == dict(title=dict(order='desc',unmapped_type='long',mode='max'))
+    with app.test_request_context(
+        headers=[('Accept-Language','en')]):
+            assert eval_field("title", True) == dict(title=dict(order='asc',unmapped_type='long',mode='min'))
+            assert eval_field("title", False) == dict(title=dict(order='desc',unmapped_type='long',mode='min'))
+    assert eval_field("date_range", True) == {"_script":{"type":"number", "script":{"lang":"painless","source":"def x = params._source.date_range1;SimpleDateFormat format = new SimpleDateFormat(); if (x != null && !x.isEmpty() ) { def value = x.get(0).get(\"gte\"); if(value != null && !value.equals(\"\")) { if(value.length() > 7) { format.applyPattern(\"yyyy-MM-dd\"); } else if(value.length() > 4) { format.applyPattern(\"yyyy-MM\");  } else { format.applyPattern(\"yyyy\"); } try { return format.parse(value).getTime(); } catch(Exception e) {} } } format.applyPattern(\"yyyy\"); return format.parse(\"9999\").getTime();"},"order": 'asc'}}
+    assert eval_field("date_range", False) == {"_script":{"type":"number", "script":{"lang":"painless","source":"def x = params._source.date_range1;SimpleDateFormat format = new SimpleDateFormat(); if (x != null && !x.isEmpty() ) { def value = x.get(0).get(\"lte\"); if(value != null && !value.equals(\"\")) { if(value.length() > 7) { format.applyPattern(\"yyyy-MM-dd\"); } else if(value.length() > 4) { format.applyPattern(\"yyyy-MM\");  } else { format.applyPattern(\"yyyy\"); } try { return format.parse(value).getTime(); } catch(Exception e) {} } } format.applyPattern(\"yyyy\"); return format.parse(\"0\").getTime();"},"order": 'desc'}}
 
 def test_eval_field_callable():
     """Test string evaluation."""
@@ -187,7 +197,7 @@ def test_default_sorter_factory(app):
     with app.test_request_context("/?sort=temporal"):
         query, urlargs = default_sorter_factory(Search(), 'myindex')
         assert query.to_dict()['sort'] == \
-            [{"_script":{"type":"number","script":{"lang":"painless","source":"def x = params._source.date_range1;Date dt = new Date();if (x != null && x instanceof List) { if (x[0] != null && x[0] instanceof Map){ def st = x[0].getOrDefault(\"gte\",\"\");SimpleDateFormat format = new SimpleDateFormat();if (st.length()>7) {format.applyPattern(\"yyyy-MM-dd\");}else if (st.length()>4){format.applyPattern(\"yyyy-MM\");}else if (st.length()==4){format.applyPattern(\"yyyy\");} try { dt = format.parse(st);} catch (Exception e){}}} return dt.getTime()"},"order": 'asc'}},
+            [{"_script":{"type":"number","script":{"lang":"painless","source":"def x = params._source.date_range1;SimpleDateFormat format = new SimpleDateFormat(); if (x != null && !x.isEmpty() ) { def value = x.get(0).get(\"gte\"); if(value != null && !value.equals(\"\")) { if(value.length() > 7) { format.applyPattern(\"yyyy-MM-dd\"); } else if(value.length() > 4) { format.applyPattern(\"yyyy-MM\");  } else { format.applyPattern(\"yyyy\"); } try { return format.parse(value).getTime(); } catch(Exception e) {} } } format.applyPattern(\"yyyy\"); return format.parse(\"9999\").getTime();"},"order": 'asc'}},
             {"_script":{"type":"number", "script": "Float.parseFloat(doc['control_number'].value)", "order": "asc"}}]
         assert urlargs == dict(sort='temporal')
     
@@ -195,6 +205,6 @@ def test_default_sorter_factory(app):
     with app.test_request_context("/?sort=-temporal"):
         query, urlargs = default_sorter_factory(Search(), 'myindex')
         assert query.to_dict()['sort'] == \
-            [{"_script":{"type":"number","script":{"lang":"painless","source":"def x = params._source.date_range1;Date dt = new Date();if (x != null && x instanceof List) { if (x[0] != null && x[0] instanceof Map){ def st = x[0].getOrDefault(\"gte\",\"\");SimpleDateFormat format = new SimpleDateFormat();if (st.length()>7) {format.applyPattern(\"yyyy-MM-dd\");}else if (st.length()>4){format.applyPattern(\"yyyy-MM\");}else if (st.length()==4){format.applyPattern(\"yyyy\");} try { dt = format.parse(st);} catch (Exception e){}}} return dt.getTime()"},"order": 'desc'}},
+            [{"_script":{"type":"number","script":{"lang":"painless","source":"def x = params._source.date_range1;SimpleDateFormat format = new SimpleDateFormat(); if (x != null && !x.isEmpty() ) { def value = x.get(0).get(\"lte\"); if(value != null && !value.equals(\"\")) { if(value.length() > 7) { format.applyPattern(\"yyyy-MM-dd\"); } else if(value.length() > 4) { format.applyPattern(\"yyyy-MM\");  } else { format.applyPattern(\"yyyy\"); } try { return format.parse(value).getTime(); } catch(Exception e) {} } } format.applyPattern(\"yyyy\"); return format.parse(\"0\").getTime();"},"order": 'desc'}},
             {"_script":{"type":"number", "script": "Float.parseFloat(doc['control_number'].value)", "order": "asc"}}]
         assert urlargs == dict(sort='-temporal')

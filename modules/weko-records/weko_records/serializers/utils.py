@@ -294,7 +294,7 @@ class OpenSearchDetailData:
         if _index_id:
             index = None
             if _index_id.isnumeric():
-                index = Index.query.filter_by(id=int(_index_id)).one_or_none()
+                index = Index.query.filter_by(id=int(_index_id), is_deleted=False).one_or_none()
             _index_name = 'Nonexistent Index' \
                 if index is None else index.index_name
             index_meta[_index_id] = 'Unnamed Index' \
@@ -473,9 +473,9 @@ class OpenSearchDetailData:
                 if index_id in index_meta:
                     index_name = index_meta[index_id]
                 else:
-                    index = Index.query.filter_by(id=index_id).one_or_none()
-                    index_name = index.index_name
-                    index_meta[index_id] = index_name
+                    index = Index.query.filter_by(id=index_id, is_deleted=False).one_or_none()
+                    index_name = 'Nonexistent Index' if index is None else index.index_name
+                    index_meta[index_id] = 'Unnamed Index' if index_name is None else index_name
 
                 fe.dc.dc_subject(index_name)
 

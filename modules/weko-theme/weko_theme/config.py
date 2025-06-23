@@ -200,6 +200,14 @@ WEKO_THEME_ADMIN_MENU = [
             {
                 'name': 'Properties',
                 'order': 4
+            },
+            {
+                'name': 'JSON-LD mapping',
+                'order': 5
+            },
+            {
+                'name': 'RO-Crate mapping',
+                'order': 6
             }
         ]
     },
@@ -222,6 +230,10 @@ WEKO_THEME_ADMIN_MENU = [
             {
                 'name': 'Import',
                 'order': 4
+            },
+            {
+                'name': 'RO-Crate Import',
+                'order': 5
             }
         ]
     },
@@ -245,7 +257,7 @@ WEKO_THEME_ADMIN_MENU = [
     },
     {
         'name': 'Records',
-        'order': 12,
+        'order': 13,
         'submenu': [
             {
                 'name': 'Persistent Identifier',
@@ -253,6 +265,20 @@ WEKO_THEME_ADMIN_MENU = [
             },
             {
                 'name': 'Record Metadata',
+                'order': 2
+            }
+        ]
+    },
+    {
+        'name': 'SWORD API',
+        'order': 12,
+        'submenu': [
+            {
+                'name': 'TSV/XML',
+                'order': 1
+            },
+            {
+                'name': 'JSON-LD',
                 'order': 2
             }
         ]
@@ -277,91 +303,95 @@ WEKO_THEME_ADMIN_MENU = [
     },
     {
         'name': 'Setting',
-        'order': 15,
+        'order': 16,
         'submenu': [
             {
                 'name': 'Items',
                 'order': 1
             },
             {
-                'name': 'Index Link',
+                'name': 'Activity List',
                 'order': 2
             },
             {
-                'name': 'Language',
+                'name': 'Index Link',
                 'order': 3
             },
             {
-                'name': 'PDF Cover Page',
+                'name': 'Language',
                 'order': 4
             },
             {
-                'name': 'Ranking',
+                'name': 'PDF Cover Page',
                 'order': 5
             },
             {
-                'name': 'Stats',
+                'name': 'Ranking',
                 'order': 6
             },
             {
-                'name': 'Style',
+                'name': 'Stats',
                 'order': 7
             },
             {
-                'name': 'Identifier',
+                'name': 'Style',
                 'order': 8
             },
             {
-                'name': 'Item Export',
+                'name': 'Identifier',
                 'order': 9
             },
             {
-                'name': 'Log Analysis',
+                'name': 'Item Export',
                 'order': 10
             },
             {
-                'name': 'Search',
+                'name': 'Log Analysis',
                 'order': 11
             },
             {
-                'name': 'Faceted Search',
+                'name': 'Search',
                 'order': 12
             },
             {
-                'name': 'Site Info',
+                'name': 'Faceted Search',
                 'order': 13
             },
             {
-                'name': 'Site License',
+                'name': 'Site Info',
                 'order': 14
             },
             {
-                'name': 'Sitemap',
+                'name': 'Site License',
                 'order': 15
             },
             {
-                'name': 'Mail',
+                'name': 'Sitemap',
                 'order': 16
             },
             {
-                'name': 'WebAPI Account',
+                'name': 'Mail',
                 'order': 17
             },
             {
-                'name': 'File Preview',
+                'name': 'WebAPI Account',
                 'order': 18
             },
             {
-                'name': 'Shibboleth',
+                'name': 'File Preview',
                 'order': 19
             },
             {
-                'name': 'Restricted Access',
+                'name': 'Shibboleth',
                 'order': 20
             },
             {
-                'name': 'Others',
+                'name': 'Restricted Access',
                 'order': 21
+            },
+            {
+                'name': 'Others',
+                'order': 22
             }
         ]
     },
@@ -385,7 +415,7 @@ WEKO_THEME_ADMIN_MENU = [
     },
     {
         'name': 'User Management',
-        'order': 14,
+        'order': 15,
         'submenu': [
             {
                 'name': 'Access: Roles',
@@ -462,23 +492,37 @@ WEKO_THEME_ADMIN_MENU = [
             {
                 'name': 'WorkFlow List',
                 'order': 2
+            },
+            {
+                'name': 'WorkSpaceWorkFlow Setting',
+                'order': 3
+            }
+        ]
+    },
+    {
+        'name': 'Logs',
+        'order': 16,
+        'submenu': [
+            {
+                'name': 'Export',
+                'order': 1
             }
         ]
     },
     {
         'name': 'Maintenance',
-        'order': 16,
+        'order': 17,
         'submenu': [
             {
                 'name': 'ElasticSearch Index',
                 'order': 1
             }
         ]
-    }
+    },
 ]
 
 
-WEKO_SHOW_INDEX_FOR_AUTHENTICATED_USER = False 
+WEKO_SHOW_INDEX_FOR_AUTHENTICATED_USER = False
 """インデックスツリー設定"""
 
 DISPLAY_LOGIN = True
@@ -487,3 +531,6 @@ DISPLAY_LOGIN = True
 
 ENABLE_COOKIE_CONSENT = False
 """ Enable klaro cookie consent function """
+
+WEKO_THEME_FETCH_SEARCH_FLG = True
+""" Enable DOM differential update functionality when searching. """

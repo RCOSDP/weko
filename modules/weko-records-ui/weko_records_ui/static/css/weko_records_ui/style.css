@@ -100,3 +100,23 @@
   background-color: #f7f7f7 !important;
   border: 1px solid #ebebeb;
 }
+
+.communities-area {
+  margin-top: 10px;
+  display: flex;
+}
+
+.communities-area-thumbnail {
+  display: flex;
+  float: left;
+  width: fit-content;
+  margin-right: 5px;
+}
+
+.communities-area-title h4 {
+  margin-top: 0;
+  margin-bottom: 0;
+
+.icon-space {
+  padding-right: 8px;
+}

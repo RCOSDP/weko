@@ -16,9 +16,10 @@ billiard==3.6.3.0
 binaryornot==0.4.4
 bleach==3.1.0
 blinker==1.4
-boto3==1.7.84
-botocore==1.10.84
+boto3==1.9.83
+botocore==1.12.209
 cachelib==0.1
+captcha==0.4
 cachetools==4.2.4
 cchardet==2.1.1
 celery==4.4.4
@@ -38,7 +39,7 @@ defusedxml==0.5.0
 dictdiffer==0.7.0
 distlib==0.3.6
 dnspython==2.2.1
-docutils==0.18.1
+docutils==0.15.2
 dojson==1.3.2
 elasticsearch==6.1.1
 elasticsearch-dsl==6.4.0
@@ -177,7 +178,6 @@ passlib==1.7.1
 pbr==5.11.1
 pexpect==4.3.0
 pickleshare==0.7.4
-Pillow==5.4.1
 platformdirs==2.4.0
 pluggy==0.13.1
 ply==3.11
@@ -186,6 +186,7 @@ prompt-toolkit==1.0.15
 psycopg2==2.7.3.2
 ptyprocess==0.5.2
 py==1.11.0
+py-ldnlib==0.1.3
 pycparser==2.18
 Pygments==2.2.0
 PyJWT==1.5.3
@@ -193,19 +194,25 @@ PyLD==2.0.3
 pyparsing==3.1.0
 -e git+https://github.com/RCOSDP/PyPDF2.git@fefc684a3a74aff6f99e5dff24f9b4dd1c95169d#egg=PyPDF2
 pyPEG2==2.15.2
-pytest==4.2.0
-python-dateutil==2.6.1
+pytest>=4.2.0
+pytest-mock==3.6.1
+python-dateutil==2.8.2
 python-editor==1.0.3
 python-geoip==1.2
 pytz==2017.3
 pyzmq==17.0.0
+rdflib==5.0.0
+rdflib-jsonld==0.6.1
 redis==2.10.6
 requests==2.18.4
 requests-oauthlib==1.1.0
-resync==1.0.9
+responses
+rocrate==0.6.0
+resync==2.0.1
 s3fs==0.1.6
 s3transfer==0.1.13
 selenium
+Pillow==8.1.2
 Sickle==0.6.4
 simplegeneric==0.8.1
 simplejson==3.12.0
@@ -259,16 +266,19 @@ webencodings==0.5.1
 -e ../weko-items-ui
 -e ../weko-itemtypes-ui
 -e ../weko-logging
+-e ../weko-notifications
 -e ../weko-records
 -e ../weko-records-ui
 -e ../weko-redis
 -e ../weko-schema-ui
 -e ../weko-search-ui
+-e ../weko-signposting
 -e ../weko-sitemap
 -e ../weko-swordserver
 -e ../weko-theme
 -e ../weko-user-profiles
 -e ../weko-workflow
+-e ../weko-workspace
 Werkzeug==0.15.2
 whichcraft==0.4.1
 WTForms==2.1
