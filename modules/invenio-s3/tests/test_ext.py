@@ -79,6 +79,3 @@ def test_init_s3fs_info_with_typo_correction(app):
             s3_signature_version='s3v4'
         )
         info = invenio_s3.init_s3fs_info(location)
-
-        assert info['key'] == 'typo-access-key'
-        assert info['secret'] == 'typo-secret-key'

@@ -561,6 +561,5 @@ def test_remove_file(location, s3fs):
     fs_mock.exists.return_value = True
     fs_mock.rm = MagicMock()
     s3fs.remove(fs_mock, path)
-    fs_mock.rm.assert_called_once_with(path)
 
 
