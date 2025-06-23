@@ -190,7 +190,7 @@ class TestStyleSettingView:
 class TestReportView:
 #    def index(self):
 # .tox/c1/bin/pytest --cov=weko_admin tests/test_admin.py::TestReportView::test_index -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
-    def test_index(self,db,client,indexes,users,admin_settings,statistic_email_addrs,mocker):
+    def test_index(self,db,client,indexes,users,statistic_email_addrs,mocker):
         login_user_via_session(client,email=users[0]["email"])
         url = url_for("report.index")
         agg={
@@ -237,7 +237,7 @@ class TestReportView:
         result = client.get(url, query_string={"repo_id": "invalid_id"})
         assert result.status_code == 403
 
-        setting = AdminSettings(id=10,name='report_email_schedule_settings',settings={"Root Index": {"details": "", "enabled": False, "frequency": "daily"}})
+        setting = AdminSettings(name='report_email_schedule_settings',settings={"Root Index": {"details": "", "enabled": False, "frequency": "daily"}})
         db.session.add(setting)
         db.session.commit()
         client.get(url, query_string={"repo_id": "comm1"})
@@ -631,6 +631,8 @@ class TestLogAnalysisSettings:
             assert kwargs["shared_crawlers"] == []
 
         # post
+        LogAnalysisRestrictedCrawlerList.query.delete()
+        db.session.commit()
         data = {
             "ip_address_0_id":"1",
             "address_list_0":["987","654","321","098"],
