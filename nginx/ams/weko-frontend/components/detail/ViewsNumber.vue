@@ -76,6 +76,7 @@ function getItemStats(span: string) {
   $fetch(useAppConfig().wekoApi + '/records/' + props.currentNumber + '/stats', {
     timeout: useRuntimeConfig().public.apiTimeout,
     method: 'GET',
+    credentials: 'omit',
     headers: {
       'Cache-Control': 'no-store',
       Pragma: 'no-cache',

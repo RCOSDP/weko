@@ -191,7 +191,7 @@
                   :class="[selectedFiles.length == 0 ? 'bg-miby-dark-gray' : 'bg-miby-link-blue']"
                   :disabled="selectedFiles.length == 0"
                   @click="downloadFilesSelected(selectedFiles)">
-                  <img src="/img/icon/icon_dl-rank.svg" alt="Download" />
+                  <img :src="`${appConf.amsImage ?? '/img'}/icon/icon_dl-rank.svg`" alt="Download" />
                   {{ $t('download') }} ({{ selectedFiles.length }} {{ $t('items') }})
                 </button>
               </div>
@@ -266,6 +266,7 @@ async function getFiles(number: string) {
   await $fetch(appConf.wekoApi + '/records/' + number, {
     timeout: useRuntimeConfig().public.apiTimeout,
     method: 'GET',
+    credentials: 'omit',
     headers: {
       'Cache-Control': 'no-store',
       Pragma: 'no-cache',
@@ -339,6 +340,7 @@ function downloadFilesAll() {
     $fetch(appConf.wekoApi + '/records/' + String(query.number) + '/files/all', {
       timeout: useRuntimeConfig().public.apiTimeout,
       method: 'GET',
+      credentials: 'omit',
       headers: {
         'Cache-Control': 'no-store',
         Pragma: 'no-cache',
@@ -398,6 +400,7 @@ function downloadFilesSelected(filesList: string[]) {
   $fetch(appConf.wekoApi + '/records/' + String(query.number) + '/files/selected', {
     timeout: useRuntimeConfig().public.apiTimeout,
     method: 'POST',
+    credentials: 'omit',
     headers: {
       'Cache-Control': 'no-store',
       Pragma: 'no-cache',
@@ -724,9 +727,9 @@ function clear() {
 function getURL() {
   const itemInfoUrl = sessionStorage.getItem('url')?.split('/');
   if (itemInfoUrl && itemInfoUrl[3] === 'search') {
-    url = `/detail?sess=search&number=${query.number}`;
+    url = `${appConf.amsPath ?? ''}/detail?sess=search&number=${query.number}`;
   } else {
-    url = `/detail?sess=top&number=${query.number}`;
+    url = `${appConf.amsPath ?? ''}/detail?sess=top&number=${query.number}`;
   }
 }
 

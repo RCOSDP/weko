@@ -2,7 +2,7 @@
   <div class="relative flex flex-col justify-center h-screen bg-miby-dark-blue">
     <div class="w-full m-auto mb-5 flex justify-center cursor-pointer">
       <NuxtLink to="" event="" @click="throughDblClick">
-        <img class="scale-150" src="/img/logo/logo_w.svg" alt="AMS Logo" />
+        <img class="scale-150" :src="`${appConf.amsImage ?? '/img'}/logo/logo_w.svg`" alt="AMS Logo" />
       </NuxtLink>
     </div>
     <div
@@ -60,7 +60,7 @@
               dirtyEmail = true;
               dirtyPassword = true;
             ">
-            <img src="/img/icon/icon_login.svg" alt="Login" />
+            <img :src="`${appConf.amsImage ?? '/img'}/icon/icon_login.svg`" alt="Login" />
             {{ $t('login') }}
           </button>
         </div>
@@ -166,6 +166,7 @@ const alertCode = ref(0);
 const dirtyEmail = ref(false);
 const dirtyPassword = ref(false);
 const dirtyReset = ref(false);
+const appConf = useAppConfig();
 
 /* ///////////////////////////////////
 // function
@@ -174,9 +175,15 @@ const dirtyReset = ref(false);
 /**
  * ログイン
  */
-function login() {
+async function login() {
   let statusCode = 0;
-  $fetch(useAppConfig().wekoApi + '/login', {
+    // 先にログアウト
+    await $fetch(appConf.wekoApi + '/logout', {
+      timeout: useRuntimeConfig().public.apiTimeout,
+      method: 'POST',
+    });
+    // ログイン
+    await $fetch(appConf.wekoApi + '/login', {
     timeout: useRuntimeConfig().public.apiTimeout,
     method: 'POST',
     body: {
@@ -185,7 +192,7 @@ function login() {
     },
     onResponse({ response }) {
       if (response.status === 200) {
-        const url = new URL(useAppConfig().wekoOrigin + '/oauth/authorize');
+        const url = new URL(appConf.wekoOrigin + '/oauth/authorize');
         const random = Math.random().toString(36);
         url.searchParams.append('response_type', 'code');
         url.searchParams.append('client_id', useRuntimeConfig().public.clientId);

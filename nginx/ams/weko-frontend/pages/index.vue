@@ -34,7 +34,7 @@
       </div>
       <!-- スクロールボタン -->
       <button id="page-top" class="block lg:hidden w-10 h-10 z-40 fixed right-5 bottom-2.5" @click="scrollToTop">
-        <img src="/img/btn/btn-gototop_sp.svg" alt="Page Top" />
+        <img :src="`${appConf.amsImage ?? '/img'}/btn/btn-gototop_sp.svg`" alt="Page Top" />
       </button>
     </main>
     <!-- 著者情報 -->
@@ -68,6 +68,7 @@ const alertType = ref('info');
 const alertMessage = ref('');
 const alertCode = ref(0);
 const isRender = ref(false);
+const appConf = useAppConfig();
 
 /* ///////////////////////////////////
 // function
@@ -98,7 +99,7 @@ try {
   // アクセストークン取得
   if (state) {
     if (sessionStorage.getItem('login:state') === state) {
-      await useFetch('/api/token/create', {
+      await useFetch(`${appConf.amsApi ?? '/api'}/token/create`, {
         method: 'GET',
         params: { code: String(query.code) }
       })
@@ -129,6 +130,7 @@ try {
   await $fetch(useAppConfig().wekoApi + '/records', {
     timeout: useRuntimeConfig().public.apiTimeout,
     method: 'GET',
+    credentials: 'omit',
     headers: {
       'Cache-Control': 'no-store',
       Pragma: 'no-cache',
