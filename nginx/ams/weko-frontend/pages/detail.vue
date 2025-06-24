@@ -720,20 +720,30 @@ function scrollToTop() {
 /**
  * プロジェクトURLを取得
  * @param itemDetail アイテム詳細
- * @returns プロジェクトURLの配列
+ * @returns プロジェクトURL
  */
 function findProjectURL(itemDetail: any) {
+  let foundProjectUrl = [];
   if (Object.prototype.hasOwnProperty.call(itemDetail, 'rocrate')) {
     const graph = itemDetail.rocrate['@graph'];
+    let prevMatched = false;
     for (const obj of graph) {
-      if (obj['@type'] === 'Dataset' && obj.additionalType === appConf.roCrate.layer.subsection) {
-        if (obj['@id'] === "プロジェクトURL/URL/URL/" && obj.text) {
-          return obj.text;
+      if (obj['@type'] === 'Dataset') {
+        if (obj.additionalType === 'subsection') {
+          if (obj['@id'] === 'プロジェクトURL/URL/URL/' && obj.text) {
+            foundProjectUrl = obj.text;
+            prevMatched = true;
+            continue;
+          }
+          if (prevMatched && obj.text.includes('isVersionOf')) {
+            return [foundProjectUrl];
+          }
+          prevMatched = false;
         }
       }
     }
   }
-  return [];
+  return foundProjectUrl;
 }
 
 /* ///////////////////////////////////
