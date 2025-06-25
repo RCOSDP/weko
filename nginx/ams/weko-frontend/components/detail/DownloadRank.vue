@@ -91,6 +91,7 @@ async function getRanking() {
   await $fetch(appConfig.wekoApi + '/ranking/' + props.currentNumber + '/files', {
     timeout: useRuntimeConfig().public.apiTimeout,
     method: 'GET',
+    credentials: 'omit',
     headers: {
       'Cache-Control': 'no-store',
       Pragma: 'no-cache',
@@ -139,6 +140,7 @@ function download(filename: string) {
   $fetch(appConfig.wekoApi + '/records/' + props.currentNumber + '/files/' + filename, {
     timeout: useRuntimeConfig().public.apiTimeout,
     method: 'GET',
+    credentials: 'omit',
     headers: {
       'Cache-Control': 'no-store',
       Pragma: 'no-cache',

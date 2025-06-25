@@ -200,7 +200,7 @@
       </button>
 
       <!-- <a class="block cursor-pointer border py-1 text-center rounded-md text-sm w-[130px]">
-        <img src="/img/btn/btn-mylist.svg" class="w-[94px] mx-auto" alt="My List" />
+        <img :src="`${useAppConfig().amsImage ?? '/img'}/btn/btn-mylist.svg`" class="w-[94px] mx-auto" alt="My List" />
       </a> -->
     </div>
     <!-- データ総数 -->
@@ -325,6 +325,7 @@ const titleSearchType = reactive({
     name: 'exactMatch'
   }
 });
+const appConf = useAppConfig();
 
 /* ///////////////////////////////////
 // function
@@ -414,7 +415,7 @@ function search() {
     emits('clickSearch');
   } else {
     sessionStorage.setItem('conditions', JSON.stringify(conditions));
-    navigateTo('/search');
+    navigateTo(`${appConf.amsPath ?? ''}/search`);
   }
 }
 
@@ -592,6 +593,7 @@ try {
     $fetch(useAppConfig().wekoApi + '/records', {
       timeout: useRuntimeConfig().public.apiTimeout,
       method: 'GET',
+      credentials: 'omit',
       headers: {
         'Cache-Control': 'no-store',
         Pragma: 'no-cache',
@@ -610,6 +612,7 @@ try {
     $fetch(useAppConfig().wekoApi + '/records', {
       timeout: useRuntimeConfig().public.apiTimeout,
       method: 'GET',
+      credentials: 'omit',
       headers: {
         'Cache-Control': 'no-store',
         Pragma: 'no-cache',
@@ -643,6 +646,7 @@ try {
     await $fetch(useAppConfig().wekoApi + '/tree/index', {
       timeout: useRuntimeConfig().public.apiTimeout,
       method: 'GET',
+      credentials: 'omit',
       headers: {
         'Cache-Control': 'no-store',
         Pragma: 'no-cache',

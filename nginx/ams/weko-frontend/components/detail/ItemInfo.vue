@@ -165,7 +165,7 @@
     </div>
     <div v-if="itemInfo.mainEntity.length < 1" class="detail__head-text open-file-button-area" />
     <div v-else class="detail__head-text open-file-button-area">
-      <NuxtLink class="font-bold" to="" event="" @click="throughDblClick(`/files?number=${itemId}`)">
+      <NuxtLink class="font-bold" to="" event="" @click="throughDblClick(`${appConf.amsPath ?? ''}/files?number=${itemId}`)">
         <button
           v-if="local == 'ja'"
           class="min-[1022px]:block h-5 min-[1022px]:h-auto min-[1022px]:border min-[1022px]:py-1 pl-2 pr-2.5 rounded text-white open-file-list-button">
@@ -263,6 +263,7 @@ onMounted(() => {
       $fetch(appConf.wekoApi + '/records/' + props.itemId + '/files/' + thumbnailName, {
         timeout: useRuntimeConfig().public.apiTimeout,
         method: 'GET',
+        credentials: 'omit',
         headers: {
           'Cache-Control': 'no-store',
           Pragma: 'no-cache',

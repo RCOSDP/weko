@@ -288,6 +288,7 @@ let filterNameDict = reactive({});
 const columnNameDict = reactive({});
 const isOpen = ref(false);
 let showFlagDict: any = reactive({}); // 一部を表示|全てを表示
+const appConf = useAppConfig();
 
 /* ///////////////////////////////////
 // function
@@ -326,6 +327,7 @@ async function search() {
   await $fetch(useAppConfig().wekoApi + '/records?' + urlSearchParam, {
     timeout: useRuntimeConfig().public.apiTimeout,
     method: 'GET',
+    credentials: 'omit',
     headers: {
       'Cache-Control': 'no-store',
       Pragma: 'no-cache',
@@ -534,6 +536,7 @@ async function downloadResultList() {
   await $fetch(useAppConfig().wekoApi + '/records/list?' + urlSearchParam, {
     timeout: useRuntimeConfig().public.apiTimeout,
     method: 'POST',
+    credentials: 'omit',
     headers: {
       'Cache-Control': 'no-store',
       Pragma: 'no-cache',
@@ -746,7 +749,7 @@ function checkExportURL() {
   conditions.detail = {};
   if (hereURL[1]) {
     sessionStorage.removeItem('conditions');
-    history.pushState('', '', '/search');
+    history.pushState('', '', `${appConf.amsPath ?? ''}/search`);
     const searchParams = new URLSearchParams(hereURL[1]);
     const params = Object.fromEntries(searchParams.entries());
     for (const key in params) {

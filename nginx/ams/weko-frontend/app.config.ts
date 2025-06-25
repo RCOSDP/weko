@@ -3,6 +3,9 @@ const weko = 'ams-dev.ir.rcos.nii.ac.jp';
 export default defineAppConfig({
   wekoOrigin: 'https://' + weko,
   wekoApi: 'https://' + weko + '/api/v1',
+  amsImage: '/img/ams',
+  amsPath: '/ams',
+  amsApi: '/api/ams',
   export: {
     jpcoar:
       'https://' + weko + '/oai?verb=GetRecord&metadataPrefix=jpcoar_1.0&identifier=oai:ams-dev.ir.rcos.nii.ac.jp:',
