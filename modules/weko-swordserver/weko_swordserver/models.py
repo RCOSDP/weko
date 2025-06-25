@@ -43,6 +43,9 @@ class SwordClientModel(db.Model, Timestamp):
             Relationship to ItemTypeJsonldMapping.
         workflow_id (int, optional): Workflow ID of the client.\
             Foreign key referencing `WorkFlow.id`.
+        workflow (WorkFlow):
+            Relationship to WorkFlow.
+            This is optional and can be null if no workflow is associated.
         duplicate_check (bool):
             Duplicate check status of the application.
         meta_data_api (list):
@@ -118,6 +121,12 @@ class SwordClientModel(db.Model, Timestamp):
         nullable=True
     )
     """int: Workflow ID of the client. Foreign key from WorkFlow."""
+
+    workflow = db.relationship(
+        WorkFlow,
+        backref=db.backref("sword_client", lazy="dynamic")
+    )
+    """Relationship to WorkFlow."""
 
     duplicate_check = db.Column(
         db.Boolean(name="duplicate_check"),

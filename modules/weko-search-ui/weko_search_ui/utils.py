@@ -2358,7 +2358,7 @@ def import_items_to_activity(item, request_info):
         )
         traceback.print_exc()
         url = headless.detail
-        recid = str(headless.recid or "")
+        recid = headless.recid
         current_action = headless.current_action
         error = str(ex)
 

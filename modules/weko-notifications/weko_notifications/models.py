@@ -20,13 +20,14 @@ from weko_user_profiles.models import UserProfile
 class NotificationsUserSettings(db.Model, Timestamp):
     """User notifications settings.
 
-    Columns:
-        `user_id` (int): ID of the settings. Primary key, foreign key
+    Attributes:
+        user_id (int): ID of the user. Primary key, foreign key
             referencing `User.id`.
-        `subscribe_email` (bool): Email notification subscription status.
-    Relationship:
-        `user` (User): Foreign key relationship to `User`.
-        `user_profile` (UserProfile): Foreign key relationship to `UserProfile`.
+        user (User): Foreign key relationship to `User`.
+        user_profile_id (int): ID of the user profile. Foreign key
+            referencing `UserProfile.user_id`.
+        user_profile (UserProfile): Foreign key relationship to `UserProfile`.
+        subscribe_email (bool): Email notification subscription status.
     """
 
     __tablename__ = 'notifications_user_settings'

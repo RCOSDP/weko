@@ -92,7 +92,7 @@ def test_save_report_unit(db,script_info):
     result = runner.invoke(save_report_unit,["1","Day"],obj=script_info)
     assert result.exit_code == 0
     assert result.output == "insert report unit success\n"
-    assert StatisticUnit.query.filter_by(unit_id=1).one_or_none().unit_name== "Day"
+    assert StatisticUnit.query.filter_by(unit_id="1").one_or_none().unit_name== "Day"
     
     with patch("weko_admin.cli.StatisticUnit.create",side_effect=Exception("test_error")):
         result = runner.invoke(save_report_unit,["1","Day"],obj=script_info)
@@ -107,7 +107,7 @@ def test_save_report_target(db,script_info):
     result = runner.invoke(save_report_target,["1","new_target","1,2,4"],obj=script_info)
     assert result.exit_code == 0
     assert result.output == "insert report target success\n"
-    assert StatisticTarget.query.filter_by(target_id=1).one_or_none().target_name== "new_target"
+    assert StatisticTarget.query.filter_by(target_id="1").one_or_none().target_name== "new_target"
     
     with patch("weko_admin.cli.StatisticTarget.create",side_effect=Exception("test_error")):
         result = runner.invoke(save_report_target,["1","new_target","1,2,4"],obj=script_info)
