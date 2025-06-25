@@ -743,8 +743,7 @@ function scrollToTop() {
  * 認証エラー時のリダイレクト処理
  */
 function oauthErrorRedirect() {
-  showPopup.value = true;
-  alertMessage.value = 'message.popup.oauthError';
+  alertMessage.value = 'message.error.oauthError';
   oauthError.value = true;
   alertType.value = 'error';
   sessionStorage.removeItem('item-url');

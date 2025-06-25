@@ -188,12 +188,7 @@
       "getDownloadRanking": "ダウンロードランキングの取得に失敗しました。",
       "getFileDlNumber": "ファイルのダウンロード数取得に失敗しました。",
       "loginFailed": "ログインに失敗しました。管理者に連絡してください。",
-      "noUserInformation": "ユーザ情報がありません。"
-    },
-    "popup": {
-      "loginRequiredMessage": "アイテム閲覧にはログインが必要です。",
-      "transitionToLogin": "{time} 秒後にログイン画面に遷移します。",
-      "loginScreen": "ログイン画面：",
+      "noUserInformation": "ユーザ情報がありません。",
       "oauthError": "アイテム閲覧にはログインが必要です。{time} 秒後にログイン画面に遷移します。ログイン画面："
     }
   },
