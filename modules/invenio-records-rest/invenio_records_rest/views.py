@@ -583,8 +583,17 @@ class RecordsListResource(ContentNegotiatedMethodView):
                                       'list_view_num', 10, type=int),
                                   type=int)
         size = RecordsListResource.adjust_list_view_num(size)
-        format = request.values.get('format')
-        if (not format or format == "html") and request.values.get('q') == None:
+        formats = request.values.getlist('format')
+        selected_format = None
+        if formats:
+            if 'html' in formats:
+                selected_format = 'html'
+            else:
+                selected_format = formats[0]
+        else:
+            selected_format = None
+
+        if (not selected_format or selected_format == "html") and request.values.get('q') is None:
             return redirect_to_search(page, size)
 
         # if page * size >= self.max_result_window:
