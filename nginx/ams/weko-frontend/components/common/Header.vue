@@ -5,7 +5,7 @@
       <div class="flex items-end flex-wrap sm:flex-nowrap">
         <p class="mr-[5px] cursor-pointer">
           <NuxtLink to="" event="" @click="throughDblClick">
-            <img src="/img/logo/logo01.png" alt="AMS Logo" />
+            <img :src="`${appConf.amsImage ?? '/img'}/logo/logo01.png`" alt="AMS Logo" />
           </NuxtLink>
         </p>
         <p class="text-white text-xs w-full md:w-auto mt-2 pb-1 md:mt-auto">
@@ -21,6 +21,11 @@
 
 <script setup>
 import HeaderMenu from '~/components/common/HeaderMenu.vue';
+
+/* ///////////////////////////////////
+// const and let
+/////////////////////////////////// */
+const appConf = useAppConfig();
 
 /* ///////////////////////////////////
 // function

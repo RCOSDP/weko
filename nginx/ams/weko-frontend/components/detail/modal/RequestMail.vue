@@ -10,7 +10,7 @@
         <!-- 閉じるボタン -->
         <div class="basis-1/6 flex text-end justify-end pr-3">
           <button type="button" class="btn-close">
-            <img src="/img/btn/btn-close.svg" alt="×" @click="closeModal" />
+            <img :src="`${appConf.amsImage ?? '/img'}/btn/btn-close.svg`" alt="×" @click="closeModal" />
           </button>
         </div>
       </div>
@@ -220,7 +220,7 @@ function getCaptcha() {
   dirtyAnswer.value = false;
   answeResult.value = false;
 
-  $fetch('api/captcha/image', {
+  $fetch(`${appConf.amsApi ?? '/api'}/captcha/image`, {
     timeout: useRuntimeConfig().public.apiTimeout,
     method: 'GET',
     headers: {
@@ -253,7 +253,7 @@ async function send() {
   let token;
 
   // 文字認証の照合
-  await $fetch('api/captcha/validate', {
+  await $fetch(`${appConf.amsApi ?? '/api'}/captcha/validate`, {
     timeout: useRuntimeConfig().public.apiTimeout,
     method: 'POST',
     headers: {
@@ -278,9 +278,10 @@ async function send() {
   if (answeResult && token) {
     emits('clickSend');
 
-    await $fetch('api/captcha/' + props.itemId + '/request-mail', {
+    await $fetch(`${appConf.amsApi ?? '/api'}/captcha/${props.itemId}/request-mail`, {
       timeout: useRuntimeConfig().public.apiTimeout,
       method: 'POST',
+      credentials: 'omit',
       headers: {
         'Cache-Control': 'no-store',
         Pragma: 'no-cache',

@@ -66,7 +66,7 @@
         to=""
         event=""
         style="cursor: pointer"
-        @click="throughDblClick(`/detail?sess=search&number=${item.id}`)">
+        @click="throughDblClick(`${appConf.amsPath ?? ''}/detail?sess=search&number=${item.id}`)">
         <span v-if="itemInfo.hasOwnProperty(appConf.roCrate.root.title)">
           {{ itemInfo[appConf.roCrate.root.title][0] }}
         </span>
@@ -138,7 +138,7 @@
               class="underline text-miby-link-blue text-14px cursor-pointer"
               to=""
               event=""
-              @click="throughDblClick(`/files?number=${item.id}`)">
+              @click="throughDblClick(`${appConf.amsPath ?? ''}/files?number=${item.id}`)">
               {{ $t('exist') + `（${getFileLength(itemInfo.mainEntity)}）` }}
             </NuxtLink>
           </span>
@@ -150,18 +150,18 @@
     <!-- <div class="row-span-1 align-top text-right pr-2">
         <label class="swap swap-rotate">
           <input type="checkbox" class="hidden" />
-          <div class="swap-on w-7 rounded"><img src="/img/icon/icon_star-fill.svg" /></div>
-          <div class="swap-off w-7 rounded"><img src="/img/icon/icon_star.svg" /></div>
+          <div class="swap-on w-7 rounded"><img :src="`${useAppConfig().amsImage ?? '/img'}/icon/icon_star-fill.svg`" /></div>
+          <div class="swap-off w-7 rounded"><img :src="`${useAppConfig().amsImage ?? '/img'}/icon/icon_star.svg`" /></div>
         </label>
       </div> -->
     <!-- 閲覧数 -->
     <!-- <div class="row-span-3 flex justify-end items-end">
         <div class="data-note flex">
-          <img src="/img/icon/icon_star-fill-black.svg" alt="My List" class="mr-1" />
+          <img :src="`${useAppConfig().amsImage ?? '/img'}/icon/icon_star-fill-black.svg`" alt="My List" class="mr-1" />
           <a>9,999</a>
         </div>
         <div class="data-note flex ml-1">
-          <img src="/img/icon/icon_eye-fill.svg" alt="Views" class="mr-1" />
+          <img :src="`${useAppConfig().amsImage ?? '/img'}/icon/icon_eye-fill.svg`" alt="Views" class="mr-1" />
           <a>9,999,999,999</a>
         </div>
       </div> -->
@@ -247,6 +247,7 @@ onMounted(() => {
       $fetch(appConf.wekoApi + '/records/' + props.item.id + '/files/' + thumbnailName, {
         timeout: useRuntimeConfig().public.apiTimeout,
         method: 'GET',
+        credentials: 'omit',
         headers: {
           'Cache-Control': 'no-store',
           Pragma: 'no-cache',
