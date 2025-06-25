@@ -162,7 +162,7 @@ class TestCommunityModelView():
             assert res.status_code == 200
             login_user_via_session(client,email=users[0]["email"])
             res = client.get(url)
-            assert res.status_code == 200
+            assert res.status_code == 403
 
             login_user_via_session(client,email=user.email)
             # post

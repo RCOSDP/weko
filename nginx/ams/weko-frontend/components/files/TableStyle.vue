@@ -234,6 +234,7 @@ function getDownloadNumber() {
   $fetch(appConfig.wekoApi + '/records/' + useRoute().query.number + '/files/' + props.file['@id'] + '/stats', {
     timeout: useRuntimeConfig().public.apiTimeout,
     method: 'GET',
+    credentials: 'omit',
     headers: {
       'Cache-Control': 'no-store',
       Pragma: 'no-cache',
@@ -328,6 +329,7 @@ function download() {
   $fetch(appConfig.wekoApi + '/records/' + useRoute().query.number + '/files/' + props.file['@id'], {
     timeout: useRuntimeConfig().public.apiTimeout,
     method: 'GET',
+    credentials: 'omit',
     headers: {
       'Cache-Control': 'no-store',
       Pragma: 'no-cache',
@@ -365,6 +367,7 @@ function preview() {
   $fetch(appConfig.wekoApi + '/records/' + useRoute().query.number + '/files/' + props.file['@id'], {
     timeout: useRuntimeConfig().public.apiTimeout,
     method: 'GET',
+    credentials: 'omit',
     headers: {
       'Cache-Control': 'no-store',
       Pragma: 'no-cache',

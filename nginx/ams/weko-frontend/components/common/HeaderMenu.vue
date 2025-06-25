@@ -22,24 +22,24 @@
       <button
         v-if="!isLogin"
         class="hidden min-[1022px]:block h-5 min-[1022px]:h-auto min-[1022px]:border min-[1022px]:py-1 pl-2 pr-2.5 rounded text-white text-xs font-light icons icon-in"
-        @click="navigateTo('/login')">
+        @click="navigateTo(`${appConf.amsPath ?? ''}/login`)">
         {{ $t('login') }}
       </button>
       <button
         v-else
         class="hidden min-[1022px]:block h-5 min-[1022px]:h-auto min-[1022px]:border min-[1022px]:py-1 pl-2 pr-2.5 rounded text-white text-xs font-light icons icon-out"
-        @click="navigateTo('/logout')">
+        @click="navigateTo(`${appConf.amsPath ?? ''}/logout`)">
         {{ $t('logout') }}
       </button>
       <!-- ログイン/ログアウト（縮小版） -->
       <button
         v-if="!isLogin"
         class="block min-[1022px]:hidden h-5 min-[1022px]:h-auto min-[1022px]:border min-[1022px]:py-1 pl-2 pr-2.5 rounded icons icon-in"
-        @click="navigateTo('/login')" />
+        @click="navigateTo(`${appConf.amsPath ?? ''}/login`)" />
       <button
         v-else
         class="block min-[1022px]:hidden h-5 min-[1022px]:h-auto min-[1022px]:border min-[1022px]:py-1 pl-2 pr-2.5 rounded icons icon-out"
-        @click="navigateTo('/logout')" />
+        @click="navigateTo(`${appConf.amsPath ?? ''}/logout`)" />
       <!-- インデックスツリーボタン -->
       <button
         class="hidden min-[1022px]:block ml-4 h-5 min-[1022px]:h-auto min-[1022px]:border min-[1022px]:py-1 pl-2 pr-2.5 text-white text-xs font-light icons icon-menu indexbutton"
@@ -60,7 +60,7 @@
           id="mobile_close_btn"
           class="btn-close min-[1022px]:mr-6 min-[1022px]:mt-6"
           @click.stop="changeModalState">
-          <img src="/img/btn/btn-close.svg" alt="Close" />
+          <img :src="`${appConf.amsImage ?? '/img'}/btn/btn-close.svg`" alt="Close" />
         </button>
         <div class="wrapper" @click.stop>
           <div class="index-tree__list p-2.5">
@@ -93,6 +93,7 @@ const isLogin = ref(false);
 const selectedLocale = ref(localStorage.getItem('locale') ?? locale.value);
 const menuBtn = ref();
 let indexes = {};
+const appConf = useAppConfig();
 
 /* ///////////////////////////////////
 // function
@@ -134,6 +135,7 @@ try {
   await $fetch(useAppConfig().wekoApi + '/tree/index', {
     timeout: useRuntimeConfig().public.apiTimeout,
     method: 'GET',
+    credentials: 'omit',
     headers: {
       'Cache-Control': 'no-store',
       Pragma: 'no-cache',

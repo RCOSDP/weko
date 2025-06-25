@@ -161,6 +161,7 @@ const visibleAlert = ref(false);
 const alertType = ref('info');
 const alertMessage = ref('');
 const alertCode = ref(0);
+const appConf = useAppConfig();
 
 /* ///////////////////////////////////
 // function
@@ -188,6 +189,7 @@ async function search() {
   await $fetch(useAppConfig().wekoApi + '/records?' + urlSearchParam, {
     timeout: useRuntimeConfig().public.apiTimeout,
     method: 'GET',
+    credentials: 'omit',
     headers: {
       'Cache-Control': 'no-store',
       Pragma: 'no-cache',
@@ -236,6 +238,7 @@ async function getParentIndex() {
   await $fetch(useAppConfig().wekoApi + '/tree/index/' + useRoute().params.id + '/parent', {
     timeout: useRuntimeConfig().public.apiTimeout,
     method: 'GET',
+    credentials: 'omit',
     headers: {
       'Cache-Control': 'no-store',
       Pragma: 'no-cache',
@@ -300,6 +303,7 @@ async function downloadResultList() {
   await $fetch(useAppConfig().wekoApi + '/records/list?' + urlSearchParam, {
     timeout: useRuntimeConfig().public.apiTimeout,
     method: 'POST',
+    credentials: 'omit',
     headers: {
       'Cache-Control': 'no-store',
       Pragma: 'no-cache',
@@ -363,7 +367,7 @@ async function renderResult() {
  */
 function reSearch() {
   conditions.currentPage = '1';
-  navigateTo('/search');
+  navigateTo(`${appConf.amsPath ?? ''}/search`);
 }
 
 /**

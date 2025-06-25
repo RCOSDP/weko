@@ -40,6 +40,8 @@ def app_config(app_config):
     app_config['TESTING'] = True
     app_config['S3_ACCESS_KEY_ID'] = 'test'
     app_config['S3_SECRET_ACCESS_KEY'] = 'test'
+    app_config['S3_DEFAULT_BLOCK_SIZE'] = 1024  # 1 KB
+    app_config['S3_MAXIMUM_NUMBER_OF_PARTS'] = 10
     return app_config
 
 

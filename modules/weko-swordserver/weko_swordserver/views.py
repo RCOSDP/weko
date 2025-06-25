@@ -298,6 +298,10 @@ def post_service_document():
         required_scopes = set([activity_scope.id])
         token_scopes = set(request.oauth.access_token.scopes)
         if not required_scopes.issubset(token_scopes):
+            current_app.logger.error(
+                "Required scopes for activity are not satisfied: {}"
+                .format(required_scopes - token_scopes)
+            )
             abort(403)
 
     if check_result.get("error"):
@@ -598,6 +602,10 @@ def put_object(recid):
         required_scopes = set([activity_scope.id])
         token_scopes = set(request.oauth.access_token.scopes)
         if not required_scopes.issubset(token_scopes):
+            current_app.logger.error(
+                "Required scopes for activity are not satisfied: {}"
+                .format(required_scopes - token_scopes)
+            )
             abort(403)
 
     if check_result.get("error"):
@@ -991,6 +999,10 @@ def delete_object(recid):
         required_scopes = set([activity_scope.id])
         token_scopes = set(request.oauth.access_token.scopes)
         if not required_scopes.issubset(token_scopes):
+            current_app.logger.error(
+                "Required scopes for activity are not satisfied: {}"
+                .format(required_scopes - token_scopes)
+            )
             abort(403)
 
     owner = -1

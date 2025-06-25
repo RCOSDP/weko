@@ -2,7 +2,7 @@
   <div class="relative flex flex-col justify-center h-screen bg-miby-dark-blue">
     <div class="w-full m-auto mb-5 flex justify-center cursor-pointer">
       <NuxtLink to="" event="" @click="throughDblClick">
-        <img class="scale-150" src="/img/logo/logo_w.svg" alt="AMS Logo" />
+        <img class="scale-150" :src="`${appConf.amsImage ?? '/img'}/logo/logo_w.svg`" alt="AMS Logo" />
       </NuxtLink>
     </div>
     <div
@@ -15,7 +15,7 @@
           <button
             class="btn w-48 mr-5 font-medium text-lg text-white bg-miby-light-blue hover:bg-sky-700"
             @click="logout">
-            <img src="/img/icon/icon_login.svg" alt="Logout" />
+            <img :src="`${appConf.amsImage ?? '/img'}/icon/icon_login.svg`" alt="Logout" />
             {{ $t('logout') }}
           </button>
         </div>
@@ -49,13 +49,14 @@
 /////////////////////////////////// */
 
 const isLogout = ref(false);
+const appConf = useAppConfig();
 
 /* ///////////////////////////////////
 // function
 /////////////////////////////////// */
 
 function logout() {
-  $fetch(useAppConfig().wekoApi + '/logout', {
+  $fetch(appConf.wekoApi + '/logout', {
     timeout: useRuntimeConfig().public.apiTimeout,
     method: 'POST',
     onResponse() {

@@ -46,7 +46,7 @@
             </div>
             <!-- 最上部に戻る -->
             <button id="page-top" class="hidden lg:block w-10 h-10 absolute right-5 bottom-[60px]" @click="scrollToTop">
-              <img src="/img/btn/btn-gototop.svg" alt="Top" />
+              <img :src="`${appConf.amsImage ?? '/img'}/btn/btn-gototop.svg`" alt="Top" />
             </button>
           </div>
         </div>
@@ -89,7 +89,7 @@
                 :class="[false ? 'bg-miby-dark-gray' : 'bg-sky-800']"
                 :disabled="false"
                 @click="openRequestMailModal">
-                <img src="/img/icon/icon_mail-send.svg" alt="Send" />
+                <img :src="`${appConf.amsImage ?? '/img'}/icon/icon_mail-send.svg`" alt="Send" />
                 {{ $t('request') }}
               </button>
             </div>
@@ -112,7 +112,7 @@
       </div>
       <!-- 最上部に戻る -->
       <button id="page-top" class="block lg:hidden w-10 h-10 z-40 fixed right-5 bottom-2.5" @click="scrollToTop">
-        <img src="/img/btn/btn-gototop_sp.svg" alt="Return To Top" />
+        <img :src="`${appConf.amsImage ?? '/img'}/btn/btn-gototop_sp.svg`" alt="Return To Top" />
       </button>
     </main>
     <!-- Loading -->
@@ -224,6 +224,7 @@ async function getDetail(number: string) {
   await $fetch(appConf.wekoApi + '/records/' + number, {
     timeout: useRuntimeConfig().public.apiTimeout,
     method: 'GET',
+    credentials: 'omit',
     headers: {
       'Cache-Control': 'no-store',
       Pragma: 'no-cache',
@@ -306,6 +307,7 @@ async function search(searchPage: string) {
   await $fetch(appConf.wekoApi + '/records?' + urlSearchParam, {
     timeout: useRuntimeConfig().public.apiTimeout,
     method: 'GET',
+    credentials: 'omit',
     headers: {
       'Cache-Control': 'no-store',
       Pragma: 'no-cache',
@@ -368,6 +370,7 @@ async function getParentIndex() {
   await $fetch(appConf.wekoApi + '/tree/index/' + indexId + '/parent', {
     timeout: useRuntimeConfig().public.apiTimeout,
     method: 'GET',
+    credentials: 'omit',
     headers: {
       'Cache-Control': 'no-store',
       Pragma: 'no-cache',
@@ -637,7 +640,7 @@ function clickParent(indexId: string) {
     sessionStorage.setItem('conditions', JSON.stringify({ type: '0', keyword: indexId }));
   }
 
-  navigateTo('/search/' + indexId);
+  navigateTo(`${appConf.amsPath ?? ''}/search/${indexId}`);
 }
 
 /**
