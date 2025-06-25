@@ -182,6 +182,205 @@ class TestSchemaTree:
         assert _ns==""
         assert _schema_obj==""
         assert _item_type_id==""
+
+    # .tox/c1/bin/pytest --cov=weko_schema_ui tests/test_schema.py::TestSchemaTree::test_remove_empty_tag -vv --cov-branch --cov-report=term --basetemp=/code/modules/weko-schema-ui/.tox/c1/tmp
+    def test_remove_empty_tag(self, db_oaischema):
+        data = None
+        instance = SchemaTree(schema_name="jpcoar_mapping")
+        instance.remove_empty_tag(data)
+        assert data == None
+
+        data = {}
+        instance = SchemaTree(schema_name="jpcoar_mapping")
+        instance.remove_empty_tag(data)
+        assert data == {}
+
+        data = {"key": None}
+        instance = SchemaTree(schema_name="jpcoar_mapping")
+        instance.remove_empty_tag(data)
+        assert data == {}
+
+        data = {"key": {}}
+        instance = SchemaTree(schema_name="jpcoar_mapping")
+        instance.remove_empty_tag(data)
+        assert data == {}
+
+        data = {"key": []}
+        instance = SchemaTree(schema_name="jpcoar_mapping")
+        instance.remove_empty_tag(data)
+        assert data == {}
+
+        data = {"key": [None]}
+        instance = SchemaTree(schema_name="jpcoar_mapping")
+        instance.remove_empty_tag(data)
+        assert data == {}
+
+        data = {"key": [[]]}
+        instance = SchemaTree(schema_name="jpcoar_mapping")
+        instance.remove_empty_tag(data)
+        assert data == {}
+
+        data = {"key": "value"}
+        instance = SchemaTree(schema_name="jpcoar_mapping")
+        instance._remain_keys = ["value"]
+        instance.remove_empty_tag(data)
+        assert data == {"key": "value"}
+
+        data = {"key": {"sub_key": None}}
+        instance = SchemaTree(schema_name="jpcoar_mapping")
+        instance.remove_empty_tag(data)
+        assert data == {}
+
+        data = {"key": {"sub_key": {}}}
+        instance = SchemaTree(schema_name="jpcoar_mapping")
+        instance.remove_empty_tag(data)
+        assert data == {}
+
+        data = {"key": {"sub_key": "value"}}
+        instance = SchemaTree(schema_name="jpcoar_mapping")
+        instance._remain_keys = ["value"]
+        instance.remove_empty_tag(data)
+        assert data == {"key": {"sub_key": "value"}}
+
+        data = {"key": {"sub_key": {"sub_sub_key": None}}}
+        instance = SchemaTree(schema_name="jpcoar_mapping")
+        instance.remove_empty_tag(data)
+        assert data == {}
+
+        data = {"key": {"sub_key": {"sub_sub_key": {}}}}
+        instance = SchemaTree(schema_name="jpcoar_mapping")
+        instance.remove_empty_tag(data)
+        assert data == {}
+
+        data = {"key": {"sub_key": {"sub_sub_key": []}}}
+        instance = SchemaTree(schema_name="jpcoar_mapping")
+        instance.remove_empty_tag(data)
+        assert data == {}
+
+        data = {"key": {"sub_key": {"sub_sub_key": [None]}}}
+        instance = SchemaTree(schema_name="jpcoar_mapping")
+        instance.remove_empty_tag(data)
+        assert data == {}
+
+        data = {"key": {"sub_key": {"sub_sub_key": [[]]}}}
+        instance = SchemaTree(schema_name="jpcoar_mapping")
+        instance.remove_empty_tag(data)
+        assert data == {}
+
+        data = {"key": {"sub_key": []}}
+        instance = SchemaTree(schema_name="jpcoar_mapping")
+        instance.remove_empty_tag(data)
+        assert data == {}
+
+        data = {"key": {"sub_key": [None]}}
+        instance = SchemaTree(schema_name="jpcoar_mapping")
+        instance.remove_empty_tag(data)
+        assert data == {}
+
+        data = {"key": {"sub_key": [[]]}}
+        instance = SchemaTree(schema_name="jpcoar_mapping")
+        instance.remove_empty_tag(data)
+        assert data == {}
+
+        data = {"key": {"sub_key": ["value"]}}
+        instance = SchemaTree(schema_name="jpcoar_mapping")
+        instance._remain_keys = ["value"]
+        instance.remove_empty_tag(data)
+        assert data == {"key": {"sub_key": ["value"]}}
+
+        data = []
+        instance = SchemaTree(schema_name="jpcoar_mapping")
+        instance.remove_empty_tag(data)
+        assert data == []
+
+        data = [None]
+        instance = SchemaTree(schema_name="jpcoar_mapping")
+        instance.remove_empty_tag(data)
+        assert data == []
+
+        data = [[]]
+        instance = SchemaTree(schema_name="jpcoar_mapping")
+        instance.remove_empty_tag(data)
+        assert data == []
+
+        data = [[[]]]
+        instance = SchemaTree(schema_name="jpcoar_mapping")
+        instance.remove_empty_tag(data)
+        assert data == []
+
+        data = [{"key": "value"}]
+        instance = SchemaTree(schema_name="jpcoar_mapping")
+        instance._remain_keys = ["value"]
+        instance.remove_empty_tag(data)
+        assert data == [{"key": "value"}]
+
+        data = [{"key": {"sub_key": None}}]
+        instance = SchemaTree(schema_name="jpcoar_mapping")
+        instance.remove_empty_tag(data)
+        assert data == []
+
+        data = [{"key": {"sub_key": {}}}]
+        instance = SchemaTree(schema_name="jpcoar_mapping")
+        instance.remove_empty_tag(data)
+        assert data == []
+
+        data = [{"key": {"sub_key": "value"}}]
+        instance = SchemaTree(schema_name="jpcoar_mapping")
+        instance._remain_keys = ["value"]
+        instance.remove_empty_tag(data)
+        assert data == [{"key": {"sub_key": "value"}}]
+
+        data = [{"key": {"sub_key": {"sub_sub_key": None}}}]
+        instance = SchemaTree(schema_name="jpcoar_mapping")
+        instance.remove_empty_tag(data)
+        assert data == []
+
+        data = [{"key": {"sub_key": {"sub_sub_key": {}}}}]
+        instance = SchemaTree(schema_name="jpcoar_mapping")
+        instance.remove_empty_tag(data)
+        assert data == []
+
+        data = [{"key": {"sub_key": {"sub_sub_key": []}}}]
+        instance = SchemaTree(schema_name="jpcoar_mapping")
+        instance.remove_empty_tag(data)
+        assert data == []
+
+        data = [{"key": {"sub_key": {"sub_sub_key": [None]}}}]
+        instance = SchemaTree(schema_name="jpcoar_mapping")
+        instance.remove_empty_tag(data)
+        assert data == []
+
+        data = [{"key": {"sub_key": {"sub_sub_key": [[]]}}}]
+        instance = SchemaTree(schema_name="jpcoar_mapping")
+        instance.remove_empty_tag(data)
+        assert data == []
+
+        data = [{"key": {"sub_key": []}}]
+        instance = SchemaTree(schema_name="jpcoar_mapping")
+        instance.remove_empty_tag(data)
+        assert data == []
+
+        data = [{"key": {"sub_key": [None]}}]
+        instance = SchemaTree(schema_name="jpcoar_mapping")
+        instance.remove_empty_tag(data)
+        assert data == []
+
+        data = [{"key": {"sub_key": [[]]}}]
+        instance = SchemaTree(schema_name="jpcoar_mapping")
+        instance.remove_empty_tag(data)
+        assert data == []
+
+        data = [{"key": {"sub_key": ["value"]}}]
+        instance = SchemaTree(schema_name="jpcoar_mapping")
+        instance._remain_keys = ["value"]
+        instance.remove_empty_tag(data)
+        assert data == [{"key": {"sub_key": ["value"]}}]
+
+        data = [{"key1": {"sub_key1": ["value1"]}}, {"key2": {"sub_key2": "value2"}, "key3": None, "key4": []}]
+        instance = SchemaTree(schema_name="jpcoar_mapping")
+        instance._remain_keys = ["value1", "value2"]
+        instance.remove_empty_tag(data)
+        assert data == [{"key1": {"sub_key1": ["value1"]}}, {"key2": {"sub_key2": "value2"}}]
         
 
     # .tox/c1/bin/pytest --cov=weko_schema_ui tests/test_schema.py::TestSchemaTree::test_find_nodes -vv --cov-branch --cov-report=term --basetemp=/code/modules/weko-schema-ui/.tox/c1/tmp
