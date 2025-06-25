@@ -349,6 +349,9 @@
 					arr.unshift(null);
 				}
 			}
+			if (!arr.includes(null)) {
+				arr.unshift(null);
+			}
 			return {
 				type: this.state.type,
 				format: "select",
