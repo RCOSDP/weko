@@ -63,8 +63,21 @@
             :current-number="currentNumber"
             :created-date="createdDate"
             @error="setError" />
-          <!-- リクエストメール（未ログイン＆フィードバックアドレス有） -->
-          <div v-if="!isLogin && checkMailAddress">
+          <!-- GakuNinRDM（プロジェクトURL有） -->
+          <div v-if="projectUrl">
+            <div class="bg-miby-light-blue py-3 pl-5">
+              <p class="text-white font-bold">
+                {{ $t('GakuNinRDM') }}
+              </p>
+            </div>
+            <div class="bg-miby-bg-gray py-7 text-center flex justify-center items-center">
+              <button @click="openDataSet">
+                <img :src="`${appConf.amsImage ?? '/img'}/logo/gakunin_logo.svg`" alt="Send" />
+              </button>
+            </div>
+          </div>
+          <!-- リクエストメール（リクエストメールアドレス有&プロジェクトURL無） -->
+          <div v-else-if="checkMailAddress">
             <div class="bg-miby-light-blue py-3 pl-5">
               <p class="icons icon-mail text-white font-bold">
                 {{ $t('requestMail') }}
@@ -78,19 +91,6 @@
                 @click="openRequestMailModal">
                 <img :src="`${appConf.amsImage ?? '/img'}/icon/icon_mail-send.svg`" alt="Send" />
                 {{ $t('request') }}
-              </button>
-            </div>
-          </div>
-          <!-- GakuNinRDM（ログイン済み＆プロジェクトID有） -->
-          <div v-else-if="isLogin && checkProjectId">
-            <div class="bg-miby-light-blue py-3 pl-5">
-              <p class="text-white font-bold">
-                {{ $t('GakuNinRDM') }}
-              </p>
-            </div>
-            <div class="bg-miby-bg-gray py-7 text-center flex justify-center items-center">
-              <button @click="openDataSet">
-                <img :src="`${appConf.amsImage ?? '/img'}/logo/gakunin_logo.svg`" alt="Send" />
               </button>
             </div>
           </div>
@@ -207,9 +207,9 @@ const alertCode = ref(0);
 const alertPosition = ref('');
 const alertWidth = ref('');
 const isLoading = ref(true);
-const isLogin = ref(false);
+// const isLogin = ref(false);
 const checkMailAddress = ref(false);
-const checkProjectId = ref(false);
+let projectUrl = '';
 
 /* ///////////////////////////////////
 // function
@@ -245,14 +245,10 @@ async function getDetail(number: string) {
           }
         }
 
-        // ログイン状況を取得する
-        isLogin.value = !!sessionStorage.getItem('login:state');
+        // プロジェクトURLの登録があるかどうか確認する
+        projectUrl = findProjectURL(itemDetail)[0] ?? '';
 
-        // プロジェクトIDの登録があるかどうか確認する
-        // TODO: RoCrateキーは暫定のため、整理後再度指定要
-        checkProjectId.value = !!obj[appConf.roCrate.root.projectId]?.[0];
-
-        // フィードバックメールアドレスがあるかどうか確認する
+        // リクエストメールアドレスがあるかどうか確認する
         // @ts-ignore
         checkMailAddress.value = !!itemDetail.metadata.hasRequestmailAddress;
       }
@@ -666,9 +662,9 @@ function openRequestMailModal() {
  * 別ウィンドウでデータセットを開く
  */
 function openDataSet() {
-  // TODO: 下記urlにデータセットを開くアドレスを入れる
-  // const url = '';
-  // window.open(url, '_blank');
+  if (projectUrl.length > 0) {
+    window.open(projectUrl, '_blank');
+  }
 }
 
 /**
@@ -722,6 +718,35 @@ function checkSendingResponse(val: boolean) {
  */
 function scrollToTop() {
   scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+/**
+ * プロジェクトURLを取得
+ * @param itemDetail アイテム詳細
+ * @returns プロジェクトURL
+ */
+function findProjectURL(itemDetail: any) {
+  let foundProjectUrl = [];
+  if (Object.prototype.hasOwnProperty.call(itemDetail, 'rocrate')) {
+    const graph = itemDetail.rocrate['@graph'];
+    let prevMatched = false;
+    for (const obj of graph) {
+      if (obj['@type'] === 'Dataset') {
+        if (obj.additionalType === 'subsection') {
+          if (obj['@id'] === 'プロジェクトURL/URL/URL/' && obj.text) {
+            foundProjectUrl = obj.text;
+            prevMatched = true;
+            continue;
+          }
+          if (prevMatched && obj.text.includes('isVersionOf')) {
+            return [foundProjectUrl];
+          }
+          prevMatched = false;
+        }
+      }
+    }
+  }
+  return foundProjectUrl;
 }
 
 /* ///////////////////////////////////

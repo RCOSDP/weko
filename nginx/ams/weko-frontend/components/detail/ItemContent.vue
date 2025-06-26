@@ -86,6 +86,11 @@ function setContentsList() {
           return;
         }
 
+        // 'プロジェクトURL'が含まれている場合はスキップ
+        if (obj['@id'] && obj['@id'].includes('プロジェクトURL')) {
+          return;
+        }
+
         if (obj.additionalType === appConf.roCrate.layer.tab) {
           const tab: IDivision = { id: obj['@id'], name: obj.name, hasPart: obj.hasPart };
           tabList.value.push(tab);
