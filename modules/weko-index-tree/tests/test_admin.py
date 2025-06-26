@@ -86,6 +86,21 @@ def test_IndexEditSettingView(app, db, location, users, id, status_code):
     with app.test_client() as client:
         login_user_via_session(client=client, email=users[id]["email"])
         # need to fix
+        with patch('weko_index_tree.admin.sync_shib_gakunin_map_groups') as mock_sync:
+            with patch('weko_index_tree.admin.IndexEditSettingView.render') as mock_render:
+                mock_render.return_value = 'rendered template'
+                res = client.get(url_for('indexedit.index'))
+                assert res.status_code==200
+                mock_sync.assert_called_once()
+                mock_render.assert_called_once_with(
+                    'weko_index_tree/admin/index_edit_setting.html',
+                    get_tree_json='/api/tree',
+                    upt_tree_json='',
+                    mod_tree_detail='/api/tree/index/',
+                    admin_coverpage_setting='False',
+                    index_id=0,
+                    lang_code='en'
+                )
         with pytest.raises(Exception) as e:
             res = client.get(url_for('indexedit.index'))
         assert e.type==TemplateNotFound
