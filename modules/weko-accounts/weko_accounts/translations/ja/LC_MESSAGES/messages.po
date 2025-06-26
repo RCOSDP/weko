@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: weko-accounts 0.1.0.dev20170000\n"
 "Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
-"POT-Creation-Date: 2025-06-26 13:42+0900\n"
+"POT-Creation-Date: 2025-06-26 15:54+0900\n"
 "PO-Revision-Date: 2018-01-19 13:59+0900\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ja\n"
@@ -27,19 +27,47 @@ msgstr "ja"
 msgid "Shibboleth flag was updated."
 msgstr "Shibboleth設定を更新しました"
 
+#: weko_accounts/admin.py:97
+msgid "gakunin_role was updated."
+msgstr "学認IdP のロール設定を更新しました"
+
+#: weko_accounts/admin.py:99
+msgid "orthros_outside_role was updated."
+msgstr "機関外のOrthros のロール設定を更新しました"
+
+#: weko_accounts/admin.py:101
+msgid "extra_role was updated."
+msgstr "その他 のロール設定を更新しました"
+
+#: weko_accounts/admin.py:112
+msgid "shib_eppn mapping was updated."
+msgstr "属性マッピング設定（shib_eppn）を更新しました"
+
 #: weko_accounts/admin.py:114
+msgid "shib_role_authority_name mapping was updated."
+msgstr "属性マッピング設定（shib_role_authority_name）を更新しました"
+
+#: weko_accounts/admin.py:116
+msgid "shib_mail mapping was updated."
+msgstr "属性マッピング設定（shib_mail）を更新しました"
+
+#: weko_accounts/admin.py:118
+msgid "shib_user_name mapping was updated."
+msgstr "属性マッピング設定（shib_user_name）を更新しました"
+
+#: weko_accounts/admin.py:130
 msgid "Blocked user list was updated."
 msgstr "ユーザーログインブロック設定を更新しました"
 
-#: weko_accounts/admin.py:120
+#: weko_accounts/admin.py:136
 msgid "Shibboleth settings have been saved"
 msgstr "Shibboleth設定を保存しました"
 
-#: weko_accounts/admin.py:143
+#: weko_accounts/admin.py:159
 msgid "Setting"
 msgstr "設定"
 
-#: weko_accounts/admin.py:144
+#: weko_accounts/admin.py:160
 msgid "Shibboleth"
 msgstr "Shibboleth"
 
@@ -225,27 +253,6 @@ msgstr "保存"
 
 #~ msgid "%(module_name)s"
 #~ msgstr ""
-
-#~ msgid "Shib User Name mapping was updated."
-#~ msgstr "属性マッピング設定（shib_user_name）を更新しました"
-
-#~ msgid "Gakunin Role was updated."
-#~ msgstr "学認IdP のロール設定を更新しました"
-
-#~ msgid "Orthros Outside Role was updated."
-#~ msgstr "機関外のOrthros のロール設定を更新しました"
-
-#~ msgid "Extra Role was updated."
-#~ msgstr "その他 のロール設定を更新しました"
-
-#~ msgid "Shib Eppn mapping was updated."
-#~ msgstr "属性マッピング設定（shib_eppn）を更新しました"
-
-#~ msgid "Shib Role Authority Name mapping was updated."
-#~ msgstr "属性マッピング設定（shib_role_authority_name）を更新しました"
-
-#~ msgid "Shib Mail mapping was updated."
-#~ msgstr "属性マッピング設定（shib_mail）を更新しました"
 
 #~ msgid "属性値の取得に失敗しました。"
 #~ msgstr ""
