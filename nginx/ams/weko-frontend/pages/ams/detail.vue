@@ -207,7 +207,7 @@ const alertCode = ref(0);
 const alertPosition = ref('');
 const alertWidth = ref('');
 const isLoading = ref(true);
-const isLogin = ref(false);
+// const isLogin = ref(false);
 const checkMailAddress = ref(false);
 let projectUrl: string = "";
 
