@@ -209,7 +209,7 @@ const alertWidth = ref('');
 const isLoading = ref(true);
 // const isLogin = ref(false);
 const checkMailAddress = ref(false);
-let projectUrl: string = "";
+let projectUrl = '';
 
 /* ///////////////////////////////////
 // function

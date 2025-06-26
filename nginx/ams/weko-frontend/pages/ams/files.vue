@@ -746,7 +746,7 @@ function throughDblClick() {
  */
  function setFileInfo(info: any) {
   const returnInfo = Array.isArray(info) ? info[0] : info;
-  return returnInfo ? returnInfo : '';
+  return returnInfo || '';
 }
 
 /* ///////////////////////////////////
