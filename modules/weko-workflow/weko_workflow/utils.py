@@ -2111,14 +2111,14 @@ def handle_finish_workflow(deposit, current_pid, recid):
                                  new_item_reference_list=new_item_reference_list)
 
         if pid_without_ver:
-        from invenio_oaiserver.tasks import update_records_sets
-        update_records_sets.delay([str(pid_without_ver.object_uuid)])
-        opration = "ITEM_CREATE" if is_newversion else "ITEM_UPDATE"
-        target_key = recid.recid if is_newversion else pid_without_ver.pid_value
-        UserActivityLogger.info(
-            operation=opration,
-            target_key=target_key
-        )
+            from invenio_oaiserver.tasks import update_records_sets
+            update_records_sets.delay([str(pid_without_ver.object_uuid)])
+            opration = "ITEM_CREATE" if is_newversion else "ITEM_UPDATE"
+            target_key = recid.recid if is_newversion else pid_without_ver.pid_value
+            UserActivityLogger.info(
+                operation=opration,
+                target_key=target_key
+            )
     except Exception as ex:
         db.session.rollback()
         current_app.logger.exception(str(ex))
