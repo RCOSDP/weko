@@ -2502,9 +2502,10 @@ class TestSwordAPIJsonldSettingsView:
 
 
 # class JsonldMappingView(ModelView):
-# .tox/c1/bin/pytest --cov=weko_admin tests/test_admin.py::TestJsonldMappingView::test_create_view -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
+# .tox/c1/bin/pytest --cov=weko_admin tests/test_admin.py::TestJsonldMappingView -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
 class TestJsonldMappingView:
 
+    # .tox/c1/bin/pytest --cov=weko_admin tests/test_admin.py::TestJsonldMappingView::test_create_view -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
     def test_create_view(self, client, users, item_type, db, mocker):
         url = url_for("jsonld-mapping.create_view")
 
@@ -2546,6 +2547,7 @@ class TestJsonldMappingView:
         assert res.status_code == 500
 
 
+    # .tox/c1/bin/pytest --cov=weko_admin tests/test_admin.py::TestJsonldMappingView::test_edit_view -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
     def test_edit_view(self, client, users, item_type, flows, db, mocker):
         url = url_for("jsonld-mapping.edit_view", id=1)
 
@@ -2645,6 +2647,8 @@ class TestJsonldMappingView:
                     content_type='application/json')
         assert res.status_code == 400
 
+
+    # .tox/c1/bin/pytest --cov=weko_admin tests/test_admin.py::TestJsonldMappingView::test_delete -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
     def test_delete(self, client, users, item_type, db, mocker, sword_client, sword_mapping):
         url = url_for("jsonld-mapping.delete", id=1)
 
@@ -2680,17 +2684,22 @@ class TestJsonldMappingView:
         assert res.status_code == 404
 
 
+    # .tox/c1/bin/pytest --cov=weko_admin tests/test_admin.py::TestJsonldMappingView::test_get_query -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
     def test_get_query(self, client, users, db, mocker):
         login_user_via_session(client,email=users[0]["email"])# sysadmin
         view = JsonldMappingView(ItemTypeJsonldMapping, db.session)
         view.get_query()
 
+
+    # .tox/c1/bin/pytest --cov=weko_admin tests/test_admin.py::TestJsonldMappingView::_is_editable -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
     def test_is_editable(self, app, client, users, db, sword_client, sword_mapping, mocker):
         login_user_via_session(client,email=users[0]["email"])# sysadmin
         view = JsonldMappingView(ItemTypeJsonldMapping, db.session)
         view._is_editable(1)
         view._is_editable(2)
 
+
+    # .tox/c1/bin/pytest --cov=weko_admin tests/test_admin.py::TestJsonldMappingView::test_format -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
     def test_format(self, app, client, users, db, sword_client, sword_mapping, mocker):
         login_user_via_session(client,email=users[0]["email"])# sysadmin
         view = JsonldMappingView(ItemTypeJsonldMapping, db.session)
@@ -2698,6 +2707,8 @@ class TestJsonldMappingView:
         view._item_type_name(None, model, None)
         view._formated_jsonld_mapping(None, model, None)
 
+
+    # .tox/c1/bin/pytest --cov=weko_admin tests/test_admin.py::TestJsonldMappingView::test_validate_mapping -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
     def test_validate_mapping(self, app, client, users, db, sword_client, sword_mapping, mocker):
         login_user_via_session(client,email=users[0]["email"])
         current_app.config['WEKO_ADMIN_SWORD_API_JSON_LD_FULL_AUTHORITY_ROLE'] = users[0]["id"]

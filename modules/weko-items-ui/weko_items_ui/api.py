@@ -80,8 +80,7 @@ def item_login(item_type_id: int = 0):
                 if "cris_linkage" in item_json:
                     cris_linkage = item_json.get("cris_linkage")
 
-
-        need_file, need_billing_file = is_schema_include_key(item_type.schema)        
+        need_file, need_billing_file = is_schema_include_key(item_type.schema)
 
         if "subitem_thumbnail" in json.dumps(item_type.schema):
             need_thumbnail = True

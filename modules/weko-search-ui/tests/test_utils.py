@@ -11,12 +11,10 @@ import unittest
 from datetime import datetime,timedelta
 import uuid
 import zipfile
-from elasticsearch import NotFoundError
 import redis
-
 import pytest
-from elasticsearch import ElasticsearchException
-from mock import MagicMock, Mock, patch, mock_open
+from elasticsearch import ElasticsearchException, NotFoundError
+from mock import MagicMock, patch, mock_open
 from flask import current_app, make_response, request
 from flask_babelex import Babel
 from flask_login import current_user
