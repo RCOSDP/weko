@@ -59,6 +59,10 @@ msgstr "属性マッピング設定（shib_mail）を更新しました"
 msgid "Blocked user list was updated."
 msgstr "ユーザーログインブロック設定を更新しました"
 
+#: weko_accounts/admin.py:
+msgid "Shibboleth settings have been saved"
+msgstr "Shibboleth設定を保存しました"
+
 #: weko_accounts/admin.py:69
 msgid "Setting"
 msgstr "設定"

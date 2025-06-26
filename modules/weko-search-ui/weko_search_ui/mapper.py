@@ -684,7 +684,8 @@ def add_file(schema, mapping, res, metadata):
         files_info = res.get("files_info", [])
         files_info.append({"key": item_key, "items": ret})
         res["files_info"] = files_info
-    res["file_path"] = file_path
+    if file_path:
+        res["file_path"] = file_path
 
 
 def add_identifier(schema, mapping, res, metadata):

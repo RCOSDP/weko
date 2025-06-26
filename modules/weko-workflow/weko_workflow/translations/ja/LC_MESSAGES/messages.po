@@ -22,6 +22,7 @@ msgstr ""
 #: tests/conftest.py:247
 msgid "write your own license"
 msgstr ""
+
 msgid "Running"
 msgstr "実行中"
 

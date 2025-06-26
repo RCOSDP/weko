@@ -131,9 +131,13 @@ class S3FSFileStorage(PyFSFileStorage):
     ):
         """Update a file in the file system."""
         old_fp = self.open(mode='rb')
-        updated_fp = S3FSFileStorage(self.fileurl, size=self._size).open(
-            mode='wb'
-        )
+        updated_fp = S3FSFileStorage(
+            self.fileurl,
+            size=self._size,
+            modified=self._modified,
+            clean_dir=self.clean_dir,
+            location=self.location
+        ).open(mode='wb')
         try:
             if seek >= 0:
                 to_write = seek
@@ -236,10 +240,10 @@ class S3FSFileStorage(PyFSFileStorage):
                 fs, path = self._get_fs()
                 fs.copy(src.fileurl, path)
             else:
-            # institutional repository
+            # local repository
                 super(S3FSFileStorage, self).copy(src, *args, **kwargs)
         else:
-        # institutional repository
+        # local repository
             super(S3FSFileStorage, self).copy(src, *args, **kwargs)
 
     @set_blocksize

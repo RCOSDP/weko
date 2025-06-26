@@ -52,7 +52,7 @@ from sqlalchemy_utils.functions import create_database, database_exists, drop_da
 from werkzeug.local import LocalProxy
 from invenio_records.api import Record
 from invenio_stats.processors import EventsIndexer
-from .helpers import create_record, json_data
+from .helpers import create_record, json_data, bagify
 
 from invenio_access import InvenioAccess
 from invenio_access.models import ActionRoles, ActionUsers
@@ -4502,3 +4502,13 @@ def db_rocrate_mapping(db):
     with db.session.begin_nested():
         db.session.add(rocrate_mapping)
     db.session.commit()
+
+
+@pytest.yield_fixture()
+def ro_crate():
+    temp_dir = tempfile.mkdtemp()
+    zip_path = os.path.join(temp_dir, "crate.zip")
+    bagify("tests/data/zip_crate/", checksums=["sha256"])
+    shutil.make_archive(zip_path.replace(".zip", ""), 'zip', "tests/data/zip_crate/")
+    yield zip_path
+    shutil.rmtree(temp_dir)

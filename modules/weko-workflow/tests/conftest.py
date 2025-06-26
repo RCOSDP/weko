@@ -61,10 +61,11 @@ from invenio_records_ui import InvenioRecordsUI
 from weko_search_ui.config import WEKO_SYS_USER
 from weko_records_ui import WekoRecordsUI
 from weko_admin import WekoAdmin
-from weko_admin.models import SessionLifetime,Identifier 
+from weko_admin.models import SessionLifetime,Identifier
 from weko_admin.views import blueprint as weko_admin_blueprint
 from weko_records.models import ItemTypeName, ItemType,FeedbackMailList,ItemTypeMapping,ItemTypeProperty
 from weko_records.api import Mapping
+from weko_records.config import WEKO_RECORDS_REFERENCE_SUPPLEMENT
 from weko_records_ui.models import FilePermission
 from weko_user_profiles import WekoUserProfiles
 from weko_index_tree.models import Index
@@ -106,6 +107,7 @@ from weko_admin import WekoAdmin
 from weko_deposit import WekoDeposit
 from weko_admin.models import AdminSettings
 from weko_notifications.models import NotificationsUserSettings
+from weko_logging.audit import WekoLoggingUserActivity
 
 sys.path.append(os.path.dirname(__file__))
 # @event.listens_for(Engine, "connect")
@@ -130,7 +132,7 @@ class TestSearch(RecordsSearch):
         """Add extra options."""
         super(TestSearch, self).__init__(**kwargs)
         self._extra.update(**{'_source': {'excludes': ['_access']}})
-        
+
 @pytest.yield_fixture(scope='session')
 def search_class():
     """Search class."""
@@ -179,7 +181,7 @@ class MockEs():
             pass
         def delete_alias(self, index="", name="",ignore=""):
             pass
-        
+
         # def search(self,index="",doc_type="",body={},**kwargs):
         #     pass
     class MockCluster():
@@ -496,6 +498,7 @@ def base_app(instance_path, search_class, cache_config):
         DEPOSIT_DEFAULT_JSONSCHEMA = 'deposits/deposit-v1.0.0.json',
         WEKO_RECORDS_UI_SECRET_KEY = "secret",
         WEKO_RECORDS_UI_ONETIME_DOWNLOAD_PATTERN = "filename={} record_id={} user_mail={} date={}",
+        WEKO_RECORDS_REFERENCE_SUPPLEMENT=WEKO_RECORDS_REFERENCE_SUPPLEMENT,
         WEKO_WORKFLOW_ACTION_START=WEKO_WORKFLOW_ACTION_START,
         WEKO_WORKFLOW_ACTION_END=WEKO_WORKFLOW_ACTION_END,
         WEKO_WORKFLOW_ACTION_ITEM_REGISTRATION=WEKO_WORKFLOW_ACTION_ITEM_REGISTRATION,
@@ -529,11 +532,13 @@ def base_app(instance_path, search_class, cache_config):
         IDENTIFIER_GRANT_SELECT_DICT=IDENTIFIER_GRANT_SELECT_DICT,
         WEKO_SYS_USER=WEKO_SYS_USER,
         RECORDS_UI_ENDPOINTS=dict(
-            # recid=dict(
-            #     pid_type='recid',
-            #     route='/records/<pid_value>',
-            #     template='invenio_records_ui/detail.html',
-            # ),
+            recid=dict(
+                pid_type='recid',
+                route='/records/<pid_value>',
+                view_imp='weko_records_ui.views.default_view_method',
+                template='invenio_records_ui/detail.html',
+                record_class='weko_deposit.api:WekoRecord',
+            ),
             # recid_previewer=dict(
             #     pid_type='recid',
             #     route='/records/<pid_value>/preview/<filename>',
@@ -550,7 +555,7 @@ def base_app(instance_path, search_class, cache_config):
         DOI_VALIDATION_INFO_JALC=DOI_VALIDATION_INFO_JALC,
         WEKO_WORKFLOW_IDENTIFIER_GRANT_IS_WITHDRAWING = -2,
     )
-    
+
     app_.testing = True
     Babel(app_)
     InvenioI18N(app_)
@@ -581,6 +586,7 @@ def base_app(instance_path, search_class, cache_config):
     WekoItemsUI(app_)
     WekoAdmin(app_)
     InvenioOAuth2Server(app_)
+    WekoLoggingUserActivity(app_)
     # WekoRecordsUI(app_)
     # app_.register_blueprint(invenio_theme_blueprint)
     app_.register_blueprint(invenio_communities_blueprint)
@@ -646,7 +652,7 @@ def guest(client):
 def req_context(client,app):
     with app.test_request_context():
         yield client
-        
+
 @pytest.fixture
 def redis_connect(app):
     redis_connection = RedisConnection().connection(db=app.config['CACHE_REDIS_DB'], kv = True)
@@ -683,7 +689,7 @@ def users(app, db):
         originalroleuser = create_test_user(email='originalroleuser@test.org')
         originalroleuser2 = create_test_user(email='originalroleuser2@test.org')
         student = User.query.filter_by(email='student@test.org').first()
-        
+
     role_count = Role.query.filter_by(name='System Administrator').count()
     if role_count != 1:
         sysadmin_role = ds.create_role(name='System Administrator')
@@ -1287,7 +1293,7 @@ def db_register(app, db, db_records, users, action_data, item_type):
                     )
     with db.session.begin_nested():
         db.session.add(activity_03)
-    
+
     activity_action03_1 = ActivityAction(activity_id=activity_03.activity_id,
                                             action_id=1,action_status="M",action_comment="",
                                             action_handler=1, action_order=1)
@@ -1298,7 +1304,7 @@ def db_register(app, db, db_records, users, action_data, item_type):
         db.session.add(activity_action03_1)
         db.session.add(activity_action03_2)
     db.session.commit()
-    
+
     history = ActivityHistory(
         activity_id=activity.activity_id,
         action_id=activity.action_id,
@@ -1323,7 +1329,7 @@ def db_register(app, db, db_records, users, action_data, item_type):
     db.session.commit()
     return {'flow_define':flow_define,
             'item_type':item_type,
-            'workflow':workflow, 
+            'workflow':workflow,
             'action_feedback_mail':activity_item3_feedbackmail,
             'action_feedback_mail1':activity_item4_feedbackmail,
             'action_feedback_mail2':activity_item5_feedbackmail,
@@ -1338,7 +1344,7 @@ def workflow(app, db, item_type, action_data, users):
     with db.session.begin_nested():
         db.session.add(flow_define)
     db.session.commit()
-    
+
     # setting flow action(start, item register, oa policy, item link, identifier grant, approval, end)
     flow_actions = list()
     # start
@@ -1455,7 +1461,7 @@ def workflow_open_restricted(app, db, item_type, action_data, users):
         db.session.add(flow_define1)
         db.session.add(flow_define2)
     db.session.commit()
-    
+
     # setting flow action(start, item register, oa policy, item link, identifier grant, approval, end)
     flow_actions1 = list()
     flow_actions2 = list()
@@ -2100,7 +2106,7 @@ def db_register_fullaction(app, db, db_records, users, action_data, item_type):
         action = action_data[0][flow_action.action_id-1]
         set_activityaction(two_app_del_activity, action, flow_action)
         set_activityaction(two_app_del_activity2, action, flow_action)
-    
+
 
     # flow_action_role = FlowActionRole(
     #     flow_action_id=flow_actions[5].id,
@@ -2375,24 +2381,24 @@ def db_register_usage_application(app, db, db_records, users, action_data, item_
         db.session.add_all([workflow_workflow1, workflow_workflow3, workflow_workflow4])
     db.session.commit()
     workflows.update({
-		"flow_define1"       : flow_define1      
-		# ,"flow_define2"       : flow_define2      
-		,"flow_define3"       : flow_define3      
-		,"flow_define4"       : flow_define4      
-		,"flow_action1_1"     : flow_action1_1    
-		,"flow_action1_2"     : flow_action1_2    
-		,"flow_action1_3"     : flow_action1_3    
-		# ,"flow_action2_1"     : flow_action2_1    
-		# ,"flow_action2_2"     : flow_action2_2    
-		,"flow_action3_1"     : flow_action3_1    
-		,"flow_action3_2"     : flow_action3_2    
-		,"flow_action3_3"     : flow_action3_3    
-		,"flow_action3_4"     : flow_action3_4    
-		,"flow_action4_1"     : flow_action4_1    
-		,"flow_action4_2"     : flow_action4_2    
-		,"flow_action4_3"     : flow_action4_3    
-		,"flow_action4_4"     : flow_action4_4    
-		,"flow_action4_5"     : flow_action4_5    
+		"flow_define1"       : flow_define1
+		# ,"flow_define2"       : flow_define2
+		,"flow_define3"       : flow_define3
+		,"flow_define4"       : flow_define4
+		,"flow_action1_1"     : flow_action1_1
+		,"flow_action1_2"     : flow_action1_2
+		,"flow_action1_3"     : flow_action1_3
+		# ,"flow_action2_1"     : flow_action2_1
+		# ,"flow_action2_2"     : flow_action2_2
+		,"flow_action3_1"     : flow_action3_1
+		,"flow_action3_2"     : flow_action3_2
+		,"flow_action3_3"     : flow_action3_3
+		,"flow_action3_4"     : flow_action3_4
+		,"flow_action4_1"     : flow_action4_1
+		,"flow_action4_2"     : flow_action4_2
+		,"flow_action4_3"     : flow_action4_3
+		,"flow_action4_4"     : flow_action4_4
+		,"flow_action4_5"     : flow_action4_5
 		,"workflow_workflow1" : workflow_workflow1
 		# ,"workflow_workflow2" : workflow_workflow2
 		,"workflow_workflow3" : workflow_workflow3
@@ -2403,7 +2409,7 @@ def db_register_usage_application(app, db, db_records, users, action_data, item_
     activity1 = Activity(activity_id='A-00000001-20001'
                         ,workflow_id=workflow_workflow1.id
                         , flow_id=flow_define1.id,
-                    action_id=3, 
+                    action_id=3,
                     item_id=db_records[2][2].id,
                     activity_login_user=1,
                     action_status = 'M',
@@ -2897,7 +2903,7 @@ def db_guestactivity(app, db, db_register):
     activity_id2 = db_register['activities'][0].activity_id
     file_name = "Test_file"
     guest_mail = "user@test.com"
-    
+
     token1 = generate_guest_activity_token_value(activity_id1, file_name, datetime.utcnow(), guest_mail)
     record1 = GuestActivity(
         user_mail=guest_mail,

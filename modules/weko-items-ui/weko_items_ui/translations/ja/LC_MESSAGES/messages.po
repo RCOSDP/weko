@@ -228,11 +228,6 @@ msgstr "parmalinkが不正です"
 msgid "Invalid achievement id"
 msgstr "業績IDが不正です"
 
-#: weko_items_ui/views.py:371
-#, fuzzy
-msgid "Invalid request"
-msgstr "無効なリクエスト"
-
 #: weko_items_ui/views.py:661
 msgid "Invalid Request"
 msgstr "無効なリクエスト"

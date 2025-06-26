@@ -108,7 +108,7 @@ from weko_deposit.config import (
 from weko_index_tree.config import (
     WEKO_INDEX_TREE_REST_ENDPOINTS as _WEKO_INDEX_TREE_REST_ENDPOINTS,
 )
-from invenio_accounts.testutils import login_user_via_session
+from weko_logging.audit import WekoLoggingUserActivity
 
 from tests.helpers import json_data, create_record
 

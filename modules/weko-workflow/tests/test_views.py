@@ -1121,7 +1121,6 @@ def test_next_action_acl_guestlogin(guest, client, db_register_fullaction):
 ])
 def test_next_action(client, db, users, db_register_fullaction, db_records, users_index, status_code, mocker,logging_client):
     current_app.config.update(
-        WEKO_RECORDS_REFERENCE_SUPPLEMENT=['isSupplementTo','isSupplementedBy'],
         WEKO_NOTIFICATIONS=False
         )
     def update_activity_order(activity_id, action_id, action_order, item_id=None, extra_info={}, temp_data='{ }'):
@@ -2246,7 +2245,7 @@ def test_next_action(client, db, users, db_register_fullaction, db_records, user
     data = response_data(res)
     assert res.status_code == 200
 
-    ###### delete flow 
+    ###### delete flow
     ## no approval
     update_activity_order("A-00000001-10020",1,1,item_id8)
     url = url_for("weko_workflow.next_action",

@@ -42,7 +42,6 @@ from weko_items_ui.utils import (
 from weko_logging.activity_logger import UserActivityLogger
 from weko_notifications.utils import notify_item_imported, notify_item_deleted
 from weko_records_ui.utils import get_record_permalink
-from weko_redis.redis import RedisConnection
 from weko_search_ui.utils import (
     import_items_to_system, import_items_to_activity,
     delete_items_with_activity
@@ -299,6 +298,10 @@ def post_service_document():
         required_scopes = set([activity_scope.id])
         token_scopes = set(request.oauth.access_token.scopes)
         if not required_scopes.issubset(token_scopes):
+            current_app.logger.error(
+                "Required scopes for activity are not satisfied: {}"
+                .format(required_scopes - token_scopes)
+            )
             abort(403)
 
     if check_result.get("error"):
@@ -599,6 +602,10 @@ def put_object(recid):
         required_scopes = set([activity_scope.id])
         token_scopes = set(request.oauth.access_token.scopes)
         if not required_scopes.issubset(token_scopes):
+            current_app.logger.error(
+                "Required scopes for activity are not satisfied: {}"
+                .format(required_scopes - token_scopes)
+            )
             abort(403)
 
     if check_result.get("error"):
@@ -992,6 +999,10 @@ def delete_object(recid):
         required_scopes = set([activity_scope.id])
         token_scopes = set(request.oauth.access_token.scopes)
         if not required_scopes.issubset(token_scopes):
+            current_app.logger.error(
+                "Required scopes for activity are not satisfied: {}"
+                .format(required_scopes - token_scopes)
+            )
             abort(403)
 
     owner = -1
