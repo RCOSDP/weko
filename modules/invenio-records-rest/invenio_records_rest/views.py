@@ -469,6 +469,8 @@ def redirect_to_search(page, size):
     if size:
         url += "&size=" + str(size)
     get_args = request.args.to_dict()
+    if get_args.get('format') != 'html':
+        get_args['format'] = 'html'
     for key, param in get_args.items():
         if key == "page_no" or key == "list_view_num" \
             or key == "log_term" or key == "lang":
@@ -584,16 +586,7 @@ class RecordsListResource(ContentNegotiatedMethodView):
                                   type=int)
         size = RecordsListResource.adjust_list_view_num(size)
         formats = request.values.getlist('format')
-        selected_format = None
-        if formats:
-            if 'html' in formats:
-                selected_format = 'html'
-            else:
-                selected_format = formats[0]
-        else:
-            selected_format = None
-
-        if (not selected_format or selected_format == "html") and request.values.get('q') is None:
+        if not formats or 'html' in formats:
             return redirect_to_search(page, size)
 
         # if page * size >= self.max_result_window:
