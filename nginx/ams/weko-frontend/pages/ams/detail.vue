@@ -248,8 +248,6 @@ async function getDetail(number: string) {
             createdDate = obj[appConf.roCrate.root.createDate][0];
           }
         }
-        // ログイン状況を取得する
-        isLogin.value = !!sessionStorage.getItem('login:state');
 
         // プロジェクトIDの登録があるかどうか確認する
         // TODO: RoCrateキーは暫定のため、整理後再度指定要
