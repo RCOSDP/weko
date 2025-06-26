@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: invenio-oauth2server 1.0.0\n"
 "Report-Msgid-Bugs-To: info@inveniosoftware.org\n"
-"POT-Creation-Date: 2025-06-20 16:30+0900\n"
+"POT-Creation-Date: 2025-06-26 13:44+0900\n"
 "PO-Revision-Date: 2025-05-07 18:18+0900\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ja\n"
@@ -112,36 +112,41 @@ msgstr ""
 
 #: invenio_oauth2server/templates/invenio_oauth2server/authorize.html:18
 #: invenio_oauth2server/templates/invenio_oauth2server/authorize.html:19
-#: invenio_oauth2server/templates/invenio_oauth2server/authorize.html:58
+#: invenio_oauth2server/templates/invenio_oauth2server/authorize.html:67
 #: invenio_oauth2server/views/server.py:70
 msgid "Authorize application"
-msgstr ""
+msgstr "アプリの使用を承諾する"
 
 #: invenio_oauth2server/templates/invenio_oauth2server/authorize.html:20
-#, python-format
+#, fuzzy, python-format
 msgid ""
 "Application '%(client_name)s' by '%(client_user)s' wants permission to "
-"access your '%(current_user)s' account."
-msgstr ""
+"access your\n"
+"        '%(current_user)s' account."
+msgstr "「%(client_user)s」による「%(client_name)s」アプリケーションがあなたのアカウントへのアクセス許可を求めています。"
 
-#: invenio_oauth2server/templates/invenio_oauth2server/authorize.html:27
+#: invenio_oauth2server/templates/invenio_oauth2server/authorize.html:29
 #: invenio_oauth2server/templates/invenio_oauth2server/settings/token_permission_view.html:29
 msgid "Review permissions"
-msgstr ""
+msgstr "権限を確認"
 
 #: invenio_oauth2server/templates/invenio_oauth2server/authorize.html:43
+msgid "No permissions granted."
+msgstr "権限が付与されていません。"
+
+#: invenio_oauth2server/templates/invenio_oauth2server/authorize.html:50
 #: invenio_oauth2server/templates/invenio_oauth2server/settings/token_permission_view.html:43
 msgid "Application"
-msgstr ""
+msgstr "アプリケーション"
 
-#: invenio_oauth2server/templates/invenio_oauth2server/authorize.html:46
+#: invenio_oauth2server/templates/invenio_oauth2server/authorize.html:53
 #: invenio_oauth2server/templates/invenio_oauth2server/settings/token_permission_view.html:46
 msgid "Visit application website"
-msgstr ""
+msgstr "アプリケーションのウェブサイト閲覧"
 
-#: invenio_oauth2server/templates/invenio_oauth2server/authorize.html:59
+#: invenio_oauth2server/templates/invenio_oauth2server/authorize.html:69
 msgid "Reject"
-msgstr ""
+msgstr "拒否"
 
 #: invenio_oauth2server/templates/invenio_oauth2server/errors.html:18
 msgid "Invalid authorization request"

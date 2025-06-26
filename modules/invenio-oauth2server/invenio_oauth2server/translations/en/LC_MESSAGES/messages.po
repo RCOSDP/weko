@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: invenio-oauth2server 1.0.0\n"
 "Report-Msgid-Bugs-To: info@inveniosoftware.org\n"
-"POT-Creation-Date: 2025-06-20 16:30+0900\n"
+"POT-Creation-Date: 2025-06-26 13:44+0900\n"
 "PO-Revision-Date: 2025-05-07 18:18+0900\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -112,7 +112,7 @@ msgstr ""
 
 #: invenio_oauth2server/templates/invenio_oauth2server/authorize.html:18
 #: invenio_oauth2server/templates/invenio_oauth2server/authorize.html:19
-#: invenio_oauth2server/templates/invenio_oauth2server/authorize.html:58
+#: invenio_oauth2server/templates/invenio_oauth2server/authorize.html:67
 #: invenio_oauth2server/views/server.py:70
 msgid "Authorize application"
 msgstr ""
@@ -121,25 +121,30 @@ msgstr ""
 #, python-format
 msgid ""
 "Application '%(client_name)s' by '%(client_user)s' wants permission to "
-"access your '%(current_user)s' account."
+"access your\n"
+"        '%(current_user)s' account."
 msgstr ""
 
-#: invenio_oauth2server/templates/invenio_oauth2server/authorize.html:27
+#: invenio_oauth2server/templates/invenio_oauth2server/authorize.html:29
 #: invenio_oauth2server/templates/invenio_oauth2server/settings/token_permission_view.html:29
 msgid "Review permissions"
 msgstr ""
 
 #: invenio_oauth2server/templates/invenio_oauth2server/authorize.html:43
+msgid "No permissions granted."
+msgstr ""
+
+#: invenio_oauth2server/templates/invenio_oauth2server/authorize.html:50
 #: invenio_oauth2server/templates/invenio_oauth2server/settings/token_permission_view.html:43
 msgid "Application"
 msgstr ""
 
-#: invenio_oauth2server/templates/invenio_oauth2server/authorize.html:46
+#: invenio_oauth2server/templates/invenio_oauth2server/authorize.html:53
 #: invenio_oauth2server/templates/invenio_oauth2server/settings/token_permission_view.html:46
 msgid "Visit application website"
 msgstr ""
 
-#: invenio_oauth2server/templates/invenio_oauth2server/authorize.html:59
+#: invenio_oauth2server/templates/invenio_oauth2server/authorize.html:69
 msgid "Reject"
 msgstr ""
 
