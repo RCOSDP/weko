@@ -72,7 +72,7 @@
             </div>
             <div class="bg-miby-bg-gray py-7 text-center flex justify-center items-center">
               <button @click="openDataSet">
-                <img src="/img/logo/gakunin_logo.svg" alt="Send" />
+                <img :src="`${appConf.amsImage ?? '/img'}/logo/gakunin_logo.svg`" alt="Send" />
               </button>
             </div>
           </div>
