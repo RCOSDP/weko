@@ -177,13 +177,13 @@ const appConf = useAppConfig();
  */
 async function login() {
   let statusCode = 0;
-    // 先にログアウト
-    await $fetch(appConf.wekoApi + '/logout', {
-      timeout: useRuntimeConfig().public.apiTimeout,
-      method: 'POST',
-    });
-    // ログイン
-    await $fetch(appConf.wekoApi + '/login', {
+  // 先にログアウト
+  await $fetch(appConf.wekoApi + '/logout', {
+    timeout: useRuntimeConfig().public.apiTimeout,
+    method: 'POST',
+  });
+  // ログイン
+  await $fetch(appConf.wekoApi + '/login', {
     timeout: useRuntimeConfig().public.apiTimeout,
     method: 'POST',
     body: {
