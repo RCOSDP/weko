@@ -341,9 +341,3 @@ msgstr ""
 msgid "Edit"
 msgstr ""
 
-#~ msgid ""
-#~ "The service that redirected your here"
-#~ " made an invalid authorization request "
-#~ "(error code: %(x_error)s)."
-#~ msgstr ""
-
