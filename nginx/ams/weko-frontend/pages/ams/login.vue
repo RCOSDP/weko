@@ -325,7 +325,7 @@ function shibbolethLoginError(route: any) {
       } else if (error === 'FAILED bind_relation_info!') {
         // 関連情報作成に失敗
         alertCode.value = 'E_LOGIN_0010';
-      } else if (error === 'Can't get relation Weko User.') {
+      } else if (error === "Can't get relation Weko User.") {
         // WEKOのユーザー関連情報が​取得出来ない
         alertCode.value = 'E_LOGIN_0011';
       } else {
