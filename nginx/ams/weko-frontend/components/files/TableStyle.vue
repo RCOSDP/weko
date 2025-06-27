@@ -356,11 +356,11 @@ function download() {
     },
     onResponseError({ response }) {
       statusCode = response.status;
-      emits('error', response.status, 'message.error.download');
+      emits('error', 'E_TABLE_STYLE_0001', 'message.error.download');
     }
   }).catch(() => {
     if (statusCode === 0) {
-      emits('error', 0, 'message.error.fetch');
+      emits('error', 'E_TABLE_STYLE_0002', 'message.error.fetch');
     }
   });
 }
@@ -393,11 +393,11 @@ function preview() {
     },
     onResponseError({ response }) {
       statusCode = response.status;
-      emits('error', response.status, 'message.error.preview');
+      emits('error', 'E_TABLE_STYLE_0003', 'message.error.preview');
     }
   }).catch(() => {
     if (statusCode === 0) {
-      emits('error', 0, 'message.error.fetch');
+      emits('error', 'E_TABLE_STYLE_0004', 'message.error.fetch');
     }
   });
 }

@@ -204,15 +204,13 @@ const requestMail = ref();
 const visibleAlert = ref(false);
 const alertType = ref('info');
 const alertMessage = ref('');
-const alertCode = ref(0);
+const alertCode = ref('');
 const alertPosition = ref('');
 const alertWidth = ref('');
 const isLoading = ref(true);
 const isLogin = !!sessionStorage.getItem('login:state');
 const checkMailAddress = ref(false);
 const checkProjectId = ref(false);
-const transitionSecond = appConf.transitionTime / 1000;
-const loginPage = window.location.origin + '/login?source=detail';
 let oauthError = ref(false);
 
 /* ///////////////////////////////////
@@ -259,29 +257,31 @@ async function getDetail(number: string) {
       }
     },
     onResponseError({ response }) {
-      alertCode.value = 0;
+      alertCode.value = '';
       statusCode = response.status;
       if (statusCode === 401 || statusCode === 403) {
         // 認証エラー
         if (isLogin) {
+          alertCode.value = 'E_DETAIL_0001';
           alertMessage.value = 'message.error.auth';
         } else {
+          alertCode.value = 'E_DETAIL_0002';
           oauthErrorRedirect();
         }
       } else if (statusCode >= 500 && statusCode < 600) {
         // サーバーエラー
         alertMessage.value = 'message.error.server';
-        alertCode.value = statusCode;
+        alertCode.value = 'E_DETAIL_0003';
       } else {
         // リクエストエラー
         alertMessage.value = 'message.error.getItemDetail';
-        alertCode.value = statusCode;
+        alertCode.value = 'E_DETAIL_0004';
       }
       alertType.value = 'error';
       alertPosition.value = '';
       alertWidth.value = 'w-full';
       visibleAlert.value = true;
-    }
+    },
   }).catch(() => {
     if (statusCode === 0) {
       // fetchエラー
@@ -289,6 +289,7 @@ async function getDetail(number: string) {
       alertType.value = 'error';
       alertPosition.value = '';
       alertWidth.value = 'w-full';
+      alertCode.value = 'E_DETAIL_0005';
       visibleAlert.value = true;
     }
   });
@@ -338,7 +339,7 @@ async function search(searchPage: string) {
       }
     },
     onResponseError({ response }) {
-      alertCode.value = 0;
+      alertCode.value = '';
       statusCode = response.status;
       switcherFlag.value = false;
       searchResult = [];
@@ -346,23 +347,25 @@ async function search(searchPage: string) {
         // 認証エラー
         if (isLogin) {
           alertMessage.value = 'message.error.auth';
+          alertCode.value = 'E_DETAIL_0006';
         } else {
+          alertCode.value = 'E_DETAIL_0007';
           oauthErrorRedirect();
         }
       } else if (statusCode >= 500 && statusCode < 600) {
         // サーバーエラー
         alertMessage.value = 'message.error.server';
-        alertCode.value = statusCode;
+        alertCode.value = 'E_DETAIL_0008';
       } else {
         // リクエストエラー
         alertMessage.value = 'message.error.search';
-        alertCode.value = statusCode;
+        alertCode.value = 'E_DETAIL_0009';
       }
       alertType.value = 'error';
       alertPosition.value = '';
       alertWidth.value = 'w-full';
       visibleAlert.value = true;
-    }
+    },
   }).catch(() => {
     if (statusCode === 0) {
       // fetchエラー
@@ -370,6 +373,7 @@ async function search(searchPage: string) {
       alertType.value = 'error';
       alertPosition.value = '';
       alertWidth.value = 'w-full';
+      alertCode.value = 'E_DETAIL_0010';
       visibleAlert.value = true;
     }
   });
@@ -402,29 +406,31 @@ async function getParentIndex() {
       }
     },
     onResponseError({ response }) {
-      alertCode.value = 0;
+      alertCode.value = '';
       statusCode = response.status;
       if (oauthError.value || statusCode === 401 || statusCode === 403) {
         // 認証エラー
         if (isLogin) {
           alertMessage.value = 'message.error.auth';
+          alertCode.value = 'E_DETAIL_0011';
         } else {
+          alertCode.value = 'E_DETAIL_0012';
           oauthErrorRedirect();
         }
       } else if (statusCode >= 500 && statusCode < 600) {
         // サーバーエラー
         alertMessage.value = 'message.error.server';
-        alertCode.value = statusCode;
+        alertCode.value = 'E_DETAIL_0013';
       } else {
         // リクエストエラー
         alertMessage.value = 'message.error.getIndex';
-        alertCode.value = statusCode;
+        alertCode.value = 'E_DETAIL_0014';
       }
       alertType.value = 'error';
       alertPosition.value = '';
       alertWidth.value = 'w-full';
       visibleAlert.value = true;
-    }
+    },
   }).catch(() => {
     if (statusCode === 0) {
       // fetchエラー
@@ -432,6 +438,7 @@ async function getParentIndex() {
       alertType.value = 'error';
       alertPosition.value = '';
       alertWidth.value = 'w-full';
+      alertCode.value = 'E_DETAIL_0015';
       visibleAlert.value = true;
     }
   });
@@ -698,7 +705,7 @@ function openLoading(type: boolean) {
  * @param status ステータスコード
  * @param message エラーメッセージ
  */
-function setError(status = 0, message: string) {
+function setError(status = '', message: string) {
   alertMessage.value = message;
   alertCode.value = status;
   alertType.value = 'error';
@@ -722,7 +729,7 @@ function checkSendingResponse(val: boolean) {
   } else {
     alertType.value = 'error';
     alertMessage.value = 'message.sendingFailed';
-    alertCode.value = 0;
+    alertCode.value = 'E_DETAIL_0016';
     alertPosition.value = 'toast-top pt-20';
     alertWidth.value = 'w-auto';
   }
@@ -770,7 +777,7 @@ try {
   }
   await getParentIndex();
 } catch (error) {
-  alertCode.value = 0;
+  alertCode.value = 'E_DETAIL_0017';
   alertMessage.value = 'message.error.error';
   alertType.value = 'error';
   alertPosition.value = '';

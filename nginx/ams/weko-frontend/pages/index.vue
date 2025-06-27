@@ -66,7 +66,7 @@ const creater = ref();
 const visibleAlert = ref(false);
 const alertType = ref('info');
 const alertMessage = ref('');
-const alertCode = ref(0);
+const alertCode = ref('');
 const isRender = ref(false);
 const appConf = useAppConfig();
 
@@ -174,33 +174,36 @@ try {
       }
     },
     onResponseError({ response }) {
-      alertCode.value = 0;
+      alertCode.value = '';
       statusCode = response.status;
       if (statusCode === 401) {
         // 認証エラー
         alertMessage.value = 'message.error.auth';
+        alertCode.value = 'E_INDEX_0001';
       } else if (statusCode >= 500 && statusCode < 600) {
         // サーバーエラー
         alertMessage.value = 'message.error.server';
-        alertCode.value = statusCode;
+        alertCode.value = 'E_INDEX_0002';
       } else {
         // リクエストエラー
         alertMessage.value = 'message.error.getLatestItem';
-        alertCode.value = statusCode;
+        alertCode.value = 'E_INDEX_0003';
       }
       alertType.value = 'error';
       visibleAlert.value = true;
-    }
+    },
   }).catch(() => {
     if (statusCode === 0) {
       // fetchエラー
       alertMessage.value = 'message.error.fetch';
+      alertCode.value = 'E_INDEX_0004';
       alertType.value = 'error';
       visibleAlert.value = true;
     }
   });
 } catch (error) {
-  alertCode.value = 0;
+  // 例外エラー
+  alertCode.value = 'E_INDEX_0005';
   alertMessage.value = 'message.error.error';
   alertType.value = 'error';
   visibleAlert.value = true;

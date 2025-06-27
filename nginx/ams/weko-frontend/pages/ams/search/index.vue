@@ -281,7 +281,7 @@ const creater = ref();
 const visibleAlert = ref(false);
 const alertType = ref('info');
 const alertMessage = ref('');
-const alertCode = ref(0);
+const alertCode = ref('');
 let filterColumnList = JSON.parse(JSON.stringify(FilterColumn));
 const filterList = ref<any[]>([]);
 let filterNameDict = reactive({});
@@ -362,28 +362,30 @@ async function search() {
       }
     },
     onResponseError({ response }) {
-      alertCode.value = 0;
+      alertCode.value = '';
       statusCode = response.status;
       if (statusCode === 401) {
         // 認証エラー
         alertMessage.value = 'message.error.auth';
+        alertCode.value = 'E_SEARCH_INDEX_0001';
       } else if (statusCode >= 500 && statusCode < 600) {
         // サーバーエラー
         alertMessage.value = 'message.error.server';
-        alertCode.value = statusCode;
+        alertCode.value = 'E_SEARCH_INDEX_0002';
       } else {
         // リクエストエラー
         alertMessage.value = 'message.error.search';
-        alertCode.value = statusCode;
+        alertCode.value = 'E_SEARCH_INDEX_0003';
       }
       alertType.value = 'error';
       visibleAlert.value = true;
-    }
+    },
   }).catch(() => {
     if (statusCode === 0) {
       // fetchエラー
       alertMessage.value = 'message.error.fetch';
       alertType.value = 'error';
+      alertCode.value = 'E_SEARCH_INDEX_0004';
       visibleAlert.value = true;
     }
   });
@@ -554,28 +556,30 @@ async function downloadResultList() {
       }
     },
     onResponseError({ response }) {
-      alertCode.value = 0;
+      alertCode.value = '';
       statusCode = response.status;
       if (statusCode === 401) {
         // 認証エラー
         alertMessage.value = 'message.error.auth';
+        alertCode.value = 'E_SEARCH_INDEX_0005';
       } else if (statusCode >= 500 && statusCode < 600) {
         // サーバーエラー
         alertMessage.value = 'message.error.server';
-        alertCode.value = statusCode;
+        alertCode.value = 'E_SEARCH_INDEX_0006';
       } else {
         // リクエストエラー
         alertMessage.value = 'message.error.downloadResult';
-        alertCode.value = statusCode;
+        alertCode.value = 'E_SEARCH_INDEX_0007';
       }
       alertType.value = 'error';
       visibleAlert.value = true;
-    }
+    },
   }).catch(() => {
     if (statusCode === 0) {
       // fetchエラー
       alertMessage.value = 'message.error.fetch';
       alertType.value = 'error';
+      alertCode.value = 'E_SEARCH_INDEX_0008';
       visibleAlert.value = true;
     }
   });
@@ -842,7 +846,7 @@ try {
   checkExportURL();
   await search();
 } catch (error) {
-  alertCode.value = 0;
+  alertCode.value = 'E_SEARCH_INDEX_0009';
   alertMessage.value = 'message.error.error';
   alertType.value = 'error';
   visibleAlert.value = true;

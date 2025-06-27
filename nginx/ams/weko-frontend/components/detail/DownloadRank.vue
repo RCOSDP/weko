@@ -161,11 +161,11 @@ function download(filename: string) {
     },
     onResponseError({ response }) {
       statusCode = response.status;
-      emits('error', response.status, 'message.error.download');
+      emits('error', 'E_DOWNLOAD_RANK_0001', 'message.error.download');
     }
   }).catch(() => {
     if (statusCode === 0) {
-      emits('error', 0, 'message.error.fetch');
+      emits('error', 'E_DOWNLOAD_RANK_0002', 'message.error.fetch');
     }
   });
 }

@@ -245,7 +245,7 @@ const selectedFiles = ref<string[]>([]);
 const visibleAlert = ref(false);
 const alertType = ref('info');
 const alertMessage = ref('');
-const alertCode = ref(0);
+const alertCode = ref('');
 let divideFileList: any[] = [];
 let createdDate = '';
 let isAllCheck = false;
@@ -303,32 +303,35 @@ async function getFiles(number: string) {
       }
     },
     onResponseError({ response }) {
-      alertCode.value = 0;
+      alertCode.value = '';
       statusCode = response.status;
       if (statusCode === 401) {
         // 認証エラー
         alertMessage.value = 'message.error.auth';
+        alertCode.value = 'E_FILES_0001';
       } else if (statusCode >= 500 && statusCode < 600) {
         // サーバーエラー
         alertMessage.value = 'message.error.server';
-        alertCode.value = statusCode;
+        alertCode.value = 'E_FILES_0002';
       } else {
         // リクエストエラー
         alertMessage.value = 'message.error.getItemDetail';
-        alertCode.value = statusCode;
+        alertCode.value = 'E_FILES_0003';
       }
       alertType.value = 'error';
       visibleAlert.value = true;
-    }
+    },
   }).catch(() => {
     if (statusCode === 0) {
       // fetchエラー
       alertMessage.value = 'message.error.fetch';
+      alertCode.value = 'E_FILES_0004';
       alertType.value = 'error';
       visibleAlert.value = true;
     }
   });
 }
+
 
 /**
  * 一括ファイルダウンロード
@@ -357,27 +360,30 @@ function downloadFilesAll() {
         }
       },
       onResponseError({ response }) {
-        alertCode.value = 0;
-        statusCode = response.status;
-        if (statusCode === 401) {
-          // 認証エラー
-          alertMessage.value = 'message.error.auth';
-        } else if (statusCode >= 500 && statusCode < 600) {
-          // サーバーエラー
-          alertMessage.value = 'message.error.server';
-          alertCode.value = statusCode;
-        } else {
-          // リクエストエラー
-          alertMessage.value = 'message.error.downloadAll';
-          alertCode.value = statusCode;
-        }
-        alertType.value = 'error';
-        visibleAlert.value = true;
-      }
-    }).catch(() => {
+          alertCode.value = '';
+          statusCode = response.status;
+          if (statusCode === 401) {
+            // 認証エラー
+            alertCode.value = 'E_FILES_0005';
+            alertMessage.value = 'message.error.auth';
+          } else if (statusCode >= 500 && statusCode < 600) {
+            // サーバーエラー
+            alertMessage.value = 'message.error.server';
+            alertCode.value = 'E_FILES_0006';
+          } else {
+            // リクエストエラー
+            alertMessage.value = 'message.error.downloadAll';
+            alertCode.value = 'E_FILES_0007';
+          }
+          alertType.value = 'error';
+          visibleAlert.value = true;
+        },
+      },
+    ).catch(() => {
       if (statusCode === 0) {
         // fetchエラー
         alertMessage.value = 'message.error.fetch';
+        alertCode.value = 'E_FILES_0008';
         alertType.value = 'error';
         visibleAlert.value = true;
       }
@@ -420,27 +426,30 @@ function downloadFilesSelected(filesList: string[]) {
       }
     },
     onResponseError({ response }) {
-      alertCode.value = 0;
-      statusCode = response.status;
-      if (statusCode === 401) {
-        // 認証エラー
-        alertMessage.value = 'message.error.auth';
-      } else if (statusCode >= 500 && statusCode < 600) {
-        // サーバーエラー
-        alertMessage.value = 'message.error.server';
-        alertCode.value = statusCode;
-      } else {
-        // リクエストエラー
-        alertMessage.value = 'message.error.downloadSelected';
-        alertCode.value = statusCode;
-      }
-      alertType.value = 'error';
-      visibleAlert.value = true;
-    }
-  }).catch(() => {
+        alertCode.value = '';
+        statusCode = response.status;
+        if (statusCode === 401) {
+          // 認証エラー
+          alertMessage.value = 'message.error.auth';
+          alertCode.value = 'E_FILES_0009';
+        } else if (statusCode >= 500 && statusCode < 600) {
+          // サーバーエラー
+          alertMessage.value = 'message.error.server';
+          alertCode.value = 'E_FILES_0010';
+        } else {
+          // リクエストエラー
+          alertMessage.value = 'message.error.downloadSelected';
+          alertCode.value = 'E_FILES_0011';
+        }
+        alertType.value = 'error';
+        visibleAlert.value = true;
+      },
+    },
+  ).catch(() => {
     if (statusCode === 0) {
       // fetchエラー
       alertMessage.value = 'message.error.fetch';
+      alertCode.value = 'E_FILES_0012';
       alertType.value = 'error';
       visibleAlert.value = true;
     }
@@ -616,7 +625,7 @@ function setPage(value: string) {
  * @param status ステータスコード
  * @param message エラーメッセージ
  */
-function setError(status = 0, message: string) {
+function setError(status = '', message: string) {
   alertMessage.value = message;
   alertCode.value = status;
   alertType.value = 'error';
@@ -751,7 +760,7 @@ try {
   divideList(filteredList.value);
   setSpanList();
 } catch (error) {
-  alertCode.value = 0;
+  alertCode.value = 'E_FILES_00013';
   alertMessage.value = 'message.error.error';
   alertType.value = 'error';
   visibleAlert.value = true;

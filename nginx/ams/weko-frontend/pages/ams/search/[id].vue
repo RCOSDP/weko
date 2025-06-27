@@ -160,7 +160,7 @@ const creater = ref();
 const visibleAlert = ref(false);
 const alertType = ref('info');
 const alertMessage = ref('');
-const alertCode = ref(0);
+const alertCode = ref('');
 const appConf = useAppConfig();
 
 /* ///////////////////////////////////
@@ -203,27 +203,29 @@ async function search() {
       }
     },
     onResponseError({ response }) {
-      alertCode.value = 0;
+      alertCode.value = '';
       statusCode = response.status;
       if (statusCode === 401) {
         // 認証エラー
         alertMessage.value = 'message.error.auth';
+        alertCode.value = 'E_ID_0001';
       } else if (statusCode >= 500 && statusCode < 600) {
         // サーバーエラー
         alertMessage.value = 'message.error.server';
-        alertCode.value = statusCode;
+        alertCode.value = 'E_ID_0002';
       } else {
         // リクエストエラー
         alertMessage.value = 'message.error.search';
-        alertCode.value = statusCode;
+        alertCode.value = 'E_ID_0003';
       }
       alertType.value = 'error';
       visibleAlert.value = true;
-    }
+    },
   }).catch(() => {
     if (statusCode === 0) {
       // fetchエラー
       alertMessage.value = 'message.error.fetch';
+      alertCode.value = 'E_ID_0004';
       alertType.value = 'error';
       visibleAlert.value = true;
     }
@@ -257,27 +259,30 @@ async function getParentIndex() {
       }
     },
     onResponseError({ response }) {
-      alertCode.value = 0;
-      statusCode = response.status;
-      if (statusCode === 401) {
-        // 認証エラー
-        alertMessage.value = 'message.error.auth';
-      } else if (statusCode >= 500 && statusCode < 600) {
-        // サーバーエラー
-        alertMessage.value = 'message.error.server';
-        alertCode.value = statusCode;
-      } else {
-        // リクエストエラー
-        alertMessage.value = 'message.error.getIndex';
-        alertCode.value = statusCode;
-      }
-      alertType.value = 'error';
-      visibleAlert.value = true;
-    }
-  }).catch(() => {
+        alertCode.value = '';
+        statusCode = response.status;
+        if (statusCode === 401) {
+          // 認証エラー
+          alertMessage.value = 'message.error.auth';
+          alertCode.value = 'E_ID_0005';
+        } else if (statusCode >= 500 && statusCode < 600) {
+          // サーバーエラー
+          alertMessage.value = 'message.error.server';
+          alertCode.value = 'E_ID_0006';
+        } else {
+          // リクエストエラー
+          alertMessage.value = 'message.error.getIndex';
+          alertCode.value = 'E_ID_0007';
+        }
+        alertType.value = 'error';
+        visibleAlert.value = true;
+      },
+    },
+  ).catch(() => {
     if (statusCode === 0) {
       // fetchエラー
       alertMessage.value = 'message.error.fetch';
+      alertCode.value = 'E_ID_0008';
       alertType.value = 'error';
       visibleAlert.value = true;
     }
@@ -321,28 +326,30 @@ async function downloadResultList() {
       }
     },
     onResponseError({ response }) {
-      alertCode.value = 0;
+      alertCode.value = '';
       statusCode = response.status;
       if (statusCode === 401) {
         // 認証エラー
         alertMessage.value = 'message.error.auth';
+        alertCode.value = 'E_ID_0009';
       } else if (statusCode >= 500 && statusCode < 600) {
         // サーバーエラー
         alertMessage.value = 'message.error.server';
-        alertCode.value = statusCode;
+        alertCode.value = 'E_ID_0010';
       } else {
         // リクエストエラー
         alertMessage.value = 'message.error.downloadResult';
-        alertCode.value = statusCode;
+        alertCode.value = 'E_ID_0011';
       }
       alertType.value = 'error';
       visibleAlert.value = true;
-    }
+    },
   }).catch(() => {
     if (statusCode === 0) {
       // fetchエラー
       alertMessage.value = 'message.error.fetch';
       alertType.value = 'error';
+      alertCode.value = 'E_ID_0012';
       visibleAlert.value = true;
     }
   });
@@ -481,7 +488,7 @@ try {
   await search();
   await getParentIndex();
 } catch (error) {
-  alertCode.value = 0;
+  alertCode.value = 'E_ID_0013';
   alertMessage.value = 'message.error.error';
   alertType.value = 'error';
   visibleAlert.value = true;

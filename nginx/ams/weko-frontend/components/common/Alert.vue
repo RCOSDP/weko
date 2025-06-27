@@ -137,7 +137,7 @@ defineProps({
   },
   // エラーコード
   code: {
-    type: Number,
+    type: String,
     default: 0
   },
   // 表示位置(https://daisyui.com/components/toast/)

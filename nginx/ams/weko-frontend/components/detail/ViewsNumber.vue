@@ -95,14 +95,14 @@ function getItemStats(span: string) {
     onResponseError({ response }) {
       statusCode = response.status;
       if (statusCode === 500) {
-        emits('error', statusCode, 'message.error.error');
+        emits('error', 'E_VIEWS_NUMBER_0001', 'message.error.error');
       } else {
-        emits('error', statusCode, 'message.error.getItemViewsNumber');
+        emits('error', 'E_VIEWS_NUMBER_0002', 'message.error.getItemViewsNumber');
       }
     }
   }).catch(() => {
     if (statusCode === 0) {
-      emits('error', 0, 'message.error.fetch');
+      emits('error', 'E_VIEWS_NUMBER_0003', 'message.error.fetch');
     }
   });
 }

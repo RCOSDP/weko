@@ -172,7 +172,7 @@ const forgetPassFlag = ref(false);
 const visibleAlert = ref(false);
 const alertType = ref('info');
 const alertMessage = ref('');
-const alertCode = ref(0);
+const alertCode = ref('');
 const dirtyEmail = ref(false);
 const dirtyPassword = ref(false);
 const dirtyReset = ref(false);
@@ -187,13 +187,13 @@ const appConf = useAppConfig();
  */
 async function login() {
   let statusCode = 0;
-    // 先にログアウト
-    await $fetch(appConf.wekoApi + '/logout', {
-      timeout: useRuntimeConfig().public.apiTimeout,
-      method: 'POST',
-    });
-    // ログイン
-    await $fetch(appConf.wekoApi + '/login', {
+  // 先にログアウト
+  await $fetch(appConf.wekoApi + '/logout', {
+    timeout: useRuntimeConfig().public.apiTimeout,
+    method: 'POST',
+  });
+  // ログイン
+  await $fetch(appConf.wekoApi + '/login', {
     timeout: useRuntimeConfig().public.apiTimeout,
     method: 'POST',
     body: {
@@ -213,7 +213,7 @@ async function login() {
       }
     },
     onResponseError({ response }) {
-      alertCode.value = 0;
+      alertCode.value = '';
       statusCode = response.status;
       if (statusCode === 400) {
         // ログイン済の場合、認可画面に遷移
@@ -229,19 +229,20 @@ async function login() {
       } else if (statusCode >= 500 && statusCode < 600) {
         // サーバーエラー
         alertMessage.value = 'message.error.server';
-        alertCode.value = statusCode;
+        alertCode.value = 'E_LOGIN_0001';
       } else {
         // リクエストエラー
         alertMessage.value = 'message.error.login';
-        alertCode.value = statusCode;
+        alertCode.value = 'E_LOGIN_0002';
       }
-      alertType.value = 'error';
-      visibleAlert.value = true;
-    }
+        alertType.value = 'error';
+        visibleAlert.value = true;
+    },
   }).catch(() => {
     if (statusCode === 0) {
       // fetchエラー
       alertMessage.value = 'message.error.fetch';
+      alertCode.value = 'E_LOGIN_0003';
       alertType.value = 'error';
       visibleAlert.value = true;
     }
@@ -294,18 +295,43 @@ function throughDblClick() {
 function shibbolethLoginError(route: any) {
   const error = route.query.error || '';
   if (error) {
-    if (error === "Login is blocked.") {
-      alertCode.value = 403;
+    if (error === 'Login is blocked.') {
+      // statusCode 403 Loginがブロックされている
       alertMessage.value = 'message.error.loginFailed';
+      alertCode.value = 'E_LOGIN_0004';
     } else if (error === 'There is no user information.') {
-      alertCode.value = 403;
+      // statusCode 403 ユーザ情報がない
       alertMessage.value = 'message.error.noUserInformation';
-    } else if (error === 'Server error has occurred. Please contact server administrator.') {
-      alertCode.value = 500;
+      alertCode.value = 'E_LOGIN_0005';
+    } else if (
+      error ===
+      'Server error has occurred. Please contact server administrator.'
+    ) {
+      // statusCode 500 サーバーエラー
       alertMessage.value = 'message.error.server';
+      alertCode.value = 'E_LOGIN_0006';
     } else {
-      alertCode.value = 400;
+      // statusCode 400
       alertMessage.value = 'message.error.loginFailed';
+      if (error === 'Missing SHIB_CACHE_PREFIX!') {
+        // Redisにcache_keyがない
+        alertCode.value = 'E_LOGIN_0007';
+      } else if (error === 'Missing Shib-Session-ID!') {
+        // Shibboleth-Session-IDが​取得出来ない
+        alertCode.value = 'E_LOGIN_0008';
+      } else if (error === 'Missing SHIB_ATTRs!') {
+        // shib_eppnが取得出来ない
+        alertCode.value = 'E_LOGIN_0009';
+      } else if (error === 'FAILED bind_relation_info!') {
+        // 関連情報作成に失敗
+        alertCode.value = 'E_LOGIN_0010';
+      } else if (error === 'Can't get relation Weko User.') {
+        // WEKOのユーザー関連情報が​取得出来ない
+        alertCode.value = 'E_LOGIN_0011';
+      } else {
+        // その他例外エラー
+        alertCode.value = 'E_LOGIN_0012';
+      }
     }
     alertType.value = 'error';
     visibleAlert.value = true;
@@ -394,7 +420,7 @@ onBeforeMount(() => {
   const route = useRoute();
   // アイテム詳細画面以外からのログインの場合、sessionStorage を削除
   if (route.query.source !== 'detail') {
-    sessionStorage.removeItem("item-url");
+    sessionStorage.removeItem('item-url');
   }
 
   shibbolethLoginError(route);
