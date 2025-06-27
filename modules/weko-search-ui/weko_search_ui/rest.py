@@ -594,6 +594,8 @@ class IndexSearchResourceAPI(ContentNegotiatedMethodView):
         try:
             # Language setting
             language = request.headers.get('Accept-Language')
+            if isinstance(language, str):
+                language = language.split(',')[0].split(';')[0].strip()
             if language:
                 get_locale().language = language
 
