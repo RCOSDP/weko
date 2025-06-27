@@ -246,7 +246,8 @@ async function getDetail(number: string) {
         }
 
         // プロジェクトURLの登録があるかどうか確認する
-        projectUrl = findProjectURL(itemDetail)[0] ?? '';
+        const urls = findProjectURL(itemDetail);
+        projectUrl = urls && urls[0] ? urls[0] : '';
 
         // リクエストメールアドレスがあるかどうか確認する
         // @ts-ignore
@@ -726,27 +727,32 @@ function scrollToTop() {
  * @returns プロジェクトURL
  */
 function findProjectURL(itemDetail: any) {
-  let foundProjectUrl = [];
+  let isProjectUrl = [];
+  let isVersionOf = false;
   if (Object.prototype.hasOwnProperty.call(itemDetail, 'rocrate')) {
     const graph = itemDetail.rocrate['@graph'];
-    let prevMatched = false;
     for (const obj of graph) {
       if (obj['@type'] === 'Dataset') {
         if (obj.additionalType === 'subsection') {
           if (obj['@id'] === 'プロジェクトURL/URL/URL/' && obj.text) {
-            foundProjectUrl = obj.text;
-            prevMatched = true;
-            continue;
+            isProjectUrl = obj.text;
           }
-          if (prevMatched && obj.text.includes('isVersionOf')) {
-            return [foundProjectUrl];
+          if (
+            obj['@id'] === 'プロジェクトURL/関連タイプ/関連タイプ/' &&
+            Array.isArray(obj.text) &&
+            obj.text[0] === 'isVersionOf'
+          ) {
+            isVersionOf = true;
           }
-          prevMatched = false;
         }
       }
     }
   }
-  return foundProjectUrl;
+  if (isVersionOf && isProjectUrl.length > 0) {
+    return isProjectUrl;
+  } else {
+    return [];
+  }
 }
 
 /* ///////////////////////////////////
