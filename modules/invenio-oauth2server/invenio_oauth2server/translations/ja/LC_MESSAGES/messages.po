@@ -118,7 +118,6 @@ msgid "Authorize application"
 msgstr "アプリの使用を承諾する"
 
 #: invenio_oauth2server/templates/invenio_oauth2server/authorize.html:20
-#, fuzzy, python-format
 msgid ""
 "Application '%(client_name)s' by '%(client_user)s' wants permission to "
 "access your\n"
