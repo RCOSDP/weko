@@ -219,7 +219,7 @@ const thumbnailName = Object.prototype.hasOwnProperty.call(itemInfo, appConf.roC
   ? itemInfo[appConf.roCrate.root.thumbnail][0]
   : '';
 const loading = ref(true);
-const thumbnailPath = ref('/img/noimage_thumbnail.jpg');
+const thumbnailPath = ref(appConf.amsImage + '/noimage_thumbnail.jpg');
 const local = String(localStorage.getItem('locale') ?? 'ja');
 
 /* ///////////////////////////////////
@@ -298,37 +298,37 @@ onMounted(() => {
     const field = itemInfo[appConf.roCrate.root.field][0];
     // 自然科学一般|Natural Science
     if (field.includes('自然科学一般') || /Natural\s?Science/.test(field)) {
-      thumbnailPath.value = '/img/naturalScience-sample.png';
+      thumbnailPath.value = appConf.amsImage + '/naturalScience-sample.png';
       // ライフサイエンス|Life Science
     } else if (field.includes('ライフサイエンス') || /Life\s?Science/.test(field)) {
-      thumbnailPath.value = '/img/lifeScience-sample.png';
+      thumbnailPath.value = appConf.amsImage + '/lifeScience-sample.png';
       // 情報通信|Informatics
     } else if (field.includes('情報通信') || field.includes('Informatics')) {
-      thumbnailPath.value = '/img/informatics-sample.png';
+      thumbnailPath.value = appConf.amsImage + '/informatics-sample.png';
       // 環境|Environmental science
     } else if (field.includes('環境') || /Environmental\s?science/.test(field)) {
-      thumbnailPath.value = '/img/environmental-sample.png';
+      thumbnailPath.value = appConf.amsImage + '/environmental-sample.png';
       // ナノテク・材料|Nanotechnology/Materials
     } else if (/ナノテク\s?・?\s?材料/.test(field) || /Nanotechnology\s?\/?\s?Materials/.test(field)) {
-      thumbnailPath.value = '/img/nanotech-sample.png';
+      thumbnailPath.value = appConf.amsImage + '/nanotech-sample.png';
       // エネルギー|Energy Engineering
     } else if (field.includes('エネルギー') || /Energy\s?Engineering/.test(field)) {
-      thumbnailPath.value = '/img/energy-sample.png';
+      thumbnailPath.value = appConf.amsImage + '/energy-sample.png';
       // ものづくり技術|Manufacturing Technology
     } else if (field.includes('ものづくり技術') || /Manufacturing\s?Technology/.test(field)) {
-      thumbnailPath.value = '/img/manufacturing-sample.png';
+      thumbnailPath.value = appConf.amsImage + '/manufacturing-sample.png';
       // 社会基盤|Social Infrastructure
     } else if (field.includes('社会基盤') || /Social\s?Infrastructure/.test(field)) {
-      thumbnailPath.value = '/img/social-sample.png';
+      thumbnailPath.value = appConf.amsImage + '/social-sample.png';
       // フロンティア|Frontier Technology
     } else if (field.includes('フロンティア') || /Frontier\s?Technology/.test(field)) {
-      thumbnailPath.value = '/img/frontier-sample.png';
+      thumbnailPath.value = appConf.amsImage + '/frontier-sample.png';
       // 人文・社会|Humanities & Social Sciences
     } else if (/人文\s?・?\s?社会/.test(field) || /Humanities\s?&?\s?Social\s?Sciences/.test(field)) {
-      thumbnailPath.value = '/img/humanities-sample.png';
+      thumbnailPath.value = appConf.amsImage + '/humanities-sample.png';
       // その他|Others
     } else if (field.includes('その他') || field.includes('Others')) {
-      thumbnailPath.value = '/img/others-sample.png';
+      thumbnailPath.value = appConf.amsImage + '/others-sample.png';
     }
   }
 });

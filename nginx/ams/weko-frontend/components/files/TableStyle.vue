@@ -218,15 +218,9 @@ const showCommentOpenFlag = ref(true);
 const fileSize: any = Object.prototype.hasOwnProperty.call(props.file, appConfig.roCrate.root.file.size)
   ? props.file[appConfig.roCrate.root.file.size][0]
   : null;
-const licenseType: any = Array.isArray(props.file[appConfig.roCrate.root.file.licenseType])
-  ? props.file[appConfig.roCrate.root.file.licenseType][0]
-  : props.file[appConfig.roCrate.root.file.licenseType];
-const fileURL: any = Array.isArray(props.file[appConfig.roCrate.root.file.url])
-  ? props.file[appConfig.roCrate.root.file.url][0]
-  : props.file[appConfig.roCrate.root.file.url];
-const fileComment: any = Array.isArray(props.file[appConfig.roCrate.root.file.comment])
-  ? props.file[appConfig.roCrate.root.file.comment][0]
-  : props.file[appConfig.roCrate.root.file.comment];
+const licenseType: any = setFileInfo(props.file[appConfig.roCrate.root.file.licenseType]);
+const fileURL: any = setFileInfo(props.file[appConfig.roCrate.root.file.url]);
+const fileComment: any = setFileInfo(props.file[appConfig.roCrate.root.file.comment]);
 
 /* ///////////////////////////////////
 // function
@@ -417,7 +411,6 @@ function getDisplayMaxLength(item: String) {
   if (checkEn(item)) {
     itemLength = 40;
   }
-
   return itemLength;
 }
 
@@ -431,6 +424,17 @@ function checkEn(name: any) {
     name = name.replace(/[α-ω]/g, '');
   }
   return /^[ -~]+$/.test(name);
+}
+
+/**
+ * マッピング済みのファイル情報を取得する
+ * マッピングされていない場合は空文字を返す
+ * @param info ファイル情報（ライセンス、格納場所、コメント）
+ * @returns ファイル情報
+ */
+function setFileInfo(info: any) {
+  const returnInfo = Array.isArray(info) ? info[0] : info;
+  return returnInfo || '';
 }
 
 /* ///////////////////////////////////

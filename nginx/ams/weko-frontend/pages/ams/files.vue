@@ -568,9 +568,7 @@ function clickAllCheckbox() {
   } else {
     isAllCheck = true;
     for (const file of divideFileList[Number(currentPage.value) - 1]) {
-      const fileUrl = Array.isArray(file[appConf.roCrate.root.file.url])
-        ? file[appConf.roCrate.root.file.url][0]
-        : file[appConf.roCrate.root.file.url];
+      const fileUrl = setFileInfo(file[appConf.roCrate.root.file.url]);
       // 格納場所がweko外部のファイルは除く
       if (fileUrl.startsWith(useAppConfig().wekoOrigin)) {
         if (!selectedFiles.value.includes(file['@id'])) {
@@ -593,9 +591,7 @@ function changeAllCheckBox() {
   if (selectedFiles.value.length >= divideLength) {
     let count = 0;
     for (const file of currentDivideFiles) {
-      const fileUrl = Array.isArray(file[appConf.roCrate.root.file.url])
-        ? file[appConf.roCrate.root.file.url][0]
-        : file[appConf.roCrate.root.file.url];
+      const fileUrl = setFileInfo(file[appConf.roCrate.root.file.url])
       // 格納場所がweko外部のファイルは除く
       if (fileUrl.startsWith(useAppConfig().wekoOrigin)) {
         if (selectedFiles.value.includes(file['@id'])) {
@@ -749,6 +745,17 @@ function throughDblClick() {
   if (location.pathname + location.search !== url) {
     navigateTo(url);
   }
+}
+
+/**
+ * マッピング済みのファイル情報を取得する
+ * マッピングされていない場合は空文字を返す
+ * @param info ファイル情報（格納場所）
+ * @returns ファイル情報
+ */
+ function setFileInfo(info: any) {
+  const returnInfo = Array.isArray(info) ? info[0] : info;
+  return returnInfo || '';
 }
 
 /* ///////////////////////////////////
