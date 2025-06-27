@@ -761,6 +761,7 @@ function oauthErrorRedirect() {
   }, appConf.transitionTime);
 }
 
+/**
  * プロジェクトURLを取得
  * @param itemDetail アイテム詳細
  * @returns プロジェクトURL
