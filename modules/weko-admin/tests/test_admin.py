@@ -9,8 +9,8 @@ from .helpers import login, logout
 
 from flask import url_for,current_app,make_response
 from flask_admin import Admin
-from flask_wtf import FlaskForm,Form
 from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.dialects import postgresql
 from wtforms.validators import ValidationError
 from werkzeug.datastructures import ImmutableMultiDict
 
@@ -1051,7 +1051,7 @@ def test_FilePreviewSettingsView_index(client, db, users, admin_settings, mocker
     assert res.status_code == 200
     args, kwargs = mock_render.call_args
     assert args[0] == "weko_admin/admin/file_preview_settings.html"
-    assert kwargs["settings"].path == "/tmp"
+    assert kwargs["settings"].path == "/var/tmp"
     assert kwargs["settings"].pdf_ttl == 3600
 
     # post
@@ -2378,18 +2378,28 @@ class TestSwordAPIJsonldSettingsView:
     def test_get_query_in_role_ids(self, client, users, db, mocker):
         login(client,obj=users[0]["obj"])
         view = SwordAPIJsonldSettingsView(SwordClientModel, db.session)
-        view.get_query()
+        q = view.get_query()
+        assert str(q.statement.compile(dialect=postgresql.dialect(),compile_kwargs={"literal_binds": True})) == "SELECT sword_clients.created, sword_clients.updated, sword_clients.id, sword_clients.client_id, sword_clients.active, sword_clients.registration_type_id, sword_clients.mapping_id, sword_clients.workflow_id, sword_clients.duplicate_check, sword_clients.meta_data_api \nFROM sword_clients ORDER BY sword_clients.id"
+        logout(client)
 
-        current_app.config['WEKO_ADMIN_SWORD_API_JSON_LD_FULL_AUTHORITY_ROLE'] = 1
-        view.get_query()
+        login(client,obj=users[1]["obj"])
+        q = view.get_query()
+        assert str(q.statement.compile(dialect=postgresql.dialect(),compile_kwargs={"literal_binds": True})) == "SELECT sword_clients.created, sword_clients.updated, sword_clients.id, sword_clients.client_id, sword_clients.active, sword_clients.registration_type_id, sword_clients.mapping_id, sword_clients.workflow_id, sword_clients.duplicate_check, sword_clients.meta_data_api \nFROM sword_clients JOIN oauth2server_client ON oauth2server_client.client_id = sword_clients.client_id \nWHERE oauth2server_client.client_id = sword_clients.client_id AND oauth2server_client.user_id = '{}' ORDER BY sword_clients.id".format(users[1]["id"])
+        logout(client)
 
     # def get_count_query(self):
     # .tox/c1/bin/pytest --cov=weko_admin tests/test_admin.py::TestSwordAPIJsonldSettingsView::test_get_count_query -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
-    @patch("weko_admin.admin.SwordAPIJsonldSettingsView.get_query")
     def test_get_count_query(self, client, users, db, mocker):
         login(client,obj=users[0]["obj"])
         view = SwordAPIJsonldSettingsView(SwordClientModel, db.session)
-        view.get_count_query()
+        q = view.get_count_query()
+        assert str(q.statement.compile(dialect=postgresql.dialect(),compile_kwargs={"literal_binds": True})) == "SELECT count('*') AS count_1 \nFROM sword_clients"
+        logout(client)
+
+        login(client,obj=users[1]["obj"])
+        q = view.get_count_query()
+        assert str(q.statement.compile(dialect=postgresql.dialect(),compile_kwargs={"literal_binds": True})) == "SELECT count('*') AS count_1 \nFROM sword_clients JOIN oauth2server_client ON oauth2server_client.client_id = sword_clients.client_id \nWHERE oauth2server_client.client_id = sword_clients.client_id AND oauth2server_client.user_id = '{}'".format(users[1]["id"])
+        logout(client)
 
     def test_format(self, app, client, users, db, sword_client, sword_mapping, mocker):
         login(client,obj=users[0]["obj"])
@@ -2410,16 +2420,6 @@ class TestSwordAPIJsonldSettingsView:
         view._format_duplicate_check(None, model, None)
         model.duplicate_check = True
         view._format_duplicate_check(None, model, None)
-
-    def test_format_none_ver(self, app, client, users, db, sword_client, sword_mapping, mocker):
-        login(client,obj=users[0]["obj"])
-        view = SwordAPIJsonldSettingsView(SwordClientModel, db.session)
-        model = SwordClientModel.query.filter_by(id=1).one()
-        model.workflow_id = 1
-        with patch("weko_admin.admin.WorkFlow.get_workflow_by_id", return_value=None):
-            view._format_workflow_name(None, model, None)
-        with patch("weko_admin.admin.JsonldMapping.get_mapping_by_id", return_value=None):
-            view._format_mapping_name(None, model, None)
 
     # def validate_mapping(self, id):
     # .tox/c1/bin/pytest --cov=weko_admin tests/test_admin.py::TestSwordAPIJsonldSettingsView::test_validate_mapping -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp

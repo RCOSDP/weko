@@ -132,6 +132,7 @@ from invenio_records_ui.config import RECORDS_UI_ENDPOINTS
 from weko_admin import WekoAdmin
 from weko_admin.config import WEKO_ADMIN_DEFAULT_ITEM_EXPORT_SETTINGS, WEKO_ADMIN_MANAGEMENT_OPTIONS
 from weko_admin.models import FacetSearchSetting, Identifier, SessionLifetime
+from weko_accounts import WekoAccounts
 from weko_deposit.api import WekoDeposit
 from weko_deposit.api import WekoDeposit as aWekoDeposit
 from weko_deposit.api import WekoIndexer, WekoRecord
@@ -153,6 +154,7 @@ from weko_records_ui.config import (
     WEKO_PERMISSION_ROLE_COMMUNITY,
     WEKO_PERMISSION_SUPER_ROLE_USER,
     WEKO_RECORDS_UI_BULK_UPDATE_FIELDS,
+    WEKO_RECORDS_UI_EMAIL_ITEM_KEYS,
 )
 from weko_records_ui.models import PDFCoverPageSettings, RocrateMapping
 from weko_redis.redis import RedisConnection
@@ -594,6 +596,7 @@ def base_app(instance_path, search_class, request):
             },
         ],
         WEKO_RECORDS_UI_BULK_UPDATE_FIELDS=WEKO_RECORDS_UI_BULK_UPDATE_FIELDS,
+        WEKO_RECORDS_UI_EMAIL_ITEM_KEYS=WEKO_RECORDS_UI_EMAIL_ITEM_KEYS,
         WEKO_SEARCH_UI_BULK_EXPORT_URI="URI_EXPORT_ALL",
         WEKO_SEARCH_UI_BULK_EXPORT_EXPIRED_TIME=3,
         WEKO_SEARCH_UI_BULK_EXPORT_TASK="KEY_EXPORT_ALL",
@@ -735,6 +738,7 @@ def base_app(instance_path, search_class, request):
     InvenioFilesREST(app_)
     InvenioDeposit(app_)
     InvenioRecordsUI(app_)
+    WekoAccounts(app_)
     WekoRecords(app_)
     WekoSearchUI(app_)
     WekoWorkflow(app_)
@@ -1183,7 +1187,7 @@ def db_records(db, instance_path, users):
     result = []
     with db.session.begin_nested():
         for d in range(record_num):
-            result.append(create_record(record_data[d], item_data[d]))
+            result.append(create_record(db, record_data[d], item_data[d]))
     db.session.commit()
 
     index_metadata = {
@@ -4437,18 +4441,6 @@ def create_record(db, record_data, item_data):
 
     return recid, depid, record, item, parent, doi, deposit
 
-@pytest.fixture()
-def db_records(app,db):
-    record_datas = list()
-    with open("tests/data/test_record/record_metadata.json") as f:
-        record_datas = json.load(f)
-
-    item_datas = list()
-    with open("tests/data/test_record/item_metadata.json") as f:
-        item_datas = json.load(f)
-
-    for i in range(len(record_datas)):
-        recid, depid, record, item, parent, doi, deposit = create_record(db,record_datas[i],item_datas[i])
 
 @pytest.fixture()
 def mapper_jpcoar(db_itemtype_jpcoar):

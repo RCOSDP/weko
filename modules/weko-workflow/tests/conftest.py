@@ -80,7 +80,7 @@ from weko_theme.views import blueprint as weko_theme_blueprint
 from simplekv.memory.redisstore import RedisStore
 from sqlalchemy_utils.functions import create_database, database_exists, \
     drop_database
-from tests.helpers import json_data, create_record
+from .helpers import json_data, create_record
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session
 from sqlalchemy import event
@@ -106,6 +106,7 @@ from weko_admin.models import SiteInfo
 from weko_admin import WekoAdmin
 from weko_deposit import WekoDeposit
 from weko_admin.models import AdminSettings
+from weko_notifications import WekoNotifications
 from weko_notifications.models import NotificationsUserSettings
 from weko_logging.audit import WekoLoggingUserActivity
 
@@ -586,6 +587,7 @@ def base_app(instance_path, search_class, cache_config):
     WekoAdmin(app_)
     InvenioOAuth2Server(app_)
     WekoLoggingUserActivity(app_)
+    WekoNotifications(app_)
     # WekoRecordsUI(app_)
     # app_.register_blueprint(invenio_theme_blueprint)
     app_.register_blueprint(invenio_communities_blueprint)

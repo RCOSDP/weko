@@ -1,5 +1,5 @@
 {
-    "tenant1-weko": {
+    "test-weko": {
         "aggs": {
             "Data Language": {
                 "terms": {
