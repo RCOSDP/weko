@@ -241,11 +241,10 @@ def test_shib_auto_login(client,redis_connect,mocker):
         shibuser.shib_user = "test_user"
         shibuser.user = User(id=1)
         with patch("weko_accounts.views.ShibUser",return_value=shibuser):
-            current_app.config['WEKO_ACCOUNTS_SHIB_AMS_LOGIN_URL'] = '{}ams/login'
             mock_redirect = mocker.patch("weko_accounts.views.redirect",return_value=make_response())
             client.get(url+'?next=ams')
             called_args, _ = mock_redirect.call_args
-            mock_redirect.assert_called_with("http://test_server.localdomain/ams/login?next=ams")
+            mock_redirect.assert_called_with("/?next=ams")
             mock_shib_login.assert_called_once()
             assert redis_connect.redis.exists("Shib-Session-1111") == False
 
@@ -414,11 +413,10 @@ def test_confirm_user(client,redis_connect,mocker):
                 shibuser = ShibUser({})
                 shibuser.user = User(id=1)
                 with patch("weko_accounts.views.ShibUser",return_value=shibuser):
-                    current_app.config['WEKO_ACCOUNTS_SHIB_AMS_LOGIN_URL'] = '{}ams/login'
                     mock_redirect = mocker.patch("weko_accounts.views.redirect",return_value=make_response())
                     client.post(url+"?next=ams",data=form)
                     called_args, _ = mock_redirect.call_args
-                    mock_redirect.assert_called_with("http://test_server.localdomain/ams/login?next=ams")
+                    mock_redirect.assert_called_with("/?next=ams")
                     assert redis_connect.redis.exists("Shib-Session-1111") == False
 
     # raise BaseException
@@ -564,11 +562,10 @@ def test_confirm_user_without_page(client,redis_connect,mocker):
                 shibuser = ShibUser({})
                 shibuser.user = User(id=1)
                 with patch("weko_accounts.views.ShibUser",return_value=shibuser):
-                    current_app.config['WEKO_ACCOUNTS_SHIB_AMS_LOGIN_URL'] = '{}ams/login'
                     mock_redirect = mocker.patch("weko_accounts.views.redirect",return_value=make_response())
                     client.get(url+"?next=ams")
                     called_args, _ = mock_redirect.call_args
-                    mock_redirect.assert_called_with("http://test_server.localdomain/ams/login?next=ams")
+                    mock_redirect.assert_called_with("/?next=ams")
                     assert redis_connect.redis.exists("Shib-Session-1111") == False
 
                 # exist ShibUser.shib_user
@@ -578,11 +575,10 @@ def test_confirm_user_without_page(client,redis_connect,mocker):
                 shibuser.shib_user = "test_user"
                 shibuser.user = User(id=1)
                 with patch("weko_accounts.views.ShibUser",return_value=shibuser):
-                    current_app.config['WEKO_ACCOUNTS_SHIB_AMS_LOGIN_URL'] = '{}ams/login'
                     mock_redirect = mocker.patch("weko_accounts.views.redirect",return_value=make_response())
                     client.get(url+"?next=ams")
                     called_args, _ = mock_redirect.call_args
-                    mock_redirect.assert_called_with("http://test_server.localdomain/ams/login?next=ams")
+                    mock_redirect.assert_called_with("/?next=ams")
                     assert redis_connect.redis.exists("Shib-Session-1111") == False
 
                 # exist ShibUser.shib_user
@@ -591,11 +587,10 @@ def test_confirm_user_without_page(client,redis_connect,mocker):
                 shibuser.shib_user = "test_user"
                 shibuser.user = User(id=1)
                 with patch("weko_accounts.views.ShibUser",return_value=shibuser):
-                    current_app.config['WEKO_ACCOUNTS_SHIB_AMS_LOGIN_URL'] = '{}ams/login'
                     mock_redirect = mocker.patch("weko_accounts.views.redirect",return_value=make_response())
                     client.get(url+"?next=ams")
                     called_args, _ = mock_redirect.call_args
-                    mock_redirect.assert_called_with("http://test_server.localdomain/ams/login?next=ams")
+                    mock_redirect.assert_called_with("/?next=ams")
                     assert redis_connect.redis.exists("Shib-Session-1111") == False
 
     # raise BaseException

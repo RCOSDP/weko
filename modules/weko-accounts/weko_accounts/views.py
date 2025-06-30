@@ -246,9 +246,7 @@ def shib_auto_login():
             remarks="Shibboleth login"
         )
         if ams_login:
-            shib_ams_login_url = current_app.config['WEKO_ACCOUNTS_SHIB_AMS_LOGIN_URL']
-            ams_url = shib_ams_login_url.format(request.url_root)
-            return redirect(f"{ams_url}?next=ams")
+            return redirect("/?next=ams")
         else:
             return redirect(session['next'] if 'next' in session else '/')
     except BaseException:
@@ -350,9 +348,7 @@ def confirm_user():
             remarks="Shibboleth login"
         )
         if ams_login:
-            shib_ams_login_url = current_app.config['WEKO_ACCOUNTS_SHIB_AMS_LOGIN_URL']
-            ams_url = shib_ams_login_url.format(request.url_root)
-            return redirect(f"{ams_url}?next=ams")
+            return redirect("/?next=ams")
         else:
             return redirect(session['next'] if 'next' in session else '/')
     except BaseException:
@@ -439,9 +435,7 @@ def confirm_user_without_page():
             shib_user.shib_user_login()
         datastore.delete(cache_key)
         if ams_login:
-            shib_ams_login_url = current_app.config['WEKO_ACCOUNTS_SHIB_AMS_LOGIN_URL']
-            ams_url = shib_ams_login_url.format(request.url_root)
-            return redirect(f"{ams_url}?next=ams")
+            return redirect("/?next=ams")
         else:
             return redirect(session['next'] if 'next' in session else '/')
     except BaseException:
