@@ -755,7 +755,7 @@ function oauthErrorRedirect() {
   setTimeout(() => {
     // 認証エラーの場合はログイン画面に遷移
      navigateTo({
-       path: '/login',
+       path: '/ams/login',
        query: { source: 'detail' }
      });
   }, appConf.transitionTime);

@@ -159,5 +159,5 @@ defineProps({
 const emits = defineEmits(['clickClose']);
 const appConf = useAppConfig();
 const transitionSecond = appConf.transitionTime / 1000;
-const loginPage = window.location.origin + '/login?source=detail';
+const loginPage = window.location.origin + `${appConf.amsPath ?? ''}/login?source=detail`;
 </script>
