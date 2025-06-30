@@ -4441,18 +4441,6 @@ def create_record(db, record_data, item_data):
 
     return recid, depid, record, item, parent, doi, deposit
 
-# @pytest.fixture()
-# def db_records(app,db):
-#     record_datas = list()
-#     with open("tests/data/test_record/record_metadata.json") as f:
-#         record_datas = json.load(f)
-
-#     item_datas = list()
-#     with open("tests/data/test_record/item_metadata.json") as f:
-#         item_datas = json.load(f)
-
-#     for i in range(len(record_datas)):
-#         recid, depid, record, item, parent, doi, deposit = create_record(db,record_datas[i],item_datas[i])
 
 @pytest.fixture()
 def mapper_jpcoar(db_itemtype_jpcoar):

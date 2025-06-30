@@ -2129,7 +2129,7 @@ def handle_finish_workflow(deposit, current_pid, recid):
         target_key = (
             recid.recid if is_newversion else pid_without_ver.pid_value
             if pid_without_ver else current_pid.pid_value
-            )
+        )
         UserActivityLogger.error(
             operation=opration,
             target_key=target_key,
