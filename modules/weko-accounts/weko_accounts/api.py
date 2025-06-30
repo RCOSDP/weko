@@ -491,7 +491,7 @@ def sync_shib_gakunin_map_groups():
 
         # create Redis key
         redis_key = fqdn + suffix
-        datastore = RedisConnection().connection(db=current_app.config['CACHE_REDIS_DB'])
+        datastore = RedisConnection().connection(db=current_app.config['GROUP_INFO_REDIS_DB'])
         map_group_list = set(id.decode('utf-8') for id in datastore.lrange(redis_key, 0, -1))
 
         # get roles

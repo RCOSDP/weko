@@ -491,7 +491,7 @@ def shib_sp_login():
         if not rst:
             if current_app.config['WEKO_ACCOUNTS_SKIP_CONFIRMATION_PAGE']:
                 user = find_user_by_email(shib_attr)
-                if user:
+                if not user:
                     next_url = 'weko_accounts.confirm_user_without_page'
             else:
                 # Relation is not existed, cache shibboleth info to redis.
