@@ -8,14 +8,14 @@ import re
 import tempfile
 import time
 import unittest
-from datetime import datetime,timedelta
 import uuid
 import zipfile
-import bagit
+from datetime import datetime, timedelta
 from elasticsearch import NotFoundError
 
+import bagit
 import pytest
-from mock import MagicMock, Mock, patch, mock_open
+from unittest.mock import MagicMock, Mock, patch, mock_open
 from werkzeug.datastructures import FileStorage
 from flask import current_app, make_response, request
 from flask_babelex import Babel
