@@ -2018,6 +2018,7 @@ def db_itemtype(app, db, make_itemtype):
 
 @pytest.fixture()
 def db_workflow(app, db, db_itemtype, users):
+    item_type_id = db_itemtype["item_type"].id
     action_datas = dict()
     with open("tests/data/actions.json", "r") as f:
         action_datas = json.load(f)
@@ -2077,7 +2078,7 @@ def db_workflow(app, db, db_itemtype, users):
     workflow = WorkFlow(
         flows_id=uuid.uuid4(),
         flows_name="test workflow1",
-        itemtype_id=1,
+        itemtype_id=item_type_id,
         index_tree_id=None,
         flow_id=1,
         is_deleted=False,
@@ -4009,6 +4010,7 @@ def make_itemtype(app,db):
 
 
         item_type = ItemType(
+            id=id,
             name_id=item_type_name.id,
             harvesting_type=True,
             schema=item_type_schema,

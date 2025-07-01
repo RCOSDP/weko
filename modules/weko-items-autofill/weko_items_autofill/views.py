@@ -16,9 +16,10 @@ from flask_login import login_required
 from invenio_db import db
 from weko_accounts.utils import login_required_customize
 from weko_admin.utils import get_current_api_certification
+from weko_items_ui.signals import cris_researchmap_linkage_request
 
 from .utils import get_cinii_record_data, get_crossref_record_data, get_doi_record_data, \
-    get_title_pubdate_path, get_wekoid_record_data, get_workflow_journal
+    get_researchmapid_record_data, get_title_pubdate_path, get_wekoid_record_data, get_workflow_journal
 
 blueprint = Blueprint(
     "weko_items_autofill",
@@ -85,7 +86,8 @@ def get_auto_fill_record_data():
     result = {
         'result': '',
         'items': '',
-        'error': ''
+        'error': '',
+        'resource_type' : ''
     }
     if request.headers['Content-Type'] != 'application/json':
         result['error'] = _('Header Error')
@@ -97,6 +99,9 @@ def get_auto_fill_record_data():
     item_type_id = data.get('item_type_id', '')
     activity_id = data.get('activity_id', '')
     exclude_duplicate_lang = data.get('exclude_duplicate_lang', False)
+    parmalink = data.get('parmalink', '')
+    achievement_type = data.get('achievement_type', '')
+    achievement_id = data.get('achievement_id', '')
 
     try:
         if api_type == 'CrossRef':
@@ -122,12 +127,17 @@ def get_auto_fill_record_data():
             doi_response = get_doi_record_data(
                 search_data, item_type_id, activity_id)
             result['result'] = doi_response
+        elif api_type == 'researchmap':
+            result['result'] , result['resource_type'] = get_researchmapid_record_data(
+                parmalink, achievement_type ,achievement_id , item_type_id)
         else:
             result['error'] = api_type + ' is NOT support autofill feature.'
     except Exception as e:
         current_app.logger.error("Failed to get autofill data.")
         traceback.print_exc()
         result['error'] = str(e)
+
+
     return jsonify(result)
 
 

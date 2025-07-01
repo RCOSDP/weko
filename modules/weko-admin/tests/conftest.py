@@ -73,6 +73,7 @@ from weko_authors import WekoAuthors
 from weko_authors.models import Authors
 from weko_index_tree import WekoIndexTree
 from weko_index_tree.models import Index, IndexStyle
+from weko_items_ui.config import WEKO_ITEMS_UI_CRIS_LINKAGE_RESEARCHMAP_MERGE_MODE_DEFAULT
 from weko_records_ui import WekoRecordsUI
 from weko_records_ui.config import WEKO_PERMISSION_SUPER_ROLE_USER
 from weko_records import WekoRecords
@@ -167,7 +168,8 @@ def base_app(instance_path, cache_config,request ,search_class):
         WEKO_THEME_INSTANCE_DATA_DIR="data",
         SEARCH_INDEX_PREFIX="test-",
         INDEXER_DEFAULT_DOC_TYPE="item-v1.0.0",
-        WEKO_PERMISSION_SUPER_ROLE_USER=WEKO_PERMISSION_SUPER_ROLE_USER
+        WEKO_PERMISSION_SUPER_ROLE_USER=WEKO_PERMISSION_SUPER_ROLE_USER,
+        WEKO_ITEMS_UI_CRIS_LINKAGE_RESEARCHMAP_MERGE_MODE_DEFAULT=WEKO_ITEMS_UI_CRIS_LINKAGE_RESEARCHMAP_MERGE_MODE_DEFAULT
     )
     app_.testing = True
     app_.login_manager = dict(_login_disabled=True)
@@ -766,6 +768,7 @@ def admin_settings(db):
     settings.append(AdminSettings(id=8,name='convert_pdf_settings',settings={"path":"/tmp/file","pdf_ttl":1800}))
     settings.append(AdminSettings(id=9,name="elastic_reindex_settings",settings={"has_errored": False}))
     settings.append(AdminSettings(id=10,name="sword_api_setting",settings={ "default_format": "TSV","data_format":{ "TSV":{"register_format": "Direct"},"XML":{"workflow": '31001',  "register_format": "Workflow"}}}))
+    settings.append(AdminSettings(id=11,name="cris_linkage",settings={'researchmap_cidkey_contents':'','researchmap_pkey_contents':'','merge_mode':''}))
     db.session.add_all(settings)
     db.session.commit()
     return settings
