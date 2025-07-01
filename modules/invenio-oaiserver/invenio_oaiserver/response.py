@@ -350,6 +350,9 @@ def is_private_index(record):
     paths = pickle.loads(pickle.dumps(record.get('path'), -1))
     return not Indexes.is_public_state_and_not_in_future(paths)
 
+def is_draft_workflow(record):
+    """Check workflow is draft"""
+    return record.get("_deposit",{}).get("status") == "draft"
 
 def is_private_index_by_public_list(item_path, public_index_ids):
     """Check index of workflow is private."""
@@ -419,10 +422,12 @@ def getrecord(**kwargs):
 
     # Harvest is private
     # or New activity
+    # or Draft activity
     if path_list and (_is_output == HARVEST_PRIVATE or
                       (is_exists_doi(record) and
                        (_is_output == PRIVATE_INDEX or is_pubdate_in_future(record))) or
-                      is_new_workflow(record)):
+                      is_new_workflow(record) or 
+                      is_draft_workflow(record)):
         return error([('idDoesNotExist', 'No matching identifier')])
     # Item is deleted
     # or Harvest is public & Item is private
@@ -441,27 +446,32 @@ def getrecord(**kwargs):
         )
         return e_tree
 
-    _sets = list(set(record.get('path', [])+record['_oai'].get('sets', [])))
-    header(
-        e_record,
-        identifier=pid_object.pid_value,
-        datestamp=record.updated,
-        sets=_sets
-    )
-    e_metadata = SubElement(e_record,
-                            etree.QName(NS_OAIPMH, 'metadata'))
+    try:
+        _sets = list(set(record.get('path', [])+record['_oai'].get('sets', [])))
+        header(
+            e_record,
+            identifier=pid_object.pid_value,
+            datestamp=record.updated,
+            sets=_sets
+        )
+        e_metadata = SubElement(e_record,
+                                etree.QName(NS_OAIPMH, 'metadata'))
 
-    etree_record = pickle.loads(pickle.dumps(record, -1))
+        etree_record = pickle.loads(pickle.dumps(record, -1))
 
-    if not etree_record.get('system_identifier_doi', None):
-        etree_record['system_identifier_doi'] = get_identifier(record)
+        if not etree_record.get('system_identifier_doi', None):
+            etree_record['system_identifier_doi'] = get_identifier(record)
 
-    # Merge licensetype and licensefree
-    etree_record = handle_license_free(etree_record)
+        # Merge licensetype and licensefree
+        etree_record = handle_license_free(etree_record)
 
-    root = record_dumper(pid_object, {'_source': etree_record})
+        root = record_dumper(pid_object, {'_source': etree_record})
 
-    e_metadata.append(root)
+        e_metadata.append(root)
+    except Exception as ex:
+        current_app.logger.error("BaseException: {}".format(ex))
+        return error([('idDoesNotExist', 'No matching identifier')])
+
     return e_tree
 
 
@@ -554,6 +564,8 @@ def listidentifiers(**kwargs):
         except NoResultFound:
             current_app.logger.error(
                 "NoResultFound: object_uuid: {}".format(pid_object.object_uuid))
+        except Exception as ex:
+            current_app.logger.error("BaseException: {}".format(ex))
 
     if len(e_listidentifiers) == 0:
         return error(get_error_code_msg(), **kwargs)
@@ -643,6 +655,13 @@ def listrecords(**kwargs):
                     deleted=True
                 )
             else:
+                etree_record = pickle.loads(pickle.dumps(record, -1))
+                if not etree_record.get('system_identifier_doi', None):
+                    etree_record['system_identifier_doi'] = get_identifier(record)
+                # Merge licensetype and licensefree
+                etree_record = handle_license_free(etree_record)
+                _record_serializer = record_dumper(pid, {'_source': etree_record})
+
                 e_record = SubElement(
                     e_listrecords, etree.QName(NS_OAIPMH, 'record'))
                 _sets = list(set(record.get('path', []) +
@@ -655,15 +674,7 @@ def listrecords(**kwargs):
                 )
                 e_metadata = SubElement(e_record, etree.QName(NS_OAIPMH,
                                                               'metadata'))
-                etree_record = pickle.loads(pickle.dumps(record, -1))
-                if not etree_record.get('system_identifier_doi', None):
-                    etree_record['system_identifier_doi'] = get_identifier(
-                        record)
-
-                # Merge licensetype and licensefree
-                etree_record = handle_license_free(etree_record)
-                e_metadata.append(record_dumper(
-                    pid, {'_source': etree_record}))
+                e_metadata.append(_record_serializer)
 
         except PIDDoesNotExistError:
             current_app.logger.error(
@@ -673,6 +684,8 @@ def listrecords(**kwargs):
         except NoResultFound:
             current_app.logger.error(
                 "NoResultFound: object_uuid: {}".format(pid_object.object_uuid))
+        except BaseException as ex:
+            current_app.logger.error("BaseException: {}".format(ex))
 
     # Check <record> tag not exist.
     if len(e_listrecords) == 0:

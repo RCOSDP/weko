@@ -121,6 +121,7 @@ from .utils import IdentifierHandle, auto_fill_title, \
     save_activity_data, saving_doi_pidstore, \
     send_usage_application_mail_for_guest_user, set_files_display_type, \
     update_approval_date, update_cache_data, validate_guest_activity_expired, \
+    validate_guest_activity_token, make_activitylog_tsv, validate_action_role_user, \
     validate_guest_activity_token, make_activitylog_tsv, \
     delete_lock_activity_cache, delete_user_lock_activity_cache, \
     check_an_item_is_locked, prepare_edit_workflow
@@ -205,8 +206,7 @@ def index():
     tab = request.args.get('tab',WEKO_WORKFLOW_TODO_TAB)
     if 'community' in request.args:
         activities, maxpage, size, pages, name_param = activity \
-            .get_activity_list(community_id=request.args.get('community'),
-                               conditions=conditions)
+            .get_activity_list(conditions=conditions)
         comm = GetCommunity.get_community_by_id(request.args.get('community'))
         ctx = {'community': comm}
         if comm is not None:
@@ -1208,23 +1208,14 @@ def check_authority(func):
         if check_authority_by_admin(activity_detail):
             return func(*args, **kwargs)
 
-        roles, users = work.get_activity_action_role(
+        is_set, is_allow, is_deny = validate_action_role_user(
             activity_id=kwargs.get('activity_id'),
             action_id=kwargs.get('action_id'),
             action_order=activity_detail.action_order
         )
-        cur_user = current_user.get_id()
-        cur_role = db.session.query(Role).join(userrole).filter_by(
-            user_id=cur_user).all()
         error_msg = _('Authorization required')
-        if users['deny'] and int(cur_user) in users['deny']:
-            return jsonify(code=403, msg=error_msg)
-        if users['allow'] and int(cur_user) not in users['allow']:
-            return jsonify(code=403, msg=error_msg)
-        for role in cur_role:
-            if roles['deny'] and role.id in roles['deny']:
-                return jsonify(code=403, msg=error_msg)
-            if roles['allow'] and role.id not in roles['allow']:
+        if is_set:
+            if is_deny:
                 return jsonify(code=403, msg=error_msg)
         return func(*args, **kwargs)
 
@@ -1244,55 +1235,46 @@ def check_authority_action(activity_id='0', action_id=0,
     if check_authority_by_admin(activity):
         return 0
 
-    roles, users = work.get_activity_action_role(activity_id, action_id,
-                                                 action_order)
     cur_user = current_user.get_id()
-    cur_role = db.session.query(Role).join(userrole).filter_by(
-        user_id=cur_user).all()
-
-    # If action_user is set:
-    # If current_user is in denied action_user
-    if users['deny'] and int(cur_user) in users['deny']:
-        return 1
-    # If current_user is in allowed action_user
-    if users['allow'] and int(cur_user) in users['allow']:
-        return 0
-    # Else if action_user is not set
-    # or action_user does not contain current_user:
-    for role in cur_role:
-        if roles['deny'] and role.id in roles['deny']:
-            return 1
-        if roles['allow'] and role.id not in roles['allow']:
-            return 1
-
-    # If action_roles is not set
-    # or action roles does not contain any role of current_user:
-    # Gather information
-    # If user is the author of activity
-    if int(cur_user) == activity.activity_login_user and \
-            not contain_login_item_application:
-        return 0
-
     if current_app.config['WEKO_WORKFLOW_ENABLE_CONTRIBUTOR']:
-        # Check if this activity has contributor equaling to current user
-        im = ItemMetadata.query.filter_by(id=activity.item_id) \
-            .filter(or_(
-            cast(ItemMetadata.json['shared_user_id'], types.INT)== int(cur_user),
-            cast(ItemMetadata.json['weko_shared_id'], types.INT)== int(cur_user))).one_or_none()
-        if im:
-            # There is an ItemMetadata with contributor equaling to current
-            # user, allow to access
+        if action_id!=4:
+           # Check if this activity has contributor equaling to current user
+            im = ItemMetadata.query.filter_by(id=activity.item_id) \
+                .filter(or_(
+                cast(ItemMetadata.json['shared_user_id'], types.INT)== int(cur_user),
+                cast(ItemMetadata.json['weko_shared_id'], types.INT)== int(cur_user))).one_or_none()
+            if im:
+                # There is an ItemMetadata with contributor equaling to current user, allow to access
+                # user, allow to access
+                return 0
+            if int(cur_user) == activity.shared_user_id:
+                return 0
+    
+    # Validation of action role(user)
+    # If action_roles is set
+    is_action_role_set, is_allow_action_role, is_deny_action_role = validate_action_role_user(activity_id, action_id, action_order)
+    if is_action_role_set:
+        # If allow roles(users) does not contain any role of current_user
+        # or deny roles(users) contains any role of curren_user,
+        # deny to access
+        if is_deny_action_role:
+            return 1
+        # If allow roles(users) contains any role of current_user,
+        # allow to access
+        elif is_allow_action_role:
             return 0
-        if int(cur_user) == activity.shared_user_id:
+    
+    # Activity creator validation
+    if contain_login_item_application:
+        activity_action_obj = work.get_activity_action_comment(
+            activity_id, action_id, action_order)
+        if activity_action_obj and activity_action_obj.action_handler \
+            and int(activity_action_obj.action_handler)==int(cur_user):
             return 0
-    # Check current user is action handler of activity
-    activity_action_obj = work.get_activity_action_comment(
-        activity_id, action_id, action_order)
-    if (activity_action_obj and activity_action_obj.action_handler
-            and int(activity_action_obj.action_handler) == int(cur_user)
-            and contain_login_item_application):
-        return 0
-
+    else:
+        if activity.activity_login_user == int(cur_user):
+            return 0
+    
     # Otherwise, user has no permission
     return 1
 
@@ -1422,7 +1404,7 @@ def next_action(activity_id='0', action_id=0, json_data=None):
         work_activity.end_activity(activity)
         res = ResponseMessageSchema().load({"code":0,"msg":_("success")})
         return jsonify(res.data), 200
-    if 'approval' == action_endpoint:
+    if 'approval' == action_endpoint and post_json.get('temporary_save') == 0:
         update_approval_date(activity_detail)
     item_id = None
     recid = None
@@ -1472,7 +1454,7 @@ def next_action(activity_id='0', action_id=0, json_data=None):
     next_action_order = next_flow_action[
         0].action_order if action_order else None
     # Start to send mail
-    if next_action_endpoint in ['approval' , 'end_action']:
+    if next_action_endpoint in ['approval' , 'end_action'] and post_json.get('temporary_save') == 0:
         current_flow_action = flow.get_flow_action_detail(
             activity_detail.flow_define.flow_id, action_id, action_order)
         if current_flow_action is None:
@@ -3188,6 +3170,7 @@ def save_activity():
 
 
 @workflow_blueprint.route('/usage-report', methods=['GET'])
+@login_required
 def usage_report():
     """
     Retrieves and returns the usage reports for the 'usage-report' route.

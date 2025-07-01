@@ -316,7 +316,7 @@ class ItemManagementBulkSearch(BaseView):
                     recursive_tree = Indexes.get_recursive_tree(q)
 
                     if current_tree is not None:
-                        tree_items = get_tree_items(current_tree.id)
+                        tree_items = get_tree_items(current_tree.id, 1)
                         has_items = len(tree_items) > 0
                         if recursive_tree is not None:
                             has_child_trees = len(recursive_tree) > 1

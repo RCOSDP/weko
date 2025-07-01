@@ -1410,7 +1410,7 @@ class QueryRankingHelper(object):
             end_date = kwargs.get('end_date')
             params = {
                 'start_date': start_date,
-                'end_date': end_date + 'T23:59:59',
+                'end_date': end_date,
                 'agg_size': str(kwargs.get('agg_size', 10)),
                 'must_not': kwargs.get('must_not', ''),
                 'new_items': True

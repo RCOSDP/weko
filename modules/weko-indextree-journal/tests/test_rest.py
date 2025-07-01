@@ -64,7 +64,7 @@ def test_create_blueprint(instance_path):
         instance_path=instance_path)
     app.config.update(
         SQLALCHEMY_DATABASE_URI=os.environ.get(
-            "SQLALCHEMY_DATABASE_URI", "sqlite:///test.db"
+            "SQLALCHEMY_DATABASE_URI", "postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest"
         ),
         TESTING=True,
         SERVER_NAME="TEST_SERVER",
@@ -136,7 +136,9 @@ class TestJournalActionResource:
                 test = '{"access_type":"F","coverage_depth":"abstract","coverage_notes":"","date_first_issue_online":"2022-01-01","date_last_issue_online":"2022-01-01","date_monograph_published_online":"","date_monograph_published_print":"","deleted":"","embargo_info":"","first_author":"","first_editor":"","ichushi_code":"","id":1,"index_id":1,"is_output":true,"jstage_code":"","language":"en","monograph_edition":"","monograph_volume":"","ncid":"","ndl_bibid":"","ndl_callno":"","num_first_issue_online":"","num_first_vol_online":"","num_last_issue_online":"","num_last_vol_online":"","online_identifier":"","owner_user_id":0,"parent_publication_title_id":"","preceding_publication_title_id":"","print_identifier":"","publication_title":"test journal 1","publication_type":"serial","publisher_name":"","title_alternative":"","title_id":1,"title_transcription":"","title_url":"search?search_type=2&q=1","abstract":"","code_issnl":""}'
                 view = JournalActionResource(ctx)
                 res = view.get(1)
-                assert '"title_url":"search?search_type=2&q=1"' in str(res.data,"utf-8")
+                data = json.loads(res.data.decode("utf-8"))
+                assert "title_url" in data
+                assert "search?search_type=2&q=1" in data["title_url"]
 
                 res = view.get(0)
                 assert str(res.data,"utf-8") == "[]\n"

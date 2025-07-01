@@ -79,7 +79,8 @@ from weko_search_ui.config import ROCRATE_METADATA_FILE, WEKO_IMPORT_DOI_TYPE
 from weko_search_ui.mapper import JsonLdMapper
 from weko_search_ui.query import item_search_factory
 from weko_search_ui.utils import (
-    check_sub_item_is_system, get_root_item_option, get_sub_item_option
+    check_sub_item_is_system, get_root_item_option,
+    get_sub_item_option, get_identifier_setting
 )
 from weko_schema_ui.models import PublishStatus
 from weko_user_profiles import UserProfile
@@ -2256,6 +2257,7 @@ def make_stats_file(item_type_id, recids, list_item_role, export_path=""):
         doi_value, doi_type = identifier.get_idt_registration_data()
         doi_type_str = doi_type[0] if doi_type and doi_type[0] else ''
         doi_str = doi_value[0] if doi_value and doi_value[0] else ''
+        identifier_setting = get_identifier_setting("Root Index")
         if doi_type_str and doi_str:
             doi_domain = ''
             if doi_type_str == WEKO_IMPORT_DOI_TYPE[0]:
@@ -2268,6 +2270,9 @@ def make_stats_file(item_type_id, recids, list_item_role, export_path=""):
                 doi_domain = IDENTIFIER_GRANT_LIST[4][2]
             if doi_domain and doi_str.startswith(doi_domain):
                 doi_str = doi_str.replace(doi_domain + '/', '', 1)
+            if doi_type_str == WEKO_IMPORT_DOI_TYPE[0] and \
+                    doi_str.startswith(identifier_setting.ndl_jalc_doi + "/"):
+                doi_type_str = WEKO_IMPORT_DOI_TYPE[3]
         records.attr_output[recid].extend([
             doi_type_str,
             doi_str
@@ -2533,6 +2538,23 @@ def export_items(post_data):
             return abort(400)
         elif len(record_ids) == 0:
             return '',204
+
+        # Get records for export
+        record_recids = []
+        record_uuids = []
+        for record_id in record_ids:
+            recid = PersistentIdentifier.get('recid', str(record_id))
+            record_recids.append(recid)
+            record_uuids.append(str(recid.object_uuid))
+
+        records = WekoRecord.get_records(record_uuids)
+
+        from weko_records_ui.utils import export_preprocess
+        record_metadata = {}
+        for recid, record in zip(record_recids, records):
+            record_metadata[recid.pid_value] = json.loads(
+                export_preprocess(recid, record, 'json')
+            )
 
         result = {'items': []}
         temp_path = tempfile.TemporaryDirectory(
@@ -3411,7 +3433,7 @@ def get_mapping_name_item_type_by_key(key, item_type_mapping):
     for mapping_key in item_type_mapping:
         if mapping_key == key:
             property_data = item_type_mapping.get(mapping_key)
-            if isinstance(property_data.get('jpcoar_mapping'), dict):
+            if isinstance(property_data, dict) and isinstance(property_data.get('jpcoar_mapping'), dict):
                 for name in property_data.get('jpcoar_mapping'):
                     return name
     return key
@@ -4194,9 +4216,9 @@ def save_title(activity_id, request_data):
     if item_type_id:
         item_type_mapping = Mapping.get_record(item_type_id)
         # current_app.logger.debug("item_type_mapping:{}".format(item_type_mapping))
-        key, key_child = get_key_title_in_item_type_mapping(item_type_mapping)
-    if key and key_child:
-        title = get_title_in_request(request_data, key, key_child)
+        key_list, key_child_dict = get_key_title_in_item_type_mapping(item_type_mapping)
+    if key_list and key_child_dict:
+        title = get_title_in_request(request_data, key_list, key_child_dict)
         activity.update_title(activity_id, title)
 
 
@@ -4206,35 +4228,41 @@ def get_key_title_in_item_type_mapping(item_type_mapping):
     :param item_type_mapping: item type mapping.
     :return:
     """
+    key_list = []
+    key_child_dict = {}
     for mapping_key in item_type_mapping:
-        property_data = item_type_mapping.get(
-            mapping_key).get('jpcoar_mapping')
-        if isinstance(property_data,
-                      dict) and 'title' in property_data and property_data.get(
-                'title').get('@value'):
-            return mapping_key, property_data.get('title').get('@value')
-    return None, None
+        property_data = item_type_mapping.get(mapping_key).get('jpcoar_mapping')
+        if isinstance(property_data, dict) and \
+                'title' in property_data and \
+                property_data.get('title').get('@value'):
+            key_list.append(mapping_key)
+            key_child_dict[mapping_key] = property_data.get('title').get('@value')
+    return key_list, key_child_dict
 
 
-def get_title_in_request(request_data, key, key_child):
+def get_title_in_request(request_data, key_list, key_child_dict):
     """Get title in request.
 
     :param request_data: activity id.
-    :param key: key of title.
-    :param key_child: key child of title.
+    :param key_list: key of title.
+    :param key_child_dict: key child of title.
     :return:
     """
     result = ''
     try:
         title = request_data.get('metainfo')
-        if title and key in title:
-            title_value = title.get(key)
-            if isinstance(title_value, dict) and key_child in title_value:
-                result = title_value.get(key_child)
-            elif isinstance(title_value, list) and len(title_value) > 0:
-                title_value = title_value[0]
-                if key_child in title_value:
+        for key in key_list:
+            if title and key in title:
+                title_value = title.get(key)
+                key_child = key_child_dict.get(key)
+                if isinstance(title_value, dict) and key_child in title_value:
                     result = title_value.get(key_child)
+                elif isinstance(title_value, list) and len(title_value) > 0:
+                    title_value = title_value[0]
+                    if key_child in title_value:
+                        result = title_value.get(key_child)
+            if result:
+                break
     except Exception:
         pass
     return result
@@ -4712,6 +4740,7 @@ def make_stats_file_with_permission(item_type_id, recids,
         doi_value, doi_type = identifier.get_idt_registration_data()
         doi_type_str = doi_type[0] if doi_type and doi_type[0] else ''
         doi_str = doi_value[0] if doi_value and doi_value[0] else ''
+        identifier_setting = get_identifier_setting("Root Index")
         if doi_type_str and doi_str:
             doi_domain = ''
             if doi_type_str == WEKO_IMPORT_DOI_TYPE[0]:
@@ -4724,6 +4753,9 @@ def make_stats_file_with_permission(item_type_id, recids,
                 doi_domain = IDENTIFIER_GRANT_LIST[4][2]
             if doi_domain and doi_str.startswith(doi_domain):
                 doi_str = doi_str.replace(doi_domain + '/', '', 1)
+            if doi_type_str == WEKO_IMPORT_DOI_TYPE[0] and \
+                    doi_str.startswith(identifier_setting.ndl_jalc_doi + "/"):
+                doi_type_str = WEKO_IMPORT_DOI_TYPE[3]
         records.attr_output[recid].extend([
             doi_type_str,
             doi_str

@@ -81,7 +81,7 @@ from .permissions import (
     check_file_download_permission, check_original_pdf_download_permission,
     check_permission_period, file_permission_factory, get_permission
 )
-from .utils import create_secret_url, get_billing_file_download_permission, \
+from .utils import create_secret_url, export_preprocess, get_billing_file_download_permission, \
     get_google_detaset_meta, get_google_scholar_meta, get_groups_price, \
     get_min_price_billing_file_download, get_record_permalink, hide_by_email, \
     delete_version, is_show_email_of_creator,hide_by_itemtype
@@ -147,6 +147,7 @@ def publish(pid, record, template=None, **kwargs):
     from weko_deposit.api import WekoIndexer
     status = request.values.get('status')
     publish_status = record.get('publish_status')
+    comm_id = request.values.get('community')
 
     pid_ver = PIDVersioning(child=pid)
     last_record = WekoRecord.get_record_by_pid(pid_ver.last_child.pid_value)
@@ -174,7 +175,10 @@ def publish(pid, record, template=None, **kwargs):
         target_key=record.get("recid"),
     )
 
-    return redirect(url_for('.recid', pid_value=pid.pid_value))
+    if comm_id:
+        return redirect(url_for('.recid', pid_value=pid.pid_value, community=comm_id))
+    else:
+        return redirect(url_for('.recid', pid_value=pid.pid_value))
 
 
 def export(pid, record, template=None, **kwargs):
@@ -188,34 +192,16 @@ def export(pid, record, template=None, **kwargs):
     :param kwargs: Additional view arguments based on URL rule.
     :return: The rendered template.
     """
-    formats = current_app.config.get('RECORDS_UI_EXPORT_FORMATS', {}).get(
-        pid.pid_type)
     schema_type = request.view_args.get('format')
-    fmt = formats.get(schema_type)
-    if fmt is False:
-        # If value is set to False, it means it was deprecated.
-        abort(410)
-    elif fmt is None:
-        abort(404)
+    data = export_preprocess(pid, record, schema_type)
+    response = make_response(data)
+
+    if 'json' in schema_type or 'bibtex' in schema_type:
+        response.headers['Content-Type'] = 'text/plain'
     else:
-        # Custom Record Metadata for export JSON
-        custom_record_medata_for_export(record)
-        if 'json' not in schema_type and 'bibtex' not in schema_type:
-            record.update({'@export_schema_type': schema_type})
+        response.headers['Content-Type'] = 'text/xml'
 
-        serializer = obj_or_import_string(fmt['serializer'])
-        data = serializer.serialize(pid, record)
-        if isinstance(data, six.binary_type):
-            data = data.decode('utf8')
-
-        response = make_response(data)
-
-        if 'json' in schema_type or 'bibtex' in schema_type:
-            response.headers['Content-Type'] = 'text/plain'
-        else:
-            response.headers['Content-Type'] = 'text/xml'
-
-        return response
+    return response
 
 
 @blueprint.app_template_filter('get_image_src')
@@ -1100,7 +1086,8 @@ def soft_delete(recid):
 def restore(recid):
     """Restore item."""
     try:
-        if not has_update_version_role(current_user):
+        record = WekoRecord.get_record_by_pid(recid)
+        if not check_created_id(record):
             abort(403)
         restore_imp(recid)
         return make_response('PID: ' + str(recid) + ' RESTORED', 200)

@@ -2337,6 +2337,7 @@
 						<line branch="true" condition-coverage="100% (2/2)" hits="1" number="1666"/>
 						<line hits="1" number="1667"/>
 						<line hits="1" number="1672"/>
+						<line hits="1" number="1673"/>
 						<line hits="1" number="1674"/>
 						<line hits="1" number="1676"/>
 						<line branch="true" condition-coverage="0% (0/2)" hits="0" missing-branches="1679,1693" number="1678"/>
@@ -2346,6 +2347,7 @@
 						<line hits="0" number="1682"/>
 						<line branch="true" condition-coverage="0% (0/2)" hits="0" missing-branches="1684,1686" number="1683"/>
 						<line hits="0" number="1684"/>
+						<line hits="0" number="1685"/>
 						<line hits="0" number="1686"/>
 						<line hits="0" number="1687"/>
 						<line branch="true" condition-coverage="0% (0/2)" hits="0" missing-branches="1689,1691" number="1688"/>
@@ -2362,6 +2364,7 @@
 						<line hits="0" number="1703"/>
 						<line hits="0" number="1704"/>
 						<line hits="1" number="1706"/>
+						<line hits="1" number="1707"/>
 						<line hits="1" number="1708"/>
 						<line hits="1" number="1709"/>
 						<line hits="1" number="1710"/>
@@ -2426,7 +2429,7 @@
 						<line branch="true" condition-coverage="100% (2/2)" hits="1" number="1782"/>
 						<line branch="true" condition-coverage="100% (2/2)" hits="1" number="1783"/>
 						<line hits="1" number="1784"/>
-						<line hits="1" number="1785"/>
+						<line branch="true" condition-coverage="100% (2/2)" hits="1" number="1785"/>
 						<line hits="1" number="1786"/>
 						<line branch="true" condition-coverage="50% (1/2)" hits="1" missing-branches="1822" number="1787"/>
 						<line hits="1" number="1788"/>
@@ -2771,7 +2774,9 @@
 						<line hits="1" number="2380"/>
 						<line hits="1" number="2383"/>
 						<line hits="1" number="2384"/>
-						<line hits="1" number="2387"/>
+						<line branch="true" condition-coverage="100% (2/2)" hits="1" number="2393"/>
+						<line branch="true" condition-coverage="100% (2/2)" hits="1" number="2394"/>
+						<line branch="true" condition-coverage="100% (2/2)" hits="1" number="2395"/>
 						<line hits="1" number="2396"/>
 						<line branch="true" condition-coverage="100% (2/2)" hits="1" number="2401"/>
 						<line branch="true" condition-coverage="100% (2/2)" hits="1" number="2402"/>

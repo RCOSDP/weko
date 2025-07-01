@@ -24,6 +24,7 @@ import base64
 import csv
 import json
 import re
+import six
 from datetime import datetime as dt
 from datetime import timedelta
 from decimal import Decimal
@@ -46,6 +47,7 @@ from invenio_oaiserver.response import getrecord
 from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from invenio_records.models import RecordMetadata
+from invenio_records_ui.utils import obj_or_import_string
 from lxml import etree
 from passlib.handlers.oracle import oracle10
 from weko_admin.models import AdminSettings
@@ -53,7 +55,7 @@ from weko_admin.utils import UsageReport, get_restricted_access
 from weko_deposit.api import WekoDeposit, WekoRecord
 from weko_records.api import FeedbackMailList, RequestMailList, ItemTypes, Mapping
 from weko_records.serializers.utils import get_mapping
-from weko_records.utils import replace_fqdn
+from weko_records.utils import custom_record_medata_for_export, replace_fqdn
 from weko_records.models import ItemReference
 from weko_schema_ui.models import PublishStatus
 from weko_workflow.api import WorkActivity, WorkFlow, UpdateItem
@@ -340,6 +342,8 @@ def delete_version(recid):
     latest_version = get_latest_version(id_without_version)
     latest_pid = PersistentIdentifier.query.filter_by(
         pid_type='recid', pid_value=latest_version).first()
+    latest_record = WekoDeposit.get_record(latest_pid.object_uuid)
+    _publish_status = latest_record.get('publish_status', PublishStatus.PUBLIC.value)
     # update parent item
     if is_latest_version:
         pid_without_ver = PersistentIdentifier.query.filter_by(
@@ -360,7 +364,7 @@ def delete_version(recid):
         parent_deposit["relation_version_is_last"] = True
         parent_deposit.publish()
         new_parent_record.commit()
-        updated_item.publish(new_parent_record)
+        updated_item.publish(new_parent_record, _publish_status)
         weko_record = WekoRecord.get_record_by_pid(
             pid_without_ver.pid_value)
         if weko_record:
@@ -387,7 +391,7 @@ def delete_version(recid):
         draft_deposit["relation_version_is_last"] = True
         draft_deposit.publish()
         new_draft_record.commit()
-        updated_item.publish(new_draft_record)
+        updated_item.publish(new_draft_record, _publish_status)
         # update item link info of draft record
         weko_record = WekoRecord.get_record_by_pid(
             draft_deposit.pid.pid_value)
@@ -624,6 +628,73 @@ def get_pair_value(name_keys, lang_keys, datas):
             for name, lang in get_pair_value(name_keys[1:], lang_keys[1:],
                                              datas.get(name_keys[0])):
                 yield name, lang
+
+def get_values_by_selected_lang(source_title, current_lang):
+    """Get value by selected lang.
+
+    @param source_title: e.g. [('None Language': 'test'), ('ja': 'テスト1'), ('ja', 'テスト2')]
+    @param current_lang: e.g. 'ja'
+    @return: e.g. ['テスト1','テスト2']
+    """
+    value_cur = []
+    value_en = []
+    value_latn = []
+    title_data_langs = []
+    title_data_langs_none = []
+    for lang, value in source_title:
+        title = {}
+        if not value:
+            continue
+        elif current_lang == lang:
+            value_cur.append(value)
+        else:
+            title[lang] = value
+            if lang == "en":
+                value_en.append(value)
+            elif lang == "ja-Latn":
+                value_latn.append(value)
+            elif lang == "None Language":
+                title_data_langs_none.append(value)
+            elif lang:
+                title_data_langs.append(title)
+    if len(value_cur) > 0:
+        return value_cur
+
+    if len(title_data_langs_none)>0:
+        source = source_title[0][1]
+        target = title_data_langs_none[0]
+        if source==target:
+            return title_data_langs_none
+
+    if len(value_latn) > 0:
+        return value_latn
+
+    if len(value_en) > 0 and (
+        current_lang != "ja"
+        or not current_app.config.get("WEKO_RECORDS_UI_LANG_DISP_FLG", False)
+    ):
+        return value_en
+
+    if len(title_data_langs) > 0:
+        if current_lang == "en":
+            target_lang = ""
+            for t in title_data_langs:
+
+                if list(t)[0] != "ja" or not current_app.config.get(
+                    "WEKO_RECORDS_UI_LANG_DISP_FLG", False
+                ):
+                    target_lang = list(t)[0]
+            if target_lang:
+                return [title_data[target_lang] for title_data in title_data_langs if target_lang in title_data]
+
+        else:
+            target_lang = list(title_data_langs[0].keys())[0]
+            return [title_data[target_lang] for title_data in title_data_langs if target_lang in title_data]
+
+    if len(title_data_langs_none) > 0:
+        return title_data_langs_none
+    else:
+        return None
 
 
 def hide_item_metadata(record, settings=None, item_type_data=None):
@@ -2346,3 +2417,36 @@ def create_tsv(files, language='en'):
 
     StringIO().close()
     return file_output
+
+
+def export_preprocess(pid, record, schema_type):
+    """Preprocess for export.
+
+    Args:
+        PersistentIdentifier : pid:
+        WekoRecord : record:
+        str : schema_type:
+    Returns:
+        str : data for export
+    """
+    formats = current_app.config.get('RECORDS_UI_EXPORT_FORMATS', {}).get(pid.pid_type, {})
+    fmt = formats.get(schema_type)
+
+    if fmt is False:
+        # If value is set to False, it means it was deprecated.
+        abort(410)
+    elif fmt is None:
+        abort(404)
+    else:
+        custom_record_medata_for_export(record)
+
+        if 'json' not in schema_type and 'bibtex' not in schema_type:
+            record.update({'@export_schema_type': schema_type})
+
+        serializer = obj_or_import_string(fmt['serializer'])
+        data = serializer.serialize(pid, record)
+
+        if isinstance(data, six.binary_type):
+            data = data.decode('utf8')
+
+        return data
