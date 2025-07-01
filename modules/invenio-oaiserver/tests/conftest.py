@@ -75,10 +75,10 @@ def base_app(instance_path):
         JSONSCHEMAS_HOST='inveniosoftware.org',
         TESTING=True,
         SECRET_KEY='CHANGE_ME',
-        #SQLALCHEMY_DATABASE_URI=os.environ.get('SQLALCHEMY_DATABASE_URI',
-        #                                        'sqlite:///test.db'),
+        # SQLALCHEMY_DATABASE_URI=os.environ.get('SQLALCHEMY_DATABASE_URI',
+        #                                         'sqlite:///test.db'),
         SQLALCHEMY_DATABASE_URI=os.getenv('SQLALCHEMY_DATABASE_URI',
-                                          'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest'),
+                                         'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest'),
         SQLALCHEMY_TRACK_MODIFICATIONS=True,
         SERVER_NAME='app',
         OAISERVER_ID_PREFIX='oai:inveniosoftware.org:recid/',
@@ -118,9 +118,9 @@ def base_app(instance_path):
     InvenioMARC21(app_)
     InvenioIndexer(app_)
     InvenioOAIServer(app_)
-    
+
     app_.register_blueprint(blueprint)
-    
+
     return app_
 
 @pytest.yield_fixture()
@@ -132,7 +132,7 @@ def app(base_app):
 def client(app):
     with app.test_client() as client:
         yield client
-        
+
 @pytest.yield_fixture()
 def db(app):
     """Database fixture."""
@@ -168,7 +168,7 @@ def users(app, db):
         originalroleuser = create_test_user(email='originalroleuser@test.org')
         originalroleuser2 = create_test_user(email='originalroleuser2@test.org')
         student = User.query.filter_by(email='student@test.org').first()
-        
+
     role_count = Role.query.filter_by(name='System Administrator').count()
     if role_count != 1:
         sysadmin_role = ds.create_role(name='System Administrator')
@@ -275,19 +275,19 @@ def users(app, db):
         {'email': user.email, 'id': user.id, 'obj': user},
         {'email': student.email,'id': student.id, 'obj': student}
     ]
-    
+
 @pytest.yield_fixture()
 def es_app(app):
     with open(join(dirname(__file__),"data/mappings/item-v1.0.0.json"),"r") as f:
     #with open(join(dirname(__file__),"data/v6/records/record-v1.0.0.json"),"r") as f:
         mapping = json.load(f)
     es = Elasticsearch("http://{}:9200".format(app.config["SEARCH_ELASTIC_HOSTS"]))
-    
+
     es.indices.create(
-        index=app.config["INDEXER_DEFAULT_INDEX"], 
+        index=app.config["INDEXER_DEFAULT_INDEX"],
         body=mapping, ignore=[400, 404]
     )
-    
+
     es.indices.put_alias(
         index=app.config["INDEXER_DEFAULT_INDEX"],
         name=app.config["SEARCH_UI_SEARCH_INDEX"],
@@ -296,16 +296,16 @@ def es_app(app):
     search = InvenioSearch(app, client=es)
     #search.register_mappings('items', 'tests.data')
     yield app
-    
+
     es.indices.delete_alias(
         index=app.config["INDEXER_DEFAULT_INDEX"],
         name=app.config["SEARCH_UI_SEARCH_INDEX"],
         ignore=[400, 404],
     )
     es.indices.delete(
-        index=app.config["INDEXER_DEFAULT_INDEX"], 
+        index=app.config["INDEXER_DEFAULT_INDEX"],
         ignore=[400, 404])
-    
+
 def mock_record_validate(self):
     """Mock validation."""
     pass
@@ -530,7 +530,7 @@ def identify(app, db):
         )
     db.session.add(iden)
     db.session.commit()
-    
+
     return [iden]
 
 @pytest.fixture()
@@ -540,7 +540,7 @@ def oaiset(app, db,without_oaiset_signals):
         name='test_name',
         description='some test description',
         search_pattern='test search')
-    
+
     db.session.add(oai)
     db.session.commit()
     return [oai]

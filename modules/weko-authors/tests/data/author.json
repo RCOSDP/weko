@@ -79,10 +79,41 @@
     "pk_id": "2"
   },
   {
+    "affiliationInfo": [
+      {
+        "affiliationNameInfo": [
+          {
+            "affiliationName": "",
+            "affiliationNameLang": "ja",
+            "affiliationNameShowFlg": "true"
+          }
+        ],
+        "identifierInfo": [
+          {
+            "affiliationId": "91011",
+            "affiliationIdType": "1",
+            "identifierShowFlg": "true"
+          }
+        ]
+      }
+    ],
     "authorIdInfo": [
       { "authorId": "123", "authorIdShowFlg": "true", "idType": "" }
     ],
+    "authorNameInfo": [
+      {
+        "familyName": "test2",
+        "firstName": "smith2",
+        "fullName": "test2 smith2",
+        "language": "en",
+        "nameFormat": "familyNmAndNm",
+        "nameShowFlg": "true"
+      }
+    ],
+    "emailInfo": [{ "email": "test.smith2@test.org" }],
+    "gather_flg": 0,
     "id": "24d4fa17-5d91-4d78-9e27-1a63a1c7b06f",
+    "is_deleted": false,
     "pk_id": "3"
   },
   {

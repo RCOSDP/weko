@@ -1,6 +1,6 @@
 import pytest
 import json
-from mock import patch
+from mock import patch, call
 from flask import current_app,url_for,make_response
 from invenio_accounts.testutils import login_user_via_session as login
 from weko_admin.models import AdminSettings
@@ -39,6 +39,7 @@ class TestShibSettingView:
             login(client=client, user=user)
             url = url_for("shibboleth.index")
             sibuser_html = 'weko_accounts/setting/shibuser.html'
+            mock_flash = mocker.patch("weko_accounts.admin.flash")
             mock_render = mocker.patch("weko_accounts.admin.ShibSettingView.render",return_value=make_response())
             current_app.config["WEKO_ACCOUNTS_SHIB_LOGIN_ENABLED"] = True
 
@@ -46,10 +47,12 @@ class TestShibSettingView:
             role_list = current_app.config['WEKO_ACCOUNTS_ROLE_LIST']
             attr_list = current_app.config['WEKO_ACCOUNTS_ATTRIBUTE_LIST']
             block_user_list = admin_settings[0].settings['blocked_ePPNs']
-            roles = admin_settings[2].settings
+            role_order = ["gakunin_role", "orthros_outside_role", "extra_role"]
+            roles = {key: admin_settings[2].settings[key] for key in role_order}
             set_language = "en"
             shib_flg = "1"
-            attributes = admin_settings[3].settings
+            attr_order = ["shib_eppn", "shib_role_authority_name", "shib_mail", "shib_user_name"]
+            attributes = {key: admin_settings[3].settings[key] for key in attr_order}
 
             data = {
                 "submit": "shib_form",
@@ -69,7 +72,6 @@ class TestShibSettingView:
 
             assert admin_settings[1].settings["shib_flg"] is True
             assert res.status_code==200
-
             mock_render.assert_called_with(
                 sibuser_html,
                 shib_flg=shib_flg,
@@ -81,6 +83,9 @@ class TestShibSettingView:
                 **roles,
                 **attributes
             )
+            mock_flash.assert_called_with('Updated Shibboleth settings', category='success')
+            mock_flash.reset_mock()
+
             current_app.config["WEKO_ACCOUNTS_SHIB_LOGIN_ENABLED"] = False
 
             data["shibbolethRadios"] = "0"
@@ -102,6 +107,8 @@ class TestShibSettingView:
                 **roles,
                 **attributes
             )
+            mock_flash.assert_called_with('Updated Shibboleth settings', category='success')
+            mock_flash.reset_mock()
 
             # デフォルトロールを変更
             mock_render = mocker.patch("weko_accounts.admin.ShibSettingView.render",return_value=make_response())
@@ -130,6 +137,12 @@ class TestShibSettingView:
                 **roles,
                 **attributes
             )
+            mock_flash.assert_has_calls([
+                call('Gakunin Role was updated.', category='success'),
+                call('Orthros Role was updated.', category='success'),
+                call('Extra Role was updated.', category='success')
+            ])
+            mock_flash.reset_mock()
 
             # 属性を変更
             mock_render = mocker.patch("weko_accounts.admin.ShibSettingView.render",return_value=make_response())
@@ -160,6 +173,14 @@ class TestShibSettingView:
                 **roles,
                 **attributes
             )
+            mock_flash.assert_has_calls([
+                call('Shibboleth Eppn mapping was updated.', category='success'),
+                call('Shibboleth Role Authority Name mapping was updated.', category='success'),
+                call('Shibboleth Mail mapping was updated.', category='success'),
+                call('Shibboleth User Name mapping was updated.', category='success')
+            ])
+            mock_flash.reset_mock()
+
 
             # ブロックユーザーを変更
             mock_render = mocker.patch("weko_accounts.admin.ShibSettingView.render",return_value=make_response())
@@ -182,11 +203,33 @@ class TestShibSettingView:
                 **roles,
                 **attributes
             )
+            mock_flash.assert_called_with('Updated User Login Block settings', category='success')
+            mock_flash.reset_mock()
+
+            # No changes
+            mock_render = mocker.patch("weko_accounts.admin.ShibSettingView.render",return_value=make_response())
+            res = client.post(url, data=data)
+
+            assert res.status_code == 200
+            mock_render.assert_called_with(
+                sibuser_html,
+                shib_flg=shib_flg,
+                set_language=set_language,
+                role_list=role_list,
+                attr_list=attr_list,
+                block_user_list=block_user_list,
+                enable_login_user_list=[],
+                **roles,
+                **attributes
+            )
+            mock_flash.assert_called_with('Shibboleth Settings have been saved.', category='success')
+            mock_flash.reset_mock()
 
             # raise BaseException
             with patch("weko_accounts.admin.ShibSettingView.render",side_effect=BaseException):
                 res = client.post(url)
                 assert res.status_code == 400
+                mock_flash.assert_not_called()
 
             # method is GET
             mock_render = mocker.patch("weko_accounts.admin.ShibSettingView.render",return_value=make_response())
@@ -203,6 +246,7 @@ class TestShibSettingView:
                 **roles,
                 **attributes
             )
+            mock_flash.assert_not_called()
 
     @pytest.fixture
     def admin_settings(self, db):

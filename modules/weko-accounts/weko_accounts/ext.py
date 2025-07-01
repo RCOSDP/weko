@@ -24,6 +24,7 @@ from flask_babelex import gettext as _
 from flask_login import user_logged_in, user_logged_out
 
 from . import config
+from .utils import get_sp_info
 
 
 class WekoAccounts(object):
@@ -56,6 +57,8 @@ class WekoAccounts(object):
         app.extensions['weko-accounts'] = self
 
         self.init_limiter(app)
+
+        self.init_login(app)
 
     def init_config(self, app):
         """
@@ -116,6 +119,15 @@ class WekoAccounts(object):
         """
         from .utils import limiter
         limiter.init_app(app)
+    
+    def init_login(self, app):
+        """Initialize login context processor.
+
+        Args:
+            app (flask.Flask): The flask application.
+        """
+        security = app.extensions['security']
+        security.login_context_processor(get_sp_info)
 
 
 class WekoAccountsREST(object):

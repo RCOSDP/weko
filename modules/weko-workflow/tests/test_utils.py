@@ -22,7 +22,7 @@ from invenio_records_files.models import RecordsBuckets
 from invenio_files_rest.models import Bucket
 from invenio_cache import current_cache
 from invenio_accounts.testutils import login_user_via_session as login
-from invenio_pidstore.models import PersistentIdentifier, PIDStatus
+from invenio_pidstore.models import PersistentIdentifier, PIDStatus, RecordIdentifier
 from flask_login.utils import login_user,logout_user
 from tests.helpers import json_data, create_activity
 from invenio_mail.models import MailConfig
@@ -990,9 +990,6 @@ def test_prepare_edit_workflow(app, workflow, db_records,users,mocker):
             "activity_login_user":1,
             "activity_update_user":1
         }
-        current_app.config.update(
-        WEKO_RECORDS_REFERENCE_SUPPLEMENT=['isSupplementTo','isSupplementedBy']
-        )
         recid = db_records[6][0]
         deposit = db_records[6][6]
         res = prepare_edit_workflow(data,recid,deposit)
@@ -1071,18 +1068,18 @@ def test_prepare_delete_workflow(app, db_records,users,db_register,mocker):
     current_app.config.update(
         WEKO_NOTIFICATIONS=False
     )
-    with app.test_request_context():
-        with patch("flask_login.utils._get_user", return_value=users[0]['obj']):
-            with patch("weko_records_ui.views.check_created_id_by_recid", return_value=True):
-                with patch("weko_records_ui.views.soft_delete", return_value=True):
-                    result = prepare_delete_workflow(del_post_activity, del_recid, del_deposit)
-                    assert result.workflow_id
+    with app.test_request_context(), \
+            patch("flask_login.utils._get_user", return_value=users[0]['obj']), \
+            patch("weko_records_ui.views.check_created_id_by_recid", return_value=True), \
+            patch("weko_records_ui.views.soft_delete", return_value=True):
+        result = prepare_delete_workflow(del_post_activity, del_recid, del_deposit)
+        assert result.workflow_id
 
-                    result = prepare_delete_workflow(post_activity_1, recid_1, deposit_1)
-                    assert result.workflow_id
+        result = prepare_delete_workflow(post_activity_1, recid_1, deposit_1)
+        assert result.workflow_id
 
-                    result = prepare_delete_workflow(app_post_activity, app_recid, app_deposit)
-                    assert result.workflow_id
+        result = prepare_delete_workflow(app_post_activity, app_recid, app_deposit)
+        assert result.workflow_id
 
 # def handle_finish_workflow(deposit, current_pid, recid):
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_handle_finish_workflow -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
@@ -1095,8 +1092,9 @@ def test_handle_finish_workflow(workflow, db_records, mocker, db_itemtype2):
 
     deposit = db_records[2][6]
     current_pid = db_records[2][0]
-    recid = db_records[2][2]
-    result = handle_finish_workflow(deposit,current_pid,recid)
+    recid = MagicMock(spec=RecordIdentifier, recid=current_pid.pid_value)
+    with patch('weko_deposit.api.WekoIndexer.update_es_data'):
+        result = handle_finish_workflow(deposit,current_pid,recid)
     assert result
 
     with patch('weko_deposit.api.WekoIndexer.update_es_data'):
@@ -1133,8 +1131,9 @@ def test_handle_finish_workflow_external_system(workflow, db_records, mocker):
     mocker.patch("weko_workflow.utils.ItemReference.get_src_references", return_value=MagicMock())
 
     current_pid = PersistentIdentifier.get("recid", "1")
+    recid = MagicMock(spec=RecordIdentifier, recid=current_pid.pid_value)
     with patch('weko_workflow.utils.call_external_system') as mock_external:
-        handle_finish_workflow(deposit, current_pid, current_pid.pid_value)
+        handle_finish_workflow(deposit, current_pid, recid)
         mock_external.assert_called()
         assert mock_external.call_args[1]["old_record"] is None
         assert mock_external.call_args[1]["new_record"] is not None
@@ -2759,6 +2758,25 @@ def test___init_activity_detail_data_for_guest(app,db,users,db_register,mocker):
             id=db_register["workflow"].itemtype_id,
         )
 
+        result = __init_activity_detail_data_for_guest(activity_id,community_id)
+        assert result == test
+
+        test_item_login_data = (
+            "weko_items_ui/iframe/item_edit.html",
+            True,
+            False,
+            item,
+            "/items/jsonschema/1",
+            "/items/schemaform/1",
+            "/items/iframe/model/save",
+            [],
+            {},
+            False,
+            [],
+            False,
+            {"researchmap" : False}
+        )
+        mocker.patch("weko_items_ui.api.item_login",return_value=test_item_login_data)
         result = __init_activity_detail_data_for_guest(activity_id,community_id)
         assert result == test
 

@@ -8,10 +8,9 @@ from flask_login.utils import login_user
 from invenio_accounts.models import Role, User,userrole
 from weko_user_profiles.models import UserProfile
 from weko_accounts.models import ShibbolethUser
-from weko_accounts.api import ShibUser,get_user_info_by_role_name,sync_shib_gakunin_map_groups,update_roles
+from weko_accounts.api import ShibUser,get_user_info_by_role_name,sync_shib_gakunin_map_groups,update_roles,update_browsing_role,remove_browsing_role,update_contribute_role,remove_contribute_role,bind_roles_to_indices
 from invenio_db import db as db_
 from invenio_accounts import InvenioAccounts
-from weko_accounts.api import ShibUser,get_user_info_by_role_name,sync_shib_gakunin_map_groups,update_roles,update_browsing_role,remove_browsing_role,update_contribute_role,remove_contribute_role
 from weko_index_tree.models import Index
 
 #class ShibUser(object):
@@ -51,8 +50,8 @@ class TestShibUser:
 
         roles = ['System Administrator','Repository Administrator']
         result = shibuser._set_weko_user_role(roles)
-        assert shibuser.user.roles == [role_repoadmin,role_sysadmin]
-        assert shibuser.shib_user.shib_roles == [role_sysadmin]
+        assert set(shibuser.user.roles) == {role_repoadmin, role_sysadmin}
+        assert set(shibuser.shib_user.shib_roles) == {role_repoadmin, role_sysadmin}
 
         # raise Exception
         error = Exception("test_error")
@@ -228,7 +227,7 @@ class TestShibUser:
 
         # exist self.user, issubset, ret is None
         attr = {
-            "shib_role_authority_name":"管理者;図書館員"
+            "shib_role_authority_name":"管理者;機関内のOrthros"
         }
         shibuser = ShibUser(attr)
         shibuser.user = users[0]["obj"]
@@ -278,7 +277,7 @@ class TestShibUser:
         assert flg == False
         assert msg == 'Failed to login.'
 #    def check_in(self):
-class TestShibUser:
+class TestShibUserExtra:
     @pytest.fixture
     def app(self,db):
         app = Flask(__name__)
@@ -300,9 +299,9 @@ class TestShibUser:
         app.config['WEKO_ACCOUNTS_IDP_ENTITY_ID'] = 'test_entity_id'
         app.config['CACHE_REDIS_DB'] = 1
         InvenioAccounts(app)
-        db_.init_app(app)
-        with app.app_context():
-            db_.create_all()
+        # db_.init_app(app)
+        # with app.app_context():
+        #     db_.create_all()
         return app
 
     @pytest.fixture
@@ -340,7 +339,7 @@ class TestShibUser:
         shib_user_instance.user = user
         shib_user_instance.shib_user = shib_user
         return shib_user_instance
-#.tox/c1/bin/pytest --cov=weko_accounts tests/test_api.py::TestShibUser::test_check_in -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+#.tox/c1/bin/pytest --cov=weko_accounts tests/test_api.py::TestShibUserExtra::test_check_in -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
     def test_check_in(self, app, mocker):
         shibuser = ShibUser({})
         shibuser.user = MagicMock(spec=User)
@@ -408,7 +407,7 @@ class TestShibUser:
             assert result is None
             shibuser.user.roles.clear.assert_called_once()
 
-#.tox/c1/bin/pytest --cov=weko_accounts tests/test_api.py::TestShibUser::test_get_roles_to_add -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+#.tox/c1/bin/pytest --cov=weko_accounts tests/test_api.py::TestShibUserExtra::test_get_roles_to_add -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
     def test_get_roles_to_add(self, app, mocker):
         shibuser = ShibUser({
             'isMemberOf': ['role1'],
@@ -454,7 +453,7 @@ class TestShibUser:
             with pytest.raises(KeyError, match='WEKO_ACCOUNTS_IDP_ENTITY_ID is missing in config'):
                 shibuser._get_roles_to_add()
 
-#.tox/c1/bin/pytest --cov=weko_accounts tests/test_api.py::TestShibUser::test_find_organization_name -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+# .tox/c1/bin/pytest --cov=weko_accounts tests/test_api.py::TestShibUserExtra::test_find_organization_name -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
     def test_find_organization_name(self, shib_user_a, app, mocker):
         with app.app_context():
             with patch('weko_accounts.api.db.session') as mock_db_session, \
@@ -485,28 +484,51 @@ class TestShibUser:
                 mocker.patch("weko_accounts.api.ShibUser.get_organization_from_api", return_value="Gakunin2")
                 result = shib_user_a._find_organization_name(group_ids)
                 assert result == True
+                assert mock_db_session.commit.call_count == 0
+                assert mock_db_session.rollback.call_count == 0
+                mock_db_session.commit.reset_mock()
 
                 # 機関内のOrthrosのorganizationNameに登録がある場合のテスト
                 mocker.patch("weko_accounts.api.ShibUser.get_organization_from_api", return_value="Orthros")
                 result = shib_user_a._find_organization_name(group_ids)
                 assert result == True
+                assert mock_db_session.commit.call_count == 0
+                assert mock_db_session.rollback.call_count == 0
+                mock_db_session.commit.reset_mock()
 
                 # 機関外のOrthrosのorganizationNameに登録がある場合のテスト
                 mocker.patch("weko_accounts.api.ShibUser.get_organization_from_api", return_value="OutsideOrthros")
                 result = shib_user_a._find_organization_name(group_ids)
                 assert result == True
+                assert mock_db_session.commit.call_count == 0
+                assert mock_db_session.rollback.call_count == 0
+                mock_db_session.commit.reset_mock()
 
                 # その他のorganizationNameに登録がある場合のテスト
                 mocker.patch("weko_accounts.api.ShibUser.get_organization_from_api", return_value="Extra")
                 result = shib_user_a._find_organization_name(group_ids)
                 assert result == True
+                assert mock_db_session.commit.call_count == 0
+                assert mock_db_session.rollback.call_count == 0
+                mock_db_session.commit.reset_mock()
 
                 # organizationNameに登録がない場合のテスト
                 mocker.patch("weko_accounts.api.ShibUser.get_organization_from_api", return_value="invalid")
                 result = shib_user_a._find_organization_name(group_ids)
                 assert result == False
+                assert mock_db_session.commit.call_count == 1
+                assert mock_db_session.rollback.call_count == 0
+                mock_db_session.commit.reset_mock()
 
-#.tox/c1/bin/pytest --cov=weko_accounts tests/test_api.py::TestShibUser::test_assign_roles_to_user -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+                # Exception Test
+                mock_db_session.commit.side_effect = Exception("Test exception")
+                with pytest.raises(Exception):
+                    shib_user_a._find_organization_name(group_ids)
+                assert mock_db_session.commit.call_count == 1
+                assert mock_db_session.rollback.call_count == 1
+                assert mock_current_app.logger.error.call_count == 1
+
+# .tox/c1/bin/pytest --cov=weko_accounts tests/test_api.py::TestShibUserExtra::test_assign_roles_to_user -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
     def test_assign_roles_to_user(self, shib_user_a, app, mocker):
         with app.app_context():
             with patch('weko_accounts.api.Role') as mock_role, \
@@ -539,7 +561,8 @@ class TestShibUser:
                 assert mock_role.query.filter_by.call_count == 6
                 assert mock_datastore.add_role_to_user.call_count == 0
                 assert mock_db_session.commit.call_count == 1
-#.tox/c1/bin/pytest --cov=weko_accounts tests/test_api.py::TestShibUser::test_assign_roles_to_user_with_roles -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+
+# .tox/c1/bin/pytest --cov=weko_accounts tests/test_api.py::TestShibUserExtra::test_assign_roles_to_user_with_roles -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
     def test_assign_roles_to_user_with_roles(self,shib_user_a, app):
         with app.app_context():
             with patch('weko_accounts.api.Role') as mock_role, \
@@ -574,7 +597,7 @@ class TestShibUser:
                 assert mock_datastore.add_role_to_user.call_count == 5
                 assert mock_db_session.commit.call_count == 1
 
-#.tox/c1/bin/pytest --cov=weko_accounts tests/test_api.py::TestShibUser::test_assign_roles_to_user_exception -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+# .tox/c1/bin/pytest --cov=weko_accounts tests/test_api.py::TestShibUserExtra::test_assign_roles_to_user_exception -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
     def test_assign_roles_to_user_exception(self, shib_user_a, app, mocker):
         with app.app_context():
             with patch('weko_accounts.api.Role') as mock_role, \
@@ -613,7 +636,7 @@ class TestShibUser:
                 assert mock_db_session.commit.call_count == 1
                 assert mock_db_session.rollback.call_count == 1
 
-# .tox/c1/bin/pytest --cov=weko_accounts tests/test_api.py::TestShibUser::test_get_ouganization_from_api -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+# .tox/c1/bin/pytest --cov=weko_accounts tests/test_api.py::TestShibUserExtra::test_get_ouganization_from_api -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
     def test_get_ouganization_from_api(self, app):
         """
         PeopleAPIからorganization_nameを取得するメソッドテスト
@@ -646,29 +669,33 @@ class TestShibUser:
 
 #    @classmethod
 #    def shib_user_logout(cls):
-# .tox/c1/bin/pytest --cov=weko_accounts tests/test_api.py::TestShibUser::test_shib_user_logout -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
-    def test_shib_user_logout(self,request_context,users,mocker):
-        user = users[0]["obj"]
-        login_user(user)
-        mock_send = mocker.patch("weko_accounts.api.user_logged_out.send")
-        shibuser = ShibUser({})
-        shibuser.shib_user_logout()
-        mock_send.assert_called_with(current_app._get_current_object(),user=user)
+# .tox/c1/bin/pytest --cov=weko_accounts tests/test_api.py::test_shib_user_logout -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_shib_user_logout(request_context,users,mocker):
+    user = users[0]["obj"]
+    login_user(user)
+    mock_send = mocker.patch("weko_accounts.api.user_logged_out.send")
+    shibuser = ShibUser({})
+    shibuser.shib_user_logout()
+    mock_send.assert_called_with(current_app._get_current_object(),user=user)
+
+
 #def get_user_info_by_role_name(role_name):
 # .tox/c1/bin/pytest --cov=weko_accounts tests/test_api.py::test_get_user_info_by_role_name -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_get_user_info_by_role_name(users):
     result = get_user_info_by_role_name('Repository Administrator')
-    assert result == [users[1]["obj"],users[6]["obj"]]
+    assert result == [users[1]["obj"]]
 
 # .tox/c1/bin/pytest --cov=weko_accounts tests/test_api.py::test_sync_shib_gakunin_map_groups_success -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
-def test_sync_shib_gakunin_map_groups_success(app, client):
-    with app.test_request_context('/sync', method='POST', data={'WEKO_ACCOUNTS_IDP_ENTITY_ID': 'https://example.com'}):
-        with patch('weko_accounts.api.RedisConnection') as mock_redis_conn, \
-             patch('weko_accounts.api.Role') as mock_role, \
+def test_sync_shib_gakunin_map_groups_success(app, client, group_info_redis_connect):
+    redis = group_info_redis_connect.redis
+    with app.test_request_context('/sync', method='POST'):
+        app.config['WEKO_ACCOUNTS_IDP_ENTITY_ID'] = 'https://example.com'
+        with patch('weko_accounts.api.Role') as mock_role, \
              patch('weko_accounts.api.update_roles') as mock_update_roles:
 
             # Redisから取得するグループリストとデータベースのロールリストが異なる場合
-            mock_redis_conn().connection().lrange.return_value = ['role1', 'role3']
+            redis.delete('example_com_gakunin_groups')
+            redis.rpush('example_com_gakunin_groups', 'role1', 'role3')
             mock_role1 = MagicMock()
             mock_role1.name = 'role1'
             mock_role2 = MagicMock()
@@ -678,17 +705,20 @@ def test_sync_shib_gakunin_map_groups_success(app, client):
             sync_shib_gakunin_map_groups()
 
             # update_rolesが呼び出されることを確認
-            mock_update_roles.assert_called_once()
+            mock_update_roles.assert_called_once_with(
+                {'role1', 'role3'}, [mock_role1, mock_role2])
 
 # .tox/c1/bin/pytest --cov=weko_accounts tests/test_api.py::test_sync_shib_gakunin_map_groups_no_update_needed -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
-def test_sync_shib_gakunin_map_groups_no_update_needed(app, client):
-    with app.test_request_context('/sync', method='POST', data={'WEKO_ACCOUNTS_IDP_ENTITY_ID': 'https://example.com'}):
-        with patch('weko_accounts.api.RedisConnection') as mock_redis_conn, \
-             patch('weko_accounts.api.Role') as mock_role, \
+def test_sync_shib_gakunin_map_groups_no_update_needed(app, client, group_info_redis_connect):
+    redis = group_info_redis_connect.redis
+    with app.test_request_context('/sync', method='POST'):
+        app.config['WEKO_ACCOUNTS_IDP_ENTITY_ID'] = 'https://example.com'
+        with patch('weko_accounts.api.Role') as mock_role, \
              patch('weko_accounts.api.update_roles') as mock_update_roles:
 
             # Redisから取得するグループリストとデータベースのロールリストが同じ場合
-            mock_redis_conn().connection().lrange.return_value = ['role1', 'role2']
+            redis.delete('example_com_gakunin_groups')
+            redis.rpush('example_com_gakunin_groups', 'role1', 'role2')
             mock_role1 = MagicMock()
             mock_role1.name = 'role1'
             mock_role2 = MagicMock()
@@ -702,42 +732,45 @@ def test_sync_shib_gakunin_map_groups_no_update_needed(app, client):
 
 # .tox/c1/bin/pytest --cov=weko_accounts tests/test_api.py::test_sync_shib_gakunin_map_groups_key_error -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_sync_shib_gakunin_map_groups_key_error(app, client):
-    with app.test_request_context('/sync', method='POST', data={}):
-        with patch('weko_accounts.api.current_app') as mock_current_app:
+    with app.test_request_context('/sync', method='POST'):
+        with patch('weko_accounts.api.current_app.logger') as mock_logger:
             with pytest.raises(KeyError):
                 sync_shib_gakunin_map_groups()
-            mock_current_app.logger.error.assert_called_once()
+            mock_logger.error.assert_called_once()
 
 # .tox/c1/bin/pytest --cov=weko_accounts tests/test_api.py::test_sync_shib_gakunin_map_groups_redis_connection_error -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_sync_shib_gakunin_map_groups_redis_connection_error(app, client):
-    with app.test_request_context('/sync', method='POST', data={'WEKO_ACCOUNTS_IDP_ENTITY_ID': 'https://example.com'}):
+    with app.test_request_context('/sync', method='POST'):
+        app.config['WEKO_ACCOUNTS_IDP_ENTITY_ID'] = 'https://example.com'
         with patch('weko_accounts.api.RedisConnection') as mock_redis_conn, \
-             patch('weko_accounts.api.current_app') as mock_current_app:
+             patch('weko_accounts.api.current_app.logger') as mock_logger:
 
             mock_redis_conn().connection.side_effect = redis.ConnectionError
 
             with pytest.raises(redis.ConnectionError):
                 sync_shib_gakunin_map_groups()
-            mock_current_app.logger.error.assert_called_once()
+            mock_logger.error.assert_called_once()
 
-#.tox/c1/bin/pytest --cov=weko_accounts tests/test_api.py::test_sync_shib_gakunin_map_groups_unexpected_error -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+# .tox/c1/bin/pytest --cov=weko_accounts tests/test_api.py::test_sync_shib_gakunin_map_groups_unexpected_error -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_sync_shib_gakunin_map_groups_unexpected_error(app, client):
-    with app.test_request_context('/sync', method='POST', data={'WEKO_ACCOUNTS_IDP_ENTITY_ID': 'https://example.com'}):
+    with app.test_request_context('/sync', method='POST'):
+        app.config['WEKO_ACCOUNTS_IDP_ENTITY_ID'] = 'https://example.com'
         with patch('weko_accounts.api.RedisConnection') as mock_redis_conn, \
-             patch('weko_accounts.api.current_app') as mock_current_app:
+             patch('weko_accounts.api.current_app.logger') as mock_logger:
 
             mock_redis_conn().connection.side_effect = Exception
 
             with pytest.raises(Exception):
                 sync_shib_gakunin_map_groups()
-            mock_current_app.logger.error.assert_called_once()
+            mock_logger.error.assert_called_once()
 
-#.tox/c1/bin/pytest --cov=weko_accounts tests/test_api.py::test_update_roles_add_new_roles -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
-def test_update_roles_add_new_roles(app, db, mocker):
+# .tox/c1/bin/pytest --cov=weko_accounts tests/test_api.py::test_update_roles -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_update_roles(app, db, mocker):
     with app.app_context():
+        mock_bind = mocker.patch('weko_accounts.api.bind_roles_to_indices')
         # テストデータの準備
         map_group_list = ['group1', 'group2', 'group3','']
-        existing_role_names = {'group1', 'group4'}
+        existing_role_names = {'group1', 'jc_group4'}
 
         # 既存のロールを追加
         existing_roles = []
@@ -756,129 +789,142 @@ def test_update_roles_add_new_roles(app, db, mocker):
         assert 'group1' in role_names
         assert 'group2' in role_names  # 新しいロールが追加されていることを確認
         assert 'group3' in role_names  # 新しいロールが追加されていることを確認
-        assert 'group4' not in role_names  # 既存のロールが削除されていることを確認
+        assert 'jc_group4' not in role_names  # 既存のロールが削除されていることを確認
         assert '' not in role_names  # 空のロールが追加されていないことを確認
 
-#.tox/c1/bin/pytest --cov=weko_accounts tests/test_api.py::test_update_roles_with_permissions -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
-def test_update_roles_with_permissions(app, db, mocker):
+        new_roles = [r for r in roles if r.name in ['group2', 'group3']]
+        remove_role_ids = [r.id for r in existing_roles if r.name == 'jc_group4']
+        mock_bind.assert_called_once_with([], new_roles, remove_role_ids)
+
+        with patch('weko_accounts.api.db.session.commit', side_effect=Exception("Test exception")),\
+            patch('weko_accounts.api.current_app.logger') as mock_logger:
+            with pytest.raises(Exception):
+                map_group_list = ['group5']
+                existing_roles = [existing_roles[0]]
+                update_roles(map_group_list, existing_roles)
+            mock_logger.error.assert_called_once_with('Error adding new roles: Test exception')
+
+# .tox/c1/bin/pytest --cov=weko_accounts tests/test_api.py::test_bind_roles_to_indices_with_all_permissions -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_bind_roles_to_indices_with_all_permissions(app, indices):
     with app.app_context():
-        # テストデータの準備
-        map_group_list = ['group1', 'group2', 'group3', '']
-        existing_role_names = {'group1', 'group4'}
+        # setting config
+        app.config['WEKO_INDEXTREE_GAKUNIN_GROUP_DEFAULT_BROWSING_PERMISSION'] = True
+        app.config['WEKO_INDEXTREE_GAKUNIN_GROUP_DEFAULT_CONTRIBUTE_PERMISSION'] = True
 
-        # 既存のロールを追加
-        existing_roles = []
-        for role_name in existing_role_names:
-            role = Role(name=role_name, description="description")
-            db.session.add(role)
-            existing_roles.append(role)
-        db.session.commit()
+        # create test data
+        new_role1 = Role(id=3, name='group3', description='description')
+        new_role2 = Role(id=4, name='group4', description='description')
 
-        # Indexインスタンスを追加
-        index1 = Index(id=1, parent=0, position=1, index_name='group1', index_name_english='Group 1 English')
-        index2 = Index(id=2, parent=0, position=2, index_name='group2', index_name_english='Group 2 English')
-        index3 = Index(id=3, parent=0, position=3, index_name='group3', index_name_english='Group 3 English')
-        db.session.add(index1)
-        db.session.add(index2)
-        db.session.add(index3)
-        db.session.commit()
+        bind_roles_to_indices([], [new_role1, new_role2], [2, 5])
 
-        # 設定をモック
-        app.config['WEKO_INNDEXTREE_GAKUNIN_GROUP_DEFAULT_BROWSING_PERMISSION'] = True
-        app.config['WEKO_INNDEXTREE_GAKUNIN_GROUP_DEFAULT_CONTRIBUTE_PERMISSION'] = True
+        result_indices = sorted(Index.query.all(), key=lambda x: x.id)
+        assert result_indices[0].browsing_role == '1,3,4'
+        assert result_indices[0].contribute_role == '1,3,4'
+        assert result_indices[1].browsing_role == '1,3,4'
+        assert result_indices[1].contribute_role == '3,4'
+        assert result_indices[2].browsing_role == '3,4'
+        assert result_indices[2].contribute_role == '1,3,4'
+        assert result_indices[3].browsing_role == '3,4'
+        assert result_indices[3].contribute_role == '3,4'
 
-        # APIモジュールのメソッドをモック
-        mock_update_browsing_role = mocker.patch('weko_accounts.api.update_browsing_role')
-        mock_remove_browsing_role = mocker.patch('weko_accounts.api.remove_browsing_role')
-        mock_update_contribute_role = mocker.patch('weko_accounts.api.update_contribute_role')
-        mock_remove_contribute_role = mocker.patch('weko_accounts.api.remove_contribute_role')
+        with patch('weko_accounts.api.db.session.commit', side_effect=Exception("Test exception")),\
+            patch('weko_accounts.api.current_app.logger') as mock_logger:
+            with pytest.raises(Exception):
+                bind_roles_to_indices([], [new_role1, new_role2], [2, 5])
+            mock_logger.error.assert_called_once_with('Error binding roles to indices: Test exception')
 
-        # update_rolesの呼び出し
-        update_roles(map_group_list, existing_roles)
-
-        # APIモジュールのメソッドが呼び出されたことを確認
-        assert mock_update_browsing_role.call_count == 1
-        assert mock_remove_browsing_role.call_count == 1
-        assert mock_update_contribute_role.call_count == 1
-        assert mock_remove_contribute_role.call_count == 1
-
-def test_update_roles_with_permissions_false(app, db, mocker):
+# .tox/c1/bin/pytest --cov=weko_accounts tests/test_api.py::test_bind_roles_to_indices_with_browsing_permissions -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_bind_roles_to_indices_with_browsing_permissions(app, indices):
     with app.app_context():
-        # テストデータの準備
-        map_group_list = ['group1', 'group2', 'group3', '']
-        existing_role_names = {'group1', 'group4'}
+        # setting config
+        app.config['WEKO_INDEXTREE_GAKUNIN_GROUP_DEFAULT_BROWSING_PERMISSION'] = True
+        app.config['WEKO_INDEXTREE_GAKUNIN_GROUP_DEFAULT_CONTRIBUTE_PERMISSION'] = False
 
-        # 既存のロールを追加
-        existing_roles = []
-        for role_name in existing_role_names:
-            role = Role(name=role_name, description="description")
-            db.session.add(role)
-            existing_roles.append(role)
-        db.session.commit()
+        # create test data
+        new_role1 = Role(id=3, name='group3', description='description')
+        new_role2 = Role(id=4, name='group4', description='description')
 
-        # Indexインスタンスを追加
-        index1 = Index(id=1, parent=0, position=1, index_name='group1', index_name_english='Group 1 English')
-        index2 = Index(id=2, parent=0, position=2, index_name='group2', index_name_english='Group 2 English')
-        index3 = Index(id=3, parent=0, position=3, index_name='group3', index_name_english='Group 3 English')
-        db.session.add(index1)
-        db.session.add(index2)
-        db.session.add(index3)
-        db.session.commit()
+        bind_roles_to_indices([], [new_role1, new_role2], [2, 5])
 
-        # 設定をモック
-        app.config['WEKO_INNDEXTREE_GAKUNIN_GROUP_DEFAULT_BROWSING_PERMISSION'] = False
-        app.config['WEKO_INNDEXTREE_GAKUNIN_GROUP_DEFAULT_CONTRIBUTE_PERMISSION'] = False
+        result_indices = sorted(Index.query.all(), key=lambda x: x.id)
+        assert result_indices[0].browsing_role == '1,3,4'
+        assert result_indices[0].contribute_role == '1,3'
+        assert result_indices[1].browsing_role == '1,3,4'
+        assert result_indices[1].contribute_role == ''
+        assert result_indices[2].browsing_role == '3,4'
+        assert result_indices[2].contribute_role == '1,3'
+        assert result_indices[3].browsing_role == '3,4'
+        assert result_indices[3].contribute_role == ''
 
-        # APIモジュールのメソッドをモック
-        mock_update_browsing_role = mocker.patch('weko_accounts.api.update_browsing_role')
-        mock_remove_browsing_role = mocker.patch('weko_accounts.api.remove_browsing_role')
-        mock_update_contribute_role = mocker.patch('weko_accounts.api.update_contribute_role')
-        mock_remove_contribute_role = mocker.patch('weko_accounts.api.remove_contribute_role')
-
-        # update_rolesの呼び出し
-        update_roles(map_group_list, existing_roles)
-
-        # APIモジュールのメソッドが呼び出されたことを確認
-        assert mock_update_browsing_role.call_count == 0
-        assert mock_remove_browsing_role.call_count == 0
-        assert mock_update_contribute_role.call_count == 0
-        assert mock_remove_contribute_role.call_count == 0
-
-#.tox/c1/bin/pytest --cov=weko_accounts tests/test_api.py::test_update_roles_with_permissions_index_none -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
-def test_update_roles_with_permissions_index_none(app, db, mocker):
+# .tox/c1/bin/pytest --cov=weko_accounts tests/test_api.py::test_bind_roles_to_indices_with_contribute_permissions -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_bind_roles_to_indices_with_contribute_permissions(app, indices):
     with app.app_context():
-        # テストデータの準備
-        map_group_list = ['group1', 'group2', 'group3', '']
-        existing_role_names = {'group1', 'group4'}
+        # setting config
+        app.config['WEKO_INDEXTREE_GAKUNIN_GROUP_DEFAULT_BROWSING_PERMISSION'] = False
+        app.config['WEKO_INDEXTREE_GAKUNIN_GROUP_DEFAULT_CONTRIBUTE_PERMISSION'] = True
 
-        # 既存のロールを追加
-        existing_roles = []
-        for role_name in existing_role_names:
-            role = Role(name=role_name, description="description")
-            db.session.add(role)
-            existing_roles.append(role)
-        db.session.commit()
+        # create test data
+        new_role1 = Role(id=3, name='group3', description='description')
+        new_role2 = Role(id=4, name='group4', description='description')
 
-        # Indexインスタンスを設定しない
+        bind_roles_to_indices([], [new_role1, new_role2], [2, 5])
 
-        # 設定をモック
-        app.config['WEKO_INNDEXTREE_GAKUNIN_GROUP_DEFAULT_BROWSING_PERMISSION'] = True
-        app.config['WEKO_INNDEXTREE_GAKUNIN_GROUP_DEFAULT_CONTRIBUTE_PERMISSION'] = True
+        result_indices = sorted(Index.query.all(), key=lambda x: x.id)
+        assert result_indices[0].browsing_role == '1,3'
+        assert result_indices[0].contribute_role == '1,3,4'
+        assert result_indices[1].browsing_role == '1,3'
+        assert result_indices[1].contribute_role == '3,4'
+        assert result_indices[2].browsing_role == ''
+        assert result_indices[2].contribute_role == '1,3,4'
+        assert result_indices[3].browsing_role == ''
+        assert result_indices[3].contribute_role == '3,4'
 
-        # APIモジュールのメソッドをモック
-        mock_update_browsing_role = mocker.patch('weko_accounts.api.update_browsing_role')
-        mock_remove_browsing_role = mocker.patch('weko_accounts.api.remove_browsing_role')
-        mock_update_contribute_role = mocker.patch('weko_accounts.api.update_contribute_role')
-        mock_remove_contribute_role = mocker.patch('weko_accounts.api.remove_contribute_role')
+# .tox/c1/bin/pytest --cov=weko_accounts tests/test_api.py::test_bind_roles_to_indices_with_no_permissions -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_bind_roles_to_indices_with_no_permissions(app, indices):
+    with app.app_context():
+        # setting config
+        app.config['WEKO_INDEXTREE_GAKUNIN_GROUP_DEFAULT_BROWSING_PERMISSION'] = False
+        app.config['WEKO_INDEXTREE_GAKUNIN_GROUP_DEFAULT_CONTRIBUTE_PERMISSION'] = False
 
-        # update_rolesの呼び出し
-        update_roles(map_group_list, existing_roles)
+        # create test data
+        new_role1 = Role(id=3, name='group3', description='description')
+        new_role2 = Role(id=4, name='group4', description='description')
 
-        # APIモジュールのメソッドが呼び出されたことを確認
-        assert mock_update_browsing_role.call_count == 0
-        assert mock_remove_browsing_role.call_count == 0
-        assert mock_update_contribute_role.call_count == 0
-        assert mock_remove_contribute_role.call_count == 0
+        bind_roles_to_indices([], [new_role1, new_role2], [2, 5])
+
+        result_indices = sorted(Index.query.all(), key=lambda x: x.id)
+        assert result_indices[0].browsing_role == '1,3'
+        assert result_indices[0].contribute_role == '1,3'
+        assert result_indices[1].browsing_role == '1,3'
+        assert result_indices[1].contribute_role == ''
+        assert result_indices[2].browsing_role == ''
+        assert result_indices[2].contribute_role == '1,3'
+        assert result_indices[3].browsing_role == ''
+        assert result_indices[3].contribute_role == ''
+
+# .tox/c1/bin/pytest --cov=weko_accounts tests/test_api.py::test_bind_roles_to_indices_with_select_index -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_bind_roles_to_indices_with_select_index(app, indices):
+    with app.app_context():
+        # setting config
+        app.config['WEKO_INDEXTREE_GAKUNIN_GROUP_DEFAULT_BROWSING_PERMISSION'] = True
+        app.config['WEKO_INDEXTREE_GAKUNIN_GROUP_DEFAULT_CONTRIBUTE_PERMISSION'] = True
+
+        # create test data
+        new_role1 = Role(id=3, name='group3', description='description')
+        new_role2 = Role(id=4, name='group4', description='description')
+
+        bind_roles_to_indices([indices[1]], [new_role1, new_role2], [2, 5])
+
+        result_indices = sorted(Index.query.all(), key=lambda x: x.id)
+        assert result_indices[0].browsing_role == '1,2,3'
+        assert result_indices[0].contribute_role == '1,2,3'
+        assert result_indices[1].browsing_role == '1,3,4'
+        assert result_indices[1].contribute_role == '3,4'
+        assert result_indices[2].browsing_role == ''
+        assert result_indices[2].contribute_role == '1,2,3'
+        assert result_indices[3].browsing_role == ''
+        assert result_indices[3].contribute_role == ''
+
 #.tox/c1/bin/pytest --cov=weko_accounts tests/test_api.py::test_update_and_remove_browsing_role -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_update_and_remove_browsing_role(app, db):
     with app.app_context():

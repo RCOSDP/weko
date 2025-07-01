@@ -237,12 +237,12 @@ class TestApiCertificate:
 # .tox/c1/bin/pytest --cov=weko_admin tests/test_models.py::TestApiCertificate::test_insert_new_api_cert -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
     def test_insert_new_api_cert(self,db):
         result = ApiCertificate.insert_new_api_cert(
-            api_code="test_api",
+            api_code="tst",
             api_name="Test API",
             cert_data="test.test@test.org"
         )
         assert result == True
-        ac = ApiCertificate.query.filter_by(api_code="test_api").one()
+        ac = ApiCertificate.query.filter_by(api_code="tst").one()
         assert ac.api_name == "Test API"
         assert ac.cert_data == "test.test@test.org"
 
@@ -257,25 +257,25 @@ class TestApiCertificate:
 # .tox/c1/bin/pytest --cov=weko_admin tests/test_models.py::TestApiCertificate::test_update_api_cert -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
     def test_update_api_cert(self, db):
         # not exist api cert
-        result = ApiCertificate.update_api_cert("test_api","Test API","test.test@test.org")
+        result = ApiCertificate.update_api_cert("tst","Test API","test.test@test.org")
         assert result == False
 
         api = ApiCertificate(
-            api_code="test_api",
+            api_code="tst",
             api_name="CrossRef",
             cert_data="test.test@test.org"
         )
         db.session.add(api)
         db.session.commit()
 
-        result = ApiCertificate.update_api_cert("test_api","Test API","test.cert@test.org")
+        result = ApiCertificate.update_api_cert("tst","Test API","test.cert@test.org")
         assert result == True
-        ac = ApiCertificate.query.filter_by(api_code="test_api").one()
+        ac = ApiCertificate.query.filter_by(api_code="tst").one()
         assert ac.api_name == "Test API"
         assert ac.cert_data == "test.cert@test.org"
 
         with patch("weko_admin.models.db.session.commit",side_effect=Exception("test_error")):
-            result = ApiCertificate.update_api_cert("test_api","Test API","test.cert@test.org")
+            result = ApiCertificate.update_api_cert("tst","Test API","test.cert@test.org")
             assert result == False
 
 #class StatisticUnit(db.Model):
@@ -618,7 +618,7 @@ class TestFeedbackMailSetting:
         assert res.account_author == "1,2"
 
         # raise exception
-        with patch("weko_admin.models.db.session.commit",side_effect=BaseException("test_error")):
+        with patch("weko_admin.models.db.session.commit",side_effect=Exception("test_error")):
             result = FeedbackMailSetting.create(
                 account_author="1,2",
                 manual_mail={"email":["test.manual1@test.org","test.manual2@test.org"]},
@@ -748,11 +748,9 @@ class TestAdminSettings:
         # create
         AdminSettings.update(
             name="new_setting",
-            settings={"key":"value"},
-            id=10
+            settings={"key":"value"}
         )
-        result = AdminSettings.query.filter_by(id=10).one()
-        assert result.name=="new_setting"
+        result = AdminSettings.query.filter_by(name="new_setting").one()
         assert result.settings=={"key":"value"}
 
         with patch("weko_admin.models.db.session.commit", side_effect=BaseException("test_error")):
@@ -1011,7 +1009,8 @@ class TestFeedbackMailFailed:
         failed1 = FeedbackMailFailed(
             history_id=1,
             author_id=1,
-            mail="test.test1@test.org"
+            mail="test.test1@test.org",
+            id=1
         )
         db.session.add(failed1)
         db.session.commit()

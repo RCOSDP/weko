@@ -78,7 +78,7 @@ function createBlockUserSettingArea() {
  * @param {number} id インデックス
  * @param {string} kinds リストの種類
  * @param {string} value 選択中の値
- * @param {Array} defaultList 選択肢作成に使用するデフォルトリスト
+ * @param {Array|string} defaultList 選択肢作成に使用するデフォルトリスト
  * @returns
  */
 function createSelectList(id, kinds, value, defaultList) {
@@ -93,7 +93,12 @@ function createSelectList(id, kinds, value, defaultList) {
     select.attr("multiple", true);
   }
 
-  const selectLists = JSON.parse(defaultList.replace(/'/g, '"'));
+  let selectLists = [];
+  if (typeof defaultList === "string") {
+    selectLists = JSON.parse(defaultList.replace(/'/g, '"'));
+  } else {
+    selectLists = defaultList;
+  }
 
   selectLists.forEach((sel) => {
     const optionText =

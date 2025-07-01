@@ -99,6 +99,19 @@ class TestAuthors:
             result = Authors.get_author_by_id(1)
             assert result == None
 
+# .tox/c1/bin/pytest --cov=weko_authors tests/test_models.py::TestAuthors::test_get_authorIdInfo -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-authors/.tox/c1/tmp
+    def test_get_authorIdInfo(self, authors, authors_prefix_settings, db):
+
+        result = Authors.get_authorIdInfo('WEKO',[1000,2000])
+        assert result == []
+
+        result = Authors.get_authorIdInfo('WEKO',[1])
+        assert result == ["1"]
+
+        result = Authors.get_authorIdInfo('WEKO',[3])
+        assert result == []
+
+
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_models.py::TestAuthorsPrefixSettings -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-authors/.tox/c1/tmp
 class TestAuthorsPrefixSettings:
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_models.py::TestAuthorsPrefixSettings::test_create -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-authors/.tox/c1/tmp

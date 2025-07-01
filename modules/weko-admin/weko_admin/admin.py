@@ -1577,44 +1577,47 @@ class SwordAPIJsonldSettingsView(ModelView):
     create_template = WEKO_ADMIN_SWORD_API_JSONLD_TEMPLATE
     edit_template = WEKO_ADMIN_SWORD_API_JSONLD_TEMPLATE
 
+    column_labels = {
+        "oauth_client.name": _("Application"),
+        "oauth_client.user.email": _("Creator"),
+        "registration_type_id": _("Registration Type"),
+        "mapping.name": _("Mapping"),
+        "workflow.flows_name": _("Workflow"),
+
+    }
     column_list = (
-        "application",
+        "oauth_client.name",
         "active",
-        "creator",
-        "registration_type",
+        "oauth_client.user.email",
+        "registration_type_id",
         "metadata_collection",
         "duplicate_check"
+    )
+    column_filters = (
+        "oauth_client.name",
+        "active",
+        "oauth_client.user.email",
+        "registration_type_id",
+        "duplicate_check",
     )
     column_details_list = (
         "id",
         "created",
         "updated",
-        "application",
+        "oauth_client.name",
         "active",
-        "registration_type",
-        "workflow_name",
-        "mapping_name",
+        "registration_type_id",
+        "workflow.flows_name",
+        "mapping.name",
         "duplicate_check",
         "meta_data_api",
     )
-
-
-    def _format_application_name(view, context, model, name):
-        if not isinstance(model, SwordClientModel):
-            return ""
-        return model.oauth_client.name
 
     def _format_active(view, context, model, name):
         if model.active:
             return _("Active Message")
         else:
             return _("Inactive Message")
-
-    def _format_creator(view, context, model, name):
-        if not isinstance(model, SwordClientModel):
-            return ""
-
-        return model.oauth_client.user.email
 
     def _format_registration_type(view, context, model, name):
         if not isinstance(model, SwordClientModel):
@@ -1638,33 +1641,19 @@ class SwordAPIJsonldSettingsView(ModelView):
         else:
             return _("Inactive Message")
 
-    def _format_workflow_name(view, context, model, name):
-        if model.workflow_id is None:
-            return ""
-        workflow = WorkFlow()
-        wf = workflow.get_workflow_by_id(model.workflow_id)
-        if wf is None:
-            return ""
-        return wf.flows_name
-
-    def _format_mapping_name(view, context, model, name):
-        if model.mapping_id is None:
-            return ""
-        mapping = JsonldMapping.get_mapping_by_id(model.mapping_id)
-        if mapping is None:
-            return ""
-        return mapping.name
-
     column_formatters = {
-        "application": _format_application_name,
         "active": _format_active,
-        "creator": _format_creator,
-        "registration_type": _format_registration_type,
+        "registration_type_id": _format_registration_type,
         "metadata_collection": _format_metadata_collection,
         "duplicate_check": _format_duplicate_check,
-        "workflow_name": _format_workflow_name,
-        "mapping_name": _format_mapping_name,
+        "created": lambda v, c, m, n: m.created.strftime("%Y-%m-%d %H:%M:%S"),
+        "updated": lambda v, c, m, n: m.updated.strftime("%Y-%m-%d %H:%M:%S"),
     }
+    column_sortable_list = ()
+    column_searchable_list = (
+        "oauth_client.name",
+        "oauth_client.user.email",
+    )
 
     def get_query(self):
         """Get query for SWORD API JSON-LD settings."""
@@ -2038,6 +2027,11 @@ class JsonldMappingView(ModelView):
         "item_type",
         "updated",
     )
+    column_labels = {
+        "name": _("Name"),
+        "item_type.item_type_name.name": _("Item Type"),
+        "updated": _("Updated"),
+    }
     column_details_list = (
         "created",
         "updated",
@@ -2065,6 +2059,8 @@ class JsonldMappingView(ModelView):
     column_formatters = {
         "item_type": _item_type_name,
         "mapping": _formated_jsonld_mapping,
+        "created": lambda v, c, m, n: m.created.strftime("%Y-%m-%d %H:%M:%S"),
+        "updated": lambda v, c, m, n: m.updated.strftime("%Y-%m-%d %H:%M:%S"),
     }
     column_sortable_list = (
         "name",
@@ -2276,6 +2272,109 @@ class JsonldMappingView(ModelView):
         return True
 
 
+class CrisLinkageSettingView(BaseView):
+    """CRIS Linkage Settings View"""
+
+    @expose('/' ,methods=['GET'])
+    def index(self):
+        SETTINGS_NAME = current_app.config["WEKO_ADMIN_SETTINGS_RESEARCHMAP_LINKAGE_SETTINGS"]# type: ignore
+        DEFAULT_MERGE_MODE = current_app.config["WEKO_ITEMS_UI_CRIS_LINKAGE_RESEARCHMAP_MERGE_MODE_DEFAULT"]# type: ignore
+
+        settings = AdminSettings.get(SETTINGS_NAME)
+        default_merge_mode = settings.merge_mode if settings and settings.merge_mode else DEFAULT_MERGE_MODE # type: ignore
+
+
+        is_clidkey_registered = settings and settings.researchmap_cidkey_contents != ''
+        is_pkey_registered = settings and settings.researchmap_pkey_contents != ''
+
+
+        MERGE_MODES = current_app.config["WEKO_ADMIN_SETTINGS_RESEARCHMAP_MERGE_MODES"] # type: ignore 
+        return self.render(
+            current_app.config["WEKO_ADMIN_CRIS_LINKAGE_SETTINGS_TEMPLATE"] # type: ignore 
+            ,merge_modes=MERGE_MODES
+            ,default_merge_mode = default_merge_mode
+            ,is_clidkey_registered = is_clidkey_registered
+            ,is_pkey_registered = is_pkey_registered
+            )
+    
+    @expose('/save_keys' ,methods=['POST'])
+    def save_keys(self):
+        researchmap_cidkey_contents = request.form.get('researchmap_cidkey_contents' ,'')
+        researchmap_pkey_contents = request.form.get('researchmap_pkey_contents' ,'')
+
+        if researchmap_cidkey_contents == '' and researchmap_pkey_contents == '':
+            flash(_('Failurely Changed Settings.') ,'error')
+            flash(_('Please input at least one of client id key or private key') ,'error')
+            return redirect(url_for('cris_linkage.index'))
+
+        if len(str(researchmap_cidkey_contents)) > 100: #valid about 20 
+            flash(_('Failurely Changed Settings.') ,'error')
+            flash(_('client id key size too large.') ,'error')
+            return redirect(url_for('cris_linkage.index'))
+        if len(str(researchmap_pkey_contents)) > 100*50: #valid about 30*70 
+            flash(_('Failurely Changed Settings.') ,'error')
+            flash(_('private key size too large.') ,'error')
+            return redirect(url_for('cris_linkage.index'))
+
+
+        SETTINGS_NAME = current_app.config["WEKO_ADMIN_SETTINGS_RESEARCHMAP_LINKAGE_SETTINGS"]# type: ignore
+        settings = AdminSettings.get(SETTINGS_NAME)
+        if not settings :
+            set = {
+                'researchmap_cidkey_contents':researchmap_cidkey_contents
+                ,'researchmap_pkey_contents':researchmap_pkey_contents
+                ,'merge_mode':''
+            }
+        else :
+            set = {
+                'researchmap_cidkey_contents' : researchmap_cidkey_contents if researchmap_cidkey_contents != '' else settings.researchmap_cidkey_contents # type: ignore 
+                ,'researchmap_pkey_contents' : researchmap_pkey_contents if researchmap_pkey_contents != '' else settings.researchmap_pkey_contents # type: ignore 
+                ,'merge_mode' : settings.merge_mode # type: ignore 
+            }
+
+        try :
+            AdminSettings.update(SETTINGS_NAME , set)
+            flash(_('Successfully Changed Settings.') ,'success')
+        except Exception as e:
+            traceback.print_exc()
+            flash(_('Failurely Changed Settings.') ,'error')
+            raise e
+
+        return redirect(url_for('cris_linkage.index'))
+
+    @expose('/save_merge_mode' ,methods=['POST'])
+    def save_merge_mode(self):
+        merge_mode = request.form.get('merge_mode' ,'')
+
+        if merge_mode == '' :
+            flash(_('Failurely Changed Settings.') ,'error')
+            flash(_('Please input Merge Mode') ,'error')
+            return redirect(url_for('cris_linkage.index'))
+
+        SETTINGS_NAME = current_app.config["WEKO_ADMIN_SETTINGS_RESEARCHMAP_LINKAGE_SETTINGS"]# type: ignore
+        settings = AdminSettings.get(SETTINGS_NAME)
+        if not settings :
+            set = {
+                'researchmap_cidkey_contents': ''
+                ,'researchmap_pkey_contents': ''
+                ,'merge_mode':merge_mode
+            }
+        else :
+            set = {
+                'researchmap_cidkey_contents' : settings.researchmap_cidkey_contents # type: ignore 
+                ,'researchmap_pkey_contents' : settings.researchmap_pkey_contents # type: ignore 
+                ,'merge_mode' : merge_mode  # type: ignore 
+            }
+
+        try :
+            AdminSettings.update(SETTINGS_NAME , set)
+            flash(_('Successfully Changed Settings.') ,'success')
+        except Exception as e:
+            traceback.print_exc()
+            flash(_('Failurely Changed Settings.') ,'error')
+            raise e
+
+        return redirect(url_for('cris_linkage.index'))
 
 style_adminview = {
     'view_class': StyleSettingView,
@@ -2411,6 +2510,7 @@ restricted_access_adminview = {
         'endpoint': 'restricted_access'
     }
 }
+
 identifier_adminview = dict(
     modelview=IdentifierSettingView,
     model=Identifier,
@@ -2460,6 +2560,16 @@ sword_api_jsonld_mapping_adminview = dict(
     endpoint='jsonld-mapping'
 )
 
+cris_linkage_adminview = {
+    'view_class': CrisLinkageSettingView,
+    'kwargs': {
+        'category': _('Setting'),
+        'name': _('CRIS Linkage'),
+        'endpoint': 'cris_linkage'
+    }
+}
+
+
 __all__ = (
     'style_adminview',
     'report_adminview',
@@ -2482,4 +2592,5 @@ __all__ = (
     'sword_api_settings_adminview',
     'sword_api_settings_jsonld_adminview',
     'sword_api_jsonld_mapping_adminview'
+    'cris_linkage_adminview',
 )

@@ -59,6 +59,9 @@ from weko_records_ui.views import (
     get_file_place,
     replace_file,
 )
+from .helpers import login, logout
+from io import BytesIO
+from werkzeug.datastructures import FileStorage
 
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
 
@@ -1266,51 +1269,151 @@ def test_publish(app, client, records):
                             mock_external.assert_called_with(old_record=record_1_c, new_record=record_0_c)
 
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_request_context -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
-def test_get_bucket_list(app,records,users,id):
+def test_get_bucket_list(app,records,users):
     with app.test_request_context():
-        with patch("weko_records_ui.api.get_s3_bucket_list", return_value={}):
+        with patch("weko_records_ui.views.get_s3_bucket_list", return_value=[]):
             response = get_bucket_list()
             assert response.status_code == 200
-        with patch("weko_records_ui.api.get_s3_bucket_list",side_effect=Exception):
+        with patch("weko_records_ui.views.get_s3_bucket_list",side_effect=Exception):
             response = get_bucket_list()
             assert response.status_code == 400
 
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_copy_bucket -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
-def test_copy_bucket(app,records,users,id):
-    with app.test_request_context():
-        with patch("weko_records_ui.api.copy_bucket_to_s3", return_value={}):
-            response = copy_bucket()
-            assert response.status_code == 200
-        with patch("weko_records_ui.api.copy_bucket_to_s3",side_effect=Exception):
-            response = copy_bucket()
-            assert response.status_code == 400
+def test_copy_bucket(app,records,users, client):
+
+    login(client,obj=users[0]["obj"])
+    url = url_for("weko_records_ui.copy_bucket")
+    with patch("weko_records_ui.views.copy_bucket_to_s3", return_value={}):
+        res = client.post(
+            url,
+            data=json.dumps({
+            'pid': '1',
+            'file_name': 'helloworld.pdf',
+            'bucket_id': '1',
+            'checked': 'True',
+            'bucket_name': 'name',
+            }),
+            content_type='application/json',
+        )
+        assert res.status_code == 200
+    with patch("weko_records_ui.views.copy_bucket_to_s3",side_effect=Exception):
+        res = client.post(
+            url,
+            data=json.dumps({
+            'pid': '1',
+            'file_name': 'helloworld.pdf',
+            'bucket_id': '1',
+            'checked': 'True',
+            'bucket_name': 'name',
+            }),
+            content_type='application/json',
+        )
+        assert res.status_code == 400
 
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_get_file_place -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
-def test_get_file_place(app,records,users,id):
-    with app.test_request_context():
-        with patch("weko_records_ui.api.get_file_place_info", return_value={}):
-            response = get_file_place()
-            assert response.status_code == 200
-        with patch("weko_records_ui.api.get_file_place_info",side_effect=Exception):
-            response = get_file_place()
-            assert response.status_code == 400
+def test_get_file_place(app,records,users, client):
+    login(client,obj=users[0]["obj"])
+    url = url_for("weko_records_ui.get_file_place")
+    with patch(
+        "weko_records_ui.views.get_file_place_info",
+        return_value={
+            "file_place": 'file_place',
+            "uri": 'uri',
+            "new_bucket_id": 'new_bucket_id',
+            "new_version_id": 'new_version_id'
+       }
+    ):
+        res = client.post(
+            url,
+            data={
+                'pid': '1',
+                'bucket_id': '1',
+                'file_name': 'helloworld.pdf',
+            },
+        )
+        assert res.status_code == 200
+    with patch("weko_records_ui.views.get_file_place_info",side_effect=Exception):
+        res = client.post(
+            url,
+            data={
+                'pid': '1',
+                'bucket_id': '1',
+                'file_name': 'helloworld.pdf',
+            },
+        )
+        assert res.status_code == 400
 
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_replace_file -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
-def test_replace_file(app,records,users,id):
-    with app.test_request_context():
-        with patch("flask.request.form.get", return_value='S3'):
-            with patch("weko_records_ui.api.replace_file_bucket", return_value={}):
-                response = replace_file()
-                assert response.status_code == 200
-        with patch("flask.request.form.get", return_value='S3'):
-            with patch("weko_records_ui.api.replace_file_bucket",side_effect=Exception):
-                response = replace_file()
-                assert response.status_code == 400
-        with patch("flask.request.form.get", return_value='local'):
-            with patch("weko_records_ui.api.replace_file_bucket", return_value={}):
-                response = replace_file()
-                assert response.status_code == 200
-        with patch("flask.request.form.get", return_value='local'):
-            with patch("weko_records_ui.api.replace_file_bucket",side_effect=Exception):
-                response = replace_file()
-                assert response.status_code == 400
+def test_replace_file(app,records,users, client):
+    login(client,obj=users[0]["obj"])
+    url = url_for("weko_records_ui.replace_file")
+    # テスト用のデータを用意
+    test_data = b'Hello, World!' # バイナリデータ
+    # BytesIOオブジェクトを作成
+    # FileStorageオブジェクトを作成
+    with patch("weko_records_ui.views.replace_file_bucket", return_value={}):
+        res = client.post(
+            url,
+            data={
+                'return_file_place': 'S3',
+                'pid': '1',
+                'bucket_id':'1',
+                'file_name': 'helloworld.pdf',
+                'file_size': 100,
+                'file_checksum': '86266081366d3c950c1cb31fbd9e1c38e4834fa52b568753ce28c87bc31252cd',
+                'new_bucket_id': '1',
+                'new_version_id': '1',
+            },
+        )
+        assert res.status_code == 200
+    with patch("weko_records_ui.views.replace_file_bucket",side_effect=Exception):
+        res = client.post(
+            url,
+            data={
+                'return_file_place': 'S3',
+                'pid': '1',
+                'bucket_id':'1',
+                'file_name': 'helloworld.pdf',
+                'file_size': 100,
+                'file_checksum': '86266081366d3c950c1cb31fbd9e1c38e4834fa52b568753ce28c87bc31252cd',
+                'new_bucket_id': '1',
+                'new_version_id': '1',
+            },
+        )
+        assert res.status_code == 400
+    with patch("weko_records_ui.views.replace_file_bucket", return_value={}):
+        virtual_file = BytesIO(test_data)
+        file = FileStorage(stream=virtual_file, filename='helloworld.pdf', content_type='application/pdf')
+        res = client.post(
+            url,
+            data={
+                'return_file_place': 'local',
+                'pid': '1',
+                'bucket_id':'1',
+                'file_name': 'helloworld.pdf',
+                'file_size': 100,
+                'file_checksum': '86266081366d3c950c1cb31fbd9e1c38e4834fa52b568753ce28c87bc31252cd',
+                'new_bucket_id': '1',
+                'new_version_id': '1',
+                'file': file,
+            },
+        )
+        assert res.status_code == 200
+    with patch("weko_records_ui.views.replace_file_bucket",side_effect=Exception):
+        virtual_file = BytesIO(test_data)
+        file = FileStorage(stream=virtual_file, filename='helloworld.pdf', content_type='application/pdf')
+        res = client.post(
+            url,
+            data={
+                'return_file_place': 'local',
+                'pid': '1',
+                'bucket_id':'1',
+                'file_name': 'helloworld.pdf',
+                'file_size': 100,
+                'file_checksum': '86266081366d3c950c1cb31fbd9e1c38e4834fa52b568753ce28c87bc31252cd',
+                'new_bucket_id': '1',
+                'new_version_id': '1',
+                'file': file,
+            },
+        )
+        assert res.status_code == 400

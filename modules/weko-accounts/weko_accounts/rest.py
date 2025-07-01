@@ -176,12 +176,12 @@ class WekoLogout(ContentNegotiatedMethodView):
     def post_v1(self, **kwargs):
 
         # Logout
-        user_id = current_user.id
         if current_user.is_authenticated:
+            user_id = current_user.id
             logout_user()
 
-        UserActivityLogger.info(
-            operation="LOGOUT",
-            target_key=user_id
-        )
+            UserActivityLogger.info(
+                operation="LOGOUT",
+                target_key=user_id
+            )
         return make_response('', 200)
