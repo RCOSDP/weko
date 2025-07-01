@@ -2208,6 +2208,9 @@ def make_stats_file(item_type_id, recids, list_item_role, export_path=""):
         ret.append('.request_mail[{}]'.format(i))
         ret_label.append('.REQUEST_MAIL[{}]'.format(i))
 
+    ret.append('.researchmap_linkage')
+    ret_label.append('.RESEAECHMAP_LINKAGE')
+
     ret.extend(['.cnri', '.doi_ra', '.doi', '.edit_mode'])
     ret_label.extend(['.CNRI', '.DOI_RA', '.DOI', 'Keep/Upgrade Version'])
     has_pubdate = len([
@@ -2238,6 +2241,9 @@ def make_stats_file(item_type_id, recids, list_item_role, export_path=""):
         records.attr_output[recid].extend(
             [''] * (max_feedback_mail - len(feedback_mail_list))
         )
+        
+        # Exporting .researchmap_linkage is ALWAYS blank
+        records.attr_output[recid].append('')
 
         request_mail_list = records.attr_data['request_mail_list'] \
             .get(recid, [])
@@ -2783,6 +2789,7 @@ def _export_item(record_id,
         exported_item['files'] = []
         exported_item['path'] = 'recid_' + str(record_id)
         exported_item['item_type_id'] = record.get('item_type_id')
+        exported_item['researchmap_linkage'] = ''
         if not records_data:
             records_data = record
         if exported_item['item_type_id']:
@@ -4671,6 +4678,10 @@ def make_stats_file_with_permission(item_type_id, recids,
         ret.append('.request_mail[{}]'.format(i))
         ret_label.append('.REQUEST_MAIL[{}]'.format(i))
 
+    ret.append('.researchmap_linkage')
+    ret_label.append('.RESEAECHMAP_LINKAGE')
+
+
     ret.extend(['.cnri', '.doi_ra', '.doi', '.edit_mode'])
     ret_label.extend(['.CNRI', '.DOI_RA', '.DOI', 'Keep/Upgrade Version'])
     ret.append('.metadata.pubdate')
@@ -4704,6 +4715,9 @@ def make_stats_file_with_permission(item_type_id, recids,
         records.attr_output[recid].extend(
             [''] * (max_request_mail - len(request_mail_list))
         )
+
+        # Exporting .researchmap_linkage is ALWAYS blank
+        records.attr_output[recid].append('')
 
         pid_cnri = record.pid_cnri
         cnri = ''

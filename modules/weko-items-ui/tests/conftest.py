@@ -31,6 +31,7 @@ from datetime import datetime,timedelta
 from unittest.mock import patch
 from kombu import Exchange, Queue
 from flask import Flask
+from flask_admin import Admin
 from flask_menu import Menu
 from celery.messaging import establish_connection
 from invenio_access import InvenioAccess
@@ -68,8 +69,9 @@ from weko_redis.redis import RedisConnection
 from invenio_search import InvenioSearch
 from invenio_stats import InvenioStats
 from sqlalchemy_utils.functions import create_database, database_exists
+from weko_admin import WekoAdmin
 from weko_admin.config import WEKO_ADMIN_DEFAULT_ITEM_EXPORT_SETTINGS
-from weko_admin.models import SessionLifetime,RankingSettings
+from weko_admin.models import SessionLifetime,RankingSettings,AdminSettings
 from weko_deposit import WekoDeposit
 from weko_deposit.api import WekoIndexer, WekoRecord
 from weko_deposit.api import WekoDeposit as aWekoDeposit
@@ -77,11 +79,13 @@ from weko_deposit.config import DEPOSIT_RECORDS_API,WEKO_DEPOSIT_ITEMS_CACHE_PRE
 from weko_index_tree.api import Indexes
 from weko_index_tree.models import Index
 from weko_index_tree.config import WEKO_INDEX_TREE_REST_ENDPOINTS,WEKO_INDEX_TREE_DEFAULT_DISPLAY_NUMBER
+from weko_logging.audit import WekoLoggingUserActivity
 from weko_notifications.models import NotificationsUserSettings
 from weko_records import WekoRecords
 from weko_records.models import ItemType, ItemTypeMapping, ItemTypeName
 from weko_records.api import ItemsMetadata
 from weko_records_ui.config import WEKO_RECORDS_UI_LICENSE_DICT
+from weko_schema_ui.config import WEKO_SCHEMA_JPCOAR_V2_SCHEMA_NAME ,WEKO_SCHEMA_JPCOAR_V2_RESOURCE_TYPE_REPLACE,WEKO_SCHEMA_JPCOAR_V2_NAMEIDSCHEME_REPLACE
 from weko_schema_ui.models import OAIServerSchema
 from weko_search_ui import WekoSearchUI
 from weko_search_ui.config import WEKO_SEARCH_REST_ENDPOINTS,RECORDS_REST_SORT_OPTIONS,INDEXER_DEFAULT_DOCTYPE,INDEXER_FILE_DOC_TYPE
@@ -104,6 +108,7 @@ from werkzeug.local import LocalProxy
 from weko_items_ui import WekoItemsUI, WekoItemsREST
 from weko_items_ui.views import blueprint as weko_items_ui_blueprint
 from weko_items_ui.views import blueprint_api as weko_items_ui_blueprint_api
+from weko_items_ui.config import WEKO_ITEMS_UI_CRIS_LINKAGE_RESEARCHMAP_TYPE_MAPPINGS ,WEKO_ITEMS_UI_CRIS_LINKAGE_RESEARCHMAP_MAPPINGS,WEKO_ITEMS_UI_CRIS_LINKAGE_RESEARCHMAP_MERGE_MODE_DEFAULT
 from weko_groups import WekoGroups
 from .helpers import create_record, json_data
 
@@ -161,6 +166,9 @@ def base_app(instance_path):
         CACHE_REDIS_URL=os.environ.get("CACHE_REDIS_URL", "redis://redis:6379/0"),
         WEKO_BUCKET_QUOTA_SIZE=50 * 1024 * 1024 * 1024,
         WEKO_MAX_FILE_SIZE=50 * 1024 * 1024 * 1024,
+        WEKO_SCHEMA_JPCOAR_V2_SCHEMA_NAME=WEKO_SCHEMA_JPCOAR_V2_SCHEMA_NAME,
+        WEKO_SCHEMA_JPCOAR_V2_RESOURCE_TYPE_REPLACE=WEKO_SCHEMA_JPCOAR_V2_RESOURCE_TYPE_REPLACE,
+        WEKO_SCHEMA_JPCOAR_V2_NAMEIDSCHEME_REPLACE=WEKO_SCHEMA_JPCOAR_V2_NAMEIDSCHEME_REPLACE,
         SEARCH_ELASTIC_HOSTS=os.environ.get("INVENIO_ELASTICSEARCH_HOST", "elasticsearch"),
         SEARCH_INDEX_PREFIX="{}-".format('test'),
         SEARCH_CLIENT_CONFIG=dict(timeout=120, max_retries=10),
@@ -217,6 +225,9 @@ def base_app(instance_path):
                          ],
         WEKO_ADMIN_PERMISSION_ROLE_COMMUNITY = "Community Administrator",
         WEKO_ADMIN_PERMISSION_ROLE_REPO = "Repository Administrator",
+        WEKO_AUTHORS_ES_INDEX_NAME='test-authors',
+        WEKO_SCHEMA_JPCOAR_V1_SCHEMA_NAME='jpcoar_v1_mapping',
+        WEKO_SCHEMA_DDI_SCHEMA_NAME='ddi_mapping',
     )
 
     app_.config['WEKO_SEARCH_REST_ENDPOINTS']['recid']['search_index']='test-weko'
@@ -227,6 +238,7 @@ def base_app(instance_path):
     'display_rank': 10,
     'rankings': {"new_items": True, "most_reviewed_items": True, "most_downloaded_items": False, "most_searched_keywords": True, "created_most_items_user": True}
     }
+    Admin(app_)
     InvenioI18N(app_)
     InvenioAssets(app_)
     InvenioDB(app_)
@@ -243,15 +255,15 @@ def base_app(instance_path):
     WekoDeposit(app_)
     WekoWorkflow(app_)
     WekoGroups(app_)
+    WekoAdmin(app_)
     InvenioIndexer(app_)
     WekoRecords(app_)
     WekoSearchUI(app_)
     WekoItemsUI(app_)
     WekoItemsREST(app_)
+    WekoLoggingUserActivity(app_)
 
     current_assets = LocalProxy(lambda: app_.extensions["invenio-assets"])
-    current_assets.collect.collect()
-
     return app_
 
 
@@ -803,7 +815,7 @@ def db_records(db,instance_path,users):
         index.public_state = False
         index.harvest_public_state = False
 
-
+    db.session.commit()
     yield result
 
 @pytest.fixture()
@@ -833,6 +845,31 @@ def db_records3(db):
     yield result
 
 @pytest.fixture()
+# def setting(db_itemtype_15 ):
+def db_records_researchmap(db ,instance_path,users,db_author ,db_activity ,db_admin_setting ,db_itemtype):
+    # with db.session.begin_nested():
+    #     depid, recid, parent, doi, record, item = db_records[0]
+    #     object_uuid = recid.object_uuid
+    #     # PersistentIdentifier.create('recid',1,None,object_type='rec',object_uuid=object_uuid)   
+    #     # db.session.add(ItemMetadata(id=object_uuid , item_type_id=1 ,version_id=uuid.uuid4()))
+    # db.session.commit()
+
+    record_data = json_data("data/test_records_researchmap.json")
+    item_data = json_data("data/test_items_researchmap.json")
+    record_num = len(record_data)
+    result = []
+    with db.session.begin_nested():
+        for d in range(record_num):
+            result.append(create_record(record_data[d], item_data[d]))
+    db.session.commit()
+    object_uuid = result[0][1].object_uuid
+    object_uuid2 = result[1][1].object_uuid
+    object_uuid3 = result[2][1].object_uuid
+    object_uuid4 = result[3][1].object_uuid
+    return  object_uuid , object_uuid2, object_uuid3, object_uuid4
+
+
+@pytest.fixture()
 def db_records_file(app,db,instance_path,users):
     index_metadata = {
         'id': 1,
@@ -856,6 +893,23 @@ def db_records_file(app,db,instance_path,users):
     db.session.commit()
 
     return depid, recid,parent,doi,record, item
+
+@pytest.fixture()
+def db_admin_setting(db):
+    with db.session.begin_nested():
+        setting = AdminSettings(id=1,name="researchmap_linkage_settings",settings={"merge_mode": "merge", "researchmap_pkey_contents": "-----BEGIN PRIVATE KEY-----", "researchmap_cidkey_contents": "ABCDEF$"})
+        db.session.add(setting)
+    db.session.commit()
+    return setting
+
+@pytest.fixture()
+def db_invalid_admin_setting(db):
+    with db.session.begin_nested():
+        setting = AdminSettings(id=1,name="researchmap_linkage_settings",settings={"merge_mode": "merge", "researchmap_pkey_contents": "", "researchmap_cidkey_contents": ""})
+        db.session.add(setting)
+    db.session.commit()
+    return setting
+
 
 @pytest.fixture()
 def db_workflow(app, db, db_itemtype, users):
@@ -1046,13 +1100,14 @@ def db_author(db):
     prefix3 = AuthorsPrefixSettings(name="CiNii",scheme="CiNii",url="https://ci.nii.ac.jp/author/##")
     prefix4 = AuthorsPrefixSettings(name="KAKEN2",scheme="KAKEN2",url="https://nrid.nii.ac.jp/nrid/##")
     prefix5 = AuthorsPrefixSettings(name="ROR",scheme="ROR",url="https://ror.org/##")
+    prefix6 = AuthorsPrefixSettings(name="researchmap",scheme="researchmap",url="https://researchmap.jp/##")
 
     affiliation_prefix1 =AuthorsAffiliationSettings(name="ISNI",scheme="ISNI",url="http://www.isni.org/isni/##")
     affiliation_prefix2 =AuthorsAffiliationSettings(name="GRID",scheme="GRID",url="https://www.grid.ac/institutes/#")
     affiliation_prefix3 =AuthorsAffiliationSettings(name="Ringgold",scheme="Ringgold",url="")
     affiliation_prefix4 =AuthorsAffiliationSettings(name="kakenhi",scheme="kakenhi",url="")
 
-    author_json = {"affiliationInfo": [{"affiliationNameInfo": [{"affiliationName": "xxx", "affiliationNameLang": "ja", "affiliationNameShowFlg": "true"}], "identifierInfo": [{"affiliationId": "xxx", "affiliationIdType": "1", "identifierShowFlg": "true"}]}], "authorIdInfo": [{"authorId": "1", "authorIdShowFlg": "true", "idType": "1"}, {"authorId": "xxxx", "authorIdShowFlg": "true", "idType": "2"}], "authorNameInfo": [{"familyName": "LAST", "firstName": "FIRST", "fullName": "LAST FIRST", "language": "en", "nameFormat": "familyNmAndNm", "nameShowFlg": "true"}], "emailInfo": [{"email": "hoge@hoge"}], "gather_flg": 0, "id": {"_id": "sBXZ7oIBMJ49WnxY8sLQ", "_index": "tenant1-authors-author-v1.0.0", "_primary_term": 4, "_seq_no": 0, "_shards": {"failed": 0, "successful": 1, "total": 2}, "_type": "author-v1.0.0", "_version": 1, "result": "created"}, "is_deleted": "False", "pk_id": "1"}
+    author_json = {"affiliationInfo": [{"affiliationNameInfo": [{"affiliationName": "xxx", "affiliationNameLang": "ja", "affiliationNameShowFlg": "true"}], "identifierInfo": [{"affiliationId": "xxx", "affiliationIdType": "1", "identifierShowFlg": "true"}]}], "authorIdInfo": [{"authorId": "1", "authorIdShowFlg": "true", "idType": "1"}, {"authorId": "xxxx", "authorIdShowFlg": "true", "idType": "2"}, {"authorId": "researchmap_author", "authorIdShowFlg": "true", "idType": "6"}], "authorNameInfo": [{"familyName": "LAST", "firstName": "FIRST", "fullName": "LAST FIRST", "language": "en", "nameFormat": "familyNmAndNm", "nameShowFlg": "true"}], "emailInfo": [{"email": "hoge@hoge"}], "gather_flg": 0, "id": {"_id": "sBXZ7oIBMJ49WnxY8sLQ", "_index": "tenant1-authors-author-v1.0.0", "_primary_term": 4, "_seq_no": 0, "_shards": {"failed": 0, "successful": 1, "total": 2}, "_type": "author-v1.0.0", "_version": 1, "result": "created"}, "is_deleted": "False", "pk_id": "1"}
     author1 = Authors(json=author_json)
 
 
@@ -1062,13 +1117,14 @@ def db_author(db):
         db.session.add(prefix3)
         db.session.add(prefix4)
         db.session.add(prefix5)
+        db.session.add(prefix6)
         db.session.add(affiliation_prefix1)
         db.session.add(affiliation_prefix2)
         db.session.add(affiliation_prefix3)
         db.session.add(affiliation_prefix4)
         db.session.add(author1)
-
-    return {"author_prefix":[prefix1,prefix2,prefix3,prefix4,prefix5],"affiliation_prefix":[affiliation_prefix1,affiliation_prefix2,affiliation_prefix3,affiliation_prefix4],"author":[author1]}
+    
+    return {"author_prefix":[prefix1,prefix2,prefix3,prefix4,prefix5,prefix6],"affiliation_prefix":[affiliation_prefix1,affiliation_prefix2,affiliation_prefix3,affiliation_prefix4],"author":[author1]}
 
 @pytest.fixture()
 def db_ranking(db):

@@ -59,13 +59,16 @@ def json_record(*args, **kwargs):
         content_type='application/json')
 
 # .tox/c1/bin/pytest --cov=weko_indextree_journal tests/test_rest.py::test_create_blueprint -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-indextree-journal/.tox/c1/tmp
+@pytest.mark.skip(reason="Negatively impacting other tests")
 def test_create_blueprint(instance_path):
     app = Flask("testapp",
         instance_path=instance_path)
     app.config.update(
-        SQLALCHEMY_DATABASE_URI=os.environ.get(
-            "SQLALCHEMY_DATABASE_URI", "sqlite:///test.db"
-        ),
+        # SQLALCHEMY_DATABASE_URI=os.environ.get(
+        #     "SQLALCHEMY_DATABASE_URI", "sqlite:///test.db"
+        # ),
+        SQLALCHEMY_DATABASE_URI=os.getenv('SQLALCHEMY_DATABASE_URI',
+                                           'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest'),
         TESTING=True,
         SERVER_NAME="TEST_SERVER",
     )

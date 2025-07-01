@@ -148,7 +148,7 @@ from .config import (
     ROCRATE_METADATA_FILE
 )
 from .query import item_path_search_factory
-
+from weko_items_ui.signals import cris_researchmap_linkage_request
 
 class DefaultOrderedDict(OrderedDict):
     """Default Dictionary that remembers insertion order."""
@@ -2176,6 +2176,13 @@ def import_items_to_system(
                     if fs.exists(path):
                         file.delete()
                 delete_cache_data(cache_key)
+
+            # start cris linkage
+            if item.get("researchmap_linkage"):
+                pid = PersistentIdentifier.query.filter_by(
+                    pid_type="recid", pid_value=item["id"]
+                ).first()
+                cris_researchmap_linkage_request.send(pid.object_uuid)
 
         except SQLAlchemyError as ex:
             current_app.logger.error(f"sqlalchemy error: {ex}")

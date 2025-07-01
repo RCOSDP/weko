@@ -78,6 +78,7 @@ def base_app(instance_path):
             "CACHE_REDIS_URL", "redis://redis:6379/0"
         ),
         CACHE_REDIS_DB='0',
+        GROUP_INFO_REDIS_DB='4',
         CACHE_REDIS_HOST="redis",
         CACHE_TYPE="redis",
         REDIS_PORT='6379',
@@ -288,6 +289,11 @@ def redis_connect(app):
     redis_connection = RedisConnection().connection(db=app.config['CACHE_REDIS_DB'], kv = True)
     return redis_connection
 
+@pytest.fixture()
+def group_info_redis_connect(app):
+    """Redis connection for group info."""
+    redis_connection = RedisConnection().connection(db=app.config['GROUP_INFO_REDIS_DB'], kv=True)
+    return redis_connection
 
 @pytest.fixture()
 def users_login(users):

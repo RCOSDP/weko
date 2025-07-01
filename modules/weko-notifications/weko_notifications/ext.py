@@ -9,6 +9,7 @@
 
 from __future__ import absolute_import, print_function
 
+from flask import request
 from flask_babelex import gettext as _
 
 from . import config
@@ -43,6 +44,11 @@ class WekoNotifications(object):
             @app.after_request
             def inbox_link(response):
                 """Add inbox link to the response headers."""
+                endpoint = request.endpoint
+                method = request.method
+                if endpoint != "weko_theme.index" or method != "HEAD":
+                    return response
+
                 inbox_link = inbox_url(app=app, _external=True)
                 links = [
                     link.strip()

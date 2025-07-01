@@ -686,8 +686,8 @@ def test_get_user_info_by_role_name(users):
     assert result == [users[1]["obj"]]
 
 # .tox/c1/bin/pytest --cov=weko_accounts tests/test_api.py::test_sync_shib_gakunin_map_groups_success -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
-def test_sync_shib_gakunin_map_groups_success(app, client, redis_connect):
-    redis = redis_connect.redis
+def test_sync_shib_gakunin_map_groups_success(app, client, group_info_redis_connect):
+    redis = group_info_redis_connect.redis
     with app.test_request_context('/sync', method='POST'):
         app.config['WEKO_ACCOUNTS_IDP_ENTITY_ID'] = 'https://example.com'
         with patch('weko_accounts.api.Role') as mock_role, \
@@ -709,8 +709,8 @@ def test_sync_shib_gakunin_map_groups_success(app, client, redis_connect):
                 {'role1', 'role3'}, [mock_role1, mock_role2])
 
 # .tox/c1/bin/pytest --cov=weko_accounts tests/test_api.py::test_sync_shib_gakunin_map_groups_no_update_needed -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
-def test_sync_shib_gakunin_map_groups_no_update_needed(app, client, redis_connect):
-    redis = redis_connect.redis
+def test_sync_shib_gakunin_map_groups_no_update_needed(app, client, group_info_redis_connect):
+    redis = group_info_redis_connect.redis
     with app.test_request_context('/sync', method='POST'):
         app.config['WEKO_ACCOUNTS_IDP_ENTITY_ID'] = 'https://example.com'
         with patch('weko_accounts.api.Role') as mock_role, \
