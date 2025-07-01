@@ -11,16 +11,16 @@
       <h1 class="text-3xl text-center font-medium">
         {{ $t('login') }}
       </h1>
-      <div class="flex justify-center items-center">
+      <div class='flex justify-center items-center'>
         <label>{{ $t('Institutional Login for institutions in Japan.') }}</label>
-        <img src="https://www.gakunin.jp/themes/custom/gakunin/logo.svg" style="vertical-align: baseline; width: 100px !important" />
+        <img src='https://www.gakunin.jp/themes/custom/gakunin/logo.svg' style='vertical-align: baseline; width: 100px !important' />
       </div>
 
       <!-- EMBEDDED-WAYF-START -->
-      <div id="wayf_div" ref="scriptContainer"></div>
+      <div id='wayf_div' ref='scriptContainer'></div>
       <!-- EMBEDDED-WAYF-END -->
 
-      <div class="text-divider">OR</div>
+      <div class='text-divider'>OR</div>
       <Form class="space-y-2 mt-3" @submit="login">
         <!-- メールアドレス -->
         <label class="label flex-col">
@@ -236,7 +236,7 @@ async function login() {
         alertData.value = amsAlert['LOGIN_MESSAGE_ERROR_REQUEST'];
       }
       visibleAlert.value = true;
-    },
+    }
   }).catch(() => {
     if (statusCode === 0) {
       // fetchエラー
@@ -318,7 +318,7 @@ function shibbolethLoginError(route: any) {
       } else if (error === 'FAILED bind_relation_info!') {
         // 関連情報作成に失敗
         alertData.value = amsAlert['LOGIN_MESSAGE_ERROR_BIND_RELATION_INFO'];
-      } else if (error === 'Can't get relation Weko User.') {
+      } else if (error === "Can't get relation Weko User.") {
         // WEKOのユーザー関連情報が​取得出来ない
         alertData.value = amsAlert['LOGIN_MESSAGE_ERROR_FAILED_GET_RELATION'];
       } else {

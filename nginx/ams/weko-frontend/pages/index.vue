@@ -190,7 +190,7 @@ try {
         alertData.value = amsAlert['INDEX_MESSAGE_ERROR_GET_LATEST_ITEM'];
       }
       visibleAlert.value = true;
-    },
+    }
   }).catch(() => {
     if (statusCode === 0) {
       // fetchエラー

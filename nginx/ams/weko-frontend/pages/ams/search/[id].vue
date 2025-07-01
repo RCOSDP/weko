@@ -326,7 +326,7 @@ async function downloadResultList() {
         alertData.value = amsAlert['ID_DOWNLOAD_MESSAGE_ERROR_DOWNLOAD_RESULT'];
       }
       visibleAlert.value = true;
-    },
+    }
   }).catch(() => {
     if (statusCode === 0) {
       // fetchエラー

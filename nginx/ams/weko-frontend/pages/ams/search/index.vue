@@ -377,7 +377,7 @@ async function search() {
         alertData.value = amsAlert['SEARCH_ITEM_MESSAGE_ERROR_REQUEST'];
       }
       visibleAlert.value = true;
-    },
+    }
   }).catch(() => {
     if (statusCode === 0) {
       // fetchエラー
@@ -564,7 +564,7 @@ async function downloadResultList() {
         alertData.value = amsAlert['SEARCH_DOWNLOAD_MESSAGE_ERROR_RESULT'];
       }
       visibleAlert.value = true;
-    },
+    }
   }).catch(() => {
     if (statusCode === 0) {
       // fetchエラー

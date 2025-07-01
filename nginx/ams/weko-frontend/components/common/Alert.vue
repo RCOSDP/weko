@@ -94,7 +94,7 @@
       </svg>
       <span v-if="message == 'message.error.oauthError'">
         {{ $t('message.error.oauthError', { time: transitionSecond }) }}
-        <a :href="loginPage" class="link">{{ loginPage }}</a>
+        <a :href='loginPage' class='link'>{{ loginPage }}</a>
         {{ code ? ' (' + code + ')' : '' }}
       </span>
       <span v-else>{{ $t(message) + (code ? ' (' + code + ')' : '') }}</span>
@@ -129,11 +129,11 @@ const props = defineProps({
   // 表示位置(https://daisyui.com/components/toast/)
   alert: {
     default: () => ({
-      msgid: "",
-      msgstr: "",
-      position: "",
-      width: "w-full",
-      loglevel: "info",
+      msgid: '',
+      msgstr: '',
+      position: '',
+      width: 'w-full',
+      loglevel: 'info',
     }),
   },
 });

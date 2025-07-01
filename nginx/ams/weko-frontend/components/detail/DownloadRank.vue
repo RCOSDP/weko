@@ -80,11 +80,11 @@ const topThree = ref<IFileInfo[]>([]);
 const other = ref<IFileInfo[]>([]);
 const isMessage = ref(false);
 const alertData = ref({
-  msgid: "",
-  msgstr: "",
-  position: "",
-  width: "w-full",
-  loglevel: "info",
+  msgid: '',
+  msgstr: '',
+  position: '',
+  width: 'w-full',
+  loglevel: 'info',
 });
 
 /* ///////////////////////////////////

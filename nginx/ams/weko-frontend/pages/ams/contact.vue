@@ -181,6 +181,7 @@ import { Form, Field, ErrorMessage } from 'vee-validate';
 
 import Alert from '~/components/common/Alert.vue';
 import ContactConfirm from '~/components/contact/modal/ContactConfirm.vue';
+import amsAlert from '~/assets/data/amsAlert.json';
 
 /* ///////////////////////////////////
 // const and let

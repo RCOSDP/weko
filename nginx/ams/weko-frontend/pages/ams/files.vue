@@ -318,7 +318,7 @@ async function getFiles(number: string) {
         alertData.value = amsAlert['FILES_DETAIL_MESSAGE_ERROR_GET_ITEM_DETAIL'];
       }
       visibleAlert.value = true;
-    },
+    }
   }).catch(() => {
     if (statusCode === 0) {
       // fetchエラー
@@ -327,7 +327,6 @@ async function getFiles(number: string) {
     }
   });
 }
-
 
 /**
  * 一括ファイルダウンロード
@@ -355,22 +354,21 @@ function downloadFilesAll() {
           a.remove();
         }
       },
-        onResponseError({ response }) {
-          statusCode = response.status;
-          if (statusCode === 401) {
-            // 認証エラー
-            alertData.value = amsAlert['FILES_ALL_MESSAGE_ERROR_AUTH'];
-          } else if (statusCode >= 500 && statusCode < 600) {
-            // サーバーエラー
-            alertData.value = amsAlert['FILES_ALL_MESSAGE_ERROR_SERVER'];
-          } else {
-            // リクエストエラー
-            alertData.value = amsAlert['FILES_ALL_MESSAGE_ERROR_DOWNLOAD_ALL'];
-          }
-          visibleAlert.value = true;
-        },
+      onResponseError({ response }) {
+        statusCode = response.status;
+        if (statusCode === 401) {
+          // 認証エラー
+          alertData.value = amsAlert['FILES_ALL_MESSAGE_ERROR_AUTH'];
+        } else if (statusCode >= 500 && statusCode < 600) {
+          // サーバーエラー
+          alertData.value = amsAlert['FILES_ALL_MESSAGE_ERROR_SERVER'];
+        } else {
+          // リクエストエラー
+          alertData.value = amsAlert['FILES_ALL_MESSAGE_ERROR_DOWNLOAD_ALL'];
+        }
+        visibleAlert.value = true;
       },
-    ).catch(() => {
+    }).catch(() => {
       if (statusCode === 0) {
         // fetchエラー
         alertData.value = amsAlert['FILES_ALL_MESSAGE_ERROR_FETCH'];
@@ -393,43 +391,42 @@ function downloadFilesAll() {
 function downloadFilesSelected(filesList: string[]) {
   let statusCode = 0;
   $fetch(appConf.wekoApi + '/records/' + String(query.number) + '/files/selected', {
-      timeout: useRuntimeConfig().public.apiTimeout,
-      method: 'POST',
-      credentials: 'omit',
-      headers: {
-        'Cache-Control': 'no-store',
-        Pragma: 'no-cache',
-        'Accept-Language': localStorage.getItem('locale') ?? 'ja',
-        Authorization: localStorage.getItem('token:type') + ' ' + localStorage.getItem('token:access')
-      },
-      body: {
-        filenames: filesList
-      },
-      onResponse({ response }) {
-        if (response.status === 200) {
-          const a = document.createElement('a');
-          a.href = window.URL.createObjectURL(new Blob([response._data]));
-          a.setAttribute('download', itemTitle.value + '_files.zip');
-          a.click();
-          a.remove();
-        }
-      },
-      onResponseError({ response }) {
-        statusCode = response.status;
-        if (statusCode === 401) {
-          // 認証エラー
-          alertData.value = amsAlert['FILES_SELECT_MESSAGE_ERROR_AUTH'];
-        } else if (statusCode >= 500 && statusCode < 600) {
-          // サーバーエラー
-          alertData.value = amsAlert['FILES_SELECT_MESSAGE_ERROR_SERVER'];
-        } else {
-          // リクエストエラー
-          alertData.value = amsAlert['FILES_SELECT_MESSAGE_ERROR_DOWNLOAD_SELECTED'];
-        }
-        visibleAlert.value = true;
-      },
+    timeout: useRuntimeConfig().public.apiTimeout,
+    method: 'POST',
+    credentials: 'omit',
+    headers: {
+      'Cache-Control': 'no-store',
+      Pragma: 'no-cache',
+      'Accept-Language': localStorage.getItem('locale') ?? 'ja',
+      Authorization: localStorage.getItem('token:type') + ' ' + localStorage.getItem('token:access')
     },
-  ).catch(() => {
+    body: {
+      filenames: filesList
+    },
+    onResponse({ response }) {
+      if (response.status === 200) {
+        const a = document.createElement('a');
+        a.href = window.URL.createObjectURL(new Blob([response._data]));
+        a.setAttribute('download', itemTitle.value + '_files.zip');
+        a.click();
+        a.remove();
+      }
+    },
+    onResponseError({ response }) {
+      statusCode = response.status;
+      if (statusCode === 401) {
+        // 認証エラー
+        alertData.value = amsAlert['FILES_SELECT_MESSAGE_ERROR_AUTH'];
+      } else if (statusCode >= 500 && statusCode < 600) {
+        // サーバーエラー
+        alertData.value = amsAlert['FILES_SELECT_MESSAGE_ERROR_SERVER'];
+      } else {
+        // リクエストエラー
+        alertData.value = amsAlert['FILES_SELECT_MESSAGE_ERROR_DOWNLOAD_SELECTED'];
+      }
+      visibleAlert.value = true;
+    }
+  }).catch(() => {
     if (statusCode === 0) {
       // fetchエラー
       alertData.value = amsAlert['FILES_SELECT_MESSAGE_ERROR_FETCH'];

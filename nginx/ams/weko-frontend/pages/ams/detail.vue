@@ -262,7 +262,7 @@ async function getDetail(number: string) {
         if (isLogin) {
           alertData.value = amsAlert['DETAIL_ITEM_MESSAGE_ERROR_AUTH'];
         } else {
-          alertData.value = amsAlert['DETAIL_ITEM_MESSAGE_ERROR_OAUTH'];
+          alertData.value = amsAlert['DETAIL_ITEM_MESSAGE_OAUTH_ERROR'];
           oauthErrorRedirect();
         }
       } else if (statusCode >= 500 && statusCode < 600) {

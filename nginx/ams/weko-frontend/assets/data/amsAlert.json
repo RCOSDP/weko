@@ -48,7 +48,7 @@
     "width": "w-full",
     "loglevel": "error"
   },
-  "DETAIL_ITEM_MESSAGE_ERROR_OAUTH": {
+  "DETAIL_ITEM_MESSAGE_OAUTH_ERROR": {
     "msgid": "DETAIL_E_0002",
     "msgstr": "message.error.oauthError",
     "position": "",
