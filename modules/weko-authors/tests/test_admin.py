@@ -1,5 +1,6 @@
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_admin.py -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
 
+from datetime import datetime
 from flask import url_for,make_response,json
 from mock import patch
 import pytest
@@ -292,6 +293,13 @@ class TestExportView():
             def failed(self):
                 return self.state == "FAILURE"
 
+        class MockFileInstance():
+            def __init__(self,date):
+                self.updated_at = date
+            @property
+            def updated(self):
+                return self.updated_at
+
         login_user_via_session(client=client, email=users[0]['email'])
         url = url_for('authors/export.check_status')
         current_cache.set("weko_authors_export_status",{"key":"authors_export_status","task_id":"test_task"})
@@ -327,6 +335,15 @@ class TestExportView():
         current_cache.set("weko_authors_export_status",{"key":"authors_export_status"})
         res = client.get(url)
         test = {'code': 200, 'data': {'download_link': '', 'filename': '', 'key': 'authors_export_status'}}
+        assert json.loads(res.data) == test
+
+        # get file instance
+        mocker_get_by_uri = mocker.patch("weko_authors.admin.FileInstance.get_by_uri")
+        expected_date = datetime.now()
+        mocker_get_by_uri.return_value = MockFileInstance(expected_date)
+        res = client.get(url)
+        expected_filename = "Creator_export_all_" + expected_date.strftime("%Y%m%d%H%M") + ".tsv"
+        test = {'code': 200, 'data': {'download_link': '', 'filename': expected_filename, 'key': 'authors_export_status'}}
         assert json.loads(res.data) == test
 
         # not get_export_status

@@ -1,6 +1,12 @@
 
 import os
 import io
+from os.path import dirname, join
+import uuid
+from flask import url_for,current_app,make_response
+from flask_admin import Admin
+from mock import patch
+from mock import MagicMock, patch
 import json
 import pytest
 from datetime import datetime
@@ -18,6 +24,7 @@ from invenio_access.models import ActionUsers
 from invenio_accounts.testutils import login_user_via_session, create_test_user
 from invenio_communities.models import Community
 from invenio_oauth2server.models import Client
+from invenio_search import current_search_client
 
 from weko_admin.models import (
     AdminSettings,StatisticsEmail,LogAnalysisRestrictedCrawlerList, RankingSettings,
@@ -190,43 +197,68 @@ class TestStyleSettingView:
 class TestReportView:
 #    def index(self):
 # .tox/c1/bin/pytest --cov=weko_admin tests/test_admin.py::TestReportView::test_index -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
-    def test_index(self,db,client,indexes,users,admin_settings,statistic_email_addrs,mocker):
+    def test_index(self,db,client,indexes,users,admin_settings,statistic_email_addrs,esindex,mocker):
         login_user_via_session(client,email=users[0]["email"])
         url = url_for("report.index")
-        agg={
-            "took": 274,
-            "timed_out": False,
-            "_shards": {
-                "total": 1,
-                "successful": 1,
-                "skipped": 0,
-                "failed": 0
-            },
-            "hits": {
-                "total": 2,
-                "max_score": 0.0,
-                "hits": [
-                ]
-            },
-            "aggregations": {
-                "aggs_public": {
-                    "doc_count": 1
-                }
+
+        def make_index(id, parent, position, index_name, index_name_english,public_state,public_date):
+            return Index(
+                id=id,
+                parent=parent,position=position,
+                index_name=index_name,index_name_english=index_name_english,
+                public_state=public_state,public_date=public_date
+            )
+        def create_record(recid, item_title, pubdate, publish_status, paths):
+            metadata = {
+                "item_1617186331708": {"attribute_name": "Title","attribute_value_mlt": [{"subitem_1551255647225": item_title,"subitem_1551255648112": "ja"}]},
+                "item_1617258105262": {"attribute_name": "Resource Type","attribute_value_mlt": [{"resourcetype": "conference paper","resourceuri": "http://purl.org/coar/resource_type/c_5794"}]},
+                "pubdate": {"attribute_name": "PubDate","attribute_value": pubdate},
+                "item_title": item_title,
+                "item_type_id": "1",
+                "control_number": str(recid),
+                "author_link": [],
+                "_oai": {"id": "oai:weko3.example.org:{0:08}".format(recid),"sets": paths},
+                "weko_shared_id": -1,
+                "owner": "1",
+                "publish_date": pubdate,
+                "title": [item_title],
+                "relation_version_is_last": True,
+                "path": paths,
+                "publish_status": publish_status
             }
-        }
-        mocker.patch("invenio_stats.utils.get_aggregations",return_value=agg)
+            es_data = {
+                "type":["conference paper"],
+                "title":metadata["title"],
+                "control_number":metadata["control_number"],
+                "_oai":metadata["_oai"],
+                "_item_metadata":metadata,
+                "itemtype":"",
+                "publish_date":metadata["publish_date"],
+                "path":paths,
+                "publish_status":publish_status,
+                "_created": "2024-01-17T05:37:57.652396+00:00",
+                "_updated": "2024-01-17T05:37:57.652396+00:00",
+                "feedback_mail_list":[],
+                "relation_version_is_last":True
+            }
+
+            current_search_client.index(
+                index=current_app.config["INDEXER_DEFAULT_INDEX"],
+                doc_type="item-v1.0.0",
+                id=uuid.uuid4(),
+                body=es_data,
+                refresh="true"
+            )
+
+        # indexes is []
         mock_render = mocker.patch("weko_admin.admin.ReportView.render",return_value=make_response())
-        test = {
-            "total":2,
-            "open":1,
-            "private":1
-        }
         client.get(url)
         args,kwargs = mock_render.call_args
+        test = {"total":0,"open":0,"private":0}
         assert args[0] == "weko_admin/admin/report.html"
         assert kwargs["result"] == test
         assert [email.email_address for email in kwargs["emails"]] == ["test.taro@test.org"]
-        assert kwargs["current_schedule"] == {'frequency': 'daily', 'details': '', 'enabled': False}
+        assert kwargs["current_schedule"] == {"details":"","enabled":False,"frequency":"daily"}
         assert kwargs["repositories"] == [{"id": "Root Index"}]
 
         client.get(url, query_string={"repo_id": "comm1"})
@@ -245,7 +277,46 @@ class TestReportView:
         assert args[0] == "weko_admin/admin/report.html"
         assert kwargs["current_schedule"] == {"details": "", "enabled": False, "frequency": "daily"}
 
+        with db.session.begin_nested():
+            db.session.add(make_index(1,0,0,'公開','publish',True,None))
+            db.session.add(make_index(11,1,0,'公開_公開','publish',True,None))
+            db.session.add(make_index(12,1,1,'公開_未公開','publish_notpublish',False,None))
+            db.session.add(make_index(13,1,2,'公開_未来公開','publish_feature',True,datetime.strptime("2100/09/21","%Y/%m/%d")))
+            db.session.add(make_index(2,0,1,'非公開','notpublish',False,None))
+            db.session.add(make_index(21,2,0,'非公開_公開','notpublish_publish',True,None))
+            db.session.add(make_index(22,2,1,'非公開_非公開','notpublish_notpublish',False,None))
+            db.session.add(make_index(23,2,2,'非公開_未来公開','notpublish_feature',True,datetime.strptime("2100/09/21","%Y/%m/%d")))
+            db.session.add(make_index(3,0,2,'未来公開','feature',True,datetime.strptime("2100/09/21","%Y/%m/%d")))
+            db.session.add(make_index(31,3,0,'未来公開_公開','feature_publish',True,None))
+            db.session.add(make_index(32,3,1,'未来公開_非公開','feature_notpublish',False,None))
+            db.session.add(make_index(33,3,2,'未来公開_未来公開','feature_feature',True,datetime.strptime("2100/09/21","%Y/%m/%d")))
+        db.session.commit()
 
+        create_record(1,"公開インデックス下公開アイテム","2024-01-12","0",["1"])
+        create_record(2,"公開インデックス下非公開アイテム","2024-01-12","1",["1"])
+        create_record(3,"公開インデックス下未来公開アイテム","2100-01-12","0",["1"])
+        create_record(4,"非公開インデックス下公開アイテム","2024-01-12","0",["2"])
+        create_record(5,"非公開インデックス下非公開アイテム","2024-01-12","1",["2"])
+        create_record(6,"非公開インデックス下未来公開アイテム","2100-01-12","0",["2"])
+        create_record(7,"未来公開インデックス下公開アイテム","2024-01-12","0",["3"])
+        create_record(8,"未来公開インデックス下非公開アイテム","2024-01-12","1",["3"])
+        create_record(9,"未来公開インデックス下未来公開アイテム","2100-01-12","0",["3"])
+        create_record(10,"非公開_公開インデックス下公開アイテム","2024-01-12","0",["21"])
+        create_record(11,"非公開_未来公開インデックス下公開アイテム","2024-01-12","0",["23"])
+        create_record(12,"公開+非公開インデックス下公開アイテム","2024-01-12","0",["1", "2"])
+        create_record(13,"非公開+未来公開インデックス下公開アイテム","2024-01-12","0",["2","3"])
+        create_record(14,"非公開+非公開_公開インデックス下公開アイテム","2024-01-12","0",["2", "21"])
+
+        mock_render = mocker.patch("weko_admin.admin.ReportView.render",return_value=make_response())
+        client.get(url)
+        args,kwargs = mock_render.call_args
+        test = {"total":14,"open":2,"private":12}
+        assert args[0] == "weko_admin/admin/report.html"
+        assert kwargs["result"] == test
+        assert [email.email_address for email in kwargs["emails"]] == ["test.taro@test.org"]
+        assert kwargs["current_schedule"] == {"details":"","enabled":False,"frequency":"daily"}
+
+        # raise Error
         with patch("weko_index_tree.api.Indexes.get_public_indexes_list",return_value=[]):
             with patch("invenio_stats.utils.get_aggregations",return_value={}):
                 with patch("weko_admin.admin.ReportView.render",side_effect=Exception("test_error")):

@@ -200,6 +200,14 @@ def base_app(instance_path):
         WEKO_PERMISSION_ROLE_COMMUNITY=["Community Administrator"],
         WEKO_DEPOSIT_TEXTMIMETYPE_WHITELIST_FOR_ES = _WEKO_DEPOSIT_TEXTMIMETYPE_WHITELIST_FOR_ES,
         WEKO_MIMETYPE_WHITELIST_FOR_ES = _WEKO_MIMETYPE_WHITELIST_FOR_ES
+        WEKO_SCHEMA_JPCOAR_V2_SCHEMA_NAME="jpcoar_mapping",
+        WEKO_SCHEMA_JPCOAR_V2_RESOURCE_TYPE_REPLACE={
+            "periodical": "journal",
+            "interview": "other",
+            "internal report": "other",
+            "report part": "other",
+            "conference object": "conference output",
+        }
     )
     # with ESTestServer(timeout=30) as server:
     Babel(app_)

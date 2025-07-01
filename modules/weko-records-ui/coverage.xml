@@ -1586,7 +1586,7 @@
 						<line branch="true" condition-coverage="100% (2/2)" hits="1" number="161"/>
 						<line hits="1" number="163"/>
 						<line hits="1" number="165"/>
-						<line branch="true" condition-coverage="100% (2/2)" hits="1" number="166"/>
+						<line branch="true" condition-coverage="50% (1/2)" hits="1" missing-branches="245" number="166"/>
 						<line hits="1" number="167"/>
 						<line branch="true" condition-coverage="100% (2/2)" hits="1" number="168"/>
 						<line hits="1" number="169"/>
@@ -3399,7 +3399,6 @@
 						<line branch="true" condition-coverage="100% (2/2)" hits="1" number="1880"/>
 						<line hits="1" number="1881"/>
 						<line hits="1" number="1882"/>
-						<line hits="1" number="1883"/>
 						<line hits="1" number="1884"/>
 						<line hits="1" number="1885"/>
 						<line branch="true" condition-coverage="100% (2/2)" hits="1" number="1886"/>

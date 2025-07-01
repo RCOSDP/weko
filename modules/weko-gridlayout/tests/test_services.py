@@ -392,7 +392,7 @@ def test_update_widget_design_setting(i18n_app, db, mocker):
         db.session.add(widget_item)
         db.session.add(widget_multi_lang01)
         db.session.commit()
-    
+
     # not exist count_start_date widget
     create_widget(1,"Access counter",
                   {"background_color":"#FFFFFF", "theme": "default", "access_counter":"0"},

@@ -2247,30 +2247,27 @@ def test_overwrite_the_memory_config_with_db(app,client,site_info):
         site_name=[{"name":"test_site_info"}],
         notify={"name":"test_notify"},
         google_tracking_id_user="test_tracking_id1",
-        addthis_user_id="ra-5d8af23e9a3a2633_1",
     )
     site_info_google2 = SiteInfo(
         site_name=[{"name":"test_site_info"}],
         notify={"name":"test_notify"},
         google_tracking_id_user="test_tracking_id2",
-        addthis_user_id="ra-5d8af23e9a3a2633_2",
     )
 
     app = Flask("test_weko_admin_app")
     # site_info is None
     overwrite_the_memory_config_with_db(app, None)
 
-    # site_info.google_tracking_id_user, addthis_user_id is not exist
+    # site_info.google_tracking_id_user is not exist
     overwrite_the_memory_config_with_db(app, site_info_not_google)
 
-    # GOOGLE_TRACKING_ID_USER, ADDTHIS_USER_ID is not exist
+    # GOOGLE_TRACKING_ID_USER is not exist
     overwrite_the_memory_config_with_db(app, site_info_google1)
     assert app.config["GOOGLE_TRACKING_ID_USER"] == "test_tracking_id1"
-    assert app.config["ADDTHIS_USER_ID"] == "ra-5d8af23e9a3a2633_1"
 
     overwrite_the_memory_config_with_db(app, site_info_google2)
     assert app.config["GOOGLE_TRACKING_ID_USER"] == "test_tracking_id2"
-    assert app.config["ADDTHIS_USER_ID"] == "ra-5d8af23e9a3a2633_2"
+
 import json
 import pytest
 from flask import current_app, make_response, request, url_for

@@ -16,6 +16,7 @@ from weko_accounts.views import (
     _redirect_method,
     find_user_by_email,
     shib_sp_login,
+    urlencode,
 )
 from weko_admin.models import AdminSettings
 
@@ -675,12 +676,14 @@ def test_shib_stub_login(client,mocker):
     res = client.get(url)
     mock_render_template.assert_called_with('weko_accounts/login_shibuser_pattern_1.html',module_name="WEKO-Accounts")
 
+
 #def shib_logout():
 # .tox/c1/bin/pytest --cov=weko_accounts tests/test_views.py::test_shib_logout -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_shib_logout(client, mocker):
     mocker.patch("weko_accounts.views.ShibUser.shib_user_logout")
     res = client.get(url_for("weko_accounts.shib_logout"))
     assert res.data == bytes("logout success","utf-8")
+
 
 # def find_user_by_email(shib_attributes):
 # .tox/c1/bin/pytest --cov=weko_accounts tests/test_views.py::test_find_user_by_email -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
@@ -693,3 +696,13 @@ def test_find_user_by_email(app, users):
 
         user = find_user_by_email({"shib_mail": "invalid.email@nii.ac.jp"})
         assert user is None
+
+
+# def urlencode(value):
+# .tox/c1/bin/pytest --cov=weko_accounts tests/test_views.py::test_urlencode -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-accounts/.tox/c1/tmp
+def test_urlencode(app):
+    app.jinja_env.filters["urlencode"] = urlencode
+    # test urlencode
+    template = app.jinja_env.from_string('{{"http://localhost:5000/weko/accounts/shib/login?SHIB_ATTR_SESSION_ID=1111&next=/next_page"|urlencode}}')
+    actual = template.render()
+    assert actual == "http%3A%2F%2Flocalhost%3A5000%2Fweko%2Faccounts%2Fshib%2Flogin%3FSHIB_ATTR_SESSION_ID%3D1111%26next%3D%2Fnext_page"

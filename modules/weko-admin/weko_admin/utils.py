@@ -1650,7 +1650,6 @@ def format_site_info_data(site_info):
     result['notify'] = notify
     result['google_tracking_id_user'] = site_info.get(
         'google_tracking_id_user')
-    result['addthis_user_id'] = site_info.get('addthis_user_id')
     result['ogp_image'] = site_info.get('ogp_image')
     result['ogp_image_name'] = site_info.get('ogp_image_name')
     return result
@@ -2328,13 +2327,6 @@ def overwrite_the_memory_config_with_db(app, site_info):
             app.config.setdefault(
                 'GOOGLE_TRACKING_ID_USER',
                 site_info.google_tracking_id_user,
-            )
-        if site_info.addthis_user_id:
-            if 'ADDTHIS_USER_ID' in app.config:
-                del app.config['ADDTHIS_USER_ID']
-            app.config.setdefault(
-                'ADDTHIS_USER_ID',
-                site_info.addthis_user_id,
             )
 
 def elasticsearch_reindex( is_db_to_es ):

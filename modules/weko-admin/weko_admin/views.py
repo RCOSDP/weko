@@ -642,10 +642,6 @@ def get_site_info():
                 'GOOGLE_TRACKING_ID_USER']
         except BaseException:
             pass
-        try:
-            result['addthis_user_id'] = current_app.config['ADDTHIS_USER_ID']
-        except BaseException:
-            pass
         return jsonify(result)
 
     result['copy_right'] = site_info.copy_right
