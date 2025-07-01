@@ -17,6 +17,8 @@
 # along with WEKO3; if not, write to the
 # Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 # MA 02111-1307, USA.
+#
+# pylint: disable=no-member
 
 """Views for weko-accounts.
 
@@ -195,7 +197,7 @@ def shib_auto_login():
 
         if not shib_session_id:
             if ams_login:
-                return _redirect_method(True, error=_('Missing Shib-Session-ID!'))
+                return _redirect_method(True, ams_error=_('Missing Shib-Session-ID!'))
             else:
                 return _redirect_method()
 
@@ -205,7 +207,7 @@ def shib_auto_login():
             'WEKO_ACCOUNTS_SHIB_CACHE_PREFIX'] + shib_session_id
         if not datastore.redis.exists(cache_key):
             if ams_login:
-                return _redirect_method(True, error=_('Missing SHIB_CACHE_PREFIX!'))
+                return _redirect_method(True, ams_error=_('Missing SHIB_CACHE_PREFIX!'))
             else:
                 return _redirect_method()
 
@@ -213,7 +215,7 @@ def shib_auto_login():
         if not cache_val:
             datastore.delete(cache_key)
             if ams_login:
-                return _redirect_method(True, error=_('Missing SHIB_ATTR!'))
+                return _redirect_method(True, ams_error=_('Missing SHIB_ATTR!'))
             else:
                 return _redirect_method()
 
@@ -230,7 +232,7 @@ def shib_auto_login():
             datastore.delete(cache_key)
             current_app.logger.error(error)
             if ams_login:
-                return _redirect_method(True, error=error)
+                return _redirect_method(True, ams_error=error)
             else:
                 flash(error, category='error')
                 return _redirect_method()
@@ -259,7 +261,7 @@ def shib_auto_login():
             remarks=tb_info[0]
         )
         if ams_login:
-            return _redirect_method(True, error=_(
+            return _redirect_method(True, ams_error=_(
                 'Server error has occurred. Please contact server administrator.'))
     return abort(400)
 
@@ -277,7 +279,7 @@ def confirm_user():
             ams_login = True
         if request.form.get('csrf_random', '') != session['csrf_random']:
             if ams_login:
-                return _redirect_method(True, error=_('csrf_random'))
+                return _redirect_method(True, ams_error=_('csrf_random'))
             else:
                 flash('csrf_random', category='error')
                 return _redirect_method()
@@ -285,7 +287,7 @@ def confirm_user():
         shib_session_id = session['shib_session_id']
         if not shib_session_id:
             if ams_login:
-                return _redirect_method(True, error=_('Missing Shib-Session-ID!'))
+                return _redirect_method(True, ams_error=_('Missing Shib-Session-ID!'))
             else:
                 flash('shib_session_id', category='error')
                 return _redirect_method()
@@ -297,7 +299,7 @@ def confirm_user():
 
         if not datastore.redis.exists(cache_key):
             if ams_login:
-                return _redirect_method(True, error=_('Missing SHIB_CACHE_PREFIX!'))
+                return _redirect_method(True, ams_error=_('Missing SHIB_CACHE_PREFIX!'))
             else:
                 flash('cache_key', category='error')
                 return _redirect_method()
@@ -305,7 +307,7 @@ def confirm_user():
         cache_val = datastore.get(cache_key)
         if not cache_val:
             if ams_login:
-                return _redirect_method(True, error=_('Missing SHIB_ATTR!'))
+                return _redirect_method(True, ams_error=_('Missing SHIB_ATTR!'))
             else:
                 flash('cache_val', category='error')
                 datastore.delete(cache_key)
@@ -317,7 +319,7 @@ def confirm_user():
         password = request.form.get('WEKO_ATTR_PWD', None)
         if not shib_user.check_weko_user(account, password):
             if ams_login:
-                return _redirect_method(True, error=_('There is no user information.'))
+                return _redirect_method(True, ams_error=_('There is no user information.'))
             else:
                 flash('check_weko_user', category='error')
                 datastore.delete(cache_key)
@@ -325,7 +327,7 @@ def confirm_user():
 
         if not shib_user.bind_relation_info(account):
             if ams_login:
-                return _redirect_method(True, error=_('FAILED bind_relation_info!'))
+                return _redirect_method(True, ams_error=_('FAILED bind_relation_info!'))
             else:
                 flash('FAILED bind_relation_info!', category='error')
                 return _redirect_method()
@@ -335,7 +337,7 @@ def confirm_user():
         if error:
             datastore.delete(cache_key)
             if ams_login:
-                return _redirect_method(True, error=error)
+                return _redirect_method(True, ams_error=error)
             else:
                 flash(error, category='error')
                 return _redirect_method()
@@ -361,7 +363,7 @@ def confirm_user():
             remarks=tb_info[0]
         )
         if ams_login:
-            return _redirect_method(True, error=_(
+            return _redirect_method(True, ams_error=_(
                 'Server error has occurred. Please contact server administrator.'))
     return abort(400)
 
@@ -382,7 +384,7 @@ def confirm_user_without_page():
         shib_session_id = session['shib_session_id']
         if not shib_session_id:
             if ams_login:
-                return _redirect_method(True, error=_('Missing Shib-Session-ID!'))
+                return _redirect_method(True, ams_error=_('Missing Shib-Session-ID!'))
             else:
                 flash('shib_session_id', category='error')
                 return _redirect_method()
@@ -396,7 +398,7 @@ def confirm_user_without_page():
         # check cache
         if not datastore.redis.exists(cache_key):
             if ams_login:
-                return _redirect_method(True, error=_('Missing SHIB_CACHE_PREFIX!'))
+                return _redirect_method(True, ams_error=_('Missing SHIB_CACHE_PREFIX!'))
             else:
                 flash('cache_key', category='error')
                 return _redirect_method()
@@ -404,7 +406,7 @@ def confirm_user_without_page():
         cache_val = datastore.get(cache_key)
         if not cache_val:
             if ams_login:
-                return _redirect_method(True, error=_('Missing SHIB_ATTR!'))
+                return _redirect_method(True, ams_error=_('Missing SHIB_ATTR!'))
             else:
                 flash('cache_val', category='error')
                 datastore.delete(cache_key)
@@ -417,7 +419,7 @@ def confirm_user_without_page():
         if not shib_user.bind_relation_info(cache_val.get('shib_mail')):
             datastore.delete(cache_key)
             if ams_login:
-                return _redirect_method(True, error=_('FAILED bind_relation_info!'))
+                return _redirect_method(True, ams_error=_('FAILED bind_relation_info!'))
             else:
                 flash('FAILED bind_relation_info!', category='error')
                 return _redirect_method()
@@ -428,7 +430,7 @@ def confirm_user_without_page():
         if error:
             datastore.delete(cache_key)
             if ams_login:
-                return _redirect_method(True, error=error)
+                return _redirect_method(True, ams_error=error)
             else:
                 flash(error, category='error')
                 return _redirect_method()
@@ -443,7 +445,7 @@ def confirm_user_without_page():
     except BaseException:
         current_app.logger.error("Unexpected error: {}".format(sys.exc_info()))
         if ams_login:
-            return _redirect_method(True, error=_(
+            return _redirect_method(True, ams_error=_(
                 'Server error has occurred. Please contact server administrator.'))
     return abort(400)
 
@@ -463,7 +465,7 @@ def shib_login():
         if not shib_session_id:
             current_app.logger.error(_('Missing Shib-Session-ID!'))
             if ams_login:
-                return _redirect_method(True, error=_('Missing Shib-Session-ID!'))
+                return _redirect_method(True, ams_error=_('Missing Shib-Session-ID!'))
             else:
                 flash(_('Missing Shib-Session-ID!'), category='error')
                 return _redirect_method()
@@ -477,7 +479,7 @@ def shib_login():
             current_app.logger.error(_('Missing SHIB_CACHE_PREFIX!'))
             flash(_('Missing SHIB_CACHE_PREFIX!'), category='error')
             if ams_login:
-                return _redirect_method(True, error=_('Missing SHIB_CACHE_PREFIX!'))
+                return _redirect_method(True, ams_error=_('Missing SHIB_CACHE_PREFIX!'))
             else:
                 return _redirect_method()
 
@@ -487,7 +489,7 @@ def shib_login():
             current_app.logger.error(_('Missing SHIB_ATTR!'))
             datastore.delete(cache_key)
             if ams_login:
-                return _redirect_method(True, error=_('Missing SHIB_ATTR!'))
+                return _redirect_method(True, ams_error=_('Missing SHIB_ATTR!'))
             else:
                 flash(_('Missing SHIB_ATTR!'), category='error')
                 return _redirect_method()
@@ -507,7 +509,7 @@ def shib_login():
     except BaseException:
         current_app.logger.error("Unexpected error: {}".format(sys.exc_info()))
         if ams_login:
-            return _redirect_method(True, error=_(
+            return _redirect_method(True, ams_error=_(
                 'Server error has occurred. Please contact server administrator.'))
     return abort(400)
 
@@ -540,7 +542,7 @@ def shib_sp_login():
         shib_session_id = request.form.get('Shib-Session-ID', None)
         if not shib_session_id and not _shib_enable:
             if ams_login:
-                return _redirect_method(True, error=_('Missing Shib-Session-ID!'))
+                return _redirect_method(True, ams_error=_('Missing Shib-Session-ID!'))
             else:
                 flash(_('Missing Shib-Session-ID!'), category='error')
                 return redirect(url_for_security('login'))
@@ -552,7 +554,7 @@ def shib_sp_login():
                 shib_attr.get('shib_eppn', None)
                 or _shib_username_config and shib_attr.get('shib_user_name')):
             if ams_login:
-                return _redirect_method(True, error=_('Missing SHIB_ATTRs!'))
+                return _redirect_method(True, ams_error=_('Missing SHIB_ATTRs!'))
             else:
                 flash(_('Missing SHIB_ATTRs!'), category='error')
                 return _redirect_method()
@@ -574,7 +576,7 @@ def shib_sp_login():
 
             if blocked:
                 if ams_login:
-                    return _redirect_method(True, error=_('Login is blocked.'))
+                    return _redirect_method(True, ams_error=_('Login is blocked.'))
                 else:
                     flash(_('Failed to login.'), category='error')
                     return _redirect_method()
@@ -614,7 +616,7 @@ def shib_sp_login():
     except BaseException:
         current_app.logger.error("Unexpected error: {}".format(sys.exc_info()))
         if ams_login:
-            return _redirect_method(True, error=_(
+            return _redirect_method(True, ams_error=_(
                 'Server error has occurred. Please contact server administrator.'))
         else:
             return _redirect_method()
