@@ -173,6 +173,7 @@
 </template>
 
 <script lang="ts" setup>
+import amsAlert from '~/assets/data/amsAlert.json';
 /* ///////////////////////////////////
 // props
 /////////////////////////////////// */
@@ -221,6 +222,13 @@ const fileSize: any = Object.prototype.hasOwnProperty.call(props.file, appConfig
 const licenseType: any = setFileInfo(props.file[appConfig.roCrate.root.file.licenseType]);
 const fileURL: any = setFileInfo(props.file[appConfig.roCrate.root.file.url]);
 const fileComment: any = setFileInfo(props.file[appConfig.roCrate.root.file.comment]);
+const alertData = ref({
+  msgid: '',
+  msgstr: '',
+  position: '',
+  width: 'w-full',
+  loglevel: 'info',
+});
 
 /* ///////////////////////////////////
 // function
@@ -350,11 +358,13 @@ function download() {
     },
     onResponseError({ response }) {
       statusCode = response.status;
-      emits('error', 'E_TABLE_STYLE_0001', 'message.error.download');
-    }
+      alertData.value = amsAlert['TABLE_STYLE_MESSAGE_ERROR_DOWNLOAD'];
+      emits('error', alertData.value.msgid, alertData.value.msgstr);
+    },
   }).catch(() => {
     if (statusCode === 0) {
-      emits('error', 'E_TABLE_STYLE_0002', 'message.error.fetch');
+      alertData.value = amsAlert['TABLE_STYLE_MESSAGE_ERROR_FETCH'];
+      emits('error', alertData.value.msgid, alertData.value.msgstr);
     }
   });
 }
@@ -365,33 +375,35 @@ function download() {
 function preview() {
   let statusCode = 0;
   $fetch(appConfig.wekoApi + '/records/' + useRoute().query.number + '/files/' + props.file['@id'], {
-    timeout: useRuntimeConfig().public.apiTimeout,
-    method: 'GET',
-    credentials: 'omit',
-    headers: {
-      'Cache-Control': 'no-store',
-      Pragma: 'no-cache',
-      'Accept-Language': localStorage.getItem('locale') ?? 'ja',
-      Authorization: localStorage.getItem('token:type') + ' ' + localStorage.getItem('token:access')
-    },
-    params: {
-      mode: 'preview'
-    },
-    onResponse({ response }) {
-      if (response.status === 200) {
-        // プレーンテキストの場合(= response._data.type がない場合)に専用のURLを作成する必要あり
-        const preview = !response._data.type ? '/file_preview/' : '/preview/';
-        const url = appConfig.wekoOrigin + '/record/' + useRoute().query.number + preview + props.file['@id'];
-        window.open(url, '', 'toolbar=no');
-      }
-    },
-    onResponseError({ response }) {
-      statusCode = response.status;
-      emits('error', 'E_TABLE_STYLE_0003', 'message.error.preview');
-    }
+      timeout: useRuntimeConfig().public.apiTimeout,
+      method: 'GET',
+      credentials: 'omit',
+      headers: {
+        'Cache-Control': 'no-store',
+        Pragma: 'no-cache',
+        'Accept-Language': localStorage.getItem('locale') ?? 'ja',
+        Authorization: localStorage.getItem('token:type') + ' ' + localStorage.getItem('token:access')
+      },
+      params: {
+        mode: 'preview'
+      },
+      onResponse({ response }) {
+        if (response.status === 200) {
+          // プレーンテキストの場合(= response._data.type がない場合)に専用のURLを作成する必要あり
+          const preview = !response._data.type ? '/file_preview/' : '/preview/';
+          const url = appConfig.wekoOrigin + '/record/' + useRoute().query.number + preview + props.file['@id'];
+          window.open(url, '', 'toolbar=no');
+        }
+      },
+      onResponseError({ response }) {
+        statusCode = response.status;
+        alertData.value = amsAlert['TABLE_STYLE_MESSAGE_ERROR_PREVIEW'];
+        emits('error', alertData.value.msgid, alertData.value.msgstr);
+      },
   }).catch(() => {
     if (statusCode === 0) {
-      emits('error', 'E_TABLE_STYLE_0004', 'message.error.fetch');
+      alertData.value = amsAlert['TABLE_STYLE_MESSAGE_ERROR_FETCH_PREVIEW'];
+      emits('error', alertData.value.msgid, alertData.value.msgstr);
     }
   });
 }

@@ -237,11 +237,9 @@
     <CreaterInfo ref="creater" />
     <!-- アラート -->
     <Alert
-      v-if="visibleAlert"
-      :type="alertType"
-      :message="alertMessage"
-      :code="alertCode"
-      @click-close="visibleAlert = !visibleAlert" />
+      v-if='visibleAlert'
+      :alert='alertData'
+      @click-close='visibleAlert = !visibleAlert' />
   </div>
 </template>
 
@@ -256,6 +254,7 @@ import SearchForm from '~/components/common/SearchForm.vue';
 import CreaterInfo from '~/components/common/modal/CreaterInfo.vue';
 import Conditions from '~/components/search/Conditions.vue';
 import SearchResult from '~/components/search/SearchResult.vue';
+import amsAlert from '~/assets/data/amsAlert.json';
 
 /* ///////////////////////////////////
 // const and let
@@ -279,9 +278,13 @@ const aggregations: any = ref({});
 const renderFlag = ref(true);
 const creater = ref();
 const visibleAlert = ref(false);
-const alertType = ref('info');
-const alertMessage = ref('');
-const alertCode = ref('');
+const alertData = ref({
+  msgid: '',
+  msgstr: '',
+  position: '',
+  width: 'w-full',
+  loglevel: 'info',
+});
 let filterColumnList = JSON.parse(JSON.stringify(FilterColumn));
 const filterList = ref<any[]>([]);
 let filterNameDict = reactive({});
@@ -362,30 +365,23 @@ async function search() {
       }
     },
     onResponseError({ response }) {
-      alertCode.value = '';
       statusCode = response.status;
       if (statusCode === 401) {
         // 認証エラー
-        alertMessage.value = 'message.error.auth';
-        alertCode.value = 'E_SEARCH_INDEX_0001';
+        alertData.value = amsAlert['SEARCH_ITEM_MESSAGE_ERROR_AUTH'];
       } else if (statusCode >= 500 && statusCode < 600) {
         // サーバーエラー
-        alertMessage.value = 'message.error.server';
-        alertCode.value = 'E_SEARCH_INDEX_0002';
+        alertData.value = amsAlert['SEARCH_ITEM_MESSAGE_ERROR_SERVER'];
       } else {
         // リクエストエラー
-        alertMessage.value = 'message.error.search';
-        alertCode.value = 'E_SEARCH_INDEX_0003';
+        alertData.value = amsAlert['SEARCH_ITEM_MESSAGE_ERROR_REQUEST'];
       }
-      alertType.value = 'error';
       visibleAlert.value = true;
     },
   }).catch(() => {
     if (statusCode === 0) {
       // fetchエラー
-      alertMessage.value = 'message.error.fetch';
-      alertType.value = 'error';
-      alertCode.value = 'E_SEARCH_INDEX_0004';
+      alertData.value = amsAlert['SEARCH_ITEM_MESSAGE_ERROR_FETCH'];
       visibleAlert.value = true;
     }
   });
@@ -556,30 +552,23 @@ async function downloadResultList() {
       }
     },
     onResponseError({ response }) {
-      alertCode.value = '';
       statusCode = response.status;
       if (statusCode === 401) {
         // 認証エラー
-        alertMessage.value = 'message.error.auth';
-        alertCode.value = 'E_SEARCH_INDEX_0005';
+        alertData.value = amsAlert['SEARCH_DOWNLOAD_MESSAGE_ERROR_AUTH'];
       } else if (statusCode >= 500 && statusCode < 600) {
         // サーバーエラー
-        alertMessage.value = 'message.error.server';
-        alertCode.value = 'E_SEARCH_INDEX_0006';
+        alertData.value = amsAlert['SEARCH_DOWNLOAD_MESSAGE_ERROR_SERVER'];
       } else {
         // リクエストエラー
-        alertMessage.value = 'message.error.downloadResult';
-        alertCode.value = 'E_SEARCH_INDEX_0007';
+        alertData.value = amsAlert['SEARCH_DOWNLOAD_MESSAGE_ERROR_RESULT'];
       }
-      alertType.value = 'error';
       visibleAlert.value = true;
     },
   }).catch(() => {
     if (statusCode === 0) {
       // fetchエラー
-      alertMessage.value = 'message.error.fetch';
-      alertType.value = 'error';
-      alertCode.value = 'E_SEARCH_INDEX_0008';
+      alertData.value = amsAlert['SEARCH_DOWNLOAD_MESSAGE_ERROR_FETCH'];
       visibleAlert.value = true;
     }
   });
@@ -846,9 +835,7 @@ try {
   checkExportURL();
   await search();
 } catch (error) {
-  alertCode.value = 'E_SEARCH_INDEX_0009';
-  alertMessage.value = 'message.error.error';
-  alertType.value = 'error';
+  alertData.value = amsAlert['SEARCH_INDEX_MESSAGE_ERROR'];
   visibleAlert.value = true;
 }
 

@@ -148,11 +148,9 @@
     </div>
     <!-- アラート -->
     <Alert
-      v-if="visibleAlert"
-      :type="alertType"
-      :message="alertMessage"
-      :code="alertCode"
-      @click-close="visibleAlert = !visibleAlert" />
+      v-if='visibleAlert'
+      :alert='alertData'
+      @click-close='visibleAlert = !visibleAlert' />
   </div>
 </template>
 
@@ -160,6 +158,7 @@
 import { Form, Field, ErrorMessage } from 'vee-validate';
 
 import Alert from '~/components/common/Alert.vue';
+import amsAlert from '~/assets/data/amsAlert.json';
 
 /* ///////////////////////////////////
 // const and let
@@ -170,9 +169,13 @@ const password = ref('');
 const reset = ref('');
 const forgetPassFlag = ref(false);
 const visibleAlert = ref(false);
-const alertType = ref('info');
-const alertMessage = ref('');
-const alertCode = ref('');
+const alertData = ref({
+  msgid: '',
+  msgstr: '',
+  position: '',
+  width: 'w-full',
+  loglevel: 'info',
+});
 const dirtyEmail = ref(false);
 const dirtyPassword = ref(false);
 const dirtyReset = ref(false);
@@ -213,7 +216,6 @@ async function login() {
       }
     },
     onResponseError({ response }) {
-      alertCode.value = '';
       statusCode = response.status;
       if (statusCode === 400) {
         // ログイン済の場合、認可画面に遷移
@@ -228,22 +230,17 @@ async function login() {
         // window.open(url.href, '_self');
       } else if (statusCode >= 500 && statusCode < 600) {
         // サーバーエラー
-        alertMessage.value = 'message.error.server';
-        alertCode.value = 'E_LOGIN_0001';
+        alertData.value = amsAlert['LOGIN_MESSAGE_ERROR_SERVER'];
       } else {
         // リクエストエラー
-        alertMessage.value = 'message.error.login';
-        alertCode.value = 'E_LOGIN_0002';
+        alertData.value = amsAlert['LOGIN_MESSAGE_ERROR_REQUEST'];
       }
-        alertType.value = 'error';
-        visibleAlert.value = true;
+      visibleAlert.value = true;
     },
   }).catch(() => {
     if (statusCode === 0) {
       // fetchエラー
-      alertMessage.value = 'message.error.fetch';
-      alertCode.value = 'E_LOGIN_0003';
-      alertType.value = 'error';
+      alertData.value = amsAlert['LOGIN_MESSAGE_ERROR_FETCH'];
       visibleAlert.value = true;
     }
   });
@@ -297,43 +294,38 @@ function shibbolethLoginError(route: any) {
   if (error) {
     if (error === 'Login is blocked.') {
       // statusCode 403 Loginがブロックされている
-      alertMessage.value = 'message.error.loginFailed';
-      alertCode.value = 'E_LOGIN_0004';
+      alertData.value = amsAlert['LOGIN_MESSAGE_ERROR_LOGIN_BLOCK'];
     } else if (error === 'There is no user information.') {
       // statusCode 403 ユーザ情報がない
-      alertMessage.value = 'message.error.noUserInformation';
-      alertCode.value = 'E_LOGIN_0005';
+      alertData.value = amsAlert['LOGIN_MESSAGE_ERROR_NO_USER_INFORMATION'];
     } else if (
       error ===
       'Server error has occurred. Please contact server administrator.'
     ) {
       // statusCode 500 サーバーエラー
-      alertMessage.value = 'message.error.server';
-      alertCode.value = 'E_LOGIN_0006';
+      alertData.value = amsAlert['LOGIN_SHIB_MESSAGE_ERROR_SERVER'];
     } else {
       // statusCode 400
-      alertMessage.value = 'message.error.loginFailed';
       if (error === 'Missing SHIB_CACHE_PREFIX!') {
         // Redisにcache_keyがない
-        alertCode.value = 'E_LOGIN_0007';
+        alertData.value = amsAlert['LOGIN_MESSAGE_ERROR_SHIB_CACHE_PREFIX'];
       } else if (error === 'Missing Shib-Session-ID!') {
         // Shibboleth-Session-IDが​取得出来ない
-        alertCode.value = 'E_LOGIN_0008';
+        alertData.value = amsAlert['LOGIN_MESSAGE_ERROR_SHIB_SESSION_ID'];
       } else if (error === 'Missing SHIB_ATTRs!') {
         // shib_eppnが取得出来ない
-        alertCode.value = 'E_LOGIN_0009';
+        alertData.value = amsAlert['LOGIN_MESSAGE_ERROR_SHIB_ATTRS'];
       } else if (error === 'FAILED bind_relation_info!') {
         // 関連情報作成に失敗
-        alertCode.value = 'E_LOGIN_0010';
-      } else if (error === "Can't get relation Weko User.") {
+        alertData.value = amsAlert['LOGIN_MESSAGE_ERROR_BIND_RELATION_INFO'];
+      } else if (error === 'Can't get relation Weko User.') {
         // WEKOのユーザー関連情報が​取得出来ない
-        alertCode.value = 'E_LOGIN_0011';
+        alertData.value = amsAlert['LOGIN_MESSAGE_ERROR_FAILED_GET_RELATION'];
       } else {
         // その他例外エラー
-        alertCode.value = 'E_LOGIN_0012';
+        alertData.value = amsAlert['LOGIN_SHIB_MESSAGE_ERROR_LOGIN_FAILED'];
       }
     }
-    alertType.value = 'error';
     visibleAlert.value = true;
   }
 }

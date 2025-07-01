@@ -34,9 +34,10 @@
             <!-- アイテム情報 -->
             <ItemInfo v-if="renderFlag" :item="itemDetail" :item-id="currentNumber" :oauth-error="oauthError" />
             <!-- アイテム内容 -->
+            <div v-if='oauthError'>{{ $t('needLogin') }}</div>
             <ItemContent v-if="renderFlag" :item="itemDetail" />
             <!-- 前/次 -->
-            <div v-if="!oauthError" class="pt-2.5 pb-28">
+            <div v-if='!oauthError' class='pt-2.5 pb-28'>
               <Switcher
                 :sess="beforePage"
                 :prev-num="prevNum"
@@ -44,7 +45,7 @@
                 @click-prev="changeDetail"
                 @click-next="changeDetail" />
             </div>
-            <div v-else class="pt-2.5 pb-28"></div>
+            <div v-else class='pt-2.5 pb-28'></div>
             <!-- 最上部に戻る -->
             <button id="page-top" class="hidden lg:block w-10 h-10 absolute right-5 bottom-[60px]" @click="scrollToTop">
               <img :src="`${appConf.amsImage ?? '/img'}/btn/btn-gototop.svg`" alt="Top" />
@@ -138,13 +139,9 @@
       @complete-send="checkSendingResponse" />
     <!-- アラート -->
     <Alert
-      v-if="visibleAlert"
-      :type="alertType"
-      :message="alertMessage"
-      :code="alertCode"
-      :position="alertPosition"
-      :width="alertWidth"
-      @click-close="visibleAlert = !visibleAlert" />
+      v-if='visibleAlert'
+      :alert='alertData'
+      @click-close='visibleAlert = !visibleAlert' />
   </div>
 </template>
 
@@ -159,6 +156,7 @@ import ItemInfo from '~/components/detail/ItemInfo.vue';
 import Switcher from '~/components/detail/Switcher.vue';
 import ViewsNumber from '~/components/detail/ViewsNumber.vue';
 import RequestMail from '~/components/detail/modal/RequestMail.vue';
+import amsAlert from '~/assets/data/amsAlert.json';
 
 /* ///////////////////////////////////
 // interface
@@ -202,11 +200,13 @@ const nextNum = ref(0);
 const creater = ref();
 const requestMail = ref();
 const visibleAlert = ref(false);
-const alertType = ref('info');
-const alertMessage = ref('');
-const alertCode = ref('');
-const alertPosition = ref('');
-const alertWidth = ref('');
+const alertData = ref({
+  msgid: '',
+  msgstr: '',
+  position: '',
+  width: 'w-full',
+  loglevel: 'info',
+});
 const isLoading = ref(true);
 const isLogin = !!sessionStorage.getItem('login:state');
 const checkMailAddress = ref(false);
@@ -256,39 +256,28 @@ async function getDetail(number: string) {
       }
     },
     onResponseError({ response }) {
-      alertCode.value = '';
       statusCode = response.status;
       if (statusCode === 401 || statusCode === 403) {
         // 認証エラー
         if (isLogin) {
-          alertCode.value = 'E_DETAIL_0001';
-          alertMessage.value = 'message.error.auth';
+          alertData.value = amsAlert['DETAIL_ITEM_MESSAGE_ERROR_AUTH'];
         } else {
-          alertCode.value = 'E_DETAIL_0002';
+          alertData.value = amsAlert['DETAIL_ITEM_MESSAGE_ERROR_OAUTH'];
           oauthErrorRedirect();
         }
       } else if (statusCode >= 500 && statusCode < 600) {
         // サーバーエラー
-        alertMessage.value = 'message.error.server';
-        alertCode.value = 'E_DETAIL_0003';
+        alertData.value = amsAlert['DETAIL_ITEM_MESSAGE_ERROR_SERVER'];
       } else {
         // リクエストエラー
-        alertMessage.value = 'message.error.getItemDetail';
-        alertCode.value = 'E_DETAIL_0004';
+        alertData.value = amsAlert['DETAIL_ITEM_MESSAGE_ERROR_GET_ITEM_DETAIL'];
       }
-      alertType.value = 'error';
-      alertPosition.value = '';
-      alertWidth.value = 'w-full';
       visibleAlert.value = true;
     },
   }).catch(() => {
     if (statusCode === 0) {
       // fetchエラー
-      alertMessage.value = 'message.error.fetch';
-      alertType.value = 'error';
-      alertPosition.value = '';
-      alertWidth.value = 'w-full';
-      alertCode.value = 'E_DETAIL_0005';
+      alertData.value = amsAlert['DETAIL_ITEM_MESSAGE_ERROR_FETCH'];
       visibleAlert.value = true;
     }
   });
@@ -338,41 +327,30 @@ async function search(searchPage: string) {
       }
     },
     onResponseError({ response }) {
-      alertCode.value = '';
       statusCode = response.status;
       switcherFlag.value = false;
       searchResult = [];
       if (oauthError.value || statusCode === 401 || statusCode === 403) {
         // 認証エラー
         if (isLogin) {
-          alertMessage.value = 'message.error.auth';
-          alertCode.value = 'E_DETAIL_0006';
+          alertData.value = amsAlert['DETAIL_SEARCH_MESSAGE_ERROR_AUTH'];
         } else {
-          alertCode.value = 'E_DETAIL_0007';
+          alertData.value = amsAlert['DETAIL_SEARCH_MESSAGE_OAUTH_ERROR'];
           oauthErrorRedirect();
         }
       } else if (statusCode >= 500 && statusCode < 600) {
         // サーバーエラー
-        alertMessage.value = 'message.error.server';
-        alertCode.value = 'E_DETAIL_0008';
+        alertData.value = amsAlert['DETAIL_SEARCH_MESSAGE_ERROR_SERVER'];
       } else {
         // リクエストエラー
-        alertMessage.value = 'message.error.search';
-        alertCode.value = 'E_DETAIL_0009';
+        alertData.value = amsAlert['DETAIL_SEARCH_MESSAGE_ERROR_GET_INDEX'];
       }
-      alertType.value = 'error';
-      alertPosition.value = '';
-      alertWidth.value = 'w-full';
       visibleAlert.value = true;
     },
   }).catch(() => {
     if (statusCode === 0) {
       // fetchエラー
-      alertMessage.value = 'message.error.fetch';
-      alertType.value = 'error';
-      alertPosition.value = '';
-      alertWidth.value = 'w-full';
-      alertCode.value = 'E_DETAIL_0010';
+      alertData.value = amsAlert['DETAIL_SEARCH_MESSAGE_ERROR_FETCH'];
       visibleAlert.value = true;
     }
   });
@@ -405,39 +383,28 @@ async function getParentIndex() {
       }
     },
     onResponseError({ response }) {
-      alertCode.value = '';
       statusCode = response.status;
       if (oauthError.value || statusCode === 401 || statusCode === 403) {
         // 認証エラー
         if (isLogin) {
-          alertMessage.value = 'message.error.auth';
-          alertCode.value = 'E_DETAIL_0011';
+          alertData.value = amsAlert['DETAIL_INDEX_MESSAGE_ERROR_AUTH'];
         } else {
-          alertCode.value = 'E_DETAIL_0012';
+          alertData.value = amsAlert['DETAIL_INDEX_MESSAGE_OAUTH_ERROR'];
           oauthErrorRedirect();
         }
       } else if (statusCode >= 500 && statusCode < 600) {
         // サーバーエラー
-        alertMessage.value = 'message.error.server';
-        alertCode.value = 'E_DETAIL_0013';
+        alertData.value = amsAlert['DETAIL_INDEX_MESSAGE_ERROR_SERVER'];
       } else {
         // リクエストエラー
-        alertMessage.value = 'message.error.getIndex';
-        alertCode.value = 'E_DETAIL_0014';
+        alertData.value = amsAlert['DETAIL_INDEX_MESSAGE_ERROR_GET_INDEX'];
       }
-      alertType.value = 'error';
-      alertPosition.value = '';
-      alertWidth.value = 'w-full';
       visibleAlert.value = true;
     },
   }).catch(() => {
     if (statusCode === 0) {
       // fetchエラー
-      alertMessage.value = 'message.error.fetch';
-      alertType.value = 'error';
-      alertPosition.value = '';
-      alertWidth.value = 'w-full';
-      alertCode.value = 'E_DETAIL_0015';
+      alertData.value = amsAlert['DETAIL_INDEX_MESSAGE_ERROR_FETCH'];
       visibleAlert.value = true;
     }
   });
@@ -705,11 +672,13 @@ function openLoading(type: boolean) {
  * @param message エラーメッセージ
  */
 function setError(status = '', message: string) {
-  alertMessage.value = message;
-  alertCode.value = status;
-  alertType.value = 'error';
-  alertPosition.value = '';
-  alertWidth.value = 'w-full';
+  alertData.value = {
+    msgid: status,
+    msgstr: message,
+    position: '',
+    width: 'w-full',
+    loglevel: 'error',
+  };
   visibleAlert.value = true;
 }
 
@@ -719,18 +688,17 @@ function setError(status = '', message: string) {
  */
 function checkSendingResponse(val: boolean) {
   if (val) {
-    alertType.value = 'success';
-    alertMessage.value = 'message.sendingSuccess';
-    alertPosition.value = 'toast-top pt-20';
-    alertWidth.value = 'w-auto';
+    alertData.value = {
+      msgid: '',
+      msgstr: 'message.sendingSuccess',
+      position: 'toast-top pt-20',
+      width: 'w-auto',
+      loglevel: 'success',
+    };
     // 入力内容初期化
     requestMail.value.initInput();
   } else {
-    alertType.value = 'error';
-    alertMessage.value = 'message.sendingFailed';
-    alertCode.value = 'E_DETAIL_0016';
-    alertPosition.value = 'toast-top pt-20';
-    alertWidth.value = 'w-auto';
+    alertData.value = amsAlert['DETAIL_MESSAGE_SENDING_FAILED'];
   }
   (document.getElementById('loading_modal') as HTMLDialogElement).close();
   visibleAlert.value = true;
@@ -747,9 +715,7 @@ function scrollToTop() {
  * 認証エラー時のリダイレクト処理
  */
 function oauthErrorRedirect() {
-  alertMessage.value = 'message.error.oauthError';
   oauthError.value = true;
-  alertType.value = 'error';
   sessionStorage.removeItem('item-url');
   sessionStorage.setItem('item-url', window.location.pathname + window.location.search);
   setTimeout(() => {
@@ -805,11 +771,7 @@ try {
   }
   await getParentIndex();
 } catch (error) {
-  alertCode.value = 'E_DETAIL_0017';
-  alertMessage.value = 'message.error.error';
-  alertType.value = 'error';
-  alertPosition.value = '';
-  alertWidth.value = 'w-full';
+  alertData.value = amsAlert['DETAIL_MESSAGE_ERROR'];
   visibleAlert.value = true;
 }
 

@@ -41,11 +41,10 @@
     <CreaterInfo ref="creater" />
     <!-- アラート -->
     <Alert
-      v-if="visibleAlert"
-      :type="alertType"
-      :message="alertMessage"
-      :code="alertCode"
-      @click-close="visibleAlert = !visibleAlert" />
+      v-if='visibleAlert'
+      :alert='alertData'
+      @click-close='visibleAlert = !visibleAlert'
+    />
   </div>
 </template>
 
@@ -56,6 +55,7 @@ import CreaterInfo from '~/components/common/modal/CreaterInfo.vue';
 // import KeywardRank from '~/components/index/KeywardRank.vue';
 import LatestItem from '~/components/index/LatestItem.vue';
 // import News from '~/components/index/News.vue';
+import amsAlert from '~/assets/data/amsAlert.json';
 
 /* ///////////////////////////////////
 // const and let
@@ -64,9 +64,13 @@ import LatestItem from '~/components/index/LatestItem.vue';
 let latestItem = {};
 const creater = ref();
 const visibleAlert = ref(false);
-const alertType = ref('info');
-const alertMessage = ref('');
-const alertCode = ref('');
+const alertData = ref({
+  msgid: '',
+  msgstr: '',
+  position: '',
+  width: '',
+  loglevel: 'info',
+});
 const isRender = ref(false);
 const appConf = useAppConfig();
 
@@ -174,38 +178,29 @@ try {
       }
     },
     onResponseError({ response }) {
-      alertCode.value = '';
       statusCode = response.status;
       if (statusCode === 401) {
         // 認証エラー
-        alertMessage.value = 'message.error.auth';
-        alertCode.value = 'E_INDEX_0001';
+        alertData.value = amsAlert['INDEX_MESSAGE_ERROR_AUTH'];
       } else if (statusCode >= 500 && statusCode < 600) {
         // サーバーエラー
-        alertMessage.value = 'message.error.server';
-        alertCode.value = 'E_INDEX_0002';
+        alertData.value = amsAlert['INDEX_MESSAGE_ERROR_SERVER'];
       } else {
         // リクエストエラー
-        alertMessage.value = 'message.error.getLatestItem';
-        alertCode.value = 'E_INDEX_0003';
+        alertData.value = amsAlert['INDEX_MESSAGE_ERROR_GET_LATEST_ITEM'];
       }
-      alertType.value = 'error';
       visibleAlert.value = true;
     },
   }).catch(() => {
     if (statusCode === 0) {
       // fetchエラー
-      alertMessage.value = 'message.error.fetch';
-      alertCode.value = 'E_INDEX_0004';
-      alertType.value = 'error';
+      alertData.value = amsAlert['INDEX_MESSAGE_ERROR_FETCH'];
       visibleAlert.value = true;
     }
   });
 } catch (error) {
   // 例外エラー
-  alertCode.value = 'E_INDEX_0005';
-  alertMessage.value = 'message.error.error';
-  alertType.value = 'error';
+  alertData.value = amsAlert['INDEX_MESSAGE_ERROR'];
   visibleAlert.value = true;
 }
 

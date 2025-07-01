@@ -30,6 +30,7 @@
 </template>
 
 <script lang="ts" setup>
+import amsAlert from '~/assets/data/amsAlert.json';
 /* ///////////////////////////////////
 // props
 /////////////////////////////////// */
@@ -62,6 +63,13 @@ const span = ref('total');
 const spanList = ref<string[]>([]);
 const regionStats = ref({});
 const openDetail = ref(false);
+const alertData = ref({
+  msgid: '',
+  msgstr: '',
+  position: '',
+  width: 'w-full',
+  loglevel: 'info',
+});
 
 /* ///////////////////////////////////
 // function
@@ -92,17 +100,20 @@ function getItemStats(span: string) {
         regionStats.value = response._data.country;
       }
     },
-    onResponseError({ response }) {
-      statusCode = response.status;
-      if (statusCode === 500) {
-        emits('error', 'E_VIEWS_NUMBER_0001', 'message.error.error');
-      } else {
-        emits('error', 'E_VIEWS_NUMBER_0002', 'message.error.getItemViewsNumber');
-      }
-    }
-  }).catch(() => {
+      onResponseError({ response }) {
+        statusCode = response.status;
+        if (statusCode === 500) {
+          alertData.value = amsAlert['VIEWS_NUMBER_MESSAGE_ERROR'];
+        } else {
+          alertData.value = amsAlert['VIEWS_NUMBER_MESSAGE_ERROR_GET_ITEM'];
+        }
+        emits('error', alertData.value.msgid, alertData.value.msgstr);
+      },
+    },
+  ).catch(() => {
     if (statusCode === 0) {
-      emits('error', 'E_VIEWS_NUMBER_0003', 'message.error.fetch');
+      alertData.value = amsAlert['VIEWS_NUMBER_MESSAGE_ERROR_FETCH'];
+      emits('error', alertData.value.msgid, alertData.value.msgstr);
     }
   });
 }

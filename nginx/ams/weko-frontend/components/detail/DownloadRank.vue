@@ -43,6 +43,7 @@
 </template>
 
 <script lang="ts" setup>
+import amsAlert from '~/assets/data/amsAlert.json';
 /* ///////////////////////////////////
 // props
 /////////////////////////////////// */
@@ -78,6 +79,13 @@ const appConfig = useAppConfig();
 const topThree = ref<IFileInfo[]>([]);
 const other = ref<IFileInfo[]>([]);
 const isMessage = ref(false);
+const alertData = ref({
+  msgid: "",
+  msgstr: "",
+  position: "",
+  width: "w-full",
+  loglevel: "info",
+});
 
 /* ///////////////////////////////////
 // function
@@ -158,14 +166,17 @@ function download(filename: string) {
         a.click();
         a.remove();
       }
+          },
+      onResponseError({ response }) {
+        statusCode = response.status;
+        alertData.value = amsAlert['DOWNLOAD_RANK_MESSAGE_ERROR_DOWNLOAD'];
+        emits('error', alertData.value.msgid, alertData.value.msgstr);
+      },
     },
-    onResponseError({ response }) {
-      statusCode = response.status;
-      emits('error', 'E_DOWNLOAD_RANK_0001', 'message.error.download');
-    }
-  }).catch(() => {
+  ).catch(() => {
     if (statusCode === 0) {
-      emits('error', 'E_DOWNLOAD_RANK_0002', 'message.error.fetch');
+      alertData.value = amsAlert['DOWNLOAD_RANK_MESSAGE_ERROR_FETCH'];
+      emits('error', alertData.value.msgid, alertData.value.msgstr);
     }
   });
 }

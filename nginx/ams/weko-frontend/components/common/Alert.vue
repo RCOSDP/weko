@@ -123,33 +123,19 @@
 // props
 /////////////////////////////////// */
 
-defineProps({
-  // トースト種別
+const props = defineProps({
+  // トースト種別(loglevel)
   // {info:インフォーメーション , success:成功 , warning:警告 , error:エラー}
-  type: {
-    type: String,
-    default: 'info'
-  },
-  // トーストに表示するメッセージ
-  message: {
-    type: String,
-    default: ''
-  },
-  // エラーコード
-  code: {
-    type: String,
-    default: 0
-  },
   // 表示位置(https://daisyui.com/components/toast/)
-  position: {
-    type: String,
-    default: ''
+  alert: {
+    default: () => ({
+      msgid: "",
+      msgstr: "",
+      position: "",
+      width: "w-full",
+      loglevel: "info",
+    }),
   },
-  // width(css)
-  width: {
-    type: String,
-    default: 'w-full'
-  }
 });
 
 /* ///////////////////////////////////
@@ -160,4 +146,11 @@ const emits = defineEmits(['clickClose']);
 const appConf = useAppConfig();
 const transitionSecond = appConf.transitionTime / 1000;
 const loginPage = window.location.origin + `${appConf.amsPath ?? ''}/login?source=detail`;
+const {
+  msgid: code,
+  msgstr: message,
+  position: position,
+  width: width,
+  loglevel: type,
+} = toRefs(props.alert);
 </script>

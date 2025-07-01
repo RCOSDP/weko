@@ -210,11 +210,9 @@
     </main>
     <!-- アラート -->
     <Alert
-      v-if="visibleAlert"
-      :type="alertType"
-      :message="alertMessage"
-      :code="alertCode"
-      @click-close="visibleAlert = !visibleAlert" />
+      v-if='visibleAlert'
+      :alert='alertData'
+      @click-close='visibleAlert = !visibleAlert' />
   </div>
 </template>
 
@@ -226,6 +224,7 @@ import Alert from '~/components/common/Alert.vue';
 import Pagination from '~/components/common/Pagination.vue';
 import SearchForm from '~/components/common/SearchForm.vue';
 import TableStyle from '~/components/files/TableStyle.vue';
+import amsAlert from '~/assets/data/amsAlert.json';
 
 /* ///////////////////////////////////
 // const and let
@@ -243,9 +242,13 @@ const span = ref('total');
 const spanList = ref<string[]>([]);
 const selectedFiles = ref<string[]>([]);
 const visibleAlert = ref(false);
-const alertType = ref('info');
-const alertMessage = ref('');
-const alertCode = ref('');
+const alertData = ref({
+  msgid: '',
+  msgstr: '',
+  position: '',
+  width: 'w-full',
+  loglevel: 'info',
+});
 let divideFileList: any[] = [];
 let createdDate = '';
 let isAllCheck = false;
@@ -303,30 +306,23 @@ async function getFiles(number: string) {
       }
     },
     onResponseError({ response }) {
-      alertCode.value = '';
       statusCode = response.status;
       if (statusCode === 401) {
         // 認証エラー
-        alertMessage.value = 'message.error.auth';
-        alertCode.value = 'E_FILES_0001';
+        alertData.value = amsAlert['FILES_DETAIL_MESSAGE_ERROR_AUTH'];
       } else if (statusCode >= 500 && statusCode < 600) {
         // サーバーエラー
-        alertMessage.value = 'message.error.server';
-        alertCode.value = 'E_FILES_0002';
+        alertData.value = amsAlert['FILES_DETAIL_MESSAGE_ERROR_SERVER'];
       } else {
         // リクエストエラー
-        alertMessage.value = 'message.error.getItemDetail';
-        alertCode.value = 'E_FILES_0003';
+        alertData.value = amsAlert['FILES_DETAIL_MESSAGE_ERROR_GET_ITEM_DETAIL'];
       }
-      alertType.value = 'error';
       visibleAlert.value = true;
     },
   }).catch(() => {
     if (statusCode === 0) {
       // fetchエラー
-      alertMessage.value = 'message.error.fetch';
-      alertCode.value = 'E_FILES_0004';
-      alertType.value = 'error';
+      alertData.value = amsAlert['FILES_DETAIL_MESSAGE_ERROR_FETCH'];
       visibleAlert.value = true;
     }
   });
@@ -359,32 +355,25 @@ function downloadFilesAll() {
           a.remove();
         }
       },
-      onResponseError({ response }) {
-          alertCode.value = '';
+        onResponseError({ response }) {
           statusCode = response.status;
           if (statusCode === 401) {
             // 認証エラー
-            alertCode.value = 'E_FILES_0005';
-            alertMessage.value = 'message.error.auth';
+            alertData.value = amsAlert['FILES_ALL_MESSAGE_ERROR_AUTH'];
           } else if (statusCode >= 500 && statusCode < 600) {
             // サーバーエラー
-            alertMessage.value = 'message.error.server';
-            alertCode.value = 'E_FILES_0006';
+            alertData.value = amsAlert['FILES_ALL_MESSAGE_ERROR_SERVER'];
           } else {
             // リクエストエラー
-            alertMessage.value = 'message.error.downloadAll';
-            alertCode.value = 'E_FILES_0007';
+            alertData.value = amsAlert['FILES_ALL_MESSAGE_ERROR_DOWNLOAD_ALL'];
           }
-          alertType.value = 'error';
           visibleAlert.value = true;
         },
       },
     ).catch(() => {
       if (statusCode === 0) {
         // fetchエラー
-        alertMessage.value = 'message.error.fetch';
-        alertCode.value = 'E_FILES_0008';
-        alertType.value = 'error';
+        alertData.value = amsAlert['FILES_ALL_MESSAGE_ERROR_FETCH'];
         visibleAlert.value = true;
       }
     });
@@ -404,53 +393,46 @@ function downloadFilesAll() {
 function downloadFilesSelected(filesList: string[]) {
   let statusCode = 0;
   $fetch(appConf.wekoApi + '/records/' + String(query.number) + '/files/selected', {
-    timeout: useRuntimeConfig().public.apiTimeout,
-    method: 'POST',
-    credentials: 'omit',
-    headers: {
-      'Cache-Control': 'no-store',
-      Pragma: 'no-cache',
-      'Accept-Language': localStorage.getItem('locale') ?? 'ja',
-      Authorization: localStorage.getItem('token:type') + ' ' + localStorage.getItem('token:access')
-    },
-    body: {
-      filenames: filesList
-    },
-    onResponse({ response }) {
-      if (response.status === 200) {
-        const a = document.createElement('a');
-        a.href = window.URL.createObjectURL(new Blob([response._data]));
-        a.setAttribute('download', itemTitle.value + '_files.zip');
-        a.click();
-        a.remove();
-      }
-    },
-    onResponseError({ response }) {
-        alertCode.value = '';
+      timeout: useRuntimeConfig().public.apiTimeout,
+      method: 'POST',
+      credentials: 'omit',
+      headers: {
+        'Cache-Control': 'no-store',
+        Pragma: 'no-cache',
+        'Accept-Language': localStorage.getItem('locale') ?? 'ja',
+        Authorization: localStorage.getItem('token:type') + ' ' + localStorage.getItem('token:access')
+      },
+      body: {
+        filenames: filesList
+      },
+      onResponse({ response }) {
+        if (response.status === 200) {
+          const a = document.createElement('a');
+          a.href = window.URL.createObjectURL(new Blob([response._data]));
+          a.setAttribute('download', itemTitle.value + '_files.zip');
+          a.click();
+          a.remove();
+        }
+      },
+      onResponseError({ response }) {
         statusCode = response.status;
         if (statusCode === 401) {
           // 認証エラー
-          alertMessage.value = 'message.error.auth';
-          alertCode.value = 'E_FILES_0009';
+          alertData.value = amsAlert['FILES_SELECT_MESSAGE_ERROR_AUTH'];
         } else if (statusCode >= 500 && statusCode < 600) {
           // サーバーエラー
-          alertMessage.value = 'message.error.server';
-          alertCode.value = 'E_FILES_0010';
+          alertData.value = amsAlert['FILES_SELECT_MESSAGE_ERROR_SERVER'];
         } else {
           // リクエストエラー
-          alertMessage.value = 'message.error.downloadSelected';
-          alertCode.value = 'E_FILES_0011';
+          alertData.value = amsAlert['FILES_SELECT_MESSAGE_ERROR_DOWNLOAD_SELECTED'];
         }
-        alertType.value = 'error';
         visibleAlert.value = true;
       },
     },
   ).catch(() => {
     if (statusCode === 0) {
       // fetchエラー
-      alertMessage.value = 'message.error.fetch';
-      alertCode.value = 'E_FILES_0012';
-      alertType.value = 'error';
+      alertData.value = amsAlert['FILES_SELECT_MESSAGE_ERROR_FETCH'];
       visibleAlert.value = true;
     }
   });
@@ -622,9 +604,13 @@ function setPage(value: string) {
  * @param message エラーメッセージ
  */
 function setError(status = '', message: string) {
-  alertMessage.value = message;
-  alertCode.value = status;
-  alertType.value = 'error';
+  alertData.value = {
+    msgid: status,
+    msgstr: message,
+    position: '',
+    width: '',
+    loglevel: 'error',
+  };
   visibleAlert.value = true;
 }
 
@@ -767,9 +753,7 @@ try {
   divideList(filteredList.value);
   setSpanList();
 } catch (error) {
-  alertCode.value = 'E_FILES_00013';
-  alertMessage.value = 'message.error.error';
-  alertType.value = 'error';
+  alertData.value = amsAlert['FILES_MESSAGE_ERROR'];
   visibleAlert.value = true;
 }
 

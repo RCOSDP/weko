@@ -298,5 +298,6 @@
   "remarks": "備考",
   "identifierText": "識別子",
   "identifierType": "識別子タイプ",
-  "Institutional Login for institutions in Japan.": "所属機関のIdPでログインする方"
+  "Institutional Login for institutions in Japan.": "所属機関のIdPでログインする方",
+  "needToLogin": "ログインが必要なアイテムです。"
 }

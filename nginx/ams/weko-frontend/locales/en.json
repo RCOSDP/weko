@@ -297,5 +297,6 @@
   "remarks": "Remarks",
   "identifierText": "identifier",
   "identifierType": "identifier type",
-  "Institutional Login for institutions in Japan.": "Institutional Login for institutions in Japan."
+  "Institutional Login for institutions in Japan.": "Institutional Login for institutions in Japan.",
+  "needToLogin": "This item requires login."
 }
