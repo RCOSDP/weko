@@ -92,7 +92,14 @@ class ShibSettingView(BaseView):
                     for key in roles:
                         if roles[key] != new_roles[key]:
                             roles[key] = new_roles[key]
-                            flash(_(f'{key.replace("_", " ").title()} was updated.'), category='success')
+                            msg = ''
+                            if key == 'gakunin_role':
+                                msg = _('gakunin_role was updated.')
+                            elif key == 'orthros_outside_role':
+                                msg = _('orthros_outside_role was updated.')
+                            elif key == 'extra_role':
+                                msg = _('extra_role was updated.')
+                            flash(msg, category='success')
                             is_edit = True
                         AdminSettings.update('default_role_settings', roles)
 
@@ -100,7 +107,16 @@ class ShibSettingView(BaseView):
                     for key in attributes:
                         if attributes[key] != new_attributes[key]:
                             attributes[key] = new_attributes[key]
-                            flash(_(f'{key.replace("_", " ").title()} mapping was updated.'), category='success')
+                            msg = ''
+                            if key == 'shib_eppn':
+                                msg = _('shib_eppn mapping was updated.')
+                            elif key == 'shib_role_authority_name':
+                                msg = _('shib_role_authority_name mapping was updated.')
+                            elif key == 'shib_mail':
+                                msg = _('shib_mail mapping was updated.')
+                            elif key == 'shib_user_name':
+                                msg = _('shib_user_name mapping was updated.')
+                            flash(msg, category='success')
                             is_edit = True
                         AdminSettings.update('attribute_mapping', attributes)
 
@@ -115,7 +131,7 @@ class ShibSettingView(BaseView):
                             category='success')
                         is_edit = True
                         block_user_list = str(new_eppn_list).replace('"', '\\"')
-                    
+
                     if not is_edit:
                         flash(_('Shibboleth settings have been saved'), category='success')
 

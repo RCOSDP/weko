@@ -22,7 +22,7 @@ from invenio_records_files.models import RecordsBuckets
 from invenio_files_rest.models import Bucket
 from invenio_cache import current_cache
 from invenio_accounts.testutils import login_user_via_session as login
-from invenio_pidstore.models import PersistentIdentifier, PIDStatus
+from invenio_pidstore.models import PersistentIdentifier, PIDStatus, RecordIdentifier
 from flask_login.utils import login_user,logout_user
 from tests.helpers import json_data
 from invenio_mail.models import MailConfig
@@ -1075,8 +1075,9 @@ def test_handle_finish_workflow(workflow, db_records, mocker, db_itemtype2):
 
     deposit = db_records[2][6]
     current_pid = db_records[2][0]
-    recid = db_records[2][2]
-    result = handle_finish_workflow(deposit,current_pid,recid)
+    recid = MagicMock(spec=RecordIdentifier, recid=current_pid.pid_value)
+    with patch('weko_deposit.api.WekoIndexer.update_es_data'):
+        result = handle_finish_workflow(deposit,current_pid,recid)
     assert result
 
     with patch('weko_deposit.api.WekoIndexer.update_es_data'):
@@ -1113,8 +1114,9 @@ def test_handle_finish_workflow_external_system(workflow, db_records, mocker):
     mocker.patch("weko_workflow.utils.ItemReference.get_src_references", return_value=MagicMock())
 
     current_pid = PersistentIdentifier.get("recid", "1")
+    recid = MagicMock(spec=RecordIdentifier, recid=current_pid.pid_value)
     with patch('weko_workflow.utils.call_external_system') as mock_external:
-        handle_finish_workflow(deposit, current_pid, current_pid.pid_value)
+        handle_finish_workflow(deposit, current_pid, recid)
         mock_external.assert_called()
         assert mock_external.call_args[1]["old_record"] is None
         assert mock_external.call_args[1]["new_record"] is not None

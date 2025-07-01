@@ -75,7 +75,7 @@ def test_index_acl_nologin(client,db_register2):
     url = url_for('weko_workflow.index')
     res =  client.get(url)
     assert res.status_code == 302
-    assert res.location == "http://TEST_SERVER.localdomain/login/?next=%2Fworkflow%2F"
+    assert res.location == "http://test_server.localdomain/login/?next=%2Fworkflow%2F"
 
 
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_index_acl -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
@@ -327,7 +327,7 @@ def test_init_activity_acl_nologin(client,db_register2):
     input = {'workflow_id': 1, 'flow_id': 1}
     res = client.post(url, json=input)
     assert res.status_code == 302
-    assert res.location == "http://TEST_SERVER.localdomain/login/?next=%2Fworkflow%2Factivity%2Finit"
+    assert res.location == "http://test_server.localdomain/login/?next=%2Fworkflow%2Factivity%2Finit"
 
 
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_init_activity_acl -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
@@ -825,7 +825,7 @@ def test_previous_action_acl_nologin(client,db_register2):
 
     res = client.post(url, json=input)
     assert res.status_code == 302
-    assert res.location == "http://TEST_SERVER.localdomain/login/?next=%2Fworkflow%2Factivity%2Faction%2F1%2F1%2FrejectOrReturn%2F1"
+    assert res.location == "http://test_server.localdomain/login/?next=%2Fworkflow%2Factivity%2Faction%2F1%2F1%2FrejectOrReturn%2F1"
 
 
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_previous_action_acl_users -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
@@ -1015,7 +1015,7 @@ def test_next_action_acl_nologin(client, db_register_fullaction):
 
     res = client.post(url, json=input)
     assert res.status_code == 302
-    assert res.location == "http://TEST_SERVER.localdomain/login/?next=%2Fworkflow%2Factivity%2Faction%2F1%2F1"
+    assert res.location == "http://test_server.localdomain/login/?next=%2Fworkflow%2Factivity%2Faction%2F1%2F1"
 
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_next_action_acl_users -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 @pytest.mark.parametrize('users_index, status_code, is_admin', [
@@ -2535,7 +2535,7 @@ def test_cancel_action_acl_nologin(client,db_register2):
 
     res = client.post(url, json=input)
     assert res.status_code == 302
-    assert res.location == 'http://TEST_SERVER.localdomain/login/?next=%2Fworkflow%2Factivity%2Faction%2F1%2F1%2Fcancel'
+    assert res.location == 'http://test_server.localdomain/login/?next=%2Fworkflow%2Factivity%2Faction%2F1%2F1%2Fcancel'
 
 
 @pytest.mark.parametrize('users_index, status_code, is_admin', [
@@ -3224,7 +3224,7 @@ def test_unlock_activity_acl_nologin(client,db_register2):
 
     res = client.post(url, json=input)
     assert res.status_code == 302
-    assert res.location == 'http://TEST_SERVER.localdomain/login/?next=%2Fworkflow%2Factivity%2Funlock%2F1'
+    assert res.location == 'http://test_server.localdomain/login/?next=%2Fworkflow%2Factivity%2Funlock%2F1'
 
 
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_unlock_activity_acl_users -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
@@ -3305,7 +3305,7 @@ def test_check_approval_acl_nologin(client,db_register2):
 
     res = client.get(url)
     assert res.status_code == 302
-    assert res.location == 'http://TEST_SERVER.localdomain/login/?next=%2Fworkflow%2Fcheck_approval%2F1'
+    assert res.location == 'http://test_server.localdomain/login/?next=%2Fworkflow%2Fcheck_approval%2F1'
 
 
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_check_approval_acl_users -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
@@ -3383,7 +3383,7 @@ def test_get_feedback_maillist_acl_nologin(client,db_register2):
 
     res = client.get(url)
     assert res.status_code == 302
-    assert res.location == 'http://TEST_SERVER.localdomain/login/?next=%2Fworkflow%2Fget_feedback_maillist%2F1'
+    assert res.location == 'http://test_server.localdomain/login/?next=%2Fworkflow%2Fget_feedback_maillist%2F1'
 
 
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_get_feedback_maillist_acl_users -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
@@ -3594,7 +3594,7 @@ def test_save_activity_acl_nologin(client,db_register2):
 
     res = client.post(url, json=input)
     assert res.status_code == 302
-    assert res.location == 'http://TEST_SERVER.localdomain/login/?next=%2Fworkflow%2Fsave_activity_data'
+    assert res.location == 'http://test_server.localdomain/login/?next=%2Fworkflow%2Fsave_activity_data'
 
 
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_save_activity_acl_users -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
@@ -4587,7 +4587,7 @@ def test_withdraw_confirm_nologin(client,db_register2):
     input = {}
 
     res = client.post(url, json=input)
-    assert res.location == 'http://TEST_SERVER.localdomain/login/?next=%2Fworkflow%2Factivity%2Fdetail%2F1%2F1%2Fwithdraw'
+    assert res.location == 'http://test_server.localdomain/login/?next=%2Fworkflow%2Factivity%2Fdetail%2F1%2F1%2Fwithdraw'
 
 
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_withdraw_confirm_users -v -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
@@ -5147,14 +5147,14 @@ def test_edit_item_direct_1(client, users, users_index, status_code):
     url = url_for("weko_workflow.edit_item_direct", pid_value="1")
     res = client.get(url)
     assert res.status_code == 302
-    assert res.location == 'http://TEST_SERVER.localdomain/workflow/edit_item_direct_after_login/1'
+    assert res.location == 'http://test_server.localdomain/workflow/edit_item_direct_after_login/1'
 
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_edit_item_direct_2 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_edit_item_direct_2(client, db_register2):
     url = url_for("weko_workflow.edit_item_direct", pid_value="1")
     res = client.get(url)
     assert res.status_code == 302
-    assert res.location == 'http://TEST_SERVER.localdomain/login/?next=%2Fworkflow%2Fedit_item_direct_after_login%2F1'
+    assert res.location == 'http://test_server.localdomain/login/?next=%2Fworkflow%2Fedit_item_direct_after_login%2F1'
 
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_edit_item_direct_after_login_01 -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 @pytest.mark.parametrize(
@@ -5174,7 +5174,7 @@ def test_edit_item_direct_after_login_01(client, users, db_register, users_index
     url = url_for("weko_workflow.edit_item_direct_after_login", pid_value="1")
     res = client.get(url)
     assert res.status_code == status_code
-    assert res.location == 'http://TEST_SERVER.localdomain/workflow/activity/detail/1'
+    assert res.location == 'http://test_server.localdomain/workflow/activity/detail/1'
 
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_edit_item_direct_after_login_02 -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 @pytest.mark.parametrize(
@@ -5385,7 +5385,7 @@ def test_edit_item_direct_after_login_10(client, users, db_register, users_index
     res = client.get(url)
     assert mock_get_workflow_activity_by_item_id.call_count == 2
     assert res.status_code == status_code
-    assert res.location == 'http://TEST_SERVER.localdomain/workflow/activity/detail/1'
+    assert res.location == 'http://test_server.localdomain/workflow/activity/detail/1'
 
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_edit_item_direct_after_login_11 -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 @pytest.mark.parametrize(
