@@ -259,7 +259,8 @@ def shib_auto_login():
             remarks=tb_info[0]
         )
         if ams_login:
-            return _redirect_method(True, error=_('Server error has occurred. Please contact server administrator.'))
+            return _redirect_method(True, error=_(
+                'Server error has occurred. Please contact server administrator.'))
     return abort(400)
 
 
@@ -360,7 +361,8 @@ def confirm_user():
             remarks=tb_info[0]
         )
         if ams_login:
-            return _redirect_method(True, error=_('Server error has occurred. Please contact server administrator.'))
+            return _redirect_method(True, error=_(
+                'Server error has occurred. Please contact server administrator.'))
     return abort(400)
 
 
@@ -441,7 +443,8 @@ def confirm_user_without_page():
     except BaseException:
         current_app.logger.error("Unexpected error: {}".format(sys.exc_info()))
         if ams_login:
-            return _redirect_method(True, error=_('Server error has occurred. Please contact server administrator.'))
+            return _redirect_method(True, error=_(
+                'Server error has occurred. Please contact server administrator.'))
     return abort(400)
 
 
@@ -504,7 +507,8 @@ def shib_login():
     except BaseException:
         current_app.logger.error("Unexpected error: {}".format(sys.exc_info()))
         if ams_login:
-            return _redirect_method(True, error=_('Server error has occurred. Please contact server administrator.'))
+            return _redirect_method(True, error=_(
+                'Server error has occurred. Please contact server administrator.'))
     return abort(400)
 
 def find_user_by_email(shib_attributes):
@@ -610,7 +614,8 @@ def shib_sp_login():
     except BaseException:
         current_app.logger.error("Unexpected error: {}".format(sys.exc_info()))
         if ams_login:
-            return _redirect_method(True, error=_('Server error has occurred. Please contact server administrator.'))
+            return _redirect_method(True, error=_(
+                'Server error has occurred. Please contact server administrator.'))
         else:
             return _redirect_method()
 
