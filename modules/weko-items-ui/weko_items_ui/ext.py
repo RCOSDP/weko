@@ -21,7 +21,7 @@
 """Flask extension for weko-items-ui."""
 
 from . import config
-
+from .signals import cris_researchmap_linkage_request ,receiver
 
 class _WekoItemsUIState(object):
     """WekoItemsUI state."""
@@ -59,6 +59,7 @@ class WekoItemsUI(object):
         state = _WekoItemsUIState(app, item_permission)
         app.extensions['weko-items-ui'] = state
         app.jinja_env.globals.update(check_ranking_show=check_ranking_show)
+        cris_researchmap_linkage_request.connect(receiver=receiver)
 
     def init_config(self, app):
         """Initialize configuration.

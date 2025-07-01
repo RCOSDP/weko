@@ -2110,21 +2110,26 @@ def handle_finish_workflow(deposit, current_pid, recid):
                                  old_item_reference_list=old_item_reference_list,
                                  new_item_reference_list=new_item_reference_list)
 
-        from invenio_oaiserver.tasks import update_records_sets
-        update_records_sets.delay([str(pid_without_ver.object_uuid)])
-        opration = "ITEM_CREATE" if is_newversion else "ITEM_UPDATE"
-        target_key = recid.recid if is_newversion else pid_without_ver.pid_value
-        UserActivityLogger.info(
-            operation=opration,
-            target_key=target_key
-        )
+        if pid_without_ver:
+            from invenio_oaiserver.tasks import update_records_sets
+            update_records_sets.delay([str(pid_without_ver.object_uuid)])
+            opration = "ITEM_CREATE" if is_newversion else "ITEM_UPDATE"
+            target_key = recid.recid if is_newversion else pid_without_ver.pid_value
+            UserActivityLogger.info(
+                operation=opration,
+                target_key=target_key
+            )
     except Exception as ex:
         db.session.rollback()
         current_app.logger.exception(str(ex))
+        traceback.print_exc()
         exec_info = sys.exc_info()
         tb_info = traceback.format_tb(exec_info[2])
         opration = "ITEM_CREATE" if is_newversion else "ITEM_UPDATE"
-        target_key = recid.recid if is_newversion else pid_without_ver.pid_value
+        target_key = (
+            recid.recid if is_newversion else pid_without_ver.pid_value
+            if pid_without_ver else current_pid.pid_value
+        )
         UserActivityLogger.error(
             operation=opration,
             target_key=target_key,
@@ -2330,7 +2335,7 @@ def get_allow_multi_thumbnail(item_type_id, activity_id=None):
     """Get Multi Thumbnail from file."""
     if activity_id:
         from weko_items_ui.api import item_login
-        _, _, _, _, _, _, _, _, _, _, _, allow_multi_thumbnail \
+        _, _, _, _, _, _, _, _, _, _, _, allow_multi_thumbnail,_ \
             = item_login(item_type_id=item_type_id)
         return allow_multi_thumbnail
     else:
@@ -3653,7 +3658,7 @@ def __init_activity_detail_data_for_guest(activity_id: str, community_id: str):
     step_item_login_url, need_file, need_billing_file, \
         record, json_schema, schema_form, \
         item_save_uri, files, endpoints, need_thumbnail, files_thumbnail, \
-        allow_multi_thumbnail \
+        allow_multi_thumbnail ,cris_linkage \
         = item_login(item_type_id=workflow_detail.itemtype_id)
     if not record and item:
         record = item

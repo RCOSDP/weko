@@ -691,3 +691,8 @@ msgstr "メンテナンス"
 #: msgid "ElasticSearch Index"
 msgid "Admin menu_Maintenance_ElasticSearch Index"
 msgstr "ElasticSearchインデックス"
+
+#: weko_admin/
+#: msgid "CRIS Linkage"
+msgid "Admin menu_Setting_CRIS Linkage"
+msgstr "CRIS 連携"

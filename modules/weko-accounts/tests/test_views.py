@@ -877,12 +877,12 @@ def test_shib_sp_login(client, redis_connect,mocker, db, users):
     )
     # shib_user.get_relation_info is None
     with patch("weko_accounts.views.ShibUser.get_relation_info",return_value=None):
-        with patch("weko_accounts.views.find_user_by_email",return_value="shib_user"):
+        with patch("weko_accounts.views.find_user_by_email",return_value=None):
             res = client.post(url,data=form)
             assert res.status_code == 200
             assert res.data.decode() == "/weko/confim/user/skip?Shib-Session-ID=1111&next=%2F"
 
-        with patch("weko_accounts.views.find_user_by_email",return_value=None):
+        with patch("weko_accounts.views.find_user_by_email",return_value="shib_user"):
             res = client.post(url,data=form)
             assert res.status_code == 200
             assert res.data.decode() == "/weko/auto/login?Shib-Session-ID=1111&next=%2F"
@@ -933,7 +933,7 @@ def test_shib_sp_login(client, redis_connect,mocker, db, users):
     }
     res = client.post(url, data=form, headers=headers)
     assert res.status_code == 200
-    assert res.data.decode('utf-8') == '/weko/auto/login?Shib-Session-ID=session&next=%2F'
+    assert res.data.decode('utf-8') == '/weko/confim/user/skip?Shib-Session-ID=session&next=%2F'
     with db.session.begin_nested():
         shib_users = ShibbolethUser.query.all()
         assert len(shib_users) == 0
@@ -967,7 +967,7 @@ def test_shib_sp_login(client, redis_connect,mocker, db, users):
     }
     res = client.post(url, data=form, headers=headers)
     assert res.status_code == 200
-    assert res.data.decode('utf-8') == '/weko/auto/login?Shib-Session-ID=session&next=%2F'
+    assert res.data.decode('utf-8') == '/weko/confim/user/skip?Shib-Session-ID=session&next=%2F'
 
     # WEKO_ACCOUNTS_SHIB_ALLOW_USERNAME_INST_EPPN is False
     current_app.config.update(
@@ -986,7 +986,7 @@ def test_shib_sp_login(client, redis_connect,mocker, db, users):
     }
     res = client.post(url, data=form, headers=headers)
     assert res.status_code == 200
-    assert res.data.decode('utf-8') == '/weko/auto/login?Shib-Session-ID=session&next=%2F'
+    assert res.data.decode('utf-8') == '/weko/confim/user/skip?Shib-Session-ID=session&next=%2F'
 
     # eppn has no value
     current_app.config.update(
@@ -1001,7 +1001,7 @@ def test_shib_sp_login(client, redis_connect,mocker, db, users):
     }
     res = client.post(url, data=form, headers=headers)
     assert res.status_code == 200
-    assert res.data.decode('utf-8') == '/weko/auto/login?Shib-Session-ID=session&next=%2F'
+    assert res.data.decode('utf-8') == '/weko/confim/user/skip?Shib-Session-ID=session&next=%2F'
 
     # HTTP_WEKOID and eppn have no value
     headers = {
@@ -1059,7 +1059,7 @@ def test_shib_sp_login(client, redis_connect,mocker, db, users):
     }
     res = client.post(url, data=form, headers=headers)
     assert res.status_code == 200
-    assert res.data.decode('utf-8') == '/weko/auto/login?Shib-Session-ID=session&next=%2F'
+    assert res.data.decode('utf-8') == '/weko/confim/user/skip?Shib-Session-ID=session&next=%2F'
 
     # Shib-Session-ID has no value
     current_app.config.update(
@@ -1074,7 +1074,7 @@ def test_shib_sp_login(client, redis_connect,mocker, db, users):
     }
     res = client.post(url, data=form, headers=headers)
     assert res.status_code == 200
-    assert res.data.decode('utf-8') == '/weko/auto/login?Shib-Session-ID=&next=%2F'
+    assert res.data.decode('utf-8') == '/weko/confim/user/skip?Shib-Session-ID=&next=%2F'
 
     # WEKO_ACCOUNTS_SHIB_LOGIN_ENABLED is False and Shib-Session-ID has no value
     current_app.config.update(
