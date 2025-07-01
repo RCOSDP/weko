@@ -310,7 +310,7 @@ def test_confirm_user(client,redis_connect,mocker):
     mock_redirect_.assert_called_once()
     called_args, called_kwargs = mock_redirect_.call_args
     assert called_args[0] == True
-    assert "Missing SHIB_CACHE_PREFIX" in called_kwargs.get("error", "")
+    assert "Missing SHIB_CACHE_PREFIX!" in called_kwargs.get("error", "")
 
     set_session(client,{"csrf_random":"test_csrf","shib_session_id":"1111"})
     # not exist cache_value
@@ -465,7 +465,7 @@ def test_confirm_user_without_page(client,redis_connect,mocker):
     mock_redirect_.assert_called_once()
     called_args, called_kwargs = mock_redirect_.call_args
     assert called_args[0] == True
-    assert "Missing SHIB_CACHE_PREFIX" in called_kwargs.get("error", "")
+    assert "Missing SHIB_CACHE_PREFIX!" in called_kwargs.get("error", "")
 
     set_session(client,{"shib_session_id":"1111"})
     # not exist cache_value
