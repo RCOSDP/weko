@@ -17,7 +17,7 @@ from sqlalchemy_utils.types import JSONType
 revision = "ce82f0d78dcb"
 down_revision = "05683afc0320"
 branch_labels = ()
-depends_on = ["invenio_oauth2server", "weko_records"]
+depends_on = "89c58783bf65"
 
 
 def upgrade():
@@ -32,7 +32,7 @@ def upgrade():
         sa.Column("registration_type_id", sa.SmallInteger(), nullable=False),
         sa.Column("mapping_id", sa.Integer(), nullable=False),
         sa.Column("workflow_id", sa.Integer()),
-        sa.Column("duplicate_check", sa.Boolean(name="duplicate_check")),
+        sa.Column("duplicate_check", sa.Boolean(name="duplicate_check"), nullable=False),
         sa.Column(
             "meta_data_api",
             sa.JSON().with_variant(
@@ -48,7 +48,7 @@ def upgrade():
             nullable=True
         ),
         sa.PrimaryKeyConstraint("id"),
-        sa.UniqueConstraint("client_id", name="uq_sword_clients_client_id"),
+        sa.Index("ix_sword_clients_client_id", "client_id", unique=True),
         sa.ForeignKeyConstraint(
             ["client_id"], ["oauth2server_client.client_id"],
             name="fk_sword_clients_client_id_oauth2server_client",
