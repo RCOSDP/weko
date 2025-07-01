@@ -2419,7 +2419,6 @@ def create_tsv(files, language='en'):
     return file_output
 
 
-
 def export_preprocess(pid, record, schema_type):
     """Preprocess for export.
 

@@ -45,7 +45,6 @@ from sqlalchemy_utils.functions import create_database, database_exists, \
     drop_database
 from simplekv.memory.redisstore import RedisStore
 
-
 from invenio_accounts import InvenioAccounts
 from invenio_accounts.models import User, Role
 from invenio_accounts.testutils import create_test_user
@@ -60,14 +59,14 @@ from invenio_files_rest import InvenioFilesREST
 from invenio_files_rest.models import FileInstance, Location
 from invenio_i18n import InvenioI18N
 from invenio_mail.models import MailConfig
+from invenio_oaiserver.ext import InvenioOAIServer
+from invenio_oauth2server.models import Client, Token
 from invenio_pidrelations import InvenioPIDRelations
 from invenio_pidstore import InvenioPIDStore
-from invenio_search import RecordsSearch,InvenioSearch,current_search_client
-from invenio_oaiserver.ext import InvenioOAIServer
+from invenio_pidstore.models import PersistentIdentifier
 from invenio_records.ext import InvenioRecords
 from invenio_records.models import RecordMetadata
-from invenio_pidstore.models import PersistentIdentifier
-from invenio_oauth2server.models import Client, Token
+from invenio_search import RecordsSearch,InvenioSearch,current_search_client
 
 from weko_authors import WekoAuthors
 from weko_authors.models import Authors
@@ -78,13 +77,12 @@ from weko_records_ui.config import WEKO_PERMISSION_SUPER_ROLE_USER
 from weko_records import WekoRecords
 from weko_records.models import SiteLicenseInfo, SiteLicenseIpAddress,ItemType,ItemTypeName,ItemTypeJsonldMapping
 from weko_redis.redis import RedisConnection
-from weko_swordserver.models import SwordClientModel
-from weko_theme import WekoTheme
 from weko_schema_ui import WekoSchemaUI
 from weko_search_ui import WekoSearchUI
+from weko_swordserver.models import SwordClientModel
+from weko_theme import WekoTheme
 from weko_workflow import WekoWorkflow
 from weko_workflow.models import Action, ActionStatus,FlowDefine,FlowAction,WorkFlow,Activity,ActivityAction
-
 
 from weko_admin import WekoAdmin
 from weko_admin.models import SessionLifetime,SiteInfo,SearchManagement,\
@@ -95,7 +93,7 @@ from weko_admin.models import SessionLifetime,SiteInfo,SearchManagement,\
 from weko_admin.views import blueprint_api
 
 from .helpers import json_data, create_record
-from weko_admin.models import FacetSearchSetting
+
 
 @pytest.yield_fixture()
 def instance_path():

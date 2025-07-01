@@ -1434,7 +1434,6 @@ def test_validation_site_info(mocker):
         'favicon_name': 'JAIRO Cloud icon',
         'notify': [{'language': 'en', 'notify_name': ''}],
         'google_tracking_id_user': 'test_tracking_id',
-        'addthis_user_id': 'ra-5d8af23e9a3a2633',
         'ogp_image': '',
         'ogp_image_name': '',
     }
@@ -1453,7 +1452,6 @@ def test_format_site_info_data():
         ],
         'copy_right': 'test copy right ',
         'google_tracking_id_user': 'test_tracking_id',
-        'addthis_user_id': 'ra-5d8af23e9a3a2633',
         'keyword': 'test_keyword1\ntest_keyword2',
         'description': 'this is test description',
         'favicon_name': 'JAIRO Cloud icon',
@@ -1474,7 +1472,6 @@ def test_format_site_info_data():
         'favicon_name': 'JAIRO Cloud icon',
         'notify': [{'language': 'en', 'notify_name': ''}],
         'google_tracking_id_user': 'test_tracking_id',
-        'addthis_user_id': 'ra-5d8af23e9a3a2633',
         'ogp_image': '',
         'ogp_image_name': '',
     }

@@ -791,6 +791,7 @@ def users(app, db):
         {'email': student.email,'id': student.id, 'obj': student}
     ]
 
+
 @pytest.fixture()
 def activity_acl_users(app, db):
     ds = app.extensions['invenio-accounts'].datastore

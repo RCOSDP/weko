@@ -7469,7 +7469,7 @@ def test_package_export_file(app):
 #         def get_max_items(self, item_attrs):
 #         def get_subs_item(self,
 # .tox/c1/bin/pytest --cov=weko_items_ui tests/test_utils.py::test_make_stats_file -vv -s -v --cov-branch --cov-report=term --cov--report --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
-def test_make_stats_file(app, db, users,db_itemtype, db_records,db_itemtype2,db_records2,identifier):
+def test_make_stats_file(app, db, users, db_itemtype, db_records, db_itemtype2, db_records2, identifier):
     app.config.update(
         EMAIL_DISPLAY_FLG=True,
         WEKO_RECORDS_UI_LICENSE_DICT=[

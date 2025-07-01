@@ -1,19 +1,19 @@
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_admin.py -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
 
 from datetime import datetime
-from flask import url_for,make_response,json
 from mock import patch
 import pytest
+from unittest.mock import MagicMock, mock_open
 
+from flask import current_app, url_for, make_response, json
 from invenio_accounts.testutils import login_user_via_session
 from invenio_cache import current_cache
 from invenio_files_rest.models import FileInstance
-from weko_workflow.utils import delete_cache_data
-from unittest.mock import MagicMock, mock_open
-from datetime import datetime
-from flask import current_app
+
 from weko_authors.admin import ImportView
 from weko_authors.tasks import import_author, import_id_prefix, import_affiliation_id
+from weko_workflow.utils import delete_cache_data
+
 
 def assert_role(response,is_permission,status_code=403):
     if is_permission:

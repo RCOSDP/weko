@@ -1,24 +1,19 @@
 
-import os
-import io
-from os.path import dirname, join
-import uuid
-from flask import url_for,current_app,make_response
-from flask_admin import Admin
-from mock import patch
-from mock import MagicMock, patch
-import json
-import pytest
 from datetime import datetime
+import io
+import json
 from mock import MagicMock, patch
-from .helpers import login, logout
+import os
+from os.path import dirname, join
+import pytest
+import uuid
 
 from flask import url_for,current_app,make_response
 from flask_admin import Admin
 from flask_wtf import FlaskForm,Form
 from sqlalchemy.exc import SQLAlchemyError
-from wtforms.validators import ValidationError
 from werkzeug.datastructures import ImmutableMultiDict
+from wtforms.validators import ValidationError
 
 from invenio_access.models import ActionUsers
 from invenio_accounts.testutils import login_user_via_session, create_test_user
@@ -32,11 +27,11 @@ from weko_admin.models import (
 )
 from weko_index_tree.models import IndexStyle,Index
 from weko_records.api import JsonldMapping
+from weko_records.models import ItemTypeJsonldMapping
 from weko_swordserver.api import SwordClient
+from weko_swordserver.models import SwordClientModel
 from weko_workflow.api import WorkFlow
 from weko_workflow.models import WorkFlow
-from weko_records.models import ItemTypeJsonldMapping
-from weko_swordserver.models import SwordClientModel
 
 from weko_admin.admin import (
     StyleSettingView,LogAnalysisSettings,ItemExportSettingsView,IdentifierSettingView,
@@ -44,6 +39,7 @@ from weko_admin.admin import (
     SwordAPIJsonldSettingsView, JsonldMappingView
 )
 
+from .helpers import login, logout
 from .test_views import assert_role
 
 # .tox/c1/bin/pytest --cov=weko_admin tests/test_admin.py -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp

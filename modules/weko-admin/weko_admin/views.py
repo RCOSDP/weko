@@ -652,7 +652,6 @@ def get_site_info():
     result['site_name'] = site_info.site_name
     result['notify'] = site_info.notify
     result['google_tracking_id_user'] = site_info.google_tracking_id_user
-    result['addthis_user_id'] = site_info.addthis_user_id
 
     if site_info.ogp_image and site_info.ogp_image_name:
         ts = time.time()

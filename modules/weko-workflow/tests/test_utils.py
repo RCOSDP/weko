@@ -3235,8 +3235,6 @@ def test_update_system_data_for_activity(db_register):
 
 
 # def check_authority_by_admin(activity):
-
-# def check_authority_by_admin(activity):
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_check_authority_by_admin -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_check_authority_by_admin(client, activity_acl, activity_acl_users):
     users = activity_acl_users["users"]
