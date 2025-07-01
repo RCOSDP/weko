@@ -1,7 +1,9 @@
 from unittest.mock import patch
 import pytest
+import json
 from lxml import etree
 from invenio_cache import current_cache
+from flask import current_app
 
 from weko_records.models import ItemType, ItemTypeName
 from weko_workflow.models import ActionJournal
@@ -63,7 +65,10 @@ from weko_items_autofill.utils import (
     set_val_for_record_model,
     set_val_for_all_child,
     remove_sub_record_model_no_value,
+    get_researchmap_autofill_item,
+    get_researchmapid_record_data
 )
+from weko_items_ui.config import WEKO_ITEMS_UI_CRIS_LINKAGE_RESEARCHMAP_MAPPINGS,WEKO_ITEMS_UI_CRIS_LINKAGE_RESEARCHMAP_TYPE_MAPPINGS
 
 from tests.helpers import json_data, login, logout
 
@@ -1163,6 +1168,23 @@ def test_get_crossref_autofill_item(app, mocker):
         "title": [{"title": {"@value": "test1_subitem1", "model_id": "test_item1"}}]
     }
 
+# def get_researchmap_autofill_item(item_id):
+# .tox/c1/bin/pytest --cov=weko_items_autofill tests/test_utils.py::test_get_researchmap_autofill_item -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-autofill/.tox/c1/tmp
+def test_get_researchmap_autofill_item(app, mocker):
+    item_id = 100
+    test_jpcoar_item = {}
+
+    # jpcoar_itemのkeyがconfig内にない場合
+    with patch("weko_items_autofill.utils.get_item_id", return_value=test_jpcoar_item):
+        result = get_researchmap_autofill_item(item_id)
+        assert result == {}
+
+    test_jpcoar_item = {"title":{"@value":"subitem_11111111","@attributes":{"xml:lang": "subitem_11111111"},"model_id": "item_11111111"}} 
+
+    # jpcoar_itemのkeyがconfig内にある場合
+    with patch("weko_items_autofill.utils.get_item_id", return_value=test_jpcoar_item):
+        result = get_researchmap_autofill_item(item_id)
+        assert result == {"title":{"@value":"subitem_11111111","@attributes":{"xml:lang": "subitem_11111111"},"model_id": "item_11111111"}} 
 
 # def get_autofill_key_tree(schema_form, item, result=None):
 # .tox/c1/bin/pytest --cov=weko_items_autofill tests/test_utils.py::test_get_autofill_key_tree -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-autofill/.tox/c1/tmp
@@ -1800,8 +1822,8 @@ def test_fill_data(app):
     form_model = ""
     autofill_data = ""
     result = fill_data(form_model, autofill_data)
-    assert result == None
-
+    assert result == []
+    
     # not multiple_data, form.get(key) is not list
     autofill_data = [{"@value": "A.Test1", "@language": "en"}]
     form_model = {
@@ -1940,6 +1962,32 @@ def test_fill_data(app):
     result = fill_data(form_model, autofill_data, schema)
     assert result == {"prop1": "Title1"}
 
+    # form_model is dict, autofill_data is str
+    autofill_data = "test_data"
+    form_model = {"test_key":"form_test"}
+    test = {"test_key":"test_data"}
+    result = fill_data(form_model, autofill_data)
+    assert result == test
+
+    # form_model is list, autofill_data is str
+    autofill_data = "test_data"
+    form_model = [{"test_key":"form_test"}]
+    test = [{"test_key":"test_data"}]
+    result = fill_data(form_model, autofill_data)
+    assert result == test
+
+    # form_model is list, autofill_data is str
+    autofill_data = "test_data"
+    form_model = [{"test_key":100}]
+    test = [{"test_key":[]}]
+    result = fill_data(form_model, autofill_data)
+    assert result == test
+
+    # form_model is list, autofill_data is int
+    autofill_data = 111
+    form_model = ""
+    result = fill_data(form_model, autofill_data)
+    assert result == None
 
 # def is_multiple(form_model, autofill_data):
 # .tox/c1/bin/pytest --cov=weko_items_autofill tests/test_utils.py::test_is_multiple -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-autofill/.tox/c1/tmp
@@ -2135,6 +2183,51 @@ def test_get_wekoid_record_data(app, client, users, records, itemtypes):
     result = get_wekoid_record_data(recid, item_type_id)
     assert result == test
     logout(app, client)
+
+# def get_researchmapid_record_data(parmalink, achievement_type ,achievement_id ,item_type_id) -> list:
+# .tox/c1/bin/pytest --cov=weko_items_autofill tests/test_utils.py::test_get_researchmapid_record_data -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-autofill/.tox/c1/tmp
+def test_get_researchmapid_record_data(app, db, itemtypes):
+    data = json_data("data/researchmap_test_data.json")
+    data = json.dumps(data)
+
+    test =  [{'item_1617186331708': [{'subitem_1551255647225': 'full-schema', 'subitem_1551255648112': 'en'}, {'subitem_1551255647225': '満艦飾', 'subitem_1551255648112': 'ja'}]}, {'item_1617186419668': [{'creatorNames': [{'creatorName': 'WEKO, 太郎', 'creatorNameLang': 'ja'}]}]}, {'item_1617186626617': [{'subitem_description': '描写', 'subitem_description_language': 'ja', 'subitem_description_type': ''}]}, {'item_1617186643794': [{'subitem_1522300316516': '出版者●●', 'subitem_1522300295150': 'ja'}]}, {'item_1617186660861': [{'subitem_1522300722591': '2024-02-05', 'subitem_1522300695726': '2024-02-05'}]}, {'item_1617186702042': [{'subitem_1551255818386': 'jpn'}]}, {'item_1617258105262': {'resourcetype': 'article'}}, {'item_1617186959569': {'subitem_1551256328147': '123'}}, {'item_1617186981471': {'subitem_1551256294723': '456'}}, {'item_1617187024783': {'subitem_1551256198917': '1'}}, {'item_1617187045071': {'subitem_1551256185532': '10'}}]
+    with patch("weko_items_autofill.utils.Researchmap.get_data", return_value=data):
+        result,_ = get_researchmapid_record_data("M1cQhPtdmlrSRFo4", "published_papers", 1358081, 3)
+        assert result == test
+
+    data_2 = json_data("data/researchmap_test_data_2.json")
+    data_2 = json.dumps(data_2)
+    test =  [{'item_1617186331708': [{'subitem_1551255647225': 'aaaaa', 'subitem_1551255648112': 'en'}, {'subitem_1551255647225': 'ああああ', 'subitem_1551255648112': 'ja'}]}, {'item_1617186419668': [{'creatorNames': [{'creatorName': 'Author English', 'creatorNameLang': 'en'}]}]}, {'item_1617186626617': [{'subitem_description': '国際・国内誌概要(英語)', 'subitem_description_language': 'en', 'subitem_description_type': ''}, {'subitem_description': '国際・国内誌概要(日本語)', 'subitem_description_language': 'ja', 'subitem_description_type': ''}]}, {'item_1617186643794': [{'subitem_1522300316516': 'pub_english', 'subitem_1522300295150': 'en'}, {'subitem_1522300316516': '出版者・発行元(日本語)', 'subitem_1522300295150': 'ja'}]}, {'item_1617186660861': [{'subitem_1522300722591': '2010-10-10', 'subitem_1522300695726': '2010-10-10'}]}, {'item_1617186702042': [{'subitem_1551255818386': 'eng'}]}, {'item_1617258105262': {'resourcetype': 'conference paper'}}, {'item_1617353299429': [{'subitem_1522306287251': {'subitem_1522306436033': '10.11501/3140078', 'subitem_1522306382014': 'DOI'}}]}, {'item_1617186941041': [{'subitem_1522650091861': 'aaaaa', 'subitem_1522650068558': 'en'}, {'subitem_1522650091861': 'ああああ', 'subitem_1522650068558': 'ja'}]}, {'item_1617186959569': {'subitem_1551256328147': '123'}}, {'item_1617186981471': {'subitem_1551256294723': '456'}}, {'item_1617187024783': {'subitem_1551256198917': '1'}}, {'item_1617187045071': {'subitem_1551256185532': '10'}}]
+    with patch("weko_items_autofill.utils.Researchmap.get_data", return_value=data_2):
+        result,_ = get_researchmapid_record_data("M1cQhPtdmlrSRFo4", "published_papers", 1356383, 3)
+        assert result == test
+
+        result,_ = get_researchmapid_record_data("M1cQhPtdmlrSRFo4", "published_papers", 1356383, 99999)
+        assert result == []
+
+        result,_ = get_researchmapid_record_data("M1cQhPtdmlrSRFo4", "published_papers", 1356383, 4)
+        assert result == []
+            
+    data = {
+    "error": "not_found",
+    "error_description": "ページが見つかりません。"
+    }
+    data = json.dumps(data)
+    with patch("weko_items_autofill.utils.Researchmap.get_data", return_value=data):
+        with pytest.raises(Exception):
+            result,_ = get_researchmapid_record_data("M1cQhPtdmlrSRFo4", "published_papers", 999999, 3)
+
+    with patch("weko_items_autofill.utils.Researchmap.get_data", return_value=data_2):
+        app.config.update(WEKO_ITEMS_UI_CRIS_LINKAGE_RESEARCHMAP_MAPPINGS = [{ 'type' : 'xxx' , "rm_name" : 'paper_title', "jpcore_name" : 'dc:title' , "weko_name" :"title"}])
+        result,_ = get_researchmapid_record_data("M1cQhPtdmlrSRFo4", "published_papers", 1356383, 3)
+        assert result == []
+        
+    with patch("weko_items_autofill.utils.Researchmap.get_data", return_value=data_2):
+        app.config.update(WEKO_ITEMS_UI_CRIS_LINKAGE_RESEARCHMAP_MAPPINGS=WEKO_ITEMS_UI_CRIS_LINKAGE_RESEARCHMAP_MAPPINGS)
+        app.config.update(WEKO_ITEMS_UI_CRIS_LINKAGE_RESEARCHMAP_TYPE_MAPPINGS= [{'achievement_type' : 'xxx','detail_type_name':'','JPCOAR_resource_type':'article'}])
+        test = [{'item_1617186331708': [{'subitem_1551255647225': 'aaaaa', 'subitem_1551255648112': 'en'}, {'subitem_1551255647225': 'ああああ', 'subitem_1551255648112': 'ja'}]}, {'item_1617186419668': [{'creatorNames': [{'creatorName': 'Author English', 'creatorNameLang': 'en'}]}]}, {'item_1617186626617': [{'subitem_description': '国際・国内誌概要(英語)', 'subitem_description_language': 'en', 'subitem_description_type': ''}, {'subitem_description': '国際・国内誌概要(日本語)', 'subitem_description_language': 'ja', 'subitem_description_type': ''}]}, {'item_1617186643794': [{'subitem_1522300316516': 'pub_english', 'subitem_1522300295150': 'en'}, {'subitem_1522300316516': '出版者・発行元(日本語)', 'subitem_1522300295150': 'ja'}]}, {'item_1617186660861': [{'subitem_1522300722591': '2010-10-10', 'subitem_1522300695726': '2010-10-10'}]}, {'item_1617186702042': [{'subitem_1551255818386': 'eng'}]}, {'item_1617353299429': [{'subitem_1522306287251': {'subitem_1522306436033': '10.11501/3140078', 'subitem_1522306382014': 'DOI'}}]}, {'item_1617186941041': [{'subitem_1522650091861': 'aaaaa', 'subitem_1522650068558': 'en'}, {'subitem_1522650091861': 'ああああ', 'subitem_1522650068558': 'ja'}]}, {'item_1617186959569': {'subitem_1551256328147': '123'}}, {'item_1617186981471': {'subitem_1551256294723': '456'}}, {'item_1617187024783': {'subitem_1551256198917': '1'}}, {'item_1617187045071': {'subitem_1551256185532': '10'}}]
+        result,_ = get_researchmapid_record_data("M1cQhPtdmlrSRFo4", "published_papers", 1356383, 3)
+        assert result == test
 
 
 # def build_record_model_for_wekoid(item_type_id, item_map_data):

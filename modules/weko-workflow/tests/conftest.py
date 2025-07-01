@@ -65,6 +65,7 @@ from weko_admin.models import SessionLifetime,Identifier
 from weko_admin.views import blueprint as weko_admin_blueprint
 from weko_records.models import ItemTypeName, ItemType,FeedbackMailList,ItemTypeMapping,ItemTypeProperty
 from weko_records.api import Mapping
+from weko_records.config import WEKO_RECORDS_REFERENCE_SUPPLEMENT
 from weko_records_ui.models import FilePermission
 from weko_user_profiles import WekoUserProfiles
 from weko_index_tree.models import Index
@@ -73,7 +74,7 @@ from weko_workflow import WekoWorkflow
 from weko_search_ui import WekoSearchUI
 from weko_workflow.models import Activity, ActionStatus, Action, ActivityAction, WorkFlow, FlowDefine, FlowAction, ActionFeedbackMail, ActionIdentifier,FlowActionRole, ActivityHistory,GuestActivity, WorkflowRole
 from weko_workflow.views import workflow_blueprint as weko_workflow_blueprint
-from weko_workflow.config import WEKO_WORKFLOW_ACTION_START,WEKO_WORKFLOW_ACTION_END,WEKO_WORKFLOW_ACTION_ITEM_REGISTRATION,WEKO_WORKFLOW_ACTION_APPROVAL,WEKO_WORKFLOW_ACTION_ITEM_LINK,WEKO_WORKFLOW_ACTION_OA_POLICY_CONFIRMATION,WEKO_WORKFLOW_ACTION_IDENTIFIER_GRANT,WEKO_WORKFLOW_ACTION_ITEM_REGISTRATION_USAGE_APPLICATION,WEKO_WORKFLOW_ACTION_GUARANTOR,WEKO_WORKFLOW_ACTION_ADVISOR,WEKO_WORKFLOW_ACTION_ADMINISTRATOR,WEKO_WORKFLOW_ACTIVITYLOG_XLS_COLUMNS, DOI_VALIDATION_INFO, DOI_VALIDATION_INFO_CROSSREF, DOI_VALIDATION_INFO_DATACITE, DOI_VALIDATION_INFO_JALC
+from weko_workflow.config import WEKO_WORKFLOW_ACTION_START,WEKO_WORKFLOW_ACTION_END,WEKO_WORKFLOW_ACTION_ITEM_REGISTRATION,WEKO_WORKFLOW_ACTION_APPROVAL,WEKO_WORKFLOW_ACTION_ITEM_LINK,WEKO_WORKFLOW_ACTION_OA_POLICY_CONFIRMATION,WEKO_WORKFLOW_ACTION_IDENTIFIER_GRANT,WEKO_WORKFLOW_ACTION_ITEM_REGISTRATION_USAGE_APPLICATION,WEKO_WORKFLOW_ACTION_GUARANTOR,WEKO_WORKFLOW_ACTION_ADVISOR,WEKO_WORKFLOW_ACTION_ADMINISTRATOR,WEKO_WORKFLOW_ACTIVITYLOG_XLS_COLUMNS, DOI_VALIDATION_INFO, DOI_VALIDATION_INFO_CROSSREF, DOI_VALIDATION_INFO_DATACITE, DOI_VALIDATION_INFO_JALC, IDENTIFIER_GRANT_SELECT_DICT
 from weko_workflow.utils import generate_guest_activity_token_value
 from weko_theme.views import blueprint as weko_theme_blueprint
 from simplekv.memory.redisstore import RedisStore
@@ -105,7 +106,9 @@ from weko_admin.models import SiteInfo
 from weko_admin import WekoAdmin
 from weko_deposit import WekoDeposit
 from weko_admin.models import AdminSettings
+from weko_notifications import WekoNotifications
 from weko_notifications.models import NotificationsUserSettings
+from weko_logging.audit import WekoLoggingUserActivity
 
 sys.path.append(os.path.dirname(__file__))
 # @event.listens_for(Engine, "connect")
@@ -496,6 +499,7 @@ def base_app(instance_path, search_class, cache_config):
         DEPOSIT_DEFAULT_JSONSCHEMA = 'deposits/deposit-v1.0.0.json',
         WEKO_RECORDS_UI_SECRET_KEY = "secret",
         WEKO_RECORDS_UI_ONETIME_DOWNLOAD_PATTERN = "filename={} record_id={} user_mail={} date={}",
+        WEKO_RECORDS_REFERENCE_SUPPLEMENT=WEKO_RECORDS_REFERENCE_SUPPLEMENT,
         WEKO_WORKFLOW_ACTION_START=WEKO_WORKFLOW_ACTION_START,
         WEKO_WORKFLOW_ACTION_END=WEKO_WORKFLOW_ACTION_END,
         WEKO_WORKFLOW_ACTION_ITEM_REGISTRATION=WEKO_WORKFLOW_ACTION_ITEM_REGISTRATION,
@@ -526,13 +530,16 @@ def base_app(instance_path, search_class, cache_config):
         ],
         DELETE_ACTIVITY_LOG_ENABLE=True,
         WEKO_WORKFLOW_ACTIVITYLOG_XLS_COLUMNS=WEKO_WORKFLOW_ACTIVITYLOG_XLS_COLUMNS,
+        IDENTIFIER_GRANT_SELECT_DICT=IDENTIFIER_GRANT_SELECT_DICT,
         WEKO_SYS_USER=WEKO_SYS_USER,
         RECORDS_UI_ENDPOINTS=dict(
-            # recid=dict(
-            #     pid_type='recid',
-            #     route='/records/<pid_value>',
-            #     template='invenio_records_ui/detail.html',
-            # ),
+            recid=dict(
+                pid_type='recid',
+                route='/records/<pid_value>',
+                view_imp='weko_records_ui.views.default_view_method',
+                template='invenio_records_ui/detail.html',
+                record_class='weko_deposit.api:WekoRecord',
+            ),
             # recid_previewer=dict(
             #     pid_type='recid',
             #     route='/records/<pid_value>/preview/<filename>',
@@ -580,6 +587,8 @@ def base_app(instance_path, search_class, cache_config):
     WekoItemsUI(app_)
     WekoAdmin(app_)
     InvenioOAuth2Server(app_)
+    WekoLoggingUserActivity(app_)
+    WekoNotifications(app_)
     # WekoRecordsUI(app_)
     # app_.register_blueprint(invenio_theme_blueprint)
     app_.register_blueprint(invenio_communities_blueprint)
@@ -2129,7 +2138,7 @@ def db_register_fullaction(app, db, db_records, users, action_data, item_type):
                     activity_start=datetime.strptime('2022/04/14 3:01:53.931', '%Y/%m/%d %H:%M:%S.%f'),
                     activity_community_id=3,
                     activity_confirm_term_of_use=True,
-                    title='test item1', shared_user_id=-1, extra_info={},
+                    title='test item1', shared_user_id=-1,extra_info={},
                     action_order=1,
                     )
     # ゲスト作成アクティビティ

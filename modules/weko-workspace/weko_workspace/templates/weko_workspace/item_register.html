@@ -27,7 +27,7 @@
     {% assets "weko_items_ui_indextree_css" %}
     <link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
     {{ super() }}
-    <link href="/static/css/weko_workflow/style.css" rel="stylesheet">
+    <link href="/static/css/weko_workspace/style.css" rel="stylesheet">
     <link href="/static/css/weko_admin/styles.css" rel="stylesheet">
     {% assets "weko_records_ui_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
   {%- endblock css %}
@@ -143,7 +143,7 @@
                       <div class="row row-12" id="radio_form_share">
                         <div class="text-center">&nbsp;
                           <div class="radio">&nbsp;
-                            <div style="display: inline-block; width: 20%; text-align: center; border: 2px solid #ccc; padding: 10px;">
+                            <div id="crossref_box" class="select_site_box select_site_disabled">
                               <label style="text-align: center;">
                                 <input type="radio" 
                                         ng-model="selectedMetaData" 
@@ -154,7 +154,7 @@
                                 <br>CrossRef MetaData
                               </label>
                             </div>
-                            <div style="display: inline-block; width: 20%; text-align: center; border: 2px solid #ccc; padding: 10px;">
+                            <div id="jalc_box" class="select_site_box select_site_disabled">
                                 <label style="text-align: center;">
                                   <input type="radio" 
                                           ng-model="selectedMetaData" 
@@ -165,7 +165,7 @@
                                   <br>JaLC MetaData
                                 </label>
                             </div>
-                            <div style="display: inline-block; width: 20%; text-align: center; border: 2px solid #ccc; padding: 10px;">
+                            <div id="cinii_box" class="select_site_box select_site_disabled">
                               <label style="text-align: center;">
                                 <input type="radio" 
                                         ng-model="selectedMetaData" 
@@ -176,7 +176,7 @@
                                 <br>CiNii MetaData
                               </label>
                             </div>
-                            <div style="display: inline-block; width: 20%; text-align: center; border: 2px solid #ccc; padding: 10px;">
+                            <div id="datacite_box" class="select_site_box select_site_disabled">
                               <label style="text-align: center;">
                                 <input type="radio" 
                                 ng-model="selectedMetaData" 

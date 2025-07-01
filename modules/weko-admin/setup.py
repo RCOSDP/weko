@@ -137,6 +137,7 @@ setup(
             'weko_admin_sword_jsonld_mapping_api = weko_admin.admin:sword_api_jsonld_mapping_adminview',
             'restricted_access_adminview = weko_admin.admin:restricted_access_adminview',
             'facet_search_adminview = weko_admin.admin:facet_search_adminview',
+            'cris_linkage_adminview = weko_admin.admin:cris_linkage_adminview' ,
             'reindex_elasticsearch_adminview = weko_admin.admin:reindex_elasticsearch_adminview'
         ],
         'invenio_access.actions': [
@@ -170,6 +171,7 @@ setup(
             'weko_admin_ng_js_tree = weko_admin.bundles:weko_admin_ng_js_tree_js',
             'weko_admin_restricted_access = weko_admin.bundles:weko_admin_restricted_access_js',
             'weko_admin_facet_search = weko_admin.bundles:weko_admin_facet_search_js',
+            'weko_admin_cris_linkage_js = weko_admin.bundles:weko_admin_cris_linkage_js',
             'weko_admin_reindex_elasticsearch_js = weko_admin.bundles:reindex_elasticsearch_js'
         ],
         'invenio_db.models': [

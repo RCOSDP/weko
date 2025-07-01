@@ -149,7 +149,7 @@ from .config import (
     ROCRATE_METADATA_FILE
 )
 from .query import item_path_search_factory
-
+from weko_items_ui.signals import cris_researchmap_linkage_request
 
 class DefaultOrderedDict(OrderedDict):
     """Default Dictionary that remembers insertion order."""
@@ -903,6 +903,7 @@ def check_jsonld_import_items(
     if isinstance(file, str):
         filename = os.path.basename(file)
     else:
+        "werkzeug.datastructures.FileStorage"
         filename = file.filename
 
     try:
@@ -1036,20 +1037,8 @@ def check_jsonld_import_items(
             "error": ex.reason
         })
     except Exception as ex:
-        msg = ""
-        if (
-            ex.args
-            and len(ex.args)
-            and isinstance(ex.args[0], dict)
-            and ex.args[0].get("error_msg")
-        ):
-            msg = ex.args[0].get("error_msg")
-            check_result.update({"error": msg})
-        else:
-            msg = str(ex)
-            check_result.update({"error": str(ex)})
-        current_app.logger.error(
-            f"Check items error: {msg}")
+        check_result.update({"error": str(ex)})
+        current_app.logger.error("Unexpected error occurred during import.")
         traceback.print_exc()
 
     return check_result
@@ -2228,6 +2217,13 @@ def import_items_to_system(
                         file.delete()
                 delete_cache_data(cache_key)
 
+            # start cris linkage
+            if item.get("researchmap_linkage"):
+                pid = PersistentIdentifier.query.filter_by(
+                    pid_type="recid", pid_value=item["id"]
+                ).first()
+                cris_researchmap_linkage_request.send(pid.object_uuid)
+
         except SQLAlchemyError as ex:
             current_app.logger.error(f"sqlalchemy error: {ex}")
             db.session.rollback()
@@ -2409,7 +2405,7 @@ def import_items_to_activity(item, request_info):
         )
         traceback.print_exc()
         url = headless.detail
-        recid = str(headless.recid or "")
+        recid = headless.recid
         current_action = headless.current_action
         error = str(ex)
 

@@ -82,6 +82,7 @@ from weko_index_tree import WekoIndexTree, WekoIndexTreeREST
 from weko_theme import WekoTheme
 from weko_groups import WekoGroups
 from invenio_pidrelations.models import PIDRelation
+from weko_logging.audit import WekoLoggingUserActivity
 from weko_records.models import ItemType, ItemTypeMapping, ItemTypeName
 from weko_records.api import ItemsMetadata, WekoRecord
 from weko_schema_ui.models import OAIServerSchema
@@ -107,7 +108,7 @@ from weko_deposit.config import (
 from weko_index_tree.config import (
     WEKO_INDEX_TREE_REST_ENDPOINTS as _WEKO_INDEX_TREE_REST_ENDPOINTS,
 )
-from invenio_accounts.testutils import login_user_via_session
+from weko_logging.audit import WekoLoggingUserActivity
 
 from tests.helpers import json_data, create_record
 
@@ -246,6 +247,7 @@ def base_app(instance_path):
     # app_.register_blueprint(rest_blueprint)
     WekoDeposit(app_)
     WekoDepositREST(app_)
+    WekoLoggingUserActivity(app_)
     return app_
 
 

@@ -48,9 +48,6 @@ class ShibSettingView(BaseView):
             attr_list = current_app.config['WEKO_ACCOUNTS_ATTRIBUTE_LIST']
             set_language = _('language')
 
-            block_user_settings = AdminSettings.get('blocked_user_settings')
-            block_user_list = block_user_settings.__dict__['blocked_ePPNs']
-
             shib_eppns = db.session.query(ShibbolethUser.shib_eppn).all()
             enable_login_user_list = [shib_eppn[0] for shib_eppn in shib_eppns]
 
@@ -84,23 +81,43 @@ class ShibSettingView(BaseView):
                 new_block_user_list = request.form.get('block-eppn-option-list', "[]")
 
                 if form == 'shib_form':
+                    is_edit = False
                     if shib_flg != new_shib_flg:
                         shib_flg = new_shib_flg
                         AdminSettings.update('shib_login_enable', {"shib_flg": (shib_flg == '1')})
                         flash(_('Shibboleth flag was updated.'), category='success')
+                        is_edit = True
 
                     # デフォルトロールの更新
                     for key in roles:
                         if roles[key] != new_roles[key]:
                             roles[key] = new_roles[key]
-                            flash(_(f'{key.replace("_", " ").title()} was updated.'), category='success')
+                            msg = ''
+                            if key == 'gakunin_role':
+                                msg = _('gakunin_role was updated.')
+                            elif key == 'orthros_outside_role':
+                                msg = _('orthros_outside_role was updated.')
+                            elif key == 'extra_role':
+                                msg = _('extra_role was updated.')
+                            flash(msg, category='success')
+                            is_edit = True
                         AdminSettings.update('default_role_settings', roles)
 
                     # 属性マッピングの更新
                     for key in attributes:
                         if attributes[key] != new_attributes[key]:
                             attributes[key] = new_attributes[key]
-                            flash(_(f'{key.replace("_", " ").title()} mapping was updated.'), category='success')
+                            msg = ''
+                            if key == 'shib_eppn':
+                                msg = _('shib_eppn mapping was updated.')
+                            elif key == 'shib_role_authority_name':
+                                msg = _('shib_role_authority_name mapping was updated.')
+                            elif key == 'shib_mail':
+                                msg = _('shib_mail mapping was updated.')
+                            elif key == 'shib_user_name':
+                                msg = _('shib_user_name mapping was updated.')
+                            flash(msg, category='success')
+                            is_edit = True
                         AdminSettings.update('attribute_mapping', attributes)
 
                     # ブロックユーザーの更新
@@ -112,7 +129,11 @@ class ShibSettingView(BaseView):
                         flash(
                             _('Blocked user list was updated.'),
                             category='success')
+                        is_edit = True
                         block_user_list = str(new_eppn_list).replace('"', '\\"')
+
+                    if not is_edit:
+                        flash(_('Shibboleth settings have been saved'), category='success')
 
             self.get_latest_current_app()
 

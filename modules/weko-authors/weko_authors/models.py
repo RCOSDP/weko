@@ -145,7 +145,23 @@ class Authors(db.Model, Timestamp):
                 return json_data
         except Exception:
             return None
+        
 
+    @classmethod
+    def get_authorIdInfo(cls, type_scheme_name:str ,author_ids :list) -> list:
+        idType = AuthorsPrefixSettings.query.filter_by(scheme=type_scheme_name).first().id
+        list_author_ids = list(set(author_ids))
+        authors = cls.query.filter(cls.id.in_(list_author_ids)).all()
+        ret = []
+        if not authors:
+            return ret
+        for author in authors :
+            json_data = author.json
+            authorIdInfos = json_data.get('authorIdInfo',[])
+            for authorIdInfo in authorIdInfos:
+                if str(authorIdInfo.get("idType")) == str(idType):
+                    ret.append(authorIdInfo.get("authorId"))
+        return ret
 
 class AuthorsPrefixSettings(db.Model, Timestamp):
     """Represent an author prefix setting."""

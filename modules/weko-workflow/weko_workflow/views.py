@@ -35,6 +35,8 @@ from typing import List
 import redis
 from redis import sentinel
 from weko_admin.models import AdminSettings
+from weko_items_ui.signals import cris_researchmap_linkage_request
+from weko_items_ui.models import CRIS_Institutions, CRISLinkageResult
 from weko_workflow.schema.marshmallow import ActionSchema, \
     ActivitySchema, ResponseMessageSchema, CancelSchema, PasswdSchema, LockSchema,\
     ResponseLockSchema, LockedValueSchema, GetFeedbackMailListSchema, GetRequestMailListSchema, \
@@ -919,6 +921,7 @@ def display_activity(activity_id="0", community_id=None):
     if temporary_journal:
         temporary_journal = temporary_journal.action_journal
 
+    cris_linkage = {'researchmap' : False}
     allow_multi_thumbnail = False
     application_item_type = False
     approval_record = []
@@ -968,7 +971,7 @@ def display_activity(activity_id="0", community_id=None):
         step_item_login_url, need_file, need_billing_file, \
             record, json_schema, schema_form,\
             item_save_uri, files, endpoints, need_thumbnail, files_thumbnail, \
-            allow_multi_thumbnail \
+            allow_multi_thumbnail ,cris_linkage \
             = item_login(item_type_id=workflow_detail.itemtype_id)
         if not step_item_login_url:
             current_app.logger.error("display_activity: can not get item")
@@ -1131,6 +1134,13 @@ def display_activity(activity_id="0", community_id=None):
     if items_display_settings:
         enable_request_maillist = items_display_settings.get('display_request_form', False)
 
+    last_result :CRISLinkageResult = CRISLinkageResult().get_last( _id ,CRIS_Institutions.RM)
+    last_linkage_result = _('Nothing')
+    if last_result:
+        last_linkage_result = _('Successful') if last_result.succeed == True else _('Failed') if last_result.succeed == False else _('Running')
+        last_linkage_result = last_linkage_result + ' (' +last_result.updated.strftime('%Y-%m-%d') + ') '
+        
+
     return render_template(
         'weko_workflow/activity_detail.html',
         action_endpoint_key=current_app.config.get(
@@ -1192,6 +1202,9 @@ def display_activity(activity_id="0", community_id=None):
         user_profile=user_profile,
         form=form,
         for_delete=for_delete,
+        open_restricted=workflow_detail.open_restricted,
+        researchmap_latest_linkage_result=last_linkage_result,
+        cris_linkage=cris_linkage,
         **ctx
     )
 
@@ -1814,6 +1827,13 @@ def next_action(activity_id='0', action_id=0, json_data=None):
                 item_id=new_item_id,
                 action_order=next_action_order
             )
+
+            # Call signal to cris linkage
+            temp_data = work_activity.get_activity_metadata(activity_id=activity_id)
+            if temp_data:
+                if json.loads(temp_data).get('cris_linkage',{}).get('researchmap' , False):
+                    cris_researchmap_linkage_request.send(new_item_id)
+
             work_activity.end_activity(activity)
 
             if action_endpoint == "approval":
@@ -1997,12 +2017,13 @@ def previous_action(activity_id='0', action_id=0, req=0):
         res = ResponseMessageSchema().load({"code":-1, "msg":"can not get activity detail"})
         return jsonify(res.data), 500
     action_order = activity_detail.action_order
+
     for_delete = activity_detail.flow_define.flow_type == WEKO_WORKFLOW_DELETION_FLOW_TYPE
     if req == 0 and for_delete and action_id == 4:
         jsondata = {'approval_reject': 1}
-        return next_action(activity_id=activity_id,
-                               action_id=action_id,
-                               json_data=jsondata)
+        return next_action(
+            activity_id=activity_id, action_id=action_id, json_data=jsondata
+        )
 
     flow = Flow()
     rtn = history.create_activity_history(activity, action_order)

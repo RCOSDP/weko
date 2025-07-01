@@ -2209,6 +2209,9 @@ def make_stats_file(item_type_id, recids, list_item_role, export_path=""):
         ret.append('.request_mail[{}]'.format(i))
         ret_label.append('.REQUEST_MAIL[{}]'.format(i))
 
+    ret.append('.researchmap_linkage')
+    ret_label.append('.RESEAECHMAP_LINKAGE')
+
     ret.extend(['.cnri', '.doi_ra', '.doi', '.edit_mode'])
     ret_label.extend(['.CNRI', '.DOI_RA', '.DOI', 'Keep/Upgrade Version'])
     has_pubdate = len([
@@ -2239,6 +2242,9 @@ def make_stats_file(item_type_id, recids, list_item_role, export_path=""):
         records.attr_output[recid].extend(
             [''] * (max_feedback_mail - len(feedback_mail_list))
         )
+
+        # Exporting .researchmap_linkage is ALWAYS blank
+        records.attr_output[recid].append('')
 
         request_mail_list = records.attr_data['request_mail_list'] \
             .get(recid, [])
@@ -2539,22 +2545,6 @@ def export_items(post_data):
         elif len(record_ids) == 0:
             return '',204
 
-        # Get records for export
-        record_recids = []
-        record_uuids = []
-        for record_id in record_ids:
-            recid = PersistentIdentifier.get('recid', str(record_id))
-            record_recids.append(recid)
-            record_uuids.append(str(recid.object_uuid))
-
-        records = WekoRecord.get_records(record_uuids)
-
-        from weko_records_ui.utils import export_preprocess
-        record_metadata = {}
-        for recid, record in zip(record_recids, records):
-            record_metadata[recid.pid_value] = json.loads(
-                export_preprocess(recid, record, 'json')
-            )
 
         result = {'items': []}
         temp_path = tempfile.TemporaryDirectory(
@@ -2575,7 +2565,6 @@ def export_items(post_data):
                 export_format,
                 include_contents,
                 record_path,
-                record_metadata.get(str(record_id))
             )
             result['items'].append(exported_item)
 
@@ -2636,6 +2625,8 @@ def export_items(post_data):
 def write_rocrate(item_types_data, export_path, list_item_role):
     """Make RO-Crate BagIt for export.
 
+    Write ro-crate-metadata.json file and create a zip file for each record.
+
     Args:
         item_types_data (dict): Item types data for export.
         export_path (str): Path to export the RO-Crate.
@@ -2646,7 +2637,7 @@ def write_rocrate(item_types_data, export_path, list_item_role):
         for data in item_types_data.values()
         for recid in data['recids']
     ]
-    # Get Metadata from ElasticSearch
+    # Get item title and extraction file list from ElasticSearch
     metadata_dict = _get_metadata_dict_in_es(all_record_ids)
 
     for item_type_id, item_type_data in item_types_data.items():
@@ -2673,6 +2664,7 @@ def write_rocrate(item_types_data, export_path, list_item_role):
             row_metadata = {
                 "recid": str(record_id),
                 "item_title": title,
+                # no use headers[0][0:2] >>> ["#.id", ".uri"]
                 "header": headers[0][2:],
                 "value": records[record_id],
             }
@@ -2704,10 +2696,14 @@ def write_rocrate(item_types_data, export_path, list_item_role):
 
 
 def _get_metadata_dict_in_es(record_ids):
-    """Get metadata by record id from ElasticSearch.
+    """Get item title and extraction file list from ElasticSearch.
 
-    :param record_ids: Record IDs
-    :return: Metadata
+    Args:
+        record_ids (list[str]): List of record IDs to fetch metadata for.
+
+    Returns:
+        dict:
+            record_id (str): (title, [extraction_file_list])
     """
     metadata_dict = {}
     try:
@@ -2802,6 +2798,7 @@ def _export_item(record_id,
         exported_item['files'] = []
         exported_item['path'] = 'recid_' + str(record_id)
         exported_item['item_type_id'] = record.get('item_type_id')
+        exported_item['researchmap_linkage'] = ''
         if not records_data:
             records_data = record
         if exported_item['item_type_id']:
@@ -3553,7 +3550,7 @@ def get_options_list(item_type_id, json_item=None):
     if json_item is None:
         json_item = ItemTypes.get_record(item_type_id)
     if json_item:
-        meta_options = json_item.model.render.get('meta_fix')
+        meta_options = json_item.model.render.get('meta_fix', {})
         meta_options.update(json_item.model.render.get('meta_list'))
     return meta_options
 
@@ -4696,6 +4693,10 @@ def make_stats_file_with_permission(item_type_id, recids,
         ret.append('.request_mail[{}]'.format(i))
         ret_label.append('.REQUEST_MAIL[{}]'.format(i))
 
+    ret.append('.researchmap_linkage')
+    ret_label.append('.RESEAECHMAP_LINKAGE')
+
+
     ret.extend(['.cnri', '.doi_ra', '.doi', '.edit_mode'])
     ret_label.extend(['.CNRI', '.DOI_RA', '.DOI', 'Keep/Upgrade Version'])
     ret.append('.metadata.pubdate')
@@ -4729,6 +4730,9 @@ def make_stats_file_with_permission(item_type_id, recids,
         records.attr_output[recid].extend(
             [''] * (max_request_mail - len(request_mail_list))
         )
+
+        # Exporting .researchmap_linkage is ALWAYS blank
+        records.attr_output[recid].append('')
 
         pid_cnri = record.pid_cnri
         cnri = ''
