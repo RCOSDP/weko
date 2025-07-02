@@ -146,5 +146,5 @@ const emits = defineEmits(['clickClose']);
 const appConf = useAppConfig();
 const transitionSecond = appConf.transitionTime / 1000;
 const loginPage = window.location.origin + `${appConf.amsPath ?? ''}/login?source=detail`;
-const { msgid: code, msgstr: message, position: position, width: width, loglevel: type } = toRefs(props.alert);
+const { msgid: code, msgstr: message, position, width, loglevel: type } = toRefs(props.alert);
 </script>

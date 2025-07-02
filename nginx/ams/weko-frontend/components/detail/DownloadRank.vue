@@ -169,12 +169,12 @@ function download(filename: string) {
     },
     onResponseError({ response }) {
       statusCode = response.status;
-      alertData.value = amsAlert['DOWNLOAD_RANK_MESSAGE_ERROR_DOWNLOAD'];
+      alertData.value = amsAlert.DOWNLOAD_RANK_MESSAGE_ERROR_DOWNLOAD;
       emits('error', alertData.value.msgid, alertData.value.msgstr);
     }
   }).catch(() => {
     if (statusCode === 0) {
-      alertData.value = amsAlert['DOWNLOAD_RANK_MESSAGE_ERROR_FETCH'];
+      alertData.value = amsAlert.DOWNLOAD_RANK_MESSAGE_ERROR_FETCH;
       emits('error', alertData.value.msgid, alertData.value.msgstr);
     }
   });

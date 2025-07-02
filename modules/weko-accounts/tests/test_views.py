@@ -1,15 +1,13 @@
-
 from unittest.mock import MagicMock
 import pytest
 import json
 import redis
-from invenio_accounts.models import Role
+from invenio_accounts.models import Role, User
 from flask import url_for,request,make_response,current_app,Flask
 from flask_login.utils import login_user,logout_user
 from flask_menu import current_menu
 from flask_security import url_for_security
 from mock import patch
-from invenio_accounts.models import User
 from weko_accounts.api import ShibUser
 from weko_accounts.models import ShibbolethUser
 from weko_accounts.views import (
@@ -35,12 +33,12 @@ def set_session(client,data):
 #    logout_user()
 #    login_user(users[4]["obj"])
 #    result = _has_admin_access()
-#    assert result == False
+#    assert result is False
 #def init_menu():
 # .tox/c1/bin/pytest --cov=weko_accounts tests/test_views.py::test_init_menu -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_init_menu(request_context):
     init_menu()
-    assert current_menu.submenu("setting.admin").active == True
+    assert current_menu.submenu("setting.admin").active is True
     assert current_menu.submenu("settings.admin").url == "/admin/"
     assert current_menu.submenu("settings.admin").text == '<i class="fa fa-cogs fa-fw"></i> Administration'
 
@@ -103,7 +101,8 @@ def test_redirect_method(app,mocker):
         mock_render = mocker.patch('weko_accounts.views.redirect',return_value=make_response())
         ams_error = 'Login is blocked.'
         _redirect_method(True, ams_error)
-        mock_render.assert_called_with('http://TEST_SERVER.localdomain/ams/login?error=Login+is+blocked.')
+        mock_render.assert_called_with(\
+            'http://TEST_SERVER.localdomain/ams/login?error=Login+is+blocked.')
         # There is no user information.
         mock_render = mocker.patch('weko_accounts.views.redirect',return_value=make_response())
         ams_error = 'There is no user information.'
@@ -114,13 +113,15 @@ def test_redirect_method(app,mocker):
         mock_render = mocker.patch('weko_accounts.views.redirect',return_value=make_response())
         ams_error = 'Server error has occurred. Please contact server administrator.'
         _redirect_method(True, ams_error)
-        mock_render.assert_called_with('http://TEST_SERVER.localdomain/ams/login?'
-                                       'error=Server+error+has+occurred.+Please+contact+server+administrator.')
+        mock_render.assert_called_with(\
+            'http://TEST_SERVER.localdomain/ams/login?'\
+            'error=Server+error+has+occurred.+Please+contact+server+administrator.')
         # other error
         mock_render = mocker.patch('weko_accounts.views.redirect',return_value=make_response())
         ams_error = 'Error Message'
         _redirect_method(True, ams_error)
-        mock_render.assert_called_with('http://TEST_SERVER.localdomain/ams/login?error=Error+Message')
+        mock_render.assert_called_with(\
+            'http://TEST_SERVER.localdomain/ams/login?error=Error+Message')
 
 #def index():
 # .tox/c1/bin/pytest --cov=weko_accounts tests/test_views.py::test_index -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
@@ -146,24 +147,26 @@ def test_shib_auto_login(client,redis_connect,mocker):
     client.get(url+"?next=ams")
     mock_redirect_.assert_called_once()
     called_args, called_kwargs = mock_redirect_.call_args
-    assert called_args[0] == True
+    assert called_args[0] is True
     assert "Missing Shib-Session-ID!" in called_kwargs.get("ams_error", "")
 
     # not exist cache
-    mocker.patch("weko_accounts.views.RedisConnection.connection",return_value=redis_connect)
+    mocker.patch("weko_accounts.views.RedisConnection.connection",
+                 return_value=redis_connect)
     mock_redirect_ = mocker.patch("weko_accounts.views._redirect_method",
                                   return_value=make_response())
     client.get(url+"?Shib-Session-ID=2222")
     mock_redirect_.assert_called_once()
 
     # not exist cache(AMS)
-    mocker.patch("weko_accounts.views.RedisConnection.connection",return_value=redis_connect)
+    mocker.patch("weko_accounts.views.RedisConnection.connection",
+                 return_value=redis_connect)
     mock_redirect_ = mocker.patch("weko_accounts.views._redirect_method",
                                   return_value=make_response())
     client.get(url+"?next=ams&Shib-Session-ID=2222")
     mock_redirect_.assert_called_once()
     called_args, called_kwargs = mock_redirect_.call_args
-    assert called_args[0] == True
+    assert called_args[0] is True
     assert "Missing SHIB_CACHE_PREFIX!" in called_kwargs.get("ams_error", "")
 
     # not cache_val
@@ -172,7 +175,7 @@ def test_shib_auto_login(client,redis_connect,mocker):
                                   return_value=make_response())
     client.get(url+"?Shib-Session-ID=1111")
     mock_redirect_.assert_called_once()
-    assert redis_connect.redis.exists("Shib-Session-1111") == False
+    assert redis_connect.redis.exists("Shib-Session-1111") is False
 
     # not cache_val(AMS)
     redis_connect.put("Shib-Session-1111",bytes("","utf-8"))
@@ -181,7 +184,7 @@ def test_shib_auto_login(client,redis_connect,mocker):
     client.get(url+"?next=ams&Shib-Session-ID=1111")
     mock_redirect_.assert_called_once()
     called_args, called_kwargs = mock_redirect_.call_args
-    assert called_args[0] == True
+    assert called_args[0] is True
     assert "Missing SHIB_ATTR!" in called_kwargs.get("ams_error", "")
 
     # is_auto_bind is false, check_in is error
@@ -191,12 +194,12 @@ def test_shib_auto_login(client,redis_connect,mocker):
 
     redis_connect.put("Shib-Session-1111",bytes('{"shib_eppn":"test_eppn"}',"utf-8"))
     mock_redirect_ = mocker.patch("weko_accounts.views._redirect_method",
-return_value=make_response())
+                                  return_value=make_response())
     with patch("weko_accounts.views.ShibUser.check_in",return_value="test_error"):
         client.get(url+"?Shib-Session-ID=1111")
         mock_get_relation.assert_called_once()
         mock_redirect_.assert_called_once()
-        assert redis_connect.redis.exists("Shib-Session-1111") == False
+        assert redis_connect.redis.exists("Shib-Session-1111") is False
 
     # is_auto_bind is false, check_in is error(AMS)
     mock_get_relation = mocker.patch("weko_accounts.views.ShibUser.get_relation_info")
@@ -211,7 +214,7 @@ return_value=make_response())
         mock_get_relation.assert_called_once()
         mock_redirect_.assert_called_once()
         called_args, called_kwargs = mock_redirect_.call_args
-        assert called_args[0] == True
+        assert called_args[0] is True
         assert "test_error" in called_kwargs.get("ams_error", "")
 
     redis_connect.put("Shib-Session-1111",bytes('{"shib_eppn":"test_eppn"}',"utf-8"))
@@ -221,12 +224,13 @@ return_value=make_response())
         shibuser = ShibUser({})
         shibuser.user = User(id=1)
         with patch("weko_accounts.views.ShibUser",return_value=shibuser):
-            mock_redirect = mocker.patch("weko_accounts.views.redirect",return_value=make_response())
+            mock_redirect = mocker.patch("weko_accounts.views.redirect",
+                                         return_value=make_response())
             client.get(url)
             mock_new_relation.assert_called_once()
             mock_shib_login.assert_not_called()
             mock_redirect.assert_called_with("/")
-            assert redis_connect.redis.exists("Shib-Session-1111") == False
+            assert redis_connect.redis.exists("Shib-Session-1111") is False
 
         # is_auto_bind is true,shib_user exis
         redis_connect.put("Shib-Session-1111",bytes('{"shib_eppn":"test_eppn"}',"utf-8"))
@@ -236,11 +240,12 @@ return_value=make_response())
         shibuser.shib_user = "test_user"
         shibuser.user = User(id=1)
         with patch("weko_accounts.views.ShibUser",return_value=shibuser):
-            mock_redirect = mocker.patch("weko_accounts.views.redirect",return_value=make_response())
+            mock_redirect = mocker.patch("weko_accounts.views.redirect",
+                                         return_value=make_response())
             client.get(url+'?next=/next_page')
             mock_redirect.assert_called_with("/next_page")
             mock_shib_login.assert_called_once()
-            assert redis_connect.redis.exists("Shib-Session-1111") == False
+            assert redis_connect.redis.exists("Shib-Session-1111") is False
 
         # is_auto_bind is true,shib_user exis(AMS)
         mock_shib_login.reset_mock()
@@ -251,12 +256,13 @@ return_value=make_response())
         shibuser.shib_user = "test_user"
         shibuser.user = User(id=1)
         with patch("weko_accounts.views.ShibUser",return_value=shibuser):
-            mock_redirect = mocker.patch("weko_accounts.views.redirect",return_value=make_response())
+            mock_redirect = mocker.patch("weko_accounts.views.redirect",
+                                         return_value=make_response())
             client.get(url+'?next=ams')
             called_args, _ = mock_redirect.call_args
             mock_redirect.assert_called_with("/?next=ams")
             mock_shib_login.assert_called_once()
-            assert redis_connect.redis.exists("Shib-Session-1111") == False
+            assert redis_connect.redis.exists("Shib-Session-1111") is False
 
     # raise BaseException
     with patch("weko_accounts.views.RedisConnection",side_effect=BaseException("test_error")):
@@ -269,14 +275,15 @@ return_value=make_response())
         res = client.get(url+"?next=ams&Shib-Session-ID=1111")
         mock_redirect_.assert_called_once()
         called_args, called_kwargs = mock_redirect_.call_args
-        assert called_args[0] == True
+        assert called_args[0] is True
         assert "Server error has occurred. Please contact server " \
                 "administrator." in called_kwargs.get("ams_error", "")
 
 #def confirm_user():
 # .tox/c1/bin/pytest --cov=weko_accounts tests/test_views.py::test_confirm_user -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_confirm_user(client,redis_connect,mocker):
-    mocker.patch("weko_accounts.views.RedisConnection.connection",return_value=redis_connect)
+    mocker.patch("weko_accounts.views.RedisConnection.connection",
+                 return_value=redis_connect)
     mocker.patch("weko_accounts.views.ShibUser.shib_user_login")
     url = url_for("weko_accounts.confirm_user")
 
@@ -294,7 +301,7 @@ def test_confirm_user(client,redis_connect,mocker):
     client.post(url+"?next=ams", data=form)
     mock_redirect_.assert_called_once()
     called_args, called_kwargs = mock_redirect_.call_args
-    assert called_args[0] == True
+    assert called_args[0] is True
     assert "csrf_random" in called_kwargs.get("ams_error", "")
 
     # not exist shib_session_id
@@ -309,7 +316,7 @@ def test_confirm_user(client,redis_connect,mocker):
     client.post(url+"?next=ams",data=form)
     mock_redirect_.assert_called_once()
     called_args, called_kwargs = mock_redirect_.call_args
-    assert called_args[0] == True
+    assert called_args[0] is True
     assert "Missing Shib-Session-ID!" in called_kwargs.get("ams_error", "")
 
     # not exist cache_key
@@ -324,7 +331,7 @@ def test_confirm_user(client,redis_connect,mocker):
     client.post(url+"?next=ams",data=form)
     mock_redirect_.assert_called_once()
     called_args, called_kwargs = mock_redirect_.call_args
-    assert called_args[0] == True
+    assert called_args[0] is True
     assert "Missing SHIB_CACHE_PREFIX!" in called_kwargs.get("ams_error", "")
 
     set_session(client,{"csrf_random":"test_csrf","shib_session_id":"1111"})
@@ -342,7 +349,7 @@ def test_confirm_user(client,redis_connect,mocker):
     client.post(url+"?next=ams",data=form)
     mock_redirect_.assert_called_once()
     called_args, called_kwargs = mock_redirect_.call_args
-    assert called_args[0] == True
+    assert called_args[0] is True
     assert "Missing SHIB_ATTR!" in called_kwargs.get("ams_error", "")
 
     # shib_user.check_weko_user is false
@@ -361,7 +368,7 @@ def test_confirm_user(client,redis_connect,mocker):
         client.post(url+"?next=ams",data=form)
         mock_redirect_.assert_called_once()
         called_args, called_kwargs = mock_redirect_.call_args
-        assert called_args[0] == True
+        assert called_args[0] is True
         assert "There is no user information." in called_kwargs.get("ams_error", "")
 
     redis_connect.put("Shib-Session-1111",bytes('{"shib_eppn":"test_eppn"}',"utf-8"))
@@ -384,21 +391,25 @@ def test_confirm_user(client,redis_connect,mocker):
                 redis_connect.put("Shib-Session-1111",bytes('{"shib_eppn":"test_eppn"}',"utf-8"))
                 shibuser = ShibUser({})
                 shibuser.user = User(id=1)
-                with patch("weko_accounts.views.ShibUser",return_value=shibuser):
-                    mock_redirect = mocker.patch("weko_accounts.views.redirect",return_value=make_response())
+                with patch("weko_accounts.views.ShibUser",
+                           return_value=shibuser):
+                    mock_redirect = mocker.patch("weko_accounts.views.redirect",
+                                                 return_value=make_response())
                     client.post(url,data=form)
                     mock_redirect.assert_called_with("/")
                     assert redis_connect.redis.exists("Shib-Session-1111") is False
 
                 # exist ShibUser.shib_user
-                set_session(client,{"csrf_random":"test_csrf","shib_session_id":"1111","next":"/next_page"})
+                set_session(client,{"csrf_random":"test_csrf",
+                                    "shib_session_id":"1111","next":"/next_page"})
                 redis_connect.put("Shib-Session-1111",bytes('{"shib_eppn":"test_eppn"}',"utf-8"))
 
                 shibuser = ShibUser({})
                 shibuser.shib_user = "test_user"
                 shibuser.user = User(id=1)
                 with patch("weko_accounts.views.ShibUser",return_value=shibuser):
-                    mock_redirect = mocker.patch("weko_accounts.views.redirect",return_value=make_response())
+                    mock_redirect = mocker.patch("weko_accounts.views.redirect",
+                                                 return_value=make_response())
                     mock_flash = mocker.patch("weko_accounts.views.flash")
                     client.post(url,data=form)
                     mock_redirect.assert_called_with("/next_page")
@@ -414,7 +425,7 @@ def test_confirm_user(client,redis_connect,mocker):
             client.post(url+"?next=ams",data=form)
             mock_redirect_.assert_called_once()
             called_args, called_kwargs = mock_redirect_.call_args
-            assert called_args[0] == True
+            assert called_args[0] is True
             assert "FAILED bind_relation_info!" in called_kwargs.get("ams_error", "")
         with patch("weko_accounts.views.ShibUser.bind_relation_info",return_value=True):
             # ShibUser.check_in is error
@@ -424,7 +435,7 @@ def test_confirm_user(client,redis_connect,mocker):
                 client.post(url+"?next=ams",data=form)
                 mock_redirect_.assert_called_once()
                 called_args, called_kwargs = mock_redirect_.call_args
-                assert called_args[0] == True
+                assert called_args[0] is True
                 assert "test_error" in called_kwargs.get("ams_error", "")
             with patch("weko_accounts.views.ShibUser.check_in",return_value=None):
                 # ShibUser.shib_user is None,not exist next in session
@@ -432,11 +443,12 @@ def test_confirm_user(client,redis_connect,mocker):
                 shibuser = ShibUser({})
                 shibuser.user = User(id=1)
                 with patch("weko_accounts.views.ShibUser",return_value=shibuser):
-                    mock_redirect = mocker.patch("weko_accounts.views.redirect",return_value=make_response())
+                    mock_redirect = mocker.patch("weko_accounts.views.redirect",
+                                                 return_value=make_response())
                     client.post(url+"?next=ams",data=form)
                     called_args, _ = mock_redirect.call_args
                     mock_redirect.assert_called_with("/?next=ams")
-                    assert redis_connect.redis.exists("Shib-Session-1111") == False
+                    assert redis_connect.redis.exists("Shib-Session-1111") is False
 
     # raise BaseException
     with patch("weko_accounts.views._redirect_method",side_effect=BaseException("test_error")):
@@ -444,19 +456,20 @@ def test_confirm_user(client,redis_connect,mocker):
         assert res.status_code == 400
 
     mock_redirect_ = mocker.patch("weko_accounts.views._redirect_method",
-return_value=make_response())
+                                  return_value=make_response())
     with patch("weko_accounts.views.RedisConnection",side_effect=BaseException("test_error")):
         res = client.post(url+"?next=ams",data=form)
         mock_redirect_.assert_called_once()
         called_args, called_kwargs = mock_redirect_.call_args
-        assert called_args[0] == True
+        assert called_args[0] is True
         assert "Server error has occurred. Please contact server " \
                 "administrator." in called_kwargs.get("ams_error", "")
 
 #def confirm_user_without_page():
 # .tox/c1/bin/pytest --cov=weko_accounts tests/test_views.py::test_confirm_user_without_page -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_confirm_user_without_page(client,redis_connect,mocker):
-    mocker.patch("weko_accounts.views.RedisConnection.connection",return_value=redis_connect)
+    mocker.patch("weko_accounts.views.RedisConnection.connection",
+                 return_value=redis_connect)
     mocker.patch("weko_accounts.views.ShibUser.shib_user_login")
     url = url_for("weko_accounts.confirm_user_without_page")
 
@@ -472,7 +485,7 @@ def test_confirm_user_without_page(client,redis_connect,mocker):
     client.get(url+"?next=ams")
     mock_redirect_.assert_called_once()
     called_args, called_kwargs = mock_redirect_.call_args
-    assert called_args[0] == True
+    assert called_args[0] is True
     assert "Missing Shib-Session-ID!" in called_kwargs.get("ams_error", "")
 
     # not exist cache_key
@@ -487,7 +500,7 @@ def test_confirm_user_without_page(client,redis_connect,mocker):
     client.get(url+"?next=ams")
     mock_redirect_.assert_called_once()
     called_args, called_kwargs = mock_redirect_.call_args
-    assert called_args[0] == True
+    assert called_args[0] is True
     assert "Missing SHIB_CACHE_PREFIX!" in called_kwargs.get("ams_error", "")
 
     set_session(client,{"shib_session_id":"1111"})
@@ -505,7 +518,7 @@ def test_confirm_user_without_page(client,redis_connect,mocker):
     client.get(url+"?next=ams")
     mock_redirect_.assert_called_once()
     called_args, called_kwargs = mock_redirect_.call_args
-    assert called_args[0] == True
+    assert called_args[0] is True
     assert "Missing SHIB_ATTR!" in called_kwargs.get("ams_error", "")
 
     redis_connect.put("Shib-Session-1111",bytes('{"shib_eppn":"test_eppn"}',"utf-8"))
@@ -528,7 +541,8 @@ def test_confirm_user_without_page(client,redis_connect,mocker):
             with patch("weko_accounts.views.ShibUser.check_in",return_value=None):
                 # ShibUser.shib_user is None,not exist next in session
                 redis_connect.put("Shib-Session-1111",bytes('{"shib_eppn":"test_eppn"}',"utf-8"))
-                mock_redirect = mocker.patch("weko_accounts.views.redirect",return_value=make_response())
+                mock_redirect = mocker.patch("weko_accounts.views.redirect",
+                                             return_value=make_response())
                 client.get(url)
                 mock_redirect.assert_called_with("/")
                 assert redis_connect.redis.exists("Shib-Session-1111") is False
@@ -540,7 +554,8 @@ def test_confirm_user_without_page(client,redis_connect,mocker):
                 shibuser = ShibUser({})
                 shibuser.shib_user = "test_user"
                 with patch("weko_accounts.views.ShibUser",return_value=shibuser):
-                    mock_redirect = mocker.patch("weko_accounts.views.redirect",return_value=make_response())
+                    mock_redirect = mocker.patch("weko_accounts.views.redirect",
+                                                 return_value=make_response())
                     mock_flash = mocker.patch("weko_accounts.views.flash")
                     client.get(url)
                     mock_redirect.assert_called_with("/")
@@ -553,7 +568,8 @@ def test_confirm_user_without_page(client,redis_connect,mocker):
                 shibuser = ShibUser({})
                 shibuser.shib_user = "test_user"
                 with patch("weko_accounts.views.ShibUser",return_value=shibuser):
-                    mock_redirect = mocker.patch("weko_accounts.views.redirect",return_value=make_response())
+                    mock_redirect = mocker.patch("weko_accounts.views.redirect",
+                                                 return_value=make_response())
                     mock_flash = mocker.patch("weko_accounts.views.flash")
                     client.get(url)
                     mock_redirect.assert_called_with("/next_page")
@@ -569,7 +585,7 @@ def test_confirm_user_without_page(client,redis_connect,mocker):
             client.get(url+"?next=ams")
             mock_redirect_.assert_called_once()
             called_args, called_kwargs = mock_redirect_.call_args
-            assert called_args[0] == True
+            assert called_args[0] is True
             assert "FAILED bind_relation_info!" in called_kwargs.get("ams_error", "")
         with patch("weko_accounts.views.ShibUser.bind_relation_info",return_value=True):
             # ShibUser.check_in is error
@@ -580,7 +596,7 @@ def test_confirm_user_without_page(client,redis_connect,mocker):
                 client.get(url+"?next=ams")
                 mock_redirect_.assert_called_once()
                 called_args, called_kwargs = mock_redirect_.call_args
-                assert called_args[0] == True
+                assert called_args[0] is True
                 assert "test_error" in called_kwargs.get("ams_error", "")
             with patch("weko_accounts.views.ShibUser.check_in",return_value=None):
                 # ShibUser.shib_user is None,not exist next in session
@@ -588,11 +604,12 @@ def test_confirm_user_without_page(client,redis_connect,mocker):
                 shibuser = ShibUser({})
                 shibuser.user = User(id=1)
                 with patch("weko_accounts.views.ShibUser",return_value=shibuser):
-                    mock_redirect = mocker.patch("weko_accounts.views.redirect",return_value=make_response())
+                    mock_redirect = mocker.patch("weko_accounts.views.redirect",
+                                                 return_value=make_response())
                     client.get(url+"?next=ams")
                     called_args, _ = mock_redirect.call_args
                     mock_redirect.assert_called_with("/?next=ams")
-                    assert redis_connect.redis.exists("Shib-Session-1111") == False
+                    assert redis_connect.redis.exists("Shib-Session-1111") is False
 
                 # exist ShibUser.shib_user
                 redis_connect.put("Shib-Session-1111",bytes('{"shib_eppn":"test_eppn"}',"utf-8"))
@@ -601,11 +618,12 @@ def test_confirm_user_without_page(client,redis_connect,mocker):
                 shibuser.shib_user = "test_user"
                 shibuser.user = User(id=1)
                 with patch("weko_accounts.views.ShibUser",return_value=shibuser):
-                    mock_redirect = mocker.patch("weko_accounts.views.redirect",return_value=make_response())
+                    mock_redirect = mocker.patch("weko_accounts.views.redirect",
+                                                 return_value=make_response())
                     client.get(url+"?next=ams")
                     called_args, _ = mock_redirect.call_args
                     mock_redirect.assert_called_with("/?next=ams")
-                    assert redis_connect.redis.exists("Shib-Session-1111") == False
+                    assert redis_connect.redis.exists("Shib-Session-1111") is False
 
                 # exist ShibUser.shib_user
                 redis_connect.put("Shib-Session-1111",bytes('{"shib_eppn":"test_eppn"}',"utf-8"))
@@ -613,11 +631,12 @@ def test_confirm_user_without_page(client,redis_connect,mocker):
                 shibuser.shib_user = "test_user"
                 shibuser.user = User(id=1)
                 with patch("weko_accounts.views.ShibUser",return_value=shibuser):
-                    mock_redirect = mocker.patch("weko_accounts.views.redirect",return_value=make_response())
+                    mock_redirect = mocker.patch("weko_accounts.views.redirect",
+                                                 return_value=make_response())
                     client.get(url+"?next=ams")
                     called_args, _ = mock_redirect.call_args
                     mock_redirect.assert_called_with("/?next=ams")
-                    assert redis_connect.redis.exists("Shib-Session-1111") == False
+                    assert redis_connect.redis.exists("Shib-Session-1111") is False
 
     # raise BaseException
     with patch("weko_accounts.views._redirect_method",side_effect=BaseException("test_error")):
@@ -630,14 +649,15 @@ def test_confirm_user_without_page(client,redis_connect,mocker):
         res = client.get(url+"?next=ams")
         mock_redirect_.assert_called_once()
         called_args, called_kwargs = mock_redirect_.call_args
-        assert called_args[0] == True
+        assert called_args[0] is True
         assert "Server error has occurred. Please contact server " \
                 "administrator." in called_kwargs.get("ams_error", "")
 
 #def shib_login():
 # .tox/c1/bin/pytest --cov=weko_accounts tests/test_views.py::test_shib_login -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_shib_login(client,redis_connect,users,mocker):
-    mocker.patch("weko_accounts.views.RedisConnection.connection",return_value=redis_connect)
+    mocker.patch("weko_accounts.views.RedisConnection.connection",
+                 return_value=redis_connect)
     mocker.patch("weko_accounts.views.generate_random_str",return_value="asdfghjkl")
     url_base = url_for("weko_accounts.shib_login")
 
@@ -652,7 +672,7 @@ def test_shib_login(client,redis_connect,users,mocker):
     client.get(url_base+"?next=ams")
     mock_redirect_.assert_called_once()
     called_args, called_kwargs = mock_redirect_.call_args
-    assert called_args[0] == True
+    assert called_args[0] is True
     assert "Missing Shib-Session-ID!" in called_kwargs.get("ams_error", "")
 
     url = url_base+"?Shib-Session-ID=2222"
@@ -669,7 +689,7 @@ def test_shib_login(client,redis_connect,users,mocker):
     client.get(url+"&next=ams")
     mock_redirect_.assert_called_once()
     called_args, called_kwargs = mock_redirect_.call_args
-    assert called_args[0] == True
+    assert called_args[0] is True
     assert "Missing SHIB_CACHE_PREFIX!" in called_kwargs.get("ams_error", "")
 
     url = url_base+"?Shib-Session-ID=1111"
@@ -687,20 +707,22 @@ def test_shib_login(client,redis_connect,users,mocker):
     client.get(url+"&next=ams")
     mock_redirect_.assert_called_once()
     called_args, called_kwargs = mock_redirect_.call_args
-    assert called_args[0] == True
+    assert called_args[0] is True
     assert "Missing SHIB_ATTR!" in called_kwargs.get("ams_error", "")
 
     # exist user
     redis_connect.put("Shib-Session-1111",
                       bytes('{"shib_eppn":"test_eppn","shib_mail":"user@test.org"}',"utf-8"))
-    mock_render = mocker.patch("weko_accounts.views.render_template",return_value=make_response())
+    mock_render = mocker.patch("weko_accounts.views.render_template",
+                               return_value=make_response())
     client.get(url)
     mock_render.assert_called_with('weko_accounts/confirm_user.html',
                                    csrf_random="asdfghjkl",email="user@test.org")
 
     # not exist user
     redis_connect.put("Shib-Session-1111",
-                      bytes('{"shib_eppn":"test_eppn","shib_mail":"not_exist_user@test.org"}',"utf-8"))
+                      bytes('{"shib_eppn":"test_eppn",' \
+                      '"shib_mail":"not_exist_user@test.org"}',"utf-8"))
     mock_render = mocker.patch("weko_accounts.views.render_template",
                                return_value=make_response())
     client.get(url)
@@ -718,7 +740,7 @@ def test_shib_login(client,redis_connect,users,mocker):
         res = client.get(url_base+"?Shib-Session-ID=1111&next=ams")
         mock_redirect_.assert_called_once()
         called_args, called_kwargs = mock_redirect_.call_args
-        assert called_args[0] == True
+        assert called_args[0] is True
         assert "Server error has occurred. Please contact server " \
                 "administrator." in called_kwargs.get("ams_error", "")
 
@@ -741,7 +763,7 @@ def test_shib_sp_login(client, redis_connect,mocker, db, users):
     client.post(url+"?next=ams")
     mock_redirect_.assert_called_once()
     called_args, called_kwargs = mock_redirect_.call_args
-    assert called_args[0] == True
+    assert called_args[0] is True
     assert "Missing Shib-Session-ID!" in called_kwargs.get("ams_error", "")
 
     current_app.config.update(
@@ -764,7 +786,7 @@ def test_shib_sp_login(client, redis_connect,mocker, db, users):
         client.post(url+"?next=ams",data=form)
         mock_redirect_.assert_called_once()
         called_args, called_kwargs = mock_redirect_.call_args
-        assert called_args[0] == True
+        assert called_args[0] is True
         assert "Missing SHIB_ATTRs!" in called_kwargs.get("ams_error", "")
 
     # Check if shib_eppn is not included in the blocked user list
@@ -775,7 +797,7 @@ def test_shib_sp_login(client, redis_connect,mocker, db, users):
             settings='{"blocked_ePPNs": ["ePPN1", "ePPN2", "ePPN3", "ePPN5", "ePPP*"]}'
         ))
         db.session.commit()
-    except Exception as e:
+    except Exception:
         db.session.rollback()
         raise
     finally:
@@ -798,7 +820,7 @@ def test_shib_sp_login(client, redis_connect,mocker, db, users):
     client.post(url+"?next=ams",data=form)
     mock_redirect_.assert_called_once()
     called_args, called_kwargs = mock_redirect_.call_args
-    assert called_args[0] == True
+    assert called_args[0] is True
     assert "Login is blocked." in called_kwargs.get("ams_error", "")
 
     # Match found with a blocked user from the wildcard
@@ -816,7 +838,7 @@ def test_shib_sp_login(client, redis_connect,mocker, db, users):
     client.post(url+"?next=ams",data=form)
     mock_redirect_.assert_called_once()
     called_args, called_kwargs = mock_redirect_.call_args
-    assert called_args[0] == True
+    assert called_args[0] is True
     assert "Login is blocked." in called_kwargs.get("ams_error", "")
 
     # Not a blocked user
@@ -831,8 +853,9 @@ def test_shib_sp_login(client, redis_connect,mocker, db, users):
     current_app.config.update(
         WEKO_ACCOUNTS_SHIB_BIND_GAKUNIN_MAP_GROUPS=True
     )
-    mock_sync_shib_gakunin_map_groups = mocker.patch("weko_accounts.views.sync_shib_gakunin_map_groups",
-                                                     return_value=None)
+    mock_sync_shib_gakunin_map_groups = \
+    mocker.patch("weko_accounts.views.sync_shib_gakunin_map_groups",
+                 return_value=None)
     client.post(url, data=form)
     mock_sync_shib_gakunin_map_groups.assert_called_once()
 
@@ -911,7 +934,7 @@ def test_shib_sp_login(client, redis_connect,mocker, db, users):
         res = client.post(url+"?next=ams",data=form)
         mock_redirect_.assert_called_once()
         called_args, called_kwargs = mock_redirect_.call_args
-        assert called_args[0] == True
+        assert called_args[0] is True
         assert "Server error has occurred. Please contact server " \
                 "administrator." in called_kwargs.get("ams_error", "")
 
@@ -1105,9 +1128,11 @@ def test_shib_stub_login(client,mocker):
         WEKO_ACCOUNTS_SHIB_IDP_LOGIN_ENABLED=False
     )
     # WEKO_ACCOUNTS_SHIB_IDP_LOGIN_ENABLED is true
-    mock_render_template = mocker.patch("weko_accounts.views.render_template",return_value=make_response())
+    mock_render_template = mocker.patch("weko_accounts.views.render_template",
+                                        return_value=make_response())
     res = client.get(url)
-    mock_render_template.assert_called_with('weko_accounts/login_shibuser_pattern_1.html',module_name="WEKO-Accounts")
+    mock_render_template.assert_called_with('weko_accounts/login_shibuser_pattern_1.html',
+                                            module_name="WEKO-Accounts")
 
 #def shib_logout():
 # .tox/c1/bin/pytest --cov=weko_accounts tests/test_views.py::test_shib_logout -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp

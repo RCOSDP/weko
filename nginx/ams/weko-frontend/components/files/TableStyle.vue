@@ -358,12 +358,12 @@ function download() {
     },
     onResponseError({ response }) {
       statusCode = response.status;
-      alertData.value = amsAlert['TABLE_STYLE_MESSAGE_ERROR_DOWNLOAD'];
+      alertData.value = amsAlert.TABLE_STYLE_MESSAGE_ERROR_DOWNLOAD;
       emits('error', alertData.value.msgid, alertData.value.msgstr);
     }
   }).catch(() => {
     if (statusCode === 0) {
-      alertData.value = amsAlert['TABLE_STYLE_MESSAGE_ERROR_FETCH'];
+      alertData.value = amsAlert.TABLE_STYLE_MESSAGE_ERROR_FETCH;
       emits('error', alertData.value.msgid, alertData.value.msgstr);
     }
   });
@@ -397,12 +397,12 @@ function preview() {
     },
     onResponseError({ response }) {
       statusCode = response.status;
-      alertData.value = amsAlert['TABLE_STYLE_MESSAGE_ERROR_PREVIEW'];
+      alertData.value = amsAlert.TABLE_STYLE_MESSAGE_ERROR_PREVIEW;
       emits('error', alertData.value.msgid, alertData.value.msgstr);
     }
   }).catch(() => {
     if (statusCode === 0) {
-      alertData.value = amsAlert['TABLE_STYLE_MESSAGE_ERROR_FETCH_PREVIEW'];
+      alertData.value = amsAlert.TABLE_STYLE_MESSAGE_ERROR_FETCH_PREVIEW;
       emits('error', alertData.value.msgid, alertData.value.msgstr);
     }
   });

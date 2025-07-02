@@ -6,16 +6,13 @@
       <!-- インデックス階層 -->
       <div class="breadcrumb flex flex-wrap w-full">
         <div v-for="index in indexes" :key="index.id">
-          <span
-            v-if="index.id != useRoute().params.id"
-            class="font-medium cursor-pointer"
-            @click="clickParent(index.id)">
+          <span v-if="index.id != route.params.id" class="font-medium cursor-pointer" @click="clickParent(index.id)">
             {{ index.name }}
           </span>
           <span v-else class="font-medium underline">
             {{ index.name }}
           </span>
-          <a v-if="index.id != useRoute().params.id" class="ml-1 mr-1">/</a>
+          <a v-if="index.id != route.params.id" class="ml-1 mr-1">/</a>
         </div>
       </div>
       <!-- 検索結果 -->
@@ -114,6 +111,9 @@
 </template>
 
 <script lang="ts" setup>
+import { useRoute, useRouter } from 'vue-router';
+
+import amsAlert from '~/assets/data/amsAlert.json';
 import ResultJson from '~/assets/data/searchResult.json';
 import Alert from '~/components/common/Alert.vue';
 import Pagination from '~/components/common/Pagination.vue';
@@ -121,7 +121,8 @@ import SearchForm from '~/components/common/SearchForm.vue';
 import CreaterInfo from '~/components/common/modal/CreaterInfo.vue';
 import Conditions from '~/components/search/Conditions.vue';
 import SearchResult from '~/components/search/SearchResult.vue';
-import amsAlert from '~/assets/data/amsAlert.json';
+
+const route = useRoute();
 
 /* ///////////////////////////////////
 // interface
@@ -206,27 +207,27 @@ async function search() {
       statusCode = response.status;
       if (statusCode === 401) {
         // 認証エラー
-        alertData.value = amsAlert['ID_SEARCH_MESSAGE_ERROR_AUTH'];
+        alertData.value = amsAlert.ID_SEARCH_MESSAGE_ERROR_AUTH;
       } else if (statusCode >= 500 && statusCode < 600) {
         // サーバーエラー
-        alertData.value = amsAlert['ID_SEARCH_MESSAGE_ERROR_SERVER'];
+        alertData.value = amsAlert.ID_SEARCH_MESSAGE_ERROR_SERVER;
       } else {
         // リクエストエラー
-        alertData.value = amsAlert['ID_SEARCH_MESSAGE_ERROR_REQUEST'];
+        alertData.value = amsAlert.ID_SEARCH_MESSAGE_ERROR_REQUEST;
       }
       visibleAlert.value = true;
     }
   }).catch(() => {
     if (statusCode === 0) {
       // fetchエラー
-      alertData.value = amsAlert['ID_SEARCH_MESSAGE_ERROR_FETCH'];
+      alertData.value = amsAlert.ID_SEARCH_MESSAGE_ERROR_FETCH;
       visibleAlert.value = true;
     }
   });
 }
 
 /**
- * インデクス階層取得
+  await $fetch(useAppConfig().wekoApi + '/tree/index/' + route.params.id + '/parent', {
  */
 async function getParentIndex() {
   let statusCode = 0;
@@ -255,20 +256,20 @@ async function getParentIndex() {
       statusCode = response.status;
       if (statusCode === 401) {
         // 認証エラー
-        alertData.value = amsAlert['ID_INDEX_MESSAGE_ERROR_AUTH'];
+        alertData.value = amsAlert.ID_INDEX_MESSAGE_ERROR_AUTH;
       } else if (statusCode >= 500 && statusCode < 600) {
         // サーバーエラー
-        alertData.value = amsAlert['ID_INDEX_MESSAGE_ERROR_SERVER'];
+        alertData.value = amsAlert.ID_INDEX_MESSAGE_ERROR_SERVER;
       } else {
         // リクエストエラー
-        alertData.value = amsAlert['ID_INDEX_MESSAGE_ERROR_GET_INDEX'];
+        alertData.value = amsAlert.ID_INDEX_MESSAGE_ERROR_GET_INDEX;
       }
       visibleAlert.value = true;
     }
   }).catch(() => {
     if (statusCode === 0) {
       // fetchエラー
-      alertData.value = amsAlert['ID_INDEX_MESSAGE_ERROR_FETCH'];
+      alertData.value = amsAlert.ID_INDEX_MESSAGE_ERROR_FETCH;
       visibleAlert.value = true;
     }
   });
@@ -314,20 +315,20 @@ async function downloadResultList() {
       statusCode = response.status;
       if (statusCode === 401) {
         // 認証エラー
-        alertData.value = amsAlert['ID_DOWNLOAD_MESSAGE_ERROR_AUTH'];
+        alertData.value = amsAlert.ID_DOWNLOAD_MESSAGE_ERROR_AUTH;
       } else if (statusCode >= 500 && statusCode < 600) {
         // サーバーエラー
-        alertData.value = amsAlert['ID_DOWNLOAD_MESSAGE_ERROR_SERVER'];
+        alertData.value = amsAlert.ID_DOWNLOAD_MESSAGE_ERROR_SERVER;
       } else {
         // リクエストエラー
-        alertData.value = amsAlert['ID_DOWNLOAD_MESSAGE_ERROR_DOWNLOAD_RESULT'];
+        alertData.value = amsAlert.ID_DOWNLOAD_MESSAGE_ERROR_DOWNLOAD_RESULT;
       }
       visibleAlert.value = true;
     }
   }).catch(() => {
     if (statusCode === 0) {
       // fetchエラー
-      alertData.value = amsAlert['ID_DOWNLOAD_MESSAGE_ERROR_FETCH'];
+      alertData.value = amsAlert.ID_DOWNLOAD_MESSAGE_ERROR_FETCH;
       visibleAlert.value = true;
     }
   });
@@ -410,18 +411,17 @@ function setDisplayType(value: string) {
  * 検索条件をセッションから復元
  */
 function setConditions() {
-  if (sessionStorage.getItem('conditions')) {
-    // @ts-ignore
-    const json = JSON.parse(sessionStorage.getItem('conditions'));
-    conditions.type = json.type ?? '0';
-    conditions.keyword = String(useRoute().params.id) ?? '';
-    conditions.currentPage = json.currentPage ?? '1';
-    conditions.perPage = json.perPage ?? '20';
-    conditions.sort = json.sort ?? 'wtl';
-    conditions.order = json.order ?? 'asc';
-    conditions.detail = json.detail ?? {};
-    conditions.detailData = json.detailData ?? {};
-  }
+  conditions.keyword = String(route.params.id) ?? '';
+  // @ts-ignore
+  const json = JSON.parse(sessionStorage.getItem('conditions'));
+  conditions.type = json.type ?? '0';
+  conditions.keyword = String(useRoute().params.id) ?? '';
+  conditions.currentPage = json.currentPage ?? '1';
+  conditions.perPage = json.perPage ?? '20';
+  conditions.sort = json.sort ?? 'wtl';
+  conditions.order = json.order ?? 'asc';
+  conditions.detail = json.detail ?? {};
+  conditions.detailData = json.detailData ?? {};
 }
 
 /**
@@ -466,7 +466,7 @@ try {
   await search();
   await getParentIndex();
 } catch (error) {
-  alertData.value = amsAlert['ID_MESSAGE_ERROR'];
+  alertData.value = amsAlert.ID_MESSAGE_ERROR;
   visibleAlert.value = true;
 }
 

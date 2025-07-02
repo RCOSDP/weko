@@ -216,12 +216,12 @@
 <script lang="ts" setup>
 import VueDatePicker from '@vuepic/vue-datepicker';
 
+import amsAlert from '~/assets/data/amsAlert.json';
 import FilterColumn from '~/assets/data/filesFilter.json';
 import Alert from '~/components/common/Alert.vue';
 import Pagination from '~/components/common/Pagination.vue';
 import SearchForm from '~/components/common/SearchForm.vue';
 import TableStyle from '~/components/files/TableStyle.vue';
-import amsAlert from '~/assets/data/amsAlert.json';
 
 /* ///////////////////////////////////
 // const and let
@@ -306,20 +306,20 @@ async function getFiles(number: string) {
       statusCode = response.status;
       if (statusCode === 401) {
         // 認証エラー
-        alertData.value = amsAlert['FILES_DETAIL_MESSAGE_ERROR_AUTH'];
+        alertData.value = amsAlert.FILES_DETAIL_MESSAGE_ERROR_AUTH;
       } else if (statusCode >= 500 && statusCode < 600) {
         // サーバーエラー
-        alertData.value = amsAlert['FILES_DETAIL_MESSAGE_ERROR_SERVER'];
+        alertData.value = amsAlert.FILES_DETAIL_MESSAGE_ERROR_SERVER;
       } else {
         // リクエストエラー
-        alertData.value = amsAlert['FILES_DETAIL_MESSAGE_ERROR_GET_ITEM_DETAIL'];
+        alertData.value = amsAlert.FILES_DETAIL_MESSAGE_ERROR_GET_ITEM_DETAIL;
       }
       visibleAlert.value = true;
     }
   }).catch(() => {
     if (statusCode === 0) {
       // fetchエラー
-      alertData.value = amsAlert['FILES_DETAIL_MESSAGE_ERROR_FETCH'];
+      alertData.value = amsAlert.FILES_DETAIL_MESSAGE_ERROR_FETCH;
       visibleAlert.value = true;
     }
   });
@@ -355,20 +355,20 @@ function downloadFilesAll() {
         statusCode = response.status;
         if (statusCode === 401) {
           // 認証エラー
-          alertData.value = amsAlert['FILES_ALL_MESSAGE_ERROR_AUTH'];
+          alertData.value = amsAlert.FILES_ALL_MESSAGE_ERROR_AUTH;
         } else if (statusCode >= 500 && statusCode < 600) {
           // サーバーエラー
-          alertData.value = amsAlert['FILES_ALL_MESSAGE_ERROR_SERVER'];
+          alertData.value = amsAlert.FILES_ALL_MESSAGE_ERROR_SERVER;
         } else {
           // リクエストエラー
-          alertData.value = amsAlert['FILES_ALL_MESSAGE_ERROR_DOWNLOAD_ALL'];
+          alertData.value = amsAlert.FILES_ALL_MESSAGE_ERROR_DOWNLOAD_ALL;
         }
         visibleAlert.value = true;
       }
     }).catch(() => {
       if (statusCode === 0) {
         // fetchエラー
-        alertData.value = amsAlert['FILES_ALL_MESSAGE_ERROR_FETCH'];
+        alertData.value = amsAlert.FILES_ALL_MESSAGE_ERROR_FETCH;
         visibleAlert.value = true;
       }
     });
@@ -413,20 +413,20 @@ function downloadFilesSelected(filesList: string[]) {
       statusCode = response.status;
       if (statusCode === 401) {
         // 認証エラー
-        alertData.value = amsAlert['FILES_SELECT_MESSAGE_ERROR_AUTH'];
+        alertData.value = amsAlert.FILES_SELECT_MESSAGE_ERROR_AUTH;
       } else if (statusCode >= 500 && statusCode < 600) {
         // サーバーエラー
-        alertData.value = amsAlert['FILES_SELECT_MESSAGE_ERROR_SERVER'];
+        alertData.value = amsAlert.FILES_SELECT_MESSAGE_ERROR_SERVER;
       } else {
         // リクエストエラー
-        alertData.value = amsAlert['FILES_SELECT_MESSAGE_ERROR_DOWNLOAD_SELECTED'];
+        alertData.value = amsAlert.FILES_SELECT_MESSAGE_ERROR_DOWNLOAD_SELECTED;
       }
       visibleAlert.value = true;
     }
   }).catch(() => {
     if (statusCode === 0) {
       // fetchエラー
-      alertData.value = amsAlert['FILES_SELECT_MESSAGE_ERROR_FETCH'];
+      alertData.value = amsAlert.FILES_SELECT_MESSAGE_ERROR_FETCH;
       visibleAlert.value = true;
     }
   });
@@ -747,7 +747,7 @@ try {
   divideList(filteredList.value);
   setSpanList();
 } catch (error) {
-  alertData.value = amsAlert['FILES_MESSAGE_ERROR'];
+  alertData.value = amsAlert.FILES_MESSAGE_ERROR;
   visibleAlert.value = true;
 }
 

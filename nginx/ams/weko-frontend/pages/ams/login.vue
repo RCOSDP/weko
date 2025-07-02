@@ -19,7 +19,7 @@
       </div>
 
       <!-- EMBEDDED-WAYF-START -->
-      <div id="wayf_div" ref="scriptContainer"></div>
+      <div id="wayf_div" ref="scriptContainer" />
       <!-- EMBEDDED-WAYF-END -->
 
       <div class="text-divider">OR</div>
@@ -154,10 +154,11 @@
 </template>
 
 <script lang="ts" setup>
+/* eslint-disable no-useless-escape */
 import { Form, Field, ErrorMessage } from 'vee-validate';
 
-import Alert from '~/components/common/Alert.vue';
 import amsAlert from '~/assets/data/amsAlert.json';
+import Alert from '~/components/common/Alert.vue';
 
 /* ///////////////////////////////////
 // const and let
@@ -229,17 +230,17 @@ async function login() {
         // window.open(url.href, '_self');
       } else if (statusCode >= 500 && statusCode < 600) {
         // サーバーエラー
-        alertData.value = amsAlert['LOGIN_MESSAGE_ERROR_SERVER'];
+        alertData.value = amsAlert.LOGIN_MESSAGE_ERROR_SERVER;
       } else {
         // リクエストエラー
-        alertData.value = amsAlert['LOGIN_MESSAGE_ERROR_REQUEST'];
+        alertData.value = amsAlert.LOGIN_MESSAGE_ERROR_REQUEST;
       }
       visibleAlert.value = true;
     }
   }).catch(() => {
     if (statusCode === 0) {
       // fetchエラー
-      alertData.value = amsAlert['LOGIN_MESSAGE_ERROR_FETCH'];
+      alertData.value = amsAlert.LOGIN_MESSAGE_ERROR_FETCH;
       visibleAlert.value = true;
     }
   });
@@ -293,34 +294,31 @@ function shibbolethLoginError(route: any) {
   if (error) {
     if (error === 'Login is blocked.') {
       // statusCode 403 Loginがブロックされている
-      alertData.value = amsAlert['LOGIN_MESSAGE_ERROR_LOGIN_BLOCK'];
+      alertData.value = amsAlert.LOGIN_MESSAGE_ERROR_LOGIN_BLOCK;
     } else if (error === 'There is no user information.') {
       // statusCode 403 ユーザ情報がない
-      alertData.value = amsAlert['LOGIN_MESSAGE_ERROR_NO_USER_INFORMATION'];
+      alertData.value = amsAlert.LOGIN_MESSAGE_ERROR_NO_USER_INFORMATION;
     } else if (error === 'Server error has occurred. Please contact server administrator.') {
       // statusCode 500 サーバーエラー
-      alertData.value = amsAlert['LOGIN_SHIB_MESSAGE_ERROR_SERVER'];
+      alertData.value = amsAlert.LOGIN_SHIB_MESSAGE_ERROR_SERVER;
+    } else if (error === 'Missing SHIB_CACHE_PREFIX!') {
+      // Redisにcache_keyがない
+      alertData.value = amsAlert.LOGIN_MESSAGE_ERROR_SHIB_CACHE_PREFIX;
+    } else if (error === 'Missing Shib-Session-ID!') {
+      // Shibboleth-Session-IDが取得出来ない
+      alertData.value = amsAlert.LOGIN_MESSAGE_ERROR_SHIB_SESSION_ID;
+    } else if (error === 'Missing SHIB_ATTRs!') {
+      // shib_eppnが取得出来ない
+      alertData.value = amsAlert.LOGIN_MESSAGE_ERROR_SHIB_ATTRS;
+    } else if (error === 'FAILED bind_relation_info!') {
+      // 関連情報作成に失敗
+      alertData.value = amsAlert.LOGIN_MESSAGE_ERROR_BIND_RELATION_INFO;
+    } else if (error === "Can't get relation Weko User.") {
+      // WEKOのユーザー関連情報が取得出来ない
+      alertData.value = amsAlert.LOGIN_MESSAGE_ERROR_FAILED_GET_RELATION;
     } else {
-      // statusCode 400
-      if (error === 'Missing SHIB_CACHE_PREFIX!') {
-        // Redisにcache_keyがない
-        alertData.value = amsAlert['LOGIN_MESSAGE_ERROR_SHIB_CACHE_PREFIX'];
-      } else if (error === 'Missing Shib-Session-ID!') {
-        // Shibboleth-Session-IDが​取得出来ない
-        alertData.value = amsAlert['LOGIN_MESSAGE_ERROR_SHIB_SESSION_ID'];
-      } else if (error === 'Missing SHIB_ATTRs!') {
-        // shib_eppnが取得出来ない
-        alertData.value = amsAlert['LOGIN_MESSAGE_ERROR_SHIB_ATTRS'];
-      } else if (error === 'FAILED bind_relation_info!') {
-        // 関連情報作成に失敗
-        alertData.value = amsAlert['LOGIN_MESSAGE_ERROR_BIND_RELATION_INFO'];
-      } else if (error === "Can't get relation Weko User.") {
-        // WEKOのユーザー関連情報が​取得出来ない
-        alertData.value = amsAlert['LOGIN_MESSAGE_ERROR_FAILED_GET_RELATION'];
-      } else {
-        // その他例外エラー
-        alertData.value = amsAlert['LOGIN_SHIB_MESSAGE_ERROR_LOGIN_FAILED'];
-      }
+      // その他例外エラー
+      alertData.value = amsAlert.LOGIN_SHIB_MESSAGE_ERROR_LOGIN_FAILED;
     }
     visibleAlert.value = true;
   }
@@ -389,16 +387,16 @@ onMounted(() => {
         <p>
           <strong>Login:</strong> Javascript is not available for your web browser. Therefore, please <a
             href='/Shibboleth.sso/DS?target='>proceed manually</a>.
-        <\/p>
-      <\/noscript>
+        </p>
+      </noscript>
       <style>
         #view_incsearch_animate,
         #view_incsearch_scroll {
           font-size: 12px;
           max-height: 5rem;
         }
-      <\/style>
-      `;
+      </style>
+    `;
     wayfContainer.parentNode.replaceChild(iframe, wayfContainer);
     iframe.width = '100%';
   }

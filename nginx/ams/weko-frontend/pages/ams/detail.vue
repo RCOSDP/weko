@@ -45,7 +45,7 @@
                 @click-prev="changeDetail"
                 @click-next="changeDetail" />
             </div>
-            <div v-else class="pt-2.5 pb-28"></div>
+            <div v-else class="pt-2.5 pb-28" />
             <!-- 最上部に戻る -->
             <button id="page-top" class="hidden lg:block w-10 h-10 absolute right-5 bottom-[60px]" @click="scrollToTop">
               <img :src="`${appConf.amsImage ?? '/img'}/btn/btn-gototop.svg`" alt="Top" />
@@ -143,6 +143,7 @@
 </template>
 
 <script lang="ts" setup>
+import amsAlert from '~/assets/data/amsAlert.json';
 import Alert from '~/components/common/Alert.vue';
 import SearchForm from '~/components/common/SearchForm.vue';
 import CreaterInfo from '~/components/common/modal/CreaterInfo.vue';
@@ -153,7 +154,6 @@ import ItemInfo from '~/components/detail/ItemInfo.vue';
 import Switcher from '~/components/detail/Switcher.vue';
 import ViewsNumber from '~/components/detail/ViewsNumber.vue';
 import RequestMail from '~/components/detail/modal/RequestMail.vue';
-import amsAlert from '~/assets/data/amsAlert.json';
 
 /* ///////////////////////////////////
 // interface
@@ -207,7 +207,7 @@ const alertData = ref({
 const isLoading = ref(true);
 const isLogin = !!sessionStorage.getItem('login:state');
 const checkMailAddress = ref(false);
-let oauthError = ref(false);
+const oauthError = ref(false);
 let projectUrl = '';
 
 /* ///////////////////////////////////
@@ -258,24 +258,24 @@ async function getDetail(number: string) {
       if (statusCode === 401 || statusCode === 403) {
         // 認証エラー
         if (isLogin) {
-          alertData.value = amsAlert['DETAIL_ITEM_MESSAGE_ERROR_AUTH'];
+          alertData.value = amsAlert.DETAIL_ITEM_MESSAGE_ERROR_AUTH;
         } else {
-          alertData.value = amsAlert['DETAIL_ITEM_MESSAGE_OAUTH_ERROR'];
+          alertData.value = amsAlert.DETAIL_ITEM_MESSAGE_OAUTH_ERROR;
           oauthErrorRedirect();
         }
       } else if (statusCode >= 500 && statusCode < 600) {
         // サーバーエラー
-        alertData.value = amsAlert['DETAIL_ITEM_MESSAGE_ERROR_SERVER'];
+        alertData.value = amsAlert.DETAIL_ITEM_MESSAGE_ERROR_SERVER;
       } else {
         // リクエストエラー
-        alertData.value = amsAlert['DETAIL_ITEM_MESSAGE_ERROR_GET_ITEM_DETAIL'];
+        alertData.value = amsAlert.DETAIL_ITEM_MESSAGE_ERROR_GET_ITEM_DETAIL;
       }
       visibleAlert.value = true;
     }
   }).catch(() => {
     if (statusCode === 0) {
       // fetchエラー
-      alertData.value = amsAlert['DETAIL_ITEM_MESSAGE_ERROR_FETCH'];
+      alertData.value = amsAlert.DETAIL_ITEM_MESSAGE_ERROR_FETCH;
       visibleAlert.value = true;
     }
   });
@@ -331,24 +331,24 @@ async function search(searchPage: string) {
       if (oauthError.value || statusCode === 401 || statusCode === 403) {
         // 認証エラー
         if (isLogin) {
-          alertData.value = amsAlert['DETAIL_SEARCH_MESSAGE_ERROR_AUTH'];
+          alertData.value = amsAlert.DETAIL_SEARCH_MESSAGE_ERROR_AUTH;
         } else {
-          alertData.value = amsAlert['DETAIL_SEARCH_MESSAGE_OAUTH_ERROR'];
+          alertData.value = amsAlert.DETAIL_SEARCH_MESSAGE_OAUTH_ERROR;
           oauthErrorRedirect();
         }
       } else if (statusCode >= 500 && statusCode < 600) {
         // サーバーエラー
-        alertData.value = amsAlert['DETAIL_SEARCH_MESSAGE_ERROR_SERVER'];
+        alertData.value = amsAlert.DETAIL_SEARCH_MESSAGE_ERROR_SERVER;
       } else {
         // リクエストエラー
-        alertData.value = amsAlert['DETAIL_SEARCH_MESSAGE_ERROR_GET_INDEX'];
+        alertData.value = amsAlert.DETAIL_SEARCH_MESSAGE_ERROR_GET_INDEX;
       }
       visibleAlert.value = true;
     }
   }).catch(() => {
     if (statusCode === 0) {
       // fetchエラー
-      alertData.value = amsAlert['DETAIL_SEARCH_MESSAGE_ERROR_FETCH'];
+      alertData.value = amsAlert.DETAIL_SEARCH_MESSAGE_ERROR_FETCH;
       visibleAlert.value = true;
     }
   });
@@ -385,24 +385,24 @@ async function getParentIndex() {
       if (oauthError.value || statusCode === 401 || statusCode === 403) {
         // 認証エラー
         if (isLogin) {
-          alertData.value = amsAlert['DETAIL_INDEX_MESSAGE_ERROR_AUTH'];
+          alertData.value = amsAlert.DETAIL_INDEX_MESSAGE_ERROR_AUTH;
         } else {
-          alertData.value = amsAlert['DETAIL_INDEX_MESSAGE_OAUTH_ERROR'];
+          alertData.value = amsAlert.DETAIL_INDEX_MESSAGE_OAUTH_ERROR;
           oauthErrorRedirect();
         }
       } else if (statusCode >= 500 && statusCode < 600) {
         // サーバーエラー
-        alertData.value = amsAlert['DETAIL_INDEX_MESSAGE_ERROR_SERVER'];
+        alertData.value = amsAlert.DETAIL_INDEX_MESSAGE_ERROR_SERVER;
       } else {
         // リクエストエラー
-        alertData.value = amsAlert['DETAIL_INDEX_MESSAGE_ERROR_GET_INDEX'];
+        alertData.value = amsAlert.DETAIL_INDEX_MESSAGE_ERROR_GET_INDEX;
       }
       visibleAlert.value = true;
     }
   }).catch(() => {
     if (statusCode === 0) {
       // fetchエラー
-      alertData.value = amsAlert['DETAIL_INDEX_MESSAGE_ERROR_FETCH'];
+      alertData.value = amsAlert.DETAIL_INDEX_MESSAGE_ERROR_FETCH;
       visibleAlert.value = true;
     }
   });
@@ -696,7 +696,7 @@ function checkSendingResponse(val: boolean) {
     // 入力内容初期化
     requestMail.value.initInput();
   } else {
-    alertData.value = amsAlert['DETAIL_MESSAGE_SENDING_FAILED'];
+    alertData.value = amsAlert.DETAIL_MESSAGE_SENDING_FAILED;
   }
   (document.getElementById('loading_modal') as HTMLDialogElement).close();
   visibleAlert.value = true;
@@ -774,7 +774,7 @@ try {
   }
   await getParentIndex();
 } catch (error) {
-  alertData.value = amsAlert['DETAIL_MESSAGE_ERROR'];
+  alertData.value = amsAlert.DETAIL_MESSAGE_ERROR;
   visibleAlert.value = true;
 }
 

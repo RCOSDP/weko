@@ -176,9 +176,9 @@
 <script lang="ts" setup>
 import { Form, Field, ErrorMessage } from 'vee-validate';
 
+import amsAlert from '~/assets/data/amsAlert.json';
 import Alert from '~/components/common/Alert.vue';
 import ContactConfirm from '~/components/contact/modal/ContactConfirm.vue';
-import amsAlert from '~/assets/data/amsAlert.json';
 
 /* ///////////////////////////////////
 // const and let
@@ -306,7 +306,7 @@ function checkSendingResponse(val: boolean) {
     dirtyMail.value = false;
     dirtyContents.value = false;
   } else {
-    toastData.value = amsAlert['CONTACT_MESSAGE_SENDING_FAILED'];
+    toastData.value = amsAlert.CONTACT_MESSAGE_SENDING_FAILED;
   }
   closeSending();
   isToast.value = true;

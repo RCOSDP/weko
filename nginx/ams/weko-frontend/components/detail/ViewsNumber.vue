@@ -103,15 +103,15 @@ function getItemStats(span: string) {
     onResponseError({ response }) {
       statusCode = response.status;
       if (statusCode === 500) {
-        alertData.value = amsAlert['VIEWS_NUMBER_MESSAGE_ERROR'];
+        alertData.value = amsAlert.VIEWS_NUMBER_MESSAGE_ERROR;
       } else {
-        alertData.value = amsAlert['VIEWS_NUMBER_MESSAGE_ERROR_GET_ITEM'];
+        alertData.value = amsAlert.VIEWS_NUMBER_MESSAGE_ERROR_GET_ITEM;
       }
       emits('error', alertData.value.msgid, alertData.value.msgstr);
     }
   }).catch(() => {
     if (statusCode === 0) {
-      alertData.value = amsAlert['VIEWS_NUMBER_MESSAGE_ERROR_FETCH'];
+      alertData.value = amsAlert.VIEWS_NUMBER_MESSAGE_ERROR_FETCH;
       emits('error', alertData.value.msgid, alertData.value.msgstr);
     }
   });

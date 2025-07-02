@@ -45,13 +45,13 @@
 </template>
 
 <script lang="ts" setup>
+import amsAlert from '~/assets/data/amsAlert.json';
 import Alert from '~/components/common/Alert.vue';
 import SearchForm from '~/components/common/SearchForm.vue';
 import CreaterInfo from '~/components/common/modal/CreaterInfo.vue';
 // import KeywardRank from '~/components/index/KeywardRank.vue';
 import LatestItem from '~/components/index/LatestItem.vue';
 // import News from '~/components/index/News.vue';
-import amsAlert from '~/assets/data/amsAlert.json';
 
 /* ///////////////////////////////////
 // const and let
@@ -111,7 +111,7 @@ try {
 
   const baseURI = useRuntimeConfig().public.redirectURI;
   const itemURL = sessionStorage.getItem('item-url');
-  const redirectURL = itemURL ? itemURL : baseURI;
+  const redirectURL = itemURL || baseURI;
 
   // アクセストークン取得
   if (state) {
@@ -141,7 +141,7 @@ try {
               path: redirectURL,
               query: {
                 sess: 'top',
-                number: number
+                number
               }
             });
           }
@@ -177,26 +177,26 @@ try {
       statusCode = response.status;
       if (statusCode === 401) {
         // 認証エラー
-        alertData.value = amsAlert['INDEX_MESSAGE_ERROR_AUTH'];
+        alertData.value = amsAlert.INDEX_MESSAGE_ERROR_AUTH;
       } else if (statusCode >= 500 && statusCode < 600) {
         // サーバーエラー
-        alertData.value = amsAlert['INDEX_MESSAGE_ERROR_SERVER'];
+        alertData.value = amsAlert.INDEX_MESSAGE_ERROR_SERVER;
       } else {
         // リクエストエラー
-        alertData.value = amsAlert['INDEX_MESSAGE_ERROR_GET_LATEST_ITEM'];
+        alertData.value = amsAlert.INDEX_MESSAGE_ERROR_GET_LATEST_ITEM;
       }
       visibleAlert.value = true;
     }
   }).catch(() => {
     if (statusCode === 0) {
       // fetchエラー
-      alertData.value = amsAlert['INDEX_MESSAGE_ERROR_FETCH'];
+      alertData.value = amsAlert.INDEX_MESSAGE_ERROR_FETCH;
       visibleAlert.value = true;
     }
   });
 } catch (error) {
   // 例外エラー
-  alertData.value = amsAlert['INDEX_MESSAGE_ERROR'];
+  alertData.value = amsAlert.INDEX_MESSAGE_ERROR;
   visibleAlert.value = true;
 }
 

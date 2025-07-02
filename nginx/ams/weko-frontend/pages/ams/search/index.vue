@@ -243,6 +243,7 @@
 <script lang="ts" setup>
 import VueDatePicker from '@vuepic/vue-datepicker';
 
+import amsAlert from '~/assets/data/amsAlert.json';
 import FilterColumn from '~/assets/data/filterSearchInfo.json';
 import ResultJson from '~/assets/data/searchResult.json';
 import Alert from '~/components/common/Alert.vue';
@@ -251,7 +252,6 @@ import SearchForm from '~/components/common/SearchForm.vue';
 import CreaterInfo from '~/components/common/modal/CreaterInfo.vue';
 import Conditions from '~/components/search/Conditions.vue';
 import SearchResult from '~/components/search/SearchResult.vue';
-import amsAlert from '~/assets/data/amsAlert.json';
 
 /* ///////////////////////////////////
 // const and let
@@ -365,20 +365,20 @@ async function search() {
       statusCode = response.status;
       if (statusCode === 401) {
         // 認証エラー
-        alertData.value = amsAlert['SEARCH_ITEM_MESSAGE_ERROR_AUTH'];
+        alertData.value = amsAlert.SEARCH_ITEM_MESSAGE_ERROR_AUTH;
       } else if (statusCode >= 500 && statusCode < 600) {
         // サーバーエラー
-        alertData.value = amsAlert['SEARCH_ITEM_MESSAGE_ERROR_SERVER'];
+        alertData.value = amsAlert.SEARCH_ITEM_MESSAGE_ERROR_SERVER;
       } else {
         // リクエストエラー
-        alertData.value = amsAlert['SEARCH_ITEM_MESSAGE_ERROR_REQUEST'];
+        alertData.value = amsAlert.SEARCH_ITEM_MESSAGE_ERROR_REQUEST;
       }
       visibleAlert.value = true;
     }
   }).catch(() => {
     if (statusCode === 0) {
       // fetchエラー
-      alertData.value = amsAlert['SEARCH_ITEM_MESSAGE_ERROR_FETCH'];
+      alertData.value = amsAlert.SEARCH_ITEM_MESSAGE_ERROR_FETCH;
       visibleAlert.value = true;
     }
   });
@@ -552,20 +552,20 @@ async function downloadResultList() {
       statusCode = response.status;
       if (statusCode === 401) {
         // 認証エラー
-        alertData.value = amsAlert['SEARCH_DOWNLOAD_MESSAGE_ERROR_AUTH'];
+        alertData.value = amsAlert.SEARCH_DOWNLOAD_MESSAGE_ERROR_AUTH;
       } else if (statusCode >= 500 && statusCode < 600) {
         // サーバーエラー
-        alertData.value = amsAlert['SEARCH_DOWNLOAD_MESSAGE_ERROR_SERVER'];
+        alertData.value = amsAlert.SEARCH_DOWNLOAD_MESSAGE_ERROR_SERVER;
       } else {
         // リクエストエラー
-        alertData.value = amsAlert['SEARCH_DOWNLOAD_MESSAGE_ERROR_RESULT'];
+        alertData.value = amsAlert.SEARCH_DOWNLOAD_MESSAGE_ERROR_RESULT;
       }
       visibleAlert.value = true;
     }
   }).catch(() => {
     if (statusCode === 0) {
       // fetchエラー
-      alertData.value = amsAlert['SEARCH_DOWNLOAD_MESSAGE_ERROR_FETCH'];
+      alertData.value = amsAlert.SEARCH_DOWNLOAD_MESSAGE_ERROR_FETCH;
       visibleAlert.value = true;
     }
   });
@@ -832,7 +832,7 @@ try {
   checkExportURL();
   await search();
 } catch (error) {
-  alertData.value = amsAlert['SEARCH_INDEX_MESSAGE_ERROR'];
+  alertData.value = amsAlert.SEARCH_INDEX_MESSAGE_ERROR;
   visibleAlert.value = true;
 }
 
