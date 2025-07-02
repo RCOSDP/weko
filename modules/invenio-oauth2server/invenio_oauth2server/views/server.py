@@ -19,7 +19,7 @@ from flask_breadcrumbs import register_breadcrumb
 from flask_login import login_required
 from flask_principal import Identity, identity_changed
 from oauthlib.oauth2.rfc6749.errors import InvalidClientError, OAuth2Error, \
-    AccessDeniedError
+    AccessDeniedError, raise_from_error
 
 from invenio_db import db
 
@@ -42,8 +42,9 @@ def login_oauth2_user(valid, oauth):
     if valid:
         oauth.user.login_via_oauth2 = True
         g.top.user = oauth.user
+        # pylint: disable=protected-access
         identity_changed.send(current_app._get_current_object(),
-                              identity=Identity(oauth.user.id))
+                      identity=Identity(oauth.user.id))
     return valid, oauth
 
 
@@ -126,7 +127,6 @@ def access_token():
 @blueprint.route('/errors')
 def errors():
     """Error view in case of invalid oauth requests."""
-    from oauthlib.oauth2.rfc6749.errors import raise_from_error
     status_code = 200
     try:
         error = None
@@ -178,6 +178,7 @@ def invalid():
 
 @blueprint.teardown_request
 def dbsession_clean(exception):
+    """Clean up the database session after each request."""
     current_app.logger.debug("invenio_oauth2server dbsession_clean: {}".format(exception))
     if exception is None:
         try:
