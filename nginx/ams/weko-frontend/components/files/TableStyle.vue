@@ -227,7 +227,7 @@ const alertData = ref({
   msgstr: '',
   position: '',
   width: 'w-full',
-  loglevel: 'info',
+  loglevel: 'info'
 });
 
 /* ///////////////////////////////////
@@ -360,7 +360,7 @@ function download() {
       statusCode = response.status;
       alertData.value = amsAlert['TABLE_STYLE_MESSAGE_ERROR_DOWNLOAD'];
       emits('error', alertData.value.msgid, alertData.value.msgstr);
-    },
+    }
   }).catch(() => {
     if (statusCode === 0) {
       alertData.value = amsAlert['TABLE_STYLE_MESSAGE_ERROR_FETCH'];
@@ -375,31 +375,31 @@ function download() {
 function preview() {
   let statusCode = 0;
   $fetch(appConfig.wekoApi + '/records/' + useRoute().query.number + '/files/' + props.file['@id'], {
-      timeout: useRuntimeConfig().public.apiTimeout,
-      method: 'GET',
-      credentials: 'omit',
-      headers: {
-        'Cache-Control': 'no-store',
-        Pragma: 'no-cache',
-        'Accept-Language': localStorage.getItem('locale') ?? 'ja',
-        Authorization: localStorage.getItem('token:type') + ' ' + localStorage.getItem('token:access')
-      },
-      params: {
-        mode: 'preview'
-      },
-      onResponse({ response }) {
-        if (response.status === 200) {
-          // プレーンテキストの場合(= response._data.type がない場合)に専用のURLを作成する必要あり
-          const preview = !response._data.type ? '/file_preview/' : '/preview/';
-          const url = appConfig.wekoOrigin + '/record/' + useRoute().query.number + preview + props.file['@id'];
-          window.open(url, '', 'toolbar=no');
-        }
-      },
-      onResponseError({ response }) {
-        statusCode = response.status;
-        alertData.value = amsAlert['TABLE_STYLE_MESSAGE_ERROR_PREVIEW'];
-        emits('error', alertData.value.msgid, alertData.value.msgstr);
-      },
+    timeout: useRuntimeConfig().public.apiTimeout,
+    method: 'GET',
+    credentials: 'omit',
+    headers: {
+      'Cache-Control': 'no-store',
+      Pragma: 'no-cache',
+      'Accept-Language': localStorage.getItem('locale') ?? 'ja',
+      Authorization: localStorage.getItem('token:type') + ' ' + localStorage.getItem('token:access')
+    },
+    params: {
+      mode: 'preview'
+    },
+    onResponse({ response }) {
+      if (response.status === 200) {
+        // プレーンテキストの場合(= response._data.type がない場合)に専用のURLを作成する必要あり
+        const preview = !response._data.type ? '/file_preview/' : '/preview/';
+        const url = appConfig.wekoOrigin + '/record/' + useRoute().query.number + preview + props.file['@id'];
+        window.open(url, '', 'toolbar=no');
+      }
+    },
+    onResponseError({ response }) {
+      statusCode = response.status;
+      alertData.value = amsAlert['TABLE_STYLE_MESSAGE_ERROR_PREVIEW'];
+      emits('error', alertData.value.msgid, alertData.value.msgstr);
+    }
   }).catch(() => {
     if (statusCode === 0) {
       alertData.value = amsAlert['TABLE_STYLE_MESSAGE_ERROR_FETCH_PREVIEW'];

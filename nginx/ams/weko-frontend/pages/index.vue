@@ -40,11 +40,7 @@
     <!-- 著者情報 -->
     <CreaterInfo ref="creater" />
     <!-- アラート -->
-    <Alert
-      v-if='visibleAlert'
-      :alert='alertData'
-      @click-close='visibleAlert = !visibleAlert'
-    />
+    <Alert v-if="visibleAlert" :alert="alertData" @click-close="visibleAlert = !visibleAlert" />
   </div>
 </template>
 
@@ -69,7 +65,7 @@ const alertData = ref({
   msgstr: '',
   position: '',
   width: '',
-  loglevel: 'info',
+  loglevel: 'info'
 });
 const isRender = ref(false);
 const appConf = useAppConfig();
@@ -145,7 +141,7 @@ try {
               path: redirectURL,
               query: {
                 sess: 'top',
-                number: number,
+                number: number
               }
             });
           }

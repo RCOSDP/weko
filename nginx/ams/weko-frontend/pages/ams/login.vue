@@ -11,16 +11,18 @@
       <h1 class="text-3xl text-center font-medium">
         {{ $t('login') }}
       </h1>
-      <div class='flex justify-center items-center'>
+      <div class="flex justify-center items-center">
         <label>{{ $t('Institutional Login for institutions in Japan.') }}</label>
-        <img src='https://www.gakunin.jp/themes/custom/gakunin/logo.svg' style='vertical-align: baseline; width: 100px !important' />
+        <img
+          src="https://www.gakunin.jp/themes/custom/gakunin/logo.svg"
+          style="vertical-align: baseline; width: 100px !important" />
       </div>
 
       <!-- EMBEDDED-WAYF-START -->
-      <div id='wayf_div' ref='scriptContainer'></div>
+      <div id="wayf_div" ref="scriptContainer"></div>
       <!-- EMBEDDED-WAYF-END -->
 
-      <div class='text-divider'>OR</div>
+      <div class="text-divider">OR</div>
       <Form class="space-y-2 mt-3" @submit="login">
         <!-- メールアドレス -->
         <label class="label flex-col">
@@ -147,10 +149,7 @@
       </Form>
     </div>
     <!-- アラート -->
-    <Alert
-      v-if='visibleAlert'
-      :alert='alertData'
-      @click-close='visibleAlert = !visibleAlert' />
+    <Alert v-if="visibleAlert" :alert="alertData" @click-close="visibleAlert = !visibleAlert" />
   </div>
 </template>
 
@@ -174,7 +173,7 @@ const alertData = ref({
   msgstr: '',
   position: '',
   width: 'w-full',
-  loglevel: 'info',
+  loglevel: 'info'
 });
 const dirtyEmail = ref(false);
 const dirtyPassword = ref(false);
@@ -193,7 +192,7 @@ async function login() {
   // 先にログアウト
   await $fetch(appConf.wekoApi + '/logout', {
     timeout: useRuntimeConfig().public.apiTimeout,
-    method: 'POST',
+    method: 'POST'
   });
   // ログイン
   await $fetch(appConf.wekoApi + '/login', {
@@ -287,7 +286,7 @@ function throughDblClick() {
 
 /**
  * Shibbolethログインエラーの処理
-  * @param route
+ * @param route
  */
 function shibbolethLoginError(route: any) {
   const error = route.query.error || '';
@@ -298,10 +297,7 @@ function shibbolethLoginError(route: any) {
     } else if (error === 'There is no user information.') {
       // statusCode 403 ユーザ情報がない
       alertData.value = amsAlert['LOGIN_MESSAGE_ERROR_NO_USER_INFORMATION'];
-    } else if (
-      error ===
-      'Server error has occurred. Please contact server administrator.'
-    ) {
+    } else if (error === 'Server error has occurred. Please contact server administrator.') {
       // statusCode 500 サーバーエラー
       alertData.value = amsAlert['LOGIN_SHIB_MESSAGE_ERROR_SERVER'];
     } else {

@@ -209,10 +209,7 @@
       </div>
     </main>
     <!-- アラート -->
-    <Alert
-      v-if='visibleAlert'
-      :alert='alertData'
-      @click-close='visibleAlert = !visibleAlert' />
+    <Alert v-if="visibleAlert" :alert="alertData" @click-close="visibleAlert = !visibleAlert" />
   </div>
 </template>
 
@@ -247,7 +244,7 @@ const alertData = ref({
   msgstr: '',
   position: '',
   width: 'w-full',
-  loglevel: 'info',
+  loglevel: 'info'
 });
 let divideFileList: any[] = [];
 let createdDate = '';
@@ -367,7 +364,7 @@ function downloadFilesAll() {
           alertData.value = amsAlert['FILES_ALL_MESSAGE_ERROR_DOWNLOAD_ALL'];
         }
         visibleAlert.value = true;
-      },
+      }
     }).catch(() => {
       if (statusCode === 0) {
         // fetchエラー
@@ -570,7 +567,7 @@ function changeAllCheckBox() {
   if (selectedFiles.value.length >= divideLength) {
     let count = 0;
     for (const file of currentDivideFiles) {
-      const fileUrl = setFileInfo(file[appConf.roCrate.root.file.url])
+      const fileUrl = setFileInfo(file[appConf.roCrate.root.file.url]);
       // 格納場所がweko外部のファイルは除く
       if (fileUrl.startsWith(useAppConfig().wekoOrigin)) {
         if (selectedFiles.value.includes(file['@id'])) {
@@ -606,7 +603,7 @@ function setError(status = '', message: string) {
     msgstr: message,
     position: '',
     width: '',
-    loglevel: 'error',
+    loglevel: 'error'
   };
   visibleAlert.value = true;
 }
@@ -736,7 +733,7 @@ function throughDblClick() {
  * @param info ファイル情報（格納場所）
  * @returns ファイル情報
  */
- function setFileInfo(info: any) {
+function setFileInfo(info: any) {
   const returnInfo = Array.isArray(info) ? info[0] : info;
   return returnInfo || '';
 }

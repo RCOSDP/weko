@@ -84,7 +84,7 @@ const alertData = ref({
   msgstr: '',
   position: '',
   width: 'w-full',
-  loglevel: 'info',
+  loglevel: 'info'
 });
 
 /* ///////////////////////////////////
@@ -166,14 +166,13 @@ function download(filename: string) {
         a.click();
         a.remove();
       }
-          },
-      onResponseError({ response }) {
-        statusCode = response.status;
-        alertData.value = amsAlert['DOWNLOAD_RANK_MESSAGE_ERROR_DOWNLOAD'];
-        emits('error', alertData.value.msgid, alertData.value.msgstr);
-      },
     },
-  ).catch(() => {
+    onResponseError({ response }) {
+      statusCode = response.status;
+      alertData.value = amsAlert['DOWNLOAD_RANK_MESSAGE_ERROR_DOWNLOAD'];
+      emits('error', alertData.value.msgid, alertData.value.msgstr);
+    }
+  }).catch(() => {
     if (statusCode === 0) {
       alertData.value = amsAlert['DOWNLOAD_RANK_MESSAGE_ERROR_FETCH'];
       emits('error', alertData.value.msgid, alertData.value.msgstr);

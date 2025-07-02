@@ -94,7 +94,7 @@
       </svg>
       <span v-if="message == 'message.error.oauthError'">
         {{ $t('message.error.oauthError', { time: transitionSecond }) }}
-        <a :href='loginPage' class='link'>{{ loginPage }}</a>
+        <a :href="loginPage" class="link">{{ loginPage }}</a>
         {{ code ? ' (' + code + ')' : '' }}
       </span>
       <span v-else>{{ $t(message) + (code ? ' (' + code + ')' : '') }}</span>
@@ -133,9 +133,9 @@ const props = defineProps({
       msgstr: '',
       position: '',
       width: 'w-full',
-      loglevel: 'info',
-    }),
-  },
+      loglevel: 'info'
+    })
+  }
 });
 
 /* ///////////////////////////////////
@@ -146,11 +146,5 @@ const emits = defineEmits(['clickClose']);
 const appConf = useAppConfig();
 const transitionSecond = appConf.transitionTime / 1000;
 const loginPage = window.location.origin + `${appConf.amsPath ?? ''}/login?source=detail`;
-const {
-  msgid: code,
-  msgstr: message,
-  position: position,
-  width: width,
-  loglevel: type,
-} = toRefs(props.alert);
+const { msgid: code, msgstr: message, position: position, width: width, loglevel: type } = toRefs(props.alert);
 </script>

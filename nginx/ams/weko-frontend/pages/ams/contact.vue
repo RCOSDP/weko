@@ -169,10 +169,7 @@
       </form>
     </dialog>
     <!-- トースト -->
-    <Alert
-      v-if='isToast'
-      :alert='toastData'
-      @click-close='isToast = !isToast'/>
+    <Alert v-if="isToast" :alert="toastData" @click-close="isToast = !isToast" />
   </div>
 </template>
 
@@ -204,7 +201,7 @@ const toastData = ref({
   msgstr: '',
   position: 'toast-top pt-20',
   width: 'w-auto',
-  loglevel: 'info',
+  loglevel: 'info'
 });
 
 /* ///////////////////////////////////

@@ -34,10 +34,10 @@
             <!-- アイテム情報 -->
             <ItemInfo v-if="renderFlag" :item="itemDetail" :item-id="currentNumber" :oauth-error="oauthError" />
             <!-- アイテム内容 -->
-            <div v-if='oauthError'>{{ $t('needLogin') }}</div>
+            <div v-if="oauthError">{{ $t('needLogin') }}</div>
             <ItemContent v-if="renderFlag" :item="itemDetail" />
             <!-- 前/次 -->
-            <div v-if='!oauthError' class='pt-2.5 pb-28'>
+            <div v-if="!oauthError" class="pt-2.5 pb-28">
               <Switcher
                 :sess="beforePage"
                 :prev-num="prevNum"
@@ -45,7 +45,7 @@
                 @click-prev="changeDetail"
                 @click-next="changeDetail" />
             </div>
-            <div v-else class='pt-2.5 pb-28'></div>
+            <div v-else class="pt-2.5 pb-28"></div>
             <!-- 最上部に戻る -->
             <button id="page-top" class="hidden lg:block w-10 h-10 absolute right-5 bottom-[60px]" @click="scrollToTop">
               <img :src="`${appConf.amsImage ?? '/img'}/btn/btn-gototop.svg`" alt="Top" />
@@ -138,10 +138,7 @@
       @click-send="openLoading(false)"
       @complete-send="checkSendingResponse" />
     <!-- アラート -->
-    <Alert
-      v-if='visibleAlert'
-      :alert='alertData'
-      @click-close='visibleAlert = !visibleAlert' />
+    <Alert v-if="visibleAlert" :alert="alertData" @click-close="visibleAlert = !visibleAlert" />
   </div>
 </template>
 
@@ -205,7 +202,7 @@ const alertData = ref({
   msgstr: '',
   position: '',
   width: 'w-full',
-  loglevel: 'info',
+  loglevel: 'info'
 });
 const isLoading = ref(true);
 const isLogin = !!sessionStorage.getItem('login:state');
@@ -274,7 +271,7 @@ async function getDetail(number: string) {
         alertData.value = amsAlert['DETAIL_ITEM_MESSAGE_ERROR_GET_ITEM_DETAIL'];
       }
       visibleAlert.value = true;
-    },
+    }
   }).catch(() => {
     if (statusCode === 0) {
       // fetchエラー
@@ -347,7 +344,7 @@ async function search(searchPage: string) {
         alertData.value = amsAlert['DETAIL_SEARCH_MESSAGE_ERROR_GET_INDEX'];
       }
       visibleAlert.value = true;
-    },
+    }
   }).catch(() => {
     if (statusCode === 0) {
       // fetchエラー
@@ -401,7 +398,7 @@ async function getParentIndex() {
         alertData.value = amsAlert['DETAIL_INDEX_MESSAGE_ERROR_GET_INDEX'];
       }
       visibleAlert.value = true;
-    },
+    }
   }).catch(() => {
     if (statusCode === 0) {
       // fetchエラー
@@ -678,7 +675,7 @@ function setError(status = '', message: string) {
     msgstr: message,
     position: '',
     width: 'w-full',
-    loglevel: 'error',
+    loglevel: 'error'
   };
   visibleAlert.value = true;
 }
@@ -694,7 +691,7 @@ function checkSendingResponse(val: boolean) {
       msgstr: 'message.sendingSuccess',
       position: 'toast-top pt-20',
       width: 'w-auto',
-      loglevel: 'success',
+      loglevel: 'success'
     };
     // 入力内容初期化
     requestMail.value.initInput();
@@ -721,10 +718,10 @@ function oauthErrorRedirect() {
   sessionStorage.setItem('item-url', window.location.pathname + window.location.search);
   setTimeout(() => {
     // 認証エラーの場合はログイン画面に遷移
-     navigateTo({
-       path: '/ams/login',
-       query: { source: 'detail' }
-     });
+    navigateTo({
+      path: '/ams/login',
+      query: { source: 'detail' }
+    });
   }, appConf.transitionTime);
 }
 

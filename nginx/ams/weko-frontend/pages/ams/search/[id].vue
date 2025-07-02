@@ -109,10 +109,7 @@
     <!-- 著者情報 -->
     <CreaterInfo ref="creater" />
     <!-- アラート -->
-    <Alert
-      v-if='visibleAlert'
-      :alert='alertData'
-      @click-close='visibleAlert = !visibleAlert' />
+    <Alert v-if="visibleAlert" :alert="alertData" @click-close="visibleAlert = !visibleAlert" />
   </div>
 </template>
 
@@ -162,7 +159,7 @@ const alertData = ref({
   msgstr: '',
   position: '',
   width: 'w-full',
-  loglevel: 'info',
+  loglevel: 'info'
 });
 const appConf = useAppConfig();
 
@@ -218,7 +215,7 @@ async function search() {
         alertData.value = amsAlert['ID_SEARCH_MESSAGE_ERROR_REQUEST'];
       }
       visibleAlert.value = true;
-    },
+    }
   }).catch(() => {
     if (statusCode === 0) {
       // fetchエラー
@@ -267,7 +264,7 @@ async function getParentIndex() {
         alertData.value = amsAlert['ID_INDEX_MESSAGE_ERROR_GET_INDEX'];
       }
       visibleAlert.value = true;
-    },
+    }
   }).catch(() => {
     if (statusCode === 0) {
       // fetchエラー
