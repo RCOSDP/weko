@@ -722,7 +722,7 @@ function oauthErrorRedirect() {
       path: '/ams/login',
       query: { source: 'detail' }
     });
-  }, appConf.transitionTime);
+  }, appConf.transitionTimeMs);
 }
 
 /**
@@ -731,7 +731,7 @@ function oauthErrorRedirect() {
  * @returns プロジェクトURL
  */
 function findProjectURL(itemDetail: any) {
-  let isProjectUrl = [];
+  let projectUrls = [];
   let isVersionOf = false;
   if (Object.prototype.hasOwnProperty.call(itemDetail, 'rocrate')) {
     const graph = itemDetail.rocrate['@graph'];
@@ -739,7 +739,7 @@ function findProjectURL(itemDetail: any) {
       if (obj['@type'] === 'Dataset') {
         if (obj.additionalType === 'subsection') {
           if (obj['@id'] === 'プロジェクトURL/URL/URL/' && obj.text) {
-            isProjectUrl = obj.text;
+            projectUrls = obj.text;
           }
           if (
             obj['@id'] === 'プロジェクトURL/関連タイプ/関連タイプ/' &&
@@ -752,8 +752,8 @@ function findProjectURL(itemDetail: any) {
       }
     }
   }
-  if (isVersionOf && isProjectUrl.length > 0) {
-    return isProjectUrl;
+  if (isVersionOf && projectUrls.length > 0) {
+    return projectUrls;
   } else {
     return [];
   }

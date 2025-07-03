@@ -14,7 +14,7 @@
       <div class="flex justify-center items-center">
         <label>{{ $t('Institutional Login for institutions in Japan.') }}</label>
         <img
-          src="https://www.gakunin.jp/themes/custom/gakunin/logo.svg"
+          :src="`${appConf.amsImage ?? '/img'}/logo/gakunin.png`"
           style="vertical-align: baseline; width: 100px !important" />
       </div>
 
