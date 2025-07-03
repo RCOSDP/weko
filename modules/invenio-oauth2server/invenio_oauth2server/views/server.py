@@ -42,7 +42,6 @@ def login_oauth2_user(valid, oauth):
     if valid:
         oauth.user.login_via_oauth2 = True
         g.user = oauth.user
-        # pylint: disable=protected-access
         identity_changed.send(current_app._get_current_object(),
                       identity=Identity(oauth.user.id))
     return valid, oauth
