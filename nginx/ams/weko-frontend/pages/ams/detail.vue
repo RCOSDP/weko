@@ -34,7 +34,7 @@
             <!-- アイテム情報 -->
             <ItemInfo v-if="renderFlag" :item="itemDetail" :item-id="currentNumber" :oauth-error="oauthError" />
             <!-- アイテム内容 -->
-            <div v-if="oauthError">{{ $t('needLogin') }}</div>
+            <div v-if="oauthError">{{ $t('needToLogin') }}</div>
             <ItemContent v-if="renderFlag" :item="itemDetail" />
             <!-- 前/次 -->
             <div v-if="!oauthError" class="pt-2.5 pb-28">
