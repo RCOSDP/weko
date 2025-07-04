@@ -32,11 +32,12 @@
               @click-prev="changeDetail"
               @click-next="changeDetail" />
             <!-- アイテム情報 -->
-            <ItemInfo v-if="renderFlag" :item="itemDetail" :item-id="currentNumber" />
+            <ItemInfo v-if="renderFlag" :item="itemDetail" :item-id="currentNumber" :oauth-error="oauthError" />
             <!-- アイテム内容 -->
+            <div v-if="oauthError">{{ $t('needToLogin') }}</div>
             <ItemContent v-if="renderFlag" :item="itemDetail" />
             <!-- 前/次 -->
-            <div class="pt-2.5 pb-28">
+            <div v-if="!oauthError" class="pt-2.5 pb-28">
               <Switcher
                 :sess="beforePage"
                 :prev-num="prevNum"
@@ -44,6 +45,7 @@
                 @click-prev="changeDetail"
                 @click-next="changeDetail" />
             </div>
+            <div v-else class="pt-2.5 pb-28" />
             <!-- 最上部に戻る -->
             <button id="page-top" class="hidden lg:block w-10 h-10 absolute right-5 bottom-[60px]" @click="scrollToTop">
               <img :src="`${appConf.amsImage ?? '/img'}/btn/btn-gototop.svg`" alt="Top" />
@@ -59,7 +61,7 @@
             </p>
           </div>
           <ViewsNumber
-            v-if="renderFlag"
+            v-if="renderFlag && !oauthError"
             :current-number="currentNumber"
             :created-date="createdDate"
             @error="setError" />
@@ -136,18 +138,12 @@
       @click-send="openLoading(false)"
       @complete-send="checkSendingResponse" />
     <!-- アラート -->
-    <Alert
-      v-if="visibleAlert"
-      :type="alertType"
-      :message="alertMessage"
-      :code="alertCode"
-      :position="alertPosition"
-      :width="alertWidth"
-      @click-close="visibleAlert = !visibleAlert" />
+    <Alert v-if="visibleAlert" :alert="alertData" @click-close="visibleAlert = !visibleAlert" />
   </div>
 </template>
 
 <script lang="ts" setup>
+import amsAlert from '~/assets/data/amsAlert.json';
 import Alert from '~/components/common/Alert.vue';
 import SearchForm from '~/components/common/SearchForm.vue';
 import CreaterInfo from '~/components/common/modal/CreaterInfo.vue';
@@ -201,14 +197,17 @@ const nextNum = ref(0);
 const creater = ref();
 const requestMail = ref();
 const visibleAlert = ref(false);
-const alertType = ref('info');
-const alertMessage = ref('');
-const alertCode = ref(0);
-const alertPosition = ref('');
-const alertWidth = ref('');
+const alertData = ref({
+  msgid: '',
+  msgstr: '',
+  position: '',
+  width: 'w-full',
+  loglevel: 'info'
+});
 const isLoading = ref(true);
-// const isLogin = ref(false);
+const isLogin = !!sessionStorage.getItem('login:state');
 const checkMailAddress = ref(false);
+const oauthError = ref(false);
 let projectUrl = '';
 
 /* ///////////////////////////////////
@@ -255,32 +254,28 @@ async function getDetail(number: string) {
       }
     },
     onResponseError({ response }) {
-      alertCode.value = 0;
       statusCode = response.status;
-      if (statusCode === 401) {
+      if (statusCode === 401 || statusCode === 403) {
         // 認証エラー
-        alertMessage.value = 'message.error.auth';
+        if (isLogin) {
+          alertData.value = amsAlert.DETAIL_ITEM_MESSAGE_ERROR_AUTH;
+        } else {
+          alertData.value = amsAlert.DETAIL_ITEM_MESSAGE_OAUTH_ERROR;
+          oauthErrorRedirect();
+        }
       } else if (statusCode >= 500 && statusCode < 600) {
         // サーバーエラー
-        alertMessage.value = 'message.error.server';
-        alertCode.value = statusCode;
+        alertData.value = amsAlert.DETAIL_ITEM_MESSAGE_ERROR_SERVER;
       } else {
         // リクエストエラー
-        alertMessage.value = 'message.error.getItemDetail';
-        alertCode.value = statusCode;
+        alertData.value = amsAlert.DETAIL_ITEM_MESSAGE_ERROR_GET_ITEM_DETAIL;
       }
-      alertType.value = 'error';
-      alertPosition.value = '';
-      alertWidth.value = 'w-full';
       visibleAlert.value = true;
     }
   }).catch(() => {
     if (statusCode === 0) {
       // fetchエラー
-      alertMessage.value = 'message.error.fetch';
-      alertType.value = 'error';
-      alertPosition.value = '';
-      alertWidth.value = 'w-full';
+      alertData.value = amsAlert.DETAIL_ITEM_MESSAGE_ERROR_FETCH;
       visibleAlert.value = true;
     }
   });
@@ -330,34 +325,30 @@ async function search(searchPage: string) {
       }
     },
     onResponseError({ response }) {
-      alertCode.value = 0;
       statusCode = response.status;
       switcherFlag.value = false;
       searchResult = [];
-      if (statusCode === 401) {
+      if (oauthError.value || statusCode === 401 || statusCode === 403) {
         // 認証エラー
-        alertMessage.value = 'message.error.auth';
+        if (isLogin) {
+          alertData.value = amsAlert.DETAIL_SEARCH_MESSAGE_ERROR_AUTH;
+        } else {
+          alertData.value = amsAlert.DETAIL_SEARCH_MESSAGE_OAUTH_ERROR;
+          oauthErrorRedirect();
+        }
       } else if (statusCode >= 500 && statusCode < 600) {
         // サーバーエラー
-        alertMessage.value = 'message.error.server';
-        alertCode.value = statusCode;
+        alertData.value = amsAlert.DETAIL_SEARCH_MESSAGE_ERROR_SERVER;
       } else {
         // リクエストエラー
-        alertMessage.value = 'message.error.search';
-        alertCode.value = statusCode;
+        alertData.value = amsAlert.DETAIL_SEARCH_MESSAGE_ERROR_GET_INDEX;
       }
-      alertType.value = 'error';
-      alertPosition.value = '';
-      alertWidth.value = 'w-full';
       visibleAlert.value = true;
     }
   }).catch(() => {
     if (statusCode === 0) {
       // fetchエラー
-      alertMessage.value = 'message.error.fetch';
-      alertType.value = 'error';
-      alertPosition.value = '';
-      alertWidth.value = 'w-full';
+      alertData.value = amsAlert.DETAIL_SEARCH_MESSAGE_ERROR_FETCH;
       visibleAlert.value = true;
     }
   });
@@ -390,32 +381,28 @@ async function getParentIndex() {
       }
     },
     onResponseError({ response }) {
-      alertCode.value = 0;
       statusCode = response.status;
-      if (statusCode === 401) {
+      if (oauthError.value || statusCode === 401 || statusCode === 403) {
         // 認証エラー
-        alertMessage.value = 'message.error.auth';
+        if (isLogin) {
+          alertData.value = amsAlert.DETAIL_INDEX_MESSAGE_ERROR_AUTH;
+        } else {
+          alertData.value = amsAlert.DETAIL_INDEX_MESSAGE_OAUTH_ERROR;
+          oauthErrorRedirect();
+        }
       } else if (statusCode >= 500 && statusCode < 600) {
         // サーバーエラー
-        alertMessage.value = 'message.error.server';
-        alertCode.value = statusCode;
+        alertData.value = amsAlert.DETAIL_INDEX_MESSAGE_ERROR_SERVER;
       } else {
         // リクエストエラー
-        alertMessage.value = 'message.error.getIndex';
-        alertCode.value = statusCode;
+        alertData.value = amsAlert.DETAIL_INDEX_MESSAGE_ERROR_GET_INDEX;
       }
-      alertType.value = 'error';
-      alertPosition.value = '';
-      alertWidth.value = 'w-full';
       visibleAlert.value = true;
     }
   }).catch(() => {
     if (statusCode === 0) {
       // fetchエラー
-      alertMessage.value = 'message.error.fetch';
-      alertType.value = 'error';
-      alertPosition.value = '';
-      alertWidth.value = 'w-full';
+      alertData.value = amsAlert.DETAIL_INDEX_MESSAGE_ERROR_FETCH;
       visibleAlert.value = true;
     }
   });
@@ -682,12 +669,14 @@ function openLoading(type: boolean) {
  * @param status ステータスコード
  * @param message エラーメッセージ
  */
-function setError(status = 0, message: string) {
-  alertMessage.value = message;
-  alertCode.value = status;
-  alertType.value = 'error';
-  alertPosition.value = '';
-  alertWidth.value = 'w-full';
+function setError(status = '', message: string) {
+  alertData.value = {
+    msgid: status,
+    msgstr: message,
+    position: '',
+    width: 'w-full',
+    loglevel: 'error'
+  };
   visibleAlert.value = true;
 }
 
@@ -697,18 +686,17 @@ function setError(status = 0, message: string) {
  */
 function checkSendingResponse(val: boolean) {
   if (val) {
-    alertType.value = 'success';
-    alertMessage.value = 'message.sendingSuccess';
-    alertPosition.value = 'toast-top pt-20';
-    alertWidth.value = 'w-auto';
+    alertData.value = {
+      msgid: '',
+      msgstr: 'message.sendingSuccess',
+      position: 'toast-top pt-20',
+      width: 'w-auto',
+      loglevel: 'success'
+    };
     // 入力内容初期化
     requestMail.value.initInput();
   } else {
-    alertType.value = 'error';
-    alertMessage.value = 'message.sendingFailed';
-    alertCode.value = 0;
-    alertPosition.value = 'toast-top pt-20';
-    alertWidth.value = 'w-auto';
+    alertData.value = amsAlert.DETAIL_MESSAGE_SENDING_FAILED;
   }
   (document.getElementById('loading_modal') as HTMLDialogElement).close();
   visibleAlert.value = true;
@@ -722,12 +710,28 @@ function scrollToTop() {
 }
 
 /**
+ * 認証エラー時のリダイレクト処理
+ */
+function oauthErrorRedirect() {
+  oauthError.value = true;
+  sessionStorage.removeItem('item-url');
+  sessionStorage.setItem('item-url', window.location.pathname + window.location.search);
+  setTimeout(() => {
+    // 認証エラーの場合はログイン画面に遷移
+    navigateTo({
+      path: '/ams/login',
+      query: { source: 'detail' }
+    });
+  }, appConf.transitionTimeMs);
+}
+
+/**
  * プロジェクトURLを取得
  * @param itemDetail アイテム詳細
  * @returns プロジェクトURL
  */
 function findProjectURL(itemDetail: any) {
-  let isProjectUrl = [];
+  let projectUrls = [];
   let isVersionOf = false;
   if (Object.prototype.hasOwnProperty.call(itemDetail, 'rocrate')) {
     const graph = itemDetail.rocrate['@graph'];
@@ -735,7 +739,7 @@ function findProjectURL(itemDetail: any) {
       if (obj['@type'] === 'Dataset') {
         if (obj.additionalType === 'subsection') {
           if (obj['@id'] === 'プロジェクトURL/URL/URL/' && obj.text) {
-            isProjectUrl = obj.text;
+            projectUrls = obj.text;
           }
           if (
             obj['@id'] === 'プロジェクトURL/関連タイプ/関連タイプ/' &&
@@ -748,8 +752,8 @@ function findProjectURL(itemDetail: any) {
       }
     }
   }
-  if (isVersionOf && isProjectUrl.length > 0) {
-    return isProjectUrl;
+  if (isVersionOf && projectUrls.length > 0) {
+    return projectUrls;
   } else {
     return [];
   }
@@ -770,11 +774,7 @@ try {
   }
   await getParentIndex();
 } catch (error) {
-  alertCode.value = 0;
-  alertMessage.value = 'message.error.error';
-  alertType.value = 'error';
-  alertPosition.value = '';
-  alertWidth.value = 'w-full';
+  alertData.value = amsAlert.DETAIL_MESSAGE_ERROR;
   visibleAlert.value = true;
 }
 

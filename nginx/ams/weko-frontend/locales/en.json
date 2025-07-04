@@ -185,7 +185,10 @@
       "getItemDetail": "Failed to get item details.",
       "getItemViewsNumber": "Failed to get the number of views for the item.",
       "getDownloadRanking": "Failed to get download ranking.",
-      "getFileDlNumber": "Failed to get the number of downloaded."
+      "getFileDlNumber": "Failed to get the number of downloaded.",
+      "loginFailed": "Failed to Login. Please contact server administrator.",
+      "noUserInformation": "There is no user information.",
+      "oauthError": "Login is required to view items. You will be automatically redirected to the login screen in {time} seconds. Login screen:"
     }
   },
   "overview": "Overview",
@@ -293,5 +296,7 @@
   "conflictOfInterestYes": "conflict of interest (Yes) ",
   "remarks": "Remarks",
   "identifierText": "identifier",
-  "identifierType": "identifier type"
+  "identifierType": "identifier type",
+  "Institutional Login for institutions in Japan.": "Institutional Login for institutions in Japan.",
+  "needToLogin": "This item requires login."
 }

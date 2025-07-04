@@ -173,6 +173,7 @@
 </template>
 
 <script lang="ts" setup>
+import amsAlert from '~/assets/data/amsAlert.json';
 /* ///////////////////////////////////
 // props
 /////////////////////////////////// */
@@ -221,6 +222,13 @@ const fileSize: any = Object.prototype.hasOwnProperty.call(props.file, appConfig
 const licenseType: any = setFileInfo(props.file[appConfig.roCrate.root.file.licenseType]);
 const fileURL: any = setFileInfo(props.file[appConfig.roCrate.root.file.url]);
 const fileComment: any = setFileInfo(props.file[appConfig.roCrate.root.file.comment]);
+const alertData = ref({
+  msgid: '',
+  msgstr: '',
+  position: '',
+  width: 'w-full',
+  loglevel: 'info'
+});
 
 /* ///////////////////////////////////
 // function
@@ -350,11 +358,13 @@ function download() {
     },
     onResponseError({ response }) {
       statusCode = response.status;
-      emits('error', response.status, 'message.error.download');
+      alertData.value = amsAlert.TABLE_STYLE_MESSAGE_ERROR_DOWNLOAD;
+      emits('error', alertData.value.msgid, alertData.value.msgstr);
     }
   }).catch(() => {
     if (statusCode === 0) {
-      emits('error', 0, 'message.error.fetch');
+      alertData.value = amsAlert.TABLE_STYLE_MESSAGE_ERROR_FETCH;
+      emits('error', alertData.value.msgid, alertData.value.msgstr);
     }
   });
 }
@@ -387,11 +397,13 @@ function preview() {
     },
     onResponseError({ response }) {
       statusCode = response.status;
-      emits('error', response.status, 'message.error.preview');
+      alertData.value = amsAlert.TABLE_STYLE_MESSAGE_ERROR_PREVIEW;
+      emits('error', alertData.value.msgid, alertData.value.msgstr);
     }
   }).catch(() => {
     if (statusCode === 0) {
-      emits('error', 0, 'message.error.fetch');
+      alertData.value = amsAlert.TABLE_STYLE_MESSAGE_ERROR_FETCH_PREVIEW;
+      emits('error', alertData.value.msgid, alertData.value.msgstr);
     }
   });
 }

@@ -209,18 +209,14 @@
       </div>
     </main>
     <!-- アラート -->
-    <Alert
-      v-if="visibleAlert"
-      :type="alertType"
-      :message="alertMessage"
-      :code="alertCode"
-      @click-close="visibleAlert = !visibleAlert" />
+    <Alert v-if="visibleAlert" :alert="alertData" @click-close="visibleAlert = !visibleAlert" />
   </div>
 </template>
 
 <script lang="ts" setup>
 import VueDatePicker from '@vuepic/vue-datepicker';
 
+import amsAlert from '~/assets/data/amsAlert.json';
 import FilterColumn from '~/assets/data/filesFilter.json';
 import Alert from '~/components/common/Alert.vue';
 import Pagination from '~/components/common/Pagination.vue';
@@ -243,9 +239,13 @@ const span = ref('total');
 const spanList = ref<string[]>([]);
 const selectedFiles = ref<string[]>([]);
 const visibleAlert = ref(false);
-const alertType = ref('info');
-const alertMessage = ref('');
-const alertCode = ref(0);
+const alertData = ref({
+  msgid: '',
+  msgstr: '',
+  position: '',
+  width: 'w-full',
+  loglevel: 'info'
+});
 let divideFileList: any[] = [];
 let createdDate = '';
 let isAllCheck = false;
@@ -303,28 +303,23 @@ async function getFiles(number: string) {
       }
     },
     onResponseError({ response }) {
-      alertCode.value = 0;
       statusCode = response.status;
       if (statusCode === 401) {
         // 認証エラー
-        alertMessage.value = 'message.error.auth';
+        alertData.value = amsAlert.FILES_DETAIL_MESSAGE_ERROR_AUTH;
       } else if (statusCode >= 500 && statusCode < 600) {
         // サーバーエラー
-        alertMessage.value = 'message.error.server';
-        alertCode.value = statusCode;
+        alertData.value = amsAlert.FILES_DETAIL_MESSAGE_ERROR_SERVER;
       } else {
         // リクエストエラー
-        alertMessage.value = 'message.error.getItemDetail';
-        alertCode.value = statusCode;
+        alertData.value = amsAlert.FILES_DETAIL_MESSAGE_ERROR_GET_ITEM_DETAIL;
       }
-      alertType.value = 'error';
       visibleAlert.value = true;
     }
   }).catch(() => {
     if (statusCode === 0) {
       // fetchエラー
-      alertMessage.value = 'message.error.fetch';
-      alertType.value = 'error';
+      alertData.value = amsAlert.FILES_DETAIL_MESSAGE_ERROR_FETCH;
       visibleAlert.value = true;
     }
   });
@@ -357,28 +352,23 @@ function downloadFilesAll() {
         }
       },
       onResponseError({ response }) {
-        alertCode.value = 0;
         statusCode = response.status;
         if (statusCode === 401) {
           // 認証エラー
-          alertMessage.value = 'message.error.auth';
+          alertData.value = amsAlert.FILES_ALL_MESSAGE_ERROR_AUTH;
         } else if (statusCode >= 500 && statusCode < 600) {
           // サーバーエラー
-          alertMessage.value = 'message.error.server';
-          alertCode.value = statusCode;
+          alertData.value = amsAlert.FILES_ALL_MESSAGE_ERROR_SERVER;
         } else {
           // リクエストエラー
-          alertMessage.value = 'message.error.downloadAll';
-          alertCode.value = statusCode;
+          alertData.value = amsAlert.FILES_ALL_MESSAGE_ERROR_DOWNLOAD_ALL;
         }
-        alertType.value = 'error';
         visibleAlert.value = true;
       }
     }).catch(() => {
       if (statusCode === 0) {
         // fetchエラー
-        alertMessage.value = 'message.error.fetch';
-        alertType.value = 'error';
+        alertData.value = amsAlert.FILES_ALL_MESSAGE_ERROR_FETCH;
         visibleAlert.value = true;
       }
     });
@@ -420,28 +410,23 @@ function downloadFilesSelected(filesList: string[]) {
       }
     },
     onResponseError({ response }) {
-      alertCode.value = 0;
       statusCode = response.status;
       if (statusCode === 401) {
         // 認証エラー
-        alertMessage.value = 'message.error.auth';
+        alertData.value = amsAlert.FILES_SELECT_MESSAGE_ERROR_AUTH;
       } else if (statusCode >= 500 && statusCode < 600) {
         // サーバーエラー
-        alertMessage.value = 'message.error.server';
-        alertCode.value = statusCode;
+        alertData.value = amsAlert.FILES_SELECT_MESSAGE_ERROR_SERVER;
       } else {
         // リクエストエラー
-        alertMessage.value = 'message.error.downloadSelected';
-        alertCode.value = statusCode;
+        alertData.value = amsAlert.FILES_SELECT_MESSAGE_ERROR_DOWNLOAD_SELECTED;
       }
-      alertType.value = 'error';
       visibleAlert.value = true;
     }
   }).catch(() => {
     if (statusCode === 0) {
       // fetchエラー
-      alertMessage.value = 'message.error.fetch';
-      alertType.value = 'error';
+      alertData.value = amsAlert.FILES_SELECT_MESSAGE_ERROR_FETCH;
       visibleAlert.value = true;
     }
   });
@@ -582,7 +567,7 @@ function changeAllCheckBox() {
   if (selectedFiles.value.length >= divideLength) {
     let count = 0;
     for (const file of currentDivideFiles) {
-      const fileUrl = setFileInfo(file[appConf.roCrate.root.file.url])
+      const fileUrl = setFileInfo(file[appConf.roCrate.root.file.url]);
       // 格納場所がweko外部のファイルは除く
       if (fileUrl.startsWith(useAppConfig().wekoOrigin)) {
         if (selectedFiles.value.includes(file['@id'])) {
@@ -612,10 +597,14 @@ function setPage(value: string) {
  * @param status ステータスコード
  * @param message エラーメッセージ
  */
-function setError(status = 0, message: string) {
-  alertMessage.value = message;
-  alertCode.value = status;
-  alertType.value = 'error';
+function setError(status = '', message: string) {
+  alertData.value = {
+    msgid: status,
+    msgstr: message,
+    position: '',
+    width: '',
+    loglevel: 'error'
+  };
   visibleAlert.value = true;
 }
 
@@ -744,7 +733,7 @@ function throughDblClick() {
  * @param info ファイル情報（格納場所）
  * @returns ファイル情報
  */
- function setFileInfo(info: any) {
+function setFileInfo(info: any) {
   const returnInfo = Array.isArray(info) ? info[0] : info;
   return returnInfo || '';
 }
@@ -758,9 +747,7 @@ try {
   divideList(filteredList.value);
   setSpanList();
 } catch (error) {
-  alertCode.value = 0;
-  alertMessage.value = 'message.error.error';
-  alertType.value = 'error';
+  alertData.value = amsAlert.FILES_MESSAGE_ERROR;
   visibleAlert.value = true;
 }
 

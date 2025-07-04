@@ -6,16 +6,13 @@
       <!-- インデックス階層 -->
       <div class="breadcrumb flex flex-wrap w-full">
         <div v-for="index in indexes" :key="index.id">
-          <span
-            v-if="index.id != useRoute().params.id"
-            class="font-medium cursor-pointer"
-            @click="clickParent(index.id)">
+          <span v-if="index.id != route.params.id" class="font-medium cursor-pointer" @click="clickParent(index.id)">
             {{ index.name }}
           </span>
           <span v-else class="font-medium underline">
             {{ index.name }}
           </span>
-          <a v-if="index.id != useRoute().params.id" class="ml-1 mr-1">/</a>
+          <a v-if="index.id != route.params.id" class="ml-1 mr-1">/</a>
         </div>
       </div>
       <!-- 検索結果 -->
@@ -109,16 +106,14 @@
     <!-- 著者情報 -->
     <CreaterInfo ref="creater" />
     <!-- アラート -->
-    <Alert
-      v-if="visibleAlert"
-      :type="alertType"
-      :message="alertMessage"
-      :code="alertCode"
-      @click-close="visibleAlert = !visibleAlert" />
+    <Alert v-if="visibleAlert" :alert="alertData" @click-close="visibleAlert = !visibleAlert" />
   </div>
 </template>
 
 <script lang="ts" setup>
+import { useRoute, useRouter } from 'vue-router';
+
+import amsAlert from '~/assets/data/amsAlert.json';
 import ResultJson from '~/assets/data/searchResult.json';
 import Alert from '~/components/common/Alert.vue';
 import Pagination from '~/components/common/Pagination.vue';
@@ -126,6 +121,8 @@ import SearchForm from '~/components/common/SearchForm.vue';
 import CreaterInfo from '~/components/common/modal/CreaterInfo.vue';
 import Conditions from '~/components/search/Conditions.vue';
 import SearchResult from '~/components/search/SearchResult.vue';
+
+const route = useRoute();
 
 /* ///////////////////////////////////
 // interface
@@ -158,9 +155,13 @@ const renderFlag = ref(true);
 const indexes = ref<indexInfo[]>([]);
 const creater = ref();
 const visibleAlert = ref(false);
-const alertType = ref('info');
-const alertMessage = ref('');
-const alertCode = ref(0);
+const alertData = ref({
+  msgid: '',
+  msgstr: '',
+  position: '',
+  width: 'w-full',
+  loglevel: 'info'
+});
 const appConf = useAppConfig();
 
 /* ///////////////////////////////////
@@ -203,35 +204,30 @@ async function search() {
       }
     },
     onResponseError({ response }) {
-      alertCode.value = 0;
       statusCode = response.status;
       if (statusCode === 401) {
         // 認証エラー
-        alertMessage.value = 'message.error.auth';
+        alertData.value = amsAlert.ID_SEARCH_MESSAGE_ERROR_AUTH;
       } else if (statusCode >= 500 && statusCode < 600) {
         // サーバーエラー
-        alertMessage.value = 'message.error.server';
-        alertCode.value = statusCode;
+        alertData.value = amsAlert.ID_SEARCH_MESSAGE_ERROR_SERVER;
       } else {
         // リクエストエラー
-        alertMessage.value = 'message.error.search';
-        alertCode.value = statusCode;
+        alertData.value = amsAlert.ID_SEARCH_MESSAGE_ERROR_REQUEST;
       }
-      alertType.value = 'error';
       visibleAlert.value = true;
     }
   }).catch(() => {
     if (statusCode === 0) {
       // fetchエラー
-      alertMessage.value = 'message.error.fetch';
-      alertType.value = 'error';
+      alertData.value = amsAlert.ID_SEARCH_MESSAGE_ERROR_FETCH;
       visibleAlert.value = true;
     }
   });
 }
 
 /**
- * インデクス階層取得
+  await $fetch(useAppConfig().wekoApi + '/tree/index/' + route.params.id + '/parent', {
  */
 async function getParentIndex() {
   let statusCode = 0;
@@ -257,28 +253,23 @@ async function getParentIndex() {
       }
     },
     onResponseError({ response }) {
-      alertCode.value = 0;
       statusCode = response.status;
       if (statusCode === 401) {
         // 認証エラー
-        alertMessage.value = 'message.error.auth';
+        alertData.value = amsAlert.ID_INDEX_MESSAGE_ERROR_AUTH;
       } else if (statusCode >= 500 && statusCode < 600) {
         // サーバーエラー
-        alertMessage.value = 'message.error.server';
-        alertCode.value = statusCode;
+        alertData.value = amsAlert.ID_INDEX_MESSAGE_ERROR_SERVER;
       } else {
         // リクエストエラー
-        alertMessage.value = 'message.error.getIndex';
-        alertCode.value = statusCode;
+        alertData.value = amsAlert.ID_INDEX_MESSAGE_ERROR_GET_INDEX;
       }
-      alertType.value = 'error';
       visibleAlert.value = true;
     }
   }).catch(() => {
     if (statusCode === 0) {
       // fetchエラー
-      alertMessage.value = 'message.error.fetch';
-      alertType.value = 'error';
+      alertData.value = amsAlert.ID_INDEX_MESSAGE_ERROR_FETCH;
       visibleAlert.value = true;
     }
   });
@@ -321,28 +312,23 @@ async function downloadResultList() {
       }
     },
     onResponseError({ response }) {
-      alertCode.value = 0;
       statusCode = response.status;
       if (statusCode === 401) {
         // 認証エラー
-        alertMessage.value = 'message.error.auth';
+        alertData.value = amsAlert.ID_DOWNLOAD_MESSAGE_ERROR_AUTH;
       } else if (statusCode >= 500 && statusCode < 600) {
         // サーバーエラー
-        alertMessage.value = 'message.error.server';
-        alertCode.value = statusCode;
+        alertData.value = amsAlert.ID_DOWNLOAD_MESSAGE_ERROR_SERVER;
       } else {
         // リクエストエラー
-        alertMessage.value = 'message.error.downloadResult';
-        alertCode.value = statusCode;
+        alertData.value = amsAlert.ID_DOWNLOAD_MESSAGE_ERROR_DOWNLOAD_RESULT;
       }
-      alertType.value = 'error';
       visibleAlert.value = true;
     }
   }).catch(() => {
     if (statusCode === 0) {
       // fetchエラー
-      alertMessage.value = 'message.error.fetch';
-      alertType.value = 'error';
+      alertData.value = amsAlert.ID_DOWNLOAD_MESSAGE_ERROR_FETCH;
       visibleAlert.value = true;
     }
   });
@@ -425,18 +411,17 @@ function setDisplayType(value: string) {
  * 検索条件をセッションから復元
  */
 function setConditions() {
-  if (sessionStorage.getItem('conditions')) {
-    // @ts-ignore
-    const json = JSON.parse(sessionStorage.getItem('conditions'));
-    conditions.type = json.type ?? '0';
-    conditions.keyword = String(useRoute().params.id) ?? '';
-    conditions.currentPage = json.currentPage ?? '1';
-    conditions.perPage = json.perPage ?? '20';
-    conditions.sort = json.sort ?? 'wtl';
-    conditions.order = json.order ?? 'asc';
-    conditions.detail = json.detail ?? {};
-    conditions.detailData = json.detailData ?? {};
-  }
+  conditions.keyword = String(route.params.id) ?? '';
+  // @ts-ignore
+  const json = JSON.parse(sessionStorage.getItem('conditions'));
+  conditions.type = json.type ?? '0';
+  conditions.keyword = String(useRoute().params.id) ?? '';
+  conditions.currentPage = json.currentPage ?? '1';
+  conditions.perPage = json.perPage ?? '20';
+  conditions.sort = json.sort ?? 'wtl';
+  conditions.order = json.order ?? 'asc';
+  conditions.detail = json.detail ?? {};
+  conditions.detailData = json.detailData ?? {};
 }
 
 /**
@@ -481,9 +466,7 @@ try {
   await search();
   await getParentIndex();
 } catch (error) {
-  alertCode.value = 0;
-  alertMessage.value = 'message.error.error';
-  alertType.value = 'error';
+  alertData.value = amsAlert.ID_MESSAGE_ERROR;
   visibleAlert.value = true;
 }
 

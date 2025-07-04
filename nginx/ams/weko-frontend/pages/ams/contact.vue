@@ -169,19 +169,14 @@
       </form>
     </dialog>
     <!-- トースト -->
-    <Alert
-      v-if="isToast"
-      :type="toastType"
-      :message="toastMessage"
-      position="toast-top pt-20"
-      width="w-auto"
-      @click-close="isToast = !isToast" />
+    <Alert v-if="isToast" :alert="toastData" @click-close="isToast = !isToast" />
   </div>
 </template>
 
 <script lang="ts" setup>
 import { Form, Field, ErrorMessage } from 'vee-validate';
 
+import amsAlert from '~/assets/data/amsAlert.json';
 import Alert from '~/components/common/Alert.vue';
 import ContactConfirm from '~/components/contact/modal/ContactConfirm.vue';
 
@@ -201,8 +196,13 @@ const dirtyName = ref(false);
 const dirtyMail = ref(false);
 const dirtyContents = ref(false);
 const isToast = ref(false);
-const toastType = ref('');
-const toastMessage = ref('');
+const toastData = ref({
+  msgid: '',
+  msgstr: '',
+  position: 'toast-top pt-20',
+  width: 'w-auto',
+  loglevel: 'info'
+});
 
 /* ///////////////////////////////////
 // function
@@ -292,8 +292,8 @@ function checkUserContents(value: any) {
  */
 function checkSendingResponse(val: boolean) {
   if (val) {
-    toastType.value = 'success';
-    toastMessage.value = 'message.sendingSuccess';
+    toastData.value.loglevel = 'success';
+    toastData.value.msgstr = 'message.sendingSuccess';
     // 入力内容初期化
     contactType.value = 'site';
     contactEtc.value = '';
@@ -306,8 +306,7 @@ function checkSendingResponse(val: boolean) {
     dirtyMail.value = false;
     dirtyContents.value = false;
   } else {
-    toastType.value = 'error';
-    toastMessage.value = 'message.sendingFailed';
+    toastData.value = amsAlert.CONTACT_MESSAGE_SENDING_FAILED;
   }
   closeSending();
   isToast.value = true;
