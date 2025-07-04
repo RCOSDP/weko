@@ -33,6 +33,7 @@ from datetime import datetime, timedelta
 
 from flask import abort, current_app, flash, jsonify, make_response, \
     redirect, render_template, request, url_for
+
 from markupsafe import Markup
 from flask_admin import BaseView, expose
 from flask_admin.contrib.sqla import ModelView
@@ -49,6 +50,8 @@ from invenio_accounts.models import User
 from invenio_db import db
 from invenio_files_rest.storage.pyfs import remove_dir_with_file
 from invenio_mail.api import send_mail
+from invenio_i18n.ext import current_i18n
+from weko_gridlayout.services import WidgetDesignServices
 from weko_index_tree.models import IndexStyle
 from weko_records.api import ItemTypes, SiteLicense, ItemTypeNames, JsonldMapping
 from weko_records.models import SiteLicenseInfo, ItemTypeJsonldMapping
@@ -451,7 +454,6 @@ class ReportView(BaseView):
                 }
                 result['private'] = result['total'] - result['open']
 
-
             settings = AdminSettings.get(
                 name='report_email_schedule_settings',
                 dict_to_object=False)
@@ -803,12 +805,41 @@ class SearchSettingsView(BaseView):
             current_app.config['WEKO_INDEX_TREE_STYLE_OPTIONS']['id'])
         width = style.width if style else '3'
         height = style.height if style else None
+
+        # Top page content acquisition (if ON/OFF setting is ON)
+        widgets = []
+        init_disp_screen_setting = current_app.config[
+                'WEKO_ADMIN_SEARCH_OPTIONS']['init_disp_setting_options'][
+                    'init_disp_screen_setting'].copy()
+        if current_app.config['WEKO_ADMIN_USE_TOP_PAGE_WEB_CONTENTS']:
+            # Getting Language Settings
+            lang = current_i18n.language
+
+            for repository in WidgetDesignServices.get_repository_list()[
+                    'repositories']:
+                for widget in WidgetDesignServices.get_widget_list(repository[
+                        'id'], {'lang_code': lang})['data']:
+                    if widget['widgetType'] == 'Free description':
+                        widgets.append({'widget_id':  widget['Id'],
+                                        'label': widget['label']})
+        else:
+            # Not displayed when the ON/OFF setting is OFF.
+            init_disp_screen_setting.pop(3)
+            if search_setting['init_disp_setting'][
+                    'init_disp_screen_setting'] == '3':
+                search_setting['init_disp_setting'][
+                    'init_disp_screen_setting'] = '0'
+
+        search_setting['free_widgets'] = widgets
+        search_setting['init_disp_screen_setting'] = init_disp_screen_setting
+
         search_setting['index_tree_style'] = {
             'width_options': current_app.config[
                 'WEKO_INDEX_TREE_STYLE_OPTIONS']['widths'],
             'width': width,
-            'height': height
+            'height': height,
         }
+
         # dump json string
         result = json.dumps(copy.deepcopy(search_setting))
         if 'POST' in request.method:

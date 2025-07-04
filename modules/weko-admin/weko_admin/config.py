@@ -1263,6 +1263,10 @@ WEKO_ADMIN_SEARCH_OPTIONS = {
                 'en': 'Communities',
                 'ja': 'コミュニティ一覧を表示する'
             }},
+            {'id': '3', 'contents': {
+                'en': 'Web content',
+                'ja': 'WEBコンテンツを表示する'
+            }},
         ],
         "init_disp_index_disp_method": [
             {'id': '0', 'contents': {
@@ -1335,7 +1339,7 @@ WEKO_ADMIN_RESTRICTED_ACCESS_SETTINGS = {
 """Default restricted access settings."""
 
 WEKO_ADMIN_RESTRICTED_ACCESS_MAX_INTEGER = 9999999
-"""max value of expiration_date and download_limit. 
+"""max value of expiration_date and download_limit.
     Any more than this and the datetime may overflow. """
 
 WEKO_ADMIN_ITEMS_PER_PAGE_USAGE_REPORT_REMINDER = 25
@@ -1384,3 +1388,5 @@ WEKO_ADMIN_DISPLAY_RESTRICTED_SETTINGS = True
 
 WEKO_ADMIN_CRIS_LINKAGE_SETTINGS_TEMPLATE = 'weko_admin/admin/cris_linkage_setting.html'
 """CRIS Linkage Settings template."""
+WEKO_ADMIN_USE_TOP_PAGE_WEB_CONTENTS = False
+""" If True, Web content can be displayed on the TOP screen.. """
