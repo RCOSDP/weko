@@ -38,6 +38,7 @@ import bagit
 import redis
 from redis import sentinel
 from elasticsearch.exceptions import NotFoundError
+from elasticsearch import exceptions as es_exceptions
 from flask import abort, current_app, flash, redirect, request, send_file, \
     url_for,jsonify
 from flask_babelex import gettext as _
@@ -54,7 +55,10 @@ from invenio_records.api import RecordBase
 from invenio_accounts.models import User
 from invenio_search import RecordsSearch
 from invenio_stats.utils import QueryRankingHelper, QuerySearchReportHelper
-from invenio_stats.views import QueryRecordViewCount
+from invenio_stats.views import QueryRecordViewCount as _QueryRecordViewCount
+from invenio_stats.proxies import current_stats
+from invenio_stats import config
+#from invenio_stats.views import QueryRecordViewCount
 from jsonschema import SchemaError, ValidationError
 from simplekv.memory.redisstore import RedisStore
 from sqlalchemy import MetaData, Table
@@ -2499,6 +2503,36 @@ def translate_schema_form(form_element, cur_lang):
         for sub_elem in form_element['items']:
             translate_schema_form(sub_elem, cur_lang)
 
+class WekoQueryRankingHelper(QueryRankingHelper):
+    @classmethod
+    def get(cls, **kwargs):
+        result = []
+        try:
+            start_date = kwargs.get('start_date')
+            end_date = kwargs.get('end_date')
+            params = {
+                'start_date': start_date,
+                'end_date': end_date + 'T23:59:59',
+                'agg_size': str(kwargs.get('agg_size', 10)),
+                'event_type': kwargs.get('event_type', ''),
+                'group_field': kwargs.get('group_field', ''),
+                'count_field': kwargs.get('count_field', ''),
+                'must_not': kwargs.get('must_not', ''),
+                'new_items': False
+            }
+            query_config = current_app.config["WEKO_ITEMS_UI_RANKING_QUERY"][kwargs.get("ranking_type")]
+            query_class = query_config["query_class"]
+            cfg  =json.loads(json.dumps(query_config["query_config"]))
+            cfg.update(query_name=kwargs.get("ranking_type"))
+            all_query = query_class(**cfg)
+            all_res = all_query.run(**params)
+            cls.Calculation(all_res, result)
+        except es_exceptions.NotFoundError as e:
+            current_app.logger.debug(e)
+        except Exception as e:
+            current_app.logger.debug(e)
+
+        return result
 
 def get_ranking(settings):
     """Get ranking.
@@ -2533,23 +2567,17 @@ def get_ranking(settings):
     # most_reviewed_items
     current_app.logger.debug("get most_reviewed_items start")
     if settings.rankings['most_reviewed_items']:
-        result = QueryRankingHelper.get(
+        result = WekoQueryRankingHelper.get(
             start_date=start_date,
             end_date=end_date,
             agg_size=settings.display_rank + rank_buffer,
             event_type='record-view',
             group_field='pid_value',
-            count_field='count'
+            count_field='count',
+            ranking_type='most_view_ranking'
         )
-        
-        current_app.logger.debug("finished getting most_reviewed_items data from ES")
         rankings['most_reviewed_items'] = get_permission_record('most_reviewed_items', result, settings.display_rank, has_permission_indexes)
 
-        q = QueryRecordViewCount() 
-        for item in rankings['most_reviewed_items']:
-            ret = q.get_data_by_pid_value(pid_value=item['key'])
-            item['count'] = int(ret['total'])
-            
     # most_downloaded_items
     current_app.logger.debug("get most_downloaded_items start")
     if settings.rankings['most_downloaded_items']:
@@ -2627,7 +2655,7 @@ def get_ranking(settings):
             )
         )
         if new_item_start_date < start_date_original:
-            new_item_start_date = start_date
+            new_item_start_date = start_date_original
         result = QueryRankingHelper.get_new_items(
             start_date=new_item_start_date.strftime('%Y-%m-%d'),
             end_date=end_date,
