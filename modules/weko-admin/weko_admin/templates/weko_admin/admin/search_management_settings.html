@@ -420,7 +420,9 @@
                             ng-model="dataJson.init_disp_setting.init_disp_index_disp_method"
                             ng-change="specificIndex();"
                             ng-disabled="dataJson.init_disp_setting.init_disp_screen_setting != 0">
-                      <option ng-repeat="opt_num in dataJson.free_widgets track by $index" value="[[opt_num.widget_id]]">{{_('[[opt_num.label]]')}}</option>
+                      {% for option in disp_option.init_disp_index_disp_method %}
+                        <option value="{{ option.id }}">{{ option.contents[currentLanguage] }}</option>
+                      {% endfor %}
                     </select>
                   </td>
                 </tr>
