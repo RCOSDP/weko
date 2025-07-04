@@ -132,6 +132,8 @@
           {% set featured_community = display_seting.featured_community %}
           {% set mycommunities = display_seting.mycommunities %}
           {% include "invenio_communities/communities_list_body.html" %}
+        {% elif display_seting.init_display_setting == '3' %}
+          {{ web_content|safe }}
         {% endif %}
       </div>
     {% endif %}

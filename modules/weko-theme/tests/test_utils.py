@@ -4,6 +4,7 @@ from flask import current_app, make_response, request
 from flask_login import current_user
 from mock import patch, MagicMock
 from elasticsearch_dsl import response, Search
+from weko_gridlayout.models import WidgetMultiLangData
 
 from weko_theme.utils import (
     get_weko_contents,
@@ -16,9 +17,32 @@ from weko_theme.utils import (
 
 # def get_weko_contents(getargs):
 def test_get_weko_contents(i18n_app, users, client_request_args, communities,redis_connect):
+
     with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
         assert get_weko_contents('comm1')
 
+    search_setting = {
+        "init_disp_setting": {
+            "init_disp_screen_setting": "3",
+            "init_disp_index_disp_method": "0",
+            "init_disp_index": MagicMock(),
+            "init_disp_web_content": "24",
+        }
+    }
+
+    widgetmultilangdata_1 = WidgetMultiLangData(
+        widget_id=24, lang_code='en', label='',
+        description_data='{"description": ""}', is_deleted=False)
+    widgetmultilangdata_2 = WidgetMultiLangData(
+        widget_id=24, lang_code='ja', label='',
+        description_data='{description": ""}', is_deleted=False)
+    with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
+        with patch('weko_theme.utils.get_search_setting',
+                   return_value=search_setting):
+            with patch("weko_theme.utils.WidgetMultiLangData.get_by_widget_id",
+                       return_value=[widgetmultilangdata_1,
+                                     widgetmultilangdata_2]):
+                assert get_weko_contents('comm1')
 
 # def get_community_id(getargs):
 def test_get_community_id(i18n_app, users, client_request_args, communities):
@@ -63,7 +87,7 @@ def test_get_init_display_setting(i18n_app, users, client_request_args, communit
     i18n_app.config['WEKO_SEARCH_TYPE_DICT'] = {'INDEX': "WEKO_SEARCH_TYPE_DICT-INDEX"}
     i18n_app.config['COMMUNITIES_SORTING_OPTIONS'] = {'INDEX': "COMMUNITIES_SORTING_OPTIONS-INDEX"}
     test = MainScreenInitDisplaySetting()
-    
+
     with patch('weko_theme.utils.SearchManagement.get', return_value=search_setting):
         with patch('invenio_search.RecordsSearch.execute', return_value=dummy_response('{"hits": {"hits": [{"_source": {"path": ["44"]}},{"_source": {"path": ["11"]}}]}}')):
             with patch('weko_theme.utils.get_journal_info', return_value="get_journal_info"):
@@ -88,8 +112,8 @@ def test_get_init_display_setting(i18n_app, users, client_request_args, communit
             with patch('weko_items_ui.utils.get_ranking', return_value="get_ranking"):
                 search_setting.init_disp_setting["init_disp_screen_setting"] = "1"
                 assert isinstance(test.get_init_display_setting(), dict)
-        
+
         search_setting.init_disp_setting["init_disp_screen_setting"] = "2"
         assert isinstance(test.get_init_display_setting(), dict)
-    
+
     assert isinstance(test.get_init_display_setting(), dict)

@@ -1210,6 +1210,10 @@ WEKO_ADMIN_SEARCH_OPTIONS = {
                 'en': 'Communities',
                 'ja': 'コミュニティ一覧を表示する'
             }},
+            {'id': '3', 'contents': {
+                'en': 'Web content',
+                'ja': 'WEBコンテンツを表示する'
+            }},
         ],
         "init_disp_index_disp_method": [
             {'id': '0', 'contents': {
@@ -1296,3 +1300,6 @@ WEKO_ADMIN_CACHE_TEMP_DIR_INFO_KEY_DEFAULT = 'cache::temp_dir_info'
 
 WEKO_ADMIN_USE_REGEX_IN_CRAWLER_LIST = False
 """ If True, enable regex function in crawler list processing. """
+
+WEKO_ADMIN_USE_TOP_PAGE_WEB_CONTENTS = False
+""" If True, Web content can be displayed on the TOP screen.. """

@@ -1336,6 +1336,10 @@ msgstr ""
 msgid "Default Contents to Display"
 msgstr ""
 
+#: weko_admin/templates/weko_admin/admin/search_management_settings.html:401
+msgid "Display settings for web content"
+msgstr ""
+
 #: weko_admin/templates/weko_admin/admin/search_management_settings.html:380
 msgid "Default Index to Display"
 msgstr ""
