@@ -180,7 +180,7 @@ async function login() {
   // 先にログアウト
   await $fetch(appConf.wekoApi + '/logout', {
     timeout: useRuntimeConfig().public.apiTimeout,
-    method: 'POST',
+    method: 'POST'
   });
   // ログイン
   await $fetch(appConf.wekoApi + '/login', {
