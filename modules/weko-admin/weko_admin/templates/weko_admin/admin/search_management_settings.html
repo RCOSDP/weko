@@ -389,9 +389,24 @@
                     <select id="init_disp_screen_setting" class="form-control"
                             ng-change="specificIndex();"
                             ng-model="dataJson.init_disp_setting.init_disp_screen_setting">
-                      {% for option in disp_option.init_disp_screen_setting %}
-                        <option value="{{ option.id }}">{{ option.contents[currentLanguage] }}</option>
-                      {% endfor %}
+                      {%- if currentLanguage == 'ja' -%}
+                        <option ng-repeat="option in dataJson.init_disp_screen_setting" value="[[option.id]]">[[option.contents.ja]]</option>
+                      {%- else -%}
+                        <option ng-repeat="option in dataJson.init_disp_screen_setting" value="[[option.id]]">[[option.contents.en]]</option>
+                      {%- endif -%}
+                    </select>
+                  </td>
+                </tr>
+                <tr>
+                  <th scope="col"><label ng-show="dataJson.init_disp_setting.init_disp_screen_setting == 3"
+                          for="init_disp_web_content">{{ _("Display settings for web content") }}:</label>
+                  </th>
+                  <td>
+                    <select id="init_disp_web_content" class="form-control"
+                            ng-model="dataJson.init_disp_setting.init_disp_web_content"
+                            ng-disabled="dataJson.init_disp_setting.init_disp_screen_setting != 3"
+                            ng-show="dataJson.init_disp_setting.init_disp_screen_setting == 3">
+                      <option ng-repeat="opt_num in dataJson.free_widgets track by $index" value="[[opt_num.widget_id]]">[[opt_num.label]]</option>
                     </select>
                   </td>
                 </tr>
@@ -405,9 +420,7 @@
                             ng-model="dataJson.init_disp_setting.init_disp_index_disp_method"
                             ng-change="specificIndex();"
                             ng-disabled="dataJson.init_disp_setting.init_disp_screen_setting != 0">
-                      {% for option in disp_option.init_disp_index_disp_method %}
-                        <option value="{{ option.id }}">{{ option.contents[currentLanguage] }}</option>
-                      {% endfor %}
+                      <option ng-repeat="opt_num in dataJson.free_widgets track by $index" value="[[opt_num.widget_id]]">{{_('[[opt_num.label]]')}}</option>
                     </select>
                   </td>
                 </tr>

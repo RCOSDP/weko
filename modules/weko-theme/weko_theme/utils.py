@@ -20,6 +20,7 @@
 
 """Utils for weko-theme."""
 
+import json
 import time
 from datetime import date, timedelta
 
@@ -35,6 +36,7 @@ from invenio_i18n.ext import current_i18n
 from invenio_search import RecordsSearch
 from weko_admin.models import AdminSettings, RankingSettings, SearchManagement
 from weko_admin.utils import get_search_setting
+from weko_gridlayout.models import WidgetMultiLangData
 from weko_gridlayout.services import WidgetDesignServices
 from weko_gridlayout.utils import get_widget_design_page_with_main, \
     main_design_has_main_widget
@@ -90,13 +92,26 @@ def get_weko_contents(getargs):
     ctx.update({
         "display_community": display_community
     })
-    
+
+    web_content = ''
+    init_disp_setting = get_search_setting().get('init_disp_setting')
+    if init_disp_setting.get(
+            'init_disp_screen_setting') == '3' and init_disp_setting.get(
+                'init_disp_web_content'):
+        lang = current_i18n.language
+        multi_lang_data = WidgetMultiLangData.get_by_widget_id(
+            init_disp_setting.get('init_disp_web_content'))
+        for data in multi_lang_data:
+            if lang == data.lang_code:
+                web_content = json.loads(data.description_data)['description']
+
     return dict(
         community_id=community_id,
         detail_condition=detail_condition,
         width=width, height=height,
         index_link_list=index_link_list,
         index_link_enabled=index_link_enabled,
+        web_content=web_content,
         **ctx
     )
 
@@ -126,7 +141,7 @@ def get_design_layout(repository_id):
 
     Returns:
         _type_: page, render_widgets
-    """    
+    """
     if not repository_id:
         return None, False
 
@@ -271,7 +286,7 @@ class MainScreenInitDisplaySetting:
                 display_format = current_index.display_format
         if display_format == '2':
             display_number = 100
-        
+
         if not init_disp_index:
             # In case is not found the index
             # set main screen initial display to the default

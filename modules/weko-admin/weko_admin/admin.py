@@ -31,7 +31,7 @@ import ipaddress
 from datetime import datetime, timedelta
 
 from flask import abort, current_app, flash, jsonify, make_response, \
-    redirect, render_template, request, url_for 
+    redirect, render_template, request, url_for
 from flask_admin import BaseView, expose
 from flask_admin.contrib.sqla import ModelView
 from flask_admin.contrib.sqla.fields import QuerySelectField
@@ -45,6 +45,8 @@ from invenio_communities.models import Community
 from invenio_db import db
 from invenio_files_rest.storage.pyfs import remove_dir_with_file
 from invenio_mail.api import send_mail
+from invenio_i18n.ext import current_i18n
+from weko_gridlayout.services import WidgetDesignServices
 from weko_index_tree.models import IndexStyle
 from weko_records.api import ItemTypes, SiteLicense
 from weko_records.models import SiteLicenseInfo
@@ -63,7 +65,7 @@ from .permissions import admin_permission_factory ,superuser_access
 from .utils import get_facet_search, get_item_mapping_list, \
     get_response_json, get_restricted_access, get_search_setting, get_detail_search_list
 from .utils import get_user_report_data as get_user_report
-from .utils import package_reports, str_to_bool 
+from .utils import package_reports, str_to_bool
 from .tasks import is_reindex_running ,reindex
 
 
@@ -72,9 +74,9 @@ class ReindexElasticSearchView(BaseView):
     @expose('/', methods=['GET'])
     @superuser_access.require(http_exception=403)
     def index(self):
-        """ 
-        show view Maintenance/ElasticSearch 
-        
+        """
+        show view Maintenance/ElasticSearch
+
         Returns:
             'weko_admin/admin/reindex_elasticsearch.html'
         """
@@ -88,7 +90,7 @@ class ReindexElasticSearchView(BaseView):
                 template=current_app.config['WEKO_ADMIN_REINDEX_ELASTICSEARCH_TEMPLATE']
                 ,isError=is_error
                 ,isExecuting=is_executing
-                ,disabled_Btn=disabled_btn 
+                ,disabled_Btn=disabled_btn
             )
         except BaseException:
             import traceback
@@ -99,7 +101,7 @@ class ReindexElasticSearchView(BaseView):
     @expose('/reindex', methods=['POST'])
     @superuser_access.require(http_exception=403)
     def reindex(self):
-        """ 
+        """
         Processing when "Executing Button" is pressed
 
         Args:
@@ -115,7 +117,7 @@ class ReindexElasticSearchView(BaseView):
         in .utils.py .
         """
 
-        
+
         try:
             ## exclusion check
             status =  self._check_reindex_is_running()
@@ -137,10 +139,10 @@ class ReindexElasticSearchView(BaseView):
             import traceback
             estr = traceback.format_exc()
             current_app.logger.error('Unexpected error: {}'.format( estr ))
-            AdminSettings.update(current_app.config['WEKO_ADMIN_SETTINGS_ELASTIC_REINDEX_SETTINGS'] 
+            AdminSettings.update(current_app.config['WEKO_ADMIN_SETTINGS_ELASTIC_REINDEX_SETTINGS']
             , dict({current_app.config['WEKO_ADMIN_SETTINGS_ELASTIC_REINDEX_SETTINGS_HAS_ERRORED']:True}))
             return jsonify({"error" : estr }), 500
-            
+
     @expose('/is_reindex_running', methods=['GET'])
     @superuser_access.require(http_exception=403)
     def check_reindex_is_running(self):
@@ -153,7 +155,7 @@ class ReindexElasticSearchView(BaseView):
                 isError      : boolean
                 isExecuting  : boolean
                 disabled_Btn : boolean
-            
+
         """
         try:
             return jsonify(self._check_reindex_is_running())
@@ -177,7 +179,7 @@ class ReindexElasticSearchView(BaseView):
         result = dict({
             "isError": is_error
             ,"isExecuting": is_executing
-            ,"disabled_Btn": is_error or is_executing 
+            ,"disabled_Btn": is_error or is_executing
         })
         return result
 
@@ -420,8 +422,8 @@ class ReportView(BaseView):
                         'aggs_public']['doc_count']
                 }
                 result['private'] = result['total'] - result['open']
-            
-            
+
+
             current_schedule = AdminSettings.get(
                 name='report_email_schedule_settings',
                 dict_to_object=False)
@@ -756,12 +758,41 @@ class SearchSettingsView(BaseView):
             current_app.config['WEKO_INDEX_TREE_STYLE_OPTIONS']['id'])
         width = style.width if style else '3'
         height = style.height if style else None
+
+        # Top page content acquisition (if ON/OFF setting is ON)
+        widgets = []
+        init_disp_screen_setting = current_app.config[
+                'WEKO_ADMIN_SEARCH_OPTIONS']['init_disp_setting_options'][
+                    'init_disp_screen_setting'].copy()
+        if current_app.config['WEKO_ADMIN_USE_TOP_PAGE_WEB_CONTENTS']:
+            # Getting Language Settings
+            lang = current_i18n.language
+
+            for repository in WidgetDesignServices.get_repository_list()[
+                    'repositories']:
+                for widget in WidgetDesignServices.get_widget_list(repository[
+                        'id'], {'lang_code': lang})['data']:
+                    if widget['widgetType'] == 'Free description':
+                        widgets.append({'widget_id':  widget['Id'],
+                                        'label': widget['label']})
+        else:
+            # Not displayed when the ON/OFF setting is OFF.
+            init_disp_screen_setting.pop(3)
+            if search_setting['init_disp_setting'][
+                    'init_disp_screen_setting'] == '3':
+                search_setting['init_disp_setting'][
+                    'init_disp_screen_setting'] = '0'
+
+        search_setting['free_widgets'] = widgets
+        search_setting['init_disp_screen_setting'] = init_disp_screen_setting
+
         search_setting['index_tree_style'] = {
             'width_options': current_app.config[
                 'WEKO_INDEX_TREE_STYLE_OPTIONS']['widths'],
             'width': width,
-            'height': height
+            'height': height,
         }
+
         # dump json string
         result = json.dumps(copy.deepcopy(search_setting))
         if 'POST' in request.method:
@@ -852,7 +883,7 @@ class SiteLicenseSettingsView(BaseView):
                                         ip_check = ipaddress.ip_address(addr_check)
                                     except ValueError:
                                         err_addr = True
-                                        break    
+                                        break
                                 if err_addr:
                                     # break for addresses
                                     break
