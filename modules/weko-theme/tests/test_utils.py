@@ -4,6 +4,7 @@ from flask import current_app, make_response, request
 from flask_login import current_user
 from mock import patch, MagicMock
 from elasticsearch_dsl import response, Search
+from weko_gridlayout.models import WidgetMultiLangData
 
 from weko_theme.utils import (
     get_weko_contents,
