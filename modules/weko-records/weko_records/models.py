@@ -367,7 +367,9 @@ class ItemTypeJsonldMapping(db.Model, Timestamp):
     item_type_id = db.Column(
         db.Integer(),
         db.ForeignKey(ItemType.id),
-        nullable=False)
+        nullable=False,
+        index=True
+    )
     """int: Target itemtype of the mapping."""
 
     item_type = db.relationship(

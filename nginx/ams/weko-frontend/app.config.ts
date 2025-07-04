@@ -150,5 +150,6 @@ export default defineAppConfig({
       by_nc_nd_4: 'https://creativecommons.org/licenses/by-nc-nd/4.0/',
       by_nc_nd_4_ja: 'https://creativecommons.org/licenses/by-nc-nd/4.0/deed.ja'
     }
-  }
+  },
+  transitionTimeMs: 10000 // ミリ秒
 });

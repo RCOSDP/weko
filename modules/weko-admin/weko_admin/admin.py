@@ -2272,6 +2272,109 @@ class JsonldMappingView(ModelView):
         return True
 
 
+class CrisLinkageSettingView(BaseView):
+    """CRIS Linkage Settings View"""
+
+    @expose('/' ,methods=['GET'])
+    def index(self):
+        SETTINGS_NAME = current_app.config["WEKO_ADMIN_SETTINGS_RESEARCHMAP_LINKAGE_SETTINGS"]# type: ignore
+        DEFAULT_MERGE_MODE = current_app.config["WEKO_ITEMS_UI_CRIS_LINKAGE_RESEARCHMAP_MERGE_MODE_DEFAULT"]# type: ignore
+
+        settings = AdminSettings.get(SETTINGS_NAME)
+        default_merge_mode = settings.merge_mode if settings and settings.merge_mode else DEFAULT_MERGE_MODE # type: ignore
+
+
+        is_clidkey_registered = settings and settings.researchmap_cidkey_contents != ''
+        is_pkey_registered = settings and settings.researchmap_pkey_contents != ''
+
+
+        MERGE_MODES = current_app.config["WEKO_ADMIN_SETTINGS_RESEARCHMAP_MERGE_MODES"] # type: ignore 
+        return self.render(
+            current_app.config["WEKO_ADMIN_CRIS_LINKAGE_SETTINGS_TEMPLATE"] # type: ignore 
+            ,merge_modes=MERGE_MODES
+            ,default_merge_mode = default_merge_mode
+            ,is_clidkey_registered = is_clidkey_registered
+            ,is_pkey_registered = is_pkey_registered
+            )
+    
+    @expose('/save_keys' ,methods=['POST'])
+    def save_keys(self):
+        researchmap_cidkey_contents = request.form.get('researchmap_cidkey_contents' ,'')
+        researchmap_pkey_contents = request.form.get('researchmap_pkey_contents' ,'')
+
+        if researchmap_cidkey_contents == '' and researchmap_pkey_contents == '':
+            flash(_('Failurely Changed Settings.') ,'error')
+            flash(_('Please input at least one of client id key or private key') ,'error')
+            return redirect(url_for('cris_linkage.index'))
+
+        if len(str(researchmap_cidkey_contents)) > 100: #valid about 20 
+            flash(_('Failurely Changed Settings.') ,'error')
+            flash(_('client id key size too large.') ,'error')
+            return redirect(url_for('cris_linkage.index'))
+        if len(str(researchmap_pkey_contents)) > 100*50: #valid about 30*70 
+            flash(_('Failurely Changed Settings.') ,'error')
+            flash(_('private key size too large.') ,'error')
+            return redirect(url_for('cris_linkage.index'))
+
+
+        SETTINGS_NAME = current_app.config["WEKO_ADMIN_SETTINGS_RESEARCHMAP_LINKAGE_SETTINGS"]# type: ignore
+        settings = AdminSettings.get(SETTINGS_NAME)
+        if not settings :
+            set = {
+                'researchmap_cidkey_contents':researchmap_cidkey_contents
+                ,'researchmap_pkey_contents':researchmap_pkey_contents
+                ,'merge_mode':''
+            }
+        else :
+            set = {
+                'researchmap_cidkey_contents' : researchmap_cidkey_contents if researchmap_cidkey_contents != '' else settings.researchmap_cidkey_contents # type: ignore 
+                ,'researchmap_pkey_contents' : researchmap_pkey_contents if researchmap_pkey_contents != '' else settings.researchmap_pkey_contents # type: ignore 
+                ,'merge_mode' : settings.merge_mode # type: ignore 
+            }
+
+        try :
+            AdminSettings.update(SETTINGS_NAME , set)
+            flash(_('Successfully Changed Settings.') ,'success')
+        except Exception as e:
+            traceback.print_exc()
+            flash(_('Failurely Changed Settings.') ,'error')
+            raise e
+
+        return redirect(url_for('cris_linkage.index'))
+
+    @expose('/save_merge_mode' ,methods=['POST'])
+    def save_merge_mode(self):
+        merge_mode = request.form.get('merge_mode' ,'')
+
+        if merge_mode == '' :
+            flash(_('Failurely Changed Settings.') ,'error')
+            flash(_('Please input Merge Mode') ,'error')
+            return redirect(url_for('cris_linkage.index'))
+
+        SETTINGS_NAME = current_app.config["WEKO_ADMIN_SETTINGS_RESEARCHMAP_LINKAGE_SETTINGS"]# type: ignore
+        settings = AdminSettings.get(SETTINGS_NAME)
+        if not settings :
+            set = {
+                'researchmap_cidkey_contents': ''
+                ,'researchmap_pkey_contents': ''
+                ,'merge_mode':merge_mode
+            }
+        else :
+            set = {
+                'researchmap_cidkey_contents' : settings.researchmap_cidkey_contents # type: ignore 
+                ,'researchmap_pkey_contents' : settings.researchmap_pkey_contents # type: ignore 
+                ,'merge_mode' : merge_mode  # type: ignore 
+            }
+
+        try :
+            AdminSettings.update(SETTINGS_NAME , set)
+            flash(_('Successfully Changed Settings.') ,'success')
+        except Exception as e:
+            traceback.print_exc()
+            flash(_('Failurely Changed Settings.') ,'error')
+            raise e
+
+        return redirect(url_for('cris_linkage.index'))
 
 style_adminview = {
     'view_class': StyleSettingView,
@@ -2407,6 +2510,7 @@ restricted_access_adminview = {
         'endpoint': 'restricted_access'
     }
 }
+
 identifier_adminview = dict(
     modelview=IdentifierSettingView,
     model=Identifier,
@@ -2456,6 +2560,16 @@ sword_api_jsonld_mapping_adminview = dict(
     endpoint='jsonld-mapping'
 )
 
+cris_linkage_adminview = {
+    'view_class': CrisLinkageSettingView,
+    'kwargs': {
+        'category': _('Setting'),
+        'name': _('CRIS Linkage'),
+        'endpoint': 'cris_linkage'
+    }
+}
+
+
 __all__ = (
     'style_adminview',
     'report_adminview',
@@ -2478,4 +2592,5 @@ __all__ = (
     'sword_api_settings_adminview',
     'sword_api_settings_jsonld_adminview',
     'sword_api_jsonld_mapping_adminview'
+    'cris_linkage_adminview',
 )

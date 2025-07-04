@@ -690,3 +690,8 @@ msgstr "Maintenance"
 #: msgid "ElasticSearch Index"
 msgid "Admin menu_Maintenance_ElasticSearch Index"
 msgstr "ElasticSearch Index"
+
+#: weko_admin/
+#: msgid "CRIS Linkage"
+msgid "Admin menu_Setting_CRIS Linkage"
+msgstr "CRIS Linkage"

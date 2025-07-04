@@ -61,6 +61,8 @@ WEKO_ACCOUNTS_SHIB_LOGIN_CACHE_TTL = 180
 WEKO_ACCOUNTS_SHIB_IDP_LOGIN_URL = '{}secure/login.py'
 """Login proxy URL."""
 
+WEKO_ACCOUNTS_SHIB_AMS_LOGIN_URL = '{}ams/login'
+
 WEKO_ACCOUNTS_SSO_ATTRIBUTE_MAP = {
     'SHIB_ATTR_EPPN': (False, 'shib_eppn'),
     # 'SHIB_ATTR_LOGIN_ID': (False, 'shib_uid'),
@@ -104,10 +106,10 @@ WEKO_ACCOUNTS_ATTRIBUTE_LIST = [
 """Attribute List."""
 
 WEKO_ACCOUNTS_ROLE_LIST = [
-    'System Administrator', 
-    'Repository Administrator', 
-    'Community Administrator', 
-    'Contributor', 
+    'System Administrator',
+    'Repository Administrator',
+    'Community Administrator',
+    'Contributor',
     'None'
 ]
 """Role List."""
@@ -117,26 +119,26 @@ WEKO_ACCOUNTS_GENERAL_ROLE = 'Contributor'
 
 WEKO_ACCOUNTS_GAKUNIN_ROLE = {
   'defaultRole': 'Contributor',
-  'organizationName': []  
-} 
+  'organizationName': []
+}
 """Gakunin Default role."""
 
 WEKO_ACCOUNTS_ORTHROS_INSIDE_ROLE = {
   'defaultRole': 'Repository Administrator',
-  'organizationName': []  
-} 
+  'organizationName': []
+}
 """Orthros (Inside) Default role."""
 
 WEKO_ACCOUNTS_ORTHROS_OUTSIDE_ROLE = {
   'defaultRole': 'Community Administrator',
-  'organizationName': []  
-} 
+  'organizationName': []
+}
 """Orthros (Outside) Default role."""
 
 WEKO_ACCOUNTS_EXTRA_ROLE = {
   'defaultRole': 'None', # ロール無
-  'organizationName': []  
-} 
+  'organizationName': []
+}
 """Extra Default role."""
 
 WEKO_ACCOUNTS_SHIB_ROLE_RELATION = {

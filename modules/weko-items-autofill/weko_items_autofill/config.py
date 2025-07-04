@@ -62,7 +62,8 @@ WEKO_ITEMS_AUTOFILL_SELECT_OPTION = [
     {'value': 'DOI', 'text': 'DOI'},
     {'value': 'CrossRef', 'text': 'CrossRef'},
     {'value': 'CiNii', 'text': 'CiNii'},
-    {'value': 'WEKOID', 'text': 'WEKOID'}
+    {'value': 'WEKOID', 'text': 'WEKOID'},
+    {'value': 'researchmap','text':'researchmap'}
 ]
 """API select option"""
 
@@ -134,3 +135,27 @@ WEKO_ITEMS_AUTOFILL_IGNORE_MAPPING = [
     "identifierRegistration.@value",
     "identifierRegistration.@attributes.identifierType"
 ]
+
+WEKO_ITEMS_AUTOFILL_RESEARCHMAP_REQUIRED_ITEM = [
+    "title",
+    "creator",
+    "contributor",
+    "subject",
+    "description",
+    "publisher",
+    "date",
+    "language",
+    "type",
+    "version",
+    "identifier",
+    "relation",
+    "sourceIdentifier",
+    "sourceTitle",
+    "volume",
+    "issue",
+    "numPages",
+    "pageStart",
+    "pageEnd",
+    "conference"
+]
+"""Researchmap required item"""

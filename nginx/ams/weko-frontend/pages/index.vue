@@ -40,16 +40,12 @@
     <!-- 著者情報 -->
     <CreaterInfo ref="creater" />
     <!-- アラート -->
-    <Alert
-      v-if="visibleAlert"
-      :type="alertType"
-      :message="alertMessage"
-      :code="alertCode"
-      @click-close="visibleAlert = !visibleAlert" />
+    <Alert v-if="visibleAlert" :alert="alertData" @click-close="visibleAlert = !visibleAlert" />
   </div>
 </template>
 
 <script lang="ts" setup>
+import amsAlert from '~/assets/data/amsAlert.json';
 import Alert from '~/components/common/Alert.vue';
 import SearchForm from '~/components/common/SearchForm.vue';
 import CreaterInfo from '~/components/common/modal/CreaterInfo.vue';
@@ -64,9 +60,13 @@ import LatestItem from '~/components/index/LatestItem.vue';
 let latestItem = {};
 const creater = ref();
 const visibleAlert = ref(false);
-const alertType = ref('info');
-const alertMessage = ref('');
-const alertCode = ref(0);
+const alertData = ref({
+  msgid: '',
+  msgstr: '',
+  position: '',
+  width: '',
+  loglevel: 'info'
+});
 const isRender = ref(false);
 const appConf = useAppConfig();
 
@@ -96,6 +96,23 @@ try {
   const query = useRoute().query;
   const state = String(query.state);
 
+  // Shibbolethログインの場合、TOP画面でOAuth認証を実行
+  const next = query.next === 'ams' ? 'ams' : '';
+  if (next === 'ams') {
+    const url = new URL(useAppConfig().wekoOrigin + '/oauth/authorize');
+    const random = Math.random().toString(36);
+    url.searchParams.append('response_type', 'code');
+    url.searchParams.append('client_id', useRuntimeConfig().public.clientId);
+    url.searchParams.append('scope', 'item:read index:read ranking:read file:read user:email');
+    url.searchParams.append('state', random);
+    sessionStorage.setItem('login:state', random);
+    window.open(url.href, '_self');
+  }
+
+  const baseURI = useRuntimeConfig().public.redirectURI;
+  const itemURL = sessionStorage.getItem('item-url');
+  const redirectURL = itemURL || baseURI;
+
   // アクセストークン取得
   if (state) {
     if (sessionStorage.getItem('login:state') === state) {
@@ -114,7 +131,20 @@ try {
           }
         })
         .finally(() => {
-          useRouter().replace({ query: {} });
+          const params = new URLSearchParams(redirectURL.replace(baseURI, ''));
+          const number = params.get('number');
+          if (!number) {
+            useRouter().replace({ query: {} });
+          } else {
+            sessionStorage.removeItem('item-url');
+            useRouter().replace({
+              path: redirectURL,
+              query: {
+                sess: 'top',
+                number
+              }
+            });
+          }
           setTimeout(() => {
             location.reload();
           }, 100);
@@ -144,35 +174,29 @@ try {
       }
     },
     onResponseError({ response }) {
-      alertCode.value = 0;
       statusCode = response.status;
       if (statusCode === 401) {
         // 認証エラー
-        alertMessage.value = 'message.error.auth';
+        alertData.value = amsAlert.INDEX_MESSAGE_ERROR_AUTH;
       } else if (statusCode >= 500 && statusCode < 600) {
         // サーバーエラー
-        alertMessage.value = 'message.error.server';
-        alertCode.value = statusCode;
+        alertData.value = amsAlert.INDEX_MESSAGE_ERROR_SERVER;
       } else {
         // リクエストエラー
-        alertMessage.value = 'message.error.getLatestItem';
-        alertCode.value = statusCode;
+        alertData.value = amsAlert.INDEX_MESSAGE_ERROR_GET_LATEST_ITEM;
       }
-      alertType.value = 'error';
       visibleAlert.value = true;
     }
   }).catch(() => {
     if (statusCode === 0) {
       // fetchエラー
-      alertMessage.value = 'message.error.fetch';
-      alertType.value = 'error';
+      alertData.value = amsAlert.INDEX_MESSAGE_ERROR_FETCH;
       visibleAlert.value = true;
     }
   });
 } catch (error) {
-  alertCode.value = 0;
-  alertMessage.value = 'message.error.error';
-  alertType.value = 'error';
+  // 例外エラー
+  alertData.value = amsAlert.INDEX_MESSAGE_ERROR;
   visibleAlert.value = true;
 }
 

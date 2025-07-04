@@ -377,7 +377,7 @@ class TestExportView():
         mocker.patch("weko_authors.admin.set_export_status")
         login_user_via_session(client=client, email=users[users_index]['email'])
         url = url_for('authors/export.export')
-        res =  client.post(url)
+        res =  client.post(url, data=json.dumps({"isTarget":None}), content_type='application/json')
         assert_role(res,is_permission)
 
     # .tox/c1/bin/pytest --cov=weko_authors tests/test_admin.py::TestExportView::test_export -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp

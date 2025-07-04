@@ -69,30 +69,31 @@ path2 = dict(
 )
 
 # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_rest.py::test_IndexSearchResource_get -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
-test_patterns =[
-    ({},
+test_patterns = {
+    "not_post_filters": ({},
      "facet_not_post_filters.json",
      {"self":"?page=1&size=20"},
      [[mock_path(**path1)]],
      "rd_result01_02_03_no_agp.json",
      "execute_result01_02_03_no_agp.json"
      ),
-    ({},
+    "facet": ({},
      "facet.json",
      {"self":"?page=1&size=20"},
      BaseException,
      "rd_result01_02_03_BaseException.json",
      "execute_result01_02_03.json"
      ),
-    ({"size":1,"page":2,"q":"1557820086539","Access":"open access"},
+    "facet_page": ({"size":1,"page":2,"q":"1557820086539","Access":"open access"},
      "facet.json",
      {"next":"?page=3&q=1557820086539&size=1","prev":"?page=1&q=1557820086539&size=1","self":"?page=2&q=1557820086539&size=1"},
      [[mock_path(**path2),mock_path(**path1)]], # path not in agp
      "rd_result01_02_03.json",
      "execute_result01_02_03.json")
-    ]
-@pytest.mark.parametrize("params, facet_file, links, paths, rd_file, execute", test_patterns)
-def test_IndexSearchResource_get(client_rest, users, item_type, record, facet_search_setting, index, mock_es_execute,
+}
+@pytest.mark.skip(reason="fixture not implemented")
+@pytest.mark.parametrize("params, facet_file, links, paths, rd_file, execute", test_patterns.values(), ids=test_patterns.keys())
+def test_IndexSearchResource_get(client_rest, users, item_type, db_records, facet_search_setting, index, mock_es_execute,
                                  params, facet_file, links, paths, rd_file, execute):
     sname = current_app.config["SERVER_NAME"]
     facet = json_data("tests/data/search/"+facet_file)
@@ -108,7 +109,8 @@ def test_IndexSearchResource_get(client_rest, users, item_type, record, facet_se
                 assert result == rd
 
 # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_rest.py::test_IndexSearchResource_get_Exception -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
-def test_IndexSearchResource_get_Exception(client_rest, db, users, item_type, db_records, facet_search_setting):
+def test_IndexSearchResource_get_Exception(i18n_app, client_rest, db, users, item_type, db_records, facet_search_setting):
+    i18n_app.config['WEKO_SEARCH_TYPE_INDEX'] = 'index'
     sname = current_app.config["SERVER_NAME"]
     #from weko_index_tree.models import Index
     #datas = json_data("data/index.json")
@@ -182,8 +184,8 @@ def test_IndexSearchResource_get_facet(i18n_app,client_rest, db, users, item_typ
 # class IndexSearchResource(ContentNegotiatedMethodView):
 # def __init__
 # def get(self, **kwargs):
-# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_rest.py::test_IndexSearchResource_get -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
-def test_IndexSearchResource_get(app,i18n_app, users, client_request_args):
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_rest.py::test_IndexSearchResource_get2 -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_IndexSearchResource_get2(app,i18n_app, users, client_request_args):
     total_hit_count = 30
     top_page = "http://test_server/index/?page=1&size=20"
     next_page = "http://test_server/index/?page=2&size=20"

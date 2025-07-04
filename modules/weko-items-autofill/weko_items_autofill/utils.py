@@ -23,6 +23,8 @@ import copy
 import json
 import traceback
 from functools import wraps
+import json
+from weko_items_ui.linkage import Researchmap
 
 from flask import current_app
 from flask_babelex import gettext as _
@@ -944,6 +946,20 @@ def get_crossref_autofill_item(item_id):
             crossref_req_item[key] = jpcoar_item.get(key)
     return crossref_req_item
 
+def get_researchmap_autofill_item(item_id):
+    """Get researchmap autofill item.
+
+    :param item_id: Item ID
+    :return:
+    """
+    jpcoar_item = get_item_id(item_id)
+    req_item = dict()
+    for key in current_app.config[
+            'WEKO_ITEMS_AUTOFILL_RESEARCHMAP_REQUIRED_ITEM']:
+        if jpcoar_item.get(key) is not None:
+            req_item[key] = jpcoar_item.get(key)
+    return req_item
+
 
 def get_autofill_key_tree(schema_form, item, result=None):
     """Get auto fill key tree.
@@ -1391,6 +1407,19 @@ def fill_data(form_model, autofill_data, schema=None, exclude_duplicate_lang=Fal
             for v in form_model:
                 new_v = fill_data(v, autofill_data, schema, exclude_duplicate_lang)
                 result.append(new_v)
+    elif isinstance(autofill_data, str):
+        if isinstance(form_model, dict):
+            for k, v in form_model.items():
+                if isinstance(v, str):
+                    result[k] = autofill_data
+                else:
+                    new_v = fill_data(v, autofill_data)
+                    result[k] = new_v
+        elif isinstance(form_model, list):
+            for v in form_model:
+                new_v = fill_data(v, autofill_data)
+                result.append(new_v)
+        return result
     else:
         return
     return result
@@ -1556,6 +1585,144 @@ def get_wekoid_record_data(recid, item_type_id):
     # Set value for record model.
     result = set_val_for_record_model(record_model, item_map_data_des)
     return result
+
+def get_researchmapid_record_data(parmalink, achievement_type ,achievement_id ,item_type_id) -> list:
+    """get record data from researchmap
+        @param
+            parmalink
+            achievement_type
+            achievement_id
+            item_type_id
+        return list
+    """
+
+    def __nest_and_merge( weko_name :str ,child_node:str , elements , api_data:dict) -> dict:
+        if not (elements == [] or elements == {} or elements== None) :
+            if not child_node:
+                api_data.update({weko_name : elements})
+            else:
+                """e.g {weko_name : {child_node_1:{child_node_2:{child_node_3:{elements}}}}}"""
+                child = elements
+                nodes = child_node.split('.')
+                nodes.reverse()
+                for node in nodes:
+                    child = {node : child}
+
+                merge_dict( api_data, {weko_name : child} ,False)
+        return api_data
+
+    api_data = {}
+    resource_type = ''
+    researchmap_mappings = current_app.config["WEKO_ITEMS_UI_CRIS_LINKAGE_RESEARCHMAP_MAPPINGS"] # type: ignore
+    researchtype_mappings = current_app.config["WEKO_ITEMS_UI_CRIS_LINKAGE_RESEARCHMAP_TYPE_MAPPINGS"]# type: ignore
+
+    data = Researchmap().get_data(parmalink, achievement_type ,achievement_id)
+    load_data:dict = json.loads(data)
+    current_app.logger.debug('load_data')
+    current_app.logger.debug(load_data)
+    error_description:str = json.loads(data).get("error_description")
+
+    if error_description:
+        raise Exception(error_description)
+    
+    for mapping in researchmap_mappings :
+        if mapping.get('type') == 'simple' or mapping.get('type') == 'simple_value':
+            rm_name:str = mapping.get('rm_name','')
+            weko_name:str = mapping.get('weko_name','')
+            element:str = load_data.get(rm_name ,'')
+
+            child_node:str = mapping.get('child_node','')
+            api_data = __nest_and_merge(weko_name  ,child_node , element ,api_data)
+
+        elif mapping.get('type') == 'lang':
+            rm_name:str = mapping.get('rm_name','')
+            weko_name:str = mapping.get('weko_name','')
+            child_node:str = mapping.get('child_node','')
+            lang_json:dict = load_data.get(rm_name , {})
+            en_value = lang_json.get('en' , '')
+            ja_value = lang_json.get('ja' , '')
+
+            elements = []
+            if en_value:
+                elements.append({'@value': en_value, '@language': 'en'})
+            if ja_value:
+                elements.append({'@value': ja_value, '@language': 'ja'})
+            
+
+            api_data = __nest_and_merge(weko_name  ,child_node ,elements ,api_data)
+
+        
+        elif mapping.get('type') == 'authors':
+            rm_name:str = mapping.get('rm_name','')
+            weko_name:str = mapping.get('weko_name','')
+            lang_json:dict = load_data.get(rm_name , {})
+            child_node:str = mapping.get('child_node','')
+
+            en_values:list = lang_json.get('en' , [])
+            ja_values:list = lang_json.get('ja' , [])
+
+            # get larger size
+            rooper = len(en_values) if len(ja_values) < len(en_values) else len(ja_values) 
+
+            elements = []
+            for roop in range(rooper):
+                en_name = en_values[roop].get('name') if roop < len(en_values) else None
+                ja_name = ja_values[roop].get('name') if roop < len(ja_values) else None
+                
+                names = []
+                # creator creatorName
+                if en_name:
+                    names.append({'@value': en_name, '@language': 'en'})
+                if ja_name:
+                    names.append({'@value': ja_name, '@language': 'ja'})
+                
+                elements.append(names)
+            
+            api_data = __nest_and_merge(weko_name  ,child_node ,elements ,api_data)
+
+
+        elif mapping.get('type') == 'identifiers':
+            rm_name:str = mapping.get('rm_name','')
+            weko_name:str = mapping.get('weko_name','')
+            lang_json:dict = load_data.get(rm_name , {})
+            child_node:str = mapping.get('child_node','')
+
+            elements = []
+            for key in lang_json.keys():
+                for val in lang_json[key]:
+                    elements.append({'@value': val , '@type' : key.upper()})
+
+            api_data = __nest_and_merge(weko_name  ,child_node ,elements ,api_data)
+
+        elif mapping.get('type') == 'type':
+            rm_name:str = mapping.get('rm_name','')
+            weko_name:str = mapping.get('weko_name','')
+            element:str = load_data.get(rm_name ,'')
+            child_node:str = mapping.get('child_node','')
+            for r_type_mapping in researchtype_mappings:
+                if r_type_mapping.get('achievement_type') == achievement_type \
+                    and mapping.get('achievement_type') == achievement_type \
+                    and r_type_mapping.get('detail_type_name') == element :
+                    resource_type =  r_type_mapping.get('JPCOAR_resource_type')
+                    api_data.update({weko_name : resource_type})
+                    break
+    current_app.logger.debug('api_data')
+    current_app.logger.debug(api_data)
+    
+    result = list()
+    with db.session.no_autoflush:
+        items = ItemTypes.get_by_id(item_type_id)
+    if items is None:
+        return result, resource_type 
+    if items.form is not None:
+        autofill_key_tree = sort_by_item_type_order(
+            items.form,
+            get_autofill_key_tree(
+                items.form,
+                get_researchmap_autofill_item(item_type_id)))
+
+        result = build_record_model(autofill_key_tree, api_data)
+    return result , resource_type 
 
 
 def build_record_model_for_wekoid(item_type_id, item_map_data):
