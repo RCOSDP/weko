@@ -12,7 +12,7 @@ from __future__ import absolute_import, print_function
 
 from functools import wraps
 
-from flask import Blueprint, g, abort, current_app, jsonify, \
+from flask import Blueprint, _request_ctx_stack, abort, current_app, jsonify, \
     redirect, render_template, request, make_response
 from flask_babelex import lazy_gettext as _
 from flask_breadcrumbs import register_breadcrumb
@@ -41,7 +41,7 @@ def login_oauth2_user(valid, oauth):
     """Log in a user after having been verified."""
     if valid:
         oauth.user.login_via_oauth2 = True
-        g.user = oauth.user
+        _request_ctx_stack.top.user = oauth.user
         identity_changed.send(current_app._get_current_object(),
                       identity=Identity(oauth.user.id))
     return valid, oauth
