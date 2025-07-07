@@ -13,7 +13,7 @@ from __future__ import absolute_import, print_function
 from functools import wraps
 
 from flask import Blueprint, _request_ctx_stack, abort, current_app, jsonify, \
-    redirect, render_template, request, make_response, session
+    redirect, render_template, request, make_response
 from flask_babelex import lazy_gettext as _
 from flask_breadcrumbs import register_breadcrumb
 from flask_login import login_required
