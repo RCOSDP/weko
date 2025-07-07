@@ -142,7 +142,7 @@
           <p class="data-note text-14px">
             {{ $t('file') + '：' }}
             <span class="font-medium">
-              <span v-if="itemInfo.mainEntity.length < 1" class="text-14px">
+              <span v-if="getFileLength(itemInfo.mainEntity) < 1" class="text-14px">
                 {{ $t('unexist') }}
               </span>
               <span v-else class="text-14px">
@@ -167,7 +167,7 @@
         </div>
       </div>
     </div>
-    <div v-if="itemInfo.mainEntity.length < 1" class="detail__head-text open-file-button-area" />
+    <div v-if="getFileLength(itemInfo.mainEntity) < 1" class="detail__head-text open-file-button-area" />
     <div v-else class="detail__head-text open-file-button-area">
       <NuxtLink class="font-bold" to="" event="" @click="throughDblClick(`${appConf.amsPath ?? ''}/files?number=${itemId}`)">
         <button

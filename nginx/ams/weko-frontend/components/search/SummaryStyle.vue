@@ -130,7 +130,7 @@
         <p class="data-note text-14px">
           {{ $t('file') + '：' }}
           <span class="font-medium">
-            <span v-if="itemInfo.mainEntity.length < 1" class="text-14px">
+            <span v-if="getFileLength(itemInfo.mainEntity) < 1" class="text-14px">
               {{ $t('unexist') }}
             </span>
             <NuxtLink
