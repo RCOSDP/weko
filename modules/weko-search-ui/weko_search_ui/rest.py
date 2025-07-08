@@ -261,7 +261,7 @@ class IndexSearchResource(ContentNegotiatedMethodView):
         rd["aggregations"]["aggregations"] = pickle.loads(pickle.dumps(agp, -1))
         nlst = []
         items_count = dict()
-        public_indexes = Indexes.get_public_indexes_list()
+        public_indexes = set(Indexes.get_public_indexes_list())
         recorrect_private_items_count(agp)
         for i in agp:
             items_count[i["key"]] = {
