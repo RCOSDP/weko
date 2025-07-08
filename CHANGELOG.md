@@ -12,6 +12,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Fixed
 ### Security
 
+## [v1.0.8a] 2025-07-08
+### Fixed
+- Fixed an issue where the tika library was not included in the Docker image.
+
+
 ## [v1.0.8] 2025-05-20
 ### Changed
 - Improved an issue where the Tika process consumed excessive memory.
@@ -147,8 +152,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Fixed a persistent loading issue in the item type edit screen.
 - Resolved an issue where Publish Status did not display in item detail screens after login.
 
-[v1.0.9] https://github.com/RCOSDP/weko/compare/v1.0.8...v1.0.9
-[v1.0.8] https://github.com/RCOSDP/weko/compare/v1.0.7...v1.0.8
 [v1.0.7] https://github.com/RCOSDP/weko/compare/v0.9.6...v1.0.7
 [v1.0.7a] https://github.com/RCOSDP/weko/compare/v1.0.7...v1.0.7a
 [v1.0.7a2] https://github.com/RCOSDP/weko/compare/v1.0.7a...v1.0.7a2
+[v1.0.7b] https://github.com/RCOSDP/weko/compare/v1.0.7a2...v1.0.7b
+[v1.0.8] https://github.com/RCOSDP/weko/compare/v1.0.7b...v1.0.8
+[v1.0.8a] https://github.com/RCOSDP/weko/compare/v1.0.8...v1.0.8a
