@@ -13,6 +13,9 @@
 ### バグフィックス
 ### 脆弱性対応等
 
+## [v1.0.8a] 2025-07-08
+### バグフィックス
+- tikaライブラリがDockerイメージに格納されていなかった問題を修正しました。
 
 ## [v1.0.8] 2025-05-20
 ### 既存機能の変更
@@ -30,10 +33,6 @@
 - /admin/load_widget_design_settingで500エラーが発生している問題を修正しました。
 - /get_uriで500エラーが発生している問題を修正しました。
 - /api/stats/<record_id>で500エラーが発生している問題を修正しました。
-
-### 脆弱性対応等
-
-
 
 
 ## [v1.0.7b] 2025-01-06
@@ -156,8 +155,9 @@
 - ログイン後、アイテム詳細画面でPublish Statusが表示されなくなる問題を修正
 
 
-[v1.0.9] https://github.com/RCOSDP/weko/compare/v1.0.8...v1.0.9
-[v1.0.8] https://github.com/RCOSDP/weko/compare/v1.0.7...v1.0.8
 [v1.0.7] https://github.com/RCOSDP/weko/compare/v0.9.6...v1.0.7
 [v1.0.7a] https://github.com/RCOSDP/weko/compare/v1.0.7...v1.0.7a
 [v1.0.7a2] https://github.com/RCOSDP/weko/compare/v1.0.7a...v1.0.7a2
+[v1.0.7b] https://github.com/RCOSDP/weko/compare/v1.0.7a2...v1.0.7b
+[v1.0.8] https://github.com/RCOSDP/weko/compare/v1.0.7b...v1.0.8
+[v1.0.8a] https://github.com/RCOSDP/weko/compare/v1.0.8...v1.0.8a
