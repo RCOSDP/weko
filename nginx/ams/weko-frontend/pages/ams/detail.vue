@@ -275,7 +275,7 @@ async function getDetail(number: string) {
       isError.value = true;
     }
   }).catch(() => {
-    if (!isError.value && statusCode === 0) {
+    if (statusCode === 0) {
       // fetchエラー
       alertData.value = amsAlert.DETAIL_ITEM_MESSAGE_ERROR_FETCH;
       visibleAlert.value = true;
