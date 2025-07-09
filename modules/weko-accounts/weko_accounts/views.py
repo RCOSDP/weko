@@ -317,7 +317,7 @@ def confirm_user_without_page():
     """
     try:
         # get shib_session_id from session
-        shib_session_id = session['shib_session_id']
+        shib_session_id = request.args.get('Shib-Session-ID', None)
         if not shib_session_id:
             flash('shib_session_id', category='error')
             return _redirect_method()
@@ -359,7 +359,7 @@ def confirm_user_without_page():
         if shib_user.shib_user:
             shib_user.shib_user_login()
         datastore.delete(cache_key)
-        return redirect(session['next'] if 'next' in session else '/')
+        return redirect(request.args.get('next', '/'))
     except BaseException:
         current_app.logger.error("Unexpected error: {}".format(sys.exc_info()))
     return abort(400)
@@ -488,20 +488,24 @@ def shib_sp_login():
 
         next_url = 'weko_accounts.shib_auto_login'
 
-        if not rst:
-            if current_app.config['WEKO_ACCOUNTS_SKIP_CONFIRMATION_PAGE']:
-                user = find_user_by_email(shib_attr)
-                if not user:
-                    next_url = 'weko_accounts.confirm_user_without_page'
-            else:
-                # Relation is not existed, cache shibboleth info to redis.
-                next_url = 'weko_accounts.shib_login'
-
         query_string = {
             'Shib-Session-ID': shib_session_id,
             'next': next,
             '_method': 'GET'
         }
+
+        if not rst:
+            if current_app.config['WEKO_ACCOUNTS_SKIP_CONFIRMATION_PAGE']:
+                user = find_user_by_email(shib_attr)
+                if user:
+                    next_url = 'weko_accounts.confirm_user_without_page'
+                else:
+                    session['shib_session_id'] = shib_session_id
+                    del query_string['Shib-Session-ID']
+            else:
+                # Relation is not existed, cache shibboleth info to redis.
+                next_url = 'weko_accounts.shib_login'
+
         return url_for(next_url, **query_string)
     except BaseException:
         current_app.logger.error("Unexpected error: {}".format(sys.exc_info()))

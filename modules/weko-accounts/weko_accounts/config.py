@@ -207,8 +207,8 @@ WEKO_ACCOUNTS_GAKUNIN_GROUP_PATTERN_DICT = {
     "sysadm_group":"jc_roles_sysadm",
     "role_keyword":"roles",
     "role_mapping":{
-        "repoadm":"Repository_Administrator",
-        "comad":"Community_Administrator",
+        "repoadm":"Repository Administrator",
+        "comadm":"Community Administrator",
         "contributor":"Contributor",
     }
 }
