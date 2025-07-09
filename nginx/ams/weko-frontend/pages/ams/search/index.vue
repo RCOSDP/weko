@@ -300,6 +300,7 @@ const appConf = useAppConfig();
 async function search() {
   setConditions();
   let statusCode = 0;
+  const isError = ref(false);
   const params = {
     q: conditions.keyword,
     search_type: conditions.type,
@@ -363,7 +364,7 @@ async function search() {
     },
     onResponseError({ response }) {
       statusCode = response.status;
-      if (statusCode === 401) {
+      if (statusCode === 401 || statusCode === 403) {
         // 認証エラー
         alertData.value = amsAlert.SEARCH_ITEM_MESSAGE_ERROR_AUTH;
       } else if (statusCode >= 500 && statusCode < 600) {
@@ -374,14 +375,19 @@ async function search() {
         alertData.value = amsAlert.SEARCH_ITEM_MESSAGE_ERROR_REQUEST;
       }
       visibleAlert.value = true;
+      isError.value = true;
+      return;
     }
   }).catch(() => {
     if (statusCode === 0) {
       // fetchエラー
       alertData.value = amsAlert.SEARCH_ITEM_MESSAGE_ERROR_FETCH;
       visibleAlert.value = true;
+      isError.value = true;
+      return;
     }
   });
+  return !isError.value;
 }
 
 /**
@@ -550,7 +556,7 @@ async function downloadResultList() {
     },
     onResponseError({ response }) {
       statusCode = response.status;
-      if (statusCode === 401) {
+      if (statusCode === 401 || statusCode === 403) {
         // 認証エラー
         alertData.value = amsAlert.SEARCH_DOWNLOAD_MESSAGE_ERROR_AUTH;
       } else if (statusCode >= 500 && statusCode < 600) {
@@ -578,7 +584,10 @@ async function renderResult() {
   try {
     renderFlag.value = false;
     showFlagDict = reactive({});
-    await search();
+    const successSearch = await search();
+    if (!successSearch) {
+      return;
+    }
   } finally {
     nextTick(() => {
       renderFlag.value = true;
@@ -828,13 +837,19 @@ function reflectCopyFilter(key: any, value: any) {
 // main
 /////////////////////////////////// */
 
-try {
-  checkExportURL();
-  await search();
-} catch (error) {
-  alertData.value = amsAlert.SEARCH_INDEX_MESSAGE_ERROR;
-  visibleAlert.value = true;
+async function init() {
+  try {
+    checkExportURL();
+    const successSearch = await search();
+    if (!successSearch) {
+      return;
+    }
+  } catch (error) {
+    alertData.value = amsAlert.SEARCH_INDEX_MESSAGE_ERROR;
+    visibleAlert.value = true;
+  }
 }
+await init();
 
 /* ///////////////////////////////////
 // life cycle

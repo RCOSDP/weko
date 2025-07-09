@@ -174,7 +174,7 @@ const appConf = useAppConfig();
 async function search() {
   setConditions();
   let statusCode = 0;
-
+  const isError = ref(false);
   const params = {
     q: conditions.keyword,
     search_type: conditions.type,
@@ -205,7 +205,7 @@ async function search() {
     },
     onResponseError({ response }) {
       statusCode = response.status;
-      if (statusCode === 401) {
+      if (statusCode === 401 || statusCode === 403) {
         // 認証エラー
         alertData.value = amsAlert.ID_SEARCH_MESSAGE_ERROR_AUTH;
       } else if (statusCode >= 500 && statusCode < 600) {
@@ -216,14 +216,19 @@ async function search() {
         alertData.value = amsAlert.ID_SEARCH_MESSAGE_ERROR_REQUEST;
       }
       visibleAlert.value = true;
+      isError.value = true;
+      return;
     }
   }).catch(() => {
     if (statusCode === 0) {
       // fetchエラー
       alertData.value = amsAlert.ID_SEARCH_MESSAGE_ERROR_FETCH;
       visibleAlert.value = true;
+      isError.value = true;
+      return;
     }
   });
+  return !isError.value;
 }
 
 /**
@@ -231,7 +236,8 @@ async function search() {
  */
 async function getParentIndex() {
   let statusCode = 0;
-  await $fetch(useAppConfig().wekoApi + '/tree/index/' + useRoute().params.id + '/parent', {
+  const isError = ref(false);
+  await $fetch(useAppConfig().wekoApi + '/tree/index/' + route.params.id + '/parent', {
     timeout: useRuntimeConfig().public.apiTimeout,
     method: 'GET',
     credentials: 'omit',
@@ -254,7 +260,7 @@ async function getParentIndex() {
     },
     onResponseError({ response }) {
       statusCode = response.status;
-      if (statusCode === 401) {
+      if (statusCode === 401 || statusCode === 403) {
         // 認証エラー
         alertData.value = amsAlert.ID_INDEX_MESSAGE_ERROR_AUTH;
       } else if (statusCode >= 500 && statusCode < 600) {
@@ -265,14 +271,19 @@ async function getParentIndex() {
         alertData.value = amsAlert.ID_INDEX_MESSAGE_ERROR_GET_INDEX;
       }
       visibleAlert.value = true;
+      isError.value = true;
+      return;
     }
   }).catch(() => {
     if (statusCode === 0) {
       // fetchエラー
       alertData.value = amsAlert.ID_INDEX_MESSAGE_ERROR_FETCH;
       visibleAlert.value = true;
+      isError.value = true;
+      return;
     }
   });
+  return !isError.value;
 }
 
 /**
@@ -313,7 +324,7 @@ async function downloadResultList() {
     },
     onResponseError({ response }) {
       statusCode = response.status;
-      if (statusCode === 401) {
+      if (statusCode === 401 || statusCode === 403) {
         // 認証エラー
         alertData.value = amsAlert.ID_DOWNLOAD_MESSAGE_ERROR_AUTH;
       } else if (statusCode >= 500 && statusCode < 600) {
@@ -340,7 +351,10 @@ async function downloadResultList() {
 async function renderResult() {
   try {
     renderFlag.value = false;
-    await search();
+    const successSearch = await search();
+    if (!successSearch) {
+      return;
+    }
   } finally {
     nextTick(() => {
       renderFlag.value = true;
@@ -462,13 +476,23 @@ function setURL() {
 // main
 /////////////////////////////////// */
 
-try {
-  await search();
-  await getParentIndex();
-} catch (error) {
-  alertData.value = amsAlert.ID_MESSAGE_ERROR;
-  visibleAlert.value = true;
+async function init() {
+  try {
+    const successSearch = await search();
+    if (!successSearch) {
+      return;
+    }
+    const successGetIndex = await getParentIndex();
+    if (!successGetIndex) {
+      return;
+    }
+  } catch (error) {
+    alertData.value = amsAlert.ID_MESSAGE_ERROR;
+    visibleAlert.value = true;
+    return;
+  }
 }
+await init();
 
 /* ///////////////////////////////////
 // life cycle

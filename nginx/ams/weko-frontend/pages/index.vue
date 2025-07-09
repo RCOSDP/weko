@@ -92,113 +92,119 @@ function scrollToTop() {
 // main
 /////////////////////////////////// */
 
-try {
-  const query = useRoute().query;
-  const state = String(query.state);
+async function init() {
+  try {
+    const query = useRoute().query;
+    const state = String(query.state);
 
-  // Shibbolethログインの場合、TOP画面でOAuth認証を実行
-  const next = query.next === 'ams' ? 'ams' : '';
-  if (next === 'ams') {
-    const url = new URL(useAppConfig().wekoOrigin + '/oauth/authorize');
-    const random = Math.random().toString(36);
-    url.searchParams.append('response_type', 'code');
-    url.searchParams.append('client_id', useRuntimeConfig().public.clientId);
-    url.searchParams.append('scope', 'item:read index:read ranking:read file:read user:email');
-    url.searchParams.append('state', random);
-    sessionStorage.setItem('login:state', random);
-    window.open(url.href, '_self');
-  }
+    // Shibbolethログインの場合、TOP画面でOAuth認証を実行
+    const next = query.next === 'ams' ? 'ams' : '';
+    if (next === 'ams') {
+      const url = new URL(useAppConfig().wekoOrigin + '/oauth/authorize');
+      const random = Math.random().toString(36);
+      url.searchParams.append('response_type', 'code');
+      url.searchParams.append('client_id', useRuntimeConfig().public.clientId);
+      url.searchParams.append('scope', 'item:read index:read ranking:read file:read user:email');
+      url.searchParams.append('state', random);
+      sessionStorage.setItem('login:state', random);
+      window.open(url.href, '_self');
+    }
 
-  const baseURI = useRuntimeConfig().public.redirectURI;
-  const itemURL = sessionStorage.getItem('item-url');
-  const redirectURL = itemURL || baseURI;
+    const baseURI = useRuntimeConfig().public.redirectURI;
+    const itemURL = sessionStorage.getItem('item-url');
+    const redirectURL = itemURL || baseURI;
 
-  // アクセストークン取得
-  if (state) {
-    if (sessionStorage.getItem('login:state') === state) {
-      await useFetch(`${appConf.amsApi ?? '/api'}/token/create`, {
-        method: 'GET',
-        params: { code: String(query.code) }
-      })
-        .then((response) => {
-          if (response.status.value === 'success') {
-            const data: any = response.data.value;
-            localStorage.setItem('token:type', data.tokenType);
-            localStorage.setItem('token:access', data.accessToken);
-            localStorage.setItem('token:refresh', data.refreshToken);
-            localStorage.setItem('token:expires', data.expires);
-            localStorage.setItem('token:issue', String(Date.now()));
-          }
+    // アクセストークン取得
+    if (state) {
+      if (sessionStorage.getItem('login:state') === state) {
+        await useFetch(`${appConf.amsApi ?? '/api'}/token/create`, {
+          method: 'GET',
+          params: { code: String(query.code) }
         })
-        .finally(() => {
-          const params = new URLSearchParams(redirectURL.replace(baseURI, ''));
-          const number = params.get('number');
-          if (!number) {
-            useRouter().replace({ query: {} });
-          } else {
-            sessionStorage.removeItem('item-url');
-            useRouter().replace({
-              path: redirectURL,
-              query: {
-                sess: 'top',
-                number
-              }
-            });
-          }
-          setTimeout(() => {
-            location.reload();
-          }, 100);
-        });
+          .then((response) => {
+            if (response.status.value === 'success') {
+              const data: any = response.data.value;
+              localStorage.setItem('token:type', data.tokenType);
+              localStorage.setItem('token:access', data.accessToken);
+              localStorage.setItem('token:refresh', data.refreshToken);
+              localStorage.setItem('token:expires', data.expires);
+              localStorage.setItem('token:issue', String(Date.now()));
+            }
+          })
+          .finally(() => {
+            const params = new URLSearchParams(redirectURL.replace(baseURI, ''));
+            const number = params.get('number');
+            if (!number) {
+              useRouter().replace({ query: {} });
+            } else {
+              sessionStorage.removeItem('item-url');
+              useRouter().replace({
+                path: redirectURL,
+                query: {
+                  sess: 'top',
+                  number
+                }
+              });
+            }
+            setTimeout(() => {
+              location.reload();
+            }, 100);
+          });
+      }
     }
-  }
-  isRender.value = true;
+    isRender.value = true;
 
-  // 検索条件の初期化
-  sessionStorage.removeItem('conditions');
-  // 最新情報取得
-  let statusCode = 0;
-  await $fetch(useAppConfig().wekoApi + '/records', {
-    timeout: useRuntimeConfig().public.apiTimeout,
-    method: 'GET',
-    credentials: 'omit',
-    headers: {
-      'Cache-Control': 'no-store',
-      Pragma: 'no-cache',
-      'Accept-Language': localStorage.getItem('locale') ?? 'ja',
-      Authorization: localStorage.getItem('token:type') + ' ' + localStorage.getItem('token:access')
-    },
-    params: { size: '5', sort: '-publish_date' },
-    onResponse({ response }) {
-      if (response.status === 200) {
-        latestItem = response._data.search_results;
+    // 検索条件の初期化
+    sessionStorage.removeItem('conditions');
+    // 最新情報取得
+    let statusCode = 0;
+    await $fetch(useAppConfig().wekoApi + '/records', {
+      timeout: useRuntimeConfig().public.apiTimeout,
+      method: 'GET',
+      credentials: 'omit',
+      headers: {
+        'Cache-Control': 'no-store',
+        Pragma: 'no-cache',
+        'Accept-Language': localStorage.getItem('locale') ?? 'ja',
+        Authorization: localStorage.getItem('token:type') + ' ' + localStorage.getItem('token:access')
+      },
+      params: { size: '5', sort: '-publish_date' },
+      onResponse({ response }) {
+        if (response.status === 200) {
+          latestItem = response._data.search_results;
+        }
+      },
+      onResponseError({ response }) {
+        statusCode = response.status;
+        if (statusCode === 401 || statusCode === 403) {
+          // 認証エラー
+          alertData.value = amsAlert.INDEX_MESSAGE_ERROR_AUTH;
+        } else if (statusCode >= 500 && statusCode < 600) {
+          // サーバーエラー
+          alertData.value = amsAlert.INDEX_MESSAGE_ERROR_SERVER;
+        } else {
+          // リクエストエラー
+          alertData.value = amsAlert.INDEX_MESSAGE_ERROR_GET_LATEST_ITEM;
+        }
+        visibleAlert.value = true;
+        return;
       }
-    },
-    onResponseError({ response }) {
-      statusCode = response.status;
-      if (statusCode === 401) {
-        // 認証エラー
-        alertData.value = amsAlert.INDEX_MESSAGE_ERROR_AUTH;
-      } else if (statusCode >= 500 && statusCode < 600) {
-        // サーバーエラー
-        alertData.value = amsAlert.INDEX_MESSAGE_ERROR_SERVER;
-      } else {
-        // リクエストエラー
-        alertData.value = amsAlert.INDEX_MESSAGE_ERROR_GET_LATEST_ITEM;
+    }).catch(() => {
+      if (statusCode === 0) {
+        // fetchエラー
+        alertData.value = amsAlert.INDEX_MESSAGE_ERROR_FETCH;
+        visibleAlert.value = true;
+        return;
       }
-      visibleAlert.value = true;
-    }
-  }).catch(() => {
-    if (statusCode === 0) {
-      // fetchエラー
-      alertData.value = amsAlert.INDEX_MESSAGE_ERROR_FETCH;
-      visibleAlert.value = true;
-    }
-  });
-} catch (error) {
-  // 例外エラー
-  alertData.value = amsAlert.INDEX_MESSAGE_ERROR;
-  visibleAlert.value = true;
+    });
+  } catch (error) {
+    // 例外エラー
+    alertData.value = amsAlert.INDEX_MESSAGE_ERROR;
+    visibleAlert.value = true;
+    return;
+  }
 }
+await init();
 
 /* ///////////////////////////////////
 // life cycle

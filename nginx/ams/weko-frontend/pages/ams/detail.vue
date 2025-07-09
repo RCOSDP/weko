@@ -37,7 +37,7 @@
             <div v-if="oauthError">{{ $t('needToLogin') }}</div>
             <ItemContent v-if="renderFlag" :item="itemDetail" />
             <!-- 前/次 -->
-            <div v-if="!oauthError" class="pt-2.5 pb-28">
+            <div v-if="!isError" class="pt-2.5 pb-28">
               <Switcher
                 :sess="beforePage"
                 :prev-num="prevNum"
@@ -61,7 +61,7 @@
             </p>
           </div>
           <ViewsNumber
-            v-if="renderFlag && !oauthError"
+            v-if="renderFlag && !isError"
             :current-number="currentNumber"
             :created-date="createdDate"
             @error="setError" />
@@ -102,7 +102,7 @@
               {{ $t('detailDLRank') }}
             </p>
           </div>
-          <DownloadRank v-if="renderFlag" :current-number="currentNumber" @error="setError" />
+          <DownloadRank v-if="renderFlag && !isError" :current-number="currentNumber" @error="setError" />
           <!-- エクスポート -->
           <div class="bg-miby-light-blue py-3 pl-5">
             <p class="icons icon-export text-white font-bold">
@@ -209,6 +209,7 @@ const isLogin = !!sessionStorage.getItem('login:state');
 const checkMailAddress = ref(false);
 const oauthError = ref(false);
 let projectUrl = '';
+const isError = ref(false);
 
 /* ///////////////////////////////////
 // function
@@ -271,12 +272,14 @@ async function getDetail(number: string) {
         alertData.value = amsAlert.DETAIL_ITEM_MESSAGE_ERROR_GET_ITEM_DETAIL;
       }
       visibleAlert.value = true;
+      isError.value = true;
     }
   }).catch(() => {
-    if (statusCode === 0) {
+    if (!isError.value && statusCode === 0) {
       // fetchエラー
       alertData.value = amsAlert.DETAIL_ITEM_MESSAGE_ERROR_FETCH;
       visibleAlert.value = true;
+      isError.value = true;
     }
   });
 }
@@ -328,7 +331,7 @@ async function search(searchPage: string) {
       statusCode = response.status;
       switcherFlag.value = false;
       searchResult = [];
-      if (oauthError.value || statusCode === 401 || statusCode === 403) {
+      if (statusCode === 401 || statusCode === 403) {
         // 認証エラー
         if (isLogin) {
           alertData.value = amsAlert.DETAIL_SEARCH_MESSAGE_ERROR_AUTH;
@@ -344,12 +347,14 @@ async function search(searchPage: string) {
         alertData.value = amsAlert.DETAIL_SEARCH_MESSAGE_ERROR_GET_INDEX;
       }
       visibleAlert.value = true;
+      isError.value = true;
     }
   }).catch(() => {
     if (statusCode === 0) {
       // fetchエラー
       alertData.value = amsAlert.DETAIL_SEARCH_MESSAGE_ERROR_FETCH;
       visibleAlert.value = true;
+      isError.value = true;
     }
   });
 }
@@ -382,7 +387,7 @@ async function getParentIndex() {
     },
     onResponseError({ response }) {
       statusCode = response.status;
-      if (oauthError.value || statusCode === 401 || statusCode === 403) {
+      if (statusCode === 401 || statusCode === 403) {
         // 認証エラー
         if (isLogin) {
           alertData.value = amsAlert.DETAIL_INDEX_MESSAGE_ERROR_AUTH;
@@ -398,12 +403,14 @@ async function getParentIndex() {
         alertData.value = amsAlert.DETAIL_INDEX_MESSAGE_ERROR_GET_INDEX;
       }
       visibleAlert.value = true;
+      isError.value = true;
     }
   }).catch(() => {
     if (statusCode === 0) {
       // fetchエラー
       alertData.value = amsAlert.DETAIL_INDEX_MESSAGE_ERROR_FETCH;
       visibleAlert.value = true;
+      isError.value = true;
     }
   });
 }
@@ -515,16 +522,25 @@ async function changeDetail(value: string) {
     try {
       openLoading(true);
       await getDetail(String(prevNum.value));
+      if (isError.value) {
+        return;
+      }
       // REVIEW: pushでクエリを置き換える場合、ブラウザーバック対応をする
       useRouter().replace({
         query: { sess: beforePage, number: prevNum.value }
       });
       if (shift === 'shift-prev') {
         await setNumList(shift);
+        if (isError.value) {
+          return;
+        }
       }
       currentNumber = prevNum.value;
       shift = setSwitchNum();
       await getParentIndex();
+      if (isError.value) {
+        return;
+      }
       // 再レンダリング
       renderFlag.value = false;
       nextTick(() => {
@@ -548,16 +564,25 @@ async function changeDetail(value: string) {
     try {
       openLoading(true);
       await getDetail(String(nextNum.value));
+      if (isError.value) {
+        return;
+      }
       // REVIEW: pushでクエリを置き換える場合、ブラウザーバック対応をする
       useRouter().replace({
         query: { sess: beforePage, number: nextNum.value }
       });
       if (shift === 'shift-next') {
         await setNumList(shift);
+        if (isError.value) {
+          return;
+        }
       }
       currentNumber = nextNum.value;
       shift = setSwitchNum();
       await getParentIndex();
+      if (isError.value) {
+        return;
+      }
       // 再レンダリング
       renderFlag.value = false;
       nextTick(() => {
@@ -763,20 +788,36 @@ function findProjectURL(itemDetail: any) {
 // main
 /////////////////////////////////// */
 
-try {
-  beforePage = String(query.sess);
-  currentNumber = Number(query.number);
-  await getDetail(String(currentNumber) ?? '0');
-  switcherFlag.value = setConditions(beforePage);
-  if (switcherFlag.value) {
-    await setNumList('initial');
-    shift = setSwitchNum();
+async function init() {
+  isError.value = false;
+  try {
+    beforePage = String(query.sess);
+    currentNumber = Number(query.number);
+    await getDetail(String(currentNumber) ?? '0');
+    if (isError.value) {
+      return;
+    }
+    switcherFlag.value = setConditions(beforePage);
+    if (switcherFlag.value) {
+      await setNumList('initial');
+      shift = setSwitchNum();
+      if (isError.value) {
+        return;
+      }
+    }
+    await getParentIndex();
+    if (isError.value) {
+      return;
+    }
+  } catch (error) {
+    alertData.value = amsAlert.DETAIL_MESSAGE_ERROR;
+    visibleAlert.value = true;
+    if (isError.value) {
+      return;
+    }
   }
-  await getParentIndex();
-} catch (error) {
-  alertData.value = amsAlert.DETAIL_MESSAGE_ERROR;
-  visibleAlert.value = true;
 }
+await init();
 
 /* ///////////////////////////////////
 // life cycle

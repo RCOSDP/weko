@@ -172,6 +172,7 @@
                     </thead>
                     <tbody v-if="filteredList.length && renderFlag">
                       <TableStyle
+                        v-if="!isError"
                         v-for="file in divideFileList[Number(currentPage) - 1]"
                         :key="file"
                         :file="file"
@@ -252,6 +253,7 @@ let isAllCheck = false;
 let filterColumnList = JSON.parse(JSON.stringify(FilterColumn));
 const filterList = ref<any[]>([]);
 let url = '';
+const isError = ref(false);
 
 /* ///////////////////////////////////
 // function
@@ -304,7 +306,7 @@ async function getFiles(number: string) {
     },
     onResponseError({ response }) {
       statusCode = response.status;
-      if (statusCode === 401) {
+      if (statusCode === 401 || statusCode === 403) {
         // 認証エラー
         alertData.value = amsAlert.FILES_DETAIL_MESSAGE_ERROR_AUTH;
       } else if (statusCode >= 500 && statusCode < 600) {
@@ -315,14 +317,19 @@ async function getFiles(number: string) {
         alertData.value = amsAlert.FILES_DETAIL_MESSAGE_ERROR_GET_ITEM_DETAIL;
       }
       visibleAlert.value = true;
+      isError.value = true;
+      return;
     }
   }).catch(() => {
     if (statusCode === 0) {
       // fetchエラー
       alertData.value = amsAlert.FILES_DETAIL_MESSAGE_ERROR_FETCH;
       visibleAlert.value = true;
+      isError.value = true;
+      return;
     }
   });
+  return !isError.value;
 }
 
 /**
@@ -353,7 +360,7 @@ function downloadFilesAll() {
       },
       onResponseError({ response }) {
         statusCode = response.status;
-        if (statusCode === 401) {
+        if (statusCode === 401 || statusCode === 403) {
           // 認証エラー
           alertData.value = amsAlert.FILES_ALL_MESSAGE_ERROR_AUTH;
         } else if (statusCode >= 500 && statusCode < 600) {
@@ -364,12 +371,14 @@ function downloadFilesAll() {
           alertData.value = amsAlert.FILES_ALL_MESSAGE_ERROR_DOWNLOAD_ALL;
         }
         visibleAlert.value = true;
+        return;
       }
     }).catch(() => {
       if (statusCode === 0) {
         // fetchエラー
         alertData.value = amsAlert.FILES_ALL_MESSAGE_ERROR_FETCH;
         visibleAlert.value = true;
+        return;
       }
     });
   } else {
@@ -411,7 +420,7 @@ function downloadFilesSelected(filesList: string[]) {
     },
     onResponseError({ response }) {
       statusCode = response.status;
-      if (statusCode === 401) {
+      if (statusCode === 401 || statusCode === 403) {
         // 認証エラー
         alertData.value = amsAlert.FILES_SELECT_MESSAGE_ERROR_AUTH;
       } else if (statusCode >= 500 && statusCode < 600) {
@@ -742,14 +751,22 @@ function setFileInfo(info: any) {
 // main
 /////////////////////////////////// */
 
-try {
-  await getFiles(String(query.number));
-  divideList(filteredList.value);
-  setSpanList();
-} catch (error) {
-  alertData.value = amsAlert.FILES_MESSAGE_ERROR;
-  visibleAlert.value = true;
+async function init() {
+  isError.value = false;
+  try {
+    const successGetFiles = await getFiles(String(query.number));
+    if (!successGetFiles) {
+      return;
+    }
+    divideList(filteredList.value);
+    setSpanList();
+  } catch (error) {
+    alertData.value = amsAlert.FILES_MESSAGE_ERROR;
+    visibleAlert.value = true;
+    return;
+  }
 }
+await init();
 
 /* ///////////////////////////////////
 // life cycle
