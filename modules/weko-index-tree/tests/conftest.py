@@ -71,6 +71,7 @@ from invenio_oauth2server.models import Client, Token
 from invenio_pidrelations import InvenioPIDRelations
 from invenio_records import InvenioRecords
 from invenio_search import InvenioSearch
+from invenio_search_ui import InvenioSearchUI
 from sqlalchemy_utils.functions import create_database, database_exists, drop_database
 from simplekv.memory.redisstore import RedisStore
 from invenio_oaiharvester.models import HarvestSettings
@@ -457,6 +458,7 @@ def base_app(instance_path):
     InvenioCache(app_)
     InvenioJSONSchemas(app_)
     InvenioSearch(app_)
+    InvenioSearchUI(app_)
     InvenioRecords(app_)
     InvenioIndexer(app_)
     InvenioI18N(app_)
