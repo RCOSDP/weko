@@ -101,9 +101,11 @@ def test_IndexEditSettingView(app, db, location, users, id, status_code):
                     index_id=0,
                     lang_code='en'
                 )
-        with pytest.raises(Exception) as e:
-            res = client.get(url_for('indexedit.index'))
-        assert e.type==TemplateNotFound
+
+        with patch('weko_index_tree.admin.sync_shib_gakunin_map_groups') as mock_sync:
+            with pytest.raises(Exception) as e:
+                res = client.get(url_for('indexedit.index'))
+            assert e.type==TemplateNotFound
 
         with pytest.raises(Exception) as e:
             res = client.post(url_for('indexedit.upload_image'), data=dict(uploadFile=_file1))
