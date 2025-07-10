@@ -306,7 +306,7 @@ async function getFiles(number: string) {
     },
     onResponseError({ response }) {
       statusCode = response.status;
-      if (statusCode === 401 || statusCode === 403) {
+      if (statusCode === 401) {
         // 認証エラー
         alertData.value = amsAlert.FILES_DETAIL_MESSAGE_ERROR_AUTH;
       } else if (statusCode >= 500 && statusCode < 600) {
@@ -360,7 +360,7 @@ function downloadFilesAll() {
       },
       onResponseError({ response }) {
         statusCode = response.status;
-        if (statusCode === 401 || statusCode === 403) {
+        if (statusCode === 401) {
           // 認証エラー
           alertData.value = amsAlert.FILES_ALL_MESSAGE_ERROR_AUTH;
         } else if (statusCode >= 500 && statusCode < 600) {
@@ -420,7 +420,7 @@ function downloadFilesSelected(filesList: string[]) {
     },
     onResponseError({ response }) {
       statusCode = response.status;
-      if (statusCode === 401 || statusCode === 403) {
+      if (statusCode === 401) {
         // 認証エラー
         alertData.value = amsAlert.FILES_SELECT_MESSAGE_ERROR_AUTH;
       } else if (statusCode >= 500 && statusCode < 600) {

@@ -205,7 +205,7 @@ const alertData = ref({
   loglevel: 'info'
 });
 const isLoading = ref(true);
-const isLogin = !!sessionStorage.getItem('login:state');
+const isLogin = !!localStorage.getItem('token:access');
 const checkMailAddress = ref(false);
 const oauthError = ref(false);
 let projectUrl = '';
@@ -256,14 +256,13 @@ async function getDetail(number: string) {
     },
     onResponseError({ response }) {
       statusCode = response.status;
-      if (statusCode === 401 || statusCode === 403) {
+      if (statusCode === 401) {
         // 認証エラー
-        if (isLogin) {
-          alertData.value = amsAlert.DETAIL_ITEM_MESSAGE_ERROR_AUTH;
-        } else {
-          alertData.value = amsAlert.DETAIL_ITEM_MESSAGE_OAUTH_ERROR;
-          oauthErrorRedirect();
-        }
+        alertData.value = amsAlert.DETAIL_ITEM_MESSAGE_OAUTH_ERROR;
+        oauthErrorRedirect();
+      } else if (statusCode === 403 && isLogin) {
+        // アクセス権限エラー
+        alertData.value = amsAlert.DETAIL_ITEM_MESSAGE_ERROR_AUTH;
       } else if (statusCode >= 500 && statusCode < 600) {
         // サーバーエラー
         alertData.value = amsAlert.DETAIL_ITEM_MESSAGE_ERROR_SERVER;
@@ -331,14 +330,13 @@ async function search(searchPage: string) {
       statusCode = response.status;
       switcherFlag.value = false;
       searchResult = [];
-      if (statusCode === 401 || statusCode === 403) {
+      if (statusCode === 401) {
         // 認証エラー
-        if (isLogin) {
-          alertData.value = amsAlert.DETAIL_SEARCH_MESSAGE_ERROR_AUTH;
-        } else {
-          alertData.value = amsAlert.DETAIL_SEARCH_MESSAGE_OAUTH_ERROR;
-          oauthErrorRedirect();
-        }
+        alertData.value = amsAlert.DETAIL_SEARCH_MESSAGE_OAUTH_ERROR;
+        oauthErrorRedirect();
+      } else if (statusCode === 403 && isLogin) {
+        // アクセス権限エラー
+        alertData.value = amsAlert.DETAIL_SEARCH_MESSAGE_ERROR_AUTH;
       } else if (statusCode >= 500 && statusCode < 600) {
         // サーバーエラー
         alertData.value = amsAlert.DETAIL_SEARCH_MESSAGE_ERROR_SERVER;
@@ -387,14 +385,13 @@ async function getParentIndex() {
     },
     onResponseError({ response }) {
       statusCode = response.status;
-      if (statusCode === 401 || statusCode === 403) {
+      if (statusCode === 401) {
         // 認証エラー
-        if (isLogin) {
-          alertData.value = amsAlert.DETAIL_INDEX_MESSAGE_ERROR_AUTH;
-        } else {
-          alertData.value = amsAlert.DETAIL_INDEX_MESSAGE_OAUTH_ERROR;
-          oauthErrorRedirect();
-        }
+        alertData.value = amsAlert.DETAIL_INDEX_MESSAGE_OAUTH_ERROR;
+        oauthErrorRedirect();
+      } else if (statusCode === 403 && isLogin) {
+        // アクセス権限エラー
+        alertData.value = amsAlert.DETAIL_INDEX_MESSAGE_ERROR_AUTH;
       } else if (statusCode >= 500 && statusCode < 600) {
         // サーバーエラー
         alertData.value = amsAlert.DETAIL_INDEX_MESSAGE_ERROR_SERVER;

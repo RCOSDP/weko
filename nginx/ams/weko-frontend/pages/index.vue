@@ -176,7 +176,7 @@ async function init() {
       },
       onResponseError({ response }) {
         statusCode = response.status;
-        if (statusCode === 401 || statusCode === 403) {
+        if (statusCode === 401) {
           // 認証エラー
           alertData.value = amsAlert.INDEX_MESSAGE_ERROR_AUTH;
         } else if (statusCode >= 500 && statusCode < 600) {

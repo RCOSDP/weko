@@ -26,6 +26,7 @@ import traceback
 from flask import Blueprint, current_app, jsonify, make_response, request, Response
 from flask_babelex import get_locale
 from flask_babelex import gettext as _
+from flask_login import current_user
 from werkzeug.http import generate_etag
 from redis import RedisError
 from invenio_oauth2server import require_api_auth, require_oauth_scopes
@@ -53,8 +54,11 @@ from weko_workflow.utils import  check_pretty
 
 from .views import escape_str
 from .permissions import page_permission_factory, file_permission_factory
-from .errors import AvailableFilesNotFoundRESTError, ContentsNotFoundError, InvalidRequestError, VersionNotFoundRESTError, InternalServerError, \
-    RecordsNotFoundRESTError, PermissionError, DateFormatRESTError, FilesNotFoundRESTError, ModeNotFoundRESTError, RequiredItemNotExistError
+from .errors import AvailableFilesNotFoundRESTError, ContentsNotFoundError, \
+    InvalidRequestError, VersionNotFoundRESTError, InternalServerError, \
+    RecordsNotFoundRESTError, PermissionError, DateFormatRESTError, \
+    FilesNotFoundRESTError, ModeNotFoundRESTError, RequiredItemNotExistError, \
+    AuthenticationRequiredError
 from .scopes import file_read_scope
 
 
@@ -343,7 +347,10 @@ class WekoRecordsResource(ContentNegotiatedMethodView):
 
             # Check Permission
             if not page_permission_factory(record).can():
-                raise PermissionError()
+                if current_user.is_authenticated:
+                    raise PermissionError()
+                else:
+                    raise AuthenticationRequiredError()
 
             # Convert RO-Crate format
             from .utils import RoCrateConverter
@@ -388,8 +395,10 @@ class WekoRecordsResource(ContentNegotiatedMethodView):
 
             return res
 
-        except (PermissionError, SameContentException) as e:
-            raise e
+        except (PermissionError,
+                SameContentException,
+                AuthenticationRequiredError) as e:
+                raise e
 
         except PIDDoesNotExistError:
             raise RecordsNotFoundRESTError()
@@ -530,7 +539,7 @@ class WekoRecordsStats(ContentNegotiatedMethodView):
 
             # Check Permission
             if not page_permission_factory(record).can():
-                raise PermissionError()
+                    raise PermissionError()
 
             # Get date param
             date = request.values.get('date', type=str)

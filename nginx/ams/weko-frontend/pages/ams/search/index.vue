@@ -364,7 +364,7 @@ async function search() {
     },
     onResponseError({ response }) {
       statusCode = response.status;
-      if (statusCode === 401 || statusCode === 403) {
+      if (statusCode === 401) {
         // 認証エラー
         alertData.value = amsAlert.SEARCH_ITEM_MESSAGE_ERROR_AUTH;
       } else if (statusCode >= 500 && statusCode < 600) {
@@ -556,7 +556,7 @@ async function downloadResultList() {
     },
     onResponseError({ response }) {
       statusCode = response.status;
-      if (statusCode === 401 || statusCode === 403) {
+      if (statusCode === 401) {
         // 認証エラー
         alertData.value = amsAlert.SEARCH_DOWNLOAD_MESSAGE_ERROR_AUTH;
       } else if (statusCode >= 500 && statusCode < 600) {

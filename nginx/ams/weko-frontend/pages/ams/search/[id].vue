@@ -205,7 +205,7 @@ async function search() {
     },
     onResponseError({ response }) {
       statusCode = response.status;
-      if (statusCode === 401 || statusCode === 403) {
+      if (statusCode === 401) {
         // 認証エラー
         alertData.value = amsAlert.ID_SEARCH_MESSAGE_ERROR_AUTH;
       } else if (statusCode >= 500 && statusCode < 600) {
@@ -260,7 +260,7 @@ async function getParentIndex() {
     },
     onResponseError({ response }) {
       statusCode = response.status;
-      if (statusCode === 401 || statusCode === 403) {
+      if (statusCode === 401) {
         // 認証エラー
         alertData.value = amsAlert.ID_INDEX_MESSAGE_ERROR_AUTH;
       } else if (statusCode >= 500 && statusCode < 600) {
@@ -324,7 +324,7 @@ async function downloadResultList() {
     },
     onResponseError({ response }) {
       statusCode = response.status;
-      if (statusCode === 401 || statusCode === 403) {
+      if (statusCode === 401) {
         // 認証エラー
         alertData.value = amsAlert.ID_DOWNLOAD_MESSAGE_ERROR_AUTH;
       } else if (statusCode >= 500 && statusCode < 600) {
