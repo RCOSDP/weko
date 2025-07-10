@@ -29,7 +29,7 @@ import traceback
 
 from b2handle.clientcredentials import PIDClientCredentials
 from redis.exceptions import RedisError
-from flask import current_app, json, request, url_for
+from flask import current_app, json, request
 from flask_babelex import gettext as _
 from flask_login import current_user
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
@@ -2086,8 +2086,7 @@ class Indexes(object):
         :param indexid: index id.
         :return: cnri, index_url
         """
-        index_url = url_for('invenio_search_ui.search',
-                            search_type=2, q=indexid, _external=True)
+        index_url = request.host_url.rstrip('/') + "/search?search_type=2&q=" + str(indexid)
         credential = PIDClientCredentials.load_from_JSON(
             current_app.config.get('WEKO_HANDLE_CREDS_JSON_PATH')
         )
