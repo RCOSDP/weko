@@ -288,14 +288,124 @@ sample = OpenSearchDetailData(
 
 # class OpenSearchDetailData:
 #     def output_open_search_detail_data(self): 
+# .tox/c1/bin/pytest --cov=weko_records tests/test_serializers_utils.py::test_output_open_search_detail_data -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
 def test_output_open_search_detail_data(app):
-    with app.test_request_context():
-        assert_str = '<title xmlns="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:opensearch="http://a9.com/-/spec/opensearch/1.1/" xmlns:prism="http://prismstandard.org/namespaces/basic/2.0/"  xmlns:wekolog="http://wekolog.org/namespaces/basic/1.0/">WEKO OpenSearch : </title>'
-        res = sample.output_open_search_detail_data()
-        _tree = etree.fromstring(res)
-        _record = str(etree.tostring(_tree.findall('title', namespaces=_tree.nsmap)[0]),"utf-8").replace('\n  ', '')
-        assert _record == str(etree.tostring(etree.fromstring(assert_str)),"utf-8")
+    item_map = {
+        'volume.@value': 'item_1617186959569.subitem_1551256328147',
+        'issue.@value': 'item_1617186981471.subitem_1551256294723',
+        'pageStart.@value': 'item_1617187024783.subitem_1551256198917',
+        'pageEnd.@value': 'item_1617187045071.subitem_1551256185532',
+    }
+    item_metadata = {
+        'item_type_id': '1',
+        'item_title': 'test',
+        'control_number': '1',
+        'path': ['1'],
+        'item_1617186959569': {'attribute_name': 'Volume Number', 'attribute_value_mlt': [{'subitem_1551256328147': '21'}]},
+        'item_1617186981471': {'attribute_name': 'Issue Number', 'attribute_value_mlt': [{'subitem_1551256294723': '13'}]},
+        'item_1617187024783': {'attribute_name': 'Page Start', 'attribute_value_mlt': [{'subitem_1551256198917': '167'}]},
+        'item_1617187045071': {'attribute_name': 'Page End', 'attribute_value_mlt': [{'subitem_1551256185532': '223'}]},
+        'pubdate': {'attribute_name': 'PubDate', 'attribute_value': '2025-06-01'},
+    }
+    hit = {
+        '_source': {
+            '_item_metadata': item_metadata,
+            '_oai': {'id': 'dummy_oai'},
+            'itemtype': 'dummy_itemtype',
+            '_created': None,
+            '_updated': None,
+        }
+    }
+    with patch("weko_records.api.Mapping.get_record", return_value={}), \
+         patch("weko_records.serializers.utils.get_mapping", return_value=item_map), \
+         patch("weko_records.serializers.utils.get_metadata_from_map", side_effect=[
+             {'item_1617186959569.subitem_1551256328147': ['21']},   # volume
+             {'item_1617186981471.subitem_1551256294723': ['13']},   # issue
+             {'item_1617187024783.subitem_1551256198917': ['167']},  # pageStart
+             {'item_1617187045071.subitem_1551256185532': ['223']},  # pageEnd
+         ]), \
+         patch("weko_records.serializers.utils.Index.query") as mock_index_query:
+        mock_index_query.filter_by.return_value.one_or_none.return_value = MagicMock(index_name='dummy_index', index_name_english='dummy_index_en')
+        sample_copy = copy.deepcopy(sample)
+        with app.test_request_context():
+            sample_copy.search_result = {'hits': {'total': 1, 'hits': [hit]}}
+            sample_copy.output_type = "atom"
+            xml = sample_copy.output_open_search_detail_data()
+            assert b'<prism:volume>21</prism:volume>' in xml
+            assert b'<prism:number>13</prism:number>' in xml
+            assert b'<prism:startingPage>167</prism:startingPage>' in xml
+            assert b'<prism:endingPage>223</prism:endingPage>' in xml
 
+@pytest.mark.parametrize(
+    "item_map, item_metadata_key, xml_tag",
+    [
+        ({'volume.@value': 'volume_key'}, 'volume_key', 'prism:volume'),
+        ({'issue.@value': 'issue_key'}, 'issue_key', 'prism:number'),
+        ({'pageStart.@value': 'page_start_key'}, 'page_start_key', 'prism:startingPage'),
+        ({'pageEnd.@value': 'page_end_key'}, 'page_end_key', 'prism:endingPage'),
+    ]
+)
+
+# .tox/c1/bin/pytest --cov=weko_records tests/test_serializers_utils.py::test_output_open_search_detail_data_field_false -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
+def test_output_open_search_detail_data_field_false(app, item_map, item_metadata_key, xml_tag):
+    # item_id does not exist in item_metadata
+    item_metadata = {
+        'item_type_id': '1',
+        'item_title': 'test',
+        'control_number': '1',
+        'path': ['1'],
+        'pubdate': {'attribute_name': 'PubDate', 'attribute_value': '2025-06-01'},
+    }
+    hit = {
+        '_source': {
+            '_item_metadata': item_metadata,
+            '_oai': {'id': 'dummy_oai'},
+            'itemtype': 'dummy_itemtype',
+            '_created': None,
+            '_updated': None,
+        }
+    }
+    with patch("weko_records.api.Mapping.get_record", return_value={}), \
+         patch("weko_records.serializers.utils.get_mapping", return_value=item_map), \
+         patch("weko_records.serializers.utils.get_metadata_from_map", return_value={item_metadata_key: ['val']}), \
+         patch("weko_records.serializers.utils.Index.query") as mock_index_query:
+        mock_index_query.filter_by.return_value.one_or_none.return_value = MagicMock(index_name='dummy_index', index_name_english='dummy_index_en')
+        sample_copy = copy.deepcopy(sample)
+        with app.test_request_context():
+            sample_copy.search_result = {'hits': {'total': 1, 'hits': [hit]}}
+            sample_copy.output_type = "atom"
+            xml = sample_copy.output_open_search_detail_data()
+            assert f'<{xml_tag}>' not in xml.decode()
+
+    # get_metadata_from_map returns a non-dict value
+    item_metadata2 = dict(item_metadata)
+    item_metadata2[item_metadata_key.split('.')[0]] = {'attribute_name': 'dummy', 'attribute_value_mlt': [{'dummy': 'val'}]}
+    hit2 = copy.deepcopy(hit)
+    hit2['_source']['_item_metadata'] = item_metadata2
+    with patch("weko_records.api.Mapping.get_record", return_value={}), \
+         patch("weko_records.serializers.utils.get_mapping", return_value=item_map), \
+         patch("weko_records.serializers.utils.get_metadata_from_map", return_value=None), \
+         patch("weko_records.serializers.utils.Index.query") as mock_index_query:
+        mock_index_query.filter_by.return_value.one_or_none.return_value = MagicMock(index_name='dummy_index', index_name_english='dummy_index_en')
+        sample_copy = copy.deepcopy(sample)
+        with app.test_request_context():
+            sample_copy.search_result = {'hits': {'total': 1, 'hits': [hit2]}}
+            sample_copy.output_type = "atom"
+            xml = sample_copy.output_open_search_detail_data()
+            assert f'<{xml_tag}>' not in xml.decode()
+
+    # get_metadata_from_map returns a string value
+    with patch("weko_records.api.Mapping.get_record", return_value={}), \
+         patch("weko_records.serializers.utils.get_mapping", return_value=item_map), \
+        patch("weko_records.serializers.utils.get_metadata_from_map", return_value={item_metadata_key: 'abc'}), \
+        patch("weko_records.serializers.utils.Index.query") as mock_index_query:
+        mock_index_query.filter_by.return_value.one_or_none.return_value = MagicMock(index_name='dummy_index', index_name_english='dummy_index_en')
+        sample_copy = copy.deepcopy(sample)
+        with app.test_request_context():
+            sample_copy.search_result = {'hits': {'total': 1, 'hits': [hit2]}}
+            sample_copy.output_type = "atom"
+            xml = sample_copy.output_open_search_detail_data()
+            assert f'<{xml_tag}>abc</{xml_tag}>'.encode() in xml
 
 #     def _set_publication_date(self, fe, item_map, item_metadata):
 def test__set_publication_date(app):
@@ -479,5 +589,3 @@ def test__set_description(app):
 
     with patch("weko_records_ui.utils.get_pair_value", return_value=data1):
         assert sample_copy._set_description(fe=fe, item_map=item_map, item_metadata=item_metadata, request_lang=request_lang) == None
-
-
