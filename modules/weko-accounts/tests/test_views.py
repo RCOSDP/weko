@@ -495,7 +495,7 @@ def test_confirm_user_without_page(client,redis_connect,mocker):
     # not exist cache_key(AMS)
     mock_redirect_ = mocker.patch("weko_accounts.views._redirect_method",
                                   return_value=make_response())
-    client.get(url+"?next=ams")
+    client.get(url, query_string={"next":"ams","Shib-Session-ID":"2222"})
     mock_redirect_.assert_called_once()
     called_args, called_kwargs = mock_redirect_.call_args
     assert called_args[0] is True
@@ -512,7 +512,7 @@ def test_confirm_user_without_page(client,redis_connect,mocker):
     redis_connect.put("Shib-Session-1111",bytes("","utf-8"))
     mock_redirect_ = mocker.patch("weko_accounts.views._redirect_method",
                                   return_value=make_response())
-    client.get(url+"?next=ams")
+    client.get(url, query_string={"next":"ams","Shib-Session-ID":"1111"})
     mock_redirect_.assert_called_once()
     called_args, called_kwargs = mock_redirect_.call_args
     assert called_args[0] is True
@@ -577,7 +577,7 @@ def test_confirm_user_without_page(client,redis_connect,mocker):
             redis_connect.put("Shib-Session-1111",bytes('{"shib_eppn":"test_eppn"}',"utf-8"))
             mock_redirect_ = mocker.patch("weko_accounts.views._redirect_method",
                                           return_value=make_response())
-            client.get(url+"?next=ams")
+            client.get(url, query_string={"next":"ams","Shib-Session-ID":"1111"})
             mock_redirect_.assert_called_once()
             called_args, called_kwargs = mock_redirect_.call_args
             assert called_args[0] is True
@@ -588,7 +588,7 @@ def test_confirm_user_without_page(client,redis_connect,mocker):
                 redis_connect.put("Shib-Session-1111",bytes('{"shib_eppn":"test_eppn"}',"utf-8"))
                 mock_redirect_ = mocker.patch("weko_accounts.views._redirect_method",
                                               return_value=make_response())
-                client.get(url+"?next=ams")
+                client.get(url, query_string={"next":"ams","Shib-Session-ID":"1111"})
                 mock_redirect_.assert_called_once()
                 called_args, called_kwargs = mock_redirect_.call_args
                 assert called_args[0] is True
@@ -601,7 +601,7 @@ def test_confirm_user_without_page(client,redis_connect,mocker):
                 with patch("weko_accounts.views.ShibUser",return_value=shibuser):
                     mock_redirect = mocker.patch("weko_accounts.views.redirect",
                                                  return_value=make_response())
-                    client.get(url+"?next=ams")
+                    client.get(url, query_string={"next":"ams","Shib-Session-ID":"1111"})
                     called_args, _ = mock_redirect.call_args
                     mock_redirect.assert_called_with("/?next=ams")
                     assert redis_connect.redis.exists("Shib-Session-1111") is False
@@ -615,7 +615,7 @@ def test_confirm_user_without_page(client,redis_connect,mocker):
                 with patch("weko_accounts.views.ShibUser",return_value=shibuser):
                     mock_redirect = mocker.patch("weko_accounts.views.redirect",
                                                  return_value=make_response())
-                    client.get(url+"?next=ams")
+                    client.get(url, query_string={"next":"ams","Shib-Session-ID":"1111"})
                     called_args, _ = mock_redirect.call_args
                     mock_redirect.assert_called_with("/?next=ams")
                     assert redis_connect.redis.exists("Shib-Session-1111") is False
@@ -628,7 +628,7 @@ def test_confirm_user_without_page(client,redis_connect,mocker):
                 with patch("weko_accounts.views.ShibUser",return_value=shibuser):
                     mock_redirect = mocker.patch("weko_accounts.views.redirect",
                                                  return_value=make_response())
-                    client.get(url+"?next=ams")
+                    client.get(url, query_string={"next":"ams","Shib-Session-ID":"1111"})
                     called_args, _ = mock_redirect.call_args
                     mock_redirect.assert_called_with("/?next=ams")
                     assert redis_connect.redis.exists("Shib-Session-1111") is False
@@ -641,7 +641,7 @@ def test_confirm_user_without_page(client,redis_connect,mocker):
     mock_redirect_ = mocker.patch("weko_accounts.views._redirect_method",
                                   return_value=make_response())
     with patch("weko_accounts.views.RedisConnection",side_effect=BaseException("test_error")):
-        res = client.get(url+"?next=ams")
+        client.get(url, query_string={"next":"ams","Shib-Session-ID":"1111"})
         mock_redirect_.assert_called_once()
         called_args, called_kwargs = mock_redirect_.call_args
         assert called_args[0] is True
