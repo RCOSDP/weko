@@ -170,9 +170,8 @@
                         <th class="w-3/12">{{ $t('comment') }}</th>
                       </tr>
                     </thead>
-                    <tbody v-if="filteredList.length && renderFlag">
+                    <tbody v-if="filteredList.length && renderFlag && !isError">
                       <TableStyle
-                        v-if="!isError"
                         v-for="file in divideFileList[Number(currentPage) - 1]"
                         :key="file"
                         :file="file"
@@ -306,27 +305,27 @@ async function getFiles(number: string) {
     },
     onResponseError({ response }) {
       statusCode = response.status;
-      if (statusCode === 401) {
-        // 認証エラー
-        alertData.value = amsAlert.FILES_DETAIL_MESSAGE_ERROR_AUTH;
-      } else if (statusCode >= 500 && statusCode < 600) {
-        // サーバーエラー
-        alertData.value = amsAlert.FILES_DETAIL_MESSAGE_ERROR_SERVER;
-      } else {
-        // リクエストエラー
-        alertData.value = amsAlert.FILES_DETAIL_MESSAGE_ERROR_GET_ITEM_DETAIL;
+      if (!isError.value) {
+        if (statusCode === 401) {
+          // 認証エラー
+          alertData.value = amsAlert.FILES_DETAIL_MESSAGE_ERROR_AUTH;
+        } else if (statusCode >= 500 && statusCode < 600) {
+          // サーバーエラー
+          alertData.value = amsAlert.FILES_DETAIL_MESSAGE_ERROR_SERVER;
+        } else {
+          // リクエストエラー
+          alertData.value = amsAlert.FILES_DETAIL_MESSAGE_ERROR_GET_ITEM_DETAIL;
+        }
+        visibleAlert.value = true;
+        isError.value = true;
       }
-      visibleAlert.value = true;
-      isError.value = true;
-      return;
     }
   }).catch(() => {
-    if (statusCode === 0) {
+    if (statusCode === 0 && !isError.value) {
       // fetchエラー
       alertData.value = amsAlert.FILES_DETAIL_MESSAGE_ERROR_FETCH;
       visibleAlert.value = true;
       isError.value = true;
-      return;
     }
   });
   return !isError.value;
@@ -360,25 +359,25 @@ function downloadFilesAll() {
       },
       onResponseError({ response }) {
         statusCode = response.status;
-        if (statusCode === 401) {
-          // 認証エラー
-          alertData.value = amsAlert.FILES_ALL_MESSAGE_ERROR_AUTH;
-        } else if (statusCode >= 500 && statusCode < 600) {
-          // サーバーエラー
-          alertData.value = amsAlert.FILES_ALL_MESSAGE_ERROR_SERVER;
-        } else {
-          // リクエストエラー
-          alertData.value = amsAlert.FILES_ALL_MESSAGE_ERROR_DOWNLOAD_ALL;
+        if (!visibleAlert.value) {
+          if (statusCode === 401) {
+            // 認証エラー
+            alertData.value = amsAlert.FILES_ALL_MESSAGE_ERROR_AUTH;
+          } else if (statusCode >= 500 && statusCode < 600) {
+            // サーバーエラー
+            alertData.value = amsAlert.FILES_ALL_MESSAGE_ERROR_SERVER;
+          } else {
+            // リクエストエラー
+            alertData.value = amsAlert.FILES_ALL_MESSAGE_ERROR_DOWNLOAD_ALL;
+          }
+          visibleAlert.value = true;
         }
-        visibleAlert.value = true;
-        return;
       }
     }).catch(() => {
-      if (statusCode === 0) {
+      if (statusCode === 0 && !visibleAlert.value) {
         // fetchエラー
         alertData.value = amsAlert.FILES_ALL_MESSAGE_ERROR_FETCH;
         visibleAlert.value = true;
-        return;
       }
     });
   } else {
@@ -763,7 +762,6 @@ async function init() {
   } catch (error) {
     alertData.value = amsAlert.FILES_MESSAGE_ERROR;
     visibleAlert.value = true;
-    return;
   }
 }
 await init();

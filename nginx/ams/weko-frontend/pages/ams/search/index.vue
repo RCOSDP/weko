@@ -364,27 +364,27 @@ async function search() {
     },
     onResponseError({ response }) {
       statusCode = response.status;
-      if (statusCode === 401) {
-        // 認証エラー
-        alertData.value = amsAlert.SEARCH_ITEM_MESSAGE_ERROR_AUTH;
-      } else if (statusCode >= 500 && statusCode < 600) {
-        // サーバーエラー
-        alertData.value = amsAlert.SEARCH_ITEM_MESSAGE_ERROR_SERVER;
-      } else {
-        // リクエストエラー
-        alertData.value = amsAlert.SEARCH_ITEM_MESSAGE_ERROR_REQUEST;
+      if (!visibleAlert.value) {
+        if (statusCode === 401) {
+          // 認証エラー
+          alertData.value = amsAlert.SEARCH_ITEM_MESSAGE_ERROR_AUTH;
+        } else if (statusCode >= 500 && statusCode < 600) {
+          // サーバーエラー
+          alertData.value = amsAlert.SEARCH_ITEM_MESSAGE_ERROR_SERVER;
+        } else {
+          // リクエストエラー
+          alertData.value = amsAlert.SEARCH_ITEM_MESSAGE_ERROR_REQUEST;
+        }
+        visibleAlert.value = true;
+        isError.value = true;
       }
-      visibleAlert.value = true;
-      isError.value = true;
-      return;
     }
   }).catch(() => {
-    if (statusCode === 0) {
+    if (statusCode === 0 && !visibleAlert.value) {
       // fetchエラー
       alertData.value = amsAlert.SEARCH_ITEM_MESSAGE_ERROR_FETCH;
       visibleAlert.value = true;
       isError.value = true;
-      return;
     }
   });
   return !isError.value;
@@ -584,10 +584,7 @@ async function renderResult() {
   try {
     renderFlag.value = false;
     showFlagDict = reactive({});
-    const successSearch = await search();
-    if (!successSearch) {
-      return;
-    }
+    await search();
   } finally {
     nextTick(() => {
       renderFlag.value = true;
@@ -840,10 +837,7 @@ function reflectCopyFilter(key: any, value: any) {
 async function init() {
   try {
     checkExportURL();
-    const successSearch = await search();
-    if (!successSearch) {
-      return;
-    }
+    await search();
   } catch (error) {
     alertData.value = amsAlert.SEARCH_INDEX_MESSAGE_ERROR;
     visibleAlert.value = true;

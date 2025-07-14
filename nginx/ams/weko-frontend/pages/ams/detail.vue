@@ -385,25 +385,27 @@ async function getParentIndex() {
     },
     onResponseError({ response }) {
       statusCode = response.status;
-      if (statusCode === 401) {
-        // 認証エラー
-        alertData.value = amsAlert.DETAIL_INDEX_MESSAGE_OAUTH_ERROR;
-        oauthErrorRedirect();
-      } else if (statusCode === 403 && isLogin) {
-        // アクセス権限エラー
-        alertData.value = amsAlert.DETAIL_INDEX_MESSAGE_ERROR_AUTH;
-      } else if (statusCode >= 500 && statusCode < 600) {
-        // サーバーエラー
-        alertData.value = amsAlert.DETAIL_INDEX_MESSAGE_ERROR_SERVER;
-      } else {
-        // リクエストエラー
-        alertData.value = amsAlert.DETAIL_INDEX_MESSAGE_ERROR_GET_INDEX;
+      if (!isError.value) {
+        if (statusCode === 401) {
+          // 認証エラー
+          alertData.value = amsAlert.DETAIL_INDEX_MESSAGE_OAUTH_ERROR;
+          oauthErrorRedirect();
+        } else if (statusCode === 403 && isLogin) {
+          // アクセス権限エラー
+          alertData.value = amsAlert.DETAIL_INDEX_MESSAGE_ERROR_AUTH;
+        } else if (statusCode >= 500 && statusCode < 600) {
+          // サーバーエラー
+          alertData.value = amsAlert.DETAIL_INDEX_MESSAGE_ERROR_SERVER;
+        } else {
+          // リクエストエラー
+          alertData.value = amsAlert.DETAIL_INDEX_MESSAGE_ERROR_GET_INDEX;
+        }
+        visibleAlert.value = true;
+        isError.value = true;
       }
-      visibleAlert.value = true;
-      isError.value = true;
     }
   }).catch(() => {
-    if (statusCode === 0) {
+    if (statusCode === 0 && !isError.value) {
       // fetchエラー
       alertData.value = amsAlert.DETAIL_INDEX_MESSAGE_ERROR_FETCH;
       visibleAlert.value = true;
@@ -803,15 +805,9 @@ async function init() {
       }
     }
     await getParentIndex();
-    if (isError.value) {
-      return;
-    }
   } catch (error) {
     alertData.value = amsAlert.DETAIL_MESSAGE_ERROR;
     visibleAlert.value = true;
-    if (isError.value) {
-      return;
-    }
   }
 }
 await init();

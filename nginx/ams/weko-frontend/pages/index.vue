@@ -176,32 +176,33 @@ async function init() {
       },
       onResponseError({ response }) {
         statusCode = response.status;
-        if (statusCode === 401) {
-          // 認証エラー
-          alertData.value = amsAlert.INDEX_MESSAGE_ERROR_AUTH;
-        } else if (statusCode >= 500 && statusCode < 600) {
-          // サーバーエラー
-          alertData.value = amsAlert.INDEX_MESSAGE_ERROR_SERVER;
-        } else {
-          // リクエストエラー
-          alertData.value = amsAlert.INDEX_MESSAGE_ERROR_GET_LATEST_ITEM;
+        if (!visibleAlert.value) {
+          if (statusCode === 401) {
+            // 認証エラー
+            alertData.value = amsAlert.INDEX_MESSAGE_ERROR_AUTH;
+          } else if (statusCode >= 500 && statusCode < 600) {
+            // サーバーエラー
+            alertData.value = amsAlert.INDEX_MESSAGE_ERROR_SERVER;
+          } else {
+            // リクエストエラー
+            alertData.value = amsAlert.INDEX_MESSAGE_ERROR_GET_LATEST_ITEM;
+          }
+          visibleAlert.value = true;
         }
-        visibleAlert.value = true;
-        return;
       }
     }).catch(() => {
-      if (statusCode === 0) {
+      if (statusCode === 0 && !visibleAlert.value) {
         // fetchエラー
         alertData.value = amsAlert.INDEX_MESSAGE_ERROR_FETCH;
         visibleAlert.value = true;
-        return;
       }
     });
   } catch (error) {
     // 例外エラー
-    alertData.value = amsAlert.INDEX_MESSAGE_ERROR;
-    visibleAlert.value = true;
-    return;
+    if (!visibleAlert.value) {
+      alertData.value = amsAlert.INDEX_MESSAGE_ERROR;
+      visibleAlert.value = true;
+    }
   }
 }
 await init();
