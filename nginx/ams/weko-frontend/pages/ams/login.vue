@@ -339,11 +339,8 @@ onMounted(() => {
   if (wayfContainer && wayfContainer.parentNode) {
     const iframe = document.createElement('iframe');
 
-    // 本番とテスト環境を切り替える
-    const dsURL = 'https://ds.gakunin.nii.ac.jp/WAYF';
-    // const dsURL = 'https://test-ds.gakunin.nii.ac.jp/WAYF';
-
-    const webHostName = useAppConfig().wekoOrigin;
+    const shibLogin = appConf.shibLogin;
+    const webHostName = appConf.wekoOrigin;
     const entityID = webHostName + '/shibboleth';
     const handlerURL = webHostName + '/Shibboleth.sso';
     const returnURL = webHostName + '/secure/login.py?next=ams';
@@ -351,7 +348,14 @@ onMounted(() => {
     // iframe内に埋め込むHTML
     iframe.srcdoc = `
       <script>
-        window.wayf_URL = '${dsURL}';
+        window.wayf_additional_idps = [
+          {
+            'entityID': '${shibLogin.orthrosURL}',
+            'name': 'Orthros',
+            'search': ['${shibLogin.orthrosURL}', 'Orthros']
+          },
+        ];
+        window.wayf_URL = '${shibLogin.dsURL}';
         window.wayf_sp_entityID = '${entityID}';
         window.wayf_sp_handlerURL = '${handlerURL}';
         window.wayf_return_url = '${returnURL}';
@@ -369,14 +373,14 @@ onMounted(() => {
         window.wayf_show_categories = true;
         window.addEventListener('load', () => {
           let iHeight = document.documentElement.offsetHeight;
-          if (!'${dsURL}'.includes('test')) {
+          if (!'${shibLogin.dsURL}'.includes('test')) {
             const extraHeight = window.innerHeight * 0.3; // NOTE:テスト環境ではない場合、画面高さの30%を加算する
             iHeight += extraHeight;
           }
           window.parent.document.querySelector('iframe').style.height = iHeight + 'px';
         });
       <\/script>
-      <script src='${dsURL}/embedded-wayf.js'><\/script>
+      <script src='${shibLogin.dsURL}/embedded-wayf.js'><\/script>
       <noscript>
         <!--
         Fallback to Shibboleth DS session initiator for non-JavaScript users
