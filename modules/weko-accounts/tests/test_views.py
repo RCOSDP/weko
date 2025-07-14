@@ -474,9 +474,8 @@ def test_confirm_user_without_page(client,redis_connect,mocker):
     url = url_for("weko_accounts.confirm_user_without_page")
 
     # not exist shib_session_id
-    set_session(client,{"shib_session_id":None})
     mock_flash = mocker.patch("weko_accounts.views.flash")
-    client.get(url)
+    client.get(url, query_string={"Shib-Session-ID":None})
     mock_flash.assert_called_with("shib_session_id",category="error")
 
     # not exist shib_session_id(AMS)
@@ -489,9 +488,8 @@ def test_confirm_user_without_page(client,redis_connect,mocker):
     assert "Missing Shib-Session-ID!" in called_kwargs.get("ams_error", "")
 
     # not exist cache_key
-    set_session(client,{"shib_session_id":"2222"})
     mock_flash = mocker.patch("weko_accounts.views.flash")
-    client.get(url)
+    client.get(url, query_string={"Shib-Session-ID":"2222"})
     mock_flash.assert_called_with("cache_key",category="error")
 
     # not exist cache_key(AMS)
@@ -503,11 +501,10 @@ def test_confirm_user_without_page(client,redis_connect,mocker):
     assert called_args[0] is True
     assert "Missing SHIB_CACHE_PREFIX!" in called_kwargs.get("ams_error", "")
 
-    set_session(client,{"shib_session_id":"1111"})
     # not exist cache_value
     redis_connect.put("Shib-Session-1111",bytes("","utf-8"))
     mock_flash = mocker.patch("weko_accounts.views.flash")
-    client.get(url)
+    client.get(url, query_string={"Shib-Session-ID":"1111"})
     mock_flash.assert_called_with("cache_val",category="error")
     assert redis_connect.redis.exists("Shib-Session-1111") is False
 
@@ -527,7 +524,7 @@ def test_confirm_user_without_page(client,redis_connect,mocker):
         with patch("weko_accounts.views.ShibUser.bind_relation_info",return_value=False):
             redis_connect.put("Shib-Session-1111",bytes('{"shib_eppn":"test_eppn"}',"utf-8"))
             mock_flash = mocker.patch("weko_accounts.views.flash")
-            client.get(url)
+            client.get(url, query_string={"Shib-Session-ID":"1111"})
             mock_flash.assert_called_with("FAILED bind_relation_info!",category="error")
             assert redis_connect.redis.exists("Shib-Session-1111") is False
         with patch("weko_accounts.views.ShibUser.bind_relation_info",return_value=True):
@@ -535,7 +532,7 @@ def test_confirm_user_without_page(client,redis_connect,mocker):
             with patch("weko_accounts.views.ShibUser.check_in",return_value="test_error"):
                 redis_connect.put("Shib-Session-1111",bytes('{"shib_eppn":"test_eppn"}',"utf-8"))
                 mock_flash = mocker.patch("weko_accounts.views.flash")
-                client.get(url)
+                client.get(url, query_string={"Shib-Session-ID":"1111"})
                 mock_flash.assert_called_with("test_error",category="error")
                 assert redis_connect.redis.exists("Shib-Session-1111") is False
             with patch("weko_accounts.views.ShibUser.check_in",return_value=None):
@@ -543,12 +540,11 @@ def test_confirm_user_without_page(client,redis_connect,mocker):
                 redis_connect.put("Shib-Session-1111",bytes('{"shib_eppn":"test_eppn"}',"utf-8"))
                 mock_redirect = mocker.patch("weko_accounts.views.redirect",
                                              return_value=make_response())
-                client.get(url)
+                client.get(url, query_string={"Shib-Session-ID":"1111"})
                 mock_redirect.assert_called_with("/")
                 assert redis_connect.redis.exists("Shib-Session-1111") is False
 
                 # exist ShibUser.shib_user
-                set_session(client,{"shib_session_id":"1111"})
                 redis_connect.put("Shib-Session-1111",bytes('{"shib_eppn":"test_eppn"}',"utf-8"))
 
                 shibuser = ShibUser({})
@@ -557,12 +553,11 @@ def test_confirm_user_without_page(client,redis_connect,mocker):
                     mock_redirect = mocker.patch("weko_accounts.views.redirect",
                                                  return_value=make_response())
                     mock_flash = mocker.patch("weko_accounts.views.flash")
-                    client.get(url)
+                    client.get(url, query_string={"Shib-Session-ID":"1111"})
                     mock_redirect.assert_called_with("/")
                     assert redis_connect.redis.exists("Shib-Session-1111") is False
 
                 # exist ShibUser.shib_user
-                set_session(client,{"shib_session_id":"1111","next":"/next_page"})
                 redis_connect.put("Shib-Session-1111",bytes('{"shib_eppn":"test_eppn"}',"utf-8"))
 
                 shibuser = ShibUser({})
@@ -571,7 +566,7 @@ def test_confirm_user_without_page(client,redis_connect,mocker):
                     mock_redirect = mocker.patch("weko_accounts.views.redirect",
                                                  return_value=make_response())
                     mock_flash = mocker.patch("weko_accounts.views.flash")
-                    client.get(url)
+                    client.get(url, query_string={"Shib-Session-ID":"1111","next":"/next_page"})
                     mock_redirect.assert_called_with("/next_page")
                     assert redis_connect.redis.exists("Shib-Session-1111") is False
 
@@ -885,6 +880,8 @@ def test_shib_sp_login(client, redis_connect,mocker, db, users):
         res = client.post(url,data=form)
         assert res.status_code == 200
         assert res.data.decode() == "/weko/shib/login?Shib-Session-ID=1111&next=%2F"
+        with client.session_transaction() as session:
+            assert 'shib_session_id' not in session
     # shib_user.get_relation_info is not None
     with patch("weko_accounts.views.ShibUser.get_relation_info",
                return_value="chib_user")\
@@ -893,6 +890,8 @@ def test_shib_sp_login(client, redis_connect,mocker, db, users):
         res = client.post(url,data=form)
         assert res.status_code == 200
         assert res.data.decode() == "/weko/shib/login?Shib-Session-ID=1111&next=%2F"
+        with client.session_transaction() as session:
+            assert 'shib_session_id' not in session
 
     current_app.config.update(
         WEKO_ACCOUNTS_SHIB_LOGIN_ENABLED=True,
@@ -903,18 +902,26 @@ def test_shib_sp_login(client, redis_connect,mocker, db, users):
         with patch("weko_accounts.views.find_user_by_email",return_value=None):
             res = client.post(url,data=form)
             assert res.status_code == 200
-            assert res.data.decode() == "/weko/confim/user/skip?Shib-Session-ID=1111&next=%2F"
-
+            # assert res.data.decode() == "/weko/confim/user/skip?Shib-Session-ID=1111&next=%2F"
+            assert res.data.decode() == "/weko/auto/login?next=%2F"
+            with client.session_transaction() as session:
+                assert session.get("shib_session_id") == "1111"
+                session.clear()
         with patch("weko_accounts.views.find_user_by_email",return_value="shib_user"):
             res = client.post(url,data=form)
             assert res.status_code == 200
-            assert res.data.decode() == "/weko/auto/login?Shib-Session-ID=1111&next=%2F"
+            # assert res.data.decode() == "/weko/auto/login?Shib-Session-ID=1111&next=%2F"
+            assert res.data.decode() == "/weko/confim/user/skip?Shib-Session-ID=1111&next=%2F"
+            with client.session_transaction() as session:
+                assert 'shib_session_id' not in session
 
     # shib_user.get_relation_info is not None
     with patch("weko_accounts.views.ShibUser.get_relation_info",return_value="shib_user"):
         res = client.post(url,data=form)
         assert res.status_code == 200
         assert res.data.decode() == "/weko/auto/login?Shib-Session-ID=1111&next=%2F"
+        with client.session_transaction() as session:
+            assert 'shib_session_id' not in session
 
     # raise BaseException
     with patch("weko_accounts.views.flash",side_effect=BaseException("test_error"))\
@@ -956,10 +963,13 @@ def test_shib_sp_login(client, redis_connect,mocker, db, users):
     }
     res = client.post(url, data=form, headers=headers)
     assert res.status_code == 200
-    assert res.data.decode('utf-8') == '/weko/confim/user/skip?Shib-Session-ID=session&next=%2F'
+    assert res.data.decode('utf-8') == '/weko/auto/login?next=%2F'
     with db.session.begin_nested():
         shib_users = ShibbolethUser.query.all()
         assert len(shib_users) == 0
+    with client.session_transaction() as session:
+        assert session.get("shib_session_id") == "session"
+        session.clear()
 
     # all attributes have value and some shibboleth_user records have target eppn
     with db.session.begin_nested():
@@ -975,6 +985,8 @@ def test_shib_sp_login(client, redis_connect,mocker, db, users):
     assert result_shib_user.shib_role_authority_name == headers['HTTP_WEKOSOCIETYAFFILIATION']
     with db.session.begin_nested():
         db.session.delete(result_shib_user)
+    with client.session_transaction() as session:
+        assert 'shib_session_id' not in session
 
     # HTTP_WEKOID has no value
     headers = {
@@ -990,7 +1002,10 @@ def test_shib_sp_login(client, redis_connect,mocker, db, users):
     }
     res = client.post(url, data=form, headers=headers)
     assert res.status_code == 200
-    assert res.data.decode('utf-8') == '/weko/confim/user/skip?Shib-Session-ID=session&next=%2F'
+    assert res.data.decode('utf-8') == '/weko/auto/login?next=%2F'
+    with client.session_transaction() as session:
+        assert session.get("shib_session_id") == "session"
+        session.clear()
 
     # WEKO_ACCOUNTS_SHIB_ALLOW_USERNAME_INST_EPPN is False
     current_app.config.update(
@@ -1009,7 +1024,10 @@ def test_shib_sp_login(client, redis_connect,mocker, db, users):
     }
     res = client.post(url, data=form, headers=headers)
     assert res.status_code == 200
-    assert res.data.decode('utf-8') == '/weko/confim/user/skip?Shib-Session-ID=session&next=%2F'
+    assert res.data.decode('utf-8') == '/weko/auto/login?next=%2F'
+    with client.session_transaction() as session:
+        assert session.get("shib_session_id") == "session"
+        session.clear()
 
     # eppn has no value
     current_app.config.update(
@@ -1024,7 +1042,10 @@ def test_shib_sp_login(client, redis_connect,mocker, db, users):
     }
     res = client.post(url, data=form, headers=headers)
     assert res.status_code == 200
-    assert res.data.decode('utf-8') == '/weko/confim/user/skip?Shib-Session-ID=session&next=%2F'
+    assert res.data.decode('utf-8') == '/weko/auto/login?next=%2F'
+    with client.session_transaction() as session:
+        assert session.get("shib_session_id") == "session"
+        session.clear()
 
     # HTTP_WEKOID and eppn have no value
     headers = {
@@ -1082,7 +1103,10 @@ def test_shib_sp_login(client, redis_connect,mocker, db, users):
     }
     res = client.post(url, data=form, headers=headers)
     assert res.status_code == 200
-    assert res.data.decode('utf-8') == '/weko/confim/user/skip?Shib-Session-ID=session&next=%2F'
+    assert res.data.decode('utf-8') == '/weko/auto/login?next=%2F'
+    with client.session_transaction() as session:
+        assert session.get("shib_session_id") == "session"
+        session.clear()
 
     # Shib-Session-ID has no value
     current_app.config.update(
@@ -1097,7 +1121,10 @@ def test_shib_sp_login(client, redis_connect,mocker, db, users):
     }
     res = client.post(url, data=form, headers=headers)
     assert res.status_code == 200
-    assert res.data.decode('utf-8') == '/weko/confim/user/skip?Shib-Session-ID=&next=%2F'
+    assert res.data.decode('utf-8') == '/weko/auto/login?next=%2F'
+    with client.session_transaction() as session:
+        assert session.get("shib_session_id") == ""
+        session.clear()
 
     # WEKO_ACCOUNTS_SHIB_LOGIN_ENABLED is False and Shib-Session-ID has no value
     current_app.config.update(

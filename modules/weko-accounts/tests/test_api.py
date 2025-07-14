@@ -8,7 +8,18 @@ from flask_login.utils import login_user
 from invenio_accounts.models import Role, User,userrole
 from weko_user_profiles.models import UserProfile
 from weko_accounts.models import ShibbolethUser
-from weko_accounts.api import ShibUser,get_user_info_by_role_name,sync_shib_gakunin_map_groups,update_roles,update_browsing_role,remove_browsing_role,update_contribute_role,remove_contribute_role,bind_roles_to_indices
+from weko_accounts.api import (
+    ShibUser,
+    get_user_info_by_role_name,
+    sync_shib_gakunin_map_groups,
+    update_roles,
+    update_browsing_role,
+    remove_browsing_role,
+    update_contribute_role,
+    remove_contribute_role,
+    bind_roles_to_indices,
+    create_fqdn_from_entity_id
+) 
 from invenio_db import db as db_
 from invenio_accounts import InvenioAccounts
 from weko_index_tree.models import Index
@@ -534,7 +545,8 @@ class TestShibUserExtra:
             with patch('weko_accounts.api.Role') as mock_role, \
                 patch('weko_accounts.api._datastore') as mock_datastore, \
                 patch('weko_accounts.api.db.session') as mock_db_session, \
-                patch('weko_accounts.api.current_app') as mock_current_app:
+                patch('weko_accounts.api.current_app') as mock_current_app, \
+                patch('weko_accounts.api.create_fqdn_from_entity_id') as mock_create_fqdn:
 
                 # Mock configuration
                 mock_current_app.config = {
@@ -550,6 +562,8 @@ class TestShibUserExtra:
                 # Mock Role queries
                 mock_role.query.filter_by.return_value.one_or_none.side_effect = [None, None, None, None, None]
                 mock_role.query.filter_by.return_value.one.side_effect = [None]
+
+                mock_create_fqdn.return_value = 'A'
 
                 # Test data
                 map_group_names = ['prefix_A_role_keyword_suffix', 'sysadm_group', 'unmapped_role', 'prefix_A_role_keyword_nonexistent']
@@ -568,7 +582,8 @@ class TestShibUserExtra:
             with patch('weko_accounts.api.Role') as mock_role, \
                 patch('weko_accounts.api._datastore') as mock_datastore, \
                 patch('weko_accounts.api.db.session') as mock_db_session, \
-                patch('weko_accounts.api.current_app') as mock_current_app:
+                patch('weko_accounts.api.current_app') as mock_current_app, \
+                patch('weko_accounts.api.create_fqdn_from_entity_id') as mock_create_fqdn:
 
                 # Mock configuration
                 mock_current_app.config = {
@@ -585,6 +600,8 @@ class TestShibUserExtra:
                 mock_role_instance = MagicMock()
                 mock_role.query.filter_by.return_value.one_or_none.side_effect = [mock_role_instance, mock_role_instance, mock_role_instance,mock_role_instance]
                 mock_role.query.filter_by.return_value.one.side_effect = [mock_role_instance]
+
+                mock_create_fqdn.return_value = 'A'
 
                 # Test data
                 map_group_names = ['prefix_A_role_keyword_suffix', 'sysadm_group', 'unmapped_role']
@@ -603,7 +620,8 @@ class TestShibUserExtra:
             with patch('weko_accounts.api.Role') as mock_role, \
                 patch('weko_accounts.api._datastore') as mock_datastore, \
                 patch('weko_accounts.api.db.session') as mock_db_session, \
-                patch('weko_accounts.api.current_app') as mock_current_app:
+                patch('weko_accounts.api.current_app') as mock_current_app, \
+                patch('weko_accounts.api.create_fqdn_from_entity_id') as mock_create_fqdn:
 
                 # Mock configuration
                 mock_current_app.config = {
@@ -619,6 +637,8 @@ class TestShibUserExtra:
                 # Mock Role queries
                 mock_role.query.filter_by.return_value.one_or_none.side_effect = [None, None, None, None]
                 mock_role.query.filter_by.return_value.one.side_effect = [None]
+
+                mock_create_fqdn.return_value = 'A'
 
                 # Mock db.session.commit to raise an exception
                 mock_db_session.commit.side_effect = Exception("Test exception")
@@ -1031,3 +1051,16 @@ def test_update_and_remove_contribute_role(app, db):
         # クリーンアップ
         db.session.delete(index)
         db.session.commit()
+
+# .tox/c1/bin/pytest --cov=weko_accounts tests/test_api.py::test_create_fqdn_from_entity_id -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_create_fqdn_from_entity_id(app):
+    with app.app_context():
+        # Test when WEKO_ACCOUNTS_IDP_ENTITY_ID is set
+        app.config['WEKO_ACCOUNTS_IDP_ENTITY_ID'] = 'https://example-org.com/shibboleth'
+        fqdn = create_fqdn_from_entity_id()
+        assert fqdn == 'example_org_com'
+
+        # Test when WEKO_ACCOUNTS_IDP_ENTITY_ID is not set
+        app.config['WEKO_ACCOUNTS_IDP_ENTITY_ID'] = None
+        with pytest.raises(KeyError, match='WEKO_ACCOUNTS_IDP_ENTITY_ID is missing in config'):
+            create_fqdn_from_entity_id()

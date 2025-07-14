@@ -384,11 +384,12 @@ class ShibUser(object):
             prefix = config['prefix']
             role_keyword = config['role_keyword']
             role_mapping = config['role_mapping']
+            fqdn = create_fqdn_from_entity_id()
 
             with db.session.begin_nested():
                 for map_group_name in map_group_names:
                     # ロール名が指定されたプレフィックスで始まるか確認
-                    pattern = prefix + r'_[A-Za-z_]_' + role_keyword + r'_[A-Za-z_]+'
+                    pattern = prefix + f'_{fqdn}_' + role_keyword + r'_[A-Za-z_]+'
                     if re.match(pattern, map_group_name):
                         # The map_group_name matches the pattern
                         suffix = map_group_name.split(role_keyword + "_")[-1]
@@ -481,12 +482,7 @@ def sync_shib_gakunin_map_groups():
     """Handle SHIB_BIND_GAKUNIN_MAP_GROUPS logic."""
     try:
         # Entity ID → Redisのキーに変換
-        idp_entity_id = current_app.config.get('WEKO_ACCOUNTS_IDP_ENTITY_ID')
-        if not idp_entity_id:
-            raise KeyError('WEKO_ACCOUNTS_IDP_ENTITY_ID is missing in config')
-
-        parsed_url = urlparse(idp_entity_id)
-        fqdn = parsed_url.netloc.split(":")[0].replace('.', '_').replace('-', '_')
+        fqdn = create_fqdn_from_entity_id()
         suffix = current_app.config.get('WEKO_ACCOUNTS_GAKUNIN_GROUP_SUFFIX', '')
 
         # create Redis key
@@ -628,3 +624,17 @@ def remove_contribute_role(self, role_id):
         if str(role_id) in contribute_roles:
             contribute_roles.remove(str(role_id))
             self.contribute_role = ','.join(contribute_roles)
+
+def create_fqdn_from_entity_id():
+    """Create a fully qualified domain name (FQDN) from the entity ID.
+    
+    Returns:
+        str: FQDN derived from the entity ID.
+    """
+    idp_entity_id = current_app.config.get('WEKO_ACCOUNTS_IDP_ENTITY_ID')
+    if not idp_entity_id:
+        raise KeyError('WEKO_ACCOUNTS_IDP_ENTITY_ID is missing in config')
+
+    parsed_url = urlparse(idp_entity_id)
+    fqdn = parsed_url.netloc.split(":")[0].replace('.', '_').replace('-', '_')
+    return fqdn
