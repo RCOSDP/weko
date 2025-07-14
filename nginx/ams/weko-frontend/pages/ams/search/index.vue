@@ -556,20 +556,22 @@ async function downloadResultList() {
     },
     onResponseError({ response }) {
       statusCode = response.status;
-      if (statusCode === 401) {
-        // 認証エラー
-        alertData.value = amsAlert.SEARCH_DOWNLOAD_MESSAGE_ERROR_AUTH;
-      } else if (statusCode >= 500 && statusCode < 600) {
-        // サーバーエラー
-        alertData.value = amsAlert.SEARCH_DOWNLOAD_MESSAGE_ERROR_SERVER;
-      } else {
-        // リクエストエラー
-        alertData.value = amsAlert.SEARCH_DOWNLOAD_MESSAGE_ERROR_RESULT;
+      if (!visibleAlert.value) {
+        if (statusCode === 401) {
+          // 認証エラー
+          alertData.value = amsAlert.SEARCH_DOWNLOAD_MESSAGE_ERROR_AUTH;
+        } else if (statusCode >= 500 && statusCode < 600) {
+          // サーバーエラー
+          alertData.value = amsAlert.SEARCH_DOWNLOAD_MESSAGE_ERROR_SERVER;
+        } else {
+          // リクエストエラー
+          alertData.value = amsAlert.SEARCH_DOWNLOAD_MESSAGE_ERROR_RESULT;
+        }
+        visibleAlert.value = true;
       }
-      visibleAlert.value = true;
     }
   }).catch(() => {
-    if (statusCode === 0) {
+    if (statusCode === 0 && !visibleAlert.value) {
       // fetchエラー
       alertData.value = amsAlert.SEARCH_DOWNLOAD_MESSAGE_ERROR_FETCH;
       visibleAlert.value = true;

@@ -217,28 +217,30 @@ async function login() {
     },
     onResponseError({ response }) {
       statusCode = response.status;
-      if (statusCode === 400) {
-        // ログイン済の場合、認可画面に遷移
-        // TODO: ログイン済専用のステータスコードが必要
-        // const url = new URL(useAppConfig().wekoOrigin + '/oauth/authorize');
-        // const random = Math.random().toString(36);
-        // url.searchParams.append('response_type', 'code');
-        // url.searchParams.append('client_id', useRuntimeConfig().public.clientId);
-        // url.searchParams.append('scope', 'item:read index:read ranking:read file:read user:email');
-        // url.searchParams.append('state', random);
-        // sessionStorage.setItem('login:state', random);
-        // window.open(url.href, '_self');
-      } else if (statusCode >= 500 && statusCode < 600) {
-        // サーバーエラー
-        alertData.value = amsAlert.LOGIN_MESSAGE_ERROR_SERVER;
-      } else {
-        // リクエストエラー
-        alertData.value = amsAlert.LOGIN_MESSAGE_ERROR_REQUEST;
+      if (!visibleAlert.value) {
+        if (statusCode === 400) {
+          // ログイン済の場合、認可画面に遷移
+          // TODO: ログイン済専用のステータスコードが必要
+          // const url = new URL(useAppConfig().wekoOrigin + '/oauth/authorize');
+          // const random = Math.random().toString(36);
+          // url.searchParams.append('response_type', 'code');
+          // url.searchParams.append('client_id', useRuntimeConfig().public.clientId);
+          // url.searchParams.append('scope', 'item:read index:read ranking:read file:read user:email');
+          // url.searchParams.append('state', random);
+          // sessionStorage.setItem('login:state', random);
+          // window.open(url.href, '_self');
+        } else if (statusCode >= 500 && statusCode < 600) {
+          // サーバーエラー
+          alertData.value = amsAlert.LOGIN_MESSAGE_ERROR_SERVER;
+        } else {
+          // リクエストエラー
+          alertData.value = amsAlert.LOGIN_MESSAGE_ERROR_REQUEST;
+        }
+        visibleAlert.value = true;
       }
-      visibleAlert.value = true;
     }
   }).catch(() => {
-    if (statusCode === 0) {
+    if (statusCode === 0 && !visibleAlert.value) {
       // fetchエラー
       alertData.value = amsAlert.LOGIN_MESSAGE_ERROR_FETCH;
       visibleAlert.value = true;

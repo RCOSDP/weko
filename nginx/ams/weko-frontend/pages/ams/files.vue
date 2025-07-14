@@ -359,7 +359,7 @@ function downloadFilesAll() {
       },
       onResponseError({ response }) {
         statusCode = response.status;
-        if (!visibleAlert.value) {
+        if (!isError.value) {
           if (statusCode === 401) {
             // 認証エラー
             alertData.value = amsAlert.FILES_ALL_MESSAGE_ERROR_AUTH;
@@ -371,13 +371,15 @@ function downloadFilesAll() {
             alertData.value = amsAlert.FILES_ALL_MESSAGE_ERROR_DOWNLOAD_ALL;
           }
           visibleAlert.value = true;
+          isError.value = true;
         }
       }
     }).catch(() => {
-      if (statusCode === 0 && !visibleAlert.value) {
+      if (statusCode === 0 && !isError.value) {
         // fetchエラー
         alertData.value = amsAlert.FILES_ALL_MESSAGE_ERROR_FETCH;
         visibleAlert.value = true;
+        isError.value = true;
       }
     });
   } else {
@@ -419,23 +421,27 @@ function downloadFilesSelected(filesList: string[]) {
     },
     onResponseError({ response }) {
       statusCode = response.status;
-      if (statusCode === 401) {
-        // 認証エラー
-        alertData.value = amsAlert.FILES_SELECT_MESSAGE_ERROR_AUTH;
-      } else if (statusCode >= 500 && statusCode < 600) {
-        // サーバーエラー
-        alertData.value = amsAlert.FILES_SELECT_MESSAGE_ERROR_SERVER;
-      } else {
-        // リクエストエラー
-        alertData.value = amsAlert.FILES_SELECT_MESSAGE_ERROR_DOWNLOAD_SELECTED;
+      if (!isError.value) {
+        if (statusCode === 401) {
+          // 認証エラー
+          alertData.value = amsAlert.FILES_SELECT_MESSAGE_ERROR_AUTH;
+        } else if (statusCode >= 500 && statusCode < 600) {
+          // サーバーエラー
+          alertData.value = amsAlert.FILES_SELECT_MESSAGE_ERROR_SERVER;
+        } else {
+          // リクエストエラー
+          alertData.value = amsAlert.FILES_SELECT_MESSAGE_ERROR_DOWNLOAD_SELECTED;
+        }
+        visibleAlert.value = true;
+        isError.value = true;
       }
-      visibleAlert.value = true;
     }
   }).catch(() => {
-    if (statusCode === 0) {
+    if (statusCode === 0 && !isError.value) {
       // fetchエラー
       alertData.value = amsAlert.FILES_SELECT_MESSAGE_ERROR_FETCH;
       visibleAlert.value = true;
+      isError.value = true;
     }
   });
 }
