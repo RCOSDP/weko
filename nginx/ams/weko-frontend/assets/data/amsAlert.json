@@ -43,7 +43,7 @@
   },
   "DETAIL_ITEM_MESSAGE_ERROR_AUTH": {
     "msgid": "DETAIL_E_0001",
-    "msgstr": "message.error.auth",
+    "msgstr": "message.error.noItemAuth",
     "position": "",
     "width": "w-full",
     "loglevel": "error"

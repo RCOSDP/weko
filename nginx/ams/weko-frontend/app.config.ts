@@ -161,9 +161,9 @@ export default defineAppConfig({
   shibLogin: {
     // 本番環境
     dsURL: 'https://ds.gakunin.nii.ac.jp/WAYF',
-    orthrosURL: 'https://ui-stg.orthros.gakunin.nii.ac.jp/'
+    orthrosURL: 'https://core.orthros.gakunin.nii.ac.jp/idp'
     // テスト環境
     // dsURL: 'https://test-ds.gakunin.nii.ac.jp/WAYF',
-    // orthrosURL: 'https://core.orthros.gakunin.nii.ac.jp/idp'
+    // orthrosURL: 'https://core-stg.orthros.gakunin.nii.ac.jp/idp'
   }
 });
