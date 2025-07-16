@@ -300,6 +300,7 @@ const appConf = useAppConfig();
 async function search() {
   setConditions();
   let statusCode = 0;
+  const isError = ref(false);
   const params = {
     q: conditions.keyword,
     search_type: conditions.type,
@@ -363,25 +364,30 @@ async function search() {
     },
     onResponseError({ response }) {
       statusCode = response.status;
-      if (statusCode === 401) {
-        // 認証エラー
-        alertData.value = amsAlert.SEARCH_ITEM_MESSAGE_ERROR_AUTH;
-      } else if (statusCode >= 500 && statusCode < 600) {
-        // サーバーエラー
-        alertData.value = amsAlert.SEARCH_ITEM_MESSAGE_ERROR_SERVER;
-      } else {
-        // リクエストエラー
-        alertData.value = amsAlert.SEARCH_ITEM_MESSAGE_ERROR_REQUEST;
+      if (!visibleAlert.value) {
+        if (statusCode === 401) {
+          // 認証エラー
+          alertData.value = amsAlert.SEARCH_ITEM_MESSAGE_ERROR_AUTH;
+        } else if (statusCode >= 500 && statusCode < 600) {
+          // サーバーエラー
+          alertData.value = amsAlert.SEARCH_ITEM_MESSAGE_ERROR_SERVER;
+        } else {
+          // リクエストエラー
+          alertData.value = amsAlert.SEARCH_ITEM_MESSAGE_ERROR_REQUEST;
+        }
+        visibleAlert.value = true;
+        isError.value = true;
       }
-      visibleAlert.value = true;
     }
   }).catch(() => {
-    if (statusCode === 0) {
+    if (statusCode === 0 && !visibleAlert.value) {
       // fetchエラー
       alertData.value = amsAlert.SEARCH_ITEM_MESSAGE_ERROR_FETCH;
       visibleAlert.value = true;
+      isError.value = true;
     }
   });
+  return !isError.value;
 }
 
 /**
@@ -550,20 +556,22 @@ async function downloadResultList() {
     },
     onResponseError({ response }) {
       statusCode = response.status;
-      if (statusCode === 401) {
-        // 認証エラー
-        alertData.value = amsAlert.SEARCH_DOWNLOAD_MESSAGE_ERROR_AUTH;
-      } else if (statusCode >= 500 && statusCode < 600) {
-        // サーバーエラー
-        alertData.value = amsAlert.SEARCH_DOWNLOAD_MESSAGE_ERROR_SERVER;
-      } else {
-        // リクエストエラー
-        alertData.value = amsAlert.SEARCH_DOWNLOAD_MESSAGE_ERROR_RESULT;
+      if (!visibleAlert.value) {
+        if (statusCode === 401) {
+          // 認証エラー
+          alertData.value = amsAlert.SEARCH_DOWNLOAD_MESSAGE_ERROR_AUTH;
+        } else if (statusCode >= 500 && statusCode < 600) {
+          // サーバーエラー
+          alertData.value = amsAlert.SEARCH_DOWNLOAD_MESSAGE_ERROR_SERVER;
+        } else {
+          // リクエストエラー
+          alertData.value = amsAlert.SEARCH_DOWNLOAD_MESSAGE_ERROR_RESULT;
+        }
+        visibleAlert.value = true;
       }
-      visibleAlert.value = true;
     }
   }).catch(() => {
-    if (statusCode === 0) {
+    if (statusCode === 0 && !visibleAlert.value) {
       // fetchエラー
       alertData.value = amsAlert.SEARCH_DOWNLOAD_MESSAGE_ERROR_FETCH;
       visibleAlert.value = true;
@@ -828,13 +836,16 @@ function reflectCopyFilter(key: any, value: any) {
 // main
 /////////////////////////////////// */
 
-try {
-  checkExportURL();
-  await search();
-} catch (error) {
-  alertData.value = amsAlert.SEARCH_INDEX_MESSAGE_ERROR;
-  visibleAlert.value = true;
+async function init() {
+  try {
+    checkExportURL();
+    await search();
+  } catch (error) {
+    alertData.value = amsAlert.SEARCH_INDEX_MESSAGE_ERROR;
+    visibleAlert.value = true;
+  }
 }
+await init();
 
 /* ///////////////////////////////////
 // life cycle

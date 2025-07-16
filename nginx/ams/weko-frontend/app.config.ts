@@ -151,5 +151,19 @@ export default defineAppConfig({
       by_nc_nd_4_ja: 'https://creativecommons.org/licenses/by-nc-nd/4.0/deed.ja'
     }
   },
-  transitionTimeMs: 10000 // ミリ秒
+  /**
+   * 閲覧権限が必要なアイテム詳細画面からログイン画面へ遷移するまでの時間設定
+   */
+  transitionTimeMs: 10000, // ミリ秒
+  /**
+   * フロントのShibboleth Login設定
+   */
+  shibLogin: {
+    // 本番環境
+    dsURL: 'https://ds.gakunin.nii.ac.jp/WAYF',
+    orthrosURL: 'https://core.orthros.gakunin.nii.ac.jp/idp'
+    // テスト環境
+    // dsURL: 'https://test-ds.gakunin.nii.ac.jp/WAYF',
+    // orthrosURL: 'https://core-stg.orthros.gakunin.nii.ac.jp/idp'
+  }
 });

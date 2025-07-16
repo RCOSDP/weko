@@ -172,6 +172,7 @@
       "error": "Error has occurred. Please contact server administrator.",
       "server": "Server error has occurred. Please contact server administrator.",
       "auth": "Authentication error has occurred. Authentication status is invalid.",
+      "noItemAuth": "You do not have permission to view this item.",
       "fetch": "Failed to send data.",
       "login": "Failed to login.",
       "search": "Failed to search items.",
