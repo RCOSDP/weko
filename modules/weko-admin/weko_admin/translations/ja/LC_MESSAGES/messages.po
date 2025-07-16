@@ -1348,7 +1348,7 @@ msgstr "初期表示画面設定"
 
 #: weko_admin/templates/weko_admin/admin/search_management_settings.html:401
 msgid "Display settings for web content"
-msgstr "WEBコンテンツ表示設定"
+msgstr "ウェブコンテンツ表示設定"
 
 #: weko_admin/templates/weko_admin/admin/search_management_settings.html:380
 msgid "Default Index to Display"
