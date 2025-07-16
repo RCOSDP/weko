@@ -27,6 +27,8 @@ import time
 import copy
 from time import sleep
 from io import StringIO
+import subprocess
+import time
 
 from celery import shared_task
 from celery.utils.log import get_task_logger
@@ -666,6 +668,7 @@ def extract_pdf_and_update_file_contents(files, record_uuid, retry_count=3, retr
 
 def update_file_content(record_uuid, file_datas):
     """Update the content of the es document
+
     Args:
         record_uuid (str): The id of the document to update.
         file_datas (dict): A dictionary of file names and contents.

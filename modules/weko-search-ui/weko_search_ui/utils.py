@@ -138,6 +138,7 @@ from .config import (
     WEKO_IMPORT_VALIDATE_MESSAGE,
     WEKO_REPO_USER,
     WEKO_SEARCH_TYPE_DICT,
+    WEKO_SEARCH_MAX_RESULT,
     WEKO_SEARCH_UI_BULK_EXPORT_MSG,
     WEKO_SEARCH_UI_BULK_EXPORT_RUN_MSG,
     WEKO_SEARCH_UI_BULK_EXPORT_FILE_CREATE_RUN_MSG,
@@ -211,7 +212,48 @@ class DefaultOrderedDict(OrderedDict):
         )
 
 
-def get_tree_items(index_tree_id):
+def execute_search_with_pagination(
+        search_instance,
+        max_result_size=WEKO_SEARCH_MAX_RESULT
+):
+    """Execute search with pagination.
+
+    @param search_instance: search instance
+    @param max_result_size: maximum number of records to get
+                            if < 0, get all records
+    @return: search result
+    """
+    if max_result_size < 0:
+        search_size = 10000
+    else:
+        search_size = min(max_result_size, 10000)
+        max_result_size -= search_size
+
+    search_instance = search_instance.extra(size=search_size)
+    search_result = search_instance.execute()
+    records = search_result.to_dict().get('hits', {}).get('hits', [])
+    result = records
+
+    while len(records) == 10000 and max_result_size != 0:
+        if max_result_size < 0:
+            search_size = 10000
+        else:
+            search_size = min(max_result_size, 10000)
+            max_result_size -= search_size
+
+        search_after = records[-1]['sort']
+        search_instance = search_instance.extra(
+            size=search_size,
+            search_after=search_after
+        )
+        search_result = search_instance.execute()
+        records = search_result.to_dict().get('hits', {}).get('hits', [])
+        result.extend(records)
+
+    return result
+
+
+def get_tree_items(index_tree_id, max_result_size=WEKO_SEARCH_MAX_RESULT):
     """Get tree items."""
     records_search = RecordsSearch()
     records_search = records_search.with_preference_param().params(version=False)
@@ -219,14 +261,12 @@ def get_tree_items(index_tree_id):
     search_instance, _ = item_path_search_factory(
         None, records_search, index_id=index_tree_id
     )
-    search_result = search_instance.execute()
-    rd = search_result.to_dict()
-    return rd.get("hits").get("hits")
+    return execute_search_with_pagination(search_instance, max_result_size)
 
 
 def delete_records(index_tree_id, ignore_items):
     """Bulk delete records."""
-    hits = get_tree_items(index_tree_id)
+    hits = get_tree_items(index_tree_id, max_result_size=-1)
     result = []
 
     from weko_records_ui.utils import soft_delete
@@ -292,7 +332,7 @@ def get_journal_info(index_id=0):
 
         cur_lang = current_i18n.language
         journal = Journals.get_journal_by_index_id(index_id)
-        if len(journal) <= 0 or journal.get("is_output") is False:
+        if not journal or len(journal) <= 0 or journal.get("is_output") is False:
             return None
 
         for value in schema_data:
@@ -2829,7 +2869,7 @@ def handle_check_doi_ra(list_record):
             current_app.logger.debug("item_id:{0} doi_ra:{1}".format(item_id, doi_ra))
             current_app.logger.debug("doi_type:{0} _value:{1}".format(doi_type, _value))
 
-            if doi_type and doi_type[0] != doi_ra:
+            if doi_type and doi_type[0] != doi_ra and (doi_ra != 'NDL JaLC' or doi_type[0] != 'JaLC'):
                 error = _("Specified {} is different from " + "existing {}.").format(
                     "DOI_RA", "DOI_RA"
                 )
@@ -3361,7 +3401,7 @@ def register_item_doi(item):
                 data,
                 WEKO_IMPORT_DOI_TYPE.index(doi_ra) + 1
             )
-        elif doi_ra == "NDL JaLC" and doi:
+        elif doi_ra == "NDL JaLC" and doi and not pid_doi:
             data = {
                 "identifier_grant_jalc_doi_link": IDENTIFIER_GRANT_LIST[1][2]
                 + "/"
@@ -3699,7 +3739,7 @@ def get_list_key_of_iso_date(schemaform):
     keys = []
     for item in schemaform:
         if not item.get("items"):
-            if item.get("templateUrl", "") == DATE_ISO_TEMPLATE_URL:
+            if (item.get("templateUrl", "") == DATE_ISO_TEMPLATE_URL) or ("dateValue" in item.get("key","")):
                 keys.append(item.get("key").replace("[]", ""))
         else:
             keys.extend(get_list_key_of_iso_date(item.get("items")))
@@ -3999,6 +4039,8 @@ def handle_fill_system_item(list_record):
                 elif is_ndl:
                     item["doi_ra"] = item_doi_ra
 
+            item_doi_ra = "JaLC" if item_doi_ra == "NDL JaLC" else item_doi_ra
+            registerd_doi_ra = "JaLC" if registerd_doi_ra == "NDL JaLC" else registerd_doi_ra
             if identifierRegistration_key in item["metadata"]:
                 if existed_doi and checked_registerd_doi_ra and checked_item_doi_ra:
                     if 'subitem_identifier_reg_type' in item["metadata"][identifierRegistration_key]:
@@ -5148,12 +5190,15 @@ def check_index_access_permissions(func):
             "search_type", WEKO_SEARCH_TYPE_DICT["FULL_TEXT"]
         )
         if search_type == WEKO_SEARCH_TYPE_DICT["INDEX"]:
-            cur_index_id = request.args.get("q", "0")
-            if not check_index_permissions(None, cur_index_id):
-                if not current_user.is_authenticated:
-                    return current_app.login_manager.unauthorized()
-                else:
-                    abort(403)
+            cur_index_id = request.args.get("q", "")
+            if cur_index_id.isdigit():
+                if not check_index_permissions(None, cur_index_id):
+                    if not current_user.is_authenticated:
+                        return current_app.login_manager.unauthorized()
+                    else:
+                        abort(403)
+            else:
+                abort(400)
         return func(*args, **kwargs)
 
     return decorated_view
@@ -5448,13 +5493,13 @@ def get_data_by_property(item_metadata, item_map, mapping_key):
         return None, None
     for key in key_list.split(","):
         attribute = item_metadata.get(key.split(".")[0])
-        if not attribute:
-            return None, key_list
-        else:
+        if attribute:
             data_result = get_sub_item_value(attribute, key.split(".")[-1])
             if data_result:
                 for value in data_result:
                     data.append(value)
+    if data == []:
+        data = None
     return data, key_list
 
 

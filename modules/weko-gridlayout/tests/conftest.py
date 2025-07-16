@@ -14,6 +14,7 @@ fixtures are available.
 from __future__ import absolute_import, print_function
 
 import os
+import json
 import shutil
 import tempfile
 import pytest
@@ -38,6 +39,8 @@ from invenio_access import InvenioAccess
 from invenio_db import InvenioDB, db as db_
 from invenio_accounts.models import User, Role
 from invenio_communities.models import Community
+from invenio_search import InvenioSearch, current_search, current_search_client
+from invenio_stats import InvenioStats
 
 from weko_redis.redis import RedisConnection
 from weko_records.models import ItemTypeProperty
@@ -97,11 +100,15 @@ def base_app(instance_path):
         WEKO_GRIDLAYOUT_ADMIN_WIDGET_DESIGN = 'weko_gridlayout/admin/widget_design.html',
         SERVER_NAME="TEST_SERVER",
         SEARCH_INDEX_PREFIX='test-',
+        SEARCH_ELASTIC_HOSTS=os.environ.get(
+            'SEARCH_ELASTIC_HOSTS', 'elasticsearch'),
         INDEXER_DEFAULT_DOC_TYPE='testrecord',
-        SEARCH_UI_SEARCH_INDEX='tenant1-weko',
+        SEARCH_UI_SEARCH_INDEX='test-weko',
         SECRET_KEY='SECRET_KEY',
+        CACHE_REDIS_URL='redis://redis:6379/0',
         CACHE_REDIS_DB='0',
-        CACHE_TYPE='0',
+        CACHE_REDIS_HOST='redis',
+        REDIS_PORT='6379',
         WEKO_GRIDLAYOUT_BUCKET_UUID='61531203-4104-4425-a51b-d32881eeab22',
         FILES_REST_DEFAULT_STORAGE_CLASS="S",
         FILES_REST_STORAGE_CLASS_LIST={
@@ -111,6 +118,7 @@ def base_app(instance_path):
         FILES_REST_DEFAULT_QUOTA_SIZE=None,
         FILES_REST_DEFAULT_MAX_FILE_SIZE=None,
         FILES_REST_OBJECT_KEY_MAX_LEN=255,
+        BABEL_DEFAULT_TIMEZONE='Asia/Tokyo'
         WEKO_PERMISSION_SUPER_ROLE_USER=WEKO_PERMISSION_SUPER_ROLE_USER
     )
     Babel(app_)
@@ -121,6 +129,9 @@ def base_app(instance_path):
     WekoGridLayout(app_)
     # InvenioCache(app_)
     # WekoAdmin(app_)
+    InvenioStats(app_)
+    InvenioCache(app_)
+    InvenioSearch(app_)
     app_.register_blueprint(blueprint)
     app_.register_blueprint(blueprint_api)
 
@@ -139,7 +150,7 @@ def i18n_app(app):
         headers=[('Accept-Language','ja')]):
         app.extensions['invenio-oauth2server'] = 1
         app.extensions['invenio-queues'] = 1
-        app.extensions['invenio-search'] = MagicMock()
+        #app.extensions['invenio-search'] = MagicMock()
         app.extensions['invenio-i18n'] = MagicMock()
         app.extensions['invenio-i18n'].language = "ja"
         yield app
@@ -515,10 +526,28 @@ def communities(app, db, user, indices):
     return comm0
 
 
+@pytest.yield_fixture()
+def es(app):
+    current_search_client.indices.delete(index='test-*')
+    # top_view aggr
+    aggr_top_view_mapping = json_data("data/mapping/top_view/v6/aggr-top-view-v1.json")
+    aggr_top_view_mapping.update({'aliases':
+        {'{}stats-top-view'.format(app.config['SEARCH_INDEX_PREFIX']): {'is_write_index': True}}})
+    current_search_client.indices.create(
+        index='{}stats-top-view-0001'.format(app.config['SEARCH_INDEX_PREFIX']),
+        body=aggr_top_view_mapping, ignore=[400, 404]
+    )
+    try:
+        yield current_search_client
+    finally:
+        current_search_client.indices.delete(index="test-*")
+
+
 @pytest.fixture
 def redis_connect(app):
     redis_connection = RedisConnection().connection(db=app.config['CACHE_REDIS_DB'], kv = True)
     return redis_connection
+
 
 @pytest.fixture()
 def location(app, db):
@@ -531,6 +560,7 @@ def location(app, db):
     db.session.commit()
     return location
 
+
 @pytest.fixture
 def widget_upload(app,db,location):
     bucket_id = app.config['WEKO_GRIDLAYOUT_BUCKET_UUID']
@@ -542,7 +572,6 @@ def widget_upload(app,db,location):
                             location=location,
                             default_storage_class=storage_class)
     db.session.add(bucket)
-
 
     img = Image.new("L", (128, 128))
     img_bytes = io.BytesIO()

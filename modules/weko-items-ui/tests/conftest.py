@@ -71,7 +71,7 @@ from invenio_stats import InvenioStats
 from sqlalchemy_utils.functions import create_database, database_exists
 from weko_admin import WekoAdmin
 from weko_admin.config import WEKO_ADMIN_DEFAULT_ITEM_EXPORT_SETTINGS
-from weko_admin.models import SessionLifetime,RankingSettings,AdminSettings
+from weko_admin.models import SessionLifetime,RankingSettings,Identifier,AdminSettings
 from weko_deposit import WekoDeposit
 from weko_deposit.api import WekoIndexer, WekoRecord
 from weko_deposit.api import WekoDeposit as aWekoDeposit
@@ -492,6 +492,38 @@ def users(app, db):
     ]
 
 
+@pytest.fixture()
+def identifier(db):
+    identifier_info = {
+        "Root Index":{
+            "JaLC": "1234",
+            "Crossref": "2345",
+            "DataCite": "3456",
+            "NDL JaLC": "4567",
+        }
+    }
+    identifiers = []
+    for index, info in identifier_info.items():
+        identifiers.append(Identifier(
+            repository=index,
+            jalc_flag=True,
+            jalc_crossref_flag=True,
+            jalc_datacite_flag=True,
+            ndl_jalc_flag=True,
+            jalc_doi=info["JaLC"],
+            jalc_crossref_doi=info["Crossref"],
+            jalc_datacite_doi=info["DataCite"],
+            ndl_jalc_doi=info["NDL JaLC"],
+            suffix="",
+            created_userId=1,
+            created_date=datetime.strptime("2018/07/28 0:00:00", "%Y/%m/%d %H:%M:%S"),
+            updated_userId=1,
+            updated_date=datetime.strptime("2018/07/28 0:00:00", "%Y/%m/%d %H:%M:%S"),
+        ))
+    db.session.add_all(identifiers)
+    db.session.commit()
+    return identifier_info
+
 
 @pytest.fixture()
 def db_oaischema(app, db):
@@ -850,7 +882,7 @@ def db_records_researchmap(db ,instance_path,users,db_author ,db_activity ,db_ad
     # with db.session.begin_nested():
     #     depid, recid, parent, doi, record, item = db_records[0]
     #     object_uuid = recid.object_uuid
-    #     # PersistentIdentifier.create('recid',1,None,object_type='rec',object_uuid=object_uuid)   
+    #     # PersistentIdentifier.create('recid',1,None,object_type='rec',object_uuid=object_uuid)
     #     # db.session.add(ItemMetadata(id=object_uuid , item_type_id=1 ,version_id=uuid.uuid4()))
     # db.session.commit()
 
@@ -1123,7 +1155,7 @@ def db_author(db):
         db.session.add(affiliation_prefix3)
         db.session.add(affiliation_prefix4)
         db.session.add(author1)
-    
+
     return {"author_prefix":[prefix1,prefix2,prefix3,prefix4,prefix5,prefix6],"affiliation_prefix":[affiliation_prefix1,affiliation_prefix2,affiliation_prefix3,affiliation_prefix4],"author":[author1]}
 
 @pytest.fixture()

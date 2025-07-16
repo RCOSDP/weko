@@ -1058,9 +1058,18 @@ def indices(app, db):
         testIndexPrivate = Index(
             index_name="testIndexPrivate", public_state=False, id=55
         )
+        testIndexSix = Index(
+            index_name="testIndexSix",
+            browsing_role="Contributor",
+            public_state=True,
+            id=66,
+            position=1,
+            item_custom_sort={},
+        )
 
         db.session.add(testIndexThree)
         db.session.add(testIndexThreeChild)
+        db.session.add(testIndexSix)
 
     return {
         "index_dict": dict(testIndexThree),
@@ -2789,26 +2798,35 @@ def es_item_file_pipeline(es):
 
 @pytest.fixture()
 def identifier(db):
-    doi_identifier = Identifier(
-        id=1,
-        repository="Root Index",
-        jalc_flag=True,
-        jalc_crossref_flag=True,
-        jalc_datacite_flag=True,
-        ndl_jalc_flag=True,
-        jalc_doi="xyz.jalc",
-        jalc_crossref_doi="xyz.crossref",
-        jalc_datacite_doi="xyz.datacite",
-        ndl_jalc_doi="xyz.ndl",
-        suffix="def",
-        created_userId="1",
-        created_date=datetime.strptime("2022-09-28 04:33:42", "%Y-%m-%d %H:%M:%S"),
-        updated_userId="1",
-        updated_date=datetime.strptime("2022-09-28 04:33:42", "%Y-%m-%d %H:%M:%S"),
-    )
-    db.session.add(doi_identifier)
+    identifier_info = {
+        "Root Index":{
+            "JaLC": "xyz.jalc",
+            "Crossref": "xyz.crossref",
+            "DataCite": "xyz.datacite",
+            "NDL JaLC": "xyz.ndl",
+        }
+    }
+    identifiers = []
+    for index, info in identifier_info.items():
+        identifiers.append(Identifier(
+            repository=index,
+            jalc_flag=True,
+            jalc_crossref_flag=True,
+            jalc_datacite_flag=True,
+            ndl_jalc_flag=True,
+            jalc_doi=info["JaLC"],
+            jalc_crossref_doi=info["Crossref"],
+            jalc_datacite_doi=info["DataCite"],
+            ndl_jalc_doi=info["NDL JaLC"],
+            suffix="def",
+            created_userId=1,
+            created_date=datetime.strptime("2018/07/28 0:00:00", "%Y/%m/%d %H:%M:%S"),
+            updated_userId=1,
+            updated_date=datetime.strptime("2018/07/28 0:00:00", "%Y/%m/%d %H:%M:%S"),
+        ))
+    db.session.add_all(identifiers)
     db.session.commit()
-    return doi_identifier
+    return identifier_info
 
 
 def record_indexer_receiver(sender, json=None, record=None, index=None,

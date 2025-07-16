@@ -80,7 +80,7 @@ from weko_theme.views import blueprint as weko_theme_blueprint
 from simplekv.memory.redisstore import RedisStore
 from sqlalchemy_utils.functions import create_database, database_exists, \
     drop_database
-from .helpers import json_data, create_record
+from tests.helpers import json_data, create_record, create_activity, create_flow
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session
 from sqlalchemy import event
@@ -617,7 +617,7 @@ def db(app):
     yield db_
     db_.session.remove()
     db_.drop_all()
-    # drop_database(str(db_.engine.url))
+    drop_database(str(db_.engine.url))
 
 @pytest.yield_fixture()
 def logging_client(app):
@@ -799,6 +799,153 @@ def users(app, db):
         {'email': user.email, 'id': user.id, 'obj': user},
         {'email': student.email,'id': student.id, 'obj': student}
     ]
+
+
+@pytest.fixture()
+def activity_acl_users(app, db):
+    ds = app.extensions['invenio-accounts'].datastore
+
+    sysadmin_role = ds.create_role(name='System Administrator')
+    repoadmin_role = ds.create_role(name='Repository Administrator')
+    comadmin_role = ds.create_role(name='Community Administrator')
+    test_role01 = ds.create_role(name='test_role01')
+    test_role02 = ds.create_role(name='test_role02')
+    test_role03 = ds.create_role(name='test_role03')
+
+    sysadmin = create_test_user(email='sysadmin@test.org')
+    repoadmin = create_test_user(email='repoadmin@test.org')
+    test_role01_user = create_test_user(email='test_role01_user@test.org')
+    test_role01_comadmin = create_test_user(email='test_role01_comadmin@test.org')
+    test_role02_user = create_test_user(email='test_role02_user@test.org')
+    test_role03_comadmin = create_test_user(email='test_role03_comadmin@test.org')
+    no_role_user = create_test_user(email='no_role@test.org')
+
+    ds.add_role_to_user(sysadmin,sysadmin_role)
+    ds.add_role_to_user(repoadmin, repoadmin_role)
+    ds.add_role_to_user(test_role01_user,test_role01)
+    ds.add_role_to_user(test_role01_comadmin,test_role01)
+    ds.add_role_to_user(test_role01_comadmin,comadmin_role)
+    ds.add_role_to_user(test_role02_user,test_role02)
+    ds.add_role_to_user(test_role03_comadmin, test_role03)
+    ds.add_role_to_user(test_role03_comadmin, comadmin_role)
+
+    """
+    root
+      ┣━ com_index
+      ┃     ┣━ com_index_child01
+      ┃     ┗━ com_index_child02
+      ┗━ not_com_index
+    """
+    indexes = [
+        Index(id=1,parent=0,position=0,index_name="com_index",display_no=5,public_state=True),
+        Index(id=2,parent=1,position=0,index_name="com_index_child01",display_no=5,public_state=True),
+        Index(id=3,parent=1,position=1,index_name="com_index_child02",display_no=5,public_state=True),
+        Index(id=4,parent=0,position=1,index_name="not_com_index",display_no=5,public_state=True)
+    ]
+    db.session.add_all(indexes)
+    db.session.commit()
+
+    test_role01_com = Community.create(community_id="test_role01_com", role_id=test_role01.id,
+                            id_user=sysadmin.id, title="test community",
+                            description=("this is test community"),
+                            root_node_id=indexes[0].id)
+    db.session.commit()
+    return {
+        "users":[sysadmin, repoadmin, test_role01_user, test_role01_comadmin, test_role02_user, test_role03_comadmin, no_role_user],
+        "roles":[sysadmin_role, repoadmin_role, comadmin_role, test_role01, test_role02, test_role03],
+        "indexes": indexes,
+        "comunities":[test_role01_com]
+    }
+
+@pytest.fixture()
+def workflow_with_action_role(db, action_data, item_type, activity_acl_users):
+
+    users = activity_acl_users["users"]
+    roles = activity_acl_users["roles"]
+
+    workflows = []
+    # no set action role(user)
+    workflows.append(create_flow(db, 1, "normal_flow","normal_workflow", None, None, item_type))
+
+    # action_role of action with action_id 1 is test_role01
+    workflows.append(create_flow(db, 2, "test_role01_role_flow","test_role01_role_workfow",{5:{"value":roles[3].id,"flg":False}},None, item_type))
+
+    # action_role of action with action_id 1 is test_role02
+    workflows.append(create_flow(db, 3, "test_role02_role_flow","test_role02_role_workfow",{5:{"value":roles[4].id,"flg":False}},None,item_type))
+
+    # action_role of action with action_id 1 is test_role01 and deny
+    workflows.append(create_flow(db, 4, "test_role01_role_deny_flow","test_role01_role_deny_workfow",{5:{"value":roles[3].id,"flg":True}},None,item_type))
+
+    # action_role of action with action_id 1 is test_role02 and deny
+    workflows.append(create_flow(db, 5, "test_role02_role_deny_flow","test_role02_role_deny_workfow",{5:{"value":roles[4].id,"flg":True}},None,item_type))
+
+    # action_user of action with action_id 1 is test_role01_user
+    workflows.append(create_flow(db, 6,"test_role01_user_flow","test_role01_user_workflow",None,{5:{"value":users[2].id,"flg":False}},item_type))
+
+    # action_user of action with action_id 1 is test_role02_user
+    workflows.append(create_flow(db, 7,"test_role02_user_flow","test_role02_user_workflow",None,{5:{"value":users[4].id,"flg":False}},item_type))
+
+    # action_user of action with action_id 1 is test_role01_user and deny
+    workflows.append(create_flow(db, 8,"test_role01_user_deny_flow","test_role01_user_deny_workflow",None,{5:{"value":users[2].id,"flg":True}},item_type))
+
+    # action_user of action with action_id 1 is test_role02_user and deny
+    workflows.append(create_flow(db, 9,"test_role02_user_deny_flow","test_role02_user_deny_workflow",None,{5:{"value":users[4].id,"flg":True}},item_type))
+    return workflows
+
+
+@pytest.fixture()
+def activity_acl(db, workflow_with_action_role, activity_acl_users):
+    users = activity_acl_users["users"]
+    workflows = workflow_with_action_role
+    activites = [
+        create_activity(db,"sysadmin_入力待ち",1,["4"],users[0],-1,workflows[0],'M',3),
+        create_activity(db,"sysadmin_承認待ち",2,["4"],users[0],-1,workflows[0],'M',4),
+        create_activity(db,"sysadmin_キャンセル",3,["4"],users[0],-1,workflows[0],'C',3),
+        create_activity(db,"sysadmin_完了",4,["4"],users[0],-1,workflows[0],'F',5),
+        create_activity(db,"sysadmin_入力中_actionrole(test_role01)",5,["4"],users[0],-1,workflows[1],'M',3),
+        create_activity(db,"test_role01_comadmin_入力中_権限内",6,["2"],users[3],-1,workflows[0],'M',3),
+        create_activity(db,"test_role01_comadmin_承認待ち_権限内",7,["2"],users[3],-1,workflows[0],'M',4),
+        create_activity(db,"test_role01_comadmin_キャンセル_権限内",8,["2"],users[3],-1,workflows[0],'C',3),
+        create_activity(db,"test_role01_comadmin_完了_権限内",9,["2"],users[3],-1,workflows[0],'F',5),
+        create_activity(db,"test_role01_comadmin_入力中_権限内_actionrole(test_role02)",10,["2"],users[3],-1,workflows[2],'M',3),
+        create_activity(db,"test_role01_comadmin_入力中_権限内_!actionrole(test_role01)",11,["2"],users[3],-1,workflows[3],'M',3),
+        create_activity(db,"test_role01_comadmin_入力中_権限外",12,["4"],users[3],-1,workflows[0],'M',3),
+        create_activity(db,"test_role01_comadmin_承認待ち_権限外",13,["4"],users[3],-1,workflows[0],'M',4),
+        create_activity(db,"test_role01_comadmin_入力中_権限外_actionrole(test_role01)",14,["4"],users[3],-1,workflows[1],'M',3),
+        create_activity(db,"test_role01_comadmin_入力中_権限外_actionrole(test_role02)",15,["4"],users[3],-1,workflows[2],'M',3),
+        create_activity(db,"test_role01_comadmin_入力中_権限外_代理(test_role01_user)",16,["4"],users[3],3,workflows[0],'M',3),
+        create_activity(db,"test_role01_comadmin_承認待ち_権限外_代理(test_role01_user)",17,["4"],users[3],3,workflows[0],'M',4),
+        create_activity(db,"test_role01_comadmin_入力中_権限外_actionrole(test_role01)_代理(test_role01_user)",18,["4"],users[3],3,workflows[1],'M',3),
+        create_activity(db,"test_role01_comadmin_入力中_権限外_actionrole(test_role02)_代理(test_role01_user)",19,["4"],users[3],3,workflows[2],'M',3),
+        create_activity(db,"test_role01_comadmin_入力中_権限外_!actionrole(test_role01)",20,["4"],users[3],-1,workflows[3],'M',3),
+        create_activity(db,"test_role01_comadmin_入力中_権限外_!actionrole(test_role01)_代理(test_role01_user)",21,["4"],users[3],3,workflows[3],'M',3),
+        create_activity(db,"test_role01_user_入力中_権限内",22,["2"],users[2],-1,workflows[0],'M',3),
+        create_activity(db,"test_role01_user_承認待ち_権限内",23,["2"],users[2],-1,workflows[0],'M',4),
+        create_activity(db,"test_role01_user_キャンセル_権限内",24,["2"],users[2],-1,workflows[0],'C',3),
+        create_activity(db,"test_role01_user_完了_権限内",25,["2"],users[2],-1,workflows[0],'F',5),
+        create_activity(db,"test_role01_user_入力中_権限内_!actionrole(test_role01)",26,["2"],users[2],-1,workflows[3],'M',3),
+        create_activity(db,"test_role01_user_入力中_権限外",27,["4"],users[2],-1,workflows[0],'M',3),
+        create_activity(db,"test_role01_user_承認待ち_権限外",28,["4"],users[2],-1,workflows[0],'M',4),
+        create_activity(db,"test_role01_user_キャンセル_権限外",29,["4"],users[2],-1,workflows[0],'C',3),
+        create_activity(db,"test_role01_user_完了_権限外",30,["4"],users[2],-1,workflows[0],'F',5),
+        create_activity(db,"test_role01_user_入力中_権限外_index未選択",31,[],users[2],-1,workflows[0],'M',2),
+        create_activity(db,"test_role01_user_入力中_権限外_index未選択_代理(test_role01_comadmin)",32,[],users[2],4,workflows[0],'M',2),
+        create_activity(db,"test_role01_user_入力前_権限外",33,None,users[2],-1,workflows[0],'M',2),
+        create_activity(db,"test_role01_user_入力中_権限外_actionrole(test_role01)",34,["4"],users[2],-1,workflows[1],'M',3),
+        create_activity(db,"test_role01_user_入力中_権限外_actionrole(test_role02)",35,["4"],users[2],-1,workflows[2],'M',3),
+        create_activity(db,"test_role01_user_入力中_権限外_!actionrole(test_role01)",36,["4"],users[2],-1,workflows[3],'M',3),
+        create_activity(db,"test_role01_user_入力中_権限外_!actionrole(test_role02)",37,["4"],users[2],-1,workflows[4],'M',3),
+        create_activity(db,"test_role01_user_入力中_権限外_代理(test_role01_comadmin)",38,["4"],users[2],4,workflows[0],'M',3),
+        create_activity(db,"test_role01_user_承認待ち_権限外_代理(test_role01_comadmin)",39,["4"],users[2],4,workflows[0],'M',4),
+        create_activity(db,"test_role01_user_入力中_権限外_actionrole(test_role02)_代理(test_role01_comadmin)",40,["4"],users[2],4,workflows[2],'M',3),
+        create_activity(db,"test_role01_user_入力中_権限外_!actionrole(test_role01)_代理(test_role01_comadmin)",41,["4"],users[2],4,workflows[3],'M',3),
+        create_activity(db,"test_role01_user_入力中_権限内+外",42,["2","4"],users[2],-1,workflows[0],'M',3),
+        create_activity(db,"test_role03_comadmin_入力中_com所属なし",43,["2"],users[5],-1,workflows[0],'M',3),
+
+    ]
+
+    return activites
+
 
 
 @pytest.fixture()
@@ -1336,7 +1483,9 @@ def db_register(app, db, db_records, users, action_data, item_type):
             'action_feedback_mail1':activity_item4_feedbackmail,
             'action_feedback_mail2':activity_item5_feedbackmail,
             'action_feedback_mail3':activity_item6_feedbackmail,
-            "activities":[activity,activity_item1,activity_item2,activity_item3,activity_item7,activity_item8,activity_guest,del_activity,app_del_activity]}
+            'activities':[activity,activity_item1,activity_item2,activity_item3,activity_item7,activity_item8,activity_guest,del_activity,app_del_activity],
+            'activity_actions':[activity_action,activity_action1_item1,activity_action2_item1,activity_action3_item1],
+    }
 
 @pytest.fixture()
 def workflow(app, db, item_type, action_data, users):
@@ -1450,6 +1599,58 @@ def workflow(app, db, item_type, action_data, users):
         "flow_action":flow_actions,
         "workflow":workflow
     }
+
+@pytest.fixture()
+def workflow_one(app, db, item_type, action_data, users):
+    flow_define = FlowDefine(id=2,flow_id=uuid.uuid4(),
+                             flow_name='Registration Flow2',
+                             flow_user=1)
+    with db.session.begin_nested():
+        db.session.add(flow_define)
+    db.session.commit()
+
+    # setting flow action(start, item register, oa policy, item link, identifier grant, approval, end)
+    flow_actions = list()
+    # start
+    flow_actions.append(FlowAction(status='N',
+                     flow_id=flow_define.flow_id,
+                     action_id=1,
+                     action_version='1.0.0',
+                     action_order=1,
+                     action_condition='',
+                     action_status='A',
+                     action_date=datetime.strptime('2018/07/28 0:00:00','%Y/%m/%d %H:%M:%S'),
+                     send_mail_setting={}))
+    with db.session.begin_nested():
+        db.session.add_all(flow_actions)
+    db.session.commit()
+    workflow = WorkFlow(flows_id=uuid.uuid4(),
+                        flows_name='test workflow02',
+                        itemtype_id=1,
+                        index_tree_id=None,
+                        flow_id=2,
+                        is_deleted=False,
+                        open_restricted=False,
+                        location_id=None,
+                        is_gakuninrdm=False)
+    with db.session.begin_nested():
+        db.session.add(workflow)
+    db.session.commit()
+
+    return {
+        "flow":flow_define,
+        "flow_action":flow_actions,
+        "workflow":workflow
+    }
+
+@pytest.fixture()
+def no_begin_action(app, db):
+    """Set up the database without a 'begin_action' in the _Action table."""
+    actions_to_update = db.session.query(Action).filter_by(action_endpoint='begin_action').all()
+    if actions_to_update:
+        for action in actions_to_update:
+            action.action_endpoint = "other_action"
+        db.session.commit()
 
 @pytest.fixture()
 def workflow_open_restricted(app, db, item_type, action_data, users):

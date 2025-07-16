@@ -4885,6 +4885,42 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
       'invenioRecords',
       'wekoRecords.controllers',
     ]);
+    
+    function FileNameCheckCtrl($scope, $rootScope){
+      $scope.deleteFromArrayFile = function(item, modelArray) {
+        // get uploaded files
+        let fileObjects={};
+        let filesVM = $rootScope["filesVM"];
+        if (filesVM && filesVM.hasOwnProperty("files")){
+          let filesUploaded = filesVM.files;
+          filesUploaded.forEach(function(file){
+            fileObjects[file.key] = file["version_id"];
+          });
+        }
+        // delete data
+        
+        if (modelArray) {
+          target = modelArray[item];
+          let flg = true;
+          if (fileObjects[target.filename] != undefined){
+            if (fileObjects[target.filename] == target.version_id){
+              flg = false;
+            }
+          }
+          if (flg){
+            modelArray.splice(item, 1);
+          }
+        }
+        return modelArray;
+      }
+    }
+
+    FileNameCheckCtrl.$inject = [
+      '$scope',
+      '$rootScope',
+    ];
+    angular.module('fileNameCheck',[])
+      .controller('FileNameCheckCtrl', FileNameCheckCtrl);
 
     angular.module('uploadThumbnail', ['schemaForm', 'invenioFiles'])
     .controller('UploadController', function ($scope, $rootScope, InvenioFilesAPI) {
@@ -5105,7 +5141,7 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
         'mgcrea.ngStrap.modal', 'pascalprecht.translate', 'ui.sortable',
         'ui.select', 'mgcrea.ngStrap.select', 'mgcrea.ngStrap.datepicker',
         'mgcrea.ngStrap.helpers.dateParser', 'mgcrea.ngStrap.tooltip',
-        'invenioFiles', 'uploadThumbnail'
+        'invenioFiles', 'uploadThumbnail', 'fileNameCheck'
       ]
     );
   });

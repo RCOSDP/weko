@@ -749,6 +749,13 @@ def indices(app, db):
             id=45,
             position=1
         )
+        testIndexSix = Index(
+            index_name="testIndexSix",
+            browsing_role="1,2,3,4,-98,-99",
+            public_state=True,
+            id=66,
+            position=4
+        )
 
 
         db.session.add(testIndexOne)
@@ -757,6 +764,7 @@ def indices(app, db):
         db.session.add(testIndexThreeChild)
         db.session.add(testIndexMore)
         db.session.add(testIndexPrivate)
+        db.session.add(testIndexSix)
 
     return {
         'index_dict': dict(testIndexThree),

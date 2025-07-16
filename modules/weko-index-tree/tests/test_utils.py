@@ -57,6 +57,7 @@ from operator import itemgetter
 
 import redis
 from redis import sentinel
+from elasticsearch import helpers
 from elasticsearch.exceptions import NotFoundError
 from elasticsearch_dsl.query import Bool, Exists, Q, QueryString
 from flask import Markup, current_app, session
@@ -480,12 +481,46 @@ def test_check_doi_in_index(i18n_app, indices, db_records):
 
 
 #*** def get_record_in_es_of_index(index_id, recursively=True):
+#*** def check_doi_in_index_and_child_index(index_id, recursively=True):
+# .tox/c1/bin/pytest --cov=weko_index_tree tests/test_utils.py::test_get_record_in_es_of_index -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-index-tree/.tox/c1/tmp
 def test_get_record_in_es_of_index(i18n_app, indices, db_records, esindex):
     # Test 1
     assert not get_record_in_es_of_index(44, recursively=False)
+    assert not check_doi_in_index_and_child_index(44, recursively=False)
 
     # Test 2
     # assert get_record_in_es_of_index(33)
+
+    def _generate_es_data(num, start_datetime=datetime.now()):
+        for i in range(num):
+            doc = {
+                "_index": i18n_app.config['INDEXER_DEFAULT_INDEX'],
+                "_type": "item-v1.0.0",
+                "_id": f"2d1a2520-9080-437f-a304-230adc8{i:05d}",
+                "_source": {
+                    "_item_metadata": {
+                        "title": [f"test_title_{i}"],
+                    },
+                    "relation_version_is_last": True,
+                    "path": ["66"],
+                    "control_number": f"{i:05d}",
+                    "_created": (start_datetime + timedelta(seconds=i)).isoformat(),
+                    "publish_status": "0",
+                },
+            }
+            if i % 2 == 0:
+                doc["_source"]["identifierRegistration"] = {
+                    "identifierType": "DOI",
+                    "value": f"10.9999/test_doi_{i:05d}",
+                }
+            yield doc
+
+    generate_data_num = 30002
+    helpers.bulk(esindex.client, _generate_es_data(generate_data_num), refresh='true')
+
+    # result over 10000
+    assert len(get_record_in_es_of_index(66)) == generate_data_num
+    assert len(check_doi_in_index_and_child_index(66)) == int(generate_data_num / 2)
 
 
 # def check_doi_in_list_record_es(index_id):
@@ -547,16 +582,6 @@ def test_check_index_permissions(app, db, users, test_indices, db_records):
             assert check_index_permissions(index_path_list=["1", "2"], is_check_doi=True)==True
 
 
-# *** def check_doi_in_index_and_child_index(index_id, recursively=True):
-# def test_check_doi_in_index_and_child_index(i18n_app, indices, esindex, db_records, records2):
-def test_check_doi_in_index_and_child_index(i18n_app, users, indices, esindex):
-    # Test 1
-    assert len(check_doi_in_index_and_child_index(33, recursively=True)) == 0
-
-    # Test 2
-    # assert len(check_doi_in_index_and_child_index(33, recursively=True)) > 0
-
-
 #+++ def __get_redis_store():
 def test___get_redis_store(i18n_app):
     assert __get_redis_store()
@@ -586,10 +611,91 @@ def test_unlock_index(i18n_app, indices):
 
 
 #+++ def validate_before_delete_index(index_id):
-def test_validate_before_delete_index(i18n_app, indices):
+# .tox/c1/bin/pytest --cov=weko-index-tree tests/test_utils.py::test_validate_before_delete_index -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-index-tree/.tox/c1/tmp
+def test_validate_before_delete_index(i18n_app, indices, mocker):
+    """
+    Test validate_before_delete_index when return validation success.
+    Args:
+        i18n_app (fixture): language setting
+        indices (fixture): index data
+        mocker (fixture): mocker
+    """
     index_id = indices['index_non_dict'].id
 
-    assert validate_before_delete_index(index_id)
+    mocker.patch("weko_index_tree.utils.is_index_locked", return_value=False)
+    mocker.patch('weko_index_tree.utils.lock_all_child_index', return_value=(True, ['lock_index_1', 'lock_index_2']))
+    mocker.patch('weko_index_tree.utils.check_doi_in_index', return_value=False)
+    mocker.patch('weko_index_tree.utils.get_editing_items_in_index', return_value=False)
+    mocker.patch('weko_index_tree.utils.check_has_any_harvest_settings_in_index_is_locked', return_value=False)
+
+    is_unlock, errors, locked_key = validate_before_delete_index(index_id)
+    # 51994 case.05(validate_before_delete_index)
+    assert is_unlock == True
+    assert errors == []
+    assert locked_key != []
+
+
+# .tox/c1/bin/pytest --cov=weko-index-tree tests/test_utils.py::test_validate_before_delete_index_error -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-index-tree/.tox/c1/tmp
+@pytest.mark.parametrize('validate', [
+    'is_index_locked',
+    'check_doi_in_index',
+    'get_editing_items_in_index',
+    'check_has_any_harvest_settings_in_index_is_locked'
+])
+def test_validate_before_delete_index_error(i18n_app, indices, validate, mocker):
+    """
+    Test validate_before_delete_index when return validation error.
+
+    Args:
+        i18n_app (fixture): language setting
+        indices (fixture): index data
+        validate (fixture): validation list
+        mocker (fixture): mocker
+    """
+    index_id = indices['index_non_dict'].id
+    # is_index_locked is True
+    if validate == 'is_index_locked':
+        mocker.patch("weko_index_tree.utils.is_index_locked", return_value=True)
+
+        is_unlock, errors, locked_key = validate_before_delete_index(index_id)
+        # 51994 case.01(validate_before_delete_index)
+        assert is_unlock == False
+        assert errors == [_('Index Delete is in progress on another device.')]
+        assert locked_key == []
+    else:
+        # is_index_locked is False
+        mocker.patch("weko_index_tree.utils.is_index_locked", return_value=False)
+        mocker.patch('weko_index_tree.utils.lock_all_child_index', return_value=(True, ['lock_index_1', 'lock_index_2']))
+        # check_doi_in_index is True
+        if validate == 'check_doi_in_index':
+            mocker.patch('weko_index_tree.utils.check_doi_in_index', return_value=True)
+            mocker.patch('weko_index_tree.utils.get_editing_items_in_index', return_value=False)
+            mocker.patch('weko_index_tree.utils.check_has_any_harvest_settings_in_index_is_locked', return_value=False)
+
+            is_unlock, errors, locked_key = validate_before_delete_index(index_id)
+            # 51994 case.02(validate_before_delete_index)
+            assert is_unlock == True
+            assert errors == [_('The index cannot be deleted because there is a link from an item that has a DOI.')]
+        # get_editing_items_in_index is True
+        elif validate == 'get_editing_items_in_index':
+            mocker.patch('weko_index_tree.utils.check_doi_in_index', return_value=False)
+            mocker.patch('weko_index_tree.utils.get_editing_items_in_index', return_value=True)
+            mocker.patch('weko_index_tree.utils.check_has_any_harvest_settings_in_index_is_locked', return_value=False)
+
+            is_unlock, errors, locked_key = validate_before_delete_index(index_id)
+            # 51994 case.03(validate_before_delete_index)
+            assert is_unlock == True
+            assert errors == [_('This index cannot be deleted because the item belonging to this index is being edited.')]
+        # check_has_any_harvest_settings_in_index_is_locked is True
+        elif validate == 'check_has_any_harvest_settings_in_index_is_locked':
+            mocker.patch('weko_index_tree.utils.check_doi_in_index', return_value=False)
+            mocker.patch('weko_index_tree.utils.get_editing_items_in_index', return_value=False)
+            mocker.patch('weko_index_tree.utils.check_has_any_harvest_settings_in_index_is_locked', return_value=True)
+
+            is_unlock, errors, locked_key = validate_before_delete_index(index_id)
+            # 51994 case.04(validate_before_delete_index)
+            assert is_unlock == True
+            assert errors == [_('The index cannot be deleted becase the index in harvester settings.')]
 
 
 #+++ def is_index_locked(index_id):
@@ -645,7 +751,7 @@ def test_get_doi_items_in_index(app):
 
 
 # def get_editing_items_in_index(index_id, recursively=False):
-# .tox/c1/bin/pytest --cov=weko_index_tree tests/test_utils.py::test_save_index_trees_to_redis -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-index-tree/.tox/c1/tmp
+# .tox/c1/bin/pytest --cov=weko_index_tree tests/test_utils.py::test_get_editing_items_in_index -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-index-tree/.tox/c1/tmp
 def test_get_editing_items_in_index(app):
     _es_data = [
         {
@@ -662,12 +768,17 @@ def test_get_editing_items_in_index(app):
     with patch("weko_index_tree.utils.get_record_in_es_of_index", return_value=_es_data):
         with patch("weko_items_ui.utils.check_item_is_being_edit", return_value=True):
             with patch("invenio_pidstore.models.PersistentIdentifier.get", return_value=True):
-                res = get_editing_items_in_index(0)
-                assert res == ["1", "2"]
+                with patch("weko_workflow.utils.bulk_check_an_item_is_locked", return_value=["1", "2"]):
+                    res = get_editing_items_in_index(0)
+                    assert res == ["1", "2"]
 
         with patch("weko_items_ui.utils.check_item_is_being_edit", return_value=False):
             with patch("invenio_pidstore.models.PersistentIdentifier.get", return_value=True):
-                with patch("weko_workflow.utils.check_an_item_is_locked", return_value=False):
+                with patch("weko_workflow.utils.bulk_check_an_item_is_locked", return_value=["1"]):
+                    res = get_editing_items_in_index(0)
+                    assert res == ["1"]
+
+                with patch("weko_workflow.utils.bulk_check_an_item_is_locked", return_value=[]):
                     res = get_editing_items_in_index(0)
                     assert res == []
 

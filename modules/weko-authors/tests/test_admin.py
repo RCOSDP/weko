@@ -1,18 +1,19 @@
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_admin.py -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
 
-from flask import url_for,make_response,json
+from datetime import datetime
 from mock import patch
 import pytest
+from unittest.mock import MagicMock, mock_open
 
+from flask import current_app, url_for, make_response, json
 from invenio_accounts.testutils import login_user_via_session
 from invenio_cache import current_cache
 from invenio_files_rest.models import FileInstance
-from weko_workflow.utils import delete_cache_data
-from unittest.mock import MagicMock, mock_open
-from datetime import datetime
-from flask import current_app
+
 from weko_authors.admin import ImportView
 from weko_authors.tasks import import_author, import_id_prefix, import_affiliation_id
+from weko_workflow.utils import delete_cache_data
+
 
 def assert_role(response,is_permission,status_code=403):
     if is_permission:
@@ -292,6 +293,13 @@ class TestExportView():
             def failed(self):
                 return self.state == "FAILURE"
 
+        class MockFileInstance():
+            def __init__(self,date):
+                self.updated_at = date
+            @property
+            def updated(self):
+                return self.updated_at
+
         login_user_via_session(client=client, email=users[0]['email'])
         url = url_for('authors/export.check_status')
         current_cache.set("weko_authors_export_status",{"key":"authors_export_status","task_id":"test_task"})
@@ -327,6 +335,15 @@ class TestExportView():
         current_cache.set("weko_authors_export_status",{"key":"authors_export_status"})
         res = client.get(url)
         test = {'code': 200, 'data': {'download_link': '', 'filename': '', 'key': 'authors_export_status'}}
+        assert json.loads(res.data) == test
+
+        # get file instance
+        mocker_get_by_uri = mocker.patch("weko_authors.admin.FileInstance.get_by_uri")
+        expected_date = datetime.now()
+        mocker_get_by_uri.return_value = MockFileInstance(expected_date)
+        res = client.get(url)
+        expected_filename = "Creator_export_all_" + expected_date.strftime("%Y%m%d%H%M") + ".tsv"
+        test = {'code': 200, 'data': {'download_link': '', 'filename': expected_filename, 'key': 'authors_export_status'}}
         assert json.loads(res.data) == test
 
         # not get_export_status

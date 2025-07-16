@@ -40,13 +40,6 @@
   {% assets "weko_records_ui_preview_carousel_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
   <script src="{{ url_for('static', filename='js/weko_records_ui/file_stats.js')}}"></script>
   {% assets "weko_records_ui_bucket_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
-<!-- start demo block-->
-
-<script type="text/javascript">var addthis_config = {"data_track_addressbar": true};</script>
-{%- set site_info = site_info|get_site_info %}
-{%- set addthis_user_id = site_info.get("addthis_user_id",config.ADDTHIS_USER_ID) %}
-<script type="text/javascript" src="//s7.addthis.com/js/300/addthis_widget.js#pubid={{ addthis_user_id }}"></script>
-<!-- end demo block -->
   {% assets "weko_theme_js_widget" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
 {%- endblock javascript %}
 

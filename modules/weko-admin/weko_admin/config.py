@@ -495,7 +495,7 @@ WEKO_ADMIN_MANAGEMENT_OPTIONS = {
          'mappingFlg': False,
          'mappingName': ''},
 
-        {'id': 'id', 'contents': '', 'contents_value': {'en': 'ID', 'ja': 'ID'}, 'useable_status': True, 'mapping': ['identifier', 'URI', 'fullTextURL', 'selfDOI', 'ISBN', 'ISSN', 'NCID', 'pmid', 'doi', 'NAID', 'ichushi'],
+        {'id': 'id', 'contents': '', 'contents_value': {'en': 'ID', 'ja': 'ID'}, 'useable_status': True, 'mapping': ['identifier', 'URI', 'fullTextURL', 'selfDOI', 'ISBN', 'ISSN', 'NCID', 'PMID', 'DOI', 'NAID', 'ICHUSHI'],
          'sche_or_attr':[{'id': 'identifier', 'contents': 'identifier', 'checkStus': False},
                          {'id': 'URI', 'contents': 'URI', 'checkStus': False},
                          {'id': 'fullTextURL',
@@ -505,10 +505,10 @@ WEKO_ADMIN_MANAGEMENT_OPTIONS = {
                          {'id': 'ISBN', 'contents': 'ISBN', 'checkStus': False},
                          {'id': 'ISSN', 'contents': 'ISSN', 'checkStus': False},
                          {'id': 'NCID', 'contents': 'NCID', 'checkStus': False},
-                         {'id': 'pmid', 'contents': 'pmid', 'checkStus': False},
-                         {'id': 'doi', 'contents': 'doi', 'checkStus': False},
+                         {'id': 'PMID', 'contents': 'PMID', 'checkStus': False},
+                         {'id': 'DOI', 'contents': 'DOI', 'checkStus': False},
                          {'id': 'NAID', 'contents': 'NAID', 'checkStus': False},
-                         {'id': 'ichushi', 'contents': 'ichushi', 'checkStus': False},
+                         {'id': 'ICHUSHI', 'contents': 'ICHUSHI', 'checkStus': False},
                          ],
          'default_display': True, 'inputType': 'text', 'inputVal': '', 'mappingFlg': True, 'mappingName': 'id_attr'},
 
@@ -633,11 +633,14 @@ WEKO_ADMIN_MANAGEMENT_OPTIONS = {
 
         {'id': 'version', 'contents': '', 'contents_value': {'en': 'Author Version Flag', 'ja': '著者版フラグ'}, 'useable_status': True, 'mapping': [],
          'options':[
-             {'id': 'accepted', 'contents': 'accepted'},
-             {'id': 'published', 'contents': 'published'},
-             {'id': 'draft', 'contents': 'draft'},
-             {'id': 'submitted', 'contents': 'submitted'},
-             {'id': 'updated', 'contents': 'updated'}
+             {'id': 'AO', 'contents': 'AO'},
+             {'id': 'SMUR', 'contents': 'SMUR'},
+             {'id': 'AM', 'contents': 'AM'},
+             {'id': 'P', 'contents': 'P'},
+             {'id': 'VoR', 'contents': 'VoR'},
+             {'id': 'CVoR', 'contents': 'CVoR'},
+             {'id': 'EVoR', 'contents': 'EVoR'},
+             {'id': 'NA', 'contents': 'NA'}
         ], 'default_display': True, 'inputType': 'selectbox', 'inputVal': '', 'mappingFlg': False, 'mappingName': ''},
         {'id': 'dissno',
          'contents': '',

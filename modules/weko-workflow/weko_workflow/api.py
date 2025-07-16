@@ -38,9 +38,12 @@ from invenio_accounts.models import Role, User, userrole
 from invenio_communities.models import Community
 from invenio_db import db
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
-from sqlalchemy import and_, asc, desc, func, or_
+from invenio_records.models import RecordMetadata
+from sqlalchemy import and_, asc, desc, func, or_,literal_column
+from sqlalchemy.sql import exists
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm.exc import NoResultFound
+from sqlalchemy.types import String
 from weko_deposit.api import WekoDeposit
 from weko_logging.activity_logger import UserActivityLogger
 from weko_notifications import Notification, NotificationClient
@@ -240,13 +243,19 @@ class Flow(object):
                 flow = _Flow.query.filter_by(
                     flow_id=flow_id).one_or_none()
                 if flow:
-                    # logical delete
-                    # flow.is_deleted = True
-                    # db.session.merge(flow)
-                    # physical delete
-                    _FlowAction.query.filter_by(flow_id=flow_id).delete()
-                    _Flow.query.filter_by(
-                        flow_id=flow_id).delete()
+                    workflow = _WorkFlow.query.filter(
+                        and_(_WorkFlow.flow_id == flow.id,
+                             _WorkFlow.is_deleted == True)
+                        ).all()
+                    if len(workflow) > 0:
+                        # logical delete
+                        flow.is_deleted = True
+                        db.session.merge(flow)
+                    else:
+                        # physical delete
+                        _FlowAction.query.filter_by(flow_id=flow_id).delete()
+                        _Flow.query.filter_by(
+                            flow_id=flow_id).delete()
             db.session.commit()
             return {'code': 0, 'msg': ''}
         except Exception as ex:
@@ -837,36 +846,40 @@ class WorkActivity(object):
             item_id (int): item id.
 
         Returns:
-            Activity: activity object.
+            _Activity:
+                activity object.
+
+        Raises:
+            Exception:
+                unexpected error.
         """
         try:
             action_id = 0
             next_action_id = 0
             action_has_term_of_use = False
             next_action_order = 0
-            with db.session.no_autoflush:
-                action = _Action.query.filter_by(
-                    action_endpoint='begin_action').one_or_none()
-                if action is not None:
-                    action_id = action.id
-                flow_define = _Flow.query.filter_by(
-                    id=activity.get('flow_id')).one_or_none()
-                if flow_define:
-                    flow_actions = _FlowAction.query.filter_by(
-                        flow_id=flow_define.flow_id).order_by(
-                        asc(_FlowAction.action_order)).all()
-                    if flow_actions and len(flow_actions) >= 2:
-                        next_action_id = flow_actions[1].action_id
-                        next_action_order = flow_actions[1].action_order
-                        enable_show_term_of_use = current_app.config[
-                            'WEKO_WORKFLOW_ENABLE_SHOWING_TERM_OF_USE']
-                        if enable_show_term_of_use:
-                            application_item_types = current_app.config[
-                                'WEKO_ITEMS_UI_SHOW_TERM_AND_CONDITION']
-                            item_type_name = \
-                                get_item_type_name(activity.get('itemtype_id'))
-                            if item_type_name in application_item_types:
-                                action_has_term_of_use = True
+            action = _Action.query.filter_by(
+                action_endpoint='begin_action').one_or_none()
+            if action is not None:
+                action_id = action.id
+            flow_define = _Flow.query.filter_by(
+                id=activity.get('flow_id')).one_or_none()
+            if flow_define:
+                flow_actions = _FlowAction.query.filter_by(
+                    flow_id=flow_define.flow_id).order_by(
+                    asc(_FlowAction.action_order)).all()
+                if flow_actions and len(flow_actions) >= 2:
+                    next_action_id = flow_actions[1].action_id
+                    next_action_order = flow_actions[1].action_order
+                    enable_show_term_of_use = current_app.config[
+                        'WEKO_WORKFLOW_ENABLE_SHOWING_TERM_OF_USE']
+                    if enable_show_term_of_use:
+                        application_item_types = current_app.config[
+                            'WEKO_ITEMS_UI_SHOW_TERM_AND_CONDITION']
+                        item_type_name = \
+                            get_item_type_name(activity.get('itemtype_id'))
+                        if item_type_name in application_item_types:
+                            action_has_term_of_use = True
             extra_info = {}
             # Get extra info
             if 'extra_info' in activity:
@@ -915,7 +928,6 @@ class WorkActivity(object):
                 action_order=next_action_order
             )
             db.session.add(db_activity)
-            db.session.commit()
         except BaseException as ex:
             raise
         else:
@@ -1699,7 +1711,25 @@ class WorkActivity(object):
         return query
 
     @staticmethod
-    def query_activities_by_tab_is_wait(query):
+    def __query_check_path(index_list, is_within=True):
+        """Create a query to check if a path in records_metadata.json is within the scope of the community index
+
+        :param index_list:
+        :param is_within:
+        :type index_list: list
+        """
+        query = exists()\
+            .select_from(
+                func.jsonb_array_elements_text(RecordMetadata.json.op('->')('path')).alias('elem')
+            )\
+            .where(
+                func.cast(literal_column('elem'),String).in_(index_list)
+            )
+
+        return query if is_within else ~query
+
+    @staticmethod
+    def query_activities_by_tab_is_wait(query, is_community_admin, comadmin_index_list):
         """
         Query activities by tab is wait.
 
@@ -1710,6 +1740,7 @@ class WorkActivity(object):
         self_group_ids = [role.id for role in current_user.roles]
         query = query \
             .filter(_FlowAction.action_id == _Activity.action_id) \
+            .filter(_Flow.flow_id==_FlowAction.flow_id)\
             .filter(
                 or_(
                     _Activity.activity_status
@@ -1748,31 +1779,64 @@ class WorkActivity(object):
                 .filter(
                     or_(
                         and_(
-                            _FlowActionRole.action_user != self_user_id,
-                            _FlowActionRole.action_user_exclude == '0',
-                            _Activity.shared_user_id != self_user_id
+                            or_(
+                                and_(
+                                    _FlowActionRole.action_user != self_user_id,
+                                    _FlowActionRole.action_user_exclude == '0',
+                                ),
+                                and_(
+                                    _FlowActionRole.action_user == self_user_id,
+                                    _FlowActionRole.action_user_exclude != '0',
+                                )
+                            ),
+                            or_(_Activity.shared_user_id != self_user_id,_Activity.shared_user_id.is_(None))
                         ),
                         and_(
-                            _FlowActionRole.action_role.notin_(self_group_ids),
-                            _FlowActionRole.action_role_exclude == '0',
-                            _Activity.shared_user_id != self_user_id
+                            or_(
+                                and_(
+                                    _FlowActionRole.action_role.notin_(self_group_ids),
+                                    _FlowActionRole.action_role_exclude == '0'
+                                ),
+                                and_(
+                                    _FlowActionRole.action_role.in_(self_group_ids),
+                                    _FlowActionRole.action_role_exclude != '0'
+                                )
+                            ),
+                            or_(_Activity.shared_user_id != self_user_id,_Activity.shared_user_id.is_(None))
                         ),
                         and_(
                             ActivityAction.action_handler != self_user_id,
-                            _Activity.shared_user_id != self_user_id
+                            or_(_Activity.shared_user_id != self_user_id,_Activity.shared_user_id.is_(None))
                         ),
                         and_(
+                            or_(
+                                and_(
+                                    _FlowActionRole.action_user != _Activity.activity_login_user,
+                                    _FlowActionRole.action_user_exclude == '0',
+                                ),
+                                and_(
+                                    _FlowActionRole.action_user == _Activity.activity_login_user,
+                                    _FlowActionRole.action_user_exclude != '0',
+                                )
+                            ),
                             _Activity.shared_user_id == self_user_id,
-                            _FlowActionRole.action_user
-                            != _Activity.activity_login_user,
-                            _FlowActionRole.action_user_exclude == '0'
                         ),
+                        #and_(
+                        #    _Activity.shared_user_id == self_user_id,
+                        #    _FlowActionRole.action_role.notin_(self_group_ids),
+                        #    _FlowActionRole.action_role_exclude == '0',
+                        #    _Flow.flow_id==_FlowAction.flow_id
+                        #),
                         and_(
                             _Activity.shared_user_id == self_user_id,
                             ActivityAction.action_handler
                             != _Activity.activity_login_user
                         ),
                     )
+                )
+            if is_community_admin:
+                query = query.filter(
+                    WorkActivity.__query_check_path(comadmin_index_list, is_within=False)
                 )
 
         return query
@@ -1782,6 +1846,7 @@ class WorkActivity(object):
         query,
         is_community_admin,
         community_user_ids,
+        comadmin_index_list
     ):
         """Query activities by tab is all.
 
@@ -1792,40 +1857,41 @@ class WorkActivity(object):
         """
         self_user_id = int(current_user.get_id())
         self_group_ids = [role.id for role in current_user.roles]
+        conditions = [
+            and_(
+                _Activity.activity_login_user == self_user_id,
+            ),
+            and_(
+                ActivityAction.action_handler == self_user_id
+            ),
+            and_(
+                _Activity.approval1 == current_user.email
+            ),
+            and_(
+                _Activity.approval2 == current_user.email
+            ),
+            and_(
+                _FlowActionRole.action_user == self_user_id,
+                _FlowActionRole.action_user_exclude == '0',
+            ),
+            and_(
+                _FlowActionRole.action_role.in_(self_group_ids),
+                _FlowActionRole.action_role_exclude == '0',
+            ),
+            and_(
+                _Activity.shared_user_id == self_user_id
+            )
+        ]
         if is_community_admin:
-            query = query \
-                .filter(_Activity.activity_login_user.in_(community_user_ids))
-        else:
-            query = query.filter(
-                or_(
-                    and_(
-                        _Activity.activity_login_user == self_user_id,
-                        _Activity.activity_status
-                        == ActivityStatusPolicy.ACTIVITY_FINALLY
-                    ),
-                    and_(
-                        ActivityAction.action_handler == self_user_id
-                    ),
-                    and_(
-                        _Activity.approval1 == current_user.email
-                    ),
-                    and_(
-                        _Activity.approval2 == current_user.email
-                    ),
-                    and_(
-                        _FlowActionRole.action_user == self_user_id,
-                        _FlowActionRole.action_user_exclude == '0'
-                    ),
-                    and_(
-                        _FlowActionRole.action_role.in_(self_group_ids),
-                        _FlowActionRole.action_role_exclude == '0'
-                    ),
-                    and_(
-                        _Activity.shared_user_id == self_user_id,
-                        _FlowAction.action_id != 4
-                    ),
+            conditions.append(
+                and_(
+                    _Activity.activity_login_user.in_(community_user_ids),
+                    WorkActivity.__query_check_path(comadmin_index_list)
                 )
             )
+        query = query\
+            .filter(or_(*conditions))\
+            .filter(_Flow.flow_id==_FlowAction.flow_id)
 
         return query
 
@@ -1853,12 +1919,15 @@ class WorkActivity(object):
         return is_admin, is_community_admin
 
     @staticmethod
-    def query_activities_by_tab_is_todo(query, is_admin):
+    def query_activities_by_tab_is_todo(query, is_admin, is_community_admin, community_user_ids, comadmin_index_list):
         """
         Query activities by tab is todo.
 
         :param query:
         :param is_admin:
+        :param is_community_admin
+        :param community_user_ids
+        :param community_index_list
         :return:
         """
         query = query \
@@ -1870,25 +1939,38 @@ class WorkActivity(object):
                 'WEKO_WORKFLOW_ENABLE_SHOW_ACTIVITY']:
             self_user_id = int(current_user.get_id())
             self_group_ids = [role.id for role in current_user.roles]
-            query = query \
-                .filter(
-                    or_(
-                        and_(
-                            _FlowActionRole.action_user == self_user_id,
-                            _FlowActionRole.action_user_exclude == '0'
-                        ),
-                        and_(
-                            _FlowActionRole.action_role.in_(self_group_ids),
-                            _FlowActionRole.action_role_exclude == '0'
-                        ),
-                        and_(
-                            _FlowActionRole.id.is_(None)
-                        ),
-                        and_(
-                            _Activity.shared_user_id == self_user_id,
-                        ),
-                    )
-                )\
+            condition1 = [
+                and_(
+                    _FlowActionRole.action_user == self_user_id,
+                    _FlowActionRole.action_user_exclude == '0',
+                ),
+                and_(
+                    _FlowActionRole.action_role.in_(self_group_ids),
+                    _FlowActionRole.action_role_exclude == '0',
+                ),
+                and_(
+                    _FlowActionRole.action_user != self_user_id,
+                    _FlowActionRole.action_user_exclude == '1',
+                ),
+                and_(
+                    ~_FlowActionRole.action_role.in_(self_group_ids),
+                    _FlowActionRole.action_role_exclude == '1',
+                ),
+                and_(
+                    _FlowActionRole.id.is_(None),
+                ),
+                and_(
+                    _Activity.shared_user_id == self_user_id,
+                ),
+            ]
+            if is_community_admin:
+                condition1.append(
+                    and_(
+                    _Activity.activity_login_user.in_(community_user_ids),
+                    WorkActivity.__query_check_path(comadmin_index_list)
+                ))
+            query = query\
+                .filter(or_(*condition1))\
                 .filter(_FlowAction.action_id == _Activity.action_id) \
                 .filter(_FlowAction.action_order == _Activity.action_order)
             if is_admin:
@@ -1896,22 +1978,29 @@ class WorkActivity(object):
                     ActivityAction.action_handler.in_([-1, self_user_id])
                 )
             else:
-                query = query.filter(
-                    or_(
-                        ActivityAction.action_handler == self_user_id,
+                condition2 = [
+                    ActivityAction.action_handler == self_user_id,
+                    and_(
+                        _FlowActionRole.action_user == self_user_id,
+                        _FlowActionRole.action_user_exclude == '0',
+                    ),
+                    and_(
+                        _FlowActionRole.action_role.in_(self_group_ids),
+                        _FlowActionRole.action_role_exclude == '0',
+                    ),
+                    and_(
+                        _Activity.shared_user_id == self_user_id,
+                        _FlowAction.action_id != 4
+                    ),
+                ]
+                if is_community_admin:
+                    condition2.append(
                         and_(
-                            _FlowActionRole.action_user == self_user_id,
-                            _FlowActionRole.action_user_exclude == '0'
-                        ),
-                        and_(
-                            _FlowActionRole.action_role.in_(self_group_ids),
-                            _FlowActionRole.action_role_exclude == '0'
-                        ),
-                        and_(
-                            _Activity.shared_user_id == self_user_id,
-                        ),
-                    )
-                )
+                        _Activity.activity_login_user.in_(community_user_ids),
+                        WorkActivity.__query_check_path(comadmin_index_list)
+                    ))
+
+                query = query.filter(or_(*condition2))
 
         return query
 
@@ -1945,6 +2034,12 @@ class WorkActivity(object):
                     ActivityAction.activity_id == _Activity.activity_id,
                     ActivityAction.action_id == _Activity.action_id,
                 )
+            )\
+            .outerjoin(
+                RecordMetadata,
+                and_(
+                    _Activity.item_id==RecordMetadata.id
+                )
             )
 
         if current_app.config['WEKO_WORKFLOW_ENABLE_SHOW_ACTIVITY'] or \
@@ -1967,43 +2062,17 @@ class WorkActivity(object):
                         _Activity.activity_update_user == User.id,
                     )
                 )
+        common_query=common_query.filter(_Flow.flow_id==_FlowAction.flow_id)
         return common_query
 
-    @staticmethod
-    def _check_community_permission(activity_data, index_ids):
-        flag = False
-        if activity_data.item_id:
-            dep = WekoDeposit.get_record(activity_data.item_id)
-            path = dep.get('path', [])
-            for i in path:
-                if str(i) in index_ids:
-                    flag = True
-                    break
-        return flag
-
     def __format_activity_data_to_show_on_workflow(self, activities,
-                                                   action_activities,
-                                                   is_community_admin):
+                                                   action_activities):
         """Format activity data to show on Workflow.
 
         @param activities:
         @param action_activities:
         @param is_community_admin:
         """
-
-        index_ids = []
-        if is_community_admin:
-            role_ids = []
-            if current_user and current_user.is_authenticated:
-                role_ids = [role.id for role in current_user.roles]
-            if role_ids:
-                from invenio_communities.models import Community
-                comm_list = Community.query.filter(
-                    Community.id_role.in_(role_ids)
-                ).all()
-                for comm in comm_list:
-                    index_ids += [str(i.cid) for i in Indexes.get_self_list(comm.root_node_id)
-                                  if i.cid not in index_ids]
 
         for activity_data, last_update_user, \
             flow_name, action_name, role_name \
@@ -2024,9 +2093,6 @@ class WorkActivity(object):
             activity_data.action_name = action_name
             activity_data.role_name = role_name if role_name else ''
 
-            if is_community_admin:
-                if not self._check_community_permission(activity_data, index_ids):
-                    continue
             # Append to do and action activities into the master list
             activities.append(activity_data)
 
@@ -2036,22 +2102,28 @@ class WorkActivity(object):
 
         @return:
         """
-        community_roles = current_app.config[
-            'WEKO_PERMISSION_ROLE_COMMUNITY']
-        community_user_ids = []
-        for role_name in community_roles:
-            community_users = User.query.outerjoin(userrole).outerjoin(Role) \
-                .filter(role_name == Role.name) \
-                .filter(userrole.c.role_id == Role.id) \
-                .filter(User.id == userrole.c.user_id) \
-                .all()
-            _tmp = [community_user.id for community_user in
-                    community_users]
-            community_user_ids.extend(_tmp)
+        community_user_ids=[]
+        role_ids = []
+        if current_user and current_user.is_authenticated:
+            role_ids = [role.id for role in current_user.roles]
+        if role_ids:
+            from invenio_communities.models import Community
+            comm_list = Community.query.filter(
+                Community.id_role.in_(role_ids)
+            ).all()
+            com_roles = list(set([comm.id_role for comm in comm_list]))
+
+            if com_roles:
+                com_users = User.query.outerjoin(userrole).outerjoin(Role) \
+                    .filter(Role.id.in_(com_roles)) \
+                    .filter(userrole.c.role_id == Role.id) \
+                    .filter(User.id == userrole.c.user_id) \
+                    .all()
+                community_user_ids = list(set([user.id for user in com_users]))
 
         return community_user_ids
 
-    def get_activity_list(self, community_id=None, conditions=None,
+    def get_activity_list(self, conditions=None,
                           is_get_all=False, activitylog = False):
         """Get activity list info.
 
@@ -2067,14 +2139,21 @@ class WorkActivity(object):
             is_admin, is_community_admin = self.check_current_user_role()
 
             tab_list = conditions.get('tab')
-
             # Get tab of page
             tab = WEKO_WORKFLOW_TODO_TAB if not tab_list else tab_list[0]
-            size = 20
-            page = 1
-
+            size = '20'
+            page = '1'
+            comadmin_index_list = []
+            if is_community_admin:
+                cur_role = [role.id for role in current_user.roles]
+                from invenio_communities.models import Community
+                comm_list = Community.query.filter(
+                    Community.id_role.in_(cur_role)
+                ).all()
+                for comm in comm_list:
+                    comadmin_index_list += [str(i.cid) for i in Indexes.get_self_list(comm.root_node_id)
+                                  if i.cid not in comadmin_index_list]
             activities = []
-
             # query activities
             query_action_activities = self.__common_query_activity_list()
 
@@ -2087,7 +2166,7 @@ class WorkActivity(object):
                 if size_wait and size_wait[0].isnumeric():
                     size = size_wait[0]
                 query_action_activities = self.query_activities_by_tab_is_wait(
-                    query_action_activities)
+                    query_action_activities, is_community_admin, comadmin_index_list)
             # query activities by tab is all
             elif tab == WEKO_WORKFLOW_ALL_TAB:
                 page_all = conditions.get('pagesall')
@@ -2097,11 +2176,12 @@ class WorkActivity(object):
                 if size_all and size_all[0].isnumeric():
                     size = size_all[0]
                 if not is_admin:
-                    community_user_ids = self.__get_community_user_ids()
+                    community_user_ids = self.__get_community_user_ids() if is_community_admin else []
                     query_action_activities = self \
                         .query_activities_by_tab_is_all(
                             query_action_activities, is_community_admin,
-                            community_user_ids
+                            community_user_ids,
+                            comadmin_index_list
                         )
             # query activities by tab is todo
             elif tab == WEKO_WORKFLOW_TODO_TAB:
@@ -2111,16 +2191,18 @@ class WorkActivity(object):
                     page = page_todo[0]
                 if size_todo and size_todo[0].isnumeric():
                     size = size_todo[0]
+                community_user_ids=[]
                 if not is_admin:
-                    community_user_ids = self.__get_community_user_ids()
+                    community_user_ids = self.__get_community_user_ids() if is_community_admin else []
                     query_action_activities = self\
                         .query_activities_by_tab_is_all(
                             query_action_activities, is_community_admin,
-                            community_user_ids
+                            community_user_ids,
+                            comadmin_index_list
                         )
 
                 query_action_activities = self.query_activities_by_tab_is_todo(
-                    query_action_activities, is_admin
+                    query_action_activities, is_admin, is_community_admin, community_user_ids,comadmin_index_list
                 )
 
             # Filter conditions
@@ -2138,13 +2220,13 @@ class WorkActivity(object):
             if count > 0:
                 name_param, page = self.__get_activity_list_per_page(
                     activities, max_page, name_param, page,
-                    query_action_activities, size, tab, is_community_admin, is_get_all
+                    query_action_activities, size, tab, is_get_all
                 )
             return activities, max_page, size, page, name_param
 
     def __get_activity_list_per_page(
         self, activities, max_page, name_param,
-        page, query_action_activities, size, tab, is_community_admin, is_get_all=False
+        page, query_action_activities, size, tab, is_get_all=False
     ):
         """Get activity list per page.
 
@@ -2171,7 +2253,7 @@ class WorkActivity(object):
         if action_activities:
             # Format activities
             self.__format_activity_data_to_show_on_workflow(
-                activities, action_activities, is_community_admin)
+                activities, action_activities)
         return name_param, page
 
     def get_all_activity_list(self, community_id=None):
@@ -3640,21 +3722,22 @@ class WorkActivityHistory(object):
 class UpdateItem(object):
     """The class about item."""
 
-    def publish(self, record):
+    def publish(self, record, status):
         r"""Record publish  status change view.
 
         Change record publish status with given status and renders record
         export template.
 
         :param record: record object.
+        :param status: publish status
         :return: The rendered template.
         """
         from weko_deposit.api import WekoIndexer
         publish_status = record.get('publish_status')
         if not publish_status:
-            record.update({'publish_status': PublishStatus.PUBLIC.value})
+            record.update({'publish_status': status})
         else:
-            record['publish_status'] = PublishStatus.PUBLIC.value
+            record['publish_status'] = status
 
         record.commit()
         db.session.commit()

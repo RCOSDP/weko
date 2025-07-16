@@ -143,7 +143,7 @@
                     <p class="form-control-static">
                       {%- if is_enable_item_name_link -%}
                         <a href="#"
-                           id="link_record_detail">{{ item.get('title_ja', item.get('title')) if item }}</a>
+                           id="link_record_detail">{{ activity.title if activity.title }}</a>
                       {%- endif -%}
                     </p>
                   </div>

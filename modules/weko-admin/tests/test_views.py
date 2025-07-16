@@ -301,7 +301,7 @@ def test_save_api_cert_data(api, users):
             data = {"api_code":"crf","cert_data":"test_cert_data"}
             res = api.post(url,json=data)
             assert response_data(res) == {"results":"success","error":""}
-    
+
     # api_code is 'oaa'
     with patch("weko_admin.views.save_api_certification",return_value={"results":"success","error":""}):
         data = {"api_code":"oaa","cert_data":"test_cert_data"}
@@ -720,16 +720,15 @@ def test_get_site_info(api,db,users,site_info,mocker):
     with patch("weko_admin.views.SiteInfo.get",return_value=None):
         res = api.get(url)
         assert res.status_code == 200
-        assert response_data(res) == {"google_tracking_id_user":"test_google_tracking_id","addthis_user_id":"test_addthis_user_id"}
+        assert response_data(res) == {"google_tracking_id_user":"test_google_tracking_id"}
 
         current_app.config.pop("GOOGLE_TRACKING_ID_USER")
-        current_app.config.pop("ADDTHIS_USER_ID")
         res = api.get(url)
         assert res.status_code == 200
         assert response_data(res) == {}
 
     current_app.config["GOOGLE_TRACKING_ID_USER"] = "test_tracking_id"
-    current_app.config["ADDTHIS_USER_ID"] = "ra-5d8af23e9a3a2633"
+
     test = {
         "copy_right":"test_copy_right1",
         "description":"test site info1.",
@@ -739,7 +738,6 @@ def test_get_site_info(api,db,users,site_info,mocker):
         "site_name":[{"name":"name11"}],
         "notify":{"name":"notify11"},
         "google_tracking_id_user":"11",
-        "addthis_user_id":"12",
         "ogp_image":"http://test_server/api/admin/ogp_image",
         "ogp_image_name":"test ogp image name1"
     }
@@ -756,7 +754,6 @@ def test_get_site_info(api,db,users,site_info,mocker):
         "site_name":{"name":"name21"},
         "notify":{"name":"notify21"},
         "google_tracking_id_user":None,
-        "addthis_user_id":None,
     }
     SiteInfo.query.delete()
     db.session.commit()
@@ -767,7 +764,6 @@ def test_get_site_info(api,db,users,site_info,mocker):
     assert response_data(res) == test
 
     current_app.config.pop("GOOGLE_TRACKING_ID_USER")
-    current_app.config.pop("ADDTHIS_USER_ID")
     test = {
         "copy_right":"test_copy_right2",
         "description":"test site info2.",
@@ -777,7 +773,6 @@ def test_get_site_info(api,db,users,site_info,mocker):
         "site_name":{"name":"name21"},
         "notify":{"name":"notify21"},
         "google_tracking_id_user":None,
-        "addthis_user_id":None,
     }
     res = api.get(url)
     assert response_data(res) == test

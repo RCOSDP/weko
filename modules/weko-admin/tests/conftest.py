@@ -45,7 +45,6 @@ from sqlalchemy_utils.functions import create_database, database_exists, \
     drop_database
 from simplekv.memory.redisstore import RedisStore
 
-
 from invenio_accounts import InvenioAccounts
 from invenio_accounts.models import User, Role
 from invenio_accounts.testutils import create_test_user
@@ -60,14 +59,14 @@ from invenio_files_rest import InvenioFilesREST
 from invenio_files_rest.models import FileInstance, Location
 from invenio_i18n import InvenioI18N
 from invenio_mail.models import MailConfig
+from invenio_oaiserver.ext import InvenioOAIServer
+from invenio_oauth2server.models import Client, Token
 from invenio_pidrelations import InvenioPIDRelations
 from invenio_pidstore import InvenioPIDStore
-from invenio_search import RecordsSearch,InvenioSearch
-from invenio_oaiserver.ext import InvenioOAIServer
+from invenio_pidstore.models import PersistentIdentifier
 from invenio_records.ext import InvenioRecords
 from invenio_records.models import RecordMetadata
-from invenio_pidstore.models import PersistentIdentifier
-from invenio_oauth2server.models import Client, Token
+from invenio_search import RecordsSearch,InvenioSearch,current_search_client
 
 from weko_authors import WekoAuthors
 from weko_authors.models import Authors
@@ -79,13 +78,12 @@ from weko_records_ui.config import WEKO_PERMISSION_SUPER_ROLE_USER
 from weko_records import WekoRecords
 from weko_records.models import SiteLicenseInfo, SiteLicenseIpAddress,ItemType,ItemTypeName,ItemTypeJsonldMapping
 from weko_redis.redis import RedisConnection
-from weko_swordserver.models import SwordClientModel
-from weko_theme import WekoTheme
 from weko_schema_ui import WekoSchemaUI
 from weko_search_ui import WekoSearchUI
+from weko_swordserver.models import SwordClientModel
+from weko_theme import WekoTheme
 from weko_workflow import WekoWorkflow
 from weko_workflow.models import Action, ActionStatus,FlowDefine,FlowAction,WorkFlow,Activity,ActivityAction
-
 
 from weko_admin import WekoAdmin
 from weko_admin.models import SessionLifetime,SiteInfo,SearchManagement,\
@@ -96,7 +94,7 @@ from weko_admin.models import SessionLifetime,SiteInfo,SearchManagement,\
 from weko_admin.views import blueprint_api
 
 from .helpers import json_data, create_record
-from weko_admin.models import FacetSearchSetting
+
 
 @pytest.yield_fixture()
 def instance_path():
@@ -140,8 +138,9 @@ def base_app(instance_path, cache_config,request ,search_class):
         #      'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'),
         SQLALCHEMY_DATABASE_URI=os.getenv('SQLALCHEMY_DATABASE_URI',
                                           'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest'),
-        SEARCH_ELASTIC_HOSTS=os.environ.get(
-            'SEARCH_ELASTIC_HOSTS', None),
+        #SEARCH_ELASTIC_HOSTS=os.environ.get(
+        #    'SEARCH_ELASTIC_HOSTS', None),
+        SEARCH_ELASTIC_HOSTS=os.environ.get("SEARCH_ELASTIC_HOSTS", "elasticsearch"),
         SQLALCHEMY_TRACK_MODIFICATIONS=True,
         SQLALCHEMY_ECHO=False,
         TEST_USER_EMAIL='test_user@example.com',
@@ -196,8 +195,9 @@ def base_app(instance_path, cache_config,request ,search_class):
     FlaskCeleryExt(app_)
     WekoSearchUI(app_)
     WekoSchemaUI(app_)
-    search = InvenioSearch(app_, client=MockEs())
-    search.register_mappings(search_class.Meta.index, 'tests.mock_module.mappings')
+    #search = InvenioSearch(app_, client=MockEs())
+    InvenioSearch(app_)
+    #search.register_mappings(search_class.Meta.index, 'tests.mock_module.mappings')
     InvenioIndexer(app_)
     InvenioRecords(app_, client=MockEs())
     InvenioOAIServer(app_)
@@ -294,6 +294,31 @@ def admin_db(admin_app):
     yield db_
     db_.session.remove()
     db_.drop_all()
+
+
+@pytest.fixture()
+def esindex(app):
+    current_search_client.indices.delete(index="test-*")
+    with open("tests/data/item-v1.0.0.json","r") as f:
+        mapping = json.load(f)
+
+    try:
+        current_search_client.indices.create(
+            app.config["INDEXER_DEFAULT_INDEX"], body=mapping
+        )
+        current_search_client.indices.put_alias(
+            index=app.config["INDEXER_DEFAULT_INDEX"], name="test-weko"
+        )
+    except:
+        current_search_client.indices.create("test-weko-items", body=mapping)
+        current_search_client.indices.put_alias(
+            index="test-weko-items", name="test-weko"
+        )
+
+    try:
+        yield current_search_client
+    finally:
+        current_search_client.indices.delete(index="test-*")
 
 @pytest.fixture
 def script_info(app):
@@ -449,7 +474,6 @@ def site_info(db):
         site_name=[{"name":"name11"}],
         notify={"name":"notify11"},
         google_tracking_id_user="11",
-        addthis_user_id="12",
         ogp_image="/var/tmp/test_dir",
         ogp_image_name="test ogp image name1"
     )
@@ -768,7 +792,8 @@ def admin_settings(db):
     settings.append(AdminSettings(id=8,name='convert_pdf_settings',settings={"path":"/tmp/file","pdf_ttl":1800}))
     settings.append(AdminSettings(id=9,name="elastic_reindex_settings",settings={"has_errored": False}))
     settings.append(AdminSettings(id=10,name="sword_api_setting",settings={ "default_format": "TSV","data_format":{ "TSV":{"register_format": "Direct"},"XML":{"workflow": '31001',  "register_format": "Workflow"}}}))
-    settings.append(AdminSettings(id=11,name="cris_linkage",settings={'researchmap_cidkey_contents':'','researchmap_pkey_contents':'','merge_mode':''}))
+    settings.append(AdminSettings(id=11,name="report_email_schedule_settings",settings={"details":"","enabled":False,"frequency":"daily"}))
+    settings.append(AdminSettings(id=12,name="cris_linkage",settings={'researchmap_cidkey_contents':'','researchmap_pkey_contents':'','merge_mode':''}))
     db.session.add_all(settings)
     db.session.commit()
     return settings

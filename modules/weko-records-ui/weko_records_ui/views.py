@@ -36,6 +36,7 @@ from flask import Blueprint, abort, current_app, escape, flash, json, \
 from flask_babelex import gettext as _
 from flask_login import login_required
 from flask_security import current_user
+from sqlalchemy.orm.exc import NoResultFound
 from invenio_cache import cached_unless_authenticated
 from invenio_db import db
 from invenio_files_rest.models import ObjectVersion, FileInstance
@@ -69,7 +70,7 @@ from weko_user_profiles.models import UserProfile
 from weko_workflow.api import WorkFlow
 
 from weko_records_ui.fd import add_signals_info
-from weko_records_ui.utils import check_items_settings, get_file_info_list
+from weko_records_ui.utils import check_items_settings, get_file_info_list, is_workflow_activity_work
 from weko_records_ui.external import call_external_system
 from weko_workflow.utils import get_item_info, process_send_mail, set_mail_info
 
@@ -80,7 +81,7 @@ from .permissions import (
     check_file_download_permission, check_original_pdf_download_permission,
     check_permission_period, file_permission_factory, get_permission
 )
-from .utils import create_secret_url, get_billing_file_download_permission, \
+from .utils import create_secret_url, export_preprocess, get_billing_file_download_permission, \
     get_google_detaset_meta, get_google_scholar_meta, get_groups_price, \
     get_min_price_billing_file_download, get_record_permalink, hide_by_email, \
     delete_version, is_show_email_of_creator,hide_by_itemtype
@@ -146,6 +147,7 @@ def publish(pid, record, template=None, **kwargs):
     from weko_deposit.api import WekoIndexer
     status = request.values.get('status')
     publish_status = record.get('publish_status')
+    comm_id = request.values.get('community')
 
     pid_ver = PIDVersioning(child=pid)
     last_record = WekoRecord.get_record_by_pid(pid_ver.last_child.pid_value)
@@ -173,7 +175,10 @@ def publish(pid, record, template=None, **kwargs):
         target_key=record.get("recid"),
     )
 
-    return redirect(url_for('.recid', pid_value=pid.pid_value))
+    if comm_id:
+        return redirect(url_for('.recid', pid_value=pid.pid_value, community=comm_id))
+    else:
+        return redirect(url_for('.recid', pid_value=pid.pid_value))
 
 
 def export(pid, record, template=None, **kwargs):
@@ -187,34 +192,16 @@ def export(pid, record, template=None, **kwargs):
     :param kwargs: Additional view arguments based on URL rule.
     :return: The rendered template.
     """
-    formats = current_app.config.get('RECORDS_UI_EXPORT_FORMATS', {}).get(
-        pid.pid_type)
     schema_type = request.view_args.get('format')
-    fmt = formats.get(schema_type)
-    if fmt is False:
-        # If value is set to False, it means it was deprecated.
-        abort(410)
-    elif fmt is None:
-        abort(404)
+    data = export_preprocess(pid, record, schema_type)
+    response = make_response(data)
+
+    if 'json' in schema_type or 'bibtex' in schema_type:
+        response.headers['Content-Type'] = 'text/plain'
     else:
-        # Custom Record Metadata for export JSON
-        custom_record_medata_for_export(record)
-        if 'json' not in schema_type and 'bibtex' not in schema_type:
-            record.update({'@export_schema_type': schema_type})
+        response.headers['Content-Type'] = 'text/xml'
 
-        serializer = obj_or_import_string(fmt['serializer'])
-        data = serializer.serialize(pid, record)
-        if isinstance(data, six.binary_type):
-            data = data.decode('utf8')
-
-        response = make_response(data)
-
-        if 'json' in schema_type or 'bibtex' in schema_type:
-            response.headers['Content-Type'] = 'text/plain'
-        else:
-            response.headers['Content-Type'] = 'text/xml'
-
-        return response
+    return response
 
 
 @blueprint.app_template_filter('get_image_src')
@@ -1015,7 +1002,15 @@ def citation(record, pid, style=None, ln=None):
 @blueprint.route("/records/soft_delete/<recid>", methods=['POST'])
 @login_required
 def soft_delete(recid):
-    """Soft delete item."""
+    """
+    Soft delete item.
+
+    Args:
+        recid (str): record id.
+    Returns:
+        object: response of delete result.
+            return json data
+    """
     try:
         if not check_created_id_by_recid(recid.replace("del_ver_", "")):
             abort(403)
@@ -1029,6 +1024,29 @@ def soft_delete(recid):
             current_app.logger.info(f"Delete version: {recid}")
             delete_version(recid)
         else:
+            is_editing = False
+            try:
+                ver_0 = PersistentIdentifier.get('recid', recid + '.0')
+            except PIDDoesNotExistError:
+                ver_0 = None
+            if ver_0 and is_workflow_activity_work(ver_0.object_uuid):
+                 is_editing = True
+            if not is_editing:
+                pid = PersistentIdentifier.get('recid', recid)
+                versioning = PIDVersioning(child=pid)
+                if versioning.exists:
+                   all_ver = versioning.children.all()
+                   for ver in all_ver:
+                        if is_workflow_activity_work(ver.object_uuid):
+                            is_editing = True
+                            break
+            if is_editing:
+                response_data = {
+                    "code": -1,
+                    "is_locked": True,
+                    "msg": _("MSG_WEKO_RECORDS_UI_IS_EDITING_TRUE")
+                }
+                return make_response(jsonify(response_data), 200)
             soft_delete_imp(recid)
             current_app.logger.info(f"Delete item: {recid}")
             starts_with_del_ver = False
@@ -1068,7 +1086,8 @@ def soft_delete(recid):
 def restore(recid):
     """Restore item."""
     try:
-        if not has_update_version_role(current_user):
+        record = WekoRecord.get_record_by_pid(recid)
+        if not check_created_id(record):
             abort(403)
         restore_imp(recid)
         return make_response('PID: ' + str(recid) + ' RESTORED', 200)
@@ -1200,13 +1219,20 @@ def get_uri():
           200:
     """
     data = request.get_json()
+    if not isinstance(data, dict):
+        current_app.logger.error('Invalid request data')
+        abort(400)
     uri = data.get('uri')
     pid_value = data.get('pid_value')
     accessrole = data.get('accessrole')
     pattern = re.compile('^/record/{}/files/.*'.format(pid_value))
     if not pattern.match(uri):
-        pid = PersistentIdentifier.get('recid', pid_value)
-        record = WekoRecord.get_record_by_pid(pid_value)
+        try:
+            record = WekoRecord.get_record_by_pid(pid_value)
+        except (NoResultFound, PIDDoesNotExistError):
+            current_app.logger.error(traceback.format_exc())
+            abort(404)
+
         bucket_id = record.get('_buckets', {}).get('deposit')
         file_id_key = '{}_{}'.format(bucket_id, uri)
 

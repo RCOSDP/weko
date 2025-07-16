@@ -5,6 +5,7 @@ import io
 import copy
 from flask import Flask, json, jsonify, session, url_for ,make_response
 from flask_security.utils import login_user
+from flask_babelex import gettext as _
 from invenio_accounts.testutils import login_user_via_session
 from invenio_files_rest.models import ObjectVersion
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
@@ -126,6 +127,31 @@ def test_publish_acl(client, records, users, id, status_code):
     res = client.post(url)
     assert res.status_code == status_code
     assert res.location == "http://test_server/records/1"
+
+
+# def export(pid, record, template=None, **kwargs):
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_publish -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+def test_publish(client, records, users, communities, mocker):
+    login_user_via_session(client=client, email=users[0]["email"])
+    indexer, records_info = records
+    
+    mock_commit = mocker.patch("weko_records_ui.views.db.session.commit")
+    mock_commit2 = mocker.patch("invenio_records.api.Record.commit")
+
+    mock_update_es_data = mocker.patch("weko_deposit.api.WekoIndexer.update_es_data")
+    
+    # Test Case 1: community id exists
+    mock_request = mocker.patch("weko_records_ui.views.request")
+    mock_request.values = {"community": 1}
+    actual_response = publish(records_info[0]["recid"], records_info[0]["record"], template=None)
+    assert actual_response.status_code == 302
+    assert actual_response.location == "/records/1?community=1"
+
+    # Test Case 2: community id exists
+    mock_request.values = {}
+    actual_response = publish(records_info[0]["recid"], records_info[0]["record"], template=None)
+    assert actual_response.status_code == 302
+    assert actual_response.location == "/records/1"
 
 
 # def export(pid, record, template=None, **kwargs):
@@ -631,6 +657,7 @@ def test_set_pdfcoverpage_header_acl_guest(app, client, records, pdfcoverpageset
         # (7, True),
     ],
 )
+@pytest.mark.timeout(300)
 def test_set_pdfcoverpage_header_acl_error(app, client, records, users, id, result, pdfcoverpagesetting):
     login_user_via_session(client=client, email=users[id]["email"])
     url = url_for("weko_records_ui.set_pdfcoverpage_header",_external=True)
@@ -747,6 +774,7 @@ def test_citation(records):
 # def soft_delete(recid):
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_soft_delete_acl_guest -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
 def test_soft_delete_acl_guest(client, records):
+    # 51994 case.04(soft_delete)
     url = url_for(
         "weko_records_ui.soft_delete", recid=1, _external=True
     )
@@ -773,6 +801,7 @@ def test_soft_delete_acl(client, records, users, id, status_code):
         url = url_for(
             "weko_records_ui.soft_delete", recid=1, _external=True
         )
+        # 51994 case.01, 05(soft_delete)
         with patch("flask.templating._render", return_value=""):
             with patch("weko_records_ui.views.call_external_system") as mock_external:
                 pid = PersistentIdentifier.query.filter_by(
@@ -791,7 +820,84 @@ def test_soft_delete_acl(client, records, users, id, status_code):
                     assert pid.status == PIDStatus.REGISTERED
                     mock_external.assert_not_called()
 
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_soft_delete_with_del_ver_prefix -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+@pytest.mark.parametrize(
+    "id, status_code",
+    [
+        (1, 200), # repoadmin
+        (2, 200), # sysadmin
+        (3, 200), # comadmin
+        (6, 200), # originalroleuser
+    ],
+)
+def test_soft_delete_with_del_ver_prefix(client, records, users, id, status_code):
+    """Test soft_delete when recid starts with 'del_ver_'."""
+    login_user_via_session(client=client, email=users[id]["email"])
+    # Arrange
+    recid = "del_ver_12345"
 
+    # 51994 case.02(soft_delete)
+    with patch("weko_records_ui.views.delete_version") as mock_delete_version:
+        # Act
+        res = client.post(url_for("weko_records_ui.soft_delete", recid=recid, _external=True))
+
+        # Assert
+        assert res.status_code == status_code
+        mock_delete_version.assert_called_once_with("12345")
+
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_soft_delete_locked -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+@pytest.mark.parametrize(
+    "id, status_code",
+    [
+        (1, 200), # repoadmin
+        (2, 200), # sysadmin
+        (3, 200), # comadmin
+        (6, 200), # originalroleuser
+    ],
+)
+def test_soft_delete_locked(client, records, users, id, status_code):
+    """Test soft_delete when item is locked."""
+    login_user_via_session(client=client, email=users[id]["email"])
+    
+    # 51994 case.03(soft_delete)
+    with patch("weko_records_ui.views.is_workflow_activity_work", return_value=True):
+        res = client.post(url_for("weko_records_ui.soft_delete", recid=1, _external=True))
+        expected_response = {
+            "code": -1,
+            "is_locked": True,
+            "msg": _("MSG_WEKO_RECORDS_UI_IS_EDITING_TRUE")
+        }
+        assert res.status_code == status_code
+        assert json.loads(res.data) == expected_response
+
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_soft_delete_exception -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+def test_soft_delete_exception(client, records, users):
+    """Test soft_delete when raise Exception."""
+    login_user_via_session(client=client, email=users[2]["email"])
+    expected_response = {
+            "code": -1,
+            "is_locked": True,
+            "msg": "Test Error."
+        }
+    with patch("weko_records_ui.views.has_update_version_role", return_value=True):
+        with patch("flask.templating._render", return_value=""):
+            pid = PersistentIdentifier.query.filter_by(pid_type='recid', pid_value='1').first()
+            assert pid.status == PIDStatus.REGISTERED
+            with patch("weko_records_ui.views.soft_delete_imp", side_effect=Exception([{
+                "is_locked": True,
+                "msg": "Test Error."
+            }])):
+                with pytest.raises(Exception):
+                    # 51994 case.06, 07(soft_delete)
+                    res = client.post(url_for("weko_records_ui.soft_delete", recid=1, _external=True))
+
+                    
+                    pid = PersistentIdentifier.query.filter_by(pid_type='recid', pid_value='1').first()
+                    assert pid.status == PIDStatus.REGISTERED
+                    assert res.status_code == 500
+                    assert res.json == expected_response
+    
+    
 # def restore(recid):
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_restore_acl_guest -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
 def test_restore_acl_guest(client, records):
@@ -957,6 +1063,9 @@ def test_preview_able(app):
 # def get_uri():
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_get_uri -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
 def test_get_uri(app,client,db_sessionlifetime,records):
+    # 404を発生させるとwebassets.exceptions.FilterErrorが発生する対策
+    app.register_error_handler(404, None)
+
     url = url_for("weko_records_ui.get_uri",  _external=True)
     res = client.post(url,data=json.dumps({"uri":"https://localhost/record/1/files/001.jpg","pid_value":"1","accessrole":"1"}), content_type='application/json')
     assert res.status_code == 200
@@ -965,6 +1074,14 @@ def test_get_uri(app,client,db_sessionlifetime,records):
     res = client.post(url,data=json.dumps({"uri":"https://localhost/001.jpg","pid_value":"1","accessrole":"1"}), content_type='application/json')
     assert res.status_code == 200
     assert json.loads(res.data)=={'status': True}
+
+    # Invalid request data
+    res = client.post("/get_uri")
+    assert res.status_code == 400
+
+    # Invalid pid_value
+    res = client.post(url,data=json.dumps({"uri":"https://localhost/001.jpg","pid_value":"test","accessrole":"1"}), content_type='application/json', follow_redirects=False)
+    assert res.status_code == 404
 
 
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_default_view_method_fix35133 -v -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp

@@ -952,3 +952,38 @@ msgstr ""
 msgid "Show All versions"
 msgstr ""
 
+msgid "This item has been deleted."
+msgstr "このアイテムは削除されています。"
+
+msgid "Apply JGSS"
+msgstr "申請"
+
+msgid "This data is not available for undergraduate students or those who do not register their positions."
+msgstr "このデータは利用できません（学部生または役職が登録されていないため）"
+
+msgid "Please input email address."
+msgstr "メールアドレスを入力してください。"
+
+msgid "Email address"
+msgstr "メールアドレス"
+
+msgid "Email address(reconfirmation)"
+msgstr "メールアドレス（確認用）"
+
+msgid "Token is invalid."
+msgstr "トークンが無効です。"
+
+msgid "The expiration date for download has been exceeded."
+msgstr "ダウンロード有効期限を超過しています。"
+
+msgid "The download limit has been exceeded."
+msgstr "ダウンロード制限回数を超過しています。"
+
+msgid "This data is not available for this user."
+msgstr "このデータは利用できません（権限がないため）。"
+
+msgid "Success Secret URL Generate"
+msgstr "成功: シークレットURLを生成し、あなたのメールアドレス宛に送信しました。"
+
+msgid "MSG_WEKO_RECORDS_UI_IS_EDITING_TRUE"
+msgstr "該当アイテムは編集中のため、削除できません。"

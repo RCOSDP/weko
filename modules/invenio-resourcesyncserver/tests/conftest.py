@@ -690,6 +690,30 @@ def es(app):
     list(current_search.delete(ignore=[404]))
 
 
+@pytest.fixture()
+def esindex(app):
+    current_search_client.indices.delete(index="test-*")
+    with open("tests/data/item-v1.0.0.json", "r") as f:
+        mapping = json.load(f)
+    try:
+        current_search_client.indices.create(
+            app.config["INDEXER_DEFAULT_INDEX"], body=mapping
+        )
+        current_search_client.indices.put_alias(
+            index=app.config["INDEXER_DEFAULT_INDEX"], name="test-weko"
+        )
+    except:
+        current_search_client.indices.create("test-weko-items", body=mapping)
+        current_search_client.indices.put_alias(
+            index="test-weko-items", name="test-weko"
+        )
+
+    try:
+        yield current_search_client
+    finally:
+        current_search_client.indices.delete(index="test-*")
+
+
 @pytest.yield_fixture()
 def i18n_app(app):
     with app.test_request_context(
@@ -727,10 +751,18 @@ def indices(app, db):
         )
         testIndexMore = Index(index_name="testIndexMore",parent=33,public_state=True,id='more')
         testIndexPrivate = Index(index_name="testIndexPrivate",public_state=False,id=55)
+        testIndexSix = Index(
+            index_name="testIndexSix",
+            browsing_role="1,2,3,4,-98,-99",
+            public_state=True,
+            id=66,
+            position=4
+        )
 
         db.session.add(testIndexThree)
         db.session.add(testIndexThreeChild)
-        
+        db.session.add(testIndexSix)
+
     return {
         'index_dict': dict(testIndexThree),
         'index_non_dict': testIndexThree,

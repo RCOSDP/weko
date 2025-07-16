@@ -62,7 +62,12 @@ require([
 
   $('.btn-begin').on('click', function () {
     let _this = $(this);
-    startLoading(_this);
+    $('.btn-begin').prop('disabled', true);
+    const loadingMessage = document.getElementById('new_activity_msg');
+    if (loadingMessage) {
+      loadingMessage.classList.remove('collapse');
+    }
+
     let post_uri = $('#post_uri').text();
     let workflow_id = $(this).data('workflow-id');
     let community = $(this).data('community');
@@ -90,13 +95,15 @@ require([
               if (0 == data.code) {
                 document.location.href = data.data.redirect;
               } else {
-                endLoading(_this);
-                alert(data.msg);
+                loadingMessage.classList.remove('alert-success');
+                loadingMessage.classList.add('alert-danger');
+                loadingMessage.textContent = 'failed to create activity. Please reload the page and try again.';
               }
             },
             error: function (jqXHE, status) {
-              endLoading(_this);
-              alert(jqXHE.responseJSON.msg);
+              loadingMessage.classList.remove('alert-success');
+              loadingMessage.classList.add('alert-danger');
+              loadingMessage.textContent = jqXHE.responseJSON.msg;
             }
           });
         } else {
@@ -112,8 +119,9 @@ require([
         }
       },
       error: function(jqXHE, status) {
-        endLoading(_this);
-        alert(jqXHE.responseJSON.msg);
+        loadingMessage.classList.remove('alert-success');
+        loadingMessage.classList.add('alert-danger');
+        loadingMessage.textContent = jqXHE.responseJSON.msg;
       }
     })
   });
@@ -269,7 +277,8 @@ require([
     let post_data = {
       commond: $('#input-comment').val(),
       action_version: act_ver,
-      community: community_id
+      community: community_id,
+      temporary_save: 0,
     };
     $.ajax({
       url: uri_apo,

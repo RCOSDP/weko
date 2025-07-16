@@ -154,7 +154,7 @@ curl -XPUT 'http://'${INVENIO_ELASTICSEARCH_HOST}':9200/_ilm/policy/weko_stats_p
 event_list=('celery-task' 'item-create' 'top-view' 'record-view' 'file-download' 'file-preview' 'search')
 for event_name in ${event_list[@]}
 do
-  curl -XPUT 'http://'${INVENIO_ELASTICSEARCH_HOST}':9200/'${SEARCH_INDEX_PREFIX}'-events-stats-'${event_name}'-000001' -H 'Content-Type: application/json' -d '
+  curl -XPUT 'http://'${INVENIO_ELASTICSEARCH_HOST}':9200/'${SEARCH_INDEX_PREFIX}'-events-stats-'${event_name}'-000001?timeout=2m' -H 'Content-Type: application/json' -d '
   {
     "aliases": {
       "'${SEARCH_INDEX_PREFIX}'-events-stats-'${event_name}'": {
@@ -162,7 +162,7 @@ do
       }
     }
   }'
-  curl -XPUT 'http://'${INVENIO_ELASTICSEARCH_HOST}':9200/'${SEARCH_INDEX_PREFIX}'-stats-'${event_name}'-000001' -H 'Content-Type: application/json' -d '
+  curl -XPUT 'http://'${INVENIO_ELASTICSEARCH_HOST}':9200/'${SEARCH_INDEX_PREFIX}'-stats-'${event_name}'-000001?timeout=2m' -H 'Content-Type: application/json' -d '
   {
     "aliases": {
       "'${SEARCH_INDEX_PREFIX}'-stats-'${event_name}'": {
@@ -263,6 +263,12 @@ ${INVENIO_WEB_INSTANCE} access \
        role "${INVENIO_ROLE_CONTRIBUTOR}"
 
 ${INVENIO_WEB_INSTANCE} access \
+       allow "files-rest-object-read-version" \
+       role "${INVENIO_ROLE_REPOSITORY}" \
+       role "${INVENIO_ROLE_COMMUNITY}" \
+       role "${INVENIO_ROLE_CONTRIBUTOR}"
+
+${INVENIO_WEB_INSTANCE} access \
        allow "search-access" \
        role "${INVENIO_ROLE_REPOSITORY}" \
        role "${INVENIO_ROLE_COMMUNITY}" \
@@ -312,7 +318,10 @@ ${INVENIO_WEB_INSTANCE} language create \
         --active --registered "en" "English" 001
 
 ${INVENIO_WEB_INSTANCE} language create \
-        --active "zh" "中文" 000
+        --active "zh-cn" "中文 (簡体)" 000
+
+${INVENIO_WEB_INSTANCE} language create \
+        --active "zh-tw" "中文 (繁体)" 000
 
 ${INVENIO_WEB_INSTANCE} language create \
         --active "id" "Indonesia" 000

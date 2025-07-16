@@ -831,7 +831,7 @@ class TestSiteInfo:
                     {"notify_name":"test_notify2","language":"ja"}
                 ],
                 "copy_right":"new_copyright","description":"this is new description","keyword":"test new keyword","favicon":"test,favicon",
-                "favicon_name":"test favicon","google_tracking_id_user":"test_tracking","addthis_user_id":"test_addthis_user",
+                "favicon_name":"test favicon","google_tracking_id_user":"test_tracking",
                 "ogp_image":"false"
             }
             SiteInfo.update(data)
@@ -851,7 +851,7 @@ class TestSiteInfo:
                     {"notify_name":"test_notify2","language":"ja"}
                 ],
                 "copy_right":"new_copyright","description":"this is new description","keyword":"test new keyword","favicon":"test,favicon",
-                "favicon_name":"test favicon","google_tracking_id_user":"test_tracking","addthis_user_id":"test_addthis_user",
+                "favicon_name":"test favicon","google_tracking_id_user":"test_tracking",
                 "ogp_image":"/var/tmp/new_dir",
                 "ogp_image_name":"new ogp image name"
             }
@@ -873,7 +873,7 @@ class TestSiteInfo:
                     {"notify_name":"new_notify2","language":"ja"}
                 ],
                 "copy_right":"new_copyright","description":"this is new description","keyword":"test new keyword","favicon":"test,favicon",
-                "favicon_name":"test favicon","google_tracking_id_user":"test_tracking","addthis_user_id":"test_addthis_user",
+                "favicon_name":"test favicon","google_tracking_id_user":"test_tracking",
                 "ogp_image":""
             }
             SiteInfo.update(data)
