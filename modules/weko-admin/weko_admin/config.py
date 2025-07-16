@@ -1265,7 +1265,7 @@ WEKO_ADMIN_SEARCH_OPTIONS = {
             }},
             {'id': '3', 'contents': {
                 'en': 'Web content',
-                'ja': 'WEBコンテンツを表示する'
+                'ja': 'ウェブコンテンツを表示する'
             }},
         ],
         "init_disp_index_disp_method": [
