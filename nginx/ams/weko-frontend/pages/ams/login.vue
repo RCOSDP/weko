@@ -342,10 +342,6 @@ onMounted(() => {
     const iframe = document.createElement('iframe');
 
     const shibLogin = appConf.shibLogin;
-    const webHostName = appConf.wekoOrigin;
-    const entityID = webHostName + '/shibboleth';
-    const handlerURL = webHostName + '/Shibboleth.sso';
-    const returnURL = webHostName + '/secure/login.py?next=ams';
 
     // iframe内に埋め込むHTML
     iframe.srcdoc = `
@@ -358,9 +354,9 @@ onMounted(() => {
           },
         ];
         window.wayf_URL = '${shibLogin.dsURL}';
-        window.wayf_sp_entityID = '${entityID}';
-        window.wayf_sp_handlerURL = '${handlerURL}';
-        window.wayf_return_url = '${returnURL}';
+        window.wayf_sp_entityID = '${shibLogin.entityID}';
+        window.wayf_sp_handlerURL = '${shibLogin.handlerURL}';
+        window.wayf_return_url = '${shibLogin.returnURL}';
         window.wayf_width = 'auto';
         window.wayf_height = 'auto';
         window.wayf_show_remember_checkbox = true;
