@@ -760,7 +760,7 @@ function oauthErrorRedirect() {
  */
 function findProjectURL(itemDetail: any) {
   let projectUrls = [];
-  let isVersionOf = false;
+  let isGrdmRelationType = false;
   if (Object.prototype.hasOwnProperty.call(itemDetail, 'rocrate')) {
     const graph = itemDetail.rocrate['@graph'];
     for (const obj of graph) {
@@ -772,15 +772,18 @@ function findProjectURL(itemDetail: any) {
           if (
             obj['@id'] === 'プロジェクトURL/関連タイプ/関連タイプ/' &&
             Array.isArray(obj.text) &&
-            obj.text[0] === 'isVersionOf'
+            obj.text[0] === appConf.grdm.relationType
           ) {
-            isVersionOf = true;
+            isGrdmRelationType = true;
+          }
+          if (appConf.grdm.url !== '' && Array.isArray(projectUrls)) {
+            projectUrls = projectUrls.filter((url: string) => url.startsWith(appConf.grdm.url));
           }
         }
       }
     }
   }
-  if (isVersionOf && projectUrls.length > 0) {
+  if (isGrdmRelationType && projectUrls.length > 0) {
     return projectUrls;
   } else {
     return [];
