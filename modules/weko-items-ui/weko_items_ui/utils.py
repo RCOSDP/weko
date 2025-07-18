@@ -2617,8 +2617,11 @@ def export_items(post_data):
         traceback.print_exc()
         flash(_('Error occurred during item export.'), 'error')
         resp = redirect(url_for('weko_items_ui.export'))
-    os.remove(zip_path+".zip")
-    temp_path.cleanup()
+    finally:
+        if "zip_path" in locals() and os.path.exists(zip_path+".zip"):
+            os.remove(zip_path+".zip")
+        if "temp_path" in locals() and os.path.exists(temp_path.name):
+            temp_path.cleanup()
     return resp
 
 
@@ -5343,7 +5346,7 @@ def create_item_deleted_data(deposit, profile, target, url):
         profile.language if profile
         else current_app.config.get("WEKO_WORKFLOW_MAIL_DEFAULT_LANGUAGE")
     )
-    timezone = profile.timezone if profile else "UTC"
+    timezone = profile.timezone if profile and profile.timezone else "UTC"
     registration_date = datetime.now(pytz.timezone(timezone))
 
     template_file = 'email_notification_item_deleted_{language}.tpl'
@@ -5380,7 +5383,7 @@ def create_direct_registered_data(deposit, profile, target, url):
         profile.language if profile
         else current_app.config.get("WEKO_WORKFLOW_MAIL_DEFAULT_LANGUAGE")
     )
-    timezone = profile.timezone if profile else "UTC"
+    timezone = profile.timezone if profile and profile.timezone else "UTC"
     registration_date = datetime.now(pytz.timezone(timezone))
 
     template_file = 'email_notification_item_registered_{language}.tpl'
