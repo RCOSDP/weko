@@ -68,7 +68,7 @@ from weko_records_ui.config import WEKO_PERMISSION_SUPER_ROLE_USER, WEKO_PERMISS
 from weko_records import WekoRecords
 from weko_records.api import ItemTypes, Mapping
 from weko_records.config import WEKO_ITEMTYPE_EXCLUDED_KEYS
-from weko_records.models import ItemTypeName, OaStatus, SiteLicenseInfo, FeedbackMailList, ItemReference, ItemTypeProperty
+from weko_records.models import ItemTypeName, OaStatus, SiteLicenseInfo, FeedbackMailList, ItemReference, ItemTypeProperty, ItemTypeJsonldMapping
 
 from tests.helpers import json_data, create_record
 
@@ -162,7 +162,7 @@ def i18n_app(app):
 @pytest.yield_fixture()
 def client(app):
     with app.test_client() as client:
-        yield
+        yield client
 
 @pytest.fixture()
 def db(app):
@@ -1288,3 +1288,31 @@ def tokens(app,users,db):
     db.session.commit()
 
     return tokens
+
+
+@pytest.fixture
+def sword_mapping(db, item_type):
+    sword_mapping = []
+    for i in range(1, 4):
+        obj = ItemTypeJsonldMapping(
+            name=f"test{i}",
+            mapping=json_data("data/jsonld_mapping.json"),
+            item_type_id=item_type.model.id,
+            is_deleted=False
+        )
+        with db.session.begin_nested():
+            db.session.add(obj)
+
+        sword_mapping.append({
+            "id": obj.id,
+            "sword_mapping": obj,
+            "name": obj.name,
+            "mapping": obj.mapping,
+            "item_type_id": obj.item_type_id,
+            "version_id": obj.version_id,
+            "is_deleted": obj.is_deleted
+        })
+
+    db.session.commit()
+
+    return sword_mapping

@@ -46,7 +46,6 @@ from weko_records.models import ItemType, ItemTypeJsonldMapping, ItemTypeName, \
 from jsonschema.validators import Draft4Validator
 from datetime import datetime, timedelta
 from weko_records.models import ItemReference
-import pytest
 from unittest.mock import patch, MagicMock
 
 # class RecordBase(dict):
@@ -928,7 +927,7 @@ class TestItemTypes:
                 assert result["code"] == 0
 
     # .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::TestItemTypes::test_update_property_enum -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records/.tox/c1/tmp
-    def test_update_property_enum(app):
+    def test_update_property_enum(self, app):
         old_value = {'type': 'array', 'items': {'type': 'object', 'title': 'dcterms_date', 'format': 'object', 'properties': {'subitem_dcterms_date': {'type': 'string', 'title': '日付（リテラル）', 'format': 'text', 'title_i18n': {'en': 'Date Literal', 'ja': '日付（リテラル）'}}, 'subitem_dcterms_date_language': {'enum': [None, 'ja', 'ja-Kana', 'ja-Latn', 'en', 'fr', 'it', 'de', 'es', 'zh-cn', 'zh-tw', 'ru', 'la', 'ms', 'eo', 'ar', 'el', 'ko'], 'type': ['null', 'string'], 'title': '言語', 'format': 'select', 'editAble': True}}, 'system_prop': False}, 'title': 'dcterms_date', 'maxItems': 9999, 'minItems': 1, 'system_prop': False}
         new_value = {'type': 'array', 'items': {'type': 'object', 'title': 'dcterms_date', 'format': 'object', 'properties': {'subitem_dcterms_date': {'type': 'string', 'title': '日付（リテラル）', 'format': 'text', 'title_i18n': {'en': 'Date Literal', 'ja': '日付（リテラル）'}}, 'subitem_dcterms_date_language': {'enum': [None, 'ja', 'ja-Kana', 'ja-Latn', 'en', 'fr', 'it', 'de', 'es', 'zh-cn', 'zh-tw', 'ru', 'la', 'ms', 'eo', 'ar', 'el', 'ko'], 'type': ['null', 'string'], 'title': '言語', 'format': 'select', 'editAble': True}}, 'system_prop': False}, 'title': 'dcterms_date', 'maxItems': 9999, 'minItems': 1, 'system_prop': False}
         expected_dict = {'type': 'array', 'items': {'type': 'object', 'title': 'dcterms_date', 'format': 'object', 'properties': {'subitem_dcterms_date': {'type': 'string', 'title': '日付（リテラル）', 'format': 'text', 'title_i18n': {'en': 'Date Literal', 'ja': '日付（リテラル）'}}, 'subitem_dcterms_date_language': {'enum': [None, 'ja', 'ja-Kana', 'ja-Latn', 'en', 'fr', 'it', 'de', 'es', 'zh-cn', 'zh-tw', 'ru', 'la', 'ms', 'eo', 'ar', 'el', 'ko'], 'type': ['null', 'string'], 'title': '言語', 'format': 'select', 'editAble': True}}, 'system_prop': False}, 'title': 'dcterms_date', 'maxItems': 9999, 'minItems': 1, 'system_prop': False}
@@ -940,6 +939,7 @@ class TestItemTypes:
         expected_dict = {'type': 'array', 'items': {'type': 'object', 'title': 'dcterms_date', 'format': 'object', 'properties': {'subitem_dcterms_date': {'type': 'string', 'title': '日付（リテラル）', 'format': 'text', 'title_i18n': {'en': 'Date Literal', 'ja': '日付（リテラル）'}}, 'subitem_dcterms_date_language': {'enum': [None, 'ja', 'ja-Kana', 'ja-Latn', 'en', 'fr', 'it', 'de', 'es', 'zh-cn', 'zh-tw', 'ru', 'la', 'ms', 'eo', 'ar', 'el', 'ko'], 'type': ['null', 'string'], 'title': '言語', 'format': 'select', 'editAble': True}}, 'system_prop': False}, 'title': 'dcterms_date', 'maxItems': 9999, 'minItems': 1, 'system_prop': False}
         ItemTypes.update_property_enum(old_value,new_value)
         TestCase().assertDictEqual(new_value, expected_dict)
+
     # .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::TestItemTypes::test_update_attribute_options -vv -s -v  --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-records/.tox/c1/tmp
     def test_update_attribute_options(self, app):
 
@@ -1764,37 +1764,39 @@ def test_site_license_update(app, db, site_license_info, users):
             }
         ]
     }
-    user = users[0]["obj"]
-    login_user(user)
-    SiteLicense.update(_none_obj)
-    db.session.commit()
-    records = SiteLicense.get_records()
-    assert len(records)==1
 
-    SiteLicense.update(_no_data_obj)
-    db.session.commit()
-    records = SiteLicense.get_records()
-    assert len(records)==0
+    with app.test_request_context():
+        user = users[0]["obj"]
+        login_user(user)
+        SiteLicense.update(_none_obj)
+        db.session.commit()
+        records = SiteLicense.get_records()
+        assert len(records)==1
 
-    SiteLicense.update(_test_obj)
-    db.session.commit()
-    records = SiteLicense.get_records()
-    assert len(records)==1
-    assert records[0]['organization_name']=='test1'
-    assert records[0]['domain_name']=='domain1'
-    assert records[0]['mail_address']=='nii@nii.co.jp'
-    assert records[0]['addresses']==[{'finish_ip_address': '255.255.255.255', 'start_ip_address': '0.0.0.0'}]
+        SiteLicense.update(_no_data_obj)
+        db.session.commit()
+        records = SiteLicense.get_records()
+        assert len(records)==0
 
-    user = users[2]["obj"]
-    login_user(user)
-    SiteLicense.update(_test_obj)
-    db.session.commit()
-    records = SiteLicense.get_records(user)
-    assert len(records)==1
-    assert records[0]['organization_name']=='test1'
-    assert records[0]['domain_name']=='domain1'
-    assert records[0]['mail_address']=='nii@nii.co.jp'
-    assert records[0]['addresses']==[{'finish_ip_address': '255.255.255.255', 'start_ip_address': '0.0.0.0'}]
+        SiteLicense.update(_test_obj)
+        db.session.commit()
+        records = SiteLicense.get_records()
+        assert len(records)==1
+        assert records[0]['organization_name']=='test1'
+        assert records[0]['domain_name']=='domain1'
+        assert records[0]['mail_address']=='nii@nii.co.jp'
+        assert records[0]['addresses']==[{'finish_ip_address': '255.255.255.255', 'start_ip_address': '0.0.0.0'}]
+
+        user = users[2]["obj"]
+        login_user(user)
+        SiteLicense.update(_test_obj)
+        db.session.commit()
+        records = SiteLicense.get_records(user)
+        assert len(records)==1
+        assert records[0]['organization_name']=='test1'
+        assert records[0]['domain_name']=='domain1'
+        assert records[0]['mail_address']=='nii@nii.co.jp'
+        assert records[0]['addresses']==[{'finish_ip_address': '255.255.255.255', 'start_ip_address': '0.0.0.0'}]
 
 # class RevisionsIterator(object):
 #     def __init__(self, model):
@@ -2462,11 +2464,11 @@ def test_item_link_bulk_delete(app, db, records):
 
 
 # class JsonldMapping:
-# .tox/c1/bin/pytest --cov=weko_swordserver tests/test_api.py::TestJsonldMapping -v -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp --full-trace
+# .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::TestJsonldMapping -v -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp --full-trace
 class TestJsonldMapping:
     # def get_mapping_by_id(cls, id, ignore_deleted=True):
-    # .tox/c1/bin/pytest --cov=weko_swordserver tests/test_api.py::TestJsonldMapping::test_get_mapping_by_id -v -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp --full-trace
-    def test_get_mapping_by_id(app, db, item_type):
+    # .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::TestJsonldMapping::test_get_mapping_by_id -v -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp --full-trace
+    def test_get_mapping_by_id(self, app, db, item_type):
         obj = JsonldMapping.create(
             name="test1",
             mapping={"test": "test"},
@@ -2492,13 +2494,13 @@ class TestJsonldMapping:
         assert mapping.is_deleted is True
 
     # def create(cls, name, mapping, item_type_id):
-    # .tox/c1/bin/pytest --cov=weko_swordserver tests/test_api.py::TestJsonldMapping::test_create -v -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp --full-trace
-    def test_create(app, db, item_type):
+    # .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::TestJsonldMapping::test_create -v -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp --full-trace
+    def test_create(self, app, db, item_type):
         # one
         obj = JsonldMapping.create(
             name="test1",
             mapping={"test": "test"},
-            item_type_id=item_type[0]["item_type"].id,
+            item_type_id=item_type.model.id,
         )
         assert obj.id == 1
         assert (ItemTypeJsonldMapping.query.filter_by(id=obj.id).first()) == obj
@@ -2507,7 +2509,7 @@ class TestJsonldMapping:
         obj = JsonldMapping.create(
             name="test2",
             mapping={"test": "test"},
-            item_type_id=item_type[0]["item_type"].id,
+            item_type_id=item_type.model.id,
         )
         assert obj.id == 2
         assert (ItemTypeJsonldMapping.query.filter_by(id=obj.id).first()) == obj
@@ -2521,8 +2523,8 @@ class TestJsonldMapping:
         assert ItemTypeJsonldMapping.query.filter_by(id=3).first() == None
 
     # def update(cls, id, name=None, mapping=None, item_type_id=None):
-    # .tox/c1/bin/pytest --cov=weko_swordserver tests/test_api.py::TestJsonldMapping::test_update -v -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp --full-trace
-    def test_update(app, db, item_type, sword_mapping):
+    # .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::TestJsonldMapping::test_update -v -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp --full-trace
+    def test_update(self, app, db, item_type, sword_mapping):
         obj = JsonldMapping.create(
             name="test1",
             mapping={"test": "test"},
@@ -2555,8 +2557,8 @@ class TestJsonldMapping:
         assert isinstance(e.value, SQLAlchemyError)
 
     # def versions()
-    # .tox/c1/bin/pytest --cov=weko_swordserver tests/test_api.py::TestJsonldMapping::test_versions -v -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp --full-trace
-    def test_versions(app, db, item_type):
+    # .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::TestJsonldMapping::test_versions -v -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp --full-trace
+    def test_versions(self, app, db, item_type):
 
         obj = JsonldMapping.create(
             name="test1",
@@ -2576,8 +2578,8 @@ class TestJsonldMapping:
         assert versions[1].version_id == 2
 
     # delete(cls, id):
-    # .tox/c1/bin/pytest --cov=weko_swordserver tests/test_api.py::TestJsonldMapping::test_delete -v -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp --full-trace
-    def test_delete(app, db, item_type):
+    # .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::TestJsonldMapping::test_delete -v -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp --full-trace
+    def test_delete(self, app, db, item_type):
         obj = JsonldMapping.create(
             name="test1",
             mapping={"test": "test"},

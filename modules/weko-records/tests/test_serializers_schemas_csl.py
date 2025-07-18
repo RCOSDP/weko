@@ -169,7 +169,7 @@ def test_get_version_RecordSchemaCSLJSON(app):
         assert test.get_version({"metadata": ""}) != None
 
 
-# def get_issue_date(self, obj): 
+# def get_issue_date(self, obj):
 # .tox/c1/bin/pytest --cov=weko_records tests/test_serializers_schemas_csl.py::test_get_issue_date_RecordSchemaCSLJSON -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records/.tox/c1/tmp
 def test_get_issue_date_RecordSchemaCSLJSON(i18n_app,users):
     def obj(date):
@@ -202,36 +202,36 @@ def test_get_issue_date_RecordSchemaCSLJSON(i18n_app,users):
             'record': metadata
         }
         return obj_data
-    
+
     with patch("flask_login.utils._get_user", return_value=users[0]["obj"]):
         schema = RecordSchemaCSLJSON()
         # not metadata
         data = obj("")
         result = schema.get_issue_date(data)
         assert bool(result) == False
-        
+
         # date format is "YYYY-MM-DD"
         data = obj("2013-10-02")
         result = schema.get_issue_date(data)
         assert result == {"date-parts":[[2013,10,2]]}
-        
+
         # date format is "YYYY-MM"
         data = obj("2013-10")
         result = schema.get_issue_date(data)
-        assert result == {"date-parts":[[2013,10,1]]}
-        
+        assert result == {"date-parts":[[2013,10]]}
+
         # date format is "YYYY"
         data = obj("2013")
         result = schema.get_issue_date(data)
-        assert result == {"date-parts":[[2013,1,1]]}
-        
+        assert result == {"date-parts":[[2013]]}
+
         # other date format
         with pytest.raises(ValidationError) as e:
             data = obj("incorrect_format")
             result = schema.get_issue_date(data)
         assert e.value.messages == ["Incorrect format"]
 
-# def get_page(self, obj): 
+# def get_page(self, obj):
 def test_get_page_RecordSchemaCSLJSON(app):
     obj = MagicMock()
 
