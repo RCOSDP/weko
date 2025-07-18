@@ -445,7 +445,10 @@ def esindex(app):
         current_search_client.indices.create("test-authors-author-v1.0.0",body=mapping)
         current_search_client.indices.put_alias(index="test-authors-author-v1.0.0", name=app.config["WEKO_AUTHORS_ES_INDEX_NAME"])
 
-    yield current_search_client
+    try:
+        yield current_search_client
+    finally:
+        current_search_client.indices.delete(index="test-*")
 
     # with app.test_request_context():
     #     current_search_client.indices.delete_alias(index="test-authors-author-v1.0.0", name=app.config["WEKO_AUTHORS_ES_INDEX_NAME"])
