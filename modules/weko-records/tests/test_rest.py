@@ -1,6 +1,6 @@
 from invenio_oauth2server.models import Token
 from mock import patch
-from flask import Blueprint
+from flask import Blueprint, current_app
 from pytest import fail
 
 from sqlalchemy.exc import SQLAlchemyError
@@ -40,6 +40,7 @@ def test_OaStatusCallback_post_v1(app, tokens, users):
     """Test OaStatusCallback.post_v1 method."""
 
     app.register_blueprint(create_blueprint(app.config['WEKO_RECORDS_REST_ENDPOINTS']))
+    current_app.logger.error(app.config['WEKO_RECORDS_REST_ENDPOINTS'])
 
     version = 'v1'
     invalid_version = 'v0'
@@ -81,7 +82,8 @@ def test_OaStatusCallback_post_v1(app, tokens, users):
                 json = correct_request_body,
                 content_type='application/json',
             )
-        except:
+        except Exception as e:
+            current_app.logger.error(f"Error during test: {e}")
             fail()
         assert res.status_code == 401
 
