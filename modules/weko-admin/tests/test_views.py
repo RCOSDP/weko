@@ -184,7 +184,7 @@ def test_save_lang_list_acl(api,users,index,is_permission):
     url = url_for("weko_admin.save_lang_list")
     login_user_via_session(client=api, email=users[index]["email"])
     with patch("weko_admin.views.update_admin_lang_setting", return_value=""):
-        with patch("weko_admin.views.delete_index_trees_from_redis"):
+        with patch("weko_index_tree.utils.delete_index_trees_from_redis"):
             res = api.post(url,data=json.dumps({}),
                             content_type="application/json")
             assert_role(res,is_permission)
@@ -193,7 +193,7 @@ def test_save_lang_list_acl(api,users,index,is_permission):
 def test_save_lang_list_acl_guest(api, users):
     url = url_for("weko_admin.save_lang_list")
     with patch("weko_admin.views.update_admin_lang_setting", return_value=""):
-        with patch("weko_admin.views.delete_index_trees_from_redis"):
+        with patch("weko_index_tree.utils.delete_index_trees_from_redis"):
             res = api.post(url,data=json.dumps({}),
                               content_type="application/json")
             assert res.status_code == 302

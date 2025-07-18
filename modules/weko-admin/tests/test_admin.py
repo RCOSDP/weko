@@ -273,6 +273,9 @@ class TestReportView:
         assert args[0] == "weko_admin/admin/report.html"
         assert kwargs["current_schedule"] == {"details": "", "enabled": False, "frequency": "daily"}
 
+        # Delete all records from the Index table before adding (to prevent unique constraint violation)
+        Index.query.delete()
+        db.session.commit()
         with db.session.begin_nested():
             db.session.add(make_index(1,0,0,'公開','publish',True,None))
             db.session.add(make_index(11,1,0,'公開_公開','publish',True,None))
