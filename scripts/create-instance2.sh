@@ -143,7 +143,7 @@ CI=true git clone https://github.com/RCOSDP/base64image.git
 
 cdvirtualenv "var/instance/static/node_modules"
 rm -rf invenio-search-js
-git clone --branch feature/jdcat_202412 https://github.com/RCOSDP/invenio-search-js.git
+git clone --branch feature/changePaginationForSearchAfterUse https://github.com/RCOSDP/invenio-search-js.git
 ##
 # sphinxdoc-run-npm-end
 
