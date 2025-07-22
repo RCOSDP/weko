@@ -101,7 +101,9 @@ WEKO_ACCOUNTS_ATTRIBUTE_LIST = [
     'givenName',
     'eduPersonAffiliation',
     'eduPersonScopedAffiliation',
-    'eduPersonTargetedID'
+    'eduPersonTargetedID',
+    'HTTP_WEKOID',
+    'HTTP_WEKOSOCIETYAFFILIATION'
 ]
 """Attribute List."""
 
