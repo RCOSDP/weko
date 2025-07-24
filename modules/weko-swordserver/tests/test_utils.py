@@ -228,7 +228,7 @@ def test_check_import_items(app, admin_settings, item_type, workflow, sword_clie
     app.config["WEKO_SWORDSERVER_BAGIT_VERIFICATION"] = False
     check_result = check_import_items(file_content, "JSON", False, -1, packaging="SimpleZip", client_id=client_id)
 
-    mocker_jsonld_check.assert_called_once_with(file_content, "SimpleZip", mapping_id, [], -1, False, is_change_identifier=False)
+    mocker_jsonld_check.assert_called_once_with(file_content, "SimpleZip", mapping_id, [], -1, validate_bagit=False, is_change_identifier=False)
     assert check_result["list_record"][0]["item_type_id"] == item_type_id
     assert check_result["list_record"][0]["item_type_name"] == item_type_name
     assert check_result["list_record"][0]["metadata"]["title"] == "test"
@@ -245,7 +245,7 @@ def test_check_import_items(app, admin_settings, item_type, workflow, sword_clie
     }
     app.config["WEKO_SWORDSERVER_BAGIT_VERIFICATION"] = True
     check_result = check_import_items(file_content, "JSON", True, 3, packaging="SimpleZip", client_id=client_id)
-    mocker_jsonld_check.assert_called_once_with(file_content, "SimpleZip", mapping_id, [], 3, True, is_change_identifier=True)
+    mocker_jsonld_check.assert_called_once_with(file_content, "SimpleZip", mapping_id, [], 3, validate_bagit=True, is_change_identifier=True)
     assert check_result["list_record"][0]["item_type_id"] == item_type_id
     assert check_result["list_record"][0]["item_type_name"] == item_type_name
     assert check_result["list_record"][0]["metadata"]["title"] == "test"
