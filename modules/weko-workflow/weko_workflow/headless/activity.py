@@ -505,7 +505,7 @@ class HeadlessActivity(WorkActivity):
                 record_uuid = self._model.item_id
                 self._deposit = WekoDeposit.get_record(record_uuid)
 
-                if metadata.get("edit_mode").lower() == "upgrade":
+                if metadata.get("edit_mode", "Keep").lower() == "upgrade":
                     cur_pid = PersistentIdentifier.get_by_object(
                         "recid", object_type="rec", object_uuid=record_uuid
                     )
