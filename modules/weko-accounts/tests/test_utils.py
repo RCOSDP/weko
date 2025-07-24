@@ -10,6 +10,7 @@ from weko_accounts.utils import (
     roles_required,
     get_sp_info
 )
+from weko_admin.models import AdminSettings
 
 
 #def get_remote_addr():
@@ -222,7 +223,7 @@ def test_generate_random_str(mocker):
 
 #def parse_attributes():
 # .tox/c1/bin/pytest --cov=weko_accounts tests/test_utils.py::test_parse_attributes -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
-def test_parse_attributes(app):
+def test_parse_attributes(app, db):
     current_app.config.update(
         WEKO_ACCOUNTS_SSO_ATTRIBUTE_MAP= {
             "SHIB_ATTR_EPPN":(True, 'shib_eppn'),
@@ -257,6 +258,21 @@ def test_parse_attributes(app):
         attrs, error = parse_attributes()
         hash_eppn = hashlib.sha256(test_eppn.encode()).hexdigest()
         assert attrs == {"shib_eppn": test_eppn, "shib_mail": "test@test.org", "shib_user_name": "G_" + hash_eppn}
+        assert error == False
+    
+    # attribute_mapping is exist
+    attribute_mapping = {
+        'shib_eppn': 'eppn',
+        'shib_role_authority_name': 'HTTP_WEKOSOCIETYAFFILIATION',
+        'shib_mail': 'mail',
+        'shib_user_name': 'HTTP_WEKOID'
+    }
+    AdminSettings.update('attribute_mapping', attribute_mapping)
+    with app.test_request_context(
+        method="POST", data={"SHIB_ATTR_EPPN":"test_eppn","SHIB_ATTR_MAIL":"test@test.org",'eppn':'test_eppn2','mail':'test2@test2.org'}
+    ):
+        attrs, error = parse_attributes()
+        assert attrs == {"shib_eppn":"test_eppn2",'shib_mail':"test2@test2.org",'shib_user_name':"G_test_eppn2"}
         assert error == False
 
 #def login_required_customize(func):
