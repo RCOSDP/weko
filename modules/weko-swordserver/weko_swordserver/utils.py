@@ -355,10 +355,11 @@ def check_import_items(
                     errorType=ErrorType.BadRequest
                 )
 
+        validate_bagit = current_app.config["WEKO_SWORDSERVER_BAGIT_VERIFICATION"]
         check_result.update(
             check_jsonld_import_items(
                 file, packaging, mapping_id, meta_data_api, shared_id,
-                is_change_identifier=is_change_identifier
+                validate_bagit, is_change_identifier=is_change_identifier
             )
         )
 
