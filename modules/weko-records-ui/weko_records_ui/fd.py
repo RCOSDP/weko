@@ -23,12 +23,17 @@
 import json
 import mimetypes
 import traceback
+import os
+import shutil
+import tempfile
 import unicodedata
 from datetime import datetime
 
-from flask import abort, current_app, render_template, request ,redirect ,url_for
+from flask import abort, current_app, render_template, request, send_file
 from flask_babelex import gettext as _
+from flask_babelex import get_locale
 from flask_login import current_user
+from flask_security.utils import hash_password
 from invenio_db import db
 from invenio_files_rest import signals
 from invenio_files_rest.models import FileInstance
@@ -37,10 +42,13 @@ from invenio_records_files.utils import record_file_factory
 from requests.sessions import session
 from sqlalchemy.exc import SQLAlchemyError
 from weko_accounts.views import _redirect_method
+from weko_admin.models import AdminSettings
 from weko_deposit.api import WekoRecord
 from weko_groups.api import Group
+from weko_logging.activity_logger import UserActivityLogger
 from weko_records.api import FilesMetadata, ItemTypes
 from weko_records_ui.utils import generate_one_time_download_url
+from weko_records_ui.errors import AvailableFilesNotFoundRESTError
 from weko_user_profiles.models import UserProfile
 from weko_workflow.utils import is_terms_of_use_only
 from werkzeug.datastructures import Headers
@@ -48,7 +56,7 @@ from werkzeug.urls import url_quote
 
 from .models import FileOnetimeDownload, FileSecretDownload, PDFCoverPageSettings
 from .pdf import make_combined_pdf
-from .permissions import check_original_pdf_download_permission, \
+from .permissions import check_file_download_permission, check_original_pdf_download_permission, \
     file_permission_factory, is_owners_or_superusers
 from .utils import check_and_send_usage_report, get_billing_file_download_permission, \
     get_groups_price, get_min_price_billing_file_download, \
@@ -235,7 +243,7 @@ def file_ui(
             abort(403)
 
     if not is_preview:
-        # redirect open_restricted download
+        # open_restricted download
         if 'open_restricted' in fileobj.get('accessrole', '') \
             and not is_terms_of_use_only \
             and not is_owners_or_superusers(record):
@@ -248,9 +256,7 @@ def file_ui(
                 current_app.logger.info('onetime_download is None')
                 abort(403)
 
-            onetime_file_url = generate_one_time_download_url(
-                file_name, record_id, user_mail )
-            return redirect(onetime_file_url) #redirect to file_download_onetime()
+            return file_download_onetime(pid=pid, record=record, file_name=file_name, user_mail=user_mail, login_flag=True) #call by method
 
     # #Check permissions
     # ObjectResource.check_object_permission(obj)
@@ -276,6 +282,13 @@ def _download_file(file_obj, is_preview, lang, obj, pid, record):
     """
     # Add download signal
     add_signals_info(record, obj)
+
+    if not is_preview:
+        UserActivityLogger.info(
+            operation="FILE_DOWNLOAD",
+            target_key=pid.pid_value,
+        )
+
     # Send file without its pdf cover page
     try:
         pdfcoverpage_set_rec = PDFCoverPageSettings.find(1)
@@ -408,53 +421,77 @@ def add_signals_info(record, obj):
     obj.item_id = record['_deposit']['id']
 
 
-def file_download_onetime(pid, record, _record_file_factory=None, **kwargs):
+def file_download_onetime(pid, record,file_name=None, user_mail=None,login_flag=False,  _record_file_factory=None, **kwargs):
     """File download onetime.
-
+ 
     :param pid:
     :param record: Record json
     :param _record_file_factory:
     :param kwargs:
     :return:
     """
-    token = request.args.get('token', type=str)
-    filename = kwargs.get("filename")
-    error_template = "weko_theme/error.html"
-    # Parse token
-    error, token_data = \
-        parse_one_time_download_token(token)
-    if error:
-        return render_template(error_template, error=error)
-    record_id, user_mail, date, secret_token = token_data
-
+    def __make_error_response(is_ajax, error_msg):
+        error_template = "weko_theme/error.html"
+        if  is_ajax:
+            return error_msg, 401
+        else:
+            return render_template(error_template,
+                               error=error_msg)
+   
+ # Cutting out the necessary information
+    if login_flag: #call by method, for login user
+        filename = file_name
+        user_mail = user_mail
+        record_id = pid.pid_value
+    else: #call by redirect, for guest
+        is_ajax = request.args.get('isajax')
+        filename = kwargs.get("filename")
+        token = request.args.get('token', type=str)
+        mailaddress = request.args.get('mailaddress',None)
+        input_password = ""
+        if request.method == "POST":
+            input_pwd = request.get_json().get('input_password')
+            if input_pwd:
+                input_password = hash_password(input_pwd)
+        # Parse token
+        if not mailaddress:
+            onetime_file_url = request.url
+            url=url_for(endpoint="invenio_records_ui.recid", onetime_file_url= onetime_file_url, pid_value = pid.pid_value, v="mailcheckflag")
+            return redirect(url)
+        error, token_data = \
+            parse_one_time_download_token(token)
+        if error:
+            return __make_error_response(is_ajax, error_msg=error)
+        record_id, user_mail, date, secret_token = token_data
+ 
     # Validate record status
     validate_download_record(record)
-
+ 
     # Get one time download record.
     onetime_download = get_onetime_download(
         file_name=filename, record_id=record_id, user_mail=user_mail
     )
-
-    # Validate token
-    is_valid, error = validate_onetime_download_token(
-        onetime_download, filename, record_id, user_mail, date, secret_token)
-    if not is_valid:
-        return render_template(error_template, error=error)
-
+ 
+    # # Validate token for guest
+    if not current_user.is_authenticated:
+        is_valid, error = validate_onetime_download_token(
+            onetime_download, filename, record_id, user_mail, date, secret_token)
+        if not is_valid:
+            return __make_error_response(is_ajax, error_msg=error)
+ 
     _record_file_factory = _record_file_factory or record_file_factory
-
+ 
     # Get file object
     file_object = _record_file_factory(pid, record, filename)
-    if not file_object or not file_object.obj:
-        return render_template(error_template,
-                               error="{} does not exist.".format(filename))
-
+    if not file_object or not file_object.obj :
+        return __make_error_response(is_ajax, error_msg="{} does not exist.".format(filename))  
+ 
     # Create updated data
     update_data = dict(
         file_name=filename, record_id=record_id, user_mail=user_mail,
         download_count=onetime_download.download_count - 1,
     )
-
+ 
     # Check and send usage report for Guest User.
     if onetime_download.extra_info and 'open_restricted' == file_object.get(
             'accessrole'):
@@ -462,24 +499,38 @@ def file_download_onetime(pid, record, _record_file_factory=None, **kwargs):
         try:
             error_msg = check_and_send_usage_report(extra_info, user_mail ,record, file_object)
             if error_msg:
-                return render_template(error_template, error=error_msg)
+                return __make_error_response(is_ajax, error_msg=error_msg)
             db.session.commit()
         except SQLAlchemyError as ex:
             current_app.logger.error("sqlalchemy error: {}".format(ex))
             db.session.rollback()
-            return render_template(error_template, error=_("Unexpected error occurred."))
+            return __make_error_response(is_ajax, error_msg=_("Unexpected error occurred."))
         except BaseException as ex:
             current_app.logger.error("Unexpected error: {}".format(ex))
             db.session.rollback()
-            return render_template(error_template, error=_("Unexpected error occurred."))
-
+            return __make_error_response(is_ajax, error_msg=_("Unexpected error occurred."))
+ 
         update_data['extra_info'] = extra_info
-
+ 
     # Update download data
     if not update_onetime_download(**update_data):
-        return render_template(error_template,
-                               error=_("Unexpected error occurred."))
+        return __make_error_response(is_ajax, error_msg=_("Unexpected error occurred."))
 
+    passcheck_function = True
+    restricted_access = AdminSettings.get(name='restricted_access',dict_to_object=False)
+    password_for_download = onetime_download.extra_info.get("password_for_download", "")
+    if restricted_access and restricted_access.get('password_enable', False):
+        if password_for_download and input_password != password_for_download:
+            passcheck_function = False
+
+    #　Guest Mailaddress Check
+    if not current_user.is_authenticated:
+        if mailaddress == user_mail and passcheck_function:
+            return _download_file(file_object, False, 'en', file_object.obj, pid,
+                                record)
+        else:
+            return __make_error_response(is_ajax, error_msg=_("Could not download file."))
+ 
     return _download_file(file_object, False, 'en', file_object.obj, pid,
                           record)
 
@@ -583,3 +634,61 @@ def file_download_secret(pid, record, _record_file_factory=None, **kwargs):
         lang = user_profile.language if user_profile and user_profile.language \
             else 'en'
     return _download_file(file_object, False, lang, file_object.obj, pid, record)
+
+
+def file_list_ui(record, files):
+    """File List Ui.
+
+    :param record: All metadata of a record.
+    :param files: File metadata list(only attribute_type "file").
+    """
+    if not files:
+        abort(404)
+
+    # Language setting
+    from weko_user_profiles.config import USERPROFILES_LANGUAGE_LIST
+    language = request.headers.get('Accept-Language')
+    if not language in [lang[0] for lang in USERPROFILES_LANGUAGE_LIST[1:]]:
+        language = 'en'
+    get_locale().language = language
+
+    item_title = record.get_titles
+
+    temp_path = tempfile.TemporaryDirectory(
+        prefix=current_app.config.get('WEKO_RECORDS_UI_FILELIST_TMP_PREFIX'))
+
+    # Set export folder
+    export_path = temp_path.name + '/' + datetime.utcnow().strftime("%Y%m%d%H%M%S")
+    files_export_path = export_path + '/data'
+    os.makedirs(files_export_path)
+
+    # Exclude thumbnails
+    filenames = [f.get('filename') for f in files]
+    target_files = [f for f in record.files if f.info().get('filename') in filenames]
+
+    # Export files
+    available_files = []
+    for file in target_files:
+        if check_file_download_permission(record, file.info()):
+            available_files.append(file)
+            file_buffered = file.obj.file.storage().open()
+            temp_file = open(
+                files_export_path + '/' + file.obj.basename, 'wb')
+            temp_file.write(file_buffered.read())
+            temp_file.close()
+    if not available_files:
+        raise AvailableFilesNotFoundRESTError()
+
+    # Create TSV file
+    from .utils import create_tsv
+    with open(f'{export_path}/file_list.tsv', 'w', encoding="utf-8") as tsv_file:
+        tsv_file.write(create_tsv(available_files, language).getvalue())
+
+    # Create download file
+    shutil.make_archive(export_path, 'zip', export_path)
+
+    return send_file(
+        export_path + '.zip',
+        as_attachment=True,
+        attachment_filename=item_title + '.zip'
+    )

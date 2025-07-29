@@ -1,0 +1,425 @@
+@charset "utf-8";
+@import 'variables';
+
+@mixin max-screen($breakpoint-mobile) {
+  @media screen and (max-width: $breakpoint-mobile) {
+    @content;
+  }
+}
+
+@mixin max-screen($breakpoint-tablet) {
+  @media screen and (max-width: ($breakpoint-tablet + 1px)) {
+    @content;
+  }
+}
+
+@mixin min-screen($breakpoint-tablet) {
+  @media screen and (min-width: $breakpoint-tablet) {
+    @content;
+  }
+}
+
+@mixin min-screen($breakpoint-pc) {
+  @media screen and (min-width: $breakpoint-pc) {
+    @content;
+  }
+}
+
+@mixin pc-mode {
+  @include max-screen($breakpoint-tablet) {
+    display: none !important;
+  }
+}
+
+@mixin pc-tab-mode {
+  @include max-screen($breakpoint-tablet) {
+    display: none !important;
+  }
+}
+
+@mixin tab-mode {
+  @include min-screen($breakpoint-tablet + 1px) {
+    display: none !important;
+  }
+}
+
+@mixin sp-mode {
+  @include min-screen($breakpoint-tablet + 1px) {
+    display: none !important;
+  }
+}
+
+// 游ゴシックはこれ
+@mixin base-font {
+  font-family: $font-family;
+  font-weight: 500;
+}
+
+// flexboxの切り替え
+@mixin pc-flex {
+  @include min-screen($breakpoint-tablet) {
+    display: flex;
+    flex-wrap: wrap;
+    @content;
+  }
+}
+
+// flexbox
+@mixin flexbox {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+// マウスオーバー設定（透過の場合）
+@mixin hover-op {
+  opacity: 0.6;
+}
+
+// クリアフィックス
+@mixin clearfix {
+  *zoom: 1;
+
+  &:after {
+    content: '';
+    display: table;
+    clear: both;
+  }
+}
+
+// fontサイズのrem対応
+@mixin font-size($size, $base-fontsize) {
+  font-size: $size + px;
+  font-size: ($size / $base-fontsize) + rem;
+}
+
+// リンクの色変更
+@mixin link-noline {
+  text-decoration: none;
+
+  &:link,
+  &:hover,
+  &:active,
+  &focus {
+    text-decoration: none;
+  }
+}
+
+@mixin link-noline-color($color) {
+  text-decoration: none;
+  color: $color;
+
+  &:link,
+  &:hover,
+  &:active,
+  &focus {
+    text-decoration: none;
+    color: $color;
+  }
+}
+
+@mixin link-color($color) {
+  color: $color;
+
+  &:link {
+    color: $color;
+  }
+
+  &:hover,
+  &:active,
+  &:focus {
+    color: lighten($color, 20%);
+  }
+}
+
+@mixin link-underline($color) {
+  color: $color;
+
+  &:active,
+  &:focus,
+  &:link,
+  &:active {
+    color: $color;
+  }
+
+  &:hover {
+    text-decoration: none;
+  }
+}
+
+@mixin link-underlinenone($color) {
+  color: $color;
+  text-decoration: none;
+
+  &:active,
+  &:focus {
+    color: $color;
+  }
+
+  &:hover {
+    color: $color;
+    text-decoration: underline;
+  }
+}
+
+@mixin link-color-hover($color, $hover) {
+  color: $color;
+  text-decoration: none;
+
+  &:active,
+  &:focus {
+    color: $color;
+  }
+
+  &:hover {
+    color: $hover;
+  }
+}
+
+/*
+  flex-box 要素横並び
+  必ず親要素に「display: flex;」「flex-wrap: wrap;」を指定すること
+  flex(PCのときの個数, 縦横の間隔, タブレットのときの個数, 縦横の間隔, スマホのときの個数, 縦横の間隔)
+*/
+@mixin flex($num, $interval, $tab-num, $tab-interval: 0, $sp-num, $sp-interval) {
+  $block: 1 / $num * 100%;
+  $space: $interval * ($num - 1) / $num;
+  $tab-block: 1 / $tab-num * 100;
+  $tab-space: $tab-interval * ($tab-num - 1) / $tab-num;
+  $sp-block: 1 / $sp-num * 100;
+  $sp-space: $sp-interval * ($sp-num - 1) / $sp-num;
+
+  @include min-screen($breakpoint-tablet + 1px) {
+    width: calc(#{$block} - #{$space}px);
+    margin-top: $interval + px;
+    margin-right: $interval + px;
+
+    &:nth-of-type(-n + #{$num}) {
+      margin-top: 0;
+    }
+
+    &:nth-of-type(#{$num}n) {
+      margin-right: 0;
+    }
+  }
+
+  @media screen and (max-width: $breakpoint-tablet) and (min-width: ($breakpoint-tablet + 1px)) {
+    width: calc(#{$tab-block} - #{$tab-space}px);
+    margin-top: $tab-interval + px;
+    margin-right: $tab-interval + px;
+
+    &:nth-of-type(-n + #{$tab-num}) {
+      margin-top: 0;
+    }
+
+    &:nth-of-type(#{$tab-num}n) {
+      margin-right: 0;
+    }
+  }
+
+  @include max-screen($breakpoint-tablet) {
+    width: calc(#{$sp-block} - #{$sp-space}px);
+    margin-top: $sp-interval + px;
+    margin-right: $sp-interval + px;
+
+    &:nth-of-type(-n + #{$sp-num}) {
+      margin-top: 0;
+    }
+
+    &:nth-of-type(#{$sp-num}n) {
+      margin-right: 0;
+    }
+  }
+
+  &:last-of-type {
+    margin-right: 0;
+  }
+}
+
+// ポジション
+@mixin absolute-top-left($top: 0, $left: 0) {
+  position: absolute;
+  top: $top;
+  left: $left;
+}
+
+@mixin absolute-top-right($top: 0, $right: 0) {
+  position: absolute;
+  top: $top;
+  right: $right;
+}
+
+@mixin absolute-bottom-left($bottom: 0, $left: 0) {
+  position: absolute;
+  bottom: $bottom;
+  left: $left;
+}
+
+@mixin absolute-bottom-right($bottom: 0, $right: 0) {
+  position: absolute;
+  bottom: $bottom;
+  right: $right;
+}
+
+// 丸角
+@mixin border-radius($radius) {
+  -webkit-border-radius: $radius + px;
+  -moz-border-radius: $radius + px;
+  border-radius: $radius + px;
+}
+
+@mixin border-radius-per($radius) {
+  -webkit-border-radius: $radius;
+  -moz-border-radius: $radius;
+  border-radius: $radius;
+}
+
+// ドロップシャドウ
+@mixin box-shadow($horizontal: 10px, $vertical: 10px, $blur: 0px, $shadow: 0px, $color: #000000) {
+  -webkit-box-shadow: $horizontal $vertical $blur $shadow $color;
+  -moz-box-shadow: $horizontal $vertical $blur $shadow $color;
+  box-shadow: $horizontal $vertical $blur $shadow $color;
+}
+
+// ボックスの真ん中にテキストを配置
+@mixin middle-line($height) {
+  height: $height + px;
+  line-height: $height + px;
+}
+
+// px to percent
+@function px-to-per($px, $parent_width: 1080) {
+  @return decimal-round(percentage($px / $parent_width), 2);
+}
+
+// math function
+// _decimal.scss | MIT License | gist.github.com/terkel/4373420
+@function decimal-round($number, $digits: 0, $mode: round) {
+  $n: 1;
+
+  // $number must be a number
+  @if type-of($number) !=number {
+    @warn '#{ $number } is not a number.';
+    @return $number;
+  }
+
+  // $digits must be a unitless number
+  @if type-of($digits) !=number {
+    @warn '#{ $digits } is not a number.';
+    @return $number;
+  } @else if not unitless($digits) {
+    @warn '#{ $digits } has a unit.';
+    @return $number;
+  }
+
+  @for $i from 1 through $digits {
+    $n: $n * 10;
+  }
+
+  @if $mode ==round {
+    @return round($number * $n) / $n;
+  } @else if $mode ==ceil {
+    @return ceil($number * $n) / $n;
+  } @else if $mode ==floor {
+    @return floor($number * $n) / $n;
+  } @else {
+    @warn '#{ $mode } is undefined keyword.';
+    @return $number;
+  }
+}
+
+@mixin ticker {
+  z-index: 30;
+  height: 25px;
+  width: 100%;
+  background-color: $c-white;
+  background-size: auto 25px;
+  overflow-x: hidden;
+
+  p {
+    animation: text_scroll 40s linear 0s infinite;
+    display: inline-block;
+    white-space: nowrap;
+  }
+}
+
+@mixin fuchidori($color: $c-white, $pixcel: 1) {
+  text-shadow:
+    #{$pixcel}px #{$pixcel}px 0 $color,
+    -#{$pixcel}px -#{$pixcel}px 0 $color,
+    -#{$pixcel}px #{$pixcel}px 0 $color,
+    #{$pixcel}px -#{$pixcel}px 0 $color,
+    0px #{$pixcel}px 0 $color,
+    0-#{$pixcel}px 0 $color,
+    -#{$pixcel}px 0 0 $color,
+    #{$pixcel}px 0 0 $color;
+}
+
+@mixin link-button {
+  display: block;
+  position: relative;
+  max-width: 355px;
+  padding: 12px 25px;
+  margin: auto;
+  border-radius: 50px;
+  background-color: $c-white;
+  text-align: center;
+  font-weight: 900;
+  font-size: 18px;
+  transition: all 0.3s ease;
+  text-decoration: none;
+
+  &::after {
+    content: '';
+    position: absolute;
+    right: 25px;
+    top: 50%;
+    transform: translateY(-50%);
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 100%;
+  }
+
+  &:hover {
+    transform: translateY(3px);
+    text-decoration: none;
+  }
+}
+
+@mixin wrapper {
+  max-width: 375px;
+  margin: auto;
+}
+
+@mixin icon-tag($color: $miby-border-gray) {
+  border-radius: 0.125rem;
+  border: 1px solid $miby-black;
+  background-color: $color;
+  padding: 0 4px 0 6px;
+  text-align: center;
+  font-size: 10px;
+}
+
+@mixin icons {
+  content: '';
+  margin-right: 6px;
+  display: inline-block;
+  vertical-align: middle;
+  background-repeat: no-repeat;
+  background-size: 100%;
+  background-position: center;
+}
+
+@mixin icon-display {
+  content: '';
+  display: inline-block;
+  vertical-align: middle;
+  background-repeat: no-repeat;
+  background-size: 28px 16px;
+  background-position: center;
+  border: 2px solid $miby-dark-gray;
+  color: $miby-dark-gray;
+  width: 36px;
+  height: 28px;
+  padding: 5px 4.5px 5px 7px;
+  background-color: #fff;
+}

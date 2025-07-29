@@ -119,6 +119,15 @@ def create_record(record_data, item_data):
     return recid, depid, record, item, parent, doi, deposit
 
 
+def fill_oauth2_headers(json_headers, token):
+    """Create authentication headers (with a valid oauth2 token)."""
+    headers = copy.deepcopy(json_headers)
+    headers.append(
+        ('Authorization', 'Bearer {0}'.format(token.access_token))
+    )
+    return headers
+
+
 def create_activity(db, item_title, recid, path, login_user, shared_user, workflow, status, action_order):
     item_id = uuid.uuid4()
     if action_order > 2:
@@ -135,7 +144,7 @@ def create_activity(db, item_title, recid, path, login_user, shared_user, workfl
             "publish_date":"2024-01-11",
             "control_number":str(recid),
             "publish_status":"2",
-            "weko_shared_id":shared_user,
+            "weko_shared_ids":[shared_user],
             "item_1617186331708": {"attribute_name": "Title","attribute_value_mlt": [{"subitem_1551255647225": item_title,"subitem_1551255648112": "ja"}]},
             "item_1617258105262": {"attribute_name": "Resource Type","attribute_value_mlt": [{"resourceuri": "http://purl.org/coar/resource_type/c_5794","resourcetype": "conference paper"}]},
             "relation_version_is_last": True
@@ -158,7 +167,7 @@ def create_activity(db, item_title, recid, path, login_user, shared_user, workfl
         "title": item_title,
         "$schema": "/items/jsonschema/1",
         "pubdate": "2023-12-26",
-        "shared_user_id": shared_user,
+        "shared_user_ids": [shared_user],
         "item_1617186331708": [{"subitem_1551255647225": item_title,"subitem_1551255648112": "ja"}],
         "item_1617258105262": {"resourceuri": "http://purl.org/coar/resource_type/c_5794","resourcetype": "conference paper"}
     } if action_order > 2 else None
@@ -173,7 +182,7 @@ def create_activity(db, item_title, recid, path, login_user, shared_user, workfl
                         action_id=now_action.action_id,action_status=status,activity_status=status,
                         activity_login_user=login_user.id,activity_update_user=login_user.id,
                         activity_start=datetime.strptime('2024/01/11 3:01:53.931', '%Y/%m/%d %H:%M:%S.%f'),
-                        title=item_title,shared_user_id=shared_user,extra_info={},action_order=action_order
+                        title=item_title,shared_user_ids=[{'user': shared_user}],extra_info={},action_order=action_order
                         )
     db.session.add(activity)
     db.session.commit()

@@ -36,7 +36,7 @@ from .query import get_records
 from .resumption_token import serialize
 from .utils import HARVEST_PRIVATE, OUTPUT_HARVEST, PRIVATE_INDEX, \
     datetime_to_datestamp, get_index_state, handle_license_free, \
-    is_output_harvest, serializer
+    is_output_harvest, serializer, get_community_index_from_set
 
 NS_OAIPMH = 'http://www.openarchives.org/OAI/2.0/'
 NS_OAIPMH_XSD = 'http://www.openarchives.org/OAI/2.0/OAI-PMH.xsd'
@@ -487,8 +487,15 @@ def listidentifiers(**kwargs):
     if 'set' in kwargs:
         set_obj = OAISet.get_set_by_spec(kwargs['set'])
         if not set_obj:
+            com_prefix = current_app.config.get('COMMUNITIES_OAI_FORMAT').replace('{community_id}', '')
+            set_obj = OAISet.get_set_by_spec(com_prefix + kwargs['set'])
+        if not set_obj:
             return error(get_error_code_msg(), **kwargs)
-        path = kwargs['set'].replace(':', '/')
+        set_value = kwargs['set']
+        if set_value and set_value[0].isdigit():
+            path = set_value.replace(':', '/')
+        else:
+            path = get_community_index_from_set(set_value)
         set_is_output = is_output_harvest([path], index_state)
         if set_is_output == HARVEST_PRIVATE:
             return error(get_error_code_msg(), **kwargs)
@@ -505,8 +512,7 @@ def listidentifiers(**kwargs):
             set_identifier(record, record)
 
             path_list = record.get('path') if 'path' in record else []
-            _is_output = is_output_harvest(path_list, index_state) \
-                if 'set' not in kwargs else set_is_output
+            _is_output = is_output_harvest(path_list, index_state)
             current_app.logger.debug("pid:{}".format(pid))
             current_app.logger.debug("_is_output:{}".format(_is_output))
             current_app.logger.debug("path_list:{}".format(path_list))
@@ -572,6 +578,7 @@ def listidentifiers(**kwargs):
 
 def listrecords(**kwargs):
     """Create OAI-PMH response for verb ListRecords."""
+    current_app.logger.debug("kwargs: {}".format(kwargs))
     record_dumper = serializer(kwargs['metadataPrefix'])
     e_tree, e_listrecords = verb(**kwargs)
 
@@ -586,9 +593,15 @@ def listrecords(**kwargs):
     if 'set' in kwargs:
         set_obj = OAISet.get_set_by_spec(kwargs['set'])
         if not set_obj:
+            com_prefix = current_app.config.get('COMMUNITIES_OAI_FORMAT').replace('{community_id}', '')
+            set_obj = OAISet.get_set_by_spec(com_prefix + kwargs['set'])
+        if not set_obj:
             return error(get_error_code_msg(), **kwargs)
-        current_app.logger.debug("set: {}".format(set_obj.spec))
-        path = kwargs['set'].replace(':', '/')
+        set_value = kwargs['set']
+        if set_value and set_value[0].isdigit():
+            path = set_value.replace(':', '/')
+        else:
+            path = get_community_index_from_set(set_value)
         set_is_output = is_output_harvest([path], index_state)
         current_app.logger.debug("set_is_output: {}".format(set_is_output))
         if set_is_output == HARVEST_PRIVATE:
@@ -605,8 +618,7 @@ def listrecords(**kwargs):
             record = WekoRecord.get_record_by_uuid(pid_object.object_uuid)
             set_identifier(record, record)
             path_list = record.get('path') if 'path' in record else []
-            _is_output = is_output_harvest(path_list, index_state) \
-                if 'set' not in kwargs else set_is_output
+            _is_output = is_output_harvest(path_list, index_state)
 
             current_app.logger.debug("pid:{}".format(pid))
             current_app.logger.debug("_is_output:{}".format(_is_output))

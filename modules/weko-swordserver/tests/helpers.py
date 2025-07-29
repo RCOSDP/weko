@@ -1,4 +1,5 @@
 
+from hashlib import sha256
 import json
 import copy
 import uuid
@@ -11,7 +12,7 @@ from invenio_pidstore.models import PersistentIdentifier, PIDStatus, RecordIdent
 from invenio_pidstore.errors import PIDDoesNotExistError
 
 from weko_deposit.api import WekoDeposit,WekoRecord
-from weko_records.api import ItemsMetadata 
+from weko_records.api import ItemsMetadata
 
 def json_data(filename):
     with open(join(dirname(__file__),filename), "r") as f:
@@ -52,3 +53,13 @@ def create_record(record_data, item_data):
 
     return recid, depid, record, item, parent, doi, deposit
 
+
+def calculate_hash(body):
+    """Calculate hash value."""
+    calculator = sha256()
+    for byte_block in iter(lambda: body.read(4096), b""):
+        calculator.update(byte_block)
+    body.seek(0)
+    hash = calculator.hexdigest()
+
+    return hash

@@ -70,6 +70,7 @@ jobs:
           - weko-schema-ui
           - weko-search-ui
           - weko-sitemap
+          - weko-swordserver
           - weko-theme
           - weko-user-profiles
           - weko-workflow

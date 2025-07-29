@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: weko-accounts 0.1.0.dev20170000\n"
 "Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
-"POT-Creation-Date: 2019-07-01 05:51+0000\n"
+"POT-Creation-Date: 2025-06-26 15:54+0900\n"
 "PO-Revision-Date: 2018-01-19 13:59+0900\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ja\n"
@@ -19,26 +19,97 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.5.1\n"
 
-#: weko_accounts/admin.py:56
+#: weko_accounts/admin.py:49
+msgid "language"
+msgstr "ja"
+
+#: weko_accounts/admin.py:88
 msgid "Shibboleth flag was updated."
 msgstr "Shibboleth設定を更新しました"
 
-#: weko_accounts/admin.py:69
+#: weko_accounts/admin.py:97
+msgid "gakunin_role was updated."
+msgstr "学認IdP のロール設定を更新しました"
+
+#: weko_accounts/admin.py:99
+msgid "orthros_outside_role was updated."
+msgstr "機関外のOrthros のロール設定を更新しました"
+
+#: weko_accounts/admin.py:101
+msgid "extra_role was updated."
+msgstr "その他 のロール設定を更新しました"
+
+#: weko_accounts/admin.py:112
+msgid "shib_eppn mapping was updated."
+msgstr "属性マッピング設定（shib_eppn）を更新しました"
+
+#: weko_accounts/admin.py:114
+msgid "shib_role_authority_name mapping was updated."
+msgstr "属性マッピング設定（shib_role_authority_name）を更新しました"
+
+#: weko_accounts/admin.py:116
+msgid "shib_mail mapping was updated."
+msgstr "属性マッピング設定（shib_mail）を更新しました"
+
+#: weko_accounts/admin.py:118
+msgid "shib_user_name mapping was updated."
+msgstr "属性マッピング設定（shib_user_name）を更新しました"
+
+#: weko_accounts/admin.py:130
+msgid "Blocked user list was updated."
+msgstr "ユーザーログインブロック設定を更新しました"
+
+#: weko_accounts/admin.py:136
+msgid "Shibboleth settings have been saved"
+msgstr "Shibboleth設定を保存しました"
+
+#: weko_accounts/admin.py:159
 msgid "Setting"
 msgstr "設定"
 
-#: weko_accounts/admin.py:70
+#: weko_accounts/admin.py:160
 msgid "Shibboleth"
 msgstr "Shibboleth"
 
+#: weko_accounts/api.py:251
+msgid "Can't get relation Weko User."
+msgstr ""
+
+#: weko_accounts/api.py:277 weko_accounts/views.py:471
+msgid "Failed to login."
+msgstr "ログインに失敗しました。"
+
 #. NOTE: This is a note to a translator.
-#: weko_accounts/ext.py:41
+#: weko_accounts/ext.py:40
 msgid "A translation string"
 msgstr "翻訳文字列"
 
-#: weko_accounts/views.py:66
+#. NOTE: Menu item text (icon replaced by a cogs icon).
+#: weko_accounts/views.py:74
+#, python-format
+msgid "%(icon)s Administration"
+msgstr ""
+
+#: weko_accounts/views.py:170 weko_accounts/views.py:542
 msgid "WEKO-Accounts"
 msgstr "WEKOアカウント"
+
+#: weko_accounts/views.py:379 weko_accounts/views.py:380
+#: weko_accounts/views.py:443
+msgid "Missing Shib-Session-ID!"
+msgstr ""
+
+#: weko_accounts/views.py:389 weko_accounts/views.py:390
+msgid "Missing SHIB_CACHE_PREFIX!"
+msgstr ""
+
+#: weko_accounts/views.py:396 weko_accounts/views.py:397
+msgid "Missing SHIB_ATTR!"
+msgstr ""
+
+#: weko_accounts/views.py:452
+msgid "Missing SHIB_ATTRs!"
+msgstr ""
 
 #: weko_accounts/templates/weko_accounts/confirm_user.html:28
 msgid "confirm for account"
@@ -53,20 +124,20 @@ msgid "Login (New WEKO users)"
 msgstr "新規IDでログイン"
 
 #: weko_accounts/templates/weko_accounts/confirm_user.html:58
-#: weko_accounts/templates/weko_accounts/login_user.html:52
+#: weko_accounts/templates/weko_accounts/login_user.html:351
 #: weko_accounts/templates/weko_accounts/shib_user.html:76
 #, python-format
 msgid "New to %(sitename)s?"
 msgstr "%(sitename)s は初めての方?"
 
 #: weko_accounts/templates/weko_accounts/confirm_user.html:59
-#: weko_accounts/templates/weko_accounts/login_user.html:52
+#: weko_accounts/templates/weko_accounts/login_user.html:351
 #: weko_accounts/templates/weko_accounts/shib_user.html:76
 msgid "Sign Up"
 msgstr "サインアップ"
 
 #: weko_accounts/templates/weko_accounts/confirm_user.html:66
-#: weko_accounts/templates/weko_accounts/login_user.html:59
+#: weko_accounts/templates/weko_accounts/login_user.html:358
 #: weko_accounts/templates/weko_accounts/shib_user.html:83
 msgid "Forgot password?"
 msgstr "パスワードをお忘れの方はこちら"
@@ -75,68 +146,129 @@ msgstr "パスワードをお忘れの方はこちら"
 msgid "Welcome to"
 msgstr "ようこそ"
 
-#: weko_accounts/templates/weko_accounts/login_user.html:29
+#: weko_accounts/templates/weko_accounts/login_shibuser_pattern_1.html:22
+#: weko_accounts/templates/weko_accounts/login_user.html:53
+msgid "Institutional Login for institutions in Japan."
+msgstr "所属機関のIdPでログインする方"
+
+#: weko_accounts/templates/weko_accounts/login_shibuser_pattern_2.html:27
+msgid "Select Institution"
+msgstr "所属機関の選択"
+
+#: weko_accounts/templates/weko_accounts/login_shibuser_pattern_2.html:32
+msgid "Back to Top Page"
+msgstr "トップページに戻る"
+
+#: weko_accounts/templates/weko_accounts/login_user.html:47
 msgid "Log in to account"
 msgstr "アカウントにログイン"
 
-#: weko_accounts/templates/weko_accounts/login_user.html:38
+#: weko_accounts/templates/weko_accounts/login_user.html:343
 msgid "Log In"
+msgstr "ログイン"
+
+#: weko_accounts/templates/weko_accounts/register_user.html:32
+#, fuzzy
+msgid "Sign up"
+msgstr "サインアップ"
+
+#: weko_accounts/templates/weko_accounts/register_user.html:37
+msgid "Already have an account?"
+msgstr ""
+
+#: weko_accounts/templates/weko_accounts/register_user.html:38
+#, fuzzy
+msgid "Log in"
 msgstr "ログイン"
 
 #: weko_accounts/templates/weko_accounts/shib_user.html:27
 msgid "test commit shibboleth account"
 msgstr ""
 
-#: weko_accounts/templates/weko_accounts/setting/shibuser.html:29
+#: weko_accounts/templates/weko_accounts/setting/shibuser.html:35
 msgid "Life Time"
 msgstr "有効期限"
 
-#: weko_accounts/templates/weko_accounts/setting/shibuser.html:40
-#: weko_accounts/templates/weko_accounts/setting/shibuser.html:53
+#: weko_accounts/templates/weko_accounts/setting/shibuser.html:47
+#: weko_accounts/templates/weko_accounts/setting/shibuser.html:61
 msgid "Allow shibboleth user"
 msgstr "Shibbolethを有効にする"
 
-#: weko_accounts/templates/weko_accounts/setting/shibuser.html:46
-#: weko_accounts/templates/weko_accounts/setting/shibuser.html:59
+#: weko_accounts/templates/weko_accounts/setting/shibuser.html:53
+#: weko_accounts/templates/weko_accounts/setting/shibuser.html:67
 msgid "Deny shibboleth user"
 msgstr "Shibbolethを無効にする"
 
-#: weko_accounts/templates/weko_accounts/setting/shibuser.html:68
-msgid "Save"
-msgstr "保存"
+#: weko_accounts/templates/weko_accounts/setting/shibuser.html:74
+msgid "Default Role"
+msgstr "既定のロール"
 
-#: weko_accounts/api.py:202
-msgid "属性値の取得に失敗しました。"
+#: weko_accounts/templates/weko_accounts/setting/shibuser.html:76
+msgid "Gakunin IdP"
+msgstr "学認IdP"
+
+#: weko_accounts/templates/weko_accounts/setting/shibuser.html:79
+msgid "Outside Orthros"
+msgstr "機関外のOrthros"
+
+#: weko_accounts/templates/weko_accounts/setting/shibuser.html:82
+msgid "Extra IdP"
+msgstr "上記以外のIdP"
+
+#: weko_accounts/templates/weko_accounts/setting/shibuser.html:88
+msgid "Attribute Mapping"
+msgstr "属性マッピング"
+
+#: weko_accounts/templates/weko_accounts/setting/shibuser.html:90
+msgid "shib_eppn"
 msgstr ""
 
-#: weko_accounts/api.py:209
-msgid "Invalid attribute."
-msgstr "属性値が不正です。"
+#: weko_accounts/templates/weko_accounts/setting/shibuser.html:93
+msgid "shib_role_authority_name"
+msgstr ""
 
-#: weko_accounts/api.py:223
-msgid "Invalid attribute."
-msgstr "ログインに失敗しました。"
+#: weko_accounts/templates/weko_accounts/setting/shibuser.html:96
+msgid "shib_mail"
+msgstr ""
 
-#: weko_accounts/templates/weko_accounts/login_shibuser_pattern_1.html
-msgid "Institutional Login for institutions in Japan."
-msgstr "所属機関のIdPでログインする方"
+#: weko_accounts/templates/weko_accounts/setting/shibuser.html:99
+msgid "shib_user_name"
+msgstr ""
 
-#: weko_accounts/templates/weko_accounts/login_shibuser_pattern_1.html
-msgid "Users who belongs to institution outside Japan, please choose your institution's location."
-msgstr "海外機関所属で、機関のIdPでログインする方は地域を選択してください。"
+#: weko_accounts/templates/weko_accounts/setting/shibuser.html:105
+msgid "Block User"
+msgstr "ブロックユーザー"
 
-#: weko_accounts/templates/weko_accounts/login_shibuser_pattern_2.html
-msgid "Select Institution"
-msgstr "所属機関の選択"
+#: weko_accounts/templates/weko_accounts/setting/shibuser.html:110
+msgid "Add"
+msgstr ""
 
-msgid "login_pattern_2_description_header"
-msgstr "WEKO3を利用するため、所属機関で認証する必要があります。所属機関を選択してください。<br>※このページを表示して時間が経過している場合は、再読み込みしてから所属機関を選択してください。<br>正しいページに戻れない場合があります。"
+#: weko_accounts/templates/weko_accounts/setting/shibuser.html:116
+msgid "Delete"
+msgstr ""
+
+#: weko_accounts/templates/weko_accounts/setting/shibuser.html:127
+msgid "Save"
+msgstr "保存"
 
 #~ msgid "%(module_name)s"
 #~ msgstr ""
 
-msgid "Back to Top Page"
-msgstr "トップページに戻る"
+#~ msgid "属性値の取得に失敗しました。"
+#~ msgstr ""
 
-msgid "Create a New Account"
-msgstr "アカウントの登録"
+#~ msgid "Invalid attribute."
+#~ msgstr "属性値が不正です。"
+
+#~ msgid ""
+#~ "Users who belongs to institution outside"
+#~ " Japan, please choose your institution's"
+#~ " location."
+#~ msgstr "海外機関所属で、機関のIdPでログインする方は地域を選択してください。"
+
+#~ msgid "login_pattern_2_description_header"
+#~ msgstr "WEKO3を利用するため、所属機関で認証する必要があります。所属機関を選択してください。<br>※このページを表示して時間が経過している場合は、再読み込みしてから所属機関を選択してください。<br>正しいページに戻れない場合があります。"
+
+#~ msgid "Create a New Account"
+#~ msgstr "アカウントの登録"
+

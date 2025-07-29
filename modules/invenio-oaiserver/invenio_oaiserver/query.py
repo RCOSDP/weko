@@ -121,6 +121,39 @@ def get_records(**kwargs):
                         **{'must_not': [
                             {'term': {'_id': str(record.id)}}]})
 
+    def get_descendant_ids(index_id):
+        """Get all descendant index IDs using CTE."""
+        from sqlalchemy.orm import aliased
+        from invenio_db import db
+        # Create an alias for the Index table
+        parent = aliased(Index)
+        child = aliased(Index)
+
+        # Define the CTE for recursive query
+        cte = db.session.query(
+            parent.id.label('ancestor_id'),
+            child.id.label('descendant_id')
+        ).filter(
+            parent.id == index_id,
+            child.parent == parent.id
+        ).cte(name='descendants', recursive=True)
+
+        # Recursive part of the CTE
+        cte = cte.union_all(
+            db.session.query(
+                cte.c.ancestor_id,
+                child.id
+            ).filter(
+                child.parent == cte.c.descendant_id
+            )
+        )
+
+        # Query the CTE to get all descendant IDs
+        descendant_ids = db.session.query(cte.c.descendant_id).all()
+
+        return [descendant_id[0] for descendant_id in descendant_ids]
+        
+
     page_ = kwargs.get('resumptionToken', {}).get('page', 1)
     size_ = current_app.config['OAISERVER_PAGE_SIZE']
     scroll = current_app.config['OAISERVER_RESUMPTION_TOKEN_EXPIRE_TIME']
@@ -139,15 +172,27 @@ def get_records(**kwargs):
             {'control_number': {'order': 'asc'}}
         )[(page_ - 1) * size_:page_ * size_]
 
-        sets = []
         if 'set' in kwargs:
-            if ":" in kwargs['set']:
-                sets = kwargs['set'].split(':')[-1]
+            if kwargs['set'][0].isdigit():
+                # set is index_id
+                if ":" in kwargs['set']:
+                    sets = kwargs['set'].split(':')[-1]
+                else:
+                    sets = kwargs['set']
             else:
-                sets = kwargs['set']
+                # set is community_id
+                from .utils import get_community_index_from_set
+                sets = get_community_index_from_set(kwargs['set'])
+
             #search = search.query('match', **{'path': kwargs['set']})
-            search = search.query('match', **{'_oai.sets': sets})
+            #search = search.query('match', **{'_oai.sets': sets})
             #search = search.query('terms', **{'_oai.sets': sets})
+            
+            if not sets:
+                search = search.query('match_none')
+            else:
+                index_ids = [sets] + get_descendant_ids(sets)
+                search = search.query('terms', **{'_oai.sets': index_ids})
 
         time_range = {}
         if 'from_' in kwargs:

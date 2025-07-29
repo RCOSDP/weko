@@ -20,6 +20,7 @@ from flask import current_app
 from invenio_search import current_search_client
 
 from .errors import InvalidRequestInputError
+from .utils import chunk_list
 
 
 class ESQuery(object):
@@ -147,9 +148,20 @@ class ESDateHistogramQuery(ESQuery):
 
         for query_param, filtered_field in self.required_filters.items():
             if query_param in kwargs:
-                agg_query = agg_query.filter(
-                    'term', **{filtered_field: kwargs[query_param]}
-                )
+                value = kwargs[query_param]
+                if value is None:
+                    continue
+                if isinstance(value, list):
+                    max_clause_count = current_app.config.get('OAISERVER_ES_MAX_CLAUSE_COUNT', 1024)
+                    if len(value) > max_clause_count:
+                        should_clauses = []
+                        for i in range(0, len(value), max_clause_count):
+                            should_clauses.append({'terms': {filtered_field: value[i:i + max_clause_count]}})
+                        agg_query = agg_query.filter('bool', should=should_clauses)
+                    else:
+                        agg_query = agg_query.filter('terms', **{filtered_field: value})
+                else:
+                    agg_query = agg_query.filter('term', **{filtered_field: value})
 
         return agg_query
 
@@ -295,10 +307,20 @@ class ESTermsQuery(ESQuery):
 
         for query_param, filtered_field in self.required_filters.items():
             if query_param in kwargs:
-                agg_query = agg_query.filter(
-                    'term', **{filtered_field: kwargs[query_param]}
-                )
-
+                value = kwargs[query_param]
+                if value is None:
+                    continue
+                if isinstance(value, list):
+                    max_clause_count = current_app.config.get('OAISERVER_ES_MAX_CLAUSE_COUNT', 1024)
+                    if len(value) > max_clause_count:
+                        should_clauses = []
+                        for i in range(0, len(value), max_clause_count):
+                            should_clauses.append({'terms': {filtered_field: value[i:i + max_clause_count]}})
+                        agg_query = agg_query.filter('bool', should=should_clauses)
+                    else:
+                        agg_query = agg_query.filter('terms', **{filtered_field: value})
+                else:
+                    agg_query = agg_query.filter('term', **{filtered_field: value})
         return agg_query
 
     def process_query_result(self, query_result, start_date, end_date):
@@ -307,7 +329,7 @@ class ESTermsQuery(ESQuery):
             """Build recursively result buckets."""
             # Add metric results for current bucket
             for metric in self.metric_fields:
-                bucket_result[metric] = agg[metric]['value']
+                bucket_result[metric] = agg[metric].get('value')
             if self.group_fields:
                 temp_data = {}
                 count = 0
@@ -537,7 +559,17 @@ class ESWekoTermsQuery(ESTermsQuery):
                 )
 
         if kwargs.get('agg_filter'):
-            agg_query = agg_query.filter('terms', **kwargs.get('agg_filter'))
+            max_clause_count = current_app.config.get('OAISERVER_ES_MAX_CLAUSE_COUNT', 1024)
+            field, values = next(iter(kwargs.get('agg_filter').items()))
+            if isinstance(values, list):
+                chunks = list(chunk_list(values, max_clause_count))
+                should_clauses = [{'terms': {field: chunk}} for chunk in chunks]
+                agg_query = agg_query.filter('bool', should=should_clauses, minimum_should_match=1)
+            else:
+                agg_query = agg_query.filter('terms', **kwargs.get('agg_filter'))
+
+        if kwargs.get('wildcard'):
+            agg_query = agg_query.filter('wildcard', **kwargs.get('wildcard'))
 
         return agg_query
 
@@ -596,5 +628,86 @@ class ESWekoRankingQuery(ESTermsQuery):
         agg_query = self.build_query(**kwargs)
 
         query_result = agg_query.execute().to_dict()
-        
+
         return query_result
+
+
+class ESWekoFileRankingQuery(ESTermsQuery):
+    """Weko ES Query for File Download Ranking."""
+
+    def __init__(self, main_fields=None, main_query=None, *args, **kwargs):
+        """Constructor.
+
+        :param main_fields: name of the timestamp field.
+        :param main_query: list of fields to copy from the top hit document
+            into the resulting aggregation.
+        """
+        super(ESWekoFileRankingQuery, self).__init__(*args, **kwargs)
+        self.main_fields = main_fields or []
+        self.main_query = main_query or {}
+
+    def build_query(self, start_date, end_date, **kwargs):
+        """Build the elasticsearch query."""
+        agg_query = Search(
+            using=self.client,
+            index=self.index,
+            doc_type=self.doc_type
+        )[0:0]
+        if self.main_query:
+            query_q = self.main_query
+            for _field in self.main_fields:
+                query_q = json.dumps(query_q).replace(
+                    "@{}".format(_field), kwargs[_field])
+                query_q = json.loads(query_q)
+
+            if 'root_file_id_list' in kwargs.keys():
+                query_q['query']['bool']['filter'][1]['terms']['root_file_id'] = kwargs['root_file_id_list']
+
+            agg_query.update_from_dict(query_q)
+
+        if start_date or end_date:
+            time_range = {}
+            if start_date:
+                time_range['gte'] = start_date.isoformat()
+            if end_date:
+                time_range['lte'] = end_date.isoformat()
+            time_range['time_zone'] = current_app.config[
+                'STATS_WEKO_DEFAULT_TIMEZONE']
+            agg_query = agg_query.filter(
+                'range',
+                **{self.time_field: time_range})
+
+        for dst, (metric, field, opts) in self.metric_fields.items():
+            agg_query.aggs.metric(dst, metric, field=field, **opts)
+
+        return agg_query
+
+    def process_query_result(self, query_result, start_date, end_date):
+        """Build the result using the query result."""
+        def build_buckets(agg, fields, bucket_result):
+            """Build recursively result buckets."""
+            # Add metric results for current bucket
+            for metric in self.metric_fields:
+                bucket_result[metric] = agg[metric]
+            return bucket_result
+
+        # Add copy_fields
+        aggs = query_result['aggregations']
+        result = dict(
+            start_date=start_date.isoformat() if start_date else None,
+            end_date=end_date.isoformat() if end_date else None,
+        )
+
+        return build_buckets(aggs, self.aggregated_fields, result)
+
+    def run(self, start_date=None, end_date=None, **kwargs):
+        """Run the query."""
+        start_date = self.extract_date(start_date) if start_date else None
+        end_date = self.extract_date(end_date) if end_date else None
+        self.validate_arguments(start_date, end_date, **kwargs)
+
+        agg_query = self.build_query(start_date, end_date, **kwargs)
+        current_app.logger.debug(agg_query.to_dict())
+        query_result = agg_query.execute().to_dict()
+
+        return self.process_query_result(query_result, start_date, end_date)

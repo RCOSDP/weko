@@ -24,9 +24,11 @@ import codecs
 import json
 import os
 import tempfile
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
+import traceback
 from urllib.parse import urlencode
 import pickle
+import sys
 
 from blinker import Namespace
 from celery import chord
@@ -40,7 +42,7 @@ from invenio_db import db
 from invenio_files_rest.models import FileInstance
 from invenio_i18n.ext import current_i18n
 from weko_admin.api import TempDirInfo
-from weko_admin.utils import reset_redis_cache
+from weko_admin.utils import get_redis_cache, reset_redis_cache
 from weko_index_tree.api import Indexes
 from weko_index_tree.models import IndexStyle
 from weko_index_tree.utils import (
@@ -48,8 +50,11 @@ from weko_index_tree.utils import (
     get_editing_items_in_index,
     is_index_locked,
 )
-from weko_records.api import ItemTypes
+from weko_logging.activity_logger import UserActivityLogger
+from weko_records.api import ItemTypes, JsonldMapping
 from weko_workflow.api import WorkFlow
+from weko_records_ui.external import call_external_system
+from weko_deposit.api import WekoRecord
 
 from weko_search_ui.api import get_search_detail_keyword
 
@@ -60,11 +65,15 @@ from .config import (
     WEKO_IMPORT_CHECK_LIST_NAME,
     WEKO_IMPORT_LIST_NAME,
     WEKO_ITEM_ADMIN_IMPORT_TEMPLATE,
+    WEKO_ITEM_ADMIN_ROCRATE_IMPORT_TEMPLATE,
     WEKO_SEARCH_UI_ADMIN_EXPORT_TEMPLATE,
+    WEKO_SEARCH_UI_BULK_EXPORT_FILE_CREATE_RUN_MSG,
 )
 from .tasks import (
     check_celery_is_run,
+    check_session_lifetime,
     check_import_items_task,
+    check_rocrate_import_items_task,
     export_all_task,
     import_item,
     is_import_running,
@@ -72,7 +81,6 @@ from .tasks import (
 )
 from .utils import (
     cancel_export_all,
-    check_import_items,
     check_sub_item_is_system,
     create_flow_define,
     delete_records,
@@ -83,6 +91,7 @@ from .utils import (
     get_root_item_option,
     get_sub_item_option,
     get_tree_items,
+    handle_metadata_by_doi,
     handle_get_all_sub_id_and_name,
     handle_workflow,
     make_stats_file,
@@ -102,6 +111,7 @@ class ItemManagementBulkDelete(BaseView):
         if request.method == "PUT":
             # Do delete items inside the current index tree (maybe root tree)
             q = request.values.get("q")
+            UserActivityLogger.issue_log_group_id(db.session)
             if q is not None and q.isdigit():
                 current_tree = Indexes.get_index(q)
                 recursive_tree = Indexes.get_recursive_tree(q)
@@ -114,7 +124,7 @@ class ItemManagementBulkDelete(BaseView):
                         edt_items = get_editing_items_in_index(q, recursively)
                         ignore_items = list(set(doi_items + edt_items))
                         # Delete items in current_tree
-                        delete_records(current_tree.id, ignore_items)
+                        delete_record_list = delete_records(current_tree.id, ignore_items)
 
                         # If recursively, then delete items of child indices
                         if recursively:
@@ -125,12 +135,23 @@ class ItemManagementBulkDelete(BaseView):
                                     child_tree = Indexes.get_index(obj[1])
 
                                     # Do delete items in child_tree
-                                    delete_records(child_tree.id, ignore_items)
+                                    child_delete_record_list = delete_records(child_tree.id, ignore_items)
+                                    delete_record_list.extend(child_delete_record_list)
                                     # Add the level 1 child into the current_tree
                                     if obj[0] == current_tree.id:
                                         direct_child_trees.append(child_tree.id)
 
                         db.session.commit()
+                        UserActivityLogger.info(operation="ITEM_BULK_DELETE")
+                        for pid in delete_record_list:
+                            UserActivityLogger.info(
+                                operation="ITEM_DELETE",
+                                target_key=pid
+                            )
+
+                        for recid in delete_record_list:
+                            record = WekoRecord.get_record_by_pid(recid)
+                            call_external_system(old_record=record)
                         if ignore_items:
                             msg = "{}<br/>".format(
                                 _("The following item(s) cannot be deleted.")
@@ -150,6 +171,12 @@ class ItemManagementBulkDelete(BaseView):
                     except Exception as e:
                         db.session.rollback()
                         current_app.logger.error(e)
+                        exec_info = sys.exc_info()
+                        tb_info = traceback.format_tb(exec_info[2])
+                        UserActivityLogger.error(
+                            operation="ITEM_BULK_DELETE",
+                            remarks=tb_info[0]
+                        )
                         msg = str(e)
 
             return jsonify({"status": 0, "msg": msg})
@@ -335,7 +362,7 @@ class ItemImportView(BaseView):
         workflow = WorkFlow()
         workflows = workflow.get_workflow_list()
         workflows_js = [get_content_workflow(item) for item in workflows]
-        
+
         form =FlaskForm(request.form)
 
         return self.render(
@@ -348,9 +375,9 @@ class ItemImportView(BaseView):
     @expose("/check", methods=["POST"])
     def check(self) -> jsonify:
         """Validate item import."""
-        
+
         validate_csrf_header(request)
-        
+
         data = request.form
         file = request.files["file"] if request.files else None
 
@@ -449,6 +476,9 @@ class ItemImportView(BaseView):
             "user_id": user_id,
             "action": "IMPORT"
         }
+        request_info.update(
+            UserActivityLogger.get_summary_from_request()
+        )
         # update temp dir expire to 1 day from now
         expire = datetime.now() + timedelta(days=1)
         TempDirInfo().set(data_path, {"expire": expire.strftime("%Y-%m-%d %H:%M:%S")})
@@ -457,18 +487,33 @@ class ItemImportView(BaseView):
         list_record = [
             item for item in data.get("list_record", []) if not item.get("errors")
         ]
+        list_doi = data.get("list_doi")
+        if UserActivityLogger.issue_log_group_id(db.session):
+            log_group_id = UserActivityLogger.get_log_group_id(request_info)
+            request_info["log_group_id"] = log_group_id
+        UserActivityLogger.info(operation="ITEM_IMPORT")
         if list_record:
             group_tasks = []
-            for item in list_record:
+            UserActivityLogger.info(operation="ITEM_BULK_CREATE")
+            for idx, item in enumerate(list_record):
                 try:
                     item["root_path"] = data_path + "/data"
                     create_flow_define()
                     handle_workflow(item)
+                    if (list_doi[idx]):
+                        metadata_doi = handle_metadata_by_doi(item, list_doi[idx])
+                        item["metadata"] = metadata_doi
                     group_tasks.append(import_item.s(item, request_info))
                     db.session.commit()
-                except Exception as e:
+                except Exception as ex:
                     db.session.rollback()
-                    current_app.logger.error(e)
+                    current_app.logger.error("Failed to Item import.")
+                    exec_info = sys.exc_info()
+                    tb_info = traceback.format_tb(exec_info[2])
+                    UserActivityLogger.error(
+                        operation="ITEM_BULK_CREATE",
+                        remarks=tb_info[0]
+                    )
 
             # handle import tasks
             import_task = chord(group_tasks)(remove_temp_dir_task.si(data_path))
@@ -722,9 +767,329 @@ class ItemImportView(BaseView):
                     "error_id": check,
                 }
             )
-            
+
         else:
             return jsonify({"is_available": True})
+
+
+class ItemRocrateImportView(BaseView):
+    """BaseView for Admin RO-Crate Import."""
+
+    @expose("/", methods=["GET"])
+    def index(self):
+        """Renders an item rocrate import view.
+
+        :return: The rendered template.
+        """
+        workflow = WorkFlow()
+        workflows = workflow.get_workflow_list()
+        workflows_js = [get_content_workflow(item) for item in workflows]
+
+        form = FlaskForm(request.form)
+
+        return self.render(
+            WEKO_ITEM_ADMIN_ROCRATE_IMPORT_TEMPLATE,
+            workflows=json.dumps(workflows_js),
+            file_format=current_app.config.get('WEKO_ADMIN_OUTPUT_FORMAT', 'json').lower(),
+            form=form
+        )
+
+    @expose("/check", methods=["POST"])
+    def check(self):
+        """Validate item import.
+
+        :return: The result of the validation.
+        """
+
+        validate_csrf_header(request)
+
+        data = request.form
+        file = request.files["file"] if request.files else None
+        packaging = request.headers.get("Packaging")
+        mapping_id = data.get("mapping_id")
+
+        role_ids = []
+        can_edit_indexes = []
+        if current_user and current_user.is_authenticated:
+            for role in current_user.roles:
+                if role.name in current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER']:
+                    role_ids = []
+                    can_edit_indexes = [0]
+                    break
+                else:
+                    role_ids.append(role.id)
+        if role_ids:
+            from invenio_communities.models import Community
+            comm_data = Community.query.filter(
+                Community.id_role.in_(role_ids)
+            ).all()
+            for comm in comm_data:
+                can_edit_indexes += [i.cid for i in Indexes.get_self_list(comm.root_node_id)]
+            can_edit_indexes = list(set(can_edit_indexes))
+        if data and file:
+            temp_path = os.path.join(
+                tempfile.gettempdir(),
+                current_app.config["WEKO_SEARCH_UI_ROCRATE_IMPORT_TMP_PREFIX"]
+                    + datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S%f")[:-3]
+            )
+            os.mkdir(temp_path)
+            file_path = os.path.join(temp_path, file.filename)
+            file.save(file_path)
+            task = check_rocrate_import_items_task.apply_async(
+                (
+                    file_path,
+                    data.get("is_change_identifier") == "true",
+                    request.host_url,
+                    packaging,
+                    mapping_id,
+                    current_i18n.language,
+                    can_edit_indexes
+                ),
+            )
+            return jsonify(code=1, check_rocrate_import_task_id=task.task_id)
+        else:
+            return make_response(jsonify({"error": "No file or data provided."}), 400)
+
+    @expose("/get_check_status", methods=["POST"])
+    def get_check_status(self) -> jsonify:
+        """Validate item import.
+
+        :return: check status.
+        """
+        data = request.get_json()
+        result = {}
+
+        if data and data.get("task_id"):
+            task = import_item.AsyncResult(data.get("task_id"))
+            if task and isinstance(task.result, dict):
+                start_date = task.result.get("start_date")
+                end_date = task.result.get("end_date")
+                result.update(
+                    {"start_date": start_date, "end_date": end_date, **task.result}
+                )
+            elif task and task.status != "PENDING":
+                current_app.logger.error(f"Task {task.id} failed")
+                result["error"] = _("Internal server error")
+        return jsonify(**result)
+
+    @expose("/download_check", methods=["POST"])
+    def download_check(self):
+        """Download report check result.
+
+        :return: The response of the download.
+        """
+        data = request.get_json()
+        now = datetime.now().strftime("%Y-%m-%d")
+        file_format = current_app.config.get('WEKO_ADMIN_OUTPUT_FORMAT', 'tsv').lower()
+
+        file_name = "check_{}.{}".format(now, file_format)
+        if data:
+            output_file = make_stats_file(
+                data.get("list_result"), WEKO_IMPORT_CHECK_LIST_NAME
+            )
+            return Response(
+                output_file.getvalue(),
+                mimetype="text/{}".format(file_format),
+                headers={"Content-disposition": "attachment; filename=" + file_name},
+            )
+        else:
+            return Response(
+                [],
+                mimetype="text/{}".format(file_format),
+                headers={"Content-disposition": "attachment; filename=" + file_name},
+            )
+
+    @expose("/import", methods=["POST"])
+    def import_items(self):
+        """Import item into System.
+
+        :return: The response of the import.
+        """
+        data = request.get_json() or {}
+        data_path = data.get("data_path")
+        user_id = current_user.get_id() if current_user else -1
+        request_info = {
+            "remote_addr": request.remote_addr,
+            "referrer": request.referrer,
+            "hostname": request.host,
+            "user_id": user_id,
+            "action": "IMPORT"
+        }
+        request_info.update(
+            UserActivityLogger.get_summary_from_request()
+        )
+        # update temp dir expire to 1 day from now
+        expire = datetime.now() + timedelta(days=1)
+        TempDirInfo().set(data_path, {"expire": expire.strftime("%Y-%m-%d %H:%M:%S")})
+
+        tasks = []
+        list_record = [
+            item for item in data.get("list_record", []) if not item.get("errors")
+        ]
+        if UserActivityLogger.issue_log_group_id(db.session):
+            log_group_id = UserActivityLogger.get_log_group_id(request_info)
+            request_info["log_group_id"] = log_group_id
+
+        UserActivityLogger.info(
+            operation="ITEM_IMPORT",
+            remarks="RO-Crate Import"
+        )
+        if list_record:
+            group_tasks = []
+            UserActivityLogger.info(
+                operation="ITEM_BULK_CREATE",
+                remarks="RO-Crate Import"
+            )
+            for item in list_record:
+                try:
+                    item["root_path"] = os.path.join(data_path, "data")
+                    create_flow_define()
+                    handle_workflow(item)
+                    group_tasks.append(import_item.s(item, request_info))
+                    db.session.commit()
+                except Exception as ex:
+                    db.session.rollback()
+                    current_app.logger.error("Failed to item import.")
+                    traceback.print_exc()
+                    exec_info = sys.exc_info()
+                    tb_info = traceback.format_tb(exec_info[2])
+                    UserActivityLogger.error(
+                        operation="ITEM_BULK_CREATE",
+                        remarks=tb_info[0]
+                    )
+
+            # handle import tasks
+            import_task = chord(group_tasks)(remove_temp_dir_task.si(data_path))
+            for idx, task in enumerate(import_task.parent.results):
+                tasks.append(
+                    {
+                        "task_id": task.task_id,
+                        "item_id": list_record[idx].get("id"),
+                    }
+                )
+
+        response_object = {
+            "status": "success",
+            "data": {"tasks": tasks},
+        }
+        return jsonify(response_object)
+
+    @expose("/check_status", methods=["POST"])
+    def get_status(self):
+        """Get status of import process.
+
+        :return: check status.
+        """
+        data = request.get_json()
+        result = []
+        if data and data.get("tasks"):
+            status = "done"
+            for task_item in data.get("tasks"):
+                task_id = task_item.get("task_id")
+                task = import_item.AsyncResult(task_id)
+                start_date = (
+                    task.result.get("start_date")
+                    if task and isinstance(task.result, dict)
+                    else ""
+                )
+                end_date = (
+                    datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                    if task.successful() or task.failed()
+                    else ""
+                )
+                item_id = task_item.get("item_id", None)
+                if not item_id and task.result:
+                    item_id = task.result.get("recid", None)
+                result.append(
+                    dict(
+                        **{
+                            "task_status": task.status,
+                            "task_result": task.result,
+                            "start_date": start_date,
+                            "end_date": task_item.get("end_date") or end_date,
+                            "task_id": task_id,
+                            "item_id": item_id,
+                        }
+                    )
+                )
+                status = (
+                    "doing"
+                    if not (task.successful() or task.failed()) or status == "doing"
+                    else "done"
+                )
+            response_object = {"status": status, "result": result}
+        else:
+            response_object = {"status": "error", "result": result}
+        return jsonify(response_object)
+
+    @expose("/export_import", methods=["POST"])
+    def download_import(self):
+        """Download import result.
+
+        :return: The response of the download.
+        """
+        data = request.get_json()
+        now = datetime.now().strftime("%Y-%m-%d")
+
+        file_format = current_app.config.get('WEKO_ADMIN_OUTPUT_FORMAT', 'tsv').lower()
+        file_name = "List_Download {}.{}".format(now, file_format)
+        if data:
+            output_file = make_stats_file(data.get("list_result"), WEKO_IMPORT_LIST_NAME)
+            return Response(
+                output_file.getvalue(),
+                mimetype="text/{}".format(file_format),
+                headers={"Content-disposition": "attachment; filename=" + file_name},
+            )
+        else:
+            return Response(
+                [],
+                mimetype="text/{}".format(file_format),
+                headers={"Content-disposition": "attachment; filename=" + file_name},
+            )
+
+    @expose("/get_disclaimer_text", methods=["GET"])
+    def get_disclaimer_text(self):
+        """Get disclaimer text.
+
+        :return: The disclaimer text.
+        """
+        data = get_change_identifier_mode_content()
+        return jsonify(code=1, data=data)
+
+    @expose("/check_import_is_available", methods=["GET"])
+    def check_import_available(self):
+        """Check import is available.
+
+        :return: check result.
+        """
+        check = is_import_running()
+        if check:
+            return jsonify(
+                {
+                    "is_available": False,
+                    "error_id": check,
+                }
+            )
+        else:
+            return jsonify({"is_available": True})
+
+    @expose("/all_mappings", methods=["GET"])
+    def all_mappings(self):
+        """Get all ItemTypeJsonldMapping as JSON.
+
+        Returns:
+            flask.Response: JSON list of dicts with id, name, item_type_id,
+            retrieved from ItemTypeJsonldMapping records that are not deleted.
+        """
+        mappings = [
+            {
+                "id": item.id,
+                "name": item.name,
+                "item_type_id": item.item_type_id
+            }
+            for item in JsonldMapping.get_all()
+        ]
+        return jsonify(mappings)
 
 
 class ItemBulkExport(BaseView):
@@ -756,40 +1121,53 @@ class ItemBulkExport(BaseView):
             name=_task_config,
             user_id=user_id
         )
-        export_status, download_uri, message, run_message, _ = get_export_status()
-        timezone = str(current_app.config["STATS_WEKO_DEFAULT_TIMEZONE"]())
+        export_status, download_uri, message, run_message, \
+            _, _, _ = get_export_status()
+        start_time = datetime.now().strftime('%Y/%m/%d %H:%M:%S')
 
         if not export_status:
-            export_task = export_all_task.apply_async(args=(request.url_root, user_id, data, timezone))
+            export_task = export_all_task.apply_async(
+                args=(request.url_root, user_id, data, start_time)
+            )
             reset_redis_cache(_cache_key, str(export_task.task_id))
 
         # return Response(status=200)
-        check = check_celery_is_run()
-        export_status, download_uri, message, run_message, status = get_export_status()
+        check_celery = check_celery_is_run()
+        check_life_time = check_session_lifetime()
+        export_status, download_uri, message, run_message, \
+            status, start_time, finish_time = get_export_status()
         return jsonify(
             data={
                 "export_status": export_status,
                 "uri_status": True if download_uri else False,
-                "celery_is_run": check,
+                "celery_is_run": check_celery,
+                "is_lifetime": check_life_time,
                 "error_message": message,
                 "export_run_msg": run_message,
-                "status": status
+                "status": status,
+                "start_time": start_time,
+                "finish_time": finish_time
             }
         )
 
     @expose("/check_export_status", methods=["GET"])
     def check_export_status(self):
         """Check export status."""
-        check = check_celery_is_run()
-        export_status, download_uri, message, run_message, status = get_export_status()
+        check_celery = check_celery_is_run()
+        check_life_time = check_session_lifetime()
+        export_status, download_uri, message, run_message, \
+            status, start_time, finish_time = get_export_status()
         return jsonify(
             data={
                 "export_status": export_status,
                 "uri_status": True if download_uri else False,
-                "celery_is_run": check,
+                "celery_is_run": check_celery,
+                "is_lifetime": check_life_time,
                 "error_message": message,
                 "export_run_msg": run_message,
-                "status": status
+                "status": status,
+                "start_time": start_time,
+                "finish_time": finish_time
             }
         )
 
@@ -797,18 +1175,47 @@ class ItemBulkExport(BaseView):
     def cancel_export(self):
         """Check export status."""
         result = cancel_export_all()
-        export_status, _, _, _, status = get_export_status()
+        export_status, _, _, _, status, _, _ = get_export_status()
         return jsonify(data={"cancel_status": result, "export_status":export_status, "status":status})
 
     @expose("/download", methods=["GET"])
     def download(self):
         """Funtion send file to Client.
 
-        path: it was load from FileInstance
+        Sends the exported file to the client for download.
+        Checks the download URI and file expiration, and if the conditions are met,
+        returns the file as an attachment. If the file is not available for download,
+        returns status 200.
         """
-        export_status, download_uri, message, run_message, _ = get_export_status()
+        file_msg = current_app.config["WEKO_ADMIN_CACHE_PREFIX"].format(
+            name=WEKO_SEARCH_UI_BULK_EXPORT_FILE_CREATE_RUN_MSG,
+            user_id=current_user.get_id()
+        )
+        export_info = json.loads(get_redis_cache(file_msg))
+        export_path = export_info["export_path"]
+        export_status, download_uri, _, _, \
+            _, _, _ = get_export_status()
         if not export_status and download_uri is not None:
             file_instance = FileInstance.get_by_uri(download_uri)
+
+            # Check the TTL in the cache and extend it
+            # if the remaining time is below a certain threshold.
+            tmp_cache = TempDirInfo().get(export_path)
+            expire = tmp_cache.get("expire") if tmp_cache else None
+            now = datetime.now()
+            if (
+                expire and
+                (datetime.strptime(expire,"%Y-%m-%d %H:%M:%S") - now).total_seconds()
+                    <= current_app.config["WEKO_SEARCH_UI_FILE_DOWNLOAD_TTL_BUFFER"]
+            ):
+                expire = datetime.strptime(expire,"%Y-%m-%d %H:%M:%S")
+                new_expire = (
+                    expire + timedelta(
+                        seconds=current_app.config["WEKO_SEARCH_UI_FILE_DOWNLOAD_TTL_BUFFER"]
+                    )
+                )
+                tmp_cache["expire"] = new_expire.strftime("%Y-%m-%d %H:%M:%S")
+                TempDirInfo().set(export_path, tmp_cache)
             return file_instance.send_file(
                 "export-all.zip",
                 mimetype="application/octet-stream",
@@ -847,7 +1254,21 @@ item_management_custom_sort_adminview = {
 
 item_management_import_adminview = {
     "view_class": ItemImportView,
-    "kwargs": {"category": _("Items"), "name": _("Import"), "endpoint": "items/import"},
+    "kwargs": {
+        "category": _("Items"),
+        "name": _("Import"),
+        "endpoint": "items/import",
+    },
+}
+
+item_management_rocrate_import_adminview = {
+    "view_class": ItemRocrateImportView,
+    "kwargs": {
+        "category": _("Items"),
+        "name": _("RO-Crate Import"),
+        "endpoint": "items/rocrate_import",
+    },
+
 }
 
 item_management_export_adminview = {
@@ -864,5 +1285,6 @@ __all__ = (
     "item_management_bulk_search_adminview",
     "item_management_custom_sort_adminview",
     "item_management_import_adminview",
+    "item_management_rocrate_import_adminview",
     "item_management_export_adminview",
 )

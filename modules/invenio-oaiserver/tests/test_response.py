@@ -712,6 +712,12 @@ def test_listidentifiers(es_app,records,item_type,mock_execute,db,mocker):
                     assert res.xpath('/x:OAI-PMH/x:ListIdentifiers/x:header[6]/x:identifier/text()', namespaces=NAMESPACES) == [str(records[6][0])]
                     assert len(res.xpath('/x:OAI-PMH/x:ListIdentifiers/x:header[6][@status="deleted"]', namespaces=NAMESPACES)) == 1
 
+                    with patch("invenio_oaiserver.response.is_deleted_workflow", return_value=False):
+                        with patch("invenio_oaiserver.response.is_private_workflow", return_value=False):
+                            with patch("invenio_oaiserver.response.is_pubdate_in_future", return_value=False):
+                                res=listidentifiers(**kwargs)
+                                assert len(res.xpath('/x:OAI-PMH/x:ListIdentifiers/x:header', namespaces=NAMESPACES)) == 6
+
                 # etree_reocrd.get("system_identifier_doi")
                 with patch("invenio_oaiserver.response.is_exists_doi",return_value=True):
                     res=listidentifiers(**kwargs)
@@ -735,6 +741,40 @@ def test_listidentifiers(es_app,records,item_type,mock_execute,db,mocker):
                     assert res.xpath('/x:OAI-PMH/x:ListIdentifiers/x:header[5]/x:identifier/text()', namespaces=NAMESPACES) == []
                     assert len(res.xpath('/x:OAI-PMH/x:ListIdentifiers/x:header[5][@status="deleted"]', namespaces=NAMESPACES)) == 0
 
+        # community id in set
+        with patch("invenio_oaiserver.response.get_records",return_value=MockPagenation(dummy_data)),\
+             patch("invenio_oaiserver.response.is_output_harvest",return_value=OUTPUT_HARVEST),\
+             patch("invenio_oaiserver.response.is_exists_doi",return_value=False):
+            # community id with prefix
+            with patch("invenio_oaiserver.response.OAISet.get_set_by_spec",return_value=OAISet(spec="user-test_comm")):
+                with patch("invenio_oaiserver.response.get_community_index_from_set",return_value="1557819692844"):
+                    kwargs_1 = dict(
+                        metadataPrefix='jpcoar_1.0',
+                        verb="ListIdentifiers",
+                        set="user-test_comm",
+                    )
+                    res=listidentifiers(**kwargs_1)
+                    assert len(res.xpath('/x:OAI-PMH/x:ListIdentifiers/x:header', namespaces=NAMESPACES)) == 6
+            # community id without prefix
+            with patch("invenio_oaiserver.response.OAISet.get_set_by_spec",side_effect=[None, OAISet(spec="user-test_comm")]):
+                with patch("invenio_oaiserver.response.get_community_index_from_set",return_value="1557819692844"):
+                    kwargs_1.update(set="test_comm")
+                    res=listidentifiers(**kwargs_1)
+                    assert len(res.xpath('/x:OAI-PMH/x:ListIdentifiers/x:header', namespaces=NAMESPACES)) == 6
+            # community id not found
+            with patch("invenio_oaiserver.response.OAISet.get_set_by_spec",side_effect=[None, None]):
+                res=listidentifiers(**kwargs_1)
+                assert res.xpath("/x:OAI-PMH/x:error",namespaces=NAMESPACES)[0].attrib["code"] == "noRecordsMatch"
+            # index id with ':'
+            with patch("invenio_oaiserver.response.OAISet.get_set_by_spec",return_value=OAISet(spec="123:1557819692844")):
+                kwargs_1.update(set="123:1557819692844")
+                res=listidentifiers(**kwargs_1)
+                assert len(res.xpath('/x:OAI-PMH/x:ListIdentifiers/x:header', namespaces=NAMESPACES)) == 6
+            # index id not found
+            with patch("invenio_oaiserver.response.OAISet.get_set_by_spec",return_value=None):
+                kwargs_1.update(set="123")
+                res=listidentifiers(**kwargs_1)
+                assert res.xpath("/x:OAI-PMH/x:error",namespaces=NAMESPACES)[0].attrib["code"] == "noRecordsMatch"
 
         # not identify
         with patch("invenio_oaiserver.response.OaiIdentify.get_all",return_value=None):
@@ -1017,6 +1057,12 @@ def test_listrecords(es_app,records,item_type,mock_execute,db,mocker):
                     assert res.xpath('/x:OAI-PMH/x:ListRecords/x:record[6]/x:header/x:identifier/text()', namespaces=NAMESPACES) == [str(records[6][0])]
                     assert len(res.xpath('/x:OAI-PMH/x:ListRecords/x:record[6]/x:header[@status="deleted"]', namespaces=NAMESPACES)) == 1
 
+                    with patch("invenio_oaiserver.response.is_deleted_workflow", return_value=False):
+                        with patch("invenio_oaiserver.response.is_private_workflow", return_value=False):
+                            with patch("invenio_oaiserver.response.is_pubdate_in_future", return_value=False):
+                                res=listrecords(**kwargs)
+                                assert len(res.xpath('/x:OAI-PMH/x:ListRecords/x:record', namespaces=NAMESPACES)) == 6
+
                 # etree_reocrd.get("system_identifier_doi")
                 with patch("invenio_oaiserver.response.is_exists_doi",return_value=True):
                     res=listrecords(**kwargs)
@@ -1040,6 +1086,40 @@ def test_listrecords(es_app,records,item_type,mock_execute,db,mocker):
                     assert res.xpath('/x:OAI-PMH/x:ListRecords/x:record[5]/x:header/x:identifier/text()', namespaces=NAMESPACES) == []
                     assert len(res.xpath('/x:OAI-PMH/x:ListRecords/x:record[5]/x:header[@status="deleted"]', namespaces=NAMESPACES)) == 0
 
+        # community id in set
+        with patch("invenio_oaiserver.response.get_records",return_value=MockPagenation(dummy_data)),\
+             patch("invenio_oaiserver.response.is_output_harvest",return_value=OUTPUT_HARVEST),\
+             patch("invenio_oaiserver.response.is_exists_doi",return_value=False):
+            # community id with prefix
+            with patch("invenio_oaiserver.response.OAISet.get_set_by_spec",return_value=OAISet(spec="user-test_comm")):
+                with patch("invenio_oaiserver.response.get_community_index_from_set",return_value="1557819692844"):
+                    kwargs_1 = dict(
+                        metadataPrefix='jpcoar_1.0',
+                        verb="ListRecords",
+                        set="user-test_comm",
+                    ) 
+                    res=listrecords(**kwargs_1)
+                    assert len(res.xpath('/x:OAI-PMH/x:ListRecords/x:record', namespaces=NAMESPACES)) == 6
+            # community id without prefix
+            with patch("invenio_oaiserver.response.OAISet.get_set_by_spec",side_effect=[None, OAISet(spec="user-test_comm")]):
+                with patch("invenio_oaiserver.response.get_community_index_from_set",return_value="1557819692844"):
+                    kwargs_1.update(set="test_comm")
+                    res=listrecords(**kwargs_1)
+                    assert len(res.xpath('/x:OAI-PMH/x:ListRecords/x:record', namespaces=NAMESPACES)) == 6
+            # community id not found
+            with patch("invenio_oaiserver.response.OAISet.get_set_by_spec",side_effect=[None, None]):
+                res=listrecords(**kwargs_1)
+                assert res.xpath("/x:OAI-PMH/x:error",namespaces=NAMESPACES)[0].attrib["code"] == "noRecordsMatch"
+            # index id with ':'
+            with patch("invenio_oaiserver.response.OAISet.get_set_by_spec",return_value=OAISet(spec="123:1557819692844")):
+                kwargs_1.update(set="123:1557819692844")
+                res=listrecords(**kwargs_1)
+                assert len(res.xpath('/x:OAI-PMH/x:ListRecords/x:record', namespaces=NAMESPACES)) == 6
+            # index id not found
+            with patch("invenio_oaiserver.response.OAISet.get_set_by_spec",return_value=None):
+                kwargs_1.update(set="123")
+                res=listrecords(**kwargs_1)
+                assert res.xpath("/x:OAI-PMH/x:error",namespaces=NAMESPACES)[0].attrib["code"] == "noRecordsMatch"
 
         # not identify
         with patch("invenio_oaiserver.response.OaiIdentify.get_all",return_value=None):
@@ -1486,35 +1566,35 @@ def test_is_pubdate_in_future():
     with app.test_request_context():
         # offset-naive
         now = datetime.utcnow()
-        record = {'_oai': {'id': 'oai:weko3.example.org:00000002', 'sets': ['1658073625012']}, 'path': ['1658073625012'], 'owner': '1', 'recid': '2', 'title': ['a'], 'pubdate': {'attribute_name': 'PubDate', 'attribute_value': '2022-07-18'}, '_buckets': {'deposit': '62d9f851-3d9f-48b7-946b-38839df98d4c'}, '_deposit': {'id': '2', 'pid': {'type': 'depid', 'value': '2', 'revision_id': 0}, 'owner': '1', 'owners': [1], 'status': 'published', 'created_by': 1, 'owners_ext': {'email': 'wekosoftware@nii.ac.jp', 'username': '', 'displayname': ''}}, 'item_title': 'a', 'author_link': [], 'item_type_id': '15', 'publish_date': '2022-07-18', 'publish_status': '0', 'weko_shared_id': -1, 'item_1617186331708': {'attribute_name': 'Title', 'attribute_value_mlt': [{'subitem_1551255647225': 'a', 'subitem_1551255648112': 'ja'}]}, 'item_1617258105262': {'attribute_name': 'Resource Type', 'attribute_value_mlt': [{'resourceuri': 'http://purl.org/coar/resource_type/c_5794', 'resourcetype': 'conference paper'}]}, 'relation_version_is_last': True, 'json': {'_source': {'_item_metadata': {'system_identifier_doi': {'attribute_name': 'Identifier', 'attribute_value_mlt': [{'subitem_systemidt_identifier': 'https://localhost:8443/records/2', 'subitem_systemidt_identifier_type': 'URI'}]}}}}}
+        record = {'_oai': {'id': 'oai:weko3.example.org:00000002', 'sets': ['1658073625012']}, 'path': ['1658073625012'], 'owner': '1', 'recid': '2', 'title': ['a'], 'pubdate': {'attribute_name': 'PubDate', 'attribute_value': '2022-07-18'}, '_buckets': {'deposit': '62d9f851-3d9f-48b7-946b-38839df98d4c'}, '_deposit': {'id': '2', 'pid': {'type': 'depid', 'value': '2', 'revision_id': 0}, 'owner': '1', 'owners': [1], 'status': 'published', 'created_by': 1, 'owners_ext': {'email': 'wekosoftware@nii.ac.jp', 'username': '', 'displayname': ''}}, 'item_title': 'a', 'author_link': [], 'item_type_id': '15', 'publish_date': '2022-07-18', 'publish_status': '0', 'weko_shared_ids': [], 'item_1617186331708': {'attribute_name': 'Title', 'attribute_value_mlt': [{'subitem_1551255647225': 'a', 'subitem_1551255648112': 'ja'}]}, 'item_1617258105262': {'attribute_name': 'Resource Type', 'attribute_value_mlt': [{'resourceuri': 'http://purl.org/coar/resource_type/c_5794', 'resourcetype': 'conference paper'}]}, 'relation_version_is_last': True, 'json': {'_source': {'_item_metadata': {'system_identifier_doi': {'attribute_name': 'Identifier', 'attribute_value_mlt': [{'subitem_systemidt_identifier': 'https://localhost:8443/records/2', 'subitem_systemidt_identifier_type': 'URI'}]}}}}}
         record['publish_date'] = now.strftime('%Y-%m-%d')
         assert record['publish_date'] == now.strftime('%Y-%m-%d')
         assert is_pubdate_in_future(record)==False
 
         # offset-naive
         now = datetime.utcnow() + timedelta(days=1)
-        record = {'_oai': {'id': 'oai:weko3.example.org:00000002', 'sets': ['1658073625012']}, 'path': ['1658073625012'], 'owner': '1', 'recid': '2', 'title': ['a'], 'pubdate': {'attribute_name': 'PubDate', 'attribute_value': '2022-07-18'}, '_buckets': {'deposit': '62d9f851-3d9f-48b7-946b-38839df98d4c'}, '_deposit': {'id': '2', 'pid': {'type': 'depid', 'value': '2', 'revision_id': 0}, 'owner': '1', 'owners': [1], 'status': 'published', 'created_by': 1, 'owners_ext': {'email': 'wekosoftware@nii.ac.jp', 'username': '', 'displayname': ''}}, 'item_title': 'a', 'author_link': [], 'item_type_id': '15', 'publish_date': '2022-07-18', 'publish_status': '0', 'weko_shared_id': -1, 'item_1617186331708': {'attribute_name': 'Title', 'attribute_value_mlt': [{'subitem_1551255647225': 'a', 'subitem_1551255648112': 'ja'}]}, 'item_1617258105262': {'attribute_name': 'Resource Type', 'attribute_value_mlt': [{'resourceuri': 'http://purl.org/coar/resource_type/c_5794', 'resourcetype': 'conference paper'}]}, 'relation_version_is_last': True, 'json': {'_source': {'_item_metadata': {'system_identifier_doi': {'attribute_name': 'Identifier', 'attribute_value_mlt': [{'subitem_systemidt_identifier': 'https://localhost:8443/records/2', 'subitem_systemidt_identifier_type': 'URI'}]}}}}}
+        record = {'_oai': {'id': 'oai:weko3.example.org:00000002', 'sets': ['1658073625012']}, 'path': ['1658073625012'], 'owner': '1', 'recid': '2', 'title': ['a'], 'pubdate': {'attribute_name': 'PubDate', 'attribute_value': '2022-07-18'}, '_buckets': {'deposit': '62d9f851-3d9f-48b7-946b-38839df98d4c'}, '_deposit': {'id': '2', 'pid': {'type': 'depid', 'value': '2', 'revision_id': 0}, 'owner': '1', 'owners': [1], 'status': 'published', 'created_by': 1, 'owners_ext': {'email': 'wekosoftware@nii.ac.jp', 'username': '', 'displayname': ''}}, 'item_title': 'a', 'author_link': [], 'item_type_id': '15', 'publish_date': '2022-07-18', 'publish_status': '0', 'weko_shared_ids': [], 'item_1617186331708': {'attribute_name': 'Title', 'attribute_value_mlt': [{'subitem_1551255647225': 'a', 'subitem_1551255648112': 'ja'}]}, 'item_1617258105262': {'attribute_name': 'Resource Type', 'attribute_value_mlt': [{'resourceuri': 'http://purl.org/coar/resource_type/c_5794', 'resourcetype': 'conference paper'}]}, 'relation_version_is_last': True, 'json': {'_source': {'_item_metadata': {'system_identifier_doi': {'attribute_name': 'Identifier', 'attribute_value_mlt': [{'subitem_systemidt_identifier': 'https://localhost:8443/records/2', 'subitem_systemidt_identifier_type': 'URI'}]}}}}}
         record['publish_date'] = now.strftime('%Y-%m-%d')
         assert record['publish_date'] == now.strftime('%Y-%m-%d')
         assert is_pubdate_in_future(record)==True
 
         # offset-naive
         now = datetime.utcnow() + timedelta(days=10)
-        record = {'_oai': {'id': 'oai:weko3.example.org:00000002', 'sets': ['1658073625012']}, 'path': ['1658073625012'], 'owner': '1', 'recid': '2', 'title': ['a'], 'pubdate': {'attribute_name': 'PubDate', 'attribute_value': '2022-07-18'}, '_buckets': {'deposit': '62d9f851-3d9f-48b7-946b-38839df98d4c'}, '_deposit': {'id': '2', 'pid': {'type': 'depid', 'value': '2', 'revision_id': 0}, 'owner': '1', 'owners': [1], 'status': 'published', 'created_by': 1, 'owners_ext': {'email': 'wekosoftware@nii.ac.jp', 'username': '', 'displayname': ''}}, 'item_title': 'a', 'author_link': [], 'item_type_id': '15', 'publish_date': '2022-07-18', 'publish_status': '0', 'weko_shared_id': -1, 'item_1617186331708': {'attribute_name': 'Title', 'attribute_value_mlt': [{'subitem_1551255647225': 'a', 'subitem_1551255648112': 'ja'}]}, 'item_1617258105262': {'attribute_name': 'Resource Type', 'attribute_value_mlt': [{'resourceuri': 'http://purl.org/coar/resource_type/c_5794', 'resourcetype': 'conference paper'}]}, 'relation_version_is_last': True, 'json': {'_source': {'_item_metadata': {'system_identifier_doi': {'attribute_name': 'Identifier', 'attribute_value_mlt': [{'subitem_systemidt_identifier': 'https://localhost:8443/records/2', 'subitem_systemidt_identifier_type': 'URI'}]}}}}}
+        record = {'_oai': {'id': 'oai:weko3.example.org:00000002', 'sets': ['1658073625012']}, 'path': ['1658073625012'], 'owner': '1', 'recid': '2', 'title': ['a'], 'pubdate': {'attribute_name': 'PubDate', 'attribute_value': '2022-07-18'}, '_buckets': {'deposit': '62d9f851-3d9f-48b7-946b-38839df98d4c'}, '_deposit': {'id': '2', 'pid': {'type': 'depid', 'value': '2', 'revision_id': 0}, 'owner': '1', 'owners': [1], 'status': 'published', 'created_by': 1, 'owners_ext': {'email': 'wekosoftware@nii.ac.jp', 'username': '', 'displayname': ''}}, 'item_title': 'a', 'author_link': [], 'item_type_id': '15', 'publish_date': '2022-07-18', 'publish_status': '0', 'weko_shared_ids': [], 'item_1617186331708': {'attribute_name': 'Title', 'attribute_value_mlt': [{'subitem_1551255647225': 'a', 'subitem_1551255648112': 'ja'}]}, 'item_1617258105262': {'attribute_name': 'Resource Type', 'attribute_value_mlt': [{'resourceuri': 'http://purl.org/coar/resource_type/c_5794', 'resourcetype': 'conference paper'}]}, 'relation_version_is_last': True, 'json': {'_source': {'_item_metadata': {'system_identifier_doi': {'attribute_name': 'Identifier', 'attribute_value_mlt': [{'subitem_systemidt_identifier': 'https://localhost:8443/records/2', 'subitem_systemidt_identifier_type': 'URI'}]}}}}}
         record['publish_date'] = now.strftime('%Y-%m-%d')
         assert record['publish_date'] == now.strftime('%Y-%m-%d')
         assert is_pubdate_in_future(record)==True
 
                 # offset-naive
         now = datetime.utcnow() - timedelta(days=1)
-        record = {'_oai': {'id': 'oai:weko3.example.org:00000002', 'sets': ['1658073625012']}, 'path': ['1658073625012'], 'owner': '1', 'recid': '2', 'title': ['a'], 'pubdate': {'attribute_name': 'PubDate', 'attribute_value': '2022-07-18'}, '_buckets': {'deposit': '62d9f851-3d9f-48b7-946b-38839df98d4c'}, '_deposit': {'id': '2', 'pid': {'type': 'depid', 'value': '2', 'revision_id': 0}, 'owner': '1', 'owners': [1], 'status': 'published', 'created_by': 1, 'owners_ext': {'email': 'wekosoftware@nii.ac.jp', 'username': '', 'displayname': ''}}, 'item_title': 'a', 'author_link': [], 'item_type_id': '15', 'publish_date': '2022-07-18', 'publish_status': '0', 'weko_shared_id': -1, 'item_1617186331708': {'attribute_name': 'Title', 'attribute_value_mlt': [{'subitem_1551255647225': 'a', 'subitem_1551255648112': 'ja'}]}, 'item_1617258105262': {'attribute_name': 'Resource Type', 'attribute_value_mlt': [{'resourceuri': 'http://purl.org/coar/resource_type/c_5794', 'resourcetype': 'conference paper'}]}, 'relation_version_is_last': True, 'json': {'_source': {'_item_metadata': {'system_identifier_doi': {'attribute_name': 'Identifier', 'attribute_value_mlt': [{'subitem_systemidt_identifier': 'https://localhost:8443/records/2', 'subitem_systemidt_identifier_type': 'URI'}]}}}}}
+        record = {'_oai': {'id': 'oai:weko3.example.org:00000002', 'sets': ['1658073625012']}, 'path': ['1658073625012'], 'owner': '1', 'recid': '2', 'title': ['a'], 'pubdate': {'attribute_name': 'PubDate', 'attribute_value': '2022-07-18'}, '_buckets': {'deposit': '62d9f851-3d9f-48b7-946b-38839df98d4c'}, '_deposit': {'id': '2', 'pid': {'type': 'depid', 'value': '2', 'revision_id': 0}, 'owner': '1', 'owners': [1], 'status': 'published', 'created_by': 1, 'owners_ext': {'email': 'wekosoftware@nii.ac.jp', 'username': '', 'displayname': ''}}, 'item_title': 'a', 'author_link': [], 'item_type_id': '15', 'publish_date': '2022-07-18', 'publish_status': '0', 'weko_shared_ids': [], 'item_1617186331708': {'attribute_name': 'Title', 'attribute_value_mlt': [{'subitem_1551255647225': 'a', 'subitem_1551255648112': 'ja'}]}, 'item_1617258105262': {'attribute_name': 'Resource Type', 'attribute_value_mlt': [{'resourceuri': 'http://purl.org/coar/resource_type/c_5794', 'resourcetype': 'conference paper'}]}, 'relation_version_is_last': True, 'json': {'_source': {'_item_metadata': {'system_identifier_doi': {'attribute_name': 'Identifier', 'attribute_value_mlt': [{'subitem_systemidt_identifier': 'https://localhost:8443/records/2', 'subitem_systemidt_identifier_type': 'URI'}]}}}}}
         record['publish_date'] = now.strftime('%Y-%m-%d')
         assert record['publish_date'] == now.strftime('%Y-%m-%d')
         assert is_pubdate_in_future(record)==False
 
         # offset-naive
         now = datetime.utcnow() - timedelta(days=10)
-        record = {'_oai': {'id': 'oai:weko3.example.org:00000002', 'sets': ['1658073625012']}, 'path': ['1658073625012'], 'owner': '1', 'recid': '2', 'title': ['a'], 'pubdate': {'attribute_name': 'PubDate', 'attribute_value': '2022-07-18'}, '_buckets': {'deposit': '62d9f851-3d9f-48b7-946b-38839df98d4c'}, '_deposit': {'id': '2', 'pid': {'type': 'depid', 'value': '2', 'revision_id': 0}, 'owner': '1', 'owners': [1], 'status': 'published', 'created_by': 1, 'owners_ext': {'email': 'wekosoftware@nii.ac.jp', 'username': '', 'displayname': ''}}, 'item_title': 'a', 'author_link': [], 'item_type_id': '15', 'publish_date': '2022-07-18', 'publish_status': '0', 'weko_shared_id': -1, 'item_1617186331708': {'attribute_name': 'Title', 'attribute_value_mlt': [{'subitem_1551255647225': 'a', 'subitem_1551255648112': 'ja'}]}, 'item_1617258105262': {'attribute_name': 'Resource Type', 'attribute_value_mlt': [{'resourceuri': 'http://purl.org/coar/resource_type/c_5794', 'resourcetype': 'conference paper'}]}, 'relation_version_is_last': True, 'json': {'_source': {'_item_metadata': {'system_identifier_doi': {'attribute_name': 'Identifier', 'attribute_value_mlt': [{'subitem_systemidt_identifier': 'https://localhost:8443/records/2', 'subitem_systemidt_identifier_type': 'URI'}]}}}}}
+        record = {'_oai': {'id': 'oai:weko3.example.org:00000002', 'sets': ['1658073625012']}, 'path': ['1658073625012'], 'owner': '1', 'recid': '2', 'title': ['a'], 'pubdate': {'attribute_name': 'PubDate', 'attribute_value': '2022-07-18'}, '_buckets': {'deposit': '62d9f851-3d9f-48b7-946b-38839df98d4c'}, '_deposit': {'id': '2', 'pid': {'type': 'depid', 'value': '2', 'revision_id': 0}, 'owner': '1', 'owners': [1], 'status': 'published', 'created_by': 1, 'owners_ext': {'email': 'wekosoftware@nii.ac.jp', 'username': '', 'displayname': ''}}, 'item_title': 'a', 'author_link': [], 'item_type_id': '15', 'publish_date': '2022-07-18', 'publish_status': '0', 'weko_shared_ids': [], 'item_1617186331708': {'attribute_name': 'Title', 'attribute_value_mlt': [{'subitem_1551255647225': 'a', 'subitem_1551255648112': 'ja'}]}, 'item_1617258105262': {'attribute_name': 'Resource Type', 'attribute_value_mlt': [{'resourceuri': 'http://purl.org/coar/resource_type/c_5794', 'resourcetype': 'conference paper'}]}, 'relation_version_is_last': True, 'json': {'_source': {'_item_metadata': {'system_identifier_doi': {'attribute_name': 'Identifier', 'attribute_value_mlt': [{'subitem_systemidt_identifier': 'https://localhost:8443/records/2', 'subitem_systemidt_identifier_type': 'URI'}]}}}}}
         record['publish_date'] = now.strftime('%Y-%m-%d')
         assert record['publish_date'] == now.strftime('%Y-%m-%d')
         assert is_pubdate_in_future(record)==False

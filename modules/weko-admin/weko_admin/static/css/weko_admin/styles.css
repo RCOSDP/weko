@@ -69,8 +69,8 @@
   border: 1px solid;
   border-color: #ddd;
   height: auto;
-  min-height: 504px;
-  max-height: 504px;
+  min-height: 400px;
+  max-height: 400px;
   margin-left: 10px;
 }
 
@@ -117,4 +117,8 @@ label.field-required::after {
 
 .popup-mail-modal {
   width: 70%;
+}
+
+.errorMessage{
+  color:red;
 }

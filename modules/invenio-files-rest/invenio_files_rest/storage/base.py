@@ -11,6 +11,7 @@
 from __future__ import absolute_import, print_function
 
 import hashlib
+import traceback
 from calendar import timegm
 from functools import partial
 
@@ -96,6 +97,7 @@ class FileStorage(object):
         try:
             fp = self.open(mode='rb')
         except Exception as e:
+            traceback.print_exc()
             raise StorageError('Could not send file: {}'.format(e))
 
         try:

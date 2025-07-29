@@ -14,6 +14,7 @@ from weko_theme.views import (
     get_default_search_setting,
     get_init_display_setting
 )
+from tests.helpers import get_json
 
 # def index():
 # .tox/c1/bin/pytest --cov=weko_theme tests/test_views.py::test_index -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-theme/.tox/c1/tmp
@@ -47,10 +48,22 @@ def test_edit(i18n_app, users):
 
 # def get_default_search_setting():
 def test_get_default_search_setting(i18n_app, users):
+    data = {'data': {
+        'dlt_dis_num_selected': '20',
+        'dlt_index_sort_selected': 'controlnumber_asc',
+        'dlt_keyword_sort_selected': 'createdate_desc',
+        'init_disp_setting': {
+            'init_disp_index': '',
+            'init_disp_index_disp_method': '0',
+            'init_disp_screen_setting': '0'}
+        },
+        'enable_fetch_select': True,
+        'status': 1
+    }
     with i18n_app.test_client() as client:
         WekoTheme(i18n_app)
         res = client.get(url_for("weko_theme.get_default_search_setting"))
-        assert res.status_code == 200
+        assert get_json(res) == data
 
 # .tox/c1/bin/pytest --cov=weko_theme tests/test_views.py::test_get_site_info -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-theme/.tox/c1/tmp
 #def get_site_info(site_info)
