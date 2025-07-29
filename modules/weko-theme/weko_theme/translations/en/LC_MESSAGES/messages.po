@@ -293,318 +293,13 @@ msgstr ""
 msgid "Ranking"
 msgstr ""
 
-#~ msgid ""
-#~ "<p>Powered by <a href=\"%(link)s\" "
-#~ "style=\"color: #ffffff;\">CERN Data Centre &"
-#~ " Invenio</a><p>"
-#~ msgstr ""
-
-#~ msgid "Detail Search"
-#~ msgstr ""
-
-#~ msgid "Title"
-#~ msgstr ""
-
-#~ msgid "Author Name"
-#~ msgstr ""
-
-#~ msgid "Subject"
-#~ msgstr ""
-
-#~ msgid "Region"
-#~ msgstr ""
-
-#~ msgid "Subject Scheme"
-#~ msgstr ""
-
-#~ msgid "BSH"
-#~ msgstr ""
-
-#~ msgid "DDC"
-#~ msgstr ""
-
-#~ msgid "LCC"
-#~ msgstr ""
-
-#~ msgid "LCSH"
-#~ msgstr ""
-
-#~ msgid "MeSH"
-#~ msgstr ""
-
-#~ msgid "NDC"
-#~ msgstr ""
-
-#~ msgid "NDLC"
-#~ msgstr ""
-
-#~ msgid "NDLSH"
-#~ msgstr ""
-
-#~ msgid "UDC"
-#~ msgstr ""
-
-#~ msgid "Scival"
-#~ msgstr ""
-
-msgid "Other"
-msgstr ""
-
-#~ msgid "Description"
-#~ msgstr ""
-
-#~ msgid "Publisher"
-#~ msgstr ""
-
-#~ msgid "Contributors"
-#~ msgstr ""
-
-#~ msgid "Contents created date"
-#~ msgstr ""
-
-#~ msgid "Contents property"
-#~ msgstr ""
-
-#~ msgid "Accepted"
-#~ msgstr ""
-
-#~ msgid "Available"
-#~ msgstr ""
-
-#~ msgid "Collected"
-#~ msgstr ""
-
-#~ msgid "Copyrighted"
-#~ msgstr ""
-
-#~ msgid "Created"
-#~ msgstr ""
-
-#~ msgid "Issued"
-#~ msgstr ""
-
-#~ msgid "Submitted"
-#~ msgstr ""
-
-#~ msgid "Updated"
-#~ msgstr ""
-
-#~ msgid "Valid"
-#~ msgstr ""
-
-#~ msgid "Format"
-#~ msgstr ""
-
-#~ msgid "Journal Title"
-#~ msgstr ""
-
-#~ msgid "ＩＤ"
-#~ msgstr ""
-
-#~ msgid "identifier"
-#~ msgstr ""
-
-#~ msgid "URI"
-#~ msgstr ""
-
-#~ msgid "fullTextURL"
-#~ msgstr ""
-
-#~ msgid "selfDOI"
-#~ msgstr ""
-
-#~ msgid "ISBN"
-#~ msgstr ""
-
-#~ msgid "ISSN"
-#~ msgstr ""
-
-#~ msgid "NCID"
-#~ msgstr ""
-
-#~ msgid "pmid"
-#~ msgstr ""
-
-#~ msgid "doi"
-#~ msgstr ""
-
-#~ msgid "NAID"
-#~ msgstr ""
-
-#~ msgid "ichushi"
-#~ msgstr ""
-
-#~ msgid "Resource Type"
-#~ msgstr ""
-
-#~ msgid "Conference Paper"
-#~ msgstr ""
-
-#~ msgid "Departmental Bulletin Paper"
-#~ msgstr ""
-
-#~ msgid "Journal Article"
-#~ msgstr ""
-
-#~ msgid "Article"
-#~ msgstr ""
-
-#~ msgid "Book"
-#~ msgstr ""
-
-#~ msgid "Presentation"
-#~ msgstr ""
-
-#~ msgid "Data or Dataset"
-#~ msgstr ""
-
-#~ msgid "Research Paper"
-#~ msgstr ""
-
-#~ msgid "Technical Report"
-#~ msgstr ""
-
-#~ msgid "Thesis or Dissertation"
-#~ msgstr ""
-
-#~ msgid "Learning Material"
-#~ msgstr ""
-
-#~ msgid "Software"
-#~ msgstr ""
-
-#~ msgid "Item Type"
-#~ msgstr ""
-
-#~ msgid "Language"
-#~ msgstr ""
-
-#~ msgid "Japanese"
-#~ msgstr ""
-
-#~ msgid "English"
-#~ msgstr ""
-
-#~ msgid "French"
-#~ msgstr ""
-
-#~ msgid "Italian"
-#~ msgstr ""
-
-#~ msgid "German"
-#~ msgstr ""
-
-#~ msgid "Spanish"
-#~ msgstr ""
-
-#~ msgid "Chinese"
-#~ msgstr ""
-
-#~ msgid "Russian"
-#~ msgstr ""
-
-#~ msgid "Latin"
-#~ msgstr ""
-
-#~ msgid "Malay"
-#~ msgstr ""
-
-#~ msgid "Esperanto"
-#~ msgstr ""
-
-#~ msgid "Arabic"
-#~ msgstr ""
-
-#~ msgid "Greek"
-#~ msgstr ""
-
-#~ msgid "Korean"
-#~ msgstr ""
-
-#~ msgid "Period"
-#~ msgstr ""
-
-#~ msgid "Academic degree date"
-#~ msgstr ""
-
-#~ msgid "Author version flag"
-#~ msgstr ""
-
-#~ msgid "accepted"
-#~ msgstr ""
-
-#~ msgid "published"
-#~ msgstr ""
-
-#~ msgid "draft"
-#~ msgstr ""
-
-#~ msgid "submitted"
-#~ msgstr ""
-
-#~ msgid "updated"
-#~ msgstr ""
-
-#~ msgid "Academic degree number"
-#~ msgstr ""
-
-#~ msgid "Degree name"
-#~ msgstr ""
-
-#~ msgid "Institution for academic degree"
-#~ msgstr ""
-
-#~ msgid "Author ID"
-#~ msgstr ""
-
-#~ msgid "Index"
-#~ msgstr ""
-
-#~ msgid "Rights"
-#~ msgstr ""
-
-#~ msgid "CC BY"
-#~ msgstr ""
-
-#~ msgid "CC BY-SA"
-#~ msgstr ""
-
-#~ msgid "CC BY-ND"
-#~ msgstr ""
-
-#~ msgid "CC BY-NC"
-#~ msgstr ""
-
-#~ msgid "CC BY-NC-SA"
-#~ msgstr ""
-
-#~ msgid "ANY"
-#~ msgstr ""
-
-#~ msgid "Menu"
-#~ msgstr ""
-
-#~ msgid "Schema Management"
-#~ msgstr ""
-
-#~ msgid "Item Management"
-#~ msgstr ""
-
-#~ msgid "Search Management"
-#~ msgstr ""
-
-#~ msgid "Edit Tree"
-#~ msgstr ""
-
-#~ msgid "Management"
-#~ msgstr ""
-
-#~ msgid "Author Management"
-#~ msgstr ""
-
 #: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_Home"
 msgstr "Home"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_ホーム"
+msgstr ""
 
 #: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_Item Types"
@@ -679,6 +374,10 @@ msgid "Admin menu_Item Types_Properties"
 msgstr "Properties"
 
 #: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_Item Types_RO-Crate Mapping"
+msgstr "RO-Crate Mapping"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_Items_Bulk Update"
 msgstr "Bulk Update"
 
@@ -693,6 +392,10 @@ msgstr "Bulk Export"
 #: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_Items_Import"
 msgstr "Import"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_Items_RO-Crate Import"
+msgstr "RO-Crate Import"
 
 #: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_Index Tree_Edit Tree"
@@ -745,6 +448,10 @@ msgstr "Flow List"
 #: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_WorkFlow_WorkFlow List"
 msgstr "WorkFlow List"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_WorkFlow_WorkSpaceWorkFlow Setting"
+msgstr "WorkSpace WorkFlow Setting"
 
 #: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_Communities_Community"
@@ -863,6 +570,10 @@ msgid "Admin menu_Setting_Items"
 msgstr "Items"
 
 #: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_Setting_Activity List"
+msgstr "Activity List"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_Setting_Index Link"
 msgstr "Index Link"
 
@@ -939,6 +650,22 @@ msgid "Admin menu_Setting_Shibboleth"
 msgstr "Shibboleth"
 
 #: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_SWORD API"
+msgstr "SWORD API"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_SWORD API_TSV/XML"
+msgstr "TSV/XML"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_SWORD API_JSON-LD"
+msgstr "JSON-LD"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_Item Types_JSON-LD Mapping"
+msgstr "JSON-LD Mapping"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_Setting_Others"
 msgstr "Others"
 
@@ -949,6 +676,14 @@ msgstr "Restricted Access"
 #: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_Setting_Faceted Search"
 msgstr "Faceted Search"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_Logs"
+msgstr "Logs"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_Logs_Export"
+msgstr "Export"
 
 #: weko_admin/
 #: msgid "Maintenance"
@@ -970,3 +705,8 @@ msgstr "Please include at least one uppercase letter, lowercase letter, number, 
 
 msgid "available characters"
 msgstr "available characters"
+
+#: weko_admin/
+#: msgid "CRIS Linkage"
+msgid "Admin menu_Setting_CRIS Linkage"
+msgstr "CRIS Linkage"

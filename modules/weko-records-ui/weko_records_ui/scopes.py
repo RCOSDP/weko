@@ -22,12 +22,20 @@
 # waive the privileges and immunities granted to it by virtue of its status
 # as an Intergovernmental Organization or submit itself to any jurisdiction.
 
-"""WEKO3 module docstring."""
+"""OAuth2 scopes."""
 
 from __future__ import absolute_import, print_function
 
 from flask_babelex import lazy_gettext as _
 from invenio_oauth2server.models import Scope
+
+
+file_read_scope = Scope(
+    id_='file:read',
+    group='file',
+    help_text=_('Allow read file.'),
+)
+"""Scope to protect file."""
 
 item_read_scope = Scope(
     id_='item:read',

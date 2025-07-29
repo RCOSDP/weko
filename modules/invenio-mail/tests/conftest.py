@@ -57,10 +57,10 @@ def base_app(instance_path):
         SECRET_KEY='SECRET_KEY',
         TESTING=True,
         SERVER_NAME='app',
-        SQLALCHEMY_DATABASE_URI=os.environ.get(
-             'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'),
-        #SQLALCHEMY_DATABASE_URI=os.getenv('SQLALCHEMY_DATABASE_URI',
-        #                                  'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest'),
+        # SQLALCHEMY_DATABASE_URI=os.environ.get(
+        #      'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'),
+        SQLALCHEMY_DATABASE_URI=os.getenv('SQLALCHEMY_DATABASE_URI',
+                                         'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest'),
         WEKO_RECORDS_UI_MAIL_TEMPLATE_SECRET_GENRE_ID=1,
         WEKO_ADMIN_RESTRICTED_ACCESS_SETTINGS = {
             "secret_URL_file_download": {

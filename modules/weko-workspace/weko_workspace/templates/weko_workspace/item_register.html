@@ -1,0 +1,454 @@
+{#
+  # This file is part of WEKO3.
+  # Copyright (C) 2017 National Institute of Informatics.
+  #
+  # WEKO3 is free software; you can redistribute it
+  # and/or modify it under the terms of the GNU General Public License as
+  # published by the Free Software Foundation; either version 2 of the
+  # License, or (at your option) any later version.
+  #
+  # WEKO3 is distributed in the hope that it will be
+  # useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+  # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+  # General Public License for more details.
+  #
+  # You should have received a copy of the GNU General Public License
+  # along with WEKO3; if not, write to the
+  # Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+  # MA 02111-1307, USA.
+  #}
+
+  {%- extends config.WEKO_WORKFLOW_BASE_TEMPLATE %}
+
+
+  {%- block css %}
+    {% assets "invenio_deposit_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+    {% assets "weko_items_authors_search_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+    {% assets "weko_items_ui_indextree_css" %}
+    <link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+    {{ super() }}
+    <link href="/static/css/weko_workspace/style.css" rel="stylesheet">
+    <link href="/static/css/weko_admin/styles.css" rel="stylesheet">
+    {% assets "weko_records_ui_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+  {%- endblock css %}
+
+  {%- block javascript %}
+  <script src="{{ url_for('static', filename='js/react/react.production.min.js') }}" crossorigin></script>
+  <script src="{{ url_for('static', filename='js/react/react-dom.production.min.js') }}" crossorigin></script>
+  <script src="{{ url_for('static', filename='js/babel-cores/browser.min.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/axios/axios.min.js') }}"></script>
+
+    {% assets "weko_theme_js_widget" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+    {% assets "invenio_deposit_dependencies_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+    {% assets "weko_admin_react_bootstrap_js" %}<script type="text/javascript" src="{{ ASSET_URL }}"></script>{% endassets %}
+    {{ super() }}
+    {% assets "invenio_deposit_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+
+    <script src="{{ url_for('static', filename='js/weko_workspace/workspace_register.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/weko_items_ui/oapolicy.js') }}"></script>
+    <!-- {% assets "weko_items_authors_search_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %} -->
+    {% assets "weko_items_ui_js_dependencies" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+  {%- endblock javascript %}
+ 
+  {%- block page_header %}
+    {%-if not community %}
+    {{ super() }}
+    {%- endif%}
+  {%- endblock page_header %}
+
+  {%- block page_footer %}
+    {%-if not community%}
+    {{ super() }}
+    {%- endif%}
+  {%- endblock page_footer %}
+
+  {%- block page_body_main %}
+  {% from "weko_theme/macros/modal_page.html" import all_modal %}
+  {{ all_modal() }}
+  <div id="alerts"></div>
+  <div class="container-fluid container-fluid2">
+    <div class="row row-4">
+      <div class="col-md-12">
+        {% if endpoints %}
+        <div class="hide" id="hide_endpoints">{{ endpoints|tojson }}</div>
+        {% else %}
+        <div class="hide" id="hide_endpoints"></div>
+        {% endif %}
+
+        <div id="weko-records">
+          <div id="loader_spinner" class="loader" ng-show="recordsVM.invenioRecordsLoading">
+            <div class="spinner-wheel"></div>
+          </div>
+          {%- if need_file or need_billing_file %}
+            <invenio-files-uploader
+              method="PUT"
+              endpoint="{{ config.DEPOSIT_FILES_API }}"
+              {% if pid %}
+                initialization="{{ config.DEPOSIT_RECORDS_EDIT_API.format(pid_value=pid.pid_value) }}"
+              {% else %}
+                initialization="{{ config.DEPOSIT_SEARCH_API }}"
+              {% endif %}
+              files='{{files|tojson}}'
+              extra-params='{"headers":{"Content-Type": "application/json"}}'
+            >
+          {%- endif %}
+            <invenio-records
+              {%- if pid %}
+                initialization="{{ config.DEPOSIT_RECORDS_EDIT_API.format(pid_value=pid.pid_value) }}"
+                files='{{files|tojson}}'
+              {% else %}
+                initialization="{{ config.DEPOSIT_SEARCH_API }}"
+                files='{{files|tojson}}'
+              {% endif %}
+              extra-params='{"headers":{"Content-Type": "application/json"}}'
+              form="{{ schemaform }}"
+              record='{{ records | tojson }}'
+              schema="{{ jsonschema }}">
+              <invenio-records-alert
+                template="{{ url_for('static', filename='node_modules/invenio-records-js/dist/templates/alert.html') }}">
+              </invenio-records-alert>
+              <div class="row row-4" ng-cloak="" ng-hide="recordsVM.invenioRecordsLoading">
+                <div class="col-sm-12">
+                  <ul class="list-inline text-right">
+                      <input type="hidden" id="next-frame" value="iframe_tree">
+                      <input type="hidden" id="next-frame-upgrade" value="iframe_tree_upgrade">
+                  </ul>
+                </div>
+              </div>
+
+              <div ng-controller="WekoRecordsCtrl" ng-cloak="" ng-hide="recordsVM.invenioRecordsLoading">
+                {%- if is_show_autofill_metadata %}
+                <div class="row row-14">
+                  <div class="col-sm-12">
+                    <div class="panel panel-default" class="col-sm-12">
+                      <div class="panel-heading" style="background-color: #dff0d8;">
+                        <h3 class="panel-title" style="color: #000000; font-weight: bold;" class="col-sm-12">{{_('DOI Input')}}</h3>
+                      </div>
+                      <div class="row col-sm-12">
+                        <div class="col-sm-12">
+                          <div class="col-sm-11">
+                            <input type="text" id="doiInput" name="doiInput" placeholder="{{ _('Please enter the DOI.') }}" 
+                                   style="border: 2px solid #ccc; padding: 5px; width: 100%;" ng-model="doiInput">
+                          </div>
+                          <div class="col-sm-1">
+                            <button type="button" class="btn btn-primary" id="autofill_item_get_button" 
+                                    ng-click="setItemMetadataAPI()" ng-disabled="isButtonDisabled">
+                                {{_('Get')}}
+                            </button>
+                          </div>
+                        
+                        </div>
+                      </div>
+
+                      <div class="row row-12" id="radio_form_share">
+                        <div class="text-center">&nbsp;
+                          <div class="radio">&nbsp;
+                            <div id="crossref_box" class="select_site_box select_site_disabled">
+                              <label style="text-align: center;">
+                                <input type="radio" 
+                                        ng-model="selectedMetaData" 
+                                        ng-change="metaDataSelectAPI(selectedMetaData)" 
+                                        name="metaDataSelect" 
+                                        id="metaDataSelectCrossRef" 
+                                        value="CrossRefMetaData">
+                                <br>CrossRef MetaData
+                              </label>
+                            </div>
+                            <div id="jalc_box" class="select_site_box select_site_disabled">
+                                <label style="text-align: center;">
+                                  <input type="radio" 
+                                          ng-model="selectedMetaData" 
+                                          ng-change="metaDataSelectAPI(selectedMetaData)" 
+                                          name="metaDataSelect" 
+                                          id="metaDataSelectJalc" 
+                                          value="JaLCMetaData">
+                                  <br>JaLC MetaData
+                                </label>
+                            </div>
+                            <div id="cinii_box" class="select_site_box select_site_disabled">
+                              <label style="text-align: center;">
+                                <input type="radio" 
+                                        ng-model="selectedMetaData" 
+                                        ng-change="metaDataSelectAPI(selectedMetaData)" 
+                                        name="metaDataSelect" 
+                                        id="metaDataSelectCinii" 
+                                        value="CiNiiMetaData">
+                                <br>CiNii MetaData
+                              </label>
+                            </div>
+                            <div id="datacite_box" class="select_site_box select_site_disabled">
+                              <label style="text-align: center;">
+                                <input type="radio" 
+                                ng-model="selectedMetaData" 
+                                ng-change="metaDataSelectAPI(selectedMetaData)"
+                                name="metaDataSelect" 
+                                id="metaDataSelectDataCite" 
+                                value="DataCiteMetaData">
+                                <br>DataCite MetaData
+                              </label>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                {%- endif %}
+                <div ng-show="false" type="text" id="btn_id" ></div>
+                <div ng-show="false" type="text" id="author_info" ></div>
+                <div ng-show="false" type="text" id="array_flg" ></div>
+                <div ng-show="false" type="text" id="array_index" ></div>
+                <div ng-show="false" type="text" id="weko_id" ></div>
+                <button ng-show="false" id="btn_setAuthorInfo" class="btn btn-default" type="button" ng-click="setAuthorInfo()"></button>
+                <button ng-show="false" id="btn_setItemMetadata" class="btn btn-default" type="button" ng-click="setItemMetadata()"></button>
+                {%- if need_file %}
+                <div class="panel panel-default" class="col-sm-12">
+                  <div class="panel-heading" style="background-color: #dff0d8;">
+                    <h3 class="panel-title" style="color: #000000; font-weight: bold;">{{_('File')}}</h3>
+                  </div>&nbsp;
+                  <div id="file_upload" class="row row-4" ng-cloak="" ng-hide="recordsVM.invenioRecordsLoading">
+                    <div class="col-sm-12">
+                      <invenio-files-error
+                        template="{{ url_for('static', filename='node_modules/invenio-files-js/dist/templates/error.html') }}">
+                      </invenio-files-error>
+                      <invenio-files-upload-zone
+                        template="{{ url_for('static', filename='templates/weko_items_ui/upload.html') }}">
+                      </invenio-files-upload-zone>
+                      <invenio-files-list
+                        template="{{ url_for('static', filename='templates/weko_items_ui/upload_file_list.html') }}"
+                      ></invenio-files-list>
+                    </div>
+                  </div>
+                </div>
+                {%- endif %}
+                {%- if need_billing_file %}
+                <div class="panel panel-default" class="col-sm-12">
+                  <div class="panel-heading" style="background-color: #dff0d8;">
+                    <h3 class="panel-title" style="color: #3c763d;">{{_('File')}}</h3>
+                  </div>
+                  <div id="billing_file_upload" class="row row-4" ng-cloak="" ng-hide="recordsVM.invenioRecordsLoading">
+                    <div class="col-sm-12">
+                      <invenio-files-error
+                        template="{{ url_for('static', filename='node_modules/invenio-files-js/dist/templates/error.html') }}">
+                      </invenio-files-error>
+                      <invenio-files-upload-zone
+                        template="{{ url_for('static', filename='templates/weko_items_ui/upload.html') }}">
+                      </invenio-files-upload-zone>
+                      <invenio-files-list
+                        template="{{ url_for('static', filename='templates/weko_items_ui/upload_file_list.html') }}"
+                      ></invenio-files-list>
+                    </div>
+                  </div>
+                </div>
+                {%- endif %}
+                <div ng-cloak="" ng-hide="recordsVM.invenioRecordsLoading">
+
+                  <div class="panel panel-default" class="col-sm-12">
+                    <div class="panel-heading" style="background-color: #dff0d8;">
+                      <h3 class="panel-title" style="color: #000000; font-weight: bold;">{{_('Metadata')}}</h3>
+                    </div>&nbsp;
+
+                    <invenio-records-form
+                      form-templates='{{ config.DEPOSIT_FORM_TEMPLATES | tojson }}'
+                      form-templates-base="{{ url_for('static', filename=config.DEPOSIT_FORM_TEMPLATES_BASE) }}"
+                      template="{{ url_for('static', filename=config.DEPOSIT_UI_JSTEMPLATE_FORM) }}">
+                    </invenio-records-form>
+                    
+                  </div>
+
+                  <div class="panel panel-default" class="col-sm-12">
+                    <div class="panel-heading" style="background-color: #dff0d8;">
+                      <h3 class="panel-title" style="color: #000000; font-weight: bold;">{{ _('oa_policy_label') }}</h3>
+                    </div>
+                    <div class="panel-body">
+                      <div class="col-sm-12 col-md-12">
+                        <div class="row content-font">
+                            <div class="panel panel-default" style="margin-right: 10px;">
+                              <div class="panel-body panel-body">
+                                  <button type="button" class="btn btn-primary" id="oapolicyurl">
+                                    {{ _('oa_policy_export') }}
+                                  </button>
+                                  <a id="oaPolicyUrl" href="#" target="_blank" class="ml-2 d-none">
+                                    <span id="oaPolicyText"></span>
+                                  </a>
+                                  <span id="oaPolicyError" class="text-danger ml-2" aria-live="polite"></span>
+                                  <input type="hidden" id="error_missing_input" value="{{ _('Please enter ISSN, eISSN, or journal title') }}">
+                                  <input type="hidden" id="error_no_policy_found" value="{{ _('No Policy Information found') }}">
+                                  <input type="hidden" id="error_api_generic" value="{{ _('An unknown error occurred') }}">
+                              </div>
+                            </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {%- if workflow_selected %}
+                  {% else %}
+                    <div class="panel panel-default" class="col-sm-12">
+                      <div class="panel-heading" style="background-color: #dff0d8;">
+                        <h3 class="panel-title" style="color: #000000; font-weight: bold;">{{_('Index Tree')}}</h3>
+                      </div>
+                      <div class="panel-body">
+                        <div class="col-sm-12 col-md-12">
+                          <div class="row content-font">
+                              <div class="panel panel-default" style="margin-right: 10px;">
+                                <div class="panel-body panel-body">
+                                    <app-root-tree></app-root-tree>
+                                </div>
+                              </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  {% endif %}
+
+                <div class="row row-4">
+                  <div class="col-sm-12">
+                    <div class="col-sm-offset-3 col-sm-6">
+                      <div class="list-inline text-center" ng-cloak="" ng-hide="recordsVM.invenioRecordsLoading">
+                        <button ng-disabled="recordsVM.invenioRecordsLoading"
+                                class="btn btn-info next-button"
+                                ng-click="saveWorkspaceDataJson()"> {{_('Regist')}}&nbsp;
+                        <span class="glyphicon glyphicon-chevron-right"></span>
+                        </button>
+                      </div>
+                    </div>
+                    <div class="col-sm-3" style="padding-right: 10px;">
+                    </div>
+                  </div>
+                </div>
+
+
+                <div role="dialog" tabindex="-1" class="fade in modal" id='index_select_confirm_modal' aria-labelledby="updateHeader" aria-hidden="true">
+                  <div class="modal-dialog row popup_notice">
+                    <div class="modal-content" role="document">
+                      <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                          <span aria-hidden="true">&times;</span>
+                        </button>
+                        <h4 class="modal-title">{{_('WEKO')}}</h4>
+                      </div>
+                      <div class="modal-body">
+                        <div class="container-modal">
+                          <div class="row">
+                            <input id="regist_success" name="regist_success"
+                                  value="{{_('At least one index should be selected.')}}"
+                                  style="display: block; margin: 0 auto; border: none; text-align: center; width: 80%; padding: 10px;">
+                          </div>
+                        </div>
+                      </div>
+                      <div class="modal-footer">
+                        <button type="button" class="btn btn-info cancel-button" data-dismiss="modal" onclick="window.location.href=window.location.href;">
+                          <span class="glyphicon glyphicon-remove"></span>
+                              {{_('Cancel')}}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Modal -->
+                <div role="dialog" tabindex="-1" class="fade in modal" id='metadata_input_check_modal' aria-labelledby="updateHeader" aria-hidden="true">
+                  <div class="modal-dialog row popup_notice">
+                    <div class="modal-content" role="document">
+                      <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                          <span aria-hidden="true">&times;</span>
+                        </button>
+                        <h4 class="modal-title">{{_('WEKO')}}</h4>
+                      </div>
+                      <div class="modal-body">
+                        <div class="container-modal">
+                          <div class="row">
+                            <input id="regist_success" name="regist_success"
+                                  value="{{_('The Required items is required. Please recheck and input.')}}"
+                                  style="display: block; margin: 0 auto; border: none; text-align: center; width: 80%; padding: 10px;">
+                          </div>
+                        </div>
+                      </div>
+                      <div class="modal-footer">
+                        <button type="button" class="btn btn-info cancel-button" data-dismiss="modal" onclick="$('#metadata_input_check_modal').css('display', ''); return false;">
+                          <span class="glyphicon glyphicon-remove"></span>
+                              {{_('Cancel')}}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>&nbsp;
+              </invenio-records>
+            {%- if need_file %}
+            </invenio-files-uploader>
+            {%- endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+  <input type="hidden" id="validate_error" name="validate_error"
+      value="{{_('The Required items is required. Please recheck and input.')}}">
+  <input type="hidden" id="duplicate_files_error" name="duplicate_files_error"
+      value="{{_('The same file name cannot be registered.')}}">
+  <input type="hidden" id="autofill_item_type_id" name="autofill_item_type_id" value="{{id}}">
+  
+  <div role="dialog" tabindex="-1" class="fade in modal" id='regist_confirm_modal'>
+    <div class="modal-dialog row popup_notice">
+      <div class="modal-content" role="document">
+        <div class="modal-header">
+          <h4 class="modal-title">{{_('WEKO')}}</h4>
+        </div>
+        <div class="modal-body">
+          <div class="container-modal">
+            <div class="row">
+              <input id="regist_success" name="regist_success"
+              value="{{_('The item is successfully registered.')}}"
+              style="display: block; margin: 0 auto; border: none; text-align: center; width: 80%; padding: 10px;">
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <div class="col text-center">
+            <button type="button" class="btn btn-danger" id="confirm_regist">
+              OK
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+    
+  <div role="dialog" tabindex="-1" class="fade in modal" id='index_select_confirm_modal'>
+    <div class="modal-dialog row popup_notice">
+      <div class="modal-content" role="document">
+        <div class="modal-header">
+          <h4 class="modal-title">{{_('WEKO')}}</h4>
+        </div>
+        <div class="modal-body">
+          <div class="container-modal">
+            <div class="row">
+              <input id="regist_success" name="regist_success"
+              value="{{_('At least one index should be selected.')}}"
+              style="display: block; margin: 0 auto; border: none; text-align: center; width: 80%; padding: 10px;">
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <div class="col text-center">
+            <button type="button" class="btn btn-danger" id="confirm_index" ng-click="itemCancel()">
+              OK
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+    
+  <script>
+    window.onload = function() {
+        var element = document.querySelector('.panel-footer');
+        if (element) {
+            element.remove();
+        }
+    };
+  </script>
+  {%- endblock page_body_main %}
+

@@ -187,11 +187,7 @@
                   {%- endif %}
                   <div class="form-group">
                     <label for="size">{{_('Display Number')}}</label>
-                    <select class="form-control" id="pagesize" onchange="changesize();">
-                      <option value="20" {% if request.args.get('size')=='20' %} selected {% endif %} >20</option>
-                      <option value="50" {% if request.args.get('size')=='50' %} selected {% endif %}>50</option>
-                      <option value="75"  {% if request.args.get('size')=='75' %} selected {% endif %} >75</option>
-                      <option value="100"  {% if request.args.get('size')=='100' %} selected {% endif %} >100</option>
+                    <select class="form-control" ng-model="vm.invenioPageSize" ng-options="size for size in pageSizes" ng-change="handlePageSizeChange()">
                     </select>
                   </div>
                 {%- endblock search_sort %}
@@ -252,25 +248,5 @@
     </div>
     </div>
     </invenio-search>
-    <script language="javascript" type="text/javascript">
-      function changesize() {
-        var pagesize = document.getElementById('pagesize');
-        var url = new URL(location.href);
-        var params = new URLSearchParams(url.search.slice(1));
-        params.set('size', pagesize.value);
-        if(params.get('search_type') == null){
-          params.set('search_type', 2);
-        }
-        if(params.get('q') == null){
-          var index_id_q= document.getElementById('index_id_q').value;
-          params.set('q', index_id_q);
-        }
-        newpath = location.pathname
-        if(location.pathname=="/"){
-          newpath="/search"
-        }
-        location.href=newpath+"?"+params;
-      };
-    </script>
   </div>
   

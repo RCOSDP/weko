@@ -21,18 +21,38 @@
 # as an Intergovernmental Organization or submit itself to any jurisdiction.
 #}
 {% macro community_header(community, link=True, subtitle=None) %}
+<style>
+  .navbar-right{
+    margin-right: 0px;
+  }
+</style>
 <div id="community_header" class="container-fluid community-default" hidden="true">
   <div class="{{ community.id }}-header">
     <div class="row">
       {%- if community.community_header %}
         <div id="wysiwyg_header" class="col-md-12">{{ community.community_header|safe }}</div>
+        {%- if community.login_menu_enabled %}
+          {% if config.DISPLAY_LOGIN %}
+            {%- include config.THEME_HEADER_LOGIN_TEMPLATE %}
+          {%- endif %}
+        {%- endif %}
       {% else %}
         <div class="col-md-12">
           <h1>
             {%- if link %}
-            <a href="{{ url_for('invenio_communities.view', community_id=community.id,view='weko') }}" style="color: #ffffff;">{{community.title}}</a>
+              <a href="{{ url_for('invenio_communities.view', community_id=community.id,view='weko') }}" style="color: #ffffff;">{{community.title}}</a>
+              {%- if community.login_menu_enabled %}
+                {% if config.DISPLAY_LOGIN %}
+                  {%- include config.THEME_HEADER_LOGIN_TEMPLATE %}
+                {%- endif %}
+              {%- endif %}
             {% else %}
-            {{community.title}}
+              {{community.title}}
+              {%- if community.login_menu_enabled %}
+                {% if config.DISPLAY_LOGIN %}
+                  {%- include config.THEME_HEADER_LOGIN_TEMPLATE %}
+                {%- endif %}
+              {%- endif %}
             {%- endif %}
             {%- if subtitle %}
             <small>{{subtitle}}</small>

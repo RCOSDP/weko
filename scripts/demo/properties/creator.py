@@ -458,7 +458,7 @@ def form(
                                 "en": "Creator Name Identifier Scheme",
                                 "ja": "作成者識別子Scheme",
                             },
-                            "titleMap": make_title_map(config.CREATOR_IDENTIFIER_SCHEMA_LBL, config.CREATOR_IDENTIFIER_SCHEMA_VAL),
+                            "titleMap": [], # make_title_map(config.CREATOR_IDENTIFIER_SCHEMA_LBL, config.CREATOR_IDENTIFIER_SCHEMA_VAL),
                             "type": "select",
                         },
                         {

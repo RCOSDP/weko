@@ -249,6 +249,7 @@ def app(request):
         WEKO_PERMISSION_ROLE_COMMUNITY=WEKO_PERMISSION_ROLE_COMMUNITY,
         EMAIL_DISPLAY_FLG = True,
         WEKO_RECORDS_UI_LICENSE_DICT=WEKO_RECORDS_UI_LICENSE_DICT,
+        WEKO_RECORDS_UI_EMAIL_ITEM_KEYS = ['creatorMails', 'contributorMails', 'mails']
     )
 
     #app.config['RECORDS_REST_ENDPOINTS']['recid']['search_class'] = \
@@ -546,6 +547,8 @@ def default_permissions(app):
     yield app
 
     app.extensions['invenio-records-rest'].reset_permission_factories()
+    # Conducted twice to increase coverage of patterns that cannot be reset.
+    app.extensions['invenio-records-rest'].reset_permission_factories()
 
 @pytest.fixture()
 def search_user(app, db):
@@ -639,7 +642,8 @@ def facet_search(db):
         active=True,
         ui_type="SelectBox",
         display_number=1,
-        is_open=True
+        is_open=True,
+        search_condition="AND"
     )
     db.session.add(control_number)
     db.session.commit()

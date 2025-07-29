@@ -1,6 +1,9 @@
 
 import pytest
 import responses
+import json
+import pytz
+from datetime import datetime
 from lxml import etree
 from mock import patch
 import copy
@@ -72,7 +75,10 @@ from invenio_oaiharvester.harvester import (
     BaseMapper,
     DCMapper,
     JPCOARMapper,
-    DDIMapper
+    DDIMapper,
+    JsonMapper,
+    BIOSAMPLEMapper,
+    BIOPROJECTMapper
 )
 # .tox/c1/bin/pytest --cov=invenio_oaiharvester tests/test_harvester.py -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-oaiharvester/.tox/c1/tmp
 
@@ -2347,6 +2353,135 @@ class TestDDIMapper:
         mapper = DDIMapper(xml)
         test = {'$schema': 11, 'pubdate': '2023-03-02', 'item_1551264308487': [{'subitem_1551255647225': 'test ddi full item', 'subitem_1551255648112': 'ja'}], 'item_1551264326373': [{'subitem_1551255720400': 'other ddi title', 'subitem_1551255721061': 'ja'}], 'item_1586157591881': [{'subitem_1586156939407': 'test_study_id', 'subitem_1591256665864': 'test_id_agency', 'subitem_1586311767281': 'ja'}], 'item_1593074267803': [{'creatorNames': [{'creatorName': 'テスト, 太郎', 'creatorNameLang': 'ja'}], 'nameIdentifiers': [{'nameIdentifier': '4'}], 'creatorAffiliations': [{'affiliationNames': [{'affiliationName': 'author.affiliation'}]}]}], 'item_1551264917614': [{'subitem_1551255702686': 'test_publisher', 'subitem_1551255710277': 'ja'}], 'item_1551264629907': [{'subitem_1602213569986': {'subitem_1602213569987': 'test_rights'}, 'subitem_1602213570623': 'ja'}], 'item_1602145817646': [{'subitem_1602142814330': 'test_founder_name', 'subitem_1602142815328': 'ja'}], 'item_1602145850035': [{'subitem_1602142123771': 'test_grant_no'}], 'item_1592405734122': [{'subitem_1592369405220': 'Test Distributor Name', 'subitem_1591320914113': 'https://test.distributor.affiliation', 'subitem_1591320889728': 'TDN', 'subitem_1592369407829': 'ja', 'subitem_1591320890384': 'Test Distributor Affiliation'}], 'item_1588254290498': [{'subitem_1587462181884': 'test_series', 'subitem_1587462183075': 'ja'}], 'item_1551265075370': [{'subitem_1591254914934': '1.2', 'subitem_1591254915862': '2023-03-07', 'subitem_1591254915406': 'ja'}], 'item_1592880868902': [{'subitem_1586228465211': 'test.input.content', 'subitem_1586228490356': 'ja'}], 'item_1551264822581': [{'subitem_1592472785169': 'Test Topic', 'subitem_1592472786088': 'test_topic_vocab', 'subitem_1592472786560': 'http://test.topic.vocab', 'subitem_1592472785698': 'ja'}, {'subitem_1592472785169': '人口', 'subitem_1592472786088': 'CESSDA Topic Classification', 'subitem_1592472786560': 'https://vocabularies.cessda.eu/urn/urn:ddi:int.cessda.cv:TopicClassification', 'subitem_1592472785698': 'ja'}, {'subitem_1592472785169': 'Demography', 'subitem_1592472786088': 'CESSDA Topic Classification', 'subitem_1592472786560': 'https://vocabularies.cessda.eu/urn/urn:ddi:int.cessda.cv:TopicClassification', 'subitem_1592472785698': 'en'}], 'item_1602145192334': [{'subitem_1602144573160': '2023-03-01', 'subitem_1602144587621': 'start'}, {'subitem_1602144573160': '2023-03-03', 'subitem_1602144587621': 'end'}], 'item_1586253152753': [{'subitem_1602144573160': '2023-03-01', 'subitem_1602144587621': 'start'}, {'subitem_1602144573160': '2023-03-06', 'subitem_1602144587621': 'end'}], 'item_1570068313185': [{'subitem_1586419454219': 'test_geographic_coverage', 'subitem_1586419462229': 'ja'}], 'item_1586253224033': [{'subitem_1596608607860': '個人', 'subitem_1596608609366': 'ja'}, {'subitem_1596608607860': 'test_unit_of_analysis', 'subitem_1596608609366': 'en'}, {'subitem_1596608607860': 'Individual', 'subitem_1596608609366': 'en'}], 'item_1586253249552': [{'subitem_1596608974429': 'test parent set', 'subitem_1596608975087': 'ja'}], 'item_1588260046718': [{'subitem_1591178807921': '量的調査', 'subitem_1591178808409': 'ja'}, {'subitem_1591178807921': 'quantatitive research', 'subitem_1591178808409': 'en'}], 'item_1551264846237': [{'subitem_1551255577890': 'this is description for ddi item. this is description for ddi item.', 'subitem_1551255592625': 'en'}], 'item_1586253334588': [{'subitem_1596609826487': 'test sampling procedure', 'subitem_1596609827068': 'ja'}, {'subitem_1596609826487': '母集団/ 全数調査', 'subitem_1596609827068': 'ja'}, {'subitem_1596609826487': 'Total universe/Complete enumeration', 'subitem_1596609827068': 'en'}], 'item_1586253349308': [{'subitem_1596610500817': 'test collection method', 'subitem_1596610501381': 'ja'}, {'subitem_1596610500817': 'インタビュー', 'subitem_1596610501381': 'ja'}, {'subitem_1596610500817': 'Interview', 'subitem_1596610501381': 'en'}], 'item_1586253589529': [{'subitem_1596609826487': 'test sampling procedure_sampling_rate', 'subitem_1596609827068': 'ja'}], 'item_1588260178185': [{'subitem_1522650727486': 'オープンアクセス', 'subitem_1522650717957': 'jp'}, {'subitem_1522650727486': 'open access', 'subitem_1522650717957': 'en'}], 'item_1551265002099': [{'subitem_1551255818386': 'jpn'}], 'item_1592405736602': [{'subitem_1602215239359': 'test_related_study_title', 'subitem_1602215240520': 'test_related_study_identifier', 'subitem_1602215239925': 'ja'}], 'item_1592405735401': [{'subitem_1602214558730': 'test_related_publication_title', 'subitem_1602214560358': 'test_related_publication_identifier', 'subitem_1602214559588': 'ja'}], 'title': 'test ddi full item', 'type': [{'resourcetype': 'dataset', 'resourceuri': 'http://purl.org/coar/resource_type/c_ddb1'}]}
         result = mapper.map()
-        
+
         assert result == test
+
+
+def test_biosample01(db_itemtype):
+
+    record = {'record': {'header': {}}}
+    with open("tests/data/test_jsonld/biosample_data01.jsonld", "r") as f:
+        json_data = json.load(f)
+        record['record']['metadata'] = json_data
+    record['record']['header']['identifier'] = json_data['identifier']
+    record['record']['header']['datestamp'] = (datetime.fromtimestamp(
+            1674085174, tz=pytz.utc)).strftime("%Y/%m/%dT%H:%M:%SZ")
+
+    mapper = BIOSAMPLEMapper(record)
+
+    result = mapper.map()
+    with open("tests/data/test_jsonld/biosample_record01.json", "r") as f:
+        test = json.load(f)
+        assert result == test
+
+
+def test_biosample02(db_itemtype):
+
+    record = {'record': {'header': {}}}
+    with open("tests/data/test_jsonld/biosample_data02.jsonld", "r") as f:
+        json_data = json.load(f)
+        record['record']['metadata'] = json_data
+    record['record']['header']['identifier'] = json_data['identifier']
+    record['record']['header']['datestamp'] = (datetime.fromtimestamp(
+            1674085174, tz=pytz.utc)).strftime("%Y/%m/%dT%H:%M:%SZ")
+
+    mapper = BIOSAMPLEMapper(record)
+    mapper.map_itemtype("")
+    result = mapper.map()
+    with open("tests/data/test_jsonld/biosample_record02.json", "r") as f:
+        test = json.load(f)
+        assert result == test
+
+
+def test_biosample_empty_data(db_itemtype):
+
+    record = {'record': {'header': {}}}
+    record['record']['header']['identifier'] = 'TEST_ID_BIOSAMPLE'
+    record['record']['header']['datestamp'] = (datetime.fromtimestamp(
+            1674085174, tz=pytz.utc)).strftime("%Y/%m/%dT%H:%M:%SZ")
+    record['record']['metadata'] = {}
+    mapper = BIOSAMPLEMapper(record)
+
+    result = mapper.map()
+    assert result == {
+        "$schema": 32102,
+        "pubdate": "2023-01-18",
+        "item_1723721669989": {
+            "resourcetype": "dataset"
+        }
+    }
+
+
+def test_biosample_deleted(db_itemtype):
+
+    record = {'record': {'header': {}}}
+    with open("tests/data/test_jsonld/biosample_data01.jsonld", "r") as f:
+        json_data = json.load(f)
+        record['record']['metadata'] = json_data
+    record['record']['header']['identifier'] = json_data['identifier']
+    record['record']['header']['datestamp'] = (datetime.fromtimestamp(
+            1674085174, tz=pytz.utc)).strftime("%Y/%m/%dT%H:%M:%SZ")
+    record['record']['header']['@status'] = 'deleted'
+
+    BaseMapper.update_itemtype_map()
+    mapper = BIOSAMPLEMapper(record)
+
+    result = mapper.map()
+    assert result == {}
+
+
+def test_bioproject(db_itemtype):
+
+    record = {'record': {'header': {}}}
+    with open("tests/data/test_jsonld/bioproject_data01.jsonld", "r") as f:
+        json_data = json.load(f)
+        record['record']['metadata'] = json_data
+    record['record']['header']['identifier'] = json_data['identifier']
+    record['record']['header']['datestamp'] = (datetime.fromtimestamp(
+            1674085174, tz=pytz.utc)).strftime("%Y/%m/%dT%H:%M:%SZ")
+
+    mapper = BIOPROJECTMapper(record)
+
+    result = mapper.map()
+    with open("tests/data/test_jsonld/bioproject_record01.json", "r") as f:
+        test = json.load(f)
+        assert result == test
+
+
+def test_bioproject_empty_data(db_itemtype):
+
+    record = {'record': {'header': {}}}
+    record['record']['header']['identifier'] = 'TEST_ID_BIOSAMPLE'
+    record['record']['header']['datestamp'] = (datetime.fromtimestamp(
+            1674085174, tz=pytz.utc)).strftime("%Y/%m/%dT%H:%M:%SZ")
+    record['record']['metadata'] = {}
+
+    mapper = BIOPROJECTMapper(record)
+
+    result = mapper.map()
+    assert result == {
+        "$schema": 32103,
+        "pubdate": "2023-01-18",
+        "item_1723373560614": {
+            "resourcetype": "dataset"
+        }
+    }
+
+
+def test_bioproject_deleted(db_itemtype):
+
+    record = {'record': {'header': {}}}
+    with open("tests/data/test_jsonld/bioproject_data01.jsonld", "r") as f:
+        json_data = json.load(f)
+        record['record']['metadata'] = json_data
+    record['record']['header']['identifier'] = json_data['identifier']
+    record['record']['header']['datestamp'] = (datetime.fromtimestamp(
+            1674085174, tz=pytz.utc)).strftime("%Y/%m/%dT%H:%M:%SZ")
+    record['record']['header']['@status'] = 'deleted'
+
+    mapper = BIOPROJECTMapper(record)
+
+    result = mapper.map()
+    assert result == {}
+
 

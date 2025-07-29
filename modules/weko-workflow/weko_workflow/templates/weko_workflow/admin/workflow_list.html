@@ -27,7 +27,7 @@
 
 {%- block body %}
 <div class="row">
-  <div class="col-sm-offset-1 col-sm-11">
+  <div class="col-sm-12">
     <a class="btn btn-success pull-right" id="btn_submit" href="{{url_for('workflowsetting.workflow_detail', workflow_id=0)}}">
       <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>&nbsp
             {{_('Create WorkFlow')}}
@@ -40,6 +40,7 @@
             <th>{{_('WorkFlow')}}</th>
             <th>{{_('Item Type')}}</th>
             <th>{{_('Flow')}}</th>
+            <th>{{_('Deletion Flow')}}</th>
             <th>{{_('Restricted Access Flag')}}</th>
             <th>{{_('GakuNinRDM Flag')}}</th>
             <th>{{_('Registration Destination Index')}}</th>
@@ -58,7 +59,20 @@
               <th scope="row">{{loop.index}}</th>
               <td><a href="{{url_for('workflowsetting.workflow_detail', workflow_id=workflow.flows_id)}}">{{workflow.flows_name}}</a></td>
               <td>{{_(workflow.itemtype.item_type_name.name)}}</td>
-              <td>{{_(workflow.flow_define.flow_name)}}</td>
+              <td>
+                <a href="{{ url_for('flowsetting.flow_detail', flow_id=workflow.flow_define.flow_id) }}">
+                  {{_(workflow.flow_define.flow_name)}}
+                </a>
+              </td>
+              <td>
+                {% if workflow.delete_flow_define %}
+                <a href="{{ url_for('flowsetting.flow_detail', flow_id=workflow.delete_flow_define.flow_id) }}">
+                    {{ workflow.delete_flow_define.flow_name }}
+                  </a>
+                {% else %}
+                  None
+                {% endif %}
+              </td>
               <td>
                 {%- if workflow.open_restricted %}
                   {{_('Enable') }}

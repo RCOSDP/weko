@@ -27,6 +27,7 @@ from unittest import TestCase
 import json
 from elasticsearch import helpers
 from elasticsearch.exceptions import RequestError
+from flask_login.utils import login_user
 from invenio_records.api import Record
 from invenio_records.errors import MissingModelError
 from invenio_pidstore.models import PersistentIdentifier
@@ -34,16 +35,19 @@ from weko_deposit.api import WekoDeposit
 from weko_index_tree.models import Index
 from mock import patch,MagicMock
 import uuid
-from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.exc import IntegrityError,SQLAlchemyError
 from sqlalchemy.orm.exc import NoResultFound
 
 from weko_records.api import FeedbackMailList, RequestMailList, ItemApplication, FilesMetadata, ItemLink, \
     ItemsMetadata, ItemTypeEditHistory, ItemTypeNames, ItemTypeProps, \
-    ItemTypes, Mapping, SiteLicense, RecordBase, WekoRecord
-from weko_records.models import ItemType, ItemTypeName, \
+    ItemTypes, Mapping, JsonldMapping, SiteLicense, RecordBase, WekoRecord
+from weko_records.models import ItemType, ItemTypeJsonldMapping, ItemTypeName, \
     SiteLicenseInfo, SiteLicenseIpAddress
 from jsonschema.validators import Draft4Validator
 from datetime import datetime, timedelta
+from weko_records.models import ItemReference
+import pytest
+from unittest.mock import patch, MagicMock
 
 # class RecordBase(dict):
 # .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::test_recordbase -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
@@ -79,14 +83,14 @@ def test_recordbase(app, db):
     assert result["created"] == "yesterday"
     assert result["updated"] == "now"
     assert record.validate(validator=Draft4Validator)==None
-    
+
     schema = {
     'type': 'object',
     'properties': {
     'id': { 'type': 'integer' },
     'version_id': { 'type': 'integer' },
     'created': {'type': 'string' },
-    'updated': { 'type': 'string' },    
+    'updated': { 'type': 'string' },
     },
     'required': ['id']
     }
@@ -101,7 +105,7 @@ def test_recordbase(app, db):
     test_model.__getitem__.side_effect = data.__getitem__
     record = RecordBase(data)
     record.model = test_model
-    assert record.validate(validator=Draft4Validator) == None    
+    assert record.validate(validator=Draft4Validator) == None
     assert record.replace_refs()=={'id': 1, 'version_id': 10, 'created': 'yesterday', 'updated': 'now', '$schema': {'type': 'object', 'properties': {'id': {'type': 'integer'}, 'version_id': {'type': 'integer'}, 'created': {'type': 'string'}, 'updated': {'type': 'string'}}, 'required': ['id']}}
 
 # class ItemTypeNames(RecordBase):
@@ -149,6 +153,10 @@ def test_itemtypenames(app, db, item_type, item_type2):
     assert len(lst)==2
     lst = ItemTypeNames.get_all_by_id(ids=[1,2,3], with_deleted=True)
     assert len(lst)==3
+
+    # def get_name_and_id_all(cls):
+    lst = ItemTypeNames.get_name_and_id_all()
+    assert len(lst)>0
 
     # def delete(self, force=True):
     item_type_name = ItemTypeNames.get_record(3)
@@ -365,7 +373,7 @@ def test_itemtypes_update_item_type(app, db, location):
         filter_magicmock.all = all
 
         return filter_magicmock
-    
+
     def myfilter_2(item):
         def all_2():
             all2_magicmock = MagicMock()
@@ -404,7 +412,7 @@ def test_itemtypes_update_item_type(app, db, location):
                         result=item_type,
                         schema=_schema
                     ) != None
-                
+
             with patch("weko_records.api.db.session.query", return_value=data1):
                 assert test.update_item_type(
                     form=_form,
@@ -888,7 +896,7 @@ def test_itemtypes_restore(app, db):
 #     def revisions(self):
 def test_revision_ItemTypes(app):
     test = ItemTypes(data={})
-    
+
     # Exception coverage
     try:
         test.revisions()
@@ -896,13 +904,13 @@ def test_revision_ItemTypes(app):
         pass
 
     test.model = True
-    
+
     with patch('weko_records.api.RevisionsIterator', return_value=MagicMock()):
         assert test.revisions() != None
 
 # .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::TestItemTypes::test_update_attribute_options -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records/.tox/c1/tmp
 class TestItemTypes:
-    
+
     # def (cls, itemtype_id, specified_list=[], renew_value='None'):
     # .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::TestItemTypes::test_reload -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records/.tox/c1/tmp
     def test_reload(self, app, db, user, item_type_with_form, item_type_mapping_with_form):
@@ -934,18 +942,19 @@ class TestItemTypes:
         TestCase().assertDictEqual(new_value, expected_dict)
     # .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::TestItemTypes::test_update_attribute_options -vv -s -v  --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-records/.tox/c1/tmp
     def test_update_attribute_options(self, app):
+
         a = {"key": "key", "type": "fieldset", "items": [{"key": "key.subkey", "type": "text", "title": "バージョン情報","isHide":True, "required": True, "isShowList": True, "title_i18n": {"en": "Version", "ja": "バージョン情報"}, "isNonDisplay": True, "title_i18n_temp": {"en": "Version", "ja": "バージョン情報"}, "isSpecifyNewline": True}], "title": "Version", "title_i18n": {"en": "Version", "ja": "バージョン情報"}}
         b = {"key": "key", "type": "fieldset", "items": [{"key": "key.subkey", "type": "text", "title": "バージョン情報", "isHide":True, "required": True, "isShowList": True, "title_i18n": {"en": "Version", "ja": "バージョン情報"}, "isNonDisplay": True, "title_i18n_temp": {"en": "Version", "ja": "バージョン情報"}, "isSpecifyNewline": True}], "title": "Version", "title_i18n": {"en": "Version", "ja": "バージョン情報"}}
         expected_dict = {"key": "key", "type": "fieldset", "items": [{"key": "key.subkey", "type": "text", "title": "バージョン情報", "isHide":True, "required": True, "isShowList": True, "title_i18n": {"en": "Version", "ja": "バージョン情報"}, "isNonDisplay": True, "title_i18n_temp": {"en": "Version", "ja": "バージョン情報"}, "isSpecifyNewline": True}], "title": "Version", "isHide": False, "isShowList": False, "isNonDisplay": False, "isSpecifyNewline": False, "required": False, "title_i18n": {"en": "Version", "ja": "バージョン情報"},"title_i18n_temp": {"en": "Version", "ja": "バージョン情報"}}
         ItemTypes.update_attribute_options(a,b,"None")
         TestCase().assertDictEqual(b, expected_dict)
-        
+
         a = {"key": "key", "type": "fieldset", "items": [{"key": "key.subkey", "type": "text", "title": "バージョン情報","isHide":False, "required": False, "isShowList": False, "title_i18n": {"en": "Version", "ja": "バージョン情報"}, "isNonDisplay": False, "title_i18n_temp": {"en": "Version", "ja": "バージョン情報"}, "isSpecifyNewline": False}], "title": "Version", "title_i18n": {"en": "Version", "ja": "バージョン情報"}}
         b = {"key": "key", "type": "fieldset", "items": [{"key": "key.subkey", "type": "text", "title": "バージョン情報", "isHide":False, "required": False, "isShowList": False, "title_i18n": {"en": "Version", "ja": "バージョン情報"}, "isNonDisplay": False, "title_i18n_temp": {"en": "Version", "ja": "バージョン情報"}, "isSpecifyNewline": False}], "title": "Version", "title_i18n": {"en": "Version", "ja": "バージョン情報"}}
         expected_dict = {"isHide": False, "isShowList": False, "isNonDisplay": False, "isSpecifyNewline": False, "required": False, "key": "key", "type": "fieldset", "items": [{"key": "key.subkey", "type": "text", "title": "バージョン情報", "isHide":False, "required": False, "isShowList": False, "title_i18n": {"en": "Version", "ja": "バージョン情報"}, "isNonDisplay": False, "title_i18n_temp": {"en": "Version", "ja": "バージョン情報"}, "isSpecifyNewline": False}], "title": "Version", "title_i18n": {"en": "Version", "ja": "バージョン情報"},"title_i18n_temp": {"en": "Version", "ja": "バージョン情報"}}
         ItemTypes.update_attribute_options(a,b,"None")
         TestCase().assertDictEqual(b, expected_dict)
-        
+
         a = {"key": "key", "type": "fieldset", "items": [{"key": "key.subkey", "type": "text", "title": "バージョン情報","title_i18n": {"en": "Version", "ja": "バージョン情報"},"title_i18n_temp": {"en": "Version", "ja": "バージョン情報"}}], "title": "Version", "title_i18n": {"en": "Version", "ja": "バージョン情報"}}
         b = {"key": "key", "type": "fieldset", "items": [{"key": "key.subkey", "type": "text", "title": "バージョン情報","title_i18n": {"en": "Version", "ja": "バージョン情報"},"title_i18n_temp": {"en": "Version", "ja": "バージョン情報"}}], "title": "Version", "title_i18n": {"en": "Version", "ja": "バージョン情報"}}
         expected_dict = {"isHide": False, "isShowList": False, "isNonDisplay": False, "isSpecifyNewline": False, "required": False, "key": "key", "type": "fieldset", "items": [{"isHide": False,"isNonDisplay": False,"isShowList": False,"isSpecifyNewline": False,"required":False,"key": "key.subkey", "type": "text", "title": "バージョン情報", "title_i18n": {"en": "Version", "ja": "バージョン情報"}, "title_i18n_temp": {"en": "Version", "ja": "バージョン情報"}}], "title": "Version", "title_i18n": {"en": "Version", "ja": "バージョン情報"}, "title_i18n_temp": {"en": "Version", "ja": "バージョン情報"}}
@@ -963,7 +972,7 @@ class TestItemTypes:
         expected_dict = {"isHide": False, "isShowList": False, "isNonDisplay": False, "isSpecifyNewline": False, "required": False, "key": "key", "type": "fieldset", "items": [{"key": "key.subkey", "type": "text", "title": "subkey","isHide":False, "required": False, "isShowList": False, "title_i18n": {"en": "subkey", "ja": "subkey"}, "isNonDisplay": True, "title_i18n_temp": {"en": "subkey", "ja": "subkey"}, "isSpecifyNewline": False,"items": [{"key": "key.subkey.subkey", "type": "text", "title": "subkey.subkey","isHide":False, "required": False, "isShowList": False, "title_i18n": {"en": "subkey.subkey", "ja": "subkey.subkey"}, "isNonDisplay": True, "title_i18n_temp": {"en": "subkey.subkey", "ja": "subkey.subkey"}, "isSpecifyNewline": False}]}], "title": "Version", "title_i18n": {"en": "key", "ja": "key"},"title_i18n_temp": {"en": "key", "ja": "key"}}
         ItemTypes.update_attribute_options(a,b, "None")
         TestCase().assertDictEqual(b, expected_dict)
-        
+
         old_value = {"key": "key", "type": "fieldset", "items": [{"key": "key.subitem_select_language", "type": "select", "title": "言語", "titleMap": [{"name": "ja", "value": "ja"}, {"name": "en", "value": "en"}], "title_i18n": {"en": "Language", "ja": "言語"}, "title_i18n_temp": {"en": "Language", "ja": "言語"}}, {"key": "key.subitem_select_item", "type": "select", "title": "値", "titleMap": [{"name": "a", "value": "a"}, {"name": "b", "value": "b"}, {"name": "c", "value": "c"}, {"name": "d", "value": "d"}, {"name": "e", "value": "e"}, {"name": "f", "value": "f"}], "title_i18n": {"en": "Value", "ja": "値"}, "title_i18n_temp": {"en": "Value", "ja": "値"}}], "title": "abcdef", "title_i18n": {"en": "", "ja": ""}}
         new_value = {"key": "key", "type": "fieldset", "items": [{"key": "key.subitem_select_language", "type": "select", "title": "言語", "titleMap": '', "title_i18n": {"en": "Language", "ja": "言語"}, "title_i18n_temp": {"en": "Language", "ja": "言語"}}, {"key": "key.subitem_select_item", "type": "select", "title": "値", "titleMap": [], "title_i18n": {"en": "Value", "ja": "値"}, "title_i18n_temp": {"en": "Value", "ja": "値"}}], "title": "abcdef", "title_i18n": {"en": "", "ja": ""}}
         expected_dict = {"isHide": False, "isShowList": False, "isNonDisplay": False, "isSpecifyNewline": False, "required": False,"key": "key", "type": "fieldset", "items": [{"key": "key.subitem_select_language", "type": "select", "title": "言語", "titleMap": [{"name": "ja", "value": "ja"}, {"name": "en", "value": "en"}], "title_i18n": {"en": "Language", "ja": "言語"}, "title_i18n_temp": {"en": "Language", "ja": "言語"},'isHide': False,'isNonDisplay': False,'isShowList': False, 'isSpecifyNewline': False,'required': False}, {"key": "key.subitem_select_item", "type": "select", "title": "値", "titleMap": [{"name": "a", "value": "a"}, {"name": "b", "value": "b"}, {"name": "c", "value": "c"}, {"name": "d", "value": "d"}, {"name": "e", "value": "e"}, {"name": "f", "value": "f"}], "title_i18n": {"en": "Value", "ja": "値"}, "title_i18n_temp": {"en": "Value", "ja": "値"},'isHide': False,'isNonDisplay': False,'isShowList': False, 'isSpecifyNewline': False,'required': False}], "title": "abcdef", "title_i18n": {"en": "", "ja": ""},"title_i18n_temp": {"en": "", "ja": ""}}
@@ -994,7 +1003,7 @@ class TestItemTypes:
         ItemTypes.update_attribute_options(old_value,new_value,"ALL")
         TestCase().assertDictEqual(new_value, expected_dict)
 
- 
+
 # class ItemTypeEditHistory(RecordBase):
 # .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::test_item_type_edit_history -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
 def test_item_type_edit_history(app, db, user):
@@ -1407,7 +1416,7 @@ def test_get_registered_item_metadata_ItemsMetadata(app):
         all_magicmock = MagicMock()
         all_magicmock.id = 1
         return [all_magicmock]
-    
+
     data1.query = MagicMock()
     data1.query.filter_by = MagicMock()
     data1.query.filter_by.all = all_func
@@ -1523,7 +1532,7 @@ def test_item_metadata_revert(app, db):
 #     def revisions(self):
 def test_revision_ItemsMetadata(app):
     test = ItemsMetadata(data={})
-    
+
     # Exception coverage
     try:
         test.revisions()
@@ -1559,7 +1568,7 @@ def test_files_metadata_create(app, db):
 def test_files_metadata_get_record(app, db):
     FilesMetadata.create(data={'data': 'test'}, pid=1, con=bytes('test content', 'utf-8'))
     FilesMetadata.create(data={})
-    
+
     record = FilesMetadata.get_record(1)
     assert record.id==1
     assert record.model.pid==1
@@ -1601,7 +1610,7 @@ def test_files_metadata_get_records(app, db):
 #     def patch(self, patch):
 def test_patch_FilesMetadata(app):
     test = FilesMetadata(data={})
-    
+
     with patch("weko_records.api.apply_patch", return_value=""):
         test.patch(patch="test")
 
@@ -1687,7 +1696,7 @@ def test_files_metadata_revert(app, db):
 #     def revisions(self):
 def test_revision_FilesMetadata(app):
     test = FilesMetadata(data={})
-    
+
     # Exception coverage
     try:
         test.revisions()
@@ -1695,7 +1704,7 @@ def test_revision_FilesMetadata(app):
         pass
 
     test.model = True
-    
+
     with patch('weko_records.api.RevisionsIterator', return_value=MagicMock()):
         assert test.revisions() != None
 
@@ -1705,8 +1714,24 @@ def test_revision_FilesMetadata(app):
 # class SiteLicense(RecordBase):
 #     def get_records(cls):
 # .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::test_site_license_get_records -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
-def test_site_license_get_records(app, db, site_license_info):
+def test_site_license_get_records(app, db, site_license_info, users):
     records = SiteLicense.get_records()
+    assert len(records)==1
+    assert records[0]['organization_name']=='test'
+    assert records[0]['domain_name']=='domain'
+    assert records[0]['mail_address']=='nii@nii.co.jp'
+    assert records[0]['addresses']==[]
+
+    records = SiteLicense.get_records(users[0]['obj'])
+    assert len(records)==1
+    assert records[0]['organization_name']=='test'
+    assert records[0]['domain_name']=='domain'
+    assert records[0]['mail_address']=='nii@nii.co.jp'
+    assert records[0]['addresses']==[]
+
+    site_license_info.repository_id = "comm01"
+    db.session.commit()
+    records = SiteLicense.get_records(users[2]['obj'])
     assert len(records)==1
     assert records[0]['organization_name']=='test'
     assert records[0]['domain_name']=='domain'
@@ -1716,7 +1741,7 @@ def test_site_license_get_records(app, db, site_license_info):
 # class SiteLicense(RecordBase):
 #     def update(cls, obj):
 # .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::test_site_license_update -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
-def test_site_license_update(app, db, site_license_info):
+def test_site_license_update(app, db, site_license_info, users):
     _none_obj = {}
     _no_data_obj = {
         'item_type': {},
@@ -1739,7 +1764,8 @@ def test_site_license_update(app, db, site_license_info):
             }
         ]
     }
-
+    user = users[0]["obj"]
+    login_user(user)
     SiteLicense.update(_none_obj)
     db.session.commit()
     records = SiteLicense.get_records()
@@ -1753,6 +1779,17 @@ def test_site_license_update(app, db, site_license_info):
     SiteLicense.update(_test_obj)
     db.session.commit()
     records = SiteLicense.get_records()
+    assert len(records)==1
+    assert records[0]['organization_name']=='test1'
+    assert records[0]['domain_name']=='domain1'
+    assert records[0]['mail_address']=='nii@nii.co.jp'
+    assert records[0]['addresses']==[{'finish_ip_address': '255.255.255.255', 'start_ip_address': '0.0.0.0'}]
+
+    user = users[2]["obj"]
+    login_user(user)
+    SiteLicense.update(_test_obj)
+    db.session.commit()
+    records = SiteLicense.get_records(user)
     assert len(records)==1
     assert records[0]['organization_name']=='test1'
     assert records[0]['domain_name']=='domain1'
@@ -1805,7 +1842,7 @@ def test_pid_WekoRecord(app):
 #     def depid(self):
 def test_depid_WekoRecord(app):
     test = WekoRecord(data={})
-    
+
     with patch('weko_records.api.PersistentIdentifier', return_value=True):
         assert test.depid() != None
 
@@ -1814,6 +1851,7 @@ def test_depid_WekoRecord(app):
 #     def update_by_list_item_id(cls, item_ids, feedback_maillist):
 #     def get_mail_list_by_item_id(cls, item_id):
 # .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::test_feedback_mail_list_create_and_update -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
+@patch('invenio_communities.utils.get_repository_id_by_item_id', return_value='Root Index')
 def test_feedback_mail_list_create_and_update(app, db):
     _item_id0 = uuid.uuid4()
     _item_id1 = uuid.uuid4()
@@ -1847,6 +1885,7 @@ def test_feedback_mail_list_create_and_update(app, db):
 # class FeedbackMailList(object):
 #     def get_feedback_mail_list(cls):
 # .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::test_get_feedback_mail_list -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
+@patch('invenio_communities.utils.get_repository_id_by_item_id', return_value='Root Index')
 def test_get_feedback_mail_list(app, db):
     def _create_pid(id, uuid):
         pid = PersistentIdentifier()
@@ -1879,6 +1918,9 @@ def test_get_feedback_mail_list(app, db):
         data = FeedbackMailList.get_feedback_mail_list()
         assert data=={'nii0@nii.co.jp': {'items': [str(_item_id0), str(_item_id2)], 'author_id': ''},
                       'nii1@nii.co.jp': {'items': [str(_item_id1), str(_item_id2)], 'author_id': '1'}}
+        data = FeedbackMailList.get_feedback_mail_list(repo_id='Root Index')
+        assert data=={'nii0@nii.co.jp': {'items': [str(_item_id0), str(_item_id2)], 'author_id': ''},
+                      'nii1@nii.co.jp': {'items': [str(_item_id1), str(_item_id2)], 'author_id': '1'}}
 
 
 # class FeedbackMailList(object):
@@ -1886,12 +1928,13 @@ def test_get_feedback_mail_list(app, db):
 #     def delete_without_commit(cls, item_id):
 #     def delete_by_list_item_id(cls, item_ids):
 # .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::test_feedback_mail_list_delete -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
+@patch('invenio_communities.utils.get_repository_id_by_item_id', return_value='Root Index')
 def test_feedback_mail_list_delete(app, db):
     _item_id1 = uuid.uuid4()
     _item_id2 = uuid.uuid4()
     _item_id3 = uuid.uuid4()
     _item_id4 = uuid.uuid4()
-    _feedback_maillist = ['nii@nii.co.jp']
+    _feedback_maillist = [{'email': 'nii0@nii.co.jp'}]
     FeedbackMailList.update_by_list_item_id([_item_id1, _item_id2, _item_id3, _item_id4], _feedback_maillist)
 
     flag = FeedbackMailList.delete(1)
@@ -2063,45 +2106,336 @@ def test_item_application_list_delete(app, db):
 #     def update(self, items):
 # .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::test_item_link_update -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
 def test_item_link_update(app, db, records):
-    _uuid = str(records[0][0].object_uuid)
-    _items1 = [
-        {
-            'item_id': '1',
-            'sele_id': 'URI'
-        },
-        {
-            'item_id': '2',
-            'sele_id': 'URI'
-        }
-    ]
-    _items2 = [
-        {
-            'item_id': '2',
-            'sele_id': 'DOI'
-        },
-        {
-            'item_id': '3',
-            'sele_id': 'HDL'
-        }
-    ]
-    ItemLink.update(ItemLink(_uuid), _items1)
-    r = ItemLink.get_item_link_info(_uuid)
-    assert len(r)==2
-    assert r[0]['item_links']=='1'
-    assert r[0]['item_title']==records[0][1]['item_title']
-    assert r[0]['value']=='URI'
-    assert r[1]['item_links']=='2'
-    assert r[1]['item_title']==records[1][1]['item_title']
-    assert r[1]['value']=='URI'
-    ItemLink.update(ItemLink(_uuid), _items2)
-    r = ItemLink.get_item_link_info(_uuid)
-    assert len(r)==2
-    assert r[0]['item_links']=='2'
-    assert r[0]['item_title']==records[1][1]['item_title']
-    assert r[0]['value']=='DOI'
-    assert r[1]['item_links']=='3'
-    assert r[1]['item_title']==records[2][1]['item_title']
-    assert r[1]['value']=='HDL'
+    """
+    test cases for ItemLink.update()
+    """
+    with app.test_request_context():
+        with app.test_client() as client:
+            # test case with integer id
+            # src item pid
+            org_item_id = "999"
+            # dst item pid
+            dst_item_id_1 = "1"
+            dst_item_id_1_1 = "1.1"
+            dst_item_id_2 = "2"
+            dst_item_id_2_1 = "2.1"
+            dst_item_id_3 = "3"
+            dst_item_id_3_1 = "3.1"
+
+            # create test instance
+            instance = ItemLink(recid=org_item_id)
+
+            # test case 1: create new relation
+            items = [
+                {'item_id': dst_item_id_1, 'sele_id': 'normal'},
+                {'item_id': dst_item_id_2, 'sele_id': 'isSupplementTo'}
+            ]
+            result = instance.update(items)
+            assert result is None
+
+            expected_relations = [
+                {'src_item_pid': org_item_id,
+                 'dst_item_pid': dst_item_id_1,
+                 'reference_type': 'normal'},
+                {'src_item_pid': org_item_id,
+                 'dst_item_pid': dst_item_id_2,
+                 'reference_type': 'isSupplementTo'},
+                {'src_item_pid': dst_item_id_2,
+                 'dst_item_pid': org_item_id,
+                 'reference_type': 'isSupplementedBy'}, # inverse relation
+                {'src_item_pid': dst_item_id_2_1,
+                 'dst_item_pid': org_item_id,
+                 'reference_type': 'isSupplementedBy'} # inverse relation
+            ]
+            actual_relations = ItemReference.query.all()
+            assert len(actual_relations) == len(expected_relations)
+            for rel in actual_relations:
+                assert {'src_item_pid': rel.src_item_pid,
+                        'dst_item_pid': rel.dst_item_pid,
+                        'reference_type': rel.reference_type
+                        } in expected_relations
+
+            # test case 2: update exist relations
+            items = []
+            result = instance.update(items)
+            assert result is None
+            items = [
+                {'src_item_pid': org_item_id,
+                 'dst_item_pid': dst_item_id_1,
+                 'sele_id': 'isSupplementTo'},
+                {'src_item_pid': org_item_id,
+                 'dst_item_pid': dst_item_id_2,
+                 'sele_id': 'isSupplementedBy'},
+                {'src_item_pid': dst_item_id_2,
+                 'dst_item_pid': org_item_id,
+                 'sele_id': 'normal'} # overwritten after update
+            ]
+            instance.bulk_create(items)
+            items = [
+                    {'item_id': dst_item_id_2, 'sele_id': 'isSupplementedBy'},
+                    {'item_id': dst_item_id_1, 'sele_id': 'isSupplementedBy'}
+                ]
+            result = instance.update(items)
+            expected_relations = [
+                {'src_item_pid': org_item_id,
+                 'dst_item_pid': dst_item_id_2,
+                 'reference_type': 'isSupplementedBy'},
+                {'src_item_pid': dst_item_id_2,
+                 'dst_item_pid': org_item_id,
+                 'reference_type': 'isSupplementTo'}, # inverse relation
+                {'src_item_pid': dst_item_id_2_1,
+                 'dst_item_pid': org_item_id,
+                 'reference_type': 'isSupplementTo'}, # inverse relation
+                {'src_item_pid': org_item_id,
+                 'dst_item_pid': dst_item_id_1,
+                 'reference_type': 'isSupplementedBy'},
+                {'src_item_pid': dst_item_id_1,
+                 'dst_item_pid': org_item_id,
+                 'reference_type': 'isSupplementTo'}, # inverse relation
+                {'src_item_pid': dst_item_id_1_1,
+                 'dst_item_pid': org_item_id,
+                 'reference_type': 'isSupplementTo'} # inverse relation
+            ]
+
+            actual_relations = ItemReference.query.all()
+            assert len(actual_relations) == len(expected_relations)
+            for rel in actual_relations:
+                assert {'src_item_pid': rel.src_item_pid,
+                        'dst_item_pid': rel.dst_item_pid,
+                        'reference_type': rel.reference_type
+                        } in expected_relations
+
+            # test case 3: delete relations
+            items = []
+            result = instance.update(items)
+            assert result is None
+            assert ItemReference.query.count() == 0
+
+            # test case 4: create and delete supplement relations
+            items = [
+                {'item_id': dst_item_id_1, 'sele_id': 'isSupplementTo'}
+            ]
+            result = instance.update(items)
+            assert result is None
+
+            supplement_relation = ItemReference.query.filter_by(
+                src_item_pid=org_item_id, dst_item_pid=dst_item_id_1).first()
+            assert supplement_relation.reference_type == 'isSupplementTo'
+            inverse_relation = ItemReference.query.filter_by(
+                src_item_pid=dst_item_id_1, dst_item_pid=org_item_id).first()
+            assert inverse_relation.reference_type == 'isSupplementedBy'
+
+            # test case 5: invalid item id
+            items = [
+                {'item_id': 'invalid', 'sele_id': 'normal'}
+            ]
+            result = instance.update(items)
+            assert result is None
+            assert ItemReference.query.filter_by(
+                dst_item_pid='invalid'
+                ).first() is None
+
+            # test case 6: DB error
+            # case IntegrityError
+            with patch.object(
+                    instance,
+                    'bulk_create',
+                    side_effect=IntegrityError(
+                        "duplicate key value", None, None)
+                ):
+                items = [
+                    {'item_id': dst_item_id_1, 'sele_id': 'normal'}
+                ]
+                result = instance.update(items)
+
+                assert result is not None
+                assert "duplicate key value" in result
+
+            # case SQLAlchemyError
+            with patch.object(
+                    instance,
+                    'bulk_create',
+                    side_effect=SQLAlchemyError("transaction error")
+                ):
+                items = [
+                    {'item_id': dst_item_id_1, 'sele_id': 'normal'}
+                ]
+                result = instance.update(items)
+
+                assert result is not None
+                assert "transaction error" in result
+
+            # test case 7: multi relations
+            items = [
+                {'item_id': dst_item_id_1, 'sele_id': 'normal'},
+                {'item_id': dst_item_id_2, 'sele_id': 'isSupplementTo'},
+                {'item_id': dst_item_id_3, 'sele_id': 'isSupplementedBy'}
+            ]
+            result = instance.update(items)
+            assert result is None
+
+            expected_relations = [
+                {'src_item_pid': org_item_id,
+                 'dst_item_pid': dst_item_id_1,
+                 'reference_type': 'normal'},
+                {'src_item_pid': org_item_id,
+                 'dst_item_pid': dst_item_id_2,
+                 'reference_type': 'isSupplementTo'},
+                {'src_item_pid': dst_item_id_2,
+                 'dst_item_pid': org_item_id,
+                 'reference_type': 'isSupplementedBy'}, # inverse relation
+                {'src_item_pid': dst_item_id_2_1,
+                 'dst_item_pid': org_item_id,
+                 'reference_type': 'isSupplementedBy'}, # inverse relation
+                {'src_item_pid': org_item_id,
+                 'dst_item_pid': dst_item_id_3,
+                 'reference_type': 'isSupplementedBy'},
+                {'src_item_pid': dst_item_id_3,
+                 'dst_item_pid': org_item_id,
+                 'reference_type': 'isSupplementTo'}, # inverse relation
+                {'src_item_pid': dst_item_id_3_1,
+                 'dst_item_pid': org_item_id,
+                 'reference_type': 'isSupplementTo'} # inverse relation
+            ]
+            actual_relations = ItemReference.query.all()
+            assert len(actual_relations) == len(expected_relations)
+            for rel in actual_relations:
+                assert {'src_item_pid': rel.src_item_pid,
+                        'dst_item_pid': rel.dst_item_pid,
+                        'reference_type': rel.reference_type
+                        } in expected_relations
+
+            # test case8: create inverse relations of supplement relations
+            items = [
+                {'item_id': dst_item_id_1, 'sele_id': 'isSupplementTo'}
+            ]
+            result = instance.update(items)
+            assert result is None
+
+            inverse_relation = ItemReference.query.filter_by(
+                src_item_pid=dst_item_id_1, dst_item_pid=org_item_id).first()
+            assert inverse_relation.reference_type == 'isSupplementedBy'
+
+            # test case 9: update from `isSupplementedBy` to `isSupplementTo`
+            items = [
+                {'item_id': dst_item_id_1, 'sele_id': 'isSupplementTo'}
+            ]
+            result = instance.update(items)
+            assert result is None
+
+            updated_relation = ItemReference.query.filter_by(
+                src_item_pid=org_item_id, dst_item_pid=dst_item_id_1).first()
+            assert updated_relation.reference_type == 'isSupplementTo'
+
+            # test case 10: update from supplement to non-supplement
+            items = [
+                {'item_id': dst_item_id_1, 'sele_id': 'isSupplementTo'}
+            ]
+            result = instance.update(items)
+            assert result is None
+
+            updated_relation = ItemReference.query.filter_by(
+                src_item_pid=org_item_id, dst_item_pid=dst_item_id_1).first()
+            inverse_relation = ItemReference.query.filter_by(
+                src_item_pid=dst_item_id_1, dst_item_pid=org_item_id).first()
+            inverse_relation_1 = ItemReference.query.filter_by(
+                src_item_pid=dst_item_id_1_1, dst_item_pid=org_item_id).first()
+            assert updated_relation.reference_type == 'isSupplementTo'
+            assert inverse_relation.reference_type == 'isSupplementedBy'
+            assert inverse_relation_1.reference_type == 'isSupplementedBy'
+
+            items = [
+                {'item_id': dst_item_id_1, 'sele_id': 'normal'}
+            ]
+            result = instance.update(items)
+            updated_relation = ItemReference.query.filter_by(
+                src_item_pid=org_item_id, dst_item_pid=dst_item_id_1).first()
+            inverse_relation = ItemReference.query.filter_by(
+                src_item_pid=dst_item_id_1, dst_item_pid=org_item_id).all()
+            inverse_relation_1 = ItemReference.query.filter_by(
+                src_item_pid=dst_item_id_1_1, dst_item_pid=org_item_id).all()
+            assert updated_relation.reference_type == 'normal'
+            assert len (inverse_relation) == 0
+            assert len (inverse_relation_1) == 0
+
+            # test case 11: delete supplement relations
+            items = []
+            result = instance.update(items)
+            assert result is None
+            assert ItemReference.query.count() == 0
+
+            # test case with decimal id
+            # src item pid
+            org_item_id = "999.0"
+            # dst item pid
+            dst_item_id_1 = "1"
+            dst_item_id_2 = "2"
+            dst_item_id_3 = "3"
+
+            # create test instance
+            instance = ItemLink(recid=org_item_id)
+
+            # test case 1.0: create new relation
+            items = [
+                {'item_id': dst_item_id_1, 'sele_id': 'normal'},
+                {'item_id': dst_item_id_2, 'sele_id': 'isSupplementTo'}
+            ]
+            result = instance.update(items)
+            assert result is None
+
+            expected_relations = [
+                {'src_item_pid': org_item_id,
+                 'dst_item_pid': dst_item_id_1,
+                 'reference_type': 'normal'},
+                {'src_item_pid': org_item_id,
+                 'dst_item_pid': dst_item_id_2,
+                 'reference_type': 'isSupplementTo'}
+            ]
+            actual_relations = ItemReference.query.all()
+            assert len(actual_relations) == len(expected_relations)
+            for rel in actual_relations:
+                assert {'src_item_pid': rel.src_item_pid,
+                 'dst_item_pid': rel.dst_item_pid,
+                 'reference_type': rel.reference_type
+                 } in expected_relations
+
+            # test case 2.0: update exist relations
+            # create old relations
+            items = []
+            result = instance.update(items)
+            assert result is None
+            items = [
+                {'src_item_pid': org_item_id,
+                 'dst_item_pid': dst_item_id_1,
+                 'sele_id': 'isSupplementTo'},
+                {'src_item_pid': org_item_id,
+                 'dst_item_pid': dst_item_id_2,
+                 'sele_id': 'isSupplementedBy'}
+            ]
+            instance.bulk_create(items)
+
+            # update relations
+            items = [
+                    {'item_id': dst_item_id_2, 'sele_id': 'isSupplementedBy'},
+                    {'item_id': dst_item_id_1, 'sele_id': 'isSupplementedBy'}
+                ]
+            result = instance.update(items)
+
+            expected_relations = [
+                {'src_item_pid': org_item_id, 'dst_item_pid': dst_item_id_2,
+                 'reference_type': 'isSupplementedBy'},
+                {'src_item_pid': org_item_id, 'dst_item_pid': dst_item_id_1,
+                 'reference_type': 'isSupplementedBy'}
+            ]
+
+            actual_relations = ItemReference.query.all()
+            assert len(actual_relations) == len(expected_relations)
+            for rel in actual_relations:
+                assert {'src_item_pid': rel.src_item_pid,
+                        'dst_item_pid': rel.dst_item_pid,
+                        'reference_type': rel.reference_type
+                        } in expected_relations
+
 
 # class ItemLink(object):
 #     def get_item_link_info(cls, recid):
@@ -2112,7 +2446,8 @@ def test_item_link_bulk_create(app, db, records):
     _uuid = str(records[0][0].object_uuid)
     _items = [
         {
-            'item_id': '1',
+            'src_item_pid': _uuid,
+            'dst_item_pid': '1',
             'sele_id': 'URI'
         }
     ]
@@ -2128,6 +2463,7 @@ def test_item_link_bulk_create(app, db, records):
     #assert len(r)==1
     #assert r[0]['reference_type']=='URI'
 
+
 # class ItemLink(object):
 #     def bulk_update(self, dst_items):
 # .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::test_item_link_bulk_update -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
@@ -2135,17 +2471,20 @@ def test_item_link_bulk_update(app, db, records):
     _uuid = str(records[0][0].object_uuid)
     _items1 = [
         {
-            'item_id': '1',
+            'src_item_pid': _uuid,
+            'dst_item_pid': '1',
             'sele_id': 'URI'
         }
     ]
     _items2 = [
         {
-            'item_id': '1',
+            'src_item_pid': _uuid,
+            'dst_item_pid': '1',
             'sele_id': 'URI'
         },
         {
-            'item_id': '2',
+            'src_item_pid': _uuid,
+            'dst_item_pid': '2',
             'sele_id': 'DOI'
         }
     ]
@@ -2168,21 +2507,24 @@ def test_item_link_bulk_delete(app, db, records):
     _uuid = str(records[0][0].object_uuid)
     _items = [
         {
-            'item_id': '1',
+            'src_item_pid': _uuid,
+            'dst_item_pid': '1',
             'sele_id': 'URI'
         },
         {
-            'item_id': '2',
+            'src_item_pid': _uuid,
+            'dst_item_pid': '2',
             'sele_id': 'DOI'
         },
         {
-            'item_id': '3',
+            'src_item_pid': _uuid,
+            'dst_item_pid': '3',
             'sele_id': 'HDL'
         }
     ]
     ItemLink.bulk_create(ItemLink(_uuid), _items)
 
-    ItemLink.bulk_delete(ItemLink(_uuid), ['1', '2'])
+    ItemLink.bulk_delete(ItemLink(_uuid), _items[0:2])
     r = ItemLink.get_item_link_info(_uuid)
     assert len(r)==1
     assert r[0]['item_links']=='3'
@@ -2190,6 +2532,137 @@ def test_item_link_bulk_delete(app, db, records):
     assert r[0]['value']=='HDL'
 
 
+# class JsonldMapping:
+# .tox/c1/bin/pytest --cov=weko_swordserver tests/test_api.py::TestJsonldMapping -v -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp --full-trace
+class TestJsonldMapping:
+    # def get_mapping_by_id(cls, id, ignore_deleted=True):
+    # .tox/c1/bin/pytest --cov=weko_swordserver tests/test_api.py::TestJsonldMapping::test_get_mapping_by_id -v -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp --full-trace
+    def test_get_mapping_by_id(app, db, item_type):
+        obj = JsonldMapping.create(
+            name="test1",
+            mapping={"test": "test"},
+            item_type_id=item_type.model.id,
+        )
+        assert JsonldMapping.get_mapping_by_id(obj.id) is obj
+        assert JsonldMapping.get_mapping_by_id(obj.id).is_deleted is False
+
+        # not found
+        assert JsonldMapping.get_mapping_by_id(999) is None
+
+        # Retrieval with_deleted=False
+        obj.is_deleted = True
+        db.session.commit()
+        mapping = JsonldMapping.get_mapping_by_id(obj.id, with_deleted=False)
+        assert mapping is None
+
+        # Retrieve with_deleted=True
+        obj.is_deleted = True
+        db.session.commit()
+        mapping = JsonldMapping.get_mapping_by_id(obj.id, with_deleted=True)
+        assert mapping.id == obj.id
+        assert mapping.is_deleted is True
+
+    # def create(cls, name, mapping, item_type_id):
+    # .tox/c1/bin/pytest --cov=weko_swordserver tests/test_api.py::TestJsonldMapping::test_create -v -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp --full-trace
+    def test_create(app, db, item_type):
+        # one
+        obj = JsonldMapping.create(
+            name="test1",
+            mapping={"test": "test"},
+            item_type_id=item_type[0]["item_type"].id,
+        )
+        assert obj.id == 1
+        assert (ItemTypeJsonldMapping.query.filter_by(id=obj.id).first()) == obj
+
+        # one more
+        obj = JsonldMapping.create(
+            name="test2",
+            mapping={"test": "test"},
+            item_type_id=item_type[0]["item_type"].id,
+        )
+        assert obj.id == 2
+        assert (ItemTypeJsonldMapping.query.filter_by(id=obj.id).first()) == obj
+
+        # occurs DB error. invalid item_type_id
+        with pytest.raises(SQLAlchemyError) as e:
+            JsonldMapping.create(
+                name="test2", mapping={"test": "test"}, item_type_id=999
+            )
+        assert isinstance(e.value, SQLAlchemyError)
+        assert ItemTypeJsonldMapping.query.filter_by(id=3).first() == None
+
+    # def update(cls, id, name=None, mapping=None, item_type_id=None):
+    # .tox/c1/bin/pytest --cov=weko_swordserver tests/test_api.py::TestJsonldMapping::test_update -v -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp --full-trace
+    def test_update(app, db, item_type, sword_mapping):
+        obj = JsonldMapping.create(
+            name="test1",
+            mapping={"test": "test"},
+            item_type_id=item_type.model.id,
+        )
+
+        # Update Successful
+        obj = JsonldMapping.update(
+            id=obj.id,
+            name="test2",
+            mapping={"test2": "test2"},
+            item_type_id=item_type.model.id,
+        )
+
+        result = ItemTypeJsonldMapping.query.filter_by(id=obj.id).first()
+        assert result == obj
+        assert result.name == "test2"
+        assert result.mapping == obj.mapping
+        assert result.version_id == 2
 
 
+        obj = JsonldMapping.update(
+            name="test2", id=999, mapping=None, item_type_id=sword_mapping[0]["item_type_id"]
+        )
+        assert obj is None
 
+        # Update with invalid item_type_id
+        with pytest.raises(SQLAlchemyError) as e:
+            JsonldMapping.update(name="test2", id=sword_mapping[0]["id"], mapping=None, item_type_id=999)
+        assert isinstance(e.value, SQLAlchemyError)
+
+    # def versions()
+    # .tox/c1/bin/pytest --cov=weko_swordserver tests/test_api.py::TestJsonldMapping::test_versions -v -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp --full-trace
+    def test_versions(app, db, item_type):
+
+        obj = JsonldMapping.create(
+            name="test1",
+            mapping={"test": "test"},
+            item_type_id=item_type.model.id,
+        )
+        obj.mapping = {"test2": "test2"}
+        db.session.commit()
+
+        versions = obj.versions.all()
+        assert len(versions) == 2
+        assert versions[0].id == obj.id
+        assert versions[1].id == obj.id
+        assert versions[0].mapping == {"test": "test"}
+        assert versions[1].mapping == obj.mapping
+        assert versions[0].version_id == 1
+        assert versions[1].version_id == 2
+
+    # delete(cls, id):
+    # .tox/c1/bin/pytest --cov=weko_swordserver tests/test_api.py::TestJsonldMapping::test_delete -v -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp --full-trace
+    def test_delete(app, db, item_type):
+        obj = JsonldMapping.create(
+            name="test1",
+            mapping={"test": "test"},
+            item_type_id=item_type.model.id,
+        )
+        obj.is_deleted = True
+        db.session.commit()
+
+        # Successful delete
+        JsonldMapping.delete(id=obj.id)
+        assert (
+            ItemTypeJsonldMapping.query.filter_by(id=obj.id).first().is_deleted == True
+        )
+
+        # Delete with non-existent id
+        res = JsonldMapping.delete(id=999)
+        assert res == None

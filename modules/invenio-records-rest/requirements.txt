@@ -13,6 +13,7 @@ binaryornot==0.4.4
 bleach==3.1.0
 blinker==1.4
 cachelib==0.1
+captcha==0.4
 cchardet==2.1.1
 celery>=4.4.4
 certifi==2017.11.5
@@ -115,7 +116,7 @@ PyJWT==1.5.3
 pypdf==4.3.1
 pyPEG2==2.15.2
 pytest-mock==3.6.1
-python-dateutil==2.6.1
+python-dateutil==2.8.2
 python-editor==1.0.3
 python-geoip==1.2
 pytz==2017.3
@@ -123,6 +124,7 @@ pyzmq==17.0.0
 redis==2.10.6
 requests==2.18.4
 requests-oauthlib==1.1.0
+rocrate==0.6.0
 Sickle==0.6.4
 simplegeneric==0.8.1
 simplejson==3.12.0
@@ -158,7 +160,7 @@ Flask-Plugins==1.6.1
 bibtexparser==1.0.1
 github3.py==1.1.0
 feedgen==0.7.0
-boto3==1.7.84
+boto3==1.9.83
 s3fs==0.1.6
 #fpdf==1.7.2
 -e git+https://github.com/RCOSDP/pyfpdf.git@fix/nii#egg=fpdf
@@ -173,7 +175,7 @@ xmltodict==0.12.0
 ftfy==4.4.3
 attrs==17.4.0
 b2handle==1.1.2
-resync==1.0.9
+resync==2.0.1
 email-validator==1.0.5
 iiif-prezi==0.3.0
 netaddr==0.8.0

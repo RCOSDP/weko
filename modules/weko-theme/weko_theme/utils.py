@@ -90,7 +90,7 @@ def get_weko_contents(getargs):
     ctx.update({
         "display_community": display_community
     })
-    
+
     return dict(
         community_id=community_id,
         detail_condition=detail_condition,
@@ -105,9 +105,9 @@ def get_community_id(getargs):  # TODO: Use this to refactor
     """Get the community data for specific args."""
     ctx = {'community': None}
     community_id = ""
-    if 'community' in getargs:
+    if 'c' in getargs:
         from weko_workflow.api import GetCommunity
-        comm = GetCommunity.get_community_by_id(getargs.get('community'))
+        comm = GetCommunity.get_community_by_id(getargs.get('c'))
         ctx = {'community': comm}
         if comm is not None:
             community_id = comm.id
@@ -126,7 +126,7 @@ def get_design_layout(repository_id):
 
     Returns:
         _type_: page, render_widgets
-    """    
+    """
     if not repository_id:
         return None, False
 
@@ -271,7 +271,7 @@ class MainScreenInitDisplaySetting:
                 display_format = current_index.display_format
         if display_format == '2':
             display_number = 100
-        
+
         if not init_disp_index:
             # In case is not found the index
             # set main screen initial display to the default
@@ -345,16 +345,35 @@ class MainScreenInitDisplaySetting:
 
     @classmethod
     def __get_public_indexes(cls, indexes: list, index_dict: dict):
-        public_index_list = [i.id for i in indexes]
+        public_index_list = {}
+        for i in indexes:
+            public_index_list[i.id] = {
+                'parent': i.parent,
+                'public_state': i.public_state
+            }
         for _index in indexes:
-            parent_list = Indexes.get_all_parent_indexes(_index.id)
-            pub_flag = True
-            for p in parent_list:
-                if p.id not in public_index_list:
-                    pub_flag = False
-                    break
+            pub_flag = _check_parent_permission(_index.id, public_index_list)
             if pub_flag and _index.id and _index.public_state:
                 index_dict[str(_index.id)] = {
                     'updated': _index.updated,
                     'display_format': _index.display_format,
                 }
+
+def _check_parent_permission(index_id, public_index_list: dict):
+    parent_id = public_index_list.get(index_id, {}).get('parent')
+    if parent_id == 0:
+        pub_flag = public_index_list.get(index_id, {}).get('public_state')
+        public_index_list[index_id]['pub_flag'] = pub_flag
+        return pub_flag
+    else:
+        if 'pub_flag' in public_index_list.get(index_id, {}):
+            return public_index_list[index_id]['pub_flag']
+        elif index_id not in public_index_list.keys():
+            return False
+        elif parent_id not in public_index_list.keys():
+            public_index_list[index_id]['pub_flag'] = False
+            return False
+        else:
+            pub_flag = _check_parent_permission(parent_id, public_index_list)
+            public_index_list[index_id]['pub_flag'] = pub_flag
+            return pub_flag

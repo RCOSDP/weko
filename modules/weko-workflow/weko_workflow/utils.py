@@ -27,10 +27,12 @@ import re
 from collections import OrderedDict
 from copy import deepcopy
 from datetime import datetime, timedelta
+import sys
 from typing import NoReturn, Optional, Tuple, Union
 import traceback
 from urllib.parse import urljoin
 
+import pytz
 from celery.task.control import inspect
 from flask import Flask, current_app, request, session, url_for
 from flask_babelex import gettext as _
@@ -59,12 +61,14 @@ from weko_admin.utils import get_restricted_access
 from weko_deposit.api import WekoDeposit, WekoRecord
 from weko_deposit.pidstore import get_record_without_version
 from weko_handle.api import Handle
+from weko_logging.activity_logger import UserActivityLogger
 from weko_records.api import FeedbackMailList, RequestMailList, ItemsMetadata, ItemTypeNames, \
     ItemTypes, Mapping, ItemApplication
-from weko_records.models import ItemMetadata, ItemType
+from weko_records.models import ItemMetadata, ItemType, ItemReference
 from weko_records.serializers.utils import get_full_mapping, get_item_type_name
 from weko_records_ui.api import get_item_provide_list
 from weko_records_ui.models import FilePermission
+from weko_records_ui.external import call_external_system
 from weko_redis import RedisConnection
 from weko_user_profiles.config import \
     WEKO_USERPROFILES_INSTITUTE_POSITION_LIST, \
@@ -86,6 +90,7 @@ from .errors import InvalidParameterValueError
 from .models import Action as _Action
 from .models import ActionStatusPolicy, Activity, ActivityStatusPolicy, \
     FlowAction, GuestActivity
+from redis.exceptions import ResponseError
 
 
 def _check_mail_setting(setting):
@@ -212,6 +217,10 @@ def saving_doi_pidstore(item_id,
             else:
                 identifier = IdentifierHandle(record_without_version)
                 reg = identifier.register_pidstore('doi', identifier_val)
+                UserActivityLogger.info(
+                    operation="ITEM_ASSIGN_DOI",
+                    target_key=str(item_id),
+                )
                 identifier.update_idt_registration_metadata(
                     doi_register_val,
                     doi_register_typ)
@@ -224,6 +233,14 @@ def saving_doi_pidstore(item_id,
         return True
     except Exception as ex:
         current_app.logger.exception(str(ex))
+        if not temporal_saving:
+            exec_info = sys.exc_info()
+            tb_info = traceback.format_tb(exec_info[2])
+            UserActivityLogger.error(
+                operation="ITEM_ASSIGN_DOI",
+                target_key=str(item_id),
+                remarks=tb_info[0]
+            )
         return False
 
 
@@ -245,7 +262,7 @@ def register_hdl(activity_id):
     current_app.logger.debug(
         "register_hdl: {0} {1}".format(activity_id, item_uuid))
     record = WekoRecord.get_record(item_uuid)
-    
+
     if record.pid_cnri:
         current_app.logger.info('This record was registered HDL!')
         return
@@ -281,7 +298,7 @@ def register_hdl_by_item_id(deposit_id, item_uuid, url_root):
 
     weko_handle = Handle()
     handle = weko_handle.register_handle(location=record_url)
-    
+
     if handle:
         handle = WEKO_SERVER_CNRI_HOST_LINK + str(handle)
         identifier = IdentifierHandle(item_uuid)
@@ -325,7 +342,7 @@ def item_metadata_validation(item_id, identifier_type, record=None,
     :param: item_id, identifier_type, record
     :return: error_list
     """
-    
+
     ddi_item_type_name = 'DDI'
     journalarticle_type = ['conference paper',
                            'data paper', 'departmental bulletin paper',
@@ -337,7 +354,7 @@ def item_metadata_validation(item_id, identifier_type, record=None,
                     'book', 'book part']
     elearning_type = ['learning object', 'learning material']
     dataset_type = ['software', 'dataset', 'aggregated data',
-                    'clinical trial data', 'compiled data', 
+                    'clinical trial data', 'compiled data',
                     'encoded data', 'experimental data', 'genomic data',
                     'geospatial data', 'laboratory notebook', 'measurement and test data',
                     'observational data', 'recorded data', 'simulation data',
@@ -352,10 +369,10 @@ def item_metadata_validation(item_id, identifier_type, record=None,
                          'conference output', 'conference object','conference proceedings',
                          'conference poster','layout design','industrial design','design','design patent','PCT application','plant patent','plant variety protection','software patent',
                          'conference presentation','manuscript', 'data management plan', 'interview','other']
-    
+
     def _check_resource_type(identifier_type, resource_type, old_resource_type):
         """
-        Validate if the new resource type and the old resource type 
+        Validate if the new resource type and the old resource type
         belong to the same mapping type
         """
         def _get_mapping_type(_resource_type):
@@ -400,7 +417,7 @@ def item_metadata_validation(item_id, identifier_type, record=None,
             return True
         else:
             return False
-        
+
     current_app.logger.debug("item_id: {}".format(item_id))
     current_app.logger.debug("identifier_type: {}".format(identifier_type))
     current_app.logger.debug("record: {}".format(record))
@@ -552,7 +569,7 @@ def item_metadata_validation(item_id, identifier_type, record=None,
             ]
             # いずれか必須が動いていない
             # either_properties = ['date','publisher']
-            
+
     # CrossRef DOI identifier registration
     elif identifier_type == IDENTIFIER_GRANT_SELECT_DICT['Crossref']:
         # 別表3-1 Crossref DOI登録メタデータのJPCOAR/JaLCマッピング【ジャーナルアーティクル】
@@ -595,7 +612,7 @@ def item_metadata_validation(item_id, identifier_type, record=None,
                 # 'givenName',
                 # 'creatorName',
                 # 'publisher',
-                # 'publisher_jpcoar', 
+                # 'publisher_jpcoar',
                 # 'date',
                 # 'dateGranted',
                 'type',
@@ -836,7 +853,7 @@ def validattion_item_property_required(
         mapping_keys = ['dc:publisher']
         handle_check_required_pattern_and_either(
             mapping_data, mapping_keys, error_list, identifier_type=identifier_type)
-    
+
     # check jpcoar:publisher
     if 'publisher_jpcoar' in properties:
         mapping_keys = ['jpcoar:publisher_jpcoar']
@@ -848,7 +865,7 @@ def validattion_item_property_required(
         mapping_keys = ['datacite:date']
         handle_check_required_pattern_and_either(
             mapping_data, mapping_keys, error_list, identifier_type=identifier_type)
-    
+
     # check dcndl:dateGranted
     if 'dateGranted' in properties:
         mapping_keys = ['dcndl:dateGranted']
@@ -860,7 +877,7 @@ def validattion_item_property_required(
         mapping_keys = ['dc:type']
         handle_check_required_pattern_and_either(
             mapping_data, mapping_keys, error_list, identifier_type=identifier_type)
-    
+
     # check jpcoar:identifier
     # if 'identifier' in properties:
     #     mapping_keys = ['jpcoar:identifier']
@@ -872,13 +889,13 @@ def validattion_item_property_required(
     #     mapping_keys = ['jpcoar:identifierRegistration']
     #     handle_check_required_pattern_and_either(
     #         mapping_data, mapping_keys, error_list, identifier_type=identifier_type)
-    
+
     # check jpcoar:pageStart
     if 'pageStart' in properties:
         mapping_keys = ['jpcoar:pageStart']
         handle_check_required_pattern_and_either(
             mapping_data, mapping_keys, error_list, identifier_type=identifier_type)
-    
+
     # check jpcoar:degreeGrantor
     if 'degreeGrantor' in properties:
         mapping_keys = ['jpcoar:degreeGrantor']
@@ -1015,8 +1032,8 @@ def validattion_item_property_either_required(
             if date['either']:
                 date['either'] = [date['either']]
             merge_doi_error_list(error_list, date)
-        
-        
+
+
     # For other resource type
     degreeGrantor = None
     if 'degreeGrantor' in properties:
@@ -1066,7 +1083,7 @@ def validattion_item_property_either_required(
             if givenName['either']:
                 givenName['either'] = [givenName['either']]
             merge_doi_error_list(error_list, givenName)
-                                
+
     return error_list
 
 
@@ -1117,6 +1134,30 @@ def get_activity_id_of_record_without_version(pid_object=None):
             return activity_first_ver.activity_id
         else:
             return None
+
+
+def get_non_extract_files_by_recid(recid):
+    """ Get extraction info from temp_data in activity.
+
+    Args:
+        recid (str): recid in deposit. "xxxxx" or "xxxxx.0"
+
+    Returns:
+        list[str]: list of non_extract filenames
+    """
+    pid = PersistentIdentifier.get('recid', recid)
+    work_activity = WorkActivity()
+    activity = work_activity.get_workflow_activity_by_item_id(pid.object_uuid)
+
+    if activity is not None and isinstance(activity.temp_data, str):
+        item_json = json.loads(activity.temp_data)
+        # Load files from temp_data.
+        files = item_json.get('files', [])
+        return [
+            file["filename"] for file in files if file.get("non_extract", False)
+        ]
+
+    return None
 
 
 def check_suffix_identifier(idt_regis_value, idt_list, idt_type_list):
@@ -1664,7 +1705,7 @@ def filter_all_condition(all_args):
 
     Returns:
         dict: a json data of filtered request parameters.
-    """    
+    """
     conditions = {}
     list_key_condition = current_app.config.get('WEKO_WORKFLOW_FILTER_PARAMS',
                                                 [])
@@ -1682,7 +1723,7 @@ def filter_condition(json, name, condition):
         json (dict): _description_
         name (string): _description_
         condition (string): _description_
-    """    
+    """
     if json.get(name):
         json[name].append(condition)
     else:
@@ -1878,6 +1919,148 @@ def prepare_edit_workflow(post_activity, recid, deposit):
     return rtn
 
 
+def prepare_delete_workflow(post_activity, recid, deposit):
+    """
+    Prepare Workflow Activity for draft record.
+
+    Check and create draft record with id is "x.0".
+    Create new workflow activity.
+    Clone Identifier and Feedbackmail relation to last activity.
+
+    Args:
+        post_activity (dict): latest activity information.
+        recid (PersistentIdentifier): current record id.
+        deposit (WekoDeposit): current deposit data.
+
+    Returns:
+        Activity: new activity object.
+    """
+    # ! Check pid's version
+    community = post_activity['community']
+    activity = WorkActivity()
+
+    pid_value = recid.pid_value.split('.')[0]
+    del_value = (
+        recid.pid_value
+        if not '.' in recid.pid_value
+        else "del_ver_{}".format(recid.pid_value)
+    )
+
+    draft_pid = PersistentIdentifier.query.filter_by(
+        pid_type='recid',
+        pid_value="{}.0".format(pid_value)
+    ).one_or_none()
+
+    if del_value.startswith("del_ver_"):
+        item_id = recid.object_uuid
+    elif not draft_pid:
+        draft_record = deposit.prepare_draft_item(recid)
+        item_id = draft_record.model.id
+    else:
+        item_id = draft_pid.object_uuid
+
+    rtn = activity.init_activity(
+        post_activity, community, item_id
+    )
+    activity_detail = activity.get_activity_detail(rtn.activity_id)
+    cur_action = activity_detail.action
+    if rtn.action_id == 2:   # end_action
+        from weko_records_ui.views import soft_delete
+        soft_delete(del_value)
+        activity.notify_about_activity(rtn.activity_id, "deleted")
+        activity.upt_activity_action_status(
+            activity_id=rtn.activity_id,
+            action_id=rtn.action_id,
+            action_status=ActionStatusPolicy.ACTION_DONE,
+            action_order=rtn.action_order
+            )
+        act = {
+            'activity_id': rtn.activity_id,
+            'action_id': rtn.action_id,
+            'action_version': cur_action.action_version,
+            'action_status': ActionStatusPolicy.ACTION_DONE,
+            'item_id': item_id,
+            'action_order': rtn.action_order
+        }
+        activity.end_activity(act)
+
+    if rtn.action_id == 4:   # approval
+        activity.notify_about_activity(rtn.activity_id, "deletion_request")
+
+    return rtn
+
+
+def prepare_delete_workflow(post_activity, recid, deposit):
+    """
+    Prepare Workflow Activity for draft record.
+
+    Check and create draft record with id is "x.0".
+    Create new workflow activity.
+    Clone Identifier and Feedbackmail relation to last activity.
+
+    Args:
+        post_activity (dict): latest activity information.
+        recid (PersistentIdentifier): current record id.
+        deposit (WekoDeposit): current deposit data.
+
+    Returns:
+        Activity: new activity object.
+    """
+    # ! Check pid's version
+    community = post_activity['community']
+    activity = WorkActivity()
+
+    pid_value = recid.pid_value.split('.')[0]
+    del_value = (
+        recid.pid_value
+        if not '.' in recid.pid_value
+        else "del_ver_{}".format(recid.pid_value)
+    )
+
+    draft_pid = PersistentIdentifier.query.filter_by(
+        pid_type='recid',
+        pid_value="{}.0".format(pid_value)
+    ).one_or_none()
+
+    if del_value.startswith("del_ver_"):
+        item_id = recid.object_uuid
+    elif not draft_pid:
+        draft_record = deposit.prepare_draft_item(recid)
+        item_id = draft_record.model.id
+    else:
+        item_id = draft_pid.object_uuid
+
+    rtn = activity.init_activity(
+        post_activity, community, item_id
+    )
+    activity_detail = activity.get_activity_detail(rtn.activity_id)
+    cur_action = activity_detail.action
+    if rtn.action_id == 2:   # end_action
+        from weko_records_ui.views import soft_delete
+        soft_delete(del_value)
+        activity.notify_about_activity(rtn.activity_id, "deleted")
+        activity.upt_activity_action_status(
+            activity_id=rtn.activity_id,
+            action_id=rtn.action_id,
+            action_status=ActionStatusPolicy.ACTION_DONE,
+            action_order=rtn.action_order
+            )
+        act = {
+            'activity_id': rtn.activity_id,
+            'action_id': rtn.action_id,
+            'action_version': cur_action.action_version,
+            'action_status': ActionStatusPolicy.ACTION_DONE,
+            'item_id': item_id,
+            'action_order': rtn.action_order
+        }
+        activity.end_activity(act)
+
+    if rtn.action_id == 4:   # approval
+        activity.notify_about_activity(rtn.activity_id, "deletion_request")
+
+    return rtn
+
+
 def handle_finish_workflow(deposit, current_pid, recid):
     """
     Get user information by email.
@@ -1893,15 +2076,23 @@ def handle_finish_workflow(deposit, current_pid, recid):
         return None
 
     item_id = None
+    old_record = None
+    new_record = None
+    record_pid = None
+    old_item_reference_list = []
+    new_item_reference_list = []
+    is_newversion = False
     try:
         pid_without_ver = get_record_without_version(current_pid)
         if ".0" in current_pid.pid_value:
             deposit.commit()
         deposit.publish()
         updated_item = UpdateItem()
+        non_extract = getattr(deposit, 'non_extract', None)
         # publish record without version ID when registering newly
         if recid:
             # new record attached version ID
+            is_newversion = True
             new_deposit = deposit.newversion(current_pid)
             item_id = new_deposit.model.id
             ver_attaching_deposit = WekoDeposit(
@@ -1928,6 +2119,7 @@ def handle_finish_workflow(deposit, current_pid, recid):
                 weko_record.update_item_link(current_pid.pid_value)
             updated_item.publish(deposit, PublishStatus.PUBLIC.value)
             updated_item.publish(ver_attaching_deposit, PublishStatus.PUBLIC.value)
+            record_pid = new_deposit.pid
         else:
             # update to record without version ID when editing
             if pid_without_ver:
@@ -1942,7 +2134,7 @@ def handle_finish_workflow(deposit, current_pid, recid):
                     if _doi is None else PublishStatus.PUBLIC.value
                 _deposit = WekoDeposit(_record, _record.model)
                 _deposit['path'] = deposit.get('path', [])
-
+                _deposit.non_extract = non_extract
                 parent_record = _deposit. \
                     merge_data_to_record_without_version(current_pid)
                 _deposit.publish()
@@ -1960,6 +2152,11 @@ def handle_finish_workflow(deposit, current_pid, recid):
                         maintain_record,
                         maintain_record.model)
                     maintain_deposit['path'] = deposit.get('path', [])
+                    maintain_deposit.non_extract = non_extract
+                    record_pid = maintain_record.pid
+                    old_record = WekoRecord.get_record_by_pid(record_pid.pid_value)
+                    old_item_reference_list = ItemReference.get_src_references(record_pid.pid_value).all()
+                    old_item_reference_list = [deepcopy(item) for item in old_item_reference_list]
                     new_parent_record = maintain_deposit. \
                         merge_data_to_record_without_version(current_pid, True)
                     maintain_deposit.publish()
@@ -1979,6 +2176,10 @@ def handle_finish_workflow(deposit, current_pid, recid):
                     draft_deposit = WekoDeposit.get_record(
                         draft_pid.object_uuid)
                     draft_deposit['path'] = deposit.get('path', [])
+                    record_pid = draft_pid
+                    old_record = WekoRecord.get_record_by_pid(record_pid.pid_value)
+                    old_item_reference_list = ItemReference.get_src_references(record_pid.pid_value).all()
+                    old_item_reference_list = [deepcopy(item) for item in old_item_reference_list]
                     new_draft_record = draft_deposit. \
                         merge_data_to_record_without_version(current_pid)
                     draft_deposit.publish()
@@ -2005,11 +2206,40 @@ def handle_finish_workflow(deposit, current_pid, recid):
                     item_id = current_pid.object_uuid
                 db.session.commit()
 
-        from invenio_oaiserver.tasks import update_records_sets
-        update_records_sets.delay([str(pid_without_ver.object_uuid)])
+        if record_pid:
+            new_record = WekoRecord.get_record_by_pid(record_pid.pid_value)
+            new_item_reference_list = \
+                ItemReference.get_src_references(record_pid.pid_value).all()
+            call_external_system(old_record=old_record,
+                                 new_record=new_record,
+                                 old_item_reference_list=old_item_reference_list,
+                                 new_item_reference_list=new_item_reference_list)
+
+        if pid_without_ver:
+            from invenio_oaiserver.tasks import update_records_sets
+            update_records_sets.delay([str(pid_without_ver.object_uuid)])
+            opration = "ITEM_CREATE" if is_newversion else "ITEM_UPDATE"
+            target_key = recid.recid if is_newversion else pid_without_ver.pid_value
+            UserActivityLogger.info(
+                operation=opration,
+                target_key=target_key
+            )
     except Exception as ex:
         db.session.rollback()
         current_app.logger.exception(str(ex))
+        traceback.print_exc()
+        exec_info = sys.exc_info()
+        tb_info = traceback.format_tb(exec_info[2])
+        opration = "ITEM_CREATE" if is_newversion else "ITEM_UPDATE"
+        target_key = (
+            recid.recid if is_newversion else pid_without_ver.pid_value
+            if pid_without_ver else current_pid.pid_value
+        )
+        UserActivityLogger.error(
+            operation=opration,
+            target_key=target_key,
+            remarks=tb_info[0]
+        )
         return item_id
     return item_id
 
@@ -2027,14 +2257,28 @@ def delete_cache_data(key: str):
 def update_cache_data(key: str, value: str, timeout=None):
     """Create or Update cache data.
 
-    :param key: Cache key.
-    :param value: Cache value.
-    :param timeout: Cache expired.
+    Args:
+        key(str):
+            Cache key.
+        value(str):
+            Cache value.
+        timeout(int or timedelta or None):
+            Cache expired.
+    Returns:
+        None
+    Raises:
+        ResponseError:
+            Redis error.
     """
-    if timeout is not None:
-        current_cache.set(key, value, timeout=timeout)
-    else:
-        current_cache.set(key, value)
+    try:
+        if timeout is not None:
+            current_cache.set(key, value, timeout=timeout)
+        else:
+            current_cache.set(key, value)
+    except ResponseError as ex:
+        current_app.logger.error(ex)
+        current_app.logger.error('key: %s, value: %s, changed timeout: %s', key, value, current_app.config['PERMANENT_SESSION_LIFETIME'])
+        current_cache.set(key, value, timeout=current_app.config['PERMANENT_SESSION_LIFETIME'])
 
 
 def get_cache_data(key: str):
@@ -2050,9 +2294,11 @@ def get_cache_data(key: str):
 def check_an_item_is_locked(item_id=None):
     """Check if an item is locked.
 
-    :param item_id: Item id.
+    Args:
+        item_id (str): The ID of the item to check.
 
-    :return
+    Returns:
+        bool: If the item is locked, return True, else False.
     """
     def check(workers):
         for worker in workers:
@@ -2148,7 +2394,7 @@ def get_url_root():
     site_url = current_app.config['THEME_SITEURL']
     if not site_url.endswith('/'):
         site_url = site_url + '/'
-        
+
     return request.host_url if request else site_url
 
 
@@ -2232,7 +2478,7 @@ def get_allow_multi_thumbnail(item_type_id, activity_id=None):
     """Get Multi Thumbnail from file."""
     if activity_id:
         from weko_items_ui.api import item_login
-        _, _, _, _, _, _, _, _, _, _, _, allow_multi_thumbnail \
+        _, _, _, _, _, _, _, _, _, _, _, allow_multi_thumbnail,_ \
             = item_login(item_type_id=item_type_id)
         return allow_multi_thumbnail
     else:
@@ -3527,7 +3773,7 @@ def get_activity_display_info(activity_id: str):
         _type_: steps
         _type_: temporary_comment [{'ActivityId': 'A-20220821-00003', 'ActionId': 1, 'ActionName': 'Start', 'ActionVersion': '1.0.0', 'ActionEndpoint': 'begin_action', 'Author': 'wekosoftware@nii.ac.jp', 'Status': 'action_done', 'ActionOrder': 1}, {'ActivityId': 'A-20220821-00003', 'ActionId': 3, 'ActionName': 'Item Registration', 'ActionVersion': '1.0.1', 'ActionEndpoint': 'item_login', 'Author': '', 'Status': ' ', 'ActionOrder': 2}, {'ActivityId': 'A-20220821-00003', 'ActionId': 4, 'ActionName': 'Approval', 'ActionVersion': '2.0.0', 'ActionEndpoint': 'approval', 'Author': '', 'Status': ' ', 'ActionOrder': 3}, {'ActivityId': 'A-20220821-00003', 'ActionId': 5, 'ActionName': 'Item Link', 'ActionVersion': '1.0.1', 'ActionEndpoint': 'item_link', 'Author': '', 'Status': ' ', 'ActionOrder': 4}, {'ActivityId': 'A-20220821-00003', 'ActionId': 7, 'ActionName': 'Identifier Grant', 'ActionVersion': '1.0.0', 'ActionEndpoint': 'identifier_grant', 'Author': '', 'Status': ' ', 'ActionOrder': 5}, {'ActivityId': 'A-20220821-00003', 'ActionId': 2, 'ActionName': 'End', 'ActionVersion': '1.0.0', 'ActionEndpoint': 'end_action', 'Author': '', 'Status': ' ', 'ActionOrder': 6}]
         Workflow: workflow_detail
-    """    
+    """
     activity = WorkActivity()
     activity_detail = activity.get_activity_detail(activity_id)
     item = None
@@ -3621,7 +3867,7 @@ def __init_activity_detail_data_for_guest(activity_id: str, community_id: str):
     step_item_login_url, need_file, need_billing_file, \
         record, json_schema, schema_form, \
         item_save_uri, files, endpoints, need_thumbnail, files_thumbnail, \
-        allow_multi_thumbnail \
+        allow_multi_thumbnail ,cris_linkage \
         = item_login(item_type_id=workflow_detail.itemtype_id)
     if not record and item:
         record = item
@@ -4218,7 +4464,7 @@ def update_system_data_for_activity(activity, sub_system_data_key,
         db.session.commit()
 
 
-def check_authority_by_admin(activity):
+def check_authority_by_admin(activity, user=None):
     """Check authority by admin.
 
     :param activity:
@@ -4227,9 +4473,10 @@ def check_authority_by_admin(activity):
     is_admin = False
     is_comadmin = False
     # If user has admin role
+    user = user or current_user
     supers = current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER']
     community_role_names = current_app.config['WEKO_PERMISSION_ROLE_COMMUNITY']
-    for role in list(current_user.roles or []):
+    for role in list(user.roles or []):
         if role.name in supers:
             is_admin = True
         elif role.name in community_role_names:
@@ -4242,7 +4489,7 @@ def check_authority_by_admin(activity):
         item_id = activity.item_id
         if item_id:
             index_ids = []
-            role_ids = [role.id for role in current_user.roles]
+            role_ids = [role.id for role in user.roles]
             from invenio_communities.models import Community
             comm_list = Community.query.filter(
                 Community.id_role.in_(role_ids)
@@ -4251,7 +4498,7 @@ def check_authority_by_admin(activity):
                 index_ids += [str(i.cid) for i in Indexes.get_self_list(comm.root_node_id)
                               if i.cid not in index_ids]
             dep = WekoDeposit.get_record(item_id)
-        
+
             path = dep.get('path',[])
             for p in path:
                 if str(p) in index_ids:
@@ -4268,7 +4515,7 @@ def validate_action_role_user(activity_id, action_id, action_order):
     :type action_id: int
     :param action_order: action_order
     :type action_order: int
-    :return: (Whether allow or deny is set for action role(user)), 
+    :return: (Whether allow or deny is set for action role(user)),
              (allow roles(users) contain role(user) of current_user),
              (role of current_user is not in allowed roles(users) or denied roles(users))
     :rtype: bool, bool, bool
@@ -4276,16 +4523,16 @@ def validate_action_role_user(activity_id, action_id, action_order):
     work = WorkActivity()
     roles, users = work.get_activity_action_role(activity_id, action_id,
                                              action_order)
-    
+
     cur_user = current_user.get_id()
     cur_role = db.session.query(Role).join(userrole).filter_by(
         user_id=cur_user).all()
     cur_role_id = [role.id for role in cur_role]
-    
+
     is_set = False
     is_set |= any(role for role in roles.values())
     is_set |= any(user for user in users.values())
-    
+
     is_deny = False
     is_allow = False
     if is_set:
@@ -4352,13 +4599,13 @@ def get_files_and_thumbnail(activity_id, item_id):
 def get_pid_and_record(item_id):
     """
     get_pid_and_record Get record data for the first time access to editing item screen.
-    
+
     Args:
         item_id (_type_): id of Item metadata.
 
     Returns:
         _type_: A tuple containing (pid, object).
-    
+
     Raises:
         invenio_pidstore.errors.PIDDoesNotExistError: if no PID is found.
         invenio_pidstore.errors.PIDDeletedError: if PID is deleted.
@@ -4623,7 +4870,7 @@ def make_activitylog_tsv(activities):
     Args:
         activities: activities for download as tsv.
     """
-    import csv 
+    import csv
     from io import StringIO
     file_output = StringIO()
 
@@ -4638,7 +4885,7 @@ def make_activitylog_tsv(activities):
         writer.writerow(term)
 
     return file_output.getvalue()
-    
+
 
 def is_terms_of_use_only(workflow_id :int) -> bool:
     """
@@ -4646,15 +4893,15 @@ def is_terms_of_use_only(workflow_id :int) -> bool:
 
     note:
         [terms of use only] workflow is open_restricted flag is "true".
-        and 
+        and
         [terms of use only] workflow is structed "Begin Action" and "End Action" only.
 
-    Args 
-        int :workflow_id 
+    Args
+        int :workflow_id
     Return
         bool :is the workflow [terms of use only]
     """
-    
+
     current_app.logger.info(workflow_id)
     wf = WorkFlow().get_workflow_by_id(workflow_id)
     if wf and wf.open_restricted :
@@ -4669,14 +4916,14 @@ def grant_access_rights_to_all_open_restricted_files(activity_id :str ,permissio
     Target all of open_restricted files in the item , grant access rights for login user.
     or
     Target a open_restricted file that is applyed by the guest user  in the item , grant access rights for guest user.
-    
+
     Args:
         str :activity_id
         FilePermission :permission
         Activity :activity_detail
     Returns
         dict :one time url and expired_date
-    """ 
+    """
     url_and_expired_date:dict = {}
     if isinstance(permission ,FilePermission): #contributer
         files = WekoRecord.get_record_by_pid(permission.record_id).get_file_data()
@@ -4692,7 +4939,7 @@ def grant_access_rights_to_all_open_restricted_files(activity_id :str ,permissio
                 extra_info:dict = deepcopy(activity_detail.extra_info)
                 extra_info.update({'file_name' : file['filename']})
                 tmp:dict = create_onetime_download_url_to_guest(activity_detail.activity_id,extra_info)
-            
+
                 if file['filename'] == permission.file_name:
                     # a applyed content.
                     url_and_expired_date = tmp
@@ -4715,6 +4962,15 @@ def grant_access_rights_to_all_open_restricted_files(activity_id :str ,permissio
     return url_and_expired_date
 
 def delete_lock_activity_cache(activity_id, data):
+    """Delete lock activity cache.
+
+    Args:
+        activity_id (str): The activity identifier.
+        data (dict): Data containing the locked value.
+
+    Returns:
+        str: Message indicating the result of the unlock operation.
+    """
     cache_key = 'workflow_locked_activity_{}'.format(activity_id)
     locked_value = str(data.get('locked_value'))
     msg = None
@@ -4847,3 +5103,94 @@ def check_pretty(pretty):
 def create_limmiter():
     from .config import WEKO_WORKFLOW_API_LIMIT_RATE_DEFAULT
     return Limiter(app=Flask(__name__), key_func=get_remote_address, default_limits=WEKO_WORKFLOW_API_LIMIT_RATE_DEFAULT)  
+
+
+def convert_to_timezone(dt, user_timezone=None):
+    """
+    Convert a datetime object to the specified timezone.
+
+    Args:
+        dt (datetime): The datetime object to convert.
+        user_timezone (str): The timezone string (e.g., 'Asia/Tokyo').
+
+    Returns:
+        datetime: The converted datetime object.
+    """
+    if dt.tzinfo is None:
+        dt = pytz.utc.localize(dt)
+    if user_timezone:
+        timezone = pytz.timezone(user_timezone)
+        dt = dt.astimezone(timezone)
+    return dt
+
+
+def load_template(template_name, language=None):
+    """Load the specified email template.
+
+    Args:
+        template_name (str): The name of the template file.
+        language (str, optional): The language code for the template (e.g., 'en', 'ja').
+
+    Returns:
+        dict: A dictionary containing the email template with the following keys:
+            - 'subject' (str): The subject line of the email template.
+            - 'body' (str): The body content of the email template.
+
+    Raises:
+        FileNotFoundError: If the template file does not exist in the specified directory.
+    """
+    current_path = os.path.dirname(os.path.abspath(__file__))
+    folder_path = os.path.join(
+                    current_path,
+                    'templates',
+                    'weko_workflow',
+                    'email_templates')
+    if language is None:
+        language = "en"
+    template_path = os.path.join(folder_path, template_name.format(language=language))
+    if not os.path.exists(template_path):
+        template_path = os.path.join(folder_path, template_name.format(language="en"))
+    with open(template_path, "r") as file:
+        lines = file.readlines()
+    # The first line is the subject, and the rest is the body.
+    subject = lines[0].strip() if lines else ""
+    body = "".join(lines[1:]).strip() if len(lines) > 1 else ""
+    return {"subject": subject, "body": body}
+
+
+def fill_template(template, data):
+    """
+    Embed data into the template.
+
+    Args:
+        template (dict): email template with the following keys:
+            - 'subject' (str): The subject template of the email.
+            - 'body' (str): The body template of the email.
+        data (dict): data to replace placeholders in the template.
+
+    Returns:
+        dict: generated email content with the following keys:
+            - 'subject' (str): The subject of the email after embedding the data.
+            - 'body' (str): The body of the email after embedding the data.
+    """
+    subject = template["subject"]
+    body = template["body"]
+
+    for key, value in data.items():
+        subject = subject.replace(f"{{{{ {key} }}}}", str(value))
+        body = body.replace(f"{{{{ {key} }}}}", str(value))
+
+    return {"subject": subject, "body": body}
+
+
+def check_activity_settings(settings=None):
+    """Check activity setting."""
+    if settings is None:
+        settings = AdminSettings.get('activity_display_settings',dict_to_object=False)
+    if settings is not None:
+        if isinstance(settings,dict):
+            if 'activity_display_flg' in settings:
+                current_app.config['WEKO_WORKFLOW_APPROVER_EMAIL_COLUMN_VISIBLE'] = settings['activity_display_flg']
+        else:
+            if hasattr(settings,'activity_display_flg'):
+                current_app.config['WEKO_WORKFLOW_APPROVER_EMAIL_COLUMN_VISIBLE'] = settings.activity_display_flg

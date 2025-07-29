@@ -4,8 +4,8 @@ import re
 from flask_login import current_user
 from requests import Response
 from weko_deposit.api import WekoFileObject
-#from weko_records_ui.errors import AvailableFilesNotFoundRESTError
-from weko_records_ui.fd import _is_terms_of_use_only, file_download_secret, prepare_response,file_download_onetime,_download_file,add_signals_info,weko_view_method,file_ui,file_preview_ui,file_download_ui # ,file_list_ui
+from weko_records_ui.errors import AvailableFilesNotFoundRESTError
+from weko_records_ui.fd import _is_terms_of_use_only, file_download_secret, prepare_response,file_download_onetime,_download_file,add_signals_info,weko_view_method,file_ui,file_preview_ui,file_download_ui,file_list_ui
 from weko_records_ui.config import WEKO_RECORDS_UI_DETAIL_TEMPLATE
 from unittest.mock import MagicMock
 from invenio_theme.config import THEME_ERROR_TEMPLATE 
@@ -450,6 +450,7 @@ def test_file_download_secret(app,db, itemtypes, users, records):
 
 
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_fd.py::test_file_list_ui -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+@pytest.mark.timeout(60)
 def test_file_list_ui(app,records,itemtypes,users,mocker,db_file_permission):
     indexer, results = records
 

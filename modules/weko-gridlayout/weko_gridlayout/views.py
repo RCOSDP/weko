@@ -19,7 +19,6 @@ from flask_login import current_user, login_required
 from invenio_cache import current_cache, current_cache_ext
 from invenio_stats.utils import QueryCommonReportsHelper
 from sqlalchemy.orm.exc import NoResultFound
-from weko_theme.utils import get_community_id, get_weko_contents
 from werkzeug.exceptions import NotFound
 from invenio_db import db
 
@@ -115,7 +114,10 @@ def load_widget_design_setting(current_language=''):
     :return:
     """
     data = request.get_json()
-    repository_id = data.get('repository_id')
+    if not isinstance(data, dict):
+        current_app.logger.error('Invalid request data.')
+        abort(400)
+    repository_id = data.get('repository_id', '')
     response = get_widget_design_setting(repository_id, current_language)
     return response
 
@@ -155,6 +157,9 @@ def load_widget_list_design_setting():
     """
     result = dict()
     data = request.get_json()
+    if not isinstance(data, dict):
+        current_app.logger.error('Invalid request data.')
+        abort(400)
     repository_id = data.get('repository_id')
     lang_default = get_default_language()
     result["widget-list"] = WidgetDesignServices.get_widget_list(
@@ -186,6 +191,9 @@ def save_widget_layout_setting():
         return jsonify(result)
 
     data = request.get_json()
+    if not isinstance(data, dict):
+        current_app.logger.error('Invalid request data.')
+        abort(400)
     result = WidgetDesignServices.update_widget_design_setting(data)
     return jsonify(result)
 
@@ -211,6 +219,9 @@ def load_widget_design_pages(lang=''):
     """
     result = dict()
     data = request.get_json()
+    if not isinstance(data, dict):
+        current_app.logger.error('Invalid request data.')
+        abort(400)
     repository_id = data.get('repository_id')
     lang_default = get_default_language()
     lang_default = lang_default.get('lang_code') if lang_default else None
@@ -233,6 +244,9 @@ def load_widget_design_page():
             "error": ""
     """
     data = request.get_json()
+    if not isinstance(data, dict):
+        current_app.logger.error('Invalid request data.')
+        abort(400)
     page_id = data.get('page_id')
     repository_id = data.get('repository_id')
     return jsonify(WidgetDesignPageServices.get_page(page_id, repository_id))
@@ -252,6 +266,9 @@ def save_widget_design_page():
         return jsonify(result)
 
     data = request.get_json()
+    if not isinstance(data, dict):
+        current_app.logger.error('Invalid request data.')
+        abort(400)
     result = WidgetDesignPageServices.add_or_update_page(data)
     return jsonify(result)
 
@@ -270,6 +287,9 @@ def delete_widget_design_page():
         return jsonify(result)
 
     data = request.get_json()
+    if not isinstance(data, dict):
+        current_app.logger.error('Invalid request data.')
+        abort(400)
     result = WidgetDesignPageServices.delete_page(data.get('page_id'))
     return jsonify(result)
 
@@ -301,6 +321,9 @@ def delete_widget_item():
         current_app.logger.debug(request.headers['Content-Type'])
         return jsonify(msg='Header Error')
     data = request.get_json()
+    if not isinstance(data, dict):
+        current_app.logger.error('Invalid request data.')
+        abort(400)
     return jsonify(WidgetItemServices.delete_by_id(data.get('data_id')))
 
 
@@ -384,11 +407,13 @@ def get_widget_page_endpoints(widget_id, lang=''):
 def view_widget_page():
     """View user-created WidgetDesignPages."""
 
+    from weko_theme.utils import get_community_id
     community_id, ctx = get_community_id(request.args)
     try:
         page = WidgetDesignPage.get_by_url(request.path)
 
         # Check if has main and if it does use different template
+        from weko_theme.utils import get_weko_contents
         if page.settings:
             main_type = current_app.config['WEKO_GRIDLAYOUT_MAIN_TYPE']
             settings = json.loads(page.settings) \
@@ -418,12 +443,14 @@ def handle_not_found(exception, **extra):
     """Custom blueprint exception handler."""
     assert isinstance(exception, NotFound)  # Only handle 404 errors
 
+    from weko_theme.utils import get_community_id
     community_id, ctx = get_community_id(request.args)
     try:  # Check if the page exists
         page = WidgetDesignPage.get_by_url(request.path)
     except NoResultFound:
         page = None
 
+    from weko_theme.utils import get_weko_contents
     if page:
         _add_url_rule(page.url)
         if page.settings:
@@ -476,9 +503,15 @@ def get_access_counter_record(repository_id, path,current_language):
         page_id = WidgetDesignPage.get_by_url("/"+path).id
         widget_design_setting = WidgetDesignPageServices.get_widget_design_setting(
             page_id, current_language or get_default_language())
-    widget_ids = [str(widget.get("widget_id")) for widget in widget_design_setting.get("widget-settings",{}) 
-                  if widget.get("type")==WEKO_GRIDLAYOUT_ACCESS_COUNTER_TYPE ]
-    if not cached_data or set(list(json.loads(cached_data.data).keys()))!=set(widget_ids):
+
+    widget_ids = [
+        str(widget.get("widget_id")) for widget in widget_design_setting.get("widget-settings", {})
+        if widget.get("type") == WEKO_GRIDLAYOUT_ACCESS_COUNTER_TYPE
+    ]
+    if len(widget_ids) == 0:
+        return abort(404)
+
+    if not cached_data or set(list(json.loads(cached_data.data).keys())) != set(widget_ids):
         result = {}
         # need to logic check
         if widget_design_setting.get('widget-settings'):
@@ -498,7 +531,7 @@ def get_access_counter_record(repository_id, path,current_language):
                         count = 0
                         for item in top_view_total_by_widget_id['all'].values():
                             count = count + int(item['count'])
-                        
+
                         top_view_total_by_widget_id['all'] = {} # clear all data
                         top_view_total_by_widget_id['all'].update(
                             {'count': count})
@@ -563,6 +596,9 @@ def unlocked_widget():
     :return:
     """
     data = request.get_json()
+    if not isinstance(data, dict):
+        current_app.logger.error('Invalid request data.')
+        abort(400)
     widget_id = data.get('widget_id')
     if WidgetItemServices.unlock_widget(widget_id):
         return jsonify(success=True), 200

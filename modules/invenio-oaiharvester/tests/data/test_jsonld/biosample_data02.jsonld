@@ -1,0 +1,361 @@
+{
+    "@context": "https://raw.githubusercontent.com/ddbj/rdf/main/context/biosample.jsonld",
+    "identifier": "SAMN19993849",
+    "organism": {
+      "identifier": 797283,
+      "name": "ant fungus garden metagenome"
+    },
+    "visibility": "unrestricted-access",
+    "downloadUrl": [
+      {
+        "name": "biosample_set.xml.gz",
+        "ftpUrl": "ftp://ftp.ddbj.nig.ac.jp/ddbj_database/biosample/biosample_set.xml.gz",
+        "type": "meta",
+        "url": "https://ddbj.nig.ac.jp/public/ddbj_database/biosample/biosample_set.xml.gz"
+      }
+    ],
+    "description": "Keywords: GSC:MIxS;MIMARKS:5.0",
+    "dateModified": "2021-07-02T01:28:33Z",
+    "title": "MIMARKS Survey related sample from ant fungus garden metagenome",
+    "type": "biosample",
+    "isPartOf": "BioSample",
+    "distribution": [
+      {
+        "contentUrl": "https://ddbj.nig.ac.jp/resource/biosample/SAMN19993849.json",
+        "encodingFormat": "JSON",
+        "type": "DataDownload"
+      },
+      {
+        "contentUrl": "https://ddbj.nig.ac.jp/resource/biosample/SAMN19993849.jsonld",
+        "encodingFormat": "JSON-LD",
+        "type": "DataDownload"
+      }
+    ],
+    "dbXrefs": [
+      {
+        "identifier": "PRJNA743060",
+        "type": "bioproject",
+        "url": "https://ddbj.nig.ac.jp/resource/bioproject/PRJNA743060"
+      },
+      {
+        "identifier": "PRJNA743045",
+        "type": "bioproject",
+        "url": "https://ddbj.nig.ac.jp/resource/bioproject/PRJNA743045"
+      },
+      {
+        "identifier": "SRA1253724",
+        "type": "sra-submission",
+        "url": "https://ddbj.nig.ac.jp/resource/sra-submission/SRA1253724"
+      },
+      {
+        "identifier": "SRA1253761",
+        "type": "sra-submission",
+        "url": "https://ddbj.nig.ac.jp/resource/sra-submission/SRA1253761"
+      },
+      {
+        "identifier": "SRX11329880",
+        "type": "sra-experiment",
+        "url": "https://ddbj.nig.ac.jp/resource/sra-experiment/SRX11329880"
+      },
+      {
+        "identifier": "SRX11331026",
+        "type": "sra-experiment",
+        "url": "https://ddbj.nig.ac.jp/resource/sra-experiment/SRX11331026"
+      },
+      {
+        "identifier": "SRR15017940",
+        "type": "sra-run",
+        "url": "https://ddbj.nig.ac.jp/resource/sra-run/SRR15017940"
+      },
+      {
+        "identifier": "SRR15019116",
+        "type": "sra-run",
+        "url": "https://ddbj.nig.ac.jp/resource/sra-run/SRR15019116"
+      },
+      {
+        "identifier": "SRP326529",
+        "type": "sra-study",
+        "url": "https://ddbj.nig.ac.jp/resource/sra-study/SRP326529"
+      },
+      {
+        "identifier": "SRP326582",
+        "type": "sra-study",
+        "url": "https://ddbj.nig.ac.jp/resource/sra-study/SRP326582"
+      },
+      {
+        "identifier": "SRS9365947",
+        "type": "sra-sample",
+        "url": "https://ddbj.nig.ac.jp/resource/sra-sample/SRS9365947"
+      }
+    ],
+    "url": "https://ddbj.nig.ac.jp/search/entry/biosample/SAMN19993849",
+    "datePublished": "2021-07-01T00:00:00Z",
+    "dateCreated": "2021-07-01T16:38:36Z",
+    "name": "TEST_NAME",
+    "dbXrefsStatistics": [
+      {
+        "count": 2,
+        "type": "bioproject"
+      },
+      {
+        "count": 2,
+        "type": "sra-run"
+      },
+      {
+        "count": 2,
+        "type": "sra-submission"
+      },
+      {
+        "count": 2,
+        "type": "sra-study"
+      },
+      {
+        "count": 1,
+        "type": "sra-sample"
+      },
+      {
+        "count": 2,
+        "type": "sra-experiment"
+      }
+    ],
+    "properties": {
+      "Status": {
+        "when": "2021-07-01T16:38:36.474",
+        "status": "live"
+      },
+      "Owner": {
+        "Contacts": {
+          "Contact": [
+            {
+              "email": "kathleen.kyle@uconn.edu",
+              "Name": {
+                "Last": "Kyle",
+                "First": "Kathleen"
+              }
+            }
+          ]
+        },
+        "Name": [
+          {
+            "content": "University of Connecticut"
+          }
+        ]
+      },
+      "access": "public",
+      "Description": {
+        "Comment": {
+          "Paragraph": [
+            "Keywords: GSC:MIxS;MIMARKS:5.0"
+          ]
+        },
+        "Organism": [
+          {
+            "taxonomy_id": 797283,
+            "OrganismName": "ant fungus garden metagenome"
+          }
+        ],
+        "Title": "MIMARKS Survey related sample from ant fungus garden metagenome"
+      },
+      "Attributes": {
+        "Attribute": [
+          {
+            "attribute_name": "collection_date",
+            "display_name": "collection date",
+            "harmonized_name": "collection_date",
+            "content": "2018-07-30"
+          },
+          {
+            "attribute_name": "env_broad_scale",
+            "display_name": "broad-scale environmental context",
+            "harmonized_name": "env_broad_scale",
+            "content": "laboratory environment [ENVO:01001405]|environmental system determined by an organism [ENVO:01001000]|fungi-associated environment [ENVO:01001041]|temperate savanna biome [ENVO:01000189]"
+          },
+          {
+            "attribute_name": "env_local_scale",
+            "display_name": "local-scale environmental context",
+            "harmonized_name": "env_local_scale",
+            "content": "laboratory environment [ENVO:01001405]|environmental system determined by an organism [ENVO:01001000]|fungi-associated environment [ENVO:01001041]|temperate savanna biome [ENVO:01000189]"
+          },
+          {
+            "attribute_name": "env_medium",
+            "display_name": "environmental medium",
+            "harmonized_name": "env_medium",
+            "content": "air [ENVO:00002005]|humid air [ENVO:01000828]"
+          },
+          {
+            "attribute_name": "geo_loc_name",
+            "display_name": "geographic location",
+            "harmonized_name": "geo_loc_name",
+            "content": "USA:New Jersey,Wharton State Forest,Batona Field"
+          },
+          {
+            "attribute_name": "host",
+            "display_name": "host",
+            "harmonized_name": "host",
+            "content": "Trachymyrmex septentrionalis"
+          },
+          {
+            "attribute_name": "lat_lon",
+            "display_name": "latitude and longitude",
+            "harmonized_name": "lat_lon",
+            "content": "39.78 N 74.63 W"
+          },
+          {
+            "attribute_name": "treatment",
+            "display_name": "treatment",
+            "harmonized_name": "treatment",
+            "content": "PBS"
+          },
+          {
+            "attribute_name": "replicate",
+            "content": "r1"
+          },
+          {
+            "attribute_name": "day_p_treat",
+            "content": "0"
+          },
+          {
+            "attribute_name": "ants",
+            "content": "+"
+          },
+          {
+            "attribute_name": "sample_type",
+            "display_name": "sample type",
+            "harmonized_name": "sample_type",
+            "content": "fungus garden"
+          }
+        ]
+      },
+      "accession": "SAMN19993849",
+      "submission_date": "2021-07-01T16:38:36.473Z",
+      "last_update": "2021-07-02T01:28:33.29Z",
+      "publication_date": "2021-07-01T00:00:00Z",
+      "Ids": {
+        "Id": [
+          {
+            "is_primary": "1",
+            "db": "BioSample",
+            "content": "SAMN19993849"
+          },
+          {
+            "db_label": "Sample name",
+            "content": "JKC00150"
+          },
+          {
+            "db": "SRA",
+            "content": "SRS9365947"
+          }
+        ]
+      },
+      "Links": {
+        "Link": [
+          {
+            "label": "PRJNA743045",
+            "type": "entrez",
+            "content": "743045",
+            "target": "bioproject"
+          }
+        ]
+      },
+      "Models": {
+        "Model": [
+          {
+            "content": "MIMARKS.survey"
+          },
+          {
+            "content": "MIGS/MIMS/MIMARKS.host-associated"
+          }
+        ]
+      },
+      "Package": {
+        "display_name": "MIMARKS: survey, host-associated; version 5.0"
+      }
+    },
+    "sameAs": [
+      {
+        "identifier": "SRS9365947",
+        "type": "sra-sample",
+        "url": "https://ddbj.nig.ac.jp/resource/sra-sample/SRS9365947"
+      }
+    ],
+    "status": "public",
+    "model": [
+      {
+        "name": "MIMARKS.survey"
+      },
+      {
+        "name": "MIGS/MIMS/MIMARKS.host-associated"
+      }
+    ],
+    "Package": {
+      "display_name": "MIMARKS: survey, host-associated; version 5.0"
+    },
+    "attribute": [
+      {
+        "attribute_name": "collection_date",
+        "display_name": "collection date",
+        "harmonized_name": "collection_date",
+        "content": "2018-07-30"
+      },
+      {
+        "attribute_name": "env_broad_scale",
+        "display_name": "broad-scale environmental context",
+        "harmonized_name": "env_broad_scale",
+        "content": "laboratory environment [ENVO:01001405]|environmental system determined by an organism [ENVO:01001000]|fungi-associated environment [ENVO:01001041]|temperate savanna biome [ENVO:01000189]"
+      },
+      {
+        "attribute_name": "env_local_scale",
+        "display_name": "local-scale environmental context",
+        "harmonized_name": "env_local_scale",
+        "content": "laboratory environment [ENVO:01001405]|environmental system determined by an organism [ENVO:01001000]|fungi-associated environment [ENVO:01001041]|temperate savanna biome [ENVO:01000189]"
+      },
+      {
+        "attribute_name": "env_medium",
+        "display_name": "environmental medium",
+        "harmonized_name": "env_medium",
+        "content": "air [ENVO:00002005]|humid air [ENVO:01000828]"
+      },
+      {
+        "attribute_name": "geo_loc_name",
+        "display_name": "geographic location",
+        "harmonized_name": "geo_loc_name",
+        "content": "USA:New Jersey,Wharton State Forest,Batona Field"
+      },
+      {
+        "attribute_name": "host",
+        "display_name": "host",
+        "harmonized_name": "host",
+        "content": "Trachymyrmex septentrionalis"
+      },
+      {
+        "attribute_name": "lat_lon",
+        "display_name": "latitude and longitude",
+        "harmonized_name": "lat_lon",
+        "content": "39.78 N 74.63 W"
+      },
+      {
+        "attribute_name": "treatment",
+        "display_name": "treatment",
+        "harmonized_name": "treatment",
+        "content": "PBS"
+      },
+      {
+        "attribute_name": "replicate",
+        "content": "r1"
+      },
+      {
+        "attribute_name": "day_p_treat",
+        "content": "0"
+      },
+      {
+        "attribute_name": "ants",
+        "content": "+"
+      },
+      {
+        "attribute_name": "sample_type",
+        "display_name": "sample type",
+        "harmonized_name": "sample_type",
+        "content": "fungus garden"
+      }
+    ]
+  }

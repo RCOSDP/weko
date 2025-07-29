@@ -27,7 +27,7 @@ import xml.etree.ElementTree as ET
 from collections import OrderedDict
 
 import pytz
-from flask import current_app
+from flask import current_app, json, Flask
 from flask_security import current_user
 from invenio_i18n.ext import current_i18n
 from invenio_pidstore import current_pidstore
@@ -40,11 +40,13 @@ from lxml import etree
 from weko_admin import config as ad_config
 from weko_admin.models import SearchManagement as sm
 from weko_schema_ui.schema import SchemaTree
-
+from weko_authors.api import WekoAuthors
+from weko_authors.utils import update_data_for_weko_link
 from .api import ItemTypes, Mapping
 from .config import COPY_NEW_FIELD, WEKO_TEST_FIELD
+from sqlalchemy import null
 
-def get_author_link(author_link, value):
+def get_author_link(author_link, weko_link, value):
     """Get author link data."""
     if isinstance(value, list):
         for v in value:
@@ -55,7 +57,11 @@ def get_author_link(author_link, value):
                 and v["nameIdentifiers"][0]["nameIdentifierScheme"] == "WEKO"
                 and "nameIdentifier" in v["nameIdentifiers"][0]
             ):
-                author_link.append(v["nameIdentifiers"][0]["nameIdentifier"])
+                weko_id = v["nameIdentifiers"][0]["nameIdentifier"]
+                pk_id = WekoAuthors.get_pk_id_by_weko_id(weko_id)
+                if int(pk_id) > 0:
+                    author_link.append(pk_id)
+                    weko_link[str(pk_id)] = weko_id
     elif (
         isinstance(value, dict)
         and "nameIdentifiers" in value
@@ -64,7 +70,11 @@ def get_author_link(author_link, value):
         and value["nameIdentifiers"][0]["nameIdentifierScheme"] == "WEKO"
         and "nameIdentifier" in value["nameIdentifiers"][0]
     ):
-        author_link.append(value["nameIdentifiers"][0]["nameIdentifier"])
+        weko_id = value["nameIdentifiers"][0]["nameIdentifier"]
+        pk_id = WekoAuthors.get_pk_id_by_weko_id(weko_id)
+        if int(pk_id) > 0:
+            author_link.append(pk_id)
+            weko_link[str(pk_id)] = weko_id
 
 def json_loader(data, pid, owner_id=None, with_deleted=False, replace_field=True):
     """Convert the item data and mapping to jpcoar.
@@ -75,15 +85,15 @@ def json_loader(data, pid, owner_id=None, with_deleted=False, replace_field=True
     :return: dc, jrc, is_edit
     """
 
-    def _set_shared_id(data):
+    def _set_shared_ids(data):
         """set weko_shared_ids from shared_user_ids"""
-        if data.get("weko_shared_ids", []):
-            return dict(weko_shared_ids=data.get("shared_user_ids",[]))
-        else:
-            if not data.get("shared_user_ids", []):
-                return dict(weko_shared_ids=data.get("weko_shared_ids",[]))
-            else:
-                return dict(weko_shared_ids=data.get("shared_user_ids",[]))
+        weko_shared_ids = data.get("weko_shared_ids", [])
+        shared_user_ids = data.get("shared_user_ids", [])
+
+        return {
+            "weko_shared_ids": weko_shared_ids
+            if not shared_user_ids else shared_user_ids
+        }
 
     dc = OrderedDict()
     jpcoar = OrderedDict()
@@ -116,6 +126,7 @@ def json_loader(data, pid, owner_id=None, with_deleted=False, replace_field=True
     mp = mjson.dumps()
     data.get("$schema")
     author_link = []
+    weko_link= {}
     for k, v in data.items():
         if k == "$schema" or mp.get(k) is None:
             continue
@@ -161,14 +172,14 @@ def json_loader(data, pid, owner_id=None, with_deleted=False, replace_field=True
         if isinstance(v, list):
             if len(v) > 0 and isinstance(v[0], dict):
                 item["attribute_value_mlt"] = v
-                get_author_link(author_link, v)
+                get_author_link(author_link, weko_link, v)
             else:
                 item["attribute_value"] = v
         elif isinstance(v, dict):
             ar.append(v)
             item["attribute_value_mlt"] = ar
             ar = []
-            get_author_link(author_link, v)
+            get_author_link(author_link, weko_link, v)
         else:
             item["attribute_value"] = v
 
@@ -202,6 +213,7 @@ def json_loader(data, pid, owner_id=None, with_deleted=False, replace_field=True
         dc.update(dict(control_number=pid))
         dc.update(dict(author_link=author_link))
         dc.update(dict(weko_shared_ids=weko_shared_ids))
+        dc.update(dict(weko_link=weko_link))
 
         if COPY_NEW_FIELD:
             copy_field_test(dc, WEKO_TEST_FIELD, jrc)
@@ -250,6 +262,7 @@ def json_loader(data, pid, owner_id=None, with_deleted=False, replace_field=True
         jrc.update(dict(itemtype=ojson.model.item_type_name.name))
         jrc.update(dict(publish_date=pubdate))
         jrc.update(dict(author_link=author_link))
+        jrc.update(dict(weko_link=weko_link))
 
         # save items's creator to check permission
         if current_user and current_user.get_id() is not None:
@@ -265,13 +278,13 @@ def json_loader(data, pid, owner_id=None, with_deleted=False, replace_field=True
         else:
             # just allow owner update shared_user_ids
             jrc.update(dict(weko_creator_id=jrc_weko_creator_id))
-        jrc.update(_set_shared_id(data))
+        jrc.update(_set_shared_ids(data))
         if owner_id:
             jrc.update(dict(owner=int(owner_id)))
             jrc.update(dict(owners=[int(owner_id)]))
 
         # dc js saved on postgresql
-        dc.update(_set_shared_id(data))
+        dc.update(_set_shared_ids(data))
         if not owner_id:
             dc.update(dict(owner=int(current_user_id)))
             dc.update(dict(owners=[int(current_user_id)]))
@@ -296,9 +309,18 @@ def copy_field_test(dc, map, jrc, iid=None):
                                 "id: {0} , inputType: {1}  , path: {2}".format(_id, _inputType,val['path'])
                             )
                             if _inputType == "text":
-                                txt = get_values_from_dict(
-                                    dc, val["path"], val["path_type"], iid
-                                )
+                                if val.get("condition_path") and val.get(
+                                    "condition_value"):
+                                    txt = get_values_from_dict_with_condition(
+                                        dc, val["path"], val["path_type"],
+                                        val["condition_path"],
+                                        val["condition_value"], iid
+                                    )
+                                else:
+                                    txt = get_values_from_dict(
+                                        dc, val["path"], val["path_type"], iid
+                                    )
+
                                 if txt:
                                     jrc[k_v.get("id")] = txt
                             elif _inputType == "range":
@@ -493,16 +515,20 @@ def makeDateRangeValue(start, end):
     b = None
     if p2.match(start):
         _s = start.split('-')
-        _e = end.split('-')
         a = time.strptime('{:0>4}-{}-{}'.format(_s[0], _s[1], _s[2]), "%Y-%m-%d")
-        b = time.strptime('{:0>4}-{}-{}'.format(_e[0], _e[1], _e[2]), "%Y-%m-%d")
     elif p3.match(start):
         _s = start.split('-')
-        _e = end.split('-')
         a = time.strptime('{:0>4}-{}'.format(_s[0], _s[1]), "%Y-%m")
-        b = time.strptime('{:0>4}-{}'.format(_e[0], _e[1]), "%Y-%m")
     elif p4.match(start):
         a = time.strptime('{:0>4}'.format(start), "%Y")
+
+    if p2.match(end):
+        _e = end.split('-')
+        b = time.strptime('{:0>4}-{}-{}'.format(_e[0], _e[1], _e[2]), "%Y-%m-%d")
+    elif p3.match(end):
+        _e = end.split('-')
+        b = time.strptime('{:0>4}-{}'.format(_e[0], _e[1]), "%Y-%m")
+    elif p4.match(end):
         b = time.strptime('{:0>4}'.format(end), "%Y")
 
     if a is not None and b is not None:
@@ -532,6 +558,54 @@ def get_values_from_dict(dc, path, path_type, iid=None):
         ret = copy_values_json_path(dc, path)
 
     current_app.logger.debug("get_values_from_dict: {0}".format(ret))
+    return ret
+
+
+def get_values_from_dict_with_condition(dc, path, path_type, condition_path,
+                                        condition_value, iid=None):
+    """Extracts the values to be used in the advanced search according to the
+    conditions.
+
+    The difference between this function and get_values_from_dict() is that it
+    does not extract values unless the specified conditions are met.
+
+    The condition is judged by extracting the value specified in condition_path
+    for the metadata defined in dc, and then judging whether the value matches
+    the condition_value.
+
+    Args:
+        dc: Item metadata.
+        path: Path to the value to be extracted.
+        path_type: json or xml.
+        condition_path: Path to the value that is the extraction condition
+        condition_value: Condition-determining value.
+        iid: Oai id.
+    Return:
+        Value used in detail search.
+    """
+    ret = None
+
+    if path_type == "xml":
+        ret = copy_value_xml_path(dc, path, iid)
+    elif path_type == "json":
+        path_tmps = path.split('.')
+        cpath_tmps = condition_path.split('.')
+        common_path = None
+        for index, tmp in enumerate(path_tmps):
+            if len(cpath_tmps) > index and tmp == cpath_tmps[index]:
+                common_path = '.'.join(path_tmps[0:index + 1])
+        if common_path:
+            vpath = path.split(common_path + '.')[1]
+            cpath = condition_path.split(common_path + '.')[1]
+            ret = []
+            matches = parse(common_path).find(dc)
+            for match in matches:
+                cval = copy_value_json_path(match, cpath)
+                if condition_value == cval:
+                    ret += copy_values_json_path(match, vpath)
+            if not ret:
+                ret = None
+
     return ret
 
 
@@ -771,8 +845,8 @@ def get_all_items2(nlst, klst):
     :param nlst:
     :param klst:
     :return: alst
-    
-    :note 
+
+    :note
     """
     alst = []
 
@@ -786,7 +860,7 @@ def get_all_items2(nlst, klst):
         elif isinstance(nlst, list):
             for ix,lst in enumerate(nlst):
                 get_items(lst)
-    
+
     def get_items2(nlst):
         ret = []
         if isinstance(nlst, dict):
@@ -801,7 +875,7 @@ def get_all_items2(nlst, klst):
                 tmp = get_items2(lst)
                 ret.append(tmp)
         return ret
-                        
+
     to_orderdict(nlst, klst, True)
     get_items(nlst)
     return alst
@@ -868,7 +942,7 @@ async def sort_meta_data_by_options(
     :param settings:
     :param item_type_data:
     """
-    
+
     from weko_deposit.api import _FormatSysBibliographicInformation
     from weko_records_ui.permissions import check_file_download_permission
     from weko_records_ui.utils import hide_item_metadata
@@ -910,7 +984,7 @@ async def sort_meta_data_by_options(
                     result.append(",".join(value))
                 else:
                     result[-1] += "," + ",".join(value)
-        
+
         return result
 
     def data_comment(result, data_result, stt_key, is_specify_newline_array):
@@ -1080,17 +1154,17 @@ async def sort_meta_data_by_options(
                 data_result, stt_key = get_value_and_lang_by_key(
                     s["key"], solst_dict_array, data_result, stt_key
                 )
-                
+
                 is_specify_newline_array.append({s["key"]: is_specify_newline})
 
         if len(data_result) > 0:
             result = data_comment(
                 result, data_result, stt_key, is_specify_newline_array
             )
-        
+
         return result
 
-    
+
     def get_value_by_selected_language(values,lang_key,current_lang):
         dict = convert_array_to_dict(values,lang_key)
         if dict.get(current_lang):
@@ -1099,7 +1173,7 @@ async def sort_meta_data_by_options(
             return dict.get("None")
         elif dict.get("en"):
             return dict.get("en")
-  
+
     def get_creator_comments(key,meta_options,creators,is_hide_email):
         """
         TODO: affiliationは未実装
@@ -1112,112 +1186,116 @@ async def sort_meta_data_by_options(
             if creator.get("creatorMails"):
                 opt = dict["{}.{}".format(key,"creatorMails")]
                 if opt.get('option'):
-                    _opt = opt.get('option')    
+                    _opt = opt.get('option')
                     if (_opt.get('hide') | _opt.get('non_display')|is_hide_email):
                         creator.pop("creatorMails")
                 opt = dict["{}.{}.{}".format(key,"creatorMails","creatorMail")]
                 if opt.get('option'):
-                    _opt = opt.get('option')    
+                    _opt = opt.get('option')
                     if (_opt.get('hide') | _opt.get('non_display')|is_hide_email):
                         if creator.get("creatorMails"):
                             creator.pop("creatorMails")
-            
+
             if creator.get("familyNames"):
                 opt = dict["{}.{}".format(key,"familyNames")]
                 if opt.get('option'):
-                    _opt = opt.get('option')    
+                    _opt = opt.get('option')
                     if (_opt.get('hide') | _opt.get('non_display')):
                         creator.pop("familyNames")
                     else:
                         creator["familyNames"] = get_value_by_selected_language(creator["familyNames"],"familyNameLang",current_lang)
+                        if not creator["familyNames"]:
+                            creator.pop("familyNames")
                 opt = dict["{}.{}.{}".format(key,"familyNames","familyName")]
                 if opt.get('option'):
-                    _opt = opt.get('option')    
+                    _opt = opt.get('option')
                     if (_opt.get('hide') | _opt.get('non_display')):
                         if creator.get("familyNames"):
                             creator.pop("familyNames")
-                        
+
             if creator.get("creatorNames"):
                 opt = dict["{}.{}".format(key,"creatorNames")]
                 if opt.get('option'):
-                    _opt = opt.get('option')    
+                    _opt = opt.get('option')
                     if (_opt.get('hide') | _opt.get('non_display')):
                         creator.pop("creatorNames")
                     else:
                         creator["creatorNames"] = get_value_by_selected_language(creator["creatorNames"],"creatorNameLang",current_lang)
-                
+                        if not creator["creatorNames"]:
+                            creator.pop("creatorNames")
+
                 opt = dict["{}.{}.{}".format(key,"creatorNames","creatorName")]
                 if opt.get('option'):
-                    _opt = opt.get('option')    
+                    _opt = opt.get('option')
                     if (_opt.get('hide') | _opt.get('non_display')):
                         if creator.get("creatorNames"):
                             creator.pop("creatorNames")
-            
+
             if creator.get("givenNames"):
                 opt = dict["{}.{}".format(key,"givenNames")]
                 if opt.get('option'):
-                    _opt = opt.get('option')    
+                    _opt = opt.get('option')
                     if (_opt.get('hide') | _opt.get('non_display')):
                         creator.pop("givenNames")
                     else:
                         creator["givenNames"] = get_value_by_selected_language(creator["givenNames"],"givenNameLang",current_lang)
+                        if not creator["givenNames"]:
+                            creator.pop("givenNames")
                 opt = dict["{}.{}.{}".format(key,"givenNames","givenName")]
                 if opt.get('option'):
-                    _opt = opt.get('option')    
+                    _opt = opt.get('option')
                     if (_opt.get('hide') | _opt.get('non_display')):
                         if creator.get("givenNames"):
                             creator.pop("givenNames")
-            
+
             if creator.get("nameIdentifiers"):
                 opt = dict["{}.{}".format(key,"nameIdentifiers")]
                 if opt.get('option'):
-                    _opt = opt.get('option')    
+                    _opt = opt.get('option')
                     if (_opt.get('hide') | _opt.get('non_display')):
                         creator.pop("nameIdentifiers")
                 opt = dict["{}.{}.{}".format(key,"nameIdentifiers","nameIdentifierScheme")]
                 if opt.get('option'):
-                    _opt = opt.get('option')    
+                    _opt = opt.get('option')
                     if (_opt.get('hide') | _opt.get('non_display')):
                         if creator.get("nameIdentifiers"):
                             creator.pop("nameIdentifiers")
-                        
+
                 opt = dict["{}.{}.{}".format(key,"nameIdentifiers","nameIdentifierURI")]
                 if opt.get('option'):
-                    _opt = opt.get('option')    
+                    _opt = opt.get('option')
                     if (_opt.get('hide') | _opt.get('non_display')):
                         if creator.get("nameIdentifiers"):
                             creator.pop("nameIdentifiers")
-                            
+
                 opt = dict["{}.{}.{}".format(key,"nameIdentifiers","nameIdentifier")]
                 if opt.get('option'):
-                    _opt = opt.get('option')    
+                    _opt = opt.get('option')
                     if (_opt.get('hide') | _opt.get('non_display')):
                         if creator.get("nameIdentifiers"):
-                            creator.pop("nameIdentifiers")        
+                            creator.pop("nameIdentifiers")
 
             if creator.get("creatorAffiliations"):
                 opt = dict["{}.{}".format(key,"creatorAffiliations")]
                 if opt.get('option'):
-                    _opt = opt.get('option')    
+                    _opt = opt.get('option')
                     if (_opt.get('hide') | _opt.get('non_display')):
                         creator.pop("creatorAffiliations")
-            
+
             if creator.get("affiliationNameIdentifiers"):
                 opt = dict["{}.{}".format(key,"affiliationNameIdentifiers")]
                 if opt.get('option'):
-                    _opt = opt.get('option')    
+                    _opt = opt.get('option')
                     if (_opt.get('hide') | _opt.get('non_display')):
                         creator.pop("affiliationNameIdentifiers")
-        
+
             # current_app.logger.error("creator:{}".format(creator))
-            ret.append(creator)
-                    
+            if creator:
+                ret.append(creator)
+
         return ret
-                
-            
-            
-        
-    
+
+
     def get_file_comments(record, files):
         """Check and get file info."""
 
@@ -1225,6 +1303,7 @@ async def sort_meta_data_by_options(
             _label = f.get("url", {}).get("label")
             _filename = f.get("filename", "")
             _extension = ""
+            _date = f.get("date", "")
             if not _label and not f.get("version_id"):
                 _label = f.get("url", {}).get("url", "")
             elif not _label:
@@ -1232,21 +1311,35 @@ async def sort_meta_data_by_options(
             if f.get("version_id"):
                 _idx = _filename.rfind(".") + 1
                 _extension = _filename[_idx:] if _idx > 0 else "unknown"
-            return _label, _extension
+            return _label, _extension, _date
 
         result = []
         for f in files:
-            label, extension = __get_label_extension()
+            label, extension, date = __get_label_extension()
             if "open_restricted" == f.get("accessrole", ""):
                 if label:
-                    result.append({"label": label, "extention": extension, "url": ""})
+                    result.append(
+                        {
+                            "label": label,
+                            "extention": extension,
+                            "url": "",
+                            "date": date
+                        }
+                    )
             elif label and (
                 not extension or check_file_download_permission(record, f, False)
             ):
                 file_url = f.get("url", {}).get("url", "")
                 if extension and file_url:
                     file_url = replace_fqdn(file_url)
-                result.append({"label": label, "extention": extension, "url": file_url})
+                result.append(
+                    {
+                        "label": label,
+                        "extention": extension,
+                        "url": file_url,
+                        "date": date
+                    }
+                )
         return result
 
     def get_file_thumbnail(thumbnails):
@@ -1262,6 +1355,115 @@ async def sort_meta_data_by_options(
                     ],
                 }
         return thumbnail
+
+    def get_description(description):
+        """Get reference."""
+        result = []
+        current_lang = current_i18n.language
+        if description and len(description) > 0:
+            description = [
+                get_value_by_selected_language(
+                    description,
+                    "subitem_description_language",
+                    current_lang
+                    )
+            ]
+            for des in description:
+                subitem_description = des.get("subitem_description")
+                subitem_description_type = des.get("subitem_description_type")
+                subitem_description_language = des.get("subitem_description_language")
+
+                description_json = {}
+                if subitem_description:
+                    description_json["subitem_description"] = \
+                        subitem_description
+                if subitem_description_type:
+                    description_json["subitem_description_type"] = \
+                        subitem_description_type
+                if subitem_description_language:
+                    description_json["subitem_description_language"] = \
+                        subitem_description_language
+                if any(description_json):
+                    result.append(description_json)
+        return result
+
+    def get_reference(reference):
+        """Get reference."""
+        result = []
+        current_lang = current_i18n.language
+        if reference and len(reference) > 0:
+            for ref in reference:
+                subitem_relation_name_array = []
+                subitem_relation_name = ref.get("subitem_relation_name")
+                if subitem_relation_name and len(subitem_relation_name) > 0:
+                    subitem_relation_name_json = {}
+                    subitem_relation_name = [
+                        get_value_by_selected_language(
+                            subitem_relation_name,
+                            "subitem_relation_name_language",
+                            current_lang
+                        )
+                    ]
+                    for relation_name in subitem_relation_name:
+                        subitem_relation_name_json = {
+                            "subitem_relation_name_text":
+                                relation_name.get(
+                                    "subitem_relation_name_text",
+                                    ""
+                                ),
+                            "subitem_relation_name_language":
+                                relation_name.get(
+                                    "subitem_relation_name_language",
+                                    ""
+                                )
+                        }
+                        subitem_relation_name_array.append(subitem_relation_name_json)
+
+                subitem_relation_type = ref.get("subitem_relation_type")
+
+                subitem_relation_type_id_json = {}
+                subitem_relation_type_id = ref.get("subitem_relation_type_id")
+                if subitem_relation_type_id and len(subitem_relation_type_id) > 0:
+                    subitem_relation_type_id_json = {
+                        "subitem_relation_type_select":
+                            subitem_relation_type_id.get(
+                                "subitem_relation_type_select",
+                                ""
+                            ),
+                        "subitem_relation_type_id_text":
+                            subitem_relation_type_id.get(
+                                "subitem_relation_type_id_text",
+                                ""
+                            )
+                    }
+
+                reference_json = {}
+                if len(subitem_relation_name_array) > 0:
+                    reference_json["subitem_relation_name"] = subitem_relation_name_array
+                if subitem_relation_type:
+                    reference_json["subitem_relation_type"] = subitem_relation_type
+                if any(subitem_relation_type_id_json):
+                    reference_json["subitem_relation_type_id"] = subitem_relation_type_id_json
+                if any(reference_json):
+                    result.append(reference_json)
+        return result
+
+    def get_date(date):
+        """Get date."""
+        result = []
+        if date and len(date) > 0:
+            for d in date:
+                subitem_date_issued_type = d.get("subitem_date_issued_type")
+                subitem_date_issued_datetime = d.get("subitem_date_issued_datetime")
+
+                date_json = {}
+                if subitem_date_issued_type:
+                    date_json["subitem_date_issued_type"] = subitem_date_issued_type
+                if subitem_date_issued_datetime:
+                    date_json["subitem_date_issued_datetime"] = subitem_date_issued_datetime
+                if any(date_json):
+                    result.append(date_json)
+        return result
 
     def append_parent_key(key, attribute_value_mlt):
         """Update parent key attribute_value_mlt."""
@@ -1350,7 +1552,7 @@ async def sort_meta_data_by_options(
         item_type_id = record_hit["_source"].get("item_type_id") or src.get(
             "item_type_id"
         )
-        
+
         # selected title
         from weko_items_ui.utils import get_hide_list_by_schema_form
 
@@ -1401,16 +1603,34 @@ async def sort_meta_data_by_options(
         files_info = []
         creator_info = None
         thumbnail = None
+        description = None
+        reference = None
+        date = None
         hide_item_metadata(src, settings, item_type_data)
         # Set value and parent option
+        pattern_description = r'(item_\d+)_description(\d+)$'
+        show_description = False
+        pattern_file = r'(item_\d+)_file(\d+)$'
+        show_file = False
+        pattern_relation = r'(item_\d+)_relation(\d+)$'
+        show_reference = False
         for lst in solst:
             key = lst[0]
             val = src.get(key)
             option = meta_options.get(key, {}).get("option")
+
+            # Set show Tab area
+            if re.match(pattern_description, key) and option:
+                show_description = not option.get("hidden") and option.get("showlist")
+            if re.match(pattern_file, key) and option:
+                show_file = not option.get("hidden") and option.get("showlist")
+            if re.match(pattern_relation, key) and option:
+                show_reference = not option.get("hidden") and option.get("showlist")
+
             if not val or not option:
                 continue
             mlt = val.get("attribute_value_mlt", [])
-            
+
             if mlt:
                 if (
                     val.get("attribute_type", "") == "file"
@@ -1423,8 +1643,32 @@ async def sort_meta_data_by_options(
                 if is_thumbnail and not option.get("hidden") and option.get("showlist"):
                     thumbnail = get_file_thumbnail(mlt)
                     continue
-                
-                
+
+                is_description = any("subitem_description" in data for data in mlt)
+                if is_description == False:
+                    is_description = any("subitem_description_type" in data for data in mlt)
+                    if is_description == False:
+                        is_description = any("subitem_description_language" in data for data in mlt)
+                if is_description and not option.get("hidden") and option.get("showlist"):
+                    description = get_description(mlt)
+                    continue
+
+                is_reference = any("subitem_relation_name" in data for data in mlt)
+                if is_reference == False:
+                    is_reference = any("subitem_relation_type" in data for data in mlt)
+                    if is_reference == False:
+                        is_reference = any("subitem_relation_type_id" in data for data in mlt)
+                if is_reference and not option.get("hidden") and option.get("showlist"):
+                    reference = get_reference(mlt)
+                    continue
+
+                is_date = any("subitem_date_issued_type" in data for data in mlt)
+                if is_date == False:
+                    is_date = any("subitem_date_issued_datetime" in data for data in mlt)
+                if is_date and not option.get("hidden") and option.get("showlist"):
+                    date = get_date(mlt)
+                    continue
+
                 if (
                     val.get("attribute_type", "") == "creator"
                     and not option.get("hidden")
@@ -1433,13 +1677,13 @@ async def sort_meta_data_by_options(
                     is_hide_email = not settings.items_display_email
                     creator_info = get_creator_comments(key,solst_dict_array,mlt,is_hide_email)
                     continue
-                
+
                 mlt = append_parent_key(key, mlt)
                 meta_data = get_all_items2(mlt, solst)
                 for m in meta_data:
                     for s in solst_dict_array:
                         s_key = s.get("key")
-                        
+
                         tmp = m.get(s_key)
                         if tmp:
                             s["value"] = (
@@ -1460,7 +1704,7 @@ async def sort_meta_data_by_options(
                                 "hide": option.get("hidden"),
                             }
                             break
-        
+
         # Format data to display on item list
         items = get_comment(
             solst_dict_array,
@@ -1469,7 +1713,7 @@ async def sort_meta_data_by_options(
             src_default,
             solst,
         )
-        
+
         if "file" in record_hit["_source"]:
             record_hit["_source"].pop("file")
 
@@ -1486,8 +1730,17 @@ async def sort_meta_data_by_options(
             record_hit["_source"]["_files_info"] = files_info
         if thumbnail:
             record_hit["_source"]["_thumbnail"] = thumbnail
+        if description:
+            record_hit["_source"]["_description"] = description
+        if reference:
+            record_hit["_source"]["_reference"] = reference
+        if date:
+            record_hit["_source"]["_date"] = date
         if creator_info:
             record_hit["_source"]["_creator_info"] = creator_info
+        record_hit["_source"]["_show_description"] = show_description
+        record_hit["_source"]["_show_file"] = show_file
+        record_hit["_source"]["_show_reference"] = show_reference
     except Exception:
         current_app.logger.exception(
             "Record serialization failed {}.".format(
@@ -1508,7 +1761,7 @@ def convert_array_to_dict(solst_dict_array,key):
             dict['None'] = item
         idx=idx+1
     return dict
-    
+
 
 def get_keywords_data_load(str):
     """Get a json of item type info.
@@ -2039,7 +2292,7 @@ def selected_value_by_language(
 
                     if len(value_array)>len(lang_array): # First title without language code
                         result = check_info_in_metadata(lang_key, val_key, None, _item_metadata)
-                    
+
                     if not result and "ja-Latn" in lang_array:  # ja_Latn
                         value = check_info_in_metadata(
                             lang_key, val_key, "ja-Latn", _item_metadata
@@ -2137,7 +2390,7 @@ def check_info_in_metadata(str_key_lang, str_key_val, str_lang, metadata):
                     for x in save:
                         if x.get(ob):
                             save = x.get(ob)
-            
+
             if isinstance(save, list):
                 for s in save:
                     if s is not None and str_lang is None:
@@ -2148,9 +2401,9 @@ def check_info_in_metadata(str_key_lang, str_key_val, str_lang, metadata):
                                 value.strip()
                                 if len(value) > 0:
                                     return value
-                    
+
                     if (
-                        s and str_key_lang 
+                        s and str_key_lang
                         and isinstance(s, dict)
                         and s.get(str_key_lang[-1])
                         and s.get(str_key_val[-1])
@@ -2257,10 +2510,10 @@ def get_value_by_selected_lang(source_title, current_lang):
 
     if len(title_data_langs_none)>0:
         source = list(source_title.values())[0]
-        target = list(title_data_langs_none[0].values())[0] 
+        target = list(title_data_langs_none[0].values())[0]
         if source==target:
             return target
-        
+
     if value_latn:
         return value_latn
 

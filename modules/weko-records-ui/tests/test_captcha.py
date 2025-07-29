@@ -30,7 +30,7 @@ def test_create_captcha_image(mocker):
 def test_generate_image(mocker):
     imagechan = ImageCaptchaEx(width=360, height=78)
     chars = "1a2b+4c5"
-    with mocker.patch("weko_records_ui.captcha.random.random", return_value=0.7):
+    with patch("weko_records_ui.captcha.random.random", return_value=0.7):
         assert  type(Image()) == type(imagechan.generate_image(chars))
 
 counter = 0

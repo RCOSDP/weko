@@ -37,6 +37,8 @@ from weko_groups.widgets import RadioGroupWidget
 from weko_records.models import ItemType
 from invenio_files_rest.models import Location
 
+from .config import WEKO_WORKFLOW_REGISTRATION_FLOW_TYPE
+
 
 class ActionStatusPolicy(object):
     """Action status policies."""
@@ -502,6 +504,14 @@ class FlowDefine(db.Model, TimestampMixin):
     is_deleted = db.Column(db.Boolean(name='is_deleted'), nullable=False, default=False)
     """flow define delete flag."""
 
+    repository_id = db.Column(db.String(100), nullable=False, default="Root Index")
+    """the repository id of flow."""
+
+    flow_type = db.Column(
+        db.SmallInteger(), nullable=False, default=WEKO_WORKFLOW_REGISTRATION_FLOW_TYPE
+    )
+    """flow type. 1: for registration, 2: for deletion."""
+
 
 class FlowAction(db.Model, TimestampMixin):
     """Action list belong to Flow."""
@@ -663,8 +673,23 @@ class WorkFlow(db.Model, TimestampMixin):
 
     flow_define = db.relationship(
         FlowDefine,
-        backref=db.backref('workflow', lazy='dynamic')
+        primaryjoin="WorkFlow.flow_id == FlowDefine.id",
+        foreign_keys=[flow_id],
+        backref=db.backref('workflows', lazy='dynamic')
     )
+    """Flow define relationship for register flow."""
+
+    delete_flow_id = db.Column(db.Integer(), db.ForeignKey(FlowDefine.id),
+                        nullable=True, default=None, unique=False)
+    """the id of delete flow."""
+
+    delete_flow_define = db.relationship(
+        FlowDefine,
+        primaryjoin="WorkFlow.delete_flow_id == FlowDefine.id",
+        foreign_keys=[delete_flow_id],
+        backref=db.backref('delete_workflows', lazy='dynamic')
+    )
+    """Flow define relationship for delete flow."""
 
     is_deleted = db.Column(db.Boolean(name='is_deleted'), nullable=False, default=False)
     """workflow delete flag."""
@@ -680,9 +705,12 @@ class WorkFlow(db.Model, TimestampMixin):
         Location,
         backref=db.backref('workflow', lazy='dynamic')
     )
-    
+
     is_gakuninrdm = db.Column(db.Boolean(name='is_gakuninrdm'), nullable=False, default=False)
     """GakuninRDM flag."""
+
+    repository_id = db.Column(db.String(100), nullable=False, default="Root Index")
+    """the repository id of workflow."""
 
 
 class Activity(db.Model, TimestampMixin):
@@ -958,6 +986,49 @@ class ActionJournal(db.Model, TimestampMixin):
     )
     """Action journal info."""
 
+class ActivityRequestMail(db.Model, TimestampMixin):
+    """Define action identifier info."""
+
+    __tablename__ = 'workflow_activity_request_mail'
+
+    id = db.Column(
+        db.Integer(),
+        nullable=False,
+        primary_key=True,
+        autoincrement=True
+    )
+    """ActivityRequestMail identifier."""
+
+    activity_id = db.Column(
+        db.String(24),
+        nullable=False,
+        unique=False,
+        index=True
+    )
+    """Activity id of Activity Action."""
+
+    display_request_button = db.Column(
+        db.Boolean(name='display_request_button'),
+        nullable=False,
+        default=False,
+        server_default='0')
+    """If set to True, enable request mail """
+
+    request_maillist = db.Column(
+        db.JSON().with_variant(
+            postgresql.JSONB(none_as_null=True),
+            'postgresql',
+        ).with_variant(
+            JSONType(),
+            'sqlite',
+        ).with_variant(
+            JSONType(),
+            'mysql',
+        ),
+        default=lambda: dict(),
+        nullable=True
+    )
+    """Request mail address list."""
 
 class ActionIdentifier(db.Model, TimestampMixin):
     """Define action identifier info."""

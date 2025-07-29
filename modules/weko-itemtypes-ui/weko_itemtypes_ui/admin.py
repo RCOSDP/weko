@@ -24,35 +24,44 @@ import sys
 import io
 import traceback
 
-from flask import abort, current_app, flash, json, jsonify, redirect, \
-    request, session, url_for, make_response, send_file
+from flask import (
+    abort, current_app, flash, json, jsonify, redirect,
+    request, session, url_for, send_file
+)
 from sqlalchemy.sql.expression import null
 from flask_admin import BaseView, expose
 from flask_babelex import gettext as _
 from flask_login import current_user
+from zipfile import ZipFile, ZIP_DEFLATED
+from marshmallow_sqlalchemy import SQLAlchemyAutoSchema
+
 from invenio_db import db
 from invenio_i18n.ext import current_i18n
-from weko_admin.models import AdminSettings, BillingPermission
-from weko_records.api import ItemsMetadata, ItemTypeEditHistory, \
-    ItemTypeNames, ItemTypeProps, ItemTypes, Mapping
+from weko_admin.models import AdminSettings, BillingPermission, AdminLangSettings
+from weko_logging.activity_logger import UserActivityLogger
+from weko_records.api import (
+    ItemsMetadata, ItemTypeEditHistory, ItemTypeNames,
+    ItemTypeProps, ItemTypes, JsonldMapping, Mapping
+)
+from weko_records.models import ItemType, ItemTypeName, ItemTypeMapping, ItemTypeProperty
 from weko_records.serializers.utils import get_mapping_inactive_show_list
+from weko_records_ui.models import RocrateMapping
 from weko_schema_ui.api import WekoSchema
 from weko_search_ui.utils import get_key_by_property
 from weko_search_ui.tasks import is_import_running
+from weko_swordserver.api import SwordClient
 from weko_workflow.api import WorkFlow
 
-from .config import WEKO_BILLING_FILE_ACCESS, WEKO_BILLING_FILE_PROP_ATT, \
+from .config import (
+    WEKO_BILLING_FILE_ACCESS, WEKO_BILLING_FILE_PROP_ATT,
     WEKO_ITEMTYPES_UI_DEFAULT_PROPERTIES_ATT
+)
 from .permissions import item_type_permission
-from .utils import check_duplicate_mapping, fix_json_schema, \
-    has_system_admin_access, remove_xsd_prefix, \
+from .utils import (
+    check_duplicate_mapping, fix_json_schema,
+    has_system_admin_access, remove_xsd_prefix,
     update_required_schema_not_exist_in_form, update_text_and_textarea
-from zipfile import ZipFile, ZIP_DEFLATED
-from marshmallow import fields, missing, post_dump, Schema
-from weko_records.models import ItemType, ItemTypeName, ItemTypeMapping, ItemTypeProperty
-from flask_marshmallow import Marshmallow, sqla
-from marshmallow_sqlalchemy import ModelSchema, SQLAlchemyAutoSchema
-from invenio_files_rest.models import FileInstance
+)
 
 class ItemTypeMetaDataView(BaseView):
     """ItemTypeMetaDataView."""
@@ -123,26 +132,39 @@ class ItemTypeMetaDataView(BaseView):
         if check == "is_import_running":
             flash(_('Item type cannot be deleted becase import is in progress.'), 'error')
             return jsonify(code=-1)
-        
+
         if item_type_id > 0:
             record = ItemTypes.get_record(id_=item_type_id)
             if record is not None:
                 # Check harvesting_type
                 if record.model.harvesting_type:
-                    flash(_('Cannot delete Item type for Harvesting.'),
-                          'error')
+                    flash(_('Cannot delete Item type for Harvesting.'), 'error')
                     return jsonify(code=-1)
                 # Get all versions
                 all_records = ItemTypes.get_records_by_name_id(
-                    name_id=record.model.name_id)
+                    name_id=record.model.name_id
+                )
                 # Check that item type is already registered to an item or not
                 for item in all_records:
                     items = ItemsMetadata.get_registered_item_metadata(
                         item_type_id=item.id)
                     if len(items) > 0:
-                        flash(_('Cannot delete due to child'
-                                ' existing item types.'), 'error')
+                        flash(
+                            _('Cannot delete due to child existing item types.'),
+                            'error'
+                        )
                         return jsonify(code=-1)
+                # Check that item type is used SWORD API
+                jsonld_mappings = JsonldMapping.get_by_itemtype_id(item_type_id)
+                for jsonld_mapping in jsonld_mappings:
+                    if SwordClient.get_clients_by_mapping_id(jsonld_mapping.id):
+                        current_app.logger.info("Item type is used SWORD API.")
+                        flash(
+                            _('Cannot delete due to SWORD API is using this item types.'),
+                            'error'
+                        )
+                        return jsonify(code=-1)
+
                 # Get item type name
                 item_type_name = ItemTypeNames.get_record(
                     id_=record.model.name_id)
@@ -154,20 +176,51 @@ class ItemTypeMetaDataView(BaseView):
                         for k in all_records:
                             k.delete()
                         db.session.commit()
-                    except BaseException:
+                        current_app.logger.info(
+                            f"Item type deleted: {item_type_name.name}"
+                        )
+                    except Exception:
                         db.session.rollback()
+                        exec_info = sys.exc_info()
+                        tb_info = traceback.format_tb(exec_info[2])
                         current_app.logger.error(
-                            "Unexpected error: {}".format(sys.exc_info()))
+                            "Unexpected error: {}".format(exec_info))
+                        UserActivityLogger.error(
+                            operation="ITEM_TYPE_DELETE",
+                            target_key=item_type_id,
+                            remarks=tb_info[0]
+                        )
+                        traceback.print_exc()
                         flash(_('Failed to delete Item type.'), 'error')
                         return jsonify(code=-1)
 
+                    for jsonld_mapping in jsonld_mappings:
+                        try:
+                            # Delete itemtype JOSN-LD mapping
+                            JsonldMapping.delete(jsonld_mapping.id)
+                            db.session.commit()
+                            current_app.logger.info(
+                                f"JSON-LD mapping deleted: {jsonld_mapping.name}"
+                            )
+                        except Exception:
+                            db.session.rollback()
+                            current_app.logger.error(
+                                "Failed to delete Item type JSON-LD mapping: {}"
+                                .format(jsonld_mapping.name)
+                            )
+                            traceback.print_exc()
+
                     current_app.logger.debug(
                         'Itemtype delete: {}'.format(item_type_id))
+                    UserActivityLogger.info(
+                        operation="ITEM_TYPE_DELETE",
+                        target_key=item_type_id
+                    )
                     flash(_('Deleted Item type successfully.'))
                     return jsonify(code=0)
-
         flash(_('An error has occurred.'), 'error')
         return jsonify(code=-1)
+
 
     @expose('/register', methods=['POST'])
     @expose('/<int:item_type_id>/register', methods=['POST'])
@@ -209,7 +262,7 @@ class ItemTypeMetaDataView(BaseView):
             upgrade_version = current_app.config[
                 'WEKO_ITEMTYPES_UI_UPGRADE_VERSION_ENABLED'
             ]
-            
+
             if not upgrade_version:
                 Mapping.create(item_type_id=record.model.id,
                                mapping=table_row_map.get('mapping'))
@@ -228,10 +281,54 @@ class ItemTypeMetaDataView(BaseView):
                 user_id=current_user.get_id(),
                 notes=data.get('edit_notes', {})
             )
-            
+
             db.session.commit()
+            if item_type_id == 0:
+                UserActivityLogger.info(
+                    operation="ITEM_TYPE_CREATE",
+                    target_key=record.model.id
+                )
+            else:
+                UserActivityLogger.info(
+                    operation="ITEM_TYPE_UPDATE",
+                    target_key=item_type_id
+                )
+            # log item type mapping and workflow
+            if not upgrade_version or item_type_id != record.model.id:
+                UserActivityLogger.info(
+                    operation="ITEM_TYPE_MAPPING_CREATE",
+                    target_key=record.model.id
+                )
+            else:
+                UserActivityLogger.info(
+                    operation="ITEM_TYPE_MAPPING_UPDATE",
+                    target_key=item_type_id
+                )
+                workflow_list = WorkFlow().get_workflow_by_itemtype_id(item_type_id)
+                for wf in workflow_list:
+                    UserActivityLogger.info(
+                        operation="WORKFLOW_UPDATE",
+                        target_key=wf.id
+                    )
         except Exception as ex:
             db.session.rollback()
+            current_app.logger.error(
+                f"Failed to register item type: {item_type_id}"
+            )
+            traceback.print_exc()
+            exec_info = sys.exc_info()
+            tb_info = traceback.format_tb(exec_info[2])
+            if item_type_id != 0:
+                UserActivityLogger.error(
+                    operation="ITEM_TYPE_UPDATE",
+                    target_key=item_type_id,
+                    remarks=tb_info[0]
+                )
+            else:
+                UserActivityLogger.error(
+                    operation="ITEM_TYPE_CREATE",
+                    remarks=tb_info[0]
+                )
             default_msg = _('Failed to register Item type.')
             response = jsonify(msg='{} {}'.format(default_msg, str(ex)))
             response.status_code = 400
@@ -269,6 +366,7 @@ class ItemTypeMetaDataView(BaseView):
                         db.session.rollback()
                         current_app.logger.error(
                             "Unexpected error: {}".format(sys.exc_info()))
+                        traceback.print_exc()
                         return jsonify(code=-1,
                                        msg=_('Failed to restore Item type.'))
 
@@ -333,7 +431,7 @@ class ItemTypeMetaDataView(BaseView):
                         'value': 'datetime'}}
 
         return jsonify(lists)
-    
+
     @expose('/<int:item_type_id>/export', methods=['GET'])
     def export(self,item_type_id):
         item_types = ItemTypes.get_by_id(id_=item_type_id)
@@ -370,7 +468,7 @@ class ItemTypeMetaDataView(BaseView):
             attachment_filename ='ItemType_export.zip' ,
             as_attachment = True
         )
-    
+
     @expose('/import', methods=['POST'])
     @item_type_permission.require(http_exception=403)
     def item_type_import(self):
@@ -387,7 +485,12 @@ class ItemTypeMetaDataView(BaseView):
         if input_file.mimetype is None:
             current_app.logger.debug(input_file.mimetype)
             return jsonify(msg=_('Illegal mimetype Error'))
-        
+
+        # Issue log group ID
+        if not UserActivityLogger.issue_log_group_id(db.session):
+            current_app.logger.error('Failed to issue log group ID.')
+            return jsonify(msg=_('Failed to issue log group ID.'))
+
         try:
             readable_files = ["ItemType.json", "ItemTypeName.json", "ItemTypeMapping.json", "ItemTypeProperty.json"]
             import_data = {
@@ -418,17 +521,17 @@ class ItemTypeMetaDataView(BaseView):
                             elif file_name == "ItemTypeProperty.json":
                                 import_data["ItemTypeProperty"] = json_obj
                                 #print(json_obj)
-            
+
             # ZIPファイル内に規定のアイテムタイプデータが無ければエラー
             if import_data["ItemType"] is null or import_data["ItemTypeName"] is null or import_data["ItemTypeMapping"] is null or import_data["ItemTypeProperty"] is null :
                 raise ValueError('Zip file contents invalid.')
-            
-            
+
+
             json_schema = fix_json_schema(import_data["ItemType"].get('schema'))
             json_form = import_data["ItemType"].get('form')
             json_schema = update_required_schema_not_exist_in_form(
                 json_schema, json_form)
-            
+
             if not json_schema:
                 raise ValueError('Schema is in wrong format.')
 
@@ -451,8 +554,18 @@ class ItemTypeMetaDataView(BaseView):
             )
 
             db.session.commit()
+            UserActivityLogger.info(
+                operation="ITEM_TYPE_CREATE",
+                target_key=item_type_id
+            )
+            # log item type mapping and workflow
+            UserActivityLogger.info(
+                operation="ITEM_TYPE_MAPPING_CREATE",
+                target_key=item_type_id
+            )
         except Exception as ex:
             db.session.rollback()
+            traceback.print_exc()
             default_msg = _('Failed to import Item type.')
             response = jsonify(msg='{} {}'.format(default_msg, str(ex)))
             response.status_code = 400
@@ -466,7 +579,7 @@ class ItemTypeMetaDataView(BaseView):
 class ItemTypeSchema(SQLAlchemyAutoSchema):
     class Meta:
         model = ItemType
-        
+
 class ItemTypeNameSchema(SQLAlchemyAutoSchema):
     class Meta:
         model = ItemTypeName
@@ -488,7 +601,7 @@ class ItemTypePropertiesView(BaseView):
     def index(self, property_id=0):
         """Renders an primitive property view."""
         lists = ItemTypeProps.get_records([])
-        
+
         # remove default properties
         properties = lists.copy()
         defaults_property_ids = [prop.id for prop in lists if
@@ -714,10 +827,21 @@ class ItemTypeMappingView(BaseView):
             Mapping.create(item_type_id=data.get('item_type_id'),
                            mapping=data_mapping)
             db.session.commit()
+            UserActivityLogger.info(
+                operation="ITEM_TYPE_MAPPING_UPDATE",
+                target_key=data.get('item_type_id')
+            )
         except BaseException:
             db.session.rollback()
             current_app.logger.error(
                 "Unexpected error: {}".format(sys.exc_info()))
+            exec_info = sys.exc_info()
+            tb_info = traceback.format_tb(exec_info[2])
+            UserActivityLogger.error(
+                operation="ITEM_TYPE_MAPPING_UPDATE",
+                target_key=data.get('item_type_id'),
+                remarks=tb_info[0]
+            )
             return jsonify(msg=_('Unexpected error occurred.'))
         return jsonify(msg=_('Successfully saved new mapping.'))
 
@@ -736,6 +860,167 @@ class ItemTypeMappingView(BaseView):
             if jpcoar_xsd is not None:
                 jpcoar_lists[SchemaName] = json.loads(jpcoar_xsd.model.xsd)
         return jsonify(remove_xsd_prefix(jpcoar_lists))
+
+
+class ItemTypeRocrateMappingView(BaseView):
+    @expose('/', methods=['GET'])
+    @expose('/<int:item_type_id>', methods=['GET'])
+    @item_type_permission.require(http_exception=403)
+    def index(self, item_type_id=0):
+        """Renders an item type mapping view.
+
+        :param item_type_id: Item type ID. (Default: 0)
+        :return: The rendered template.
+        """
+        current_app.logger.info('ItemTypeID:{}'.format(item_type_id))
+        try:
+            item_type_names = ItemTypes.get_latest()  # ItemTypes.get_all()
+            if item_type_names is None or len(item_type_names) == 0:
+                return self.render(
+                    current_app.config['WEKO_ITEMTYPES_UI_ADMIN_ERROR_TEMPLATE']
+                )
+            item_type = ItemTypes.get_by_id(item_type_id)
+            if item_type is None:
+                current_app.logger.info(item_type_names[0].item_type[0])
+                return redirect(url_for('itemtypesrocratemapping.index', item_type_id=item_type_names[0].item_type[0].id))
+
+            item_properties = self._get_item_properties(item_type)
+            record = RocrateMapping.query.filter_by(item_type_id=item_type_id).one_or_none()
+            rocrate_mapping = record.mapping if record is not None else ''
+
+            registered_languages = AdminLangSettings.get_registered_language()
+
+        except BaseException:
+            current_app.logger.error('Unexpected error: {}'.format(sys.exc_info()))
+            abort(500)
+
+        return self.render(
+            current_app.config['WEKO_ITEMTYPES_UI_ADMIN_ROCRATE_MAPPING_TEMPLATE'],
+            item_type_id=item_type_id,
+            item_type_names=item_type_names,
+            item_properties=item_properties,
+            rocrate_mapping=rocrate_mapping,
+            rocrate_dataset_properties=current_app.config['WEKO_ITEMTYPES_UI_DATASET_PROPERTIES'],
+            rocrate_file_properties=current_app.config['WEKO_ITEMTYPES_UI_FILE_PROPERTIES'],
+            registered_languages=registered_languages,
+        )
+
+    @expose('', methods=['POST'])
+    @item_type_permission.require(http_exception=403)
+    def register(self):
+        """Register an item type mapping."""
+        if request.headers['Content-Type'] != 'application/json':
+            current_app.logger.debug(request.headers['Content-Type'])
+            abort(400)
+
+        try:
+            data = request.get_json()
+            item_type_id = data.get('item_type_id')
+            mapping = data.get('mapping')
+
+            with db.session.begin_nested():
+                record = RocrateMapping.query.filter_by(item_type_id=item_type_id).one_or_none()
+                if record is None:
+                    # Create data
+                    record = RocrateMapping(item_type_id, mapping)
+                    db.session.add(record)
+                else:
+                    # Update data
+                    record.mapping = mapping
+            db.session.commit()
+
+        except BaseException:
+            db.session.rollback()
+            current_app.logger.error('Unexpected error: {}'.format(sys.exc_info()))
+            abort(500)
+
+        return jsonify(msg=_('Successfully saved new mapping.'))
+
+    def _get_item_properties(self, item_type):
+        schema_props = item_type.schema.get('properties')
+        cur_lang = current_i18n.language
+
+        keys = ['pubdate']
+        render_table_row = item_type.render.get('table_row')
+        if isinstance(render_table_row, list):
+            keys.extend(render_table_row)
+
+        item_properties = {}
+        for key in keys:
+            schema_prop = schema_props.get(key)
+            form_key = [key]
+            form_prop = self._get_child_form_prop(item_type.form, form_key)
+
+            item_properties[key] = self._get_item_property(schema_prop, form_key, form_prop, cur_lang)
+
+        return item_properties
+
+    def _get_item_property(self, schema_prop, form_key, form_prop, cur_lang):
+        item_property = {}
+        title = self._get_title(schema_prop, form_prop, cur_lang)
+        item_property['title'] = title
+        type = schema_prop.get('type')
+        if type == 'string' or type == ["null", "string"]:
+            item_property['type'] = 'string'
+
+        elif type == 'object':
+            item_property['type'] = 'object'
+            item_property['properties'] = {}
+
+            for child_key, child_schema_prop in schema_prop.get('properties').items():
+                child_form_key = form_key + [child_key]
+                child_form_prop = self._get_child_form_prop(form_prop.get('items', []), child_form_key)
+
+                item_property['properties'][child_key] = self._get_item_property(child_schema_prop, child_form_key, child_form_prop, cur_lang)
+
+        elif type == 'array':
+            item_property['type'] = 'array'
+            item_property['properties'] = {}
+
+            for child_key, child_schema_prop in schema_prop.get('items').get('properties').items():
+                child_form_key = form_key + [child_key]
+                child_form_prop = self._get_child_form_prop(form_prop.get('items', []), child_form_key)
+
+                item_property['properties'][child_key] = self._get_item_property(child_schema_prop, child_form_key, child_form_prop, cur_lang)
+
+        return item_property
+
+    def _get_title(self, schema_prop, form_prop, cur_lang):
+        title = ''
+        if 'default' != cur_lang:
+            if 'title_i18n' in schema_prop:
+                if cur_lang in schema_prop['title_i18n']:
+                    title = schema_prop['title_i18n'][cur_lang]
+            else:
+                if form_prop:
+                    if 'title_i18n' in form_prop:
+                        if cur_lang in form_prop['title_i18n']:
+                            title = form_prop['title_i18n'][cur_lang]
+
+        if title == '':
+            title = schema_prop.get('title')
+
+        return title
+
+    def _get_child_form_prop(self, forms, form_key):
+        target = {}
+        for form in forms:
+            if 'key' not in form:
+                continue
+            if self._check_form_key(form['key'], form_key):
+                target = form
+                break
+        return target
+
+    def _check_form_key(self, form_key, schema_keys):
+        form_keys = form_key.split('.')
+        if len(form_keys) != len(schema_keys):
+            return False
+        for index, key_name in enumerate(form_keys):
+            key_name = key_name.split('[')[0]
+            if schema_keys[index] != key_name:
+                return False
+        return True
 
 
 itemtype_meta_data_adminview = {
@@ -767,8 +1052,20 @@ itemtype_mapping_adminview = {
         'endpoint': 'itemtypesmapping'
     }
 }
+
+itemtype_rocrate_mapping_adminview = {
+    'view_class': ItemTypeRocrateMappingView,
+    'kwargs': {
+        'category': _('Item Types'),
+        'name': _('RO-Crate Mapping'),
+        'url': '/admin/itemtypes/rocrate_mapping',
+        'endpoint': 'itemtypesrocratemapping'
+    }
+}
+
 __all__ = (
     'itemtype_meta_data_adminview',
     'itemtype_properties_adminview',
     'itemtype_mapping_adminview',
+    'itemtype_rocrate_mapping_adminview',
 )

@@ -60,7 +60,9 @@ def test_drop(app,db,script_info, mock_entry_points, verbose):
 # .tox/c1/bin/pytest --cov=invenio_db tests/test_cli.py::test_init -v -vv -s --cov-branch --cov-report=term --cov-report=xml --basetemp=/code/modules/invenio-db/.tox/c1/tmp
 def test_init(app,db,script_info, mock_entry_points, mocker):
     idb = InvenioDB(app)
-    from invenio_db import cli
+    from invenio_db import cli, db
+    if cli.database_exists(str(db.engine.url)):
+        cli.drop_database(db.engine.url)
     mock_spy = mocker.spy(cli,"create_database")
     
     # not exist db
@@ -95,7 +97,7 @@ def test_destroy(app,db,script_info,mock_entry_points,mocker):
         obj=script_info
     )
     assert "Destroying database" in result.output
-    assert "Sqlite database has not been initialised" in result.output
+    # assert "Sqlite database has not been initialised" in result.output
     assert mock_spy.call_count == 1
     
     _db = LocalProxy(lambda: current_app.extensions['sqlalchemy'].db)

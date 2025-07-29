@@ -86,6 +86,9 @@ setup(
         'invenio_base.apps': [
             'weko_items_ui = weko_items_ui:WekoItemsUI',
         ],
+        'invenio_base.api_apps': [
+            'weko_items_ui = weko_items_ui:WekoItemsREST',
+        ],
         'invenio_i18n.translations': [
             'messages = weko_items_ui',
         ],
@@ -114,6 +117,19 @@ setup(
         ],
         'invenio_access.actions': [
             'item_access = weko_items_ui.permissions:action_item_access',
+        ],
+        'invenio_oauth2server.scopes': [
+            'item_read_scope = weko_items_ui.scopes:item_read_scope',
+            'item_create_scope = weko_items_ui.scopes:item_create_scope',
+            'item_update_scope = weko_items_ui.scopes:item_update_scope',
+            'item_delete_scope = weko_items_ui.scopes:item_delete_scope',
+            'ranking_read_scope = weko_items_ui.scopes:ranking_read_scope'
+        ],
+        'invenio_db.models': [
+            'weko_items_ui = weko_items_ui.models',
+        ],
+        'invenio_celery.tasks': [
+            'weko_items_ui = weko_items_ui.tasks',
         ],
     },
     extras_require=extras_require,
