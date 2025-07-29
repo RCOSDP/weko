@@ -1057,3 +1057,11 @@ msgstr ""
 msgid "Failed to get mapping list."
 msgstr ""
 
+#: weko_search_ui/utils.py:3891
+msgid "The specified terms does not exist in the system"
+msgstr ""
+
+#: weko_search_ui/utils.py:3896
+msgid "The specified provinding method does not exist in the system"
+msgstr ""
+

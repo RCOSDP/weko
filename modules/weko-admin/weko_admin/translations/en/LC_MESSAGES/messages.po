@@ -1881,3 +1881,9 @@ msgstr "Current"
 #: weko_admin/templates/weko_admin/settings/lifetime.html:59
 msgid "Update"
 msgstr "Update"
+
+msgid "restricted_error_message"
+msgstr "Error Message"
+
+msgid "password check function"
+msgstr "Password check function when downloading for guest user"

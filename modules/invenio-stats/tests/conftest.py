@@ -34,7 +34,6 @@ from kombu import Exchange, Queue
 from flask import Flask, appcontext_pushed, g
 from flask.cli import ScriptInfo
 from flask_celeryext import FlaskCeleryExt
-
 from invenio_access import InvenioAccess
 from invenio_accounts import InvenioAccounts, InvenioAccountsREST
 from invenio_access.models import ActionRoles, ActionUsers

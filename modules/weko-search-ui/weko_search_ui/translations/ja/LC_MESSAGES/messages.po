@@ -206,7 +206,7 @@ msgstr "指定されたファイル{}の形式はインポートに対応して�
 msgid ""
 "The csv/tsv file was not found in the specified file {}. Check if the "
 "directory structure is correct."
-msgstr "指定されたファイル{}にtsv/csvファイルが見つかりませんでした。ディレクトリ構成が正しいか確認してください。"
+msgstr "指定されたファイル{}にcsv/tsvファイルが見つかりませんでした。ディレクトリ構成が正しいか確認してください。"
 
 #: weko_search_ui/utils.py:649
 msgid ""
@@ -416,11 +416,11 @@ msgstr ""
 
 #: weko_search_ui/utils.py:3462
 msgid "The following metadata are required.<br/>{}"
-msgstr ""
+msgstr "{}は必須項目です。"
 
 #: weko_search_ui/utils.py:3467
 msgid "One of the following metadata is required.<br/>{}<br/>"
-msgstr "{}は必須項目です。"
+msgstr "{}のいずれかを設定してください。"
 
 #: weko_search_ui/utils.py:3530 weko_search_ui/utils.py:3542
 msgid "Please specify the date with any format of YYYY-MM-DD, YYYY-MM, YYYY."
@@ -491,7 +491,7 @@ msgstr "{}に指定されたファイル名と{}が一致しません。"
 
 #: weko_search_ui/views.py:137
 msgid "\"<\" and \">\" cannot be used for searching."
-msgstr ""
+msgstr "'<' , '>' は検索に使用できません。"
 
 #: weko_search_ui/static/js/weko_search_ui/moment.min.js:1
 msgid ": , "
@@ -1057,4 +1057,44 @@ msgstr "マッピング"
 #: weko_search_ui/templates/weko_search_ui/admin/rocrate_import.html:96
 msgid "Failed to get mapping list."
 msgstr "マッピング定義リストの取得に失敗しました。"
+
+# weko_search_ui/utils.py:1915
+msgid "If there is a info of content file, terms of use cannot be set"
+msgstr "コンテンツファイル情報がある場合、利用規約は設定できません。"
+
+#: weko_search_ui/utils.py:3900
+msgid "The specified provinding method does not exist in the system"
+msgstr "指定する提供方法はシステムに存在しません。"
+
+#: weko_search_ui/utils.py:3910
+msgid "The specified terms does not exist in the system"
+msgstr "指定する利用規約はシステムに存在しません。"
+
+#: weko_search_ui/templates/weko_search_ui/body_facet_search.html:33
+msgid "Chinese"
+msgstr "中国語"
+
+#: weko_search_ui/templates/weko_search_ui/body_facet_search.html:35
+msgid "English"
+msgstr "英語"
+
+#: weko_search_ui/templates/weko_search_ui/body_facet_search.html:36
+msgid "French"
+msgstr "フランス語"
+
+#: weko_search_ui/templates/weko_search_ui/body_facet_search.html:37
+msgid "German"
+msgstr "ドイツ語"
+
+#: weko_search_ui/templates/weko_search_ui/body_facet_search.html:38
+msgid "Japanese"
+msgstr "日本語"
+
+#: weko_search_ui/templates/weko_search_ui/body_facet_search.html:39
+msgid "Korean"
+msgstr "韓国語"
+
+#: weko_search_ui/templates/weko_search_ui/body_facet_search.html:40
+msgid "Russian"
+msgstr "ロシア語"
 

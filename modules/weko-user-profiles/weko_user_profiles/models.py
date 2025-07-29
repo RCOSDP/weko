@@ -166,6 +166,16 @@ class UserProfile(db.Model):
         ).one()
 
     @classmethod
+    def get_by_displayname(cls, username):
+        """Get profile by username.
+
+        :param username: A username to query for (case insensitive).
+        """
+        return cls.query.filter(
+            UserProfile._displayname == username.lower()
+        ).first()
+
+    @classmethod
     def get_by_userid(cls, user_id):
         """Get profile by user identifier.
 

@@ -58,13 +58,13 @@ class ItemSettingView(BaseView):
             check_items_settings()
             email_display_flg = '0'
             search_author_flg = 'name'
-            open_date_display_flg = current_app.config.get(
-                'OPEN_DATE_HIDE_VALUE')
+            open_date_display_flg = current_app.config.get('OPEN_DATE_HIDE_VALUE')
             is_display_request_form = current_app.config.get('DISPLAY_REQUEST_FORM', False)
             # Get display request form settings
             items_display_settings = AdminSettings.get('items_display_settings')
             if items_display_settings:
                 is_display_request_form = items_display_settings.__dict__.get('display_request_form')
+
             if current_app.config['EMAIL_DISPLAY_FLG']:
                 email_display_flg = '1'
             if 'ITEM_SEARCH_FLG' in current_app.config:
@@ -108,7 +108,6 @@ class ItemSettingView(BaseView):
                 traceback.format_exception(exc, val, tb)
             )
         return abort(400)
-
 
 class PdfCoverPageSettingView(BaseView):
     """PdfCover Page settings."""

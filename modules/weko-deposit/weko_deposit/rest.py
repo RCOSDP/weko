@@ -55,6 +55,7 @@ def publish(**kwargs):
             pid_type='recid', pid_value=pid_value).first()
         r = RecordMetadata.query.filter_by(id=pid.object_uuid).first()
         dep = WekoDeposit(r.json, r)
+        dep.update_request_mail()
         dep.publish()
     except BaseException:
         abort(400, "Failed to publish item")

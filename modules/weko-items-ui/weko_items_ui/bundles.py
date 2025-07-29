@@ -92,3 +92,9 @@ request_maillist_js = Bundle(
     filters='jsmin',
     output="gen/weko_items_ui_request_maillist.%(version)s.js",
 )
+
+no_file_approval_js = Bundle(
+    'js/weko_items_ui/no_file_approval.js',
+    filters='jsmin',
+    output="gen/weko_items_ui_no_file_approval.%(version)s.js",
+)

@@ -663,7 +663,7 @@ msgstr ""
 
 #: weko_search_ui/templates/weko_search_ui/body_facet_search.html:26
 msgid "Go to"
-msgstr ""
+msgstr "Go to"
 
 #: weko_search_ui/templates/weko_search_ui/body_facet_search.html:27
 msgid "search"
@@ -692,7 +692,7 @@ msgstr ""
 
 #: weko_search_ui/templates/weko_search_ui/admin/bulk_delete_display.html:49
 msgid "Delete items of child recursively"
-msgstr ""
+msgstr "Delete items of child index recursively"
 
 #: weko_search_ui/templates/weko_search_ui/admin/bulk_delete_display.html:63
 msgid "Delete"
@@ -1056,5 +1056,54 @@ msgstr ""
 
 #: weko_search_ui/templates/weko_search_ui/admin/rocrate_import.html:96
 msgid "Failed to get mapping list."
+msgstr ""
+
+#: weko_search_ui/templates/weko_search_ui/admin/rocrate_import.html:58
+#: weko_search_ui/templates/weko_search_ui/admin/rocrate_import.html:94
+msgid "Mapping"
+msgstr ""
+
+#: weko_search_ui/templates/weko_search_ui/admin/rocrate_import.html:96
+msgid "Failed to get mapping list."
+msgstr ""
+
+#: weko_search_ui/utils.py:1915
+msgid "If there is a info of content file, terms of use cannot be set."
+msgstr "If there is a info of content file, terms of use cannot be set."
+
+#: weko_search_ui/utils.py:3900
+msgid "The specified provinding method does not exist in the system"
+msgstr ""
+
+#: weko_search_ui/utils.py:3910
+msgid "The specified terms does not exist in the system"
+msgstr ""
+
+#: weko_search_ui/templates/weko_search_ui/body_facet_search.html:33
+msgid "Chinese"
+msgstr ""
+
+#: weko_search_ui/templates/weko_search_ui/body_facet_search.html:35
+msgid "English"
+msgstr ""
+
+#: weko_search_ui/templates/weko_search_ui/body_facet_search.html:36
+msgid "French"
+msgstr ""
+
+#: weko_search_ui/templates/weko_search_ui/body_facet_search.html:37
+msgid "German"
+msgstr ""
+
+#: weko_search_ui/templates/weko_search_ui/body_facet_search.html:38
+msgid "Japanese"
+msgstr ""
+
+#: weko_search_ui/templates/weko_search_ui/body_facet_search.html:39
+msgid "Korean"
+msgstr ""
+
+#: weko_search_ui/templates/weko_search_ui/body_facet_search.html:40
+msgid "Russian"
 msgstr ""
 

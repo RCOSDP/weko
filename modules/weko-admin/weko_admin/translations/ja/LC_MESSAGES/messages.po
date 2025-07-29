@@ -1909,3 +1909,9 @@ msgstr "client idキーのサイズが大きすぎます"
 
 msgid "private key size too large."
 msgstr "privateキーのサイズが大きすぎます"
+
+msgid "restricted_error_message"
+msgstr "エラーメッセージ"
+
+msgid "password check function"
+msgstr "非ログインユーザーのDLにおけるパスワードチェック機能"

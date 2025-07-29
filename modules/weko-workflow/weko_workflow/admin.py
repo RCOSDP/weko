@@ -36,6 +36,7 @@ from invenio_communities.models import Community
 from invenio_db import db
 from invenio_files_rest.models import Location
 from invenio_i18n.ext import current_i18n
+from invenio_mail.models import MailTemplates
 from weko_admin.models import AdminSettings
 from weko_index_tree.models import Index
 from weko_records.api import ItemTypes
@@ -78,6 +79,9 @@ class FlowSettingView(BaseView):
         else:
             repositories = Community.get_repositories_by_user(current_user)
         actions = self.get_actions()
+        mail_templates = MailTemplates.get_templates()
+        use_restricted_item = current_app.config.get('WEKO_ADMIN_USE_MAIL_TEMPLATE_EDIT', False)
+        display_request_form = AdminSettings.get('items_display_settings', {}).get("display_request_form", False)
         if '0' == flow_id:
             flow = None
             return self.render(
@@ -89,7 +93,12 @@ class FlowSettingView(BaseView):
                 roles=roles,
                 actions=None,
                 action_list=actions,
-                repositories=repositories
+                repositories=repositories,
+                mail_templates=mail_templates,
+                use_restricted_item=use_restricted_item,
+                display_request_form=display_request_form,
+                workflow_registrant_id = current_app.config.get("WEKO_WORKFLOW_ITEM_REGISTRANT_ID"),
+                workflow_request_mail_id = current_app.config.get("WEKO_WORKFLOW_REQUEST_MAIL_ID")
             )
         UUID_PATTERN = re.compile(r'^[\da-f]{8}-([\da-f]{4}-){3}[\da-f]{12}$',
                                   re.IGNORECASE)
@@ -112,7 +121,12 @@ class FlowSettingView(BaseView):
             actions=flow.flow_actions,
             action_list=actions,
             specifed_properties=specified_properties,
-            repositories=repositories
+            repositories=repositories,
+            mail_templates=mail_templates,
+            use_restricted_item=use_restricted_item,
+            display_request_form=display_request_form,
+            workflow_registrant_id = current_app.config.get("WEKO_WORKFLOW_ITEM_REGISTRANT_ID"),
+            workflow_request_mail_id = current_app.config.get("WEKO_WORKFLOW_REQUEST_MAIL_ID")
         )
 
     @staticmethod
@@ -233,6 +247,8 @@ class FlowSettingView(BaseView):
     @expose('/action/<string:flow_id>', methods=['POST'])
     def upt_flow_action(self, flow_id=0):
         """Update FlowAction Info."""
+        if not self._check_auth(str(flow_id)) :
+            abort(403)
         try:
             actions = request.get_json()
             workflow = Flow()

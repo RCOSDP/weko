@@ -283,6 +283,7 @@ class IndexSearchResource(ContentNegotiatedMethodView):
                 else:
                     search = search.post_filter({"terms": {query_key: params[param]}})
         search_result = search.execute()
+
         # Generate links for prev/next
         urlkwargs.update(
             size=size,

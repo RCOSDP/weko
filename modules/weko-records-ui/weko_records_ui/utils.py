@@ -24,19 +24,21 @@ import base64
 import csv
 import json
 import re
+import datetime
 import six
 from datetime import datetime as dt
 from datetime import timedelta
 from decimal import Decimal
-from typing import List, NoReturn, Optional, Tuple
-from urllib.parse import urlparse,quote
+from typing import List, Optional, Tuple
+from urllib.parse import quote
 from io import StringIO
 import copy
 
-from flask import abort, current_app, json, request, url_for, make_response, Flask
-from flask_babelex import get_locale
+from flask import abort, current_app, json, make_response, request, Flask
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 from flask_babelex import gettext as _
-from flask_babelex import to_user_timezone, to_utc
+from flask_babelex import to_utc
 from flask_login import current_user
 from sqlalchemy import desc
 from invenio_accounts.models import Role, User
@@ -473,6 +475,7 @@ def soft_delete(recid):
             FeedbackMailList.delete(ver.object_uuid)
             dep.remove_feedback_mail()
             RequestMailList.delete(ver.object_uuid)
+            dep.remove_request_mail()
             for f in dep.files:
                 if f.file.uri not in del_files:
                     del_files[f.file.uri] = f.file.storage()
@@ -943,6 +946,10 @@ def replace_license_free(record_metadata, is_change_label=True):
                         attr[_license_note] = attr[_license_free]
                         del attr[_license_free]
 
+def get_data_by_key_array_json(key, array_json, get_key):
+    for item in array_json:
+        if str(item.get('id')) == str(key):
+            return item.get(get_key)
 
 def get_file_info_list(record, item_type=None):
     """File Information of all file in record.
@@ -988,11 +995,6 @@ def get_file_info_list(record, item_type=None):
                     message = "Download / Preview is available from {}/{}/{}."
                     p_file['download_preview_message'] = _(message).format(
                         adt.year, adt.month, adt.day)
-
-    def get_data_by_key_array_json(key, array_json, get_key):
-        for item in array_json:
-            if str(item.get('id')) == str(key):
-                return item.get(get_key)
 
     workflows = get_workflows()
     roles = get_roles()
@@ -1059,6 +1061,15 @@ def get_file_info_list(record, item_type=None):
                                 p['role_id'] = role
                                 p['role'] = get_data_by_key_array_json(
                                     role, roles, 'name')
+                    # add role
+                    role_list = f.get("roles")
+                    if role_list:
+                        for r in role_list:
+                            role = r.get('role')
+                            if role:
+                                r['role_id'] = role
+                                r['role'] = get_data_by_key_array_json(role, roles, 'name')
+
                     f['file_order'] = file_order
                     files.append(f)
                 file_order += 1
@@ -1383,7 +1394,7 @@ def get_valid_onetime_download(file_name: str, record_id: str,user_mail: str) ->
 
 
 def create_onetime_download_url(
-    activity_id: str, file_name: str, record_id: str, user_mail: str,
+    activity_id: str, file_name: str, record_id: str, user_mail: str, password_for_download:str,
     is_guest: bool = False
 ):
     """Create onetime download.
@@ -1402,7 +1413,8 @@ def create_onetime_download_url(
         extra_info = dict(
             usage_application_activity_id=activity_id,
             send_usage_report=True,
-            is_guest=is_guest
+            is_guest=is_guest,
+            password_for_download=password_for_download
         )
         file_onetime = FileOnetimeDownload.create(**{
             "file_name": file_name,
@@ -1830,23 +1842,21 @@ def create_secret_url(record_id:str ,file_name:str ,user_mail:str ,restricted_fu
 
     # generate url
     secret_file_url = _generate_secret_download_url(
-        file_name, record_id, secret_obj.id , secret_obj.created)
+        file_name, record_id, secret_obj.id, secret_obj.created)
 
-    return_dict:dict = {
-        "restricted_download_link":"",
-        "mail_recipient":"",
-        "file_name":file_name,
+    return_dict: dict = {
+        "secret_url": secret_file_url,
+        "mail_recipient": secret_obj.user_mail,
+        "file_name": file_name,
         "restricted_expiration_date": "",
         "restricted_expiration_date_ja": "",
         "restricted_expiration_date_en": "",
-        "restricted_download_count":"",
-        "restricted_download_count_ja":"",
-        "restricted_download_count_en":"",
-        "restricted_fullname" :restricted_fullname,
-        "restricted_data_name" :restricted_data_name,
+        "restricted_download_count": "",
+        "restricted_download_count_ja": "",
+        "restricted_download_count_en": "",
+        "restricted_fullname": restricted_fullname,
+        "restricted_data_name": restricted_data_name,
     }
-    return_dict["mail_recipient"] = secret_obj.user_mail
-    return_dict["restricted_download_link"] = secret_file_url
 
     max_int :int = current_app.config["WEKO_ADMIN_RESTRICTED_ACCESS_MAX_INTEGER"]
     if secret_obj.expiration_date < max_int:
@@ -1916,10 +1926,9 @@ def parse_secret_download_token(token: str) -> Tuple[str, Tuple]:
         decode_token = base64.b64decode(token.encode()).decode()
         current_app.logger.debug("decode_token:{}".format(decode_token))
         param = decode_token.split(" ")
-        if not param or len(param) != 4:
+        if not param or len(param) != 5:
             return error, ()
-
-        return "", (param[0], param[1], param[2], param[3]) #record_id, id, current_date, secret_token
+        return "", (param[0], param[1], param[2] + " " + param[3] , param[4]) #record_id, id, current_date(date + time), secret_token
     except Exception as err:
         current_app.logger.error(err)
         return error, ()
@@ -2418,6 +2427,10 @@ def create_tsv(files, language='en'):
     StringIO().close()
     return file_output
 
+
+def create_limmiter():
+    from .config import WEKO_RECORDS_UI_API_LIMIT_RATE_DEFAULT
+    return Limiter(app=Flask(__name__), key_func=get_remote_address, default_limits=WEKO_RECORDS_UI_API_LIMIT_RATE_DEFAULT)
 
 def export_preprocess(pid, record, schema_type):
     """Preprocess for export.

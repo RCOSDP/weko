@@ -217,6 +217,10 @@ msgstr "Specified ID does not exist."
 msgid "Item cannot be edited because the import is in progress."
 msgstr ""
 
+#: weko_items_ui/views.py:848
+msgid "Logged-in user cannot be deleted."
+msgstr "Logged-in user cannot be deleted."
+
 #: weko_items_ui/views.py:1071
 #, fuzzy
 msgid "Workflow setting does not exist."
@@ -697,3 +701,11 @@ msgstr ""
 msgid "Export"
 msgstr ""
 
+msgid "The approver email address cannot be the same as the applicant. Please recheck and input."
+msgstr ""
+
+msgid "error message for item application"
+msgstr "When uploading a file, you cannot set usage request workflow for the item."
+
+msgid "Set usage application workflow for item"
+msgstr ""

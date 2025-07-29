@@ -777,7 +777,7 @@ def send_mail_reminder_usage_report():
     if json_data and json_data.get('activity_ids'):
         activities_id = json_data.get('activity_ids')
         usage_report = UsageReport()
-        result = usage_report.send_reminder_mail(activities_id)
+        result = usage_report.send_reminder_mail(activities_id, forced_send=True)
 
     return jsonify(status=result), 200
 

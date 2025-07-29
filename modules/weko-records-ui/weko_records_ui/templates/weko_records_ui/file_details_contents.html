@@ -43,6 +43,7 @@
       <div class="row">
         <div class="col-sm-12 col-md-12 col-left">
           {%- block record_author %}
+            {%- set _files = files -%}
             {%- set files = record.files -%}
             {%- set record = record -%}
             {%- set deposit = record['_buckets']['deposit'] -%}

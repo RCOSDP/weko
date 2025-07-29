@@ -290,16 +290,14 @@ function autocomplete(inp, arr) {
         droplist_show_other_user.addEventListener('click', function (e) {
           /*insert the value for the autocomplete text field:*/
           inp.value = this.getElementsByTagName("input")[0].value;
-          if (mode == 'share_username') {
+          if (mode.match('share_username')) {
             filter.filter_username = inp.value;
             // get exact user info contains username and email by username unique
             get_autofill_data(filter.filter_username, "", mode);
-          } else {
-            if (mode == 'share_email') {
-              filter.filter_email = inp.value;
-              // get exact user info contains username and email by email
-              get_autofill_data('', filter.filter_email, mode);
-            }
+          } else if (mode.match('share_email')) {
+            filter.filter_email = inp.value;
+            // get exact user info contains username and email by email
+            get_autofill_data('', filter.filter_email, mode);
           }
           closeAllLists();
         });
@@ -343,7 +341,8 @@ function autocomplete(inp, arr) {
           x[currentFocus].click();
         }
       } else {
-        if (currentFocus == -1 && $("#share_username").val() != '') {
+        let target_id = this.id.replace('share_email_', '').replace('share_username_', '');
+        if (currentFocus == -1 && $("#share_username_"+target_id).val() != '') {
           if (x) {
             x[0].click();
           }
@@ -385,16 +384,18 @@ function autocomplete(inp, arr) {
   });
 }
 
-get_search_data = function (keyword) {
+// 新規行の場合user_id=0 更新行の場合row_id=0
+get_search_data = function (keyword, row_id='share_'+keyword+'_0') {
   get_search_data_url = '/api/items/get_search_data/' + keyword;
+  let id;
   if (keyword == 'username') {
-    $("#share_username").prop('readonly', true);
-    $("#id_spinners_username").css("display", "");
-  } else {
-    if (keyword == 'email') {
-      $("#share_email").prop('readonly', true);
-      $("#id_spinners_email").css("display", "");
-    }
+    id = row_id.replace('share_username_', '');
+    $("#share_username_"+id).prop('readonly', true);
+    $("#id_spinners_username_"+id).css("display", "");
+  } else if(keyword == 'email') {
+    id = row_id.replace('share_email_', '');
+    $("#share_email_"+id).prop('readonly', true);
+    $("#id_spinners_email_"+id).css("display", "");
   }
 
   $.ajax({
@@ -409,20 +410,17 @@ get_search_data = function (keyword) {
         return null;
       } else {
         if (keyword === 'username') {
-          $("#id_spinners_username").css("display", "none");
-          $("#share_username").prop('readonly', false);
+          $("#id_spinners_username_"+id).css("display", "none");
+          $("#share_username_"+id).prop('readonly', false);
           username_arr = data.results;
           // auto fill for username
-          autocomplete(document.getElementById("share_username"), username_arr);
-
-        } else {
-          if (keyword === 'email') {
-            $("#id_spinners_email").css("display", "none");
-            $("#share_email").prop('readonly', false);
-            email_arr = data.results;
-            // auto fill for email input
-            autocomplete(document.getElementById("share_email"), email_arr);
-          }
+          autocomplete(document.getElementById("share_username_"+id), username_arr);
+        } else if(keyword === 'email') {
+          $("#id_spinners_email_"+id).css("display", "none");
+          $("#share_email_"+id).prop('readonly', false);
+          email_arr = data.results;
+          // auto fill for email input
+          autocomplete(document.getElementById("share_email_"+id), email_arr);
         }
         return data.results;
       }
@@ -452,6 +450,8 @@ get_autofill_data = function (keyword, data, mode) {
     param.email = data;
   }
 
+  //get id
+  let mode_id = mode.replace('share_username_', '').replace('share_email_', '');
   //Create request
   $.ajax({
     url: "/api/items/validate_user_info",
@@ -462,15 +462,13 @@ get_autofill_data = function (keyword, data, mode) {
     data: JSON.stringify(param),
     dataType: "json",
     success: function (data, status) {
-      if (mode == 'share_username') {
-        $("#share_email").val(data.results.email);
-      } else {
-        if (mode == 'share_email') {
-          if (data.results.username) {
-            $("#share_username").val(data.results.username);
-          } else {
-            $("#share_username").val("");
-          }
+      if (mode.match('share_username')) {
+        $("#share_email_"+mode_id).val(data.results.email);
+      } else if (mode.match('share_email')) {
+        if (data.results.username) {
+          $("#share_username_"+mode_id).val(data.results.username);
+        } else {
+          $("#share_username_"+mode_id).val("");
         }
       }
     },
@@ -482,32 +480,195 @@ get_autofill_data = function (keyword, data, mode) {
     }
   });
 }
-$("#share_username").focusout(function () {
+function focusoutShareUsername(share_username_id) {
   username_arr = [];
-  $("#share_email").prop('readonly', true);
+  id = share_username_id.replace('share_username_', '');
+  $("#share_email_" + id).prop('readonly', true);
+}
+function focusoutShareEmail(share_email_id) {
+  username_arr = [];
+  id = share_email_id.replace('share_email_', '');
+  $("#share_username_" + id).prop('readonly', true);
+}
 
-})
+removeUser = async(user_id, id_value) => {
+  let parent_id;
+  let email_id;
+  if(user_id == 0) {
+    id_value = id_value.replace('id_trash_0_', '');
+    let id = parseInt(id_value);
+    if (!isNaN(id)) {
+      parent_id = `#contributor_new_row_${id}`;
+      email_id = `#share_email_0_${id}`;
+    }
+  }else{
+    parent_id = `#contributor_row_${user_id}`;
+    email_id = `#share_email_${user_id}`;
+  }
 
-$("#share_email").focusout(function () {
-  email_arr = [];
-  $("#share_username").prop('readonly', true);
-})
+  // Newボタンで追加したユーザー情報
+  let search_new_ids = $('[id^="contributor_new_row_"]');
+  // 本アクティビティに登録済みユーザー情報
+  let search_ids = $('[id^="contributor_row_"]');
+
+  if(search_ids.length + search_new_ids.length < 2) {
+    let current_lang = $("#current_language").val();
+    message = 'At least 1 user is required.';
+    if (current_lang = 'ja') {
+      message = 'ユーザーは1名以上必要です。';
+    }
+    alert(message);
+    return false;
+  }
+  //削除対象のログインユーザーの状態をチェック
+  const target_email = $(email_id).val();
+  if (target_email != '') {
+    const promise = angular.element(document.getElementById('weko_records_ctrl')).scope().checkLoginUserEmail(target_email);
+    const is_login_user = await promise.then(ret => {
+        // "ret == false" can delete
+        return ret.is_login_user;
+      }).catch(msg => {
+        alert(msg.error);
+        return true;
+      });
+
+    if(is_login_user) {
+      return false;
+    }
+  }
+  //削除実行
+  $(parent_id).remove();
+}
+
+// append new row contributor
+function addUser() {
+  let max_id = 0;
+  let search_ids = $('[id^="contributor_new_row_"]');
+  for(let idx=0; idx<search_ids.length; idx++) {
+    let str = search_ids[idx].id.split('_');
+    if(str.length < 4) {
+      continue;
+    }
+    let no = parseInt(str[3]);
+    if (no != NaN & no > max_id) {
+      max_id = no;
+    }
+  }
+  max_id += 1;
+
+  let base_node = $("#contributor_new_row").clone(true);
+  base_node.attr('id', `contributor_new_row_${max_id}`);
+  base_node.css('display', 'block');
+  base_node.find('#pd_username_0').attr('id', `pd_username_0_${max_id}`);
+  base_node.find('#label_username_0').attr('id', `label_username_0_${max_id}`);
+  base_node.find('#label_email_0').attr('id', `label_email_0_${max_id}`);
+  base_node.find('#id_spinners_email_0').css('display', 'none');
+  base_node.find('#id_owner_radio_0').attr('id', `id_owner_radio_0_${max_id}`);
+  base_node.find('#share_username_0').attr('id', `share_username_0_${max_id}`);
+  base_node.find('#id_spinners_username_0').attr('id', `id_spinners_username_0_${max_id}`);
+  base_node.find('#share_email_0').attr('id', `share_email_0_${max_id}`);
+  base_node.find('#share_email_0').attr('name', `share_email_0_${max_id}`);
+  base_node.find('#id_trash_0').attr('id', `id_trash_0_${max_id}`);
+
+  if (max_id == 1) {
+    $("#contributor_new_row").after(base_node);
+  }
+  else{
+    $(`#contributor_new_row_${max_id-1}`).after(base_node);
+  }
+  return;
+}
+
+function labelChangeToContributor(target_parent_div_list) {
+  target_parent_div_list.map( function(ii, element) {
+    let parent = $(`#${element.id}`).find('.input_contributor').parent();
+    if (parent.length > 0) {
+      let org_html = parent[0].innerHTML;
+      org_html = org_html.replaceAll('Owner', 'Contributor');
+      org_html = org_html.replace('Username', 'Contributor');
+      org_html = org_html.replace('handleShareContributor', 'handleShareOwner');
+      parent[0].innerHTML = org_html;
+    }
+  });
+}
+
+function displayAllTrashIcon(trash_id_list) {
+  trash_id_list.map( function(ii, element) {
+    $(`#${element.id}`).css('display', 'block');
+  });
+}
+
+function handleShareOwner(id) {
+  const is_owner = $('#' + id).prop("checked");
+  id = id.replace('id_owner_radio_', '');
+  if(is_owner) {
+    // 全てContributorに変更する
+    // Newボタンで追加したユーザー情報
+    let search_new_ids = $('[id^="contributor_new_row_"]');
+    labelChangeToContributor(search_new_ids);
+    // 本アクティビティに登録済みユーザー情報
+    let search_ids = $('[id^="contributor_row_"]');
+    labelChangeToContributor(search_ids);
+    // ゴミ箱アイコンを表示
+    displayAllTrashIcon($('[id^="id_trash_"]'));
+
+    let org_owner = $("#id_owner_radio_" + id).parent()[0].innerHTML;
+    org_owner = org_owner.replace('Username', 'Owner');
+    org_owner = org_owner.replace('Contributor', 'Owner');
+    $("#id_owner_radio_" + id).parent()[0].innerHTML = org_owner;
+    $("#share_username" + id).val("");
+    $("#share_email" + id).val("");
+    $("#id_owner_radio_" + id).prop('checked', 'checked');
+    // Ownerは削除不可能
+    $("#id_trash_" + id).css("display", "none");
+  } else {
+    let org_owner = $("#id_owner_radio_" + id).parent()[0].innerHTML;
+    org_owner = org_owner.replace('Username', 'Contributor');
+    org_owner = org_owner.replace('Owner', 'Contributor');
+    org_owner = org_owner.replace('handleShareContributor', 'handleShareOwner');
+    $("#id_owner_radio_" + id).parent()[0].innerHTML = org_owner;
+    $("#share_username_" + id).val("");
+    $("#share_email_" + id).val("");
+    $("#id_spinners_username_" + id).css("display", "none");
+    $("#share_username_" + id).prop('readonly', true);
+    $("#id_spinners_email_" + id).css("display", "none");
+    $("#share_email_"+ id).prop('readonly', true);
+    $("#id_trash_" + id).css('display', 'block');
+  }
+}
 
 function handleSharePermission(value) {
   if (value == 'this_user') {
     $(".form_share_permission").css('display', 'none');
-    $("#share_username").val("");
-    $("#share_email").val("");
-  } else {
-    if (value == 'other_user') {
-      $(".form_share_permission").css('display', 'block');
-      $("#share_username").val("");
-      $("#share_email").val("");
-      $("#id_spinners_username").css("display", "none");
-      $("#share_username").prop('readonly', true);
-      $("#id_spinners_email").css("display", "none");
-      $("#share_email").prop('readonly', true);
-    }
+    //let share_username_ids = $('[id^="share_username_"]');
+    //share_username_ids.map( function(ii, share_username) {
+    //  $("#"+share_username.id).val("");
+    //});
+    //let share_email_ids = $('[id^="share_email_"]');
+    //share_email_ids.map( function(ii, share_email) {
+    //  $("#"+share_email.id).val("");
+    //});
+  } else if (value == 'other_user') {
+    $(".form_share_permission").css('display', 'block');
+    
+    // let spinners_username_ids = $('[id^="id_spinners_username_"]');
+    // spinners_username_ids.map( function(ii, spinners_username) {
+    //   $("#"+spinners_username.id).css('display', 'inline-block');
+    // });
+    // let share_username_ids = $('[id^="share_username_"]');
+    // share_username_ids.map( function(ii, share_username) {
+    //   $("#"+share_username.id).val("");
+    //   $("#"+share_username.id).prop('readonly', true);
+    // });
+    // let spinners_email_ids = $('[id^="id_spinners_email_"]');
+    // spinners_email_ids.map( function(ii, spinners_email) {
+    //   $("#"+spinners_email.id).css('display', 'none');
+    // });
+    // let share_email_ids = $('[id^="share_email_"]');
+    // share_email_ids.map( function(ii, share_email) {
+    //   $("#"+share_email.id).val("");
+    //   $("#"+share_email.id).prop('readonly', true);
+    // });
   }
 }
 
@@ -1334,6 +1495,31 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
                 }
               }
             }
+            /*Add data for 'Roles' in File.*/
+            var roles_schema = filemeta_schema.items.properties['roles'];
+            if (roles_schema) {
+              if (!dataInit) {
+                dataInit = $scope.getDataInit();
+              }
+              var role_schema_child = roles_schema.items.properties['role'];
+              if (role_schema_child) {
+                // Add enum in schema.
+                role_schema_child['enum'] = [];
+                role_schema_child['enum'].push(null);
+                // Add titleMap in form.
+                var roles_form = get_subitem(filemeta_form.items, 'roles');
+                var role_form_item = get_subitem(roles_form.items, 'role');
+                role_form_item['titleMap'] = [];
+                var roles = dataInit['logged_roles'];
+                for (let key in roles) {
+                  role_schema_child['enum'].push(roles[key]['id'].toString());
+                  role_form_item['titleMap'].push({
+                    name: roles[key]['name'],
+                    value: roles[key]['id'].toString()
+                  });
+                }
+              }
+            }
             /*Add data for 'Term' in File.*/
             var term_schema = filemeta_schema.items.properties['terms'];
             if (term_schema) {
@@ -1387,7 +1573,7 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
         }
       }
 
-      $scope.initContributorData = function () {
+      $scope.initContributorData = async function () {
         $("#contributor-panel").addClass("hidden");
         // Load Contributor information
         let recordModel = $rootScope.recordsVM.invenioRecordsModel;
@@ -1397,47 +1583,54 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
         } else {
           $scope.is_item_owner = true;
         }
-        if (!recordModel.hasOwnProperty('shared_user_id')) {
+        if (!recordModel.hasOwnProperty('shared_user_ids')) {
           $("#contributor-panel").removeClass("hidden");
           $(".input_contributor").prop("checked", true);
-          $("#share_username").val("");
-          $("#share_email").val("");
+          
+          let share_username_ids = $('[id^="share_username_"]');
+          share_username_ids.map( function(ii, share_username) {
+            $("#"+share_username.id).val("");
+          });
+          let share_email_ids = $('[id^="share_email_"]');
+          share_email_ids.map( function(ii, share_email) {
+            $("#"+share_email.id).val("");
+          });
+
           // Apply for run feature when Display Workflow is error.
           // When Display Workflow is fixed, please remove this
           $scope.is_item_owner = true;
           // ----
         } else {
-          if (recordModel.shared_user_id && recordModel.shared_user_id != -1) {
+          if (recordModel.shared_user_ids && recordModel.shared_user_ids.length > 0 && recordModel.shared_user_ids != -1) {
             // Call rest api to get user information
-            let get_user_url = '/api/items/get_user_info/' + owner_id + '/' + recordModel.shared_user_id;
-            $.ajax({
-              url: get_user_url,
-              method: 'GET',
-              success: function (data, stauts) {
-                if (data.owner) {
-                  $scope.is_item_owner = true;
-                  $("#contributor-panel").removeClass("hidden");
-                  $(".other_user_rad").click();
-                  $("#share_username").val(data.username);
-                  $("#share_email").val(data.email);
-                } else {
-                  $(".other_user_rad").click();
-                  $("#share_username").val(data.username);
-                  $("#share_email").val(data.email);
-                }
-              },
-              error: function (data, status) {
-                //alert("Cannot connect to server!");
-                var modalcontent = "Cannot connect to server!";
-                $("#inputModal").html(modalcontent);
-                $("#allModal").modal("show");
+            let shared_user_ids_query = '';
+            for(id of recordModel.shared_user_ids) {
+              if(shared_user_ids_query != '') {
+                shared_user_ids_query += '&';
               }
+              shared_user_ids_query += 'shared_user_ids='+id["user"]
+            }
+            let get_user_url = '/api/items/get_user_info/' + owner_id + '?' + shared_user_ids_query;
+            await $scope.getUserInfo(get_user_url).then(data => {
+              return true;
+            }).catch(msg => {
+              var modalcontent = "Cannot connect to server!";
+              modalcontent += msg;
+              $("#inputModal").html(modalcontent);
+              $("#allModal").modal("show");
+              return false;
             });
           } else {
             $("#contributor-panel").removeClass("hidden");
             $(".input_contributor").prop("checked", true);
-            $("#share_username").val("");
-            $("#share_email").val("");
+            let share_username_ids = $('[id^="share_username_"]');
+            share_username_ids.map( function(ii, share_username) {
+              $("#"+share_username.id).val("");
+            });
+            let share_email_ids = $('[id^="share_email_"]');
+            share_email_ids.map( function(ii, share_email) {
+              $("#"+share_email.id).val("");
+            });
             // Apply for run feature when Display Workflow is error.
             // When Display Workflow is fixed, please remove this
             $scope.is_item_owner = true;
@@ -1875,6 +2068,16 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
           if (item.key === key) {
             item["readonly"] = true;
           }
+          if (item.items) {
+            item.items.forEach(function (subitem) {
+              if (typeof(subitem.key) === "string") {
+                let key_list = subitem.key.split(".");
+                if (key_list[key_list.length - 1] === key) {
+                  subitem["readonly"] = true;
+                }
+              }
+            });
+          }
         });
       }
 
@@ -1901,7 +2104,6 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
               // let userPosition = model[key]['subitem_position'];
               if (fullName || userMail) {
                 let position = model[key]['subitem_position'];
-                position = $scope.translationsPositionByText(position);
                 $rootScope.recordsVM.invenioRecordsModel[key]['subitem_position'] = position;
                 if (model[key]['subitem_affiliated_institution'] && model[key]['subitem_affiliated_institution'].length > 0) {
 
@@ -1916,8 +2118,6 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
 
                 }
                 isExisted = true;
-                // Set read only for user information property
-                $scope.setFormReadOnly(key)
                 break;
               }
             }
@@ -1937,7 +2137,6 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
               let userMail = model[key]['subitem_mail_address'];
               if (fullName || userMail) {
                 let position = model[key]['subitem_position'];
-                position = $scope.translationsPosition(position);
                 $rootScope.recordsVM.invenioRecordsModel[key]['subitem_position'] = position;
                 if (model[key]['subitem_affiliated_institution'] && model[key]['subitem_affiliated_institution'].length >0) {
 
@@ -1951,8 +2150,6 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
                     }
                 }
                 isExisted = true;
-                // Set read only for user information property
-                $scope.setFormReadOnly(key);
                 break;
               }
             }
@@ -1963,7 +2160,7 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
 
       $scope.autoFillProfileInfo = function () {
         var needToAutoFillProfileInfo = $("#application_item_type").val();
-        if (needToAutoFillProfileInfo == 'False' || $scope.isExistingUserProfile()) {
+        if (needToAutoFillProfileInfo == 'False' || ($('#current_guest_email').val() && $scope.isExistingUserProfile())) {
           return;
         }
         var user_info_html = $("#user_info_data").val();
@@ -1974,7 +2171,6 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
         // Key for detecting user profile info
         // These 2 keys is unique for User Information so use these to detect user_information obj
         var affiliatedDivision = 'subitem_affiliated_division/department';
-        var affiliatedInstitution = 'subitem_affiliated_institution';
         // Key for dectecting affiliated institution
         var affiliatedInstitutionName = 'subitem_affiliated_institution_name';
         var affiliatedInstitutionPosition = 'subitem_affiliated_institution_position';
@@ -1983,8 +2179,7 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
           var currentInvenioRecordsSchema = $rootScope.recordsVM.invenioRecordsSchema.properties[key];
           if (currentInvenioRecordsSchema.properties) {
             let containAffiliatedDivision = currentInvenioRecordsSchema.properties.hasOwnProperty(affiliatedDivision);
-            let containAffiliatedInstitution = currentInvenioRecordsSchema.properties.hasOwnProperty(affiliatedInstitution);
-            if (containAffiliatedDivision && containAffiliatedInstitution) {
+            if (containAffiliatedDivision) {
               // Store key of user info to disable this form later
               userInfoKey = key;
               $rootScope.recordsVM.invenioRecordsModel[key] = {};
@@ -2011,21 +2206,12 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
                   }
                 } else {
                   if (data.results[subKey]) {
-                    if (subKey==='subitem_position') {
-                      let position = $scope.translationsPosition(data.results[subKey]);
-                      $rootScope.recordsVM.invenioRecordsModel[key][subKey] = position;
-                    } else {
-                      $rootScope.recordsVM.invenioRecordsModel[key][subKey] = String(data.results[subKey])
-                    }
+                    $rootScope.recordsVM.invenioRecordsModel[key][subKey] = String(data.results[subKey]);
                   }
                 }
               }
             }
           }
-        }
-        if (userInfoKey != null) {
-          // Set read only for user information property
-          $scope.setFormReadOnly(userInfoKey);
         }
       };
 
@@ -2071,12 +2257,14 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
           if (!titleData) {
             return;
           }
-          let userName;
-          titleData = JSON.parse(titleData);
-          if (guestEmail) {
-            userName = guestEmail.split("@")[0];
-          } else {
-            userName = JSON.parse(userInfoData).results["subitem_displayname"];
+	        let userName = $('#auto_fill_subitem_fullname').val();
+	        titleData = JSON.parse(titleData);
+          if (!userName) {
+            if (guestEmail) {
+              userName = guestEmail.split("@")[0];
+            } else {
+              userName = JSON.parse(userInfoData).results["subitem_displayname"];
+            }
           }
           let titleSubKey = "subitem_item_title";
           let titleLanguageKey = "subitem_item_title_language";
@@ -2224,7 +2412,7 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
       }
 
       $scope.autoFillInstitutionPosition = function () {
-        let key = 'subitem_restricted_access_institution_position';
+        let key = 'subitem_institution_position';
         let schemaProperties = $rootScope.recordsVM.invenioRecordsSchema.properties;
         let formProperties = $rootScope.recordsVM.invenioRecordsForm;
         //Get "Institution Position" from select html.
@@ -2242,7 +2430,6 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
       $scope.autoFillUsageApplication = function () {
         let properties = [
           'subitem_restricted_access_dataset_usage',
-          'subitem_restricted_access_mail_address',
           'subitem_restricted_access_usage_report_id',
           'subitem_restricted_access_wf_issued_date',
           'subitem_restricted_access_application_date',
@@ -2256,13 +2443,13 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
       $scope.autoFillUsageReport = function () {
         let properties = [
           'subitem_restricted_access_dataset_usage',
-          'subitem_restricted_access_name',
-          'subitem_restricted_access_mail_address',
-          'subitem_restricted_access_university/institution',
-          'subitem_restricted_access_affiliated_division/department',
-          'subitem_restricted_access_position',
-          'subitem_restricted_access_position(others)',
-          'subitem_restricted_access_phone_number',
+          'subitem_fullname',
+          'subitem_mail_address',
+          'subitem_university/institution',
+          'subitem_affiliated_division/department',
+          'subitem_position',
+          'subitem_position(others)',
+          'subitem_phone_number',
           'subitem_restricted_access_usage_report_id',
           'subitem_restricted_access_wf_issued_date',
           'subitem_restricted_access_application_date',
@@ -2579,10 +2766,102 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
         return rtnValue;
       }
 
+      $scope.setContributorModel = async () => {
+        let model = $rootScope.recordsVM.invenioRecordsModel;
+        // ownerは必ず指定する
+        if($("input[name='checkedSharePermiss']:checked").val() =='other_user' & $("input[name='owner_radio']:checked").length == 0) {
+          $("#inputModal").html('[Be sure to select an owner.]');
+          $("#allModal").modal("show");
+          return false;
+        }
+        // This user
+        if($("input[name='checkedSharePermiss']:checked").val() =='this_user') {
+          //contributorは[]
+          model['shared_user_ids'] = [];
+          return true;
+        }
+
+        // owner
+        let owner_radio_id = $("input[name='owner_radio']:checked")[0].id;
+        let owner_id = owner_radio_id.replace('id_owner_radio_', '')
+        // 空白チェック
+        if($("input[name='checkedSharePermiss']:checked").val() =='other_user' & $(`#share_email_${owner_id}`).val() == '') {
+          $("#inputModal").html('[owner email address is blank.]');
+          $("#allModal").modal("show");
+          return false;
+        }
+
+        // get_user_id from email
+        const owner_email = $(`#share_email_${owner_id}`).val();
+        let get_user_url = '/api/items/get_userinfo_by_emails?emails=' + owner_email;
+        let ret_owner = await $scope.getUserInfoByEmails(get_user_url)
+        .then(user_infos => {
+          parse_owner_id = Number.parseInt(owner_id)
+          if (Number.isNaN(parse_owner_id) | parse_owner_id <= 0 ) {
+            parse_owner_id = user_infos.map(info => Number.parseInt(info['user_id']))
+          }
+          return parse_owner_id;
+        }).then( parse_owner_id => {
+          if(typeof(parse_owner_id) === 'object') {
+            model['owner'] = int(parse_owner_id[0]);
+            model['owners'] = [int(parse_owner_id[0])] 
+          } else if (typeof(parse_owner_id) === 'number') {
+            model['owner'] = parse_owner_id;
+            model['owners'] = [parse_owner_id] 
+          }
+          return true;
+        }).catch(msg => {
+          $("#inputModal").html(msg);
+          $("#allModal").modal("show");
+          return false;
+        });
+        
+        // make url
+        let contributors = $("input[name='owner_radio']");
+        let get_con_user_url = '';
+        for (let idx=0; idx<contributors.length; idx++) {
+          if($(`#${contributors[idx].id}`).attr('checked') == 'checked') {
+            continue;
+          }
+          let contributor_id = contributors[idx].id.replace('id_owner_radio_', '')
+          if (contributor_id == owner_id) {
+            continue;
+          }
+          const contributor_email = $(`#share_email_${contributor_id}`).val();
+          if (get_con_user_url == '' & contributor_email !='') {
+            get_con_user_url = '/api/items/get_userinfo_by_emails?emails=' + contributor_email;
+          } else if (contributor_email !='') {
+            get_con_user_url += '&emails=' + contributor_email;
+          }
+        }
+        let ret_contributor = false;
+        if(get_con_user_url == '') {
+          ret_contributor = true;
+        } else {
+          ret_contributor = await $scope.getUserInfoByEmails(get_con_user_url)
+          .then(user_infos => {
+            let shared_user_ids = [];
+            user_infos.forEach((users => {
+              shared_user_ids.push({'user':users['user_id']});
+            }));
+            model['shared_user_ids'] = shared_user_ids;
+            return true;
+          }).catch(msg => {
+            $("#inputModal").html(msg);
+            $("#allModal").modal("show");
+            return false;
+          });
+        }
+        
+        if(ret_owner & ret_contributor){
+          return true;
+        }
+        return false;
+      }
+
       $rootScope.$on('invenio.records.loading.stop', function (ev) {
         $scope.checkLoadingNextButton();
         $scope.hiddenPubdate();
-        $scope.initContributorData();
         $scope.initUserGroups();
         $scope.loadFilesFromSession();
         $scope.initFilenameList();
@@ -2607,15 +2886,14 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
           $scope.autoFillUsageApplication();
           setTimeout(function () {
             function updateItemTitle() {
-              let item_title = $("#auto_fill_subitem_restricted_access_item_title").val() +
-                $("#subitem_restricted_access_name").val()
+              let item_title = $("#auto_fill_subitem_restricted_access_item_title").val() + $("#subitem_fullname").val()
               $rootScope["recordsVM"].invenioRecordsModel[item_title_key]['subitem_restricted_access_item_title'] = item_title;
             }
-            $("#subitem_restricted_access_name").on('input', function () {
+            $("#subitem_fullname").on('input', function () {
               updateItemTitle();
             });
 
-            if ($("#subitem_restricted_access_name").val()) {
+            if ($("#subitem_fullname").val()) {
               updateItemTitle();
             }
           }, 3000);
@@ -2663,7 +2941,12 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
         setTimeout(function () {
           window.dispatchEvent(new Event('resize'));
           $scope.resizeMainContentWidget();
-        }, 500)
+        }, 500);
+
+        // Delay 0.5s after page render
+        setTimeout(function () {
+          $scope.initContributorData();
+        }, 500);
       });
 
       /**
@@ -3463,86 +3746,112 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
       }
 
 
-      $scope.registerUserPermission = function () {
-        // let userSelection = $('#input').val();
+      $scope.registerUserPermission = async function () {
+        let model = $rootScope.recordsVM.invenioRecordsModel;
         let userSelection = $(".form_share_permission").css('display');
-        let result = false;
-        if (userSelection == 'none') {
-          $rootScope.recordsVM.invenioRecordsModel['shared_user_id'] = -1;
-          result = true;
-        } else if (userSelection == 'block') {
-          let _username = $('#share_username').val();
-          let _email = $('#share_email').val();
-          let current_login_user = 0;
-          // Get current login user
-          $.ajax({
-            url: '/api/items/get_current_login_user_id',
-            method: 'GET',
-            async: false,
-            success: function (data, status) {
-              if (data.user_id) {
-                current_login_user = data.user_id;
-              }
-            }
-          });
-          let param = {
-            username: _username,
-            email: _email
-          };
-          $.ajax({
-            url: '/api/items/validate_user_info',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            method: 'POST',
-            async: false,
-            data: JSON.stringify(param),
-            dataType: "json",
-            success: function (data, stauts) {
-              if (data.error) {
-                alert('Some errors have occured!\nDetail: ' + data.error);
-                //var modalcontent =  "Some errors have occured!\nDetail: " + data.error;
-                //$("#inputModal").html(modalcontent);
-                //$("#allModal").modal("show");
-              } else {
-                if (data.validation) {
-                  userInfo = data.results;
-                  let otherUser = {
-                    username: userInfo.username,
-                    email: userInfo.email,
-                    userID: userInfo.user_id
-                  };
-                  if (otherUser.userID == current_login_user) {
-                    alert('You cannot specify yourself in "Other users" setting.');
-                    //var modalcontent = "You cannot specify yourself in "Other users" setting.";
-                    //$("#inputModal").html(modalcontent);
-                    //$("#allModal").modal("show");
-                  } else {
-                    $rootScope.recordsVM.invenioRecordsModel['shared_user_id'] = otherUser.userID;
-                    result = true;
-                  }
-                } else {
-                  alert('Shared user information is not valid\nPlease check it again!');
-                  //var modalcontent = "Shared user information is not valid\nPlease check it again!";
-                  //$("#inputModal").html(modalcontent);
-                  //$("#allModal").modal("show");
-                }
-              }
-            },
-            error: function (data, status) {
-              alert('Cannot connect to server!');
-              //var modalcontent =  "Cannot connect to server!";
-              //$("#inputModal").html(modalcontent);
-              //$("#allModal").modal("show");
-            }
-          })
-        } else {
-          alert('Some errors have occured when edit Contributer');
-          //var modalcontent =  "Some errors have occured when edit Contributer";
-          //$("#inputModal").html(modalcontent);
-          //$("#allModal").modal("show");
+        let login_user_id = 0;
+        let is_exist_login_user = false;
+        // init model
+        model['shared_user_ids'] = [];
+
+        if (userSelection != 'block') {
+          return true;
         }
-        return result;
+        const promise_check_contributor = await $scope.getCurrentLoginUserId().then(user_id => login_user_id = user_id).then(() => {
+          /******************/
+          /* 入力チェック
+          /******************/
+          // ownerは必ず指定する
+          if ($("input[name='checkedSharePermiss']:checked").val() =='other_user' & $("input[name='owner_radio']:checked").length == 0) {
+            return Promise.reject('[Be sure to select an owner.]');
+          }
+          // This user
+          if ($("input[name='checkedSharePermiss']:checked").val() =='this_user') {
+            return true;
+          }
+          // owner
+          let owner_radio_id = $("input[name='owner_radio']:checked")[0].id;
+          let owner_id = owner_radio_id.replace('id_owner_radio_', '')
+          // 空白チェック
+          if($("input[name='checkedSharePermiss']:checked").val() =='other_user' & $(`#share_email_${owner_id}`).val() == '') {
+            return Promise.reject('[owner email address is blank.]');
+          }
+          return owner_id;
+        }).then(async (owner_id) => {
+          /************************************************************/
+          /* ownerとContributorをまとめてリストでチェックする
+          /************************************************************/
+          let check_user_info_list = [];
+          let check_owner_user_info = { 'username': '', 'email': '', 'owner': true };
+          // owner
+          const owner_username = $(`#share_username_${owner_id}`).val();
+          const owner_email = $(`#share_email_${owner_id}`).val();
+          check_owner_user_info['username'] = owner_username;
+          check_owner_user_info['email'] = owner_email;
+          check_user_info_list.push(check_owner_user_info);
+          // contributor
+          let contributors = $("input[name='owner_radio']");
+          for (let idx=0; idx<contributors.length; idx++) {
+            let check_contributor_user_info = { 'username': '', 'email': '', 'owner': false };
+            let contributor_id = contributors[idx].id.replace('id_owner_radio_', '');
+            const contributor_username = $(`#share_username_${contributor_id}`).val();
+            const contributor_email = $(`#share_email_${contributor_id}`).val();
+            if (contributor_email == '' | contributors[idx].checked) {
+              continue;
+            }
+            check_contributor_user_info['username'] = contributor_username;
+            check_contributor_user_info['email'] = contributor_email;
+            check_user_info_list.push(check_contributor_user_info);
+          }
+          let ret = { 'async_validate': false, 'error': ''};
+          let owner_info = {};
+          let contributors_info = [];
+          let async_validate_users = await $scope.validateUserInfo(login_user_id, check_user_info_list)
+          .then( user_list => {
+            for (user of user_list) {
+              if (user['is_login_user']) {
+                is_exist_login_user = true;
+              }
+              if (user['owner']) {
+                owner_info = {'user_id': user['userID'], 'email': user['email']};
+              } else {
+                contributors_info.push({'user_id':user['userID'], 'email': user['email']});
+              }
+            }
+            ret['async_validate'] = true;
+            return ret;
+          }).catch(msg => {
+            ret['error'] = msg;
+            ret['async_validate'] = false;
+            return ret;
+          });
+
+          if(async_validate_users['async_validate']) {
+            // ログインチェック成功 Modelに設定する
+            //owner
+            model['owner'] = Number.parseInt(owner_info['user_id'])
+            
+            //contributor
+            let shared_user_ids = [];
+            contributors_info.forEach((contributors => {
+              shared_user_ids.push({'user':contributors['user_id']});
+            }));
+            model['shared_user_ids'] = shared_user_ids;
+          } else {
+            return async_validate_users['error'];
+          }
+          return '';
+        }).then((error_message) => {
+          if (error_message.length > 0) {
+            return Promise.reject(error_message);
+          }
+          if (!is_exist_login_user) {
+            return Promise.reject('Contributer or Owner - the login user is required.');
+          }
+          return true;
+        });
+
+        return promise_check_contributor;
       }
 
       $scope.genTitleAndPubDate = function () {
@@ -3604,36 +3913,27 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
       }
 
       $scope.getFeedbackMailList = function() {
-        const re = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
-        $scope.feedback_emails = []
-        invalid_emails = [];
-        emails = []
-        emails = $('#sltBoxListEmail').children('a');
-        if (emails.length === 0) {
-          return invalid_emails;
-        }
-        emails.each(function (idx) {
-          mail_info = emails[idx]
-          value = mail_info.attributes[1]['value'].split('_')
-          author_id = value[0]
-          mail = value[1]
-          result = re.test(String(mail).toLowerCase());
-          if (result) {
-            $scope.feedback_emails.push({
-              "author_id": author_id,
-              "email": mail
-            })
-          } else {
-            invalid_emails.push(mail);
-          }
-        });
-        return invalid_emails;
+        const emais_info = $scope.getMailList('#sltBoxListEmail');
+        $scope.feedback_emails = emais_info['valid_emails'];
+        return emais_info['invalid_emails'];
       }
 
       $scope.getRequestMailList = function() {
         const emais_info = $scope.getMailList('#sltBoxListRequestEmail');
         $scope.request_emails = emais_info['valid_emails'];
         return emais_info['invalid_emails'];
+      }
+
+      $scope.getItemApplicationCheckBox = function(){
+        const ItemApplicationCheckBox = $('#display_item_application_checkbox');
+        console.log('ItemApplicationCheckBox', ItemApplicationCheckBox);
+        return ItemApplicationCheckBox
+      }
+
+      $scope.getItemApplication = function(){
+        const ItemApplication = $('#workflow_for_item_application');
+        console.log('ItemApplication', ItemApplication);
+        return ItemApplication
       }
 
       $scope.getMailList = function(list_id) {
@@ -3647,15 +3947,18 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
           return mails_info;
         }
         emails.each(function (idx) {
-          const email = emails[idx]
-          const result = re.test(String(email.text).toLowerCase());
+          mail_info = emails[idx]
+          value = mail_info.attributes[1]['value'].split('_')
+          author_id = value[0]
+          const mail = value[1]
+          const result = re.test(String(mail).toLowerCase());
           if (result) {
             mails_info['valid_emails'].push({
-              "author_id": email.attributes[1]['value'],
-              "email": email.text
+              "author_id": author_id,
+              "email": mail
             })
           } else {
-            mails_info['invalid_emails'].push(email.text);
+            mails_info['invalid_emails'].push(mail);
           }
         });
         return mails_info;
@@ -3940,6 +4243,7 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
         }
         approvalMailSubKey = JSON.parse(approvalMailSubKey);
         let param = {};
+        let same_mail_flag = false;
         Object.keys($scope.depositionForm).forEach(function (key) {
           approvalMailSubKey.forEach(function (item) {
             let item_keys = item.split('.').pop();
@@ -3951,6 +4255,9 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
                 if (mail_address) {
                   mail_address = mail_address.trim()
                 }
+                if (mail_address == $("#subitem_mail_address").val()) {
+                  same_mail_flag = true;
+                }
                 param[item] = mail_address;
                 emailsToValidate.push(item);
                 listEmailKeys.push(key);
@@ -3958,6 +4265,10 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
             }
           });
         });
+        if (same_mail_flag) {
+          $scope.processShowModelValidation([], itemsDict, "#validate_email_check");
+          return false;
+        }
         param['activity_id'] = activityId;
         param['user_to_check'] = emailsToValidate;
         param['user_key_to_check'] = listEmailKeys;
@@ -4286,13 +4597,15 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
           }
         }
       }
-      $scope.updateDataJson = function (activityId, steps, item_save_uri, currentActionId, isAutoSetIndexAction, enableContributor, enableFeedbackMail, enableRequestMail) {
-          if (!validateSession()) {
+      $scope.updateDataJson = async function (activityId, steps, item_save_uri, currentActionId, isAutoSetIndexAction, enableContributor, enableFeedbackMail, enableRequestMail) {
+        if (!validateSession()) {
           return;
         }
         $scope.startLoading();
         let currActivityId = $("#activity_id").text();
-        if (!$scope.saveDataJson(item_save_uri, currentActionId, isAutoSetIndexAction, enableContributor, enableFeedbackMail, enableRequestMail, true)) {
+        let is_saved_json = await $scope.saveDataJson(item_save_uri, currentActionId, isAutoSetIndexAction, enableContributor, enableFeedbackMail, enableRequestMail, true);
+        if (!is_saved_json) {
+          $scope.endLoading();
           return;
         }
         $scope.UpdateApplicationDate();
@@ -4320,9 +4633,7 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
           $scope.genTitleAndPubDate();
           let next_frame = $('#next-frame').val();
           let next_frame_upgrade = $('#next-frame-upgrade').val();
-          if (enableContributor === 'True' && !this.registerUserPermission()) {
-            $scope.endLoading();
-          } else if (enableFeedbackMail === 'True' && !this.saveFeedbackMailListCallback(currentActionId)) {
+          if (enableFeedbackMail === 'True' && !this.saveFeedbackMailListCallback(currentActionId)) {
             $scope.endLoading();
           } else {
             $scope.addApprovalMail();
@@ -4337,12 +4648,11 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
             //If CustomBSDatePicker empty => remove attr.
             CustomBSDatePicker.removeLastAttr($rootScope.recordsVM.invenioRecordsModel);
 
-            // let title = $rootScope.recordsVM.invenioRecordsModel['title'];
-            // let shareUserID = $rootScope.recordsVM.invenioRecordsModel['shared_user_id'];
-            // $scope.saveTitleAndShareUserID(title, shareUserID);
-
             // Save required data into workflow activity
-            if (!$scope.saveActivity()) {
+            let is_save = await $scope.saveActivity(false).then(ret => {
+              return ret;
+            });
+            if (!is_save) {
               $scope.endLoading();
               return false;
             }
@@ -4422,16 +4732,20 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
         return removedItemKeys;
       }
 
-      $scope.saveActivity = function () {
+      $scope.saveActivity = async function (is_login_check = true) {
         let result = true;
         const URL = "/workflow/save_activity_data";
         let activityID = $('#activity_id').text();
         let recordModel = $rootScope["recordsVM"].invenioRecordsModel;
 
+        // get title
+        $scope.genTitleAndPubDate();
+
         let requestData = {
           activity_id: activityID,
           title: recordModel['title'],
-          shared_user_id: recordModel['shared_user_id'],
+          shared_user_ids: recordModel['shared_user_ids'],
+          owner: recordModel['owner']
         }
 
         if (recordModel['approval1'] || recordModel['approval2']) {
@@ -4439,6 +4753,28 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
           requestData['approval2'] = recordModel['approval2'];
         }
 
+        if(is_login_check) {
+          //shared_userに現在ログイン中のユーザーIDと一致するかチェック
+          shared_user_ids = [];
+          if (recordModel['shared_user_ids'] != undefined) {
+            recordModel['shared_user_ids'].forEach(users => {
+              shared_user_ids.push(users['user']);
+            });
+          }
+          const ids = shared_user_ids.concat(recordModel['owner']);
+          if (Number.isInteger(recordModel['owner'])) {
+            let is_correct = await $scope.checkLoginUserIds(ids)
+            .then(ret => {
+              return true;
+            }).catch(error => {
+              alert(error);
+              return false;
+            });
+            if(!is_correct) {
+              return false;
+            }
+          }
+        }
 
         $.ajax({
           url: URL,
@@ -4448,20 +4784,160 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
             "Content-Type": "application/json"
           },
           data: JSON.stringify(requestData),
-          dataType: "json",
-          success: function (data) {
-            if (!data.success) {
-              addAlert(data.msg, "alert-danger");
-              result = false;
-            }
-          },
-          error: function () {
-            addAlert("Cannot connect to server!", "alert-danger");
+          dataType: "json"
+        }).done(data => {
+          if (!data.success) {
+            addAlert(data.msg, "alert-danger");
             result = false;
           }
-        })
+        }).fail(err=> {
+          addAlert("Cannot connect to server!"+err, "alert-danger");
+          result = false;
+        });
 
         return result;
+      }
+
+      $scope.validateUserInfo = (login_user_id, user_list) => {
+        let param = user_list;
+        return new Promise((resolve, reject) => {
+          $.ajax({
+            url: '/api/items/validate_users_info',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            method: 'POST',
+            data: JSON.stringify(param),
+            dataType: "json"
+          }).done(users_list => {
+            ret_list = [];
+            for (user of users_list.results) {
+              if (user.validation & !!user.info) {
+                userInfo = user.info;
+                let otherUser = {
+                  username: userInfo.username,
+                  email: userInfo.email,
+                  userID: userInfo.user_id,
+                  is_login_user: false,
+                  owner: user.owner
+                };
+                if (Number(otherUser.userID) == Number(login_user_id)) {
+                  otherUser.is_login_user = true;
+                }
+                ret_list.push(otherUser)
+              } else {
+                message = 'Shared user information is not valid\nPlease check it again!';
+                reject(message);
+              }
+            }
+            resolve(ret_list);
+          }).fail(data => {
+            message = 'Cannot connect to server!';
+            reject(message);
+          });
+        });
+      };
+
+      $scope.getCurrentLoginUserId = () => {
+        return new Promise((resolve, reject) => {
+          $.ajax({
+            url: '/api/items/get_current_login_user_id',
+            method: 'GET'
+          }).done(data => {
+            if (data.error) {
+              reject(data.error);
+            } else if (data.user_id) {
+              resolve(data.user_id);
+            }
+          }).fail(data => {
+            reject('Cannot connect to server!');
+          });
+        });
+      };
+
+      $scope.checkLoginUserEmail = (email) => {
+        return new Promise((resolve, reject) => {
+          $.ajax({
+            url: '/api/items/is_login_user_email/' + email,
+            method: 'GET'
+          }).done(data => {
+            if (!data.is_login_user) {
+              resolve(data);
+            } else {
+              reject(data);
+            }
+          }).fail(data => {
+            reject('Cannot connect to server!' + data.error);
+          });
+        });
+      }
+
+      $scope.checkLoginUserIds = (params) => {
+        let login_user_id_url = '/api/items/is_login_user_ids?';
+        for (param in params) {
+          if (login_user_id_url.slice(-1) != '?') {
+            login_user_id_url += '&';
+          }
+          login_user_id_url += 'ids='+param;
+        }
+        return new Promise((resolve, reject) => {
+          $.ajax({
+            url: login_user_id_url,
+            method: 'GET'
+          }).done(data => {
+            if (data['is_login_user'] === false) {
+              resolve(data);
+              return true;
+            } else {
+              reject(data['error']);
+              return false;
+            }
+          }).fail(data => {
+            reject('Cannot connect to server!');
+            return false;
+          });
+        });
+      }
+
+      $scope.getUserInfo = (url) => {
+        return new Promise((resolve, reject) => {
+          $.ajax({
+            url: url,
+            method: 'GET'
+          }).done(data => {
+            if(data.error) {
+              reject(data.error);
+            } else {
+              for(let element of data) {
+                if (element.owner) {
+                  $scope.is_item_owner = true;
+                  $("#contributor-panel").removeClass("hidden");
+                  $(".other_user_rad").click();
+                  $(`#share_username_${element.userid}`).val(element.username);
+                  $(`#share_email_${element.userid}`).val(element.email);
+                } else {
+                  $(".other_user_rad").click();
+                  $(`#share_username_${element.userid}`).val(element.username);
+                  $(`#share_email_${element.userid}`).val(element.email);
+                }
+              }
+              resolve(data);
+            }
+          });
+        });
+      }
+
+      $scope.getUserInfoByEmails = (url) => {
+        return new Promise((resolve, reject) => {
+          $.ajax({
+            url: url,
+            method: 'GET'
+          }).done(user_infos => {
+            resolve(user_infos);
+          }).fail(msg => {
+            reject(msg.responseText);
+          });
+        });
       }
 
       $scope.addApprovalMail = function () {
@@ -4515,8 +4991,8 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
         sessionStorage.removeItem(key);
       }
 
-      $scope.saveActivityData = function(item_save_uri, currActivityId, enableContributor,enableFeedbackMail, enableRequestMail,startLoading,sessionValid) {
-        if (!$scope.saveDataJson(item_save_uri, currActivityId, enableContributor,enableFeedbackMail, enableRequestMail,startLoading,sessionValid)){
+      $scope.saveActivityData = function(item_save_uri, currActivityId, enableContributor, enableFeedbackMail, enableRequestMail, startLoading, sessionValid) {
+        if (!$scope.saveDataJson(item_save_uri, currActivityId, enableContributor, enableFeedbackMail, enableRequestMail, startLoading, sessionValid)){
           return;
         }
         $scope.genTitleAndPubDate();
@@ -4526,7 +5002,7 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
         return true
       }
 
-      $scope.saveDataJson = function (item_save_uri, currentActionId, enableContributor, enableFeedbackMail, enableRequestMail, startLoading,sessionValid) {
+      $scope.saveDataJson = async function (item_save_uri, currentActionId, enableContributor, enableFeedbackMail, enableRequestMail, startLoading, sessionValid) {
         //When press 'Next' or 'Save' button, setting data for model.
         //This function is called in updataDataJson function.
         if(!sessionValid){
@@ -4545,16 +5021,25 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
             $scope.updateTitleForOutputReport()
           }
 
+          if (!model['item_dataset_usage']) {
+            $rootScope.recordsVM.invenioRecordsModel['item_dataset_usage'] = {
+              subitem_dataset_usage : $("#data_type_title").val()
+            };
+          }
+
           var invalidFlg = $('form[name="depositionForm"]').hasClass("ng-invalid");
           let permission = false;
+          let error_message = 'An error ocurred while processing the user data!<br><br>';
           $scope.$broadcast('schemaFormValidate');
           if (enableFeedbackMail === 'True' && enableContributor === 'True') {
             if (!invalidFlg && $scope.is_item_owner) {
-              if (!this.registerUserPermission()) {
-                // Do nothing
-              } else {
-                permission = true;
-              }
+              await this.registerUserPermission().then((contributor_check) => {
+                if (contributor_check) {
+                  permission = true;
+                }
+              }).catch((msg) => {
+                error_message = msg;
+              });
             } else {
               permission = true;
             }
@@ -4568,11 +5053,35 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
               this.saveDataJsonCallback(item_save_uri, startLoading);
               this.saveFeedbackMailListCallback(currentActionId);
               this.saveRequestMailListCallback(currentActionId);
+              if(($("#display_item_application_checkbox").prop('checked') == true) && ($rootScope.filesVM.files.length > 0)){
+                let modalcontent = $('#invalid-item-application-format').val();
+                $("#inputModal").html(modalcontent);
+                $("#allModal").modal("show");
+                return;
+              }else{
+                this.saveItemApplicationCallback(currentActionId);
+              }
+            } else {
+              $("#inputModal").html(error_message);
+              $("#allModal").modal("show");
+              $scope.endLoading();
+              return false;
             }
           } else {
             this.saveDataJsonCallback(item_save_uri, startLoading);
           }
+
           $scope.storeFilesToSession();
+
+          // Save required data into workflow activity
+          let is_save = await $scope.saveActivity(true).then(ret => {
+            return ret;
+          });
+          if (!is_save) {
+            $scope.endLoading();
+            return false;
+          }
+
         } catch (error) {
           var msgHeader = 'An error ocurred while processing the input data!<br><br>'
           $("#inputModal").html(msgHeader + error.message);
@@ -4584,6 +5093,7 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
       };
 
       $scope.saveDataJsonCallback = function (item_save_uri, startLoading) {
+        const activityID = $("#activity_id").text();
         $scope.unattachedSystemProperties();
         var metainfo = { 'metainfo': $rootScope.recordsVM.invenioRecordsModel };
         if (!angular.isUndefined($rootScope.filesVM)) {
@@ -4593,6 +5103,7 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
             {},
             metainfo,
             {
+              'activity_id': activityID,
               'files': $rootScope.filesVM.files,
               'endpoints': $rootScope.filesVM.invenioFilesEndpoints,
               'cris_linkage' : {'researchmap' : $('#researchmap_chk').prop("checked")}
@@ -4698,6 +5209,49 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
           },
           error: function(data, status) {
             var modalcontent =  "Cannot save Request-Mail list!";
+            $("#inputModal").html(modalcontent);
+            $("#allModal").modal("show");
+            result = false;
+          }
+        });
+        return result;
+      };
+      
+      $scope.saveItemApplicationCallback = function(cur_action_id){
+        const activityID = $("#activity_id").text();
+        const actionID = cur_action_id;
+        const display_item_application_btn = $("#display_item_application_checkbox").prop('checked');
+        const terms_without_contents = $("#terms_without_contents").val();
+        const workflow_for_item_application = $("#workflow_for_item_application").val();
+
+        let result = true;
+        if ($.isEmptyObject(workflow_for_item_application)) {
+          return result;
+        }
+
+        if(terms_without_contents == "term_free"){
+          var terms_description_without_contents = $("#termsDescription").val();
+        }
+
+        let request_body = {
+          'is_display_item_application_button': display_item_application_btn,
+          'terms_without_contents': terms_without_contents,
+          'workflow_for_item_application': workflow_for_item_application,
+          'terms_description_without_contents': terms_description_without_contents
+        }
+        $.ajax({
+          url: '/workflow/save_item_application' + '/' + activityID + '/' + actionID,
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          method: 'POST',
+          async: false,
+          data: JSON.stringify(request_body),
+          dataType: "json",
+          success: function(data, stauts) {
+          },
+          error: function(data, status) {
+            var modalcontent =  "Cannot save usage application without contents";
             $("#inputModal").html(modalcontent);
             $("#allModal").modal("show");
             result = false;

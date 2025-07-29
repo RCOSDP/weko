@@ -23,7 +23,10 @@
 from invenio_oauth2server.ext import verify_oauth_token_and_set_current_user
 
 from . import config
+from .rest import create_blueprint, create_blueprint_cites
+from .views import blueprint
 from weko_admin import config as admin_config
+
 
 class WekoRecordsUI(object):
     """weko-records-ui extension."""
@@ -66,6 +69,7 @@ class WekoRecordsUI(object):
         app.config.setdefault('EMAIL_DISPLAY_FLG',
                               getattr(config, 'EMAIL_DISPLAY_FLG'))
 
+
 class WekoRecordsREST(object):
     """weko-record-ui-rest extension."""
 
@@ -85,7 +89,6 @@ class WekoRecordsREST(object):
 
         :param app: An instance of :class:`flask.Flask`.
         """
-        from .rest import create_blueprint
         self.init_config(app)
         blueprint = create_blueprint(
             app.config['WEKO_RECORDS_UI_REST_ENDPOINTS']
@@ -104,6 +107,7 @@ class WekoRecordsREST(object):
         for k in dir(admin_config):
             if k.startswith('WEKO_ADMIN_'):
                 app.config.setdefault(k, getattr(admin_config, k))
+
 
 class WekoRecordsCitesREST(object):
     """weko-record-ui-rest extension."""
