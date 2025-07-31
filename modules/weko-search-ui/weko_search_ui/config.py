@@ -527,8 +527,8 @@ WEKO_IMPORT_LIST_NAME = [
     "Start Date",
     "End Date",
     "Item Id",
-    "Action",
-    "Work Flow Status",
+    "Status",
+    "Import Result",
 ]
 WEKO_ADMIN_LIFETIME_DEFAULT = 1800
 

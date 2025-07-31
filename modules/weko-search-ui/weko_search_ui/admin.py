@@ -554,18 +554,14 @@ class ItemImportView(BaseView):
                 item_id = task_item.get("item_id", None)
                 if not item_id and task.result:
                     item_id = task.result.get("recid", None)
-                result.append(
-                    dict(
-                        **{
-                            "task_status": task.status,
-                            "task_result": task.result,
-                            "start_date": start_date,
-                            "end_date": task_item.get("end_date") or end_date,
-                            "task_id": task_id,
-                            "item_id": item_id,
-                        }
-                    )
-                )
+                result.append({
+                    "task_status": task.status,
+                    "task_result": task.result,
+                    "start_date": start_date,
+                    "end_date": task_item.get("end_date") or end_date,
+                    "task_id": task_id,
+                    "item_id": item_id,
+                })
                 status = (
                     "doing"
                     if not (task.successful() or task.failed()) or status == "doing"
@@ -1000,18 +996,14 @@ class ItemRocrateImportView(BaseView):
                 item_id = task_item.get("item_id", None)
                 if not item_id and task.result:
                     item_id = task.result.get("recid", None)
-                result.append(
-                    dict(
-                        **{
-                            "task_status": task.status,
-                            "task_result": task.result,
-                            "start_date": start_date,
-                            "end_date": task_item.get("end_date") or end_date,
-                            "task_id": task_id,
-                            "item_id": item_id,
-                        }
-                    )
-                )
+                result.append({
+                    "task_status": task.status,
+                    "task_result": task.result,
+                    "start_date": start_date,
+                    "end_date": task_item.get("end_date") or end_date,
+                    "task_id": task_id,
+                    "item_id": item_id,
+                })
                 status = (
                     "doing"
                     if not (task.successful() or task.failed()) or status == "doing"
