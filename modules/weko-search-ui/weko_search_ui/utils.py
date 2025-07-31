@@ -2926,10 +2926,8 @@ def handle_check_doi_ra(list_record):
 def handle_check_doi(list_record):
     """Check DOI.
 
-    :argument
-        list_record -- {list} list record import.
-    :return
-
+    Args:
+        list_record (list): list record import.
     """
     def _check_doi(doi_ra, doi, item):
         error = None
@@ -2955,9 +2953,40 @@ def handle_check_doi(list_record):
                     error = _("Specified Prefix of {} is incorrect.").format("DOI")
         return error
 
+    def _check_doi_duplicate(doi_ra, doi, record=None):
+        """Check if DOI already exists in the system.
+
+        Args:
+            doi_ra (str): DOI Registration Agency.
+            doi (str): DOI value.
+            record (WekoRecord, optional):
+                WekoRecord object of item to update.
+        """
+        error = None
+        object_uuid = record.pid_recid.object_uuid if record else None
+        identifier = IdentifierHandle(object_uuid)
+        doi_domain = IDENTIFIER_GRANT_LIST[WEKO_IMPORT_DOI_TYPE.index(doi_ra) + 1][2]
+        doi_link = doi_domain + "/" + doi
+
+        doi_pidstore = identifier.check_pidstore_exist("doi", doi_link)
+        if doi_pidstore and doi_pidstore.status == PIDStatus.DELETED:
+            error = _(
+                "Specified DOI was withdrawn. Please specify another DOI."
+            )
+        # Check if DOI already exists, but allows to assign to self.
+        elif doi_pidstore and doi_pidstore.object_uuid != object_uuid:
+            error = _(
+                "Specified DOI has been used already for another item. "
+                "Please specify another DOI."
+            )
+        return error
+
+    list_doi = []
+    list_duplicated = []
+
     for item in list_record:
         error = None
-        item_id = str(item.get("id"))
+        item_id = str(item.get("id") or "")
         doi = item.get("doi")
         doi_ra = item.get("doi_ra")
         if item.get("is_change_identifier") and doi_ra and not doi:
@@ -2988,13 +3017,19 @@ def handle_check_doi(list_record):
                             )
                         elif not suffix:
                             error = _("Please specify {}.").format("DOI suffix")
+                        elif item.get("status") == "new":
+                            error = _check_doi_duplicate(doi_ra, doi)
+                        else:
+                            record = WekoRecord.get_record_by_pid(item_id)
+                            error = _check_doi_duplicate(doi_ra, doi, record)
             else:
                 if item.get("status") == "new":
                      if doi:
                         error = _check_doi(doi_ra, doi, item)
+
                 else:
-                    pid = WekoRecord.get_record_by_pid(item_id).pid_recid
-                    identifier = IdentifierHandle(pid.object_uuid)
+                    record = WekoRecord.get_record_by_pid(item_id)
+                    identifier = IdentifierHandle(record.pid_recid.object_uuid)
                     _value, doi_type = identifier.get_idt_registration_data()
                     if not doi_type:
                         if doi:
@@ -3002,7 +3037,7 @@ def handle_check_doi(list_record):
                     else:
                         pid_doi = None
                         try:
-                            pid_doi = WekoRecord.get_record_by_pid(item_id).pid_doi
+                            pid_doi = record.pid_doi
                         except Exception as ex:
                             current_app.logger.error("item id: %s not found." % item_id)
                             current_app.logger.error(ex)
@@ -3022,7 +3057,27 @@ def handle_check_doi(list_record):
         if error:
             item["errors"] = item["errors"] + [error] if item.get("errors") else [error]
             item["errors"] = list(set(item["errors"]))
+        elif doi and doi not in list_doi:
+                list_doi.append(doi)
+        elif doi:
+            list_duplicated.append(doi)
 
+    # check duplicated DOI between import items.
+    for item in list_record:
+        doi = item.get("doi")
+        if doi not in list_duplicated:
+            continue
+
+        error = _(
+            "Specified DOI is duplicated with another import item. "
+            "Please specify another DOI."
+        )
+        item["errors"] = (
+            item["errors"] + [error] if item.get("errors") else [error]
+        )
+        current_app.logger.warning(
+            f"Specified DOI is duplicated with another import item: {doi}"
+        )
 
 def handle_check_item_link(list_record):
     """Check item link.
