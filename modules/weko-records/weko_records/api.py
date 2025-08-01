@@ -2678,7 +2678,7 @@ class RequestMailList(object):
                 else:
                     query_object.mail_list = request_maillist
                     db.session.merge(query_object)
-            db.session.commit()
+
         except SQLAlchemyError:
             db.session.rollback()
             return False
@@ -2894,7 +2894,7 @@ class ItemLink(object):
 
         return ret
 
-    def update(self, items):
+    def update(self, items, require_commit=True):
         """Update list item link of current record.
 
         This method updates the relationships between the current item
@@ -2905,6 +2905,8 @@ class ItemLink(object):
         Args:
             items(list): List of dictionaries containing
                 'item_id' and 'sele_id' (relationship type).
+            require_commit (bool):
+                If True, commit the transaction after processing.
         Returns:
             str: Error message if any, otherwise None.
         """
@@ -3020,22 +3022,26 @@ class ItemLink(object):
                 if created:
                     self.bulk_create(created)
 
-            # Commit the transaction if all operations succeed
-            db.session.commit()
+            if require_commit:
+                # Commit the transaction if all operations succeed
+                db.session.commit()
             for deleted_link in deleted:
                 UserActivityLogger.info(
                     operation="ITEM_DELETE_LINK",
-                    target_key=deleted_link["dst_item_pid"]
+                    target_key=deleted_link["dst_item_pid"],
+                    require_commit=require_commit
                 )
             for updated_link in updated:
                 UserActivityLogger.info(
                     operation="ITEM_UPDATE_LINK",
-                    target_key=updated_link["dst_item_pid"]
+                    target_key=updated_link["dst_item_pid"],
+                    require_commit=require_commit
                 )
             for created_link in created:
                 UserActivityLogger.info(
                     operation="ITEM_CREATE_LINK",
-                    target_key=created_link["dst_item_pid"]
+                    target_key=created_link["dst_item_pid"],
+                    require_commit=require_commit
                 )
         except IntegrityError as ex:
             # Log and handle integrity errors (e.g., duplicate entries)

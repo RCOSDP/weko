@@ -2011,11 +2011,11 @@ def register_item_metadata(item, root_path, owner, is_gakuninrdm=False, request_
                 pid, keep_version=True, is_import=True
             )
             item_link_draft_pid = ItemLink(_draft_pid.pid_value)
-            item_link_draft_pid.update(link_data)
+            item_link_draft_pid.update(link_data, require_commit=False)
         item_link_latest_pid = ItemLink(_deposit.pid.pid_value)
-        item_link_latest_pid.update(link_data)
+        item_link_latest_pid.update(link_data, require_commit=False)
         item_link_pid_without_ver = ItemLink(item_id)
-        item_link_pid_without_ver.update(link_data)
+        item_link_pid_without_ver.update(link_data, require_commit=False)
 
 def update_publish_status(item_id, status):
     """Handle get title.
@@ -2230,7 +2230,6 @@ def import_items_to_system(
 
         except SQLAlchemyError as ex:
             current_app.logger.error(f"sqlalchemy error: {ex}")
-            db.session.rollback()
             if item.get("id"):
                 pid = PersistentIdentifier.query.filter_by(
                     pid_type="recid", pid_value=item["id"]
@@ -2240,6 +2239,7 @@ def import_items_to_system(
                     PIDVersioning(child=pid).last_child.object_uuid
                 )
                 handle_remove_es_metadata(item, bef_metadata, bef_last_ver_metadata)
+            db.session.rollback()
             current_app.logger.error("item id: %s update error." % item["id"])
             traceback.print_exc(file=sys.stdout)
             exec_info = sys.exc_info()
@@ -2263,7 +2263,6 @@ def import_items_to_system(
             return {"success": False, "error_id": error_id}
         except ElasticsearchException as ex:
             current_app.logger.error("elasticsearch  error: ", ex)
-            db.session.rollback()
             if item.get("id"):
                 pid = PersistentIdentifier.query.filter_by(
                     pid_type="recid", pid_value=item["id"]
@@ -2273,6 +2272,7 @@ def import_items_to_system(
                     PIDVersioning(child=pid).last_child.object_uuid
                 )
                 handle_remove_es_metadata(item, bef_metadata, bef_last_ver_metadata)
+            db.session.rollback()
             current_app.logger.error("item id: %s update error." % item["id"])
             traceback.print_exc(file=sys.stdout)
             exec_info = sys.exc_info()
@@ -2296,7 +2296,6 @@ def import_items_to_system(
             return {"success": False, "error_id": error_id}
         except redis.RedisError as ex:
             current_app.logger.error(f"redis  error: {ex}")
-            db.session.rollback()
             if item.get("id"):
                 pid = PersistentIdentifier.query.filter_by(
                     pid_type="recid", pid_value=item["id"]
@@ -2306,6 +2305,7 @@ def import_items_to_system(
                     PIDVersioning(child=pid).last_child.object_uuid
                 )
                 handle_remove_es_metadata(item, bef_metadata, bef_last_ver_metadata)
+            db.session.rollback()
             current_app.logger.error("item id: %s update error." % item["id"])
             traceback.print_exc(file=sys.stdout)
             exec_info = sys.exc_info()
@@ -2327,9 +2327,8 @@ def import_items_to_system(
                 error_id = ex.args[0].get("error_id")
 
             return {"success": False, "error_id": error_id}
-        except BaseException as ex:
+        except Exception as ex:
             current_app.logger.error("Unexpected error: {}".format(ex))
-            db.session.rollback()
             if item.get("id"):
                 pid = PersistentIdentifier.query.filter_by(
                     pid_type="recid", pid_value=item["id"]
@@ -2339,6 +2338,7 @@ def import_items_to_system(
                     PIDVersioning(child=pid).last_child.object_uuid
                 )
                 handle_remove_es_metadata(item, bef_metadata, bef_last_ver_metadata)
+            db.session.rollback()
             current_app.logger.error("item id: %s update error." % item["id"])
             traceback.print_exc(file=sys.stdout)
             exec_info = sys.exc_info()
