@@ -1062,12 +1062,12 @@ class ResultComponent extends React.Component {
     const { tasks } = this.props
     const result = tasks.map((item, key) => {
       return {
-        'No': key + 1,
-        'Start Date': item.start_date ? item.start_date : '',
-        'End Date': item.end_date ? item.end_date : '',
-        'Item Id': item.item_id || '',
-        'Status': getTaskStatusLabel(item.task_status),
-        'Import Result': getTaskResult(item.task_result)
+        [no]: key + 1,
+        [start_date]: item.start_date ? item.start_date : '',
+        [end_date]: item.end_date ? item.end_date : '',
+        [item_id]: item.item_id || '',
+        [statusLabel]: getTaskStatusLabel(item.task_status),
+        [importResult]: getTaskResult(item.task_result)
       }
     })
     const data = {

@@ -581,7 +581,10 @@ class ItemImportView(BaseView):
         file_format = current_app.config.get('WEKO_ADMIN_OUTPUT_FORMAT', 'tsv').lower()
         file_name = "List_Download {}.{}".format(now, file_format)
         if data:
-            output_file = make_stats_file(data.get("list_result"), WEKO_IMPORT_LIST_NAME)
+            output_file = make_stats_file(
+                data.get("list_result"),
+                list(map(lambda x: str(x) , WEKO_IMPORT_LIST_NAME))
+            )
             return Response(
                 output_file.getvalue(),
                 mimetype="text/{}".format(file_format),
@@ -1026,7 +1029,10 @@ class ItemRocrateImportView(BaseView):
         file_format = current_app.config.get('WEKO_ADMIN_OUTPUT_FORMAT', 'tsv').lower()
         file_name = "List_Download {}.{}".format(now, file_format)
         if data:
-            output_file = make_stats_file(data.get("list_result"), WEKO_IMPORT_LIST_NAME)
+            output_file = make_stats_file(
+                data.get("list_result"),
+                list(map(lambda x: str(x) , WEKO_IMPORT_LIST_NAME))
+            )
             return Response(
                 output_file.getvalue(),
                 mimetype="text/{}".format(file_format),

@@ -21,6 +21,7 @@
 """Configuration for weko-search-ui."""
 
 import pickle
+from flask_babelex import lazy_gettext as _
 
 from invenio_records_rest.config import RECORDS_REST_ENDPOINTS
 from invenio_search import RecordsSearch
@@ -523,12 +524,12 @@ WEKO_FLOW_DEFINE_LIST_ACTION = [
 WEKO_IMPORT_CHECK_LIST_NAME = ["No", "Item Type", "Item Id", "Title", "Check result"]
 
 WEKO_IMPORT_LIST_NAME = [
-    "No",
-    "Start Date",
-    "End Date",
-    "Item Id",
-    "Status",
-    "Import Result",
+    _("No."),
+    _("Start Date"),
+    _("End Date"),
+    _("Item ID"),
+    _("Status"),
+    _("Import Result"),
 ]
 WEKO_ADMIN_LIFETIME_DEFAULT = 1800
 
