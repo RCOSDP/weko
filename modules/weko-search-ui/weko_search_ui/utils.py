@@ -2961,6 +2961,9 @@ def handle_check_doi(list_record):
             doi (str): DOI value.
             record (WekoRecord, optional):
                 WekoRecord object of item to update.
+
+        Returns:
+            str: error message.
         """
         error = None
         object_uuid = record.pid_recid.object_uuid if record else None
