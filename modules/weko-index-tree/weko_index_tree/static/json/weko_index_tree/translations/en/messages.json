@@ -210,5 +210,13 @@
     "Required_Input": [
       null,
       "English is required input."
+    ],
+    "IndexURL": [
+      null,
+      "Index URL"
+    ],
+    "CNRI": [
+      null,
+      "CNRI"
     ]
 }

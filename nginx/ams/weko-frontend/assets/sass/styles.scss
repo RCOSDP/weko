@@ -1,0 +1,184 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Josefin+Sans:wght@400;700&display=swap');
+@import 'common';
+@import 'mixin';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.index-tree {
+  &.show,
+  &.scroll {
+    position: fixed;
+    z-index: 20;
+    height: 52px;
+    top: 0;
+    background-color: #040e27;
+  }
+
+  &:not(.show).scroll {
+    animation: DownAnime 0.5s forwards;
+  }
+
+  #about &,
+  #contact &,
+  #help &,
+  #application &,
+  #faq & {
+    display: none;
+  }
+}
+
+.faq {
+  &-index {
+    margin-bottom: 100px;
+
+    &__title {
+      font-weight: 500;
+      margin-bottom: 20px;
+    }
+
+    &__item {
+      border-bottom: 1px solid $miby-thin-gray;
+
+      &:first-of-type {
+        border-top: 1px solid $miby-thin-gray;
+      }
+
+      .anker {
+        display: block;
+        width: 100%;
+        padding: 10px 0;
+        position: relative;
+
+        .icons {
+          position: absolute;
+          right: 10px;
+        }
+      }
+    }
+  }
+
+  &-content {
+    margin-bottom: 100px;
+
+    &__title {
+      font-weight: 500;
+      margin-bottom: 10px;
+    }
+
+    &__list {
+      &:nth-of-type(2n) {
+        background-color: $miby-border-gray;
+      }
+
+      summary {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        position: relative;
+        padding: 10px 20px 10px 45px;
+        color: $miby-link-blue;
+        font-weight: 500;
+        cursor: pointer;
+        text-indent: -25px;
+
+        &::marker,
+        &::-webkit-details-marker {
+          display: none;
+        }
+
+        &::before,
+        &::after {
+          content: '';
+          position: absolute;
+          right: 20px;
+          width: 12px;
+          height: 12px;
+          background-image: url(/img/icon/icon_close02.svg);
+          background-position: center;
+          background-size: 12px;
+          background-repeat: no-repeat;
+        }
+
+        &::after {
+          rotate: 90deg;
+          transition: rotate 0.3s;
+        }
+
+        span {
+          padding-right: 25px;
+
+          &::before {
+            @include icons;
+            width: 20px;
+            height: 20px;
+            vertical-align: bottom;
+            background-image: url(/img/icon/icon_q.svg);
+          }
+        }
+      }
+
+      p {
+        will-change: transform, opacity;
+        margin: 0;
+        padding: 10px 20px 10px 45px;
+        text-indent: -25px;
+        color: $miby-faq-gray;
+        animation: FadeOut 0.5s ease;
+
+        span::before {
+          @include icons;
+          width: 20px;
+          height: 20px;
+          vertical-align: bottom;
+          background-image: url(/img/icon/icon_a.svg);
+        }
+      }
+
+      &[open] {
+        summary::after {
+          rotate: 180deg;
+        }
+
+        p {
+          animation: FadeIn 0.5s ease;
+        }
+      }
+    }
+  }
+}
+
+.detail {
+  &__wrapper {
+    width: 100%;
+    position: relative;
+
+    @include min-screen($breakpoint-tablet) {
+      max-width: 75%;
+    }
+  }
+
+  &__head {
+    width: 100%;
+    padding: 40px 20px 5px;
+
+    @include max-screen($breakpoint-mobile) {
+      grid-template-columns: 80px auto;
+    }
+
+    &-image {
+      margin-right: 15px;
+    }
+
+    &-text {
+      .icons-type {
+        @include max-screen($breakpoint-mobile) {
+          width: 100%;
+          text-align: left;
+        }
+      }
+    }
+  }
+}

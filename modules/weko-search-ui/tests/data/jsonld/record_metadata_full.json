@@ -1,0 +1,350 @@
+{
+  "_oai": {
+    "id": "oai:weko3.example.org:02000001",
+    "sets": []
+  },
+  "path": [
+    "1623632832836"
+  ],
+  "owner": "2",
+  "recid": "2000001",
+  "title": [
+    "RO-Crate Sample Dataset"
+  ],
+  "pubdate": {
+    "attribute_name": "PubDate",
+    "attribute_value": "2025-06-06"
+  },
+  "_buckets": {
+    "deposit": "a5cabc38-ea2a-45c7-9928-f55335801a6e"
+  },
+  "_deposit": {
+    "id": "2000001",
+    "pid": {
+      "type": "depid",
+      "value": "2000001",
+      "revision_id": 0
+    },
+    "owners": [
+      2
+    ],
+    "status": "published"
+  },
+  "weko_link": {},
+  "item_title": "RO-Crate Sample Dataset",
+  "author_link": [],
+  "item_type_id": "30002",
+  "publish_date": "2025-06-06",
+  "control_number": "2000001",
+  "publish_status": "0",
+  "weko_shared_id": -1,
+  "item_30002_file35": {
+    "attribute_name": "File",
+    "attribute_type": "file",
+    "attribute_value_mlt": [
+      {
+        "url": {
+          "url": "https://localhost/record/2000001/files/sample.txt",
+          "label": "sample.txt"
+        },
+        "date": [
+          {
+            "dateType": "Available",
+            "dateValue": "2025-06-06"
+          }
+        ],
+        "format": "text/plain",
+        "fileDate": [
+          {
+            "fileDateType": "Created",
+            "fileDateValue": "2024-11-11"
+          },
+          {
+            "fileDateType": "Issued",
+            "fileDateValue": "2024-09-01"
+          }
+        ],
+        "filename": "sample.txt",
+        "filesize": [
+          {
+            "value": "333 B"
+          }
+        ],
+        "mimetype": "text/plain",
+        "accessrole": "open_access",
+        "version_id": "16315666-1567-431e-b3e8-1aac4194d87e"
+      },
+      {
+        "url": {
+          "url": "https://localhost/record/2000001/files/data.csv",
+          "label": "data.csv"
+        },
+        "date": [
+          {
+            "dateType": "Available",
+            "dateValue": "2025-06-06"
+          }
+        ],
+        "format": "text/csv",
+        "fileDate": [
+          {
+            "fileDateType": "Collected",
+            "fileDateValue": "2024-11-10"
+          }
+        ],
+        "filename": "data.csv",
+        "filesize": [
+          {
+            "value": "475 B"
+          }
+        ],
+        "mimetype": "text/csv",
+        "accessrole": "open_login",
+        "version_id": "d1d7fb14-2da9-4630-a36c-83dfacb4e9d7"
+      },
+      {
+        "url": {
+          "url": "https://localhost/record/2000001/files/0606%2Fdata.csv",
+          "label": "0606/data.csv"
+        },
+        "date": [
+          {
+            "dateType": "Available",
+            "dateValue": "2025-06-25"
+          }
+        ],
+        "format": "text/csv",
+        "fileDate": [
+          {
+            "fileDateType": "Collected",
+            "fileDateValue": "2025-06-06"
+          }
+        ],
+        "filename": "0606%2Fdata.csv",
+        "filesize": [
+          {
+            "value": "475 B"
+          }
+        ],
+        "mimetype": "text/csv",
+        "accessrole": "open_date",
+        "version_id": "d97f51e5-43da-4a90-9e00-f00cf8cd4ca3"
+      },
+      {
+        "url": {
+          "url": "https://example.com/test/sample/1",
+          "label": "https://example.com/test/sample/1"
+        },
+        "date": [
+          {
+            "dateType": "Available",
+            "dateValue": "2025-06-06"
+          }
+        ],
+        "fileDate": [
+          {
+            "fileDateType": "Issued",
+            "fileDateValue": "2025-05-05"
+          },
+          {
+            "fileDateType": "Updated",
+            "fileDateValue": "2025-06-05"
+          }
+        ],
+        "filename": "reference sample",
+        "accessrole": "open_no",
+        "version_id": ""
+      }
+    ]
+  },
+  "item_30002_title0": {
+    "attribute_name": "Title",
+    "attribute_value_mlt": [
+      {
+        "subitem_title": "RO-Crate Sample Dataset",
+        "subitem_title_language": "en"
+      },
+      {
+        "subitem_title": "RO-Crateサンプルデータセット",
+        "subitem_title_language": "ja"
+      }
+    ]
+  },
+  "item_30002_creator2": {
+    "attribute_name": "Creator",
+    "attribute_type": "creator",
+    "attribute_value_mlt": [
+      {
+        "givenNames": [
+          {
+            "givenName": "Taro",
+            "givenNameLang": "en"
+          }
+        ],
+        "familyNames": [
+          {
+            "familyName": "Weko",
+            "familyNameLang": "en"
+          }
+        ],
+        "creatorMails": [
+          {
+            "creatorMail": "test@test.com"
+          }
+        ],
+        "creatorNames": [
+          {
+            "creatorName": "Weko, Taro",
+            "creatorNameLang": "en"
+          }
+        ],
+        "nameIdentifiers": [
+          {
+            "nameIdentifier": "1",
+            "nameIdentifierScheme": "WEKO"
+          }
+        ],
+        "creatorAlternatives": [
+          {
+            "creatorAlternative": "Sato, Taro",
+            "creatorAlternativeLang": "en"
+          }
+        ]
+      }
+    ]
+  },
+  "item_30002_language12": {
+    "attribute_name": "Language",
+    "attribute_value_mlt": [
+      {
+        "subitem_language": "jpn"
+      }
+    ]
+  },
+  "item_30002_relation18": {
+    "attribute_name": "Relation",
+    "attribute_value_mlt": [
+      {
+        "subitem_relation_name": [
+          {
+            "subitem_relation_name_text": "RO-Crateを用いた材料研究データのデータリポジトリへの登録",
+            "subitem_relation_name_language": "ja"
+          }
+        ],
+        "subitem_relation_type": "isVersionOf",
+        "subitem_relation_type_id": {
+          "subitem_relation_type_select": "DOI",
+          "subitem_relation_type_id_text": "https://doi.org/10.2964/jsik_2021_067"
+        }
+      },
+      {
+        "subitem_relation_name": [
+          {
+            "subitem_relation_name_text": "ResearchObject/ro-crate: Research Object Crate",
+            "subitem_relation_name_language": "en"
+          }
+        ],
+        "subitem_relation_type": "requires",
+        "subitem_relation_type_id": {
+          "subitem_relation_type_select": "URI",
+          "subitem_relation_type_id_text": "https://github.com/ResearchObject/ro-crate"
+        }
+      }
+    ]
+  },
+  "item_30002_contributor3": {
+    "attribute_name": "Contributor",
+    "attribute_value_mlt": [
+      {
+        "givenNames": [
+          {
+            "givenName": "John",
+            "givenNameLang": "en"
+          }
+        ],
+        "familyNames": [
+          {
+            "familyName": "Doe",
+            "familyNameLang": "en"
+          }
+        ],
+        "nameIdentifiers": [
+          {
+            "nameIdentifier": "2",
+            "nameIdentifierScheme": "WEKO"
+          }
+        ],
+        "contributorMails": [
+          {
+            "contributorMail": "jiro@sample.ac.jp"
+          }
+        ],
+        "contributorNames": [
+          {
+            "lang": "en",
+            "contributorName": "Doe, John"
+          }
+        ]
+      }
+    ]
+  },
+  "item_30002_description9": {
+    "attribute_name": "Description",
+    "attribute_value_mlt": [
+      {
+        "subitem_description": "This is a sample file for the WEKO3 import feature for RO-Crate format items.",
+        "subitem_description_type": "Abstract",
+        "subitem_description_language": "en"
+      },
+      {
+        "subitem_description": "これはWEKO3でRO-Crate形式のアイテムをインポートする機能のためのサンプルファイルです。",
+        "subitem_description_type": "Abstract",
+        "subitem_description_language": "ja"
+      }
+    ]
+  },
+  "relation_version_is_last": true,
+  "item_30002_access_rights4": {
+    "attribute_name": "Access Rights",
+    "attribute_value_mlt": [
+      {
+        "subitem_access_right": "embargoed access",
+        "subitem_access_right_uri": "http://purl.org/coar/access_right/c_f1cf"
+      }
+    ]
+  },
+  "item_30002_rights_holder7": {
+    "attribute_name": "Rights Holder",
+    "attribute_value_mlt": [
+      {
+        "rightHolderNames": [
+          {
+            "rightHolderName": "国立情報学研究所（NII）",
+            "rightHolderLanguage": "ja"
+          }
+        ]
+      }
+    ]
+  },
+  "item_30002_resource_type13": {
+    "attribute_name": "Resource Type",
+    "attribute_value_mlt": [
+      {
+        "resourceuri": "http://purl.org/coar/resource_type/c_ddb1",
+        "resourcetype": "dataset"
+      }
+    ]
+  },
+  "item_30002_holding_agent_name37": {
+    "attribute_name": "所蔵機関",
+    "attribute_value_mlt": [
+      {
+        "holding_agent_names": [
+          {
+            "holding_agent_name": "Example Organization"
+          }
+        ]
+      }
+    ]
+  }
+}

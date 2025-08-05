@@ -23,6 +23,7 @@ import csv
 import json
 import math
 import os
+import traceback
 import zipfile
 from datetime import datetime, timedelta
 from io import BytesIO, StringIO
@@ -42,7 +43,7 @@ from invenio_indexer.api import RecordIndexer
 from invenio_mail.admin import MailSettingView
 from invenio_mail.models import MailConfig
 from invenio_records.models import RecordMetadata
-from invenio_records_rest.facets import terms_filter
+from invenio_records_rest.facets import terms_filter, terms_condition_filter, range_filter
 from invenio_stats.views import QueryFileStatsCount, QueryRecordViewCount
 from jinja2 import Template
 from simplekv.memory.redisstore import RedisStore
@@ -204,6 +205,7 @@ def get_current_api_certification(api_code):
         results['cert_data'] = cert_data.get('cert_data')
 
     except Exception as e:
+        traceback.print_exc()
         return str(e)
 
     return results
@@ -306,17 +308,28 @@ def get_unit_stats_report(target_id):
     return result
 
 
-def get_user_report_data():
+def get_user_report_data(repo_id=None):
     """Get user report data from db and modify."""
+    from invenio_communities.models import Community
     role_counts = []
     try:
-        role_counts = db.session.query(Role.name,
-                                       func.count(userrole.c.role_id)) \
-            .outerjoin(userrole) \
-            .group_by(Role.id).all()
+        if repo_id != 'Root Index':
+            repository = Community.get(repo_id)
+            user_ids_with_role = db.session.query(userrole.c.user_id) \
+                .filter(userrole.c.role_id == repository.group_id).subquery()
+            role_counts = db.session.query(Role.name,
+                                        func.count(userrole.c.role_id)) \
+                    .outerjoin(userrole) \
+                    .filter(userrole.c.user_id.in_(user_ids_with_role)) \
+                    .group_by(Role.id).all()
+        else:
+            role_counts = db.session.query(Role.name,
+                                        func.count(userrole.c.role_id)) \
+                    .outerjoin(userrole) \
+                    .group_by(Role.id).all()
     except Exception as e:
         current_app.logger.error('Could not retrieve user report data: ')
-        current_app.logger.error(e)
+        traceback.print_exc()
         return {}
 
     role_counts = [dict(role_name=name, count=count)
@@ -464,9 +477,9 @@ def write_report_file_rows(writer, records, file_type=None, other_info=None):
             user_name = 'Guest'
             user_id = int(record.get('cur_user_id'))
             if user_id > 0:
-                user_info = get_user_information(user_id)
-                user_email = user_info['email']
-                user_name = user_info['username']
+                user_infos = get_user_information([user_id])
+                user_email = user_infos[0]['email']
+                user_name = user_infos[0]['username']
             writer.writerow([
                 user_email, user_name,
                 record.get('total_download'), record.get('total_preview')])
@@ -567,17 +580,28 @@ class StatisticMail:
         return previous_month.strftime("%Y-%m")
 
     @classmethod
-    def send_mail_to_all(cls, list_mail_data=None, stats_date=None):
+    def send_mail_to_all(cls):
         """Send mail to all setting email."""
+        repo_ids = [setting.repository_id for setting in FeedbackMailSetting.query.all()]
+        for repo in repo_ids:
+            cls.send_mail_to_one(repo=repo)
+
+    @classmethod
+    def send_mail_to_one(cls, list_mail_data=None, stats_date=None, repo=None):
+        """Send mail to setting email."""
         from weko_records.api import FeedbackMailList
         from weko_workflow.utils import get_site_info_name
 
         # Load setting:
         system_default_language = get_system_default_language()
-        setting = FeedbackMail.get_feed_back_email_setting()
+        setting = FeedbackMail.get_feed_back_email_setting(repo_id=repo)
         if not setting.get('is_sending_feedback') and not stats_date:
             return
         banned_mail = cls.get_banned_mail(setting.get('data'))
+        if repo != "Root Index":
+            root_setting = FeedbackMail.get_feed_back_email_setting(repo_id='Root Index')
+            root_banned_mail= cls.get_banned_mail(root_setting.get('data'))
+            banned_mail = list(set(banned_mail + root_banned_mail))
 
         session = db.session
         id = FeedbackMailHistory.get_sequence(session)
@@ -588,15 +612,16 @@ class StatisticMail:
         total_mail = 0
         try:
             if not list_mail_data:
-                list_mail_data = FeedbackMailList.get_feedback_mail_list()
+                list_mail_data = FeedbackMailList.get_feedback_mail_list(repo)
                 if not list_mail_data:
                     return
 
             # Get site name.
             site_en, site_ja = get_site_info_name()
             # Set default site name.
-            site_name = current_app.config[
-                'WEKO_ADMIN_FEEDBACK_MAIL_DEFAULT_SUBJECT']
+            site_name = current_app.config.get(
+                'WEKO_ADMIN_FEEDBACK_MAIL_DEFAULT_SUBJECT',
+                config.WEKO_ADMIN_FEEDBACK_MAIL_DEFAULT_SUBJECT)
             if system_default_language == 'ja' and site_ja:
                 site_name = site_ja
             elif system_default_language == 'en' and site_en:
@@ -643,6 +668,7 @@ class StatisticMail:
                     failed_mail += 1
         except Exception as ex:
             current_app.logger.error('Error has occurred: {}'.format(ex))
+            traceback.print_exc()
         end_time = datetime.now()
         FeedbackMailHistory.create(
             session,
@@ -651,7 +677,8 @@ class StatisticMail:
             end_time,
             stats_date,
             total_mail,
-            failed_mail
+            failed_mail,
+            repository_id=repo
         )
 
     @classmethod
@@ -1071,7 +1098,7 @@ class FeedbackMail:
         return result
 
     @classmethod
-    def get_feed_back_email_setting(cls):
+    def get_feed_back_email_setting(cls, repo_id=None):
         """Get list feedback email setting.
 
         Returns:
@@ -1084,7 +1111,7 @@ class FeedbackMail:
             'root_url': '',
             'error': ''
         }
-        setting = FeedbackMailSetting.get_all_feedback_email_setting()
+        setting = FeedbackMailSetting.get_feedback_email_setting_by_repo(repo_id)
         if len(setting) == 0:
             return result
         list_author_id = setting[0].account_author.split(',')
@@ -1112,8 +1139,8 @@ class FeedbackMail:
         return result
 
     @classmethod
-    def update_feedback_email_setting(cls, data,
-                                      is_sending_feedback, root_url):
+    def update_feedback_email_setting(cls, data, is_sending_feedback,
+                                      root_url, repo_id=None):
         """Update feedback email setting.
 
         Arguments:
@@ -1129,8 +1156,13 @@ class FeedbackMail:
             'error': ''
         }
         update_result = False
+
+        if not repo_id:
+            result['error'] = "Repository ID is required."
+            return result
+
         if not data and not is_sending_feedback:
-            update_result = FeedbackMailSetting.delete()
+            update_result = FeedbackMailSetting.delete_by_repo(repo_id)
             return cls.handle_update_message(
                 result,
                 update_result
@@ -1139,20 +1171,22 @@ class FeedbackMail:
         if error_message:
             result['error'] = error_message
             return result
-        current_setting = FeedbackMailSetting.get_all_feedback_email_setting()
+        current_setting = FeedbackMailSetting.get_feedback_email_setting_by_repo(repo_id)
         if len(current_setting) == 0:
             update_result = FeedbackMailSetting.create(
                 cls.convert_feedback_email_data_to_string(data),
                 cls.get_list_manual_email(data),
                 is_sending_feedback,
-                root_url
+                root_url,
+                repo_id
             )
         else:
             update_result = FeedbackMailSetting.update(
                 cls.convert_feedback_email_data_to_string(data),
                 cls.get_list_manual_email(data),
                 is_sending_feedback,
-                root_url
+                root_url,
+                repo_id
             )
         return cls.handle_update_message(
             result,
@@ -1255,11 +1289,12 @@ class FeedbackMail:
         return error_message
 
     @classmethod
-    def load_feedback_mail_history(cls, page_num):
+    def load_feedback_mail_history(cls, page_num, repo_id=None):
         """Load all history of send mail.
 
         Arguments:
             page_num {integer} -- The page number
+            repo_id {string} -- The repository id
 
         Raises:
             ValueError: Parameter error
@@ -1276,7 +1311,7 @@ class FeedbackMail:
             'error': ''
         }
         try:
-            data = FeedbackMailHistory.get_all_history()
+            data = FeedbackMailHistory.get_all_history(repo_id=repo_id)
             list_history = list()
             page_num_end = \
                 page_num * config.WEKO_ADMIN_NUMBER_OF_SEND_MAIL_HISTORY
@@ -1299,6 +1334,7 @@ class FeedbackMail:
                 new_data['success'] = int(
                     data[index].count) - int(data[index].error)
                 new_data['is_latest'] = data[index].is_latest
+                new_data['repo'] = data[index].repository_id
                 list_history.append(new_data)
             result['data'] = list_history
             result['total_page'] = cls.get_total_page(
@@ -1309,6 +1345,7 @@ class FeedbackMail:
                 config.WEKO_ADMIN_NUMBER_OF_SEND_MAIL_HISTORY
             return result
         except Exception as ex:
+            traceback.print_exc()
             result['error'] = 'Cannot get data. Detail: ' + str(ex)
             return result
 
@@ -1454,7 +1491,7 @@ class FeedbackMail:
         if len(list_failed_mail) == 0:
             return None
 
-        list_mail_data = FeedbackMailList.get_feedback_mail_list()
+        list_mail_data = FeedbackMailList.get_feedback_mail_list(repo_id=history_data.repository_id)
         if not list_mail_data:
             return None
 
@@ -1464,6 +1501,7 @@ class FeedbackMail:
                 resend_mail_data[k] = v
         result['data'] = resend_mail_data
         result['stats_date'] = stats_time
+        result['repository_id'] = history_data.repository_id
         return result
 
     @classmethod
@@ -1720,6 +1758,8 @@ def get_restricted_access(key: Optional[str] = None) -> Optional[dict]:
     if not restricted_access:
         restricted_access = current_app.config[
             'WEKO_ADMIN_RESTRICTED_ACCESS_SETTINGS']
+    if not 'error_msg' in restricted_access:
+            restricted_access['error_msg'] = config.WEKO_ADMIN_RESTRICTED_ACCESS_ERROR_MESSAGE
     if not key:
         return restricted_access
     elif key in restricted_access:
@@ -1756,7 +1796,7 @@ def update_restricted_access(restricted_access: dict):
                 secret_URL_file_download['secret_download_limit']) < 1:
             return False
         return True
-        
+
     def parse_content_file_download():
         if content_file_download.get('expiration_date_unlimited_chk'):
             content_file_download['expiration_date'] = config.WEKO_ADMIN_RESTRICTED_ACCESS_MAX_INTEGER
@@ -1844,15 +1884,16 @@ class UsageReport:
         self.__page_number = 1
         self.__usage_report_activities_data = []
         self.__mail_key = {
-            "subitem_restricted_access_name": "restricted_fullname",
-            "subitem_restricted_access_mail_address": "restricted_mail_address",
-            "subitem_restricted_access_university/institution":
+            "subitem_fullname": "restricted_fullname",
+            "subitem_mail_address": "restricted_mail_address",
+            "subitem_university/institution":
                 "restricted_university_institution",
             "subitem_restricted_access_dataset_usage": "restricted_data_name",
             "subitem_restricted_access_application_date":
                 "restricted_application_date",
             "subitem_restricted_access_research_title":
-                "restricted_research_title"
+                "restricted_research_title",
+            "subitem_research_title": "restricted_research_title"
         }
         self.__mail_info_lst = []
 
@@ -1926,12 +1967,12 @@ class UsageReport:
         return activities
 
     def send_reminder_mail(self, activities_id: list,
-                           mail_template: str = None, activities: list = None):
+                           mail_id: str = None, activities: list = None, forced_send = False):
         """Send reminder email to user.
 
         Args:
             activities_id (list): Activity identifier list.
-            mail_template (str, optional): Mail template.
+            mail_id (str, optional): Mail template id.
             activities (list, optional): Activities list.
         """
         if not activities:
@@ -1941,8 +1982,10 @@ class UsageReport:
         site_url = current_app.config['THEME_SITEURL']
         site_name_en, site_name_ja = self.__get_site_info()
         site_mail = self.__get_default_mail_sender()
-        if not mail_template:
-            mail_template = current_app.config\
+        institution_name_ja = current_app.config['THEME_INSTITUTION_NAME']['ja']
+        institution_name_en = current_app.config['THEME_INSTITUTION_NAME']['en']
+        if not mail_id:
+            mail_id = current_app.config\
                 .get("WEKO_WORKFLOW_REQUEST_FOR_REGISTER_USAGE_REPORT")
 
         for activity in activities:
@@ -1960,6 +2003,8 @@ class UsageReport:
                     "restricted_site_url": site_url,
                     "restricted_site_name_ja": site_name_ja,
                     "restricted_site_name_en": site_name_en,
+                    "restricted_institution_name_ja": institution_name_ja,
+                    "restricted_institution_name_en": institution_name_en,
                     "restricted_site_mail": site_mail,
                     "restricted_usage_activity_id": activity.extra_info.get(
                         'usage_activity_id'),
@@ -1973,10 +2018,11 @@ class UsageReport:
             self.__mail_info_lst[-1]['mail_recipient'] = \
                 self.__mail_info_lst[-1]['restricted_mail_address']
         is_sendmail_success = True
-        for mail_info in self.__mail_info_lst:
-            if not self.__process_send_mail(mail_info, mail_template):
-                is_sendmail_success = False
-                break
+        if activity.extra_info.get('is_guest') or forced_send:
+            for mail_info in self.__mail_info_lst:
+                if not self.__process_send_mail(mail_info, mail_id):
+                    is_sendmail_success = False
+                    break
         return is_sendmail_success
 
     @staticmethod
@@ -2106,6 +2152,24 @@ def get_item_mapping_list():
         result = result + mapping_list
     return result
 
+def get_detail_search_list():
+    """
+    Gets the name and type of the search condition used in the detail search.
+    The purpose of this function is to return the information of a detail search in order to prevent
+    duplication of parameter names used in a facet search with those used in a detail search.
+
+    It extracts the part related to the detail_condition from the search settings and returns [id],
+    which is the source of the parameter name, and [inputType], which determines the type.
+
+    If there is a special search parameter, the parameter name is defined in [mappingName] and is included in the response.
+    """
+    detail_conditions = get_search_setting()["detail_condition"]
+    result = []
+    for k_v in detail_conditions:
+        result.append([k_v.get("id"), k_v.get("inputType")])
+        if k_v.get("mappingName"): result.append([k_v.get("mappingName"), k_v.get("id") + ".mappingName"])
+    return result
+
 
 def create_facet_search_query():
     """Create facet search query."""
@@ -2204,9 +2268,17 @@ def get_facet_search_query(has_permission=True):
     # Get query on redis.
     result = json.loads(get_redis_cache(key)) or {}
     # Update terms filter function for post filters.
+
     post_filters = result.get(search_index).get('post_filters')
+    from weko_admin.utils import get_title_facets
+    titles, order, uiTypes, isOpens, displayNumbers, searchConditions = get_title_facets()
     for k, v in post_filters.items():
-        post_filters.update({k: terms_filter(v)})
+        if v == 'temporal':
+            # If the mapping name is [template], it is assumed to be a Filter to date_range1.
+            post_filters.update({k: range_filter('date_range1', False, False)})
+        else:
+            # Set whether the Filter is an AND or OR condition from the facet definition.
+            post_filters.update({k: terms_condition_filter(v, searchConditions[k] == 'AND')})
     return result
 
 
@@ -2225,6 +2297,7 @@ def get_title_facets():
     uiTypes = {}
     isOpens = {}
     displayNumbers = {}
+    searchConditions = {}
     activated_facets = FacetSearchSetting.get_activated_facets()
     for item in activated_facets:
         titles[item.name_en] = item.name_jp if lang == 'ja' else item.name_en
@@ -2232,7 +2305,8 @@ def get_title_facets():
         uiTypes[item.name_en] = item.ui_type
         isOpens[item.name_en] = item.is_open
         displayNumbers[item.name_en] = item.display_number
-    return titles, order, uiTypes, isOpens, displayNumbers
+        searchConditions[item.name_en] = item.search_condition
+    return titles, order, uiTypes, isOpens, displayNumbers, searchConditions
 
 
 def is_exits_facet(data, id):
@@ -2264,38 +2338,38 @@ def overwrite_the_memory_config_with_db(app, site_info):
             )
 
 def elasticsearch_reindex( is_db_to_es ):
-    """ 
+    """
     reindex *-weko-item-* of elasticsearch index
 
     Args:
     is_db_to_es : boolean
         if True,  index Documents from DB data
         if False, index Documents from ES data itself
-    
+
     Returns:
-        str : 'completed' 
-        
+        str : 'completed'
+
     Raises:
-    AssersionError 
+    AssersionError
         In case of the response code from ElasticSearch is not 200,
         Subsequent processing is interrupted.
-    
+
     Todo:
-        warning: Simultaneous execution is prohibited. 
-        warning: Execution during operation is prohibited 
-                because documents submitted during execution may not be reflected. 
+        warning: Simultaneous execution is prohibited.
+        warning: Execution during operation is prohibited
+                because documents submitted during execution may not be reflected.
                 Please allow execution only during maintenance periods.
     """
     from invenio_oaiserver.percolator import _create_percolator_mapping
     # consts
-    elasticsearch_host = os.environ.get('INVENIO_ELASTICSEARCH_HOST') 
+    elasticsearch_host = os.environ.get('INVENIO_ELASTICSEARCH_HOST')
     base_url = 'http://' + elasticsearch_host + ':9200/'
     reindex_url = base_url + '_reindex?pretty&refresh=true&wait_for_completion=true'
-    
+
     # "{}-weko-item-v1.0.0".format(prefix)
     index = current_app.config['INDEXER_DEFAULT_INDEX']
     tmpindex = "{}-tmp".format(index)
-    
+
     # "{}-weko".format(prefix)
     alias_name = current_app.config['SEARCH_UI_SEARCH_INDEX']
 
@@ -2337,7 +2411,7 @@ def elasticsearch_reindex( is_db_to_es ):
     current_app.logger.info(' START elasticsearch reindex: {}.'.format(index))
 
     # トランザクションログをLucenceに保存。
-    response = requests.post(base_url + index + "/_flush?wait_if_ongoing=true") 
+    response = requests.post(base_url + index + "/_flush?wait_if_ongoing=true")
     current_app.logger.info(response.text)
     assert response.status_code == 200 ,response.text
 
@@ -2345,26 +2419,26 @@ def elasticsearch_reindex( is_db_to_es ):
 
     # 一時保管用のインデックスを作成
     # create tmp index
-    current_app.logger.info("START create tmpindex") 
-    current_app.logger.info("PUT tmpindex") 
+    current_app.logger.info("START create tmpindex")
+    current_app.logger.info("PUT tmpindex")
     response = requests.put(base_url + tmpindex + "?pretty", headers=headers ,json=base_index_definition)
     current_app.logger.info(response.text)
     assert response.status_code == 200 ,response.text
-    current_app.logger.info("add setting percolator") 
+    current_app.logger.info("add setting percolator")
 
     _create_percolator_mapping(tmpindex, "item-v1.0.0")
-    current_app.logger.info("END create tmpindex") 
-    
+    current_app.logger.info("END create tmpindex")
+
     # 高速化を期待してインデックスの設定を変更。
-    current_app.logger.info("START change setting for faster") 
+    current_app.logger.info("START change setting for faster")
     response = requests.put(base_url + tmpindex + "/_settings?pretty", headers=headers ,json={ "index" : {"number_of_replicas" : 0, "refresh_interval": -1 }})
     current_app.logger.info(response.text)
     assert response.status_code == 200 ,response.text #
-    current_app.logger.info("END change setting for faster") 
+    current_app.logger.info("END change setting for faster")
 
-    
+
     # document count
-    current_app.logger.info("index document count:{}".format(requests.get(base_url + "_cat/count/"+ index ).text)) 
+    current_app.logger.info("index document count:{}".format(requests.get(base_url + "_cat/count/"+ index ).text))
     current_app.logger.info("tmpindex document count:{}".format(requests.get(base_url + "_cat/count/"+ tmpindex ).text))
 
     # 一時保管用のインデックスに元のインデックスの再インデックスを行う
@@ -2378,41 +2452,41 @@ def elasticsearch_reindex( is_db_to_es ):
     # document count
     index_cnt = requests.get(base_url + "_cat/count/"+ index + "?h=count").text
     tmpindex_cnt = requests.get(base_url + "_cat/count/"+ tmpindex + "?h=count").text
-    current_app.logger.info("index document count:{}".format(index_cnt)) 
+    current_app.logger.info("index document count:{}".format(index_cnt))
     current_app.logger.info("tmpindex document count:{}".format(tmpindex_cnt))
     assert index_cnt == tmpindex_cnt,'Document counts do not match.'
 
     # 再インデックス前のインデックスを削除する
-    current_app.logger.info("START delete index") 
+    current_app.logger.info("START delete index")
     response = requests.delete(base_url + index)
     current_app.logger.info(response.text)
     assert response.status_code == 200 ,response.text
-    current_app.logger.info("END delete index") 
+    current_app.logger.info("END delete index")
 
     # 新しくインデックスを作成する
     #create index
-    current_app.logger.info("START create index") 
-    current_app.logger.info("PUT index") 
+    current_app.logger.info("START create index")
+    current_app.logger.info("PUT index")
     response = requests.put(url = base_url + index + "?pretty", headers=headers ,json=base_index_definition)
     current_app.logger.info(response.text)
     assert response.status_code == 200 ,response.text
-    current_app.logger.info("add setting percolator") 
+    current_app.logger.info("add setting percolator")
     _create_percolator_mapping(index, "item-v1.0.0")
-    current_app.logger.info("END create index") 
+    current_app.logger.info("END create index")
 
     # 高速化を期待してインデックスの設定を変更。
-    current_app.logger.info("START change setting for faster") 
+    current_app.logger.info("START change setting for faster")
     response = requests.put(base_url + index + "/_settings?pretty", headers=headers ,json={ "index" : {"number_of_replicas" : 0, "refresh_interval": -1 }})
     current_app.logger.info(response.text)
     assert response.status_code == 200 ,response.text
-    current_app.logger.info("END change setting for faster") 
+    current_app.logger.info("END change setting for faster")
 
     # aliasを再設定する。
-    current_app.logger.info("START re-regist alias") 
+    current_app.logger.info("START re-regist alias")
     response = requests.post(base_url + "_aliases", headers=headers, json=json_data_set_alias )
     current_app.logger.info(response.text)
     assert response.status_code == 200 ,response.text
-    current_app.logger.info("END re-regist alias") 
+    current_app.logger.info("END re-regist alias")
 
     # アイテムを再投入する。
     current_app.logger.info("START reindex")
@@ -2434,30 +2508,30 @@ def elasticsearch_reindex( is_db_to_es ):
     current_app.logger.info("END reindex")
 
     # 高速化を期待して変更したインデックスの設定を元に戻す。
-    current_app.logger.info("START revert setting for faster") 
+    current_app.logger.info("START revert setting for faster")
     response = requests.put(base_url + index + "/_settings?pretty", headers=headers ,json={ "index" : {"number_of_replicas" : number_of_replicas, "refresh_interval": refresh_interval }})
     current_app.logger.info(response.text)
-    assert response.status_code == 200 ,response.text 
-    current_app.logger.info("END revert setting for faster") 
+    assert response.status_code == 200 ,response.text
+    current_app.logger.info("END revert setting for faster")
 
     # document count
     index_cnt = requests.get(base_url + "_cat/count/"+ index + "?h=count").text
     tmpindex_cnt = requests.get(base_url + "_cat/count/"+ tmpindex + "?h=count").text
-    current_app.logger.info("index document count:{}".format(index_cnt)) 
+    current_app.logger.info("index document count:{}".format(index_cnt))
     current_app.logger.info("tmpindex document count:{}".format(tmpindex_cnt))
     assert index_cnt == tmpindex_cnt ,'Document counts do not match.'
 
 
-    # 一時保管用のインデックスを削除する 
+    # 一時保管用のインデックスを削除する
     # delete tmp-index
-    current_app.logger.info("START delete tmpindex") 
+    current_app.logger.info("START delete tmpindex")
     response = requests.delete(base_url + tmpindex)
     current_app.logger.info(response.text)
     assert response.status_code == 200 ,response.text
-    current_app.logger.info("END delete tmpindex") 
+    current_app.logger.info("END delete tmpindex")
 
     current_app.logger.info(' END elasticsearch reindex: {}.'.format(index))
-    
+
     return 'completed'
 
 def _elasticsearch_remake_item_index(index_name):
@@ -2491,5 +2565,5 @@ def _elasticsearch_remake_item_index(index_name):
         assert res.get("_shards").get("failed") == 0 ,'Index fail.'
         returnlist.append(res)
     current_app.logger.info(' END elasticsearch import from records_metadata')
-    
+
     return returnlist

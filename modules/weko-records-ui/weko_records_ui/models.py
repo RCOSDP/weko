@@ -35,6 +35,8 @@ from sqlalchemy.sql.functions import concat ,now
 from sqlalchemy_utils.models import Timestamp
 from sqlalchemy_utils.types import JSONType
 
+from weko_records.models import ItemType
+
 """ PDF cover page model"""
 
 
@@ -487,7 +489,7 @@ class FileSecretDownload(db.Model, Timestamp):
             created = data.get("created")
             current_app.logger.debug("data: {}".format(data))
             file_permission = cls.find(file_name=file_name, id=id,
-                                        record_id=record_id,created=created)
+                                        record_id=record_id, created=created)
             current_app.logger.debug("file_permission: {}".format(file_permission))
             if len(file_permission) == 1:
                 file = file_permission[0]
@@ -518,4 +520,53 @@ class FileSecretDownload(db.Model, Timestamp):
         )
         return query.order_by(desc(cls.id)).all()
 
-__all__ = ('PDFCoverPageSettings', 'FilePermission', 'FileOnetimeDownload' ,'FileSecretDownload')
+
+class RocrateMapping(db.Model, Timestamp):
+    """Represent a mapping from metadata to ro-crate.
+    The RocrateMapping object contains a ``created`` and  a ``updated`` properties that are automatically updated.
+    """
+
+    __tablename__ = 'rocrate_mapping'
+
+    id = db.Column(
+        db.Integer(),
+        primary_key=True,
+        autoincrement=True
+    )
+    """Record identifier."""
+
+    item_type_id = db.Column(
+        db.Integer,
+        db.ForeignKey(ItemType.id),
+        unique=True,
+        nullable=False,
+    )
+    """ID of item type."""
+
+    mapping = db.Column(
+        db.JSON().with_variant(
+            postgresql.JSONB(none_as_null=True),
+            'postgresql',
+        ).with_variant(
+            JSONType(),
+            'sqlite',
+        ).with_variant(
+            JSONType(),
+            'mysql',
+        ),
+        default=lambda: dict(),
+        nullable=True
+    )
+    """Store mapping in JSON format."""
+
+    def __init__(self, item_type_id, mapping):
+        """Init.
+
+        :param item_type_id: item type id
+        :param mapping: mapping from metadata to RO-Crate
+        """
+        self.item_type_id = item_type_id
+        self.mapping = mapping
+
+
+__all__ = ('PDFCoverPageSettings', 'FilePermission', 'FileOnetimeDownload', 'RocrateMapping')

@@ -1,460 +1,1078 @@
-# English translations for weko-search-ui.
-# Copyright (C) 2017 National Institute of Informatics
-# This file is distributed under the same license as the
-# weko-search-ui project.
-# FIRST AUTHOR <EMAIL@ADDRESS>, 2015.
+# Japanese translations for weko-search-ui.
+# Copyright (C) 2025 National Institute of Informatics
+# This file is distributed under the same license as the weko-search-ui
+# project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2025.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: weko-search-ui 0.1.0.dev20170000\n"
 "Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
-"POT-Creation-Date: 2021-03-25 14:36+0900\n"
-"PO-Revision-Date: 2015-10-09 17:08+0200\n"
+"POT-Creation-Date: 2025-05-27 19:16+0900\n"
+"PO-Revision-Date: 2025-04-09 22:35+0900\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ja\n"
-"Language-Team: en <LL@li.org>\n"
-"Plural-Forms: nplurals=2; plural=(n != 1)\n"
+"Language-Team: ja <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=0\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.5.1\n"
 
-#: weko_search_ui/admin.py:179 weko_search_ui/admin.py:617
+#: tests/conftest.py:399
+msgid "write your own license"
+msgstr ""
+
+#: tests/conftest.py:404
+msgid "Creative Commons CC0 1.0 Universal Public Domain Designation"
+msgstr ""
+
+#: tests/conftest.py:420
+msgid "Creative Commons Attribution 3.0 Unported (CC BY 3.0)"
+msgstr ""
+
+#: tests/conftest.py:432
+msgid "Creative Commons Attribution-ShareAlike 3.0 Unported (CC BY-SA 3.0)"
+msgstr ""
+
+#: tests/conftest.py:447
+msgid "Creative Commons Attribution-NoDerivs 3.0 Unported (CC BY-ND 3.0)"
+msgstr ""
+
+#: tests/conftest.py:461
+msgid "Creative Commons Attribution-NonCommercial 3.0 Unported (CC BY-NC 3.0)"
+msgstr ""
+
+#: tests/conftest.py:476
+msgid ""
+"Creative Commons Attribution-NonCommercial-ShareAlike 3.0 Unported (CC "
+"BY-NC-SA 3.0)"
+msgstr ""
+
+#: tests/conftest.py:491
+msgid ""
+"Creative Commons Attribution-NonCommercial-NoDerivs 3.0 Unported (CC BY-"
+"NC-ND 3.0)"
+msgstr ""
+
+#: tests/conftest.py:507
+msgid "Creative Commons Attribution 4.0 International (CC BY 4.0)"
+msgstr ""
+
+#: tests/conftest.py:519
+msgid "Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)"
+msgstr ""
+
+#: tests/conftest.py:534
+msgid ""
+"Creative Commons Attribution-NoDerivatives 4.0 International (CC BY-ND "
+"4.0)"
+msgstr ""
+
+#: tests/conftest.py:549
+msgid ""
+"Creative Commons Attribution-NonCommercial 4.0 International (CC BY-NC "
+"4.0)"
+msgstr ""
+
+#: tests/conftest.py:564
+msgid ""
+"Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International "
+"(CC BY-NC-SA 4.0)"
+msgstr ""
+
+#: tests/conftest.py:579
+msgid ""
+"Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 "
+"International (CC BY-NC-ND 4.0)"
+msgstr ""
+
+#: weko_search_ui/admin.py:158
+msgid "The following item(s) cannot be deleted."
+msgstr "以下のアイテムを削除することはできませんでした。"
+
+#: weko_search_ui/admin.py:163
+msgid "DOI granting item(s):"
+msgstr "DOI付与済みのアイテム："
+
+#: weko_search_ui/admin.py:168
+msgid "Editing item(s):"
+msgstr "編集中のアイテム："
+
+#: weko_search_ui/admin.py:171
+msgid "Success"
+msgstr ""
+
+#: weko_search_ui/admin.py:204
+msgid "Index Delete is in progress on another device."
+msgstr ""
+
+#: weko_search_ui/admin.py:207
+msgid ""
+"DOI granting item(s) are including in the deletion items.<br/>DOI "
+"granting item(s) cannot be deleted without withdrawing the DOI.<br/>Do "
+"you want to continue deleting items that are not grant DOI?"
+msgstr "削除対象にDOI付与済みアイテムが含まれています。<br/>DOI付与済みアイテムはDOI取下げを行わないと削除できません。<br/>DOI付与済み以外のアイテム削除を続行しますか？"
+
+#: weko_search_ui/admin.py:216
+msgid "Are you sure you want to delete it?"
+msgstr "削除してよろしいですか？"
+
+#: weko_search_ui/admin.py:219
+msgid "No such index."
+msgstr ""
+
+#: weko_search_ui/admin.py:310 weko_search_ui/admin.py:1243
 msgid "Custom Sort"
 msgstr "カスタムソート"
 
-#: weko_search_ui/admin.py:181 weko_search_ui/admin.py:608
+#: weko_search_ui/admin.py:312 weko_search_ui/admin.py:1234
 msgid "Bulk Delete"
 msgstr "一括削除"
 
-#: weko_search_ui/admin.py:194
+#: weko_search_ui/admin.py:325
 msgid "Bulk Update"
 msgstr "一括更新"
 
-#: weko_search_ui/admin.py:599 weko_search_ui/admin.py:616
-#: weko_search_ui/templates/weko_search_ui/admin/import.html:41
+#: weko_search_ui/admin.py:440 weko_search_ui/admin.py:868
+#: weko_search_ui/templates/weko_search_ui/admin/export.html:53
+#: weko_search_ui/templates/weko_search_ui/admin/import.html:96
+#: weko_search_ui/templates/weko_search_ui/admin/rocrate_import.html:97
+#: weko_search_ui/utils.py:590 weko_search_ui/utils.py:726
+msgid "Internal server error"
+msgstr "サーバ内部エラー"
+
+#: weko_search_ui/admin.py:1225 weko_search_ui/admin.py:1242
+#: weko_search_ui/templates/weko_search_ui/admin/import.html:53
+#: weko_search_ui/templates/weko_search_ui/admin/rocrate_import.html:54
 msgid "Index Tree"
 msgstr "インデックスツリー"
 
-#: weko_search_ui/admin.py:607 weko_search_ui/admin.py:625
-#: weko_search_ui/admin.py:634
+#: weko_search_ui/admin.py:1233 weko_search_ui/admin.py:1251
+#: weko_search_ui/admin.py:1260 weko_search_ui/admin.py:1270
 msgid "Items"
 msgstr "アイテム"
 
-#: weko_search_ui/admin.py:626
-#: weko_search_ui/templates/weko_search_ui/admin/import.html:30
+#: weko_search_ui/admin.py:1252
+#: weko_search_ui/templates/weko_search_ui/admin/import.html:42
+#: weko_search_ui/templates/weko_search_ui/admin/rocrate_import.html:43
 msgid "Import"
 msgstr "インポート"
 
-#: weko_search_ui/admin.py:635
+#: weko_search_ui/admin.py:1261
+#: weko_search_ui/templates/weko_search_ui/admin/rocrate_import.html:42
+msgid "RO-Crate Import"
+msgstr "RO-Crate インポート"
+
+#: weko_search_ui/admin.py:1271
 msgid "Bulk Export"
+msgstr "一括エクスポート"
+
+#: weko_search_ui/api.py:209
+msgid "contents"
 msgstr ""
 
-#: weko_search_ui/query.py:540
-msgid "\"<\" and \">\" cannot be used for searching."
-msgstr "'<' , '>' は検索に使用できません。"
+#: weko_search_ui/mapper.py:1360
+msgid "\"{key}\" is required."
+msgstr "「{key}」 に対応するマッピングが必要です。"
 
-#: weko_search_ui/templates/weko_search_ui/admin/import.html:83
-#: weko_search_ui/utils.py:490
-msgid "Internal server error"
-msgstr "内部サーバーエラー"
+#: weko_search_ui/mapper.py:1381
+msgid "\"{key}\" is not in itemtype."
+msgstr "「{key}」 はアイテムタイプに存在しません。"
 
-#: weko_search_ui/utils.py:492
+#: weko_search_ui/mapper.py:1383
+msgid "\"{key}\" is not in itemtype, did you mean \"{similar_key}\"?"
+msgstr "「{key}」 はアイテムタイプに存在しません。「{similar_key}」であれば存在します。"
+
+#: weko_search_ui/tasks.py:328
+msgid "`wk:metadata_replace` flag cannot be used in RO-Crate Import."
+msgstr "RO-Crate インポートでは、`wk:metadata_replace`フラグを有効にできません。"
+
+#: weko_search_ui/tasks.py:343
+msgid "`wk:isSplited` flag cannot be used in RO-Crate Import."
+msgstr "RO-Crate インポートでは、`wk:isSplited`フラグを有効にできません。"
+
+#: weko_search_ui/utils.py:541
+msgid "The same item may have been registered."
+msgstr "同じアイテムが登録されている可能性があります。"
+
+#: weko_search_ui/utils.py:592 weko_search_ui/utils.py:708
 msgid ""
 "The format of the specified file {} does not support import. Please "
 "specify one of the following formats: zip, tar, gztar, bztar, xztar."
 msgstr "指定されたファイル{}の形式はインポートに対応していません。zip,tar,gztar,bztar,xztarいずれかの形式を指定してください。"
 
-#: weko_search_ui/utils.py:497
+#: weko_search_ui/utils.py:600
 msgid ""
-"The tsv/csv file was not found in the specified file {}. Check if the "
+"The csv/tsv file was not found in the specified file {}. Check if the "
 "directory structure is correct."
-msgstr "指定されたファイル{}にtsv/csvファイルが見つかりませんでした。ディレクトリ構成が正しいか確認してください。"
+msgstr "指定されたファイル{}にcsv/tsvファイルが見つかりませんでした。ディレクトリ構成が正しいか確認してください。"
 
-#: weko_search_ui/utils.py:560
+#: weko_search_ui/utils.py:649
+msgid ""
+"The item type of the item to be imported is missing or has already been "
+"deleted."
+msgstr ""
+
+#: weko_search_ui/utils.py:715
+msgid ""
+"The xml file was not found in the specified file {}. Check if the "
+"directory structure is correct."
+msgstr ""
+
+#: weko_search_ui/utils.py:793
+msgid "The item type ID specified in the XML file does not exist."
+msgstr ""
+
+#: weko_search_ui/utils.py:1215
 msgid ""
 "There is an error in the format of the first line of the header of the {}"
 " file."
 msgstr "{}ファイルのヘッダ１行目の形式に誤りがあります。"
 
-#: weko_search_ui/utils.py:576
+#: weko_search_ui/utils.py:1234
 msgid "The item type ID specified in the {} file does not exist."
 msgstr "{}ファイルで指定されたアイテムタイプIDは存在しません。"
 
-#: weko_search_ui/utils.py:583
+#: weko_search_ui/utils.py:1243
 msgid "Cannot register because the specified item type is not the latest version."
 msgstr "指定されたアイテムタイプが最新のバージョンでないため登録できません。"
 
-#: weko_search_ui/utils.py:592
+#: weko_search_ui/utils.py:1258
 msgid "The following metadata keys are duplicated.<br/>{}"
 msgstr "以下のメタデータキーが重複しています。<br/>{}"
 
-#: weko_search_ui/utils.py:605
+#: weko_search_ui/utils.py:1281
 msgid "The item does not consistent with the specified item type.<br/>{}"
 msgstr "指定されたアイテムタイプと項目が一致しません。<br/>{}"
 
-#: weko_search_ui/utils.py:625
+#: weko_search_ui/utils.py:1311
 msgid "Cannot read {} file correctly."
 msgstr "{}ファイルが正しく読み込めません。"
 
-#: weko_search_ui/utils.py:644
+#: weko_search_ui/utils.py:1331
 msgid ""
 "The following items are not registered because they do not exist in the "
 "specified item type. {}"
 msgstr "次の項目指定されたアイテムタイプに存在しないため登録されません。{}"
 
-#: weko_search_ui/utils.py:651
+#: weko_search_ui/utils.py:1341
 msgid ""
 "The {} file could not be read. Make sure the file format is {} and that "
 "the file is UTF-8 encoded."
 msgstr "{}ファイルを読み込めませんでした。ファイル形式が{}であること、またそのファイルがUTF-8でエンコードされているかを確認してください。"
 
-#: weko_search_ui/utils.py:713
+#: weko_search_ui/utils.py:1372
+msgid ""
+"The XML file could not be read. Make sure the file format is XML and that"
+" the file is UTF-8 encoded."
+msgstr ""
+
+#: weko_search_ui/utils.py:1444
 msgid "Please specify item ID by half-width number."
 msgstr "アイテムIDは半角数字で指定してください。"
 
-#: weko_search_ui/utils.py:727
+#: weko_search_ui/utils.py:1459
 msgid "Specified item type does not exist."
 msgstr "指定されたアイテムタイプが存在していません。"
 
-#: weko_search_ui/utils.py:797
+#: weko_search_ui/utils.py:1533
 msgid "Specified URI and system URI do not match."
 msgstr "指定されたURIとシステムURIが一致しません。"
 
-#: weko_search_ui/utils.py:805
-msgid "Item already DELETED in the system"
-msgstr "該当アイテムは削除済です"
+#: weko_search_ui/utils.py:1545
+msgid "Item does not exist in the system."
+msgstr "アイテムがシステムに存在しません。"
 
-#: weko_search_ui/utils.py:815
+#: weko_search_ui/utils.py:1552
+msgid "Item already DELETED in the system."
+msgstr "リンク先アイテムは削除済です。"
+
+#: weko_search_ui/utils.py:1569
 msgid "Please specify either \"Keep\" or \"Upgrade\"."
 msgstr "Keep、Upgradeのいずれかを指定してください。"
 
-#: weko_search_ui/utils.py:823
-msgid "Item ID does not match the specified URI information."
-msgstr "アイテムIDが指定されたURIの情報と一致しません。"
-
-#: weko_search_ui/utils.py:1255
+#: weko_search_ui/utils.py:2472
 msgid "Title is required item."
 msgstr "タイトルは必須項目です。"
 
-#: weko_search_ui/utils.py:2496
-msgid "One of the following required values ​​has not been registered.<br/>{}<br/>"
-msgstr "次のいずれかの必要値が登録していません。<br/>{}<br/>"
-
-#: weko_search_ui/utils.py:1276
+#: weko_search_ui/utils.py:2489
 msgid "{} is required item."
 msgstr "{}は必須項目です。"
 
-#: weko_search_ui/utils.py:1278
+#: weko_search_ui/utils.py:2492
 msgid "Please set \"public\" or \"private\" for {}."
 msgstr "{}はpublic,privateのいずれかを設定してください。"
 
-#: weko_search_ui/utils.py:1312
-msgid "Specified {} does not match with existing index."
-msgstr "指定された{}はシステムのものと一致していません。"
-
-#: weko_search_ui/utils.py:1317
+#: weko_search_ui/utils.py:2533
 msgid "The specified {} does not exist in system."
 msgstr "指定された{}はシステムに存在しません。"
 
-#: weko_search_ui/utils.py:1352
+#: weko_search_ui/utils.py:2543
+msgid "Specified {} does not match with existing index."
+msgstr "指定された{}はシステムのものと一致していません。"
+
+#: weko_search_ui/utils.py:2587
+msgid "Your role cannot register items in this index."
+msgstr "ロールの権限が足りずこのインデックスにアイテム登録ができません。"
+
+#: weko_search_ui/utils.py:2608
 msgid "Both of IndexID and POS_INDEX are not being set."
 msgstr "IndexID, POS_INDEXがどちらも設定されていません。"
 
-#: weko_search_ui/utils.py:2470
-msgid "ID is specified for the newly registered item. Ignore the ID and register."
-msgstr "新規登録アイテムにIDが指定されています。IDを無視して登録を行います。"
-
-#: weko_search_ui/utils.py:1426
+#: weko_search_ui/utils.py:2654 weko_search_ui/utils.py:2679
 msgid "Specified {} is invalid."
 msgstr "指定された{}は不正です。"
 
-#: weko_search_ui/utils.py:1468 weko_search_ui/utils.py:1500
-#: weko_search_ui/utils.py:1576 weko_search_ui/utils.py:1616
-#: weko_search_ui/utils.py:1620 weko_search_ui/utils.py:1656
+#: weko_search_ui/utils.py:2721 weko_search_ui/utils.py:2754
+#: weko_search_ui/utils.py:2846 weko_search_ui/utils.py:2916
+#: weko_search_ui/utils.py:2920 weko_search_ui/utils.py:2942
+#: weko_search_ui/utils.py:2966
 msgid "Please specify {}."
 msgstr "{}を設定してください。"
 
-#: weko_search_ui/utils.py:1471 weko_search_ui/utils.py:1623
+#: weko_search_ui/utils.py:2724 weko_search_ui/utils.py:2923
 msgid "The specified {} exceeds the maximum length."
 msgstr "指定された{}が最大長を超えています。"
 
-#: weko_search_ui/utils.py:1485 weko_search_ui/utils.py:1638
+#: weko_search_ui/utils.py:2739 weko_search_ui/utils.py:2897
+#: weko_search_ui/utils.py:2907 weko_search_ui/utils.py:2938
 msgid "Specified Prefix of {} is incorrect."
 msgstr "指定された{}のPrefixが誤っています。"
 
-#: weko_search_ui/utils.py:1493 weko_search_ui/utils.py:1588
-#: weko_search_ui/utils.py:1645
+#: weko_search_ui/utils.py:2747 weko_search_ui/utils.py:2891
+#: weko_search_ui/utils.py:2900
 msgid "{} cannot be set."
 msgstr "{}は設定できません。"
 
-#: weko_search_ui/utils.py:1502 weko_search_ui/utils.py:1505
-#: weko_search_ui/utils.py:1563 weko_search_ui/utils.py:1658
+#: weko_search_ui/utils.py:2756 weko_search_ui/utils.py:2760
+#: weko_search_ui/utils.py:2829 weko_search_ui/utils.py:2968
 msgid "Specified {} is different from existing {}."
 msgstr "指定された{}は登録している{}と異なっています。"
 
-#: weko_search_ui/utils.py:1533
-msgid "You cannot keep an item private because it has a DOI."
-msgstr "アイテムにDOIが付与されているため、アイテムを非公開にすることはできません。"
+#: weko_search_ui/utils.py:2780
+msgid ""
+"When assigning a DOI to an item, it must be associated with an index "
+"whose index status is \"Public\" and Harvest Publishing is \"Public\"."
+msgstr ""
 
-#: weko_search_ui/utils.py:1538
+#: weko_search_ui/utils.py:2785
 msgid ""
 "Since the item has a DOI, it must be associated with an index whose index"
 " status is \"Public\" and whose Harvest Publishing is \"Public\"."
 msgstr "アイテムにDOIが付与されているため、インデックス状態が「公開」かつハーベスト公開が「公開」のインデックスに関連付けが必要です。"
 
-#: weko_search_ui/utils.py:1579
+#: weko_search_ui/utils.py:2796
+msgid "You cannot keep an item private because it has a DOI."
+msgstr "アイテムにDOIが付与されているため、アイテムを非公開にすることはできません。"
+
+#: weko_search_ui/utils.py:2850 weko_search_ui/utils.py:4070
 msgid "DOI_RA should be set by one of JaLC, Crossref, DataCite, NDL JaLC."
 msgstr "DOI_RAはJaLC,Crossref,DataCite,NDL JaLCのいずれかを設定してください。"
 
-#: weko_search_ui/utils.py:1584 weko_search_ui/utils.py:1590
-msgid "PID does not meet the conditions."
-msgstr "PID付与の条件を満たしていません。"
+#: weko_search_ui/utils.py:3001
+msgid "Item Link type: '{}' is not one of {}."
+msgstr "リンクタイプ'{}'は次の決められた選択肢に含まれていません。{}"
 
-#: weko_search_ui/utils.py:1955
-msgid "Please specify the date with any format of YYYY-MM-DD, YYYY-MM, YYYY."
-msgstr "日付はYYYY-MM-DD、YYYY-MM、YYYYのいずれかで指定してください。"
+#: weko_search_ui/utils.py:3005
+msgid "Please specify Item URL for item link."
+msgstr "アイテムリンク先のURLを指定してください。"
 
-msgid "Replace value of {} from {} to {}."
-msgstr "{}の値を{}から{}へ置き換えました。"
+#: weko_search_ui/utils.py:3019
+msgid "Specified Item Link URI and system URI do not match."
+msgstr "指定されたアイテムリンク先URIとシステムURIが一致しません。"
 
-#: weko_search_ui/utils.py:1967
-msgid "Please specify PubDate with YYYY-MM-DD."
-msgstr "公開日はYYYY-MM-DDで指定してください。"
+#: weko_search_ui/utils.py:3025
+msgid "Linking item does not exist in the system."
+msgstr "リンク先アイテムがシステムに存在しません。"
 
-#: weko_search_ui/utils.py:2034
-msgid "Please specify Open Access Date with YYYY-MM-DD."
-msgstr "オープンアクセスの日付はYYYY-MM-DDで指定してください。"
+#: weko_search_ui/utils.py:3028
+msgid "Linking item already deleted in the system."
+msgstr "リンク先アイテムは削除済です。"
 
-#: weko_search_ui/utils.py:2169
-msgid "PID does not meet the conditions.<br/>"
-msgstr "PIDが条件を満たしていません。<br/>"
+#: weko_search_ui/utils.py:3067
+msgid "It is not allowed to create links to the item itself."
+msgstr "自身へのアイテムリンクを作成することはできません。"
 
-#: weko_search_ui/utils.py:2180
+#: weko_search_ui/utils.py:3072
+msgid "It is not allowed to create links other than {} between split items."
+msgstr "分割したアイテム間で{}以外のリンクを作成することはできません。"
+
+#: weko_search_ui/utils.py:3108
+msgid "Duplicate Item Link."
+msgstr "重複するアイテムリンクを作成することはできません。"
+
+#: weko_search_ui/utils.py:3447
+msgid ""
+"One of the following required values ​​has not been "
+"registered.<br/>{}<br/>"
+msgstr "次のいずれかの必要値が登録していません。<br/>{}<br/>"
+
+#: weko_search_ui/utils.py:3452
+msgid ""
+"The mapping of required items for DOI validation is not set. Please "
+"recheck the following mapping settings.<br/>{}"
+msgstr ""
+
+#: weko_search_ui/utils.py:3462
 msgid "The following metadata are required.<br/>{}"
 msgstr "{}は必須項目です。"
 
-#: weko_search_ui/utils.py:2185
+#: weko_search_ui/utils.py:3467
 msgid "One of the following metadata is required.<br/>{}<br/>"
 msgstr "{}のいずれかを設定してください。"
 
-#: weko_search_ui/utils.py:2270
+#: weko_search_ui/utils.py:3530 weko_search_ui/utils.py:3542
+msgid "Please specify the date with any format of YYYY-MM-DD, YYYY-MM, YYYY."
+msgstr "日付はYYYY-MM-DD、YYYY-MM、YYYYのいずれかで指定してください。"
+
+#: weko_search_ui/utils.py:3536
+msgid "Replace value of {} from {} to {}."
+msgstr "{}の値を{}から{}へ置き換えました。"
+
+#: weko_search_ui/utils.py:3559
+msgid "Please specify PubDate with YYYY-MM-DD."
+msgstr "公開日はYYYY-MM-DDで指定してください。"
+
+#: weko_search_ui/utils.py:3589
+msgid "ID is specified for the newly registered item. Ignore the ID and register."
+msgstr "新規登録アイテムにIDが指定されています。IDを無視して登録を行います。"
+
+#: weko_search_ui/utils.py:3672
+msgid "Please specify Open Access Date with YYYY-MM-DD."
+msgstr "オープンアクセスの日付はYYYY-MM-DDで指定してください。"
+
+#: weko_search_ui/utils.py:3909 weko_search_ui/utils.py:4055
+#: weko_search_ui/utils.py:4061
+msgid "Please specify DOI prefix/suffix."
+msgstr "DOIは prefix/suffix の形式で指定して下さい。"
+
+#: weko_search_ui/utils.py:4047
+msgid "The specified DOI is wrong and fixed with the registered DOI."
+msgstr ""
+
+#: weko_search_ui/utils.py:4050
+msgid ""
+"The specified DOI RA is wrong and fixed with the correct DOI RA of the "
+"registered DOI."
+msgstr ""
+
+#: weko_search_ui/utils.py:4057 weko_search_ui/utils.py:4063
+msgid "Please specify DOI suffix."
+msgstr ""
+
+#: weko_search_ui/utils.py:4066
+msgid "Do not specify DOI suffix."
+msgstr ""
+
+#: weko_search_ui/utils.py:4072
+msgid "Specified Prefix of DOI is incorrect."
+msgstr ""
+
+#: weko_search_ui/utils.py:4104
 msgid ""
 "Please specify the image file(gif, jpg, jpe, jpeg, png, bmp, tiff, tif) "
 "for the thumbnail."
 msgstr "サムネイルは画像ファイル（gif, jpg, jpe, jpeg, png, bmp, tiff, tif）を指定してください。"
 
-#: weko_search_ui/utils.py:2711
+#: weko_search_ui/utils.py:5220
 msgid "The file specified in ({}) does not exist."
 msgstr "（{}）に指定したファイルが存在しません。"
 
-#: weko_search_ui/utils.py:2714
+#: weko_search_ui/utils.py:5224
 msgid ""
 "The file specified in ({}) does not exist.<br/>The file will not be "
 "updated. Update only the metadata with csv/tsv contents."
 msgstr "（{}）に指定したファイルが存在しません。<br/>ファイルの更新はしません。csv/tsv内容でメタデータのみ更新します。"
 
-#: weko_search_ui/utils.py:2833
+#: weko_search_ui/utils.py:5511
 msgid "The file name specified in {} and {} do not match."
 msgstr "{}に指定されたファイル名と{}が一致しません。"
+
+#: weko_search_ui/views.py:137
+msgid "\"<\" and \">\" cannot be used for searching."
+msgstr "'<' , '>' は検索に使用できません。"
 
 #: weko_search_ui/static/js/weko_search_ui/moment.min.js:1
 msgid ": , "
 msgstr ""
 
-#: weko_search_ui/templates/weko_search_ui/body_contents.html:20
+#: weko_search_ui/templates/weko_search_ui/body_contents.html:21
 msgid "is_permission"
 msgstr ""
 
-#: weko_search_ui/templates/weko_search_ui/body_contents.html:22
+#: weko_search_ui/templates/weko_search_ui/body_contents.html:24
 msgid "is_login"
 msgstr ""
 
-#: weko_search_ui/templates/weko_search_ui/admin/import.html:61
-#: weko_search_ui/templates/weko_search_ui/body_contents.html:29
-#: weko_search_ui/templates/weko_search_ui/body_contents.html:69
+#: weko_search_ui/templates/weko_search_ui/admin/import.html:73
+#: weko_search_ui/templates/weko_search_ui/admin/rocrate_import.html:75
+#: weko_search_ui/templates/weko_search_ui/body_contents.html:32
+#: weko_search_ui/templates/weko_search_ui/body_contents.html:72
 msgid "Title"
 msgstr "タイトル"
 
-#: weko_search_ui/templates/weko_search_ui/body_contents.html:41
-#: weko_search_ui/templates/weko_search_ui/body_contents.html:70
+#: weko_search_ui/templates/weko_search_ui/body_contents.html:44
+#: weko_search_ui/templates/weko_search_ui/body_contents.html:73
 msgid "Details"
 msgstr "詳細"
 
-#: weko_search_ui/templates/weko_search_ui/body_contents.html:86
+#: weko_search_ui/templates/weko_search_ui/body_contents.html:103
 msgid "Items to Export"
-msgstr ""
+msgstr "アイテムエクスポート"
 
-#: weko_search_ui/templates/weko_search_ui/body_contents.html:87
+#: weko_search_ui/templates/weko_search_ui/body_contents.html:105
 msgid "Item Lists"
 msgstr "アイテムリスト"
 
-#: weko_search_ui/templates/weko_search_ui/body_contents.html:88
+#: weko_search_ui/templates/weko_search_ui/body_contents.html:107
 msgid "Search Results"
 msgstr "検索結果"
 
-#: weko_search_ui/templates/weko_search_ui/body_contents.html:102
+#: weko_search_ui/templates/weko_search_ui/body_contents.html:124
 msgid "Export Checked Items"
 msgstr "チェックしたアイテムをエクスポート"
 
-#: weko_search_ui/templates/weko_search_ui/body_contents.html:103
+#: weko_search_ui/templates/weko_search_ui/body_contents.html:125
 msgid "Export All Displayed Items"
 msgstr "表示中のアイテムをエクスポート"
 
-#: weko_search_ui/templates/weko_search_ui/body_contents.html:104
+#: weko_search_ui/templates/weko_search_ui/body_contents.html:126
 msgid "Export All Items Of This Index"
 msgstr "このインデックス全てのアイテムをエクスポート"
 
-#: weko_search_ui/templates/weko_search_ui/body_contents.html:105
+#: weko_search_ui/templates/weko_search_ui/body_contents.html:127
 msgid "Print Checked Items"
 msgstr "チェックしたアイテムを印刷"
 
-#: weko_search_ui/templates/weko_search_ui/body_contents.html:106
+#: weko_search_ui/templates/weko_search_ui/body_contents.html:128
 msgid "Print All Displayed Items"
 msgstr "表示中のアイテムを印刷"
 
-#: weko_search_ui/templates/weko_search_ui/body_contents.html:107
+#: weko_search_ui/templates/weko_search_ui/body_contents.html:129
 msgid "Print All Items Of This Index"
 msgstr "このインデックス全てのアイテムを印刷"
 
-#: weko_search_ui/templates/weko_search_ui/body_contents.html:109
+#: weko_search_ui/templates/weko_search_ui/body_contents.html:131
 msgid "Execution"
 msgstr "実行"
 
-#: weko_search_ui/templates/weko_search_ui/body_contents.html:111
+#: weko_search_ui/templates/weko_search_ui/admin/export.html:49
+#: weko_search_ui/templates/weko_search_ui/body_contents.html:134
 msgid "Export"
 msgstr ""
 
-#: weko_search_ui/templates/weko_search_ui/body_contents.html:115
-#: weko_search_ui/templates/weko_search_ui/body_contents.html:138
+#: weko_search_ui/templates/weko_search_ui/body_contents.html:139
+#: weko_search_ui/templates/weko_search_ui/body_contents.html:169
 msgid "Display Order"
 msgstr "表示順"
 
-#: weko_search_ui/templates/weko_search_ui/body_contents.html:117
+#: weko_search_ui/templates/weko_search_ui/body_contents.html:141
 msgid "Title(Ascending)"
 msgstr "タイトル（昇順）"
 
-#: weko_search_ui/templates/weko_search_ui/body_contents.html:118
+#: weko_search_ui/templates/weko_search_ui/body_contents.html:142
 msgid "Title(Descending)"
 msgstr "タイトル（降順）"
 
-#: weko_search_ui/templates/weko_search_ui/body_contents.html:119
+#: weko_search_ui/templates/weko_search_ui/body_contents.html:143
 msgid "Registrant(Ascending)"
 msgstr "登録者（昇順）"
 
-#: weko_search_ui/templates/weko_search_ui/body_contents.html:120
+#: weko_search_ui/templates/weko_search_ui/body_contents.html:144
 msgid "Registrant(Descending)"
 msgstr "登録者（降順）"
 
-#: weko_search_ui/templates/weko_search_ui/body_contents.html:121
+#: weko_search_ui/templates/weko_search_ui/body_contents.html:145
 msgid "Item Types(Asending)"
 msgstr "アイテムタイプ（昇順）"
 
-#: weko_search_ui/templates/weko_search_ui/body_contents.html:122
+#: weko_search_ui/templates/weko_search_ui/body_contents.html:146
 msgid "Item Types(Descending)"
 msgstr "アイテムタイプ（降順）"
 
-#: weko_search_ui/templates/weko_search_ui/body_contents.html:123
+#: weko_search_ui/templates/weko_search_ui/body_contents.html:147
 msgid "ID(Ascending)"
 msgstr "ID（昇順）"
 
-#: weko_search_ui/templates/weko_search_ui/body_contents.html:124
+#: weko_search_ui/templates/weko_search_ui/body_contents.html:148
 msgid "ID(Descending)"
 msgstr "ID（降順）"
 
-#: weko_search_ui/templates/weko_search_ui/body_contents.html:125
+#: weko_search_ui/templates/weko_search_ui/body_contents.html:149
 msgid "Modified Date and Time(Ascending)"
 msgstr "更新日時（昇順）"
 
-#: weko_search_ui/templates/weko_search_ui/body_contents.html:126
+#: weko_search_ui/templates/weko_search_ui/body_contents.html:150
 msgid "Modified Date and Time(Descending)"
 msgstr "更新日時（降順）"
 
-#: weko_search_ui/templates/weko_search_ui/body_contents.html:127
+#: weko_search_ui/templates/weko_search_ui/body_contents.html:151
 msgid "Created Date and Time(Ascending)"
 msgstr "作成日時（昇順）"
 
-#: weko_search_ui/templates/weko_search_ui/body_contents.html:128
+#: weko_search_ui/templates/weko_search_ui/body_contents.html:152
 msgid "Created Date and Time(Descending)"
 msgstr "作成日時（降順）"
 
-#: weko_search_ui/templates/weko_search_ui/body_contents.html:129
+#: weko_search_ui/templates/weko_search_ui/body_contents.html:153
 msgid "Review Date and Time(Ascending)"
 msgstr "査読日時（昇順）"
 
-#: weko_search_ui/templates/weko_search_ui/body_contents.html:130
+#: weko_search_ui/templates/weko_search_ui/body_contents.html:154
 msgid "Review Date and Time(Descending)"
 msgstr "査読日時（降順）"
 
-#: weko_search_ui/templates/weko_search_ui/body_contents.html:131
+#: weko_search_ui/templates/weko_search_ui/body_contents.html:155
 msgid "Published Year(Ascending)"
 msgstr "出版年（昇順）"
 
-#: weko_search_ui/templates/weko_search_ui/body_contents.html:132
+#: weko_search_ui/templates/weko_search_ui/body_contents.html:156
 msgid "Published Year(Descending)"
 msgstr "出版年（降順）"
 
-#: weko_search_ui/templates/weko_search_ui/body_contents.html:133
+#: weko_search_ui/templates/weko_search_ui/body_contents.html:157
 msgid "Custom(Ascending)"
 msgstr "カスタム（昇順）"
 
-#: weko_search_ui/templates/weko_search_ui/body_contents.html:134
+#: weko_search_ui/templates/weko_search_ui/body_contents.html:158
 msgid "Custom(Descending)"
 msgstr "カスタム（降順）"
 
-#: weko_search_ui/templates/weko_search_ui/body_contents.html:152
+#: weko_search_ui/templates/weko_search_ui/body_contents.html:159
+msgid "Relevance(Ascending)"
+msgstr ""
+
+#: weko_search_ui/templates/weko_search_ui/body_contents.html:160
+msgid "Relevance(Descending)"
+msgstr ""
+
+#: weko_search_ui/templates/weko_search_ui/body_contents.html:189
 msgid "Display Number"
 msgstr "表示数"
 
-#: weko_search_ui/templates/weko_search_ui/admin/item_list_display.html:50
-#: weko_search_ui/templates/weko_search_ui/body_contents.html:169
+#: weko_search_ui/templates/weko_search_ui/admin/item_list_display.html:57
+#: weko_search_ui/templates/weko_search_ui/body_contents.html:205
 msgid "Search failed."
 msgstr "検索に失敗しました"
 
-#: weko_search_ui/templates/weko_search_ui/admin/item_list_display.html:54
-#: weko_search_ui/templates/weko_search_ui/body_contents.html:173
+#: weko_search_ui/templates/weko_search_ui/admin/item_list_display.html:63
+#: weko_search_ui/templates/weko_search_ui/body_contents.html:211
 msgid "Loading..."
 msgstr "読み込み中..."
 
-#: weko_search_ui/templates/weko_search_ui/body_facet_search.html:25
-msgid "Access"
-msgstr "アクセス制御"
-
 #: weko_search_ui/templates/weko_search_ui/body_facet_search.html:26
-msgid "Open access"
-msgstr "オープンアクセス"
+msgid "Go to"
+msgstr "\"検索\""
 
 #: weko_search_ui/templates/weko_search_ui/body_facet_search.html:27
-msgid "Restricted access"
-msgstr "制約付きアクセス"
+msgid "search"
+msgstr "検索"
 
 #: weko_search_ui/templates/weko_search_ui/body_facet_search.html:28
-msgid "Metadata only access"
-msgstr "メタデータのみ"
+msgid "cancel"
+msgstr "キャンセル"
 
 #: weko_search_ui/templates/weko_search_ui/body_facet_search.html:29
-msgid "Embargoed access"
-msgstr "エンバーゴ期間中"
+msgid "facet slider required validation"
+msgstr "値を設定してください。"
 
 #: weko_search_ui/templates/weko_search_ui/body_facet_search.html:30
-msgid "Data Language"
-msgstr "データの言語"
+msgid "facet slider value Validation"
+msgstr "正しい値を設定してください。"
 
 #: weko_search_ui/templates/weko_search_ui/body_facet_search.html:31
-msgid "Distributor"
-msgstr "配布者、配布機関"
+msgid "facet slider correlation validation"
+msgstr "範囲fromは範囲to以下にしてください。"
 
-#: weko_search_ui/templates/weko_search_ui/body_facet_search.html:32
-msgid "Data Type"
-msgstr "データタイプ"
+#: weko_search_ui/templates/weko_search_ui/admin/bulk_delete_display.html:36
+#: weko_search_ui/templates/weko_search_ui/admin/item_list_display.html:37
+msgid "Target Index"
+msgstr "対象インデックス"
+
+#: weko_search_ui/templates/weko_search_ui/admin/bulk_delete_display.html:49
+msgid "Delete items of child recursively"
+msgstr "子インデックスのアイテムを再帰的に削除します"
+
+#: weko_search_ui/templates/weko_search_ui/admin/bulk_delete_display.html:63
+msgid "Delete"
+msgstr "削除"
+
+#: weko_search_ui/templates/weko_search_ui/admin/bulk_delete_display.html:82
+#: weko_search_ui/templates/weko_search_ui/admin/item_list_display.html:115
+msgid "Continue"
+msgstr "継続"
+
+#: weko_search_ui/templates/weko_search_ui/admin/bulk_delete_display.html:84
+#: weko_search_ui/templates/weko_search_ui/admin/export.html:52
+#: weko_search_ui/templates/weko_search_ui/admin/import.html:59
+#: weko_search_ui/templates/weko_search_ui/admin/item_list_display.html:96
+#: weko_search_ui/templates/weko_search_ui/admin/item_list_display.html:116
+#: weko_search_ui/templates/weko_search_ui/admin/rocrate_import.html:61
+msgid "Cancel"
+msgstr "キャンセル"
+
+#: weko_search_ui/templates/weko_search_ui/admin/export.html:40
+msgid "The last item ID"
+msgstr "最新のアイテムID"
+
+#: weko_search_ui/templates/weko_search_ui/admin/export.html:41
+msgid "Filter"
+msgstr "フィルター"
+
+#: weko_search_ui/templates/weko_search_ui/admin/export.html:42
+#: weko_search_ui/templates/weko_search_ui/admin/import.html:56
+#: weko_search_ui/templates/weko_search_ui/admin/rocrate_import.html:57
+msgid "Item Type"
+msgstr "アイテムタイプ"
+
+#: weko_search_ui/templates/weko_search_ui/admin/export.html:43
+msgid "Item ID"
+msgstr "アイテムID"
+
+#: weko_search_ui/templates/weko_search_ui/admin/export.html:44
+msgid "Export item"
+msgstr "エクスポート"
+
+#: weko_search_ui/templates/weko_search_ui/admin/export.html:45
+msgid "Download URL"
+msgstr "ダウンロードURL"
+
+#: weko_search_ui/templates/weko_search_ui/admin/export.html:47
+msgid "Export Start Time"
+msgstr ""
+
+#: weko_search_ui/templates/weko_search_ui/admin/export.html:48
+msgid "Export Finish Time"
+msgstr ""
+
+#: weko_search_ui/templates/weko_search_ui/admin/export.html:50
+msgid "Export message"
+msgstr "全体エクスポートを実行してよいですか？"
+
+#: weko_search_ui/templates/weko_search_ui/admin/export.html:51
+msgid "Execute"
+msgstr "実行"
+
+#: weko_search_ui/templates/weko_search_ui/admin/export.html:54
+msgid "Cancel export message"
+msgstr "全件エクスポートの処理をキャンセルしてよいですか？"
+
+#: weko_search_ui/templates/weko_search_ui/admin/export.html:55
+#: weko_search_ui/templates/weko_search_ui/admin/import.html:99
+#: weko_search_ui/templates/weko_search_ui/admin/rocrate_import.html:100
+msgid "Celery is not running."
+msgstr ""
+
+#: weko_search_ui/templates/weko_search_ui/admin/export.html:56
+msgid "Session lifetime is not one day."
+msgstr ""
+
+#: weko_search_ui/templates/weko_search_ui/admin/export.html:57
+#: weko_search_ui/templates/weko_search_ui/admin/import.html:95
+msgid "Failed to get item type list."
+msgstr "アイテムタイプリストの取得に失敗しました。"
+
+#: weko_search_ui/templates/weko_search_ui/admin/export.html:58
+msgid "Failed to get last item ID."
+msgstr ""
+
+#: weko_search_ui/templates/weko_search_ui/admin/import.html:43
+#: weko_search_ui/templates/weko_search_ui/admin/rocrate_import.html:44
+msgid "List"
+msgstr "一覧"
+
+#: weko_search_ui/templates/weko_search_ui/admin/import.html:44
+#: weko_search_ui/templates/weko_search_ui/admin/rocrate_import.html:45
+msgid "Import File"
+msgstr "ファイルインポート"
+
+#: weko_search_ui/templates/weko_search_ui/admin/import.html:45
+#: weko_search_ui/templates/weko_search_ui/admin/rocrate_import.html:46
+msgid "Import Index"
+msgstr "インデックスインポート"
+
+#: weko_search_ui/templates/weko_search_ui/admin/import.html:46
+#: weko_search_ui/templates/weko_search_ui/admin/rocrate_import.html:47
+msgid "WorkFlow"
+msgstr "ワークフロー"
+
+#: weko_search_ui/templates/weko_search_ui/admin/import.html:47
+#: weko_search_ui/templates/weko_search_ui/admin/rocrate_import.html:48
+msgid "Select File"
+msgstr "ファイル選択"
+
+#: weko_search_ui/templates/weko_search_ui/admin/import.html:48
+#: weko_search_ui/templates/weko_search_ui/admin/rocrate_import.html:49
+msgid "Select Index"
+msgstr "インデックス選択"
+
+#: weko_search_ui/templates/weko_search_ui/admin/import.html:49
+#: weko_search_ui/templates/weko_search_ui/admin/rocrate_import.html:50
+msgid "Select WorkFlow"
+msgstr "ワークフロー選択"
+
+#: weko_search_ui/templates/weko_search_ui/admin/import.html:50
+#: weko_search_ui/templates/weko_search_ui/admin/rocrate_import.html:51
+msgid "Selected file name"
+msgstr "選択したファイル名"
+
+#: weko_search_ui/templates/weko_search_ui/admin/import.html:51
+#: weko_search_ui/templates/weko_search_ui/admin/rocrate_import.html:52
+msgid "Selected index"
+msgstr "選択したインデックス"
+
+#: weko_search_ui/templates/weko_search_ui/admin/import.html:52
+#: weko_search_ui/templates/weko_search_ui/admin/rocrate_import.html:53
+msgid "Selected workflow"
+msgstr "選択したワークフロー"
+
+#: weko_search_ui/templates/weko_search_ui/admin/import.html:54
+#: weko_search_ui/templates/weko_search_ui/admin/rocrate_import.html:55
+msgid "Designate Index"
+msgstr "インデックスを指定"
+
+#: weko_search_ui/templates/weko_search_ui/admin/import.html:55
+#: weko_search_ui/templates/weko_search_ui/admin/rocrate_import.html:56
+msgid "Workflow"
+msgstr "ワークフロー"
+
+#: weko_search_ui/templates/weko_search_ui/admin/import.html:57
+#: weko_search_ui/templates/weko_search_ui/admin/rocrate_import.html:59
+msgid "Flow"
+msgstr "フロー"
+
+#: weko_search_ui/templates/weko_search_ui/admin/import.html:58
+#: weko_search_ui/templates/weko_search_ui/admin/rocrate_import.html:60
+msgid "Select"
+msgstr "選択"
+
+#: weko_search_ui/templates/weko_search_ui/admin/import.html:60
+#: weko_search_ui/templates/weko_search_ui/admin/rocrate_import.html:62
+msgid "Check"
+msgstr "確認"
+
+#: weko_search_ui/templates/weko_search_ui/admin/import.html:61
+#: weko_search_ui/templates/weko_search_ui/admin/rocrate_import.html:63
+msgid "Change Identifier Mode."
+msgstr "識別子変更モード"
+
+#: weko_search_ui/templates/weko_search_ui/admin/import.html:62
+#: weko_search_ui/templates/weko_search_ui/admin/rocrate_import.html:64
+msgid "I agree to the terms of use."
+msgstr "利用規約に同意します"
+
+#: weko_search_ui/templates/weko_search_ui/admin/import.html:63
+#: weko_search_ui/templates/weko_search_ui/admin/rocrate_import.html:65
+msgid "Change DOI Mode"
+msgstr "DOI変更モード"
+
+#: weko_search_ui/templates/weko_search_ui/admin/import.html:65
+#: weko_search_ui/templates/weko_search_ui/admin/rocrate_import.html:67
+msgid "Summary"
+msgstr "サマリー"
+
+#: weko_search_ui/templates/weko_search_ui/admin/import.html:66
+#: weko_search_ui/templates/weko_search_ui/admin/rocrate_import.html:68
+msgid "Total"
+msgstr "総計"
+
+#: weko_search_ui/templates/weko_search_ui/admin/import.html:67
+#: weko_search_ui/templates/weko_search_ui/admin/rocrate_import.html:69
+msgid "New Item"
+msgstr "新規登録アイテム"
+
+#: weko_search_ui/templates/weko_search_ui/admin/import.html:68
+#: weko_search_ui/templates/weko_search_ui/admin/rocrate_import.html:70
+msgid "Update Item"
+msgstr "更新アイテム"
+
+#: weko_search_ui/templates/weko_search_ui/admin/import.html:69
+#: weko_search_ui/templates/weko_search_ui/admin/rocrate_import.html:71
+msgid "Check Error"
+msgstr "チェックエラー"
+
+#: weko_search_ui/templates/weko_search_ui/admin/import.html:70
+#: weko_search_ui/templates/weko_search_ui/admin/rocrate_import.html:72
+msgid "import_btn_download"
+msgstr "ダウンロード"
+
+#: weko_search_ui/templates/weko_search_ui/admin/import.html:71
+#: weko_search_ui/templates/weko_search_ui/admin/rocrate_import.html:73
+msgid "No."
+msgstr "No."
+
+#: weko_search_ui/templates/weko_search_ui/admin/import.html:72
+#: weko_search_ui/templates/weko_search_ui/admin/rocrate_import.html:74
+msgid "Item Id"
+msgstr ""
+
+#: weko_search_ui/templates/weko_search_ui/admin/import.html:74
+msgid "DOI"
+msgstr ""
+
+#: weko_search_ui/templates/weko_search_ui/admin/import.html:75
+#: weko_search_ui/templates/weko_search_ui/admin/rocrate_import.html:76
+msgid "Check Result"
+msgstr "チェック結果"
+
+#: weko_search_ui/templates/weko_search_ui/admin/import.html:76
+#: weko_search_ui/templates/weko_search_ui/admin/rocrate_import.html:77
+msgid "Error"
+msgstr "エラー"
+
+#: weko_search_ui/templates/weko_search_ui/admin/import.html:77
+#: weko_search_ui/templates/weko_search_ui/admin/rocrate_import.html:78
+msgid "Warning"
+msgstr "警告"
+
+#: weko_search_ui/templates/weko_search_ui/admin/import.html:78
+#: weko_search_ui/templates/weko_search_ui/admin/rocrate_import.html:79
+msgid "Not match"
+msgstr "一致しない"
+
+#: weko_search_ui/templates/weko_search_ui/admin/import.html:79
+#: weko_search_ui/templates/weko_search_ui/admin/rocrate_import.html:80
+msgid "Register"
+msgstr "登録"
+
+#: weko_search_ui/templates/weko_search_ui/admin/import.html:80
+#: weko_search_ui/templates/weko_search_ui/admin/rocrate_import.html:81
+msgid "Keep Version"
+msgstr "バージョンの維持"
+
+#: weko_search_ui/templates/weko_search_ui/admin/import.html:81
+#: weko_search_ui/templates/weko_search_ui/admin/rocrate_import.html:82
+msgid "Upgrade Version"
+msgstr "バージョンの変更"
+
+#: weko_search_ui/templates/weko_search_ui/admin/import.html:82
+#: weko_search_ui/templates/weko_search_ui/admin/rocrate_import.html:83
+msgid "Register with [Change Identifier Mode]."
+msgstr "「識別子変更モード」で登録します。"
+
+#: weko_search_ui/templates/weko_search_ui/admin/import.html:84
+#: weko_search_ui/templates/weko_search_ui/admin/rocrate_import.html:85
+msgid "Start Date"
+msgstr "開始日"
+
+#: weko_search_ui/templates/weko_search_ui/admin/import.html:85
+#: weko_search_ui/templates/weko_search_ui/admin/rocrate_import.html:86
+msgid "End Date"
+msgstr "終了日"
+
+#: weko_search_ui/templates/weko_search_ui/admin/import.html:86
+#: weko_search_ui/templates/weko_search_ui/admin/rocrate_import.html:87
+msgid "Action"
+msgstr "アクション"
+
+#: weko_search_ui/templates/weko_search_ui/admin/import.html:87
+#: weko_search_ui/templates/weko_search_ui/admin/rocrate_import.html:88
+msgid "End"
+msgstr "End"
+
+#: weko_search_ui/templates/weko_search_ui/admin/import.html:88
+#: weko_search_ui/templates/weko_search_ui/admin/rocrate_import.html:89
+msgid "Work Flow Status"
+msgstr "ワークフローステータス"
+
+#: weko_search_ui/templates/weko_search_ui/admin/import.html:89
+#: weko_search_ui/templates/weko_search_ui/admin/rocrate_import.html:90
+msgid "Done"
+msgstr "作業済"
+
+#: weko_search_ui/templates/weko_search_ui/admin/import.html:90
+#: weko_search_ui/templates/weko_search_ui/admin/rocrate_import.html:91
+msgid "To Do"
+msgstr ""
+
+#: weko_search_ui/templates/weko_search_ui/admin/import.html:91
+#: weko_search_ui/templates/weko_search_ui/admin/rocrate_import.html:92
+msgid "Result"
+msgstr "結果"
+
+#: weko_search_ui/templates/weko_search_ui/admin/import.html:92
+#: weko_search_ui/templates/weko_search_ui/admin/rocrate_import.html:93
+msgid "Next"
+msgstr "次へ"
+
+#: weko_search_ui/templates/weko_search_ui/admin/import.html:93
+msgid "Item Type Template"
+msgstr "アイテムタイプのテンプレート"
+
+#: weko_search_ui/templates/weko_search_ui/admin/import.html:94
+#: weko_search_ui/templates/weko_search_ui/admin/rocrate_import.html:95
+msgid "Failed to download."
+msgstr "ダウンロードに失敗しました。"
+
+#: weko_search_ui/templates/weko_search_ui/admin/import.html:97
+#: weko_search_ui/templates/weko_search_ui/admin/rocrate_import.html:98
+msgid "Import is in progress on another device."
+msgstr "他の端末でインポートを実行中です。"
+
+#: weko_search_ui/templates/weko_search_ui/admin/import.html:98
+#: weko_search_ui/templates/weko_search_ui/admin/rocrate_import.html:99
+msgid "Import is in progress."
+msgstr "インポートを実行中です。"
+
+#: weko_search_ui/templates/weko_search_ui/admin/import.html:100
+#: weko_search_ui/templates/weko_search_ui/admin/rocrate_import.html:101
+msgid ""
+"This DOI has been already grant for another item. Please specify another "
+"DOI."
+msgstr "このDOIは既に別のアイテムに付与されています。別のDOIを指定してください。"
+
+#: weko_search_ui/templates/weko_search_ui/admin/import.html:101
+#: weko_search_ui/templates/weko_search_ui/admin/rocrate_import.html:102
+msgid "import_error_msg_is_withdraw_doi"
+msgstr "このDOIは取り下げられました。別のDOIを指定してください。"
+
+#: weko_search_ui/templates/weko_search_ui/admin/import.html:102
+#: weko_search_ui/templates/weko_search_ui/admin/rocrate_import.html:103
+msgid "The corresponding item has been deleted."
+msgstr "該当アイテムは削除済です。"
+
+#: weko_search_ui/templates/weko_search_ui/admin/import.html:103
+#: weko_search_ui/templates/weko_search_ui/admin/rocrate_import.html:104
+msgid "Cannot update because the corresponding item is being edited."
+msgstr "該当アイテムが編集中のため更新できません。"
+
+#: weko_search_ui/templates/weko_search_ui/admin/item_list_display.html:88
+msgid "Edit"
+msgstr "編集"
+
+#: weko_search_ui/templates/weko_search_ui/admin/item_list_display.html:93
+msgid "Save"
+msgstr "保存"
+
+#: weko_search_ui/templates/weko_search_ui/admin/item_list_display.html:112
+msgid "Is the input contents discarded ?"
+msgstr "入力内容を破棄してもよろしいですか？"
+
+#: weko_search_ui/templates/weko_search_ui/admin/rocrate_import.html:58
+#: weko_search_ui/templates/weko_search_ui/admin/rocrate_import.html:94
+msgid "Mapping"
+msgstr "マッピング"
+
+#: weko_search_ui/templates/weko_search_ui/admin/rocrate_import.html:96
+msgid "Failed to get mapping list."
+msgstr "マッピング定義リストの取得に失敗しました。"
+
+# weko_search_ui/utils.py:1915
+msgid "If there is a info of content file, terms of use cannot be set"
+msgstr "コンテンツファイル情報がある場合、利用規約は設定できません。"
+
+#: weko_search_ui/utils.py:3900
+msgid "The specified provinding method does not exist in the system"
+msgstr "指定する提供方法はシステムに存在しません。"
+
+#: weko_search_ui/utils.py:3910
+msgid "The specified terms does not exist in the system"
+msgstr "指定する利用規約はシステムに存在しません。"
 
 #: weko_search_ui/templates/weko_search_ui/body_facet_search.html:33
 msgid "Chinese"
 msgstr "中国語"
-
-#: weko_search_ui/templates/weko_search_ui/body_facet_search.html:34
-msgid "Mandarin Chinese"
-msgstr "北京語"
 
 #: weko_search_ui/templates/weko_search_ui/body_facet_search.html:35
 msgid "English"
@@ -479,346 +1097,4 @@ msgstr "韓国語"
 #: weko_search_ui/templates/weko_search_ui/body_facet_search.html:40
 msgid "Russian"
 msgstr "ロシア語"
-
-#: weko_search_ui/templates/weko_search_ui/body_facet_search.html:42
-msgid "Social Science Japan Data Archive (SSJDA)"
-msgstr "SSJデータアーカイブ"
-
-#: weko_search_ui/templates/weko_search_ui/body_facet_search.html:43
-msgid "Institute of Economic Research, Hitotsubashi University"
-msgstr "一橋大学経済研究所"
-
-#: weko_search_ui/templates/weko_search_ui/body_facet_search.html:44
-msgid "Panel Data Research Center at Keio University"
-msgstr "慶應義塾大学 パネルデータ設計・解析センター"
-
-#: weko_search_ui/templates/weko_search_ui/body_facet_search.html:45
-msgid "JGSS Research Center"
-msgstr "大阪商業大学JGSS研究センター"
-
-#: weko_search_ui/templates/weko_search_ui/body_facet_search.html:46
-msgid "Historiographical Institute The University of Tokyo"
-msgstr "東京大学史料編纂所"
-
-#: weko_search_ui/templates/weko_search_ui/admin/bulk_delete_display.html:33
-#: weko_search_ui/templates/weko_search_ui/admin/item_list_display.html:34
-msgid "Target Index"
-msgstr "対象インデックス"
-
-#: weko_search_ui/templates/weko_search_ui/admin/bulk_delete_display.html:43
-msgid "Delete items of child recursively"
-msgstr "子インデックスのアイテムを再帰的に削除します"
-
-#: weko_search_ui/templates/weko_search_ui/admin/bulk_delete_display.html:52
-#: weko_search_ui/templates/weko_search_ui/admin/bulk_delete_display.html:56
-msgid "Delete"
-msgstr "削除"
-
-#: weko_search_ui/templates/weko_search_ui/admin/bulk_delete_display.html:70
-msgid "Are you sure you want to delete it?"
-msgstr "削除してよろしいですか？"
-
-#: weko_search_ui/templates/weko_search_ui/admin/bulk_delete_display.html:73
-#: weko_search_ui/templates/weko_search_ui/admin/item_list_display.html:100
-msgid "Continue"
-msgstr "継続"
-
-#: weko_search_ui/templates/weko_search_ui/admin/bulk_delete_display.html:75
-#: weko_search_ui/templates/weko_search_ui/admin/import.html:47
-#: weko_search_ui/templates/weko_search_ui/admin/item_list_display.html:82
-#: weko_search_ui/templates/weko_search_ui/admin/item_list_display.html:101
-msgid "Cancel"
-msgstr "キャンセル"
-
-#: weko_search_ui/templates/weko_search_ui/admin/import.html:31
-msgid "List"
-msgstr "一覧"
-
-#: weko_search_ui/templates/weko_search_ui/admin/import.html:32
-msgid "Import File"
-msgstr "ファイルインポート"
-
-#: weko_search_ui/templates/weko_search_ui/admin/import.html:33
-msgid "Import Index"
-msgstr "インデックスインポート"
-
-#: weko_search_ui/templates/weko_search_ui/admin/import.html:34
-msgid "WorkFlow"
-msgstr "ワークフロー"
-
-#: weko_search_ui/templates/weko_search_ui/admin/import.html:35
-msgid "Select File"
-msgstr "ファイル選択"
-
-#: weko_search_ui/templates/weko_search_ui/admin/import.html:36
-msgid "Select Index"
-msgstr "インデックス選択"
-
-#: weko_search_ui/templates/weko_search_ui/admin/import.html:37
-msgid "Select WorkFlow"
-msgstr "ワークフロー選択"
-
-#: weko_search_ui/templates/weko_search_ui/admin/import.html:38
-msgid "Selected file name"
-msgstr "選択したファイル名"
-
-#: weko_search_ui/templates/weko_search_ui/admin/import.html:39
-msgid "Selected index"
-msgstr "選択したインデックス"
-
-#: weko_search_ui/templates/weko_search_ui/admin/import.html:40
-msgid "Selected workflow"
-msgstr "選択したワークフロー"
-
-#: weko_search_ui/templates/weko_search_ui/admin/import.html:42
-msgid "Designate Index"
-msgstr "インデックスを指定"
-
-#: weko_search_ui/templates/weko_search_ui/admin/import.html:43
-msgid "Workflow"
-msgstr "ワークフロー"
-
-#: weko_search_ui/templates/weko_search_ui/admin/import.html:44
-msgid "Item Type"
-msgstr "アイテムタイプ"
-
-#: weko_search_ui/templates/weko_search_ui/admin/import.html:45
-msgid "Flow"
-msgstr "フロー"
-
-#: weko_search_ui/templates/weko_search_ui/admin/import.html:46
-msgid "Select"
-msgstr "選択"
-
-#: weko_search_ui/templates/weko_search_ui/admin/import.html:48
-msgid "Check"
-msgstr "確認"
-
-#: weko_search_ui/templates/weko_search_ui/admin/import.html:49
-msgid "Change Identifier Mode."
-msgstr "識別子変更モード"
-
-#: weko_search_ui/templates/weko_search_ui/admin/import.html:50
-msgid "I agree to the terms of use."
-msgstr "利用規約に同意します"
-
-#: weko_search_ui/templates/weko_search_ui/admin/import.html:51
-msgid "Change DOI Mode"
-msgstr "DOI変更モード"
-
-#: weko_search_ui/templates/weko_search_ui/admin/import.html:53
-msgid "Summary"
-msgstr "サマリー"
-
-#: weko_search_ui/templates/weko_search_ui/admin/import.html:54
-msgid "Total"
-msgstr "総計"
-
-#: weko_search_ui/templates/weko_search_ui/admin/import.html:55
-msgid "New Item"
-msgstr "新規登録アイテム"
-
-#: weko_search_ui/templates/weko_search_ui/admin/import.html:56
-msgid "Update Item"
-msgstr "更新アイテム"
-
-#: weko_search_ui/templates/weko_search_ui/admin/import.html:57
-msgid "Check Error"
-msgstr "チェックエラー"
-
-#: weko_search_ui/templates/weko_search_ui/admin/import.html:58
-msgid "import_btn_download"
-msgstr "ダウンロード"
-
-#: weko_search_ui/templates/weko_search_ui/admin/import.html:59
-msgid "No."
-msgstr "No."
-
-#: weko_search_ui/templates/weko_search_ui/admin/import.html:60
-msgid "Item Id"
-msgstr "アイテムID"
-
-#: weko_search_ui/templates/weko_search_ui/admin/import.html:62
-msgid "Check Result"
-msgstr "チェック結果"
-
-#: weko_search_ui/templates/weko_search_ui/admin/import.html:63
-msgid "Error"
-msgstr "エラー"
-
-#: weko_search_ui/templates/weko_search_ui/admin/import.html:64
-msgid "Warning"
-msgstr "警告"
-
-#: weko_search_ui/templates/weko_search_ui/admin/import.html:65
-msgid "Not match"
-msgstr "一致しない"
-
-#: weko_search_ui/templates/weko_search_ui/admin/import.html:66
-msgid "Register"
-msgstr "登録"
-
-#: weko_search_ui/templates/weko_search_ui/admin/import.html:67
-msgid "Keep Version"
-msgstr "バージョンの維持"
-
-#: weko_search_ui/templates/weko_search_ui/admin/import.html:68
-msgid "Upgrade Version"
-msgstr "バージョンの変更"
-
-#: weko_search_ui/templates/weko_search_ui/admin/import.html:69
-msgid "Register with [Change Identifier Mode]."
-msgstr "「識別子変更モード」で登録します。"
-
-#: weko_search_ui/templates/weko_search_ui/admin/import.html:71
-msgid "Start Date"
-msgstr "開始日"
-
-#: weko_search_ui/templates/weko_search_ui/admin/import.html:72
-msgid "End Date"
-msgstr "終了日"
-
-#: weko_search_ui/templates/weko_search_ui/admin/import.html:73
-msgid "Action"
-msgstr "アクション"
-
-#: weko_search_ui/templates/weko_search_ui/admin/import.html:74
-msgid "End"
-msgstr "End"
-
-#: weko_search_ui/templates/weko_search_ui/admin/import.html:75
-msgid "Work Flow Status"
-msgstr "ワークフローステータス"
-
-#: weko_search_ui/templates/weko_search_ui/admin/import.html:76
-msgid "Done"
-msgstr "作業済"
-
-#: weko_search_ui/templates/weko_search_ui/admin/import.html:77
-msgid "To Do"
-msgstr ""
-
-#: weko_search_ui/templates/weko_search_ui/admin/import.html:78
-msgid "Result"
-msgstr "結果"
-
-#: weko_search_ui/templates/weko_search_ui/admin/import.html:79
-msgid "Next"
-msgstr "次へ"
-
-#: weko_search_ui/templates/weko_search_ui/admin/import.html:80
-msgid "Item Type Template"
-msgstr "アイテムタイプのテンプレート"
-
-#: weko_search_ui/templates/weko_search_ui/admin/import.html:81
-msgid "Failed to download."
-msgstr "ダウンロードに失敗しました。"
-
-#: weko_search_ui/templates/weko_search_ui/admin/import.html:82
-msgid "Failed to get item type list."
-msgstr "アイテムタイプリストの取得に失敗しました。"
-
-#: weko_search_ui/templates/weko_search_ui/admin/import.html:84
-msgid "Import is in progress on another device."
-msgstr "他の端末でインポートを実行中です。"
-
-#: weko_search_ui/templates/weko_search_ui/admin/import.html:85
-msgid "Import is in progress."
-msgstr "インポートを実行中です。"
-
-#: weko_search_ui/templates/weko_search_ui/admin/import.html:86
-msgid "Celery is not running."
-msgstr ""
-
-#: weko_search_ui/templates/weko_search_ui/admin/import.html:87
-msgid ""
-"This DOI has been already grant for another item. Please specify another "
-"DOI."
-msgstr "このDOIは既に別のアイテムに付与されています。別のDOIを指定してください。"
-
-#: weko_search_ui/templates/weko_search_ui/admin/import.html:88
-msgid "import_error_msg_is_withdraw_doi"
-msgstr "このDOIは取り下げられました。別のDOIを指定してください。"
-
-#: weko_search_ui/templates/weko_search_ui/admin/import.html:89
-msgid "The corresponding item has been deleted."
-msgstr "該当アイテムは削除済です。"
-
-#: weko_search_ui/templates/weko_search_ui/admin/import.html:90
-msgid "Cannot update because the corresponding item is being edited."
-msgstr "該当アイテムが編集中のため更新できません。"
-
-#: weko_search_ui/templates/weko_search_ui/admin/item_list_display.html:74
-msgid "Edit"
-msgstr "編集"
-
-#: weko_search_ui/templates/weko_search_ui/admin/item_list_display.html:79
-msgid "Save"
-msgstr "保存"
-
-#: weko_search_ui/templates/weko_search_ui/admin/item_list_display.html:97
-msgid "Is the input contents discarded ?"
-msgstr "入力内容を破棄してもよろしいですか？"
-
-#: weko_search_ui/templates/weko_search_ui/body_facet_search.html:50
-msgid "Go to"
-msgstr "移動"
-
-#: weko_search_ui/templates/weko_search_ui/body_facet_search.html:27
-msgid "search"
-msgstr "検索"
-
-msgid "The following item(s) cannot be deleted."
-msgstr "以下のアイテムを削除することはできませんでした。"
-
-msgid "DOI granting item(s):"
-msgstr "DOI付与済みのアイテム："
-
-msgid "Editing item(s):"
-msgstr "編集中のアイテム："
-
-msgid ""
-"DOI granting item(s) are including in the deletion items.<br/>DOI "
-"granting item(s) cannot be deleted without withdrawing the DOI.<br/>Do "
-"you want to continue deleting items that are not grant DOI?"
-msgstr "削除対象にDOI付与済みアイテムが含まれています。<br/>DOI付与済みアイテムはDOI取下げを行わないと削除できません。<br/>DOI付与済み以外のアイテム削除を続行しますか？"
-
-msgid "Your role cannot register items in this index."
-msgstr "ロールの権限が足りずこのインデックスにアイテム登録ができません。"
-
-#~ msgid "Search"
-#~ msgstr "キーワード検索"
-
-#~ msgid "DetailSearch"
-#~ msgstr "詳細検索"
-
-#~ msgid "Index List"
-#~ msgstr "インデクスリスト"
-
-#~ msgid "Update"
-#~ msgstr "更新"
-
-#~ msgid "\"<\" and \">\" are cannot be used for searching"
-#~ msgstr ""
-
-#~ msgid "The last item ID"
-#~ msgstr "最新のアイテムID"
-
-#~ msgid "Filter"
-#~ msgstr "フィルター"
-
-#~ msgid "Export item"
-#~ msgstr "エクスポート"
-
-#~ msgid "Download URL"
-#~ msgstr "ダウンロードURL"
-
-#~ msgid "Export message"
-#~ msgstr "全体エクスポートを実行してよいですか？"
-
-#~ msgid "Cancel export message"
-#~ msgstr "全件エクスポートの処理をキャンセルしてよいですか？"
-
-#~ msgid "Execute"
-#~ msgstr "実行"
 

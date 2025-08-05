@@ -21,6 +21,9 @@
 """Module tests foe weko-accounts."""
 
 from flask import Flask
+from flask_security import Security, SQLAlchemyUserDatastore
+from unittest.mock import patch
+from invenio_accounts.models import User, Role
 from weko_accounts import WekoAccounts
 
 
@@ -29,19 +32,31 @@ def test_version():
     from weko_accounts import __version__
     assert __version__
 
-
+# .tox/c1/bin/pytest --cov=weko_accounts tests/test_weko_accounts.py::test_init -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-accounts/.tox/c1/tmp
 def test_init():
     """Test extension initialization."""
-    app = Flask('testapp')
-    ext = WekoAccounts(app)
-    assert 'weko-accounts' in app.extensions
+    with patch('weko_accounts.ext.WekoAccounts.init_login'):
+        app = Flask('testapp')
+        ext = WekoAccounts(app)
+        assert 'weko-accounts' in app.extensions
 
-    app = Flask('testapp')
-    ext = WekoAccounts()
-    assert 'weko-accounts' not in app.extensions
-    ext.init_app(app)
-    assert 'weko-accounts' in app.extensions
+        app = Flask('testapp')
+        ext = WekoAccounts()
+        assert 'weko-accounts' not in app.extensions
+        ext.init_app(app)
+        assert 'weko-accounts' in app.extensions
 
+# .tox/c1/bin/pytest --cov=weko_accounts tests/test_weko_accounts.py::test_init_login -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-accounts/.tox/c1/tmp
+def test_init_login(db, users):
+    app = Flask('testapp')
+    user_datastore = SQLAlchemyUserDatastore(db, User, Role)
+    security = Security(app, user_datastore)
+
+    with app.app_context():
+        accounts = WekoAccounts()
+        with patch.object(security._state, 'login_context_processor') as mock_lcp:
+            accounts.init_login(app)
+            mock_lcp.assert_called()
 
 def test_view(app,session_time):
     """

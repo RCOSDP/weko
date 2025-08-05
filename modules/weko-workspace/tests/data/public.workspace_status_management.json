@@ -1,0 +1,18 @@
+[
+    {
+        "user_id": 1,
+        "recid": 2000038,
+        "is_favorited": false,
+        "is_read": true,
+        "created": "2025-03-04T15:22:55.643+09:00",
+        "updated": "2025-03-07T10:39:02.188+09:00"
+    },
+    {
+        "user_id": 1,
+        "recid": 2000041,
+        "is_favorited": true,
+        "is_read": false,
+        "created": "2025-03-11T18:35:54.048+09:00",
+        "updated": "2025-03-11T22:31:23.068+09:00"
+    }
+]

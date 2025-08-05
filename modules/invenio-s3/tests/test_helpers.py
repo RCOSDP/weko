@@ -1,87 +1,75 @@
-
-from mock import patch
-from datetime import datetime
-from calendar import timegm
+import pytest
+from flask import Flask, Response
 
 from invenio_s3.helpers import redirect_stream
 
-# .tox/c1/bin/pytest --cov=invenio_s3 tests/test_helpers.py::test_redirect_stream -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-s3/.tox/c1/tmp
-def test_redirect_stream(base_app):
-    with base_app.test_request_context():
-        url = "http://test.com"
-        filename = "test.txt"
-        size = 15
-        chunk_size = 5 * 1024 * 1024  # 5MiB
-        etag = "test_etag"
-        content_md5="test_md5"
-        now = datetime(2022,10,1,2,3,4,5)
-        mtime = timegm(now.timetuple())
-        
-        result = redirect_stream(
-            url,
-            filename,
-            size,
-            mtime,
-            mimetype="text/plain",
+@pytest.fixture
+def app():
+    app = Flask("testapp")
+    app.response_class = Response
+    return app
+
+def dummy_s3_url_builder(**kwargs):
+    # kwargsにはResponseContentType, ResponseContentDispositionが入る
+    return "https://dummy-s3-url"
+
+def test_redirect_stream_basic(app):
+    with app.app_context():
+        resp = redirect_stream(
+            s3_url_builder=dummy_s3_url_builder,
+            filename="test.txt",
+            mimetype=None,
             restricted=True,
             as_attachment=False,
-            etag=etag,
-            content_md5=content_md5,
-            chunk_size=chunk_size,
-            conditional=False,
             trusted=False
         )
-        headers = result.headers
-        assert headers['Content-Length'] == str(size)
-        assert headers['Content-MD5'] == content_md5
-        assert headers['Location'] == url
-        assert headers['Content-Security-Policy'] == "default-src 'none';"
-        assert headers['Content-Disposition'] == "inline"
-        assert headers["Etag"] == '"test_etag"'
-        assert headers["Last-Modified"] == now.strftime("%a, %d %b %Y %H:%M:%S GMT")
-        
-        result = redirect_stream(
-            url,
-            "test.txt",
-            size,
-            None,
+        assert resp.status_code == 302
+        assert resp.headers["Location"] == "https://dummy-s3-url"
+        assert resp.headers["Content-Disposition"].startswith("inline")
+        assert resp.mimetype == "text/plain"
+
+def test_redirect_stream_as_attachment(app):
+    with app.app_context():
+        resp = redirect_stream(
+            s3_url_builder=dummy_s3_url_builder,
+            filename="テストファイル.txt",
             mimetype=None,
-            restricted=False,
+            restricted=True,
             as_attachment=True,
-            etag=None,
-            content_md5=None,
-            chunk_size=chunk_size,
-            conditional=True,
+            trusted=False
+        )
+        assert resp.status_code == 302
+        assert resp.headers["Location"] == "https://dummy-s3-url"
+        assert resp.headers["Content-Disposition"].startswith("attachment")
+        assert resp.mimetype == "text/plain" or resp.mimetype == "application/octet-stream"
+
+def test_redirect_stream_trusted(app):
+    with app.app_context():
+        resp = redirect_stream(
+            s3_url_builder=dummy_s3_url_builder,
+            filename="test.txt",
+            mimetype="application/pdf",
+            restricted=True,
+            as_attachment=False,
             trusted=True
         )
-        headers = result.headers
-        assert "Content-MD5" not in headers
-        assert "Content-Security-Policy" not in headers
-        assert headers["Content-Disposition"] == "attachment; filename=test.txt"
-        assert "Etag" not in headers
-        assert "Lost-Modified" not in headers
-        assert headers["Cache-Control"] == "public, max-age=43200"
+        assert resp.status_code == 302
+        assert resp.headers["Location"] == "https://dummy-s3-url"
+        assert resp.headers["Content-Disposition"].startswith("inline")
+        assert resp.mimetype == "application/pdf"
+        # trusted=Trueの場合、セキュリティヘッダが付与されない
+        assert "X-Content-Type-Options" not in resp.headers
 
-        # raise UnicodeEncodeError
-        with patch("invenio_s3.helpers.current_app.get_send_file_max_age",return_value=None):
-                result = redirect_stream(
-                    url,
-                    u"test\u201Cfile\u201D",
-                    size,
-                    None,
-                    mimetype=None,
-                    restricted=False,
-                    as_attachment=True,
-                    etag=None,
-                    content_md5=None,
-                    chunk_size=chunk_size,
-                    conditional=True,
-                    trusted=True
-                )
-                headers = result.headers
-                assert "Content-MD5" not in headers
-                assert "Content-Security-Policy" not in headers
-                assert headers["Content-Disposition"] == "attachment; filename*=UTF-8''test%E2%80%9Cfile%E2%80%9D; filename=testfile"
-                assert "Etag" not in headers
-                assert "Lost-Modified" not in headers
-                assert headers["Cache-Control"] == "public"
+def test_redirect_stream_octet_stream(app):
+    with app.app_context():
+        resp = redirect_stream(
+            s3_url_builder=dummy_s3_url_builder,
+            filename="unknownfile.unknown",
+            mimetype=None,
+            restricted=True,
+            as_attachment=False,
+            trusted=False
+        )
+        assert resp.status_code == 302
+        assert resp.headers["Content-Disposition"].startswith("attachment")
+        assert resp.mimetype == "application/octet-stream"

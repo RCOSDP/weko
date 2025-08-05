@@ -42,6 +42,15 @@ WEKO_ADMIN_SETTINGS_ELASTIC_REINDEX_SETTINGS = 'elastic_reindex_settings'
 WEKO_ADMIN_SETTINGS_ELASTIC_REINDEX_SETTINGS_HAS_ERRORED = 'has_errored'
 """a json property name of admin_settings record 'lastic_reindex_settings'"""
 
+WEKO_ADMIN_SETTINGS_RESEARCHMAP_LINKAGE_SETTINGS='researchmap_linkage_settings'
+"""admin_settings record name"""
+
+WEKO_ADMIN_SETTINGS_RESEARCHMAP_MERGE_MODES = [('similar_merge_similar_data','similar merge(similar data priority)')
+                       ,('similar_merge_input_data','similar merge(input data priority)')
+                       ,('merge','merge')
+                       ,('force','force')]
+""" merge mode select options"""
+
 WEKO_ADMIN_LIFETIME_TEMPLATE = 'weko_admin/settings/lifetime.html'
 """Settings base template for weko-admin module."""
 
@@ -50,6 +59,15 @@ WEKO_ADMIN_SITE_LICENSE_TEMPLATE = 'weko_admin/admin/site_license_settings.html'
 
 WEKO_ADMIN_SITE_LICENSE_SEND_MAIL_TEMPLATE = 'weko_admin/admin/site_license_send_mail_settings.html'
 """Site-license send mail settings templates."""
+
+WEKO_ADMIN_SWORD_API_TEMPLATE = 'weko_admin/admin/sword_api_settings.html'
+"""SWORD API template."""
+
+WEKO_ADMIN_SWORD_API_JSONLD_TEMPLATE = 'weko_admin/admin/sword_api_jsonld_settings.html'
+"""SWORD API JSONLD template."""
+
+WEKO_ADMIN_SWORD_API_JSONLD_MAPPING_TEMPLATE = 'weko_admin/admin/jsonld_mapping_settings.html'
+"""SWORD API JSONLD template."""
 
 WEKO_ADMIN_BlOCK_STYLE_TEMPLATE = 'weko_admin/admin/block_style.html'
 """Block-style template."""
@@ -1113,7 +1131,25 @@ WEKO_ADMIN_COMMUNITY_ACCESS_LIST = [
     'indexjournal',
     'report',
     'itemexportsettings',
-    'items/import'
+    'items/import',
+    'items/rocrate_import',
+    'items/bulk/update',
+    'items/bulk/delete',
+    'items/bulk-export',
+    'authors',
+    'authors/export',
+    'authors/import',
+    'feedbackmail',
+    'sitelicensesendmail',
+    'flowsetting',
+    'workflowsetting',
+    'community',
+    'user',
+    'resource_list',
+    'change_list',
+    'resync',
+    'sitelicensesettings',
+    'oaiset',
 ]
 """Classes Community Administrator can access."""
 
@@ -1129,6 +1165,7 @@ WEKO_ADMIN_REPOSITORY_ACCESS_LIST = [
     'itemtypes',
     'language',
     'loganalysissetting',
+    'logs/export',
     'others',
     'pdfcoverpage',
     'rankingsettings',
@@ -1136,6 +1173,7 @@ WEKO_ADMIN_REPOSITORY_ACCESS_LIST = [
     'site-license',
     'search-management',
     'sitemap',
+    'activity',
     'indexlink',
     'itemsetting',
     'statssettings',
@@ -1147,6 +1185,7 @@ WEKO_ADMIN_REPOSITORY_ACCESS_LIST = [
     'sitelicensesettings',
     'itemtypesregister',
     'itemtypesmapping',
+    'itemtypesrocratemapping',
     'itemtypes/mapping',
     'items/bulk-export',
     'feedbackmail',
@@ -1157,8 +1196,15 @@ WEKO_ADMIN_REPOSITORY_ACCESS_LIST = [
     'site_info',
     'location',
     'facet-search',
+    'restricted_access',
+    'mailtemplates',
     'community',
-    # 'restricted_access'
+    'workspaceworkflowsetting',
+    'swordapi',
+    'swordapi/jsonld',
+    'jsonld-mapping',
+    'shibboleth',
+    'cris_linkage'
 ] + WEKO_ADMIN_COMMUNITY_ACCESS_LIST
 """Classes Repository Administrator can access."""
 
@@ -1233,6 +1279,18 @@ WEKO_INDEX_TREE_STYLE_OPTIONS = {
     'widths': ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11']
 }
 
+WEKO_ADMIN_RESTRICTED_ACCESS_ERROR_MESSAGE = {
+    "key" : "",
+    "content" : {
+        "ja" : {
+            "content" : "このデータは利用できません（権限がないため）。"
+        },
+        "en":{
+            "content" : "This data is not available for this user"
+        }
+    }
+}
+
 WEKO_ADMIN_RESTRICTED_ACCESS_DISPLAY_FLAG = False
 """
 Restricted access feature display flag.
@@ -1257,11 +1315,14 @@ WEKO_ADMIN_RESTRICTED_ACCESS_SETTINGS = {
         "expiration_date_access": 500,
         "expiration_date_access_unlimited_chk": False,
     },
-    "terms_and_conditions": []
+    "terms_and_conditions": [],
+    "error_msg": WEKO_ADMIN_RESTRICTED_ACCESS_ERROR_MESSAGE
 }
 """Default restricted access settings."""
 
 WEKO_ADMIN_RESTRICTED_ACCESS_MAX_INTEGER = 9999999
+"""max value of expiration_date and download_limit. 
+    Any more than this and the datetime may overflow. """
 
 WEKO_ADMIN_ITEMS_PER_PAGE_USAGE_REPORT_REMINDER = 25
 """Default number of usage report activities results that display in one page."""
@@ -1280,7 +1341,8 @@ WEKO_ADMIN_FACET_SEARCH_SETTING = {
     "aggregations": [],
     "ui_type": "CheckboxList",
     "display_number": 5,
-    "is_open": True
+    "is_open": True,
+    "search_condition": "OR"
 }
 """Default Facet Search settings."""
 
@@ -1293,8 +1355,18 @@ WEKO_ADMIN_FACET_SEARCH_SETTING_QUERY_KEY_NO_PERMISSION = 'facet_search_query_no
 WEKO_ADMIN_FACET_SEARCH_SETTING_BUCKET_SIZE = 1000
 """Default Facet Search bucket size."""
 
+
 WEKO_ADMIN_CACHE_TEMP_DIR_INFO_KEY_DEFAULT = 'cache::temp_dir_info'
 """Default Cache Temporary Directory Information Key."""
 
 WEKO_ADMIN_USE_REGEX_IN_CRAWLER_LIST = False
 """ If True, enable regex function in crawler list processing. """
+
+WEKO_ADMIN_USE_MAIL_TEMPLATE_EDIT = False
+"""Whether system can edit mail template or not."""
+
+WEKO_ADMIN_DISPLAY_RESTRICTED_SETTINGS = False
+"""If True, display admin restricted settings."""
+
+WEKO_ADMIN_CRIS_LINKAGE_SETTINGS_TEMPLATE = 'weko_admin/admin/cris_linkage_setting.html'
+"""CRIS Linkage Settings template."""

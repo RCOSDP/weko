@@ -9,7 +9,7 @@
 #
 # WEKO3 is distributed in the hope that it will be
 # useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
 # General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
@@ -21,19 +21,22 @@
 {%- extends admin_base_template %}
 
 {% block css %}
-  {{ super() }}
-  {% assets "weko_theme_css_buttons" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+{{ super() }}
+{% assets "weko_theme_css_buttons" %}
+<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
 {% endblock %}
 
 {%- block javascript %}
-  {%- include config.WEKO_WORKFLOW_POP_PAGE -%}
-  {{ super() }}
-  {% assets "flow_detail_admin_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+{%- include config.WEKO_WORKFLOW_POP_PAGE -%}
+{{ super() }}
+{% assets "flow_detail_admin_js" %}
+<script src="{{ ASSET_URL }}"></script>{% endassets %}
 {%- endblock javascript %}
 
 {%- block body %}
 {% from "weko_theme/macros/modal_page.html" import all_modal %}
 {{ all_modal() }}
+<input type="hidden" id="actions" name="actions" value='{{ actions }}'>
 <div id="alerts"></div>
 <div class="row">
   <div class="col-sm-offset-2">
@@ -42,9 +45,33 @@
         <div class="form-group" id="div_flow_name">
           <label for="txt_flow_name" class="col-sm-4 control-label">{{_('Flow Name')}}</label>
           <div class="col-sm-8">
-            <input type="text" class="form-control" id="txt_flow_name"
-                                                    name="flow_name"
-                                                    placeholder="{{_('Ener the Flow name')}}"  value="{{flow.flow_name if flow}}">
+            <input type="text" class="form-control" id="txt_flow_name" name="flow_name"
+              placeholder="{{_('Ener the Flow name')}}" value="{{flow.flow_name if flow}}">
+          </div>
+        </div>
+        <div class="form-group">
+          <div class="col-sm-offset-4 col-sm-8">
+            <div class="checkbox">
+              <label>
+                <input type="checkbox" id="chk_for_delete" name="for_delete" {% if actions and actions|length> 0 %}
+                disabled {% endif %}
+                {% if flow and flow.flow_type == 2 %} checked {% endif %}> {{_('for delete')}}
+              </label>
+            </div>
+          </div>
+        </div>
+        <div class="form-group" id="div_repo_id">
+          <label for="txt_repo_id" class="col-sm-4 control-label">Repository</label>
+          <div class="col-sm-8">
+            {%- if repositories %}
+              <select class="form-control" id="txt_repo_id">
+                {%- for repository in repositories if repository %}
+                  <option value="{{repository.id}}" {%- if flow.repository_id == repository.id %} selected {%- endif %}>{{repository.id}}</option>
+                {%- endfor %}
+              </select>
+            {%-else %}
+              <option value=""></option>
+            {%- endif %}
           </div>
         </div>
       </div>
@@ -60,7 +87,8 @@
         <div class="form-group">
           <label class="col-sm-3 control-label">{{_('Flow Author')}}</label>
           <div class="col-sm-9">
-            {%- set username = current_userprofile.username|default(current_user.email) if current_userprofile else None %}
+            {%- set username = current_userprofile.username|default(current_user.email) if current_userprofile else None
+            %}
             {%- if flow %}
             <p class="form-control-static">{{flow.user_profile.email if flow}}</p>
             {% else %}
@@ -79,17 +107,17 @@
             {%- if flow_id == '0' %}
             <button type="button" class="btn btn-primary" id="btn-new-flow">
               <span class="glyphicon glyphicon-save" aria-hidden="true"></span>&nbsp
-                  {{_('Save')}}
+              {{_('Save')}}
             </button>
             {%- else %}
             <button type="button" class="btn btn-primary" id="btn-upt-flow">
               <span class="glyphicon glyphicon-save" aria-hidden="true"></span>&nbsp
-                     {{_('Save')}}
+              {{_('Save')}}
             </button>
             {% endif %}
-            <button type="button" class="btn btn-danger" id="btn-del-flow" {%- if flow_id == '0' %} disabled {% endif %}>
+            <button type="button" class="btn btn-danger" id="btn-del-flow" {%- if flow_id=='0' %} disabled {% endif %}>
               <span class="glyphicon glyphicon-trash" aria-hidden="true"></span>&nbsp
-                   {{_('Delete')}}
+              {{_('Delete')}}
             </button>
           </div>
         </div>
@@ -98,15 +126,17 @@
   </div>
 </div>
 <div class="row">
-  <div class="col-sm-offset-2 col-sm-8"><hr></div>
+  <div class="col-sm-offset-2 col-sm-8">
+    <hr>
+  </div>
 </div>
 <div class="row">
   <div class="col-sm-offset-2 col-sm-8">
     <label>{{_('Action List')}}</label><br>
-    <button class="btn btn-success pull-right" id="btn_pop_action" {%- if flow_id == '0' %} disabled {% endif %}>
+    <button class="btn btn-success pull-right" id="btn_pop_action" {%- if flow_id=='0' %} disabled {% endif %}>
       <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>&nbsp
       {{_('More Action')}}
-    </button><br/><br/><br/>
+    </button><br /><br /><br />
     <div class="table-responsive">
       <table class="table table-striped table-bordered table-hover">
         <thead>
@@ -123,79 +153,110 @@
           </tr>
         </thead>
         <tbody id="tb_action_list">
-        {%- if actions %}
+          <td id="display_request_form" display_request_form="{{display_request_form}}">
+          {%- if actions %}
           {%- for action in actions|sort(attribute='action_order') %}
-            <tr id="row_{{action.action_id}}" class="row_{{action.action_id}}">
-              <td class="hide action_ids" data-workflow-flow-action-id="{{action.id}}">{{action.action_id}}</td>
-              <th scope="row"><span class="action_order">{{loop.index}}</span></th>
-              <td>
-                <span id="td_action_name_{{action.action_id}}">{{action.action.action_name}}</span>
-                {%- if action.action.action_name == "Approval" %}
-                  <span class="approval-order"></span>
-                {%- endif %}
-              </td>
-              <td>
-                <div class="form-inline">
-                  <div class="hide">{{action.action_role.action_role}}</div>
-                  <div class="hide">{{action.action_role.action_role_exclude}}</div>
-				          <select class="form-control td_action_role" id="td_action_role_{{action.action_id}}" data-action-id="{{action.action_id}}" data-row-order-role="{{loop.index}}">
-                    <option value="0"></option>
-                    {%- for role in roles if role %}
-                    <option value="{{role.id}}" {% if role.id == action.action_role.action_role%}selected{% endif %}>{{role.name}}</option>
-                    {%- endfor %}
-                  </select>
-                  <div class="checkbox">
-                    <label>
-                      <input type="checkbox" class="td_action_role_deny" id="td_action_role_deny_{{action.action_id}}" data-action-id="{{action.action_id}}" data-row-order-role-deny="{{loop.index}}"
-                        {% if action.action_role.action_role_exclude %}checked{% endif %}>
-                      {{_('Deny')}}
-                    </label>
-                  </div>
+          <tr id="row_{{action.action_id}}" class="row_{{action.action_id}}">
+            <td class="hide action_ids" data-workflow-flow-action-id="{{action.id}}">{{action.action_id}}</td>
+            <th scope="row"><span class="action_order">{{loop.index}}</span></th>
+            <td>
+              <span id="td_action_name_{{action.action_id}}">{{action.action.action_name}}</span>
+              {%- if action.action.action_name == "Approval" %}
+              <span class="approval-order"></span>
+              {%- endif %}
+            </td>
+            <td>
+              <div class="form-inline">
+                <div class="hide">{{action.action_role.action_role}}</div>
+                <div class="hide">{{action.action_role.action_role_exclude}}</div>
+				        <select class="form-control td_action_role" id="td_action_role_{{action.action_id}}"
+                  data-action-id="{{action.action_id}}" data-row-order-role="{{loop.index}}">
+                  <option value="0"></option>
+                  {%- for role in roles if role %}
+                  <option value="{{role.id}}" {% if role.id==action.action_role.action_role%}selected{% endif %}>
+                    {{role.name}}</option>
+                  {%- endfor %}
+                </select>
+                <div class="checkbox">
+                  <label>
+                    <input type="checkbox" class="td_action_role_deny" id="td_action_role_deny_{{action.action_id}}"
+                      data-action-id="{{action.action_id}}" data-row-order-role-deny="{{loop.index}}"{% if
+                      action.action_role.action_role_exclude %}checked{% endif %}>
+                    {{_('Deny')}}
+                  </label>
                 </div>
-              </td>
-              <td>
-                <div class="form-inline" id="form_{{action.action_order}}">
-				          <select class="form-control td_action_user" id="td_action_user_{{action.action_id}}" data-action-id="{{action.action_id}}" data-row-order="{{loop.index}}">
-                    <option value="0"></option>
-                    {%- for user in users if user %}
-                      <option value="{{user.id}}" {% if user.id == action.action_role.action_user%}selected{% endif %}>{{user.email}}</option>
-                    {%- endfor %}
-                    <option class="{%- if action.action.action_name == 'Approval' %}specify-property-option{%- else %}hide{%- endif %}" value="-1">{{_('Specify property')}}</option>
-                    {%- if action.action_role.specify_property %}
-                      {%- for specifed in specifed_properties if specifed %}
-                        {%- if action.action_role.specify_property == specifed["value"] %}
-                          <option value="{{action.action_role.specify_property}}" selected>{{specifed["text"]}}</option>
-                        {%- endif %}
-                      {%- endfor %}
-                    {%- endif %}
-                  </select>
-                  <div class="checkbox">
-                    <label>
-                      <input type="checkbox" class="td_action_user_deny" id="td_action_user_deny_{{action.action_id}}" data-action-id="{{action.action_id}}" data-row-order-user-deny="{{loop.index}}" {% if action.action_role.action_user_exclude %}checked{% endif %}> {{_('Deny')}}
-                    </label>
+              </div>
+            </td>
+            <td>
+              <div class="form-inline" id="form_{{action.action_order}}">
+				        <select class="form-control td_action_user" id="td_action_user_{{action.action_id}}"
+                  data-action-id="{{action.action_id}}" data-row-order="{{loop.index}}">
+                  <option value="0"></option>
+                  {%- for user in users if user %}
+                  <option value="{{user.id}}" {% if user.id==action.action_role.action_user%}selected{% endif %}>
+                    {{user.email}}</option>
+                  {%- endfor %}
+                  <option
+                    class="{%- if action.action.action_name == 'Approval' %}specify-property-option{%- else %}hide{%- endif %}"
+                    value="-1">{{_('Specify property')}}</option>
+                  {%- if action.action_role.specify_property %}
+                  {%- for specifed in specifed_properties if specifed %}
+                  {%- if action.action_role.specify_property == specifed["value"] %}
+                  <option value="{{action.action_role.specify_property}}" selected>{{specifed["text"]}}</option>
+                  {%- endif %}
+                  {%- endfor %}
+                  {%- endif %}
+                  <option class="{%- if action.action.action_name == 'Approval' %}item-registrant-option{%- else %}hide{%- endif %}"
+                    {% if action.action_role.action_item_registrant%} selected {% endif %} 
+                    value="{{workflow_registrant_id}}">{{_('Item registrant')}}</option>                                    
+                  <option class="{%- if action.action.action_name == 'Approval' and display_request_form == True%}request-mail-option{%- else %}hide{%- endif %}"
+                    {% if action.action_role.action_request_mail%} selected {% endif %} 
+                    value="{{workflow_request_mail_id}}">{{_('Request mail')}}</option>
+                </select>
+                <div class="checkbox">
+                  <label>
+                    <input type="checkbox" class="td_action_user_deny" id="td_action_user_deny_{{action.action_id}}"
+                      data-action-id="{{action.action_id}}" data-row-order-user-deny="{{loop.index}}" {% if
+                      action.action_role.action_user_exclude %}checked{% endif %}> {{_('Deny')}}
+                  </label>
+                </div>
+                <br>
+                {% if action.action.action_name == 'Approval' and use_restricted_item %}
+                <div>
+                  <button class="btn btn-primary pull-right ten-pixel-top-margin btn_setting_nortification_mail" id="btn_setting_nortification_mail_{{loop.index}}" 
+                    data-old-action-order="{{loop.index}}">{{_('Notification Email Setting')}}</button>
+                  <input type="hidden" id="loop_index" value='{{ loop.index }}'>
+                  {% include "weko_workflow/admin/mail_setting.html" %}
+                </div>
+                {% elif action.action.action_name == 'Item Registration' and use_restricted_item %}
+
+                <div class="mail_setting_for_itemReg">
+                  <div class="form-inline">
+                    <label style="font-weight: unset;">
+                      <input type="checkbox" class="pointer checkbox_change" id="td_action_item_reg_done_{{action.action_id}}" {% if action.send_mail_setting.inform_itemReg and action.send_mail_setting.inform_itemReg.send %}checked{% endif %}>
+                    {{_('Send an email to the registrant')}}</label>
                   </div>
-                  <br>
-<!--　mail for restricted access
-                  {% if action.action.action_name == 'Approval'%}
-                  <div class="mail_setting_options">
-                      <div class="form-inline">
-                        <label style="font-weight: unset;">
-                          <input type="checkbox" class="pointer" id="td_action_request_approval_{{action.action_id}}" {% if action.send_mail_setting.request_approval %}checked{% endif %} >
-                          {{_('Approval Request Notification Email')}}</label>
-                      </div>
-                      <div class="form-inline">
-                        <label style="font-weight: unset;">
-                          <input type="checkbox" class="pointer" id="td_action_approval_reject_{{action.action_id}}" {% if action.send_mail_setting.inform_reject %}checked{% endif %}>
-                          {{_('Approval Rejection Notification Email')}}</label>
-                      </div>
-                      <div class="form-inline">
-                        <label style="font-weight: unset;">
-                          <input type="checkbox" class="pointer" id="td_action_approval_done_{{action.action_id}}" {% if action.send_mail_setting.inform_approval %}checked{% endif %}>
-                          {{_('Approval Notification Email')}}</label>
-                      </div>
-                    </div> 
-                  {% endif %}  
--->
+                  <select style="width: 200px" id="td_action_item_reg_done_mail_{{action.action_id}}" {% if not action.send_mail_setting.inform_itemReg or not action.send_mail_setting.inform_itemReg.send %}disabled{% endif %}>
+                    <option value="0"></option>
+                    {%- for mail_template in mail_templates %}
+                    <option value="{{mail_template['key']}}" {% if action.send_mail_setting.inform_itemReg and mail_template['key'] == action.send_mail_setting.inform_itemReg.mail %}selected{% endif %}>ID:{{mail_template['key']}} {{mail_template['content']['subject']}}</option>
+                    {%- endfor %}
+                  </select>
+                </div>
+                <div class="mail_setting_for_itemReg_for_registerPerson">
+                  <div class="form-inline">
+                    <label style="font-weight: unset;">
+                      <input type="checkbox" class="pointer checkbox_change" id="td_action_item_reg_done_for_registerPerson_{{action.action_id}}" {% if action.send_mail_setting.inform_itemReg_for_registerPerson and action.send_mail_setting.inform_itemReg_for_registerPerson.send %}checked{% endif %}>
+                    {{_('Send an email to item registrants when applying for use')}}</label>
+                  </div>
+                  <select style="width: 200px" id="td_action_item_reg_done_mail_for_registerPerson_{{action.action_id}}" {% if not action.send_mail_setting.inform_itemReg_for_registerPerson or not action.send_mail_setting.inform_itemReg_for_registerPerson.send %}disabled{% endif %}>
+                    <option value="0"></option>
+                    {%- for mail_template in mail_templates %}
+                    <option value="{{mail_template['key']}}" {% if action.send_mail_setting.inform_itemReg_for_registerPerson and mail_template['key'] == action.send_mail_setting.inform_itemReg_for_registerPerson.mail %}selected{% endif %}>ID:{{mail_template['key']}} {{mail_template['content']['subject']}}</option>
+                    {%- endfor %}
+                  </select>
+                </div>
+                {% endif %}
               </td>
               <td class="hide">{{_(action.action_status.value)}}</td>
               <td class="hide"><span id="td_action_date_{{action.action_id}}">{{action.action_date.date()}}</span></td>
@@ -212,91 +273,203 @@
               </td>
             </tr>
           {%- endfor %}
-        {%- endif %}
+          {%- endif %}
         </tbody>
       </table>
     </div>
   </div>
 </div>
 <div class="row">
-<div class="col-sm-offset-2 col-sm-8">
-  <button type="button" class="btn btn-default" onclick="window.location.href='{{url_for('flowsetting.index')}}';">
-    <span class="glyphicon glyphicon-chevron-left" aria-hidden="true"></span>&nbsp
-    {{_('Back')}}
- </button>
-<button type="button" class="btn btn-primary pull-right" id="btn_submit"
-    data-uri="{{url_for('flowsetting.upt_flow_action', flow_id=flow_id)}}" {%- if flow_id == '0' %} disabled {% endif %}>
-    <span class="glyphicon glyphicon-save" aria-hidden="true"></span>&nbsp
-     {{_('Save')}}
-</button>
-</div>
+  <div class="col-sm-offset-2 col-sm-8">
+    <button type="button" class="btn btn-default" onclick="window.location.href='{{url_for('flowsetting.index')}}';">
+      <span class="glyphicon glyphicon-chevron-left" aria-hidden="true"></span>&nbsp
+      {{_('Back')}}
+    </button>
+    <button type="button" class="btn btn-primary pull-right" id="btn_submit"
+      data-uri="{{url_for('flowsetting.upt_flow_action', flow_id=flow_id)}}" {%- if flow_id=='0' %} disabled {% endif
+      %}>
+      <span class="glyphicon glyphicon-save" aria-hidden="true"></span>&nbsp
+      {{_('Save')}}
+    </button>
+  </div>
 </div>
 
 <table class="table table-striped table-bordered table-hover flow-row-template hide">
-<tbody>
-  <tr id="row_apply_action.id">
-    <th scope="row"><span class="action_order"></span></th>
-    <td class="hide action_ids" data-workflow-flow-action-id="action.id">apply_action.id</td>
-    <td><span id="td_action_name_apply_action.id">apply_action.name</span></td>
-    <td>
-      <div class="form-inline">
-        <select class="form-control td_action_role" id="td_action_role_apply_action.id" data-action-id="apply_action.id">
-          <option value="0" selected></option>
-          {%- for role in roles if role %}
+  <tbody>
+    <tr id="row_apply_action.id">
+      <th scope="row"><span class="action_order"></span></th>
+      <td class="hide action_ids" data-workflow-flow-action-id="action.id">apply_action.id</td>
+      <td><span id="td_action_name_apply_action.id">apply_action.name</span></td>
+      <td>
+        <div class="form-inline">
+          <select class="form-control td_action_role" id="td_action_role_apply_action.id"
+            data-action-id="apply_action.id">
+            <option value="0" selected></option>
+            {%- for role in roles if role %}
             <option value="{{role.id}}">{{role.name}}</option>
-          {%- endfor %}
-        </select>
-        <div class="checkbox">
-          <input type="checkbox" class="td_action_role_deny" id="td_action_role_deny_apply_action.id" data-action-id="apply_action.id">
-          {{_("Deny")}}
+            {%- endfor %}
+          </select>
+          <div class="checkbox">
+            <input type="checkbox" class="td_action_role_deny" id="td_action_role_deny_apply_action.id"
+              data-action-id="apply_action.id">
+            {{_("Deny")}}
+          </div>
         </div>
-      </div>
-    </td>
-    <td>
-      <div class="form-inline">
-        <select class="form-control td_action_user" id="td_action_user_apply_action.id" data-action-id="apply_action.id">
-          <option value="0" selected></option>
-          {%- for user in users if user -%}
+      </td>
+      <td>
+        <div class="form-inline">
+          <select class="form-control td_action_user" id="td_action_user_apply_action.id"
+            data-action-id="apply_action.id">
+            <option value="0" selected></option>
+            {%- for user in users if user -%}
             <option value="{{user.id}}">{{user.email}}</option>
-          {%- endfor -%}
-          <option class="specify-property-option" value="-1">{{_('Specify property')}}</option>
-        </select>
-        <div class="checkbox">
-          <input type="checkbox" class="td_action_user_deny" id="td_action_user_deny_apply_action.id" data-action-id="apply_action.id">
-          {{_("Deny")}}
-        </div>
-        <div class="mail_setting_options">
-          <div class="form-inline">
-            <label style="font-weight: unset;">
-              <input type="checkbox" class="pointer" id="td_action_request_approval_apply_action.id">
-              {{_('Approval Request Notification Email')}}</label>
-            </label>
+            {%- endfor -%}
+            <option class="specify-property-option" value="-1">{{_('Specify property')}}</option>
+            <option class="item-registrant-option"  value="{{workflow_registrant_id}}">{{_('Item registrant')}}</option>     
+            <option class="request-mail-option" value="{{workflow_request_mail_id}}">{{_('Request mail')}}</option>     
+          </select>
+          <div class="checkbox">
+            <input type="checkbox" class="td_action_user_deny" id="td_action_user_deny_apply_action.id"
+              data-action-id="apply_action.id">
+            {{_("Deny")}}
           </div>
-          <div class="form-inline">
-            <label style="font-weight: unset;">
-              <input type="checkbox" class="pointer" id="td_action_approval_reject_apply_action.id">
-              {{_('Approval Rejection Notification Email')}}</label>
-            </label>
-          </div>
-          <div class="form-inline">
-            <label style="font-weight: unset;">
-              <input type="checkbox" class="pointer" id="td_action_approval_done_apply_action.id">
-              {{_('Approval Notification Email')}}</label>
-            </label>
+
+          {% if use_restricted_item %}
+          <div class="mail_setting_for_approval">
+            <button class="btn btn-primary ten-pixel-top-margin pull-right btn_setting_nortification_mail"
+              id="btn_setting_nortification_mail_loop.index" data-old-action-order="loop.index">
+              {{_('Notification Email Setting')}}
+            </button>
           </div>
         </div>
-      </div>
-    </td>
-    <td class="hide">{{_("Usable")}}</td>
-    <td class="hide"><span id="td_action_date_apply_action.id">apply_action.action_date</span></td>
-    <td class="hide"><span id="td_action_ver_apply_action.id">apply_action.action_version</span></td>
-    <td>
-      <div class="btn-group" role="group" aria-label="Swap">
-        <button type="button" class="btn btn-default btn-sm sortable sortable_up"><i class="fa fa-angle-up"></i></button><br/><br/>
-        <button type="button" class="btn btn-default btn-sm sortable sortable_down"><i class="fa fa-angle-down"></i></button>
-      </div>
-    </td>
-  </tr>
-</tbody>
+        <!-- /.modal -->
+        <div class="modal fade modal_for_setting_nortification_mail" id="settingModal_loop.index" tabindex="-1"
+          role="dialog" aria-labelledby="setting_nortification_mail_Label">
+          <div class="modal-dialog" role="document">
+            <div class="modal-content">
+              <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                  <span aria-hidden="true">&times;</span>
+                </button>
+                <h4 class="modal-title" id="setting_nortification_mail_Label">{{_('Notification Email Setting')}}</h4>
+              </div>
+              <div class="modal-body">
+                <div class="panel panel-default panel-body" style="overflow-y: auto; max-height:400px;">
+                  <div class="mail_setting_for_approval">
+                    <div class="form-inline">
+                      <label style="font-weight: unset;">
+                        <input type="checkbox" class="pointer checkbox_change" id="td_action_request_approval_apply_action.id">
+                        {{_('Approval Request Notification Email')}}
+                      </label>
+                    </div>
+                    <div style="display: flex; justify-content: flex-end;">
+                      <nobr>{{_('Login User')}}：</nobr>
+                      <select style="width: 250px" id="td_action_request_approval_mail_apply_action.id" disabled>
+                        <option value="0" selected></option>
+                        {%- for mail_template in mail_templates %}
+                        <option value="{{mail_template['key']}}">ID:{{mail_template['key']}} {{mail_template['content']['subject']}}</option>
+                        {%- endfor %}
+                      </select>
+                    </div>
+                    <div style="display: flex; justify-content: flex-end;">
+                      <nobr>{{_('Guest User')}}：</nobr>
+                      <select style="width: 250px" id="td_action_request_approval_mail_for_guest_apply_action.id" disabled>
+                        <option value="0" selected></option>
+                        {%- for mail_template in mail_templates %}
+                        <option value="{{mail_template['key']}}">ID:{{mail_template['key']}} {{mail_template['content']['subject']}}</option>
+                        {%- endfor %}
+                      </select>
+                    </div>
+                    <br>
+                    <div class="form-inline">
+                      <label style="font-weight: unset;">
+                        <input type="checkbox" class="pointer checkbox_change" id="td_action_approval_reject_apply_action.id">
+                        {{_('Approval Rejection Notification Email')}}</label>
+                      </label>
+                    </div>
+                    <div style="display: flex; justify-content: flex-end;">
+                      <nobr>{{_('Login User')}}：</nobr>
+                      <select style="width: 250px" id="td_action_approval_reject_mail_apply_action.id" disabled>
+                        <option value="0" selected></option>
+                         {%- for mail_template in mail_templates %}
+                        <option value="{{mail_template['key']}}">ID:{{mail_template['key']}} {{mail_template['content']['subject']}}</option>
+                        {%- endfor %}
+                      </select>
+                    </div>
+                    <div style="display: flex; justify-content: flex-end;">
+                      <nobr>{{_('Guest User')}}：</nobr>
+                      <select style="width: 250px" id="td_action_approval_reject_mail_for_guest_apply_action.id" disabled>
+                        <option value="0" selected></option>
+                        {%- for mail_template in mail_templates %}
+                        <option value="{{mail_template['key']}}">ID:{{mail_template['key']}} {{mail_template['content']['subject']}}</option>
+                        {%- endfor %}
+                      </select>
+                    </div>
+                    <br>
+                    <div class="form-inline">
+                      <label style="font-weight: unset;">
+                        <input type="checkbox" class="pointer checkbox_change" id="td_action_approval_done_apply_action.id">
+                        {{_('Approval Notification Email')}}</label>
+                      </label>
+                    </div>
+                    <div style="display: flex; justify-content: flex-end;">
+                      <nobr>{{_('Login User')}}：</nobr>
+                      <select style="width: 250px" id="td_action_approval_done_mail_apply_action.id" disabled>
+                        <option value="0" selected></option>
+                        {%- for mail_template in mail_templates %}
+                        <option value="{{mail_template['key']}}">ID:{{mail_template['key']}} {{mail_template['content']['subject']}}</option>
+                        {%- endfor %}
+                      </select>
+                    </div>
+                    <div style="display: flex; justify-content: flex-end;">
+                      <nobr>{{_('Guest User')}}：</nobr>
+                      <select style="width: 250px" id="td_action_approval_done_mail_for_guest_apply_action.id" disabled>
+                        <option value="0" selected></option>
+                        {%- for mail_template in mail_templates %}
+                        <option value="{{mail_template['key']}}">ID:{{mail_template['key']}} {{mail_template['content']['subject']}}</option>
+                        {%- endfor %}
+                      </select>
+                    </div>
+                  </div>
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-info close-button" data-dismiss="modal">
+                    <span class="glyphicon glyphicon-remove"></span>
+                    {{_('Close')}}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div><!-- /.modal -->
+          <div class="mail_setting_for_itemReg">
+            <div class="form-inline">
+              <label style="font-weight: unset;">
+                <input type="checkbox" class="pointer checkbox_change" id="td_action_item_reg_done_apply_action.id">
+                {{_('Send an email to the registrant')}}</label>
+              </label>
+            </div>
+            <select style="width: 200px" id="td_action_item_reg_done_mail_apply_action.id" disabled>
+              <option value="0" selected></option>
+              {%- for mail_template in mail_templates %}
+                <option value="{{mail_template['key']}}">{{mail_template['content']['subject']}}</option>
+              {%- endfor %}
+            </select>
+          </div>
+          {% endif %}
+        </div>
+      </td>
+      <td class="hide">{{_("Usable")}}</td>
+      <td class="hide"><span id="td_action_date_apply_action.id">apply_action.action_date</span></td>
+      <td class="hide"><span id="td_action_ver_apply_action.id">apply_action.action_version</span></td>
+      <td>
+        <div class="btn-group" role="group" aria-label="Swap">
+          <button type="button" class="btn btn-default btn-sm sortable sortable_up"><i
+            class="fa fa-angle-up"></i></button><br/><br/>
+          <button type="button" class="btn btn-default btn-sm sortable sortable_down"><i
+            class="fa fa-angle-down"></i></button>
+        </div>
+      </td>
+    </tr>
+  </tbody>
 </table>
 {%- endblock %}

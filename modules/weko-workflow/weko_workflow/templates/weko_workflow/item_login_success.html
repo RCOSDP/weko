@@ -19,7 +19,7 @@
 #}
 
 {%- extends config.WEKO_WORKFLOW_BASE_TEMPLATE %}
-{%- from "invenio_communities/macros.html" import community_header %}
+{%- from "invenio_communities/macros.html" import community_header with context %}
 
 {%- block css %}
   {{ super() }}
@@ -225,7 +225,7 @@
                     <button type="button" class="btn btn-info next-button" id="btn-back">
                       <span class="glyphicon glyphicon-chevron-left"></span>{{_('Back')}}
                     </button>
-                    <button type="button" class="btn btn-primary save-button" id="btn-draft">
+                    <button type="button" class="btn btn-primary save-button hide" id="btn-draft">
                       <span class="glyphicon glyphicon-saved"></span>
                       {{_('Save')}}
                     </button>

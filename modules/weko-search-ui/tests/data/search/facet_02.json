@@ -1,0 +1,87 @@
+{
+    "test-weko": {
+        "aggs": {
+            "Data Language": {
+                "terms": {
+                    "field": "language",
+                    "size": 1000
+                }
+            },
+            "Access": {
+                "terms": {
+                    "field": "accessRights",
+                    "size": 1000
+                }
+            },
+            "Location": {
+                "terms": {
+                    "field": "geoLocation.geoLocationPlace",
+                    "size": 1000
+                }
+            },
+            "Time Period(s)": {
+                "terms": {
+                    "field": "temporal",
+                    "size": 1000
+                }
+            },
+            "Topic": {
+                "terms": {
+                    "field": "subject.value",
+                    "size": 1000
+                }
+            },
+            "Distributor": {
+                "filter": {
+                    "bool": {
+                        "must": [
+                            {
+                                "term": {
+                                    "contributor.@attributes.contributorType": "Distributor"
+                                }
+                            }
+                        ]
+                    }
+                },
+                "aggs": {
+                    "Distributor": {
+                        "terms": {
+                            "field": "contributor.contributorName",
+                            "size": 1000
+                        }
+                    }
+                }
+            },
+            "Data Type": {
+                "filter": {
+                    "bool": {
+                        "must": [
+                            {
+                                "term": {
+                                    "description.descriptionType": "Other"
+                                }
+                            }
+                        ]
+                    }
+                },
+                "aggs": {
+                    "Data Type": {
+                        "terms": {
+                            "field": "description.value",
+                            "size": 1000
+                        }
+                    }
+                }
+            }
+        },
+        "post_filters": {
+            "Data Language": "language",
+            "Access": "accessRights",
+            "Location": "geoLocation.geoLocationPlace",
+            "Time Period(s)": "temporal",
+            "Topic": "subject.value",
+            "Distributor": "contributor.contributorName",
+            "Data Type": "description.value"
+        }
+    }
+}

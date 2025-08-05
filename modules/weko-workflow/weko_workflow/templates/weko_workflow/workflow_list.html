@@ -19,7 +19,7 @@
 #}
 
 {%- extends config.WEKO_WORKFLOW_BASE_TEMPLATE %}
-{%- from "invenio_communities/macros.html" import community_header %}
+{%- from "invenio_communities/macros.html" import community_header with context  %}
 
 {%- block css %}
 {{ super() }}
@@ -70,6 +70,10 @@
 {%- block page_body_main %}
 <div class="row">
   <div class="col-sm-12">
+    <p id="new_activity_msg" class="alert alert-success alert-dismissible text-middle collapse" role="msg"
+      style="min-width: 330px;">
+      {{_('Please wait a moment.')}}
+    </p>
     <table class="table table-striped table-bordered">
     <thead>
       <tr>
@@ -77,6 +81,7 @@
         <th>{{_('WorkFlow')}}</th>
         <th>{{_('Item Type')}}</th>
         <th>{{_('Flow')}}</th>
+        <th>{{_('Deletion Flow')}}</th>
         <th></th>
         <th class="hide">{{_('Next Flow')}}</th>
       </tr>
@@ -88,6 +93,13 @@
         <td>{{workflow.flows_name}}</td>
         <td><span id="item_type_{{workflow.id}}" data-itemtype-id="{{workflow.itemtype_id}}">{{_(workflow.itemtype.item_type_name.name)}}</span></td>
         <td><span id="flow_{{workflow.id}}" data-flow-id="{{workflow.flow_id}}">{{_(workflow.flow_define.flow_name)}}</span></td>
+        <td>
+          {% if workflow.delete_flow_define %}
+            {{ workflow.delete_flow_define.flow_name }}
+          {% else %}
+            None
+          {% endif %}
+        </td>
         {%-if community%}
         <td class="text-center"><a href="#" class="btn btn-primary btn-begin align-middle"
                 id="btn-begin-{{workflow.id}}"

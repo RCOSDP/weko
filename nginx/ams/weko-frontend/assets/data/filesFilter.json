@@ -1,0 +1,125 @@
+[
+  {
+    "id": 1,
+    "comment": "ファイル名",
+    "i18n": "fileName",
+    "roCrateKey": "@id",
+    "type": "text",
+    "data": null
+  },
+  {
+    "id": 2,
+    "comment": "公開日",
+    "i18n": "releaseDate",
+    "roCrateKey": "dateCreated",
+    "type": "date",
+    "data": null
+  },
+  {
+    "id": 3,
+    "comment": "ライセンス",
+    "i18n": "license",
+    "roCrateKey": "license",
+    "type": "checkbox",
+    "data": [
+      {
+        "id": 1,
+        "comment": "CC0",
+        "i18n": false,
+        "roCrateValue": "license_12",
+        "value": false
+      },
+      {
+        "id": 2,
+        "comment": "CC BY 3.0",
+        "i18n": false,
+        "roCrateValue": "license_6",
+        "value": false
+      },
+      {
+        "id": 3,
+        "comment": "CC BY 4.0",
+        "i18n": false,
+        "roCrateValue": "license_0",
+        "value": false
+      },
+      {
+        "id": 4,
+        "comment": "CC BY-SA 3.0",
+        "i18n": false,
+        "roCrateValue": "license_7",
+        "value": false
+      },
+      {
+        "id": 5,
+        "comment": "CC BY-SA 4.0",
+        "i18n": false,
+        "roCrateValue": "license_1",
+        "value": false
+      },
+      {
+        "id": 6,
+        "comment": "CC BY-ND 3.0",
+        "i18n": false,
+        "roCrateValue": "license_8",
+        "value": false
+      },
+      {
+        "id": 7,
+        "comment": "CC BY-ND 4.0",
+        "i18n": false,
+        "roCrateValue": "license_2",
+        "value": false
+      },
+      {
+        "id": 8,
+        "comment": "CC BY-NC 3.0",
+        "i18n": false,
+        "roCrateValue": "license_9",
+        "value": false
+      },
+      {
+        "id": 9,
+        "comment": "CC BY-NC 4.0",
+        "i18n": false,
+        "roCrateValue": "license_3",
+        "value": false
+      },
+      {
+        "id": 10,
+        "comment": "CC BY-NC-SA 3.0",
+        "i18n": false,
+        "roCrateValue": "license_10",
+        "value": false
+      },
+      {
+        "id": 11,
+        "comment": "CC BY-NC-SA 4.0",
+        "i18n": false,
+        "roCrateValue": "license_4",
+        "value": false
+      },
+      {
+        "id": 12,
+        "comment": "CC BY-NC-ND 3.0",
+        "i18n": false,
+        "roCrateValue": "license_11",
+        "value": false
+      },
+      {
+        "id": 13,
+        "comment": "CC BY-NC-ND 4.0",
+        "i18n": false,
+        "roCrateValue": "license_5",
+        "value": false
+      },
+      {
+        "id": 14,
+        "comment": "others",
+        "i18n": false,
+        "roCrateValue": "license_free",
+        "value": false
+      }
+    ]
+  }
+]

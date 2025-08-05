@@ -239,16 +239,24 @@ class Deposit(Record):
                 cls.deposit_minter(id_, data, recid=recid)
 
         data['_deposit'].setdefault('owners', list())
-        if not current_user:
-            data['_deposit']['owners'].append(1)
-        elif current_user.is_authenticated:
-            creator_id = int(current_user.get_id())
 
-            if creator_id not in data['_deposit']['owners']:
-                data['_deposit']['owners'].append(creator_id)
-
-            data['_deposit']['created_by'] = creator_id
-
+        if current_user and current_user.is_authenticated:
+            data['owner'] = int(current_user.get_id())
+            data['owners'] = [int(data['owner'])]
+            data['_deposit']['owner'] = int(data['owner'])
+            data['_deposit']['owners'] = [int(data['owner'])]
+            data['_deposit']['created_by'] = int(current_user.get_id())
+        else:
+            data['owner'] = 1
+            data['owners'] = [1]
+            data['_deposit']['owner'] = 1
+            data['_deposit']['owners'] = [1]
+        if 'weko_shared_ids' in data:
+            data['_deposit']['weko_shared_ids'] = data['weko_shared_ids']
+        else:
+            data['weko_shared_ids'] = []
+            data['_deposit']['weko_shared_ids'] = []
+        
         return super(Deposit, cls).create(data, id_=id_)
 
     @contextmanager

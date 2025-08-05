@@ -15,7 +15,7 @@
         "username": "",
         "displayname": ""
       },
-      "shared_user_id": -1,
+      "shared_user_ids": [],
       "item_1617186331708": [
         { "subitem_1551255647225": "ff", "subitem_1551255648112": "ja" }
       ],
@@ -73,7 +73,7 @@
         "username": "",
         "displayname": ""
       },
-      "shared_user_id": -1,
+      "shared_user_ids": [],
       "item_1617186331708": [
         { "subitem_1551255647225": "ff", "subitem_1551255648112": "ja" }
       ],
@@ -98,7 +98,7 @@
         "username": "",
         "displayname": ""
       },
-      "shared_user_id": -1,
+      "shared_user_ids": [],
       "item_1617186331708": [
         { "subitem_1551255647225": "ff", "subitem_1551255648112": "ja" }
       ],
@@ -123,7 +123,7 @@
         "username": "",
         "displayname": ""
       },
-      "shared_user_id": -1,
+      "shared_user_ids": [],
       "item_1617186331708": [
         { "subitem_1551255647225": "ff", "subitem_1551255648112": "ja" }
       ],
@@ -148,7 +148,7 @@
         "username": "",
         "displayname": ""
       },
-      "shared_user_id": -1,
+      "shared_user_ids": [],
       "item_1617186331708": [
         { "subitem_1551255647225": "ff", "subitem_1551255648112": "ja" }
       ],
@@ -173,7 +173,7 @@
         "username": "",
         "displayname": ""
       },
-      "shared_user_id": -1,
+      "shared_user_ids": [],
       "item_1617186331708": [
         { "subitem_1551255647225": "ff", "subitem_1551255648112": "ja" }
       ],
