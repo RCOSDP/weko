@@ -6,11 +6,12 @@ const urlUpdate = window.location.origin + "/admin/change_list/update";
 const urlDelete = window.location.origin + "/admin/change_list/delete";
 const urlGetList = window.location.origin + "/admin/change_list/get_all";
 const urlGetTreeList = window.location.origin + "/api/tree";
+const urlGetRepositoryList = window.location.origin + "/admin/resync/get_repository";
 const default_state = {
   status: null,
   repository_id: "",
   change_dump_manifest: false,
-  change_tracking_state: ['created', 'updated','deleted'],
+  change_tracking_state: ['created', 'updated', 'deleted'],
   url_path: "",
   interval_by_date: 1,
   max_changes_size: 10000,
@@ -59,7 +60,7 @@ class MainLayout extends React.Component {
     this.handleChangeTab = this.handleChangeTab.bind(this);
   }
 
-  componentDidMount() {}
+  componentDidMount() { }
 
   handleChangeTab(select_tab, select_item = {}) {
     const { tabs } = this.state;
@@ -284,8 +285,7 @@ class CreateResourceComponent extends React.Component {
     this.handleChangeState = this.handleChangeState.bind(this);
     this.handleChangeURL = this.handleChangeURL.bind(this);
     this.handleSubmit = this.handleSubmit.bind(this);
-    this.generateTreeList = this.generateTreeList.bind(this);
-    this.getTreeList = this.getTreeList.bind(this);
+    this.getRepositoryList = this.getRepositoryList.bind(this);
   }
 
   handleChangeState(name, value) {
@@ -325,7 +325,7 @@ class CreateResourceComponent extends React.Component {
       .then(res => res.json())
       .then(res => {
         if (res.success) {
-          if(add_another){
+          if (add_another) {
             this.setState({
               ...default_state
             })
@@ -339,8 +339,8 @@ class CreateResourceComponent extends React.Component {
       .catch(() => alert("Error in Create"));
   }
 
-  getTreeList() {
-    fetch(urlGetTreeList, {
+  getRepositoryList() {
+    fetch(urlGetRepositoryList, {
       method: "GET",
       headers: {
         "Content-Type": "application/json"
@@ -348,34 +348,15 @@ class CreateResourceComponent extends React.Component {
     })
       .then(res => res.json())
       .then(res => {
-        let treeList = [];
-        res.map(item => {
-          treeList = [...treeList, ...this.generateTreeList(item, "")];
-        });
         this.setState({
-          tree_list: treeList
+          tree_list: res
         });
       })
-      .catch(() => alert("Error in get Tree list"));
-  }
-
-  generateTreeList(item, path = "") {
-    const real_path = path
-      ? path + " / " + item.value + " <ID:" + item.id + ">"
-      : item.value + " <ID:" + item.id + ">";
-    if (!item.children.length) {
-      return [{ id: item.id, value: real_path }];
-    } else {
-      let result = [];
-      item.children.map(i => {
-        result = [...result, ...this.generateTreeList(i, real_path)];
-      });
-      return [{ id: item.id, value: real_path }, ...result];
-    }
+      .catch(() => alert("Error in get Repository list"));
   }
 
   componentDidMount() {
-    this.getTreeList();
+    this.getRepositoryList();
   }
 
   render() {
@@ -388,35 +369,35 @@ class CreateResourceComponent extends React.Component {
           </div>
           <div className="col-md-10">
             <div className="col-md-10">
-            <div className="row">
-              <div className="col-md-2 flex">
-                <input
-                checked={state.status===true}
-                type="radio"
-                name="status"
-                value="Publish"
-                onChange={e => {
-                  const value = e.target.value;
-                  this.handleChangeState("status", value==="Publish");
-                }}
-                ></input>
-                <div  className="p-l-10">Publish</div>
-              </div>
-              <div className="col-md-2 flex">
-                <input
-                  checked={state.status===false}
-                  type="radio"
-                  name="status"
-                  value="Private"
-                  onChange={e => {
-                    const value = e.target.value;
-                    this.handleChangeState("status", value==="Publish");
-                  }}
+              <div className="row">
+                <div className="col-md-2 flex">
+                  <input
+                    checked={state.status === true}
+                    type="radio"
+                    name="status"
+                    value="Publish"
+                    onChange={e => {
+                      const value = e.target.value;
+                      this.handleChangeState("status", value === "Publish");
+                    }}
+                  ></input>
+                  <div className="p-l-10">Publish</div>
+                </div>
+                <div className="col-md-2 flex">
+                  <input
+                    checked={state.status === false}
+                    type="radio"
+                    name="status"
+                    value="Private"
+                    onChange={e => {
+                      const value = e.target.value;
+                      this.handleChangeState("status", value === "Publish");
+                    }}
                   ></input>
                   <div className="p-l-10">Private</div>
+                </div>
               </div>
             </div>
-          </div>
           </div>
         </div>
 
@@ -434,7 +415,6 @@ class CreateResourceComponent extends React.Component {
               value={state.repository_id}
             >
               <option value="" disabled></option>
-              <option value="0">Root Index</option>
               {state.tree_list.map(item => {
                 return <option value={item.id} dangerouslySetInnerHTML={{ __html: item.value }}></option>;
               })}
@@ -489,7 +469,7 @@ class CreateResourceComponent extends React.Component {
               value={state.interval_by_date}
               onChange={e => {
                 let value = e.target.value;
-                value  = value >=1 ? value : 1
+                value = value >= 1 ? value : 1
                 this.handleChangeState("interval_by_date", parseInt(value));
               }}
             ></input>
@@ -504,29 +484,29 @@ class CreateResourceComponent extends React.Component {
           <div className="col-md-10">
             <div className="row">
               {
-                  tracker_state_list.map((item, key) => {
-                    return(
-                      <div className="col-md-2 flex" key={key}>
-                        <input
-                          type="checkbox"
-//                          className="form-control"
-                          checked={state.change_tracking_state.includes(item.value)}
-                          onChange={e => {
-                            let {change_tracking_state} = state
-                            const value = e.target.checked;
-                            if(value){
-                              change_tracking_state.push(item.value)
-                            }
-                            else {
-                              change_tracking_state = change_tracking_state.filter(i => i !== item.value)
-                            }
-                            this.handleChangeState("change_tracking_state", change_tracking_state);
-                          }}
-                        ></input>
-                        <div className="p-l-10">{item.name}</div>
-                      </div>
-                    )
-                  })
+                tracker_state_list.map((item, key) => {
+                  return (
+                    <div className="col-md-2 flex" key={key}>
+                      <input
+                        type="checkbox"
+                        //                          className="form-control"
+                        checked={state.change_tracking_state.includes(item.value)}
+                        onChange={e => {
+                          let { change_tracking_state } = state
+                          const value = e.target.checked;
+                          if (value) {
+                            change_tracking_state.push(item.value)
+                          }
+                          else {
+                            change_tracking_state = change_tracking_state.filter(i => i !== item.value)
+                          }
+                          this.handleChangeState("change_tracking_state", change_tracking_state);
+                        }}
+                      ></input>
+                      <div className="p-l-10">{item.name}</div>
+                    </div>
+                  )
+                })
               }
             </div>
           </div>
@@ -618,8 +598,7 @@ class EditResourceComponent extends React.Component {
     this.handleChangeState = this.handleChangeState.bind(this);
     this.handleChangeURL = this.handleChangeURL.bind(this);
     this.handleSubmit = this.handleSubmit.bind(this);
-    this.generateTreeList = this.generateTreeList.bind(this);
-    this.getTreeList = this.getTreeList.bind(this);
+    this.getRepositoryList = this.getRepositoryList.bind(this);
   }
 
   handleChangeState(name, value) {
@@ -628,7 +607,7 @@ class EditResourceComponent extends React.Component {
       {
         ...state,
         [name]: value
-      },() => {
+      }, () => {
         if (name === "repository_id") {
           this.handleChangeURL();
         }
@@ -666,8 +645,8 @@ class EditResourceComponent extends React.Component {
       .catch(() => alert("Error in Edit"));
   }
 
-  getTreeList() {
-    fetch(urlGetTreeList, {
+  getRepositoryList() {
+    fetch(urlGetRepositoryList, {
       method: "GET",
       headers: {
         "Content-Type": "application/json"
@@ -675,34 +654,15 @@ class EditResourceComponent extends React.Component {
     })
       .then(res => res.json())
       .then(res => {
-        let treeList = [];
-        res.map(item => {
-          treeList = [...treeList, ...this.generateTreeList(item, "")];
-        });
         this.setState({
-          tree_list: treeList
+          tree_list: res
         });
       })
-      .catch(() => alert("Error in get Tree list"));
-  }
-
-  generateTreeList(item, path = "") {
-    const real_path = path
-      ? path + " / " + item.value + " <ID:" + item.id + ">"
-      : item.value + " <ID:" + item.id + ">";
-    if (!item.children.length) {
-      return [{ id: item.id, value: real_path }];
-    } else {
-      let result = [];
-      item.children.map(i => {
-        result = [...result, ...this.generateTreeList(i, real_path)];
-      });
-      return [{ id: item.id, value: real_path }, ...result];
-    }
+      .catch(() => alert("Error in get Repository list"));
   }
 
   componentDidMount() {
-    this.getTreeList();
+    this.getRepositoryList();
     const { select_item } = this.props;
     this.setState({
       ...select_item,
@@ -729,7 +689,7 @@ class EditResourceComponent extends React.Component {
                   value="Publish"
                   onChange={e => {
                     const value = e.target.value;
-                    this.handleChangeState("status", value==="Publish");
+                    this.handleChangeState("status", value === "Publish");
                   }}
                 ></input>
                 <div className="p-l-10">Publish</div>
@@ -742,10 +702,10 @@ class EditResourceComponent extends React.Component {
                   value="Private"
                   onChange={e => {
                     const value = e.target.value;
-                    this.handleChangeState("status", value==="Publish");
+                    this.handleChangeState("status", value === "Publish");
                   }}
-                 ></input>
-                 <div className="p-l-10">Private</div>
+                ></input>
+                <div className="p-l-10">Private</div>
               </div>
 
 
@@ -766,7 +726,6 @@ class EditResourceComponent extends React.Component {
               }}
               value={state.repository_id}
             >
-              <option value="0">Root Index</option>
               {state.tree_list.map(item => {
                 return <option value={item.id} dangerouslySetInnerHTML={{ __html: item.value }}></option>;
               })}
@@ -821,7 +780,7 @@ class EditResourceComponent extends React.Component {
               value={state.interval_by_date}
               onChange={e => {
                 let value = e.target.value;
-                value  = value >=1 ? value : 1
+                value = value >= 1 ? value : 1
                 this.handleChangeState("interval_by_date", parseInt(value));
               }}
             ></input>
@@ -837,29 +796,29 @@ class EditResourceComponent extends React.Component {
           <div className="col-md-10">
             <div className="row">
               {
-                  tracker_state_list.map((item, key) => {
-                    return(
-                      <div className="col-md-2 flex" key={key}>
-                        <input
-                          type="checkbox"
-//                          className="form-control"
-                          checked={state.change_tracking_state.includes(item.value)}
-                          onChange={e => {
-                            let {change_tracking_state} = state
-                            const value = e.target.checked;
-                            if(value){
-                              change_tracking_state.push(item.value)
-                            }
-                            else {
-                              change_tracking_state = change_tracking_state.filter(i => i !== item.value)
-                            }
-                            this.handleChangeState("change_tracking_state", change_tracking_state);
-                          }}
-                        ></input>
-                        <div className="p-l-10">{item.name}</div>
-                      </div>
-                    )
-                  })
+                tracker_state_list.map((item, key) => {
+                  return (
+                    <div className="col-md-2 flex" key={key}>
+                      <input
+                        type="checkbox"
+                        //                          className="form-control"
+                        checked={state.change_tracking_state.includes(item.value)}
+                        onChange={e => {
+                          let { change_tracking_state } = state
+                          const value = e.target.checked;
+                          if (value) {
+                            change_tracking_state.push(item.value)
+                          }
+                          else {
+                            change_tracking_state = change_tracking_state.filter(i => i !== item.value)
+                          }
+                          this.handleChangeState("change_tracking_state", change_tracking_state);
+                        }}
+                      ></input>
+                      <div className="p-l-10">{item.name}</div>
+                    </div>
+                  )
+                })
               }
             </div>
           </div>
@@ -945,7 +904,7 @@ class DetailResourceComponent extends React.Component {
     return <div>Deatil ne</div>;
   }
 }
-$(function() {
+$(function () {
   ReactDOM.render(<MainLayout />, document.getElementById("root"));
   initDatepicker()
 });
@@ -967,31 +926,31 @@ class ComponentDatePicker extends React.Component {
     }
   }
 
-  componentDidMount(){
+  componentDidMount() {
     const that = this
     $("#publish_date").change(
-      function(event) {
-          const value = event.target.value;
-          if (moment(value,'MM/DD/YYYY').isValid()) {
-            if (that.props.onChange){
-            that.props.onChange(that.props.name,value)
-          }
+      function (event) {
+        const value = event.target.value;
+        if (moment(value, 'MM/DD/YYYY').isValid()) {
+          if (that.props.onChange) {
+            that.props.onChange(that.props.name, value)
           }
         }
+      }
     )
   }
 
-  componentWillUnmount(){
+  componentWillUnmount() {
     $("#publish_date").off('change');
   }
 
   render() {
-    const {props} = this
+    const { props } = this
     return (
       <div style={this.styleContainer} className="form-group">
         <div class={this.state.defaultClass} id={this.props.date_picker_id}>
-          <input value={props.value} className="form-control" name={this.props.component_name} id={this.props.id_component} style={this.styleDatePicker} type="text" data-provide="datepicker"/>
-          <div id={this.props.error_id} style={{color: 'red'}} className={this.state.errorMessageClass}>Format is incorrect!</div>
+          <input value={props.value} className="form-control" name={this.props.component_name} id={this.props.id_component} style={this.styleDatePicker} type="text" data-provide="datepicker" />
+          <div id={this.props.error_id} style={{ color: 'red' }} className={this.state.errorMessageClass}>Format is incorrect!</div>
         </div>
       </div>
     )
@@ -1005,9 +964,9 @@ function initDatepicker() {
     autoclose: true,
     forceParse: false
   })
-  .on("changeDate", function(e) {
-    if (document.getElementById("publish_date_picker").classList.contains('has-error')) {
-      document.getElementById("publish_date_picker").classList.remove('has-error');
-    }
-  });
+    .on("changeDate", function (e) {
+      if (document.getElementById("publish_date_picker").classList.contains('has-error')) {
+        document.getElementById("publish_date_picker").classList.remove('has-error');
+      }
+    });
 }

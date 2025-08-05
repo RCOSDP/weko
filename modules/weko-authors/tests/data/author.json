@@ -10,17 +10,13 @@
           }
         ],
         "identifierInfo": [
-          {
-            "affiliationId": "5678",
-            "affiliationIdType": "1",
-            "identifierShowFlg": "true"
-          }
         ]
       }
     ],
     "authorIdInfo": [
       { "authorId": "1", "authorIdShowFlg": "true", "idType": "1" },
-      { "authorId": "1234", "authorIdShowFlg": "true", "idType": "2" }
+      { "authorId": "1234", "authorIdShowFlg": "true", "idType": "2" },
+      { "authorId": "12345", "authorIdShowFlg": "true", "idType": "3" }
     ],
     "authorNameInfo": [
       {
@@ -35,7 +31,7 @@
     "emailInfo": [{ "email": "test.taro@test.org" }],
     "gather_flg": 0,
     "id": "8e174b76-66f6-46b3-a2cb-2607fdc1e84b",
-    "is_deleted": "false",
+    "is_deleted": false,
     "pk_id": "1"
   },
   {
@@ -52,6 +48,11 @@
           {
             "affiliationId": "1234",
             "affiliationIdType": "1",
+            "identifierShowFlg": "true"
+          },
+          {
+            "affiliationId": "12345",
+            "affiliationIdType": "2",
             "identifierShowFlg": "true"
           }
         ]
@@ -74,7 +75,64 @@
     "emailInfo": [{ "email": "test.smith@test.org" }],
     "gather_flg": 0,
     "id": "12bdc98a-20fb-4455-92ba-ad1131dbfcc8",
-    "is_deleted": "false",
+    "is_deleted": false,
     "pk_id": "2"
+  },
+  {
+    "affiliationInfo": [
+      {
+        "affiliationNameInfo": [
+          {
+            "affiliationName": "",
+            "affiliationNameLang": "ja",
+            "affiliationNameShowFlg": "true"
+          }
+        ],
+        "identifierInfo": [
+          {
+            "affiliationId": "91011",
+            "affiliationIdType": "1",
+            "identifierShowFlg": "true"
+          }
+        ]
+      }
+    ],
+    "authorIdInfo": [
+      { "authorId": "123", "authorIdShowFlg": "true", "idType": "" }
+    ],
+    "authorNameInfo": [
+      {
+        "familyName": "test2",
+        "firstName": "smith2",
+        "fullName": "test2 smith2",
+        "language": "en",
+        "nameFormat": "familyNmAndNm",
+        "nameShowFlg": "true"
+      }
+    ],
+    "emailInfo": [{ "email": "test.smith2@test.org" }],
+    "gather_flg": 0,
+    "id": "24d4fa17-5d91-4d78-9e27-1a63a1c7b06f",
+    "is_deleted": false,
+    "pk_id": "3"
+  },
+  {
+    "affiliationInfo": [
+      {
+        "affiliationNameInfo": [
+          {}
+        ],
+        "identifierInfo": [
+          {}
+        ]
+      }
+    ],
+    "authorIdInfo": [
+      { "authorId": "2", "authorIdShowFlg": "true", "idType": "2" }
+    ],
+    "gather_flg": 1,
+    "id": "1ac8be125-18a0-4521-8392-b920f79fdecc",
+    "pk_id": "4",
+    "is_deleted": true
   }
 ]

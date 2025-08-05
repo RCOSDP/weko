@@ -60,4 +60,49 @@ COPY public.mail_templates (id, mail_subject, mail_body, default_mail, genre_id)
 SELECT pg_catalog.setval('public.mail_templates_id_seq', 11, true);
 
 
+INSERT INTO public.mail_templates
+	(id, mail_subject, mail_body, default_mail, genre_id)
+	VALUES(12,'利用申請のお知らせ / Notice of application for use','データ提供者 様
+
+[restricted_institution_name_ja]です。
+[restricted_fullname]様から、ご登録いただいたコンテンツに対して、下記のデータの利用申請がありましたので報告いたします。
+
+申請番号： [restricted_activity_id]
+登録者名： [restricted_fullname]
+メールアドレス： [restricted_mail_address]
+所属機関：[restricted_university_institution]
+研究題目：[restricted_research_title]
+申請データ：[restricted_data_name]
+申請年月日：[restricted_application_date]
+
+このメールは自動送信されているので返信しないでください。
+お問い合わせは下記までお願いします。また、このメールに心当たりのない方は、[restricted_institution_name_ja]までご連絡ください。
+
+[restricted_site_name_ja]：[restricted_site_url]
+問い合わせ窓口：[restricted_site_mail]
+
+----------------------------------------------------------------------------------
+
+Dear Data Provider,
+
+This is a message from [restricted_institution_name_en].
+We received the below application from [restricted_fullname].
+
+Application No.：[restricted_activity_id]
+Name：[restricted_fullname]
+E-mail：[restricted_mail_address]
+Affiliation：[restricted_university_institution]
+Title of research：[restricted_research_title]
+Dataset requested ：[restricted_data_name]
+Application date：[restricted_application_date]
+
+Please do not reply to this email as it has been sent automatically.
+Please direct all inquiries to the following address.
+Also, if you received this message in error, please notify [restricted_institution_name_en].
+
+[restricted_site_name_en]：[restricted_site_url]
+E-mail：[restricted_site_mail]', true, 3);
+--
+-- PostgreSQL database dump complete
+--
 

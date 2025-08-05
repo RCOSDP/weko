@@ -7,41 +7,52 @@
     </div>
   {% endif %}
   <form method="POST" name="export_items_form" id="export_items_form"
-    action={{url_for('weko_items_ui.export')}}>
+    action={{url_for('weko_items_ui.export')}}
+    ng-init="enableContentsExporting={{enable_contents_exporting|lower}}">
     <div class="col-xs-9 col-xs-offset-3">
-      <p class="col-xs-2">{{_('File Contents')}}</p>
-      <div class="col-xs-6">
+      <p class="col-xs-2">{{_('Export Format')}}</p>
+      <div class="col-xs-5">
         <div class="form-group">
-          <label class="radio-inline {{ 'text-muted' if not enable_contents_exporting else '' }}" for="item_export_radio_off">
-            <input type="radio" name="export_file_contents_radio"
-              id="item_export_radio_off" value="False"
-              {{ 'checked' if enable_contents_exporting else 'checked disabled' }}>
-            {{_('Do Not Export File Contents')}}
+          <label class="radio-inline" for="export_format_radio_tsv">
+            <input type="radio" name="export_format_radio"
+              id="export_format_radio_tsv" value="TSV"
+              ng-model="selectedExportFormat" ng-change="checkExportFormat()">
+            {{_('TSV')}}{# To distinguish among all formats, JSON -> TSV #}
           </label>
-          <label class="radio-inline {{ 'text-muted' if not enable_contents_exporting else '' }}" for="export_file_contents_radio_on">
-            <input type="radio" name="export_file_contents_radio"
-              id="export_file_contents_radio_on" value="True"
-              {{ '' if enable_contents_exporting else 'disabled' }}>
-            {{_('Export File Contents')}}
+          <label class="radio-inline" for="export_format_radio_bibtex">
+            <input type="radio" name="export_format_radio"
+              id="export_format_radio_bibtex" value="BIBTEX"
+              ng-model="selectedExportFormat" ng-change="checkExportFormat()">
+            {{_('BIBTEX')}}
+          </label>
+          <label class="radio-inline" for="export_format_radio_rocrate"
+            ng-class="{'text-muted':!enableContentsExporting}">
+            <input type="radio" name="export_format_radio"
+              id="export_format_radio_rocrate" value="ROCRATE"
+              ng-model="selectedExportFormat" ng-change="checkExportFormat()"
+              ng-disabled="!enableContentsExporting">
+            {{_('RO-Crate')}}
           </label>
         </div>
       </div>
     </div>
     <div class="col-xs-9 col-xs-offset-3">
-      <p class="col-xs-2">{{_('Export Format')}}</p>
-      <div class="col-xs-3">
+      <p class="col-xs-2">{{_('File Contents')}}</p>
+      <div class="col-xs-6">
         <div class="form-group">
-          <label class="radio-inline" for="export_format_radio_tsv">
-            <input type="radio" name="export_format_radio"
-              id="export_format_radio_tsv" value="TSV"
-              {{ 'checked' if  True else '' }}>
-            {{_('TSV')}}
+          <label class="radio-inline" for="item_export_radio_off"
+            ng-class="{'text-muted':!enableContentsExporting||selectedExportFormat==='ROCRATE'}">
+            <input type="radio" name="export_file_contents_radio"
+              id="item_export_radio_off" value="False"
+              ng-disabled="!enableContentsExporting" checked>
+            {{_('Do Not Export File Contents')}}
           </label>
-          <label class="radio-inline" for="export_format_radio_bibtex">
-            <input type="radio" name="export_format_radio"
-              id="export_format_radio_bibtex" value="BIBTEX"
-              {{ 'checked' if False else '' }} >
-            {{_('BIBTEX')}}
+          <label class="radio-inline" for="export_file_contents_radio_on"
+            ng-class="{'text-muted':!enableContentsExporting||selectedExportFormat==='ROCRATE'}">
+            <input type="radio" name="export_file_contents_radio"
+              id="export_file_contents_radio_on" value="True"
+              ng-disabled="!enableContentsExporting">
+            {{_('Export File Contents')}}
           </label>
         </div>
       </div>

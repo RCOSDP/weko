@@ -35,7 +35,7 @@ from invenio_communities.models import Community
 from invenio_accounts.testutils import login_user_via_view, login_user_via_session
 from invenio_i18n.ext import current_i18n
 from sqlalchemy.exc import IntegrityError
-
+from flask import current_app
 from weko_deposit.api import WekoDeposit
 from weko_index_tree.api import Indexes
 from weko_index_tree.models import Index
@@ -107,8 +107,27 @@ def test_indexes_create(app, db, users, test_indices):
 
             res = Indexes.create(0)
             assert res==None
+
             res = Indexes.create(0, {'id': None})
             assert res==None
+
+            app.config['WEKO_HANDLE_ALLOW_REGISTER_CNRI'] = True
+            app.config['WEKO_HANDLE_CREDS_JSON_PATH'] = '/code/modules/resources/handle_creds.json'
+            with patch("weko_handle.api.Handle.register_handle", return_value='1234567890/1'):
+                res = Indexes.create(2, {
+                    'id': 1044,
+                    'parent': 104,
+                    'value': 'Create index test10',
+                })
+            assert res==True
+
+            with patch("weko_handle.api.Handle.register_handle", return_value= None):
+                res = Indexes.create(2, {
+                    'id': 1045,
+                    'parent': 105,
+                    'value': 'Create index test11',
+                })
+            assert res==False
 
 
 # class Indexes(object):
@@ -239,11 +258,12 @@ def test_indexes_delete(app, db, users, test_indices):
         assert Index.query.filter_by(id=11).first().is_deleted == True
 
         with patch("weko_index_tree.tasks.delete_oaiset_setting", return_value=True):
-            res = Indexes.delete(20, False)
-            assert res==0
-            res = Indexes.delete(22, False)
-            assert res==[22]
-            assert Index.query.filter_by(id=22).first().is_deleted == True
+            with patch("weko_index_tree.tasks.delete_index_handle", return_value=True):
+                res = Indexes.delete(20, False)
+                assert res==0
+                res = Indexes.delete(22, False)
+                assert res==[22]
+                assert Index.query.filter_by(id=22).first().is_deleted == True
 
 
 # class Indexes(object):
@@ -331,12 +351,12 @@ def test_indexes_move(app, db, users, communities, test_indices):
                 res = Indexes.move(22, **_data)
                 assert res['is_ok']==False
                 assert res['msg']=="The index cannot be kept private because there are links from items that have a DOI."
-            
+
             _index = dict(Indexes.get_index(1))
             assert _index["parent"] == 0
             assert _index["position"] == 0
 
-            # 
+            #
             _data = {
                 'pre_parent': "0",
                 'parent': "0",
@@ -355,7 +375,7 @@ def test_indexes_move(app, db, users, communities, test_indices):
             res = Indexes.move(1, **_data)
             assert res['is_ok']==True
             assert res['msg']==''
-            
+
             _index = dict(Indexes.get_index(1))
             assert _index["parent"] == 0
             assert _index["position"] == 3
@@ -369,7 +389,7 @@ def test_indexes_move(app, db, users, communities, test_indices):
             res = Indexes.move(1, **_data)
             assert res['is_ok']==True
             assert res['msg']==''
-            
+
             _index = dict(Indexes.get_index(1))
             assert _index["parent"] == 0
             assert _index["position"] == 0
@@ -402,7 +422,7 @@ def test_indexes_move(app, db, users, communities, test_indices):
                     }
                     res = Indexes.move(1, **_data)
                     assert res['is_ok']==False
-            
+
             with patch("weko_index_tree.api.db.session.commit", side_effect=IntegrityError(None, None, None)):
                 # move index 1 Exception
                 _data = {
@@ -465,7 +485,7 @@ def test_indexes_move(app, db, users, communities, test_indices):
                     res = Indexes.move(3, **_data)
                     assert res['is_ok']==True
                     assert res['msg']==''
-                    
+
                     _index = dict(Indexes.get_index(3))
                     assert _index["parent"] == 2
                     assert _index["position"] == 1
@@ -591,8 +611,65 @@ def test_update_set_info(i18n_app, db, users, test_indices):
     index_info["index_name"] = "TEST"
     with patch("weko_index_tree.tasks.update_oaiset_setting.delay",side_effect = MagicMock()):
         Indexes.update_set_info(index_info)
-    
-    
+
+#.tox/c1/bin/pytest --cov=weko_index_tree tests/test_api.py::test_filter_roles -v -s -vv --cov-branch --cov-report=html --cov-config=tox.ini --basetemp=/code/modules/weko-index-tree/.tox/c1/tmp
+def test_filter_roles(app, mocker):
+    with app.app_context():
+        # モックデータの準備
+        roles = [
+            {"id": 1, "name": "Contributor"},
+            {"id": 2, "name": "Community Administrator"},
+            {"id": 3, "name": "Repository Administrator"},
+            {"id": 4, "name": "System Administrator"},
+            {"id": 5, "name": "group_key_test_role"},
+            {"id": 6, "name": "key_value_role"},
+            {"id": 7, "name": "Authenticated User"},
+            {"id": 8, "name": "Guest"},
+            {"id": 9, "name": "General"},
+            {"id": 10, "name": "group_value_role"},
+        ]
+
+        # 設定をモック
+        mocker.patch.dict(current_app.config, {
+            'WEKO_ACCOUNTS_GAKUNIN_GROUP_PATTERN_DICT': {
+                'prefix': 'group',
+                'role_keyword': 'key'
+            },
+            'WEKO_PERMISSION_ROLE_USER': ['Contributor', 'Community Administrator', 'Repository Administrator', 'System Administrator', 'General', 'Guest', 'Authenticated User']
+        })
+
+        # メソッドの呼び出し
+        filtered_roles, excluded_roles = Indexes.filter_roles(roles)
+
+        # 結果の検証
+        assert len(filtered_roles) == 2
+        assert filtered_roles[0]["name"] == "key_value_role"
+        assert filtered_roles[1]["name"] == "group_value_role"
+        assert len(excluded_roles) == 8
+        assert excluded_roles[0]["name"] == "Contributor"
+        assert excluded_roles[1]["name"] == "Community Administrator"
+        assert excluded_roles[2]["name"] == "Repository Administrator"
+        assert excluded_roles[3]["name"] == "System Administrator"
+        assert excluded_roles[4]["name"] == "group_key_test_role"
+        assert excluded_roles[5]["name"] == "Authenticated User"
+        assert excluded_roles[6]["name"] == "Guest"
+        assert excluded_roles[7]["name"] == "General"
+
+        # リスト以外の値を渡すテストケース
+        non_list_value = "not_a_list"
+        with pytest.raises(TypeError, match="roles must be a list"):
+            Indexes.filter_roles(non_list_value)
+
+        # None を渡すテストケース
+        none_value = None
+        with pytest.raises(TypeError, match="roles must be a list"):
+            Indexes.filter_roles(none_value)
+
+        # 辞書を渡すテストケース
+        dict_value = {"id": 1, "name": "role_name"}
+        with pytest.raises(TypeError, match="roles must be a list"):
+            Indexes.filter_roles(dict_value)
+
 #     def delete_set_info(cls, action, index_id, id_list):
 #     def get_public_indexes_list(cls):
 # .tox/c1/bin/pytest --cov=weko_index_tree tests/test_api.py::test_Indexes_get_public_indexes_list -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-index-tree/.tox/c1/tmp
@@ -604,7 +681,7 @@ def test_Indexes_get_public_indexes_list(i18n_app, db):
             index_name=index_name,index_name_english=index_name_english,
             public_state=public_state,public_date=public_date
         )
-    
+
     with db.session.begin_nested():
         db.session.add(make_index(1,0,0,'公開','publish',True,None))
         db.session.add(make_index(11,1,0,'公開_公開','publish',True,None))
@@ -619,13 +696,21 @@ def test_Indexes_get_public_indexes_list(i18n_app, db):
         db.session.add(make_index(32,3,1,'未来公開_非公開','feature_notpublish',False,None))
         db.session.add(make_index(33,3,2,'未来公開_未来公開','feature_feature',True,datetime.strptime("2100/09/21","%Y/%m/%d")))
     db.session.commit()
-    
+
     result = Indexes.get_public_indexes_list()
     assert result == ["1", "11"]
-    
-# .tox/c1/bin/pytest --cov=weko_index_tree tests/test_api.py::test_indexes_get_index_tree -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-index-tree/.tox/c1/tmp
-def test_indexes_get_index_tree(i18n_app, db, redis_connect, users, db_records, test_indices, communities):
+
+# .tox/c1/bin/pytest --cov=weko_index_tree tests/test_api.py::test_indexes_get_index_tree -v -s -vv --cov-branch --cov-report=html --cov-config=tox.ini --basetemp=/code/modules/weko-index-tree/.tox/c1/tmp
+def test_indexes_get_index_tree(i18n_app, db, redis_connect, users, db_records, test_indices, communities, mocker):
     os.environ['INVENIO_WEB_HOST_NAME'] = "test"
+    mocker.patch.dict(current_app.config, {
+            'WEKO_ACCOUNTS_GAKUNIN_GROUP_PATTERN_DICT': {
+                'prefix': 'group',
+                'role_keyword': 'key'
+            },
+            'WEKO_PERMISSION_ROLE_USER': ['Contributor', 'Community Administrator', 'Repository Administrator', 'System Administrator', 'General', 'Guest', 'Authenticated User'],
+            'WEKO_PERMISSION_SUPER_ROLE_USER': ['System Administrator', 'Repository Administrator']
+    })
     with i18n_app.test_client() as client:
         # get_index_tree
         res = Indexes.get_index_tree()
@@ -714,18 +799,18 @@ def test_indexes_get_index_tree(i18n_app, db, redis_connect, users, db_records, 
 
         # get_index_with_role
         res = Indexes.get_index_with_role(1)
-        assert res=={'biblio_flag': False, 'browsing_group': {'allow': [], 'deny': []}, 'browsing_role': {'allow': [{'id': 3, 'name': 'Contributor'}, {'id': -99, 'name': 'Guest'}], 'deny': [{'id': 4, 'name': 'Community Administrator'}, {'id': 5, 'name': 'General'}, {'id': 6, 'name': 'Original Role'}, {'id': -98, 'name': 'Authenticated User'}]}, 'comment': '', 'contribute_group': {'allow': [], 'deny': []}, 'contribute_role': {'allow': [{'id': 3, 'name': 'Contributor'}, {'id': 4, 'name': 'Community Administrator'}, {'id': -98, 'name': 'Authenticated User'}, {'id': -99, 'name': 'Guest'}], 'deny': [{'id': 5, 'name': 'General'}, {'id': 6, 'name': 'Original Role'}]}, 'coverpage_state': True, 'display_format': '1', 'display_no': 0, 'harvest_public_state': True, 'harvest_spec': '', 'id': 1, 'image_name': '', 'index_link_enabled': True, 'index_link_name': 'Test index link 1_ja', 'index_link_name_english': 'Test index link 1_en', 'index_name': 'テストインデックス 1', 'index_name_english': 'Test index 1', 'is_deleted': False, 'more_check': False, 'online_issn': '1234-5678', 'owner_user_id': 0, 'parent': 0, 'position': 0, 'public_date': '20220101', 'public_state': True, 'recursive_browsing_group': True, 'recursive_browsing_role': True, 'recursive_contribute_group': True, 'recursive_contribute_role': True, 'recursive_coverpage_check': True, 'recursive_public_state': False, 'rss_status': False}
+        assert res=={'biblio_flag': False, 'browsing_group': {'allow': [],'deny': [{'id': '6gr', 'name': 'Original Role'}]}, 'browsing_role': {'allow': [{'id': 3, 'name': 'Contributor'}, {'id': -99, 'name': 'Guest'}], 'deny': [{'id': 4, 'name': 'Community Administrator'}, {'id': 5, 'name': 'General'}, {'id': -98, 'name': 'Authenticated User'}]}, 'comment': '', 'contribute_group': {'allow': [], 'deny': [{'id': '6gr', 'name': 'Original Role'}]}, 'contribute_role': {'allow': [{'id': 3, 'name': 'Contributor'}, {'id': 4, 'name': 'Community Administrator'}, {'id': -98, 'name': 'Authenticated User'}, {'id': -99, 'name': 'Guest'}], 'deny': [{'id': 5, 'name': 'General'}]}, 'coverpage_state': True, 'display_format': '1', 'display_no': 0, 'harvest_public_state': True, 'harvest_spec': '', 'id': 1, 'image_name': '', 'index_link_enabled': True, 'index_link_name': 'Test index link 1_ja', 'index_link_name_english': 'Test index link 1_en', 'index_name': 'テストインデックス 1', 'index_name_english': 'Test index 1', 'is_deleted': False, 'more_check': False, 'online_issn': '1234-5678', 'owner_user_id': 0, 'parent': 0, 'position': 0, 'public_date': '20220101', 'public_state': True, 'recursive_browsing_group': True, 'recursive_browsing_role': True, 'recursive_contribute_group': True, 'recursive_contribute_role': True, 'recursive_coverpage_check': True, 'recursive_public_state': False, 'rss_status': False, 'cnri': '', 'index_url': ''}
         res = Indexes.get_index_with_role(22)
-        assert res=={'biblio_flag': True, 'browsing_group': {'allow': [], 'deny': []}, 'browsing_role': {'allow': [{'id': 3, 'name': 'Contributor'}, {'id': -99, 'name': 'Guest'}], 'deny': [{'id': 4, 'name': 'Community Administrator'}, {'id': 5, 'name': 'General'}, {'id': 6, 'name': 'Original Role'}, {'id': -98, 'name': 'Authenticated User'}]}, 'comment': '', 'contribute_group': {'allow': [], 'deny': []}, 'contribute_role': {'allow': [{'id': 3, 'name': 'Contributor'}, {'id': 4, 'name': 'Community Administrator'}, {'id': -98, 'name': 'Authenticated User'}, {'id': -99, 'name': 'Guest'}], 'deny': [{'id': 5, 'name': 'General'},  {'id': 6, 'name': 'Original Role'}]}, 'coverpage_state': False, 'display_format': '1', 'display_no': 1, 'harvest_public_state': True, 'harvest_spec': '', 'id': 22, 'image_name': '', 'index_link_enabled': True, 'index_link_name': 'Test index link 22_ja', 'index_link_name_english': 'Test index link 22_en', 'index_name': 'テストインデックス 22', 'index_name_english': 'Test index 22', 'is_deleted': False, 'more_check': False, 'online_issn': '', 'owner_user_id': 0, 'parent': 2, 'position': 1, 'public_date': '', 'public_state': True, 'recursive_browsing_group': False, 'recursive_browsing_role': False, 'recursive_contribute_group': False, 'recursive_contribute_role': False, 'recursive_coverpage_check': False, 'recursive_public_state': True, 'rss_status': False}
+        assert res=={'biblio_flag': True, 'browsing_group': {'allow': [], 'deny': [{'id': '6gr', 'name': 'Original Role'}]}, 'browsing_role': {'allow': [{'id': 3, 'name': 'Contributor'}, {'id': -99, 'name': 'Guest'}], 'deny': [{'id': 4, 'name': 'Community Administrator'}, {'id': 5, 'name': 'General'}, {'id': -98, 'name': 'Authenticated User'}]}, 'comment': '', 'contribute_group': {'allow': [], 'deny': [{'id': '6gr', 'name': 'Original Role'}]}, 'contribute_role': {'allow': [{'id': 3, 'name': 'Contributor'}, {'id': 4, 'name': 'Community Administrator'}, {'id': -98, 'name': 'Authenticated User'}, {'id': -99, 'name': 'Guest'}], 'deny': [{'id': 5, 'name': 'General'}]}, 'coverpage_state': False, 'display_format': '1', 'display_no': 1, 'harvest_public_state': True, 'harvest_spec': '', 'id': 22, 'image_name': '', 'index_link_enabled': True, 'index_link_name': 'Test index link 22_ja', 'index_link_name_english': 'Test index link 22_en', 'index_name': 'テストインデックス 22', 'index_name_english': 'Test index 22', 'is_deleted': False, 'more_check': False, 'online_issn': '', 'owner_user_id': 0, 'parent': 2, 'position': 1, 'public_date': '', 'public_state': True, 'recursive_browsing_group': False, 'recursive_browsing_role': False, 'recursive_contribute_group': False, 'recursive_contribute_role': False, 'recursive_coverpage_check': False, 'recursive_public_state': True, 'rss_status': False, 'cnri': '', 'index_url': ''}
 
-        with patch("weko_index_tree.api.Indexes.get_account_role", return_value="test"):
+        with patch("weko_index_tree.api.Indexes.get_account_role", return_value=[]):
             res = Indexes.get_index_with_role(1)
             assert res["browsing_role"]==res["contribute_role"]=={'allow': [], 'deny': []}
 
         with patch("weko_groups.models.Group.query") as mock_query:
             mock_query.all.return_value = [Group(id="g1", name="g1"), Group(id="g2", name="g2"), Group(id="g3", name="g3")]
             res = Indexes.get_index_with_role(1)
-            assert res["browsing_group"]==res["contribute_group"]=={'allow': [{'id': "g1", 'name': 'g1'}, {'id': "g2", 'name': 'g2'}], 'deny': [{'id': "g3", 'name': 'g3'}]}
+            assert res["browsing_group"]==res["contribute_group"]=={'allow': [{'id': "g1", 'name': 'g1'}, {'id': "g2", 'name': 'g2'}], 'deny': [{'id': "g3", 'name': 'g3'} ,{'id': '6gr', 'name': 'Original Role'}]}
 
         # get_index
         res = Indexes.get_index(2)
@@ -1026,3 +1111,65 @@ def test_indexes_get_index_tree(i18n_app, db, redis_connect, users, db_records, 
         # update_item_sort_custom_es
         res = Indexes.update_item_sort_custom_es("33", [{"1": "1", "2": "2"}])
         assert res==None
+
+# .tox/c1/bin/pytest --cov=weko_index_tree tests/test_api.py::test_get_index_with_role_group -v -s -vv --cov-branch --cov-report=html --cov-config=tox.ini --basetemp=/code/modules/weko-index-tree/.tox/c1/tmp
+def test_get_index_with_role_group(app, db, mocker):
+    with app.app_context():
+        # 必要な設定を追加
+        mocker.patch.dict(current_app.config, {
+            'WEKO_ACCOUNTS_GAKUNIN_GROUP_PATTERN_DICT': {
+                'prefix': 'group',
+                'role_keyword': 'key'
+            },
+            'WEKO_PERMISSION_ROLE_USER': ['Contributor', 'Community Administrator', 'Repository Administrator', 'System Administrator', 'General', 'Guest', 'Authenticated User'],
+            'WEKO_PERMISSION_SUPER_ROLE_USER': ['System Administrator', 'Repository Administrator']
+        })
+
+        # モックデータの準備
+        index_data = {
+            'id': 1,
+            'browsing_role': '3,-99,9',
+            'contribute_role': '3,4,-98,-99',
+            'browsing_group': '1,2',
+            'contribute_group': '1,2',
+            'public_date': datetime(2022, 1, 1),
+        }
+        mocker.patch.object(Indexes, 'get_index', return_value=index_data)
+
+        roles = [
+            {"id": 3, "name": "Contributor"},
+            {"id": 4, "name": "Community Administrator"},
+            {"id": -98, "name": "Authenticated User"},
+            {"id": -99, "name": "Guest"},
+            {"id": 5, "name": "General"},
+            {"id": 6, "name": "group_key_test_role"},
+            {"id": 7, "name": "key_value_role"},
+            {"id": 8, "name": "group_value_role"},
+            {"id": 9, "name": "jc_xxx_groups_user1"},
+            {"id": 10, "name": "System Administrator"},
+        ]
+        mocker.patch.object(Indexes, 'get_account_role', return_value=roles)
+
+        groups = [
+            Group(id=1, name="Group1"),
+            Group(id=2, name="Group2"),
+            Group(id=3, name="Group3"),
+        ]
+        mocker.patch('weko_index_tree.api.Group.query.all', return_value=groups)
+
+        # テスト対象メソッドの呼び出し
+        result = Indexes.get_index_with_role(1)
+
+        # 結果の検証
+        assert result['browsing_group']['allow'] ==  [{'id': '9gr', 'name': 'jc_xxx_groups_user1'}]
+        assert result['browsing_group']['deny'] == [{'id': '7gr', 'name': 'key_value_role'},{'id': '8gr', 'name': 'group_value_role'}]
+        assert result['contribute_group']['allow'] ==  [{'id': '9gr', 'name': 'jc_xxx_groups_user1'}]
+        assert result['contribute_group']['deny'] == [{'id': '7gr', 'name': 'key_value_role'},{'id': '8gr', 'name': 'group_value_role'}]
+
+        # 結果が空の場合のテストケース
+        mocker.patch.object(Indexes, 'get_account_role', return_value=[])
+        result = Indexes.get_index_with_role(1)
+        assert result['browsing_group']['allow'] == []
+        assert result['browsing_group']['deny'] == []
+        assert result['contribute_group']['allow'] == []
+        assert result['contribute_group']['deny'] == []

@@ -83,11 +83,20 @@ class LockedValueSchema(Schema):
         strict = True
     
 class GetFeedbackMailListSchema(ResponseSchema):
-    data = fields.List(fields.Dict(),allow_none=True)    
-    
+    data = fields.List(fields.Dict(),allow_none=True)
+
+class GetRequestMailListSchema(ResponseSchema):
+    request_maillist = fields.List(fields.Dict(),allow_none=True)
+    is_display_request_button = fields.Boolean(required=True)
+
+class GetItemApplicationSchema(ResponseSchema):
+    item_application = fields.Dict(allow_none=True)
+    is_display_item_application_button = fields.Boolean(required=True)
+
 class SaveActivitySchema(Schema):
     activity_id = fields.String(required=True)
     # title = fields.String(required=True)
+    # title = fields.List(required=True)
     shared_user_ids = fields.List(fields.Dict(allow_none=True))
     approval1 = fields.String(allow_none=True)
     approval2 = fields.String(allow_none=True)

@@ -43,9 +43,13 @@
     <!--<script src="https://unpkg.com/axios/dist/axios.min.js"></script>-->
 
     <script src="{{ url_for('static', filename='js/weko_items_ui/item.autofill.js') }}" type="text/babel"></script>
+    <script src="{{ url_for('static', filename='js/weko_items_ui/oapolicy.js') }}"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     {% assets "invenio_deposit_dependencies_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
     {% assets "weko_admin_react_bootstrap_js" %}<script type="text/javascript" src="{{ ASSET_URL }}"></script>{% endassets %}
     {% assets "weko_items_ui_feedback_maillist_js" %}<script type="text/babel" src="{{ ASSET_URL }}"></script>{% endassets %}
+    {% assets "weko_items_ui_request_maillist_js" %}<script type="text/babel" src="{{ ASSET_URL }}"></script>{% endassets %}
+    {% assets "weko_items_ui_no_file_approval_js" %}<script type="text/babel" src="{{ ASSET_URL }}"></script>{% endassets %}
     {{ super() }}
     {% assets "invenio_deposit_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
     {%- if need_thumbnail %}
@@ -180,7 +184,7 @@
                   <div class="col-sm-12">
                   <p class="text-center">
                     <button class="btn btn-success"
-                        ng-click="getItemMetadata()">
+                        ng-click="saveActivityData('{{item_save_uri}}',{{action_id}},'{{enable_contributor}}','{{enable_feedback_maillist}}', '{{enable_request_maillist}}', true, false);getItemMetadata()">
                         <span class="glyphicon glyphicon-plus"></span>&nbsp
                       {{_('Automatic Metadata Input')}}
                   </button>
@@ -276,9 +280,33 @@
                     form-templates-base="{{ url_for('static', filename=config.DEPOSIT_FORM_TEMPLATES_BASE) }}"
                     template="{{ url_for('static', filename=config.DEPOSIT_UI_JSTEMPLATE_FORM) }}">
                   </invenio-records-form>
+                  
+                  <div class="form-group row">
+                    <div class="col-sm-12 style-component">
+                      <label class="col-sm-3 col-form-label text-right">{{ _('oa_policy_label') }}</label>
+                      <div class="col-sm-9">
+                        <div class="input-group">
+                          <button type="button" class="btn btn-primary" id="oapolicyurl">
+                            {{ _('oa_policy_export') }}
+                          </button>
+                          <a id="oaPolicyUrl" href="#" target="_blank" class="ml-2 d-none">
+                            <span id="oaPolicyText"></span>
+                          </a>
+                          <span id="oaPolicyError" class="text-danger ml-2" aria-live="polite"></span>
+                        </div>
+                        <input type="hidden" id="error_missing_input" value="{{ _('Please enter ISSN, eISSN, or journal title') }}">
+                        <input type="hidden" id="error_no_policy_found" value="{{ _('No Policy Information found') }}">
+                        <input type="hidden" id="error_api_generic" value="{{ _('An unknown error occurred') }}">
+                      </div>
+                    </div>
+                  </div>
+
                   {%- block feedback_mail_list %}
                     <div id="react"></div>
+                    <div id="request-maillist"></div>
                     <input id="component-search-email-name" type="hidden" value="{{_('Feedback Mail Destination')}}" />
+                    <input id="enable-request-email-checkbox-label" type="hidden" value="{{_('Display Request Mail Button')}}" />
+                    <input id="request-email-list-label" type="hidden" value="{{_('Request Mail Destination')}}" />
                     <input id="open-modal-search-button-name" type="hidden" value="{{_('From author DB')}}" />
                     <input id="delete-button-name" type="hidden" value="{{_('Delete')}}" />
                     <input id="input-text-placeholder" type="hidden" value="{{_('Input text')}}" />
@@ -290,6 +318,33 @@
                     <input id="mail-address-label" type="hidden" value="{{_('Mail address')}}" />
                     <input id="import-button-name" type="hidden" value="{{_('Feedback Mail Import')}}" />
                   {%- endblock feedback_mail_list %}
+
+                  {%- block none_contents_approval %}
+                  <div id="none-contents-approval"></div>
+                  <input id="no_file_approval_checkbox_label" type="hidden" value="{{_('Set usage application workflow for item')}}" />
+                  <input id="no_file_approval_label" type="hidden" value="{{_('WorkFlow')}}" />
+                  <input id="terms_and_conditions_label" type="hidden" value="{{_('Terms and Conditions')}}" />
+                  <input id="invalid-item-application-format" type="hidden" value="{{_('error message for item application')}}" />                  
+                  {%- endblock none_contents_approval %}
+
+                  {%- block cris_linkage %}
+                    {%- if not open_restricted %}
+                      <div id="cris_linkage">
+                        <div class="col-sm-12 twentyfive-pixel-bottom-margin">
+                          <div class="col-xs-3" style="text-align:right"><label for="" >{{_('Auto Linkage to CRIS Institution')}}</label></div>
+                          <div class="col-xs-9">
+                            <span class="workflow-span">
+                              <input type="checkbox" id="researchmap_chk" name="researchmap_chk" {{ 'checked' if cris_linkage.researchmap else '' }}/>
+                              <label for="researchmap_chk" >researchmap</label>
+                            </span>
+                            <span class="workflow-span">
+                              {{_('Latest Linkage Result：')}}{{ researchmap_latest_linkage_result }}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    {%- endif %}
+                  {%- endblock cris_linkage %}
 
                   {% if record|length %} <!-- Check Item Registration is edit mode then show version_management -->
                     {%- block radio_version_management %}
@@ -327,13 +382,13 @@
                         {%- endif %}
                         <button ng-disabled="recordsVM.invenioRecordsLoading"
                                 class="btn btn-primary save-button"
-                                ng-click="saveActivityData('{{item_save_uri}}',{{action_id}},'{{enable_contributor}}','{{enable_feedback_maillist}}', true, false);">
+                                ng-click="saveActivityData('{{item_save_uri}}',{{action_id}},'{{enable_contributor}}','{{enable_feedback_maillist}}', '{{enable_request_maillist}}', true, false);">
                               <span class="glyphicon glyphicon-saved"></span>&nbsp
                               {{_('Save')}}
                         </button>
                         <button ng-disabled="recordsVM.invenioRecordsLoading"
                                 class="btn btn-info next-button"
-                                ng-click="updateDataJson('{{activity_id}}',{{steps}},'{{item_save_uri}}',{{action_id}},'{{is_auto_set_index_action}}','{{enable_contributor}}','{{enable_feedback_maillist}}')"> {{_('Next')}}&nbsp
+                                ng-click="updateDataJson('{{activity_id}}',{{steps}},'{{item_save_uri}}',{{action_id}},'{{is_auto_set_index_action}}','{{enable_contributor}}','{{enable_feedback_maillist}}', '{{enable_request_maillist}}')"> {{_('Next')}}&nbsp
                         <span class="glyphicon glyphicon-chevron-right"></span>
                         </button>
                       </div>
@@ -447,16 +502,30 @@
           <input type="hidden" id="list_license_data" name="list_license_data" value='{{ list_license_data }}'>
           <input type="hidden" id="application_item_type" name="application_item_type" value='{{application_item_type}}'>
           <input type="hidden" id="enable_feedback_maillist" name="enable_feedback_maillist" value='{{enable_feedback_maillist}}'>
+          <input type="hidden" id="enable_request_maillist" name="enable_request_maillist" value='{{enable_request_maillist}}'/>
           {% set position_err_msg = "Position is being inputted (Only input when selecting 'Others')" %}
           <input type="hidden" id="err_input_other_position" name="err_input_other_position" value='{{_(position_err_msg)}}'>
           <input type="hidden" id="err_position_not_provided" name="err_position_not_provided" value='{{_("Position not provided.")}}'>
           <input type="hidden" id="autofill_header_name"
           name="autofill_header_name" value="{{_('Automatic metadata input')}}">
+          <input type="hidden" id="autofill_achievement_type"
+          name="autofill_achievement_type" value="{{_('achievement type')}}">
+          <input type="hidden" id="autofill_achievement_id"
+          name="autofill_achievement_id" value="{{_('achievement id')}}">
+          <input type="hidden" id="autofill_parmalink" value="{{_('parmalink')}}">
+          <input type="hidden" id="autofill_published_papers" value="{{_('published papers')}}">
+          <input type="hidden" id="autofill_misc" value="{{_('MISC')}}">
+          <input type="hidden" id="autofill_book_etc" value="{{_('book etc')}}">
+          <input type="hidden" id="autofill_presentations" value="{{_('presentations')}}">
+          <input type="hidden" id="autofill_works" value="{{_('Works')}}">
+          <input type="hidden" id="autofill_others" value="{{_('others')}}">
           <input type="hidden" id="autofill_select_meta"
           name="autofill_select_meta">
           <input type="hidden" id="autofill_get_value" name="autofill_get_value" value="{{_('Get')}}">
           <input type="hidden" id="validate_error" name="validate_error"
               value="{{_('The following items is required. Please recheck and input.')}}">
+          <input type="hidden" id="duplicate_warning" name="duplicate_warning"
+              value="{{_('The same item may have been registered.')}}">
           <input type="hidden" id="duplicate_input_error" name="duplicate_input_error"
               value="{{_('The following items cannot have same value. Please recheck and re-input.')}}">
           <input type="hidden" id="ja_kana_error" name="ja_kana_error"
@@ -525,4 +594,3 @@
     </div><!-- /.modal-dialog -->
   </div><!-- /.modal -->
   {%- endblock page_body %}
-

@@ -20,11 +20,9 @@
 
 """Configuration for weko-records-ui."""
 import os
+from enum import Enum
 
 from flask_babelex import lazy_gettext as _
-from invenio_records_rest.utils import allow_all
-
-from .views import blueprint
 
 WEKO_RECORDS_UI_DETAIL_TEMPLATE = 'weko_records_ui/detail.html'
 WEKO_RECORDS_UI_BASE_TEMPLATE = 'weko_theme/page.html'
@@ -70,6 +68,9 @@ OPEN_DATE_DISPLAY_VALUE = '1'
 OPEN_DATE_HIDE_VALUE = '0'
 # setting the release date if display
 
+DISPLAY_REQUEST_FORM = False
+# Default setting whether to display the request form
+
 # CSL Citation Formatter
 # ======================
 #: Styles Endpoint for CSL
@@ -97,6 +98,12 @@ CSL_JSTEMPLATE_LOADING = os.path.join(CSL_JSTEMPLATE_DIR, 'loading.html')
 CSL_JSTEMPLATE_TYPEAHEAD = os.path.join(CSL_JSTEMPLATE_DIR, 'typeahead.html')
 
 RECORDS_UI_ENDPOINTS = dict(
+    recid_signposting=dict(
+        pid_type='recid',
+        route='/records/<pid_value>',
+        view_imp='weko_signposting.api.requested_signposting',
+        methods=['HEAD']
+    ),
     recid=dict(
         pid_type='recid',
         route='/records/<pid_value>',
@@ -127,6 +134,23 @@ RECORDS_UI_ENDPOINTS = dict(
         record_class='weko_deposit.api:WekoRecord',
         permission_factory_imp='weko_records_ui.permissions'
                                ':page_permission_factory',
+    ),
+    recid_files_all=dict(
+        pid_type='recid',
+        route='/record/<pid_value>/files/all',
+        view_imp='weko_records_ui.fd.file_list_ui',
+        record_class='weko_deposit.api:WekoRecord',
+        permission_factory_imp='weko_records_ui.permissions'
+                               ':page_permission_factory',
+    ),
+    recid_files_selected=dict(
+        pid_type='recid',
+        route='/record/<pid_value>/files/selected',
+        view_imp='weko_records_ui.fd.file_list_ui',
+        record_class='weko_deposit.api:WekoRecord',
+        permission_factory_imp='weko_records_ui.permissions'
+                               ':page_permission_factory',
+        methods=['POST'],
     ),
     recid_file_details=dict(
         pid_type='recid',
@@ -168,6 +192,7 @@ RECORDS_UI_ENDPOINTS = dict(
         route='/record/<pid_value>/file/onetime/<string:filename>',
         view_imp='weko_records_ui.fd.file_download_onetime',
         record_class='weko_deposit.api:WekoRecord',
+        methods=['GET','POST'],
     ),
     recid_secret_url=dict(
         pid_type='recid',
@@ -256,6 +281,12 @@ WEKO_RECORDS_UI_CITES_REST_ENDPOINTS = {
                                     ':citeproc_v1_response'),
         },
         'cites_route': '/record/cites/<int:pid_value>',
+        'item_route': '/<string:version>/records/<int:pid_value>',
+        'records_stats_route': '/<string:version>/records/<int:pid_value>/stats',
+        'files_stats_route': '/<string:version>/records/<int:pid_value>/files/<string:filename>/stats',
+        'files_get_route': '/<string:version>/records/<int:pid_value>/files/<string:filename>',
+        'file_list_get_all_route': '/<string:version>/records/<int:pid_value>/files/all',
+        'file_list_get_selected_route': '/<string:version>/records/<int:pid_value>/files/selected',
         'default_media_type': 'application/json',
         'max_result_window': 10000,
     },
@@ -339,12 +370,12 @@ FOOTER_HEIGHT = 4  # height of the footer cell
 METADATA_HEIGHT = 9
 
 # Path to the JPAexg font file
-JPAEXG_TTF_FILEPATH = blueprint.root_path + "/fonts/ipaexg00201/ipaexg.ttf"
+JPAEXG_TTF_FILEPATH = "/fonts/ipaexg00201/ipaexg.ttf"
 
 # Path to the JPAexm font file
-JPAEXM_TTF_FILEPATH = blueprint.root_path + "/fonts/ipaexm00201/ipaexm.ttf"
+JPAEXM_TTF_FILEPATH = "/fonts/ipaexm00201/ipaexm.ttf"
 
-PDF_COVERPAGE_LANG_FILEPATH = blueprint.root_path + "/translations/"
+PDF_COVERPAGE_LANG_FILEPATH = "/translations/"
 
 PDF_COVERPAGE_LANG_FILENAME = "/pdf_coverpage.json"
 
@@ -561,7 +592,7 @@ WEKO_RECORDS_UI_EMAIL_ITEM_KEYS = ['creatorMails', 'contributorMails', 'mails']
 RECORDS_UI_TOMBSTONE_TEMPLATE = 'weko_records_ui/tombstone.html'
 # Setting the template of showing deleted record
 
-WEKO_RECORDS_UI_LANG_DISP_FLG = False 
+WEKO_RECORDS_UI_LANG_DISP_FLG = False
 """ Enable function of switching metadata by language of metadata """
 
 WEKO_RECORDS_UI_GOOGLE_SCHOLAR_OUTPUT_RESOURCE_TYPE = [
@@ -651,11 +682,20 @@ WEKO_RECORDS_UI_DISPLAY_VERSION_BOX_FLG = True
 WEKO_RECORDS_UI_DISPLAY_EXPORT_BOX_FLG = True
 """ Display Export box on item detail. """
 
-WEKO_RECORDS_UI_DISPLAY_RESOURCE_TYPE = False 
+WEKO_RECORDS_UI_DISPLAY_COMMUNITIES_BOX_FLG = True
+""" Display COMMUNITIES box on item detail. """
+
+WEKO_RECORDS_UI_DISPLAY_RESOURCE_TYPE = False
 """ Display resource type on item detail. """
 
 WEKO_RECORDS_UI_DISPLAY_ITEM_TYPE = True
 """ Display item type name on item detail. """
+
+WEKO_RECORDS_UI_COMMUNITIES_BOX_THUMBNAIL_WIDTH = 50
+""" community thumbnail width in COMMUNITIES BOX. """
+
+WEKO_RECORDS_UI_COMMUNITIES_BOX_THUMBNAIL_HEIGHT = 50
+""" community thumbnail height in COMMUNITIES BOX. """
 
 WEKO_RECORDS_UI_REST_ENDPOINTS = {
     'need_restricted_access': {
@@ -670,8 +710,63 @@ WEKO_RECORDS_UI_REST_ENDPOINTS = {
         'route': '/<string:version>/records/<int:pid_value>/files/<string:file_name>/application',
         'default_media_type': 'application/json',
     },
+    'send_request_mail': {
+        'route': '/<string:version>/records/<int:pid_value>/request-mail',
+        'default_media_type': 'application/json',
+    },
+    'get_captcha_image': {
+        'route': '/<string:version>/captcha/image',
+        'default_media_type': 'application/json',
+    },
+    'validate_captcha_answer': {
+        'route': '/<string:version>/captcha/validate',
+        'default_media_type': 'application/json',
+    }
 }
 
 WEKO_RECORDS_UI_API_LIMIT_RATE_DEFAULT = ['100 per minute']
 
 WEKO_RECORDS_UI_API_ACCEPT_LANGUAGES = ['en', 'ja']
+
+WEKO_RECORDS_UI_CAPTCHA_EXPIRATION_SECONDS = 900
+
+WEKO_RECORDS_UI_CAPTCHA_TTL_SECONDS = 600
+
+WEKO_RECORDS_UI_NOTIFICATION_MESSAGE = "以下の内容のリクエストメールをデータ提供者に送信しました。\n\n-----------------------------------------------------------------------------\n\n"
+
+WEKO_RECORDS_UI_REQUEST_MESSAGE = "様からリクエストメールが送信されました。\n\n-----------------------------------------------------------------------------\n\n"
+
+WEKO_RECORDS_UI_FILELIST_TMP_PREFIX = 'weko_filelist_'
+
+WEKO_RECORDS_UI_TSV_FIELD_NAMES_DEFAULT = ['Name', 'Size', 'License', 'Date', 'URL']
+
+WEKO_RECORDS_UI_TSV_FIELD_NAMES_EN = ['Name', 'Size', 'License', 'Date', 'URL']
+
+WEKO_RECORDS_UI_TSV_FIELD_NAMES_JA = ['名前', 'サイズ', 'ライセンス', '公開日', '格納場所']
+
+# The API URL to obtain a token for OA. example: "<OA URL>/oauth/token"
+WEKO_RECORDS_UI_OA_GET_TOKEN_URL = ""
+
+# The API URL to update the status of an OA article. example: "<OA URL>/api/articles/{}/status"
+WEKO_RECORDS_UI_OA_UPDATE_STATUS_URL = ""
+
+# The API URL to get OA policies. example: "<OA URL>/api/oa_policies"
+WEKO_RECORDS_UI_OA_GET_OA_POLICIES_URL = ""
+
+WEKO_RECORDS_UI_OA_API_RETRY_COUNT = 3
+
+WEKO_RECORDS_UI_OA_API_CODE = "oaa"
+
+class EXTERNAL_SYSTEM(Enum):
+    OA = "OA"
+
+class ITEM_ACTION(Enum):
+    CREATED = "created"
+    UPDATED = "updated"
+    DELETED = "deleted"
+
+class FILE_OPEN_STATUS(Enum):
+    PUBLIC = "public"
+    EMBARGO = "embargo"
+    PRIVATE = "private"
+    RESTRICTED = "restricted"

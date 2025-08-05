@@ -35,6 +35,7 @@ from unittest.mock import patch
 from datetime import timedelta
 from kombu import Exchange, Queue
 from sqlalchemy.sql import func
+from invenio_mail import InvenioMail
 
 import pytest
 from elasticsearch import Elasticsearch
@@ -88,6 +89,7 @@ from sqlalchemy_utils.functions import create_database, database_exists, drop_da
 from weko_admin import WekoAdmin
 from weko_admin.models import SessionLifetime, RankingSettings
 from weko_admin.models import AdminSettings
+from weko_accounts import WekoAccounts
 from weko_deposit import WekoDeposit, WekoDepositREST
 from weko_deposit.api import WekoDeposit as aWekoDeposit
 from weko_deposit.api import WekoIndexer, WekoRecord, _FormatSysBibliographicInformation
@@ -110,13 +112,14 @@ from weko_index_tree.config import (
 from weko_index_tree.models import Index, IndexStyle
 from weko_items_ui import WekoItemsUI
 from weko_items_ui.config import WEKO_ITEMS_UI_MS_MIME_TYPE,WEKO_ITEMS_UI_FILE_SISE_PREVIEW_LIMIT
+from weko_logging.audit import WekoLoggingUserActivity
 from weko_records import WekoRecords
 from weko_records.api import ItemsMetadata, FilesMetadata
 from weko_records_ui.ext import WekoRecordsREST
-from weko_records.models import ItemType, ItemTypeMapping, ItemTypeName, SiteLicenseInfo, FeedbackMailList,SiteLicenseIpAddress
+from weko_records.models import ItemType, ItemTypeMapping, ItemTypeName, SiteLicenseInfo, FeedbackMailList,SiteLicenseIpAddress,RequestMailList
 from weko_records.utils import get_options_and_order_list
 from weko_records_ui.config import WEKO_ADMIN_PDFCOVERPAGE_TEMPLATE,RECORDS_UI_ENDPOINTS,WEKO_RECORDS_UI_SECRET_KEY,WEKO_RECORDS_UI_ONETIME_DOWNLOAD_PATTERN
-from weko_records_ui.models import FileSecretDownload, PDFCoverPageSettings,FileOnetimeDownload, FilePermission #RocrateMapping
+from weko_records_ui.models import FileSecretDownload, PDFCoverPageSettings,FileOnetimeDownload, FilePermission, RocrateMapping
 from weko_records_ui.scopes import item_read_scope
 from weko_records_ui.utils import _create_secret_download_url, _generate_secret_download_url
 from weko_schema_ui.config import (
@@ -145,6 +148,11 @@ from weko_records_ui.config import (
     RECORDS_UI_EXPORT_FORMATS,
     WEKO_PERMISSION_ROLE_COMMUNITY,
     WEKO_RECORDS_UI_EMAIL_ITEM_KEYS,
+    WEKO_RECORDS_UI_OA_API_RETRY_COUNT,
+    WEKO_RECORDS_UI_OA_API_CODE,
+    EXTERNAL_SYSTEM,
+    ITEM_ACTION,
+    FILE_OPEN_STATUS
 )
 from weko_search_ui import WekoSearchUI
 from weko_search_ui.config import WEKO_SEARCH_MAX_RESULT
@@ -209,9 +217,11 @@ def base_app(instance_path):
         JSONSCHEMAS_URL_SCHEME="http",
         SECRET_KEY="CHANGE_ME",
         SECURITY_PASSWORD_SALT="CHANGE_ME_ALSO",
-        SQLALCHEMY_DATABASE_URI=os.environ.get(
-            "SQLALCHEMY_DATABASE_URI", "sqlite:///test.db"
-        ),
+        # SQLALCHEMY_DATABASE_URI=os.environ.get(
+        #     "SQLALCHEMY_DATABASE_URI", "sqlite:///test.db"
+        # ),
+        SQLALCHEMY_DATABASE_URI=os.getenv('SQLALCHEMY_DATABASE_URI',
+                                           'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest'),
         SQLALCHEMY_TRACK_MODIFICATIONS=True,
         SQLALCHEMY_ECHO=False,
         TESTING=True,
@@ -283,12 +293,20 @@ def base_app(instance_path):
         INDEXER_MQ_QUEUE = Queue("indexer", exchange=Exchange("indexer", type="direct"), routing_key="indexer",queue_arguments={"x-queue-type":"quorum"}),
         WEKO_WORKFLOW_DATE_FORMAT = WEKO_WORKFLOW_DATE_FORMAT,
         WEKO_RECORDS_UI_MAIL_TEMPLATE_SECRET_GENRE_ID = 1,
+        MAIL_SUPPRESS_SEND=True,
         SEARCH_UI_SEARCH_INDEX="test-weko",
         FILES_REST_ROLES_ENV = [
             'INVENIO_ROLE_SYSTEM',
             'INVENIO_ROLE_REPOSITORY',
             'INVENIO_ROLE_COMMUNITY'
-        ]
+        ],
+        WEKO_RECORDS_UI_OA_GET_TOKEN_URL = "<OA URL>/oauth/token",
+        WEKO_RECORDS_UI_OA_UPDATE_STATUS_URL = "<OA URL>/api/articles/{}/status",
+        WEKO_RECORDS_UI_OA_API_RETRY_COUNT = WEKO_RECORDS_UI_OA_API_RETRY_COUNT,
+        WEKO_RECORDS_UI_OA_API_CODE = WEKO_RECORDS_UI_OA_API_CODE,
+        EXTERNAL_SYSTEM = EXTERNAL_SYSTEM,
+        ITEM_ACTION = ITEM_ACTION,
+        FILE_OPEN_STATUS = FILE_OPEN_STATUS
     )
     #with ESTestServer(timeout=30) as server:
     client = Elasticsearch(['localhost:9200'])
@@ -318,6 +336,7 @@ def base_app(instance_path):
     InvenioREST(app_)
     InvenioOAuth2Server(app_)
     InvenioOAuth2ServerREST(app_)
+    InvenioMail(app_)
     WekoRecords(app_)
     WekoItemsUI(app_)
     WekoRecordsUI(app_)
@@ -329,6 +348,7 @@ def base_app(instance_path):
     WekoIndexTree(app_)
     WekoIndexTreeREST(app_)
     WekoSchemaUI(app_)
+    WekoAccounts(app_)
     #Menu(app_)
     app_.register_blueprint(weko_records_ui_blueprint)
     app_.register_blueprint(weko_workflow_blueprint)
@@ -339,6 +359,7 @@ def base_app(instance_path):
     # app_.register_blueprint(rest_blueprint)
     WekoDeposit(app_)
     WekoDepositREST(app_)
+    WekoLoggingUserActivity(app_)
     WekoRecordsREST(app_)
 
     current_assets = LocalProxy(lambda: app_.extensions["invenio-assets"])
@@ -612,35 +633,6 @@ def itemtypes(app, db):
     item_type_name = ItemTypeName(
         id=1, name="テストアイテムタイプ", has_site_license=True, is_active=True
     )
-    item_type_schema = dict()
-    with open("tests/data/itemtype_schema.json", "r") as f:
-        item_type_schema = json.load(f)
-
-    item_type_form = dict()
-    with open("tests/data/itemtype_form.json", "r") as f:
-        item_type_form = json.load(f)
-
-    item_type_render = dict()
-    with open("tests/data/itemtype_render.json", "r") as f:
-        item_type_render = json.load(f)
-
-    item_type_mapping = dict()
-    with open("tests/data/itemtype_mapping.json", "r") as f:
-        item_type_mapping = json.load(f)
-
-    item_type = ItemType(
-        id=1,
-        name_id=1,
-        harvesting_type=True,
-        schema=item_type_schema,
-        form=item_type_form,
-        render=item_type_render,
-        tag=1,
-        version_id=1,
-        is_deleted=False,
-    )
-
-    item_type_mapping = ItemTypeMapping(id=1, item_type_id=1, mapping=item_type_mapping)
 
     item_type_name_31001 = ItemTypeName(
         id=31001, name="利用申請", has_site_license=True, is_active=True
@@ -708,6 +700,35 @@ def itemtypes(app, db):
 
     item_type_mapping_31002 = ItemTypeMapping(id=31002, item_type_id=31002, mapping=item_type_mapping_31002)
 
+    item_type_schema = dict()
+    with open("tests/data/itemtype_schema.json", "r") as f:
+        item_type_schema = json.load(f)
+
+    item_type_form = dict()
+    with open("tests/data/itemtype_form.json", "r") as f:
+        item_type_form = json.load(f)
+
+    item_type_render = dict()
+    with open("tests/data/itemtype_render.json", "r") as f:
+        item_type_render = json.load(f)
+
+    item_type_mapping = dict()
+    with open("tests/data/itemtype_mapping.json", "r") as f:
+        item_type_mapping = json.load(f)
+
+    item_type = ItemType(
+        id=1,
+        name_id=1,
+        harvesting_type=True,
+        schema=item_type_schema,
+        form=item_type_form,
+        render=item_type_render,
+        tag=1,
+        version_id=1,
+        is_deleted=False,
+    )
+
+    item_type_mapping = ItemTypeMapping(id=1, item_type_id=1, mapping=item_type_mapping)
 
     with db.session.begin_nested():
         db.session.add(item_type_name)
@@ -2795,10 +2816,10 @@ def records_restricted(app, db, workflows_restricted, records ,users):
     filepath = "tests/data/helloworld.pdf"
     wf1 :WorkFlow = workflows_restricted.get("workflow_workflow1")
     wf2 :WorkFlow = workflows_restricted.get("workflow_workflow2")
-    results.append(make_record_restricted(db, indexer, i, filepath, filename, mimetype 
+    results.append(make_record_restricted(db, indexer, i, filepath, filename, mimetype
                                         ,"none_loggin" ,wf2.id))
     i = i + 1
-    results.append(make_record_restricted(db, indexer, i, filepath, filename, mimetype 
+    results.append(make_record_restricted(db, indexer, i, filepath, filename, mimetype
                                         ,str(users[0]["id"]) #contributer
                                         ,wf1.id))
     i = i + 1
@@ -2819,18 +2840,18 @@ def records_restricted(app, db, workflows_restricted, records ,users):
 def make_record_restricted(db, indexer, i, filepath, filename, mimetype ,userId ,workflowId):
     """ make open_resirected record"""
     record_data = {
-        "_oai": {"id": "oai:weko3.example.org:000000{:02d}".format(i), "sets": ["{}".format((i % 2) + 1)]},
-        "path": ["{}".format((i % 2) + 1)],
+        "_oai": {"id": f"oai:weko3.example.org:000000{i:02}", "sets": [f"{(i % 2) + 1}"]},
+        "path": [f"{(i % 2) + 1}"],
         "owner": 1,
-        "recid": "{}".format(i),
+        "recid": f"{i}",
         "title": [
             "ja_conference paperITEM00000009(public_open_access_open_access_simple)"
         ],
-        "pubdate": {"attribute_name": "PubDate", "attribute_value": "2021-08-06"},
+        "pubdate": {"attribute_name": "PubDate", "attribute_value": "2024-02-15"},
         "_buckets": {"deposit": "27202db8-aefc-4b85-b5ae-4921ac151ddf"},
         "_deposit": {
-            "id": "{}".format(i),
-            "pid": {"type": "depid", "value": "{}".format(i), "revision_id": 0},
+            "id": f"{i}",
+            "pid": {"type": "depid", "value": f"{i}", "revision_id": 0},
             "owners": [1],
             "status": "published",
         },
@@ -2857,11 +2878,11 @@ def make_record_restricted(db, indexer, i, filepath, filename, mimetype ,userId 
             "attribute_name": "Alternative Title",
             "attribute_value_mlt": [
                 {
-                    "subitem_1551255720400": "Alternative Title",
+                    "subitem_1551255720400": "Alternative EN Title",
                     "subitem_1551255721061": "en",
                 },
                 {
-                    "subitem_1551255720400": "Alternative Title",
+                    "subitem_1551255720400": "Alternative JA Title",
                     "subitem_1551255721061": "ja",
                 },
             ],
@@ -3051,7 +3072,7 @@ def make_record_restricted(db, indexer, i, filepath, filename, mimetype ,userId 
             "attribute_value_mlt": [
                 {
                     "subitem_1522300695726": "Available",
-                    "subitem_1522300722591": "2021-06-30",
+                    "subitem_1522300722591": "2024-01-31",
                 }
             ],
         },
@@ -3363,9 +3384,9 @@ def make_record_restricted(db, indexer, i, filepath, filename, mimetype ,userId 
     }
 
     item_data = {
-        "id": "{}".format(i),
-        "pid": {"type": "recid", "value": "{}".format(i), "revision_id": 0},
-        "path": ["{}".format((i % 2) + 1)],
+        "id": f"{i}",
+        "pid": {"type": "recid", "value": f"{i}", "revision_id": 0},
+        "path": [f"{(i % 2) + 1}"],
         "owner": 1,
         "title": "ja_conference paperITEM00000009(public_open_access_open_access_simple)",
         "owners": [1],
@@ -3866,7 +3887,7 @@ def make_record_restricted(db, indexer, i, filepath, filename, mimetype ,userId 
             "date": [{"dateValue": "2021-07-12", "dateType": "Available"}],
             "accessrole": "open_restricted",
             #"provide" : [{"role": userId, "workflow": workflowId }],
-            #"terms"	:"term_free","termsDescription":"利用規約本文",
+            #"terms" :"term_free","termsDescription":"利用規約本文",
             "displaytype": "simple",
             "filename": filename,
             "attachment": {},
@@ -3906,7 +3927,7 @@ def make_record_restricted(db, indexer, i, filepath, filename, mimetype ,userId 
             "date": [{"dateValue": "2021-07-12", "dateType": "Available"}],
             "accessrole": "open_restricted",
             "provide" : [{"role" :userId, "workflow": workflowId }],
-            "terms"	:"term_free","termsDescription":"利用規約本文",
+            "terms" :"term_free","termsDescription":"利用規約本文",
             "displaytype": "simple",
             "filename": filename,
             "attachment": {},
@@ -4994,7 +5015,7 @@ def make_record_restricted_open_login(db, indexer, i, filepath, filename, mimety
             "date": [{"dateValue": "2021-07-12", "dateType": "Available"}],
             "accessrole": "open_login",
             "roles" : roles,
-            "terms"	:"term_free","termsDescription":"利用規約本文",
+            "terms" :"term_free","termsDescription":"利用規約本文",
             "displaytype": "simple",
             "filename": filename,
             "attachment": {},
@@ -5033,7 +5054,7 @@ def make_record_restricted_open_login(db, indexer, i, filepath, filename, mimety
             "date": [{"dateValue": "2021-07-12", "dateType": "Available"}],
             "accessrole": "open_login",
             "roles" : roles,
-            "terms"	:"term_free","termsDescription":"利用規約本文",
+            "terms" :"term_free","termsDescription":"利用規約本文",
             "displaytype": "simple",
             "filename": filename,
             "attachment": {},
@@ -5472,24 +5493,24 @@ def workflows_restricted(db ,workflow_actions, itemtypes,users, records):
         db.session.add_all([workflow_workflow1, workflow_workflow2, workflow_workflow3, workflow_workflow4])
 
     workflows.update({
-		"flow_define1"       : flow_define1      
-		,"flow_define2"       : flow_define2      
-		,"flow_define3"       : flow_define3      
-		,"flow_define4"       : flow_define4      
-		,"flow_action1_1"     : flow_action1_1    
-		,"flow_action1_2"     : flow_action1_2    
-		,"flow_action1_3"     : flow_action1_3    
-		,"flow_action2_1"     : flow_action2_1    
-		,"flow_action2_2"     : flow_action2_2    
-		,"flow_action3_1"     : flow_action3_1    
-		,"flow_action3_2"     : flow_action3_2    
-		,"flow_action3_3"     : flow_action3_3    
-		,"flow_action3_4"     : flow_action3_4    
-		,"flow_action4_1"     : flow_action4_1    
-		,"flow_action4_2"     : flow_action4_2    
-		,"flow_action4_3"     : flow_action4_3    
-		,"flow_action4_4"     : flow_action4_4    
-		,"flow_action4_5"     : flow_action4_5    
+		"flow_define1"       : flow_define1
+		,"flow_define2"       : flow_define2
+		,"flow_define3"       : flow_define3
+		,"flow_define4"       : flow_define4
+		,"flow_action1_1"     : flow_action1_1
+		,"flow_action1_2"     : flow_action1_2
+		,"flow_action1_3"     : flow_action1_3
+		,"flow_action2_1"     : flow_action2_1
+		,"flow_action2_2"     : flow_action2_2
+		,"flow_action3_1"     : flow_action3_1
+		,"flow_action3_2"     : flow_action3_2
+		,"flow_action3_3"     : flow_action3_3
+		,"flow_action3_4"     : flow_action3_4
+		,"flow_action4_1"     : flow_action4_1
+		,"flow_action4_2"     : flow_action4_2
+		,"flow_action4_3"     : flow_action4_3
+		,"flow_action4_4"     : flow_action4_4
+		,"flow_action4_5"     : flow_action4_5
 		,"workflow_workflow1" : workflow_workflow1
 		,"workflow_workflow2" : workflow_workflow2
 		,"workflow_workflow3" : workflow_workflow3
@@ -5521,7 +5542,7 @@ def site_license_info(app, db):
 @pytest.fixture()
 def site_license_ipaddr(app, db,site_license_info):
     record1 = SiteLicenseIpAddress(organization_id=1,organization_no=1,start_ip_address="192.168.0.0",finish_ip_address="192.168.0.255")
-    # record2 = SiteLicenseIpAddress(organization_id=1,start_ip_address="192.168.1.0",finish_ip_address="192.168.2.255")   
+    # record2 = SiteLicenseIpAddress(organization_id=1,start_ip_address="192.168.1.0",finish_ip_address="192.168.2.255")
     with db.session.begin_nested():
         db.session.add(record1)
         # db.session.add(record2)
@@ -5535,7 +5556,7 @@ def db_fileonetimedownload(app, db):
         record_id='1',
         download_count=10,
         expiration_date=0,
-        extra_info=str({"is_guest": True, "send_usage_report": True, "usage_application_activity_id": ""})
+        extra_info={"is_guest": True, "send_usage_report": True, "usage_application_activity_id": "","password_for_download":"test_pass"}
     )
     db.session.add(record)
     return record
@@ -5549,7 +5570,7 @@ def db_file_permission(app, db,users,records_restricted):
     record0 = FilePermission(
         user_id=1, record_id=recid0.pid_value, file_name=filename0,
         usage_application_activity_id="usage_application_activity_id_dummy1",
-        usage_report_activity_id=None, status=1, 
+        usage_report_activity_id=None, status=1,
     )
     email = list(filter(lambda x : x['email'] if x['id'] == record0.user_id else None,users))[0]['email']
     record0_onetime=FileOnetimeDownload(user_mail=email
@@ -5669,7 +5690,7 @@ def db_FileOneTimeDownload(app, db):
         db.session.add(file_one_time_download)
     return file_one_time_download
 
-    
+
 @pytest.fixture()
 def db_admin_settings(db):
     with db.session.begin_nested():
@@ -6074,6 +6095,33 @@ def oauth_headers(client, json_headers, create_oauth_token, create_oauth_token_a
     ]
 
 @pytest.fixture()
+def make_request_maillist(db):
+    rec_id_1 = 100
+    rec_id_2 = 200
+    item_id_1 = uuid.uuid4()
+    item_id_2 = uuid.uuid4()
+    mail_list_1 = [{"email": "author1@example.com", "author_id": "1"}]
+    mail_list_2 = []
+
+    request_maillist_1 = RequestMailList(id = 1, item_id = item_id_1, mail_list = mail_list_1)
+    request_maillist_2 = RequestMailList(id = 2, item_id = item_id_2, mail_list = mail_list_2)
+
+    recid1_test = PersistentIdentifier.create('recid', str(rec_id_1), object_type='rec', object_uuid=item_id_1, status=PIDStatus.REGISTERED)
+    recid2_test = PersistentIdentifier.create('recid', str(rec_id_2), object_type='rec', object_uuid=item_id_2, status=PIDStatus.REGISTERED)
+
+    with db.session.begin_nested():
+        db.session.add(request_maillist_1)
+        db.session.add(request_maillist_2)
+        db.session.add(recid1_test)
+        db.session.add(recid2_test)
+    db.session.commit()
+
+    return [
+        item_id_1,
+        item_id_2
+        ]
+
+@pytest.fixture()
 def records_rest(app, db):
     rec_uuid = uuid.uuid4()
 
@@ -6145,6 +6193,32 @@ def db_rocrate_mapping(db):
         db.session.add(rocrate_mapping)
     db.session.commit()
 
+@pytest.fixture()
+def make_request_maillist(db):
+    rec_id_1 = 1000
+    rec_id_2 = 2000
+    item_id_1 = uuid.uuid4()
+    item_id_2 = uuid.uuid4()
+    mail_list_1 = [{"email": "author1@example.com", "author_id": "1"}]
+    mail_list_2 = []
+
+    request_maillist_1 = RequestMailList(id = 1, item_id = item_id_1, mail_list = mail_list_1)
+    request_maillist_2 = RequestMailList(id = 2, item_id = item_id_2, mail_list = mail_list_2)
+
+    recid1_test = PersistentIdentifier.create('recid', str(rec_id_1), object_type='rec', object_uuid=item_id_1, status=PIDStatus.REGISTERED)
+    recid2_test = PersistentIdentifier.create('recid', str(rec_id_2), object_type='rec', object_uuid=item_id_2, status=PIDStatus.REGISTERED)
+
+    with db.session.begin_nested():
+        db.session.add(request_maillist_1)
+        db.session.add(request_maillist_2)
+        db.session.add(recid1_test)
+        db.session.add(recid2_test)
+    db.session.commit()
+
+    return [
+        item_id_1,
+        item_id_2
+        ]
 
 @pytest.fixture()
 def indices(app, db):
@@ -6153,7 +6227,7 @@ def indices(app, db):
     latest_index = db.session.query(
         func.max(Index.position).label("max_position")
     ).one()
-        
+
     index = Index(
         id=1234567890,
         index_name="index_name",

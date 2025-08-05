@@ -82,6 +82,7 @@ from weko_index_tree import WekoIndexTree, WekoIndexTreeREST
 from weko_theme import WekoTheme
 from weko_groups import WekoGroups
 from invenio_pidrelations.models import PIDRelation
+from weko_logging.audit import WekoLoggingUserActivity
 from weko_records.models import ItemType, ItemTypeMapping, ItemTypeName
 from weko_records.api import ItemsMetadata, WekoRecord
 from weko_schema_ui.models import OAIServerSchema
@@ -101,11 +102,13 @@ from weko_deposit.config import (
     WEKO_DEPOSIT_REST_ENDPOINTS as _WEKO_DEPOSIT_REST_ENDPOINTS,
     _PID,
     DEPOSIT_REST_ENDPOINTS as _DEPOSIT_REST_ENDPOINTS,
+    WEKO_DEPOSIT_TEXTMIMETYPE_WHITELIST_FOR_ES as _WEKO_DEPOSIT_TEXTMIMETYPE_WHITELIST_FOR_ES,
+    WEKO_MIMETYPE_WHITELIST_FOR_ES as _WEKO_MIMETYPE_WHITELIST_FOR_ES
 )
 from weko_index_tree.config import (
     WEKO_INDEX_TREE_REST_ENDPOINTS as _WEKO_INDEX_TREE_REST_ENDPOINTS,
 )
-from invenio_accounts.testutils import login_user_via_session
+from weko_logging.audit import WekoLoggingUserActivity
 
 from tests.helpers import json_data, create_record
 
@@ -194,7 +197,10 @@ def base_app(instance_path):
             "System Administrator",
             "Repository Administrator",
         ],
+        WEKO_DEPOSIT_MAX_BACK_OFF_TIME=2,
         WEKO_PERMISSION_ROLE_COMMUNITY=["Community Administrator"],
+        WEKO_DEPOSIT_TEXTMIMETYPE_WHITELIST_FOR_ES = _WEKO_DEPOSIT_TEXTMIMETYPE_WHITELIST_FOR_ES,
+        WEKO_MIMETYPE_WHITELIST_FOR_ES = _WEKO_MIMETYPE_WHITELIST_FOR_ES,
         WEKO_SCHEMA_JPCOAR_V2_SCHEMA_NAME="jpcoar_mapping",
         WEKO_SCHEMA_JPCOAR_V2_RESOURCE_TYPE_REPLACE={
             "periodical": "journal",
@@ -241,6 +247,7 @@ def base_app(instance_path):
     # app_.register_blueprint(rest_blueprint)
     WekoDeposit(app_)
     WekoDepositREST(app_)
+    WekoLoggingUserActivity(app_)
     return app_
 
 
@@ -480,7 +487,7 @@ def users(app, db):
         ds.add_role_to_user(originalroleuser, originalrole)
         ds.add_role_to_user(originalroleuser2, originalrole)
         ds.add_role_to_user(originalroleuser2, repoadmin_role)
-        
+
     index = Index()
     db.session.add(index)
     db.session.commit()
@@ -603,9 +610,9 @@ def db_itemtype(app, db):
     with open("tests/data/itemtype_render.json", "r") as f:
         item_type_render = json.load(f)
 
-    item_type_mapping = dict()
+    _item_type_mapping_mapping = dict()
     with open("tests/data/itemtype_mapping.json", "r") as f:
-        item_type_mapping = json.load(f)
+        item_type_mapping_mapping = json.load(f)
 
     item_type = ItemType(
         id=1,
@@ -618,8 +625,10 @@ def db_itemtype(app, db):
         version_id=1,
         is_deleted=False,
     )
+    created_date = datetime.strptime("2020/01/01 0:00:00.000",'%Y/%m/%d %H:%M:%S.%f')
+    updated_date = datetime.strptime("2021/01/01 0:00:00.000",'%Y/%m/%d %H:%M:%S.%f')
 
-    item_type_mapping = ItemTypeMapping(id=1, item_type_id=1, mapping=item_type_mapping)
+    item_type_mapping = ItemTypeMapping(created=created_date, updated=updated_date, id=1, item_type_id=1, mapping=item_type_mapping_mapping)
 
     with db.session.begin_nested():
         db.session.add(item_type_name)
@@ -692,15 +701,12 @@ def es_records(app, db, location, db_itemtype, db_oaischema):
             deposit.commit()
             
             record['item_1617605131499']['attribute_value_mlt'][0]['version_id'] = str(obj.version_id)
-            record.commit()
 
             record_data['content']= [{"date":[{"dateValue":"2021-07-12","dateType":"Available"}],"accessrole":"open_access","displaytype" : "simple","filename" : "hello.txt","attachment" : {},"format" : "text/plain","mimetype" : "text/plain","filesize" : [{"value" : "1 KB"}],"version_id" : "{}".format(obj.version_id),"url" : {"url":"http://localhost/record/{}/files/hello.txt".format(i)},"file":(base64.b64encode(stream.getvalue())).decode('utf-8')}]
             indexer.upload_metadata(record_data, rec_uuid, 1, False)
             item = ItemsMetadata.create(item_data, id_=rec_uuid)
-            item.commit()
-            
-            record_info = {'depid':depid, 'recid':recid, 'parent': parent, 'doi':doi, 'hdl': hdl, 'record':record, 'record_data':record_data, 'item':item , 'item_data':item_data, 'deposit': deposit}
-            results.append(record_info)
+
+            results.append({"depid":depid, "recid":recid, "parent": parent, "doi":doi, "hdl": hdl,"record":record, "record_data":record_data,"item":item , "item_data":item_data,"deposit": deposit})
 
         for i in range(1, 10):
             create_record(i, (i % 2) + 1)
@@ -840,7 +846,7 @@ def db_admin_settings(db):
 @pytest.fixture()
 def db_userprofile(app, db, users):
     profiles = {}
-    with db.session.begin_nested(): 
+    with db.session.begin_nested():
         user = users[1]['obj']
         p = UserProfile()
         p.user_id = user.id
@@ -957,10 +963,9 @@ def db_activity(app, db,users,location,db_itemtype,db_actions):
     with db.session.begin_nested():
         db.session.add(no_location_activity)
         db.session.add(location_activity)
-    
-    #db.session.ex
+
     db.session.commit()
-    
+
     return no_location_activity, location_activity
 
 @pytest.fixture()

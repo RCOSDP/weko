@@ -19,7 +19,7 @@
  #}
 
 {%- extends config.WEKO_WORKFLOW_BASE_TEMPLATE %}
-{%- from "invenio_communities/macros.html" import community_header %}
+{%- from "invenio_communities/macros.html" import community_header with context %}
 
 {%- block css %}
   {{ super() }}
@@ -248,9 +248,15 @@
         <div class="panel panel-default hide" id="hide-res-check">{{ res_check }}</div>
         <div class="panel panel-default">
           {%- if 0 != res_check %}
-            <div class="panel-body" id="step_page_permission">
-              {% include 'weko_workflow/permission_required.html' %}
-            </div>
+            {%- if approval_pending %}
+              <div class="panel-body" id="step_page_pending">
+                {% include 'weko_workflow/approval_pending.html' %}
+              </div>
+            {%- else %}
+              <div class="panel-body" id="step_page_permission">
+                {% include 'weko_workflow/permission_required.html' %}
+              </div>
+            {%- endif %}
           {%- else %}
             <div class="panel-body" id="activity_locked">
               {% include 'weko_workflow/lock_activity.html' with context %}
@@ -321,6 +327,11 @@
           {%- endif %}
         </div>
       {%- endif %}
+      {%- if application_approved %}
+        <div class="panel panel-default">
+          {%- include "weko_workflow/after_approval.html" %}
+        </div>
+      {%- endif %}
       {%- block history_panel %}
       <div class="panel panel-default">
         <span class="indent">{{_('History')}}</span>
@@ -369,7 +380,8 @@
     {%- else %}
        <button class="btn btn-info pull-left back-button" onClick="window.location.href='{{url_for('weko_workflow.index')}}'; $(this).prop('disabled', true)">
          <span class="glyphicon glyphicon-chevron-left"></span> {{_('Back')}}</button>
-         {%- if 'F' == activity.activity_status %}
+         <div class="hide" id="for_delete">{{for_delete}}</div>
+         {%- if 'F' == activity.activity_status and not for_delete %}
          <button class="btn btn-info pull-right back-button" onClick="window.location.href='/records/{{ _id }}' ;$(this).prop('disabled', true)">
           Access</button>
 

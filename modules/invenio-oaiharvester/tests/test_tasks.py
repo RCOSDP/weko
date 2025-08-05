@@ -212,7 +212,16 @@ def test_event_counter(app):
 
 
 # .tox/c1/bin/pytest --cov=invenio_oaiharvester tests/test_tasks.py::test_process_item -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-oaiharvester/.tox/c1/tmp
-def test_process_item(app, db, esindex, location, db_itemtype,harvest_setting,db_records,mocker):
+def test_process_item(app, db, esindex, location, db_itemtype, harvest_setting, db_records, mocker, monkeypatch):
+    app.config["WEKO_SCHEMA_JPCOAR_V2_SCHEMA_NAME"] = 'jpcoar_mapping'
+    app.config["WEKO_SCHEMA_JPCOAR_V2_RESOURCE_TYPE_REPLACE"] = {
+            'periodical':'journal',
+            'interview':'other',
+            'internal report':'other',
+            'report part':'other',
+        }
+    app.config["WEKO_SCHEMA_JPCOAR_V2_NAMEIDSCHEME_REPLACE"] = {'e-Rad':'e-Rad_Researcher'}
+    monkeypatch.setenv("TIKA_JAR_FILE_PATH", "/code/tika/tika-app-2.6.0.jar")
     mocker.patch("weko_search_ui.utils.send_item_created_event_to_es")
     mock_resource_type_map={
         'conference paper':'Harvesting dc'
@@ -546,6 +555,7 @@ def test_run_harvesting(app, db,mocker):
         db.session.add(jpcoar_setting1)
         db.session.add(jpcoar_setting2)
         db.session.add(logs)
+        db.session.execute("SELECT setval('harvest_logs_id_seq', 1)")
     db.session.commit()
 
     # is_harvest_running is True

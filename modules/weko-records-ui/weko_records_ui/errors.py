@@ -22,17 +22,31 @@
 # waive the privileges and immunities granted to it by virtue of its status
 # as an Intergovernmental Organization or submit itself to any jurisdiction.
 
-"""Index errors."""
+"""Records Error"""
 from flask_babelex import gettext as _
 from flask_babelex import get_locale
-from invenio_rest.errors import RESTException
+from invenio_rest.errors import RESTException, RESTValidationError
 
 
 class VersionNotFoundRESTError(RESTException):
     """API Version error."""
 
     code = 400
-    description = _('This API version does not found.')
+    description = 'This API version does not found'
+
+
+class DateFormatRESTError(RESTException):
+    """Date Format error."""
+
+    code = 400
+    description = 'Date formatting(YYYY-MM) is incorrect.'
+
+
+class ModeNotFoundRESTError(RESTException):
+    """Date Format error."""
+
+    code = 400
+    description = 'Mode not specified.'
 
 class InvalidEmailError(RESTException):
     """Invalid email Error error."""
@@ -45,7 +59,30 @@ class InvalidTokenError(RESTException):
 
     code = 400
     description = _('Invalid Tokens.')
-    
+
+class RequiredItemNotExistError(RESTValidationError):
+    """Required Item not exists in request body error."""
+
+    description = _('Reqired item does not exist.')
+
+class InvalidCaptchaError(RESTException):
+    """Invalid CAPTCHA calculation result error."""
+
+    code = 400
+    description = _('The calculation results are different.')
+
+class InvalidRequestError(RESTException):
+    """Invalid Request error."""
+
+    code = 400
+    description = 'Invalid Request Header or Body'
+
+class AuthenticationRequiredError(RESTException):
+    """Contents not found error."""
+
+    code = 401
+    description = _('Unauthorized.')
+
 class InvalidWorkflowError(RESTException):
     """Contents not found error."""
 
@@ -65,14 +102,39 @@ class InvalidWorkflowError(RESTException):
             return restricted_error_msg['content']['ja']['content']
         return restricted_error_msg['content']['en']['content']
 
+
+class PermissionError(RESTException):
+    """Permission error"""
+
+    code = 403
+    description = 'Permission denied'
+
+class AvailableFilesNotFoundRESTError(RESTException):
+    """Available Files Not Found error."""
+
+    code = 403
+    description = 'This File is private or you don\'t have permission'
+
+class RecordsNotFoundRESTError(RESTException):
+    """Records Not Found error."""
+
+    code = 404
+    description = 'This Item does not found'
+
+class FilesNotFoundRESTError(RESTException):
+    """Files Not Found error."""
+
+    code = 404
+    description = 'This File does not found'
+
 class ContentsNotFoundError(RESTException):
     """Contents not found error."""
 
     code = 404
     description = _('Contents not found.')
-    
+
 class InternalServerError(RESTException):
     """Internal Server Error."""
-    
+
     code = 500
-    description = _('Internal Server Error.')
+    description = 'Internal Server Error'

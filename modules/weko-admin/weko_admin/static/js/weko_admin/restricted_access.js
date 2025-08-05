@@ -1,4 +1,4 @@
-const {useState, useEffect} = React;
+const {useState, useEffect ,useCallback} = React;
 const CONTENT_FILE_DOWNLOAD_LABEL = document.getElementById('content_file_download_label').value;
 const DOWNLOAD_LIMIT_LABEL = document.getElementById('download_limit_label').value;
 const EXPIRATION_DATE_LABEL = document.getElementById('expiration_date_label').value;
@@ -36,6 +36,7 @@ const MSG_SEND_MAIL_FAILED = document.getElementById("msg_sent_failed").value;
 const LABEL_SECRET_URL_DOWNLOAD = document.getElementById("label_secret_url_download").value;
 const LABEL_SECRET_URL_ENABLED = document.getElementById("label_secret_url_enabled").value;
 const LABEL_ERROR_MESSAGE = document.getElementById("error_message").value;
+const LABEL_PASSWORD_FOR_DOWNLOAD = document.getElementById("password_for_download").value;
 
 const EMPTY_TERM = {
   key: '',
@@ -116,6 +117,36 @@ function InputComponent({
                disabled={disabledAll}/>
         {UNLIMITED_LABEL}
       </label>
+    </div>
+  )
+}
+
+function PasswordLayout({value,setValue}) {
+  const style = {marginRight: "5px", marginLeft: "15px"};
+
+  return (
+    <div>
+      <div className="row">
+        <div className="col-sm-12 col-md-12 col-md-12">
+          <div className="panel panel-default">
+            <div className="panel-heading">
+              <h5><strong>{LABEL_PASSWORD_FOR_DOWNLOAD}</strong></h5>
+            </div>
+            <div className="panel-body">
+              <div className="form-inline">
+                <label htmlFor="password_enable" className="text-left">
+                <input type="checkbox"
+                    style={style}
+                    id="password_enable"
+                    checked={value}
+                    onChange={(event) =>  setValue(event.target.checked)}/>
+                    {LABEL_SECRET_URL_ENABLED}
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   )
 }
@@ -465,19 +496,23 @@ function ErrorMsgConditions({errorMsg, setErrorMsg}) {
 
 
 function RestrictedAccessLayout({
+                                  password_enable,
                                   secret_URL_file_download,
                                   content_file_download,
                                   terms_and_conditions,
                                   usage_report_workflow_access,
-                                  restricted_access_display_flag,
-                                  error_msg
+                                  error_msg,
+                                  restricted_access_display_flag
                                 }) {
-  const [secretURLFileDownload , setSecretURLFileDownload] = useState(secret_URL_file_download)
+  const [passwordEnable, setPasswordEnable] = useState(!!password_enable);
+  const [secretURLFileDownload , setSecretURLFileDownload] = useState(secret_URL_file_download);
   const [contentFileDownload, setContentFileDownload] = useState(content_file_download);
   const [usageReportWorkflowAccess, setUsageReportWorkflowAccess] = useState(usage_report_workflow_access);
   const [termList, setTermList] = useState(terms_and_conditions);
   const [currentTerm, setCurrentTerm] = useState(EMPTY_TERM);
   const [errorMsg, setErrorMsg] = useState(error_msg);
+
+  const setPasswordEnableCallback = useCallback(setPasswordEnable , []);
 
   function handleApply() {
     let termListClone = [...termList];
@@ -550,6 +585,7 @@ function RestrictedAccessLayout({
      } 
 
     let data = {
+      password_enable:passwordEnable,
       secret_URL_file_download:secretURLFileDownload,
       content_file_download: contentFileDownload,
       usage_report_workflow_access: usageReportWorkflowAccess,
@@ -656,6 +692,8 @@ function RestrictedAccessLayout({
   if (restricted_access_display_flag) {
     return (
       <div>
+        <PasswordLayout value={passwordEnable}
+                        setValue={setPasswordEnableCallback}/>
         <SecretURLFileDownloadLayout value={secretURLFileDownload}
                                    setValue={setSecretURLFileDownload}/>
         <ContentFileDownloadLayout value={contentFileDownload}

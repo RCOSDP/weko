@@ -57,6 +57,9 @@ WEKO_ITEMS_UI_INDEX_URL = '/items/index/{pid_value}'
 
 WEKO_ITEMS_UI_RANKING_TEMPLATE = 'weko_items_ui/ranking.html'
 
+WEKO_ITEMS_UI_README_MD = 'templates/README.md'
+"""README.md for RO-Crate Export."""
+
 WEKO_ITEMS_UI_DEFAULT_MAX_EXPORT_NUM = 100
 """Default max number of allowed to be exported."""
 
@@ -207,6 +210,8 @@ WEKO_ITEMS_UI_RANKING_BUFFER = 100
 
 WEKO_ITEMS_UI_SEARCH_RANK_KEY_FILTER = ['']
 
+WEKO_ITEMS_UI_SHARED_USER_ROLE_ID_LIST = [1,2,3]
+
 WEKO_ITEMS_UI_RANKING_QUERY = dict(
     most_view_ranking = dict(
         query_class = ESWekoRankingQuery,
@@ -258,4 +263,122 @@ WEKO_ITEMS_UI_RANKING_QUERY = dict(
     )
 )
 
-WEKO_ITEMS_UI_SHARED_USER_ROLE_ID_LIST = [1,2,3]
+WEKO_ITEMS_UI_REST_ENDPOINTS = {
+    'ranking': {
+        'rank_route': '/<string:version>/ranking/<string:ranking_type>',
+        'rank_files_route': '/<string:version>/ranking/<int:pid_value>/files',
+        'default_media_type': 'application/json',
+        'max_result_window': 10000,
+    },
+}
+WEKO_ITEMS_UI_CRIS_LINKAGE_RESEARCHMAP_BASE_URL="https://api-trial.researchmap.jp"
+WEKO_ITEMS_UI_CRIS_LINKAGE_RESEARCHMAP_HOST = "api-trial.researchmap.jp:443"
+WEKO_ITEMS_UI_CRIS_LINKAGE_RESEARCHMAP_RETRY_MAX = 5
+WEKO_ITEMS_UI_CRIS_LINKAGE_RESEARCHMAP_MERGE_MODE_DEFAULT = 'similar_merge_similar_data'
+
+WEKO_ITEMS_UI_DEFAULT_LANG = "ja"
+
+WEKO_ITEMS_UI_CRIS_LINKAGE_RESEARCHMAP_MAPPINGS = [
+        { 'type' : 'lang' , "rm_name" : 'paper_title', "jpcoar_name" : 'dc:title' , "weko_name" :"title"}
+        ,{ 'type' : 'lang' , "rm_name" : 'book_title', "jpcoar_name" : 'dc:title' , "weko_name" :"title"}
+        ,{ 'type' : 'lang' , "rm_name" : 'presentation_title', "jpcoar_name" : 'dc:title' , "weko_name" :"title"}
+        ,{ 'type' : 'lang' , "rm_name" : 'work_title', "jpcoar_name" : 'dc:title' , "weko_name" :"title"}
+        ,{ 'type' : 'lang' , "rm_name" : 'other_title', "jpcoar_name" : 'dc:title' , "weko_name" :"title"}
+        
+        ,{'type' : 'lang' , "rm_name" : 'description', "jpcoar_name" : 'datacite:description' , "weko_name" :"description"}
+        ,{'type' : 'lang' , "rm_name" : 'publisher',   "jpcoar_name" : 'dc:publisher' , "weko_name" :"publisher"}
+        ,{'type' : 'lang' , "rm_name" : 'publication_name',   "jpcoar_name" : 'jpcoar:sourceTitle' , "weko_name" :"sourceTitle"}
+
+        ,{'type' : 'lang' , "rm_name" : 'event',   "jpcoar_name" : 'jpcoar:conference' , "weko_name" :"conference" , "child_node" : "conferenceName"}
+        ,{'type' : 'lang' , "rm_name" : 'promoter',   "jpcoar_name" : 'jpcoar:conference' , "weko_name" :"conference", "child_node" : "conferenceSponsor"}
+        ,{'type' : 'lang' , "rm_name" : 'location',   "jpcoar_name" : 'jpcoar:conference' , "weko_name" :"conference", "child_node" : "conferencePlace"}
+        ,{'type' : 'simple' , "rm_name" : 'address_country',   "jpcoar_name" : 'jpcoar:conference' , "weko_name" :"conference", "child_node" : "conferenceCountry"}
+
+        ,{'type' : 'authors'    ,  "rm_name" : 'authors'     , "jpcoar_name" : 'jpcoar:creator'  ,"weko_name": 'creator'}
+        ,{'type' : 'authors'    ,  "rm_name" : 'creators'     , "jpcoar_name" : 'jpcoar:creator'  ,"weko_name": 'creator'}
+        ,{'type' : 'authors'    ,  "rm_name" : 'originators'     , "jpcoar_name" : 'jpcoar:creator'  ,"weko_name": 'creator'}
+        ,{'type' : 'authors'    ,  "rm_name" : 'presenters'     , "jpcoar_name" : 'jpcoar:creator'  ,"weko_name": 'creator'}
+        ,{'type' : 'identifiers',  "rm_name" : "identifiers" , "jpcoar_name" : 'jpcoar:relation' ,"weko_name": 'relation'}
+        ,{'type' : 'simple_value', "rm_name" : 'publication_date',  "jpcoar_name" :  'datacite:date' , "weko_name" : "date"}
+        ,{'type' : 'simple' ,"rm_name" : 'total_page',   "jpcoar_name" : 'jpcoar:numPages', "weko_name" : "numPages"}
+        ,{'type' : 'simple', "rm_name" : 'volume', "jpcoar_name" :  'jpcoar:volume' , "weko_name" : "volume"}
+        ,{'type' : 'simple', "rm_name" : 'number', "jpcoar_name" :  'jpcoar:issue' , "weko_name" : "issue"}
+        ,{'type' : 'simple', "rm_name" : 'starting_page', "jpcoar_name" : 'jpcoar:pageStart' , "weko_name" : "pageStart"}
+        ,{'type' : 'simple', "rm_name" : 'ending_page', "jpcoar_name" :   'jpcoar:pageEnd' ,   "weko_name" : "pageEnd"}
+        ,{'type' : 'simple', "rm_name" : 'languages', "jpcoar_name" :  'dc:language' , "weko_name" : "language"}
+        ,{'type' :  'type', "rm_name" : 'published_paper_type'     , "jpcoar_name" :  'dc:type'     , "weko_name" : "type" ,'achievement_type' : 'published_papers'}
+        ,{'type' :  'type', "rm_name" : 'misc_type'     , "jpcoar_name" :  'dc:type'     , "weko_name" : "type" , 'achievement_type' : 'misc'}
+        ,{'type' :  'type', "rm_name" : 'book_type'     , "jpcoar_name" :  'dc:type'     , "weko_name" : "type" , 'achievement_type' : 'books_etc'}
+        ,{'type' :  'type', "rm_name" : 'presentation_type'     , "jpcoar_name" :  'dc:type'     , "weko_name" : "type",'achievement_type' : 'presentations'}
+        ,{'type' :  'type', "rm_name" : 'work_type'     , "jpcoar_name" :  'dc:type'     , "weko_name" : "type", 'achievement_type' : 'works'}
+        ,{'type' :  'type', "rm_name" : 'dataset_type'     , "jpcoar_name" :  'dc:type'     , "weko_name" : "type" ,'achievement_type' : 'others'}
+
+    ]
+WEKO_ITEMS_UI_CRIS_LINKAGE_RESEARCHMAP_TYPE_MAPPINGS=\
+    [{'achievement_type' : 'published_papers','detail_type_name':'','JPCOAR_resource_type':'article'}
+    ,{'achievement_type' : 'published_papers','detail_type_name':'scientific_journal','JPCOAR_resource_type':'journal article'}
+    ,{'achievement_type' : 'published_papers','detail_type_name':'international_conference_proceedings','JPCOAR_resource_type':'conference paper'}
+    ,{'achievement_type' : 'published_papers','detail_type_name':'research_institution','JPCOAR_resource_type':'departmental bulletin paper'}
+    ,{'achievement_type' : 'published_papers','detail_type_name':'symposium','JPCOAR_resource_type':'conference paper'}
+    ,{'achievement_type' : 'published_papers','detail_type_name':'research_society','JPCOAR_resource_type':'article'}
+    ,{'achievement_type' : 'published_papers','detail_type_name':'in_book','JPCOAR_resource_type':'article'}
+    ,{'achievement_type' : 'published_papers','detail_type_name':'master_thesis','JPCOAR_resource_type':'master thesis'}
+    ,{'achievement_type' : 'published_papers','detail_type_name':'others','JPCOAR_resource_type':'article'}
+    ,{'achievement_type' : 'published_papers','detail_type_name':'doctoral_thesis','JPCOAR_resource_type':'doctoral thesis'}
+    ,{'achievement_type' : 'misc','detail_type_name':'','JPCOAR_resource_type':'learning object'}
+    ,{'achievement_type' : 'misc','detail_type_name':'report_scientific_journal','JPCOAR_resource_type':'learning object'}
+    ,{'achievement_type' : 'misc','detail_type_name':'report_research_institution','JPCOAR_resource_type':'learning object'}
+    ,{'achievement_type' : 'misc','detail_type_name':'summary_international_conference','JPCOAR_resource_type':'learning object'}
+    ,{'achievement_type' : 'misc','detail_type_name':'summary_national_conference','JPCOAR_resource_type':'learning object'}
+    ,{'achievement_type' : 'misc','detail_type_name':'technical_report','JPCOAR_resource_type':'technical report'}
+    ,{'achievement_type' : 'misc','detail_type_name':'introduction_scientific_journal','JPCOAR_resource_type':'learning object'}
+    ,{'achievement_type' : 'misc','detail_type_name':'introduction_international_proceedings','JPCOAR_resource_type':'learning object'}
+    ,{'achievement_type' : 'misc','detail_type_name':'introduction_research_institution','JPCOAR_resource_type':'learning object'}
+    ,{'achievement_type' : 'misc','detail_type_name':'introduction_commerce_magazine','JPCOAR_resource_type':'learning object'}
+    ,{'achievement_type' : 'misc','detail_type_name':'introduction_other','JPCOAR_resource_type':'learning object'}
+    ,{'achievement_type' : 'misc','detail_type_name':'lecture_materials','JPCOAR_resource_type':'learning object'}
+    ,{'achievement_type' : 'misc','detail_type_name':'book_review','JPCOAR_resource_type':'learning object'}
+    ,{'achievement_type' : 'misc','detail_type_name':'meeting_report','JPCOAR_resource_type':'learning object'}
+    ,{'achievement_type' : 'misc','detail_type_name':'others','JPCOAR_resource_type':'learning object'}
+    ,{'achievement_type' : 'books_etc','detail_type_name':'','JPCOAR_resource_type':'book'}
+    ,{'achievement_type' : 'books_etc','detail_type_name':'scholarly_book','JPCOAR_resource_type':'book'}
+    ,{'achievement_type' : 'books_etc','detail_type_name':'dictionary_or_encycropedia','JPCOAR_resource_type':'book'}
+    ,{'achievement_type' : 'books_etc','detail_type_name':'textbook','JPCOAR_resource_type':'book'}
+    ,{'achievement_type' : 'books_etc','detail_type_name':'report','JPCOAR_resource_type':'report'}
+    ,{'achievement_type' : 'books_etc','detail_type_name':'general_book','JPCOAR_resource_type':'book'}
+    ,{'achievement_type' : 'books_etc','detail_type_name':'musical_material','JPCOAR_resource_type':'musical notation'}
+    ,{'achievement_type' : 'books_etc','detail_type_name':'film_or_video','JPCOAR_resource_type':'video'}
+    ,{'achievement_type' : 'books_etc','detail_type_name':'image_material','JPCOAR_resource_type':'image'}
+    ,{'achievement_type' : 'books_etc','detail_type_name':'phonetic_material','JPCOAR_resource_type':'sound'}
+    ,{'achievement_type' : 'books_etc','detail_type_name':'map','JPCOAR_resource_type':'map'}
+    ,{'achievement_type' : 'books_etc','detail_type_name':'others','JPCOAR_resource_type':'book'}
+    ,{'achievement_type' : 'presentations','detail_type_name':'','JPCOAR_resource_type':'conference presentation'}
+    ,{'achievement_type' : 'presentations','detail_type_name':'oral_presentation','JPCOAR_resource_type':'conference presentation'}
+    ,{'achievement_type' : 'presentations','detail_type_name':'invited_oral_presentation','JPCOAR_resource_type':'conference presentation'}
+    ,{'achievement_type' : 'presentations','detail_type_name':'keynote_oral_presentation','JPCOAR_resource_type':'conference presentation'}
+    ,{'achievement_type' : 'presentations','detail_type_name':'poster_presentation','JPCOAR_resource_type':'conference poster'}
+    ,{'achievement_type' : 'presentations','detail_type_name':'public_symposium','JPCOAR_resource_type':'conference presentation'}
+    ,{'achievement_type' : 'presentations','detail_type_name':'nominated_symposium','JPCOAR_resource_type':'conference presentation'}
+    ,{'achievement_type' : 'presentations','detail_type_name':'public_discourse','JPCOAR_resource_type':'conference presentation'}
+    ,{'achievement_type' : 'presentations','detail_type_name':'media_report','JPCOAR_resource_type':'conference presentation'}
+    ,{'achievement_type' : 'presentations','detail_type_name':'others','JPCOAR_resource_type':'conference presentation'}
+    ,{'achievement_type' : 'works','detail_type_name':'','JPCOAR_resource_type':'interactive resource'}
+    ,{'achievement_type' : 'works','detail_type_name':'artistic_activity','JPCOAR_resource_type':'interactive resource'}
+    ,{'achievement_type' : 'works','detail_type_name':'architectural_works','JPCOAR_resource_type':'interactive resource'}
+    ,{'achievement_type' : 'works','detail_type_name':'software','JPCOAR_resource_type':'software'}
+    ,{'achievement_type' : 'works','detail_type_name':'database','JPCOAR_resource_type':'interactive resource'}
+    ,{'achievement_type' : 'works','detail_type_name':'web_service','JPCOAR_resource_type':'interactive resource'}
+    ,{'achievement_type' : 'works','detail_type_name':'educational_materials','JPCOAR_resource_type':'interactive resource'}
+    ,{'achievement_type' : 'works','detail_type_name':'others','JPCOAR_resource_type':'interactive resource'}
+    ,{'achievement_type' : 'others','detail_type_name':'','JPCOAR_resource_type':'other'}
+    ,{'achievement_type' : 'others','detail_type_name':'preprint','JPCOAR_resource_type':'other'}
+    ,{'achievement_type' : 'others','detail_type_name':'published','JPCOAR_resource_type':'other'}
+    ,{'achievement_type' : 'others','detail_type_name':'experimental','JPCOAR_resource_type':'other'}
+    ,{'achievement_type' : 'others','detail_type_name':'summary','JPCOAR_resource_type':'other'}
+    ,{'achievement_type' : 'others','detail_type_name':'others','JPCOAR_resource_type':'other'}
+    ]
+
+
+from kombu import Exchange, Queue
+LINKAGE_MQ_EXCHANGE = Exchange('cris_researchmap_linkage', type='direct')
+LINKAGE_MQ_QUEUE = Queue("cris_researchmap_linkage", exchange=LINKAGE_MQ_EXCHANGE, routing_key="cris_researchmap_linkage",queue_arguments={"x-queue-type":"quorum"})

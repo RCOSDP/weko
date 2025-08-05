@@ -26,6 +26,9 @@ WEKO_WORKFLOW_BASE_TEMPLATE = 'weko_workflow/base.html'
 WEKO_WORKFLOW_POP_PAGE = 'weko_workflow/admin/pop_page.html'
 """Default pop page template for the flow detail page."""
 
+WEKO_ADMIN_ACTIVITY_SETTINGS_TEMPLATE = 'weko_workflow/admin/activity_settings.html'
+"""Activity Settings template."""
+
 WEKO_WORKFLOW_OAPOLICY_SEARCH = 'oa_policy_{keyword}'
 """OA Policy cache."""
 
@@ -37,6 +40,9 @@ WEKO_WORKFLOW_MAX_ACTIVITY_ID = 99999
 
 WEKO_WORKFLOW_ACTIVITY_ID_FORMAT = 'A-{}-{}'
 """Activity Id's format (A-YYYYMMDD-NNNNN with NNNNN starts from 00001)."""
+
+WEKO_WORKFLOW_DELETION_ACTIVITY_ID_FORMAT = 'D-{}-{}'
+"""Deletion Activity Id's format (D-YYYYMMDD-NNNNN with NNNNN starts from 00001)."""
 
 WEKO_WORKFLOW_ACTION_ENDPOINTS = {
     'item_login': {
@@ -53,7 +59,7 @@ IDENTIFIER_GRANT_LIST = [(0, 'Not Grant', ''),
                          ]
 """Options list for Identifier Grant action."""
 
-IDENTIFIER_GRANT_SUFFIX_METHOD = 0 
+IDENTIFIER_GRANT_SUFFIX_METHOD = 0
 """
     Suffix input method for Identifier Grant action
 
@@ -309,6 +315,9 @@ WEKO_WORKFLOW_ACTION_GUARANTOR = ''
 WEKO_WORKFLOW_ACTION_ADVISOR = ''
 """Action Approval by Advisor"""
 
+WEKO_WORKFLOW_APPROVER_EMAIL_COLUMN_VISIBLE = True
+"""Approver email column visible"""
+
 WEKO_WORKFLOW_ACTIONS = [
     WEKO_WORKFLOW_ACTION_START,
     WEKO_WORKFLOW_ACTION_END,
@@ -316,6 +325,12 @@ WEKO_WORKFLOW_ACTIONS = [
     WEKO_WORKFLOW_ACTION_APPROVAL,
     WEKO_WORKFLOW_ACTION_ITEM_LINK,
     WEKO_WORKFLOW_ACTION_IDENTIFIER_GRANT
+]
+
+WEKO_WORKFLOW_DELETION_ACTIONS= [
+    WEKO_WORKFLOW_ACTION_START,
+    WEKO_WORKFLOW_ACTION_END,
+    WEKO_WORKFLOW_ACTION_APPROVAL
 ]
 """Action list"""
 
@@ -326,7 +341,9 @@ WEKO_WORKFLOW_COLUMNS = [
     'flows_name',
     'action_name',
     'StatusDesc',
-    'email'
+    'email' ,
+    'approver' ,
+    'approver_email'
 ]
 """Work flow activity columns"""
 
@@ -334,7 +351,8 @@ WEKO_WORKFLOW_FILTER_COLUMNS = [
     'workflow',
     'user',
     'item',
-    'status'
+    'status',
+    'action'
 ]
 """Work flow filters"""
 
@@ -452,7 +470,7 @@ WEKO_WORKFLOW_IDENTIFIER_GRANT_WITHDRAWN = -3
 WEKO_WORKFLOW_SEND_MAIL_USER_GROUP = {}
 
 WEKO_WORKFLOW_FILTER_PARAMS = [
-    'createdfrom', 'createdto', 'workflow', 'user', 'item', 'status', 'tab',
+    'createdfrom', 'createdto', 'workflow', 'user', 'item', 'status', 'action', 'tab',
     'sizewait', 'sizetodo', 'sizeall', 'pagesall', 'pagestodo', 'pageswait'
 ]
 
@@ -493,6 +511,8 @@ WEKO_WORKFLOW_GAKUNINRDM_DATA = [
 WEKO_WORKFLOW_GAKUNINRDM_PREFIX = 'GakuninRDM'
 """GekuninRDM prefix for logging."""
 
+WEKO_STR_TRUE = ['true', 't', 'yes', '1']
+
 WEKO_WORKFLOW_ACTIVITYLOG_ROLE_ENABLE = ["System Administrator","Repository Administrator"]
 """ Roles that can output activitylog"""
 
@@ -532,6 +552,7 @@ WEKO_WORKFLOW_ACTIVITYLOG_XLS_COLUMNS = [
     'action_name',
     'role_name'
 ]
+
 WEKO_ITEMS_UI_MULTIPLE_APPROVALS = True
 
 WEKO_STR_TRUE = ['true', 't', 'yes', '1']
@@ -559,8 +580,20 @@ WEKO_WORKFLOW_API_LIMIT_RATE_DEFAULT = ['100 per minute']
 
 WEKO_WORKFLOW_API_ACCEPT_LANGUAGES = ['en', 'ja']
 
+WEKO_WORKFLOW_APPROVAL_PREVIEW = True
+"""Setting preview function during approval"""
+
 WEKO_WORKFLOW_ITEM_REGISTRANT_ID = -2
 """Item registrant id."""
 
-WEKO_WORKFLOW_APPROVAL_PREVIEW = True
-"""Setting preview function during approval"""
+WEKO_WORKFLOW_REQUEST_MAIL_ID = -3
+"""Request mail id."""
+
+WEKO_WORKFLOW_REGISTRATION_FLOW_TYPE = 1
+"""Registration flow type"""
+
+WEKO_WORKFLOW_DELETION_FLOW_TYPE = 2
+"""Deletion flow type"""
+
+WEKO_WORKFLOW_MAIL_DEFAULT_LANGUAGE = 'en'
+"""Default language for mail template"""

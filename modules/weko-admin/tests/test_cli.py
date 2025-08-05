@@ -17,7 +17,8 @@ from weko_admin.cli import (
     create_settings,
     create_default_settings,
     create_default_affiliation_settings,
-    insert_facet_search_to_db
+    insert_facet_search_to_db,
+    update_attribute_mapping
 )
 from weko_admin.models import AdminLangSettings,ApiCertificate,StatisticUnit,\
                             StatisticTarget,BillingPermission,AdminSettings,FacetSearchSetting
@@ -91,7 +92,7 @@ def test_save_report_unit(db,script_info):
     result = runner.invoke(save_report_unit,["1","Day"],obj=script_info)
     assert result.exit_code == 0
     assert result.output == "insert report unit success\n"
-    assert StatisticUnit.query.filter_by(unit_id=1).one_or_none().unit_name== "Day"
+    assert StatisticUnit.query.filter_by(unit_id="1").one_or_none().unit_name== "Day"
     
     with patch("weko_admin.cli.StatisticUnit.create",side_effect=Exception("test_error")):
         result = runner.invoke(save_report_unit,["1","Day"],obj=script_info)
@@ -106,7 +107,7 @@ def test_save_report_target(db,script_info):
     result = runner.invoke(save_report_target,["1","new_target","1,2,4"],obj=script_info)
     assert result.exit_code == 0
     assert result.output == "insert report target success\n"
-    assert StatisticTarget.query.filter_by(target_id=1).one_or_none().target_name== "new_target"
+    assert StatisticTarget.query.filter_by(target_id="1").one_or_none().target_name== "new_target"
     
     with patch("weko_admin.cli.StatisticTarget.create",side_effect=Exception("test_error")):
         result = runner.invoke(save_report_target,["1","new_target","1,2,4"],obj=script_info)
@@ -202,28 +203,65 @@ def test_create_default_affiliation_settings(db,script_info):
 # .tox/c1/bin/pytest --cov=weko_admin tests/test_cli.py::test_insert_facet_search_to_db -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
 def test_insert_facet_search_to_db(db, script_info):
     runner = CliRunner()
-    result = runner.invoke(insert_facet_search_to_db,["Data Language","データの言語","language","[]","True","SelectBox","1","True"],obj=script_info)
+    result = runner.invoke(insert_facet_search_to_db,["Data Language","データの言語","language","[]","True","SelectBox","1","True","OR"],obj=script_info)
     assert result.exit_code == 0
     assert result.output == "insert facet search\n"
     assert FacetSearchSetting.query.filter_by(name_en="Data Language").one_or_none().active== True
     
-    result = runner.invoke(insert_facet_search_to_db,["Distributor","配布者","contributor.contributorName","[{'agg_value': 'Distributor', 'agg_mapping': 'contributor.@attributes.contributorType'}]","True","CheckboxList","2","True"],obj=script_info)
+    result = runner.invoke(insert_facet_search_to_db,["Distributor","配布者","contributor.contributorName","[{'agg_value': 'Distributor', 'agg_mapping': 'contributor.@attributes.contributorType'}]","True","CheckboxList","2","True","OR"],obj=script_info)
     assert result.exit_code == 0
     assert result.output == "insert facet search\n"
     assert FacetSearchSetting.query.filter_by(name_en="Distributor").one_or_none().active== True
     
-    result = runner.invoke(insert_facet_search_to_db,["Temporal","時間的範囲","temporal","[]","True","RangeSlider","3","True"],obj=script_info)
+    result = runner.invoke(insert_facet_search_to_db,["Temporal","時間的範囲","temporal","[]","True","RangeSlider","3","True","AND"],obj=script_info)
     assert result.exit_code == 0
     assert result.output == "insert facet search\n"
     assert FacetSearchSetting.query.filter_by(name_en="Temporal").one_or_none().active== True
     
     
-    result = runner.invoke(insert_facet_search_to_db,["Topic","トピック","subject.value","[]","True","SelectBox","4"],obj=script_info)
+    result = runner.invoke(insert_facet_search_to_db,["Topic","トピック","subject.value","[]","True","SelectBox","4","False"],obj=script_info)
     assert result.exit_code == 2
     assert 'Usage: create [OPTIONS] NAME_EN NAME_JP MAPPING AGGREGATIONS ACTIVE UI_TYPE' in result.output
     assert FacetSearchSetting.query.filter_by(name_en="Topic").one_or_none()==None
     
     with patch("weko_admin.cli.FacetSearchSetting.create",side_effect=Exception("test_error")):
-        result = runner.invoke(insert_facet_search_to_db,["Data Language","データの言語","language","[]","True","SelectBox","1","True"],obj=script_info)
+        result = runner.invoke(insert_facet_search_to_db,["Data Language","データの言語","language","[]","True","SelectBox","1","True","OR"],obj=script_info)
+        assert result.exit_code == 0
+        assert result.output == "test_error\n"
+
+#def admin_settings():
+#def update_attribute_mapping(shib_eppn, shib_role_authority_name, shib_mail, shib_user_name):
+# .tox/c1/bin/pytest --cov=weko_admin tests/test_cli.py::test_update_attribute_mapping -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
+def test_update_attribute_mapping(db, script_info):
+    runner = CliRunner()
+
+    try:
+        db.session.add(AdminSettings(
+            id=9,
+            name="attribute_mapping",
+            settings='{"shib_eppn": "eduPersonPrincipalName", "shib_mail": "mail", "shib_user_name": "displayName", "shib_role_authority_name": "eduPersonAffiliation"}'
+        ))
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        raise
+    finally:
+        db.session.remove()
+
+    # テスト用引数をオプション形式で定義
+    args = [
+        '--shib_eppn', 'o',
+        '--shib_role_authority_name', None,
+        '--shib_mail', 'o',
+        '--shib_user_name', None
+    ]
+        
+    result = runner.invoke(update_attribute_mapping, args=args, obj=script_info)
+
+    assert result.exit_code == 0  
+    assert result.output.strip() == "Mapping and update were successful."
+
+    with patch("weko_admin.cli.AdminSettings.update",side_effect=Exception("test_error")):
+        result = runner.invoke(update_attribute_mapping, args=args, obj=script_info)
         assert result.exit_code == 0
         assert result.output == "test_error\n"
