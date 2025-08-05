@@ -926,7 +926,7 @@ def test_send_mail_reminder_usage_report_guest(api):
 def test_send_mail_reminder_usage_report(api,users,mocker):
     login_user_via_session(client=api, email=users[0]["email"])
     class MockUsage:
-        def send_reminder_mail(self,activity_id,mail_id=None,activities=None,forced_send=False):
+        def send_reminder_mail(self,activities_id,mail_id=None,activities=None,forced_send=False):
             return True
     mocker.patch("weko_admin.views.UsageReport",return_value=MockUsage())
 

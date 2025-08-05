@@ -192,8 +192,9 @@ def test_file_ui3(app,records_restricted,itemtypes,db_file_permission,users ,cli
                 fileobj:WekoFileObject = record_file_factory( recid_login, record_login, filename = "helloworld_open_restricted.pdf" )
                 fileobj.data['accessrole']='open_restricted'
                 fileobj.data['filename'] = "helloworld_open_restricted.pdf"
-                with pytest.raises(Forbidden):
-                    res = file_ui(recid_login,record_login ,is_preview=False , filename = "helloworld_open_restricted.pdf")
+                res = file_ui(recid_login,record_login ,is_preview=False , filename = "helloworld_open_restricted.pdf")
+                mock.assert_called()
+                assert res.status == '200 OK'
             
             #24
             with patch("flask_login.utils._get_user", return_value=users[7]["obj"]):
@@ -509,4 +510,3 @@ def test_file_list_ui(app,records,itemtypes,users,mocker,db_file_permission):
         with patch("weko_records_ui.fd.request.headers.get", return_value="other_lang"):
             file_list_ui(record, record.files)
             assert get_locale().language == "en"
-

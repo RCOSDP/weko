@@ -23,7 +23,7 @@ def test_role_has_access(app,users):
         assert test.role_has_access('mailtemplates') == True
     
     with patch("flask_login.utils._get_user", return_value=users[1]["obj"]):
-        assert test.role_has_access('mailtemplates') == False
+        assert test.role_has_access('mailtemplates') == True
     
     #W2023-22-2 TestNo.24
     app.config.update(WEKO_ADMIN_USE_MAIL_TEMPLATE_EDIT = False)
@@ -33,12 +33,20 @@ def test_role_has_access(app,users):
     #W2023-22-2 TestNo.25
     app.config.pop("WEKO_ADMIN_USE_MAIL_TEMPLATE_EDIT")
     with patch("flask_login.utils._get_user", return_value=users[0]["obj"]):  
-        assert test.role_has_access('mailtemplates') == True
+        assert test.role_has_access('mailtemplates') == False
 
     app.config.update(WEKO_ADMIN_USE_MAIL_TEMPLATE_EDIT = False)
     assert test.role_has_access('mailtemplates') == False
+
+    with patch("flask_login.utils._get_user", return_value=users[0]["obj"]):
+        assert test.role_has_access('restricted_access') == True
     
-
+    with patch("flask_login.utils._get_user", return_value=users[1]["obj"]):
+        assert test.role_has_access('restricted_access') == False
     
-
-
+    app.config.update(WEKO_ADMIN_DISPLAY_RESTRICTED_SETTINGS = False)
+    with patch("flask_login.utils._get_user", return_value=users[0]["obj"]):
+        assert test.role_has_access('restricted_access') == True
+    
+    with patch("flask_login.utils._get_user", return_value=users[1]["obj"]):
+        assert test.role_has_access('restricted_access') == False

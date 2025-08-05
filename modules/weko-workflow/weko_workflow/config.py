@@ -449,6 +449,9 @@ WEKO_WORKFLOW_ACCESS_ACTIVITY_URL = ""
 WEKO_WORKFLOW_USAGE_REPORT_ACTIVITY_URL = ""
 """Template access the URL"""
 
+WEKO_WORKFLOW_REQUEST_FOR_REGISTER_USAGE_REPORT = '7'
+"""Mail template for Request for register Data Usage Report"""
+
 WEKO_WORKFLOW_DATE_FORMAT = "%Y-%m-%d"
 """Date format string."""
 
@@ -535,7 +538,7 @@ WEKO_WORKFLOW_ACTIVITYLOG_XLS_COLUMNS = [
     'title',
     'action_status',
     'activity_id',
-    'shared_user_id',
+    'shared_user_ids',
     'activity_login_user',
     'activity_name',
     'temp_data',

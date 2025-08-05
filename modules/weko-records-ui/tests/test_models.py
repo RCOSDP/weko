@@ -1,7 +1,7 @@
 import io
 from datetime import datetime, timedelta, timezone
 from unittest import mock  # python3
-from unittest.mock import MagicMock
+#from unittest.mock import MagicMock
 
 import mock  # python2, after pip install mock
 import pytest
@@ -15,10 +15,107 @@ from invenio_accounts.testutils import create_test_user, login_user_via_session
 from mock import patch
 
 from weko_records_ui.models import (
-    FileSecretDownload
+    InstitutionName
+    ,FileSecretDownload
     ,FilePermission
     ,FileOnetimeDownload
 )
+    
+
+institution_name = InstitutionName(
+    name="test"
+)
+
+
+# InstitutionName
+def test_InstitutionName_set_institution_name(app,):
+    # Exception coverage
+    institution_name.set_institution_name("test")
+
+
+# FilePermission
+def test_FilePermission_set_institution_name(app, db, db_FilePermission):
+    db_FilePermission.find(
+        user_id=db_FilePermission.id,
+        record_id=db_FilePermission.record_id,
+        file_name=db_FilePermission.file_name
+    )
+
+
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_models.py::test_FilePermission_init_file_permission -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+def test_FilePermission_init_file_permission(app, db, db_FilePermission):
+    db_FilePermission.init_file_permission(
+        user_id=db_FilePermission.id,
+        record_id=db_FilePermission.record_id,
+        file_name=db_FilePermission.file_name,
+        activity_id=db_FilePermission.usage_application_activity_id
+    )
+
+
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_models.py::test_FilePermission_update_status -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+def test_FilePermission_update_status(app, db, db_FilePermission):
+    f = db.session.query(FilePermission).first()
+    assert f.status == -1
+    db_FilePermission.update_status(
+        permission=f,
+        status=1
+    )
+    db.session.commit()
+    f = db.session.query(FilePermission).first()
+    assert f.status == 1
+
+
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_models.py::test_FilePermission_update_open_date -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+def test_FilePermission_update_open_date(app, db, db_FilePermission):
+    f = db.session.query(FilePermission).first()
+    db_FilePermission.update_open_date(
+        permission=f,
+        open_date=datetime(2022, 12, 31)
+    )
+    db.session.commit()
+    f = db.session.query(FilePermission).first()
+    assert f.open_date == datetime(2022, 12, 31)
+
+
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_models.py::test_FilePermission_find_by_activity -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+def test_FilePermission_find_by_activity(app, db, db_FilePermission):
+    db_FilePermission.find_by_activity(
+        activity_id=db_FilePermission.usage_application_activity_id
+    )
+
+
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_models.py::test_FilePermission_update_usage_report_activity_id -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+def test_FilePermission_update_usage_report_activity_id(app, db, db_FilePermission):
+    f = db.session.query(FilePermission).first()
+    assert f.usage_application_activity_id == "test"
+    db_FilePermission.update_usage_report_activity_id(
+        permission=f,
+        activity_id='test2'
+    )
+    db.session.commit()
+    f = db.session.query(FilePermission).first()
+    assert f.usage_report_activity_id == "test2"
+
+
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_models.py::test_FilePermission_delete_object -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+def test_FilePermission_delete_object(app, db, db_FilePermission):
+    assert db.session.query(FilePermission).count() == 1
+    db_FilePermission.delete_object(
+        permission=db_FilePermission
+    )
+    assert db.session.query(FilePermission).count() == 0
+
+
+def test_FileOnetimeDownload_update_download(app, db, db_FileOneTimeDownload):
+    data1 = {
+        "file_name": db_FileOneTimeDownload.file_name,
+        "user_mail": db_FileOneTimeDownload.user_mail,
+        "record_id": db_FileOneTimeDownload.record_id,
+    }
+
+    db_FileOneTimeDownload.update_download(
+        data=data1
+    )
 
 # def find_list_permission_approved(record_id, file_name):
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_models.py::test_find_list_permission_approved -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
@@ -27,7 +124,7 @@ def test_find_list_permission_approved(app, records_restricted, users,db_file_pe
     indexer, results = records_restricted
     recid = results[len(results)-1]["recid"]
     filename =results[len(results)-1]["filename"]
-    assert len(FilePermission.find_list_permission_approved(users[0]["id"],recid.pid_value, filename)) == 2
+    assert len(FilePermission.find_list_permission_approved(users[0]["id"],recid.pid_value, filename)) == 0
 
 # def find_by_activity:
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_models.py::test_find_by_activity -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp

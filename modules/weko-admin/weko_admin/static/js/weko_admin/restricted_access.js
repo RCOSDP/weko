@@ -720,6 +720,7 @@ function RestrictedAccessLayout({
       <div>
         <SecretURLFileDownloadLayout value={secretURLFileDownload}
                                    setValue={setSecretURLFileDownload}/>
+        <ErrorMsgConditions errorMsg={errorMsg} setErrorMsg={setErrorMsg}/>
         <div className="form-group">
           <button id="save-btn" className="btn btn-primary pull-right" style={{marginBottom: "15px"}}
                   onClick={handleSave}>

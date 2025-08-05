@@ -14,6 +14,9 @@ $(document).ready(function () {
   function isApproval(action) {
     return action && action.name == 'Approval';
   }
+  function isItemReg(action){
+    return action && action.name == 'Item Registration';
+  }
   $('.btn_apply').on('click', function () {
     let actionId = $(this).data('action-id');
     let actionName = $('#action_name_' + actionId).text();

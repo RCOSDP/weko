@@ -1197,7 +1197,7 @@ WEKO_ADMIN_REPOSITORY_ACCESS_LIST = [
     'location',
     'facet-search',
     'restricted_access',
-    'mailtemplates'
+    'mailtemplates',
     'community',
     'workspaceworkflowsetting',
     'swordapi',
@@ -1362,8 +1362,11 @@ WEKO_ADMIN_CACHE_TEMP_DIR_INFO_KEY_DEFAULT = 'cache::temp_dir_info'
 WEKO_ADMIN_USE_REGEX_IN_CRAWLER_LIST = False
 """ If True, enable regex function in crawler list processing. """
 
-WEKO_ADMIN_USE_MAIL_TEMPLATE_EDIT = True
+WEKO_ADMIN_USE_MAIL_TEMPLATE_EDIT = False
 """Whether system can edit mail template or not."""
+
+WEKO_ADMIN_DISPLAY_RESTRICTED_SETTINGS = False
+"""If True, display admin restricted settings."""
 
 WEKO_ADMIN_CRIS_LINKAGE_SETTINGS_TEMPLATE = 'weko_admin/admin/cris_linkage_setting.html'
 """CRIS Linkage Settings template."""

@@ -144,7 +144,7 @@ def create_activity(db, item_title, recid, path, login_user, shared_user, workfl
             "publish_date":"2024-01-11",
             "control_number":str(recid),
             "publish_status":"2",
-            "weko_shared_ids":[shared_user],
+            "weko_shared_ids":[{'user': shared_user}],
             "item_1617186331708": {"attribute_name": "Title","attribute_value_mlt": [{"subitem_1551255647225": item_title,"subitem_1551255648112": "ja"}]},
             "item_1617258105262": {"attribute_name": "Resource Type","attribute_value_mlt": [{"resourceuri": "http://purl.org/coar/resource_type/c_5794","resourcetype": "conference paper"}]},
             "relation_version_is_last": True

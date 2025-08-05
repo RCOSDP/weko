@@ -477,9 +477,9 @@ def write_report_file_rows(writer, records, file_type=None, other_info=None):
             user_name = 'Guest'
             user_id = int(record.get('cur_user_id'))
             if user_id > 0:
-                user_info = get_user_information(user_id)
-                user_email = user_info['email']
-                user_name = user_info['username']
+                user_infos = get_user_information([user_id])
+                user_email = user_infos[0]['email']
+                user_name = user_infos[0]['username']
             writer.writerow([
                 user_email, user_name,
                 record.get('total_download'), record.get('total_preview')])

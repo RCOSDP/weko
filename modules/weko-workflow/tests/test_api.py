@@ -461,9 +461,9 @@ class TestWorkActivity:
         }
     ]
 
-    # .tox/c1/bin/pytest --cov=weko_workflow tests/test_api.py::TestWorkActivity::test_WorkActivity_get_activity_list -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+    # .tox/c1/bin/pytest --cov=weko_workflow tests/test_api.py::TestWorkActivity::test_get_activity_list -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
     @pytest.mark.parametrize('conditions', conditions)
-    def test_WorkActivity_get_activity_list(self, app, users, db_register_activity, conditions):
+    def test_get_activity_list(self, app, users, db_register_activity, conditions):
         # test preparation
         activity = WorkActivity()
 
@@ -538,7 +538,7 @@ class TestWorkActivity:
 
 
     # .tox/c1/bin/pytest --cov=weko_workflow tests/test_api.py::TestWorkActivity::test_get_all_activity_list -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
-    def test_get_all_activity_list(self,app, client, users, db_register):
+    def test_get_all_activity_list(self,app, client, users, db_register_full_action):
         with app.test_request_context():
             login_user(users[2]["obj"])
             activity = WorkActivity()
@@ -547,7 +547,7 @@ class TestWorkActivity:
 
 
     # .tox/c1/bin/pytest --cov=weko_workflow tests/test_api.py::TestWorkActivity::test_get_activity_index_search -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
-    def test_get_activity_index_search(self,app, db_register):
+    def test_get_activity_index_search(self,app, db_register_full_action):
         activity = WorkActivity()
         with app.test_request_context():
             activity_detail, item, steps, action_id, cur_step, \
@@ -563,30 +563,29 @@ class TestWorkActivity:
 
 
     # .tox/c1/bin/pytest --cov=weko_workflow tests/test_api.py::TestWorkActivity::test_upt_activity_detail -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
-    def test_upt_activity_detail(self,app, db_register, db_records):
+    def test_upt_activity_detail(self,app, db_register_full_action, db_records):
         activity = WorkActivity()
         db_activity = activity.upt_activity_detail(db_records[2][2].id)
         assert db_activity == None
 
 
     # .tox/c1/bin/pytest --cov=weko_workflow tests/test_api.py::TestWorkActivity::test_get_corresponding_usage_activities -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
-    def test_get_corresponding_usage_activities(self,app, db_register):
+    def test_get_corresponding_usage_activities(self,app, db_register_full_action):
         activity = WorkActivity()
         usage_application_list, output_report_list = activity.get_corresponding_usage_activities(1)
         assert usage_application_list == {'activity_data_type': {}, 'activity_ids': []}
         assert output_report_list == {'activity_data_type': {}, 'activity_ids': []}
 
     # .tox/c1/bin/pytest --cov=weko_workflow tests/test_api.py::TestWorkActivity::test_check_community_permission -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
-    def test_check_community_permission(self,app,db_register):
+    def test_check_community_permission(self,app,db_register_full_action):
         activity = WorkActivity()
-        activities = db_register["activities"]
-        not_itemid_act = activities[0]
+        activities = db_register_full_action["activities"]
+        not_itemid_act = activities[1]
         # not exist activity.item_id
         result = WorkActivity._check_community_permission(not_itemid_act, ["1"])
 
         assert result == True
 
-        assert 1==2
     # .tox/c1/bin/pytest --cov=weko_workflow tests/test_api.py::TestWorkActivity::test_query_check_path -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
     def test_query_check_path(self, db):
         index_list = ["1","2","3"]
@@ -722,7 +721,7 @@ class TestWorkActivity:
         assert max_page == 0
         assert size == '20'
         assert page == '1'
-    
+
     # .tox/c1/bin/pytest --cov=weko_workflow tests/test_api.py::TestWorkActivity::test_get_usage_report_activities -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
     def test_get_usage_report_activities(app, activity_usage_report):
         activity = WorkActivity()
@@ -850,7 +849,7 @@ def test_WorkActivity_filter_by_action(app, db):
 
 
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_api.py::test_WorkActivity_get_activity_index_search -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
-def test_WorkActivity_get_activity_index_search(app, db_register):
+def test_WorkActivity_get_activity_index_search(app, db_register_full_action):
     activity = WorkActivity()
     with app.test_request_context():
         activity_detail, item, steps, action_id, cur_step, \
@@ -866,7 +865,7 @@ def test_WorkActivity_get_activity_index_search(app, db_register):
 
 
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_api.py::test_WorkActivity_upt_activity_detail -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
-def test_WorkActivity_upt_activity_detail(app, db_register, db_records):
+def test_WorkActivity_upt_activity_detail(app, db_register_full_action, db_records):
     activity = WorkActivity()
     db_activity = activity.upt_activity_detail(db_records[2][2].id)
     assert db_activity.id == 4
@@ -879,7 +878,7 @@ def test_WorkActivity_upt_activity_detail(app, db_register, db_records):
 
 
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_api.py::test_WorkActivity_get_corresponding_usage_activities -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
-def test_WorkActivity_get_corresponding_usage_activities(app, db_register):
+def test_WorkActivity_get_corresponding_usage_activities(app, db_register_full_action):
     activity = WorkActivity()
     usage_application_list, output_report_list = activity.get_corresponding_usage_activities(1)
     assert usage_application_list == {'activity_data_type': {}, 'activity_ids': []}
@@ -1960,7 +1959,7 @@ def test_query_activities_by_tab_is_wait(users, db):
                 )
                 )
         expected = "AND (workflow_activity.activity_login_user = ? OR (workflow_activity.shared_user_ids LIKE '%' + ? || '%')) AND (workflow_flow_action_role.action_user != ? AND workflow_flow_action_role.action_user_exclude = ? AND (workflow_activity.shared_user_ids NOT LIKE '%' + ? || '%') OR workflow_flow_action_role.action_role NOT IN (?) AND workflow_flow_action_role.action_role_exclude = ? AND (workflow_activity.shared_user_ids NOT LIKE '%' + ? || '%') OR workflow_activity_action.action_handler != ? AND (workflow_activity.shared_user_ids NOT LIKE '%' + ? || '%') OR (workflow_activity.shared_user_ids LIKE '%' + ? || '%') AND workflow_flow_action_role.action_user != workflow_activity.activity_login_user AND workflow_flow_action_role.action_user_exclude = ? OR (workflow_activity.shared_user_ids LIKE '%' + ? || '%') AND workflow_activity_action.action_handler != workflow_activity.activity_login_user)"  
-        ret = WorkActivity.query_activities_by_tab_is_wait(query)
+        ret = WorkActivity.query_activities_by_tab_is_wait(query, True, [1])
         assert str(ret).find(expected)
     
     current_app.config['WEKO_WORKFLOW_ENABLE_SHOW_ACTIVITY'] = True
@@ -1988,7 +1987,7 @@ def test_query_activities_by_tab_is_wait(users, db):
                 )
                 )
         expected = "AND (workflow_activity.activity_login_user = ?) AND ((workflow_flow_action_role.action_user != ? AND workflow_flow_action_role.action_user_exclude = '0') OR (workflow_flow_action_role.action_role NOT IN (?) AND workflow_flow_action_role.action_role_exclude = '0') OR (workflow_activity_action.action_handler != ? ))"
-        ret = WorkActivity.query_activities_by_tab_is_wait(query)
+        ret = WorkActivity.query_activities_by_tab_is_wait(query, False, [])
         assert str(ret).find(expected)
     
 # def query_activities_by_tab_is_all(query, is_community_admin, community_user_ids)

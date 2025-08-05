@@ -69,13 +69,6 @@ def append_file_content(sender, json={}, record=None, index=None, **kwargs):
             }
             json.update(request_mail)
 
-        request_mail_list = RequestMailList.get_mail_list_by_item_id(record.id)
-        if request_mail_list:
-            request_mail = {
-                'request_mail_list': request_mail_list
-            }
-            json.update(request_mail)
-
         current_app.logger.info('FINISHED reindex record: {0}'.format(
             im['control_number']))
     except NoResultFound:

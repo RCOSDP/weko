@@ -22,7 +22,7 @@ msgstr ""
 #: tests/test_admin.py:1794 tests/test_admin.py:1802 tests/test_admin.py:1810
 #: tests/test_admin.py:1818 weko_admin/admin.py:143
 msgid "completed"
-msgstr ""
+msgstr "Completed!"
 
 #: tests/test_admin.py:1827 weko_admin/admin.py:136
 #: weko_admin/templates/weko_admin/admin/reindex_elasticsearch.html:43
@@ -32,7 +32,7 @@ msgstr ""
 #: tests/test_admin.py:1837 weko_admin/admin.py:134
 #: weko_admin/templates/weko_admin/admin/reindex_elasticsearch.html:42
 msgid "haserror"
-msgstr ""
+msgstr "Execution prohibited due to an error"
 
 #: tests/test_views.py:98 tests/test_views.py:111 tests/test_views.py:125
 #: weko_admin/views.py:153

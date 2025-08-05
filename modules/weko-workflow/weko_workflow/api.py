@@ -1891,17 +1891,17 @@ class WorkActivity(object):
                                 and_(
                                     _FlowActionRole.action_user == _Activity.activity_login_user,
                                     _FlowActionRole.action_user_exclude != '0',
-                                ),
+                                )
+                            ),
+                            or_(
+                                cast(_Activity.shared_user_ids, String).contains(self_user_id_json),
                                 _Activity.temp_data.op("#>>")("{'metainfo', 'shared_user_ids'}").contains(self_user_id_json),
                                 _Activity.temp_data.op("#>>")("{'metainfo', 'owner'}") == str(self_user_id),
                             ),
+                            _FlowActionRole.action_user 
+                            != _Activity.activity_login_user,
+                            _FlowActionRole.action_user_exclude == '0'
                         ),
-                        #and_(
-                        #    _Activity.shared_user_id == self_user_id,
-                        #    _FlowActionRole.action_role.notin_(self_group_ids),
-                        #    _FlowActionRole.action_role_exclude == '0',
-                        #    _Flow.flow_id==_FlowAction.flow_id
-                        #),
                         and_(
                             or_(
                                 cast(_Activity.shared_user_ids, String).contains(self_user_id_json),
@@ -2200,6 +2200,18 @@ class WorkActivity(object):
                 )
         common_query=common_query.filter(_Flow.flow_id==_FlowAction.flow_id)
         return common_query
+
+    @staticmethod
+    def _check_community_permission(activity_data, index_ids):
+        flag = False
+        if activity_data.item_id:
+            dep = WekoDeposit.get_record(activity_data.item_id)
+            path = dep.get('path', [])
+            for i in path:
+                if str(i) in index_ids:
+                    flag = True
+                    break
+        return flag
 
     def __format_activity_data_to_show_on_workflow(self, activities,
                                                    action_activities):

@@ -1061,8 +1061,8 @@ class WekoDeposit(Deposit):
             deposit: newly created deposit object
 
         Raises:
-           PIDInvalidAction(): Invalid operation on persistent identifier in current state.
-           AttributeError:
+            PIDInvalidAction(): Invalid operation on persistent identifier in current state.
+            AttributeError:
         """
         deposit = None
         if not self.is_published():
@@ -1081,7 +1081,7 @@ class WekoDeposit(Deposit):
         owner = data['_deposit']['owner']
         owners = data['_deposit']['owners']
         weko_shared_ids = data['weko_shared_ids']
-        
+
         keys_to_remove = ('_deposit', 'doi', '_oai',
                             '_files', '_buckets', '$schema')
         for k in keys_to_remove:
@@ -1090,7 +1090,7 @@ class WekoDeposit(Deposit):
         draft_id = '{0}.{1}'.format(
             pid.pid_value,
             0 if is_draft else get_latest_version_id(pid.pid_value))
-        
+
         # NOTE: We call the superclass `create()` method, because
         # we don't want a new empty bucket, but
         # an unlocked snapshot of the old record's bucket.

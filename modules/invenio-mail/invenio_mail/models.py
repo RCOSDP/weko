@@ -69,6 +69,7 @@ class MailConfig(db.Model):
             cfg.mail_use_ssl = new_config['mail_use_ssl']
             cfg.mail_username = new_config['mail_username']
             cfg.mail_password = new_config['mail_password']
+            cfg.mail_local_hostname = new_config['mail_local_hostname']
             cfg.mail_default_sender = new_config['mail_default_sender']
             db.session.commit()
         except:
@@ -114,7 +115,7 @@ class MailTemplates(db.Model):
         # get secret mail enabled
         restricted_access = AdminSettings.get('restricted_access', False)
         if not restricted_access:
-            restricted_access = current_app.config['WEKO_ADMIN_RESTRICTED_ACCESS_SETTINGS']         
+            restricted_access = current_app.config['WEKO_ADMIN_RESTRICTED_ACCESS_SETTINGS']
         secret_enabled:bool = restricted_access.get('secret_URL_file_download',{}).get('secret_enable',False)
 
         try:

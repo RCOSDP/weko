@@ -164,6 +164,7 @@ def base_app(instance_path):
         ACCOUNTS_SESSION_REDIS_DB_NO=1,
         CACHE_REDIS_HOST="redis",
         REDIS_PORT="6379",
+        CACHE_REDIS_HOST="redis",
         CACHE_REDIS_URL=os.environ.get("CACHE_REDIS_URL", "redis://redis:6379/0"),
         WEKO_BUCKET_QUOTA_SIZE=50 * 1024 * 1024 * 1024,
         WEKO_MAX_FILE_SIZE=50 * 1024 * 1024 * 1024,
@@ -548,6 +549,7 @@ def users_1(app, db):
         {"email": sysadmin.email, "id": sysadmin.id, "obj": sysadmin},
         {"email": repoadmin.email, "id": repoadmin.id, "obj": repoadmin}
     ]
+
 @pytest.fixture()
 def identifier(db):
     identifier_info = {

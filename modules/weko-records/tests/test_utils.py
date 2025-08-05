@@ -672,6 +672,15 @@ def test_json_loader2(app, db, users, item_type, item_type2, item_type3, item_ty
             jrc['_item_metadata'] = dict(jrc['_item_metadata'])
             assert dc['control_number'] == _pid.pid_value
     
+    ojson = ItemTypes.get_record(2)
+    expect_jrc = {'item': [], 'weko_creator_id': 10}
+    with patch("flask_login.utils._get_user", return_value=users[2]["obj"]):
+        with patch("weko_records.api.ItemTypes.get_record", return_value=ojson):
+            with patch('weko_records.utils.SchemaTree.get_jpcoar_json', return_value=expect_jrc):
+                _data8['control_number'] = 1
+                dc, jrc, is_edit = json_loader(_data8, _pid, owner_id=1)
+                assert jrc['weko_creator_id'] == 10
+    
     with patch("flask_login.utils._get_user", return_value=users[2]["obj"]):
         with patch('weko_records.utils.SchemaTree.get_jpcoar_json', return_value={'item': [], 'weko_creator_id': '1'}):
             dc, jrc, is_edit = json_loader(_data10, _pid, owner_id=1)

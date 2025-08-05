@@ -57,7 +57,7 @@ from six import BytesIO
 from weko_records.utils import get_options_and_order_list
 from elasticsearch import Elasticsearch
 from sqlalchemy.orm.exc import NoResultFound
-from sqlalchemy.exc import OperationalError
+from sqlalchemy.exc import OperationalError, SQLAlchemyError
 from weko_admin.models import AdminSettings
 from weko_records.models import ItemMetadata, ItemTypeProperty
 from weko_records.api import FeedbackMailList, ItemLink, ItemsMetadata, ItemTypes, Mapping, WekoRecord
@@ -359,13 +359,14 @@ class TestWekoDeposit:
     # def item_metadata(self):
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoDeposit::test_item_metadata -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
     def test_item_metadata(self, app, es_records):
-        _, records, item_metadata = es_records
+        _, records = es_records
         deposit = records[0]['deposit']
 
         expected = {'id': '1', 'pid': {'type': 'depid', 'value': '1', 'revision_id': 0}, 'lang': 'ja', 'owner': '1', 'title': 'title', 'owners': [1], 'status': 'published', '$schema': '/items/jsonschema/1', 'pubdate': '2022-08-20', 'created_by': 1, 'owners_ext': {'email': 'wekosoftware@nii.ac.jp', 'username': '', 'displayname': ''}, 'shared_user_ids': [], 'item_1617186331708': [{'subitem_1551255647225': 'タイトル', 'subitem_1551255648112': 'ja'}, {'subitem_1551255647225': 'title', 'subitem_1551255648112': 'en'}], 'item_1617258105262': {'resourceuri': 'http://purl.org/coar/resource_type/c_5794', 'resourcetype': 'conference paper'}}
 
-        print(json.loads(json.dumps(item_metadata)))
-        assert json.loads(json.dumps(item_metadata)) == json.loads(json.dumps(expected))
+        assert deposit.item_metadata == expected
+        # print(json.loads(json.dumps(item_metadata)))
+        # assert json.loads(json.dumps(item_metadata)) == json.loads(json.dumps(expected))
 
 
         deposit = WekoDeposit({})
@@ -392,13 +393,14 @@ class TestWekoDeposit:
         record = records[0]["record"]
         record["$schema"] = "https://127.0.0.1/schema/deposits/deposit-v1.0.0.json"
         record["control_number"] = "1"
+        deposit = WekoDeposit(record, record.model)
         from dictdiffer.merge import UnresolvedConflictsException
         from invenio_deposit.errors import MergeConflict
-        with patch("weko_deposit.api.WekoDeposit.fetch_published",return_value=(records[0]["depid"],record)):
-            with patch('invenio_records.api.Record.revisions', return_value=record):
-                with patch("weko_deposit.api.Merger.run",side_effect=UnresolvedConflictsException(["test_conflict"])):
-                    with pytest.raises(MergeConflict):
-                        ret = dep.merge_with_published()
+        # with patch("weko_deposit.api.WekoDeposit.fetch_published",return_value=(records[0]["depid"],record)):
+        with patch('invenio_records.api.Record.revisions', return_value=record):
+            with patch("weko_deposit.api.Merger.run",side_effect=UnresolvedConflictsException(["test_conflict"])):
+                with pytest.raises(MergeConflict):
+                    ret = deposit.merge_with_published()
     
     # def _patch(diff_result, destination, in_place=False):
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoDeposit::test__patch -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
@@ -720,6 +722,9 @@ class TestWekoDeposit:
                         assert '11.0' == ret['recid']
                         assert '11.0' == ret['_deposit']['id']
 
+                        # SQLAlchemyError
+                        with patch('weko_deposit.api.Deposit.create', side_effect=SQLAlchemyError):
+                            assert None == deposit.newversion(depid_1)
 
     # def get_content_files(self):
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoDeposit::test_get_content_files -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
@@ -925,6 +930,10 @@ class TestWekoDeposit:
         item_data = record['item_data']
 
         deposit.delete_item_metadata(item_data)
+
+        assert 'attribute_name' not in deposit
+        assert [] == deposit['weko_shared_ids']
+        
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoDeposit::test_record_data_from_act_temp -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
     def test_record_data_from_act_temp(sel,app,db,db_activity,es_records):
         _, records = es_records
@@ -968,7 +977,7 @@ class TestWekoDeposit:
         db.session.merge(activity)
         db.session.commit()
         result = deposit.record_data_from_act_temp()
-        test = {"pubdate": "2023-10-10","item_1617186331708": [{"subitem_1551255647225": "test_title","subitem_1551255648112": "ja"}],"item_1617186385884": [{"subitem_1551255720400": "alter title"}],"item_1617186419668": [{"familyNames": [{"familyName": "test_family_name"}]}],"item_1617258105262": {"resourcetype": "conference paper","resourceuri": "http://purl.org/coar/resource_type/c_5794"},"deleted_items": ["none_str","empty_list","item_1617186499011","item_1617186609386","item_1617186626617","item_1617186643794","item_1617186660861","item_1617186702042","item_1617186783814","item_1617186859717","item_1617186882738","item_1617186901218","item_1617186920753","item_1617186941041","item_1617187112279","item_1617187187528","item_1617349709064","item_1617353299429","item_1617605131499","item_1617610673286","item_1617620223087","item_1617944105607","item_1617187056579",'shared_user_ids'],"$schema": "/items/jsonschema/1","title": "test_title","lang": "ja"}
+        test = {"pubdate": "2023-10-10","item_1617186331708": [{"subitem_1551255647225": "test_title","subitem_1551255648112": "ja"}],"item_1617186385884": [{"subitem_1551255720400": "alter title"}],"item_1617186419668": [{"familyNames": [{"familyName": "test_family_name"}]}],"item_1617258105262": {"resourcetype": "conference paper","resourceuri": "http://purl.org/coar/resource_type/c_5794"},"deleted_items": ["none_str","empty_list","item_1617186499011","item_1617186609386","item_1617186626617","item_1617186643794","item_1617186660861","item_1617186702042","item_1617186783814","item_1617186859717","item_1617186882738","item_1617186901218","item_1617186920753","item_1617186941041","item_1617187112279","item_1617187187528","item_1617349709064","item_1617353299429","item_1617605131499","item_1617610673286","item_1617620223087","item_1617944105607","item_1617187056579","shared_user_ids"],"$schema": "/items/jsonschema/1","title": "test_title","lang": "ja"}
         assert result == test
 
         # title is dict
@@ -977,7 +986,7 @@ class TestWekoDeposit:
         db.session.merge(activity)
         db.session.commit()
         result = deposit.record_data_from_act_temp()
-        test = {"pubdate": "2023-10-10","item_1617186331708": {"subitem_1551255647225": "test_title","subitem_1551255648112": "ja"},"item_1617186385884": [{"subitem_1551255720400": "alter title"}],"item_1617186419668": [{"familyNames": [{"familyName": "test_family_name"}]}],"item_1617258105262": {"resourcetype": "conference paper","resourceuri": "http://purl.org/coar/resource_type/c_5794"},"deleted_items": ["none_str","empty_list","item_1617186499011","item_1617186609386","item_1617186626617","item_1617186643794","item_1617186660861","item_1617186702042","item_1617186783814","item_1617186859717","item_1617186882738","item_1617186901218","item_1617186920753","item_1617186941041","item_1617187112279","item_1617187187528","item_1617349709064","item_1617353299429","item_1617605131499","item_1617610673286","item_1617620223087","item_1617944105607","item_1617187056579",'shared_user_ids'],"$schema": "/items/jsonschema/1","title": "test_title","lang": "ja"}
+        test = {"pubdate": "2023-10-10","item_1617186331708": {"subitem_1551255647225": "test_title","subitem_1551255648112": "ja"},"item_1617186385884": [{"subitem_1551255720400": "alter title"}],"item_1617186419668": [{"familyNames": [{"familyName": "test_family_name"}]}],"item_1617258105262": {"resourcetype": "conference paper","resourceuri": "http://purl.org/coar/resource_type/c_5794"},"deleted_items": ["none_str","empty_list","item_1617186499011","item_1617186609386","item_1617186626617","item_1617186643794","item_1617186660861","item_1617186702042","item_1617186783814","item_1617186859717","item_1617186882738","item_1617186901218","item_1617186920753","item_1617186941041","item_1617187112279","item_1617187187528","item_1617349709064","item_1617353299429","item_1617605131499","item_1617610673286","item_1617620223087","item_1617944105607","item_1617187056579","shared_user_ids"],"$schema": "/items/jsonschema/1","title": "test_title","lang": "ja"}
         assert result == test
 
         # title data is not exist
@@ -986,7 +995,7 @@ class TestWekoDeposit:
         db.session.merge(activity)
         db.session.commit()
         result = deposit.record_data_from_act_temp()
-        test = {"pubdate": "2023-10-10","item_1617186385884": [{"subitem_1551255720400": "alter title"}],"item_1617186419668": [{"familyNames": [{"familyName": "test_family_name"}]}],"item_1617258105262": {"resourcetype": "conference paper","resourceuri": "http://purl.org/coar/resource_type/c_5794"},"deleted_items": ["none_str","empty_list","item_1617186331708","item_1617186499011","item_1617186609386","item_1617186626617","item_1617186643794","item_1617186660861","item_1617186702042","item_1617186783814","item_1617186859717","item_1617186882738","item_1617186901218","item_1617186920753","item_1617186941041","item_1617187112279","item_1617187187528","item_1617349709064","item_1617353299429","item_1617605131499","item_1617610673286","item_1617620223087","item_1617944105607","item_1617187056579",'shared_user_ids'],"$schema": "/items/jsonschema/1","title": "test_title","lang": ""}
+        test = {"pubdate": "2023-10-10","item_1617186385884": [{"subitem_1551255720400": "alter title"}],"item_1617186419668": [{"familyNames": [{"familyName": "test_family_name"}]}],"item_1617258105262": {"resourcetype": "conference paper","resourceuri": "http://purl.org/coar/resource_type/c_5794"},"deleted_items": ["none_str","empty_list","item_1617186331708","item_1617186499011","item_1617186609386","item_1617186626617","item_1617186643794","item_1617186660861","item_1617186702042","item_1617186783814","item_1617186859717","item_1617186882738","item_1617186901218","item_1617186920753","item_1617186941041","item_1617187112279","item_1617187187528","item_1617349709064","item_1617353299429","item_1617605131499","item_1617610673286","item_1617620223087","item_1617944105607","item_1617187056579","shared_user_ids"],"$schema": "/items/jsonschema/1","title": "test_title","lang": ""}
         assert result == test
 
         # not exist title_parent_key in path
@@ -1008,9 +1017,6 @@ class TestWekoDeposit:
         with patch("weko_items_autofill.utils.get_title_pubdate_path",return_value=mock_path):
             result = deposit.record_data_from_act_temp()
             assert result == test
-
-        assert 'attribute_name' not in deposit
-        assert [] == deposit['weko_shared_ids']
 
     # def convert_item_metadata(self, index_obj, data=None):
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoDeposit::test_convert_item_metadata -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
@@ -1368,6 +1374,14 @@ class TestWekoDeposit:
 
         data2 = {}
         ret = deposit.convert_type_shared_user_ids(data2)
+        assert [] == ret['shared_user_ids']
+
+        data3 = {'shared_user_id': -1}
+        ret = deposit.convert_type_shared_user_ids(data3)
+        assert [] == ret['shared_user_ids']
+
+        data4 = {'shared_user_ids': ['1', '2']}
+        ret = deposit.convert_type_shared_user_ids(data4)
         assert [] == ret['shared_user_ids']
 
 # class WekoRecord(Record):

@@ -36,7 +36,6 @@ from invenio_pidstore.models import PersistentIdentifier, PIDStatus, Redirect
 from invenio_db import db as iv_db
 from invenio_pidrelations.models import PIDRelation
 from invenio_pidstore.errors import PIDDoesNotExistError
-from weko_admin import WekoAdmin
 from weko_admin.config import WEKO_ADMIN_MANAGEMENT_OPTIONS
 from weko_admin.api import TempDirInfo
 from weko_admin.models import AdminLangSettings

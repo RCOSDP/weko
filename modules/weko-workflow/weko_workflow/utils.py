@@ -2738,6 +2738,8 @@ def replace_characters(data, content):
         '[restricted_approver_name]': 'restricted_approver_name',
         '[restricted_site_name_ja]': 'restricted_site_name_ja',
         '[restricted_site_name_en]': 'restricted_site_name_en',
+        '[restricted_institution_name_en]':'restricted_institution_name_en',
+        '[restricted_institution_name_ja]':'restricted_institution_name_ja',
         '[restricted_site_mail]': 'restricted_site_mail',
         '[restricted_site_url]': 'restricted_site_url',
         '[restricted_approver_affiliation]': 'restricted_approver_affiliation',
@@ -2746,8 +2748,6 @@ def replace_characters(data, content):
         '[data_download_date]': 'data_download_date',
         '[usage_report_url]': 'usage_report_url',
         '[restricted_usage_activity_id]': 'restricted_usage_activity_id',
-        #        '[restricted_institution_name_ja]':'restricted_institution_name_ja',
-        #        '[restricted_institution_name_en]':'restricted_institution_name_en',
         '[file_name]': 'file_name',
         '[restricted_download_count]': 'restricted_download_count',
         '[restricted_download_count_ja]': 'restricted_download_count_ja',
@@ -2811,7 +2811,7 @@ def get_item_info(item_id):
         try:
             item = ItemsMetadata.get_record(id_=item_id)
         except Exception as ex:
-            current_app.logger.exception('Cannot get item data:' + str(ex))
+            current_app.logger.error('Cannot get item data: {}'.format(ex))
             temp = dict()
             return temp
 
@@ -2871,6 +2871,8 @@ def set_mail_info(item_info, activity_detail, guest_user=False):
     mail_address = item_info.get('subitem_mail_address')
     site_en, site_ja = get_site_info_name()
     site_mail = get_default_mail_sender()
+    institution_name_ja = current_app.config['THEME_INSTITUTION_NAME']['ja']
+    institution_name_en = current_app.config['THEME_INSTITUTION_NAME']['en']
     register_user = register_date = ''
     activity_id = activity_detail.activity_id if activity_detail else ''
     if not guest_user:
@@ -2915,6 +2917,8 @@ def set_mail_info(item_info, activity_detail, guest_user=False):
         restricted_approver_affiliation='',
         restricted_site_name_ja=site_ja,
         restricted_site_name_en=site_en,
+        restricted_institution_name_ja=institution_name_ja,
+        restricted_institution_name_en=institution_name_en,
         restricted_site_mail=site_mail,
         restricted_site_url=current_app.config['THEME_SITEURL'],
         mail_recipient=item_info.get('subitem_mail_address'),
@@ -3015,7 +3019,7 @@ def process_send_notification_mail(activity_detail, action_endpoint,
     is_guest_user = True if activity_detail.extra_info.get(
         'guest_mail', None) else False
     item_info = get_item_info(activity_detail.item_id)
-    mail_info = set_mail_info(item_info, activity_detail)
+    mail_info = set_mail_info(item_info, activity_detail, is_guest_user)
 
     workflow = WorkFlow()
     workflow_detail = workflow.get_workflow_by_id(
@@ -3025,7 +3029,8 @@ def process_send_notification_mail(activity_detail, action_endpoint,
     mail_info['next_step'] = next_action_endpoint
     """ Set registration date to 'mail_info' """
     get_approval_dates(mail_info)
-    if 'item_login' in action_endpoint:
+    if 'item_login' in action_endpoint \
+            and action_mails_setting.get("previous", {}):
         """ Send mail for register to notify that registration is done"""
         if not action_mails_setting["approval"]:
             setting = action_mails_setting.get("previous") \
@@ -4060,16 +4065,17 @@ def get_approval_keys():
     return approval_keys
 
 
-def process_send_mail(mail_info, mail_pattern_name):
+def process_send_mail(mail_info, mail_id):
     """Send mail approval rejected.
 
     :mail_info: object
+    :mail_id: mail template id
     """
     if not mail_info.get("mail_recipient"):
         current_app.logger.error('Mail address is not defined')
         return
 
-    subject, body = get_mail_data(mail_pattern_name)
+    subject, body = get_mail_data(mail_id)
     if body and subject:
         body = replace_characters(mail_info, body)
         return send_mail(subject, mail_info['mail_recipient'], body)
@@ -4881,7 +4887,7 @@ def make_activitylog_tsv(activities):
     for item in activities:
         term = []
         for name in keys:
-            term.append(getattr(item,name))
+            term.append(getattr(item,name,""))
         writer.writerow(term)
 
     return file_output.getvalue()

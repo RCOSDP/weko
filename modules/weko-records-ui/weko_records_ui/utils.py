@@ -986,9 +986,10 @@ def get_file_info_list(record, item_type=None):
             if date and isinstance(date, list) and date[0]:
                 adtv = date[0].get('dateValue')
                 if adtv is None:
-                    adtv = dt.date.max
-                adt = dt.strptime(adtv, '%Y-%m-%d')
-                if is_future(adtv):
+                    adt = datetime.date.max
+                else:
+                    adt = dt.strptime(adtv, "%Y-%m-%d")
+                if is_future(adt):
                     message = "Download is available from {}/{}/{}."
                     p_file['future_date_message'] = _(message).format(
                         adt.year, adt.month, adt.day)

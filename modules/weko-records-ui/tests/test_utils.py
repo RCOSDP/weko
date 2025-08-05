@@ -47,16 +47,16 @@ from weko_records_ui.utils import (
     get_terms,
     get_roles,
     check_items_settings,
+    get_data_by_key_array_json,
     get_values_by_selected_lang,
     export_preprocess,
     get_data_by_key_array_json,
-    #RoCrateConverter,
-    #create_tsv
+    RoCrateConverter,
+    create_tsv
     )
 import base64
 from unittest.mock import MagicMock
 import copy
-import pytest
 import io
 from datetime import datetime as dt
 from datetime import timedelta
@@ -72,13 +72,11 @@ from mock import patch
 from weko_deposit.api import WekoRecord, WekoDeposit
 from weko_records_ui.models import FileOnetimeDownload, FileSecretDownload
 from weko_records.api import ItemTypes,Mapping
-from werkzeug.exceptions import NotFound
 from weko_admin.models import AdminSettings
 from weko_records.serializers.utils import get_mapping
 from weko_records.models import ItemType, ItemTypeMapping, ItemTypeName
 from flask_babelex import gettext as _
 import datetime
-from datetime import datetime as dt ,timedelta
 from werkzeug.exceptions import Gone, NotFound
 
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
@@ -555,7 +553,7 @@ def test_get_file_info_list(app,records, itemtypes):
 
         ret =  get_file_info_list(record, item_type=itemtypes["item_type"])
         assert len(ret)==2
-    
+
     # 異常系
     # 不正な数値を指定する
     record['item_1617605131499']['attribute_value_mlt'][0]['filesize'][0]['value'] = '1.7976931348623157e+308/0 kb'
@@ -648,10 +646,9 @@ def test_get_data_by_key_array_json(app):
 #def test_create_usage_report_for_user():
 #    assert False
 
-
-# def get_data_usage_application_data(record_metadata, data_result: dict):
-# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_get_data_usage_application_data -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
-def test_get_data_usage_application_data(app, db, workflows, records, users, db_file_permission):
+# def create_usage_report_for_user(onetime_download_extra_info: dict):
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_create_usage_report_for_user -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+def test_create_usage_report_for_user(app, db, workflows, records, users, db_file_permission):
     _onetime_download_extra_info = {
         'usage_application_activity_id': 'usage_application_activity_id_dummy1',
         'is_guest': False
@@ -1031,7 +1028,7 @@ def test_validate_secret_download_token(app):
         secret_download=FileSecretDownload(
             file_name= "eee.txt", record_id= '1',user_mail="repoadmin@example.org",expiration_date=999999,download_count=10
         )
-        secret_download.created = datetime(2023,3,8,0,52,19,624552)
+        secret_download.created = dt(2023,3,8,0,52,19,624552)
         secret_download.id = 5
         # 68
         res = validate_secret_download_token(secret_download=None , file_name= "eee.txt", record_id= '1', id= '5', date= '2023-03-08 00:52:19.624552', token= '6FA7D321A949550D')
@@ -1053,7 +1050,7 @@ def test_validate_secret_download_token(app):
         secret_download2=FileSecretDownload(
             file_name= "eee.txt", record_id= '5',user_mail="repoadmin@example.org",expiration_date=-1,download_count=10
         )
-        secret_download2.created = datetime(2023,3,8,0,52,19,624552)
+        secret_download2.created = dt(2023,3,8,0,52,19,624552)
         secret_download2.id = 5
         res = validate_secret_download_token(secret_download=secret_download2 , file_name= "eee.txt", record_id= '1', id= '5', date= '2023-03-08 00:52:19.624552', token= '6FA7D321A949550D')
         assert res == (False , _("The expiration date for download has been exceeded."))
@@ -1118,6 +1115,7 @@ def test_get_data_usage_application_data(app ,db):
         res = update_secret_download(**update_data)
         assert len(res) == 1
         assert res[0].download_count == 100
+
 
 # def update_secret_download(**kwargs) -> Optional[List[FileSecretDownload]]:
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_export_preprocess -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp

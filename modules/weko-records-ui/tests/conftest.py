@@ -33,7 +33,7 @@ from datetime import datetime
 from collections import OrderedDict
 from unittest.mock import patch
 from datetime import timedelta
-from invenio_mail import InvenioMail
+from kombu import Exchange, Queue
 from sqlalchemy.sql import func
 from invenio_mail import InvenioMail
 
@@ -171,9 +171,10 @@ from weko_workflow.models import (
 from weko_workflow.config import WEKO_WORKFLOW_DATE_FORMAT
 from weko_workflow.scopes import activity_scope
 from weko_workflow.views import workflow_blueprint as weko_workflow_blueprint
+from werkzeug.utils import secure_filename
 
 from tests.helpers import fill_oauth2_headers
-from werkzeug.utils import secure_filename
+
 
 
 @pytest.yield_fixture()
@@ -289,6 +290,7 @@ def base_app(instance_path):
         WEKO_RECORDS_UI_SECRET_KEY=WEKO_RECORDS_UI_SECRET_KEY,
         WEKO_RECORDS_UI_ONETIME_DOWNLOAD_PATTERN=WEKO_RECORDS_UI_ONETIME_DOWNLOAD_PATTERN,
         WEKO_ADMIN_PDFCOVERPAGE_TEMPLATE=WEKO_ADMIN_PDFCOVERPAGE_TEMPLATE,
+        INDEXER_MQ_QUEUE = Queue("indexer", exchange=Exchange("indexer", type="direct"), routing_key="indexer",queue_arguments={"x-queue-type":"quorum"}),
         WEKO_WORKFLOW_DATE_FORMAT = WEKO_WORKFLOW_DATE_FORMAT,
         WEKO_RECORDS_UI_MAIL_TEMPLATE_SECRET_GENRE_ID = 1,
         MAIL_SUPPRESS_SEND=True,
@@ -851,8 +853,9 @@ def records(app, db, esindex, indextree, location, itemtypes, oaischema):
     filename = "helloworld.pdf"
     mimetype = "application/pdf"
     filepath = "tests/data/helloworld.pdf"
+
     shared_ids = []
-    results.append(make_record(db, indexer, i, filepath, filename, mimetype, shared_ids))
+    results.append(make_record(db, indexer, i, filepath, filename, mimetype, shared_ids, file_head=True))
 
     i = 2
     filename = "helloworld.docx"
@@ -861,14 +864,14 @@ def records(app, db, esindex, indextree, location, itemtypes, oaischema):
     )
     filepath = "tests/data/helloworld.docx"
     shared_ids = [1]
-    results.append(make_record(db, indexer, i, filepath, filename, mimetype, shared_ids))
+    results.append(make_record(db, indexer, i, filepath, filename, mimetype, shared_ids, file_head=False))
 
     i = 3
     filename = "helloworld.zip"
     mimetype = "application/zip"
     filepath = "tests/data/helloworld.zip"
     shared_ids = [1,2]
-    results.append(make_record(db, indexer, i, filepath, filename, mimetype, shared_ids))
+    results.append(make_record(db, indexer, i, filepath, filename, mimetype, shared_ids, file_head=False))
 
     i = 4
     files = [
@@ -920,7 +923,7 @@ def records(app, db, esindex, indextree, location, itemtypes, oaischema):
     return indexer, results
 
 
-def make_record(db, indexer, i, filepath, filename, mimetype, shared_ids):
+def make_record(db, indexer, i, filepath, filename, mimetype, shared_ids, file_head):
     record_data = {
         "_oai": {"id": "oai:weko3.example.org:000000{:02d}".format(i), "sets": ["{}".format((i % 2) + 1)]},
         "path": ["{}".format((i % 2) + 1)],
@@ -3883,7 +3886,7 @@ def make_record_restricted(db, indexer, i, filepath, filename, mimetype ,userId 
         {
             "date": [{"dateValue": "2021-07-12", "dateType": "Available"}],
             "accessrole": "open_restricted",
-            #"provide" : [{"role":userId, "workflow": workflowId }],
+            #"provide" : [{"role": userId, "workflow": workflowId }],
             #"terms" :"term_free","termsDescription":"利用規約本文",
             "displaytype": "simple",
             "filename": filename,

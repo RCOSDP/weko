@@ -37,7 +37,6 @@ from invenio_db import db
 from invenio_files_rest.models import Location
 from invenio_i18n.ext import current_i18n
 from invenio_mail.models import MailTemplates
-from weko_admin.models import AdminSettings
 from weko_index_tree.models import Index
 from weko_records.api import ItemTypes
 from weko_records.models import ItemTypeProperty
@@ -375,6 +374,8 @@ class WorkFlowSettingView(BaseView):
                 is_sysadmin =True
                 break
 
+        is_display_restricted_access_checkbox = is_sysadmin and current_app.config.get('WEKO_ADMIN_DISPLAY_RESTRICTED_SETTINGS', False)
+
         if '0' == workflow_id:
             """Create new workflow"""
             return self.render(
@@ -390,6 +391,7 @@ class WorkFlowSettingView(BaseView):
                 hide_label=hide_label,
                 display_hide_label=display_hide,
                 is_sysadmin=is_sysadmin,
+                is_display_restricted_access_checkbox=is_display_restricted_access_checkbox,
                 repositories=repositories
             )
 
@@ -422,6 +424,7 @@ class WorkFlowSettingView(BaseView):
             hide_label=hide_label,
             display_hide_label=display_hide,
             is_sysadmin=is_sysadmin,
+            is_display_restricted_access_checkbox=is_display_restricted_access_checkbox,
             repositories=repositories
         )
 

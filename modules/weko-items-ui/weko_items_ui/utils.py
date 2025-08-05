@@ -1079,6 +1079,7 @@ def validate_form_input_data(
                             items_to_be_checked_for_ja_latn.append(data_item_values.get(mapping_key))
                         else:
                             pass
+
             # Validation for TITLE
             validation_duplication_error_checker(
                 _("Title"),

@@ -1329,7 +1329,7 @@ def check_authority_action(activity_id='0', action_id=0,
                 return 0
             if int(cur_user) == int(metadata_owner):
                 return 0
-    
+
     # Validation of action role(user)
     # If action_roles is set
     is_action_role_set, is_allow_action_role, is_deny_action_role = validate_action_role_user(activity_id, action_id, action_order)
@@ -1354,7 +1354,7 @@ def check_authority_action(activity_id='0', action_id=0,
     else:
         if activity.activity_login_user == int(cur_user):
             return 0
-    
+
     # Otherwise, user has no permission
     return 1
 
@@ -1620,7 +1620,7 @@ def next_action(activity_id='0', action_id=0, json_data=None):
         current_user.is_authenticated and \
         (not activity_detail.extra_info or not
             activity_detail.extra_info.get('guest_mail')):
-        process_send_notification_mail(activity_detail, action_endpoint, 
+        process_send_notification_mail(activity_detail, action_endpoint,
                                        next_action_endpoint, action_mails_setting)
 
     if post_json.get('temporary_save') == 1 \
@@ -3351,18 +3351,18 @@ def check_approval(activity_id='0'):
     return jsonify(res.data), 200
 
 
-@workflow_blueprint.route('/send_mail/<string:activity_id>/<string:mail_template>',
+@workflow_blueprint.route('/send_mail/<string:activity_id>/<string:mail_id>',
                  methods=['POST'])
 @login_required
-def send_mail(activity_id='0', mail_template=''):
+def send_mail(activity_id='0', mail_id=''):
     """
-    Sends an email for the specified activity using the given mail template.
+    Sends an email for the specified activity using the given mail id.
 
     This route is accessed via a POST request and requires the user to be logged in.
 
     Args:
         activity_id (str): The ID of the activity.
-        mail_template (str): The name of the mail template.
+        mail_id (str): The ID of the mail template.
 
     Returns:
         Response: JSON response indicating the success or failure of sending the mail.
@@ -3374,7 +3374,7 @@ def send_mail(activity_id='0', mail_template=''):
         work_activity = WorkActivity()
         activity_detail = work_activity.get_activity_detail(activity_id)
         if current_app.config.get('WEKO_WORKFLOW_ENABLE_AUTO_SEND_EMAIL'):
-            process_send_reminder_mail(activity_detail, mail_template)
+            process_send_reminder_mail(activity_detail, mail_id)
     except ValueError:
         return jsonify(code=-1, msg='Error')
     return jsonify(code=1, msg='Success')
@@ -3549,7 +3549,7 @@ def download_activitylog():
         activities.append(tmp_activity)
     else:
         conditions = filter_all_condition(request.args)
-        activities, maxpage, size, pages, name_param = activity.get_activity_list(conditions=conditions, activitylog=True)
+        activities, _, _, _, _, _ = activity.get_activity_list(conditions=conditions, activitylog=True)
 
         if not activities:
             return jsonify(code=-1, msg='no activity error') ,400
@@ -3645,7 +3645,7 @@ def clear_activitylog():
     else:
 
         conditions = filter_all_condition(request.args)
-        activities, maxpage, size, pages, name_param = activity.get_activity_list(conditions=conditions, activitylog=True)
+        activities, _, _, _, _, _ = activity.get_activity_list(conditions=conditions, activitylog=True)
 
         if not activities:
             return jsonify(code=-1, msg='no activity error') ,400

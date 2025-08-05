@@ -29,7 +29,7 @@ import tempfile
 import unicodedata
 from datetime import datetime
 
-from flask import abort, current_app, render_template, request, send_file
+from flask import abort, current_app, render_template, request, redirect, send_file, url_for
 from flask_babelex import gettext as _
 from flask_babelex import get_locale
 from flask_login import current_user
@@ -437,8 +437,12 @@ def file_download_onetime(pid, record,file_name=None, user_mail=None,login_flag=
         else:
             return render_template(error_template,
                                error=error_msg)
-   
- # Cutting out the necessary information
+    
+    is_ajax = None
+    mailaddress = None
+    date = None
+    secret_token = None
+    # Cutting out the necessary information
     if login_flag: #call by method, for login user
         filename = file_name
         user_mail = user_mail

@@ -33,7 +33,7 @@ from invenio_records.errors import MissingModelError
 from invenio_pidstore.models import PersistentIdentifier
 from weko_deposit.api import WekoDeposit
 from weko_index_tree.models import Index
-from mock import patch,MagicMock
+from unittest.mock import patch,MagicMock
 import uuid
 from sqlalchemy.exc import IntegrityError,SQLAlchemyError
 from sqlalchemy.orm.exc import NoResultFound
@@ -41,13 +41,10 @@ from sqlalchemy.orm.exc import NoResultFound
 from weko_records.api import FeedbackMailList, RequestMailList, ItemApplication, FilesMetadata, ItemLink, \
     ItemsMetadata, ItemTypeEditHistory, ItemTypeNames, ItemTypeProps, \
     ItemTypes, Mapping, JsonldMapping, SiteLicense, RecordBase, WekoRecord
-from weko_records.models import ItemType, ItemTypeJsonldMapping, ItemTypeName, \
+from weko_records.models import ItemReference, ItemType, ItemTypeJsonldMapping, ItemTypeName, \
     SiteLicenseInfo, SiteLicenseIpAddress
 from jsonschema.validators import Draft4Validator
 from datetime import datetime, timedelta
-from weko_records.models import ItemReference
-import pytest
-from unittest.mock import patch, MagicMock
 
 # class RecordBase(dict):
 # .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::test_recordbase -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp

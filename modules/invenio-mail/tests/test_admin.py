@@ -133,6 +133,7 @@ class TestMailSettingView:
         result = MailSettingView.send_statistic_mail(rf)
         assert result == False
         mock_send.assert_called()
+
 class TestMailTemplatesView:
     # .tox/c1/bin/pytest --cov=invenio_mail tests/test_admin.py::TestMailTemplatesView::test_index -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-mail/.tox/c1/tmp
     def test_index(self, client, mail_templates, mocker):

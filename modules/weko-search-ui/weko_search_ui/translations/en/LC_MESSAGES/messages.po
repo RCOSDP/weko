@@ -1058,15 +1058,6 @@ msgstr ""
 msgid "Failed to get mapping list."
 msgstr ""
 
-#: weko_search_ui/templates/weko_search_ui/admin/rocrate_import.html:58
-#: weko_search_ui/templates/weko_search_ui/admin/rocrate_import.html:94
-msgid "Mapping"
-msgstr ""
-
-#: weko_search_ui/templates/weko_search_ui/admin/rocrate_import.html:96
-msgid "Failed to get mapping list."
-msgstr ""
-
 #: weko_search_ui/utils.py:1915
 msgid "If there is a info of content file, terms of use cannot be set."
 msgstr "If there is a info of content file, terms of use cannot be set."
@@ -1106,4 +1097,3 @@ msgstr ""
 #: weko_search_ui/templates/weko_search_ui/body_facet_search.html:40
 msgid "Russian"
 msgstr ""
-
