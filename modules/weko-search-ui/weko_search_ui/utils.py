@@ -2930,6 +2930,7 @@ def handle_check_doi(list_record):
         list_record (list): list record import.
     """
     def _check_doi(doi_ra, doi, item):
+        """Check DOI value when chang identifier mode is off."""
         error = None
         split_doi = doi.split("/")
         if doi_ra == "NDL JaLC":
@@ -2941,6 +2942,7 @@ def handle_check_doi(list_record):
                     doi_ra
                 ):
                     error = _("Specified Prefix of {} is incorrect.").format("DOI")
+            # any valid DOI specified by the user can be registered if NDL JaLC is selected
         else:
             if len(split_doi) > 1 and not doi.endswith("/"):
                 error = _("{} cannot be set.").format("DOI")
@@ -2954,7 +2956,7 @@ def handle_check_doi(list_record):
         return error
 
     def _check_doi_duplicate(doi_ra, doi, record=None):
-        """Check if DOI already exists in the system.
+        """Check if DOI already exists in the system when chang identifier mode is on.
 
         Args:
             doi_ra (str): DOI Registration Agency.
@@ -2992,9 +2994,7 @@ def handle_check_doi(list_record):
         item_id = str(item.get("id") or "")
         doi = item.get("doi")
         doi_ra = item.get("doi_ra")
-        if item.get("is_change_identifier") and doi_ra and not doi:
-            error = _("Please specify {}.").format("DOI")
-        elif doi_ra:
+        if doi_ra:
             if item.get("is_change_identifier"):
                 if not doi:
                     error = _("Please specify {}.").format("DOI")
@@ -3023,7 +3023,12 @@ def handle_check_doi(list_record):
                         elif item.get("status") == "new":
                             error = _check_doi_duplicate(doi_ra, doi)
                         else:
-                            record = WekoRecord.get_record_by_pid(item_id)
+                            try:
+                                record = WekoRecord.get_record_by_pid(item_id)
+                            except SQLAlchemyError as ex:
+                                current_app.logger.error(f"item id: {item_id} not found.")
+                                traceback.print_exc(file=sys.stdout)
+                                record = None
                             error = _check_doi_duplicate(doi_ra, doi, record)
             else:
                 if item.get("status") == "new":
@@ -3031,19 +3036,19 @@ def handle_check_doi(list_record):
                         error = _check_doi(doi_ra, doi, item)
 
                 else:
-                    record = WekoRecord.get_record_by_pid(item_id)
-                    identifier = IdentifierHandle(record.pid_recid.object_uuid)
-                    _value, doi_type = identifier.get_idt_registration_data()
+                    try:
+                        record = WekoRecord.get_record_by_pid(item_id)
+                        identifier = IdentifierHandle(record.pid_recid.object_uuid)
+                        _value, doi_type = identifier.get_idt_registration_data()
+                    except SQLAlchemyError as ex:
+                        current_app.logger.error(f"item id: {item_id} not found.")
+                        traceback.print_exc(file=sys.stdout)
+                        doi_type = None
                     if not doi_type:
                         if doi:
                             error = _check_doi(doi_ra, doi, item)
                     else:
-                        pid_doi = None
-                        try:
-                            pid_doi = record.pid_doi
-                        except Exception as ex:
-                            current_app.logger.error("item id: %s not found." % item_id)
-                            current_app.logger.error(ex)
+                        pid_doi = record.pid_doi
                         if pid_doi:
                             doi_domain = IDENTIFIER_GRANT_LIST[
                                 WEKO_IMPORT_DOI_TYPE.index(doi_ra) + 1
@@ -3052,7 +3057,7 @@ def handle_check_doi(list_record):
                                 error = _("Please specify {}.").format("DOI")
                             elif not pid_doi.pid_value == (doi_domain + "/" + doi):
                                 error = _(
-                                    "Specified {} is different from" + " existing {}."
+                                    "Specified {} is different from existing {}."
                                 ).format("DOI", "DOI")
                         elif doi:
                             error = _check_doi(doi_ra, doi, item)
