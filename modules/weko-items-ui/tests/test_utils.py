@@ -11141,10 +11141,10 @@ def test_create_item_deleted_data(app, db,users, db_records2, db_userprofile):
             res = create_item_deleted_data(record, profile, target, url)
             assert res == "test_template_fill"
             test = {
-                "item_title":"タイトル",
-                "submitter_name":None,
-                "registration_date":"2025-01-01 12:00:00",
-                "record_url":url
+                "target_title":"タイトル",
+                "recipient_name":None,
+                "event_date":"2025-01-01 12:00:00",
+                "target_url":url
             }
             mock_fill.assert_called_with(
                 "test_template",
@@ -11160,10 +11160,10 @@ def test_create_item_deleted_data(app, db,users, db_records2, db_userprofile):
             res = create_item_deleted_data(record, profile, target, url)
             assert res == "test_template_fill"
             test = {
-                "item_title":"タイトル",
-                "submitter_name":None,
-                "registration_date":"2025-01-01 12:00:00",
-                "record_url":url
+                "target_title":"タイトル",
+                "recipient_name":None,
+                "event_date":"2025-01-01 12:00:00",
+                "target_url":url
             }
             mock_fill.assert_called_with(
                 "test_template",
@@ -11187,10 +11187,10 @@ def test_create_direct_registerd_data(app, db,users, db_records2, db_userprofile
             res = create_direct_registered_data(record, profile, target, url)
             assert res == "test_template_fill"
             test = {
-                "item_title":"タイトル",
-                "submitter_name":"test_user",
-                "registration_date":"2025-01-01 12:00:00",
-                "record_url":url
+                "target_title":"タイトル",
+                "recipient_name":"test_user",
+                "event_date":"2025-01-01 12:00:00",
+                "target_url":url
             }
             mock_fill.assert_called_with(
                 "test_template",
@@ -11206,10 +11206,10 @@ def test_create_direct_registerd_data(app, db,users, db_records2, db_userprofile
             res = create_direct_registered_data(record, profile, target, url)
             assert res == "test_template_fill"
             test = {
-                "item_title":"タイトル",
-                "submitter_name":"test_user",
-                "registration_date":"2025-01-01 12:00:00",
-                "record_url":url
+                "target_title":"タイトル",
+                "recipient_name":"test_user",
+                "event_date":"2025-01-01 12:00:00",
+                "target_url":url
             }
             mock_fill.assert_called_with(
                 "test_template",
