@@ -121,7 +121,7 @@
               v-model="answer"
               name="answer"
               type="number"
-              :placeholder="$t('message.placeholder.subject')"
+              :placeholder="$t('message.placeholder.result')"
               :class="{
                 'border-miby-form-red': dirtyAnswer && !answeResult,
                 'border-miby-thin-gray': !dirtyAnswer || answeResult

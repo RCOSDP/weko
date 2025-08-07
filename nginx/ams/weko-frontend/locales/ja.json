@@ -156,7 +156,8 @@
       "mail": "メールアドレスを入力",
       "contents": "お問い合わせ内容を入力",
       "contactType": "お問い合わせ種別を入力",
-      "request": "リクエスト内容を入力"
+      "request": "リクエスト内容を入力",
+      "result": "計算結果を入力"
     },
     "alert": {
       "requiredField": "必須入力",
