@@ -893,6 +893,41 @@ def test_shib_sp_login(client, redis_connect,mocker, db, users):
         with client.session_transaction() as session:
             assert 'shib_session_id' not in session
 
+    # test without blocked_user_settings
+    AdminSettings.query.filter_by(id=11).delete()
+    db.session.commit()
+    with patch("weko_accounts.views.ShibUser.get_relation_info",
+               return_value=None)\
+        and patch("weko_accounts.views.redirect",
+                  return_value=make_response()):
+        res = client.post(url,data=form)
+        assert res.status_code == 200
+        assert res.data.decode() == "/weko/shib/login?Shib-Session-ID=1111&next=%2F"
+        with client.session_transaction() as session:
+            assert 'shib_session_id' not in session
+
+    # test with blocked_user_setting dict
+    db.session.add(AdminSettings(
+        id=11,
+        name="blocked_user_settings",
+        settings={"blocked_ePPNs": ["ePPN1", "ePPN2", "ePPN3", "ePPN5", "ePPP*"]}
+    ))
+    db.session.commit()
+    mock_flash = mocker.patch("weko_accounts.views.flash")
+    form_blocked = {
+        "Shib-Session-ID":"1111",
+        "eppn":"ePPN3"
+    }
+    client.post(url,data=form_blocked)
+    mock_flash.assert_called_with("Failed to login.",category="error")
+    AdminSettings.query.filter_by(id=11).delete()
+    db.session.add(AdminSettings(
+        id=11,
+        name="blocked_user_settings",
+        settings='{"blocked_ePPNs": ["ePPN1", "ePPN2", "ePPN3", "ePPN5", "ePPP*"]}'
+    ))
+    db.session.commit()
+
     current_app.config.update(
         WEKO_ACCOUNTS_SHIB_LOGIN_ENABLED=True,
         WEKO_ACCOUNTS_SKIP_CONFIRMATION_PAGE=True
