@@ -187,9 +187,13 @@ def shib_auto_login():
     try:
         is_auto_bind = False
         shib_session_id = request.args.get('Shib-Session-ID', None)
-        session['next'] = request.args.get('next', '/')
-        if session['next'] == 'ams':
-            ams_login = True
+        next_value = request.args.get('next')
+        if next_value is not None and next_value == 'ams':
+            pass
+        else:
+            next_value = session.get('next', '/')
+            session['next'] = next_value
+        ams_login = next_value == 'ams'
         if not shib_session_id:
             shib_session_id = session['shib_session_id']
             is_auto_bind = True
