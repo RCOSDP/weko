@@ -143,6 +143,8 @@
 </template>
 
 <script lang="ts" setup>
+import { onBeforeRouteLeave } from 'vue-router';
+
 import amsAlert from '~/assets/data/amsAlert.json';
 import Alert from '~/components/common/Alert.vue';
 import SearchForm from '~/components/common/SearchForm.vue';
@@ -210,6 +212,7 @@ const checkMailAddress = ref(false);
 const oauthError = ref(false);
 let projectUrl = '';
 const isError = ref(false);
+let timeoutId: ReturnType<typeof setTimeout> | null = null;
 
 /* ///////////////////////////////////
 // function
@@ -744,7 +747,7 @@ function oauthErrorRedirect() {
   oauthError.value = true;
   sessionStorage.removeItem('item-url');
   sessionStorage.setItem('item-url', window.location.pathname + window.location.search);
-  setTimeout(() => {
+  timeoutId = setTimeout(() => {
     // 認証エラーの場合はログイン画面に遷移
     navigateTo({
       path: '/ams/login',
@@ -829,5 +832,12 @@ onMounted(() => {
 
 onUpdated(() => {
   refreshToken();
+});
+
+onBeforeRouteLeave(() => {
+  if (timeoutId) {
+    clearTimeout(timeoutId);
+    timeoutId = null;
+  }
 });
 </script>

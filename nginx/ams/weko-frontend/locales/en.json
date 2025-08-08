@@ -155,7 +155,8 @@
       "mail": "Enter your email address",
       "contents": "Enter your inquiry details",
       "contactType": "Enter contact type",
-      "request": "Enter your request"
+      "request": "Enter your request",
+      "result": "Enter result"
     },
     "alert": {
       "requiredField": "This field is required",
