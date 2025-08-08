@@ -18,6 +18,7 @@ from flask_admin.actions import action
 from flask_admin import expose
 from flask_admin.contrib.sqla import ModelView
 from flask_admin.form import SecureForm
+from flask_babelex import gettext as _
 from flask_security import current_user
 from flask_wtf import FlaskForm
 from invenio_admin.filters import FilterConverter
@@ -33,11 +34,6 @@ from wtforms.widgets import PasswordInput
 from .models import Bucket, FileInstance, Location, MultipartObject, \
     ObjectVersion, slug_pattern
 from .tasks import verify_checksum
-
-
-def _(x):
-    """Identity function for string extraction."""
-    return x
 
 
 def require_slug(form, field):
