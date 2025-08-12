@@ -4757,12 +4757,51 @@ class TestJsonLdMapper:
 
             assert list_record[0].get("errors") is None
 
+        schema["properties"].update({
+            "item_1754636750964": {
+                "type": "string",
+                "title": "Extra",
+                "format": "textarea"
+            }
+        })
+        item_type2.model.schema = schema
+        db.session.commit()
+        json_ld["@graph"][0].update({
+            "additional": { "@id": "#additional" }
+        })
+        json_ld["@graph"].append({
+            "@id": "#additional",
+            "value": "This is an extra field for testing."
+        })
+        with app.test_request_context():
+            mapper = JsonLdMapper(item_type2.model.id, json_mapping)
+            item_metadatas, format = mapper.to_item_metadata(json_ld)
+            item_metadata, system_info = item_metadatas[0]
+            assert item_metadata["item_1754636750964"]
+
         schema = json_data("data/jsonld/item_type_schema.json")
+        schema["properties"].update({
+            "item_1744171568909": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "interim": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "title": "Extra",
+                "maxItems": 9999,
+                "minItems": 1
+            }
+        })
         item_type2.model.schema = schema
         mapping = json_data("data/jsonld/item_type_mapping.json")
         item_type_mapping2.model.mapping = mapping
         db.session.commit()
         json_mapping = json_data("data/jsonld/ro-crate_mapping.json")
+        json_mapping["Extra"] = "item_1744171568909"
         json_ld = json_data("data/jsonld/ro-crate-metadata2.json")
 
         with app.test_request_context():
@@ -4781,6 +4820,7 @@ class TestJsonLdMapper:
             assert thesis["item_30001_title0"][0]["subitem_title"] == "The Sample Dataset for WEKO"
             assert thesis["item_30001_title0"][1]["subitem_title"] == "WEKO用サンプルデータセット"
             assert thesis["files_info"][0]["key"] == "item_30001_file22"
+            assert thesis["item_1744171568909"]
 
             evidence, system_info = item_metadatas[1]
             assert system_info["_id"] == "_:EvidenceData1"
@@ -4791,6 +4831,7 @@ class TestJsonLdMapper:
             assert evidence["path"] == [1623632832836]
             assert evidence["item_30001_title0"][0]["subitem_title"] == "The Sample Dataset for WEKO, evidence part"
             assert evidence["item_30001_title0"][1]["subitem_title"] == "WEKO用サンプルデータセットのエビデンス部分"
+            assert evidence["item_1744171568909"]
 
             list_record = [
                 {
@@ -5202,7 +5243,6 @@ class TestJsonLdMapper:
     # def to_item_metadata(self, json_ld):
     # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_mapper.py::TestJsonLdMapper::test_to_item_metadata_ams_dict -v -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
     def test_to_item_metadata_ams_dict(self, app, db, item_type2):
-        app.config.update({"WEKO_SWORDSERVER_METADATA_FILE_ROCRATE": "ro-crate-metadata.json"})
         json_mapping = json_data("data/ams/jsonld_mapping_dict.json")
         json_ld = json_data("data/ams/ro-crate-metadata_dict.json")
 
