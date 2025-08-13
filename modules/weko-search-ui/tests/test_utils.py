@@ -2200,21 +2200,46 @@ def test_handle_check_duplicate_item_link(app):
     assert not list_record[0].get("errors")
 
 # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_handle_check_operation_flags -v -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
-def test_handle_check_operation_flags():
+def test_handle_check_operation_flags(tmpdir):
+    tmp_dir = tmpdir.mkdir("test")
+    with open(os.path.join(tmp_dir, "test_1.txt"), "w") as f11, \
+            open(os.path.join(tmp_dir, "test_1.csv"), "w") as f12:
+        f11.write("This is a test file.")
+        f12.write("This is a test file.")
+    with open(os.path.join(tmp_dir, "test_2.txt"), "w") as f21, \
+            open(os.path.join(tmp_dir, "test_2.csv"), "w") as f22:
+        f21.write("This is a test file.")
+        f22.write("This is a test file.")
+    with open(os.path.join(tmp_dir, "test_3.txt"), "w") as f31, \
+            open(os.path.join(tmp_dir, "test_3.csv"), "w") as f32:
+        f31.write("This is a test file.")
+        f32.write("This is a test file.")
+    with open(os.path.join(tmp_dir, "test_4.txt"), "w") as f41, \
+            open(os.path.join(tmp_dir, "test_4.csv"), "w") as f42:
+        f41.write("This is a test file.")
+        f42.write("This is a test file.")
+
+    assert len(os.listdir(tmp_dir)) == 8
+
     list_record = [
-        {"metadata_replace": True, "file_path":["/test/test.txt", "test/test.csv"]},
-        {"metadata_replace": False, "file_path":["/test/test.txt", "test/test.csv"]},
-        {"file_path":["/test/test.txt", "test/test.csv"]},
+        {"status": "new", "metadata_replace": True, "file_path":["test_1.txt", "test_1.csv", "https://..."]},
+        {"status": "Keep", "metadata_replace": True, "file_path":["test_2.txt", "test_2.csv", "https://..."]},
+        {"status": "Keep", "metadata_replace": False, "file_path":["test_3.txt", "test_3.csv", "https://..."]},
+        {"status": "Upgrede", "file_path":["test_4.txt", "test_4.csv"]},
     ]
 
     test = [
-        {"metadata_replace": True, "file_path":[]},
-        {"metadata_replace": False, "file_path":["/test/test.txt", "test/test.csv"]},
-        {"file_path":["/test/test.txt", "test/test.csv"]},
+        {"status": "new", "metadata_replace": True, "file_path":["test_1.txt", "test_1.csv", "https://..."], "errors": ["The 'wk:metadataReplace' flag cannot be used when registering an item."]},
+        {"status": "Keep", "metadata_replace": True, "file_path":["test_2.txt", "test_2.csv", "https://..."]},
+        {"status": "Keep", "metadata_replace": False, "file_path":["test_3.txt", "test_3.csv", "https://..."]},
+        {"status": "Upgrede", "file_path":["test_4.txt", "test_4.csv"]},
     ]
 
-    handle_check_operation_flags(list_record)
+    handle_check_operation_flags(list_record, tmp_dir)
     assert list_record == test
+    assert not os.path.isfile(os.path.join(tmp_dir, "test_2.txt"))
+    assert not os.path.isfile(os.path.join(tmp_dir, "test_2.csv"))
+    assert len(os.listdir(tmp_dir)) == 6
 
 # def register_item_handle(item):
 def test_register_item_handle(i18n_app, es_item_file_pipeline, es_records):
