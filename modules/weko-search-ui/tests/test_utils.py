@@ -115,6 +115,7 @@ from weko_search_ui.utils import (
     handle_check_doi_ra,
     handle_check_duplication_item_id,
     handle_check_duplicate_item_link,
+    handle_check_duplicate_record,
     handle_check_exist_record,
     handle_check_file_content,
     handle_check_file_metadata,
@@ -1089,6 +1090,32 @@ def test_get_item_type(mocker_itemtype):
     assert result == except_result
 
     assert get_item_type(0) == {}
+
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_handle_check_duplicate_record -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+# def handle_check_duplicate_record(list_record):
+def test_handle_check_duplicate_record(app):
+    record = {"metadata": {"title": "Title 1"}}
+    expect = {"metadata": {"title": "Title 1"}}
+    with patch("weko_items_ui.utils.is_duplicate_item") as mock_is_duplicate:
+        mock_is_duplicate.return_value = False, [], []
+        handle_check_duplicate_record([record])
+    assert mock_is_duplicate.call_count == 1
+    assert record == expect
+
+    record = {"id": "1", "metadata": {"title": "Title 1"}}
+    expect = {"id": "1", "metadata": {"title": "Title 1"}}
+    with patch("weko_items_ui.utils.is_duplicate_item") as mock_is_duplicate:
+        mock_is_duplicate.return_value = False, [], []
+        handle_check_duplicate_record([record])
+    assert mock_is_duplicate.call_count == 1
+    assert record == expect
+
+    link = "https://example.com/duplicate/1"
+    record = {"metadata": {"title": "Title 1"}}
+    expect = {"metadata": {"title": "Title 1"}, "warning": f'The same item may have been registered.<br><a href="{link}" target="_blank">{link}</a><br>'}
+    with patch("weko_items_ui.utils.is_duplicate_item") as mock_is_duplicate:
+        mock_is_duplicate.return_value = True, ["1"], [link]
+        handle_check_duplicate_record([record])
 
 
 # def handle_check_exist_record(list_record) -> list:
