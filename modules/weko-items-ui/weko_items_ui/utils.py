@@ -31,7 +31,7 @@ import tempfile
 import traceback
 import unicodedata
 import pytz
-from collections import OrderedDict
+from collections import OrderedDict, Counter
 from datetime import date, datetime, timedelta, timezone
 from io import StringIO
 
@@ -3983,10 +3983,65 @@ def sanitize_input_data(data):
             else:
                 sanitize_input_data(data[i])
 
-def check_duplicate(data, is_item=True, exclude_ids=[]):
-    """
-    Check if a record or item is duplicate in records_metadata.
+def get_duplicate_fields(data):
+    """Extract duplicate fields from the metadata.
 
+    Args:
+        data (dict or list): Metadata dictionary or list of dictionaries.
+
+    Returns:
+        tuple(list, list, list, list, list):
+            - List of resource types for the item.
+            - List of item identifiers.
+            - List of item titles.
+            - List of item creator names.
+            - List of item author IDs.
+    """
+    resource_types = []
+    identifiers = []
+    titles = []
+    creators = []
+    author_links = []
+    if isinstance(data, dict):
+        if "resourcetype" in data:
+            resource_types.append(data["resourcetype"])
+        if "subitem_identifier_uri" in data:
+            identifiers.append(data["subitem_identifier_uri"])
+        if "subitem_title" in data:
+            titles.append(data["subitem_title"])
+        if "creatorNames" in data:
+            for creator in data["creatorNames"]:
+                if isinstance(creator, dict):
+                    creators.append(creator.get("creatorName", ""))
+        if "nameIdentifiers" in data:
+            for name_id in data["nameIdentifiers"]:
+                if isinstance(name_id, dict) and \
+                        name_id.get("nameIdentifierScheme") == "WEKO":
+                    author_links.append(name_id.get("nameIdentifier", ""))
+    elif isinstance(data, list):
+        for item in data:
+            item_resource_types, item_identifiers, item_title, item_creators, item_author_links = \
+                get_duplicate_fields(item)
+            resource_types.extend(item_resource_types)
+            identifiers.extend(item_identifiers)
+            titles.extend(item_title)
+            creators.extend(item_creators)
+            author_links.extend(item_author_links)
+
+    return resource_types, identifiers, titles, creators, author_links
+    
+def check_duplicate(data, is_item=True, exclude_ids=[]):
+    """Check if a record or item is duplicate in records_metadata.
+    
+    Checks whether records or items in records_metadata are unique.
+
+    If an identifier exists, returns True if a duplicate item exists.
+
+    For title, resource type, and author, returns True if all duplicate items exist.
+
+    Does not return True if any unique properties exist.
+    If each property has multiple values, all values must match to be considered a duplicate.
+    
     Args:
         data (dict or str): Metadata dictionary (or JSON string).
         is_item (bool): True if checking an item, False if checking a record.
@@ -4014,39 +4069,46 @@ def check_duplicate(data, is_item=True, exclude_ids=[]):
         current_app.logger.error("Metadata format is invalid.")
         return False, [], []
 
-    identifier = title = resource_type = creator = ""
+    identifiers = []
+    titles = []
+    resource_types = []
+    creators = []
     author_links = metadata.get("author_link", [])
     host = request.host
 
-    # Extract other fields
-    for key, value in metadata.items():
-        if isinstance(value, dict) and "resourcetype" in value:
-            resource_type = value["resourcetype"]
-        if isinstance(value, list):
-            for v in value:
-                if isinstance(v, dict):
-                    if "subitem_identifier_uri" in v:
-                        identifier = v["subitem_identifier_uri"]
-                    if "subitem_title" in v:
-                        title = v["subitem_title"]
-                    if "creatorNames" in v:
-                        creator_info = v["creatorNames"][0] if v["creatorNames"] else {}
-                        creator = creator_info.get("creatorName", "")
-
+    for value in metadata.values():
+        _resource_types, _identifiers, _titles, _creators, _author_links = get_duplicate_fields(value)
+        resource_types.extend(_resource_types)
+        identifiers.extend(_identifiers)
+        titles.extend(_titles)
+        creators.extend(_creators)
+        author_links.extend(_author_links)
+    
+    resource_types = list(set(resource_types))
+    identifiers = list(set(identifiers))
+    titles = list(set(titles))
+    creators = list(set(creators))
+    author_links = list(set(author_links))
 
     # 1. Check identifier
-    if identifier:
-        escaped_identifier = identifier.replace('"', '\\"')
+    if identifiers:
+        escaped_identifiers = [id.replace('"', '\\"') for id in identifiers]
+        jsonpath_queries = [
+            f'$.**.subitem_identifier_uri ? (@ == "{identifier}")'
+            for identifier in escaped_identifiers
+        ]
+        where_clauses = " AND ".join([
+            f"jsonb_path_exists(json, :jsonpath_query_{i})"
+            for i in range(len(jsonpath_queries))
+        ])
         query = text(f"""
             SELECT CAST(jsonb_extract_path_text(json, 'recid') AS INTEGER)
             FROM records_metadata
-            WHERE jsonb_path_exists(json, :jsonpath_query)
+            WHERE {where_clauses}
             AND jsonb_extract_path_text(json, 'publish_status') = '0'
             AND jsonb_extract_path_text(json, 'recid') NOT LIKE '%.%'
         """)
-        params = {
-            "jsonpath_query": f'$.**.subitem_identifier_uri ? (@ == "{escaped_identifier}")'
-        }
+        params = {f"jsonpath_query_{i}": query for i, query in enumerate(jsonpath_queries)}
         result = db.session.execute(query, params).fetchall()
         if result:
             recid_list = [r[0] for r in result if r[0] not in exclude_ids]
@@ -4054,8 +4116,11 @@ def check_duplicate(data, is_item=True, exclude_ids=[]):
                 return True, recid_list, [f"https://{host}/records/{r}" for r in recid_list]
 
     # 2. Normalize title
-    normalized_title = unicodedata.normalize("NFKC", title).lower()
-    normalized_title = re.sub(r'[\s,　]', '', normalized_title)
+    normalized_titles = [
+        unicodedata.normalize("NFKC", title).lower()
+        for title in titles
+    ]
+    normalized_titles = [re.sub(r'[\s,　]', '', title) for title in normalized_titles]
 
     query = text("""
         SELECT  CAST(jsonb_extract_path_text(json, 'recid') AS INTEGER), json
@@ -4067,32 +4132,46 @@ def check_duplicate(data, is_item=True, exclude_ids=[]):
     result = db.session.execute(query).fetchall()
 
     matched_recids = set()
+    count_titles = Counter(titles)
     for recid, json_obj in result:
         json_str = json.dumps(json_obj, ensure_ascii=False)
-        titles = re.findall(r'"subitem_title"\s*:\s*"([^"]+)"', json_str)
-        for t in titles:
+        result_titles = re.findall(r'"subitem_title"\s*:\s*"([^"]+)"', json_str)
+        clean_titles = []
+        for t in result_titles:
             cleaned = unicodedata.normalize("NFKC", t).lower()
             cleaned = re.sub(r'[\s,　]', '', cleaned)
-            if cleaned == normalized_title:
-                matched_recids.add(recid)
-                break
-
+            clean_titles.append(cleaned)
+        count_clean_titles = Counter(clean_titles)
+        if count_titles == count_clean_titles:
+            matched_recids.add(recid)
     matched_recids -= set(exclude_ids)
 
     if not matched_recids:
         return False, [], []
 
     # 3. Match resource_type
-    escaped_resource_type = resource_type.replace('"', '\\"')
+    escaped_resource_types = [
+        resource_type.replace('"', '\\"')
+        for resource_type in resource_types
+    ]
+    resourcetype_queries = [
+        f'$.**.resourcetype ? (@ == "{resourcetype}")'
+        for resourcetype in escaped_resource_types
+    ]
+    where_clauses = " AND ".join([
+        f"jsonb_path_exists(json, :jsonpath_query_{i})"
+        for i in range(len(resourcetype_queries))
+    ])
     query = text(f"""
         SELECT CAST(jsonb_extract_path_text(json, 'recid') AS INTEGER)
         FROM records_metadata
-        WHERE jsonb_path_exists(json, :jsonpath_query)
+        WHERE {where_clauses}
         AND jsonb_extract_path_text(json, 'publish_status') = '0'
         AND jsonb_extract_path_text(json, 'recid') NOT LIKE '%.%'
     """)
     params = {
-        "jsonpath_query": f'$.**.resourcetype ? (@ == "{escaped_resource_type}")'
+        f"jsonpath_query_{i}": query
+        for i, query in enumerate(resourcetype_queries)
     }
     result = db.session.execute(query, params).fetchall()
     recids_resource = {r[0] for r in result}
@@ -4125,6 +4204,7 @@ def check_duplicate(data, is_item=True, exclude_ids=[]):
                     cleaned = re.sub(r'[\s,　]', '', full)
                     author_names.add(cleaned)
 
+        count_author_names = Counter(author_names)
         if author_names:
             query = text("""
                 SELECT CAST(jsonb_extract_path_text(json, 'recid') AS INTEGER), json
@@ -4136,14 +4216,17 @@ def check_duplicate(data, is_item=True, exclude_ids=[]):
             result = db.session.execute(query).fetchall()
             for recid, json_obj in result:
                 json_str = json.dumps(json_obj, ensure_ascii=False)
-                creators = re.findall(r'"creatorName"\s*:\s*"([^"]+)"', json_str)
-                for name in creators:
-                    cleaned = re.sub(r'[\s,　]', '', name)
-                    if cleaned in author_names:
-                        final_matched.add(recid)
-                        break
+                result_creators = re.findall(r'"creatorName"\s*:\s*"([^"]+)"', json_str)
+                clean_creators = [re.sub(r'[\s,　]', '', name) for name in result_creators]
+                count_clean_creators = Counter(clean_creators)
+                if count_clean_creators == count_author_names:
+                    final_matched.add(recid)
     else:
-        normalized_creator = re.sub(r'[\s,　]', '', creator)
+        normalized_creators = [
+            re.sub(r'[\s,　]', '', creator)
+            for creator in creators
+        ]
+        count_normalized_creators = Counter(normalized_creators)
         query = text("""
             SELECT CAST(jsonb_extract_path_text(json, 'recid') AS INTEGER), json
             FROM records_metadata
@@ -4154,12 +4237,11 @@ def check_duplicate(data, is_item=True, exclude_ids=[]):
         result = db.session.execute(query).fetchall()
         for recid, json_obj in result:
             json_str = json.dumps(json_obj, ensure_ascii=False)
-            creators = re.findall(r'"creatorName"\s*:\s*"([^"]+)"', json_str)
-            for name in creators:
-                cleaned = re.sub(r'[\s,　]', '', name)
-                if cleaned == normalized_creator:
-                    final_matched.add(recid)
-                    break
+            result_creators = re.findall(r'"creatorName"\s*:\s*"([^"]+)"', json_str)
+            clean_creator = [re.sub(r'[\s,　]', '', name) for name in result_creators]
+            count_clean_creator = Counter(clean_creator)
+            if count_normalized_creators == count_clean_creator:
+                final_matched.add(recid)
 
     final_matched &= matched_recids
     if final_matched:

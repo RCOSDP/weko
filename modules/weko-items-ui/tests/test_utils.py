@@ -144,6 +144,7 @@ from weko_items_ui.utils import (
     send_mail_from_notification_info,
     get_notification_targets,
     get_notification_targets_approver,
+    get_duplicate_fields,
 )
 from weko_items_ui.config import WEKO_ITEMS_UI_DEFAULT_MAX_EXPORT_NUM,WEKO_ITEMS_UI_MAX_EXPORT_NUM_PER_ROLE
 from invenio_indexer.api import RecordIndexer
@@ -11072,7 +11073,141 @@ def test_get_weko_link(app, client, users, db_records, mocker):
     # not key == "nameIdentifiers" is true
     res = get_weko_link({"metainfo": {"field1": [{"field2": {}}]}})
     assert res == {}
-
+    
+# .tox/c1/bin/pytest --cov=weko_items_ui tests/test_utils.py::test_get_duplicate_fields -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
+def test_get_duplicate_fields():
+    data_author_list = [
+        {
+            "creatorNames":[
+                {"creatorName":"情報, 太郎"},
+                {"creatorName":"じょうほう, たろう"},
+            ],
+            "nameIdentifiers":[
+                {"nameIdentifierScheme":"WEKO","nameIdentifier":"6","nameIdentifierURI":"https://test.uri"},
+                {"nameIdentifierScheme":"ORCID","nameIdentifier":"6.123","nameIdentifierURI":"https://test.orcid.uri"},
+            ]
+        },
+        {
+            "creatorNames":[
+                {"creatorName":"じょうほう, じろう"},
+                {"creatorName":"情報, 次郎"},
+            ],
+            "nameIdentifiers":[
+                {"nameIdentifierScheme":"ORCID","nameIdentifier":"7.123","nameIdentifierURI":"https://test.orcid.uri"},
+                {"nameIdentifierScheme":"WEKO","nameIdentifier":"7","nameIdentifierURI":"https://test.uri"},
+            ]
+        }
+    ]
+    res = get_duplicate_fields(data_author_list)
+    assert res[0] == []
+    assert res[1] == []
+    assert res[2] == []
+    assert res[3] == ["情報, 太郎", "じょうほう, たろう", "じょうほう, じろう", "情報, 次郎"]
+    assert res[4] == ["6", "7"]
+    
+    data_author_dict = {
+        "creatorNames":[
+            {"creatorName":"情報, 太郎"},
+            {"creatorName":"じょうほう, たろう"},
+        ],
+        "nameIdentifiers":[
+            {"nameIdentifierScheme":"WEKO","nameIdentifier":"6","nameIdentifierURI":"https://test.uri"},
+            {"nameIdentifierScheme":"ORCID","nameIdentifier":"6.123","nameIdentifierURI":"https://test.orcid.uri"},
+        ]
+    }
+    res = get_duplicate_fields(data_author_dict)
+    assert res[0] == []
+    assert res[1] == []
+    assert res[2] == []
+    assert res[3] == ["情報, 太郎", "じょうほう, たろう"]
+    assert res[4] == ["6"]
+    
+    data_title_list = [
+        {
+            "subitem_title": "テストタイトル",
+            "subitem_title_language": "ja"
+        },
+        {
+            "subitem_title": "test title",
+            "subitem_title_language": "en"
+        }
+    ]
+    res = get_duplicate_fields(data_title_list)
+    assert res[0] == []
+    assert res[1] == []
+    assert res[2] == ["テストタイトル", "test title"]
+    assert res[3] == []
+    assert res[4] == []
+    
+    data_title_dict = {
+        "subitem_title": "テストタイトルその2",
+        "subitem_title_language": "ja"
+    }
+    res = get_duplicate_fields(data_title_dict)
+    assert res[0] == []
+    assert res[1] == []
+    assert res[2] == ["テストタイトルその2"]
+    assert res[3] == []
+    assert res[4] == []
+    
+    
+    data_idt_list = [
+        {
+            "subitem_identifier_uri": "5678",
+            "subitem_identifier_type": "DOI",
+        },
+        {
+            "subitem_identifier_uri": "90123",
+            "subitem_identifier_type": "URI",
+        },
+    ]
+    res = get_duplicate_fields(data_idt_list)
+    assert res[0] == []
+    assert res[1] == ["5678","90123"]
+    assert res[2] == []
+    assert res[3] == []
+    assert res[4] == []
+    
+    data_idt_dict = {
+        "subitem_identifier_uri": "12345",
+        "subitem_identifier_type": "DOI",
+    }
+    res = get_duplicate_fields(data_idt_dict)
+    assert res[0] == []
+    assert res[1] == ["12345"]
+    assert res[2] == []
+    assert res[3] == []
+    assert res[4] == []
+    
+    data_resourcetype_list = [
+        {
+            "resourcetype": "data paper",
+            "resourceuri": "http://purl.org/coar/resource_type/c_beb9"
+        },
+        {
+            "resourcetype": "journal",
+            "resourceuri": "http://purl.org/coar/resource_type/c_0640/"
+        },
+    ]
+    res = get_duplicate_fields(data_resourcetype_list)
+    assert res[0] == ["data paper", "journal"]
+    assert res[1] == []
+    assert res[2] == []
+    assert res[3] == []
+    assert res[4] == []
+    data_resourcetype_dict = {
+            "resourcetype": "conference paper",
+            "resourceuri": "http://purl.org/coar/resource_type/c_5794"
+    }
+    res = get_duplicate_fields(data_resourcetype_dict)
+    assert res[0] == ["conference paper"]
+    assert res[1] == []
+    assert res[2] == []
+    assert res[3] == []
+    assert res[4] == []
+    
+    
+    
 # def check_duplicate(data, is_item=True):
 # .tox/c1/bin/pytest --cov=weko_items_ui tests/test_utils.py::test_check_duplicate -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
 def test_check_duplicate(app, users,db_records3):
