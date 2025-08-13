@@ -5056,19 +5056,36 @@ class TestJsonLdMapper:
             assert file_1["name"] == "data.csv"
 
         # case Extra(attribute_value_mlt)
-        key = "item_1744171568909"
-        multi_metadata = {
-            "attribute_name": "Extra",
-            "attribute_value_mlt": [
-                {
-                    "interim": "エクストラ_multi"
-                }
-            ]
-        }
-        schema = json_data("data/jsonld/item_type_schema_multi.json")
+        schema = json_data("data/jsonld/item_type_schema.json")
+        schema["properties"].update({
+            "item_1744171568909": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "interim": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "title": "Extra",
+                "maxItems": 9999,
+                "minItems": 1
+            }
+        })
         item_type2.model.schema = schema
         db.session.commit()
-        metadata.update(**{key:multi_metadata})
+        extra_metadata = {
+            "item_1744171568909": {
+                "attribute_name": "Extra",
+                "attribute_value_mlt": [
+                    {
+                        "interim": "エクストラ_multi"
+                    }
+                ]
+            }
+        }
+        metadata.update(extra_metadata)
 
         rocrate = JsonLdMapper(
             item_type2.model.id, json_mapping).to_rocrate_metadata(metadata)
@@ -5111,17 +5128,26 @@ class TestJsonLdMapper:
         assert file_0["name"] == "sample.rst"
         assert file_1["name"] == "data.csv"
         # Extra
-        assert extra["value"] == multi_metadata["attribute_value_mlt"][0]['interim']
+        assert extra["value"] == extra_metadata["item_1744171568909"]["attribute_value_mlt"][0]['interim']
 
         # case Extra(attribute_value)
-        single_metadata = {
-            "attribute_name": "extra_field",
-            "attribute_value": "エクストラ_single"
-        }
-        metadata.update(**{key:single_metadata})
-        schema = json_data("data/jsonld/item_type_schema_multi.json")
+        schema = json_data("data/jsonld/item_type_schema.json")
+        schema["properties"].update({
+            "item_1754636750964": {
+                "type": "string",
+                "title": "Extra",
+                "format": "textarea"
+            }
+        })
         item_type2.model.schema = schema
         db.session.commit()
+        extra_metadata = {
+            "item_1754636750964": {
+                "attribute_name": "extra_field",
+                "attribute_value": "エクストラ_single"
+            }
+        }
+        metadata.update(extra_metadata)
 
         rocrate = JsonLdMapper(
             item_type2.model.id, json_mapping).to_rocrate_metadata(metadata)
@@ -5164,7 +5190,7 @@ class TestJsonLdMapper:
         assert file_0["name"] == "sample.rst"
         assert file_1["name"] == "data.csv"
         # Extra(attribute_value)
-        assert extra["value"] == single_metadata["attribute_value"]
+        assert extra["value"] == extra_metadata["item_1754636750964"]["attribute_value"]
 
 
     # def is_valid(self):
