@@ -55,7 +55,7 @@ RUN apt-get -y update --allow-releaseinfo-change && \
 	       phantomjs
 	       
 # setup_npm_and_css_js_filters
-RUN su -c "npm install -g node-sass@3.8.0 clean-css@3.4.12 requirejs uglify-js"
+RUN su -c "npm install -g node-sass@9.0.0 clean-css@3.4.12 requirejs uglify-js"
 
 # setup_virtualenvwrapper
 RUN pip install -U setuptools pip && \
@@ -103,7 +103,7 @@ RUN source "$(which virtualenvwrapper.sh)" && \
     source /home/invenio/.virtualenvs/invenio/bin/activate && \
     ${INVENIO_WEB_INSTANCE} npm && \
     cdvirtualenv "var/instance/static" && \
-    CI=true npm install "https://github.com/RCOSDP/invenio-search-js.git#feature/changePaginationForSearchAfterUse" --save && \
+    CI=true npm install "https://github.com/RCOSDP/invenio-search-js.git#feature/jdcat_202412" --save && \
     CI=true npm install angular-schema-form@0.8.13 && \
     CI=true npm install && \
     cdvirtualenv "var/instance/static/node_modules/ckeditor/plugins" && \

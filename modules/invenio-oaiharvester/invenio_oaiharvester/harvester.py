@@ -2207,55 +2207,72 @@ class JsonMapper(BaseMapper):
 
     def _apply_child_metadata(self, child_metadata, json_data, json_keys,
                               subitem_keys):
-        """
+        """ 
             This process is part of “_create_metadata” and is not
             intended for any other use.
-        """
-        json_key = json_keys[0]
-        value = json_data.get(json_key)
-        if not value:
-            # Perform processing only if there are values
-            # to be set in the json file.
-            return
-        elif isinstance(value, dict):
-            if len(subitem_keys) == 1:
-                # If the subitem code is fixed, the item
-                # to be retrieved is fixed.
-                if value.get(json_keys[1]):
-                    child_metadata[subitem_keys[0]] = str(value[json_keys[1]])
-            else:
-                if not child_metadata.get(subitem_keys[0]):
-                    # If Metadata does not yet have a definition,
-                    # create a dict that will serve as a container.
-                    child_metadata[subitem_keys[0]] = {}
-                self._apply_child_metadata(
-                    child_metadata[subitem_keys[0]],
-                    value, json_keys[1:], subitem_keys[1:])
-        else:
-            if len(subitem_keys) == 1:
-                # If the subitem code is fixed, the item
-                #  to be retrieved is fixed.
-                child_metadata[subitem_keys[0]] = str(value)
-            else:
-                if not child_metadata.get(subitem_keys[0]):
-                    # If Metadata does not yet have a definition,
-                    # create a dict that will serve as a container.
-                    child_metadata[subitem_keys[0]] = {}
-                if child_metadata[subitem_keys[0]].get(subitem_keys[1:][0]):
-                    # The case where multiple json values are set for
-                    # one item of ItemType.
-                    child_metadata[subitem_keys[0]] = [
-                        child_metadata[subitem_keys[0]]]
-                    child_metadata[subitem_keys[0]].append({})
-                    self._apply_child_metadata(
-                        child_metadata[subitem_keys[0]][-1],
-                        json_data, json_keys, subitem_keys[1:])
+        """ 
+        try:
+            json_key = json_keys[0]
+            value = json_data.get(json_key)
+            if value is None:
+                return
+
+            if isinstance(value, dict):
+                if len(json_keys) > 1:
+                    # 次のキーに掘り下げ
+                    next_key = json_keys[1]
+                    next_value = value.get(next_key)
+                    if isinstance(next_value, dict) and len(json_keys) > 2:
+                        # 3段階目に対応
+                        final_key = json_keys[2]
+                        final_value = next_value.get(final_key)
+                        if final_value is not None and len(subitem_keys) == 1:
+                            child_metadata[subitem_keys[0]] = str(final_value)
+                        elif final_value is not None:
+                            if not child_metadata.get(subitem_keys[0]):
+                                child_metadata[subitem_keys[0]] = {}
+                            child_metadata[subitem_keys[0]][subitem_keys[1]] = str(final_value)
+                    elif next_value is not None:
+                        if len(subitem_keys) == 1:
+                            child_metadata[subitem_keys[0]] = str(next_value)
+                        else:
+                            if not child_metadata.get(subitem_keys[0]):
+                                child_metadata[subitem_keys[0]] = {}
+                            child_metadata[subitem_keys[0]][subitem_keys[1]] = str(next_value)
                 else:
+                    if len(subitem_keys) == 1:
+                        child_metadata[subitem_keys[0]] = str(value)
+                    else:
+                        if not child_metadata.get(subitem_keys[0]):
+                            child_metadata[subitem_keys[0]] = {}
+                        self._apply_child_metadata(
+                            child_metadata[subitem_keys[0]],
+                            value, json_keys[1:], subitem_keys[1:]
+                        )
+            elif isinstance(value, list):
+                # List内のdictに対して再帰的に処理
+                for entry in value:
+                    if isinstance(entry, dict):
+                        self._apply_child_metadata(child_metadata, entry, json_keys[1:], subitem_keys)
+            else:
+                if len(subitem_keys) == 1:
+                    child_metadata[subitem_keys[0]] = str(value)
+                else:
+                    if not child_metadata.get(subitem_keys[0]):
+                        child_metadata[subitem_keys[0]] = {}
                     self._apply_child_metadata(
                         child_metadata[subitem_keys[0]],
-                        json_data, json_keys, subitem_keys[1:])
-
-
+                        json_data, json_keys, subitem_keys[1:]
+                    )
+        except Exception as e:
+            import traceback
+            from flask import current_app
+            current_app.logger.error(
+                f"Error in _apply_child_metadata(): json_keys={json_keys}, subitem_keys={subitem_keys}, error={str(e)}" 
+            )
+            traceback.print_exc()
+            raise
+ 
 class BIOSAMPLEMapper(JsonMapper):
     """
        Mapper for BioSample. Please refer to JsonMapper
@@ -2281,15 +2298,14 @@ class BIOSAMPLEMapper(JsonMapper):
             'sameAs.関連識別子.関連識別子': 'sameAs.url',
             'organism.Organism Identifier': 'organism.identifier',
             'organism.Organism Name': 'organism.name',
-            'attributes.Attribute Name': 'attribute.attribute_name',
-            'attributes.Attribute Display Name': 'attribute.display_name',
-            'attributes.Attribute Harmonized Name':
-                'attribute.harmonized_name',
-            'attributes.Attribute Content': 'attribute.content',
+            'attributes.Attribute Name': 'properties.Attributes.Attribute.attribute_name',
+            'attributes.Attribute Display Name': 'properties.Attributes.Attribute.display_name',
+            'attributes.Attribute Harmonized Name': 'properties.Attributes.Attribute.harmonized_name',
+            'attributes.Attribute Content': 'properties.Attributes.Attribute.content',
             'description.入力内容': 'description',
-            'Model Name.入力内容': 'model.name',
-            'package.Package Display Name': 'Package.display_name',
-            'package.Package Name': 'Package.name',
+            'Model Name.入力内容': 'properties.Models.Model.content',
+            'package.Package Display Name': 'properties.Package.display_name',
+            'package.Package Name': 'properties.Package.content',
             'dbXrefs.関連名称.関連名称': ['dbXrefs.identifier', 'dbXrefs.type'],
             'dbXrefs.関連識別子.関連識別子': 'dbXrefs.url',
             'dbXrefsStatistics.Statistic Count': 'dbXrefsStatistics.count',
