@@ -1050,38 +1050,14 @@ RESOURCE_TYPE_V2_MAP = {
 }
 
 
-class BaseMapper:
-    """BaseMapper."""
-
-    itemtype_map = {}
-    identifiers = []
-
-    @classmethod
-    def update_itemtype_map(cls):
-        """Update itemtype map."""
-        for t in ItemTypes.get_all(with_deleted=False):
-            cls.itemtype_map[t.item_type_name.name] = t
+class JPCOARV2Mapper:
+    """JPCOAR V2 Mapper."""
 
     def __init__(self, xml):
         """Init."""
         self.xml = xml
         self.json = xmltodict.parse(xml) if xml else {}
-        if not BaseMapper.itemtype_map:
-            BaseMapper.update_itemtype_map()
-
         self.itemtype = None
-        for item in BaseMapper.itemtype_map:
-            if "Others" == item or "Multiple" == item:
-                self.itemtype = BaseMapper.itemtype_map.get(item)
-                break
-
-
-class JPCOARV2Mapper(BaseMapper):
-    """JPCOAR V2 Mapper."""
-
-    def __init__(self, xml):
-        """Init."""
-        super().__init__(xml)
 
     def map(self, item_type_name):
         """Get map."""
@@ -1089,7 +1065,7 @@ class JPCOARV2Mapper(BaseMapper):
         if not item_type_name or not self.json or "jpcoar:jpcoar" not in self.json.keys():
             return default_metadata
 
-        self.itemtype = self.itemtype_map.get(item_type_name)
+        self.itemtype = ItemTypes.get_by_name(item_type_name)
 
         if not self.itemtype:
             return default_metadata
@@ -1162,7 +1138,7 @@ class JPCOARV2Mapper(BaseMapper):
         return res
 
 
-class JsonMapper(BaseMapper):
+class JsonMapper:
     """ Mapper to map from Json format file to ItemType.
 
         The original file to be mapped by this Mapper is assumed to be a
