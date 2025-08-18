@@ -25,12 +25,13 @@ import re
 import traceback
 
 from email_validator import validate_email
-from flask import Flask, Blueprint, current_app, jsonify, make_response, request, abort, url_for, Response
+from flask import Blueprint, current_app, jsonify, make_response, request, Response, abort, url_for
 from flask_babelex import get_locale
 from flask_babelex import gettext as _
-from flask_limiter import Limiter
-from flask_limiter.util import get_remote_address
 from flask_login import current_user
+from werkzeug.http import generate_etag
+from redis import RedisError
+from invenio_oauth2server import require_api_auth, require_oauth_scopes
 from urllib import parse
 from redis import RedisError
 from werkzeug.http import generate_etag
@@ -42,7 +43,6 @@ from invenio_pidstore.errors import PIDInvalidAction, PIDDoesNotExistError
 from invenio_pidstore.models import PersistentIdentifier
 from invenio_records_rest.links import default_links_factory
 from invenio_records_rest.utils import obj_or_import_string
-from invenio_records_rest.views import pass_record
 from invenio_records_rest.views import \
     create_error_handlers as records_rest_error_handlers
 from invenio_records_files.utils import record_file_factory
@@ -69,10 +69,7 @@ from .errors import AvailableFilesNotFoundRESTError, ContentsNotFoundError, Date
     RecordsNotFoundRESTError, RequiredItemNotExistError, VersionNotFoundRESTError
 from .permissions import page_permission_factory, file_permission_factory
 from .scopes import file_read_scope, item_read_scope
-from .utils import create_limmiter
 from .views import escape_str, get_usage_workflow
-
-limiter = create_limmiter()
 
 
 def create_error_handlers(blueprint):
@@ -446,7 +443,7 @@ class GetFileTerms(ContentNegotiatedMethodView):
 
         # Check ETag
         etag = _generate_terms_token(filename, terms_content)
-        if check_etag(etag):
+        if self.check_etag(etag, weak=True):
             return make_response('304 Not Modified', 304)
 
         # Create response

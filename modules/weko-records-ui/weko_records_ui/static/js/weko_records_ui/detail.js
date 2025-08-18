@@ -445,7 +445,7 @@ require([
     if(file_version_id != null) {
       startGuestWorkflowId = "#btn-start-guest-wf-" + file_version_id
       startNormalWorkflowId = "#btn-start-workflow-" + file_version_id
-      termsAndConditionModalId = "#term_and_condtion_modal-" + file_version_id
+      termsAndConditionModalId = "#term_and_condtion_modal_" + file_version_id
     }
     if (isGuest == "True" && isTermsOnly == "True") {
       const $btnStartGuestTermOnly=$(startGuestWorkflowId);
@@ -537,7 +537,7 @@ require([
       });
     }
   });
-  
+
   $('#print-btn')?.on('click',() => {
     const iframe = document.createElement('iframe');
     iframe.srcdoc = "<!DOCTYPE html>"
@@ -583,7 +583,11 @@ $('#mailaddress_confirm_download').click(function () {
       success: function (response) {
           let link = document.createElement("a");
           link.download = "";
-          link.href = get_uri;
+          if (!!response.guest_token) {
+            link.href = get_uri + "&guest-token=" + response.guest_token;
+          } else {
+            link.href = get_uri;
+          }
           link.click();
           $('#mailcheck_download_modal').modal('hide');
           document.location.href = item_detailes_url;

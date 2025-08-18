@@ -164,3 +164,5 @@ INVENIO_MAIL_VARIABLE_HELP = [
         "comment": "研究計画"
     }
 ]
+
+INVENIO_MAIL_DEFAULT_TEMPLATE_CATEGORY_ID = 3

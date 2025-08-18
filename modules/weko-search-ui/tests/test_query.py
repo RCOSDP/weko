@@ -1,13 +1,8 @@
-import pytest
 import json
 import copy
-import os
-from flask import request, url_for
-from re import L
-from elasticsearch_dsl.query import Match, Range, Terms, Bool, Exists
+from elasticsearch_dsl.query import Match, Range, Terms, Bool
 from mock import patch, MagicMock
-from werkzeug import ImmutableMultiDict
-from werkzeug.datastructures import MultiDict, CombinedMultiDict
+from werkzeug.datastructures import MultiDict
 from invenio_accounts.testutils import login_user_via_session
 
 from invenio_i18n.ext import current_i18n
@@ -109,6 +104,16 @@ def test_get_permission_filter(i18n_app, users, client_request_args, indices):
                 # index_id in is_perm_indexes
                 res = get_permission_filter(33)
                 assert res == ([Terms(publish_status=['0', '1']), Terms(path=['33']), Bool(must=[Terms(publish_status=['0', '1']), Match(relation_version_is_last='true')])], ['33', '33/44', '66'])
+
+    with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
+        res = get_permission_filter(33)
+        expected = ([Match(publish_status='0'), Range(publish_date={'lte': 'now/d', 'time_zone': 'UTC'}), Terms(path=['33']), Bool(must=[Match(publish_status='0'), Match(relation_version_is_last='true')])], ['33','33/44'])
+        assert res==expected
+        mock_searchperm = MagicMock(side_effect=MockSearchPerm)
+        with patch('weko_search_ui.query.search_permission', mock_searchperm):
+            res = get_permission_filter()
+            expected = ([Bool(must=[Terms(path=['33','44'])], should=[Match(weko_creator_id='5'), Terms(weko_shared_ids=['5']), Bool(must=[Match(publish_status='0'), Range(publish_date={'lte': 'now/d', 'time_zone': 'UTC'})])]), Bool(must=[Match(relation_version_is_last='true')])], ['33','33/44'])
+            assert res==expected
 
 
 def test_get_permission_filter_with_community(i18n_app, users, client_request_args, indices, communities):
@@ -668,19 +673,19 @@ def test_default_search_factory_no_queries(app, users, communities):
 
 # def item_path_search_factory(self, search, index_id=None):
 # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_query.py::test_item_path_search_factory -vv -s --cov-branch --cov-report=xml --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
-def test_item_path_search_factory(i18n_app, users, indices):
+def test_item_path_search_factory(app, users, indices):
     search = RecordsSearch()
-    i18n_app.config['WEKO_SEARCH_TYPE_INDEX'] = 'index'
-    i18n_app.config['OAISERVER_ES_MAX_CLAUSE_COUNT'] = 1
-    i18n_app.config['WEKO_ADMIN_MANAGEMENT_OPTIONS'] = WEKO_ADMIN_MANAGEMENT_OPTIONS
-    with i18n_app.test_request_context():
+    app.config['WEKO_SEARCH_TYPE_INDEX'] = 'index'
+    app.config['OAISERVER_ES_MAX_CLAUSE_COUNT'] = 1
+    app.config['WEKO_ADMIN_MANAGEMENT_OPTIONS'] = WEKO_ADMIN_MANAGEMENT_OPTIONS
+    with app.test_request_context():
         with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
             with patch("weko_search_ui.query.get_item_type_aggs", return_value={}):
                 mock_searchperm = MagicMock(side_effect=MockSearchPerm)
                 with patch('weko_search_ui.query.search_permission', mock_searchperm):
                     res = item_path_search_factory(self=None, search=search, index_id=33)
                     assert res
-                    _rv = ([Bool(must=[Terms(path=[])], should=[Match(weko_creator_id='5'), Match(weko_shared_ids=['5']), Bool(must=[Match(publish_status='0'), Range(publish_date={'lte': 'now/d'})])]), Bool(must=[Match(relation_version_is_last='true')])], ['3', '4', '5'])
+                    _rv = ([Bool(must=[Terms(path=[])], should=[Match(weko_creator_id='5'), Terms(weko_shared_ids=['5']), Bool(must=[Match(publish_status='0'), Range(publish_date={'lte': 'now/d'})])]), Bool(must=[Match(relation_version_is_last='true')])], ['3', '4', '5'])
                     with patch('weko_search_ui.query.get_permission_filter', return_value=_rv):
                         res = item_path_search_factory(self=None, search=search, index_id=None)
                         assert res
@@ -691,7 +696,7 @@ def test_item_path_search_factory(i18n_app, users, indices):
 
     with patch("flask_login.utils._get_user",return_value=users[3]["obj"]):
         url = "/test?page=1&size=20&sort=controlnumber&search_type=2&q=3"
-        with i18n_app.test_request_context(url):
+        with app.test_request_context(url):
             mock_searchperm = MagicMock(side_effect=MockSearchPerm)
             with patch("weko_search_ui.query.search_permission",mock_searchperm):
                 with patch("weko_search_ui.query.get_item_type_aggs",return_value={}):

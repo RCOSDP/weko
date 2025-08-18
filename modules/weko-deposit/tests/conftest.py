@@ -171,7 +171,7 @@ def base_app(instance_path):
         OAUTH2_CACHE_TYPE="simple",
         ACCOUNTS_JWT_ENABLE=False,
         INDEXER_DEFAULT_INDEX="{}-weko-item-v1.0.0".format("test"),
-        SEARCH_UI_SEARCH_INDEX="{}-weko".format("test"),
+        SEARCH_UI_SEARCH_INDEX="{}-weko-item-v1.0.0".format("test"),
         INDEXER_DEFAULT_DOCTYPE="item-v1.0.0",
         INDEXER_DEFAULT_DOC_TYPE="item-v1.0.0",
         INDEXER_FILE_DOC_TYPE="content",
@@ -529,9 +529,8 @@ def deposit(app, location):
         deleted=False,
         location=location,
     )
-    with patch("weko_deposit.api.Bucket.create", return_value=bucket):
-        deposit = aWekoDeposit.create({})
-        return deposit.pid.pid_value
+    deposit = aWekoDeposit.create({})
+    return deposit.pid.pid_value
 
 
 @pytest.fixture()

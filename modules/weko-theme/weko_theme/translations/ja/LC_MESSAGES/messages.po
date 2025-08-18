@@ -301,7 +301,6 @@ msgstr ""
 msgid "Admin menu_ホーム"
 msgstr "ホーム"
 
-
 #: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_Item Types"
 msgstr "アイテムタイプ管理"

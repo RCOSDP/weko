@@ -69,7 +69,7 @@ from weko_records_ui.config import WEKO_PERMISSION_SUPER_ROLE_USER, WEKO_PERMISS
 from weko_records import WekoRecords
 from weko_records.api import ItemTypes, Mapping
 from weko_records.config import WEKO_ITEMTYPE_EXCLUDED_KEYS
-from weko_records.models import ItemTypeName, OaStatus, SiteLicenseInfo, FeedbackMailList, ItemReference, ItemTypeProperty
+from weko_records.models import ItemTypeName, OaStatus, SiteLicenseInfo, ItemReference, ItemTypeProperty
 
 from tests.helpers import json_data, create_record
 
@@ -1366,3 +1366,277 @@ def tokens(app,users,db):
     db.session.commit()
 
     return tokens
+
+@pytest.fixture
+def db_ItemReference(db):
+    ir = ItemReference(
+        src_item_pid="1",
+        dst_item_pid="2",
+        reference_type="reference_type"
+    )
+    with db.session.begin_nested():
+        db.session.add(ir)
+
+    return ir
+
+@pytest.fixture
+def k_v_with_c():
+    k_v_with_c = [
+        {
+            "id": "date_range1",
+            "mapping": [],
+            "contents": "",
+            "inputType": "dateRange",
+            "input_Type": "range",
+            "item_value": {
+            "1": {
+                "path": {
+                "gte": "",
+                "lte": ""
+                },
+                "path_type": {
+                "gte": "json",
+                "lte": "json"
+                }
+            },
+            "12": {
+                "path": {
+                "gte": "$.item_1551265302120.attribute_value_mlt[*].subitem_1551256918211",
+                "lte": "$.item_1551265302120.attribute_value_mlt[*].subitem_1551256918211"
+                },
+                "path_type": {
+                "gte": "json",
+                "lte": "json"
+                }
+            },
+            "20": {
+                "path": {
+                "gte": "$.item_1602145192334.attribute_value_mlt[1].subitem_1602144573160",
+                "lte": "$.item_1602145192334.attribute_value_mlt[0].subitem_1602144573160"
+                },
+                "path_type": {
+                "gte": "json",
+                "lte": "json"
+                }
+            }
+            },
+            "mappingFlg": False,
+            "inputVal_to": "",
+            "mappingName": "",
+            "inputVal_from": "",
+            "contents_value": {
+            "en": "Time Period(s)",
+            "ja": "対象時期"
+            },
+            "useable_status": True,
+            "default_display": True
+        },
+        {
+            "id": "text1",
+            "mapping": [],
+            "contents": "",
+            "inputVal": "",
+            "inputType": "text",
+            "input_Type": "text",
+            "item_value": {
+            "1": {
+                "path": "aaaa",
+                "path_type": "json",
+                "condition_path": "TEST",
+                "condition_value": "TEST"
+            },
+            "12": {
+                "path": "$.item_1551264418667.attribute_value_mlt[*].subitem_1551257245638[*].subitem_1551257276108",
+                "path_type": "json",
+                "condition_path": "$.item_1551264418667.attribute_value_mlt[*].subitem_1551257036415",
+                "condition_value": "Distributor"
+            },
+            "20": {
+                "path": "",
+                "path_type": "json"
+            }
+            },
+            "mappingFlg": False,
+            "mappingName": "",
+            "contents_value": {
+            "en": "Distributor",
+            "ja": "配布者"
+            },
+            "useable_status": True,
+            "default_display": True
+        },
+        {
+            "id": "text3",
+            "mapping": [],
+            "contents": "",
+            "inputVal": "",
+            "inputType": "text",
+            "input_Type": "text",
+            "item_value": {
+            "1": {
+                "path": "",
+                "path_type": "json"
+            },
+            "12": {
+                "path": "$.item_1636460428217.attribute_value_mlt[*].subitem_1522657697257",
+                "path_type": "json",
+                "condition_path": "$.item_1636460428217.attribute_value_mlt[*].subitem_1522657647525",
+                "condition_value": "Abstract"
+            },
+            "20": {
+                "path": "$.item_1551264846237.attribute_value_mlt[*].subitem_1551255577890",
+                "path_type": "json"
+            }
+            },
+            "mappingFlg": False,
+            "mappingName": "",
+            "contents_value": {
+            "en": "Summary",
+            "ja": "概要"
+            },
+            "useable_status": True,
+            "default_display": True
+        },
+        {
+            "id": "text10",
+            "mapping": [],
+            "contents": "",
+            "inputVal": "",
+            "inputType": "text",
+            "input_Type": "text",
+            "item_value": {
+            "1": {
+                "path": "",
+                "path_type": "json"
+            },
+            "12": {
+                "path": "$.item_1551264418667.attribute_value_mlt[*].subitem_1551257245638[*].subitem_1551257276108",
+                "path_type": "json",
+                "condition_path": "$.item_1551264418667.attribute_value_mlt[*].subitem_1551257036415",
+                "condition_value": "Other"
+            },
+            "20": {
+                "path": "$.item_1602147887655.attribute_value_mlt[*].subitem_1602143328410",
+                "path_type": "json"
+            }
+            },
+            "mappingFlg": False,
+            "mappingName": "",
+            "contents_value": {
+            "en": "Provider",
+            "ja": "所蔵者・寄託者"
+            },
+            "useable_status": True,
+            "default_display": True
+        },
+        {
+            "id": "text11",
+            "mapping": [],
+            "contents": "",
+            "inputVal": "",
+            "inputType": "text",
+            "input_Type": "text",
+            "item_value": {
+            "1": {
+                "path": "",
+                "path_type": "json"
+            },
+            "12": {
+                "path": "$.item_1636460428217.attribute_value_mlt[*].subitem_1522657697257",
+                "path_type": "json",
+                "condition_path": "$.item_1636460428217.attribute_value_mlt[*].subitem_1522657647525",
+                "condition_value": "Other"
+            },
+            "20": {
+                "path": "$.item_1588260046718.attribute_value_mlt[*].subitem_1591178807921",
+                "path_type": "json"
+            }
+            },
+            "mappingFlg": False,
+            "mappingName": "",
+            "contents_value": {
+            "en": "Data Type",
+            "ja": "データタイプ"
+            },
+            "useable_status": False,
+            "default_display": False
+        }
+    ]
+    return k_v_with_c
+
+@pytest.fixture
+def meta01():
+    filepath = os.path.join(
+        os.path.dirname(os.path.realpath(__file__)),
+        "data",
+        "meta01.json"
+    )
+    with open(filepath, encoding="utf-8") as f:
+            input_data = json.load(f)
+    return input_data
+
+@pytest.fixture
+def db_OaStatus(db):
+    oa_status = OaStatus(
+        oa_article_id=1,
+        oa_status="Unprocessed",
+        weko_item_pid="20000001"
+    )
+    with db.session.begin_nested():
+        db.session.add(oa_status)
+
+    return oa_status
+
+@pytest.fixture
+def tokens(app,users,db):
+    scopes = [
+        "oa_status:update",
+        ""
+    ]
+    tokens = []
+
+    for i, scope in enumerate(scopes):
+        user = users[i]
+        user_id = str(user["id"])
+
+        test_client = Client(
+            client_id=f"dev{user_id}",
+            client_secret=f"dev{user_id}",
+            name="Test name",
+            description="test description",
+            is_confidential=False,
+            user_id=user_id,
+            _default_scopes="deposit:write"
+        )
+        test_token = Token(
+            client=test_client,
+            user_id=user_id,
+            token_type="bearer",
+            access_token=jwt_create_token(user_id=user_id),
+            expires=datetime.now() + timedelta(hours=10),
+            is_personal=False,
+            is_internal=True,
+            _scopes=scope
+        )
+
+        db.session.add(test_client)
+        db.session.add(test_token)
+
+        tokens.append({"token":test_token, "client":test_client, "scope":scope})
+
+    db.session.commit()
+
+    return tokens
+
+
+@pytest.fixture
+def db_ItemReference(db):
+    ir = ItemReference(
+        src_item_pid="1",
+        dst_item_pid="2",
+        reference_type="reference_type"
+    )
+    with db.session.begin_nested():
+        db.session.add(ir)
+
+    return ir

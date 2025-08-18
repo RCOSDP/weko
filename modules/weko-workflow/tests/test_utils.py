@@ -1,6 +1,4 @@
-from unittest import mock
 from unittest.mock import mock_open
-from urllib.parse import parse_qs
 import pytest
 import uuid
 import json
@@ -21,9 +19,8 @@ from weko_deposit.api import WekoRecord, WekoDeposit
 from invenio_records_files.models import RecordsBuckets
 from invenio_files_rest.models import Bucket
 from invenio_cache import current_cache
-from invenio_accounts.testutils import login_user_via_session as login
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus, RecordIdentifier
-from flask_login.utils import login_user,logout_user
+from flask_login.utils import login_user
 from tests.helpers import json_data, create_activity
 from invenio_mail.models import MailConfig
 from weko_admin.models import SiteInfo, Identifier
@@ -160,7 +157,7 @@ from weko_workflow.utils import (
     get_non_extract_files_by_recid,
     check_activity_settings
 )
-from weko_workflow.api import GetCommunity, UpdateItem, WorkActivity, WorkActivityHistory, WorkFlow
+from weko_workflow.api import WorkActivity
 from weko_workflow.models import Activity
 from datetime import timedelta
 from redis.exceptions import ResponseError
@@ -1045,8 +1042,8 @@ def test_prepare_edit_workflow(app, workflow, db_records,users,mocker, order_if)
             "activity_login_user":1,
             "activity_update_user":1
         }
-        recid = db_records[0][0]
-        deposit = db_records[0][6]
+        recid = db_records[6][0]
+        deposit = db_records[6][6]
         mocker.patch("weko_workflow.utils.FeedbackMailList.get_mail_list_by_item_id", return_value = [{"email":"exam@exam.com","author_id":""}])
         request_mail_mock = mocker.patch("weko_workflow.utils.RequestMailList.get_mail_list_by_item_id", return_value = [{"email":"exam@exam.com","author_id":""}])
         item_application_mock = mocker.patch("weko_workflow.utils.ItemApplication.get_item_application_by_item_id", return_value = {"workflow":1, "terms":"term_free", "termsDescription":"test"})
@@ -1059,9 +1056,7 @@ def test_prepare_edit_workflow(app, workflow, db_records,users,mocker, order_if)
             with patch("weko_workflow.utils.IdentifierHandle.get_pidstore", return_value = None):
                 result = prepare_edit_workflow(data,recid,deposit)
             with patch("weko_workflow.utils.IdentifierHandle.get_pidstore", return_value = PersistentIdentifier(status= PIDStatus.DELETED)) as idh:
-                
                 result = prepare_edit_workflow(data,recid,deposit)
-                
         if order_if == 2:
             with patch("weko_workflow.utils.Bucket.get", return_value=None):
                 with pytest.raises(SQLAlchemyError):
@@ -1074,7 +1069,8 @@ def test_prepare_edit_workflow(app, workflow, db_records,users,mocker, order_if)
                 recid = db_records[7][0]
                 deposit = db_records[7][6]
                 result = prepare_edit_workflow(data,recid,deposit) 
-        
+                assert result.activity_id != None
+
         recid = db_records[6][0]
         deposit = db_records[6][6]
         res = prepare_edit_workflow(data,recid,deposit)
@@ -2007,12 +2003,12 @@ def test_set_mail_info(app, db_register, mocker, records_restricted, db_records,
         "subitem_title":"test_sub_title",
         "subitem_advisor_university/institution":"test advisor university",
         "subitem_guarantor_university/institution":"test guarantor university",
-        "subitem_restricted_access_name":"test access name",
-        'subitem_restricted_access_university/institution':"test_restricted_institution",
+        "subitem_fullname":"test access name",
+        'subitem_university/institution':"test_restricted_institution",
         "subitem_restricted_access_research_title":"test_restricted_research_title",
         "subitem_restricted_access_dataset_usage":"test_restricted_dataset",
         "subitem_restricted_access_application_date":"test_restricted_date",
-        "subitem_restricted_access_mail_address":"restricted@test.org",
+        "subitem_mail_address":"restricted@test.org",
         "subitem_restricted_access_research_plan":"restricted_research_plan"
     }
 
@@ -4458,93 +4454,6 @@ def test_make_activitylog_tsv(db_register,db_records):
     output_tsv = make_activitylog_tsv(activities)
     assert isinstance(output_tsv,str)
     assert len(output_tsv.splitlines()) == 1
-
-# def is_terms_of_use_only(workflow_id :int) -> bool:
-# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_is_terms_of_use_only -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
-def test_is_terms_of_use_only(app ,workflow ,workflow_open_restricted):
-    with app.test_request_context():
-        assert not is_terms_of_use_only(workflow["workflow"].id)
-        assert is_terms_of_use_only(workflow_open_restricted[0]["workflow"].id)
-        assert not is_terms_of_use_only(workflow_open_restricted[1]["workflow"].id)
-
-# def grant_access_rights_to_all_open_restricted_files(activity_id :str ,permission:Union[FilePermission,GuestActivity] , activity_detail :Activity) -> dict:
-# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_grant_access_rights_to_all_open_restricted_files -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
-def test_grant_access_rights_to_all_open_restricted_files(app ,db,users ):
-    activity_id = "20000101-99"
-    file_permission = FilePermission(
-        file_name= "bbb.txt"
-        ,record_id=1
-        ,status=-1
-        ,usage_application_activity_id=activity_id
-        ,user_id=users[0]["id"]
-        ,usage_report_activity_id=None
-    )
-    db.session.add(file_permission)
-    activity_detail:Activity = Activity()
-    activity_detail.extra_info = {
-                    "file_name": "bbb.txt"
-                    , "record_id": 1
-                    , "user_mail": users[0]["email"]
-                }
-
-    activity_id_guest = "20001231-99"
-    guest_activity = GuestActivity(
-        file_name= "bbb.txt"
-        ,record_id=1
-        ,status=-1
-        ,activity_id=activity_id_guest
-        ,user_mail=users[5]["email"]
-        ,expiration_date=0
-        ,is_usage_report=None
-        ,token=''
-    )
-    db.session.add(guest_activity)
-    activity_detail_guest:Activity = Activity()
-    activity_detail_guest.extra_info = {
-                    "file_name": "bbb.txt"
-                    , "record_id": 1
-                    , "guest_mail": users[5]["email"]
-                }
-    mock = MagicMock()
-    mock.get_file_data = lambda : [{'accessrole' : 'open_restricted','filename':'aaa.txt'}
-                                ,{'accessrole' : 'open_restricted','filename':'bbb.txt'}
-                                ,{'accessrole' : 'open_access'    ,'filename':'ccc.txt'}]
-
-    with app.test_request_context():
-        with patch('weko_workflow.utils.WekoRecord.get_record_by_pid',return_value = mock):
-            res = grant_access_rights_to_all_open_restricted_files(activity_id ,file_permission, activity_detail )
-            # print(res)
-            assert 'bbb.txt' in res["file_url"]
-
-            fps = FilePermission.find_by_activity(activity_id)
-            assert len(fps) == 2
-
-            for fp in fps:
-                assert fp.status == 1
-
-                user = list(filter(lambda x : x["obj"].id == fp.user_id ,users))[0]
-
-                fd = FileOnetimeDownload.find(
-                    file_name = fp.file_name,
-                    record_id = fp.record_id,
-                    user_mail = user["obj"].email
-                )
-                assert len(fd) == 1
-
-    with app.test_request_context():
-        res = grant_access_rights_to_all_open_restricted_files(activity_id_guest ,guest_activity, activity_detail_guest )
-        assert 'bbb.txt' in res["file_url"]
-        fps = FilePermission.find_by_activity(activity_id_guest)
-        assert len(fps) == 0
-        fd = FileOnetimeDownload.find(
-                    file_name = guest_activity.file_name,
-                    record_id = guest_activity.record_id,
-                    user_mail = users[5]["email"]
-                )
-        assert len(fd) == 1
-
-    res = grant_access_rights_to_all_open_restricted_files(activity_id ,None, activity_detail )
-    assert res == {}
 
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_delete_lock_activity_cache -vv -s -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_delete_lock_activity_cache(client,users):

@@ -33,7 +33,7 @@ from invenio_i18n.ext import current_i18n
 from invenio_i18n.views import set_lang
 
 from . import config
-from .models import AdminLangSettings, SessionLifetime, SiteInfo
+from .models import AdminLangSettings, AdminSettings, SessionLifetime, SiteInfo
 from .utils import overwrite_the_memory_config_with_db
 from .views import blueprint
 
@@ -51,7 +51,10 @@ class WekoAdmin(object):
             conf = current_app.config
             access_table = conf['WEKO_ADMIN_ACCESS_TABLE']
             system_admin = conf['WEKO_ADMIN_PERMISSION_ROLE_SYSTEM']
-            is_use_mail_templates = conf.get('WEKO_ADMIN_USE_MAIL_TEMPLATE_EDIT', False)
+            is_use_mail_templates = False
+            restricted_access_settings = AdminSettings.get("restricted_access", dict_to_object=False)
+            if restricted_access_settings:
+                is_use_mail_templates = restricted_access_settings.get("edit_mail_templates_enable", False)
             is_display_restricted_settings = conf.get('WEKO_ADMIN_DISPLAY_RESTRICTED_SETTINGS', False)
             try:
                 roles = db.session.query(Role).join(userrole).filter_by(

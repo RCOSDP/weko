@@ -124,6 +124,11 @@ label.field-required::after {
   width: 70%;
 }
 
+.settings_checkbox {
+  margin-right: 5px !important;
+  margin-left: 15px !important;
+}
+
 .errorMessage{
   color:red;
 }

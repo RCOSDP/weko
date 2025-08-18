@@ -368,7 +368,7 @@ def check_permission_period(permission : FilePermission) -> bool :
     from weko_items_ui.utils import get_user_information
 
     if permission.status == 1:
-        res = get_valid_onetime_download(permission.file_name ,permission.record_id , get_user_information(permission.user_id)[0]['email'])
+        res = get_valid_onetime_download(permission.file_name, permission.record_id, get_user_information(permission.user_id)[0]['email'])
         current_app.logger.info(res)
         return res is not None
     else:

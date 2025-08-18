@@ -31,9 +31,7 @@ from invenio_accounts.utils import jwt_create_token
 from invenio_indexer import InvenioIndexer
 import pytest
 from invenio_indexer.api import RecordIndexer
-from invenio_pidstore.minters import recid_minter
 from invenio_records import Record
-from invenio_oaiserver.minters import oaiid_minter
 
 from flask import Flask
 from flask_babelex import Babel
@@ -93,7 +91,7 @@ from weko_admin.models import SessionLifetime,SiteInfo,SearchManagement,\
         FacetSearchSetting,BillingPermission,LogAnalysisRestrictedIpAddress,\
         LogAnalysisRestrictedCrawlerList,StatisticsEmail,RankingSettings, Identifier
 from weko_admin.views import blueprint_api
-from weko_admin.config import WEKO_ADMIN_COMMUNITY_ACCESS_LIST,WEKO_ADMIN_REPOSITORY_ACCESS_LIST,WEKO_ADMIN_ACCESS_TABLE,WEKO_ADMIN_PERMISSION_ROLE_SYSTEM,WEKO_ADMIN_USE_MAIL_TEMPLATE_EDIT, WEKO_ADMIN_RESTRICTED_ACCESS_SETTINGS
+from weko_admin.config import WEKO_ADMIN_COMMUNITY_ACCESS_LIST,WEKO_ADMIN_REPOSITORY_ACCESS_LIST,WEKO_ADMIN_ACCESS_TABLE,WEKO_ADMIN_PERMISSION_ROLE_SYSTEM, WEKO_ADMIN_RESTRICTED_ACCESS_SETTINGS
 
 from .helpers import json_data, create_record
 
@@ -173,7 +171,6 @@ def base_app(instance_path, cache_config,request ,search_class):
         WEKO_ADMIN_REPOSITORY_ACCESS_LIST = WEKO_ADMIN_REPOSITORY_ACCESS_LIST,
         WEKO_ADMIN_ACCESS_TABLE=WEKO_ADMIN_ACCESS_TABLE,
         WEKO_ADMIN_PERMISSION_ROLE_SYSTEM =WEKO_ADMIN_PERMISSION_ROLE_SYSTEM,
-        WEKO_ADMIN_USE_MAIL_TEMPLATE_EDIT =WEKO_ADMIN_USE_MAIL_TEMPLATE_EDIT,
         WEKO_ADMIN_RESTRICTED_ACCESS_SETTINGS = WEKO_ADMIN_RESTRICTED_ACCESS_SETTINGS,
         WEKO_WORKFLOW_USAGE_REPORT_WORKFLOW_NAME = 'test workflow31001',
         WEKO_PERMISSION_SUPER_ROLE_USER=WEKO_PERMISSION_SUPER_ROLE_USER,
@@ -259,7 +256,7 @@ def _database_setup(app, request):
                 app.kvsession_store.redis.flushall()
 
     request.addfinalizer(teardown)
-    return a
+    return app
 
 @pytest.yield_fixture()
 def api(app):
@@ -797,7 +794,7 @@ def admin_settings(db):
     settings.append(AdminSettings(id=3,name='site_license_mail_settings',settings={"Root Index": {"auto_send_flag": False}}))
     settings.append(AdminSettings(id=4,name='default_properties_settings',settings={"show_flag": True}))
     settings.append(AdminSettings(id=5,name='item_export_settings',settings={"allow_item_exporting": True, "enable_contents_exporting": True}))
-    settings.append(AdminSettings(id=6,name="restricted_access",settings={"content_file_download": {"expiration_date": 30,"expiration_date_unlimited_chk": False,"download_limit": 10,"download_limit_unlimited_chk": False,},"usage_report_workflow_access": {"expiration_date_access": 500,"expiration_date_access_unlimited_chk": False,},"terms_and_conditions": [], "error_msg":{"key" : "","content" : {"ja" : {"content" : "このデータは利用できません（権限がないため）。"},"en":{"content" : "This data is not available for this user"}}}}))
+    settings.append(AdminSettings(id=6,name="restricted_access",settings={"content_file_download": {"expiration_date": 30,"expiration_date_unlimited_chk": False,"download_limit": 10,"download_limit_unlimited_chk": False,},"usage_report_workflow_access": {"expiration_date_access": 500,"expiration_date_access_unlimited_chk": False,},"terms_and_conditions": [], "error_msg":{"key" : "","content" : {"ja" : {"content" : "このデータは利用できません（権限がないため）。"},"en":{"content" : "This data is not available for this user"}}}, "edit_mail_templates_enable": False, "password_enable": False, "display_request_form": False, "preview_workflow_approval_enable": False, "item_application": {"application_item_types": [], "item_application_enable": False}}))
     settings.append(AdminSettings(id=7,name="display_stats_settings",settings={"display_stats":False}))
     settings.append(AdminSettings(id=8,name='convert_pdf_settings',settings={"path":"/tmp/file","pdf_ttl":1800}))
     settings.append(AdminSettings(id=9,name="elastic_reindex_settings",settings={"has_errored": False}))
@@ -945,7 +942,7 @@ def activities(db,flows,records,users):
                     activity_community_id=3,
                     activity_confirm_term_of_use=True,
                     title='test item1', shared_user_ids=[],
-                    extra_info={"usage_activity_id":"3","usage_application_record_data":{"subitem_restricted_access_name":"test_access_name",}},
+                    extra_info={"usage_activity_id":"3","usage_application_record_data":{"subitem_fullname":"test_access_name",}},
                     action_order=1,
                     )
     db.session.add(activity_usage)
@@ -1227,14 +1224,11 @@ def reindex_settings(i18n_app):
     db_.session.commit()
     return db_
 
-def _create_record(app, item_dict, mint_oaiid=True):
+def _create_record(app, item_dict):
     """Create test record."""
     indexer = RecordIndexer()
     with app.test_request_context():
         record_id = uuid.uuid4()
-        recid = recid_minter(record_id, item_dict)
-        if mint_oaiid:
-            oaiid_minter(record_id, item_dict)
         record = Record.create(item_dict, id_=record_id)
         indexer.index(record)
         return record

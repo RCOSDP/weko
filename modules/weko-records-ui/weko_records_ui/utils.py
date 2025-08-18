@@ -34,13 +34,12 @@ from urllib.parse import quote
 from io import StringIO
 import copy
 
-from flask import abort, current_app, json, make_response, request, Flask
+from flask import abort, current_app, json, request, Flask
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from flask_babelex import gettext as _
 from flask_babelex import to_utc
 from flask_login import current_user
-from sqlalchemy import desc
 from invenio_accounts.models import Role, User
 from invenio_cache import current_cache
 from invenio_db import db
@@ -55,7 +54,7 @@ from passlib.handlers.oracle import oracle10
 from weko_admin.models import AdminSettings
 from weko_admin.utils import UsageReport, get_restricted_access
 from weko_deposit.api import WekoDeposit, WekoRecord
-from weko_records.api import FeedbackMailList, RequestMailList, ItemTypes, Mapping
+from weko_records.api import FeedbackMailList, RequestMailList, ItemTypes
 from weko_records.serializers.utils import get_mapping
 from weko_records.utils import custom_record_medata_for_export, replace_fqdn
 from weko_records.models import ItemReference
@@ -811,7 +810,7 @@ def hide_by_email(item_metadata, force_flag=False, item_type=None):
 
         # Hidden owners_ext info
         if item_metadata.get('_deposit') and \
-                item_metadata['_deposit'].get('owners_ext'):
+                item_metadata['_deposit'].get('owners_ext') and item_metadata['_deposit']['owners_ext'].get('email'):
             del item_metadata['_deposit']['owners_ext']
 
         for item in item_metadata:
@@ -1180,7 +1179,7 @@ def send_usage_report_mail_for_user(guest_mail: str, temp_url: str):
     # Mail information
     mail_info = {
         'template': current_app.config.get(
-            "WEKO_WORKFLOW_USAGE_REPORT_ACTIVITY_URL"),
+            "WEKO_WORKFLOW_USAGE_REPORT_REMINDER_MAIL_TEMPLATE_ID"),
         'mail_address': guest_mail,
         'url_guest_user': temp_url
     }
@@ -1202,12 +1201,12 @@ def check_and_send_usage_report(extra_info:dict, user_mail:str ,record:dict, fil
     if not extra_info.get('send_usage_report'):
         return
     activity = create_usage_report_for_user(extra_info)
-    mail_template = current_app.config.get(
-        "WEKO_WORKFLOW_USAGE_REPORT_ACTIVITY_URL")
+    mail_template_id = current_app.config.get(
+        "WEKO_WORKFLOW_USAGE_REPORT_REMINDER_MAIL_TEMPLATE_ID")
     usage_report = UsageReport()
     if not activity:
         return _("Unexpected error occurred.")
-    if not usage_report.send_reminder_mail([], mail_template, [activity]):
+    if not usage_report.send_reminder_mail([], mail_template_id, [activity]):
         return _("Failed to send mail.")
     extra_info['send_usage_report'] = False
 

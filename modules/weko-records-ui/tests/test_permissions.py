@@ -1,20 +1,12 @@
-import io
 from datetime import datetime, timedelta, timezone
-from unittest import mock  # python3
 from unittest.mock import MagicMock
 
-import mock  # python2, after pip install mock
 import pytest
-from flask import Flask, json, jsonify, session, url_for, current_app
-from flask_babelex import get_locale, to_user_timezone, to_utc
+from flask import current_app
 from flask_login import current_user
 from flask_security import login_user
 from flask_security.utils import login_user
-from invenio_accounts.models import Role, User
-from invenio_accounts.testutils import create_test_user, login_user_via_session
 from mock import patch
-from weko_records_ui.config import WEKO_PERMISSION_SUPER_ROLE_USER
-from weko_records_ui.models import FileOnetimeDownload
 
 from weko_records_ui.permissions import (
     check_created_id,
@@ -116,15 +108,15 @@ def test_check_file_download_permission(app, records, users, db_file_permission,
     
     with patch("flask_login.utils._get_user", return_value=users[0]["obj"]):
         with patch("weko_records_ui.utils.to_utc", return_value=datetime.utcnow()):
-            
+
             assert check_file_download_permission(record, fjson, False) == True
             fjson['accessrole'] = 'open_date'
             assert check_file_download_permission(record, fjson, True) == True
-            
+
             yesterday = datetime.utcnow() - timedelta(days = 1)
             with patch("weko_records_ui.utils.to_utc", return_value=yesterday):
                 assert check_file_download_permission(record, fjson, False) == True
-                
+
             tomorrow = datetime.utcnow() + timedelta(days = 1)
             with patch("weko_records_ui.utils.to_utc", return_value=tomorrow):
                 assert check_file_download_permission(record, fjson, False) == False
@@ -1021,7 +1013,8 @@ def test_is_owners_or_superusers(app,records,users):
         # comadmin
         with  patch("flask_login.utils._get_user", return_value=users[3]["obj"]):
             assert is_owners_or_superusers(testrec)
-    
+
+
 # def __isint(str): -> bool:
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_permissions.py::test___isint -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
 def test___isint():

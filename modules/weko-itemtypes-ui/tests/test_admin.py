@@ -753,13 +753,13 @@ class TestItemTypeRocrateMappingView:
         url = url_for('itemtypesrocratemapping.index')
         res = client.get(url)
         assert res.status_code == 302
-        assert res.headers['Location'] == url + str(item_type[0].get('item_type').id)
+        assert res.headers['Location'] == 'http://test_server/admin/itemtypes/rocrate_mapping/1'
 
         # item_type_id is not exist : redirect first item type
         url100 = url_for('itemtypesrocratemapping.index', item_type_id=100)
         res = client.get(url100)
         assert res.status_code == 302
-        assert res.headers['Location'] == url + str(item_type[0].get('item_type').id)
+        assert res.headers['Location'] == 'http://test_server/admin/itemtypes/rocrate_mapping/1'
 
         # item_type_id is normal : 200
         url1 = url_for('itemtypesrocratemapping.index', item_type_id=1)

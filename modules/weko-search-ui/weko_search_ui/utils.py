@@ -72,7 +72,7 @@ from invenio_search import RecordsSearch
 
 from sqlalchemy import func as _func
 from sqlalchemy.exc import SQLAlchemyError
-from weko_admin.models import SessionLifetime
+from weko_admin.models import AdminSettings, SessionLifetime
 from weko_admin.utils import get_redis_cache, reset_redis_cache, get_restricted_access
 from weko_admin.api import TempDirInfo
 from weko_authors.models import AuthorsAffiliationSettings, AuthorsPrefixSettings
@@ -1963,8 +1963,18 @@ def register_item_metadata(item, root_path, owner, is_gakuninrdm=False, request_
         FeedbackMailList.delete_without_commit(deposit.id)
         deposit.remove_feedback_mail()
 
+    # check restricted access settings
+    can_import_request_mail = False
+    can_import_item_application = False
+    restricted_access_settings = AdminSettings.get("restricted_access", dict_to_object=False)
+    if restricted_access_settings:
+        can_import_request_mail = restricted_access_settings.get("display_request_form", False)
+        item_application_settings = restricted_access_settings.get("item_application", {})
+        can_import_item_application = item_application_settings.get("item_application_enable", False) \
+            and item.get("item_type_id", 0) in item_application_settings.get("application_item_types", [])
+
     request_mail_list = item["metadata"].get("request_mail_list")
-    if request_mail_list:
+    if request_mail_list and can_import_request_mail:
         RequestMailList.update(
             item_id = deposit.id, request_maillist=request_mail_list
         )
@@ -1974,7 +1984,7 @@ def register_item_metadata(item, root_path, owner, is_gakuninrdm=False, request_
         deposit.remove_request_mail()
 
     item_application = item.get("item_application")
-    if item_application:
+    if item_application and can_import_item_application:
         if item_application.get("termsDescription", ""):
             item_application["termsDescription"]=item_application.pop("termsDescription", "")
         ItemApplication.update(item_id = deposit.id, item_application = item_application)
@@ -2003,7 +2013,7 @@ def register_item_metadata(item, root_path, owner, is_gakuninrdm=False, request_
                 item_id=_deposit.id, feedback_maillist=feedback_mail_list
             )
 
-        if request_mail_list:
+        if request_mail_list and can_import_request_mail:
             RequestMailList.update(
                 item_id=_deposit.id, request_maillist=request_mail_list
             )
@@ -2025,8 +2035,9 @@ def register_item_metadata(item, root_path, owner, is_gakuninrdm=False, request_
             )
             item_link_draft_pid = ItemLink(_draft_pid.pid_value)
             item_link_draft_pid.update(link_data)
-            if item_application:
-                ItemApplication.update(item_id=_deposit.id, item_application=item_application)
+
+        if item_application and can_import_item_application:
+            ItemApplication.update(item_id=_deposit.id, item_application=item_application)
 
         item_link_latest_pid = ItemLink(_deposit.pid.pid_value)
         item_link_latest_pid.update(link_data)
@@ -2770,7 +2781,7 @@ def handle_check_and_prepare_item_application(list_record):
             #コンテンツファイル情報の有無をチェック
             file_paths = item.get("file_path", [])
             # リストfile_pathsの空文字列を削除
-            file_paths = [a for a in file_paths if a != '' or a != None]
+            file_paths = [a for a in file_paths if a != '' and a != None]
             exists_filepath = len(file_paths)!=0
             exists_filename = check_exists_file_name(item)
             has_contents_file= exists_filepath or exists_filename

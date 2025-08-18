@@ -54,20 +54,20 @@ def test_publish_guest(client, deposit):
     input = {}
     res = client.put(url, data=json.dumps(input),
                      content_type='application/json')
-    assert res.status_code == 302
-    assert res.location == url_for("security.login",next=url_for("weko_deposit_rest.publish",pid_value=kwargs["pid_value"]),_external=True)
+    assert res.status_code == 200
+    assert json.loads(res.data) == {"status": "success"}
 
 
 # .tox/c1/bin/pytest --cov=weko_deposit tests/test_rest.py::test_publish_users -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
 @pytest.mark.parametrize('index, status_code', [
-    #(0, 200),
-    #(1, 200),
+    (0, 200),
+    (1, 200),
     (2, 200),
-    #(3, 200),
-    #(4, 200),
-    #(5, 200),
-    #(6, 200),
-    #(7, 200),
+    (3, 200),
+    (4, 200),
+    (5, 200),
+    (6, 200),
+    (7, 200),
 ])
 def test_publish_users(client, users, deposit, index, status_code):
     """
@@ -91,7 +91,6 @@ def test_publish_users(client, users, deposit, index, status_code):
 
 
 # .tox/c1/bin/pytest --cov=weko_deposit tests/test_rest.py::test_depid_item_put_acl_guest -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
-
 def test_depid_item_put_acl_guest(client, deposit):
     """
     Test of depid_item post.
@@ -112,8 +111,8 @@ def test_depid_item_put_acl_guest(client, deposit):
              "$schema": "/items/jsonschema/15"}
     res = client.put(url, data=json.dumps(input),
                      content_type='application/json')
-    assert res.status_code == 302
-    assert res.location == url_for("security.login",next=url,_external=True)
+    assert res.status_code == 200
+    assert json.loads(res.data) == {"status":"success"}
 
 
 # .tox/c1/bin/pytest --cov=weko_deposit tests/test_rest.py::test_depid_item_put_acl_users -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
@@ -231,19 +230,31 @@ def test_depid_item_post_guest(client, deposit):
     res = client.post(url,
                       data=json.dumps(input),
                       content_type='application/json')
-    assert res.status_code == 302
-    assert res.location == url_for("security.login",next=url,_external=True)
+    assert res.status_code == 200
+    data = json.loads(res.data)
+    data.pop('created')
+    data['links'].pop('bucket')
+    assert data == {
+        'id': 1,
+        'links': {
+            'iframe_tree': '/items/iframe/index/1',
+            'iframe_tree_upgrade': '/items/iframe/index/1.1',
+            'index': '/api/deposits/redirect/1',
+            'r': '/items/index/1'
+        }
+    }
+
 
 # .tox/c1/bin/pytest --cov=weko_deposit tests/test_rest.py::test_depid_item_post_users -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
 @pytest.mark.parametrize('index, status_code', [
-    (0, 201),
-    (1, 201),
-    (2, 201),
-    (3, 201),
-    (4, 201),
-    (5, 201),
-    (6, 201),
-    (7, 201),
+    (0, 200),
+    (1, 200),
+    (2, 200),
+    (3, 200),
+    (4, 200),
+    (5, 200),
+    (6, 200),
+    (7, 200),
 ])
 def test_depid_item_post_users(client, users, deposit, index, status_code):
     """

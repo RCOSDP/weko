@@ -1915,3 +1915,21 @@ msgstr "エラーメッセージ"
 
 msgid "password check function"
 msgstr "非ログインユーザーのDLにおけるパスワードチェック機能"
+
+msgid "application for use of items without content"
+msgstr "コンテンツ未登録アイテムの利用申請"
+
+msgid "item types available for application"
+msgstr "コンテンツ未登録状態で利用申請可能なアイテムタイプ"
+
+msgid "item type not available for use application"
+msgstr "コンテンツ未登録状態で利用申請不可能なアイテムタイプ"
+
+msgid "file preview in approval actions"
+msgstr "承認アクションにおけるファイルプレビュー"
+
+msgid "edit mail templates"
+msgstr "メールテンプレート編集"
+
+msgid "display request form"
+msgstr "リクエストフォーム"

@@ -21,7 +21,6 @@
 """Flask extension for weko-workflow."""
 
 from . import config
-from .rest import create_blueprint
 
 
 class WekoWorkflow(object):
@@ -85,6 +84,7 @@ class WekoWorkflowREST(object):
 
         :param app: An instance of :class:`flask.Flask`.
         """
+        from .rest import create_blueprint
         self.init_config(app)
         blueprint = create_blueprint(app, app.config['WEKO_WORKFLOW_REST_ENDPOINTS'])
         app.register_blueprint(blueprint)

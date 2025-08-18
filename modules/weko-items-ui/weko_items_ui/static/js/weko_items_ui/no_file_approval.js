@@ -6,59 +6,44 @@ class NoneContentsApproval extends React.Component{
     constructor(props){
         super(props);
         this.state = {
+            workflows: [],
+            terms: [],
+            termsDescription: null,
             showNoneContentsApproval:false,
-            showTextareaForTerms:false
+            selected_workflow: null,
+            selected_term: null,
         }
     }
 
     componentDidMount() {
-        const activityID = $("#activity_id").text();
-        let item_application = [];
-        let display_item_application_button = false
-        $.ajax({
-            url: "/workflow/get_item_application/" + activityID,
-            async: false,
-            method: "GET",
-            success: function (response) {
-            if (response.code) {
-                item_application = response.item_application || {};
-                display_item_application_button = response.is_display_item_application_button || false
-            }
-            },
-            error: function(jqXHR, status) {
-                alert(jqXHR.responseJSON.msg);
-            }
-        })
-        this.setState({showNoneContentsApproval:display_item_application_button})
-    }
+        fetch('/workflow/get-data-init')
+            .then(response => response.json())
+            .then(data => {
+                const workflows = data.init_workflows || [];
+                const terms = data.init_terms || [];
+                this.setState({
+                    workflows: workflows,
+                    terms: terms
+                })})
+            .catch(error => alert(error));
 
-
-    getDataInit() {
-        let dataInit = {'workflows': [], 'roles': []};
-        $.ajax({
-          url: '/workflow/get-data-init',
-          method: 'GET',
-          async: false,
-          success: function (data, status) {
-            dataInit = data;
-          },
-          error: function (data, status) {}
-        })
-        return dataInit
-      }
-
-    TextareaForTerms(){
-        let term_id = $('#terms_without_contents').val();
-        if(term_id == "term_free"){
-            return true
-        }
-        return false
+        fetch('/workflow/get_item_application/' + $("#activity_id").text())
+            .then(response => response.json())
+            .then(data => {
+                if (data.code) {
+                    const item_application = data.item_application || {};
+                    const display_item_application_button = data.is_display_item_application_button || false
+                    this.setState({
+                        showNoneContentsApproval: display_item_application_button,
+                        selected_workflow: item_application.workflow,
+                        selected_term: item_application.terms,
+                        termsDescription: item_application.termsDescription
+                    })
+                }})
+            .catch(error => alert(error));
     }
 
     render() {
-        const itemApplicationList = this.getDataInit()
-        const workflowList = itemApplicationList['init_workflows']
-        const termsList = itemApplicationList['init_terms']
         return (
         <div>
             <div className="row">
@@ -79,9 +64,10 @@ class NoneContentsApproval extends React.Component{
                     <div class="col-sm-9">
                         <select class="form-control" id="workflow_for_item_application">
                             <option value=""></option>
-                            {workflowList.map((workflow,index) => (
-                            <option value={workflow.id}>{workflow.flows_name}</option>
-                            ))}
+                            {this.state.workflows.map((workflow, index) => {
+                                const selected = (workflow.id == this.state.selected_workflow) ? 'selected' : '';
+                                return <option value={workflow.id} selected={selected}>{workflow.flows_name}</option>;
+                            })}
                         </select>
                     </div>
                 </div>
@@ -92,18 +78,19 @@ class NoneContentsApproval extends React.Component{
                         {TERMS_AND_CONDITIONS_LABEL}
                     </label>
                     <div class="col-sm-9">
-                        <select class="form-control" id="terms_without_contents" onChange={() => {this.setState({showTextareaForTerms : this.TextareaForTerms()})}} > 
+                        <select class="form-control" id="terms_without_contents" onChange={(e) => {this.setState({selected_term : e.target.value})}} >
                             <option value=""></option>
-                            {termsList.map((Terms,index) => (
-                            <option value={Terms.id}>{Terms.name}</option>
-                            ))}
+                            {this.state.terms.map((Terms, index) => {
+                                const selected = (Terms.id === this.state.selected_term) ? 'selected' : '';
+                                return <option value={Terms.id} selected={selected}>{Terms.name}</option>;
+                            })}
                         </select>
                     </div>
-                <div className={`row ${this.state.showTextareaForTerms ? 'show': 'hidden'}`}>
+                <div className={`row ${this.state.selected_term === "term_free" ? 'show': 'hidden'}`}>
                     <div className="col-sm-12 form-group schema-form-textarea">
                         <label className="control-label col-sm-3"></label>
                         <div class="col-sm-9">
-                            <textarea class="form-control" id="termsDescription"></textarea>
+                            <textarea class="form-control" id="termsDescription" onChange={() => {this.setState({termsDescription: this.value})}} value={this.state.termsDescription} />
                         </div>
                     </div>
                 </div>
@@ -113,7 +100,6 @@ class NoneContentsApproval extends React.Component{
         )
     }
 }
-
 
 ReactDOM.render(
     <NoneContentsApproval/>,

@@ -423,7 +423,9 @@
           {% if is_display_request_form %}
             {%- include "weko_records_ui/box/request.html" %}
           {% endif %}
-      {{ check_item_application(record, community, url_for_security) }}
+      {% if is_no_content_item_application %}
+        {{ check_item_application(record, community, url_for_security) }}
+      {% endif %}
 		  {% if config.WEKO_RECORDS_UI_DISPLAY_VERSION_BOX_FLG %}
              {%- include "weko_records_ui/box/versions.html" %}
 		  {% endif %}

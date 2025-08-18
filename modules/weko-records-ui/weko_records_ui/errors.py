@@ -92,7 +92,7 @@ class InvalidWorkflowError(RESTException):
 
         self.code = 403
         self.description = self.get_this_message()
-    
+
     def get_this_message(self):
         from weko_admin.utils import get_restricted_access
 
@@ -137,4 +137,4 @@ class InternalServerError(RESTException):
     """Internal Server Error."""
 
     code = 500
-    description = 'Internal Server Error'
+    description = _('Internal Server Error.')

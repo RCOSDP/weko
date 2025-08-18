@@ -2,7 +2,6 @@ import pytest
 from weko_records_ui.utils import (
     is_future,
     create_usage_report_for_user,
-    get_data_usage_application_data,
     send_usage_report_mail_for_user,
     check_and_send_usage_report,
     update_onetime_download,
@@ -19,7 +18,6 @@ from weko_records_ui.utils import (
     is_private_index,
     get_file_info_list,
     replace_license_free,
-    is_show_email_of_creator,
     hide_by_itemtype,
     hide_by_email,
     hide_by_file,
@@ -36,11 +34,9 @@ from weko_records_ui.utils import (
     get_google_detaset_meta,
     get_google_scholar_meta,
     create_secret_url,
-    _generate_secret_download_url,
     parse_secret_download_token,
     validate_secret_download_token,
     get_secret_download,
-    _create_secret_download_url,
     update_secret_download,
     get_valid_onetime_download,
     display_oaiset_path,
@@ -57,24 +53,17 @@ from weko_records_ui.utils import (
 import base64
 from unittest.mock import MagicMock
 import copy
-import io
 from datetime import datetime as dt
 from datetime import timedelta
 from lxml import etree
 from fpdf import FPDF
-from invenio_records_files.utils import record_file_factory
-from flask import Flask, json, jsonify, session, url_for,current_app
-from flask_security.utils import login_user
+from flask import json, current_app
 from flask_babelex import to_utc 
-from invenio_accounts.testutils import login_user_via_session
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from mock import patch
 from weko_deposit.api import WekoRecord, WekoDeposit
 from weko_records_ui.models import FileOnetimeDownload, FileSecretDownload
-from weko_records.api import ItemTypes,Mapping
 from weko_admin.models import AdminSettings
-from weko_records.serializers.utils import get_mapping
-from weko_records.models import ItemType, ItemTypeMapping, ItemTypeName
 from flask_babelex import gettext as _
 import datetime
 from werkzeug.exceptions import Gone, NotFound
@@ -322,9 +311,6 @@ def test_get_pair_value(app):
         assert name== ('ja_conference paperITEM00000001(public_open_access_open_access_simple)', 'ja')
         assert lang== ('en_conference paperITEM00000001(public_open_access_simple)', 'en')
 
-        name_keys = ['subitem_1551255647225', 'subitem_1551255647225']
-        lang_keys = ['subitem_1551255648112', 'subitem_1551255647225']
-        name,lang =  get_pair_value(name_keys,lang_keys,datas)
 
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_get_values_by_selected_lang -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
 def test_get_values_by_selected_lang(app):
@@ -1011,14 +997,14 @@ def test_parse_secret_download_token(app ,db):
 
 
     # 66
-    # onetime_download pattern
-    assert parse_secret_download_token("MSB1c2VyQGV4YW1wbGUub3JnIDIwMjItMDktMjcgNDBDRkNGODFGM0FFRUI0Ng==") == (_("Token is invalid."),())
+    # invalid args pattern
+    assert parse_secret_download_token("MSA1IDIwMjMtMDMtMDggMDA6NTI6MTkuNjI0NTUyIDZGQTdEMzIxQTk0OTU1MEQ=") == (_("Token is invalid."),())
 
     # 67
-    # secret_download pattern
-    error , res = parse_secret_download_token("MSA1IDIwMjMtMDMtMDggMDA6NTI6MTkuNjI0NTUyIDZGQTdEMzIxQTk0OTU1MEQ=")
+    # valid args pattern
+    error, res = parse_secret_download_token("MSA1IDIwMjMtMDMtMDhUMDA6NTI6MTkuNjI0NTUyIDZGQTdEMzIxQTk0OTU1MEQ=")
     assert not error
-    assert res == ('1', '5', '2023-03-08 00:52:19.624552', '6FA7D321A949550D')
+    assert res == ('1', '5', '2023-03-08T00:52:19.624552', '6FA7D321A949550D')
 
 # def validate_secret_download_token(
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_validate_secret_download_token -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp

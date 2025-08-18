@@ -58,7 +58,7 @@ from invenio_records.api import RecordBase
 from invenio_accounts.models import User
 from invenio_search import RecordsSearch
 from invenio_stats.utils import QueryRankingHelper
-
+from weko_admin.models import AdminSettings
 from weko_authors.api import WekoAuthors
 from weko_deposit.api import WekoDeposit, WekoRecord
 from weko_deposit.pidstore import get_record_without_version
@@ -1061,6 +1061,8 @@ def validate_form_input_data(
 
     for data_key in data_keys:
         data_item_value_list = data[data_key]
+        if type(data_item_value_list) != list:
+            continue
         # Validate TITLE item values from data
         if mapping_title_item_key == data_key:
             for data_item_values in data_item_value_list:
@@ -2233,20 +2235,32 @@ def make_stats_file(item_type_id, recids, list_item_role, export_path=""):
         ret.append('.feedback_mail[{}]'.format(i))
         ret_label.append('.FEEDBACK_MAIL[{}]'.format(i))
 
-    max_request_mail = records.get_max_ins_request_mail()
-    for i in range(max_request_mail):
-        ret.append('.request_mail[{}]'.format(i))
-        ret_label.append('.REQUEST_MAIL[{}]'.format(i))
+    # restricted access settings
+    can_export_item_application = False
+    can_export_request_mail = False
+    restricted_access_settings = AdminSettings.get("restricted_access", dict_to_object=False)
+    if restricted_access_settings:
+        can_export_request_mail = restricted_access_settings.get("display_request_form", False)
+        item_application_settings = restricted_access_settings.get("item_application", {})
+        can_export_item_application = item_application_settings.get("item_application_enable", False) \
+            and int(item_type_id) in item_application_settings.get("application_item_types", [])
 
-    records.get_item_application()
+    if can_export_request_mail:
+        max_request_mail = records.get_max_ins_request_mail()
+        for i in range(max_request_mail):
+            ret.append('.request_mail[{}]'.format(i))
+            ret_label.append('.REQUEST_MAIL[{}]'.format(i))
 
     ret.append('.researchmap_linkage')
     ret_label.append('.RESEAECHMAP_LINKAGE')
 
-    ret.extend(['.item_application.workflow','.item_application.terms','.item_application.termsDescription',
-                '.cnri', '.doi_ra', '.doi', '.edit_mode'])
-    ret_label.extend(['.ITEM_APPLICATION.WORKFLOW','.ITEM_APPLICATION.TERMS','.ITEM_APPLICATION.TERMS_DESCRIPTION',
-                      '.CNRI', '.DOI_RA', '.DOI', 'Keep/Upgrade Version'])
+    if can_export_item_application:
+        records.get_item_application()
+        ret.extend([".item_application.workflow",".item_application.terms",".item_application.termsDescription"])
+        ret_label.extend([".ITEM_APPLICATION.WORKFLOW",".ITEM_APPLICATION.TERMS",".ITEM_APPLICATION.TERMS_DESCRIPTION"])
+
+    ret.extend(['.cnri', '.doi_ra', '.doi', '.edit_mode'])
+    ret_label.extend(['.CNRI', '.DOI_RA', '.DOI', 'Keep/Upgrade Version'])
     has_pubdate = len([
         record for _, record in records.records.items()
         if record.get('pubdate')
@@ -2279,17 +2293,19 @@ def make_stats_file(item_type_id, recids, list_item_role, export_path=""):
         # Exporting .researchmap_linkage is ALWAYS blank
         records.attr_output[recid].append('')
 
-        request_mail_list = records.attr_data['request_mail_list'] \
-            .get(recid, [])
-        records.attr_output[recid].extend(request_mail_list)
-        records.attr_output[recid].extend(
-            [''] * (max_request_mail - len(request_mail_list))
-        )
+        if can_export_request_mail:
+            request_mail_list = records.attr_data['request_mail_list'] \
+                .get(recid, [])
+            records.attr_output[recid].extend(request_mail_list)
+            records.attr_output[recid].extend(
+                [''] * (max_request_mail - len(request_mail_list))
+            )
 
-        item_application = records.attr_data['item_application'].get(recid, {})
-        records.attr_output[recid].append(item_application.get('workflow',''))
-        records.attr_output[recid].append(item_application.get('terms',''))
-        records.attr_output[recid].append(item_application.get('termsDescription',''))
+        if can_export_item_application:
+            item_application = records.attr_data['item_application'].get(recid, {})
+            records.attr_output[recid].append(item_application.get('workflow',''))
+            records.attr_output[recid].append(item_application.get('terms',''))
+            records.attr_output[recid].append(item_application.get('termsDescription',''))
 
         pid_cnri = record.pid_cnri
         cnri = ''
@@ -4737,20 +4753,33 @@ def make_stats_file_with_permission(item_type_id, recids,
     for i in range(max_feedback_mail):
         ret.append('.feedback_mail[{}]'.format(i))
         ret_label.append('.FEEDBACK_MAIL[{}]'.format(i))
-    max_request_mail = records.get_max_ins_request_mail()
-    for i in range(max_request_mail):
-        ret.append('.request_mail[{}]'.format(i))
-        ret_label.append('.REQUEST_MAIL[{}]'.format(i))
 
-    records.get_item_application()
+    # restricted access settings
+    can_export_item_application = False
+    can_export_request_mail = False
+    restricted_access_settings = AdminSettings.get("restricted_access", dict_to_object=False)
+    if restricted_access_settings:
+        can_export_request_mail = restricted_access_settings.get("display_request_form", False)
+        item_application_settings = restricted_access_settings.get("item_application", {})
+        can_export_item_application = item_application_settings.get("item_application_enable", False) \
+            and int(item_type_id) in item_application_settings.get("application_item_types", [])
+
+    if can_export_request_mail:
+        max_request_mail = records.get_max_ins_request_mail()
+        for i in range(max_request_mail):
+            ret.append('.request_mail[{}]'.format(i))
+            ret_label.append('.REQUEST_MAIL[{}]'.format(i))
 
     ret.append('.researchmap_linkage')
     ret_label.append('.RESEAECHMAP_LINKAGE')
 
-    ret.extend(['.item_application.workflow','.item_application.terms','.item_application.termsDescription',
-                '.cnri', '.doi_ra', '.doi', '.edit_mode'])
-    ret_label.extend(['.ITEM_APPLICATION.WORKFLOW','.ITEM_APPLICATION.TERMS','.ITEM_APPLICATION.TERMS_DESCRIPTION',
-                      '.CNRI', '.DOI_RA', '.DOI', 'Keep/Upgrade Version'])
+    if can_export_item_application:
+        records.get_item_application()
+        ret.extend([".item_application.workflow",".item_application.terms",".item_application.termsDescription"])
+        ret_label.extend([".ITEM_APPLICATION.WORKFLOW",".ITEM_APPLICATION.TERMS",".ITEM_APPLICATION.TERMS_DESCRIPTION"])
+
+    ret.extend(['.cnri', '.doi_ra', '.doi', '.edit_mode'])
+    ret_label.extend(['.CNRI', '.DOI_RA', '.DOI', 'Keep/Upgrade Version'])
     ret.append('.metadata.pubdate')
     ret_label.append('公開日' if
                      permissions['current_language']() == 'ja' else 'PubDate')
@@ -4776,20 +4805,22 @@ def make_stats_file_with_permission(item_type_id, recids,
             [''] * (max_feedback_mail - len(feedback_mail_list))
         )
 
-        request_mail_list = records.attr_data['request_mail_list'] \
-            .get(recid, [])
-        records.attr_output[recid].extend(request_mail_list)
-        records.attr_output[recid].extend(
-            [''] * (max_request_mail - len(request_mail_list))
-        )
+        if can_export_request_mail:
+            request_mail_list = records.attr_data['request_mail_list'] \
+                .get(recid, [])
+            records.attr_output[recid].extend(request_mail_list)
+            records.attr_output[recid].extend(
+                [''] * (max_request_mail - len(request_mail_list))
+            )
 
         # Exporting .researchmap_linkage is ALWAYS blank
         records.attr_output[recid].append('')
 
-        item_application = records.attr_data['item_application'].get(recid, {})
-        records.attr_output[recid].append(item_application.get('workflow',''))
-        records.attr_output[recid].append(item_application.get('terms',''))
-        records.attr_output[recid].append(item_application.get('termsDescription',''))
+        if can_export_item_application:
+            item_application = records.attr_data['item_application'].get(recid, {})
+            records.attr_output[recid].append(item_application.get('workflow',''))
+            records.attr_output[recid].append(item_application.get('terms',''))
+            records.attr_output[recid].append(item_application.get('termsDescription',''))
 
         pid_cnri = record.pid_cnri
         cnri = ''

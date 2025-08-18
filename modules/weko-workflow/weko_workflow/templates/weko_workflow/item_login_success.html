@@ -56,9 +56,16 @@
 {%- endblock page_footer %}
 
 {% set guest_email = None %}
-{% if activity and activity.extra_info and 'guest_mail' in activity.extra_info %}
-  {% set guest_email = activity.extra_info.guest_mail %}
+{% set application_record_id = None %}
+{% if activity and activity.extra_info %}
+  {% if 'guest_mail' in activity.extra_info %}
+    {% set guest_email = activity.extra_info.guest_mail %}
+  {% endif %}
+  {% if "record_id" in activity.extra_info %}
+    {% set application_record_id = activity.extra_info.record_id %}
+  {% endif %}
 {% endif %}
+
 {%- block page_body_main %}
 {{ form.csrf_token }}
 <div class="row">
@@ -286,6 +293,10 @@
     {%-if community%}
     <a class="btn btn-default pull-right"
       href="{{url_for('weko_workflow.index',community=community.id)}}">{{_('Back')}}</a>
+    {%- elif guest_email and application_record_id %}
+    <a class="btn btn-info pull-left back-button" href="/records/{{ application_record_id }}">
+        <span class="glyphicon glyphicon-chevron-left"></span>
+            {{_('Back')}}</a>
     {%-else%}
     <a class="btn btn-info pull-left back-button" href="{{url_for('weko_workflow.index')}}">
             <span class="glyphicon glyphicon-chevron-left"></span>

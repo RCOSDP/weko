@@ -37,6 +37,12 @@ const LABEL_SECRET_URL_DOWNLOAD = document.getElementById("label_secret_url_down
 const LABEL_SECRET_URL_ENABLED = document.getElementById("label_secret_url_enabled").value;
 const LABEL_ERROR_MESSAGE = document.getElementById("error_message").value;
 const LABEL_PASSWORD_FOR_DOWNLOAD = document.getElementById("password_for_download").value;
+const LABEL_ITEM_APPLICATION = $("#item_application").first().val();
+const APPLICIABLE_ITEM_TYPES = $("#appliciable_item_types").first().val();
+const NOT_APPLICIABLE_ITEM_TYPES = $("#not_appliciable_item_types").first().val();
+const LABEL_PREVIEW_WORKFLOW_APPROVAL = $("#preview_workflow_approval").first().val();
+const LABEL_EDIT_MAIL_TEMPLATES = $("#edit_mail_templates").first().val();
+const LABEL_REQUEST_FORM = $("#request_form").first().val();
 
 const EMPTY_TERM = {
   key: '',
@@ -121,8 +127,54 @@ function InputComponent({
   )
 }
 
-function PasswordLayout({value,setValue}) {
-  const style = {marginRight: "5px", marginLeft: "15px"};
+function ItemApplicationSettingsLayout({enableItemApplication,setEnableItemApplication,applicationItemTypeList,setApplicationItemTypeList}) {
+  function convertItemTypeToOption(itemType) {
+    return (
+      <option value={itemType.id}>{itemType.name}</option>
+    )
+  }
+
+  const [itemTypes, setItemTypes] = useState([])
+
+  const enableSelected = () => {
+    let selectedItemTypes = [];
+    $('#select_hide option:selected').each(function () {
+      selectedItemTypes.push(parseInt($(this).val()));
+      $(this).prop('selected', false);
+    });
+
+    if (selectedItemTypes.length > 0 && enableItemApplication) {
+      setApplicationItemTypeList([...applicationItemTypeList, ...selectedItemTypes]);
+    }
+  }
+
+  const disableSelected = () => {
+    let selectedItemTypes = [];
+    $('#select_show option:selected').each(function () {
+      selectedItemTypes.push(parseInt($(this).val()));
+      $(this).prop('selected', false);
+    });
+
+    if (selectedItemTypes.length > 0 && enableItemApplication) {
+      setApplicationItemTypeList(applicationItemTypeList.filter((item, index) => !selectedItemTypes.includes(item)));
+    }
+  }
+
+  useEffect(() => {
+    fetch('/api/itemtypes/lastest')
+      .then(response => response.json())
+      .then((data) => {
+        let results = []
+        for (const itemType of data) {
+          if (itemType.harvesting_type)
+            continue
+          else
+            results.push(itemType)
+        }
+        setItemTypes(results)
+      })
+      .catch(console.error)
+  }, [])
 
   return (
     <div>
@@ -130,17 +182,75 @@ function PasswordLayout({value,setValue}) {
         <div className="col-sm-12 col-md-12 col-md-12">
           <div className="panel panel-default">
             <div className="panel-heading">
-              <h5><strong>{LABEL_PASSWORD_FOR_DOWNLOAD}</strong></h5>
+              <h5><strong>{LABEL_ITEM_APPLICATION}</strong></h5>
+            </div>
+            <div className="panel-body">
+              <div className="form-group">
+                <label htmlFor="item_application_enable" className="text-left">
+                <input type="checkbox"
+                  id="item_application_enable"
+                  className="settings_checkbox"
+                  checked={enableItemApplication}
+                  onChange={(event) =>  setEnableItemApplication(event.target.checked)}/>
+                  <strong>{LABEL_SECRET_URL_ENABLED}</strong>
+                </label>
+              </div>
+              <fieldset disabled={!enableItemApplication}>
+                <div class="form-group col-sm-5 col-md-5 col-md-5">
+                  <div>{APPLICIABLE_ITEM_TYPES}</div>
+                  <select multiple name="select_show" id="select_show" class="form-control">
+                    {itemTypes
+                      .filter(itemType => (!itemType.harvesting_type && applicationItemTypeList.includes(itemType.id)))
+                      .map(convertItemTypeToOption)}
+                  </select>
+                </div>
+                <div class="form-group col-sm-2 col-md-2 col-md-2 text-center margin-top padding-top">
+                  <div>
+                    <button type="button" class="btn btn-default" id="setHide" onClick={disableSelected}>
+                      <span class="glyphicon glyphicon-arrow-right"></span>
+                    </button>
+                  </div>
+                  <div class="margin-top">
+                    <button type="button" class="btn btn-default" id="setShow" onClick={enableSelected}>
+                      <span class="glyphicon glyphicon-arrow-left"></span>
+                    </button>
+                  </div>
+                </div>
+                <div class="form-group col-sm-5 col-md-5 col-md-5">
+                  <div>{NOT_APPLICIABLE_ITEM_TYPES}</div>
+                  <select multiple name="select_hide" id="select_hide" class="form-control">
+                  {itemTypes
+                    .filter(itemType => (!itemType.harvesting_type && !applicationItemTypeList.includes(itemType.id)))
+                    .map(convertItemTypeToOption)}
+                  </select>
+                </div>
+              </fieldset>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function FunctionEnableOnlyLayout({value, setValue, header_title, checkbox_id}) {
+  return (
+    <div>
+      <div className="row">
+        <div className="col-sm-12 col-md-12 col-md-12">
+          <div className="panel panel-default">
+            <div className="panel-heading">
+              <h5><strong>{header_title}</strong></h5>
             </div>
             <div className="panel-body">
               <div className="form-inline">
-                <label htmlFor="password_enable" className="text-left">
+                <label htmlFor={checkbox_id} className="text-left">
                 <input type="checkbox"
-                    style={style}
-                    id="password_enable"
-                    checked={value}
-                    onChange={(event) =>  setValue(event.target.checked)}/>
-                    {LABEL_SECRET_URL_ENABLED}
+                  className="settings_checkbox"
+                  id={checkbox_id}
+                  checked={value}
+                  onChange={(event) =>  setValue(event.target.checked)}/>
+                  <strong>{LABEL_SECRET_URL_ENABLED}</strong>
                 </label>
               </div>
             </div>
@@ -186,7 +296,7 @@ function SecretURLFileDownloadLayout({value, setValue}) {
               <div className="form-inline">
                 <label htmlFor="secret_enable" className="text-left">
                   <input type="checkbox"
-                    style={style}
+                    className="settings_checkbox"
                     id="secret_enable"
                     key={Math.random()}
                     checked={checkboxValue}
@@ -496,6 +606,10 @@ function ErrorMsgConditions({errorMsg, setErrorMsg}) {
 
 
 function RestrictedAccessLayout({
+                                  item_application,
+                                  preview_workflow_approval_enable,
+                                  edit_mail_templates_enable,
+                                  display_request_form,
                                   password_enable,
                                   secret_URL_file_download,
                                   content_file_download,
@@ -504,6 +618,20 @@ function RestrictedAccessLayout({
                                   error_msg,
                                   restricted_access_display_flag
                                 }) {
+
+  let itemApplicationSetting = item_application;
+  if (!itemApplicationSetting) {
+    itemApplicationSetting = {
+      item_application_enable: false,
+      application_item_types: []
+    };
+  }
+
+  const [itemApplicationEnable, setItemApplicationEnable] = useState(!!itemApplicationSetting.item_application_enable);
+  const [applicationItemTypeList, setApplicationItemTypeList] = useState(itemApplicationSetting.application_item_types);
+  const [workflowPreviewEnabled, setWorkflowPreviewEnabled] = useState(!!preview_workflow_approval_enable);
+  const [editMailTemplateEnabled, setEditMailTemplateEnabled] = useState(!!edit_mail_templates_enable);
+  const [requestFormEnabled, setRequestFormEnabled] = useState(!!display_request_form);
   const [passwordEnable, setPasswordEnable] = useState(!!password_enable);
   const [secretURLFileDownload , setSecretURLFileDownload] = useState(secret_URL_file_download);
   const [contentFileDownload, setContentFileDownload] = useState(content_file_download);
@@ -577,14 +705,21 @@ function RestrictedAccessLayout({
       showErrorMessage(MESSAGE_MISSING_DATA);
       return false;
     }
-     //Validate ErrorMsgConditions
-     errorMessage = validErrorMsgConditions();
-     if(errorMessage){
-       showErrorMessage(errorMessage);
-       return false;
-     } 
+    //Validate ErrorMsgConditions
+    errorMessage = validErrorMsgConditions();
+    if(errorMessage){
+      showErrorMessage(errorMessage);
+      return false;
+    }
 
     let data = {
+      item_application: {
+        item_application_enable: itemApplicationEnable,
+        application_item_types: applicationItemTypeList
+      },
+      preview_workflow_approval_enable: workflowPreviewEnabled,
+      edit_mail_templates_enable: editMailTemplateEnabled,
+      display_request_form: requestFormEnabled,
       password_enable:passwordEnable,
       secret_URL_file_download:secretURLFileDownload,
       content_file_download: contentFileDownload,
@@ -689,11 +824,30 @@ function RestrictedAccessLayout({
     return errorMessage;
   }
 
+
   if (restricted_access_display_flag) {
     return (
       <div>
-        <PasswordLayout value={passwordEnable}
-                        setValue={setPasswordEnableCallback}/>
+        <ItemApplicationSettingsLayout enableItemApplication={itemApplicationEnable}
+                        setEnableItemApplication={setItemApplicationEnable}
+                        applicationItemTypeList={applicationItemTypeList}
+                        setApplicationItemTypeList={setApplicationItemTypeList}/>
+        <FunctionEnableOnlyLayout value={workflowPreviewEnabled}
+                        setValue={setWorkflowPreviewEnabled}
+                        header_title={LABEL_PREVIEW_WORKFLOW_APPROVAL}
+                        checkbox_id="preview_workflow_approval_enable"/>
+        <FunctionEnableOnlyLayout value={editMailTemplateEnabled}
+                        setValue={setEditMailTemplateEnabled}
+                        header_title={LABEL_EDIT_MAIL_TEMPLATES}
+                        checkbox_id="mail_template_edit_enable"/>
+        <FunctionEnableOnlyLayout value={requestFormEnabled}
+                        setValue={setRequestFormEnabled}
+                        header_title={LABEL_REQUEST_FORM}
+                        checkbox_id="request_form_display_enable"/>
+        <FunctionEnableOnlyLayout value={passwordEnable}
+                        setValue={setPasswordEnableCallback}
+                        header_title={LABEL_PASSWORD_FOR_DOWNLOAD}
+                        checkbox_id="password_enable"/>
         <SecretURLFileDownloadLayout value={secretURLFileDownload}
                                    setValue={setSecretURLFileDownload}/>
         <ContentFileDownloadLayout value={contentFileDownload}

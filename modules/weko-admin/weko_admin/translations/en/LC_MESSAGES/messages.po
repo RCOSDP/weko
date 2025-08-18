@@ -1887,3 +1887,21 @@ msgstr "Error Message"
 
 msgid "password check function"
 msgstr "Password check function when downloading for guest user"
+
+msgid "application for use of items without content"
+msgstr "Application for use of items without content"
+
+msgid "item types available for application"
+msgstr "Item types available for application"
+
+msgid "item type not available for use application"
+msgstr "Item types not available for application"
+
+msgid "file preview in approval actions"
+msgstr "File preview in approval actions"
+
+msgid "edit mail templates"
+msgstr "Edit mail templates"
+
+msgid "display request form"
+msgstr "Display request form"

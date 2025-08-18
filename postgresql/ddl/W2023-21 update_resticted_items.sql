@@ -29,6 +29,6 @@ WHERE
 		AND shared_user_id > 0
 	);
 
---3. Drop "shared_user_id" column
+--3. Drop "shared_user_ids" column
 ALTER TABLE
 	workflow_activity DROP COLUMN shared_user_id;

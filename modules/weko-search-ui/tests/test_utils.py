@@ -21,16 +21,13 @@ from unittest.mock import MagicMock, Mock, patch, mock_open
 from werkzeug.exceptions import BadRequest
 from elasticsearch import helpers, ElasticsearchException, NotFoundError
 from elasticsearch_dsl import Search
-from flask import current_app, make_response, request, url_for
-from flask_babelex import Babel
+from flask import current_app, make_response, request
 from flask_login import current_user
 
 from sqlalchemy import func as _func
 from sqlalchemy.exc import SQLAlchemyError
 from invenio_files_rest.models import FileInstance,Location
-from invenio_i18n.ext import current_i18n
 from invenio_i18n.babel import set_locale
-from invenio_records.api import Record
 from invenio_records.models import RecordMetadata
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus, Redirect
 from invenio_db import db as iv_db
@@ -48,17 +45,12 @@ from weko_redis.redis import RedisConnection
 from weko_schema_ui.config import WEKO_SCHEMA_RELATION_TYPE
 from weko_workflow.models import WorkFlow
 
-
-from weko_search_ui import WekoSearchUI
 from weko_search_ui.config import (
     ACCESS_RIGHT_TYPE_URI,
     RESOURCE_TYPE_URI,
     VERSION_TYPE_URI,
     WEKO_SEARCH_UI_BULK_EXPORT_URI,
     WEKO_SEARCH_UI_BULK_EXPORT_TASK,
-    WEKO_IMPORT_SYSTEM_ITEMS,
-    WEKO_REPO_USER,
-    WEKO_SYS_USER,
 )
 from weko_search_ui.utils import (
     DefaultOrderedDict,
@@ -72,7 +64,6 @@ from weko_search_ui.utils import (
     check_sub_item_is_system,
     check_terms_in_system,
     clean_thumbnail_file,
-    convert_nested_item_to_list,
     create_deposit,
     create_flow_define,
     create_work_flow,

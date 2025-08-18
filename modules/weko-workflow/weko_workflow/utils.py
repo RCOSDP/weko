@@ -2529,7 +2529,7 @@ def send_mail_reminder(mail_info):
     """
     subject, body = get_mail_data(mail_info.get('mail_id'))
     if not body:
-        raise ValueError('Cannot get email template')
+        raise ValueError('Cannot get email body')
     body = replace_characters(mail_info, body)
     if not send_mail(subject, mail_info.get('mail_address'), body):
         raise ValueError('Cannot send mail')
@@ -2738,8 +2738,8 @@ def replace_characters(data, content):
         '[restricted_approver_name]': 'restricted_approver_name',
         '[restricted_site_name_ja]': 'restricted_site_name_ja',
         '[restricted_site_name_en]': 'restricted_site_name_en',
-        '[restricted_institution_name_en]':'restricted_institution_name_en',
-        '[restricted_institution_name_ja]':'restricted_institution_name_ja',
+        '[restricted_institution_name_ja]': 'restricted_institution_name_ja',
+        '[restricted_institution_name_en]': 'restricted_institution_name_en',
         '[restricted_site_mail]': 'restricted_site_mail',
         '[restricted_site_url]': 'restricted_site_url',
         '[restricted_approver_affiliation]': 'restricted_approver_affiliation',
@@ -2908,7 +2908,8 @@ def set_mail_info(item_info, activity_detail, guest_user=False):
         restricted_application_date=item_info.get(
             'subitem_restricted_access_application_date'),
         restricted_mail_address=item_info.get(
-            'subitem_restricted_access_mail_address'),
+            'subitem_mail_address'),
+        #    'subitem_mail_address'),
         #        restricted_institution_name_ja = institution_name,
         #        restricted_institution_name_en = institution_name,
         restricted_download_link='',
@@ -4080,6 +4081,7 @@ def process_send_mail(mail_info, mail_id):
         body = replace_characters(mail_info, body)
         return send_mail(subject, mail_info['mail_recipient'], body)
 
+
 def process_send_mail_tpl(mail_info, mail_pattern_name):
     """Send mail approval rejected.
 
@@ -4303,8 +4305,11 @@ def get_usage_data(item_type_id, activity_detail, user_profile=None):
             return result
         __build_metadata_for_usage_report(rm.json, result)
         result['dataset_usage'] = rm.json.get('item_title')
-        result['item_title'] = related_activity_id + cfg.get(
-            'WEKO_WORKFLOW_USAGE_REPORT_ITEM_TITLE') + result['usage_data_name']
+        result['item_title'] = '{}_{}_{}'.format(
+            related_activity_id,
+            cfg.get('WEKO_WORKFLOW_USAGE_REPORT_ITEM_TITLE'),
+            result['usage_data_name']
+        )
 
     return result
 
@@ -5073,7 +5078,7 @@ def check_role():
     Check if user has role.
 
     :return: return false if guest user / return true if any other.
-    """        
+    """
     role_list = current_app.config['WEKO_PERMISSION_ROLE_USER']
 
     for role in list(current_user.roles or []):

@@ -443,11 +443,11 @@ WEKO_WORKFLOW_APPROVE_USAGE_REPORT = ""
 WEKO_WORKFLOW_APPROVE_OUTPUT_REGISTRATION = ""
 """Approve Output Registration mail template's filename"""
 
-WEKO_WORKFLOW_ACCESS_ACTIVITY_URL = ""
+WEKO_WORKFLOW_ACCESS_ACTIVITY_URL = "1"
 """Template access the URL"""
 
-WEKO_WORKFLOW_USAGE_REPORT_ACTIVITY_URL = ""
-"""Template access the URL"""
+WEKO_WORKFLOW_USAGE_REPORT_REMINDER_MAIL_TEMPLATE_ID = "6"
+"""Usage Repost reminder mail template id"""
 
 WEKO_WORKFLOW_REQUEST_FOR_REGISTER_USAGE_REPORT = '7'
 """Mail template for Request for register Data Usage Report"""
@@ -554,8 +554,6 @@ WEKO_WORKFLOW_ACTIVITYLOG_XLS_COLUMNS = [
 ]
 
 WEKO_ITEMS_UI_MULTIPLE_APPROVALS = True
-
-WEKO_STR_TRUE = ['true', 't', 'yes', '1']
 
 WEKO_WORKFLOW_REST_ENDPOINTS = dict(
     activities=dict(

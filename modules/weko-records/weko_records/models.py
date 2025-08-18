@@ -785,6 +785,7 @@ class RequestMailList(db.Model, Timestamp):
     )
     """List of request mail in json format."""
 
+
 class ItemApplication(db.Model, Timestamp):
 
     __tablename__ = 'item_application'
@@ -818,6 +819,7 @@ class ItemApplication(db.Model, Timestamp):
         nullable=True
     )
     """Item application info (terms and workflow)."""
+
 
 class ItemReference(db.Model, Timestamp):
     """Model of item reference relations."""

@@ -72,8 +72,14 @@
 {%- endblock page_footer %}
 
 {% set guest_email = None %}
-{% if activity and activity.extra_info and 'guest_mail' in activity.extra_info %}
-  {% set guest_email = activity.extra_info.guest_mail %}
+{% set application_record_id = None %}
+{% if activity and activity.extra_info %}
+  {% if 'guest_mail' in activity.extra_info %}
+    {% set guest_email = activity.extra_info.guest_mail %}
+  {% endif %}
+  {% if "record_id" in activity.extra_info %}
+    {% set application_record_id = activity.extra_info.record_id %}
+  {% endif %}
 {% endif %}
 
 {%- block page_body_main %}
@@ -376,16 +382,19 @@
     {%- if community %}
        <button class="btn btn-info pull-left back-button" onClick="window.location.href='{{url_for('weko_workflow.index',community=community.id)}}';$(this).prop('disabled', true)">
          <span class="glyphicon glyphicon-chevron-left"></span> {{_('Back')}}</button>
-
     {%- else %}
-       <button class="btn btn-info pull-left back-button" onClick="window.location.href='{{url_for('weko_workflow.index')}}'; $(this).prop('disabled', true)">
+      {%- if guest_email and application_record_id %}
+       <button class="btn btn-info pull-left back-button" onClick="window.location.href='/records/{{ application_record_id }}';$(this).prop('disabled', true)">
          <span class="glyphicon glyphicon-chevron-left"></span> {{_('Back')}}</button>
-         <div class="hide" id="for_delete">{{for_delete}}</div>
-         {%- if 'F' == activity.activity_status and not for_delete %}
-         <button class="btn btn-info pull-right back-button" onClick="window.location.href='/records/{{ _id }}' ;$(this).prop('disabled', true)">
-          Access</button>
-
-         {%- endif %}
+      {%- else %}
+       <button class="btn btn-info pull-left back-button" onClick="window.location.href='{{url_for('weko_workflow.index')}}'; $(this).prop('disabled', true)">
+         <span class="glyphicon glyphicon-chevron-left"></span> {{_('Back')}} {{is_guest_activity}}</button>
+      {%- endif %}
+      <div class="hide" id="for_delete">{{for_delete}}</div>
+      {%- if 'F' == activity.activity_status and not for_delete %}
+      <button class="btn btn-info pull-right back-button" onClick="window.location.href='/records/{{ _id }}' ;$(this).prop('disabled', true)">
+      Access</button>
+      {%- endif %}
     {%- endif %}
   </div>
 </div>

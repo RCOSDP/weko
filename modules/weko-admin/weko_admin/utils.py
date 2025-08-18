@@ -29,24 +29,21 @@ from datetime import datetime, timedelta
 from io import BytesIO, StringIO
 from typing import Dict, Optional, Tuple, Union
 
-import redis
-from redis import sentinel
 import requests
 from flask import current_app, request
 from flask_babelex import gettext as __
 from flask_babelex import lazy_gettext as _
 from invenio_accounts.models import Role, userrole
-from invenio_cache import cached_unless_authenticated
 from invenio_db import db
 from invenio_i18n.ext import current_i18n
 from invenio_indexer.api import RecordIndexer
 from invenio_mail.admin import MailSettingView
 from invenio_mail.models import MailConfig
+from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from invenio_records.models import RecordMetadata
 from invenio_records_rest.facets import terms_filter, terms_condition_filter, range_filter
 from invenio_stats.views import QueryFileStatsCount, QueryRecordViewCount
 from jinja2 import Template
-from simplekv.memory.redisstore import RedisStore
 from sqlalchemy import func
 from weko_authors.models import Authors
 from weko_schema_ui.models import PublishStatus
@@ -1957,8 +1954,9 @@ class UsageReport:
             activities.append(
                 dict(
                     activity_id=activity.activity_id,
-                    item_name=activity.title or activity.temp_data.get("title",
-                                                                       ""),
+                    item_name=activity.title or ((type(activity.temp_data)==dict) and activity.temp_data.get("title" "")) or "",
+                    #item_name=activity.title or activity.temp_data.get("title",
+                    #                                                   ""),
                     workflow_name=activity.workflow.flows_name,
                     action_status=action_status,
                     user_mail=user_mail

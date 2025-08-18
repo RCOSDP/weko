@@ -68,9 +68,6 @@ OPEN_DATE_DISPLAY_VALUE = '1'
 OPEN_DATE_HIDE_VALUE = '0'
 # setting the release date if display
 
-DISPLAY_REQUEST_FORM = False
-# Default setting whether to display the request form
-
 # CSL Citation Formatter
 # ======================
 #: Styles Endpoint for CSL
@@ -721,7 +718,7 @@ WEKO_RECORDS_UI_REST_ENDPOINTS = {
     'validate_captcha_answer': {
         'route': '/<string:version>/captcha/validate',
         'default_media_type': 'application/json',
-    }
+    },
 }
 
 WEKO_RECORDS_UI_API_LIMIT_RATE_DEFAULT = ['100 per minute']

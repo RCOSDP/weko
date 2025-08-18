@@ -539,7 +539,10 @@ def client_api(app):
 
 @pytest.yield_fixture()
 def client_request_args(app):
-    # app.register_blueprint(create_blueprint(app, app.config['WEKO_INDEX_TREE_REST_ENDPOINTS']))
+    try:
+        app.register_blueprint(create_blueprint(app, app.config['WEKO_INDEX_TREE_REST_ENDPOINTS']))
+    except AssertionError:
+        pass
     with app.test_client() as client:
         r = client.get('/', query_string={
             'index_id': '33',

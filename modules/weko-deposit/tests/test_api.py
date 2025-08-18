@@ -22,10 +22,8 @@
 
 """Module tests."""
 
-from re import T
 import json
 from datetime import datetime
-from typing_extensions import reveal_type
 import pytest
 from pytest_mock import mocker
 from mock import Mock, patch, MagicMock
@@ -34,44 +32,38 @@ import copy
 from collections import OrderedDict
 from werkzeug.exceptions import HTTPException
 import time
-from flask import session, current_app, make_response
-from flask_login import login_user
-from flask_security import current_user, url_for_security
+from flask import session, make_response
+from flask_security import url_for_security
 import json
 
 from elasticsearch.exceptions import NotFoundError
-from invenio_pidstore.models import PersistentIdentifier, PIDStatus, Redirect
+from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from invenio_pidstore.errors import PIDInvalidAction
 from invenio_pidrelations.models import PIDRelation
 from invenio_records.errors import MissingModelError
 from invenio_records.models import RecordMetadata
 from invenio_records_rest.errors import PIDResolveRESTError
-from invenio_records_files.models import RecordsBuckets
-from invenio_records_files.api import Record
 from invenio_records.models import RecordMetadata
 from invenio_files_rest.models import Bucket, ObjectVersion,FileInstance
 from invenio_records.api import RecordRevision
-from invenio_pidrelations.contrib.versioning import PIDVersioning
-from invenio_pidrelations.contrib.records import RecordDraft
 from six import BytesIO
-from weko_records.utils import get_options_and_order_list
 from elasticsearch import Elasticsearch
 from sqlalchemy.orm.exc import NoResultFound
-from sqlalchemy.exc import OperationalError, SQLAlchemyError
+from sqlalchemy.exc import SQLAlchemyError
 from weko_admin.models import AdminSettings
-from weko_records.models import ItemMetadata, ItemTypeProperty
-from weko_records.api import FeedbackMailList, ItemLink, ItemsMetadata, ItemTypes, Mapping, WekoRecord
+from weko_records.models import ItemMetadata
+from weko_records.api import FeedbackMailList, ItemLink, ItemsMetadata, WekoRecord
 from invenio_pidrelations.serializers.utils import serialize_relations
 from weko_deposit.api import WekoDeposit, WekoFileObject, WekoIndexer, \
     WekoRecord, _FormatSysBibliographicInformation, _FormatSysCreator
 from weko_deposit.config import WEKO_DEPOSIT_BIBLIOGRAPHIC_TRANSLATIONS
-from invenio_accounts.testutils import login_user_via_view,login_user_via_session
+from invenio_accounts.testutils import login_user_via_session
 from invenio_accounts.models import User
-from weko_items_ui.config import WEKO_ITEMS_UI_MS_MIME_TYPE,WEKO_ITEMS_UI_FILE_SISE_PREVIEW_LIMIT
+from weko_items_ui.config import WEKO_ITEMS_UI_MS_MIME_TYPE
 from weko_workflow.models import Activity
 from weko_redis.redis import RedisConnection
 
-from tests.helpers import login, create_record_with_pdf
+from tests.helpers import create_record_with_pdf
 # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
 
 class MockClient():
@@ -627,7 +619,7 @@ class TestWekoDeposit:
             deposit = WekoDeposit.create({})
             item_id = deposit.pid.object_uuid
             index_obj = {'index': ['1'], 'actions': 'private'}
-            data = {'pubdate': '2023-12-07', 'item_1617186331708': [{'subitem_1551255647225': 'test', 'subitem_1551255648112': 'ja'}], 'item_1617258105262': {'resourcetype': 'conference paper', 'resourceuri': 'http://purl.org/coar/resource_type/c_5794'}, 'shared_user_id': -1, 'title': 'test', 'lang': 'ja', 'deleted_items': ['item_1617186385884', 'item_1617186419668', 'item_1617186499011', 'item_1617186609386', 'item_1617186626617', 'item_1617186643794', 'item_1617186660861', 'item_1617186702042', 'item_1617186783814', 'item_1617186859717', 'item_1617186882738', 'item_1617186901218', 'item_1617186920753', 'item_1617186941041', 'item_1617187112279', 'item_1617187187528', 'item_1617349709064', 'item_1617353299429', 'item_1617605131499', 'item_1617610673286', 'item_1617620223087', 'item_1617944105607', 'item_1617187056579', 'approval1', 'approval2'], '$schema': '/items/jsonschema/1'}
+            data = {'pubdate': '2023-12-07', 'item_1617186331708': [{'subitem_1551255647225': 'test', 'subitem_1551255648112': 'ja'}], 'item_1617258105262': {'resourcetype': 'conference paper', 'resourceuri': 'http://purl.org/coar/resource_type/c_5794'}, 'shared_user_ids': [], 'title': 'test', 'lang': 'ja', 'deleted_items': ['item_1617186385884', 'item_1617186419668', 'item_1617186499011', 'item_1617186609386', 'item_1617186626617', 'item_1617186643794', 'item_1617186660861', 'item_1617186702042', 'item_1617186783814', 'item_1617186859717', 'item_1617186882738', 'item_1617186901218', 'item_1617186920753', 'item_1617186941041', 'item_1617187112279', 'item_1617187187528', 'item_1617349709064', 'item_1617353299429', 'item_1617605131499', 'item_1617610673286', 'item_1617620223087', 'item_1617944105607', 'item_1617187056579', 'approval1', 'approval2'], '$schema': '/items/jsonschema/1'}
             deposit.update(index_obj,data)
             deposit.commit()
             FeedbackMailList.update(item_id,[{"email":"test.taro@test.org","author_id":""}])
@@ -653,7 +645,6 @@ class TestWekoDeposit:
         recid = record['recid']
 
         deposit = record['deposit']
-
         with patch("weko_deposit.api.WekoDeposit.is_published",return_value=None):
             with pytest.raises(PIDInvalidAction):
                 ret = deposit.newversion()
@@ -977,7 +968,7 @@ class TestWekoDeposit:
         db.session.merge(activity)
         db.session.commit()
         result = deposit.record_data_from_act_temp()
-        test = {"pubdate": "2023-10-10","item_1617186331708": [{"subitem_1551255647225": "test_title","subitem_1551255648112": "ja"}],"item_1617186385884": [{"subitem_1551255720400": "alter title"}],"item_1617186419668": [{"familyNames": [{"familyName": "test_family_name"}]}],"item_1617258105262": {"resourcetype": "conference paper","resourceuri": "http://purl.org/coar/resource_type/c_5794"},"deleted_items": ["none_str","empty_list","item_1617186499011","item_1617186609386","item_1617186626617","item_1617186643794","item_1617186660861","item_1617186702042","item_1617186783814","item_1617186859717","item_1617186882738","item_1617186901218","item_1617186920753","item_1617186941041","item_1617187112279","item_1617187187528","item_1617349709064","item_1617353299429","item_1617605131499","item_1617610673286","item_1617620223087","item_1617944105607","item_1617187056579","shared_user_ids"],"$schema": "/items/jsonschema/1","title": "test_title","lang": "ja"}
+        test = {"pubdate": "2023-10-10","item_1617186331708": [{"subitem_1551255647225": "test_title","subitem_1551255648112": "ja"}],"item_1617186385884": [{"subitem_1551255720400": "alter title"}],"item_1617186419668": [{"familyNames": [{"familyName": "test_family_name"}]}],"shared_user_ids": [],"item_1617258105262": {"resourcetype": "conference paper","resourceuri": "http://purl.org/coar/resource_type/c_5794"},"deleted_items": ["none_str","empty_list","item_1617186499011","item_1617186609386","item_1617186626617","item_1617186643794","item_1617186660861","item_1617186702042","item_1617186783814","item_1617186859717","item_1617186882738","item_1617186901218","item_1617186920753","item_1617186941041","item_1617187112279","item_1617187187528","item_1617349709064","item_1617353299429","item_1617605131499","item_1617610673286","item_1617620223087","item_1617944105607","item_1617187056579"],"$schema": "/items/jsonschema/1","title": "test_title","lang": "ja"}
         assert result == test
 
         # title is dict
@@ -986,7 +977,7 @@ class TestWekoDeposit:
         db.session.merge(activity)
         db.session.commit()
         result = deposit.record_data_from_act_temp()
-        test = {"pubdate": "2023-10-10","item_1617186331708": {"subitem_1551255647225": "test_title","subitem_1551255648112": "ja"},"item_1617186385884": [{"subitem_1551255720400": "alter title"}],"item_1617186419668": [{"familyNames": [{"familyName": "test_family_name"}]}],"item_1617258105262": {"resourcetype": "conference paper","resourceuri": "http://purl.org/coar/resource_type/c_5794"},"deleted_items": ["none_str","empty_list","item_1617186499011","item_1617186609386","item_1617186626617","item_1617186643794","item_1617186660861","item_1617186702042","item_1617186783814","item_1617186859717","item_1617186882738","item_1617186901218","item_1617186920753","item_1617186941041","item_1617187112279","item_1617187187528","item_1617349709064","item_1617353299429","item_1617605131499","item_1617610673286","item_1617620223087","item_1617944105607","item_1617187056579","shared_user_ids"],"$schema": "/items/jsonschema/1","title": "test_title","lang": "ja"}
+        test = {"pubdate": "2023-10-10","item_1617186331708": {"subitem_1551255647225": "test_title","subitem_1551255648112": "ja"},"item_1617186385884": [{"subitem_1551255720400": "alter title"}],"item_1617186419668": [{"familyNames": [{"familyName": "test_family_name"}]}],"shared_user_ids": [],"item_1617258105262": {"resourcetype": "conference paper","resourceuri": "http://purl.org/coar/resource_type/c_5794"},"deleted_items": ["none_str","empty_list","item_1617186499011","item_1617186609386","item_1617186626617","item_1617186643794","item_1617186660861","item_1617186702042","item_1617186783814","item_1617186859717","item_1617186882738","item_1617186901218","item_1617186920753","item_1617186941041","item_1617187112279","item_1617187187528","item_1617349709064","item_1617353299429","item_1617605131499","item_1617610673286","item_1617620223087","item_1617944105607","item_1617187056579"],"$schema": "/items/jsonschema/1","title": "test_title","lang": "ja"}
         assert result == test
 
         # title data is not exist
@@ -995,7 +986,7 @@ class TestWekoDeposit:
         db.session.merge(activity)
         db.session.commit()
         result = deposit.record_data_from_act_temp()
-        test = {"pubdate": "2023-10-10","item_1617186385884": [{"subitem_1551255720400": "alter title"}],"item_1617186419668": [{"familyNames": [{"familyName": "test_family_name"}]}],"item_1617258105262": {"resourcetype": "conference paper","resourceuri": "http://purl.org/coar/resource_type/c_5794"},"deleted_items": ["none_str","empty_list","item_1617186331708","item_1617186499011","item_1617186609386","item_1617186626617","item_1617186643794","item_1617186660861","item_1617186702042","item_1617186783814","item_1617186859717","item_1617186882738","item_1617186901218","item_1617186920753","item_1617186941041","item_1617187112279","item_1617187187528","item_1617349709064","item_1617353299429","item_1617605131499","item_1617610673286","item_1617620223087","item_1617944105607","item_1617187056579","shared_user_ids"],"$schema": "/items/jsonschema/1","title": "test_title","lang": ""}
+        test = {"pubdate": "2023-10-10","item_1617186385884": [{"subitem_1551255720400": "alter title"}],"item_1617186419668": [{"familyNames": [{"familyName": "test_family_name"}]}],"shared_user_ids": [],"item_1617258105262": {"resourcetype": "conference paper","resourceuri": "http://purl.org/coar/resource_type/c_5794"},"deleted_items": ["none_str","empty_list","item_1617186331708","item_1617186499011","item_1617186609386","item_1617186626617","item_1617186643794","item_1617186660861","item_1617186702042","item_1617186783814","item_1617186859717","item_1617186882738","item_1617186901218","item_1617186920753","item_1617186941041","item_1617187112279","item_1617187187528","item_1617349709064","item_1617353299429","item_1617605131499","item_1617610673286","item_1617620223087","item_1617944105607","item_1617187056579"],"$schema": "/items/jsonschema/1","title": "test_title","lang": ""}
         assert result == test
 
         # not exist title_parent_key in path
@@ -1355,6 +1346,7 @@ class TestWekoDeposit:
         # 正しくない手法だが、Elasticsearchの結果を前提としている
         deposit.jrc = copy.deepcopy(ret['_source'])
         deposit.delete_content_files()
+        ret['_source']['content'][0].pop('file')
         assert deposit.jrc==ret['_source']
 
     # def convert_type_shared_user_ids(cls, data):
@@ -1547,6 +1539,9 @@ class TestWekoRecord:
     #     def get_titles(self):
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoRecord::test_get_titles -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
     def test_get_titles(self,app,es_records,db_itemtype,db_oaischema):
+        record = WekoRecord({})
+        with app.test_request_context():
+            assert record.get_titles==""
         _, results = es_records
         result = results[0]
         record = result['record']
@@ -1810,7 +1805,7 @@ class Test_FormatSysCreator:
         with app.test_request_context():
             obj = _FormatSysCreator(prepare_creator)
             assert isinstance(obj,_FormatSysCreator)==True
-            creators={'creatorType': [{'givenName': '太郎', 'givenNameLang': 'ja'}, {'givenName': 'タロウ', 'givenNameLang': 'ja-Kana'}, {'givenName': 'Taro', 'givenNameLang': 'en'}], 'familyNames': [{'familyName': '情報', 'familyNameLang': 'ja'}, {'familyName': 'ジョウホウ', 'familyNameLang': 'ja-Kana'}, {'familyName': 'Joho', 'familyNameLang': 'en'}], 'creatorNames': [{'creatorName': '情報, 太郎', 'creatorNameLang': 'ja'}, {'creatorName': 'ジョウホウ, タロウ', 'creatorNameLang': 'ja-Kana'}, {'creatorName': 'Joho, Taro', 'creatorNameLang': 'en'}], 'nameIdentifiers': [{'nameIdentifier': 'xxxxxxx', 'nameIdentifierURI': 'https://orcid.org/', 'nameIdentifierScheme': 'ORCID'}, {'nameIdentifier': 'xxxxxxx', 'nameIdentifierURI': 'https://ci.nii.ac.jp/', 'nameIdentifierScheme': 'CiNii'}, {'nameIdentifier': 'zzzzzzz', 'nameIdentifierURI': 'https://kaken.nii.ac.jp/', 'nameIdentifierScheme': 'KAKEN2'}], 'creatorAffiliations': [{'affiliationNames': [{'affiliationName': '所属機関', 'affiliationNameLang': 'ja'}, {'affiliationName': 'Affilication Name', 'affiliationNameLang': 'en'}], 'affiliationNameIdentifiers': [{'affiliationNameIdentifier': 'xxxxxx', 'affiliationNameIdentifierURI': 'xxxxx', 'affiliationNameIdentifierScheme': 'ISNI'}]}], 'creatorAlternatives': [{'creatorAlternative': 'Alternative Name', 'creatorAlternativeLang': 'en'}, {'creatorAlternative': '別名', 'creatorAlternativeLang': 'ja'}]}
+            creators={'givenNames': [{'givenName': '太郎', 'givenNameLang': 'ja'}, {'givenName': 'タロウ', 'givenNameLang': 'ja-Kana'}, {'givenName': 'Taro', 'givenNameLang': 'en'}], 'familyNames': [{'familyName': '情報', 'familyNameLang': 'ja'}, {'familyName': 'ジョウホウ', 'familyNameLang': 'ja-Kana'}, {'familyName': 'Joho', 'familyNameLang': 'en'}], 'creatorNames': [{'creatorName': '情報, 太郎', 'creatorNameLang': 'ja'}, {'creatorName': 'ジョウホウ, タロウ', 'creatorNameLang': 'ja-Kana'}, {'creatorName': 'Joho, Taro', 'creatorNameLang': 'en'}], 'nameIdentifiers': [{'nameIdentifier': 'xxxxxxx', 'nameIdentifierURI': 'https://orcid.org/', 'nameIdentifierScheme': 'ORCID'}, {'nameIdentifier': 'xxxxxxx', 'nameIdentifierURI': 'https://ci.nii.ac.jp/', 'nameIdentifierScheme': 'CiNii'}, {'nameIdentifier': 'zzzzzzz', 'nameIdentifierURI': 'https://kaken.nii.ac.jp/', 'nameIdentifierScheme': 'KAKEN2'}], 'creatorAffiliations': [{'affiliationNames': [{'affiliationName': '所属機関', 'affiliationNameLang': 'ja'}, {'affiliationName': 'Affilication Name', 'affiliationNameLang': 'en'}], 'affiliationNameIdentifiers': [{'affiliationNameIdentifier': 'xxxxxx', 'affiliationNameIdentifierURI': 'xxxxx', 'affiliationNameIdentifierScheme': 'ISNI'}]}], 'creatorAlternatives': [{'creatorAlternative': 'Alternative Name', 'creatorAlternativeLang': 'en'}, {'creatorAlternative': '別名', 'creatorAlternativeLang': 'ja'}]}
             language='ja'
             creator_list=[]
             creator_list_temp=None

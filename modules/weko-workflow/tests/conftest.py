@@ -20,7 +20,6 @@
 
 """Pytest configuration."""
 
-from copy import deepcopy
 import copy
 import os, sys
 import shutil
@@ -30,37 +29,30 @@ from unittest.mock import patch
 import uuid
 from datetime import datetime, timedelta
 from six import BytesIO
-import base64
 from mock import patch
 
 import pytest
-from flask import Flask, session, url_for, Response
+from flask import Flask, url_for, Response
 from flask_babelex import Babel, lazy_gettext as _
 from flask_menu import Menu
 from flask_oauthlib.provider import OAuth2Provider
 from elasticsearch import Elasticsearch
-from invenio_theme import InvenioTheme
-from invenio_theme.views import blueprint as invenio_theme_blueprint
 from invenio_assets import InvenioAssets
 from invenio_access import InvenioAccess
 from invenio_access.models import ActionUsers,ActionRoles
 from invenio_accounts.testutils import create_test_user
 from invenio_accounts import InvenioAccounts
 from invenio_accounts.models import User, Role
-from invenio_accounts.views.settings import blueprint \
-    as invenio_accounts_blueprint
 from invenio_deposit import InvenioDeposit
 from invenio_i18n import InvenioI18N
 from invenio_cache import InvenioCache
 from invenio_admin import InvenioAdmin
-from invenio_admin.views import blueprint as invenio_admin_blueprint
 from invenio_db import InvenioDB, db as db_
 from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidrelations.contrib.records import RecordDraft
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from invenio_stats import InvenioStats
 from invenio_search import RecordsSearch,InvenioSearch
-from invenio_communities import InvenioCommunities
 from invenio_communities.views.ui import blueprint as invenio_communities_blueprint
 from invenio_communities.models import Community
 from invenio_jsonschemas import InvenioJSONSchemas
@@ -74,10 +66,8 @@ from weko_deposit.api import WekoIndexer, WekoRecord
 from weko_deposit.api import WekoDeposit as WekoDepositAPI
 from weko_search_ui.config import WEKO_SYS_USER
 from weko_records_ui import WekoRecordsUI
-from weko_theme import WekoTheme
 from weko_admin import WekoAdmin
 from weko_admin.models import SessionLifetime,Identifier
-from weko_admin.views import blueprint as weko_admin_blueprint
 from weko_records.models import ItemTypeName, ItemType,FeedbackMailList,ItemTypeMapping,ItemTypeProperty
 from weko_records.api import ItemsMetadata, Mapping
 from weko_records.config import WEKO_RECORDS_REFERENCE_SUPPLEMENT
@@ -94,14 +84,9 @@ from weko_workflow.config import WEKO_WORKFLOW_ACTION_START,WEKO_WORKFLOW_ACTION
 from weko_workflow.ext import WekoWorkflowREST
 from weko_workflow.scopes import activity_scope
 from weko_theme.config import THEME_INSTITUTION_NAME
-from weko_theme.views import blueprint as weko_theme_blueprint
-from simplekv.memory.redisstore import RedisStore
 from sqlalchemy_utils.functions import create_database, database_exists, \
     drop_database
 from tests.helpers import json_data, create_record, fill_oauth2_headers, create_activity, create_flow
-from sqlalchemy.engine import Engine
-from sqlalchemy.orm import Session
-from sqlalchemy import event
 from invenio_files_rest.models import Location, Bucket,ObjectVersion
 from invenio_files_rest import InvenioFilesREST
 from invenio_records import InvenioRecords
@@ -109,13 +94,10 @@ from invenio_oauth2server import InvenioOAuth2Server
 from invenio_pidrelations import InvenioPIDRelations
 from invenio_pidstore import InvenioPIDStore
 from weko_index_tree.api import Indexes
-from kombu import Exchange, Queue
 from weko_index_tree.models import Index
-from weko_schema_ui.models import OAIServerSchema
-from weko_schema_ui.config import WEKO_SCHEMA_JPCOAR_V1_SCHEMA_NAME,WEKO_SCHEMA_DDI_SCHEMA_NAME,WEKO_SCHEMA_JPCOAR_V2_SCHEMA_NAME
-from weko_index_tree.config import WEKO_INDEX_TREE_REST_ENDPOINTS,WEKO_INDEX_TREE_DEFAULT_DISPLAY_NUMBER
+from weko_schema_ui.config import WEKO_SCHEMA_JPCOAR_V1_SCHEMA_NAME,WEKO_SCHEMA_DDI_SCHEMA_NAME
+from weko_index_tree.config import WEKO_INDEX_TREE_DEFAULT_DISPLAY_NUMBER
 from weko_user_profiles.models import UserProfile
-from weko_user_profiles.config import WEKO_USERPROFILES_ROLES,WEKO_USERPROFILES_GENERAL_ROLE
 from weko_authors.models import Authors
 from invenio_records_files.api import RecordsBuckets
 from weko_redis.redis import RedisConnection
@@ -3068,6 +3050,249 @@ def db_register_usage_application_workflows(app, db, action_data, item_type ):
 
 
 @pytest.fixture()
+def db_register_usage_application(app, db, db_records, users, action_data, item_type, db_register_usage_application_workflows ):
+    workflows = db_register_usage_application_workflows
+    
+    # 利用登録(now -> item_registration, next ->end)
+    activity1 = Activity(activity_id='A-00000001-20001'
+                        ,workflow_id=workflows["workflow_workflow1"].id
+                        , flow_id=workflows["flow_define1"].id,
+                    action_id=3, 
+                    item_id=db_records[2][2].id,
+                    activity_login_user=1,
+                    action_status = 'M',
+                    activity_update_user=1,
+                    activity_start=datetime.strptime('2022/04/14 3:01:53.931', '%Y/%m/%d %H:%M:%S.%f'),
+                    activity_community_id=None,
+                    activity_confirm_term_of_use=True,
+                    title='test'
+                    , shared_user_ids=[]
+                    , extra_info={"file_name": "aaa.txt", "record_id": "1", "user_mail": "aaa@test.org", "related_title": "test", "is_restricted_access": True},
+                    action_order=2)
+    activity1_pre_action = ActivityAction(
+        activity_id='A-00000001-20001'
+        ,action_id=3
+        ,action_status = 'M'
+        ,action_order=2
+        ,action_handler=-1
+    )
+    activity1_next_action = ActivityAction(
+        activity_id='A-00000001-20001'
+        ,action_id=2
+        ,action_status = 'M'
+        ,action_order=3
+        ,action_handler=1
+    )
+    # 利用申請(next ->end)
+    activity2 = Activity(activity_id='A-00000001-20002'
+                        ,workflow_id=workflows["workflow_workflow3"].id
+                        ,flow_id=workflows["flow_define3"].id
+                        ,action_id=4
+                        ,item_id=db_records[2][2].id
+                    , activity_login_user=1
+                    , action_status = 'M'
+                    , activity_update_user=1
+                    , activity_start=datetime.strptime('2022/04/14 3:01:53.931', '%Y/%m/%d %H:%M:%S.%f')
+                    , activity_community_id=3
+                    , activity_confirm_term_of_use=True
+                    , title='test'
+                    , shared_user_ids=[]
+                    , extra_info={}
+                    , action_order=3)
+    activity2_pre_action = ActivityAction(
+        activity_id='A-00000001-20002'
+        ,action_id=4
+        ,action_status = 'M'
+        ,action_order=3
+        ,action_handler=1
+    )
+    activity2_next_action = ActivityAction(
+        activity_id='A-00000001-20002'
+        ,action_id=2
+        ,action_status = 'M'
+        ,action_order=4
+        ,action_handler=-1
+    )
+    file_permission = FilePermission(
+        user_id = 1
+        ,record_id= 1
+        ,file_name= "aaa.txt"
+        ,usage_application_activity_id='A-00000001-20002'
+        ,usage_report_activity_id=None
+        ,status = -1
+    )
+    # ２段階利用申請(next -> approval2)
+    activity3 = Activity(activity_id='A-00000001-20003'
+                        ,workflow_id=workflows["workflow_workflow4"].id
+                        ,flow_id=workflows["flow_define4"].id
+                        ,action_id=4
+                        ,item_id=db_records[2][2].id
+                        ,activity_login_user=1
+                        ,action_status = 'M'
+                        ,activity_update_user=1
+                        ,activity_start=datetime.strptime('2022/04/14 3:01:53.931', '%Y/%m/%d %H:%M:%S.%f')
+                        ,activity_community_id=3
+                        ,activity_confirm_term_of_use=True
+                        ,title='test'
+                        ,shared_user_ids=[]
+                        ,extra_info={"file_name": "aaa.txt", "record_id": "1", "user_mail": "aaa@test.org", "related_title": "test", "is_restricted_access": True}
+                        ,action_order=3)
+    activity3_pre_action = ActivityAction(
+        activity_id='A-00000001-20003'
+        ,action_id=4
+        ,action_status = 'M'
+        ,action_order=3
+        ,action_handler=1
+    )
+    activity3_next_action = ActivityAction(
+        activity_id='A-00000001-20003'
+        ,action_id=4
+        ,action_status = 'M'
+        ,action_order=4
+        ,action_handler=1
+    )
+    # ２段階利用申請(next ->end)
+    activity4 = Activity(activity_id='A-00000001-20004'
+                        ,workflow_id=workflows["workflow_workflow4"].id
+                        ,flow_id=workflows["flow_define4"].id
+                        ,action_id=4
+                        ,item_id=db_records[2][2].id
+                        ,activity_login_user=1
+                        ,action_status = 'M'
+                        ,activity_update_user=1
+                        ,activity_start=datetime.strptime('2022/04/14 3:01:53.931', '%Y/%m/%d %H:%M:%S.%f')
+                        ,activity_community_id=3
+                        ,activity_confirm_term_of_use=True
+                        ,title='test'
+                        ,shared_user_ids=[]
+                        ,extra_info={"file_name": "aaa.txt", "record_id": "1", "user_mail": "aaa@test.org", "related_title": "test", "is_restricted_access": True}
+                        ,action_order=4)
+    activity4_pre_action = ActivityAction(
+        activity_id='A-00000001-20004'
+        ,action_id=4
+        ,action_status = 'M'
+        ,action_order=4
+        ,action_handler=1
+    )
+    activity4_next_action = ActivityAction(
+        activity_id='A-00000001-20004'
+        ,action_id=2
+        ,action_status = 'M'
+        ,action_order=5
+        ,action_handler=1
+    )
+    guest_activity = GuestActivity(
+        activity_id='A-00000001-20004'
+        ,record_id=1
+        ,user_mail = 'aaa@test.org'
+        ,file_name = "aaa.txt"
+        ,token="abc"
+        ,expiration_date=5
+        ,is_usage_report=False
+    )
+    # 利用申請(next ->end)
+    activity5 = Activity(activity_id='A-00000001-20005'
+                        ,workflow_id=workflows["workflow_workflow3"].id
+                        ,flow_id=workflows["flow_define3"].id
+                        ,action_id=4
+                        ,item_id=db_records[2][2].id
+                    , activity_login_user=1
+                    , action_status = 'M'
+                    , activity_update_user=1
+                    , activity_start=datetime.strptime('2022/04/14 3:01:53.931', '%Y/%m/%d %H:%M:%S.%f')
+                    , activity_community_id=3
+                    , activity_confirm_term_of_use=True
+                    , title='test'
+                    , shared_user_ids=[]
+                    , extra_info={"file_name": "recid/15.0", "record_id": "1", "user_mail": "aaa@test.org", "related_title": "test", "is_restricted_access": True}
+                    , action_order=3)
+    activity5_pre_action = ActivityAction(
+        activity_id='A-00000001-20005'
+        ,action_id=4
+        ,action_status = 'M'
+        ,action_order=3
+        ,action_handler=1
+    )
+    activity5_next_action = ActivityAction(
+        activity_id='A-00000001-20005'
+        ,action_id=2
+        ,action_status = 'M'
+        ,action_order=4
+        ,action_handler=-1
+    )
+    file_permission = FilePermission(
+        user_id = 1
+        ,record_id= 1
+        ,file_name= "aaa.txt"
+        ,usage_application_activity_id='A-00000001-20005'
+        ,usage_report_activity_id=None
+        ,status = -1
+    )
+    with db.session.begin_nested():
+        db.session.add(activity1)
+        db.session.add(activity2)
+        db.session.add(activity3)
+        db.session.add(activity4)
+        db.session.add(activity5)
+    db.session.commit()
+    with db.session.begin_nested():
+        db.session.add(activity1_next_action)
+        db.session.add(activity2_next_action)
+        db.session.add(activity3_next_action)
+        db.session.add(activity4_next_action)
+        db.session.add(activity5_next_action)
+        db.session.add(activity1_pre_action)
+        db.session.add(activity2_pre_action)
+        db.session.add(activity3_pre_action)
+        db.session.add(activity4_pre_action)
+        db.session.add(activity5_pre_action)
+        db.session.add(file_permission)
+        db.session.add(guest_activity)
+    db.session.commit()
+    workflows.update({
+        "activity1":activity1
+        ,"activity2":activity2
+        ,"activity3":activity3
+        ,"activity4":activity4
+        ,"activity5":activity5
+    })
+
+    permissions = list()
+    for i in range(len(users)):
+        permissions.append(FilePermission(users[i]["id"],"1.1","test_file","2",None,-1))
+    with db.session.begin_nested():
+        db.session.add_all(permissions)
+    db.session.commit()
+
+    def set_activityaction(_activity, _action,_flow_action):
+        action_handler = _activity.activity_login_user \
+            if not _action.action_endpoint == 'approval' else -1
+        activity_action = ActivityAction(
+            activity_id=_activity.activity_id,
+            action_id=_flow_action.action_id,
+            action_status="F",
+            action_handler=action_handler,
+            action_order=_flow_action.action_order
+        )
+        db.session.add(activity_action)
+
+    # setting activity_action in activity existed item
+    # for flow_action in flow_actions:
+    #     action = action_data[0][flow_action.action_id-1]
+    #     set_activityaction(activity_item1, action, flow_action)
+    #     set_activityaction(activity_item2, action, flow_action)
+    #     set_activityaction(activity_item3, action, flow_action)
+    #     set_activityaction(activity_item4, action, flow_action)
+    #     set_activityaction(activity_item5, action, flow_action)
+    #     set_activityaction(activity_item6, action, flow_action)
+
+    # db.session.commit()
+    return workflows
+    # {"flow_actions":flow_actions,
+    #         "activities":[activity,activity_item1,activity_item2,activity_item3,activity_item4,activity_item5,activity_item6]}
+
+
+@pytest.fixture()
 def db_register_request_mail(app, db, db_records, users, action_data, item_type):
     flow_define = FlowDefine(flow_id=uuid.uuid4(),
                              flow_name='Registration Flow',
@@ -3772,207 +3997,6 @@ def db_register_activity(app, db, db_records, workflow_approval, users):
     return {
         'activity': activities,
     }
-
-
-@pytest.fixture()
-def db_register_usage_application(app, db, db_records, users, action_data, item_type, db_register_usage_application_workflows ):
-    workflows = db_register_usage_application_workflows
-    
-    # 利用登録(now -> item_registration, next ->end)
-    activity1 = Activity(activity_id='A-00000001-20001'
-                        ,workflow_id=workflows["workflow_workflow1"].id
-                        , flow_id=workflows["flow_define1"].id,
-                    action_id=3, 
-                    item_id=db_records[2][2].id,
-                    activity_login_user=1,
-                    action_status = 'M',
-                    activity_update_user=1,
-                    activity_start=datetime.strptime('2022/04/14 3:01:53.931', '%Y/%m/%d %H:%M:%S.%f'),
-                    activity_community_id=None,
-                    activity_confirm_term_of_use=True,
-                    title='test'
-                    , shared_user_ids=[]
-                    , extra_info={},
-                    action_order=2)
-    activity1_pre_action = ActivityAction(
-        activity_id='A-00000001-20001'
-        ,action_id=3
-        ,action_status = 'M'
-        ,action_order=2
-        ,action_handler=-1
-    )
-    activity1_next_action = ActivityAction(
-        activity_id='A-00000001-20001'
-        ,action_id=2
-        ,action_status = 'M'
-        ,action_order=3
-        ,action_handler=1
-    )
-    # 利用申請(next ->end)
-    activity2 = Activity(activity_id='A-00000001-20002'
-                        ,workflow_id=workflows["workflow_workflow3"].id
-                        ,flow_id=workflows["flow_define3"].id
-                        ,action_id=4
-                        ,item_id=db_records[2][2].id
-                    , activity_login_user=1
-                    , action_status = 'M'
-                    , activity_update_user=1
-                    , activity_start=datetime.strptime('2022/04/14 3:01:53.931', '%Y/%m/%d %H:%M:%S.%f')
-                    , activity_community_id=3
-                    , activity_confirm_term_of_use=True
-                    , title='test'
-                    , shared_user_ids=[]
-                    , extra_info={}
-                    , action_order=3)
-    activity2_pre_action = ActivityAction(
-        activity_id='A-00000001-20002'
-        ,action_id=4
-        ,action_status = 'M'
-        ,action_order=3
-        ,action_handler=1
-    )
-    activity2_next_action = ActivityAction(
-        activity_id='A-00000001-20002'
-        ,action_id=2
-        ,action_status = 'M'
-        ,action_order=4
-        ,action_handler=-1
-    )
-    file_permission = FilePermission(
-        user_id = 1
-        ,record_id= 1
-        ,file_name= "aaa.txt"
-        ,usage_application_activity_id='A-00000001-20002'
-        ,usage_report_activity_id=None
-        ,status = -1
-    )
-    # ２段階利用申請(next -> approval2)
-    activity3 = Activity(activity_id='A-00000001-20003'
-                        ,workflow_id=workflows["workflow_workflow4"].id
-                        ,flow_id=workflows["flow_define4"].id
-                        ,action_id=4
-                        ,item_id=db_records[2][2].id
-                        ,activity_login_user=1
-                        ,action_status = 'M'
-                        ,activity_update_user=1
-                        ,activity_start=datetime.strptime('2022/04/14 3:01:53.931', '%Y/%m/%d %H:%M:%S.%f')
-                        ,activity_community_id=3
-                        ,activity_confirm_term_of_use=True
-                        ,title='test'
-                        ,shared_user_ids=[]
-                        ,extra_info={"file_name": "aaa.txt", "record_id": "1", "user_mail": "aaa@test.org", "related_title": "test", "is_restricted_access": True}
-                        ,action_order=3)
-    activity3_pre_action = ActivityAction(
-        activity_id='A-00000001-20003'
-        ,action_id=4
-        ,action_status = 'M'
-        ,action_order=3
-        ,action_handler=1
-    )
-    activity3_next_action = ActivityAction(
-        activity_id='A-00000001-20003'
-        ,action_id=4
-        ,action_status = 'M'
-        ,action_order=4
-        ,action_handler=1
-    )
-    # ２段階利用申請(next ->end)
-    activity4 = Activity(activity_id='A-00000001-20004'
-                        ,workflow_id=workflows["workflow_workflow4"].id
-                        ,flow_id=workflows["flow_define4"].id
-                        ,action_id=4
-                        ,item_id=db_records[2][2].id
-                        ,activity_login_user=1
-                        ,action_status = 'M'
-                        ,activity_update_user=1
-                        ,activity_start=datetime.strptime('2022/04/14 3:01:53.931', '%Y/%m/%d %H:%M:%S.%f')
-                        ,activity_community_id=3
-                        ,activity_confirm_term_of_use=True
-                        ,title='test'
-                        ,shared_user_ids=[]
-                        ,extra_info={"file_name": "aaa.txt", "record_id": "1", "user_mail": "aaa@test.org", "related_title": "test", "is_restricted_access": True}
-                        ,action_order=4)
-    activity4_pre_action = ActivityAction(
-        activity_id='A-00000001-20004'
-        ,action_id=4
-        ,action_status = 'M'
-        ,action_order=4
-        ,action_handler=1
-    )
-    activity4_next_action = ActivityAction(
-        activity_id='A-00000001-20004'
-        ,action_id=2
-        ,action_status = 'M'
-        ,action_order=5
-        ,action_handler=1
-    )
-    guest_activity = GuestActivity(
-        activity_id='A-00000001-20004'
-        ,record_id=1
-        ,user_mail = 'aaa@test.org'
-        ,file_name = "aaa.txt"
-        ,token="abc"
-        ,expiration_date=datetime.now()
-        ,is_usage_report=False
-    )
-    with db.session.begin_nested():
-        db.session.add(activity1)
-        db.session.add(activity2)
-        db.session.add(activity3)
-        db.session.add(activity4)
-    db.session.commit()
-    with db.session.begin_nested():
-        db.session.add(activity1_next_action)
-        db.session.add(activity2_next_action)
-        db.session.add(activity3_next_action)
-        db.session.add(activity4_next_action)
-        db.session.add(activity1_pre_action)
-        db.session.add(activity2_pre_action)
-        db.session.add(activity3_pre_action)
-        db.session.add(activity4_pre_action)
-        db.session.add(file_permission)
-        db.session.add(guest_activity)
-    db.session.commit()
-    workflows.update({
-        "activity1":activity1
-        ,"activity2":activity2
-        ,"activity3":activity3
-        ,"activity4":activity4
-    })
-
-    permissions = list()
-    for i in range(len(users)):
-        permissions.append(FilePermission(users[i]["id"],"1.1","test_file","2",None,-1))
-    with db.session.begin_nested():
-        db.session.add_all(permissions)
-    db.session.commit()
-
-    def set_activityaction(_activity, _action,_flow_action):
-        action_handler = _activity.activity_login_user \
-            if not _action.action_endpoint == 'approval' else -1
-        activity_action = ActivityAction(
-            activity_id=_activity.activity_id,
-            action_id=_flow_action.action_id,
-            action_status="F",
-            action_handler=action_handler,
-            action_order=_flow_action.action_order
-        )
-        db.session.add(activity_action)
-
-    # setting activity_action in activity existed item
-    # for flow_action in flow_actions:
-    #     action = action_data[0][flow_action.action_id-1]
-    #     set_activityaction(activity_item1, action, flow_action)
-    #     set_activityaction(activity_item2, action, flow_action)
-    #     set_activityaction(activity_item3, action, flow_action)
-    #     set_activityaction(activity_item4, action, flow_action)
-    #     set_activityaction(activity_item5, action, flow_action)
-    #     set_activityaction(activity_item6, action, flow_action)
-
-    # db.session.commit()
-    return workflows
-    # {"flow_actions":flow_actions,
-    #         "activities":[activity,activity_item1,activity_item2,activity_item3,activity_item4,activity_item5,activity_item6]}
 
 
 @pytest.fixture()

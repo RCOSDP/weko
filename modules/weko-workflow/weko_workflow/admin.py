@@ -79,8 +79,9 @@ class FlowSettingView(BaseView):
             repositories = Community.get_repositories_by_user(current_user)
         actions = self.get_actions()
         mail_templates = MailTemplates.get_templates()
-        use_restricted_item = current_app.config.get('WEKO_ADMIN_USE_MAIL_TEMPLATE_EDIT', False)
-        display_request_form = AdminSettings.get('items_display_settings', {}).get("display_request_form", False)
+        restricted_access_settings = AdminSettings.get("restricted_access", dict_to_object=False) or {}
+        use_restricted_item = restricted_access_settings.get("edit_mail_templates_enable", False)
+        display_request_form = restricted_access_settings.get("display_request_form", False)
         if '0' == flow_id:
             flow = None
             return self.render(

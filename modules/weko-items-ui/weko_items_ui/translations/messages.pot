@@ -572,7 +572,7 @@ msgstr ""
 msgid ""
 "The specified number has been exceeded. You can only select up to two "
 "fields."
-msgstr ""
+msgstr "You can only select up two fields."
 
 #: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:508
 msgid "The same file name cannot be registered."

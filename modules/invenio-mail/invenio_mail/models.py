@@ -26,6 +26,8 @@ from invenio_db import db
 from sqlalchemy import or_
 from flask_babelex import gettext as _
 
+from invenio_mail.config import INVENIO_MAIL_DEFAULT_TEMPLATE_CATEGORY_ID
+
 
 class MailConfig(db.Model):
     """Mail Config."""
@@ -91,7 +93,8 @@ class MailTemplates(db.Model):
     mail_body = db.Column(db.Text, nullable=True)
     default_mail = db.Column(db.Boolean, default=False)
     mail_genre_id = db.Column('genre_id', db.Integer,
-                              db.ForeignKey('mail_template_genres.id', onupdate='CASCADE', ondelete='RESTRICT'), nullable=False)
+                              db.ForeignKey('mail_template_genres.id', onupdate='CASCADE', ondelete='RESTRICT'),
+                              nullable=False, default=INVENIO_MAIL_DEFAULT_TEMPLATE_CATEGORY_ID)
 
     def toDict(self):
         """model object to dict"""
@@ -113,7 +116,7 @@ class MailTemplates(db.Model):
         from weko_admin.models import AdminSettings
         result = []
         # get secret mail enabled
-        restricted_access = AdminSettings.get('restricted_access', False)
+        restricted_access = AdminSettings.get('restricted_access', dict_to_object=False)
         if not restricted_access:
             restricted_access = current_app.config['WEKO_ADMIN_RESTRICTED_ACCESS_SETTINGS']
         secret_enabled:bool = restricted_access.get('secret_URL_file_download',{}).get('secret_enable',False)
@@ -145,6 +148,7 @@ class MailTemplates(db.Model):
             obj = cls.get_by_id(data['key'])
         else:
             obj = cls()
+            obj.genre_id = current_app.config["INVENIO_MAIL_DEFAULT_TEMPLATE_CATEGORY_ID"]
         obj.mail_subject = data['content']['subject']
         obj.mail_body = data['content']['body']
         try:

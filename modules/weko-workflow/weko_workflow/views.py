@@ -21,7 +21,6 @@
 """Blueprint for weko-workflow."""
 
 import json
-import os
 import re
 import shutil
 import sys
@@ -33,8 +32,6 @@ from functools import wraps
 from typing import List
 from urllib.parse import urljoin
 
-import redis
-from redis import sentinel
 from weko_admin.models import AdminSettings
 from weko_items_ui.signals import cris_researchmap_linkage_request
 from weko_items_ui.models import CRIS_Institutions, CRISLinkageResult
@@ -46,7 +43,7 @@ from weko_workflow.schema.utils import get_schema_action, type_null_check
 from marshmallow.exceptions import ValidationError
 
 from flask import Response, Blueprint, abort, current_app, has_request_context, \
-    jsonify, make_response, render_template, request, session, url_for, send_file, redirect
+    jsonify, make_response, render_template, request, session, url_for, redirect
 from flask_babelex import gettext as _
 from flask_login import current_user, login_required
 from flask_security import url_for_security
@@ -63,10 +60,8 @@ from invenio_pidstore.resolver import Resolver
 from invenio_pidstore.errors import PIDDoesNotExistError,PIDDeletedError
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from invenio_rest import ContentNegotiatedMethodView
-from sqlalchemy import or_
 from sqlalchemy.exc import SQLAlchemyError
 from weko_redis import RedisConnection
-from weko_accounts.api import ShibUser
 from weko_accounts.models import User
 from weko_accounts.utils import login_required_customize
 from weko_admin.models import AdminSettings
@@ -111,7 +106,6 @@ from .utils import IdentifierHandle, auto_fill_title, \
     check_existed_doi, is_terms_of_use_only, \
     delete_cache_data, delete_guest_activity, filter_all_condition, \
     get_account_info, get_actionid, get_activity_display_info, \
-    get_activity_id_of_record_without_version, \
     get_application_and_approved_date, get_approval_keys, get_cache_data, \
     get_files_and_thumbnail, get_identifier_setting, get_main_record_detail, \
     get_pid_and_record, get_pid_value_by_activity_detail, \
@@ -717,7 +711,7 @@ def display_guest_activity(file_name=""):
     @param file_name:File name
     @return:
     """
-    render_guest_workflow(file_name=file_name)
+    return render_guest_workflow(file_name=file_name)
 
 
 @workflow_blueprint.route('/activity/guest-user/recid/<string:record_id>', methods=['GET'])
@@ -726,7 +720,7 @@ def display_guest_activity_item_application(record_id=""):
     @param record_id:File name
     @return:
     """
-    render_guest_workflow(file_name='recid/' + record_id)
+    return render_guest_workflow(file_name='recid/' + record_id)
 
 
 def render_guest_workflow(file_name=""):
@@ -1161,10 +1155,6 @@ def display_activity(activity_id="0", community_id=None):
 
     form = FlaskForm(request.form)
 
-    approval_preview = False
-    if action_endpoint == 'approval' and current_app.config.get('WEKO_WORKFLOW_APPROVAL_PREVIEW'):
-        approval_preview = workflow_detail.open_restricted
-    
     approval_pending = False
     if action_endpoint == 'approval' and workflow_detail.open_restricted:
         approval_pending = True
@@ -1180,11 +1170,17 @@ def display_activity(activity_id="0", community_id=None):
             application_approved = True
 
     # Get Settings
+    approval_preview = False
     enable_request_maillist = False
-    items_display_settings = AdminSettings.get(name='items_display_settings',
-                                        dict_to_object=False)
-    if items_display_settings:
-        enable_request_maillist = items_display_settings.get('display_request_form', False)
+    is_no_content_item_application = False
+    restricted_access_settings = AdminSettings.get(name="restricted_access", dict_to_object=False)
+    if restricted_access_settings:
+        if action_endpoint == 'approval' and restricted_access_settings.get("preview_workflow_approval_enable", False):
+            approval_preview = workflow_detail.open_restricted
+        enable_request_maillist = restricted_access_settings.get('display_request_form', False)
+        item_application_settings = restricted_access_settings.get("item_application", {})
+        is_no_content_item_application = item_application_settings.get("item_application_enable", False) \
+            and workflow_detail.itemtype_id in item_application_settings.get("application_item_types", [])
 
     last_result :CRISLinkageResult = CRISLinkageResult().get_last( _id ,CRIS_Institutions.RM)
     last_linkage_result = _('Nothing')
@@ -1229,6 +1225,7 @@ def display_activity(activity_id="0", community_id=None):
             action_endpoint, item_type_name),
         is_hidden_pubdate=is_hidden_pubdate_value,
         is_show_autofill_metadata=show_autofill_metadata,
+        is_no_content_item_application=is_no_content_item_application,
         item_save_uri=item_save_uri,
         item=item,
         jsonschema=json_schema,
@@ -1324,8 +1321,9 @@ def check_authority_action(activity_id='0', action_id=0,
         elif im:
             # Check if this activity has contributor equaling to current user
             metadata_shared_user_ids = im.json.get('shared_user_ids', [])
+            metadata_weko_shared_ids = im.json.get('weko_shared_ids', [])
             metadata_owner = int(im.json.get('owner', '-1'))
-            if int(cur_user) in metadata_shared_user_ids:
+            if int(cur_user) in metadata_shared_user_ids + metadata_weko_shared_ids:
                 return 0
             if int(cur_user) == int(metadata_owner):
                 return 0
@@ -1581,7 +1579,6 @@ def next_action(activity_id='0', action_id=0, json_data=None):
                     # 利用申請(ゲスト)なら、WF作成時にFilePermissionが作られていないが、GuestActivityが作られている。
                     url_and_expired_date = grant_access_rights_to_all_open_restricted_files(activity_id,guest_activity[0] ,activity_detail)
 
-
             if not url_and_expired_date:
                 url_and_expired_date = {}
         action_mails_setting['approval'] = True
@@ -1594,7 +1591,7 @@ def next_action(activity_id='0', action_id=0, json_data=None):
                 action_id=next_action_id,
                 action_order=next_action_order).one_or_none()
             if current_flow_action and current_flow_action.action_roles and current_flow_action.action_roles[0].action_request_mail:
-                is_request_enabled = AdminSettings.get('items_display_settings',{})\
+                is_request_enabled = AdminSettings.get("restricted_access", dict_to_object=False) \
                     .get("display_request_form", False)
                 #リクエスト機能がAdmin画面で無効化されている場合、メールは送信しない。
                 if is_request_enabled :
@@ -1715,10 +1712,14 @@ def next_action(activity_id='0', action_id=0, json_data=None):
                 FeedbackMailList.delete_by_list_item_id(item_ids)
 
             enable_request_maillist = False
-            items_display_settings = AdminSettings.get(name='items_display_settings',
-                                        dict_to_object=False)
-            if items_display_settings:
-                enable_request_maillist = items_display_settings.get('display_request_form', False)
+            enable_item_application = False
+            restricted_access_settings = AdminSettings.get("restricted_access", dict_to_object=False)
+            if restricted_access_settings:
+                enable_request_maillist = restricted_access_settings.get("display_request_form", False)
+                item_application_settings = restricted_access_settings.get("item_application", {})
+                enable_item_application = item_application_settings.get("item_application_enable", False)
+                application_item_types = item_application_settings.get("application_item_types", [])
+                can_register_item_application = enable_item_application and (activity_detail.workflow.itemtype_id in application_item_types)
 
             if activity_request_mail and activity_request_mail.request_maillist and enable_request_maillist:
                 RequestMailList.update_by_list_item_id(
@@ -1728,7 +1729,7 @@ def next_action(activity_id='0', action_id=0, json_data=None):
             else:
                 RequestMailList.delete_by_list_item_id(item_ids)
 
-            if activity_item_application and activity_item_application.item_application:
+            if activity_item_application and activity_item_application.item_application and can_register_item_application:
                 ItemApplication.update_by_list_item_id(
                     item_ids=item_ids,
                     item_application=activity_item_application.item_application
@@ -3086,7 +3087,7 @@ def get_request_maillist(activity_id='0'):
 def get_item_application(activity_id='0'):
     check_flg = type_null_check(activity_id, str)
     if not check_flg:
-        current_app.logger.error("get_request_maillist: argument error")
+        current_app.logger.error("get_item_application: argument error")
         res = ResponseMessageSchema().load({"code":-1, "msg":"arguments error"})
         return jsonify(res.data), 400
     try:

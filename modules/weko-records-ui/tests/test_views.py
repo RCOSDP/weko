@@ -3,26 +3,16 @@ import uuid
 import pytest
 import io
 import copy
-from flask import Flask, json, jsonify, session, url_for ,make_response
-from flask_security.utils import login_user
+from flask import json, url_for ,make_response
 from flask_babelex import gettext as _
 from invenio_accounts.testutils import login_user_via_session
-from invenio_files_rest.models import ObjectVersion
-from invenio_mail.models import MailTemplateGenres
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from mock import patch
 from lxml import etree
 from weko_deposit.api import WekoRecord
 from werkzeug.exceptions import NotFound, Forbidden
-from sqlalchemy.orm.exc import MultipleResultsFound
 from jinja2.exceptions import TemplatesNotFound
 from weko_workflow.models import (
-    Action,
-    ActionStatus,
-    ActionStatusPolicy,
-    Activity,
-    FlowAction,
-    FlowDefine,
     WorkFlow,
 )
 from weko_records_ui.models import PDFCoverPageSettings, FilePermission
@@ -36,18 +26,13 @@ from weko_records_ui.views import (
     json_string_escape,
     pid_value_version,
     publish,
-    restore,
     check_file_permission,
     record_from_pid,
     default_view_method,
     url_to_link,
     xml_string_escape,
     escape_str,
-    init_permission,
     file_version_update,
-    set_pdfcoverpage_header,
-    parent_view_method,
-    doi_ish_view_method,
     check_file_permission_period,
     get_file_permission,
     check_content_file_clickable,
@@ -55,16 +40,11 @@ from weko_records_ui.views import (
     get_item_usage_workflow,
     get_workflow_detail,
     preview_able,
-    get_uri,
     get_bucket_list,
-    copy_bucket,
-    get_file_place,
-    replace_file,
 )
-from .helpers import login, logout
+from .helpers import login
 from io import BytesIO
 from werkzeug.datastructures import FileStorage
-from weko_records_ui.config import WEKO_RECORDS_UI_MAIL_TEMPLATE_SECRET_GENRE_ID
 
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
 
@@ -1231,21 +1211,19 @@ def test_create_secret_url_and_send_mail(app,client,db,users,records, db_mailTem
     login_user_via_session(client=client, user=users[id]["obj"] ,email=users[id]["email"])
     with patch('weko_records_ui.views._get_show_secret_url_button',return_value = True):
         with patch('weko_records_ui.views.process_send_mail',return_value = True):
-                #with app.test_request_context():
-                    #W2023-22-2 TestNo.7
-                    res = client.get(secret_file_url)
-                    assert res.status_code == 405
+            # with app.test_request_context():
+            #W2023-22-2 TestNo.7
+            res = client.get(secret_file_url)
+            assert res.status_code == 405
 
-                    #W2023-22-2 TestNo.4
-                    res = client.post(secret_file_url ,data=json.dumps({}), content_type='application/json')
-                    assert res.status_code == 200
-
-        with patch('weko_records_ui.views.process_send_mail', return_value = False):
+            #W2023-22-2 TestNo.4
+            res = client.post(secret_file_url ,data=json.dumps({}), content_type='application/json')
+            assert res.status_code == 200
+        with patch('weko_records_ui.views.process_send_mail',return_value = False):
             with patch("flask.templating._render", return_value=""):
                 res = client.post(secret_file_url ,data=json.dumps({}), content_type='application/json')
                 assert res.status_code == 500
 
-        
     #W2023-22-2 TestNo.6
     with patch('weko_records_ui.views._get_show_secret_url_button',return_value = False):
         with patch('weko_records_ui.views.process_send_mail',return_value = True):

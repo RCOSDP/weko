@@ -125,6 +125,32 @@ def url(root, kwargs = {}):
     url = "{root}?{param}".format(root = root, param = "&".join(args)) if kwargs else root
     return url
 
+# def create_error_handlers(blueprint):
+def test_create_error_handlers(app):
+    assert create_error_handlers(blueprint) == None
+
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_rest.py::test_create_blueprint -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+# def create_blueprint(endpoints):
+def test_create_blueprint(app):
+    assert create_blueprint(endpoints) != None
+
+
+# WekoRecordsCitesResource
+def test_WekoRecordsCitesResource(app, records):
+    data1 = MagicMock()
+    data2 = {"1": 1}
+    values = {}
+    indexer, results = records
+    record = results[0]['record']
+    pid_value = record.pid.pid_value
+
+    test = WekoRecordsCitesResource(data1, data2)
+    with app.test_request_context():
+        with patch("flask.request", return_value=values):
+            with patch("weko_records_ui.rest.citeproc_v1.serialize", return_value=data2):
+                assert WekoRecordsCitesResource.get(pid_value, pid_value)
+
+
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_rest.py::test_NeedRestrictedAccess_get_v1 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
 def test_NeedRestrictedAccess_get_v1(app, client, db, make_record_need_restricted_access, oauth_headers, users):
     """Test NeedRestrictedAccess.get_v1 method."""

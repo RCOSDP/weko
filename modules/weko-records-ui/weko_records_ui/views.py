@@ -37,7 +37,6 @@ from flask_babelex import get_locale, gettext as _
 from flask_login import login_required
 from flask_security import current_user
 from sqlalchemy.orm.exc import NoResultFound
-from invenio_cache import cached_unless_authenticated
 from invenio_db import db
 from invenio_files_rest.models import ObjectVersion, FileInstance
 from invenio_files_rest.permissions import has_update_version_role
@@ -60,7 +59,7 @@ from weko_index_tree.api import Indexes
 from weko_index_tree.models import IndexStyle
 from weko_index_tree.utils import get_index_link_list
 from weko_logging.activity_logger import UserActivityLogger
-from weko_records.api import ItemLink, Mapping, ItemTypes, RequestMailList
+from weko_records.api import ItemLink, ItemTypes, RequestMailList
 from weko_records.serializers import citeproc_v1
 from weko_records.serializers.utils import get_mapping
 from weko_records.utils import custom_record_medata_for_export, \
@@ -70,7 +69,6 @@ from weko_search_ui.api import get_search_detail_keyword
 from weko_schema_ui.models import PublishStatus
 from weko_user_profiles.models import UserProfile
 from weko_workflow.api import WorkFlow
-
 from weko_records_ui.fd import add_signals_info
 from weko_records_ui.utils import check_items_settings, get_file_info_list, is_workflow_activity_work
 from weko_records_ui.external import call_external_system
@@ -715,11 +713,6 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
 
     mailcheckflag=request.args.get("v")
 
-    password_checkflag = False
-    restricted_access = AdminSettings.get(name='restricted_access',dict_to_object=False)
-    if restricted_access and restricted_access.get('password_enable', False):
-        password_checkflag = True
-
     with_files = False
     for content in record.get_file_data():
         if content.get('filename'):
@@ -749,14 +742,23 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
 
     # Get Settings
     enable_request_maillist = False
-    items_display_settings = AdminSettings.get(name='items_display_settings',
-                                        dict_to_object=False)
-    if items_display_settings:
-        enable_request_maillist = items_display_settings.get('display_request_form', False)
+    is_no_content_item_application = False
+    password_checkflag = False
+    restricted_access_settings = AdminSettings.get(name="restricted_access", dict_to_object=False)
+    if restricted_access_settings:
+        # enable password
+        password_checkflag = restricted_access_settings.get('password_enable', False)
 
-    # Get request recipients
-    request_recipients = RequestMailList.get_mail_list_by_item_id(pid.object_uuid)
-    is_display_request_form = enable_request_maillist and (True if request_recipients else False)
+        # Check request form permission
+        enable_request_maillist = restricted_access_settings.get('display_request_form', False)
+        # Get request recipients
+        request_recipients = RequestMailList.get_mail_list_by_item_id(pid.object_uuid)
+        is_display_request_form = enable_request_maillist and (True if request_recipients else False)
+
+        # Check item application permission
+        item_application_settings = restricted_access_settings.get("item_application", {})
+        is_no_content_item_application = item_application_settings.get("item_application_enable", False) \
+            and int(item_type_id) in item_application_settings.get("application_item_types", [])
 
     return render_template(
         template,
@@ -791,6 +793,7 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         password_checkflag=password_checkflag,
         path_name_dict=path_name_dict,
         is_display_file_preview=is_display_file_preview,
+        is_no_content_item_application=is_no_content_item_application,
         # experimental implementation 20210502
         title_name=title_name,
         rights_values=rights_values,

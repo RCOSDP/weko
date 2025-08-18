@@ -572,7 +572,7 @@ class CommunityModelView(ModelView):
         'group': {
             'allow_blank': False,
             'query_factory': lambda: db.session.query(Role).filter(Role.name.like("%_groups_%")).all(),
-    }
+        }
     }
     form_extra_fields = {
         'cnri': StringField(),

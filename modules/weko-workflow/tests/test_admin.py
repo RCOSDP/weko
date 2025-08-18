@@ -1,15 +1,14 @@
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_admin.py -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 
 
-from unittest.mock import MagicMock, patch
 import uuid
 import pytest
 import uuid
 from mock import patch
-from flask import Flask, json, jsonify, url_for, session, make_response
+from flask import json, url_for, make_response
 from invenio_accounts.testutils import login_user_via_session as login
-from werkzeug.exceptions import InternalServerError ,NotFound,Forbidden
-from weko_workflow.admin import FlowSettingView,WorkFlowSettingView,AdminSettings
+from werkzeug.exceptions import InternalServerError ,Forbidden
+from weko_workflow.admin import FlowSettingView,WorkFlowSettingView
 from weko_workflow.models import FlowDefine, FlowAction, FlowActionRole, WorkFlow, WorkflowRole
 from weko_admin.models import AdminSettings
 
@@ -32,7 +31,7 @@ class TestFlowSettingView:
         # (5, 200),
         # (6, 200),
     ])
-    def test_index_acl(self,client,db_register2,users,users_index,status_code,db):                
+    def test_index_acl(self,client,db_register2,users,users_index,status_code,db):
         adminsetting=AdminSettings(id=1,name='items_display_settings',settings={})
         # Adminsettings display_request_form is None
         with db.session.begin_nested():
@@ -68,7 +67,6 @@ class TestFlowSettingView:
         # (6, 200),
     ])
     def test_flow_detail_acl(self,client,workflow,db_register2,users,users_index,status_code,db):
-        
         adminsetting=AdminSettings(id=1,name='items_display_settings',settings={})
         # Adminsettings display_request_form is None
         with db.session.begin_nested():
@@ -88,14 +86,14 @@ class TestFlowSettingView:
         with patch("flask.templating._render", return_value=""):
             res =  client.get(url)
             assert res.status_code == status_code
-        
+
         #test No.10(W2023-22 2)
         url = '/admin/flowsetting/{}'.format("hoge")
         with patch("flask.templating._render", return_value=""):
             res =  client.get(url)
             assert res.status_code == 404
-        
-        #test No.11(W2023-22 2)        
+
+        #test No.11(W2023-22 2)
         login(client=client, email=users[users_index]['email'])
         url = '/admin/flowsetting/{}'.format(flow_define.flow_id)
         with patch("weko_workflow.admin.FlowSettingView._check_auth",return_value = False):
@@ -133,7 +131,7 @@ class TestFlowSettingView:
         with db.session.begin_nested():
             db.session.add(adminsetting)
         db.session.commit()
-        
+
         #repoadmin
         login(client=client, email=users[1]['email'])
         url = '/admin/flowsetting/{}'.format(workflow_open_restricted[1]["flow"].flow_id)
@@ -626,13 +624,7 @@ class TestWorkFlowSettingView:
         assert res.status_code == 200
         q = WorkFlow.query.all()
         assert len(q) == 2
-        
-        login(client=client, email=users[users_index]['email'])
-        url = '/admin/workflowsetting/{}'.format(uuid.uuid4())
-        with patch("flask.templating._render", return_value=""):
-            res =  client.put(url)
-            assert res.status_code == status_code  
-    
+
     #     def update_workflow(self, workflow_id='0'):
     # .tox/c1/bin/pytest --cov=weko_workflow tests/test_admin.py::TestWorkFlowSettingView::test_update_workflow -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
     def test_update_workflow(self,client,db,db_register2,users,workflow):

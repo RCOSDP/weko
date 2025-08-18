@@ -993,7 +993,7 @@ def validate_users_info():
 def get_user_info(owner):
     """get_user_info.
 
-    Get username and password by querying user id
+    Get username and email by querying user id
 
     param:
         user_ids: The user ID list

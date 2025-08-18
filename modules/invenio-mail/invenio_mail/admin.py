@@ -11,7 +11,7 @@ from flask_babelex import gettext as _
 from flask_mail import Message
 from werkzeug.local import LocalProxy
 
-from invenio_mail.models import MailConfig
+from invenio_mail.models import MailConfig, MailTemplates
 
 from . import config
 from .models import MailTemplates
@@ -37,7 +37,7 @@ def _set_flask_mail_cfg(cfg):
     current_app.extensions['mail'].use_ssl = cfg.get('mail_use_ssl', '')
     current_app.extensions['mail'].default_sender = cfg.get('mail_default_sender', '')
     current_app.extensions['mail'].debug = 0
-    current_app.extensions['mail'].local_hostname = cfg['mail_local_hostname']
+    current_app.extensions['mail'].local_hostname = cfg.get('mail_local_hostname', '')
 
 
 class MailSettingView(BaseView):

@@ -24,7 +24,6 @@ import json
 import re
 import sys
 from datetime import datetime
-from datetime import timezone
 from functools import partial
 
 from elasticsearch_dsl.query import Bool, Q

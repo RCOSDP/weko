@@ -24,7 +24,6 @@ import urllib.parse
 import pickle
 from typing import Union
 import json
-import copy
 import re
 import sys
 import traceback
@@ -43,7 +42,7 @@ from invenio_records.signals import after_record_delete, after_record_insert, \
     before_record_insert, before_record_revert, before_record_update
 from invenio_search import RecordsSearch
 from jsonpatch import apply_patch
-from sqlalchemy import and_, asc, desc, func, or_, not_, cast, String
+from sqlalchemy import desc, cast, String
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm.attributes import flag_modified
 from sqlalchemy.sql.expression import desc
@@ -1031,6 +1030,10 @@ class ItemTypes(RecordBase):
                 db.session.add(mapping.model)
                 result['msg'] = "Fix ItemType({}) mapping".format(itemtype_id)
                 result['code'] = 0
+        else:
+            mapping = Mapping.create(itemtype_id,table_row_map.get('mapping'))
+            flag_modified(mapping.model, 'mapping')
+            db.session.add(mapping.model)
 
         ItemTypeEditHistory.create_or_update(
             item_type_id=record.model.id,

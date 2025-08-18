@@ -1225,16 +1225,16 @@ $(document).ready(function () {
       isSelected = true;
       Object.keys(defProps).forEach(function (key) {
         if (isSelected) {
-          propertyOptions = propertyOptions + '<option value="' + defProps[key].value + '" selected>' + defProps[key].name + '</option>';
+          propertyOptions = propertyOptions + '<option value="' + defProps[key].value + '" selected>Default | ' + defProps[key].name + '</option>';
           isSelected = false;
         } else {
-          propertyOptions = propertyOptions + '<option value="' + defProps[key].value + '">' + defProps[key].name + '</option>';
+          propertyOptions = propertyOptions + '<option value="' + defProps[key].value + '">Default | ' + defProps[key].name + '</option>';
         }
 
         if (generalTextProps.includes(defProps[key].value)) {
-          textPropertyOptions = textPropertyOptions + '<option value="' + defProps[key].value + '">' + defProps[key].name + '</option>';
+          textPropertyOptions = textPropertyOptions + '<option value="' + defProps[key].value + '">Default | ' + defProps[key].name + '</option>';
         } else {
-          textPropertyOptions = textPropertyOptions + '<option value="' + defProps[key].value + '" disabled>' + defProps[key].name + '</option>';
+          textPropertyOptions = textPropertyOptions + '<option value="' + defProps[key].value + '" disabled>Default | ' + defProps[key].name + '</option>';
         }
       });
 
@@ -1263,11 +1263,11 @@ $(document).ready(function () {
             }
           }
         } else {
-          option = '<option value="cus_' + key + '">' + data[key].name + '</option>';
+          option = '<option value="cus_' + key + '">ID:' + key.toString() + ' | ' + data[key].name + '</option>';
           if (generalTextProps.includes('cus_' + key)) {
-            _option = '<option value="cus_' + key + '">' + data[key].name + '</option>';
+            _option = '<option value="cus_' + key + '">ID:' + key.toString() + ' | ' + data[key].name + '</option>';
           } else {
-            _option = '<option value="cus_' + key + '" disabled>' + data[key].name + '</option>';
+            _option = '<option value="cus_' + key + '" disabled>ID:' + key.toString() + ' | ' + data[key].name + '</option>';
           }
           if (data[key].sort != null) {
             odered[data[key].sort] = option;

@@ -1,8 +1,5 @@
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_fd.py -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
 
-import re
-from flask_login import current_user
-from requests import Response
 from weko_deposit.api import WekoFileObject
 from weko_records_ui.errors import AvailableFilesNotFoundRESTError
 from weko_records_ui.fd import _is_terms_of_use_only, file_download_secret, prepare_response,file_download_onetime,_download_file,add_signals_info,weko_view_method,file_ui,file_preview_ui,file_download_ui,file_list_ui
@@ -11,19 +8,18 @@ from unittest.mock import MagicMock
 from invenio_theme.config import THEME_ERROR_TEMPLATE 
 import pytest
 import io
-import copy
-from flask import Flask, json, jsonify, session, url_for,request
-from flask import url_for,current_app,make_response
-from flask_security.utils import login_user
+from flask import url_for
+from flask import url_for,make_response
 from flask_babelex import get_locale
-from invenio_accounts.testutils import login_user_via_session
 from mock import patch
 from invenio_records_files.utils import record_file_factory
 from werkzeug.exceptions import NotFound ,Forbidden
 
 from weko_admin.models import AdminSettings
 from weko_records_ui.models import FileSecretDownload
-from sqlalchemy.exc import SQLAlchemyError 
+from sqlalchemy.exc import SQLAlchemyError
+
+
 # def weko_view_method(pid, record, template=None, **kwargs):
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_fd.py::test_weko_view_method -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
 def test_weko_view_method(app,records,itemtypes,users):
@@ -192,9 +188,8 @@ def test_file_ui3(app,records_restricted,itemtypes,db_file_permission,users ,cli
                 fileobj:WekoFileObject = record_file_factory( recid_login, record_login, filename = "helloworld_open_restricted.pdf" )
                 fileobj.data['accessrole']='open_restricted'
                 fileobj.data['filename'] = "helloworld_open_restricted.pdf"
-                res = file_ui(recid_login,record_login ,is_preview=False , filename = "helloworld_open_restricted.pdf")
-                mock.assert_called()
-                assert res.status == '200 OK'
+                with pytest.raises(Forbidden):
+                    res = file_ui(recid_login,record_login ,is_preview=False , filename = "helloworld_open_restricted.pdf")
             
             #24
             with patch("flask_login.utils._get_user", return_value=users[7]["obj"]):

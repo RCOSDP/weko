@@ -1081,9 +1081,8 @@ class WekoDeposit(Deposit):
         owner = data['_deposit']['owner']
         owners = data['_deposit']['owners']
         weko_shared_ids = data['weko_shared_ids']
-
         keys_to_remove = ('_deposit', 'doi', '_oai',
-                            '_files', '_buckets', '$schema')
+                        '_files', '_buckets', '$schema')
         for k in keys_to_remove:
             data.pop(k, None)
 
@@ -1123,7 +1122,7 @@ class WekoDeposit(Deposit):
                 parent_pid = PIDVersioning(child=recid).parent
                 relation = PIDRelation.query. \
                     filter_by(parent=parent_pid,
-                                child=recid).one_or_none()
+                            child=recid).one_or_none()
                 relation.relation_type = 3
             db.session.merge(relation)
 
@@ -1132,11 +1131,10 @@ class WekoDeposit(Deposit):
         snapshot.locked = False
         deposit['_buckets'] = {'deposit': str(snapshot.id)}
         RecordsBuckets.create(record=deposit.model,
-                                bucket=snapshot)
+                            bucket=snapshot)
 
         index = {'index': self.get('path', []),
                 'actions': self.get('publish_status')}
-
         if session and 'activity_info' in session:
             del session['activity_info']
         if is_draft:

@@ -375,7 +375,7 @@
     "relation_version_is_last": true
   },
   {
-    "_oai": { "id": "oai:weko3.example.org:00000194"},
+    "_oai": { "id": "oai:weko3.example.org:00000194", "sets": [] },
     "path": ["1679618435874"],
     "owner": 1,
     "owners": [1],
@@ -424,7 +424,7 @@
     "relation_version_is_last": true
   },
   {
-    "_oai": { "id": "oai:weko3.example.org:00000195"},
+    "_oai": { "id": "oai:weko3.example.org:00000195", "sets": [] },
     "path": ["1679618435874"],
     "owner": 1,
     "owners": [1],

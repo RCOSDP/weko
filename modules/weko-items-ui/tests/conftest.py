@@ -158,6 +158,28 @@ def base_app(instance_path):
         WEKO_PERMISSION_ROLE_COMMUNITY=["Community Administrator"],
         THEME_SITEURL="https://localhost",
         WEKO_THEME_DEFAULT_COMMUNITY="Root Index",
+        WEKO_SCHEMA_JPCOAR_V1_SCHEMA_NAME = 'jpcoar_v1_mapping',
+        WEKO_SCHEMA_JPCOAR_V2_SCHEMA_NAME = 'jpcoar_v2_mapping',
+        WEKO_SCHEMA_DDI_SCHEMA_NAME = 'ddi_mapping',
+        WEKO_SCHEMA_VERSION_TYPE={
+            "modified": "oaire:versiontype",
+            "original": "oaire:version"
+        },
+        WEKO_SCHEMA_PUBLISHER_TYPE={
+            "modified": "jpcoar:publisher_jpcoar",
+            "original": "jpcoar:publisher"
+        },
+        WEKO_SCHEMA_DATE_TYPE={
+            "modified": "dcterms:date_dcterms",
+            "original": "dcterms:date"
+        },
+        WEKO_SCHEMA_UI_LIST_SCHEME=[
+            'e-Rad', 'e-Rad_Researcher','NRID', 'ORCID', 'ISNI', 'VIAF', 'AID',
+            'kakenhi', 'Ringgold', 'GRID', 'ROR'
+        ],
+        WEKO_SCHEMA_UI_LIST_SCHEME_AFFILIATION = [
+            'ISNI', 'kakenhi', 'Ringgold', 'GRID','ROR'
+        ],
         #  WEKO_ITEMS_UI_BASE_TEMPLATE = 'weko_items_ui/base.html',
         #  WEKO_ITEMS_UI_INDEX_TEMPLATE= 'weko_items_ui/item_index.html',
         CACHE_TYPE="redis",
@@ -209,7 +231,7 @@ def base_app(instance_path):
         EMAIL_DISPLAY_FLG = True,
         SEARCH_UI_SEARCH_INDEX="test-weko",
         WEKO_USERPROFILES_GENERAL_ROLE=WEKO_USERPROFILES_GENERAL_ROLE,
-        CACHE_REDIS_DB = 0,
+        CACHE_REDIS_DB = 2,
         WEKO_DEPOSIT_ITEMS_CACHE_PREFIX=WEKO_DEPOSIT_ITEMS_CACHE_PREFIX,
         INDEXER_DEFAULT_DOCTYPE=INDEXER_DEFAULT_DOCTYPE,
         INDEXER_FILE_DOC_TYPE=INDEXER_FILE_DOC_TYPE,
@@ -384,9 +406,9 @@ def users(app, db):
         comadmin = User.query.filter_by(email="comadmin@test.org").first()
         repoadmin = User.query.filter_by(email="repoadmin@test.org").first()
         sysadmin = User.query.filter_by(email="sysadmin@test.org").first()
-        generaluser = User.query.filter_by(email="generaluser@test.org")
-        originalroleuser = create_test_user(email="originalroleuser@test.org")
-        originalroleuser2 = create_test_user(email="originalroleuser2@test.org")
+        generaluser = User.query.filter_by(email="generaluser@test.org").first()
+        originalroleuser = User.query.filter_by(email="originalroleuser@test.org").first()
+        originalroleuser2 = User.query.filter_by(email="originalroleuser2@test.org").first()
 
     role_count = Role.query.filter_by(name="System Administrator").count()
     if role_count != 1:
@@ -616,6 +638,8 @@ def db_oaischema(app, db):
     )
     with db.session.begin_nested():
         db.session.add(oaischema)
+
+    return oaischema
 
 
 @pytest.fixture()
@@ -22643,7 +22667,7 @@ def make_record(db, indexer, i, files, thumbnail=None):
         "item_type_id": "1",
         "publish_date": "2024-01-31",
         "publish_status": "0",
-        "weko_shared_id": -1,
+        "weko_shared_ids": [],
         "item_1617186331708": {
             "attribute_name": "Title",
             "attribute_value_mlt": [
@@ -23441,3 +23465,11 @@ def db_approval_action(db, db_workflow, users):
         "flow_action": flow_action,
         "flow_action_role": flow_action_role,
     }
+
+@pytest.fixture()
+def restricted_settings(db):
+    AdminSettings.update(
+        "restricted_access",
+        {"item_application": {"application_item_types": [1], "item_application_enable": True}, "display_request_form": True},
+        id=10
+    )

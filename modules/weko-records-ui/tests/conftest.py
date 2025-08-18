@@ -22,15 +22,12 @@
 
 import copy
 import json
-from os.path import dirname, exists, join
-import mimetypes
+from os.path import join
 import os
 import shutil
 import tempfile
-import time
 import uuid
 from datetime import datetime
-from collections import OrderedDict
 from unittest.mock import patch
 from datetime import timedelta
 from kombu import Exchange, Queue
@@ -39,15 +36,13 @@ from invenio_mail import InvenioMail
 
 import pytest
 from elasticsearch import Elasticsearch
-from flask import Flask ,request
+from flask import Flask
 from flask_babelex import Babel
-from flask_login import LoginManager, UserMixin
-from flask_menu import Menu
 from invenio_access import InvenioAccess
 from invenio_access.models import ActionRoles, ActionUsers
 from invenio_accounts import InvenioAccounts
 from invenio_accounts.models import Role, User
-from invenio_accounts.testutils import create_test_user, login_user_via_session
+from invenio_accounts.testutils import create_test_user
 from invenio_admin import InvenioAdmin
 from invenio_assets import InvenioAssets
 from invenio_cache import InvenioCache
@@ -72,7 +67,7 @@ from invenio_pidrelations.models import PIDRelation
 from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidrelations.contrib.records import RecordDraft
 from invenio_pidstore import InvenioPIDStore
-from invenio_pidstore.models import PersistentIdentifier, PIDStatus, Redirect
+from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from invenio_previewer import InvenioPreviewer
 from invenio_records import InvenioRecords
 from invenio_records_files.models import RecordsBuckets
@@ -81,28 +76,19 @@ from invenio_records_ui import InvenioRecordsUI
 from invenio_rest import InvenioREST
 from invenio_search import InvenioSearch, current_search_client
 from invenio_search_ui import InvenioSearchUI
-from invenio_stats.config import SEARCH_INDEX_PREFIX as index_prefix
 from invenio_theme import InvenioTheme
-from simplekv.memory.redisstore import RedisStore
 from six import BytesIO
-from sqlalchemy_utils.functions import create_database, database_exists, drop_database
+from sqlalchemy_utils.functions import create_database, database_exists
 from weko_admin import WekoAdmin
-from weko_admin.models import SessionLifetime, RankingSettings
+from weko_admin.models import SessionLifetime
 from weko_admin.models import AdminSettings
 from weko_accounts import WekoAccounts
 from weko_deposit import WekoDeposit, WekoDepositREST
 from weko_deposit.api import WekoDeposit as aWekoDeposit
-from weko_deposit.api import WekoIndexer, WekoRecord, _FormatSysBibliographicInformation
+from weko_deposit.api import WekoIndexer, WekoRecord
 from weko_deposit.config import _PID
 from weko_deposit.config import DEPOSIT_REST_ENDPOINTS
-from weko_deposit.config import DEPOSIT_REST_ENDPOINTS as _DEPOSIT_REST_ENDPOINTS
 from weko_deposit.config import WEKO_BUCKET_QUOTA_SIZE
-from weko_deposit.config import WEKO_DEPOSIT_REST_ENDPOINTS
-from weko_deposit.config import (
-    WEKO_DEPOSIT_REST_ENDPOINTS as _WEKO_DEPOSIT_REST_ENDPOINTS,
-)
-from weko_deposit.storage import WekoFileStorage
-from weko_deposit.views import blueprint
 from weko_groups import WekoGroups
 from weko_index_tree import WekoIndexTree, WekoIndexTreeREST
 from weko_index_tree.api import Indexes
@@ -116,12 +102,11 @@ from weko_logging.audit import WekoLoggingUserActivity
 from weko_records import WekoRecords
 from weko_records.api import ItemsMetadata, FilesMetadata
 from weko_records_ui.ext import WekoRecordsREST
-from weko_records.models import ItemType, ItemTypeMapping, ItemTypeName, SiteLicenseInfo, FeedbackMailList,SiteLicenseIpAddress,RequestMailList
-from weko_records.utils import get_options_and_order_list
+from weko_records.models import ItemType, ItemTypeMapping, ItemTypeName, SiteLicenseInfo, SiteLicenseIpAddress, RequestMailList
 from weko_records_ui.config import WEKO_ADMIN_PDFCOVERPAGE_TEMPLATE,RECORDS_UI_ENDPOINTS,WEKO_RECORDS_UI_SECRET_KEY,WEKO_RECORDS_UI_ONETIME_DOWNLOAD_PATTERN
 from weko_records_ui.models import FileSecretDownload, PDFCoverPageSettings,FileOnetimeDownload, FilePermission, RocrateMapping
-from weko_records_ui.scopes import item_read_scope
-from weko_records_ui.utils import _create_secret_download_url, _generate_secret_download_url
+from weko_items_ui.scopes import item_read_scope
+
 from weko_schema_ui.config import (
     WEKO_SCHEMA_DDI_SCHEMA_NAME,
     WEKO_SCHEMA_JPCOAR_V1_SCHEMA_NAME,
@@ -134,13 +119,11 @@ from weko_records_ui import WekoRecordsUI, WekoRecordsCitesREST
 from weko_records_ui.views import blueprint as weko_records_ui_blueprint
 from weko_records_ui.config import (
     WEKO_RECORDS_UI_GOOGLE_SCHOLAR_OUTPUT_RESOURCE_TYPE,
-    JPAEXM_TTF_FILEPATH,
     URL_OA_POLICY_HEIGHT,
     FOOTER_HEIGHT,
     METADATA_HEIGHT,
     TITLE_HEIGHT,
     HEADER_HEIGHT,
-    JPAEXG_TTF_FILEPATH,
     PDF_COVERPAGE_LANG_FILEPATH,
     PDF_COVERPAGE_LANG_FILENAME,
     WEKO_RECORDS_UI_DOWNLOAD_DAYS,
@@ -157,11 +140,9 @@ from weko_records_ui.config import (
 from weko_search_ui import WekoSearchUI
 from weko_search_ui.config import WEKO_SEARCH_MAX_RESULT
 from weko_theme import WekoTheme
-from weko_user_profiles.models import UserProfile
 from weko_workflow.models import (
     Action,
     ActionStatus,
-    ActionStatusPolicy,
     Activity,
     GuestActivity,
     FlowAction,
@@ -2059,7 +2040,7 @@ def make_record_v2(db, indexer, i, files, thumbnail=None):
         "item_type_id": "1",
         "publish_date": "2024-01-31",
         "publish_status": "0",
-        "weko_shared_id": -1,
+        "weko_shared_ids": [],
         "item_1617186331708": {
             "attribute_name": "Title",
             "attribute_value_mlt": [
@@ -3321,8 +3302,6 @@ def make_record_restricted(db, indexer, i, filepath, filename, mimetype ,userId 
                     "accessrole": "open_restricted",
                     "version_id": "c1502853-c2f9-455d-8bec-f6e630e54b21",
                     "displaytype": "simple",
-                    "terms": 'term_free',# if i==4 else '100',
-                    "terms_content": 'test terms_content' if i==4 else 'test2 terms context',
                 }
             ],
         },
@@ -3744,8 +3723,6 @@ def make_record_restricted(db, indexer, i, filepath, filename, mimetype ,userId 
                 "accessrole": "open_restricted",
                 "version_id": "c1502853-c2f9-455d-8bec-f6e630e54b21",
                 "displaytype": "simple",
-                "terms": 'term_free', #if i==4 else '100',
-                "terms_content": 'test terms_content' if i==4 else 'test2 terms context',
             }
         ],
         "item_1617610673286": [
@@ -3886,8 +3863,8 @@ def make_record_restricted(db, indexer, i, filepath, filename, mimetype ,userId 
         {
             "date": [{"dateValue": "2021-07-12", "dateType": "Available"}],
             "accessrole": "open_restricted",
-            #"provide" : [{"role": userId, "workflow": workflowId }],
-            #"terms" :"term_free","termsDescription":"利用規約本文",
+            "provide" : [{"role": userId, "workflow": workflowId }],
+            "terms" :"term_free","termsDescription":"利用規約本文",
             "displaytype": "simple",
             "filename": filename,
             "attachment": {},

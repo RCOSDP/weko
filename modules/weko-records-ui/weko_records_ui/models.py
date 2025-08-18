@@ -22,13 +22,12 @@
 """Database models for weko-admin."""
 
 from datetime import datetime
-from datetime import timedelta
 import traceback
 from typing import List
 
 from flask import current_app
 from invenio_db import db
-from sqlalchemy import desc, or_ ,func
+from sqlalchemy import desc, func
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.dialects.postgresql import INTERVAL
 from sqlalchemy.sql.functions import concat ,now
@@ -404,7 +403,7 @@ class FileOnetimeDownload(db.Model, Timestamp):
             cls.user_mail == obj.get("user_mail"),
         )
         return query.order_by(desc(cls.id)).all()
-    
+
     @classmethod
     def find_downloadable_only(cls, **obj) -> list:
         """If the user can download ,find file onetime download.
@@ -420,7 +419,7 @@ class FileOnetimeDownload(db.Model, Timestamp):
             now() < cls.created  + func.cast( concat( cls.expiration_date , ' days' ) , INTERVAL)
         )
         return query.order_by(desc(cls.id)).all()
-        
+
 
 class FileSecretDownload(db.Model, Timestamp):
     """File secret download."""
@@ -487,7 +486,6 @@ class FileSecretDownload(db.Model, Timestamp):
             id = data.get("id")
             record_id = data.get("record_id")
             created = data.get("created")
-            current_app.logger.debug("data: {}".format(data))
             file_permission = cls.find(file_name=file_name, id=id,
                                         record_id=record_id, created=created)
             current_app.logger.debug("file_permission: {}".format(file_permission))
@@ -569,4 +567,4 @@ class RocrateMapping(db.Model, Timestamp):
         self.mapping = mapping
 
 
-__all__ = ('PDFCoverPageSettings', 'FilePermission', 'FileOnetimeDownload', 'RocrateMapping')
+__all__ = ('PDFCoverPageSettings', 'FilePermission', 'FileOnetimeDownload' ,'FileSecretDownload', 'RocrateMapping')

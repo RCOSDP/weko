@@ -2174,14 +2174,11 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
         // Key for dectecting affiliated institution
         var affiliatedInstitutionName = 'subitem_affiliated_institution_name';
         var affiliatedInstitutionPosition = 'subitem_affiliated_institution_position';
-        var userInfoKey = null;
         for (let key in $rootScope.recordsVM.invenioRecordsSchema.properties) {
           var currentInvenioRecordsSchema = $rootScope.recordsVM.invenioRecordsSchema.properties[key];
           if (currentInvenioRecordsSchema.properties) {
             let containAffiliatedDivision = currentInvenioRecordsSchema.properties.hasOwnProperty(affiliatedDivision);
             if (containAffiliatedDivision) {
-              // Store key of user info to disable this form later
-              userInfoKey = key;
               $rootScope.recordsVM.invenioRecordsModel[key] = {};
               var currentInvenioRecordsModel = $rootScope.recordsVM.invenioRecordsModel[key];
               for (let subKey in currentInvenioRecordsSchema.properties) {
@@ -2207,6 +2204,8 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
                 } else {
                   if (data.results[subKey]) {
                     $rootScope.recordsVM.invenioRecordsModel[key][subKey] = String(data.results[subKey]);
+                    // Set read only for user information property
+                    $scope.setFormReadOnly(subKey);
                   }
                 }
               }
