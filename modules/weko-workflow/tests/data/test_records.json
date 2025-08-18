@@ -334,6 +334,47 @@
     "relation_version_is_last": true
   },
   {
+    "_oai": { "id": "oai:weko3.example.org:00000003", "sets": [] },
+    "path": ["2"],
+    "owner": 1,
+    "owners": [1],
+    "created_by": 1,
+    "recid": "3",
+    "title": ["title3"],
+    "pubdate": { "attribute_name": "PubDate", "attribute_value": "2022-08-20" },
+    "_buckets": { "deposit": "3cd49fde-d698-481f-9754-726812c86b0f" },
+    "_deposit": {
+      "id": "3",
+      "pid": { "type": "depid", "value": "3", "revision_id": 0 },
+      "owner": 1,
+      "owners": [1],
+      "status": "draft",
+      "created_by": 1
+    },
+    "item_title": "title3",
+    "author_link": [],
+    "item_type_id": "1",
+    "publish_date": "2022-08-20",
+    "publish_status": "0",
+    "weko_shared_ids": [],
+    "item_1617186331708": {
+      "attribute_name": "Title",
+      "attribute_value_mlt": [
+        { "subitem_1551255647225": "title3", "subitem_1551255648112": "ja" }
+      ]
+    },
+    "item_1617258105262": {
+      "attribute_name": "Resource Type",
+      "attribute_value_mlt": [
+        {
+          "resourceuri": "http://purl.org/coar/resource_type/c_5794",
+          "resourcetype": "conference paper"
+        }
+      ]
+    },
+    "relation_version_is_last": true
+  },
+  {
     "_oai": { "id": "oai:weko3.example.org:00000194", "sets": [] },
     "path": ["1679618435874"],
     "owner": 1,
@@ -431,41 +472,32 @@
     },
     "relation_version_is_last": true
   },
-
   {
-    "_oai": { "id": "oai:weko3.example.org:00000003", "sets": ["3"] },
-    "path": ["3"],
-    "owner": 1,
-    "owners": [1],
-    "created_by": 1,
-    "recid": "3",
-    "title": ["title3"],
-    "pubdate": { "attribute_name": "PubDate", "attribute_value": "2022-08-20" },
-    "_buckets": { "deposit": "3e99cfca-098b-42ed-b8a0-20ddd09b3e02" },
+    "_oai": { "id": "oai:weko3.example.org:00000001.1", "sets": [] },
+    "path": ["1"],
+    "owner": "1",
+    "recid": "4",
+    "title": ["title"],
+    "pubdate": { "attribute_name": "PubDate", "attribute_value": "2025-05-05" },
+    "_buckets": { "deposit": "3cd49fde-d698-481f-9754-726812c91hg4" },
     "_deposit": {
-      "id": "3",
-      "pid": { "type": "depid", "value": "3", "revision_id": 0 },
-      "owner": 1,
+      "id": "4",
+      "pid": { "type": "depid", "value": "4", "revision_id": 0 },
+      "owner": "1",
       "owners": [1],
       "status": "published",
-      "created_by": 1,
-      "owners_ext": {
-        "email": "",
-        "username": "",
-        "displayname": ""
-      },
-      "shared_user_ids":[1]
+      "created_by": 1
     },
-    "item_title": "title3",
+    "item_title": "title",
     "author_link": [],
     "item_type_id": "1",
-    "publish_date": "2022-08-20",
+    "publish_date": "2025-05-05",
     "publish_status": "0",
     "weko_shared_ids": [],
     "item_1617186331708": {
       "attribute_name": "Title",
       "attribute_value_mlt": [
-        { "subitem_1551255647225": "title3", "subitem_1551255648112": "ja" }
+        { "subitem_1551255647225": "title", "subitem_1551255648112": "ja" }
       ]
     },
     "item_1617258105262": {
@@ -481,12 +513,107 @@
       "attribute_name": "Identifier Registration",
       "attribute_value_mlt": [
         {
-          "subitem_identifier_reg_text" :"",
-          "subitem_identifier_reg_type": ""
+          "subitem_identifier_reg_text": "test_2/0000000001",
+          "subitem_identifier_reg_type": "JaLC"
+        }
+      ]
+    },
+    "relation_version_is_last": true
+  },
+  {
+    "_oai": { "id": "oai:weko3.example.org:00000001.1", "sets": [] },
+    "path": ["1"],
+    "owner": "1",
+    "recid": "4.0",
+    "title": ["title"],
+    "pubdate": { "attribute_name": "PubDate", "attribute_value": "2025-05-05" },
+    "_buckets": { "deposit": "3cd49fde-d698-481f-9754-726812c91hg4" },
+    "_deposit": {
+      "id": "4.0",
+      "pid": { "type": "depid", "value": "4.0", "revision_id": 0 },
+      "owner": "1",
+      "owners": [1],
+      "status": "published",
+      "created_by": 1
+    },
+    "item_title": "title",
+    "author_link": [],
+    "item_type_id": "1",
+    "publish_date": "2025-05-05",
+    "publish_status": "0",
+    "weko_shared_ids": [],
+    "item_1617186331708": {
+      "attribute_name": "Title",
+      "attribute_value_mlt": [
+        { "subitem_1551255647225": "title", "subitem_1551255648112": "ja" }
+      ]
+    },
+    "item_1617258105262": {
+      "attribute_name": "Resource Type",
+      "attribute_value_mlt": [
+        {
+          "resourceuri": "http://purl.org/coar/resource_type/c_5794",
+          "resourcetype": "conference paper"
+        }
+      ]
+    },
+    "item_1617186819068": {
+      "attribute_name": "Identifier Registration",
+      "attribute_value_mlt": [
+        {
+          "subitem_identifier_reg_text": "test_2/0000000001",
+          "subitem_identifier_reg_type": "JaLC"
+        }
+      ]
+    },
+    "relation_version_is_last": true
+  },
+  {
+    "_oai": { "id": "oai:weko3.example.org:00000001.1", "sets": [] },
+    "path": ["1"],
+    "owner": "1",
+    "recid": "4.1",
+    "title": ["title"],
+    "pubdate": { "attribute_name": "PubDate", "attribute_value": "2025-05-05" },
+    "_buckets": { "deposit": "3cd49fde-d698-481f-9754-726812c91hg4" },
+    "_deposit": {
+      "id": "4.1",
+      "pid": { "type": "depid", "value": "4.1", "revision_id": 0 },
+      "owner": "1",
+      "owners": [1],
+      "status": "published",
+      "created_by": 1
+    },
+    "item_title": "title",
+    "author_link": [],
+    "item_type_id": "1",
+    "publish_date": "2025-05-05",
+    "publish_status": "0",
+    "weko_shared_ids": [],
+    "item_1617186331708": {
+      "attribute_name": "Title",
+      "attribute_value_mlt": [
+        { "subitem_1551255647225": "title", "subitem_1551255648112": "ja" }
+      ]
+    },
+    "item_1617258105262": {
+      "attribute_name": "Resource Type",
+      "attribute_value_mlt": [
+        {
+          "resourceuri": "http://purl.org/coar/resource_type/c_5794",
+          "resourcetype": "conference paper"
+        }
+      ]
+    },
+    "item_1617186819068": {
+      "attribute_name": "Identifier Registration",
+      "attribute_value_mlt": [
+        {
+          "subitem_identifier_reg_text": "test_2/0000000001",
+          "subitem_identifier_reg_type": "JaLC"
         }
       ]
     },
     "relation_version_is_last": true
   }
-
 ]

@@ -91,9 +91,9 @@ COPY public.accounts_role (id, name, description) FROM stdin;
 -- Data for Name: index; Type: TABLE DATA; Schema: public; Owner: invenio
 --
 
-COPY public.index (created, updated, id, parent, "position", index_name, index_name_english, index_link_name, index_link_name_english, harvest_spec, index_link_enabled, comment, more_check, display_no, harvest_public_state, display_format, image_name, public_state, public_date, recursive_public_state, rss_status, coverpage_state, recursive_coverpage_check, browsing_role, recursive_browsing_role, contribute_role, recursive_contribute_role, browsing_group, recursive_browsing_group, contribute_group, recursive_contribute_group, owner_user_id, item_custom_sort, biblio_flag, online_issn) FROM stdin;
-2023-12-26 00:58:30.451000	2023-12-26 00:59:04.577000	1703552310404	0	-100	利用申請	Usage Application		New Index		f		f	5	f	1		f	\N	f	f	f	f	3,5,-98,-99	f	1,2,3,4,5,-98,-99	f		f		f	1	{}	f	f
-2021-03-20 07:15:32.798837	2021-03-20 07:15:55.192712	1616224532673	0	-99	利用報告	Data Usage Report		New Index		f		f	5	t	1		f	\N	f	f	f	f	3,-98,-99	f	1,2,3,4,-98,-99	f		f		f	1	{}	f	f
+COPY public.index (created, updated, id, parent, "position", index_name, index_name_english, index_link_name, index_link_name_english, harvest_spec, index_link_enabled, comment, more_check, display_no, harvest_public_state, display_format, image_name, public_state, public_date, recursive_public_state, rss_status, coverpage_state, recursive_coverpage_check, browsing_role, recursive_browsing_role, contribute_role, recursive_contribute_role, browsing_group, recursive_browsing_group, contribute_group, recursive_contribute_group, owner_user_id, item_custom_sort, biblio_flag, online_issn, is_deleted) FROM stdin;
+2023-12-26 00:58:30.451000	2023-12-26 00:59:04.577000	1703552310404	0	-100	利用申請	Usage Application		New Index		f		f	5	f	1		f	\N	f	f	f	f	3,5,-98,-99	f	1,2,3,4,5,-98,-99	f		f		f	1	{}	f	f	f
+2021-03-20 07:15:32.798837	2021-03-20 07:15:55.192712	1616224532673	0	-99	利用報告	Data Usage Report		New Index		f		f	5	t	1		f	\N	f	f	f	f	3,-98,-99	f	1,2,3,4,-98,-99	f		f		f	1	{}	f	f	f
 \.
 
 
@@ -101,11 +101,11 @@ COPY public.index (created, updated, id, parent, "position", index_name, index_n
 -- Data for Name: workflow_flow_define; Type: TABLE DATA; Schema: public; Owner: invenio
 --
 
-COPY public.workflow_flow_define (status, created, updated, id, flow_id, flow_name, flow_user, flow_status, is_deleted) FROM stdin;
-N	2021-03-20 07:30:09.519	2021-03-20 07:30:16.883	31001	cc3aa348-f0da-4cef-b404-ffaabb1d5894	利用報告/Data Usage Report	1	A	f
-N	2021-03-20 07:30:09.519	2021-03-20 07:30:16.883	31002	a6ff688f-4b53-457c-9b5c-e5d4cc3b3068	default_利用申請フロー	1	A	f
-N	2023-12-26 09:38:40.699	2023-12-26 10:04:10.160	31003	92408473-006d-479d-a931-85ba931e2492	default_二段階利用申請フロー	1	A	f
-N	2023-12-26 11:08:28.825	2023-12-26 11:08:28.825	31004	d8635b0d-733a-468d-b7d1-2731ed720c8e	default_利用規約のみフロー	1	M	f
+COPY public.workflow_flow_define (status, created, updated, id, flow_id, flow_name, flow_user, flow_status, is_deleted, flow_type) FROM stdin;
+N	2021-03-20 07:30:09.519	2021-03-20 07:30:16.883	31001	cc3aa348-f0da-4cef-b404-ffaabb1d5894	利用報告/Data Usage Report	1	A	f	1
+N	2021-03-20 07:30:09.519	2021-03-20 07:30:16.883	31002	a6ff688f-4b53-457c-9b5c-e5d4cc3b3068	default_利用申請フロー	1	A	f	1
+N	2023-12-26 09:38:40.699	2023-12-26 10:04:10.160	31003	92408473-006d-479d-a931-85ba931e2492	default_二段階利用申請フロー	1	A	f	1
+N	2023-12-26 11:08:28.825	2023-12-26 11:08:28.825	31004	d8635b0d-733a-468d-b7d1-2731ed720c8e	default_利用規約のみフロー	1	M	f	1
 \.
 
 --
@@ -173,7 +173,7 @@ COPY public.mail_template_genres (id, name) FROM stdin;
 \.
 
 --
--- PostgreSQL database dump complete
+-- Delete data mail templates.
 --
 
 DELETE FROM public.mail_templates;

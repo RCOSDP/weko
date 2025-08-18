@@ -26,12 +26,14 @@ import json
 import os
 import re
 import sys
+import traceback
 import unicodedata
 import ipaddress
 from datetime import datetime, timedelta
 
 from flask import abort, current_app, flash, jsonify, make_response, \
-    redirect, render_template, request, url_for 
+    redirect, render_template, request, url_for
+from markupsafe import Markup
 from flask_admin import BaseView, expose
 from flask_admin.contrib.sqla import ModelView
 from flask_admin.contrib.sqla.fields import QuerySelectField
@@ -41,40 +43,48 @@ from flask_babelex import gettext as _
 from flask_login import current_user
 from flask_mail import Attachment
 from flask_wtf import FlaskForm,Form
+from sqlalchemy.exc import SQLAlchemyError
 from invenio_communities.models import Community
+from invenio_accounts.models import User
 from invenio_db import db
 from invenio_files_rest.storage.pyfs import remove_dir_with_file
 from invenio_mail.api import send_mail
 from weko_index_tree.models import IndexStyle
-from weko_records.api import ItemTypes, SiteLicense
-from weko_records.models import SiteLicenseInfo
+from weko_records.api import ItemTypes, SiteLicense, ItemTypeNames, JsonldMapping
+from weko_records.models import SiteLicenseInfo, ItemTypeJsonldMapping
 from weko_records_ui.utils import check_items_settings
 from weko_schema_ui.models import PublishStatus
+from weko_search_ui.mapper import JsonLdMapper
+from weko_swordserver.models import SwordClientModel
+from weko_swordserver.api import SwordClient
+from weko_workflow.api import WorkFlow, WorkActivity
 from wtforms.fields import StringField
 from wtforms.validators import ValidationError
-
+from weko_items_autofill.config import WEKO_ITEMS_AUTOFILL_API_LIST
+from invenio_oauth2server.models import Client
+from invenio_accounts.models import User
 
 from .config import WEKO_PIDSTORE_IDENTIFIER_TEMPLATE_CREATOR, \
-    WEKO_PIDSTORE_IDENTIFIER_TEMPLATE_EDITOR
+    WEKO_PIDSTORE_IDENTIFIER_TEMPLATE_EDITOR, WEKO_ADMIN_SWORD_API_JSONLD_TEMPLATE, \
+    WEKO_ADMIN_SWORD_API_JSONLD_MAPPING_TEMPLATE
 from .models import AdminSettings, FacetSearchSetting, Identifier, \
     LogAnalysisRestrictedCrawlerList, LogAnalysisRestrictedIpAddress, \
     RankingSettings, SearchManagement, StatisticsEmail
 from .permissions import admin_permission_factory ,superuser_access
 from .utils import get_facet_search, get_item_mapping_list, \
-    get_response_json, get_restricted_access, get_search_setting
+    get_response_json, get_restricted_access, get_search_setting, get_detail_search_list
 from .utils import get_user_report_data as get_user_report
-from .utils import package_reports, str_to_bool 
+from .utils import package_reports, str_to_bool
 from .tasks import is_reindex_running ,reindex
-
 
 class ReindexElasticSearchView(BaseView):
 
     @expose('/', methods=['GET'])
     @superuser_access.require(http_exception=403)
     def index(self):
-        """ 
-        show view Maintenance/ElasticSearch 
-        
+        """
+        show view Maintenance/ElasticSearch
+
         Returns:
             'weko_admin/admin/reindex_elasticsearch.html'
         """
@@ -88,10 +98,9 @@ class ReindexElasticSearchView(BaseView):
                 template=current_app.config['WEKO_ADMIN_REINDEX_ELASTICSEARCH_TEMPLATE']
                 ,isError=is_error
                 ,isExecuting=is_executing
-                ,disabled_Btn=disabled_btn 
+                ,disabled_Btn=disabled_btn
             )
         except BaseException:
-            import traceback
             estr = traceback.format_exc()
             current_app.logger.error('Unexpected error: {}'.format( estr ))
             return abort(500)
@@ -99,7 +108,7 @@ class ReindexElasticSearchView(BaseView):
     @expose('/reindex', methods=['POST'])
     @superuser_access.require(http_exception=403)
     def reindex(self):
-        """ 
+        """
         Processing when "Executing Button" is pressed
 
         Args:
@@ -115,7 +124,7 @@ class ReindexElasticSearchView(BaseView):
         in .utils.py .
         """
 
-        
+
         try:
             ## exclusion check
             status =  self._check_reindex_is_running()
@@ -134,13 +143,12 @@ class ReindexElasticSearchView(BaseView):
             return jsonify({"responce" : _('completed')}), 200
 
         except BaseException:
-            import traceback
             estr = traceback.format_exc()
             current_app.logger.error('Unexpected error: {}'.format( estr ))
-            AdminSettings.update(current_app.config['WEKO_ADMIN_SETTINGS_ELASTIC_REINDEX_SETTINGS'] 
+            AdminSettings.update(current_app.config['WEKO_ADMIN_SETTINGS_ELASTIC_REINDEX_SETTINGS']
             , dict({current_app.config['WEKO_ADMIN_SETTINGS_ELASTIC_REINDEX_SETTINGS_HAS_ERRORED']:True}))
             return jsonify({"error" : estr }), 500
-            
+
     @expose('/is_reindex_running', methods=['GET'])
     @superuser_access.require(http_exception=403)
     def check_reindex_is_running(self):
@@ -153,12 +161,11 @@ class ReindexElasticSearchView(BaseView):
                 isError      : boolean
                 isExecuting  : boolean
                 disabled_Btn : boolean
-            
+
         """
         try:
             return jsonify(self._check_reindex_is_running())
         except BaseException:
-            import traceback
             estr = traceback.format_exc()
             current_app.logger.error('Unexpected error: {}'.format( estr ))
             return abort(500)
@@ -177,7 +184,7 @@ class ReindexElasticSearchView(BaseView):
         result = dict({
             "isError": is_error
             ,"isExecuting": is_executing
-            ,"disabled_Btn": is_error or is_executing 
+            ,"disabled_Btn": is_error or is_executing
         })
         return result
 
@@ -325,8 +332,27 @@ class ReportView(BaseView):
         from invenio_stats.utils import get_aggregations
         from weko_index_tree.api import Indexes
 
+        is_super = any(role.name in current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER'] for role in current_user.roles)
+        if is_super:
+            repositories = [{"id": "Root Index"}] + \
+                [com.to_dict() for com in Community.query.all()]
+        else:
+            repositories = [com.to_dict() for com in Community.get_repositories_by_user(current_user)]
+
+        repo_id = request.args.get('repo_id')
+        if repo_id:
+            if repo_id not in [r.get("id") for r in repositories]:
+                abort(403)
+        else:
+            repo_id = repositories[0]["id"] if repositories else None
+
         try:
             indexes = Indexes.get_public_indexes_list()
+            if repo_id and repo_id != "Root Index":
+                repository = Community.query.get(repo_id)
+                community_indexes = Indexes.get_child_list_recursive(repository.root_node_id)
+                indexes = list(set(indexes) & set(community_indexes))
+
             indexes_query = []
 
             if indexes:
@@ -404,6 +430,10 @@ class ReportView(BaseView):
                 }
             }
 
+            if repo_id and repo_id != "Root Index":
+                aggs_query["query"]["bool"]["should"] = {"terms": {"path": community_indexes}}
+                aggs_query["query"]["bool"]["minimum_should_match"] = 1
+
             aggs_results = get_aggregations(
                 current_app.config['SEARCH_UI_SEARCH_INDEX'], aggs_query)
 
@@ -420,16 +450,20 @@ class ReportView(BaseView):
                         'aggs_public']['doc_count']
                 }
                 result['private'] = result['total'] - result['open']
-            
-            
-            current_schedule = AdminSettings.get(
+
+
+            settings = AdminSettings.get(
                 name='report_email_schedule_settings',
                 dict_to_object=False)
-            current_schedule = current_schedule if current_schedule else \
-                current_app.config['WEKO_ADMIN_REPORT_DELIVERY_SCHED']
+            current_schedule = None
+            if settings:
+                current_schedule = settings.get(repo_id)
+            if not current_schedule:
+                current_schedule = current_app.config['WEKO_ADMIN_REPORT_DELIVERY_SCHED']
 
             # Emails to send reports to
-            all_email_address = StatisticsEmail().get_all()
+            all_email_address = StatisticsEmail.query.filter_by(repository_id=repo_id).all()
+
             return self.render(
                 current_app.config['WEKO_ADMIN_REPORT_TEMPLATE'],
                 result=result,
@@ -440,8 +474,12 @@ class ReportView(BaseView):
                               _('Sunday')],
                 current_schedule=current_schedule,
                 frequency_options=current_app.config[
-                    'WEKO_ADMIN_REPORT_FREQUENCIES'])
+                    'WEKO_ADMIN_REPORT_FREQUENCIES'],
+                repositories=repositories,
+                selected_repo_id=repo_id
+            )
         except Exception as e:
+            traceback.print_exc()
             current_app.logger.error("Unexpected error: {}".format(e))
         return abort(400)
 
@@ -493,7 +531,8 @@ class ReportView(BaseView):
     @expose('/user_report_data', methods=['GET'])
     def get_user_report_data(self):
         """Get user report data from db and modify."""
-        return jsonify(get_user_report())
+        repository_id = request.args.get('repository_id')
+        return jsonify(get_user_report(repo_id=repository_id))
 
     @expose('/set_email_schedule', methods=['POST'])
     def set_email_schedule(self):
@@ -517,9 +556,15 @@ class ReportView(BaseView):
         }
 
         try:
-            AdminSettings.update('report_email_schedule_settings', schedule)
+            repository_id = request.form.get('repository_select')
+            settings = AdminSettings.get('report_email_schedule_settings', False)
+            if not settings:
+                settings = {}
+            settings[repository_id] = schedule
+            AdminSettings.update('report_email_schedule_settings', settings)
             flash(_('Successfully Changed Schedule.'), 'error')
-        except Exception:
+        except Exception as ex:
+            traceback.print_exc()
             flash(_('Could Not Save Changes.'), 'error')
         return redirect(url_for('report.index'))
 
@@ -527,7 +572,8 @@ class ReportView(BaseView):
     def get_email_address(self):
         """Save Email Address."""
         input_email = request.form.getlist('inputEmail')
-        StatisticsEmail.delete_all_row()
+        repo_select = request.form.get('repository_select')
+        StatisticsEmail.delete_by_repo(repo_select)
         alert_msg = 'Successfully saved email addresses.'
         category = 'info'
         for input in input_email:
@@ -535,10 +581,11 @@ class ReportView(BaseView):
                 match = re.match(r'^[_a-z0-9-]+(\.[_a-z0-9-]+)*@[a-z0-9-]+('
                                  r'\.[a-z0-9-]+)*(\.[a-z]{2,4})$', input)
                 if match:
-                    StatisticsEmail.insert_email_address(input)
+                    StatisticsEmail.insert_email_address(input, repo_select)
                 else:
                     alert_msg = 'Please check email input fields.'
                     category = 'error'
+                    current_app.logger.error(alert_msg)
         flash(_(alert_msg), category=category)
         return redirect(url_for("report.index"))
 
@@ -852,27 +899,29 @@ class SiteLicenseSettingsView(BaseView):
                                         ip_check = ipaddress.ip_address(addr_check)
                                     except ValueError:
                                         err_addr = True
-                                        break    
+                                        break
                                 if err_addr:
                                     # break for addresses
                                     break
                         if err_addr:
+                            current_app.logger.error("IP Address is incorrect")
                             raise ValueError('IP Address is incorrect')
 
                 SiteLicense.update(data)
                 db.session.commit()
                 jfy['status'] = 201
                 jfy['message'] = 'Site license was successfully updated.'
-            except BaseException as ex:
+            except Exception as ex:
                 db.session.rollback()
                 current_app.logger.error('Failed to update site license: {}'.format(ex))
+                traceback.print_exc()
                 jfy['status'] = 500
                 jfy['message'] = 'Failed to update site license.'
             return make_response(jsonify(jfy), jfy['status'])
 
         try:
             # site license list
-            result_list = SiteLicense.get_records()
+            result_list = SiteLicense.get_records(user=current_user)
             # item types list
             n_lst = ItemTypes.get_latest()
             result = get_response_json(result_list, n_lst)
@@ -889,12 +938,15 @@ class SiteLicenseSendMailSettingsView(BaseView):
 
     @expose('/', methods=['GET', 'POST'])
     def index(self):
+        repository_id = None
         if request.method == 'POST':
             data = request.get_json()
-            settings = AdminSettings.get('site_license_mail_settings')
-            settings.auto_send_flag = data['auto_send_flag']
+            settings = AdminSettings.get('site_license_mail_settings', False)
+            new_settings = settings.copy()
+            repository_id = data['repository_id']
+            new_settings[repository_id]={'auto_send_flag': data['auto_send_flag']}
             AdminSettings.update('site_license_mail_settings',
-                                 settings.__dict__)
+                                 new_settings)
             for name in data['checked_list']:
                 sitelicense = SiteLicenseInfo.query.filter_by(
                     organization_name=name).first()
@@ -906,18 +958,31 @@ class SiteLicenseSendMailSettingsView(BaseView):
                         db.session.rollback()
                         current_app.logger.error(e)
 
-        sitelicenses = SiteLicenseInfo.query.order_by(
-            SiteLicenseInfo.organization_id).all()
-        settings = AdminSettings.get('site_license_mail_settings')
+        if any(role.name in current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER'] for role in current_user.roles):
+            repositories = [{"id": "Root Index"}] + Community.query.all()
+            if repository_id is None:
+                repository_id = "Root Index"
+        else:
+            repositories = Community.get_repositories_by_user(current_user)
+            if repository_id is None:
+                repository_id = repositories[0].id if repositories else None
+
+        sitelicenses = SiteLicenseInfo.query.filter_by(repository_id=repository_id).order_by(
+                    SiteLicenseInfo.organization_id).all()
+        settings = AdminSettings.get('site_license_mail_settings', False)
+        setting = settings.get(repository_id) if settings else {}
+        auto_send = setting.get("auto_send_flag", False) if setting else False
+
         now = datetime.utcnow()
         last_month = (now.replace(day=1) - timedelta(days=1)).replace(day=1)
 
         return self.render(
             current_app.config['WEKO_ADMIN_SITE_LICENSE_SEND_MAIL_TEMPLATE'],
             sitelicenses=sitelicenses,
-            auto_send=settings.auto_send_flag,
+            auto_send=auto_send,
             now=now,
-            last_month=last_month
+            last_month=last_month,
+            repositories=repositories
         )
 
 
@@ -1248,10 +1313,13 @@ class RestrictedAccessSettingView(BaseView):
 
     @expose('/', methods=['GET', 'POST'])
     def index(self):
+        _restricted_access = get_restricted_access()
+        _restricted_access["restricted_access_display_flag"] = current_app.config[
+            "WEKO_ADMIN_RESTRICTED_ACCESS_DISPLAY_FLAG"]
         return self.render(
             current_app.config[
                 "WEKO_ADMIN_RESTRICTED_ACCESS_SETTINGS_TEMPLATE"],
-            data=json.dumps(get_restricted_access()),
+            data=json.dumps(_restricted_access),
             items_per_page=current_app.config[
                 "WEKO_ADMIN_ITEMS_PER_PAGE_USAGE_REPORT_REMINDER"],
             maxint=current_app.config["WEKO_ADMIN_RESTRICTED_ACCESS_MAX_INTEGER"]
@@ -1311,6 +1379,7 @@ class FacetSearchSettingView(ModelView):
             return redirect(return_url)
         facet_search = get_facet_search()
         facet_search.update({'mapping_list': get_item_mapping_list()})
+        facet_search.update({'detail_condition': get_detail_search_list()})
         return self.render(
             current_app.config['WEKO_ADMIN_FACET_SEARCH_SETTING_TEMPLATE'],
             data=json.dumps(facet_search),
@@ -1324,6 +1393,7 @@ class FacetSearchSettingView(ModelView):
             return redirect(return_url)
         facet_search = get_facet_search(id=id)
         facet_search.update({'mapping_list': get_item_mapping_list()})
+        facet_search.update({'detail_condition': get_detail_search_list()})
         return self.render(
             current_app.config['WEKO_ADMIN_FACET_SEARCH_SETTING_TEMPLATE'],
             data=json.dumps(facet_search),
@@ -1338,6 +1408,7 @@ class FacetSearchSettingView(ModelView):
             return redirect(return_url)
         facet_search = get_facet_search(id=id)
         facet_search.update({'mapping_list': get_item_mapping_list()})
+        #facet_search.update({'detail_condition': get_detail_search_list()})
         return self.render(
             current_app.config['WEKO_ADMIN_FACET_SEARCH_SETTING_TEMPLATE'],
             data=json.dumps(facet_search),
@@ -1362,6 +1433,948 @@ class FacetSearchSettingView(ModelView):
             id=id
         )
 
+
+class SwordAPISettingsView(BaseView):
+    """SWORD API TSV/CSV and XML Settings admin view."""
+    @expose("/", methods=["GET","POST"])
+    def index(self):
+        """Each metadata format settings."""
+        TSVCSV = "TSV/CSV"
+        XML = "XML"
+        page_type = TSVCSV
+        if request.args.get("tab") == "xml":
+            page_type = XML
+
+        if request.method == "GET":
+            # GET
+            default_settings = {
+                TSVCSV: {
+                    "active": True,
+                    "registration_type": "Direct",
+                    "duplicate_check": False,
+                },
+                XML: {
+                    "active": False,
+                    "registration_type": "Workflow",
+                    "workflow": "-1",
+                    "duplicate_check": False,
+                }
+            }  # Default
+            current_settings = AdminSettings.get("sword_api_setting", False)
+            if not current_settings:
+                AdminSettings.update("sword_api_setting", default_settings)
+                current_settings = default_settings
+                current_app.logger.info(
+                    "Create default settings for SWORD API settings."
+                )
+
+            current_settings_json = json.dumps(current_settings)
+            if "default_format" in current_settings:
+                # old format fix
+                current_settings = AdminSettings.get("sword_api_setting", False)
+                tsvcsv_registration_type = current_settings["data_format"]["TSV"]["register_format"]
+                xml_registration_type = current_settings["data_format"]["XML"]["register_format"]
+                xml_workflow = current_settings["data_format"]["XML"]["workflow"]
+
+                new_settings = {
+                    TSVCSV: {
+                        "active": True,
+                        "registration_type": tsvcsv_registration_type,
+                        "duplicate_check": False,
+                    },
+                    XML: {
+                        "active": False,
+                        "registration_type": xml_registration_type,
+                        "workflow": xml_workflow,
+                        "duplicate_check": False,
+                    }
+                }
+                AdminSettings.update("sword_api_setting", new_settings)
+                current_app.logger.info(
+                    "Update SWORD API settings to new format."
+                )
+                current_settings = new_settings
+                current_settings_json = json.dumps(current_settings)
+
+            form = FlaskForm(request.form)
+            workflow = WorkFlow()
+            workflow_list = workflow.get_workflow_list()
+            reduce_workflows = workflow.reduce_workflows_for_registration(workflow_list)
+            workflows = workflow.get_workflows_by_roles(reduce_workflows)
+            deleted_workflows = workflow.get_deleted_workflow_list()
+            deleted_workflow_name_dict = {
+                deleted_workflow.id: deleted_workflow.flows_name
+                for deleted_workflow in deleted_workflows
+            }
+
+            # Process exclude workflows
+            from weko_workflow.utils import exclude_admin_workflow
+            exclude_admin_workflow(workflows)
+
+            active_value = ""
+            workflow_value = ""
+            duplicate_check_value = ""
+            if page_type == XML:
+                if current_settings[XML]["active"] == True:
+                    active_value = "checked"
+                registration_type_value = current_settings[XML]["registration_type"]
+                workflow_value = current_settings[XML]["workflow"]
+                if current_settings[XML]["duplicate_check"] == True:
+                    duplicate_check_value = "checked"
+            else:
+                if current_settings[TSVCSV]["active"] == True:
+                    active_value = "checked"
+                registration_type_value = current_settings[TSVCSV]["registration_type"]
+                if current_settings[TSVCSV]["duplicate_check"] == True:
+                    duplicate_check_value = "checked"
+
+            return self.render(
+                current_app.config["WEKO_ADMIN_SWORD_API_TEMPLATE"],
+                current_settings = current_settings,
+                current_settings_json = current_settings_json,
+                deleted_workflow_name_dict = json.dumps(deleted_workflow_name_dict),
+                workflows = workflows,
+                form = form,
+                page_type = page_type,
+                active_value = active_value,
+                registration_type_value = registration_type_value,
+                workflow_value = workflow_value,
+                duplicate_check_value = duplicate_check_value
+            )
+        else:
+            # POST
+            current_settings = AdminSettings.get("sword_api_setting", False)
+
+            active = request.json.get("active")
+            registration_type = request.json.get("registration_type")
+            workflow = request.json.get("workflow")
+            duplicate_check = request.json.get("duplicate_check")
+
+            current_settings.update({
+                page_type: {
+                    "active": active,
+                    "registration_type": registration_type,
+                    "workflow": workflow,
+                    "duplicate_check": duplicate_check
+                }
+            })
+            AdminSettings.update("sword_api_setting", current_settings)
+            current_app.logger.info(
+                "Update settings for Sword API: {}".format(page_type)
+            )
+            return jsonify(success=True),200
+
+
+class SwordAPIJsonldSettingsView(ModelView):
+    """SWORD API JSON-LD Settings admin view."""
+    form_base_class = Form
+
+    can_create = True
+    can_edit = True
+    can_delete = True
+    can_view_details = True
+    column_display_all_relations = True
+    create_template = WEKO_ADMIN_SWORD_API_JSONLD_TEMPLATE
+    edit_template = WEKO_ADMIN_SWORD_API_JSONLD_TEMPLATE
+
+    column_labels = {
+        "oauth_client.name": _("Application"),
+        "oauth_client.user.email": _("Creator"),
+        "registration_type_id": _("Registration Type"),
+        "mapping.name": _("Mapping"),
+        "workflow.flows_name": _("Workflow"),
+
+    }
+    column_list = (
+        "oauth_client.name",
+        "active",
+        "oauth_client.user.email",
+        "registration_type_id",
+        "metadata_collection",
+        "duplicate_check"
+    )
+    column_filters = (
+        "oauth_client.name",
+        "active",
+        "oauth_client.user.email",
+        "registration_type_id",
+        "duplicate_check",
+    )
+    column_details_list = (
+        "id",
+        "created",
+        "updated",
+        "oauth_client.name",
+        "active",
+        "registration_type_id",
+        "workflow.flows_name",
+        "mapping.name",
+        "duplicate_check",
+        "meta_data_api",
+    )
+
+    def _format_active(view, context, model, name):
+        if model.active:
+            return _("Active Message")
+        else:
+            return _("Inactive Message")
+
+    def _format_registration_type(view, context, model, name):
+        if not isinstance(model, SwordClientModel):
+            return ""
+        if model.registration_type == "Direct":
+            return _("Direct_Registration")
+        elif model.registration_type == "Workflow":
+            return _("WorkFlow_Registration")
+        else:
+            return ""
+
+    def _format_metadata_collection(view, context, model, name):
+        if len(model.meta_data_api) > 0:
+            return _("Active Message")
+        else:
+            return _("Inactive Message")
+
+    def _format_duplicate_check(view, context, model, name):
+        if model.duplicate_check:
+            return _("Active Message")
+        else:
+            return _("Inactive Message")
+
+    column_formatters = {
+        "active": _format_active,
+        "registration_type_id": _format_registration_type,
+        "metadata_collection": _format_metadata_collection,
+        "duplicate_check": _format_duplicate_check,
+        "created": lambda v, c, m, n: m.created.strftime("%Y-%m-%d %H:%M:%S"),
+        "updated": lambda v, c, m, n: m.updated.strftime("%Y-%m-%d %H:%M:%S"),
+    }
+    column_sortable_list = ()
+    column_searchable_list = (
+        "oauth_client.name",
+        "oauth_client.user.email",
+    )
+
+    def get_query(self):
+        """Get query for SWORD API JSON-LD settings."""
+        query = super().get_query().order_by(SwordClientModel.id)
+        list_role = [role.name for role in current_user.roles]
+        if current_app.config["WEKO_ADMIN_PERMISSION_ROLE_SYSTEM"] not in list_role:
+            query = (
+                query.join(Client)
+                .filter(Client.client_id == SwordClientModel.client_id)
+                .filter(Client.user_id == current_user.get_id())
+            )
+        return query
+
+    def get_count_query(self):
+        """Get count query for SWORD API JSON-LD settings."""
+        query = super().get_count_query()
+        list_role = [role.name for role in current_user.roles]
+        if current_app.config["WEKO_ADMIN_PERMISSION_ROLE_SYSTEM"] not in list_role:
+            query = (
+                query.join(Client)
+                .filter(Client.client_id == SwordClientModel.client_id)
+                .filter(Client.user_id == current_user.get_id())
+            )
+        return query
+
+    @expose("/add/", methods=["GET", "POST"])
+    def create_view(self):
+        """Create new SWORD API JSON-LD settings."""
+        if request.method == "GET":
+            # GET
+            form = FlaskForm(request.form)
+
+            # GET current user oauth clients
+            list_cur_user_client = [
+                client
+                for client in Client.get_by_user_id(current_user.get_id())
+                # exclude personal clients
+                if not client.is_internal
+            ]
+            list_sword_clients = SwordClient.get_client_id_all()
+            # exclude already registered clients
+            client_list = [
+                client for client in list_cur_user_client
+                if client.client_id not in list_sword_clients
+            ]
+
+            # GET metadata api
+            metadata_api = []
+            metadata_api.extend(
+                current_app.config.get("WEKO_ITEMS_AUTOFILL_API_LIST", []).copy()
+            )
+            metadata_api.append("Original")
+
+            # GET workflow
+            workflow = WorkFlow()
+            workflow_list = workflow.get_workflow_list()
+            reduce_workflows = workflow.reduce_workflows_for_registration(workflow_list)
+            workflows = workflow.get_workflows_by_roles(reduce_workflows)
+            deleted_workflows = workflow.get_deleted_workflow_list()
+            deleted_workflow_name_dict = {}
+            for deleted_workflow in deleted_workflows:
+                deleted_workflow_name_dict[deleted_workflow.id] = deleted_workflow.flows_name
+            # Process exclude workflows
+            from weko_workflow.utils import exclude_admin_workflow
+            exclude_admin_workflow(workflows)
+
+            # All mapping
+            jsonld_mappings = [
+                {
+                    "id": mapping.id,
+                    "name": mapping.name,
+                    "item_type_id": mapping.item_type_id
+                } for mapping in JsonldMapping.get_all()
+            ]
+
+            # All ItemTypeNames
+            item_type_names = [
+                {"id": item_type.id, "name": item_type.name}
+                for item_type in ItemTypeNames.get_name_and_id_all()
+            ]
+
+            return self.render(
+                self.create_template,
+                form=form,
+                client_list=client_list,
+                active_value="checked",
+                metadata_api=metadata_api,
+                deleted_workflow_name_dict=json.dumps(deleted_workflow_name_dict),
+                workflows=workflows,
+                jsonld_mappings=jsonld_mappings,
+                current_page_type="add",
+                current_client_name=None,
+                current_model_json=None,
+                can_edit=True,
+                item_type_names=item_type_names,
+            )
+        else:
+            # POST
+            try:
+                client_id = request.json.get("application")
+                if request.json.get("registration_type") == "Direct":
+                    registration_type_id = SwordClientModel.RegistrationType.DIRECT
+                    workflow_id = None
+                else:
+                    registration_type_id = SwordClientModel.RegistrationType.WORKFLOW
+                    workflow_id = request.json.get("workflow_id")
+                mapping_id = request.json.get("mapping_id")
+                active = request.json.get("active") == "True"
+                duplicate_check = request.json.get("duplicate_check") == "True"
+                meta_data_api = request.json.get("metadata_api_selected")
+                if meta_data_api and "Original" not in meta_data_api:
+                    msg = "Cannot disable 'Original'."
+                    current_app.logger.error(msg)
+                    return jsonify({"error": msg}), 400
+                obj = JsonldMapping.get_mapping_by_id(mapping_id)
+                try:
+                    if not JsonLdMapper(obj.item_type_id, obj.mapping).is_valid:
+                        msg = f"Invalid jsonld mapping."
+                        current_app.logger.error(msg)
+                        return jsonify({"error": msg}), 400
+                except Exception as ex:
+                    msg = f"Failed to validate jsonld mapping."
+                    current_app.logger.error(msg)
+                    traceback.print_exc()
+                    return jsonify({"error": msg}), 400
+
+                obj = SwordClient.register(
+                    client_id=client_id,
+                    registration_type_id=registration_type_id,
+                    mapping_id=mapping_id,
+                    workflow_id=workflow_id,
+                    active=active,
+                    duplicate_check=duplicate_check,
+                    meta_data_api=meta_data_api
+                )
+                current_app.logger.info(
+                    f"Create settings for Sword API: {obj.oauth_client.name}"
+                )
+                return jsonify(results=True), 200
+
+            except SQLAlchemyError as ex:
+                db.session.rollback()
+                msg = "Failed to create application settings."
+                current_app.logger.error(msg)
+                traceback.print_exc()
+                return jsonify({"error": msg}), 400
+
+
+    @expose("/edit/<string:id>/", methods=["GET", "POST"])
+    def edit_view(self, id):
+        """Edit SWORD API JSON-LD settings."""
+        model = self.get_one(id)
+        if model is None:
+            current_app.logger.error(
+                f"SWORD API JSON-LD settings not found: {id}"
+            )
+            abort(404)
+
+        # GET activity Waiting approval workflow
+        can_edit = self._is_editable(model.workflow_id)
+        if not can_edit:
+            current_app.logger.info(
+                "Cannot edit SWORD API JSON-LD settings because there are "
+                "activities awaiting approval that use workflow: {}."
+                .format(model.workflow_id)
+            )
+
+        if request.method == "GET":
+            # GET
+            form = FlaskForm(request.form)
+
+            # GET metadata api
+            metadata_api = WEKO_ITEMS_AUTOFILL_API_LIST.copy()
+            metadata_api.append("Original")
+
+            # GET workflow
+            workflow = WorkFlow()
+            workflow_list = workflow.get_workflow_list()
+            reduce_workflows = workflow.reduce_workflows_for_registration(workflow_list)
+            workflows = workflow.get_workflows_by_roles(reduce_workflows)
+            deleted_workflows = workflow.get_deleted_workflow_list()
+            deleted_workflow_name_dict = {}
+            for deleted_workflow in deleted_workflows:
+                deleted_workflow_info = {
+                    "name": deleted_workflow.flows_name,
+                    "itemtype_id": deleted_workflow.itemtype_id,
+                }
+                deleted_workflow_name_dict[deleted_workflow.id] = deleted_workflow_info
+            # Process exclude workflows
+
+            from weko_workflow.utils import exclude_admin_workflow
+            exclude_admin_workflow(workflows)
+
+
+            # All mapping
+            jsonld_mappings = [
+                {
+                    "id": mapping.id,
+                    "name": mapping.name,
+                    "item_type_id": mapping.item_type_id
+                } for mapping in JsonldMapping.get_all()
+            ]
+
+            current_model_json = {
+                "id": model.id,
+                "client_id": model.client_id,
+                "registration_type_id": model.registration_type_id,
+                "mapping_id": model.mapping_id,
+                "workflow_id": model.workflow_id,
+                "active": model.active,
+                "duplicate_check": model.duplicate_check,
+                "meta_data_api": model.meta_data_api
+            }
+
+            # All ItemTypeNames
+            item_type_names = [
+                {"id": item_type.id, "name": item_type.name}
+                for item_type in ItemTypeNames.get_name_and_id_all()
+            ]
+
+            return self.render(
+                self.edit_template,
+                form=form,
+                metadata_api=metadata_api,
+                deleted_workflow_name_dict=json.dumps(deleted_workflow_name_dict),
+                workflows=workflows,
+                jsonld_mappings=jsonld_mappings,
+                current_page_type="edit",
+                current_client_name=model.oauth_client.name,
+                current_model_json=current_model_json,
+                can_edit=can_edit,
+                item_type_names=item_type_names,
+                id=model.id,
+            )
+        else:
+            # POST
+            if not can_edit:
+                return jsonify("Unapproved items exit."), 400
+
+            try:
+                if request.json.get("registration_type") == "Direct":
+                    registration_type_id = SwordClientModel.RegistrationType.DIRECT
+                    workflow_id = None
+                else:
+                    registration_type_id = SwordClientModel.RegistrationType.WORKFLOW
+                    workflow_id = request.json.get("workflow_id")
+                mapping_id = request.json.get("mapping_id")
+                active = request.json.get("active") == "True"
+                duplicate_check = request.json.get("duplicate_check") == "True"
+                meta_data_api = request.json.get("metadata_api_selected")
+
+                if meta_data_api == ["Original"]:
+                    meta_data_api = []
+                if meta_data_api and "Original" not in meta_data_api:
+                    msg = "Cannot disable 'Original'."
+                    current_app.logger.error(msg)
+                    return jsonify({"error": msg}), 400
+                obj = JsonldMapping.get_mapping_by_id(mapping_id)
+                try:
+                    if not JsonLdMapper(obj.item_type_id, obj.mapping).is_valid:
+                        msg = "Invalid jsonld mapping."
+                        current_app.logger.error(msg)
+                        return jsonify({"error": msg}), 400
+                except Exception as ex:
+                    msg = "Failed to validate jsonld mapping."
+                    current_app.logger.error(msg)
+                    traceback.print_exc()
+                    return jsonify({"error": msg}), 400
+
+                SwordClient.update(
+                    client_id=model.client_id,
+                    registration_type_id=registration_type_id,
+                    mapping_id=mapping_id,
+                    workflow_id=workflow_id,
+                    active=active,
+                    duplicate_check=duplicate_check,
+                    meta_data_api=meta_data_api
+                )
+                current_app.logger.info(
+                    f"Update settings for Sword API: {model.oauth_client.name}"
+                )
+                return jsonify(results=True), 200
+
+            except SQLAlchemyError as ex:
+                msg = f"Failed to update application settings: {model.oauth_client.name}"
+                current_app.logger.error(msg)
+                traceback.print_exc()
+                return jsonify({"error": msg}), 400
+
+
+    @expose("/validate/<string:id>/", methods=["GET"])
+    def validate_mapping(self, id):
+        obj = JsonldMapping.get_mapping_by_id(id)
+        itemtype_id = obj.item_type_id
+        try:
+            return jsonify(results=JsonLdMapper(itemtype_id, obj.mapping).is_valid), 200
+        except Exception as ex:
+            msg = "Failed to validate jsonld mapping."
+            current_app.logger.error(msg)
+            traceback.print_exc()
+            return jsonify({"error": msg}), 400
+
+
+    @expose("/delete/", methods=["POST"])
+    def delete_data(self):
+        model = self.get_one(request.form.get("id"))
+        if model is None:
+            current_app.logger.error(
+                f"SWORD API JSON-LD settings not found: {id}"
+            )
+            abort(404)
+
+        name = model.oauth_client.name
+
+        if self._is_editable(model.workflow_id):
+            try:
+                SwordClient.remove(model.client_id)
+                current_app.logger.info(
+                    f"SWORD API JSON-LD settings deleted: {name}"
+                )
+                flash(_("SWORD API JSON-LD settings deleted."), "success")
+            except SQLAlchemyError as e:
+                db.session.rollback()
+                msg = f"Failed to delete SWORD API JSON-LD settings: {name}"
+                current_app.logger.error(msg)
+                traceback.print_exc()
+                flash(_("Failed to delete SWORD API JSON-LD settings."), "error")
+        else:
+            current_app.logger.info(
+                "Cannot delete SWORD API JSON-LD settings because there are "
+                "activities awaiting approval that use workflow: {}."
+                .format(model.workflow_id)
+            )
+            flash(_("Unapproved Items Exit."), "error")
+
+        return_url = get_redirect_target() or self.get_url(".index_view")
+        return redirect(return_url)
+
+
+    def _is_editable(self, workflow_id):
+        """Check if the mapping is editable."""
+        can_edit = True
+        if workflow_id is not None:
+            count = (
+                WorkActivity()
+                .count_waiting_approval_by_workflow_id(workflow_id)
+            )
+            can_edit = not bool(count)
+        return can_edit
+
+
+class JsonldMappingView(ModelView):
+    """Pidstore Identifier admin view."""
+    form_base_class = Form
+
+    can_create = True
+    can_edit = True
+    can_delete = False
+    can_view_details = True
+    column_display_all_relations = True
+    create_template = WEKO_ADMIN_SWORD_API_JSONLD_MAPPING_TEMPLATE
+    edit_template = WEKO_ADMIN_SWORD_API_JSONLD_MAPPING_TEMPLATE
+
+    column_filters = (
+        "name",
+        "item_type.item_type_name.name"
+    )
+
+    column_list = (
+        "name",
+        "item_type",
+        "updated",
+    )
+    column_labels = {
+        "name": _("Name"),
+        "item_type.item_type_name.name": _("Item Type"),
+        "updated": _("Updated"),
+    }
+    column_details_list = (
+        "created",
+        "updated",
+        "name",
+        "item_type",
+        "mapping",
+        "version_id",
+    )
+
+    def _item_type_name(view, context, model, name):
+        item_type_name = ""
+        if model.item_type and model.item_type.item_type_name:
+            item_type_name = model.item_type.item_type_name.name
+        else:
+            item_type_name = _("Not Found ItemType")
+        return item_type_name
+
+    def _formated_jsonld_mapping(view, context, model, name):
+        format_json =json.dumps(model.mapping, indent=4, ensure_ascii=False)
+        return Markup(
+            '<pre style="white-space: pre; border: none; '
+            f'background-color: transparent;">{format_json}</pre>'
+        )
+
+    column_formatters = {
+        "item_type": _item_type_name,
+        "mapping": _formated_jsonld_mapping,
+        "created": lambda v, c, m, n: m.created.strftime("%Y-%m-%d %H:%M:%S"),
+        "updated": lambda v, c, m, n: m.updated.strftime("%Y-%m-%d %H:%M:%S"),
+    }
+    column_sortable_list = (
+        "name",
+        ('item_type', 'item_type.item_type_name.name'),
+        "updated",
+    )
+    column_searchable_list = (
+        "name",
+        "item_type.item_type_name.name"
+    )
+
+    def get_query(self):
+        """Get query for JSON-LD mapping."""
+        return (
+            super().get_query()
+            .filter(ItemTypeJsonldMapping.is_deleted == False)
+            .order_by(ItemTypeJsonldMapping.id)
+        )
+
+    @expose("/new/", methods=["GET", "POST"])
+    def create_view(self):
+
+        if request.method == "GET":
+            # GET
+            form = FlaskForm(request.form)
+
+            # GET ItemType
+            itemtypes = ItemTypes.get_latest_with_item_type()
+            item_types = [
+                {"id": itemtype.id, "item_type_name": itemtype.name}
+                for itemtype in itemtypes
+            ]
+
+            return self.render(
+                self.create_template,
+                form=form,
+                current_page_type="new",
+                item_types=item_types,
+                current_name=None,
+                current_mapping=None,
+                current_item_type_id=None,
+                current_model_json=None,
+                can_edit=False,
+                id=None,
+            )
+        else:
+            # POST
+            name = request.json.get("name")
+            item_type_id = request.json.get("item_type_id")
+            mapping = request.json.get("mapping")
+
+            try:
+                JsonldMapping.create(name, mapping, item_type_id)
+                current_app.logger.info(f"new jsonld mapping created: {name}")
+                return jsonify(results=True), 200
+
+            except SQLAlchemyError as ex:
+                msg = f"Failed to create jsonld mapping: {name}"
+                current_app.logger.error(msg)
+                traceback.print_exc()
+                return jsonify({"error": msg}), 500
+
+    @expose("/edit/<string:id>/", methods=["GET", "POST"])
+    def edit_view(self, id):
+        model = self.get_one(id)
+        if model is None:
+            current_app.logger.error(
+                f"JSON-LD mapping not found. ID: {id}"
+            )
+            abort(404)
+
+        # Get activity waiting approval workflow
+        can_edit = self._is_editable(id)
+        if not can_edit:
+            current_app.logger.info(
+                "Cannot edit JSON-LD mapping because there are "
+                "some activities awaiting approval that use mapping {}."
+                .format(model.name)
+            )
+
+        # check if this mapping is using sword_clients
+        can_change_itemtype = not SwordClient.get_clients_by_mapping_id(model.id)
+        if not can_change_itemtype:
+            current_app.logger.info(
+                "Cannot edit JSON-LD mapping because this mapping is using "
+                "SWORD API JSON-LD settings."
+            )
+
+        if request.method == "GET":
+            # GET
+            form = FlaskForm(request.form)
+
+            # GET ItemType
+            itemtypes = ItemTypes.get_latest_with_item_type()
+            item_types = [
+                {"id": itemtype.id, "item_type_name": itemtype.name}
+                for itemtype in itemtypes
+            ]
+
+            current_model_json = {
+                "id": model.id,
+                "name": model.name,
+                "mapping": model.mapping,
+                "item_type_id": model.item_type_id,
+            }
+
+            return self.render(
+                self.edit_template,
+                form=form,
+                current_page_type="edit",
+                item_types=item_types,
+                current_name=model.name,
+                current_mapping=model.mapping,
+                current_item_type_id=model.item_type_id,
+                current_model_json=current_model_json,
+                can_edit=can_edit,
+                can_change_itemtype=can_change_itemtype,
+                id=id,
+            )
+        else:
+            # POST
+            if not can_edit:
+                return jsonify("Unapproved items exit."), 400
+
+
+            name = request.json.get("name")
+            mapping = request.json.get("mapping")
+            item_type_id = request.json.get("item_type_id")
+
+            if (
+                not can_change_itemtype
+                and int(item_type_id) != model.item_type_id
+            ):
+                return jsonify("Cannot change item type"), 400
+            try:
+                JsonldMapping.update(id, name, mapping, item_type_id)
+                current_app.logger.info(f"jsonld mapping updated: {name}")
+                return jsonify(results=True),200
+
+            except SQLAlchemyError as ex:
+                msg = f"Failed to update jsonld mapping: {model.name}"
+                current_app.logger.error(msg)
+                traceback.print_exc()
+                return jsonify({"error": msg}), 400
+
+    @expose("/delete/<string:id>/", methods=["DELETE"])
+    def delete(self, id):
+        """Delete JSON-LD mapping."""
+        model = self.get_one(id)
+        if model is None:
+            current_app.logger.error(
+                f"JSON-LD mapping not found. ID: {id}"
+            )
+            abort(404)
+        if not self._is_editable(id):
+            current_app.logger.info(
+                "Cannot delete JSON-LD mapping because there are "
+                "some activities awaiting approval that use mapping {}."
+                .format(model.name)
+            )
+            return jsonify("Unapproved items exit."), 400
+
+        try:
+            obj = JsonldMapping.delete(id)
+            current_app.logger.info(f"jsonld mapping deleted: {obj.name}")
+            return jsonify(results=True), 200
+
+        except SQLAlchemyError as ex:
+            db.session.rollback()
+            msg = f"Failed to delete jsonld mapping: {model.name}"
+            current_app.logger.error(msg)
+            traceback.print_exc()
+            return jsonify({"error": msg}), 400
+
+
+    @expose("/validate", methods=["POST"])
+    def validate_mapping(self):
+        data = request.get_json()
+        itemtype_id = data.get("itemtype_id")
+        mapping_id = data.get("mapping_id")
+        mapping = data.get("mapping")
+
+        if mapping is None:
+            mapping = JsonldMapping.get_mapping_by_id(mapping_id).mapping
+
+        return jsonify(JsonLdMapper(itemtype_id, mapping).validate())
+
+    def _is_editable(self, mapping_id):
+        """Check if the mapping is editable.
+
+        This method checks if there are any activities awaiting approval
+        that use the given mapping ID.
+
+        Args:
+            mapping_id (str): Mapping ID.
+
+        Returns:
+            bool: True if the mapping is editable, False otherwise.
+        """
+        list_sword_client = SwordClient.get_clients_by_mapping_id(mapping_id)
+        list_workflow_id = [
+            client.workflow_id for client in list_sword_client
+            if client.workflow_id is not None
+        ]
+        for workflow_id in list_workflow_id:
+            count = WorkActivity().count_waiting_approval_by_workflow_id(workflow_id)
+            if count > 0:
+                return False
+        return True
+
+
+class CrisLinkageSettingView(BaseView):
+    """CRIS Linkage Settings View"""
+
+    @expose('/' ,methods=['GET'])
+    def index(self):
+        SETTINGS_NAME = current_app.config["WEKO_ADMIN_SETTINGS_RESEARCHMAP_LINKAGE_SETTINGS"]# type: ignore
+        DEFAULT_MERGE_MODE = current_app.config["WEKO_ITEMS_UI_CRIS_LINKAGE_RESEARCHMAP_MERGE_MODE_DEFAULT"]# type: ignore
+
+        settings = AdminSettings.get(SETTINGS_NAME)
+        default_merge_mode = settings.merge_mode if settings and settings.merge_mode else DEFAULT_MERGE_MODE # type: ignore
+
+
+        is_clidkey_registered = settings and settings.researchmap_cidkey_contents != ''
+        is_pkey_registered = settings and settings.researchmap_pkey_contents != ''
+
+
+        MERGE_MODES = current_app.config["WEKO_ADMIN_SETTINGS_RESEARCHMAP_MERGE_MODES"] # type: ignore 
+        return self.render(
+            current_app.config["WEKO_ADMIN_CRIS_LINKAGE_SETTINGS_TEMPLATE"] # type: ignore 
+            ,merge_modes=MERGE_MODES
+            ,default_merge_mode = default_merge_mode
+            ,is_clidkey_registered = is_clidkey_registered
+            ,is_pkey_registered = is_pkey_registered
+            )
+    
+    @expose('/save_keys' ,methods=['POST'])
+    def save_keys(self):
+        researchmap_cidkey_contents = request.form.get('researchmap_cidkey_contents' ,'')
+        researchmap_pkey_contents = request.form.get('researchmap_pkey_contents' ,'')
+
+        if researchmap_cidkey_contents == '' and researchmap_pkey_contents == '':
+            flash(_('Failurely Changed Settings.') ,'error')
+            flash(_('Please input at least one of client id key or private key') ,'error')
+            return redirect(url_for('cris_linkage.index'))
+
+        if len(str(researchmap_cidkey_contents)) > 100: #valid about 20 
+            flash(_('Failurely Changed Settings.') ,'error')
+            flash(_('client id key size too large.') ,'error')
+            return redirect(url_for('cris_linkage.index'))
+        if len(str(researchmap_pkey_contents)) > 100*50: #valid about 30*70 
+            flash(_('Failurely Changed Settings.') ,'error')
+            flash(_('private key size too large.') ,'error')
+            return redirect(url_for('cris_linkage.index'))
+
+
+        SETTINGS_NAME = current_app.config["WEKO_ADMIN_SETTINGS_RESEARCHMAP_LINKAGE_SETTINGS"]# type: ignore
+        settings = AdminSettings.get(SETTINGS_NAME)
+        if not settings :
+            set = {
+                'researchmap_cidkey_contents':researchmap_cidkey_contents
+                ,'researchmap_pkey_contents':researchmap_pkey_contents
+                ,'merge_mode':''
+            }
+        else :
+            set = {
+                'researchmap_cidkey_contents' : researchmap_cidkey_contents if researchmap_cidkey_contents != '' else settings.researchmap_cidkey_contents # type: ignore 
+                ,'researchmap_pkey_contents' : researchmap_pkey_contents if researchmap_pkey_contents != '' else settings.researchmap_pkey_contents # type: ignore 
+                ,'merge_mode' : settings.merge_mode # type: ignore 
+            }
+
+        try :
+            AdminSettings.update(SETTINGS_NAME , set)
+            flash(_('Successfully Changed Settings.') ,'success')
+        except Exception as e:
+            traceback.print_exc()
+            flash(_('Failurely Changed Settings.') ,'error')
+            raise e
+
+        return redirect(url_for('cris_linkage.index'))
+
+    @expose('/save_merge_mode' ,methods=['POST'])
+    def save_merge_mode(self):
+        merge_mode = request.form.get('merge_mode' ,'')
+
+        if merge_mode == '' :
+            flash(_('Failurely Changed Settings.') ,'error')
+            flash(_('Please input Merge Mode') ,'error')
+            return redirect(url_for('cris_linkage.index'))
+
+        SETTINGS_NAME = current_app.config["WEKO_ADMIN_SETTINGS_RESEARCHMAP_LINKAGE_SETTINGS"]# type: ignore
+        settings = AdminSettings.get(SETTINGS_NAME)
+        if not settings :
+            set = {
+                'researchmap_cidkey_contents': ''
+                ,'researchmap_pkey_contents': ''
+                ,'merge_mode':merge_mode
+            }
+        else :
+            set = {
+                'researchmap_cidkey_contents' : settings.researchmap_cidkey_contents # type: ignore 
+                ,'researchmap_pkey_contents' : settings.researchmap_pkey_contents # type: ignore 
+                ,'merge_mode' : merge_mode  # type: ignore 
+            }
+
+        try :
+            AdminSettings.update(SETTINGS_NAME , set)
+            flash(_('Successfully Changed Settings.') ,'success')
+        except Exception as e:
+            traceback.print_exc()
+            flash(_('Failurely Changed Settings.') ,'error')
+            raise e
+
+        return redirect(url_for('cris_linkage.index'))
 
 style_adminview = {
     'view_class': StyleSettingView,
@@ -1497,6 +2510,7 @@ restricted_access_adminview = {
         'endpoint': 'restricted_access'
     }
 }
+
 identifier_adminview = dict(
     modelview=IdentifierSettingView,
     model=Identifier,
@@ -1522,6 +2536,39 @@ reindex_elasticsearch_adminview = {
     }
 }
 
+sword_api_settings_adminview = {
+    'view_class': SwordAPISettingsView,
+    'kwargs': {
+        'category': _('SWORD API'),
+        'name': _('TSV/XML'),
+        'endpoint': 'swordapi'
+    }
+}
+sword_api_settings_jsonld_adminview = dict(
+    modelview=SwordAPIJsonldSettingsView,
+    model=SwordClientModel,
+    category=_('SWORD API'),
+    name=_('JSON-LD'),
+    endpoint='swordapi/jsonld'
+)
+
+sword_api_jsonld_mapping_adminview = dict(
+    modelview=JsonldMappingView,
+    model=ItemTypeJsonldMapping,
+    category=_('Item Types'),
+    name=_('JSON-LD Mapping'),
+    endpoint='jsonld-mapping'
+)
+
+cris_linkage_adminview = {
+    'view_class': CrisLinkageSettingView,
+    'kwargs': {
+        'category': _('Setting'),
+        'name': _('CRIS Linkage'),
+        'endpoint': 'cris_linkage'
+    }
+}
+
 
 __all__ = (
     'style_adminview',
@@ -1541,5 +2588,9 @@ __all__ = (
     'restricted_access_adminview',
     'identifier_adminview',
     'facet_search_adminview',
-    'reindex_elasticsearch_adminview'
+    'reindex_elasticsearch_adminview',
+    'sword_api_settings_adminview',
+    'sword_api_settings_jsonld_adminview',
+    'sword_api_jsonld_mapping_adminview'
+    'cris_linkage_adminview',
 )

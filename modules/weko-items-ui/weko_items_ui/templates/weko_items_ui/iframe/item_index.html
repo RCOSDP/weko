@@ -19,7 +19,7 @@
 #}
 
 {%- extends config.WEKO_WORKFLOW_BASE_TEMPLATE %}
-{%- from "invenio_communities/macros.html" import community_header %}
+{%- from "invenio_communities/macros.html" import community_header with context  %}
 
 {%- block css %}
   {{ super() }}
@@ -172,7 +172,7 @@
                   <label>{{_('Item')}}</label>
                </div>
                <div class="col-xs-11 col-md-11 col-lg-11">
-                   <a href="#" id="link_record_detail">{{ item.get('title_ja', item.get('title')) if item }}</a>
+                   <a href="#" id="link_record_detail">{{ activity.title if activity.title }}</a>
                </div>
           </div>
         </div>

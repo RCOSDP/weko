@@ -34,10 +34,10 @@ def schema(title="", multi_flag=multiple_flag):
             "format": "object",
             "properties": {
                 "subitem_radio_item": {
-                    "items": {"enum": [None], "type": "string"},
-                    "type": "array",
+                    "enum": [None],
+                    "type": "string",
                     "title": "値",
-                    "format": "checkboxes",
+                    "format": "radios",
                     "editAble": True,
                 },
                 "subitem_radio_language": {
@@ -64,17 +64,16 @@ def form(
         """Form text."""
         _d = {
             "key": key.replace("[]", ""),
-            "type": "fieldset",
             "items": [
                 {
-                    "key": "{}.subitem_textarea_language".format(key),
+                    "key": "{}.subitem_radio_language".format(key),
                     "type": "select",
                     "title": "言語",
                     "titleMap": get_select_value(config.LANGUAGE_VAL2_1),
                     "title_i18n": {"en": "Language", "ja": "言語"},
                 },
                 {
-                    "key": "{}.subitem_textarea_value".format(key),
+                    "key": "{}.subitem_radio_item".format(key),
                     "type": "radios",
                     "title": "値",
                     "titleMap": [],

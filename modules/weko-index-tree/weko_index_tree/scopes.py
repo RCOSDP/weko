@@ -41,8 +41,14 @@ class IndexScope(Scope):
         )
 
 
-create_index_scope = IndexScope('create', help_text=_('Allow create.'))
+create_index_scope = IndexScope('create', help_text=_('Allow create index.'))
 """Allow create."""
 
-read_index_scope = IndexScope('read', help_text=_('Allow read.'))
+read_index_scope = IndexScope('read', help_text=_('Allow read index.'))
 """Allow read."""
+
+update_index_scope = IndexScope('update', help_text=_('Allow update index.'))
+"""Allow update index."""
+
+delete_index_scope = IndexScope('delete', help_text=_('Allow delete index.'))
+"""Allow delete."""

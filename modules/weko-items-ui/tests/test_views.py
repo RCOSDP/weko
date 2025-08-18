@@ -2,22 +2,29 @@
 import json
 from collections import OrderedDict
 from unittest.mock import MagicMock
-from time import sleep
+import uuid
+import requests
+from unittest.mock import patch, MagicMock
 
 import os
 import pytest
+from sqlalchemy.exc import SQLAlchemyError
 from flask import json, url_for, make_response
 from jinja2.exceptions import TemplateNotFound
+
 from invenio_accounts.testutils import login_user_via_session
-from mock import patch
+from invenio_pidstore.models import PersistentIdentifier
+from invenio_communities.models import Community
 from weko_redis.redis import RedisConnection
-from weko_deposit.api import WekoRecord
+from weko_deposit.api import WekoDeposit, WekoRecord
 from weko_workflow.api import WorkActivity
-from weko_workflow.models import Activity
+from weko_workflow.models import Activity, WorkFlow
 
 from weko_items_ui.views import (
     check_ranking_show,
     default_view_method,
+    prepare_delete_item,
+    prepare_edit_item,
     to_links_js,
 )
 
@@ -346,7 +353,7 @@ def test_iframe_save_model_error(app, client, db_itemtype, db_workflow, users, i
     ],
 )
 def test_iframe_save_model(
-    app, client, db_itemtype, db_workflow, users, id, status_code
+    app, client, db_itemtype, db_workflow, users, id, status_code, mocker, db_records3
 ):
     app.config["PRESERVE_CONTEXT_ON_EXCEPTION"] = False
     app.config["TESTING"] = True
@@ -437,6 +444,13 @@ def test_iframe_save_model(
             "action_status": "M",
             "commond": "",
         }
+
+    res = client.post(url, json={})
+    assert res.status_code == 400
+    ret = json.loads(res.data)
+    assert ret["code"] == 1
+    assert ret["msg"] == "リクエストデータがありません"
+
     res = client.post(url, json=data)
     assert res.status_code == status_code
     ret = json.loads(res.data)
@@ -474,6 +488,54 @@ def test_iframe_save_model(
     ret = json.loads(res.data)
     assert ret["code"] == 0
     assert ret["msg"].startswith("Model save success at") == True
+
+    # is_duplicate True
+    data["metainfo"]["item_1617186419668"][0]["creatorNames"] = [{"creatorName":"情報, 太郎"}]
+    data["metainfo"]["item_1617258105262"]={}
+    with client.session_transaction() as session:
+        session["activity_info"] = {
+            "activity_id": None,
+            "action_id": 3,
+            "action_version": "1.0.1",
+            "action_status": "M",
+            "commond": "",
+        }
+    res = client.post(url, json=data)
+    assert res.status_code == 400
+    ret = json.loads(res.data)
+    assert ret["code"] == 1
+    assert ret["msg"] == "既に登録されているデータです"
+
+    # metainfo false
+    res = client.post(url, json={'data':1})
+    assert res.status_code == status_code
+    ret = json.loads(res.data)
+    assert ret["code"] == 0
+    assert ret["msg"].startswith("Model save success at") == True
+
+    # Exception
+    with patch("weko_items_ui.views.is_duplicate_record", side_effect=Exception("Mocked Exception")):
+        res = client.post(url, json=data)
+
+        assert res.status_code == 500
+        ret = json.loads(res.data)
+        assert ret["code"] == 1
+        assert ret["msg"] == "Model save error"
+
+    with client.session_transaction() as session:
+        session["activity_info"] = {
+            "activity_id": "A-00000000-00000",
+            "action_id": 3,
+            "action_version": "1.0.1",
+            "action_status": "M",
+            "commond": "",
+        }
+    mocker.patch("weko_items_ui.views.sanitize_input_data",side_effect=Exception("Sanitize error"))
+    res = client.post(url, json={})
+    assert res.status_code == status_code
+    ret = json.loads(res.data)
+    assert ret["code"] == 1
+    assert ret["msg"] == "Model save error"
 
 # .tox/c1/bin/pytest --cov=weko_items_ui tests/test_views.py::test_iframe_save_model_1 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
 def test_iframe_save_model_1(
@@ -20460,13 +20522,13 @@ def test_iframe_items_index_get_error(app, client, db_itemtype, users, db_record
     mocker.patch("weko_items_ui.views.set_files_display_type")
     mocker.patch("weko_items_ui.views.get_thumbnails",return_value=[])
     mocker.patch("weko_items_ui.views.update_index_tree_for_record")
-    
+
     # pid_value == 0
     url = url_for("weko_items_ui.iframe_items_index", pid_value=str(0), _external=True)
     with patch("weko_items_ui.views.redirect",return_value=make_response()) as mock_redirect:
         res = client.get(url)
         mock_redirect.assert_called_with("/items/iframe")
-    
+
     url = url_for("weko_items_ui.iframe_items_index", pid_value=str(1), _external=True)
     # exist community
     with patch("weko_workflow.api.GetCommunity.get_community_by_id", return_value="c"):
@@ -20559,7 +20621,7 @@ def test_iframe_items_index_get(app, client, db_itemtype, users, db_records, db_
         session["itemlogin_histories"] = []
         session["itemlogin_res_check"] = None
         session["itemlogin_pid"] = recid
-    
+
     with patch("weko_deposit.api.WekoIndexer.upload_metadata", return_value=True):
         with patch("weko_workflow.utils.get_main_record_detail", return_value={"record": record, "files": [], "files_thumbnail": []}):
             with pytest.raises(Exception) as e:
@@ -21128,40 +21190,153 @@ def test_get_current_login_user_id_acl(
 
 
 # def prepare_edit_item():
-# .tox/c1/bin/pytest --cov=weko_items_ui tests/test_views.py::test_prepare_edit_item_login -v --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
-@pytest.mark.parametrize(
-    "id, status_code",
-    [
-        (0, 200),
-        (1, 200),
-        (2, 200),
-        (3, 200),
-        (4, 200),
-        (5, 200),
-        (6, 200),
-        (7, 200),
-    ],
-)
-def test_prepare_edit_item_login(client_api, users, db_records, id, status_code, db_sessionlifetime):
-    depid, recid, parent, doi, record, item = db_records[0]
-    deposit_id = record['_deposit']['id']
-    login_user_via_session(client=client_api, email=users[id]["email"])
-    res = client_api.post(
-        "/api/items/prepare_edit_item",
-        data=json.dumps({'pid_value': deposit_id}),
-        content_type="application/json",
-    )
-    assert res.status_code == status_code
+# .tox/c1/bin/pytest --cov=weko_items_ui tests/test_views.py::test_prepare_edit_item_login -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
+def test_prepare_edit_item_login(client_api, users, db_itemtype_15, mocker):
+    itemtype_id = db_itemtype_15["item_type"].id
+    mock_will_be_edit = mocker.patch("weko_items_ui.views.lock_item_will_be_edit")
+    mock_will_be_edit.return_value = True
+    mock_item_locked = mocker.patch("weko_items_ui.views.check_an_item_is_locked")
 
-    if id == 2:
-        res = client_api.post(
-            "/api/items/prepare_edit_item",
-            data=json.dumps({}),
-            content_type="application/json",
-        )
-        assert res.status_code == status_code
-        assert json.loads(res.data)['msg'] == 'This Item is being edited.'
-    sleep(3)
+    url = url_for("weko_items_ui.prepare_edit_item")
+
+    login_user_via_session(client=client_api, email=users[1]["email"])
+    # invalid content type
+    res = client_api.post(url, data=json.dumps({}), content_type="multipart/form-data")
+    assert res.status_code == 200
+    assert json.loads(res.data)['msg'] == "Header Error"
+
+    # no post data
+    res = client_api.post(url, data=json.dumps({}), content_type="application/json")
+    assert res.status_code == 200
+    assert json.loads(res.data)['msg'] == "An error has occurred."
+
+    post_data = {"pid_value": "1"}
+
+    # failed to lock item
+    mock_will_be_edit.return_value = False
+    res = client_api.post(url, data=json.dumps(post_data), content_type="application/json")
+    assert res.status_code == 200
+    assert json.loads(res.data)['msg'] == 'This Item is being edited.'
+
+    # success to lock item
+    # record not found
+    mock_will_be_edit.return_value = True
+    mock_pid = MagicMock(spec=PersistentIdentifier)
+    mock_resolver = mocker.patch("weko_items_ui.views.Resolver.resolve")
+    mock_resolver.return_value = (mock_pid, None)
+    mock_latest_pid = MagicMock(spec=PersistentIdentifier)
+    mock_versioning = MagicMock()
+    mock_versioning.object_uuid = str(uuid.uuid4())
+    mock_versioning.last_child = mock_latest_pid
+    mocker.patch("weko_items_ui.views.PIDVersioning.__new__", return_value=mock_versioning)
+    mocker.patch("weko_items_ui.views.PIDVersioning.__init__")
+    mock_user_roles = mocker.patch("weko_items_ui.views.get_user_roles")
+    mock_user_roles.return_value = False, None
+
+    res = client_api.post(url, data=json.dumps(post_data), content_type="application/json")
+    assert res.status_code == 200
+    assert json.loads(res.data)['msg'] == "Record does not exist."
+
+    # record found
+    # no permission to edit
+    mock_deposit = {"owner": users[2]["id"], "weko_shared_id": users[0]["id"]}
+    mock_resolver.return_value = (mock_pid, mock_deposit)
+    res = client_api.post(url, data=json.dumps(post_data), content_type="application/json")
+    assert res.status_code == 200
+    assert json.loads(res.data)['msg'] == "You are not allowed to edit this item."
+
+    # item type not found
+    mock_deposit = {"owner": users[1]["id"], "weko_shared_id": users[0]["id"], "item_type_id": 999}
+    mock_resolver.return_value = (mock_pid, mock_deposit)
+    mock_user_roles.return_value = True, []
+    res = client_api.post(url, data=json.dumps(post_data), content_type="application/json")
+    assert res.status_code == 200
+    assert json.loads(res.data)['msg'] == "Dependency ItemType not found."
+
+    # item is locked
+    mock_deposit = {"owner": users[1]["id"], "weko_shared_id": users[0]["id"], "item_type_id": itemtype_id}
+    mock_resolver.return_value = (mock_pid, mock_deposit)
+    mock_item_locked.return_value = True
+    res = client_api.post(url, data=json.dumps(post_data), content_type="application/json")
+    assert res.status_code == 200
+    assert json.loads(res.data)['msg'] == "Item cannot be edited because the import is in progress."
+
+    # item being edited
+    mock_item_locked.return_value = False
+    mock_being_edit = mocker.patch("weko_items_ui.views.check_item_is_being_edit")
+    mock_being_edit.return_value = "TestActivity"
+    res = client_api.post(url, data=json.dumps(post_data), content_type="application/json")
+    assert res.status_code == 200
+    assert json.loads(res.data)['msg'] == "This Item is being edited."
+
+    # success to prepare edit item
+    # latest activity found by item id
+    mock_being_edit.return_value = ""
+    mock_activity = MagicMock(spec=Activity)
+    mock_activity.workflow_id = 1
+    mock_activity.flow_id = 1
+    mock_latest_activity = mocker.patch("weko_items_ui.views.WorkActivity.get_workflow_activity_by_item_id")
+    mock_latest_activity.return_value = mock_activity
+
+    with patch("weko_items_ui.views.prepare_edit_workflow") as mock_prepare_workflow:
+        res = client_api.post(url, data=json.dumps(post_data), content_type="application/json")
+        mock_prepare_workflow.assert_called_once()
+        assert res.status_code == 200
+        assert json.loads(res.data)["msg"] == "success"
+
+    # latest activity not found by item uuid
+    # workflow does not exist
+    url = url_for("weko_items_ui.prepare_edit_item", community="Test Community")
+    mock_latest_activity.reset_mock()
+    mock_latest_activity.side_effect = [None, mock_activity]
+    res = client_api.post(url, data=json.dumps(post_data), content_type="application/json")
+    assert res.status_code == 200
+    assert json.loads(res.data)["msg"] == "Workflow setting does not exist."
+
+    # success to prepare edit item
+    # latest activity found by itemtype id
+    mock_latest_activity.side_effect = [None, mock_activity]
+    mock_workflow = MagicMock(spec=WorkFlow)
+    mock_workflow.id = 1
+    mock_workflow.flow_id = 1
+    mock_get_workflow = mocker.patch("weko_items_ui.views.get_workflow_by_item_type_id")
+    mock_get_workflow.return_value = mock_workflow
+
+    with patch("weko_items_ui.views.prepare_edit_workflow") as mock_prepare_workflow:
+        mock_community = MagicMock(spec=Community)
+        mock_community.id = "Test Community"
+        mock_get_community = mocker.patch("weko_items_ui.views.GetCommunity.get_community_by_id")
+        mock_get_community.return_value = mock_community
+
+        res = client_api.post(url, data=json.dumps(post_data), content_type="application/json")
+        assert res.status_code == 200
+        assert json.loads(res.data)["msg"] == "success"
+        mock_prepare_workflow.assert_called_once()
+
+    # success to prepare edit item
+    # no request
+    mock_latest_activity.side_effect = [None, mock_activity]
+    with patch("weko_items_ui.views.prepare_edit_workflow") as mock_prepare_workflow:
+        ret = prepare_edit_item(1, "Test Community")
+        assert ret.status_code == 200
+        assert ret.json["msg"] == "success"
+        mock_prepare_workflow.assert_called_once()
+
+    # db error
+    mock_latest_activity.side_effect = [None, mock_activity]
+    with patch("weko_items_ui.views.prepare_edit_workflow") as mock_prepare_workflow:
+        mock_prepare_workflow.side_effect = SQLAlchemyError("Test Error")
+        res = client_api.post(url, data=json.dumps(post_data), content_type="application/json")
+        assert res.status_code == 200
+        assert json.loads(res.data)["msg"] == "An error has occurred."
+
+    # unexpected error
+    mock_latest_activity.side_effect = [None, mock_activity]
+    with patch("weko_items_ui.views.prepare_edit_workflow") as mock_prepare_workflow:
+        mock_prepare_workflow.side_effect = Exception("Unexpected Error")
+        res = client_api.post(url, data=json.dumps(post_data), content_type="application/json")
+        assert res.status_code == 200
+        assert json.loads(res.data)["msg"] == "An error has occurred."
 
 
 def test_prepare_edit_item_guest(client_api, users):
@@ -21171,6 +21346,7 @@ def test_prepare_edit_item_guest(client_api, users):
         content_type="application/json",
     )
     assert res.status_code == 302
+
 
 # .tox/c1/bin/pytest --cov=weko_items_ui tests/test_views.py::test_prepare_edit_item_login_1 -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
 @pytest.mark.parametrize(
@@ -21190,6 +21366,193 @@ def test_prepare_edit_item_login_1(client_api, users, id, status_code):
         content_type="text/plain",
     )
     assert res.status_code == status_code
+
+
+# .tox/c1/bin/pytest --cov=weko_items_ui tests/test_views.py::test_prepare_edit_item_login_2 -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
+def test_prepare_edit_item_login_2(app, client_api, users, db_records, db_itemtype):
+    _, _, _, _, record, _ = db_records[0]
+    deposit_id = record['_deposit']['id']
+    login_user_via_session(client=client_api, email=users[0]["email"])
+    url = '/api/items/prepare_edit_item'
+    data_json = {'pid_value': deposit_id}
+    data = json.dumps(data_json)
+    content_type = 'application/json'
+    redis_connection = RedisConnection()
+    datastore = redis_connection.connection(db=app.config['ACCOUNTS_SESSION_REDIS_DB_NO'], kv = True)
+    datastore.put(
+        'pid_{}_will_be_edit'.format(deposit_id),
+        'test'.encode('utf-8'))
+    res = client_api.post(url, data=data, content_type=content_type)
+    assert json.loads(res.data) == {'code': -1, 'msg': 'This Item is being edited.'}
+    datastore.delete('pid_{}_will_be_edit'.format(deposit_id))
+    res = client_api.post(url, data=data, content_type=content_type)
+    assert json.loads(res.data) == {'code': -1, 'msg': 'You are not allowed to edit this item.'}
+    with patch('weko_deposit.api.WekoDeposit.get_record', return_value={'owner': str(users[0]['id']), 'weko_shared_ids': [users[0]['id']]}):
+        datastore.delete('pid_{}_will_be_edit'.format(deposit_id))
+        res = client_api.post(url, data=data, content_type=content_type)
+        assert json.loads(res.data) == {'code': -1, 'msg': 'Dependency ItemType not found.'} 
+
+
+# def prepare_delete_item(id=None, community=None, shared_user_id=-1):
+# .tox/c1/bin/pytest --cov=weko_items_ui tests/test_views.py::test_prepare_delete_item_login -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
+def test_prepare_delete_item_login(client_api, users, db_itemtype_15, mocker):
+    itemtype_id = db_itemtype_15["item_type"].id
+    mock_will_be_edit = mocker.patch("weko_items_ui.views.lock_item_will_be_edit")
+    mock_will_be_edit.return_value = True
+    mock_item_locked = mocker.patch("weko_items_ui.views.check_an_item_is_locked")
+
+    url = url_for("weko_items_ui.prepare_delete_item")
+
+    login_user_via_session(client=client_api, email=users[1]["email"])
+    # invalid content type
+    res = client_api.post(url, data=json.dumps({}), content_type="multipart/form-data")
+    assert res.status_code == 200
+    assert json.loads(res.data)['msg'] == "Header Error"
+
+    # no post data
+    res = client_api.post(url, data=json.dumps({}), content_type="application/json")
+    assert res.status_code == 200
+    assert json.loads(res.data)['msg'] == "An error has occurred."
+
+    post_data = {"pid_value": "1"}
+
+    # failed to lock item
+    mock_will_be_edit.return_value = False
+    res = client_api.post(url, data=json.dumps(post_data), content_type="application/json")
+    assert res.status_code == 200
+    assert json.loads(res.data)['msg'] == 'This Item is being edited.'
+
+    # success to lock item
+    # record not found
+    mock_will_be_edit.return_value = True
+    mock_pid = MagicMock(spec=PersistentIdentifier)
+    mock_resolver = mocker.patch("weko_items_ui.views.Resolver.resolve")
+    mock_resolver.return_value = (mock_pid, None)
+    mock_latest_pid = MagicMock(spec=PersistentIdentifier)
+    mock_versioning = MagicMock()
+    mock_versioning.object_uuid = str(uuid.uuid4())
+    mock_versioning.last_child = mock_latest_pid
+    mocker.patch("weko_items_ui.views.PIDVersioning.__new__", return_value=mock_versioning)
+    mocker.patch("weko_items_ui.views.PIDVersioning.__init__")
+    mock_user_roles = mocker.patch("weko_items_ui.views.get_user_roles")
+    mock_user_roles.return_value = False, None
+
+    res = client_api.post(url, data=json.dumps(post_data), content_type="application/json")
+    assert res.status_code == 200
+    assert json.loads(res.data)['msg'] == "Record does not exist."
+
+    # record found
+    # no permission to edit
+    mock_deposit = {"owner": users[2]["id"], "weko_shared_id": users[0]["id"]}
+    mock_resolver.return_value = (mock_pid, mock_deposit)
+    res = client_api.post(url, data=json.dumps(post_data), content_type="application/json")
+    assert res.status_code == 200
+    assert json.loads(res.data)['msg'] == "You are not allowed to edit this item."
+
+    # item type not found
+    mock_deposit = {"owner": users[1]["id"], "weko_shared_id": users[0]["id"], "item_type_id": 999}
+    mock_resolver.return_value = (mock_pid, mock_deposit)
+    mock_user_roles.return_value = True, []
+    res = client_api.post(url, data=json.dumps(post_data), content_type="application/json")
+    assert res.status_code == 200
+    assert json.loads(res.data)['msg'] == "Dependency ItemType not found."
+
+    # item is locked
+    mock_deposit = {"owner": users[1]["id"], "weko_shared_id": users[0]["id"], "item_type_id": itemtype_id, "item_title": "Test Item"}
+    mock_resolver.return_value = (mock_pid, mock_deposit)
+    mock_item_locked.return_value = True
+    res = client_api.post(url, data=json.dumps(post_data), content_type="application/json")
+    assert res.status_code == 200
+    assert json.loads(res.data)['msg'] == "Item cannot be edited because the import is in progress."
+
+    # item being edited
+    mock_item_locked.return_value = False
+    mock_being_edit = mocker.patch("weko_items_ui.views.check_item_is_being_edit")
+    mock_being_edit.return_value = "TestActivity"
+    res = client_api.post(url, data=json.dumps(post_data), content_type="application/json")
+    assert res.status_code == 200
+    assert json.loads(res.data)['msg'] == "This Item is being edited."
+
+    # success to prepare edit item
+    # latest activity found by item uuid
+    mock_being_edit.return_value = ""
+    mock_activity = MagicMock(spec=Activity)
+    mock_activity.workflow_id = 1
+    mock_activity.flow_id = 1
+    mock_latest_activity = mocker.patch("weko_items_ui.views.WorkActivity.get_workflow_activity_by_item_id")
+    mock_latest_activity.return_value = mock_activity
+    mock_workflow = MagicMock(spec=WorkFlow)
+    mock_workflow.is_deleted = False
+    mock_workflow.delete_flow_id = None
+    mock_get_workflow_by_id = mocker.patch("weko_items_ui.views.WorkFlows.get_workflow_by_id")
+    mock_get_workflow_by_id.return_value = mock_workflow
+
+    with patch("weko_records_ui.views.soft_delete") as mock_soft_delete, \
+            patch("weko_items_ui.utils.send_mail_item_deleted") as mock_send_mail:
+        res = client_api.post(url, data=json.dumps(post_data), content_type="application/json")
+        mock_soft_delete.assert_called_once()
+        mock_send_mail.assert_called_once()
+        assert res.status_code == 200
+        assert json.loads(res.data)["msg"] == "success"
+
+    # latest workflow is deleted and not found by itemtype id
+    mock_get_workflow = mocker.patch("weko_items_ui.views.get_workflow_by_item_type_id")
+    mock_get_workflow.return_value = None
+    mock_workflow.id = 1
+    mock_workflow.is_deleted = True
+
+    with patch("weko_records_ui.views.soft_delete") as mock_soft_delete, \
+            patch("weko_items_ui.utils.send_mail_item_deleted") as mock_send_mail:
+        res = client_api.post(url, data=json.dumps(post_data), content_type="application/json")
+        mock_soft_delete.assert_called_once()
+        mock_send_mail.assert_called_once()
+        assert res.status_code == 200
+        assert json.loads(res.data)["msg"] == "success"
+
+    # latest activity not found and found by itemtype id
+    # delete_flow is no None
+    mock_latest_activity.return_value = None
+    mock_get_workflow.return_value = mock_workflow
+    mock_workflow.delete_flow_id = 2
+
+    # no request
+    with patch("weko_records_ui.views.soft_delete") as mock_soft_delete, \
+            patch("weko_items_ui.views.prepare_delete_workflow") as mock_prepare_workflow:
+        ret = prepare_delete_item(1, "", shared_user_id=3)
+        assert ret.status_code == 200
+        assert ret.json["msg"] == "success"
+        mock_soft_delete.assert_not_called()
+        mock_prepare_workflow.assert_called_once()
+
+    # request with community
+    url = url_for("weko_items_ui.prepare_delete_item", community="Test Community")
+    with patch("weko_records_ui.views.soft_delete") as mock_soft_delete, \
+            patch("weko_items_ui.views.prepare_delete_workflow") as mock_prepare_workflow:
+        mock_community = MagicMock(spec=Community)
+        mock_community.id = "Test Community"
+        mock_get_community = mocker.patch("weko_items_ui.views.GetCommunity.get_community_by_id")
+        mock_get_community.return_value = mock_community
+
+        res = client_api.post(url, data=json.dumps(post_data), content_type="application/json")
+        mock_soft_delete.assert_not_called()
+        mock_prepare_workflow.assert_called_once()
+        assert res.status_code == 200
+        assert json.loads(res.data)["msg"] == "success"
+
+    # db error
+    with patch("weko_items_ui.views.prepare_delete_workflow") as mock_prepare_workflow:
+        mock_prepare_workflow.side_effect = SQLAlchemyError("Test Error")
+        res = client_api.post(url, data=json.dumps(post_data), content_type="application/json")
+        assert res.status_code == 200
+        assert json.loads(res.data)["msg"] == "An error has occurred."
+
+    # unexpected error
+    with patch("weko_items_ui.views.prepare_delete_workflow") as mock_prepare_workflow:
+        mock_prepare_workflow.side_effect = Exception("Unexpected Error")
+        res = client_api.post(url, data=json.dumps(post_data), content_type="application/json")
+        assert res.status_code == 200
+        assert json.loads(res.data)["msg"] == "An error has occurred."
+
 
 # def ranking():
 # .tox/c1/bin/pytest --cov=weko_items_ui tests/test_views.py::test_ranking_acl_nologin -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
@@ -21369,11 +21732,21 @@ def test_get_authors_prefix_settings_acl_nologin(client_api, db_sessionlifetime)
 
 # def get_authors_affiliation_settings():
 # .tox/c1/bin/pytest --cov=weko_items_ui tests/test_views.py::test_get_authors_affiliation_settings_acl_nologin -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
-def test_get_authors_affiliation_settings_acl_nologin(client_api, db_sessionlifetime):
+def test_get_authors_affiliation_settings_acl_nologin(client_api, db_sessionlifetime, mocker):
     url = url_for("weko_items_ui_api.get_authors_affiliation_settings", _external=True)
+    mock_affiliation = MagicMock()
+    mock_affiliation.name = "test"
+    mock_affiliation.scheme = "Test Scheme"
+    mock_affiliation.url = "https://test.com"
+    mocker.patch("weko_items_ui.views.get_data_authors_affiliation_settings",return_value=[mock_affiliation])
     res = client_api.get(url)
     assert res.status_code == 200
-
+    json.loads(res.data) == [
+        {"name": "test", "scheme": "Test Scheme", "url": "https://test.com"}
+    ]
+    mocker.patch("weko_items_ui.views.get_data_authors_affiliation_settings",return_value=None)
+    res = client_api.get(url)
+    assert res.status_code == 403
 
 # def session_validate():
 # .tox/c1/bin/pytest --cov=weko_items_ui tests/test_views.py::test_session_validate_acl_nologin -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
@@ -21467,6 +21840,103 @@ def test_check_record_doi_indexes(
 
     with pytest.raises(PIDDoesNotExistError):
         res = client_api.get("{}?doi=1".format(url))
+
+# .tox/c1/bin/pytest --cov=weko_items_ui tests/test_views.py::test_get_oa_policy -vv -s  --cov-branch --cov-report=term --cov-report=html --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
+@pytest.mark.parametrize(
+    "user_id, params, status_code, expected_response",
+    [
+        # 正常系: issnを指定した場合
+        (0, {"issn": "1111-1111","eissn": "22222-2222","title": "3333-3333"}, 200, {"policy_url": "http://example.com/policy"}),
+        # 異常系: 必須パラメータなし (400)
+        (0, {}, 400, {"error": "Please enter ISSN, eISSN, or journal title"}),
+        # # 異常系: トークン取得失敗 (401)
+        (0, {"issn": "1234-5678"}, 401, {"error": "Authentication error occurred"}),
+        # 異常系: APIリクエストで404
+        (0, {"issn": "9999-9999"}, 404, {"error": "No matching policy"}),
+        # 異常系: APIリクエストで429
+        (0, {"issn": "1234-5678"}, 429, {"error": "Request limit exceeded"}),
+         # 異常系: APIリクエストで500
+        (0, {"issn": "1234-5678"}, 500, {"error": "Internal server error"}),
+         # 異常系: APIリクエストで502
+        (0, {"issn": "1234-5678"}, 502, {"error": "An unknown error occurred"}),
+    ],
+)
+def test_get_oa_policy(
+    client_api, users, user_id, params, status_code, expected_response
+):
+    """get_oa_policyエンドポイントの動作をテストする"""
+    # ユーザーログインをシミュレート
+    login_user_via_session(client=client_api, email=users[user_id]["email"])
+
+    # エンドポイントURLを生成（Blueprint名をweko_items_uiに仮定）
+    url = url_for("weko_items_ui.get_oa_policy", _external=True)
+
+    # get_access_tokenとrequests.getをモック化
+    with patch("weko_items_ui.views.get_access_token") as mock_get_token, patch(
+        "requests.get"
+    ) as mock_requests_get:
+
+        # 各ケースに応じたモックの設定
+        if status_code == 401:
+            # トークン取得失敗ケース
+            mock_get_token.return_value = None
+        else:
+            # 正常なトークンを返す
+            mock_get_token.return_value = {"access_token": "mock_token"}
+
+        # requests.getのモックレスポンスを設定
+        if status_code == 200:
+            mock_requests_get.return_value.status_code = 200
+            mock_requests_get.return_value.json.return_value = {"url": "http://example.com/policy"}
+        elif status_code == 400:
+            mock_requests_get.return_value.status_code = 400
+        elif status_code == 401:
+            mock_requests_get.return_value.status_code = 401
+        elif status_code == 404:
+            mock_requests_get.return_value.status_code = 404
+        elif status_code == 429:
+            mock_requests_get.return_value.status_code = 429
+        elif status_code == 500:
+            mock_requests_get.return_value.status_code = 500
+        elif status_code == 502:
+            mock_requests_get.return_value.status_code = 502
+
+        # APIリクエストを送信
+        res = client_api.get(url, query_string=params)
+
+        # レスポンスの検証
+        if(status_code  == 502):
+            assert res.status_code == 500, f"ステータスコードが{status_code}であるべき"
+        else:
+            assert res.status_code == status_code, f"ステータスコードが{status_code}であるべき"
+            assert json.loads(res.data) == expected_response, "レスポンス内容が期待値と一致するべき"
+
+# 例外処理のテスト
+# .tox/c1/bin/pytest --cov=weko_items_ui tests/test_views.py::test_get_oa_policy_exceptions -vv -s  --cov-branch --cov-report=term --cov-report=html --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
+def test_get_oa_policy_exceptions(client_api, users):
+    """get_oa_policyの例外処理をテストする"""
+    # ユーザーログインをシミュレート
+    login_user_via_session(client=client_api, email=users[0]["email"])
+
+    # エンドポイントURLを生成（Blueprint名をweko_items_uiに仮定）
+    url = url_for("weko_items_ui.get_oa_policy", _external=True)
+
+    # requests.exceptions.RequestExceptionをシミュレート
+    with patch("weko_items_ui.views.get_access_token", return_value={"access_token": "mock_token"}), patch(
+        "requests.get", side_effect=requests.exceptions.RequestException("API接続エラー")
+    ):
+        res = client_api.get(url, query_string={"issn": "1234-5678"})
+        assert res.status_code == 500, "リクエスト例外時に500が返るべき"
+        assert json.loads(res.data) == {"error": "API Request Failed"}
+
+    # 一般的な例外をシミュレート
+    with patch(
+        "weko_items_ui.views.get_access_token", side_effect=Exception("予期しないエラー")
+    ):
+        res = client_api.get(url, query_string={"issn": "1234-5678"})
+        assert res.status_code == 500, "一般的な例外時に500が返るべき"
+        assert "error" in json.loads(res.data)
+        assert "An unknown error occurred" in json.loads(res.data)["error"]
 
 # def is_login_user_email
 # .tox/c1/bin/pytest --cov=weko_items_ui tests/test_views.py::test_is_login_user_email -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp

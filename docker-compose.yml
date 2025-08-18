@@ -2,21 +2,32 @@
 #
 # This file is part of WEKO3.
 # Copyright (C) 2017 National Institute of Informatics.
+# All rights reserved.
 #
-# WEKO3 is free software; you can redistribute it
-# and/or modify it under the terms of the GNU General Public License as
-# published by the Free Software Foundation; either version 2 of the
-# License, or (at your option) any later version.
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
 #
-# WEKO3 is distributed in the hope that it will be
-# useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-# General Public License for more details.
+# 1. Redistributions of source code must retain the above copyright notice,
+#    this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright notice,
+#    this list of conditions and the following disclaimer in the documentation
+#    and/or other materials provided with the distribution.
 #
-# You should have received a copy of the GNU General Public License
-# along with WEKO3; if not, write to the
-# Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
-# MA 02111-1307, USA.
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
+# ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+# (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+# ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+# The views and conclusions contained in the software and documentation are those
+# of the authors and should not be interpreted as representing official policies,
+# either expressed or implied, of the FreeBSD Project.
+
 
 version: "3.2"
 
@@ -28,9 +39,7 @@ services:
       #target: stage_1
     sysctls:
       net.core.somaxconn: 1024
-    #command: /bin/bash -c "rm -f /code/celeryd.pid; celery worker -A invenio_app.celery --loglevel=INFO -B -D -f /code/celeryd.log && uwsgi --ini /home/invenio/.virtualenvs/invenio/var/instance/conf/uwsgi.ini"
-    #command: /bin/bash -c "jinja2 /code/scripts/instance.cfg > /home/invenio/.virtualenvs/invenio/var/instance/conf/invenio.cfg; rm -f /code/celeryd.pid; celery worker -A invenio_app.celery --loglevel=DEBUG -B -D -f /code/celeryd.log && uwsgi --ini /home/invenio/.virtualenvs/invenio/var/instance/conf/uwsgi.ini"
-    command: bash /code/scripts/entrypoint.sh
+    command: bash /code/scripts/entrypoint_web.sh
     environment:
       - PATH=/home/invenio/.virtualenvs/invenio/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
       - VIRTUALENVWRAPPER_PYTHON=/home/invenio/.virtualenvs/invenio/bin/python
@@ -41,7 +50,8 @@ services:
       - INVENIO_WEB_PROTOCOL=https
       - INVENIO_USER_EMAIL=wekosoftware@nii.ac.jp
       - INVENIO_USER_PASS=uspass123
-      - INVENIO_POSTGRESQL_HOST=postgresql
+      # - INVENIO_POSTGRESQL_HOST=postgresql
+      - INVENIO_POSTGRESQL_HOST=pgpool
       - INVENIO_POSTGRESQL_DBNAME=invenio
       - INVENIO_POSTGRESQL_DBUSER=invenio
       - INVENIO_POSTGRESQL_DBPASS=dbpass123
@@ -61,13 +71,14 @@ services:
       # production or development
       # - FLASK_ENV=development
       - FLASK_ENV=production
-      #- FLASK_DEBUG=True
+      # - FLASK_DEBUG=True
       - SEARCH_INDEX_PREFIX=tenant1
-      - INVENIO_DB_POOL_CLASS=QueuePool
+      #- INVENIO_DB_POOL_CLASS=QueuePool
+      - INVENIO_DB_POOL_CLASS=NullPool
       - GOOGLE_TRACKING_ID_SYSTEM=UA-86504114-1
       - GOOGLE_TRACKING_ID_USER=
-      - ADDTHIS_USER_ID=ra-5d8af23e9a3a2633
-      - TMPDIR=/tmp
+      - TMPDIR=/var/tmp
+      - TZ=Asia/Tokyo
       - CACHE_REDIS_DB=0
       - ACCOUNTS_SESSION_REDIS_DB_NO=1
       - CELERY_RESULT_BACKEND_DB_NO=2
@@ -77,7 +88,7 @@ services:
       - WEKO_RECORDS_UI_SECRET_KEY="secret"
       - SECRET_KEY="CHANGE ME"
       - WTF_CSRF_SECRET_KEY="CHANGE ME"
-      - TZ=Asia/Tokyo
+      - TIKA_JAR_FILE_PATH=/code/tika/tika-app-2.6.0.jar
     volumes:
       - weko3_data:/var/tmp
       - static_data:/home/invenio/.virtualenvs/invenio/var/instance/static
@@ -130,9 +141,143 @@ services:
       - /code/modules/weko-sitemap/weko_sitemap.egg-info
       - /code/modules/invenio-iiif/invenio_iiif.egg-info
       - /code/modules/weko-swordserver/weko_swordserver.egg-info
+      - /code/modules/weko-workspace/weko_workspace.egg-info
+      - /code/modules/weko-signposting/weko_signposting.egg-info
+      - /code/modules/weko-notifications/weko_notifications.egg-info
     user: invenio
     links:
       - postgresql
+      - pgpool
+      - redis
+      - elasticsearch
+      - rabbitmq
+      - worker
+      - inbox
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+    ports:
+      - "5001:5000"
+    #privileged: true
+    # pscap apt-get install libcap-ng-utils
+    #cap_add:
+    #  - SYS_ADMIN
+    oom_kill_disable: true
+    deploy:
+      resources:
+        limits:
+          memory: 8000m
+
+  worker:
+    restart: "always"
+    build:
+      context: .
+      #target: stage_1
+    # image: weko-web
+    # depends_on:
+    #   - web
+    sysctls:
+      net.core.somaxconn: 1024
+    command: bash /code/scripts/entrypoint_worker.sh
+    environment:
+      - PATH=/home/invenio/.virtualenvs/invenio/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+      - VIRTUALENVWRAPPER_PYTHON=/home/invenio/.virtualenvs/invenio/bin/python
+      - INVENIO_WEB_HOST=127.0.0.1
+      - INVENIO_WEB_INSTANCE=invenio
+      - INVENIO_WEB_VENV=invenio
+      - INVENIO_WEB_HOST_NAME=weko3.example.org
+      - INVENIO_WEB_PROTOCOL=https
+      - INVENIO_USER_EMAIL=wekosoftware@nii.ac.jp
+      - INVENIO_USER_PASS=uspass123
+      #- INVENIO_POSTGRESQL_HOST=postgresql
+      - INVENIO_POSTGRESQL_HOST=pgpool
+      - INVENIO_POSTGRESQL_DBNAME=invenio
+      - INVENIO_POSTGRESQL_DBUSER=invenio
+      - INVENIO_POSTGRESQL_DBPASS=dbpass123
+      - INVENIO_REDIS_HOST=redis
+      - INVENIO_ELASTICSEARCH_HOST=elasticsearch
+      - INVENIO_RABBITMQ_HOST=rabbitmq
+      - INVENIO_RABBITMQ_USER=guest
+      - INVENIO_RABBITMQ_PASS=guest
+      - INVENIO_RABBITMQ_VHOST=/
+      - INVENIO_WORKER_HOST=127.0.0.1
+      - INVENIO_FILES_LOCATION_NAME=local
+      - INVENIO_FILES_LOCATION_URI=/var/tmp
+      - INVENIO_ROLE_SYSTEM=System Administrator
+      - INVENIO_ROLE_REPOSITORY=Repository Administrator
+      - INVENIO_ROLE_CONTRIBUTOR=Contributor
+      - INVENIO_ROLE_COMMUNITY=Community Administrator
+      # production or development
+      # - FLASK_ENV=development
+      - FLASK_ENV=production
+      #- FLASK_DEBUG=True
+      - SEARCH_INDEX_PREFIX=tenant1
+      #- INVENIO_DB_POOL_CLASS=QueuePool
+      - INVENIO_DB_POOL_CLASS=NullPool
+      - GOOGLE_TRACKING_ID_SYSTEM=UA-86504114-1
+      - GOOGLE_TRACKING_ID_USER=
+      - TIKA_JAR_FILE_PATH=/code/tika/tika-app-2.6.0.jar
+      - TMPDIR=/var/tmp
+    volumes:
+      - weko3_data:/var/tmp
+      - static_data:/home/invenio/.virtualenvs/invenio/var/instance/static
+      - data_data:/home/invenio/.virtualenvs/invenio/var/instance/data
+      - conf_data:/home/invenio/.virtualenvs/invenio/var/instance/conf
+      - type: bind
+        source: .
+        target: /code
+      - /code/modules/invenio-admin/invenio_admin.egg-info
+      - /code/modules/invenio-app/invenio_app.egg-info
+      - /code/modules/invenio-accounts/invenio_accounts.egg-info
+      - /code/modules/invenio-oauth2server/invenio_oauth2server.egg-info
+      - /code/modules/invenio-files-rest/invenio_files_rest.egg-info
+      - /code/modules/invenio-indexer/invenio_indexer.egg-info
+      - /code/modules/invenio-s3/invenio_s3.egg-info
+      - /code/modules/invenio-oaiharvester/invenio_oaiharvester.egg-info
+      - /code/modules/invenio-oaiserver/invenio_oaiserver.egg-info
+      - /code/modules/invenio-records/invenio_records.egg-info
+      - /code/modules/invenio-previewer/invenio_previewer.egg-info
+      - /code/modules/invenio-stats/invenio_stats.egg-info
+      - /code/modules/invenio-records-rest/invenio_records_rest.egg-info
+      - /code/modules/invenio-communities/invenio_communities.egg-info
+      - /code/modules/invenio-mail/invenio_mail.egg-info
+      - /code/modules/invenio-deposit/invenio_deposit.egg-info
+      - /code/modules/invenio-resourcesyncserver/invenio_resourcesyncserver.egg-info
+      - /code/modules/invenio-resourcesyncclient/invenio_resourcesyncclient.egg-info
+      - /code/modules/invenio-queues/invenio_queues.egg-info
+      - /code/modules/invenio-db/invenio_db.egg-info
+      - /code/modules/weko-theme/weko_theme.egg-info
+      - /code/modules/weko-itemtypes-ui/weko_itemtypes_ui.egg-info
+      - /code/modules/weko-items-ui/weko_items_ui.egg-info
+      - /code/modules/weko-accounts/weko_accounts.egg-info
+      - /code/modules/weko-admin/weko_admin.egg-info
+      - /code/modules/weko-logging/weko_logging.egg-info
+      - /code/modules/weko-gridlayout/weko_gridlayout.egg-info
+      - /code/modules/weko-groups/weko_groups.egg-info
+      - /code/modules/weko-search-ui/weko_search_ui.egg-info
+      - /code/modules/weko-records/weko_records.egg-info
+      - /code/modules/weko-records-ui/weko_records_ui.egg-info
+      - /code/modules/weko-schema-ui/weko_schema_ui.egg-info
+      - /code/modules/weko-index-tree/weko_index_tree.egg-info
+      - /code/modules/weko-user-profiles/weko_user_profiles.egg-info
+      - /code/modules/weko-deposit/weko_deposit.egg-info
+      - /code/modules/weko-authors/weko_authors.egg-info
+      - /code/modules/weko-handle/weko_handle.egg-info
+      - /code/modules/weko-workflow/weko_workflow.egg-info
+      - /code/modules/weko-indextree-journal/weko_indextree_journal.egg-info
+      - /code/modules/weko-bulkupdate/weko_bulkupdate.egg-info
+      - /code/modules/weko-items-autofill/weko_items_autofill.egg-info
+      - /code/modules/weko-sitemap/weko_sitemap.egg-info
+      - /code/modules/invenio-iiif/invenio_iiif.egg-info
+      - /code/modules/weko-swordserver/weko_swordserver.egg-info
+      - /code/modules/weko-workspace/weko_workspace.egg-info
+      - /code/modules/weko-signposting/weko_signposting.egg-info
+      - /code/modules/weko-notifications/weko_notifications.egg-info
+    user: invenio
+    links:
+      - postgresql
+      - pgpool
       - redis
       - elasticsearch
       - rabbitmq
@@ -140,8 +285,6 @@ services:
       driver: "json-file"
       options:
         max-size: "10m"
-    ports:
-      - "5001:5000"
     #privileged: true
     # pscap apt-get install libcap-ng-utils
     #cap_add:
@@ -163,11 +306,31 @@ services:
     volumes:
       - pgsql-data:/var/lib/postgresql/data
     ports:
+      #- "25401:5432"
+      - "5432"
+
+  pgpool:
+    restart: "always"
+    image: bitnami/pgpool
+    environment:
+      - PGPOOL_BACKEND_NODES=0:postgresql:5432
+      - PGPOOL_SR_CHECK_USER=invenio
+      - PGPOOL_SR_CHECK_PASSWORD=dbpass123
+      - PGPOOL_ENABLE_LDAP=no
+      - PGPOOL_POSTGRES_USERNAME=postgres
+      - PGPOOL_POSTGRES_PASSWORD=dbpass123
+      - PGPOOL_ADMIN_USERNAME=admin
+      - PGPOOL_ADMIN_PASSWORD=dbpass123
+      - PGPOOL_CLIENT_IDLE_LIMIT=300
+      - PGPOOL_CONNECTION_LIFE_TIME=10
+      - PGPOOL_NUM_INIT_CHILDREN=2
+      - PGPOOL_MAX_POOL=2
+    ports:
       - "25401:5432"
 
   redis:
     restart: "always"
-    image: redis
+    image: redis:7.4.1
     ports:
       - "26301:6379"
     deploy:
@@ -180,15 +343,9 @@ services:
     build:
       context: .
       dockerfile: ./elasticsearch/Dockerfile
-      args:
-        - ELASTICSEARCH_S3_ACCESS_KEY=${ELASTICSEARCH_S3_ACCESS_KEY}
-        - ELASTICSEARCH_S3_SECRET_KEY=${ELASTICSEARCH_S3_SECRET_KEY}
-        - ELASTICSEARCH_S3_ENDPOINT=${ELASTICSEARCH_S3_ENDPOINT}
-        - ELASTICSEARCH_S3_BUCKET=${ELASTICSEARCH_S3_BUCKET}
     volumes:
       - es-data:/usr/share/elasticsearch/data
     environment:
-      - "discovery.type=single-node"
       - "ES_JAVA_OPTS=-Xms2048m -Xmx2048m"
     ports:
       - "29201:9200"
@@ -196,7 +353,7 @@ services:
 
   rabbitmq:
     restart: "always"
-    image: rabbitmq
+    image: rabbitmq:4.0.2
     ports:
       - "24301:4369"
       - "45601:25672"
@@ -216,6 +373,7 @@ services:
 #      - letsencrypt_html:/var/www/html
     links:
       - web
+      - inbox
     deploy:
       resources:
         limits:
@@ -237,6 +395,38 @@ services:
     links:
       - rabbitmq
 
+  inbox:
+    restart: "always"
+    build:
+      context: ./inbox
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      - ENABLE_PUSH_NOTIFICATIONS=True
+      - ICON=/static/images/weko-logo-256.png
+      - MONGO_DB_URI=mongodb://inbox:ibpass123@mongo:27017
+      - MONGO_DB_NAME=inbox
+      - ON_RECEIVE_NOTIFICATION_WEBHOOK_URL=
+      - ALLOWED_ADMIN_ORIGINS=["*"]
+      - ALLOWED_ORIGINS=["*"]
+      - SUBSCRIBER=mailto:wekosoftware@nii.ac.jp
+      - VAPID_PUBLIC_KEY=
+      - VAPID_PRIVATE_KEY=
+    links:
+      - mongo
+
+  mongo:
+    restart: "always"
+    image: mongo:7.0.14
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=inbox
+      - MONGO_INITDB_ROOT_PASSWORD=ibpass123
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+
 #  kibana:
 #    build:
 #      context: .
@@ -253,11 +443,13 @@ services:
 
 volumes:
   weko3_data:
+  weko3_tmp:
   static_data:
   data_data:
   conf_data:
   pgsql-data:
   es-data:
+  mongo_data:
 #  letsencrypt_etc:
 #  letsencrypt_html:
 

@@ -1,0 +1,1298 @@
+[
+    {
+        "key": "pubdate",
+        "type": "template",
+        "title": "PubDate",
+        "format": "yyyy-MM-dd",
+        "required": true,
+        "title_i18n": {
+            "en": "PubDate",
+            "ja": "公開日"
+        },
+        "templateUrl": "/static/templates/weko_deposit/datepicker.html"
+    },
+    {
+        "key": "item_1717569423159",
+        "type": "fieldset",
+        "items": [
+            {
+                "key": "item_1717569423159.subitem_title",
+                "type": "text",
+                "title": "タイトル",
+                "title_i18n": {
+                    "en": "Title",
+                    "ja": "タイトル"
+                }
+            },
+            {
+                "key": "item_1717569423159.subitem_title_language",
+                "type": "select",
+                "title": "言語",
+                "titleMap": [
+                    {
+                        "name": "ja",
+                        "value": "ja"
+                    },
+                    {
+                        "name": "ja-Kana",
+                        "value": "ja-Kana"
+                    },
+                    {
+                        "name": "ja-Latn",
+                        "value": "ja-Latn"
+                    },
+                    {
+                        "name": "en",
+                        "value": "en"
+                    },
+                    {
+                        "name": "fr",
+                        "value": "fr"
+                    },
+                    {
+                        "name": "it",
+                        "value": "it"
+                    },
+                    {
+                        "name": "de",
+                        "value": "de"
+                    },
+                    {
+                        "name": "es",
+                        "value": "es"
+                    },
+                    {
+                        "name": "zh-cn",
+                        "value": "zh-cn"
+                    },
+                    {
+                        "name": "zh-tw",
+                        "value": "zh-tw"
+                    },
+                    {
+                        "name": "ru",
+                        "value": "ru"
+                    },
+                    {
+                        "name": "la",
+                        "value": "la"
+                    },
+                    {
+                        "name": "ms",
+                        "value": "ms"
+                    },
+                    {
+                        "name": "eo",
+                        "value": "eo"
+                    },
+                    {
+                        "name": "ar",
+                        "value": "ar"
+                    },
+                    {
+                        "name": "el",
+                        "value": "el"
+                    },
+                    {
+                        "name": "ko",
+                        "value": "ko"
+                    }
+                ],
+                "title_i18n": {
+                    "en": "Language",
+                    "ja": "言語"
+                }
+            }
+        ],
+        "title": "Title",
+        "title_i18n": {
+            "en": "",
+            "ja": ""
+        }
+    },
+    {
+        "key": "item_1717569433997",
+        "type": "fieldset",
+        "items": [
+            {
+                "key": "item_1717569433997.resourceuri",
+                "type": "text",
+                "title": "資源タイプ識別子",
+                "readonly": true,
+                "title_i18n": {
+                    "en": "Resource Type Identifier",
+                    "ja": "資源タイプ識別子"
+                },
+                "title_i18n_temp": {
+                    "en": "Resource Type Identifier",
+                    "ja": "資源タイプ識別子"
+                }
+            },
+            {
+                "key": "item_1717569433997.resourcetype",
+                "type": "select",
+                "title": "資源タイプ ",
+                "onChange": "resourceTypeSelect()",
+                "titleMap": [
+                    {
+                        "name": "conference paper",
+                        "value": "conference paper"
+                    },
+                    {
+                        "name": "data paper",
+                        "value": "data paper"
+                    },
+                    {
+                        "name": "departmental bulletin paper",
+                        "value": "departmental bulletin paper"
+                    },
+                    {
+                        "name": "editorial",
+                        "value": "editorial"
+                    },
+                    {
+                        "name": "journal",
+                        "value": "journal"
+                    },
+                    {
+                        "name": "journal article",
+                        "value": "journal article"
+                    },
+                    {
+                        "name": "newspaper",
+                        "value": "newspaper"
+                    },
+                    {
+                        "name": "review article",
+                        "value": "review article"
+                    },
+                    {
+                        "name": "other periodical",
+                        "value": "other periodical"
+                    },
+                    {
+                        "name": "software paper",
+                        "value": "software paper"
+                    },
+                    {
+                        "name": "article",
+                        "value": "article"
+                    },
+                    {
+                        "name": "book",
+                        "value": "book"
+                    },
+                    {
+                        "name": "book part",
+                        "value": "book part"
+                    },
+                    {
+                        "name": "cartographic material",
+                        "value": "cartographic material"
+                    },
+                    {
+                        "name": "map",
+                        "value": "map"
+                    },
+                    {
+                        "name": "conference output",
+                        "value": "conference output"
+                    },
+                    {
+                        "name": "conference presentation",
+                        "value": "conference presentation"
+                    },
+                    {
+                        "name": "conference proceedings",
+                        "value": "conference proceedings"
+                    },
+                    {
+                        "name": "conference poster",
+                        "value": "conference poster"
+                    },
+                    {
+                        "name": "aggregated data",
+                        "value": "aggregated data"
+                    },
+                    {
+                        "name": "clinical trial data",
+                        "value": "clinical trial data"
+                    },
+                    {
+                        "name": "compiled data",
+                        "value": "compiled data"
+                    },
+                    {
+                        "name": "dataset",
+                        "value": "dataset"
+                    },
+                    {
+                        "name": "encoded data",
+                        "value": "encoded data"
+                    },
+                    {
+                        "name": "experimental data",
+                        "value": "experimental data"
+                    },
+                    {
+                        "name": "genomic data",
+                        "value": "genomic data"
+                    },
+                    {
+                        "name": "geospatial data",
+                        "value": "geospatial data"
+                    },
+                    {
+                        "name": "laboratory notebook",
+                        "value": "laboratory notebook"
+                    },
+                    {
+                        "name": "measurement and test data",
+                        "value": "measurement and test data"
+                    },
+                    {
+                        "name": "observational data",
+                        "value": "observational data"
+                    },
+                    {
+                        "name": "recorded data",
+                        "value": "recorded data"
+                    },
+                    {
+                        "name": "simulation data",
+                        "value": "simulation data"
+                    },
+                    {
+                        "name": "survey data",
+                        "value": "survey data"
+                    },
+                    {
+                        "name": "image",
+                        "value": "image"
+                    },
+                    {
+                        "name": "still image",
+                        "value": "still image"
+                    },
+                    {
+                        "name": "moving image",
+                        "value": "moving image"
+                    },
+                    {
+                        "name": "video",
+                        "value": "video"
+                    },
+                    {
+                        "name": "lecture",
+                        "value": "lecture"
+                    },
+                    {
+                        "name": "design patent",
+                        "value": "design patent"
+                    },
+                    {
+                        "name": "patent",
+                        "value": "patent"
+                    },
+                    {
+                        "name": "PCT application",
+                        "value": "PCT application"
+                    },
+                    {
+                        "name": "plant patent",
+                        "value": "plant patent"
+                    },
+                    {
+                        "name": "plant variety protection",
+                        "value": "plant variety protection"
+                    },
+                    {
+                        "name": "software patent",
+                        "value": "software patent"
+                    },
+                    {
+                        "name": "trademark",
+                        "value": "trademark"
+                    },
+                    {
+                        "name": "utility model",
+                        "value": "utility model"
+                    },
+                    {
+                        "name": "report",
+                        "value": "report"
+                    },
+                    {
+                        "name": "research report",
+                        "value": "research report"
+                    },
+                    {
+                        "name": "technical report",
+                        "value": "technical report"
+                    },
+                    {
+                        "name": "policy report",
+                        "value": "policy report"
+                    },
+                    {
+                        "name": "working paper",
+                        "value": "working paper"
+                    },
+                    {
+                        "name": "data management plan",
+                        "value": "data management plan"
+                    },
+                    {
+                        "name": "sound",
+                        "value": "sound"
+                    },
+                    {
+                        "name": "thesis",
+                        "value": "thesis"
+                    },
+                    {
+                        "name": "bachelor thesis",
+                        "value": "bachelor thesis"
+                    },
+                    {
+                        "name": "master thesis",
+                        "value": "master thesis"
+                    },
+                    {
+                        "name": "doctoral thesis",
+                        "value": "doctoral thesis"
+                    },
+                    {
+                        "name": "commentary",
+                        "value": "commentary"
+                    },
+                    {
+                        "name": "design",
+                        "value": "design"
+                    },
+                    {
+                        "name": "industrial design",
+                        "value": "industrial design"
+                    },
+                    {
+                        "name": "interactive resource",
+                        "value": "interactive resource"
+                    },
+                    {
+                        "name": "layout design",
+                        "value": "layout design"
+                    },
+                    {
+                        "name": "learning object",
+                        "value": "learning object"
+                    },
+                    {
+                        "name": "manuscript",
+                        "value": "manuscript"
+                    },
+                    {
+                        "name": "musical notation",
+                        "value": "musical notation"
+                    },
+                    {
+                        "name": "peer review",
+                        "value": "peer review"
+                    },
+                    {
+                        "name": "research proposal",
+                        "value": "research proposal"
+                    },
+                    {
+                        "name": "research protocol",
+                        "value": "research protocol"
+                    },
+                    {
+                        "name": "software",
+                        "value": "software"
+                    },
+                    {
+                        "name": "source code",
+                        "value": "source code"
+                    },
+                    {
+                        "name": "technical documentation",
+                        "value": "technical documentation"
+                    },
+                    {
+                        "name": "transcription",
+                        "value": "transcription"
+                    },
+                    {
+                        "name": "workflow",
+                        "value": "workflow"
+                    },
+                    {
+                        "name": "other",
+                        "value": "other"
+                    }
+                ],
+                "title_i18n": {
+                    "en": "Resource Type",
+                    "ja": "資源タイプ "
+                },
+                "title_i18n_temp": {
+                    "en": "Resource Type",
+                    "ja": "資源タイプ "
+                }
+            }
+        ],
+        "title": "資源タイプ",
+        "title_i18n": {
+            "en": "",
+            "ja": ""
+        }
+    },
+    {
+        "add": "New",
+        "key": "item_1717569452044",
+        "items": [
+            {
+                "key": "item_1717569452044[].creatorType",
+                "type": "text",
+                "title": "作成者タイプ",
+                "title_i18n": {
+                    "en": "Creator Type",
+                    "ja": "作成者タイプ"
+                },
+                "title_i18n_temp": {
+                    "en": "Creator Type",
+                    "ja": "作成者タイプ"
+                }
+            },
+            {
+                "add": "New",
+                "key": "item_1717569452044[].nameIdentifiers",
+                "items": [
+                    {
+                        "key": "item_1717569452044[].nameIdentifiers[].nameIdentifierScheme",
+                        "type": "select",
+                        "title": "作成者識別子Scheme",
+                        "titleMap": [],
+                        "title_i18n": {
+                            "en": "Creator Name Identifier Scheme",
+                            "ja": "作成者識別子Scheme"
+                        },
+                        "title_i18n_temp": {
+                            "en": "Creator Name Identifier Scheme",
+                            "ja": "作成者識別子Scheme"
+                        }
+                    },
+                    {
+                        "key": "item_1717569452044[].nameIdentifiers[].nameIdentifierURI",
+                        "type": "text",
+                        "title": "作成者識別子URI",
+                        "title_i18n": {
+                            "en": "Creator Name Identifier URI",
+                            "ja": "作成者識別子URI"
+                        },
+                        "title_i18n_temp": {
+                            "en": "Creator Name Identifier URI",
+                            "ja": "作成者識別子URI"
+                        }
+                    },
+                    {
+                        "key": "item_1717569452044[].nameIdentifiers[].nameIdentifier",
+                        "type": "text",
+                        "title": "作成者識別子",
+                        "title_i18n": {
+                            "en": "Creator Name Identifier",
+                            "ja": "作成者識別子"
+                        },
+                        "title_i18n_temp": {
+                            "en": "Creator Name Identifier",
+                            "ja": "作成者識別子"
+                        }
+                    }
+                ],
+                "style": {
+                    "add": "btn-success"
+                },
+                "title": "作成者識別子",
+                "title_i18n": {
+                    "en": "Creator Name Identifier",
+                    "ja": "作成者識別子"
+                },
+                "title_i18n_temp": {
+                    "en": "Creator Name Identifier",
+                    "ja": "作成者識別子"
+                }
+            },
+            {
+                "add": "New",
+                "key": "item_1717569452044[].creatorNames",
+                "isHide":true,
+                "items": [
+                    {
+                        "key": "item_1717569452044[].creatorNames[].creatorName",
+                        "type": "text",
+                        "title": "姓名",
+                        "isHide":true,
+                        "title_i18n": {
+                            "en": "Name",
+                            "ja": "姓名"
+                        },
+                        "title_i18n_temp": {
+                            "en": "Name",
+                            "ja": "姓名"
+                        }
+                    },
+                    {
+                        "key": "item_1717569452044[].creatorNames[].creatorNameLang",
+                        "type": "select",
+                        "title": "言語",
+                        "isHide":true,
+                        "titleMap": [
+                            {
+                                "name": "ja",
+                                "value": "ja"
+                            },
+                            {
+                                "name": "ja-Kana",
+                                "value": "ja-Kana"
+                            },
+                            {
+                                "name": "ja-Latn",
+                                "value": "ja-Latn"
+                            },
+                            {
+                                "name": "en",
+                                "value": "en"
+                            },
+                            {
+                                "name": "fr",
+                                "value": "fr"
+                            },
+                            {
+                                "name": "it",
+                                "value": "it"
+                            },
+                            {
+                                "name": "de",
+                                "value": "de"
+                            },
+                            {
+                                "name": "es",
+                                "value": "es"
+                            },
+                            {
+                                "name": "zh-cn",
+                                "value": "zh-cn"
+                            },
+                            {
+                                "name": "zh-tw",
+                                "value": "zh-tw"
+                            },
+                            {
+                                "name": "ru",
+                                "value": "ru"
+                            },
+                            {
+                                "name": "la",
+                                "value": "la"
+                            },
+                            {
+                                "name": "ms",
+                                "value": "ms"
+                            },
+                            {
+                                "name": "eo",
+                                "value": "eo"
+                            },
+                            {
+                                "name": "ar",
+                                "value": "ar"
+                            },
+                            {
+                                "name": "el",
+                                "value": "el"
+                            },
+                            {
+                                "name": "ko",
+                                "value": "ko"
+                            }
+                        ],
+                        "title_i18n": {
+                            "en": "Language",
+                            "ja": "言語"
+                        },
+                        "title_i18n_temp": {
+                            "en": "Language",
+                            "ja": "言語"
+                        }
+                    },
+                    {
+                        "key": "item_1717569452044[].creatorNames[].creatorNameType",
+                        "type": "select",
+                        "title": "名前タイプ",
+                        "isHide":true,
+                        "titleMap": [
+                            {
+                                "name": "Personal",
+                                "value": "Personal"
+                            },
+                            {
+                                "name": "Organizational",
+                                "value": "Organizational"
+                            }
+                        ],
+                        "title_i18n": {
+                            "en": "Name Type",
+                            "ja": "名前タイプ"
+                        },
+                        "title_i18n_temp": {
+                            "en": "Name Type",
+                            "ja": "名前タイプ"
+                        }
+                    }
+                ],
+                "style": {
+                    "add": "btn-success"
+                },
+                "title": "作成者姓名",
+                "title_i18n": {
+                    "en": "Creator Name",
+                    "ja": "作成者姓名"
+                },
+                "title_i18n_temp": {
+                    "en": "Creator Name",
+                    "ja": "作成者姓名"
+                }
+            },
+            {
+                "add": "New",
+                "key": "item_1717569452044[].familyNames",
+                "items": [
+                    {
+                        "key": "item_1717569452044[].familyNames[].familyName",
+                        "type": "text",
+                        "title": "姓",
+                        "title_i18n": {
+                            "en": "Family Name",
+                            "ja": "姓"
+                        },
+                        "title_i18n_temp": {
+                            "en": "Family Name",
+                            "ja": "姓"
+                        }
+                    },
+                    {
+                        "key": "item_1717569452044[].familyNames[].familyNameLang",
+                        "type": "select",
+                        "title": "言語",
+                        "titleMap": [
+                            {
+                                "name": "ja",
+                                "value": "ja"
+                            },
+                            {
+                                "name": "ja-Kana",
+                                "value": "ja-Kana"
+                            },
+                            {
+                                "name": "ja-Latn",
+                                "value": "ja-Latn"
+                            },
+                            {
+                                "name": "en",
+                                "value": "en"
+                            },
+                            {
+                                "name": "fr",
+                                "value": "fr"
+                            },
+                            {
+                                "name": "it",
+                                "value": "it"
+                            },
+                            {
+                                "name": "de",
+                                "value": "de"
+                            },
+                            {
+                                "name": "es",
+                                "value": "es"
+                            },
+                            {
+                                "name": "zh-cn",
+                                "value": "zh-cn"
+                            },
+                            {
+                                "name": "zh-tw",
+                                "value": "zh-tw"
+                            },
+                            {
+                                "name": "ru",
+                                "value": "ru"
+                            },
+                            {
+                                "name": "la",
+                                "value": "la"
+                            },
+                            {
+                                "name": "ms",
+                                "value": "ms"
+                            },
+                            {
+                                "name": "eo",
+                                "value": "eo"
+                            },
+                            {
+                                "name": "ar",
+                                "value": "ar"
+                            },
+                            {
+                                "name": "el",
+                                "value": "el"
+                            },
+                            {
+                                "name": "ko",
+                                "value": "ko"
+                            }
+                        ],
+                        "title_i18n": {
+                            "en": "Language",
+                            "ja": "言語"
+                        },
+                        "title_i18n_temp": {
+                            "en": "Language",
+                            "ja": "言語"
+                        }
+                    }
+                ],
+                "style": {
+                    "add": "btn-success"
+                },
+                "title": "作成者姓",
+                "title_i18n": {
+                    "en": "Creator Family Name",
+                    "ja": "作成者姓"
+                },
+                "title_i18n_temp": {
+                    "en": "Creator Family Name",
+                    "ja": "作成者姓"
+                }
+            },
+            {
+                "add": "New",
+                "key": "item_1717569452044[].givenNames",
+                "items": [
+                    {
+                        "key": "item_1717569452044[].givenNames[].givenName",
+                        "type": "text",
+                        "title": "名",
+                        "isHide": false,
+                        "title_i18n": {
+                            "en": "Given Name",
+                            "ja": "名"
+                        },
+                        "title_i18n_temp": {
+                            "en": "Given Name",
+                            "ja": "名"
+                        }
+                    },
+                    {
+                        "key": "item_1717569452044[].givenNames[].givenNameLang",
+                        "type": "select",
+                        "title": "言語",
+                        "isHide": false,
+                        "titleMap": [
+                            {
+                                "name": "ja",
+                                "value": "ja"
+                            },
+                            {
+                                "name": "ja-Kana",
+                                "value": "ja-Kana"
+                            },
+                            {
+                                "name": "ja-Latn",
+                                "value": "ja-Latn"
+                            },
+                            {
+                                "name": "en",
+                                "value": "en"
+                            },
+                            {
+                                "name": "fr",
+                                "value": "fr"
+                            },
+                            {
+                                "name": "it",
+                                "value": "it"
+                            },
+                            {
+                                "name": "de",
+                                "value": "de"
+                            },
+                            {
+                                "name": "es",
+                                "value": "es"
+                            },
+                            {
+                                "name": "zh-cn",
+                                "value": "zh-cn"
+                            },
+                            {
+                                "name": "zh-tw",
+                                "value": "zh-tw"
+                            },
+                            {
+                                "name": "ru",
+                                "value": "ru"
+                            },
+                            {
+                                "name": "la",
+                                "value": "la"
+                            },
+                            {
+                                "name": "ms",
+                                "value": "ms"
+                            },
+                            {
+                                "name": "eo",
+                                "value": "eo"
+                            },
+                            {
+                                "name": "ar",
+                                "value": "ar"
+                            },
+                            {
+                                "name": "el",
+                                "value": "el"
+                            },
+                            {
+                                "name": "ko",
+                                "value": "ko"
+                            }
+                        ],
+                        "title_i18n": {
+                            "en": "Language",
+                            "ja": "言語"
+                        },
+                        "title_i18n_temp": {
+                            "en": "Language",
+                            "ja": "言語"
+                        }
+                    }
+                ],
+                "style": {
+                    "add": "btn-success"
+                },
+                "title": "作成者名",
+                "isHide": false,
+                "title_i18n": {
+                    "en": "Creator Given Name",
+                    "ja": "作成者名"
+                },
+                "title_i18n_temp": {
+                    "en": "Creator Given Name",
+                    "ja": "作成者名"
+                }
+            },
+            {
+                "add": "New",
+                "key": "item_1717569452044[].creatorMails",
+                "items": [
+                    {
+                        "key": "item_1717569452044[].creatorMails[].creatorMail",
+                        "type": "text",
+                        "title": "メールアドレス",
+                        "title_i18n": {
+                            "en": "Email Address",
+                            "ja": "メールアドレス"
+                        },
+                        "title_i18n_temp": {
+                            "en": "Email Address",
+                            "ja": "メールアドレス"
+                        }
+                    }
+                ],
+                "style": {
+                    "add": "btn-success"
+                },
+                "title": "作成者メールアドレス",
+                "title_i18n": {
+                    "en": "Creator Email Address",
+                    "ja": "作成者メールアドレス"
+                },
+                "title_i18n_temp": {
+                    "en": "Creator Email Address",
+                    "ja": "作成者メールアドレス"
+                }
+            },
+            {
+                "key": "item_1717569452044[].authorInputButton",
+                "icon": "glyphicon glyphicon-search",
+                "type": "button",
+                "style": "btn-default pull-right m-top-5",
+                "title": "著者DBから入力",
+                "onClick": "searchAuthor('item_1717569452044', true, form)",
+                "title_i18n": {
+                    "en": "Enter from DB",
+                    "ja": "著者DBから入力"
+                }
+            }
+        ],
+        "style": {
+            "add": "btn-success"
+        },
+        "title": "作成者",
+        "title_i18n": {
+            "en": "",
+            "ja": ""
+        }
+    },
+    {
+        "key": "item_1717639687882",
+        "type": "fieldset",
+        "items": [
+            {
+                "key": "item_1717639687882.subitem_link_language",
+                "type": "select",
+                "title": "言語",
+                "titleMap": [
+                    {
+                        "name": "ja",
+                        "value": "ja"
+                    },
+                    {
+                        "name": "ja-Kana",
+                        "value": "ja-Kana"
+                    },
+                    {
+                        "name": "ja-Latn",
+                        "value": "ja-Latn"
+                    },
+                    {
+                        "name": "en",
+                        "value": "en"
+                    },
+                    {
+                        "name": "fr",
+                        "value": "fr"
+                    },
+                    {
+                        "name": "it",
+                        "value": "it"
+                    },
+                    {
+                        "name": "de",
+                        "value": "de"
+                    },
+                    {
+                        "name": "es",
+                        "value": "es"
+                    },
+                    {
+                        "name": "zh-cn",
+                        "value": "zh-cn"
+                    },
+                    {
+                        "name": "zh-tw",
+                        "value": "zh-tw"
+                    },
+                    {
+                        "name": "ru",
+                        "value": "ru"
+                    },
+                    {
+                        "name": "la",
+                        "value": "la"
+                    },
+                    {
+                        "name": "ms",
+                        "value": "ms"
+                    },
+                    {
+                        "name": "eo",
+                        "value": "eo"
+                    },
+                    {
+                        "name": "ar",
+                        "value": "ar"
+                    },
+                    {
+                        "name": "el",
+                        "value": "el"
+                    },
+                    {
+                        "name": "ko",
+                        "value": "ko"
+                    }
+                ],
+                "title_i18n": {
+                    "en": "Language",
+                    "ja": "言語"
+                }
+            },
+            {
+                "key": "item_1717639687882.subitem_link_text",
+                "type": "text",
+                "title": "表示名",
+                "isHide": true,
+                "title_i18n": {
+                    "en": "Link Text",
+                    "ja": "表示名"
+                },
+                "isNonDisplay": false
+            },
+            {
+                "key": "item_1717639687882.subitem_link_url",
+                "type": "text",
+                "title": "URL",
+                "title_i18n": {
+                    "en": "URL",
+                    "ja": "URL"
+                }
+            }
+        ],
+        "title": "URL",
+        "title_i18n": {
+            "en": "",
+            "ja": ""
+        }
+    },
+    {
+        "key": "system_identifier_doi",
+        "type": "fieldset",
+        "items": [
+            {
+                "key": "parentkey.subitem_systemidt_identifier",
+                "type": "text",
+                "title": "SYSTEMIDT Identifier"
+            },
+            {
+                "key": "parentkey.subitem_systemidt_identifier_type",
+                "type": "select",
+                "title": "SYSTEMIDT Identifier Type",
+                "titleMap": [
+                    {
+                        "name": "DOI",
+                        "value": "DOI"
+                    },
+                    {
+                        "name": "HDL",
+                        "value": "HDL"
+                    },
+                    {
+                        "name": "URI",
+                        "value": "URI"
+                    }
+                ]
+            }
+        ],
+        "title": "Persistent Identifier(DOI)",
+        "title_i18n": {
+            "en": "Persistent Identifier(DOI)",
+            "ja": "永続識別子（DOI）"
+        }
+    },
+    {
+        "key": "system_identifier_hdl",
+        "type": "fieldset",
+        "items": [
+            {
+                "key": "parentkey.subitem_systemidt_identifier",
+                "type": "text",
+                "title": "SYSTEMIDT Identifier"
+            },
+            {
+                "key": "parentkey.subitem_systemidt_identifier_type",
+                "type": "select",
+                "title": "SYSTEMIDT Identifier Type",
+                "titleMap": [
+                    {
+                        "name": "DOI",
+                        "value": "DOI"
+                    },
+                    {
+                        "name": "HDL",
+                        "value": "HDL"
+                    },
+                    {
+                        "name": "URI",
+                        "value": "URI"
+                    }
+                ]
+            }
+        ],
+        "title": "Persistent Identifier(HDL)",
+        "title_i18n": {
+            "en": "Persistent Identifier(HDL)",
+            "ja": "永続識別子（HDL）"
+        }
+    },
+    {
+        "key": "system_identifier_uri",
+        "type": "fieldset",
+        "items": [
+            {
+                "key": "parentkey.subitem_systemidt_identifier",
+                "type": "text",
+                "title": "SYSTEMIDT Identifier"
+            },
+            {
+                "key": "parentkey.subitem_systemidt_identifier_type",
+                "type": "select",
+                "title": "SYSTEMIDT Identifier Type",
+                "titleMap": [
+                    {
+                        "name": "DOI",
+                        "value": "DOI"
+                    },
+                    {
+                        "name": "HDL",
+                        "value": "HDL"
+                    },
+                    {
+                        "name": "URI",
+                        "value": "URI"
+                    }
+                ]
+            }
+        ],
+        "title": "Persistent Identifier(URI)",
+        "title_i18n": {
+            "en": "Persistent Identifier(URI)",
+            "ja": "永続識別子（URI）"
+        }
+    },
+    {
+        "key": "system_file",
+        "type": "fieldset",
+        "items": [
+            {
+                "add": "New",
+                "key": "parentkey.subitem_systemfile_filename",
+                "items": [
+                    {
+                        "key": "parentkey.subitem_systemfile_filename[].subitem_systemfile_filename_label",
+                        "type": "text",
+                        "title": "SYSTEMFILE Filename Label"
+                    },
+                    {
+                        "key": "parentkey.subitem_systemfile_filename[].subitem_systemfile_filename_type",
+                        "type": "select",
+                        "title": "SYSTEMFILE Filename Type",
+                        "titleMap": [
+                            {
+                                "name": "Abstract",
+                                "value": "Abstract"
+                            },
+                            {
+                                "name": "Fulltext",
+                                "value": "Fulltext"
+                            },
+                            {
+                                "name": "Summary",
+                                "value": "Summary"
+                            },
+                            {
+                                "name": "Thumbnail",
+                                "value": "Thumbnail"
+                            },
+                            {
+                                "name": "Other",
+                                "value": "Other"
+                            }
+                        ]
+                    },
+                    {
+                        "key": "parentkey.subitem_systemfile_filename[].subitem_systemfile_filename_uri",
+                        "type": "text",
+                        "title": "SYSTEMFILE Filename URI"
+                    }
+                ],
+                "style": {
+                    "add": "btn-success"
+                },
+                "title": "SYSTEMFILE Filename"
+            },
+            {
+                "key": "parentkey.subitem_systemfile_mimetype",
+                "type": "text",
+                "title": "SYSTEMFILE MimeType"
+            },
+            {
+                "key": "parentkey.subitem_systemfile_size",
+                "type": "text",
+                "title": "SYSTEMFILE Size"
+            },
+            {
+                "add": "New",
+                "key": "parentkey.subitem_systemfile_datetime",
+                "items": [
+                    {
+                        "key": "parentkey.subitem_systemfile_datetime[].subitem_systemfile_datetime_date",
+                        "type": "template",
+                        "title": "SYSTEMFILE DateTime Date",
+                        "format": "yyyy-MM-dd",
+                        "templateUrl": "/static/templates/weko_deposit/datepicker.html"
+                    },
+                    {
+                        "key": "parentkey.subitem_systemfile_datetime[].subitem_systemfile_datetime_type",
+                        "type": "select",
+                        "title": "SYSTEMFILE DateTime Type",
+                        "titleMap": [
+                            {
+                                "name": "Accepted",
+                                "value": "Accepted"
+                            },
+                            {
+                                "name": "Available",
+                                "value": "Available"
+                            },
+                            {
+                                "name": "Collected",
+                                "value": "Collected"
+                            },
+                            {
+                                "name": "Copyrighted",
+                                "value": "Copyrighted"
+                            },
+                            {
+                                "name": "Created",
+                                "value": "Created"
+                            },
+                            {
+                                "name": "Issued",
+                                "value": "Issued"
+                            },
+                            {
+                                "name": "Submitted",
+                                "value": "Submitted"
+                            },
+                            {
+                                "name": "Updated",
+                                "value": "Updated"
+                            },
+                            {
+                                "name": "Valid",
+                                "value": "Valid"
+                            }
+                        ]
+                    }
+                ],
+                "style": {
+                    "add": "btn-success"
+                },
+                "title": "SYSTEMFILE DateTime"
+            },
+            {
+                "key": "parentkey.subitem_systemfile_version",
+                "type": "text",
+                "title": "SYSTEMFILE Version"
+            }
+        ],
+        "title": "File Information",
+        "title_i18n": {
+            "en": "File Information",
+            "ja": "ファイル情報"
+        }
+    }
+]

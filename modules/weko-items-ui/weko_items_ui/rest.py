@@ -36,6 +36,7 @@ from invenio_rest import ContentNegotiatedMethodView
 from invenio_rest.errors import SameContentException
 from invenio_db import db
 from invenio_rest.views import create_api_errorhandler
+from weko_accounts.utils import limiter
 from weko_admin.models import RankingSettings
 from weko_deposit.api import WekoRecord
 from sqlalchemy.exc import SQLAlchemyError
@@ -45,10 +46,8 @@ from weko_records_ui.permissions import page_permission_factory
 
 from .errors import VersionNotFoundRESTError, InternalServerError, \
     PermissionError, NoRankingtypeError, RequestParameterError
-from .utils import get_ranking, create_limmiter
+from .utils import get_ranking
 from .scopes import ranking_read_scope
-
-limiter = create_limmiter()
 
 
 def create_error_handlers(blueprint):

@@ -28,6 +28,7 @@ from operator import itemgetter
 from flask import Markup, current_app, session
 from flask_babelex import gettext as _
 from flask_login import current_user
+from invenio_communities.models import Community
 from invenio_db import db
 from invenio_i18n.ext import current_i18n
 from invenio_stats.utils import QueryRankingHelper
@@ -76,7 +77,7 @@ class WidgetItemServices:
             'message': '',
             'success': False
         }
-        if not data:
+        if not data or not data.get('data'):
             result['message'] = 'No data saved!'
             return result
         widget_data = data.get('data')
@@ -422,13 +423,18 @@ class WidgetDesignServices:
         :return: Repository list.
         """
         result = {
-            "repositories": [{"id": "Root Index", "title": ""}],
+            "repositories": [],
             "error": ""
         }
+        is_super = set(role.name for role in current_user.roles) & \
+            set(current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER'])
         try:
-            from invenio_communities.models import Community
             with db.session.no_autoflush:
-                communities = Community.query.all()
+                if is_super:
+                    communities = Community.query.all()
+                    result['repositories'].append({"id": "Root Index", "title": ""})
+                else:
+                    communities = Community.get_repositories_by_user(current_user)
             if communities:
                 for community in communities:
                     community_result = dict()
@@ -436,6 +442,7 @@ class WidgetDesignServices:
                     community_result['title'] = community.title
                     result['repositories'].append(community_result)
         except Exception as e:
+            current_app.logger.error(f"Error getting repository list: {e}")
             result['error'] = str(e)
 
         return result
@@ -649,10 +656,11 @@ class WidgetDesignServices:
                         WidgetItemServices.get_widget_data_by_widget_id(
                             item.get('widget_id'))
                     item.update(widget_item.get('settings'))
-                    if item.get('type') == \
-                            WEKO_GRIDLAYOUT_ACCESS_COUNTER_TYPE \
-                            and not item.get('created_date'):
-                        item['created_date'] = date.today().strftime("%Y-%m-%d")
+                    if item.get('type') == WEKO_GRIDLAYOUT_ACCESS_COUNTER_TYPE:
+                        today = date.today().strftime("%Y-%m-%d")
+                        item['created_date'] = today
+                        if not item.get('count_start_date'):
+                            item['count_start_date'] = item['created_date'] if item.get('created_date') else today
             setting_data = json.dumps(json_data)
 
             # Main contents can only be in one page design or main design

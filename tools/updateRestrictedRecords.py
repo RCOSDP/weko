@@ -191,10 +191,13 @@ def update_records_metadata():
 def update_admin_settings():
     """update admin_settings for secret_URL_download """
     restricted_access = AdminSettings.get('restricted_access', False)
-    restricted_access['secret_URL_file_download'] = {"secret_download_limit": 10,
-                                                     "secret_expiration_date": 30,
-                                                     "secret_download_limit_unlimited_chk": False,
-                                                     "secret_expiration_date_unlimited_chk": False}
+    if not restricted_access:
+        restricted_access = current_app.config['WEKO_ADMIN_RESTRICTED_ACCESS_SETTINGS']
+    else:
+        restricted_access['secret_URL_file_download'] = {"secret_download_limit": 10,
+                                                        "secret_expiration_date": 30,
+                                                        "secret_download_limit_unlimited_chk": False,
+                                                        "secret_expiration_date_unlimited_chk": False}
     AdminSettings.update('restricted_access', restricted_access)
 
 def elasticsearch_reindex( is_db_to_es ):

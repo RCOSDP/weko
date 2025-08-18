@@ -409,7 +409,7 @@
             "search_other"
           ]
         },
-        "versionType": {
+        "versiontype": {
           "type": "text",
           "copy_to": [
             "search_other"

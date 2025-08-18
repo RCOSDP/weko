@@ -37,7 +37,8 @@ RUN cd nginx-1.20.1 && dpkg-buildpackage -b
 FROM ubuntu:focal AS nginx-stage_1
 
 ENV DEBIAN_FRONTEND=noninteractive
-RUN apt-get update && apt-get install -y openssl wget curl unzip supervisor shibboleth-sp-common shibboleth-sp-utils php-fpm php-curl
+RUN apt-get update && apt-get install -y openssl wget curl unzip supervisor shibboleth-sp-common shibboleth-sp-utils php-fpm php-curl fcgiwrap python3-pip
+RUN pip3 install requests
 
 WORKDIR /tmp
 #COPY --from=nginx-with-shib /tmp/nginx_1.18.0-2~focal_amd64.deb .
@@ -66,6 +67,7 @@ ADD nginx.conf /etc/nginx/nginx.conf
 ADD ./keys/server.crt /etc/nginx/server.crt
 ADD ./keys/server.key /etc/nginx/server.key
 ADD ./idp-metadata.xml /etc/shibboleth/idp-metadata.xml
+ADD ./orthros-idp-metadata.xml /etc/shibboleth/orthros-idp-metadata.xml
 ADD ./htpasswd /etc/nginx/.htpasswd
 ADD ./htdigest /etc/nginx/.htdigest
 ADD redirect_list.map /etc/nginx/redirect_list.map
@@ -75,7 +77,8 @@ RUN chmod 400 /etc/nginx/server.key
 RUN mkdir  /usr/share/nginx/html/secure
 #ADD ./phpinfo.php /usr/share/nginx/html/secure/phpinfo.php
 #ADD ./index.php /usr/share/nginx/html/secure/index.php
-ADD ./login.php /usr/share/nginx/html/secure/login.php
+ADD ./login.py /usr/share/nginx/html/secure/login.py
+RUN chmod 755 /usr/share/nginx/html/secure/login.py
 
 ADD ./shib_clear_headers /etc/nginx/shib_clear_headers
 ADD ./shib_fastcgi_params /etc/nginx/shib_fastcgi_params

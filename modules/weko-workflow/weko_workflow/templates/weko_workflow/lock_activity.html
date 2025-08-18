@@ -24,7 +24,16 @@
     <div class="col-sm-12 col-md-12 col-lg-10">
       <h1><i class="fa fa-flash"></i>{{_('Permission required')}}</h1>
       <p id="locked_msg">{{ _('This activity is being locked ({}).') }}</p>
-      <p id="user_locked_msg">{{ _('Already have another activity open ({}). Close any open activities.')}}</p>
+      <div id="user_locked">
+        <div style="display: flex">
+          <div>
+            <p>{{_("One user cannot open multiple activities simultaneously.")}}</p>
+            <p id="user_locked_msg">{{ _('Already have another activity open ({}). Close any open activities.')}}</p>
+          </div>
+          <button type="input" id="user_locked_btn" class="btn clear-activitylog" style="margin: 0 10px; width: 8.5em; height:3em;">Force Unlock</button>
+        </div>
+
+      </div>
     </div>
   </div>
 </div>
@@ -40,8 +49,19 @@
         <h4 class="modal-title">WEKO</h4>
       </div>
       <div class="modal-body" style="overflow-x: auto;">
-        <span class="glyphicon glyphicon-question-sign fa-3x" style="vertical-align: middle; margin: 0 10px"></span>
-        <span style="margin: 0 10px">{{_('Do you want to unlock this activity?')}}</span>
+        <div id="lock_modal" style="display: none;">
+          <span class="glyphicon glyphicon-question-sign fa-3x" style="vertical-align: middle; margin: 0 10px"></span>
+          <span id="locked_msg_modal" style="margin: 0 10px">{{_('Do you want to unlock this activity?')}}</span>
+        </div>
+        <div id="user_lock_modal" style="display: none;">
+          <div style="display: flex">
+            <span class="glyphicon glyphicon-question-sign fa-3x" style="vertical-align: middle; margin: 0 10px"></span>
+            <div>
+              <p>{{_('Do you want to unlock this activity?')}}</p>
+              <span style="border-bottom:solid; border-color:#FF0000; border-width:2px;">{{_("Please confirm that no other windows or tabs have the activity open.")}}</span>
+            </div>
+          </div>
+        </div>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-primary"

@@ -49,6 +49,20 @@
     <input type="text" class="form-control" id="cross_ref_account" name="cross_ref_account" value={{ data }}>
   </div>
 </div>
+<div class="hidden" id="oa_assist_API" name="oa_assist_API">
+  <div class="form-group row">
+    <label for="oa_assist_client_id" class="control-label col-sm-3 text-right">{{_('OA assist API Client ID')}}</label>
+    <div class="controls col-sm-5">
+      <input type="text" class="form-control" id="oa_assist_client_id" name="oa_assist_client_id" value="">
+    </div>
+  </div>
+  <div class="form-group row">
+    <label for="oa_assist_client_secret" class="control-label col-sm-3 text-right">{{_('OA assist API Client Secret')}}</label>
+    <div class="controls col-sm-5">
+      <input type="text" class="form-control" id="oa_assist_client_secret" name="oa_assist_client_secret" value="">
+    </div>
+  </div>
+</div>
 <div class="form-actions row">
   <div class="col-sm-offset-7 col-sm-9">
     <button id="api_account_save" name="api_account_save" value="index_form"

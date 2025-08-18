@@ -57,7 +57,7 @@ setup_requires = [
 install_requires = [
     'Flask-BabelEx>=0.9.2',
     'invenio-previewer>=1.0.0a11',
-    'PyPDF2>=1.26.0',
+    'pypdf>=4.3.1,<5.0.0',
     'invenio-pidrelations>=1.0.0a3',
     'invenio-records>=1.0.0b4',
 ]
@@ -90,7 +90,7 @@ setup(
             'weko_records_ui = weko_records_ui:WekoRecordsUI',
         ],
         'invenio_base.api_apps': [
-            'weko_records_ui_rest = weko_records_ui.ext:WekoRecordsREST',
+            'weko_records_ui_rest = weko_records_ui:WekoRecordsREST',
             'weko_records_ui_cites_rest = weko_records_ui:WekoRecordsCitesREST',
         ],
         'invenio_admin.views': [
@@ -111,6 +111,7 @@ setup(
             'weko_records_ui_js = weko_records_ui.bundles:js',
             'weko_records_ui_preview_carousel_js = weko_records_ui.bundles:preview_carousel',
             'weko_records_ui_file_action_js = weko_records_ui.bundles:file_action_js',
+            'weko_records_ui_bucket_js = weko_records_ui.bundles:bucket_js',
             'weko_records_ui_bootstrap_popover_js = weko_records_ui.bundles:bootstrap_popover_js',
             'weko_records_ui_bootstrap_popover_css = weko_records_ui.bundles:bootstrap_popover_css',
         ],
@@ -127,6 +128,7 @@ setup(
         ],
         'invenio_oauth2server.scopes': [
             'file_read_scope = weko_records_ui.scopes:file_read_scope',
+            'item_read_scope = weko_records_ui.scopes:item_read_scope',
         ],
     },
     extras_require=extras_require,

@@ -36,9 +36,9 @@ from invenio_stats.utils import QueryCommonReportsHelper, \
 
 from weko_admin.api import TempDirInfo
 
-from .models import AdminSettings, StatisticsEmail
+from .models import AdminSettings, StatisticsEmail, FeedbackMailSetting
 from .utils import StatisticMail, get_user_report_data, package_reports ,elasticsearch_reindex
-from .views import manual_send_site_license_mail 
+from .views import manual_send_site_license_mail
 from celery.task.control import inspect
 from weko_search_ui.tasks import check_celery_is_run
 from .config import WEKO_ADMIN_SETTINGS_ELASTIC_REINDEX_SETTINGS,\
@@ -49,12 +49,12 @@ logger = get_task_logger(__name__)
 
 
 @shared_task(
-    name = "weko_admin.tasks.reindex" 
+    name = "weko_admin.tasks.reindex"
     ,bind=True
     ,acks_late=False
     ,ignore_results=False)
 def reindex(self, is_db_to_es ):
-    """ 
+    """
     Celery task to do elasticsearch_reindex
     if error has occord in elasticsearch_reindex , update admin_settings
 
@@ -64,10 +64,10 @@ def reindex(self, is_db_to_es ):
     is_db_to_es : boolean
         if True,  index Documents from DB data
         if False, index Documents from ES data itself
-    
+
     Returns:
         str : elasticsearch_reindex responce text
-        
+
     Raises:
         raises error in elasticsearch_reindex
 
@@ -80,18 +80,19 @@ def reindex(self, is_db_to_es ):
         return elasticsearch_reindex(is_db_to_es)
     except BaseException as ex:
         # set error in admin_settings
-        AdminSettings.update(WEKO_ADMIN_SETTINGS_ELASTIC_REINDEX_SETTINGS 
+        AdminSettings.update(WEKO_ADMIN_SETTINGS_ELASTIC_REINDEX_SETTINGS
         , dict({WEKO_ADMIN_SETTINGS_ELASTIC_REINDEX_SETTINGS_HAS_ERRORED:True}))
         raise ex
 
 def is_reindex_running():
     """Check reindex is running."""
-    
+
     if not check_celery_is_run():
         return False
 
-    reserved = inspect().reserved()
-    active = inspect().active()
+    _timeout = current_app.config.get("CELERY_GET_STATUS_TIMEOUT", 3.0)
+    reserved = inspect(timeout=_timeout).reserved()
+    active = inspect(timeout=_timeout).active()
     for worker in active:
         for task in active[worker]:
             current_app.logger.debug("active")
@@ -107,35 +108,36 @@ def is_reindex_running():
             if task["name"] == "weko_admin.tasks.reindex":
                 current_app.logger.info("weko_admin.tasks.reindex is reserved")
                 return True
-    
+
     current_app.logger.debug("weko_admin.tasks.reindex is not running")
     return False
 
 @shared_task(ignore_results=True)
-def send_all_reports(report_type=None, year=None, month=None):
+def send_all_reports(report_type=None, year=None, month=None, repository_id=None):
     """Query elasticsearch for each type of stats report."""
     # By default get the current month and year
     now = datetime.now()
     month = month or now.month
     year = year or now.year
+    repository_id = repository_id or 'Root Index'
     all_results = {
         'file_download': QueryFileReportsHelper.get(
-            year=year, month=month, event='file_download'),
+            year=year, month=month, event='file_download', repository_id=repository_id),
         'file_preview': QueryFileReportsHelper.get(
-            year=year, month=month, event='file_preview'),
+            year=year, month=month, event='file_preview', repository_id=repository_id),
         'index_access': QueryRecordViewPerIndexReportHelper.get(
-            year=year, month=month),
+            year=year, month=month, repository_id=repository_id),
         'detail_view': QueryRecordViewReportHelper.get(
-            year=year, month=month),
+            year=year, month=month, repository_id=repository_id),
         'file_using_per_user': QueryFileReportsHelper.get(
-            year=year, month=month, event='file_using_per_user'),
+            year=year, month=month, event='file_using_per_user', repository_id=repository_id),
         'top_page_access': QueryCommonReportsHelper.get(
             year=year, month=month, event='top_page_access'),
         'search_count': QuerySearchReportHelper.get(
-            year=year, month=month),
-        'user_roles': get_user_report_data(),
+            year=year, month=month, repository_id=repository_id),
+        'user_roles': get_user_report_data(repo_id=repository_id),
         'site_access': QueryCommonReportsHelper.get(
-            year=year, month=month, event='site_access')
+            year=year, month=month, event='site_access', repository_id=repository_id),
     }
     with current_app.app_context():
         # Allow for this to be used to get specific emails as well
@@ -149,7 +151,7 @@ def send_all_reports(report_type=None, year=None, month=None):
         zip_name = 'logReport_' + zip_date + '.zip'
         zip_stream = package_reports(reports, year, month)
 
-        recepients = StatisticsEmail.get_all_emails()
+        recepients = StatisticsEmail.get_emails_by_repo(repository_id=repository_id)
         attachments = [Attachment(zip_name,
                                   'application/x-zip-compressed',
                                   zip_stream.getvalue())]
@@ -171,18 +173,22 @@ def check_send_all_reports():
     """Check Redis periodically for when to run a task."""
     with current_app.app_context():
         # Schedule set in the view
-        schedule = AdminSettings.get(name='report_email_schedule_settings',
+        schedules = AdminSettings.get(name='report_email_schedule_settings',
                                      dict_to_object=False)
-        schedule = schedule if schedule else None
-        if schedule and _due_to_run(schedule):
-            send_all_reports.delay()
+        schedules = schedules if schedules else {}
+        for repository_id, schedule in schedules.items():
+            if schedule and _due_to_run(schedule):
+                send_all_reports.delay(repository_id=repository_id)
 
 
 @shared_task(ignore_results=True)
 def send_feedback_mail():
     """Check Redis periodically for when to run a task."""
     with current_app.app_context():
-        StatisticMail.send_mail_to_all()
+        setting = FeedbackMailSetting.get_feedback_email_setting_by_repo(repo_id='Root Index')
+        if setting:
+            if setting[0].is_sending_feedback:
+                StatisticMail.send_mail_to_all()
 
 
 def _due_to_run(schedule):
@@ -200,22 +206,23 @@ def _due_to_run(schedule):
 @shared_task(ignore_results=True)
 def check_send_site_access_report():
     """Check send site access report."""
-    settings = AdminSettings.get('site_license_mail_settings')
-    if settings and settings.auto_send_flag:
-        agg_month = \
-            current_app.config.get('WEKO_ADMIN_DEFAULT_AGGREGATION_MONTH', 1)
-        # Previous months
-        end_date = datetime.utcnow().replace(day=1) - timedelta(days=1)
-        count = 1
-        start_date = end_date.replace(day=1)
-        while count < agg_month:
-            start_date = (start_date - timedelta(days=1)).replace(day=1)
-            count = count + 1
-        end_month = end_date.strftime('%Y-%m')
-        start_month = start_date.strftime('%Y-%m')
-        # send mail api
-        manual_send_site_license_mail(start_month=start_month,
-                                      end_month=end_month)
+    settings = AdminSettings.get('site_license_mail_settings',dict_to_object=False)
+    for repository_id, setting in settings.items():
+        if setting and setting.get("auto_send_flag"):
+            agg_month = \
+                current_app.config.get('WEKO_ADMIN_DEFAULT_AGGREGATION_MONTH', 1)
+            # Previous months
+            end_date = datetime.utcnow().replace(day=1) - timedelta(days=1)
+            count = 1
+            start_date = end_date.replace(day=1)
+            while count < agg_month:
+                start_date = (start_date - timedelta(days=1)).replace(day=1)
+                count = count + 1
+            end_month = end_date.strftime('%Y-%m')
+            start_month = start_date.strftime('%Y-%m')
+            # send mail api
+            manual_send_site_license_mail(start_month=start_month,
+                                        end_month=end_month, repo_id=repository_id)
 
 
 @shared_task(ignore_results=True)
@@ -232,7 +239,11 @@ def clean_temp_info():
             if not expire:
                 continue
             if expire < datetime.now().strftime('%Y-%m-%d %H:%M:%S'):
-                can_delete = True
-                shutil.rmtree(temp_path)
+                if extra_info.get("is_export"):
+                    from weko_search_ui.utils import delete_exported
+                    can_delete = delete_exported(temp_path,extra_info)
+                else:
+                    shutil.rmtree(temp_path)
+                    can_delete = True
         if can_delete:
             temp_dir_api.delete(temp_path)

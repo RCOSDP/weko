@@ -155,6 +155,7 @@ class MailTemplates(db.Model):
             if data['key']:
                 db.session.merge(obj)
             else:
+                obj.mail_genre_id = '3'
                 db.session.add(obj)
             db.session.commit()
             return True

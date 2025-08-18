@@ -2,7 +2,7 @@
   <div>
     <!-- 検索フォーム -->
     <SearchForm :sessCondFlag="false" />
-    <main class="max-w-[1024px] mx-auto px-2.5">
+    <main class="mx-auto max-w-[97vw]">
       <div class="w-full">
         <div class="w-full">
           <div class="bg-miby-light-blue w-full flex">
@@ -57,87 +57,157 @@
                   </select>
                 </div>
               </div>
-              <!-- フィルター -->
-              <div class="flex gap-2.5">
-                <button class="btn-modal block cursor-pointer" data-target="FilterFileList" @click="openFilter">
-                  <img src="/img/btn/btn-filter.svg" alt="Filter" />
+            </div>
+          </div>
+          <!-- フィルター -->
+          <div class="flex flex-wrap">
+            <div class="bg-miby-searchtags-blue filter-area">
+              <div class="bg-miby-light-blue w-full flex text-white text-center py-0.5 px-8 font-medium">
+                {{ $t('filter') }}
+              </div>
+              <ul v-for="searchType in filterList" :key="searchType.id" class="pt-0.5 pl-2 text-sm font-medium">
+                <li>
+                  {{ $t(searchType.i18n) }}
+                </li>
+                <!-- テキストボックス -->
+                <ul v-if="searchType.type == 'text'" class="text-14px font-medium pb-2">
+                  <div class="text-center">
+                    <input
+                      v-model="searchType.data"
+                      type="text"
+                      class="rounded h-8 w-11/12 text-black border border-gray-50"
+                      @change="filtering(filterList)" />
+                  </div>
+                </ul>
+                <!-- チェックボックス -->
+                <ul v-if="searchType.type == 'checkbox'" class="pl-4 text-14px font-medium pb-2">
+                  <li v-for="item in searchType.data" :key="item.id">
+                    <label>
+                      <input
+                        v-model="item.value"
+                        type="checkbox"
+                        class="link-color"
+                        :checked="item.value"
+                        :value="true"
+                        @change="filtering(filterList)" />
+                      <span class="ml-1">{{ $t(item.comment) }}</span>
+                    </label>
+                  </li>
+                </ul>
+                <!-- 日付範囲指定 -->
+                <ul v-if="searchType.type == 'date'" class="text-xs font-medium pb-2 mx-auto w-11/12">
+                  <li>
+                    <VueDatePicker
+                      v-model="searchType.data"
+                      format="yyyy-MM-dd"
+                      model-type="yyyy-MM-dd"
+                      :enable-time-picker="false"
+                      range
+                      @closed="filtering(filterList)"
+                      @cleared="filtering(filterList)" />
+                  </li>
+                </ul>
+              </ul>
+              <div class="flex justify-center">
+                <button
+                  class="min-[1022px]:block h-5 min-[1022px]:h-auto min-[1022px]:border min-[1022px]:py-1 pl-2 pr-2.5 rounded text-14px text-white font-medium bg-link-color"
+                  @click="clear">
+                  {{ $t('clear') }}
                 </button>
               </div>
             </div>
-          </div>
-          <!-- ファイルリスト -->
-          <div class="p-5 bg-miby-bg-gray">
-            <div class="flex flex-wrap justify-end items-center mb-10">
-              <!-- 一括ダウンロード -->
-              <a
-                v-if="filteredList.length"
-                class="pl-1.5 md:pl-0 icons icon-download after cursor-pointer"
-                @click="downloadFilesAll">
-                <span class="underline text-sm text-miby-link-blue font-medium pr-1">
-                  {{ $t('filesDownloadAll') }}
-                </span>
-              </a>
-            </div>
-            <div>
-              <div class="w-full overflow-x-auto">
-                <table class="search-lists w-full border-collapse border border-slate-500 table-fixed min-w-[960px]">
-                  <thead>
-                    <tr>
-                      <th class="w-16">
-                        {{ $t('selection') }}
-                      </th>
-                      <th class="w-3/12">
-                        {{ $t('fileName') }}
-                      </th>
-                      <th class="">
-                        {{ $t('fileDetail') }}
-                      </th>
-                      <th class="">
-                        {{ $t('action') }}
-                      </th>
-                      <th class="w-3/12">
-                        {{ $t('storageURL') }}
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody v-if="filteredList.length && renderFlag">
-                    <TableStyle
-                      v-for="file in divideFileList[Number(currentPage) - 1]"
-                      :key="file"
-                      :file="file"
-                      :span="span === 'total' ? '' : span"
-                      @click-checkbox="clickCkeckbox"
-                      @error="setError" />
-                  </tbody>
-                </table>
+
+            <!-- ファイルリスト -->
+            <div class="p-5 bg-miby-bg-gray result-area">
+              <div class="flex flex-wrap justify-end items-center mb-7">
+                <div class="mr-auto">
+                  <NuxtLink class="font-bold" to="" event="" @click="throughDblClick">
+                    <a class="pl-1.5 md:pl-0">
+                      <span
+                        class="underline text-sm icons icon-arrow-l text-miby-link-blue font-medium pr-1 cursor-pointer">
+                        {{ $t('returnToItemDetails') }}
+                      </span>
+                    </a>
+                  </NuxtLink>
+                </div>
+                <!-- 全件ダウンロード -->
+                <div class="ml-auto">
+                  <a
+                    v-if="filteredList.length"
+                    class="pl-1.5 md:pl-0 icons icon-download after cursor-pointer"
+                    @click="downloadFilesAll">
+                    <span class="underline text-sm text-miby-link-blue font-medium pr-1">
+                      {{ $t('filesDownloadAll') }}
+                    </span>
+                  </a>
+                </div>
               </div>
-            </div>
-            <div class="flex justify-center mt-4 mb-4">
-              <!-- 選択ダウンロード -->
-              <button
-                v-if="filteredList.length"
-                class="flex gap-1 text-white px-4 py-2 rounded"
-                :class="[selectedFiles.length == 0 ? 'bg-miby-dark-gray' : 'bg-miby-link-blue']"
-                :disabled="selectedFiles.length == 0"
-                @click="downloadFilesSelected(selectedFiles)">
-                <img src="/img/icon/icon_dl-rank.svg" alt="Download" />
-                {{ $t('download') }}
-              </button>
-            </div>
-            <div class="max-w-[300px] mx-auto mt-3.5 mb-16">
-              <Pagination
-                v-if="filteredList.length && renderFlag"
-                :total="Number(filteredList.length)"
-                :currentPage="Number(currentPage)"
-                :displayPerPage="Number(perPage)"
-                @click-page="setPage" />
+              <div>
+                <div class="w-full overflow-x-auto">
+                  <table class="search-lists w-full border-collapse border border-slate-500 table-fixed min-w-[960px]">
+                    <thead>
+                      <tr>
+                        <th class="w-12 !py-2">
+                          {{ $t('selection') }}
+                          <input
+                            v-model="isAllCheck"
+                            type="checkbox"
+                            :checked="isAllCheck"
+                            @click="clickAllCheckbox()" />
+                        </th>
+                        <th class="w-3/12">
+                          {{ $t('fileName') }}
+                        </th>
+                        <th class="w-[15%]">
+                          {{ $t('fileDetail') }}
+                        </th>
+                        <th class="w-[10%]">
+                          {{ $t('action') }}
+                        </th>
+                        <th class="w-3/12">
+                          {{ $t('storageURL') }}
+                        </th>
+                        <th class="w-3/12">{{ $t('comment') }}</th>
+                      </tr>
+                    </thead>
+                    <tbody v-if="filteredList.length && renderFlag">
+                      <TableStyle
+                        v-for="file in divideFileList[Number(currentPage) - 1]"
+                        :key="file"
+                        :file="file"
+                        :span="span === 'total' ? '' : span"
+                        :checked="selectedFiles.includes(file['@id'])"
+                        @click-checkbox="clickCheckbox"
+                        @error="setError" />
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+              <div class="flex justify-center mt-4 mb-4 gap-8">
+                <!-- 選択ダウンロード -->
+                <button
+                  v-if="filteredList.length"
+                  class="flex gap-1 text-white px-4 py-2 rounded button-center"
+                  :class="[selectedFiles.length == 0 ? 'bg-miby-dark-gray' : 'bg-miby-link-blue']"
+                  :disabled="selectedFiles.length == 0"
+                  @click="downloadFilesSelected(selectedFiles)">
+                  <img src="/img/icon/icon_dl-rank.svg" alt="Download" />
+                  {{ $t('download') }} ({{ selectedFiles.length }} {{ $t('items') }})
+                </button>
+              </div>
+              <div class="max-w-[300px] mx-auto mt-3.5 mb-16">
+                <Pagination
+                  v-if="filteredList.length && renderFlag"
+                  :total="Number(filteredList.length)"
+                  :currentPage="Number(currentPage)"
+                  :displayPerPage="Number(perPage)"
+                  @click-page="setPage" />
+              </div>
             </div>
           </div>
         </div>
       </div>
     </main>
-    <!-- フィルター -->
-    <Filter ref="filter" class="z-50" @filtering="filtering" />
     <!-- アラート -->
     <Alert
       v-if="visibleAlert"
@@ -149,11 +219,13 @@
 </template>
 
 <script lang="ts" setup>
+import VueDatePicker from '@vuepic/vue-datepicker';
+
+import FilterColumn from '~/assets/data/filesFilter.json';
 import Alert from '~/components/common/Alert.vue';
 import Pagination from '~/components/common/Pagination.vue';
 import SearchForm from '~/components/common/SearchForm.vue';
 import TableStyle from '~/components/files/TableStyle.vue';
-import Filter from '~/components/files/modal/Filter.vue';
 
 /* ///////////////////////////////////
 // const and let
@@ -166,7 +238,6 @@ const currentPage = ref('1');
 const perPage = ref('20');
 const itemTitle = ref('undefined');
 const fileList = ref([]);
-const filter = ref();
 const filteredList = ref([]);
 const span = ref('total');
 const spanList = ref<string[]>([]);
@@ -177,6 +248,10 @@ const alertMessage = ref('');
 const alertCode = ref(0);
 let divideFileList: any[] = [];
 let createdDate = '';
+let isAllCheck = false;
+let filterColumnList = JSON.parse(JSON.stringify(FilterColumn));
+const filterList = ref<any[]>([]);
+let url = '';
 
 /* ///////////////////////////////////
 // function
@@ -220,6 +295,10 @@ async function getFiles(number: string) {
           }
         }
         filteredList.value = fileList.value;
+
+        for (const column of filterColumnList) {
+          filterList.value.push(JSON.parse(JSON.stringify(column)));
+        }
       }
     },
     onResponseError({ response }) {
@@ -426,10 +505,14 @@ function setSpanList() {
 
 /**
  * 再レンダリング用イベント
+ * @param clearSelectedFiles ダウンロードするファイルリストをリセットするか
  */
-function renderResult() {
+function renderResult(clearSelectedFiles = true) {
   renderFlag.value = false;
-  selectedFiles.value = [];
+  if (clearSelectedFiles) {
+    isAllCheck = false;
+    selectedFiles.value = [];
+  }
   nextTick(() => {
     renderFlag.value = true;
   });
@@ -449,7 +532,7 @@ function selectPerPage() {
  * @param name ファイル名
  * @param isCheck チェック状態
  */
-function clickCkeckbox(name: string, isCheck: boolean) {
+function clickCheckbox(name: string, isCheck: boolean) {
   if (isCheck) {
     selectedFiles.value.push(name);
   } else {
@@ -457,6 +540,61 @@ function clickCkeckbox(name: string, isCheck: boolean) {
       return item !== name;
     });
     selectedFiles.value = files;
+  }
+  changeAllCheckBox();
+}
+
+/**
+ * 現在のページに表示されているファイルのチェックを全選択／全解除する
+ */
+function clickAllCheckbox() {
+  if (isAllCheck) {
+    isAllCheck = false;
+    selectedFiles.value = selectedFiles.value.filter((file) => {
+      return !divideFileList[Number(currentPage.value) - 1].some((divide: any) => divide['@id'] === file);
+    });
+  } else {
+    isAllCheck = true;
+    for (const file of divideFileList[Number(currentPage.value) - 1]) {
+      const fileUrl = Array.isArray(file[appConf.roCrate.root.file.url])
+        ? file[appConf.roCrate.root.file.url][0]
+        : file[appConf.roCrate.root.file.url];
+      // 格納場所がweko外部のファイルは除く
+      if (fileUrl.startsWith(useAppConfig().wekoOrigin)) {
+        if (!selectedFiles.value.includes(file['@id'])) {
+          selectedFiles.value.push(file['@id']);
+        }
+      }
+    }
+  }
+  setPage(currentPage.value);
+}
+
+/**
+ * 手動で現在のページに表示されているファイルのチェックをすべて入れたら全選択のチェックをつける
+ * そうでなかったらチェックを外す
+ */
+function changeAllCheckBox() {
+  const currentDivideFiles = divideFileList[Number(currentPage.value) - 1];
+  const divideLength = currentDivideFiles.length;
+  isAllCheck = false;
+  if (selectedFiles.value.length >= divideLength) {
+    let count = 0;
+    for (const file of currentDivideFiles) {
+      const fileUrl = Array.isArray(file[appConf.roCrate.root.file.url])
+        ? file[appConf.roCrate.root.file.url][0]
+        : file[appConf.roCrate.root.file.url];
+      // 格納場所がweko外部のファイルは除く
+      if (fileUrl.startsWith(useAppConfig().wekoOrigin)) {
+        if (selectedFiles.value.includes(file['@id'])) {
+          count++;
+          if (count === divideLength) {
+            isAllCheck = true;
+            break;
+          }
+        }
+      }
+    }
   }
 }
 
@@ -466,7 +604,8 @@ function clickCkeckbox(name: string, isCheck: boolean) {
  */
 function setPage(value: string) {
   currentPage.value = value;
-  renderResult();
+  renderResult(false);
+  changeAllCheckBox();
 }
 
 /**
@@ -479,13 +618,6 @@ function setError(status = 0, message: string) {
   alertCode.value = status;
   alertType.value = 'error';
   visibleAlert.value = true;
-}
-
-/**
- * フィルターボタン押下時イベント
- */
-function openFilter() {
-  filter.value.openModal();
 }
 
 /**
@@ -569,10 +701,42 @@ function filtering(value: any) {
       }
     }
   }
-
   divideList(filteredList.value);
   currentPage.value = '1';
   renderResult();
+}
+
+/**
+ * フィルタリング条件の初期化
+ */
+function clear() {
+  filterColumnList = JSON.parse(JSON.stringify(FilterColumn));
+  filterList.value = [];
+
+  for (const column of filterColumnList) {
+    filterList.value.push(JSON.parse(JSON.stringify(column)));
+  }
+
+  filtering(filterList.value);
+}
+
+/** ファイル一覧画面からアイテム詳細画面へ戻るためのURLを生成 */
+function getURL() {
+  const itemInfoUrl = sessionStorage.getItem('url')?.split('/');
+  if (itemInfoUrl && itemInfoUrl[3] === 'search') {
+    url = `/detail?sess=search&number=${query.number}`;
+  } else {
+    url = `/detail?sess=top&number=${query.number}`;
+  }
+}
+
+/**
+ * ダブルクリックを制御する
+ */
+function throughDblClick() {
+  if (location.pathname + location.search !== url) {
+    navigateTo(url);
+  }
 }
 
 /* ///////////////////////////////////
@@ -595,6 +759,7 @@ try {
 /////////////////////////////////// */
 
 onMounted(() => {
+  getURL();
   refreshToken();
 });
 

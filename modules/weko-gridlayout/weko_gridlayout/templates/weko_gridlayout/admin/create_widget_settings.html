@@ -56,5 +56,7 @@
     <script type="text/javascript" src="{{ ASSET_URL }}"></script>
   {% endassets %}
   <script type="text/javascript"
-          src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+          src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  {% assets "weko_admin_date_picker_js" %}<script type="text/javascript" src="{{ ASSET_URL }}"></script>{% endassets %}
+
 {%- endblock javascript %}

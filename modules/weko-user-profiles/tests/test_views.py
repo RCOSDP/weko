@@ -349,31 +349,31 @@ def test_get_profile_info(client,app,admin_app,register_bp,users,mocker,user_pro
         assert json.loads(res.data) == {"positions":"","results":"","error":"'AnonymousUser' object has no attribute 'id'"}
 
         current_app.config['WEKO_USERPROFILES_POSITION_LIST'] = [('', ''), ('Professor', 'Professor')]
-        with patch("flask_login.utils._get_user", return_value=users[0]["obj"]):
-            profile_info = {
-                "subitem_fullname":"test taro",
-                "subitem_displayname":"sysadmin user",
-                "subitem_user_name":"sysadmin",
-                "subitem_university/institution":"test university",
-                "subitem_affiliated_division/department":"test department",
-                "subitem_position":"test position",
-                "subitem_phone_number":"123-4567",
-                "subitem_position(other)":"test other position",
-                "subitem_affiliated_institution":[
-                    {"subitem_affiliated_institution_name":"test institute","subitem_affiliated_institution_position":"test institute position"},
-                    {"subitem_affiliated_institution_name":"test institute2","subitem_affiliated_institution_position":"test institute position2"},
-                ],
-                'subitem_mail_address': 'sysadmin@test.org',
-            }
-            test = {
-                "results":profile_info,
-                "positions":current_app.config["WEKO_USERPROFILES_POSITION_LIST"],
-                "error":""
-            }
-            mocker.patch("weko_user_profiles.views.get_user_profile_info",return_value=profile_info)
-            app.json_encoder = TestJSONEncoder
-            res = client.get(url)
-            assert json.loads(res.data) == json.loads(jsonify(test).data)
+        login(app,client,email=users[0]["email"],password='123456')
+        profile_info = {
+            "subitem_fullname":"test taro",
+            "subitem_displayname":"sysadmin user",
+            "subitem_user_name":"sysadmin",
+            "subitem_university/institution":"test university",
+            "subitem_affiliated_division/department":"test department",
+            "subitem_position":"test position",
+            "subitem_phone_number":"123-4567",
+            "subitem_position(other)":"test other position",
+            "subitem_affiliated_institution":[
+                {"subitem_affiliated_institution_name":"test institute","subitem_affiliated_institution_position":"test institute position"},
+                {"subitem_affiliated_institution_name":"test institute2","subitem_affiliated_institution_position":"test institute position2"},
+            ],
+            'subitem_mail_address': 'sysadmin@test.org',
+        }
+        test = {
+            "results":profile_info,
+            "positions":current_app.config['WEKO_USERPROFILES_POSITION_LIST'],
+            "error":""
+        }
+        mocker.patch("weko_user_profiles.views.get_user_profile_info",return_value=profile_info)
+        app.json_encoder = TestJSONEncoder
+        res = client.get(url)
+        assert json.loads(res.data) == json.loads(jsonify(test).data)
 
 
 # def profile():
@@ -386,7 +386,7 @@ def test_profile(client,register_bp,users,mocker):
         assert res.status_code == 302
         user = User.query.filter_by(email=users[0]["email"]).first()
         mocker.patch("invenio_accounts.models.User.get_id", return_value=users[0]["id"])
-        login_user_via_session(client=client,email=users[0]["email"])
+        login_user_via_session(client=client,user=user)
 
         mocker.patch("weko_user_profiles.views.profile_form_factory")
         mocker.patch("weko_user_profiles.views.render_template",return_value=make_response())

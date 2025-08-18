@@ -25,6 +25,7 @@ from datetime import datetime
 
 from flask import json, current_app
 from mock import patch
+import pytest
 
 from weko_workflow.rest import FileApplicationActivity
 
@@ -129,6 +130,11 @@ def test_GetActivities_get(app, client, db, db_register_activity, auth_headers, 
     assert res_data['condition']['status'] == 'todo'
     assert res_data['condition']['limit'] == '20'
     assert res_data['condition']['page'] == '1'
+
+    # Error : 500
+    with patch('weko_workflow.rest.generate_etag', side_effect=Exception):
+        res = client.get(url(path, param), headers=headers_sysadmin)
+        assert res.status_code == 500
 
     # Cange language : 200 *** Confirmed by integration test ***
     # res = client.get(url(path, param), headers=headers_language)
@@ -608,6 +614,25 @@ def test_FileApplicationActivity_post(app, client, db, db_register_for_applicati
             content_type='application/json',
             headers=headers_student,
         )
+    assert res.status_code == 404
+    try:
+        res_json = json.loads(res.get_data())
+    except:
+        assert False
+    
+    # Exception : 404
+    params = {"index_ids": index1["id"]}
+    body = application_api_request_body[0]
+    res_check = 0   # OK
+    with patch('weko_workflow.rest.check_authority_action', return_value=res_check):
+        with patch('weko_workflow.rest.get_pid_and_record', side_effect=Exception):
+            with pytest.raises(Exception):
+                res = client.post(
+                    url(f'/{version}/workflow/activities/{edit_item_activity_id}/application', params),
+                    data=json.dumps(body),
+                    content_type='application/json',
+                    headers=headers_student,
+                )
     assert res.status_code == 404
     try:
         res_json = json.loads(res.get_data())

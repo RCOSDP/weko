@@ -25,12 +25,14 @@ from datetime import timedelta, timezone
 import traceback
 from typing import List, Optional
 
-from flask import abort, current_app
+from flask import abort, current_app, request
 from flask_babelex import get_locale, to_user_timezone, to_utc
 from flask_security import current_user
 from invenio_access import Permission, action_factory
 from invenio_accounts.models import User
 from invenio_db import db
+from invenio_deposit.scopes import write_scope
+from invenio_oauth2server import require_api_auth, require_oauth_scopes
 from weko_groups.api import Group, Membership, MembershipState
 from weko_index_tree.utils import check_index_permissions, get_user_roles
 from weko_records.api import ItemTypes
@@ -76,19 +78,32 @@ def page_permission_factory(record, *args, **kwargs):
 def file_permission_factory(record, *args, **kwargs):
     """File permission factory."""
 
-    def can(self):
-        fjson = kwargs.get('fjson')
+    @require_api_auth()
+    @require_oauth_scopes(write_scope.id)
+    def can_by_oauth(fjson):
         return check_file_download_permission(record, fjson)
+
+    def can(self):
+        is_ok = False
+        fjson = kwargs.get('fjson')
+        if request.headers and \
+                request.headers.get(current_app.config['OAUTH2SERVER_JWT_AUTH_HEADER']):
+            is_ok = can_by_oauth(fjson)
+        else:
+            item_type = kwargs.get('item_type', None)
+            is_ok = check_file_download_permission(record, fjson, item_type)
+        return is_ok
 
     return type('FileDownLoadPermissionChecker', (), {'can': can})()
 
 
-def check_file_download_permission(record, fjson, is_display_file_info=False):
+def check_file_download_permission(record, fjson, is_display_file_info=False, item_type=None):
     """Check file download."""
-    def site_license_check():
+    def site_license_check(item_type):
         # site license permission check
-        obj = ItemTypes.get_by_id(record.get('item_type_id'))
-        if obj.item_type_name.has_site_license:
+        if not item_type:
+            item_type = ItemTypes.get_by_id(record.get('item_type_id'))
+        if item_type.item_type_name.has_site_license:
             return check_site_license_permission(
             ) | check_user_group_permission(fjson.get('groups'))
         return False
@@ -175,15 +190,18 @@ def check_file_download_permission(record, fjson, is_display_file_info=False):
                 else:
                     try:
                         # contents accessdate
-                        date = fjson.get('accessdate',None)
-                        if not date:
-                            date = fjson.get('date')
-                        if date and isinstance(date, list) and date[0]:
-                            adt = date[0].get('dateValue')
-                            c_is_can = not is_future(adt)
+                        c_is_can = False
+                        access_date = fjson.get('accessdate',None)
+                        if access_date:
+                            c_is_can = not is_future(access_date)
+                        else:
+                            # get date list and check dateValue is future 
+                            date_list = fjson.get('date')
+                            if date_list and isinstance(date_list, list) and date_list[0]:
+                                adt = date_list[0].get('dateValue')
+                                c_is_can = not is_future(adt)
 
                         # publish date
-                        p_is_can = True
                         idt = record.get('publish_date')
                         p_is_can = not is_future(idt)
 
@@ -221,7 +239,7 @@ def check_file_download_permission(record, fjson, is_display_file_info=False):
 
                     if not is_can:
                         # site license permission check
-                        is_can = site_license_check()
+                        is_can = site_license_check(item_type)
 
             # access with login user
             elif 'open_login' in acsrole:
@@ -272,7 +290,7 @@ def check_file_download_permission(record, fjson, is_display_file_info=False):
                                 is_billing_can = True
                         if not is_billing_can:
                             # site license permission check
-                            is_billing_can = site_license_check()
+                            is_billing_can = site_license_check(item_type)
 
                     is_can = is_login_user and is_role_can and is_billing_can
 
@@ -284,7 +302,7 @@ def check_file_download_permission(record, fjson, is_display_file_info=False):
                     is_permission_user = __check_user_permission(
                         user_id_list)
                     if not current_user.is_authenticated or \
-                            not is_permission_user or site_license_check():
+                            not is_permission_user or site_license_check(item_type):
                         is_can = False
                 else:
                     if current_user_email in created_user_email_list:
@@ -342,7 +360,7 @@ def check_permission_period(permission : FilePermission) -> bool :
     """Check download permission.
         Args
             FilePermission:permission
-        Returns 
+        Returns
             bool:is the user has access rights or not
     """
 
@@ -488,6 +506,13 @@ def check_publish_status(record):
 #                 is_himself = False
 #     return is_himself
 
+def check_created_id_by_recid(recid):
+    from weko_deposit.api import WekoRecord
+    record = WekoRecord.get_record_by_pid(recid)
+    if not record:
+        return False
+    return check_created_id(record)
+
 def check_created_id(record):
     """Check edit permission to the record for the current user
 
@@ -497,10 +522,11 @@ def check_created_id(record):
 
     Returns:
         bool: True is the current user has the edit permission.
-    """    
+    """
     is_himself = False
     # Super users
     supers = current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER']
+    comadmin = current_app.config['WEKO_PERMISSION_ROLE_COMMUNITY']
     user_id = current_user.get_id() \
             if current_user and current_user.is_authenticated else None
     if user_id is not None:
@@ -514,7 +540,36 @@ def check_created_id(record):
             # In case of supper user,it's always have permission
             if lst.name in supers:
                 is_himself = True
+            if lst.name in comadmin:
+                if has_comadmin_permission(record):
+                    is_himself = True
     return is_himself
+
+
+def has_comadmin_permission(record):
+    """Check community admin permission.
+
+    Args:
+        record (dict): the record to check edit permission.
+
+    Returns:
+        bool: True is the current user has the edit permission.
+    """
+    from invenio_communities.models import Community
+    from weko_index_tree.api import Indexes
+
+    record_indexes = record.get("path", [])
+    if not record_indexes:
+        return False
+
+    com_list = Community.get_repositories_by_user(current_user)
+    for com in com_list:
+        indexes = set(
+            str(i) for i in Indexes.get_child_list_recursive(com.root_node_id)
+        )
+        if any(str(idx) in indexes for idx in record_indexes):
+            return True
+    return False
 
 
 def check_usage_report_in_permission(permission):
@@ -541,7 +596,7 @@ def check_create_usage_report(record, file_json , user_id=None):
     return None
 
 def is_owners_or_superusers(record) -> bool:
-    """ 
+    """
     return true if the user can download the record's contents unconditionally
 
     Args
@@ -567,7 +622,7 @@ def is_owners_or_superusers(record) -> bool:
     for role in list(current_user.roles or []):
         if role.name in supers:
             return True
-    
+
     return False
 
 

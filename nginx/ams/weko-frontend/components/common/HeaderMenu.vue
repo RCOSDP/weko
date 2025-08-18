@@ -41,8 +41,10 @@
         class="block min-[1022px]:hidden h-5 min-[1022px]:h-auto min-[1022px]:border min-[1022px]:py-1 pl-2 pr-2.5 rounded icons icon-out"
         @click="navigateTo('/logout')" />
       <!-- インデックスツリーボタン -->
-      <button class="hidden min-[1022px]:block ml-4" @click="changeModalState">
-        <img src="/img/btn/btn-index.svg" alt="Index Tree" />
+      <button
+        class="hidden min-[1022px]:block ml-4 h-5 min-[1022px]:h-auto min-[1022px]:border min-[1022px]:py-1 pl-2 pr-2.5 text-white text-xs font-light icons icon-menu indexbutton"
+        @click="changeModalState">
+        {{ $t('index') }}
       </button>
       <!-- インデックスツリーボタン（縮小版） -->
       <button ref="menuBtn" class="btn-sp-menu block min-[1022px]:hidden" @click="changeModalState">

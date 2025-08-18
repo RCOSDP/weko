@@ -128,3 +128,7 @@ label.field-required::after {
   margin-right: 5px !important;
   margin-left: 15px !important;
 }
+
+.errorMessage{
+  color:red;
+}

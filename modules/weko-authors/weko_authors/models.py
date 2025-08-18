@@ -75,6 +75,22 @@ class Authors(db.Model, Timestamp):
     )
     """json for author info"""
 
+    repository_id = db.Column(
+        db.JSON().with_variant(
+            postgresql.JSONB(none_as_null=True),
+            'postgresql',
+        ).with_variant(
+            JSONType(),
+            'sqlite',
+        ).with_variant(
+            JSONType(),
+            'mysql',
+        ),
+        default=lambda: dict(),
+        nullable=True
+    )
+    """repository_id of the authors"""
+
     @classmethod
     def get_sequence(cls, session):
         """Get author id next sequence.
@@ -89,25 +105,25 @@ class Authors(db.Model, Timestamp):
         return next_id
 
     @classmethod
-    def get_first_email_by_id(cls, author_id):
-        """Get first email of author by id.
+    def get_emails_by_id(cls, author_id):
+        """Get emails of author by id.
 
         Arguments:
             author_id {int} -- author id
 
         Returns:
-            string -- first email
+            list -- emails
 
         """
         try:
             author = cls.query.filter_by(id=author_id).one_or_none()
             if not author:
-                return None
+                return []
             json_data = author.json
             email_info = json_data.get('emailInfo')
-            return email_info[0].get('email')
+            return [e.get('email') for e in email_info if e.get('email')]
         except Exception:
-            return None
+            return []
 
     @classmethod
     def get_author_by_id(cls, author_id):
@@ -121,14 +137,31 @@ class Authors(db.Model, Timestamp):
 
         """
         try:
-            author = cls.query.filter_by(id=author_id).one_or_none()
-            if not author:
-                return None
-            json_data = author.json
-            return json_data
+            with db.session.begin_nested():
+                author = cls.query.filter_by(id=author_id).one_or_none()
+                if not author:
+                    return None
+                json_data = author.json
+                return json_data
         except Exception:
             return None
+        
 
+    @classmethod
+    def get_authorIdInfo(cls, type_scheme_name:str ,author_ids :list) -> list:
+        idType = AuthorsPrefixSettings.query.filter_by(scheme=type_scheme_name).first().id
+        list_author_ids = list(set(author_ids))
+        authors = cls.query.filter(cls.id.in_(list_author_ids)).all()
+        ret = []
+        if not authors:
+            return ret
+        for author in authors :
+            json_data = author.json
+            authorIdInfos = json_data.get('authorIdInfo',[])
+            for authorIdInfo in authorIdInfos:
+                if str(authorIdInfo.get("idType")) == str(idType):
+                    ret.append(authorIdInfo.get("authorId"))
+        return ret
 
 class AuthorsPrefixSettings(db.Model, Timestamp):
     """Represent an author prefix setting."""
@@ -156,6 +189,22 @@ class AuthorsPrefixSettings(db.Model, Timestamp):
         default=datetime.utcnow,
         onupdate=datetime.utcnow)
     """ Updated date."""
+
+    repository_id = db.Column(
+        db.JSON().with_variant(
+            postgresql.JSONB(none_as_null=True),
+            'postgresql',
+        ).with_variant(
+            JSONType(),
+            'sqlite',
+        ).with_variant(
+            JSONType(),
+            'mysql',
+        ),
+        default=lambda: dict(),
+        nullable=True
+    )
+    """repository_id of prefix settings"""
 
     @classmethod
     def create(cls, name, scheme, url):
@@ -233,6 +282,22 @@ class AuthorsAffiliationSettings(db.Model, Timestamp):
         default=datetime.utcnow,
         onupdate=datetime.utcnow)
     """ Updated date."""
+
+    repository_id = db.Column(
+        db.JSON().with_variant(
+            postgresql.JSONB(none_as_null=True),
+            'postgresql',
+        ).with_variant(
+            JSONType(),
+            'sqlite',
+        ).with_variant(
+            JSONType(),
+            'mysql',
+        ),
+        default=lambda: dict(),
+        nullable=True
+    )
+    """repository_id of affiliation organization."""
 
     @classmethod
     def create(cls, name, scheme, url):

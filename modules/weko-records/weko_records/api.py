@@ -25,6 +25,8 @@ import pickle
 from typing import Union
 import json
 import re
+import sys
+import traceback
 
 from elasticsearch.exceptions import NotFoundError
 from elasticsearch_dsl.query import QueryString
@@ -45,17 +47,19 @@ from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm.attributes import flag_modified
 from sqlalchemy.sql.expression import desc
 from werkzeug.local import LocalProxy
-
+from weko_authors.models import Authors
 
 
 from .fetchers import weko_record_fetcher
-from .models import FeedbackMailList as _FeedbackMailList
-from .models import RequestMailList as _RequestMailList
-from .models import ItemApplication as _ItemApplication
-from .models import FileMetadata, ItemMetadata, ItemReference, ItemType
-from .models import ItemTypeEditHistory as ItemTypeEditHistoryModel
-from .models import ItemTypeMapping, ItemTypeName, ItemTypeProperty, \
-    SiteLicenseInfo, SiteLicenseIpAddress
+from .models import (
+    FeedbackMailList as _FeedbackMailList,
+    RequestMailList as _RequestMailList,
+    ItemApplication as _ItemApplication,
+    FileMetadata, ItemMetadata, ItemReference, ItemType,
+    ItemTypeEditHistory as ItemTypeEditHistoryModel,
+    ItemTypeMapping, ItemTypeName, ItemTypeProperty,
+    ItemTypeJsonldMapping, SiteLicenseInfo, SiteLicenseIpAddress
+)
 
 
 _records_state = LocalProxy(
@@ -219,6 +223,12 @@ class ItemTypeNames(RecordBase):
             if not with_deleted:
                 query = query.filter_by(is_active=True)  # noqa
             return query.one_or_none()
+
+    @classmethod
+    def get_name_and_id_all(cls):
+        """get name and id all."""
+        query = db.session.query(ItemTypeName).with_entities(ItemTypeName.name, ItemTypeName.id)
+        return query.all()
 
     def delete(self, force=False):
         """Delete an item type name.
@@ -473,7 +483,7 @@ class ItemTypes(RecordBase):
             result = []
             for key in _delete_list:
                 prop_mapping = item_type_mapping.get(key, {}).get("jpcoar_mapping", {})
-                if prop_mapping:
+                if prop_mapping and isinstance(prop_mapping, dict):
                     result.extend(list(prop_mapping.keys()))
             return result
 
@@ -587,17 +597,14 @@ class ItemTypes(RecordBase):
         :param item_type_name: Item Type Name.
         :return: Record list.
         """
-        name = urllib.parse.quote_plus(item_type_name)
-        query_string = "itemtype:{}".format(
-            name)
+        from weko_search_ui.utils import execute_search_with_pagination
         result = []
         try:
             search = RecordsSearch(
                 index=current_app.config['SEARCH_UI_SEARCH_INDEX'])
-            search = search.query(QueryString(query=query_string))
+            search = search.query('term', **{"itemtype.keyword": item_type_name})
             search = search.sort('-publish_date', '-_updated')
-            search_result = search.execute().to_dict()
-            result = search_result.get('hits', {}).get('hits', [])
+            result = execute_search_with_pagination(search, -1)
         except NotFoundError as e:
             current_app.logger.debug("Indexes do not exist yet: ", str(e))
         return result
@@ -637,23 +644,30 @@ class ItemTypes(RecordBase):
     def get_by_id(cls, id_, with_deleted=False):
         """Retrieve the item type by id.
 
-        :param id_: Identifier of item type.
-        :param with_deleted: If `True` then it includes deleted item types.
-        :returns: The :class:`ItemTypes` instance.
+        Args:
+            id_ (int): Identifier of item type.
+            with_deleted (bool): If `True` then it includes deleted item types.
+
+        Returns:
+            ItemType: Item type model instance.
         """
         with db.session.no_autoflush:
             query = ItemType.query.filter_by(id=id_)
             if not with_deleted:
                 query = query.filter(ItemType.is_deleted.is_(False))  # noqa
-            return query.one_or_none()
+            obj = query.one_or_none()
+        return obj if isinstance(obj, ItemType) else None
 
     @classmethod
     def get_by_name(cls, name_, with_deleted=False):
-        """Retrieve the item type by id.
+        """Retrieve the item type by item type name.
 
-        :param name_: Name of item type.
-        :param with_deleted: If `True` then it includes deleted item types.
-        :returns: The :class:`ItemTypes` instance.
+        Args:
+            name_ (str): Name of item type.
+        with_deleted (bool): If `True` then it includes deleted item types.
+
+        Returns:
+            ItemType: Item type model instance.
         """
         with db.session.no_autoflush:
             query = ItemTypeName.query.filter_by(name=name_)
@@ -663,7 +677,8 @@ class ItemTypes(RecordBase):
             query = ItemType.query.filter_by(name_id=itemTypeName.id)
             if not with_deleted:
                 query = query.filter(ItemType.is_deleted.is_(False))  # noqa
-            return query.one_or_none()
+            obj = query.one_or_none()
+        return obj if isinstance(obj, ItemType) else None
 
     @classmethod
     def get_by_name_id(cls, name_id, with_deleted=False):
@@ -805,7 +820,7 @@ class ItemTypes(RecordBase):
             # flag_modified(self.model, 'schema')
             # flag_modified(self.model, 'form')
             # flag_modified(self.model, 'render')
-            
+
             db.session.merge(self.model)
 
         after_record_update.send(
@@ -917,16 +932,19 @@ class ItemTypes(RecordBase):
         return RevisionsIterator(self.model)
 
     @classmethod
-    def reload(cls,itemtype_id):
+    def reload(cls, itemtype_id, specified_list=[], renew_value='None'):
         """reload itemtype properties.
 
         Args:
             itemtype_id (_type_): _description_
+            specified_list: renew properties id list
+            renew_value: None, ALL, VAL, LOC
         """
         # with db.session.begin_nested():
+        result = {"msg":"Update ItemType({})".format(itemtype_id),"code":0}
         item_type = ItemTypes.get_by_id(itemtype_id)
-        old_render = pickle.loads(pickle.dumps(item_type.render, -1))
         data = pickle.loads(pickle.dumps(item_type.render, -1))
+
         pat1 = re.compile(r'cus_(\d+)')
         for idx, i in enumerate(data['table_row_map']['form']):
             if isinstance(i,dict) and 'key' in i:
@@ -936,23 +954,43 @@ class ItemTypes(RecordBase):
                     multiple_flg = data['meta_list'][_prop_id]['option']['multiple']
                     if pat1.match(_tmp):
                         _tmp = int(_tmp.replace('cus_', ''))
+                        if specified_list and _tmp not in specified_list:
+                            continue
                         _prop = ItemTypeProps.get_record(_tmp)
                         if _prop:
                             # data['meta_list'][_prop_id] = json.loads('{"input_maxItems": "9999","input_minItems": "1","input_type": "cus_'+str(_prop.id)+'","input_value": "","option": {"crtf": false,"hidden": false,"multiple": true,"oneline": false,"required": false,"showlist": false},"title": "'+_prop.name+'","title_i18n": {"en": "", "ja": "'+_prop.name+'"}}')
-                            data['schemaeditor']['schema'][_prop_id]=pickle.loads(pickle.dumps(_prop.schema, -1))
+                            # data['schemaeditor']['schema'][_prop_id]=pickle.loads(pickle.dumps(_prop.schema, -1))
                             if multiple_flg:
                                 data['table_row_map']['schema']['properties'][_prop_id]['items']=pickle.loads(pickle.dumps(_prop.schema, -1))
                                 data['table_row_map']['schema']['properties'][_prop_id]['type']="array"
+                                if 'maxItems' not in data['table_row_map']['schema']['properties'][_prop_id]:
+                                    data['table_row_map']['schema']['properties'][_prop_id]['maxItems']=9999
+                                if 'minItems' not in data['table_row_map']['schema']['properties'][_prop_id]:
+                                    data['table_row_map']['schema']['properties'][_prop_id]['minItems']=1
+                                if 'properties' in data['table_row_map']['schema']['properties'][_prop_id]:
+                                    data['table_row_map']['schema']['properties'][_prop_id].pop('properties')
+                                if 'format' in data['table_row_map']['schema']['properties'][_prop_id]:
+                                    data['table_row_map']['schema']['properties'][_prop_id].pop('format')
+
+                                tmp_data = pickle.loads(pickle.dumps(data['table_row_map']['form'][idx], -1))
                                 _forms = json.loads(json.dumps(pickle.loads(pickle.dumps(_prop.forms, -1))).replace('parentkey',_prop_id))
                                 data['table_row_map']['form'][idx]=pickle.loads(pickle.dumps(_forms, -1))
+                                cls.update_attribute_options(tmp_data, data['table_row_map']['form'][idx], renew_value)
+                                cls.update_property_enum(item_type.render['table_row_map']['schema']['properties'][_prop_id],data['table_row_map']['schema']['properties'][_prop_id])
                             else:
+                                tmp_data = pickle.loads(pickle.dumps(data['table_row_map']['form'][idx], -1))
                                 data['table_row_map']['schema']['properties'][_prop_id]=pickle.loads(pickle.dumps(_prop.schema, -1))
+                                # cls.update_property_enum(item_type.render['table_row_map']['schema']['properties'],data['table_row_map']['schema']['properties'][_prop_id])
                                 _form = json.loads(json.dumps(pickle.loads(pickle.dumps(_prop.form, -1))).replace('parentkey',_prop_id))
                                 data['table_row_map']['form'][idx]=pickle.loads(pickle.dumps(_form, -1))
-                                                       
+                                cls.update_attribute_options(tmp_data, data['table_row_map']['form'][idx], renew_value)
+                                cls.update_property_enum(item_type.render['table_row_map']['schema']['properties'][_prop_id],data['table_row_map']['schema']['properties'][_prop_id])
+
         from weko_itemtypes_ui.utils import fix_json_schema,update_required_schema_not_exist_in_form, update_text_and_textarea
+
         table_row_map = data.get('table_row_map')
         json_schema = fix_json_schema(table_row_map.get('schema'))
+
         json_form = table_row_map.get('form')
         json_schema = update_required_schema_not_exist_in_form(
             json_schema, json_form)
@@ -960,16 +998,23 @@ class ItemTypes(RecordBase):
         if itemtype_id != 0:
             json_schema, json_form = update_text_and_textarea(
                 itemtype_id, json_schema, json_form)
-        
-        # item_type.schema = json_schema
-        # item_type.form = json_form
-        # item_type.render = data
-        
-        # flag_modified(item_type, 'schema')
-        # flag_modified(item_type, 'form')
-        # flag_modified(item_type, 'render')
-        
-        # db.session.merge(item_type)
+
+        if 'schemaeditor' in data:
+            if 'schema' in data['schemaeditor']:
+                data['schemaeditor']['schema'] = json_schema
+
+        # item_type_mapping = (
+        #             ItemTypeMapping.query.filter(ItemTypeMapping.item_type_id == itemtype_id)
+        #             .order_by(desc(ItemTypeMapping.created))
+        #             .first()
+        #         )
+        # data['table_row_map']['mapping'] = item_type_mapping.mapping if item_type_mapping else {}
+
+        # current_app.logger.error("Update ItemType({})".format(itemtype_id))
+        # current_app.logger.error("Update data({})".format(data))
+        # current_app.logger.error("Update json_schema({})".format(json_schema))
+
+        # print(data)
 
         record = cls.update(id_=itemtype_id,
                                       name=item_type.item_type_name.name,
@@ -983,24 +1028,122 @@ class ItemTypes(RecordBase):
                 mapping.model.mapping = table_row_map.get('mapping')
                 flag_modified(mapping.model, 'mapping')
                 db.session.add(mapping.model)
+                result['msg'] = "Fix ItemType({}) mapping".format(itemtype_id)
+                result['code'] = 0
         else:
             mapping = Mapping.create(itemtype_id,table_row_map.get('mapping'))
             flag_modified(mapping.model, 'mapping')
             db.session.add(mapping.model)
 
-        
         ItemTypeEditHistory.create_or_update(
             item_type_id=record.model.id,
             user_id=1,
             notes=data.get('edit_notes', {})
         )
-            
-        # return record
 
+        return result
 
+    @classmethod
+    def update_property_enum(cls, old_value, new_value):
+        managed_key_list = current_app.config.get("WEKO_RECORDS_MANAGED_KEYS")
+        if isinstance(old_value, dict):
+            for key, value in old_value.items():
+                if isinstance(old_value[key], dict):
+                    if key in new_value and key in old_value:
+                        if "enum" in old_value[key]:
+                            if key not in managed_key_list:
+                                if old_value[key]["enum"] != [None]:
+                                    new_value[key]["enum"] = old_value[key]["enum"]
+                        if "currentEnum" in old_value[key]:
+                            if key not in managed_key_list:
+                                if old_value[key]["currentEnum"] != [None]:
+                                    new_value[key]["currentEnum"] = old_value[key]["currentEnum"]
+                        # if "title" in old_value[key]:
+                        #     if old_value[key]["title"] != "":
+                        #         new_value[key]["title"] = old_value[key]["title"]
+                        # if "title_i18n" in old_value[key]:
+                        #     if old_value[key]["title_i18n"] != "":
+                        #         new_value[key]["title_i18n"] = old_value[key]["title_i18n"]
+                        if "enum" not in old_value[key] and "currentEnum" not in old_value[key]:
+                            if key in new_value and key in old_value:
+                                cls.update_property_enum(old_value[key], new_value[key])
 
-            
-            
+    @classmethod
+    def update_attribute_options(cls, old_value, new_value, renew_value = 'None'):
+        managed_key_list = current_app.config.get("WEKO_RECORDS_MANAGED_KEYS")
+        if isinstance(old_value, list):
+           for i in old_value:
+               cls.update_attribute_options(i, new_value, renew_value)
+        elif isinstance(old_value, dict):
+            if "key" in old_value:
+                key = old_value["key"]
+                new_item = cls.getItemByItemsKey(new_value,key)
+                if new_item is not None:
+                    isHide = False
+                    isShowList = False
+                    isNonDisplay = False
+                    isSpecifyNewline = False
+                    isRequired = False
+                    title_i18n = None
+                    title_i18n_temp = None
+                    titleMap = None
+                    title = None
+
+                    if "title" in old_value:
+                        title = old_value["title"]
+                    if "isHide" in old_value:
+                        isHide = old_value["isHide"]
+                    if "isShowList" in old_value:
+                        isShowList = old_value["isShowList"]
+                    if "isNonDisplay" in old_value:
+                        isNonDisplay = old_value["isNonDisplay"]
+                    if "isSpecifyNewline" in old_value:
+                        isSpecifyNewline = old_value["isSpecifyNewline"]
+                    if "required" in old_value:
+                        isRequired = old_value["required"]
+                    if "title_i18n" in old_value and renew_value not in ["ALL", "LOC"]:
+                        title_i18n_temp = old_value["title_i18n"]
+                        title_i18n = title_i18n_temp
+                    if "title_i18n_temp" in old_value and renew_value not in ["ALL", "LOC"]:
+                        title_i18n_temp = old_value["title_i18n_temp"]
+                    if ("titleMap" in old_value and key.split(".")[-1] not in managed_key_list) or ("titleMap" in old_value and renew_value not in ["ALL", "VAL"]) :
+                        titleMap = old_value["titleMap"]
+
+                    new_item["isHide"] = isHide
+                    new_item["isShowList"] = isShowList
+                    new_item["isNonDisplay"] = isNonDisplay
+                    new_item["isSpecifyNewline"] = isSpecifyNewline
+                    new_item["required"] = isRequired
+                    if title:
+                        new_item["title"] = title
+                    if title_i18n:
+                        new_item["title_i18n"] = title_i18n
+                    if title_i18n_temp:
+                        new_item["title_i18n_temp"] = title_i18n_temp
+                    if titleMap:
+                        new_item["titleMap"] = titleMap
+                    if 'items' in old_value:
+                        cls.update_attribute_options(old_value["items"], new_item, renew_value)
+
+    @classmethod
+    def getItemByItemsKey(cls,prop,key):
+        if isinstance(prop, list):
+            for i in prop:
+                ret = cls.getItemByItemsKey(i,key)
+                if ret is not None:
+                    return ret
+        elif isinstance(prop, dict):
+            if "key" in prop and prop["key"] == key:
+                return prop
+            elif "items" in prop:
+                for item in prop["items"]:
+                    if "key" in item and item["key"] == key:
+                        return item
+                    if "items" in item:
+                        ret = cls.getItemByItemsKey(item,key)
+                        if ret is not None:
+                            return ret
+        return None
 
 
 class ItemTypeEditHistory(object):
@@ -1295,6 +1438,178 @@ class Mapping(RecordBase):
             return [cls(obj.mapping, model=obj) for obj in query.all()]
 
 
+class JsonldMapping():
+    @classmethod
+    def create(cls, name, mapping, item_type_id):
+        """Create mapping.
+
+        Create new mapping for item type. ID is autoincremented.
+        mapping dict is dumped to JSON format.
+
+        Args:
+            name (str): Name of the mapping.
+            mapping (dict): Mapping in JSON format.
+            item_type_id (str): Target itemtype of the mapping.
+
+        Returns:
+            ItemTypeJsonldMapping: Created mapping object.
+
+        Raises:
+            SQLAlchemyError: An error occurred while creating the mapping.
+        """
+        obj = ItemTypeJsonldMapping(
+            name=name,
+            mapping=mapping or {},
+            item_type_id=item_type_id,
+        )
+
+        try:
+            with db.session.begin_nested():
+                db.session.add(obj)
+            db.session.commit()
+        except SQLAlchemyError as ex:
+            db.session.rollback()
+            raise
+
+        return obj
+
+
+    @classmethod
+    def update(cls, id, name, mapping, item_type_id):
+        """Update mapping.
+
+        Update mapping by ID. Specify the value to be updated.
+        The verion_id is incremented and the previousmapping moves to
+        the history table.
+
+        Args:
+            id (int): Mapping ID.
+            name (str, optional): Name of the mapping. Not required.
+            mapping (dict, optional): Mapping in JSON format. Not required.
+            item_type_id (str, optional):
+                Target itemtype of the mapping. Not required.
+
+        Returns:
+            ItemTypeJsonldMapping: Updated mapping object.
+
+        Raises:
+            WekoSwordserverException: When mapping not found.
+            SQLAlchemyError: An error occurred while updating the mapping.
+        """
+        obj = cls.get_mapping_by_id(id)
+        if not isinstance(obj, ItemTypeJsonldMapping):
+            return None
+
+        obj.name = name
+        obj.mapping = mapping or {}
+        obj.item_type_id = item_type_id
+
+        try:
+            db.session.commit()
+        except SQLAlchemyError as ex:
+            db.session.rollback()
+            raise
+
+        return obj
+
+
+    @classmethod
+    def delete(cls, id):
+        """Delete mapping.
+
+        Soft-delete mapping by ID.
+
+        Args:
+            id (int): Mapping ID.
+
+        Returns:
+            ItemTypeJsonldMapping: Deleted mapping object.
+        """
+        obj = cls.get_mapping_by_id(id)
+        if not isinstance(obj, ItemTypeJsonldMapping):
+            return None
+        obj.is_deleted = True
+        db.session.commit()
+        return obj
+
+
+    @classmethod
+    def get_mapping_by_id(cls, id, with_deleted=False):
+        """Get mapping by mapping_id.
+
+        Get mapping latest version by mapping_id.
+        If include_deleted=False, return None if the mapping is deleted(default).
+        Specify include_deleted=True to get the mapping even if it is deleted.
+
+        Args:
+            id (int): Mapping ID.
+            with_deleted (bool, optional):
+                Include deleted mapping. Default is False.
+
+        Returns:
+            ItemTypeJsonldMapping:
+            Mapping object. If not found or deleted, return `None`.
+        """
+        query = ItemTypeJsonldMapping.query.filter_by(id=id)
+        if not with_deleted:
+            query = query.filter_by(is_deleted=False)
+        obj = query.first()
+
+        return obj if isinstance(obj, ItemTypeJsonldMapping) else None
+
+    @classmethod
+    def get_by_itemtype_id(cls, item_type_id, with_deleted=False):
+        """Get mapping by itemtype_id.
+
+        Get mapping latest version by itemtype_id.
+        If include_deleted=False, return None if the mapping is deleted(default).
+        Specify include_deleted=True to get the mapping even if it is deleted.
+
+        Args:
+            item_type_id (int): Itemtype ID.
+            include_deleted (bool, optional):
+                Include deleted mapping. Default is False.
+
+        Returns:
+            list[ItemTypeJsonldMapping]:
+            List of mapping objects. If not found or deleted, return empty list.
+        """
+        query = (
+            ItemTypeJsonldMapping.query
+            .filter_by(item_type_id=item_type_id)
+            .order_by(ItemTypeJsonldMapping.updated.desc())
+        )
+        if not with_deleted:
+            query = query.filter_by(is_deleted=False)
+
+        return [
+            mapping for mapping in query.all()
+            if isinstance(mapping, ItemTypeJsonldMapping)
+        ]
+
+    @classmethod
+    def get_all(cls, with_deleted=False):
+        """Get all mapping.
+
+        Get all mapping. If include_deleted=False, return only active mapping.
+        Specify include_deleted=True to get all mapping including deleted.
+
+        Args:
+            include_deleted (bool, optional):
+                Include deleted mapping. Default is False.
+
+        Returns:
+            list[ItemTypeJsonldMapping]: List of mapping objects.
+        """
+        query = ItemTypeJsonldMapping.query
+        if not with_deleted:
+            query = query.filter_by(is_deleted=False)
+        return [
+            mapping for mapping in query.all()
+            if isinstance(mapping, ItemTypeJsonldMapping)
+        ]
+
+
 class ItemTypeProps(RecordBase):
     """Define API for Itemtype Property creation and manipulation."""
 
@@ -1391,7 +1706,7 @@ class ItemTypeProps(RecordBase):
                 query = ItemTypeProperty.query.filter_by(delflg=False)
 
             return query.all()
-        
+
     @property
     def revisions(self):
         """Get revisions iterator."""
@@ -1961,62 +2276,110 @@ class SiteLicense(RecordBase):
     """Define API for SiteLicense creation and manipulation."""
 
     @classmethod
-    def get_records(cls):
+    def get_records(cls, user=None):
         """Retrieve multiple records.
 
         :returns: A list of :class:`Record` instances.
         """
+        from invenio_communities.models import Community
         with db.session.no_autoflush:
-            sl_obj = SiteLicenseInfo.query.order_by(
-                SiteLicenseInfo.organization_id).all()
+            if not user:
+                sl_obj = SiteLicenseInfo.query.order_by(
+                    SiteLicenseInfo.organization_id).all()
+            else:
+                if any(role.name in current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER'] for role in user.roles):
+                    sl_obj = SiteLicenseInfo.query.order_by(
+                        SiteLicenseInfo.organization_id).all()
+                else:
+                    repositories = Community.get_repositories_by_user(user)
+                    repository_ids = [repository.id for repository in repositories]
+                    sl_obj = SiteLicenseInfo.query.filter(SiteLicenseInfo.repository_id.in_(repository_ids)).order_by(
+                        SiteLicenseInfo.organization_id).all()
             return [cls(dict(obj)) for obj in sl_obj]
 
     @classmethod
     def update(cls, obj):
         """Update method."""
-        def get_addr(lst, id_):
-            if lst and isinstance(lst, list):
-                sld = []
-                for j in range(len(lst)):
-                    sl = SiteLicenseIpAddress(
-                        organization_id=id_,
-                        organization_no=j + 1,
-                        start_ip_address='.'.join(
-                            lst[j].get('start_ip_address')),
-                        finish_ip_address='.'.join(
-                            lst[j].get('finish_ip_address'))
-                    )
-                    sld.append(sl)
-                return sld
+        def get_repository_ids():
+            """Get repository ID based on user's roles."""
+            from flask_login import current_user
+            from invenio_communities.models import Community
+            if any(role.name in current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER'] for role in current_user.roles):
+                return ["Root Index"]
+            repositories = Community.get_repositories_by_user(current_user)
+            if repositories:
+                return [repository.id for repository in repositories]
+            raise Exception("No repository found for the user")
 
+        def get_existing_entries(repository_ids):
+            """Get existing site license entries for the repository."""
+            if "Root Index" in repository_ids:
+                return {info.organization_name: info for info in SiteLicenseInfo.query.all()}
+            return {info.organization_name: info for info in SiteLicenseInfo.query.filter(SiteLicenseInfo.repository_id.in_(repository_ids)).all()}
+
+        def get_addr(lst, organization_id):
+            """Convert address list to SiteLicenseIpAddress instances."""
+            if not lst or not isinstance(lst, list):
+                return []
+
+            return [
+                SiteLicenseIpAddress(
+                    organization_id=organization_id,
+                    organization_no=j + 1,
+                    start_ip_address='.'.join(item.get('start_ip_address')),
+                    finish_ip_address='.'.join(item.get('finish_ip_address'))
+                )
+                for j, item in enumerate(lst)
+            ]
         # update has_site_license field on item type name tbl
         ItemTypeNames.update(obj.get('item_type'))
+        repository_ids = get_repository_ids()
+
         site_license = obj.get('site_license')
-        if isinstance(site_license, list):
-            # delete all rows first
-            SiteLicenseIpAddress.query.delete()
-            SiteLicenseInfo.query.delete()
-            # add new rows
-            if site_license:
-                sif = []
-                for i in range(len(site_license)):
-                    lst = site_license[i]
-                    if lst.get('mail_address'):
-                        receive_mail_flag = lst.get('receive_mail_flag')
-                    else:
-                        receive_mail_flag = 'F'
-                    slif = SiteLicenseInfo(
-                        organization_id=i + 1,
-                        organization_name=lst.get('organization_name'),
-                        receive_mail_flag=receive_mail_flag,
-                        mail_address=lst.get('mail_address'),
-                        domain_name=lst.get('domain_name'),
-                        addresses=get_addr(
-                            lst.get('addresses'),
-                            i))
-                    sif.append(slif)
-                # add new rows
-                db.session.add_all(sif)
+        if not isinstance(site_license, list):
+            return
+
+        existing_entries = get_existing_entries(repository_ids)
+        new_entries = {}
+
+        for lst in site_license:
+            org_name = lst.get('organization_name')
+            receive_mail_flag = lst.get('receive_mail_flag', 'F') if lst.get('mail_address') else 'F'
+
+            if org_name in existing_entries:
+                # Update existing entry
+                slif = existing_entries[org_name]
+                slif.receive_mail_flag = receive_mail_flag
+                slif.mail_address = lst.get('mail_address')
+                slif.domain_name = lst.get('domain_name')
+
+                # Update addresses
+                for addr in slif.addresses:
+                    db.session.delete(addr)
+                new_addresses = get_addr(lst.get('addresses'), slif.organization_id)
+                slif.addresses = new_addresses
+
+                new_entries[org_name] = slif
+            else:
+                # Create new entry
+                slif = SiteLicenseInfo(
+                    organization_name=org_name,
+                    receive_mail_flag=receive_mail_flag,
+                    mail_address=lst.get('mail_address'),
+                    domain_name=lst.get('domain_name'),
+                    repository_id=lst.get('repository_id') if lst.get('repository_id') else repository_ids[0]
+                )
+                slif.addresses = get_addr(lst.get('addresses'), slif.organization_id)
+                new_entries[org_name] = slif
+                db.session.add(slif)
+
+        # Remove obsolete entries
+        obsolete_entries = set(existing_entries.keys()) - set(new_entries.keys())
+        for org_name in obsolete_entries:
+            target = existing_entries[org_name]
+            for addr in target.addresses:
+                db.session.delete(addr)
+            db.session.delete(target)
 
 
 class RevisionsIterator(object):
@@ -2113,17 +2476,39 @@ class FeedbackMailList(object):
         :param feedback_maillist: list mail feedback
         :return boolean: True if success
         """
+        from invenio_communities.utils import get_repository_id_by_item_id
         with db.session.begin_nested():
             query_object = _FeedbackMailList.query.filter_by(
                 item_id=item_id).one_or_none()
             if not query_object:
+                mail_list = []
+                account_author_set = set()
+                for d in feedback_maillist:
+                    author_id = d.get("author_id")
+                    email = d.get("email")
+                    if author_id:
+                        account_author_set.add(str(author_id))
+                    elif email:
+                        mail_list.append({"email": email})
                 query_object = _FeedbackMailList(
                     item_id=item_id,
-                    mail_list=feedback_maillist
+                    mail_list=mail_list,
+                    account_author=",".join(list(account_author_set)),
+                    repository_id=get_repository_id_by_item_id(item_id)
                 )
                 db.session.add(query_object)
             else:
-                query_object.mail_list = feedback_maillist
+                mail_list = []
+                account_author_set = set()
+                for d in feedback_maillist:
+                    author_id = d.get("author_id")
+                    email = d.get("email")
+                    if author_id:
+                        account_author_set.add(str(author_id))
+                    elif email:
+                        mail_list.append({"email": email})
+                query_object.mail_list = mail_list
+                query_object.account_author = ",".join(list(account_author_set))
                 db.session.merge(query_object)
 
     @classmethod
@@ -2148,12 +2533,95 @@ class FeedbackMailList(object):
             with db.session.no_autoflush:
                 query_object = _FeedbackMailList.query.filter_by(
                     item_id=item_id).one_or_none()
-                if query_object and query_object.mail_list:
-                    return query_object.mail_list
+                if query_object:
+                    data = []
+                    list_author_id = []
+                    if query_object.account_author:
+                        list_author_id = query_object.account_author.split(',')
+                        for author_id in list_author_id:
+                            emails = Authors.get_emails_by_id(author_id)
+                            for e in emails:
+                                data.append({"email": e, "author_id": author_id})
+                    if query_object.mail_list:
+                        for m in query_object.mail_list:
+                            author_id = m.get("author_id")
+                            email = m.get("email")
+                            if author_id: # if there is author_id (obsolete data formats only)
+                                if author_id not in list_author_id:
+                                    emails = Authors.get_emails_by_id(author_id)
+                                    for e in emails:
+                                        data.append({"email": e, "author_id": author_id})
+                            else:
+                                if email:
+                                    data.append({"email": email, "author_id": ""})
+                    return data
                 else:
                     return []
-        except SQLAlchemyError:
+        except SQLAlchemyError as e:
+            current_app.logger.error(e)
             return []
+
+    @classmethod
+    def get_feedback_mail_list(cls, repo_id=None):
+        """Get feedback mail list for send mail."""
+        mail_list = {}
+        checked_author_id = {}
+
+        # get feedbak mail list from db
+        data = db.session.query(
+            _FeedbackMailList, PersistentIdentifier
+        ).join(
+            PersistentIdentifier,
+            _FeedbackMailList.item_id == PersistentIdentifier.object_uuid
+        ).filter(
+            PersistentIdentifier.pid_type == 'recid',
+            PersistentIdentifier.status == PIDStatus.REGISTERED,
+            PersistentIdentifier.pid_value.notlike("%.%")
+        )
+
+        if repo_id:
+            data = data.filter(_FeedbackMailList.repository_id == repo_id)
+        data = data.all()
+
+        # create return data
+        for d in data:
+            item_id = str(d.FeedbackMailList.item_id)
+            emails_no_authorid = []
+            list_author_id = d.FeedbackMailList.account_author.split(',')
+            for m in d.FeedbackMailList.mail_list:
+                if m.get("author_id"):
+                    list_author_id.append(m.get("author_id"))
+                else:
+                    emails_no_authorid.append(m.get("email"))
+            # there is author id
+            for author_id in list(set(list_author_id)):
+                if not author_id:
+                    continue
+                if author_id in checked_author_id:
+                    emails = checked_author_id.get(author_id)
+                    for e in emails:
+                        mail_list[e]["items"].append(item_id)
+                else:
+                    emails = Authors.get_emails_by_id(author_id)
+                    for e in emails:
+                        if e and e not in mail_list:
+                            mail_list[e] = {
+                                "items": [item_id],
+                                "author_id": author_id
+                            }
+                    checked_author_id[author_id] = emails
+            # if no author id
+            for e in emails_no_authorid:
+                if e:
+                    if e not in mail_list:
+                        mail_list[e] = {
+                            "items": [item_id],
+                            "author_id": ""
+                        }
+                    else:
+                        mail_list[e]["items"].append(item_id)
+
+        return mail_list
 
     @classmethod
     def delete(cls, item_id):
@@ -2374,8 +2842,14 @@ class ItemLink(object):
     def get_item_link_info(cls, recid):
         """Get item link info of recid.
 
-        :param recid: Record Identifier.
-        :return ret: List destination records.
+        Args:
+            recid (str): Record Identifier.
+
+        Returns:
+            list(dict): Destination records info.
+                - item_links: Destination item PID
+                - item_title: Title of the destination item
+                - value: Reference type
         """
         from weko_deposit.api import WekoRecord
 
@@ -2488,74 +2962,214 @@ class ItemLink(object):
     def update(self, items):
         """Update list item link of current record.
 
-        :param items: List record_d and relation type.
-        :return: Error or not.
-        """
-        dst_relations = ItemReference.get_src_references(
-            self.org_item_id).all()
-        dst_ids = [dst_item.dst_item_pid for dst_item in dst_relations]
-        updated = []
-        created = []
-        for item in items:
-            item_id = item['item_id']
-            if item_id in dst_ids:
-                updated.extend(item for dst_item in dst_relations if
-                               dst_item.reference_type != item['sele_id'])
-                dst_ids.remove(item_id)
-            else:
-                created.append(item)
+        This method updates the relationships between the current item
+        (self.org_item_id) and a list of destination items (items).
+        It handles creation, updating, and deletionof relationships,
+        including special logic for supplement relationships.
 
-        deleted = dst_ids
+        Args:
+            items(list): List of dictionaries containing
+                'item_id' and 'sele_id' (relationship type).
+        Returns:
+            str: Error message if any, otherwise None.
+        """
+        from weko_logging.activity_logger import UserActivityLogger
+        from weko_records_ui.utils import get_latest_version
+
+        src_without_ver = self.org_item_id.split('.')[0]
+        # Fetch all existing relationships where the current item is src
+        dst_relations = ItemReference.get_src_references(self.org_item_id).all()
+        # Fetch all existing relationships where the current item is dst
+        src_relations = ItemReference.get_dst_references(src_without_ver).all()
+
+        src_fixed_relations = {rel.dst_item_pid: rel for rel in dst_relations}
+        dst_fixed_relations = {rel.src_item_pid: rel for rel in src_relations}
+        # Initialize lists to track changes:
+        # created: new items to be added
+        # updated: items whose relationship type has changed
+        # deleted: items to be deleted
+        created = []
+        updated = []
+        deleted = []
+        supplement_key = current_app.config["WEKO_RECORDS_REFERENCE_SUPPLEMENT"]
+        # Iterate through each item in the input list
+        is_src_integer = (self.org_item_id == src_without_ver)
+        for item in items:
+            item_id = str(item['item_id'])
+            if item_id and not item_id.isdecimal():
+                continue
+            sele_id = item['sele_id']
+
+            relation = {
+                'src_item_pid': self.org_item_id,
+                'dst_item_pid': item_id,
+                'sele_id': sele_id
+            }
+            if item_id in src_fixed_relations:
+                dst_item = src_fixed_relations.pop(item_id)
+                if sele_id != dst_item.reference_type:
+                    updated.append(relation)
+            else:
+                created.append(relation)
+
+            # inverse link
+            if is_src_integer:
+                draft_pid = PersistentIdentifier.query.filter_by(
+                    pid_type='recid',
+                    pid_value=f"{item_id}.0"
+                ).one_or_none()
+                inv_src_ids = [item_id, get_latest_version(item_id)] + (
+                    [draft_pid.pid_value] if draft_pid else []
+                )
+                if sele_id in supplement_key:
+                    opposite_index = 0 if sele_id == supplement_key[1] else 1
+                    inv_relation = supplement_key[opposite_index]
+                    for inv_src_id in inv_src_ids:
+                        relation = {
+                            'src_item_pid': inv_src_id,
+                            'dst_item_pid': src_without_ver,
+                            'sele_id': inv_relation
+                        }
+                        if inv_src_id in dst_fixed_relations:
+                            if (inv_relation !=
+                                dst_fixed_relations[inv_src_id].reference_type):
+                                updated.append(relation)
+                        else:
+                            created.append(relation)
+                else:
+                    deleted.extend([
+                        {
+                            'src_item_pid': inv_src_id,
+                            'dst_item_pid': src_without_ver
+                        }
+                        for inv_src_id in inv_src_ids
+                        if (
+                            inv_src_id in dst_fixed_relations and
+                            dst_fixed_relations[inv_src_id].reference_type
+                            in supplement_key
+                        )
+                    ])
+
+        # delete
+        for deleted_dst, deleted_link in src_fixed_relations.items():
+            deleted.append({
+                'src_item_pid': self.org_item_id,
+                'dst_item_pid': deleted_dst
+            })
+            sele_id = deleted_link.reference_type
+            if sele_id in supplement_key and is_src_integer:
+                inv_src_ids = [
+                    deleted_dst,
+                    f"{deleted_dst}.0",
+                    get_latest_version(deleted_dst)
+                ]
+                deleted.extend([
+                    {
+                        'src_item_pid': inv_src_id,
+                        'dst_item_pid': src_without_ver,
+                    }
+                    for inv_src_id in inv_src_ids
+                        if inv_src_id in dst_fixed_relations
+                ])
 
         try:
+            # Perform all database operations within a nested transaction
             with db.session.begin_nested():
-                if created:
-                    self.bulk_create(created)
-                if updated:
-                    self.bulk_update(updated)
+                # Delete relationships for removed items
                 if deleted:
                     self.bulk_delete(deleted)
+                # Update existing relationships
+                if updated:
+                    self.bulk_update(updated)
+                # Create new relationships
+                if created:
+                    self.bulk_create(created)
+
+            # Commit the transaction if all operations succeed
             db.session.commit()
+            for deleted_link in deleted:
+                UserActivityLogger.info(
+                    operation="ITEM_DELETE_LINK",
+                    target_key=deleted_link["dst_item_pid"]
+                )
+            for updated_link in updated:
+                UserActivityLogger.info(
+                    operation="ITEM_UPDATE_LINK",
+                    target_key=updated_link["dst_item_pid"]
+                )
+            for created_link in created:
+                UserActivityLogger.info(
+                    operation="ITEM_CREATE_LINK",
+                    target_key=created_link["dst_item_pid"]
+                )
         except IntegrityError as ex:
-            current_app.logger.error(ex.orig)
-            db.session.rollback()
-            return str(ex.orig)
-        except SQLAlchemyError as ex:
+            # Log and handle integrity errors (e.g., duplicate entries)
             current_app.logger.error(ex)
             db.session.rollback()
+            exec_info = sys.exc_info()
+            tb_info = traceback.format_tb(exec_info[2])
+            UserActivityLogger.error(
+                operation="ITEM_UPDATE_LINK",
+                remarks=tb_info[0]
+            )
             return str(ex)
+        except SQLAlchemyError as ex:
+            # Log and handle other SQLAlchemy errors
+            current_app.logger.error(ex)
+            db.session.rollback()
+            exec_info = sys.exc_info()
+            tb_info = traceback.format_tb(exec_info[2])
+            UserActivityLogger.error(
+                operation="ITEM_UPDATE_LINK",
+                remarks=tb_info[0]
+            )
+            return str(ex)
+        # Return None if no errors occurred
         return None
 
-    def bulk_create(self, dst_items):
-        """Create list of item links.
 
-        :param dst_items: List items.
+    def bulk_create(self, items):
+        """Create a list of item links in bulk.
+
+        Args:
+            dst_items: List of dictionaries containing
+                'src_item_pid', 'dst_item_pid' and 'sele_id' to be created.
         """
-        objects = [ItemReference(
-            src_item_pid=self.org_item_id,
-            dst_item_pid=cr['item_id'],
-            reference_type=cr['sele_id']) for cr in dst_items]
+        # Create a list of ItemReference objects for bulk insertion
+        objects = [
+            ItemReference(
+                src_item_pid=item['src_item_pid'],
+                dst_item_pid=item['dst_item_pid'],
+                reference_type=item['sele_id']
+            ) for item in items
+        ]
+        # Save all objects in a single database operation
         db.session.bulk_save_objects(objects)
 
-    def bulk_update(self, dst_items):
-        """Update list of item links.
+    def bulk_update(self, items):
+        """Update a list of item links in bulk.
 
-        :param dst_items: List items.
+        Args:
+            items(list): List of dictionaries containing
+                'src_item_pid', 'dst_item_pid' and 'sele_id' to be updated.
         """
-        objects = [ItemReference(
-            src_item_pid=self.org_item_id,
-            dst_item_pid=cr['item_id'],
-            reference_type=cr['sele_id']) for cr in dst_items]
-        for obj in objects:
-            db.session.merge(obj)
+        # Update each item relationship by merging changes into the database
+        for item in items:
+            db.session.merge(ItemReference(
+                src_item_pid=item['src_item_pid'],
+                dst_item_pid=item['dst_item_pid'],
+                reference_type=item['sele_id']
+            ))
 
-    def bulk_delete(self, dst_item_ids):
-        """Delete list of item links.
+    def bulk_delete(self, items):
+        """Delete a list of item links in bulk.
 
-        :param dst_item_ids: List items.
+        Args:
+            items(list): List of dictionaries containing
+                'src_item_pid', 'dst_item_pid' to be deleted.
         """
-        for dst_item_id in dst_item_ids:
+        for item in items:
             db.session.query(ItemReference).filter(
-                ItemReference.src_item_pid == self.org_item_id,
-                ItemReference.dst_item_pid == dst_item_id
+                ItemReference.src_item_pid==item['src_item_pid'],
+                ItemReference.dst_item_pid==item['dst_item_pid'],
             ).delete(synchronize_session='fetch')

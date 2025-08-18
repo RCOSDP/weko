@@ -83,6 +83,9 @@ WEKO_RECORDS_ALTERNATIVE_NAME_KEYS = ['creatorAlternative',
 WEKO_RECORDS_AFFILIATION_NAME_KEYS = ['affiliationName', 'affiliationNameLang']
 """List affiliation name key."""
 
+WEKO_RECORDS_MANAGED_KEYS =  ["accessrole","affiliationNameIdentifierScheme","bibliographicIssueDateType","catalog_access_right","catalog_description_type","catalog_file_object_type","catalog_identifier_type",
+"catalog_license_type","catalog_subject_scheme","contributorAffiliationScheme","contributor_type","contributorType","creatorNameType","dateType","displaytype","fileDateType","holding_agent_name_identifier_scheme","jpcoar_dataset_series","nameIdentifierScheme","nameType","objectType","resourcetype","subitem_access_right","subitem_apc","subitem_award_number_type","subitem_conference_country","subitem_date_issued_type","subitem_degreegrantor_identifier_scheme","subitem_description_type","subitem_funder_identifier_type","subitem_funding_stream_identifier_type","subitem_identifier_reg_type","subitem_identifier_type","subitem_relation_type","subitem_relation_type_select","subitem_source_identifier_type","subitem_subject_scheme","subitem_version_type"]
+
 WEKO_RECORDS_TITLE_TITLE = 'Title'
 """Title."""
 
@@ -98,6 +101,9 @@ WEKO_RECORDS_TIME_PERIOD_TITLES = ['時間的範囲', 'Time Period',
                                    '調査日', 'Date', '対象時期',
                                    'TimePeriod', 'Time Period(s)', 'Temporal']
 """List time period titles."""
+
+WEKO_RECORDS_REFERENCE_SUPPLEMENT = ['isSupplementTo','isSupplementedBy']
+"""List item reference supplement."""
 
 """
 WEKO_TEST_FIELD = {
@@ -252,3 +258,11 @@ COPY_NEW_FIELD = True
 
 WEKO_RECORDS_SYSTEM_COMMA = "-,-"
 """The system comma used to break metadata subitems."""
+
+WEKO_RECORDS_REST_ENDPOINTS = {
+    'oa_status_callback': {
+        'route': '/<string:version>/oa_status/callback',
+        'default_media_type': 'application/json',
+    }
+}
+"""REST endpoints."""

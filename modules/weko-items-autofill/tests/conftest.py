@@ -43,6 +43,7 @@ from weko_workflow.models import ActionStatus, Action
 from weko_admin.models import ApiCertificate
 
 from weko_items_autofill import WekoItemsAutofill
+from weko_items_ui.config import WEKO_ITEMS_UI_CRIS_LINKAGE_RESEARCHMAP_MAPPINGS,WEKO_ITEMS_UI_CRIS_LINKAGE_RESEARCHMAP_TYPE_MAPPINGS
 
 from tests.helpers import json_data, create_record
 
@@ -90,7 +91,9 @@ def base_app(instance_path):
         #     'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'),
         SQLALCHEMY_DATABASE_URI=os.getenv('SQLALCHEMY_DATABASE_URI',
                                            'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest'),
-        CACHE_REDIS_URL='redis://redis:6379/0',
+        CACHE_REDIS_URL=os.environ.get(
+            "CACHE_REDIS_URL", "redis://redis:6379/0"
+        ),
         CACHE_REDIS_DB='0',
         CACHE_REDIS_HOST="redis",
         SEARCH_UI_SEARCH_INDEX="test-weko",
@@ -100,6 +103,8 @@ def base_app(instance_path):
             "System Administrator",
             "Repository Administrator",
         ],
+        WEKO_ITEMS_UI_CRIS_LINKAGE_RESEARCHMAP_MAPPINGS=WEKO_ITEMS_UI_CRIS_LINKAGE_RESEARCHMAP_MAPPINGS,
+        WEKO_ITEMS_UI_CRIS_LINKAGE_RESEARCHMAP_TYPE_MAPPINGS = WEKO_ITEMS_UI_CRIS_LINKAGE_RESEARCHMAP_TYPE_MAPPINGS
     )
     Babel(app_)
     InvenioDB(app_)
@@ -334,14 +339,25 @@ def itemtypes(db):
                      render=json_data("data/itemtypes/15_render.json"),
                      tag=1,version_id=1,is_deleted=False)
     item_type_mapping3 = ItemTypeMapping(id=3, item_type_id=item_type15.id, mapping=json_data("data/itemtypes/15_item_type_mapping.json"))
+    itemtype_name_for_error = ItemTypeName(id=4,name='テストアイテムタイプ4',
+                                  has_site_license=True,
+                                  is_active=True)
+    item_type_for_error = ItemType(id=4,name_id=itemtype_name_for_error.id,harvesting_type=True,
+                     schema={},
+                     render={},
+                     tag=1,version_id=1,is_deleted=False)
+    item_type_mapping_for_error = ItemTypeMapping(id=4, item_type_id=item_type_for_error.id, mapping={})
 
     with db.session.begin_nested():
         db.session.add(item_type15)
         db.session.add(item_type_mapping3)
+        db.session.add(itemtype_name_for_error)
+        db.session.add(item_type_for_error)
+        db.session.add(item_type_mapping_for_error)
         
     db.session.commit()
 
-    return [(item_type,item_type_name,item_type_mapping),(item_type2,item_type_name2),(item_type15,itemtype_name15)]
+    return [(item_type,item_type_name,item_type_mapping),(item_type2,item_type_name2),(item_type15,itemtype_name15),(item_type_for_error,itemtype_name_for_error)]
 
 @pytest.fixture()
 def actions(db):

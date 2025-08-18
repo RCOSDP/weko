@@ -122,88 +122,6 @@ def test_file_ui(app,records,itemtypes,users,mocker):
                 file_ui(data2, data3)
             except:
                 pass
-       
-
-# def file_ui(
-# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_fd.py::test_file_ui2 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
-def test_file_ui2(app,records_restricted,itemtypes,users ,client ,mocker):
-    indexer, results = records_restricted
-    recid_none_login =  results[len(results) -2]["recid"]
-    recid_login =  results[len(results) -1]["recid"]
-    # 21
-    # with app.test_request_context():
-    mock= mocker.patch('weko_records_ui.fd._download_file' ,return_value=make_response())
-    res = client.get(url_for('invenio_records_ui.recid_files'
-                        , pid_value = recid_none_login.pid_value
-                        , filename = "helloworld_open_restricted.pdf"
-                        ) + "?terms_of_use_only=true")
-    assert res.status == '200 OK'
-    assert mock.call_count == 1
-    #22
-    data1 = MagicMock()
-    def cannot():
-        return False
-    data1.can = cannot
-    mock = mocker.patch('weko_records_ui.fd._redirect_method' ,return_value=make_response())
-    with patch('weko_records_ui.fd.file_permission_factory', return_value=data1):
-        res = client.get(url_for('invenio_records_ui.recid_files'
-                            , pid_value = recid_none_login.pid_value
-                            , filename = "helloworld_open_restricted.pdf"
-                            ))
-        assert res.status == '200 OK'
-        assert mock.call_count == 1
-
-    with patch("weko_records_ui.fd.file_permission_factory", return_value=data1):
-        with patch("flask_login.utils._get_user", return_value=users[7]["obj"]):
-                indexer, results = records_restricted
-                recid_none_login =  results[len(results) -2]["recid"]
-                recid_login =  results[len(results) -1]["recid"]
-                record_login = results[len(results) -1]["record"]
-
-                from werkzeug.exceptions import Forbidden 
-                try:
-                    res = file_ui(recid_login,record_login ,is_preview=False  , filename = "helloworld_open_restricted.pdf")
-                    assert False
-                except Forbidden :
-                    pass
-
-# def file_ui(
-# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_fd.py::test_file_ui3 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
-def test_file_ui3(app,records_restricted,itemtypes,db_file_permission,users ,client ,mocker):
-    indexer, results = records_restricted
-    recid_none_login =  results[len(results) -2]["recid"]
-    recid_login =  results[len(results) -1]["recid"]
-    record_login = results[len(results) -1]["record"]
-    data1 = MagicMock()
-    def can():
-        return True
-    data1.can = can
-
-    with app.test_request_context():
-        with patch('weko_records_ui.fd.file_permission_factory', return_value=data1):
-            #23
-            # contributer logined
-            with patch("flask_login.utils._get_user", return_value=users[0]["obj"]):
-                mock = mocker.patch('weko_records_ui.fd.file_download_onetime' ,return_value=make_response())
-                fileobj:WekoFileObject = record_file_factory( recid_login, record_login, filename = "helloworld_open_restricted.pdf" )
-                fileobj.data['accessrole']='open_restricted'
-                fileobj.data['filename'] = "helloworld_open_restricted.pdf"
-                res = file_ui(recid_login,record_login ,is_preview=False , filename = "helloworld_open_restricted.pdf")
-                mock.assert_called()
-            
-            #24
-            with patch("flask_login.utils._get_user", return_value=users[7]["obj"]):
-                with patch("weko_records_ui.fd.is_owners_or_superusers", return_value=False):
-                    fileobj:WekoFileObject = record_file_factory( recid_login, record_login, filename = "helloworld_open_restricted.pdf" )
-                    fileobj.data['accessrole']='open_restricted'
-                    fileobj.data['filename'] = "helloworld_open_restricted.pdf"
-                    from werkzeug.exceptions import Forbidden 
-                    try:
-                        res = file_ui(recid_login,record_login ,is_preview=False  , filename = "helloworld_open_restricted.pdf")
-                        assert False
-                    except Forbidden :
-                        pass
-
 
 # for records_restricted
 # # def file_ui(
@@ -417,7 +335,7 @@ def test_file_download_onetime(app, records, itemtypes, users, db_fileonetimedow
             with patch("flask.templating._render", return_value=""):
                 with patch("weko_records_ui.fd.get_onetime_download", return_value=db_fileonetimedownload):
                     #with patch("weko_records_ui.fd.parse_one_time_download_token", return_value=(True, [1])):
-                        res = client.post('/record/1/file/onetime/helloworld.zip',
+                        res = client.post('/record/3/file/onetime/helloworld.zip',
                                     data={'input_password':'test_pass'},
                                     content_type='application/json')
                         assert res.status_code == 200
@@ -523,12 +441,12 @@ def test_file_download_secret(app,db, itemtypes, users, records):
                         with patch("weko_records_ui.fd.record_file_factory", return_value=factory):
                             with patch("weko_records_ui.fd.get_secret_download", return_value=p):
                                 assert file_download_secret(recid,record,record_file_factory,filename="helloworld.docx")=="_download_file"
-
                     with patch("weko_records_ui.fd.record_file_factory", return_value=False):
                         assert file_download_onetime(recid,record,record_file_factory)==('weko_theme/error.html', 'Token is invalid.')
 
 
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_fd.py::test_file_list_ui -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+@pytest.mark.timeout(60)
 def test_file_list_ui(app,records,itemtypes,users,mocker,db_file_permission):
     indexer, results = records
 

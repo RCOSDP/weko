@@ -20,6 +20,7 @@
 
 """Configuration for weko-records-ui."""
 import os
+from enum import Enum
 
 from flask_babelex import lazy_gettext as _
 
@@ -94,6 +95,12 @@ CSL_JSTEMPLATE_LOADING = os.path.join(CSL_JSTEMPLATE_DIR, 'loading.html')
 CSL_JSTEMPLATE_TYPEAHEAD = os.path.join(CSL_JSTEMPLATE_DIR, 'typeahead.html')
 
 RECORDS_UI_ENDPOINTS = dict(
+    recid_signposting=dict(
+        pid_type='recid',
+        route='/records/<pid_value>',
+        view_imp='weko_signposting.api.requested_signposting',
+        methods=['HEAD']
+    ),
     recid=dict(
         pid_type='recid',
         route='/records/<pid_value>',
@@ -252,6 +259,10 @@ RECORDS_UI_EXPORT_FORMATS = {
             title='DDI',
             serializer='weko_schema_ui.serializers.WekoCommonSchema',
             order=6,
+        ),
+        'zip': dict(
+            title='ZIP',
+            order=7,
         ),
     }
 }
@@ -668,11 +679,20 @@ WEKO_RECORDS_UI_DISPLAY_VERSION_BOX_FLG = True
 WEKO_RECORDS_UI_DISPLAY_EXPORT_BOX_FLG = True
 """ Display Export box on item detail. """
 
+WEKO_RECORDS_UI_DISPLAY_COMMUNITIES_BOX_FLG = True
+""" Display COMMUNITIES box on item detail. """
+
 WEKO_RECORDS_UI_DISPLAY_RESOURCE_TYPE = False
 """ Display resource type on item detail. """
 
 WEKO_RECORDS_UI_DISPLAY_ITEM_TYPE = True
 """ Display item type name on item detail. """
+
+WEKO_RECORDS_UI_COMMUNITIES_BOX_THUMBNAIL_WIDTH = 50
+""" community thumbnail width in COMMUNITIES BOX. """
+
+WEKO_RECORDS_UI_COMMUNITIES_BOX_THUMBNAIL_HEIGHT = 50
+""" community thumbnail height in COMMUNITIES BOX. """
 
 WEKO_RECORDS_UI_REST_ENDPOINTS = {
     'need_restricted_access': {
@@ -720,3 +740,30 @@ WEKO_RECORDS_UI_TSV_FIELD_NAMES_DEFAULT = ['Name', 'Size', 'License', 'Date', 'U
 WEKO_RECORDS_UI_TSV_FIELD_NAMES_EN = ['Name', 'Size', 'License', 'Date', 'URL']
 
 WEKO_RECORDS_UI_TSV_FIELD_NAMES_JA = ['名前', 'サイズ', 'ライセンス', '公開日', '格納場所']
+
+# The API URL to obtain a token for OA. example: "<OA URL>/oauth/token"
+WEKO_RECORDS_UI_OA_GET_TOKEN_URL = ""
+
+# The API URL to update the status of an OA article. example: "<OA URL>/api/articles/{}/status"
+WEKO_RECORDS_UI_OA_UPDATE_STATUS_URL = ""
+
+# The API URL to get OA policies. example: "<OA URL>/api/oa_policies"
+WEKO_RECORDS_UI_OA_GET_OA_POLICIES_URL = ""
+
+WEKO_RECORDS_UI_OA_API_RETRY_COUNT = 3
+
+WEKO_RECORDS_UI_OA_API_CODE = "oaa"
+
+class EXTERNAL_SYSTEM(Enum):
+    OA = "OA"
+
+class ITEM_ACTION(Enum):
+    CREATED = "created"
+    UPDATED = "updated"
+    DELETED = "deleted"
+
+class FILE_OPEN_STATUS(Enum):
+    PUBLIC = "public"
+    EMBARGO = "embargo"
+    PRIVATE = "private"
+    RESTRICTED = "restricted"

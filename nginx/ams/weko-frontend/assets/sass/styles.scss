@@ -156,15 +156,13 @@
     position: relative;
 
     @include min-screen($breakpoint-tablet) {
-      max-width: calc(100% - 276px);
+      max-width: 75%;
     }
   }
 
   &__head {
     width: 100%;
-    padding: 40px 20px 30px;
-    display: grid;
-    grid-template-columns: 135px auto;
+    padding: 40px 20px 5px;
 
     @include max-screen($breakpoint-mobile) {
       grid-template-columns: 80px auto;
