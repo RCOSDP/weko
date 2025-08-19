@@ -60,6 +60,8 @@ class ShibUser(object):
                     is_member_of = [is_member_of]
                 else:
                     is_member_of = []
+            elif not isinstance(is_member_of, list):
+                is_member_of = []
             self.is_member_of = is_member_of
             del shib_attr['shib_is_member_of']
 
@@ -73,6 +75,8 @@ class ShibUser(object):
                     organizations = [organizations]
                 else:
                     organizations = []
+            elif not isinstance(organizations, list):
+                organizations = []
             self.organizations = organizations
             del shib_attr['shib_organization']
 

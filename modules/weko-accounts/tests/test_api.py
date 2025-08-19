@@ -88,6 +88,30 @@ class TestShibUser:
         assert shibuser.is_member_of == []
         assert shibuser.organizations == []
 
+        # get is_member_of, type is neither list nor str
+        attr = {
+            "shib_eppn": "test_eppn",
+            "shib_is_member_of": 123
+        }
+        shibuser = ShibUser(attr)
+        assert shibuser.shib_attr == {"shib_eppn": "test_eppn"}
+        assert shibuser.user == None
+        assert shibuser.shib_user == None
+        assert shibuser.is_member_of == []
+        assert shibuser.organizations == []
+
+        # get is_member_of, type is none
+        attr = {
+            "shib_eppn": "test_eppn",
+            "shib_is_member_of": None
+        }
+        shibuser = ShibUser(attr)
+        assert shibuser.shib_attr == {"shib_eppn": "test_eppn"}
+        assert shibuser.user == None
+        assert shibuser.shib_user == None
+        assert shibuser.is_member_of == []
+        assert shibuser.organizations == []
+
         # get organizations and type is list
         attr = {
             "shib_eppn":"test_eppn",
@@ -136,6 +160,29 @@ class TestShibUser:
         assert shibuser.is_member_of == []
         assert shibuser.organizations == []
 
+        # get organizations, type is neither list nor str
+        attr = {
+            "shib_eppn": "test_eppn",
+            "shib_organization": 123
+        }
+        shibuser = ShibUser(attr)
+        assert shibuser.shib_attr == {"shib_eppn": "test_eppn"}
+        assert shibuser.user == None
+        assert shibuser.shib_user == None
+        assert shibuser.is_member_of == []
+        assert shibuser.organizations == []
+
+        # get organizations, type is none
+        attr = {
+            "shib_eppn": "test_eppn",
+            "shib_organization": None
+        }
+        shibuser = ShibUser(attr)
+        assert shibuser.shib_attr == {"shib_eppn": "test_eppn"}
+        assert shibuser.user == None
+        assert shibuser.shib_user == None
+        assert shibuser.is_member_of == []
+        assert shibuser.organizations == []
 
 #    def _set_weko_user_role(self, roles):
 # .tox/c1/bin/pytest --cov=weko_accounts tests/test_api.py::TestShibUser::test_set_weko_user_role -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
