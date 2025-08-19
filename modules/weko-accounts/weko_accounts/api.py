@@ -50,6 +50,32 @@ class ShibUser(object):
         self.shib_user = None
         """The :class:`.models.ShibbolethUser` instance."""
 
+        self.is_member_of = []
+        if 'shib_is_member_of' in shib_attr:
+            is_member_of = shib_attr.get('shib_is_member_of', [])
+            if isinstance(is_member_of, str):
+                if is_member_of.find(';') != -1:
+                    is_member_of = is_member_of.split(';')
+                elif is_member_of:
+                    is_member_of = [is_member_of]
+                else:
+                    is_member_of = []
+            self.is_member_of = is_member_of
+            del shib_attr['shib_is_member_of']
+
+        self.organizations = []
+        if 'shib_organization' in shib_attr:
+            organizations = shib_attr.get('shib_organization', [])
+            if isinstance(organizations, str):
+                if organizations.find(';') != -1:
+                    organizations = organizations.split(';')
+                elif organizations:
+                    organizations = [organizations]
+                else:
+                    organizations = []
+            self.organizations = organizations
+            del shib_attr['shib_organization']
+
     def _set_weko_user_role(self, roles):
         """
         Assign role for Shibboleth user.
