@@ -1110,6 +1110,14 @@ def test_handle_check_duplicate_record(app):
     assert mock_is_duplicate.call_count == 1
     assert record == expect
 
+    record = {"id": "invalid", "metadata": {"title": "Title 1"}}
+    expect = {"id": "invalid", "metadata": {"title": "Title 1"}}
+    with patch("weko_items_ui.utils.is_duplicate_item") as mock_is_duplicate:
+        mock_is_duplicate.return_value = False, [], []
+        handle_check_duplicate_record([record])
+    assert mock_is_duplicate.call_count == 1
+    assert record == expect
+
     link = "https://example.com/duplicate/1"
     record = {"metadata": {"title": "Title 1"}}
     expect = {"metadata": {"title": "Title 1"}, "warning": f'The same item may have been registered.<br><a href="{link}" target="_blank">{link}</a><br>'}

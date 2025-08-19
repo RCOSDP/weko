@@ -969,8 +969,6 @@ def check_jsonld_import_items(
         data_path = os.path.join(data_path, "data")
         list_record.sort(key=lambda x: get_priority(x["link_data"]))
 
-        handle_check_duplicate_record(list_record)
-
         handle_shared_id(list_record, shared_id)
         handle_save_bagit(list_record, file, data_path, filename)
         handle_metadata_amend_by_doi(list_record, meta_data_api)
@@ -980,6 +978,7 @@ def check_jsonld_import_items(
         handle_fill_system_item(list_record)
 
         list_record = handle_validate_item_import(list_record, item_type.schema)
+        handle_check_duplicate_record(list_record)
 
         list_record = handle_check_exist_record(list_record)
         handle_item_title(list_record)
@@ -1540,9 +1539,12 @@ def handle_check_duplicate_record(list_record):
     from weko_items_ui.utils import is_duplicate_item
     for item in list_record:
         warning = None
+        item_id = item.get("id")
+        if not isinstance(item_id, str) or not item_id.isdigit():
+            item_id = None
         is_duplicate, _recid_lest, duplicate_links = is_duplicate_item(
             item.get("metadata", {}),
-            exclude_ids=[int(item["id"])] if item.get("id") else []
+            exclude_ids=[int(item_id)] if item_id else []
         )
         if is_duplicate:
             duplicate_links = list(set(duplicate_links))
