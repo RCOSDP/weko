@@ -33,7 +33,7 @@ class TestShibUser:
             "shib_eppn":"test_eppn"
         }
         shibuser = ShibUser(attr)
-        assert shibuser.shib_attr == attr
+        assert shibuser.shib_attr == {"shib_eppn": "test_eppn"}
         assert shibuser.user == None
         assert shibuser.shib_user == None
         assert shibuser.is_member_of == []
@@ -46,7 +46,7 @@ class TestShibUser:
                                   "https://example.com/gr/yyy"]
         }
         shibuser = ShibUser(attr)
-        assert shibuser.shib_attr == attr
+        assert shibuser.shib_attr == {"shib_eppn": "test_eppn"}
         assert shibuser.user == None
         assert shibuser.shib_user == None
         assert shibuser.is_member_of == ["https://example.com/gr/xxx", "https://example.com/gr/yyy"]
@@ -58,7 +58,7 @@ class TestShibUser:
             "shib_is_member_of": "https://example.com/gr/xxx"
         }
         shibuser = ShibUser(attr)
-        assert shibuser.shib_attr == attr
+        assert shibuser.shib_attr == {"shib_eppn": "test_eppn"}
         assert shibuser.user == None
         assert shibuser.shib_user == None
         assert shibuser.is_member_of == ["https://example.com/gr/xxx"]
@@ -70,10 +70,22 @@ class TestShibUser:
             "shib_is_member_of": "https://example.com/gr/xxx;https://example.com/gr/yyy"
         }
         shibuser = ShibUser(attr)
-        assert shibuser.shib_attr == attr
+        assert shibuser.shib_attr == {"shib_eppn": "test_eppn"}
         assert shibuser.user == None
         assert shibuser.shib_user == None
         assert shibuser.is_member_of == ["https://example.com/gr/xxx", "https://example.com/gr/yyy"]
+        assert shibuser.organizations == []
+
+        # get is_member_of, type is str and is empty
+        attr = {
+            "shib_eppn": "test_eppn",
+            "shib_is_member_of": ""
+        }
+        shibuser = ShibUser(attr)
+        assert shibuser.shib_attr == {"shib_eppn": "test_eppn"}
+        assert shibuser.user == None
+        assert shibuser.shib_user == None
+        assert shibuser.is_member_of == []
         assert shibuser.organizations == []
 
         # get organizations and type is list
@@ -82,7 +94,7 @@ class TestShibUser:
             "shib_organization": ["Abcdef University", "Test Organization"]
         }
         shibuser = ShibUser(attr)
-        assert shibuser.shib_attr == attr
+        assert shibuser.shib_attr == {"shib_eppn": "test_eppn"}
         assert shibuser.user == None
         assert shibuser.shib_user == None
         assert shibuser.is_member_of == []
@@ -94,7 +106,7 @@ class TestShibUser:
             "shib_organization": "Abcdef University"
         }
         shibuser = ShibUser(attr)
-        assert shibuser.shib_attr == attr
+        assert shibuser.shib_attr == {"shib_eppn": "test_eppn"}
         assert shibuser.user == None
         assert shibuser.shib_user == None
         assert shibuser.is_member_of == []
@@ -106,11 +118,23 @@ class TestShibUser:
             "shib_organization": "Abcdef University;Test Organization"
         }
         shibuser = ShibUser(attr)
-        assert shibuser.shib_attr == attr
+        assert shibuser.shib_attr == {"shib_eppn": "test_eppn"}
         assert shibuser.user == None
         assert shibuser.shib_user == None
         assert shibuser.is_member_of == []
         assert shibuser.organizations == ["Abcdef University", "Test Organization"]
+
+        # get organizations, type is str and is empty
+        attr = {
+            "shib_eppn": "test_eppn",
+            "shib_organization": ""
+        }
+        shibuser = ShibUser(attr)
+        assert shibuser.shib_attr == {"shib_eppn": "test_eppn"}
+        assert shibuser.user == None
+        assert shibuser.shib_user == None
+        assert shibuser.is_member_of == []
+        assert shibuser.organizations == []
 
 
 #    def _set_weko_user_role(self, roles):
