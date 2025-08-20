@@ -146,9 +146,7 @@ class ItemTypeMetaDataView(BaseView):
                 )
                 # Check that item type is already registered to an item or not
                 for item in all_records:
-                    items = ItemsMetadata.get_registered_item_metadata(
-                        item_type_id=item.id)
-                    if len(items) > 0:
+                    if ItemsMetadata.count_registered_item_metadata(item.id) > 0:
                         flash(
                             _('Cannot delete due to child existing item types.'),
                             'error'

@@ -1408,22 +1408,17 @@ def test_item_metadata_get_by_item_type_id(app, db):
 
 # class ItemsMetadata(RecordBase):
 #     def get_registered_item_metadata(cls, item_type_id):
-def test_get_registered_item_metadata_ItemsMetadata(app):
-    test = ItemsMetadata(data={})
-    data1 = MagicMock()
+def test_count_registered_item_metadata(app):
+    mock_db = MagicMock()
+    mock_query = MagicMock(name='query')
+    mock_query.join.return_value = mock_query
+    mock_query.filter.return_value = mock_query
+    mock_query.count.return_value = 1
+    mock_db.session.query.return_value = mock_query
 
-    def all_func():
-        all_magicmock = MagicMock()
-        all_magicmock.id = 1
-        return [all_magicmock]
-
-    data1.query = MagicMock()
-    data1.query.filter_by = MagicMock()
-    data1.query.filter_by.all = all_func
-
-    with patch("weko_records.api.ItemMetadata", return_value=data1):
-        with patch("weko_records.api.PersistentIdentifier", return_value=data1):
-            assert test.get_registered_item_metadata(item_type_id=1) != None
+    with patch("weko_records.api.db", mock_db):
+        result = ItemsMetadata.count_registered_item_metadata(item_type_id=1)
+        assert result == 1
 
 # class ItemsMetadata(RecordBase):
 #     def get_by_object_id(cls, object_id):

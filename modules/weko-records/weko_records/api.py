@@ -1845,23 +1845,24 @@ class ItemsMetadata(RecordBase):
             return query.all()
 
     @classmethod
-    def get_registered_item_metadata(cls, item_type_id):
-        """Retrieve multiple records by item types identifier.
+    def count_registered_item_metadata(cls, item_type_id):
+        """Count the number of registered item metadata by item type identifier.
 
-        :param item_type_id: Identifier of item type.
-        :returns: A list of :class:`Record` instance.
+        Args:
+            item_type_id (int): Identifier of item type.
+        Returns:
+            int: Count of registered item metadata.
         """
         with db.session.no_autoflush:
-            # Get all item metadata registered by item_type_id
-            items = ItemMetadata.query.filter_by(item_type_id=item_type_id).all()
-            item_metadata_array = [str(item.id) for item in items]
-            # Get all persistent identifier which are not deleted.
-            persistent_identifier = PersistentIdentifier.query.filter(
-                PersistentIdentifier.object_uuid.in_(item_metadata_array),
-                PersistentIdentifier.pid_type == 'recid',
+            query = db.session.query(PersistentIdentifier).join(
+                ItemMetadata,
+                PersistentIdentifier.object_uuid == ItemMetadata.id
+            ).filter(
+                ItemMetadata.item_type_id == item_type_id,
+                PersistentIdentifier.pid_type == "recid",
                 PersistentIdentifier.status == PIDStatus.REGISTERED
-            ).all()
-            return persistent_identifier
+            )
+            return query.count()
 
     @classmethod
     def get_by_object_id(cls, object_id):
