@@ -1000,6 +1000,7 @@ def check_jsonld_import_items(
         handle_check_and_prepare_feedback_mail(list_record)
         handle_check_and_prepare_request_mail(list_record)
 
+        handle_check_operation_flags(list_record, data_path)
         handle_check_file_metadata(list_record, data_path)
 
         handle_check_authors_prefix(list_record)
@@ -1012,8 +1013,6 @@ def check_jsonld_import_items(
 
         handle_check_item_link(list_record)
         handle_check_duplicate_item_link(list_record)
-
-        handle_check_operation_flags(list_record)
 
         check_result.update({"list_record": list_record})
 
@@ -3175,24 +3174,39 @@ def handle_check_duplicate_item_link(list_record):
                 item["errors"] + errors if item.get("errors") else errors
             )
 
-def handle_check_operation_flags(list_record):
+def handle_check_operation_flags(list_record, data_path):
     """
-    The handle_check_operation_flags method processes and updates metadata
-    based on the specified flags.
+    Processes and updates metadata based on the specified flags.
     It checks the status of each flag and modifies the metadata accordingly.
 
     Args:
         list_record (list): List of records.
+        data_path (str): Path to the data.
 
     Notes:
-        The 'metadata_replace' flag indicates whether to ignore the uploaded files.
-        If 'metadata_replace' is set to True, the uploaded files will be ignored.
+        The 'wk:metadataReplace' flag indicates whether uploaded files should
+        be ignored when updating an item. If 'wk:metadataReplace' is set to True,
+        only the metadata will be updated.
     """
 
     for record in list_record:
         flg = record.get("metadata_replace")
-        if flg:
-            record["file_path"] = []
+        error = None
+        if record.get("status") == "new" and flg:
+            error = _(
+                "The 'wk:metadataReplace' flag cannot be used "
+                "when registering an item."
+            )
+        elif flg:
+            for file_path in record.get("file_path", []):
+                target_path = os.path.join(data_path, file_path)
+                if os.path.exists(target_path):
+                    os.remove(target_path)
+
+        if error:
+            record["errors"] = (
+                record["errors"] + [error] if record.get("errors") else [error]
+            )
 
 def register_item_handle(item):
     """Register item handle (CNRI).
