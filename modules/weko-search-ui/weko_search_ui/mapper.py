@@ -2312,23 +2312,24 @@ class JsonLdMapper(JsonMapper):
         # Extra
         if "Extra" in item_map:
             extra_key = item_map["Extra"]
-            # case: "Extra" is list
-            # If not list, pass this process.
-            extra_key_head = item_map["Extra"]
-            if not metadata_to_map.get(extra_key):
-                extra_schema = self.itemtype.schema["properties"].get(
-                    extra_key_head).get("items").get("properties")
-                interim = list(extra_schema.keys())[0]
-                extra_key = extra_key_head + "[0]." + interim
+            prop_type = self._get_property_type(extra_key)
+            if prop_type == "array":
+                extra_key_head = item_map["Extra"]
+                if not metadata_to_map.get(extra_key):
+                    extra_schema = self.itemtype.schema["properties"].get(
+                        extra_key_head).get("items", {}).get("properties")
+                    interim = list(extra_schema.keys())[0] if extra_schema else ""
+                    extra_key = extra_key_head + "[0]." + interim
             str_extra_dict = metadata_to_map.get(extra_key)
-            extra_entity = {
-                "description": "Metadata which is not able to be mapped",
-                "value": str_extra_dict
-            }
-            add_entity(
-                rocrate.root_dataset, "additionalProperty", gen_id("extra"),
-                "PropertyValue", extra_entity
-            )
+            if str_extra_dict:
+                extra_entity = {
+                    "description": "Metadata which is not able to be mapped",
+                    "value": str_extra_dict
+                }
+                add_entity(
+                    rocrate.root_dataset, "additionalProperty", gen_id("extra"),
+                    "PropertyValue", extra_entity
+                )
 
         # wk:itemLinks
         list_item_link_info = ItemLink.get_item_link_info(recid)
