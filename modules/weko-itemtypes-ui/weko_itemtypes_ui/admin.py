@@ -130,7 +130,7 @@ class ItemTypeMetaDataView(BaseView):
         """Soft-delete an item type."""
         check = is_import_running()
         if check == "is_import_running":
-            flash(_('Item type cannot be deleted becase import is in progress.'), 'error')
+            flash(_('Cannot delete item type. Import is in progress.'), 'error')
             return jsonify(code=-1)
 
         if item_type_id > 0:
@@ -138,7 +138,10 @@ class ItemTypeMetaDataView(BaseView):
             if record is not None:
                 # Check harvesting_type
                 if record.model.harvesting_type:
-                    flash(_('Cannot delete Item type for Harvesting.'), 'error')
+                    flash(
+                        _('Cannot delete item type. It is used for harvesting.'),
+                        'error'
+                    )
                     return jsonify(code=-1)
                 # Get all versions
                 all_records = ItemTypes.get_records_by_name_id(
@@ -148,19 +151,30 @@ class ItemTypeMetaDataView(BaseView):
                 for item in all_records:
                     if ItemsMetadata.count_registered_item_metadata(item.id) > 0:
                         flash(
-                            _('Cannot delete due to child existing item types.'),
+                            _('Cannot delete item type. Item of this type already exists.'),
                             'error'
                         )
                         return jsonify(code=-1)
+                # Check that item type is used in workflow
+                workflow = WorkFlow()
+                workflow_list = workflow.get_workflow_by_itemtype_id(item_type_id)
+                if workflow_list:
+                    current_app.logger.info("Item type is used in workflow.")
+                    flash(
+                        _('Cannot delete item type. It is used in some workflows.'),
+                        'error'
+                    )
+                    return jsonify(code=-1)
+
                 # Check that item type is used SWORD API
                 jsonld_mappings = JsonldMapping.get_by_itemtype_id(item_type_id)
                 for jsonld_mapping in jsonld_mappings:
                     if SwordClient.get_clients_by_mapping_id(jsonld_mapping.id):
                         current_app.logger.info("Item type is used SWORD API.")
-                        flash(
-                            _('Cannot delete due to SWORD API is using this item types.'),
-                            'error'
-                        )
+                        flash(_(
+                            'Cannot delete item type. It is used in SWORD API '
+                            'JSON-LD import settings.'
+                        ), 'error')
                         return jsonify(code=-1)
 
                 # Get item type name
@@ -189,7 +203,7 @@ class ItemTypeMetaDataView(BaseView):
                             remarks=tb_info[0]
                         )
                         traceback.print_exc()
-                        flash(_('Failed to delete Item type.'), 'error')
+                        flash(_('Unexpected error. Failed to delete item type.'), 'error')
                         return jsonify(code=-1)
 
                     for jsonld_mapping in jsonld_mappings:
@@ -203,7 +217,7 @@ class ItemTypeMetaDataView(BaseView):
                         except Exception:
                             db.session.rollback()
                             current_app.logger.error(
-                                "Failed to delete Item type JSON-LD mapping: {}"
+                                "Failed to delete JSON-LD mapping: {}"
                                 .format(jsonld_mapping.name)
                             )
                             traceback.print_exc()
@@ -216,7 +230,7 @@ class ItemTypeMetaDataView(BaseView):
                     )
                     flash(_('Deleted Item type successfully.'))
                     return jsonify(code=0)
-        flash(_('An error has occurred.'), 'error')
+        flash(_('Item type not found.'), 'error')
         return jsonify(code=-1)
 
 
@@ -417,7 +431,7 @@ class ItemTypeMetaDataView(BaseView):
             else:
                 lists['defaults'] = {
                     '0': {
-                        'name': _('Date (Type-less）'),
+                        'name': _('Date (Type-less)'),
                         'value': 'datetime'}}
         else:
             if current_app.config['WEKO_ITEMTYPES_UI_SHOW_DEFAULT_PROPERTIES']:
@@ -425,7 +439,7 @@ class ItemTypeMetaDataView(BaseView):
             else:
                 lists['defaults'] = {
                     '0': {
-                        'name': _('Date (Type-less）'),
+                        'name': _('Date (Type-less)'),
                         'value': 'datetime'}}
 
         return jsonify(lists)
