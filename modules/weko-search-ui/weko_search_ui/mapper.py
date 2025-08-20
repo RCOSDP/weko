@@ -1458,8 +1458,8 @@ class JsonLdMapper(JsonMapper):
             **({"uri": system_info["uri"]}
                 if isinstance(system_info.get("uri"), str) else {}),
             "file_path": [
-                filename[5:] for filename in system_info["file_path"]
-                if filename.startswith("data/")
+                filename[5:] if filename.startswith("data/") else ""
+                for filename in system_info["file_path"]
             ],
             "non_extract": [
                 filename[5:] for filename in system_info["non_extract"]

@@ -963,7 +963,7 @@ def check_jsonld_import_items(
 
         with open(f"{data_path}/{json_name}", "r") as f:
             json_ld = json.load(f)
-        item_metadatas, _ = mapper.to_item_metadata(json_ld)
+        item_metadatas, _fromat = mapper.to_item_metadata(json_ld)
         list_record = [
             {
                 "$schema": f"/items/jsonschema/{item_type.id}",
@@ -1021,8 +1021,10 @@ def check_jsonld_import_items(
         current_app.logger.warning("Failed to extract import file.")
         traceback.print_exc()
         check_result.update({
-            "error": f"The format of the specified file {filename} dose not "
-            + "support import. Please specify a zip file."
+            "error": _(
+                "The format of the specified file {} dose not "
+                "support import. Please specify a zip file."
+            ).frormat(filename)
         })
     except bagit.BagValidationError as ex:
         current_app.logger.warning("Failed to validate import bagit file.")
@@ -1036,8 +1038,14 @@ def check_jsonld_import_items(
         check_result.update({
             "error": ex.reason
         })
+    except json.JSONDecodeError as ex:
+        current_app.logger.warning("Failed to decode import JSON-LD file.")
+        traceback.print_exc()
+        check_result.update({
+            "error": _("Failred to decode JSON-LD file: ") + str(ex)
+        })
     except Exception as ex:
-        check_result.update({"error": str(ex)})
+        check_result.update({"error": _("Unexpected error occurred: ") + str(ex)})
         current_app.logger.error("Unexpected error occurred during import.")
         traceback.print_exc()
 
