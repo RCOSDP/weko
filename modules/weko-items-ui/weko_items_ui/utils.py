@@ -27,22 +27,25 @@ import json
 import os
 import re
 import shutil
-import sys
 import tempfile
 import traceback
+import unicodedata
+import pytz
 from collections import OrderedDict
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, timezone
 from io import StringIO
 
 import bagit
+from sqlalchemy.exc import SQLAlchemyError
 from elasticsearch.exceptions import NotFoundError
 from elasticsearch import exceptions as es_exceptions
-from flask import abort, current_app, flash, redirect, request, send_file, \
-    url_for,Flask
+from flask import abort, current_app, flash, redirect, request, send_file, url_for
 from flask_babelex import gettext as _
-from flask_limiter import Limiter
-from flask_limiter.util import get_remote_address
 from flask_login import current_user
+from sqlalchemy import MetaData, Table
+from sqlalchemy.sql import text
+from jsonschema import SchemaError, ValidationError
+
 from invenio_accounts.models import Role, userrole
 from invenio_db import db
 from invenio_i18n.ext import current_i18n
@@ -55,34 +58,39 @@ from invenio_records.api import RecordBase
 from invenio_accounts.models import User
 from invenio_search import RecordsSearch
 from invenio_stats.utils import QueryRankingHelper
-#from invenio_stats.views import QueryRecordViewCount
-from jsonschema import SchemaError, ValidationError
-from sqlalchemy import MetaData, Table
 from weko_admin.models import AdminSettings
+from weko_authors.api import WekoAuthors
 from weko_deposit.api import WekoDeposit, WekoRecord
 from weko_deposit.pidstore import get_record_without_version
 from weko_index_tree.api import Indexes
-from weko_index_tree.utils import check_index_permissions, get_index_id, \
-    get_user_roles
-from weko_records.api import FeedbackMailList, RequestMailList, ItemTypes, Mapping, ItemApplication
+from weko_index_tree.utils import (
+    check_index_permissions, get_index_id, get_user_roles
+)
+from weko_notifications.models import NotificationsUserSettings
+from weko_records.api import FeedbackMailList, JsonldMapping, RequestMailList, ItemTypes, Mapping, ItemApplication
 from weko_records.serializers.utils import get_item_type_name
 from weko_records.utils import replace_fqdn_of_file_metadata
 from weko_records_ui.errors import AvailableFilesNotFoundRESTError
-from weko_records_ui.permissions import check_created_id, \
-    check_file_download_permission, check_publish_status
+from weko_records_ui.permissions import (
+    check_created_id, check_file_download_permission, check_publish_status
+)
 from weko_redis.redis import RedisConnection
-from weko_search_ui.config import WEKO_IMPORT_DOI_TYPE
+from weko_search_ui.config import ROCRATE_METADATA_FILE, WEKO_IMPORT_DOI_TYPE
+from weko_search_ui.mapper import JsonLdMapper
 from weko_search_ui.query import item_search_factory
-from weko_search_ui.utils import check_sub_item_is_system, \
-    get_root_item_option, get_sub_item_option
+from weko_search_ui.utils import (
+    check_sub_item_is_system, get_root_item_option,
+    get_sub_item_option, get_identifier_setting
+)
 from weko_schema_ui.models import PublishStatus
 from weko_user_profiles import UserProfile
 from weko_workflow.api import WorkActivity
-from weko_workflow.config import IDENTIFIER_GRANT_LIST, \
-    WEKO_SERVER_CNRI_HOST_LINK
-from weko_workflow.models import ActionStatusPolicy as ASP
-from weko_workflow.models import Activity, FlowAction, FlowActionRole, \
-    FlowDefine
+from weko_workflow.config import (
+    IDENTIFIER_GRANT_LIST, WEKO_SERVER_CNRI_HOST_LINK
+)
+from weko_workflow.models import (
+    Activity, FlowAction, FlowActionRole, FlowDefine, ActionStatusPolicy as ASP
+)
 from weko_workflow.utils import IdentifierHandle
 
 def check_display_shared_user(user_id):
@@ -109,7 +117,7 @@ def get_list_username():
         username = user.username
         if username:
             result.append(username)
-    
+
     return result
 
 
@@ -361,7 +369,7 @@ def find_hidden_items(item_id_list, idx_paths=None, check_creator_permission=Fal
     no_permission_index = []
     hidden_list = []
     for record in WekoRecord.get_records(item_id_list):
-        
+
         if check_creator_permission:
             # Check if user is owner of the item
             if check_created_id(record):
@@ -441,7 +449,7 @@ def get_permission_record(rank_type, es_data, display_rank, has_permission_index
                         break
                 add_flag = is_public and has_index_permission
         except PIDDoesNotExistError:
-            # do not add deleted items into ranking list. 
+            # do not add deleted items into ranking list.
             add_flag = False
             current_app.logger.debug("PID {} does not exist.".format(pid_value))
 
@@ -580,7 +588,7 @@ def validate_form_input_data(
 
     :param result: result dictionary.
     :param item_id: item type identifier.
-    :param data: form input data 
+    :param data: form input data
     :param activity_id: activity id
     """
     # current_app.logger.error("result: {}".format(result))
@@ -600,11 +608,11 @@ def validate_form_input_data(
             elif type(given_data) is str:
                 ret = list(given_data)
         return ret
-        
+
 
     # Get langauge key - DONE
-    # Iterate data for validating the value - 
-    # Check each item and raise an error for duplicate langauge value - 
+    # Iterate data for validating the value -
+    # Check each item and raise an error for duplicate langauge value -
 
     item_type = ItemTypes.get_by_id(item_id)
     json_schema = item_type.schema.copy()
@@ -734,13 +742,13 @@ def validate_form_input_data(
     for key in item_type_mapping_keys:
         jpcoar_value: dict = _get_jpcoar_mapping_value_mapping(key, item_type_mapping)
         jpcoar_value_keys_lv1: list = list(jpcoar_value)
-        
+
         for key_lv1 in jpcoar_value_keys_lv1:
             if "title" == key_lv1:
                 title_sub_items: dict = jpcoar_value[key_lv1]
                 title_sub_items_keys: list = list(title_sub_items.keys())
                 mapping_title_item_key: str = key
-                
+
                 for title_sub_item in title_sub_items:
                     if "@attributes" == title_sub_item:
                         mapping_title_language_key: list = title_sub_items.get(title_sub_item, {}).get("xml:lang", "_").split(".")
@@ -749,11 +757,11 @@ def validate_form_input_data(
                 alternative_title_sub_items: dict = jpcoar_value[key_lv1]
                 alternative_title_sub_items_title_sub_items_keys: list = list(alternative_title_sub_items.keys())
                 mapping_alternative_title_item_key: str = key
-                
+
                 for alternative_title_sub_item in alternative_title_sub_items:
                     if "@attributes" == alternative_title_sub_item:
                         mapping_alternative_title_language_key: list = alternative_title_sub_items.get(alternative_title_sub_item, {}).get("xml:lang", "_").split(".")
-                
+
             elif "creator" == key_lv1:
                 mapping_creator_item_key: str = key
                 creator_sub_items: dict = jpcoar_value[key_lv1]
@@ -780,7 +788,7 @@ def validate_form_input_data(
                         mapping_creator_alternative_name_language_key = (
                             creator_sub_items.get(creator_sub_item, {}).get("@attributes", {"xml:lang": "_._"}).get("xml:lang", "_._").split(".")
                         )
-            
+
             elif "contributor" == key_lv1:
                 mapping_contributor_item_key: str = key
                 contributor_sub_items: dict = jpcoar_value[key_lv1]
@@ -839,16 +847,16 @@ def validate_form_input_data(
                     source_title_sub_items: dict = jpcoar_value[key_lv1]
                     source_title_sub_items_keys: list = list(source_title_sub_items.keys())
                     mapping_source_title_item_key: str = key
-                    
+
                     for source_title_sub_item in source_title_sub_items:
                         if "@attributes" == source_title_sub_item:
                             mapping_source_title_language_key: list = source_title_sub_items.get(source_title_sub_item, {}).get("xml:lang", "_").split(".")
-            
+
             elif "degreeName" == key_lv1:
                 degree_name_sub_items: dict = jpcoar_value[key_lv1]
                 degree_name_sub_items_keys: list = list(degree_name_sub_items.keys())
                 mapping_degree_name_item_key: str = key
-                
+
                 for degree_name_sub_item in degree_name_sub_items:
                     if "@attributes" == degree_name_sub_item:
                         mapping_degree_name_language_key: list = degree_name_sub_items.get(degree_name_sub_item, {}).get("xml:lang", "_").split(".")
@@ -889,7 +897,7 @@ def validate_form_input_data(
                         mapping_conference_sponsor_language_key = (
                             conference_sub_items.get(conference_sub_item, {}).get("@attributes", {"xml:lang": "_._"}).get("xml:lang", "_._").split(".")
                         )
-            
+
     """
     For iterating the argument 'data' and validating its language value
     """
@@ -903,13 +911,13 @@ def validate_form_input_data(
         ):
             if language_value_list.count(language_value) > 1:
                 raise ValidationError(f"{item_error_message} -- {duplication_error}")
-        
+
         duplication_error: str = """
             Please ensure that the following applicable items have no duplicate language values:
-            Title, Creator Name ,Creator Family Name, Creator Given Name, Creator Affliation Name, 
-            Contributor Name ,Contributor Family Name, Contributor Given Name, Contributor Affliation Name, 
-            Related Title, Funding Reference Funder Name, Funding Reference Award Title, Source Title, Degree Name, 
-            Degree Grantor Name, Conference Name, Conference Sponsor, Conference Date, Conference Venue, Conference Place, 
+            Title, Creator Name ,Creator Family Name, Creator Given Name, Creator Affliation Name,
+            Contributor Name ,Contributor Family Name, Contributor Given Name, Contributor Affliation Name,
+            Related Title, Funding Reference Funder Name, Funding Reference Award Title, Source Title, Degree Name,
+            Degree Grantor Name, Conference Name, Conference Sponsor, Conference Date, Conference Venue, Conference Place,
             Holding Agent Name, Catalog Title
         """
 
@@ -938,11 +946,11 @@ def validate_form_input_data(
         ):
             if language_value == "ja-Kana" and "ja" not in language_value_list:
                 raise ValidationError(f"{item_error_message} -- {ja_kana_error}")
-        
+
         ja_kana_error: str = """
             If ja-Kana is used, please ensure that the following applicable items have ja language values:
-            Creator Name ,Creator Family Name, Creator Given Name, Creator Alternative Name, 
-            Contributor Name ,Contributor Family Name, Contributor Given Name, Contributor Alternative Name, 
+            Creator Name ,Creator Family Name, Creator Given Name, Creator Alternative Name,
+            Contributor Name ,Contributor Family Name, Contributor Given Name, Contributor Alternative Name,
             Holding Agent Name, Catalog Title.
         """
 
@@ -971,11 +979,11 @@ def validate_form_input_data(
         ):
             if language_value == "ja-Latn" and "ja" not in language_value_list:
                 raise ValidationError(f"{item_error_message} -- {ja_latn_error}")
-        
+
         ja_latn_error: str = """
             If ja-Latn is used, please ensure that the following applicable items have ja language values:
-            Creator Name ,Creator Family Name, Creator Given Name, Creator Alternative Name, 
-            Contributor Name ,Contributor Family Name, Contributor Given Name, Contributor Alternative Name, 
+            Creator Name ,Creator Family Name, Creator Given Name, Creator Alternative Name,
+            Contributor Name ,Contributor Family Name, Contributor Given Name, Contributor Alternative Name,
             Holding Agent Name, Catalog Title.
         """
 
@@ -1009,10 +1017,10 @@ def validate_form_input_data(
 
             if not result:
                 raise ValidationError(f"{item_error_message} -- {date_format_error}")
-        
+
         date_format_error: str = """
-            Please ensure that entered date has the following formats: YYYY, YYYY-MM, YYYY-MM-DD, 
-            YYYY-MM-DDThh:mm+TZD, YYYY-MM-DDThh:mm-TZD, YYYY-MM-DDThh:mm:ss+TZD, YYYY-MM-DDThh:mm:ss-TZD, 
+            Please ensure that entered date has the following formats: YYYY, YYYY-MM, YYYY-MM-DD,
+            YYYY-MM-DDThh:mm+TZD, YYYY-MM-DDThh:mm-TZD, YYYY-MM-DDThh:mm:ss+TZD, YYYY-MM-DDThh:mm:ss-TZD,
             YYYY-MM-DDThh:mm:ss.ss+TZD, YYYY-MM-DDThh:mm:ss.ss-TZD
         """
 
@@ -1058,15 +1066,22 @@ def validate_form_input_data(
         # Validate TITLE item values from data
         if mapping_title_item_key == data_key:
             for data_item_values in data_item_value_list:
-                keys_that_exist_in_data: list = _get_keys_that_exist_from_data(data_item_values)
-                for mapping_key in list(set(mapping_title_language_key)):
-                    if mapping_key in keys_that_exist_in_data:
-                        # Append TITLE LANGUAGE value to items_to_be_checked_for_duplication list
-                        items_to_be_checked_for_duplication.append(data_item_values.get(mapping_key))
-                        items_to_be_checked_for_ja_kana.append(data_item_values.get(mapping_key))
-                        items_to_be_checked_for_ja_latn.append(data_item_values.get(mapping_key))
-                    else:
-                        pass
+                if type(data_item_values) == str:
+                    # Append TITLE LANGUAGE value to items_to_be_checked_for_duplication list
+                    items_to_be_checked_for_duplication.append(data_item_value_list.get(data_item_values))
+                    items_to_be_checked_for_ja_kana.append(data_item_value_list.get(data_item_values))
+                    items_to_be_checked_for_ja_latn.append(data_item_value_list.get(data_item_values))
+                else:
+                    keys_that_exist_in_data: list = _get_keys_that_exist_from_data(data_item_values)
+                    for mapping_key in list(set(mapping_title_language_key)):
+                        if mapping_key in keys_that_exist_in_data:
+                            # Append TITLE LANGUAGE value to items_to_be_checked_for_duplication list
+                            items_to_be_checked_for_duplication.append(data_item_values.get(mapping_key))
+                            items_to_be_checked_for_ja_kana.append(data_item_values.get(mapping_key))
+                            items_to_be_checked_for_ja_latn.append(data_item_values.get(mapping_key))
+                        else:
+                            pass
+
             # Validation for TITLE
             validation_duplication_error_checker(
                 _("Title"),
@@ -1088,15 +1103,20 @@ def validate_form_input_data(
         # Validate ALTERNATIVE TITLE item values from data
         elif mapping_alternative_title_item_key == data_key:
             for data_item_values in data_item_value_list:
-                keys_that_exist_in_data: list = _get_keys_that_exist_from_data(data_item_values)
-                for mapping_key in list(set(mapping_alternative_title_language_key)):
-                    if mapping_key in keys_that_exist_in_data:
-                        # Append ALTERNATIVE TITLE LANGUAGE value to items_to_be_checked_for_duplication list
-                        items_to_be_checked_for_ja_kana.append(data_item_values.get(mapping_key))
-                        items_to_be_checked_for_ja_latn.append(data_item_values.get(mapping_key))
-                    else:
-                        pass
-            
+                if type(data_item_values) == str:
+                    # Append ALTERNATIVE TITLE LANGUAGE value to items_to_be_checked_for_duplication list
+                    items_to_be_checked_for_ja_kana.append(data_item_value_list.get(data_item_values))
+                    items_to_be_checked_for_ja_latn.append(data_item_value_list.get(data_item_values))
+                else:
+                    keys_that_exist_in_data: list = _get_keys_that_exist_from_data(data_item_values)
+                    for mapping_key in list(set(mapping_alternative_title_language_key)):
+                        if mapping_key in keys_that_exist_in_data:
+                            # Append ALTERNATIVE TITLE LANGUAGE value to items_to_be_checked_for_duplication list
+                            items_to_be_checked_for_ja_kana.append(data_item_values.get(mapping_key))
+                            items_to_be_checked_for_ja_latn.append(data_item_values.get(mapping_key))
+                        else:
+                            pass
+
             # Validation for ALTERNATIVE TITLE
             validation_ja_kana_error_checker(
                 _("Alternative Title"),
@@ -1172,7 +1192,7 @@ def validate_form_input_data(
                             items_to_be_checked_for_duplication = []
                             items_to_be_checked_for_ja_kana = []
                             items_to_be_checked_for_ja_latn = []
-                        
+
                         # CREATOR AFFLIATION NAMES
                         elif data_creator_item_values_key == mapping_creator_affiliation_name_language_key[0]:
                             creator_affiliations: [dict] = data_creator_item_values.get(mapping_creator_affiliation_name_language_key[0])
@@ -1309,7 +1329,7 @@ def validate_form_input_data(
                             items_to_be_checked_for_duplication = []
                             items_to_be_checked_for_ja_kana = []
                             items_to_be_checked_for_ja_latn = []
-                        
+
                         # CONTRIBUTOR AFFLIATION NAMES
                         elif data_contributor_item_values_key == mapping_contributor_affiliation_name_language_key[0]:
                             contributor_affiliations: [dict] = data_contributor_item_values.get(mapping_contributor_affiliation_name_language_key[0])
@@ -1521,7 +1541,7 @@ def validate_form_input_data(
                                 if mapping_key in keys_that_exist_in_data:
                                     # Append CONFERENCE DATE LANGUAGE value to items_to_be_checked_for_duplication list
                                     items_to_be_checked_for_duplication.append(date_values.get(mapping_key))
-            if isinstance(data_conference_item_values, dict):                                    
+            if isinstance(data_conference_item_values, dict):
                 # Validation for CONFERENCE DATE
                 validation_duplication_error_checker(
                     _("Conference Date"),
@@ -1549,7 +1569,7 @@ def validate_form_input_data(
                             )
                             # Reset validation lists below for the next item to be validated
                             items_to_be_checked_for_duplication = []
-                        
+
                         # CONFERENCE PLACE
                         elif data_conference_item_values_key == mapping_conference_place_language_key[0]:
                             conference_places_values: [dict] = data_conference_item_values.get(mapping_conference_place_language_key[0])
@@ -1611,6 +1631,7 @@ def validate_form_input_data(
     remove_excluded_items_in_json_schema(item_id, json_schema)
 
     data['$schema'] = json_schema.copy()
+
     validation_data = RecordBase(data)
 
     try:
@@ -1919,18 +1940,21 @@ def make_stats_file(item_type_id, recids, list_item_role, export_path=""):
         NameError: name '_' is not defined
 
     """
-    from weko_records_ui.views import escape_newline, escape_str
+    from weko_records_ui.views import escape_newline
 
-    item_type = ItemTypes.get_by_id(item_type_id).render
-    list_hide = get_item_from_option(item_type_id)
+    item_type = ItemTypes.get_by_id(item_type_id)
+    if item_type:
+        list_hide = get_item_from_option(item_type_id, item_type=ItemTypes(item_type.schema, model=item_type))
+    else:
+        list_hide = get_item_from_option(item_type_id)
     no_permission_show_hide = hide_meta_data_for_role(
         list_item_role.get(item_type_id))
-    if no_permission_show_hide and item_type and item_type.get('table_row'):
+    if no_permission_show_hide and item_type and item_type.render.get('table_row'):
         for name_hide in list_hide:
-            item_type['table_row'] = hide_table_row(
-                item_type.get('table_row'), name_hide)
+            item_type.render['table_row'] = hide_table_row(
+                item_type.render.get('table_row'), name_hide)
 
-    table_row_properties = item_type['table_row_map']['schema'].get(
+    table_row_properties = item_type.render['table_row_map']['schema'].get(
         'properties')
 
     class RecordsManager:
@@ -2010,7 +2034,7 @@ def make_stats_file(item_type_id, recids, list_item_role, export_path=""):
             self.attr_data['request_mail_list']['max_size'] = largest_size
 
             return self.attr_data['request_mail_list']['max_size']
-        
+
         # 利用申請を取得する内部メソッド
         def get_item_application(self):
             self.attr_data['item_application']={}
@@ -2227,6 +2251,9 @@ def make_stats_file(item_type_id, recids, list_item_role, export_path=""):
             ret.append('.request_mail[{}]'.format(i))
             ret_label.append('.REQUEST_MAIL[{}]'.format(i))
 
+    ret.append('.researchmap_linkage')
+    ret_label.append('.RESEAECHMAP_LINKAGE')
+
     if can_export_item_application:
         records.get_item_application()
         ret.extend([".item_application.workflow",".item_application.terms",".item_application.termsDescription"])
@@ -2263,6 +2290,9 @@ def make_stats_file(item_type_id, recids, list_item_role, export_path=""):
             [''] * (max_feedback_mail - len(feedback_mail_list))
         )
 
+        # Exporting .researchmap_linkage is ALWAYS blank
+        records.attr_output[recid].append('')
+
         if can_export_request_mail:
             request_mail_list = records.attr_data['request_mail_list'] \
                 .get(recid, [])
@@ -2287,6 +2317,7 @@ def make_stats_file(item_type_id, recids, list_item_role, export_path=""):
         doi_value, doi_type = identifier.get_idt_registration_data()
         doi_type_str = doi_type[0] if doi_type and doi_type[0] else ''
         doi_str = doi_value[0] if doi_value and doi_value[0] else ''
+        identifier_setting = get_identifier_setting("Root Index")
         if doi_type_str and doi_str:
             doi_domain = ''
             if doi_type_str == WEKO_IMPORT_DOI_TYPE[0]:
@@ -2299,6 +2330,9 @@ def make_stats_file(item_type_id, recids, list_item_role, export_path=""):
                 doi_domain = IDENTIFIER_GRANT_LIST[4][2]
             if doi_domain and doi_str.startswith(doi_domain):
                 doi_str = doi_str.replace(doi_domain + '/', '', 1)
+            if doi_type_str == WEKO_IMPORT_DOI_TYPE[0] and \
+                    doi_str.startswith(identifier_setting.ndl_jalc_doi + "/"):
+                doi_type_str = WEKO_IMPORT_DOI_TYPE[3]
         records.attr_output[recid].extend([
             doi_type_str,
             doi_str
@@ -2309,7 +2343,7 @@ def make_stats_file(item_type_id, recids, list_item_role, export_path=""):
             pubdate = record.get('pubdate', {}).get('attribute_value', '')
             records.attr_output[recid].append(pubdate)
 
-    for item_key in item_type.get('table_row'):
+    for item_key in item_type.render.get('table_row'):
         item = table_row_properties.get(item_key)
         records.get_max_ins(item_key)
         keys = []
@@ -2345,7 +2379,7 @@ def make_stats_file(item_type_id, recids, list_item_role, export_path=""):
                 if not keys:
                     keys = [item_key]
                 if not labels:
-                    labels = [item.get('title')]                
+                    labels = [item.get('title')]
                 data = records.attr_data[item_key].get(recid) or {}
                 attr_val = data.get("attribute_value", "")
                 if isinstance(attr_val,str):
@@ -2365,9 +2399,9 @@ def make_stats_file(item_type_id, recids, list_item_role, export_path=""):
     ret_option = []
     multiple_option = ['.metadata.path', '.pos_index',
                        '.feedback_mail', '.request_mail', '.file_path', '.thumbnail_path']
-    meta_list = item_type.get('meta_list', {})
-    meta_list.update(item_type.get('meta_fix', {}))
-    form = item_type.get('table_row_map', {}).get('form', {})
+    meta_list = item_type.render.get('meta_list', {})
+    meta_list.update(item_type.render.get('meta_fix', {}))
+    form = item_type.render.get('table_row_map', {}).get('form', {})
     del_num = 0
     total_col = len(ret)
     for index in range(total_col):
@@ -2465,7 +2499,7 @@ def write_bibtex_files(item_types_data, export_path):
     """
     # current_app.logger.error("item_types_data:{}".format(item_types_data))
     # current_app.logger.error("export_path:{}".format(export_path))
-    
+
     for item_type_id in item_types_data:
         item_type_data = item_types_data[item_type_id]
         output = make_bibtex_data(item_type_data['recids'])
@@ -2491,7 +2525,7 @@ def write_files(item_types_data, export_path, list_item_role):
     file_format = current_app.config.get('WEKO_ADMIN_OUTPUT_FORMAT', 'tsv').lower()
 
     for item_type_id in item_types_data:
-        
+
         current_app.logger.debug("item_type_id:{}".format(item_type_id))
         current_app.logger.debug("item_types_data[item_type_id]['recids']:{}".format(item_types_data[item_type_id]['recids']))
         headers, records = make_stats_file(
@@ -2527,47 +2561,64 @@ def check_item_type_name(name):
 
 
 def export_items(post_data):
-    """Gather all the item data and export and return as a JSON or BIBTEX.
+    """Gather all the item data and export
 
-    :return: JSON, BIBTEX
+    Export items in the selected format, such as a TSV, BIBTEX or RO-CRATE.
+
+    Args:
+        post_data (dict): Data from the export form.
+            - export_file_contents_radio (str): Whether to include file contents.
+            - export_format_radio (str): The format to export (e.g., JSON, BIBTEX).
+            - record_ids (list): List of record IDs to export.
+            - invalid_record_ids (list): List of invalid record IDs.
+            - record_metadata (dict): Metadata for the records.
+
+    Returns:
+        Response: A file download response with the exported data.
     """
-    current_app.logger.debug("post_data:{}".format(post_data))
-    include_contents = True if \
-        post_data.get('export_file_contents_radio') == 'True' else False
-    export_format = post_data['export_format_radio']
-    record_ids = json.loads(post_data['record_ids'])
-    invalid_record_ids = json.loads(post_data['invalid_record_ids'])
-    if isinstance(invalid_record_ids,dict) or isinstance(invalid_record_ids,list):
-        invalid_record_ids = [int(i) for i in invalid_record_ids]
-    else:
-        invalid_record_ids = [invalid_record_ids]
-    # Remove all invalid records
-    record_ids = set(record_ids) - set(invalid_record_ids)
-    record_metadata = json.loads(post_data['record_metadata'])
-    if len(record_ids) > _get_max_export_items():
-        return abort(400)
-    elif len(record_ids) == 0:
-        return '',204
-
-    result = {'items': []}
-    temp_path = tempfile.TemporaryDirectory(
-        prefix=current_app.config['WEKO_ITEMS_UI_EXPORT_TMP_PREFIX'])
-    item_types_data = {}
-
     try:
+        current_app.logger.debug("post_data:{}".format(post_data))
+        include_contents = (
+            True if post_data.get('export_file_contents_radio') == 'True' else False
+        )
+        export_format = post_data['export_format_radio']
+        record_ids = json.loads(post_data['record_ids'])
+        invalid_record_ids = json.loads(post_data['invalid_record_ids'])
+        if isinstance(invalid_record_ids,dict) or isinstance(invalid_record_ids,list):
+            invalid_record_ids = [int(i) for i in invalid_record_ids]
+        else:
+            invalid_record_ids = [invalid_record_ids]
+        # Remove all invalid records
+        record_ids = list(set(record_ids) - set(invalid_record_ids))
+        record_metadata = (
+            json.loads(post_data['record_metadata'])
+            if post_data.get('record_metadata') else {}
+        )
+        if len(record_ids) > _get_max_export_items():
+            return abort(400)
+        elif len(record_ids) == 0:
+            return '',204
+
+
+        result = {'items': []}
+        temp_path = tempfile.TemporaryDirectory(
+            prefix=current_app.config['WEKO_ITEMS_UI_EXPORT_TMP_PREFIX']
+        )
+        item_types_data = {}
+
         # Set export folder
-        export_path = temp_path.name + '/' + \
-            datetime.utcnow().strftime("%Y%m%d%H%M%S")
+        datetime_now = datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S")
+        export_path = os.path.join(temp_path.name, datetime_now)
+
         # Double check for limits
         for record_id in record_ids:
-            record_path = export_path + '/recid_' + str(record_id)
+            record_path = os.path.join(export_path, f"recid_{record_id}")
             os.makedirs(record_path, exist_ok=True)
             exported_item, list_item_role = _export_item(
                 record_id,
                 export_format,
                 include_contents,
                 record_path,
-                record_metadata.get(str(record_id))
             )
             result['items'].append(exported_item)
 
@@ -2575,12 +2626,11 @@ def export_items(post_data):
             item_type = ItemTypes.get_by_id(item_type_id)
             if not item_types_data.get(item_type_id):
                 item_type_name = check_item_type_name(
-                    item_type.item_type_name.name)
+                    item_type.item_type_name.name
+                )
                 item_types_data[item_type_id] = {
                     'item_type_id': item_type_id,
-                    'name': '{}({})'.format(
-                        item_type_name,
-                        item_type_id),
+                    'name': f'{item_type_name}({item_type_id})',
                     'root_url': request.url_root,
                     'jsonschema': 'items/jsonschema/' + item_type_id,
                     'keys': [],
@@ -2593,29 +2643,148 @@ def export_items(post_data):
         # Create export info file
         if export_format == 'BIBTEX':
             write_bibtex_files(item_types_data, export_path)
+        elif export_format == 'ROCRATE':
+            write_rocrate(item_types_data, export_path, list_item_role)
         else:
             write_files(item_types_data, export_path, list_item_role)
 
-        # Create bag
-        bagit.make_bag(export_path)
+        if export_format != 'ROCRATE':
+            # Create bag
+            bagit.make_bag(export_path)
         # Create download file
         # zip filename: export_{uuid}-{%Y%m%d%H%M%S}
-        zip_path = tempfile.gettempdir()+"/"+export_path.split("/")[-2]+"-"+export_path.split("/")[-1]
+        zip_path = os.path.join(
+            tempfile.gettempdir(),
+            export_path.split("/")[-2] + "-" + export_path.split("/")[-1]
+        )
         shutil.make_archive(zip_path, 'zip', export_path)
+        resp = send_file(
+            zip_path+".zip",
+            as_attachment=True,
+            attachment_filename='export.zip'
+        )
+    except (json.JSONDecodeError, KeyError, TypeError, ValueError):
+        current_app.logger.error(traceback.print_exc())
+        return abort(400)
     except Exception:
-        current_app.logger.error('-' * 60)
-        traceback.print_exc(file=sys.stdout)
-        current_app.logger.error('-' * 60)
+        current_app.logger.error(traceback.print_exc())
+        traceback.print_exc()
         flash(_('Error occurred during item export.'), 'error')
-        return redirect(url_for('weko_items_ui.export'))
-    resp = send_file(
-        zip_path+".zip",
-        as_attachment=True,
-        attachment_filename='export.zip'
-    )
+        resp = redirect(url_for('weko_items_ui.export'))
     os.remove(zip_path+".zip")
+    temp_path.cleanup()
     return resp
 
+
+def write_rocrate(item_types_data, export_path, list_item_role):
+    """Make RO-Crate BagIt for export.
+
+    Write ro-crate-metadata.json file and create a zip file for each record.
+
+    Args:
+        item_types_data (dict): Item types data for export.
+        export_path (str): Path to export the RO-Crate.
+        list_item_role (dict): List of item roles for export.
+    """
+    all_record_ids = [
+        str(recid)
+        for data in item_types_data.values()
+        for recid in data['recids']
+    ]
+    # Get item title and extraction file list from ElasticSearch
+    metadata_dict = _get_metadata_dict_in_es(all_record_ids)
+
+    for item_type_id, item_type_data in item_types_data.items():
+        mappings = JsonldMapping.get_by_itemtype_id(item_type_id)
+        mapper = JsonLdMapper(item_type_id, None)
+        for m in mappings:
+            mapper.json_mapping = m.mapping
+            if mapper.is_valid:
+                break
+        if mapper.json_mapping is None:
+            raise Exception("No valid mapping found for item type")
+
+        record_ids = item_type_data['recids']
+        headers, records = make_stats_file(
+            item_type_id, item_type_data['recids'], list_item_role,
+        )
+
+        for record_id in record_ids:
+            # crate each record directory
+            record_path = os.path.join(export_path, f"recid_{record_id}")
+            os.makedirs(record_path, exist_ok=True)
+            title, extracted_files = metadata_dict.get(str(record_id), ("", []))
+
+            row_metadata = {
+                "recid": str(record_id),
+                "item_title": title,
+                # no use headers[0][0:2] >>> ["#.id", ".uri"]
+                "header": headers[0][2:],
+                "value": records[record_id],
+            }
+
+            # Create RO-Crate info file
+            rocrate = mapper.to_rocrate_metadata(
+                tsv_row_metadata=row_metadata, extracted_files=extracted_files
+            )
+            jsonld_path = os.path.join(
+                record_path, ROCRATE_METADATA_FILE.split("/")[-1]
+            )
+            with open(jsonld_path, "w", encoding="utf8") as f:
+                json.dump(
+                    rocrate.metadata.generate(), f, indent=2,
+                    ensure_ascii=False
+                )
+
+            bagit.make_bag(record_path, checksums=["sha256"])
+
+            shutil.make_archive(record_path, "zip", record_path)
+            shutil.rmtree(record_path)
+
+    # Create README.md file
+    readme_path = os.path.join(export_path, "README.md")
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    source_path = current_app.config["WEKO_ITEMS_UI_README_MD"]
+    src_readme_path = os.path.join(current_dir, source_path)
+    shutil.copyfile(src_readme_path, readme_path)
+
+
+def _get_metadata_dict_in_es(record_ids):
+    """Get item title and extraction file list from ElasticSearch.
+
+    Args:
+        record_ids (list[str]): List of record IDs to fetch metadata for.
+
+    Returns:
+        dict:
+            record_id (str): (title, [extraction_file_list])
+    """
+    metadata_dict = {}
+    try:
+        # Get metadata from ElasticSearch
+        search = (
+            RecordsSearch(index=current_app.config["SEARCH_UI_SEARCH_INDEX"])
+            .filter("terms", control_number=record_ids)
+            .filter("term", relation_version_is_last=True)
+            .sort("control_number")
+            .source(["title", "content"])
+            .params(from_=0, size=100)
+        )
+        search_result = search.execute().to_dict()
+        record_list = search_result.get("hits", {}).get("hits", [])
+        for record in record_list:
+            [key] = record.get("sort")
+            title = record.get("_source", {}).get("title", [""])[0]
+            content = record.get("_source", {}).get("content", [])
+            extraction_file_list = [
+                file_content.get("filename") for file_content in content
+                if file_content.get("attachment")
+            ]
+            metadata_dict.update({key: (title, extraction_file_list)})
+    except NotFoundError as e:
+        current_app.logger.error("Index do not exist yet: ", str(e))
+
+    return metadata_dict
 
 
 def _get_max_export_items():
@@ -2683,11 +2852,15 @@ def _export_item(record_id,
         exported_item['files'] = []
         exported_item['path'] = 'recid_' + str(record_id)
         exported_item['item_type_id'] = str(record.get('item_type_id')) if record.get('item_type_id') else None
+        exported_item['researchmap_linkage'] = ''
         if not records_data:
             records_data = record
         if exported_item['item_type_id']:
-            list_hidden = get_ignore_item_from_mapping(
-                exported_item['item_type_id'])
+            item_type_id = exported_item['item_type_id']
+            list_hidden = []
+            item_type = ItemTypes.get_by_id(item_type_id)
+            if item_type:
+                list_hidden = get_ignore_item_from_mapping(item_type_id, item_type)
             if records_data.get('metadata'):
                 meta_data = records_data.get('metadata')
                 _custom_export_metadata(meta_data.get('_item_metadata', {}),
@@ -2708,12 +2881,12 @@ def _export_item(record_id,
                                 hide_key, records_data['metadata'])
 
         # Create metadata file.
-        with open('{}/{}_metadata.json'.format(tmp_path,
-                                               exported_item['name']),
-                  'w',
-                  encoding='utf8') as output_file:
-            json.dump(records_data, output_file, indent=2,
-                      sort_keys=True, ensure_ascii=False)
+        # with open('{}/{}_metadata.json'.format(tmp_path,
+        #                                        exported_item['name']),
+        #           'w',
+        #           encoding='utf8') as output_file:
+        #     json.dump(records_data, output_file, indent=2,
+        #               sort_keys=True, ensure_ascii=False)
         # First get all of the files, checking for permissions while doing so
         if include_contents:
             # Get files
@@ -2723,11 +2896,9 @@ def _export_item(record_id,
                         exported_item['files'].append(file.info())
                         # TODO: Then convert the item into the desired format
                         if file:
-                            file_buffered = file.obj.file.storage().open()
-                            temp_file = open(
-                                tmp_path + '/' + file.obj.basename, 'wb')
-                            temp_file.write(file_buffered.read())
-                            temp_file.close()
+                            with file.obj.file.storage().open() as file_buffered, \
+                                open(tmp_path + '/' + file.obj.basename, 'wb') as temp_file:
+                                temp_file.write(file_buffered.read())
 
     return exported_item, list_item_role
 
@@ -2833,12 +3004,12 @@ def to_files_js(record):
     """List files in a deposit.
 
     Args:
-        record (WekoDeposit): _description_
+        record (WekoDeposit): record object.
 
     Returns:
-        _type_: _description_
+        list: File information taken from metadata
     """
-    current_app.logger.debug("type: {}".format(type(record))) 
+    current_app.logger.debug("type: {}".format(type(record)))
     res = []
     files = record.files or []
     files_content_dict = {}
@@ -2851,7 +3022,7 @@ def to_files_js(record):
     # Get files form meta_data, so that you can append any extra info to files
     # (which not contained by file_bucket) such as license below
     files_from_meta = get_files_from_metadata(record)
-    
+
     # get file with order similar metadata
     files_content = []
     for _k, f in files_from_meta.items():
@@ -3205,6 +3376,56 @@ def get_data_authors_affiliation_settings():
         current_app.logger.error(e)
         return None
 
+def get_weko_link(metadata):
+    """
+    メタデータからweko_idを取得し、weko_idに対応するpk_idと一緒に
+    weko_linkを作成します。
+    args
+        metadata: dict
+        例：{
+                "metainfo": {
+                    "item_30002_creator2": [
+                        {
+                            "nameIdentifiers": [
+                                {
+                                    "nameIdentifier": "8",
+                                    "nameIdentifierScheme": "WEKO",
+                                    "nameIdentifierURI": ""
+                                }
+                            ]
+                        }
+                    ]
+                },
+                "files": [],
+                "endpoints": {
+                    "initialization": "/api/deposits/items"
+                }
+            }
+    return
+        weko_link: dict
+        例：{"2": "10002"}
+    """
+    weko_link = {}
+    weko_id_list=[]
+    for x in metadata["metainfo"].values():
+        if not isinstance(x, list):
+            continue
+        for y in x:
+            if not isinstance(y, dict):
+                continue
+            for key, value in y.items():
+                if not key == "nameIdentifiers":
+                    continue
+                for z in value:
+                    if z.get("nameIdentifierScheme","") == "WEKO":
+                        if z.get("nameIdentifier","") not in weko_id_list:
+                            weko_id_list.append(z.get("nameIdentifier"))
+    weko_link = {}
+    for weko_id in weko_id_list:
+        pk_id = WekoAuthors.get_pk_id_by_weko_id(weko_id)
+        if int(pk_id) > 0:
+            weko_link[pk_id] = weko_id
+    return weko_link
 
 def hide_meta_data_for_role(record):
     """
@@ -3239,33 +3460,40 @@ def hide_meta_data_for_role(record):
     return is_hidden
 
 
-def get_ignore_item_from_mapping(_item_type_id):
+def get_ignore_item_from_mapping(_item_type_id, item_type):
     """Get ignore item from mapping.
 
     :param _item_type_id:
+    :param item_type:
     :return ignore_list:
     """
     ignore_list = []
-    meta_options, item_type_mapping = get_options_and_order_list(_item_type_id)
-    sub_ids = get_hide_list_by_schema_form(item_type_id=_item_type_id)
+    meta_options, item_type_mapping = get_options_and_order_list(
+        _item_type_id, item_type_data=ItemTypes(item_type.schema, model=item_type))
+    sub_ids = get_hide_list_by_schema_form(item_type=item_type)
     for key, val in meta_options.items():
         hidden = val.get('option').get('hidden')
         if hidden:
             ignore_list.append(
                 get_mapping_name_item_type_by_key(key, item_type_mapping))
     for sub_id in sub_ids:
-        key = [re.sub(r'\[\d+\]', '', _id) for _id in sub_id.split('.')]
+        key = [re.sub(r'\[\d*\]', '', _id) for _id in sub_id.split('.')]
         if key[0] in item_type_mapping:
             mapping = item_type_mapping.get(key[0]).get('jpcoar_mapping')
             if isinstance(mapping, dict):
-                name = [list(mapping.keys())[0]]
-                if len(key) > 1:
-                    tree_name = get_mapping_name_item_type_by_sub_key(
-                        '.'.join(key[1:]), mapping.get(name[0])
-                    )
-                    if tree_name:
-                        name += tree_name
-                ignore_list.append(name)
+                for _name in mapping.keys():
+                    name = None
+                    if len(key) > 1:
+                        tree_name = get_mapping_name_item_type_by_sub_key(
+                            '.'.join(key[1:]),mapping.get(_name)
+                        )
+                        if tree_name is not None:
+                            name = [_name]
+                            name += tree_name
+                    else:
+                        name = [_name]
+                    if name is not None:
+                        ignore_list.append(name)
     return ignore_list
 
 
@@ -3279,7 +3507,7 @@ def get_mapping_name_item_type_by_key(key, item_type_mapping):
     for mapping_key in item_type_mapping:
         if mapping_key == key:
             property_data = item_type_mapping.get(mapping_key)
-            if isinstance(property_data.get('jpcoar_mapping'), dict):
+            if isinstance(property_data, dict) and isinstance(property_data.get('jpcoar_mapping'), dict):
                 for name in property_data.get('jpcoar_mapping'):
                     return name
     return key
@@ -3305,7 +3533,10 @@ def get_mapping_name_item_type_by_sub_key(key, item_type_mapping):
                 tree_name += _mapping_name
                 break
         elif key == property_data:
-            tree_name = [mapping_key if mapping_key != '@value' else '']
+            if mapping_key!= '@value':
+                tree_name = [mapping_key]
+            else:
+                tree_name = []
             break
     return tree_name
 
@@ -3318,7 +3549,7 @@ def del_hide_sub_item(key, mlt, hide_list):
             elif isinstance(v, str):
                 for h in hide_list:
                     if h.startswith(key) and h.endswith(k) and k in mlt:
-                        mlt.pop(k) 
+                        mlt.pop(k)
             else:
                 pass
     elif isinstance(mlt, list):
@@ -3327,12 +3558,11 @@ def del_hide_sub_item(key, mlt, hide_list):
     else:
         pass
 
-def get_hide_list_by_schema_form(item_type_id=None, schemaform=None):
+def get_hide_list_by_schema_form(item_type=None, schemaform=None):
     """Get hide list by schema form."""
     ids = []
-    if item_type_id and not schemaform:
-        item_type = ItemTypes.get_by_id(item_type_id).render
-        schemaform = item_type.get('table_row_map', {}).get('form', {})
+    if item_type and not schemaform:
+        schemaform = item_type.render.get('table_row_map', {}).get('form', {})
     if schemaform:
         for item in schemaform:
             if not item.get('items'):
@@ -3343,16 +3573,15 @@ def get_hide_list_by_schema_form(item_type_id=None, schemaform=None):
     return ids
 
 
-def get_hide_parent_keys(item_type_id=None, meta_list=None):
+def get_hide_parent_keys(item_type=None, meta_list=None):
     """Get all hide parent keys.
 
-    :param item_type_id:
+    :param item_type:
     :param meta_list:
     :return: hide parent keys
     """
-    if item_type_id and not meta_list:
-        item_type = ItemTypes.get_by_id(item_type_id).render
-        meta_list = item_type.get('meta_list', {})
+    if item_type and not meta_list:
+        meta_list = item_type.render.get('meta_list', {})
     hide_parent_keys = []
     for key, val in meta_list.items():
         hidden = val.get('option', {}).get('hidden')
@@ -3368,18 +3597,18 @@ def get_hide_parent_and_sub_keys(item_type):
     """
     # Get parent keys of 'Hide' items.
     meta_list = item_type.render.get('meta_list', {})
-    hide_parent_key = get_hide_parent_keys(item_type.id, meta_list)
+    hide_parent_key = get_hide_parent_keys(item_type, meta_list)
     # Get sub keys of 'Hide' items.
     forms = item_type.render.get('table_row_map', {}).get('form', {})
-    hide_sub_keys = get_hide_list_by_schema_form(item_type.id, forms)
+    hide_sub_keys = get_hide_list_by_schema_form(item_type, forms)
     hide_sub_keys = [prop.replace('[]', '') for prop in hide_sub_keys]
     return hide_parent_key, hide_sub_keys
 
 
-def get_item_from_option(_item_type_id):
+def get_item_from_option(_item_type_id, item_type=None):
     """Get all keys of properties that is set Hide option on metadata."""
     ignore_list = []
-    meta_options = get_options_list(_item_type_id)
+    meta_options = get_options_list(_item_type_id, json_item=item_type)
     for key, val in meta_options.items():
         hidden = val.get('option').get('hidden')
         if hidden:
@@ -3394,15 +3623,17 @@ def get_options_list(item_type_id, json_item=None):
     :param json_item:
     :return: options dict
     """
+    meta_options = {}
     if json_item is None:
         json_item = ItemTypes.get_record(item_type_id)
-    meta_options = json_item.model.render.get('meta_fix')
-    meta_options.update(json_item.model.render.get('meta_list'))
+    if json_item:
+        meta_options = json_item.model.render.get('meta_fix', {})
+        meta_options.update(json_item.model.render.get('meta_list'))
     return meta_options
 
 
 def get_options_and_order_list(item_type_id, item_type_mapping=None,
-                               item_type_data=None):
+                               item_type_data=None, mapping_flag=True):
     """Get Options by item type id.
 
     :param item_type_id:
@@ -3415,9 +3646,13 @@ def get_options_and_order_list(item_type_id, item_type_mapping=None,
     item_type_mapping = None
     if item_type_id:
         meta_options = get_options_list(item_type_id, item_type_data)
-        if item_type_mapping is None:
+        if item_type_mapping is None and mapping_flag:
             item_type_mapping = Mapping.get_record(item_type_id)
-    return meta_options, item_type_mapping
+
+    if mapping_flag:
+        return meta_options, item_type_mapping
+    else:
+        return meta_options
 
 
 def hide_table_row(table_row, hide_key):
@@ -3491,7 +3726,7 @@ def translate_validation_message(item_property, cur_lang):
     """
     # current_app.logger.error("item_property:{}".format(item_property))
     # current_app.logger.error("cur_lang:{}".format(cur_lang))
-    
+
     items_attr = 'items'
     properties_attr = 'properties'
     if isExistKeyInDict(items_attr, item_property):
@@ -3507,21 +3742,40 @@ def translate_validation_message(item_property, cur_lang):
             translate_validation_message(value, cur_lang)
 
 
-def get_workflow_by_item_type_id(item_type_name_id, item_type_id):
-    """Get workflow settings by item type id."""
+def get_workflow_by_item_type_id(
+    item_type_name_id, item_type_id, with_deleted=True
+):
+    """Get workflow settings by item type id.
+
+    Args:
+        item_type_name_id (int): Item type name id.
+        item_type_id (int): Item type id.
+        with_deleted (bool): Whether to include deleted workflows. Defaults to True.
+
+    Returns:
+        WorkFlow: The workflow object if found, otherwise None.
+
+    """
     from weko_workflow.models import WorkFlow
 
-    workflow = WorkFlow.query.filter_by(
-        itemtype_id=item_type_id).first()
+    query = WorkFlow.query.filter_by(itemtype_id=item_type_id)
+    if not with_deleted:
+        query = query.filter_by(is_deleted=False)
+    workflow = query.first()
+
     if not workflow:
         item_type_list = ItemTypes.get_by_name_id(item_type_name_id)
         id_list = [x.id for x in item_type_list]
-        workflow = (
+        query = (
             WorkFlow.query
             .filter(WorkFlow.itemtype_id.in_(id_list))
             .order_by(WorkFlow.itemtype_id.desc())
-            .order_by(WorkFlow.flow_id.asc()).first())
-    return workflow
+            .order_by(WorkFlow.flow_id.asc())
+        )
+        if not with_deleted:
+            query = query.filter_by(is_deleted=False)
+        workflow = query.first()
+    return workflow if isinstance(workflow, WorkFlow) else None
 
 
 def validate_bibtex(record_ids):
@@ -3636,7 +3890,7 @@ def get_ranking(settings):
     :param settings: ranking setting.
     :return:
     """
-    
+
     def _get_index_info(index_json, index_info):
         for index in index_json:
             index_info[index["id"]] = {
@@ -3690,7 +3944,7 @@ def get_ranking(settings):
 
         current_app.logger.debug("finished getting most_downloaded_items data from ES")
         rankings['most_downloaded_items'] = get_permission_record('most_downloaded_items', result, settings.display_rank, has_permission_indexes)
-    
+
     # created_most_items_user
     current_app.logger.debug("get created_most_items_user start")
     if settings.rankings['created_most_items_user']:
@@ -3760,10 +4014,10 @@ def get_ranking(settings):
             agg_size=settings.display_rank + rank_buffer,
             must_not=json.dumps([{"wildcard": {"control_number": "*.*"}}])
         )
-        
+
         current_app.logger.debug("finished getting new_items data from ES")
         rankings['new_items'] = get_permission_record('new_items', result, settings.display_rank, has_permission_indexes)
-        
+
     return rankings
 
 
@@ -3789,7 +4043,7 @@ def sanitize_input_data(data):
 
     Args:
         data (dict or list): target dict or list
-    """    
+    """
     if isinstance(data, dict):
         for k, v in data.items():
             if isinstance(v, str):
@@ -3802,6 +4056,225 @@ def sanitize_input_data(data):
                 data[i] = __sanitize_string(data[i])
             else:
                 sanitize_input_data(data[i])
+
+def check_duplicate(data, is_item=True, exclude_ids=[]):
+    """
+    Check if a record or item is duplicate in records_metadata.
+
+    Args:
+        data (dict or str): Metadata dictionary (or JSON string).
+        is_item (bool): True if checking an item, False if checking a record.
+        exclude_ids (list): List of record IDs to exclude from the check.
+
+    Returns:
+        tuple(bool, list, list):
+            - True if duplicate exists, False otherwise.
+            - List of duplicate record IDs.
+            - List of duplicate record URLs.
+    """
+    if isinstance(data, str):
+        try:
+            data = json.loads(data)
+        except json.JSONDecodeError as e:
+            current_app.logger.error(f"JSON decode failed: {e}")
+            return False, [], []
+
+    if not isinstance(data, dict):
+        current_app.logger.error("The provided data is not a dictionary.")
+        return False, [], []
+
+    metadata = data if is_item else data.get("metainfo", {})
+    if not isinstance(metadata, dict):
+        current_app.logger.error("Metadata format is invalid.")
+        return False, [], []
+
+    identifier = title = resource_type = creator = ""
+    author_links = metadata.get("author_link", [])
+    host = request.host
+
+    # Extract other fields
+    for key, value in metadata.items():
+        if isinstance(value, dict) and "resourcetype" in value:
+            resource_type = value["resourcetype"]
+        if isinstance(value, list):
+            for v in value:
+                if isinstance(v, dict):
+                    if "subitem_identifier_uri" in v:
+                        identifier = v["subitem_identifier_uri"]
+                    if "subitem_title" in v:
+                        title = v["subitem_title"]
+                    if "creatorNames" in v:
+                        creator_info = v["creatorNames"][0] if v["creatorNames"] else {}
+                        creator = creator_info.get("creatorName", "")
+
+
+    # 1. Check identifier
+    if identifier:
+        escaped_identifier = identifier.replace('"', '\\"')
+        query = text(f"""
+            SELECT CAST(jsonb_extract_path_text(json, 'recid') AS INTEGER)
+            FROM records_metadata
+            WHERE jsonb_path_exists(json, :jsonpath_query)
+            AND jsonb_extract_path_text(json, 'publish_status') = '0'
+            AND jsonb_extract_path_text(json, 'recid') NOT LIKE '%.%'
+        """)
+        params = {
+            "jsonpath_query": f'$.**.subitem_identifier_uri ? (@ == "{escaped_identifier}")'
+        }
+        result = db.session.execute(query, params).fetchall()
+        if result:
+            recid_list = [r[0] for r in result if r[0] not in exclude_ids]
+            if recid_list:
+                return True, recid_list, [f"https://{host}/records/{r}" for r in recid_list]
+
+    # 2. Normalize title
+    normalized_title = unicodedata.normalize("NFKC", title).lower()
+    normalized_title = re.sub(r'[\s,　]', '', normalized_title)
+
+    query = text("""
+        SELECT  CAST(jsonb_extract_path_text(json, 'recid') AS INTEGER), json
+        FROM records_metadata
+        WHERE jsonb_path_exists(json, '$.**.subitem_title')
+        AND jsonb_extract_path_text(json, 'publish_status') = '0'
+        AND jsonb_extract_path_text(json, 'recid') NOT LIKE '%.%'
+    """)
+    result = db.session.execute(query).fetchall()
+
+    matched_recids = set()
+    for recid, json_obj in result:
+        json_str = json.dumps(json_obj, ensure_ascii=False)
+        titles = re.findall(r'"subitem_title"\s*:\s*"([^"]+)"', json_str)
+        for t in titles:
+            cleaned = unicodedata.normalize("NFKC", t).lower()
+            cleaned = re.sub(r'[\s,　]', '', cleaned)
+            if cleaned == normalized_title:
+                matched_recids.add(recid)
+                break
+
+    matched_recids -= set(exclude_ids)
+
+    if not matched_recids:
+        return False, [], []
+
+    # 3. Match resource_type
+    escaped_resource_type = resource_type.replace('"', '\\"')
+    query = text(f"""
+        SELECT CAST(jsonb_extract_path_text(json, 'recid') AS INTEGER)
+        FROM records_metadata
+        WHERE jsonb_path_exists(json, :jsonpath_query)
+        AND jsonb_extract_path_text(json, 'publish_status') = '0'
+        AND jsonb_extract_path_text(json, 'recid') NOT LIKE '%.%'
+    """)
+    params = {
+        "jsonpath_query": f'$.**.resourcetype ? (@ == "{escaped_resource_type}")'
+    }
+    result = db.session.execute(query, params).fetchall()
+    recids_resource = {r[0] for r in result}
+    matched_recids &= recids_resource
+    matched_recids -= set(exclude_ids)
+
+    if not matched_recids:
+        return False, [], []
+
+    # 4. Author check (via author_link or creator)
+    final_matched = set()
+    if author_links:
+        # Get fullName(s) from authors table via author_link
+        placeholders = ','.join([f':aid{i}' for i in range(len(author_links))])
+        params = {f'aid{i}': aid for i, aid in enumerate(author_links)}
+        query = text(f"""
+            SELECT json FROM authors
+            WHERE jsonb_path_exists(json, '$.authorIdInfo[*].authorId')
+            AND jsonb_extract_path_text(json, 'authorIdInfo', '0', 'authorId') IN ({placeholders})
+        """)
+        result = db.session.execute(query, params).fetchall()
+
+        author_names = set()
+        for row in result:
+            json_obj = row[0]
+            name_info = json_obj.get("authorNameInfo", [])
+            for n in name_info:
+                full = n.get("fullName")
+                if full:
+                    cleaned = re.sub(r'[\s,　]', '', full)
+                    author_names.add(cleaned)
+
+        if author_names:
+            query = text("""
+                SELECT CAST(jsonb_extract_path_text(json, 'recid') AS INTEGER), json
+                FROM records_metadata
+                WHERE jsonb_path_exists(json, '$.**.creatorNames[*].creatorName')
+                AND jsonb_extract_path_text(json, 'publish_status') = '0'
+                AND jsonb_extract_path_text(json, 'recid') NOT LIKE '%.%'
+            """)
+            result = db.session.execute(query).fetchall()
+            for recid, json_obj in result:
+                json_str = json.dumps(json_obj, ensure_ascii=False)
+                creators = re.findall(r'"creatorName"\s*:\s*"([^"]+)"', json_str)
+                for name in creators:
+                    cleaned = re.sub(r'[\s,　]', '', name)
+                    if cleaned in author_names:
+                        final_matched.add(recid)
+                        break
+    else:
+        normalized_creator = re.sub(r'[\s,　]', '', creator)
+        query = text("""
+            SELECT CAST(jsonb_extract_path_text(json, 'recid') AS INTEGER), json
+            FROM records_metadata
+            WHERE jsonb_path_exists(json, '$.**.creatorNames[*].creatorName')
+            AND jsonb_extract_path_text(json, 'publish_status') = '0'
+            AND jsonb_extract_path_text(json, 'recid') NOT LIKE '%.%'
+        """)
+        result = db.session.execute(query).fetchall()
+        for recid, json_obj in result:
+            json_str = json.dumps(json_obj, ensure_ascii=False)
+            creators = re.findall(r'"creatorName"\s*:\s*"([^"]+)"', json_str)
+            for name in creators:
+                cleaned = re.sub(r'[\s,　]', '', name)
+                if cleaned == normalized_creator:
+                    final_matched.add(recid)
+                    break
+
+    final_matched &= matched_recids
+    if final_matched:
+        links = [f"https://{host}/records/{r}" for r in final_matched]
+        return True, list(final_matched), links
+
+    current_app.logger.debug("No duplicates found.")
+    return False, [], []
+
+
+
+def is_duplicate_item(metadata, exclude_ids=[]):
+    """Check if an item is duplicate in records_metadata.
+
+    Args:
+        metadata (dict): Metadata dictionary.
+        exclude_ids (list, Optional): List of record IDs to exclude from the check.
+
+    Returns:
+        tuple:
+            - bool: True if duplicate exists, False otherwise.
+            - list: List of duplicate record IDs.
+            - list: List of duplicate record URLs.
+    """
+    return check_duplicate(metadata, is_item=True, exclude_ids=exclude_ids)
+
+
+def is_duplicate_record(data, exclude_ids=[]):
+    """Check if a record is duplicate in records_metadata.
+
+    Args:
+        data (dict): Metadata dictionary.
+        exclude_ids (list, Optional): List of record IDs to exclude from the check.
+
+    Returns:
+        tuple:
+            - bool: True if duplicate exists, False otherwise.
+            - list: List of duplicate record IDs.
+            - list: List of duplicate record URLs.
+    """
+    return check_duplicate(data, is_item=False, exclude_ids=exclude_ids)
 
 
 def save_title(activity_id, request_data):
@@ -3818,9 +4291,9 @@ def save_title(activity_id, request_data):
         if item_type_id:
             item_type_mapping = Mapping.get_record(item_type_id)
             # current_app.logger.debug("item_type_mapping:{}".format(item_type_mapping))
-            key, key_child = get_key_title_in_item_type_mapping(item_type_mapping)
-        if key and key_child:
-            title = get_title_in_request(request_data, key, key_child)
+            key_list, key_child_dict = get_key_title_in_item_type_mapping(item_type_mapping)
+        if key_list and key_child_dict:
+            title = get_title_in_request(request_data, key_list, key_child_dict)
             activity.update_title(activity_id, title)
 
 
@@ -3830,35 +4303,41 @@ def get_key_title_in_item_type_mapping(item_type_mapping):
     :param item_type_mapping: item type mapping.
     :return:
     """
+    key_list = []
+    key_child_dict = {}
     for mapping_key in item_type_mapping:
-        property_data = item_type_mapping.get(
-            mapping_key).get('jpcoar_mapping')
-        if isinstance(property_data,
-                      dict) and 'title' in property_data and property_data.get(
-                'title').get('@value'):
-            return mapping_key, property_data.get('title').get('@value')
-    return None, None
+        property_data = item_type_mapping.get(mapping_key).get('jpcoar_mapping')
+        if isinstance(property_data, dict) and \
+                'title' in property_data and \
+                property_data.get('title').get('@value'):
+            key_list.append(mapping_key)
+            key_child_dict[mapping_key] = property_data.get('title').get('@value')
+    return key_list, key_child_dict
 
 
-def get_title_in_request(request_data, key, key_child):
+def get_title_in_request(request_data, key_list, key_child_dict):
     """Get title in request.
 
     :param request_data: activity id.
-    :param key: key of title.
-    :param key_child: key child of title.
+    :param key_list: key of title.
+    :param key_child_dict: key child of title.
     :return:
     """
     result = ''
     try:
         title = request_data.get('metainfo')
-        if title and key in title:
-            title_value = title.get(key)
-            if isinstance(title_value, dict) and key_child in title_value:
-                result = title_value.get(key_child)
-            elif isinstance(title_value, list) and len(title_value) > 0:
-                title_value = title_value[0]
-                if key_child in title_value:
+        for key in key_list:
+            if title and key in title:
+                title_value = title.get(key)
+                key_child = key_child_dict.get(key)
+                if isinstance(title_value, dict) and key_child in title_value:
                     result = title_value.get(key_child)
+                elif isinstance(title_value, list) and len(title_value) > 0:
+                    title_value = title_value[0]
+                    if key_child in title_value:
+                        result = title_value.get(key_child)
+            if result:
+                break
     except Exception:
         pass
     return result
@@ -3917,24 +4396,22 @@ def hide_thumbnail(schema_form):
             break
 
 
-def get_ignore_item(_item_type_id, item_type_mapping=None,
-                    item_type_data=None):
+def get_ignore_item(_item_type_id, item_type_data=None):
     """Get ignore item from mapping.
 
     :param _item_type_id:
-    :param item_type_mapping:
     :param item_type_data:
     :return ignore_list:
     """
     ignore_list = []
-    meta_options, _ = get_options_and_order_list(
-        _item_type_id, item_type_mapping, item_type_data)
+    sub_ids = []
+    meta_options = get_options_and_order_list(
+        _item_type_id, item_type_data=item_type_data, mapping_flag=False)
     schema_form = None
     if item_type_data is not None:
         schema_form = item_type_data.model.render.get("table_row_map", {}).get(
             'form')
-    sub_ids = get_hide_list_by_schema_form(
-        item_type_id=_item_type_id, schemaform=schema_form)
+        sub_ids = get_hide_list_by_schema_form(schemaform=schema_form)
     for key, val in meta_options.items():
         hidden = val.get('option').get('hidden')
         if hidden:
@@ -3958,12 +4435,12 @@ def make_stats_file_with_permission(item_type_id, recids,
 
     Returns:
         _type_: _description_
-    """                                   
+    """
     """
 
     Arguments:
-        item_type_id    -- 
-        recids          -- 
+        item_type_id    --
+        recids          --
     Returns:
         ret             -- Key properties
         ret_label       -- Label properties
@@ -4316,6 +4793,9 @@ def make_stats_file_with_permission(item_type_id, recids,
             ret.append('.request_mail[{}]'.format(i))
             ret_label.append('.REQUEST_MAIL[{}]'.format(i))
 
+    ret.append('.researchmap_linkage')
+    ret_label.append('.RESEAECHMAP_LINKAGE')
+
     if can_export_item_application:
         records.get_item_application()
         ret.extend([".item_application.workflow",".item_application.terms",".item_application.termsDescription"])
@@ -4356,6 +4836,9 @@ def make_stats_file_with_permission(item_type_id, recids,
                 [''] * (max_request_mail - len(request_mail_list))
             )
 
+        # Exporting .researchmap_linkage is ALWAYS blank
+        records.attr_output[recid].append('')
+
         if can_export_item_application:
             item_application = records.attr_data['item_application'].get(recid, {})
             records.attr_output[recid].append(item_application.get('workflow',''))
@@ -4372,6 +4855,7 @@ def make_stats_file_with_permission(item_type_id, recids,
         doi_value, doi_type = identifier.get_idt_registration_data()
         doi_type_str = doi_type[0] if doi_type and doi_type[0] else ''
         doi_str = doi_value[0] if doi_value and doi_value[0] else ''
+        identifier_setting = get_identifier_setting("Root Index")
         if doi_type_str and doi_str:
             doi_domain = ''
             if doi_type_str == WEKO_IMPORT_DOI_TYPE[0]:
@@ -4384,6 +4868,9 @@ def make_stats_file_with_permission(item_type_id, recids,
                 doi_domain = IDENTIFIER_GRANT_LIST[4][2]
             if doi_domain and doi_str.startswith(doi_domain):
                 doi_str = doi_str.replace(doi_domain + '/', '', 1)
+            if doi_type_str == WEKO_IMPORT_DOI_TYPE[0] and \
+                    doi_str.startswith(identifier_setting.ndl_jalc_doi + "/"):
+                doi_type_str = WEKO_IMPORT_DOI_TYPE[3]
         records.attr_output[recid].extend([
             doi_type_str,
             doi_str
@@ -4511,49 +4998,75 @@ def check_item_is_being_edit(
     # current_app.logger.error("recid:{}".format(recid))
     # current_app.logger.error("post_workflow:{}".format(post_workflow))
     # current_app.logger.error("activity:{}".format(activity))
-    if not activity:
+    if not isinstance(activity, WorkActivity):
         activity = WorkActivity()
-    if not post_workflow:
+    if not isinstance(post_workflow, Activity):
         latest_pid = PIDVersioning(child=recid).last_child
         item_uuid = latest_pid.object_uuid
         post_workflow = activity.get_workflow_activity_by_item_id(item_uuid)
-    if post_workflow and post_workflow.action_status \
-            in [ASP.ACTION_BEGIN, ASP.ACTION_DOING]:
+    if (
+        post_workflow and post_workflow.action_status
+            in [ASP.ACTION_BEGIN, ASP.ACTION_DOING]
+    ):
         current_app.logger.debug("post_workflow: {0} status: {1}".format(
             post_workflow, post_workflow.action_status))
-        #return True
-        return post_workflow.activity_id
+        return str(post_workflow.activity_id)
 
     draft_pid = PersistentIdentifier.query.filter_by(
         pid_type='recid',
         pid_value="{}.0".format(recid.pid_value)
     ).one_or_none()
-    if draft_pid:
+    if isinstance(draft_pid, PersistentIdentifier):
         draft_workflow = activity.get_workflow_activity_by_item_id(
-            draft_pid.object_uuid)
-        if draft_workflow and \
-            draft_workflow.action_status in [ASP.ACTION_BEGIN,
-                                             ASP.ACTION_DOING]:
+            draft_pid.object_uuid
+        )
+        if (
+            draft_workflow
+            and draft_workflow.action_status in [ASP.ACTION_BEGIN, ASP.ACTION_DOING]
+        ):
             current_app.logger.debug("draft_workflow: {0} status: {1}".format(
-                draft_pid.object_uuid, draft_workflow.action_status))
-            #return True
-            return draft_workflow.activity_id
+                draft_pid.object_uuid, draft_workflow.action_status)
+            )
+            return str(draft_workflow.activity_id)
 
         pv = PIDVersioning(child=recid)
         latest_pid = PIDVersioning(parent=pv.parent,child=recid).get_children(
             pid_status=PIDStatus.REGISTERED
         ).filter(PIDRelation.relation_type == 2).order_by(
-            PIDRelation.index.desc()).first()
+            PIDRelation.index.desc()
+        ).first()
         latest_workflow = activity.get_workflow_activity_by_item_id(
-            latest_pid.object_uuid)
-        if latest_workflow and \
-            latest_workflow.action_status in [ASP.ACTION_BEGIN,
-                                              ASP.ACTION_DOING]:
+            latest_pid.object_uuid
+        )
+        if (
+            latest_workflow
+            and latest_workflow.action_status in [ASP.ACTION_BEGIN, ASP.ACTION_DOING]
+        ):
             current_app.logger.debug("latest_workflow: {0} status: {1}".format(
                 latest_pid.object_uuid, latest_workflow.action_status))
-            #return True
-            return latest_workflow.activity_id
-    #return False
+            return str(latest_workflow.activity_id)
+
+    pv = PIDVersioning(child=recid)
+    versions_uuid = [
+        record.object_uuid
+        for record in PIDVersioning(parent=pv.parent, child=recid)
+        .get_children(pid_status=PIDStatus.REGISTERED)
+        .filter(PIDRelation.relation_type == 2)
+        .order_by(PIDRelation.index.desc())
+        .all()
+    ]
+    last_activity = (
+        Activity.query
+        .filter(Activity.item_id.in_(versions_uuid))
+        .filter(Activity.action_status.in_([ASP.ACTION_BEGIN, ASP.ACTION_DOING]))
+        .order_by(Activity.updated.desc())
+        .first()
+    )
+    if isinstance(last_activity, Activity):
+        current_app.logger.debug("last_activity: {0} status: {1}".format(
+            last_activity.item_id, last_activity.action_status))
+        return str(last_activity.activity_id)
+
     return ""
 
 
@@ -4565,7 +5078,7 @@ def check_item_is_deleted(recid):
 
     Returns:
         bool: True: deleted, False: available
-    """    
+    """
     pid = PersistentIdentifier.query.filter_by(
         pid_type='recid', pid_value=recid).first()
     if not pid:
@@ -4584,7 +5097,7 @@ def permission_ranking(result, pid_value_permissions, display_rank, list_name,
         display_rank (_type_): _description_
         list_name (_type_): _description_
         pid_value (_type_): _description_
-    """                       
+    """
     list_result = list()
     for data in result.get(list_name, []):
         if data.get(pid_value, '') in pid_value_permissions:
@@ -4609,10 +5122,31 @@ def has_permission_edit_item(record, recid):
     can_edit = True if pid == get_record_without_version(pid) else False
     return can_edit and permission
 
+def lock_item_will_be_edit(pid_value):
+    """Lock item will be edit.
 
-def create_limmiter():
-    from .config import WEKO_ITEMS_UI_API_LIMIT_RATE_DEFAULT
-    return Limiter(app=Flask(__name__), key_func=get_remote_address, default_limits=WEKO_ITEMS_UI_API_LIMIT_RATE_DEFAULT)
+    Lock the item to prevent double-click operation.
+    The lock will be released after 3 seconds.
+
+    Args:
+        pid_value (str): recid of item.
+
+    Returns:
+        bool: If lock is successful, return True.
+    """
+    redis_connection = RedisConnection()
+    sessionstorage = redis_connection.connection(
+        db=current_app.config['ACCOUNTS_SESSION_REDIS_DB_NO'], kv = True
+    )
+    if sessionstorage.redis.exists("pid_{}_will_be_edit".format(pid_value)):
+        return False
+
+    sessionstorage.put(
+        "pid_{}_will_be_edit".format(pid_value),
+        str(current_user.get_id()).encode('utf-8'),
+        ttl_secs=3
+    )
+    return True
 
 def get_file_download_data(item_id, record, filenames, query_date=None, size=None):
     """Get file download data.
@@ -4697,3 +5231,401 @@ def get_file_download_data(item_id, record, filenames, query_date=None, size=Non
         result['period'] = 'total'
 
     return result
+
+
+# --- 通知対象取得関数 ---
+
+def get_notification_targets(deposit, user_id, shared_id):
+    """
+    Retrieve notification targets for a given deposit and user.
+
+    Args:
+        deposit (dict): The deposit data containing information about owners
+                        and shared users.
+        user_id (int): The ID of the current user.
+
+    Returns:
+        dict: A dictionary containing the following keys:
+            - "targets" (list): List of User objects who are the notification targets.
+            - "settings" (dict): A dictionary mapping user IDs to their notification settings.
+            - "profiles" (dict): A dictionary mapping user IDs to their user profiles.
+    """
+    owners = deposit.get("_deposit", {}).get("owners", [])
+    set_target_id = set(owners)
+    is_shared = shared_id != -1
+    if is_shared:
+        set_target_id.add(shared_id)
+    set_target_id.discard(int(user_id))
+
+    target_ids = list(set_target_id)
+    current_app.logger.debug(f"[get_notification_targets] target_ids: {target_ids}")
+
+    try:
+        targets = User.query.filter(User.id.in_(target_ids)).all()
+        settings = NotificationsUserSettings.query.filter(
+            NotificationsUserSettings.user_id.in_(target_ids)
+        ).all()
+        profiles = UserProfile.query.filter(
+            UserProfile.user_id.in_(target_ids)
+        ).all()
+
+        return {
+            "targets": targets,
+            "settings": {s.user_id: s for s in settings},
+            "profiles": {p.user_id: p for p in profiles}
+        }
+    except SQLAlchemyError:
+        current_app.logger.exception("[get_notification_targets] DB access failed")
+        return dict()
+
+
+def get_notification_targets_approver(activity):
+    """
+    Retrieve notification targets for the approval process in a workflow.
+
+    Args:
+        activity (Activity): The workflow activity instance containing information such as
+            the actor, flow definition, and community ID.
+
+    Returns:
+        dict: A dictionary containing the following keys:
+            - "targets" (list of User): List of users to be notified.
+            - "settings" (dict): Mapping of user_id to NotificationsUserSettings for the targets.
+            - "profiles" (dict): Mapping of user_id to UserProfile for the targets.
+            - "actor" (dict): A dictionary with the name and email of the actor (initiator).
+    """
+    from weko_workflow.api import Flow, GetCommunity
+    from weko_workflow.models import Action
+    try:
+        actor_id = activity.activity_login_user
+        actor_profile = UserProfile.get_by_userid(actor_id)
+        actor_name = actor_profile.username if actor_profile else None
+
+        flow_id = activity.flow_define.flow_id
+        flow_detail = Flow().get_flow_detail(flow_id)
+        approval_action = Action.query.filter_by(
+            action_endpoint="approval"
+        ).one()
+        approval_action_role = None
+        for action in flow_detail.flow_actions:
+            if (
+                action.action_id == approval_action.id
+                and action.action_order == activity.action_order + 1
+            ):
+                approval_action_role = action.action_role
+                break
+
+        admin_role_id = Role.query.filter_by(
+            name=current_app.config.get("WEKO_ADMIN_PERMISSION_ROLE_REPO")
+        ).one().id
+
+        target_role = {admin_role_id}
+        if approval_action_role:
+            action_role_id = approval_action_role.action_role
+            if isinstance(action_role_id, int) and approval_action_role.action_role_exclude:
+                target_role.discard(action_role_id)
+
+        set_target_id = {
+            uid[0] for uid in db.session.query(userrole.c.user_id)
+            .filter(userrole.c.role_id.in_(target_role)).distinct()
+        }
+
+        if approval_action_role:
+            action_user_id = approval_action_role.action_user
+            if isinstance(action_user_id, int):
+                if approval_action_role.action_user_exclude:
+                    set_target_id.discard(action_user_id)
+                else:
+                    set_target_id.add(action_user_id)
+
+        community_id = activity.activity_community_id
+        if community_id is not None:
+            community_admin_role_id = Role.query.filter_by(
+                name=current_app.config.get("WEKO_ADMIN_PERMISSION_ROLE_COMMUNITY")
+            ).one().id
+            community_owner_role_id = GetCommunity.get_community_by_id(community_id).id_role
+            role_left = userrole.alias("role_left")
+            role_right = userrole.alias("role_right")
+
+            set_community_admin_id = {
+                uid[0] for uid in db.session.query(role_left.c.user_id)
+                .join(role_right, role_left.c.role_id == role_right.c.role_id)
+                .filter(
+                    role_left.c.role_id == community_admin_role_id,
+                    role_right.c.role_id == community_owner_role_id
+                ).distinct()
+            }
+            set_target_id.update(set_community_admin_id)
+
+        is_shared = activity.shared_user_id is not None and activity.shared_user_id != -1
+        if not is_shared:
+            set_target_id.discard(actor_id)
+
+        targets = User.query.filter(User.id.in_(list(set_target_id))).all()
+        settings = NotificationsUserSettings.query.filter(
+            NotificationsUserSettings.user_id.in_(list(set_target_id))
+        ).all()
+        profiles = UserProfile.query.filter(
+            UserProfile.user_id.in_(list(set_target_id))
+        ).all()
+        actor = User.query.filter_by(id=actor_id).one_or_none()
+
+        return {
+            "targets": targets,
+            "settings": {s.user_id: s for s in settings},
+            "profiles": {p.user_id: p for p in profiles},
+            "actor": {"name": actor_name, "email": actor.email}
+        }
+
+    except SQLAlchemyError:
+        current_app.logger.exception("[get_notification_targets_approver] DB access failed")
+        return dict()
+
+
+def get_notification_targets_approved(deposit, user_id, activity):
+    """
+    Retrieve notification targets for a given deposit and user.
+
+    Args:
+        deposit (dict): The deposit data containing information about owners
+                        and shared users.
+        user_id (int): The ID of the current user.
+        activity (Activity): The workflow activity instance.
+
+    Returns:
+        dict: A dictionary containing the following keys:
+            - "targets" (list): List of User objects who are the notification targets.
+            - "settings" (dict): A dictionary mapping user IDs to their notification settings.
+            - "profiles" (dict): A dictionary mapping user IDs to their user profiles.
+    """
+    owners = deposit.get("_deposit", {}).get("owners", [])
+    set_target_id = set(owners)
+    is_shared = deposit.get("weko_shared_id") != -1
+
+    actor_id = activity.activity_login_user
+    if actor_id:
+        set_target_id.add(actor_id)
+
+    if is_shared:
+        set_target_id.add(deposit.get("weko_shared_id"))
+    else:
+        set_target_id.discard(int(user_id))
+
+    target_ids = list(set_target_id)
+    current_app.logger.debug(f"[get_notification_targets_approved] target_ids: {target_ids}")
+
+    try:
+        targets = User.query.filter(User.id.in_(target_ids)).all()
+        settings = NotificationsUserSettings.query.filter(
+            NotificationsUserSettings.user_id.in_(target_ids)
+        ).all()
+        profiles = UserProfile.query.filter(
+            UserProfile.user_id.in_(target_ids)
+        ).all()
+
+        return {
+            "targets": targets,
+            "settings": {s.user_id: s for s in settings},
+            "profiles": {p.user_id: p for p in profiles}
+        }
+    except SQLAlchemyError:
+        current_app.logger.exception("[get_notification_targets_approved] DB access failed")
+        return dict()
+
+# --- メール本文生成関数 ---
+
+def create_item_deleted_data(deposit, profile, target, url):
+    """
+    Generate the email content for item deletion notification.
+
+    Args:
+        deposit (dict): Data of the deleted item.
+        profile (UserProfile): Profile information of the user receiving the notification.
+        target (User): User object of the recipient.
+        url (str): URL of the deleted item.
+
+    Returns:
+        dict: A dictionary containing the filled email subject and body with the following keys:
+              - 'subject' (str): The subject of the email.
+              - 'body' (str): The body of the email.
+    """
+    from weko_workflow.utils import load_template, fill_template
+    language = (
+        profile.language if profile
+        else current_app.config.get("WEKO_WORKFLOW_MAIL_DEFAULT_LANGUAGE")
+    )
+    timezone = profile.timezone if profile else "UTC"
+    registration_date = datetime.now(pytz.timezone(timezone))
+
+    template_file = 'email_notification_item_deleted_{language}.tpl'
+    template = load_template(template_file, language)
+
+    data = {
+        "item_title": deposit.get("item_title", ""),
+        "submitter_name": profile.username if profile else target.email,
+        "registration_date": registration_date.strftime("%Y-%m-%d %H:%M:%S"),
+        "record_url": url
+    }
+
+    return fill_template(template, data)
+
+
+
+def create_direct_registered_data(deposit, profile, target, url):
+    """
+    Generate email content for a direct registration notification.
+
+    Args:
+        deposit (dict): Data of the registered item.
+        profile (UserProfile): Profile information of the user receiving the notification.
+        target (User): User object of the recipient.
+        url (str): URL of the registered item.
+
+    Returns:
+        dict: A dictionary containing the filled email subject and body with the following keys:
+            - 'subject' (str): The subject of the email.
+            - 'body' (str): The body of the email.
+    """
+    from weko_workflow.utils import load_template, fill_template
+    language = (
+        profile.language if profile
+        else current_app.config.get("WEKO_WORKFLOW_MAIL_DEFAULT_LANGUAGE")
+    )
+    timezone = profile.timezone if profile else "UTC"
+    registration_date = datetime.now(pytz.timezone(timezone))
+
+    template_file = 'email_notification_item_registered_{language}.tpl'
+    template = load_template(template_file, language)
+
+    data = {
+        "item_title": deposit.get("item_title", ""),
+        "submitter_name": profile.username if profile else target.email,
+        "registration_date": registration_date.strftime("%Y-%m-%d %H:%M:%S"),
+        "record_url": url
+    }
+    return fill_template(template, data)
+
+
+# --- 共通通知送信関数 ---
+
+def send_mail_from_notification_info(get_info_func, context_obj, content_creator, record_url=None):
+    """
+    Send notification emails to a list of users based on the provided context and content creator function.
+
+    Args:
+        get_info_func (function): A function that retrieves notification target information.
+                                  It should accept `context_obj` as an argument and return a dictionary
+                                  containing "targets", "settings", "profiles", and optionally "actor".
+        context_obj (object): The context object used to retrieve notification target information.
+        content_creator (function): A function that generates the email content.
+                                     It should accept `context_obj`, `profile`, `target`, `record_url`, and optionally `actor`
+                                     as arguments and return a dictionary with "subject" and "body" keys.
+        record_url (str, optional): The URL of the record associated with the notification. Defaults to None.
+
+    Returns:
+        int: The total number of successfully sent emails.
+"""
+    from weko_workflow.utils import send_mail
+
+    with db.session.begin_nested():
+        info = get_info_func(context_obj)
+
+    targets = info.get("targets", [])
+    settings = info.get("settings", {})
+    profiles = info.get("profiles", {})
+    actor = info.get("actor", None)
+
+    send_count = 0
+
+    for target in targets:
+        try:
+            setting = settings.get(target.id)
+            if not setting:
+                current_app.logger.debug(f"[send_mail] No setting for user_id: {target.id}")
+                continue
+            if not target.confirmed_at:
+                current_app.logger.debug(f"[send_mail] User {target.id} not confirmed")
+                continue
+            if not setting.subscribe_email:
+                current_app.logger.debug(f"[send_mail] User {target.id} unsubscribed from emails")
+                continue
+
+            profile = profiles.get(target.id)
+            if actor:
+                mail_data = content_creator(context_obj, profile, target, record_url, actor)
+            else:
+                mail_data = content_creator(context_obj, profile, target, record_url)
+
+            recipient = target.email
+            current_app.logger.debug(f"[send_mail] Sending to: {target.id}")
+            res = send_mail(mail_data.get("subject"), recipient, mail_data.get("body"))
+
+            if res:
+                send_count += 1
+
+        except Exception:
+            current_app.logger.exception(
+                f"[send_mail] Failed for user_id: {target.id}"
+            )
+
+    current_app.logger.debug(f"[send_mail] Total mails sent: {send_count}")
+    return send_count
+
+
+# --- 各イベントから呼び出すエントリーポイント ---
+
+def send_mail_item_deleted(pid_value, deposit, user_id, shared_id=-1):
+    """
+    Send a notification email when an item is deleted.
+
+    Args:
+        pid_value (str): The persistent identifier (PID) of the deleted item.
+        deposit (dict): The deposit data of the deleted item.
+        user_id (int): The ID of the user who initiated the deletion.
+
+    Returns:
+        int: The total number of successfully sent emails.
+    """
+    try:
+        record_url = request.host_url + f"records/{pid_value}"
+        current_app.logger.debug(f"[send_mail_item_deleted] pid_value: {pid_value}, user_id: {user_id}")
+        return send_mail_from_notification_info(
+            get_info_func=lambda obj: get_notification_targets(obj, user_id, shared_id),
+            context_obj=deposit,
+            content_creator=create_item_deleted_data,
+            record_url=record_url
+        )
+    except Exception as e:
+        current_app.logger.exception(
+            "Unexpected error occurred while sending mail for item deletion"
+        )
+        return
+
+
+def send_mail_direct_registered(pid_value, user_id, share_id=-1):
+    """
+    Send a notification email for a directly registered item.
+
+    Args:
+        pid_value (str): The persistent identifier (PID) of the registered item.
+        user_id (int): The ID of the user who registered the item.
+        share_id (int): The shared ID of the user.
+
+    Returns:
+        int: The total number of successfully sent emails.
+    """
+    try:
+        deposit = WekoRecord.get_record_by_pid(pid_value)
+        record_url = request.host_url + f"records/{pid_value}"
+        current_app.logger.debug(f"[send_mail_direct_registered] pid_value: {pid_value}, user_id: {user_id}")
+        return send_mail_from_notification_info(
+            get_info_func=lambda obj: get_notification_targets(obj, user_id, share_id),
+            context_obj=deposit,
+            content_creator=create_direct_registered_data,
+            record_url=record_url
+        )
+    except Exception as e:
+        current_app.logger.exception(
+            "Unexpected error occurred while sending mail for item registration"
+        )
+        return

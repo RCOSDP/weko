@@ -1,0 +1,70 @@
+{#
+    # This file is part of WEKO3.
+    # Copyright (C) 2017 National Institute of Informatics.
+    #
+    # WEKO3 is free software; you can redistribute it
+    # and/or modify it under the terms of the GNU General Public License as
+    # published by the Free Software Foundation; either version 2 of the
+    # License, or (at your option) any later version.
+    #
+    # WEKO3 is distributed in the hope that it will be
+    # useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+    # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+    # General Public License for more details.
+    #
+    # You should have received a copy of the GNU General Public License
+    # along with WEKO3; if not, write to the
+    # Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+    # MA 02111-1307, USA.
+    #}
+
+    {%- extends config.BASE_PAGE_TEMPLATE %}
+
+    {%- from "invenio_communities/macros.html" import community_header with context %}
+
+    {%- block css %}
+      {{ super() }}
+      {% assets "invenio_search_ui_search_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+      {% assets "weko_search_ui_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+    {%- endblock css %}
+
+    {%- block javascript %}
+      {{ super() }}
+      {% assets "weko_theme_js_treeview" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+      {% assets "weko_theme_js_top_page" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+      {% assets "weko_theme_js_detail_search" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+      {% assets "invenio_search_ui_search_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+      {% assets "weko_search_ui_dependencies_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+      {% assets "weko_search_ui_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+      {% assets "weko_theme_js_widget" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+    {%- endblock javascript %}
+
+    {%- block page_body_tabs %}
+      {% from "weko_theme/macros/tabs_selector.html" import tabs_selector with context %}
+      {{ tabs_selector('content_policy',community_id) }}
+    {%- endblock page_body_tabs%}
+
+    {% block page_body %}
+        <div class="communities">
+          <div id="community-id" name="community-id" hidden>{{ community_id }}</div>
+          {{ community_header(community, subtitle='') }}
+          <div id="page_body" class="grid-stack collapse hidden">
+            <div id="main_contents">
+              {{ super() }}
+            </div>
+          </div>
+          {%- from "weko_theme/macros/footer-community.html" import community_footer_widget %}
+          {{ community_footer_widget(render_widgets, community, link=False, subtitle='') }}
+        </div>
+      <div class="communities"></div>
+    {% endblock page_body %}
+
+    {%- block page_body_main %}
+    <div class="content-policy container py-5">
+      <div class="policy-content">
+        {% if community.content_policy %}
+          {{ community.content_policy | sanitize_html | safe }}
+        {% endif %}
+      </div>
+    </div>
+  {%- endblock page_body_main %}

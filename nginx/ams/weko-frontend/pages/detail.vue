@@ -3,13 +3,13 @@
     <!-- 検索フォーム -->
     <SearchForm :sessCondFlag="false" />
     <!-- インデックス階層 -->
-    <main class="max-w-[1024px] mx-auto px-2.5">
-      <div class="breadcrumb flex flex-wrap w-full">
-        <div v-for="index in indexes" :key="index.id">
-          <span v-if="index.id != indexId" class="font-medium cursor-pointer" @click="clickParent(index.id)">
+    <main class="mx-auto max-w-[97vw]">
+      <div class="w-full">
+        <div v-for="index in indexes" :key="index.id" class="w-full">
+          <span v-if="index.id != indexId" class="font-medium cursor-pointer text-14px" @click="clickParent(index.id)">
             {{ index.name }}
           </span>
-          <span v-else class="font-medium cursor-pointer" @click="clickParent(index.id)">
+          <span v-else class="font-medium cursor-pointer text-14px" @click="clickParent(index.id)">
             {{ index.name }}
           </span>
           <a v-if="index.id != indexId" class="ml-1 mr-1">/</a>
@@ -17,7 +17,7 @@
       </div>
       <div class="flex flex-wrap w-full">
         <!-- メインコンテンツ -->
-        <div class="detail__wrapper">
+        <div class="detail__wrapper h-full">
           <div class="bg-miby-light-blue py-3 pl-5">
             <p class="icons icon-item text-white font-bold">
               {{ $t('item') }}
@@ -51,7 +51,7 @@
           </div>
         </div>
         <!-- サブコンテンツ -->
-        <div class="w-full md:max-w-[271px] md:ml-[5px]">
+        <div class="w-full md:ml-[5px] max-w-[24.5%]">
           <!-- 閲覧数 -->
           <div class="bg-miby-light-blue py-3 pl-5 flex items-center">
             <p class="icons icon-statistics text-white font-bold">
@@ -63,21 +63,36 @@
             :current-number="currentNumber"
             :created-date="createdDate"
             @error="setError" />
-          <!-- リクエストメール -->
-          <div class="bg-miby-light-blue py-3 pl-5">
-            <p class="icons icon-mail text-white font-bold">
-              {{ $t('requestMail') }}
-            </p>
+          <!-- リクエストメール（未ログイン＆フィードバックアドレス有） -->
+          <div v-if="!isLogin && checkMailAddress">
+            <div class="bg-miby-light-blue py-3 pl-5">
+              <p class="icons icon-mail text-white font-bold">
+                {{ $t('requestMail') }}
+              </p>
+            </div>
+            <div class="bg-miby-bg-gray py-7 text-center flex justify-center items-center">
+              <button
+                class="flex gap-1 text-white px-4 py-2 rounded"
+                :class="[false ? 'bg-miby-dark-gray' : 'bg-sky-800']"
+                :disabled="false"
+                @click="openRequestMailModal">
+                <img src="/img/icon/icon_mail-send.svg" alt="Send" />
+                {{ $t('request') }}
+              </button>
+            </div>
           </div>
-          <div class="bg-miby-bg-gray py-7 text-center flex justify-center items-center">
-            <button
-              class="flex gap-1 text-white px-4 py-2 rounded"
-              :class="[false ? 'bg-miby-dark-gray' : 'bg-sky-800']"
-              :disabled="false"
-              @click="openRequestMailModal">
-              <img src="/img/icon/icon_mail-send.svg" alt="Send" />
-              {{ $t('request') }}
-            </button>
+          <!-- GakuNinRDM（ログイン済み＆プロジェクトID有） -->
+          <div v-else-if="isLogin && checkProjectId">
+            <div class="bg-miby-light-blue py-3 pl-5">
+              <p class="text-white font-bold">
+                {{ $t('GakuNinRDM') }}
+              </p>
+            </div>
+            <div class="bg-miby-bg-gray py-7 text-center flex justify-center items-center">
+              <button @click="openDataSet">
+                <img src="/img/logo/gakunin_logo.svg" alt="Send" />
+              </button>
+            </div>
           </div>
           <!-- ダウンロードランキング -->
           <div class="bg-miby-light-blue py-3 pl-5">
@@ -115,8 +130,8 @@
     <!-- リクエストメール -->
     <RequestMail
       v-if="renderFlag"
-      class="z-50"
       ref="requestMail"
+      class="z-50"
       :item-id="currentNumber"
       @click-send="openLoading(false)"
       @complete-send="checkSendingResponse" />
@@ -192,6 +207,9 @@ const alertCode = ref(0);
 const alertPosition = ref('');
 const alertWidth = ref('');
 const isLoading = ref(true);
+const isLogin = ref(false);
+const checkMailAddress = ref(false);
+const checkProjectId = ref(false);
 
 /* ///////////////////////////////////
 // function
@@ -216,14 +234,26 @@ async function getDetail(number: string) {
       if (response.status === 200) {
         itemDetail = response._data;
         indexId = response._data.index ?? '';
+
+        // @ts-ignore
+        const obj = getContentById(itemDetail.rocrate, './');
         // 閲覧数用作成日時取得
         if (Object.prototype.hasOwnProperty.call(itemDetail, 'rocrate')) {
-          // @ts-ignore
-          const obj = getContentById(itemDetail.rocrate, './');
           if (Object.prototype.hasOwnProperty.call(obj, appConf.roCrate.root.createDate)) {
             createdDate = obj[appConf.roCrate.root.createDate][0];
           }
         }
+
+        // ログイン状況を取得する
+        isLogin.value = !!sessionStorage.getItem('login:state');
+
+        // プロジェクトIDの登録があるかどうか確認する
+        // TODO: RoCrateキーは暫定のため、整理後再度指定要
+        checkProjectId.value = !!obj[appConf.roCrate.root.projectId]?.[0];
+
+        // フィードバックメールアドレスがあるかどうか確認する
+        // @ts-ignore
+        checkMailAddress.value = !!itemDetail.metadata.hasRequestmailAddress;
       }
     },
     onResponseError({ response }) {
@@ -268,7 +298,16 @@ async function search(searchPage: string) {
   }
 
   let statusCode = 0;
-  await $fetch(appConf.wekoApi + '/records', {
+  const params = {
+    q: conditions.keyword,
+    search_type: conditions.type,
+    page: searchPage,
+    size: conditions.perPage,
+    sort: conditions.order === 'asc' ? conditions.sort : '-' + conditions.sort
+  };
+  const urlSearchParam = new URLSearchParams(params);
+
+  await $fetch(appConf.wekoApi + '/records?' + urlSearchParam, {
     timeout: useRuntimeConfig().public.apiTimeout,
     method: 'GET',
     headers: {
@@ -276,13 +315,6 @@ async function search(searchPage: string) {
       Pragma: 'no-cache',
       'Accept-Language': localStorage.getItem('locale') ?? 'ja',
       Authorization: localStorage.getItem('token:type') + ' ' + localStorage.getItem('token:access')
-    },
-    params: {
-      q: conditions.keyword,
-      search_type: conditions.type,
-      page: searchPage,
-      size: conditions.perPage,
-      sort: conditions.order === 'asc' ? conditions.sort : '-' + conditions.sort
     },
     onResponse({ response }) {
       if (response.status === 200) {
@@ -497,7 +529,9 @@ async function changeDetail(value: string) {
       openLoading(true);
       await getDetail(String(prevNum.value));
       // REVIEW: pushでクエリを置き換える場合、ブラウザーバック対応をする
-      useRouter().replace({ query: { sess: beforePage, number: prevNum.value } });
+      useRouter().replace({
+        query: { sess: beforePage, number: prevNum.value }
+      });
       if (shift === 'shift-prev') {
         await setNumList(shift);
       }
@@ -528,7 +562,9 @@ async function changeDetail(value: string) {
       openLoading(true);
       await getDetail(String(nextNum.value));
       // REVIEW: pushでクエリを置き換える場合、ブラウザーバック対応をする
-      useRouter().replace({ query: { sess: beforePage, number: nextNum.value } });
+      useRouter().replace({
+        query: { sess: beforePage, number: nextNum.value }
+      });
       if (shift === 'shift-next') {
         await setNumList(shift);
       }
@@ -609,11 +645,11 @@ function clickParent(indexId: string) {
 }
 
 /**
- * 作成者情報モーダル表示
+ * 作成者情報モーダル表示(10/25現在未使用)
  */
-function openCreaterModal() {
-  creater.value.openModal();
-}
+// function openCreaterModal() {
+//   creater.value.openModal();
+// }
 
 /**
  * リクエストモーダル表示
@@ -621,6 +657,15 @@ function openCreaterModal() {
 function openRequestMailModal() {
   requestMail.value.getCaptcha();
   requestMail.value.openModal();
+}
+
+/**
+ * 別ウィンドウでデータセットを開く
+ */
+function openDataSet() {
+  // TODO: 下記urlにデータセットを開くアドレスを入れる
+  // const url = '';
+  // window.open(url, '_blank');
 }
 
 /**

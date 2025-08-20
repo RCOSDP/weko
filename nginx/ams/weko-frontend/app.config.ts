@@ -23,7 +23,7 @@ export default defineAppConfig({
       // 公開区分
       releaseRange: 'accessMode',
       // 公開日
-      releaseDate: 'reviews',
+      releaseDate: 'dateCreated',
       // 作成日
       createDate: 'dateCreated',
       // 更新日
@@ -42,6 +42,9 @@ export default defineAppConfig({
       accessMode: 'accessMode',
       // キーワード
       keywords: 'keywords',
+      // プロジェクトID
+      // TODO: valueはマッピング整理後に修正予定
+      projectId: 'text',
       // ファイル情報
       file: {
         // 格納場所
@@ -51,9 +54,11 @@ export default defineAppConfig({
         // ライセンス種別
         licenseType: 'license',
         // ライセンス自由入力
-        licenseWrite: 'test',
+        licenseWrite: 'text',
         // ファイル形式
-        format: 'encodingFormat'
+        format: 'encodingFormat',
+        // コメント
+        comment: 'comment'
       }
     },
     /**
@@ -79,6 +84,16 @@ export default defineAppConfig({
         member: 'Private',
         // 非公開
         private: 'Unshared'
+      },
+      accessMode: {
+        // 公開
+        public: 'open access',
+        // 共有
+        group: 'restricted access',
+        // 非共有・非公開
+        member: 'embargoed access',
+        // 公開期間猶予
+        private: 'metadata only access'
       }
     }
   },

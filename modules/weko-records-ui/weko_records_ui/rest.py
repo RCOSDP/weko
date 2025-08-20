@@ -23,6 +23,7 @@ import inspect
 import json
 import re
 import traceback
+
 from email_validator import validate_email
 from flask import Blueprint, current_app, jsonify, make_response, request, Response, abort, url_for
 from flask_babelex import get_locale
@@ -33,6 +34,8 @@ from redis import RedisError
 from invenio_oauth2server import require_api_auth, require_oauth_scopes
 from urllib import parse
 from redis import RedisError
+from werkzeug.http import generate_etag
+
 from invenio_db import db
 from invenio_oauth2server import require_api_auth, require_oauth_scopes
 from invenio_pidrelations.contrib.versioning import PIDVersioning
@@ -47,28 +50,26 @@ from invenio_rest import ContentNegotiatedMethodView
 from invenio_rest.errors import SameContentException
 from invenio_db import db
 from invenio_rest.views import create_api_errorhandler
+from invenio_stats.views import QueryRecordViewCount, QueryFileStatsCount
 from sqlalchemy.exc import SQLAlchemyError
-from invenio_stats.views import QueryFileStatsCount, QueryRecordViewCount
+from weko_accounts.utils import limiter
 from weko_deposit.api import WekoRecord
-from weko_records.api import ItemTypes
+from weko_items_ui.scopes import item_read_scope
+from weko_records.api import ItemTypes, RequestMailList
 from weko_records.serializers import citeproc_v1
 from weko_records_ui.api import create_captcha_image, send_request_mail, validate_captcha_answer
-from weko_items_ui.scopes import item_read_scope
 from weko_workflow.api import WorkActivity, WorkFlow
 from weko_workflow.models import GuestActivity
 from weko_workflow.scopes import activity_scope
-from weko_workflow.utils import check_pretty, init_activity_for_guest_user
+from weko_workflow.utils import check_etag, check_pretty, init_activity_for_guest_user
 
-from .views import escape_str, get_usage_workflow
+from .errors import AvailableFilesNotFoundRESTError, ContentsNotFoundError, DateFormatRESTError, \
+    FilesNotFoundRESTError, InternalServerError, InvalidEmailError, InvalidRequestError, \
+    InvalidTokenError, InvalidWorkflowError, ModeNotFoundRESTError, PermissionError, \
+    RecordsNotFoundRESTError, RequiredItemNotExistError, VersionNotFoundRESTError
 from .permissions import page_permission_factory, file_permission_factory
-from .errors import AvailableFilesNotFoundRESTError, ContentsNotFoundError, InvalidRequestError, VersionNotFoundRESTError, InternalServerError, \
-    RecordsNotFoundRESTError, PermissionError, DateFormatRESTError, FilesNotFoundRESTError, ModeNotFoundRESTError, RequiredItemNotExistError, \
-    InvalidEmailError, InvalidTokenError, InvalidWorkflowError
-from .scopes import file_read_scope
-from .utils import create_limmiter
-
-
-limiter = create_limmiter()
+from .scopes import file_read_scope, item_read_scope
+from .views import escape_str, get_usage_workflow
 
 
 def create_error_handlers(blueprint):
@@ -165,6 +166,7 @@ def create_blueprint(endpoints):
             )
 
     return blueprint
+
 
 def create_blueprint_cites(endpoints):
     """Create Weko-Records-UI-Cites-REST blueprint.
@@ -644,8 +646,8 @@ class WekoRecordsCitesResource(ContentNegotiatedMethodView):
     # @need_record_permission('read_permission_factory')
     def get(self, pid_value, **kwargs):
         """Render citation for record according to style and language."""
-        style = request.values.get('style', 1)  # style or 'science'
-        locale = request.values.get('locale', 2)
+        style = request.values.get('style', "aapg-bulletin")  # style or 'science'
+        locale = request.values.get('locale', "en-US")
         try:
             pid = PersistentIdentifier.get('depid', pid_value)
             record = WekoRecord.get_record(pid.object_uuid)
@@ -729,11 +731,17 @@ class WekoRecordsResource(ContentNegotiatedMethodView):
             # Check pretty
             indent = 4 if request.args.get('pretty') == 'true' else None
 
+            # Check presence of requestmail address
+            metadata = self._convert_metadata(record, language)
+            mail_list = RequestMailList.get_mail_list_by_item_id(pid.object_uuid)
+            mail_list_len = len(mail_list) if isinstance(mail_list, list) else 0
+            metadata['hasRequestmailAddress'] = mail_list_len > 0
+
             # Create Response
             res_json = {
                 'index': indexId,
                 'rocrate': rocrate,
-                'metadata': self._convert_metadata(record, language),
+                'metadata': metadata
             }
             res = Response(
                 response=json.dumps(res_json, indent=indent),
@@ -1373,6 +1381,7 @@ class CreateCaptchaImage(ContentNegotiatedMethodView):
         response = make_response(jsonify(res_json), 200)
         return response
 
+
 class CaptchaAnswerValidation(ContentNegotiatedMethodView):
 
     view_name = 'records_ui_{0}'
@@ -1385,6 +1394,7 @@ class CaptchaAnswerValidation(ContentNegotiatedMethodView):
     def post(self, **kwargs):
         """
         Post file application.
+
         Returns:
             Result json.
         """

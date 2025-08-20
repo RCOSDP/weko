@@ -3,8 +3,8 @@
     <div class="flex flex-wrap gap-10 lg:gap-20 items-end justify-between">
       <div class="flex">
         <ul class="text-white text-sm mr-20">
-          <li class="mb-1.5">
-            <NuxtLink class="underline" to="/">
+          <li class="mb-1.5 cursor-pointer">
+            <NuxtLink class="underline" to="" event="" @click="throughDblClick('/')">
               <span>TOP</span>
             </NuxtLink>
           </li>
@@ -23,8 +23,8 @@
               <span>FAQ</span>
             </NuxtLink>
           </li> -->
-          <li>
-            <NuxtLink class="underline" to="/contact">
+          <li class="cursor-pointer">
+            <NuxtLink class="underline" to="" event="" @click="throughDblClick('/contact')">
               <span>CONTACT</span>
             </NuxtLink>
           </li>
@@ -54,8 +54,8 @@
         </ul>
       </div>
       <div class="flex flex-wrap lg:flex-nowrap items-center max-w-[245px] lg:max-w-full mx-auto md:mr-0">
-        <p class="mr-[5px]">
-          <NuxtLink to="/">
+        <p class="mr-[5px] cursor-pointer">
+          <NuxtLink to="" event="" @click="throughDblClick('/')">
             <img src="/img/logo/logo01.png" alt="AMS Logo" />
           </NuxtLink>
         </p>
@@ -68,3 +68,19 @@
     </div>
   </footer>
 </template>
+
+<script setup>
+/* ///////////////////////////////////
+// function
+/////////////////////////////////// */
+/**
+ * ダブルクリックを制御する
+ */
+function throughDblClick(route) {
+  if (route === '/contact') {
+    navigateTo('/contact');
+  } else if (location.pathname !== '/') {
+    navigateTo('/');
+  }
+}
+</script>

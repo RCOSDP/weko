@@ -43,7 +43,7 @@ from invenio_db import db as db_
 from invenio_communities.models import Community
 
 from weko_index_tree.models import Index
-
+from weko_notifications import WekoNotifications
 
 from weko_user_profiles import WekoUserProfiles
 from weko_user_profiles.views import blueprint_ui_init,blueprint_api_init
@@ -71,6 +71,7 @@ def base_app(instance_path):
         LOGIN_DISABLED=False,
         SECRET_KEY='testing_key',
         SERVER_NAME='TEST_SERVER.localdomain',
+        THEME_SITEURL="https://localhost",
         SQLALCHEMY_DATABASE_URI=os.getenv('SQLALCHEMY_DATABASE_URI',
                                            'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest'),
         # SQLALCHEMY_DATABASE_URI=os.environ.get(
@@ -88,7 +89,8 @@ def base_app(instance_path):
     InvenioAccess(app_)
     InvenioAccounts(app_)
     WekoUserProfiles(app_)
-    
+    WekoNotifications(app_)
+
     app_.register_blueprint(accounts_blueprint)
 
     yield app_
@@ -170,7 +172,7 @@ def users(app, db):
         originalroleuser = create_test_user(email='originalroleuser@test.org')
         originalroleuser2 = create_test_user(email='originalroleuser2@test.org')
         student = User.query.filter_by(email='student@test.org').first()
-        
+
     role_count = Role.query.filter_by(name='System Administrator').count()
     if role_count != 1:
         sysadmin_role = ds.create_role(name='System Administrator')

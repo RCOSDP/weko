@@ -228,8 +228,12 @@
       null,
       "必須入力項目を入力してください。"
     ],
-    "Required_Input": [
+    "IndexURL": [
       null,
-      "英語で入力は必要です。"
+      "インデックスURL"
+    ],
+    "CNRI": [
+      null,
+      "CNRI"
     ]
 }

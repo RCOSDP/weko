@@ -35,6 +35,7 @@ let isRegenerate = false;
 let isClickMainContent = false;
 
 const PageBodyGrid = function () {
+    this.intervalId;
     this.init = function () {
         let options = {
             width: 12,
@@ -264,11 +265,15 @@ const PageBodyGrid = function () {
     };
 
     this.buildAccessCounter = function (widgetId, created_date, languageDescription) {
+        let precedingMessage = languageDescription.preceding_message ? languageDescription.preceding_message + " " : "";
+        let followingMessage = languageDescription.following_message ? " " + languageDescription.following_message : "";
+        let otherMessage = languageDescription.other_message ? languageDescription.other_message : "";
+        let countStartDate = languageDescription.count_start_date ? languageDescription.count_start_date : created_date;
         let data = this.getAccessTopPageValue();
         let result = 0;
         // Convert to display-able number
-        if (data && data[widgetId] && data[widgetId][created_date]) {
-          let widget = data[widgetId][created_date];
+        if (data && data[widgetId] && data[widgetId][countStartDate]) {
+          let widget = data[widgetId][countStartDate];
             let initNum = widget.access_counter ? Number(widget.access_counter) : 0;
             result = widget.all.count ? Number(widget.all.count) : 0;
             if (typeof(initNum) == 'number') {
@@ -276,13 +281,10 @@ const PageBodyGrid = function () {
             }
         }
 
-        let precedingMessage = languageDescription.preceding_message ? languageDescription.preceding_message + " " : "";
-        let followingMessage = languageDescription.following_message ? " " + languageDescription.following_message : "";
-        let otherMessage = languageDescription.other_message ? languageDescription.other_message : "";
-
         return '<div>'
                 + ' <div class="counter-container">'
-                +       precedingMessage + '<span data-widget-id="' + widgetId + '" data-created-date="' + created_date
+                +       precedingMessage
+                + '<span data-widget-id="' + widgetId + '" data-created-date="' + created_date + '"data-count-start-date="'+ countStartDate
                 + '" class = "text-access-counter">' + result + '</span>' + followingMessage
                 + ' </div>'
                 + ' <div>' + otherMessage + '</div>'
@@ -327,7 +329,7 @@ const PageBodyGrid = function () {
             },
             success: function(response) {
                 var endpoints = response.endpoints;
-                var repoHomeURL = (repoID === DEFAULT_REPOSITORY) ? '/' : ('/' + '?community=' + repoID);
+                var repoHomeURL = (repoID === DEFAULT_REPOSITORY) ? '/' : ('/' + '?c=' + repoID);
                 var navbarID = 'widgetNav_' + widgetID; // Re-use to build unique class ids
                 var navbarClass = settings.menu_orientation === 'vertical' ?
                     'nav nav-pills nav-stacked pull-left ' + navbarID : 'nav navbar-nav';
@@ -336,7 +338,8 @@ const PageBodyGrid = function () {
                 let navbarHeader = "";
                 for (let i in endpoints) {  // Create links
                   let liClass = '';
-                  let communityArgs = (repoID === DEFAULT_REPOSITORY) ? '' : '?community=' + repoID;
+                  let communityArgs = (repoID === DEFAULT_REPOSITORY) ? '' : '?c=' + repoID;
+                  let communityPath = (repoID === DEFAULT_REPOSITORY) ? '' : '/c/' + repoID + '/page';
                   let title = endpoints[i].title;
                   let endpointsURL = endpoints[i].url;
                   if (endpoints[i].is_main_layout) {
@@ -345,7 +348,20 @@ const PageBodyGrid = function () {
                     if (window.location.pathname === endpointsURL) {
                       liClass = 'class="active"';
                     }
-                    childNavBar += '<li ' + liClass + '><a href="' + endpointsURL + communityArgs + '">' + title + '</a></li>';
+                    if (endpointsURL.charAt(0) === '/'){
+                      if (communityPath === '') {
+                        childNavBar += '<li ' + liClass + '><a href="' + endpointsURL + communityArgs + '">' + title + '</a></li>';
+                      } else {
+                        let provisionalURL = endpointsURL.replace(communityPath, '')
+                        if (provisionalURL.charAt(0) === '/'){
+                          childNavBar += '<li ' + liClass + '><a href="' + endpointsURL + communityArgs + '">' + title + '</a></li>';
+                        } else {
+                          childNavBar += '<li ' + liClass + '><a href="' + provisionalURL + '">' + title + '</a></li>';
+                        }
+                      }
+                    } else {
+                      childNavBar += '<li ' + liClass + '><a href="' + endpointsURL + '">' + title + '</a></li>';
+                    }
                   }
                 }
 
@@ -411,7 +427,8 @@ const PageBodyGrid = function () {
     };
 
     this.widgetTemplate = function (node, index) {
-        let content = "";
+      let loginElement = "";
+      let content = "";
         let multiLangSetting = node.multiLangSetting;
         let languageDescription = "";
         let id = 'id="widget_body_' + index + '"';
@@ -434,7 +451,11 @@ const PageBodyGrid = function () {
             }
             content = this.buildAccessCounter(widgetId, node.created_date, languageDescription);
             let _this = this
-            setInterval(function() { return _this.setAccessCounterValue(); }, INTERVAL_TIME);
+            if (!this.intervalId) {
+                this.intervalId = setInterval(function() {
+                    return _this.setAccessCounterValue(widgetId);
+                }, INTERVAL_TIME);
+            }
         } else if (node.type === NEW_ARRIVALS) {
             let innerID = 'new_arrivals' + '_' + index;
             id = 'id="' + innerID + '"';
@@ -448,6 +469,10 @@ const PageBodyGrid = function () {
           this.buildMenu(node.id, node.widget_id, innerID, menuSettings);
         } else if (node.type === HEADER_TYPE) {
             $("#community_header").attr("hidden", true);
+            let content_area = document.querySelector('.navbar-right');
+            if (content_area !== null) {
+              loginElement = content_area.cloneNode(true);
+            }
             if (!$.isEmptyObject(languageDescription)) {
                 content = languageDescription.description;
             }
@@ -475,7 +500,7 @@ const PageBodyGrid = function () {
             'body': content,
             'id': id
         };
-        return widgetTheme.buildTemplate(widget_data, node, dataTheme);
+        return widgetTheme.buildTemplate(widget_data, node, dataTheme, loginElement);
     };
 
     this.setAccessCounterValue = function () {
@@ -484,9 +509,9 @@ const PageBodyGrid = function () {
         let accessCounter = 0;
         $(".text-access-counter").each(function () {
             let widgetId = $(this).data("widgetId");
-            let createdDate = $(this).data("createdDate");
-            if (data && data[widgetId] && data[widgetId][createdDate]) {
-                var widget = data[widgetId][createdDate];
+            let countStartDate = $(this).data("countStartDate") ? $(this).data("countStartDate") : $(this).data("createdDate");
+            if (data && data[widgetId] && data[widgetId][countStartDate]) {
+                var widget = data[widgetId][countStartDate];
                 let result = widget.access_counter ? Number(widget.access_counter) : 0;
                 accessCounter = result + (widget.all.count ? Number(widget.all.count) : 0);
             }
@@ -505,12 +530,18 @@ const PageBodyGrid = function () {
             current_language = "en";
         }
         var currentTime = new Date().getTime();
+        var current_path=location.pathname
+        var url = (current_path === "/" || current_path.indexOf("/c/") !==-1) ? "/main" : current_path;
+        var _this = this
         $.ajax({
-            url: '/api/admin/access_counter_record/' + repository_id + '/' + current_language, 
+            url: '/api/admin/access_counter_record/' + repository_id + url + '/' + current_language,
             method: 'GET',
             async: false,
             success: function(response) {
                 data = response;
+            },
+            error: function() {
+                clearInterval(_this.intervalId);
             }
         });
         return data;
@@ -543,7 +574,7 @@ let WidgetTheme = function () {
         'scroll-bar': ''
     };
 
-    this.buildTemplate = function (widget_data, widget_settings, template) {
+    this.buildTemplate = function (widget_data, widget_settings, template, element) {
         if (!widget_data || !widget_settings) {
             return undefined;
         }
@@ -606,16 +637,33 @@ let WidgetTheme = function () {
             noAutoHeight = "no-auto-height";
             overflowY = "";
         }
-      return '<div class="grid-stack-item widget-resize">' +
+        if ( element == "") {
+          return '<div class="grid-stack-item widget-resize">' +
           '    <div class="' + setClass + '" style="' + borderStyle + '">' +
           header +
           '        <div class="' + panelClasses + ' ' + headerClass + ' ' + noAutoHeight + ' " style="padding-top: 0px; padding-bottom: 0!important;'
           + overflowY + overFlowX + this.buildCssText('background-color', backgroundColor) + ' "' + id + '>'
           + widget_data.body +
           '        </div>' +
-          '    </div>' +
+          '    </div>'+
           '</div>';
-    };
+        } else {
+          return '<div class="grid-stack-item widget-resize over">' +
+              '    <div class="' + setClass + '" style="' + borderStyle + '">' +
+              header +
+              '        <div class="' + panelClasses + ' ' + headerClass + ' ' + noAutoHeight + ' " style="padding-top: 0px; padding-bottom: 0!important;'
+              + overflowY + overFlowX + this.buildCssText('background-color', backgroundColor) + ' "' + id + '>'
+              + widget_data.body +
+              '        </div>' +
+              '    </div>' + element.outerHTML +
+              '</div>' +
+              '<style>' +
+              '.over{overflow: visible !important;}' +
+              '.grid-stack-item-content.panel.header-footer-type{ z-index: -1 !important }' +
+              '.navbar-right{ margin-right: 15px; }' +
+              '</style>';
+        }
+      };
 
   this.validateWidgetHeight = function (widgetType, widgetData) {
     if ([FREE_DESCRIPTION_TYPE, NOTICE_TYPE, HEADER_TYPE, FOOTER_TYPE].indexOf(widgetType) > -1) {

@@ -20,27 +20,32 @@
 
 """WEKO3 module docstring."""
 
+import sys
 import re
 import uuid
+import json
 
-from flask import abort, current_app, jsonify, request, url_for
+from flask import abort, current_app, flash, jsonify, request, url_for
 from flask_admin import BaseView, expose
 from flask_login import current_user
 from flask_babelex import gettext as _
+from flask_wtf import FlaskForm
 from invenio_accounts.models import Role, User
+from invenio_communities.models import Community
 from invenio_db import db
 from invenio_files_rest.models import Location
 from invenio_i18n.ext import current_i18n
 from invenio_mail.models import MailTemplates
-from weko_admin.models import AdminSettings
 from weko_index_tree.models import Index
 from weko_records.api import ItemTypes
 from weko_records.models import ItemTypeProperty
+from weko_admin.models import AdminSettings
 
+from . import config
 from .api import Action, Flow, WorkActivity, WorkFlow
 from .config import WEKO_WORKFLOW_SHOW_HARVESTING_ITEMS
 from .models import WorkflowRole
-from .utils import recursive_get_specified_properties
+from .utils import recursive_get_specified_properties, check_activity_settings
 
 
 class FlowSettingView(BaseView):
@@ -66,6 +71,11 @@ class FlowSettingView(BaseView):
         """
         users = User.query.filter_by(active=True).all()
         roles = Role.query.all()
+        if set(role.name for role in current_user.roles) & \
+                set(current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER']):
+            repositories = [{"id": "Root Index"}] + Community.query.all()
+        else:
+            repositories = Community.get_repositories_by_user(current_user)
         actions = self.get_actions()
         mail_templates = MailTemplates.get_templates()
         restricted_access_settings = AdminSettings.get("restricted_access", dict_to_object=False) or {}
@@ -82,6 +92,7 @@ class FlowSettingView(BaseView):
                 roles=roles,
                 actions=None,
                 action_list=actions,
+                repositories=repositories,
                 mail_templates=mail_templates,
                 use_restricted_item=use_restricted_item,
                 display_request_form=display_request_form,
@@ -109,6 +120,7 @@ class FlowSettingView(BaseView):
             actions=flow.flow_actions,
             action_list=actions,
             specifed_properties=specified_properties,
+            repositories=repositories,
             mail_templates=mail_templates,
             use_restricted_item=use_restricted_item,
             display_request_form=display_request_form,
@@ -187,7 +199,7 @@ class FlowSettingView(BaseView):
         if '0' == flow_id:
             return jsonify(code=500, msg='No data to delete.',
                            data={'redirect': url_for('flowsetting.index')})
-        
+
         if not self._check_auth(flow_id) :
             abort(403)
 
@@ -216,12 +228,19 @@ class FlowSettingView(BaseView):
     @staticmethod
     def get_actions():
         """Get Actions info."""
+        def _set_available_for_delete(action):
+            action.available_for_delete = action.action_name in current_app.config[
+                "WEKO_WORKFLOW_DELETION_ACTIONS"
+            ]
+            return action
+
         actions = Action().get_action_list()
-        action_list = list()
-        for action in actions:
-            if action.action_name in current_app.config[
-                    'WEKO_WORKFLOW_ACTIONS']:
-                action_list.append(action)
+        action_list = [
+            _set_available_for_delete(action)
+            for action in actions
+            if action.action_name in current_app.config["WEKO_WORKFLOW_ACTIONS"]
+        ]
+
         return action_list
 
     @expose('/action/<string:flow_id>', methods=['POST'])
@@ -254,8 +273,8 @@ class FlowSettingView(BaseView):
 
     @staticmethod
     def _check_auth(flow_id:str ):
-        """  
-        if the flow is used in open_restricted workflow , 
+        """
+        if the flow is used in open_restricted workflow ,
         the flow can Update by System Administrator.
 
         Args FlowDefine
@@ -298,7 +317,7 @@ class WorkFlowSettingView(BaseView):
         :return:
         """
         workflow = WorkFlow()
-        workflows = workflow.get_workflow_list()
+        workflows = workflow.get_workflow_list(user=current_user)
         role = Role.query.all()
         for wf in workflows:
             index_tree = Index().get_index_by_id(wf.index_tree_id)
@@ -342,6 +361,11 @@ class WorkFlowSettingView(BaseView):
         display_label = self.get_language_workflows("display")
         hide_label = self.get_language_workflows("hide")
         display_hide = self.get_language_workflows("display_hide")
+        if set(role.name for role in current_user.roles) & \
+                set(current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER']):
+            repositories = [{"id": "Root Index"}] + Community.query.all()
+        else:
+            repositories = Community.get_repositories_by_user(current_user)
 
         # the workflow that open_restricted is true can update by system administrator only
         is_sysadmin = False
@@ -349,6 +373,8 @@ class WorkFlowSettingView(BaseView):
             if r.name in current_app.config['WEKO_SYS_USER']:
                 is_sysadmin =True
                 break
+
+        is_display_restricted_access_checkbox = is_sysadmin and current_app.config.get('WEKO_ADMIN_DISPLAY_RESTRICTED_SETTINGS', False)
 
         if '0' == workflow_id:
             """Create new workflow"""
@@ -365,6 +391,8 @@ class WorkFlowSettingView(BaseView):
                 hide_label=hide_label,
                 display_hide_label=display_hide,
                 is_sysadmin=is_sysadmin,
+                is_display_restricted_access_checkbox=is_display_restricted_access_checkbox,
+                repositories=repositories
             )
 
         """Update the workflow info"""
@@ -379,7 +407,7 @@ class WorkFlowSettingView(BaseView):
         else:
             display = role
             hide = []
-        
+
         if workflows.open_restricted and not is_sysadmin:
             abort(403)
 
@@ -395,7 +423,9 @@ class WorkFlowSettingView(BaseView):
             display_label=display_label,
             hide_label=hide_label,
             display_hide_label=display_hide,
-            is_sysadmin=is_sysadmin
+            is_sysadmin=is_sysadmin,
+            is_display_restricted_access_checkbox=is_display_restricted_access_checkbox,
+            repositories=repositories
         )
 
     @expose('/<string:workflow_id>', methods=['POST', 'PUT'])
@@ -410,10 +440,15 @@ class WorkFlowSettingView(BaseView):
             flows_name=json_data.get('flows_name', None),
             itemtype_id=json_data.get('itemtype_id', 0),
             flow_id=json_data.get('flow_id', 0),
+            delete_flow_id=(
+                json_data.get('delete_flow_id')
+                if json_data.get('delete_flow_id') else None
+            ),
             index_tree_id=json_data.get('index_id'),
             location_id=json_data.get('location_id'),
             open_restricted=json_data.get('open_restricted', False),
-            is_gakuninrdm=json_data.get('is_gakuninrdm')
+            is_gakuninrdm=json_data.get('is_gakuninrdm'),
+            repository_id=json_data.get('repository_id', None),
         )
         workflow = WorkFlow()
         try:
@@ -422,6 +457,8 @@ class WorkFlowSettingView(BaseView):
                 form_workflow.update(
                     flows_id=uuid.uuid4()
                 )
+                if form_workflow['repository_id'] == None:
+                    form_workflow.pop('repository_id')
                 workflow.create_workflow(form_workflow)
                 workflow_detail = workflow.get_workflow_by_flows_id(
                     form_workflow.get('flows_id'))
@@ -487,7 +524,7 @@ class WorkFlowSettingView(BaseView):
         :param list_hide:
 
         :return: displays, hides.
-        """        
+        """
         displays = []
         hides = []
         if isinstance(role, list):
@@ -546,12 +583,120 @@ class WorkFlowSettingView(BaseView):
         return cls.MULTI_LANGUAGE[key].get(language)
 
 
+class ActivitySettingsView(BaseView):
+    @expose('/', methods=['GET', 'POST'])
+    def index(self):
+        """Get and update activity settings.
+
+        :return:
+        """
+        try:
+            form = FlaskForm(request.form)
+            # Get display request form settings
+            activity_display_settings = AdminSettings.get('activity_display_settings')
+            if not activity_display_settings:
+                activity_display_settings_tmp = current_app.config.get("WEKO_WORKFLOW_APPROVER_EMAIL_COLUMN_VISIBLE")
+                activity_display_settings = {"activity_display_flg": activity_display_settings_tmp}
+                AdminSettings.update('activity_display_settings', activity_display_settings)
+            check_activity_settings()
+            activity_display_flg = '0'
+            if current_app.config['WEKO_WORKFLOW_APPROVER_EMAIL_COLUMN_VISIBLE']:
+                activity_display_flg = '1'
+
+            if request.method == 'POST' and form.validate():
+                # Process forms
+                form = request.form.get('submit', None)
+                if form == 'set_search_author_form':
+                    settings = activity_display_settings.__dict__
+                    activity_display_flg = request.form.get('displayRadios', '0')
+                    is_activity_display = (activity_display_flg == '1')
+                    settings['activity_display_flg'] = is_activity_display
+
+                    AdminSettings.update('activity_display_settings', settings)
+                    flash(_('Activity setting was updated.'), category='success')
+
+            return self.render(config.WEKO_ADMIN_ACTIVITY_SETTINGS_TEMPLATE,
+                               activity_display_flg=activity_display_flg,
+                               form=form)
+        except BaseException:
+            import traceback
+            exc, val, tb = sys.exc_info()
+            current_app.logger.error(
+                'Unexpected error: {}'.format(sys.exc_info()))
+            current_app.logger.error(
+                traceback.format_exception(exc, val, tb)
+            )
+        return abort(400)
+
+class WorkSpaceWorkFlowSettingView(BaseView):
+    """WorkSpace WorkFlow setting view."""
+
+    @expose('/', methods=['GET', 'POST'])
+    def index(self):
+        """Index."""
+        current_settings = AdminSettings.get(
+                name='workspace_workflow_settings',
+                dict_to_object=False)
+
+        if not current_settings:
+            current_settings = {
+                "item_type_id": "",
+                "work_flow_id": "",
+                "workFlow_select_flg":""
+            }
+
+        try:
+            form = FlaskForm(request.form)
+            item_type_list = ItemTypes.get_latest_with_item_type()
+
+            item_type_list = [item for item in item_type_list if item[3] != True]
+            workflow = WorkFlow()
+            workflows = workflow.get_workflow_list()
+
+            if request.method == 'POST' and form.validate():
+                # Process forms
+                submit_form = request.form.get('submit', None)
+                if submit_form == 'set_workspace_workflow_setting_form':
+                    workFlow_select_flg = request.form.get('registrationRadio', '')
+
+                    # Direct registration
+                    if workFlow_select_flg == '1':
+                        current_settings["workFlow_select_flg"] = '1'
+                        current_settings["item_type_id"] = request.form.get('itemType', '')
+                    else:
+                        # Registration with workflow
+                        current_settings["workFlow_select_flg"] = '0'
+                        current_settings["work_flow_id"] = request.form.get('workFlow', '')
+
+                    AdminSettings.update('workspace_workflow_settings',
+                                         current_settings)
+                    flash(_('WorkSpace WorkFlow Setting was updated.'), category='success')
+
+            return self.render('weko_workflow/admin/workspace_workflow_setting.html',
+                               item_type_list=item_type_list,
+                               work_flow_list=workflows,
+                               form=form,
+                               current_settings=current_settings)
+        except BaseException:
+            current_app.logger.error(
+                'Unexpected error: {}'.format(sys.exc_info()))
+        return abort(400)
+
 workflow_adminview = {
     'view_class': WorkFlowSettingView,
     'kwargs': {
         'category': _('WorkFlow'),
         'name': _('WorkFlow List'),
         'endpoint': 'workflowsetting'
+    }
+}
+
+workspace_workflow_adminview = {
+    'view_class': WorkSpaceWorkFlowSettingView,
+    'kwargs': {
+        'category': _('WorkFlow'),
+        'name': _('WorkSpaceWorkFlow Setting'),
+        'endpoint': 'workspaceworkflowsetting'
     }
 }
 
@@ -564,7 +709,18 @@ flow_adminview = {
     }
 }
 
+activity_settings_adminview = {
+    'view_class': ActivitySettingsView,
+    'kwargs': {
+        'category': _('Setting'),
+        'name': _('Activity List'),
+        'endpoint': 'activity'
+    }
+}
+
 __all__ = (
     'flow_adminview',
     'workflow_adminview',
+    'activity_settings_adminview',
+    'workspace_workflow_adminview',
 )

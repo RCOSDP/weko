@@ -36,3 +36,10 @@ file_read_scope = Scope(
     help_text=_('Allow read file.'),
 )
 """Scope to protect file."""
+
+item_read_scope = Scope(
+    id_='item:read',
+    group='item',
+    help_text=_('Allow read Item.'),
+)
+"""Scope to protect item."""

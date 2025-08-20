@@ -2,9 +2,32 @@ $(document).ready(function () {
   $('#step_page').focus();
   $('#activity_locked').hide();
   $('#locked_msg').hide()
-  $('#user_locked_msg').hide()
+  $('#user_locked').hide()
 
   var guestEmail = $('#current_guest_email').val();
+
+  var unlocks_activity = function (activity_id, locked_value, is_opened, is_force = false) {
+    if (guestEmail){
+      return ;
+    }
+    var url = '/workflow/activity/unlocks/' + activity_id;
+    var is_ie = /*@cc_on!@*/false || !!document.documentMode;
+
+    var data = JSON.stringify({
+      locked_value: locked_value,
+      is_opened: is_opened,
+      is_force: is_force
+    })
+    if (is_ie) {
+      var xhr = new XMLHttpRequest();
+      xhr.open("POST", url, false);
+      xhr.send(data);
+    } else {
+      navigator.sendBeacon(url, data);
+    }
+    if (locked_value){sessionStorage.removeItem('locked_value');}
+    sessionStorage.removeItem('is_opened');
+  };
 
   var unlock_activity = function (activity_id, locked_value) {
     if (guestEmail) {
@@ -26,14 +49,16 @@ $(document).ready(function () {
 
     sessionStorage.removeItem('locked_value');
   };
-  var user_unlock_activity = function (activity_id) {
+
+  var user_unlock_activity = function (activity_id, is_opened, is_force = false) {
     if (guestEmail) {
       return;
     }
     var url = '/workflow/activity/user_unlock/' + activity_id;
-    
+
     var data = JSON.stringify({
-      is_opened: is_opened
+      is_opened: is_opened,
+      is_force: is_force
     })
     var is_ie = /*@cc_on!@*/false || !!document.documentMode;
     if (is_ie) {
@@ -72,15 +97,28 @@ $(document).ready(function () {
         if (result.err) {
           $('#step_page').hide();
           $('#activity_locked').show();
-          $('#user_locked_msg').show();
+          $('#user_locked').show();
+          $('#user_locked_btn').hide();
           var msg = $('#user_locked_msg').text();
-          if (result.locked_by_username) {
-            msg = msg.replace('{}', result.locked_by_username);
+          if (result.activity_id) {
+            msg = msg.replace('{}', result.activity_id);
           } else {
             msg = msg.replace(' ({})', '');
             msg = msg.replace('（{}）', '');
           }
           $('#user_locked_msg').html(msg);
+          if (result.activity_id === activity_id){
+            $('#user_locked_btn').show();
+            $('#user_locked_btn').on('click', function(){
+              $("#action_unlock_activity").modal("show");
+              $("#user_lock_modal").css('display','block');
+              $('#btn_unlock').on('click', function () {
+                $("#action_unlock_activity").modal("hide");
+                user_unlock_activity(activity_id, is_opened, is_force=true);
+                location.reload();
+              });
+            });
+          }
           is_opened=true;
           sessionStorage.setItem('is_opened', is_opened);
         } else {
@@ -115,6 +153,7 @@ $(document).ready(function () {
 
           if (current_user_email === result.locked_by_email) {
             $("#action_unlock_activity").modal("show");
+            $("#lock_modal").css('display','block');
             // handle popup unlock
             $('#btn_unlock').on('click', function () {
               $("#action_unlock_activity").modal("hide");
@@ -141,11 +180,7 @@ $(document).ready(function () {
   });
 
   window.addEventListener('beforeunload', function (e) {
-    if (locked_value) {
-      unlock_activity(activity_id, locked_value);
-    }
-    user_unlock_activity(activity_id);
-    console.log(e.type);
+    unlocks_activity(activity_id, locked_value, is_opened)
     // イベントをキャンセルする
     // e.preventDefault();
     // Chrome では returnValue を設定する必要がある
@@ -153,11 +188,7 @@ $(document).ready(function () {
   });
 
   window.addEventListener('unload', function (e) {
-    if (locked_value) {
-      unlock_activity(activity_id, locked_value);
-    }
-    user_unlock_activity(activity_id);
-    console.log(e.type);
+    unlocks_activity(activity_id, locked_value, is_opened)
     // イベントをキャンセルする
     // e.preventDefault();
     // Chrome では returnValue を設定する必要がある

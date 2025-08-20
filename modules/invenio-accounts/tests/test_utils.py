@@ -20,7 +20,7 @@ from invenio_db import db
 
 from invenio_accounts import testutils
 from invenio_accounts.errors import JWTDecodeError, JWTExpiredToken
-from invenio_accounts.utils import jwt_create_token, jwt_decode_token
+from invenio_accounts.utils import jwt_create_token, jwt_decode_token, get_user_ids_by_role
 
 
 def test_client_authenticated(app):
@@ -172,3 +172,33 @@ def test_jwt_expired_token(app):
         # Random token
         with pytest.raises(JWTDecodeError):
             jwt_decode_token('Roadster SV')
+
+
+def test_get_user_ids_by_role_returns_user_ids(app):
+    """Test get_user_ids_by_role."""
+    with app.app_context():
+        ds = app.extensions['invenio-accounts'].datastore
+
+        user1 = ds.create_user(email='test1@test.org', active=True)
+        user2 = ds.create_user(email='test2@test.org', active=True)
+        role = ds.create_role(name='superuser', description='1234')
+        ds.add_role_to_user(user1, role)
+        ds.add_role_to_user(user2, role)
+        ds.commit()
+
+        user_ids = get_user_ids_by_role(role.id)
+        assert str(user1.id) in user_ids
+        assert str(user2.id) in user_ids
+        assert len(user_ids) == 2
+
+
+@pytest.mark.parametrize("role_id, expected", [
+    (999, []),
+    (None, []),
+    ('1', []),
+])
+def test_get_user_ids_by_role_returns_empty_list(app, role_id, expected):
+    """Test get_user_ids_by_role."""
+    with app.app_context():
+        user_ids = get_user_ids_by_role(role_id)
+        assert user_ids == expected

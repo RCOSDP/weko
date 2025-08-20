@@ -46,7 +46,9 @@ from weko_admin.models import SessionLifetime
 from weko_index_tree.models import Index
 from weko_records_ui import WekoRecordsUI
 from weko_redis.redis import RedisConnection
+from weko_search_ui import WekoSearchUI
 from weko_user_profiles import WekoUserProfiles
+from weko_logging.audit import WekoLoggingUserActivity
 
 from weko_accounts import WekoAccounts, WekoAccountsREST
 from weko_accounts.views import blueprint
@@ -67,16 +69,27 @@ def base_app(instance_path):
         SECRET_KEY='SECRET_KEY',
         TESTING=True,
         SERVER_NAME='TEST_SERVER.localdomain',
-        SQLALCHEMY_DATABASE_URI=os.environ.get(
-         'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'),
-        #SQLALCHEMY_DATABASE_URI=os.getenv('SQLALCHEMY_DATABASE_URI',
-        #                                   'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest'),
+        # SQLALCHEMY_DATABASE_URI=os.environ.get(
+        #  'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'),
+        SQLALCHEMY_DATABASE_URI=os.getenv('SQLALCHEMY_DATABASE_URI',
+                                          'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest'),
         THEME_SITEURL = 'https://localhost',
-        CACHE_REDIS_URL='redis://redis:6379/0',
+        CACHE_REDIS_URL=os.environ.get(
+            "CACHE_REDIS_URL", "redis://redis:6379/0"
+        ),
         CACHE_REDIS_DB='0',
+        GROUP_INFO_REDIS_DB='4',
         CACHE_REDIS_HOST="redis",
         CACHE_TYPE="redis",
         REDIS_PORT='6379',
+        WEB_HOST_NAME='localhost',
+        WEKO_ACCOUNTS_SSO_ATTRIBUTE_MAP = {
+            'eppn': (False, 'shib_eppn'),
+            'HTTP_WEKOSOCIETYAFFILIATION': (False, 'shib_role_authority_name'),
+            'mail': (False, 'shib_mail'),
+            'HTTP_WEKOID': (False, 'shib_user_name'),
+        },
+        WEKO_ACCOUNTS_SHIB_IDP_LOGIN_URL='{}secure/login.py',
     )
     Babel(app_)
     InvenioI18N(app_)
@@ -93,13 +106,15 @@ def base_app(instance_path):
     WekoUserProfiles(app_)
     app_.register_blueprint(blueprint)
     WekoAccountsREST(app_)
+    WekoSearchUI(app_)
+    WekoLoggingUserActivity(app_)
     return app_
 
 
 @pytest.yield_fixture()
 def app(base_app):
     """Flask application fixture."""
-    
+
     with base_app.app_context():
         yield base_app
 @pytest.yield_fixture()
@@ -116,7 +131,7 @@ def db(app):
     db_.session.remove()
     db_.drop_all()
     # drop_database(str(db_.engine.url))
-    
+
 @pytest.yield_fixture()
 def client(app,session_time):
     """make a test client.
@@ -127,7 +142,7 @@ def client(app,session_time):
     """
     with app.test_client() as client:
         yield client
-        
+
 
 @pytest.fixture()
 def users(app, db):
@@ -154,7 +169,7 @@ def users(app, db):
         originalroleuser = create_test_user(email='originalroleuser@test.org')
         originalroleuser2 = create_test_user(email='originalroleuser2@test.org')
         student = User.query.filter_by(email='student@test.org').first()
-        
+
     role_count = Role.query.filter_by(name='System Administrator').count()
     if role_count != 1:
         sysadmin_role = ds.create_role(name='System Administrator')
@@ -180,7 +195,7 @@ def users(app, db):
     ds.add_role_to_user(generaluser, general_role)
     ds.add_role_to_user(originalroleuser, originalrole)
     ds.add_role_to_user(originalroleuser2, originalrole)
-    ds.add_role_to_user(originalroleuser2, repoadmin_role)
+    # ds.add_role_to_user(originalroleuser2, repoadmin_role)
     ds.add_role_to_user(student,studentrole)
 
     # Assign access authorization
@@ -265,18 +280,65 @@ def users(app, db):
 @pytest.fixture()
 def session_time(app,db):
     session_lifetime = SessionLifetime(lifetime=60,is_delete=False)
-    
+
     with db.session.begin_nested():
         db.session.add(session_lifetime)
-        
+
 @pytest.fixture
 def redis_connect(app):
     redis_connection = RedisConnection().connection(db=app.config['CACHE_REDIS_DB'], kv = True)
     return redis_connection
 
+@pytest.fixture()
+def group_info_redis_connect(app):
+    """Redis connection for group info."""
+    redis_connection = RedisConnection().connection(db=app.config['GROUP_INFO_REDIS_DB'], kv=True)
+    return redis_connection
 
 @pytest.fixture()
 def users_login(users):
     inactive_user = create_test_user(email='inactive_user@test.org', active=False)
     users.append({'email': inactive_user.email, 'id': inactive_user.id, 'obj': inactive_user})
     return users
+
+@pytest.fixture()
+def indices(db):
+    """Create indices."""
+    index_1 = Index(
+        index_name='Index 1',
+        comment='This is index 1',
+        position=0,
+        browsing_role='1,2,3',
+        contribute_role='1,2,3',
+        is_deleted=False
+    )
+    index_2 = Index(
+        index_name='Index 2',
+        comment='This is index 2',
+        position=1,
+        browsing_role='1,2,3',
+        contribute_role='',
+        is_deleted=False
+    )
+    index_3 = Index(
+        index_name='Index 3',
+        comment='This is index 3',
+        position=2,
+        browsing_role='',
+        contribute_role='1,2,3',
+        is_deleted=False
+    )
+    index_4 = Index(
+        index_name='Index 4',
+        comment='This is index 4',
+        position=3,
+        browsing_role='',
+        contribute_role='',
+        is_deleted=False
+    )
+    db.session.add(index_1)
+    db.session.add(index_2)
+    db.session.add(index_3)
+    db.session.add(index_4)
+    db.session.commit()
+    return [index_1, index_2, index_3, index_4]

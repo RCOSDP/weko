@@ -1,6 +1,8 @@
 from invenio_db import db
 from flask import current_app
 from sqlalchemy.orm.attributes import flag_modified
+from weko_records.models import ItemTypeMapping
+from sqlalchemy import desc
 from weko_records.api import (
     ItemsMetadata,
     ItemTypeEditHistory,
@@ -76,15 +78,19 @@ def main():
         i = 1
         with db.session.begin_nested():
             # itemType = ItemTypes.get_by_name('デフォルトアイテムタイプ（フル）')
-            itemType = ItemTypes.get_by_id(30002)
+            itemType = ItemTypes.get_by_id(30002,with_deleted=True)
             if itemType is None:
-                itemType = ItemTypes.get_by_id(15)
+                itemType = ItemTypes.get_by_id(15,with_deleted=True)
                 if itemType is None:
                     raise Exception("itemType is not found.")
             if itemType:
                 cur_prop_ids = checkRegisterdProperty(itemType, new_prop_ids)
                 _render = pickle.loads(pickle.dumps(itemType.render, -1))
-                _mapping = Mapping.get_record(itemType.id)
+                _mapping = (
+                    ItemTypeMapping.query.filter(ItemTypeMapping.item_type_id == itemType.id)
+                    .order_by(desc(ItemTypeMapping.created))
+                    .first()
+                )
                 for id in cur_prop_ids:
                     _prop = ItemTypeProps.get_record(id)
                     _prop_id = "item_{}".format(int(datetime(2023,10,30,0,0).strftime('%s')) + i)
@@ -108,8 +114,10 @@ def main():
                         )
                         _render["table_row_map"]["form"].append(_form)
                         _render["table_row_map"]["mapping"][_prop_id] = pickle.loads(pickle.dumps(new_prop_mapping.get(str(id),""),-1))
+                        _mapping.mapping[_prop_id] = pickle.loads(pickle.dumps(new_prop_mapping.get(str(id),""),-1))
                         _render["table_row"].append(_prop_id)
-                        _mapping[_prop_id] = pickle.loads(pickle.dumps(_render["table_row_map"]["mapping"][_prop_id],-1))
+                        if _prop_id in _mapping.mapping and _mapping.mapping[_prop_id] and "=" not in _mapping.mapping[_prop_id]:
+                            _mapping.mapping[_prop_id] = pickle.loads(pickle.dumps(_render["table_row_map"]["mapping"][_prop_id],-1))
                         print("property cus_{} has been registerd.".format(id))
 
                 if len(cur_prop_ids) > 0:
@@ -137,9 +145,11 @@ def main():
                     flag_modified(itemType, "form")
                     flag_modified(itemType, "render")
                     db.session.merge(itemType)
-                    db.session.merge(_mapping.model)
+
+                    flag_modified(_mapping, 'mapping')
+                    db.session.merge(_mapping)
                     Mapping.create(item_type_id=itemType.id,
-                               mapping=_mapping)
+                               mapping=_mapping.mapping)
                     print("session merged.")
 
         db.session.commit()

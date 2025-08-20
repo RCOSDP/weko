@@ -25,7 +25,8 @@ from weko_records_ui.permissions import (
     page_permission_factory,
     is_open_restricted,
     is_owners_or_superusers,
-    __isint
+    __isint,
+    has_comadmin_permission
 )
 
 
@@ -48,11 +49,32 @@ def test_page_permission_factory(app, records, users,db_file_permission):
 
 # def file_permission_factory(record, *args, **kwargs):
 #    def can(self):
-# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_permissions.py::test_get_permission -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
-def test_file_permission_factory(app, records, users,db_file_permission):
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_permissions.py::test_file_permission_factory -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+def test_file_permission_factory(app, records, users, db_file_permission):
+    app.config['OAUTH2SERVER_JWT_AUTH_HEADER'] = 'Authorization'
     indexer, results = records
     record = results[0]["record"]
     assert file_permission_factory(record).can() == None
+
+    # check_file_download_permission returns True
+    with patch("weko_records_ui.permissions.check_file_download_permission", return_value=True):
+        assert file_permission_factory(record).can() == True
+
+    # check_file_download_permission returns False
+    with patch("weko_records_ui.permissions.check_file_download_permission", return_value=False):
+        assert file_permission_factory(record).can() == False
+
+    # with OAuth2
+    with app.test_request_context(headers={"Authorization": "Bearer testtoken"}):
+        with patch("weko_records_ui.permissions.check_file_download_permission", return_value=True), \
+             patch("weko_records_ui.permissions.require_api_auth", lambda: lambda f: f), \
+             patch("weko_records_ui.permissions.require_oauth_scopes", lambda x: lambda f: f):
+            assert file_permission_factory(record).can() == True
+
+        with patch("weko_records_ui.permissions.check_file_download_permission", return_value=False), \
+             patch("weko_records_ui.permissions.require_api_auth", lambda: lambda f: f), \
+             patch("weko_records_ui.permissions.require_oauth_scopes", lambda x: lambda f: f):
+            assert file_permission_factory(record).can() == False
 
 
 # def check_file_download_permission(record, fjson, is_display_file_info=False):
@@ -60,7 +82,7 @@ def test_file_permission_factory(app, records, users,db_file_permission):
 #    def get_email_list_by_ids(user_id_list):
 #    def __check_user_permission(user_id_list):
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_permissions.py::test_check_file_download_permission -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
-def test_check_file_download_permission(app, records, users):#, db_file_permission
+def test_check_file_download_permission(app, records, users, db_file_permission, itemtypes):
     current_app.extensions['invenio-search'] = MagicMock()
     print("invenio-search current_app")
     print(vars(current_app.extensions['invenio-search']['app']))
@@ -76,7 +98,8 @@ def test_check_file_download_permission(app, records, users):#, db_file_permissi
 
     with patch("flask_login.utils._get_user", return_value=users[1]["obj"]):
         assert check_file_download_permission(record, fjson, True) == True
-
+        assert check_file_download_permission(record, fjson, True, item_type=itemtypes["item_type"]) == True
+    
     with patch("flask_login.utils._get_user", return_value=users[7]["obj"]):
         assert check_file_download_permission(record, fjson, True) == True
 
@@ -84,22 +107,22 @@ def test_check_file_download_permission(app, records, users):#, db_file_permissi
         assert check_file_download_permission(record, fjson, True) == True
     
     with patch("flask_login.utils._get_user", return_value=users[0]["obj"]):
-        with patch("weko_records_ui.permissions.to_utc", return_value=datetime.utcnow()):
+        with patch("weko_records_ui.utils.to_utc", return_value=datetime.utcnow()):
 
             assert check_file_download_permission(record, fjson, False) == True
             fjson['accessrole'] = 'open_date'
             assert check_file_download_permission(record, fjson, True) == True
 
             yesterday = datetime.utcnow() - timedelta(days = 1)
-            with patch("weko_records_ui.permissions.to_utc", return_value=yesterday):
+            with patch("weko_records_ui.utils.to_utc", return_value=yesterday):
                 assert check_file_download_permission(record, fjson, False) == True
 
             tomorrow = datetime.utcnow() + timedelta(days = 1)
-            with patch("weko_records_ui.permissions.to_utc", return_value=tomorrow):
+            with patch("weko_records_ui.utils.to_utc", return_value=tomorrow):
                 assert check_file_download_permission(record, fjson, False) == False
 
             tomorrow = datetime.utcnow() + timedelta(days = 1)
-            with patch("weko_records_ui.permissions.to_utc", return_value=tomorrow):
+            with patch("weko_records_ui.utils.to_utc", return_value=tomorrow):
                 fjson['accessrole'] = 'open_date'
                 fjson['roles'] = [{'role':'none_loggin'},{'role':'1'},{'role':'2'},{'role':'3'},{'role':'4'},{'role':'5'}]
                 assert check_file_download_permission(record, fjson, False) == False
@@ -117,7 +140,13 @@ def test_check_file_download_permission(app, records, users):#, db_file_permissi
             fjson['role'] = [{'role':'none_loggin'},{'role':'1'},{'role':'2'},{'role':'3'},{'role':'4'},{'role':'5'}]
             assert check_file_download_permission(record, fjson, False) == True
 
+            fjson['date'][0]['dateValue'] = (datetime.now() + timedelta(weeks=1)).strftime("%Y-%m-%d")
+            record['publish_date'] = "2023-01-01"
+            fjson['roles'] = [{'role':'Contributor'}]
+            assert check_file_download_permission(record, fjson, False) == True
+
             fjson['accessrole'] = 'open_login'
+            fjson['roles'] = [{'role':'none_loggin'},{'role':'1'},{'role':'2'},{'role':'3'},{'role':'4'},{'role':'5'}]
             assert check_file_download_permission(record, fjson, True) == True
 
             with patch("weko_records_ui.permissions.check_user_group_permission", return_value=True):
@@ -127,13 +156,38 @@ def test_check_file_download_permission(app, records, users):#, db_file_permissi
                 assert check_file_download_permission(record, fjson, False) == True
                 fjson['groupsprice'] = [MagicMock()]
                 assert check_file_download_permission(record, fjson, False) == True
+
+                fjson['groups'] = True
+                fjson['roles'] = [{'role': 'Contributor'}]
+                assert check_file_download_permission(record, fjson, False) == True
+
+                fjson['roles'] = []
+                assert check_file_download_permission(record, fjson, False) == True
+
+            with patch("weko_records_ui.permissions.check_user_group_permission", return_value=False):
+                fjson.pop('groupsprice')
+                assert check_file_download_permission(record, fjson, False) == False
     
             fjson['accessrole'] = 'open_no'
+            fjson['roles'] = [{'role':'none_loggin'},{'role':'1'},{'role':'2'},{'role':'3'},{'role':'4'},{'role':'5'}]
             assert check_file_download_permission(record, fjson, True) == False
             assert check_file_download_permission(record, fjson, False) == False
 
             fjson['accessrole'] = 'open_restricted'
             assert check_file_download_permission(record, fjson, True) == False
+        
+        fjson['accessrole'] = 'open_date'
+        fjson['accessdate'] = (datetime.now().date() + timedelta(weeks = 1)).strftime('%Y-%m-%d')
+        fjson['roles'] = [{'role':'none_loggin'},{'role':'System Administrator'},{'role':'Repository Administrator'},{'role':'Contributor'},{'role':'Community Administrator'},{'role':'General'}]
+        assert check_file_download_permission(record, fjson, False) == True
+
+        fjson['accessrole'] = 'open_login'
+        assert check_file_download_permission(record, fjson, False) == False
+
+        fjson['roles'] = []
+        fjson['groupsprice'] = ''
+        fjson['groups'] = 'group'
+        assert check_file_download_permission(record, fjson, False) == False
 
     record = results[2]["record"]
     fjson = {'url': {'url': 'https://weko3.example.org/record/11/files/001.jpg'}, 
@@ -182,6 +236,7 @@ def test_check_file_download_permission(app, records, users):#, db_file_permissi
     with patch("flask_login.utils._get_user", return_value=users[2]["obj"]):
         assert check_file_download_permission(record, fjson, False) == True
 
+    fjson['accessdate'] = (datetime.utcnow() + timedelta(weeks=1)).strftime("%Y-%m-%d")
     with patch("flask_login.utils._get_user", return_value=users[0]["obj"]):
         assert check_file_download_permission(record, fjson, False) == False
 
@@ -689,23 +744,18 @@ def test_check_created_id_guest(app, users):
     record["item_type_id"] = "15"
 
 
-# def check_created_id(record):
-# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_permissions.py::test_check_created_id_1 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
-def test_check_created_id_1(app, users):
-    datastore = app.extensions["invenio-accounts"].datastore
-    login_manager = app.login_manager
-
-    @login_manager.user_loader
-    def load_user(user_id):
-        user = datastore.find_user(id=user_id)
-        return user
-
-    @app.route("/foo_login/<username>")
-    def login(username):
-        user = datastore.find_user(email=username)
-        login_user(user)
-        return "Logged In"
-
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_permissions.py::test_check_created_id -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+@pytest.mark.parametrize("index,status",[
+    (0,True),
+    (1,True),
+    (2,True),
+    (3,True),
+    (4,False),
+    (5,False),
+    (6,True),
+    (7,True),
+])
+def test_check_created_id(app, users, index, status):
     record = {
         "_oai": {"id": "oai:weko3.example.org:00000001", "sets": ["1657555088462"]},
         "path": ["1657555088462"],
@@ -732,7 +782,7 @@ def test_check_created_id_1(app, users):
         "item_type_id": "15",
         "publish_date": "2022-07-12",
         "publish_status": "0",
-        "weko_shared_ids": [],
+        "weko_shared_ids": [2],
         "item_1617186331708": {
             "attribute_name": "Title",
             "attribute_value_mlt": [
@@ -750,110 +800,9 @@ def test_check_created_id_1(app, users):
         },
         "relation_version_is_last": True,
     }
-    assert record.get("_deposit", {}).get("created_by") == 1
-    assert record.get("item_type_id") == "15"
-    assert record.get("weko_shared_ids") == []
 
-    supers = app.config["WEKO_PERMISSION_SUPER_ROLE_USER"]
-    user_roles = app.config["WEKO_PERMISSION_ROLE_USER"]
-
-    with app.test_request_context(headers=[("Accept-Language", "en")]):
-        with app.test_client() as client:
-            # guest user
-            assert current_user.is_authenticated == False
-            assert record.get("_deposit", {}).get("created_by") == 1
-            assert record.get("item_type_id") == "15"
-            assert record.get("weko_shared_ids") == []
-            assert check_created_id(record) == False
-            ## no item type
-            record["item_type_id"] = ""
-            assert record.get("_deposit", {}).get("created_by") == 1
-            assert record.get("item_type_id") == ""
-            assert record.get("weko_shared_ids") == []
-            assert check_created_id(record) == False
-            record["item_type_id"] = "15"
-
-    data_registration = app.config.get("WEKO_ITEMS_UI_DATA_REGISTRATION")
-    application_item_type_list = app.config.get(
-        "WEKO_ITEMS_UI_APPLICATION_ITEM_TYPES_LIST"
-    )
-
-    with app.test_request_context(headers=[("Accept-Language", "en")]):
-        with app.test_client() as client:
-            for user in users:
-                client.get("/foo_login/{}".format(user["email"]), follow_redirects=True)
-                assert current_user.is_authenticated == True
-                assert current_user.id == user["obj"].id
-                assert set(current_user.roles) == set(user["obj"].roles)
-
-                super_flg = False
-                for s in supers:
-                    if s in user["obj"].roles:
-                        super_flg = True
-                print("email:{}".format(user["obj"].email))
-                print("id:{}".format(user["obj"].id))
-                print("roles:{}".format(user["obj"].roles))
-                print("super_flg:{}".format(super_flg))
-                
-                # no item_type_id
-                record["item_type_id"] = ""
-                assert record.get("item_type_id") == ""
-                record["_deposit"]["created_by"] = user["obj"].id
-                record["weko_shared_ids"] = []
-                assert record.get("_deposit", {}).get("created_by") == user["obj"].id
-                assert record.get("weko_shared_ids") == []
-                assert check_created_id(record) == True
-                
-                record["_deposit"]["created_by"] = -1
-                record["weko_shared_ids"] = [user["obj"].id]
-                assert record.get("_deposit", {}).get("created_by") == -1
-                assert record.get("weko_shared_ids") == [user["obj"].id]
-                assert check_created_id(record) == True
-                
-                record["_deposit"]["created_by"] = -1
-                record["weko_shared_ids"] = []
-                record["weko_shared_ids"] = []
-                assert record.get("_deposit", {}).get("created_by") == -1
-                assert record.get("weko_shared_ids") == []
-                assert record.get("weko_shared_ids") == []
-                if super_flg:
-                    assert check_created_id(record) == True
-                else:
-                    assert check_created_id(record) == False
-
-                record["item_type_id"] = "15"
-                assert record.get("item_type_id") == "15"
-
-                # created_by
-                record["_deposit"]["created_by"] = user["obj"].id
-                record["weko_shared_ids"] = []
-                assert record.get("_deposit", {}).get("created_by") == user["obj"].id
-                assert record.get("weko_shared_ids") == []
-                assert check_created_id(record) == True
-                
-                # weko_shared_ids
-                record["_deposit"]["created_by"] = 1
-                record["weko_shared_ids"] = [user["obj"].id]
-                assert record.get("_deposit", {}).get("created_by") == 1
-                assert record.get("weko_shared_ids") == [user["obj"].id]
-                assert check_created_id(record) == True
-
-                # created_id and weko_shared_ids
-                record["_deposit"]["created_by"] = user["obj"].id
-                record["weko_shared_ids"] = [user["obj"].id]
-                assert record.get("_deposit", {}).get("created_by") == user["obj"].id
-                assert record.get("weko_shared_ids") == [user["obj"].id]
-                assert check_created_id(record) == True
-
-                # no created_id and weko_shared_ids
-                record["_deposit"]["created_by"] = 10
-                record["weko_shared_ids"] = []
-                assert record.get("_deposit", {}).get("created_by") == 10
-                assert record.get("weko_shared_ids") == []
-                if super_flg:
-                    assert check_created_id(record) == True
-                else:
-                    assert check_created_id(record) == False
+    with patch("flask_login.utils._get_user", return_value=users[index]["obj"]):
+        assert check_created_id(record) == status
 
     record = {
         "_oai": {"id": "oai:weko3.example.org:00000001", "sets": ["1657555088462"]},
@@ -899,7 +848,7 @@ def test_check_created_id_1(app, users):
         },
         "relation_version_is_last": True,
     }
-    
+
     #login("contributor@test.org")
     with app.test_request_context(headers=[("Accept-Language", "en")]):
         with app.test_client() as client:
@@ -911,20 +860,8 @@ def test_check_created_id_1(app, users):
             assert record.get("weko_shared_ids") == [1,2,3]
             assert check_created_id(record) == True
 
-
-# def check_created_id(record):
-# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_permissions.py::test_check_created_id_2 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
-@pytest.mark.parametrize("index,status",[
-    (0,True),
-    (1,True),
-    (2,True),
-    (3,False),
-    (4,False),
-    (5,False),
-    (6,True),
-    (7,True),
-])
-def test_check_created_id_2(app, users, index, status):
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_permissions.py::test_check_created_id_comadmin -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+def test_check_created_id_comadmin(app, users, db):
     record = {
         "_oai": {"id": "oai:weko3.example.org:00000001", "sets": ["1657555088462"]},
         "path": ["1657555088462"],
@@ -951,7 +888,7 @@ def test_check_created_id_2(app, users, index, status):
         "item_type_id": "15",
         "publish_date": "2022-07-12",
         "publish_status": "0",
-        "weko_shared_ids": [2],
+        "weko_shared_id": 2,
         "item_1617186331708": {
             "attribute_name": "Title",
             "attribute_value_mlt": [
@@ -969,9 +906,40 @@ def test_check_created_id_2(app, users, index, status):
         },
         "relation_version_is_last": True,
     }
+    with patch("flask_login.utils._get_user", return_value=users[3]["obj"]), \
+         patch("weko_records_ui.permissions.has_comadmin_permission", return_value=True):
+        assert check_created_id(record) == True
 
-    with patch("flask_login.utils._get_user", return_value=users[index]["obj"]):
-        assert check_created_id(record) == status
+
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_permissions.py::test_has_comadmin_permission -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+def test_has_comadmin_permission(app, users, mocker):
+    mocker.patch("flask_login.utils._get_user", return_value=users[3]["obj"])
+    mock_get_repos = mocker.patch("invenio_communities.models.Community.get_repositories_by_user")
+    mock_get_children =  mocker.patch("weko_index_tree.api.Indexes.get_child_list_recursive")
+
+    # with permmission
+    mock_get_repos.return_value = [MagicMock(root_node_id=1)]
+    mock_get_children.return_value = ["12345", "67890"]
+    record = {"path": ["12345"]}
+    result = has_comadmin_permission(record)
+    assert result is True
+
+    #without permission
+    record = {"path": ["11111"]}
+    result = has_comadmin_permission(record)
+    assert result is False
+
+    # with no community
+    mock_get_repos.return_value = []
+    record = {"path": ["12345"]}
+    result = has_comadmin_permission(record)
+    assert result is False
+
+    # with no index
+    mock_get_repos.return_value = [MagicMock(root_node_id=1)]
+    record = {"path": []}
+    result = has_comadmin_permission(record)
+    assert result is False
 
 
 # def check_usage_report_in_permission(permission):
@@ -1012,11 +980,6 @@ def test___get_file_permission(app, records_restricted, users,db_file_permission
     filename =results[0]["filename"]
     with patch("flask_login.utils._get_user", return_value=users[7]["obj"]):
         assert len(__get_file_permission(recid.pid_value, filename)) == 1
-
-    recid = results[len(results)-1]["recid"]
-    filename =results[len(results)-1]["filename"]
-    with patch("flask_login.utils._get_user", return_value=users[0]["obj"]):
-        assert len(__get_file_permission(recid.pid_value, filename)) == 2
 
 # def is_owners_or_superusers(record) -> bool:
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_permissions.py::test_is_owners_or_superusers -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp

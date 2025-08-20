@@ -96,6 +96,7 @@ class GetItemApplicationSchema(ResponseSchema):
 class SaveActivitySchema(Schema):
     activity_id = fields.String(required=True)
     # title = fields.String(required=True)
+    # title = fields.List(required=True)
     shared_user_ids = fields.List(fields.Dict(allow_none=True))
     approval1 = fields.String(allow_none=True)
     approval2 = fields.String(allow_none=True)

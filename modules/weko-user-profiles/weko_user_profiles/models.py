@@ -134,6 +134,18 @@ class UserProfile(db.Model):
 
     item16 = db.Column('item16', db.String(255))
 
+    """s3_endpoint_url"""
+    s3_endpoint_url = db.Column('s3_endpoint_url', db.String(128))
+
+    """s3_region_name"""
+    s3_region_name = db.Column('s3_region_name', db.String(128))
+
+    """access_key"""
+    access_key = db.Column('access_key', db.String(128))
+
+    """secret_key"""
+    secret_key = db.Column('secret_key', db.String(128))
+
     @hybrid_property
     def username(self):
         """Get username."""
@@ -177,11 +189,14 @@ class UserProfile(db.Model):
     def get_by_userid(cls, user_id):
         """Get profile by user identifier.
 
-        :param user_id: Identifier of a :class:`~invenio_accounts.models.User`.
-        :returns: A :class:`~invenio_userprofiles.models.UserProfile` instance
-            or ``None``.
+        Args:
+            user_id (int): user id.
+
+        Returns:
+            UserProfile: user profile object. If not found, return None.
         """
-        return cls.query.filter_by(user_id=user_id).one_or_none()
+        obj = cls.query.filter_by(user_id=user_id).one_or_none()
+        return obj if isinstance(obj, UserProfile) else None
 
     @property
     def is_anonymous(self):

@@ -163,16 +163,15 @@ SPECIFIED_LIST = [
 # e.g.: SPECIFIED_LIST = [3020, 3021] or SPECIFIED_LIST = [PUBLISHED_DATE, SUMMARY]
 
 DEFAULT_MAPPING = {
-    "display_lang_type": None,
-    "jpcoar_v1_mapping": None,
-    "jpcoar_mapping": None,
-    "junii2_mapping": None,
-    "lido_mapping": None,
-    "lom_mapping": None,
-    "oai_dc_mapping": None,
-    "spase_mapping": None,
+    "display_lang_type": "",
+    "jpcoar_v1_mapping": "",
+    "jpcoar_mapping": "",
+    "junii2_mapping": "",
+    "lido_mapping": "",
+    "lom_mapping": "",
+    "oai_dc_mapping": "",
+    "spase_mapping": "",
 }
-
 LANGUAGE_VAL2_1 = [
     None,
     "ja",
@@ -819,7 +818,34 @@ COUNTRY_VAL = [
     "ZMB",
     "ZWE",
 ]
-AFFILIATION_SCHEME_VAL = [None, "kakenhi", "ISNI", "Ringgold", "GRID"]
+AFFILIATION_SCHEME_LBL = [None, "kakenhi【非推奨】", "ISNI", "Ringgold【非推奨】", "GRID","ROR"]
+AFFILIATION_SCHEME_VAL = [None, "kakenhi", "ISNI", "Ringgold", "GRID","ROR"]
+CREATOR_IDENTIFIER_SCHEMA_LBL = [
+None,
+"e-Rad_Researcher",
+"e-Rad",
+"NRID【非推奨】",
+"ORCID",
+"ISNI",
+"VIAF",
+"AID",
+"kakenhi【非推奨】",
+"Ringgold",
+"GRID【非推奨】",
+"ROR","WEKO"]
+CREATOR_IDENTIFIER_SCHEMA_VAL = [
+None,
+"e-Rad_Researcher",
+"e-Rad",
+"NRID",
+"ORCID",
+"ISNI",
+"VIAF",
+"AID",
+"kakenhi",
+"Ringgold",
+"GRID",
+"ROR","WEKO"]
 DATE_TYPE_VAL = [
     None,
     "Accepted",
@@ -950,7 +976,7 @@ RELATION_ID_TYPE_LBL = [
     "ISSN【非推奨】",
     "NAID【非推奨】",
     "NCID",
-    "PMID【現在不使用】",
+    "PMID",
     "PURL",
     "SCOPUS",
     "URI",

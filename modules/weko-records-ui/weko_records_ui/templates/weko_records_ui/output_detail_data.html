@@ -48,7 +48,7 @@
     {%- if record_detail_data['attribute_value_mlt'] is string or not record_detail_data['attribute_value_mlt'] -%}
       <tr>
         <th scope="row"
-            colspan="6">{{ record_detail_data['attribute_name_i18n'] }}</th>
+            colspan="6">{{ output_detail_data['attribute_name_i18n'] }}</th>
         <td>{{ record_detail_data['attribute_value_mlt'] }}</td>
       </tr>
     {%- else -%}
@@ -57,7 +57,13 @@
               {%- if attribute_data -%}
               <tr>
                 <th scope="row" colspan="6"
-                style="border-bottom: none">{{ record_detail_data['attribute_name_i18n'] }}</th>
+                style="border-bottom: none">
+                {%- if record_detail_data['attribute_name_i18n'] and record_detail_data['attribute_name_i18n']|length>0 -%}
+                {{ record_detail_data['attribute_name_i18n'] }}
+                {%- else -%}
+                {{ record_detail_data['attribute_name'] }}
+                {%- endif -%}
+                </th>
                 <td>
                 </td>
               </tr>
@@ -66,37 +72,39 @@
             {%- endfor -%}
         {%- else -%}
             {{ output_attribute_value_mlt_Init( record_detail_data ) }}
-        {%- endif -%}        
+        {%- endif -%}
     {%- endif -%}
 {% endmacro %}
 
 {% macro output_attribute_value_mlt(attribute_value_mlt, level, parrent_name) %}
-    {%- for attribute_data in attribute_value_mlt -%}
-        {%- set displayflag = True -%}
-        {% if parrent_name %}
-            {%- set labels = parrent_name.split('.') -%}
-            {%- if labels|length == 1 -%}
-                {{ child_data(parrent_name, '', level) }}
-            {%- else -%}
-                {%- set displayflag = False -%}
-            {%- endif -%}
-        {% endif %}
-        {%- if attribute_data is mapping and displayflag -%}
-            {%- for k, v in attribute_data.items() -%}
-                {%- if v is string or k.split('.')[0] == 'nameIdentifier' -%}
-                    {{ child_data(k, v, level) }}
-                {%- else -%}
-                    {{ output_attribute_value_mlt(v, level, k) }}
-                {%- endif -%}
-            {%- endfor -%}
-        {%- elif attribute_data is iterable and attribute_data is not string and displayflag -%}
+    {%- if attribute_value_mlt is iterable and attribute_value_mlt is not string -%}
+        {%- for attribute_data in attribute_value_mlt -%}
+            {%- set displayflag = True -%}
             {% if parrent_name %}
-                {{ output_attribute_value_mlt(attribute_data, level + 1) }}
-            {% else %}
-                {{ output_attribute_value_mlt(attribute_data, level) }}
+                {%- set labels = parrent_name.split('.') -%}
+                {%- if labels|length == 1 -%}
+                    {{ child_data(parrent_name, '', level) }}
+                {%- else -%}
+                    {%- set displayflag = False -%}
+                {%- endif -%}
             {% endif %}
-        {%- endif -%}
-    {%- endfor -%}
+            {%- if attribute_data is mapping and displayflag -%}
+                {%- for k, v in attribute_data.items() -%}
+                    {%- if v is string or k.split('.')[0] == 'nameIdentifier' -%}
+                        {{ child_data(k, v, level) }}
+                    {%- else -%}
+                        {{ output_attribute_value_mlt(v, level, k) }}
+                    {%- endif -%}
+                {%- endfor -%}
+            {%- elif attribute_data is iterable and attribute_data is not string and displayflag -%}
+                {% if parrent_name %}
+                    {{ output_attribute_value_mlt(attribute_data, level + 1) }}
+                {% else %}
+                    {{ output_attribute_value_mlt(attribute_data, level) }}
+                {% endif %}
+            {%- endif -%}
+        {%- endfor -%}
+    {%- endif -%}
 {% endmacro %}
 
 {% macro child_data(label, content, level) %}
@@ -104,17 +112,13 @@
  {%- if content -%}
   <tr  style="border: 0px !important;">
       {{ out_table_th(level) }}
-      {% set labels = label.split('.') %}
-      {%- if labels|length > 1 -%}
-          {% set label = labels[1] %}
-      {%- endif -%}
       <th scope="row" colspan="{{ label_colspan_default - level }}" style="border: 0px !important;">{{ label }}</th>
         {% autoescape false %}
             {%- if label == 'URL'  -%}
-                <td><a href="{{content}}">{{ content | escape_str }}</a></td>
+                <td><a href="{{content | encode_filename }}">{{ content | escape_str }}</a></td>
             {%- elif content|url_to_link -%}
-            <td><a href="{{content}}" target='_blank'>{{ content | escape_str }}</a></td>
-	    {%- else -%}
+                <td><a href="{{content}}" target='_blank'>{{ content | escape_str }}</a></td>
+	          {%- else -%}
                 <td class="multiple-line">{{ content | escape_str }}</td>
             {%- endif -%}
         {% endautoescape %}
@@ -203,7 +207,7 @@
                         {%- set nsflg.dispflg = True -%}
                     {%- endif -%}
                 {%- endfor -%}
-            {%- endif -%}        
+            {%- endif -%}
         {%- endif -%}
     {%- endfor -%}
     {%- for language_value in language_data -%}
@@ -229,57 +233,59 @@
 
 {% macro output_attribute_value_mlt_exceptlang(attribute_value_mlt,level,parentname) %}
     {%- set langkey = _('Language:').split(':')[0] -%}
-    {%- for attribute_data in attribute_value_mlt -%}
-        {%- if attribute_data[1] -%}
-            {%- if attribute_data[1][0] -%}
-                {%- if attribute_data[1][0] is mapping -%}
-                    {%- if parentname -%}
-                        {{ child_data(parentname, '', level-1) }}
-                    {%- endif -%}
-                    {%- for key, value in attribute_data[1][0].items() -%}
-                        {%- if value is string -%}
-                            {%- if attribute_data|length == 2 -%}
-                                {{ output_attribute_value_mlt(attribute_data, level) }}
-                            {%- else -%}    
+    {%- if attribute_value_mlt is iterable and attribute_value_mlt is not string -%}
+        {%- for attribute_data in attribute_value_mlt -%}
+            {%- if attribute_data[1] -%}
+                {%- if attribute_data[1][0] -%}
+                    {%- if attribute_data[1][0] is mapping -%}
+                        {%- if parentname -%}
+                            {{ child_data(parentname, '', level-1) }}
+                        {%- endif -%}
+                        {%- for key, value in attribute_data[1][0].items() -%}
+                            {%- if value is string -%}
+                                {%- if attribute_data|length == 2 -%}
+                                    {{ output_attribute_value_mlt(attribute_data, level) }}
+                                {%- else -%}
+                                    {{ output_attribute_value_mlt_exceptlang(attribute_data,level) }}
+                                {%- endif -%}
+                            {%- else -%}
                                 {{ output_attribute_value_mlt_exceptlang(attribute_data,level) }}
                             {%- endif -%}
-                        {%- else -%}
-                            {{ output_attribute_value_mlt_exceptlang(attribute_data,level) }}
-                        {%- endif -%}
-                    {%- endfor -%}
+                        {%- endfor -%}
+                    {%- endif -%}
                 {%- endif -%}
-            {%- endif -%}
-        {%- elif attribute_data is mapping -%}
-            {%- set langflg = namespace(langjudgeflg = False) -%}
-            {%- for key, value in attribute_data.items() -%}
-                {%- if value is not string -%}
-                    {%- if value[0] -%}
-                        {%- set value_data = value[0] -%}
-                        {%- if value_data[0] -%}
-                            {%- set lang_data =  value_data[0] -%}
-                            {%- for lang_value in lang_data -%}
-                                {%- if not langflg.langjudgeflg -%}
-                                    {%- if lang_value[0] -%}
-                                        {%- if lang_value[0] is mapping -%}
-                                            {%- if langkey in lang_value[0].keys() -%}
-                                                {{ output_attribute_value_mlt_lang(key,value,level+1) }}
-                                                {%- set langflg.langjudgeflg = True -%}
+            {%- elif attribute_data is mapping -%}
+                {%- set langflg = namespace(langjudgeflg = False) -%}
+                {%- for key, value in attribute_data.items() -%}
+                    {%- if value is not string -%}
+                        {%- if value[0] -%}
+                            {%- set value_data = value[0] -%}
+                            {%- if value_data[0] -%}
+                                {%- set lang_data =  value_data[0] -%}
+                                {%- for lang_value in lang_data -%}
+                                    {%- if not langflg.langjudgeflg -%}
+                                        {%- if lang_value[0] -%}
+                                            {%- if lang_value[0] is mapping -%}
+                                                {%- if langkey in lang_value[0].keys() -%}
+                                                    {{ output_attribute_value_mlt_lang(key,value,level+1) }}
+                                                    {%- set langflg.langjudgeflg = True -%}
+                                                {%- endif -%}
                                             {%- endif -%}
                                         {%- endif -%}
                                     {%- endif -%}
-                                {%- endif -%}
-                            {%- endfor -%}
+                                {%- endfor -%}
+                            {%- endif -%}
                         {%- endif -%}
+                        {%- if not langflg.langjudgeflg -%}
+                            {{ output_attribute_value_mlt_exceptlang(value,level+1,key) }}
+                        {%- endif -%}
+                    {%- else -%}
+                        {{ child_data(key,value,level) }}
                     {%- endif -%}
-                    {%- if not langflg.langjudgeflg -%}
-                        {{ output_attribute_value_mlt_exceptlang(value,level+1,key) }}
-                    {%- endif -%}
-                {%- else -%}
-                    {{ child_data(key,value,level) }}
-                {%- endif -%}
-            {%- endfor -%}
-        {%- elif attribute_data is iterable and attribute_data is not string -%}
-            {{ output_attribute_value_mlt_exceptlang(attribute_data,level,parentname) }}
-        {%- endif -%}
-    {%- endfor -%}
+                {%- endfor -%}
+            {%- elif attribute_data is iterable and attribute_data is not string -%}
+                {{ output_attribute_value_mlt_exceptlang(attribute_data,level,parentname) }}
+            {%- endif -%}
+        {%- endfor -%}
+    {%- endif -%}
 {% endmacro %}

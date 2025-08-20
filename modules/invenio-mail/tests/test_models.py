@@ -70,6 +70,45 @@ class TestMailTemplates:
 
         assert result == expected_result
 
+    # .tox/c1/bin/pytest --cov=invenio_mail tests/test_models.py::TestMailTemplates::test_get_templates -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-mail/.tox/c1/tmp
+    def test_get_templates(self, app, mail_templates, admin_settings, mocker):
+        # secret_enabled is False and secret_genre_id is 1
+        result = MailTemplates.get_templates()
+        assert result == []
+
+        # secret_enabled is True
+        app.config['WEKO_ADMIN_RESTRICTED_ACCESS_SETTINGS'] = {
+            'secret_URL_file_download': {
+                'secret_enable': True
+            }
+        }
+        expect = [
+            {
+                'key': '1',
+                'flag': True,
+                'content': {
+                    'subject': 'test subject',
+                    'body': 'test body'
+                },
+                'genre_order': 1,
+                'genre_key': 'Notification of secret URL provision',
+                'genre_name': 'Notification of secret URL provision'
+            }
+        ]
+        with mocker.patch('weko_admin.models.AdminSettings.get', return_value=None):
+            result = MailTemplates.get_templates()
+            assert result == expect
+
+        # Exception in toDict
+        with mocker.patch('invenio_mail.models.MailTemplates.toDict', side_effect=Exception):
+            result = MailTemplates.get_templates()
+            assert result == []
+
+    # .tox/c1/bin/pytest --cov=invenio_mail tests/test_models.py::TestMailTemplates::test_get_by_id -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-mail/.tox/c1/tmp
+    def test_get_by_id(self, app, mail_templates):
+        result = MailTemplates.get_by_id(1)
+        assert result == mail_templates
+
 # .tox/c1/bin/pytest --cov=invenio_mail tests/test_models.py::TestMailTemplates::test_save_and_update -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-mail/.tox/c1/tmp
     def test_save_and_update(self, mail_template_fixture):
         mt = MailTemplates()
@@ -114,6 +153,17 @@ class TestMailTemplates:
             side_effect=Exception('DB Error Test')
         ):
             result = mt.save_and_update(new_data)
+            assert result == False
+
+    # .tox/c1/bin/pytest --cov=invenio_mail tests/test_models.py::TestMailTemplates::test_delete_by_id -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-mail/.tox/c1/tmp
+    def test_delete_by_id(self, app, mail_templates):
+        # test delete_by_id
+        result = MailTemplates.delete_by_id(1)
+        assert result == True
+
+        # test delete_by_id with exception
+        with patch('invenio_db.db.session.commit', side_effect=Exception):
+            result = MailTemplates.delete_by_id(1)
             assert result == False
 
 

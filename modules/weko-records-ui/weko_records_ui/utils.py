@@ -24,18 +24,21 @@ import base64
 import csv
 import json
 import re
+import datetime
+import six
 from datetime import datetime as dt
 from datetime import timedelta
 from decimal import Decimal
 from typing import List, Optional, Tuple
 from urllib.parse import quote
 from io import StringIO
+import copy
 
 from flask import abort, current_app, json, request, Flask
-from flask_babelex import gettext as _
-from flask_babelex import to_utc
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
+from flask_babelex import gettext as _
+from flask_babelex import to_utc
 from flask_login import current_user
 from invenio_accounts.models import Role, User
 from invenio_cache import current_cache
@@ -45,19 +48,23 @@ from invenio_oaiserver.response import getrecord
 from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from invenio_records.models import RecordMetadata
+from invenio_records_ui.utils import obj_or_import_string
 from lxml import etree
 from passlib.handlers.oracle import oracle10
 from weko_admin.models import AdminSettings
 from weko_admin.utils import UsageReport, get_restricted_access
 from weko_deposit.api import WekoDeposit, WekoRecord
 from weko_records.api import FeedbackMailList, RequestMailList, ItemTypes
-from weko_records.utils import replace_fqdn
+from weko_records.serializers.utils import get_mapping
+from weko_records.utils import custom_record_medata_for_export, replace_fqdn
 from weko_records.models import ItemReference
 from weko_schema_ui.models import PublishStatus
 from weko_workflow.api import WorkActivity, WorkFlow, UpdateItem
 from weko_workflow.models import ActivityStatusPolicy
 
 from weko_records_ui.models import InstitutionName
+from weko_records_ui.external import call_external_system
+from weko_workflow.models import Activity
 
 from .models import FileOnetimeDownload, FilePermission, FileSecretDownload
 from .permissions import check_create_usage_report, \
@@ -95,9 +102,9 @@ def check_items_settings(settings=None):
         if isinstance(settings,dict):
             if 'items_display_email' in settings:
                 current_app.config['EMAIL_DISPLAY_FLG'] = settings['items_display_email']
-            if 'items_search_author' in settings:    
+            if 'items_search_author' in settings:
                 current_app.config['ITEM_SEARCH_FLG'] = settings['items_search_author']
-            if 'item_display_open_date' in settings:    
+            if 'item_display_open_date' in settings:
                 current_app.config['OPEN_DATE_DISPLAY_FLG'] = \
                 settings['item_display_open_date']
         else:
@@ -157,7 +164,7 @@ def get_billing_file_download_permission(groups_price: list) -> dict:
 
     Returns:
         dict: Billing file permission dictionary.
-    """    
+    """
     # current_app.logger.debug("groups_price:{}".format(groups_price))
     billing_file_permission = dict()
     for data in groups_price:
@@ -277,6 +284,9 @@ def delete_version(recid):
     id_without_version = recid.split('.')[0]
     latest_version = get_latest_version(id_without_version)
     is_latest_version = recid == latest_version
+    old_record = WekoRecord.get_record_by_pid(id_without_version)
+    old_item_reference_list = ItemReference.get_src_references(id_without_version).all()
+    old_item_reference_list = [copy.deepcopy(item) for item in old_item_reference_list]
 
     # delete item version
     del_files = {}
@@ -333,6 +343,8 @@ def delete_version(recid):
     latest_version = get_latest_version(id_without_version)
     latest_pid = PersistentIdentifier.query.filter_by(
         pid_type='recid', pid_value=latest_version).first()
+    latest_record = WekoDeposit.get_record(latest_pid.object_uuid)
+    _publish_status = latest_record.get('publish_status', PublishStatus.PUBLIC.value)
     # update parent item
     if is_latest_version:
         pid_without_ver = PersistentIdentifier.query.filter_by(
@@ -352,19 +364,20 @@ def delete_version(recid):
             )
         parent_deposit["relation_version_is_last"] = True
         parent_deposit.publish()
-        new_parent_record.update_feedback_mail()
         new_parent_record.commit()
-        updated_item.publish(new_parent_record)
+        updated_item.publish(new_parent_record, _publish_status)
         weko_record = WekoRecord.get_record_by_pid(
             pid_without_ver.pid_value)
         if weko_record:
             weko_record.update_item_link(latest_pid.pid_value)
+        new_item_reference_list = ItemReference.get_src_references(id_without_version).all()
+        call_external_system(old_record=old_record, new_record=weko_record,
+                             old_item_reference_list=old_item_reference_list, new_item_reference_list=new_item_reference_list)
+
     # update draft item
-    draft_pid = PersistentIdentifier.get(
-        'recid',
-        '{}.0'.format(id_without_version)
-    )
-    if not is_workflow_activity_work(draft_pid.object_uuid):
+    draft_pid = PersistentIdentifier.query.filter_by(
+        pid_type='recid', pid_value='{}.0'.format(id_without_version)).first()
+    if draft_pid is not None and not is_workflow_activity_work(draft_pid.object_uuid):
         draft_deposit = WekoDeposit.get_record(
             draft_pid.object_uuid)
         new_draft_record = draft_deposit. \
@@ -378,9 +391,8 @@ def delete_version(recid):
             )
         draft_deposit["relation_version_is_last"] = True
         draft_deposit.publish()
-        new_draft_record.update_feedback_mail()
         new_draft_record.commit()
-        updated_item.publish(new_draft_record)
+        updated_item.publish(new_draft_record, _publish_status)
         # update item link info of draft record
         weko_record = WekoRecord.get_record_by_pid(
             draft_deposit.pid.pid_value)
@@ -564,7 +576,7 @@ def get_license_pdf(license, item_metadata_json, pdf, file_item_id, footer_w,
     # current_app.logger.debug("footer_h:{}".format(footer_h))
     # current_app.logger.debug("cc_logo_xposition:{}".format(cc_logo_xposition))
     # current_app.logger.debug("item:{}".format(item))
-        
+
     from .views import blueprint
     license_icon_pdf_location = \
         current_app.config['WEKO_RECORDS_UI_LICENSE_ICON_PDF_LOCATION']
@@ -600,7 +612,7 @@ def get_pair_value(name_keys, lang_keys, datas):
     current_app.logger.debug("name_keys:{}".format(name_keys))
     current_app.logger.debug("lang_keys:{}".format(lang_keys))
     current_app.logger.debug("datas:{}".format(datas))
-    
+
     if len(name_keys) == 1 and len(lang_keys) == 1:
         if isinstance(datas, list):
             for data in datas:
@@ -619,14 +631,79 @@ def get_pair_value(name_keys, lang_keys, datas):
                                              datas.get(name_keys[0])):
                 yield name, lang
 
+def get_values_by_selected_lang(source_title, current_lang):
+    """Get value by selected lang.
 
-def hide_item_metadata(record, settings=None, item_type_mapping=None,
-                       item_type_data=None):
+    @param source_title: e.g. [('None Language': 'test'), ('ja': 'テスト1'), ('ja', 'テスト2')]
+    @param current_lang: e.g. 'ja'
+    @return: e.g. ['テスト1','テスト2']
+    """
+    value_cur = []
+    value_en = []
+    value_latn = []
+    title_data_langs = []
+    title_data_langs_none = []
+    for lang, value in source_title:
+        title = {}
+        if not value:
+            continue
+        elif current_lang == lang:
+            value_cur.append(value)
+        else:
+            title[lang] = value
+            if lang == "en":
+                value_en.append(value)
+            elif lang == "ja-Latn":
+                value_latn.append(value)
+            elif lang == "None Language":
+                title_data_langs_none.append(value)
+            elif lang:
+                title_data_langs.append(title)
+    if len(value_cur) > 0:
+        return value_cur
+
+    if len(title_data_langs_none)>0:
+        source = source_title[0][1]
+        target = title_data_langs_none[0]
+        if source==target:
+            return title_data_langs_none
+
+    if len(value_latn) > 0:
+        return value_latn
+
+    if len(value_en) > 0 and (
+        current_lang != "ja"
+        or not current_app.config.get("WEKO_RECORDS_UI_LANG_DISP_FLG", False)
+    ):
+        return value_en
+
+    if len(title_data_langs) > 0:
+        if current_lang == "en":
+            target_lang = ""
+            for t in title_data_langs:
+
+                if list(t)[0] != "ja" or not current_app.config.get(
+                    "WEKO_RECORDS_UI_LANG_DISP_FLG", False
+                ):
+                    target_lang = list(t)[0]
+            if target_lang:
+                return [title_data[target_lang] for title_data in title_data_langs if target_lang in title_data]
+
+        else:
+            target_lang = list(title_data_langs[0].keys())[0]
+            return [title_data[target_lang] for title_data in title_data_langs if target_lang in title_data]
+
+    if len(title_data_langs_none) > 0:
+        return title_data_langs_none
+    else:
+        return None
+
+
+def hide_item_metadata(record, settings=None, item_type_data=None):
     """Hiding emails and hidden item metadata.
 
     :param record:
     :param settings:
-    :param item_type_mapping:
     :param item_type_data:
     :return:
     """
@@ -637,10 +714,10 @@ def hide_item_metadata(record, settings=None, item_type_mapping=None,
 
     if hide_meta_data_for_role(record):
         list_hidden = get_ignore_item(
-            record['item_type_id'], item_type_mapping, item_type_data
+            record['item_type_id'], item_type_data
         )
         record = hide_by_itemtype(record, list_hidden)
-        
+
         hide_email = hide_meta_data_for_role(record)
         if hide_email:
             # Hidden owners_ext.email
@@ -670,7 +747,7 @@ def hide_item_metadata_email_only(record):
     check_items_settings()
 
     record['weko_creator_id'] = record.get('owner')
-    
+
     hide_email = hide_meta_data_for_role(record)
     if hide_email:
         # Hidden owners_ext.email
@@ -706,11 +783,12 @@ def hide_by_file(item_metadata):
     return item_metadata
 
 
-def hide_by_email(item_metadata, force_flag=False):
+def hide_by_email(item_metadata, force_flag=False, item_type=None):
     """Hiding emails.
 
     :param item_metadata:
     :param force_flag: force to hide
+    :param item_type: item type data
     :return:
     """
     from weko_items_ui.utils import get_options_and_order_list, get_hide_list_by_schema_form
@@ -718,9 +796,17 @@ def hide_by_email(item_metadata, force_flag=False):
     subitem_keys = current_app.config['WEKO_RECORDS_UI_EMAIL_ITEM_KEYS']
 
     item_type_id = item_metadata.get('item_type_id')
+
     if item_type_id:
-        meta_options, type_mapping = get_options_and_order_list(item_type_id)
-        hide_list = get_hide_list_by_schema_form(item_type_id)
+        hide_list = []
+        if item_type:
+            meta_options = get_options_and_order_list(
+                item_type_id,
+                item_type_data=ItemTypes(item_type.schema, model=item_type),
+                mapping_flag=False)
+            hide_list = get_hide_list_by_schema_form(schemaform=item_type.render.get('table_row_map', {}).get('form', []))
+        else:
+            meta_options = get_options_and_order_list(item_type_id, mapping_flag=False)
 
         # Hidden owners_ext info
         if item_metadata.get('_deposit') and \
@@ -788,6 +874,45 @@ def item_setting_show_email():
         is_display = False
     return is_display
 
+def is_show_email_of_creator(item_type_id, item_type=None):
+    """Check setting show/hide email for 'Detail' and 'PDF Cover Page' screen.
+
+    :param item_type_id: item type id of current record.
+    :param item_type: item type data
+    :return: True/False, True: show, False: hide.
+    """
+    def get_creator_id(item_type_id, item_type):
+        item_map = get_mapping(item_type_id, "jpcoar_mapping", item_type=item_type)
+        creator = 'creator.creatorName.@value'
+        creator_id = None
+        if creator in item_map:
+            creator_id = item_map[creator].split('.')[0]
+        return creator_id
+
+    def item_type_show_email(item_type_id, item_type):
+        # Get flag of creator's email hide from item type.
+        if not item_type:
+            item_type = ItemTypes.get_by_id(item_type_id)
+        creator_id = get_creator_id(item_type_id, item_type)
+        if not creator_id:
+            return None
+        schema_editor = item_type.render.get('schemaeditor', {})
+        schema = schema_editor.get('schema', {})
+        creator = schema.get(creator_id)
+        if not creator:
+            return None
+        properties = creator.get('properties', {})
+        creator_mails = properties.get('creatorMails', {})
+        items = creator_mails.get('items', {})
+        properties = items.get('properties', {})
+        creator_mail = properties.get('creatorMail', {})
+        is_hide = creator_mail.get('isHide', None)
+        return is_hide
+
+    is_hide = item_type_show_email(item_type_id, item_type)
+    is_display = item_setting_show_email()
+
+    return not is_hide and is_display
 
 def replace_license_free(record_metadata, is_change_label=True):
     """Change the item name 'licensefree' to 'license_note'.
@@ -825,10 +950,11 @@ def get_data_by_key_array_json(key, array_json, get_key):
         if str(item.get('id')) == str(key):
             return item.get(get_key)
 
-def get_file_info_list(record):
+def get_file_info_list(record, item_type=None):
     """File Information of all file in record.
 
     :param record: all metadata of a record.
+    :param item_type: item type data
     :return: json files.
     """
     def get_file_size(p_file):
@@ -859,9 +985,10 @@ def get_file_info_list(record):
             if date and isinstance(date, list) and date[0]:
                 adtv = date[0].get('dateValue')
                 if adtv is None:
-                    adtv = dt.date.max
-                adt = dt.strptime(adtv, '%Y-%m-%d')
-                if is_future(adtv):
+                    adt = datetime.date.max
+                else:
+                    adt = dt.strptime(adtv, "%Y-%m-%d")
+                if is_future(adt):
                     message = "Download is available from {}/{}/{}."
                     p_file['future_date_message'] = _(message).format(
                         adt.year, adt.month, adt.day)
@@ -882,7 +1009,7 @@ def get_file_info_list(record):
                 meta_data.get('attribute_type', '') == "file":
             file_metadata = meta_data.get("attribute_value_mlt", [])
             for f in file_metadata:
-                if check_file_download_permission(record, f, True)\
+                if check_file_download_permission(record, f, True, item_type=item_type)\
                         or is_open_restricted(f):
                     # Set default version_id.
                     f["version_id"] = f.get('version_id', '')
@@ -1099,7 +1226,7 @@ def generate_one_time_download_url(
     :param record_id: File Version ID
     :param guest_mail: guest email
     :return:
-    """    
+    """
     secret_key = current_app.config['WEKO_RECORDS_UI_SECRET_KEY']
     download_pattern = current_app.config[
         'WEKO_RECORDS_UI_ONETIME_DOWNLOAD_PATTERN']
@@ -1167,7 +1294,7 @@ def validate_onetime_download_token(
         'WEKO_RECORDS_UI_ONETIME_DOWNLOAD_PATTERN']
     hash_value = download_pattern.format(
         file_name, record_id, guest_mail, date)
-    
+
     if not oracle10.verify(secret_key, token, hash_value):
         current_app.logger.debug('Validate token error: {}'.format(hash_value))
         return False, token_invalid
@@ -1233,7 +1360,7 @@ def get_onetime_download(file_name: str, record_id: str,
         str:file_name:
         str:record_id:
         str:user_mail:
-    Returns: 
+    Returns:
         FileOnetimeDownload or None
     """
     file_downloads = FileOnetimeDownload.find(
@@ -1243,19 +1370,19 @@ def get_onetime_download(file_name: str, record_id: str,
         return file_downloads[0]
     else:
         return None
-    
+
 def get_valid_onetime_download(file_name: str, record_id: str,user_mail: str) -> Optional[FileOnetimeDownload]:
-    """Get file_onetime_download 
+    """Get file_onetime_download
         if expiration_date and download_count is set downloadable
 
     Args:
         str:file_name:
         str:record_id:
         str:user_mail:
-    Returns: 
+    Returns:
         FileOnetimeDownload or None
     """
-                
+
     file_downloads:List[FileOnetimeDownload] = FileOnetimeDownload \
     .find_downloadable_only(
         file_name=file_name, record_id=record_id, user_mail=user_mail
@@ -1280,7 +1407,7 @@ def create_onetime_download_url(
     :return:
     """
     content_file_download = get_restricted_access('content_file_download')
-    if isinstance(content_file_download, dict):
+    if content_file_download and isinstance(content_file_download, dict):
         expiration_date = content_file_download.get("expiration_date", 30)
         download_limit = content_file_download.get("download_limit", 10)
         extra_info = dict(
@@ -1345,13 +1472,14 @@ def get_terms():
     terms_result = [{'id': 'term_free', 'name': _('Free Input')}]
     terms_list = get_restricted_access('terms_and_conditions')
     current_lang = current_i18n.language
-    for term in terms_list:
-        terms_result.append(
-            {'id': term.get("key"), "name": term.get("content", {}).
-                get(current_lang, "en").get("title", ""),
-                "content": term.get("content", {}).
-                get(current_lang, "en").get("content", "")}
-        )
+    if terms_list and isinstance(terms_list, list):
+        for term in terms_list:
+            terms_result.append(
+                {'id': term.get("key"), "name": term.get("content", {}).
+                    get(current_lang, "en").get("title", ""),
+                    "content": term.get("content", {}).
+                    get(current_lang, "en").get("content", "")}
+            )
     return terms_result
 
 
@@ -1525,7 +1653,7 @@ def get_google_detaset_meta(record,record_tree=None):
     # Required property check
     min_length = current_app.config.get('WEKO_RECORDS_UI_GOOGLE_DATASET_DESCRIPTION_MIN',WEKO_RECORDS_UI_GOOGLE_DATASET_DESCRIPTION_MIN)
     max_length = current_app.config.get('WEKO_RECORDS_UI_GOOGLE_DATASET_DESCRIPTION_MAX',WEKO_RECORDS_UI_GOOGLE_DATASET_DESCRIPTION_MAX)
-    
+
     for title in mtdata.findall('dc:title', namespaces=mtdata.nsmap):
         res_data['name'] = title.text
     for description in mtdata.findall('datacite:description', namespaces=mtdata.nsmap):
@@ -1698,20 +1826,20 @@ def create_secret_url(record_id:str ,file_name:str ,user_mail:str ,restricted_fu
     """
     Save in FileSecretDownload
     and Generate Secret Download URL.
-    
+
     Args:
         str :record_id:
         str :file_name:
         str :user_mail
         str :restricted_fullname  :embed mail string
         str :restricted_data_name :embed mail string
-    Return: 
-        dict: created info 
+    Return:
+        dict: created info
     """
     # Save to Database.
     secret_obj:FileSecretDownload = _create_secret_download_url(
         file_name, record_id, user_mail)
-    
+
     # generate url
     secret_file_url = _generate_secret_download_url(
         file_name, record_id, secret_obj.id, secret_obj.created)
@@ -1739,29 +1867,29 @@ def create_secret_url(record_id:str ,file_name:str ,user_mail:str ,restricted_fu
     else:
         return_dict["restricted_expiration_date_ja"] = "無制限"
         return_dict["restricted_expiration_date_en"] = "Unlimited"
-            
+
 
     if secret_obj.download_count < max_int :
         return_dict["restricted_download_count"] = str(secret_obj.download_count)
     else:
         return_dict["restricted_download_count_ja"] = "無制限"
         return_dict["restricted_download_count_en"] = "Unlimited"
-            
+
     return return_dict
 
 
 def _generate_secret_download_url(file_name: str, record_id: str, id: str ,created :dt) -> str:
     """Generate Secret download URL.
-    
+
     Args
         str: file_name: File name
         str: record_id: File Version ID
         str: id: FileSecretDownload id
         datetime :created :FileSecretDownload created
-    
+
     Returns
         str: generated url
-    """    
+    """
     secret_key = current_app.config['WEKO_RECORDS_UI_SECRET_KEY']
     download_pattern = current_app.config[
         'WEKO_RECORDS_UI_SECRET_DOWNLOAD_PATTERN']
@@ -1777,6 +1905,7 @@ def _generate_secret_download_url(file_name: str, record_id: str, id: str ,creat
     host_name = request.host_url
     url = "{}record/{}/file/secret/{}?token={}" \
         .format(host_name, record_id, file_name, token_value)
+    current_app.logger.debug("secret_file_url:{}".format(url))
     return url
 
 
@@ -1785,7 +1914,7 @@ def parse_secret_download_token(token: str) -> Tuple[str, Tuple]:
 
     Args
         token:
-    Returns: 
+    Returns:
         str   : error message
         Tuple : (record_id, id, date, secret_token)
     """
@@ -1797,10 +1926,9 @@ def parse_secret_download_token(token: str) -> Tuple[str, Tuple]:
         decode_token = base64.b64decode(token.encode()).decode()
         current_app.logger.debug("decode_token:{}".format(decode_token))
         param = decode_token.split(" ")
-        if not param or len(param) != 4:
+        if not param or len(param) != 5:
             return error, ()
-
-        return "", (param[0], param[1], param[2], param[3]) #record_id, id, current_date, secret_token
+        return "", (param[0], param[1], param[2] + " " + param[3] , param[4]) #record_id, id, current_date(date + time), secret_token
     except Exception as err:
         current_app.logger.error(err)
         return error, ()
@@ -1819,9 +1947,9 @@ def validate_secret_download_token(
         str:id:
         str:date:
         str:token:
-    Returns 
+    Returns
         Tuple:
-            bool : is valid 
+            bool : is valid
             str  : error message
     """
     token_invalid = _("Token is invalid.")
@@ -1856,7 +1984,7 @@ def validate_secret_download_token(
         current_app.logger.error('Validate secret download token error:')
         current_app.logger.error(err)
         return False, token_invalid
-        
+
 def get_secret_download(file_name: str, record_id: str,
                         id: str , created :dt ) -> Optional[FileSecretDownload]:
     """Get secret download count.
@@ -1888,9 +2016,9 @@ def _create_secret_download_url(file_name: str, record_id: str, user_mail: str) 
         FileSecretDownload : inserted record
     """
     secret_url_file_download:dict = get_restricted_access('secret_URL_file_download')
-        
-    expiration_date = secret_url_file_download.get("secret_expiration_date")
-    download_limit = secret_url_file_download.get("secret_download_limit")
+
+    expiration_date = secret_url_file_download.get("secret_expiration_date", 30)
+    download_limit = secret_url_file_download.get("secret_download_limit", 10)
 
     file_secret = FileSecretDownload.create(**{
         "file_name": file_name,
@@ -1900,7 +2028,7 @@ def _create_secret_download_url(file_name: str, record_id: str, user_mail: str) 
         "download_count": download_limit,
     })
     return file_secret
-    
+
 
 
 def update_secret_download(**kwargs) -> Optional[List[FileSecretDownload]]:
@@ -1975,7 +2103,7 @@ class RoCrateConverter:
             file_entity = self.crate.add_file(metadata_file.get('filename', ''))
             # TODO: RO-Crate Mapping画面のfileのkey項目一覧からaccessModeとdateCreatedを削除（下記で使用するから）
             file_entity['accessMode'] = metadata_file.get('accessrole', '')
-            file_entity['dateCreated'] = metadata_file.get('date', [{}])[0].get('dateValue')
+            file_entity['dateCreated'] =  metadata_file.get('date')[0]['dateValue'] if isinstance(metadata_file.get('date', ''), list) else ''
             self.__add_file_properties(file_entity, map_file, metadata, index)
             file_entities.append(file_entity)
         self.crate.root_dataset['mainEntity'] = file_entities
@@ -2032,7 +2160,10 @@ class RoCrateConverter:
                 property_value = self.__get_property_value(keys, 0, metadata)
 
             if property_value:
-                entity[rocrate_property] = property_value
+                if isinstance(property_value, list):
+                    entity[rocrate_property] = property_value
+                else:
+                    entity[rocrate_property] = [property_value]
 
     def __add_properties(self, entity, map, metadata):
         """
@@ -2047,7 +2178,10 @@ class RoCrateConverter:
         for rocrate_property, item_property in map.items():
             property_value = self.__get_property(item_property, metadata)
             if property_value:
-                entity[rocrate_property] = property_value
+                if isinstance(property_value, list):
+                    entity[rocrate_property] = property_value
+                else:
+                    entity[rocrate_property] = [property_value]
 
     def __get_property(self, item_property, metadata):
         """
@@ -2226,11 +2360,6 @@ class RoCrateConverter:
 
         return self.crate.metadata.generate()
 
-
-def create_limmiter():
-    from .config import WEKO_RECORDS_UI_API_LIMIT_RATE_DEFAULT
-    return Limiter(app=Flask(__name__), key_func=get_remote_address, default_limits=WEKO_RECORDS_UI_API_LIMIT_RATE_DEFAULT)
-
 def create_tsv(files, language='en'):
     """Create TSV file from files information.
 
@@ -2297,3 +2426,40 @@ def create_tsv(files, language='en'):
 
     StringIO().close()
     return file_output
+
+
+def create_limmiter():
+    from .config import WEKO_RECORDS_UI_API_LIMIT_RATE_DEFAULT
+    return Limiter(app=Flask(__name__), key_func=get_remote_address, default_limits=WEKO_RECORDS_UI_API_LIMIT_RATE_DEFAULT)
+
+def export_preprocess(pid, record, schema_type):
+    """Preprocess for export.
+
+    Args:
+        PersistentIdentifier : pid:
+        WekoRecord : record:
+        str : schema_type:
+    Returns:
+        str : data for export
+    """
+    formats = current_app.config.get('RECORDS_UI_EXPORT_FORMATS', {}).get(pid.pid_type, {})
+    fmt = formats.get(schema_type)
+
+    if fmt is False:
+        # If value is set to False, it means it was deprecated.
+        abort(410)
+    elif fmt is None:
+        abort(404)
+    else:
+        custom_record_medata_for_export(record)
+
+        if 'json' not in schema_type and 'bibtex' not in schema_type:
+            record.update({'@export_schema_type': schema_type})
+
+        serializer = obj_or_import_string(fmt['serializer'])
+        data = serializer.serialize(pid, record)
+
+        if isinstance(data, six.binary_type):
+            data = data.decode('utf8')
+
+        return data

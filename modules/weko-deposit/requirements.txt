@@ -33,7 +33,7 @@ elasticsearch==6.1.1
 elasticsearch-dsl==6.4.0
 entrypoints==0.2.3
 Flask==1.0.4
-Flask-Admin==1.5.3
+flask-admin==1.5.4
 Flask-Alembic==2.0.1
 Flask-Assets==0.12
 Flask-BabelEx==0.9.4
@@ -111,8 +111,7 @@ ptyprocess==0.5.2
 pycparser==2.18
 Pygments==2.2.0
 PyJWT==1.5.3
-#PyPDF2==1.26.0
--e git+https://github.com/RCOSDP/PyPDF2.git@fix/nii#egg=PyPDF2
+pypdf==4.3.1
 pyPEG2==2.15.2
 python-dateutil==2.8.2
 python-editor==1.0.3
@@ -174,7 +173,7 @@ xmltodict==0.12.0
 ftfy==4.4.3
 attrs==17.4.0
 b2handle==1.1.2
-resync==1.0.9
+resync==2.0.1
 email-validator==1.0.5
 iiif-prezi==0.3.0
 netaddr==0.8.0

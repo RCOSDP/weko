@@ -188,7 +188,7 @@ class GetActivities(ContentNegotiatedMethodView):
             # Get activity list
             work_activity = WorkActivity()
             rst_activities, _rst_max, rst_size, rst_page, _rst_name, rst_count = \
-                work_activity.get_activity_list(None, create_conditions_dict(param_status, param_limit, param_page), False)
+                work_activity.get_activity_list({}, create_conditions_dict(param_status, param_limit, param_page), False)
 
             activity_list = []
             for activity in rst_activities:
@@ -992,7 +992,7 @@ class FileApplicationActivity(ContentNegotiatedMethodView):
     def _clean_file_metadata(item_type_id, data):
         # clear metadata of file information
         is_cleaned = True
-        item_map = get_mapping(Mapping.get_record(item_type_id), "jpcoar_mapping")
+        item_map = get_mapping(item_type_id, "jpcoar_mapping")
         key = item_map.get("file.URI.@value")
         if key:
             key = key.split(".")[0]

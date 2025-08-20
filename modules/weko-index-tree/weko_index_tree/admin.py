@@ -33,7 +33,7 @@ from .api import Indexes
 from .models import IndexStyle
 from .permissions import index_tree_permission
 from .utils import get_admin_coverpage_setting
-
+from weko_accounts.api import sync_shib_gakunin_map_groups
 
 class IndexLinkSettingView(BaseView):
     """Index link setting view."""
@@ -77,6 +77,8 @@ class IndexEditSettingView(BaseView):
     @expose('/<int:index_id>', methods=['GET'])
     def index(self, index_id=0):
         """Render the index tree edit page."""
+        if current_app.config['WEKO_ACCOUNTS_SHIB_BIND_GAKUNIN_MAP_GROUPS']:
+            sync_shib_gakunin_map_groups()
         return self.render(
             current_app.config['WEKO_INDEX_TREE_INDEX_ADMIN_TEMPLATE'],
             get_tree_json=current_app.config['WEKO_INDEX_TREE_LIST_API'],

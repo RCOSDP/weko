@@ -1,0 +1,167 @@
+{
+  "item_test1_1":{
+    "jpcoar_mapping":{
+      "test1":{
+        "@value":"test_value1",
+        "@attributes":{
+          "xml:lang":"test_item_lang1"
+        }
+      }
+    }
+  },
+  "item_test1_2":{
+    "jpcoar_mapping":{
+      "test1_2":{
+        "@value":"",
+        "@attributes":{
+          "xml:lang":"test_item_lang1"
+        }
+      }
+    }
+  },
+  "item_test1_3":{
+    "jpcoar_mapping":{
+      "test1_3":{
+        "@value":"test_value1",
+        "@attributes":{
+          "test":""
+        }
+      }
+    }
+  },
+  "item_test1_4":{
+    "jpcoar_mapping":{
+      "test1_4":{
+        "@value":"test_value1",
+        "@attributes":{
+          "test":""
+        }
+      }
+    }
+  },
+  "item_test1_5":{
+    "jpcoar_mapping":{
+      "test1":{
+        "@value":"test_value1",
+        "@attributes":{
+          "xml:lang":"test_item_lang1"
+        }
+      }
+    }
+  },
+  "item_test2_title":{
+    "jpcoar_mapping":{
+      "title":{
+        "@value":"test_title",
+        "@attributes":{
+          "xml:lang":"test_title_lang"
+        }
+      }
+    }
+  },
+  "item_test3_file":{
+    "jpcoar_mapping":{
+      "file":{
+        "URI": {
+          "@value": "url.url",
+          "@attributes": {
+            "label": "url.label",
+            "objectType": "url.objectType"
+          }
+        },
+        "mimeType": {
+          "@value": "format"
+        }
+      }
+    }
+  },
+  "item_resource_type":{
+    "jpcoar_mapping":{
+      "type":{
+        "@value": "resourcetype",
+        "@attributes": {
+          "rdf:resource": "resourceuri"
+        }
+      }
+    }
+  },
+  "item_description":{
+    "jpcoar_mapping":{
+      "description":{
+        "@value": "subitem_description_value",
+        "@attributes": {
+          "xml:lang": "subitem_description_lang"
+        }
+      }
+    }
+  },
+  "item_date":{
+    "jpcoar_mapping":{
+      "date":{
+        "@value": "subitem_date_value",
+        "@attributes": {
+          "dateType": "subitem_date_type"
+        }
+      }
+    }
+  },
+  "item_relation":{
+    "jpcoar_mapping":{
+      "date":{
+        "@value": "subitem_relation_value",
+        "@attributes": {
+          "dateType": "subitem_relation_type"
+        }
+      }
+    }
+  },
+  "item_publisher":{
+    "jpcoar_mapping":{
+      "publisher":{
+        "@value": "subitem_publisher",
+        "@attributes": {
+          "xml:lang": "subitem_publisherLang"
+        }
+      }
+    }
+  },
+  "item_test5_creator":{
+    "jpcoar_mapping":{
+      "creator":{
+        "creatorName": {
+          "@value": "creatorNames.creatorName",
+          "@attributes": {
+            "xml:lang": "creatorName.creatorNameLang"
+          }
+        }
+      }
+    }
+  },
+  "item_test6_bibliographic":{
+    "jpcoar_mapping":{
+      "volume": "bibliographic_volume",
+      "pageStart": "bibliographic_pageStart",
+      "pageEnd": "bibliographic_pageEnd",
+      "sourceTitle": {
+        "@value": "bibliographic_titles.bibliographic_title",
+        "@attributes": {
+          "xml:lang": "bibliographic_titles.bibliographic_titleLang"
+        }
+      }
+    }
+  },
+  "system_file":{
+    "jpcoar_mapping":{
+        "system_file":{
+            "URI":{
+                "@value":"subitem_systemfile_filename_uri",
+                "@attributes":{
+                    "label":"subitem_systemfile_filename_label",
+                    "objectType":"subitem_systemfile_filename_type"
+                }
+            }
+        }
+    }
+  }
+}
+

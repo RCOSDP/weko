@@ -615,7 +615,8 @@ function RestrictedAccessLayout({
                                   content_file_download,
                                   terms_and_conditions,
                                   usage_report_workflow_access,
-                                  error_msg
+                                  error_msg,
+                                  restricted_access_display_flag
                                 }) {
 
   let itemApplicationSetting = item_application;
@@ -824,49 +825,65 @@ function RestrictedAccessLayout({
   }
 
 
-  return (
-    <div>
-      <ItemApplicationSettingsLayout enableItemApplication={itemApplicationEnable}
-                      setEnableItemApplication={setItemApplicationEnable}
-                      applicationItemTypeList={applicationItemTypeList}
-                      setApplicationItemTypeList={setApplicationItemTypeList}/>
-      <FunctionEnableOnlyLayout value={workflowPreviewEnabled}
-                      setValue={setWorkflowPreviewEnabled}
-                      header_title={LABEL_PREVIEW_WORKFLOW_APPROVAL}
-                      checkbox_id="preview_workflow_approval_enable"/>
-      <FunctionEnableOnlyLayout value={editMailTemplateEnabled}
-                      setValue={setEditMailTemplateEnabled}
-                      header_title={LABEL_EDIT_MAIL_TEMPLATES}
-                      checkbox_id="mail_template_edit_enable"/>
-      <FunctionEnableOnlyLayout value={requestFormEnabled}
-                      setValue={setRequestFormEnabled}
-                      header_title={LABEL_REQUEST_FORM}
-                      checkbox_id="request_form_display_enable"/>
-      <FunctionEnableOnlyLayout value={passwordEnable}
-                      setValue={setPasswordEnableCallback}
-                      header_title={LABEL_PASSWORD_FOR_DOWNLOAD}
-                      checkbox_id="password_enable"/>
-      <SecretURLFileDownloadLayout value={secretURLFileDownload}
-                                 setValue={setSecretURLFileDownload}/>
-      <ContentFileDownloadLayout value={contentFileDownload}
-                                 setValue={setContentFileDownload}/>
-      <UsageReportWorkflowAccessLayout value={usageReportWorkflowAccess}
-                                       setValue={setUsageReportWorkflowAccess}/>
-      <TermsConditions termList={termList} setTermList={setTermList}
-                       currentTerm={currentTerm}
-                       setCurrentTerm={setCurrentTerm}/>
-      <ErrorMsgConditions errorMsg={errorMsg} setErrorMsg={setErrorMsg}/>
-      <div className="form-group">
-        <button id="save-btn" className="btn btn-primary pull-right" style={{marginBottom: "15px"}}
-                onClick={handleSave}>
-          <span className="glyphicon glyphicon-save"></span>&nbsp;{SAVE_LABEL}
-        </button>
-      </div>
+  if (restricted_access_display_flag) {
+    return (
       <div>
-        <UsageReportList/>
+        <ItemApplicationSettingsLayout enableItemApplication={itemApplicationEnable}
+                        setEnableItemApplication={setItemApplicationEnable}
+                        applicationItemTypeList={applicationItemTypeList}
+                        setApplicationItemTypeList={setApplicationItemTypeList}/>
+        <FunctionEnableOnlyLayout value={workflowPreviewEnabled}
+                        setValue={setWorkflowPreviewEnabled}
+                        header_title={LABEL_PREVIEW_WORKFLOW_APPROVAL}
+                        checkbox_id="preview_workflow_approval_enable"/>
+        <FunctionEnableOnlyLayout value={editMailTemplateEnabled}
+                        setValue={setEditMailTemplateEnabled}
+                        header_title={LABEL_EDIT_MAIL_TEMPLATES}
+                        checkbox_id="mail_template_edit_enable"/>
+        <FunctionEnableOnlyLayout value={requestFormEnabled}
+                        setValue={setRequestFormEnabled}
+                        header_title={LABEL_REQUEST_FORM}
+                        checkbox_id="request_form_display_enable"/>
+        <FunctionEnableOnlyLayout value={passwordEnable}
+                        setValue={setPasswordEnableCallback}
+                        header_title={LABEL_PASSWORD_FOR_DOWNLOAD}
+                        checkbox_id="password_enable"/>
+        <SecretURLFileDownloadLayout value={secretURLFileDownload}
+                                   setValue={setSecretURLFileDownload}/>
+        <ContentFileDownloadLayout value={contentFileDownload}
+                                   setValue={setContentFileDownload}/>
+        <UsageReportWorkflowAccessLayout value={usageReportWorkflowAccess}
+                                         setValue={setUsageReportWorkflowAccess}/>
+        <TermsConditions termList={termList} setTermList={setTermList}
+                         currentTerm={currentTerm}
+                         setCurrentTerm={setCurrentTerm}/>
+        <ErrorMsgConditions errorMsg={errorMsg} setErrorMsg={setErrorMsg}/>
+        <div className="form-group">
+          <button id="save-btn" className="btn btn-primary pull-right" style={{marginBottom: "15px"}}
+                  onClick={handleSave}>
+            <span className="glyphicon glyphicon-save"></span>&nbsp;{SAVE_LABEL}
+          </button>
+        </div>
+        <div>
+          <UsageReportList/>
+        </div>
       </div>
-    </div>
-  )
+    )
+  } else {
+    return (
+      <div>
+        <SecretURLFileDownloadLayout value={secretURLFileDownload}
+                                   setValue={setSecretURLFileDownload}/>
+        <ErrorMsgConditions errorMsg={errorMsg} setErrorMsg={setErrorMsg}/>
+        <div className="form-group">
+          <button id="save-btn" className="btn btn-primary pull-right" style={{marginBottom: "15px"}}
+                  onClick={handleSave}>
+            <span className="glyphicon glyphicon-save"></span>&nbsp;{SAVE_LABEL}
+          </button>
+        </div>
+      </div>
+    )
+  }
 }
 
 function showErrorMessage(errorMessage) {

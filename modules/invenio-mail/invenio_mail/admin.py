@@ -14,6 +14,7 @@ from werkzeug.local import LocalProxy
 from invenio_mail.models import MailConfig, MailTemplates, MailTemplateUsers
 
 from . import config
+from .models import MailTemplates
 
 _app = LocalProxy(lambda: current_app.extensions['weko-admin'].app)
 

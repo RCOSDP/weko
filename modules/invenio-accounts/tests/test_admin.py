@@ -7,7 +7,7 @@
 # under the terms of the MIT License; see LICENSE file for more details.
 
 import pytest
-from mock import patch
+from mock import patch, MagicMock
 from flask import current_app, session, url_for
 from flask_admin import menu
 from flask_security import url_for_security
@@ -17,9 +17,9 @@ from werkzeug.local import LocalProxy
 
 from invenio_accounts import InvenioAccounts
 from invenio_accounts.cli import users_create
-from invenio_accounts.models import SessionActivity
+from invenio_accounts.models import SessionActivity, User, Role
 from invenio_accounts.testutils import create_test_user, login_user_via_view
-from invenio_accounts.admin import SessionActivityView
+from invenio_accounts.admin import SessionActivityView, UserView
 
 _datastore = LocalProxy(
     lambda: current_app.extensions['security'].datastore
@@ -211,7 +211,7 @@ def test_admin_sessions_action_delete(app):
         with app.test_client() as client:
             login_user_via_view(client=client, email=user2_email,
                                 password=user2_pw)
-            
+
             with patch('invenio_accounts.admin.db.session.commit', side_effect=Exception('')):
                 view.action_delete([user1_sid])
                 sessions = SessionActivity.query.all()
@@ -220,4 +220,66 @@ def test_admin_sessions_action_delete(app):
             view.action_delete([user1_sid])
             sessions = SessionActivity.query.all()
             assert len(sessions) == 1
-    
+
+
+# .tox/c1/bin/pytest --cov=invenio_accounts tests/test_admin.py::test_userview_get_query -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-accounts/.tox/c1/tmp
+def test_userview_get_query(app, users):
+        """Test get_query for super role user."""
+        view = UserView(User, db.session)
+        mock_repo = MagicMock(group=MagicMock(id=1))
+        with app.test_request_context():
+            with patch("flask_login.utils._get_user", return_value=users[2]['obj']):
+                query = view.get_query()
+                assert query is not None
+                assert query.count() == User.query.count()
+
+            with patch("flask_login.utils._get_user", return_value=users[0]['obj']):
+                with patch("invenio_communities.models.Community.get_repositories_by_user", return_value=[mock_repo]):
+                    db.session.add(users[0]['obj'])
+                    db.session.commit()
+                    query = view.get_query()
+                    assert query is not None
+                    assert query.count() == 0
+
+
+# .tox/c1/bin/pytest --cov=invenio_accounts tests/test_admin.py::test_userview_get_count_query -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-accounts/.tox/c1/tmp
+def test_userview_get_count_query(app, users):
+        """Test get_count_query for super role user."""
+        view = UserView(User, db.session)
+        mock_repo = MagicMock(group=MagicMock(id=1))
+        with app.test_request_context():
+            with patch("flask_login.utils._get_user", return_value=users[2]['obj']):
+                query = view.get_count_query()
+                assert query is not None
+                assert query.scalar() == User.query.count()
+
+            with patch("flask_login.utils._get_user", return_value=users[0]['obj']):
+                with patch("invenio_communities.models.Community.get_repositories_by_user", return_value=[mock_repo]):
+                    db.session.add(users[0]['obj'])
+                    db.session.commit()
+                    query = view.get_count_query()
+                    assert query is not None
+                    assert query.scalar() == 0
+
+# .tox/c1/bin/pytest --cov=invenio_accounts tests/test_admin.py::test_userview_on_form_prefill -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-accounts/.tox/c1/tmp
+def test_userview_on_form_prefill(app, users):
+    """Test on_form_prefill for super role user."""
+    view = UserView(User, db.session)
+    form = view.create_form()
+    user = users[2]['obj']
+    user.roles = [
+        Role(name='role1'),
+        Role(name='role2_groups_1')
+    ]
+    view.get_one = MagicMock(return_value=user)
+    view.on_form_prefill(form, user.id)
+    assert form.data['active'] is False
+    assert form.role.data == [user.roles[0]]
+    assert form.group.data == [user.roles[1]]
+
+# .tox/c1/bin/pytest --cov=invenio_accounts tests/test_admin.py::test_userview_edit_form -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-accounts/.tox/c1/tmp
+def test_userview_edit_form(app, users):
+    """Test edit_form for super role user."""
+    view = UserView(User, db.session)
+    form = view.edit_form()
+    assert form.data['active'] is False

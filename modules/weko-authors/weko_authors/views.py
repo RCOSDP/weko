@@ -21,6 +21,8 @@
 """Views for weko-authors."""
 
 import re
+import sys
+import traceback
 import uuid
 from flask import Response, Blueprint, current_app, json, jsonify, make_response, request
 from flask_babelex import gettext as _
@@ -32,8 +34,13 @@ from weko_schema_ui.models import PublishStatus
 
 from .config import WEKO_AUTHORS_IMPORT_KEY
 from .models import Authors, AuthorsAffiliationSettings, AuthorsPrefixSettings
+from .api import WekoAuthors
 from .permissions import author_permission
-from .utils import get_author_prefix_obj, get_author_affiliation_obj, get_count_item_link
+from .utils import (
+    get_author_prefix_obj, get_author_affiliation_obj, get_count_item_link,
+    validate_weko_id, check_period_date
+)
+from weko_logging.activity_logger import UserActivityLogger
 
 blueprint = Blueprint(
     'weko_authors',
@@ -60,43 +67,51 @@ def create():
     if request.headers['Content-Type'] != 'application/json':
         return jsonify(msg=_('Header Error'))
 
-    session = db.session
-    new_id = Authors.get_sequence(session)
-
     data = request.get_json()
-    data["gather_flg"] = 0
-    data["is_deleted"] = "false"
-    data["pk_id"] = str(new_id)
-    data["authorIdInfo"].insert(0,
-                                {
-                                    "idType": "1",
-                                    "authorId": str(new_id),
-                                    "authorIdShowFlg": "true"
-                                })
-    es_data = json.loads(json.dumps(data))
-    es_id = str(uuid.uuid4())
-    data['id'] = es_id
 
-    author_data = dict()
+    # weko_idを取得する。
+    author_id_info = data["authorIdInfo"]
+    weko_id = None
+    for i in author_id_info:
+        if i.get('idType') == '1':
+            weko_id = i.get('authorId')
+    if not weko_id:
+        return jsonify(msg=_('Please set WEKO ID.')), 500
 
-    author_data["id"] = new_id
-    author_data["json"] = data
+    #weko_idのバリーデーションチェック
     try:
-        with session.begin_nested():
-            author = Authors(**author_data)
-            session.add(author)
-        indexer = RecordIndexer()
-        
-        session.commit()
-        indexer.client.index(
-            index=current_app.config['WEKO_AUTHORS_ES_INDEX_NAME'],
-            doc_type=current_app.config['WEKO_AUTHORS_ES_DOC_TYPE'],
-            id=es_id,
-            body=es_data,
-        )
+        result_weko_id_check = validate_weko_id(weko_id)
+        if result_weko_id_check[0] == False and result_weko_id_check[1] == "not half digit":
+            # weko_idが半角数字でない場合はエラーを返す
+            return jsonify(msg=_('Please set the WEKOID in the half digit.')), 500
+        elif result_weko_id_check[0] == False and result_weko_id_check[1] == "already exists":
+            # weko_idが既に存在する場合はエラーを返す
+            return jsonify(msg=_('The value is already in use as WEKO ID.')), 500
     except Exception as ex:
-        session.rollback()
         current_app.logger.error(ex)
+        traceback.print_exc()
+        return jsonify(msg=_('Failed')), 500
+
+
+    #periodのバリーデーションチェック
+    result_period_check = check_period_date(data)
+    if result_period_check[0] == False and result_period_check[1] == "not date format":
+        return jsonify(msg=_('Please set the affiliation start date and end date in the format yyyy-MM-dd.')), 500
+    elif result_period_check[0] == False and result_period_check[1] == "start is after end":
+        return jsonify(msg=_('The end date must be after the start date.')), 500
+
+    try:
+        WekoAuthors.create(data)
+        UserActivityLogger.info(operation="AUTHOR_CREATE")
+    except Exception as ex:
+        current_app.logger.error(ex)
+        traceback.print_exc()
+        exec_info = sys.exc_info()
+        tb_info = traceback.format_tb(exec_info[2])
+        UserActivityLogger.error(
+            operation="AUTHOR_CREATE",
+            remarks=tb_info[0]
+        )
         return jsonify(msg=_('Failed')), 500
     return jsonify(msg=_('Success'))
 
@@ -109,33 +124,41 @@ def update_author():
     if request.headers['Content-Type'] != 'application/json':
         current_app.logger.debug(request.headers['Content-Type'])
         return jsonify(msg=_('Header Error'))
+    req = request.get_json()
+    data = req["author"]
+    force_change_flag = request.get_json()["forceChangeFlag"]
+    # weko_idを取得する。
+    weko_id = None
+    author_id_info = data["authorIdInfo"]
+    for i in author_id_info:
+        if i.get('idType') == '1':
+            weko_id = i.get('authorId')
+    if not weko_id:
+        return jsonify(msg=_('Please set WEKO ID.')), 500
+    pk_id = data["pk_id"]
 
-    user_id = current_user.get_id()
-    data = request.get_json()
     try:
-        with db.session.begin_nested():
-            author_data = Authors.query.filter_by(
-                id=json.loads(json.dumps(data))["pk_id"]).one()
-            author_data.json = data
-            db.session.merge(author_data)
-        db.session.commit()
-        
-        indexer = RecordIndexer()
-        body = {'doc': data}
-        indexer.client.update(
-            index=current_app.config['WEKO_AUTHORS_ES_INDEX_NAME'],
-            doc_type=current_app.config['WEKO_AUTHORS_ES_DOC_TYPE'],
-            id=json.loads(json.dumps(data))["id"],
-            body=body
-        )
-        from weko_deposit.tasks import update_items_by_authorInfo
-        
-        update_items_by_authorInfo.delay(
-            user_id,data, [json.loads(json.dumps(data))["pk_id"]], [json.loads(json.dumps(data))["id"]])
+        #weko_idのバリーデーションチェック
+        result_weko_id_check = validate_weko_id(weko_id, pk_id)
 
+        if result_weko_id_check[0] == False and result_weko_id_check[1] == "not half digit":
+            # weko_idが半角数字でない場合はエラーを返す
+            return jsonify(msg=_('Please set the WEKOID in the half digit.')), 500
+        elif result_weko_id_check[0] == False and result_weko_id_check[1] == "already exists":
+            # weko_idが既に存在する場合はエラーを返す
+            return jsonify(msg=_('The value is already in use as WEKO ID.')), 500
+
+        #periodのバリーデーションチェック
+        result_period_check = check_period_date(data)
+        if result_period_check[0] == False and result_period_check[1] == "not date format":
+            return jsonify(msg=_('Please set the affiliation start date and end date in the format yyyy-MM-dd.')), 500
+        elif result_period_check[0] == False and result_period_check[1] == "start is after end":
+            return jsonify(msg=_('The end date must be after the start date.')), 500
+
+        WekoAuthors.update(pk_id, data, force_change_flag)
     except Exception as ex:
-        db.session.rollback()
         current_app.logger.error(ex)
+        traceback.print_exc()
         return jsonify(msg=_('Failed')), 500
 
     return jsonify(msg=_('Success'))
@@ -164,16 +187,24 @@ def delete_author():
         author_data.json = json_data
         db.session.merge(author_data)
         db.session.commit()
+        UserActivityLogger.info(
+            operation="AUTHOR_DELETE",
+            target_key=json.loads(json.dumps(data))["pk_id"]
+        )
         RecordIndexer().client.update(
             id=json.loads(json.dumps(data))["Id"],
             index=current_app.config['WEKO_AUTHORS_ES_INDEX_NAME'],
             doc_type=current_app.config['WEKO_AUTHORS_ES_DOC_TYPE'],
             body={'doc': {'is_deleted': 'true'}}
         )
-        
+
     except Exception as ex:
         db.session.rollback()
         current_app.logger.error(ex)
+        UserActivityLogger.error(
+            operation="AUTHOR_DELETE",
+            target_key=json.loads(json.dumps(data))["pk_id"]
+        )
         return jsonify(msg=_('Failed')), 500
 
     return jsonify(msg=_('Success'))
@@ -256,10 +287,11 @@ def get():
     item_cnt_list = []
     for es_hit in result['hits']['hits']:
         author_id_info = es_hit['_source']['authorIdInfo']
-        if author_id_info:
+        pk_id = es_hit['_source']['pk_id']
+        if pk_id and author_id_info:
             author_id = author_id_info[0]['authorId']
             temp_str = json.dumps(query_item).replace(
-                "@author_id", author_id)
+                "@author_id", pk_id)
             result_itemCnt = indexer.client.search(
                 index=current_app.config['SEARCH_UI_SEARCH_INDEX'],
                 body=json.loads(temp_str)
@@ -268,7 +300,7 @@ def get():
                     and result_itemCnt['hits'] \
                     and result_itemCnt['hits']['total']:
                 item_cnt_list.append(
-                    {'key': author_id,
+                    {'key': pk_id,
                      'doc_count': result_itemCnt['hits']['total']})
 
     result['item_cnt'] = {'aggregations':
@@ -309,6 +341,49 @@ def getById():
     )
     return json.dumps(result)
 
+@blueprint_api.route("/get_max_weko_id", methods=['GET'])
+@login_required
+def get_max_weko_id():
+    """Get max weko id."""
+    query = {
+        "_source": ["authorIdInfo"],  # authorIdInfoフィールドのみを取得
+        "query": {
+            "bool": {
+                "must": [
+                    {"term": {"gather_flg": {"value": 0}}}
+                ],
+                "must_not": [
+                    {"term": {"is_deleted": True}}
+                ]
+            }
+        },
+        "size": 1000  # スクロールごとに取得するドキュメント数
+    }
+
+    indexer = RecordIndexer()
+    result = indexer.client.search(
+        index=current_app.config['WEKO_AUTHORS_ES_INDEX_NAME'],
+        body=query,
+        scroll='2m'  # スクロールの有効期限
+    )
+
+    max_author_id = 0
+    scroll_id = result['_scroll_id']
+
+    while len(result['hits']['hits']) > 0:
+        for hit in result['hits']['hits']:
+            author_id_info = hit['_source'].get('authorIdInfo', [])
+            for info in author_id_info:
+                if info.get('idType') == '1':
+                    author_id = int(info.get('authorId'))
+                    if author_id > max_author_id:
+                        max_author_id = author_id
+        result = indexer.client.scroll(
+            scroll_id=scroll_id,
+            scroll='2m'
+        )
+
+    return jsonify(max_author_id=max_author_id)
 
 @blueprint_api.route("/input", methods=['POST'])
 @login_required

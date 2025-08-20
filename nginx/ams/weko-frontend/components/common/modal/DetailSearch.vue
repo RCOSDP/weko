@@ -5,7 +5,7 @@
         <div class="basis-1/6" />
         <!-- タイトル -->
         <div class="basis-4/6">
-          <p class="text-white leading-[43px] text-center font-medium">{{ $t('detailSearch') }}</p>
+          <p class="text-white leading-[43px] text-center font-medium">{{ $t('advanced') }}</p>
         </div>
         <!-- 閉じるボタン -->
         <div class="basis-1/6 flex text-end justify-end pr-3">

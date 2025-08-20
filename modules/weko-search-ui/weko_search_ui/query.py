@@ -53,11 +53,12 @@ def get_item_type_aggs(search_index):
     return facets.get(search_index).get("aggs", {})
 
 
-def get_permission_filter(index_id: str = None):
+def get_permission_filter(index_id: str = None, is_community=False):
     """Check permission.
 
     Args:
         index_id (str, optional): Index Identifier Number. Defaults to None.
+        is_community (bool): Includes child indexes under the specified index. Defaults to False.
 
     Returns:
         List: Query command.
@@ -84,17 +85,26 @@ def get_permission_filter(index_id: str = None):
         if search_type == config.WEKO_SEARCH_TYPE_DICT["FULL_TEXT"]:
             should_path = []
             if index_id in is_perm_indexes:
-                should_path.append(Q("terms", path=index_id))
+                if is_community:
+                    child_ids = Indexes.get_child_list_recursive(int(index_id))
+                    term_list.extend([i for i in child_ids if i in is_perm_indexes])
+                else:
+                    term_list.append(index_id)
+                should_path.append(Q("terms", path=term_list))
 
             terms = Q("bool", should=should_path)
         else:  # In case search_type is keyword or index
             if index_id in is_perm_indexes:
-                term_list.append(index_id)
+                if is_community:
+                    child_ids = Indexes.get_child_list_recursive(int(index_id))
+                    term_list.extend([i for i in child_ids if i in is_perm_indexes])
+                else:
+                    term_list.append(index_id)
 
             terms = Q("terms", path=term_list)
     else:
         terms = Q("terms", path=is_perm_indexes)
-    
+
     if is_admin:
         mst.append(status)
     else:
@@ -142,6 +152,7 @@ def default_search_factory(self, search, query_parser=None, search_type=None, ad
         :param qs: Query string.
         :return: Query parser.
         """
+        qs = qs.replace("　", " ").replace(" | ", " OR ")
         q = (
             Q(
                 "query_string",
@@ -171,18 +182,52 @@ def default_search_factory(self, search, query_parser=None, search_type=None, ad
                 return
 
             if isinstance(v, str):
-                name_dict = dict(operator="and")
-                name_dict.update(dict(query=kv))
-                qry = Q("match", **{v: name_dict})
+                split_text_list = _split_text_by_or(kv)
+
+                if len(split_text_list) == 1:
+                    name_dict = dict(operator="and")
+                    name_dict.update(dict(query=kv))
+                    qry = Q("match", **{v: name_dict})
+                else:
+                    # OR search
+                    should_list = []
+                    for split_text in split_text_list:
+                        name_dict = dict(operator="and")
+                        name_dict.update(dict(query=split_text))
+                        should_list.append(Q("match", **{v: name_dict}))
+                    qry = Q("bool", should=should_list, minimum_should_match=1)
+
             elif isinstance(v, list):
-                qry = Q(
-                    "multi_match",
-                    query=kv,
-                    type="most_fields",
-                    minimum_should_match="75%",
-                    operator="and",
-                    fields=v,
-                )
+                if k == "title" and params.get("exact_title_match"):
+                    should_list = []
+                    should_list.append(Q("term", **{"title":kv}))
+                    should_list.append(Q("term", **{"alternative":kv}))
+                    qry = Q("bool", should=should_list, minimum_should_match=1)
+                else:
+                    split_text_list = _split_text_by_or(kv)
+                    if len(split_text_list) == 1:
+                        qry = Q(
+                            "multi_match",
+                            query=kv,
+                            type="most_fields",
+                            minimum_should_match="75%",
+                            operator="and",
+                            fields=v,
+                        )
+                    else:
+                        # OR search
+                        should_list = []
+                        for split_text in split_text_list:
+                            should_list.append(Q(
+                                "multi_match",
+                                query=split_text,
+                                type="most_fields",
+                                minimum_should_match="75%",
+                                operator="and",
+                                fields=v,
+                        ))
+                        qry = Q("bool", should=should_list, minimum_should_match=1)
+
             elif isinstance(v, dict):
 
                 for key, vlst in v.items():
@@ -205,9 +250,16 @@ def default_search_factory(self, search, query_parser=None, search_type=None, ad
                         ]
 
                         for j in kvl:
-                            name_dict = dict(operator="and")
-                            name_dict.update(dict(query=j))
-                            shud.append(Q("match", **{key: name_dict}))
+
+                            if j == "other" and k=="language":
+                                source = "boolean flg=false; for(lang in doc['language']){if (!params.param1.contains(lang)){flg=true;}} return flg;"
+                                params = {"param1":vlst}
+                                script = Q("script",script={"source":source,"params":params})
+                                shud.append(Q("bool",filter=script))
+                            else:
+                                name_dict = dict(operator="and")
+                                name_dict.update(dict(query=j))
+                                shud.append(Q("match", **{key: name_dict}))
 
                         if shud:
                             return Q("bool", should=shud)
@@ -288,20 +340,37 @@ def default_search_factory(self, search, query_parser=None, search_type=None, ad
                                     for alst in attr:
                                         if isinstance(alst, tuple):
                                             val_attr_lst = alst[1].split("=")
-                                            name = alst[0] + ".value"
-                                            name_dict = dict(operator="and")
-                                            name_dict.update(dict(query=kv))
-                                            mut = [Q("match", **{name: name_dict})]
                                             qt = None
 
+                                            # attribute conditon
+                                            field_name = alst[0] + "." + val_attr_lst[0]
                                             if "=*" in alst[1]:
                                                 name = alst[0] + "." + val_attr_lst[0]
                                                 qt = [
-                                                    Q("term", **{name: val_attr_lst[1]})
+                                                    Q("term", **{name: key})
                                                 ]
 
-                                            mut.extend(qt or [])
-                                            qry = Q("bool", must=mut)
+                                            split_text_list = _split_text_by_or(kv)
+                                            if len(split_text_list) == 1:
+                                                name = alst[0] + ".value"
+                                                name_dict = dict(operator="and")
+                                                name_dict.update(dict(query=kv))
+                                                mut = [Q("match", **{name: name_dict})]
+
+                                                mut.extend(qt or [])
+                                                qry = Q("bool", must=mut)
+
+                                            else:
+                                                # OR search
+                                                should_list = []
+                                                for split_text in split_text_list:
+                                                    name = alst[0] + ".value"
+                                                    name_dict = dict(operator="and")
+                                                    name_dict.update(dict(query=split_text))
+                                                    should_list.append(Q("match", **{name: name_dict}))
+                                                mut = []
+                                                mut.extend(qt or [])
+                                                qry = Q("bool", must=mut, should=should_list, minimum_should_match=1)
                                             shuld.append(
                                                 Q("nested", path=alst[0], query=qry)
                                             )
@@ -449,10 +518,20 @@ def default_search_factory(self, search, query_parser=None, search_type=None, ad
                 return
 
             if isinstance(v, str):
-                name_dict = dict(operator="and")
-                name_dict.update(dict(query=kv))
-                qry = Q("match", **{v: name_dict})
+                split_text_list = _split_text_by_or(kv)
+                if len(split_text_list) == 1:
+                    name_dict = dict(operator="and")
+                    name_dict.update(dict(query=kv))
+                    qry = Q("match", **{v: name_dict})
 
+                else:
+                    # OR search
+                    should_list = []
+                    for split_text in split_text_list:
+                        name_dict = dict(operator="and")
+                        name_dict.update(dict(query=split_text))
+                        should_list.append(Q("match", **{v: name_dict}))
+                    qry = Q("bool", should=should_list, minimum_should_match=1)
             return qry
 
         def _get_range_query(k, v):
@@ -622,7 +701,7 @@ def default_search_factory(self, search, query_parser=None, search_type=None, ad
         comm = Community.get(community_id)
         root_node_id = comm.root_node_id
 
-        mst, _ = get_permission_filter(root_node_id)
+        mst, _ = get_permission_filter(root_node_id, is_community=True)
         q = _get_search_qs_query(qs)
 
         if q:
@@ -633,17 +712,31 @@ def default_search_factory(self, search, query_parser=None, search_type=None, ad
 
     def _get_file_content_query(qstr):
         """Query for searching indexed file contents."""
-        multi_cont_q = Q(
-            "multi_match",
-            query=qstr,
-            operator="and",
-            fields=["content.attachment.content"],
-        )
+        split_text_list = _split_text_by_or(qstr)
+        if len(split_text_list) == 1:
+            multi_cont_q = Q(
+                "multi_match",
+                query=qstr,
+                operator="and",
+                fields=["content.attachment.content"],
+            )
+        else:
+            # OR search
+            should_list = []
+            for split_text in split_text_list:
+                should_list.append(Q(
+                    "multi_match",
+                    query=split_text,
+                    operator="and",
+                    fields=["content.attachment.content"],
+                ))
+            multi_cont_q = Q("bool", should=should_list, minimum_should_match=1)
 
         # Search fields may increase so leaving as multi
+        qstr = qstr.replace("　", " ").replace(" | ", " OR ")
         multi_q = Q(
             "query_string",
-            query=qs,
+            query=qstr,
             default_operator="and",
             fields=["search_*", "search_*.ja"],
         )
@@ -688,7 +781,7 @@ def default_search_factory(self, search, query_parser=None, search_type=None, ad
         # add  Permission filter by publish date and status
         comm = Community.get(community_id)
         root_node_id = comm.root_node_id
-        mst, _ = get_permission_filter(root_node_id)
+        mst, _ = get_permission_filter(root_node_id, is_community=True)
 
         # multi keywords search filter
         mkq = _get_detail_keywords_query()
@@ -1194,8 +1287,11 @@ def opensearch_factory(self, search, query_parser=None):
         index_id = str(index_id)
         return item_path_search_factory(self, search, index_id=index_id)
     else:
+        additional_params = {
+            "exact_title_match": request.args.get("exact_title_match") == "true"
+        }
         return default_search_factory(
-            self, search, query_parser, search_type=search_type
+            self, search, query_parser, search_type=search_type, additional_params=additional_params
         )
 
 
@@ -1271,71 +1367,18 @@ def item_search_factory(
     current_app.logger.debug(json.dumps((search.query()).to_dict()))
     return search, urlkwargs
 
+def _split_text_by_or(text):
+    """split text by " OR " or " | "
 
-def feedback_email_search_factory(self, search):
-    """Factory for search feedback email list.
-
-    :param self:
-    :param search:
-    :return:
+    Args:
+        text(str): input text
+    Returns:
+        list: list of split text
     """
-
-    def _get_query():
-        query_string = "_type:{} AND " "relation_version_is_last:true ".format(
-            current_app.config["INDEXER_DEFAULT_DOC_TYPE"]
-        )
-        query_q = {
-            "query": {
-                "bool": {
-                    "must": [
-                        {
-                            "nested": {
-                                "path": "feedback_mail_list",
-                                "query": {
-                                    "bool": {
-                                        "must": [
-                                            {
-                                                "exists": {
-                                                    "field": "feedback_mail_list.email"
-                                                }
-                                            }
-                                        ]
-                                    }
-                                },
-                            }
-                        },
-                        {"query_string": {"query": query_string}},
-                    ]
-                }
-            },
-            "aggs": {
-                "feedback_mail_list": {
-                    "nested": {"path": "feedback_mail_list"},
-                    "aggs": {
-                        "email_list": {
-                            "terms": {
-                                "field": "feedback_mail_list.email",
-                                "size": config.WEKO_SEARCH_MAX_FEEDBACK_MAIL,
-                            }
-                        }
-                    },
-                }
-            },
-        }
-        return query_q
-
-    query_q = _get_query()
-
-    try:
-        # Aggregations.
-        extr = search._extra.copy()
-        search.update_from_dict(query_q)
-        search._extra.update(extr)
-    except SyntaxError:
-        current_app.logger.debug(
-            "Failed parsing query: {0}".format(query_q), exc_info=True
-        )
-        raise InvalidQueryRESTError()
-    # debug elastic search query
-    current_app.logger.debug(json.dumps((search.query()).to_dict()))
-    return search
+    if not isinstance(text, str):
+        return []
+    text = text.replace("　", " ")
+    pattern = r'(?<= )(?:OR|\|)(?= )'
+    split_text_list = re.split(pattern, text)
+    split_text_list = [item.strip() for item in split_text_list]
+    return split_text_list

@@ -1,19 +1,9 @@
 <template>
   <div>
-    <div class="w-full bg-miby-searchtags-blue p-5">
-      <div class="mb-2.5 flex flex-wrap">
-        <!-- 検索条件 -->
-        <div v-for="column in DetailColumn" :key="column.id">
-          <p class="text-sm text-miby-dark-gray">
-            {{ '[' + $t(column.i18n) + ']' }}
-            <span class="ml-px mr-2 text-miby-black">
-              {{ formatConditionsValue(column) ?? $t('unspecified') }}
-            </span>
-          </p>
-        </div>
-      </div>
+    <div class="w-full bg-miby-searchtags-blue p-2">
+      <div class="flex flex-wrap" />
       <div class="flex flex-wrap justify-between items-center">
-        <div class="flex flex-wrap gap-5 items-center">
+        <div class="flex flex-wrap gap-5 items-center mr-auto">
           <!-- 表示件数（選択） -->
           <div class="text-miby-black text-sm font-medium flex items-center">
             <span>
@@ -55,7 +45,7 @@
           <!-- 並び順 -->
           <div
             v-if="displayType != 'table'"
-            class="text-miby-black text-sm font-medium flex justify-center items-center mr-10">
+            class="text-miby-black text-sm font-medium flex justify-center items-center">
             <span>
               {{ $t('displaySort') + '：' }}
             </span>
@@ -65,19 +55,16 @@
               class="cursor-pointer border text-sm border-gray-300 rounded"
               @change="emits('clickSort', sort)">
               <option value="wtl" selected>
-                {{ $t('title') }}
-              </option>
-              <option value="creator">
-                {{ $t('creater') }}
-              </option>
-              <option value="publish_date">
-                {{ $t('publishDate') }}
+                {{ $t('titleOfDataset') }}
               </option>
               <option value="createdate">
                 {{ $t('createdDate') }}
               </option>
               <option value="upd">
                 {{ $t('updatedDate') }}
+              </option>
+              <option value="creator">
+                {{ $t('nameOfDataCreator') }}
               </option>
             </select>
             <!-- 昇順/降順 -->
@@ -115,18 +102,16 @@
             </div>
           </div>
         </div>
-        <div class="flex gap-2.5 py-5 md:py-0">
-          <!-- フィルター -->
-          <!-- <button class="btn-modal block cursor-pointer" data-target="Filter" @click="emits('clickFilter')">
-            <img src="/img/btn/btn-filter.svg" alt="Filter" />
-          </button> -->
-          <!-- 項目表示 -->
+        <div class="flex ml-auto">
           <button
-            v-if="displayType == 'table'"
-            class="btn-modal block cursor-pointer"
-            data-target="DisplayItem"
-            @click="emits('displayItem')">
-            <img src="/img/btn/btn-display-item.svg" alt="Item" />
+            class="min-[1022px]:block h-5 min-[1022px]:h-auto min-[1022px]:border min-[1022px]:py-1 pl-2 pr-2.5 rounded text-xs text-white bg-link-color whitespace-normal"
+            style="max-width: 100%"
+            @click="copySearchCondition">
+            <p class="text-14px">
+              {{ $t('search/Filter') }}
+              <br />
+              {{ $t('conditionCopy') }}
+            </p>
           </button>
         </div>
       </div>
@@ -135,10 +120,6 @@
 </template>
 
 <script lang="ts" setup>
-import { useI18n } from 'vue-i18n';
-
-import DetailColumn from '~/assets/data/detailSearch.json';
-
 /* ///////////////////////////////////
 // props
 /////////////////////////////////// */
@@ -173,83 +154,46 @@ const emits = defineEmits([
 // const and let
 /////////////////////////////////// */
 
-const { t, locale } = useI18n();
 const perPage = ref(props.conditions.perPage ?? '20');
 const sort = ref(props.conditions.sort ?? 'wtl');
 const order = ref(props.conditions.order ?? 'asc');
+let copyURL = '';
 
 /* ///////////////////////////////////
 // function
 /////////////////////////////////// */
 
-/**
- * 検索条件に表示する値を整形
- * @param column 検索条件オブジェクト
- */
-function formatConditionsValue(column: any) {
-  if (column.type === 'text') {
-    return props.conditions.detail[column.query] === '' ? null : props.conditions.detail[column.query];
-  } else if (column.type === 'checkbox') {
-    const valueList: Array<string> = [];
-    // 設定された検索条件値があるか判定
-    if (props.conditions.detail[column.query]) {
-      // カンマ区切りの文字列を配列にする
-      for (const val of String(props.conditions.detail[column.query]).split(',')) {
-        // クエリ用値から表示用値に読み替え
-        for (const data of Array.from(column.data ?? [])) {
-          // @ts-ignore
-          if (data.query === val) {
-            // @ts-ignore
-            valueList.push(data.comment);
-          }
-        }
-      }
-      return valueList.join(', ');
-    } else {
-      return null;
-    }
-  } else if (column.type === 'date') {
-    locale.value = String(localStorage.getItem('locale'));
-    const valueList: Array<string> = [];
-    const from = props.conditions.detail[column.queryFrom];
-    const to = props.conditions.detail[column.queryTo];
-    let result = null;
-    if (column.checkbox) {
-      for (const val of String(props.conditions.detail[column.query]).split(',')) {
-        for (const data of Array.from(column.checkbox ?? [])) {
-          // @ts-ignore
-          if (data.query === val) {
-            // @ts-ignore
-            valueList.push(t(data.i18n));
-          }
-        }
-      }
-      if (valueList.length) {
-        result = valueList.join(', ') + ': ';
-      }
-    }
-    if (from) {
-      result = (result ?? '') + formatDate(from) + ' - ' + formatDate(to);
-      return result;
-    } else {
-      return result;
-    }
+/** 検索条件コピー機能 */
+function copySearchCondition() {
+  copyURL = '';
+  const params = {
+    q: props.conditions.keyword,
+    search_type: props.conditions.type,
+    page: props.conditions.currentPage,
+    size: props.conditions.perPage,
+    sort: props.conditions.order === 'asc' ? props.conditions.sort : '-' + props.conditions.sort
+  };
+  if (props.conditions.detail) {
+    Object.assign(params, props.conditions.detail);
   }
-  return null;
-}
+  if (props.conditions.filter) {
+    Object.assign(params, props.conditions.filter);
+  }
 
-/**
- * 8桁文字列を日付に変換
- * @param date 日付
- */
-function formatDate(date: string) {
-  if (!date) {
-    return '';
-  }
-  const year = date.slice(0, 4);
-  const month = date.slice(4, 6);
-  const day = date.slice(6, 8);
-  return `${year}/${month}/${day}`;
+  // paramsをクエリ文字列に変換
+  const urlSearchParam = new URLSearchParams(params).toString();
+  const hereURL = window.location.href.split('?')[0];
+  copyURL = hereURL + '?' + urlSearchParam;
+
+  // クリップボードに貼り付け
+  navigator.clipboard.writeText(copyURL).then(
+    () => {
+      alert('Copy successful');
+    },
+    () => {
+      alert('Copy failed');
+    }
+  );
 }
 </script>
 
@@ -257,6 +201,6 @@ function formatDate(date: string) {
 #sort-dropdown {
   appearance: none;
   background-image: url('/img/icon/icon_sort01.svg');
-  background-size: 20%;
+  background-size: 25px;
 }
 </style>

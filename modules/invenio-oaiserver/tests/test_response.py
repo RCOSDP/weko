@@ -32,6 +32,10 @@ from weko_records.models import ItemMetadata, ItemTypeMapping
 from invenio_oaiserver.models import Identify, OAISet
 from invenio_oaiserver.utils import HARVEST_PRIVATE, OUTPUT_HARVEST, PRIVATE_INDEX, datetime_to_datestamp
 
+from invenio_pidstore import current_pidstore
+from invenio_records import Record
+from invenio_oaiserver.provider import OAIIDProvider
+
 from invenio_oaiserver.response import (
     NS_DC, NS_OAIDC, NS_OAIPMH,NS_JPCOAR,
     is_private_index,
@@ -52,7 +56,8 @@ from invenio_oaiserver.response import (
     create_files_url,
     get_identifier,
     header,
-    identify
+    identify,
+    is_draft_workflow
 )
 
 
@@ -65,84 +70,143 @@ NAMESPACES = {'x': NS_OAIPMH, 'y': NS_OAIDC, 'z': NS_DC}
 #    record = {"path": "example_path"}
 #    res = is_private_index(record)
 
+# .tox/c1/bin/pytest --cov=invenio_oaiserver tests/test_response.py::test_is_draft_workflow -vv -s -v --cov-branch --cov-report=term --basetemp=/code/modules/invenio-oaiserver/.tox/c1/tmp
+def test_is_draft_workflow():
+    not_draft = {
+        "_oai": {"id": "oai:weko3.example.org:000000001","sets": ["1706242675706"]},
+        "path": ["1706242675706"],
+        "owner": "1",
+        "recid": "1",
+        "title": ["not_draft"],
+        "pubdate": {"attribute_name": "PubDate","attribute_value": "2024-01-17"},
+        "_buckets": {"deposit": "8b98e578-9cdc-47a8-bfdb-60ab6a25ccf9"},
+        "_deposit": {
+            "id": "1",
+            "pid": {
+                "type": "depid",
+                "value": "1",
+                "revision_id": 0
+            },
+            "owner": "1",
+            "owners": [
+                1
+            ],
+            "status": "published",
+            "created_by": 1,
+            "owners_ext": {
+                "email": "wekosoftware@nii.ac.jp",
+                "username": "",
+                "displayname": ""
+            }
+        },
+        "item_title": "not_draft",
+        "author_link": [],
+        "item_type_id": "15",
+        "publish_date": "2024-01-17",
+        "control_number": "139",
+        "publish_status": "0",
+        "weko_shared_id": -1,
+        "item_1617186331708": {"attribute_name": "Title","attribute_value_mlt": [{"subitem_1551255647225": "not_draft","subitem_1551255648112": "ja"}]},
+        "item_1617258105262": {"attribute_name": "Resource Type","attribute_value_mlt": [{"resourceuri": "http://purl.org/coar/resource_type/c_5794","resourcetype": "conference paper"}]},
+        "relation_version_is_last": True
+    }
+    
+    result = is_draft_workflow(not_draft)
+    assert result == False
+    
+    draft = {
+        "_oai": {"id": "oai:weko3.example.org:000000001","sets": ["1706242675706"]},
+        "path": ["1706242675706"],
+        "owner": "1",
+        "recid": "1",
+        "title": ["not_draft"],
+        "pubdate": {"attribute_name": "PubDate","attribute_value": "2024-01-17"},
+        "_buckets": {"deposit": "8b98e578-9cdc-47a8-bfdb-60ab6a25ccf9"},
+        "_deposit": {
+            "id": "1",
+            "pid": {
+                "type": "depid",
+                "value": "1",
+                "revision_id": 0
+            },
+            "owner": "1",
+            "owners": [
+                1
+            ],
+            "status": "draft",
+            "created_by": 1
+        },
+        "item_title": "not_draft",
+        "author_link": [],
+        "item_type_id": "15",
+        "publish_date": "2024-01-17",
+        "control_number": "139",
+        "publish_status": "0",
+        "weko_shared_id": -1,
+        "item_1617186331708": {"attribute_name": "Title","attribute_value_mlt": [{"subitem_1551255647225": "not_draft","subitem_1551255648112": "ja"}]},
+        "item_1617258105262": {"attribute_name": "Resource Type","attribute_value_mlt": [{"resourceuri": "http://purl.org/coar/resource_type/c_5794","resourcetype": "conference paper"}]},
+        "relation_version_is_last": True
+    }
+    
+    result = is_draft_workflow(draft)
+    assert result == True
+    
 # def getrecord
-# .tox/c1/bin/pytest --cov=invenio_oaiserver tests/test_response.py::test_getrecord -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-oaiserver/.tox/c1/tmp
-def test_getrecord(app, records, item_type, mock_execute, db, mocker):
-    """Test of method which creates OAI-PMH response for verb GetRecord."""
+# .tox/c1/bin/pytest --cov=invenio_oaiserver tests/test_response.py::test_getrecord -vv -s -v --cov-branch --cov-report=term --basetemp=/code/modules/invenio-oaiserver/.tox/c1/tmp
+def test_getrecord(app, db, item_type, mocker):
     with app.app_context():
         identify = Identify(
-            outPutSetting=True
-        )
-        index_metadata = {
-            "id": 1557819692844,
-            "parent": 0,
-            "position": 0,
-            "index_name": "コンテンツタイプ (Contents Type)",
-            "index_name_english": "Contents Type",
-            "index_link_name": "",
-            "index_link_name_english": "New Index",
-            "index_link_enabled": False,
-            "more_check": False,
-            "display_no": 5,
-            "harvest_public_state": True,
-            "display_format": 1,
-            "image_name": "",
-            "public_state": True,
-            "recursive_public_state": True,
-            "rss_status": False,
-            "coverpage_state": False,
-            "recursive_coverpage_check": False,
-            "browsing_role": "3,-98,-99",
-            "recursive_browsing_role": False,
-            "contribute_role": "1,2,3,4,-98,-99",
-            "recursive_contribute_role": False,
-            "browsing_group": "",
-            "recursive_browsing_group": False,
-            "recursive_contribute_group": False,
-            "owner_user_id": 1,
-            "item_custom_sort": {"2": 1}
-        }
-        index = Index(**index_metadata)
+                outPutSetting=True
+            )
+        public_index_metadata = {
+                "id": "1",
+                "parent": 0,
+                "position": 0,
+                "index_name": "public_index",
+                "index_name_english": "public_index",
+                "display_no": 0,
+                "harvest_public_state": True,
+                "public_state": True,
+                "browsing_role": "3,-98,-99",
+                "recursive_browsing_role": False,
+                "contribute_role": "1,2,3,4,-98,-99",
+                "recursive_contribute_role": False,
+                "browsing_group": "",
+                "recursive_browsing_group": False,
+                "recursive_contribute_group": False,
+                "owner_user_id": 1,
+                "item_custom_sort": {"2": 1}
+            }
+        public_index = Index(**public_index_metadata)
+        private_index_metadata = {
+                "id": "2",
+                "parent": 0,
+                "position": 1,
+                "index_name": "private_index",
+                "index_name_english": "private_index",
+                "display_no": 0,
+                "harvest_public_state": True,
+                "public_state": False,
+                "browsing_role": "3,-98,-99",
+                "recursive_browsing_role": False,
+                "contribute_role": "1,2,3,4,-98,-99",
+                "recursive_contribute_role": False,
+                "browsing_group": "",
+                "recursive_browsing_group": False,
+                "recursive_contribute_group": False,
+                "owner_user_id": 1,
+                "item_custom_sort": {"2": 1}
+            }
+        private_index = Index(**private_index_metadata)
         mapping = Mapping.create(
             item_type_id=item_type.id,
             mapping={}
         )
         with db.session.begin_nested():
             db.session.add(identify)
-            db.session.add(index)
-        dummy_data = {
-            "hits": {
-                "total": 3,
-                "hits": [
-                    {
-                        "_source": {
-                            "_oai": {"id": str(records[0][0])},
-                            "_updated": "2022-01-01T10:10:10"
-                        },
-                        "_id": records[0][2].id,
-                    },
-                    {
-                        "_source": {
-                            "_oai": {"id": str(records[1][0])},
-                            "_updated": "2022-01-01T10:10:10"
-                        },
-                        "_id": records[1][2].id,
-                    },
-                    {
-                        "_source": {
-                            "_oai": {"id": str(records[2][0])},
-                            "_updated": "2022-01-01T10:10:10"
-                        },
-                        "_id": records[2][2].id,
-                    },
-                ]
-            }
-        }
-        kwargs = dict(
-            metadataPrefix="jpcoar_1.0",
-            verb="GetRecord",
-            identifier=str(records[0][0])
-        )
+            db.session.add(public_index)
+            db.session.add(private_index)
+        db.session.commit()
         ns = {"root_name": "jpcoar", "namespaces":{'': 'https://github.com/JPCOAR/schema/blob/master/1.0/',
               'dc': 'http://purl.org/dc/elements/1.1/', 'xs': 'http://www.w3.org/2001/XMLSchema',
               'rdf': 'http://www.w3.org/1999/02/22-rdf-syntax-ns#', 'xml': 'http://www.w3.org/XML/1998/namespace',
@@ -150,227 +214,201 @@ def test_getrecord(app, records, item_type, mock_execute, db, mocker):
               'jpcoar': 'https://github.com/JPCOAR/schema/blob/master/1.0/',
               'dcterms': 'http://purl.org/dc/terms/', 'datacite': 'https://schema.datacite.org/meta/kernel-4/',
               'rioxxterms': 'http://www.rioxx.net/schema/v2.0/rioxxterms/'}}
-        mocker.patch("invenio_oaiserver.response.to_utc",side_effect=lambda x:x)
+        mocker.patch("weko_records_ui.utils.to_utc",side_effect=lambda x:x)
         mocker.patch("weko_index_tree.utils.get_user_groups",return_value=[])
         mocker.patch("weko_index_tree.utils.check_roles",return_value=True)
-        mocker.patch("invenio_oaiserver.response.get_identifier",return_value=None)
         mocker.patch("weko_schema_ui.schema.cache_schema",return_value=ns)
-        with patch("invenio_oaiserver.query.OAIServerSearch.execute",return_value=mock_execute(dummy_data)):
-            # not identify
-            with patch("invenio_oaiserver.response.OaiIdentify.get_all",return_value=None):
-                res = getrecord(**kwargs)
-                assert res.xpath("/x:OAI-PMH/x:error",namespaces=NAMESPACES)[0].attrib["code"] == "idDoesNotExist"
-
-            # output setting of identity = false 
-            identify = Identify(
-                outPutSetting=False
-            )
-            with patch("invenio_oaiserver.response.OaiIdentify.get_all",return_value=identify):
-                res = getrecord(**kwargs)
-                assert res.xpath("/x:OAI-PMH/x:error",namespaces=NAMESPACES)[0].attrib["code"] == "idDoesNotExist"
-
-            # harvest setting of index = private
-            with patch("invenio_oaiserver.response.is_output_harvest",return_value=HARVEST_PRIVATE):
-                res = getrecord(**kwargs)
-                assert res.xpath("/x:OAI-PMH/x:error",namespaces=NAMESPACES)[0].attrib["code"] == "idDoesNotExist"
-
-        # path is none
-        dummy_data = {
-            "hits": {
-                "total": 1,
-                "hits": [
-                    {
-                        "_source": {
-                            "_oai": {"id": str(records[2][0])},
-                            "_updated": "2022-01-01T10:10:10"
-                        },
-                        "_id": records[1][2].id,
-                    }
-                ]
-            }
-        }
-        kwargs = dict(
-            metadataPrefix='jpcoar_1.0',
-            verb="GetRecord",
-            identifier=str(records[1][0])
-        )
-        with patch("invenio_oaiserver.query.OAIServerSearch.execute",return_value=mock_execute(dummy_data)):
-            res = getrecord(**kwargs)
-            identifier = res.xpath(
-                '/x:OAI-PMH/x:GetRecord/x:record/x:header/x:identifier/text()',
-                namespaces=NAMESPACES)
-            assert identifier == [str(records[1][0])]
-            header = res.xpath(
-                '/x:OAI-PMH/x:GetRecord/x:record/x:header[@status="deleted"]',
-                namespaces=NAMESPACES)
-            assert len(header) == 1
-
-        # publish_status = 0 (public item)
-        dummy_data = {
-            "hits": {
-                "total": 1,
-                "hits": [
-                    {
-                        "_source": {
-                            "_oai": {"id": str(records[2][0])},
-                            "_updated": "2022-01-01T10:10:10"
-                        },
-                        "_id": records[2][2].id,
-                    }
-                ]
-            }
-        }
-        kwargs = dict(
-            metadataPrefix='jpcoar_1.0',
-            verb="GetRecord",
-            identifier=str(records[2][0])
-        )
-        with patch("invenio_oaiserver.query.OAIServerSearch.execute",return_value=mock_execute(dummy_data)):
-            # not etree_record.get("system_identifier_doi")
-            with patch("invenio_oaiserver.response.is_exists_doi",return_value=False):
-                res = getrecord(**kwargs)
-                identifier = res.xpath(
-                    '/x:OAI-PMH/x:GetRecord/x:record/x:header/x:identifier/text()',
-                    namespaces=NAMESPACES)
-                assert identifier == [str(records[2][0])]
-                datestamp = res.xpath(
-                    '/x:OAI-PMH/x:GetRecord/x:record/x:header/x:datestamp/text()',
-                    namespaces=NAMESPACES)
-                assert datestamp == [datetime_to_datestamp(records[2][0].updated)]
-
-                # private index
-                with patch("invenio_oaiserver.response.is_output_harvest",return_value=PRIVATE_INDEX):
-                    res = getrecord(**kwargs)
-                    identifier = res.xpath(
-                        '/x:OAI-PMH/x:GetRecord/x:record/x:header/x:identifier/text()',
-                        namespaces=NAMESPACES)
-                    assert identifier == [str(records[2][0])]
-                    header = res.xpath(
-                        '/x:OAI-PMH/x:GetRecord/x:record/x:header[@status="deleted"]',
-                        namespaces=NAMESPACES)
-                    assert len(header) == 1
-
-            kwargs = dict(
-                metadataPrefix='jpcoar_1.0',
-                verb="GetRecord",
-                identifier=str(records[3][0])
-            )
-            # etree_record.get("system_identifier_doi")
-            with patch("invenio_oaiserver.response.is_exists_doi",return_value=True):
-                res = getrecord(**kwargs)
-                identifier = res.xpath(
-                    '/x:OAI-PMH/x:GetRecord/x:record/x:header/x:identifier/text()',
-                    namespaces=NAMESPACES)
-                assert identifier == []
-                assert len(res.xpath('/x:OAI-PMH/x:GetRecord/x:record/x:metadata',
-                                        namespaces=NAMESPACES)) == 0
-                
-                # private index
-                with patch("invenio_oaiserver.response.is_output_harvest",return_value=PRIVATE_INDEX):
-                    res = getrecord(**kwargs)
-                    assert res.xpath("/x:OAI-PMH/x:error",namespaces=NAMESPACES)[0].attrib["code"] == "idDoesNotExist"
+        mocker.patch("weko_deposit.api.get_record_without_version",side_effect=lambda x:x)
         
-        # publish_status = 2 (new item)
-        dummy_data = {
-            "hits": {
-                "total": 1,
-                "hits": [
-                    {
-                        "_source": {
-                            "_oai": {"id": str(records[4][0])},
-                            "_updated": "2022-01-01T10:10:10"
-                        },
-                        "_id": records[4][2].id,
-                    }
-                ]
+        def create_record(recid, title, path, pub_date, pub_status, is_draft, is_doi,is_exist_sysidt=False):
+            record_data = {
+                "_oai":{
+                    "id":"",
+                    "sets":path
+                },
+                "item_type_id":item_type.id,
+                "path":path,
+                "publish_date":pub_date,
+                "publish_status":pub_status,
+                "_deposit": {
+                    "id": recid,
+                    "pid": {
+                        "type": "depid",
+                        "value": "",
+                        "revision_id": 0
+                    },
+                    "status": "published" if not is_draft else "draft",
+                    "created_by": 1
+                },
+                "item_title": title,
+                "recid":recid
             }
-        }
-        kwargs = dict(
-            metadataPrefix='jpcoar_1.0',
-            verb="GetRecord",
-            identifier=str(records[4][0])
+            if is_exist_sysidt:
+                record_data["system_identifier_doi"] = {
+                    "attribute_name":"Identifier",
+                    "attribute_value_mlt":[
+                        {
+                            "subitem_systemidt_identifer":"https://test.org/records:{}".format(recid),
+                            "subitem_systemidt_identifier_type":"URI"
+                        }
+                    ]
+                }
+            rec_uuid = uuid.uuid4()
+            pid = current_pidstore.minters['recid'](rec_uuid, record_data)
+            oai_val = "oai:weko3.example.org:{:08}".format(int(pid.pid_value))
+            record_data["_oai"]["id"] = oai_val
+            record_metadata = RecordMetadata(id=rec_uuid,json=record_data)
+            db.session.add(record_metadata)
+            oai = OAIIDProvider.create(
+                object_type='oai',
+                object_uuid=rec_uuid,
+                pid_value=oai_val
+            ).pid
+            if is_doi:
+                doi = PersistentIdentifier(
+                    pid_type="doi",
+                    pid_value="https://doi.org/2500/{:010}".format(int(pid.pid_value)),
+                    status=PIDStatus.REGISTERED,
+                    object_type="rec",
+                    object_uuid=rec_uuid
+                )
+                db.session.add(doi)
+            else:
+                doi = None
+            db.session.commit()
+            return record_metadata, pid, oai, doi
+            
+        # identify.outPutSetting is false
+        identify = Identify(
+            outPutSetting=False
         )
-        with patch("invenio_oaiserver.query.OAIServerSearch.execute",return_value=mock_execute(dummy_data)):
-            # not etree_record.get("system_identifier_doi")
-            with patch("invenio_oaiserver.response.is_exists_doi",return_value=False):
-                res = getrecord(**kwargs)
-                assert res.xpath("/x:OAI-PMH/x:error",namespaces=NAMESPACES)[0].attrib["code"] == "idDoesNotExist"
-
+        with patch("invenio_oaiserver.response.OaiIdentify.get_all",return_value=identify):
             kwargs = dict(
-                metadataPrefix='jpcoar_1.0',
+                metadataPrefix="jpcoar_1.0",
                 verb="GetRecord",
-                identifier=str(records[4][0])
+                identifier="oai:test.org:000001"
             )
-            # etree_record.get("system_identifier_doi")
-            with patch("invenio_oaiserver.response.is_exists_doi",return_value=True):
-                res = getrecord(**kwargs)
-                assert res.xpath("/x:OAI-PMH/x:error",namespaces=NAMESPACES)[0].attrib["code"] == "idDoesNotExist"
-
-        # publish_status = -1 (deleted item)
-        dummy_data = {
-            "hits": {
-                "total": 1,
-                "hits": [
-                    {
-                        "_source": {
-                            "_oai": {"id": str(records[4][0])},
-                            "_updated": "2022-01-01T10:10:10"
-                        },
-                        "_id": records[5][2].id,
-                    }
-                ]
-            }
-        }
+            res = getrecord(**kwargs)
+            assert res.xpath("/x:OAI-PMH/x:error",namespaces=NAMESPACES)[0].attrib["code"] == "idDoesNotExist"
+        
+        # harvest is private(_is_output=2)
+        record = create_record("1","harvest_is_private", ["100"], "2000-11-11", "0",False,False)
         kwargs = dict(
             metadataPrefix='jpcoar_1.0',
             verb="GetRecord",
-            identifier=str(records[5][0])
+            identifier=str(record[2].pid_value)
         )
-        with patch("invenio_oaiserver.query.OAIServerSearch.execute",return_value=mock_execute(dummy_data)):
-            # not etree_record.get("system_identifier_doi")
-            with patch("invenio_oaiserver.response.is_exists_doi",return_value=False):
-                res = getrecord(**kwargs)
-                identifier = res.xpath(
-                    '/x:OAI-PMH/x:GetRecord/x:record/x:header/x:identifier/text()',
-                    namespaces=NAMESPACES)
-                assert identifier == [str(records[5][0])]
-                header = res.xpath(
-                    '/x:OAI-PMH/x:GetRecord/x:record/x:header[@status="deleted"]',
-                    namespaces=NAMESPACES)
-                assert len(header) == 1
-
-        # publish_status = 1 (private item)
-        dummy_data = {
-            "hits": {
-                "total": 1,
-                "hits": [
-                    {
-                        "_source": {
-                            "_oai": {"id": str(records[4][0])},
-                            "_updated": "2022-01-01T10:10:10"
-                        },
-                        "_id": records[6][2].id,
-                    }
-                ]
-            }
-        }
+        res = getrecord(**kwargs)
+        assert res.xpath("/x:OAI-PMH/x:error",namespaces=NAMESPACES)[0].attrib["code"] == "idDoesNotExist"
+        
+        # pubdate is feature(record.json._source._item_metadata.system_identifier_doi.attrivute_value_mlt.subitem_systemidt_identifier_type=doi, record.publish_date is feature,)
+        record = create_record("2","xx", ["1"], "2100-11-11", "0",False,True)
         kwargs = dict(
             metadataPrefix='jpcoar_1.0',
             verb="GetRecord",
-            identifier=str(records[6][0])
+            identifier=str(record[2].pid_value)
         )
-        with patch("invenio_oaiserver.query.OAIServerSearch.execute",return_value=mock_execute(dummy_data)):
-            # not etree_record.get("system_identifier_doi")
-            with patch("invenio_oaiserver.response.is_exists_doi",return_value=False):
-                res = getrecord(**kwargs)
-                identifier = res.xpath(
-                    '/x:OAI-PMH/x:GetRecord/x:record/x:header/x:identifier/text()',
-                    namespaces=NAMESPACES)
-                assert identifier == [str(records[6][0])]
-                header = res.xpath(
-                    '/x:OAI-PMH/x:GetRecord/x:record/x:header[@status="deleted"]',
-                    namespaces=NAMESPACES)
-                assert len(header) == 1
+        res = getrecord(**kwargs)
+        assert res.xpath("/x:OAI-PMH/x:error",namespaces=NAMESPACES)[0].attrib["code"] == "idDoesNotExist"
+        
+        # new activity(record.publish_status=2)
+        record = create_record("3","xx",["1"],"2000-11-11","2",False,False)
+        kwargs = dict(
+            metadataPrefix='jpcoar_1.0',
+            verb="GetRecord",
+            identifier=str(record[2].pid_value)
+        )
+        res = getrecord(**kwargs)
+        assert res.xpath("/x:OAI-PMH/x:error",namespaces=NAMESPACES)[0].attrib["code"] == "idDoesNotExist"
+
+        # draft activity(record._deposit.status=draft)
+        record = create_record("4","xx",["1"],"2000-11-11","2",True,False)
+        kwargs = dict(
+            metadataPrefix='jpcoar_1.0',
+            verb="GetRecord",
+            identifier=str(record[2].pid_value)
+        )
+        res = getrecord(**kwargs)
+        assert res.xpath("/x:OAI-PMH/x:error",namespaces=NAMESPACES)[0].attrib["code"] == "idDoesNotExist"
+
+        ## harvest is public, item is private(record.path not in index_list)
+        record = create_record("5","xx",["2"],"2000-11-11","0",False,False)
+        kwargs = dict(
+            metadataPrefix='jpcoar_1.0',
+            verb="GetRecord",
+            identifier=str(record[2].pid_value)
+        )
+        res = getrecord(**kwargs)
+        assert res.xpath("/x:OAI-PMH/x:GetRecord/x:record/x:header",namespaces=NAMESPACES)[0].attrib["status"] == "deleted"
+        assert res.xpath("/x:OAI-PMH/x:GetRecord/x:record/x:header/x:identifier/text()",namespaces=NAMESPACES) == [record[2].pid_value]
+
+        # harvest is public, workflow is private(record.publish_status=1)
+        record = create_record("6","xx",["1"],"2000-11-11","1",False,False)
+
+        kwargs = dict(
+            metadataPrefix='jpcoar_1.0',
+            verb="GetRecord",
+            identifier=str(record[2].pid_value)
+        )
+        res = getrecord(**kwargs)
+        assert res.xpath("/x:OAI-PMH/x:GetRecord/x:record/x:header",namespaces=NAMESPACES)[0].attrib["status"] == "deleted"
+        assert res.xpath("/x:OAI-PMH/x:GetRecord/x:record/x:header/x:identifier/text()",namespaces=NAMESPACES) == [record[2].pid_value]
+
+        # harvest is public, workflow is deleted(record.publish_status=-1)
+        record = create_record("7","xx",["1"],"2000-11-11","-1",False,False)
+        kwargs = dict(
+            metadataPrefix='jpcoar_1.0',
+            verb="GetRecord",
+            identifier=str(record[2].pid_value)
+        )
+        res = getrecord(**kwargs)
+        assert res.xpath("/x:OAI-PMH/x:GetRecord/x:record/x:header",namespaces=NAMESPACES)[0].attrib["status"] == "deleted"
+        assert res.xpath("/x:OAI-PMH/x:GetRecord/x:record/x:header/x:identifier/text()",namespaces=NAMESPACES) == [record[2].pid_value]
+
+        # harvest is public, publish is feature(record.publish_date is feature)
+        record = create_record("8","xx",["1"],"2100-11-11","0",False,False)
+        kwargs = dict(
+            metadataPrefix='jpcoar_1.0',
+            verb="GetRecord",
+            identifier=str(record[2].pid_value)
+        )
+        res = getrecord(**kwargs)
+        assert res.xpath("/x:OAI-PMH/x:GetRecord/x:record/x:header",namespaces=NAMESPACES)[0].attrib["status"] == "deleted"
+        assert res.xpath("/x:OAI-PMH/x:GetRecord/x:record/x:header/x:identifier/text()",namespaces=NAMESPACES) == [record[2].pid_value]
+
+        # system_identifier_doi is not exists
+        record = create_record("9","xx",["1"],"2000-11-11","0",False,False)
+        kwargs = dict(
+            metadataPrefix='jpcoar_1.0',
+            verb="GetRecord",
+            identifier=str(record[2].pid_value)
+        )
+        res = getrecord(**kwargs)
+        assert res.xpath("/x:OAI-PMH/x:GetRecord/x:record/x:header/x:identifier/text()",namespaces=NAMESPACES) == [record[2].pid_value]
+        assert len(res.xpath("/x:OAI-PMH/x:GetRecord/x:record/x:metadata",namespaces=NAMESPACES)) == 1
+        
+        # system_identifier_doi is exists
+        record = create_record("10","xx",["1"],"2000-11-11","0",False,False,True)
+        kwargs = dict(
+            metadataPrefix='jpcoar_1.0',
+            verb="GetRecord",
+            identifier=str(record[2].pid_value)
+        )
+        res = getrecord(**kwargs)
+        assert res.xpath("/x:OAI-PMH/x:GetRecord/x:record/x:header/x:identifier/text()",namespaces=NAMESPACES) == [record[2].pid_value]
+        assert len(res.xpath("/x:OAI-PMH/x:GetRecord/x:record/x:metadata",namespaces=NAMESPACES)) == 1
+
+        # exception is raised
+        record = create_record("11","xx",["1"],"2000-11-11","0",False,False)
+        kwargs = dict(
+            metadataPrefix='jpcoar_1.0',
+            verb="GetRecord",
+            identifier=str(record[2].pid_value)
+        )
+        with patch("invenio_oaiserver.response.pickle.loads",side_effect=Exception):
+            res = getrecord(**kwargs)
+            assert res.xpath("/x:OAI-PMH/x:error",namespaces=NAMESPACES)[0].attrib["code"] == "idDoesNotExist"
+
 
 
 def test_getrecord_future_item(app,records,item_type,mock_execute,db,mocker):
@@ -674,6 +712,12 @@ def test_listidentifiers(es_app,records,item_type,mock_execute,db,mocker):
                     assert res.xpath('/x:OAI-PMH/x:ListIdentifiers/x:header[6]/x:identifier/text()', namespaces=NAMESPACES) == [str(records[6][0])]
                     assert len(res.xpath('/x:OAI-PMH/x:ListIdentifiers/x:header[6][@status="deleted"]', namespaces=NAMESPACES)) == 1
 
+                    with patch("invenio_oaiserver.response.is_deleted_workflow", return_value=False):
+                        with patch("invenio_oaiserver.response.is_private_workflow", return_value=False):
+                            with patch("invenio_oaiserver.response.is_pubdate_in_future", return_value=False):
+                                res=listidentifiers(**kwargs)
+                                assert len(res.xpath('/x:OAI-PMH/x:ListIdentifiers/x:header', namespaces=NAMESPACES)) == 6
+
                 # etree_reocrd.get("system_identifier_doi")
                 with patch("invenio_oaiserver.response.is_exists_doi",return_value=True):
                     res=listidentifiers(**kwargs)
@@ -697,6 +741,40 @@ def test_listidentifiers(es_app,records,item_type,mock_execute,db,mocker):
                     assert res.xpath('/x:OAI-PMH/x:ListIdentifiers/x:header[5]/x:identifier/text()', namespaces=NAMESPACES) == []
                     assert len(res.xpath('/x:OAI-PMH/x:ListIdentifiers/x:header[5][@status="deleted"]', namespaces=NAMESPACES)) == 0
 
+        # community id in set
+        with patch("invenio_oaiserver.response.get_records",return_value=MockPagenation(dummy_data)),\
+             patch("invenio_oaiserver.response.is_output_harvest",return_value=OUTPUT_HARVEST),\
+             patch("invenio_oaiserver.response.is_exists_doi",return_value=False):
+            # community id with prefix
+            with patch("invenio_oaiserver.response.OAISet.get_set_by_spec",return_value=OAISet(spec="user-test_comm")):
+                with patch("invenio_oaiserver.response.get_community_index_from_set",return_value="1557819692844"):
+                    kwargs_1 = dict(
+                        metadataPrefix='jpcoar_1.0',
+                        verb="ListIdentifiers",
+                        set="user-test_comm",
+                    )
+                    res=listidentifiers(**kwargs_1)
+                    assert len(res.xpath('/x:OAI-PMH/x:ListIdentifiers/x:header', namespaces=NAMESPACES)) == 6
+            # community id without prefix
+            with patch("invenio_oaiserver.response.OAISet.get_set_by_spec",side_effect=[None, OAISet(spec="user-test_comm")]):
+                with patch("invenio_oaiserver.response.get_community_index_from_set",return_value="1557819692844"):
+                    kwargs_1.update(set="test_comm")
+                    res=listidentifiers(**kwargs_1)
+                    assert len(res.xpath('/x:OAI-PMH/x:ListIdentifiers/x:header', namespaces=NAMESPACES)) == 6
+            # community id not found
+            with patch("invenio_oaiserver.response.OAISet.get_set_by_spec",side_effect=[None, None]):
+                res=listidentifiers(**kwargs_1)
+                assert res.xpath("/x:OAI-PMH/x:error",namespaces=NAMESPACES)[0].attrib["code"] == "noRecordsMatch"
+            # index id with ':'
+            with patch("invenio_oaiserver.response.OAISet.get_set_by_spec",return_value=OAISet(spec="123:1557819692844")):
+                kwargs_1.update(set="123:1557819692844")
+                res=listidentifiers(**kwargs_1)
+                assert len(res.xpath('/x:OAI-PMH/x:ListIdentifiers/x:header', namespaces=NAMESPACES)) == 6
+            # index id not found
+            with patch("invenio_oaiserver.response.OAISet.get_set_by_spec",return_value=None):
+                kwargs_1.update(set="123")
+                res=listidentifiers(**kwargs_1)
+                assert res.xpath("/x:OAI-PMH/x:error",namespaces=NAMESPACES)[0].attrib["code"] == "noRecordsMatch"
 
         # not identify
         with patch("invenio_oaiserver.response.OaiIdentify.get_all",return_value=None):
@@ -758,6 +836,10 @@ def test_listidentifiers(es_app,records,item_type,mock_execute,db,mocker):
                 assert res.xpath("/x:OAI-PMH/x:error",namespaces=NAMESPACES)[0].attrib["code"] == "noRecordsMatch"
             # raise NoResultFound
             with patch("invenio_oaiserver.response.WekoRecord.get_record_by_uuid",side_effect=NoResultFound()):
+                res=listidentifiers(**kwargs)
+                assert res.xpath("/x:OAI-PMH/x:error",namespaces=NAMESPACES)[0].attrib["code"] == "noRecordsMatch"
+            # raise Exception
+            with patch("invenio_oaiserver.response.WekoRecord.get_record_by_uuid",side_effect=Exception()):
                 res=listidentifiers(**kwargs)
                 assert res.xpath("/x:OAI-PMH/x:error",namespaces=NAMESPACES)[0].attrib["code"] == "noRecordsMatch"
 
@@ -975,6 +1057,12 @@ def test_listrecords(es_app,records,item_type,mock_execute,db,mocker):
                     assert res.xpath('/x:OAI-PMH/x:ListRecords/x:record[6]/x:header/x:identifier/text()', namespaces=NAMESPACES) == [str(records[6][0])]
                     assert len(res.xpath('/x:OAI-PMH/x:ListRecords/x:record[6]/x:header[@status="deleted"]', namespaces=NAMESPACES)) == 1
 
+                    with patch("invenio_oaiserver.response.is_deleted_workflow", return_value=False):
+                        with patch("invenio_oaiserver.response.is_private_workflow", return_value=False):
+                            with patch("invenio_oaiserver.response.is_pubdate_in_future", return_value=False):
+                                res=listrecords(**kwargs)
+                                assert len(res.xpath('/x:OAI-PMH/x:ListRecords/x:record', namespaces=NAMESPACES)) == 6
+
                 # etree_reocrd.get("system_identifier_doi")
                 with patch("invenio_oaiserver.response.is_exists_doi",return_value=True):
                     res=listrecords(**kwargs)
@@ -998,6 +1086,40 @@ def test_listrecords(es_app,records,item_type,mock_execute,db,mocker):
                     assert res.xpath('/x:OAI-PMH/x:ListRecords/x:record[5]/x:header/x:identifier/text()', namespaces=NAMESPACES) == []
                     assert len(res.xpath('/x:OAI-PMH/x:ListRecords/x:record[5]/x:header[@status="deleted"]', namespaces=NAMESPACES)) == 0
 
+        # community id in set
+        with patch("invenio_oaiserver.response.get_records",return_value=MockPagenation(dummy_data)),\
+             patch("invenio_oaiserver.response.is_output_harvest",return_value=OUTPUT_HARVEST),\
+             patch("invenio_oaiserver.response.is_exists_doi",return_value=False):
+            # community id with prefix
+            with patch("invenio_oaiserver.response.OAISet.get_set_by_spec",return_value=OAISet(spec="user-test_comm")):
+                with patch("invenio_oaiserver.response.get_community_index_from_set",return_value="1557819692844"):
+                    kwargs_1 = dict(
+                        metadataPrefix='jpcoar_1.0',
+                        verb="ListRecords",
+                        set="user-test_comm",
+                    ) 
+                    res=listrecords(**kwargs_1)
+                    assert len(res.xpath('/x:OAI-PMH/x:ListRecords/x:record', namespaces=NAMESPACES)) == 6
+            # community id without prefix
+            with patch("invenio_oaiserver.response.OAISet.get_set_by_spec",side_effect=[None, OAISet(spec="user-test_comm")]):
+                with patch("invenio_oaiserver.response.get_community_index_from_set",return_value="1557819692844"):
+                    kwargs_1.update(set="test_comm")
+                    res=listrecords(**kwargs_1)
+                    assert len(res.xpath('/x:OAI-PMH/x:ListRecords/x:record', namespaces=NAMESPACES)) == 6
+            # community id not found
+            with patch("invenio_oaiserver.response.OAISet.get_set_by_spec",side_effect=[None, None]):
+                res=listrecords(**kwargs_1)
+                assert res.xpath("/x:OAI-PMH/x:error",namespaces=NAMESPACES)[0].attrib["code"] == "noRecordsMatch"
+            # index id with ':'
+            with patch("invenio_oaiserver.response.OAISet.get_set_by_spec",return_value=OAISet(spec="123:1557819692844")):
+                kwargs_1.update(set="123:1557819692844")
+                res=listrecords(**kwargs_1)
+                assert len(res.xpath('/x:OAI-PMH/x:ListRecords/x:record', namespaces=NAMESPACES)) == 6
+            # index id not found
+            with patch("invenio_oaiserver.response.OAISet.get_set_by_spec",return_value=None):
+                kwargs_1.update(set="123")
+                res=listrecords(**kwargs_1)
+                assert res.xpath("/x:OAI-PMH/x:error",namespaces=NAMESPACES)[0].attrib["code"] == "noRecordsMatch"
 
         # not identify
         with patch("invenio_oaiserver.response.OaiIdentify.get_all",return_value=None):

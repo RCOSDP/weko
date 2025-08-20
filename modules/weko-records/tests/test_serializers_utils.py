@@ -24,6 +24,9 @@ def test_get_mapping(app, db, item_type, item_type_mapping):
     result = get_mapping(1, 'jpcoar_mapping')
     assert result == {"item.@value": "item_1.interim"}
 
+    result = get_mapping(1, 'jpcoar_mapping', item_type=item_type)
+    assert result == {"item.@value": "item_1.interim"}
+
 # def get_full_mapping(item_type_mapping, mapping_type):
 # .tox/c1/bin/pytest --cov=weko_records tests/test_serializers_utils.py::test_get_full_mapping -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
 def test_get_full_mapping():
@@ -161,14 +164,51 @@ sample = OpenSearchDetailData(
 # class OpenSearchDetailData:
 #     def output_open_search_detail_data(self): 
 # .tox/c1/bin/pytest --cov=weko_records tests/test_serializers_utils.py::test_output_open_search_detail_data -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
-def test_output_open_search_detail_data(app):
+def test_output_open_search_detail_data(app, db_index, records, item_type, item_type_mapping):
     with app.test_request_context():
-        assert_str = '<title xmlns="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:opensearch="http://a9.com/-/spec/opensearch/1.1/" xmlns:prism="http://prismstandard.org/namespaces/basic/2.0/">WEKO OpenSearch: </title>'
         res = sample.output_open_search_detail_data()
         _tree = etree.fromstring(res)
-        _record = str(etree.tostring(_tree.findall('title', namespaces=_tree.nsmap)[0]),"utf-8").replace('\n  ', '')
-        assert _record == str(etree.tostring(etree.fromstring(assert_str)),"utf-8")
+        assert _tree.find('title', namespaces=_tree.nsmap).text == 'WEKO OpenSearch: '
 
+    with app.test_request_context('/?index_id=1'):
+        res = sample.output_open_search_detail_data()
+        _tree = etree.fromstring(res)
+        assert _tree.find('title', namespaces=_tree.nsmap).text == 'WEKO OpenSearch: IndexA'
+
+    with app.test_request_context('/?index_id=99'):
+        res = sample.output_open_search_detail_data()
+        _tree = etree.fromstring(res)
+        assert _tree.find('title', namespaces=_tree.nsmap).text == 'WEKO OpenSearch: Nonexistent Index'
+
+    _search_result = {
+        '_source': {
+            '_item_metadata': {
+                'item_type_id': '1',
+                'item_title': 'Title',
+                'control_number': '1',
+                'path': ['99'], # deleted index
+                'pubdate': {
+                    'attribute_value': '2024-08-01',
+                },
+            },
+            '_oai': {
+                'id': '1',
+            },
+            'itemtype': 'test_itemtype',
+            '_created': '2024-08-01T00:00:00Z',
+            '_updated': '2024-08-01T00:00:00Z',
+        },
+    }
+
+    sample_copy = copy.deepcopy(sample)
+    sample_copy.search_result = {'hits': {'total': 1, 'hits': [_search_result]}}
+
+    with app.test_request_context('/?q=IndexA'):
+        res = sample_copy.output_open_search_detail_data()
+        _tree = etree.fromstring(res)
+        _entry = _tree.find('entry', namespaces=_tree.nsmap)
+        assert _tree.find('title', namespaces=_tree.nsmap).text == 'WEKO OpenSearch: IndexA'
+        assert _entry.find('dc:subject', namespaces=_entry.nsmap).text == 'Nonexistent Index'
 
 #     def _set_publication_date(self, fe, item_map, item_metadata):
 def test__set_publication_date(app):

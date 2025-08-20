@@ -717,21 +717,21 @@ BEGIN
         RAISE NOTICE 'processing property ID:  1011';
         UPDATE item_type SET render=replace(render::text,'cus_5"','cus_1011"')::jsonb WHERE render::text like '%cus_5"%';
 
-        UPDATE item_type SET schema=replace(schema::text,'subitem_1522300295150','subitem_publisher')::jsonb WHERE schema::text like '%subitem_1522300295150%';
-        UPDATE item_type SET form=replace(form::text,'subitem_1522300295150','subitem_publisher')::jsonb WHERE form::text like '%subitem_1522300295150%';
-        UPDATE item_type SET render=replace(render::text,'subitem_1522300295150','subitem_publisher')::jsonb WHERE render::text like '%subitem_1522300295150%';
-        UPDATE item_type_mapping SET mapping=replace(mapping::text,'subitem_1522300295150','subitem_publisher')::jsonb WHERE mapping::text like '%subitem_1522300295150%';
+        UPDATE item_type SET schema=replace(schema::text,'subitem_1522300316516','subitem_publisher')::jsonb WHERE schema::text like '%subitem_1522300316516%';
+        UPDATE item_type SET form=replace(form::text,'subitem_1522300316516','subitem_publisher')::jsonb WHERE form::text like '%subitem_1522300316516%';
+        UPDATE item_type SET render=replace(render::text,'subitem_1522300316516','subitem_publisher')::jsonb WHERE render::text like '%subitem_1522300316516%';
+        UPDATE item_type_mapping SET mapping=replace(mapping::text,'subitem_1522300316516','subitem_publisher')::jsonb WHERE mapping::text like '%subitem_1522300316516%';
 
-        UPDATE item_type SET schema=replace(schema::text,'subitem_1522300316516','subitem_publisher_languag')::jsonb WHERE schema::text like '%subitem_1522300316516%';
-        UPDATE item_type SET form=replace(form::text,'subitem_1522300316516','subitem_publisher_languag')::jsonb WHERE form::text like '%subitem_1522300316516%';
-        UPDATE item_type SET render=replace(render::text,'subitem_1522300316516','subitem_publisher_languag')::jsonb WHERE render::text like '%subitem_1522300316516%';
-        UPDATE item_type_mapping SET mapping=replace(mapping::text,'subitem_1522300316516','subitem_publisher_languag')::jsonb WHERE mapping::text like '%subitem_1522300316516%';
+        UPDATE item_type SET schema=replace(schema::text,'subitem_1522300295150','subitem_publisher_language')::jsonb WHERE schema::text like '%subitem_1522300295150%';
+        UPDATE item_type SET form=replace(form::text,'subitem_1522300295150','subitem_publisher_language')::jsonb WHERE form::text like '%subitem_1522300295150%';
+        UPDATE item_type SET render=replace(render::text,'subitem_1522300295150','subitem_publisher_language')::jsonb WHERE render::text like '%subitem_1522300295150%';
+        UPDATE item_type_mapping SET mapping=replace(mapping::text,'subitem_1522300295150','subitem_publisher_language')::jsonb WHERE mapping::text like '%subitem_1522300295150%';
 
-        UPDATE records_metadata SET json=replace(json::text,'subitem_1522300295150','subitem_publisher')::jsonb WHERE json::text like '%subitem_1522300295150%';
-        UPDATE records_metadata SET json=replace(json::text,'subitem_1522300316516','subitem_publisher_languag')::jsonb WHERE json::text like '%subitem_1522300316516%';
+        UPDATE records_metadata SET json=replace(json::text,'subitem_1522300316516','subitem_publisher')::jsonb WHERE json::text like '%subitem_1522300316516%';
+        UPDATE records_metadata SET json=replace(json::text,'subitem_1522300295150','subitem_publisher_language')::jsonb WHERE json::text like '%subitem_1522300295150%';
 
-        UPDATE item_metadata SET json=replace(json::text,'subitem_1522300295150','subitem_publisher')::jsonb WHERE json::text like '%subitem_1522300295150%';
-        UPDATE item_metadata SET json=replace(json::text,'subitem_1522300316516','subitem_publisher_languag')::jsonb WHERE json::text like '%subitem_1522300295150%';
+        UPDATE item_metadata SET json=replace(json::text,'subitem_1522300316516','subitem_publisher')::jsonb WHERE json::text like '%subitem_1522300316516%';
+        UPDATE item_metadata SET json=replace(json::text,'subitem_1522300295150','subitem_publisher_language')::jsonb WHERE json::text like '%subitem_1522300295150%';
 
         DELETE FROM item_type_property WHERE id=5;
 
@@ -742,16 +742,16 @@ BEGIN
         UPDATE item_type SET render=replace(render::text,'subitem_1551255702686','subitem_publisher')::jsonb WHERE render::text like '%subitem_1551255702686%';
         UPDATE item_type_mapping SET mapping=replace(mapping::text,'subitem_1551255702686','subitem_publisher')::jsonb WHERE mapping::text like '%subitem_1551255702686%';
 
-        UPDATE item_type SET schema=replace(schema::text,'subitem_1551255710277','subitem_publisher_languag')::jsonb WHERE schema::text like '%subitem_1551255710277%';
-        UPDATE item_type SET form=replace(form::text,'subitem_1551255710277','subitem_publisher_languag')::jsonb WHERE form::text like '%subitem_1551255710277%';
-        UPDATE item_type SET render=replace(render::text,'subitem_1551255710277','subitem_publisher_languag')::jsonb WHERE render::text like '%subitem_1551255710277%';
-        UPDATE item_type_mapping SET mapping=replace(mapping::text,'subitem_1551255710277','subitem_publisher_languag')::jsonb WHERE mapping::text like '%subitem_1551255710277%';
+        UPDATE item_type SET schema=replace(schema::text,'subitem_1551255710277','subitem_publisher_language')::jsonb WHERE schema::text like '%subitem_1551255710277%';
+        UPDATE item_type SET form=replace(form::text,'subitem_1551255710277','subitem_publisher_language')::jsonb WHERE form::text like '%subitem_1551255710277%';
+        UPDATE item_type SET render=replace(render::text,'subitem_1551255710277','subitem_publisher_language')::jsonb WHERE render::text like '%subitem_1551255710277%';
+        UPDATE item_type_mapping SET mapping=replace(mapping::text,'subitem_1551255710277','subitem_publisher_language')::jsonb WHERE mapping::text like '%subitem_1551255710277%';
 
         UPDATE records_metadata SET json=replace(json::text,'subitem_1551255702686','subitem_publisher')::jsonb WHERE json::text like '%subitem_1551255702686%';
-        UPDATE records_metadata SET json=replace(json::text,'subitem_1551255710277','subitem_publisher_languag')::jsonb WHERE json::text like '%subitem_1551255710277%';
+        UPDATE records_metadata SET json=replace(json::text,'subitem_1551255710277','subitem_publisher_language')::jsonb WHERE json::text like '%subitem_1551255710277%';
 
         UPDATE item_metadata SET json=replace(json::text,'subitem_1551255702686','subitem_publisher')::jsonb WHERE json::text like '%subitem_1551255702686%';
-        UPDATE item_metadata SET json=replace(json::text,'subitem_1551255710277','subitem_publisher_languag')::jsonb WHERE json::text like '%subitem_1551255710277%';
+        UPDATE item_metadata SET json=replace(json::text,'subitem_1551255710277','subitem_publisher_language')::jsonb WHERE json::text like '%subitem_1551255710277%';
 
         DELETE FROM item_type_property WHERE id=68;
 
@@ -851,41 +851,41 @@ BEGIN
         RAISE NOTICE 'processing property ID:  1024';
         UPDATE item_type SET render=replace(render::text,'cus_13"','cus_1024"')::jsonb WHERE render::text like '%cus_13"%';
 
-        UPDATE item_type SET schema=replace(schema::text,'subitem_1522650068558','subitem_record_name_languag')::jsonb WHERE schema::text like '%subitem_1522650068558%';
-        UPDATE item_type SET form=replace(form::text,'subitem_1522650068558','subitem_record_name_languag')::jsonb WHERE form::text like '%subitem_1522650068558%';
-        UPDATE item_type SET render=replace(render::text,'subitem_1522650068558','subitem_record_name_languag')::jsonb WHERE render::text like '%subitem_1522650068558%';
-        UPDATE item_type_mapping SET mapping=replace(mapping::text,'subitem_1522650068558','subitem_record_name_languag')::jsonb WHERE mapping::text like '%subitem_1522650068558%';
+        UPDATE item_type SET schema=replace(schema::text,'subitem_1522650068558','subitem_source_title_language')::jsonb WHERE schema::text like '%subitem_1522650068558%';
+        UPDATE item_type SET form=replace(form::text,'subitem_1522650068558','subitem_source_title_language')::jsonb WHERE form::text like '%subitem_1522650068558%';
+        UPDATE item_type SET render=replace(render::text,'subitem_1522650068558','subitem_source_title_language')::jsonb WHERE render::text like '%subitem_1522650068558%';
+        UPDATE item_type_mapping SET mapping=replace(mapping::text,'subitem_1522650068558','subitem_source_title_language')::jsonb WHERE mapping::text like '%subitem_1522650068558%';
 
-        UPDATE item_type SET schema=replace(schema::text,'subitem_1522650091861','subitem_record_name')::jsonb WHERE schema::text like '%subitem_1522650091861%';
-        UPDATE item_type SET form=replace(form::text,'subitem_1522650091861','subitem_record_name')::jsonb WHERE form::text like '%subitem_1522650091861%';
-        UPDATE item_type SET render=replace(render::text,'subitem_1522650091861','subitem_record_name')::jsonb WHERE render::text like '%subitem_1522650091861%';
-        UPDATE item_type_mapping SET mapping=replace(mapping::text,'subitem_1522650091861','subitem_record_name')::jsonb WHERE mapping::text like '%subitem_1522650091861%';
+        UPDATE item_type SET schema=replace(schema::text,'subitem_1522650091861','subitem_source_title')::jsonb WHERE schema::text like '%subitem_1522650091861%';
+        UPDATE item_type SET form=replace(form::text,'subitem_1522650091861','subitem_source_title')::jsonb WHERE form::text like '%subitem_1522650091861%';
+        UPDATE item_type SET render=replace(render::text,'subitem_1522650091861','subitem_source_title')::jsonb WHERE render::text like '%subitem_1522650091861%';
+        UPDATE item_type_mapping SET mapping=replace(mapping::text,'subitem_1522650091861','subitem_source_title')::jsonb WHERE mapping::text like '%subitem_1522650091861%';
 
-        UPDATE records_metadata SET json=replace(json::text,'subitem_1522650068558','subitem_record_name_languag')::jsonb WHERE json::text like '%subitem_1522650068558%';
-        UPDATE records_metadata SET json=replace(json::text,'subitem_1522650091861','subitem_record_name')::jsonb WHERE json::text like '%subitem_1522650091861%';
+        UPDATE records_metadata SET json=replace(json::text,'subitem_1522650068558','subitem_source_title_language')::jsonb WHERE json::text like '%subitem_1522650068558%';
+        UPDATE records_metadata SET json=replace(json::text,'subitem_1522650091861','subitem_source_title')::jsonb WHERE json::text like '%subitem_1522650091861%';
 
-        UPDATE item_metadata SET json=replace(json::text,'subitem_1522650068558','subitem_record_name_languag')::jsonb WHERE json::text like '%subitem_1522650068558%';
-        UPDATE item_metadata SET json=replace(json::text,'subitem_1522650091861','subitem_record_name')::jsonb WHERE json::text like '%subitem_1522650091861%';
+        UPDATE item_metadata SET json=replace(json::text,'subitem_1522650068558','subitem_source_title_language')::jsonb WHERE json::text like '%subitem_1522650068558%';
+        UPDATE item_metadata SET json=replace(json::text,'subitem_1522650091861','subitem_source_title')::jsonb WHERE json::text like '%subitem_1522650091861%';
 
         DELETE FROM item_type_property WHERE id=13;
 
         UPDATE item_type SET render=replace(render::text,'cus_89"','cus_1024"')::jsonb WHERE render::text like '%cus_89"%';
 
-        UPDATE item_type SET schema=replace(schema::text,'subitem_1551256350188','subitem_record_name_languag')::jsonb WHERE schema::text like '%subitem_1551256350188%';
-        UPDATE item_type SET form=replace(form::text,'subitem_1551256350188','subitem_record_name_languag')::jsonb WHERE form::text like '%subitem_1551256350188%';
-        UPDATE item_type SET render=replace(render::text,'subitem_1551256350188','subitem_record_name_languag')::jsonb WHERE render::text like '%subitem_1551256350188%';
-        UPDATE item_type_mapping SET mapping=replace(mapping::text,'subitem_1551256350188','subitem_record_name_languag')::jsonb WHERE mapping::text like '%subitem_1551256350188%';
+        UPDATE item_type SET schema=replace(schema::text,'subitem_1551256350188','subitem_source_title_language')::jsonb WHERE schema::text like '%subitem_1551256350188%';
+        UPDATE item_type SET form=replace(form::text,'subitem_1551256350188','subitem_source_title_language')::jsonb WHERE form::text like '%subitem_1551256350188%';
+        UPDATE item_type SET render=replace(render::text,'subitem_1551256350188','subitem_source_title_language')::jsonb WHERE render::text like '%subitem_1551256350188%';
+        UPDATE item_type_mapping SET mapping=replace(mapping::text,'subitem_1551256350188','subitem_source_title_language')::jsonb WHERE mapping::text like '%subitem_1551256350188%';
 
-        UPDATE item_type SET schema=replace(schema::text,'subitem_1551256349044','subitem_record_name')::jsonb WHERE schema::text like '%subitem_1551256349044%';
-        UPDATE item_type SET form=replace(form::text,'subitem_1551256349044','subitem_record_name')::jsonb WHERE form::text like '%subitem_1551256349044%';
-        UPDATE item_type SET render=replace(render::text,'subitem_1551256349044','subitem_record_name')::jsonb WHERE render::text like '%subitem_1551256349044%';
-        UPDATE item_type_mapping SET mapping=replace(mapping::text,'subitem_1551256349044','subitem_record_name')::jsonb WHERE mapping::text like '%subitem_1551256349044%';
+        UPDATE item_type SET schema=replace(schema::text,'subitem_1551256349044','subitem_source_title')::jsonb WHERE schema::text like '%subitem_1551256349044%';
+        UPDATE item_type SET form=replace(form::text,'subitem_1551256349044','subitem_source_title')::jsonb WHERE form::text like '%subitem_1551256349044%';
+        UPDATE item_type SET render=replace(render::text,'subitem_1551256349044','subitem_source_title')::jsonb WHERE render::text like '%subitem_1551256349044%';
+        UPDATE item_type_mapping SET mapping=replace(mapping::text,'subitem_1551256349044','subitem_source_title')::jsonb WHERE mapping::text like '%subitem_1551256349044%';
 
-        UPDATE records_metadata SET json=replace(json::text,'subitem_1551256350188','subitem_record_name_languag')::jsonb WHERE json::text like '%subitem_1551256350188%';
-        UPDATE records_metadata SET json=replace(json::text,'subitem_1551256349044','subitem_record_name')::jsonb WHERE json::text like '%subitem_1551256349044%';
+        UPDATE records_metadata SET json=replace(json::text,'subitem_1551256350188','subitem_source_title_language')::jsonb WHERE json::text like '%subitem_1551256350188%';
+        UPDATE records_metadata SET json=replace(json::text,'subitem_1551256349044','subitem_source_title')::jsonb WHERE json::text like '%subitem_1551256349044%';
 
-        UPDATE item_metadata SET json=replace(json::text,'subitem_1551256350188','subitem_record_name_languag')::jsonb WHERE json::text like '%subitem_1551256350188%';
-        UPDATE item_metadata SET json=replace(json::text,'subitem_1551256349044','subitem_record_name')::jsonb WHERE json::text like '%subitem_1551256349044%';
+        UPDATE item_metadata SET json=replace(json::text,'subitem_1551256350188','subitem_source_title_language')::jsonb WHERE json::text like '%subitem_1551256350188%';
+        UPDATE item_metadata SET json=replace(json::text,'subitem_1551256349044','subitem_source_title')::jsonb WHERE json::text like '%subitem_1551256349044%';
 
         DELETE FROM item_type_property WHERE id=89;
 
@@ -1054,31 +1054,6 @@ BEGIN
 
         UPDATE item_type SET render=replace(render::text,'cus_98"','cus_1039"')::jsonb WHERE render::text like '%cus_98"%';
         
-        -- UPDATE item_type SET schema=replace(schema::text,'subitem_1551256171004','contributorType')::jsonb WHERE schema::text like '%subitem_1551256171004%';
-        -- UPDATE item_type SET form=replace(form::text,'subitem_1551256171004','contributorType')::jsonb WHERE form::text like '%subitem_1551256171004%';
-        -- UPDATE item_type SET render=replace(render::text,'subitem_1551256171004','contributorType')::jsonb WHERE render::text like '%subitem_1551256171004%';
-        -- UPDATE item_type_mapping SET mapping=replace(mapping::text,'subitem_1551256171004','contributorType')::jsonb WHERE mapping::text like '%subitem_1551256171004%';
-
-        -- UPDATE item_type SET schema=replace(schema::text,'subitem_1551256171004','nameIdentifiers')::jsonb WHERE schema::text like '%subitem_1551256171004%';
-        -- UPDATE item_type SET form=replace(form::text,'subitem_1551256171004','nameIdentifiers')::jsonb WHERE form::text like '%subitem_1551256171004%';
-        -- UPDATE item_type SET render=replace(render::text,'subitem_1551256171004','nameIdentifiers')::jsonb WHERE render::text like '%subitem_1551256171004%';
-        -- UPDATE item_type_mapping SET mapping=replace(mapping::text,'subitem_1551256171004','nameIdentifiers')::jsonb WHERE mapping::text like '%subitem_1551256171004%';
-
-        -- UPDATE item_type SET schema=replace(schema::text,'subitem_1551256171004','nameIdentifierScheme')::jsonb WHERE schema::text like '%subitem_1551256171004%';
-        -- UPDATE item_type SET form=replace(form::text,'subitem_1551256171004','nameIdentifierScheme')::jsonb WHERE form::text like '%subitem_1551256171004%';
-        -- UPDATE item_type SET render=replace(render::text,'subitem_1551256171004','nameIdentifierScheme')::jsonb WHERE render::text like '%subitem_1551256171004%';
-        -- UPDATE item_type_mapping SET mapping=replace(mapping::text,'subitem_1551256171004','nameIdentifierScheme')::jsonb WHERE mapping::text like '%subitem_1551256171004%';
-
-        -- UPDATE item_type SET schema=replace(schema::text,'subitem_1551256171004','nameIdentifierURI')::jsonb WHERE schema::text like '%subitem_1551256171004%';
-        -- UPDATE item_type SET form=replace(form::text,'subitem_1551256171004','nameIdentifierURI')::jsonb WHERE form::text like '%subitem_1551256171004%';
-        -- UPDATE item_type SET render=replace(render::text,'subitem_1551256171004','nameIdentifierURI')::jsonb WHERE render::text like '%subitem_1551256171004%';
-        -- UPDATE item_type_mapping SET mapping=replace(mapping::text,'subitem_1551256171004','nameIdentifierURI')::jsonb WHERE mapping::text like '%subitem_1551256171004%';
-
-        -- UPDATE item_type SET schema=replace(schema::text,'subitem_1551256171004','nameIdentifier')::jsonb WHERE schema::text like '%subitem_1551256171004%';
-        -- UPDATE item_type SET form=replace(form::text,'subitem_1551256171004','nameIdentifier')::jsonb WHERE form::text like '%subitem_1551256171004%';
-        -- UPDATE item_type SET render=replace(render::text,'subitem_1551256171004','nameIdentifier')::jsonb WHERE render::text like '%subitem_1551256171004%';
-        -- UPDATE item_type_mapping SET mapping=replace(mapping::text,'subitem_1551256171004','nameIdentifier')::jsonb WHERE mapping::text like '%subitem_1551256171004%';
-
         UPDATE item_type SET schema=replace(schema::text,'subitem_1551256171004','contributorNames')::jsonb WHERE schema::text like '%subitem_1551256171004%';
         UPDATE item_type SET form=replace(form::text,'subitem_1551256171004','contributorNames')::jsonb WHERE form::text like '%subitem_1551256171004%';
         UPDATE item_type SET render=replace(render::text,'subitem_1551256171004','contributorNames')::jsonb WHERE render::text like '%subitem_1551256171004%';
@@ -1093,11 +1068,6 @@ BEGIN
         UPDATE item_type SET form=replace(form::text,'subitem_1551257279831','lang')::jsonb WHERE form::text like '%subitem_1551257279831%';
         UPDATE item_type SET render=replace(render::text,'subitem_1551257279831','lang')::jsonb WHERE render::text like '%subitem_1551257279831%';
         UPDATE item_type_mapping SET mapping=replace(mapping::text,'subitem_1551257279831','lang')::jsonb WHERE mapping::text like '%subitem_1551257279831%';
-
-        -- UPDATE item_type SET schema=replace(schema::text,'subitem_1551256171004','nameType')::jsonb WHERE schema::text like '%subitem_1551256171004%';
-        -- UPDATE item_type SET form=replace(form::text,'subitem_1551256171004','nameType')::jsonb WHERE form::text like '%subitem_1551256171004%';
-        -- UPDATE item_type SET render=replace(render::text,'subitem_1551256171004','nameType')::jsonb WHERE render::text like '%subitem_1551256171004%';
-        -- UPDATE item_type_mapping SET mapping=replace(mapping::text,'subitem_1551256171004','nameType')::jsonb WHERE mapping::text like '%subitem_1551256171004%';
 
         UPDATE item_type SET schema=replace(schema::text,'subitem_1551257272214','familyNames')::jsonb WHERE schema::text like '%subitem_1551257272214%';
         UPDATE item_type SET form=replace(form::text,'subitem_1551257272214','familyNames')::jsonb WHERE form::text like '%subitem_1551257272214%';
@@ -1184,18 +1154,10 @@ BEGIN
         UPDATE item_type SET render=replace(render::text,'subitem_1551261546333','contributorAffiliationNameLang')::jsonb WHERE render::text like '%subitem_1551261546333%';
         UPDATE item_type_mapping SET mapping=replace(mapping::text,'subitem_1551261546333','contributorAffiliationNameLang')::jsonb WHERE mapping::text like '%subitem_1551261546333%';
 
-
-
-        -- UPDATE records_metadata SET json=replace(json::text,'subitem_1551256171004','contributorType')::jsonb WHERE json::text like '%subitem_1551256171004%';
-        -- UPDATE records_metadata SET json=replace(json::text,'subitem_1551256171004','nameIdentifiers')::jsonb WHERE json::text like '%subitem_1551256171004%';
-        -- UPDATE records_metadata SET json=replace(json::text,'subitem_1551256171004','nameIdentifierScheme')::jsonb WHERE json::text like '%subitem_1551256171004%';
-        -- UPDATE records_metadata SET json=replace(json::text,'subitem_1551256171004','nameIdentifierURI')::jsonb WHERE json::text like '%subitem_1551256171004%';
-        -- UPDATE records_metadata SET json=replace(json::text,'subitem_1551256171004','nameIdentifier')::jsonb WHERE json::text like '%subitem_1551256171004%';
         UPDATE records_metadata SET json=replace(json::text,'subitem_1551257245638','contributorNames')::jsonb WHERE json::text like '%subitem_1551257245638%';
         UPDATE records_metadata SET json=replace(json::text,'subitem_1551257276108','contributorName')::jsonb WHERE json::text like '%subitem_1551257276108%';
         UPDATE records_metadata SET json=replace(json::text,'subitem_1551257279831','lang')::jsonb WHERE json::text like '%subitem_1551257279831%';
         UPDATE records_metadata SET json=replace(json::text,'subitem_1551256171004','nameType')::jsonb WHERE json::text like '%subitem_1551256171004%';
-        -- UPDATE records_metadata SET json=replace(json::text,'subitem_1551256171004','nameType')::jsonb WHERE json::text like '%subitem_1551256171004%';
         UPDATE records_metadata SET json=replace(json::text,'subitem_1551257272214','familyNames')::jsonb WHERE json::text like '%subitem_1551257272214%';
         UPDATE records_metadata SET json=replace(json::text,'subitem_1551257316910','familyNameLang')::jsonb WHERE json::text like '%subitem_1551257316910%';
         UPDATE records_metadata SET json=replace(json::text,'subitem_1551257314588','familyName')::jsonb WHERE json::text like '%subitem_1551257314588%';
@@ -1218,19 +1180,9 @@ BEGIN
         UPDATE records_metadata SET json=replace(json::text,'subitem_1551261542403','contributorAffiliationName')::jsonb WHERE json::text like '%subitem_1551261542403%';
         UPDATE records_metadata SET json=replace(json::text,'subitem_1551261546333','contributorAffiliationNameLang')::jsonb WHERE json::text like '%subitem_1551261546333%';
         
-
-
-
-        
-        -- UPDATE item_metadata SET json=replace(json::text,'subitem_1551256171004','contributorType')::jsonb WHERE json::text like '%subitem_1551256171004%';
-        -- UPDATE item_metadata SET json=replace(json::text,'subitem_1551256171004','nameIdentifiers')::jsonb WHERE json::text like '%subitem_1551256171004%';
-        -- UPDATE item_metadata SET json=replace(json::text,'subitem_1551256171004','nameIdentifierScheme')::jsonb WHERE json::text like '%subitem_1551256171004%';
-        -- UPDATE item_metadata SET json=replace(json::text,'subitem_1551256171004','nameIdentifierURI')::jsonb WHERE json::text like '%subitem_1551256171004%';
-        -- UPDATE item_metadata SET json=replace(json::text,'subitem_1551256171004','nameIdentifier')::jsonb WHERE json::text like '%subitem_1551256171004%';
         UPDATE item_metadata SET json=replace(json::text,'subitem_1551257245638','contributorNames')::jsonb WHERE json::text like '%subitem_1551257245638%';
         UPDATE item_metadata SET json=replace(json::text,'subitem_1551257276108','contributorName')::jsonb WHERE json::text like '%subitem_1551257276108%';
         UPDATE item_metadata SET json=replace(json::text,'subitem_1551257279831','lang')::jsonb WHERE json::text like '%subitem_1551257279831%';
-        -- UPDATE item_metadata SET json=replace(json::text,'subitem_1551256171004','nameType')::jsonb WHERE json::text like '%subitem_1551256171004%';
         UPDATE item_metadata SET json=replace(json::text,'subitem_1551257272214','familyNames')::jsonb WHERE json::text like '%subitem_1551257272214%';
         UPDATE item_metadata SET json=replace(json::text,'subitem_1551257316910','familyNameLang')::jsonb WHERE json::text like '%subitem_1551257316910%';
         UPDATE item_metadata SET json=replace(json::text,'subitem_1551257314588','familyName')::jsonb WHERE json::text like '%subitem_1551257314588%';
@@ -1591,20 +1543,20 @@ BEGIN
         RAISE NOTICE 'processing property ID:  1020';
         UPDATE item_type SET render=replace(render::text,'cus_18"','cus_1020"')::jsonb WHERE render::text like '%cus_18"%';
 
-        UPDATE item_type SET schema=replace(schema::text,'subitem_1522658018441','subitem_temporal_languag')::jsonb WHERE schema::text like '%subitem_1522658018441%';
-        UPDATE item_type SET form=replace(form::text,'subitem_1522658018441','subitem_temporal_languag')::jsonb WHERE form::text like '%subitem_1522658018441%';
-        UPDATE item_type SET render=replace(render::text,'subitem_1522658018441','subitem_temporal_languag')::jsonb WHERE render::text like '%subitem_1522658018441%';
-        UPDATE item_type_mapping SET mapping=replace(mapping::text,'subitem_1522658018441','subitem_temporal_languag')::jsonb WHERE mapping::text like '%subitem_1522658018441%';
+        UPDATE item_type SET schema=replace(schema::text,'subitem_1522658018441','subitem_temporal_language')::jsonb WHERE schema::text like '%subitem_1522658018441%';
+        UPDATE item_type SET form=replace(form::text,'subitem_1522658018441','subitem_temporal_language')::jsonb WHERE form::text like '%subitem_1522658018441%';
+        UPDATE item_type SET render=replace(render::text,'subitem_1522658018441','subitem_temporal_language')::jsonb WHERE render::text like '%subitem_1522658018441%';
+        UPDATE item_type_mapping SET mapping=replace(mapping::text,'subitem_1522658018441','subitem_temporal_language')::jsonb WHERE mapping::text like '%subitem_1522658018441%';
 
         UPDATE item_type SET schema=replace(schema::text,'subitem_1522658031721','subitem_temporal_text')::jsonb WHERE schema::text like '%subitem_1522658031721%';
         UPDATE item_type SET form=replace(form::text,'subitem_1522658031721','subitem_temporal_text')::jsonb WHERE form::text like '%subitem_1522658031721%';
         UPDATE item_type SET render=replace(render::text,'subitem_1522658031721','subitem_temporal_text')::jsonb WHERE render::text like '%subitem_1522658031721%';
         UPDATE item_type_mapping SET mapping=replace(mapping::text,'subitem_1522658031721','subitem_temporal_text')::jsonb WHERE mapping::text like '%subitem_1522658031721%';
 
-        UPDATE records_metadata SET json=replace(json::text,'subitem_1522658018441','subitem_temporal_languag')::jsonb WHERE json::text like '%subitem_1522658018441%';
+        UPDATE records_metadata SET json=replace(json::text,'subitem_1522658018441','subitem_temporal_language')::jsonb WHERE json::text like '%subitem_1522658018441%';
         UPDATE records_metadata SET json=replace(json::text,'subitem_1522658031721','subitem_temporal_text')::jsonb WHERE json::text like '%subitem_1522658031721%';
 
-        UPDATE item_metadata SET json=replace(json::text,'subitem_1522658018441','subitem_temporal_languag')::jsonb WHERE json::text like '%subitem_1522658018441%';
+        UPDATE item_metadata SET json=replace(json::text,'subitem_1522658018441','subitem_temporal_language')::jsonb WHERE json::text like '%subitem_1522658018441%';
         UPDATE item_metadata SET json=replace(json::text,'subitem_1522658031721','subitem_temporal_text')::jsonb WHERE json::text like '%subitem_1522658031721%';
 
 
@@ -1612,20 +1564,20 @@ BEGIN
 
         UPDATE item_type SET render=replace(render::text,'cus_94"','cus_1020"')::jsonb WHERE render::text like '%cus_94"%';
 
-        UPDATE item_type SET schema=replace(schema::text,'subitem_1551256920086','subitem_temporal_languag')::jsonb WHERE schema::text like '%subitem_1551256920086%';
-        UPDATE item_type SET form=replace(form::text,'subitem_1551256920086','subitem_temporal_languag')::jsonb WHERE form::text like '%subitem_1551256920086%';
-        UPDATE item_type SET render=replace(render::text,'subitem_1551256920086','subitem_temporal_languag')::jsonb WHERE render::text like '%subitem_1551256920086%';
-        UPDATE item_type_mapping SET mapping=replace(mapping::text,'subitem_1551256920086','subitem_temporal_languag')::jsonb WHERE mapping::text like '%subitem_1551256920086%';
+        UPDATE item_type SET schema=replace(schema::text,'subitem_1551256920086','subitem_temporal_language')::jsonb WHERE schema::text like '%subitem_1551256920086%';
+        UPDATE item_type SET form=replace(form::text,'subitem_1551256920086','subitem_temporal_language')::jsonb WHERE form::text like '%subitem_1551256920086%';
+        UPDATE item_type SET render=replace(render::text,'subitem_1551256920086','subitem_temporal_language')::jsonb WHERE render::text like '%subitem_1551256920086%';
+        UPDATE item_type_mapping SET mapping=replace(mapping::text,'subitem_1551256920086','subitem_temporal_language')::jsonb WHERE mapping::text like '%subitem_1551256920086%';
 
         UPDATE item_type SET schema=replace(schema::text,'subitem_1551256918211','subitem_temporal_text')::jsonb WHERE schema::text like '%subitem_1551256918211%';
         UPDATE item_type SET form=replace(form::text,'subitem_1551256918211','subitem_temporal_text')::jsonb WHERE form::text like '%subitem_1551256918211%';
         UPDATE item_type SET render=replace(render::text,'subitem_1551256918211','subitem_temporal_text')::jsonb WHERE render::text like '%subitem_1551256918211%';
         UPDATE item_type_mapping SET mapping=replace(mapping::text,'subitem_1551256918211','subitem_temporal_text')::jsonb WHERE mapping::text like '%subitem_1551256918211%';
 
-        UPDATE records_metadata SET json=replace(json::text,'subitem_1551256920086','subitem_temporal_languag')::jsonb WHERE json::text like '%subitem_1551256920086%';
+        UPDATE records_metadata SET json=replace(json::text,'subitem_1551256920086','subitem_temporal_language')::jsonb WHERE json::text like '%subitem_1551256920086%';
         UPDATE records_metadata SET json=replace(json::text,'subitem_1551256918211','subitem_temporal_text')::jsonb WHERE json::text like '%subitem_1551256918211%';
 
-        UPDATE item_metadata SET json=replace(json::text,'subitem_1551256920086','subitem_temporal_languag')::jsonb WHERE json::text like '%subitem_1551256920086%';
+        UPDATE item_metadata SET json=replace(json::text,'subitem_1551256920086','subitem_temporal_language')::jsonb WHERE json::text like '%subitem_1551256920086%';
         UPDATE item_metadata SET json=replace(json::text,'subitem_1551256918211','subitem_temporal_text')::jsonb WHERE json::text like '%subitem_1551256918211%';
 
         DELETE FROM item_type_property WHERE id=94;

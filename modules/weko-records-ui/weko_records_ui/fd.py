@@ -45,6 +45,7 @@ from weko_accounts.views import _redirect_method
 from weko_admin.models import AdminSettings
 from weko_deposit.api import WekoRecord
 from weko_groups.api import Group
+from weko_logging.activity_logger import UserActivityLogger
 from weko_records.api import FilesMetadata, ItemTypes
 from weko_records_ui.errors import AvailableFilesNotFoundRESTError
 from weko_redis.redis import RedisConnection
@@ -281,6 +282,13 @@ def _download_file(file_obj, is_preview, lang, obj, pid, record):
     """
     # Add download signal
     add_signals_info(record, obj)
+
+    if not is_preview:
+        UserActivityLogger.info(
+            operation="FILE_DOWNLOAD",
+            target_key=pid.pid_value,
+        )
+
     # Send file without its pdf cover page
     try:
         pdfcoverpage_set_rec = PDFCoverPageSettings.find(1)
@@ -429,8 +437,12 @@ def file_download_onetime(pid, record,file_name=None, user_mail=None,login_flag=
         else:
             return render_template(error_template,
                                error=error_msg)
-   
- # Cutting out the necessary information
+    
+    is_ajax = None
+    mailaddress = None
+    date = None
+    secret_token = None
+    # Cutting out the necessary information
     if login_flag: #call by method, for login user
         filename = file_name
         user_mail = user_mail
@@ -599,6 +611,9 @@ def file_download_secret(pid, record, _record_file_factory=None, **kwargs):
     # Validate record status
     validate_download_record(record)
 
+    if isinstance(date,str):
+        date = datetime.strptime(date, "%Y-%m-%dT%H:%M:%S.%f")
+    
     # Get secret download record.
     secret_download :FileSecretDownload = get_secret_download(
         file_name=filename, record_id=pid.pid_value, id=id , created=date
@@ -611,8 +626,11 @@ def file_download_secret(pid, record, _record_file_factory=None, **kwargs):
     is_valid, error = validate_secret_download_token(
         secret_download, filename, pid.pid_value, id,
         secret_download.created.isoformat(), secret_token)
+    current_app.logger.debug("is_valid: {}, error: {}".format(is_valid,error))
+    
     if not is_valid:
         return render_template(error_template, error=error)
+
     _record_file_factory = _record_file_factory or record_file_factory
 
     # Get file object
@@ -623,8 +641,8 @@ def file_download_secret(pid, record, _record_file_factory=None, **kwargs):
 
     # Create updated data
     update_data = dict(
-        file_name=filename, record_id=record_id, id=id, created=date,
-        download_count=secret_download.download_count - 1
+        file_name=filename, record_id=record_id, id=id,
+        download_count=secret_download.download_count - 1,created=str(date)
     )
 
     # Update download data

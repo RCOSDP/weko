@@ -11,7 +11,7 @@ $(document).ready(function () {
     row_no=$(this).data('old-action-order');
     $('#settingModal_'+ row_no).modal('show');
   });
-  function isApproval(action){
+  function isApproval(action) {
     return action && action.name == 'Approval';
   }
   function isItemReg(action){
@@ -53,7 +53,7 @@ $(document).ready(function () {
       Object.assign(apply_action, { action: 'ADD' });
     }
     localStorage.setItem('apply_action_list', JSON.stringify(apply_action_list));
-    if(!isApproval(apply_action)){
+    if (!isApproval(apply_action)) {
       $(this).removeClass('btn-primary');
       $(this).prop('disabled', true);
     }
@@ -75,13 +75,13 @@ $(document).ready(function () {
     }
     Object.assign(apply_action, { action: 'DEL' });
     localStorage.setItem('apply_action_list', JSON.stringify(apply_action_list));
-    if(!isApproval(apply_action)){
+    if (!isApproval(apply_action)) {
       $(this).removeClass('btn-primary');
       $(this).prop('disabled', true);
       $('#btn_apply_' + actionId).addClass('btn-primary');
       $('#btn_apply_' + actionId).removeProp('disabled');
     }
-    else{
+    else {
       if (count == 1) {
         $(this).removeClass('btn-primary');
         $(this).prop('disabled', true);
@@ -143,14 +143,14 @@ $(document).ready(function () {
     initSortedBtn();
   });
   $('#myModalActionUser').on('click', '#btnSettingActionUser', function () {
-    let selectedOption = $( "#myModalActionUser #cbxActionUser option:selected");
+    let selectedOption = $("#myModalActionUser #cbxActionUser option:selected");
     let val = selectedOption.val();
     if (val) {
       let txt = selectedOption.text();
       let order = $("#myModalActionUser .action-order").text();
-      let $cbbActionUser = $('select[data-row-order="'+order+'"]');
-      $("#cbxActionUser > option").each(function() {
-        $('select[data-row-order="'+order+'"] option[value="'+this.value+'"]').each(function() {
+      let $cbbActionUser = $('select[data-row-order="' + order + '"]');
+      $("#cbxActionUser > option").each(function () {
+        $('select[data-row-order="' + order + '"] option[value="' + this.value + '"]').each(function () {
           $(this).remove();
         });
       });
@@ -165,7 +165,7 @@ $(document).ready(function () {
     }
   });
   $('#tb_action_list').on('change', '.td_action_user', function () {
-    if($(this).val() == -1){
+    if ($(this).val() == -1) {
       let order = $(this).attr('data-row-order');
       $("#myModalActionUser .my-modal-action-user").text(order);
       $("#myModalActionUser").modal("show");
@@ -198,6 +198,8 @@ $(document).ready(function () {
   });
   $('#btn-new-flow').on('click', function () {
     let flow_name = $('#txt_flow_name').val();
+    let for_delete = $('#chk_for_delete').is(':checked');
+    let repository_id = $('#txt_repo_id').val();
     if (flow_name.length == 0) {
       $('#div_flow_name').addClass('has-error');
       $('#txt_flow_name').focus();
@@ -208,7 +210,11 @@ $(document).ready(function () {
       method: 'POST',
       async: true,
       contentType: 'application/json',
-      data: JSON.stringify({ 'flow_name': flow_name }),
+      data: JSON.stringify({
+        'flow_name': flow_name,
+        'for_delete': for_delete,
+        'repository_id': repository_id
+      }),
       success: function (data, status) {
         if (data.code == 0) {
           document.location.href = data.data.redirect;
@@ -227,6 +233,8 @@ $(document).ready(function () {
   });
   $('#btn-upt-flow').on('click', function () {
     let flow_name = $('#txt_flow_name').val();
+    let for_delete = $('#chk_for_delete').is(':checked');
+    let repository_id = $('#txt_repo_id').val();
     if (flow_name.length == 0) {
       $('#div_flow_name').addClass('has-error');
       $('#txt_flow_name').focus();
@@ -237,7 +245,11 @@ $(document).ready(function () {
       method: 'POST',
       async: true,
       contentType: 'application/json',
-      data: JSON.stringify({ 'flow_name': flow_name }),
+      data: JSON.stringify({
+        'flow_name': flow_name,
+        'for_delete': for_delete,
+        'repository_id': repository_id
+      }),
       success: function (data, status) {
         document.querySelectorAll('#inputModal').forEach(element => {
           element.innerHTML = data.msg
@@ -285,6 +297,18 @@ $(document).ready(function () {
     });
   });
 
+  function filterActions() {
+    const isChecked = $('#chk_for_delete').is(':checked');
+    if (isChecked) {
+      $('.action_normal').hide();
+    }
+    else {
+      $('.action_normal').show();
+    }
+  }
+  filterActions();
+  $('#chk_for_delete').on('change', filterActions);
+
   let action_list = [];
   $('#txt_flow_name').focus();
   setOrderApproval();
@@ -292,14 +316,14 @@ $(document).ready(function () {
     let $tr = $(this).parents('tr');
     let actionId = $(this).text();
     let actionname = $('#td_action_name_' + actionId).text();
-    if(!isApproval({'name': actionname})){
+    if (!isApproval({ 'name': actionname })) {
       $('#btn_apply_' + actionId).removeClass('btn-primary');
       $('#btn_apply_' + actionId).addClass('btn-default');
       $('#btn_apply_' + actionId).prop('disabled', true);
       $('#btn_unusable_' + actionId).addClass('btn-primary');
       $('#btn_unusable_' + actionId).removeProp('disabled');
     }
-    else{
+    else {
       $('#btn_unusable_' + actionId).addClass('btn-primary');
       $('#btn_unusable_' + actionId).removeProp('disabled');
     }
@@ -404,7 +428,7 @@ $(document).ready(function () {
       new_row = new_row.replaceAll('apply_action.name', apply_action.name);
       new_row = new_row.replaceAll('apply_action.action_date', apply_action.date);
       new_row = new_row.replaceAll('apply_action.action_version', apply_action.version);
-      if(!isApproval(apply_action)){
+      if (!isApproval(apply_action)) {
         new_row = new_row.replaceAll('specify-property-option', 'hide');
         new_row = new_row.replaceAll('item-registrant-option', 'hide');
         new_row = new_row.replaceAll('request-mail-option', 'hide');
@@ -541,19 +565,19 @@ $(document).ready(function () {
     localStorage.setItem('apply_action_list', JSON.stringify(action_list));
   }
 
-  function setOrderApproval(){
+  function setOrderApproval() {
     $('#tb_action_list .approval-order').each(function (i) {
-      $(this).text(' ('+(i+1)+')');
+      $(this).text(' (' + (i + 1) + ')');
     });
   }
 
-  function updateDataWorkflowFlowActionId(actions){
+  function updateDataWorkflowFlowActionId(actions) {
     // Update data-workflow-flow-action-id
     $('#tb_action_list .action_ids').each(function (i) {
       let row = $(this).parents('tr');
       let order = $(row).find('.action_order').text();
-      let action = actions.find(function(elm){
-        if(elm.action_order == order){
+      let action = actions.find(function (elm) {
+        if (elm.action_order == order) {
           return elm;
         }
       });
@@ -564,19 +588,19 @@ $(document).ready(function () {
   function addAlert(message) {
     $("#alerts").append(
       '<div class="alert alert-light" id="alert-style">' +
-        '<button type="button" class="close" data-dismiss="alert">' +
-        "&times;</button>" +
-        message +
-        "</div>"
+      '<button type="button" class="close" data-dismiss="alert">' +
+      "&times;</button>" +
+      message +
+      "</div>"
     );
   }
 
   $('#myModalActionUser').on('hidden.bs.modal', function (e) {
     $('#cbxActionUser option:selected').removeAttr('selected');
     let order = $("#myModalActionUser .action-order").text();
-     if($('select[data-row-order="'+order+'"]').val() == '-1'){
-        $('select[data-row-order="'+order+'"]').val(0);
-     }
+    if ($('select[data-row-order="' + order + '"]').val() == '-1') {
+      $('select[data-row-order="' + order + '"]').val(0);
+    }
   })
 });
 

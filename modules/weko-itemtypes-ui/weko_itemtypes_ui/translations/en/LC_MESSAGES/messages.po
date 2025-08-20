@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: weko-itemtypes-ui 0.1.0.dev20170000\n"
 "Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
-"POT-Creation-Date: 2024-10-07 17:22+0900\n"
+"POT-Creation-Date: 2025-05-02 14:43+0900\n"
 "PO-Revision-Date: 2018-01-18 18:48+0900\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -17,71 +17,79 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.9.1\n"
+"Generated-By: Babel 2.5.1\n"
 
-#: weko_itemtypes_ui/admin.py:125
+#: weko_itemtypes_ui/admin.py:128
 msgid "Item type cannot be deleted becase import is in progress."
 msgstr ""
 
-#: weko_itemtypes_ui/admin.py:133
+#: weko_itemtypes_ui/admin.py:132 weko_itemtypes_ui/admin.py:382
+msgid "An error has occurred."
+msgstr ""
+
+#: weko_itemtypes_ui/admin.py:139
 msgid "Cannot delete Item type for Harvesting."
 msgstr ""
 
-#: weko_itemtypes_ui/admin.py:144
+#: weko_itemtypes_ui/admin.py:151
 #: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_itemtype.html:92
 msgid "Cannot delete due to child existing item types."
 msgstr ""
 
-#: weko_itemtypes_ui/admin.py:162
+#: weko_itemtypes_ui/admin.py:164
+msgid "Cannot delete due to SWORD API is using this item types."
+msgstr ""
+
+#: weko_itemtypes_ui/admin.py:191
 msgid "Failed to delete Item type."
 msgstr ""
 
-#: weko_itemtypes_ui/admin.py:167
+#: weko_itemtypes_ui/admin.py:215
+msgid "Failed to delete Item type JSON-LD mapping."
+msgstr ""
+
+#: weko_itemtypes_ui/admin.py:226
 msgid "Deleted Item type successfully."
 msgstr ""
 
-#: weko_itemtypes_ui/admin.py:170 weko_itemtypes_ui/admin.py:282
-msgid "An error has occurred."
-msgstr ""
-
-#: weko_itemtypes_ui/admin.py:182 weko_itemtypes_ui/admin.py:644
+#: weko_itemtypes_ui/admin.py:237 weko_itemtypes_ui/admin.py:644
 #: weko_itemtypes_ui/admin.py:813
 msgid "Header Error"
 msgstr ""
 
-#: weko_itemtypes_ui/admin.py:185
+#: weko_itemtypes_ui/admin.py:241
 msgid "Item type cannot be updated becase import is in progress."
 msgstr ""
 
-#: weko_itemtypes_ui/admin.py:237
+#: weko_itemtypes_ui/admin.py:337
 msgid "Failed to register Item type."
 msgstr ""
 
-#: weko_itemtypes_ui/admin.py:242 weko_itemtypes_ui/admin.py:244
+#: weko_itemtypes_ui/admin.py:342 weko_itemtypes_ui/admin.py:344
 msgid "Successfuly registered Item type."
 msgstr ""
 
-#: weko_itemtypes_ui/admin.py:275
+#: weko_itemtypes_ui/admin.py:375
 msgid "Failed to restore Item type."
 msgstr ""
 
-#: weko_itemtypes_ui/admin.py:280
+#: weko_itemtypes_ui/admin.py:380
 msgid "Restored Item type successfully."
 msgstr ""
 
-#: weko_itemtypes_ui/admin.py:326 weko_itemtypes_ui/admin.py:334
+#: weko_itemtypes_ui/admin.py:426 weko_itemtypes_ui/admin.py:434
 msgid "Date (Type-less）"
 msgstr ""
 
-#: weko_itemtypes_ui/admin.py:404
+#: weko_itemtypes_ui/admin.py:486
 msgid "No item type name Error"
 msgstr ""
 
-#: weko_itemtypes_ui/admin.py:406
+#: weko_itemtypes_ui/admin.py:488
 msgid "No file Error"
 msgstr ""
 
-#: weko_itemtypes_ui/admin.py:409
+#: weko_itemtypes_ui/admin.py:491
 msgid "Illegal mimetype Error"
 msgstr ""
 
@@ -111,37 +119,37 @@ msgstr ""
 msgid "Saved property successfully."
 msgstr ""
 
-#: weko_itemtypes_ui/admin.py:824
+#: weko_itemtypes_ui/admin.py:825
 msgid "Duplicate mapping as below:"
 msgstr ""
 
-#: weko_itemtypes_ui/admin.py:833
+#: weko_itemtypes_ui/admin.py:845
 msgid "Unexpected error occurred."
 msgstr ""
 
-#: weko_itemtypes_ui/admin.py:834 weko_itemtypes_ui/admin.py:925
+#: weko_itemtypes_ui/admin.py:846 weko_itemtypes_ui/admin.py:937
 msgid "Successfully saved new mapping."
 msgstr ""
 
-#: weko_itemtypes_ui/admin.py:1017 weko_itemtypes_ui/admin.py:1027
-#: weko_itemtypes_ui/admin.py:1037 weko_itemtypes_ui/admin.py:1047
+#: weko_itemtypes_ui/admin.py:1029 weko_itemtypes_ui/admin.py:1039
+#: weko_itemtypes_ui/admin.py:1049 weko_itemtypes_ui/admin.py:1059
 msgid "Item Types"
 msgstr ""
 
-#: weko_itemtypes_ui/admin.py:1018
+#: weko_itemtypes_ui/admin.py:1030
 msgid "Metadata"
 msgstr ""
 
-#: weko_itemtypes_ui/admin.py:1028
+#: weko_itemtypes_ui/admin.py:1040
 msgid "Properties"
 msgstr ""
 
-#: weko_itemtypes_ui/admin.py:1038
+#: weko_itemtypes_ui/admin.py:1050
 #: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_rocrate_mapping.html:216
 msgid "Mapping"
 msgstr ""
 
-#: weko_itemtypes_ui/admin.py:1048
+#: weko_itemtypes_ui/admin.py:1060
 msgid "RO-Crate Mapping"
 msgstr ""
 
