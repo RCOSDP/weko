@@ -5,8 +5,7 @@ const selected_file_name = document.getElementById("selected_file_name").value;
 const index_tree = document.getElementById("index_tree").value;
 const designate_index = document.getElementById("designate_index").value;
 const item_type = document.getElementById("item_type").value;
-const mapping = document.getElementById("mapping").value;
-const mapping_templates = document.getElementById("mapping_templates").value;
+const select_mapping = document.getElementById("select_mapping").value;
 const flow = document.getElementById("flow").value;
 const select = document.getElementById("select").value;
 const cancel = document.getElementById("cancel").value;
@@ -645,6 +644,7 @@ class RocrateImportComponent extends React.Component {
               </div>
             </div>
           </div>
+          <MappingComponent onMappingChange={this.handleMappingChange} />
           <div className="col-md-12">
             <div className="row">
               <div className="col-md-4">
@@ -678,7 +678,6 @@ class RocrateImportComponent extends React.Component {
           </div>
         </div>
         <hr />
-        <MappingComponent onMappingChange={this.handleMappingChange} />
         <ReactBootstrap.Modal show={this.state.show} onHide={this.handleClose} dialogClassName="w-725">
           <ReactBootstrap.Modal.Header closeButton>
             <h4 className="modal-title in_line">{change_identifier_mode}</h4>
@@ -1203,18 +1202,15 @@ class MappingComponent extends React.Component {
     });
 
     return (
-      <div class="mapping_compoment">
-        <h4>{mapping_templates}</h4>
-        <div class="row">
-          <div class="col-md-12 form-inline">
-            <div class="form-group">
-              <label style={{ marginRight: ".5rem" }}>{mapping}:</label>
-              <select class="form-control" style={{ marginRight: ".5rem",
-                    minWidth: "300px" }} onChange={this.onCbxMappingChange}>
-                {select_options}
-              </select>
-            </div>
+      <div class="col-md-12">
+        <div className="row form-inline" style={{ marginBottom: "2rem" }}>
+          <div className="col-md-2 col-cd">
+            <label>{select_mapping}</label>
           </div>
+          <select class="form-control" style={{ marginRight: ".5rem",
+                minWidth: "300px" }} onChange={this.onCbxMappingChange}>
+            {select_options}
+          </select>
         </div>
       </div>
     );

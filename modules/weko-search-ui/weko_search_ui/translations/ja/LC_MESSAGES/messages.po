@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: weko-search-ui 0.1.0.dev20170000\n"
 "Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
-"POT-Creation-Date: 2025-08-07 19:03+0900\n"
+"POT-Creation-Date: 2025-08-20 12:54+0900\n"
 "PO-Revision-Date: 2025-04-09 22:35+0900\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ja\n"
@@ -499,7 +499,7 @@ msgid ""
 "updated. Update only the metadata with csv/tsv contents."
 msgstr "（{}）に指定したファイルが存在しません。<br/>ファイルの更新はしません。csv/tsv内容でメタデータのみ更新します。"
 
-#: weko_search_ui/utils.py:5568
+#: weko_search_ui/utils.py:5569
 msgid "The file name specified in {} and {} do not match."
 msgstr "{}に指定されたファイル名と{}が一致しません。"
 
@@ -1064,6 +1064,9 @@ msgid "Is the input contents discarded ?"
 msgstr "入力内容を破棄してもよろしいですか？"
 
 #: weko_search_ui/templates/weko_search_ui/admin/rocrate_import.html:58
+msgid "Select Mapping"
+msgstr "マッピング選択"
+
 #: weko_search_ui/templates/weko_search_ui/admin/rocrate_import.html:94
 msgid "Mapping"
 msgstr "マッピング"
