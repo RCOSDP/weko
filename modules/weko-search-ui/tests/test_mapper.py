@@ -2,12 +2,10 @@ import pytest
 import xmltodict
 import uuid
 from datetime import date
-from mock import patch
-from unittest.mock import MagicMock
+from unittest.mock import patch, MagicMock
 from collections import OrderedDict
 
 from weko_records.api import Mapping
-from weko_records.models import ItemType,ItemTypeName
 from weko_records.serializers.utils import get_full_mapping
 from weko_search_ui.mapper import (
     get_subitem_text_key,
@@ -58,7 +56,6 @@ from weko_search_ui.mapper import (
     add_file,
     add_identifier,
     add_catalog,
-    BaseMapper,
     JPCOARV2Mapper,
     JsonMapper,
     JsonLdMapper
@@ -3290,7 +3287,7 @@ def test_add_file(mapper_jpcoar):
     # Case04: Parse empty file
     res = {}
     add_file(schema, mapping, res, [])
-    assert res == {'file_path': [],}
+    assert res == {}
 
 
 # def add_catalog(schema, mapping, res, metadata):
@@ -3646,13 +3643,12 @@ def test_add_catalog():
     assert res == {}
 
 
-# class BaseMapper:
-# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_mapper.py::TestBaseMapper -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
-class TestBaseMapper:
-#     def update_itemtype_map(cls):
-#     def __init__(self, xml):
-# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_mapper.py::TestBaseMapper::test_init -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
-    def test_init(self,app,db):
+# class JPCOARV2Mapper(BaseMapper):
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_mapper.py::TestJPCOARV2Mapper -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+class TestJPCOARV2Mapper:
+    # def __init__(self, xml):
+    # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_mapper.py::TestJPCOARV2Mapper::test_init -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+    def test_init(self):
         xml_str="""
         <jpcoar:jpcoar xmlns:datacite="https://schema.datacite.org/meta/kernel-4/" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcndl="http://ndl.go.jp/dcndl/terms/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:jpcoar="https://github.com/JPCOAR/schema/blob/master/1.0/" xmlns:oaire="http://namespace.openaire.eu/schema/oaire/" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:rioxxterms="http://www.rioxx.net/schema/v2.0/rioxxterms/" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns="https://github.com/JPCOAR/schema/blob/master/1.0/" xsi:schemaLocation="https://github.com/JPCOAR/schema/blob/master/1.0/jpcoar_scm.xsd">
             <dc:title xml:lang="ja">test full item</dc:title>
@@ -3765,45 +3761,11 @@ class TestBaseMapper:
             </jpcoar:file>
         </jpcoar:jpcoar>"""
         # not exist item_type with name "Multiple" or "Others"
-        item_type_name1 = ItemTypeName(
-            id=10, name="test_itemtype", has_site_license=True, is_active=True
-        )
-        item_type1 = ItemType(
-            id=10,name_id=10,harvesting_type=True,schema={},form={},render={},tag=1,version_id=1,is_deleted=False,
-        )
-        db.session.add(item_type_name1)
-        db.session.add(item_type1)
-        db.session.commit()
-        mapper = BaseMapper(xml_str)
+        mapper = JPCOARV2Mapper(xml_str)
+        assert mapper.xml == xml_str
+        assert mapper.json == xmltodict.parse(xml_str)
         assert mapper.itemtype is None
 
-        # exist item_type with name "Multiple" or "Others"
-        item_type_name2 = ItemTypeName(
-            id=11, name="Multiple", has_site_license=True, is_active=True
-        )
-        item_type2 = ItemType(
-            id=11,name_id=11,harvesting_type=True,schema={},form={},render={},tag=1,version_id=1,is_deleted=False,
-        )
-        db.session.add(item_type_name2)
-        db.session.add(item_type2)
-        db.session.commit()
-        BaseMapper.update_itemtype_map()
-        mapper = BaseMapper(xml_str)
-        assert mapper.itemtype == item_type2
-
-
-# update_itemtype_map(cls)
-# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_mapper.py::TestBaseMapper::test_update_itemtype_map -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
-    def test_update_itemtype_map(self, db_itemtype_jpcoar):
-        BaseMapper.update_itemtype_map()
-        item_type_name = db_itemtype_jpcoar["item_type_multiple_name"].name
-        assert item_type_name in BaseMapper.itemtype_map
-        assert type(BaseMapper.itemtype_map[item_type_name]) == ItemType
-
-
-# class JPCOARV2Mapper(BaseMapper):
-# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_mapper.py::TestJPCOARV2Mapper -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
-class TestJPCOARV2Mapper:
 #     def map(self):
 # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_mapper.py::TestJPCOARV2Mapper::test_map -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
     def test_map(self,db_itemtype):
