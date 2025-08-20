@@ -1408,7 +1408,9 @@ class JsonLdMapper(JsonMapper):
         Args:
             json_ld (dict): metadata with json-ld format.
         Returns:
-            list[dict]: list of mapped metadata.
+            tuple (list[dict], str):
+                - list[dict]: list of mapped metadata.
+                - str: format of the metadata. "ro-crate" or "sword-bagit".
         """
         metadatas, format = self._deconstruct_json_ld(json_ld)
         list_items = [
@@ -1595,7 +1597,8 @@ class JsonLdMapper(JsonMapper):
                 )
                 mapped_metadata["request_mail_list"] = request_mail_list
             elif META_PATH not in properties_mapping:
-                if not META_KEY.endswith("@id"):
+                if ("wk:" not in META_KEY and not META_KEY.endswith("@id")
+                    and META_KEY not in ["name", "description"]):
                     missing_metadata[META_KEY] = META_VALUE
             else:
                 # item metadata
@@ -1746,21 +1749,19 @@ class JsonLdMapper(JsonMapper):
         if not extracted:
             raise ValueError("Invalid json-ld format: Metadata is not found.")
 
-        def _resolve_link(parent, key, value):
+        def _resolve_link(value):
             """Resolve links in json-ld metadata and restore hierarchy."""
             if isinstance(value, dict):
                 if len(value) == 1 and "@id" in value and value["@id"] in extracted:
-                    parent[key] = extracted[value["@id"]]
+                    return _resolve_link(extracted[value["@id"]])
                 else:
-                    for k, v in value.items():
-                        _resolve_link(value, k, v)
+                    return {k: _resolve_link(v) for k, v in value.items()}
             elif isinstance(value, list):
-                for i, v in enumerate(value):
-                    _resolve_link(value, i, v)
+                return [_resolve_link(v) for v in value]
+            else:
+                return value
 
-        # Restore metadata to tree structure by tracing "@id" in linked data
-        for key, value in extracted.items():
-            _resolve_link(extracted, key, value)
+        extracted = {k: _resolve_link(v) for k, v in extracted.items()}
 
         list_extracted = []
         if format == "ro-crate":
@@ -1778,12 +1779,12 @@ class JsonLdMapper(JsonMapper):
             metadata = cls._deconstruct_dict(extracted)
             system_info = {}
             system_info.update(
-                {"id": extracted["identifier"]}
-                if "identifier" in extracted else {}
+                {"id": metadata.pop("identifier")}
+                if "identifier" in metadata else {}
             )
             system_info.update(
-                {"uri": extracted["uri"]}
-                if "uri" in extracted else {}
+                {"uri": metadata.pop("uri")}
+                if "uri" in metadata else {}
             )
 
             list_grant = extracted.get("wk:grant", [])
@@ -1791,13 +1792,13 @@ class JsonLdMapper(JsonMapper):
                 raise ValueError(
                     "Invalid json-ld format: wk:grant is not a list."
                 )
-            for grant in extracted.get("wk:grant", []):
+            for grant in list_grant:
                 if not isinstance(grant, dict):
                     continue
                 if grant.get("jpcoar:identifier") == "HDL":
                     system_info["cnri"] = grant.get("@id").lstrip("#")
                     break
-            for grant in extracted.get("wk:grant", []):
+            for grant in list_grant:
                 if not isinstance(grant, dict):
                     continue
                 if grant.get("jpcoar:identifier") == "DOI":
