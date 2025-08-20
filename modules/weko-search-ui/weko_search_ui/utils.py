@@ -2011,11 +2011,11 @@ def register_item_metadata(item, root_path, owner, is_gakuninrdm=False, request_
                 pid, keep_version=True, is_import=True
             )
             item_link_draft_pid = ItemLink(_draft_pid.pid_value)
-            item_link_draft_pid.update(link_data)
+            item_link_draft_pid.update(link_data, require_commit=False)
         item_link_latest_pid = ItemLink(_deposit.pid.pid_value)
-        item_link_latest_pid.update(link_data)
+        item_link_latest_pid.update(link_data, require_commit=False)
         item_link_pid_without_ver = ItemLink(item_id)
-        item_link_pid_without_ver.update(link_data)
+        item_link_pid_without_ver.update(link_data, require_commit=False)
 
 def update_publish_status(item_id, status):
     """Handle get title.
@@ -2230,7 +2230,6 @@ def import_items_to_system(
 
         except SQLAlchemyError as ex:
             current_app.logger.error(f"sqlalchemy error: {ex}")
-            db.session.rollback()
             if item.get("id"):
                 pid = PersistentIdentifier.query.filter_by(
                     pid_type="recid", pid_value=item["id"]
@@ -2240,6 +2239,7 @@ def import_items_to_system(
                     PIDVersioning(child=pid).last_child.object_uuid
                 )
                 handle_remove_es_metadata(item, bef_metadata, bef_last_ver_metadata)
+            db.session.rollback()
             current_app.logger.error("item id: %s update error." % item["id"])
             traceback.print_exc(file=sys.stdout)
             exec_info = sys.exc_info()
@@ -2263,7 +2263,6 @@ def import_items_to_system(
             return {"success": False, "error_id": error_id}
         except ElasticsearchException as ex:
             current_app.logger.error("elasticsearch  error: ", ex)
-            db.session.rollback()
             if item.get("id"):
                 pid = PersistentIdentifier.query.filter_by(
                     pid_type="recid", pid_value=item["id"]
@@ -2273,6 +2272,7 @@ def import_items_to_system(
                     PIDVersioning(child=pid).last_child.object_uuid
                 )
                 handle_remove_es_metadata(item, bef_metadata, bef_last_ver_metadata)
+            db.session.rollback()
             current_app.logger.error("item id: %s update error." % item["id"])
             traceback.print_exc(file=sys.stdout)
             exec_info = sys.exc_info()
@@ -2296,7 +2296,6 @@ def import_items_to_system(
             return {"success": False, "error_id": error_id}
         except redis.RedisError as ex:
             current_app.logger.error(f"redis  error: {ex}")
-            db.session.rollback()
             if item.get("id"):
                 pid = PersistentIdentifier.query.filter_by(
                     pid_type="recid", pid_value=item["id"]
@@ -2306,6 +2305,7 @@ def import_items_to_system(
                     PIDVersioning(child=pid).last_child.object_uuid
                 )
                 handle_remove_es_metadata(item, bef_metadata, bef_last_ver_metadata)
+            db.session.rollback()
             current_app.logger.error("item id: %s update error." % item["id"])
             traceback.print_exc(file=sys.stdout)
             exec_info = sys.exc_info()
@@ -2327,9 +2327,8 @@ def import_items_to_system(
                 error_id = ex.args[0].get("error_id")
 
             return {"success": False, "error_id": error_id}
-        except BaseException as ex:
+        except Exception as ex:
             current_app.logger.error("Unexpected error: {}".format(ex))
-            db.session.rollback()
             if item.get("id"):
                 pid = PersistentIdentifier.query.filter_by(
                     pid_type="recid", pid_value=item["id"]
@@ -2339,6 +2338,7 @@ def import_items_to_system(
                     PIDVersioning(child=pid).last_child.object_uuid
                 )
                 handle_remove_es_metadata(item, bef_metadata, bef_last_ver_metadata)
+            db.session.rollback()
             current_app.logger.error("item id: %s update error." % item["id"])
             traceback.print_exc(file=sys.stdout)
             exec_info = sys.exc_info()
@@ -2926,12 +2926,11 @@ def handle_check_doi_ra(list_record):
 def handle_check_doi(list_record):
     """Check DOI.
 
-    :argument
-        list_record -- {list} list record import.
-    :return
-
+    Args:
+        list_record (list): list record import.
     """
     def _check_doi(doi_ra, doi, item):
+        """Check DOI value when chang identifier mode is off."""
         error = None
         split_doi = doi.split("/")
         if doi_ra == "NDL JaLC":
@@ -2943,6 +2942,7 @@ def handle_check_doi(list_record):
                     doi_ra
                 ):
                     error = _("Specified Prefix of {} is incorrect.").format("DOI")
+            # any valid DOI specified by the user can be registered if NDL JaLC is selected
         else:
             if len(split_doi) > 1 and not doi.endswith("/"):
                 error = _("{} cannot be set.").format("DOI")
@@ -2955,14 +2955,46 @@ def handle_check_doi(list_record):
                     error = _("Specified Prefix of {} is incorrect.").format("DOI")
         return error
 
+    def _check_doi_duplicate(doi_ra, doi, record=None):
+        """Check if DOI already exists in the system when chang identifier mode is on.
+
+        Args:
+            doi_ra (str): DOI Registration Agency.
+            doi (str): DOI value.
+            record (WekoRecord, optional):
+                WekoRecord object of item to update.
+
+        Returns:
+            str: error message.
+        """
+        error = None
+        object_uuid = record.pid_recid.object_uuid if record else None
+        identifier = IdentifierHandle(object_uuid)
+        doi_domain = IDENTIFIER_GRANT_LIST[WEKO_IMPORT_DOI_TYPE.index(doi_ra) + 1][2]
+        doi_link = doi_domain + "/" + doi
+
+        doi_pidstore = identifier.check_pidstore_exist("doi", doi_link)
+        if doi_pidstore and doi_pidstore.status == PIDStatus.DELETED:
+            error = _(
+                "Specified DOI was withdrawn. Please specify another DOI."
+            )
+        # Check if DOI already exists, but allows to assign to self.
+        elif doi_pidstore and doi_pidstore.object_uuid != object_uuid:
+            error = _(
+                "Specified DOI has been used already for another item. "
+                "Please specify another DOI."
+            )
+        return error
+
+    list_doi = []
+    list_duplicated = []
+
     for item in list_record:
         error = None
-        item_id = str(item.get("id"))
+        item_id = str(item.get("id") or "")
         doi = item.get("doi")
         doi_ra = item.get("doi_ra")
-        if item.get("is_change_identifier") and doi_ra and not doi:
-            error = _("Please specify {}.").format("DOI")
-        elif doi_ra:
+        if doi_ra:
             if item.get("is_change_identifier"):
                 if not doi:
                     error = _("Please specify {}.").format("DOI")
@@ -2988,24 +3020,35 @@ def handle_check_doi(list_record):
                             )
                         elif not suffix:
                             error = _("Please specify {}.").format("DOI suffix")
+                        elif item.get("status") == "new":
+                            error = _check_doi_duplicate(doi_ra, doi)
+                        else:
+                            try:
+                                record = WekoRecord.get_record_by_pid(item_id)
+                            except SQLAlchemyError as ex:
+                                current_app.logger.error(f"item id: {item_id} not found.")
+                                traceback.print_exc(file=sys.stdout)
+                                record = None
+                            error = _check_doi_duplicate(doi_ra, doi, record)
             else:
                 if item.get("status") == "new":
                      if doi:
                         error = _check_doi(doi_ra, doi, item)
+
                 else:
-                    pid = WekoRecord.get_record_by_pid(item_id).pid_recid
-                    identifier = IdentifierHandle(pid.object_uuid)
-                    _value, doi_type = identifier.get_idt_registration_data()
+                    try:
+                        record = WekoRecord.get_record_by_pid(item_id)
+                        identifier = IdentifierHandle(record.pid_recid.object_uuid)
+                        _value, doi_type = identifier.get_idt_registration_data()
+                    except SQLAlchemyError as ex:
+                        current_app.logger.error(f"item id: {item_id} not found.")
+                        traceback.print_exc(file=sys.stdout)
+                        doi_type = None
                     if not doi_type:
                         if doi:
                             error = _check_doi(doi_ra, doi, item)
                     else:
-                        pid_doi = None
-                        try:
-                            pid_doi = WekoRecord.get_record_by_pid(item_id).pid_doi
-                        except Exception as ex:
-                            current_app.logger.error("item id: %s not found." % item_id)
-                            current_app.logger.error(ex)
+                        pid_doi = record.pid_doi
                         if pid_doi:
                             doi_domain = IDENTIFIER_GRANT_LIST[
                                 WEKO_IMPORT_DOI_TYPE.index(doi_ra) + 1
@@ -3014,7 +3057,7 @@ def handle_check_doi(list_record):
                                 error = _("Please specify {}.").format("DOI")
                             elif not pid_doi.pid_value == (doi_domain + "/" + doi):
                                 error = _(
-                                    "Specified {} is different from" + " existing {}."
+                                    "Specified {} is different from existing {}."
                                 ).format("DOI", "DOI")
                         elif doi:
                             error = _check_doi(doi_ra, doi, item)
@@ -3022,7 +3065,27 @@ def handle_check_doi(list_record):
         if error:
             item["errors"] = item["errors"] + [error] if item.get("errors") else [error]
             item["errors"] = list(set(item["errors"]))
+        elif doi and doi not in list_doi:
+                list_doi.append(doi)
+        elif doi:
+            list_duplicated.append(doi)
 
+    # check duplicated DOI between import items.
+    for item in list_record:
+        doi = item.get("doi")
+        if doi not in list_duplicated:
+            continue
+
+        error = _(
+            "Specified DOI is duplicated with another import item. "
+            "Please specify another DOI."
+        )
+        item["errors"] = (
+            item["errors"] + [error] if item.get("errors") else [error]
+        )
+        current_app.logger.warning(
+            f"Specified DOI is duplicated with another import item: {doi}"
+        )
 
 def handle_check_item_link(list_record):
     """Check item link.

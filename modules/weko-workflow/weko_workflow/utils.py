@@ -1310,13 +1310,14 @@ class IdentifierHandle(object):
     item_metadata = None
     metadata_mapping = None
 
-    def __init__(self, item_id):
+    def __init__(self, item_id=None):
         """Initialize IdentifierHandle."""
         self.item_uuid = item_id
-        self.metadata_mapping = MappingData(item_id)
-        self.item_type_id = self.metadata_mapping.get_data_item_type().id
-        self.item_metadata = ItemsMetadata.get_record(item_id)
-        self.item_record = self.metadata_mapping.record
+        if item_id:
+            self.metadata_mapping = MappingData(item_id)
+            self.item_type_id = self.metadata_mapping.get_data_item_type().id
+            self.item_metadata = ItemsMetadata.get_record(item_id)
+            self.item_record = self.metadata_mapping.record
 
     def get_pidstore(self, pid_type='doi', object_uuid=None):
         """Get Persistent Identifier Object by pid_value or item_uuid.
@@ -2273,10 +2274,7 @@ def check_existed_doi(doi_link):
     respon['code'] = 1
     respon['msg'] = 'error'
     if doi_link:
-        doi_pidstore = IdentifierHandle.check_pidstore_exist(
-            None,
-            'doi',
-            doi_link)
+        doi_pidstore = IdentifierHandle().check_pidstore_exist('doi', doi_link)
         if doi_pidstore:
             respon['isExistDOI'] = True
             respon['msg'] = _('This DOI has been used already for another '
