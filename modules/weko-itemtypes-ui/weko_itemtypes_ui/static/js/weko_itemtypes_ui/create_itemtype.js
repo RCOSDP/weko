@@ -2024,10 +2024,21 @@ $(document).ready(function () {
       data: data,
       success: function (data, textStatus) {
         if ('redirect_url' in data) {
-          window.location.href = data.redirect_url
-        }
-        else {
-          $('.modal-body').text(data.msg);
+          if ('duplicated_props' in data && Object.keys(data.duplicated_props).length > 0) {
+            let duplicatedPropsMessage = data.msg;
+            for (let id in data.duplicated_props) {
+              duplicatedPropsMessage += `<br>&nbsp;&nbsp;&nbsp;&nbsp;ID:&nbsp;${id}&nbsp;-&nbsp;${data.duplicated_props[id].name}`;
+            }
+            $('.modal-body').html(duplicatedPropsMessage);
+            $('#myModal').modal('show');
+            $('#myModal').off('hide.bs.modal').on('hide.bs.modal', function () {
+              window.location.href = data.redirect_url;
+            });
+          } else {
+            window.location.href = data.redirect_url
+          }
+        } else {
+          $('#myModal .modal-body').text(data.msg);
           $('#myModal').modal('show');
         }
       },

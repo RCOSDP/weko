@@ -69,6 +69,8 @@ class WekoAdmin(object):
                 elif endpoint == 'restricted_access' and not is_display_restricted_settings \
                     and role.name != system_admin:
                         return False
+                elif endpoint == "profile_settings":
+                    return current_app.config.get("WEKO_USERPROFILES_CUSTOMIZE_ENABLED", False)
                 access_list = access_table[role.name] if role.name in access_table \
                     else []
                 if endpoint in access_list or role.name == system_admin:

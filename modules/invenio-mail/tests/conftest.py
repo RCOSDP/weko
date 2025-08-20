@@ -40,7 +40,7 @@ from invenio_accounts.testutils import create_test_user
 
 from invenio_mail import InvenioMail, config
 from invenio_mail.admin import mail_adminview, mail_templates_adminview
-from invenio_mail.models import MailConfig
+from invenio_mail.models import MailConfig, MailTemplates, MailTemplateGenres, MailTemplateUsers, MailType
 
 
 @pytest.yield_fixture()
@@ -102,9 +102,9 @@ def base_app(instance_path):
     app_.jinja_loader.searchpath.append('tests/templates')
     admin = Admin(app_)
     view_class = mail_adminview['view_class']
+    view_class_template = mail_templates_adminview['view_class']
     admin.add_view(view_class(**mail_adminview['kwargs']))
-    templates_view_class = mail_templates_adminview['view_class']
-    admin.add_view(templates_view_class(**mail_templates_adminview['kwargs']))
+    admin.add_view(view_class_template(**mail_templates_adminview['kwargs']))
     
     
     return app_
@@ -407,3 +407,81 @@ def admin_settings(db):
     )
     db.session.add(restricted_access)
     db.session.commit()
+
+
+@pytest.fixture
+def mail_template_fixture(db):
+    genre1 = MailTemplateGenres(id=1, name='Test Genre1')
+    genre2 = MailTemplateGenres(id=2, name='Test Genre2')
+    genre3 = MailTemplateGenres(id=3, name='Test Genre3')
+    db.session.add(genre1)
+    db.session.add(genre2)
+    db.session.add(genre3)
+
+    mail_template = MailTemplates(
+        id = 1,
+        mail_subject = 'Test Subject',
+        mail_body = 'Test Body',
+        default_mail = True,
+        mail_genre_id = 1
+    )
+    db.session.add(mail_template)
+    return mail_template
+
+
+@pytest.fixture
+def mail_template_users_fixture(db, mail_template_fixture):
+    user1 = User(id=1, email='user1@example.com')
+    user2 = User(id=2, email='user2@example.com')
+
+    mail_template = mail_template_fixture
+
+    mail_template_user1_recipient = MailTemplateUsers(
+        template=mail_template,
+        user=user1,
+        mail_type=MailType.RECIPIENT
+    )
+    mail_template_user1_cc = MailTemplateUsers(
+        template=mail_template,
+        user=user1,
+        mail_type=MailType.CC
+    )
+    mail_template_user1_bcc = MailTemplateUsers(
+        template=mail_template,
+        user=user1,
+        mail_type=MailType.BCC
+    )
+    mail_template_user2_recipient = MailTemplateUsers(
+        template=mail_template,
+        user=user2,
+        mail_type=MailType.RECIPIENT
+    )
+    mail_template_user2_cc = MailTemplateUsers(
+        template=mail_template,
+        user=user2,
+        mail_type=MailType.CC
+    )
+    mail_template_user2_bcc = MailTemplateUsers(
+        template=mail_template,
+        user=user2,
+        mail_type=MailType.BCC
+    )
+    db.session.add(mail_template_user1_recipient)
+    db.session.add(mail_template_user1_cc)
+    db.session.add(mail_template_user1_bcc)
+    db.session.add(mail_template_user2_recipient)
+    db.session.add(mail_template_user2_cc)
+    db.session.add(mail_template_user2_bcc)
+    db.session.commit()
+
+    users = [user1, user2]
+    mail_template_users = [
+        mail_template_user1_recipient,
+        mail_template_user1_cc,
+        mail_template_user1_bcc,
+        mail_template_user2_recipient,
+        mail_template_user2_cc,
+        mail_template_user2_bcc
+    ]
+
+    return mail_template, users, mail_template_users

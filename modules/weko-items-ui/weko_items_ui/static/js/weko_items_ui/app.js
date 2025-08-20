@@ -2172,8 +2172,8 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
         // These 2 keys is unique for User Information so use these to detect user_information obj
         var affiliatedDivision = 'subitem_affiliated_division/department';
         // Key for dectecting affiliated institution
-        var affiliatedInstitutionName = 'subitem_affiliated_institution_name';
-        var affiliatedInstitutionPosition = 'subitem_affiliated_institution_position';
+        const affiliatedInstitutionName = 'subitem_affiliated_institution_name';
+        const affiliatedInstitutionPosition = 'subitem_affiliated_institution_position';
         for (let key in $rootScope.recordsVM.invenioRecordsSchema.properties) {
           var currentInvenioRecordsSchema = $rootScope.recordsVM.invenioRecordsSchema.properties[key];
           if (currentInvenioRecordsSchema.properties) {
@@ -2182,22 +2182,29 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
               $rootScope.recordsVM.invenioRecordsModel[key] = {};
               var currentInvenioRecordsModel = $rootScope.recordsVM.invenioRecordsModel[key];
               for (let subKey in currentInvenioRecordsSchema.properties) {
-                if (currentInvenioRecordsSchema.properties[subKey].type == "array") {
+                const currentInvenioRecordsSubSchema = currentInvenioRecordsSchema.properties[subKey];
+                if (currentInvenioRecordsSubSchema.type == "array") {
                   //Affiliated institution is an array
-                  let containInstitutionName = currentInvenioRecordsSchema.properties[subKey].items.properties.hasOwnProperty(affiliatedInstitutionName);
-                  let containInstitutionPosition = currentInvenioRecordsSchema.properties[subKey].items.properties.hasOwnProperty(affiliatedInstitutionPosition);
+                  const containInstitutionName = currentInvenioRecordsSubSchema.items.properties.hasOwnProperty(affiliatedInstitutionName);
+                  const containInstitutionPosition = currentInvenioRecordsSubSchema.items.properties.hasOwnProperty(affiliatedInstitutionPosition);
                   if (containInstitutionName && containInstitutionPosition) {
                     //init the Affiliated Institution
                     currentInvenioRecordsModel[subKey] = [];
                     // get arr Affiliated institution form the result data
                     var arrAffiliatedData = data.results[subKey];
-                    if (arrAffiliatedData) {
+                    if (arrAffiliatedData && arrAffiliatedData.length > 0) {
                       // Set value for each pair of Affiliated Institution data
-                      arrAffiliatedData.forEach(function(value, index) {
-                        currentInvenioRecordsModel[subKey][index] = {};
-                        currentInvenioRecordsModel[subKey][index][affiliatedInstitutionName] = value.subitem_affiliated_institution_name;
-                        let institutionPosition = $scope.translationsInstitutePosition(value.subitem_affiliated_institution_position);
-                        currentInvenioRecordsModel[subKey][index][affiliatedInstitutionPosition] = institutionPosition;
+                      currentInvenioRecordsModel[subKey] = arrAffiliatedData.map((value) => {
+                        var institutionInfo = {
+                          [affiliatedInstitutionName]: value.subitem_affiliated_institution_name
+                        };
+                        if (currentInvenioRecordsSubSchema.items.properties.subitem_affiliated_institution_position.type == "select") {
+                          let institutionPosition = $scope.translationsInstitutePosition(value.subitem_affiliated_institution_position);
+                          institutionInfo[affiliatedInstitutionPosition] = institutionPosition;
+                        } else {
+                          institutionInfo[affiliatedInstitutionPosition] = value.subitem_affiliated_institution_position;
+                        }
+                        return institutionInfo
                       });
                     }
                   }

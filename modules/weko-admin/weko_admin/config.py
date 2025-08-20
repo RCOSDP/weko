@@ -157,6 +157,10 @@ WEKO_ADMIN_CACHE_PREFIX = 'admin_cache_{name}_{user_id}'
 WEKO_ADMIN_OUTPUT_FORMAT = 'tsv'
 """Output file format."""
 
+#プロフィール設定テンプレートを格納
+WEKO_ADMIN_PROFILE_SETTING_TEMPLATE  = 'weko_admin/admin/profiles_settings.html'
+"""Language template."""
+
 WEKO_ADMIN_REPORT_HEADERS = {
     'file_download': _('No. Of File Downloads'),
     'file_preview': _('No. Of File Previews'),

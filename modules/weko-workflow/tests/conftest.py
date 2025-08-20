@@ -56,7 +56,7 @@ from invenio_search import RecordsSearch,InvenioSearch
 from invenio_communities.views.ui import blueprint as invenio_communities_blueprint
 from invenio_communities.models import Community
 from invenio_jsonschemas import InvenioJSONSchemas
-from invenio_mail.models import MailTemplateGenres, MailTemplates
+from invenio_mail.models import MailTemplates, MailTemplateGenres, MailTemplateUsers, MailType
 from invenio_oauth2server import InvenioOAuth2Server, InvenioOAuth2ServerREST
 from invenio_oauth2server.models import Client, Token
 from invenio_oauth2server.views import settings_blueprint as oauth2server_settings_blueprint
@@ -5330,3 +5330,79 @@ def db_notification_user_settings(app, db, users):
     db.session.add(notification_settings)
     db.session.commit()
     return notification_settings
+
+@pytest.fixture
+def db_mail_templates(db):
+    genre1 = MailTemplateGenres(id=1, name='Test Genre1')
+    genre2 = MailTemplateGenres(id=2, name='Test Genre2')
+    genre3 = MailTemplateGenres(id=3, name='Test Genre3')
+    db.session.add(genre1)
+    db.session.add(genre2)
+    db.session.add(genre3)
+
+    mail_template = MailTemplates(
+        id = 1,
+        mail_subject = 'Test Subject',
+        mail_body = 'Test Body',
+        default_mail = True,
+        mail_genre_id = 1
+    )
+    db.session.add(mail_template)
+    return mail_template
+
+@pytest.fixture
+def db_mail_template_users(db, db_mail_templates):
+    user1 = User(id=1, email='user1@example.com', active=True)
+    user2 = User(id=2, email='user2@example.com', active=True)
+
+    mail_template = db_mail_templates
+
+    mail_template_user1_recipient = MailTemplateUsers(
+        template=mail_template,
+        user=user1,
+        mail_type=MailType.RECIPIENT
+    )
+    mail_template_user1_cc = MailTemplateUsers(
+        template=mail_template,
+        user=user1,
+        mail_type=MailType.CC
+    )
+    mail_template_user1_bcc = MailTemplateUsers(
+        template=mail_template,
+        user=user1,
+        mail_type=MailType.BCC
+    )
+    mail_template_user2_recipient = MailTemplateUsers(
+        template=mail_template,
+        user=user2,
+        mail_type=MailType.RECIPIENT
+    )
+    mail_template_user2_cc = MailTemplateUsers(
+        template=mail_template,
+        user=user2,
+        mail_type=MailType.CC
+    )
+    mail_template_user2_bcc = MailTemplateUsers(
+        template=mail_template,
+        user=user2,
+        mail_type=MailType.BCC
+    )
+    db.session.add(mail_template_user1_recipient)
+    db.session.add(mail_template_user1_cc)
+    db.session.add(mail_template_user1_bcc)
+    db.session.add(mail_template_user2_recipient)
+    db.session.add(mail_template_user2_cc)
+    db.session.add(mail_template_user2_bcc)
+    db.session.commit()
+
+    users = [user1, user2]
+    mail_template_users = [
+        mail_template_user1_recipient,
+        mail_template_user1_cc,
+        mail_template_user1_bcc,
+        mail_template_user2_recipient,
+        mail_template_user2_cc,
+        mail_template_user2_bcc
+    ]
+
+    return mail_template, users, mail_template_users

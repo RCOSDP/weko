@@ -711,3 +711,11 @@ msgstr "available characters"
 #: msgid "CRIS Linkage"
 msgid "Admin menu_Setting_CRIS Linkage"
 msgstr "CRIS Linkage"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_Advanced"
+msgstr "Advanced"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_Advanced_Profile Settings"
+msgstr "Profile Settings"

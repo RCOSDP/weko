@@ -100,3 +100,16 @@ msgstr "ゲストユーザ申請フォーム案内メール"
 
 msgid "Others"
 msgstr "その他テンプレート"
+
+# Mail templates editing
+msgid "Subject"
+msgstr "件名"
+
+msgid "Recipients"
+msgstr "送信先"
+
+msgid "Please input the Mail Subject and Mail Body."
+msgstr "件名と本文は入力必須項目です。"
+
+msgid "Invalid email addresses ({emails}) detected. Please correct them to match the addresses which are registered in WEKO."
+msgstr "無効なメールアドレス ({emails}) が入力されています。WEKOに登録されているアドレスに修正してください。"

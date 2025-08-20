@@ -536,6 +536,16 @@ WEKO_THEME_ADMIN_MENU = [
             }
         ]
     },
+    {
+        'name': 'Advanced',
+        'order': 18,
+        'submenu': [
+            {
+                'name': 'Profile Settings',
+                'order': 1
+            }
+        ]
+    }
 ]
 
 

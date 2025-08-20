@@ -9,7 +9,6 @@ from flask import current_app
 from elasticsearch.exceptions import NotFoundError
 from invenio_indexer.api import RecordIndexer
 from invenio_search import current_search_client
-from mock import patch, MagicMock
 
 
 from weko_authors.api import WekoAuthors

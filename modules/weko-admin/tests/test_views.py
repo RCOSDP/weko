@@ -1051,3 +1051,32 @@ def test_dbsession_clean(app, db):
     db.session.add(itemtype_name3)
     dbsession_clean(Exception)
     assert ItemTypeName.query.filter_by(id=3).first() is None
+
+
+# .tox/c1/bin/pytest --cov=weko_admin tests/test_views.py::test_send_profile_settings_save -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
+def test_send_profile_settings_save(api, users):
+    url = url_for("weko_admin.send_profile_settings_save")
+    login_user_via_session(client=api, email=users[0]["email"])
+
+    # 正常系テスト
+    valid_data = {
+        "profiles_templates": {
+            "fullname": {"label_name": "Full Name", "visible": True, "format": "text", "options": []},
+            "university": {"label_name": "University", "visible": True, "format": "text", "options": []}
+        }
+    }
+
+    with patch("weko_admin.models.AdminSettings.update", return_value=True):
+        res = api.post(url, json=valid_data)
+        assert response_data(res) == {"status": "success", "msg": "Settings updated successfully"}
+
+    # 無効なデータテスト
+    invalid_data = {}
+
+    res = api.post(url, json=invalid_data)
+    assert response_data(res) == {"status": "error", "msg": "Invalid data"}
+
+    # 例外発生時のテスト
+    with patch("weko_admin.models.AdminSettings.update", side_effect=Exception('DB error')):
+        res = api.post(url, json=valid_data)
+        assert response_data(res) == {"status": "error", "msg": "Failed to update settings"}

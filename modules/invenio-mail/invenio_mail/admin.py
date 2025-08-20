@@ -11,7 +11,7 @@ from flask_babelex import gettext as _
 from flask_mail import Message
 from werkzeug.local import LocalProxy
 
-from invenio_mail.models import MailConfig, MailTemplates
+from invenio_mail.models import MailConfig, MailTemplates, MailTemplateUsers
 
 from . import config
 from .models import MailTemplates
@@ -132,7 +132,9 @@ class MailSettingView(BaseView):
             msg = Message()
             msg.subject = rf['subject']
             msg.body = rf['body']
-            msg.recipients = [rf['recipient']]
+            msg.recipients = rf['recipients']
+            msg.cc = rf.get('cc', [])
+            msg.bcc = rf.get('bcc', [])
             current_app.extensions['mail'].send(msg)
             return True
         except Exception as ex:
@@ -145,8 +147,13 @@ class MailTemplatesView(BaseView):
     def index(self):
         """Mail template top page."""
         mts = MailTemplates.get_templates()
+        flag = current_app.config['INVENIO_MAIL_ADDITIONAL_RECIPIENTS_ENABLED']
+        data = {
+            "mail_templates": mts,
+            "additional_display": flag
+        }
         return self.render(config.INVENIO_MAIL_TEMPLATES_TEMPLATE,
-                           data=json.dumps({"mail_templates": mts}))
+                           data=json.dumps(data))
 
     @expose('help', methods=['GET'])
     def help(self):
@@ -160,24 +167,46 @@ class MailTemplatesView(BaseView):
 
         :return:
         """
+        mail_template = request.get_json()['mail_templates'][0]
+        emails = [
+            email.strip()
+            for key in ['recipients', 'cc', 'bcc']
+            for email in mail_template['content'].get(key, '').split(',')
+            if email.strip()
+        ]
+        invalid_emails = (
+            sorted(set(self.get_invalid_emails(emails) if emails else []))
+        )
 
-        mail_templates = request.get_json()['mail_templates']
-        status = True
-        for m in mail_templates:
-            status = status and MailTemplates.save_and_update(m)
-        if status:
+        if invalid_emails:
+            invalid_emails_message = _(
+                "Invalid email addresses ({emails}) detected. "
+                "Please correct them to match the addresses which are "
+                "registered in WEKO."
+            ).format(emails=", ".join(invalid_emails))
             result = {
-                "status": status,
-                "msg": _("Mail template was successfully updated."),
-                "data": MailTemplates.get_templates()
+                "status": False,
+                "msg": invalid_emails_message,
+                "data": MailTemplates.get_templates(),
             }
+            return jsonify(result), 200
         else:
-            result = {
-                "status": status,
-                "msg": _("Mail template update failed."),
-                "data": MailTemplates.get_templates()
-            }
-        return jsonify(result), 200
+            status = True
+            status = status and MailTemplates.save_and_update(mail_template)
+            status = status and MailTemplateUsers.save_and_update(mail_template)
+            if status:
+                result = {
+                    "status": status,
+                    "msg": _("Mail template was successfully updated."),
+                    "data": MailTemplates.get_templates()
+                }
+            else:
+                result = {
+                    "status": status,
+                    "msg": _("Mail template update failed."),
+                    "data": MailTemplates.get_templates()
+                }
+            return jsonify(result), 200
 
     @expose('/delete', methods=['DELETE'])
     def delete_mail_template(self):
@@ -201,6 +230,28 @@ class MailTemplatesView(BaseView):
                 "data": MailTemplates.get_templates()
             }
         return jsonify(result), 200
+
+
+    def get_invalid_emails(self, emails):
+        """Get invalid email addresses.
+        
+        Return both of unregistered and inactive account emails.
+
+        Args:
+            emails (list): list of email addresses
+        
+        Returns:
+            list: list of invalid email addresses
+
+        """
+        from invenio_accounts.models import User
+
+        invalid_emails = []
+        for m in emails:
+            valid_mail = User.query.filter_by(email=m, active=True).first()
+            if not valid_mail:
+                invalid_emails.append(m)
+        return invalid_emails
 
 
 mail_adminview = {

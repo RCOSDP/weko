@@ -42,6 +42,7 @@ from weko_accounts.utils import roles_required
 from weko_records.models import SiteLicenseInfo
 
 from werkzeug.local import LocalProxy
+from .models import AdminSettings
 
 from .api import send_site_license_mail
 from .config import WEKO_ADMIN_PERMISSION_ROLE_REPO, \
@@ -854,3 +855,26 @@ def dbsession_clean(exception):
         except:
             db.session.rollback()
     db.session.remove()
+
+#プロフィール設定画面のセーブの為のエンドポイントを設定
+@blueprint_api.route("/profile_settings/save", methods=["POST"])
+#ログインユーザーの設定
+@login_required
+@roles_required([WEKO_ADMIN_PERMISSION_ROLE_SYSTEM,
+                 WEKO_ADMIN_PERMISSION_ROLE_REPO])
+    # データベースに保存する処理
+def send_profile_settings_save():
+    data = request.get_json()
+    if not data or 'profiles_templates' not in data:
+        return jsonify({"status": "error", "msg": "Invalid data"}), 400
+
+    profiles_templates = data['profiles_templates']
+
+    try:
+        # settingsカラムを更新または新規作成
+        AdminSettings.update(name='profiles_items_settings', settings=profiles_templates)
+        return jsonify({"status": "success", "msg": "Settings updated successfully"}), 200
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error("Error updating profile settings: {}".format(str(e)))
+        return jsonify({"status": "error", "msg": "Failed to update settings"}), 500

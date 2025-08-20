@@ -25,6 +25,8 @@ from invenio_db import db
 from sqlalchemy import event
 from sqlalchemy.ext.hybrid import hybrid_property
 
+from weko_admin.models import AdminSettings
+
 from .validators import validate_username
 
 
@@ -84,45 +86,53 @@ class UserProfile(db.Model):
     position = db.Column('position', db.String(100))
 
     """Position"""
-    otherPosition = db.Column('otherPosition', db.String(100))
+    item1 = db.Column('otherPosition', db.String(100))
 
     """Phone number"""
-    phoneNumber = db.Column('phoneNumber', db.String(15))
+    item2 = db.Column('phoneNumber', db.String(15))
 
     """Affiliation institute name 1"""
     """Affiliation institute name (n)"""
-    instituteName = db.Column('instituteName', db.String(100))
+    item3 = db.Column('instituteName', db.String(100))
 
     """Affiliation institute position (n)"""
-    institutePosition = db.Column('institutePosition', db.String(255))
+    item4 = db.Column('institutePosition', db.String(255))
 
     """Affiliation institute name 2"""
     """Affiliation institute name (n)"""
-    instituteName2 = db.Column('instituteName2', db.String(100))
+    item5 = db.Column('instituteName2', db.String(100))
 
     """Affiliation institute position (n)"""
-    institutePosition2 = db.Column('institutePosition2', db.String(255))
+    item6 = db.Column('institutePosition2', db.String(255))
 
     """Affiliation institute name 3"""
     """Affiliation institute name (n)"""
-    instituteName3 = db.Column('instituteName3', db.String(100))
+    item7 = db.Column('instituteName3', db.String(100))
 
     """Affiliation institute position (n)"""
-    institutePosition3 = db.Column('institutePosition3', db.String(255))
+    item8 = db.Column('institutePosition3', db.String(255))
 
     """Affiliation institute name 4"""
     """Affiliation institute name (n)"""
-    instituteName4 = db.Column('instituteName4', db.String(100))
+    item9 = db.Column('instituteName4', db.String(100))
 
     """Affiliation institute position (n)"""
-    institutePosition4 = db.Column('institutePosition4', db.String(255))
+    item10 = db.Column('institutePosition4', db.String(255))
 
     """Affiliation institute name 5"""
     """Affiliation institute name (n)"""
-    instituteName5 = db.Column('instituteName5', db.String(100))
+    item11 = db.Column('instituteName5', db.String(100))
 
     """Affiliation institute position (n)"""
-    institutePosition5 = db.Column('institutePosition5', db.String(255))
+    item12 = db.Column('institutePosition5', db.String(255))
+
+    item13 = db.Column('item13', db.String(255))
+
+    item14 = db.Column('item14', db.String(255))
+
+    item15 = db.Column('item15', db.String(255))
+
+    item16 = db.Column('item16', db.String(255))
 
     """s3_endpoint_url"""
     s3_endpoint_url = db.Column('s3_endpoint_url', db.String(128))
@@ -198,23 +208,21 @@ class UserProfile(db.Model):
 
         :return:
         """
-        institute_dict = {
-            1: {'subitem_affiliated_institution_name': self.instituteName,
-                'subitem_affiliated_institution_position':
-                    self.institutePosition},
-            2: {'subitem_affiliated_institution_name': self.instituteName2,
-                'subitem_affiliated_institution_position':
-                    self.institutePosition2},
-            3: {'subitem_affiliated_institution_name': self.instituteName3,
-                'subitem_affiliated_institution_position':
-                    self.institutePosition3},
-            4: {'subitem_affiliated_institution_name': self.instituteName4,
-                'subitem_affiliated_institution_position':
-                    self.institutePosition4},
-            5: {'subitem_affiliated_institution_name': self.instituteName5,
-                'subitem_affiliated_institution_position':
-                    self.institutePosition5}
-        }
+        profile_setting = AdminSettings.get('profiles_items_settings', dict_to_object=False)
+        item_field_settings = [
+            profile_setting.get("item"+ str(i), {}).get("visible", False)  for i in range(3, 17)]
+        institute_dict = [
+            {"subitem_affiliated_institution_name": self.item3 if item_field_settings[0] else "",
+            'subitem_affiliated_institution_position': self.item4 if item_field_settings[1] else ""},
+            {'subitem_affiliated_institution_name': self.item5 if item_field_settings[2] else "",
+            'subitem_affiliated_institution_position': self.item6 if item_field_settings[3] else ""},
+            {'subitem_affiliated_institution_name': self.item7 if item_field_settings[4] else "",
+            'subitem_affiliated_institution_position':self.item8 if item_field_settings[5] else ""},
+            {'subitem_affiliated_institution_name': self.item9 if item_field_settings[6] else "",
+            'subitem_affiliated_institution_position': self.item10 if item_field_settings[7] else ""},
+            {'subitem_affiliated_institution_name': self.item11 if item_field_settings[8] else "",
+            'subitem_affiliated_institution_position': self.item12 if item_field_settings[9] else ""}
+        ]
         return institute_dict
 
 

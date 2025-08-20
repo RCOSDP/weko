@@ -3286,6 +3286,29 @@ def validate_user_mail_and_index(request_data):
         result['error'] = str(ex)
     return result
 
+#制限公開、アイテム自動入力機能の役職を取得、整形し画面に反映させる。
+def positionlist_current():
+    #元データを取得
+    current_list =AdminSettings.get('profiles_items_settings', dict_to_object=False)
+    if not current_list:
+        return []
+    
+    #取得したcurrent_listの中から'position'キーの'select'をリストで取得
+    current_list = current_list.get('position', {}).get('select', [])
+    if not current_list:
+        return []
+
+    #リストの最初の項目を抜き出す。
+    current_select = current_list[0]
+
+    #パイプで分割してリストに変換。例）A|B|C → ['A','B','C']
+    current_select = current_select.split('|')
+
+    #既存リストWEKO_USERPROFILES_POSITION_LIST_GENERALをもとにタプルに変換。
+    settings_tuples = [(index,_(index)) for index in current_select]
+
+    #最終的なリストを返す。
+    return settings_tuples
 
 def recursive_form(schema_form):
     """
@@ -3303,7 +3326,7 @@ def recursive_form(schema_form):
                 == 'select'):
             dict_data = []
             positions = current_app.config.get(
-                'WEKO_USERPROFILES_POSITION_LIST')
+                'WEKO_USERPROFILES_POSITION_LIST')+positionlist_current()
             for val in positions:
                 if val[0]:
                     current_position = {

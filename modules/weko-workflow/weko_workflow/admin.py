@@ -25,7 +25,6 @@ import re
 import uuid
 import json
 
-from flask_wtf import FlaskForm
 from flask import abort, current_app, flash, jsonify, request, url_for
 from flask_admin import BaseView, expose
 from flask_login import current_user

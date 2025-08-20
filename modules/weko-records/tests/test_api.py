@@ -35,14 +35,15 @@ from weko_deposit.api import WekoDeposit
 from weko_index_tree.models import Index
 from unittest.mock import patch,MagicMock
 import uuid
-from sqlalchemy.exc import IntegrityError,SQLAlchemyError
+from sqlalchemy import text
+from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm.exc import NoResultFound
 
 from weko_records.api import FeedbackMailList, RequestMailList, ItemApplication, FilesMetadata, ItemLink, \
     ItemsMetadata, ItemTypeEditHistory, ItemTypeNames, ItemTypeProps, \
     ItemTypes, Mapping, JsonldMapping, SiteLicense, RecordBase, WekoRecord
 from weko_records.models import ItemReference, ItemType, ItemTypeJsonldMapping, ItemTypeName, \
-    SiteLicenseInfo, SiteLicenseIpAddress
+    SiteLicenseInfo, SiteLicenseIpAddress, ItemTypeProperty
 from jsonschema.validators import Draft4Validator
 from datetime import datetime, timedelta
 
@@ -1274,6 +1275,102 @@ def test_item_type_props(app, db):
     #assert records[0].sort==None
 
 #     def revisions(self):
+
+# .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::test_create -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records/.tox/c1/tmp
+def test_create(db, simple_item_type):
+    # Note: A property with ID 1 already exists in the test database
+    # Set ID sequence to start from 2
+    db.session.execute(
+        text("SELECT setval('item_type_property_id_seq', 2, false);"))
+    db.session.commit
+
+    # Create new property with new ID
+    new_prop = ItemTypeProps.create(
+        property_id=2,
+        name='test property 2',
+        schema={'type': 'string'},
+        form_single={'title_i18n': {'en': 'test_propety'}},
+        form_array=['test form']
+    )
+    assert ItemTypeProperty.query.count() == 2
+    assert ItemTypeProperty.query.get(new_prop.id).name == 'test property 2'
+
+    # Create new property with existing ID (≒ update)
+    new_prop = ItemTypeProps.create(
+        property_id=2,
+        name='test property 3',
+        schema={'type': 'string'},
+        form_single={'title_i18n': {'en': 'test property'}},
+        form_array=['test form']
+    )
+    assert ItemTypeProperty.query.count() == 2
+    assert ItemTypeProperty.query.get(new_prop.id).name == 'test property 3'
+
+    # Error if name is empty
+    with pytest.raises(Exception) as e:
+        ItemTypeProps.create(
+            property_id=3,
+            name='',
+            schema={'type': 'string'},
+            form_single={'title_i18n': {'en': 'test property'}},
+            form_array=['test form']
+        )
+    assert e.type == ValueError
+    assert str(e.value) == 'The property name is required and cannot be empty.'
+
+    # Error if the property has a new ID, but the name is duplicated
+    with pytest.raises(Exception) as e:
+        ItemTypeProps.create(
+            property_id=4,
+            name='test property 3',
+            schema={'type': 'string'},
+            form_single={'title_i18n': {'en': 'test property'}},
+            form_array=['test form']
+        )
+    assert e.type == ValueError
+    assert 'The property name "test property 3" already exists.' in str(e.value)
+
+# .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::test_create_with_property_id -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records/.tox/c1/tmp
+def test_create_with_property_id(simple_item_type):
+    # Note: A property with ID 1 already exists in the test database
+    # Create new property with new id
+    new_prop = ItemTypeProps.create_with_property_id(
+        property_id=2,
+        name='test property 2',
+        schema={'type': 'string'},
+        form_single={'title_i18n': {'en': 'test property'}},
+        form_array=['test form']
+    )
+    assert ItemTypeProperty.query.count() == 2
+    assert ItemTypeProperty.query.get(new_prop.id).name == 'test property 2'
+
+    # Error if name is empty
+    with pytest.raises(Exception) as e:
+        ItemTypeProps.create_with_property_id(
+            property_id=3,
+            name='',
+            schema={'type': 'string'},
+            form_single={'title_i18n': {'en': 'test property'}},
+            form_array=['test form']
+        )
+    assert e.type == ValueError
+    assert str(e.value) == 'The property name is required and cannot be empty.'
+
+    # Error if the property has a new ID, but the name is duplicated
+    with pytest.raises(Exception) as e:
+        ItemTypeProps.create_with_property_id(
+            property_id=4,
+            name='test property 2',
+            schema={'type': 'string'},
+            form_single={'title_i18n': {'en': 'test property'}},
+            form_array=['test form']
+        )
+    assert e.type == ValueError
+    assert str(e.value) == (
+        'The property name "test property 2" already exists.'
+    )
+
+
 def test_revisions_ItemTypeProps(app):
     test = ItemTypeProps(data={})
     test.model = "Not None"

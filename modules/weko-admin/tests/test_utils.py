@@ -891,29 +891,19 @@ class TestStatisticMail:
 
 #     def send_mail(cls, recipient, body, subject):
 # .tox/c1/bin/pytest --cov=weko_admin tests/test_utils.py::TestStatisticMail::test_send_mail -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
-    def test_send_mail(self,client,mocker):
-        recipient = "test@test.org"
-        body = {
-            "user_name":"テスト 太郎",
-            "organization":"No Site Name",
-            "time":"2022-10",
-            "data":"----------------------------------------\n[Title] : title2\n[URL] : http://test.com/records/2\n[DetailView] : 3\n[FileDownload] : \n    test_file2_1.tsv(10)\n    test_file2_2.tsv(20)\n",
-            "total_item":1,
-            "total_file":2,
-            "total_detail_view":3,
-            "total_download":30
-        }
-        body = str(body)
-        subject = "[No Site Name]2022-10 利用統計レポート"
-
-        mock_send = mocker.patch("weko_admin.utils.MailSettingView.send_statistic_mail",return_value=True)
-        test = {
-            "subject":subject,
-            "body":body,
-            "recipient":recipient
-        }
-        result = StatisticMail.send_mail(recipient,body,subject)
-        mock_send.assert_called_with(test)
+    def test_send_mail(self, app):
+        recipient = "test@example.com"
+        body = "Test Body"
+        subject = "Test Subject"
+        with patch("weko_admin.utils.MailSettingView.send_statistic_mail", return_value=True) as mock_send:
+            with app.app_context():
+                result = StatisticMail.send_mail(recipient, body, subject)
+                assert result == True
+                mock_send.assert_called_once_with({
+                    'subject': subject,
+                    'body': body,
+                    'recipients': recipient
+                })
 
 
 #     def build_statistic_mail_subject(cls, title, send_date,

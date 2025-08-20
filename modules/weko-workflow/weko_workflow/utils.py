@@ -45,7 +45,7 @@ from invenio_db import db
 from invenio_files_rest.models import Bucket, ObjectVersion
 from invenio_i18n.ext import current_i18n
 from invenio_mail.admin import MailSettingView
-from invenio_mail.models import MailConfig, MailTemplates
+from invenio_mail.models import MailConfig, MailTemplates, MailType, MailTemplateUsers
 from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidrelations.models import PIDRelation
 from invenio_pidstore.models import PersistentIdentifier, \
@@ -2527,11 +2527,24 @@ def send_mail_reminder(mail_info):
 
     :mail_info: object
     """
-    subject, body = get_mail_data(mail_info.get('mail_id'))
-    if not body:
+    mail_data = get_mail_data(mail_info.get('mail_id'))
+
+    subject = mail_data.get('mail_subject')
+    body = mail_data.get('mail_body')
+    recipients = mail_data.get('mail_recipients', [])
+
+    if not subject:
+        raise ValueError('Cannot get email subject')
+    elif not body:
         raise ValueError('Cannot get email body')
-    body = replace_characters(mail_info, body)
-    if not send_mail(subject, mail_info.get('mail_address'), body):
+    else:
+        body = replace_characters(mail_info, body)
+        recipients.extend([mail_info.get('mail_address')])
+
+    mail_data['mail_body'] = body
+    mail_data['mail_recipients'] = recipients
+
+    if not send_mail(mail_data):
         raise ValueError('Cannot send mail')
 
 
@@ -2540,11 +2553,18 @@ def send_mail_approval_done(mail_info):
 
     :mail_info: object
     """
-    subject, body = email_pattern_approval_done(
-        mail_info.get('item_type_name'))
-    if body and subject:
+    mail_data = email_pattern_approval_done(mail_info.get('item_type_name'))
+
+    subject = mail_data.get('mail_subject')
+    body = mail_data.get('mail_body')
+    recipients = mail_data.get('mail_recipients', [])
+
+    if subject and body:
         body = replace_characters(mail_info, body)
-        send_mail(subject, mail_info.get('register_user_mail'), body)
+        recipients.extend([mail_info.get('register_user_mail')])
+        mail_data['mail_body'] = body
+        mail_data['mail_recipients'] = recipients
+        send_mail(mail_data)
 
 
 def send_mail_registration_done(mail_info, mail_id):
@@ -2553,10 +2573,18 @@ def send_mail_registration_done(mail_info, mail_id):
     :mail_info: object
     :mail_id: mail template id
     """
-    subject, body = get_mail_data(mail_id)
-    if body and subject:
+    mail_data = get_mail_data(mail_id)
+
+    subject = mail_data.get('mail_subject')
+    body = mail_data.get('mail_body')
+    recipients = mail_data.get('mail_recipients', [])
+
+    if subject and body:
         body = replace_characters(mail_info, body)
-        send_mail(subject, mail_info.get('register_user_mail'), body)
+        recipients.extend([mail_info.get('register_user_mail')])
+        mail_data['mail_body'] = body
+        mail_data['mail_recipients'] = recipients
+        send_mail(mail_data)
 
 
 def send_mail_request_approval(mail_info):
@@ -2564,34 +2592,49 @@ def send_mail_request_approval(mail_info):
 
     :mail_info: object
     """
-    if mail_info:
-        approver_mail = subject = body = None
+    if not mail_info:
+        return
+    else:
+        approver_mail = mail_data = subject = body = None
         next_step = mail_info.get('next_step')
         if next_step == 'approval_advisor':
             approver_mail = mail_info.get('advisor_mail_address')
         elif next_step == 'approval_guarantor':
             approver_mail = mail_info.get('guarantor_mail_address')
         if approver_mail:
-            subject, body = email_pattern_request_approval(
+            mail_data = email_pattern_request_approval(
                 mail_info.get('item_type_name'), next_step)
-        if body and subject:
+
+    if not mail_data:
+        return
+    else:
+        subject = mail_data.get('mail_subject')
+        body = mail_data.get('mail_body')
+        recipients = mail_data.get('mail_recipients', [])
+        if subject and body:
             subject = replace_characters(mail_info, subject)
             body = replace_characters(mail_info, body)
-            send_mail(subject, approver_mail, body)
+            recipients.extend([approver_mail])
+            mail_data['mail_subject'] = subject
+            mail_data['mail_body'] = body
+            mail_data['mail_recipients'] = recipients
+            send_mail(mail_data)
 
 
-def send_mail(subject, recipient, body):
+def send_mail(mail_data):
     """Send an email via the Flask-Mail extension.
 
     :subject: Email subject
-    :recipient: Email recipient
+    :recipients: Email recipients
     :body: content of email
     """
-    if recipient:
+    if mail_data:
         rf = {
-            'subject': subject,
-            'body': body,
-            'recipient': recipient
+            'subject': mail_data.get('mail_subject'),
+            'recipients': mail_data.get('mail_recipients'),
+            'cc': mail_data.get('mail_cc'),
+            'bcc': mail_data.get('mail_bcc'),
+            'body': mail_data.get('mail_body')
         }
         return MailSettingView.send_statistic_mail(rf)
 
@@ -2645,9 +2688,53 @@ def get_mail_data(mail_id):
     """
     mt = MailTemplates.get_by_id(mail_id)
     if mt:
-        return mt.mail_subject, mt.mail_body
+        subject = mt.mail_subject
+        body = mt.mail_body
     else:
-        return "", ""
+        return {
+            "mail_subject": "",
+            "mail_body": "",
+            "mail_recipients": [],
+            "mail_cc": [],
+            "mail_bcc": []
+        }
+
+    recipients = []
+    cc = []
+    bcc = []
+    invalid_ids = []
+    records = MailTemplateUsers.query.filter_by(template_id=mail_id).all()
+    for record in records:
+        user = User.query.filter_by(id=record.user_id, active=True).first()
+        if user:
+            if record.mail_type == MailType.RECIPIENT:
+                recipients.append(user.email)
+            elif record.mail_type == MailType.CC:
+                cc.append(user.email)
+            else:
+                bcc.append(user.email)
+        else:
+            invalid_ids.append(record.user_id)
+
+    if invalid_ids:
+        for id in invalid_ids:
+            MailTemplateUsers.delete_by_user_id(id)
+
+    default_data = {
+        "mail_subject": subject,
+        "mail_body": body
+    }
+    additional_data = {
+        "mail_recipients": recipients,
+        "mail_cc": cc,
+        "mail_bcc": bcc
+    }
+    flag = current_app.config['INVENIO_MAIL_ADDITIONAL_RECIPIENTS_ENABLED']
+    if not flag:
+        return default_data
+    else:
+        return {**default_data, **additional_data}
+
 
 def get_mail_data_tpl(file_name):
     """Get data of a email.
@@ -3501,16 +3588,26 @@ def save_activity_data(data: dict) -> NoReturn:
     if activity_id:
         WorkActivity().update_activity(activity_id, activity_data)
 
-def send_mail_url_guest_user(mail_info: dict) -> bool:
+def send_mail_url_guest_user(mail_info):
     """Send mail url guest_user.
 
     :mail_info: object
     """
-    subject, body = get_mail_data(mail_info.get('mail_id'))
-    if not body:
+    mail_data = get_mail_data(mail_info.get('mail_id'))
+
+    subject  = mail_data.get('mail_subject')
+    body = mail_data.get('mail_body')
+    recipients = mail_data.get('mail_recipients', [])
+
+    if not subject or not body:
         return False
-    body = replace_characters(mail_info, body)
-    if not send_mail(subject, mail_info.get('mail_address'), body):
+    else:
+        body = replace_characters(mail_info, body)
+        recipients.extend([mail_info.get('mail_address')])
+        mail_data['mail_body'] = body
+        mail_data['mail_recipients'] = recipients
+
+    if not send_mail(mail_data):
         return False
     else:
         return True
@@ -4076,10 +4173,18 @@ def process_send_mail(mail_info, mail_id):
         current_app.logger.error('Mail address is not defined')
         return
 
-    subject, body = get_mail_data(mail_id)
-    if body and subject:
+    mail_data = get_mail_data(mail_id)
+
+    subject = mail_data.get('mail_subject')
+    body = mail_data.get('mail_body')
+    recipients = mail_data.get('mail_recipients', [])
+
+    if subject and body:
         body = replace_characters(mail_info, body)
-        return send_mail(subject, mail_info['mail_recipient'], body)
+        recipients.extend([mail_info.get('mail_recipient')])
+        mail_data['mail_body'] = body
+        mail_data['mail_recipients'] = recipients
+        send_mail(mail_data)
 
 
 def process_send_mail_tpl(mail_info, mail_pattern_name):
@@ -4267,7 +4372,21 @@ def get_usage_data(item_type_id, activity_detail, user_profile=None):
             phone_number='',
             usage_report_id='',
             wf_issued_date=wf_issued_date,
-            item_title=item_title
+            item_title=item_title,
+            item3='',
+            item4='',
+            item5='',
+            item6='',
+            item7='',
+            item8='',
+            item9='',
+            item10='',
+            item11='',
+            item12='',
+            item13='',
+            item14='',
+            item15='',
+            item16='',
         )
     elif item_type_id in cfg.get('WEKO_WORKFLOW_USAGE_REPORT_ITEM_TYPES_LIST'):
         usage_record_id = extra_info.get('usage_record_id')
@@ -4279,8 +4398,22 @@ def get_usage_data(item_type_id, activity_detail, user_profile=None):
             "subitem_affiliated_division/department":
                 "affiliated_division_department",
             "subitem_position": "position",
-            "subitem_position(others)": "position_other",
-            "subitem_phone_number": "phone_number",
+            "subitem_position(others)": "item1",
+            "subitem_phone_number": "item2",
+            "subitem_item3": "item3",
+            "subitem_item4": "item4",
+            "subitem_item5": "item5",
+            "subitem_item6": "item6",
+            "subitem_item7": "item7",
+            "subitem_item8": "item8",
+            "subitem_item9": "item9",
+            "subitem_item10": "item10",
+            "subitem_item11": "item11",
+            "subitem_item12": "item12",
+            "subitem_item13": "item13",
+            "subitem_item14": "item14",
+            "subitem_item15": "item15",
+            "subitem_item16": "item16",
         }
         result = dict(
             usage_type='Report',
@@ -4294,7 +4427,21 @@ def get_usage_data(item_type_id, activity_detail, user_profile=None):
             phone_number='',
             usage_report_id=activity_detail.activity_id,
             wf_issued_date=wf_issued_date,
-            item_title=''
+            item_title='',
+            item3='',
+            item4='',
+            item5='',
+            item6='',
+            item7='',
+            item8='',
+            item9='',
+            item10='',
+            item11='',
+            item12='',
+            item13='',
+            item14='',
+            item15='',
+            item16='',
         )
         related_activity_id = extra_info.get('usage_activity_id')
         if not related_activity_id:

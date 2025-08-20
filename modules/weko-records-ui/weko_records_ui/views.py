@@ -744,6 +744,7 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
     enable_request_maillist = False
     is_no_content_item_application = False
     password_checkflag = False
+    is_display_request_form = False
     restricted_access_settings = AdminSettings.get(name="restricted_access", dict_to_object=False)
     if restricted_access_settings:
         # enable password

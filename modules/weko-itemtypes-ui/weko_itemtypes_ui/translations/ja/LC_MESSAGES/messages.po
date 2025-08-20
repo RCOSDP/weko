@@ -85,23 +85,33 @@ msgstr "日付（タイプなし）"
 
 #: weko_itemtypes_ui/admin.py:486
 msgid "No item type name Error"
-msgstr ""
+msgstr "アイテムタイプ名を入力してください"
 
 #: weko_itemtypes_ui/admin.py:488
 msgid "No file Error"
-msgstr ""
+msgstr "ファイルが未選択です"
 
 #: weko_itemtypes_ui/admin.py:491
 msgid "Illegal mimetype Error"
-msgstr ""
+msgstr "MIMEタイプエラー"
 
-#: weko_itemtypes_ui/admin.py:569
-msgid "Failed to import Item type."
+#: weko_itemtypes_ui/admin.py:512
+msgid "Unregistered properties detected."
+msgstr "未登録のプロパティを検出しました"
+
+#: weko_itemtypes_ui/admin.py:550
+msgid "Failed to import the item type."
 msgstr "アイテムタイプのインポートに失敗しました"
 
-#: weko_itemtypes_ui/admin.py:574 weko_itemtypes_ui/admin.py:576
-msgid "Successfuly import Item type."
-msgstr "アイテムタイプをインポートしました"
+#: weko_itemtypes_ui/admin.py:556 weko_itemtypes_ui/admin.py:574
+msgid "The item type imported successfully."
+msgstr "アイテムタイプのインポートに成功しました"
+
+#: weko_itemtypes_ui/admin.py:565
+msgid ""
+"The item type imported successfully, but these property IDs were "
+"duplicated and were not imported:"
+msgstr "アイテムタイプのインポートに成功しました。ただし、以下のプロパティはID重複のため既存のプロパティに置き換えられます。"
 
 #: weko_itemtypes_ui/admin.py:657
 msgid "Failed to save property."

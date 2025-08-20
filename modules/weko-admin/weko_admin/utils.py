@@ -929,7 +929,7 @@ class StatisticMail:
         rf = {
             'subject': subject,
             'body': body,
-            'recipient': recipient
+            'recipients': recipient
         }
         current_app.logger.debug("END Prepare Feedback Mail Data")
         return MailSettingView.send_statistic_mail(rf)

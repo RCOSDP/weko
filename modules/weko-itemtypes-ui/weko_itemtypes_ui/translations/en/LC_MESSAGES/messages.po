@@ -93,12 +93,22 @@ msgstr ""
 msgid "Illegal mimetype Error"
 msgstr ""
 
-#: weko_itemtypes_ui/admin.py:569
-msgid "Failed to import Item type."
+#: weko_itemtypes_ui/admin.py:512
+msgid "Unregistered properties detected."
 msgstr ""
 
-#: weko_itemtypes_ui/admin.py:574 weko_itemtypes_ui/admin.py:576
-msgid "Successfuly import Item type."
+#: weko_itemtypes_ui/admin.py:550
+msgid "Failed to import the item type."
+msgstr ""
+
+#: weko_itemtypes_ui/admin.py:556 weko_itemtypes_ui/admin.py:574
+msgid "The item type imported successfully."
+msgstr ""
+
+#: weko_itemtypes_ui/admin.py:565
+msgid ""
+"The item type imported successfully, but these property IDs were "
+"duplicated and were not imported:"
 msgstr ""
 
 #: weko_itemtypes_ui/admin.py:657
