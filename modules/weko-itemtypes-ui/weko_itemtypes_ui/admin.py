@@ -28,11 +28,13 @@ from flask import (
     abort, current_app, flash, json, jsonify, redirect,
     request, session, url_for, send_file, Response
 )
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.sql.expression import null
 from flask_admin import BaseView, expose
 from flask_babelex import gettext as _
 from flask_login import current_user
 from zipfile import ZipFile, ZIP_DEFLATED
+from werkzeug.exceptions import HTTPException
 from marshmallow_sqlalchemy import SQLAlchemyAutoSchema
 
 from invenio_db import db
@@ -130,108 +132,106 @@ class ItemTypeMetaDataView(BaseView):
         """Soft-delete an item type."""
         check = is_import_running()
         if check == "is_import_running":
+            current_app.logger.error("Import is running. Failed to delete item type.")
             flash(_('Cannot delete item type. Import is in progress.'), 'error')
             abort(400)
 
-        if item_type_id > 0:
-            record = ItemTypes.get_record(id_=item_type_id)
-            if record is not None:
-                # Check harvesting_type
-                if record.model.harvesting_type:
-                    flash(
-                        _('Cannot delete item type. It is used for harvesting.'),
-                        'error'
-                    )
-                    abort(400)
-                # Get all versions
-                all_records = ItemTypes.get_records_by_name_id(
-                    name_id=record.model.name_id
-                )
-                # Check that item type is already registered to an item or not
-                for item in all_records:
-                    if ItemsMetadata.count_registered_item_metadata(item.id) > 0:
-                        flash(
-                            _('Cannot delete item type. Item of this type already exists.'),
-                            'error'
-                        )
-                        abort(400)
-                # Check that item type is used in workflow
-                workflow = WorkFlow()
-                workflow_list = workflow.get_workflow_by_itemtype_id(item_type_id)
-                if workflow_list:
-                    current_app.logger.info("Item type is used in workflow.")
-                    flash(
-                        _('Cannot delete item type. It is used in some workflows.'),
-                        'error'
-                    )
-                    abort(400)
+        record = ItemTypes.get_record(id_=item_type_id)
+        if record is None:
+            current_app.logger.error(f"Item type not found: {item_type_id}")
+            flash(_('Item type not found.'), 'error')
+            abort(404)
 
-                # Check that item type is used SWORD API
-                jsonld_mappings = JsonldMapping.get_by_itemtype_id(item_type_id)
-                for jsonld_mapping in jsonld_mappings:
-                    if SwordClient.get_clients_by_mapping_id(jsonld_mapping.id):
-                        current_app.logger.info("Item type is used SWORD API.")
-                        flash(_(
-                            'Cannot delete item type. It is used in SWORD API '
-                            'JSON-LD import settings.'
-                        ), 'error')
-                        abort(400)
+        # Check harvesting_type
+        if record.model.harvesting_type:
+            current_app.logger.error(
+                f"Item type {item_type_id} is used for harvesting."
+            )
+            flash(_('Cannot delete item type. It is used for harvesting.'), 'error')
+            abort(400)
+        # Get records by item type name
+        list_item_type = ItemTypes.get_records_by_name_id(
+            name_id=record.model.name_id
+        )
+        list_item_exist = [
+            item_type for item_type in list_item_type
+            if ItemsMetadata.count_registered_item_metadata(item_type.id) > 0
+        ]
+        # Check that item type is already registered to an item or not
+        if list_item_exist:
+            current_app.logger.error(
+                f"Item type {item_type_id} is used in item metadata."
+            )
+            flash(
+                _('Cannot delete item type. Item of this type already exists.'),
+                'error'
+            )
+            abort(400)
+        # Check that item type is used in workflow
+        workflow = WorkFlow()
+        workflow_list = workflow.get_workflow_by_itemtype_id(item_type_id)
+        if workflow_list:
+            current_app.logger.error("Item type {item_type_id} is used in workflow.")
+            flash(
+                _('Cannot delete item type. It is used in some workflows.'),
+                'error'
+            )
+            abort(400)
 
-                # Get item type name
-                item_type_name = ItemTypeNames.get_record(
-                    id_=record.model.name_id)
-                if all_records and item_type_name:
-                    try:
-                        # Delete item type name
-                        ItemTypeNames.delete(item_type_name)
-                        # Delete item typea
-                        for k in all_records:
-                            k.delete()
-                        db.session.commit()
-                        current_app.logger.info(
-                            f"Item type deleted: {item_type_name.name}"
-                        )
-                    except Exception:
-                        db.session.rollback()
-                        exec_info = sys.exc_info()
-                        tb_info = traceback.format_tb(exec_info[2])
-                        current_app.logger.error(
-                            "Unexpected error: {}".format(exec_info))
-                        UserActivityLogger.error(
-                            operation="ITEM_TYPE_DELETE",
-                            target_key=item_type_id,
-                            remarks=tb_info[0]
-                        )
-                        traceback.print_exc()
-                        flash(_('Unexpected error. Failed to delete item type.'), 'error')
-                        abort(500)
+        # Check that item type is used SWORD API
+        jsonld_mappings = JsonldMapping.get_by_itemtype_id(item_type_id)
+        used_jsonld_mappings = [
+            mapping for mapping in jsonld_mappings
+            if SwordClient.get_clients_by_mapping_id(mapping.id)
+        ]
+        if used_jsonld_mappings:
+            current_app.logger.error(
+                "Item type {} is used SWORD API."
+                .format(record.model.item_type_name)
+            )
+            flash(_(
+                'Cannot delete item type. It is used in SWORD API JSON-LD '
+                'import settings.'
+            ), 'error')
+            abort(400)
 
-                    for jsonld_mapping in jsonld_mappings:
-                        try:
-                            # Delete itemtype JOSN-LD mapping
-                            JsonldMapping.delete(jsonld_mapping.id)
-                            db.session.commit()
-                            current_app.logger.info(
-                                f"JSON-LD mapping deleted: {jsonld_mapping.name}"
-                            )
-                        except Exception:
-                            db.session.rollback()
-                            current_app.logger.error(
-                                "Failed to delete JSON-LD mapping: {}"
-                                .format(jsonld_mapping.name)
-                            )
-                            traceback.print_exc()
+        try:
+            # Delete item type name
+            ItemTypeNames.delete(record.model.name_id)
+            # Delete item typea
+            for item_type in list_item_type:
+                item_type.delete()
+            # Delete itemtype JOSN-LD mapping
+            for mapping in jsonld_mappings:
+                JsonldMapping.delete(mapping.id)
+            db.session.commit()
+            current_app.logger.info(
+                f"Item type deleted: {record.model.item_type_name}"
+            )
+            current_app.logger.debug(
+                'Itemtype delete: {}'.format(item_type_id))
+            UserActivityLogger.info(
+                operation="ITEM_TYPE_DELETE",
+                target_key=item_type_id
+            )
+        except SQLAlchemyError:
+            db.session.rollback()
+            traceback.print_exc()
+            current_app.logger.error(
+                f"Failed to delete item type: {item_type_id}."
+            )
+            exec_info = sys.exc_info()
+            tb_info = traceback.format_tb(exec_info[2])
+            UserActivityLogger.error(
+                operation="ITEM_TYPE_DELETE",
+                target_key=item_type_id,
+                remarks=tb_info[0]
+            )
+            flash(_('Unexpected error. Failed to delete item type.'), 'error')
+            abort(500)
 
-                    current_app.logger.debug(
-                        'Itemtype delete: {}'.format(item_type_id))
-                    UserActivityLogger.info(
-                        operation="ITEM_TYPE_DELETE",
-                        target_key=item_type_id
-                    )
-                    flash(_('Deleted Item type successfully.'))
-                    return Response(status=204)
-        flash(_('Item type not found.'), 'error')
-        abort(404)
+        flash(_('Deleted Item type successfully.'))
+        return Response(status=204)
 
     @expose('/register', methods=['POST'])
     @expose('/<int:item_type_id>/register', methods=['POST'])

@@ -136,7 +136,7 @@ def test_itemtypenames(app, db, item_type, item_type2):
     ItemTypeNames.update(data2)
 
     # def delete(self, force=False):
-    ItemTypeNames.delete(item_type_name)
+    ItemTypeNames.delete(item_type_name.id)
     assert item_type_name.id == 2
     item_type_name = ItemTypeNames.get_record(2)
     assert item_type_name is None
@@ -161,7 +161,7 @@ def test_itemtypenames(app, db, item_type, item_type2):
     # def delete(self, force=True):
     item_type_name = ItemTypeNames.get_record(3)
     assert item_type_name.id == 3
-    ItemTypeNames.delete(item_type_name, force=True)
+    ItemTypeNames.delete(item_type_name.id, force=True)
     item_type_name = ItemTypeNames.get_record(3)
     assert item_type_name is None
     item_type_name = ItemTypeNames.get_record(3, with_deleted=True)
@@ -2583,10 +2583,12 @@ class TestJsonldMapping:
 
         # Successful delete
         JsonldMapping.delete(id=obj.id)
+        db.session.commit()
         assert (
             ItemTypeJsonldMapping.query.filter_by(id=obj.id).first().is_deleted == True
         )
 
         # Delete with non-existent id
         res = JsonldMapping.delete(id=999)
+        db.session.commit()
         assert res == None

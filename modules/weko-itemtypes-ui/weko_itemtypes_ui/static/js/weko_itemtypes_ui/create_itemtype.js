@@ -109,8 +109,8 @@ $(document).ready(function () {
     show: false
   })
 
-  function addAlert(message) {
-    $('#alerts').append(
+  function addInfo(message) {
+    $('#infos').append(
       '<div id="alert-style" class="alert">' +
         '<button type="button" class="close" data-dismiss="alert">&times;</button>' +
         message +
@@ -1510,7 +1510,7 @@ $(document).ready(function () {
           restore_itemtype.removeClass("deleted_type");
           restore_itemtype.addClass("normal_type");
           $('#itemtype_name').val('');
-          addAlert(data.msg);
+          addInfo(data.msg);
           window.scroll({top: 0, behavior: "smooth"});
         },
         function (errmsg) {
