@@ -26,7 +26,7 @@ import traceback
 
 from flask import (
     abort, current_app, flash, json, jsonify, redirect,
-    request, session, url_for, send_file
+    request, session, url_for, send_file, Response
 )
 from sqlalchemy.sql.expression import null
 from flask_admin import BaseView, expose
@@ -131,7 +131,7 @@ class ItemTypeMetaDataView(BaseView):
         check = is_import_running()
         if check == "is_import_running":
             flash(_('Cannot delete item type. Import is in progress.'), 'error')
-            return jsonify(code=-1)
+            abort(400)
 
         if item_type_id > 0:
             record = ItemTypes.get_record(id_=item_type_id)
@@ -142,7 +142,7 @@ class ItemTypeMetaDataView(BaseView):
                         _('Cannot delete item type. It is used for harvesting.'),
                         'error'
                     )
-                    return jsonify(code=-1)
+                    abort(400)
                 # Get all versions
                 all_records = ItemTypes.get_records_by_name_id(
                     name_id=record.model.name_id
@@ -154,7 +154,7 @@ class ItemTypeMetaDataView(BaseView):
                             _('Cannot delete item type. Item of this type already exists.'),
                             'error'
                         )
-                        return jsonify(code=-1)
+                        abort(400)
                 # Check that item type is used in workflow
                 workflow = WorkFlow()
                 workflow_list = workflow.get_workflow_by_itemtype_id(item_type_id)
@@ -164,7 +164,7 @@ class ItemTypeMetaDataView(BaseView):
                         _('Cannot delete item type. It is used in some workflows.'),
                         'error'
                     )
-                    return jsonify(code=-1)
+                    abort(400)
 
                 # Check that item type is used SWORD API
                 jsonld_mappings = JsonldMapping.get_by_itemtype_id(item_type_id)
@@ -175,7 +175,7 @@ class ItemTypeMetaDataView(BaseView):
                             'Cannot delete item type. It is used in SWORD API '
                             'JSON-LD import settings.'
                         ), 'error')
-                        return jsonify(code=-1)
+                        abort(400)
 
                 # Get item type name
                 item_type_name = ItemTypeNames.get_record(
@@ -204,7 +204,7 @@ class ItemTypeMetaDataView(BaseView):
                         )
                         traceback.print_exc()
                         flash(_('Unexpected error. Failed to delete item type.'), 'error')
-                        return jsonify(code=-1)
+                        abort(500)
 
                     for jsonld_mapping in jsonld_mappings:
                         try:
@@ -229,10 +229,9 @@ class ItemTypeMetaDataView(BaseView):
                         target_key=item_type_id
                     )
                     flash(_('Deleted Item type successfully.'))
-                    return jsonify(code=0)
+                    return Response(status=204)
         flash(_('Item type not found.'), 'error')
-        return jsonify(code=-1)
-
+        abort(404)
 
     @expose('/register', methods=['POST'])
     @expose('/<int:item_type_id>/register', methods=['POST'])
