@@ -561,7 +561,7 @@ def shib_sp_login():
         shib_session_id = request.form.get('Shib-Session-ID', None)
         if not shib_session_id and not _shib_enable:
             if ams_login:
-                return generate_ams_login_url(ams_error=_('Missing Shib-Session-ID!'))
+                return generate_ams_login_url(_('Missing Shib-Session-ID!'))
             else:
                 flash(_('Missing Shib-Session-ID!'), category='error')
                 return redirect(url_for_security('login'))
@@ -573,7 +573,7 @@ def shib_sp_login():
                 shib_attr.get('shib_eppn', None)
                 or _shib_username_config and shib_attr.get('shib_user_name')):
             if ams_login:
-                return generate_ams_login_url(ams_error=_('Missing SHIB_ATTRs!'))
+                return generate_ams_login_url(_('Missing SHIB_ATTRs!'))
             else:
                 flash(_('Missing SHIB_ATTRs!'), category='error')
                 return _redirect_method()
@@ -595,7 +595,7 @@ def shib_sp_login():
 
             if blocked:
                 if ams_login:
-                    return generate_ams_login_url(ams_error=_('Login is blocked.'))
+                    return generate_ams_login_url(_('Login is blocked.'))
                 else:
                     flash(_('Failed to login.'), category='error')
                     return _redirect_method()
