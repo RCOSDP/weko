@@ -173,11 +173,15 @@ def generate_ams_login_url(ams_error):
     """
     Generate a redirect URL for the AMS login page with error details.
 
+    The returned URL starts with a '/'.
+
     Args:
-        ams_error (str): Error message describing the login error to include in the redirect URL.
+        ams_error (str): Error message for the AMS login page to include
+            in the redirect URL.
 
     Returns:
-        str: URL for the AMS login page including the error information as a query parameter.
+        str: URL for the AMS login page including the error
+            information as a query parameter.
     """
     shib_ams_login_url = current_app.config['WEKO_ACCOUNTS_SHIB_AMS_LOGIN_URL']
     ams_url = shib_ams_login_url.format('/')
