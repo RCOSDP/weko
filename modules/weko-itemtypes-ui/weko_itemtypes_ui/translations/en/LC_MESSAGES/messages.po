@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: weko-itemtypes-ui 0.1.0.dev20170000\n"
 "Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
-"POT-Creation-Date: 2025-05-02 14:43+0900\n"
+"POT-Creation-Date: 2025-08-20 17:28+0900\n"
 "PO-Revision-Date: 2018-01-18 18:48+0900\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -19,127 +19,135 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.5.1\n"
 
-#: weko_itemtypes_ui/admin.py:128
-msgid "Item type cannot be deleted becase import is in progress."
+#: weko_itemtypes_ui/admin.py:133
+msgid "Cannot delete item type. Import is in progress."
 msgstr ""
 
-#: weko_itemtypes_ui/admin.py:132 weko_itemtypes_ui/admin.py:382
-msgid "An error has occurred."
+#: weko_itemtypes_ui/admin.py:142
+msgid "Cannot delete item type. It is used for harvesting."
 msgstr ""
 
-#: weko_itemtypes_ui/admin.py:139
-msgid "Cannot delete Item type for Harvesting."
-msgstr ""
-
-#: weko_itemtypes_ui/admin.py:151
+#: weko_itemtypes_ui/admin.py:154
 #: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_itemtype.html:92
-msgid "Cannot delete due to child existing item types."
+msgid "Cannot delete item type. Item of this type already exists."
 msgstr ""
 
 #: weko_itemtypes_ui/admin.py:164
-msgid "Cannot delete due to SWORD API is using this item types."
+msgid "Cannot delete item type. It is used in some workflows."
 msgstr ""
 
-#: weko_itemtypes_ui/admin.py:191
-msgid "Failed to delete Item type."
+#: weko_itemtypes_ui/admin.py:174
+msgid "Cannot delete item type. It is used in SWORD API JSON-LD import settings."
 msgstr ""
 
-#: weko_itemtypes_ui/admin.py:215
-msgid "Failed to delete Item type JSON-LD mapping."
+#: weko_itemtypes_ui/admin.py:206
+msgid "Unexpected error. Failed to delete item type."
 msgstr ""
 
-#: weko_itemtypes_ui/admin.py:226
+#: weko_itemtypes_ui/admin.py:231
 msgid "Deleted Item type successfully."
 msgstr ""
 
-#: weko_itemtypes_ui/admin.py:237 weko_itemtypes_ui/admin.py:644
-#: weko_itemtypes_ui/admin.py:813
+#: weko_itemtypes_ui/admin.py:233
+msgid "Item type not found."
+msgstr ""
+
+#: weko_itemtypes_ui/admin.py:244 weko_itemtypes_ui/admin.py:656
+#: weko_itemtypes_ui/admin.py:825
 msgid "Header Error"
 msgstr ""
 
-#: weko_itemtypes_ui/admin.py:241
+#: weko_itemtypes_ui/admin.py:248
 msgid "Item type cannot be updated becase import is in progress."
 msgstr ""
 
-#: weko_itemtypes_ui/admin.py:337
+#: weko_itemtypes_ui/admin.py:344
 msgid "Failed to register Item type."
 msgstr ""
 
-#: weko_itemtypes_ui/admin.py:342 weko_itemtypes_ui/admin.py:344
+#: weko_itemtypes_ui/admin.py:349 weko_itemtypes_ui/admin.py:351
 msgid "Successfuly registered Item type."
 msgstr ""
 
-#: weko_itemtypes_ui/admin.py:375
+#: weko_itemtypes_ui/admin.py:383
 msgid "Failed to restore Item type."
 msgstr ""
 
-#: weko_itemtypes_ui/admin.py:380
+#: weko_itemtypes_ui/admin.py:388
 msgid "Restored Item type successfully."
 msgstr ""
 
-#: weko_itemtypes_ui/admin.py:426 weko_itemtypes_ui/admin.py:434
-msgid "Date (Type-less）"
+#: weko_itemtypes_ui/admin.py:390
+msgid "An error has occurred."
 msgstr ""
 
-#: weko_itemtypes_ui/admin.py:486
+#: weko_itemtypes_ui/admin.py:434 weko_itemtypes_ui/admin.py:442
+msgid "Date (Type-less)"
+msgstr ""
+
+#: weko_itemtypes_ui/admin.py:494
 msgid "No item type name Error"
 msgstr ""
 
-#: weko_itemtypes_ui/admin.py:488
+#: weko_itemtypes_ui/admin.py:496
 msgid "No file Error"
 msgstr ""
 
-#: weko_itemtypes_ui/admin.py:491
+#: weko_itemtypes_ui/admin.py:499
 msgid "Illegal mimetype Error"
 msgstr ""
 
-#: weko_itemtypes_ui/admin.py:569
+#: weko_itemtypes_ui/admin.py:504
+msgid "Failed to issue log group ID."
+msgstr ""
+
+#: weko_itemtypes_ui/admin.py:581
 msgid "Failed to import Item type."
 msgstr ""
 
-#: weko_itemtypes_ui/admin.py:574 weko_itemtypes_ui/admin.py:576
+#: weko_itemtypes_ui/admin.py:586 weko_itemtypes_ui/admin.py:588
 msgid "Successfuly import Item type."
 msgstr ""
 
-#: weko_itemtypes_ui/admin.py:657
+#: weko_itemtypes_ui/admin.py:669
 msgid "Failed to save property."
 msgstr ""
 
-#: weko_itemtypes_ui/admin.py:658
+#: weko_itemtypes_ui/admin.py:670
 msgid "Saved property successfully."
 msgstr ""
 
-#: weko_itemtypes_ui/admin.py:825
+#: weko_itemtypes_ui/admin.py:837
 msgid "Duplicate mapping as below:"
 msgstr ""
 
-#: weko_itemtypes_ui/admin.py:845
+#: weko_itemtypes_ui/admin.py:857
 msgid "Unexpected error occurred."
 msgstr ""
 
-#: weko_itemtypes_ui/admin.py:846 weko_itemtypes_ui/admin.py:937
+#: weko_itemtypes_ui/admin.py:858 weko_itemtypes_ui/admin.py:949
 msgid "Successfully saved new mapping."
 msgstr ""
 
-#: weko_itemtypes_ui/admin.py:1029 weko_itemtypes_ui/admin.py:1039
-#: weko_itemtypes_ui/admin.py:1049 weko_itemtypes_ui/admin.py:1059
+#: weko_itemtypes_ui/admin.py:1041 weko_itemtypes_ui/admin.py:1051
+#: weko_itemtypes_ui/admin.py:1061 weko_itemtypes_ui/admin.py:1071
 msgid "Item Types"
 msgstr ""
 
-#: weko_itemtypes_ui/admin.py:1030
+#: weko_itemtypes_ui/admin.py:1042
 msgid "Metadata"
 msgstr ""
 
-#: weko_itemtypes_ui/admin.py:1040
+#: weko_itemtypes_ui/admin.py:1052
 msgid "Properties"
 msgstr ""
 
-#: weko_itemtypes_ui/admin.py:1050
+#: weko_itemtypes_ui/admin.py:1062
 #: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_rocrate_mapping.html:216
 msgid "Mapping"
 msgstr ""
 
-#: weko_itemtypes_ui/admin.py:1060
+#: weko_itemtypes_ui/admin.py:1072
 msgid "RO-Crate Mapping"
 msgstr ""
 
@@ -563,61 +571,4 @@ msgstr ""
 #: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/error.html:34
 msgid "Register Itemtype"
 msgstr ""
-
-#~ msgid "Tee"
-#~ msgstr ""
-
-#~ msgid "'itemtype name'"
-#~ msgstr ""
-
-#~ msgid "itemtype list"
-#~ msgstr ""
-
-#~ msgid "Sending"
-#~ msgstr ""
-
-#~ msgid "create itemtype"
-#~ msgstr ""
-
-#~ msgid "itemtype name"
-#~ msgstr ""
-
-#~ msgid "JSONSchema"
-#~ msgstr ""
-
-#~ msgid "SchemaForm"
-#~ msgstr ""
-
-#~ msgid "Cannot delete because there is belonging item."
-#~ msgstr ""
-
-#~ msgid "Do you want to register the content？"
-#~ msgstr ""
-
-#~ msgid "Fail"
-#~ msgstr ""
-
-#~ msgid "Success"
-#~ msgstr ""
-
-#~ msgid "Property"
-#~ msgstr ""
-
-#~ msgid "Preview"
-#~ msgstr ""
-
-#~ msgid "Back"
-#~ msgstr ""
-
-#~ msgid "Linking"
-#~ msgstr ""
-
-#~ msgid "Add2"
-#~ msgstr ""
-
-#~ msgid "Input fixed Value"
-#~ msgstr ""
-
-#~ msgid "Input fixed value"
-#~ msgstr ""
 

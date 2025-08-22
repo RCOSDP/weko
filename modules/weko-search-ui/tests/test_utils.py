@@ -833,6 +833,7 @@ def test_check_jsonld_import_items(i18n_app, db, test_indices, item_type2, item_
         assert result["error"] == "Mapping is invalid for item type {}.".format(item_type2.model.item_type_name.name)
 
     JsonldMapping.delete(obj.id)
+    db.session.commit()
     result = check_jsonld_import_items(ro_crate, "SimpleZip", obj.id, shared_id=-1)
     assert result["error"] == "Metadata mapping not defined for registration your item."
 

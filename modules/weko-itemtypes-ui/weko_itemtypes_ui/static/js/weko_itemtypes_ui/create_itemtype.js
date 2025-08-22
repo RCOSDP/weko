@@ -109,6 +109,24 @@ $(document).ready(function () {
     show: false
   })
 
+  function addInfo(message) {
+    $('#infos').append(
+      '<div id="alert-style" class="alert">' +
+        '<button type="button" class="close" data-dismiss="alert">&times;</button>' +
+        message +
+      '</div>'
+    );
+  };
+
+  function addError(message) {
+    $('#errors').append(
+      '<div class="alert alert-danger">' +
+        '<button type="button" class="close" data-dismiss="alert">&times;</button>' +
+        message +
+      '</div>'
+    );
+  };
+
   if ($('#item-type-lists').val().length > 0) {
     // バージョンアップ
     $('#upt_version').attr('checked', true);
@@ -147,11 +165,11 @@ $(document).ready(function () {
   });
   $('#import_exec_btn').on('click', function () {
     if ($('#import_file').prop("files").length != 1) {
-      alert("Please select Zipfile.");
+      addError("Please select Zipfile.");
       return;
     }
     if ($('#itemtype_name_import').val().length < 1) {
-      alert("Please input Type Name.");
+      addError("Please input Type Name.");
       return;
     }
     let fd = new FormData();
@@ -1460,9 +1478,11 @@ $(document).ready(function () {
     var is_harvesting_type = selected_item_type.hasClass("harvesting_type");
     var is_belonging_item = selected_item_type.hasClass("belonging_item");
     if (is_harvesting_type) {
-      alert($("#msg_for_harvesting").val());
+      addError($("#msg_for_harvesting").val());
+      window.scroll({top: 0, behavior: "smooth"});
     } else if (is_belonging_item) {
-      alert($("#msg_for_belonging_item").val());
+      addError($("#msg_for_belonging_item").val());
+      window.scroll({top: 0, behavior: "smooth"});
     } else {
       $("#item_type_delete_confirmation").modal("show");
     }
@@ -1490,10 +1510,12 @@ $(document).ready(function () {
           restore_itemtype.removeClass("deleted_type");
           restore_itemtype.addClass("normal_type");
           $('#itemtype_name').val('');
-          alert(data.msg);
+          addInfo(data.msg);
+          window.scroll({top: 0, behavior: "smooth"});
         },
         function (errmsg) {
-          alert(data.msg);
+          addError(errmsg);
+          window.scroll({top: 0, behavior: "smooth"});
         });
     }
   });
