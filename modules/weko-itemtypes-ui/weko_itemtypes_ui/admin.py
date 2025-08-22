@@ -34,7 +34,6 @@ from flask_admin import BaseView, expose
 from flask_babelex import gettext as _
 from flask_login import current_user
 from zipfile import ZipFile, ZIP_DEFLATED
-from werkzeug.exceptions import HTTPException
 from marshmallow_sqlalchemy import SQLAlchemyAutoSchema
 
 from invenio_db import db

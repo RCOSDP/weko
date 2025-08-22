@@ -21,20 +21,14 @@
 """Module tests."""
 
 from re import T
-# from tkinter import W
+import uuid
 import pytest
 from unittest import TestCase
-import json
 from elasticsearch import helpers
-from elasticsearch.exceptions import RequestError
 from flask_login.utils import login_user
-from invenio_records.api import Record
 from invenio_records.errors import MissingModelError
 from invenio_pidstore.models import PersistentIdentifier
-from weko_deposit.api import WekoDeposit
-from weko_index_tree.models import Index
-from mock import patch,MagicMock
-import uuid
+from unittest.mock import patch, MagicMock
 from sqlalchemy.exc import IntegrityError,SQLAlchemyError
 from sqlalchemy.orm.exc import NoResultFound
 
@@ -46,8 +40,6 @@ from weko_records.models import ItemType, ItemTypeJsonldMapping, ItemTypeName, \
 from jsonschema.validators import Draft4Validator
 from datetime import datetime, timedelta
 from weko_records.models import ItemReference
-import pytest
-from unittest.mock import patch, MagicMock
 
 # class RecordBase(dict):
 # .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::test_recordbase -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
