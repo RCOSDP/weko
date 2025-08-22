@@ -169,6 +169,24 @@ def _redirect_method(has_next=False, ams_error=None):
             next=request.full_path if has_next else None))
 
 
+def generate_ams_login_url(ams_error):
+    """
+    Generate a redirect URL for the AMS login page with error details.
+
+    Args:
+        ams_error (str): Error message describing the login error to include in the redirect URL.
+
+    Returns:
+        str: URL for the AMS login page including the error information as a query parameter.
+    """
+    shib_ams_login_url = current_app.config['WEKO_ACCOUNTS_SHIB_AMS_LOGIN_URL']
+    ams_url = shib_ams_login_url.format('/')
+    encoded_error = quote_plus(
+        str(ams_error), encoding='utf-8', errors='replace')
+    url = f'{ams_url}?error={encoded_error}'
+    return url
+
+
 @blueprint.route('/')
 def index():
     """Render a basic view."""
@@ -188,9 +206,7 @@ def shib_auto_login():
         is_auto_bind = False
         shib_session_id = request.args.get('Shib-Session-ID', None)
         next_value = request.args.get('next')
-        if next_value is not None and next_value == 'ams':
-            pass
-        else:
+        if next_value != 'ams':
             next_value = session.get('next', '/')
             session['next'] = next_value
         ams_login = next_value == 'ams'
@@ -277,7 +293,7 @@ def confirm_user():
     """
     ams_login = False
     try:
-        next_value = request.args.get('next', '')
+        next_value = session['next'] if 'next' in session else ''
         if next_value == 'ams':
             ams_login = True
         if request.form.get('csrf_random', '') != session['csrf_random']:
@@ -545,7 +561,7 @@ def shib_sp_login():
         shib_session_id = request.form.get('Shib-Session-ID', None)
         if not shib_session_id and not _shib_enable:
             if ams_login:
-                return _redirect_method(True, ams_error=_('Missing Shib-Session-ID!'))
+                return generate_ams_login_url(ams_error=_('Missing Shib-Session-ID!'))
             else:
                 flash(_('Missing Shib-Session-ID!'), category='error')
                 return redirect(url_for_security('login'))
@@ -557,7 +573,7 @@ def shib_sp_login():
                 shib_attr.get('shib_eppn', None)
                 or _shib_username_config and shib_attr.get('shib_user_name')):
             if ams_login:
-                return _redirect_method(True, ams_error=_('Missing SHIB_ATTRs!'))
+                return generate_ams_login_url(ams_error=_('Missing SHIB_ATTRs!'))
             else:
                 flash(_('Missing SHIB_ATTRs!'), category='error')
                 return _redirect_method()
@@ -579,7 +595,7 @@ def shib_sp_login():
 
             if blocked:
                 if ams_login:
-                    return _redirect_method(True, ams_error=_('Login is blocked.'))
+                    return generate_ams_login_url(ams_error=_('Login is blocked.'))
                 else:
                     flash(_('Failed to login.'), category='error')
                     return _redirect_method()
@@ -623,8 +639,8 @@ def shib_sp_login():
     except BaseException:
         current_app.logger.error("Unexpected error: {}".format(sys.exc_info()))
         if ams_login:
-            return _redirect_method(True, ams_error=_(
-                'Server error has occurred. Please contact server administrator.'))
+            return generate_ams_login_url(
+                _('Server error has occurred. Please contact server administrator.'))
         else:
             return _redirect_method()
 
