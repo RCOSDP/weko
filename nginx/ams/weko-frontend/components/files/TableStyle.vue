@@ -273,38 +273,38 @@ function getDownloadNumber() {
  */
 function setLicenseIcon() {
   if (licenseType === appConfig.cc.zero) {
-    licenseImg.value = '/img/license/cc-zero.svg';
+    licenseImg.value = appConfig.amsImage + '/license/cc-zero.svg';
     licenseLink = local === 'ja' ? appConfig.cc.link.zero_ja : appConfig.cc.link.zero;
   } else if (licenseType === appConfig.cc.by_3 || licenseType === appConfig.cc.by_4) {
-    licenseImg.value = '/img/license/by.svg';
+    licenseImg.value = appConfig.amsImage + '/license/by.svg';
     if (local === 'ja') {
       licenseLink = licenseType === appConfig.cc.by_3 ? appConfig.cc.link.by_3_ja : appConfig.cc.link.by_4_ja;
     } else {
       licenseLink = licenseType === appConfig.cc.by_3 ? appConfig.cc.link.by_3 : appConfig.cc.link.by_4;
     }
   } else if (licenseType === appConfig.cc.by_sa_3 || licenseType === appConfig.cc.by_sa_4) {
-    licenseImg.value = '/img/license/by-sa.svg';
+    licenseImg.value = appConfig.amsImage + '/license/by-sa.svg';
     if (local === 'ja') {
       licenseLink = licenseType === appConfig.cc.by_sa_3 ? appConfig.cc.link.by_sa_3_ja : appConfig.cc.link.by_sa_4_ja;
     } else {
       licenseLink = licenseType === appConfig.cc.by_sa_3 ? appConfig.cc.link.by_sa_3 : appConfig.cc.link.by_sa_4;
     }
   } else if (licenseType === appConfig.cc.by_nd_3 || licenseType === appConfig.cc.by_nd_4) {
-    licenseImg.value = '/img/license/by-nd.svg';
+    licenseImg.value = appConfig.amsImage + '/license/by-nd.svg';
     if (local === 'ja') {
       licenseLink = licenseType === appConfig.cc.by_nd_3 ? appConfig.cc.link.by_nd_3_ja : appConfig.cc.link.by_nd_4_ja;
     } else {
       licenseLink = licenseType === appConfig.cc.by_nd_3 ? appConfig.cc.link.by_nd_3 : appConfig.cc.link.by_nd_4;
     }
   } else if (licenseType === appConfig.cc.by_nc_3 || licenseType === appConfig.cc.by_nc_4) {
-    licenseImg.value = '/img/license/by-nc.svg';
+    licenseImg.value = appConfig.amsImage + '/license/by-nc.svg';
     if (local === 'ja') {
       licenseLink = licenseType === appConfig.cc.by_nc_3 ? appConfig.cc.link.by_nc_3_ja : appConfig.cc.link.by_nc_4_ja;
     } else {
       licenseLink = licenseType === appConfig.cc.by_nc_3 ? appConfig.cc.link.by_nc_3 : appConfig.cc.link.by_nc_4;
     }
   } else if (licenseType === appConfig.cc.by_nc_sa_3 || licenseType === appConfig.cc.by_nc_sa_4) {
-    licenseImg.value = '/img/license/by-nc-sa.svg';
+    licenseImg.value = appConfig.amsImage + '/license/by-nc-sa.svg';
     if (local === 'ja') {
       licenseLink =
         licenseType === appConfig.cc.by_nc_sa_3 ? appConfig.cc.link.by_nc_sa_3_ja : appConfig.cc.link.by_nc_sa_4_ja;
@@ -313,7 +313,7 @@ function setLicenseIcon() {
         licenseType === appConfig.cc.by_nc_sa_3 ? appConfig.cc.link.by_nc_sa_3 : appConfig.cc.link.by_nc_sa_4;
     }
   } else if (licenseType === appConfig.cc.by_nc_nd_3 || licenseType === appConfig.cc.by_nc_nd_4) {
-    licenseImg.value = '/img/license/by-nc-nd.svg';
+    licenseImg.value = appConfig.amsImage + '/license/by-nc-nd.svg';
     if (local === 'ja') {
       licenseLink =
         licenseType === appConfig.cc.by_nc_nd_3 ? appConfig.cc.link.by_nc_nd_3_ja : appConfig.cc.link.by_nc_nd_4_ja;
