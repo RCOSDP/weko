@@ -135,11 +135,15 @@ cp -prf "/code/modules/weko-index-tree/weko_index_tree/static/indextree" "var/in
 # sphinxdoc-run-npm-begin
 ${INVENIO_WEB_INSTANCE} npm
 cdvirtualenv "var/instance/static"
-CI=true npm install angular-schema-form@0.8.13
 CI=true npm install
+CI=true npm install angular-schema-form@0.8.13
 ## for install ckeditor plugins
 cdvirtualenv "var/instance/static/node_modules/ckeditor/plugins"
-CI=true git clone https://github.com/nmmf/base64image.git
+CI=true git clone https://github.com/RCOSDP/base64image.git
+
+cdvirtualenv "var/instance/static/node_modules" 
+rm -rf invenio-search-js
+git clone --branch feature/changePaginationForSearchAfterUse https://github.com/RCOSDP/invenio-search-js.git
 ##
 # sphinxdoc-run-npm-end
 
