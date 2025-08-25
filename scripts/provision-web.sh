@@ -50,7 +50,10 @@ provision_web_common_ubuntu14 () {
 
     # sphinxdoc-install-useful-system-tools-ubuntu14-begin
     # update list of available packages:
-    $sudo apt-get -y update --allow-releaseinfo-change
+    #$sudo apt-get -y update --allow-releaseinfo-change
+    $sudo sed -i 's|http://deb.debian.org/debian|http://archive.debian.org/debian|g' /etc/apt/sources.list
+    $sudo sed -i 's|http://security.debian.org/debian-security|http://archive.debian.org/debian-security|g' /etc/apt/sources.list
+    $sudo apt-get -o Acquire::Check-Valid-Until=false update
 
     # install useful system tools:
     $sudo apt-get -y install \
@@ -65,7 +68,7 @@ provision_web_common_ubuntu14 () {
 
     # sphinxdoc-add-nodejs-external-repository-ubuntu14-begin
     if [[ ! -f /etc/apt/sources.list.d/nodesource.list ]]; then
-        curl -sL https://deb.nodesource.com/setup_4.x | $sudo bash -
+        curl -sL https://deb.nodesource.com/setup_20.x | $sudo bash -
     fi
     # sphinxdoc-add-nodejs-external-repository-ubuntu14-end
 
@@ -117,7 +120,7 @@ provision_web_common_centos7 () {
 
     # sphinxdoc-add-nodejs-external-repository-centos7-begin
     if [[ ! -f /etc/yum.repos.d/nodesource-el.repo ]]; then
-        curl -sL https://rpm.nodesource.com/setup_4.x | $sudo bash -
+        curl -sL https://rpm.nodesource.com/setup_20.x | $sudo bash -
     fi
     # sphinxdoc-add-nodejs-external-repository-centos7-end
 
@@ -153,7 +156,7 @@ setup_npm_and_css_js_filters () {
 
     # sphinxdoc-install-npm-and-css-js-filters-begin
     # $sudo su -c "npm install -g npm"
-    $sudo su -c "npm install -g node-sass@3.8.0 clean-css@3.4.12 requirejs uglify-js"
+    $sudo su -c "npm install -g node-sass@9.0.0 clean-css@3.4.12 requirejs uglify-js"
     # sphinxdoc-install-npm-and-css-js-filters-end
 
 }
