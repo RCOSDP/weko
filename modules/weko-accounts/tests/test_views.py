@@ -25,6 +25,12 @@ def set_session(client,data):
     with client.session_transaction() as session:
         for k, v in data.items():
             session[k] = v
+
+def del_session(client,key):
+
+    with client.session_transaction() as session:
+        del session[key]
+
 #def _has_admin_access():
 # .tox/c1/bin/pytest --cov=weko_accounts tests/test_views.py::test_has_admin_access -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 #def test_has_admin_access(request_context,users):
@@ -324,7 +330,8 @@ def test_confirm_user(client,redis_connect,mocker):
     form = {"csrf_random":"test_csrf"}
     mock_redirect_ = mocker.patch("weko_accounts.views._redirect_method",
                                   return_value=make_response())
-    client.post(url+"?next=ams", data=form)
+    set_session(client,{"next": "ams"})
+    client.post(url, data=form)
     mock_redirect_.assert_called_once()
     called_args, called_kwargs = mock_redirect_.call_args
     assert called_args[0] is True
@@ -332,6 +339,7 @@ def test_confirm_user(client,redis_connect,mocker):
 
     # not exist shib_session_id
     set_session(client,{"csrf_random":"test_csrf","shib_session_id":None})
+    del_session(client, "next")
     mock_flash = mocker.patch("weko_accounts.views.flash")
     client.post(url,data=form)
     mock_flash.assert_called_with("shib_session_id",category="error")
@@ -339,7 +347,8 @@ def test_confirm_user(client,redis_connect,mocker):
     # not exist shib_session_id(AMS)
     mock_redirect_ = mocker.patch("weko_accounts.views._redirect_method",
                                   return_value=make_response())
-    client.post(url+"?next=ams",data=form)
+    set_session(client,{"next": "ams"})
+    client.post(url, data=form)
     mock_redirect_.assert_called_once()
     called_args, called_kwargs = mock_redirect_.call_args
     assert called_args[0] is True
@@ -347,6 +356,7 @@ def test_confirm_user(client,redis_connect,mocker):
 
     # not exist cache_key
     set_session(client,{"csrf_random":"test_csrf","shib_session_id":"2222"})
+    del_session(client, "next")
     mock_flash = mocker.patch("weko_accounts.views.flash")
     client.post(url,data=form)
     mock_flash.assert_called_with("cache_key",category="error")
@@ -354,13 +364,15 @@ def test_confirm_user(client,redis_connect,mocker):
     # not exist cache_key(AMS)
     mock_redirect_ = mocker.patch("weko_accounts.views._redirect_method",
                                   return_value=make_response())
-    client.post(url+"?next=ams",data=form)
+    set_session(client,{"next": "ams"})
+    client.post(url, data=form)
     mock_redirect_.assert_called_once()
     called_args, called_kwargs = mock_redirect_.call_args
     assert called_args[0] is True
     assert "Missing SHIB_CACHE_PREFIX!" in called_kwargs.get("ams_error", "")
 
     set_session(client,{"csrf_random":"test_csrf","shib_session_id":"1111"})
+    del_session(client, "next")
     # not exist cache_value
     redis_connect.put("Shib-Session-1111",bytes("","utf-8"))
     mock_flash = mocker.patch("weko_accounts.views.flash")
@@ -372,7 +384,8 @@ def test_confirm_user(client,redis_connect,mocker):
     redis_connect.put("Shib-Session-1111",bytes("","utf-8"))
     mock_redirect_ = mocker.patch("weko_accounts.views._redirect_method",
                                   return_value=make_response())
-    client.post(url+"?next=ams",data=form)
+    set_session(client,{"next": "ams"})
+    client.post(url, data=form)
     mock_redirect_.assert_called_once()
     called_args, called_kwargs = mock_redirect_.call_args
     assert called_args[0] is True
@@ -382,6 +395,7 @@ def test_confirm_user(client,redis_connect,mocker):
     redis_connect.put("Shib-Session-1111",bytes('{"shib_eppn":"test_eppn"}',"utf-8"))
     with patch("weko_accounts.views.ShibUser.check_weko_user",return_value=False):
         mock_flash = mocker.patch("weko_accounts.views.flash")
+        del_session(client, "next")
         client.post(url,data=form)
         mock_flash.assert_called_with("check_weko_user",category="error")
         assert redis_connect.redis.exists("Shib-Session-1111") is False
@@ -391,7 +405,8 @@ def test_confirm_user(client,redis_connect,mocker):
     with patch("weko_accounts.views.ShibUser.check_weko_user",return_value=False):
         mock_redirect_ = mocker.patch("weko_accounts.views._redirect_method",
                                       return_value=make_response())
-        client.post(url+"?next=ams",data=form)
+        set_session(client, {"next": "ams"})
+        client.post(url,data=form)
         mock_redirect_.assert_called_once()
         called_args, called_kwargs = mock_redirect_.call_args
         assert called_args[0] is True
@@ -403,6 +418,7 @@ def test_confirm_user(client,redis_connect,mocker):
         with patch("weko_accounts.views.ShibUser.bind_relation_info",return_value=False):
             redis_connect.put("Shib-Session-1111",bytes('{"shib_eppn":"test_eppn"}',"utf-8"))
             mock_flash = mocker.patch("weko_accounts.views.flash")
+            del_session(client, "next")
             client.post(url,data=form)
             mock_flash.assert_called_with("FAILED bind_relation_info!",category="error")
         with patch("weko_accounts.views.ShibUser.bind_relation_info",return_value=True):
@@ -429,7 +445,6 @@ def test_confirm_user(client,redis_connect,mocker):
                 set_session(client,{"csrf_random":"test_csrf",
                                     "shib_session_id":"1111","next":"/next_page"})
                 redis_connect.put("Shib-Session-1111",bytes('{"shib_eppn":"test_eppn"}',"utf-8"))
-
                 shibuser = ShibUser({})
                 shibuser.shib_user = "test_user"
                 shibuser.user = User(id=1)
@@ -448,7 +463,8 @@ def test_confirm_user(client,redis_connect,mocker):
             redis_connect.put("Shib-Session-1111",bytes('{"shib_eppn":"test_eppn"}',"utf-8"))
             mock_redirect_ = mocker.patch("weko_accounts.views._redirect_method",
                                           return_value=make_response())
-            client.post(url+"?next=ams",data=form)
+            set_session(client, {"next": "ams"})
+            client.post(url,data=form)
             mock_redirect_.assert_called_once()
             called_args, called_kwargs = mock_redirect_.call_args
             assert called_args[0] is True
@@ -458,7 +474,7 @@ def test_confirm_user(client,redis_connect,mocker):
             with patch("weko_accounts.views.ShibUser.check_in",return_value="test_error"):
                 mock_redirect_ = mocker.patch("weko_accounts.views._redirect_method",
                                               return_value=make_response())
-                client.post(url+"?next=ams",data=form)
+                client.post(url,data=form)
                 mock_redirect_.assert_called_once()
                 called_args, called_kwargs = mock_redirect_.call_args
                 assert called_args[0] is True
@@ -471,20 +487,22 @@ def test_confirm_user(client,redis_connect,mocker):
                 with patch("weko_accounts.views.ShibUser",return_value=shibuser):
                     mock_redirect = mocker.patch("weko_accounts.views.redirect",
                                                  return_value=make_response())
-                    client.post(url+"?next=ams",data=form)
+                    client.post(url,data=form)
                     called_args, _ = mock_redirect.call_args
                     mock_redirect.assert_called_with("/?next=ams")
                     assert redis_connect.redis.exists("Shib-Session-1111") is False
 
     # raise BaseException
     with patch("weko_accounts.views._redirect_method",side_effect=BaseException("test_error")):
+        del_session(client, "next")
         res = client.post(url,data=form)
         assert res.status_code == 400
 
     mock_redirect_ = mocker.patch("weko_accounts.views._redirect_method",
                                   return_value=make_response())
     with patch("weko_accounts.views.RedisConnection",side_effect=BaseException("test_error")):
-        res = client.post(url+"?next=ams",data=form)
+        set_session(client, {"next": "ams"})
+        res = client.post(url,data=form)
         mock_redirect_.assert_called_once()
         called_args, called_kwargs = mock_redirect_.call_args
         assert called_args[0] is True
