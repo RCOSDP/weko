@@ -375,7 +375,7 @@ def make_combined_pdf(pid, fileobj, obj, lang_user):
                     multi_lang_value = []
                     for publisher_name, publisher_lang in pair_name_language_publisher:
                         if not publisher_lang:
-                            publisher_lang == 'None Language'
+                            publisher_lang = 'None Language'
                         multi_lang_value.append((publisher_lang, publisher_name))
                     values = get_values_by_selected_lang(multi_lang_value, cur_lang)
                     if values:
