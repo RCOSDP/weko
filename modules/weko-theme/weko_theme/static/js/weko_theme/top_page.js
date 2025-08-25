@@ -158,7 +158,8 @@ require([
 
             if ($('#community').val() && $('#q').val.trim().length > 0) {
                 $('#community').serializeArray().map(function (item) {
-                    search = insertParam(search, item.name, item.value);
+                  const paramName = (item.name === 'community') ? 'c' : item.name;
+                    search = insertParam(search, paramName, item.value);
                 })
             }
 
@@ -190,7 +191,7 @@ require([
                 search = insertParam(search, "item_management", "delete");
                 window.location.href = "/admin/items/search" + search;
             } else {
-                let searchParam = window.facetSearchFunctions && window.facetSearchFunctions.getFacetSearchCondition ? 
+                let searchParam = window.facetSearchFunctions && window.facetSearchFunctions.getFacetSearchCondition ?
                     window.facetSearchFunctions.getFacetSearchCondition() : new URLSearchParams();
                 let appendSearchParam = new URLSearchParams(search);
                 searchParam.set('search_type', appendSearchParam.get('search_type'));

@@ -1999,7 +1999,7 @@ class WekoRecord(Record):
         """
         navs = Indexes.get_path_name(self.get('path', []))
 
-        community = request.args.get('community', None)
+        community = request.args.get('c', None)
         if not community:
             return navs
 

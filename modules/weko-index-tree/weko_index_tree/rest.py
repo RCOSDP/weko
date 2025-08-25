@@ -508,7 +508,7 @@ class IndexTreeActionResource(ContentNegotiatedMethodView):
         from invenio_communities.models import Community
         try:
             action = request.values.get('action')
-            comm_id = request.values.get('community')
+            comm_id = request.values.get('c')
 
             more_id_list = request.values.get('more_ids')
             more_ids = []

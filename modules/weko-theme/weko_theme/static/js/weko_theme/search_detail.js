@@ -172,7 +172,7 @@
                 query_str = query_str + "&search_type=" + $scope.search_type + "&q=" + $scope.search_q;
 
                 if ($scope.search_community != "") {
-                    query_str = query_str + "&community=" + $scope.search_community;
+                    query_str = query_str + "&c=" + $scope.search_community;
                 }
 
                 angular.forEach($scope.condition_data, function (item, index, array) {
@@ -198,7 +198,7 @@
                         var pattern_date = /^(?:[0-9]{4}|[0-9]{4}(0[1-9]|1[0-2])|[0-9]{4}(0[1-9]|1[0-2])(0[1-9]|[1-2][0-9]|3[0-1]))$/
                         var inputValFrom = item.key_value.inputVal_from;
                         var inputValTo = item.key_value.inputVal_to;
-                        
+
                         if (pattern_date.test(inputValFrom)){
                             switch (inputValFrom.length) {
                                 // YYYY
@@ -318,7 +318,7 @@
                 } else if (angular.element('#item_management_bulk_delete').length != 0) {
                     url = '/admin/items' + url + '&item_management=delete';
                 } else {
-                    let searchParam = window.facetSearchFunctions && window.facetSearchFunctions.getFacetSearchCondition ? 
+                    let searchParam = window.facetSearchFunctions && window.facetSearchFunctions.getFacetSearchCondition ?
                         window.facetSearchFunctions.getFacetSearchCondition() : new URLSearchParams();
                     for(var entry of new URLSearchParams(query_str).entries()) {
                         searchParam.set(entry[0], entry[1]);
@@ -458,7 +458,7 @@
                         return 31
                 }
             }
-        
+
             $scope.validDate = function(elem){
                 const date_pattern = /([0-9]{4})(0[1-9]|1[0-2])(0[1-9]|[1-2][0-9]|3[0-1])/
                 if (elem.validity.patternMismatch){

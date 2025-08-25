@@ -46,7 +46,7 @@ require([
       pid_value: pid_val
     };
     if (community) {
-      post_uri = post_uri + "?community=" + community;
+      post_uri = post_uri + "?c=" + community;
     }
     $.ajax({
       url: post_uri,
@@ -68,7 +68,7 @@ require([
           if ("activity_id" in res) {
             url = "/workflow/activity/detail/"+res.activity_id;
             if (community) {
-              url = url + "?community=" + community;
+              url = url + "?c=" + community;
             }
             $('[role="alert"]').append(' <a href=' + url + '>' + res.activity_id + '</a>')
           }
@@ -110,7 +110,7 @@ require([
       pid_value: pid_val
     };
     if (community) {
-      post_uri = post_uri + "?community=" + community;
+      post_uri = post_uri + "?c=" + community;
     }
     // Added DOI check process
     let check_doi_uri = "/api/items/check_record_doi/" + pid_val;
@@ -147,7 +147,7 @@ require([
                 if ("activity_id" in res) {
                   url = "/workflow/activity/detail/"+res.activity_id;
                   if (community) {
-                    url = url + "?community=" + community;
+                    url = url + "?c=" + community;
                   }
                   $('[role="alert"]').append(' <a href=' + url + '>' + res.activity_id + '</a>')
                 }
@@ -189,7 +189,7 @@ require([
       pid_value: pid_val
     };
     if (community) {
-      post_uri = post_uri + "?community=" + community;
+      post_uri = post_uri + "?c=" + community;
     }
     // Extract PID
     // pid_val has del_ver and version information, so remove them here
@@ -231,7 +231,7 @@ require([
                 if ("activity_id" in res) {
                   url = "/workflow/activity/detail/"+res.activity_id;
                   if (community) {
-                    url = url + "?community=" + community;
+                    url = url + "?c=" + community;
                   }
                   $('[role="alert"]').append(' <a href=' + url + '>' + res.activity_id + '</a>')
                 }
@@ -284,7 +284,7 @@ require([
       }
     };
     if (typeof communityId !== 'undefined' && communityId !== "") {
-      post_uri = post_uri + "?community=" + communityId;
+      post_uri = post_uri + "?c=" + communityId;
     }
     var deferred = new $.Deferred();
     $.ajax({
