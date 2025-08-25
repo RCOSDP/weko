@@ -131,8 +131,7 @@ def test_redirect_method(app,mocker):
 
 # .tox/c1/bin/pytest --cov=weko_accounts tests/test_views.py::test_generate_ams_login_url -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_generate_ams_login_url(app):
-    url = 'ams'
-    with app.test_request_context(url):
+    with app.test_request_context():
         current_app.config['WEKO_ACCOUNTS_SHIB_AMS_LOGIN_URL'] = '{}ams/login'
         # Missing Shib-Session-ID!
         ams_error = 'Missing Shib-Session-ID!'
