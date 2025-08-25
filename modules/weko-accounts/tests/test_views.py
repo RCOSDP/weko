@@ -27,7 +27,6 @@ def set_session(client,data):
             session[k] = v
 
 def del_session(client,key):
-
     with client.session_transaction() as session:
         del session[key]
 
