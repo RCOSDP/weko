@@ -16,7 +16,8 @@ from weko_accounts.views import (
     _redirect_method,
     find_user_by_email,
     shib_sp_login,
-    _adjust_shib_admin_DB
+    _adjust_shib_admin_DB,
+    generate_ams_login_url
 )
 from weko_admin.models import AdminSettings
 
@@ -122,6 +123,31 @@ def test_redirect_method(app,mocker):
         _redirect_method(True, ams_error)
         mock_render.assert_called_with(\
             'http://TEST_SERVER.localdomain/ams/login?error=Error+Message')
+
+# .tox/c1/bin/pytest --cov=weko_accounts tests/test_views.py::test_generate_ams_login_url -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_generate_ams_login_url(app):
+    url = 'ams'
+    with app.test_request_context(url):
+        current_app.config['WEKO_ACCOUNTS_SHIB_AMS_LOGIN_URL'] = '{}ams/login'
+        # Missing Shib-Session-ID!
+        ams_error = 'Missing Shib-Session-ID!'
+        url = generate_ams_login_url(ams_error)
+        assert url == '/ams/login?error=Missing+Shib-Session-ID%21'
+
+        # Missing SHIB_ATTRs!
+        ams_error = 'Missing SHIB_ATTRs!'
+        url = generate_ams_login_url(ams_error)
+        assert url == '/ams/login?error=Missing+SHIB_ATTRs%21'
+
+        # Login is blocked.
+        ams_error = 'Login is blocked.'
+        url = generate_ams_login_url(ams_error)
+        assert url == '/ams/login?error=Login+is+blocked.'
+
+        # Server error has occurred. Please contact server administrator.
+        ams_error = 'Server error has occurred. Please contact server administrator.'
+        url = generate_ams_login_url(ams_error)
+        assert url == '/ams/login?error=Server+error+has+occurred.+Please+contact+server+administrator.'
 
 #def index():
 # .tox/c1/bin/pytest --cov=weko_accounts tests/test_views.py::test_index -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
@@ -776,11 +802,11 @@ def test_shib_sp_login(client, redis_connect,mocker, db, users):
 
     # parse_attribute is error(AMS)
     with patch("weko_accounts.views.parse_attributes",return_value=("attr",True)):
-        mock_redirect_ = mocker.patch("weko_accounts.views._redirect_method",
+        mock_generate_ams_url = mocker.patch("weko_accounts.views.generate_ams_login_url",
                                       return_value=make_response())
         client.post(url+"?next=ams",data=form)
-        mock_redirect_.assert_called_once()
-        called_args, called_kwargs = mock_redirect_.call_args
+        mock_generate_ams_url.assert_called_once()
+        called_args, called_kwargs = mock_generate_ams_url.call_args
         assert called_args[0] is True
         assert "Missing SHIB_ATTRs!" in called_kwargs.get("ams_error", "")
 
