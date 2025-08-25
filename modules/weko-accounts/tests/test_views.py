@@ -779,13 +779,12 @@ def test_shib_sp_login(client, redis_connect,mocker, db, users):
         mock_redirect.assert_called_with(url_for("security.login"))
 
     # not shib_session_id(AMS)
-    mock_redirect_ = mocker.patch("weko_accounts.views._redirect_method",
+    mock_generate_ams_login_url = mocker.patch("weko_accounts.views.generate_ams_login_url",
                                   return_value=make_response())
     client.post(url+"?next=ams")
-    mock_redirect_.assert_called_once()
-    called_args, called_kwargs = mock_redirect_.call_args
-    assert called_args[0] is True
-    assert "Missing Shib-Session-ID!" in called_kwargs.get("ams_error", "")
+    mock_generate_ams_login_url.assert_called_once()
+    called_args, _ = mock_generate_ams_login_url.call_args
+    assert "Missing Shib-Session-ID!" in called_args[0]
 
     current_app.config.update(
         WEKO_ACCOUNTS_SHIB_LOGIN_ENABLED=True
@@ -802,13 +801,12 @@ def test_shib_sp_login(client, redis_connect,mocker, db, users):
 
     # parse_attribute is error(AMS)
     with patch("weko_accounts.views.parse_attributes",return_value=("attr",True)):
-        mock_generate_ams_url = mocker.patch("weko_accounts.views.generate_ams_login_url",
+        mock_generate_ams_login_url = mocker.patch("weko_accounts.views.generate_ams_login_url",
                                       return_value=make_response())
         client.post(url+"?next=ams",data=form)
-        mock_generate_ams_url.assert_called_once()
-        called_args, called_kwargs = mock_generate_ams_url.call_args
-        assert called_args[0] is True
-        assert "Missing SHIB_ATTRs!" in called_kwargs.get("ams_error", "")
+        mock_generate_ams_login_url.assert_called_once()
+        called_args, _ = mock_generate_ams_login_url.call_args
+        assert "Missing SHIB_ATTRs!" in called_args[0]
 
     # Check if shib_eppn is not included in the blocked user list
     try:
@@ -836,13 +834,12 @@ def test_shib_sp_login(client, redis_connect,mocker, db, users):
                                   return_value=make_response())
 
     # Match with blocked user(AMS)
-    mock_redirect_ = mocker.patch("weko_accounts.views._redirect_method",
-                                  return_value=make_response())
+    mock_generate_ams_login_url = mocker.patch("weko_accounts.views.generate_ams_login_url",
+                                      return_value=make_response())
     client.post(url+"?next=ams",data=form)
-    mock_redirect_.assert_called_once()
-    called_args, called_kwargs = mock_redirect_.call_args
-    assert called_args[0] is True
-    assert "Login is blocked." in called_kwargs.get("ams_error", "")
+    mock_generate_ams_login_url.assert_called_once()
+    called_args, _ = mock_generate_ams_login_url.call_args
+    assert "Login is blocked." in called_args[0]
 
     # Match found with a blocked user from the wildcard
     mock_flash = mocker.patch("weko_accounts.views.flash")
@@ -854,13 +851,12 @@ def test_shib_sp_login(client, redis_connect,mocker, db, users):
     mock_flash.assert_called_with("Failed to login.",category="error")
 
     # Match found with a blocked user from the wildcard(AMS)
-    mock_redirect_ = mocker.patch("weko_accounts.views._redirect_method",
-                                  return_value=make_response())
+    mock_generate_ams_login_url = mocker.patch("weko_accounts.views.generate_ams_login_url",
+                                    return_value=make_response())
     client.post(url+"?next=ams",data=form)
-    mock_redirect_.assert_called_once()
-    called_args, called_kwargs = mock_redirect_.call_args
-    assert called_args[0] is True
-    assert "Login is blocked." in called_kwargs.get("ams_error", "")
+    mock_generate_ams_login_url.assert_called_once()
+    called_args, _ = mock_generate_ams_login_url.call_args
+    assert "Login is blocked." in called_args[0]
 
     # Not a blocked user
     form = {
@@ -992,19 +988,18 @@ def test_shib_sp_login(client, redis_connect,mocker, db, users):
         mock_redirect_.assert_called_once()
 
     # raise BaseException(AMS)
-    mock_redirect_ = mocker.patch("weko_accounts.views._redirect_method",
-                                  return_value=make_response())
+    mock_generate_ams_login_url = mocker.patch("weko_accounts.views.generate_ams_login_url",
+                                    return_value=make_response())
     with patch("weko_accounts.views.RedisConnection",side_effect=BaseException("test_error")):
         form = {
             "Shib-Session-ID":"1111",
             "eppn":"test_eppn"
         }
         res = client.post(url+"?next=ams",data=form)
-        mock_redirect_.assert_called_once()
-        called_args, called_kwargs = mock_redirect_.call_args
-        assert called_args[0] is True
+        mock_generate_ams_login_url.assert_called_once()
+        called_args, _ = mock_generate_ams_login_url.call_args
         assert "Server error has occurred. Please contact server " \
-                "administrator." in called_kwargs.get("ams_error", "")
+                "administrator." in called_args[0]
 
     # all attributes have value and some shibboleth_user records don't have target eppn
     current_app.config.update(
