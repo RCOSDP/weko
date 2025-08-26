@@ -4181,7 +4181,7 @@ def check_duplicate(data, is_item=True, exclude_ids=[]):
     if not matched_recids:
         return False, [], []
 
-    # 4. Author check (via author_link or creator)
+    # 4. Author check (via author_link or creator name)
     final_matched = set()
     if author_links:
         # Get fullName(s) from authors table via author_link
