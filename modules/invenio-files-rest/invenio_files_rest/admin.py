@@ -137,9 +137,6 @@ class LocationModelView(ModelView):
                 if (model.s3_endpoint_url and
                     not model.s3_endpoint_url.endswith('/')):
                     model.s3_endpoint_url = model.s3_endpoint_url + '/'
-                if (not model.s3_region_name and
-                    model.s3_endpoint_url):
-                    model.s3_region_name = model.s3_endpoint_url.split('.')[2]
             elif (model.type ==
                   current_app.config['FILES_REST_LOCATION_TYPE_S3_VIRTUAL_HOST_VALUE']):
                 model.s3_signature_version = None
@@ -147,16 +144,12 @@ class LocationModelView(ModelView):
                     model.uri = model.uri + '/'
                 if (model.uri.startswith('https://s3')):
                     # ex: https://s3.us-east-1.amazonaws.com/bucket_name/file_name
-                    if not model.s3_region_name:
-                        model.s3_region_name = model.uri.split('.')[1]
                     parts = model.uri.split('/')
                     model.s3_endpoint_url = (
                         parts[0] + '//' + parts[2] + '/'
                     )
                 else:
                     # ex: https://bucket_name.s3.us-east-1.amazonaws.com/file_name
-                    if not model.s3_region_name:
-                        model.s3_region_name = model.uri.split('.')[2]
                     parts = model.uri.split('/')
                     sub_parts = parts[2].split('.')
                     model.s3_endpoint_url = (
@@ -175,25 +168,18 @@ class LocationModelView(ModelView):
                     model.uri = model.uri + '/'
                 if not model.s3_endpoint_url.endswith('/'):
                     model.s3_endpoint_url = model.s3_endpoint_url + '/'
-                if (not model.s3_region_name and
-                    model.s3_endpoint_url):
-                    model.s3_region_name = model.s3_endpoint_url.split('.')[2]
             elif (model.type ==
                   current_app.config['FILES_REST_LOCATION_TYPE_S3_VIRTUAL_HOST_VALUE']):
                 if not model.uri.endswith('/'):
                     model.uri = model.uri + '/'
                 if (model.uri.startswith('https://s3')):
                     # ex: https://s3.us-east-1.amazonaws.com/bucket_name/file_name
-                    if not model.s3_region_name:
-                        model.s3_region_name = model.uri.split('.')[1]
                     parts = model.uri.split('/')
                     model.s3_endpoint_url = (
                         parts[0] + '//' + parts[2] + '/'
                     )
                 else:
                     # ex: https://bucket_name.s3.us-east-1.amazonaws.com/file_name
-                    if not model.s3_region_name:
-                        model.s3_region_name = model.uri.split('.')[2]
                     parts = model.uri.split('/')
                     sub_parts = parts[2].split('.')
                     model.s3_endpoint_url = (
