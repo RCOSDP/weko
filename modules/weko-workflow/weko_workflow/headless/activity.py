@@ -751,8 +751,8 @@ class HeadlessActivity(WorkActivity):
         for file in files:
             if isinstance(file, str):
                 if not os.path.isfile(file):
-                    current_app.logger.error(f"file({file}) is not found.")
-                    raise WekoWorkflowException(f"file({file}) is not found.")
+                    current_app.logger.warning(f"file({file}) is not found.")
+                    continue
                 size = os.path.getsize(file)
                 with open(file, "rb") as f:
                     file_info = upload(os.path.basename(file), f, size)

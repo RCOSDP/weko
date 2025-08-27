@@ -173,7 +173,7 @@ def default_search_factory(self, search, query_parser=None, search_type=None, ad
         :return: Query parser.
         """
 
-        def _get_keywords_query(k, v):
+        def _get_keywords_query(k, v, params):
             qry = None
             kv = (
                 params.get("lang") if k == "language" else params.get(k)
@@ -276,7 +276,7 @@ def default_search_factory(self, search, query_parser=None, search_type=None, ad
 
             return qry
 
-        def _get_object_query(k, v):
+        def _get_object_query(k, v, params):
             # text value
             kv = params.get(k)
             if not kv:
@@ -310,7 +310,7 @@ def default_search_factory(self, search, query_parser=None, search_type=None, ad
                                         )
             return None
 
-        def _get_nested_query(k, v):
+        def _get_nested_query(k, v, params):
             # text value
             kv = params.get(k)
 
@@ -427,7 +427,7 @@ def default_search_factory(self, search, query_parser=None, search_type=None, ad
 
             return Q("bool", should=shuld) if shuld else None
 
-        def _get_date_query(k, v):
+        def _get_date_query(k, v, params):
             """[summary]
 
             Args:
@@ -509,7 +509,7 @@ def default_search_factory(self, search, query_parser=None, search_type=None, ad
             current_app.logger.debug(qry)
             return qry
 
-        def _get_text_query(k, v):
+        def _get_text_query(k, v, params):
             qry = None
             kv = (
                 params.get("lang") if k == "language" else params.get(k)
@@ -535,7 +535,7 @@ def default_search_factory(self, search, query_parser=None, search_type=None, ad
                     qry = Q("bool", should=should_list, minimum_should_match=1)
             return qry
 
-        def _get_range_query(k, v):
+        def _get_range_query(k, v, params):
             qry = None
 
             if isinstance(v, list) and len(v) >= 2:
@@ -553,7 +553,7 @@ def default_search_factory(self, search, query_parser=None, search_type=None, ad
                     qry = Q("range", **{v[1]: qv})
             return qry
 
-        def _get_geo_distance_query(k, v):
+        def _get_geo_distance_query(k, v, params):
 
             qry = None
 
@@ -574,7 +574,7 @@ def default_search_factory(self, search, query_parser=None, search_type=None, ad
 
             return qry
 
-        def _get_geo_shape_query(k, v):
+        def _get_geo_shape_query(k, v, params):
             qry = None
 
             if isinstance(v, list) and len(v) >= 2:
@@ -621,47 +621,47 @@ def default_search_factory(self, search, query_parser=None, search_type=None, ad
 
         try:
             for k, v in ks.items():
-                qy = _get_keywords_query(k, v)
+                qy = _get_keywords_query(k, v, params)
 
                 if qy:
                     mut.append(qy)
 
             for k, v in kn.items():
-                qy = _get_nested_query(k, v)
+                qy = _get_nested_query(k, v, params)
 
                 if qy:
                     mut.append(qy)
 
             for k, v in kd.items():
-                qy = _get_date_query(k, v)
+                qy = _get_date_query(k, v, params)
 
                 if qy:
                     mut.append(qy)
 
             for k, v in ko.items():
-                qy = _get_object_query(k, v)
+                qy = _get_object_query(k, v, params)
 
                 if qy:
                     mut.append(qy)
             for k, v in kt.items():
-                qy = _get_text_query(k, v)
+                qy = _get_text_query(k, v, params)
 
                 if qy:
                     mut.append(qy)
             for k, v in kr.items():
-                qy = _get_range_query(k, v)
+                qy = _get_range_query(k, v, params)
 
                 if qy:
                     mut.append(qy)
 
             for k, v in kgd.items():
-                qy = _get_geo_distance_query(k, v)
+                qy = _get_geo_distance_query(k, v, params)
 
                 if qy:
                     mut.append(qy)
 
             for k, v in kgs.items():
-                qy = _get_geo_shape_query(k, v)
+                qy = _get_geo_shape_query(k, v, params)
 
                 if qy:
                     mut.append(qy)

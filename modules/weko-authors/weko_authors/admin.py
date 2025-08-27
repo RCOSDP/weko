@@ -190,8 +190,9 @@ class ExportView(BaseView):
         # Remove previous export url.
         delete_export_url()
         if export_target == "author_db":
-            temp_folder_path = current_app.config.get(
-                "WEKO_AUTHORS_EXPORT_TMP_DIR"
+            temp_folder_path = os.path.join(
+                tempfile.gettempdir(),
+                current_app.config.get("WEKO_AUTHORS_EXPORT_TMP_DIR")
             )
             os.makedirs(temp_folder_path, exist_ok=True)
             prefix = (
@@ -200,7 +201,8 @@ class ExportView(BaseView):
             )
 
             with tempfile.NamedTemporaryFile(
-                dir=temp_folder_path, prefix=prefix, suffix='.tsv', mode='w+', delete=False
+                dir=temp_folder_path, prefix=prefix, suffix='.tsv', 
+                mode='w+', delete=False
             ) as temp_file:
                 temp_file_path = temp_file.name
 
@@ -256,7 +258,10 @@ class ExportView(BaseView):
         """Resume export progress."""
 
         delete_export_url()
-        temp_folder_path = current_app.config.get("WEKO_AUTHORS_EXPORT_TMP_DIR")
+        temp_folder_path = os.path.join(
+            tempfile.gettempdir(),
+            current_app.config.get("WEKO_AUTHORS_EXPORT_TMP_DIR")
+        )
         os.makedirs(temp_folder_path, exist_ok=True)
         prefix = (
             current_app.config["WEKO_AUTHORS_EXPORT_TMP_PREFIX"]
@@ -264,7 +269,8 @@ class ExportView(BaseView):
         )
 
         with tempfile.NamedTemporaryFile(
-            dir=temp_folder_path, prefix=prefix, suffix='.tsv', mode='w+', delete=False
+            dir=temp_folder_path, prefix=prefix, suffix='.tsv', mode='w+', 
+            delete=False
         ) as temp_file:
             temp_file_path = temp_file.name
         update_cache_data(

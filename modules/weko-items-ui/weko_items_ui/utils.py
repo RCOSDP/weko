@@ -5353,10 +5353,10 @@ def create_item_deleted_data(deposit, profile, target, url):
     template = load_template(template_file, language)
 
     data = {
-        "item_title": deposit.get("item_title", ""),
-        "submitter_name": profile.username if profile else target.email,
-        "registration_date": registration_date.strftime("%Y-%m-%d %H:%M:%S"),
-        "record_url": url
+        "target_title": deposit.get("item_title", ""),
+        "recipient_name": profile.username if profile else target.email,
+        "event_date": registration_date.strftime("%Y-%m-%d %H:%M:%S"),
+        "target_url": url
     }
 
     return fill_template(template, data)
@@ -5390,10 +5390,10 @@ def create_direct_registered_data(deposit, profile, target, url):
     template = load_template(template_file, language)
 
     data = {
-        "item_title": deposit.get("item_title", ""),
-        "submitter_name": profile.username if profile else target.email,
-        "registration_date": registration_date.strftime("%Y-%m-%d %H:%M:%S"),
-        "record_url": url
+        "target_title": deposit.get("item_title", ""),
+        "recipient_name": profile.username if profile else target.email,
+        "event_date": registration_date.strftime("%Y-%m-%d %H:%M:%S"),
+        "target_url": url
     }
     return fill_template(template, data)
 
