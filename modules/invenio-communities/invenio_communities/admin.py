@@ -241,6 +241,12 @@ class CommunityModelView(ModelView):
         if(request.method == 'POST'):
             form_data = request.form.to_dict()
             try:
+                # Validate community ID
+                self.validate_community_id(form_data['id'])
+                # Validate title length
+                if len(form_data['title']) > 255:
+                    raise ValidationError("Title must be 255 characters or fewer.")
+
                 model.id_role = form_data['owner']
                 model.root_node_id = form_data['index']
                 model.title = form_data['title']
@@ -312,11 +318,17 @@ class CommunityModelView(ModelView):
 
                 db.session.commit()
                 return redirect(url_for('.index_view'))
+            except ValidationError as e:
+                return jsonify({
+                    "error": "ValidationError",
+                    "message": str(e)}), 400
             except Exception as e:
                 traceback.print_exc()
-                current_app.logger.error(e)
+                current_app.logger.error("Unexpected error: {}".format(e))
                 db.session.rollback()
-                return jsonify({"Unexpected error": str(e)}), 400
+                return jsonify({
+                    "error": "Unexpected error",
+                    "message": str(e)}), 400
 
         else:
             # request method GET
@@ -553,17 +565,6 @@ class CommunityModelView(ModelView):
         'thumbnail': FileField(description='ファイルタイプ: JPG ,JPEG, PNG'),
         'login_menu_enabled': RadioField('login_menu_enabled', choices=[('False', 'Disabled'), ('True', 'Enabled')] ),
     }
-
-    # form_widget_args = {
-    #     'id': {
-    #         'placeholder': 'Please enter community ID',
-    #         'maxlength': 100,
-    #     },
-    #     'title': {
-    #         'placeholder': 'Please enter title',
-    #         'maxlength': 255,
-    #     },
-    # }
 
     @property
     def can_create(self):

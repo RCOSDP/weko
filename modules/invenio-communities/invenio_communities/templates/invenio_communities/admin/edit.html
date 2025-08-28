@@ -124,6 +124,8 @@
     <script>
       $(document).ready(function(){
           $("#id").prop('readonly', true)
+          $("#title").prop('placeholder', 'Please enter title (maximum characters:255)')
+          $("#title").prop('maxlength', 255)
           $("#cnri").prop('readonly', true)
           $("#thumbnail").prop('accept', "image/png, image/jpeg, image/jpg,")
       });
