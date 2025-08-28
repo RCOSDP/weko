@@ -1108,13 +1108,14 @@ def _create_error_document(type, error):
 
 @blueprint.errorhandler(401)
 def handle_unauthorized(ex):
+    traceback.print_exc()
     msg = "Authentication is required."
     current_app.logger.error(msg)
     return jsonify(_create_error_document(ErrorType.AuthenticationRequired.type, msg)), ErrorType.AuthenticationRequired.code
 
 @blueprint.errorhandler(403)
 def handle_forbidden(ex):
-    msg = "Not allowed operation in your token scope."
+    msg = "Not allowed operation in your role or token scope."
     current_app.logger.error(msg)
     return jsonify(_create_error_document(ErrorType.Forbidden.type, msg)), ErrorType.Forbidden.code
 
