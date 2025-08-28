@@ -44,6 +44,7 @@ from redis.exceptions import RedisError
 
 from flask import current_app, jsonify
 from flask_babelex import gettext as _
+from flask_security import current_user
 from invenio_cache import current_cache
 from invenio_db import db
 from invenio_indexer.api import RecordIndexer
@@ -53,6 +54,7 @@ from .contrib.validation import (
     validate_map, validate_required, check_weko_id_is_exits_for_import
 )
 from .api import WekoAuthors
+from .errors import AuthorsValidationError, AuthorsPermissionError
 from .models import AuthorsPrefixSettings, AuthorsAffiliationSettings, Authors
 
 def update_cache_data(key: str, value: str, timeout=None):
@@ -1731,3 +1733,121 @@ def get_check_base_name():
         current_app.config["WEKO_AUTHORS_IMPORT_CACHE_USER_TSV_FILE_KEY"])
     base_file_name = os.path.splitext(os.path.basename(temp_file_path))[0]
     return f"{base_file_name}-check"
+
+from invenio_communities.models import Community
+
+def validate_community_ids(new_ids, old_ids=None, is_create=False):
+    """Validate community IDs.
+
+    Args:
+        new_ids (iterable): The new community IDs.
+        old_ids (iterable): The old community IDs.
+        is_create (bool): Flag indicating if this is a create operation.
+    """
+    new_ids = set(new_ids)
+    old_ids = set(old_ids) if old_ids else set()
+
+    # 形式チェック
+    for cid in new_ids:
+        if not re.match(r'^[a-zA-Z0-9_-]+$', cid):
+            raise AuthorsValidationError(description=f"Invalid community ID format: {cid}")
+
+    # 存在チェック
+    existing_ids = {c.id for c in Community.query.filter(Community.id.in_(new_ids)).all()}
+    missing_ids = new_ids - existing_ids
+    if missing_ids:
+        raise AuthorsValidationError(description=f"Community ID(s) {', '.join(missing_ids)} does not exist.")
+
+    # 権限チェック
+    managed_communities, is_super = get_managed_community(current_user)
+    managed_ids = {c.id for c in managed_communities}
+
+    if is_super:
+        return
+
+    if is_create:
+        unauthorized = new_ids - managed_ids
+        if unauthorized:
+            raise AuthorsPermissionError(description=f'You do not have management permissions for the community "{", ".join(unauthorized)}".')
+        if not (new_ids & managed_ids):
+            raise AuthorsValidationError(description='You must assign at least one managed community.')
+
+    else:
+        if not (old_ids & managed_ids):
+            raise AuthorsPermissionError(description='You do not manage the existing record.')
+        if not (new_ids & managed_ids):
+            raise AuthorsPermissionError(description='You must include at least one community ID that you manage.')
+
+        added = new_ids - old_ids
+        removed = old_ids - new_ids
+
+        unauthorized_add = added - managed_ids
+        if unauthorized_add:
+            raise AuthorsPermissionError(
+                description=f'You do not have management permissions for the community "{", ".join(unauthorized_add)}".'
+            )
+
+        unauthorized_remove = removed - managed_ids
+        if unauthorized_remove:
+            raise AuthorsPermissionError(
+                description=f'You do not have management permissions for the community "{", ".join(unauthorized_remove)}".'
+            )
+
+    return True, 200, 'Validation passed'
+
+
+def get_managed_community(user):
+    """Get communities managed by the user.
+
+    Args:
+        user (User): The user object.
+
+    Returns:
+        list: List of communities managed by the user.
+    """
+    managed_communities = []
+    if user.is_authenticated:
+        try:
+            is_super = any(role.name in current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER'] for role in user.roles)
+            if is_super:
+                managed_communities = Community.query.all()
+            else:
+                managed_communities = Community.get_repositories_by_user(user)
+        except Exception as e:
+            current_app.logger.error(f"Error fetching managed communities: {e}")
+            traceback.print_exc()
+    return managed_communities, is_super
+
+
+def check_delete_entity(entity, entity_type, id):
+    entity_instance = entity.query.get(id)
+    if not entity_instance:
+        return False, f'{entity_type} not found.'
+    communities = entity_instance.communities
+
+    # 現在のユーザーが管理しているコミュニティを取得
+    managed_communities, is_super = get_managed_community(current_user)
+    managed_community_ids = {comm.id for comm in managed_communities}
+
+    if is_super:
+        return True, None
+    elif communities == []:
+        # entityに関連付けられているコミュニティがない場合はリポジトリ管理者以上のみ削除可能
+        return False, f'You do not have permissions for this {entity_type}.'
+    else:
+        # entityに関連付けられているすべてのコミュニティの管理者であれば削除可能
+        unauthorized_communities = [com.id for com in communities
+                                    if com.id not in managed_community_ids]
+        if not unauthorized_communities:
+            return True, None
+        return False, f'You do not have management permissions for the community "{unauthorized_communities}".'
+
+
+def check_delete_author(id):
+    return check_delete_entity(Authors, 'Author', id)
+
+def check_delete_prefix(id):
+    return check_delete_entity(AuthorsPrefixSettings, 'Prefix', id)
+
+def check_delete_affiliation(id):
+    return check_delete_entity(AuthorsAffiliationSettings, 'Affiliation', id)

@@ -28,6 +28,7 @@ from flask import Response, Blueprint, current_app, json, jsonify, make_response
 from flask_babelex import gettext as _
 from flask_login import login_required
 from flask_security import current_user
+from invenio_communities.models import Community
 from invenio_db import db
 from invenio_indexer.api import RecordIndexer
 from weko_schema_ui.models import PublishStatus
@@ -35,10 +36,13 @@ from weko_schema_ui.models import PublishStatus
 from .config import WEKO_AUTHORS_IMPORT_KEY
 from .models import Authors, AuthorsAffiliationSettings, AuthorsPrefixSettings
 from .api import WekoAuthors
+from .errors import AuthorsValidationError
 from .permissions import author_permission
 from .utils import (
     get_author_prefix_obj, get_author_affiliation_obj, get_count_item_link,
-    validate_weko_id, check_period_date
+    validate_weko_id, check_period_date, validate_community_ids,
+    get_managed_community, check_delete_author, check_delete_prefix,
+    check_delete_affiliation
 )
 from weko_logging.activity_logger import UserActivityLogger
 
@@ -100,6 +104,14 @@ def create():
     elif result_period_check[0] == False and result_period_check[1] == "start is after end":
         return jsonify(msg=_('The end date must be after the start date.')), 500
 
+    #community_idsのバリデーションチェック
+    try:
+        community_ids = data.get("community_ids", [])
+        validate_community_ids(community_ids, is_create=True)
+    except Exception as ex:
+        current_app.logger.error(ex)
+        return jsonify(msg=_('Failed')), 500
+
     try:
         WekoAuthors.create(data)
         UserActivityLogger.info(operation="AUTHOR_CREATE")
@@ -155,7 +167,14 @@ def update_author():
         elif result_period_check[0] == False and result_period_check[1] == "start is after end":
             return jsonify(msg=_('The end date must be after the start date.')), 500
 
+        #community_idsのバリデーションチェック
+        community_ids = data.get("community_ids", [])
+        validate_community_ids(community_ids, is_create=True)
+
         WekoAuthors.update(pk_id, data, force_change_flag)
+    except AuthorsValidationError as e:
+        current_app.logger.error(e)
+        return jsonify(msg=e.description), e.code
     except Exception as ex:
         current_app.logger.error(ex)
         traceback.print_exc()
@@ -177,6 +196,10 @@ def delete_author():
         return make_response(
             _('The author is linked to items and cannot be deleted.'),
             500)
+
+    check, message = check_delete_author(data['pk_id'])
+    if not check:
+        return make_response(message, 403)
 
     try:
         author_data = Authors.query.filter_by(
@@ -616,6 +639,18 @@ def download_process_status():
         )
 
 
+@blueprint_api.route("/managed_communities", methods=["get"])
+@login_required
+@author_permission.require(http_exception=403)
+def get_managed_communities():
+    """Get managed communities."""
+    communities, is_super = get_managed_community(current_user)
+    community_ids = [community.id for community in communities]
+    data = {"communityIds": community_ids,
+            "isAdmin": is_super}
+    return jsonify(data)
+
+
 @blueprint_api.route("/search_prefix", methods=['get'])
 @login_required
 @author_permission.require(http_exception=403)
@@ -626,8 +661,9 @@ def get_prefix_list():
     data = []
     if settings:
         for s in settings:
-            tmp = s.__dict__
+            tmp = s.__dict__.copy()
             tmp.pop('_sa_instance_state', None)
+            tmp['communityIds'] = [community.id for community in s.communities]
             data.append(tmp)
     return jsonify(data)
 
@@ -642,8 +678,9 @@ def get_affiliation_list():
     data = []
     if settings:
         for s in settings:
-            tmp = s.__dict__
+            tmp = s.__dict__.copy()
             tmp.pop('_sa_instance_state', None)
+            tmp['communityIds'] = [community.id for community in s.communities]
             data.append(tmp)
     return jsonify(data)
 
@@ -680,15 +717,27 @@ def update_prefix():
     """Update authors prefix settings."""
     try:
         data = request.get_json()
+        community_ids = data.pop("communityIds", [])
+        old = AuthorsPrefixSettings.query.get(data.get('id'))
+        old_community_ids = [c.id for c in old.communities]
+
+        validate_community_ids(community_ids, old_ids=old_community_ids)
+        data['communities'] = Community.get_by_ids(community_ids)
+
         check = get_author_prefix_obj(data['scheme'])
         if check is None or check.id == data['id']:
             AuthorsPrefixSettings.update(**data)
-            return jsonify({'code': 200, 'msg': 'Success'})
+            return jsonify({'code': 200, 'msg': 'Success'}), 200
         else:
             return jsonify(
-                {'code': 400, 'msg': 'Specified scheme is already exist.'})
-    except Exception:
-        return jsonify({'code': 204, 'msg': 'Failed'})
+                {'code': 400, 'msg': 'Specified scheme is already exist.'}), 400
+    except AuthorsValidationError as ex:
+        current_app.logger.error(f"Failed to update authors prefix settings: {ex}")
+        return jsonify({'code': ex.code, 'msg': ex.description}), ex.code
+    except Exception as ex:
+        current_app.logger.error(f"Unexpected Error: {ex}")
+        traceback.print_exc()
+        return jsonify({'code': 500, 'msg': 'Failed'}), 500
 
 
 @blueprint_api.route("/delete_prefix/<id>", methods=['delete'])
@@ -696,6 +745,9 @@ def update_prefix():
 @author_permission.require(http_exception=403)
 def delete_prefix(id):
     """Delete authors prefix settings."""
+    check, message = check_delete_prefix(id)
+    if not check:
+        return jsonify(msg=message), 400
     AuthorsPrefixSettings.delete(id)
     return jsonify(msg=_('Success'))
 
@@ -707,15 +759,25 @@ def create_prefix():
     """Add new authors prefix settings."""
     try:
         data = request.get_json()
+        community_ids = data.pop("communityIds", [])
+
+        validate_community_ids(community_ids, is_create=True)
+        data['communities'] = Community.get_by_ids(community_ids)
+
         check = get_author_prefix_obj(data['scheme'])
         if check is None:
             AuthorsPrefixSettings.create(**data)
-            return jsonify({'code': 200, 'msg': 'Success'})
+            return jsonify({'code': 200, 'msg': 'Success'}), 200
         else:
             return jsonify(
-                {'code': 400, 'msg': 'Specified scheme is already exist.'})
-    except Exception:
-        return jsonify({'code': 204, 'msg': 'Failed'})
+                {'code': 400, 'msg': 'Specified scheme is already exist.'}), 400
+    except AuthorsValidationError as ex:
+        current_app.logger.error(f"Failed to create authors prefix settings: {ex}")
+        return jsonify({'code': ex.code, 'msg': ex.description}), ex.code
+    except Exception as ex:
+        current_app.logger.error(f"Unexpected Error: {ex}")
+        traceback.print_exc()
+        return jsonify({'code': 500, 'msg': 'Failed'}), 500
 
 
 @blueprint_api.route("/edit_affiliation", methods=['post'])
@@ -725,15 +787,27 @@ def update_affiliation():
     """Update authors affiliation settings."""
     try:
         data = request.get_json()
+        community_ids = data.pop("communityIds", [])
+        old = AuthorsAffiliationSettings.query.get(data.get('id'))
+        old_community_ids = [c.id for c in old.communities]
+
+        validate_community_ids(community_ids, old_ids=old_community_ids)
+        data['communities'] = Community.get_by_ids(community_ids)
+
         check = get_author_affiliation_obj(data['scheme'])
         if check is None or check.id == data['id']:
             AuthorsAffiliationSettings.update(**data)
-            return jsonify({'code': 200, 'msg': 'Success'})
+            return jsonify({'code': 200, 'msg': 'Success'}), 200
         else:
             return jsonify(
-                {'code': 400, 'msg': 'Specified scheme is already exist.'})
-    except Exception:
-        return jsonify({'code': 204, 'msg': 'Failed'})
+                {'code': 400, 'msg': 'Specified scheme is already exist.'}), 400
+    except AuthorsValidationError as ex:
+        current_app.logger.error(f"Failed to update authors affiliation settings: {ex}")
+        return jsonify({'code': ex.code, 'msg': ex.description}), ex.code
+    except Exception as ex:
+        current_app.logger.error(f"Unexpected Error: {ex}")
+        traceback.print_exc()
+        return jsonify({'code': 500, 'msg': 'Failed'}), 500
 
 
 @blueprint_api.route("/delete_affiliation/<id>", methods=['delete'])
@@ -741,6 +815,9 @@ def update_affiliation():
 @author_permission.require(http_exception=403)
 def delete_affiliation(id):
     """Delete authors affiliation settings."""
+    check, message = check_delete_affiliation(id)
+    if not check:
+        return jsonify(msg=message), 400
     AuthorsAffiliationSettings.delete(id)
     return jsonify(msg=_('Success'))
 
@@ -752,15 +829,25 @@ def create_affiliation():
     """Add new authors affiliation settings."""
     try:
         data = request.get_json()
+        community_ids = data.pop("communityIds", [])
+
+        validate_community_ids(community_ids, is_create=True)
+        data['communities'] = Community.get_by_ids(community_ids)
+
         check = get_author_affiliation_obj(data['scheme'])
         if check is None:
             AuthorsAffiliationSettings.create(**data)
-            return jsonify({'code': 200, 'msg': 'Success'})
+            return jsonify({'code': 200, 'msg': 'Success'}), 200
         else:
             return jsonify(
-                {'code': 400, 'msg': 'Specified scheme is already exist.'})
-    except Exception:
-        return jsonify({'code': 204, 'msg': 'Failed'})
+                {'code': 400, 'msg': 'Specified scheme is already exist.'}), 400
+    except AuthorsValidationError as ex:
+        current_app.logger.error(f"Failed to create authors affiliation settings: {ex}")
+        return jsonify({'code': ex.code, 'msg': ex.description}), ex.code
+    except Exception as ex:
+        current_app.logger.error(f"Unexpected Error: {ex}")
+        traceback.print_exc()
+        return jsonify({'code': 500, 'msg': 'Failed'}), 500
 
 
 @blueprint.teardown_request
