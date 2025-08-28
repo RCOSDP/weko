@@ -2086,7 +2086,7 @@ class Indexes(object):
         :param indexid: index id.
         :return: cnri, index_url
         """
-        index_url = request.url.split('/admin/')[0] + '/index/' + str(indexid)
+        index_url = request.host_url.rstrip('/') + "/search?search_type=2&q=" + str(indexid)
         credential = PIDClientCredentials.load_from_JSON(
             current_app.config.get('WEKO_HANDLE_CREDS_JSON_PATH')
         )
