@@ -539,7 +539,7 @@ class WekoRecordsStats(ContentNegotiatedMethodView):
 
             # Check Permission
             if not page_permission_factory(record).can():
-                    raise PermissionError()
+                raise PermissionError()
 
             # Get date param
             date = request.values.get('date', type=str)
