@@ -17,7 +17,7 @@ SET client_min_messages = warning;
 SET row_security = off;
 
 --
--- Data for Name: item_type_mapping; Type: TABLE DATA; Schema: public; Owner: invenio
+-- Data for Name: jsonld_mappings; Type: TABLE DATA; Schema: public; Owner: invenio
 --
 
 COPY public.jsonld_mappings (created, updated, id, name, mapping, item_type_id, version_id, is_deleted) FROM stdin;

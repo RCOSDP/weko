@@ -7,12 +7,14 @@ docker cp scripts/demo/ams/item_type_mapping.sql $(docker-compose -f docker-comp
 docker cp scripts/demo/ams/rocrate_mapping.sql $(docker-compose -f docker-compose2.yml ps -q postgresql):/tmp/ams_rocrate_mapping.sql
 docker cp scripts/demo/ams/facet_search_setting.sql $(docker-compose -f docker-compose2.yml ps -q postgresql):/tmp/ams_facet_search_setting.sql
 docker cp scripts/demo/ams/jsonld_mappings.sql $(docker-compose -f docker-compose2.yml ps -q postgresql):/tmp/ams_jsonld_mappings.sql
+docker cp scripts/demo/ams/index_style.sql $(docker-compose -f docker-compose2.yml ps -q postgresql):/tmp/ams_index_style.sql
 docker-compose -f docker-compose2.yml exec postgresql psql -U invenio -d invenio -f /tmp/ams_itemtype_name.sql
 docker-compose -f docker-compose2.yml exec postgresql psql -U invenio -d invenio -f /tmp/ams_itemtype.sql
 docker-compose -f docker-compose2.yml exec postgresql psql -U invenio -d invenio -f /tmp/ams_itemtype_mapping.sql
 docker-compose -f docker-compose2.yml exec postgresql psql -U invenio -d invenio -f /tmp/ams_rocrate_mapping.sql
 docker-compose -f docker-compose2.yml exec postgresql psql -U invenio -d invenio -f /tmp/ams_facet_search_setting.sql
 docker-compose -f docker-compose2.yml exec postgresql psql -U invenio -d invenio -f /tmp/ams_jsonld_mappings.sql
+docker-compose -f docker-compose2.yml exec postgresql psql -U invenio -d invenio -f /tmp/ams_index_style.sql
 
 echo 'add free textarea to file property'
 docker-compose -f docker-compose2.yml exec web invenio shell /code/tools/add_free_textarea.py
