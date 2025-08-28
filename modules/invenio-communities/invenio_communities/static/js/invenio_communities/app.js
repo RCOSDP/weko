@@ -38,10 +38,30 @@
               window.location.href = response.url;
             }
           } else {
-            return response.json().then(err => { throw new Error(err.error); });
+            return response.text().then(text => {
+              let errorMsg;
+              try {
+                // parse JSON error response
+                const errorObj = JSON.parse(text);
+                if (errorObj.error && errorObj.message) {
+                  if (errorObj.error === "ValidationError") {
+                    errorMsg = errorObj.message;
+                  } else {
+                    errorMsg = errorObj.error + ": " + errorObj.message;
+                  }
+                } else {
+                  // if the JSON does not have expected fields, use the whole text
+                  errorMsg = text;
+                }
+              } catch (e) {
+                // not a JSON response
+                errorMsg = text || 'Unknown error occurred';
+              }
+              throw new Error(errorMsg);
+            });
           }
         }).catch(error => {
-          alert("An error has occurred. : " + error.message); // エラーメッセージを表示
+          alert(error.message);
         });
       }
     }
