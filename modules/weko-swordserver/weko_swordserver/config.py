@@ -108,6 +108,9 @@ segmented upload, if segmented upload is supported.
 WEKO_SWORDSERVER_DIGEST_VERIFICATION = True
 """ Does the server require the client to send a digest? """
 
+WEKO_SWORDSERVER_BAGIT_VERIFICATION = True
+""" Does the server require the client to send a BagIt package? """
+
 WEKO_SWORDSERVER_DEPOSIT_ROLE_ENABLE = [
     "System Administrator",
     "Repository Administrator"
