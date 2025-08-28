@@ -20,9 +20,15 @@ SET row_security = off;
 -- Data for Name: index_style; Type: TABLE DATA; Schema: public; Owner: invenio
 --
 
-COPY public.index_style (created, updated, id, width, height, index_link_enabled) FROM stdin;
-2025-02-25 04:05:58.957687	2025-02-25 04:05:58.957691	weko	3		false
-\.
+INSERT INTO public.index_style (created, updated, id, width, height, index_link_enabled) VALUES
+('2025-02-25 04:05:58.957687', '2025-02-25 04:05:58.957691', 'weko', 3, '', false)
+ON CONFLICT (id) DO UPDATE SET
+  created = EXCLUDED.created,
+  updated = EXCLUDED.updated,
+  id = EXCLUDED.id,
+  width = EXCLUDED.width,
+  height = EXCLUDED.height,
+  index_link_enabled = EXCLUDED.index_link_enabled;
 
 
 --

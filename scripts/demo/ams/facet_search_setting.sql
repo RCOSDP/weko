@@ -20,17 +20,28 @@ SET row_security = off;
 -- Data for Name: facet_search_setting; Type: TABLE DATA; Schema: public; Owner: invenio
 --
 
-COPY public.facet_search_setting (id, name_en, name_jp, mapping, aggregations, active, ui_type, display_number, is_open, search_condition) FROM stdin;
-51001	genre_filter	データセットの分野	text1.raw	[]	t	CheckboxList	5	t	OR
-51002	subjectOf_filter	データセットの名称	title	[]	t	CheckboxList	5	t	OR
-51003	payOrFree_filter	有償・無償	text2.raw	[]	t	CheckboxList	5	t	OR
-51004	contactPermission_filter	連絡・許諾の要不要	text3.raw	[]	t	CheckboxList	5	t	OR
-51005	creator_filter	データ作成者 氏名	text4.raw	[]	t	CheckboxList	5	t	OR
-51006	projectName_filter	プロジェクト名	text5.raw	[]	t	CheckboxList	5	t	OR
-51007	iCIsNo_filter	（IC無の場合）	text6.raw	[]	t	CheckboxList	5	t	OR
-51008	accessMode_filter	アクセス権	text7.raw	[]	t	CheckboxList	5	t	OR
-51009	informedConsent_filter	（ヒト）インフォームドコンセント（IC） 有・無・不要	text8.raw	[]	t	CheckboxList	5	t	OR
-\.
+INSERT INTO public.facet_search_setting (id, name_en, name_jp, mapping, aggregations, active, ui_type, display_number, is_open, search_condition) VALUES
+(51001, 'genre_filter', 'データセットの分野', 'text1.raw', '[]', true, 'CheckboxList', 5, true, 'OR'),
+(51002, 'subjectOf_filter', 'データセットの名称', 'title', '[]', true, 'CheckboxList', 5, true, 'OR'),
+(51003, 'payOrFree_filter', '有償・無償', 'text2.raw', '[]', true, 'CheckboxList', 5, true, 'OR'),
+(51004, 'contactPermission_filter', '連絡・許諾の要不要', 'text3.raw', '[]', true, 'CheckboxList', 5, true, 'OR'),
+(51005, 'creator_filter', 'データ作成者 氏名', 'text4.raw', '[]', true, 'CheckboxList', 5, true, 'OR'),
+(51006, 'projectName_filter', 'プロジェクト名', 'text5.raw', '[]', true, 'CheckboxList', 5, true, 'OR'),
+(51007, 'iCIsNo_filter', '（IC無の場合）', 'text6.raw', '[]', true, 'CheckboxList', 5, true, 'OR'),
+(51008, 'accessMode_filter', 'アクセス権', 'text7.raw', '[]', true, 'CheckboxList', 5, true, 'OR'),
+(51009, 'informedConsent_filter', '（ヒト）インフォームドコンセント（IC） 有・無・不要', 'text8.raw', '[]', true, 'CheckboxList', 5, true, 'OR')
+ON CONFLICT (id) DO UPDATE SET
+  id = EXCLUDED.id,
+  name_en = EXCLUDED.name_en,
+  name_jp = EXCLUDED.name_jp,
+  mapping = EXCLUDED.mapping,
+  aggregations = EXCLUDED.aggregations,
+  active = EXCLUDED.active,
+  ui_type = EXCLUDED.ui_type,
+  display_number = EXCLUDED.display_number,
+  is_open = EXCLUDED.is_open,
+  search_condition = EXCLUDED.search_condition;
+
 
 
 --

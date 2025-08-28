@@ -20,9 +20,16 @@ SET row_security = off;
 -- Data for Name: item_type_name; Type: TABLE DATA; Schema: public; Owner: invenio
 --
 
-COPY public.item_type_name (created, updated, id, name, has_site_license, is_active) FROM stdin;
-2025-02-25 04:05:58.871334	2025-02-25 04:05:58.871341	51000	未病アイテムタイプ	t	t
-\.
+INSERT INTO public.item_type_name (created, updated, id, name, has_site_license, is_active) VALUES
+('2025-02-25 04:05:58.871334', '2025-02-25 04:05:58.871341', 51000, '未病アイテムタイプ', true, true)
+ON CONFLICT (id) DO UPDATE SET
+  created = EXCLUDED.created,
+  updated = EXCLUDED.updated,
+  id = EXCLUDED.id,
+  name = EXCLUDED.name,
+  has_site_license = EXCLUDED.has_site_license,
+  is_active = EXCLUDED.is_active;
+
 
 
 --
