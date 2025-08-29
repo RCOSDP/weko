@@ -1991,7 +1991,7 @@ class TestUsageReport:
             url = "http://test_server/workflow/activity/detail/{}".format(activity.id)
             return url, "test.test@test.org"
         mocker.patch("weko_admin.utils.UsageReport._UsageReport__get_usage_report_email_and_url", side_effect=mock_email_and_url)
-        mocker.patch("weko_workflow.utils.get_mail_data", return_value=("test_subject", "test_body"))
+        mocker.patch("weko_workflow.utils.get_mail_data", return_value={"mail_subject": "test_subject", "mail_body": "test_body"})
         mocker.patch("weko_workflow.utils.replace_characters", return_value="test_body")
         usage_report = UsageReport()
         acts = [

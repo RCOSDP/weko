@@ -60,7 +60,6 @@ from weko_index_tree.models import IndexStyle
 from weko_index_tree.utils import get_index_link_list
 from weko_logging.activity_logger import UserActivityLogger
 from weko_records.api import ItemLink, ItemTypes, RequestMailList
-from weko_records.serializers import citeproc_v1
 from weko_records.serializers.utils import get_mapping
 from weko_records.utils import custom_record_medata_for_export, \
     remove_weko2_special_character, selected_value_by_language
@@ -886,9 +885,9 @@ def _get_show_secret_url_button(record : WekoRecord, filename :str) -> bool:
     has_parmission = False
     # Registered user
     owner_user_id = [int(record['owner'])] if record.get('owner') else []
-    shared_user_id = [int(record['weko_shared_id'])] if int(record.get('weko_shared_id', -1)) != -1 else []
+    shared_user_ids = [int(uid) for uid in record.get('weko_shared_ids', [])]
     if current_user and current_user.is_authenticated and \
-        current_user.id in owner_user_id + shared_user_id:
+        current_user.id in owner_user_id + shared_user_ids:
         has_parmission = True
     # Super users
     supers = current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER']
@@ -1046,6 +1045,7 @@ def file_version_update():
 @blueprint.app_template_filter('citation')
 def citation(record, pid, style=None, ln=None):
     """Render citation for record according to style and language."""
+    from weko_records.serializers import citeproc_v1
     locale = ln or "en-US"  # ln or current_i18n.language
     style = style or "aapg-bulletin"  # style or 'science'
     try:

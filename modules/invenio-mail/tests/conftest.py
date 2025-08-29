@@ -419,7 +419,6 @@ def mail_template_fixture(db):
     db.session.add(genre3)
 
     mail_template = MailTemplates(
-        id = 1,
         mail_subject = 'Test Subject',
         mail_body = 'Test Body',
         default_mail = True,

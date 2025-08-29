@@ -159,7 +159,6 @@ def base_app(instance_path):
         THEME_SITEURL="https://localhost",
         WEKO_THEME_DEFAULT_COMMUNITY="Root Index",
         WEKO_SCHEMA_JPCOAR_V1_SCHEMA_NAME = 'jpcoar_v1_mapping',
-        WEKO_SCHEMA_JPCOAR_V2_SCHEMA_NAME = 'jpcoar_v2_mapping',
         WEKO_SCHEMA_DDI_SCHEMA_NAME = 'ddi_mapping',
         WEKO_SCHEMA_VERSION_TYPE={
             "modified": "oaire:versiontype",
@@ -186,7 +185,6 @@ def base_app(instance_path):
         ACCOUNTS_SESSION_REDIS_DB_NO=1,
         CACHE_REDIS_HOST="redis",
         REDIS_PORT="6379",
-        CACHE_REDIS_HOST="redis",
         CACHE_REDIS_URL=os.environ.get("CACHE_REDIS_URL", "redis://redis:6379/0"),
         WEKO_BUCKET_QUOTA_SIZE=50 * 1024 * 1024 * 1024,
         WEKO_MAX_FILE_SIZE=50 * 1024 * 1024 * 1024,
@@ -250,8 +248,6 @@ def base_app(instance_path):
         WEKO_ADMIN_PERMISSION_ROLE_COMMUNITY = "Community Administrator",
         WEKO_ADMIN_PERMISSION_ROLE_REPO = "Repository Administrator",
         WEKO_AUTHORS_ES_INDEX_NAME='test-authors',
-        WEKO_SCHEMA_JPCOAR_V1_SCHEMA_NAME='jpcoar_v1_mapping',
-        WEKO_SCHEMA_DDI_SCHEMA_NAME='ddi_mapping',
     )
 
     app_.config['WEKO_SEARCH_REST_ENDPOINTS']['recid']['search_index']='test-weko'

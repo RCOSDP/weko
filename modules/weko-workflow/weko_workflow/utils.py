@@ -66,7 +66,6 @@ from weko_records.api import FeedbackMailList, RequestMailList, ItemsMetadata, I
     ItemTypes, Mapping, ItemApplication
 from weko_records.models import ItemMetadata, ItemType, ItemReference
 from weko_records.serializers.utils import get_full_mapping, get_item_type_name
-from weko_records_ui.api import get_item_provide_list
 from weko_records_ui.models import FilePermission
 from weko_records_ui.external import call_external_system
 from weko_redis import RedisConnection
@@ -2943,6 +2942,7 @@ def set_mail_info(item_info, activity_detail, guest_user=False):
     :activity_detail: object
     :guest_user: object
     """
+    from weko_records_ui.api import get_item_provide_list
     def _get_restricted_data_name():
         result = item_info.get('subitem_restricted_access_dataset_usage', '')
         if not result:
@@ -3711,6 +3711,7 @@ def send_usage_application_mail_for_guest_user(guest_mail: str, temp_url: str, d
     @param temp_url:
     @return:
     """
+    from weko_records_ui.api import get_item_provide_list
     # Mail information
     site_name_en, site_name_ja = get_site_info_name()
     site_mail = get_default_mail_sender()
@@ -4184,7 +4185,7 @@ def process_send_mail(mail_info, mail_id):
         recipients.extend([mail_info.get('mail_recipient')])
         mail_data['mail_body'] = body
         mail_data['mail_recipients'] = recipients
-        send_mail(mail_data)
+        return send_mail(mail_data)
 
 
 def process_send_mail_tpl(mail_info, mail_pattern_name):

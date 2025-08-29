@@ -156,7 +156,12 @@ class TestMailTemplatesView:
         client.get(url)
         mock_render.assert_called_with(
             'invenio_mail/mail_templates.html',
-            data=json.dumps({"mail_templates": MailTemplates.get_templates()})
+            data=json.dumps(
+                {
+                    "mail_templates": MailTemplates.get_templates(),
+                    "additional_display": False
+                }
+            )
         )
 
     # .tox/c1/bin/pytest --cov=invenio_mail tests/test_admin.py::TestMailTemplatesView::test_help -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-mail/.tox/c1/tmp

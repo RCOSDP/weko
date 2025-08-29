@@ -443,7 +443,8 @@ def base_app(instance_path):
         WEKO_INDEX_TREE_API = "/api/tree/index/",
         WEKO_THEME_INSTANCE_DATA_DIR="data",
         WEKO_HANDLE_ALLOW_REGISTER_CNRI=False,
-        WEKO_ADMIN_PERMISSION_ROLE_COMMUNITY="Community Administrator"
+        WEKO_ADMIN_PERMISSION_ROLE_COMMUNITY="Community Administrator",
+        WEKO_INDEX_TREE_SHOW_MODAL=False
     )
     app_.url_map.converters['pid'] = PIDConverter
 

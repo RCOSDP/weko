@@ -128,7 +128,6 @@ setup(
         ],
         'invenio_oauth2server.scopes': [
             'file_read_scope = weko_records_ui.scopes:file_read_scope',
-            'item_read_scope = weko_records_ui.scopes:item_read_scope',
         ],
     },
     extras_require=extras_require,

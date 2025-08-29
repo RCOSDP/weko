@@ -40,7 +40,6 @@ from invenio_pidstore.resolver import Resolver
 from invenio_records.api import Record
 from invenio_pidrelations.contrib.versioning import PIDVersioning
 from weko_workflow.api import WorkFlow
-from weko_items_ui.utils import get_workflow_by_item_type_id
 from weko_records.api import ItemTypes
 from invenio_files_rest.models import Location
 from weko_search_ui.utils import handle_check_item_is_locked, check_replace_file_import_items, import_items_to_system
@@ -508,6 +507,7 @@ def get_file_place_info(org_pid, org_bucket_id, file_name):
         raise Exception(_('Cannot update because the corresponding item is being edited.'))
 
     from weko_workflow.api import WorkActivity
+    from weko_items_ui.utils import get_workflow_by_item_type_id
 
     # get workflow
     pid_value = org_pid

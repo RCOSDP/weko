@@ -953,7 +953,7 @@ class WorkActivity(object):
                 action_status=ActionStatusPolicy.ACTION_DOING,
                 activity_login_user=activity_login_user,
                 activity_update_user=activity_update_user,
-                shared_user_id=activity.get("shared_user_id"),
+                shared_user_ids=activity.get("shared_user_ids"),
                 activity_status=ActivityStatusPolicy.ACTIVITY_MAKING,
                 activity_start=datetime.now(timezone.utc),
                 activity_community_id=community_id,
@@ -3211,9 +3211,9 @@ class WorkActivity(object):
         """Get notification parameters for registrant."""
         with db.session.begin_nested():
             set_target_id = {activity.activity_login_user}
-            is_shared = not activity.shared_user_id in [-1, None]
+            is_shared = bool(activity.shared_user_ids)
             if is_shared:
-                set_target_id.add(activity.shared_user_id)
+                set_target_id.update([s.get('user') for s in activity.shared_user_ids])
 
             recid = (
                 PersistentIdentifier
@@ -3239,9 +3239,6 @@ class WorkActivity(object):
                 .get_by_object("recid", "rec", activity.item_id)
             )
             actor_id = activity.activity_login_user
-            is_shared = not activity.shared_user_id in [-1, None]
-            if is_shared:
-                actor_id = activity.shared_user_id
 
             actor_profile = UserProfile.get_by_userid(actor_id)
             actor_name = (
@@ -3322,9 +3319,6 @@ class WorkActivity(object):
                 }
                 set_target_id.update(set_community_admin_id)
 
-            if not is_shared:
-                # if self request, not notify
-                set_target_id.discard(actor_id)
         return set_target_id, recid, actor_id, actor_name
 
 
