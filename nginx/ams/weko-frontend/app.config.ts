@@ -27,27 +27,24 @@ export default defineAppConfig({
       releaseRange: 'accessMode',
       // 公開日
       releaseDate: 'dateCreated',
-      // 作成日
+      // メタデータ作成日
       createDate: 'dateCreated',
-      // 更新日
+      // メタデータ更新日
       updateDate: 'reviews',
-      // タイトル
+      // データセットの名称
       title: 'subjectOf',
-      // 分野
+      // データセットの分野
       field: 'genre',
-      // 作成者氏名
+      // データ作成者氏名
       authorName: 'creator',
-      // 作成者所属
+      // データ作成者所属
       authorAffiliation: 'creativeWorkStatus',
-      // ヒト/動物/その他
+      // 取得データの対象種別
       target: 'character',
       // アクセス権
       accessMode: 'accessMode',
       // キーワード
       keywords: 'keywords',
-      // プロジェクトID
-      // TODO: valueはマッピング整理後に修正予定
-      projectId: 'text',
       // ファイル情報
       file: {
         // 格納場所
