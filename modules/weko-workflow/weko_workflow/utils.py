@@ -1761,6 +1761,7 @@ def prepare_edit_workflow(post_activity, recid, deposit):
             _parent = WekoDeposit.get_record(recid.object_uuid)
             _deposit = WekoDeposit.get_record(draft_pid.object_uuid)
             _deposit['path'] = _parent.get('path')
+            _deposit['_deposit']['status'] = 'draft'
             _deposit.merge_data_to_record_without_version(recid, True)
             _deposit.publish()
             _bucket = Bucket.get(_deposit.files.bucket.id)
