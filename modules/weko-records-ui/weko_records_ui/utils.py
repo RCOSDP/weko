@@ -686,6 +686,7 @@ def get_values_by_selected_lang(source_title, current_lang):
                     "WEKO_RECORDS_UI_LANG_DISP_FLG", False
                 ):
                     target_lang = list(t)[0]
+                    break
             if target_lang:
                 return [title_data[target_lang] for title_data in title_data_langs if target_lang in title_data]
 

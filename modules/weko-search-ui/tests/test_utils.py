@@ -114,6 +114,7 @@ from weko_search_ui.utils import (
     handle_check_doi_ra,
     handle_check_duplication_item_id,
     handle_check_duplicate_item_link,
+    handle_check_duplicate_record,
     handle_check_exist_record,
     handle_check_file_content,
     handle_check_file_metadata,
@@ -508,7 +509,7 @@ def test_check_tsv_import_items(i18n_app):
     file = TestFile()
     assert check_tsv_import_items(file, True, True)
 
-    time.sleep(1)
+    time.sleep(0.1)
     file_name = "sample_file.zip"
     file_path = os.path.join(current_path, "data", "sample_file", file_name)
     prefix = current_app.config["WEKO_SEARCH_UI_IMPORT_TMP_PREFIX"]
@@ -636,7 +637,7 @@ def test_check_xml_import_items(i18n_app, db_itemtype_jpcoar):
     with i18n_app.test_request_context():
         broken_file_name = "sample_zip_broken.zip"
         broken_file_path = os.path.join('tests', "data", "jpcoar", "v2", broken_file_name)
-        time.sleep(2)
+        time.sleep(0.1)
         result = check_xml_import_items(broken_file_path, item_type.id)
         assert result["error"] == "The format of the specified file sample_zip_broken.zip does not support import." \
             " Please specify one of the following formats: zip, tar, gztar, bztar, xztar."
@@ -644,7 +645,7 @@ def test_check_xml_import_items(i18n_app, db_itemtype_jpcoar):
     # Case04: Xml files not included
     with i18n_app.test_request_context():
         zip_file_path = os.path.join('tests', "data", "helloworld.zip")
-        time.sleep(2)
+        time.sleep(0.1)
         result = check_xml_import_items(zip_file_path, item_type.id)
         assert result["error"] ==  "The xml file was not found in the specified file helloworld.zip." \
             " Check if the directory structure is correct."
@@ -652,7 +653,7 @@ def test_check_xml_import_items(i18n_app, db_itemtype_jpcoar):
     with i18n_app.test_request_context():
         failed_file_name = "no_jpcoar_xml_file.zip"
         failed_file_path = os.path.join('tests', "data", "jpcoar", "v2", failed_file_name)
-        time.sleep(2)
+        time.sleep(0.1)
         print("Case04")
         result = check_xml_import_items(failed_file_path, item_type.id)
         assert result["error"] ==  "The xml file was not found in the specified file no_jpcoar_xml_file.zip." \
@@ -662,21 +663,21 @@ def test_check_xml_import_items(i18n_app, db_itemtype_jpcoar):
     # Case05: UnicodeDecodeError occured
     with i18n_app.test_request_context():
         with patch("weko_search_ui.utils.handle_check_file_metadata", side_effect=lambda x,y: "foo".encode('utf-16').decode('utf-8')):
-            time.sleep(2)
+            time.sleep(0.1)
             result = check_xml_import_items(file_path, item_type.id)
             assert result["error"] == "invalid start byte"
 
     # Case06: Other exception occured (without args)
     with i18n_app.test_request_context():
         with patch("weko_search_ui.utils.handle_check_file_metadata", side_effect=Exception()):
-            time.sleep(2)
+            time.sleep(0.1)
             result = check_xml_import_items(file_path, item_type.id)
             assert result["error"] == "Internal server error"
 
     # Case07: Other exception occured (with args)
     with i18n_app.test_request_context():
         with patch("weko_search_ui.utils.handle_check_file_metadata", side_effect=Exception({"error_msg": "error_msg_sample"})):
-            time.sleep(2)
+            time.sleep(0.1)
             result = check_xml_import_items(file_path, item_type.id)
             assert result["error"] == "error_msg_sample"
 
@@ -810,6 +811,7 @@ def test_check_jsonld_import_items(i18n_app, db, test_indices, item_type2, item_
         assert "data_path" not in result
         assert "item_type_id" not in result
         assert "list_record" not in result
+        time.sleep(0.1)
 
     with patch("weko_search_ui.utils.bagit.Bag.validate",side_effect=bagit.BagValidationError("Bag validation error")):
         result = check_jsonld_import_items(ro_crate, "SimpleZip", obj.id, shared_id=-1, validate_bagit=False)
@@ -1090,6 +1092,40 @@ def test_get_item_type(mocker_itemtype):
     assert result == except_result
 
     assert get_item_type(0) == {}
+
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_handle_check_duplicate_record -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+# def handle_check_duplicate_record(list_record):
+def test_handle_check_duplicate_record(app):
+    record = {"metadata": {"title": "Title 1"}}
+    expect = {"metadata": {"title": "Title 1"}}
+    with patch("weko_items_ui.utils.is_duplicate_item") as mock_is_duplicate:
+        mock_is_duplicate.return_value = False, [], []
+        handle_check_duplicate_record([record])
+    assert mock_is_duplicate.call_count == 1
+    assert record == expect
+
+    record = {"id": "1", "metadata": {"title": "Title 1"}}
+    expect = {"id": "1", "metadata": {"title": "Title 1"}}
+    with patch("weko_items_ui.utils.is_duplicate_item") as mock_is_duplicate:
+        mock_is_duplicate.return_value = False, [], []
+        handle_check_duplicate_record([record])
+    assert mock_is_duplicate.call_count == 1
+    assert record == expect
+
+    record = {"id": "invalid", "metadata": {"title": "Title 1"}}
+    expect = {"id": "invalid", "metadata": {"title": "Title 1"}}
+    with patch("weko_items_ui.utils.is_duplicate_item") as mock_is_duplicate:
+        mock_is_duplicate.return_value = False, [], []
+        handle_check_duplicate_record([record])
+    assert mock_is_duplicate.call_count == 1
+    assert record == expect
+
+    link = "https://example.com/duplicate/1"
+    record = {"metadata": {"title": "Title 1"}}
+    expect = {"metadata": {"title": "Title 1"}, "warning": f'The same item may have been registered.<br><a href="{link}" target="_blank">{link}</a><br>'}
+    with patch("weko_items_ui.utils.is_duplicate_item") as mock_is_duplicate:
+        mock_is_duplicate.return_value = True, ["1"], [link]
+        handle_check_duplicate_record([record])
 
 
 # def handle_check_exist_record(list_record) -> list:
@@ -2336,21 +2372,46 @@ def test_handle_check_duplicate_item_link(app):
     assert not list_record[0].get("errors")
 
 # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_handle_check_operation_flags -v -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
-def test_handle_check_operation_flags():
+def test_handle_check_operation_flags(tmpdir):
+    tmp_dir = tmpdir.mkdir("test")
+    with open(os.path.join(tmp_dir, "test_1.txt"), "w") as f11, \
+            open(os.path.join(tmp_dir, "test_1.csv"), "w") as f12:
+        f11.write("This is a test file.")
+        f12.write("This is a test file.")
+    with open(os.path.join(tmp_dir, "test_2.txt"), "w") as f21, \
+            open(os.path.join(tmp_dir, "test_2.csv"), "w") as f22:
+        f21.write("This is a test file.")
+        f22.write("This is a test file.")
+    with open(os.path.join(tmp_dir, "test_3.txt"), "w") as f31, \
+            open(os.path.join(tmp_dir, "test_3.csv"), "w") as f32:
+        f31.write("This is a test file.")
+        f32.write("This is a test file.")
+    with open(os.path.join(tmp_dir, "test_4.txt"), "w") as f41, \
+            open(os.path.join(tmp_dir, "test_4.csv"), "w") as f42:
+        f41.write("This is a test file.")
+        f42.write("This is a test file.")
+
+    assert len(os.listdir(tmp_dir)) == 8
+
     list_record = [
-        {"metadata_replace": True, "file_path":["/test/test.txt", "test/test.csv"]},
-        {"metadata_replace": False, "file_path":["/test/test.txt", "test/test.csv"]},
-        {"file_path":["/test/test.txt", "test/test.csv"]},
+        {"status": "new", "metadata_replace": True, "file_path":["test_1.txt", "test_1.csv", "https://..."]},
+        {"status": "Keep", "metadata_replace": True, "file_path":["test_2.txt", "test_2.csv", "https://..."]},
+        {"status": "Keep", "metadata_replace": False, "file_path":["test_3.txt", "test_3.csv", "https://..."]},
+        {"status": "Upgrede", "file_path":["test_4.txt", "test_4.csv"]},
     ]
 
     test = [
-        {"metadata_replace": True, "file_path":[]},
-        {"metadata_replace": False, "file_path":["/test/test.txt", "test/test.csv"]},
-        {"file_path":["/test/test.txt", "test/test.csv"]},
+        {"status": "new", "metadata_replace": True, "file_path":["test_1.txt", "test_1.csv", "https://..."], "errors": ["The 'wk:metadataReplace' flag cannot be used when registering an item."]},
+        {"status": "Keep", "metadata_replace": True, "file_path":["test_2.txt", "test_2.csv", "https://..."]},
+        {"status": "Keep", "metadata_replace": False, "file_path":["test_3.txt", "test_3.csv", "https://..."]},
+        {"status": "Upgrede", "file_path":["test_4.txt", "test_4.csv"]},
     ]
 
-    handle_check_operation_flags(list_record)
+    handle_check_operation_flags(list_record, tmp_dir)
     assert list_record == test
+    assert not os.path.isfile(os.path.join(tmp_dir, "test_2.txt"))
+    assert not os.path.isfile(os.path.join(tmp_dir, "test_2.csv"))
+    assert len(os.listdir(tmp_dir)) == 6
 
 # def register_item_handle(item):
 def test_register_item_handle(i18n_app, es_item_file_pipeline, es_records):

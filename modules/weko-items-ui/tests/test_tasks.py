@@ -70,13 +70,13 @@ def test_get_achievement_type(app):
     assert get_achievement_type({"type" : ["hoge"]}) == None
 
 # .tox/c1/bin/pytest --cov=weko_items_ui tests/test_tasks.py::test_build_achievement -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko_items-ui/.tox/c1/tmp
-def test_build_achievement(app,db_records_researchmap):
+def test_build_achievement(app, db_records_researchmap, es):
     recid = PersistentIdentifier.get_by_object(pid_type='recid', object_type='rec', object_uuid=db_records_researchmap[0]) 
     record,item = get_item(db_records_researchmap[0])
     # mapping = Mapping.get_record(item.item_type_id)
     mapping = ItemTypeMapping.query.filter(ItemTypeMapping.mapping != None).first().mapping
     #  db_itemtype_15["item_type_mapping"] 
-    _ , jrc , _= json_loader(data=item.json ,pid=recid) 
+    _ , jrc , _= json_loader(data=item.json ,pid=recid)
     assert build_achievement(record,item,recid,mapping,jrc, 'published_papers')
     assert build_achievement(record,item,recid,mapping,jrc, 'misc')
     assert build_achievement(record,item,recid,mapping,jrc, 'books_etc')

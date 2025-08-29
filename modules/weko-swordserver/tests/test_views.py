@@ -1,34 +1,22 @@
 import os
-from unittest.mock import MagicMock, PropertyMock,Mock
-from flask import url_for,json,request,abort
-from flask_login.utils import login_user
-from zipfile import BadZipFile
 import pytest
 import datetime
-from time import sleep
 from unittest.mock import MagicMock, patch
-import shutil
-from flask import url_for,json,abort
+
+from flask import url_for, request, abort
 from flask_limiter.errors import RateLimitExceeded
 from sword3common.lib.seamless import SeamlessException
 from werkzeug.datastructures import FileStorage
 
 from invenio_accounts.testutils import login_user_via_session
-from invenio_pidstore.models import PersistentIdentifier
 from invenio_files_rest.models import Location
-from invenio_records.models import RecordMetadata
-
-from weko_search_ui.utils import handle_check_date, handle_check_exist_record, import_items_to_system
-from weko_workflow.models import Activity
 from weko_workflow.errors import WekoWorkflowException
 
 from weko_swordserver.errors import *
-from weko_swordserver.views import _get_status_workflow_document, blueprint, _get_status_document,_create_error_document,post_service_document
+from weko_swordserver.views import _get_status_workflow_document, blueprint, _get_status_document, _create_error_document
 
-from .helpers import json_data, calculate_hash
-from weko_swordserver.utils import check_import_file_format,update_item_ids
-from weko_search_ui.utils import import_items_to_system,import_items_to_activity
-from weko_swordserver.utils import check_import_items,get_shared_ids_from_on_behalf_of
+from .helpers import calculate_hash
+
 # .tox/c1/bin/pytest --cov=weko_swordserver tests/test_views.py -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp
 
 # def get_service_document():

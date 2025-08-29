@@ -72,6 +72,7 @@ from sqlalchemy_utils.functions import create_database, database_exists
 from weko_admin import WekoAdmin
 from weko_admin.config import WEKO_ADMIN_DEFAULT_ITEM_EXPORT_SETTINGS
 from weko_admin.models import SessionLifetime,RankingSettings,Identifier,AdminSettings
+from weko_accounts import WekoAccounts
 from weko_deposit import WekoDeposit
 from weko_deposit.api import WekoIndexer, WekoRecord
 from weko_deposit.api import WekoDeposit as aWekoDeposit
@@ -182,8 +183,9 @@ def base_app(instance_path):
         #  WEKO_ITEMS_UI_BASE_TEMPLATE = 'weko_items_ui/base.html',
         #  WEKO_ITEMS_UI_INDEX_TEMPLATE= 'weko_items_ui/item_index.html',
         CACHE_TYPE="redis",
-        ACCOUNTS_SESSION_REDIS_DB_NO=1,
         CACHE_REDIS_HOST="redis",
+        ACCOUNTS_SESSION_REDIS_DB_NO=1,
+        WEKO_SCHEMA_CACHE_PREFIX="cache_{schema_name}",
         REDIS_PORT="6379",
         CACHE_REDIS_URL=os.environ.get("CACHE_REDIS_URL", "redis://redis:6379/0"),
         WEKO_BUCKET_QUOTA_SIZE=50 * 1024 * 1024 * 1024,
@@ -271,6 +273,7 @@ def base_app(instance_path):
     InvenioSearch(app_)
     InvenioStats(app_)
     Menu(app_)
+    WekoAccounts(app_)
     WekoRecords(app_)
     WekoDeposit(app_)
     WekoWorkflow(app_)
@@ -329,28 +332,12 @@ def db(app):
     db_.drop_all()
 
 @pytest.fixture()
-def esindex(app,db_records):
+def esindex(app,db_records, es):
     index_name = app.config["INDEXER_DEFAULT_INDEX"]
-    alias_name = "test-weko"
-
-    with open("tests/data/mappings/item-v1.0.0.json","r") as f:
-        mapping = json.load(f)
-
-    search = LocalProxy(lambda: app.extensions["invenio-search"])
-
-    with app.test_request_context():
-        search.client.indices.create(index=index_name, body=mapping, ignore=[400])
-        search.client.indices.put_alias(index=index_name, name=alias_name)
-        # print(current_search_client.indices.get_alias())
 
     for depid, recid, parent, doi, record, item in db_records:
-        search.client.index(index=index_name, doc_type='item-v1.0.0', id=record.id, body=record, refresh='true')
-
-    yield search
-
-    with app.test_request_context():
-        search.client.indices.delete_alias(index=index_name, name=alias_name)
-        search.client.indices.delete(index=index_name, ignore=[400, 404])
+        es.index(index=index_name, doc_type='item-v1.0.0', id=record.id, body=record, refresh='true')
+    return es
 
 @pytest.fixture()
 def redis_connect(app):
@@ -363,24 +350,29 @@ def without_remove_session(app):
         yield
 
 @pytest.fixture()
-def esindex2(app):
+def es(app):
     from invenio_search import current_search_client as client
-    index_name = app.config["SEARCH_UI_SEARCH_INDEX"]
-    alias_name = "test-items-alias"
-
+    client.indices.delete(index="test-*")
+    record_index_name = app.config["INDEXER_DEFAULT_INDEX"]
+    record_alias_name = app.config["SEARCH_UI_SEARCH_INDEX"]
+    author_index_name = "{}-authors-author-v1.0.0".format(
+            'test'
+        )
+    author_alias_name = app.config["WEKO_AUTHORS_ES_INDEX_NAME"]
     with open("tests/data/mappings/item-v1.0.0.json","r") as f:
-        mapping = json.load(f)
-
+        record_mapping = json.load(f)
+    with open("tests/data/mappings/author-v1.0.0.json","r") as f:
+        author_mapping = json.load(f)
     with app.test_request_context():
-        client.indices.create(index=index_name, body=mapping, ignore=[400])
-        client.indices.put_alias(index=index_name, name=alias_name)
+        client.indices.create(index=record_index_name, body=record_mapping, ignore=[400])
+        client.indices.put_alias(index=record_index_name, name=record_alias_name)
+        client.indices.create(index=author_index_name, body=author_mapping, ignore=[400])
+        client.indices.put_alias(index=author_index_name, name=author_alias_name)
 
     yield client
 
-    with app.test_request_context():
-        client.indices.delete_alias(index=index_name, name=alias_name)
-        client.indices.delete(index=index_name, ignore=[400, 404])
-
+    # with app.test_request_context():
+    #     client.indices.delete(index="test-*")
 
 @pytest.fixture()
 def users(app, db):
@@ -1309,7 +1301,7 @@ def db_ranking(db):
 
 @pytest.fixture()
 def db_itemtype_15(app, db):
-    item_type_name = ItemTypeName(id=1,
+    item_type_name = ItemTypeName(id=15,
         name="テストアイテムタイプ", has_site_license=True, is_active=True
     )
     item_type_schema = {
@@ -22511,8 +22503,8 @@ def db_itemtype_15(app, db):
         },
     }
     item_type = ItemType(
-        id=1,
-        name_id=1,
+        id=15,
+        name_id=15,
         harvesting_type=True,
         schema=item_type_schema,
         form=item_type_form,
@@ -22522,7 +22514,7 @@ def db_itemtype_15(app, db):
         is_deleted=False,
     )
 
-    item_type_mapping = ItemTypeMapping(id=1,item_type_id=1, mapping=item_type_mapping)
+    item_type_mapping = ItemTypeMapping(id=15,item_type_id=15, mapping=item_type_mapping)
 
     with db.session.begin_nested():
         db.session.add(item_type_name)
@@ -22533,7 +22525,7 @@ def db_itemtype_15(app, db):
 
 
 @pytest.fixture()
-def records(db, esindex2, instance_path):#, indextree, location, itemtypes, db_oaischema):
+def records(db, es, instance_path):#, indextree, location, itemtypes, db_oaischema):
     indexer = WekoIndexer()
     indexer.get_es_index()
 

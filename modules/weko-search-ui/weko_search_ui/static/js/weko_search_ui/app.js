@@ -473,7 +473,7 @@ function itemExportCtrl($scope, $rootScope, $http, $location) {
     }
   }
 
-  $scope.selectedExportFormat = "JSON";
+  $scope.selectedExportFormat = "TSV";
   $scope.checkExportFormat = function () {
     if (!$scope.enableContentsExporting) {
       return;
