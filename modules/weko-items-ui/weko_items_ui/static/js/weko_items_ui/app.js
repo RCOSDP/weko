@@ -741,6 +741,10 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
                 form = recordForm
               }
             }
+          } else if (sub_item_key === 'pubdate' && recordForm.hasOwnProperty('key')) { // #52935
+            if (recordForm.key && recordForm.key.indexOf(sub_item_key) >= 0) {
+              form = recordForm;
+            }
           }
         });
         return form;
@@ -2545,6 +2549,7 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
         $scope.updateNumFiles();
         $scope.editModeHandle();
         $scope.autoFillInstitutionPosition();
+        $scope.setOnChangeEvent($scope.searchForm("pubdate"), $scope.accessRoleChange);
         let usage_type = $("#auto_fill_usage_data_usage_type").val();
         // Auto fill for Usage Application & Usage Report
         if (usage_type === 'Report') {
@@ -2612,6 +2617,10 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
           $scope.resizeMainContentWidget();
         }, 500)
       });
+
+      $scope.setOnChangeEvent = function(modelForm, funcName) {
+        modelForm.onChange = funcName;
+      };
 
       /**
        * Resize main content widget after optional items are collapsed
