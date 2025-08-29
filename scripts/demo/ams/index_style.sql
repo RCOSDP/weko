@@ -17,23 +17,22 @@ SET client_min_messages = warning;
 SET row_security = off;
 
 --
--- Data for Name: item_type_name; Type: TABLE DATA; Schema: public; Owner: invenio
+-- Data for Name: index_style; Type: TABLE DATA; Schema: public; Owner: invenio
 --
 
-INSERT INTO public.item_type_name (created, updated, id, name, has_site_license, is_active) VALUES
-('2025-02-25 04:05:58.871334', '2025-02-25 04:05:58.871341', 51000, '未病アイテムタイプ', true, true)
+INSERT INTO public.index_style (created, updated, id, width, height, index_link_enabled) VALUES
+('2025-02-25 04:05:58.957687', '2025-02-25 04:05:58.957691', 'weko', 3, '', false)
 ON CONFLICT (id) DO UPDATE SET
   created = EXCLUDED.created,
   updated = EXCLUDED.updated,
   id = EXCLUDED.id,
-  name = EXCLUDED.name,
-  has_site_license = EXCLUDED.has_site_license,
-  is_active = EXCLUDED.is_active;
-
+  width = EXCLUDED.width,
+  height = EXCLUDED.height,
+  index_link_enabled = EXCLUDED.index_link_enabled;
 
 
 --
--- Name: item_type_name_id_seq; Type: SEQUENCE SET; Schema: public; Owner: invenio
+-- Name: index_style_seq; Type: SEQUENCE SET; Schema: public; Owner: invenio
 --
 
 --
