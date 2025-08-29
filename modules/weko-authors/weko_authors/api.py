@@ -31,7 +31,10 @@ from sqlalchemy.sql.functions import func
 from sqlalchemy.exc import SQLAlchemyError
 from time import sleep
 
-from .models import Authors, AuthorsPrefixSettings, AuthorsAffiliationSettings
+from .models import (
+    Authors, AuthorsPrefixSettings, AuthorsAffiliationSettings,
+    AuthorCommunityRelations
+)
 
 
 class WekoAuthors(object):
@@ -167,7 +170,7 @@ class WekoAuthors(object):
             return query.all()
 
     @classmethod
-    def get_by_range(cls,  start_point, sum, with_deleted=True, with_gather=True):
+    def get_by_range(cls,  start_point, sum, with_deleted=True, with_gather=True, community_ids=None):
         """Get authors by range."""
         filters = []
         try:
@@ -177,6 +180,9 @@ class WekoAuthors(object):
                 if not with_gather:
                     filters.append(Authors.gather_flg == 0)
                 query = Authors.query.filter(*filters)
+                if community_ids is not None:
+                    query = query.join(AuthorCommunityRelations, Authors.id == AuthorCommunityRelations.author_id)
+                    query = query.filter(AuthorCommunityRelations.community_id.in_(community_ids))
                 query = query.order_by(Authors.id)
                 query = query.offset(start_point).limit(sum)
                 return query.all()
@@ -185,7 +191,7 @@ class WekoAuthors(object):
             raise
 
     @classmethod
-    def get_records_count(cls, with_deleted=True, with_gather=True):
+    def get_records_count(cls, with_deleted=True, with_gather=True, community_ids=None):
         """Get authors's count."""
         filters = []
         try:
@@ -195,6 +201,9 @@ class WekoAuthors(object):
                 if not with_gather:
                     filters.append(Authors.gather_flg == 0)
                 query = Authors.query.filter(*filters)
+                if community_ids is not None:
+                    query = query.join(AuthorCommunityRelations, Authors.id == AuthorCommunityRelations.author_id)
+                    query = query.filter(AuthorCommunityRelations.community_id.in_(community_ids))
                 query = query.order_by(Authors.id)
                 return query.count()
         except Exception as ex:
@@ -394,7 +403,7 @@ class WekoAuthors(object):
         return result
 
     @classmethod
-    def mapping_max_item(cls, mappings, affiliation_mappings, records_count, retrys=0):
+    def mapping_max_item(cls, mappings, affiliation_mappings, community_mappings, records_count, retrys=0):
         """Mapping max item of multiple case."""
         try:
             size = current_app.config["WEKO_AUTHORS_EXPORT_BATCH_SIZE"]
@@ -403,6 +412,10 @@ class WekoAuthors(object):
             if not affiliation_mappings:
                 affiliation_mappings = deepcopy(
                     current_app.config["WEKO_AUTHORS_FILE_MAPPING_FOR_AFFILIATION"]
+                )
+            if not community_mappings:
+                community_mappings = deepcopy(
+                    current_app.config["WEKO_AUTHORS_FILE_MAPPING_FOR_COMMUNITY"]
                 )
             if not records_count:
                 records_count = cls.get_records_count(False, False)
@@ -454,6 +467,14 @@ class WekoAuthors(object):
                             if child_length > mapping_max[index][child["json_id"]]:
                                 mapping_max[index][child["json_id"]] = child_length
 
+                community_mappings['max'] = max(
+                    community_mappings.get('max', 1),
+                    max(list(map(
+                        lambda x: len(x.communities),
+                        authors
+                    )))
+                )
+
             # Finally, subtract the WEKOID part from the maximum value
             for mapping in mappings:
                 if mapping['json_id'] == 'authorIdInfo':
@@ -470,7 +491,7 @@ class WekoAuthors(object):
                 db.session.rollback()
                 sleep(sleep_time)
                 result = cls.mapping_max_item(
-                    mappings=None, affiliation_mappings=None, \
+                    mappings=None, affiliation_mappings=None, community_mappings=None,
                     records_count=records_count, retrys=retrys
                 )
                 return result
@@ -479,20 +500,21 @@ class WekoAuthors(object):
         except Exception as ex:
             current_app.logger.error(ex)
             raise
-        return mappings, affiliation_mappings
+        return mappings, affiliation_mappings, community_mappings
 
     @classmethod
-    def prepare_export_data(cls, mappings, affiliation_mappings, authors, schemes, aff_schemes, start, size):
+    def prepare_export_data(cls, mappings, affiliation_mappings, community_mappings, authors, schemes, aff_schemes, start, size):
         """Prepare export data of all authors."""
         row_header = []
         row_label_en = []
         row_label_jp = []
         row_data = []
 
-        if not mappings or not affiliation_mappings:
-            mappings, affiliation_mappings = WekoAuthors.mapping_max_item(
+        if not mappings or not affiliation_mappings or not community_mappings:
+            mappings, affiliation_mappings, community_mappings = WekoAuthors.mapping_max_item(
                 deepcopy(current_app.config["WEKO_AUTHORS_FILE_MAPPING"]),
                 deepcopy(current_app.config["WEKO_AUTHORS_FILE_MAPPING_FOR_AFFILIATION"]),
+                deepcopy(current_app.config["WEKO_AUTHORS_FILE_MAPPING_FOR_COMMUNITY"]),
                 WekoAuthors.get_records_count(False, False)
             )
         if not authors:
@@ -532,6 +554,12 @@ class WekoAuthors(object):
                             '{}[{}][{}]'.format(c['label_en'], index, i))
                         row_label_jp.append(
                             '{}[{}][{}]'.format(c['label_jp'], index, i))
+
+        # Community information mapping
+        for i in range(0, community_mappings.get("max", 1)):
+            row_header.append('{}[{}]'.format(community_mappings["json_id"], i))
+            row_label_en.append('{}[{}]'.format(community_mappings["label_en"], i))
+            row_label_jp.append('{}[{}]'.format(community_mappings["label_jp"], i))
 
         row_header[0] = '#' + row_header[0]
         row_label_en[0] = '#' + row_label_en[0]
@@ -624,6 +652,13 @@ class WekoAuthors(object):
                                     )
                                 else:
                                     row.append(val)
+
+            # Process mapping for each community
+            for i in range(community_mappings.get("max", 1)):
+                if i >= len(author.communities):
+                    row.append(None)
+                else:
+                    row.append(author.communities[i].id)
 
             row_data.append(row)
 

@@ -45,6 +45,7 @@ from redis.exceptions import RedisError
 from flask import current_app, jsonify
 from flask_babelex import gettext as _
 from flask_security import current_user
+from invenio_accounts.models import User
 from invenio_cache import current_cache
 from invenio_db import db
 from invenio_indexer.api import RecordIndexer
@@ -371,12 +372,17 @@ def export_authors(user_id):
                 # get mapping
                 mappings = deepcopy(current_app.config["WEKO_AUTHORS_FILE_MAPPING"])
                 affiliation_mappings = deepcopy(current_app.config["WEKO_AUTHORS_FILE_MAPPING_FOR_AFFILIATION"])
+                community_mappings = deepcopy(current_app.config["WEKO_AUTHORS_FILE_MAPPING_FOR_COMMUNITY"])
+
+                user = User.query.get(user_id)
+                communities, is_super = get_managed_community(user)
+                community_ids = [c.id for c in communities] if not is_super else None
 
                 # get the number of authors (excluding deleted and merged authors)
-                records_count = WekoAuthors.get_records_count(False, False)
+                records_count = WekoAuthors.get_records_count(False, False, community_ids)
                 # Get the maximum value of multiple items on the mapping
-                mappings, affiliation_mappings = \
-                    WekoAuthors.mapping_max_item(mappings, affiliation_mappings, records_count)
+                mappings, affiliation_mappings, community_mappings = \
+                    WekoAuthors.mapping_max_item(mappings, affiliation_mappings, community_mappings, records_count)
 
                 schemes = WekoAuthors.get_identifier_scheme_info()
                 aff_schemes = WekoAuthors.get_affiliation_identifier_scheme_info()
@@ -413,9 +419,9 @@ def export_authors(user_id):
                 current_app.logger.info(f"Export authors retry count：{attempt}")
                 try:
                     # Get author information from start in WEKO_EXPORT_BATCH_SIZE units
-                    authors = WekoAuthors.get_by_range(i, size, False, False)
+                    authors = WekoAuthors.get_by_range(i, size, False, False, community_ids)
                     row_header, row_label_en, row_label_jp, row_data =\
-                        WekoAuthors.prepare_export_data(mappings, affiliation_mappings, authors, schemes, aff_schemes, i, size)
+                        WekoAuthors.prepare_export_data(mappings, affiliation_mappings, community_mappings, authors, schemes, aff_schemes, i, size)
                     break
                 except SQLAlchemyError as ex:
                     traceback.print_exc(file=stdout)
