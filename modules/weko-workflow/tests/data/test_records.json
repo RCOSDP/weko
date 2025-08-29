@@ -359,5 +359,147 @@
       ]
     },
     "relation_version_is_last": true
+  },
+  {
+    "_oai": { "id": "oai:weko3.example.org:00000001", "sets": ["1"] },
+    "path": ["1"],
+    "owner": "1",
+    "recid": "4",
+    "title": ["title"],
+    "pubdate": { "attribute_name": "PubDate", "attribute_value": "2022-08-20" },
+    "_buckets": { "deposit": "11111111-1111-1111-1111-111111111111" },
+    "_deposit": {
+      "id": "4",
+      "pid": { "type": "depid", "value": "4", "revision_id": 0 },
+      "owner": "1",
+      "owners": [1],
+      "status": "published",
+      "created_by": 1,
+      "owners_ext": {
+        "email": "wekosoftware@nii.ac.jp",
+        "username": "",
+        "displayname": ""
+      }
+    },
+    "item_title": "title",
+    "author_link": [],
+    "item_type_id": "1",
+    "publish_date": "2022-08-20",
+    "publish_status": "0",
+    "item_1617186331708": {
+      "attribute_name": "Title",
+      "attribute_value_mlt": [
+        { "subitem_1551255647225": "title", "subitem_1551255648112": "ja", "subitem_stop/continue":"Continue" }
+      ]
+    },
+    "item_1617258105262": {
+      "attribute_name": "Resource Type",
+      "attribute_value_mlt": [
+        {
+          "resourceuri": "http://purl.org/coar/resource_type/c_5794",
+          "resourcetype": "conference paper"
+        }
+      ]
+    },
+    "item_1617186819068": {
+      "attribute_name": "Identifier Registration",
+      "attribute_value_mlt": [
+        {
+          "subitem_identifier_reg_text" :"test/0000000001",
+          "subitem_identifier_reg_type": "JaLC"
+        }
+      ]
+    },
+    "item_1617605131499": {
+      "attribute_name": "File",
+      "attribute_type": "file",
+      "attribute_value_mlt": [
+          {
+              "url": {
+                  "url": "https://localhost/record/1/files/test.txt"
+              },
+              "date": [
+                  {
+                      "dateType": "Available",
+                      "dateValue": "2022-10-03"
+                  }
+              ],
+              "format": "text/tab-separated-values",
+              "filename": "check_2022-03-10.tsv",
+              "filesize": [
+                  {
+                      "value": "460 B"
+                  }
+              ],
+              "accessrole": "open_access",
+              "version_id": "29dd361d-dc7f-49bc-b471-bdb5752afef5",
+              "displaytype": "detail",
+              "licensetype": "license_12",
+              "is_thumbnail":true
+          }
+      ]
+    },
+    "item_1664947259584": {
+      "attribute_name": "サムネイル",
+      "attribute_value_mlt": [
+          {
+              "subitem_thumbnail": [
+                  {
+                      "thumbnail_url": "/api/files/29ad484d-4ed1-4caf-8b21-ab348ae7bf28/test.png?versionId=ecd5715e-4ca5-4e45-b93c-5089f52860a0",
+                      "thumbnail_label": "test.png"
+                  }
+              ]
+          }
+      ]
+    },
+    "relation_version_is_last": true
+  },
+  {
+    "_oai": { "id": "oai:weko3.example.org:00000001.0", "sets": [] },
+    "path": ["1"],
+    "owner": "1",
+    "recid": "4.0",
+    "title": ["title"],
+    "pubdate": { "attribute_name": "PubDate", "attribute_value": "2022-08-20" },
+    "_buckets": { "deposit": "11111111-1111-1111-1111-111111111111" },
+    "_deposit": {
+      "id": "4.0",
+      "pid": { "type": "depid", "value": "4.0", "revision_id": 0 },
+      "owner": "1",
+      "owners": [1],
+      "status": "published",
+      "created_by": 1
+    },
+    "item_title": "title",
+    "author_link": [],
+    "item_type_id": "1",
+    "publish_date": "2022-08-20",
+    "publish_status": "0",
+    "weko_shared_id": -1,
+    "item_1617186331708": {
+      "attribute_name": "Title",
+      "attribute_value_mlt": [
+        { "subitem_1551255647225": "title", "subitem_1551255648112": "ja" ,"subitem_stop/continue":"Not Continue"}
+      ]
+    },
+    "item_1617258105262": {
+      "attribute_name": "Resource Type",
+      "attribute_value_mlt": [
+        {
+          "resourceuri": "http://purl.org/coar/resource_type/c_5794",
+          "resourcetype": "conference paper"
+        }
+      ]
+    },
+    "item_1617186819068": {
+      "attribute_name": "Identifier Registration",
+      "attribute_value_mlt": [
+        {
+          "subitem_identifier_reg_text" :"test/0000000001",
+          "subitem_identifier_reg_type": "JaLC"
+        }
+      ]
+    },
+    "relation_version_is_last": true
   }
 ]
