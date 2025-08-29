@@ -771,6 +771,7 @@ def render_guest_workflow(file_name=""):
             files=record_detail_alt.get('files'),
             files_thumbnail=record_detail_alt.get('files_thumbnail'),
             pid=record_detail_alt.get('pid', None),
+            open_restricted=True,
         )
     )
 
@@ -3010,78 +3011,6 @@ def user_unlock_activity(activity_id="0"):
     res = {"code":200, "msg":msg}
     return jsonify(res), 200
 
-@workflow_blueprint.route('/get_request_maillist/<string:activity_id>', methods=['GET'])
-@login_required
-def get_request_maillist(activity_id='0'):
-    """アクティビティに設定されているリクエストメール送信先の情報を取得して返す
-
-    Args:
-       activity_id (str, optional): 対象のアクティビティID.パスパラメータから取得. Defaults to '0'.
-
-    Returns:
-        object: 設定されているリクエストメール送信先を示すResponse
-               json data validated by ResponseMessageSchema or GetRequestMailListSchema
-
-    Raises:
-        marshmallow.exceptions.ValidationError: if ResponseMessageSchema is invalid.
-    ---
-    get:
-        description: "get request maillist"
-        security:
-            - login_required: []
-        responses:
-            200:
-                description: "success"
-                content:
-                    application/json:
-                        schema:
-                            GetRequestMailListSchema
-                        example: {"code":1,"msg":_('Success'),"data":mail_list}
-            400:
-                description: "arguments error"
-                content:
-                    application/json:
-                        schema:
-                            ResponseMessageSchema
-                        example: {"code": -1, "msg": "arguments error"}
-    """
-    check_flg = type_null_check(activity_id, str)
-    if not check_flg:
-        current_app.logger.error("get_request_maillist: argument error")
-        res = ResponseMessageSchema().load({"code":-1, "msg":"arguments error"})
-        return jsonify(res.data), 400
-    try:
-        activity_request_mail = WorkActivity().get_activity_request_mail(
-            activity_id=activity_id)
-        if activity_request_mail:
-            request_mail_list = activity_request_mail.request_maillist
-            if not isinstance(request_mail_list, list):
-                res = ResponseMessageSchema().load({"code":-1,"msg":"mail_list is not list"})
-                return jsonify(res.data), 400
-            for mail in request_mail_list:
-                # replace email address
-                if mail.get('author_id'):
-                    email = Authors.get_emails_by_id(
-                        mail.get('author_id'))
-                    if email:
-                        mail['email'] = email
-                    else:
-                        request_mail_list.remove(mail)
-            res = GetRequestMailListSchema().load({
-                'code':1,
-                'msg':_('Success'),
-                'request_maillist': request_mail_list,
-                'is_display_request_button': activity_request_mail.display_request_button
-            })
-            return jsonify(res.data), 200
-        else:
-            res = ResponseMessageSchema().load({'code':0,'msg':'Empty!'})
-            return jsonify(res.data), 200
-    except Exception:
-        current_app.logger.exception("Unexpected error:")
-    res = ResponseMessageSchema().load({'code':-1,'msg':_('Error')})
-    return jsonify(res.data), 400
-
 @workflow_blueprint.route('/get_item_application/<string:activity_id>', methods=['GET'])
 @login_required
 def get_item_application(activity_id='0'):
@@ -4017,8 +3946,8 @@ def edit_item_direct_after_login(pid_value):
         return render_template("weko_theme/error.html",
                 error="Record does not exist."), 404
 
-    authenticators = [str(deposit.get('owner')),
-                      str(deposit.get('weko_shared_id'))]
+    authenticators = [str(deposit.get('owner'))] + \
+                     [str(shared_id) for shared_id in deposit.get('weko_shared_ids', [])]
     user_id = str(get_current_user())
     activity = WorkActivity()
     latest_pid = PIDVersioning(child=recid).last_child

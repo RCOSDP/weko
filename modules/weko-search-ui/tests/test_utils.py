@@ -141,7 +141,7 @@ from weko_search_ui.utils import (
     handle_remove_es_metadata,
     handle_save_bagit,
     handle_set_change_identifier_flag,
-    handle_shared_id,
+    handle_shared_ids,
     handle_validate_item_import,
     handle_workflow,
     handle_flatten_data_encode_filename,
@@ -851,22 +851,22 @@ def test_check_jsonld_import_items(i18n_app, db, test_indices, item_type2, item_
     # print(f"result: {json.dumps(result, indent=2, ensure_ascii=False)}")
 
 
-# def handle_shared_id(list_record, shared_id=-1):
-# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_handle_shared_id -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
-def test_handle_shared_id():
+# def handle_shared_ids(list_record, shared_id=-1):
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_handle_shared_ids -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_handle_shared_ids():
     with open("tests/data/list_records/list_records.json", "r") as json_file:
         list_record = json.load(json_file)
 
-    assert "weko_shared_id" not in list_record[0]["metadata"]
+    assert "weko_shared_ids" not in list_record[0]["metadata"]
 
-    handle_shared_id(list_record, shared_id="3")
-    assert "weko_shared_id" not in list_record[0]["metadata"]
+    handle_shared_ids(list_record, shared_ids=["3"])
+    assert "weko_shared_ids" not in list_record[0]["metadata"]
 
-    handle_shared_id(list_record)
-    assert list_record[0]["metadata"]["weko_shared_id"] == -1
+    handle_shared_ids(list_record)
+    assert list_record[0]["metadata"]["weko_shared_ids"] == []
 
-    handle_shared_id(list_record, shared_id=3)
-    assert list_record[0]["metadata"]["weko_shared_id"] == 3
+    handle_shared_ids(list_record, shared_ids=[3])
+    assert list_record[0]["metadata"]["weko_shared_ids"] == [3]
 
 
 # def handle_save_bagit(list_record, file, data_path, filename):

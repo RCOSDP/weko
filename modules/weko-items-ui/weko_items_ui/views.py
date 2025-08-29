@@ -1269,7 +1269,7 @@ def prepare_edit_item(id=None, community=None):
 
 @blueprint.route('/prepare_delete_item', methods=['POST'])
 @login_required
-def prepare_delete_item(id=None, community=None, shared_user_id=-1):
+def prepare_delete_item(id=None, community=None, shared_user_ids=[]):
     """Prepare delete item.
 
     Delete item directly or create delete activity.
@@ -1284,7 +1284,7 @@ def prepare_delete_item(id=None, community=None, shared_user_id=-1):
     Args:
         id (str): pid_value
         community (str): community id
-        shared_user_id (int): shared user id
+        shared_user_ids (list): shared user ids
 
     Returns:
         Response: JSON response with code and message.
@@ -1328,9 +1328,8 @@ def prepare_delete_item(id=None, community=None, shared_user_id=-1):
                 msg=_('Record does not exist.')
             )
 
-        authenticators = [
-            str(deposit.get('owner')), str(deposit.get('weko_shared_id'))
-        ]
+        authenticators = [str(deposit.get('owner'))] + \
+                         [str(uid) for uid in deposit.get('weko_shared_ids', [])]
         user_id = str(current_user.get_id())
         work_activity = WorkActivity()
         latest_pid = PIDVersioning(child=recid).last_child
@@ -1394,7 +1393,7 @@ def prepare_delete_item(id=None, community=None, shared_user_id=-1):
         if not workflow or workflow.delete_flow_id is None:
             from weko_records_ui.views import soft_delete
             soft_delete(del_value)
-            send_mail_item_deleted(pid_value, deposit, user_id, shared_user_id)
+            send_mail_item_deleted(pid_value, deposit, user_id, shared_user_ids)
             return jsonify(
                 code=0,
                 msg="success",
@@ -1402,7 +1401,7 @@ def prepare_delete_item(id=None, community=None, shared_user_id=-1):
             )
 
         post_activity['flow_id'] = workflow.delete_flow_id
-        post_activity['shared_user_id'] = shared_user_id
+        post_activity['shared_user_ids'] = shared_user_ids
 
         try:
             rtn = prepare_delete_workflow(post_activity, recid, deposit)

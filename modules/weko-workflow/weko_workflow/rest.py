@@ -188,7 +188,7 @@ class GetActivities(ContentNegotiatedMethodView):
             # Get activity list
             work_activity = WorkActivity()
             rst_activities, _rst_max, rst_size, rst_page, _rst_name, rst_count = \
-                work_activity.get_activity_list({}, create_conditions_dict(param_status, param_limit, param_page), False)
+                work_activity.get_activity_list(create_conditions_dict(param_status, param_limit, param_page), False)
 
             activity_list = []
             for activity in rst_activities:

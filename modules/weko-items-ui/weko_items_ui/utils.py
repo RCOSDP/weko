@@ -3457,7 +3457,8 @@ def hide_meta_data_for_role(record):
     # Item Register users and Sharing users
     if record and current_user.get_id() in [
         record.get('weko_creator_id'),
-            str(record.get('weko_shared_ids'))]:
+            [str(shared_id) for shared_id in record.get('weko_shared_ids', [])]
+    ]:
         is_hidden = False
 
     return is_hidden
@@ -5320,7 +5321,7 @@ def get_file_download_data(item_id, record, filenames, query_date=None, size=Non
 
 # --- 通知対象取得関数 ---
 
-def get_notification_targets(deposit, user_id, shared_id):
+def get_notification_targets(deposit, user_id, shared_ids):
     """
     Retrieve notification targets for a given deposit and user.
 
@@ -5328,6 +5329,7 @@ def get_notification_targets(deposit, user_id, shared_id):
         deposit (dict): The deposit data containing information about owners
                         and shared users.
         user_id (int): The ID of the current user.
+        shared_ids (list): The list of shared user IDs.
 
     Returns:
         dict: A dictionary containing the following keys:
@@ -5337,9 +5339,9 @@ def get_notification_targets(deposit, user_id, shared_id):
     """
     owners = deposit.get("_deposit", {}).get("owners", [])
     set_target_id = set(owners)
-    is_shared = shared_id != -1
+    is_shared = bool(shared_ids)
     if is_shared:
-        set_target_id.add(shared_id)
+        set_target_id.update(shared_ids)
     set_target_id.discard(int(user_id))
 
     target_ids = list(set_target_id)
@@ -5442,7 +5444,7 @@ def get_notification_targets_approver(activity):
             }
             set_target_id.update(set_community_admin_id)
 
-        is_shared = activity.shared_user_id is not None and activity.shared_user_id != -1
+        is_shared = bool(activity.shared_user_ids)
         if not is_shared:
             set_target_id.discard(actor_id)
 
@@ -5485,14 +5487,14 @@ def get_notification_targets_approved(deposit, user_id, activity):
     """
     owners = deposit.get("_deposit", {}).get("owners", [])
     set_target_id = set(owners)
-    is_shared = deposit.get("weko_shared_id") != -1
+    is_shared = bool(deposit.get("weko_shared_ids"))
 
     actor_id = activity.activity_login_user
     if actor_id:
         set_target_id.add(actor_id)
 
     if is_shared:
-        set_target_id.add(deposit.get("weko_shared_id"))
+        set_target_id.update(deposit.get("weko_shared_ids", []))
     else:
         set_target_id.discard(int(user_id))
 
@@ -5659,7 +5661,7 @@ def send_mail_from_notification_info(get_info_func, context_obj, content_creator
 
 # --- 各イベントから呼び出すエントリーポイント ---
 
-def send_mail_item_deleted(pid_value, deposit, user_id, shared_id=-1):
+def send_mail_item_deleted(pid_value, deposit, user_id, shared_ids=[]):
     """
     Send a notification email when an item is deleted.
 
@@ -5667,6 +5669,7 @@ def send_mail_item_deleted(pid_value, deposit, user_id, shared_id=-1):
         pid_value (str): The persistent identifier (PID) of the deleted item.
         deposit (dict): The deposit data of the deleted item.
         user_id (int): The ID of the user who initiated the deletion.
+        shared_ids (list): The list of shared user IDs.
 
     Returns:
         int: The total number of successfully sent emails.
@@ -5675,7 +5678,7 @@ def send_mail_item_deleted(pid_value, deposit, user_id, shared_id=-1):
         record_url = request.host_url + f"records/{pid_value}"
         current_app.logger.debug(f"[send_mail_item_deleted] pid_value: {pid_value}, user_id: {user_id}")
         return send_mail_from_notification_info(
-            get_info_func=lambda obj: get_notification_targets(obj, user_id, shared_id),
+            get_info_func=lambda obj: get_notification_targets(obj, user_id, shared_ids),
             context_obj=deposit,
             content_creator=create_item_deleted_data,
             record_url=record_url
@@ -5687,14 +5690,14 @@ def send_mail_item_deleted(pid_value, deposit, user_id, shared_id=-1):
         return
 
 
-def send_mail_direct_registered(pid_value, user_id, share_id=-1):
+def send_mail_direct_registered(pid_value, user_id, share_ids=[]):
     """
     Send a notification email for a directly registered item.
 
     Args:
         pid_value (str): The persistent identifier (PID) of the registered item.
         user_id (int): The ID of the user who registered the item.
-        share_id (int): The shared ID of the user.
+        share_ids (list): The list of shared IDs of the users.
 
     Returns:
         int: The total number of successfully sent emails.
@@ -5704,7 +5707,7 @@ def send_mail_direct_registered(pid_value, user_id, share_id=-1):
         record_url = request.host_url + f"records/{pid_value}"
         current_app.logger.debug(f"[send_mail_direct_registered] pid_value: {pid_value}, user_id: {user_id}")
         return send_mail_from_notification_info(
-            get_info_func=lambda obj: get_notification_targets(obj, user_id, share_id),
+            get_info_func=lambda obj: get_notification_targets(obj, user_id, share_ids),
             context_obj=deposit,
             content_creator=create_direct_registered_data,
             record_url=record_url

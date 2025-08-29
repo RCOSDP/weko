@@ -160,7 +160,6 @@ def base_app(instance_path):
         THEME_SITEURL="https://localhost",
         WEKO_THEME_DEFAULT_COMMUNITY="Root Index",
         WEKO_SCHEMA_JPCOAR_V1_SCHEMA_NAME = 'jpcoar_v1_mapping',
-        WEKO_SCHEMA_JPCOAR_V2_SCHEMA_NAME = 'jpcoar_v2_mapping',
         WEKO_SCHEMA_DDI_SCHEMA_NAME = 'ddi_mapping',
         WEKO_SCHEMA_VERSION_TYPE={
             "modified": "oaire:versiontype",

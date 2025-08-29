@@ -294,12 +294,6 @@ def base_app(instance_path, search_class, request):
         INDEXER_DEFAULT_DOCTYPE="item-v1.0.0",
         WEKO_SCHEMA_JPCOAR_V1_SCHEMA_NAME = 'jpcoar_v1_mapping',
         WEKO_SCHEMA_JPCOAR_V2_SCHEMA_NAME = 'jpcoar_mapping',
-        WEKO_SCHEMA_JPCOAR_V2_RESOURCE_TYPE_REPLACE={
-            'periodical':'journal',
-            'interview':'other',
-            'internal report':'other',
-            'report part':'other',
-        },
         WEKO_SCHEMA_DDI_SCHEMA_NAME = "ddi_mapping",
         INDEXER_FILE_DOC_TYPE="content",
         INDEXER_DEFAULT_INDEX="{}-weko-item-v1.0.0".format("test"),
@@ -698,7 +692,6 @@ def base_app(instance_path, search_class, request):
         WEKO_SEARCH_UI_BULK_EXPORT_RETRY = 5,
         WEKO_SEARCH_UI_BULK_EXPORT_LIMIT = 100,
         RECORDS_UI_ENDPOINTS = RECORDS_UI_ENDPOINTS,
-        WEKO_SCHEMA_JPCOAR_V2_SCHEMA_NAME="jpcoar_mapping",
         WEKO_SCHEMA_JPCOAR_V2_RESOURCE_TYPE_REPLACE={
             "periodical": "journal",
             "interview": "other",

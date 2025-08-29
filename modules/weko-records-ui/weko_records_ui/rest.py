@@ -56,7 +56,6 @@ from weko_accounts.utils import limiter
 from weko_deposit.api import WekoRecord
 from weko_items_ui.scopes import item_read_scope
 from weko_records.api import ItemTypes, RequestMailList
-from weko_records.serializers import citeproc_v1
 from weko_records_ui.api import create_captcha_image, send_request_mail, validate_captcha_answer
 from weko_workflow.api import WorkActivity, WorkFlow
 from weko_workflow.models import GuestActivity
@@ -68,7 +67,7 @@ from .errors import AvailableFilesNotFoundRESTError, ContentsNotFoundError, Date
     InvalidTokenError, InvalidWorkflowError, ModeNotFoundRESTError, PermissionError, \
     RecordsNotFoundRESTError, RequiredItemNotExistError, VersionNotFoundRESTError
 from .permissions import page_permission_factory, file_permission_factory
-from .scopes import file_read_scope, item_read_scope
+from .scopes import file_read_scope
 from .views import escape_str, get_usage_workflow
 
 
@@ -646,6 +645,7 @@ class WekoRecordsCitesResource(ContentNegotiatedMethodView):
     # @need_record_permission('read_permission_factory')
     def get(self, pid_value, **kwargs):
         """Render citation for record according to style and language."""
+        from weko_records.serializers import citeproc_v1
         style = request.values.get('style', "aapg-bulletin")  # style or 'science'
         locale = request.values.get('locale', "en-US")
         try:

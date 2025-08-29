@@ -1116,49 +1116,6 @@ class ActionFeedbackMail(db.Model, TimestampMixin):
     )
     """Action journal info."""
 
-class ActivityRequestMail(db.Model, TimestampMixin):
-    """Define action identifier info."""
-
-    __tablename__ = 'workflow_activity_request_mail'
-
-    id = db.Column(
-        db.Integer(),
-        nullable=False,
-        primary_key=True,
-        autoincrement=True
-    )
-    """ActivityRequestMail identifier."""
-
-    activity_id = db.Column(
-        db.String(24),
-        nullable=False,
-        unique=False,
-        index=True
-    )
-    """Activity id of Activity Action."""
-
-    display_request_button = db.Column(
-        db.Boolean(name='display_request_button'),
-        nullable=False, 
-        default=False, 
-        server_default='0')
-    """If set to True, enable request mail """
-
-    request_maillist = db.Column(
-        db.JSON().with_variant(
-            postgresql.JSONB(none_as_null=True),
-            'postgresql',
-        ).with_variant(
-            JSONType(),
-            'sqlite',
-        ).with_variant(
-            JSONType(),
-            'mysql',
-        ),
-        default=lambda: dict(),
-        nullable=True
-    )
-    """Request mail address list."""
 
 class ActivityItemApplication(db.Model, TimestampMixin):
     """Define action identifier info."""

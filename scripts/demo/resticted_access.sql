@@ -101,11 +101,11 @@ COPY public.index (created, updated, id, parent, "position", index_name, index_n
 -- Data for Name: workflow_flow_define; Type: TABLE DATA; Schema: public; Owner: invenio
 --
 
-COPY public.workflow_flow_define (status, created, updated, id, flow_id, flow_name, flow_user, flow_status, is_deleted, flow_type) FROM stdin;
-N	2021-03-20 07:30:09.519	2021-03-20 07:30:16.883	31001	cc3aa348-f0da-4cef-b404-ffaabb1d5894	利用報告/Data Usage Report	1	A	f	1
-N	2021-03-20 07:30:09.519	2021-03-20 07:30:16.883	31002	a6ff688f-4b53-457c-9b5c-e5d4cc3b3068	default_利用申請フロー	1	A	f	1
-N	2023-12-26 09:38:40.699	2023-12-26 10:04:10.160	31003	92408473-006d-479d-a931-85ba931e2492	default_二段階利用申請フロー	1	A	f	1
-N	2023-12-26 11:08:28.825	2023-12-26 11:08:28.825	31004	d8635b0d-733a-468d-b7d1-2731ed720c8e	default_利用規約のみフロー	1	M	f	1
+COPY public.workflow_flow_define (status, created, updated, id, flow_id, flow_name, flow_user, flow_status, is_deleted, flow_type, repository_id) FROM stdin;
+N	2021-03-20 07:30:09.519	2021-03-20 07:30:16.883	31001	cc3aa348-f0da-4cef-b404-ffaabb1d5894	利用報告/Data Usage Report	1	A	f	1	Root Index
+N	2021-03-20 07:30:09.519	2021-03-20 07:30:16.883	31002	a6ff688f-4b53-457c-9b5c-e5d4cc3b3068	default_利用申請フロー	1	A	f	1	Root Index
+N	2023-12-26 09:38:40.699	2023-12-26 10:04:10.160	31003	92408473-006d-479d-a931-85ba931e2492	default_二段階利用申請フロー	1	A	f	1	Root Index
+N	2023-12-26 11:08:28.825	2023-12-26 11:08:28.825	31004	d8635b0d-733a-468d-b7d1-2731ed720c8e	default_利用規約のみフロー	1	M	f	1	Root Index
 \.
 
 --
@@ -137,11 +137,11 @@ N	2023-12-26 11:08:28.862000	2023-12-26 11:08:28.862000	31015	d8635b0d-733a-468d
 -- Data for Name: workflow_workflow; Type: TABLE DATA; Schema: public; Owner: invenio
 --
 
-COPY public.workflow_workflow (status, created, updated, id, flows_id, flows_name, itemtype_id, index_tree_id, flow_id, is_deleted, open_restricted, is_gakuninrdm) FROM stdin;
-N	2021-03-20 07:31:06.962251	2021-03-20 07:31:06.962297	31001	cc3aa348-f0da-4cef-b404-ffaabb1d5894	利用報告/Data Usage Report	31003	\N	31001	f	f	f
-N	2023-12-22 09:42:38.833000	2023-12-22 09:42:38.833000	31002	98c4f391-595c-4cc7-90b7-468c57a80e51	利用申請	31001	1703552310404	31002	f	t	f
-N	2023-12-26 10:05:05.417000	2023-12-26 10:05:16.250000	31003	cfbbaed1-c0eb-49ac-b64d-e78892bdea91	二段階利用申請	31002	1703552310404	31003	f	t	f
-N	2023-12-26 11:11:49.373000	2023-12-26 11:11:49.373000	31004	e0f79e2c-695f-412d-90c4-ae8f91b86949	利用規約のみ	31001	1703552310404	31004	f	t	f
+COPY public.workflow_workflow (status, created, updated, id, flows_id, flows_name, itemtype_id, index_tree_id, flow_id, is_deleted, open_restricted, is_gakuninrdm, repository_id) FROM stdin;
+N	2021-03-20 07:31:06.962251	2021-03-20 07:31:06.962297	31001	cc3aa348-f0da-4cef-b404-ffaabb1d5894	利用報告/Data Usage Report	31003	\N	31001	f	f	f	Root Index
+N	2023-12-22 09:42:38.833000	2023-12-22 09:42:38.833000	31002	98c4f391-595c-4cc7-90b7-468c57a80e51	利用申請	31001	1703552310404	31002	f	t	f	Root Index
+N	2023-12-26 10:05:05.417000	2023-12-26 10:05:16.250000	31003	cfbbaed1-c0eb-49ac-b64d-e78892bdea91	二段階利用申請	31002	1703552310404	31003	f	t	f	Root Index
+N	2023-12-26 11:11:49.373000	2023-12-26 11:11:49.373000	31004	e0f79e2c-695f-412d-90c4-ae8f91b86949	利用規約のみ	31001	1703552310404	31004	f	t	f	Root Index
 \.
 
 COPY public.workflow_userrole (status, created, updated, workflow_id, role_id) FROM stdin;

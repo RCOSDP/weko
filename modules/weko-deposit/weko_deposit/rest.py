@@ -40,7 +40,6 @@ from invenio_rest import ContentNegotiatedMethodView
 from simplekv.memory.redisstore import RedisStore
 from sqlalchemy.exc import SQLAlchemyError
 from weko_redis.redis import RedisConnection
-from weko_records_ui.external import call_external_system
 
 from .api import WekoDeposit, WekoRecord
 
@@ -211,6 +210,7 @@ class ItemResource(ContentNegotiatedMethodView):
     def put(self, **kwargs):
         """Put."""
         from weko_workflow.api import WorkActivity
+        from weko_records_ui.external import call_external_system
         try:
             data = request.get_json()
             self.__sanitize_input_data(data)

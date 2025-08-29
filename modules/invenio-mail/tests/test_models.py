@@ -88,7 +88,10 @@ class TestMailTemplates:
                 'flag': True,
                 'content': {
                     'subject': 'test subject',
-                    'body': 'test body'
+                    'body': 'test body',
+                    "recipients": '',
+                    "cc": '',
+                    "bcc": ''
                 },
                 'genre_order': 1,
                 'genre_key': 'Notification of secret URL provision',

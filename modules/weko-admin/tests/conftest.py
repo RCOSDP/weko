@@ -801,8 +801,6 @@ def admin_settings(db):
     settings.append(AdminSettings(id=10,name="sword_api_setting",settings={ "default_format": "TSV","data_format":{ "TSV":{"register_format": "Direct"},"XML":{"workflow": '31001',  "register_format": "Workflow"}}}))
     settings.append(AdminSettings(id=11,name="report_email_schedule_settings",settings={"details":"","enabled":False,"frequency":"daily"}))
     settings.append(AdminSettings(id=12,name="cris_linkage",settings={'researchmap_cidkey_contents':'','researchmap_pkey_contents':'','merge_mode':''}))
-    settings.append(AdminSettings(id=13,name='restricted_access_not_exist_errormsg', settings={"content_file_download": {"expiration_date": 30,"expiration_date_unlimited_chk": False,"download_limit": 10,"download_limit_unlimited_chk": False,},"usage_report_workflow_access": {"expiration_date_access": 500,"expiration_date_access_unlimited_chk": False,},"terms_and_conditions": []}))
-    settings.append(AdminSettings(id=14,name='error_msg',settings={"key" : "","content" : {"ja" : {"content" : "このデータは利用できません（権限がないため）。"},"en":{"content" : "This data is not available for this user"}}}))
     db.session.add_all(settings)
     db.session.commit()
     return settings
