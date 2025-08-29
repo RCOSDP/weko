@@ -271,34 +271,39 @@ def check_period_date(data):
                                 return False, "start is after end"
     return True, None
 
-def get_export_status():
+def get_export_status(user_id):
     """Get export status from cache."""
-    return current_cache.get(current_app.config.get("WEKO_AUTHORS_EXPORT_CACHE_STATUS_KEY")) or {}
+    key = f'{current_app.config.get("WEKO_AUTHORS_EXPORT_CACHE_STATUS_KEY")}_{user_id}'
+    return current_cache.get(key) or {}
 
 
-def set_export_status(start_time=None, task_id=None):
+def set_export_status(user_id, start_time=None, task_id=None):
     """Set export status into cache."""
-    data = get_export_status() or dict()
+    data = get_export_status(user_id) or dict()
     if start_time:
         data['start_time'] = start_time
     if task_id:
         data['task_id'] = task_id
 
-    current_cache.set(current_app.config.get("WEKO_AUTHORS_EXPORT_CACHE_STATUS_KEY"), data, timeout=0)
+    key = f'{current_app.config.get("WEKO_AUTHORS_EXPORT_CACHE_STATUS_KEY")}_{user_id}'
+    current_cache.set(key, data, timeout=0)
     return data
 
 
-def delete_export_status():
+def delete_export_status(user_id):
     """Delete export status."""
-    current_cache.delete(current_app.config.get("WEKO_AUTHORS_EXPORT_CACHE_STATUS_KEY"))
+    key = f'{current_app.config.get("WEKO_AUTHORS_EXPORT_CACHE_STATUS_KEY")}_{user_id}'
+    current_cache.delete(key)
 
 
-def get_export_url():
+def get_export_url(user_id):
     """Get exported info from cache."""
-    return current_cache.get(current_app.config.get("WEKO_AUTHORS_EXPORT_CACHE_URL_KEY")) or {}
+    # return current_cache.get(current_app.config.get("WEKO_AUTHORS_EXPORT_CACHE_URL_KEY")) or {}
+    key = f'{current_app.config.get("WEKO_AUTHORS_EXPORT_CACHE_URL_KEY")}_{user_id}'
+    return current_cache.get(key) or {}
 
 
-def save_export_url(start_time, end_time, file_uri):
+def save_export_url(start_time, end_time, file_uri, user_id):
     """Save exported info into cache."""
     data = dict(
         start_time=start_time,
@@ -306,12 +311,15 @@ def save_export_url(start_time, end_time, file_uri):
         file_uri=file_uri
     )
 
-    current_cache.set(current_app.config.get("WEKO_AUTHORS_EXPORT_CACHE_URL_KEY"), data, timeout=0)
+    key = f'{current_app.config.get("WEKO_AUTHORS_EXPORT_CACHE_URL_KEY")}_{user_id}'
+    current_cache.set(key, data, timeout=0)
     return data
 
-def delete_export_url():
+def delete_export_url(user_id):
     """Delete exported URL from cache."""
-    current_cache.delete(current_app.config.get("WEKO_AUTHORS_EXPORT_CACHE_URL_KEY"))
+    key = f'{current_app.config.get("WEKO_AUTHORS_EXPORT_CACHE_URL_KEY")}_{user_id}'
+    current_cache.delete(key)
+    # current_cache.delete(current_app.config.get("WEKO_AUTHORS_EXPORT_CACHE_URL_KEY"))
 
 def handle_exception(ex, attempt, retrys, interval, stop_point=0):
     """Manage sleep and retries.
@@ -337,7 +345,7 @@ def handle_exception(ex, attempt, retrys, interval, stop_point=0):
     current_app.logger.info(f"Connection failed, retrying in {interval} seconds...")
     sleep(interval)
 
-def export_authors():
+def export_authors(user_id):
     """Export all authors.
 
     Returns:
@@ -349,7 +357,7 @@ def export_authors():
     interval = current_app.config["WEKO_AUTHORS_BULK_EXPORT_RETRY_INTERVAL"]
     size =  current_app.config.get("WEKO_AUTHORS_EXPORT_BATCH_SIZE", 1000)
     stop_point = current_cache.get(
-        current_app.config["WEKO_AUTHORS_EXPORT_CACHE_STOP_POINT_KEY"]
+        f'{current_app.config["WEKO_AUTHORS_EXPORT_CACHE_STOP_POINT_KEY"]}_{user_id}'
     )
     mappings = []
     schemes = {}
@@ -375,7 +383,7 @@ def export_authors():
 
                 # Get the path of the temporary file
                 temp_file_path=current_cache.get(
-                    current_app.config["WEKO_AUTHORS_EXPORT_CACHE_TEMP_FILE_PATH_KEY"])
+                    f'{current_app.config["WEKO_AUTHORS_EXPORT_CACHE_TEMP_FILE_PATH_KEY"]}_{user_id}')
                 break
             except SQLAlchemyError as ex:
                 traceback.print_exc(file=stdout)
@@ -391,7 +399,7 @@ def export_authors():
         start_point = stop_point if stop_point else 0
 
         current_cache.delete(
-            current_app.config["WEKO_AUTHORS_EXPORT_CACHE_STOP_POINT_KEY"])
+            f'{current_app.config["WEKO_AUTHORS_EXPORT_CACHE_STOP_POINT_KEY"]}_{user_id}')
         # Get authors 1000 at a time and write data
         for i in range(start_point, records_count, size):
             current_app.logger.info(f"Export authors start_point：{start_point}")
@@ -419,12 +427,12 @@ def export_authors():
                     traceback.print_exc(file=stdout)
                     handle_exception(ex, attempt, retrys, interval, stop_point=i)
             # Write to temporary file
-            write_to_tempfile(i, row_header, row_label_en, row_label_jp, row_data)
+            write_to_tempfile(i, row_header, row_label_en, row_label_jp, row_data, user_id)
         # Save the completed temporary file to file instance
         with open(temp_file_path, 'rb') as f:
             reader = io.BufferedReader(f)
             # save data into location
-            cache_url = get_export_url()
+            cache_url = get_export_url(user_id)
             if not cache_url:
                 file = FileInstance.create()
                 file.set_contents(
@@ -440,19 +448,19 @@ def export_authors():
     except Exception as ex:
         db.session.rollback()
         # If stop_point is not set, delete the temporary file
-        if not current_cache.get(current_app.config["WEKO_AUTHORS_EXPORT_CACHE_STOP_POINT_KEY"]):
+        if not current_cache.get(f'{current_app.config["WEKO_AUTHORS_EXPORT_CACHE_STOP_POINT_KEY"]}_{user_id}'):
             os.remove(temp_file_path)
         current_app.logger.error(ex)
         traceback.print_exc(file=stdout)
     current_cache.set(
-        current_app.config.get("WEKO_AUTHORS_EXPORT_TARGET_CACHE_KEY"),
+        f'{current_app.config.get("WEKO_AUTHORS_EXPORT_TARGET_CACHE_KEY")}_{user_id}',
         "author_db",
         timeout=0
     )
 
     return file_uri
 
-def export_prefix(target):
+def export_prefix(target, user_id):
     """Export id_prefix or affiliation_id.
 
     Args:
@@ -492,7 +500,7 @@ def export_prefix(target):
                 file_io.getvalue().encode("utf-8-sig")))
 
             # save data into location
-            cache_url = get_export_url()
+            cache_url = get_export_url(user_id)
             if not cache_url:
                 file = FileInstance.create()
                 file.set_contents(
@@ -504,7 +512,7 @@ def export_prefix(target):
             file_uri = file.uri if file else None
             db.session.commit()
             current_cache.set(
-                current_app.config.get("WEKO_AUTHORS_EXPORT_TARGET_CACHE_KEY"),
+                f'{current_app.config.get("WEKO_AUTHORS_EXPORT_TARGET_CACHE_KEY")}_{user_id}',
                 target,
                 timeout=0
             )
@@ -539,7 +547,7 @@ def check_file_name(export_target):
         file_base_name = current_app.config.get('WEKO_AUTHORS_AFFILIATION_EXPORT_FILE_NAME')
     return file_base_name
 
-def write_to_tempfile(start, row_header, row_label_en, row_label_jp, row_data):
+def write_to_tempfile(start, row_header, row_label_en, row_label_jp, row_data, user_id):
     """Write data to a temporary file.
 
     Args:
@@ -551,7 +559,7 @@ def write_to_tempfile(start, row_header, row_label_en, row_label_jp, row_data):
     """
     # Get the path of the temporary file
     temp_file_path=current_cache.get( \
-        current_app.config["WEKO_AUTHORS_EXPORT_CACHE_TEMP_FILE_PATH_KEY"])
+        f'{current_app.config["WEKO_AUTHORS_EXPORT_CACHE_TEMP_FILE_PATH_KEY"]}_{user_id}')
 
     # Open the file and write data
     try:
