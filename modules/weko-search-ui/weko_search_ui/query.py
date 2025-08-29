@@ -24,7 +24,6 @@ import json
 import re
 import sys
 from datetime import datetime
-from datetime import timezone
 from functools import partial
 
 from elasticsearch_dsl.query import Bool, Q
@@ -121,7 +120,7 @@ def get_permission_filter(index_id: str = None, is_community=False):
             user_terms = Q("terms", publish_status=[
                 PublishStatus.PUBLIC.value, PublishStatus.PRIVATE.value])
             creator_user_match = Q("match", weko_creator_id=user_id)
-            shared_user_match = Q("match", weko_shared_id=user_id)
+            shared_user_match = Q("terms", weko_shared_ids=[user_id])
             shuld = []
             shuld.append(Q("bool", must=[user_terms, creator_user_match]))
             shuld.append(Q("bool", must=[user_terms, shared_user_match]))

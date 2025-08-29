@@ -163,7 +163,7 @@ def get_workspace_itemlist():
         source = record.get("_source", {})
         if not source or (
             str(source.get("weko_creator_id", None)) != str(current_user.get_id()) and
-            str(source.get("weko_shared_id", None)) != str(current_user.get_id())
+            str(current_user.get_id()) not in [str(shared_id) for shared_id in source.get("weko_shared_ids", [])]
         ):
             # If user ID does not match, skip this record
             current_app.logger.debug(f"[workspace] skip item \"_id\": {record.get('_id')}")

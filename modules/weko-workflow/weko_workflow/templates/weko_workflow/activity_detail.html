@@ -72,8 +72,14 @@
 {%- endblock page_footer %}
 
 {% set guest_email = None %}
-{% if activity and activity.extra_info and 'guest_mail' in activity.extra_info %}
-  {% set guest_email = activity.extra_info.guest_mail %}
+{% set application_record_id = None %}
+{% if activity and activity.extra_info %}
+  {% if 'guest_mail' in activity.extra_info %}
+    {% set guest_email = activity.extra_info.guest_mail %}
+  {% endif %}
+  {% if "record_id" in activity.extra_info %}
+    {% set application_record_id = activity.extra_info.record_id %}
+  {% endif %}
 {% endif %}
 
 {%- block page_body_main %}
@@ -248,9 +254,15 @@
         <div class="panel panel-default hide" id="hide-res-check">{{ res_check }}</div>
         <div class="panel panel-default">
           {%- if 0 != res_check %}
-            <div class="panel-body" id="step_page_permission">
-              {% include 'weko_workflow/permission_required.html' %}
-            </div>
+            {%- if approval_pending %}
+              <div class="panel-body" id="step_page_pending">
+                {% include 'weko_workflow/approval_pending.html' %}
+              </div>
+            {%- else %}
+              <div class="panel-body" id="step_page_permission">
+                {% include 'weko_workflow/permission_required.html' %}
+              </div>
+            {%- endif %}
           {%- else %}
             <div class="panel-body" id="activity_locked">
               {% include 'weko_workflow/lock_activity.html' with context %}
@@ -321,6 +333,11 @@
           {%- endif %}
         </div>
       {%- endif %}
+      {%- if application_approved %}
+        <div class="panel panel-default">
+          {%- include "weko_workflow/after_approval.html" %}
+        </div>
+      {%- endif %}
       {%- block history_panel %}
       <div class="panel panel-default">
         <span class="indent">{{_('History')}}</span>
@@ -365,16 +382,19 @@
     {%- if community %}
        <button class="btn btn-info pull-left back-button" onClick="window.location.href='{{url_for('weko_workflow.index',community=community.id)}}';$(this).prop('disabled', true)">
          <span class="glyphicon glyphicon-chevron-left"></span> {{_('Back')}}</button>
-
     {%- else %}
-       <button class="btn btn-info pull-left back-button" onClick="window.location.href='{{url_for('weko_workflow.index')}}'; $(this).prop('disabled', true)">
+      {%- if guest_email and application_record_id %}
+       <button class="btn btn-info pull-left back-button" onClick="window.location.href='/records/{{ application_record_id }}';$(this).prop('disabled', true)">
          <span class="glyphicon glyphicon-chevron-left"></span> {{_('Back')}}</button>
-         <div class="hide" id="for_delete">{{for_delete}}</div>
-         {%- if 'F' == activity.activity_status and not for_delete %}
-         <button class="btn btn-info pull-right back-button" onClick="window.location.href='/records/{{ _id }}' ;$(this).prop('disabled', true)">
-          Access</button>
-
-         {%- endif %}
+      {%- else %}
+       <button class="btn btn-info pull-left back-button" onClick="window.location.href='{{url_for('weko_workflow.index')}}'; $(this).prop('disabled', true)">
+         <span class="glyphicon glyphicon-chevron-left"></span> {{_('Back')}} {{is_guest_activity}}</button>
+      {%- endif %}
+      <div class="hide" id="for_delete">{{for_delete}}</div>
+      {%- if 'F' == activity.activity_status and not for_delete %}
+      <button class="btn btn-info pull-right back-button" onClick="window.location.href='/records/{{ _id }}' ;$(this).prop('disabled', true)">
+      Access</button>
+      {%- endif %}
     {%- endif %}
   </div>
 </div>

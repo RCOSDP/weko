@@ -60,21 +60,6 @@
       </label>
     </div>
   </div>
-  <div class="row">
-    <div class="col-sm-2 text-right">
-      <label>{{_('Request Form')}}</label>
-    </div>
-    <div class="col-sm-8">
-      <label class="radio-inline">
-        <input type="radio" name="requestFormDisplayRadios" id="requestFormDisplayRadios1" value="1" {{ 'checked' if is_request_form_display }}>
-        {{_("Display Request Form")}}
-      </label>
-      <label class="radio-inline">
-        <input type="radio" name="requestFormDisplayRadios" id="requestFormDisplayRadios0" value="0" {{ 'checked' if not is_request_form_display }} >
-        {{_("Hide Request Form")}}
-      </label>
-    </div>
-  </div>
   <div class="form-actions">
    <div class="col-sm-offset-3 col-sm-10">
     <button type="submit" name="submit" value="set_search_author_form"

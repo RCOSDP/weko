@@ -222,13 +222,14 @@
 						<line hits="1" number="243"/>
 						<line hits="1" number="245"/>
 						<line hits="1" number="246"/>
-						<line branch="true" condition-coverage="100% (2/2)" hits="1" number="253"/>
+						<line hits="1" number="253"/>
 						<line hits="1" number="254"/>
 						<line hits="1" number="255"/>
 						<line branch="true" condition-coverage="100% (2/2)" hits="1" number="256"/>
 						<line hits="1" number="257"/>
-						<line hits="1" number="259"/>
-						<line hits="1" number="261"/>
+						<line hits="1" number="258"/>
+						<line branch="true" condition-coverage="100% (2/2)" hits="1" number="259"/>
+						<line hits="1" number="260"/>
 						<line hits="1" number="262"/>
 						<line hits="1" number="263"/>
 						<line hits="1" number="270"/>
@@ -456,7 +457,7 @@
 						<line hits="1" number="599"/>
 						<line hits="1" number="601"/>
 						<line hits="1" number="602"/>
-						<line hits="1" number="603"/>
+						<line branch="true" condition-coverage="100% (2/2)" hits="1" number="604"/>
 						<line hits="1" number="605"/>
 						<line hits="1" number="606"/>
 						<line branch="true" condition-coverage="100% (2/2)" hits="1" number="608"/>
@@ -2255,7 +2256,6 @@
 						<line branch="true" condition-coverage="100% (2/2)" hits="1" number="1056"/>
 						<line hits="1" number="1057"/>
 						<line hits="1" number="1059"/>
-						<line hits="1" number="1060"/>
 						<line hits="1" number="1061"/>
 						<line hits="1" number="1062"/>
 						<line hits="1" number="1063"/>

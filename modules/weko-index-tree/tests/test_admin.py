@@ -100,6 +100,7 @@ def test_IndexEditSettingView(app, db, location, users, id, status_code):
                     mod_tree_detail='/api/tree/index/',
                     admin_coverpage_setting='False',
                     index_id=0,
+                    render_widgets='False',
                     lang_code='en'
                 )
                 
@@ -117,6 +118,7 @@ def test_IndexEditSettingView(app, db, location, users, id, status_code):
                     mod_tree_detail='/api/tree/index/',
                     admin_coverpage_setting='False',
                     index_id=0,
+                    render_widgets='False',
                     lang_code='en'
                 )
 

@@ -159,10 +159,10 @@ def get_es_itemlist():
             else None
         )
         creator_user_match = Q("match", weko_creator_id=user_id)
-        shared_user_match = Q("match", weko_shared_id=user_id)
+        shared_users_match = Q("terms", weko_shared_ids=[user_id])
         shuld = []
         shuld.append(Q("bool", must=[publish_status_match, creator_user_match]))
-        shuld.append(Q("bool", must=[publish_status_match, shared_user_match]))
+        shuld.append(Q("bool", must=[publish_status_match, shared_users_match]))
         must = []
         must.append(Q("bool", should=shuld))
         must.append(Q("bool", must=Q("match", relation_version_is_last="true")))

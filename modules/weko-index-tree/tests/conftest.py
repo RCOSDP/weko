@@ -71,6 +71,7 @@ from invenio_oauth2server.models import Client, Token
 from invenio_pidrelations import InvenioPIDRelations
 from invenio_records import InvenioRecords
 from invenio_search import InvenioSearch
+from invenio_search_ui import InvenioSearchUI
 from sqlalchemy_utils.functions import create_database, database_exists, drop_database
 from simplekv.memory.redisstore import RedisStore
 from invenio_oaiharvester.models import HarvestSettings
@@ -443,7 +444,8 @@ def base_app(instance_path):
         WEKO_INDEX_TREE_API = "/api/tree/index/",
         WEKO_THEME_INSTANCE_DATA_DIR="data",
         WEKO_HANDLE_ALLOW_REGISTER_CNRI=False,
-        WEKO_ADMIN_PERMISSION_ROLE_COMMUNITY="Community Administrator"
+        WEKO_ADMIN_PERMISSION_ROLE_COMMUNITY="Community Administrator",
+        WEKO_INDEX_TREE_SHOW_MODAL=False
     )
     app_.url_map.converters['pid'] = PIDConverter
 
@@ -457,6 +459,7 @@ def base_app(instance_path):
     InvenioCache(app_)
     InvenioJSONSchemas(app_)
     InvenioSearch(app_)
+    InvenioSearchUI(app_)
     InvenioRecords(app_)
     InvenioIndexer(app_)
     InvenioI18N(app_)
@@ -1145,7 +1148,7 @@ def db_register(app, db):
                     activity_start=datetime.strptime('2022/04/14 3:01:53.931', '%Y/%m/%d %H:%M:%S.%f'),
                     activity_community_id=3,
                     activity_confirm_term_of_use=True,
-                    title='test', shared_user_id=-1, extra_info={},
+                    title='test', shared_user_ids=[], extra_info={},
                     action_order=6)
 
     with db.session.begin_nested():

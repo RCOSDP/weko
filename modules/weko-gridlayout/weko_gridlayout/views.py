@@ -492,8 +492,8 @@ def _add_url_rule(url_or_urls):
 
 
 @blueprint_api.route('/access_counter_record/<string:repository_id>'
-                     '/<string:path>/<string:current_language>', methods=['GET'])
-def get_access_counter_record(repository_id, path,current_language):
+                     '/<path:path>/<string:current_language>', methods=['GET'])
+def get_access_counter_record(repository_id, path, current_language):
     """Get access Top page value."""
     cached_data = current_cache.get('access_counter')
     if path == "main":

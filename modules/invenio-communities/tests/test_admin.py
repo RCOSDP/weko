@@ -226,6 +226,46 @@ class TestCommunityModelView():
             res = client.post(url,data=data)
             assert res.status_code == 400
 
+            # over max length (community id max length = 100)
+            data = {
+                "id": "a-" + "1"*99,
+                "owner": 1,
+                "index": 11,
+                "group": 1,
+                "title": "Test comm after",
+                "description": "this is description of community1.",
+                "page":"",
+                "curation_policy":"",
+                "ranking":0,
+                "fixed_points":0,
+                "login_menu_enabled":False,
+                "catalog_data": "{\"metainfo\":{\"parentkey\":[{\"catalog_contributors\":[{\"contributor_names\":[{\"contributor_name\":\"提供機関名\",\"contributor_name_language\":\"ja\"}],\"contributor_type\":\"HostingInstitution\"}],\"catalog_identifiers\":[{}],\"catalog_subjects\":[{}],\"catalog_licenses\":[{}],\"catalog_rights\":[{}],\"catalog_access_rights\":[{}]}]}}",
+                "thumbnail": object(),
+                "content_policy":""
+            }
+            res = client.post(url,data=data)
+            assert res.status_code == 400
+
+            # over max length (title max length = 255)
+            data = {
+                "id": "a-123456789",
+                "owner": 1,
+                "index": 11,
+                "group": 1,
+                "title": "T"*256,
+                "description": "this is description of community1.",
+                "page":"",
+                "curation_policy":"",
+                "ranking":0,
+                "fixed_points":0,
+                "login_menu_enabled":False,
+                "catalog_data": "{\"metainfo\":{\"parentkey\":[{\"catalog_contributors\":[{\"contributor_names\":[{\"contributor_name\":\"提供機関名\",\"contributor_name_language\":\"ja\"}],\"contributor_type\":\"HostingInstitution\"}],\"catalog_identifiers\":[{}],\"catalog_subjects\":[{}],\"catalog_licenses\":[{}],\"catalog_rights\":[{}],\"catalog_access_rights\":[{}]}]}}",
+                "thumbnail": object(),
+                "content_policy":""
+            }
+            res = client.post(url,data=data)
+            assert res.status_code == 400
+
             # correct_data
             file1 = werkzeug.datastructures.FileStorage(stream=BytesIO(base64.b64decode(SMALLEST_JPEG_B64)),
                 filename="image.jpg",
@@ -528,6 +568,28 @@ class TestCommunityModelView():
                 comm = Community.query.filter_by(id="test_comm2").one()
                 assert comm.cnri == "http://hdl.handle.net/1234567890/1"
             app.config['WEKO_HANDLE_ALLOW_REGISTER_CNRI'] = False
+
+            # title over max length (title max length = 255)
+            file_dummy = werkzeug.datastructures.FileStorage(stream=BytesIO(base64.b64decode(SMALLEST_JPEG_B64)),
+                filename="image.jpg",
+                content_type="image/jpg")
+            data = {
+                "id": "test_comm",
+                "owner": 1,
+                "index": 11,
+                "title": "T"*256,
+                "description": "this is description of community1.",
+                "page":"",
+                "curation_policy":"",
+                "ranking":0,
+                "fixed_points":0,
+                "login_menu_enabled":True,
+                "catalog_data": "{\"metainfo\":{\"parentkey\":[{\"catalog_contributors\":[{\"contributor_names\":[{\"contributor_name\":\"提供機関名\",\"contributor_name_language\":\"ja\"}],\"contributor_type\":\"HostingInstitution\"}],\"catalog_identifiers\":[{}],\"catalog_subjects\":[{}],\"catalog_licenses\":[{}],\"catalog_rights\":[{}],\"catalog_access_rights\":[{}]}]}}",
+                "thumbnail": file_dummy,
+                "content_policy":""
+            }
+            res = client.post(url,data=data)
+            assert res.status_code == 400
 
             # thumbnail_format_error
             file2 = werkzeug.datastructures.FileStorage(stream=BytesIO(base64.b64decode(SMALLEST_JPEG_B64)),

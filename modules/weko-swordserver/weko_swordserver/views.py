@@ -59,7 +59,7 @@ from .utils import (
     check_import_items,
     check_deletion_type,
     update_item_ids,
-    get_shared_id_from_on_behalf_of,
+    get_shared_ids_from_on_behalf_of,
     delete_item_directly
 )
 from weko_accounts.utils import limiter
@@ -262,7 +262,7 @@ def post_service_document():
     file_format = check_import_file_format(file, packaging)
 
     on_behalf_of = request.headers.get("On-Behalf-Of")
-    shared_id = get_shared_id_from_on_behalf_of(on_behalf_of)
+    shared_ids = get_shared_ids_from_on_behalf_of(on_behalf_of)
     client_id = request.oauth.client.client_id
 
     digest = request.headers.get("Digest")
@@ -281,7 +281,7 @@ def post_service_document():
             )
 
     check_result = check_import_items(
-        file, file_format, shared_id=shared_id,
+        file, file_format, shared_ids=shared_ids,
         packaging=packaging, client_id=client_id
     )
 
@@ -387,9 +387,9 @@ def post_service_document():
             else:
                 recid = str(import_result.get("recid"))
                 notify_item_imported(
-                    current_user.id, recid, current_user.id, shared_id=shared_id
+                    current_user.id, recid, current_user.id, shared_ids=shared_ids
                 )
-                send_mail_direct_registered(recid, current_user.id, shared_id)
+                send_mail_direct_registered(recid, current_user.id, shared_ids)
 
         elif register_type == "Workflow":
             url, recid, action , error = import_items_to_activity(
@@ -566,7 +566,7 @@ def put_object(recid):
     file_format = check_import_file_format(file, packaging)
 
     on_behalf_of = request.headers.get("On-Behalf-Of")
-    shared_id = get_shared_id_from_on_behalf_of(on_behalf_of)
+    shared_ids = get_shared_ids_from_on_behalf_of(on_behalf_of)
     client_id = request.oauth.client.client_id
 
     digest = request.headers.get("Digest")
@@ -585,7 +585,7 @@ def put_object(recid):
             )
 
     check_result = check_import_items(
-        file, file_format, shared_id=shared_id,
+        file, file_format, shared_ids=shared_ids,
         packaging=packaging, client_id=client_id
     )
 
@@ -702,9 +702,9 @@ def put_object(recid):
                 .format(recid, import_result.get("error_id")),
                 ErrorType.BadRequest
             )
-        send_mail_direct_registered(recid, current_user.id, shared_id)
+        send_mail_direct_registered(recid, current_user.id, shared_ids)
         notify_item_imported(
-            current_user.id, recid, current_user.id, shared_id=shared_id
+            current_user.id, recid, current_user.id, shared_ids=shared_ids
         )
         response = jsonify(_get_status_document(recid)), 200
 
@@ -990,7 +990,7 @@ def delete_object(recid):
         )
 
     on_behalf_of = request.headers.get("On-Behalf-Of")
-    shared_id = get_shared_id_from_on_behalf_of(on_behalf_of)
+    shared_ids = get_shared_ids_from_on_behalf_of(on_behalf_of)
     client_id = request.oauth.client.client_id
     check_result = check_deletion_type(client_id)
 
@@ -1013,7 +1013,7 @@ def delete_object(recid):
         "referrer": request.referrer,
         "hostname": request.host,
         "user_id": owner,
-        "shared_id": shared_id,
+        "shared_ids": shared_ids,
         "action": "DELETE"
     }
 
@@ -1036,9 +1036,9 @@ def delete_object(recid):
 
             delete_item_directly(recid, request_info=request_info)
             notify_item_deleted(
-                current_user.id, recid, current_user.id, shared_id=shared_id
+                current_user.id, recid, current_user.id, shared_ids=shared_ids
             )
-            send_mail_item_deleted(recid, record, current_user.id, shared_id)
+            send_mail_item_deleted(recid, record, current_user.id, shared_ids)
             current_app.logger.info(
                 f"Item deleted by sword from {request.oauth.client.name} (recid={recid})"
             )
@@ -1108,13 +1108,14 @@ def _create_error_document(type, error):
 
 @blueprint.errorhandler(401)
 def handle_unauthorized(ex):
+    traceback.print_exc()
     msg = "Authentication is required."
     current_app.logger.error(msg)
     return jsonify(_create_error_document(ErrorType.AuthenticationRequired.type, msg)), ErrorType.AuthenticationRequired.code
 
 @blueprint.errorhandler(403)
 def handle_forbidden(ex):
-    msg = "Not allowed operation in your token scope."
+    msg = "Not allowed operation in your role or token scope."
     current_app.logger.error(msg)
     return jsonify(_create_error_document(ErrorType.Forbidden.type, msg)), ErrorType.Forbidden.code
 

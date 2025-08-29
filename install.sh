@@ -17,6 +17,8 @@ docker cp scripts/demo/doi_identifier.sql $(docker-compose -f docker-compose2.ym
 docker-compose -f docker-compose2.yml exec postgresql psql -U invenio -d invenio -f /tmp/doi_identifier.sql
 docker cp postgresql/ddl/W-OA-user_activity_log.sql $(docker-compose -f docker-compose2.yml ps -q postgresql):/tmp/W-OA-user_activity_log.sql
 docker-compose -f docker-compose2.yml exec postgresql psql -U invenio -d invenio -f /tmp/W-OA-user_activity_log.sql
+# docker cp scripts/demo/resticted_access.sql $(docker-compose -f docker-compose2.yml ps -q postgresql):/tmp/resticted_access.sql
+# docker-compose -f docker-compose2.yml exec postgresql psql -U invenio -d invenio -f /tmp/resticted_access.sql
 
 docker-compose -f docker-compose2.yml run --rm web invenio assets build
 docker-compose -f docker-compose2.yml run --rm web invenio collect -v

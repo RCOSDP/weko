@@ -27,7 +27,7 @@ blueprint = Blueprint(
 )
 
 blueprint_api = Blueprint(
-    'weko_handle',
+    'weko_handle_api',
     __name__,
     template_folder='templates',
     static_folder='static',

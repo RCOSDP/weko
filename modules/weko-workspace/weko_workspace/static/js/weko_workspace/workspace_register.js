@@ -3059,7 +3059,7 @@ function toObject(arr) {
       $scope.registerUserPermission = function () {
         // let userSelection = $('#input').val();
         let result = false;
-        $rootScope.recordsVM.invenioRecordsModel['shared_user_id'] = -1;
+        $rootScope.recordsVM.invenioRecordsModel['shared_user_ids'] = [];
         result = true;
         return result;
       }

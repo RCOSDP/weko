@@ -175,13 +175,13 @@ def get_push_template():
     return templates
 
 
-def _get_params_for_registrant(target_id, actor_id, shared_id):
+def _get_params_for_registrant(target_id, actor_id, shared_ids):
     """Get parameters for registrant.
 
     Args:
         target_id (int): The target ID.
         actor_id (int): The actor ID.
-        shared_id (int): The shared ID.
+        shared_ids (list): The shared IDs.
 
     Returns:
         tuple(set, str):
@@ -189,9 +189,9 @@ def _get_params_for_registrant(target_id, actor_id, shared_id):
             - str: The actor's name.
     """
     set_target_id = {target_id}
-    is_shared = shared_id != -1
+    is_shared = bool(shared_ids)
     if is_shared:
-        set_target_id.add(shared_id)
+        set_target_id.update(shared_ids)
     set_target_id.discard(actor_id)
 
     actor_profile = UserProfile.get_by_userid(actor_id)
@@ -200,7 +200,7 @@ def _get_params_for_registrant(target_id, actor_id, shared_id):
     return set_target_id, actor_name
 
 def notify_item_imported(
-    target_id, recid, actor_id, object_name=None, shared_id=-1
+    target_id, recid, actor_id, object_name=None, shared_ids=[]
 ):
     """Notify item imported.
 
@@ -208,13 +208,13 @@ def notify_item_imported(
         target_id (int): The target ID.
         recid (str): The record ID.
         actor_id (int): The actor ID.
-        shared_id (str): The shared ID.
+        shared_ids (list): The shared IDs.
 
     Returns:
         dict: The notification.
     """
     set_target_id, actor_name = _get_params_for_registrant(
-        target_id, actor_id, shared_id
+        target_id, actor_id, shared_ids
     )
 
     from .notifications import Notification
@@ -243,7 +243,7 @@ def notify_item_imported(
 
 
 def notify_item_deleted(
-    target_id, recid, actor_id, object_name=None, shared_id=-1
+    target_id, recid, actor_id, object_name=None, shared_ids=[]
 ):
     """Notify item deleted.
 
@@ -251,13 +251,13 @@ def notify_item_deleted(
         target_id (int): The target ID.
         recid (str): The record ID.
         actor_id (int): The actor ID.
-        shared_id (str): The shared ID.
+        shared_ids (list): The shared IDs.
 
     Returns:
         dict: The notification.
     """
     set_target_id, actor_name = _get_params_for_registrant(
-        target_id, actor_id, shared_id
+        target_id, actor_id, shared_ids
     )
 
     from .notifications import Notification

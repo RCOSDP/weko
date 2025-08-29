@@ -539,7 +539,10 @@ def client_api(app):
 
 @pytest.yield_fixture()
 def client_request_args(app):
-    # app.register_blueprint(create_blueprint(app, app.config['WEKO_INDEX_TREE_REST_ENDPOINTS']))
+    try:
+        app.register_blueprint(create_blueprint(app, app.config['WEKO_INDEX_TREE_REST_ENDPOINTS']))
+    except AssertionError:
+        pass
     with app.test_client() as client:
         r = client.get('/', query_string={
             'index_id': '33',
@@ -902,7 +905,7 @@ def db_register(app, db):
                     activity_start=datetime.strptime('2022/04/14 3:01:53.931', '%Y/%m/%d %H:%M:%S.%f'),
                     activity_community_id=3,
                     activity_confirm_term_of_use=True,
-                    title='test', shared_user_id=-1, extra_info={},
+                    title='test', shared_user_ids=[], extra_info={},
                     action_order=6)
 
     with db.session.begin_nested():

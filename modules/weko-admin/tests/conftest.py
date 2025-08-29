@@ -31,9 +31,7 @@ from invenio_accounts.utils import jwt_create_token
 from invenio_indexer import InvenioIndexer
 import pytest
 from invenio_indexer.api import RecordIndexer
-from invenio_pidstore.minters import recid_minter
 from invenio_records import Record
-from invenio_oaiserver.minters import oaiid_minter
 
 from flask import Flask
 from flask_babelex import Babel
@@ -64,6 +62,7 @@ from invenio_oauth2server.models import Client, Token
 from invenio_pidrelations import InvenioPIDRelations
 from invenio_pidstore import InvenioPIDStore
 from invenio_pidstore.models import PersistentIdentifier
+from invenio_oauth2server import InvenioOAuth2Server
 from invenio_records.ext import InvenioRecords
 from invenio_records.models import RecordMetadata
 from invenio_search import RecordsSearch,InvenioSearch,current_search_client
@@ -92,6 +91,7 @@ from weko_admin.models import SessionLifetime,SiteInfo,SearchManagement,\
         FacetSearchSetting,BillingPermission,LogAnalysisRestrictedIpAddress,\
         LogAnalysisRestrictedCrawlerList,StatisticsEmail,RankingSettings, Identifier
 from weko_admin.views import blueprint_api
+from weko_admin.config import WEKO_ADMIN_COMMUNITY_ACCESS_LIST,WEKO_ADMIN_REPOSITORY_ACCESS_LIST,WEKO_ADMIN_ACCESS_TABLE,WEKO_ADMIN_PERMISSION_ROLE_SYSTEM, WEKO_ADMIN_RESTRICTED_ACCESS_SETTINGS
 
 from .helpers import json_data, create_record
 
@@ -167,6 +167,12 @@ def base_app(instance_path, cache_config,request ,search_class):
         WEKO_THEME_INSTANCE_DATA_DIR="data",
         SEARCH_INDEX_PREFIX="test-",
         INDEXER_DEFAULT_DOC_TYPE="item-v1.0.0",
+        WEKO_ADMIN_COMMUNITY_ACCESS_LIST =WEKO_ADMIN_COMMUNITY_ACCESS_LIST,
+        WEKO_ADMIN_REPOSITORY_ACCESS_LIST = WEKO_ADMIN_REPOSITORY_ACCESS_LIST,
+        WEKO_ADMIN_ACCESS_TABLE=WEKO_ADMIN_ACCESS_TABLE,
+        WEKO_ADMIN_PERMISSION_ROLE_SYSTEM =WEKO_ADMIN_PERMISSION_ROLE_SYSTEM,
+        WEKO_ADMIN_RESTRICTED_ACCESS_SETTINGS = WEKO_ADMIN_RESTRICTED_ACCESS_SETTINGS,
+        WEKO_WORKFLOW_USAGE_REPORT_WORKFLOW_NAME = 'test workflow31001',
         WEKO_PERMISSION_SUPER_ROLE_USER=WEKO_PERMISSION_SUPER_ROLE_USER,
         WEKO_ITEMS_UI_CRIS_LINKAGE_RESEARCHMAP_MERGE_MODE_DEFAULT=WEKO_ITEMS_UI_CRIS_LINKAGE_RESEARCHMAP_MERGE_MODE_DEFAULT
     )
@@ -182,6 +188,7 @@ def base_app(instance_path, cache_config,request ,search_class):
     InvenioAccess(app_)
     InvenioAdmin(app_)
     InvenioCache(app_)
+    InvenioOAuth2Server(app_)
     InvenioPIDRelations(app_)
     InvenioPIDStore(app_)
     InvenioFilesREST(app_)
@@ -249,7 +256,7 @@ def _database_setup(app, request):
                 app.kvsession_store.redis.flushall()
 
     request.addfinalizer(teardown)
-    return a
+    return app
 
 @pytest.yield_fixture()
 def api(app):
@@ -787,7 +794,7 @@ def admin_settings(db):
     settings.append(AdminSettings(id=3,name='site_license_mail_settings',settings={"Root Index": {"auto_send_flag": False}}))
     settings.append(AdminSettings(id=4,name='default_properties_settings',settings={"show_flag": True}))
     settings.append(AdminSettings(id=5,name='item_export_settings',settings={"allow_item_exporting": True, "enable_contents_exporting": True}))
-    settings.append(AdminSettings(id=6,name="restricted_access",settings={"content_file_download": {"expiration_date": 30,"expiration_date_unlimited_chk": False,"download_limit": 10,"download_limit_unlimited_chk": False,},"usage_report_workflow_access": {"expiration_date_access": 500,"expiration_date_access_unlimited_chk": False,},"terms_and_conditions": []}))
+    settings.append(AdminSettings(id=6,name="restricted_access",settings={"content_file_download": {"expiration_date": 30,"expiration_date_unlimited_chk": False,"download_limit": 10,"download_limit_unlimited_chk": False,},"usage_report_workflow_access": {"expiration_date_access": 500,"expiration_date_access_unlimited_chk": False,},"terms_and_conditions": [], "error_msg":{"key" : "","content" : {"ja" : {"content" : "このデータは利用できません（権限がないため）。"},"en":{"content" : "This data is not available for this user"}}}, "edit_mail_templates_enable": False, "password_enable": False, "display_request_form": False, "preview_workflow_approval_enable": False, "item_application": {"application_item_types": [], "item_application_enable": False}}))
     settings.append(AdminSettings(id=7,name="display_stats_settings",settings={"display_stats":False}))
     settings.append(AdminSettings(id=8,name='convert_pdf_settings',settings={"path":"/tmp/file","pdf_ttl":1800}))
     settings.append(AdminSettings(id=9,name="elastic_reindex_settings",settings={"has_errored": False}))
@@ -901,7 +908,7 @@ def activities(db,flows,records,users):
                     activity_start=datetime.strptime('2022/04/14 3:01:53.931', '%Y/%m/%d %H:%M:%S.%f'),
                     activity_community_id=3,
                     activity_confirm_term_of_use=True,
-                    title='test item1', shared_user_id=-1, extra_info={},
+                    title='test item1', shared_user_ids=[], extra_info={},
                     action_order=1,
                     )
     db.session.add(activity_item1)
@@ -911,7 +918,7 @@ def activities(db,flows,records,users):
                     activity_start=datetime.strptime('2022/04/14 3:01:53.931', '%Y/%m/%d %H:%M:%S.%f'),
                     activity_community_id=3,
                     activity_confirm_term_of_use=True,
-                    title='test item31001', shared_user_id=-1, extra_info={},
+                    title='test item31001', shared_user_ids=[], extra_info={},
                     action_order=1,
                     )
     db.session.add(activity_31001)
@@ -921,7 +928,7 @@ def activities(db,flows,records,users):
                     activity_start=datetime.strptime('2022/04/14 3:01:53.931', '%Y/%m/%d %H:%M:%S.%f'),
                     activity_community_id=3,
                     activity_confirm_term_of_use=True,
-                    title='test item1', shared_user_id=-1, extra_info={"is_guest":True,"guest_mail":"test.guest@test.org","file_name":"test_file"},
+                    title='test item1', shared_user_ids=[], extra_info={"is_guest":True,"guest_mail":"test.guest@test.org","file_name":"test_file"},
                     action_order=1,
                     )
 
@@ -932,8 +939,8 @@ def activities(db,flows,records,users):
                     activity_start=datetime.strptime('2022/04/14 3:01:53.931', '%Y/%m/%d %H:%M:%S.%f'),
                     activity_community_id=3,
                     activity_confirm_term_of_use=True,
-                    title='test item1', shared_user_id=-1,
-                    extra_info={"usage_activity_id":"3","usage_application_record_data":{"subitem_restricted_access_name":"test_access_name",}},
+                    title='test item1', shared_user_ids=[],
+                    extra_info={"usage_activity_id":"3","usage_application_record_data":{"subitem_fullname":"test_access_name",}},
                     action_order=1,
                     )
     db.session.add(activity_usage)
@@ -1209,20 +1216,17 @@ def reindex_settings(i18n_app):
     settings = list()
     settings.append(PersistentIdentifier(object_uuid=record0.id,pid_type="oai",pid_value="oai:weko3.example.org:00000001",status="R",object_type="rec"))
     settings.append(PersistentIdentifier(object_uuid=record1.id,pid_type="oai",pid_value="oai:weko3.example.org:00000002",status="R",object_type="rec"))
-    settings.append(RecordMetadata(id="{069a5c8b-b3df-4909-98a2-713527c8db50}",json={"_oai": {"id": "oai:weko3.example.org:00000005.1", "sets": []}, "path": ["1669370353013"], "owner": "1", "recid": "5.1", "title": ["タイトル"], "pubdate": {"attribute_name": "PubDate", "attribute_value": "2022-11-30"}, "_buckets": {"deposit": "07beac8f-6518-4894-923b-4160d3ab4c24"}, "_deposit": {"id": "5.1", "pid": {"type": "depid", "value": "5.1", "revision_id": 0}, "owner": "1", "owners": [1], "status": "published", "created_by": 1}, "item_title": "タイトル", "author_link": [], "item_type_id": "40002", "publish_date": "2022-11-30", "publish_status": "0", "weko_shared_id": -1, "item_1617186331708": {"attribute_name": "Title", "attribute_value_mlt": [{"subitem_1551255647225": "タイトル", "subitem_1551255648112": "ja"}]}, "item_1617258105262": {"attribute_name": "Resource Type", "attribute_value_mlt": [{"resourceuri": "http://purl.org/coar/resource_type/c_beb9", "resourcetype": "data paper"}]}, "item_1669786983830": {"attribute_name": "new_changed", "attribute_value_mlt": [{"subitem_1669370027424": [{"subitem_1669370032950": "new_text", "subitem_1669370036614": "new_text"}], "subitem_1669370028622": "2022-10-31"}]}, "relation_version_is_last": True},version_id=1))
-    settings.append(RecordMetadata(id="{06a3949a-44eb-477f-91bd-a2e8fe018e22}",json={"_oai": {"id": "oai:weko3.example.org:00000016.1", "sets": []}, "path": ["1669370353013"], "owner": "1", "recid": "16.1", "title": ["タイトル"], "pubdate": {"attribute_name": "PubDate", "attribute_value": "2022-12-02"}, "_buckets": {"deposit": "bc52eca2-fab8-4de5-b54a-d6991cf27f8f"}, "_deposit": {"id": "16.1", "pid": {"type": "depid", "value": "16.1", "revision_id": 0}, "owner": "1", "owners": [1], "status": "published", "created_by": 1}, "item_title": "タイトル", "author_link": [], "item_type_id": "40004", "publish_date": "2022-12-02", "publish_status": "0", "weko_shared_id": -1, "item_1617186331708": {"attribute_name": "Title", "attribute_value_mlt": [{"subitem_1551255647225": "タイトル", "subitem_1551255648112": "ja"}]}, "item_1617258105262": {"attribute_name": "Resource Type", "attribute_value_mlt": [{"resourceuri": "http://purl.org/coar/resource_type/c_6501", "resourcetype": "journal article"}]}, "item_1669942968526": {"attribute_name": "", "attribute_value_mlt": [{"subitem_1669942715232": "a"}]}, "item_1669942969646": {"attribute_name": "", "attribute_value_mlt": [{"subitem_1669942715232": "a"}]}, "item_1669942970526": {"attribute_name": "", "attribute_value_mlt": [{"subitem_1669940015843": ["a"]}]}, "item_1669942972286": {"attribute_name": "", "attribute_value_mlt": [{"subitem_1669942715232": "a"}]}, "item_1669943008966": {"attribute_name": "", "attribute_value_mlt": [{"subitem_1669942715232": "2022-12-02"}]}, "item_1669943105542": {"attribute_name": "", "attribute_value_mlt": [{"subitem_1669943076184": "a"}]}, "item_1669943517557": {"attribute_name": "", "attribute_value_mlt": [{"subitem_1669941342567": [{"subitem_1669942576264": "a", "subitem_1669942583842": "a", "subitem_1669942586009": ["a"], "subitem_1669942602505": "a"}]}]}, "relation_version_is_last": True},version_id=1))
+    settings.append(RecordMetadata(id="{069a5c8b-b3df-4909-98a2-713527c8db50}",json={"_oai": {"id": "oai:weko3.example.org:00000005.1", "sets": []}, "path": ["1669370353013"], "owner": "1", "recid": "5.1", "title": ["タイトル"], "pubdate": {"attribute_name": "PubDate", "attribute_value": "2022-11-30"}, "_buckets": {"deposit": "07beac8f-6518-4894-923b-4160d3ab4c24"}, "_deposit": {"id": "5.1", "pid": {"type": "depid", "value": "5.1", "revision_id": 0}, "owner": "1", "owners": [1], "status": "published", "created_by": 1}, "item_title": "タイトル", "author_link": [], "item_type_id": "40002", "publish_date": "2022-11-30", "publish_status": "0", "weko_shared_ids": [], "item_1617186331708": {"attribute_name": "Title", "attribute_value_mlt": [{"subitem_1551255647225": "タイトル", "subitem_1551255648112": "ja"}]}, "item_1617258105262": {"attribute_name": "Resource Type", "attribute_value_mlt": [{"resourceuri": "http://purl.org/coar/resource_type/c_beb9", "resourcetype": "data paper"}]}, "item_1669786983830": {"attribute_name": "new_changed", "attribute_value_mlt": [{"subitem_1669370027424": [{"subitem_1669370032950": "new_text", "subitem_1669370036614": "new_text"}], "subitem_1669370028622": "2022-10-31"}]}, "relation_version_is_last": True},version_id=1))
+    settings.append(RecordMetadata(id="{06a3949a-44eb-477f-91bd-a2e8fe018e22}",json={"_oai": {"id": "oai:weko3.example.org:00000016.1", "sets": []}, "path": ["1669370353013"], "owner": "1", "recid": "16.1", "title": ["タイトル"], "pubdate": {"attribute_name": "PubDate", "attribute_value": "2022-12-02"}, "_buckets": {"deposit": "bc52eca2-fab8-4de5-b54a-d6991cf27f8f"}, "_deposit": {"id": "16.1", "pid": {"type": "depid", "value": "16.1", "revision_id": 0}, "owner": "1", "owners": [1], "status": "published", "created_by": 1}, "item_title": "タイトル", "author_link": [], "item_type_id": "40004", "publish_date": "2022-12-02", "publish_status": "0", "weko_shared_ids": [], "item_1617186331708": {"attribute_name": "Title", "attribute_value_mlt": [{"subitem_1551255647225": "タイトル", "subitem_1551255648112": "ja"}]}, "item_1617258105262": {"attribute_name": "Resource Type", "attribute_value_mlt": [{"resourceuri": "http://purl.org/coar/resource_type/c_6501", "resourcetype": "journal article"}]}, "item_1669942968526": {"attribute_name": "", "attribute_value_mlt": [{"subitem_1669942715232": "a"}]}, "item_1669942969646": {"attribute_name": "", "attribute_value_mlt": [{"subitem_1669942715232": "a"}]}, "item_1669942970526": {"attribute_name": "", "attribute_value_mlt": [{"subitem_1669940015843": ["a"]}]}, "item_1669942972286": {"attribute_name": "", "attribute_value_mlt": [{"subitem_1669942715232": "a"}]}, "item_1669943008966": {"attribute_name": "", "attribute_value_mlt": [{"subitem_1669942715232": "2022-12-02"}]}, "item_1669943105542": {"attribute_name": "", "attribute_value_mlt": [{"subitem_1669943076184": "a"}]}, "item_1669943517557": {"attribute_name": "", "attribute_value_mlt": [{"subitem_1669941342567": [{"subitem_1669942576264": "a", "subitem_1669942583842": "a", "subitem_1669942586009": ["a"], "subitem_1669942602505": "a"}]}]}, "relation_version_is_last": True},version_id=1))
     db_.session.add_all(settings)
     db_.session.commit()
     return db_
 
-def _create_record(app, item_dict, mint_oaiid=True):
+def _create_record(app, item_dict):
     """Create test record."""
     indexer = RecordIndexer()
     with app.test_request_context():
         record_id = uuid.uuid4()
-        recid = recid_minter(record_id, item_dict)
-        if mint_oaiid:
-            oaiid_minter(record_id, item_dict)
         record = Record.create(item_dict, id_=record_id)
         indexer.index(record)
         return record
