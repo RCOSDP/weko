@@ -1597,7 +1597,7 @@ class JsonLdMapper(JsonMapper):
                     traceback.print_exc()
 
         # Check if "Extra" prepared in itemtype schema form item_map
-        if "Extra" in item_map:
+        if "Extra" in item_map and missing_metadata:
             extra_key = item_map["Extra"]
             prop_type = self._get_property_type(extra_key)
             if prop_type == "array":

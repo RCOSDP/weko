@@ -40,7 +40,7 @@ from invenio_accounts.models import Role
 from invenio_db import db
 from sqlalchemy import func, or_
 from weko_index_tree.models import Index
-from wtforms.validators import ValidationError
+from wtforms.validators import ValidationError, Length
 from wtforms import FileField, RadioField, StringField
 from wtforms.utils import unset_value
 from invenio_i18n.ext import current_i18n
@@ -85,33 +85,12 @@ class CommunityModelView(ModelView):
 
     @expose('/new/', methods=['GET', 'POST'])
     def create_view(self):
-
-        def validate_input_id(id):
-            the_patterns = {
-                "ASCII_LETTER_PATTERN": "[a-zA-Z0-9_-]+$",
-                "FIRST_LETTER_PATTERN1": "^[a-zA-Z_-].*",
-                "FIRST_LETTER_PATTERN2": "^[-]+[0-9]+",
-            }
-            the_result = {
-                "ASCII_LETTER_PATTERN": "Don't use space or special "
-                                        "character except `-` and `_`.",
-                "FIRST_LETTER_PATTERN1": 'The first character cannot '
-                                        'be a number or special character. '
-                                        'It should be an '
-                                        'alphabet character, "-" or "_"',
-                "FIRST_LETTER_PATTERN2": "Cannot set negative number to ID.",
-            }
-
-            m = re.match(the_patterns['FIRST_LETTER_PATTERN1'], id)
-            if m is None:
-                raise ValidationError(the_result['FIRST_LETTER_PATTERN1'])
-            m = re.match(the_patterns['FIRST_LETTER_PATTERN2'], id)
-            if m is not None:
-                raise ValidationError(the_result['FIRST_LETTER_PATTERN2'])
-            m = re.match(the_patterns['ASCII_LETTER_PATTERN'], id)
-            if m is None:
-                raise ValidationError(the_result['ASCII_LETTER_PATTERN'])
-
+        """Create a new model.
+        Returns:
+            The model view.
+        Raises:
+            403: If the user doesn't have permission to create.
+        """
         if self.can_create is False:
             abort(403)
 
@@ -119,31 +98,20 @@ class CommunityModelView(ModelView):
 
         if(request.method == 'POST'):
             try:
-                pageaddFlag = True
                 form_data = request.form.to_dict()
-                model = Community()
-                validate_input_id(form_data['id'])
-                model.id = form_data['id']
-                model.id_role = form_data['owner']
-                model.root_node_id = form_data['index']
-                model.title = form_data['title']
-                model.description = form_data['description']
-                model.page = form_data['page']
-                model.curation_policy = form_data['curation_policy']
-                model.ranking = form_data['ranking']
-                model.fixed_points = form_data['fixed_points']
-                model.content_policy = form_data['content_policy']
-                if form_data['login_menu_enabled'] == 'True':
-                    model.login_menu_enabled = True
-                else:
-                    model.login_menu_enabled = False
-                if form_data.get('group') != "__None":
-                    model.group_id = form_data.get('group')
-                the_result = {
-                    "FILE_PATTERN": "Thumbnail file only 'jpeg', 'jpg', 'png' format.",
-                }
+                
+                # Validate community ID
+                self.validate_community_id(form_data['id'])
+                # Validate title length
+                if len(form_data['title']) > 255:
+                    raise ValidationError("Title must be 255 characters or fewer.")
+
+                thumbnail_path = None
                 fp = request.files.get('thumbnail')
-                if '' != fp.filename:
+                if fp and fp.filename:
+                    validation_error_messages = {
+                        "FILE_PATTERN": "Thumbnail file only 'jpeg', 'jpg', 'png' format.",
+                    }
                     directory = os.path.join(
                         current_app.instance_path,
                         current_app.config['WEKO_THEME_INSTANCE_DATA_DIR'],
@@ -154,108 +122,82 @@ class CommunityModelView(ModelView):
                     ext = os.path.splitext(fp.filename)[1].lower()
                     allowed_extensions = {'.png', '.jpg', '.jpeg'}
                     if ext not in allowed_extensions:
-                        raise ValidationError(the_result['FILE_PATTERN'])
+                        raise ValidationError(validation_error_messages['FILE_PATTERN'])
                     filename = os.path.join(
                         directory,
-                        model.id + '_' + fp.filename)
-                    file_uri = '/data/' + 'c/' + model.id + '_' + fp.filename
+                        form_data['id'] + '_' + fp.filename)
+                    file_uri = '/data/' + 'c/' + form_data['id'] + '_' + fp.filename
                     fp.save(filename)
-                    model.thumbnail_path = file_uri
+                    thumbnail_path = file_uri
 
+                catalog_json_data =None
                 catalog_json = json.loads(form_data['catalog_data'])
                 flg, result_json = delete_empty(catalog_json['metainfo'])
                 if flg:
-                    model.catalog_json = result_json['parentkey']
-                else:
-                    model.catalog_json = None
-                model.id_user = current_user.get_id()
-                model.cnri = None
+                    catalog_json_data = result_json['parentkey']
 
+                # login_menu_enabledをブール値に変換
+                login_menu_enabled = form_data['login_menu_enabled'] == 'True'
+
+                # group_idの設定
+                group_id = None
+                if form_data.get('group') != "__None":
+                    group_id = form_data.get('group')
+
+                # create community
                 comm = Community.create(
-                    community_id=model.id,
-                    role_id=model.id_role,
-                    id_user=model.id_user,
-                    root_node_id=model.root_node_id,
-                    group_id=model.group_id,
-                    title=model.title,
-                    description=model.description,
-                    page=model.page,
-                    curation_policy=model.curation_policy,
-                    ranking=model.ranking,
-                    fixed_points=model.fixed_points,
-                    content_policy=model.content_policy,
-                    login_menu_enabled=model.login_menu_enabled,
-                    thumbnail_path=model.thumbnail_path,
-                    catalog_json=model.catalog_json,
-                    cnri=model.cnri
+                    community_id=form_data['id'],
+                    role_id=form_data['owner'],
+                    id_user=current_user.get_id(),
+                    root_node_id=form_data['index'],
+                    group_id=group_id,
+                    title=form_data['title'],
+                    description=form_data['description'],
+                    page=form_data['page'],
+                    curation_policy=form_data['curation_policy'],
+                    ranking=form_data['ranking'],
+                    fixed_points=form_data['fixed_points'],
+                    content_policy=form_data['content_policy'],
+                    login_menu_enabled=login_menu_enabled,
+                    thumbnail_path=thumbnail_path,
+                    catalog_json=catalog_json_data,
+                    cnri=None
                 )
                 db.session.commit()
 
                 # get CNRI handle
                 if current_app.config.get('WEKO_HANDLE_ALLOW_REGISTER_CNRI'):
                     weko_handle = Handle()
-                    url = request.url.split('/admin/')[0] + '/c/' + str(model.id)
+                    url = request.url.split('/admin/')[0] + '/c/' + str(comm.id)
                     credential = PIDClientCredentials.load_from_JSON(
                         current_app.config.get('WEKO_HANDLE_CREDS_JSON_PATH'))
-                    hdl = credential.get_prefix() + '/c/' + str(model.id)
+                    hdl = credential.get_prefix() + '/c/' + str(comm.id)
                     handle = weko_handle.register_handle(location=url, hdl=hdl)
                     if handle:
-                        model_for_handle = self.get_one(model.id)
+                        model_for_handle = self.get_one(comm.id)
                         model_for_handle.cnri = WEKO_SERVER_CNRI_HOST_LINK + str(handle)
                         db.session.commit()
                     else:
                         current_app.logger.info('Cannot connect Handle server!')
 
-                data = [
-                    {
-                        "is_edit": False,
-                        "page_id": 0,
-                        "repository_id": model.id,
-                        "title": "About",
-                        "url": "/c/" + model.id + "/page/about",
-                        "content": "",
-                        "settings": "",
-                        "multi_lang_data": {"en": "About"},
-                        "is_main_layout": False,
-                    },
-                    {
-                        "is_edit": False,
-                        "page_id": 0,
-                        "repository_id": model.id,
-                        "title": "Editorial board",
-                        "url": "/c/" + model.id + "/page/eb",
-                        "content": "",
-                        "settings": "",
-                        "multi_lang_data": {"en": "Editorial board"},
-                        "is_main_layout": False,
-                    },
-                    {
-                        "is_edit": False,
-                        "page_id": 0,
-                        "repository_id": model.id,
-                        "title": "OA Policy",
-                        "url": "/c/" + model.id + "/page/oapolicy",
-                        "content": "",
-                        "settings": "",
-                        "multi_lang_data": {"en": "OA Policy"},
-                        "is_main_layout": False,
-                    }
-                ]
-                for page in data:
-                    addPageResult = WidgetDesignPageServices.add_or_update_page(page)
-                    if addPageResult['result'] == False:
-                        current_app.logger.error(page['url'] + " page add failed.")
-                        pageaddFlag = False
+                # Add default pages
+                page_addition_result = self._add_default_pages(comm.id)
 
-                if pageaddFlag == False:
-                    return redirect(url_for('.index_view', pageaddFlag=pageaddFlag))
-                else:
-                    return redirect(url_for('.index_view'))
+                if not page_addition_result:
+                    return redirect(url_for('.index_view', pageaddFlag=page_addition_result))
+                return redirect(url_for('.index_view'))
+
+            except ValidationError as e:
+                return jsonify({
+                    "error": "ValidationError",
+                    "message": str(e)}), 400
             except Exception as e:
                 traceback.print_exc()
-                current_app.logger.error(e)
+                current_app.logger.error("Unexpected error: {}".format(e))
                 db.session.rollback()
-                return jsonify({"Unexpected error": str(e)}), 400
+                return jsonify({
+                    "error": "Unexpected error",
+                    "message": str(e)}), 400
 
         else:
             form.login_menu_enabled.data = 'False'
@@ -268,7 +210,6 @@ class CommunityModelView(ModelView):
                 pid=None,
                 record=None,
                 type = 'create',
-
                 return_url=request.args.get('url'),
                 c_id=id,
             )
@@ -300,6 +241,12 @@ class CommunityModelView(ModelView):
         if(request.method == 'POST'):
             form_data = request.form.to_dict()
             try:
+                # Validate community ID
+                self.validate_community_id(form_data['id'])
+                # Validate title length
+                if len(form_data['title']) > 255:
+                    raise ValidationError("Title must be 255 characters or fewer.")
+
                 model.id_role = form_data['owner']
                 model.root_node_id = form_data['index']
                 model.title = form_data['title']
@@ -371,11 +318,17 @@ class CommunityModelView(ModelView):
 
                 db.session.commit()
                 return redirect(url_for('.index_view'))
+            except ValidationError as e:
+                return jsonify({
+                    "error": "ValidationError",
+                    "message": str(e)}), 400
             except Exception as e:
                 traceback.print_exc()
-                current_app.logger.error(e)
+                current_app.logger.error("Unexpected error: {}".format(e))
                 db.session.rollback()
-                return jsonify({"Unexpected error": str(e)}), 400
+                return jsonify({
+                    "error": "Unexpected error",
+                    "message": str(e)}), 400
 
         else:
             # request method GET
@@ -539,12 +492,36 @@ class CommunityModelView(ModelView):
         model.id_user = current_user.get_id()
 
     def _validate_input_id(self, field):
-        the_patterns = {
+        """Validate community ID.
+
+        Args:
+            id (str): Community ID.
+        Returns:
+            str: Validated community ID.
+        Raises:
+            ValidationError: If the community ID is invalid.
+        """
+        try:
+            # 共通のバリデーション関数を呼び出す
+            field.data = self.validate_community_id(field.data)
+        except ValidationError as e:
+            raise e
+
+    def validate_community_id(self, community_id):
+        """Validate community ID.
+        Args:
+            community_id (str): Community ID.
+        Returns:
+            str: Validated community ID.
+        Raises:
+            ValidationError: If the community ID is invalid.
+        """
+        community_id_regex_patterns = {
             "ASCII_LETTER_PATTERN": "[a-zA-Z0-9_-]+$",
             "FIRST_LETTER_PATTERN1": "^[a-zA-Z_-].*",
             "FIRST_LETTER_PATTERN2": "^[-]+[0-9]+",
         }
-        the_result = {
+        validation_error_messages = {
             "ASCII_LETTER_PATTERN": "Don't use space or special "
                                     "character except `-` and `_`.",
             "FIRST_LETTER_PATTERN1": 'The first character cannot '
@@ -554,37 +531,39 @@ class CommunityModelView(ModelView):
             "FIRST_LETTER_PATTERN2": "Cannot set negative number to ID.",
         }
 
-        m = re.match(the_patterns['FIRST_LETTER_PATTERN1'], field.data)
+        # Check if the community ID length is within the limit
+        if len(community_id) > 100:
+            raise ValidationError(validation_error_messages['COMMUNITY_ID_TOO_LONG'])
+
+        # Check if the community ID matches the required pattern
+        m = re.match(community_id_regex_patterns['FIRST_LETTER_PATTERN1'], community_id)
         if m is None:
-            raise ValidationError(the_result['FIRST_LETTER_PATTERN1'])
-        m = re.match(the_patterns['FIRST_LETTER_PATTERN2'], field.data)
+            raise ValidationError(validation_error_messages['FIRST_LETTER_PATTERN1'])
+        m = re.match(community_id_regex_patterns['FIRST_LETTER_PATTERN2'], community_id)
         if m is not None:
-            raise ValidationError(the_result['FIRST_LETTER_PATTERN2'])
-        m = re.match(the_patterns['ASCII_LETTER_PATTERN'], field.data)
+            raise ValidationError(validation_error_messages['FIRST_LETTER_PATTERN2'])
+        m = re.match(community_id_regex_patterns['ASCII_LETTER_PATTERN'], community_id)
         if m is None:
-            raise ValidationError(the_result['ASCII_LETTER_PATTERN'])
-        field.data = field.data.lower()
+            raise ValidationError(validation_error_messages['ASCII_LETTER_PATTERN'])
+
+        return community_id.lower()
 
     form_args = {
         'id': {
             'validators': [_validate_input_id]
         },
+        "title": {
+            "validators": [Length(max=255)]
+        },
         'group': {
             'allow_blank': False,
-            'query_factory': lambda: db.session.query(Role).filter(Role.name.like("%_groups_%")).all(),
-    }
+            'query_factory': lambda: db.session.query(Role).filter(Role.name.like("%_groups_%")).all()
+        }
     }
     form_extra_fields = {
         'cnri': StringField(),
         'thumbnail': FileField(description='ファイルタイプ: JPG ,JPEG, PNG'),
         'login_menu_enabled': RadioField('login_menu_enabled', choices=[('False', 'Disabled'), ('True', 'Enabled')] ),
-    }
-
-    form_widget_args = {
-        'id': {
-            'placeholder': 'Please select ID',
-            'maxlength': 100,
-        }
     }
 
     @property
@@ -676,6 +655,64 @@ class CommunityModelView(ModelView):
                 Index.id.in_(_query)).order_by(Index.id.asc()).all()
 
         return query
+
+    def _add_default_pages(self, community_id):
+        """
+        Add default pages to new community.
+
+        The default pages are:
+        1. About
+        2. Editorial board
+        3. OA Policy
+        Args:
+            community_id (str): Community ID
+        Returns:
+            bool: True if all pages are added successfully, False otherwise.
+        """
+        data = [
+            {
+                "is_edit": False,
+                "page_id": 0,
+                "repository_id": community_id,
+                "title": "About",
+                "url": "/c/" + community_id + "/page/about",
+                "content": "",
+                "settings": "",
+                "multi_lang_data": {"en": "About"},
+                "is_main_layout": False,
+            },
+            {
+                "is_edit": False,
+                "page_id": 0,
+                "repository_id": community_id,
+                "title": "Editorial board",
+                "url": "/c/" + community_id + "/page/eb",
+                "content": "",
+                "settings": "",
+                "multi_lang_data": {"en": "Editorial board"},
+                "is_main_layout": False,
+            },
+            {
+                "is_edit": False,
+                "page_id": 0,
+                "repository_id": community_id,
+                "title": "OA Policy",
+                "url": "/c/" + community_id + "/page/oapolicy",
+                "content": "",
+                "settings": "",
+                "multi_lang_data": {"en": "OA Policy"},
+                "is_main_layout": False,
+            }
+        ]
+
+        page_addition_result = True
+        for page in data:
+            addPageResult = WidgetDesignPageServices.add_or_update_page(page)
+            if not addPageResult.get('result', False):
+                current_app.logger.error(page['url'] + " page add failed.")
+                page_addition_result = False
+
+        return page_addition_result
 
 
 class FeaturedCommunityModelView(ModelView):
