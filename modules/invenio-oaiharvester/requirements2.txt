@@ -202,6 +202,7 @@ pyzmq==17.0.0
 redis==2.10.6
 requests==2.18.4
 requests-oauthlib==1.1.0
+responses
 resync==1.0.9
 s3fs==0.1.6
 s3transfer==0.1.13
