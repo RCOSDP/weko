@@ -143,7 +143,9 @@ def test_depid_item_put_acl_users(client, users, deposit, index, status_code):
     assert res.status_code == status_code
 
 # .tox/c1/bin/pytest --cov=weko_deposit tests/test_rest.py::test_depid_item_put -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
-def test_depid_item_put(client, users,es_records):
+def test_depid_item_put(client, users,es_records, mocker):
+    mock_task = mocker.patch("weko_deposit.tasks.extract_pdf_and_update_file_contents")
+    mock_task.apply_async = MagicMock()
     login_user_via_session(client=client, email=users[2]['email'])
     kwargs = {
         #'pid_value': deposit

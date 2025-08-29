@@ -910,6 +910,7 @@ __all__ = (
     'ItemTypeEditHistory',
     'ItemTypeName',
     'ItemTypeMapping',
+    "ItemTypeJsonldMapping",
     'ItemTypeProperty',
     'ItemMetadata',
     'FileMetadata',
