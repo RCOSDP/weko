@@ -36,7 +36,7 @@ from weko_workflow.models import WorkFlow
 from weko_admin.admin import (
     StyleSettingView,LogAnalysisSettings,ItemExportSettingsView,IdentifierSettingView,
     identifier_adminview,facet_search_adminview,FacetSearchSettingView,SwordAPISettingsView,
-    SwordAPIJsonldSettingsView, JsonldMappingView
+    SwordAPIJsonldSettingsView, JsonldMappingView, ProfileSettingView
 )
 
 from .helpers import login, logout
@@ -597,6 +597,9 @@ def test_FeedbackMailView_index(client,users,mocker):
 def test_LanguageSettingView_index(client,users,mocker):
     login_user_via_session(client,email=users[0]["email"])
     url = url_for("language.index")
+    with client.session_transaction() as sess:
+        print(f"sess:{sess}")
+        print(f"users[0]['obj'].roles:{users[0]['obj'].roles}")
     # get
     mock_render = mocker.patch("weko_admin.admin.LanguageSettingView.render",return_value=make_response())
     result = client.get(url)
@@ -1813,6 +1816,7 @@ class TestsReindexElasticSearchView:
         assert res.status_code == 302
         mocker_render.assert_not_called()
 
+# .tox/c1/bin/pytest --cov=weko_admin tests/test_admin.py::TestsReindexElasticSearchView::test_ReindexElasticSearchView_index_raise -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
     def test_ReindexElasticSearchView_index_raise(self, client,users,admin_settings,mocker):
         login_user_via_session(client,email=users[0]["email"])# sysadmin
         url = url_for("reindex_es.index")
@@ -2887,3 +2891,42 @@ class TestCrisLinkageSettingView:
             with pytest.raises(Exception):
                 client.post(url,data=data)
                 mock_flash.assert_called_with('Failurely Changed Settings.','error')
+
+# .tox/c1/bin/pytest --cov=weko_admin tests/test_admin.py::TestProfileSettingView::test_ProfileSettingView_index -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-admin/.tox/c1/tmp
+class TestProfileSettingView:
+    def test_ProfileSettingView_index(self,client, users, mocker,app):
+        with app.test_client() as client:
+            login_user_via_session(client, email=users[0]["email"])
+            url = url_for("profile_settings.index")
+            app.config.update({
+                "WEKO_USERPROFILES_CUSTOMIZE_ENABLED": True
+            })
+            mock_get = mocker.patch("weko_admin.admin.AdminSettings.get", return_value=None)
+            # GETリクエストのテスト
+            mock_render = mocker.patch("weko_admin.admin.ProfileSettingView.render", return_value=make_response())
+            result = client.get(url)
+            assert result.status_code == 200
+            mock_render.assert_called_with(
+                "weko_admin/admin/profiles_settings.html",
+                data = json.dumps({}), format_options = "[]"
+            )
+            mock_get.assert_called_with("profiles_items_settings", dict_to_object=False)
+
+            # ケース 2: AdminSettings.get がカスタム設定を返す場合
+            mock_get_custom = mocker.patch("weko_admin.admin.AdminSettings.get", return_value={"custom_field": "custom_value"})
+
+            # GETリクエストのテスト
+            result = client.get(url)
+
+            # ステータスコードの確認
+            assert result.status_code == 200
+
+            # render メソッドの呼び出しを確認
+            mock_render.assert_called_with(
+                "weko_admin/admin/profiles_settings.html",
+                data=json.dumps({"custom_field": "custom_value"}),  # カスタム設定が渡されることを確認
+                format_options=json.dumps([]),  # フォーマットオプションの確認
+            )
+
+            # AdminSettings.get が正しく呼び出されたかを確認
+            mock_get_custom.assert_called_with("profiles_items_settings", dict_to_object=False)

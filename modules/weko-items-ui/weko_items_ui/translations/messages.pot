@@ -194,6 +194,10 @@ msgstr ""
 msgid "Header Error"
 msgstr ""
 
+#: weko_items_ui/views.py:924 weko_items_ui/views.py:947
+msgid "Logged-in user cannot be deleted."
+msgstr ""
+
 #: weko_items_ui/views.py:998 weko_items_ui/views.py:1054
 #: weko_items_ui/views.py:1163 weko_items_ui/views.py:1219
 msgid "This Item is being edited."
@@ -554,6 +558,12 @@ msgstr ""
 msgid "Position not provided."
 msgstr ""
 
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:463
+msgid ""
+"The approver email address cannot be the same as the applicant. Please "
+"recheck and input."
+msgstr ""
+
 #: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:502
 msgid "Can not found the email address of approval."
 msgstr ""
@@ -562,7 +572,7 @@ msgstr ""
 msgid ""
 "The specified number has been exceeded. You can only select up to two "
 "fields."
-msgstr ""
+msgstr "You can only select up two fields."
 
 #: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:508
 msgid "The same file name cannot be registered."

@@ -1,0 +1,95 @@
+[
+  {
+    "_oai": { "id": "oai:weko3.example.org:00000196", "sets": [] },
+    "path": ["1679618435874"],
+    "owner": 1,
+    "owners": [1],
+    "recid": "196",
+    "title": ["title"],
+    "pubdate": { "attribute_name": "PubDate", "attribute_value": "2023-04-25" },
+    "_buckets": { "deposit": "4b5c756b-f805-47b7-82f7-1ef4e8b5b540" },
+    "_deposit": {
+      "id": "196",
+      "pid": { "type": "depid", "value": "196", "revision_id": 0 },
+      "owner": "1",
+      "owners": [1],
+      "status": "published",
+      "created_by": 1
+    },
+    "item_title": "テスト タイトル3",
+    "author_link": [],
+    "item_type_id": "1",
+    "publish_date": "2023-04-25",
+    "publish_status": "0",
+    "weko_shared_ids": [],
+    "item_1617186331708": {
+      "attribute_name": "Title",
+      "attribute_value_mlt": [
+        { "subitem_1551255647225": "テスト タイトル3", "subitem_1551255648112": "en" }
+      ]
+    },
+    "relation_version_is_last": true
+  },
+  {
+    "_oai": { "id": "oai:weko3.example.org:00000197", "sets": [] },
+    "path": ["1679618435874"],
+    "owner": 1,
+    "owners": [1],
+    "recid": "197",
+    "title": ["テスト タイトル4"],
+    "pubdate": { "attribute_name": "PubDate", "attribute_value": "2023-04-25" },
+    "_buckets": { "deposit": "4b5c756b-f805-47b7-82f7-1ef4e8b5b540" },
+    "_deposit": {
+      "id": "197",
+      "pid": { "type": "depid", "value": "197", "revision_id": 0 },
+      "owner": 1,
+      "owners": [1],
+      "status": "published",
+      "created_by": 1
+    },
+    "item_title": "テスト タイトル4",
+    "author_link": [],
+    "item_type_id": "1",
+    "publish_date": "2023-04-25",
+    "publish_status": "0",
+    "weko_shared_ids": [100],
+    "item_1617186331708": {
+      "attribute_name": "Title",
+      "attribute_value_mlt": [
+        { "subitem_1551255647225": "テスト タイトル4", "subitem_1551255648112": "en" }
+      ]
+    },
+    "relation_version_is_last": true
+  },
+  {
+    "_oai": { "id": "oai:weko3.example.org:00000198", "sets": [] },
+    "path": ["1679618435874"],
+    "owner": 1,
+    "owners": [1],
+    "recid": "198",
+    "title": ["テスト タイトル5"],
+    "pubdate": { "attribute_name": "PubDate", "attribute_value": "2023-04-25" },
+    "_buckets": { "deposit": "4b5c756b-f805-47b7-82f7-1ef4e8b5b540" },
+    "_deposit": {
+      "id": "198",
+      "pid": { "type": "depid", "value": "198", "revision_id": 0 },
+      "owner": 1,
+      "owners": [1],
+      "status": "published",
+      "created_by": 1
+    },
+    "item_title": "テスト タイトル5",
+    "author_link": [],
+    "item_type_id": "1",
+    "publish_date": "2023-04-25",
+    "publish_status": "0",
+    "weko_shared_ids": [2],
+    "item_1617186331708": {
+      "attribute_name": "Title",
+      "attribute_value_mlt": [
+        { "subitem_1551255647225": "テスト タイトル5", "subitem_1551255648112": "en" }
+      ]
+    },
+    "relation_version_is_last": true
+  }
+]

@@ -801,7 +801,7 @@ WEKO_WORKFLOW_ACTIVITYLOG_XLS_COLUMNS = [
     'title',
     'action_status',
     'activity_id',
-    'shared_user_id',
+    'shared_user_ids',
     'activity_login_user',
     'activity_name',
     'temp_data',

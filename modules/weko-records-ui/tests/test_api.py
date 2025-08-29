@@ -8,8 +8,8 @@ from sqlalchemy.exc import SQLAlchemyError
 from unittest.mock import patch, MagicMock
 
 from invenio_accounts.testutils import login_user_via_session, create_test_user
-from weko_records_ui.api import send_request_mail, create_captcha_image, validate_captcha_answer
-from weko_records_ui.api import send_request_mail, create_captcha_image, get_s3_bucket_list, copy_bucket_to_s3, get_file_place_info, replace_file_bucket
+from weko_records.models import ItemApplication
+from weko_records_ui.api import send_request_mail, create_captcha_image, get_item_provide_list, validate_captcha_answer, get_s3_bucket_list, copy_bucket_to_s3, get_file_place_info, replace_file_bucket
 from weko_records_ui.errors import AuthenticationRequiredError, ContentsNotFoundError, InternalServerError, InvalidCaptchaError, InvalidEmailError, RequiredItemNotExistError
 from weko_redis.redis import RedisConnection
 from weko_user_profiles.models import UserProfile
@@ -28,6 +28,7 @@ def test_send_request_mail(app, make_request_maillist):
 
     redis_connection = RedisConnection()
     datastore = redis_connection.connection(db=app.config['CACHE_REDIS_DB'])
+    datastore.delete(b'test_key')
     datastore.hmset(b'test_key',{b'authorization_token':b'token'})
 
     correct_mail_info = {
@@ -188,7 +189,7 @@ def test_validate_captcha_answer(app):
 
     redis_connection = RedisConnection()
     datastore = redis_connection.connection(db=app.config['CACHE_REDIS_DB'])
-
+    datastore.delete(b'test_key')
     datastore.hmset(b'test_key',{b'calculation_result':b'100'})
 
     # TestCase: missing 'key' in request body
@@ -245,6 +246,24 @@ def test_create_captcha_image(app):
         assert 'key' in response.keys()
         assert 'image' in response.keys()
         assert response.get('ttl') == 600
+
+# def get_item_provide_list(item_id):
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_api.py::test_get_item_provide_list -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+def test_get_item_provide_list(mocker, db):
+    assert get_item_provide_list(None)=={}
+    item_id_1 = uuid.uuid4()
+    item_id_2 = uuid.uuid4()
+    item_application_1 = ItemApplication(id = 1, item_id = item_id_1, item_application = {"workflow":"1", "terms":"term_free", "termsDescription":"利用規約自由入力"})
+
+    with db.session.begin_nested():
+        db.session.add(item_application_1)
+    db.session.commit()
+    assert get_item_provide_list(item_id_1) == {"workflow":"1", "terms":"term_free", "termsDescription":"利用規約自由入力"}
+    assert get_item_provide_list(item_id_2) == {}
+
+    # error
+    mocker.patch("flask_sqlalchemy.BaseQuery.first", side_effect=SQLAlchemyError)
+    assert get_item_provide_list(item_id_1) == {}
 
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_api.py::test_get_s3_bucket_list -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
 def test_get_s3_bucket_list(app, db, users, client):
@@ -654,4 +673,3 @@ def test_replace_file_bucket_S3(app, db, users, client, records):
             },
         )
         assert res.status_code == 200
-

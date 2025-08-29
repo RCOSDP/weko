@@ -956,8 +956,35 @@ msgstr ""
 msgid "Show All versions"
 msgstr ""
 
-msgid "Success Secret URL Generate"
-msgstr "Success: Secret URL Generate is succeed. Sent the URL to your email adress."
-
 msgid "MSG_WEKO_RECORDS_UI_IS_EDITING_TRUE"
 msgstr "Cannot delete because it is being edited."
+
+msgid "Email address"
+msgstr ""
+
+msgid "Print Terms and Conditions"
+msgstr ""
+
+msgid "Could not download file."
+msgstr ""
+
+msgid "To download the files below, you will need to enter your email address and password."
+msgstr ""
+
+msgid "To download the files below, you will need to enter your email address."
+msgstr ""
+
+msgid "If you have not set a password, please apply again."
+msgstr ""
+
+msgid "File Name"
+msgstr ""
+
+msgid "Download is available from {}/{}/{}."
+msgstr "Download is available from {}/{}/{}."
+
+msgid "Download / Preview is available from {}/{}/{}."
+msgstr "Download / Preview is available from {}/{}/{}."
+
+msgid "Email address(reconfirmation)"
+msgstr ""

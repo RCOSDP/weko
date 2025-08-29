@@ -22,6 +22,7 @@ botocore==1.12.209
 cachelib==0.1
 captcha==0.4
 cachetools==4.2.4
+captcha==0.4
 cchardet==2.1.1
 celery==4.4.4
 certifi==2017.11.5

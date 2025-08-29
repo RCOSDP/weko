@@ -18,7 +18,6 @@ import json
 import subprocess
 import tempfile
 import os
-import uuid
 from os.path import join, dirname
 from io import BytesIO
 import uuid

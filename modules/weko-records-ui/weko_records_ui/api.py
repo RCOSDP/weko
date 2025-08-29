@@ -25,6 +25,7 @@ from weko_logging.activity_logger import UserActivityLogger
 from invenio_db import db
 
 from weko_records.api import RequestMailList
+from weko_records.models import ItemApplication
 from weko_records_ui.captcha import get_captcha_info
 from weko_records_ui.errors import (
     AuthenticationRequiredError, ContentsNotFoundError, InternalServerError,
@@ -39,7 +40,6 @@ from invenio_pidstore.resolver import Resolver
 from invenio_records.api import Record
 from invenio_pidrelations.contrib.versioning import PIDVersioning
 from weko_workflow.api import WorkFlow
-from weko_items_ui.utils import get_workflow_by_item_type_id
 from weko_records.api import ItemTypes
 from invenio_files_rest.models import Location
 from weko_search_ui.utils import handle_check_item_is_locked, check_replace_file_import_items, import_items_to_system
@@ -187,6 +187,24 @@ def create_captcha_image():
         'ttl': ttl
     }
     return True, res_json
+
+
+def get_item_provide_list(item_id):
+    if not item_id:
+        return {}
+
+    item_application_info = None
+    try:
+        with db.session.no_autoflush:
+            item_application_info = db.session.query(ItemApplication) \
+                .filter_by(item_id=item_id).first()
+    except Exception:
+        current_app.logger.exception('Item provide list query failed.')
+
+    if item_application_info:
+        return item_application_info.item_application
+    else:
+        return {}
 
 
 def get_s3_bucket_list():
@@ -489,6 +507,7 @@ def get_file_place_info(org_pid, org_bucket_id, file_name):
         raise Exception(_('Cannot update because the corresponding item is being edited.'))
 
     from weko_workflow.api import WorkActivity
+    from weko_items_ui.utils import get_workflow_by_item_type_id
 
     # get workflow
     pid_value = org_pid
