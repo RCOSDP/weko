@@ -66,7 +66,7 @@ def test_init():
     
 
 
-def test_view(app):
+def test_view(app,db_sessionlifetime):
     """Test view."""
     WekoItemsUI(app)
     with app.test_client() as client:

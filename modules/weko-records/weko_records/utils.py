@@ -2416,7 +2416,8 @@ def check_info_in_metadata(str_key_lang, str_key_val, str_lang, metadata):
                             return s.get(str_key_val[-1])
             elif isinstance(save, dict):
                 if (
-                    save.get(str_key_lang[-1])
+                    len(str_key_lang) > 0
+                    and save.get(str_key_lang[-1])
                     and save.get(str_key_val[-1])
                     and save.get(str_key_lang[-1]).strip() == str_lang.strip()
                 ):

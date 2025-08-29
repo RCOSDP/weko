@@ -550,9 +550,13 @@ class WekoBibTexSerializer():
 
         for element in root.findall('.//dc:type', self.__ns):
             type_value = element.text
-
+        
+        date_type_mapping = current_app.config.get('WEKO_SCHEMA_DATE_DATETYPE_MAPPING', 
+                                                   WEKO_SCHEMA_DATE_DATETYPE_MAPPING)
+        default_date_type = current_app.config.get('WEKO_SCHEMA_DATE_DEFAULT_DATETYPE',
+                                                    WEKO_SCHEMA_DATE_DEFAULT_DATETYPE)
         self.base_date_priority[0] = self.base_date_priority[0].replace(
-            '@DATE_TYPE', WEKO_SCHEMA_DATE_DATETYPE_MAPPING.get(type_value, WEKO_SCHEMA_DATE_DEFAULT_DATETYPE))
+            '@DATE_TYPE', date_type_mapping.get(type_value, default_date_type))
 
         if self.date_priority_mapping.get(type_value):
             date_priority_list = self.date_priority_mapping.get(type_value)

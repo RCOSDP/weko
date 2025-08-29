@@ -505,7 +505,7 @@ class HeadlessActivity(WorkActivity):
                 record_uuid = self._model.item_id
                 self._deposit = WekoDeposit.get_record(record_uuid)
 
-                if metadata.get("edit_mode").lower() == "upgrade":
+                if metadata.get("edit_mode", "Keep").lower() == "upgrade":
                     cur_pid = PersistentIdentifier.get_by_object(
                         "recid", object_type="rec", object_uuid=record_uuid
                     )
@@ -751,8 +751,8 @@ class HeadlessActivity(WorkActivity):
         for file in files:
             if isinstance(file, str):
                 if not os.path.isfile(file):
-                    current_app.logger.error(f"file({file}) is not found.")
-                    raise WekoWorkflowException(f"file({file}) is not found.")
+                    current_app.logger.warning(f"file({file}) is not found.")
+                    continue
                 size = os.path.getsize(file)
                 with open(file, "rb") as f:
                     file_info = upload(os.path.basename(file), f, size)

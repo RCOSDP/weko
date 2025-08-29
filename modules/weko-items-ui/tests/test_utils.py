@@ -136,6 +136,7 @@ from weko_items_ui.utils import (
     send_mail_from_notification_info,
     get_notification_targets,
     get_notification_targets_approver,
+    get_duplicate_fields,
 )
 from weko_items_ui.config import WEKO_ITEMS_UI_DEFAULT_MAX_EXPORT_NUM,WEKO_ITEMS_UI_MAX_EXPORT_NUM_PER_ROLE
 from invenio_indexer.api import RecordIndexer
@@ -851,7 +852,7 @@ def test_validate_form_input_data(app, db_itemtype):
 # .tox/c1/bin/pytest --cov=weko_items_ui tests/test_utils.py::test_validate_form_input_data_2 -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
 def test_validate_form_input_data_2(app, db_itemtype_15):
     result = {"is_valid": True, "error": ""}
-    item_id = 1
+    item_id = 15
     data = {
         "item_1617186331708": [
             {"subitem_1551255647225": "test1", "subitem_1551255648112": "ja"},
@@ -8341,12 +8342,24 @@ def test_get_list_file_by_record_id(db_records,users,esindex):
 # .tox/c1/bin/pytest --cov=weko_items_ui tests/test_utils.py::test_write_bibtex_files -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
 def test_write_bibtex_files(app, db_oaischema, db_records, db_itemtype_15):
     app.config.update(OAISERVER_XSL_URL=None)
+    redis_connection = RedisConnection().connection(db=app.config['CACHE_REDIS_DB'], kv = True)
+    redis_connection.delete("cache_jpcoar_mapping")
     item_types_data = {
         "15": {
             "item_type_id": "15",
             "name": "itemtype",
             "root_url": "https://localhost:8443/",
             "jsonschema": "items/jsonschema/15",
+            "keys": [],
+            "labels": [],
+            "recids": [1],
+            "data": {},
+        },
+        "14": {
+            "item_type_id": "15",
+            "name": "デフォルトアイテムタイプ（シンプル）(14)",
+            "root_url": "https://localhost:8443/",
+            "jsonschema": "items/jsonschema/14",
             "keys": [],
             "labels": [],
             "recids": [1],
@@ -8365,6 +8378,14 @@ def test_write_bibtex_files(app, db_oaischema, db_records, db_itemtype_15):
             with patch('weko_schema_ui.serializers.WekoBibTexSerializer.serialize', return_value='test_data'):
                 write_bibtex_files(item_types_data, export_path)
                 assert os.path.exists("{}/itemtype.bib".format(export_path)) == True
+
+    with patch("weko_items_ui.utils.make_bibtex_data", return_value="test_value"):
+        export_path = "/tmp/weko_export_agvb5jc9/20220827140620"
+        write_bibtex_files(item_types_data, export_path)
+        file_path15 = f"{export_path}/デフォルトアイテムタイプ（フル）(15).bib"
+        file_path14 = f"{export_path}/デフォルトアイテムタイプ（シンプル）(14).bib"
+        assert os.path.isfile(file_path15)
+        assert os.path.isfile(file_path14)
 
 
 # def write_files(item_types_data, export_path, list_item_role):
@@ -8856,7 +8877,7 @@ def test_is_need_to_show_agreement_page(db_itemtype,users,id,result):
 
 # def update_index_tree_for_record(pid_value, index_tree_id):
 # .tox/c1/bin/pytest --cov=weko_items_ui tests/test_utils.py::test_update_index_tree_for_record -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
-def test_update_index_tree_for_record(app, db_itemtype, db_records, users, esindex):
+def test_update_index_tree_for_record(app, db_itemtype, db_records, users, esindex,mocker):
     depid, recid, parent, doi, record, item = db_records[0]
     record['$schema'] = "/items/jsonschema/1"
     redis_connection = RedisConnection()
@@ -8864,6 +8885,7 @@ def test_update_index_tree_for_record(app, db_itemtype, db_records, users, esind
     datastore.put(
         app.config['WEKO_DEPOSIT_ITEMS_CACHE_PREFIX'].format(pid_value=recid.pid_value),
         (json.dumps(record)).encode('utf-8'))
+    mocker.patch("weko_deposit.tasks.extract_pdf_and_update_file_contents.apply_async")
     with patch("weko_deposit.api.WekoIndexer.upload_metadata", return_value=True):
         res = WekoRecord.get_record(recid.object_uuid)
         assert res["path"] == ['1']
@@ -9202,7 +9224,7 @@ def test_get_options_list(app,db_itemtype):
 # .tox/c1/bin/pytest --cov=weko_items_ui tests/test_utils.py::test_get_options_and_order_list -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
 def test_get_options_and_order_list(db_itemtype):
     item_type = db_itemtype['item_type']
-    ret = ({'pubdate': {'title': 'PubDate', 'option': {'crtf': False, 'hidden': False, 'multiple': False, 'required': True, 'showlist': False}, 'input_type': 'datetime', 'title_i18n': {'en': 'PubDate', 'ja': '公開日'}, 'input_value': ''}, 'item_1617186331708': {'title': 'Title', 'option': {'crtf': True, 'hidden': False, 'oneline': False, 'multiple': True, 'required': True, 'showlist': True}, 'input_type': 'cus_67', 'title_i18n': {'en': 'Title', 'ja': 'タイトル'}, 'input_value': '', 'input_maxItems': '9999', 'input_minItems': '1'}, 'item_1617186385884': {'title': 'Alternative Title', 'option': {'crtf': False, 'hidden': False, 'oneline': False, 'multiple': True, 'required': False, 'showlist': False}, 'input_type': 'cus_69', 'title_i18n': {'en': 'Alternative Title', 'ja': 'その他のタイトル'}, 'input_value': '', 'input_maxItems': '9999', 'input_minItems': '1'}, 'item_1617186419668': {'title': 'Creator', 'option': {'crtf': True, 'hidden': False, 'oneline': False, 'multiple': True, 'required': False, 'showlist': True}, 'input_type': 'cus_60', 'title_i18n': {'en': 'Creator', 'ja': '作成者'}, 'input_value': '', 'input_maxItems': '9999', 'input_minItems': '1'}, 'item_1617186476635': {'title': 'Access Rights', 'option': {'crtf': False, 'hidden': False, 'oneline': False, 'multiple': False, 'required': False, 'showlist': False}, 'input_type': 'cus_4', 'title_i18n': {'en': 'Access Rights', 'ja': 'アクセス権'}, 'input_value': '', 'input_maxItems': '9999', 'input_minItems': '1'}, 'item_1617186499011': {'title': 'Rights', 'option': {'crtf': False, 'hidden': False, 'oneline': False, 'multiple': True, 'required': False, 'showlist': False}, 'input_type': 'cus_14', 'title_i18n': {'en': 'Rights', 'ja': '権利情報'}, 'input_value': '', 'input_maxItems': '9999', 'input_minItems': '1'}, 'item_1617186609386': {'title': 'Subject', 'option': {'crtf': False, 'hidden': False, 'oneline': False, 'multiple': True, 'required': False, 'showlist': False}, 'input_type': 'cus_6', 'title_i18n': {'en': 'Subject', 'ja': '主題'}, 'input_value': '', 'input_maxItems': '9999', 'input_minItems': '1'}, 'item_1617186626617': {'title': 'Description', 'option': {'crtf': False, 'hidden': False, 'oneline': False, 'multiple': True, 'required': False, 'showlist': False}, 'input_type': 'cus_17', 'title_i18n': {'en': 'Description', 'ja': '内容記述'}, 'input_value': '', 'input_maxItems': '9999', 'input_minItems': '1'}, 'item_1617186643794': {'title': 'Publisher', 'option': {'crtf': False, 'hidden': False, 'oneline': False, 'multiple': True, 'required': False, 'showlist': False}, 'input_type': 'cus_5', 'title_i18n': {'en': 'Publisher', 'ja': '出版者'}, 'input_value': '', 'input_maxItems': '9999', 'input_minItems': '1'}, 'item_1617186660861': {'title': 'Date', 'option': {'crtf': False, 'hidden': False, 'oneline': False, 'multiple': True, 'required': False, 'showlist': False}, 'input_type': 'cus_11', 'title_i18n': {'en': 'Date', 'ja': '日付'}, 'input_value': '', 'input_maxItems': '9999', 'input_minItems': '1'}, 'item_1617186702042': {'title': 'Language', 'option': {'crtf': False, 'hidden': False, 'oneline': False, 'multiple': True, 'required': False, 'showlist': False}, 'input_type': 'cus_71', 'title_i18n': {'en': 'Language', 'ja': '言語'}, 'input_value': '', 'input_maxItems': '9999', 'input_minItems': '1'}, 'item_1617186783814': {'title': 'Identifier', 'option': {'crtf': False, 'hidden': False, 'oneline': False, 'multiple': True, 'required': False, 'showlist': False}, 'input_type': 'cus_176', 'title_i18n': {'en': 'Identifier', 'ja': '識別子'}, 'input_value': '', 'input_maxItems': '9999', 'input_minItems': '1'}, 'item_1617186819068': {'title': 'Identifier Registration', 'option': {'crtf': False, 'hidden': False, 'oneline': False, 'multiple': False, 'required': False, 'showlist': False}, 'input_type': 'cus_16', 'title_i18n': {'en': 'Identifier Registration', 'ja': 'ID登録'}, 'input_value': '', 'input_maxItems': '9999', 'input_minItems': '1'}, 'item_1617186859717': {'title': 'Temporal', 'option': {'crtf': False, 'hidden': False, 'oneline': False, 'multiple': True, 'required': False, 'showlist': False}, 'input_type': 'cus_18', 'title_i18n': {'en': 'Temporal', 'ja': '時間的範囲'}, 'input_value': '', 'input_maxItems': '9999', 'input_minItems': '1'}, 'item_1617186882738': {'title': 'Geo Location', 'option': {'crtf': False, 'hidden': False, 'oneline': False, 'multiple': True, 'required': False, 'showlist': False}, 'input_type': 'cus_19', 'title_i18n': {'en': 'Geo Location', 'ja': '位置情報'}, 'input_value': '', 'input_maxItems': '9999', 'input_minItems': '1'}, 'item_1617186901218': {'title': 'Funding Reference', 'option': {'crtf': False, 'hidden': False, 'oneline': False, 'multiple': True, 'required': False, 'showlist': False}, 'input_type': 'cus_21', 'title_i18n': {'en': 'Funding Reference', 'ja': '助成情報'}, 'input_value': '', 'input_maxItems': '9999', 'input_minItems': '1'}, 'item_1617186920753': {'title': 'Source Identifier', 'option': {'crtf': False, 'hidden': False, 'oneline': False, 'multiple': True, 'required': False, 'showlist': False}, 'input_type': 'cus_10', 'title_i18n': {'en': 'Source Identifier', 'ja': '収録物識別子'}, 'input_value': '', 'input_maxItems': '9999', 'input_minItems': '1'}, 'item_1617186941041': {'title': 'Source Title', 'option': {'crtf': False, 'hidden': False, 'oneline': False, 'multiple': True, 'required': False, 'showlist': True}, 'input_type': 'cus_13', 'title_i18n': {'en': 'Source Title', 'ja': '収録物名'}, 'input_value': '', 'input_maxItems': '9999', 'input_minItems': '1'}, 'item_1617186959569': {'title': 'Volume Number', 'option': {'crtf': False, 'hidden': False, 'oneline': False, 'multiple': False, 'required': False, 'showlist': True}, 'input_type': 'cus_88', 'title_i18n': {'en': 'Volume Number', 'ja': '巻'}, 'input_value': '', 'input_maxItems': '9999', 'input_minItems': '1'}, 'item_1617186981471': {'title': 'Issue Number', 'option': {'crtf': False, 'hidden': False, 'oneline': False, 'multiple': False, 'required': False, 'showlist': True}, 'input_type': 'cus_87', 'title_i18n': {'en': 'Issue Number', 'ja': '号'}, 'input_value': '', 'input_maxItems': '9999', 'input_minItems': '1'}, 'item_1617186994930': {'title': 'Number of Pages', 'option': {'crtf': False, 'hidden': False, 'oneline': False, 'multiple': False, 'required': False, 'showlist': True}, 'input_type': 'cus_85', 'title_i18n': {'en': 'Number of Pages', 'ja': 'ページ数'}, 'input_value': '', 'input_maxItems': '9999', 'input_minItems': '1'}, 'item_1617187024783': {'title': 'Page Start', 'option': {'crtf': False, 'hidden': False, 'oneline': False, 'multiple': False, 'required': False, 'showlist': True}, 'input_type': 'cus_84', 'title_i18n': {'en': 'Page Start', 'ja': '開始ページ'}, 'input_value': '', 'input_maxItems': '9999', 'input_minItems': '1'}, 'item_1617187045071': {'title': 'Page End', 'option': {'crtf': False, 'hidden': False, 'oneline': False, 'multiple': False, 'required': False, 'showlist': True}, 'input_type': 'cus_83', 'title_i18n': {'en': 'Page End', 'ja': '終了ページ'}, 'input_value': '', 'input_maxItems': '9999', 'input_minItems': '1'}, 'item_1617187056579': {'title': 'Bibliographic Information', 'option': {'crtf': False, 'hidden': False, 'oneline': False, 'multiple': False, 'required': False, 'showlist': True}, 'input_type': 'cus_102', 'title_i18n': {'en': 'Bibliographic Information', 'ja': '書誌情報'}, 'input_value': '', 'input_maxItems': '9999', 'input_minItems': '1'}, 'item_1617187087799': {'title': 'Dissertation Number', 'option': {'crtf': False, 'hidden': False, 'oneline': False, 'multiple': False, 'required': False, 'showlist': True}, 'input_type': 'cus_82', 'title_i18n': {'en': 'Dissertation Number', 'ja': '学位授与番号'}, 'input_value': '', 'input_maxItems': '9999', 'input_minItems': '1'}, 'item_1617187112279': {'title': 'Degree Name', 'option': {'crtf': False, 'hidden': False, 'oneline': False, 'multiple': True, 'required': False, 'showlist': True}, 'input_type': 'cus_80', 'title_i18n': {'en': 'Degree Name', 'ja': '学位名'}, 'input_value': '', 'input_maxItems': '9999', 'input_minItems': '1'}, 'item_1617187136212': {'title': 'Date Granted', 'option': {'crtf': False, 'hidden': False, 'oneline': False, 'multiple': False, 'required': False, 'showlist': True}, 'input_type': 'cus_79', 'title_i18n': {'en': 'Date Granted', 'ja': '学位授与年月日'}, 'input_value': '', 'input_maxItems': '9999', 'input_minItems': '1'}, 'item_1617187187528': {'title': 'Conference', 'option': {'crtf': True, 'hidden': False, 'oneline': False, 'multiple': True, 'required': False, 'showlist': True}, 'input_type': 'cus_75', 'title_i18n': {'en': 'Conference', 'ja': '会議記述'}, 'input_value': '', 'input_maxItems': '9999', 'input_minItems': '1'}, 'item_1617258105262': {'title': 'Resource Type', 'option': {'crtf': False, 'hidden': False, 'oneline': False, 'multiple': False, 'required': True, 'showlist': False}, 'input_type': 'cus_8', 'title_i18n': {'en': 'Resource Type', 'ja': '資源タイプ'}, 'input_value': '', 'input_maxItems': '9999', 'input_minItems': '1'}, 'item_1617265215918': {'title': 'Version Type', 'option': {'crtf': False, 'hidden': False, 'oneline': False, 'multiple': False, 'required': False, 'showlist': False}, 'input_type': 'cus_9', 'title_i18n': {'en': 'Version Type', 'ja': '出版タイプ'}, 'input_value': '', 'input_maxItems': '9999', 'input_minItems': '1'}, 'item_1617349709064': {'title': 'Contributor', 'option': {'crtf': False, 'hidden': False, 'oneline': False, 'multiple': True, 'required': False, 'showlist': False}, 'input_type': 'cus_62', 'title_i18n': {'en': 'Contributor', 'ja': '寄与者'}, 'input_value': '', 'input_maxItems': '9999', 'input_minItems': '1'}, 'item_1617349808926': {'title': 'Version', 'option': {'crtf': False, 'hidden': False, 'oneline': False, 'multiple': False, 'required': False, 'showlist': False}, 'input_type': 'cus_28', 'title_i18n': {'en': 'Version', 'ja': 'バージョン情報'}, 'input_value': '', 'input_maxItems': '9999', 'input_minItems': '1'}, 'item_1617351524846': {'title': 'APC', 'option': {'crtf': False, 'hidden': False, 'oneline': False, 'multiple': False, 'required': False, 'showlist': False}, 'input_type': 'cus_27', 'title_i18n': {'en': 'APC', 'ja': 'APC'}, 'input_value': '', 'input_maxItems': '9999', 'input_minItems': '1'}, 'item_1617353299429': {'title': 'Relation', 'option': {'crtf': False, 'hidden': False, 'oneline': False, 'multiple': True, 'required': False, 'showlist': False}, 'input_type': 'cus_12', 'title_i18n': {'en': 'Relation', 'ja': '関連情報'}, 'input_value': '', 'input_maxItems': '9999', 'input_minItems': '1'}, 'item_1617605131499': {'title': 'File', 'option': {'crtf': False, 'hidden': False, 'oneline': False, 'multiple': True, 'required': False, 'showlist': True}, 'input_type': 'cus_65', 'title_i18n': {'en': 'File', 'ja': 'ファイル情報'}, 'input_value': '', 'input_maxItems': '9999', 'input_minItems': '1'}, 'item_1617610673286': {'title': 'Rights Holder', 'option': {'crtf': False, 'hidden': False, 'oneline': False, 'multiple': True, 'required': False, 'showlist': False}, 'input_type': 'cus_3', 'title_i18n': {'en': 'Rights Holder', 'ja': '権利者情報'}, 'input_value': '', 'input_maxItems': '9999', 'input_minItems': '1'}, 'item_1617620223087': {'title': 'Heading', 'option': {'crtf': False, 'hidden': False, 'oneline': False, 'multiple': True, 'required': False, 'showlist': False}, 'input_type': 'cus_119', 'title_i18n': {'en': 'Heading', 'ja': '見出し'}, 'input_value': '', 'input_maxItems': '9999', 'input_minItems': '1'}, 'item_1617944105607': {'title': 'Degree Grantor', 'option': {'crtf': False, 'hidden': False, 'oneline': False, 'multiple': True, 'required': False, 'showlist': True}, 'input_type': 'cus_78', 'title_i18n': {'en': 'Degree Grantor', 'ja': '学位授与機関'}, 'input_value': '', 'input_maxItems': '9999', 'input_minItems': '1'}, 'item_1662046377046': {'title': 'サムネイル', 'option': {'crtf': False, 'hidden': False, 'oneline': False, 'multiple': True, 'required': False, 'showlist': True}, 'input_type': 'cus_1037', 'title_i18n': {'en': 'thumbnail', 'ja': 'サムネイル'}, 'input_value': '', 'input_maxItems': '9999', 'input_minItems': '1'}}, {'pubdate': {'lom_mapping': '', 'lido_mapping': '', 'spase_mapping': '', 'jpcoar_mapping': '', 'junii2_mapping': '', 'oai_dc_mapping': '', 'display_lang_type': '', 'jpcoar_v1_mapping': ''}, 'system_file': {'lom_mapping': '', 'lido_mapping': '', 'spase_mapping': '', 'jpcoar_mapping': {'system_file': {'URI': {'@value': 'subitem_systemfile_filename_uri', '@attributes': {'label': 'subitem_systemfile_filename_label', 'objectType': 'subitem_systemfile_filename_type'}}, 'date': {'@value': 'subitem_systemfile_datetime_date', '@attributes': {'dateType': 'subitem_systemfile_datetime_type'}}, 'extent': {'@value': 'subitem_systemfile_size'}, 'version': {'@value': 'subitem_systemfile_version'}, 'mimeType': {'@value': 'subitem_systemfile_mimetype'}}}, 'junii2_mapping': '', 'oai_dc_mapping': '', 'display_lang_type': '', 'jpcoar_v1_mapping': {'system_file': {'URI': {'@value': 'subitem_systemfile_filename_uri', '@attributes': {'label': 'subitem_systemfile_filename_label', 'objectType': 'subitem_systemfile_filename_type'}}, 'date': {'@value': 'subitem_systemfile_datetime_date', '@attributes': {'dateType': 'subitem_systemfile_datetime_type'}}, 'extent': {'@value': 'subitem_systemfile_size'}, 'version': {'@value': 'subitem_systemfile_version'}, 'mimeType': {'@value': 'subitem_systemfile_mimetype'}}}}, 'item_1617186331708': {'lom_mapping': '', 'lido_mapping': '', 'spase_mapping': '', 'jpcoar_mapping': {'title': {'@value': 'subitem_1551255647225', '@attributes': {'xml:lang': 'subitem_1551255648112'}}}, 'junii2_mapping': '', 'oai_dc_mapping': {'title': {'@value': 'subitem_1551255647225'}}, 'display_lang_type': '', 'jpcoar_v1_mapping': {'title': {'@value': 'subitem_1551255647225', '@attributes': {'xml:lang': 'subitem_1551255648112'}}}}, 'item_1617186385884': {'lom_mapping': '', 'lido_mapping': '', 'spase_mapping': '', 'jpcoar_mapping': {'alternative': {'@value': 'subitem_1551255720400', '@attributes': {'xml:lang': 'subitem_1551255721061'}}}, 'junii2_mapping': '', 'oai_dc_mapping': {'title': {'@value': 'subitem_1551255720400'}}, 'display_lang_type': '', 'jpcoar_v1_mapping': {'alternative': {'@value': 'subitem_1551255720400', '@attributes': {'xml:lang': 'subitem_1551255721061'}}}}, 'item_1617186419668': {'lom_mapping': '', 'lido_mapping': '', 'spase_mapping': '', 'jpcoar_mapping': {'creator': {'givenName': {'@value': 'givenNames.givenName', '@attributes': {'xml:lang': 'givenNames.givenNameLang'}}, 'familyName': {'@value': 'familyNames.familyName', '@attributes': {'xml:lang': 'familyNames.familyNameLang'}}, 'affiliation': {'nameIdentifier': {'@value': 'creatorAffiliations.affiliationNameIdentifiers.affiliationNameIdentifier', '@attributes': {'nameIdentifierURI': 'creatorAffiliations.affiliationNameIdentifiers.affiliationNameIdentifierURI', 'nameIdentifierScheme': 'creatorAffiliations.affiliationNameIdentifiers.affiliationNameIdentifierScheme'}}, 'affiliationName': {'@value': 'creatorAffiliations.affiliationNames.affiliationName', '@attributes': {'xml:lang': 'creatorAffiliations.affiliationNames.affiliationNameLang'}}}, 'creatorName': {'@value': 'creatorNames.creatorName', '@attributes': {'xml:lang': 'creatorNames.creatorNameLang'}}, 'nameIdentifier': {'@value': 'nameIdentifiers.nameIdentifier', '@attributes': {'nameIdentifierURI': 'nameIdentifiers.nameIdentifierURI', 'nameIdentifierScheme': 'nameIdentifiers.nameIdentifierScheme'}}, 'creatorAlternative': {'@value': 'creatorAlternatives.creatorAlternative', '@attributes': {'xml:lang': 'creatorAlternatives.creatorAlternativeLang'}}}}, 'junii2_mapping': '', 'oai_dc_mapping': {'creator': {'@value': 'creatorNames.creatorName,nameIdentifiers.nameIdentifier'}}, 'display_lang_type': '', 'jpcoar_v1_mapping': {'creator': {'givenName': {'@value': 'givenNames.givenName', '@attributes': {'xml:lang': 'givenNames.givenNameLang'}}, 'familyName': {'@value': 'familyNames.familyName', '@attributes': {'xml:lang': 'familyNames.familyNameLang'}}, 'affiliation': {'nameIdentifier': {'@value': 'creatorAffiliations.affiliationNameIdentifiers.affiliationNameIdentifier', '@attributes': {'nameIdentifierURI': 'creatorAffiliations.affiliationNameIdentifiers.affiliationNameIdentifierURI', 'nameIdentifierScheme': 'creatorAffiliations.affiliationNameIdentifiers.affiliationNameIdentifierScheme'}}, 'affiliationName': {'@value': 'creatorAffiliations.affiliationNames.affiliationName', '@attributes': {'xml:lang': 'creatorAffiliations.affiliationNames.affiliationNameLang'}}}, 'creatorName': {'@value': 'creatorNames.creatorName', '@attributes': {'xml:lang': 'creatorNames.creatorNameLang'}}, 'nameIdentifier': {'@value': 'nameIdentifiers.nameIdentifier', '@attributes': {'nameIdentifierURI': 'nameIdentifiers.nameIdentifierURI', 'nameIdentifierScheme': 'nameIdentifiers.nameIdentifierScheme'}}, 'creatorAlternative': {'@value': 'creatorAlternatives.creatorAlternative', '@attributes': {'xml:lang': 'creatorAlternatives.creatorAlternativeLang'}}}}}, 'item_1617186476635': {'lom_mapping': '', 'lido_mapping': '', 'spase_mapping': '', 'jpcoar_mapping': {'accessRights': {'@value': 'subitem_1522299639480', '@attributes': {'rdf:resource': 'subitem_1600958577026'}}}, 'junii2_mapping': '', 'oai_dc_mapping': {'rights': {'@value': 'subitem_1522299639480'}}, 'display_lang_type': '', 'jpcoar_v1_mapping': {'accessRights': {'@value': 'subitem_1522299639480', '@attributes': {'rdf:resource': 'subitem_1600958577026'}}}}, 'item_1617186499011': {'lom_mapping': '', 'lido_mapping': '', 'spase_mapping': '', 'jpcoar_mapping': {'rights': {'@value': 'subitem_1522651041219', '@attributes': {'xml:lang': 'subitem_1522650717957', 'rdf:resource': 'subitem_1522650727486'}}}, 'junii2_mapping': '', 'oai_dc_mapping': {'rights': {'@value': 'subitem_1522651041219'}}, 'display_lang_type': '', 'jpcoar_v1_mapping': {'rights': {'@value': 'subitem_1522651041219', '@attributes': {'xml:lang': 'subitem_1522650717957', 'rdf:resource': 'subitem_1522650727486'}}}}, 'item_1617186609386': {'lom_mapping': '', 'lido_mapping': '', 'spase_mapping': '', 'jpcoar_mapping': {'subject': {'@value': 'subitem_1523261968819', '@attributes': {'xml:lang': 'subitem_1522299896455', 'subjectURI': 'subitem_1522300048512', 'subjectScheme': 'subitem_1522300014469'}}}, 'junii2_mapping': '', 'oai_dc_mapping': {'subject': {'@value': 'subitem_1523261968819'}}, 'display_lang_type': '', 'jpcoar_v1_mapping': {'subject': {'@value': 'subitem_1523261968819', '@attributes': {'xml:lang': 'subitem_1522299896455', 'subjectURI': 'subitem_1522300048512', 'subjectScheme': 'subitem_1522300014469'}}}}, 'item_1617186626617': {'lom_mapping': '', 'lido_mapping': '', 'spase_mapping': '', 'jpcoar_mapping': {'description': {'@value': 'subitem_description', '@attributes': {'xml:lang': 'subitem_description_language', 'descriptionType': 'subitem_description_type'}}}, 'junii2_mapping': '', 'oai_dc_mapping': {'description': {'@value': 'subitem_description'}}, 'display_lang_type': '', 'jpcoar_v1_mapping': {'description': {'@value': 'subitem_description', '@attributes': {'xml:lang': 'subitem_description_language', 'descriptionType': 'subitem_description_type'}}}}, 'item_1617186643794': {'lom_mapping': '', 'lido_mapping': '', 'spase_mapping': '', 'jpcoar_mapping': {'publisher': {'@value': 'subitem_1522300316516', '@attributes': {'xml:lang': 'subitem_1522300295150'}}}, 'junii2_mapping': '', 'oai_dc_mapping': {'publisher': {'@value': 'subitem_1522300316516'}}, 'display_lang_type': '', 'jpcoar_v1_mapping': {'publisher': {'@value': 'subitem_1522300316516', '@attributes': {'xml:lang': 'subitem_1522300295150'}}}}, 'item_1617186660861': {'lom_mapping': '', 'lido_mapping': '', 'spase_mapping': '', 'jpcoar_mapping': {'date': {'@value': 'subitem_1522300722591', '@attributes': {'dateType': 'subitem_1522300695726'}}}, 'junii2_mapping': '', 'oai_dc_mapping': {'date': {'@value': 'subitem_1522300722591'}}, 'display_lang_type': '', 'jpcoar_v1_mapping': {'date': {'@value': 'subitem_1522300722591', '@attributes': {'dateType': 'subitem_1522300695726'}}}}, 'item_1617186702042': {'lom_mapping': '', 'lido_mapping': '', 'spase_mapping': '', 'jpcoar_mapping': {'language': {'@value': 'subitem_1551255818386'}}, 'junii2_mapping': '', 'oai_dc_mapping': {'language': {'@value': 'subitem_1551255818386'}}, 'display_lang_type': '', 'jpcoar_v1_mapping': {'language': {'@value': 'subitem_1551255818386'}}}, 'item_1617186783814': {'lom_mapping': '', 'lido_mapping': '', 'spase_mapping': '', 'jpcoar_mapping': {'identifier': {'@value': 'subitem_identifier_uri', '@attributes': {'identifierType': 'subitem_identifier_type'}}}, 'junii2_mapping': '', 'oai_dc_mapping': {'identifier': {'@value': 'subitem_identifier_uri'}}, 'display_lang_type': '', 'jpcoar_v1_mapping': {'identifier': {'@value': 'subitem_identifier_uri', '@attributes': {'identifierType': 'subitem_identifier_type'}}}}, 'item_1617186819068': {'lom_mapping': '', 'lido_mapping': '', 'spase_mapping': '', 'jpcoar_mapping': {'identifierRegistration': {'@value': 'subitem_identifier_reg_text', '@attributes': {'identifierType': 'subitem_identifier_reg_type'}}}, 'junii2_mapping': '', 'oai_dc_mapping': '', 'display_lang_type': '', 'jpcoar_v1_mapping': {'identifierRegistration': {'@value': 'subitem_identifier_reg_text', '@attributes': {'identifierType': 'subitem_identifier_reg_type'}}}}, 'item_1617186859717': {'lom_mapping': '', 'lido_mapping': '', 'spase_mapping': '', 'jpcoar_mapping': {'temporal': {'@value': 'subitem_1522658031721', '@attributes': {'xml:lang': 'subitem_1522658018441'}}}, 'junii2_mapping': '', 'oai_dc_mapping': {'coverage': {'@value': 'subitem_1522658031721'}}, 'display_lang_type': '', 'jpcoar_v1_mapping': {'temporal': {'@value': 'subitem_1522658031721', '@attributes': {'xml:lang': 'subitem_1522658018441'}}}}, 'item_1617186882738': {'lom_mapping': '', 'lido_mapping': '', 'spase_mapping': '', 'jpcoar_mapping': {'geoLocation': {'geoLocationBox': {'eastBoundLongitude': {'@value': 'subitem_geolocation_box.subitem_east_longitude'}, 'northBoundLatitude': {'@value': 'subitem_geolocation_box.subitem_north_latitude'}, 'southBoundLatitude': {'@value': 'subitem_geolocation_box.subitem_south_latitude'}, 'westBoundLongitude': {'@value': 'subitem_geolocation_box.subitem_west_longitude'}}, 'geoLocationPlace': {'@value': 'subitem_geolocation_place.subitem_geolocation_place_text'}, 'geoLocationPoint': {'pointLatitude': {'@value': 'subitem_geolocation_point.subitem_point_latitude'}, 'pointLongitude': {'@value': 'subitem_geolocation_point.subitem_point_longitude'}}}}, 'junii2_mapping': '', 'oai_dc_mapping': {'coverage': {'@value': 'subitem_geolocation_place.subitem_geolocation_place_text'}}, 'display_lang_type': '', 'jpcoar_v1_mapping': {'geoLocation': {'geoLocationBox': {'eastBoundLongitude': {'@value': 'subitem_geolocation_box.subitem_east_longitude'}, 'northBoundLatitude': {'@value': 'subitem_geolocation_box.subitem_north_latitude'}, 'southBoundLatitude': {'@value': 'subitem_geolocation_box.subitem_south_latitude'}, 'westBoundLongitude': {'@value': 'subitem_geolocation_box.subitem_west_longitude'}}, 'geoLocationPlace': {'@value': 'subitem_geolocation_place.subitem_geolocation_place_text'}, 'geoLocationPoint': {'pointLatitude': {'@value': 'subitem_geolocation_point.subitem_point_latitude'}, 'pointLongitude': {'@value': 'subitem_geolocation_point.subitem_point_longitude'}}}}}, 'item_1617186901218': {'lom_mapping': '', 'lido_mapping': '', 'spase_mapping': '', 'jpcoar_mapping': {'fundingReference': {'awardTitle': {'@value': 'subitem_1522399651758.subitem_1522721929892', '@attributes': {'xml:lang': 'subitem_1522399651758.subitem_1522721910626'}}, 'funderName': {'@value': 'subitem_1522399412622.subitem_1522737543681', '@attributes': {'xml:lang': 'subitem_1522399412622.subitem_1522399416691'}}, 'awardNumber': {'@value': 'subitem_1522399571623.subitem_1522399628911', '@attributes': {'awardURI': 'subitem_1522399571623.subitem_1522399585738'}}, 'funderIdentifier': {'@value': 'subitem_1522399143519.subitem_1522399333375', '@attributes': {'funderIdentifierType': 'subitem_1522399143519.subitem_1522399281603'}}}}, 'junii2_mapping': '', 'oai_dc_mapping': '', 'display_lang_type': '', 'jpcoar_v1_mapping': {'fundingReference': {'awardTitle': {'@value': 'subitem_1522399651758.subitem_1522721929892', '@attributes': {'xml:lang': 'subitem_1522399651758.subitem_1522721910626'}}, 'funderName': {'@value': 'subitem_1522399412622.subitem_1522737543681', '@attributes': {'xml:lang': 'subitem_1522399412622.subitem_1522399416691'}}, 'awardNumber': {'@value': 'subitem_1522399571623.subitem_1522399628911', '@attributes': {'awardURI': 'subitem_1522399571623.subitem_1522399585738'}}, 'funderIdentifier': {'@value': 'subitem_1522399143519.subitem_1522399333375', '@attributes': {'funderIdentifierType': 'subitem_1522399143519.subitem_1522399281603'}}}}}, 'item_1617186920753': {'lom_mapping': '', 'lido_mapping': '', 'spase_mapping': '', 'jpcoar_mapping': {'sourceIdentifier': {'@value': 'subitem_1522646572813', '@attributes': {'identifierType': 'subitem_1522646500366'}}}, 'junii2_mapping': '', 'oai_dc_mapping': {'identifier': {'@value': 'subitem_1522646572813'}}, 'display_lang_type': '', 'jpcoar_v1_mapping': {'sourceIdentifier': {'@value': 'subitem_1522646572813', '@attributes': {'identifierType': 'subitem_1522646500366'}}}}, 'item_1617186941041': {'lom_mapping': '', 'lido_mapping': '', 'spase_mapping': '', 'jpcoar_mapping': {'sourceTitle': {'@value': 'subitem_1522650091861', '@attributes': {'xml:lang': 'subitem_1522650068558'}}}, 'junii2_mapping': '', 'oai_dc_mapping': {'identifier': {'@value': 'subitem_1522650091861'}}, 'display_lang_type': '', 'jpcoar_v1_mapping': {'sourceTitle': {'@value': 'subitem_1522650091861', '@attributes': {'xml:lang': 'subitem_1522650068558'}}}}, 'item_1617186959569': {'lom_mapping': '', 'lido_mapping': '', 'spase_mapping': '', 'jpcoar_mapping': {'volume': {'@value': 'subitem_1551256328147'}}, 'junii2_mapping': '', 'oai_dc_mapping': {'identifier': {'@value': 'subitem_1551256328147'}}, 'display_lang_type': '', 'jpcoar_v1_mapping': {'volume': {'@value': 'subitem_1551256328147'}}}, 'item_1617186981471': {'lom_mapping': '', 'lido_mapping': '', 'spase_mapping': '', 'jpcoar_mapping': {'issue': {'@value': 'subitem_1551256294723'}}, 'junii2_mapping': '', 'oai_dc_mapping': {'identifier': {'@value': 'subitem_1551256294723'}}, 'display_lang_type': '', 'jpcoar_v1_mapping': {'issue': {'@value': 'subitem_1551256294723'}}}, 'item_1617186994930': {'lom_mapping': '', 'lido_mapping': '', 'spase_mapping': '', 'jpcoar_mapping': {'numPages': {'@value': 'subitem_1551256248092'}}, 'junii2_mapping': '', 'oai_dc_mapping': {'identifier': {'@value': 'subitem_1551256248092'}}, 'display_lang_type': '', 'jpcoar_v1_mapping': {'numPages': {'@value': 'subitem_1551256248092'}}}, 'item_1617187024783': {'lom_mapping': '', 'lido_mapping': '', 'spase_mapping': '', 'jpcoar_mapping': {'pageStart': {'@value': 'subitem_1551256198917'}}, 'junii2_mapping': '', 'oai_dc_mapping': {'identifier': {'@value': 'subitem_1551256198917'}}, 'display_lang_type': '', 'jpcoar_v1_mapping': {'pageStart': {'@value': 'subitem_1551256198917'}}}, 'item_1617187045071': {'lom_mapping': '', 'lido_mapping': '', 'spase_mapping': '', 'jpcoar_mapping': {'pageEnd': {'@value': 'subitem_1551256185532'}}, 'junii2_mapping': '', 'oai_dc_mapping': {'identifier': {'@value': 'subitem_1551256185532'}}, 'display_lang_type': '', 'jpcoar_v1_mapping': {'pageEnd': {'@value': 'subitem_1551256185532'}}}, 'item_1617187056579': {'lom_mapping': '', 'lido_mapping': '', 'spase_mapping': '', 'jpcoar_mapping': {'date': {'@value': 'bibliographicIssueDates.bibliographicIssueDate', '@attributes': {'dateType': 'bibliographicIssueDates.bibliographicIssueDateType'}}, 'issue': {'@value': 'bibliographicIssueNumber'}, 'volume': {'@value': 'bibliographicVolumeNumber'}, 'pageEnd': {'@value': 'bibliographicPageEnd'}, 'numPages': {'@value': 'bibliographicNumberOfPages'}, 'pageStart': {'@value': 'bibliographicPageStart'}, 'sourceTitle': {'@value': 'bibliographic_titles.bibliographic_title', '@attributes': {'xml:lang': 'bibliographic_titles.bibliographic_titleLang'}}}, 'junii2_mapping': '', 'oai_dc_mapping': {'date': {'@value': 'bibliographicIssueDates.bibliographicIssueDate'}, 'identifier': {'@value': 'bibliographic_titles.bibliographic_title,bibliographicIssueNumber,bibliographicVolumeNumber,bibliographicPageEnd,bibliographicPageStart'}}, 'display_lang_type': '', 'jpcoar_v1_mapping': {'date': {'@value': 'bibliographicIssueDates.bibliographicIssueDate', '@attributes': {'dateType': 'bibliographicIssueDates.bibliographicIssueDateType'}}, 'issue': {'@value': 'bibliographicIssueNumber'}, 'volume': {'@value': 'bibliographicVolumeNumber'}, 'pageEnd': {'@value': 'bibliographicPageEnd'}, 'numPages': {'@value': 'bibliographicNumberOfPages'}, 'pageStart': {'@value': 'bibliographicPageStart'}, 'sourceTitle': {'@value': 'bibliographic_titles.bibliographic_title', '@attributes': {'xml:lang': 'bibliographic_titles.bibliographic_titleLang'}}}}, 'item_1617187087799': {'lom_mapping': '', 'lido_mapping': '', 'spase_mapping': '', 'jpcoar_mapping': {'dissertationNumber': {'@value': 'subitem_1551256171004'}}, 'junii2_mapping': '', 'oai_dc_mapping': {'identifier': {'@value': 'subitem_1551256171004'}}, 'display_lang_type': '', 'jpcoar_v1_mapping': {'dissertationNumber': {'@value': 'subitem_1551256171004'}}}, 'item_1617187112279': {'lom_mapping': '', 'lido_mapping': '', 'spase_mapping': '', 'jpcoar_mapping': {'degreeName': {'@value': 'subitem_1551256126428', '@attributes': {'xml:lang': 'subitem_1551256129013'}}}, 'junii2_mapping': '', 'oai_dc_mapping': {'description': {'@value': 'subitem_1551256126428'}}, 'display_lang_type': '', 'jpcoar_v1_mapping': {'degreeName': {'@value': 'subitem_1551256126428', '@attributes': {'xml:lang': 'subitem_1551256129013'}}}}, 'item_1617187136212': {'lom_mapping': '', 'lido_mapping': '', 'spase_mapping': '', 'jpcoar_mapping': {'dateGranted': {'@value': 'subitem_1551256096004'}}, 'junii2_mapping': '', 'oai_dc_mapping': {'date': {'@value': 'subitem_1551256096004'}}, 'display_lang_type': '', 'jpcoar_v1_mapping': {'dateGranted': {'@value': 'subitem_1551256096004'}}}, 'item_1617187187528': {'lom_mapping': '', 'lido_mapping': '', 'spase_mapping': '', 'jpcoar_mapping': {'conference': {'conferenceDate': {'@value': 'subitem_1599711699392.subitem_1599711704251', '@attributes': {'endDay': 'subitem_1599711699392.subitem_1599711735410', 'endYear': 'subitem_1599711699392.subitem_1599711743722', 'endMonth': 'subitem_1599711699392.subitem_1599711739022', 'startDay': 'subitem_1599711699392.subitem_1599711712451', 'xml:lang': 'subitem_1599711699392.subitem_1599711745532', 'startYear': 'subitem_1599711699392.subitem_1599711731891', 'startMonth': 'subitem_1599711699392.subitem_1599711727603'}}, 'conferenceName': {'@value': 'subitem_1599711633003.subitem_1599711636923', '@attributes': {'xml:lang': 'subitem_1599711633003.subitem_1599711645590'}}, 'conferenceVenue': {'@value': 'subitem_1599711758470.subitem_1599711769260', '@attributes': {'xml:lang': 'subitem_1599711758470.subitem_1599711775943'}}, 'conferenceCountry': {'@value': 'subitem_1599711813532'}, 'conferenceSponsor': {'@value': 'subitem_1599711660052.subitem_1599711680082', '@attributes': {'xml:lang': 'subitem_1599711660052.subitem_1599711686511'}}, 'conferenceSequence': {'@value': 'subitem_1599711655652'}}}, 'junii2_mapping': '', 'oai_dc_mapping': '', 'display_lang_type': '', 'jpcoar_v1_mapping': {'conference': {'conferenceDate': {'@value': 'subitem_1599711699392.subitem_1599711704251', '@attributes': {'endDay': 'subitem_1599711699392.subitem_1599711735410', 'endYear': 'subitem_1599711699392.subitem_1599711743722', 'endMonth': 'subitem_1599711699392.subitem_1599711739022', 'startDay': 'subitem_1599711699392.subitem_1599711712451', 'xml:lang': 'subitem_1599711699392.subitem_1599711745532', 'startYear': 'subitem_1599711699392.subitem_1599711731891', 'startMonth': 'subitem_1599711699392.subitem_1599711727603'}}, 'conferenceName': {'@value': 'subitem_1599711633003.subitem_1599711636923', '@attributes': {'xml:lang': 'subitem_1599711633003.subitem_1599711645590'}}, 'conferenceVenue': {'@value': 'subitem_1599711758470.subitem_1599711769260', '@attributes': {'xml:lang': 'subitem_1599711758470.subitem_1599711775943'}}, 'conferenceCountry': {'@value': 'subitem_1599711813532'}, 'conferenceSponsor': {'@value': 'subitem_1599711660052.subitem_1599711680082', '@attributes': {'xml:lang': 'subitem_1599711660052.subitem_1599711686511'}}, 'conferenceSequence': {'@value': 'subitem_1599711655652'}}}}, 'item_1617258105262': {'lom_mapping': '', 'lido_mapping': '', 'spase_mapping': '', 'jpcoar_mapping': {'type': {'@value': 'resourcetype', '@attributes': {'rdf:resource': 'resourceuri'}}}, 'junii2_mapping': '', 'oai_dc_mapping': {'description': {'@value': 'resourceuri'}}, 'display_lang_type': '', 'jpcoar_v1_mapping': {'type': {'@value': 'resourcetype', '@attributes': {'rdf:resource': 'resourceuri'}}}}, 'item_1617265215918': {'lom_mapping': '', 'lido_mapping': '', 'spase_mapping': '', 'jpcoar_mapping': {'versiontype': {'@value': 'subitem_1522305645492', '@attributes': {'rdf:resource': 'subitem_1600292170262'}}}, 'junii2_mapping': '', 'oai_dc_mapping': {'type': {'@value': 'subitem_1522305645492'}}, 'display_lang_type': '', 'jpcoar_v1_mapping': {'versiontype': {'@value': 'subitem_1522305645492', '@attributes': {'rdf:resource': 'subitem_1600292170262'}}}}, 'item_1617349709064': {'lom_mapping': '', 'lido_mapping': '', 'spase_mapping': '', 'jpcoar_mapping': {'contributor': {'givenName': {'@value': 'givenNames.givenName', '@attributes': {'xml:lang': 'givenNames.givenNameLang'}}, 'familyName': {'@value': 'familyNames.familyName', '@attributes': {'xml:lang': 'familyNames.familyNameLang'}}, '@attributes': {'contributorType': 'contributorType'}, 'affiliation': {'nameIdentifier': {'@value': 'contributorAffiliations.contributorAffiliationNameIdentifiers.contributorAffiliationNameIdentifier', '@attributes': {'nameIdentifierURI': 'contributorAffiliations.contributorAffiliationNameIdentifiers.contributorAffiliationURI', 'nameIdentifierScheme': 'contributorAffiliations.contributorAffiliationNameIdentifiers.contributorAffiliationScheme'}}, 'affiliationName': {'@value': 'contributorAffiliations.contributorAffiliationNames.contributorAffiliationName', '@attributes': {'xml:lang': 'contributorAffiliations.contributorAffiliationNames.contributorAffiliationNameLang'}}}, 'nameIdentifier': {'@value': 'nameIdentifiers.nameIdentifier', '@attributes': {'nameIdentifierURI': 'nameIdentifiers.nameIdentifierURI', 'nameIdentifierScheme': 'nameIdentifiers.nameIdentifierScheme'}}, 'contributorName': {'@value': 'contributorNames.contributorName', '@attributes': {'xml:lang': 'contributorNames.lang'}}, 'contributorAlternative': {'@value': 'contributorAlternatives.contributorAlternative', '@attributes': {'xml:lang': 'contributorAlternatives.contributorAlternativeLang'}}}}, 'junii2_mapping': '', 'oai_dc_mapping': {'contributor': {'@value': 'contributorNames.contributorName,nameIdentifiers.nameIdentifier'}}, 'display_lang_type': '', 'jpcoar_v1_mapping': {'contributor': {'givenName': {'@value': 'givenNames.givenName', '@attributes': {'xml:lang': 'givenNames.givenNameLang'}}, 'familyName': {'@value': 'familyNames.familyName', '@attributes': {'xml:lang': 'familyNames.familyNameLang'}}, '@attributes': {'contributorType': 'contributorType'}, 'affiliation': {'nameIdentifier': {'@value': 'contributorAffiliations.contributorAffiliationNameIdentifiers.contributorAffiliationNameIdentifier', '@attributes': {'nameIdentifierURI': 'contributorAffiliations.contributorAffiliationNameIdentifiers.contributorAffiliationURI', 'nameIdentifierScheme': 'contributorAffiliations.contributorAffiliationNameIdentifiers.contributorAffiliationScheme'}}, 'affiliationName': {'@value': 'contributorAffiliations.contributorAffiliationNames.contributorAffiliationName', '@attributes': {'xml:lang': 'contributorAffiliations.contributorAffiliationNames.contributorAffiliationNameLang'}}}, 'nameIdentifier': {'@value': 'nameIdentifiers.nameIdentifier', '@attributes': {'nameIdentifierURI': 'nameIdentifiers.nameIdentifierURI', 'nameIdentifierScheme': 'nameIdentifiers.nameIdentifierScheme'}}, 'contributorName': {'@value': 'contributorNames.contributorName', '@attributes': {'xml:lang': 'contributorNames.lang'}}, 'contributorAlternative': {'@value': 'contributorAlternatives.contributorAlternative', '@attributes': {'xml:lang': 'contributorAlternatives.contributorAlternativeLang'}}}}}, 'item_1617349808926': {'lom_mapping': '', 'lido_mapping': '', 'spase_mapping': '', 'jpcoar_mapping': {'version': {'@value': 'subitem_1523263171732'}}, 'junii2_mapping': '', 'oai_dc_mapping': '', 'display_lang_type': '', 'jpcoar_v1_mapping': {'version': {'@value': 'subitem_1523263171732'}}}, 'item_1617351524846': {'lom_mapping': '', 'lido_mapping': '', 'spase_mapping': '', 'jpcoar_mapping': {'apc': {'@value': 'subitem_1523260933860'}}, 'junii2_mapping': '', 'oai_dc_mapping': '', 'display_lang_type': '', 'jpcoar_v1_mapping': {'apc': {'@value': 'subitem_1523260933860'}}}, 'item_1617353299429': {'lom_mapping': '', 'lido_mapping': '', 'spase_mapping': '', 'jpcoar_mapping': {'relation': {'@attributes': {'relationType': 'subitem_1522306207484'}, 'relatedTitle': {'@value': 'subitem_1523320863692.subitem_1523320909613', '@attributes': {'xml:lang': 'subitem_1523320863692.subitem_1523320867455'}}, 'relatedIdentifier': {'@value': 'subitem_1522306287251.subitem_1522306436033', '@attributes': {'identifierType': 'subitem_1522306287251.subitem_1522306382014'}}}}, 'junii2_mapping': '', 'oai_dc_mapping': {'relation': {'@value': 'subitem_1522306287251.subitem_1522306436033,subitem_1523320863692.subitem_1523320909613'}}, 'display_lang_type': '', 'jpcoar_v1_mapping': {'relation': {'@attributes': {'relationType': 'subitem_1522306207484'}, 'relatedTitle': {'@value': 'subitem_1523320863692.subitem_1523320909613', '@attributes': {'xml:lang': 'subitem_1523320863692.subitem_1523320867455'}}, 'relatedIdentifier': {'@value': 'subitem_1522306287251.subitem_1522306436033', '@attributes': {'identifierType': 'subitem_1522306287251.subitem_1522306382014'}}}}}, 'item_1617605131499': {'lom_mapping': '', 'lido_mapping': '', 'spase_mapping': '', 'jpcoar_mapping': {'file': {'URI': {'@value': 'url.url', '@attributes': {'label': 'url.label', 'objectType': 'url.objectType'}}, 'date': {'@value': 'fileDate.fileDateValue', '@attributes': {'dateType': 'fileDate.fileDateType'}}, 'extent': {'@value': 'filesize.value'}, 'version': {'@value': 'version'}, 'mimeType': {'@value': 'format'}}}, 'junii2_mapping': '', 'oai_dc_mapping': '', 'display_lang_type': '', 'jpcoar_v1_mapping': {'file': {'URI': {'@value': 'url.url', '@attributes': {'label': 'url.label', 'objectType': 'url.objectType'}}, 'date': {'@value': 'fileDate.fileDateValue', '@attributes': {'dateType': 'fileDate.fileDateType'}}, 'extent': {'@value': 'filesize.value'}, 'version': {'@value': 'version'}, 'mimeType': {'@value': 'format'}}}}, 'item_1617610673286': {'lom_mapping': '', 'lido_mapping': '', 'spase_mapping': '', 'jpcoar_mapping': {'rightsHolder': {'nameIdentifier': {'@value': 'nameIdentifiers.nameIdentifier', '@attributes': {'nameIdentifierURI': 'nameIdentifiers.nameIdentifierURI', 'nameIdentifierScheme': 'nameIdentifiers.nameIdentifierScheme'}}, 'rightsHolderName': {'@value': 'rightHolderNames.rightHolderName', '@attributes': {'xml:lang': 'rightHolderNames.rightHolderLanguage'}}}}, 'junii2_mapping': '', 'oai_dc_mapping': '', 'display_lang_type': '', 'jpcoar_v1_mapping': {'rightsHolder': {'nameIdentifier': {'@value': 'nameIdentifiers.nameIdentifier', '@attributes': {'nameIdentifierURI': 'nameIdentifiers.nameIdentifierURI', 'nameIdentifierScheme': 'nameIdentifiers.nameIdentifierScheme'}}, 'rightsHolderName': {'@value': 'rightHolderNames.rightHolderName', '@attributes': {'xml:lang': 'rightHolderNames.rightHolderLanguage'}}}}}, 'item_1617620223087': {'lom_mapping': '', 'lido_mapping': '', 'spase_mapping': '', 'jpcoar_mapping': '', 'junii2_mapping': '', 'oai_dc_mapping': '', 'display_lang_type': '', 'jpcoar_v1_mapping': ''}, 'item_1617944105607': {'lom_mapping': '', 'lido_mapping': '', 'spase_mapping': '', 'jpcoar_mapping': {'degreeGrantor': {'nameIdentifier': {'@value': 'subitem_1551256015892.subitem_1551256027296', '@attributes': {'nameIdentifierScheme': 'subitem_1551256015892.subitem_1551256029891'}}, 'degreeGrantorName': {'@value': 'subitem_1551256037922.subitem_1551256042287', '@attributes': {'xml:lang': 'subitem_1551256037922.subitem_1551256047619'}}}}, 'junii2_mapping': '', 'oai_dc_mapping': {'description': {'@value': 'subitem_1551256037922.subitem_1551256042287'}}, 'display_lang_type': '', 'jpcoar_v1_mapping': {'degreeGrantor': {'nameIdentifier': {'@value': 'subitem_1551256015892.subitem_1551256027296', '@attributes': {'nameIdentifierScheme': 'subitem_1551256015892.subitem_1551256029891'}}, 'degreeGrantorName': {'@value': 'subitem_1551256037922.subitem_1551256042287', '@attributes': {'xml:lang': 'subitem_1551256037922.subitem_1551256047619'}}}}}, 'system_identifier_doi': {'lom_mapping': '', 'lido_mapping': '', 'spase_mapping': '', 'jpcoar_mapping': {'identifier': {'@value': 'subitem_systemidt_identifier', '@attributes': {'identifierType': 'subitem_systemidt_identifier_type'}}}, 'junii2_mapping': '', 'oai_dc_mapping': '', 'display_lang_type': '', 'jpcoar_v1_mapping': {'identifier': {'@value': 'subitem_systemidt_identifier', '@attributes': {'identifierType': 'subitem_systemidt_identifier_type'}}}}, 'system_identifier_hdl': {'lom_mapping': '', 'lido_mapping': '', 'spase_mapping': '', 'jpcoar_mapping': {'identifier': {'@value': 'subitem_systemidt_identifier', '@attributes': {'identifierType': 'subitem_systemidt_identifier_type'}}}, 'junii2_mapping': '', 'oai_dc_mapping': '', 'display_lang_type': '', 'jpcoar_v1_mapping': {'identifier': {'@value': 'subitem_systemidt_identifier', '@attributes': {'identifierType': 'subitem_systemidt_identifier_type'}}}}, 'system_identifier_uri': {'lom_mapping': '', 'lido_mapping': '', 'spase_mapping': '', 'jpcoar_mapping': {'identifier': {'@value': 'subitem_systemidt_identifier', '@attributes': {'identifierType': 'subitem_systemidt_identifier_type'}}}, 'junii2_mapping': '', 'oai_dc_mapping': '', 'display_lang_type': '', 'jpcoar_v1_mapping': {'identifier': {'@value': 'subitem_systemidt_identifier', '@attributes': {'identifierType': 'subitem_systemidt_identifier_type'}}}}})
+    ret = ({'pubdate': {'title': 'PubDate', 'option': {'crtf': False, 'hidden': False, 'multiple': False, 'required': True, 'showlist': False}, 'input_type': 'datetime', 'title_i18n': {'en': 'PubDate', 'ja': '公開日'}, 'input_value': ''}, 'item_1617186331708': {'title': 'Title', 'option': {'crtf': True, 'hidden': False, 'oneline': False, 'multiple': True, 'required': True, 'showlist': True}, 'input_type': 'cus_67', 'title_i18n': {'en': 'Title', 'ja': 'タイトル'}, 'input_value': '', 'input_maxItems': '9999', 'input_minItems': '1'}, 'item_1617186385884': {'title': 'Alternative Title', 'option': {'crtf': False, 'hidden': False, 'oneline': False, 'multiple': True, 'required': False, 'showlist': False}, 'input_type': 'cus_69', 'title_i18n': {'en': 'Alternative Title', 'ja': 'その他のタイトル'}, 'input_value': '', 'input_maxItems': '9999', 'input_minItems': '1'}, 'item_1617186419668': {'title': 'Creator', 'option': {'crtf': True, 'hidden': False, 'oneline': False, 'multiple': True, 'required': False, 'showlist': True}, 'input_type': 'cus_60', 'title_i18n': {'en': 'Creator', 'ja': '作成者'}, 'input_value': '', 'input_maxItems': '9999', 'input_minItems': '1'}, 'item_1617186476635': {'title': 'Access Rights', 'option': {'crtf': False, 'hidden': False, 'oneline': False, 'multiple': False, 'required': False, 'showlist': False}, 'input_type': 'cus_4', 'title_i18n': {'en': 'Access Rights', 'ja': 'アクセス権'}, 'input_value': '', 'input_maxItems': '9999', 'input_minItems': '1'}, 'item_1617186499011': {'title': 'Rights', 'option': {'crtf': False, 'hidden': False, 'oneline': False, 'multiple': True, 'required': False, 'showlist': False}, 'input_type': 'cus_14', 'title_i18n': {'en': 'Rights', 'ja': '権利情報'}, 'input_value': '', 'input_maxItems': '9999', 'input_minItems': '1'}, 'item_1617186609386': {'title': 'Subject', 'option': {'crtf': False, 'hidden': False, 'oneline': False, 'multiple': True, 'required': False, 'showlist': False}, 'input_type': 'cus_6', 'title_i18n': {'en': 'Subject', 'ja': '主題'}, 'input_value': '', 'input_maxItems': '9999', 'input_minItems': '1'}, 'item_1617186626617': {'title': 'Description', 'option': {'crtf': False, 'hidden': False, 'oneline': False, 'multiple': True, 'required': False, 'showlist': False}, 'input_type': 'cus_17', 'title_i18n': {'en': 'Description', 'ja': '内容記述'}, 'input_value': '', 'input_maxItems': '9999', 'input_minItems': '1'}, 'item_1617186643794': {'title': 'Publisher', 'option': {'crtf': False, 'hidden': False, 'oneline': False, 'multiple': True, 'required': False, 'showlist': False}, 'input_type': 'cus_5', 'title_i18n': {'en': 'Publisher', 'ja': '出版者'}, 'input_value': '', 'input_maxItems': '9999', 'input_minItems': '1'}, 'item_1617186660861': {'title': 'Date', 'option': {'crtf': False, 'hidden': False, 'oneline': False, 'multiple': True, 'required': False, 'showlist': False}, 'input_type': 'cus_11', 'title_i18n': {'en': 'Date', 'ja': '日付'}, 'input_value': '', 'input_maxItems': '9999', 'input_minItems': '1'}, 'item_1617186702042': {'title': 'Language', 'option': {'crtf': False, 'hidden': False, 'oneline': False, 'multiple': True, 'required': False, 'showlist': False}, 'input_type': 'cus_71', 'title_i18n': {'en': 'Language', 'ja': '言語'}, 'input_value': '', 'input_maxItems': '9999', 'input_minItems': '1'}, 'item_1617186783814': {'title': 'Identifier', 'option': {'crtf': False, 'hidden': False, 'oneline': False, 'multiple': True, 'required': False, 'showlist': False}, 'input_type': 'cus_176', 'title_i18n': {'en': 'Identifier', 'ja': '識別子'}, 'input_value': '', 'input_maxItems': '9999', 'input_minItems': '1'}, 'item_1617186819068': {'title': 'Identifier Registration', 'option': {'crtf': False, 'hidden': False, 'oneline': False, 'multiple': False, 'required': False, 'showlist': False}, 'input_type': 'cus_16', 'title_i18n': {'en': 'Identifier Registration', 'ja': 'ID登録'}, 'input_value': '', 'input_maxItems': '9999', 'input_minItems': '1'}, 'item_1617186859717': {'title': 'Temporal', 'option': {'crtf': False, 'hidden': False, 'oneline': False, 'multiple': True, 'required': False, 'showlist': False}, 'input_type': 'cus_18', 'title_i18n': {'en': 'Temporal', 'ja': '時間的範囲'}, 'input_value': '', 'input_maxItems': '9999', 'input_minItems': '1'}, 'item_1617186882738': {'title': 'Geo Location', 'option': {'crtf': False, 'hidden': False, 'oneline': False, 'multiple': True, 'required': False, 'showlist': False}, 'input_type': 'cus_19', 'title_i18n': {'en': 'Geo Location', 'ja': '位置情報'}, 'input_value': '', 'input_maxItems': '9999', 'input_minItems': '1'}, 'item_1617186901218': {'title': 'Funding Reference', 'option': {'crtf': False, 'hidden': False, 'oneline': False, 'multiple': True, 'required': False, 'showlist': False}, 'input_type': 'cus_21', 'title_i18n': {'en': 'Funding Reference', 'ja': '助成情報'}, 'input_value': '', 'input_maxItems': '9999', 'input_minItems': '1'}, 'item_1617186920753': {'title': 'Source Identifier', 'option': {'crtf': False, 'hidden': False, 'oneline': False, 'multiple': True, 'required': False, 'showlist': False}, 'input_type': 'cus_10', 'title_i18n': {'en': 'Source Identifier', 'ja': '収録物識別子'}, 'input_value': '', 'input_maxItems': '9999', 'input_minItems': '1'}, 'item_1617186941041': {'title': 'Source Title', 'option': {'crtf': False, 'hidden': False, 'oneline': False, 'multiple': True, 'required': False, 'showlist': True}, 'input_type': 'cus_13', 'title_i18n': {'en': 'Source Title', 'ja': '収録物名'}, 'input_value': '', 'input_maxItems': '9999', 'input_minItems': '1'}, 'item_1617186959569': {'title': 'Volume Number', 'option': {'crtf': False, 'hidden': False, 'oneline': False, 'multiple': False, 'required': False, 'showlist': True}, 'input_type': 'cus_88', 'title_i18n': {'en': 'Volume Number', 'ja': '巻'}, 'input_value': '', 'input_maxItems': '9999', 'input_minItems': '1'}, 'item_1617186981471': {'title': 'Issue Number', 'option': {'crtf': False, 'hidden': False, 'oneline': False, 'multiple': False, 'required': False, 'showlist': True}, 'input_type': 'cus_87', 'title_i18n': {'en': 'Issue Number', 'ja': '号'}, 'input_value': '', 'input_maxItems': '9999', 'input_minItems': '1'}, 'item_1617186994930': {'title': 'Number of Pages', 'option': {'crtf': False, 'hidden': False, 'oneline': False, 'multiple': False, 'required': False, 'showlist': True}, 'input_type': 'cus_85', 'title_i18n': {'en': 'Number of Pages', 'ja': 'ページ数'}, 'input_value': '', 'input_maxItems': '9999', 'input_minItems': '1'}, 'item_1617187024783': {'title': 'Page Start', 'option': {'crtf': False, 'hidden': False, 'oneline': False, 'multiple': False, 'required': False, 'showlist': True}, 'input_type': 'cus_84', 'title_i18n': {'en': 'Page Start', 'ja': '開始ページ'}, 'input_value': '', 'input_maxItems': '9999', 'input_minItems': '1'}, 'item_1617187045071': {'title': 'Page End', 'option': {'crtf': False, 'hidden': False, 'oneline': False, 'multiple': False, 'required': False, 'showlist': True}, 'input_type': 'cus_83', 'title_i18n': {'en': 'Page End', 'ja': '終了ページ'}, 'input_value': '', 'input_maxItems': '9999', 'input_minItems': '1'}, 'item_1617187056579': {'title': 'Bibliographic Information', 'option': {'crtf': False, 'hidden': False, 'oneline': False, 'multiple': False, 'required': False, 'showlist': True}, 'input_type': 'cus_102', 'title_i18n': {'en': 'Bibliographic Information', 'ja': '書誌情報'}, 'input_value': '', 'input_maxItems': '9999', 'input_minItems': '1'}, 'item_1617187087799': {'title': 'Dissertation Number', 'option': {'crtf': False, 'hidden': False, 'oneline': False, 'multiple': False, 'required': False, 'showlist': True}, 'input_type': 'cus_82', 'title_i18n': {'en': 'Dissertation Number', 'ja': '学位授与番号'}, 'input_value': '', 'input_maxItems': '9999', 'input_minItems': '1'}, 'item_1617187112279': {'title': 'Degree Name', 'option': {'crtf': False, 'hidden': False, 'oneline': False, 'multiple': True, 'required': False, 'showlist': True}, 'input_type': 'cus_80', 'title_i18n': {'en': 'Degree Name', 'ja': '学位名'}, 'input_value': '', 'input_maxItems': '9999', 'input_minItems': '1'}, 'item_1617187136212': {'title': 'Date Granted', 'option': {'crtf': False, 'hidden': False, 'oneline': False, 'multiple': False, 'required': False, 'showlist': True}, 'input_type': 'cus_79', 'title_i18n': {'en': 'Date Granted', 'ja': '学位授与年月日'}, 'input_value': '', 'input_maxItems': '9999', 'input_minItems': '1'}, 'item_1617187187528': {'title': 'Conference', 'option': {'crtf': True, 'hidden': False, 'oneline': False, 'multiple': True, 'required': False, 'showlist': True}, 'input_type': 'cus_75', 'title_i18n': {'en': 'Conference', 'ja': '会議記述'}, 'input_value': '', 'input_maxItems': '9999', 'input_minItems': '1'}, 'item_1617258105262': {'title': 'Resource Type', 'option': {'crtf': False, 'hidden': False, 'oneline': False, 'multiple': False, 'required': True, 'showlist': False}, 'input_type': 'cus_8', 'title_i18n': {'en': 'Resource Type', 'ja': '資源タイプ'}, 'input_value': '', 'input_maxItems': '9999', 'input_minItems': '1'}, 'item_1617265215918': {'title': 'Version Type', 'option': {'crtf': False, 'hidden': False, 'oneline': False, 'multiple': False, 'required': False, 'showlist': False}, 'input_type': 'cus_9', 'title_i18n': {'en': 'Version Type', 'ja': '出版タイプ'}, 'input_value': '', 'input_maxItems': '9999', 'input_minItems': '1'}, 'item_1617349709064': {'title': 'Contributor', 'option': {'crtf': False, 'hidden': False, 'oneline': False, 'multiple': True, 'required': False, 'showlist': False}, 'input_type': 'cus_62', 'title_i18n': {'en': 'Contributor', 'ja': '寄与者'}, 'input_value': '', 'input_maxItems': '9999', 'input_minItems': '1'}, 'item_1617349808926': {'title': 'Version', 'option': {'crtf': False, 'hidden': False, 'oneline': False, 'multiple': False, 'required': False, 'showlist': False}, 'input_type': 'cus_28', 'title_i18n': {'en': 'Version', 'ja': 'バージョン情報'}, 'input_value': '', 'input_maxItems': '9999', 'input_minItems': '1'}, 'item_1617351524846': {'title': 'APC', 'option': {'crtf': False, 'hidden': False, 'oneline': False, 'multiple': False, 'required': False, 'showlist': False}, 'input_type': 'cus_27', 'title_i18n': {'en': 'APC', 'ja': 'APC'}, 'input_value': '', 'input_maxItems': '9999', 'input_minItems': '1'}, 'item_1617353299429': {'title': 'Relation', 'option': {'crtf': False, 'hidden': False, 'oneline': False, 'multiple': True, 'required': False, 'showlist': False}, 'input_type': 'cus_12', 'title_i18n': {'en': 'Relation', 'ja': '関連情報'}, 'input_value': '', 'input_maxItems': '9999', 'input_minItems': '1'}, 'item_1617605131499': {'title': 'File', 'option': {'crtf': False, 'hidden': False, 'oneline': False, 'multiple': True, 'required': False, 'showlist': True}, 'input_type': 'cus_65', 'title_i18n': {'en': 'File', 'ja': 'ファイル情報'}, 'input_value': '', 'input_maxItems': '9999', 'input_minItems': '1'}, 'item_1617610673286': {'title': 'Rights Holder', 'option': {'crtf': False, 'hidden': False, 'oneline': False, 'multiple': True, 'required': False, 'showlist': False}, 'input_type': 'cus_3', 'title_i18n': {'en': 'Rights Holder', 'ja': '権利者情報'}, 'input_value': '', 'input_maxItems': '9999', 'input_minItems': '1'}, 'item_1617620223087': {'title': 'Heading', 'option': {'crtf': False, 'hidden': False, 'oneline': False, 'multiple': True, 'required': False, 'showlist': False}, 'input_type': 'cus_119', 'title_i18n': {'en': 'Heading', 'ja': '見出し'}, 'input_value': '', 'input_maxItems': '9999', 'input_minItems': '1'}, 'item_1617944105607': {'title': 'Degree Grantor', 'option': {'crtf': False, 'hidden': False, 'oneline': False, 'multiple': True, 'required': False, 'showlist': True}, 'input_type': 'cus_78', 'title_i18n': {'en': 'Degree Grantor', 'ja': '学位授与機関'}, 'input_value': '', 'input_maxItems': '9999', 'input_minItems': '1'}, 'item_1662046377046': {'title': 'サムネイル', 'option': {'crtf': False, 'hidden': False, 'oneline': False, 'multiple': True, 'required': False, 'showlist': True}, 'input_type': 'cus_1037', 'title_i18n': {'en': 'thumbnail', 'ja': 'サムネイル'}, 'input_value': '', 'input_maxItems': '9999', 'input_minItems': '1'}}, {'pubdate': {'lom_mapping': '', 'lido_mapping': '', 'spase_mapping': '', 'jpcoar_mapping': '', 'junii2_mapping': '', 'oai_dc_mapping': '', 'display_lang_type': '', 'jpcoar_v1_mapping': ''}, 'system_file': {'lom_mapping': '', 'lido_mapping': '', 'spase_mapping': '', 'jpcoar_mapping': {'system_file': {'URI': {'@value': 'subitem_systemfile_filename_uri', '@attributes': {'label': 'subitem_systemfile_filename_label', 'objectType': 'subitem_systemfile_filename_type'}}, 'date': {'@value': 'subitem_systemfile_datetime_date', '@attributes': {'dateType': 'subitem_systemfile_datetime_type'}}, 'extent': {'@value': 'subitem_systemfile_size'}, 'version': {'@value': 'subitem_systemfile_version'}, 'mimeType': {'@value': 'subitem_systemfile_mimetype'}}}, 'junii2_mapping': '', 'oai_dc_mapping': '', 'display_lang_type': '', 'jpcoar_v1_mapping': {'system_file': {'URI': {'@value': 'subitem_systemfile_filename_uri', '@attributes': {'label': 'subitem_systemfile_filename_label', 'objectType': 'subitem_systemfile_filename_type'}}, 'date': {'@value': 'subitem_systemfile_datetime_date', '@attributes': {'dateType': 'subitem_systemfile_datetime_type'}}, 'extent': {'@value': 'subitem_systemfile_size'}, 'version': {'@value': 'subitem_systemfile_version'}, 'mimeType': {'@value': 'subitem_systemfile_mimetype'}}}}, 'item_1617186331708': {'lom_mapping': '', 'lido_mapping': '', 'spase_mapping': '', 'jpcoar_mapping': {'title': {'@value': 'subitem_1551255647225', '@attributes': {'xml:lang': 'subitem_1551255648112'}}}, 'junii2_mapping': '', 'oai_dc_mapping': {'title': {'@value': 'subitem_1551255647225'}}, 'display_lang_type': '', 'jpcoar_v1_mapping': {'title': {'@value': 'subitem_1551255647225', '@attributes': {'xml:lang': 'subitem_1551255648112'}}}}, 'item_1617186331709':{'display_lang_type': '','jpcoar_mapping': {'title': {'@attributes': {'xml:lang': 'subitem_1551255648113'},'@value': 'subitem_1551255647226'}},'jpcoar_v1_mapping': {'title': {'@attributes': {'xml:lang': 'subitem_1551255648113'},'@value': 'subitem_1551255647226'}},'junii2_mapping': '','lido_mapping': '','lom_mapping': '','oai_dc_mapping': {'title': {'@value': 'subitem_1551255647226'}},'spase_mapping': ''},'item_1617186385884': {'lom_mapping': '', 'lido_mapping': '', 'spase_mapping': '', 'jpcoar_mapping': {'alternative': {'@value': 'subitem_1551255720400', '@attributes': {'xml:lang': 'subitem_1551255721061'}}}, 'junii2_mapping': '', 'oai_dc_mapping': {'title': {'@value': 'subitem_1551255720400'}}, 'display_lang_type': '', 'jpcoar_v1_mapping': {'alternative': {'@value': 'subitem_1551255720400', '@attributes': {'xml:lang': 'subitem_1551255721061'}}}}, 'item_1617186419668': {'lom_mapping': '', 'lido_mapping': '', 'spase_mapping': '', 'jpcoar_mapping': {'creator': {'givenName': {'@value': 'givenNames.givenName', '@attributes': {'xml:lang': 'givenNames.givenNameLang'}}, 'familyName': {'@value': 'familyNames.familyName', '@attributes': {'xml:lang': 'familyNames.familyNameLang'}}, 'affiliation': {'nameIdentifier': {'@value': 'creatorAffiliations.affiliationNameIdentifiers.affiliationNameIdentifier', '@attributes': {'nameIdentifierURI': 'creatorAffiliations.affiliationNameIdentifiers.affiliationNameIdentifierURI', 'nameIdentifierScheme': 'creatorAffiliations.affiliationNameIdentifiers.affiliationNameIdentifierScheme'}}, 'affiliationName': {'@value': 'creatorAffiliations.affiliationNames.affiliationName', '@attributes': {'xml:lang': 'creatorAffiliations.affiliationNames.affiliationNameLang'}}}, 'creatorName': {'@value': 'creatorNames.creatorName', '@attributes': {'xml:lang': 'creatorNames.creatorNameLang'}}, 'nameIdentifier': {'@value': 'nameIdentifiers.nameIdentifier', '@attributes': {'nameIdentifierURI': 'nameIdentifiers.nameIdentifierURI', 'nameIdentifierScheme': 'nameIdentifiers.nameIdentifierScheme'}}, 'creatorAlternative': {'@value': 'creatorAlternatives.creatorAlternative', '@attributes': {'xml:lang': 'creatorAlternatives.creatorAlternativeLang'}}}}, 'junii2_mapping': '', 'oai_dc_mapping': {'creator': {'@value': 'creatorNames.creatorName,nameIdentifiers.nameIdentifier'}}, 'display_lang_type': '', 'jpcoar_v1_mapping': {'creator': {'givenName': {'@value': 'givenNames.givenName', '@attributes': {'xml:lang': 'givenNames.givenNameLang'}}, 'familyName': {'@value': 'familyNames.familyName', '@attributes': {'xml:lang': 'familyNames.familyNameLang'}}, 'affiliation': {'nameIdentifier': {'@value': 'creatorAffiliations.affiliationNameIdentifiers.affiliationNameIdentifier', '@attributes': {'nameIdentifierURI': 'creatorAffiliations.affiliationNameIdentifiers.affiliationNameIdentifierURI', 'nameIdentifierScheme': 'creatorAffiliations.affiliationNameIdentifiers.affiliationNameIdentifierScheme'}}, 'affiliationName': {'@value': 'creatorAffiliations.affiliationNames.affiliationName', '@attributes': {'xml:lang': 'creatorAffiliations.affiliationNames.affiliationNameLang'}}}, 'creatorName': {'@value': 'creatorNames.creatorName', '@attributes': {'xml:lang': 'creatorNames.creatorNameLang'}}, 'nameIdentifier': {'@value': 'nameIdentifiers.nameIdentifier', '@attributes': {'nameIdentifierURI': 'nameIdentifiers.nameIdentifierURI', 'nameIdentifierScheme': 'nameIdentifiers.nameIdentifierScheme'}}, 'creatorAlternative': {'@value': 'creatorAlternatives.creatorAlternative', '@attributes': {'xml:lang': 'creatorAlternatives.creatorAlternativeLang'}}}}}, 'item_1617186476635': {'lom_mapping': '', 'lido_mapping': '', 'spase_mapping': '', 'jpcoar_mapping': {'accessRights': {'@value': 'subitem_1522299639480', '@attributes': {'rdf:resource': 'subitem_1600958577026'}}}, 'junii2_mapping': '', 'oai_dc_mapping': {'rights': {'@value': 'subitem_1522299639480'}}, 'display_lang_type': '', 'jpcoar_v1_mapping': {'accessRights': {'@value': 'subitem_1522299639480', '@attributes': {'rdf:resource': 'subitem_1600958577026'}}}}, 'item_1617186499011': {'lom_mapping': '', 'lido_mapping': '', 'spase_mapping': '', 'jpcoar_mapping': {'rights': {'@value': 'subitem_1522651041219', '@attributes': {'xml:lang': 'subitem_1522650717957', 'rdf:resource': 'subitem_1522650727486'}}}, 'junii2_mapping': '', 'oai_dc_mapping': {'rights': {'@value': 'subitem_1522651041219'}}, 'display_lang_type': '', 'jpcoar_v1_mapping': {'rights': {'@value': 'subitem_1522651041219', '@attributes': {'xml:lang': 'subitem_1522650717957', 'rdf:resource': 'subitem_1522650727486'}}}}, 'item_1617186609386': {'lom_mapping': '', 'lido_mapping': '', 'spase_mapping': '', 'jpcoar_mapping': {'subject': {'@value': 'subitem_1523261968819', '@attributes': {'xml:lang': 'subitem_1522299896455', 'subjectURI': 'subitem_1522300048512', 'subjectScheme': 'subitem_1522300014469'}}}, 'junii2_mapping': '', 'oai_dc_mapping': {'subject': {'@value': 'subitem_1523261968819'}}, 'display_lang_type': '', 'jpcoar_v1_mapping': {'subject': {'@value': 'subitem_1523261968819', '@attributes': {'xml:lang': 'subitem_1522299896455', 'subjectURI': 'subitem_1522300048512', 'subjectScheme': 'subitem_1522300014469'}}}}, 'item_1617186626617': {'lom_mapping': '', 'lido_mapping': '', 'spase_mapping': '', 'jpcoar_mapping': {'description': {'@value': 'subitem_description', '@attributes': {'xml:lang': 'subitem_description_language', 'descriptionType': 'subitem_description_type'}}}, 'junii2_mapping': '', 'oai_dc_mapping': {'description': {'@value': 'subitem_description'}}, 'display_lang_type': '', 'jpcoar_v1_mapping': {'description': {'@value': 'subitem_description', '@attributes': {'xml:lang': 'subitem_description_language', 'descriptionType': 'subitem_description_type'}}}}, 'item_1617186643794': {'lom_mapping': '', 'lido_mapping': '', 'spase_mapping': '', 'jpcoar_mapping': {'publisher': {'@value': 'subitem_1522300316516', '@attributes': {'xml:lang': 'subitem_1522300295150'}}}, 'junii2_mapping': '', 'oai_dc_mapping': {'publisher': {'@value': 'subitem_1522300316516'}}, 'display_lang_type': '', 'jpcoar_v1_mapping': {'publisher': {'@value': 'subitem_1522300316516', '@attributes': {'xml:lang': 'subitem_1522300295150'}}}}, 'item_1617186660861': {'lom_mapping': '', 'lido_mapping': '', 'spase_mapping': '', 'jpcoar_mapping': {'date': {'@value': 'subitem_1522300722591', '@attributes': {'dateType': 'subitem_1522300695726'}}}, 'junii2_mapping': '', 'oai_dc_mapping': {'date': {'@value': 'subitem_1522300722591'}}, 'display_lang_type': '', 'jpcoar_v1_mapping': {'date': {'@value': 'subitem_1522300722591', '@attributes': {'dateType': 'subitem_1522300695726'}}}}, 'item_1617186702042': {'lom_mapping': '', 'lido_mapping': '', 'spase_mapping': '', 'jpcoar_mapping': {'language': {'@value': 'subitem_1551255818386'}}, 'junii2_mapping': '', 'oai_dc_mapping': {'language': {'@value': 'subitem_1551255818386'}}, 'display_lang_type': '', 'jpcoar_v1_mapping': {'language': {'@value': 'subitem_1551255818386'}}}, 'item_1617186783814': {'lom_mapping': '', 'lido_mapping': '', 'spase_mapping': '', 'jpcoar_mapping': {'identifier': {'@value': 'subitem_identifier_uri', '@attributes': {'identifierType': 'subitem_identifier_type'}}}, 'junii2_mapping': '', 'oai_dc_mapping': {'identifier': {'@value': 'subitem_identifier_uri'}}, 'display_lang_type': '', 'jpcoar_v1_mapping': {'identifier': {'@value': 'subitem_identifier_uri', '@attributes': {'identifierType': 'subitem_identifier_type'}}}}, 'item_1617186819068': {'lom_mapping': '', 'lido_mapping': '', 'spase_mapping': '', 'jpcoar_mapping': {'identifierRegistration': {'@value': 'subitem_identifier_reg_text', '@attributes': {'identifierType': 'subitem_identifier_reg_type'}}}, 'junii2_mapping': '', 'oai_dc_mapping': '', 'display_lang_type': '', 'jpcoar_v1_mapping': {'identifierRegistration': {'@value': 'subitem_identifier_reg_text', '@attributes': {'identifierType': 'subitem_identifier_reg_type'}}}}, 'item_1617186859717': {'lom_mapping': '', 'lido_mapping': '', 'spase_mapping': '', 'jpcoar_mapping': {'temporal': {'@value': 'subitem_1522658031721', '@attributes': {'xml:lang': 'subitem_1522658018441'}}}, 'junii2_mapping': '', 'oai_dc_mapping': {'coverage': {'@value': 'subitem_1522658031721'}}, 'display_lang_type': '', 'jpcoar_v1_mapping': {'temporal': {'@value': 'subitem_1522658031721', '@attributes': {'xml:lang': 'subitem_1522658018441'}}}}, 'item_1617186882738': {'lom_mapping': '', 'lido_mapping': '', 'spase_mapping': '', 'jpcoar_mapping': {'geoLocation': {'geoLocationBox': {'eastBoundLongitude': {'@value': 'subitem_geolocation_box.subitem_east_longitude'}, 'northBoundLatitude': {'@value': 'subitem_geolocation_box.subitem_north_latitude'}, 'southBoundLatitude': {'@value': 'subitem_geolocation_box.subitem_south_latitude'}, 'westBoundLongitude': {'@value': 'subitem_geolocation_box.subitem_west_longitude'}}, 'geoLocationPlace': {'@value': 'subitem_geolocation_place.subitem_geolocation_place_text'}, 'geoLocationPoint': {'pointLatitude': {'@value': 'subitem_geolocation_point.subitem_point_latitude'}, 'pointLongitude': {'@value': 'subitem_geolocation_point.subitem_point_longitude'}}}}, 'junii2_mapping': '', 'oai_dc_mapping': {'coverage': {'@value': 'subitem_geolocation_place.subitem_geolocation_place_text'}}, 'display_lang_type': '', 'jpcoar_v1_mapping': {'geoLocation': {'geoLocationBox': {'eastBoundLongitude': {'@value': 'subitem_geolocation_box.subitem_east_longitude'}, 'northBoundLatitude': {'@value': 'subitem_geolocation_box.subitem_north_latitude'}, 'southBoundLatitude': {'@value': 'subitem_geolocation_box.subitem_south_latitude'}, 'westBoundLongitude': {'@value': 'subitem_geolocation_box.subitem_west_longitude'}}, 'geoLocationPlace': {'@value': 'subitem_geolocation_place.subitem_geolocation_place_text'}, 'geoLocationPoint': {'pointLatitude': {'@value': 'subitem_geolocation_point.subitem_point_latitude'}, 'pointLongitude': {'@value': 'subitem_geolocation_point.subitem_point_longitude'}}}}}, 'item_1617186901218': {'lom_mapping': '', 'lido_mapping': '', 'spase_mapping': '', 'jpcoar_mapping': {'fundingReference': {'awardTitle': {'@value': 'subitem_1522399651758.subitem_1522721929892', '@attributes': {'xml:lang': 'subitem_1522399651758.subitem_1522721910626'}}, 'funderName': {'@value': 'subitem_1522399412622.subitem_1522737543681', '@attributes': {'xml:lang': 'subitem_1522399412622.subitem_1522399416691'}}, 'awardNumber': {'@value': 'subitem_1522399571623.subitem_1522399628911', '@attributes': {'awardURI': 'subitem_1522399571623.subitem_1522399585738'}}, 'funderIdentifier': {'@value': 'subitem_1522399143519.subitem_1522399333375', '@attributes': {'funderIdentifierType': 'subitem_1522399143519.subitem_1522399281603'}}}}, 'junii2_mapping': '', 'oai_dc_mapping': '', 'display_lang_type': '', 'jpcoar_v1_mapping': {'fundingReference': {'awardTitle': {'@value': 'subitem_1522399651758.subitem_1522721929892', '@attributes': {'xml:lang': 'subitem_1522399651758.subitem_1522721910626'}}, 'funderName': {'@value': 'subitem_1522399412622.subitem_1522737543681', '@attributes': {'xml:lang': 'subitem_1522399412622.subitem_1522399416691'}}, 'awardNumber': {'@value': 'subitem_1522399571623.subitem_1522399628911', '@attributes': {'awardURI': 'subitem_1522399571623.subitem_1522399585738'}}, 'funderIdentifier': {'@value': 'subitem_1522399143519.subitem_1522399333375', '@attributes': {'funderIdentifierType': 'subitem_1522399143519.subitem_1522399281603'}}}}}, 'item_1617186920753': {'lom_mapping': '', 'lido_mapping': '', 'spase_mapping': '', 'jpcoar_mapping': {'sourceIdentifier': {'@value': 'subitem_1522646572813', '@attributes': {'identifierType': 'subitem_1522646500366'}}}, 'junii2_mapping': '', 'oai_dc_mapping': {'identifier': {'@value': 'subitem_1522646572813'}}, 'display_lang_type': '', 'jpcoar_v1_mapping': {'sourceIdentifier': {'@value': 'subitem_1522646572813', '@attributes': {'identifierType': 'subitem_1522646500366'}}}}, 'item_1617186941041': {'lom_mapping': '', 'lido_mapping': '', 'spase_mapping': '', 'jpcoar_mapping': {'sourceTitle': {'@value': 'subitem_1522650091861', '@attributes': {'xml:lang': 'subitem_1522650068558'}}}, 'junii2_mapping': '', 'oai_dc_mapping': {'identifier': {'@value': 'subitem_1522650091861'}}, 'display_lang_type': '', 'jpcoar_v1_mapping': {'sourceTitle': {'@value': 'subitem_1522650091861', '@attributes': {'xml:lang': 'subitem_1522650068558'}}}}, 'item_1617186959569': {'lom_mapping': '', 'lido_mapping': '', 'spase_mapping': '', 'jpcoar_mapping': {'volume': {'@value': 'subitem_1551256328147'}}, 'junii2_mapping': '', 'oai_dc_mapping': {'identifier': {'@value': 'subitem_1551256328147'}}, 'display_lang_type': '', 'jpcoar_v1_mapping': {'volume': {'@value': 'subitem_1551256328147'}}}, 'item_1617186981471': {'lom_mapping': '', 'lido_mapping': '', 'spase_mapping': '', 'jpcoar_mapping': {'issue': {'@value': 'subitem_1551256294723'}}, 'junii2_mapping': '', 'oai_dc_mapping': {'identifier': {'@value': 'subitem_1551256294723'}}, 'display_lang_type': '', 'jpcoar_v1_mapping': {'issue': {'@value': 'subitem_1551256294723'}}}, 'item_1617186994930': {'lom_mapping': '', 'lido_mapping': '', 'spase_mapping': '', 'jpcoar_mapping': {'numPages': {'@value': 'subitem_1551256248092'}}, 'junii2_mapping': '', 'oai_dc_mapping': {'identifier': {'@value': 'subitem_1551256248092'}}, 'display_lang_type': '', 'jpcoar_v1_mapping': {'numPages': {'@value': 'subitem_1551256248092'}}}, 'item_1617187024783': {'lom_mapping': '', 'lido_mapping': '', 'spase_mapping': '', 'jpcoar_mapping': {'pageStart': {'@value': 'subitem_1551256198917'}}, 'junii2_mapping': '', 'oai_dc_mapping': {'identifier': {'@value': 'subitem_1551256198917'}}, 'display_lang_type': '', 'jpcoar_v1_mapping': {'pageStart': {'@value': 'subitem_1551256198917'}}}, 'item_1617187045071': {'lom_mapping': '', 'lido_mapping': '', 'spase_mapping': '', 'jpcoar_mapping': {'pageEnd': {'@value': 'subitem_1551256185532'}}, 'junii2_mapping': '', 'oai_dc_mapping': {'identifier': {'@value': 'subitem_1551256185532'}}, 'display_lang_type': '', 'jpcoar_v1_mapping': {'pageEnd': {'@value': 'subitem_1551256185532'}}}, 'item_1617187056579': {'lom_mapping': '', 'lido_mapping': '', 'spase_mapping': '', 'jpcoar_mapping': {'date': {'@value': 'bibliographicIssueDates.bibliographicIssueDate', '@attributes': {'dateType': 'bibliographicIssueDates.bibliographicIssueDateType'}}, 'issue': {'@value': 'bibliographicIssueNumber'}, 'volume': {'@value': 'bibliographicVolumeNumber'}, 'pageEnd': {'@value': 'bibliographicPageEnd'}, 'numPages': {'@value': 'bibliographicNumberOfPages'}, 'pageStart': {'@value': 'bibliographicPageStart'}, 'sourceTitle': {'@value': 'bibliographic_titles.bibliographic_title', '@attributes': {'xml:lang': 'bibliographic_titles.bibliographic_titleLang'}}}, 'junii2_mapping': '', 'oai_dc_mapping': {'date': {'@value': 'bibliographicIssueDates.bibliographicIssueDate'}, 'identifier': {'@value': 'bibliographic_titles.bibliographic_title,bibliographicIssueNumber,bibliographicVolumeNumber,bibliographicPageEnd,bibliographicPageStart'}}, 'display_lang_type': '', 'jpcoar_v1_mapping': {'date': {'@value': 'bibliographicIssueDates.bibliographicIssueDate', '@attributes': {'dateType': 'bibliographicIssueDates.bibliographicIssueDateType'}}, 'issue': {'@value': 'bibliographicIssueNumber'}, 'volume': {'@value': 'bibliographicVolumeNumber'}, 'pageEnd': {'@value': 'bibliographicPageEnd'}, 'numPages': {'@value': 'bibliographicNumberOfPages'}, 'pageStart': {'@value': 'bibliographicPageStart'}, 'sourceTitle': {'@value': 'bibliographic_titles.bibliographic_title', '@attributes': {'xml:lang': 'bibliographic_titles.bibliographic_titleLang'}}}}, 'item_1617187087799': {'lom_mapping': '', 'lido_mapping': '', 'spase_mapping': '', 'jpcoar_mapping': {'dissertationNumber': {'@value': 'subitem_1551256171004'}}, 'junii2_mapping': '', 'oai_dc_mapping': {'identifier': {'@value': 'subitem_1551256171004'}}, 'display_lang_type': '', 'jpcoar_v1_mapping': {'dissertationNumber': {'@value': 'subitem_1551256171004'}}}, 'item_1617187112279': {'lom_mapping': '', 'lido_mapping': '', 'spase_mapping': '', 'jpcoar_mapping': {'degreeName': {'@value': 'subitem_1551256126428', '@attributes': {'xml:lang': 'subitem_1551256129013'}}}, 'junii2_mapping': '', 'oai_dc_mapping': {'description': {'@value': 'subitem_1551256126428'}}, 'display_lang_type': '', 'jpcoar_v1_mapping': {'degreeName': {'@value': 'subitem_1551256126428', '@attributes': {'xml:lang': 'subitem_1551256129013'}}}}, 'item_1617187136212': {'lom_mapping': '', 'lido_mapping': '', 'spase_mapping': '', 'jpcoar_mapping': {'dateGranted': {'@value': 'subitem_1551256096004'}}, 'junii2_mapping': '', 'oai_dc_mapping': {'date': {'@value': 'subitem_1551256096004'}}, 'display_lang_type': '', 'jpcoar_v1_mapping': {'dateGranted': {'@value': 'subitem_1551256096004'}}}, 'item_1617187187528': {'lom_mapping': '', 'lido_mapping': '', 'spase_mapping': '', 'jpcoar_mapping': {'conference': {'conferenceDate': {'@value': 'subitem_1599711699392.subitem_1599711704251', '@attributes': {'endDay': 'subitem_1599711699392.subitem_1599711735410', 'endYear': 'subitem_1599711699392.subitem_1599711743722', 'endMonth': 'subitem_1599711699392.subitem_1599711739022', 'startDay': 'subitem_1599711699392.subitem_1599711712451', 'xml:lang': 'subitem_1599711699392.subitem_1599711745532', 'startYear': 'subitem_1599711699392.subitem_1599711731891', 'startMonth': 'subitem_1599711699392.subitem_1599711727603'}}, 'conferenceName': {'@value': 'subitem_1599711633003.subitem_1599711636923', '@attributes': {'xml:lang': 'subitem_1599711633003.subitem_1599711645590'}}, 'conferenceVenue': {'@value': 'subitem_1599711758470.subitem_1599711769260', '@attributes': {'xml:lang': 'subitem_1599711758470.subitem_1599711775943'}}, 'conferenceCountry': {'@value': 'subitem_1599711813532'}, 'conferenceSponsor': {'@value': 'subitem_1599711660052.subitem_1599711680082', '@attributes': {'xml:lang': 'subitem_1599711660052.subitem_1599711686511'}}, 'conferenceSequence': {'@value': 'subitem_1599711655652'}}}, 'junii2_mapping': '', 'oai_dc_mapping': '', 'display_lang_type': '', 'jpcoar_v1_mapping': {'conference': {'conferenceDate': {'@value': 'subitem_1599711699392.subitem_1599711704251', '@attributes': {'endDay': 'subitem_1599711699392.subitem_1599711735410', 'endYear': 'subitem_1599711699392.subitem_1599711743722', 'endMonth': 'subitem_1599711699392.subitem_1599711739022', 'startDay': 'subitem_1599711699392.subitem_1599711712451', 'xml:lang': 'subitem_1599711699392.subitem_1599711745532', 'startYear': 'subitem_1599711699392.subitem_1599711731891', 'startMonth': 'subitem_1599711699392.subitem_1599711727603'}}, 'conferenceName': {'@value': 'subitem_1599711633003.subitem_1599711636923', '@attributes': {'xml:lang': 'subitem_1599711633003.subitem_1599711645590'}}, 'conferenceVenue': {'@value': 'subitem_1599711758470.subitem_1599711769260', '@attributes': {'xml:lang': 'subitem_1599711758470.subitem_1599711775943'}}, 'conferenceCountry': {'@value': 'subitem_1599711813532'}, 'conferenceSponsor': {'@value': 'subitem_1599711660052.subitem_1599711680082', '@attributes': {'xml:lang': 'subitem_1599711660052.subitem_1599711686511'}}, 'conferenceSequence': {'@value': 'subitem_1599711655652'}}}}, 'item_1617258105262': {'lom_mapping': '', 'lido_mapping': '', 'spase_mapping': '', 'jpcoar_mapping': {'type': {'@value': 'resourcetype', '@attributes': {'rdf:resource': 'resourceuri'}}}, 'junii2_mapping': '', 'oai_dc_mapping': {'description': {'@value': 'resourceuri'}}, 'display_lang_type': '', 'jpcoar_v1_mapping': {'type': {'@value': 'resourcetype', '@attributes': {'rdf:resource': 'resourceuri'}}}}, 'item_1617265215918': {'lom_mapping': '', 'lido_mapping': '', 'spase_mapping': '', 'jpcoar_mapping': {'versiontype': {'@value': 'subitem_1522305645492', '@attributes': {'rdf:resource': 'subitem_1600292170262'}}}, 'junii2_mapping': '', 'oai_dc_mapping': {'type': {'@value': 'subitem_1522305645492'}}, 'display_lang_type': '', 'jpcoar_v1_mapping': {'versiontype': {'@value': 'subitem_1522305645492', '@attributes': {'rdf:resource': 'subitem_1600292170262'}}}}, 'item_1617349709064': {'lom_mapping': '', 'lido_mapping': '', 'spase_mapping': '', 'jpcoar_mapping': {'contributor': {'givenName': {'@value': 'givenNames.givenName', '@attributes': {'xml:lang': 'givenNames.givenNameLang'}}, 'familyName': {'@value': 'familyNames.familyName', '@attributes': {'xml:lang': 'familyNames.familyNameLang'}}, '@attributes': {'contributorType': 'contributorType'}, 'affiliation': {'nameIdentifier': {'@value': 'contributorAffiliations.contributorAffiliationNameIdentifiers.contributorAffiliationNameIdentifier', '@attributes': {'nameIdentifierURI': 'contributorAffiliations.contributorAffiliationNameIdentifiers.contributorAffiliationURI', 'nameIdentifierScheme': 'contributorAffiliations.contributorAffiliationNameIdentifiers.contributorAffiliationScheme'}}, 'affiliationName': {'@value': 'contributorAffiliations.contributorAffiliationNames.contributorAffiliationName', '@attributes': {'xml:lang': 'contributorAffiliations.contributorAffiliationNames.contributorAffiliationNameLang'}}}, 'nameIdentifier': {'@value': 'nameIdentifiers.nameIdentifier', '@attributes': {'nameIdentifierURI': 'nameIdentifiers.nameIdentifierURI', 'nameIdentifierScheme': 'nameIdentifiers.nameIdentifierScheme'}}, 'contributorName': {'@value': 'contributorNames.contributorName', '@attributes': {'xml:lang': 'contributorNames.lang'}}, 'contributorAlternative': {'@value': 'contributorAlternatives.contributorAlternative', '@attributes': {'xml:lang': 'contributorAlternatives.contributorAlternativeLang'}}}}, 'junii2_mapping': '', 'oai_dc_mapping': {'contributor': {'@value': 'contributorNames.contributorName,nameIdentifiers.nameIdentifier'}}, 'display_lang_type': '', 'jpcoar_v1_mapping': {'contributor': {'givenName': {'@value': 'givenNames.givenName', '@attributes': {'xml:lang': 'givenNames.givenNameLang'}}, 'familyName': {'@value': 'familyNames.familyName', '@attributes': {'xml:lang': 'familyNames.familyNameLang'}}, '@attributes': {'contributorType': 'contributorType'}, 'affiliation': {'nameIdentifier': {'@value': 'contributorAffiliations.contributorAffiliationNameIdentifiers.contributorAffiliationNameIdentifier', '@attributes': {'nameIdentifierURI': 'contributorAffiliations.contributorAffiliationNameIdentifiers.contributorAffiliationURI', 'nameIdentifierScheme': 'contributorAffiliations.contributorAffiliationNameIdentifiers.contributorAffiliationScheme'}}, 'affiliationName': {'@value': 'contributorAffiliations.contributorAffiliationNames.contributorAffiliationName', '@attributes': {'xml:lang': 'contributorAffiliations.contributorAffiliationNames.contributorAffiliationNameLang'}}}, 'nameIdentifier': {'@value': 'nameIdentifiers.nameIdentifier', '@attributes': {'nameIdentifierURI': 'nameIdentifiers.nameIdentifierURI', 'nameIdentifierScheme': 'nameIdentifiers.nameIdentifierScheme'}}, 'contributorName': {'@value': 'contributorNames.contributorName', '@attributes': {'xml:lang': 'contributorNames.lang'}}, 'contributorAlternative': {'@value': 'contributorAlternatives.contributorAlternative', '@attributes': {'xml:lang': 'contributorAlternatives.contributorAlternativeLang'}}}}}, 'item_1617349808926': {'lom_mapping': '', 'lido_mapping': '', 'spase_mapping': '', 'jpcoar_mapping': {'version': {'@value': 'subitem_1523263171732'}}, 'junii2_mapping': '', 'oai_dc_mapping': '', 'display_lang_type': '', 'jpcoar_v1_mapping': {'version': {'@value': 'subitem_1523263171732'}}}, 'item_1617351524846': {'lom_mapping': '', 'lido_mapping': '', 'spase_mapping': '', 'jpcoar_mapping': {'apc': {'@value': 'subitem_1523260933860'}}, 'junii2_mapping': '', 'oai_dc_mapping': '', 'display_lang_type': '', 'jpcoar_v1_mapping': {'apc': {'@value': 'subitem_1523260933860'}}}, 'item_1617353299429': {'lom_mapping': '', 'lido_mapping': '', 'spase_mapping': '', 'jpcoar_mapping': {'relation': {'@attributes': {'relationType': 'subitem_1522306207484'}, 'relatedTitle': {'@value': 'subitem_1523320863692.subitem_1523320909613', '@attributes': {'xml:lang': 'subitem_1523320863692.subitem_1523320867455'}}, 'relatedIdentifier': {'@value': 'subitem_1522306287251.subitem_1522306436033', '@attributes': {'identifierType': 'subitem_1522306287251.subitem_1522306382014'}}}}, 'junii2_mapping': '', 'oai_dc_mapping': {'relation': {'@value': 'subitem_1522306287251.subitem_1522306436033,subitem_1523320863692.subitem_1523320909613'}}, 'display_lang_type': '', 'jpcoar_v1_mapping': {'relation': {'@attributes': {'relationType': 'subitem_1522306207484'}, 'relatedTitle': {'@value': 'subitem_1523320863692.subitem_1523320909613', '@attributes': {'xml:lang': 'subitem_1523320863692.subitem_1523320867455'}}, 'relatedIdentifier': {'@value': 'subitem_1522306287251.subitem_1522306436033', '@attributes': {'identifierType': 'subitem_1522306287251.subitem_1522306382014'}}}}}, 'item_1617605131499': {'lom_mapping': '', 'lido_mapping': '', 'spase_mapping': '', 'jpcoar_mapping': {'file': {'URI': {'@value': 'url.url', '@attributes': {'label': 'url.label', 'objectType': 'url.objectType'}}, 'date': {'@value': 'fileDate.fileDateValue', '@attributes': {'dateType': 'fileDate.fileDateType'}}, 'extent': {'@value': 'filesize.value'}, 'version': {'@value': 'version'}, 'mimeType': {'@value': 'format'}}}, 'junii2_mapping': '', 'oai_dc_mapping': '', 'display_lang_type': '', 'jpcoar_v1_mapping': {'file': {'URI': {'@value': 'url.url', '@attributes': {'label': 'url.label', 'objectType': 'url.objectType'}}, 'date': {'@value': 'fileDate.fileDateValue', '@attributes': {'dateType': 'fileDate.fileDateType'}}, 'extent': {'@value': 'filesize.value'}, 'version': {'@value': 'version'}, 'mimeType': {'@value': 'format'}}}}, 'item_1617610673286': {'lom_mapping': '', 'lido_mapping': '', 'spase_mapping': '', 'jpcoar_mapping': {'rightsHolder': {'nameIdentifier': {'@value': 'nameIdentifiers.nameIdentifier', '@attributes': {'nameIdentifierURI': 'nameIdentifiers.nameIdentifierURI', 'nameIdentifierScheme': 'nameIdentifiers.nameIdentifierScheme'}}, 'rightsHolderName': {'@value': 'rightHolderNames.rightHolderName', '@attributes': {'xml:lang': 'rightHolderNames.rightHolderLanguage'}}}}, 'junii2_mapping': '', 'oai_dc_mapping': '', 'display_lang_type': '', 'jpcoar_v1_mapping': {'rightsHolder': {'nameIdentifier': {'@value': 'nameIdentifiers.nameIdentifier', '@attributes': {'nameIdentifierURI': 'nameIdentifiers.nameIdentifierURI', 'nameIdentifierScheme': 'nameIdentifiers.nameIdentifierScheme'}}, 'rightsHolderName': {'@value': 'rightHolderNames.rightHolderName', '@attributes': {'xml:lang': 'rightHolderNames.rightHolderLanguage'}}}}}, 'item_1617620223087': {'lom_mapping': '', 'lido_mapping': '', 'spase_mapping': '', 'jpcoar_mapping': '', 'junii2_mapping': '', 'oai_dc_mapping': '', 'display_lang_type': '', 'jpcoar_v1_mapping': ''}, 'item_1617944105607': {'lom_mapping': '', 'lido_mapping': '', 'spase_mapping': '', 'jpcoar_mapping': {'degreeGrantor': {'nameIdentifier': {'@value': 'subitem_1551256015892.subitem_1551256027296', '@attributes': {'nameIdentifierScheme': 'subitem_1551256015892.subitem_1551256029891'}}, 'degreeGrantorName': {'@value': 'subitem_1551256037922.subitem_1551256042287', '@attributes': {'xml:lang': 'subitem_1551256037922.subitem_1551256047619'}}}}, 'junii2_mapping': '', 'oai_dc_mapping': {'description': {'@value': 'subitem_1551256037922.subitem_1551256042287'}}, 'display_lang_type': '', 'jpcoar_v1_mapping': {'degreeGrantor': {'nameIdentifier': {'@value': 'subitem_1551256015892.subitem_1551256027296', '@attributes': {'nameIdentifierScheme': 'subitem_1551256015892.subitem_1551256029891'}}, 'degreeGrantorName': {'@value': 'subitem_1551256037922.subitem_1551256042287', '@attributes': {'xml:lang': 'subitem_1551256037922.subitem_1551256047619'}}}}}, 'system_identifier_doi': {'lom_mapping': '', 'lido_mapping': '', 'spase_mapping': '', 'jpcoar_mapping': {'identifier': {'@value': 'subitem_systemidt_identifier', '@attributes': {'identifierType': 'subitem_systemidt_identifier_type'}}}, 'junii2_mapping': '', 'oai_dc_mapping': '', 'display_lang_type': '', 'jpcoar_v1_mapping': {'identifier': {'@value': 'subitem_systemidt_identifier', '@attributes': {'identifierType': 'subitem_systemidt_identifier_type'}}}}, 'system_identifier_hdl': {'lom_mapping': '', 'lido_mapping': '', 'spase_mapping': '', 'jpcoar_mapping': {'identifier': {'@value': 'subitem_systemidt_identifier', '@attributes': {'identifierType': 'subitem_systemidt_identifier_type'}}}, 'junii2_mapping': '', 'oai_dc_mapping': '', 'display_lang_type': '', 'jpcoar_v1_mapping': {'identifier': {'@value': 'subitem_systemidt_identifier', '@attributes': {'identifierType': 'subitem_systemidt_identifier_type'}}}}, 'system_identifier_uri': {'lom_mapping': '', 'lido_mapping': '', 'spase_mapping': '', 'jpcoar_mapping': {'identifier': {'@value': 'subitem_systemidt_identifier', '@attributes': {'identifierType': 'subitem_systemidt_identifier_type'}}}, 'junii2_mapping': '', 'oai_dc_mapping': '', 'display_lang_type': '', 'jpcoar_v1_mapping': {'identifier': {'@value': 'subitem_systemidt_identifier', '@attributes': {'identifierType': 'subitem_systemidt_identifier_type'}}}}})
     assert get_options_and_order_list(item_type.id) == ret
     assert get_options_and_order_list(item_type.id, item_type_data=ItemTypes(item_type.schema, model=item_type)) == ret
     assert get_options_and_order_list(item_type.id, mapping_flag=False) == ret[0]
@@ -9366,7 +9388,7 @@ def test_WekoQueryRankingHelper_get(app, users, db_records,esindex,mocker):
                 count_field='count',
                 ranking_type='most_view_ranking'
             )
-    assert result == [{'key': '3', 'count': 5}, {'key': '1', 'count': 4}, {'key': '4', 'count': 2}]
+        assert result == [{'key': '3', 'count': 5}, {'key': '1', 'count': 4}, {'key': '4', 'count': 2}]
     # raise Exception
     with patch("weko_items_ui.utils.json.loads",side_effect=Exception("test_error")):
         result = WekoQueryRankingHelper.get(
@@ -10285,8 +10307,9 @@ def test_save_title(app, db_itemtype, db_workflow, db_records, users):
 # .tox/c1/bin/pytest --cov=weko_items_ui tests/test_utils.py::test_get_key_title_in_item_type_mapping -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
 def test_get_key_title_in_item_type_mapping(db_itemtype):
     mapping = db_itemtype['item_type_mapping'].mapping
-    assert get_key_title_in_item_type_mapping(mapping) ==  ('item_1617186331708', 'subitem_1551255647225')
-
+    key_list, key_child_dict = get_key_title_in_item_type_mapping(mapping)
+    assert key_list == ["item_1617186331708","item_1617186331709"]
+    assert key_child_dict == {"item_1617186331708": "subitem_1551255647225", "item_1617186331709": "subitem_1551255647226"}
 
 # def get_title_in_request(request_data, key, key_child):
 # .tox/c1/bin/pytest --cov=weko_items_ui tests/test_utils.py::test_get_title_in_request -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
@@ -11311,53 +11334,188 @@ def test_get_weko_link(app, client, users, db_records, mocker):
     # not key == "nameIdentifiers" is true
     res = get_weko_link({"metainfo": {"field1": [{"field2": {}}]}})
     assert res == {}
-
+    
+# .tox/c1/bin/pytest --cov=weko_items_ui tests/test_utils.py::test_get_duplicate_fields -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
+def test_get_duplicate_fields():
+    data_author_list = [
+        {
+            "creatorNames":[
+                {"creatorName":"情報, 太郎"},
+                {"creatorName":"じょうほう, たろう"},
+            ],
+            "nameIdentifiers":[
+                {"nameIdentifierScheme":"WEKO","nameIdentifier":"6","nameIdentifierURI":"https://test.uri"},
+                {"nameIdentifierScheme":"ORCID","nameIdentifier":"6.123","nameIdentifierURI":"https://test.orcid.uri"},
+            ]
+        },
+        {
+            "creatorNames":[
+                {"creatorName":"じょうほう, じろう"},
+                {"creatorName":"情報, 次郎"},
+            ],
+            "nameIdentifiers":[
+                {"nameIdentifierScheme":"ORCID","nameIdentifier":"7.123","nameIdentifierURI":"https://test.orcid.uri"},
+                {"nameIdentifierScheme":"WEKO","nameIdentifier":"7","nameIdentifierURI":"https://test.uri"},
+            ]
+        }
+    ]
+    res = get_duplicate_fields(data_author_list)
+    assert res[0] == []
+    assert res[1] == []
+    assert res[2] == []
+    assert res[3] == ["情報, 太郎", "じょうほう, たろう", "じょうほう, じろう", "情報, 次郎"]
+    assert res[4] == ["6", "7"]
+    
+    data_author_dict = {
+        "creatorNames":[
+            {"creatorName":"情報, 太郎"},
+            {"creatorName":"じょうほう, たろう"},
+        ],
+        "nameIdentifiers":[
+            {"nameIdentifierScheme":"WEKO","nameIdentifier":"6","nameIdentifierURI":"https://test.uri"},
+            {"nameIdentifierScheme":"ORCID","nameIdentifier":"6.123","nameIdentifierURI":"https://test.orcid.uri"},
+        ]
+    }
+    res = get_duplicate_fields(data_author_dict)
+    assert res[0] == []
+    assert res[1] == []
+    assert res[2] == []
+    assert res[3] == ["情報, 太郎", "じょうほう, たろう"]
+    assert res[4] == ["6"]
+    
+    data_title_list = [
+        {
+            "subitem_title": "テストタイトル",
+            "subitem_title_language": "ja"
+        },
+        {
+            "subitem_title": "test title",
+            "subitem_title_language": "en"
+        }
+    ]
+    res = get_duplicate_fields(data_title_list)
+    assert res[0] == []
+    assert res[1] == []
+    assert res[2] == ["テストタイトル", "test title"]
+    assert res[3] == []
+    assert res[4] == []
+    
+    data_title_dict = {
+        "subitem_title": "テストタイトルその2",
+        "subitem_title_language": "ja"
+    }
+    res = get_duplicate_fields(data_title_dict)
+    assert res[0] == []
+    assert res[1] == []
+    assert res[2] == ["テストタイトルその2"]
+    assert res[3] == []
+    assert res[4] == []
+    
+    
+    data_idt_list = [
+        {
+            "subitem_identifier_uri": "5678",
+            "subitem_identifier_type": "DOI",
+        },
+        {
+            "subitem_identifier_uri": "90123",
+            "subitem_identifier_type": "URI",
+        },
+    ]
+    res = get_duplicate_fields(data_idt_list)
+    assert res[0] == []
+    assert res[1] == ["5678","90123"]
+    assert res[2] == []
+    assert res[3] == []
+    assert res[4] == []
+    
+    data_idt_dict = {
+        "subitem_identifier_uri": "12345",
+        "subitem_identifier_type": "DOI",
+    }
+    res = get_duplicate_fields(data_idt_dict)
+    assert res[0] == []
+    assert res[1] == ["12345"]
+    assert res[2] == []
+    assert res[3] == []
+    assert res[4] == []
+    
+    data_resourcetype_list = [
+        {
+            "resourcetype": "data paper",
+            "resourceuri": "http://purl.org/coar/resource_type/c_beb9"
+        },
+        {
+            "resourcetype": "journal",
+            "resourceuri": "http://purl.org/coar/resource_type/c_0640/"
+        },
+    ]
+    res = get_duplicate_fields(data_resourcetype_list)
+    assert res[0] == ["data paper", "journal"]
+    assert res[1] == []
+    assert res[2] == []
+    assert res[3] == []
+    assert res[4] == []
+    data_resourcetype_dict = {
+            "resourcetype": "conference paper",
+            "resourceuri": "http://purl.org/coar/resource_type/c_5794"
+    }
+    res = get_duplicate_fields(data_resourcetype_dict)
+    assert res[0] == ["conference paper"]
+    assert res[1] == []
+    assert res[2] == []
+    assert res[3] == []
+    assert res[4] == []
+    
+    
+    
 # def check_duplicate(data, is_item=True):
 # .tox/c1/bin/pytest --cov=weko_items_ui tests/test_utils.py::test_check_duplicate -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
 def test_check_duplicate(app, users,db_records3):
-    # JSON format NG
-    res, [], [] =  check_duplicate('',True)
-    assert res == False
+    with app.test_request_context():
+        # JSON format NG
+        res, [], [] =  check_duplicate('',True)
+        assert res == False
 
-    # data dict NG
-    res, [], [] =  check_duplicate(1,True)
-    assert res == False
+        # data dict NG
+        res, [], [] =  check_duplicate(1,True)
+        assert res == False
 
-    # metadata format NG
-    res, [], [] =  check_duplicate({"metainfo":123},False)
-    assert res == False
+        # metadata format NG
+        res, [], [] =  check_duplicate({"metainfo":123},False)
+        assert res == False
 
-    # first_item not dict
-    res, [], [] =  check_duplicate({"subitem_identifier_uri":[{"subitem_identifier_uri"}]},True)
-    assert res == False
+        # first_item not dict
+        res, [], [] =  check_duplicate({"subitem_identifier_uri":[{"subitem_identifier_uri"}]},True)
+        assert res == False
 
-    # subitem_identifier_uri NG
-    res, [], [] =  check_duplicate({"subitem_identifier_uri":[{"subitem_identifier_uri":"noexists"}]},True)
-    assert res == False
+        # subitem_identifier_uri NG
+        res, [], [] =  check_duplicate({"subitem_identifier_uri":[{"subitem_identifier_uri":"noexists"}]},True)
+        assert res == False
 
-    # subitem_identifier_uri OK
-    res, recid_list, item_links =  check_duplicate({"subitem_identifier_uri":[{"subitem_identifier_uri":"http://localhost"}]},True)
-    assert recid_list[0] == 8
+        # subitem_identifier_uri OK
+        res, recid_list, item_links =  check_duplicate({"subitem_identifier_uri":[{"subitem_identifier_uri":"http://localhost"}]},True)
+        assert recid_list[0] == 8
 
-    # subitem_title NG
-    res, [], [] =  check_duplicate({"subitem_title":[{"subitem_title":"title"}]},True)
-    assert res == False
+        # subitem_title NG
+        res, [], [] =  check_duplicate({"subitem_title":[{"subitem_title":"title"}]},True)
+        assert res == False
 
-    # subitem_title:T  resource_type:T
-    res, [], [] =  check_duplicate({"subitem_title":[{"subitem_title":"タイトル"}],"resourcetype":{"resourcetype":"Resource Type"}},True)
-    assert res == False
+        # subitem_title:T  resource_type:T
+        res, [], [] =  check_duplicate({"subitem_title":[{"subitem_title":"タイトル"}],"resourcetype":{"resourcetype":"Resource Type"}},True)
+        assert res == False
 
-    # creatorNames NG
-    res, [], [] =  check_duplicate({"creatorNames":[{"creatorNames":[{"creatorName":"test"}]}]},True)
-    assert res == False
+        # creatorNames NG
+        res, [], [] =  check_duplicate({"creatorNames":[{"creatorNames":[{"creatorName":"test"}]}]},True)
+        assert res == False
 
-    # creatorNames OK
-    res, recid_list, item_links =  check_duplicate({"creatorNames":[{"creatorNames":[{"creatorName":"情報, 太郎"}]}]},True)
-    assert recid_list[0] == 8
+        # creatorNames OK
+        res, recid_list, item_links =  check_duplicate({"creatorNames":[{"creatorNames":[{"creatorName":"情報, 太郎"}]}]},True)
+        assert recid_list[0] == 8
 
-    # resourcetype
-    res, [], [] =  check_duplicate({"resourcetype":{"resourcetype":"test"}},True)
-    assert res == False
+        # resourcetype
+        res, [], [] =  check_duplicate({"resourcetype":{"resourcetype":"test"}},True)
+        assert res == False
 
 # def get_notification_targets(deposit, user_id):
 
@@ -11365,7 +11523,7 @@ def test_check_duplicate(app, users,db_records3):
 
 # def create_item_deleted_data(deposit, profile, target, url):
 # .tox/c1/bin/pytest --cov=weko_items_ui tests/test_utils.py::test_create_item_deleted_data -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
-def test_create_item_deleted_data(app, users, db_records2, db_userprofile):
+def test_create_item_deleted_data(app, db,users, db_records2, db_userprofile):
     record = db_records2[0][4]
     target = users[0]["obj"]
     profile = db_userprofile.get(target.email)
@@ -11374,18 +11532,44 @@ def test_create_item_deleted_data(app, users, db_records2, db_userprofile):
     with patch("weko_items_ui.utils.datetime") as mock_datetime:
         mock_datetime.now.return_value = datetime(2025, 1, 1, 12, 0, 0, tzinfo=pytz.timezone("Asia/Tokyo"))
 
-        res = create_item_deleted_data(record, profile, target, url)
-        subject, body = res.get("subject"), res.get("body")
-        assert "タイトル" in subject
-        assert "タイトル" in body
-        assert "2025-01-01 12:00:00" in body
-        assert url in body
-        assert users[0]["email"] in body
+        with patch("weko_workflow.utils.fill_template",return_value="test_template_fill") as mock_fill,\
+                patch("weko_workflow.utils.load_template",return_value="test_template"):
+            res = create_item_deleted_data(record, profile, target, url)
+            assert res == "test_template_fill"
+            test = {
+                "target_title":"タイトル",
+                "recipient_name":None,
+                "event_date":"2025-01-01 12:00:00",
+                "target_url":url
+            }
+            mock_fill.assert_called_with(
+                "test_template",
+                test
+            )
+
+        profile.timezone = "Asia/Tokyo"
+        db.session.merge(profile)
+        db.session.commit()
+
+        with patch("weko_workflow.utils.fill_template",return_value="test_template_fill") as mock_fill,\
+                patch("weko_workflow.utils.load_template",return_value="test_template"):
+            res = create_item_deleted_data(record, profile, target, url)
+            assert res == "test_template_fill"
+            test = {
+                "target_title":"タイトル",
+                "recipient_name":None,
+                "event_date":"2025-01-01 12:00:00",
+                "target_url":url
+            }
+            mock_fill.assert_called_with(
+                "test_template",
+                test
+            )
 
 
 # def create_direct_registerd_data(deposit, profile, target, url):
 # .tox/c1/bin/pytest --cov=weko_items_ui tests/test_utils.py::test_create_direct_registerd_data -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
-def test_create_direct_registerd_data(app, users, db_records2, db_userprofile):
+def test_create_direct_registerd_data(app, db,users, db_records2, db_userprofile):
     record = db_records2[0][4]
     target = users[0]["obj"]
     profile = db_userprofile.get(target.email)
@@ -11394,14 +11578,39 @@ def test_create_direct_registerd_data(app, users, db_records2, db_userprofile):
 
     with patch("weko_items_ui.utils.datetime") as mock_datetime:
         mock_datetime.now.return_value = datetime(2025, 1, 1, 12, 0, 0, tzinfo=pytz.timezone("Asia/Tokyo"))
-        res = create_direct_registered_data(record, profile, target, url)
+        with patch("weko_workflow.utils.fill_template",return_value="test_template_fill") as mock_fill,\
+                patch("weko_workflow.utils.load_template",return_value="test_template"):
+            res = create_direct_registered_data(record, profile, target, url)
+            assert res == "test_template_fill"
+            test = {
+                "target_title":"タイトル",
+                "recipient_name":"test_user",
+                "event_date":"2025-01-01 12:00:00",
+                "target_url":url
+            }
+            mock_fill.assert_called_with(
+                "test_template",
+                test
+            )
 
-    subject, body = res.get("subject"), res.get("body")
-    assert "タイトル" in subject
-    assert "タイトル" in body
-    assert "2025-01-01 12:00:00" in body
-    assert url in body
-    assert profile.username in body
+        profile.timezone = "Asia/Tokyo"
+        db.session.merge(profile)
+        db.session.commit()
+
+        with patch("weko_workflow.utils.fill_template",return_value="test_template_fill") as mock_fill,\
+                patch("weko_workflow.utils.load_template",return_value="test_template"):
+            res = create_direct_registered_data(record, profile, target, url)
+            assert res == "test_template_fill"
+            test = {
+                "target_title":"タイトル",
+                "recipient_name":"test_user",
+                "event_date":"2025-01-01 12:00:00",
+                "target_url":url
+            }
+            mock_fill.assert_called_with(
+                "test_template",
+                test
+            )
 
 
 # def send_mail_item_deleted(pid_value, deposit, user_id):
@@ -11428,11 +11637,16 @@ def test_send_mail_item_deleted(app, mocker):
     _, kwargs = mock_send_mail_from_notification_info.call_args
     get_info_func = kwargs["get_info_func"]
     get_info_func(deposit)
-    mock_get_notification_targets.assert_called_once_with(deposit, user_id)
+    mock_get_notification_targets.assert_called_once_with(deposit, user_id,-1)
 
     assert kwargs["context_obj"] == deposit
     assert kwargs["content_creator"] == create_item_deleted_data
     assert kwargs["record_url"] == expected_url
+    # raise error
+    with patch("weko_items_ui.utils.get_notification_targets",side_effect=Exception("test_error")):
+        result = send_mail_item_deleted(pid_value, deposit, user_id)
+        assert result == None
+
 
 
 # def send_mail_direct_registerd(pid_value, user_id):
@@ -11459,11 +11673,15 @@ def test_send_mail_direct_registered(app, mocker, db_records2):
     _, kwargs = mock_send_mail_from_notification_info.call_args
     get_info_func = kwargs["get_info_func"]
     get_info_func(deposit)
-    mock_get_notification_targets.assert_called_once_with(deposit, user_id)
+    mock_get_notification_targets.assert_called_once_with(deposit, user_id,-1)
 
     assert kwargs["context_obj"] == deposit
     assert kwargs["content_creator"] == create_direct_registered_data
     assert kwargs["record_url"] == expected_url
+    # raise error
+    with patch("weko_items_ui.utils.get_notification_targets",side_effect=Exception("test_error")):
+        result = send_mail_direct_registered(pid_value, deposit, user_id)
+        assert result == None
 
 
 # def send_mail_from_notification_info(get_info_func, context_obj, content_creator):
@@ -11604,72 +11822,63 @@ def test_send_mail_from_notification_info_missing_keys(app, mocker, users):
 
 
 # def get_notification_targets(deposit, user_id):
-# .tox/c1/bin/pytest --cov=weko_items_ui tests/test_utils.py::test_get_notification_targets_shared_user_included -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
-def test_get_notification_targets_shared_user_included(app, users, db_records2, db_userprofile, db_notifsetting):
+# .tox/c1/bin/pytest --cov=weko_items_ui tests/test_utils.py::test_get_notification_targets -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
+def test_get_notification_targets(app, users, db_records2, db_userprofile, db_notifsetting):
     deposit = db_records2[0][4]
-    deposit["weko_shared_id"] = users[0]["id"]
-    deposit["_deposit"]["owners"] = [users[1]["id"]]
+    deposit["_deposit"]["owners"] = [users[1]["id"],users[2]["id"]]
     user_id = users[1]["id"]
 
-    result = get_notification_targets(deposit, user_id)
+    # exist shared user
+    result = get_notification_targets(deposit, user_id, users[0]["id"])
 
-    assert set(result["targets"]) == {users[0]["obj"] ,users[1]["obj"]}
-
-    expected_settings = {
-        users[0]["id"]: db_notifsetting[users[0]["id"]],
-        users[1]["id"]: db_notifsetting[users[1]["id"]],
-    }
-    expected_profiles = {
-        users[0]["id"]: db_userprofile[users[0]["email"]],
-        users[1]["id"]: db_userprofile[users[1]["email"]],
-    }
-    assert result["settings"] == expected_settings
-    assert result["profiles"] == expected_profiles
-
-# .tox/c1/bin/pytest --cov=weko_items_ui tests/test_utils.py::test_get_notification_targets_non_shared_self_excluded -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
-def test_get_notification_targets_non_shared_self_excluded(app, users, db_records2, db_userprofile, db_notifsetting):
-    deposit = db_records2[0][4]
-    deposit["weko_shared_id"] = -1
-    deposit["_deposit"]["owners"] = [users[0]["id"]]
-    user_id = users[1]["id"]
-
-    result = get_notification_targets(deposit, user_id)
-
-    assert set(result["targets"]) == {users[0]["obj"]}
+    assert set(result["targets"]) == {users[2]["obj"] ,users[0]["obj"]}
 
     expected_settings = {
+        users[2]["id"]: db_notifsetting[users[2]["id"]],
         users[0]["id"]: db_notifsetting[users[0]["id"]],
     }
     expected_profiles = {
+        users[2]["id"]: db_userprofile[users[2]["email"]],
         users[0]["id"]: db_userprofile[users[0]["email"]],
     }
     assert result["settings"] == expected_settings
     assert result["profiles"] == expected_profiles
 
-# .tox/c1/bin/pytest --cov=weko_items_ui tests/test_utils.py::test_get_notification_targets_empty_owners -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
-def test_get_notification_targets_empty_owners(app, users, db_records2, db_userprofile, db_notifsetting):
+    # shared user is none
+    result = get_notification_targets(deposit, user_id, -1)
+
+    assert set(result["targets"]) == {users[2]["obj"]}
+
+    expected_settings = {
+        users[2]["id"]: db_notifsetting[users[2]["id"]],
+    }
+    expected_profiles = {
+        users[2]["id"]: db_userprofile[users[2]["email"]],
+    }
+    assert result["settings"] == expected_settings
+    assert result["profiles"] == expected_profiles
+
+
+    # owner is empty
     deposit = db_records2[0][4]
-    deposit["weko_shared_id"] = -1
     deposit["_deposit"]["owners"] = []
     user_id = users[1]["id"]
 
-    result = get_notification_targets(deposit, user_id)
+    result = get_notification_targets(deposit, user_id,-1)
 
     assert result["targets"] == []
     assert result["settings"] == {}
     assert result["profiles"] == {}
 
-# .tox/c1/bin/pytest --cov=weko_items_ui tests/test_utils.py::test_get_notification_targets_db_error -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
-def test_get_notification_targets_db_error(app, users, db_records2, db_userprofile, db_notifsetting):
+    # raise error
     deposit = db_records2[0][4]
-    deposit["weko_shared_id"] = -1
     deposit["_deposit"]["owners"] = []
     user_id = users[1]["id"]
     with patch("weko_items_ui.utils.User.query") as mock_user_query:
         mock_user_query.filter.return_value.all.side_effect = SQLAlchemyError("DB Error")
-        result = get_notification_targets(deposit, user_id)
+        result = get_notification_targets(deposit, user_id,-1)
     assert result == {}
-
+    
 # def get_notification_targets_approver(activity):
 # .tox/c1/bin/pytest --cov=weko_items_ui tests/test_utils.py::test_get_notification_targets_approver_normal_behavior -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
 def test_get_notification_targets_approver_normal_behavior(app, db, users, db_workflow, db_userprofile, db_notifsetting, db_community, db_approval_action):
@@ -11683,6 +11892,7 @@ def test_get_notification_targets_approver_normal_behavior(app, db, users, db_wo
     activity.shared_user_id = -1
     activity.activity_login_user = users[0]["id"]
     activity.activity_community_id = comm.id
+    activity.action_order=3
     actor = db_userprofile[users[0]["email"]]
     actor.username = "contirbutor"
     db.session.commit()
@@ -11707,6 +11917,7 @@ def test_get_notification_targets_approver_no_approval_action_role(app, db, user
     activity.shared_user_id = -1
     activity.activity_login_user = users[0]["id"]
     activity.activity_community_id = comm.id
+    activity.action_order=3
     actor = db_userprofile[users[0]["email"]]
     actor.username = "contirbutor"
     db.session.commit()
@@ -11733,6 +11944,8 @@ def test_get_notification_targets_approver_role_inclusion(app, db, users, db_wor
     activity.shared_user_id = -1
     activity.activity_login_user = users[0]["id"]
     activity.activity_community_id = comm.id
+    activity.action_order=3
+
     actor = db_userprofile[users[0]["email"]]
     actor.username = "contirbutor"
     db.session.commit()
@@ -11760,6 +11973,8 @@ def test_get_notification_targets_approver_user_excluded(app, db, users, db_work
     activity.shared_user_id = -1
     activity.activity_login_user = users[0]["id"]
     activity.activity_community_id = comm.id
+    activity.action_order=3
+
     actor = db_userprofile[users[0]["email"]]
     actor.username = "contirbutor"
     db.session.commit()

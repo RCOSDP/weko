@@ -43,6 +43,27 @@ def require_slug(form, field):
     if not slug_pattern.match(field.data):
         raise ValidationError(_("Invalid location name."))
 
+def validate_uri(form, field):
+    """
+    Validate the URI field based on the value of the 'type' field.
+
+    This function checks if the 'type' field in the form is set to 
+    'FILES_REST_LOCATION_TYPE_S3_VIRTUAL_HOST_VALUE'. If so, it ensures 
+    that the URI field starts with 'https://'. If the condition is not 
+    met, a ValidationError is raised.
+
+    Args:
+        form (wtforms.Form): The form object containing the fields.
+        field (wtforms.Field): The field being validated (URI field).
+
+    Raises:
+        ValidationError: If the URI does not start with 'https://' when 
+        the 'type' field is set to 'FILES_REST_LOCATION_TYPE_S3_VIRTUAL_HOST_VALUE'.
+    """
+    if form.type.data == \
+            current_app.config['FILES_REST_LOCATION_TYPE_S3_VIRTUAL_HOST_VALUE'] and \
+            not field.data.startswith('https://'):
+        raise ValidationError(_("Invalid URL. It should start with https://"))
 
 def link(text, link_func):
     """Generate a object formatter for links.."""
@@ -117,7 +138,8 @@ class LocationModelView(ModelView):
         's3_url_expiration': IntegerField('url_expiration', validators=[NumberRange(min=0), Optional()]),
     }
     form_args = dict(
-        name=dict(validators=[require_slug])
+        name=dict(validators=[require_slug]),
+        uri=dict(validators=[validate_uri]),
     )
     page_size = 25
     edit_template = 'admin/location_edit.html'
@@ -137,31 +159,12 @@ class LocationModelView(ModelView):
                 if (model.s3_endpoint_url and
                     not model.s3_endpoint_url.endswith('/')):
                     model.s3_endpoint_url = model.s3_endpoint_url + '/'
-                if (not model.s3_region_name and
-                    model.s3_endpoint_url):
-                    model.s3_region_name = model.s3_endpoint_url.split('.')[2]
             elif (model.type ==
                   current_app.config['FILES_REST_LOCATION_TYPE_S3_VIRTUAL_HOST_VALUE']):
                 model.s3_signature_version = None
                 if not model.uri.endswith('/'):
                     model.uri = model.uri + '/'
-                if (model.uri.startswith('https://s3')):
-                    # ex: https://s3.us-east-1.amazonaws.com/bucket_name/file_name
-                    if not model.s3_region_name:
-                        model.s3_region_name = model.uri.split('.')[1]
-                    parts = model.uri.split('/')
-                    model.s3_endpoint_url = (
-                        parts[0] + '//' + parts[2] + '/'
-                    )
-                else:
-                    # ex: https://bucket_name.s3.us-east-1.amazonaws.com/file_name
-                    if not model.s3_region_name:
-                        model.s3_region_name = model.uri.split('.')[2]
-                    parts = model.uri.split('/')
-                    sub_parts = parts[2].split('.')
-                    model.s3_endpoint_url = (
-                        parts[0] + '//' + parts[2].replace(sub_parts[0] + '.', '') + '/'
-                    )
+                model.s3_endpoint_url = model.uri
             else:
                 model.s3_default_block_size = None
                 model.s3_maximum_number_of_parts = None
@@ -175,30 +178,11 @@ class LocationModelView(ModelView):
                     model.uri = model.uri + '/'
                 if not model.s3_endpoint_url.endswith('/'):
                     model.s3_endpoint_url = model.s3_endpoint_url + '/'
-                if (not model.s3_region_name and
-                    model.s3_endpoint_url):
-                    model.s3_region_name = model.s3_endpoint_url.split('.')[2]
             elif (model.type ==
                   current_app.config['FILES_REST_LOCATION_TYPE_S3_VIRTUAL_HOST_VALUE']):
                 if not model.uri.endswith('/'):
                     model.uri = model.uri + '/'
-                if (model.uri.startswith('https://s3')):
-                    # ex: https://s3.us-east-1.amazonaws.com/bucket_name/file_name
-                    if not model.s3_region_name:
-                        model.s3_region_name = model.uri.split('.')[1]
-                    parts = model.uri.split('/')
-                    model.s3_endpoint_url = (
-                        parts[0] + '//' + parts[2] + '/'
-                    )
-                else:
-                    # ex: https://bucket_name.s3.us-east-1.amazonaws.com/file_name
-                    if not model.s3_region_name:
-                        model.s3_region_name = model.uri.split('.')[2]
-                    parts = model.uri.split('/')
-                    sub_parts = parts[2].split('.')
-                    model.s3_endpoint_url = (
-                        parts[0] + '//' + parts[2].replace(sub_parts[0] + '.', '') + '/'
-                    )
+                model.s3_endpoint_url = model.uri
             else:
                 # local
                 model.s3_default_block_size = None

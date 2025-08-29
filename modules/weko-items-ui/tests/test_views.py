@@ -5,6 +5,7 @@ from unittest.mock import MagicMock
 import uuid
 import requests
 from unittest.mock import patch, MagicMock
+import responses
 
 import os
 import pytest
@@ -329,7 +330,7 @@ def test_iframe_save_model_acl(app, client, db_itemtype, db_workflow, users, id,
 @pytest.mark.parametrize(
     "id, status_code",
     [
-        (0, 200),
+        (0, 500),
     ],
 )
 def test_iframe_save_model_error(app, client, db_itemtype, db_workflow, users, id, status_code):
@@ -500,11 +501,12 @@ def test_iframe_save_model(
             "action_status": "M",
             "commond": "",
         }
-    res = client.post(url, json=data)
-    assert res.status_code == 400
-    ret = json.loads(res.data)
-    assert ret["code"] == 1
-    assert ret["msg"] == "既に登録されているデータです"
+    with patch("weko_items_ui.views.is_duplicate_record", return_value=(True,["1"],["https://example.com/records/1"])):
+        res = client.post(url, json=data)
+        assert res.status_code == 200
+        ret = json.loads(res.data)
+        assert ret["code"] == 1
+        assert ret["msg"] == "The same item may have been registered."
 
     # metainfo false
     res = client.post(url, json={'data':1})
@@ -530,9 +532,9 @@ def test_iframe_save_model(
             "action_status": "M",
             "commond": "",
         }
-    mocker.patch("weko_items_ui.views.sanitize_input_data",side_effect=Exception("Sanitize error"))
-    res = client.post(url, json={})
-    assert res.status_code == status_code
+        mocker.patch("weko_items_ui.views.sanitize_input_data",side_effect=Exception("Sanitize error"))
+    res = client.post(url, json=data)
+    assert res.status_code == 500
     ret = json.loads(res.data)
     assert ret["code"] == 1
     assert ret["msg"] == "Model save error"
@@ -21340,8 +21342,9 @@ def test_prepare_edit_item_login(client_api, users, db_itemtype_15, mocker):
 
 
 def test_prepare_edit_item_guest(client_api, users):
+    url = url_for("weko_items_ui.prepare_edit_item")
     res = client_api.post(
-        "/api/items/prepare_edit_item",
+        url,
         data=json.dumps({}),
         content_type="application/json",
     )
@@ -21842,6 +21845,7 @@ def test_check_record_doi_indexes(
         res = client_api.get("{}?doi=1".format(url))
 
 # .tox/c1/bin/pytest --cov=weko_items_ui tests/test_views.py::test_get_oa_policy -vv -s  --cov-branch --cov-report=term --cov-report=html --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
+@responses.activate
 @pytest.mark.parametrize(
     "user_id, params, status_code, expected_response",
     [
@@ -21862,7 +21866,7 @@ def test_check_record_doi_indexes(
     ],
 )
 def test_get_oa_policy(
-    client_api, users, user_id, params, status_code, expected_response
+    app, client_api, users, user_id, params, status_code, expected_response
 ):
     """get_oa_policyエンドポイントの動作をテストする"""
     # ユーザーログインをシミュレート
@@ -21871,11 +21875,19 @@ def test_get_oa_policy(
     # エンドポイントURLを生成（Blueprint名をweko_items_uiに仮定）
     url = url_for("weko_items_ui.get_oa_policy", _external=True)
 
-    # get_access_tokenとrequests.getをモック化
-    with patch("weko_items_ui.views.get_access_token") as mock_get_token, patch(
-        "requests.get"
-    ) as mock_requests_get:
 
+    # get_access_tokenとrequests.getをモック化
+    with patch("weko_items_ui.views.get_oa_token") as mock_get_token:
+        res = client_api.get(url, query_string=params)
+        assert res.status_code == 400
+
+        if status_code == 400:
+            assert json.loads(res.data).get("error") == "Please enter ISSN, eISSN, or journal title"
+        else:
+            assert json.loads(res.data).get("error") == "Invalid API URL"
+        # with patch("requests.get") as mock_requests_get:
+
+        app.config["WEKO_RECORDS_UI_OA_GET_OA_POLICIES_URL"] = "https://example.com/api/oa_policies"
         # 各ケースに応じたモックの設定
         if status_code == 401:
             # トークン取得失敗ケース
@@ -21883,23 +21895,13 @@ def test_get_oa_policy(
         else:
             # 正常なトークンを返す
             mock_get_token.return_value = {"access_token": "mock_token"}
-
-        # requests.getのモックレスポンスを設定
-        if status_code == 200:
-            mock_requests_get.return_value.status_code = 200
-            mock_requests_get.return_value.json.return_value = {"url": "http://example.com/policy"}
-        elif status_code == 400:
-            mock_requests_get.return_value.status_code = 400
-        elif status_code == 401:
-            mock_requests_get.return_value.status_code = 401
-        elif status_code == 404:
-            mock_requests_get.return_value.status_code = 404
-        elif status_code == 429:
-            mock_requests_get.return_value.status_code = 429
-        elif status_code == 500:
-            mock_requests_get.return_value.status_code = 500
-        elif status_code == 502:
-            mock_requests_get.return_value.status_code = 502
+        responses.add(
+            responses.GET,
+            "https://example.com/api/oa_policies",
+            status=status_code,
+            body=json.dumps({"url": "http://example.com/policy"}) if status_code==200 else "{}",
+            content_type="application/json",
+        )
 
         # APIリクエストを送信
         res = client_api.get(url, query_string=params)
@@ -21913,25 +21915,25 @@ def test_get_oa_policy(
 
 # 例外処理のテスト
 # .tox/c1/bin/pytest --cov=weko_items_ui tests/test_views.py::test_get_oa_policy_exceptions -vv -s  --cov-branch --cov-report=term --cov-report=html --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
-def test_get_oa_policy_exceptions(client_api, users):
+def test_get_oa_policy_exceptions(app,client_api, users):
     """get_oa_policyの例外処理をテストする"""
     # ユーザーログインをシミュレート
     login_user_via_session(client=client_api, email=users[0]["email"])
-
+    app.config["WEKO_RECORDS_UI_OA_GET_OA_POLICIES_URL"] = "https://example.com/api/oa_policies"
     # エンドポイントURLを生成（Blueprint名をweko_items_uiに仮定）
     url = url_for("weko_items_ui.get_oa_policy", _external=True)
 
     # requests.exceptions.RequestExceptionをシミュレート
-    with patch("weko_items_ui.views.get_access_token", return_value={"access_token": "mock_token"}), patch(
-        "requests.get", side_effect=requests.exceptions.RequestException("API接続エラー")
+    with patch("weko_items_ui.views.get_oa_token", return_value={"access_token": "mock_token"}), patch(
+        "weko_items_ui.views.requests.Session", side_effect=requests.exceptions.RequestException("API接続エラー")
     ):
         res = client_api.get(url, query_string={"issn": "1234-5678"})
         assert res.status_code == 500, "リクエスト例外時に500が返るべき"
         assert json.loads(res.data) == {"error": "API Request Failed"}
 
     # 一般的な例外をシミュレート
-    with patch(
-        "weko_items_ui.views.get_access_token", side_effect=Exception("予期しないエラー")
+    with patch("weko_items_ui.views.get_oa_token", return_value={"access_token": "mock_token"}), patch(
+        "weko_items_ui.views.requests.Session", side_effect=Exception("An unknown error occurred")
     ):
         res = client_api.get(url, query_string={"issn": "1234-5678"})
         assert res.status_code == 500, "一般的な例外時に500が返るべき"

@@ -50,6 +50,36 @@ class ShibUser(object):
         self.shib_user = None
         """The :class:`.models.ShibbolethUser` instance."""
 
+        self.is_member_of = []
+        if 'shib_is_member_of' in shib_attr:
+            is_member_of = shib_attr.get('shib_is_member_of', [])
+            if isinstance(is_member_of, str):
+                if is_member_of.find(';') != -1:
+                    is_member_of = is_member_of.split(';')
+                elif is_member_of:
+                    is_member_of = [is_member_of]
+                else:
+                    is_member_of = []
+            elif not isinstance(is_member_of, list):
+                is_member_of = []
+            self.is_member_of = is_member_of
+            del shib_attr['shib_is_member_of']
+
+        self.organizations = []
+        if 'shib_organization' in shib_attr:
+            organizations = shib_attr.get('shib_organization', [])
+            if isinstance(organizations, str):
+                if organizations.find(';') != -1:
+                    organizations = organizations.split(';')
+                elif organizations:
+                    organizations = [organizations]
+                else:
+                    organizations = []
+            elif not isinstance(organizations, list):
+                organizations = []
+            self.organizations = organizations
+            del shib_attr['shib_organization']
+
     def _set_weko_user_role(self, roles):
         """
         Assign role for Shibboleth user.
@@ -292,7 +322,7 @@ class ShibUser(object):
         try:
             if current_app.config['WEKO_ACCOUNTS_SHIB_BIND_GAKUNIN_MAP_GROUPS']:
                 roles_add = self._get_roles_to_add()
-                if not self._find_organization_name(roles_add):
+                if not self._find_organization_name():
                     self._assign_roles_to_user(roles_add)
         except Exception as ex:
             traceback.print_exc()
@@ -316,7 +346,7 @@ class ShibUser(object):
         if current_app.config['WEKO_ACCOUNTS_SHIB_BIND_GAKUNIN_MAP_GROUPS']:
             try:
                 # get shibboleth attributes (isMemberOf)
-                shib_attr_is_member_of = self.shib_attr.get('isMemberOf', [])
+                shib_attr_is_member_of = self.is_member_of
 
                 # check isMemberOf is a list
                 if not isinstance(shib_attr_is_member_of, list):
@@ -339,35 +369,34 @@ class ShibUser(object):
 
         return shib_attr_is_member_of
 
-    def _find_organization_name(self, group_ids):
+    def _find_organization_name(self):
         """
         If organization_name has been registered for each role beforehand,
         that role will be assigned.
 
         Args:
-            group_ids (list): List of group IDs.
+            None
         """
         try:
             with db.session.begin_nested():
-                for group in group_ids:
-                    group_id = urllib.parse.quote(group)
-                    organization_name = self.get_organization_from_api(group_id)
+                organization_name = set(self.organizations) if self.organizations else set()
 
-                    setting_role = ""
-                    if organization_name in current_app.config["WEKO_ACCOUNTS_GAKUNIN_ROLE"]["organizationName"]:
-                        setting_role = current_app.config["WEKO_ACCOUNTS_GAKUNIN_ROLE"]["defaultRole"].replace(" ", "_")
-                    elif organization_name in current_app.config["WEKO_ACCOUNTS_ORTHROS_INSIDE_ROLE"]["organizationName"]:
-                        setting_role = current_app.config["WEKO_ACCOUNTS_ORTHROS_INSIDE_ROLE"]["defaultRole"].replace(" ", "_")
-                    elif organization_name in current_app.config["WEKO_ACCOUNTS_ORTHROS_OUTSIDE_ROLE"]["organizationName"]:
-                        setting_role = current_app.config["WEKO_ACCOUNTS_ORTHROS_OUTSIDE_ROLE"]["defaultRole"].replace(" ", "_")
-                    elif organization_name in current_app.config["WEKO_ACCOUNTS_EXTRA_ROLE"]["organizationName"]:
-                        setting_role = current_app.config["WEKO_ACCOUNTS_EXTRA_ROLE"]["defaultRole"].replace(" ", "_")
-
-                    if len(setting_role) > 0:
-                        role = Role.query.filter_by(name=setting_role).one_or_none()
-                        _datastore.add_role_to_user(self.user, role)
-                        self.shib_user.shib_roles.append(role)
-                        return True
+                setting_role = []
+                if bool(organization_name & set(current_app.config["WEKO_ACCOUNTS_GAKUNIN_ROLE"]["organizationName"])):
+                    setting_role.append(current_app.config["WEKO_ACCOUNTS_GAKUNIN_ROLE"]["defaultRole"])
+                if bool(organization_name & set(current_app.config["WEKO_ACCOUNTS_ORTHROS_INSIDE_ROLE"]["organizationName"])):
+                    setting_role.append(current_app.config["WEKO_ACCOUNTS_ORTHROS_INSIDE_ROLE"]["defaultRole"])
+                if bool(organization_name & set(current_app.config["WEKO_ACCOUNTS_ORTHROS_OUTSIDE_ROLE"]["organizationName"])):
+                    setting_role.append(current_app.config["WEKO_ACCOUNTS_ORTHROS_OUTSIDE_ROLE"]["defaultRole"])
+                if bool(organization_name & set(current_app.config["WEKO_ACCOUNTS_EXTRA_ROLE"]["organizationName"])):
+                    setting_role.append(current_app.config["WEKO_ACCOUNTS_EXTRA_ROLE"]["defaultRole"])
+                if setting_role:
+                    for role in setting_role:
+                        role = Role.query.filter_by(name=role).one_or_none()
+                        if role and role not in self.user.roles:
+                            _datastore.add_role_to_user(self.user, role)
+                            self.shib_user.shib_roles.append(role)
+                    return True
 
             db.session.commit()
             return False
@@ -388,18 +417,22 @@ class ShibUser(object):
 
             with db.session.begin_nested():
                 for map_group_name in map_group_names:
+                    if map_group_name.find('/sp/') != -1 or map_group_name.endswith('/admin'):
+                        # Skip if the group name contains '/sp/' or ends with '/admin'
+                        continue
                     # ロール名が指定されたプレフィックスで始まるか確認
+                    group_name = map_group_name.split('/')[-1]
                     pattern = prefix + f'_{fqdn}_' + role_keyword + r'_[A-Za-z_]+'
-                    if re.match(pattern, map_group_name):
+                    if re.match(pattern, group_name):
                         # The map_group_name matches the pattern
-                        suffix = map_group_name.split(role_keyword + "_")[-1]
+                        suffix = group_name.split(role_keyword + "_")[-1]
                         weko_role_name = role_mapping.get(suffix)
                         if weko_role_name:
                             role = Role.query.filter_by(name=weko_role_name).one_or_none()
                             if role and role not in self.user.roles:
                                 _datastore.add_role_to_user(self.user, role)
                                 self.shib_user.shib_roles.append(role)
-                    elif map_group_name == config["sysadm_group"]:
+                    elif group_name == config["sysadm_group"]:
                         # システム管理者のロールを追加
                         sysadm_name = current_app.config['WEKO_ADMIN_PERMISSION_ROLE_SYSTEM']
                         role = Role.query.filter_by(name=sysadm_name).one()
@@ -408,7 +441,7 @@ class ShibUser(object):
                             self.shib_user.shib_roles.append(role)
 
                     # マッピングされたロール名をデータベースでロールを確認
-                    role = Role.query.filter_by(name=map_group_name).one_or_none()
+                    role = Role.query.filter_by(name=group_name).one_or_none()
                     # ロールが存在し、かつユーザーにまだそのロールが割り当てられていない場合
                     if role and role not in self.user.roles:
                         # ユーザーにロールを追加
@@ -432,7 +465,7 @@ class ShibUser(object):
         Raises:
             ValueError: If the API response is not as expected.
         """
-        url = f"https://cg.gakunin.jp/api/people/@me/{group_id}"
+        url = f"{current_app.config['WEKO_ACCOUNTS_GAKUNIN_MAP_BASE_URL']}/api/people/@me/{group_id}"
         headers = {
             'Content-Type': 'application/json',
         }

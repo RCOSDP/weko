@@ -1,10 +1,10 @@
-FROM python:3.12-slim as base
+FROM python:3.12-slim AS base
 
 ENV PYTHONUNBUFFERED True
 ENV APP_HOME /app
 WORKDIR $APP_HOME
 
-FROM base as production
+FROM base AS production
 
 RUN apt-get update && apt-get install -y git
 RUN git clone --branch nii_main https://github.com/RCOSDP/coar-notify-inbox.git $APP_HOME
