@@ -215,7 +215,7 @@ def base_app(instance_path, search_class, cache_config):
     app_.config.update(
         SECRET_KEY='SECRET_KEY',
         TESTING=True,
-        SERVER_NAME='TEST_SERVER.localdomain',
+        SERVER_NAME='localhost',
         SQLALCHEMY_DATABASE_URI=os.getenv('SQLALCHEMY_DATABASE_URI',
                                            'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest'),
         # SQLALCHEMY_DATABASE_URI=os.environ.get(
