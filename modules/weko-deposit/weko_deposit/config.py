@@ -57,10 +57,23 @@ FILES_REST_UPLOAD_OWNER_FACTORIES = 'weko_deposit.serializer.file_uploaded_owner
 """file update version"""
 
 WEKO_DEPOSIT_ITEMS_CACHE_PREFIX = 'cache_itemsIndex_{pid_value}'
-""" cache items prifix info"""
+""" cache items prefix info"""
 
 WEKO_DEPOSIT_ITEM_UPDATE_STATUS_TTL = 60 * 10
-""" cache default timeout (sec.)"""
+""" cache default timeout for update status (sec.)"""
+
+WEKO_DEPOSIT_ITEM_UPDATE_TASK_TTL = 60 * 60 * 24 * 30 # 1 month
+""" cache default timeout for update task (sec.)"""
+
+WEKO_DEPOSIT_ITEM_UPDATE_RETRY_COUNT = 1
+""" retry count of update_items_by_authorInfo """
+
+WEKO_DEPOSIT_ITEM_UPDATE_RETRY_COUNTDOWN = 3
+""" retry countdown of update_items_by_authorInfo (sec.)"""
+
+WEKO_DEPOSIT_ITEM_UPDATE_RETRY_BACKOFF_RATE = 2
+""" retry backoff rate of update_items_by_authorInfo """
+
 
 WEKO_DEPOSIT_ITEMS_CACHE_TTL = 300
 """ cache default timeout 5 minutes"""
