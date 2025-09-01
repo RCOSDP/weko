@@ -1038,7 +1038,14 @@ def unpackage_and_check_import_file_for_prefix(file_format, file_name, temp_file
                     tmp_data ={}
                     try:
                         for num, data in enumerate(data_row, start=0):
-                            tmp_data[header[num]] = data
+                            raw_header = header[num]
+                            header_key = re.sub(r'\[\d+\]$', '', raw_header)
+                            is_array = '[' in raw_header
+                            if is_array:
+                                if data:
+                                    tmp_data.setdefault(header_key, []).append(data)
+                            else:
+                                tmp_data[header_key] = data
                     except Exception as ex:
                         current_app.logger.error(ex)
                         traceback.print_exc()
@@ -1067,9 +1074,17 @@ def handle_check_consistence_with_mapping_for_prefix(keys, header):
         list: Not consistent items.
     """
     not_consistent_list = []
+    idx_pattern = re.compile(r'^(?P<base>[^\[\]]+)\[(?P<idx>\d+)\]$')
+
     for item in header:
-        if item not in keys:
-            not_consistent_list.append(item)
+        m = idx_pattern.match(item)
+        if m:
+            base = m.group('base')
+            if f"{base}[0]" not in keys:
+                not_consistent_list.append(item)
+        else:
+            if item not in keys:
+                not_consistent_list.append(item)
     return not_consistent_list
 
 def validate_import_data_for_prefix(file_data, target):
@@ -1110,6 +1125,7 @@ def validate_import_data_for_prefix(file_data, target):
         name = item.get('name', "")
         url = item.get('url', "")
         is_deleted = item.get('is_deleted')
+        community_ids = item.get("community_ids", [])
         # Check if the 'scheme' key is empty
         if not scheme:
             errors.append(_("Scheme is required item."))
@@ -1147,6 +1163,28 @@ def validate_import_data_for_prefix(file_data, target):
             errors.append(_("The specified scheme is duplicated."))
         else:
             list_import_scheme.append(scheme)
+
+        try:
+            if item.get('status') == 'new':
+                validate_community_ids(community_ids, is_create=True)
+            elif item.get('status') == 'update':
+                if target == "id_prefix":
+                    old = AuthorsPrefixSettings.query.get(item.get('id'))
+                elif target == "affiliation_id":
+                    old = AuthorsAffiliationSettings.query.get(item.get('id'))
+                old_community_ids = [c.id for c in old.communities]
+                validate_community_ids(community_ids, old_ids=old_community_ids)
+            elif item.get('status') == 'deleted':
+                if target == "id_prefix":
+                    check, message = check_delete_prefix(item.get('id'))
+                elif target == "affiliation_id":
+                    check, message = check_delete_affiliation(item.get('id'))
+
+                if not check:
+                    errors.append(message)
+        except AuthorsValidationError as ex:
+            errors.append(ex.description)
+
         if errors:
             item['errors'] = item['errors'] + errors \
                 if item.get('errors') else errors

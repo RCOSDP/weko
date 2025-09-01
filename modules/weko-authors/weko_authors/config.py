@@ -212,7 +212,7 @@ WEKO_AUTHORS_FILE_MAPPING = [
     }
 ]
 
-WEKO_AUTHORS_FILE_MAPPING_FOR_PREFIX =["scheme", "name", "url", "is_deleted"]
+WEKO_AUTHORS_FILE_MAPPING_FOR_PREFIX = ["scheme", "name", "url", "is_deleted", "community_ids[0]"]
 
 WEKO_AUTHORS_FILE_MAPPING_FOR_COMMUNITY = {
     "label_en": "Community",
