@@ -722,7 +722,7 @@ def update_prefix():
         old_community_ids = [c.id for c in old.communities]
 
         validate_community_ids(community_ids, old_ids=old_community_ids)
-        data['communities'] = Community.get_by_ids(community_ids)
+        data['community_ids'] = set(community_ids)
 
         check = get_author_prefix_obj(data['scheme'])
         if check is None or check.id == data['id']:
@@ -762,7 +762,7 @@ def create_prefix():
         community_ids = data.pop("communityIds", [])
 
         validate_community_ids(community_ids, is_create=True)
-        data['communities'] = Community.get_by_ids(community_ids)
+        data['community_ids'] = set(community_ids)
 
         check = get_author_prefix_obj(data['scheme'])
         if check is None:
@@ -792,7 +792,7 @@ def update_affiliation():
         old_community_ids = [c.id for c in old.communities]
 
         validate_community_ids(community_ids, old_ids=old_community_ids)
-        data['communities'] = Community.get_by_ids(community_ids)
+        data['community_ids'] = set(community_ids)
 
         check = get_author_affiliation_obj(data['scheme'])
         if check is None or check.id == data['id']:
@@ -832,7 +832,7 @@ def create_affiliation():
         community_ids = data.pop("communityIds", [])
 
         validate_community_ids(community_ids, is_create=True)
-        data['communities'] = Community.get_by_ids(community_ids)
+        data['community_ids'] = set(community_ids)
 
         check = get_author_affiliation_obj(data['scheme'])
         if check is None:

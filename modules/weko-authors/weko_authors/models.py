@@ -269,7 +269,7 @@ class AuthorsPrefixSettings(db.Model, Timestamp):
     )
 
     @classmethod
-    def create(cls, name, scheme, url, communities=None):
+    def create(cls, name, scheme, url, community_ids=None):
         """Create settings."""
         try:
             data = AuthorsPrefixSettings()
@@ -278,9 +278,10 @@ class AuthorsPrefixSettings(db.Model, Timestamp):
                 data.url = url
                 if scheme:
                     data.scheme = scheme.strip()
-                if communities is not None:
-                    data.communities = communities
                 db.session.add(data)
+                db.session.flush()
+                if community_ids is not None:
+                    data.add_communities(community_ids)
             db.session.commit()
         except BaseException as ex:
             db.session.rollback()
@@ -289,7 +290,7 @@ class AuthorsPrefixSettings(db.Model, Timestamp):
         return cls
 
     @classmethod
-    def update(cls, id, name, scheme, url, communities=None):
+    def update(cls, id, name, scheme, url, community_ids=None):
         """Update settings."""
         try:
             with db.session.begin_nested():
@@ -298,8 +299,8 @@ class AuthorsPrefixSettings(db.Model, Timestamp):
                 data.url = url
                 if scheme:
                     data.scheme = scheme.strip()
-                if communities is not None:
-                    data.communities = communities
+                if community_ids is not None:
+                    data.update_communities(community_ids)
                 db.session.merge(data)
             db.session.commit()
         except BaseException as ex:
@@ -320,6 +321,56 @@ class AuthorsPrefixSettings(db.Model, Timestamp):
             current_app.logger.error(ex)
             raise
         return cls
+
+    def add_communities(self, community_ids):
+        """Add new communities to the prefix.
+
+        Args:
+            community_ids (list): List of community IDs to associate with the prefix.
+        """
+        try:
+            with db.session.begin_nested():
+                for community_id in community_ids:
+                    relation = AuthorPrefixCommunityRelations(prefix_id=self.id, community_id=community_id)
+                    db.session.add(relation)
+
+        except Exception as ex:
+            db.session.rollback()
+            current_app.logger.error(ex)
+            raise
+
+    def update_communities(self, community_ids):
+        """Update communities for the prefix.
+
+        Args:
+            community_ids (list): List of community IDs to associate with the prefix.
+        """
+        try:
+            with db.session.begin_nested():
+                # Get existing community relations
+                existing_relations = AuthorPrefixCommunityRelations.query.filter_by(prefix_id=self.id).all()
+                existing_community_ids = {rel.community_id for rel in existing_relations}
+
+                # Calculate differences
+                to_add = set(community_ids) - existing_community_ids
+                to_remove = existing_community_ids - set(community_ids)
+
+                # Add new relations
+                for community_id in to_add:
+                    relation = AuthorPrefixCommunityRelations(prefix_id=self.id, community_id=community_id)
+                    db.session.add(relation)
+
+                # Remove old relations
+                if to_remove:
+                    AuthorPrefixCommunityRelations.query.filter(
+                        AuthorPrefixCommunityRelations.prefix_id == self.id,
+                        AuthorPrefixCommunityRelations.community_id.in_(to_remove)
+                    ).delete(synchronize_session=False)
+
+        except Exception as ex:
+            db.session.rollback()
+            current_app.logger.error(ex)
+            raise
 
 
 class AuthorsAffiliationSettings(db.Model, Timestamp):
@@ -372,7 +423,7 @@ class AuthorsAffiliationSettings(db.Model, Timestamp):
     )
 
     @classmethod
-    def create(cls, name, scheme, url, communities=None):
+    def create(cls, name, scheme, url, community_ids=None):
         """Create settings."""
         try:
             data = AuthorsAffiliationSettings()
@@ -381,9 +432,10 @@ class AuthorsAffiliationSettings(db.Model, Timestamp):
                 data.url = url
                 if scheme:
                     data.scheme = scheme.strip()
-                if communities is not None:
-                    data.communities = communities
                 db.session.add(data)
+                db.session.flush()
+                if community_ids is not None:
+                    data.add_communities(community_ids)
             db.session.commit()
         except BaseException as ex:
             db.session.rollback()
@@ -392,7 +444,7 @@ class AuthorsAffiliationSettings(db.Model, Timestamp):
         return cls
 
     @classmethod
-    def update(cls, id, name, scheme, url, communities=None):
+    def update(cls, id, name, scheme, url, community_ids=None):
         """Update settings."""
         try:
             with db.session.begin_nested():
@@ -401,8 +453,8 @@ class AuthorsAffiliationSettings(db.Model, Timestamp):
                 data.url = url
                 if scheme:
                     data.scheme = scheme.strip()
-                if communities is not None:
-                    data.communities = communities
+                if community_ids is not None:
+                    data.update_communities(community_ids)
                 db.session.merge(data)
             db.session.commit()
         except BaseException as ex:
@@ -423,6 +475,57 @@ class AuthorsAffiliationSettings(db.Model, Timestamp):
             current_app.logger.error(ex)
             raise
         return cls
+
+    def add_communities(self, community_ids):
+        """Add new communities to the affiliation.
+
+        Args:
+            community_ids (list): List of community IDs to associate with the affiliation.
+        """
+        try:
+            with db.session.begin_nested():
+                for community_id in community_ids:
+                    relation = AuthorAffiliationCommunityRelations(affiliation_id=self.id, community_id=community_id)
+                    db.session.add(relation)
+
+        except Exception as ex:
+            db.session.rollback()
+            current_app.logger.error(ex)
+            raise
+
+    def update_communities(self, community_ids):
+        """Update communities for the affiliation.
+
+        Args:
+            community_ids (list): List of community IDs to associate with the affiliation.
+        """
+        try:
+            with db.session.begin_nested():
+                # Get existing community relations
+                existing_relations = AuthorAffiliationCommunityRelations.query.filter_by(affiliation_id=self.id).all()
+                existing_community_ids = {rel.community_id for rel in existing_relations}
+
+                # Calculate differences
+                to_add = set(community_ids) - existing_community_ids
+                to_remove = existing_community_ids - set(community_ids)
+
+                # Add new relations
+                for community_id in to_add:
+                    relation = AuthorAffiliationCommunityRelations(affiliation_id=self.id, community_id=community_id)
+                    db.session.add(relation)
+
+                # Remove old relations
+                if to_remove:
+                    AuthorAffiliationCommunityRelations.query.filter(
+                        AuthorAffiliationCommunityRelations.affiliation_id == self.id,
+                        AuthorAffiliationCommunityRelations.community_id.in_(to_remove)
+                    ).delete(synchronize_session=False)
+
+        except Exception as ex:
+            db.session.rollback()
+            current_app.logger.error(ex)
+            raise
+
 
 
 class AuthorCommunityRelations(db.Model, Timestamp):
