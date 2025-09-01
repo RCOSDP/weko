@@ -501,7 +501,7 @@ def export_prefix(target, user_id):
             )))
             current_app.logger.error(f"Community length: {community_length}")
 
-            row_header += [f"community_id[{i}]" for i in range(community_length)]
+            row_header += [f"community_ids[{i}]" for i in range(community_length)]
             row_label_en += [f"Community ID[{i}]" for i in range(community_length)]
             row_label_jp += [f"コミュニティID[{i}]" for i in range(community_length)]
 
