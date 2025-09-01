@@ -487,11 +487,25 @@ def export_prefix(target, user_id):
 
     for attempt in range(retrys):
         try:
+            user = User.query.get(user_id)
+            communities, is_super = get_managed_community(user)
+            community_ids = [c.id for c in communities] if not is_super else None
+
             if target == "id_prefix":
-                prefix = WekoAuthors.get_id_prefix_all()
+                prefix = WekoAuthors.get_id_prefix_all(community_ids=community_ids)
             elif target == "affiliation_id":
-                prefix = WekoAuthors.get_affiliation_id_all()
-            row_data = WekoAuthors.prepare_export_prefix(target, prefix)
+                prefix = WekoAuthors.get_affiliation_id_all(community_ids=community_ids)
+
+            community_length = max(list(map(
+                lambda x: len(x.communities), prefix
+            )))
+            current_app.logger.error(f"Community length: {community_length}")
+
+            row_header += [f"community_id[{i}]" for i in range(community_length)]
+            row_label_en += [f"Community ID[{i}]" for i in range(community_length)]
+            row_label_jp += [f"コミュニティID[{i}]" for i in range(community_length)]
+
+            row_data = WekoAuthors.prepare_export_prefix(target, prefix, community_length)
             # write file data to a stream
             file_io = io.StringIO()
             if current_app.config.get('WEKO_ADMIN_OUTPUT_FORMAT', 'tsv').lower() == 'csv':

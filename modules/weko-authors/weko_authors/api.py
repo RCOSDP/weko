@@ -30,6 +30,7 @@ from invenio_indexer.api import RecordIndexer
 from sqlalchemy.sql.functions import func
 from sqlalchemy.exc import SQLAlchemyError
 from time import sleep
+from invenio_communities.models import Community
 
 from .models import (
     Authors, AuthorsPrefixSettings, AuthorsAffiliationSettings,
@@ -340,10 +341,16 @@ class WekoAuthors(object):
 
 
     @classmethod
-    def get_id_prefix_all(cls):
+    def get_id_prefix_all(cls, community_ids=None):
         """Get all id_prefix."""
         with db.session.no_autoflush:
             query = AuthorsPrefixSettings.query
+            if community_ids is not None:
+                query = query.filter(
+                    AuthorsPrefixSettings.communities.any(
+                        Community.id.in_(community_ids)
+                    )
+                )
             query = query.order_by(AuthorsPrefixSettings.id)
 
             return query.all()
@@ -372,10 +379,16 @@ class WekoAuthors(object):
         return result
 
     @classmethod
-    def get_affiliation_id_all(cls):
+    def get_affiliation_id_all(cls, community_ids=None):
         """Get all affiliation_id."""
         with db.session.no_autoflush:
             query = AuthorsAffiliationSettings.query
+            if community_ids is not None:
+                query = query.filter(
+                    AuthorsAffiliationSettings.communities.any(
+                        Community.id.in_(community_ids)
+                    )
+                )
             query = query.order_by(AuthorsAffiliationSettings.id)
 
             return query.all()
@@ -665,7 +678,7 @@ class WekoAuthors(object):
         return row_header, row_label_en, row_label_jp, row_data
 
     @classmethod
-    def prepare_export_prefix(cls, target_prefix, prefixes):
+    def prepare_export_prefix(cls, target_prefix, prefixes, community_length):
         """Prepare export data of id_prefix, affiliation_id."""
         row_data = []
 
@@ -673,7 +686,12 @@ class WekoAuthors(object):
             # Exclude WEKO's own prefix for author identifier prefixes
             if target_prefix == "id_prefix" and prefix.scheme == "WEKO":
                 continue
-            row = [prefix.scheme, prefix.name, prefix.url]
+            row = [prefix.scheme, prefix.name, prefix.url, None]
+            for i in range(community_length):
+                if i >= len(prefix.communities):
+                    row.append(None)
+                else:
+                    row.append(prefix.communities[i].id)
             row_data.append(row)
 
         return row_data
