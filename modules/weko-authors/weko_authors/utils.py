@@ -915,6 +915,21 @@ def validate_import_data(file_format, file_data, mapping_ids, mapping, list_impo
         # set status
         set_record_status(file_format, existed_authors_id, item, errors, warnings)
 
+        try:
+            community_ids= item.get('community_ids')
+            if item.get('status') == 'new':
+                validate_community_ids(community_ids, is_create=True)
+            elif item.get('status') == 'update':
+                old = Authors.query.get(pk_id)
+                old_community_ids = [c.id for c in old.communities]
+                validate_community_ids(community_ids, old_ids=old_community_ids)
+            elif item.get('status') == 'deleted':
+                check, message = check_delete_affiliation(pk_id)
+                if not check:
+                    errors.append(message)
+        except AuthorsValidationError as e:
+            errors.append(e.description)
+
         # get data folow by mapping
         data_by_mapping = {}
         for _key in mapping_ids:
@@ -1859,7 +1874,7 @@ def validate_community_ids(new_ids, old_ids=None, is_create=False):
                 description=f'You do not have management permissions for the community "{", ".join(unauthorized_remove)}".'
             )
 
-    return True, 200, 'Validation passed'
+    return
 
 
 def get_managed_community(user):
