@@ -916,7 +916,7 @@ def validate_import_data(file_format, file_data, mapping_ids, mapping, list_impo
         set_record_status(file_format, existed_authors_id, item, errors, warnings)
 
         try:
-            community_ids= item.get('community_ids')
+            community_ids= item.get('communityIds')
             if item.get('status') == 'new':
                 validate_community_ids(community_ids, is_create=True)
             elif item.get('status') == 'update':

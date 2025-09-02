@@ -51,11 +51,11 @@ class WekoAuthors(object):
         new_id = Authors.get_sequence(session)
         data["pk_id"] = str(new_id)
         data["gather_flg"] = 0
-        community_ids = data.pop("community_ids", [])
+        community_ids = data.pop("communityIds", [])
 
         es_id = str(uuid.uuid4())
         es_data = json.loads(json.dumps(data))
-        es_data["community_ids"] = community_ids
+        es_data["communityIds"] = community_ids
         try:
             with session.begin_nested():
                 data['id'] = es_id
@@ -126,11 +126,11 @@ class WekoAuthors(object):
                     author.is_deleted = data.get('is_deleted', False)
                 else:
                     data['is_deleted'] = author.is_deleted
-                community_ids = data.pop("community_ids", [])
+                community_ids = data.pop("communityIds", [])
                 author.update_communities(community_ids)
                 es_id = author.json["id"] if author.json.get("id") else str(uuid.uuid4())
                 es_data = json.loads(json.dumps(data))
-                es_data["community_ids"] = community_ids
+                es_data["communityIds"] = community_ids
                 data['id'] = es_id
                 author.json = data
                 db.session.merge(author)

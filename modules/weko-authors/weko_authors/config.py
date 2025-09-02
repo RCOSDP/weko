@@ -217,7 +217,7 @@ WEKO_AUTHORS_FILE_MAPPING_FOR_PREFIX = ["scheme", "name", "url", "is_deleted", "
 WEKO_AUTHORS_FILE_MAPPING_FOR_COMMUNITY = {
     "label_en": "Community",
     "label_jp": "コミュニティ",
-    "json_id": "community_ids",
+    "json_id": "communityIds",
 }
 
 WEKO_AUTHORS_FILE_MAPPING_FOR_AFFILIATION ={

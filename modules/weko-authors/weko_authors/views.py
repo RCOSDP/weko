@@ -104,9 +104,9 @@ def create():
     elif result_period_check[0] == False and result_period_check[1] == "start is after end":
         return jsonify(msg=_('The end date must be after the start date.')), 500
 
-    #community_idsのバリデーションチェック
+    #communityIdsのバリデーションチェック
     try:
-        community_ids = data.get("community_ids", [])
+        community_ids = data.get("communityIds", [])
         validate_community_ids(community_ids, is_create=True)
     except Exception as ex:
         current_app.logger.error(ex)
@@ -167,8 +167,8 @@ def update_author():
         elif result_period_check[0] == False and result_period_check[1] == "start is after end":
             return jsonify(msg=_('The end date must be after the start date.')), 500
 
-        #community_idsのバリデーションチェック
-        community_ids = data.get("community_ids", [])
+        #communityIdsのバリデーションチェック
+        community_ids = data.get("communityIds", [])
         validate_community_ids(community_ids, is_create=True)
 
         WekoAuthors.update(pk_id, data, force_change_flag)
