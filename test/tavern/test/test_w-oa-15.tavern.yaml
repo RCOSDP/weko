@@ -1,0 +1,251 @@
+test_name: 著者DBのID変更
+
+includes:
+  - !include config.yaml
+
+marks:
+  - usefixtures:
+    - login_repoadmin
+
+stages:
+  - name: prepare author
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.author_create_helper:create_author
+          extra_kwargs:
+            host: "{host}"
+            author_info_file: "{author_info.w-oa-15}"
+  - name: workflow/activity/init
+    request:
+      url: "{host}/workflow/activity/init"
+      method: POST
+      verify: false
+      json:
+        flow_id: 1
+        itemtype_id: 30002
+        workflow_id: 1
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.verify_helper:response_verify_init_response
+        extra_kwargs:
+          file_name: "{expected_json.w-oa-15.success_case}"
+      save:
+        $ext:
+          function: helper.response_helper:response_save_next_path
+  - name: api/items/author_prefix_settings
+    request:
+      url: "{host}/api/items/author_prefix_settings"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.verify_helper:response_verify_common_response
+        extra_kwargs:
+          file_name: "{expected_json.item_registration.success_case}"
+          key: author_prefix_settings
+      save:
+        $ext:
+          function: helper.response_helper:response_save_author_prefix_settings
+  - name: accounts/settings/groups/grouplist
+    request:
+      url: "{host}/accounts/settings/groups/grouplist"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.verify_helper:response_verify_common_response
+        extra_kwargs:
+          file_name: "{expected_json.item_registration.success_case}"
+          key: grouplist
+      save:
+        $ext:
+          function: helper.response_helper:response_save_group_list
+  - name: "{next_path}"
+    request:
+      url: "{host}{next_path}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.response_helper:response_save_register_data
+          extra_kwargs:
+            file_name: w-oa-15/item_type_30002.json
+  - name: api/items/validate
+    request:
+      url: "{host}/api/items/validate"
+      method: POST
+      verify: false
+      json:
+        $ext:
+          function: helper.request_helper:request_create_validate_param
+          extra_kwargs:
+            data: "{register_data}"
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.verify_helper:response_verify_common_response
+        extra_kwargs:
+          file_name: "{expected_json.w-oa-15.success_case}"
+          key: validate
+  - name: workflow/save_activity_data
+    request:
+      url: "{host}/workflow/save_activity_data"
+      method: POST
+      verify: false
+      json:
+        $ext:
+          function: helper.request_helper:request_create_save_activity_data_param
+          extra_kwargs:
+            activity_id: "{activity_id}"
+            data: "{register_data}"
+            title_key: "{title_keys.30002}"
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.verify_helper:response_verify_common_response
+        extra_kwargs:
+          file_name: "{expected_json.w-oa-15.success_case}"
+          key: save_activity_data
+  - name: items/iframe/model/save
+    request:
+      url: "{host}/items/iframe/model/save"
+      method: POST
+      verify: false
+      json:
+        $ext:
+          function: helper.request_helper:request_create_save_param
+          extra_kwargs:
+            data: "{register_data}"
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.verify_helper:response_verify_workflow_records
+        extra_kwargs:
+          folder_path: w-oa-15_expect
+          activity_id: "{activity_id}"
+          activity_start_time: "{activity_start_time}"
+          file_name: w-oa-15/item_type_30002.json
+  - name: api/authors/search
+    request:
+      url: "{host}/api/authors/search"
+      method: POST
+      verify: false
+      json:
+        numOfPage: 25
+        pageNumber: 1
+        searchKey: ""
+        sortKey: ""
+        sortOrder: ""
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.response_helper:response_save_author_search
+  - name: api/authors/edit
+    request:
+      url: "{host}/api/authors/edit"
+      method: POST
+      verify: false
+      json:
+        $ext:
+          function: helper.request_helper:request_create_author_edit_param
+          extra_kwargs:
+            file_name: "{author_info.w-oa-15}"
+            author_id: "{author_id}"
+    response:
+      status_code: 200
+  - name: workflow/activity/detail
+    request:
+      url: "{host}/workflow/activity/detail/{activity_id}?status="
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.verify_helper:response_verify_temp_data_after_change_author_info
+        extra_kwargs:
+          creator_key: "{creator_keys.30002}"
+      save:
+        $ext:
+          function: helper.response_helper:response_save_changed_data
+  - name: api/deposits/items
+    request:
+      url: "{host}/api/deposits/items"
+      method: POST
+      verify: false
+      json:
+        $ext:
+          function: helper.request_helper:request_create_deposits_items_param
+          extra_kwargs:
+            data: "{changed_data}"
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.verify_helper:response_verify_deposits_items_response
+        extra_kwargs:
+          file_name: "{expected_json.w-oa-15.success_case}"
+          host: "{host}"
+      save:
+        $ext:
+          function: helper.response_helper:response_save_recid
+  - name: api/deposits/redirect/{recid}
+    request:
+      url: "{host}/api/deposits/redirect/{recid}"
+      method: PUT
+      verify: false
+      json:
+        $ext:
+          function: helper.request_helper:request_create_deposits_redirect_param
+          extra_kwargs:
+            data: "{changed_data}"
+            title_key: "{title_keys.30002}"
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.verify_helper:response_verify_common_response
+        extra_kwargs:
+          file_name: "{expected_json.w-oa-15.success_case}"
+          key: deposits_redirect
+  - name: api/tree/{recid}
+    request:
+      url: "{host}/api/tree/{recid}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.verify_helper:response_verify_common_response
+        extra_kwargs:
+          file_name: "{expected_json.w-oa-15.success_case}"
+          key: tree
+      save:
+        $ext:
+          function: helper.response_helper:response_save_tree_data
+  - name: api/deposits/items/{recid}
+    request:
+      url: "{host}/api/deposits/items/{recid}"
+      method: PUT
+      verify: false
+      json:
+        $ext:
+          function: helper.request_helper:request_create_deposits_items_index_param
+          extra_kwargs:
+            indexes: "{tree_data}"
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.verify_helper:response_verify_changed_data
+        extra_kwargs:
+          folder_path: w-oa-15_expect2
+          activity_id: "{activity_id}"
