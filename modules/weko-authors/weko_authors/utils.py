@@ -1824,6 +1824,12 @@ def validate_community_ids(new_ids, old_ids=None, is_create=False, activity_id=N
         old_ids (iterable): The old community IDs.
         is_create (bool): Flag indicating if this is a create operation.
         activity_id (str): The activity ID.
+
+    Returns:
+        list: Validated community IDs.
+
+    Raises:
+        AuthorsValidationError: If the community IDs are invalid.
     """
     new_ids = set(new_ids)
     old_ids = set(old_ids) if old_ids else set()
@@ -1895,6 +1901,7 @@ def get_managed_community(user):
 
     Returns:
         list: List of communities managed by the user.
+        bool: Flag indicating if the user is a super user.
     """
     managed_communities = []
     if user.is_authenticated:
@@ -1911,6 +1918,16 @@ def get_managed_community(user):
 
 
 def check_delete_entity(entity, entity_type, id):
+    """Check if the current user can delete the specified entity.
+
+    Args:
+        entity: The entity class to check.
+        entity_type: The type of the entity (for error messages).
+        id: The ID of the entity to check.
+
+    Returns:
+        tuple: (bool, str) indicating if the user can delete the entity and an error message if not.
+    """
     entity_instance = entity.query.get(id)
     if not entity_instance:
         return False, _('{} not found.').format(entity_type)
@@ -1937,10 +1954,13 @@ def check_delete_entity(entity, entity_type, id):
 
 
 def check_delete_author(id):
+    """Check if the current user can delete the specified author."""
     return check_delete_entity(Authors, _('Author ID'), id)
 
 def check_delete_prefix(id):
+    """Check if the current user can delete the specified prefix."""
     return check_delete_entity(AuthorsPrefixSettings, _('ID Prefix'), id)
 
 def check_delete_affiliation(id):
+    """Check if the current user can delete the specified affiliation."""
     return check_delete_entity(AuthorsAffiliationSettings, _('Affiliation ID'), id)
