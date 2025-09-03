@@ -106,8 +106,8 @@ def create():
 
     #communityIdsのバリデーションチェック
     try:
-        community_ids = data.get("communityIds", [])
-        validate_community_ids(community_ids, is_create=True)
+        data["communityIds"] = validate_community_ids(
+            data.get("communityIds", []), is_create=True)
     except Exception as ex:
         current_app.logger.error(ex)
         return jsonify(msg=_('Failed')), 500
@@ -168,8 +168,10 @@ def update_author():
             return jsonify(msg=_('The end date must be after the start date.')), 500
 
         #communityIdsのバリデーションチェック
-        community_ids = data.get("communityIds", [])
-        validate_community_ids(community_ids, is_create=True)
+        old = Authors.query.get(data.get('id'))
+        old_community_ids = [c.id for c in old.communities]
+        data["communityIds"] = validate_community_ids(
+            data.get("communityIds", []), old_ids=old_community_ids)
 
         WekoAuthors.update(pk_id, data, force_change_flag)
     except AuthorsValidationError as e:
@@ -721,8 +723,7 @@ def update_prefix():
         old = AuthorsPrefixSettings.query.get(data.get('id'))
         old_community_ids = [c.id for c in old.communities]
 
-        validate_community_ids(community_ids, old_ids=old_community_ids)
-        data['community_ids'] = set(community_ids)
+        data['community_ids'] = validate_community_ids(community_ids, old_ids=old_community_ids)
 
         check = get_author_prefix_obj(data['scheme'])
         if check is None or check.id == data['id']:
@@ -761,8 +762,7 @@ def create_prefix():
         data = request.get_json()
         community_ids = data.pop("communityIds", [])
 
-        validate_community_ids(community_ids, is_create=True)
-        data['community_ids'] = set(community_ids)
+        data['community_ids'] = validate_community_ids(community_ids, is_create=True)
 
         check = get_author_prefix_obj(data['scheme'])
         if check is None:
@@ -791,8 +791,7 @@ def update_affiliation():
         old = AuthorsAffiliationSettings.query.get(data.get('id'))
         old_community_ids = [c.id for c in old.communities]
 
-        validate_community_ids(community_ids, old_ids=old_community_ids)
-        data['community_ids'] = set(community_ids)
+        data['community_ids'] = validate_community_ids(community_ids, old_ids=old_community_ids)
 
         check = get_author_affiliation_obj(data['scheme'])
         if check is None or check.id == data['id']:
@@ -831,8 +830,7 @@ def create_affiliation():
         data = request.get_json()
         community_ids = data.pop("communityIds", [])
 
-        validate_community_ids(community_ids, is_create=True)
-        data['community_ids'] = set(community_ids)
+        data['community_ids'] = validate_community_ids(community_ids, is_create=True)
 
         check = get_author_affiliation_obj(data['scheme'])
         if check is None:

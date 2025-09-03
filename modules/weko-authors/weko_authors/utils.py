@@ -918,13 +918,13 @@ def validate_import_data(file_format, file_data, mapping_ids, mapping, list_impo
         try:
             community_ids= item.get('communityIds')
             if item.get('status') == 'new':
-                validate_community_ids(community_ids, is_create=True)
+                item["communityIds"] = validate_community_ids(community_ids, is_create=True)
             elif item.get('status') == 'update':
                 old = Authors.query.get(pk_id)
                 old_community_ids = [c.id for c in old.communities]
-                validate_community_ids(community_ids, old_ids=old_community_ids)
+                item["communityIds"] = validate_community_ids(community_ids, old_ids=old_community_ids)
             elif item.get('status') == 'deleted':
-                check, message = check_delete_affiliation(pk_id)
+                check, message = check_delete_author(pk_id)
                 if not check:
                     errors.append(message)
         except AuthorsValidationError as e:
@@ -1181,22 +1181,21 @@ def validate_import_data_for_prefix(file_data, target):
 
         try:
             if item.get('status') == 'new':
-                validate_community_ids(community_ids, is_create=True)
+                item["community_ids"] = validate_community_ids(community_ids, is_create=True)
             elif item.get('status') == 'update':
                 if target == "id_prefix":
                     old = AuthorsPrefixSettings.query.get(item.get('id'))
                 elif target == "affiliation_id":
                     old = AuthorsAffiliationSettings.query.get(item.get('id'))
                 old_community_ids = [c.id for c in old.communities]
-                validate_community_ids(community_ids, old_ids=old_community_ids)
+                item["community_ids"] = validate_community_ids(community_ids, old_ids=old_community_ids)
             elif item.get('status') == 'deleted':
                 if target == "id_prefix":
                     check, message = check_delete_prefix(item.get('id'))
                 elif target == "affiliation_id":
                     check, message = check_delete_affiliation(item.get('id'))
-
-                if not check:
-                    errors.append(message)
+                    if not check:
+                        errors.append(message)
         except AuthorsValidationError as ex:
             errors.append(ex.description)
 
@@ -1844,7 +1843,7 @@ def validate_community_ids(new_ids, old_ids=None, is_create=False):
     managed_ids = {c.id for c in managed_communities}
 
     if is_super:
-        return
+        return list(new_ids)
 
     if is_create:
         unauthorized = new_ids - managed_ids
@@ -1874,7 +1873,7 @@ def validate_community_ids(new_ids, old_ids=None, is_create=False):
                 description=f'You do not have management permissions for the community "{", ".join(unauthorized_remove)}".'
             )
 
-    return
+    return list(new_ids)
 
 
 def get_managed_community(user):
