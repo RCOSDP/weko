@@ -47,6 +47,7 @@ from flask_babelex import gettext as _
 from flask_security import current_user
 from invenio_accounts.models import User
 from invenio_cache import current_cache
+from invenio_communities.models import Community
 from invenio_db import db
 from invenio_indexer.api import RecordIndexer
 
@@ -1814,15 +1815,15 @@ def get_check_base_name():
     base_file_name = os.path.splitext(os.path.basename(temp_file_path))[0]
     return f"{base_file_name}-check"
 
-from invenio_communities.models import Community
 
-def validate_community_ids(new_ids, old_ids=None, is_create=False):
+def validate_community_ids(new_ids, old_ids=None, is_create=False, activity_id=None):
     """Validate community IDs.
 
     Args:
         new_ids (iterable): The new community IDs.
         old_ids (iterable): The old community IDs.
         is_create (bool): Flag indicating if this is a create operation.
+        activity_id (str): The activity ID.
     """
     new_ids = set(new_ids)
     old_ids = set(old_ids) if old_ids else set()
@@ -1844,6 +1845,16 @@ def validate_community_ids(new_ids, old_ids=None, is_create=False):
 
     if is_super:
         return list(new_ids)
+
+    if activity_id:
+        from weko_workflow.api import WorkActivity
+        activity = WorkActivity.get_activity_by_id(activity_id)
+    if activity:
+        if activity.activity_community_id is None:
+            if not new_ids:
+                return list(new_ids)
+        elif activity.activity_community_id not in managed_ids:
+            managed_ids.add(activity.activity_community_id)
 
     if is_create:
         unauthorized = new_ids - managed_ids

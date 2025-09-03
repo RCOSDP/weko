@@ -72,6 +72,7 @@ def create():
         return jsonify(msg=_('Header Error'))
 
     data = request.get_json()
+    activity_id = request.args.get('activity_id')
 
     # weko_idを取得する。
     author_id_info = data["authorIdInfo"]
@@ -107,10 +108,10 @@ def create():
     #communityIdsのバリデーションチェック
     try:
         data["communityIds"] = validate_community_ids(
-            data.get("communityIds", []), is_create=True)
-    except Exception as ex:
+            data.get("communityIds", []), is_create=True, activity_id=activity_id)
+    except AuthorsValidationError as ex:
         current_app.logger.error(ex)
-        return jsonify(msg=_('Failed')), 500
+        return jsonify(msg=ex.description), ex.code
 
     try:
         WekoAuthors.create(data)
@@ -648,8 +649,17 @@ def get_managed_communities():
     """Get managed communities."""
     communities, is_super = get_managed_community(current_user)
     community_ids = [community.id for community in communities]
-    data = {"communityIds": community_ids,
-            "isAdmin": is_super}
+    activity_id = request.args.get("activity_id")
+    activity = None
+    if activity_id:
+        from weko_workflow.api import WorkActivity
+        activity = WorkActivity.get_activity_by_id(activity_id)
+
+    data = {
+        "communityIds": community_ids,
+        "isAdmin": is_super,
+        "activityCommunityId": activity.activity_community_id if activity else None
+    }
     return jsonify(data)
 
 
