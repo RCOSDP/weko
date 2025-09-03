@@ -1831,13 +1831,13 @@ def validate_community_ids(new_ids, old_ids=None, is_create=False, activity_id=N
     # 形式チェック
     for cid in new_ids:
         if not re.match(r'^[a-zA-Z0-9_-]+$', cid):
-            raise AuthorsValidationError(description=f"Invalid community ID format: {cid}")
+            raise AuthorsValidationError(description=_("Invalid community ID format: {}").format(cid))
 
     # 存在チェック
     existing_ids = {c.id for c in Community.query.filter(Community.id.in_(new_ids)).all()}
     missing_ids = new_ids - existing_ids
     if missing_ids:
-        raise AuthorsValidationError(description=f"Community ID(s) {', '.join(missing_ids)} does not exist.")
+        raise AuthorsValidationError(description=_("Community ID(s) {} does not exist.").format(", ".join(missing_ids)))
 
     # 権限チェック
     managed_communities, is_super = get_managed_community(current_user)
@@ -1859,15 +1859,15 @@ def validate_community_ids(new_ids, old_ids=None, is_create=False, activity_id=N
     if is_create:
         unauthorized = new_ids - managed_ids
         if unauthorized:
-            raise AuthorsPermissionError(description=f'You do not have management permissions for the community "{", ".join(unauthorized)}".')
+            raise AuthorsPermissionError(description=_('You do not have permission for this {}’s communities: {}.').format(_("Author ID"), ", ".join(unauthorized)))
         if not (new_ids & managed_ids):
-            raise AuthorsValidationError(description='You must assign at least one managed community.')
+            raise AuthorsValidationError(description=_('You must include at least one managed community.'))
 
     else:
         if not (old_ids & managed_ids):
-            raise AuthorsPermissionError(description='You do not manage the existing record.')
+            raise AuthorsPermissionError(description=_('You cannot manage this record.'))
         if not (new_ids & managed_ids):
-            raise AuthorsPermissionError(description='You must include at least one community ID that you manage.')
+            raise AuthorsPermissionError(description=_('You must include at least one managed community.'))
 
         added = new_ids - old_ids
         removed = old_ids - new_ids
@@ -1875,13 +1875,13 @@ def validate_community_ids(new_ids, old_ids=None, is_create=False, activity_id=N
         unauthorized_add = added - managed_ids
         if unauthorized_add:
             raise AuthorsPermissionError(
-                description=f'You do not have management permissions for the community "{", ".join(unauthorized_add)}".'
+                description=_('You do not have permission for this {}’s communities: {}.').format(_("Author ID"), ", ".join(unauthorized_add))
             )
 
         unauthorized_remove = removed - managed_ids
         if unauthorized_remove:
             raise AuthorsPermissionError(
-                description=f'You do not have management permissions for the community "{", ".join(unauthorized_remove)}".'
+                description=_('You do not have permission for this {}’s communities: {}.').format(_("Author ID"), ", ".join(unauthorized_remove))
             )
 
     return list(new_ids)
@@ -1913,7 +1913,7 @@ def get_managed_community(user):
 def check_delete_entity(entity, entity_type, id):
     entity_instance = entity.query.get(id)
     if not entity_instance:
-        return False, f'{entity_type} not found.'
+        return False, _('{} not found.').format(entity_type)
     communities = entity_instance.communities
 
     # 現在のユーザーが管理しているコミュニティを取得
@@ -1924,21 +1924,23 @@ def check_delete_entity(entity, entity_type, id):
         return True, None
     elif communities == []:
         # entityに関連付けられているコミュニティがない場合はリポジトリ管理者以上のみ削除可能
-        return False, f'You do not have permissions for this {entity_type}.'
+        return False, _('You cannot manage this record.')
     else:
         # entityに関連付けられているすべてのコミュニティの管理者であれば削除可能
         unauthorized_communities = [com.id for com in communities
                                     if com.id not in managed_community_ids]
         if not unauthorized_communities:
             return True, None
-        return False, f'You do not have management permissions for the community "{unauthorized_communities}".'
+        return False, _('You do not have permission for this {}’s communities: {}.').format(
+            entity_type, ", ".join(unauthorized_communities)
+        )
 
 
 def check_delete_author(id):
-    return check_delete_entity(Authors, 'Author', id)
+    return check_delete_entity(Authors, _('Author ID'), id)
 
 def check_delete_prefix(id):
-    return check_delete_entity(AuthorsPrefixSettings, 'Prefix', id)
+    return check_delete_entity(AuthorsPrefixSettings, _('ID Prefix'), id)
 
 def check_delete_affiliation(id):
-    return check_delete_entity(AuthorsAffiliationSettings, 'Affiliation', id)
+    return check_delete_entity(AuthorsAffiliationSettings, _('Affiliation ID'), id)
