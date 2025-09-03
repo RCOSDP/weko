@@ -1141,7 +1141,7 @@ class TestWekoRecord:
         result = results[0]
         record = result['record']
         # assert record.navi==[]
-        with app.test_request_context(query_string={"community":"test_com"}):
+        with app.test_request_context(query_string={"c":"test_com"}):
             assert record.navi==[]
 
     #     def item_type_info(self):

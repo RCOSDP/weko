@@ -435,7 +435,7 @@ def test_init_activity_acl(app, client, users, users_index, status_code, item_ty
     q = ActivityAction.query.all()
     assert len(q) == 7
 
-    url = url_for('weko_workflow.init_activity', community='comm01')
+    url = url_for('weko_workflow.init_activity', c='comm01')
     input = {'workflow_id': str(workflow_id), 'flow_id': str(flow_def_id)}
     res = client.post(url, json=input)
     assert res.status_code == status_code
@@ -491,7 +491,7 @@ def test_init_activity_acl(app, client, users, users_index, status_code, item_ty
     q = ActivityAction.query.all()
     assert len(q) == 14
 
-    url = url_for('weko_workflow.init_activity', community='comm02')
+    url = url_for('weko_workflow.init_activity', c='comm02')
     input = {'workflow_id': workflow_id, 'flow_id': flow_def_id, 'itemtype_id': item_type_id}
     res = client.post(url, json=input)
     assert res.status_code == status_code
