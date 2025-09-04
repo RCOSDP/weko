@@ -21,6 +21,7 @@ botocore==1.12.209
 cachelib==0.1
 captcha==0.4
 cachetools==4.2.4
+captcha==0.4
 cchardet==2.1.1
 celery==4.4.4
 certifi==2017.11.5
@@ -206,7 +207,7 @@ rdflib-jsonld==0.6.1
 redis==2.10.6
 requests==2.18.4
 requests-oauthlib==1.1.0
-responses
+responses==0.10.3
 rocrate==0.6.0
 resync==2.0.1
 s3fs==0.1.6

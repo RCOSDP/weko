@@ -217,6 +217,10 @@ msgstr "Specified ID does not exist."
 msgid "Item cannot be edited because the import is in progress."
 msgstr ""
 
+#: weko_items_ui/views.py:848
+msgid "Logged-in user cannot be deleted."
+msgstr "Logged-in user cannot be deleted."
+
 #: weko_items_ui/views.py:1071
 #, fuzzy
 msgid "Workflow setting does not exist."
@@ -573,7 +577,7 @@ msgstr "Can not found the email address of approval."
 msgid ""
 "The specified number has been exceeded. You can only select up to two "
 "fields."
-msgstr "Select up to two fields."
+msgstr "You can only select up two fields."
 
 #: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:508
 #, fuzzy
@@ -697,3 +701,17 @@ msgstr ""
 msgid "Export"
 msgstr ""
 
+msgid "The approver email address cannot be the same as the applicant. Please recheck and input."
+msgstr ""
+
+msgid "error message for item application"
+msgstr "When uploading a file, you cannot set usage request workflow for the item."
+
+msgid "Set usage application workflow for item"
+msgstr ""
+
+msgid ""
+"You cannot change the resource type "
+"of items that have been grant a"
+" DOI."
+msgstr ""

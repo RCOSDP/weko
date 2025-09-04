@@ -634,6 +634,10 @@ msgid "Admin menu_Setting_Mail"
 msgstr "Mail"
 
 #: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_Setting_Mail Templates"
+msgstr "Mail Templates"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_Setting_WebAPI Account"
 msgstr "WebAPI Account"
 
@@ -691,7 +695,27 @@ msgstr "Maintenance"
 msgid "Admin menu_Maintenance_ElasticSearch Index"
 msgstr "ElasticSearch Index"
 
+msgid "Password(reconfirmation)"
+msgstr ""
+
+msgid "password rule1"
+msgstr "Please set a password with at least 8 characters."
+
+msgid "password rule2"
+msgstr "Please include at least one uppercase letter, lowercase letter, number, and symbol."
+
+msgid "available characters"
+msgstr "available characters"
+
 #: weko_admin/
 #: msgid "CRIS Linkage"
 msgid "Admin menu_Setting_CRIS Linkage"
 msgstr "CRIS Linkage"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_Advanced"
+msgstr "Advanced"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_Advanced_Profile Settings"
+msgstr "Profile Settings"

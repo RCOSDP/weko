@@ -1177,3 +1177,15 @@ def test_get_index_with_role_group(app, db, mocker):
         assert result['browsing_group']['deny'] == []
         assert result['contribute_group']['allow'] == []
         assert result['contribute_group']['deny'] == []
+
+
+# .tox/c1/bin/pytest --cov=weko_index_tree tests/test_api.py::test_indexes_get_handle_index_url -v -s -vv --cov-branch --cov-report=html --cov-config=tox.ini --basetemp=/code/modules/weko-index-tree/.tox/c1/tmp
+def test_indexes_get_handle_index_url(app, db, users, test_indices, mocker):
+    with app.test_request_context():
+        mock_handle = mocker.MagicMock()
+        mock_handle.register_handle.return_value="https://test/handle/1"
+        mocker.patch("weko_index_tree.api.Handle", return_value=mock_handle)
+        app.config['WEKO_HANDLE_CREDS_JSON_PATH'] = '/code/modules/resources/handle_creds.json'
+        handle, index_url = Indexes.get_handle_index_url(1)
+        assert index_url == "http://TEST_SERVER/search?search_type=2&q=1"
+        assert handle == "https://test/handle/1"

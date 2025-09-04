@@ -1,0 +1,71 @@
+{
+    "pubdate": "2025-07-01",
+    "item_30002_title0": [
+        {
+            "subitem_title": "test1",
+            "subitem_title_language": "en"
+        }
+    ],
+    "item_30002_resource_type13": {
+        "resourceuri": "http://purl.org/coar/resource_type/c_1843",
+        "resourcetype": "other"
+    },
+    "item_30002_creator2": [
+        {
+            "creatorAffiliations": [
+                {
+                    "affiliationNames": [
+                        {
+                            "affiliationName": "test機関",
+                            "affiliationNameLang": null
+                        }
+                    ],
+                    "affiliationNameIdentifiers": [
+                        {
+                            "affiliationNameIdentifier": "1000",
+                            "affiliationNameIdentifierURI": "http://www.isni.org/isni/1000",
+                            "affiliationNameIdentifierScheme": "ISNI"
+                        }
+                    ]
+                }
+            ],
+            "creatorMails": [
+                {
+                    "creatorMail": "test@exam.com"
+                }
+            ],
+            "creatorNames": [
+                {
+                    "creatorName": "test, taro",
+                    "creatorNameLang": "en"
+                }
+            ],
+            "familyNames": [
+                {
+                    "familyName": "test",
+                    "familyNameLang": "en"
+                }
+            ],
+            "givenNames": [
+                {
+                    "givenName": "taro",
+                    "givenNameLang": "en"
+                }
+            ],
+            "nameIdentifiers": [
+                {
+                    "nameIdentifier": "10",
+                    "nameIdentifierScheme": "WEKO",
+                    "nameIdentifierURI": ""
+                },
+                {
+                    "nameIdentifier": "100",
+                    "nameIdentifierScheme": "ORCID",
+                    "nameIdentifierURI": "https://orcid.org/100"
+                }
+            ]
+        }
+    ],
+    "$schema": "/items/jsonschema/30002",
+    "shared_user_id": -1
+}

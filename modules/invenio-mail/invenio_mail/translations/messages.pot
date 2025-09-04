@@ -90,3 +90,25 @@ msgstr ""
 msgid "Send"
 msgstr ""
 
+# Mail template genre table
+msgid "Notification of secret URL provision"
+msgstr ""
+
+msgid "Guidance to the application form"
+msgstr ""
+
+msgid "Others"
+msgstr ""
+
+# Mail template editing
+msgid "Subject"
+msgstr ""
+
+msgid "Recipients"
+msgstr ""
+
+msgid "Please input the Mail Subject and Mail Body."
+msgstr ""
+
+msgid "Invalid email addresses ({emails}) detected. Please correct them to match the addresses which are registered in WEKO."
+msgstr ""

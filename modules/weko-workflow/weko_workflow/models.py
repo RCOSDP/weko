@@ -619,6 +619,16 @@ class FlowActionRole(db.Model, TimestampMixin):
     specify_property = db.Column(
         db.String(255), nullable=True)
     """the name of flows."""
+    
+    action_item_registrant = db.Column(
+        db.Boolean(name='item_registrant'),
+        nullable=False, default=False, server_default='0')
+    """If set to True, item_registrant allow action"""
+
+    action_request_mail = db.Column(
+        db.Boolean(name='request_mail'),
+        nullable=False, default=False, server_default='0')
+    """If set to True, item_request mail allow action"""
 
 
 class WorkFlow(db.Model, TimestampMixin):
@@ -811,7 +821,20 @@ class Activity(db.Model, TimestampMixin):
 
     title = db.Column(db.Text, nullable=True)
 
-    shared_user_id = db.Column(db.Integer(), nullable=True)
+    shared_user_ids = db.Column(
+        db.JSON().with_variant(
+            postgresql.JSONB(none_as_null=True),
+            'postgresql',
+        ).with_variant(
+            JSONType(),
+            'sqlite',
+        ).with_variant(
+            JSONType(),
+            'mysql',
+        ),
+        default=lambda: dict(),
+        nullable=True
+    )
 
     temp_data = db.Column(
         db.JSON().with_variant(
@@ -1093,6 +1116,49 @@ class ActionFeedbackMail(db.Model, TimestampMixin):
     )
     """Action journal info."""
 
+
+class ActivityItemApplication(db.Model, TimestampMixin):
+    """Define action identifier info."""
+
+    __tablename__ = 'workflow_activity_item_application'
+
+    id = db.Column(
+        db.Integer(),
+        nullable=False,
+        primary_key=True,
+        autoincrement=True
+    )
+    """ActivityRequestMail identifier."""
+
+    activity_id = db.Column(
+        db.String(24),
+        nullable=False,
+        unique=False,
+        index=True
+    )
+    """Activity id of Activity Action."""
+
+    display_item_application_button = db.Column(
+        db.Boolean(name='display_item_application_button'),
+        nullable=False, 
+        default=False, 
+        server_default='0')
+    """If set to True, enable request mail """
+
+    item_application = db.Column(
+        db.JSON().with_variant(
+            postgresql.JSONB(none_as_null=True),
+            'postgresql',
+        ).with_variant(
+            JSONType(),
+            'sqlite',
+        ).with_variant(
+            JSONType(),
+            'mysql',
+        ),
+        default=lambda: dict(),
+        nullable=True
+    )
 
 class WorkflowRole(db.Model, TimestampMixin):
     """Define action identifier info."""

@@ -1,0 +1,61 @@
+{
+    "init": {
+        "code": 0,
+        "msg": "success",
+        "data": {
+            "redirect": "/workflow/activity/detail/A-{}-00001"
+        }
+    },
+    "author_prefix_settings": [
+        {
+            "name": "WEKO",
+            "scheme": "WEKO",
+            "url": ""
+        },
+        {
+            "name": "ORCID",
+            "scheme": "ORCID",
+            "url": "https://orcid.org/##"
+        },
+        {
+            "name": "CiNii",
+            "scheme": "CiNii",
+            "url": "https://ci.nii.ac.jp/author/##"
+        },
+        {
+            "name": "KAKEN2",
+            "scheme": "KAKEN2",
+            "url": "https://nrid.nii.ac.jp/nrid/##"
+        },
+        {
+            "name": "ROR",
+            "scheme": "ROR",
+            "url": "https://ror.org/##"
+        },
+        {
+            "name": "ISNI",
+            "scheme": "ISNI",
+            "url": "http://www.isni.org/isni/##"
+        },
+        {
+            "name": "VIAF",
+            "scheme": "VIAF",
+            "url": "https://viaf.org/viaf/##"
+        },
+        {
+            "name": "AID",
+            "scheme": "AID",
+            "url": ""
+        },
+        {
+            "name": "e-Rad_Researcher",
+            "scheme": "e-Rad_Researcher",
+            "url": ""
+        }
+    ],
+    "grouplist": {},
+    "validate": {
+        "is_valid": false,
+        "error": "Please input all required item."
+    }
+}

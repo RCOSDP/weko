@@ -7,8 +7,15 @@ $(document).ready(function () {
   $('#btn_pop_action').on('click', function () {
     $('#myModal').modal('show');
   });
+  $('#tb_action_list').on('click', '.btn_setting_nortification_mail', function () {
+    row_no=$(this).data('old-action-order');
+    $('#settingModal_'+ row_no).modal('show');
+  });
   function isApproval(action) {
     return action && action.name == 'Approval';
+  }
+  function isItemReg(action){
+    return action && action.name == 'Item Registration';
   }
   $('.btn_apply').on('click', function () {
     let actionId = $(this).data('action-id');
@@ -29,7 +36,16 @@ $(document).ready(function () {
         role: 0,
         role_deny: false,
         workflow_flow_action_id: -1,
-        send_mail_setting: { "inform_reject": false, "inform_approval": false, "request_approval": false },
+        send_mail_setting : {
+          "inform_reject": {"send": false, "mail": "0"},
+          "inform_reject_for_guest": {"send": false, "mail": "0"},
+          "inform_approval": {"send": false, "mail": "0"},
+          "inform_approval_for_guest":{"send":false, "mail": "0"},
+          "request_approval": {"send": false, "mail": "0"},
+          "request_approval_for_guest": {"send": false, "mail": "0"},
+          "inform_itemReg": {"send": false, "mail": "0"},
+          "inform_itemReg_for_registerPerson":{"send":false, "mail": "0"}
+        },
         action: 'ADD'
       };
       apply_action_list.push(apply_action);
@@ -73,6 +89,42 @@ $(document).ready(function () {
     }
     init_action_list(apply_action);
     $('#myModal').modal('hide');
+  });
+  $('#tb_action_list').on('click', '.checkbox_change', function () {
+    let obj_id = $(this).context.id;
+    let id_list = obj_id.split('_');
+    let id_list_for_guest = obj_id.split('_');
+    let id_list_for_registerPerson = obj_id.split('_');
+    let action_id = id_list.pop();
+    id_list_for_guest.pop();
+    id_list_for_registerPerson.pop();
+    id_list.push('mail');
+    id_list_for_guest.push('mail_for_guest');
+    id_list_for_registerPerson.push('mail_for_registerPerson');
+    id_list.push(action_id);
+    id_list_for_guest.push(action_id);
+    id_list_for_registerPerson.push(action_id);
+    let mail_control_id = id_list.join('_');
+    let mail_for_guest_control_id = id_list_for_guest.join('_');
+    let mail_for_registerPerson_control_id = id_list_for_registerPerson.join('_');
+    let cur_row = $(this).parents('tr');
+    let actionname = $('#td_action_name_' + action_id).text();
+    if ($(this).context.checked) {
+      cur_row.find('#' + mail_control_id).removeAttr('disabled');
+      cur_row.find('#' + mail_for_registerPerson_control_id).removeAttr('disabled');
+      if (isApproval({'name': actionname})){
+        cur_row.find('#' + mail_for_guest_control_id).removeAttr('disabled');
+      }
+    } else {
+      cur_row.find('#' + mail_control_id).attr("disabled", "disabled");
+      cur_row.find('#' + mail_control_id)[0][0].selected = true;
+      cur_row.find('#' + mail_for_registerPerson_control_id).attr("disabled", "disabled");
+      cur_row.find('#' + mail_for_registerPerson_control_id)[0][0].selected = true;
+      if(isApproval({'name': actionname})){
+        cur_row.find('#' + mail_for_guest_control_id).attr("disabled", "disabled");
+        cur_row.find('#' + mail_for_guest_control_id)[0][0].selected = true;
+      }
+    }
   });
   $('#tb_action_list').on('click', '.sortable_up', function () {
     let cur_row = $(this).parents('tr');
@@ -277,6 +329,38 @@ $(document).ready(function () {
     }
     $('#flow_action_ver_' + actionId).text($('#td_action_ver_' + actionId).text());
     $('#flow_action_date_' + actionId).text($('#td_action_date_' + actionId).text());
+    let request_approval_mail = "0";
+    let request_approval_mail_for_guest = "0";
+    let inform_approval_mail = "0";
+    let inform_approval_mail_for_guest = "0";
+    let inform_reject_mail = "0";
+    let inform_reject_mail_for_guest = "0";
+    let inform_itemReg_mail = "0"; 
+    let inform_itemReg_mail_for_registerPerson = "0";
+    if ($tr.find('#td_action_request_approval_mail_' + actionId)[0]) {
+      request_approval_mail = $tr.find('#td_action_request_approval_mail_' + actionId)[0].value;
+    }
+    if ($tr.find('#td_action_request_approval_mail_for_guest_' + actionId)[0]) {
+      request_approval_mail_for_guest = $tr.find('#td_action_request_approval_mail_for_guest_' + actionId)[0].value;
+    }
+    if ($tr.find('#td_action_approval_done_mail_' + actionId)[0]) {
+      inform_approval_mail = $tr.find('#td_action_approval_done_mail_' + actionId)[0].value;
+    }
+    if ($tr.find('#td_action_approval_done_mail_for_guest_' + actionId)[0]) {
+      inform_approval_mail_for_guest = $tr.find('#td_action_approval_done_mail_for_guest_' + actionId)[0].value;
+    }
+    if ($tr.find('#td_action_approval_reject_mail_' + actionId)[0]) {
+      inform_reject_mail = $tr.find('#td_action_approval_reject_mail_' + actionId)[0].value;
+    }
+    if ($tr.find('#td_action_approval_reject_mail_for_guest_' + actionId)[0]) {
+      inform_reject_mail_for_guest = $tr.find('#td_action_approval_reject_mail_for_guest_' + actionId)[0].value;
+    }
+    if ($tr.find('#td_action_item_reg_done_mail_' + actionId)[0]) {
+      inform_itemReg_mail = $tr.find('#td_action_item_reg_done_mail_' + actionId)[0].value;
+    }
+    if ($tr.find('#td_action_item_reg_done_mail_for_registerPerson_' + actionId)[0]) {
+      inform_itemReg_mail_for_registerPerson = $tr.find('#td_action_item_reg_done_mail_for_registerPerson_' + actionId)[0].value;
+    }
     action_list.push({
       id: actionId,
       name: $tr.find('#td_action_name_' + actionId).text(),
@@ -288,9 +372,38 @@ $(document).ready(function () {
       role_deny: $tr.find('#td_action_role_deny_' + actionId).is(':checked'),
       workflow_flow_action_id: $(this).data('workflow-flow-action-id'),
       send_mail_setting: {
-        "request_approval": $tr.find('#td_action_request_approval_' + actionId).is(':checked'),
-        "inform_approval": $tr.find('#td_action_approval_done_' + actionId).is(':checked'),
-        "inform_reject": $tr.find('#td_action_approval_reject_' + actionId).is(':checked')
+        "request_approval": {
+          "send": $tr.find('#td_action_request_approval_' + actionId).is(':checked'),
+          "mail": request_approval_mail
+        },
+        "request_approval_for_guest": {
+          "send": $tr.find('#td_action_request_approval_' + actionId).is(':checked'),
+          "mail": request_approval_mail_for_guest
+        },
+        "inform_approval": {
+          "send": $tr.find('#td_action_approval_done_' + actionId).is(':checked'),
+          "mail": inform_approval_mail
+        },
+        "inform_approval_for_guest": {
+          "send": $tr.find('#td_action_approval_done_' + actionId).is(':checked'),
+          "mail": inform_approval_mail_for_guest
+        },
+        "inform_reject": {
+          "send": $tr.find('#td_action_approval_reject_' + actionId).is(':checked'),
+          "mail": inform_reject_mail
+        },
+        "inform_reject_for_guest": {
+          "send": $tr.find('#td_action_approval_reject_' + actionId).is(':checked'),
+          "mail": inform_reject_mail_for_guest
+        },
+        "inform_itemReg": {
+          "send": $tr.find('#td_action_item_reg_done_' + actionId).is(':checked'),
+          "mail": inform_itemReg_mail
+        },
+        "inform_itemReg_for_registerPerson": {
+          "send": $tr.find('#td_action_item_reg_done_for_registerPerson_' + actionId).is(':checked'),
+          "mail": inform_itemReg_mail_for_registerPerson
+        }
       },
       action: 'ADD'
     });
@@ -317,8 +430,23 @@ $(document).ready(function () {
       new_row = new_row.replaceAll('apply_action.action_version', apply_action.version);
       if (!isApproval(apply_action)) {
         new_row = new_row.replaceAll('specify-property-option', 'hide');
+        new_row = new_row.replaceAll('item-registrant-option', 'hide');
+        new_row = new_row.replaceAll('request-mail-option', 'hide');
         new_row = new_row.replaceAll('<span class="approval-order"></span>', '');
-        new_row = new_row.replaceAll('mail_setting_options', 'hide');
+        new_row = new_row.replaceAll('mail_setting_for_approval', 'hide');
+        new_row = new_row.replaceAll('btn btn-primary pull-right btn_setting_nortification_mail', 'hide');
+      }else{
+        action_order=1;
+        $('#tb_action_list .action_order').each(function (index) {
+          action_order++;
+        });
+        if($('#display_request_form')[0].getAttribute("display_request_form") === 'False'){
+          new_row = new_row.replaceAll('request-mail-option', 'hide');
+        }
+        new_row=new_row.replaceAll('loop.index', action_order);
+      }
+      if(!isItemReg(apply_action)){
+        new_row = new_row.replaceAll('mail_setting_for_itemReg', 'hide');
       }
       $('#tb_action_list').append(new_row);
     }
@@ -346,6 +474,38 @@ $(document).ready(function () {
       let $tr = $(this).parents('tr');
 
       let actionId = $(this).text();
+      let request_approval_mail = "0";
+      let request_approval_mail_for_guest = "0";
+      let inform_approval_mail = "0";
+      let inform_approval_mail_for_guest = "0";
+      let inform_reject_mail = "0";
+      let inform_reject_mail_for_guest = "0";
+      let inform_itemReg_mail = "0";
+      let inform_itemReg_mail_for_registerPerson = "0";
+      if ($tr.find('#td_action_request_approval_mail_' + actionId)[0]) {
+        request_approval_mail = $tr.find('#td_action_request_approval_mail_' + actionId)[0].value;
+      }
+      if ($tr.find('#td_action_request_approval_mail_for_guest_' + actionId)[0]) {
+        request_approval_mail_for_guest = $tr.find('#td_action_request_approval_mail_for_guest_' + actionId)[0].value;
+      }
+      if ($tr.find('#td_action_approval_done_mail_' + actionId)[0]) {
+        inform_approval_mail = $tr.find('#td_action_approval_done_mail_' + actionId)[0].value;
+      }
+      if ($tr.find('#td_action_approval_done_mail_for_guest_' + actionId)[0]) {
+        inform_approval_mail_for_guest = $tr.find('#td_action_approval_done_mail_for_guest_' + actionId)[0].value;
+      }
+      if ($tr.find('#td_action_approval_reject_mail_' + actionId)[0]) {
+        inform_reject_mail = $tr.find('#td_action_approval_reject_mail_' + actionId)[0].value;
+      }
+      if ($tr.find('#td_action_approval_reject_mail_for_guest_' + actionId)[0]) {
+        inform_reject_mail_for_guest = $tr.find('#td_action_approval_reject_mail_for_guest_' + actionId)[0].value;
+      }
+      if ($tr.find('#td_action_item_reg_done_mail_' + actionId)[0]) {
+        inform_itemReg_mail = $tr.find('#td_action_item_reg_done_mail_' + actionId)[0].value;
+      }
+      if ($tr.find('#td_action_item_reg_done_mail_for_registerPerson_' + actionId)[0]) {
+        inform_itemReg_mail_for_registerPerson = $tr.find('#td_action_item_reg_done_mail_for_registerPerson_' + actionId)[0].value;
+      }
       action_list.push({
         id: actionId,
         name: $tr.find('#td_action_name_' + actionId).text(),
@@ -357,9 +517,38 @@ $(document).ready(function () {
         role_deny: $tr.find('#td_action_role_deny_' + actionId).is(':checked'),
         workflow_flow_action_id: $(this).data('workflow-flow-action-id'),
         send_mail_setting: {
-          "request_approval": $tr.find('#td_action_request_approval_' + actionId).is(':checked'),
-          "inform_approval": $tr.find('#td_action_approval_done_' + actionId).is(':checked'),
-          "inform_reject": $tr.find('#td_action_approval_reject_' + actionId).is(':checked')
+            "request_approval": {
+              "send": $tr.find('#td_action_request_approval_' + actionId).is(':checked'),
+              "mail": request_approval_mail
+            },
+            "request_approval_for_guest": {
+              "send": $tr.find('#td_action_request_approval_' + actionId).is(':checked'),
+              "mail": request_approval_mail_for_guest
+            },
+            "inform_approval": {
+              "send": $tr.find('#td_action_approval_done_' + actionId).is(':checked'),
+              "mail": inform_approval_mail
+            },
+            "inform_approval_for_guest":{
+              "send": $tr.find('#td_action_approval_done_' + actionId).is(':checked'),
+              "mail": inform_approval_mail_for_guest
+            },
+            "inform_reject": {
+              "send": $tr.find('#td_action_approval_reject_' + actionId).is(':checked'),
+              "mail": inform_reject_mail
+            },
+            "inform_reject_for_guest": {
+              "send": $tr.find('#td_action_approval_reject_' + actionId).is(':checked'),
+              "mail": inform_reject_mail_for_guest
+            },
+            "inform_itemReg": {
+              "send": $tr.find('#td_action_item_reg_done_' + actionId).is(':checked'),
+              "mail": inform_itemReg_mail
+            },
+            "inform_itemReg_for_registerPerson": {
+              "send": $tr.find('#td_action_item_reg_done_for_registerPerson_' + actionId).is(':checked'),
+              "mail": inform_itemReg_mail_for_registerPerson
+            }
         },
         action: 'ADD'
       });

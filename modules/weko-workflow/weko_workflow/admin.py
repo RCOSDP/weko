@@ -25,7 +25,6 @@ import re
 import uuid
 import json
 
-from flask_wtf import FlaskForm
 from flask import abort, current_app, flash, jsonify, request, url_for
 from flask_admin import BaseView, expose
 from flask_login import current_user
@@ -36,7 +35,7 @@ from invenio_communities.models import Community
 from invenio_db import db
 from invenio_files_rest.models import Location
 from invenio_i18n.ext import current_i18n
-from weko_admin.models import AdminSettings
+from invenio_mail.models import MailTemplates
 from weko_index_tree.models import Index
 from weko_records.api import ItemTypes
 from weko_records.models import ItemTypeProperty
@@ -78,6 +77,10 @@ class FlowSettingView(BaseView):
         else:
             repositories = Community.get_repositories_by_user(current_user)
         actions = self.get_actions()
+        mail_templates = MailTemplates.get_templates()
+        restricted_access_settings = AdminSettings.get("restricted_access", dict_to_object=False) or {}
+        use_restricted_item = restricted_access_settings.get("edit_mail_templates_enable", False)
+        display_request_form = restricted_access_settings.get("display_request_form", False)
         if '0' == flow_id:
             flow = None
             return self.render(
@@ -89,7 +92,12 @@ class FlowSettingView(BaseView):
                 roles=roles,
                 actions=None,
                 action_list=actions,
-                repositories=repositories
+                repositories=repositories,
+                mail_templates=mail_templates,
+                use_restricted_item=use_restricted_item,
+                display_request_form=display_request_form,
+                workflow_registrant_id = current_app.config.get("WEKO_WORKFLOW_ITEM_REGISTRANT_ID"),
+                workflow_request_mail_id = current_app.config.get("WEKO_WORKFLOW_REQUEST_MAIL_ID")
             )
         UUID_PATTERN = re.compile(r'^[\da-f]{8}-([\da-f]{4}-){3}[\da-f]{12}$',
                                   re.IGNORECASE)
@@ -112,7 +120,12 @@ class FlowSettingView(BaseView):
             actions=flow.flow_actions,
             action_list=actions,
             specifed_properties=specified_properties,
-            repositories=repositories
+            repositories=repositories,
+            mail_templates=mail_templates,
+            use_restricted_item=use_restricted_item,
+            display_request_form=display_request_form,
+            workflow_registrant_id = current_app.config.get("WEKO_WORKFLOW_ITEM_REGISTRANT_ID"),
+            workflow_request_mail_id = current_app.config.get("WEKO_WORKFLOW_REQUEST_MAIL_ID")
         )
 
     @staticmethod
@@ -233,6 +246,8 @@ class FlowSettingView(BaseView):
     @expose('/action/<string:flow_id>', methods=['POST'])
     def upt_flow_action(self, flow_id=0):
         """Update FlowAction Info."""
+        if not self._check_auth(str(flow_id)) :
+            abort(403)
         try:
             actions = request.get_json()
             workflow = Flow()
@@ -359,6 +374,8 @@ class WorkFlowSettingView(BaseView):
                 is_sysadmin =True
                 break
 
+        is_display_restricted_access_checkbox = is_sysadmin and current_app.config.get('WEKO_ADMIN_DISPLAY_RESTRICTED_SETTINGS', False)
+
         if '0' == workflow_id:
             """Create new workflow"""
             return self.render(
@@ -374,6 +391,7 @@ class WorkFlowSettingView(BaseView):
                 hide_label=hide_label,
                 display_hide_label=display_hide,
                 is_sysadmin=is_sysadmin,
+                is_display_restricted_access_checkbox=is_display_restricted_access_checkbox,
                 repositories=repositories
             )
 
@@ -406,6 +424,7 @@ class WorkFlowSettingView(BaseView):
             hide_label=hide_label,
             display_hide_label=display_hide,
             is_sysadmin=is_sysadmin,
+            is_display_restricted_access_checkbox=is_display_restricted_access_checkbox,
             repositories=repositories
         )
 

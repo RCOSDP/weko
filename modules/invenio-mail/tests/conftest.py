@@ -28,7 +28,8 @@ from flask_babelex import Babel
 from sqlalchemy_utils.functions import create_database, database_exists, \
     drop_database
 
-
+from weko_admin.config import WEKO_ADMIN_RESTRICTED_ACCESS_SETTINGS
+from weko_admin.models import AdminSettings
 from weko_index_tree.models import Index
 from invenio_communities.models import Community
 from invenio_access import InvenioAccess
@@ -38,8 +39,8 @@ from invenio_accounts.models import User, Role
 from invenio_accounts.testutils import create_test_user
 
 from invenio_mail import InvenioMail, config
-from invenio_mail.admin import mail_adminview
-from invenio_mail.models import MailConfig
+from invenio_mail.admin import mail_adminview, mail_templates_adminview
+from invenio_mail.models import MailConfig, MailTemplates, MailTemplateGenres, MailTemplateUsers, MailType
 
 
 @pytest.yield_fixture()
@@ -60,6 +61,37 @@ def base_app(instance_path):
         #      'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'),
         SQLALCHEMY_DATABASE_URI=os.getenv('SQLALCHEMY_DATABASE_URI',
                                          'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest'),
+        WEKO_RECORDS_UI_MAIL_TEMPLATE_SECRET_GENRE_ID=1,
+        WEKO_ADMIN_RESTRICTED_ACCESS_SETTINGS = {
+            "secret_URL_file_download": {
+                "secret_expiration_date": 30,
+                "secret_expiration_date_unlimited_chk": False,
+                "secret_download_limit": 10,
+                "secret_download_limit_unlimited_chk": False,
+            },
+            "content_file_download": {
+                "expiration_date": 30,
+                "expiration_date_unlimited_chk": False,
+                "download_limit": 10,
+                "download_limit_unlimited_chk": False,
+            },
+            "usage_report_workflow_access": {
+                "expiration_date_access": 500,
+                "expiration_date_access_unlimited_chk": False,
+            },
+            "terms_and_conditions": [],
+            "error_msg": {
+                "key" : "",
+                "content" : {
+                    "ja" : {
+                        "content" : "このデータは利用できません（権限がないため）。"
+                    },
+                    "en":{
+                        "content" : "This data is not available for this user"
+                    }
+                }
+            }
+        }
     )
     Babel(app_)
     InvenioDB(app_)
@@ -70,7 +102,9 @@ def base_app(instance_path):
     app_.jinja_loader.searchpath.append('tests/templates')
     admin = Admin(app_)
     view_class = mail_adminview['view_class']
+    view_class_template = mail_templates_adminview['view_class']
     admin.add_view(view_class(**mail_adminview['kwargs']))
+    admin.add_view(view_class_template(**mail_templates_adminview['kwargs']))
     
     
     return app_
@@ -243,6 +277,40 @@ def mail_configs(db):
     db.session.commit()
     return config
 
+@pytest.fixture()
+def mail_templates(db):
+    """Create mail templates."""
+    from invenio_mail.models import MailTemplates
+    from invenio_mail.models import MailTemplateGenres
+    genres = []
+    genre1 = MailTemplateGenres(
+        id=1,
+        name="Notification of secret URL provision"
+    )
+    genres.append(genre1)
+    genre2 = MailTemplateGenres(
+        id=2,
+        name="Guidance to the application form"
+    )
+    genres.append(genre2)
+    genre3 = MailTemplateGenres(
+        id=3,
+        name="Others"
+    )
+    genres.append(genre3)
+    db.session.add_all(genres)
+    db.session.commit()
+    template = MailTemplates(
+        id=1,
+        mail_subject="test subject",
+        mail_body="test body",
+        default_mail=True,
+        mail_genre_id=genre1.id,
+    )
+    db.session.add(template)
+    db.session.commit()
+    return template
+
 @pytest.yield_fixture()
 def email_admin_app():
     """Flask application fixture."""
@@ -330,3 +398,89 @@ def email_ctx():
         'content': 'This a content.',
         'sender': 'sender',
     }
+
+@pytest.fixture
+def admin_settings(db):
+    restricted_access = AdminSettings(
+        name='restricted_access',
+        settings=WEKO_ADMIN_RESTRICTED_ACCESS_SETTINGS
+    )
+    db.session.add(restricted_access)
+    db.session.commit()
+
+
+@pytest.fixture
+def mail_template_fixture(db):
+    genre1 = MailTemplateGenres(id=1, name='Test Genre1')
+    genre2 = MailTemplateGenres(id=2, name='Test Genre2')
+    genre3 = MailTemplateGenres(id=3, name='Test Genre3')
+    db.session.add(genre1)
+    db.session.add(genre2)
+    db.session.add(genre3)
+
+    mail_template = MailTemplates(
+        mail_subject = 'Test Subject',
+        mail_body = 'Test Body',
+        default_mail = True,
+        mail_genre_id = 1
+    )
+    db.session.add(mail_template)
+    return mail_template
+
+
+@pytest.fixture
+def mail_template_users_fixture(db, mail_template_fixture):
+    user1 = User(id=1, email='user1@example.com')
+    user2 = User(id=2, email='user2@example.com')
+
+    mail_template = mail_template_fixture
+
+    mail_template_user1_recipient = MailTemplateUsers(
+        template=mail_template,
+        user=user1,
+        mail_type=MailType.RECIPIENT
+    )
+    mail_template_user1_cc = MailTemplateUsers(
+        template=mail_template,
+        user=user1,
+        mail_type=MailType.CC
+    )
+    mail_template_user1_bcc = MailTemplateUsers(
+        template=mail_template,
+        user=user1,
+        mail_type=MailType.BCC
+    )
+    mail_template_user2_recipient = MailTemplateUsers(
+        template=mail_template,
+        user=user2,
+        mail_type=MailType.RECIPIENT
+    )
+    mail_template_user2_cc = MailTemplateUsers(
+        template=mail_template,
+        user=user2,
+        mail_type=MailType.CC
+    )
+    mail_template_user2_bcc = MailTemplateUsers(
+        template=mail_template,
+        user=user2,
+        mail_type=MailType.BCC
+    )
+    db.session.add(mail_template_user1_recipient)
+    db.session.add(mail_template_user1_cc)
+    db.session.add(mail_template_user1_bcc)
+    db.session.add(mail_template_user2_recipient)
+    db.session.add(mail_template_user2_cc)
+    db.session.add(mail_template_user2_bcc)
+    db.session.commit()
+
+    users = [user1, user2]
+    mail_template_users = [
+        mail_template_user1_recipient,
+        mail_template_user1_cc,
+        mail_template_user1_bcc,
+        mail_template_user2_recipient,
+        mail_template_user2_cc,
+        mail_template_user2_bcc
+    ]
+
+    return mail_template, users, mail_template_users
