@@ -156,7 +156,8 @@
       "mail": "メールアドレスを入力",
       "contents": "お問い合わせ内容を入力",
       "contactType": "お問い合わせ種別を入力",
-      "request": "リクエスト内容を入力"
+      "request": "リクエスト内容を入力",
+      "result": "計算結果を入力"
     },
     "alert": {
       "requiredField": "必須入力",
@@ -173,6 +174,7 @@
       "error": "エラーが発生しました。管理者に連絡してください。",
       "server": "サーバエラーが発生しました。管理者に連絡してください。",
       "auth": "認証エラーが発生しました。認証状態が不正です。",
+      "noItemAuth": "アイテムの閲覧権限がありません。",
       "fetch": "データ送信に失敗しました。",
       "login": "ログインに失敗しました。",
       "search": "アイテム検索に失敗しました。",
@@ -186,7 +188,10 @@
       "getItemDetail": "アイテム詳細情報の取得に失敗しました。",
       "getItemViewsNumber": "アイテムの閲覧数取得に失敗しました。",
       "getDownloadRanking": "ダウンロードランキングの取得に失敗しました。",
-      "getFileDlNumber": "ファイルのダウンロード数取得に失敗しました。"
+      "getFileDlNumber": "ファイルのダウンロード数取得に失敗しました。",
+      "loginFailed": "ログインに失敗しました。管理者に連絡してください。",
+      "noUserInformation": "ユーザ情報がありません。",
+      "oauthError": "アイテム閲覧にはログインが必要です。{time} 秒後にログイン画面に遷移します。ログイン画面："
     }
   },
   "overview": "概要",
@@ -294,5 +299,7 @@
   "conflictOfInterestYes": "利益相反の有無（有の場合）",
   "remarks": "備考",
   "identifierText": "識別子",
-  "identifierType": "識別子タイプ"
+  "identifierType": "識別子タイプ",
+  "Institutional Login for institutions in Japan.": "所属機関のIdPでログインする方",
+  "needToLogin": "ログインが必要なアイテムです。"
 }

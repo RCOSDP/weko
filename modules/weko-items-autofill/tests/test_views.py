@@ -71,7 +71,8 @@ def test_get_selection_option(client_api,users):
         {'value': 'Default', 'text': 'Select the ID'},
         {'value': 'CrossRef', 'text': 'CrossRef'},
         {'value': 'CiNii', 'text': 'CiNii'},
-        {'value': 'WEKOID', 'text': 'WEKOID'}
+        {'value': 'WEKOID', 'text': 'WEKOID'},
+        {'value': 'researchmap','text':'researchmap'}
     ]
     }
     res = client_api.get(url)
@@ -148,7 +149,7 @@ def test_get_auto_fill_record_data(client_api,db,users,mocker):
     # header error
     res = client_api.post(url,data="test_value",content_type="plain/text")
     assert res.status_code == 200
-    assert json.loads(res.data) == {"result":"","items":"","error":"Header Error"}
+    assert json.loads(res.data) == {"result":"","items":"","error":"Header Error",'resource_type' : '' }
 
     data = {
         "api_type":"",
@@ -164,7 +165,7 @@ def test_get_auto_fill_record_data(client_api,db,users,mocker):
     }
     res = client_api.post(url,json=data)
     assert res.status_code == 200
-    assert json.loads(res.data) == {"result":"","items":"","error":"not_exist_type is NOT support autofill feature."}
+    assert json.loads(res.data) == {"result":"","items":"","error":"not_exist_type is NOT support autofill feature.",'resource_type' : '' }
 
     # api_type is CrossRef
 
@@ -176,8 +177,8 @@ def test_get_auto_fill_record_data(client_api,db,users,mocker):
     }
     res = client_api.post(url,json=data)
     assert res.status_code == 200
-    assert json.loads(res.data) == {"result":"return_crossref_record_data","items":"","error":""}
-    mock_crossref_record.assert_called_with("test_crf@test.org","data","1")
+    assert json.loads(res.data) == {"result":"return_crossref_record_data","items":"","error":"",'resource_type' : '' }
+    mock_crossref_record.assert_called_with("test_crf@test.org","data","1", False)
 
     # api_type is CiNii
     data = {
@@ -188,7 +189,7 @@ def test_get_auto_fill_record_data(client_api,db,users,mocker):
     mock_cinii_record = mocker.patch("weko_items_autofill.views.get_cinii_record_data",return_value="return_cinii_record_data")
     res = client_api.post(url,json=data)
     assert res.status_code == 200
-    assert json.loads(res.data) == {"result":"return_cinii_record_data","items":"","error":""}
+    assert json.loads(res.data) == {"result":"return_cinii_record_data","items":"","error":"",'resource_type' : '' }
     mock_cinii_record.assert_called_with("data","1")
 
     # api_type is WEKOID
@@ -200,14 +201,33 @@ def test_get_auto_fill_record_data(client_api,db,users,mocker):
     mock_weko_record = mocker.patch("weko_items_autofill.views.get_wekoid_record_data",return_value="return_weko_record_data")
     res = client_api.post(url,json=data)
     assert res.status_code == 200
-    assert json.loads(res.data) == {"result":"return_weko_record_data","items":"","error":""}
+    assert json.loads(res.data) == {"result":"return_weko_record_data","items":"","error":"",'resource_type' : '' }
     mock_weko_record.assert_called_with("data","1")
 
+    # api_type is researchmap
+    data = {
+        "api_type":"researchmap",
+        "parmalink":"test_parmalink",
+        "achievement_type":"test_achievement_type",
+        "achievement_id":"test_achievement_id",
+        "item_type_id":"1"
+    }
+    mock_researchmapid_record = mocker.patch("weko_items_autofill.views.get_researchmapid_record_data",return_value=("return_researchmapid_record_data","return_researchmapid_resource_type"))
+    res = client_api.post(url,json=data)
+    assert res.status_code == 200
+    assert json.loads(res.data) == {"result":"return_researchmapid_record_data","items":"","error":"",'resource_type' : "return_researchmapid_resource_type" }
+    mock_researchmapid_record.assert_called_with("test_parmalink","test_achievement_type","test_achievement_id","1")
+    
     # raise Exception
+    data = {
+        "api_type":"WEKOID",
+        "search_data":"data",
+        "item_type_id":"1"
+    }
     mocker.patch("weko_items_autofill.views.get_wekoid_record_data",side_effect=Exception("test_error"))
     res = client_api.post(url,json=data)
     assert res.status_code == 200
-    assert json.loads(res.data) == {"result":"","items":"","error":"test_error"}
+    assert json.loads(res.data) == {"result":"","items":"","error":"test_error",'resource_type' : '' }
 
 
 # .tox/c1/bin/pytest --cov=weko_items_autofill tests/test_views.py::test_get_auto_fill_record_data_doi -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-autofill/.tox/c1/tmp

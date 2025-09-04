@@ -471,6 +471,8 @@ ${INVENIO_WEB_INSTANCE} authors_prefix default_settings \
        "AID" "AID" ""
 ${INVENIO_WEB_INSTANCE} authors_prefix default_settings \
        "e-Rad_Researcher" "e-Rad_Researcher" ""
+${INVENIO_WEB_INSTANCE} authors_prefix default_settings \
+       "researchmap" "researchmap" "https://researchmap.jp/##"
 # create-default-authors-prefix-settings-end
 
 # create-default-authors-affiliation-settings-begin

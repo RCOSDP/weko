@@ -31,7 +31,7 @@ class WekoHandle(object):
         """Flask application initialization."""
         self.init_config(app)
 
-        app.register_blueprint(blueprint)
+        # app.register_blueprint(blueprint)
         app.extensions['weko-handle'] = self
 
     def init_config(self, app):

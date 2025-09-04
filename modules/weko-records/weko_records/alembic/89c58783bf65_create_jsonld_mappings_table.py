@@ -48,6 +48,7 @@ def upgrade():
             "is_deleted", sa.Boolean(name="is_deleted"),
             nullable=False, default=False
         ),
+        sa.Index("ix_jsonld_mappings_item_type_id", "item_type_id"),
         sa.ForeignKeyConstraint(
             ["item_type_id"], ["item_type.id"],
             name="fk_jsonld_mappings_item_type_id_item_type",

@@ -387,7 +387,7 @@ function saveDataFormat(type) {
   if (type === 'add') {
     url = '/admin/swordapi/jsonld/add/';
   } else {
-    url = '/admin/swordapi/jsonld/edit/' + current_model_json['id'];
+    url = '/admin/swordapi/jsonld/edit/' + current_model_json['id'] + '/';
   }
   fetch(url, {
     method: 'POST',

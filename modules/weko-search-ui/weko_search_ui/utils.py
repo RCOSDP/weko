@@ -148,7 +148,7 @@ from .config import (
     ROCRATE_METADATA_FILE
 )
 from .query import item_path_search_factory
-
+from weko_items_ui.signals import cris_researchmap_linkage_request
 
 class DefaultOrderedDict(OrderedDict):
     """Default Dictionary that remembers insertion order."""
@@ -1304,14 +1304,18 @@ def read_stats_file(file_path: str, file_name: str, file_format: str) -> dict:
                     if isinstance(check_item_type, dict):
                         item_type_name = check_item_type.get("name")
                         item_type_id = check_item_type.get("item_type_id")
-                        item_data = dict(
+                        item_data = {
                             **data_parse_metadata,
                             **{
                                 "item_type_name": item_type_name or "",
                                 "item_type_id": item_type_id or "",
                                 "$schema": schema if schema else "",
+                                "metadata": {
+                                    **data_parse_metadata.get("metadata", {}),
+                                    "edit_mode": data_parse_metadata.get("edit_mode", "Keep"),
+                                }
                             }
-                        )
+                        }
                     else:
                         item_data = dict(**data_parse_metadata)
                     if item_path_not_existed:
@@ -2176,6 +2180,13 @@ def import_items_to_system(
                     if fs.exists(path):
                         file.delete()
                 delete_cache_data(cache_key)
+
+            # start cris linkage
+            if item.get("researchmap_linkage"):
+                pid = PersistentIdentifier.query.filter_by(
+                    pid_type="recid", pid_value=item["id"]
+                ).first()
+                cris_researchmap_linkage_request.send(pid.object_uuid)
 
         except SQLAlchemyError as ex:
             current_app.logger.error(f"sqlalchemy error: {ex}")

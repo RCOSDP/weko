@@ -1860,3 +1860,52 @@ msgstr "現行"
 #: weko_admin/templates/weko_admin/settings/lifetime.html:59
 msgid "Update"
 msgstr "更新"
+
+#: 
+msgid "CRIS Linkage"
+msgstr "CRIS 連携"
+
+msgid "similar merge(similar data priority)"
+msgstr "マージ（類似データ優先）"
+
+msgid "similar merge(input data priority)"
+msgstr "マージ（入力データ優先）"
+
+msgid "merge"
+msgstr "追加（類似データがあればエラー）"
+
+msgid "force"
+msgstr "追加（入力データ強制）"
+
+msgid "API Key"
+msgstr "APIキー"
+
+msgid "client id key"
+msgstr "client idキー"
+
+msgid "private key"
+msgstr "privateキー"
+
+msgid "Merge Mode"
+msgstr "マージモード"
+
+msgid "Select file"
+msgstr "ファイル選択"
+
+msgid "Selected file name"
+msgstr "選択したファイル名"
+
+msgid "Please input at least one of client id key or private key"
+msgstr "client idキーまたはprivateキーのどちらか最低一つは入力してください"
+
+msgid "Please input Merge Mode"
+msgstr "マージモードを入力してください"
+
+msgid "Registered"
+msgstr "登録済"
+
+msgid "client id key size too large."
+msgstr "client idキーのサイズが大きすぎます"
+
+msgid "private key size too large."
+msgstr "privateキーのサイズが大きすぎます"

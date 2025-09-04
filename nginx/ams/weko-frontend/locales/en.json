@@ -155,7 +155,8 @@
       "mail": "Enter your email address",
       "contents": "Enter your inquiry details",
       "contactType": "Enter contact type",
-      "request": "Enter your request"
+      "request": "Enter your request",
+      "result": "Enter result"
     },
     "alert": {
       "requiredField": "This field is required",
@@ -172,6 +173,7 @@
       "error": "Error has occurred. Please contact server administrator.",
       "server": "Server error has occurred. Please contact server administrator.",
       "auth": "Authentication error has occurred. Authentication status is invalid.",
+      "noItemAuth": "You do not have permission to view this item.",
       "fetch": "Failed to send data.",
       "login": "Failed to login.",
       "search": "Failed to search items.",
@@ -185,7 +187,10 @@
       "getItemDetail": "Failed to get item details.",
       "getItemViewsNumber": "Failed to get the number of views for the item.",
       "getDownloadRanking": "Failed to get download ranking.",
-      "getFileDlNumber": "Failed to get the number of downloaded."
+      "getFileDlNumber": "Failed to get the number of downloaded.",
+      "loginFailed": "Failed to Login. Please contact server administrator.",
+      "noUserInformation": "There is no user information.",
+      "oauthError": "Login is required to view items. You will be automatically redirected to the login screen in {time} seconds. Login screen:"
     }
   },
   "overview": "Overview",
@@ -293,5 +298,7 @@
   "conflictOfInterestYes": "conflict of interest (Yes) ",
   "remarks": "Remarks",
   "identifierText": "identifier",
-  "identifierType": "identifier type"
+  "identifierType": "identifier type",
+  "Institutional Login for institutions in Japan.": "Institutional Login for institutions in Japan.",
+  "needToLogin": "This item requires login."
 }

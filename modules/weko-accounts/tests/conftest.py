@@ -78,6 +78,7 @@ def base_app(instance_path):
             "CACHE_REDIS_URL", "redis://redis:6379/0"
         ),
         CACHE_REDIS_DB='0',
+        GROUP_INFO_REDIS_DB='4',
         CACHE_REDIS_HOST="redis",
         CACHE_TYPE="redis",
         REDIS_PORT='6379',
@@ -288,6 +289,11 @@ def redis_connect(app):
     redis_connection = RedisConnection().connection(db=app.config['CACHE_REDIS_DB'], kv = True)
     return redis_connection
 
+@pytest.fixture()
+def group_info_redis_connect(app):
+    """Redis connection for group info."""
+    redis_connection = RedisConnection().connection(db=app.config['GROUP_INFO_REDIS_DB'], kv=True)
+    return redis_connection
 
 @pytest.fixture()
 def users_login(users):
@@ -336,3 +342,25 @@ def indices(db):
     db.session.add(index_4)
     db.session.commit()
     return [index_1, index_2, index_3, index_4]
+
+@pytest.fixture()
+def weko_roles(app):
+    """Create roles.
+
+    Args:
+        app (Flask): Flask application.
+    
+    Returns:
+        dict: Dictionary of roles.
+    """
+    ds = app.extensions["invenio-accounts"].datastore
+    sysadmin_role = ds.create_role(name='System Administrator')
+    repoadmin_role = ds.create_role(name='Repository Administrator')
+    contributor_role = ds.create_role(name='Contributor')
+    comadmin_role = ds.create_role(name='Community Administrator')
+    return {
+        'sysadmin': sysadmin_role,
+        'repoadmin': repoadmin_role,
+        'contributor': contributor_role,
+        'comadmin': comadmin_role
+    }

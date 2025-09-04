@@ -96,7 +96,7 @@
           right: 20px;
           width: 12px;
           height: 12px;
-          background-image: url(/img/icon/icon_close02.svg);
+          background-image: url(/img/ams/icon/icon_close02.svg);
           background-position: center;
           background-size: 12px;
           background-repeat: no-repeat;
@@ -115,7 +115,7 @@
             width: 20px;
             height: 20px;
             vertical-align: bottom;
-            background-image: url(/img/icon/icon_q.svg);
+            background-image: url(/img/ams/icon/icon_q.svg);
           }
         }
       }
@@ -133,7 +133,7 @@
           width: 20px;
           height: 20px;
           vertical-align: bottom;
-          background-image: url(/img/icon/icon_a.svg);
+          background-image: url(/img/ams/icon/icon_a.svg);
         }
       }
 
@@ -181,4 +181,26 @@
       }
     }
   }
+}
+
+.text-divider {
+  display: flex;
+  align-items: center;
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+  padding-left: 40px;
+  padding-right: 40px;
+}
+.text-divider::before,
+.text-divider::after {
+  content: '';
+  height: 1px;
+  background-color: #a3a3a3;
+  flex-grow: 1;
+}
+.text-divider::before {
+  margin-right: 1rem;
+}
+.text-divider::after {
+  margin-left: 1rem;
 }

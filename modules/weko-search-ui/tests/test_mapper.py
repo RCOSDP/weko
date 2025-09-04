@@ -3283,13 +3283,14 @@ def test_add_file(mapper_jpcoar):
                     },
                 }
             ]
-        }]
+        }],
+        'file_path': ['70_5_331.pdf'],
     }
 
     # Case04: Parse empty file
     res = {}
     add_file(schema, mapping, res, [])
-    assert res == {}
+    assert res == {'file_path': [],}
 
 
 # def add_catalog(schema, mapping, res, metadata):

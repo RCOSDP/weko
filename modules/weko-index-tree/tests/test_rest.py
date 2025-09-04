@@ -1347,3 +1347,14 @@ class TestIndexManagementAPI:
         with patch.object(Indexes, "delete", side_effect=SQLAlchemyError):
             response = client_rest.delete(url, headers=auth_headers)
             assert response.status_code == 500, f"{response.json}"
+
+# class GetIndex:
+# .tox/c1/bin/pytest --cov=weko_index_tree tests/test_rest.py::TestGetIndex -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko_index_tree/.tox/c1/tmp --full-trace
+class TestGetIndex:
+    # .tox/c1/bin/pytest --cov=weko_index_tree tests/test_rest.py::TestGetIndex::test_get_v1 -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko_index_tree/.tox/c1/tmp --full-trace
+    def test_get_v1(self, client_rest, users, test_indices, auth_headers_sysadmin):
+        res = client_rest.get('/v1/tree/index/1', headers=auth_headers_sysadmin)
+        assert res.status_code == 200
+        data = json.loads(res.get_data())
+        assert data['index']['name'] == 'Test index 1'
+        assert data['index']['public_date'] == '20220101'

@@ -200,7 +200,7 @@ function copySearchCondition() {
 <style scoped>
 #sort-dropdown {
   appearance: none;
-  background-image: url('/img/icon/icon_sort01.svg');
+  background-image: url('/img/ams/icon/icon_sort01.svg');
   background-size: 25px;
 }
 </style>
