@@ -20,6 +20,7 @@
 
 """Database models for user profiles."""
 
+from flask import current_app
 from invenio_accounts.models import User
 from invenio_db import db
 from sqlalchemy import event
