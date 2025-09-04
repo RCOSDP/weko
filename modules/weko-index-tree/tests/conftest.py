@@ -445,6 +445,15 @@ def base_app(instance_path):
         WEKO_THEME_INSTANCE_DATA_DIR="data",
         WEKO_HANDLE_ALLOW_REGISTER_CNRI=False,
         WEKO_ADMIN_PERMISSION_ROLE_COMMUNITY="Community Administrator",
+        WEKO_PERMISSION_ROLE_USER=[
+            "System Administrator",
+            "Repository Administrator",
+            "Contributor",
+            "General",
+            "Community Administrator",
+            "Guest",
+            "Authenticated User"
+        ]
         WEKO_INDEX_TREE_SHOW_MODAL=False
     )
     app_.url_map.converters['pid'] = PIDConverter
@@ -986,34 +995,43 @@ def without_oaiset_signals(app):
 
 
 @pytest.fixture()
-def esindex(app,db_records):
+def es(app):
+    """Provide elasticsearch access, create and clean indices.
+
+    Don't create template so that the test or another fixture can modify the
+    enabled events.
+    """
+
     with open("tests/data/mappings/item-v1.0.0.json","r") as f:
         mapping = json.load(f)
 
     search = LocalProxy(lambda: app.extensions["invenio-search"])
 
-    with app.test_request_context():
-        try:
-            search.client.indices.create(app.config["INDEXER_DEFAULT_INDEX"],body=mapping)
-            search.client.indices.put_alias(index=app.config["INDEXER_DEFAULT_INDEX"], name="test-weko")
-        except:
-            search.client.indices.create("test-weko-items",body=mapping)
-            search.client.indices.put_alias(index="test-weko-items", name="test-weko")
-        # print(current_search_client.indices.get_alias())
+    try:
+        search.client.indices.create(app.config["INDEXER_DEFAULT_INDEX"],body=mapping)
+        search.client.indices.put_alias(index=app.config["INDEXER_DEFAULT_INDEX"], name="test-weko")
+    except:
+        search.client.indices.create("test-weko-items",body=mapping)
+        search.client.indices.put_alias(index="test-weko-items", name="test-weko")
 
-    for depid, recid, parent, doi, record, item in db_records:
-        search.client.index(index='test-weko-item-v1.0.0', doc_type='item-v1.0.0', id=record.id, body=record,refresh='true')
-
-
-    yield search
-
-    with app.test_request_context():
+    try:
+        yield search
+    finally:
         try:
             search.client.indices.delete_alias(index=app.config["INDEXER_DEFAULT_INDEX"], name="test-weko")
             search.client.indices.delete(index=app.config["INDEXER_DEFAULT_INDEX"], ignore=[400, 404])
         except:
             search.client.indices.delete_alias(index="test-weko-items", name="test-weko")
             search.client.indices.delete(index="test-weko-items", ignore=[400, 404])
+
+
+@pytest.fixture()
+def esindex(app, es, db_records):
+
+    for depid, recid, parent, doi, record, item in db_records:
+        es.client.index(index='test-weko-item-v1.0.0', doc_type='item-v1.0.0', id=record.id, body=record,refresh='true')
+
+    yield es
 
 
 @pytest.fixture()
@@ -1394,23 +1412,6 @@ def mock_user_ctx(mock_users):
     with patch('invenio_stats.utils.current_user',
                mock_users['authenticated']):
         yield
-
-
-@pytest.yield_fixture()
-def es(app):
-    """Provide elasticsearch access, create and clean indices.
-
-    Don't create template so that the test or another fixture can modify the
-    enabled events.
-    """
-    current_search_client.indices.delete(index='*')
-    current_search_client.indices.delete_template('*')
-    list(current_search.create())
-    try:
-        yield current_search_client
-    finally:
-        current_search_client.indices.delete(index='*')
-        current_search_client.indices.delete_template('*')
 
 
 def generate_events(

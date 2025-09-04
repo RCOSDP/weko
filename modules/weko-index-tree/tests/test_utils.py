@@ -212,7 +212,7 @@ def test_get_user_groups(i18n_app, client_rest, users, db):
 
 # .tox/c1/bin/pytest --cov=weko_index_tree tests/test_utils.py::test_check_roles -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-index-tree/.tox/c1/tmp
 #+++ def check_roles(user_role, roles):
-def test_check_roles(users):
+def test_check_roles(i18n_app, users):
     # admin user
     user_role = (True, [])
     roles = ["1","2"]
@@ -434,7 +434,8 @@ def test_get_admin_coverpage_setting(pdfcoverpage):
 
 
 #+++ def get_elasticsearch_records_data_by_indexes(index_ids, start_date, end_date):
-def test_get_elasticsearch_records_data_by_indexes(i18n_app, db_records, indices, esindex):
+# .tox/c1/bin/pytest --cov=weko_index_tree tests/test_utils.py::test_get_elasticsearch_records_data_by_indexes -vv -s --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-index-tree/.tox/c1/tmp --full-trace
+def test_get_elasticsearch_records_data_by_indexes(i18n_app, indices, db_records, esindex):
     idx_tree_ids = [idx.cid for idx in Indexes.get_recursive_tree(indices['index_non_dict'].id)]
     current_date = date.today()
     start_date = (current_date - timedelta(days=1)).strftime("%Y-%m-%d")
@@ -717,21 +718,12 @@ def test_perform_delete_index(app, db, test_indices, users):
             with patch("weko_index_tree.utils.is_index_locked", return_value=False):
                 assert perform_delete_index(1, Indexes, "move")==('', ['The index cannot be deleted because there is a link from an item that has a DOI.'])
             with patch("weko_index_tree.utils.check_doi_in_index", return_value=False):
-                _data = [
-                    {
-                        "_source": {"_item_metadata": {"control_number": "0"}}
-                    },
-                    {
-                        "_source": {"_item_metadata": {"control_number": "1"}}
-                    }
-                ]
-                with patch("weko_index_tree.utils.get_record_in_es_of_index", return_value=_data):
-                    with patch("weko_workflow.utils.check_an_item_is_locked", return_value=True):
-                        assert perform_delete_index(1, Indexes, "move")==('', ['This index cannot be deleted because the item belonging to this index is being edited by the import function.'])
-                    with patch("weko_workflow.utils.check_an_item_is_locked", return_value=False):
-                        with patch("weko_index_tree.api.Indexes.delete_by_action", return_value=None):
-                            assert perform_delete_index(1, Indexes, "move")==('Failed to delete index.', [])
-                        assert perform_delete_index(1, Indexes, "delete")==('Index deleted successfully.', [])
+                with patch("weko_index_tree.utils.get_editing_items_in_index", return_value=["0"]):
+                    assert perform_delete_index(1, Indexes, "move")==('', ['This index cannot be deleted because the item belonging to this index is being edited.'])
+                with patch("weko_index_tree.utils.get_editing_items_in_index", return_value=[]):
+                    with patch("weko_index_tree.api.Indexes.delete_by_action", return_value=None):
+                        assert perform_delete_index(1, Indexes, "move")==('Failed to delete index.', [])
+                    assert perform_delete_index(1, Indexes, "delete")==('Index deleted successfully.', [])
 
 
 # def get_doi_items_in_index(index_id, recursively=False):
