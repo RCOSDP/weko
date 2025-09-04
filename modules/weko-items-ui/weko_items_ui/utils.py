@@ -3289,29 +3289,29 @@ def validate_user_mail_and_index(request_data):
         result['error'] = str(ex)
     return result
 
-#制限公開、アイテム自動入力機能の役職を取得、整形し画面に反映させる。
-def positionlist_current():
-    #元データを取得
-    current_list =AdminSettings.get('profiles_items_settings', dict_to_object=False)
-    if not current_list:
-        return []
-    
-    #取得したcurrent_listの中から'position'キーの'select'をリストで取得
-    current_list = current_list.get('position', {}).get('select', [])
-    if not current_list:
-        return []
+def get_profile_positions():
+    """
+    Get profile positions from admin settings or default settings.
+    Returns:
+        list: List of tuples containing position values and labels.
+    """
+    # check if profile customize is enabled
+    if not current_app.config.get("WEKO_USERPROFILES_CUSTOMIZE_ENABLED", False):
+        # get default position list from config
+        return current_app.config.get("WEKO_USERPROFILES_POSITION_LIST", [])
 
-    #リストの最初の項目を抜き出す。
-    current_select = current_list[0]
+    # get setting from admin settings
+    profile_setting = AdminSettings.get("profiles_items_settings", dict_to_object=False)
+    if not profile_setting:
+        profile_setting = current_app.config.get("WEKO_USERPROFILES_DEFAULT_FIELDS_SETTINGS", {})
 
-    #パイプで分割してリストに変換。例）A|B|C → ['A','B','C']
-    current_select = current_select.split('|')
+    # get position list from setting
+    position_options = profile_setting.get("position", {}).get("options", [])
+    if not position_options:
+        return current_app.config.get("WEKO_USERPROFILES_POSITION_LIST", [])
 
-    #既存リストWEKO_USERPROFILES_POSITION_LIST_GENERALをもとにタプルに変換。
-    settings_tuples = [(index,_(index)) for index in current_select]
-
-    #最終的なリストを返す。
-    return settings_tuples
+    # create list of tuple for option value and label
+    return [(position,_(position)) for position in position_options]
 
 def recursive_form(schema_form):
     """
@@ -3328,8 +3328,7 @@ def recursive_form(schema_form):
         if (form.get('title', '') == 'Position' and form.get('type', '')
                 == 'select'):
             dict_data = []
-            positions = current_app.config.get(
-                'WEKO_USERPROFILES_POSITION_LIST')+positionlist_current()
+            positions = get_profile_positions()
             for val in positions:
                 if val[0]:
                     current_position = {

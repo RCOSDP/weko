@@ -32,10 +32,11 @@ from weko_admin.models import AdminSettings
 
 
 def get_user_profile_info(user_id):
-    """Get user profile info.
-
-    @param user_id:
-    @return:
+    """Get user profile information.
+    Args:
+        user_id (int): User ID
+    Returns:
+        dict: User profile information
     """
     result = {
         'subitem_user_name': '',
@@ -49,17 +50,22 @@ def get_user_profile_info(user_id):
         'subitem_affiliated_institution': [],
     }
     user_info = UserProfile.get_by_userid(int(user_id))
-    #項目表示の設定を取得。visbleがFalseの場合は表示しない
-    profile_conf = AdminSettings.get('profiles_items_settings', dict_to_object=False)
+
+    # get setting from admin settings
+    profile_setting = AdminSettings.get('profiles_items_settings', dict_to_object=False)
+    if not profile_setting:
+        profile_setting = current_app.config.get("WEKO_USERPROFILES_DEFAULT_FIELDS_SETTINGS", {})
+
+    # get user profile visible setting
     if user_info is not None:
-        result['subitem_fullname'] = user_info.fullname if profile_conf.get('fullname', {}).get('visible', True) else ''
-        result['subitem_displayname'] = user_info._displayname if profile_conf.get('displayname', {}).get('visible', True) else ''
-        result['subitem_user_name'] = user_info.get_username if profile_conf.get('username', {}).get('visible', True) else ''
-        result['subitem_university/institution'] = user_info.university if profile_conf.get('university', {}).get('visible', True) else ''
-        result['subitem_affiliated_division/department'] = user_info.department if profile_conf.get('department', {}).get('visible', True) else ''
-        result['subitem_position'] = user_info.position if profile_conf.get('position', {}).get('visible', True) else ''
-        result['subitem_position(others)'] = user_info.item1 if profile_conf.get('item1', {}).get('visible', True) else ''
-        result['subitem_phone_number'] = user_info.item2 if profile_conf.get('item2', {}).get('visible', True) else ''
+        result['subitem_fullname'] = user_info.fullname if profile_setting.get('fullname', {}).get('visible', True) else ''
+        result['subitem_displayname'] = user_info._displayname if profile_setting.get('displayname', {}).get('visible', True) else ''
+        result['subitem_user_name'] = user_info.get_username if profile_setting.get('username', {}).get('visible', True) else ''
+        result['subitem_university/institution'] = user_info.university if profile_setting.get('university', {}).get('visible', True) else ''
+        result['subitem_affiliated_division/department'] = user_info.department if profile_setting.get('department', {}).get('visible', True) else ''
+        result['subitem_position'] = user_info.position if profile_setting.get('position', {}).get('visible', True) else ''
+        result['subitem_position(others)'] = user_info.item1 if profile_setting.get('item1', {}).get('visible', True) else ''
+        result['subitem_phone_number'] = user_info.item2 if profile_setting.get('item2', {}).get('visible', True) else ''
         subitem_affiliated_institution = []
         institute_dict_data = user_info.get_institute_data()
         for institution_info in institute_dict_data:

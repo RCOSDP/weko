@@ -110,22 +110,29 @@ def validate_digits(form, field):
 
 
 def custom_profile_form_factory(profile_cls):
+    """Create a custom profile form class based on configuration settings.
+    Args:
+        profile_cls (class): Base profile form class to extend.
+    Returns:
+        class: A dynamically created ProfileForm class.
+    """
     if not issubclass(profile_cls, ProfileForm):
         profile_cls = ProfileForm
 
     # Get profile configuration settings
-    profile_conf = AdminSettings.get('profiles_items_settings', dict_to_object=False)
+    profile_setting = AdminSettings.get('profiles_items_settings', dict_to_object=False)
 
     # Create the ProfileForm class dynamically
-    if profile_conf is None:
-        if current_app.config.get("WEKO_USERPROFILES_DEFAULT_FIELDS_SETTINGS"):
-            profile_conf = current_app.config.get("WEKO_USERPROFILES_DEFAULT_FIELDS_SETTINGS")
+    if profile_setting is None:
+        if current_app.config.get("WEKO_USERPROFILES_DEFAULT_FIELDS_SETTINGS", {}):
+            profile_setting = current_app.config.get("WEKO_USERPROFILES_DEFAULT_FIELDS_SETTINGS")
         else:
             raise ValueError("Could not retrieve profile configuration settings.")
 
-    # Iterate over the profile configuration settings
-    sorted_profile_conf = OrderedDict(sorted(profile_conf.items(), key=lambda x: x[1].get("order", 0)))
-    for key, value in sorted_profile_conf.items():
+    # Sort profile_setting by 'order' key
+    sorted_profile_setting = OrderedDict(sorted(profile_setting.items(), key=lambda x: x[1].get("order", 0)))
+    # Iterate over the sorted configuration and add fields to the form class
+    for key, value in sorted_profile_setting.items():
         # Check if the field should be visible
         if value['visible']:
             field_format = value['format']
