@@ -1907,14 +1907,16 @@ def register_item_metadata(item, root_path, owner, is_gakuninrdm=False, request_
 
     _deposit_data = record.dumps().get("_deposit")
     deposit = WekoDeposit(record, record.model)
-    new_data = dict(
-        **item.get("metadata"),
+
+    new_data = {
         **_deposit_data,
+        **item.get("metadata"),
         **{
             "$schema": item.get("$schema"),
+            "status": _deposit_data.get("status"),
             "title": item.get("item_title"),
         }
-    )
+    }
     new_data = escape_newline(new_data)
     item_status = {
         "index": new_data["path"],
