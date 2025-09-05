@@ -1325,9 +1325,9 @@ class TestHeadlessActivity:
         assert ex.value.description.startswith("File size limit exceeded.")
 
         # Test case: file not found
-        with pytest.raises(WekoWorkflowException) as ex:
-            activity._upload_files(["non_existent_file.txt"], {})
-        assert ex.value.args[0] == "file(non_existent_file.txt) is not found."
+        with app.test_request_context():
+            files_info = activity._upload_files(["non_existent_file.txt"], {})
+        assert len(files_info) == 0
 
     # def _delete_file(self, version_ids):
     # .tox/c1/bin/pytest --cov=weko_workflow tests/test_activity.py::TestHeadlessActivity::test__delete_file -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp

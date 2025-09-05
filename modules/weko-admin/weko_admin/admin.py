@@ -2225,6 +2225,7 @@ class JsonldMappingView(ModelView):
 
         try:
             obj = JsonldMapping.delete(id)
+            db.session.commit()
             current_app.logger.info(f"jsonld mapping deleted: {obj.name}")
             return jsonify(results=True), 200
 

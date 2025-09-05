@@ -554,18 +554,14 @@ class ItemImportView(BaseView):
                 item_id = task_item.get("item_id", None)
                 if not item_id and task.result:
                     item_id = task.result.get("recid", None)
-                result.append(
-                    dict(
-                        **{
-                            "task_status": task.status,
-                            "task_result": task.result,
-                            "start_date": start_date,
-                            "end_date": task_item.get("end_date") or end_date,
-                            "task_id": task_id,
-                            "item_id": item_id,
-                        }
-                    )
-                )
+                result.append({
+                    "task_status": task.status,
+                    "task_result": task.result,
+                    "start_date": start_date,
+                    "end_date": task_item.get("end_date") or end_date,
+                    "task_id": task_id,
+                    "item_id": item_id,
+                })
                 status = (
                     "doing"
                     if not (task.successful() or task.failed()) or status == "doing"
@@ -585,7 +581,10 @@ class ItemImportView(BaseView):
         file_format = current_app.config.get('WEKO_ADMIN_OUTPUT_FORMAT', 'tsv').lower()
         file_name = "List_Download {}.{}".format(now, file_format)
         if data:
-            output_file = make_stats_file(data.get("list_result"), WEKO_IMPORT_LIST_NAME)
+            output_file = make_stats_file(
+                data.get("list_result"),
+                list(map(lambda x: str(x) , WEKO_IMPORT_LIST_NAME))
+            )
             return Response(
                 output_file.getvalue(),
                 mimetype="text/{}".format(file_format),
@@ -1000,18 +999,14 @@ class ItemRocrateImportView(BaseView):
                 item_id = task_item.get("item_id", None)
                 if not item_id and task.result:
                     item_id = task.result.get("recid", None)
-                result.append(
-                    dict(
-                        **{
-                            "task_status": task.status,
-                            "task_result": task.result,
-                            "start_date": start_date,
-                            "end_date": task_item.get("end_date") or end_date,
-                            "task_id": task_id,
-                            "item_id": item_id,
-                        }
-                    )
-                )
+                result.append({
+                    "task_status": task.status,
+                    "task_result": task.result,
+                    "start_date": start_date,
+                    "end_date": task_item.get("end_date") or end_date,
+                    "task_id": task_id,
+                    "item_id": item_id,
+                })
                 status = (
                     "doing"
                     if not (task.successful() or task.failed()) or status == "doing"
@@ -1034,7 +1029,10 @@ class ItemRocrateImportView(BaseView):
         file_format = current_app.config.get('WEKO_ADMIN_OUTPUT_FORMAT', 'tsv').lower()
         file_name = "List_Download {}.{}".format(now, file_format)
         if data:
-            output_file = make_stats_file(data.get("list_result"), WEKO_IMPORT_LIST_NAME)
+            output_file = make_stats_file(
+                data.get("list_result"),
+                list(map(lambda x: str(x) , WEKO_IMPORT_LIST_NAME))
+            )
             return Response(
                 output_file.getvalue(),
                 mimetype="text/{}".format(file_format),

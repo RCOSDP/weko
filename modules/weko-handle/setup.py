@@ -81,6 +81,9 @@ setup(
         'invenio_base.api_blueprints': [
             'weko_handle = weko_handle.views:blueprint_api',
         ],
+        'invenio_base.api_apps': [
+            'weko_handle = weko_handle:WekoHandle',
+        ],
         # TODO: Edit these entry points to fit your needs.
         # 'invenio_access.actions': [],
         # 'invenio_admin.actions': [],
