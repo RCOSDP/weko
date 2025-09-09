@@ -36,6 +36,9 @@ jobs:
       - name: Show logs (for debug)
         run: docker compose logs
 
+      - name: Run tests inside container
+        run: docker compose exec -T web bash /code/run-tox.sh
+
       - name: Stop and remove containers
         if: always()
         run: docker compose down
