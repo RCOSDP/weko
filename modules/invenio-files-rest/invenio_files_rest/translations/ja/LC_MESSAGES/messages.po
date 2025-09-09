@@ -1,18 +1,19 @@
-# Translations template for invenio-files-rest.
+# Japanese translations for invenio-files-rest.
 # Copyright (C) 2025 CERN
 # This file is distributed under the same license as the invenio-files-rest
 # project.
 # FIRST AUTHOR <EMAIL@ADDRESS>, 2025.
 #
-#, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: invenio-files-rest 1.0.1\n"
 "Report-Msgid-Bugs-To: info@inveniosoftware.org\n"
 "POT-Creation-Date: 2025-08-08 14:27+0900\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"PO-Revision-Date: 2025-08-08 14:28+0900\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
-"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: ja\n"
+"Language-Team: ja <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=0\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -78,17 +79,17 @@ msgstr ""
 
 #: invenio_files_rest/admin.py:135
 msgid "No default location is set. Please configure one location as default."
-msgstr ""
+msgstr "デフォルトに設定されたロケーションが存在しません。いずれか1つのロケーションをデフォルトに設定してください"
 
 #: invenio_files_rest/admin.py:139
 msgid ""
 "Multiple locations are set as default. Only one default location can be "
 "configured. Please correct the settings."
-msgstr ""
+msgstr "複数のロケーションがデフォルトに設定されています。デフォルトのロケーションは1つのみ設定可能です。設定を修正してください。"
 
 #: invenio_files_rest/admin.py:166
 msgid "Cannot save because another location is already set as default."
-msgstr ""
+msgstr "他のロケーションがすでにデフォルトに設定されているため、保存できません。"
 
 #: invenio_files_rest/admin.py:335
 msgid "UUID"
