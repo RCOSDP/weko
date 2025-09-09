@@ -5,7 +5,7 @@ on: [push, pull_request]
 jobs:
   test:
     name: Test
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     services:
       postgres:
         image: postgres:12
@@ -33,11 +33,13 @@ jobs:
       fail-fast: false
       matrix:
         module:
+          - invenio-accounts
           - invenio-communities
           - invenio-db
           - invenio-deposit
           - invenio-files-rest
           - invenio-iiif
+          - invenio-indexer
           - invenio-mail
           - invenio-oaiharvester
           - invenio-oaiserver
@@ -65,11 +67,13 @@ jobs:
           - weko-itemtypes-ui
           - weko-logging
           - weko-plugins
-          - weko-records
           - weko-records-ui
+          - weko-records
+          - weko-redis
           - weko-schema-ui
           - weko-search-ui
           - weko-sitemap
+          - weko-swordserver
           - weko-theme
           - weko-user-profiles
           - weko-workflow
