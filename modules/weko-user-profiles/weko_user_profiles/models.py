@@ -20,6 +20,7 @@
 
 """Database models for user profiles."""
 
+from flask import current_app
 from invenio_accounts.models import User
 from invenio_db import db
 from sqlalchemy import event
@@ -205,10 +206,15 @@ class UserProfile(db.Model):
 
     def get_institute_data(self):
         """Get institute data.
-
-        :return:
+        Returns:
+            list: list of dict which contains affiliated institution name and position.
         """
+
+        # get setting from admin settings
         profile_setting = AdminSettings.get('profiles_items_settings', dict_to_object=False)
+        if not profile_setting:
+            profile_setting = current_app.config.get("WEKO_USERPROFILES_DEFAULT_FIELDS_SETTINGS", {})
+
         item_field_settings = [
             profile_setting.get("item"+ str(i), {}).get("visible", False)  for i in range(3, 17)]
         institute_dict = [
