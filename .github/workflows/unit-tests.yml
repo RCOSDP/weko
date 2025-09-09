@@ -1,13 +1,41 @@
-name: Unit Tests (Docker Matrix)
+name: Unit Tests (Efficient Matrix with Docker)
 
 on: [push, pull_request]
 
 jobs:
+  build-base-image:
+    runs-on: ubuntu-24.04
+    outputs:
+      image_tag: ${{ steps.meta.outputs.tags }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository }}/weko-ci-base
+
+      - name: Build & push base image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile  # 必要に応じてベースイメージ用Dockerfileを指定
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
   test:
-    name: Test ${{ matrix.module }} in Docker Compose
+    needs: build-base-image
     runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
+      max-parallel: 8 # リソースに応じて調整
       matrix:
         module:
           - invenio-accounts
@@ -62,39 +90,37 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Ensure docker compose v2
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Pull base image
+        run: docker pull ${{ needs.build-base-image.outputs.image_tag }}
+
+      - name: Start container for ${{ matrix.module }}
         run: |
-          docker compose version || {
-            DOCKER_CONFIG=${DOCKER_CONFIG:-$HOME/.docker}
-            mkdir -p $DOCKER_CONFIG/cli-plugins
-            curl -SL https://github.com/docker/compose/releases/latest/download/docker-compose-linux-x86_64 \
-              -o $DOCKER_CONFIG/cli-plugins/docker-compose
-            chmod +x $DOCKER_CONFIG/cli-plugins/docker-compose
-            docker compose version
-          }
+          docker compose -f docker-compose.yml up -d
 
-      - name: Build containers
-        run: docker compose build
-
-      - name: Start containers
-        run: docker compose up -d
-
-      - name: Wait for services to be healthy
+      - name: Wait for web to be healthy
         run: |
-          sleep 15  # 必要に応じて待機時間を調整
+          timeout 60 bash -c \
+            'until [ "$$(docker inspect --format="{{.State.Health.Status}}" $(docker compose ps -q web))" == "healthy" ]; do sleep 2; done'
 
-      - name: Install test dependencies in container
+      - name: Install test dependencies
         run: |
           docker compose exec -T web bash -c "pip install --upgrade pip && pip install tox tox-setuptools-version pytest-timeout"
 
-      - name: Run tox in module
+      - name: Run tox in ${{ matrix.module }}
         run: |
           docker compose exec -T web bash -c "cd modules/${{ matrix.module }} && tox"
 
-      - name: Show logs (for debug)
+      - name: Show logs if failed
         if: failure()
         run: docker compose logs
 
-      - name: Stop and remove containers
+      - name: Stop containers
         if: always()
         run: docker compose down
