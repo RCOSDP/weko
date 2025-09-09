@@ -281,7 +281,7 @@
                           {% set file_detail_url = file_details_url + '?file_order=' + file.file_order|string %}
                         {%- endif -%}
                         {%- if community -%}
-                          {% set file_detail_url = file_detail_url + "&community=" + community.id %}
+                          {% set file_detail_url = file_detail_url + "&c=" + community.id %}
                         {%- endif -%}
                         <a class="action-anchor" href="{{ file_detail_url }}">
                           <button class="img-rounded action-button button-sm">

@@ -202,14 +202,14 @@ def index():
     # WEKO_THEME_DEFAULT_COMMUNITY = 'Root Index'
     # Get the design for widget rendering
     page, render_widgets = get_design_layout(
-        request.args.get('community') or current_app.config[
+        request.args.get('c') or current_app.config[
             'WEKO_THEME_DEFAULT_COMMUNITY'])
 
     tab = request.args.get('tab',WEKO_WORKFLOW_TODO_TAB)
-    if 'community' in request.args:
+    if 'c' in request.args:
         activities, maxpage, size, pages, name_param = activity \
             .get_activity_list(conditions=conditions)
-        comm = GetCommunity.get_community_by_id(request.args.get('community'))
+        comm = GetCommunity.get_community_by_id(request.args.get('c'))
         ctx = {'community': comm}
         if comm is not None:
             community_id = comm.id
@@ -472,8 +472,8 @@ def new_activity():
     workflows = workflow.get_workflows_by_roles(workflows)
     ctx = {'community': None}
     community_id = ""
-    if 'community' in request.args:
-        comm = GetCommunity.get_community_by_id(request.args.get('community'))
+    if 'c' in request.args:
+        comm = GetCommunity.get_community_by_id(request.args.get('c'))
         ctx = {'community': comm}
         if comm is not None:
            community_id = comm.id
@@ -569,7 +569,7 @@ def init_activity(json_data=None, community=None):
         return jsonify(res.data), 200
 
     activity = WorkActivity()
-    community_id = request.args.get('community') or community
+    community_id = request.args.get('c') or community
     try:
         if community_id is not None:
             rtn = activity.init_activity(post_activity.data, community_id)
@@ -585,7 +585,7 @@ def init_activity(json_data=None, community=None):
             comm = GetCommunity.get_community_by_id(community_id)
             if comm is not None:
                 url = url_for('weko_workflow.display_activity',
-                          activity_id=rtn.activity_id, community=comm.id)
+                          activity_id=rtn.activity_id, c=comm.id)
         db.session.commit()
     except SQLAlchemyError as ex:
         traceback.print_exc()
@@ -884,7 +884,7 @@ def display_activity(activity_id="0", community_id=None):
     # display_activity of Identifier grant
     identifier_setting = None
     if action_endpoint == 'identifier_grant' and item:
-        community_id = request.args.get('community') or community_id
+        community_id = request.args.get('c') or community_id
         if not community_id:
             community_id = 'Root Index'
         identifier_setting = get_identifier_setting(community_id)
@@ -1139,7 +1139,7 @@ def display_activity(activity_id="0", community_id=None):
     if last_result:
         last_linkage_result = _('Successful') if last_result.succeed == True else _('Failed') if last_result.succeed == False else _('Running')
         last_linkage_result = last_linkage_result + ' (' +last_result.updated.strftime('%Y-%m-%d') + ') '
-        
+
 
     return render_template(
         'weko_workflow/activity_detail.html',
@@ -1262,7 +1262,7 @@ def check_authority_action(activity_id='0', action_id=0,
                 return 0
             if int(cur_user) == activity.shared_user_id:
                 return 0
-    
+
     # Validation of action role(user)
     # If action_roles is set
     is_action_role_set, is_allow_action_role, is_deny_action_role = validate_action_role_user(activity_id, action_id, action_order)
@@ -1276,7 +1276,7 @@ def check_authority_action(activity_id='0', action_id=0,
         # allow to access
         elif is_allow_action_role:
             return 0
-    
+
     # Activity creator validation
     if contain_login_item_application:
         activity_action_obj = work.get_activity_action_comment(
@@ -1287,7 +1287,7 @@ def check_authority_action(activity_id='0', action_id=0,
     else:
         if activity.activity_login_user == int(cur_user):
             return 0
-    
+
     # Otherwise, user has no permission
     return 1
 

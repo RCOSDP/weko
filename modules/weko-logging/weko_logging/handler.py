@@ -75,7 +75,7 @@ class UserActivityLogHandler(logging.Handler):
         source = None
         client_id = None
 
-        # get request info from extra     
+        # get request info from extra
         request_summury = record.request_info if hasattr(record, "request_info") else None
         if not request_summury:
             request_summury = self.get_summary_from_request()
@@ -149,7 +149,7 @@ class UserActivityLogHandler(logging.Handler):
     @classmethod
     def get_community_id_from_path(cls, request_info):
         """Get community id from request path.
-        
+
         Args:
             request_info (dict): The request path.
 
@@ -169,8 +169,8 @@ class UserActivityLogHandler(logging.Handler):
         if "/c/" in str(path_info.path):
             community_path = path_info.path.split("/c/")[1]
             community_id = community_path.split("/")[0]
-        elif "community" in request_args:
-            community_id = request_args.get("community")
+        elif "c" in request_args:
+            community_id = request_args.get("c")
         return community_id
 
     @classmethod
@@ -219,7 +219,7 @@ class UserActivityLogHandler(logging.Handler):
         """
         if not request:
             return {}
-    
+
         request_summary = {}
         # ip address
         if hasattr(request, "remote_addr") and request.remote_addr:
@@ -239,5 +239,5 @@ class UserActivityLogHandler(logging.Handler):
         # get args from request
         if hasattr(request, "args") and request.args:
             request_summary["args"] = request.args
-        
+
         return request_summary

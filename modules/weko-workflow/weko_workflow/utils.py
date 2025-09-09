@@ -3803,8 +3803,8 @@ def prepare_data_for_guest_activity(activity_id: str) -> dict:
     ctx = {'community': None}
     getargs = request.args
     community_id = ""
-    if 'community' in getargs:
-        comm = GetCommunity.get_community_by_id(getargs.get('community'))
+    if 'c' in getargs:
+        comm = GetCommunity.get_community_by_id(getargs.get('c'))
         ctx = {'community': comm}
         community_id = comm.id
 

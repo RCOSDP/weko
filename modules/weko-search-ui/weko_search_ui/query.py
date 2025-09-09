@@ -804,7 +804,7 @@ def default_search_factory(self, search, query_parser=None, search_type=None, ad
     comm_ide = request.values.get("provisional_communities")
 
     # simple search
-    comm_id_simple = request.values.get("community")
+    comm_id_simple = request.values.get("c")
 
     # add by ryuu at 1004 end
     if comm_id_simple:

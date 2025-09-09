@@ -992,7 +992,7 @@ def prepare_edit_item(id=None, community=None):
     post_activity = request.get_json() or {}
     getargs = request.args if request else {}
     pid_value = id or post_activity.get('pid_value')
-    community = community or getargs.get('community', None)
+    community = community or getargs.get('c', None)
 
     if pid_value:
         # Check redis cache
@@ -1106,7 +1106,7 @@ def prepare_edit_item(id=None, community=None):
             comm = GetCommunity.get_community_by_id(community)
             url_redirect = url_for('weko_workflow.display_activity',
                                    activity_id=rtn.activity_id,
-                                   community=comm.id)
+                                   c=comm.id)
         else:
             url_redirect = url_for('weko_workflow.display_activity',
                                    activity_id=rtn.activity_id)
@@ -1157,7 +1157,7 @@ def prepare_delete_item(id=None, community=None, shared_user_id=-1):
     post_activity = request.get_json() or {}
     getargs = request.args if request else {}
     del_value = id or post_activity.get('pid_value')
-    community = community or getargs.get('community', None)
+    community = community or getargs.get('c', None)
 
     if del_value:
         del_value = str(del_value)
@@ -1284,7 +1284,7 @@ def prepare_delete_item(id=None, community=None, shared_user_id=-1):
             comm = GetCommunity.get_community_by_id(community)
             url_redirect = url_for(
                 'weko_workflow.display_activity',
-                activity_id=rtn.activity_id, community=comm.id
+                activity_id=rtn.activity_id, c=comm.id
             )
         else:
             url_redirect = url_for(
@@ -1415,9 +1415,9 @@ def export():
     community_id = ""
     ctx = {'community': None}
     cur_index_id = search_type if search_type not in ('0', '1',) else None
-    if 'community' in request.args:
+    if 'c' in request.args:
         from weko_workflow.api import GetCommunity
-        comm = GetCommunity.get_community_by_id(request.args.get('community'))
+        comm = GetCommunity.get_community_by_id(request.args.get('c'))
         ctx = {'community': comm}
         if comm is not None:
             community_id = comm.id

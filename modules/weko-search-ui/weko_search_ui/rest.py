@@ -243,7 +243,7 @@ class IndexSearchResource(ContentNegotiatedMethodView):
         page = request.values.get("page", 1, type=int)
         size = request.values.get("size", 20, type=int)
         is_search = request.values.get("is_search", 0 ,type=int ) #toppage and search_page is 1
-        community_id = request.values.get("community")
+        community_id = request.values.get("c")
         params = {}
         facets = get_facet_search_query()
         search_index = current_app.config["SEARCH_UI_SEARCH_INDEX"]
