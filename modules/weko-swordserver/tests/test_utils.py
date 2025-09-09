@@ -443,18 +443,28 @@ def test_update_item_ids(app, mocker):
 
 
 # .tox/c1/bin/pytest --cov=weko_swordserver tests/test_utils.py::test_check_deletion_type -v -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp --full-trace
-@pytest.mark.parametrize("register_type, workflow_exists, workflow_deleted, delete_flow_id, expected", [
-    # Workflow type, workflow exists, not deleted, has delete_flow_id
-    ("Workflow", True, False, 123, {"deletion_type": "Workflow", "workflow_id": 2, "delete_flow_id": 123}),
-    # Workflow type, workflow exists, not deleted, no delete_flow_id
-    ("Workflow", True, False, None, {"deletion_type": "Direct"}),
-    # Workflow type, workflow exists, deleted, has delete_flow_id
-    ("Workflow", True, True, 456, None),
-    # Workflow type, workflow does not exist
-    ("Workflow", False, None, None, None),
-    # Direct type
-    ("Direct", None, None, None, {"deletion_type": "Direct"}),
-])
+@pytest.mark.parametrize(
+    "register_type, workflow_exists, workflow_deleted, delete_flow_id, expected",
+    [
+        # Workflow type, workflow exists, not deleted, has delete_flow_id
+        ("Workflow", True, False, 123, {"deletion_type": "Workflow", "workflow_id": 2, "delete_flow_id": 123}),
+        # Workflow type, workflow exists, not deleted, no delete_flow_id
+        ("Workflow", True, False, None, {"deletion_type": "Direct"}),
+        # Workflow type, workflow exists, deleted, has delete_flow_id
+        ("Workflow", True, True, 456, None),
+        # Workflow type, workflow does not exist
+        ("Workflow", False, None, None, None),
+        # Direct type
+        ("Direct", None, None, None, {"deletion_type": "Direct"}),
+    ],
+    ids=[
+        "delete_flow_id",
+        "no_delete_flow_id",
+        "deleted_with_flow_id",
+        "workflow_not_found",
+        "direct_type"
+    ]
+)
 def test_check_deletion_type(app, mocker, register_type, workflow_exists, workflow_deleted, delete_flow_id, expected):
     mock_sword_client = MagicMock()
     mock_sword_client.registration_type = register_type
@@ -492,7 +502,7 @@ def test_check_deletion_type_no_sword_client(app, mocker):
 
 
 # .tox/c1/bin/pytest --cov=weko_swordserver tests/test_utils.py::test_check_deletion_type_invalid_registration_type -v -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp --full-trace
-def test_check_deletion_type_invalid_registration_type(app, mocker):
+def test_check_deletion_type_invalid_type(app, mocker):
     mock_sword_client = MagicMock()
     mock_sword_client.registration_type = "InvalidType"
     mocker.patch("weko_swordserver.utils.SwordClient.get_client_by_id", return_value=mock_sword_client)
@@ -513,6 +523,12 @@ def test_check_deletion_type_invalid_registration_type(app, mocker):
          WekoSwordserverException, ErrorType.BadRequest, "Item cannot be deleted because it is in import progress."),
         ("recid_editing", (MagicMock(), MagicMock()), False, True,
          WekoSwordserverException, ErrorType.BadRequest, "Item cannot be deleted because it is being edited."),
+    ],
+    ids=[
+        "valid_record",
+        "record_not_found",
+        "record_locked",
+        "record_being_edited"
     ]
 )
 def test_delete_item_directly(

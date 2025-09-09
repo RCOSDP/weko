@@ -15,35 +15,34 @@ import bagit
 from io import StringIO
 
 import pytest
+from unittest.mock import MagicMock, patch, mock_open
 
-from unittest.mock import MagicMock, Mock, patch, mock_open
-
-from werkzeug.exceptions import BadRequest
-from elasticsearch import helpers, ElasticsearchException, NotFoundError
-from elasticsearch_dsl import Search
 from flask import current_app, make_response, request
 from flask_login import current_user
-
-from sqlalchemy import func as _func
+from werkzeug.exceptions import BadRequest, NotFound
+from elasticsearch import helpers, ElasticsearchException, NotFoundError
+from elasticsearch_dsl import Search
 from sqlalchemy.exc import SQLAlchemyError
+
+from invenio_db import db as iv_db
 from invenio_files_rest.models import FileInstance,Location
 from invenio_i18n.babel import set_locale
-from invenio_records.models import RecordMetadata
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus, Redirect
-from invenio_db import db as iv_db
 from invenio_pidrelations.models import PIDRelation
 from invenio_pidstore.errors import PIDDoesNotExistError
+
 from weko_admin.config import WEKO_ADMIN_MANAGEMENT_OPTIONS
 from weko_admin.api import TempDirInfo
-from weko_admin.models import AdminLangSettings
 from weko_deposit.api import WekoDeposit, WekoIndexer, WekoRecord as d_wekorecord
 from weko_authors.models import AuthorsPrefixSettings, AuthorsAffiliationSettings
 from weko_records.api import ItemsMetadata, JsonldMapping, WekoRecord
-from weko_records.models import ItemMetadata
 from weko_records.models import ItemType
 from weko_redis.redis import RedisConnection
 from weko_schema_ui.config import WEKO_SCHEMA_RELATION_TYPE
-from weko_workflow.models import WorkFlow
+from weko_workflow.errors import WekoWorkflowException
+from weko_workflow.headless.activity import HeadlessActivity
+from weko_workflow.models import Activity, WorkFlow
+
 
 from weko_search_ui.config import (
     ACCESS_RIGHT_TYPE_URI,
@@ -176,14 +175,9 @@ from weko_search_ui.utils import (
     get_priority,
     get_record_ids
 )
-from werkzeug.exceptions import NotFound
 
-from weko_workflow.errors import WekoWorkflowException
-from weko_workflow.headless.activity import HeadlessActivity
-from weko_workflow.models import Activity
 
 from .helpers import json_data
-
 
 
 FIXTURE_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), "data")
@@ -803,6 +797,7 @@ def test_check_jsonld_import_items(i18n_app, db, test_indices, item_type2, item_
         assert "data_path" not in result
         assert "item_type_id" not in result
         assert "list_record" not in result
+        time.sleep(0.1)
 
 
     with patch("weko_search_ui.utils.zipfile.ZipFile",side_effect=UnicodeDecodeError("uni", b'\xe3\x81\xad\xe3\x81\x93',2,4,"cp932 cant decode")):
@@ -1331,7 +1326,7 @@ def test_register_item_metadata2(i18n_app, es_item_file_pipeline, deposit, es_re
                     with patch("weko_search_ui.utils.RequestMailList.update") as update_request_mail:
                         register_item_metadata(item, root_path, -1, is_gakuninrdm=False)
                         update_request_mail.assert_called()
-        
+
 # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_register_item_metadata3 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
 # @pytest.mark.parametrize('order_if', [1,2])
 @pytest.mark.parametrize('order_if', [1,2,3,4])
@@ -1353,7 +1348,7 @@ def test_register_item_metadata3(i18n_app, es_item_file_pipeline, deposit, es_re
     item["metadata"]["feedback_mail_list"]={"email": "contributor@test.org", "author_id": ""}
     item["item_application"]={"workflow":"1", "terms":"term_free", "termsDescription":"利用規約自由入力"}
     item["status"]="keep"
-    
+
     item["identifier_key"]="item_1617186331708"
     with patch("weko_search_ui.utils.find_and_update_location_size", return_value=None):
         with patch("weko_deposit.api.Indexes.get_path_list", return_value={"","",""}):
@@ -1375,7 +1370,7 @@ def test_register_item_metadata3(i18n_app, es_item_file_pipeline, deposit, es_re
                         update_item_application = mocker.patch("weko_search_ui.utils.ItemApplication.update")
                         mocker.patch("weko_search_ui.utils.WekoDeposit.newversion", return_value = WekoDeposit(0))
                         item["pid"]=None
-                        item["status"]="new" 
+                        item["status"]="new"
                         register_item_metadata(item, root_path, item['owner'], is_gakuninrdm=False)
                         update_request.assert_called()
                         update_item_application = mocker.patch("weko_search_ui.utils.ItemApplication.update")
@@ -2011,79 +2006,322 @@ def test_handle_check_doi_ra(i18n_app, db,es_item_file_pipeline, es_records,iden
 # def handle_check_doi(list_record):
 # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_handle_check_doi -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
 def test_handle_check_doi(app,identifier):
-    filepath = os.path.join(
-        os.path.dirname(os.path.realpath(__file__)),
-        "data",
-        "list_records",
-        "list_records.json",
-    )
-    with open(filepath, encoding="utf-8") as f:
-        list_record = json.load(f)
+    list_record = json_data("data/list_records/list_records.json")
     assert handle_check_doi(list_record) == None
 
     # case new items with doi_ra
-    filepath = os.path.join(
-        os.path.dirname(os.path.realpath(__file__)),
-        "data",
-        "list_records",
-        "b4_handle_check_doi.json",
-    )
-    with open(filepath, encoding="utf-8") as f:
-        list_record = json.load(f)
+    list_record = json_data("data/list_records/b4_handle_check_doi.json")
     assert handle_check_doi(list_record) == None
 
-    # item = {
-    #     "doi_ra": "JaLC",
-    #     "is_change_identifier": True,
-    #     "status": "new"
-    # }
-    item = MagicMock()
-    with patch("weko_deposit.api.WekoRecord.get_record_by_pid", return_value="1"):
-        assert not handle_check_doi([item])
+    # item status is not new
+    # change identifier mode on, but not specified DOI
+    item = {"id": "1", "status": "Keep", "doi": "", "doi_ra": "JaLC", "is_change_identifier": True}
+    expect = { **item , "errors":["Please specify DOI."]}
+    handle_check_doi([item])
+    assert item == expect
 
-    #item2 = {"doi_ra": "JaLC", "is_change_identifier": False, "status": "keep"}
-    #mock = MagicMock()
-    #mock2 = MagicMock()
-    #mock3 = MagicMock()
-    #mock2.object_uuid = mock3
-    #mock.pid_recid = mock2
+    # change identifier mode on, but specified DOI exceeds the maximum length
+    item = {"id": "2", "status": "Keep", "doi": "a"*300, "doi_ra": "JaLC", "is_change_identifier": True}
+    expect = { **item , "errors":["The specified DOI exceeds the maximum length."]}
+    handle_check_doi([item])
+    assert item == expect
 
-    ## def myfunc():
-    ##     return 1,2
-    ## mock.get_idt_registration_data = myfunc
+    # change identifier mode on, but specified DOI prefix is incorrect
+    item = {"id": "3", "status": "Keep", "doi": "wrong_prefix/", "doi_ra": "JaLC", "is_change_identifier": True}
+    expect = { **item , "errors":["Specified Prefix of DOI is incorrect."]}
+    handle_check_doi([item])
+    assert item == expect
 
-    #with patch("weko_deposit.api.WekoRecord.get_record_by_pid", return_value=mock):
-    #    # with patch("weko_workflow.utils.IdentifierHandle", return_value=mock):
-    #    assert not handle_check_doi([item2])
+    # change identifier mode on, but specified DOI suffix is not specified
+    item = {"id": "4", "status": "Keep", "doi": "xyz.jalc/", "doi_ra": "JaLC", "is_change_identifier": True}
+    expect = { **item , "errors":["Please specify DOI suffix."]}
+    handle_check_doi([item])
+    assert item == expect
 
-    item = [
-        {"id":"1","doi":"","doi_ra":"JaLC","is_change_identifier":True},
-        {"id":"2","doi":"a"*300,"doi_ra":"JaLC","is_change_identifier":True},
-        {"id":"3","doi":"wrong_prefix/","doi_ra":"JaLC","is_change_identifier":True},
-        {"id":"4","doi":"xyz.jalc/","doi_ra":"JaLC","is_change_identifier":True},
-        {"id":"5","doi":"xyz.jalc/12345","doi_ra":"JaLC","is_change_identifier":True},
-        {"id":"6","status":"new","doi":"xyz.jalc/12345","doi_ra":"JaLC","is_change_identifier":False},
-        {"id":"7","status":"new","doi":"wrong_prefix/","doi_ra":"JaLC","is_change_identifier":False},
-        {"id":"8","status":"new","doi":"xyz.jalc/","doi_ra":"JaLC","is_change_identifier":False},
-        {"id":"9","status":"new","doi":"xyz.ndl","doi_ra":"NDL JaLC","is_change_identifier":False},
-        {"id":"10","status":"new","doi":"wrong_prefix/12345","doi_ra":"NDL JaLC","is_change_identifier":False},
-        {"id":"11","status":"new","doi":"xyz.ndl/12345","doi_ra":"NDL JaLC","is_change_identifier":False},
+    # change identifier mode on, but suffix of DOI is empty
+    item = {"id": "4", "status": "Keep", "doi": "xyz.jalc", "doi_ra": "JaLC", "is_change_identifier": True}
+    expect = { **item , "errors":["Please specify DOI suffix."]}
+    handle_check_doi([item])
+    assert item == expect
+
+    # change identifier mode on, specified DOI is correct
+    item = {"id": "5", "status": "Keep", "doi": "xyz.jalc/12345", "doi_ra": "JaLC", "is_change_identifier": True}
+    expect = { **item }
+    mock_record = MagicMock()
+    mock_record.pid_recid.object_uuid = uuid.uuid4()
+    mock_doi = MagicMock()
+    mock_doi.status = PIDStatus.REGISTERED
+    mock_doi.object_uuid = mock_record.pid_recid.object_uuid
+    with patch("weko_search_ui.utils.WekoRecord.get_record_by_pid", return_value=mock_record), \
+            patch("weko_search_ui.utils.IdentifierHandle.__init__", return_value=None), \
+            patch("weko_search_ui.utils.IdentifierHandle.check_pidstore_exist", return_value=mock_doi):
+        handle_check_doi([item])
+    assert item == expect
+
+    # change identifier mode on, but specified DOI is used already
+    item = {"id": "6", "status": "Keep", "doi": "xyz.jalc/12345", "doi_ra": "JaLC", "is_change_identifier": True}
+    expect = { **item, "errors": ["Specified DOI has been used already for another item. Please specify another DOI."]}
+    mock_record = MagicMock()
+    mock_record.pid_recid.object_uuid = uuid.uuid4()
+    mock_doi = MagicMock()
+    mock_doi.status = PIDStatus.REGISTERED
+    mock_doi.object_uuid = uuid.uuid4()
+    with patch("weko_search_ui.utils.WekoRecord.get_record_by_pid", return_value=mock_record), \
+            patch("weko_search_ui.utils.IdentifierHandle.__init__", return_value=None), \
+            patch("weko_search_ui.utils.IdentifierHandle.check_pidstore_exist", return_value=mock_doi):
+        handle_check_doi([item])
+    assert item == expect
+
+    # change identifier mode on, but specified DOI already withdrawn
+    item = {"id": "7", "status": "Keep", "doi": "xyz.jalc/12345", "doi_ra": "JaLC", "is_change_identifier": True}
+    expect = { **item, "errors": ["Specified DOI was withdrawn. Please specify another DOI."]}
+    mock_record = MagicMock()
+    mock_record.pid_recid.object_uuid = uuid.uuid4()
+    mock_doi = MagicMock()
+    mock_doi.status = PIDStatus.DELETED
+    mock_doi.object_uuid = mock_record.pid_recid.object_uuid
+    with patch("weko_search_ui.utils.WekoRecord.get_record_by_pid", return_value=mock_record), \
+            patch("weko_search_ui.utils.IdentifierHandle.__init__", return_value=None), \
+            patch("weko_search_ui.utils.IdentifierHandle.check_pidstore_exist", return_value=mock_doi):
+        handle_check_doi([item])
+    assert item == expect
+
+    # change identifier mode on, but specified DOI is used already and SQLAlchemyError
+    item = {"id": "x", "status": "Keep", "doi": "xyz.jalc/12345", "doi_ra": "JaLC", "is_change_identifier": True}
+    expect = { **item, "errors": ["Specified DOI has been used already for another item. Please specify another DOI."] }
+    mock_doi = MagicMock()
+    mock_doi.status = PIDStatus.REGISTERED
+    mock_doi.object_uuid = mock_record.pid_recid.object_uuid
+    with patch("weko_search_ui.utils.WekoRecord.get_record_by_pid", side_effect=SQLAlchemyError()), \
+            patch("weko_search_ui.utils.IdentifierHandle.__init__", return_value=None), \
+            patch("weko_search_ui.utils.IdentifierHandle.check_pidstore_exist", return_value=mock_doi):
+        handle_check_doi([item])
+    assert item == expect
+
+    # item status is new
+    item = {"status":"new", "doi": "xyz.jalc/12345", "doi_ra": "JaLC", "is_change_identifier": True}
+    expect = { **item, "errors": ["Specified DOI has been used already for another item. Please specify another DOI."]}
+    mock_record = MagicMock()
+    mock_record.pid_recid.object_uuid = uuid.uuid4()
+    mock_doi = MagicMock()
+    mock_doi.status = PIDStatus.REGISTERED
+    mock_doi.object_uuid = uuid.uuid4()
+    with patch("weko_search_ui.utils.IdentifierHandle.__init__", return_value=None), \
+            patch("weko_search_ui.utils.IdentifierHandle.check_pidstore_exist", return_value=mock_doi):
+        handle_check_doi([item])
+    assert item == expect
+
+    # change identifier mode off, but specified doi
+    item = {"status": "new", "doi": "xyz.jalc/12345", "doi_ra": "JaLC", "is_change_identifier": False}
+    expect = { **item, "errors": ["DOI cannot be set."]}
+    handle_check_doi([item])
+    assert item == expect
+
+    # change identifier mode off, but specified DOI prefix is incorrect
+    item = {"status": "new", "doi": "wrong_prefix/", "doi_ra": "JaLC", "is_change_identifier": False}
+    expect = { **item, "doi_suffix_not_existed": True, "errors": ["Specified Prefix of DOI is incorrect."]}
+    handle_check_doi([item])
+    assert item == expect
+
+    # change identifier mode off, but specified DOI prefix is incorrect and ignore_check_doi_prefix is True
+    item = {"status": "new", "doi": "wrong_prefix/", "doi_ra": "JaLC", "is_change_identifier": False, "ignore_check_doi_prefix": True}
+    expect = { **item, "doi_suffix_not_existed": True}
+    handle_check_doi([item])
+    assert item == expect
+
+    # change identifier mode off, but specified DOI suffix is empty
+    item = {"status": "new", "doi": "xyz.jalc/", "doi_ra": "JaLC", "is_change_identifier": False}
+    expect = { **item, "doi_suffix_not_existed": True, }
+    handle_check_doi([item])
+    assert item == expect
+
+    # change identifier mode off, only RA is specified
+    item = {"status": "new", "doi": "", "doi_ra": "JaLC", "is_change_identifier": False}
+    expect = { **item }
+    handle_check_doi([item])
+    assert item == expect
+
+    # change identifier mode off, but specified DOI suffix is empty, RA is NDL JaLC
+    item = {"status": "new", "doi": "xyz.ndl", "doi_ra": "NDL JaLC", "is_change_identifier": False}
+    expect = { **item, "errors": ["DOI cannot be set."]}
+    handle_check_doi([item])
+    assert item == expect
+
+    # change identifier mode off, but specified DOI prefix is incorrect
+    item = {"status": "new", "doi": "wrong_prefix/12345", "doi_ra": "NDL JaLC", "is_change_identifier": False}
+    expect = { **item, "errors": ["Specified Prefix of DOI is incorrect."]}
+    handle_check_doi([item])
+    assert item == expect
+
+    # change identifier mode off
+    # any valid DOI specified by the user can be registered if NDL JaLC is selected
+    item = {"status": "new", "doi": "xyz.ndl/12345", "doi_ra": "NDL JaLC", "is_change_identifier": False}
+    expect = { **item }
+    handle_check_doi([item])
+    assert item == expect
+
+    # change identifier mode off, item status is not new, no DOI registered, only specified RA
+    item = {"id": "8", "status": "Keep", "doi": "", "doi_ra": "JaLC", "is_change_identifier": False}
+    expect = { **item }
+    mock_record = MagicMock()
+    mock_record.pid_recid.object_uuid = uuid.uuid4()
+    mock_record.pid_doi = None
+    with patch("weko_search_ui.utils.WekoRecord.get_record_by_pid", return_value=mock_record), \
+            patch("weko_search_ui.utils.IdentifierHandle.__init__", return_value=None), \
+            patch("weko_search_ui.utils.IdentifierHandle.get_idt_registration_data", return_value=(None, None)):
+        handle_check_doi([item])
+    assert item == expect
+
+    # change identifier mode off, item status is not new, no DOI registered but specified doi
+    item = {"id": "8", "status": "Keep", "doi": "xyz.jalc/12345", "doi_ra": "JaLC", "is_change_identifier": False}
+    expect = { **item, "errors": ["DOI cannot be set."] }
+    mock_record = MagicMock()
+    mock_record.pid_recid.object_uuid = uuid.uuid4()
+    mock_record.pid_doi = None
+    with patch("weko_search_ui.utils.WekoRecord.get_record_by_pid", return_value=mock_record), \
+            patch("weko_search_ui.utils.IdentifierHandle.__init__", return_value=None), \
+            patch("weko_search_ui.utils.IdentifierHandle.get_idt_registration_data", return_value=(None, None)):
+        handle_check_doi([item])
+    assert item == expect
+
+    # change identifier mode off, item status is not new, no DOI registered but specified doi, SQLAlchemyError
+    item = {"id": "8", "status": "Keep", "doi": "xyz.jalc/12345", "doi_ra": "JaLC", "is_change_identifier": False}
+    expect = { **item, "errors": ["DOI cannot be set."] }
+    mock_record = MagicMock()
+    mock_record.pid_recid.object_uuid = uuid.uuid4()
+    mock_record.pid_doi = None
+    with patch("weko_search_ui.utils.WekoRecord.get_record_by_pid", side_effect=SQLAlchemyError()):
+        handle_check_doi([item])
+    assert item == expect
+
+    # change identifier mode off, item status is not new, DOI registered in record metadata, specified DOI and match doi
+    item = {"id": "9", "status": "Keep", "doi": "xyz.jalc/12345", "doi_ra": "JaLC", "is_change_identifier": False}
+    expect = { **item }
+    mock_record = MagicMock()
+    mock_record.pid_recid.object_uuid = uuid.uuid4()
+    mock_record.pid_doi.pid_value = "https://doi.org/xyz.jalc/12345"
+    with patch("weko_search_ui.utils.WekoRecord.get_record_by_pid", return_value=mock_record), \
+            patch("weko_search_ui.utils.IdentifierHandle.__init__", return_value=None), \
+            patch("weko_search_ui.utils.IdentifierHandle.get_idt_registration_data", return_value=(mock_record.pid_doi.pid_value, "JaLC")):
+        handle_check_doi([item])
+    assert item == expect
+
+    # change identifier mode off, item status is not new, DOI registered in record metadata, specified DOI and not match doi
+    item = {"id": "10", "status": "Keep", "doi": "xyz.jalc/12345", "doi_ra": "JaLC", "is_change_identifier": False}
+    expect = { **item, "errors": ["Specified DOI is different from existing DOI."] }
+    mock_record = MagicMock()
+    mock_record.pid_recid.object_uuid = uuid.uuid4()
+    mock_record.pid_doi.pid_value = "https://doi.org/mis.jalc/12345"
+    with patch("weko_search_ui.utils.WekoRecord.get_record_by_pid", return_value=mock_record), \
+            patch("weko_search_ui.utils.IdentifierHandle.__init__", return_value=None), \
+            patch("weko_search_ui.utils.IdentifierHandle.get_idt_registration_data", return_value=(mock_record.pid_doi.pid_value, "JaLC")):
+        handle_check_doi([item])
+    assert item == expect
+
+    # change identifier mode off, item status is not new, DOI registered in record metadata, specified RA but DOI empty
+    item = {"id": "11", "status": "Keep", "doi": "", "doi_ra": "JaLC", "is_change_identifier": False}
+    expect = { **item, "errors": ["Please specify DOI."] }
+    mock_record = MagicMock()
+    mock_record.pid_recid.object_uuid = uuid.uuid4()
+    mock_record.pid_doi.pid_value = "https://doi.org/mis.jalc/12345"
+    with patch("weko_search_ui.utils.WekoRecord.get_record_by_pid", return_value=mock_record), \
+            patch("weko_search_ui.utils.IdentifierHandle.__init__", return_value=None), \
+            patch("weko_search_ui.utils.IdentifierHandle.get_idt_registration_data", return_value=(mock_record.pid_doi.pid_value, "JaLC")):
+        handle_check_doi([item])
+    assert item == expect
+
+    # change identifier mode off, item status is not new, DOI not registered, but DOI exists in record metadata and specified DOI
+    item = {"id": "12", "status": "Keep", "doi": "xyz.jalc/12345", "doi_ra": "JaLC", "is_change_identifier": False}
+    expect = { **item, "errors": ["DOI cannot be set."] }
+    mock_record = MagicMock()
+    mock_record.pid_recid.object_uuid = uuid.uuid4()
+    mock_record.pid_doi = None
+    with patch("weko_search_ui.utils.WekoRecord.get_record_by_pid", return_value=mock_record), \
+            patch("weko_search_ui.utils.IdentifierHandle.__init__", return_value=None), \
+            patch("weko_search_ui.utils.IdentifierHandle.get_idt_registration_data", return_value=("some_doi", "JaLC")):
+        handle_check_doi([item])
+    assert item == expect
+
+    # change identifier mode off, item status is not new, DOI not registered, but DOI exists in record metadata and specified RA, not specified DOI
+    item = {"id": "13", "status": "Keep", "doi": "", "doi_ra": "JaLC", "is_change_identifier": False}
+    expect = { **item }
+    mock_record = MagicMock()
+    mock_record.pid_recid.object_uuid = uuid.uuid4()
+    mock_record.pid_doi = None
+    with patch("weko_search_ui.utils.WekoRecord.get_record_by_pid", return_value=mock_record), \
+            patch("weko_search_ui.utils.IdentifierHandle.__init__", return_value=None), \
+            patch("weko_search_ui.utils.IdentifierHandle.get_idt_registration_data", return_value=("some_doi", "JaLC")):
+        handle_check_doi([item])
+    assert item == expect
+
+    # not specified RA
+    item = {"id": "13", "status": "Keep", "doi": "", "doi_ra": "", "is_change_identifier": False}
+    expect = { **item }
+    handle_check_doi([item])
+    assert item == expect
+
+
+    # duplicate check inside import file
+    list_record = [
+        {"status": "new", "doi": "xyz.jalc/12345", "doi_ra": "JaLC", "is_change_identifier": True}, # duplicate with existing item: id 17
+        {"status": "new", "doi": "xyz.jalc/12344", "doi_ra": "JaLC", "is_change_identifier": True}, # duplicate in import items: index 2
+        {"status": "new", "doi": "xyz.jalc/12344", "doi_ra": "JaLC", "is_change_identifier": True}, # duplicate in import items: index 1
+        {"status": "new", "doi": "xyz.jalc/12348", "doi_ra": "JaLC", "is_change_identifier": True}, # duplicate in import items: id 18
+        {"id": "15", "status": "Keep", "doi": "xyz.jalc/12346", "doi_ra": "JaLC", "is_change_identifier": True}, # existing item
+        {"id": "16", "status": "Keep", "doi": "xyz.jalc/12347", "doi_ra": "JaLC", "is_change_identifier": True}, # existing item
+        {"id": "17", "status": "Keep", "doi": "xyz.jalc/12345", "doi_ra": "JaLC", "is_change_identifier": True}, # duplicate with new import item: index 0
+        {"id": "18", "status": "Keep", "doi": "xyz.jalc/12348", "doi_ra": "JaLC", "is_change_identifier": True}, # change doi, but duplicate in import items: index 3
     ]
-    test = [
-        {"id":"1","doi":"","doi_ra":"JaLC","is_change_identifier":True,"errors":["Please specify DOI."]},
-        {"id":"2","doi":"a"*300,"doi_ra":"JaLC","is_change_identifier":True,"errors":["The specified DOI exceeds the maximum length."]},
-        {"id":"3","doi":"wrong_prefix/","doi_ra":"JaLC","is_change_identifier":True,"errors":["Specified Prefix of DOI is incorrect."]},
-        {"id":"4","doi":"xyz.jalc/","doi_ra":"JaLC","is_change_identifier":True,"errors":["Please specify DOI suffix."]},
-        {"id":"5","doi":"xyz.jalc/12345","doi_ra":"JaLC","is_change_identifier":True},
-        {"id":"6","status":"new","doi":"xyz.jalc/12345","doi_ra":"JaLC","is_change_identifier":False,"errors":["DOI cannot be set."]},
-        {"id":"7","status":"new","doi":"wrong_prefix/","doi_ra":"JaLC","is_change_identifier":False,"doi_suffix_not_existed":True,"errors":["Specified Prefix of DOI is incorrect."]},
-        {"id":"8","status":"new","doi":"xyz.jalc/","doi_ra":"JaLC","is_change_identifier":False,"doi_suffix_not_existed":True},
-        {"id":"9","status":"new","doi":"xyz.ndl","doi_ra":"NDL JaLC","is_change_identifier":False,"errors":["DOI cannot be set."]},
-        {"id":"10","status":"new","doi":"wrong_prefix/12345","doi_ra":"NDL JaLC","is_change_identifier":False,"errors":["Specified Prefix of DOI is incorrect."]},
-        {"id":"11","status":"new","doi":"xyz.ndl/12345","doi_ra":"NDL JaLC","is_change_identifier":False},
+    expect = [
+        {"status": "new", "doi": "xyz.jalc/12345", "doi_ra": "JaLC", "is_change_identifier": True, "errors": ["Specified DOI has been used already for another item. Please specify another DOI."]},
+        {"status": "new", "doi": "xyz.jalc/12344", "doi_ra": "JaLC", "is_change_identifier": True, "errors": ["Specified DOI is duplicated with another import item. Please specify another DOI."]},
+        {"status": "new", "doi": "xyz.jalc/12344", "doi_ra": "JaLC", "is_change_identifier": True, "errors": ["Specified DOI is duplicated with another import item. Please specify another DOI."]},
+        {"status": "new", "doi": "xyz.jalc/12348", "doi_ra": "JaLC", "is_change_identifier": True, "errors": ["Specified DOI is duplicated with another import item. Please specify another DOI."]},
+        {"id": "15", "status": "Keep", "doi": "xyz.jalc/12346", "doi_ra": "JaLC", "is_change_identifier": True},
+        {"id": "16", "status": "Keep", "doi": "xyz.jalc/12347", "doi_ra": "JaLC", "is_change_identifier": True},
+        {"id": "17", "status": "Keep", "doi": "xyz.jalc/12345", "doi_ra": "JaLC", "is_change_identifier": True},
+        {"id": "18", "status": "Keep", "doi": "xyz.jalc/12348", "doi_ra": "JaLC", "is_change_identifier": True, "errors": ["Specified DOI is duplicated with another import item. Please specify another DOI."]},
     ]
-    handle_check_doi(item)
-    assert item == test
+
+    def mock_get_record_by_pid(recid):
+        record = MagicMock()
+        record.pid_recid.object_uuid = "uuid-{}".format(recid)
+        if recid == "15":
+            record.pid_doi.pid_value = "https://doi.org/xyz.jalc/12346"
+        elif recid == "16":
+            record.pid_doi.pid_value = "https://doi.org/xyz.jalc/12347"
+        elif recid == "17":
+            record.pid_doi.pid_value = "https://doi.org/xyz.jalc/12345"
+        elif recid == "18":
+            record.pid_doi.pid_value = "https://doi.org/xyz.jalc/12399"
+        return record
+
+    def mock_doi_check_pidstore_exist(type, doi_link):
+        doi = MagicMock()
+        if doi_link == "https://doi.org/xyz.jalc/12345":
+            doi.status = PIDStatus.REGISTERED
+            doi.object_uuid = "uuid-17"
+            return doi
+        elif doi_link == "https://doi.org/xyz.jalc/12344":
+            return None
+        elif doi_link == "https://doi.org/xyz.jalc/12346":
+            doi.status = PIDStatus.REGISTERED
+            doi.object_uuid = "uuid-15"
+            return doi
+        elif doi_link == "https://doi.org/xyz.jalc/12347":
+            doi.status = PIDStatus.REGISTERED
+            doi.object_uuid = "uuid-16"
+        elif doi_link == "https://doi.org/xyz.jalc/12399":
+            doi.status = PIDStatus.REGISTERED
+            doi.object_uuid = "uuid-18"
+            return doi
+
+    with patch("weko_search_ui.utils.WekoRecord.get_record_by_pid", side_effect=mock_get_record_by_pid), \
+            patch("weko_search_ui.utils.IdentifierHandle.__init__", return_value=None), \
+            patch("weko_search_ui.utils.IdentifierHandle.check_pidstore_exist", side_effect=mock_doi_check_pidstore_exist):
+        handle_check_doi(list_record)
+    for record, expected in zip(list_record, expect):
+        assert record == expected
 
 
 # def handle_check_item_link(list_record):
@@ -4397,20 +4635,20 @@ def test_handle_check_restricted_access_property_en(app, db, users, record_restr
     assert list_record[0]["errors"] == None
 
     restricted_access_json ={
-			"key": "168065611041",
-			"content": {
-				"en": {
-					"title": "Privacy Policy for WEKO3",
-					"content": "Privacy Policyobligations"
-				},
-				"ja": {
-					"title": "利用規約",
-					"content": "利用規約本文"
-				}
-			},
-			"existed": True
-		}
-    
+            "key": "168065611041",
+            "content": {
+                "en": {
+                    "title": "Privacy Policy for WEKO3",
+                    "content": "Privacy Policyobligations"
+                },
+                "ja": {
+                    "title": "利用規約",
+                    "content": "利用規約本文"
+                }
+            },
+            "existed": True
+        }
+
     ################################
     # 英語モード
     ################################
@@ -4421,7 +4659,7 @@ def test_handle_check_restricted_access_property_en(app, db, users, record_restr
                 list_record = [record_restricted[3]]
                 handle_check_restricted_access_property(list_record)
                 assert list_record[0]["errors"] == ["The specified terms does not exist in the system"]
-            
+
                 # 利用規約(terms)が設定されていない。提供(provide)に存在しないワークフローが設定されている。
                 list_record = [record_restricted[4]]
                 handle_check_restricted_access_property(list_record)
@@ -4436,19 +4674,19 @@ def test_handle_check_restricted_access_property_en(app, db, users, record_restr
 # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_handle_check_restricted_access_property_ja -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
 def test_handle_check_restricted_access_property_ja(app, db, users, record_restricted, terms, db_itemtype_restricted_access, db_workflow):
     restricted_access_json ={
-			"key": "168065611041",
-			"content": {
-				"en": {
-					"title": "Privacy Policy for WEKO3",
-					"content": "Privacy Policyobligations"
-				},
-				"ja": {
-					"title": "利用規約",
-					"content": "利用規約本文"
-				}
-			},
-			"existed": True
-		}
+            "key": "168065611041",
+            "content": {
+                "en": {
+                    "title": "Privacy Policy for WEKO3",
+                    "content": "Privacy Policyobligations"
+                },
+                "ja": {
+                    "title": "利用規約",
+                    "content": "利用規約本文"
+                }
+            },
+            "existed": True
+        }
     ################################
     # 日本語モード
     ################################
@@ -4549,7 +4787,7 @@ def test_check_provide_in_system(users, db_workflow, record_restricted):
     key = "item_1685583796047"
     item = record_restricted[9]
     assert check_provide_in_system(key, item) == True
-    
+
 
 # def handle_check_file_path(paths, data_path, is_new=False, is_thumbnail=False, is_single_thumbnail=False):
 def test_handle_check_file_path(i18n_app):
