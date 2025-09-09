@@ -470,15 +470,21 @@ class HeadlessActivity(WorkActivity):
             item_map = get_mapping(self.item_type.id, "jpcoar_mapping", self.item_type)
             title_value_key = "title.@value"
             title, _ = get_data_by_property(metadata, item_map, title_value_key)
-            weko_shared_ids = metadata.get("weko_shared_ids", [])
+            weko_shared_ids = [
+                {"user": int(id)} if not isinstance(id, dict) else id
+                for id in metadata.get("weko_shared_ids", [])
+            ]
             shared_user_ids = metadata.get("shared_user_ids", [])
             identifierRegistration_key = item_map.get(
                 "identifierRegistration.@attributes.identifierType", ""
             ).split(".")[0]
 
+            # merge shared_user_ids
+            shared_ids = shared_user_ids if shared_user_ids else weko_shared_ids
+
             self.update_activity(self.activity_id, {
                 "title": title[0] if title else "",
-                "shared_user_ids": shared_user_ids if shared_user_ids else weko_shared_ids
+                "shared_user_ids": shared_ids
             })
 
             _old_metadata, _old_files = {}, []
