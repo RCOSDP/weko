@@ -185,7 +185,8 @@ for module_path in modules/*/; do
     #   continue
     # fi
     echo "### Running tests for ${module_path%?} ###"
-    (cd ${module_path} && tox >tox.result;rm -f tox.result.gz;gzip tox.result;rm -rf .tox)
+    # (cd ${module_path} && tox >tox.result;rm -f tox.result.gz;gzip tox.result;rm -rf .tox)
+    (cd ${module_path} && tox;rm -rf .tox)
     echo
   fi
 done
