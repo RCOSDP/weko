@@ -5,13 +5,37 @@ on: [push, pull_request]
 jobs:
   build:
     name: Build
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Build
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Ensure docker compose v2
+        run: |
+          docker compose version || {
+            DOCKER_CONFIG=${DOCKER_CONFIG:-$HOME/.docker}
+            mkdir -p $DOCKER_CONFIG/cli-plugins
+            curl -SL https://github.com/docker/compose/releases/latest/download/docker-compose-linux-x86_64 \
+              -o $DOCKER_CONFIG/cli-plugins/docker-compose
+            chmod +x $DOCKER_CONFIG/cli-plugins/docker-compose
+            docker compose version
+          }
+
+      - name: Build containers
         run: docker compose build
-      - name: Start
+
+      - name: Start containers
         run: docker compose up -d
-      - name: Container status
+
+      - name: Check container status
         run: docker compose ps
+
+      - name: Show logs (for debug)
+        run: docker compose logs
+
+      - name: Stop and remove containers
+        if: always()
+        run: docker compose down
