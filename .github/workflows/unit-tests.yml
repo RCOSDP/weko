@@ -83,6 +83,10 @@ jobs:
         run: |
           sleep 15  # 必要に応じて待機時間を調整
 
+      - name: Install test dependencies in container
+        run: |
+          docker compose exec -T web bash -c "pip install --upgrade pip && pip install tox tox-setuptools-version pytest-timeout"
+
       - name: Run tox in module
         run: |
           docker compose exec -T web bash -c "cd modules/${{ matrix.module }} && tox"
