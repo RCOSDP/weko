@@ -36,11 +36,8 @@ from weko_accounts.utils import roles_required
 from weko_admin.api import TempDirInfo
 from weko_deposit.api import WekoRecord
 from weko_items_ui.scopes import item_create_scope, item_update_scope, item_delete_scope
-from weko_items_ui.utils import (
-    lock_item_will_be_edit, send_mail_direct_registered, send_mail_item_deleted
-)
+from weko_items_ui.utils import lock_item_will_be_edit
 from weko_logging.activity_logger import UserActivityLogger
-from weko_notifications.utils import notify_item_imported, notify_item_deleted
 from weko_records_ui.utils import get_record_permalink
 from weko_search_ui.utils import (
     import_items_to_system, import_items_to_activity,
@@ -60,7 +57,8 @@ from .utils import (
     check_deletion_type,
     update_item_ids,
     get_shared_ids_from_on_behalf_of,
-    delete_item_directly
+    delete_item_directly,
+    notify_about_item,
 )
 from weko_accounts.utils import limiter
 
@@ -386,10 +384,9 @@ def post_service_document():
                 error = str(import_result.get('error_id'))
             else:
                 recid = str(import_result.get("recid"))
-                notify_item_imported(
-                    current_user.id, recid, current_user.id, shared_ids=shared_ids
+                notify_about_item(
+                    "import", recid, current_user.id, shared_ids=shared_ids
                 )
-                send_mail_direct_registered(recid, current_user.id, shared_ids)
 
         elif register_type == "Workflow":
             url, recid, action , error = import_items_to_activity(
@@ -702,9 +699,8 @@ def put_object(recid):
                 .format(recid, import_result.get("error_id")),
                 ErrorType.BadRequest
             )
-        send_mail_direct_registered(recid, current_user.id, shared_ids)
-        notify_item_imported(
-            current_user.id, recid, current_user.id, shared_ids=shared_ids
+        notify_about_item(
+            "update", recid, current_user.id, shared_ids=shared_ids
         )
         response = jsonify(_get_status_document(recid)), 200
 
@@ -1035,10 +1031,9 @@ def delete_object(recid):
                 raise WekoSwordserverException(msg, ErrorType.BadRequest)
 
             delete_item_directly(recid, request_info=request_info)
-            notify_item_deleted(
-                current_user.id, recid, current_user.id, shared_ids=shared_ids
+            notify_about_item(
+                "delete", recid, current_user.id, record, shared_ids
             )
-            send_mail_item_deleted(recid, record, current_user.id, shared_ids)
             current_app.logger.info(
                 f"Item deleted by sword from {request.oauth.client.name} (recid={recid})"
             )

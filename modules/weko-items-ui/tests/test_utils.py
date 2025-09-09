@@ -11664,7 +11664,7 @@ def test_send_mail_direct_registered(app, mocker, db_records2):
     deposit = db_records2[0][4]
 
     with app.test_request_context():
-        result = send_mail_direct_registered(pid_value, user_id)
+        result = send_mail_direct_registered(pid_value, deposit, user_id)
 
     assert result == 1
 
@@ -11673,7 +11673,7 @@ def test_send_mail_direct_registered(app, mocker, db_records2):
     _, kwargs = mock_send_mail_from_notification_info.call_args
     get_info_func = kwargs["get_info_func"]
     get_info_func(deposit)
-    mock_get_notification_targets.assert_called_once_with(deposit, user_id,-1)
+    mock_get_notification_targets.assert_called_once_with(deposit, user_id, [])
 
     assert kwargs["context_obj"] == deposit
     assert kwargs["content_creator"] == create_direct_registered_data

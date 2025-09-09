@@ -5689,7 +5689,7 @@ def send_mail_item_deleted(pid_value, deposit, user_id, shared_ids=[]):
         return
 
 
-def send_mail_direct_registered(pid_value, user_id, share_ids=[]):
+def send_mail_direct_registered(pid_value, deposit, user_id, share_ids=[]):
     """
     Send a notification email for a directly registered item.
 
@@ -5702,7 +5702,6 @@ def send_mail_direct_registered(pid_value, user_id, share_ids=[]):
         int: The total number of successfully sent emails.
     """
     try:
-        deposit = WekoRecord.get_record_by_pid(pid_value)
         record_url = request.host_url + f"records/{pid_value}"
         current_app.logger.debug(f"[send_mail_direct_registered] pid_value: {pid_value}, user_id: {user_id}")
         return send_mail_from_notification_info(
