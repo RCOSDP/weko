@@ -157,6 +157,10 @@ WEKO_ADMIN_CACHE_PREFIX = 'admin_cache_{name}_{user_id}'
 WEKO_ADMIN_OUTPUT_FORMAT = 'tsv'
 """Output file format."""
 
+#プロフィール設定テンプレートを格納
+WEKO_ADMIN_PROFILE_SETTING_TEMPLATE  = 'weko_admin/admin/profiles_settings.html'
+"""Language template."""
+
 WEKO_ADMIN_REPORT_HEADERS = {
     'file_download': _('No. Of File Downloads'),
     'file_preview': _('No. Of File Previews'),
@@ -1196,14 +1200,15 @@ WEKO_ADMIN_REPOSITORY_ACCESS_LIST = [
     'site_info',
     'location',
     'facet-search',
+    'restricted_access',
+    'mailtemplates',
     'community',
     'workspaceworkflowsetting',
     'swordapi',
     'swordapi/jsonld',
     'jsonld-mapping',
     'shibboleth',
-    'cris_linkage',
-    #'restricted_access'
+    'cris_linkage'
 ] + WEKO_ADMIN_COMMUNITY_ACCESS_LIST
 """Classes Repository Administrator can access."""
 
@@ -1278,6 +1283,18 @@ WEKO_INDEX_TREE_STYLE_OPTIONS = {
     'widths': ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11']
 }
 
+WEKO_ADMIN_RESTRICTED_ACCESS_ERROR_MESSAGE = {
+    "key" : "",
+    "content" : {
+        "ja" : {
+            "content" : "このデータは利用できません（権限がないため）。"
+        },
+        "en":{
+            "content" : "This data is not available for this user"
+        }
+    }
+}
+
 WEKO_ADMIN_RESTRICTED_ACCESS_DISPLAY_FLAG = False
 """
 Restricted access feature display flag.
@@ -1302,11 +1319,22 @@ WEKO_ADMIN_RESTRICTED_ACCESS_SETTINGS = {
         "expiration_date_access": 500,
         "expiration_date_access_unlimited_chk": False,
     },
-    "terms_and_conditions": []
+    "terms_and_conditions": [],
+    "error_msg": WEKO_ADMIN_RESTRICTED_ACCESS_ERROR_MESSAGE,
+    "edit_mail_templates_enable": False,
+    "item_application": {
+        "application_item_types": [],
+        "item_application_enable": False,
+    },
+    "password_enable": False,
+    "preview_workflow_approval_enable": False,
+    "display_request_form": False,
 }
 """Default restricted access settings."""
 
 WEKO_ADMIN_RESTRICTED_ACCESS_MAX_INTEGER = 9999999
+"""max value of expiration_date and download_limit. 
+    Any more than this and the datetime may overflow. """
 
 WEKO_ADMIN_ITEMS_PER_PAGE_USAGE_REPORT_REMINDER = 25
 """Default number of usage report activities results that display in one page."""
@@ -1345,6 +1373,12 @@ WEKO_ADMIN_CACHE_TEMP_DIR_INFO_KEY_DEFAULT = 'cache::temp_dir_info'
 
 WEKO_ADMIN_USE_REGEX_IN_CRAWLER_LIST = False
 """ If True, enable regex function in crawler list processing. """
+
+WEKO_ADMIN_USE_MAIL_TEMPLATE_EDIT = False
+"""Whether system can edit mail template or not."""
+
+WEKO_ADMIN_DISPLAY_RESTRICTED_SETTINGS = False
+"""If True, display admin restricted settings."""
 
 WEKO_ADMIN_CRIS_LINKAGE_SETTINGS_TEMPLATE = 'weko_admin/admin/cris_linkage_setting.html'
 """CRIS Linkage Settings template."""

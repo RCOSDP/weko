@@ -21,6 +21,7 @@ docutils==0.15.2
 cachelib==0.1
 captcha==0.4
 cachetools==4.2.4
+captcha==0.4
 cchardet==2.1.1
 celery==4.4.4
 certifi==2017.11.5
@@ -192,7 +193,7 @@ Pygments==2.2.0
 PyJWT==1.5.3
 PyLD==2.0.3
 pyparsing==3.1.0
-pypdf==4.3.1
+-e git+https://github.com/RCOSDP/PyPDF2.git@fefc684a3a74aff6f99e5dff24f9b4dd1c95169d#egg=PyPDF2
 pyPEG2==2.15.2
 pytest>=4.2.0
 pytest-mock==3.6.1

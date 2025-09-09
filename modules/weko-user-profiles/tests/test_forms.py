@@ -26,16 +26,18 @@
 import pytest
 from mock import patch
 
-from wtforms import StringField
+from wtforms import StringField, SelectField, HiddenField
 from wtforms.validators import StopValidation,ValidationError
 
-from flask import Blueprint, current_app
+from flask import Blueprint, current_app,Flask
 from flask_login.utils import login_user, logout_user
 from flask_wtf import FlaskForm
+
 
 from weko_user_profiles.models import UserProfile
 from weko_user_profiles.forms import (
     VerificationForm,
+    custom_profile_form_factory,
     strip_filter,
     _update_with_csrf_disabled, 
     confirm_register_form_factory, 
@@ -45,11 +47,16 @@ from weko_user_profiles.forms import (
     check_length_100_characters,
     check_other_position,
     ProfileForm,
-    EmailProfileForm
+    EmailProfileForm,
+    validate_digits
 )
 
 from tests.helpers import login,logout
 
+# def test_register_form_factory_no_csrf(app):
+#     """Test CSRF token is not in reg. form and not in profile inner form."""
+#     security = app.extensions['security']
+#     rf = _get_form(app, security.register_form, register_form_factory)
 
 # def test_register_form_factory_no_csrf(app):
 #     """Test CSRF token is not in reg. form and not in profile inner form."""
@@ -148,6 +155,7 @@ form_test_blueprint = Blueprint(
 @form_test_blueprint.route("/profile_form",methods=["POST"])
 def profile_form():
     form = ProfileForm(csrf_enabled=False)
+
     if form.validate_on_submit():
         return "OK"
     
@@ -175,6 +183,7 @@ def register_form(app):
 class MockData:
     def __init__(self,data):
         self.data = data
+        self.errors = []
 
 
 # def strip_filter(text):
@@ -220,6 +229,32 @@ def test_check_phone_number():
     field = MockData("12-345")
     check_phone_number({},field)
 
+#.tox/c1/bin/pytest --cov=weko_user_profiles tests/test_forms.py::test_validate_digits -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-user-profiles/.tox/c1/tmp
+#識別子のバリデーション
+def test_validate_digits():
+
+    #異常系(数字以外)
+    field = MockData("test data")
+    with pytest.raises(ValidationError) as e:
+        validate_digits({},field)
+        assert str(e.value) == 'Only digits are allowed.'
+
+    #異常系(全角数字)
+    field = MockData("０１２３４５６７８９")
+    with pytest.raises(ValidationError) as e:
+        validate_digits({},field)
+        assert str(e.value) == 'Only digits are allowed.'
+
+    #正常系
+    field = MockData("0123456789")
+    validate_digits({},field)
+
+    field = MockData("")
+    validate_digits({},field)
+
+    # 正常系(None文字列)
+    field = MockData("None")
+    validate_digits({}, field)
 
 #def check_length_100_characters(form, field):
 # .tox/c1/bin/pytest --cov=weko_user_profiles tests/test_forms.py::test_check_length_100_characters -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-user-profiles/.tox/c1/tmp
@@ -235,45 +270,318 @@ def test_check_length_100_characters():
 
 
 #def check_other_position(form, field):
-# .tox/c1/bin/pytest --cov=weko_user_profiles tests/test_forms.py::test_check_other_position -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-user-profiles/.tox/c1/tmp
-def test_check_other_position():
+# .tox/c1/bin/pytest --cov=weko_user_profiles tests/test_forms.py::test_check_other_position -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-user-profiles/.tox/c1/tmp
+@pytest.mark.parametrize("position, field_data, expected_exception, expected_message", [
+    ("test form", "test data", ValidationError, "Position is being inputted (Only input when selecting 'Others')"),
+    ("test form", "", None, None),
+    ("Others", "", ValidationError, 'Position not provided.'),
+    ("Others", "test data", None, None),
+    ("その他", "", ValidationError, 'Position not provided.'),
+    ("その他", "test data", None, None),
+    ("Others (Input Detail)", "", ValidationError, 'Position not provided.'),
+    ("Others (Input Detail)", "test data", None, None),
+])
+#check_other_positionのテスト
+def test_check_other_position(app, position, field_data, expected_exception, expected_message):
+    # モッククラスの定義
     class MockForm:
-        def __init__(self,data):
+        def __init__(self, data):
             self.position = self.MockPosition(data)
-        class MockPosition:
-            def __init__(self,data):
-                self.data = data
-    
-    # form.position.data is not "Others (Input Detail)"
-    form = MockForm("test form")
-    ## field.data > 0
-    field = MockData("test data")
-    with pytest.raises(ValidationError) as e:
-        check_other_position(form,field)
-        assert str(e) == "Position is being inputted (Only input when selecting 'Others')"
-        
-    ## field.data <= 0
-    field = MockData("")
-    check_other_position(form,field)
-    
-    # form.position.data is "Others (Input Detail)"
-    form = MockForm("Others (Input Detail)")
-    ## field.data == 0
-    field = MockData("")
-    with pytest.raises(ValidationError) as e:
-        check_other_position(form,field)
-        assert str(e) == 'Position not provided.'
-    
-    ## field.data != 0
-    field = MockData("test data")
-    check_other_position(form,field)
 
+        class MockPosition:
+            def __init__(self, data):
+                self.data = data
+
+    class MockField:
+        def __init__(self, data):
+            self.data = data
+
+    form = MockForm(position)
+    field = MockField(field_data)
+
+    app.config.update(
+        WEKO_USERPROFILES_OTHERS_INPUT_DETAIL="Others (Input Detail)",
+    )
+
+    if expected_exception:
+        with pytest.raises(expected_exception) as e:
+            check_other_position(form, field)
+        assert str(e.value) == expected_message
+    else:
+        check_other_position(form, field)  # 例外は発生しない
+
+
+# def custom_profile_form_factory(profile_cls):
+# .tox/c1/bin/pytest --cov=weko_user_profiles tests/test_forms.py::test_custom_profile_form_factory -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-user-profiles/.tox/c1/tmp
+class DummyClass:
+    pass
+
+def test_custom_profile_form_factory(app):
+
+    profile_conf = {
+        'fullname': {'format': 'text', 'label_name': 'Full Name', 'visible': True, 'options': [''], "order": 1},
+        'university': {'format': 'text', 'label_name': 'University', 'visible': True, 'options': [''], "order": 2},
+        'department': {'format': 'text', 'label_name': 'Department', 'visible': True, 'options': [''], "order": 3},
+        'position': {'format': 'text', 'label_name': 'Position', 'visible': True, 'options': [''], "order": 4},
+        "item1": {"format": "phonenumber", "label_name": "phonenumber", "visible": True, "options": [], "order": 5},
+        "item2": {"format": "position(other)", "label_name": "other_position", "visible": True, "options": [], "order": 6},
+        "item3": {"format": "identifier", "label_name": "other_position", "visible": True, "options": [], "order": 7},
+        "item4": {"format": "select", "label_name": "optionsample", "visible": True, "options": ["test1", "test2", "test3"], "order": 8},
+    }
+
+    profile_conf = {
+        'fullname': {'format': 'text', 'label_name': 'Full Name', 'visible': True, 'options': [''], "order": 1},
+        'university': {'format': 'text', 'label_name': 'University', 'visible': True, 'options': [''], "order": 2},
+        'department': {'format': 'text', 'label_name': 'Department', 'visible': True, 'options': [''], "order": 3},
+        'position': {'format': 'text', 'label_name': 'Position', 'visible': True, 'options': [''], "order": 4},
+    }
+
+    with app.test_client():
+        # AdminSettings.get をモックして、profile_conf を返すようにする
+        with patch('weko_admin.models.AdminSettings.get', return_value=profile_conf):
+            # DummyClass を渡して、ProfileForm のサブクラスでない場合をテスト
+            form_cls = custom_profile_form_factory(DummyClass)
+            assert form_cls is ProfileForm  # ProfileForm に置き換えられていることを確認
+
+    with app.test_client():
+        #正常系
+        with patch('weko_admin.models.AdminSettings.get', return_value=profile_conf):
+            form_cls = custom_profile_form_factory(ProfileForm)
+            assert form_cls() is not None
+
+        # Invalid Case: profile_conf and WEKO_USERPROFILES_DEFAULT_FIELDS_SETTINGS is None
+        with patch('weko_admin.models.AdminSettings.get', return_value=None):
+            with pytest.raises(ValueError, match="Could not retrieve profile configuration settings."):
+                with patch('flask.current_app.config.get', return_value=None):
+                    custom_profile_form_factory(ProfileForm)
+
+    # 正常系: WEKO_USERPROFILES_DEFAULT_FIELDS_SETTINGS is not none
+    app.config.update({
+        "WEKO_USERPROFILES_DEFAULT_FIELDS_SETTINGS": {
+            'fullname': {'format': 'text', 'label_name': 'Full Name', 'visible': True, 'options': [''], "order": 1},
+            'university': {'format': 'text', 'label_name': 'University', 'visible': True, 'options': [''], "order": 2},
+            'department': {'format': 'text', 'label_name': 'Department', 'visible': True, 'options': [''], "order": 3},
+            'position': {'format': 'text', 'label_name': 'Position', 'visible': True, 'options': [''], "order": 4},
+        }
+    })
+    with app.test_client():
+        with patch('weko_admin.models.AdminSettings.get', return_value=None):
+            form_cls = custom_profile_form_factory(ProfileForm)
+            assert form_cls() is not None
+
+    from werkzeug.datastructures import MultiDict
+    # 不正な 'select' 値が入っている場合のテスト
+    profile_form = {
+        'fullname': {'format': 'select', 'label_name': 'Full Name', 'visible': True, 'options': ["item1", "item2", "item3"]},
+        'university': {'format': 'identifier', 'label_name': 'University', 'visible': True, 'options': ['']},
+        'department': {'format': 'text', 'label_name': 'Department', 'visible': True, 'options': ['']},
+        'position': {'format': 'select', 'label_name': 'Position', 'visible': True, 'options': ''}
+    }
+
+    with app.test_client():
+        with patch('weko_admin.models.AdminSettings.get', return_value=profile_form):
+            with pytest.raises(ValueError, match=r"Invalid 'options' value in field: position"):
+                custom_profile_form_factory(ProfileForm)
+
+    # 不正な 'format' 値が入っている場合のテスト
+    profile_form = {
+        'fullname': {'format': 'select', 'label_name': 'Full Name', 'visible': True, 'options': ["item1", "item2", "item3"]},
+        'university': {'format': 'identifier', 'label_name': 'University', 'visible': True, 'options': ['']},
+        'department': {'format': 'test', 'label_name': 'Department', 'visible': True, 'options': ['']},
+        'position': {'format': 'select', 'label_name': 'Position', 'visible': True, 'options': ['']}
+    }
+
+    with app.test_client():
+        with patch('weko_admin.models.AdminSettings.get', return_value=profile_form):
+            with pytest.raises(ValueError, match=r"Invalid 'format' value in field: department"):
+                custom_profile_form_factory(ProfileForm)
+
+    # 正常な 'identifier' タイプのフィールド生成のテスト
+    profile_form = {
+        'fullname': {'format': 'text', 'label_name': 'Full Name', 'visible': True, 'options': ['']},
+        'university': {'format': 'identifier', 'label_name': 'University', 'visible': True, 'options': ['']},
+        'department': {'format': 'text', 'label_name': 'Department', 'visible': True, 'options': ['']},
+        'position': {'format': 'select', 'label_name': 'Position', 'visible': True, 'options': ["item1", "item2", "item3"]}
+    }
+
+    with app.test_client():
+        with patch('weko_admin.models.AdminSettings.get', return_value=profile_form):
+            form_cls = custom_profile_form_factory(ProfileForm)
+            form = form_cls()
+
+            # フォームデータの設定
+            form_data = MultiDict({
+                'university': '123456789',         # universityフィールドに値を設定
+            })
+
+            # フォームデータを処理
+            form.process(form_data)
+
+            # フィールドの生成を確認
+            assert form is not None
+            assert isinstance(form.university, StringField)  # 'identifier' の場合
+            assert form.university.data == '123456789'
+            print(f"University: {form.university.data}")
+
+    # 'text' タイプのフィールド生成のテスト
+    profile_form1 = {
+        'fullname': {'format': 'text', 'label_name': 'Full Name', 'visible': True, 'options': ['']},
+        'university': {'format': 'identifier', 'label_name': 'University', 'visible': True, 'options': ['']},
+        'department': {'format': 'text', 'label_name': 'Department', 'visible': True, 'options': ['']},
+        'position': {'format': 'text', 'label_name': 'Position', 'visible': True, 'options': ['']}
+    }
+
+    with app.test_client():
+        # AdminSettings.getをモックして、profile_formを返すようにする
+        with patch('weko_admin.models.AdminSettings.get', return_value=profile_form1):
+            print(f"formtext1:", profile_form)
+
+            # ProfileFormのインスタンスを作成
+            form_cls = custom_profile_form_factory(ProfileForm)
+            form = form_cls()
+
+            # フォームデータの設定
+            form_data = MultiDict({
+                'fullname': 'John Doe',
+            })
+
+            # フォームデータを処理
+            form.process(form_data)
+
+            # フィールドの生成とデータの確認
+            assert form is not None
+            assert isinstance(form.fullname, StringField)
+            # フィールドに設定された値を確認
+            assert form.fullname.data == 'John Doe'
+
+    # 正常なプロフィール設定でselectフィールドが正しく生成されるかテスト
+    profile_form2 = {
+        'fullname': {'format': 'text', 'label_name': 'Full Name', 'visible': True, 'options': ['']},
+        'university': {'format': 'identifier', 'label_name': 'University', 'visible': True, 'options': ['']},
+        'department': {'format': 'text', 'label_name': 'Department', 'visible': True, 'options': ['']},
+        'position': {'format': 'select', 'label_name': 'Position', 'visible': True, 'options': ["item1", "item2", "item3"]}
+    }
+
+    with app.test_client():
+        # AdminSettings.getをモックして、profile_formを返すようにする
+        with patch('weko_admin.models.AdminSettings.get', return_value=profile_form2):
+            print(f"formtext2:", profile_form2)
+            # ProfileFormのインスタンスを作成
+            form_cls = custom_profile_form_factory(ProfileForm)
+            form1 = form_cls()
+
+            # フォームデータの設定
+            form_data = MultiDict({
+                'position': 'item1',
+            })
+
+            # フォームデータを処理
+            form1.process(form_data)
+
+            # フィールドの生成とデータの確認
+            assert form1 is not None
+            assert isinstance(form1.position, SelectField)
+            # フィールドに設定された値を確認
+            assert form1.position.data == 'item1'
+            # 値を出力して確認する
+            print(f"Position: {form1.position.data}")
+
+    # 正常な 'phoneNumber' タイプのフィールド生成のテスト
+    profile_form_phonenumber = {
+        'fullname': {'format': 'text', 'label_name': 'Full Name', 'visible': True, 'options': ['']},
+        'university': {'format': 'phonenumber', 'label_name': 'University', 'visible': True, 'options': ['']},
+        'department': {'format': 'text', 'label_name': 'Department', 'visible': True, 'options': ['']},
+        'position': {'format': 'select', 'label_name': 'Position', 'visible': True, 'options': ["item1", "item2", "item3"]}
+    }
+
+    with app.test_client():
+        with patch('weko_admin.models.AdminSettings.get', return_value=profile_form_phonenumber):
+            form_cls = custom_profile_form_factory(ProfileForm)
+            form = form_cls()
+
+            # フォームデータの設定
+            form_data = MultiDict({
+                'university': '123-4567-89',         # universityフィールドに値を設定
+            })
+
+            # フォームデータを処理
+            form.process(form_data)
+
+            # フィールドの生成を確認
+            assert form is not None
+            assert isinstance(form.university, StringField)  # 'identifier' の場合
+            assert form.university.data == '123-4567-89'
+
+    # 正常な 'position(other)' タイプのフィールド生成のテスト
+    profile_form = {
+        'fullname': {'format': 'text', 'label_name': 'Full Name', 'visible': True, 'options': ['']},
+        'university': {'format': 'identifier', 'label_name': 'University', 'visible': True, 'options': ['']},
+        'department': {'format': 'text', 'label_name': 'Department', 'visible': True, 'options': ['']},
+        'position': {'format': 'select', 'label_name': 'Position', 'visible': True, 'options': ["item1", "item2", "item3", "Other"]},
+        "item1": {"format": "position(other)", "label_name": "other_position", "visible": True, "options": [""]},
+    }
+
+    with app.test_client():
+        with patch('weko_admin.models.AdminSettings.get', return_value=profile_form):
+            form_cls = custom_profile_form_factory(ProfileForm)
+            form = form_cls()
+
+            # フォームデータの設定
+            form_data = MultiDict({
+                "position": "Other",
+                "item1": "other_position_value",         # universityフィールドに値を設定
+            })
+
+            # フォームデータを処理
+            form.process(form_data)
+
+            # フィールドの生成を確認
+            assert form is not None
+            assert isinstance(form.position, SelectField)
+            assert isinstance(form.item1, StringField)
+            assert form.item1.data == "other_position_value"
+
+    # 正常な 非表示 タイプのフィールド生成のテスト
+    profile_form_hidden = {
+        'fullname': {'format': 'text', 'label_name': 'Full Name', 'visible': True, 'options': ['']},
+        'university': {'format': 'identifier', 'label_name': 'University', 'visible': True, 'options': ['']},
+        'department': {'format': 'text', 'label_name': 'Department', 'visible': True, 'options': ['']},
+        'position': {'format': 'select', 'label_name': 'Position', 'visible': True, 'options': ["item1", "item2", "item3", "Other"]},
+        "item1": {"format": "text", "label_name": "hidden_field", "visible": False, "options": [""]},
+    }
+    with app.test_client():
+        with patch('weko_admin.models.AdminSettings.get', return_value=profile_form_hidden):
+            form_cls = custom_profile_form_factory(ProfileForm)
+            form = form_cls()
+
+            # フォームデータの設定
+            form_data = MultiDict({
+                "item1": "hidden_value",         # universityフィールドに値を設定
+            })
+
+            # フォームデータを処理
+            form.process(form_data)
+
+            # フィールドの生成を確認
+            assert form is not None
+            assert isinstance(form.item1, HiddenField)
+            assert form.item1.data == "hidden_value"
 
 #class ProfileForm(FlaskForm):
+# .tox/c1/bin/pytest --cov=weko_user_profiles tests/test_forms.py::TestProfileForm -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-user-profiles/.tox/c1/tmp
 class TestProfileForm:
+
 #    def validate_username(form, field):
 # .tox/c1/bin/pytest --cov=weko_user_profiles tests/test_forms.py::TestProfileForm::test_validate_username -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-user-profiles/.tox/c1/tmp
     def test_validate_username(self,app,client,register_form,users,db):
+        from weko_user_profiles.config import USERPROFILES_LANGUAGE_LIST, USERPROFILES_TIMEZONE_LIST
+        from weko_user_profiles.validators import USERNAME_RULES
+
+        app.config.update(
+            USERNAME_RULES=USERNAME_RULES,
+            USERPROFILES_LANGUAGE_LIST=USERPROFILES_LANGUAGE_LIST,
+            USERPROFILES_TIMEZONE_LIST=USERPROFILES_TIMEZONE_LIST
+        )
         user = users[0]["obj"]
         login(app,client,obj=user)
         data = {
@@ -285,14 +593,20 @@ class TestProfileForm:
             "university":"test university",
             "department":"test department",
             "position":"Professor",
-            "phoneNumber":"12-345",
-            "institutePosition":"",
-            "institutePosition2":"",
-            "institutePosition3":"",
-            "institutePosition4":"",
-            "institutePosition5":""
+            "item1": "",
+            "item2":"12-345",
+            "item3":"",
+            "item4":"",
+            "item5":"",
+            "item6":"",
+            "item7":"",
+            "item8":"",
+            "item9":"",
+            "item10":"",
+            "item11":"",
+            "item12":"",
         }
-        
+
         #login_user(users[0]["obj"])
         user_profile1 = UserProfile(
             user_id=users[0]["id"],
@@ -311,15 +625,14 @@ class TestProfileForm:
         res = client.post("/test_form/profile_form",data=data)
         assert res.data == bytes("OK","utf-8")
         logout(app,client)
-        
-        
+
         # current_userid!= userprofile.user_id,field.data!=current_userid
         user = users[1]["obj"]
         login(app,client,obj=user)
-        
+
         res = client.post("/test_form/profile_form",data=data)
         assert res.data == bytes('Username already exists.',"utf-8")
-        
+
         # raise NoResultFound
         data["username"]="other user"
         res = client.post("/test_form/profile_form",data=data)
@@ -331,32 +644,70 @@ class TestProfileForm:
 # .tox/c1/bin/pytest --cov=weko_user_profiles tests/test_forms.py::test_EmailProfileForm -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-user-profiles/.tox/c1/tmp
 def test_EmailProfileForm(app):
 
-    form = EmailProfileForm(
-            formdata=None,
-            username="test",
-            fullname="test user",
-            timezone="Etc/GMT-9",
-            language="ja",
-            email="test@test.org",
-            email_repeat="test@test.org",
-            university="test university",
-            department="test department",
-            position = "test position",
-            otherPosition="test other position",
-            phoneNumber="123-4567",
-            instituteName="test institute",
-            institutePosition="test institute position",
-            instituteName2="test institute2",
-            institutePosition2="test institute position2",
-            instituteName3="",
-            institutePosition3="",
-            instituteName4="",
-            institutePosition4="",
-            instituteName5="",
-            institutePosition5=""
-    )
-    assert "username" in form.data
-    assert "phoneNumber" not in form.data
+    # リスト以外の値を設定
+    with app.app_context():
+        with patch('weko_user_profiles.forms.current_app') as mock_current_app:
+            mock_current_app.config = {
+                'WEKO_USERPROFILES_FORM_COLUMN': 'not_a_list'
+            }
+
+            form = EmailProfileForm(
+                formdata=None,
+                username="test",
+                fullname="test user",
+                timezone="Etc/GMT-9",
+                language="ja",
+                email="test@test.org",
+                email_repeat="test@test.org",
+                university="test university",
+                department="test department",
+                position="test position",
+                item1="test other position",
+                item2="1234567",
+                item3="test institute",
+                item4="test institute position",
+                item5="test institute2",
+                item6="test institute position2",
+                item7="",
+                item8="",
+                item9="",
+                item10="",
+                item11="",
+                item12=""
+            )
+            assert "username" in form.data
+            assert "phoneNumber" not in form.data
+
+        # リストの値を設定
+        with patch('weko_user_profiles.forms.current_app') as mock_current_app:
+            mock_current_app.config = {'WEKO_USERPROFILES_FORM_COLUMN': ['username', 'fullname', 'email']}
+            form = EmailProfileForm(
+                formdata=None,
+                username="test",
+                fullname="test user",
+                timezone="Etc/GMT-9",
+                language="ja",
+                email="test@test.org",
+                email_repeat="test@test.org",
+                university="test university",
+                department="test department",
+                position="test position",
+                item1="test other position",
+                item2="1234567",
+                item3="test institute",
+                item4="test institute position",
+                item5="test institute2",
+                item6="test institute position2",
+                item7="",
+                item8="",
+                item9="",
+                item10="",
+                item11="",
+                item12=""
+            )
+            assert "username" in form.data
+            assert "university" not in form.data
+            assert "phoneNumber" not in form.data
 
 
 #class VerificationForm(FlaskForm):
@@ -376,15 +727,16 @@ def test_verificationForm(client,register_form):
 def test_register_form_factory(req_context):
     class TestForm(FlaskForm):
         text = StringField("Text")
+
     result = register_form_factory(TestForm)()
 
     assert 'profile' in result
     assert "text" in result
     assert 'csrf_token' not in result.profile
     assert 'csrf_token' not in result or result.csrf_token.data is None
-    
+
     current_app.config.update(
-    WTF_CSRF_ENABLED=True
+        WTF_CSRF_ENABLED=True
     )
     result = register_form_factory(TestForm)()
 
@@ -399,17 +751,18 @@ def test_register_form_factory(req_context):
 def test_confirm_register_form_factory(req_context):
     class TestForm(FlaskForm):
         text = StringField("Text")
+
     result = confirm_register_form_factory(TestForm)()
-    
+
     assert 'profile' in result
     assert "text" in result
     assert 'csrf_token' not in result.profile
     assert 'csrf_token' not in result or result.csrf_token.data is None
-    
+
     current_app.config.update(
-    WTF_CSRF_ENABLED=True
+        WTF_CSRF_ENABLED=True
     )
-    result = register_form_factory(TestForm)()
+    result = confirm_register_form_factory(TestForm)()
 
     assert 'profile' in result
     assert "text" in result

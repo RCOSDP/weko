@@ -172,7 +172,7 @@ msgstr ""
 
 #: weko_workflow/admin.py:697
 msgid "Activity List"
-msgstr "Stopped"
+msgstr "List"
 
 #: weko_workflow/api.py:2340 weko_workflow/utils.py:3542
 msgid "End"
@@ -990,7 +990,7 @@ msgstr ""
 
 #: weko_workflow/templates/weko_workflow/admin/flow_detail.html:45
 msgid "Flow Name"
-msgstr ""
+msgstr "Name"
 
 #: weko_workflow/templates/weko_workflow/admin/flow_detail.html:48
 msgid "Ener the Flow name"
@@ -1010,11 +1010,11 @@ msgstr "Updated"
 
 #: weko_workflow/templates/weko_workflow/admin/flow_detail.html:88
 msgid "Flow Author"
-msgstr ""
+msgstr "Author"
 
 #: weko_workflow/templates/weko_workflow/admin/flow_detail.html:100
 msgid "Flow Status"
-msgstr ""
+msgstr "Status"
 
 #: weko_workflow/templates/weko_workflow/admin/flow_detail.html:135
 #: weko_workflow/templates/weko_workflow/admin/pop_page.html:8
@@ -1168,4 +1168,39 @@ msgstr ""
 
 #: weko_workflow/templates/weko_workflow/admin/workspace_workflow_setting.html:62
 msgid "WorkFlow Select"
+msgstr ""
+
+msgid "Item registrant"
+msgstr "Item registrant"
+
+msgid "Request mail"
+msgstr "Request mail"
+
+msgid "Guest User"
+msgstr ""
+
+msgid "Login User"
+msgstr ""
+
+msgid "Notification Email Setting"
+msgstr ""
+
+msgid "Send an email to item registrants when applying for use"
+msgstr ""
+
+msgid "Application approved."
+msgstr ""
+
+msgid "Back to Top page"
+msgstr ""
+
+msgid "Waiting for approval."
+msgstr ""
+
+#: weko_workflow/templates/weko_workflow/record_detail.html:64
+#: weko_workflow/templates/weko_workflow/record_detail.html:86
+msgid "Preview"
+msgstr ""
+
+msgid "Link"
 msgstr ""

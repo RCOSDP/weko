@@ -233,8 +233,8 @@ class MainLayout extends React.Component {
 
       if ('list_record' in response) {
         const is_import = response.list_record.filter(item => {
-          return !item.errors || item.errors.length === 0;
-        }).length <= 0;
+          return item.errors && item.errors.length > 0;
+        }).length > 0;
         that.setState(() => {
           return {
             list_record: response.list_record,

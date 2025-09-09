@@ -29,24 +29,21 @@ from datetime import datetime, timedelta
 from io import BytesIO, StringIO
 from typing import Dict, Optional, Tuple, Union
 
-import redis
-from redis import sentinel
 import requests
 from flask import current_app, request
 from flask_babelex import gettext as __
 from flask_babelex import lazy_gettext as _
 from invenio_accounts.models import Role, userrole
-from invenio_cache import cached_unless_authenticated
 from invenio_db import db
 from invenio_i18n.ext import current_i18n
 from invenio_indexer.api import RecordIndexer
 from invenio_mail.admin import MailSettingView
 from invenio_mail.models import MailConfig
+from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from invenio_records.models import RecordMetadata
 from invenio_records_rest.facets import terms_filter, terms_condition_filter, range_filter
 from invenio_stats.views import QueryFileStatsCount, QueryRecordViewCount
 from jinja2 import Template
-from simplekv.memory.redisstore import RedisStore
 from sqlalchemy import func
 from weko_authors.models import Authors
 from weko_schema_ui.models import PublishStatus
@@ -477,9 +474,9 @@ def write_report_file_rows(writer, records, file_type=None, other_info=None):
             user_name = 'Guest'
             user_id = int(record.get('cur_user_id'))
             if user_id > 0:
-                user_info = get_user_information(user_id)
-                user_email = user_info['email']
-                user_name = user_info['username']
+                user_infos = get_user_information([user_id])
+                user_email = user_infos[0]['email']
+                user_name = user_infos[0]['username']
             writer.writerow([
                 user_email, user_name,
                 record.get('total_download'), record.get('total_preview')])
@@ -932,7 +929,7 @@ class StatisticMail:
         rf = {
             'subject': subject,
             'body': body,
-            'recipient': recipient
+            'recipients': recipient
         }
         current_app.logger.debug("END Prepare Feedback Mail Data")
         return MailSettingView.send_statistic_mail(rf)
@@ -1758,6 +1755,8 @@ def get_restricted_access(key: Optional[str] = None) -> Optional[dict]:
     if not restricted_access:
         restricted_access = current_app.config[
             'WEKO_ADMIN_RESTRICTED_ACCESS_SETTINGS']
+    if not 'error_msg' in restricted_access:
+            restricted_access['error_msg'] = config.WEKO_ADMIN_RESTRICTED_ACCESS_ERROR_MESSAGE
     if not key:
         return restricted_access
     elif key in restricted_access:
@@ -1882,15 +1881,16 @@ class UsageReport:
         self.__page_number = 1
         self.__usage_report_activities_data = []
         self.__mail_key = {
-            "subitem_restricted_access_name": "restricted_fullname",
-            "subitem_restricted_access_mail_address": "restricted_mail_address",
-            "subitem_restricted_access_university/institution":
+            "subitem_fullname": "restricted_fullname",
+            "subitem_mail_address": "restricted_mail_address",
+            "subitem_university/institution":
                 "restricted_university_institution",
             "subitem_restricted_access_dataset_usage": "restricted_data_name",
             "subitem_restricted_access_application_date":
                 "restricted_application_date",
             "subitem_restricted_access_research_title":
-                "restricted_research_title"
+                "restricted_research_title",
+            "subitem_research_title": "restricted_research_title"
         }
         self.__mail_info_lst = []
 
@@ -1954,8 +1954,9 @@ class UsageReport:
             activities.append(
                 dict(
                     activity_id=activity.activity_id,
-                    item_name=activity.title or activity.temp_data.get("title",
-                                                                       ""),
+                    item_name=activity.title or ((type(activity.temp_data)==dict) and activity.temp_data.get("title" "")) or "",
+                    #item_name=activity.title or activity.temp_data.get("title",
+                    #                                                   ""),
                     workflow_name=activity.workflow.flows_name,
                     action_status=action_status,
                     user_mail=user_mail
@@ -1964,12 +1965,12 @@ class UsageReport:
         return activities
 
     def send_reminder_mail(self, activities_id: list,
-                           mail_template: str = None, activities: list = None):
+                           mail_id: str = None, activities: list = None, forced_send = False):
         """Send reminder email to user.
 
         Args:
             activities_id (list): Activity identifier list.
-            mail_template (str, optional): Mail template.
+            mail_id (str, optional): Mail template id.
             activities (list, optional): Activities list.
         """
         if not activities:
@@ -1979,8 +1980,10 @@ class UsageReport:
         site_url = current_app.config['THEME_SITEURL']
         site_name_en, site_name_ja = self.__get_site_info()
         site_mail = self.__get_default_mail_sender()
-        if not mail_template:
-            mail_template = current_app.config\
+        institution_name_ja = current_app.config['THEME_INSTITUTION_NAME']['ja']
+        institution_name_en = current_app.config['THEME_INSTITUTION_NAME']['en']
+        if not mail_id:
+            mail_id = current_app.config\
                 .get("WEKO_WORKFLOW_REQUEST_FOR_REGISTER_USAGE_REPORT")
 
         for activity in activities:
@@ -1998,6 +2001,8 @@ class UsageReport:
                     "restricted_site_url": site_url,
                     "restricted_site_name_ja": site_name_ja,
                     "restricted_site_name_en": site_name_en,
+                    "restricted_institution_name_ja": institution_name_ja,
+                    "restricted_institution_name_en": institution_name_en,
                     "restricted_site_mail": site_mail,
                     "restricted_usage_activity_id": activity.extra_info.get(
                         'usage_activity_id'),
@@ -2011,10 +2016,11 @@ class UsageReport:
             self.__mail_info_lst[-1]['mail_recipient'] = \
                 self.__mail_info_lst[-1]['restricted_mail_address']
         is_sendmail_success = True
-        for mail_info in self.__mail_info_lst:
-            if not self.__process_send_mail(mail_info, mail_template):
-                is_sendmail_success = False
-                break
+        if activity.extra_info.get('is_guest') or forced_send:
+            for mail_info in self.__mail_info_lst:
+                if not self.__process_send_mail(mail_info, mail_id):
+                    is_sendmail_success = False
+                    break
         return is_sendmail_success
 
     @staticmethod

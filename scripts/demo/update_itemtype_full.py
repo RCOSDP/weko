@@ -145,7 +145,7 @@ def main():
                     flag_modified(itemType, "form")
                     flag_modified(itemType, "render")
                     db.session.merge(itemType)
-                    
+
                     flag_modified(_mapping, 'mapping')
                     db.session.merge(_mapping)
                     Mapping.create(item_type_id=itemType.id,

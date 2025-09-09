@@ -1,0 +1,30 @@
+{
+    "pubdate": "2025-07-01",
+    "item_30002_title0": [
+        {
+            "subitem_title": "duplication_test_123",
+            "subitem_title_language": "en"
+        }
+    ],
+    "item_30002_creator2": [
+        {
+            "creatorNames": [
+                {
+                    "creatorName": "高橋 三郎"
+                }
+            ],
+            "nameIdentifiers": [
+                {
+                    "nameIdentifier": "1",
+                    "nameIdentifierScheme": "WEKO"
+                }
+            ]
+        }
+    ],
+    "item_30002_resource_type13": {
+        "resourceuri": "http://purl.org/coar/resource_type/c_6501",
+        "resourcetype": "article"
+    },
+    "$schema": "/items/jsonschema/30002",
+    "shared_user_id": -1
+}

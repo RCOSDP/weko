@@ -71,6 +71,8 @@ WEKO_ACCOUNTS_SSO_ATTRIBUTE_MAP = {
     'SHIB_ATTR_SITE_USER_WITHIN_IP_RANGE_FLAG': (False, 'shib_ip_range_flag'),
     'SHIB_ATTR_MAIL': (False, 'shib_mail'),
     'SHIB_ATTR_USER_NAME': (False, 'shib_user_name'),
+    "SHIB_ATTR_IS_MEMBER_OF": (False, 'shib_is_member_of'),
+    "SHIB_ATTR_ORGANIZATION": (False, 'shib_organization'),
 }
 """IdP attribute map."""
 
@@ -99,7 +101,9 @@ WEKO_ACCOUNTS_ATTRIBUTE_LIST = [
     'givenName',
     'eduPersonAffiliation',
     'eduPersonScopedAffiliation',
-    'eduPersonTargetedID'
+    'eduPersonTargetedID',
+    'HTTP_WEKOID',
+    'HTTP_WEKOSOCIETYAFFILIATION'
 ]
 """Attribute List."""
 
@@ -224,3 +228,6 @@ WEKO_ACCOUNTS_GAKUNIN_USER_NAME_PREFIX = 'G_'
 
 WEKO_ACCOUNTS_SHIB_USER_NAME_NO_HASH_LENGTH = 253
 """Length of Shibboleth user name without hash value."""
+
+WEKO_ACCOUNTS_GAKUNIN_MAP_BASE_URL = 'https://cg.gakunin.jp'
+"""Base URL for Gakunin mAP."""

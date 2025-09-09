@@ -15,7 +15,7 @@ from weko_admin.models import AdminSettings
 from weko_swordserver.utils import (
     check_import_file_format,
     check_import_items,
-    get_shared_id_from_on_behalf_of,
+    get_shared_ids_from_on_behalf_of,
     is_valid_file_hash,
     update_item_ids,
     check_deletion_type,
@@ -119,34 +119,34 @@ def test_check_import_file_format(app):
     assert check_import_file_format(file_content, 'SimpleZip') == 'XML'
 
 
-# def get_shared_id_from_on_behalf_of(on_behalf_of):
-# .tox/c1/bin/pytest --cov=weko_swordserver tests/test_utils.py::test_get_shared_id_from_on_behalf_of -v -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp --full-trace
-def test_get_shared_id_from_on_behalf_of(app, db, users, personal_token):
+# def get_shared_ids_from_on_behalf_of(on_behalf_of):
+# .tox/c1/bin/pytest --cov=weko_swordserver tests/test_utils.py::test_get_shared_ids_from_on_behalf_of -v -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp --full-trace
+def test_get_shared_ids_from_on_behalf_of(app, db, users, personal_token):
     on_behalf_of = None
-    assert get_shared_id_from_on_behalf_of(on_behalf_of) == -1
+    assert get_shared_ids_from_on_behalf_of(on_behalf_of) == []
 
     on_behalf_of = users[3].get("email")
-    assert get_shared_id_from_on_behalf_of(on_behalf_of) == users[3]["id"]
+    assert get_shared_ids_from_on_behalf_of(on_behalf_of) == [users[3]["id"]]
 
     on_behalf_of = personal_token[3]["token"].access_token
-    assert get_shared_id_from_on_behalf_of(on_behalf_of) == personal_token[3]["token"].user_id
-    assert get_shared_id_from_on_behalf_of(on_behalf_of) == users[3]["id"]
+    assert get_shared_ids_from_on_behalf_of(on_behalf_of) == [personal_token[3]["token"].user_id]
+    assert get_shared_ids_from_on_behalf_of(on_behalf_of) == [users[3]["id"]]
 
     shib_user = ShibbolethUser(shib_eppn="test@example.ac.jp", shib_user_name="testuser", weko_uid=users[3]["id"])
     db.session.add(shib_user)
     db.session.commit()
     on_behalf_of = shib_user.shib_eppn
-    assert get_shared_id_from_on_behalf_of(on_behalf_of) == users[3]["id"]
+    assert get_shared_ids_from_on_behalf_of(on_behalf_of) == [users[3]["id"]]
 
     on_behalf_of = "invalid"
     with pytest.raises(WekoSwordserverException) as e:
-        get_shared_id_from_on_behalf_of(on_behalf_of)
+        get_shared_ids_from_on_behalf_of(on_behalf_of)
     assert e.value.errorType == ErrorType.BadRequest
     assert e.value.message == "No user found by On-Behalf-Of."
 
     on_behalf_of = 999
     with pytest.raises(WekoSwordserverException) as e:
-        get_shared_id_from_on_behalf_of(on_behalf_of)
+        get_shared_ids_from_on_behalf_of(on_behalf_of)
     assert e.value.errorType == ErrorType.ServerError
     assert e.value.message == "Failed to get shared ID from On-Behalf-Of."
 
@@ -193,7 +193,7 @@ def test_check_import_items(app, admin_settings, item_type, workflow, sword_clie
     }
     check_result = check_import_items(file_content, "TSV/CSV")
 
-    mocker_tsv_check.assert_called_once_with(file_content, False, shared_id=-1)
+    mocker_tsv_check.assert_called_once_with(file_content, False, shared_ids=[])
     assert check_result["list_record"][0]["item_type_id"] == item_type_id
     assert check_result["list_record"][0]["item_type_name"] == item_type_name
     assert check_result["list_record"][0]["metadata"]["title"] == "test"
@@ -207,9 +207,9 @@ def test_check_import_items(app, admin_settings, item_type, workflow, sword_clie
     mocker_tsv_check.return_value = {
         "list_record": [{"item_type_id": item_type_id, "item_type_name": item_type_name, "metadata": {"title": "test"}}]
     }
-    check_result = check_import_items(file_content, "TSV/CSV", True, 3)
+    check_result = check_import_items(file_content, "TSV/CSV", True, [3])
 
-    mocker_tsv_check.assert_called_once_with(file_content, True, shared_id=3)
+    mocker_tsv_check.assert_called_once_with(file_content, True, shared_ids=[3])
     assert check_result["list_record"][0]["item_type_id"] == item_type_id
     assert check_result["list_record"][0]["item_type_name"] == item_type_name
     assert check_result["list_record"][0]["metadata"]["title"] == "test"
@@ -226,7 +226,7 @@ def test_check_import_items(app, admin_settings, item_type, workflow, sword_clie
         "list_record": [{"item_type_id": item_type_id, "item_type_name": item_type_name, "metadata": {"title": "test"}}]
     }
     app.config["WEKO_SWORDSERVER_BAGIT_VERIFICATION"] = False
-    check_result = check_import_items(file_content, "JSON", False, -1, packaging="SimpleZip", client_id=client_id)
+    check_result = check_import_items(file_content, "JSON", False, [], packaging="SimpleZip", client_id=client_id)
 
     mocker_jsonld_check.assert_called_once_with(file_content, "SimpleZip", mapping_id, [], -1, validate_bagit=False, is_change_identifier=False)
     assert check_result["list_record"][0]["item_type_id"] == item_type_id
@@ -244,7 +244,7 @@ def test_check_import_items(app, admin_settings, item_type, workflow, sword_clie
         "list_record": [{"item_type_id": item_type_id, "item_type_name": item_type_name, "metadata": {"title": "test"}}]
     }
     app.config["WEKO_SWORDSERVER_BAGIT_VERIFICATION"] = True
-    check_result = check_import_items(file_content, "JSON", True, 3, packaging="SimpleZip", client_id=client_id)
+    check_result = check_import_items(file_content, "JSON", True, [3], packaging="SimpleZip", client_id=client_id)
     mocker_jsonld_check.assert_called_once_with(file_content, "SimpleZip", mapping_id, [], 3, validate_bagit=True, is_change_identifier=True)
     assert check_result["list_record"][0]["item_type_id"] == item_type_id
     assert check_result["list_record"][0]["item_type_name"] == item_type_name
@@ -260,7 +260,7 @@ def test_check_import_items(app, admin_settings, item_type, workflow, sword_clie
         "list_record": [{"item_type_id": item_type_id, "item_type_name": item_type_name, "metadata": {"title": "test"}}]
     }
     with patch("weko_swordserver.utils.WorkFlows.get_workflow_by_itemtype_id", return_value=[]):
-        check_result = check_import_items(file_content, "TSV/CSV", True, 3)
+        check_result = check_import_items(file_content, "TSV/CSV", True, [3])
     assert check_result["error"] == "Workflow not found for item type ID."
 
     # tsv, registration workflow not found
@@ -270,7 +270,7 @@ def test_check_import_items(app, admin_settings, item_type, workflow, sword_clie
         "list_record": [{"item_type_id": item_type_id, "item_type_name": item_type_name, "metadata": {"title": "test"}}]
     }
     with patch("weko_swordserver.utils.WorkFlows.reduce_workflows_for_registration", return_value=[]):
-        check_result = check_import_items(file_content, "TSV/CSV", True, 3)
+        check_result = check_import_items(file_content, "TSV/CSV", True, [3])
     assert check_result["error"] == "No workflow found for item type ID."
 
     item_type_id = item_type[1]["item_type"].id
@@ -290,8 +290,8 @@ def test_check_import_items(app, admin_settings, item_type, workflow, sword_clie
     mocker_xml_check.return_value = {
         "list_record": [{"item_type_id": item_type_id, "item_type_name": item_type_name, "metadata": {"title": "test"}}]
     }
-    check_result = check_import_items(file_content, "XML", True, 3)
-    mocker_xml_check.assert_called_once_with(file_content, item_type_id, shared_id=3)
+    check_result = check_import_items(file_content, "XML", True, [3])
+    mocker_xml_check.assert_called_once_with(file_content, item_type_id, shared_ids=[3])
     assert check_result["list_record"][0]["item_type_id"] == item_type_id
     assert check_result["list_record"][0]["item_type_name"] == item_type_name
     assert check_result["list_record"][0]["metadata"]["title"] == "test"
@@ -304,7 +304,7 @@ def test_check_import_items(app, admin_settings, item_type, workflow, sword_clie
     file_content = BytesIO()
     mocker_tsv_check = mocker.patch("weko_swordserver.utils.check_tsv_import_items")
     with pytest.raises(WekoSwordserverException) as e:
-        check_import_items(file_content, "TSV/CSV", True, 3)
+        check_import_items(file_content, "TSV/CSV", True, [3])
     e.value.errorType == ErrorType.MetadataFormatNotAcceptable
     e.value.message == "TSV/CSV metadata import is not enabled."
 
@@ -312,7 +312,7 @@ def test_check_import_items(app, admin_settings, item_type, workflow, sword_clie
     file_content = BytesIO()
     mocker_tsv_check = mocker.patch("weko_swordserver.utils.check_tsv_import_items")
     with pytest.raises(WekoSwordserverException) as e:
-        check_import_items(file_content, "XML", True, 3)
+        check_import_items(file_content, "XML", True, [3])
     e.value.errorType == ErrorType.MetadataFormatNotAcceptable
     e.value.message == "XML metadata import is not enabled."
 
@@ -321,7 +321,7 @@ def test_check_import_items(app, admin_settings, item_type, workflow, sword_clie
     file_content = BytesIO()
     with patch("weko_swordserver.utils.WorkFlows.get_workflow_by_id", return_value=None):
         with pytest.raises(WekoSwordserverException) as e:
-            check_result = check_import_items(file_content, "XML", True, 3)
+            check_result = check_import_items(file_content, "XML", True, [3])
     assert e.value.errorType == ErrorType.BadRequest
     assert e.value.message == "Workflow not found for registration your item."
 
@@ -329,7 +329,7 @@ def test_check_import_items(app, admin_settings, item_type, workflow, sword_clie
     file_content = BytesIO()
     with patch("weko_swordserver.utils.WorkFlows.reduce_workflows_for_registration", return_value=[]):
         with pytest.raises(WekoSwordserverException) as e:
-            check_result = check_import_items(file_content, "XML", True, 3)
+            check_result = check_import_items(file_content, "XML", True, [3])
     assert e.value.errorType == ErrorType.BadRequest
     assert e.value.message == "Workflow is not for item registration."
 
@@ -337,7 +337,7 @@ def test_check_import_items(app, admin_settings, item_type, workflow, sword_clie
     client_id = "invalid_client_id"
     file_content = BytesIO()
     with pytest.raises(WekoSwordserverException) as e:
-        check_result = check_import_items(file_content, "JSON", True, 3, packaging="SimpleZip", client_id=client_id)
+        check_result = check_import_items(file_content, "JSON", True, [3], packaging="SimpleZip", client_id=client_id)
     assert e.value.errorType == ErrorType.BadRequest
     assert e.value.message == "No SWORD API setting found for client ID that you are using."
 
@@ -347,14 +347,14 @@ def test_check_import_items(app, admin_settings, item_type, workflow, sword_clie
     file_content = BytesIO()
     with patch("weko_swordserver.utils.WorkFlows.get_workflow_by_id", return_value=None):
         with pytest.raises(WekoSwordserverException) as e:
-            check_result = check_import_items(file_content, "JSON", True, 3, packaging="SimpleZip", client_id=client_id)
+            check_result = check_import_items(file_content, "JSON", True, [3], packaging="SimpleZip", client_id=client_id)
     assert e.value.errorType == ErrorType.BadRequest
     assert e.value.message == "Workflow not found for registration your item."
 
     # jsonld, registration workflow not found
     with patch("weko_swordserver.utils.WorkFlows.reduce_workflows_for_registration", return_value=[]):
         with pytest.raises(WekoSwordserverException) as e:
-            check_result = check_import_items(file_content, "JSON", True, 3, packaging="SimpleZip", client_id=client_id)
+            check_result = check_import_items(file_content, "JSON", True, [3], packaging="SimpleZip", client_id=client_id)
     assert e.value.errorType == ErrorType.BadRequest
     assert e.value.message == "Workflow is not for item registration."
 

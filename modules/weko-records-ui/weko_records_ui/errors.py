@@ -24,6 +24,7 @@
 
 """Records Error"""
 from flask_babelex import gettext as _
+from flask_babelex import get_locale
 from invenio_rest.errors import RESTException, RESTValidationError
 
 
@@ -53,6 +54,12 @@ class InvalidEmailError(RESTException):
     code = 400
     description = _('Invalid mailaddress.')
 
+class InvalidTokenError(RESTException):
+    """Invalid Token Error error."""
+
+    code = 400
+    description = _('Invalid Tokens.')
+
 class RequiredItemNotExistError(RESTValidationError):
     """Required Item not exists in request body error."""
 
@@ -75,6 +82,26 @@ class AuthenticationRequiredError(RESTException):
 
     code = 401
     description = _('Unauthorized.')
+
+class InvalidWorkflowError(RESTException):
+    """Contents not found error."""
+
+    def __init__(self, errors=None, **kwargs):
+        """Initialize RESTException."""
+        super(InvalidWorkflowError, self).__init__(errors, **kwargs)
+
+        self.code = 403
+        self.description = self.get_this_message()
+
+    def get_this_message(self):
+        from weko_admin.utils import get_restricted_access
+
+        locale = get_locale()
+        restricted_error_msg = get_restricted_access('error_msg')
+        if locale.get_language_name('en') == 'Japanese':
+            return restricted_error_msg['content']['ja']['content']
+        return restricted_error_msg['content']['en']['content']
+
 
 class PermissionError(RESTException):
     """Permission error"""
@@ -110,4 +137,4 @@ class InternalServerError(RESTException):
     """Internal Server Error."""
 
     code = 500
-    description = 'Internal Server Error'
+    description = _('Internal Server Error.')

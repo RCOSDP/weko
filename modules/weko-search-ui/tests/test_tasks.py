@@ -2,6 +2,7 @@
 from datetime import datetime
 import os
 import json
+import pathlib
 import pytest
 import unittest
 from flask import current_app, make_response, request
@@ -48,6 +49,47 @@ def test_check_import_items_task(i18n_app, users, mocker):
         assert "error" not in res
         assert res["data_path"] == "/tmp/data"
         assert res["list_record"] == [{"id": 1, "errors": ["test_error"]}]
+
+    file_path = "tests/data/test.txt"
+    data = {"error": None, 'data_path': 'test_path', 'list_record': [{'errors': None}]}
+
+    p = pathlib.Path(file_path)
+    p.touch()
+
+    mock_datetime = mocker.patch('weko_search_ui.tasks.datetime', autospec=True)
+    mock_datetime.now.return_value = datetime(2025, 4, 1, 12, 0, 0)
+    mock_apply_async = mocker.patch('weko_search_ui.tasks.remove_temp_dir_task.apply_async', autospec=True)
+    with patch("weko_search_ui.tasks.check_import_items", return_value=data):
+        with patch("shutil.rmtree", return_value=""):
+            result = check_import_items_task(file_path=file_path,is_change_identifier=True,host_url="https://localhost")
+            assert result["start_date"] == "2025-04-01 12:00:00"
+            assert result["end_date"] == "2025-04-01 12:00:00"
+            assert result["data_path"] == "test_path"
+            assert result["list_record"] == [{'errors': None}]
+            assert not result.get("error")
+            assert mock_apply_async.call_count == 0
+
+            data['list_record'] = [{'errors': "error"}]
+            result = check_import_items_task(file_path=file_path,is_change_identifier=True,host_url="https://localhost")
+            assert result["start_date"] == "2025-04-01 12:00:00"
+            assert result["end_date"] == "2025-04-01 12:00:00"
+            assert result["data_path"] == "test_path"
+            assert result["list_record"] == [{'errors': "error"}]
+            assert not result.get("error")
+            assert mock_apply_async.call_count == 1
+    
+    data = {"error": 'error', 'data_path': 'test_path', 'list_record': [{'errors': None}]}
+    with patch("weko_search_ui.tasks.check_import_items", return_value=data):
+        with patch("shutil.rmtree", return_value=""):
+            # with patch('weko_search_ui.tasks.get_lifetime', return_value=1800):
+            result = check_import_items_task(file_path=file_path,is_change_identifier=True,host_url="https://localhost")
+            assert result["start_date"] == "2025-04-01 12:00:00"
+            assert result["end_date"] == "2025-04-01 12:00:00"
+            assert not result.get("data_path")
+            assert not result.get("list_record")
+            assert result['error'] == 'error'
+    
+    p.unlink()
 
 
 # def check_rocrate_import_items_task(file_path, is_change_identifier: bool, host_url, packaging, mapping_id, lang="en"):

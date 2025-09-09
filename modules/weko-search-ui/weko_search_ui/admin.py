@@ -42,6 +42,7 @@ from invenio_db import db
 from invenio_files_rest.models import FileInstance
 from invenio_i18n.ext import current_i18n
 from weko_admin.api import TempDirInfo
+from weko_admin.models import AdminSettings
 from weko_admin.utils import get_redis_cache, reset_redis_cache
 from weko_index_tree.api import Indexes
 from weko_index_tree.models import IndexStyle
@@ -625,8 +626,30 @@ class ItemImportView(BaseView):
                     ]
                     ids_line = pickle.loads(pickle.dumps(WEKO_EXPORT_TEMPLATE_BASIC_ID, -1))
                     names_line = pickle.loads(pickle.dumps(WEKO_EXPORT_TEMPLATE_BASIC_NAME, -1))
-                    systems_line = ["#"] + ["" for _ in range(len(ids_line) - 1)]
                     options_line = pickle.loads(pickle.dumps(WEKO_EXPORT_TEMPLATE_BASIC_OPTION, -1))
+
+                    # check restricted access settings
+                    restricted_access_settings = AdminSettings.get("restricted_access", dict_to_object=False)
+                    if restricted_access_settings:
+                        # no content item application
+                        item_application_settings = restricted_access_settings.get("item_application", {})
+                        if item_application_settings.get("item_application_enable", False) \
+                            and item_type.id in item_application_settings.get("application_item_types", []):
+                            ids_line = ids_line[0:6] + [
+                                ".item_application.workflow", ".item_application.terms",".item_application.termsDescription"
+                            ] + ids_line[6:]
+                            names_line = names_line[0:6] + [
+                                ".ITEM_APPLICATION.WORKFLOW", ".ITEM_APPLICATION.TERMS", ".ITEM_APPLICATION.TERMS_DESCRIPTION",
+                            ] + names_line[6:]
+                            options_line = options_line[0:6] + ["", "", ""] + options_line[6:]
+
+                        # request form
+                        if restricted_access_settings.get("display_request_form", False):
+                            ids_line.insert(6, ".request_mail[0]")
+                            names_line.insert(6, ".REQUEST_MAIL[0]")
+                            options_line.insert(6, "Allow Multiple")
+
+                    systems_line = ["#"] + ["" for _ in range(len(ids_line) - 1)]
 
                     item_type = item_type.render
                     meta_list = {

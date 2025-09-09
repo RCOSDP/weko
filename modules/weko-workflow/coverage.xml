@@ -231,10 +231,10 @@
 						<line hits="0" number="407"/>
 						<line hits="0" number="408"/>
 						<line hits="0" number="410"/>
-						<line hits="0" number="413"/>
-						<line hits="0" number="417"/>
-						<line hits="0" number="418"/>
-						<line hits="0" number="419"/>
+						<line hits="1" number="413"/>
+						<line hits="1" number="417"/>
+						<line hits="1" number="418"/>
+						<line hits="1" number="419"/>
 						<line hits="0" number="420"/>
 						<line hits="0" number="421"/>
 						<line hits="0" number="422"/>
@@ -489,25 +489,25 @@
 						<line hits="0" number="391"/>
 						<line hits="0" number="392"/>
 						<line hits="1" number="394"/>
-						<line hits="0" number="400"/>
-						<line hits="0" number="401"/>
-						<line hits="0" number="402"/>
-						<line hits="0" number="403"/>
-						<line branch="true" condition-coverage="0% (0/2)" hits="0" missing-branches="407,415" number="406"/>
-						<line hits="0" number="407"/>
-						<line hits="0" number="408"/>
-						<line hits="0" number="409"/>
-						<line hits="0" number="410"/>
-						<line hits="0" number="411"/>
-						<line hits="0" number="412"/>
-						<line hits="0" number="413"/>
-						<line hits="0" number="414"/>
-						<line hits="0" number="415"/>
-						<line hits="0" number="416"/>
-						<line hits="0" number="417"/>
-						<line hits="0" number="418"/>
-						<line hits="0" number="419"/>
-						<line hits="0" number="420"/>
+						<line hits="1" number="400"/>
+						<line hits="1" number="401"/>
+						<line hits="1" number="402"/>
+						<line hits="1" number="403"/>
+						<line branch="true" condition-coverage="100% (2/2)" hits="1" number="406"/>
+						<line hits="1" number="407"/>
+						<line hits="1" number="408"/>
+						<line hits="1" number="409"/>
+						<line hits="1" number="410"/>
+						<line hits="1" number="411"/>
+						<line hits="1" number="412"/>
+						<line hits="1" number="413"/>
+						<line hits="1" number="414"/>
+						<line hits="1" number="415"/>
+						<line hits="1" number="416"/>
+						<line hits="1" number="417"/>
+						<line hits="1" number="418"/>
+						<line hits="1" number="419"/>
+						<line hits="1" number="420"/>
 						<line hits="1" number="422"/>
 						<line hits="1" number="427"/>
 						<line hits="1" number="428"/>

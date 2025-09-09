@@ -11,6 +11,14 @@ from invenio_pidstore.models import PersistentIdentifier, PIDStatus, RecordIdent
 from invenio_pidstore.errors import PIDDoesNotExistError
 
 
+def fill_oauth2_headers(json_headers, token):
+    """Create authentication headers (with a valid oauth2 token)."""
+    headers = copy.deepcopy(json_headers)
+    headers.append(
+        ('Authorization', 'Bearer {0}'.format(token.access_token))
+    )
+    return headers
+
 def json_data(filename):
     with open(join(dirname(__file__),filename), "r") as f:
         return json.load(f)

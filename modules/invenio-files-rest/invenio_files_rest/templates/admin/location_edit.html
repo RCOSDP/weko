@@ -57,6 +57,7 @@ window.onload = function(){
       if (s3UrlExpirationInput.value === ''){
         s3UrlExpirationInput.value = 60
       }
+      s3RegionNameInput.required = true
     } else if (typeSpan.getAttribute('title') == 'S3 Virtural Host') {
       accessKeyField.style.display = ''
       accessKeyInput.required = true
@@ -73,6 +74,7 @@ window.onload = function(){
       if (s3UrlExpirationInput.value === ''){
         s3UrlExpirationInput.value = 60
       }
+      s3RegionNameInput.required = true
     } else {
       accessKeyField.style.display = 'none'
       secretKeyField.style.display = 'none'
@@ -91,6 +93,7 @@ window.onload = function(){
       s3DefaultBlockSizeInput.value = null
       s3MaximumNumberOfPartsInput.value = null
       s3RegionNameInput.value = null
+      s3RegionNameInput.required = false
       s3UrlExpirationInput.value = null
     }
   }
