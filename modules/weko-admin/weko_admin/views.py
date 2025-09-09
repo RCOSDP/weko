@@ -864,6 +864,10 @@ def dbsession_clean(exception):
                  WEKO_ADMIN_PERMISSION_ROLE_REPO])
     # データベースに保存する処理
 def send_profile_settings_save():
+    """Save profile settings.
+    Return:
+        json -- response result
+    """
     data = request.get_json()
     if not data or 'profiles_templates' not in data:
         return jsonify({"status": "error", "msg": "Invalid data"}), 400
@@ -872,7 +876,7 @@ def send_profile_settings_save():
 
     try:
         # settingsカラムを更新または新規作成
-        AdminSettings.update(name='profiles_items_settings', settings=profiles_templates)
+        AdminSettings.update(name="profiles_items_settings", settings=profiles_templates)
         return jsonify({"status": "success", "msg": "Settings updated successfully"}), 200
     except Exception as e:
         db.session.rollback()

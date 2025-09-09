@@ -3407,10 +3407,18 @@ class WorkActivity(object):
                 data = data_callback(activity, target, profile)
 
                 mail_data = fill_template(template, data)
-                recipient = target.email
 
-                res = send_mail(mail_data.get("subject"), recipient, mail_data.get("body"))
+                # get mail info
+                mail_info = {
+                    "mail_subject": mail_data.get("subject"),
+                    "mail_body": mail_data.get("body"),
+                    "mail_recipients": [target.email],
+                    "mail_cc": [],
+                    "mail_bcc": []
+                }
 
+                # send mail
+                res = send_mail(mail_info)
                 if res:
                     send_count += 1
 
