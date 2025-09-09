@@ -25,7 +25,7 @@ from flask_babelex import lazy_gettext as _
 USERPROFILES = True
 """Enable or disable module extensions."""
 
-USERPROFILES_EMAIL_ENABLED = False
+USERPROFILES_EMAIL_ENABLED = True
 """Include the user email in the profile form."""
 
 USERPROFILES_EXTEND_SECURITY_FORMS = False
@@ -171,7 +171,7 @@ WEKO_USERPROFILES_FORM_COLUMN = ["username", "timezone", "language", "email",
 
 WEKO_USERPROFILES_READONLY_EMAILFIELD = False
 
-WEKO_USERPROFILES_CUSTOMIZE_ENABLED = True
+WEKO_USERPROFILES_CUSTOMIZE_ENABLED = False
 """Enable customize profile fields"""
 
 USERPROFILES_FORMAT_OPTION_LIST = ["text", "select", "identifier", "phonenumber", "position(other)"]
