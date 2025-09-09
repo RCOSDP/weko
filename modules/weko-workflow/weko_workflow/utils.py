@@ -1990,77 +1990,6 @@ def prepare_delete_workflow(post_activity, recid, deposit):
     return rtn
 
 
-def prepare_delete_workflow(post_activity, recid, deposit):
-    """
-    Prepare Workflow Activity for draft record.
-
-    Check and create draft record with id is "x.0".
-    Create new workflow activity.
-    Clone Identifier and Feedbackmail relation to last activity.
-
-    Args:
-        post_activity (dict): latest activity information.
-        recid (PersistentIdentifier): current record id.
-        deposit (WekoDeposit): current deposit data.
-
-    Returns:
-        Activity: new activity object.
-    """
-    # ! Check pid's version
-    community = post_activity['community']
-    activity = WorkActivity()
-
-    pid_value = recid.pid_value.split('.')[0]
-    del_value = (
-        recid.pid_value
-        if not '.' in recid.pid_value
-        else "del_ver_{}".format(recid.pid_value)
-    )
-
-    draft_pid = PersistentIdentifier.query.filter_by(
-        pid_type='recid',
-        pid_value="{}.0".format(pid_value)
-    ).one_or_none()
-
-    if del_value.startswith("del_ver_"):
-        item_id = recid.object_uuid
-    elif not draft_pid:
-        draft_record = deposit.prepare_draft_item(recid)
-        item_id = draft_record.model.id
-    else:
-        item_id = draft_pid.object_uuid
-
-    rtn = activity.init_activity(
-        post_activity, community, item_id
-    )
-    activity_detail = activity.get_activity_detail(rtn.activity_id)
-    cur_action = activity_detail.action
-    if rtn.action_id == 2:   # end_action
-        from weko_records_ui.views import soft_delete
-        soft_delete(del_value)
-        activity.notify_about_activity(rtn.activity_id, "deleted")
-        activity.upt_activity_action_status(
-            activity_id=rtn.activity_id,
-            action_id=rtn.action_id,
-            action_status=ActionStatusPolicy.ACTION_DONE,
-            action_order=rtn.action_order
-            )
-        act = {
-            'activity_id': rtn.activity_id,
-            'action_id': rtn.action_id,
-            'action_version': cur_action.action_version,
-            'action_status': ActionStatusPolicy.ACTION_DONE,
-            'item_id': item_id,
-            'action_order': rtn.action_order
-        }
-        activity.end_activity(act)
-
-    if rtn.action_id == 4:   # approval
-        activity.notify_about_activity(rtn.activity_id, "deletion_request")
-
-    return rtn
-
-
 def handle_finish_workflow(deposit, current_pid, recid):
     """
     Get user information by email.
@@ -2621,9 +2550,17 @@ def send_mail_request_approval(mail_info):
 def send_mail(mail_data):
     """Send an email via the Flask-Mail extension.
 
-    :subject: Email subject
-    :recipients: Email recipients
-    :body: content of email
+        keys in mail_data:
+            * mail_subject - subject of email
+            * mail_recipients - email recipients
+            * mail_cc - mail_cc
+            * mail_bcc - mail_bcc
+            * mail_body - content of email
+
+    Args:
+        mail_data (dict): mail data
+    Returns:
+        bool: True if the email was sent, False otherwise
     """
     if mail_data:
         rf = {
@@ -4196,13 +4133,19 @@ def process_send_mail_tpl(mail_info, mail_pattern_name):
         return
 
     subject, body = get_mail_data_tpl(mail_pattern_name)
-    current_app.logger.error("subject:{}".format(subject))
-    current_app.logger.error("body:{}".format(body))
+
 
     if body and subject:
         body = replace_characters(mail_info, body)
         current_app.logger.error('Mail send body and subject')
-        return send_mail(subject, mail_info['mail_recipient'], body)
+        mail_info = {
+            "mail_subject": subject,
+            "mail_body": body,
+            "mail_recipients": [mail_info['mail_recipient']],
+            "mail_cc": [],
+            "mail_bcc": []
+        }
+        return send_mail(mail_info)
 
 def cancel_expired_usage_reports():
     """Cancel expired usage reports."""
@@ -5061,7 +5004,7 @@ def is_terms_of_use_only(workflow_id :int) -> bool:
 
     current_app.logger.info(workflow_id)
     wf = WorkFlow().get_workflow_by_id(workflow_id)
-    if wf and wf.open_restricted :
+    if wf and wf.open_restricted:
         fa :list[FlowAction] =Flow().get_flow_action_list(wf.flow_id)
         if len(fa) == 2 :
             #begin action and end action
