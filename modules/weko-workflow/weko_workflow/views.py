@@ -1045,6 +1045,13 @@ def display_activity(activity_id="0"):
     if approval_record and files:
         files = set_files_display_type(approval_record, files)
 
+    # Add item link data for approval steps
+    if approval_record and recid and action_endpoint in ['approval', 'approval_advisor', 'approval_guarantor', 'approval_administrator']:
+        item_link_info = ItemLink.get_item_link_info(recid.pid_value)
+        if item_link_info:
+            approval_record["relation"] = item_link_info
+        else:
+            approval_record["relation"] = []
 
     ctx.update(
         dict(
