@@ -122,11 +122,19 @@ jobs:
         run: |
           docker compose -f docker-compose.yml up -d
 
-      - name: Wait for web to be healthy
+      - name: Wait for web to be ready
         run: |
-          timeout 60 bash -c \
-            'until [ "$$(docker inspect --format="{{.State.Health.Status}}" $(docker compose ps -q web))" == "healthy" ]; do sleep 2; done'
-
+          for i in {1..30}; do
+            if docker compose exec -T web curl -k -f http://localhost/ping > /dev/null 2>&1; then
+              echo "Web is up!"
+              exit 0
+            fi
+            sleep 10
+          done
+          echo "Web did not become ready in time"
+          docker compose logs
+          exit 1
+      
       - name: Install test dependencies
         run: |
           docker compose exec -T web bash -c "pip install --upgrade pip && pip install tox tox-setuptools-version pytest-timeout"
