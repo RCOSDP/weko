@@ -131,3 +131,4 @@ jobs:
       - name: Stop containers
         if: always()
         run: docker compose down
+
