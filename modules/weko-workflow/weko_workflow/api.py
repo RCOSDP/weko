@@ -3211,24 +3211,28 @@ class WorkActivity(object):
         """Get notification parameters for registrant."""
         with db.session.begin_nested():
             set_target_id = {activity.activity_login_user}
-            is_shared = bool(activity.shared_user_ids)
+            shared_user_ids = [
+                s.get('user') for s in activity.shared_user_ids or []
+            ]
+            is_shared = len(shared_user_ids) > 0
             if is_shared:
-                set_target_id.update([s.get('user') for s in activity.shared_user_ids])
+                set_target_id.update(shared_user_ids)
 
             recid = (
                 PersistentIdentifier
                 .get_by_object("recid", "rec", activity.item_id)
             )
             actor_id = activity.activity_update_user
+            set_target_id.discard(actor_id)
+
+            if is_shared and actor_id == activity.activity_login_user:
+                actor_id = shared_user_ids[0]
 
             actor_profile = UserProfile.get_by_userid(actor_id)
             actor_name = (
                 actor_profile.username
                 if actor_profile is not None else None
             )
-
-            # if self delete, not notify
-            set_target_id.discard(actor_id)
 
         return set_target_id, recid, actor_id, actor_name
 

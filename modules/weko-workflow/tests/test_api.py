@@ -1111,27 +1111,89 @@ def test_workactivity_notify_about_activity_invalid_case(app, db, db_register, m
 
 
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_api.py::test_workactivity_get_params_for_registrant -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
-def test_workactivity_get_params_for_registrant(app, users, db_register, db_records, db_user_profile):
-    mock_activity = MagicMock(
-        activity_login_user=users[0]["id"],
-        activity_update_user=users[1]["id"],
-        shared_user_id=-1,
-        item_id=db_records[2][2].id,
-    )
-    activity_obj = WorkActivity()
-    set_target_id, recid, actor_id, actor_name = activity_obj._get_params_for_registrant(mock_activity)
-    assert set_target_id == {users[0]["id"]}
-    assert recid == db_records[2][0]
-    assert actor_id == users[1]["id"]
-    assert actor_name == None
+def test_workactivity_get_params_for_registrant(app, users, db_register_full_action, db_records):
 
-    mock_activity.shared_user_id = users[2]["id"]
-    mock_activity.activity_update_user = users[2]["id"]
-    set_target_id, recid, actor_id, actor_name = activity_obj._get_params_for_registrant(mock_activity)
-    assert set_target_id == {users[0]["id"]}
-    assert recid == db_records[2][0]
-    assert actor_id == users[2]["id"]
-    assert actor_name == db_user_profile.username
+    activity_obj = WorkActivity()
+
+    # case: not shared_user_ids
+    # activity_login_user == activity_update_user: directly registration
+    with patch("weko_workflow.api.UserProfile.get_by_userid") as mock_get_user_profile:
+        mock_user_profile = MagicMock(username="test_username")
+        mock_get_user_profile.return_value = mock_user_profile
+        mock_activity = MagicMock(
+            activity_login_user=users[0]["id"],
+            activity_update_user=users[0]["id"],
+            shared_user_ids=None,
+            item_id=db_records[2][2].id,
+        )
+
+        set_target_id, recid, actor_id, actor_name = activity_obj._get_params_for_registrant(mock_activity)
+
+        assert set_target_id == set()
+        assert recid == db_records[2][0]
+        assert actor_id == users[0]["id"]
+        assert actor_name == mock_user_profile.username
+        mock_get_user_profile.assert_called_once_with(users[0]["id"])
+
+    # case: not shared_user_ids
+    # activity_login_user != activity_update_user: item approvaled
+    with patch("weko_workflow.api.UserProfile.get_by_userid") as mock_get_user_profile:
+        mock_user_profile = MagicMock(username="test_username")
+        mock_get_user_profile.return_value = mock_user_profile
+        mock_activity = MagicMock(
+            activity_login_user=users[0]["id"],
+            activity_update_user=users[2]["id"],
+            shared_user_ids=None,
+            item_id=db_records[2][2].id,
+        )
+
+        set_target_id, recid, actor_id, actor_name = activity_obj._get_params_for_registrant(mock_activity)
+
+        assert set_target_id == {users[0]["id"]}
+        assert recid == db_records[2][0]
+        assert actor_id == users[2]["id"]
+        assert actor_name == mock_user_profile.username
+        mock_get_user_profile.assert_called_once_with(users[2]["id"])
+
+    # case: shared_user_ids
+    # activity_login_user == activity_update_user: directly registration
+    with patch("weko_workflow.api.UserProfile.get_by_userid") as mock_get_user_profile:
+        mock_user_profile = MagicMock(username="test_username")
+        mock_get_user_profile.return_value = mock_user_profile
+        mock_activity = MagicMock(
+            activity_login_user=users[0]["id"],
+            activity_update_user=users[0]["id"],
+            shared_user_ids=[{"user": users[1]["id"]}, {"user": users[3]["id"]}],
+            item_id=db_records[2][2].id,
+        )
+
+        set_target_id, recid, actor_id, actor_name = activity_obj._get_params_for_registrant(mock_activity)
+
+        assert set_target_id == {users[1]["id"], users[3]["id"]}
+        assert recid == db_records[2][0]
+        assert actor_id == users[1]["id"]
+        assert actor_name == mock_user_profile.username
+        mock_get_user_profile.assert_called_once_with(users[1]["id"])
+
+    # case: shared_user_ids
+    # activity_login_user != activity_update_user: item approvaled
+    with patch("weko_workflow.api.UserProfile.get_by_userid") as mock_get_user_profile:
+        mock_user_profile = MagicMock(username="test_username")
+        mock_get_user_profile.return_value = mock_user_profile
+        mock_activity = MagicMock(
+            activity_login_user=users[0]["id"],
+            activity_update_user=users[2]["id"],
+            shared_user_ids=[{"user": users[1]["id"]}, {"user": users[3]["id"]}],
+            item_id=db_records[2][2].id,
+        )
+
+        set_target_id, recid, actor_id, actor_name = activity_obj._get_params_for_registrant(mock_activity)
+
+        assert set_target_id == {users[0]["id"], users[1]["id"], users[3]["id"]}
+        assert recid == db_records[2][0]
+        assert actor_id == users[2]["id"]
+        assert actor_name == mock_user_profile.username
+        mock_get_user_profile.assert_called_once_with(users[2]["id"])
 
 
 @pytest.fixture

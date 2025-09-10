@@ -159,25 +159,26 @@ def test_get_push_template(app, mocker):
 # def _get_params_for_registrant(target_id, actor_id, shared_id):
 # .tox/c1/bin/pytest --cov=weko_notifications tests/test_utils.py::test__get_params_for_registrant -v -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-notifications/.tox/c1/tmp --full-trace
 def test__get_params_for_registrant():
-    # Test with shared_id == -1
-    target_id = 1
-    actor_id = 2
-    shared_id = -1
-    with patch("weko_notifications.utils.UserProfile.get_by_userid") as mock_get_params:
-        mock_get_params.return_value = MagicMock()
-        mock_get_params.return_value.username = "Test User"
-        set_target_id, actor_name = _get_params_for_registrant(target_id, actor_id, shared_id)
-        assert set_target_id == {target_id}
+    # Test with shared_id = []
+    target_id = actor_id = 1
+    shared_ids = []
+    with patch("weko_notifications.utils.UserProfile.get_by_userid") as mock_get_user_profile:
+        mock_user_profile = MagicMock(username="Test User")
+        mock_get_user_profile.return_value = mock_user_profile
+        set_target_id, actor_name = _get_params_for_registrant(target_id, actor_id, shared_ids)
+        assert set_target_id == set()
         assert actor_name == "Test User"
+        mock_get_user_profile.assert_called_once_with(actor_id)
 
-    # Test with shared_id != -1
-        shared_id = 3
-    # with patch("weko_notifications.utils.UserProfile.get_by_userid") as mock_get_params:
-    #     mock_get_params.return_value = MagicMock()
-    #     mock_get_params.return_value.username = "Test User"
-        set_target_id, actor_name = _get_params_for_registrant(target_id, actor_id, shared_id)
-        assert set_target_id == {target_id, shared_id}
+    target_id = actor_id = 1
+    shared_ids = [2, 3]
+    with patch("weko_notifications.utils.UserProfile.get_by_userid") as mock_get_user_profile:
+        mock_user_profile = MagicMock(username="Test User")
+        mock_get_user_profile.return_value = mock_user_profile
+        set_target_id, actor_name = _get_params_for_registrant(target_id, actor_id, shared_ids)
+        assert set_target_id == set(shared_ids)
         assert actor_name == "Test User"
+        mock_get_user_profile.assert_called_once_with(shared_ids[0])
 
 
 # def notify_item_imported(target_id, recid, actor_id, object_name=None, shared_id=-1):

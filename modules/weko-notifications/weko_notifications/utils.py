@@ -175,7 +175,7 @@ def get_push_template():
     return templates
 
 
-def _get_params_for_registrant(target_id, actor_id, shared_ids):
+def _get_params_for_registrant(target_id, actor_id, shared_ids=[]):
     """Get parameters for registrant.
 
     Args:
@@ -189,10 +189,12 @@ def _get_params_for_registrant(target_id, actor_id, shared_ids):
             - str: The actor's name.
     """
     set_target_id = {target_id}
-    is_shared = bool(shared_ids)
+    is_shared = len(shared_ids) > 0
     if is_shared:
         set_target_id.update(shared_ids)
     set_target_id.discard(actor_id)
+    if is_shared:
+        actor_id = shared_ids[0]
 
     actor_profile = UserProfile.get_by_userid(actor_id)
     actor_name = actor_profile.username if actor_profile else None
