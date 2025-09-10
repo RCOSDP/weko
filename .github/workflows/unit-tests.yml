@@ -3,7 +3,7 @@ name: Unit Tests (Smart Image Build)
 on: [push, pull_request]
 
 env:
-  IMAGE_TAG: ghcr.io/${{ github.repository }}/weko:${{ github.sha }}
+  IMAGE_TAG: ghcr.io/rcosdp/weko:${{ github.sha }}
 
 jobs:
   prepare-image:
