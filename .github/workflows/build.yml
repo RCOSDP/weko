@@ -2,11 +2,65 @@ name: Build
 
 on: [push, pull_request]
 
+env:
+  IMAGE_TAG: ghcr.io/rcosdp/weko:${{ github.sha }}
+
 jobs:
+  prepare-image:
+    runs-on: ubuntu-24.04
+    outputs:
+      image_tag: ${{ env.IMAGE_TAG }}
+      image_exists: ${{ steps.check-image.outputs.exists }}
+    steps:
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Check if image exists on GHCR
+        id: check-image
+        run: |
+          if docker manifest inspect $IMAGE_TAG > /dev/null 2>&1; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Checkout
+        if: steps.check-image.outputs.exists == 'false'
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        if: steps.check-image.outputs.exists == 'false'
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build & push image (if not exists)
+        if: steps.check-image.outputs.exists == 'false'
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: ${{ env.IMAGE_TAG }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
   build:
-    name: Build
+    needs: prepare-image
     runs-on: ubuntu-24.04
     steps:
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Pull base image
+        run: docker pull ${{ needs.prepare-image.outputs.image_tag }}
+
       - name: Checkout
         uses: actions/checkout@v4
 
@@ -24,9 +78,6 @@ jobs:
             docker compose version
           }
 
-      - name: Build containers
-        run: docker compose build
-
       - name: Start containers
         run: docker compose up -d
 
@@ -35,9 +86,6 @@ jobs:
 
       - name: Show logs (for debug)
         run: docker compose logs
-
-      # - name: Run tests inside container
-      #   run: docker compose exec -T web bash /code/run-tox.sh
 
       - name: Stop and remove containers
         if: always()
