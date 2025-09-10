@@ -59,6 +59,9 @@
       {% autoescape false %}
       {{ name | escape_str }}
       {% endautoescape %}
+      {%- if attribute_data.get('type') and attribute_data['type']|length > 0 -%}
+        （{{ attribute_data['type'] | escape_str }}）
+      {%- endif -%}
       <span> </span>
       {%- endfor -%}
       {%- endif -%}
@@ -102,7 +105,9 @@
       <span>E-MAIL</span>
       {%- for i in attribute_data['creatorMails'] -%}
       <br>
-      {{ i['creatorMail'] | escape_str }}
+      {%- if 'creatorMail' in i -%}
+        {{ i['creatorMail'] | escape_str }}
+      {%- endif -%}
       {%- endfor -%}
     </p>
     {%- endif -%}
