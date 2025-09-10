@@ -52,7 +52,7 @@ jobs:
     runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
-      max-parallel: 8 # リソースに応じて調整
+      max-parallel: 2 # リソースに応じて調整
       matrix:
         module:
           - invenio-accounts
