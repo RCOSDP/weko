@@ -1,44 +1,54 @@
-name: Unit Tests (Efficient Matrix with GHCR)
+name: Unit Tests (Smart Image Build)
 
 on: [push, pull_request]
 
+env:
+  IMAGE_TAG: ghcr.io/${{ github.repository_owner }}/weko:${{ github.sha }}
+
 jobs:
-  build-base-image:
+  prepare-image:
     runs-on: ubuntu-24.04
     outputs:
-      image_tag: ${{ steps.meta.outputs.tags }}
+      image_tag: ${{ env.IMAGE_TAG }}
+      image_exists: ${{ steps.check-image.outputs.exists }}
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Docker meta
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ghcr.io/${{ github.repository_owner }}/weko
-
-      - name: Login to GitHub Container Registry
+      - name: Login to GHCR
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build & push base image
+      - name: Check if image exists on GHCR
+        id: check-image
+        run: |
+          if docker manifest inspect $IMAGE_TAG > /dev/null 2>&1; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Checkout
+        if: steps.check-image.outputs.exists == 'false'
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        if: steps.check-image.outputs.exists == 'false'
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build & push image (if not exists)
+        if: steps.check-image.outputs.exists == 'false'
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: ./Dockerfile  # 必要に応じてベースイメージ用Dockerfileを指定
+          file: ./Dockerfile
           push: true
-          tags: ${{ steps.meta.outputs.tags }}
+          tags: ${{ env.IMAGE_TAG }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
   test:
-    needs: build-base-image
+    needs: prepare-image
     runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
@@ -105,7 +115,8 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Pull base image
-        run: docker pull ${{ needs.build-base-image.outputs.image_tag }}
+        run: docker pull ${{ needs.prepare-image.outputs.image_tag }}
+
 
       - name: Start container for ${{ matrix.module }}
         run: |
