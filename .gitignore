@@ -99,3 +99,5 @@ test/data
 test/import.zip
 test/dummyfile/import.zip
 test/dummyfile/data
+
+ui-tests/test-results/

@@ -1260,3 +1260,15 @@ msgstr ""
 
 msgid "Success Secret URL Generate"
 msgstr "succeess:secret url generate is succeed. send to your mail adress."
+
+msgid "Import to GakuNin RDM"
+msgstr ""
+
+msgid "Item is not published"
+msgstr ""
+
+msgid "File is not publicly accessible"
+msgstr ""
+
+msgid "Item is not published and file is not publicly accessible"
+msgstr ""
