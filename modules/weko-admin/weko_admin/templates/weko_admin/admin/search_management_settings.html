@@ -38,7 +38,7 @@
   {% set searchOptions = config['WEKO_ADMIN_SEARCH_OPTIONS'] %}
   {% set currentLanguage = current_i18n.language %}
 <div id="search_management" class="container-fluid table-responsive">
-  <div ng-init="initData('{{ setting_data }}')"
+  <div ng-init="initData({{setting_data}})"
        ng-controller="searchManagementCtrl">
     <div class="row">
       <div id="alerts"></div>
@@ -537,18 +537,25 @@
                 </td>
                 <td class="col-sm-10" id="setting_label">
                   <div class="form-inline" id="setting_label1">
-                    <select class="form-control" name="label_list" id="label_list1">
+                    <select class="form-control" name="label_list" id="label_list1" style="width: 73px">
                       <option value="0">json</option>
                       <option value="1">xml</option>
                     </select>
                     <input type="text" id="path_text1" class="form-control" value="" placeholder="{{_('Enter Input Value')}}">
                   </div>
                   <div class="form-inline" id="setting_label2">
-                    <select class="form-control" name="label_list" id="label_list2">
+                    <select class="form-control" name="label_list" id="label_list2" style="width: 73px">
                       <option value="0">json</option>
                       <option value="1">xml</option>
                     </select>
                     <input type="text" id="path_text2" class="form-control" value="" placeholder="{{_('Enter Input Value')}}">
+                  </div>
+                  <div class="form-inline" id="setting_label3" style="padding-top:6px;padding-left:6px">
+                    <label for="condition_path_text" style="width: 67px; font-weight: normal;">{{_('Setting detail condition')}}</label>
+                    <input type="text" id="condition_path_text" class="form-control" value="" placeholder="Enter Condition Path">
+                  </div>
+                  <div class="form-inline" id="setting_label4">
+                    <input type="text" id="condition_value_text" class="form-control" style="margin-left:76px" value="" placeholder="Enter Condition Value">
                   </div>
                 </td>
                 <td class="col-sm-2" id="group_btn">

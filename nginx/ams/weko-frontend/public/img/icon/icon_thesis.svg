@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="14" height="16" viewBox="0 0 14 16">
+  <defs>
+    <clipPath id="clip-path">
+      <rect id="長方形_1408" data-name="長方形 1408" width="14" height="16" transform="translate(437 288)" fill="#fff"/>
+    </clipPath>
+  </defs>
+  <g id="icon_thesis" transform="translate(-437 -288)" clip-path="url(#clip-path)">
+    <g id="白紙の書類アイコン" transform="translate(437.467 288.233)">
+      <path id="パス_23" data-name="パス 23" d="M57.919,0H52.257l-.288.288L47.99,4.267l-.288.288v8.61a2.657,2.657,0,0,0,2.654,2.654h7.564a2.657,2.657,0,0,0,2.654-2.654V2.654A2.657,2.657,0,0,0,57.919,0ZM59.59,13.165a1.671,1.671,0,0,1-1.671,1.671H50.356a1.671,1.671,0,0,1-1.671-1.671v-8.2h2.586a1.393,1.393,0,0,0,1.392-1.392V.983h5.256A1.671,1.671,0,0,1,59.59,2.654V13.165Z" transform="translate(-47.702)" fill="#fff"/>
+    </g>
+  </g>
+</svg>

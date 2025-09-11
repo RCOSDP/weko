@@ -67,7 +67,9 @@ $("#btn_create").on("click", function () {
     id: $("#_id").val(),
     flows_name: $("#txt_workflow_name").val(),
     itemtype_id: $("#txt_itemtype").val(),
+    repository_id: $("#txt_repo_id").val(),
     flow_id: $("#txt_flow_name").val(),
+    delete_flow_id: $("#txt_flow_delete").val(), 
     list_hide: list_hide,
     open_restricted: $('#restricted_access_flag')?.is(":checked"),
     is_gakuninrdm: $('#chkboxGakuNinRDMFlag').is(":checked")

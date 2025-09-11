@@ -82,6 +82,11 @@ def test_filter_community(app, db, communities_for_filtering, user,
     assert len(results) == 0
     assert {c.id for c in results} == set()
 
+def test_get_by_root_node_id(app, db, communities):
+    root_node_id = communities[0].root_node_id
+    assert (Community.get_by_root_node_id(root_node_id) != None)
+    assert (Community.get_by_root_node_id(root_node_id, True) != None)
+
 # class InclusionRequest(db.Model, Timestamp):
 class TestInclusionRequest:
 #     def get_record(self):
@@ -97,7 +102,7 @@ class TestInclusionRequest:
         )
         db.session.add(increq)
         db.session.commit()
-        
+
         result = increq.get_record()
         assert result.id == record_id
 #     def delete(self):
@@ -114,9 +119,9 @@ class TestInclusionRequest:
             user=users[2]["obj"]
         )
         assert increq
-        
+
         # raise IntegrityError
-        
+
         with pytest.raises(InclusionRequestExistsError) as e:
             increq = InclusionRequest.create(
                 community=comm,
@@ -126,7 +131,7 @@ class TestInclusionRequest:
             )
         assert e.value.community==comm
         assert e.value.record == record
-        
+
         # commnity.has_record is true
         rec = Record.get_record(record.id)
         rec.setdefault("communities", [])
@@ -143,7 +148,7 @@ class TestInclusionRequest:
             )
         assert e.value.community==comm
         assert e.value.record == record
-        
+
         # expires_at < datetime.utcnow
         expires_at = datetime.utcnow() + timedelta(days=-10)
         comm = communities[1]
@@ -156,7 +161,7 @@ class TestInclusionRequest:
             )
         assert e.value.community==comm
         assert e.value.record == record
-        
+
 
 #     @classmethod
 #     def get(cls, community_id, record_uuid):
@@ -170,7 +175,7 @@ class TestCommunity:
     def test_repr(self,communities):
         for comm in communities:
             assert str(comm) == "<Community, ID: {}>".format(comm.id)
-            
+
 #     def create(cls, community_id, role_id, root_node_id, **data):
 #     def save_logo(self, stream, filename):
 # .tox/c1/bin/pytest --cov=invenio_communities tests/test_models.py::TestCommunity::test_save_logo -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-communities/.tox/c1/tmp
@@ -178,18 +183,18 @@ class TestCommunity:
         comm = communities[0]
         logo_filename = "weko-logo.png"
         logo = open(os.path.join(os.path.dirname(__file__),'data/weko-logo.png'),"rb")
-        
+
         # success save logo
         with patch("invenio_communities.models.save_and_validate_logo",return_value=None):
             result = comm.save_logo(logo,logo_filename)
             assert result == False
-            
+
         # failed save logo
         with patch("invenio_communities.models.save_and_validate_logo",return_value="png"):
             result = comm.save_logo(logo,logo_filename)
             assert result == True
             assert comm.logo_ext == "png"
-            
+
 #     def get(cls, community_id, with_deleted=False):
 #     def get_by_user(cls, role_ids, with_deleted=False):
 # .tox/c1/bin/pytest --cov=invenio_communities tests/test_models.py::TestCommunity::test_get_by_user -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-communities/.tox/c1/tmp
@@ -201,8 +206,32 @@ class TestCommunity:
         # with_deleted is true
         result = Community.get_by_user([1],with_deleted=True)
         assert "communities_community.deleted_at IS NULL" not in str(result)
-        
+
 #     def filter_communities(cls, p, so, with_deleted=False):
+# .tox/c1/bin/pytest --cov=invenio_communities tests/test_models.py::TestCommunity::test_get_repositories_by_user -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-communities/.tox/c1/tmp
+    def test_get_repositories_by_user(self, db, communities, users):
+        user = users[0]["obj"]
+        comm = communities[0]
+
+        # matching group_id
+        comm.group_id = user.roles[0].id
+        db.session.commit()
+        result = Community.get_repositories_by_user(user)
+        assert len(result) == 1
+        assert result[0].id == comm.id
+
+        # non matching group_id
+        comm.group_id = user.roles[0].id + 1
+        db.session.commit()
+        result = Community.get_repositories_by_user(user)
+        assert len(result) == 0
+
+        # user has no roles
+        user.roles = []
+        db.session.commit()
+        result = Community.get_repositories_by_user(user)
+        assert len(result) == 0
+
 #     def add_record(self, record):
 # .tox/c1/bin/pytest --cov=invenio_communities tests/test_models.py::TestCommunity::test_add_record -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-communities/.tox/c1/tmp
     def test_add_record(self, app, db, db_records,communities,mocker):
@@ -218,17 +247,17 @@ class TestCommunity:
         metadata =RecordMetadata.query.filter_by(id=record.id).one().json
         assert metadata["communities"] == ["comm1"]
         db.session.commit()
-        
+
         # has_record is true, oaiset.has_record is true
         rec = Record.get_record(record.id)
         comm.add_record(rec)
-        
+
         # COMMUNITIES_OAI_ENABLED is false
         app.config.update(
             COMMUNITIES_OAI_ENABLED=False
         )
         comm.add_record(rec)
-        
+
 
 #     def remove_record(self, record):
 # .tox/c1/bin/pytest --cov=invenio_communities tests/test_models.py::TestCommunity::test_remove_record -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-communities/.tox/c1/tmp
@@ -244,13 +273,13 @@ class TestCommunity:
         comm.oaiset.add_record(rec)
         rec.commit()
         db.session.commit()
-        
+
         rec = Record.get_record(record.id)
         comm.remove_record(rec)
 
         # has_record is false, oaiset.has_record is false
         comm.remove_record(rec)
-        
+
         # COMMUNITIES_OAI_ENABLED is false
         app.config.update(
             COMMUNITIES_OAI_ENABLED=False
@@ -262,6 +291,19 @@ class TestCommunity:
 #     def reject_record(self, record):
 #     def delete(self):
 #     def undelete(self):
+
+# .tox/c1/bin/pytest --cov=invenio_communities tests/test_models.py::TestCommunity::test_to_dict -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-communities/.tox/c1/tmp
+    def test_to_dict(self,communities):
+        comm = communities[0]
+        result = comm.to_dict()
+        assert result["id"] == comm.id
+        assert result["id_role"] == comm.id_role
+        assert result["id_user"] == comm.id_user
+        assert result["title"] == comm.title
+        assert result["description"] == comm.description
+        assert result["root_node_id"] == comm.root_node_id
+        assert result["group_id"] == comm.group_id
+
 #     def is_deleted(self):
 #     def logo_url(self):
 #     def community_url(self):
@@ -297,7 +339,7 @@ class TestCommunity:
         comm = communities[0]
         result = comm.oaiset
         assert result.id == 1
-        
+
         app.config.update(
             COMMUNITIES_OAI_ENABLED=False
         )

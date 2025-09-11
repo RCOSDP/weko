@@ -45,7 +45,9 @@ from .errors import CommunitiesError, InclusionRequestExistsError, \
     InclusionRequestObsoleteError
 from .signals import inclusion_request_created
 from .utils import save_and_validate_logo
-
+from sqlalchemy.dialects import postgresql
+from sqlalchemy_utils.types import JSONType
+from sqlalchemy import cast, String
 
 class InclusionRequest(db.Model, Timestamp):
     """Association table for Community and Record models.
@@ -221,6 +223,31 @@ class Community(db.Model, Timestamp):
     deleted_at = db.Column(db.DateTime, nullable=True, default=None)
     """Time at which the community was soft-deleted."""
 
+    thumbnail_path = db.Column(db.Text, nullable=True, default='')
+    """thumbnail_path."""
+
+    login_menu_enabled = db.Column(db.Boolean, nullable=False, default=False)
+    """login_menu enabled or Disabled."""
+
+    catalog_json = db.Column(
+        db.JSON().with_variant(
+            postgresql.JSONB(none_as_null=True),
+            'postgresql',
+        ).with_variant(
+            JSONType(),
+            'sqlite',
+        ).with_variant(
+            JSONType(),
+            'mysql',
+        ),
+        default=[],
+        nullable=True
+    )
+    """catalog."""
+
+    cnri = db.Column(db.Text, nullable=True, default=None)
+    """thumbnail_path."""
+
     # root_node_id = db.Column(db.Text, nullable=False, default='')
 
     root_node_id = db.Column(
@@ -228,8 +255,17 @@ class Community(db.Model, Timestamp):
         db.ForeignKey(Index.id),
         nullable=False
     )
-
     """Id of Root Node"""
+
+    content_policy = db.Column(db.Text, nullable=True, default='')
+    """Community content policy."""
+
+    group_id = db.Column(
+        db.Integer,
+        db.ForeignKey(Role.id),
+        nullable=True
+    )
+    """Group of the community."""
 
     #
     # Relationships
@@ -248,6 +284,9 @@ class Community(db.Model, Timestamp):
                             backref='index',
                             foreign_keys=[root_node_id])
     """Relation to the owner (Index) of the community."""
+
+    group = db.relationship(Role, backref='group',
+                            foreign_keys=[group_id])
 
     def __repr__(self):
         """String representation of the community object."""
@@ -294,6 +333,15 @@ class Community(db.Model, Timestamp):
         return query.order_by(db.asc(Community.title))
 
     @classmethod
+    def get_by_root_node_id(cls, root_node_id, with_deleted=False):
+        """Get communities by root_node_id."""
+        q = cls.query.filter_by(root_node_id=root_node_id)
+        if not with_deleted:
+            q = q.filter(cls.deleted_at.is_(None))
+
+        return q.order_by(db.asc(Community.title)).all()
+
+    @classmethod
     def filter_communities(cls, p, so, with_deleted=False):
         """Search for communities.
 
@@ -314,6 +362,7 @@ class Community(db.Model, Timestamp):
                 cls.id.ilike('%' + p + '%'),
                 cls.title.ilike('%' + p + '%'),
                 cls.description.ilike('%' + p + '%'),
+                cast(cls.catalog_json, String).ilike('%' + p + '%'),
             ))
 
         if so in current_app.config['COMMUNITIES_SORTING_OPTIONS']:
@@ -322,6 +371,12 @@ class Community(db.Model, Timestamp):
         else:
             query = query.order_by(db.desc(cls.ranking))
         return query
+
+    @classmethod
+    def get_repositories_by_user(cls, user):
+        """Get repository ids for user."""
+        role_ids = [role.id for role in user.roles]
+        return Community.query.filter(Community.group_id.in_(role_ids)).all()
 
     def add_record(self, record):
         """Add a record to the community.
@@ -410,6 +465,14 @@ class Community(db.Model, Timestamp):
             raise CommunitiesError(community=self)
         else:
             self.deleted_at = None
+
+    def to_dict(self):
+        """Convert the Community object to a dictionary.
+
+        Returns:
+            dict: Dictionary representation of the Community object.
+        """
+        return {column.name: getattr(self, column.name) for column in self.__table__.columns}
 
     @property
     def is_deleted(self):

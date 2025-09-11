@@ -1,0 +1,4 @@
+13126efcc85a5f41f1c9678de2edafa0ca9d4a03cf16b1c86a437a21b956bde9  data/data.csv
+b7c2ecef4c1997b88a5570d93fe0948d761ccf093f3d28f6fdec2b66895e97da  data/ro-crate-metadata.json
+9adeb738fa4a701430e0cd3f8d680473d81a637d8e976d92f3267bd329693a3d  data/sample.txt
+e9e151c03a64f10c4a8821755db000e7cf087c7caf5f71174817b1b542c097e9  data/test/data.csv

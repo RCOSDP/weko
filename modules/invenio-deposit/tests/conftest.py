@@ -124,6 +124,7 @@ def base_app(request):
                 "Repository Administrator",
             ],
             WEKO_RECORDS_UI_EMAIL_ITEM_KEYS = ['creatorMails', 'contributorMails', 'mails'],
+            WEKO_PERMISSION_ROLE_COMMUNITY = ['Community Administrator'],
         )
         Babel(app_)
         FlaskCeleryExt(app_)

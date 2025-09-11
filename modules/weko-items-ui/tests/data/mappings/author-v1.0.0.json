@@ -1,0 +1,171 @@
+{
+  "settings": {
+    "number_of_shards": 1,
+    "number_of_replicas": 1,
+    "max_result_window":1000000,
+    "analysis": {
+      "tokenizer": {
+        "ja_tokenizer": {
+          "type": "kuromoji_tokenizer",
+          "mode": "search"
+        },
+        "ngram_tokenizer": {
+          "type": "nGram",
+          "min_gram": 2,
+          "max_gram": 3,
+          "token_chars": [
+            "letter",
+            "digit"
+          ]
+        }
+      },
+      "analyzer": {
+        "ja_analyzer": {
+          "tokenizer": "ja_tokenizer",
+          "filter": [
+            "kuromoji_baseform",
+            "kuromoji_part_of_speech",
+            "cjk_width",
+            "stop",
+            "kuromoji_stemmer",
+            "lowercase"
+          ]
+        },
+        "ngram_analyzer": {
+          "type": "custom",
+          "char_filter": [
+            "html_strip"
+          ],
+          "tokenizer": "ngram_tokenizer",
+          "filter": [
+            "cjk_width",
+            "lowercase"
+          ]
+        },
+        "wk_analyzer": {
+          "type": "custom",
+          "char_filter": [
+            "html_strip"
+          ],
+          "tokenizer": "standard",
+          "filter": [
+            "standard",
+            "lowercase",
+            "stop",
+            "cjk_width"
+          ]
+        },
+        "paths": {
+          "tokenizer": "path_hierarchy"
+        }
+      }
+    }
+  },
+  "mappings": {
+    "author-v1.0.0": {
+      "properties": {
+        "pk_id": {
+          "type": "keyword"
+        },
+        "authorNameInfo": {
+          "type": "object",
+          "properties": {
+            "familyName": {
+              "type": "text"
+            },
+            "firstName": {
+              "type": "text"
+            },
+            "fullName": {
+              "type": "text",
+              "fields": {
+                "raw": {
+                  "type": "keyword",
+                  "index": true
+                }
+              }
+            },
+            "language": {
+              "type": "text",
+              "index": false
+            },
+            "nameFormat": {
+              "type": "text",
+              "index": false
+            },
+            "nameShowFlg": {
+              "type": "boolean"
+            }
+          }
+        },
+        "authorIdInfo": {
+          "type": "object",
+          "properties": {
+            "authorId": {
+              "type": "text"
+            },
+            "idType": {
+              "type": "text",
+              "index": false
+            },
+            "authorIdShowFlg": {
+              "type": "boolean"
+            }
+          }
+        },
+        "emailInfo": {
+          "type": "object",
+          "properties": {
+            "email": {
+              "type": "text",
+              "fields": {
+                "raw": {
+                  "type": "keyword",
+                  "index": true
+                }
+              }
+            }
+          }
+        },
+        "affiliationInfo": {
+          "type": "object",
+          "properties": {
+            "identifierInfo": {
+              "type": "object",
+              "properties": {
+                "affiliationId": {
+                  "type": "text"
+                },
+                "affiliationIdType": {
+                  "type": "text",
+                  "index": false
+                },
+                "identifierShowFlg": {
+                  "type": "boolean"
+                }
+              }
+            },
+            "affiliationNameInfo": {
+              "type": "object",
+              "properties": {
+                "affiliationName": {
+                  "type": "text",
+                  "index": false
+                },
+                "affiliationNameLang": {
+                  "type": "text"
+                },
+                "affiliationNameShowFlg": {
+                  "type": "boolean"
+                }
+              }
+            }
+          }
+        },
+        "is_deleted": {
+          "type": "boolean"
+        }
+      }
+    }
+  }
+}

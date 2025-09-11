@@ -10,6 +10,8 @@
 
 from __future__ import absolute_import, print_function
 
+import sys
+import traceback
 import uuid
 from functools import partial, wraps
 
@@ -22,6 +24,8 @@ from marshmallow import missing
 from six.moves.urllib.parse import parse_qsl
 from webargs import fields
 from webargs.flaskparser import use_kwargs
+
+from weko_logging.activity_logger import UserActivityLogger
 
 from .errors import DuplicateTagError, ExhaustedStreamError, FileSizeError, \
     InvalidTagError, MissingQueryParameter, MultipartInvalidChunkSize
@@ -668,9 +672,23 @@ class ObjectResource(ContentNegotiatedMethodView):
                     ObjectVersionTag.create(obj, key, value)
 
             db.session.commit()
+            opration = "FILE_CREATE" if not replace_version_id else "FILE_UPDATE"
+            UserActivityLogger.info(
+                operation=opration,
+                target_key=key
+            )
         except Exception as e:
             db.session.rollback()
+            traceback.print_exc()
             current_app.logger.error(e)
+            exec_info = sys.exc_info()
+            tb_info = traceback.format_tb(exec_info[2])
+            opration = "FILE_CREATE" if not replace_version_id else "FILE_UPDATE"
+            UserActivityLogger.error(
+                operation=opration,
+                target_key=key,
+                remarks=tb_info[0]
+            )
 
         _response = self.make_response(
             data=obj,
@@ -706,6 +724,7 @@ class ObjectResource(ContentNegotiatedMethodView):
         :returns: A Flask response.
         """
         try:
+            file_key = obj.key if hasattr(obj, 'key') else None
             if version_id is None:
                 # Create a delete marker.
                 with db.session.begin_nested():
@@ -730,9 +749,21 @@ class ObjectResource(ContentNegotiatedMethodView):
                     remove_file_data.delay(str(obj.file_id))
 
             db.session.commit()
+            UserActivityLogger.info(
+                operation="FILE_DELETE",
+                target_key=file_key
+            )
         except Exception as e:
             db.session.rollback()
             current_app.logger.error(e)
+            file_key = obj.key if hasattr(obj, 'key') else None
+            exec_info = sys.exc_info()
+            tb_info = traceback.format_tb(exec_info[2])
+            UserActivityLogger.error(
+                operation="FILE_DELETE",
+                target_key=file_key,
+                remarks=tb_info[0]
+            )
         return self.make_response('', 204)
 
     @staticmethod

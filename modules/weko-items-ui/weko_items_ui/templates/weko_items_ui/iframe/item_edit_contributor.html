@@ -1,0 +1,57 @@
+{#
+    # This file is part of WEKO3.
+    # Copyright (C) 2017 National Institute of Informatics.
+    #
+    # WEKO3 is free software; you can redistribute it
+    # and/or modify it under the terms of the GNU General Public License as
+    # published by the Free Software Foundation; either version 2 of the
+    # License, or (at your option) any later version.
+    #
+    # WEKO3 is distributed in the hope that it will be
+    # useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+    # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+    # General Public License for more details.
+    #
+    # You should have received a copy of the GNU General Public License
+    # along with WEKO3; if not, write to the
+    # Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+    # MA 02111-1307, USA.
+    #}
+{% for user in users %}
+<div id="contributor_row_{{user.userid}}" >
+    <div class="row row-4 panel-body panel-body2 contributor-record pd_username" id="pd_username_{{user.userid}}">
+        <div class="col-xs-3 col-sm-3 col-md-3 col-lg-3 label_username" id="label_username_{{user.userid}}">
+            {% if user.owner %}
+                <label for="share_username_{{user.userid}}">
+                    <input type="radio" name="owner_radio" id="id_owner_radio_{{user.userid}}" class="input_contributor" value="owner" checked="checked" onChange="handleShareOwner(this.id)">Owner </label>
+            {% else %}
+                <label for="share_username_{{user.userid}}">
+                    <input type="radio" name="owner_radio" id="id_owner_radio_{{user.userid}}" class="input_contributor" value="contributor" onChange="handleShareOwner(this.id)">Contributor </label>
+            {% endif %}
+        </div>
+        <div class="col-xs-2 col-sm-2 col-md-2 col-lg-2">
+            <div class="autocomplete">
+                <input id="share_username_{{user.userid}}" autocomplete="off" type="text" name="share_username" placeholder="Username" class="form-control" onclick="get_search_data('username', this.id)" value="{{user.username|e}}" forcusout="focusoutShareUsername(this.id)">
+                <span class="glyphicon glyphicon-refresh glyphicon-refresh-animate id_spinners_username" id="id_spinners_username_{{user.userid}}"></span>
+            </div>
+        </div>
+        <div class="col-xs-1 col-sm-1 col-md-1 col-lg-1 label_email" id="label_email_{{user.userid}}">
+            <label for="share_email_{{user.userid}}">Email </label>
+        </div>
+        <div class="col-xs-5 col-sm-5 col-md-5 col-lg-5">
+            <div class="autocomplete">
+                <input id="share_email_{{user.userid}}" autocomplete="off" type="text" name="share_email" placeholder="Email" class="form-control" onclick="get_search_data('email', this.id)" value="{{user.email|e}}" foucusout="focusoutShareEmail(this.id)">
+                <span class="glyphicon glyphicon-refresh glyphicon-refresh-animate id_spinners_email" id="id_spinners_email_{{user.userid}}"></span>
+            </div>
+        </div>
+        <div class="text-center contributor-trash">
+            {% if user.owner %}
+                <a id="id_trash_{{user.userid}}" onclick='removeUser("{{user.userid}}")' style="display:none;"><i class="fa fa-trash" aria-hidden="true"></i></a>
+            {% else %}
+                <a id="id_trash_{{user.userid}}" onclick='removeUser("{{user.userid}}")'><i class="fa fa-trash" aria-hidden="true"></i></a>
+            {% endif %}
+        </div>
+    </div>
+    <div class="row row-4"></div>
+</div>
+{% endfor %}

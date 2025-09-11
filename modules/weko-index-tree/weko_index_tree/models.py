@@ -130,7 +130,7 @@ class Index(db.Model, Timestamp):
     """Recursive PDF Cover Page State of the index."""
 
     browsing_role = db.Column(db.Text, nullable=True)
-    """Browsing Role of the  ."""
+    """Browsing role of the index."""
 
     recursive_browsing_role = db.Column(
         db.Boolean(name='recs_browsing_role'), nullable=True, default=False)
@@ -144,7 +144,7 @@ class Index(db.Model, Timestamp):
     """Recursive Browsing Role of the index."""
 
     browsing_group = db.Column(db.Text, nullable=True)
-    """Browsing Group of the  ."""
+    """Browsing Group of the index."""
 
     recursive_browsing_group = db.Column(
         db.Boolean(name='recs_browsing_group'), nullable=True, default=False)
@@ -186,6 +186,20 @@ class Index(db.Model, Timestamp):
     online_issn = db.Column(db.Text, nullable=True, default='')
     """Online ISSN of the index."""
 
+
+    cnri = db.Column(db.Text, nullable=True)
+    """cnri of the index."""
+
+    index_url = db.Column(db.Text, nullable=True)
+    """index_url Group of the index."""
+
+    is_deleted = db.Column(
+        db.Boolean(name='is_deleted'),
+        nullable=False,
+        default=False
+    )
+    """Delete status of the index."""
+
     def __iter__(self):
         """Iter."""
         for name in dir(Index):
@@ -214,15 +228,21 @@ class Index(db.Model, Timestamp):
                     "\n", r"<br\>").replace("&EMPTY&", ""))
 
     @classmethod
-    def have_children(cls, id):
+    def have_children(cls, id, with_deleted=False):
         """Have Children."""
-        children = cls.query.filter_by(parent=id).all()
+        children = cls.query.filter_by(parent=id)
+        if not with_deleted:
+            children = children.filter_by(is_deleted=False)
+        children = children.all()
         return False if (children is None or len(children) == 0) else True
 
     @classmethod
-    def get_all(cls):
+    def get_all(cls, with_deleted=False):
         """Get all Indexes."""
-        query_result = cls.query.all()
+        query = cls.query
+        if not with_deleted:
+            query = query.filter_by(is_deleted=False)
+        query_result = query.all()
         result = []
         if query_result:
             for index in query_result:
@@ -234,10 +254,21 @@ class Index(db.Model, Timestamp):
         return result if result else []
 
     @classmethod
-    def get_index_by_id(cls, index):
-        """Get all Indexes."""
-        query_result = cls.query.filter_by(id=index).one_or_none()
-        return query_result
+    def get_index_by_id(cls, index, with_deleted=False):
+        """Get all Indexes.
+
+        Args:
+            index (int): Identifier of the index.
+            with_deleted (bool): If True, include deleted indexes.
+
+        Returns:
+            Index: The index model object if found, otherwise None.
+        """
+        query = cls.query.filter_by(id=index)
+        if not with_deleted:
+            query = query.filter_by(is_deleted=False)
+        obj = query.one_or_none()
+        return obj if isinstance(obj, cls) else None
 
 
 class IndexStyle(db.Model, Timestamp):

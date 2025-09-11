@@ -23,6 +23,7 @@
 
 """Tests for user profile views."""
 
+import pytest
 from flask import url_for, json,make_response, current_app, g, jsonify
 from mock import patch
 from flask_breadcrumbs import current_breadcrumbs
@@ -32,6 +33,7 @@ from flask_security import url_for_security
 from flask_menu import current_menu
 from flask_login import login_user
 from speaklater import _LazyString
+from wtforms import StringField, SelectField
 
 from invenio_accounts.models import User
 from invenio_accounts.testutils import login_user_via_session
@@ -39,7 +41,6 @@ from invenio_accounts.testutils import login_user_via_session
 import weko_user_profiles
 from weko_user_profiles import WekoUserProfiles
 from weko_user_profiles.forms import ProfileForm,EmailProfileForm
-from weko_user_profiles.config import WEKO_USERPROFILES_POSITION_LIST
 from weko_user_profiles.views import (
     blueprint_ui_init, 
     blueprint_api_init,
@@ -340,38 +341,39 @@ def test_userprofile(db,users,user_profiles):
 
 # def get_profile_info():
 # .tox/c1/bin/pytest --cov=weko_user_profiles tests/test_views.py::test_get_profile_info -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-user-profiles/.tox/c1/tmp
-def test_get_profile_info(client,app,admin_app,register_bp,users,mocker):
+def test_get_profile_info(client,app,admin_app,register_bp,users,mocker,user_profiles):
     with patch("sqlalchemy.orm.scoping.scoped_session.remove", return_value=None):
         url = url_for("weko_user_profiles_api_init.get_profile_info")
 
         res = client.get(url)
         assert json.loads(res.data) == {"positions":"","results":"","error":"'AnonymousUser' object has no attribute 'id'"}
 
-        with patch("flask_login.utils._get_user", return_value=users[0]["obj"]):
-            profile_info = {
-                "subitem_fullname":"test taro",
-                "subitem_displayname":"sysadmin user",
-                "subitem_user_name":"sysadmin",
-                "subitem_university/institution":"test university",
-                "subitem_affiliated_division/department":"test department",
-                "subitem_position":"test position",
-                "subitem_phone_number":"123-4567",
-                "subitem_position(other)":"test other position",
-                "subitem_affiliated_institution":[
-                    {"subitem_affiliated_institution_name":"test institute","subitem_affiliated_institution_position":"test institute position"},
-                    {"subitem_affiliated_institution_name":"test institute2","subitem_affiliated_institution_position":"test institute position2"},
-                ],
-                'subitem_mail_address': 'sysadmin@test.org',
-            }
-            test = {
-                "results":profile_info,
-                "positions":WEKO_USERPROFILES_POSITION_LIST,
-                "error":""
-            }
-            mocker.patch("weko_user_profiles.views.get_user_profile_info",return_value=profile_info)
-            app.json_encoder = TestJSONEncoder
-            res = client.get(url)
-            assert json.loads(res.data) == json.loads(jsonify(test).data)
+        current_app.config['WEKO_USERPROFILES_POSITION_LIST'] = [('', ''), ('Professor', 'Professor')]
+        login(app,client,email=users[0]["email"],password='123456')
+        profile_info = {
+            "subitem_fullname":"test taro",
+            "subitem_displayname":"sysadmin user",
+            "subitem_user_name":"sysadmin",
+            "subitem_university/institution":"test university",
+            "subitem_affiliated_division/department":"test department",
+            "subitem_position":"test position",
+            "subitem_phone_number":"123-4567",
+            "subitem_position(other)":"test other position",
+            "subitem_affiliated_institution":[
+                {"subitem_affiliated_institution_name":"test institute","subitem_affiliated_institution_position":"test institute position"},
+                {"subitem_affiliated_institution_name":"test institute2","subitem_affiliated_institution_position":"test institute position2"},
+            ],
+            'subitem_mail_address': 'sysadmin@test.org',
+        }
+        test = {
+            "results":profile_info,
+            "positions":current_app.config['WEKO_USERPROFILES_POSITION_LIST'],
+            "error":""
+        }
+        mocker.patch("weko_user_profiles.views.get_user_profile_info",return_value=profile_info)
+        app.json_encoder = TestJSONEncoder
+        res = client.get(url)
+        assert json.loads(res.data) == json.loads(jsonify(test).data)
 
 
 # def profile():
@@ -382,7 +384,9 @@ def test_profile(client,register_bp,users,mocker):
         # no login
         res = client.get(url)
         assert res.status_code == 302
-        login_user_via_session(client=client,email=users[0]["email"])
+        user = User.query.filter_by(email=users[0]["email"]).first()
+        mocker.patch("invenio_accounts.models.User.get_id", return_value=users[0]["id"])
+        login_user_via_session(client=client,user=user)
 
         mocker.patch("weko_user_profiles.views.profile_form_factory")
         mocker.patch("weko_user_profiles.views.render_template",return_value=make_response())
@@ -411,14 +415,44 @@ def test_profile(client,register_bp,users,mocker):
 
 # def profile_form_factory():
 # .tox/c1/bin/pytest --cov=weko_user_profiles tests/test_views.py::test_profile_form_factory -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-user-profiles/.tox/c1/tmp
-def test_profile_form_factory(req_context,users,user_profiles):
-    g.userprofile = user_profiles[0]
-    login_user(users[0]["obj"])
-    result = profile_form_factory()
-    assert type(result) == EmailProfileForm
-    assert result.username.data == "sysadmin user"
-    current_app.config.update(
-        USERPROFILES_EMAIL_ENABLED=False
-    )
-    result = profile_form_factory()
-    assert type(result) == ProfileForm
+def test_profile_form_factory(app,req_context,users,user_profiles):
+    app.config.update({
+        "USERPROFILES_EMAIL_ENABLED": True,
+        "WEKO_USERPROFILES_CUSTOMIZE_ENABLED": False
+    })
+    with app.test_client():
+        g.userprofile = user_profiles[0]
+        login_user(users[0]["obj"])
+        result = profile_form_factory()
+        assert type(result) == EmailProfileForm
+        assert result.department is None
+        assert result.username.data == "sysadmin user"
+        app.config.update({
+            "USERPROFILES_EMAIL_ENABLED": False
+        })
+        result = profile_form_factory()
+        assert type(result) == ProfileForm
+        assert type(result.department) == StringField
+
+    # Case: WEKO_USERPROFILES_CUSTOMIZE_ENABLED = True
+    app.config.update({
+        "USERPROFILES_EMAIL_ENABLED": True,
+        "WEKO_USERPROFILES_CUSTOMIZE_ENABLED": True,
+        "WEKO_USERPROFILES_DEFAULT_FIELDS_SETTINGS": {
+            "fullname": {"format": "text", "label_name": "Full Name", "visible": True, "options": [''], "order": 1},
+            "university": {"format": "text", "label_name": "University", "visible": True, "options": [''], "order": 2},
+            "department": {"format": "select", "label_name": "Department", "visible": True, "options": ["test1", "test2"], "order": 3},
+            "position": {"format": "text", "label_name": "Position", "visible": True, "options": [''], "order": 4},
+        }
+    })
+    with app.test_client():
+        result = profile_form_factory()
+        assert type(result) == EmailProfileForm
+        assert result.department is None
+        assert result.username.data == "sysadmin user"
+        app.config.update(
+            USERPROFILES_EMAIL_ENABLED=False
+        )
+        result = profile_form_factory()
+        assert type(result) == ProfileForm
+        assert type(result.department) == SelectField

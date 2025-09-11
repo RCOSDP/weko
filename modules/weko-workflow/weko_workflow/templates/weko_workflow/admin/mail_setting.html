@@ -1,0 +1,154 @@
+<!-- /.modal -->
+<div class="modal fade modal_for_setting_nortification_mail" id="settingModal_{{loop.index}}" tabindex="-1"
+    role="dialog" aria-labelledby="setting_nortification_mail_Label">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+                <h4 class="modal-title" id="setting_nortification_mail_Label">{{_('Notification Email Setting')}}</h4>
+            </div>
+            <div class="modal-body">
+                <div class="panel panel-default panel-body" style="overflow-y: auto; max-height:400px;">
+                    <div class="mail_setting_for_approval">
+                        <div class="form-inline">
+                            <label style="font-weight: unset;">
+                                <input type="checkbox" class="pointer checkbox_change"
+                                    id="td_action_request_approval_{{action.action_id}}" {% if
+                                    (action.send_mail_setting.request_approval and
+                                    action.send_mail_setting.request_approval.send) or
+                                    (action.send_mail_setting.request_approval_for_guest and
+                                    action.send_mail_setting.request_approval_for_guest.send) %}checked{% endif %}>
+                                {{_('Approval Request Notification Email')}}
+                            </label>
+                        </div>
+                        <div style="display: flex; justify-content: flex-end;">
+                            <nobr>{{_('Login User')}}：</nobr>
+                            <select style="width: 250px" id="td_action_request_approval_mail_{{action.action_id}}" {% if
+                                not( (action.send_mail_setting.request_approval and
+                                action.send_mail_setting.request_approval.send) or
+                                (action.send_mail_setting.request_approval_for_guest and
+                                action.send_mail_setting.request_approval_for_guest.send) )%}disabled{% endif %}>
+                                <option value="0"></option>
+                                {%- for mail_template in mail_templates %}
+                                <option value="{{mail_template['key']}}" {% if action.send_mail_setting.request_approval
+                                    and mail_template['key']==action.send_mail_setting.request_approval.mail
+                                    %}selected{% endif %}>ID:{{mail_template['key']}} | {{mail_template['content']['subject']}}</option>
+                                {%- endfor %}
+                            </select>
+                        </div>
+                        <div style="display: flex; justify-content: flex-end;">
+                            <nobr>{{_('Guest User')}}：</nobr>
+                            <select style="width: 250px"
+                                id="td_action_request_approval_mail_for_guest_{{action.action_id}}" {% if not(
+                                (action.send_mail_setting.request_approval and
+                                action.send_mail_setting.request_approval.send) or
+                                (action.send_mail_setting.request_approval_for_guest and
+                                action.send_mail_setting.request_approval_for_guest.send) )%}disabled{% endif %}>
+                                <option value="0"></option>
+                                {%- for mail_template in mail_templates %}
+                                <option value="{{mail_template['key']}}" {% if
+                                    action.send_mail_setting.request_approval_for_guest and
+                                    mail_template['key']==action.send_mail_setting.request_approval_for_guest.mail
+                                    %}selected{% endif %}>ID:{{mail_template['key']}} | {{mail_template['content']['subject']}}</option>
+                                {%- endfor %}
+                            </select>
+                        </div>
+                        <br>
+                        <div class="form-inline">
+                            <label style="font-weight: unset;">
+                                <input type="checkbox" class="pointer checkbox_change"
+                                    id="td_action_approval_reject_{{action.action_id}}" {% if
+                                    (action.send_mail_setting.inform_reject and
+                                    action.send_mail_setting.inform_reject.send) or
+                                    (action.send_mail_setting.inform_reject_for_guest and
+                                    action.send_mail_setting.inform_reject_for_guest.send) %}checked{% endif %}>
+                                {{_('Approval Rejection Notification Email')}}</label>
+                        </div>
+                        <div style="display: flex; justify-content: flex-end;">
+                            <nobr>{{_('Login User')}}：</nobr>
+                            <select style="width: 250px" id="td_action_approval_reject_mail_{{action.action_id}}" {% if
+                                not ( (action.send_mail_setting.inform_reject and
+                                action.send_mail_setting.inform_reject.send) or
+                                (action.send_mail_setting.inform_reject_for_guest and
+                                action.send_mail_setting.inform_reject_for_guest.send) ) %}disabled{% endif %}>
+                                <option value="0"></option>
+                                {%- for mail_template in mail_templates %}
+                                <option value="{{mail_template['key']}}" {% if action.send_mail_setting.inform_reject
+                                    and mail_template['key']==action.send_mail_setting.inform_reject.mail %}selected{%
+                                    endif %}>
+                                    ID:{{mail_template['key']}} | {{mail_template['content']['subject']}}</option>
+                                {%- endfor %}
+                            </select>
+                        </div>
+                        <div style="display: flex; justify-content: flex-end;">
+                            <nobr>{{_('Guest User')}}：</nobr>
+                            <select style="width: 250px"
+                                id="td_action_approval_reject_mail_for_guest_{{action.action_id}}" {% if not (
+                                (action.send_mail_setting.inform_reject and action.send_mail_setting.inform_reject.send)
+                                or (action.send_mail_setting.inform_reject_for_guest and
+                                action.send_mail_setting.inform_reject_for_guest.send) )%}disabled{% endif %}>
+                                <option value="0"></option>
+                                {%- for mail_template in mail_templates %}
+                                <option value="{{mail_template['key']}}" {% if
+                                    action.send_mail_setting.inform_reject_for_guest and
+                                    mail_template['key']==action.send_mail_setting.inform_reject_for_guest.mail
+                                    %}selected{% endif %}>ID:{{mail_template['key']}} | {{mail_template['content']['subject']}}</option>
+                                {%- endfor %}
+                            </select>
+                        </div>
+                        <br>
+                        <div class="form-inline">
+                            <label style="font-weight: unset;">
+                                <input type="checkbox" class="pointer checkbox_change"
+                                    id="td_action_approval_done_{{action.action_id}}" {% if
+                                    (action.send_mail_setting.inform_approval and
+                                    action.send_mail_setting.inform_approval.send) or
+                                    (action.send_mail_setting.inform_approval_for_guest and
+                                    action.send_mail_setting.inform_approval_for_guest.send) %}checked{% endif %}>
+                                {{_('Approval Notification Email')}}</label>
+                        </div>
+                        <div style="display: flex; justify-content: flex-end;">
+                            <nobr>{{_('Login User')}}：</nobr>
+                            <select style="width: 250px" id="td_action_approval_done_mail_{{action.action_id}}" {% if
+                                not( (action.send_mail_setting.inform_approval and
+                                action.send_mail_setting.inform_approval.send) or
+                                (action.send_mail_setting.inform_approval_for_guest and
+                                action.send_mail_setting.inform_approval_for_guest.send) ) %}disabled{% endif %}>
+                                <option value="0"></option>
+                                {%- for mail_template in mail_templates %}
+                                <option value="{{mail_template['key']}}" {% if action.send_mail_setting.inform_approval
+                                    and mail_template['key']==action.send_mail_setting.inform_approval.mail %}selected{%
+                                    endif %}>ID:{{mail_template['key']}} | {{mail_template['content']['subject']}}</option>
+                                {%- endfor %}
+                            </select>
+                        </div>
+                        <div style="display: flex; justify-content: flex-end;">
+                            <nobr>{{_('Guest User')}}：</nobr>
+                            <select style="width: 250px"
+                                id="td_action_approval_done_mail_for_guest_{{action.action_id}}" {% if not(
+                                (action.send_mail_setting.inform_approval and
+                                action.send_mail_setting.inform_approval.send) or
+                                (action.send_mail_setting.inform_approval_for_guest and
+                                action.send_mail_setting.inform_approval_for_guest.send) ) %}disabled{% endif %}>
+                                <option value="0"></option>
+                                {%- for mail_template in mail_templates %}
+                                <option value="{{mail_template['key']}}" {% if
+                                    action.send_mail_setting.inform_approval_for_guest and
+                                    mail_template['key']==action.send_mail_setting.inform_approval_for_guest.mail
+                                    %}selected{% endif %}>ID:{{mail_template['key']}} | {{mail_template['content']['subject']}}</option>
+                                {%- endfor %}
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-info close-button" data-dismiss="modal">
+                        <span class="glyphicon glyphicon-remove"></span>
+                        {{_('Close')}}
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div><!-- /.modal -->

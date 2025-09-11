@@ -16,7 +16,7 @@
 """API for item login."""
 
 from flask import current_app, json, session, url_for
-from weko_accounts.utils import login_required_customize
+from weko_authors.utils import update_data_for_weko_link
 from weko_records.api import ItemTypes
 from weko_records.utils import find_items
 from weko_workflow.api import WorkActivity
@@ -32,13 +32,17 @@ def item_login(item_type_id: int = 0):
 
     Returns:
         _type_: _description_
-    """    
+    """
     activity_id = None
     allow_multi_thumbnail = False
     endpoints = {}
     files = []
     files_thumbnail = []
-    item_save_uri = url_for("weko_items_ui.iframe_save_model")
+    item_save_uri = ""
+    try:
+        item_save_uri = url_for("weko_items_ui.iframe_save_model")
+    except:
+        pass
     json_schema = ""
     need_billing_file = False
     need_file = False
@@ -46,6 +50,7 @@ def item_login(item_type_id: int = 0):
     record = {}
     schema_form = ""
     template_url = "weko_items_ui/iframe/item_edit.html"
+    cris_linkage = {"researchmap" : False}
     try:
         item_type = (
             ItemTypes.get_by_id(item_type_id)
@@ -60,7 +65,7 @@ def item_login(item_type_id: int = 0):
         if activity_id:
             activity = WorkActivity()
             metadata = activity.get_activity_metadata(activity_id)
-            if metadata: 
+            if metadata:
                 item_json = json.loads(metadata)
                 if "metainfo" in item_json:
                     record = item_json.get("metainfo")
@@ -73,8 +78,13 @@ def item_login(item_type_id: int = 0):
                     ]
                 if "endpoints" in item_json:
                     endpoints = item_json.get("endpoints")
+                if "weko_link" in item_json:
+                    weko_link = item_json.get("weko_link")
+                    update_data_for_weko_link(item_json.get("metainfo"), weko_link)
+                if "cris_linkage" in item_json:
+                    cris_linkage = item_json.get("cris_linkage")
 
-        need_file, need_billing_file = is_schema_include_key(item_type.schema)        
+        need_file, need_billing_file = is_schema_include_key(item_type.schema)
 
         if "subitem_thumbnail" in json.dumps(item_type.schema):
             need_thumbnail = True
@@ -108,4 +118,5 @@ def item_login(item_type_id: int = 0):
         need_thumbnail,
         files_thumbnail,
         allow_multi_thumbnail,
+        cris_linkage,
     )

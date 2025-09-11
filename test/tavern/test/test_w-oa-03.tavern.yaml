@@ -1,0 +1,1563 @@
+test_name: 個別登録_重複アイテムなし
+
+includes:
+  - !include config.yaml
+
+marks:
+  - usefixtures:
+    - login_repoadmin
+
+stages:
+  - name: workflow/activity/init
+    request:
+      url: "{host}/workflow/activity/init"
+      method: POST
+      verify: false
+      json:
+        flow_id: 1
+        itemtype_id: 30002
+        workflow_id: 1
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.verify_helper:response_verify_init_response
+        extra_kwargs:
+          file_name: "{expected_json.w-oa-03.success_case}"
+      save:
+        $ext:
+          function: helper.response_helper:response_save_next_path
+  - name: api/items/author_prefix_settings
+    request:
+      url: "{host}/api/items/author_prefix_settings"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.verify_helper:response_verify_common_response
+        extra_kwargs:
+          file_name: "{expected_json.w-oa-03.success_case}"
+          key: author_prefix_settings
+      save:
+        $ext:
+          function: helper.response_helper:response_save_author_prefix_settings
+  - name: accounts/settings/groups/grouplist
+    request:
+      url: "{host}/accounts/settings/groups/grouplist"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.verify_helper:response_verify_common_response
+        extra_kwargs:
+          file_name: "{expected_json.w-oa-03.success_case}"
+          key: grouplist
+      save:
+        $ext:
+          function: helper.response_helper:response_save_group_list
+  - name: "{next_path}"
+    request:
+      url: "{host}{next_path}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.response_helper:response_save_register_data
+          extra_kwargs:
+            file_name: w-oa-03/item_type_30002.json
+  - name: api/items/validate
+    request:
+      url: "{host}/api/items/validate"
+      method: POST
+      verify: false
+      json:
+        $ext:
+          function: helper.request_helper:request_create_validate_param
+          extra_kwargs:
+            data: "{register_data}"
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.verify_helper:response_verify_common_response
+        extra_kwargs:
+          file_name: "{expected_json.w-oa-03.success_case}"
+          key: validate
+  - name: workflow/save_activity_data
+    request:
+      url: "{host}/workflow/save_activity_data"
+      method: POST
+      verify: false
+      json:
+        $ext:
+          function: helper.request_helper:request_create_save_activity_data_param
+          extra_kwargs:
+            activity_id: "{activity_id}"
+            data: "{register_data}"
+            title_key: "{title_keys.30002}"
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.verify_helper:response_verify_common_response
+        extra_kwargs:
+          file_name: "{expected_json.w-oa-03.success_case}"
+          key: save_activity_data
+  - name: items/iframe/model/save
+    request:
+      url: "{host}/items/iframe/model/save"
+      method: POST
+      verify: false
+      json:
+        $ext:
+          function: helper.request_helper:request_create_save_param
+          extra_kwargs:
+            data: "{register_data}"
+    response:
+      status_code: 200
+      # ポップアップが表示されるレスポンスでないことを確認
+      verify_response_with:
+        function: helper.verify_helper:response_verify_iframe_save_model_response
+        extra_kwargs:
+          file_name: "{expected_json.w-oa-03.success_case}"
+
+---
+test_name: 個別登録_DOI重複1件
+
+includes:
+  - !include config.yaml
+
+marks:
+  - usefixtures:
+    - login_repoadmin
+
+stages:
+  - name: prepare
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.item_create_helper:create_item
+          extra_kwargs:
+            host: "{host}"
+            create_info_file: "{create_info.w-oa-03}"
+            creation_count: 1
+  - name: workflow/activity/init
+    request:
+      url: "{host}/workflow/activity/init"
+      method: POST
+      verify: false
+      json:
+        flow_id: 1
+        itemtype_id: 30002
+        workflow_id: 1
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.verify_helper:response_verify_init_response
+        extra_kwargs:
+          file_name: "{expected_json.w-oa-03.success_case}"
+          before_count: 1
+      save:
+        $ext:
+          function: helper.response_helper:response_save_next_path
+  - name: api/items/author_prefix_settings
+    request:
+      url: "{host}/api/items/author_prefix_settings"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.verify_helper:response_verify_common_response
+        extra_kwargs:
+          file_name: "{expected_json.w-oa-03.success_case}"
+          key: author_prefix_settings
+      save:
+        $ext:
+          function: helper.response_helper:response_save_author_prefix_settings
+  - name: accounts/settings/groups/grouplist
+    request:
+      url: "{host}/accounts/settings/groups/grouplist"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.verify_helper:response_verify_common_response
+        extra_kwargs:
+          file_name: "{expected_json.w-oa-03.success_case}"
+          key: grouplist
+      save:
+        $ext:
+          function: helper.response_helper:response_save_group_list
+  - name: "{next_path}"
+    request:
+      url: "{host}{next_path}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.response_helper:response_save_register_data
+          extra_kwargs:
+            file_name: w-oa-03/item_type_30002.json
+  - name: api/items/validate
+    request:
+      url: "{host}/api/items/validate"
+      method: POST
+      verify: false
+      json:
+        $ext:
+          function: helper.request_helper:request_create_validate_param
+          extra_kwargs:
+            data: "{register_data}"
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.verify_helper:response_verify_common_response
+        extra_kwargs:
+          file_name: "{expected_json.w-oa-03.success_case}"
+          key: validate
+  - name: workflow/save_activity_data
+    request:
+      url: "{host}/workflow/save_activity_data"
+      method: POST
+      verify: false
+      json:
+        $ext:
+          function: helper.request_helper:request_create_save_activity_data_param
+          extra_kwargs:
+            activity_id: "{activity_id}"
+            data: "{register_data}"
+            title_key: "{title_keys.30002}"
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.verify_helper:response_verify_common_response
+        extra_kwargs:
+          file_name: "{expected_json.w-oa-03.success_case}"
+          key: save_activity_data
+  - name: items/iframe/model/save
+    request:
+      url: "{host}/items/iframe/model/save"
+      method: POST
+      verify: false
+      json:
+        $ext:
+          function: helper.request_helper:request_create_save_param
+          extra_kwargs:
+            data: "{register_data}"
+    response:
+      status_code: 200
+      # ポップアップが表示されるレスポンスであることを確認
+      verify_response_with:
+        function: helper.verify_helper:response_verify_duplicate_item
+        extra_kwargs:
+          host: "{host}"
+          file_name: "{expected_json.w-oa-03.duplicate_item}"
+          created_count: 1
+
+---
+test_name: 個別登録_DOI重複2件
+
+includes:
+  - !include config.yaml
+
+marks:
+  - usefixtures:
+    - login_repoadmin
+
+stages:
+  - name: prepare
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.item_create_helper:create_item
+          extra_kwargs:
+            host: "{host}"
+            create_info_file: "{create_info.w-oa-03}"
+            creation_count: 2
+  - name: workflow/activity/init
+    request:
+      url: "{host}/workflow/activity/init"
+      method: POST
+      verify: false
+      json:
+        flow_id: 1
+        itemtype_id: 30002
+        workflow_id: 1
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.verify_helper:response_verify_init_response
+        extra_kwargs:
+          file_name: "{expected_json.w-oa-03.success_case}"
+          before_count: 2
+      save:
+        $ext:
+          function: helper.response_helper:response_save_next_path
+  - name: api/items/author_prefix_settings
+    request:
+      url: "{host}/api/items/author_prefix_settings"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.verify_helper:response_verify_common_response
+        extra_kwargs:
+          file_name: "{expected_json.w-oa-03.success_case}"
+          key: author_prefix_settings
+      save:
+        $ext:
+          function: helper.response_helper:response_save_author_prefix_settings
+  - name: accounts/settings/groups/grouplist
+    request:
+      url: "{host}/accounts/settings/groups/grouplist"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.verify_helper:response_verify_common_response
+        extra_kwargs:
+          file_name: "{expected_json.w-oa-03.success_case}"
+          key: grouplist
+      save:
+        $ext:
+          function: helper.response_helper:response_save_group_list
+  - name: "{next_path}"
+    request:
+      url: "{host}{next_path}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.response_helper:response_save_register_data
+          extra_kwargs:
+            file_name: w-oa-03/item_type_30002.json
+  - name: api/items/validate
+    request:
+      url: "{host}/api/items/validate"
+      method: POST
+      verify: false
+      json:
+        $ext:
+          function: helper.request_helper:request_create_validate_param
+          extra_kwargs:
+            data: "{register_data}"
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.verify_helper:response_verify_common_response
+        extra_kwargs:
+          file_name: "{expected_json.w-oa-03.success_case}"
+          key: validate
+  - name: workflow/save_activity_data
+    request:
+      url: "{host}/workflow/save_activity_data"
+      method: POST
+      verify: false
+      json:
+        $ext:
+          function: helper.request_helper:request_create_save_activity_data_param
+          extra_kwargs:
+            activity_id: "{activity_id}"
+            data: "{register_data}"
+            title_key: "{title_keys.30002}"
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.verify_helper:response_verify_common_response
+        extra_kwargs:
+          file_name: "{expected_json.w-oa-03.success_case}"
+          key: save_activity_data
+  - name: items/iframe/model/save
+    request:
+      url: "{host}/items/iframe/model/save"
+      method: POST
+      verify: false
+      json:
+        $ext:
+          function: helper.request_helper:request_create_save_param
+          extra_kwargs:
+            data: "{register_data}"
+    response:
+      status_code: 200
+      # ポップアップが表示されるレスポンスであることを確認
+      verify_response_with:
+        function: helper.verify_helper:response_verify_duplicate_item
+        extra_kwargs:
+          host: "{host}"
+          file_name: "{expected_json.w-oa-03.duplicate_item}"
+          created_count: 2
+---
+test_name: 個別登録_DOI重複10件
+
+includes:
+  - !include config.yaml
+
+marks:
+  - usefixtures:
+    - login_repoadmin
+
+stages:
+  - name: prepare
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.item_create_helper:create_item
+          extra_kwargs:
+            host: "{host}"
+            create_info_file: "{create_info.w-oa-03}"
+            creation_count: 10
+  - name: workflow/activity/init
+    request:
+      url: "{host}/workflow/activity/init"
+      method: POST
+      verify: false
+      json:
+        flow_id: 1
+        itemtype_id: 30002
+        workflow_id: 1
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.verify_helper:response_verify_init_response
+        extra_kwargs:
+          file_name: "{expected_json.w-oa-03.success_case}"
+          before_count: 10
+      save:
+        $ext:
+          function: helper.response_helper:response_save_next_path
+  - name: api/items/author_prefix_settings
+    request:
+      url: "{host}/api/items/author_prefix_settings"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.verify_helper:response_verify_common_response
+        extra_kwargs:
+          file_name: "{expected_json.w-oa-03.success_case}"
+          key: author_prefix_settings
+      save:
+        $ext:
+          function: helper.response_helper:response_save_author_prefix_settings
+  - name: accounts/settings/groups/grouplist
+    request:
+      url: "{host}/accounts/settings/groups/grouplist"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.verify_helper:response_verify_common_response
+        extra_kwargs:
+          file_name: "{expected_json.w-oa-03.success_case}"
+          key: grouplist
+      save:
+        $ext:
+          function: helper.response_helper:response_save_group_list
+  - name: "{next_path}"
+    request:
+      url: "{host}{next_path}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.response_helper:response_save_register_data
+          extra_kwargs:
+            file_name: w-oa-03/item_type_30002.json
+  - name: api/items/validate
+    request:
+      url: "{host}/api/items/validate"
+      method: POST
+      verify: false
+      json:
+        $ext:
+          function: helper.request_helper:request_create_validate_param
+          extra_kwargs:
+            data: "{register_data}"
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.verify_helper:response_verify_common_response
+        extra_kwargs:
+          file_name: "{expected_json.w-oa-03.success_case}"
+          key: validate
+  - name: workflow/save_activity_data
+    request:
+      url: "{host}/workflow/save_activity_data"
+      method: POST
+      verify: false
+      json:
+        $ext:
+          function: helper.request_helper:request_create_save_activity_data_param
+          extra_kwargs:
+            activity_id: "{activity_id}"
+            data: "{register_data}"
+            title_key: "{title_keys.30002}"
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.verify_helper:response_verify_common_response
+        extra_kwargs:
+          file_name: "{expected_json.w-oa-03.success_case}"
+          key: save_activity_data
+  - name: items/iframe/model/save
+    request:
+      url: "{host}/items/iframe/model/save"
+      method: POST
+      verify: false
+      json:
+        $ext:
+          function: helper.request_helper:request_create_save_param
+          extra_kwargs:
+            data: "{register_data}"
+    response:
+      status_code: 200
+      # ポップアップが表示されるレスポンスであることを確認
+      verify_response_with:
+        function: helper.verify_helper:response_verify_duplicate_item
+        extra_kwargs:
+          host: "{host}"
+          file_name: "{expected_json.w-oa-03.duplicate_item}"
+          created_count: 10
+
+---
+test_name: 個別登録_タイトル・資源タイプ・著者同一
+
+includes:
+  - !include config.yaml
+
+marks:
+  - usefixtures:
+    - login_repoadmin
+
+stages:
+  - name: prepare
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.item_create_helper:create_item
+          extra_kwargs:
+            host: "{host}"
+            create_info_file: "{create_info.w-oa-03_duplicate}"
+            creation_count: 1
+  - name: workflow/activity/init
+    request:
+      url: "{host}/workflow/activity/init"
+      method: POST
+      verify: false
+      json:
+        flow_id: 1
+        itemtype_id: 30002
+        workflow_id: 1
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.verify_helper:response_verify_init_response
+        extra_kwargs:
+          file_name: "{expected_json.w-oa-03.success_case}"
+          before_count: 1
+      save:
+        $ext:
+          function: helper.response_helper:response_save_next_path
+  - name: api/items/author_prefix_settings
+    request:
+      url: "{host}/api/items/author_prefix_settings"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.verify_helper:response_verify_common_response
+        extra_kwargs:
+          file_name: "{expected_json.w-oa-03.success_case}"
+          key: author_prefix_settings
+      save:
+        $ext:
+          function: helper.response_helper:response_save_author_prefix_settings
+  - name: accounts/settings/groups/grouplist
+    request:
+      url: "{host}/accounts/settings/groups/grouplist"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.verify_helper:response_verify_common_response
+        extra_kwargs:
+          file_name: "{expected_json.w-oa-03.success_case}"
+          key: grouplist
+      save:
+        $ext:
+          function: helper.response_helper:response_save_group_list
+  - name: "{next_path}"
+    request:
+      url: "{host}{next_path}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.response_helper:response_save_register_data_with_change
+          extra_kwargs:
+            file_name: w-oa-03/item_type_30002_duplicate.json
+            key_dict_file: item_type_30002_keys.json
+            change_type: 0
+  - name: api/items/validate
+    request:
+      url: "{host}/api/items/validate"
+      method: POST
+      verify: false
+      json:
+        $ext:
+          function: helper.request_helper:request_create_validate_param
+          extra_kwargs:
+            data: "{register_data}"
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.verify_helper:response_verify_common_response
+        extra_kwargs:
+          file_name: "{expected_json.w-oa-03.success_case}"
+          key: validate
+  - name: workflow/save_activity_data
+    request:
+      url: "{host}/workflow/save_activity_data"
+      method: POST
+      verify: false
+      json:
+        $ext:
+          function: helper.request_helper:request_create_save_activity_data_param
+          extra_kwargs:
+            activity_id: "{activity_id}"
+            data: "{register_data}"
+            title_key: "{title_keys.30002}"
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.verify_helper:response_verify_common_response
+        extra_kwargs:
+          file_name: "{expected_json.w-oa-03.success_case}"
+          key: save_activity_data
+  - name: items/iframe/model/save
+    request:
+      url: "{host}/items/iframe/model/save"
+      method: POST
+      verify: false
+      json:
+        $ext:
+          function: helper.request_helper:request_create_save_param
+          extra_kwargs:
+            data: "{register_data}"
+    response:
+      status_code: 200
+      # ポップアップが表示されるレスポンスであることを確認
+      verify_response_with:
+        function: helper.verify_helper:response_verify_duplicate_item
+        extra_kwargs:
+          host: "{host}"
+          file_name: "{expected_json.w-oa-03.duplicate_item}"
+          created_count: 1
+
+---
+test_name: 個別登録_タイトルの表記ゆれ
+
+includes:
+  - !include config.yaml
+
+marks:
+  - usefixtures:
+    - login_repoadmin
+
+stages:
+  - name: prepare
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.item_create_helper:create_item
+          extra_kwargs:
+            host: "{host}"
+            create_info_file: "{create_info.w-oa-03_duplicate}"
+            creation_count: 1
+  - name: workflow/activity/init
+    request:
+      url: "{host}/workflow/activity/init"
+      method: POST
+      verify: false
+      json:
+        flow_id: 1
+        itemtype_id: 30002
+        workflow_id: 1
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.verify_helper:response_verify_init_response
+        extra_kwargs:
+          file_name: "{expected_json.w-oa-03.success_case}"
+          before_count: 1
+      save:
+        $ext:
+          function: helper.response_helper:response_save_next_path
+  - name: api/items/author_prefix_settings
+    request:
+      url: "{host}/api/items/author_prefix_settings"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.verify_helper:response_verify_common_response
+        extra_kwargs:
+          file_name: "{expected_json.w-oa-03.success_case}"
+          key: author_prefix_settings
+      save:
+        $ext:
+          function: helper.response_helper:response_save_author_prefix_settings
+  - name: accounts/settings/groups/grouplist
+    request:
+      url: "{host}/accounts/settings/groups/grouplist"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.verify_helper:response_verify_common_response
+        extra_kwargs:
+          file_name: "{expected_json.w-oa-03.success_case}"
+          key: grouplist
+      save:
+        $ext:
+          function: helper.response_helper:response_save_group_list
+  - name: "{next_path}"
+    request:
+      url: "{host}{next_path}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.response_helper:response_save_register_data_with_change
+          extra_kwargs:
+            file_name: w-oa-03/item_type_30002_duplicate.json
+            key_dict_file: item_type_30002_keys.json
+            change_type: 1
+  - name: api/items/validate
+    request:
+      url: "{host}/api/items/validate"
+      method: POST
+      verify: false
+      json:
+        $ext:
+          function: helper.request_helper:request_create_validate_param
+          extra_kwargs:
+            data: "{register_data}"
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.verify_helper:response_verify_common_response
+        extra_kwargs:
+          file_name: "{expected_json.w-oa-03.success_case}"
+          key: validate
+  - name: workflow/save_activity_data
+    request:
+      url: "{host}/workflow/save_activity_data"
+      method: POST
+      verify: false
+      json:
+        $ext:
+          function: helper.request_helper:request_create_save_activity_data_param
+          extra_kwargs:
+            activity_id: "{activity_id}"
+            data: "{register_data}"
+            title_key: "{title_keys.30002}"
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.verify_helper:response_verify_common_response
+        extra_kwargs:
+          file_name: "{expected_json.w-oa-03.success_case}"
+          key: save_activity_data
+  - name: items/iframe/model/save
+    request:
+      url: "{host}/items/iframe/model/save"
+      method: POST
+      verify: false
+      json:
+        $ext:
+          function: helper.request_helper:request_create_save_param
+          extra_kwargs:
+            data: "{register_data}"
+    response:
+      status_code: 200
+      # ポップアップが表示されるレスポンスであることを確認
+      verify_response_with:
+        function: helper.verify_helper:response_verify_duplicate_item
+        extra_kwargs:
+          host: "{host}"
+          file_name: "{expected_json.w-oa-03.duplicate_item}"
+          created_count: 1
+
+---
+test_name: 個別登録_タイトル不一致
+
+includes:
+  - !include config.yaml
+
+marks:
+  - usefixtures:
+    - login_repoadmin
+
+stages:
+  - name: prepare
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.item_create_helper:create_item
+          extra_kwargs:
+            host: "{host}"
+            create_info_file: "{create_info.w-oa-03_duplicate}"
+            creation_count: 1
+  - name: workflow/activity/init
+    request:
+      url: "{host}/workflow/activity/init"
+      method: POST
+      verify: false
+      json:
+        flow_id: 1
+        itemtype_id: 30002
+        workflow_id: 1
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.verify_helper:response_verify_init_response
+        extra_kwargs:
+          file_name: "{expected_json.w-oa-03.success_case}"
+          before_count: 1
+      save:
+        $ext:
+          function: helper.response_helper:response_save_next_path
+  - name: api/items/author_prefix_settings
+    request:
+      url: "{host}/api/items/author_prefix_settings"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.verify_helper:response_verify_common_response
+        extra_kwargs:
+          file_name: "{expected_json.w-oa-03.success_case}"
+          key: author_prefix_settings
+      save:
+        $ext:
+          function: helper.response_helper:response_save_author_prefix_settings
+  - name: accounts/settings/groups/grouplist
+    request:
+      url: "{host}/accounts/settings/groups/grouplist"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.verify_helper:response_verify_common_response
+        extra_kwargs:
+          file_name: "{expected_json.w-oa-03.success_case}"
+          key: grouplist
+      save:
+        $ext:
+          function: helper.response_helper:response_save_group_list
+  - name: "{next_path}"
+    request:
+      url: "{host}{next_path}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.response_helper:response_save_register_data_with_change
+          extra_kwargs:
+            file_name: w-oa-03/item_type_30002_duplicate.json
+            key_dict_file: item_type_30002_keys.json
+            change_type: 2
+  - name: api/items/validate
+    request:
+      url: "{host}/api/items/validate"
+      method: POST
+      verify: false
+      json:
+        $ext:
+          function: helper.request_helper:request_create_validate_param
+          extra_kwargs:
+            data: "{register_data}"
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.verify_helper:response_verify_common_response
+        extra_kwargs:
+          file_name: "{expected_json.w-oa-03.success_case}"
+          key: validate
+  - name: workflow/save_activity_data
+    request:
+      url: "{host}/workflow/save_activity_data"
+      method: POST
+      verify: false
+      json:
+        $ext:
+          function: helper.request_helper:request_create_save_activity_data_param
+          extra_kwargs:
+            activity_id: "{activity_id}"
+            data: "{register_data}"
+            title_key: "{title_keys.30002}"
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.verify_helper:response_verify_common_response
+        extra_kwargs:
+          file_name: "{expected_json.w-oa-03.success_case}"
+          key: save_activity_data
+  - name: items/iframe/model/save
+    request:
+      url: "{host}/items/iframe/model/save"
+      method: POST
+      verify: false
+      json:
+        $ext:
+          function: helper.request_helper:request_create_save_param
+          extra_kwargs:
+            data: "{register_data}"
+    response:
+      status_code: 200
+      # ポップアップが表示されるレスポンスでないことを確認
+      verify_response_with:
+        function: helper.verify_helper:response_verify_iframe_save_model_response
+        extra_kwargs:
+          file_name: "{expected_json.w-oa-03.success_case}"
+
+---
+test_name: 個別登録_資源タイプ不一致
+
+includes:
+  - !include config.yaml
+
+marks:
+  - usefixtures:
+    - login_repoadmin
+
+stages:
+  - name: prepare
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.item_create_helper:create_item
+          extra_kwargs:
+            host: "{host}"
+            create_info_file: "{create_info.w-oa-03_duplicate}"
+            creation_count: 1
+  - name: workflow/activity/init
+    request:
+      url: "{host}/workflow/activity/init"
+      method: POST
+      verify: false
+      json:
+        flow_id: 1
+        itemtype_id: 30002
+        workflow_id: 1
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.verify_helper:response_verify_init_response
+        extra_kwargs:
+          file_name: "{expected_json.w-oa-03.success_case}"
+          before_count: 1
+      save:
+        $ext:
+          function: helper.response_helper:response_save_next_path
+  - name: api/items/author_prefix_settings
+    request:
+      url: "{host}/api/items/author_prefix_settings"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.verify_helper:response_verify_common_response
+        extra_kwargs:
+          file_name: "{expected_json.w-oa-03.success_case}"
+          key: author_prefix_settings
+      save:
+        $ext:
+          function: helper.response_helper:response_save_author_prefix_settings
+  - name: accounts/settings/groups/grouplist
+    request:
+      url: "{host}/accounts/settings/groups/grouplist"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.verify_helper:response_verify_common_response
+        extra_kwargs:
+          file_name: "{expected_json.w-oa-03.success_case}"
+          key: grouplist
+      save:
+        $ext:
+          function: helper.response_helper:response_save_group_list
+  - name: "{next_path}"
+    request:
+      url: "{host}{next_path}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.response_helper:response_save_register_data_with_change
+          extra_kwargs:
+            file_name: w-oa-03/item_type_30002_duplicate.json
+            key_dict_file: item_type_30002_keys.json
+            change_type: 3
+  - name: api/items/validate
+    request:
+      url: "{host}/api/items/validate"
+      method: POST
+      verify: false
+      json:
+        $ext:
+          function: helper.request_helper:request_create_validate_param
+          extra_kwargs:
+            data: "{register_data}"
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.verify_helper:response_verify_common_response
+        extra_kwargs:
+          file_name: "{expected_json.w-oa-03.success_case}"
+          key: validate
+  - name: workflow/save_activity_data
+    request:
+      url: "{host}/workflow/save_activity_data"
+      method: POST
+      verify: false
+      json:
+        $ext:
+          function: helper.request_helper:request_create_save_activity_data_param
+          extra_kwargs:
+            activity_id: "{activity_id}"
+            data: "{register_data}"
+            title_key: "{title_keys.30002}"
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.verify_helper:response_verify_common_response
+        extra_kwargs:
+          file_name: "{expected_json.w-oa-03.success_case}"
+          key: save_activity_data
+  - name: items/iframe/model/save
+    request:
+      url: "{host}/items/iframe/model/save"
+      method: POST
+      verify: false
+      json:
+        $ext:
+          function: helper.request_helper:request_create_save_param
+          extra_kwargs:
+            data: "{register_data}"
+    response:
+      status_code: 200
+      # ポップアップが表示されるレスポンスでないことを確認
+      verify_response_with:
+        function: helper.verify_helper:response_verify_iframe_save_model_response
+        extra_kwargs:
+          file_name: "{expected_json.w-oa-03.success_case}"
+
+---
+test_name: 個別登録_著者名不一致
+
+includes:
+  - !include config.yaml
+
+marks:
+  - usefixtures:
+    - login_repoadmin
+
+stages:
+  - name: prepare
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.item_create_helper:create_item
+          extra_kwargs:
+            host: "{host}"
+            create_info_file: "{create_info.w-oa-03_duplicate}"
+            creation_count: 1
+  - name: workflow/activity/init
+    request:
+      url: "{host}/workflow/activity/init"
+      method: POST
+      verify: false
+      json:
+        flow_id: 1
+        itemtype_id: 30002
+        workflow_id: 1
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.verify_helper:response_verify_init_response
+        extra_kwargs:
+          file_name: "{expected_json.w-oa-03.success_case}"
+          before_count: 1
+      save:
+        $ext:
+          function: helper.response_helper:response_save_next_path
+  - name: api/items/author_prefix_settings
+    request:
+      url: "{host}/api/items/author_prefix_settings"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.verify_helper:response_verify_common_response
+        extra_kwargs:
+          file_name: "{expected_json.w-oa-03.success_case}"
+          key: author_prefix_settings
+      save:
+        $ext:
+          function: helper.response_helper:response_save_author_prefix_settings
+  - name: accounts/settings/groups/grouplist
+    request:
+      url: "{host}/accounts/settings/groups/grouplist"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.verify_helper:response_verify_common_response
+        extra_kwargs:
+          file_name: "{expected_json.w-oa-03.success_case}"
+          key: grouplist
+      save:
+        $ext:
+          function: helper.response_helper:response_save_group_list
+  - name: "{next_path}"
+    request:
+      url: "{host}{next_path}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.response_helper:response_save_register_data_with_change
+          extra_kwargs:
+            file_name: w-oa-03/item_type_30002_duplicate.json
+            key_dict_file: item_type_30002_keys.json
+            change_type: 4
+  - name: api/items/validate
+    request:
+      url: "{host}/api/items/validate"
+      method: POST
+      verify: false
+      json:
+        $ext:
+          function: helper.request_helper:request_create_validate_param
+          extra_kwargs:
+            data: "{register_data}"
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.verify_helper:response_verify_common_response
+        extra_kwargs:
+          file_name: "{expected_json.w-oa-03.success_case}"
+          key: validate
+  - name: workflow/save_activity_data
+    request:
+      url: "{host}/workflow/save_activity_data"
+      method: POST
+      verify: false
+      json:
+        $ext:
+          function: helper.request_helper:request_create_save_activity_data_param
+          extra_kwargs:
+            activity_id: "{activity_id}"
+            data: "{register_data}"
+            title_key: "{title_keys.30002}"
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.verify_helper:response_verify_common_response
+        extra_kwargs:
+          file_name: "{expected_json.w-oa-03.success_case}"
+          key: save_activity_data
+  - name: items/iframe/model/save
+    request:
+      url: "{host}/items/iframe/model/save"
+      method: POST
+      verify: false
+      json:
+        $ext:
+          function: helper.request_helper:request_create_save_param
+          extra_kwargs:
+            data: "{register_data}"
+    response:
+      status_code: 200
+      # ポップアップが表示されるレスポンスでないことを確認
+      verify_response_with:
+        function: helper.verify_helper:response_verify_iframe_save_model_response
+        extra_kwargs:
+          file_name: "{expected_json.w-oa-03.success_case}"
+
+---
+test_name: 個別登録_著者名順番変更
+
+includes:
+  - !include config.yaml
+
+marks:
+  - usefixtures:
+    - login_repoadmin
+
+stages:
+  - name: prepare
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.item_create_helper:create_item
+          extra_kwargs:
+            host: "{host}"
+            create_info_file: "{create_info.w-oa-03_duplicate}"
+            creation_count: 1
+  - name: workflow/activity/init
+    request:
+      url: "{host}/workflow/activity/init"
+      method: POST
+      verify: false
+      json:
+        flow_id: 1
+        itemtype_id: 30002
+        workflow_id: 1
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.verify_helper:response_verify_init_response
+        extra_kwargs:
+          file_name: "{expected_json.w-oa-03.success_case}"
+          before_count: 1
+      save:
+        $ext:
+          function: helper.response_helper:response_save_next_path
+  - name: api/items/author_prefix_settings
+    request:
+      url: "{host}/api/items/author_prefix_settings"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.verify_helper:response_verify_common_response
+        extra_kwargs:
+          file_name: "{expected_json.w-oa-03.success_case}"
+          key: author_prefix_settings
+      save:
+        $ext:
+          function: helper.response_helper:response_save_author_prefix_settings
+  - name: accounts/settings/groups/grouplist
+    request:
+      url: "{host}/accounts/settings/groups/grouplist"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.verify_helper:response_verify_common_response
+        extra_kwargs:
+          file_name: "{expected_json.w-oa-03.success_case}"
+          key: grouplist
+      save:
+        $ext:
+          function: helper.response_helper:response_save_group_list
+  - name: "{next_path}"
+    request:
+      url: "{host}{next_path}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.response_helper:response_save_register_data_with_change
+          extra_kwargs:
+            file_name: w-oa-03/item_type_30002_duplicate.json
+            key_dict_file: item_type_30002_keys.json
+            change_type: 5
+  - name: api/items/validate
+    request:
+      url: "{host}/api/items/validate"
+      method: POST
+      verify: false
+      json:
+        $ext:
+          function: helper.request_helper:request_create_validate_param
+          extra_kwargs:
+            data: "{register_data}"
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.verify_helper:response_verify_common_response
+        extra_kwargs:
+          file_name: "{expected_json.w-oa-03.success_case}"
+          key: validate
+  - name: workflow/save_activity_data
+    request:
+      url: "{host}/workflow/save_activity_data"
+      method: POST
+      verify: false
+      json:
+        $ext:
+          function: helper.request_helper:request_create_save_activity_data_param
+          extra_kwargs:
+            activity_id: "{activity_id}"
+            data: "{register_data}"
+            title_key: "{title_keys.30002}"
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.verify_helper:response_verify_common_response
+        extra_kwargs:
+          file_name: "{expected_json.w-oa-03.success_case}"
+          key: save_activity_data
+  - name: items/iframe/model/save
+    request:
+      url: "{host}/items/iframe/model/save"
+      method: POST
+      verify: false
+      json:
+        $ext:
+          function: helper.request_helper:request_create_save_param
+          extra_kwargs:
+            data: "{register_data}"
+    response:
+      status_code: 200
+      # ポップアップが表示されるレスポンスであることを確認
+      verify_response_with:
+        function: helper.verify_helper:response_verify_duplicate_item
+        extra_kwargs:
+          host: "{host}"
+          file_name: "{expected_json.w-oa-03.duplicate_item}"
+          created_count: 1
+
+---
+test_name: 個別登録_著者DB
+
+includes:
+  - !include config.yaml
+
+marks:
+  - usefixtures:
+    - login_repoadmin
+
+stages:
+  - name: prepare item
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.item_create_helper:create_item
+          extra_kwargs:
+            host: "{host}"
+            create_info_file: "{create_info.w-oa-03_dup_author}"
+            creation_count: 1
+  - name: prepare author
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.author_create_helper:create_author
+          extra_kwargs:
+            host: "{host}"
+            author_info_file: "{author_info.w-oa-03}"
+  - name: workflow/activity/init
+    request:
+      url: "{host}/workflow/activity/init"
+      method: POST
+      verify: false
+      json:
+        flow_id: 1
+        itemtype_id: 30002
+        workflow_id: 1
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.verify_helper:response_verify_init_response
+        extra_kwargs:
+          file_name: "{expected_json.w-oa-03.success_case}"
+          before_count: 1
+      save:
+        $ext:
+          function: helper.response_helper:response_save_next_path
+  - name: api/items/author_prefix_settings
+    request:
+      url: "{host}/api/items/author_prefix_settings"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.verify_helper:response_verify_common_response
+        extra_kwargs:
+          file_name: "{expected_json.w-oa-03.success_case}"
+          key: author_prefix_settings
+      save:
+        $ext:
+          function: helper.response_helper:response_save_author_prefix_settings
+  - name: accounts/settings/groups/grouplist
+    request:
+      url: "{host}/accounts/settings/groups/grouplist"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.verify_helper:response_verify_common_response
+        extra_kwargs:
+          file_name: "{expected_json.w-oa-03.success_case}"
+          key: grouplist
+      save:
+        $ext:
+          function: helper.response_helper:response_save_group_list
+  - name: "{next_path}"
+    request:
+      url: "{host}{next_path}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.response_helper:response_save_register_data_with_change
+          extra_kwargs:
+            file_name: w-oa-03/item_type_30002_duplicate.json
+            key_dict_file: item_type_30002_keys.json
+            change_type: 6
+  - name: api/items/validate
+    request:
+      url: "{host}/api/items/validate"
+      method: POST
+      verify: false
+      json:
+        $ext:
+          function: helper.request_helper:request_create_validate_param
+          extra_kwargs:
+            data: "{register_data}"
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.verify_helper:response_verify_common_response
+        extra_kwargs:
+          file_name: "{expected_json.w-oa-03.success_case}"
+          key: validate
+  - name: workflow/save_activity_data
+    request:
+      url: "{host}/workflow/save_activity_data"
+      method: POST
+      verify: false
+      json:
+        $ext:
+          function: helper.request_helper:request_create_save_activity_data_param
+          extra_kwargs:
+            activity_id: "{activity_id}"
+            data: "{register_data}"
+            title_key: "{title_keys.30002}"
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.verify_helper:response_verify_common_response
+        extra_kwargs:
+          file_name: "{expected_json.w-oa-03.success_case}"
+          key: save_activity_data
+  - name: items/iframe/model/save
+    request:
+      url: "{host}/items/iframe/model/save"
+      method: POST
+      verify: false
+      json:
+        $ext:
+          function: helper.request_helper:request_create_save_param
+          extra_kwargs:
+            data: "{register_data}"
+    response:
+      status_code: 200
+      # ポップアップが表示されるレスポンスであることを確認
+      verify_response_with:
+        function: helper.verify_helper:response_verify_duplicate_item
+        extra_kwargs:
+          host: "{host}"
+          file_name: "{expected_json.w-oa-03.duplicate_item}"
+          created_count: 1

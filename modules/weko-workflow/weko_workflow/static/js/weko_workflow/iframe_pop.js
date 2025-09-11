@@ -32,9 +32,20 @@ require([
   $("#step_item_login", parent.document).attr('height', '240px');
 
   $('#btn-back').on('click', function () {
-    let origin = new URL(window.location.href).origin;
-    let redirect_uri = origin + "/workflow/activity/detail/" + $("#activity_id").text().trim();
-    document.location.href = redirect_uri;
+    let redirectUri = null
+    let guestRegistrationUrlInput = $('#current_guest_url')
+    if (guestRegistrationUrlInput != null && guestRegistrationUrlInput.val() != null) {
+      redirectUri = guestRegistrationUrlInput.val()
+    } else {
+      let origin = new URL(window.location.href).origin;
+      redirectUri = origin + "/workflow/activity/detail/" + $("#activity_id").text().trim();
+    }
+
+    if (redirectUri != null) {
+      document.location.href = redirectUri;
+    } else {
+      console.log("Item registration url cannot get.")
+    }
   });
 
   $('#btn-finish').on('click', function(){
