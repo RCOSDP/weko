@@ -74,6 +74,7 @@ COPY --chown=invenio:invenio packages-invenio.txt /code/packages-invenio.txt
 COPY --chown=invenio:invenio requirements-weko-modules.txt /code/requirements-weko-modules.txt
 COPY --chown=invenio:invenio invenio /code/invenio
 COPY --chown=invenio:invenio postgresql /code/postgresql
+COPY --chown=invenio:invenio tika /code/tika
 
 FROM stage_3 AS stage_4
 # Create Weko instance:
