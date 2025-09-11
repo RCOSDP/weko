@@ -1199,7 +1199,7 @@ class TestWekoAuthorsPrepareExport:
 #     def get_used_scheme_of_id_prefix(cls):
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_api.py::TestWekoAuthorsGetUsedSchemeOfIdPrefix -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
 class TestWekoAuthorsGetUsedSchemeOfIdPrefix:
-# .tox/c1/bin/pytest --cov=weko_authors tests/test_api.py::TestWekoAuthors::test_get_used_scheme_of_id_prefix_1 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
+# .tox/c1/bin/pytest --cov=weko_authors tests/test_api.py::TestWekoAuthorsGetUsedSchemeOfIdPrefix::test_get_used_scheme_of_id_prefix_1 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
     @pytest.mark.parametrize('base_app',[dict(
         is_es=True
     )],indirect=['base_app'])
@@ -1207,7 +1207,7 @@ class TestWekoAuthorsGetUsedSchemeOfIdPrefix:
         result = WekoAuthors.get_used_scheme_of_id_prefix()
         assert result == (['ORCID', 'CiNii'], {1: 'WEKO', 2: 'ORCID', 3: 'CiNii', 4: 'KAKEN2', 5: 'ROR'})
 
-# .tox/c1/bin/pytest --cov=weko_authors tests/test_api.py::TestWekoAuthors::test_get_used_scheme_of_id_prefix_2 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
+# .tox/c1/bin/pytest --cov=weko_authors tests/test_api.py::TestWekoAuthorsGetUsedSchemeOfIdPrefix::test_get_used_scheme_of_id_prefix_2 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
     @pytest.mark.parametrize('base_app',[dict(
         is_es=True
     )],indirect=['base_app'])
@@ -1215,7 +1215,7 @@ class TestWekoAuthorsGetUsedSchemeOfIdPrefix:
         result = WekoAuthors.get_used_scheme_of_id_prefix()
         assert result == ([], {1: 'WEKO', 2: 'ORCID', 3: 'CiNii', 4: 'KAKEN2', 5: 'ROR'})
 
-# .tox/c1/bin/pytest --cov=weko_authors tests/test_api.py::TestWekoAuthors::test_get_used_scheme_of_id_prefix_3 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
+# .tox/c1/bin/pytest --cov=weko_authors tests/test_api.py::TestWekoAuthorsGetUsedSchemeOfIdPrefix::test_get_used_scheme_of_id_prefix_3 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
     @pytest.mark.parametrize('base_app',[dict(
         is_es=True
     )],indirect=['base_app'])
@@ -1226,7 +1226,7 @@ class TestWekoAuthorsGetUsedSchemeOfIdPrefix:
 #     def get_used_scheme_of_affiliation_id(cls):
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_api.py::TestWekoAuthorsGetUsedSchemeOfAffiliationId -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
 class TestWekoAuthorsGetUsedSchemeOfAffiliationId:
-# .tox/c1/bin/pytest --cov=weko_authors tests/test_api.py::TestWekoAuthors::test_get_used_scheme_of_affiliation_id_1 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
+# .tox/c1/bin/pytest --cov=weko_authors tests/test_api.py::TestWekoAuthorsGetUsedSchemeOfAffiliationId::test_get_used_scheme_of_affiliation_id_1 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
     @pytest.mark.parametrize('base_app',[dict(
         is_es=True
     )],indirect=['base_app'])
@@ -1234,7 +1234,7 @@ class TestWekoAuthorsGetUsedSchemeOfAffiliationId:
         result = WekoAuthors.get_used_scheme_of_affiliation_id()
         assert result == (['ISNI', 'GRID'], {1: 'ISNI', 2: 'GRID', 3: 'Ringgold', 4: 'kakenhi'})
 
-# .tox/c1/bin/pytest --cov=weko_authors tests/test_api.py::TestWekoAuthors::test_get_used_scheme_of_affiliation_id_2 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
+# .tox/c1/bin/pytest --cov=weko_authors tests/test_api.py::TestWekoAuthorsGetUsedSchemeOfAffiliationId::test_get_used_scheme_of_affiliation_id_2 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
     @pytest.mark.parametrize('base_app',[dict(
         is_es=True
     )],indirect=['base_app'])
@@ -1242,7 +1242,7 @@ class TestWekoAuthorsGetUsedSchemeOfAffiliationId:
         result = WekoAuthors.get_used_scheme_of_affiliation_id()
         assert result == ([], {1: 'ISNI', 2: 'GRID', 3: 'Ringgold', 4: 'kakenhi'})
 
-# .tox/c1/bin/pytest --cov=weko_authors tests/test_api.py::TestWekoAuthors::test_get_used_scheme_of_affiliation_id_3 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
+# .tox/c1/bin/pytest --cov=weko_authors tests/test_api.py::TestWekoAuthorsGetUsedSchemeOfAffiliationId::test_get_used_scheme_of_affiliation_id_3 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
     @pytest.mark.parametrize('base_app',[dict(
         is_es=True
     )],indirect=['base_app'])
