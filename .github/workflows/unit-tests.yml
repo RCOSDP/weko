@@ -16,7 +16,8 @@ jobs:
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
-          username: ${{ github.actor }}
+          #username: ${{ github.actor }}
+          username: mhaya
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Check if image exists on GHCR
@@ -52,7 +53,7 @@ jobs:
     runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
-      max-parallel: 2 # リソースに応じて調整
+      max-parallel: 1
       matrix:
         module:
           - invenio-accounts
@@ -111,7 +112,8 @@ jobs:
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
-          username: ${{ github.actor }}
+          # username: ${{ github.actor }}
+          username: mhaya
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Pull base image
@@ -125,7 +127,7 @@ jobs:
       - name: Wait for web to be ready
         run: |
           for i in {1..30}; do
-            if docker compose exec -T web curl -k -f http://localhost/ping > /dev/null 2>&1; then
+            if docker compose -f docker-compose2.yml exec -T web curl -k -f https://localhost/ping > /dev/null 2>&1; then
               echo "Web is up!"
               exit 0
             fi
