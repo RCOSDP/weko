@@ -37,6 +37,7 @@ from elasticsearch_dsl import response, Search
 from sqlalchemy_utils.functions import create_database, database_exists
 from flask import Flask
 from flask_babelex import Babel
+from flask_menu import Menu
 
 from invenio_i18n import InvenioI18N
 from invenio_access import InvenioAccess
@@ -56,6 +57,7 @@ from invenio_pidstore import InvenioPIDStore
 from invenio_records import InvenioRecords
 from invenio_search import InvenioSearch, current_search_client
 
+from weko_accounts import WekoAccounts
 from weko_admin.models import AdminSettings
 from weko_deposit import WekoDeposit
 from weko_itemtypes_ui import WekoItemtypesUI
@@ -69,10 +71,13 @@ from weko_records_ui.config import WEKO_PERMISSION_SUPER_ROLE_USER, WEKO_PERMISS
 from weko_records import WekoRecords
 from weko_records.api import ItemTypes, Mapping
 from weko_records.config import WEKO_ITEMTYPE_EXCLUDED_KEYS
+
 from weko_records.models import (
     SiteLicenseInfo, ItemReference, ItemType, ItemTypeName,
-    ItemTypeMapping, ItemTypeProperty, OaStatus
+    ItemTypeMapping, ItemTypeProperty, OaStatus, FeedbackMailList,
+    ItemTypeJsonldMapping
 )
+
 from tests.helpers import json_data, create_record
 
 sys.path.append(os.path.dirname(__file__))
@@ -89,6 +94,7 @@ def instance_path():
 def base_app(instance_path):
     """Flask application fixture."""
     app_ = Flask('testapp', instance_path=instance_path)
+    app_.logger.setLevel('DEBUG')
     app_.config.update(
         CELERY_ALWAYS_EAGER=True,
         CELERY_CACHE_BACKEND="memory",
@@ -129,6 +135,7 @@ def base_app(instance_path):
 
     WekoRecords(app_)
     Babel(app_)
+    Menu(app_)
     InvenioI18N(app_)
     InvenioAccess(app_)
     InvenioAccounts(app_)
@@ -148,6 +155,7 @@ def base_app(instance_path):
     WekoLoggingUserActivity(app_)
     WekoSearchUI(app_)
     WekoRecordsUI(app_)
+    WekoAccounts(app_)
 
     return app_
 
@@ -167,7 +175,7 @@ def i18n_app(app):
 @pytest.yield_fixture()
 def client(app):
     with app.test_client() as client:
-        yield
+        yield client
 
 @pytest.fixture()
 def db(app):
@@ -1358,6 +1366,33 @@ def tokens(app,users,db):
 
     return tokens
 
+
+@pytest.fixture
+def sword_mapping(db, item_type):
+    sword_mapping = []
+    for i in range(1, 4):
+        obj = ItemTypeJsonldMapping(
+            name=f"test{i}",
+            mapping=json_data("data/jsonld_mapping.json"),
+            item_type_id=item_type.model.id,
+            is_deleted=False
+        )
+        with db.session.begin_nested():
+            db.session.add(obj)
+
+        sword_mapping.append({
+            "id": obj.id,
+            "sword_mapping": obj,
+            "name": obj.name,
+            "mapping": obj.mapping,
+            "item_type_id": obj.item_type_id,
+            "version_id": obj.version_id,
+            "is_deleted": obj.is_deleted
+        })
+
+    db.session.commit()
+
+    return sword_mapping
 
 @pytest.fixture
 def db_ItemReference(db):
