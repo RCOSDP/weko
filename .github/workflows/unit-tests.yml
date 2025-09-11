@@ -131,7 +131,7 @@ jobs:
               echo "Web is up!"
               exit 0
             fi
-            sleep 30
+            sleep 60
           done
           echo "Web did not become ready in time"
           docker compose logs
