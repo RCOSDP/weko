@@ -1,0 +1,346 @@
+{
+    "pubdate": "yyyy-mm-dd",
+    "item_30001_file22": [
+        {
+            "url": {
+                "url": "",
+                "label": "",
+                "objectType": ""
+            },
+            "date": [
+                {
+                    "dateType": "",
+                    "dateValue": "yyyy-mm-dd"
+                }
+            ],
+            "format": "",
+            "groups": "",
+            "version": "",
+            "fileDate": [
+                {
+                    "fileDateType": "",
+                    "fileDateValue": "yyyy-mm-dd"
+                }
+            ],
+            "filename": "",
+            "filesize": [
+                {
+                    "value": ""
+                }
+            ],
+            "accessrole": "",
+            "displaytype": "",
+            "licensefree": "",
+            "licensetype": ""
+        }
+    ],
+    "item_30001_title0": [
+        {
+            "subitem_title": "",
+            "subitem_title_language": ""
+        }
+    ],
+    "item_30001_rights5": [
+        {
+            "subitem_rights": "",
+            "subitem_rights_language": "",
+            "subitem_rights_resource": ""
+        }
+    ],
+    "item_30001_creator2": [
+        {
+            "iscreator": "",
+            "givenNames": [
+                {
+                    "givenName": "",
+                    "givenNameLang": ""
+                }
+            ],
+            "creatorType": "",
+            "familyNames": [
+                {
+                    "familyName": "",
+                    "familyNameLang": ""
+                }
+            ],
+            "creatorMails": [
+                {
+                    "creatorMail": ""
+                }
+            ],
+            "creatorNames": [
+                {
+                    "creatorName": "",
+                    "creatorNameLang": "",
+                    "creatorNameType": ""
+                }
+            ],
+            "nameIdentifiers": [
+                {
+                    "nameIdentifier": "",
+                    "nameIdentifierURI": "",
+                    "nameIdentifierScheme": ""
+                }
+            ],
+            "creatorAffiliations": [
+                {
+                    "affiliationNames": [
+                        {
+                            "affiliationName": "",
+                            "affiliationNameLang": ""
+                        }
+                    ],
+                    "affiliationNameIdentifiers": [
+                        {
+                            "affiliationNameIdentifier": "",
+                            "affiliationNameIdentifierURI": "",
+                            "affiliationNameIdentifierScheme": ""
+                        }
+                    ]
+                }
+            ],
+            "creatorAlternatives": [
+                {
+                    "creatorAlternative": "",
+                    "creatorAlternativeLang": ""
+                }
+            ]
+        }
+    ],
+    "item_30001_subject7": [
+        {
+            "subitem_subject": "",
+            "subitem_subject_uri": "",
+            "subitem_subject_scheme": "",
+            "subitem_subject_language": ""
+        }
+    ],
+    "item_30001_heading23": [
+        {
+            "subitem_heading_headline": "",
+            "subitem_heading_language": "",
+            "subitem_heading_banner_headline": ""
+        }
+    ],
+    "item_30001_language10": [
+        {
+            "subitem_language": ""
+        }
+    ],
+    "item_30001_publisher9": [
+        {
+            "subitem_publisher": "",
+            "subitem_publisher_language": ""
+        }
+    ],
+    "item_30001_relation14": [
+        {
+            "subitem_relation_name": [
+                {
+                    "subitem_relation_name_text": "",
+                    "subitem_relation_name_language": ""
+                }
+            ],
+            "subitem_relation_type": "",
+            "subitem_relation_type_id": {
+                "subitem_relation_type_select": "",
+                "subitem_relation_type_id_text": ""
+            }
+        }
+    ],
+    "item_30001_contributor3": [
+        {
+            "givenNames": [
+                {
+                    "givenName": "",
+                    "givenNameLang": ""
+                }
+            ],
+            "familyNames": [
+                {
+                    "familyName": "",
+                    "familyNameLang": ""
+                }
+            ],
+            "contributorType": "",
+            "nameIdentifiers": [
+                {
+                    "nameIdentifier": "",
+                    "nameIdentifierURI": "",
+                    "nameIdentifierScheme": ""
+                }
+            ],
+            "contributorMails": [
+                {
+                    "contributorMail": ""
+                }
+            ],
+            "contributorNames": [
+                {
+                    "lang": "",
+                    "nameType": "",
+                    "contributorName": ""
+                }
+            ],
+            "contributorAffiliations": [
+                {
+                    "contributorAffiliationNames": [
+                        {
+                            "contributorAffiliationName": "",
+                            "contributorAffiliationNameLang": ""
+                        }
+                    ],
+                    "contributorAffiliationNameIdentifiers": [
+                        {
+                            "contributorAffiliationURI": "",
+                            "contributorAffiliationScheme": "",
+                            "contributorAffiliationNameIdentifier": ""
+                        }
+                    ]
+                }
+            ],
+            "contributorAlternatives": [
+                {
+                    "contributorAlternative": "",
+                    "contributorAlternativeLang": ""
+                }
+            ]
+        }
+    ],
+    "item_30001_description8": [
+        {
+            "subitem_description": "",
+            "subitem_description_type": "",
+            "subitem_description_language": ""
+        }
+    ],
+    "item_30001_degree_name19": [
+        {
+            "subitem_degreename": "",
+            "subitem_degreename_language": ""
+        }
+    ],
+    "item_30001_access_rights4": {
+        "subitem_access_right": "",
+        "subitem_access_right_uri": ""
+    },
+    "item_30001_date_granted20": {
+        "subitem_dategranted": "yyyy-mm-dd"
+    },
+    "item_30001_rights_holder6": [
+        {
+            "nameIdentifiers": [
+                {
+                    "nameIdentifier": "",
+                    "nameIdentifierURI": "",
+                    "nameIdentifierScheme": ""
+                }
+            ],
+            "rightHolderNames": [
+                {
+                    "rightHolderName": "",
+                    "rightHolderLanguage": ""
+                }
+            ]
+        }
+    ],
+    "item_30001_version_type12": {
+        "subitem_version_type": "",
+        "subitem_peer_reviewed": "",
+        "subitem_version_resource": ""
+    },
+    "item_30001_resource_type11": {
+        "resourceuri": "",
+        "resourcetype": ""
+    },
+    "item_30001_degree_grantor21": [
+        {
+            "subitem_degreegrantor": [
+                {
+                    "subitem_degreegrantor_name": "",
+                    "subitem_degreegrantor_language": ""
+                }
+            ],
+            "subitem_degreegrantor_identifier": [
+                {
+                    "subitem_degreegrantor_identifier_name": "",
+                    "subitem_degreegrantor_identifier_scheme": ""
+                }
+            ]
+        }
+    ],
+    "item_30001_alternative_title1": [
+        {
+            "subitem_alternative_title": "",
+            "subitem_alternative_title_language": ""
+        }
+    ],
+    "item_30001_funding_reference15": [
+        {
+            "subitem_award_titles": [
+                {
+                    "subitem_award_title": "",
+                    "subitem_award_title_language": ""
+                }
+            ],
+            "subitem_funder_names": [
+                {
+                    "subitem_funder_name": "",
+                    "subitem_funder_name_language": ""
+                }
+            ],
+            "subitem_award_numbers": {
+                "subitem_award_uri": "",
+                "subitem_award_number": "",
+                "subitem_award_number_type": ""
+            },
+            "subitem_funding_streams": [
+                {
+                    "subitem_funding_stream": "",
+                    "subitem_funding_stream_language": ""
+                }
+            ],
+            "subitem_funder_identifiers": {
+                "subitem_funder_identifier": "",
+                "subitem_funder_identifier_type": ""
+            },
+            "subitem_funding_stream_identifiers": {
+                "subitem_funding_stream_identifier": "",
+                "subitem_funding_stream_identifier_type": "",
+                "subitem_funding_stream_identifier_type_uri": ""
+            }
+        }
+    ],
+    "item_30001_source_identifier16": [
+        {
+            "subitem_source_identifier": "",
+            "subitem_source_identifier_type": ""
+        }
+    ],
+    "item_30001_dissertation_number18": {
+        "subitem_dissertationnumber": ""
+    },
+    "item_30001_identifier_registration13": {
+        "subitem_identifier_reg_text": "",
+        "subitem_identifier_reg_type": ""
+    },
+    "item_30001_bibliographic_information17": {
+        "bibliographicPageEnd": "",
+        "bibliographic_titles": [
+            {
+                "bibliographic_title": "",
+                "bibliographic_titleLang": ""
+            }
+        ],
+        "bibliographicPageStart": "",
+        "bibliographicIssueDates": {
+            "bibliographicIssueDate": "yyyy-mm-dd",
+            "bibliographicIssueDateType": ""
+        },
+        "bibliographicIssueNumber": "",
+        "bibliographicVolumeNumber": "",
+        "bibliographicNumberOfPages": ""
+    },
+    "$schema": "/items/jsonschema/30001",
+    "shared_user_id": -1
+}

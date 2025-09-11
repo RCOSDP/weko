@@ -192,7 +192,7 @@ class HeadlessActivity(WorkActivity):
             raise WekoWorkflowException("activity is already initialized.")
 
         activity_id = kwargs.get("activity_id")
-        shared_id = kwargs.get("shared_id", -1)
+        shared_ids = kwargs.get("shared_ids", [])
         if activity_id is not None:
             # restart activity
             result, _ = verify_deletion(activity_id)
@@ -210,7 +210,7 @@ class HeadlessActivity(WorkActivity):
             user = User.query.get(user_id)
             if (
                 self._model.activity_login_user != user_id
-                    and self._model.shared_user_id != user_id
+                    and {'user': user_id} not in self._model.shared_user_ids
                     and not check_authority_by_admin(self.activity_id, user)
             ):
                 current_app.logger.error(
@@ -238,7 +238,7 @@ class HeadlessActivity(WorkActivity):
             if not for_delete:
                 response = prepare_edit_item(item_id, community)
             else:
-                response = prepare_delete_item(item_id, community, shared_id)
+                response = prepare_delete_item(item_id, community, shared_ids)
 
             if response.json.get("code") != 0:
                 current_app.logger.error(
@@ -470,16 +470,21 @@ class HeadlessActivity(WorkActivity):
             item_map = get_mapping(self.item_type.id, "jpcoar_mapping", self.item_type)
             title_value_key = "title.@value"
             title, _ = get_data_by_property(metadata, item_map, title_value_key)
-            weko_shared_id = metadata.get("weko_shared_id", -1)
-            shared_user_id = metadata.get("shared_user_id", -1)
+            weko_shared_ids = [
+                {"user": int(id)} if not isinstance(id, dict) else id
+                for id in metadata.get("weko_shared_ids", [])
+            ]
+            shared_user_ids = metadata.get("shared_user_ids", [])
             identifierRegistration_key = item_map.get(
                 "identifierRegistration.@attributes.identifierType", ""
             ).split(".")[0]
 
+            # merge shared_user_ids
+            shared_ids = shared_user_ids if shared_user_ids else weko_shared_ids
+
             self.update_activity(self.activity_id, {
                 "title": title[0] if title else "",
-                "shared_user_id": shared_user_id
-                    if shared_user_id != -1 else weko_shared_id
+                "shared_user_ids": shared_ids
             })
 
             _old_metadata, _old_files = {}, []
@@ -505,7 +510,7 @@ class HeadlessActivity(WorkActivity):
                 record_uuid = self._model.item_id
                 self._deposit = WekoDeposit.get_record(record_uuid)
 
-                if metadata.get("edit_mode").lower() == "upgrade":
+                if metadata.get("edit_mode", "Keep").lower() == "upgrade":
                     cur_pid = PersistentIdentifier.get_by_object(
                         "recid", object_type="rec", object_uuid=record_uuid
                     )
@@ -751,8 +756,8 @@ class HeadlessActivity(WorkActivity):
         for file in files:
             if isinstance(file, str):
                 if not os.path.isfile(file):
-                    current_app.logger.error(f"file({file}) is not found.")
-                    raise WekoWorkflowException(f"file({file}) is not found.")
+                    current_app.logger.warning(f"file({file}) is not found.")
+                    continue
                 size = os.path.getsize(file)
                 with open(file, "rb") as f:
                     file_info = upload(os.path.basename(file), f, size)

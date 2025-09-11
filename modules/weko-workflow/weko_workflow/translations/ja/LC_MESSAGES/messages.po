@@ -1169,3 +1169,45 @@ msgstr "アイテムタイプ選択"
 #: weko_workflow/templates/weko_workflow/admin/workspace_workflow_setting.html:62
 msgid "WorkFlow Select"
 msgstr "ワークフロー選択"
+
+msgid "Item registrant"
+msgstr "アイテム登録者"
+
+msgid "Request mail"
+msgstr "リクエスト送信先"
+
+msgid "Guest User"
+msgstr "非ログインユーザー"
+
+msgid "Login User"
+msgstr "ログインユーザー"
+
+msgid "Notification Email Setting"
+msgstr "通知メール設定"
+
+msgid "Send an email to item registrants when applying for use"
+msgstr "利用申請時に、アイテム登録者に対しメールを送信する"
+
+msgid "Application approved."
+msgstr "申請が承認されました"
+
+msgid "Back to Top page"
+msgstr "トップページへ戻る"
+
+msgid "Waiting for approval."
+msgstr "承認待ちです"
+
+#: weko_workflow/templates/weko_workflow/record_detail.html:78
+#: weko_workflow/templates/weko_workflow/record_detail.html:100
+msgid "Preview"
+msgstr "プレビュー"
+
+msgid "Link"
+msgstr "リンク"
+
+msgid "Send an email to the registrant"
+msgstr "登録者にメールを送信する"
+
+#: weko_workflow/views.py:770
+msgid "Error! Cannot process quit activity!"
+msgstr "アクティビティを終了できません"

@@ -55,6 +55,10 @@
         null,
         "Set the publication date of child indexes recursively"
     ],
+    "example": [
+        null,
+        "E.g:20180628"
+    ],
     "Harvest_Publish": [
         null,
         "Harvest Publish"
@@ -62,6 +66,22 @@
     "Harvest_Message": [
         null,
         "Please turn off the check if you do not want to open the metadata of the belonging items to public"
+    ],
+    "Harvest_checkbox": [
+        null,
+        "Open to public"
+    ],
+    "Harvest_check_message": [
+        null,
+        "If you enable the publish setting, information about items in the index will be made available to outside parties. Do you want to enable public settings?"
+    ],
+    "btn_message_enable": [
+        null,
+        "enable"
+    ],
+    "btn_message_close": [
+        null,
+        "close"
     ],
     "Online_Issn": [
         null,

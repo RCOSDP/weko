@@ -5,8 +5,7 @@ const selected_file_name = document.getElementById("selected_file_name").value;
 const index_tree = document.getElementById("index_tree").value;
 const designate_index = document.getElementById("designate_index").value;
 const item_type = document.getElementById("item_type").value;
-const mapping = document.getElementById("mapping").value;
-const mapping_templates = document.getElementById("mapping_templates").value;
+const select_mapping = document.getElementById("select_mapping").value;
 const flow = document.getElementById("flow").value;
 const select = document.getElementById("select").value;
 const cancel = document.getElementById("cancel").value;
@@ -36,12 +35,14 @@ const register_with = document.getElementById("register_with").value;
 //label result
 const start_date = document.getElementById("start_date").value;
 const end_date = document.getElementById("end_date").value;
-const action = document.getElementById("action").value;
+const importResult = document.getElementById("import_result").value;
 const end = document.getElementById("end").value;
-const work_flow_status = document.getElementById("work_flow_status").value;
+const statusLabel = document.getElementById("status").value;
 const done = document.getElementById("done").value;
-const to_do = document.getElementById("to_do").value;
+const processing = document.getElementById("processing").value;
+const waiting = document.getElementById("waiting").value;
 const result_label = document.getElementById("result").value;
+const succses = document.getElementById("succses").value;
 const next = document.getElementById("next").value;
 const error_download = document.getElementById("error_download").value;
 const error_get_lstMapping = document.getElementById("error_get_lstMapping").value;
@@ -82,26 +83,33 @@ function showErrorMsg(msg) {
     '&times;</button>' + msg + '</div>');
 }
 
-function getResultErrorMsg(error_id) {
-  let msg = '';
-  switch (error_id) {
-    case 'is_duplicated_doi':
-      msg = is_duplicated_doi;
-      break;
-    case 'is_withdraw_doi':
-      msg = is_withdraw_doi;
-      break;
-    case 'item_is_deleted':
-      msg = item_is_deleted;
-      break;
-    case 'item_is_being_edit':
-      msg = item_is_being_edit;
-      break;
-  }
-  if (msg === '') {
-    return 'Error';
-  } else {
-    return 'Error: ' + msg;
+function getTaskResult(task_result) {
+  if (!task_result) return '';
+  if (task_result.success) return succses;
+
+  const errorMessages = {
+    is_duplicated_doi,
+    is_withdraw_doi,
+    item_is_deleted,
+    item_is_being_edit
+  };
+  const msg = errorMessages[task_result.error_id] || '';
+  return msg === '' ? '' : error + ': ' + msg;
+}
+
+function getTaskStatusLabel(taskStatus) {
+  if (!taskStatus) return '';
+  switch (taskStatus) {
+    case "PENDING":
+      return waiting;
+    case "STARTED":
+      return processing;
+    case "SUCCESS":
+      return done;
+    case "FAILURE":
+      return "FAILURE";
+    default:
+      return '';
   }
 }
 
@@ -645,6 +653,7 @@ class RocrateImportComponent extends React.Component {
               </div>
             </div>
           </div>
+          <MappingComponent onMappingChange={this.handleMappingChange} />
           <div className="col-md-12">
             <div className="row">
               <div className="col-md-4">
@@ -678,7 +687,6 @@ class RocrateImportComponent extends React.Component {
           </div>
         </div>
         <hr />
-        <MappingComponent onMappingChange={this.handleMappingChange} />
         <ReactBootstrap.Modal show={this.state.show} onHide={this.handleClose} dialogClassName="w-725">
           <ReactBootstrap.Modal.Header closeButton>
             <h4 className="modal-title in_line">{change_identifier_mode}</h4>
@@ -1051,12 +1059,12 @@ class ResultComponent extends React.Component {
     const { tasks } = this.props
     const result = tasks.map((item, key) => {
       return {
-        'No': key + 1,
-        'Start Date': item.start_date ? item.start_date : '',
-        'End Date': item.end_date ? item.end_date : '',
-        'Item Id': item.item_id || '',
-        'Action': item.task_result ? (item.task_result.success ? "End" : getResultErrorMsg(item.task_result.error_id)) : "Start",
-        'Work Flow Status': item.task_status ? item.task_status === "PENDING" ? "To Do" : item.task_status === "SUCCESS" ? "Done" : item.task_status === "FAILURE" ? "FAILURE" : '' : ''
+        [no]: key + 1,
+        [start_date]: item.start_date ? item.start_date : '',
+        [end_date]: item.end_date ? item.end_date : '',
+        [item_id]: item.item_id || '',
+        [statusLabel]: getTaskStatusLabel(item.task_status),
+        [importResult]: getTaskResult(item.task_result)
       }
     })
     const data = {
@@ -1114,12 +1122,12 @@ class ResultComponent extends React.Component {
           <table class="table table-striped table-bordered">
             <thead>
               <tr>
-                <th>{no}</th>
+                <th className="id">{no}</th>
                 <th className="start_date"><p className="t_head">{start_date}</p></th>
                 <th className="end_date"><p className="t_head ">{end_date}</p></th>
-                <th><p className="t_head item_id">{item_id}</p></th>
-                <th><p className="t_head action">{action}</p></th>
-                <th><p className="t_head wf_status">{work_flow_status}</p></th>
+                <th className="t_head item_id">{item_id}</th>
+                <th className="t_head action">{importResult}</th>
+                <th><p className="t_head wf_status">{statusLabel}</p></th>
               </tr>
             </thead>
             <tbody>
@@ -1127,18 +1135,14 @@ class ResultComponent extends React.Component {
                 tasks.map((item, key) => {
                   return (
                     <tr key={key}>
-                      <td>
-                        {key + 1}
-                      </td>
+                      <td>{key + 1}</td>
                       <td>{item.start_date ? item.start_date : ''}</td>
                       <td>{item.end_date ? item.end_date : ''}</td>
-                      <td>{item.item_id || ''}</td>
-                      <td>{item.task_result ? (item.task_result.success ? end : getResultErrorMsg(item.task_result.error_id)) : "Start"}</td>
-                      <td>
-                        {item.task_status && item.task_status === "PENDING" ? to_do : ''}
-                        {item.task_status && item.task_status === "SUCCESS" ? done : ''}
-                        {item.task_status && item.task_status === "FAILURE" ? "FAILURE" : ''}
+                      <td><a href={item.item_id ? "/records/" + item.item_id : ''} target="_blank">
+                          {item.item_id || ''}</a>
                       </td>
+                      <td>{getTaskStatusLabel(item.task_status)}</td>
+                      <td>{getTaskResult(item.task_result)}</td>
                     </tr>
                   )
                 })
@@ -1203,18 +1207,15 @@ class MappingComponent extends React.Component {
     });
 
     return (
-      <div class="mapping_compoment">
-        <h4>{mapping_templates}</h4>
-        <div class="row">
-          <div class="col-md-12 form-inline">
-            <div class="form-group">
-              <label style={{ marginRight: ".5rem" }}>{mapping}:</label>
-              <select class="form-control" style={{ marginRight: ".5rem",
-                    minWidth: "300px" }} onChange={this.onCbxMappingChange}>
-                {select_options}
-              </select>
-            </div>
+      <div class="col-md-12">
+        <div className="row form-inline" style={{ marginBottom: "2rem" }}>
+          <div className="col-md-2 col-cd">
+            <label>{select_mapping}</label>
           </div>
+          <select class="form-control" style={{ marginRight: ".5rem",
+                minWidth: "300px" }} onChange={this.onCbxMappingChange}>
+            {select_options}
+          </select>
         </div>
       </div>
     );

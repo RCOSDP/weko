@@ -38,7 +38,11 @@ def item_login(item_type_id: int = 0):
     endpoints = {}
     files = []
     files_thumbnail = []
-    item_save_uri = url_for("weko_items_ui.iframe_save_model")
+    item_save_uri = ""
+    try:
+        item_save_uri = url_for("weko_items_ui.iframe_save_model")
+    except:
+        pass
     json_schema = ""
     need_billing_file = False
     need_file = False

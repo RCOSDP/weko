@@ -84,19 +84,22 @@ def test_indexes_create(app, db, users, test_indices):
 
             with patch("weko_index_tree.api.db.session.commit", side_effect=Exception):
                 res = Indexes.create(3, {
-                    'id': 33,
+                    'id': 41,
                     'parent': 3,
                     'value': 'Create index test3',
                 })
                 assert res==False
 
             with patch("weko_index_tree.api.db.session.commit", side_effect=IntegrityError(None, None, 'uix_position')):
-                res = Indexes.create(3, {
-                    'id': 33,
-                    'parent': 3,
-                    'value': 'Create index test3',
-                })
-                assert res==False
+                with patch("weko_logging.activity_logger.UserActivityLogger.error") as mock_log_err:
+                    mock_log_err.return_value = None
+                    res = Indexes.create(3, {
+                        'id': 41,
+                        'parent': 3,
+                        'value': 'Create index test3',
+                    })
+                    assert res==False
+                    mock_log_err.assert_called_once()
 
             res = Indexes.create(10, {
                 'id': 101,
@@ -113,13 +116,14 @@ def test_indexes_create(app, db, users, test_indices):
 
             app.config['WEKO_HANDLE_ALLOW_REGISTER_CNRI'] = True
             app.config['WEKO_HANDLE_CREDS_JSON_PATH'] = '/code/modules/resources/handle_creds.json'
-            with patch("weko_handle.api.Handle.register_handle", return_value='1234567890/1'):
-                res = Indexes.create(2, {
-                    'id': 1044,
-                    'parent': 104,
-                    'value': 'Create index test10',
-                })
-            assert res==True
+            with app.test_request_context('/admin/'):
+                with patch("weko_handle.api.Handle.register_handle", return_value='1234567890/1'):
+                    res = Indexes.create(2, {
+                        'id': 1044,
+                        'parent': 104,
+                        'value': 'Create index test10',
+                    })
+                    assert res==True
 
             with patch("weko_handle.api.Handle.register_handle", return_value= None):
                 res = Indexes.create(2, {
@@ -1129,7 +1133,7 @@ def test_get_index_with_role_group(app, db, mocker):
         index_data = {
             'id': 1,
             'browsing_role': '3,-99,9',
-            'contribute_role': '3,4,-98,-99',
+            'contribute_role': '3,-99,9',
             'browsing_group': '1,2',
             'contribute_group': '1,2',
             'public_date': datetime(2022, 1, 1),
@@ -1173,3 +1177,15 @@ def test_get_index_with_role_group(app, db, mocker):
         assert result['browsing_group']['deny'] == []
         assert result['contribute_group']['allow'] == []
         assert result['contribute_group']['deny'] == []
+
+
+# .tox/c1/bin/pytest --cov=weko_index_tree tests/test_api.py::test_indexes_get_handle_index_url -v -s -vv --cov-branch --cov-report=html --cov-config=tox.ini --basetemp=/code/modules/weko-index-tree/.tox/c1/tmp
+def test_indexes_get_handle_index_url(app, db, users, test_indices, mocker):
+    with app.test_request_context():
+        mock_handle = mocker.MagicMock()
+        mock_handle.register_handle.return_value="https://test/handle/1"
+        mocker.patch("weko_index_tree.api.Handle", return_value=mock_handle)
+        app.config['WEKO_HANDLE_CREDS_JSON_PATH'] = '/code/modules/resources/handle_creds.json'
+        handle, index_url = Indexes.get_handle_index_url(1)
+        assert index_url == "http://TEST_SERVER/search?search_type=2&q=1"
+        assert handle == "https://test/handle/1"

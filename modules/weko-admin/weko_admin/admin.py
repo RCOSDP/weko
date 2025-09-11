@@ -1433,6 +1433,20 @@ class FacetSearchSettingView(ModelView):
             id=id
         )
 
+#   アドバンスドのviewクラスを設定
+class ProfileSettingView(BaseView):
+    @expose('/', methods=['GET'])
+    def index(self):
+        profile_fields_settings = AdminSettings.get("profiles_items_settings", dict_to_object=False)
+        if not profile_fields_settings:
+            profile_fields_settings = current_app.config.get("WEKO_USERPROFILES_DEFAULT_FIELDS_SETTINGS", {})
+
+        return self.render(
+            current_app.config["WEKO_ADMIN_PROFILE_SETTING_TEMPLATE"],
+            data = json.dumps(profile_fields_settings),
+            format_options = json.dumps(
+                current_app.config.get("USERPROFILES_FORMAT_OPTION_LIST", [])),
+        )
 
 class SwordAPISettingsView(BaseView):
     """SWORD API TSV/CSV and XML Settings admin view."""
@@ -2536,6 +2550,16 @@ reindex_elasticsearch_adminview = {
     }
 }
 
+# プロファイル設定のviewを設定
+profile_settings_adminview = {
+    'view_class': ProfileSettingView,
+    'kwargs': {
+        'category': _('Advanced'),
+        'name': _('Profile Settings'),
+        'endpoint': 'profile_settings'
+    }
+}
+
 sword_api_settings_adminview = {
     'view_class': SwordAPISettingsView,
     'kwargs': {
@@ -2589,6 +2613,7 @@ __all__ = (
     'identifier_adminview',
     'facet_search_adminview',
     'reindex_elasticsearch_adminview',
+    'profile_settings_adminview',
     'sword_api_settings_adminview',
     'sword_api_settings_jsonld_adminview',
     'sword_api_jsonld_mapping_adminview'

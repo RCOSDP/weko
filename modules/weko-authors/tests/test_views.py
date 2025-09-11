@@ -50,9 +50,14 @@ class MockIndexer():
             pass
 
         def search(self, index=None, doc_type=None, body=None):
-            return {"hits": {"hits": [{"_source":
-                    {"authorNameInfo": "", "authorIdInfo": "", "emailInfo": ""}
-                    }]}}
+            return {"hits": {"hits": [
+                        {"_source":{
+                            "authorNameInfo": "",
+                            "authorIdInfo": "",
+                            "emailInfo": "",
+                            "pk_id": ""
+                        }}
+                    ]}}
 
         def index(self, index=None, doc_type=None, body=None):
             return {}
@@ -925,6 +930,7 @@ def test_gatherById_acl_users(client, users, index, is_permission):
             res = client.post(url, json=input)
             assert_role(res, is_permission)
 
+
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_views.py::test_gatherById -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
 def test_gatherById(client, users, authors):
     url = url_for("weko_authors.gatherById")
@@ -942,20 +948,6 @@ def test_gatherById(client, users, authors):
     input = {
         "idFrom":["1","2"],
         "idFromPkId":["1","2"],
-        "idTo":"3"
-    }
-
-    # raise Exception
-    with patch("weko_authors.views.db.session.commit", side_effect=Exception("test_error")):
-        res = client.post(url, json=input)
-        assert res.status_code == 200
-        assert json.loads(res.data) == {"code": 204, "msg": "Failed"}
-        assert Authors.query.filter_by(id="1").one().gather_flg == 0
-        assert Authors.query.filter_by(id="2").one().gather_flg == 0
-
-    input = {
-        "idFrom":["1","2"],
-        "idFromPkId":["1","2"],
         "idTo":"1"
     }
     data = {
@@ -966,12 +958,17 @@ def test_gatherById(client, users, authors):
     }
     record_indexer = RecordIndexer()
     record_indexer.client=MockClient(data)
-    with patch("weko_authors.views.RecordIndexer", return_value=record_indexer):
-        with patch('weko_deposit.tasks.update_items_by_authorInfo'):
+    with patch("weko_authors.views.RecordIndexer", return_value=record_indexer), \
+        patch("weko_workflow.utils.update_cache_data") as mock_update_cache, \
+        patch('weko_deposit.tasks.update_items_by_authorInfo.delay') as mock_update_items:
             res = client.post(url, json=input)
             assert json.loads(res.data) == {"code": 0, "msg": "Success"}
-            assert Authors.query.filter_by(id="1").one().gather_flg == 0
-            assert Authors.query.filter_by(id="2").one().gather_flg == 1
+            mock_update_cache.assert_called_once()
+            mock_update_items.assert_called_once()
+            args, kwargs = mock_update_items.call_args
+            assert "1" not in kwargs.get("origin_pkid_list")  # gatherFromPkId
+            assert "1" not in kwargs.get("origin_id_list")  # gatherFrom
+
 
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_views.py::test_get_prefix_list_acl_guest -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
 def test_get_prefix_list_acl_guest(client):
@@ -1096,12 +1093,13 @@ def test_get_list_schema_acl_users(client, users, index, is_permission):
     res = client.get(url)
     assert_role(res, is_permission)
 
+
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_views.py::test_get_list_schema -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
 def test_get_list_schema(client, users):
     url = url_for("weko_authors.get_list_schema")
     login_user_via_session(client=client, email=users[0]['email'])
     test = {
-        "list":['e-Rad', 'NRID', 'ORCID', 'ISNI', 'VIAF', 'AID','kakenhi', 'Ringgold', 'GRID', 'ROR', 'Other'],
+        "list":['e-Rad', 'NRID', 'ORCID', 'ISNI', 'VIAF', 'AID','kakenhi', 'Ringgold', 'GRID', 'ROR', 'researchmap', 'Other'],
         "index":10
     }
     res = client.get(url)
@@ -1538,30 +1536,6 @@ def test_get_max_weko_id(client, users, mocker ):
 
     record_indexer = RecordIndexer()
     record_indexer.client=MockClient(data_2)
-    mocker.patch("weko_authors.views.RecordIndexer",return_value=record_indexer)
-    test = {'max_author_id': 0}
-    res = client.get(url)
-    assert get_json(res) == test
-
-
-    data_3 = {
-    "test-authors": {
-        "hits": {
-            "hits": [
-                {"_source": {"authorIdInfo": [{"authorId": "2",'idType': '1'}]}, 'pk_id': 'xxx'}
-            ]
-        },
-        "_scroll_id": "AAA"
-    },
-    "test-weko": {
-        "hits": {
-            "total": 1
-        }
-    }
-    }
-
-    record_indexer = RecordIndexer()
-    record_indexer.client=MockClient(data_3)
     mocker.patch("weko_authors.views.RecordIndexer",return_value=record_indexer)
     test = {'max_author_id': 0}
     res = client.get(url)

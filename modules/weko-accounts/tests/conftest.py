@@ -41,6 +41,7 @@ from invenio_accounts.testutils import create_test_user
 from invenio_communities.models import Community
 from invenio_db import InvenioDB, db as db_
 from invenio_i18n import InvenioI18N
+from invenio_oauth2server import InvenioOAuth2Server
 from weko_admin import WekoAdmin
 from weko_admin.models import SessionLifetime
 from weko_index_tree.models import Index
@@ -68,7 +69,7 @@ def base_app(instance_path):
     app_.config.update(
         SECRET_KEY='SECRET_KEY',
         TESTING=True,
-        SERVER_NAME='TEST_SERVER.localdomain',
+        SERVER_NAME='test_server.localdomain',
         # SQLALCHEMY_DATABASE_URI=os.environ.get(
         #  'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'),
         SQLALCHEMY_DATABASE_URI=os.getenv('SQLALCHEMY_DATABASE_URI',
@@ -100,6 +101,7 @@ def base_app(instance_path):
     InvenioAccounts(app_)
     InvenioAccess(app_)
     InvenioAdmin(app_)
+    InvenioOAuth2Server(app_)
     WekoAccounts(app_)
     WekoRecordsUI(app_)
     WekoAdmin(app_)
@@ -342,3 +344,25 @@ def indices(db):
     db.session.add(index_4)
     db.session.commit()
     return [index_1, index_2, index_3, index_4]
+
+@pytest.fixture()
+def weko_roles(app):
+    """Create roles.
+
+    Args:
+        app (Flask): Flask application.
+    
+    Returns:
+        dict: Dictionary of roles.
+    """
+    ds = app.extensions["invenio-accounts"].datastore
+    sysadmin_role = ds.create_role(name='System Administrator')
+    repoadmin_role = ds.create_role(name='Repository Administrator')
+    contributor_role = ds.create_role(name='Contributor')
+    comadmin_role = ds.create_role(name='Community Administrator')
+    return {
+        'sysadmin': sysadmin_role,
+        'repoadmin': repoadmin_role,
+        'contributor': contributor_role,
+        'comadmin': comadmin_role
+    }

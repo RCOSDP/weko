@@ -14,7 +14,7 @@ from weko_index_tree.api import Indexes
 from weko_records.api import ItemTypes, SiteLicense,ItemsMetadata
 from weko_user_profiles import UserProfile
 
-from weko_admin.config import WEKO_ADMIN_MANAGEMENT_OPTIONS
+from weko_admin.config import WEKO_ADMIN_MANAGEMENT_OPTIONS, WEKO_ADMIN_RESTRICTED_ACCESS_SETTINGS
 from weko_admin.models import AdminLangSettings, FeedbackMailHistory, FeedbackMailFailed, SiteInfo
 from weko_admin.utils import (
     get_response_json,
@@ -620,12 +620,12 @@ class TestStatisticMail:
 
         # is_sending_feedback is False, stats_date is None
         with patch("weko_admin.utils.FeedbackMail.get_feed_back_email_setting",return_value={"is_sending_feedback":False}):
-            result = StatisticMail.send_mail_to_all(None,None)
+            result = StatisticMail.send_mail_to_all()
             assert result == None
 
         # list_mail_data is None, get_feedback_mail_list is None
-        with patch("weko_search_ui.utils.get_feedback_mail_list", return_value=None):
-            result = StatisticMail.send_mail_to_all(None,None)
+        with patch("weko_records.api.FeedbackMailList.get_feedback_mail_list", return_value=None):
+            result = StatisticMail.send_mail_to_all()
             assert result == None
 
         mail_data = {
@@ -633,24 +633,24 @@ class TestStatisticMail:
             "test.taro@test.org":{"author_id":"1","items":{}},
             "test.hanako@test.org":{"author_id":"2","items":{}}
         }
-        mocker.patch("weko_search_ui.utils.get_feedback_mail_list", return_value=mail_data)
+        mocker.patch("weko_records.api.FeedbackMailList.get_feedback_mail_list", return_value=mail_data)
         # system_default_language is ja
         with patch("weko_admin.utils.get_system_default_language", return_value="ja"):
-            result = StatisticMail.send_mail_to_all(None,"2022-11")
+            result = StatisticMail.send_mail_to_all()
         # system_default_language is other
         with patch("weko_admin.utils.get_system_default_language", return_value="du"):
-            result = StatisticMail.send_mail_to_all(None,"2022-11")
+            result = StatisticMail.send_mail_to_all()
 
         # system_default_language is en
         # host_url[-1] is "/"
         current_app.config.update(THEME_SITEURL="https://localhost/")
-        result = StatisticMail.send_mail_to_all(None,"2022-11")
+        result = StatisticMail.send_mail_to_all()
 
         with patch("weko_admin.utils.StatisticMail.send_mail", side_effect=[True, False]):
-            StatisticMail.send_mail_to_all(mail_data,"2022-11")
+            StatisticMail.send_mail_to_all()
 
         with patch("weko_admin.utils.StatisticMail.build_statistic_mail_subject", side_effect=Exception("test_error")):
-            StatisticMail.send_mail_to_all(mail_data,"2022-11")
+            StatisticMail.send_mail_to_all()
 
 
 #     def get_banned_mail(cls, list_banned_mail):
@@ -891,29 +891,19 @@ class TestStatisticMail:
 
 #     def send_mail(cls, recipient, body, subject):
 # .tox/c1/bin/pytest --cov=weko_admin tests/test_utils.py::TestStatisticMail::test_send_mail -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
-    def test_send_mail(self,client,mocker):
-        recipient = "test@test.org"
-        body = {
-            "user_name":"テスト 太郎",
-            "organization":"No Site Name",
-            "time":"2022-10",
-            "data":"----------------------------------------\n[Title] : title2\n[URL] : http://test.com/records/2\n[DetailView] : 3\n[FileDownload] : \n    test_file2_1.tsv(10)\n    test_file2_2.tsv(20)\n",
-            "total_item":1,
-            "total_file":2,
-            "total_detail_view":3,
-            "total_download":30
-        }
-        body = str(body)
-        subject = "[No Site Name]2022-10 利用統計レポート"
-
-        mock_send = mocker.patch("weko_admin.utils.MailSettingView.send_statistic_mail",return_value=True)
-        test = {
-            "subject":subject,
-            "body":body,
-            "recipient":recipient
-        }
-        result = StatisticMail.send_mail(recipient,body,subject)
-        mock_send.assert_called_with(test)
+    def test_send_mail(self, app):
+        recipient = "test@example.com"
+        body = "Test Body"
+        subject = "Test Subject"
+        with patch("weko_admin.utils.MailSettingView.send_statistic_mail", return_value=True) as mock_send:
+            with app.app_context():
+                result = StatisticMail.send_mail(recipient, body, subject)
+                assert result == True
+                mock_send.assert_called_once_with({
+                    'subject': subject,
+                    'body': body,
+                    'recipients': recipient
+                })
 
 
 #     def build_statistic_mail_subject(cls, title, send_date,
@@ -1582,31 +1572,30 @@ def test_get_init_display_index(app,indexes,mocker):
 
 # def get_restricted_access(key: str = None):
 # .tox/c1/bin/pytest --cov=weko_admin tests/test_utils.py::test_get_restricted_access -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
-def test_get_restricted_access(client,admin_settings):
-    test = {
-        "content_file_download": {
-            "expiration_date": 30,
-            "expiration_date_unlimited_chk": False,
-            "download_limit": 10,
-            "download_limit_unlimited_chk": False,
-        },
-        "usage_report_workflow_access": {
-            "expiration_date_access": 500,
-            "expiration_date_access_unlimited_chk": False,
-        },
-        "terms_and_conditions": []
-    }
+def test_get_restricted_access(app, admin_settings):
+
+    #test No.3 (W2023-22 3(5))
     with patch("weko_admin.utils.AdminSettings.get",return_value=None):
         result = get_restricted_access("not exist key")
         assert result == {}
 
+    #test No.3 (W2023-22 3(5))
     # not key
     result = get_restricted_access("")
     assert result == admin_settings[5].settings
-
+    
+    #test No.3 (W2023-22 3(5))
     result = get_restricted_access("usage_report_workflow_access")
     assert result == admin_settings[5].settings["usage_report_workflow_access"]
 
+    #test No.1 (W2023-22 3(5))
+    with patch("weko_admin.utils.AdminSettings.get",return_value=admin_settings[9].settings):
+        result = get_restricted_access("error_msg")
+        assert result == admin_settings[5].settings["error_msg"]
+
+    #test No.2 (W2023-22 3(5))
+    result = get_restricted_access("error_msg")
+    assert result == admin_settings[5].settings["error_msg"]
 
 # def update_restricted_access(restricted_access: dict):
 #     def parse_content_file_download():
@@ -1666,6 +1655,17 @@ def test_update_restricted_access(admin_settings):
         "usage_report_workflow_access": {
             "expiration_date_access": 1,
             "expiration_date_access_unlimited_chk": False
+        },
+        "error_msg": {
+            "key" : "",
+            "content" : {
+                "ja" : {
+                    "content" : "このデータは利用できません（権限がないため）。"
+                },
+                "en":{
+                    "content" : "This data is not available for this user"
+                }
+            }
         }
     }
     result = update_restricted_access(data)
@@ -1689,6 +1689,17 @@ def test_update_restricted_access(admin_settings):
             "secret_expiration_date_unlimited_chk": True,
             "secret_download_limit": 10,
             "secret_download_limit_unlimited_chk": False,
+        },
+        "error_msg": {
+            "key" : "",
+            "content" : {
+                "ja" : {
+                    "content" : "このデータは利用できません（権限がないため）。"
+                },
+                "en":{
+                    "content" : "This data is not available for this user"
+                }
+            }
         }
     }
     result = update_restricted_access(param)
@@ -1712,6 +1723,17 @@ def test_update_restricted_access(admin_settings):
             "secret_expiration_date_unlimited_chk": False,
             "secret_download_limit": 9999999,
             "secret_download_limit_unlimited_chk": True,
+        },
+        "error_msg": {
+            "key" : "",
+            "content" : {
+                "ja" : {
+                    "content" : "このデータは利用できません（権限がないため）。"
+                },
+                "en":{
+                    "content" : "This data is not available for this user"
+                }
+            }
         }
     }
     result = update_restricted_access(param)
@@ -1962,13 +1984,14 @@ class TestUsageReport:
 #     def send_reminder_mail(self, activities_id: list,
 # .tox/c1/bin/pytest --cov=weko_admin tests/test_utils.py::TestUsageReport::test_send_reminder_mail -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
     def test_send_reminder_mail(self, app, activities, mocker):
-        mail_template = current_app.config.get(
-            "WEKO_WORKFLOW_REQUEST_FOR_REGISTER_USAGE_REPORT")
+        mail_id = current_app.config.get(
+            'WEKO_WORKFLOW_REQUEST_FOR_REGISTER_USAGE_REPORT'
+        )
         def mock_email_and_url(activity):
             url = "http://test_server/workflow/activity/detail/{}".format(activity.id)
             return url, "test.test@test.org"
         mocker.patch("weko_admin.utils.UsageReport._UsageReport__get_usage_report_email_and_url", side_effect=mock_email_and_url)
-        mocker.patch("weko_workflow.utils.get_mail_data", return_value=("test_subject", "test_body"))
+        mocker.patch("weko_workflow.utils.get_mail_data", return_value={"mail_subject": "test_subject", "mail_body": "test_body"})
         mocker.patch("weko_workflow.utils.replace_characters", return_value="test_body")
         usage_report = UsageReport()
         acts = [
@@ -1976,7 +1999,7 @@ class TestUsageReport:
             activities[3], # exist item_id, extra_info
         ]
         mocker.patch("weko_workflow.utils.send_mail", return_value=True)
-        result = usage_report.send_reminder_mail([],mail_template, acts)
+        result = usage_report.send_reminder_mail([],mail_id, acts)
         assert result == True
 
         # not exist activities and mail_template, failed send mail
@@ -2049,7 +2072,7 @@ class TestUsageReport:
 # .tox/c1/bin/pytest --cov=weko_admin tests/test_utils.py::TestUsageReport::test_build_user_info -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
     def test_build_user_info(self):
         record_data = {
-            "subitem_restricted_access_name":"test_value",
+            "subitem_fullname":"test_value",
             "subitem_test_item":["subitem_test_item1"]
         }
         usage_report = UsageReport()

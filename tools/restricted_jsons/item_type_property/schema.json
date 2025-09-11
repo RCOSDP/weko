@@ -1,0 +1,267 @@
+{
+    "format": "object",
+    "properties": {
+        "accessdate": {
+            "format": "datetime",
+            "title": "公開日",
+            "title_i18n": {
+                "en": "",
+                "ja": ""
+            },
+            "type": "string"
+        },
+        "accessrole": {
+            "default": "open_restricted",
+            "enum": [
+                "open_access",
+                "open_date",
+                "open_login",
+                "open_no",
+                "open_restricted"
+            ],
+            "format": "radios",
+            "title": "アクセス",
+            "type": "string"
+        },
+        "displaytype": {
+            "enum": [
+                "detail",
+                "simple",
+                "preview"
+            ],
+            "format": "select",
+            "title": "表示形式",
+            "type": "string"
+        },
+        "fileDate": {
+            "format": "array",
+            "items": {
+                "format": "object",
+                "properties": {
+                    "fileDateType": {
+                        "currentEnum": [
+                            "Accepted",
+                            "Collected",
+                            "Copyrighted",
+                            "Issued",
+                            "Submitted",
+                            "Updated",
+                            "Valid"
+                        ],
+                        "enum": [
+                            null,
+                            "Accepted",
+                            "Collected",
+                            "Copyrighted",
+                            "Issued",
+                            "Submitted",
+                            "Updated",
+                            "Valid"
+                        ],
+                        "format": "select",
+                        "title": "日付タイプ",
+                        "type": [
+                            "null",
+                            "string"
+                        ]
+                    },
+                    "fileDateValue": {
+                        "format": "datetime",
+                        "title": "日付",
+                        "title_i18n": {
+                            "en": "",
+                            "ja": ""
+                        },
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "title": "日付",
+            "type": "array"
+        },
+        "filename": {
+            "enum": [],
+            "format": "select",
+            "title": "表示名",
+            "type": "string"
+        },
+        "filesize": {
+            "format": "array",
+            "items": {
+                "format": "object",
+                "properties": {
+                    "value": {
+                        "format": "text",
+                        "title": "サイズ",
+                        "title_i18n": {
+                            "en": "",
+                            "ja": ""
+                        },
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "title": "サイズ",
+            "type": "array"
+        },
+        "format": {
+            "format": "text",
+            "title": "フォーマット",
+            "title_i18n": {
+                "en": "",
+                "ja": ""
+            },
+            "type": "string"
+        },
+        "licensefree": {
+            "format": "textarea",
+            "title": " ",
+            "title_i18n": {
+                "en": "",
+                "ja": ""
+            },
+            "type": "string"
+        },
+        "licensetype": {
+            "enum": [],
+            "format": "select",
+            "title": "ライセンス",
+            "type": "string"
+        },
+        "provide": {
+            "format": "array",
+            "items": {
+                "format": "object",
+                "properties": {
+                    "role": {
+                        "currentEnum": [],
+                        "enum": [],
+                        "format": "select",
+                        "title": "ロール",
+                        "type": [
+                            "string",
+                            "number",
+                            "null"
+                        ]
+                    },
+                    "workflow": {
+                        "currentEnum": [],
+                        "enum": [],
+                        "format": "select",
+                        "title": "ワークフロー",
+                        "type": [
+                            "string",
+                            "number",
+                            "null"
+                        ]
+                    }
+                },
+                "type": "object"
+            },
+            "title": "提供方法",
+            "type": "array"
+        },
+        "roles": {
+            "format": "array",
+            "items": {
+                "format": "object",
+                "properties": {
+                    "role": {
+                        "currentEnum": [],
+                        "enum": [],
+                        "format": "select",
+                        "title": "ロール",
+                        "type": [
+                            "string",
+                            "number",
+                            "null"
+                        ]
+                    }
+                },
+                "type": "object"
+            },
+            "title": "ロール",
+            "type": "array"
+        },
+        "terms": {
+            "enum": [],
+            "format": "select",
+            "title": "利用規約",
+            "type": [
+                "string",
+                "number",
+                "null"
+            ]
+        },
+        "termsDescription": {
+            "format": "textarea",
+            "title": " ",
+            "title_i18n": {
+                "en": "",
+                "ja": ""
+            },
+            "type": "string"
+        },
+        "url": {
+            "format": "object",
+            "properties": {
+                "label": {
+                    "format": "text",
+                    "title": "ラベル",
+                    "title_i18n": {
+                        "en": "",
+                        "ja": ""
+                    },
+                    "type": "string"
+                },
+                "objectType": {
+                    "currentEnum": [
+                        "abstract",
+                        "dataset",
+                        "fulltext",
+                        "software",
+                        "summary",
+                        "thumbnail",
+                        "other"
+                    ],
+                    "enum": [
+                        null,
+                        "abstract",
+                        "dataset",
+                        "fulltext",
+                        "software",
+                        "summary",
+                        "thumbnail",
+                        "other"
+                    ],
+                    "format": "select",
+                    "title": "オブジェクトタイプ",
+                    "type": "string"
+                },
+                "url": {
+                    "format": "text",
+                    "title": "本文URL",
+                    "title_i18n": {
+                        "en": "",
+                        "ja": ""
+                    },
+                    "type": "string"
+                }
+            },
+            "title": "本文URL",
+            "type": "object"
+        },
+        "version": {
+            "format": "text",
+            "title": "バージョン情報",
+            "title_i18n": {
+                "en": "",
+                "ja": ""
+            },
+            "type": "string"
+        }
+    },
+    "type": "object"
+}

@@ -75,7 +75,7 @@ from .utils import (
     export_items, get_current_user, get_data_authors_prefix_settings,
     get_data_authors_affiliation_settings, get_list_email, get_list_username,
     get_ranking, get_user_info_by_email, get_user_info_by_username,
-    get_user_information, get_user_permission, get_workflow_by_item_type_id,
+    get_user_information, get_workflow_by_item_type_id,
     hide_form_items, is_schema_include_key, remove_excluded_items_in_json_schema,
     sanitize_input_data, save_title, set_multi_language_name, to_files_js,
     translate_schema_form, translate_validation_message, update_index_tree_for_record,
@@ -344,6 +344,14 @@ def iframe_save_model():
             for key in list(metainfo.keys()):
                 if key.startswith('either_valid_'):
                     del data['metainfo'][key]
+        # double check
+        for key, item in data.get('metainfo').items():
+            if type(item) == list:
+                for setting_vals in item:
+                    if type(setting_vals) is dict:
+                        for setting_key in setting_vals:
+                            if setting_key == 'roles' or setting_key == 'provide':
+                                setting_vals[setting_key] = [dict(s) for s in set(frozenset(d.items()) for d in setting_vals[setting_key])]
 
         # セッション取得
         if activity_id:
@@ -904,37 +912,118 @@ def validate_user_info():
 
     return jsonify(result)
 
+@blueprint_api.route('/validate_users_info', methods=['POST'])
+def validate_users_info():
+    """validate_users_info.
 
-@blueprint_api.route('/get_user_info/<int:owner>/<int:shared_user_id>',
-                     methods=['GET'])
+    Host the api which provide 2 service:
+        Validate users list information: check if users is exist
+
+    request:
+        header: Content type must be json
+        data:
+            'results': [
+                {
+                    'username' : The username,
+                    'email' : The email,
+                    'owner' : True/False
+                }
+            ]
+    return: response pack:
+        [
+            {
+                'owner' : True/False,
+                'info': users information if users is valid,
+                'validation': 'true' if user is valid, other case return 'false',
+                'error': return error message, empty if no error occurs
+            }
+        ]
+
+    How to use: Validation: fill both username and email
+    """
+    result = {'results':[]}
+
+    if request.headers['Content-Type'] != 'application/json':
+        """Check header of request"""
+        result['error'] = _('Header Error')
+        return jsonify(result)
+    
+    data_list = request.get_json()
+    for data in data_list:
+        info = {
+            'owner': False,
+            'info': '',
+            'validation': False,
+            'error': ''
+        }
+        username = data.get('username', '')
+        email = data.get('email', '')
+
+        try:
+            info['owner'] = data.get('owner', False)
+            if username != "":
+                if email == "":
+                    info['info'] = get_user_info_by_username(username)
+                    if not info['info']:
+                        raise Exception('Not Found Username')
+                    info['validation'] = True
+                else:
+                    validate_data = validate_user(username, email)
+                    info['info'] = validate_data['results']
+                    info['validation'] = validate_data['validation']
+                    if validate_data['error'] != "":
+                        raise Exception(validate_data['error'])
+                result['results'].append(info)
+
+            if email != "" and username == "":
+                info['info'] = get_user_info_by_email(email)
+                if not info['info']:
+                    raise Exception('Not Found Email')
+                info['validation'] = True
+                result['results'].append(info)
+
+        except Exception as e:
+            info['error'] = str(e)
+            result['results'].append(info)
+
+    return jsonify(result)
+
+@blueprint_api.route('/get_user_info/<int:owner>', methods=['GET'])
 @item_permission.require(http_exception=403)
-def get_user_info(owner, shared_user_id):
+def get_user_info(owner):
     """get_user_info.
 
-    Get username and password by querying user id
+    Get username and email by querying user id
 
     param:
-        user_id: The user ID
-    return: The result json:
+        user_ids: The user ID list
+    return: The result json list:
+        userid: The userid,
         username: The username,
         email: The email,
         error: null if no error occurs
     """
-    result = {
+    result = []
+
+    shared_user_ids = request.args.getlist('shared_user_ids', type=int)
+    shared_user_ids.append(owner)
+    user_infos = get_user_information(shared_user_ids)
+    for user_info in user_infos:
+        info = {
+        'userid': '',
         'username': '',
         'email': '',
         'owner': False,
         'error': ''
-    }
-    try:
-        user_info = get_user_information(shared_user_id)
-        result['username'] = user_info['username']
-        result['email'] = user_info['email']
-        if owner != 0:
-            result['owner'] = get_user_permission(owner)
-    except Exception as e:
-        result['error'] = str(e)
-
+        }
+        info['userid'] = user_info['userid']
+        info['username'] = user_info['username']
+        info['email'] = user_info['email']
+        if owner == user_info['userid']:
+            info['owner'] = True
+        
+        result.append(info)
+    
     return jsonify(result)
 
 
@@ -956,6 +1045,63 @@ def get_current_login_user_id():
         result['error'] = str(e)
 
     return jsonify(result)
+
+@blueprint_api.route('/is_login_user_email/<string:email>', methods=['GET'])
+def is_login_user_email(email):
+    result = {
+        'is_login_user': False,
+        'error': '',
+    }
+    # get user_id from delete email
+    user_info = get_user_info_by_email(email)
+    current_user_id = int(get_current_user())
+    if (user_info != None and user_info['user_id'] == current_user_id):
+        message = _("Logged-in user cannot be deleted.")
+        result['error'] = message
+        result['is_login_user'] = True
+
+    return jsonify(result)
+
+@blueprint_api.route('/is_login_user_ids', methods=['GET'])
+def is_login_user_ids():
+    ids = request.args.getlist('ids')
+    result = {
+        'is_login_user' : False,
+        'error': ''
+    }
+    #admin user
+    supers = current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER'] + current_app.config['WEKO_PERMISSION_ROLE_COMMUNITY']
+    is_admin = False
+    for role in list(current_user.roles or []):
+        if role.name in supers:
+            is_admin = True
+    if not is_admin:
+        for target_id in ids:
+            if int(target_id) == int(get_current_user()):
+                result['is_login_user'] = True
+                result['error'] = _("Logged-in user cannot be deleted.")
+                break
+    else:
+        result['is_login_user'] = False
+    return jsonify(result)
+
+@blueprint_api.route('/get_userinfo_by_emails', methods=['GET'])
+def get_userinfo_by_emails():
+    emails = request.args.getlist('emails')
+    user_infos = []
+    for email in emails :
+        # Flaskのrequest.args.getでは記号「+」が空白になる為、変換する
+        email = email.replace(' ', '+')
+        user_info = get_user_info_by_email(email)
+        if not user_info or ('error' in user_info):
+            raise ConnectionError("wrong email or Cannot connect to server!")
+        
+        user_info['user_id'] = user_info['user_id']
+        user_info['username'] = user_info['username']
+        user_info['email'] = user_info['email']
+        user_infos.append(user_info)
+
+    return jsonify(user_infos)
 
 
 @blueprint.route('/prepare_edit_item', methods=['POST'])
@@ -1016,11 +1162,9 @@ def prepare_edit_item(id=None, community=None):
                 msg=_('Record does not exist.')
             )
 
-        authenticators = [
-            str(deposit.get('owner')),
-            str(deposit.get('weko_shared_id'))
-        ]
-        user_id = str(get_current_user())
+        authenticators = [int(deposit.get('owner'))] \
+            + deposit.get('weko_shared_ids') if deposit.get('weko_shared_ids') is not None else []
+        user_id = int(get_current_user())
         work_activity = WorkActivity()
         latest_pid = PIDVersioning(child=recid).last_child
 
@@ -1125,7 +1269,7 @@ def prepare_edit_item(id=None, community=None):
 
 @blueprint.route('/prepare_delete_item', methods=['POST'])
 @login_required
-def prepare_delete_item(id=None, community=None, shared_user_id=-1):
+def prepare_delete_item(id=None, community=None, shared_user_ids=[]):
     """Prepare delete item.
 
     Delete item directly or create delete activity.
@@ -1140,7 +1284,7 @@ def prepare_delete_item(id=None, community=None, shared_user_id=-1):
     Args:
         id (str): pid_value
         community (str): community id
-        shared_user_id (int): shared user id
+        shared_user_ids (list): shared user ids
 
     Returns:
         Response: JSON response with code and message.
@@ -1184,9 +1328,8 @@ def prepare_delete_item(id=None, community=None, shared_user_id=-1):
                 msg=_('Record does not exist.')
             )
 
-        authenticators = [
-            str(deposit.get('owner')), str(deposit.get('weko_shared_id'))
-        ]
+        authenticators = [str(deposit.get('owner'))] + \
+                         [str(uid) for uid in deposit.get('weko_shared_ids', [])]
         user_id = str(current_user.get_id())
         work_activity = WorkActivity()
         latest_pid = PIDVersioning(child=recid).last_child
@@ -1250,7 +1393,7 @@ def prepare_delete_item(id=None, community=None, shared_user_id=-1):
         if not workflow or workflow.delete_flow_id is None:
             from weko_records_ui.views import soft_delete
             soft_delete(del_value)
-            send_mail_item_deleted(pid_value, deposit, user_id, shared_user_id)
+            send_mail_item_deleted(pid_value, deposit, user_id, shared_user_ids)
             return jsonify(
                 code=0,
                 msg="success",
@@ -1258,7 +1401,7 @@ def prepare_delete_item(id=None, community=None, shared_user_id=-1):
             )
 
         post_activity['flow_id'] = workflow.delete_flow_id
-        post_activity['shared_user_id'] = shared_user_id
+        post_activity['shared_user_ids'] = shared_user_ids
 
         try:
             rtn = prepare_delete_workflow(post_activity, recid, deposit)
@@ -1514,7 +1657,6 @@ def check_validation_error_msg(activity_id):
 @blueprint.route('/', methods=['GET'])
 @blueprint.route('/corresponding-activity', methods=['GET'])
 @login_required
-@item_permission.require(http_exception=403)
 def corresponding_activity_list():
     """Get corresponding usage & output activity list.
 

@@ -1,4 +1,3 @@
-
 import pytest
 from requests.models import Response
 from mock import patch
@@ -77,25 +76,26 @@ class TestCrossRefOpenURL:
 
 #     def get_data(self):
 # .tox/c1/bin/pytest --cov=weko_items_autofill tests/test_api.py::TestCrossRefOpenURL::test_get_data -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-autofill/.tox/c1/tmp
-    def test_get_data(self,mocker):
-        cross_ref = CrossRefOpenURL("test_pid","test_doi")
+    def test_get_data(self, app, mocker):
+        cross_ref = CrossRefOpenURL("test_pid", "test_doi")
         res = Response()
         res._content = b"test response"
         res.status_code = 200
-        
-        with patch("weko_items_autofill.api.CrossRefOpenURL._do_http_request",return_value=res):
-            result = cross_ref.get_data()
-            assert result == {"response":"test response","error":""}
-        # statuscode != 200
-        res.status_code = 400
-        with patch("weko_items_autofill.api.CrossRefOpenURL._do_http_request",return_value=res):
-            result = cross_ref.get_data()
-            assert result == {"response":"","error":""}
-        
-        # raise Exception
-        with patch("weko_items_autofill.api.CrossRefOpenURL._do_http_request",side_effect=Exception("request error")):
-            result = cross_ref.get_data()
-            assert result == {"response":"","error":"request error"}
+
+        with app.app_context():
+            with patch("weko_items_autofill.api.CrossRefOpenURL._do_http_request", return_value=res):
+                result = cross_ref.get_data()
+                assert result == {"response": "test response", "error": ""}
+            # statuscode != 200
+            res.status_code = 400
+            with patch("weko_items_autofill.api.CrossRefOpenURL._do_http_request", return_value=res):
+                result = cross_ref.get_data()
+                assert result == {"response": "", "error": ""}
+
+            # raise Exception
+            with patch("weko_items_autofill.api.CrossRefOpenURL._do_http_request", side_effect=Exception("request error")):
+                result = cross_ref.get_data()
+                assert result == {"response": "", "error": "request error"}
 
 
 # class CiNiiURL:
@@ -157,25 +157,25 @@ class TestCiNiiURL:
         mock_get.assert_called_with("https://cir.nii.ac.jp/crid/test_naid.json",
                                     timeout=5,proxies={"http":"test_http_proxy","https":"test_https_proxy"})
 
-
 #     def get_data(self):
 # .tox/c1/bin/pytest --cov=weko_items_autofill tests/test_api.py::TestCiNiiURL::test_get_data -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-autofill/.tox/c1/tmp
-    def test_get_data(self):
+    def test_get_data(self, app):
         cini = CiNiiURL("test_naid")
         res = Response()
         res._content = b'{"key":"test response"}'
         res.status_code = 200
-        
-        with patch("weko_items_autofill.api.CiNiiURL._do_http_request",return_value=res):
-            result = cini.get_data()
-            assert result == {"response":{"key":"test response"},"error":""}
-        # statuscode != 200
-        res.status_code = 400
-        with patch("weko_items_autofill.api.CiNiiURL._do_http_request",return_value=res):
-            result = cini.get_data()
-            assert result == {"response":"","error":""}
-        
-        # raise Exception
-        with patch("weko_items_autofill.api.CiNiiURL._do_http_request",side_effect=Exception("request error")):
-            result = cini.get_data()
-            assert result == {"response":"","error":"request error"}
+
+        with app.app_context():
+            with patch("weko_items_autofill.api.CiNiiURL._do_http_request",return_value=res):
+                result = cini.get_data()
+                assert result == {"response":{"key":"test response"},"error":""}
+            # statuscode != 200
+            res.status_code = 400
+            with patch("weko_items_autofill.api.CiNiiURL._do_http_request",return_value=res):
+                result = cini.get_data()
+                assert result == {"response":"","error":""}
+            
+            # raise Exception
+            with patch("weko_items_autofill.api.CiNiiURL._do_http_request",side_effect=Exception("request error")):
+                result = cini.get_data()
+                assert result == {"response":"","error":"request error"}

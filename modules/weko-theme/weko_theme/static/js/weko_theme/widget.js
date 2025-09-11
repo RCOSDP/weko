@@ -531,10 +531,15 @@ const PageBodyGrid = function () {
         }
         var currentTime = new Date().getTime();
         var current_path=location.pathname
-        var url = (current_path === "/" || current_path.indexOf("/c/") !==-1) ? "/main" : current_path;
+        var path_parts = current_path.split('/').filter(Boolean)
+        var url = (
+          current_path === "/" || 
+          current_path.startsWith("/c/") && path_parts.length === 2
+        ) ? "/main" : current_path;
         var _this = this
         $.ajax({
-            url: '/api/admin/access_counter_record/' + repository_id + url + '/' + current_language,
+            url: '/api/admin/access_counter_record/' + 
+              repository_id + url + '/' + current_language,
             method: 'GET',
             async: false,
             success: function(response) {

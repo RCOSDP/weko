@@ -952,8 +952,8 @@ def test_fileinstance_send_file(app, db, dummy_location,dummy_s3_location,mocker
                     readable=True
                 )
                 res = f.send_file("test_file.docx",True,"application/vnd.openxmlformats-officedocument.wordprocessingml.document",False,None,False,True)
-                mock_convert.assert_called_with("/tmp/pdf_dir/1","/tmp/convert_1/test_file.docx")
-                shutil.rmtree("/tmp/pdf_dir/1")
+                mock_convert.assert_called_with("/var/tmp/pdf_dir/1","/var/tmp/convert_1/test_file.docx")
+                shutil.rmtree("/var/tmp/pdf_dir/1")
 
 def test_fileinstance_send_file_s3_path1(app, db, dummy_location,dummy_s3_location,mocker):
     """Test file instance send file."""
@@ -992,8 +992,8 @@ def test_fileinstance_send_file_s3_path1(app, db, dummy_location,dummy_s3_locati
                     readable=True
                 )
                 res = f.send_file("test_file.docx",True,"application/vnd.openxmlformats-officedocument.wordprocessingml.document",False,None,False,True)
-                mock_convert.assert_called_with("/tmp/pdf_dir/1","/tmp/convert_1/test_file.docx")
-                shutil.rmtree("/tmp/pdf_dir/1")
+                mock_convert.assert_called_with("/var/tmp/pdf_dir/1","/var/tmp/convert_1/test_file.docx")
+                shutil.rmtree("/var/tmp/pdf_dir/1")
 
 def test_fileinstance_send_file_s3_path2(app, db, dummy_location,dummy_s3_location,mocker):
     """Test file instance send file."""
@@ -1032,8 +1032,8 @@ def test_fileinstance_send_file_s3_path2(app, db, dummy_location,dummy_s3_locati
                     readable=True
                 )
                 res = f.send_file("test_file.docx",True,"application/vnd.openxmlformats-officedocument.wordprocessingml.document",False,None,False,True)
-                mock_convert.assert_called_with("/tmp/pdf_dir/1","/tmp/convert_1/test_file.docx")
-                shutil.rmtree("/tmp/pdf_dir/1")
+                mock_convert.assert_called_with("/var/tmp/pdf_dir/1","/var/tmp/convert_1/test_file.docx")
+                shutil.rmtree("/var/tmp/pdf_dir/1")
 
 
 
@@ -1099,4 +1099,4 @@ def test_get_location_all(app, db, dummy_location):
     """Test validating the FileInstance."""
     f = FileInstance.create()
     locations = f.get_location_all()
-    assert locations == None
+    assert locations == [dummy_location]

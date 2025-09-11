@@ -1,0 +1,757 @@
+[
+    {
+        "pos_index": [
+            "IndexA"
+        ],
+        "publish_status": "public",
+        "feedback_mail": [
+            "wekosoftware@nii.ac.jp"
+        ],
+        "doi_ra": "JaLC",
+        "edit_mode": "Keep",
+        "metadata": {
+            "item_1617186331708": [
+                {
+                    "subitem_1551255647225": "ja_conference paperITEM00000001(public_open_access_open_access_simple)",
+                    "subitem_1551255648112": "ja"
+                },
+                {
+                    "subitem_1551255647225": "en_conference paperITEM00000001(public_open_access_simple)",
+                    "subitem_1551255648112": "en"
+                }
+            ],
+            "item_1617186702042": [
+                {
+                    "subitem_1551255818386": "jpn"
+                }
+            ],
+            "item_1617258105262": {
+                "resourcetype": "conference paper",
+                "resourceuri": "http://purl.org/coar/resource_type/c_5794"
+            },
+            "item_1685583796047": [
+                {
+                    "accessrole": "open_restricted",
+                    "date": [
+                        {
+                            "dateType": "Available",
+                            "dateValue": "2021-07-12"
+                        }
+                    ],
+                    "displaytype": "simple",
+                    "filename": "1KB.pdf",
+                    "filesize": [
+                        {
+                            "value": "1 KB"
+                        }
+                    ],
+                    "format": "text/plain"
+                }
+            ]
+        },
+        "file_path": [
+            "file00000001/1KB.pdf"
+        ],
+        "item_type_name": "新制限公開用アイテムタイプ",
+        "item_type_id": 5,
+        "$schema": "https://localhost:8443/items/jsonschema/5",
+        "identifier_key": "item_1617186819068",
+        "errors": null,
+        "status": "new",
+        "id": "oai:weko3.example.org:00000001",
+        "item_title": "ja_conference paperITEM00000001(public_open_access_open_access_simple)",
+        "filenames": [
+            {
+                "id": ".metadata.item_1685583796047[0].filename",
+                "filename": "1KB.pdf"
+            },
+            {
+                "id": ".metadata.item_1685583796047[1].filename",
+                "filename": ""
+            }
+        ],
+        "is_change_identifier": false
+    },
+    {
+        "pos_index": [
+            "IndexA"
+        ],
+        "publish_status": "public",
+        "feedback_mail": [
+            "wekosoftware@nii.ac.jp"
+        ],
+        "doi_ra": "JaLC",
+        "edit_mode": "Keep",
+        "metadata": {
+            "item_1617186331708": [
+                {
+                    "subitem_1551255647225": "ja_conference paperITEM00000001(public_open_access_open_access_simple)",
+                    "subitem_1551255648112": "ja"
+                },
+                {
+                    "subitem_1551255647225": "en_conference paperITEM00000001(public_open_access_simple)",
+                    "subitem_1551255648112": "en"
+                }
+            ],
+            "item_1617186702042": [
+                {
+                    "subitem_1551255818386": "jpn"
+                }
+            ],
+            "item_1617258105262": {
+                "resourcetype": "conference paper",
+                "resourceuri": "http://purl.org/coar/resource_type/c_5794"
+            },
+            "item_1685583796047": [
+                {
+                    "accessrole": "open_restricted",
+                    "date": [
+                        {
+                            "dateType": "Available",
+                            "dateValue": "2021-07-12"
+                        }
+                    ],
+                    "displaytype": "simple",
+                    "filename": "1KB.pdf",
+                    "filesize": [
+                        {
+                            "value": "1 KB"
+                        }
+                    ],
+                    "format": "text/plain",
+                    "terms" : 168065611041
+                }
+            ]
+        },
+        "file_path": [
+            "file00000001/1KB.pdf"
+        ],
+        "item_type_name": "新制限公開用アイテムタイプ",
+        "item_type_id": 5,
+        "$schema": "https://localhost:8443/items/jsonschema/5",
+        "identifier_key": "item_1617186819068",
+        "errors": null,
+        "status": "new",
+        "id": "oai:weko3.example.org:00000001",
+        "item_title": "ja_conference paperITEM00000001(public_open_access_open_access_simple)",
+        "filenames": [
+            {
+                "id": ".metadata.item_1685583796047[0].filename",
+                "filename": "1KB.pdf"
+            },
+            {
+                "id": ".metadata.item_1685583796047[1].filename",
+                "filename": ""
+            }
+        ],
+        "is_change_identifier": false
+    },
+    {
+        "pos_index": [
+            "IndexA"
+        ],
+        "publish_status": "public",
+        "feedback_mail": [
+            "wekosoftware@nii.ac.jp"
+        ],
+        "doi_ra": "JaLC",
+        "edit_mode": "Keep",
+        "metadata": {
+            "item_1617186331708": [
+                {
+                    "subitem_1551255647225": "ja_conference paperITEM00000001(public_open_access_open_access_simple)",
+                    "subitem_1551255648112": "ja"
+                },
+                {
+                    "subitem_1551255647225": "en_conference paperITEM00000001(public_open_access_simple)",
+                    "subitem_1551255648112": "en"
+                }
+            ],
+            "item_1617186702042": [
+                {
+                    "subitem_1551255818386": "jpn"
+                }
+            ],
+            "item_1685583796047": [
+                {
+                    "accessrole": "open_restricted",
+                    "date": [
+                        {
+                            "dateType": "Available",
+                            "dateValue": "2021-07-12"
+                        }
+                    ],
+                    "displaytype": "simple",
+                    "filename": "1KB.pdf",
+                    "filesize": [
+                        {
+                            "value": "1 KB"
+                        }
+                    ],
+                    "format": "text/plain",
+                    "provide" : [
+                        {
+                            "workflow": 1,
+                            "role": 3
+                        }
+                    ]
+                }
+            ]
+        },
+        "file_path": [
+            "file00000001/1KB.pdf"
+        ],
+        "item_type_name": "新制限公開用アイテムタイプ",
+        "item_type_id": 5,
+        "$schema": "https://localhost:8443/items/jsonschema/5",
+        "identifier_key": "item_1617186819068",
+        "errors": null,
+        "status": "new",
+        "id": "oai:weko3.example.org:00000001",
+        "item_title": "ja_conference paperITEM00000001(public_open_access_open_access_simple)",
+        "filenames": [
+            {
+                "id": ".metadata.item_1685583796047[0].filename",
+                "filename": "1KB.pdf"
+            },
+            {
+                "id": ".metadata.item_1685583796047[1].filename",
+                "filename": ""
+            }
+        ],
+        "is_change_identifier": false
+    },
+    {
+        "pos_index": [
+            "IndexA"
+        ],
+        "publish_status": "public",
+        "feedback_mail": [
+            "wekosoftware@nii.ac.jp"
+        ],
+        "doi_ra": "JaLC",
+        "edit_mode": "Keep",
+        "metadata": {
+            "item_1617186331708": [
+                {
+                    "subitem_1551255647225": "ja_conference paperITEM00000001(public_open_access_open_access_simple)",
+                    "subitem_1551255648112": "ja"
+                },
+                {
+                    "subitem_1551255647225": "en_conference paperITEM00000001(public_open_access_simple)",
+                    "subitem_1551255648112": "en"
+                }
+            ],
+            "item_1617186702042": [
+                {
+                    "subitem_1551255818386": "jpn"
+                }
+            ],
+            "item_1617258105262": {
+                "resourcetype": "conference paper",
+                "resourceuri": "http://purl.org/coar/resource_type/c_5794"
+            },
+            "item_1685583796047": [
+                {
+                    "accessrole": "open_restricted",
+                    "date": [
+                        {
+                            "dateType": "Available",
+                            "dateValue": "2021-07-12"
+                        }
+                    ],
+                    "displaytype": "simple",
+                    "filename": "1KB.pdf",
+                    "filesize": [
+                        {
+                            "value": "1 KB"
+                        }
+                    ],
+                    "format": "text/plain",
+                    "terms" : 1
+                }
+            ]
+        },
+        "file_path": [
+            "file00000001/1KB.pdf"
+        ],
+        "item_type_name": "新制限公開用アイテムタイプ",
+        "item_type_id": 5,
+        "$schema": "https://localhost:8443/items/jsonschema/5",
+        "identifier_key": "item_1617186819068",
+        "errors": null,
+        "status": "new",
+        "id": "oai:weko3.example.org:00000001",
+        "item_title": "ja_conference paperITEM00000001(public_open_access_open_access_simple)",
+        "filenames": [
+            {
+                "id": ".metadata.item_1685583796047[0].filename",
+                "filename": "1KB.pdf"
+            },
+            {
+                "id": ".metadata.item_1685583796047[1].filename",
+                "filename": ""
+            }
+        ],
+        "is_change_identifier": false
+    },
+    {
+        "pos_index": [
+            "IndexA"
+        ],
+        "publish_status": "public",
+        "feedback_mail": [
+            "wekosoftware@nii.ac.jp"
+        ],
+        "doi_ra": "JaLC",
+        "edit_mode": "Keep",
+        "metadata": {
+            "item_1617186331708": [
+                {
+                    "subitem_1551255647225": "ja_conference paperITEM00000001(public_open_access_open_access_simple)",
+                    "subitem_1551255648112": "ja"
+                },
+                {
+                    "subitem_1551255647225": "en_conference paperITEM00000001(public_open_access_simple)",
+                    "subitem_1551255648112": "en"
+                }
+            ],
+            "item_1617186702042": [
+                {
+                    "subitem_1551255818386": "jpn"
+                }
+            ],
+            "item_1617258105262": {
+                "resourcetype": "conference paper",
+                "resourceuri": "http://purl.org/coar/resource_type/c_5794"
+            },
+            "item_1685583796047": [
+                {
+                    "accessrole": "open_restricted",
+                    "date": [
+                        {
+                            "dateType": "Available",
+                            "dateValue": "2021-07-12"
+                        }
+                    ],
+                    "displaytype": "simple",
+                    "filename": "1KB.pdf",
+                    "filesize": [
+                        {
+                            "value": "1 KB"
+                        }
+                    ],
+                    "format": "text/plain",
+                    "provide" : [
+                        {
+                            "workflow": 0,
+                            "role": 3
+                        }
+                    ]
+                }
+            ]
+        },
+        "file_path": [
+            "file00000001/1KB.pdf"
+        ],
+        "item_type_name": "新制限公開用アイテムタイプ",
+        "item_type_id": 5,
+        "$schema": "https://localhost:8443/items/jsonschema/5",
+        "identifier_key": "item_1617186819068",
+        "errors": null,
+        "status": "new",
+        "id": "oai:weko3.example.org:00000001",
+        "item_title": "ja_conference paperITEM00000001(public_open_access_open_access_simple)",
+        "filenames": [
+            {
+                "id": ".metadata.item_1685583796047[0].filename",
+                "filename": "1KB.pdf"
+            },
+            {
+                "id": ".metadata.item_1685583796047[1].filename",
+                "filename": ""
+            }
+        ],
+        "is_change_identifier": false
+    },
+    {
+        "pos_index": [
+            "IndexA"
+        ],
+        "publish_status": "public",
+        "feedback_mail": [
+            "wekosoftware@nii.ac.jp"
+        ],
+        "doi_ra": "JaLC",
+        "edit_mode": "Keep",
+        "metadata": {
+            "item_1617186331708": [
+                {
+                    "subitem_1551255647225": "ja_conference paperITEM00000001(public_open_access_open_access_simple)",
+                    "subitem_1551255648112": "ja"
+                },
+                {
+                    "subitem_1551255647225": "en_conference paperITEM00000001(public_open_access_simple)",
+                    "subitem_1551255648112": "en"
+                }
+            ],
+            "item_1617186702042": [
+                {
+                    "subitem_1551255818386": "jpn"
+                }
+            ],
+            "item_1617258105262": {
+                "resourcetype": "conference paper",
+                "resourceuri": "http://purl.org/coar/resource_type/c_5794"
+            },
+            "item_1685583796047": [
+                {
+                    "accessrole": "open_restricted",
+                    "date": [
+                        {
+                            "dateType": "Available",
+                            "dateValue": "2021-07-12"
+                        }
+                    ],
+                    "displaytype": "simple",
+                    "filename": "1KB.pdf",
+                    "filesize": [
+                        {
+                            "value": "1 KB"
+                        }
+                    ],
+                    "format": "text/plain",
+                    "provide" : [
+                        {
+                            "workflow": 1,
+                            "role": 100
+                        }
+                    ]
+                }
+            ]
+        },
+        "file_path": [
+            "file00000001/1KB.pdf"
+        ],
+        "item_type_name": "新制限公開用アイテムタイプ",
+        "item_type_id": 5,
+        "$schema": "https://localhost:8443/items/jsonschema/5",
+        "identifier_key": "item_1617186819068",
+        "errors": null,
+        "status": "new",
+        "id": "oai:weko3.example.org:00000001",
+        "item_title": "ja_conference paperITEM00000001(public_open_access_open_access_simple)",
+        "filenames": [
+            {
+                "id": ".metadata.item_1685583796047[0].filename",
+                "filename": "1KB.pdf"
+            },
+            {
+                "id": ".metadata.item_1685583796047[1].filename",
+                "filename": ""
+            }
+        ],
+        "is_change_identifier": false
+    },
+    {
+        "pos_index": [
+            "IndexA"
+        ],
+        "publish_status": "public",
+        "feedback_mail": [
+            "wekosoftware@nii.ac.jp"
+        ],
+        "doi_ra": "JaLC",
+        "edit_mode": "Keep",
+        "metadata": {
+            "item_1617186331708": [
+                {
+                    "subitem_1551255647225": "ja_conference paperITEM00000001(public_open_access_open_access_simple)",
+                    "subitem_1551255648112": "ja"
+                },
+                {
+                    "subitem_1551255647225": "en_conference paperITEM00000001(public_open_access_simple)",
+                    "subitem_1551255648112": "en"
+                }
+            ],
+            "item_1617186702042": [
+                {
+                    "subitem_1551255818386": "jpn"
+                }
+            ],
+            "item_1685583796047": [
+                {
+                    "accessrole": "open_restricted",
+                    "date": [
+                        {
+                            "dateType": "Available",
+                            "dateValue": "2021-07-12"
+                        }
+                    ],
+                    "displaytype": "simple",
+                    "filename": "1KB.pdf",
+                    "filesize": [
+                        {
+                            "value": "1 KB"
+                        }
+                    ],
+                    "format": "text/plain",
+                    "provide" : [
+                        {
+                            "role": 1
+                        }
+                    ]
+                }
+            ]
+        },
+        "file_path": [
+            "file00000001/1KB.pdf"
+        ],
+        "item_type_name": "新制限公開用アイテムタイプ",
+        "item_type_id": 5,
+        "$schema": "https://localhost:8443/items/jsonschema/5",
+        "identifier_key": "item_1617186819068",
+        "errors": null,
+        "status": "new",
+        "id": "oai:weko3.example.org:00000001",
+        "item_title": "ja_conference paperITEM00000001(public_open_access_open_access_simple)",
+        "filenames": [
+            {
+                "id": ".metadata.item_1685583796047[0].filename",
+                "filename": "1KB.pdf"
+            },
+            {
+                "id": ".metadata.item_1685583796047[1].filename",
+                "filename": ""
+            }
+        ],
+        "is_change_identifier": false
+    },
+    {
+        "pos_index": [
+            "IndexA"
+        ],
+        "publish_status": "public",
+        "feedback_mail": [
+            "wekosoftware@nii.ac.jp"
+        ],
+        "doi_ra": "JaLC",
+        "edit_mode": "Keep",
+        "metadata": {
+            "item_1617186331708": [
+                {
+                    "subitem_1551255647225": "ja_conference paperITEM00000001(public_open_access_open_access_simple)",
+                    "subitem_1551255648112": "ja"
+                },
+                {
+                    "subitem_1551255647225": "en_conference paperITEM00000001(public_open_access_simple)",
+                    "subitem_1551255648112": "en"
+                }
+            ],
+            "item_1617186702042": [
+                {
+                    "subitem_1551255818386": "jpn"
+                }
+            ],
+            "item_1685583796047": [
+                {
+                    "accessrole": "open_restricted",
+                    "date": [
+                        {
+                            "dateType": "Available",
+                            "dateValue": "2021-07-12"
+                        }
+                    ],
+                    "displaytype": "simple",
+                    "filename": "1KB.pdf",
+                    "filesize": [
+                        {
+                            "value": "1 KB"
+                        }
+                    ],
+                    "format": "text/plain",
+                    "provide" : [
+                        {
+                            "workflow": 1
+                        }
+                    ]
+                }
+            ]
+        },
+        "file_path": [
+            "file00000001/1KB.pdf"
+        ],
+        "item_type_name": "新制限公開用アイテムタイプ",
+        "item_type_id": 5,
+        "$schema": "https://localhost:8443/items/jsonschema/5",
+        "identifier_key": "item_1617186819068",
+        "errors": null,
+        "status": "new",
+        "id": "oai:weko3.example.org:00000001",
+        "item_title": "ja_conference paperITEM00000001(public_open_access_open_access_simple)",
+        "filenames": [
+            {
+                "id": ".metadata.item_1685583796047[0].filename",
+                "filename": "1KB.pdf"
+            },
+            {
+                "id": ".metadata.item_1685583796047[1].filename",
+                "filename": ""
+            }
+        ],
+        "is_change_identifier": false
+    },
+    {
+        "pos_index": [
+            "IndexA"
+        ],
+        "publish_status": "public",
+        "feedback_mail": [
+            "wekosoftware@nii.ac.jp"
+        ],
+        "doi_ra": "JaLC",
+        "edit_mode": "Keep",
+        "metadata": {
+            "item_1617186331708": [
+                {
+                    "subitem_1551255647225": "ja_conference paperITEM00000001(public_open_access_open_access_simple)",
+                    "subitem_1551255648112": "ja"
+                },
+                {
+                    "subitem_1551255647225": "en_conference paperITEM00000001(public_open_access_simple)",
+                    "subitem_1551255648112": "en"
+                }
+            ],
+            "item_1617186702042": [
+                {
+                    "subitem_1551255818386": "jpn"
+                }
+            ],
+            "item_1617258105262": {
+                "resourcetype": "conference paper",
+                "resourceuri": "http://purl.org/coar/resource_type/c_5794"
+            },
+            "item_1685583796047": [
+                {
+                    "accessrole": "open_restricted",
+                    "date": [
+                        {
+                            "dateType": "Available",
+                            "dateValue": "2021-07-12"
+                        }
+                    ],
+                    "displaytype": "simple",
+                    "filename": "1KB.pdf",
+                    "filesize": [
+                        {
+                            "value": "1 KB"
+                        }
+                    ],
+                    "format": "text/plain"
+                }
+            ]
+        },
+        "file_path": [
+            "file00000001/1KB.pdf"
+        ],
+        "item_type_name": "新制限公開用アイテムタイプ",
+        "item_type_id": 5,
+        "$schema": "https://localhost:8443/items/jsonschema/5",
+        "identifier_key": "item_1617186819068",
+        "errors": null,
+        "status": "new",
+        "id": "oai:weko3.example.org:00000001",
+        "item_title": "ja_conference paperITEM00000001(public_open_access_open_access_simple)",
+        "filenames": [
+            {
+                "id": ".metadata.item_1685583796047[0].filename",
+                "filename": "1KB.pdf"
+            },
+            {
+                "id": ".metadata.item_1685583796047[1].filename",
+                "filename": ""
+            }
+        ],
+        "is_change_identifier": false
+    },
+    {
+        "pos_index": [
+            "IndexA"
+        ],
+        "publish_status": "public",
+        "feedback_mail": [
+            "wekosoftware@nii.ac.jp"
+        ],
+        "doi_ra": "JaLC",
+        "edit_mode": "Keep",
+        "metadata": {
+            "item_1617186331708": [
+                {
+                    "subitem_1551255647225": "ja_conference paperITEM00000001(public_open_access_open_access_simple)",
+                    "subitem_1551255648112": "ja"
+                },
+                {
+                    "subitem_1551255647225": "en_conference paperITEM00000001(public_open_access_simple)",
+                    "subitem_1551255648112": "en"
+                }
+            ],
+            "item_1617186702042": [
+                {
+                    "subitem_1551255818386": "jpn"
+                }
+            ],
+            "item_1617258105262": {
+                "resourcetype": "conference paper",
+                "resourceuri": "http://purl.org/coar/resource_type/c_5794"
+            },
+            "item_1685583796047": [
+                {
+                    "accessrole": "open_restricted",
+                    "date": [
+                        {
+                            "dateType": "Available",
+                            "dateValue": "2021-07-12"
+                        }
+                    ],
+                    "displaytype": "simple",
+                    "filename": "1KB.pdf",
+                    "filesize": [
+                        {
+                            "value": "1 KB"
+                        }
+                    ],
+                    "format": "text/plain",
+                    "provide" : [
+                        {
+                            "workflow": 1,
+                            "role": "none_loggin"
+                        }
+                    ],
+                    "terms" : 168065611041
+                }
+            ]
+        },
+        "file_path": [
+            "file00000001/1KB.pdf"
+        ],
+        "item_type_name": "新制限公開用アイテムタイプ",
+        "item_type_id": 5,
+        "$schema": "https://localhost:8443/items/jsonschema/5",
+        "identifier_key": "item_1617186819068",
+        "errors": null,
+        "status": "new",
+        "id": "oai:weko3.example.org:00000001",
+        "item_title": "ja_conference paperITEM00000001(public_open_access_open_access_simple)",
+        "filenames": [
+            {
+                "id": ".metadata.item_1685583796047[0].filename",
+                "filename": "1KB.pdf"
+            },
+            {
+                "id": ".metadata.item_1685583796047[1].filename",
+                "filename": ""
+            }
+        ],
+        "is_change_identifier": false
+    }
+]

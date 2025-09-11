@@ -23,7 +23,6 @@ import copy
 import json
 import traceback
 from functools import wraps
-import json
 from weko_items_ui.linkage import Researchmap
 
 from flask import current_app

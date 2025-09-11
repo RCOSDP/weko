@@ -40,7 +40,6 @@ from invenio_rest import ContentNegotiatedMethodView
 from simplekv.memory.redisstore import RedisStore
 from sqlalchemy.exc import SQLAlchemyError
 from weko_redis.redis import RedisConnection
-from weko_records_ui.external import call_external_system
 
 from .api import WekoDeposit, WekoRecord
 
@@ -55,6 +54,7 @@ def publish(**kwargs):
             pid_type='recid', pid_value=pid_value).first()
         r = RecordMetadata.query.filter_by(id=pid.object_uuid).first()
         dep = WekoDeposit(r.json, r)
+        dep.update_request_mail()
         dep.publish()
     except BaseException:
         abort(400, "Failed to publish item")
@@ -210,6 +210,7 @@ class ItemResource(ContentNegotiatedMethodView):
     def put(self, **kwargs):
         """Put."""
         from weko_workflow.api import WorkActivity
+        from weko_records_ui.external import call_external_system
         try:
             data = request.get_json()
             self.__sanitize_input_data(data)

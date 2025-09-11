@@ -184,7 +184,7 @@ def test_save_lang_list_acl(api,users,index,is_permission):
     url = url_for("weko_admin.save_lang_list")
     login_user_via_session(client=api, email=users[index]["email"])
     with patch("weko_admin.views.update_admin_lang_setting", return_value=""):
-        with patch("weko_admin.views.delete_index_trees_from_redis"):
+        with patch("weko_index_tree.utils.delete_index_trees_from_redis"):
             res = api.post(url,data=json.dumps({}),
                             content_type="application/json")
             assert_role(res,is_permission)
@@ -193,7 +193,7 @@ def test_save_lang_list_acl(api,users,index,is_permission):
 def test_save_lang_list_acl_guest(api, users):
     url = url_for("weko_admin.save_lang_list")
     with patch("weko_admin.views.update_admin_lang_setting", return_value=""):
-        with patch("weko_admin.views.delete_index_trees_from_redis"):
+        with patch("weko_index_tree.utils.delete_index_trees_from_redis"):
             res = api.post(url,data=json.dumps({}),
                               content_type="application/json")
             assert res.status_code == 302
@@ -926,7 +926,7 @@ def test_send_mail_reminder_usage_report_guest(api):
 def test_send_mail_reminder_usage_report(api,users,mocker):
     login_user_via_session(client=api, email=users[0]["email"])
     class MockUsage:
-        def send_reminder_mail(self,activity_id):
+        def send_reminder_mail(self,activities_id,mail_id=None,activities=None,forced_send=False):
             return True
     mocker.patch("weko_admin.views.UsageReport",return_value=MockUsage())
 
@@ -1051,3 +1051,32 @@ def test_dbsession_clean(app, db):
     db.session.add(itemtype_name3)
     dbsession_clean(Exception)
     assert ItemTypeName.query.filter_by(id=3).first() is None
+
+
+# .tox/c1/bin/pytest --cov=weko_admin tests/test_views.py::test_send_profile_settings_save -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
+def test_send_profile_settings_save(api, users):
+    url = url_for("weko_admin.send_profile_settings_save")
+    login_user_via_session(client=api, email=users[0]["email"])
+
+    # 正常系テスト
+    valid_data = {
+        "profiles_templates": {
+            "fullname": {"label_name": "Full Name", "visible": True, "format": "text", "options": []},
+            "university": {"label_name": "University", "visible": True, "format": "text", "options": []}
+        }
+    }
+
+    with patch("weko_admin.models.AdminSettings.update", return_value=True):
+        res = api.post(url, json=valid_data)
+        assert response_data(res) == {"status": "success", "msg": "Settings updated successfully"}
+
+    # 無効なデータテスト
+    invalid_data = {}
+
+    res = api.post(url, json=invalid_data)
+    assert response_data(res) == {"status": "error", "msg": "Invalid data"}
+
+    # 例外発生時のテスト
+    with patch("weko_admin.models.AdminSettings.update", side_effect=Exception('DB error')):
+        res = api.post(url, json=valid_data)
+        assert response_data(res) == {"status": "error", "msg": "Failed to update settings"}
