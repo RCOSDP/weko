@@ -1,4 +1,3 @@
-
 from unittest.mock import MagicMock
 import pytest
 import json
@@ -91,11 +90,11 @@ def test_redirect_method(app,mocker):
         )
         mock_render = mocker.patch("weko_accounts.views.redirect",return_value=make_response())
         _redirect_method(False)
-        mock_render.assert_called_with("http://TEST_SERVER.localdomain/secure/login.py")
+        mock_render.assert_called_with("http://test_server.localdomain/secure/login.py")
 
         mock_render = mocker.patch("weko_accounts.views.redirect",return_value=make_response())
         _redirect_method(True)
-        mock_render.assert_called_with("http://TEST_SERVER.localdomain/secure/login.py?next="+url)
+        mock_render.assert_called_with("http://test_server.localdomain/secure/login.py?next="+url)
 
 #def index():
 # .tox/c1/bin/pytest --cov=weko_accounts tests/test_views.py::test_index -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
@@ -732,7 +731,7 @@ def test_shib_stub_login(client,mocker):
     # WEKO_ACCOUNTS_SHIB_IDP_LOGIN_ENABLED is true
     mock_redirect = mocker.patch("weko_accounts.views.redirect",return_value=make_response())
     res = client.get(url)
-    mock_redirect.assert_called_with("http://test_server.localdomain/secure/login.php")
+    mock_redirect.assert_called_with("http://test_server.localdomain/secure/login.py?next=/next_page")
 
     current_app.config.update(
         WEKO_ACCOUNTS_SHIB_IDP_LOGIN_ENABLED=False
@@ -740,7 +739,13 @@ def test_shib_stub_login(client,mocker):
     # WEKO_ACCOUNTS_SHIB_IDP_LOGIN_ENABLED is true
     mock_render_template = mocker.patch("weko_accounts.views.render_template",return_value=make_response())
     res = client.get(url)
-    mock_render_template.assert_called_with('weko_accounts/login_shibuser_pattern_1.html',module_name="WEKO-Accounts")
+    mock_render_template.assert_called_with(
+        'weko_accounts/login_shibuser_pattern_1.html',
+        module_name="WEKO-Accounts",
+        return_url='http://test_server.localdomain/secure/login.py',
+        sp_entityID='https://localhost/shibboleth-sp',
+        sp_handlerURL='https://localhost/Shibboleth.sso'
+    )
 
 
 #def shib_logout():

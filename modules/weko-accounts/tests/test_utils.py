@@ -348,7 +348,7 @@ def test_get_sp_info(app):
         assert result == {
             'sp_entityID': 'https://localhost/shibboleth-sp',
             'sp_handlerURL': 'https://localhost/Shibboleth.sso',
-            'return_url': 'http://TEST_SERVER.localdomain/secure/login.py'
+            'return_url': 'http://test_server.localdomain/secure/login.py'
         }
         assert session['next'] == 'next_url'
 
@@ -359,6 +359,6 @@ def test_get_sp_info(app):
         assert result == {
             'sp_entityID': 'https://test-sp/shibboleth-sp',
             'sp_handlerURL': 'https://test-sp/Shibboleth.sso',
-            'return_url': 'http://TEST_SERVER.localdomain/secure/login.py'
+            'return_url': 'http://test_server.localdomain/secure/login.py'
         }
         assert session['next'] == '/'

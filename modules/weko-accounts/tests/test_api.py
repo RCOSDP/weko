@@ -21,6 +21,7 @@ from weko_accounts.api import (
     create_fqdn_from_entity_id
 ) 
 from invenio_db import db as db_
+from invenio_db import InvenioDB
 from invenio_accounts import InvenioAccounts
 from weko_index_tree.models import Index
 
@@ -456,6 +457,7 @@ class TestShibUserExtra:
         app.config['WEKO_ACCOUNTS_IDP_ENTITY_ID'] = 'test_entity_id'
         app.config['CACHE_REDIS_DB'] = 1
         InvenioAccounts(app)
+        InvenioDB(app)
         # db_.init_app(app)
         # with app.app_context():
         #     db_.create_all()
@@ -1061,6 +1063,7 @@ def test_update_roles(app, db, mocker):
         remove_role_ids = [r.id for r in existing_roles if r.name == 'jc_group4']
         mock_bind.assert_called_once_with([], new_roles, remove_role_ids)
 
+        existing_roles = Role.query.all()
         with patch('weko_accounts.api.db.session.commit', side_effect=Exception("Test exception")),\
             patch('weko_accounts.api.current_app.logger') as mock_logger:
             with pytest.raises(Exception):
