@@ -14,7 +14,7 @@ import pytest
 from invenio_admin import InvenioAdmin
 from wtforms.validators import ValidationError
 
-from invenio_files_rest.admin import require_slug
+from invenio_files_rest.admin import require_slug, validate_uri
 from invenio_files_rest.models import Bucket, ObjectVersion
 
 
@@ -26,6 +26,26 @@ def test_require_slug():
 
     assert require_slug(None, TestField('aslug')) is None
     pytest.raises(ValidationError, require_slug, None, TestField('Not A Slug'))
+
+
+# .tox/c1/bin/pytest --cov=invenio_files_rest tests/test_admin.py::test_validate_uri -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-files-rest/.tox/c1/tmp
+def test_validate_uri(app):
+    class TestField(object):
+        def __init__(self, data):
+            self.data = data
+    class TestType(object):
+            def __init__(self, type):
+                self.data = type
+    class TestForm(object):
+        def __init__(self, type):
+            self.type = TestType(type)
+
+    # type is s3, uri is wrong uri -> not raise error
+    assert validate_uri(TestForm("s3"),TestField('wrong_uri')) is None
+    # type is s3_vh, uri is correct uri -> not raise error
+    assert validate_uri(TestForm("s3_vh"),TestField('https://correct_uri')) is None
+    # type is s3_vh, uri is wrong uri -> raise error
+    pytest.raises(ValidationError, validate_uri, TestForm("s3_vh"), TestField("wrong_uri"))
 
 
 def test_admin_views(app, db, dummy_location):

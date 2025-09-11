@@ -777,7 +777,7 @@ class FileInstance(db.Model, Timestamp):
     @classmethod
     def get_location_all(cls):
         """Get all location ."""
-        return db.session.query(Location)
+        return db.session.query(Location).all()
 
     @classmethod
     def create(cls):

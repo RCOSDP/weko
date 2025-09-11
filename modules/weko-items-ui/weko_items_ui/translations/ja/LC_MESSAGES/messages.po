@@ -258,6 +258,10 @@ msgstr "レコードが存在しません"
 msgid "Item cannot be edited because the import is in progress."
 msgstr "インポートを実行中のためアイテムの編集はできません。"
 
+#: weko_items_ui/views.py:848
+msgid "Logged-in user cannot be deleted."
+msgstr "ログインユーザーは削除できません。"
+
 #: weko_items_ui/views.py:1071
 msgid "Workflow setting does not exist."
 msgstr "ワークフローの設定が存在しません"
@@ -605,7 +609,7 @@ msgstr "承認者のメールアドレスを検出できません。"
 msgid ""
 "The specified number has been exceeded. You can only select up to two "
 "fields."
-msgstr "最大2つのフィールドを選択します"
+msgstr "選択できる分野は2つまでです。"
 
 #: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:508
 msgid "The same file name cannot be registered."
@@ -725,3 +729,22 @@ msgstr ""
 msgid "Export"
 msgstr "エクスポート"
 
+msgid "The approver email address cannot be the same as the applicant. Please recheck and input."
+msgstr "承認者のメールアドレスが申請者と同じにすることはできません。ご確認の上、再度入力してください。"
+
+msgid "error message for item application"
+msgstr "ファイルアップロード時は、アイテムに対し利用申請ワークフローを設定はできません。"
+
+msgid "Set usage application workflow for item"
+msgstr "アイテムに利用申請ワークフローを設定"
+
+msgid ""
+"You cannot change the resource type "
+"of items that have been grant a"
+" DOI."
+msgstr "DOI付与済みアイテムの資源タイプの変更はできません。"
+
+#: weko_items_ui/views.py:406
+#, fuzzy
+msgid "Invalid request"
+msgstr "無効なリクエスト"

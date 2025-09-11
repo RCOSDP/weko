@@ -89,6 +89,7 @@ def test_IndexEditSettingView(app, db, location, users, id, status_code):
         with patch('weko_index_tree.admin.sync_shib_gakunin_map_groups') as mock_sync:
             with patch('weko_index_tree.admin.IndexEditSettingView.render') as mock_render:
                 mock_render.return_value = 'rendered template'
+                app.config['WEKO_ACCOUNTS_SHIB_BIND_GAKUNIN_MAP_GROUPS'] = True
                 res = client.get(url_for('indexedit.index'))
                 assert res.status_code==200
                 mock_sync.assert_called_once()
@@ -99,11 +100,32 @@ def test_IndexEditSettingView(app, db, location, users, id, status_code):
                     mod_tree_detail='/api/tree/index/',
                     admin_coverpage_setting='False',
                     index_id=0,
+                    render_widgets='False',
                     lang_code='en'
                 )
-        with pytest.raises(Exception) as e:
-            res = client.get(url_for('indexedit.index'))
-        assert e.type==TemplateNotFound
+
+                mock_sync.reset_mock()
+                mock_render.reset_mock()
+                app.config['WEKO_ACCOUNTS_SHIB_BIND_GAKUNIN_MAP_GROUPS'] = False
+                mock_render.return_value = 'rendered template without shib'
+                res = client.get(url_for('indexedit.index'))
+                assert res.status_code==200
+                mock_sync.assert_not_called()
+                mock_render.assert_called_once_with(
+                    'weko_index_tree/admin/index_edit_setting.html',
+                    get_tree_json='/api/tree',
+                    upt_tree_json='',
+                    mod_tree_detail='/api/tree/index/',
+                    admin_coverpage_setting='False',
+                    index_id=0,
+                    render_widgets='False',
+                    lang_code='en'
+                )
+
+        with patch('weko_index_tree.admin.sync_shib_gakunin_map_groups') as mock_sync:
+            with pytest.raises(Exception) as e:
+                res = client.get(url_for('indexedit.index'))
+            assert e.type==TemplateNotFound
 
         with pytest.raises(Exception) as e:
             res = client.post(url_for('indexedit.upload_image'), data=dict(uploadFile=_file1))

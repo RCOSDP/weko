@@ -1,50 +1,196 @@
 # Translations template for weko-index-tree.
-# Copyright (C) 2019 National Institute of Informatics
+# Copyright (C) 2025 National Institute of Informatics
 # This file is distributed under the same license as the weko-index-tree
 # project.
-# FIRST AUTHOR <EMAIL@ADDRESS>, 2019.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2025.
 #
 #, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: weko-index-tree 0.1.0.dev20170000\n"
 "Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
-"POT-Creation-Date: 2019-07-02 06:08+0000\n"
+"POT-Creation-Date: 2025-07-09 17:46+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.5.1\n"
+"Generated-By: Babel 2.9.1\n"
 
-#: weko_index_tree/admin.py:70
-msgid "The information was updated."
+#: tests/conftest.py:196
+msgid "write your own license"
 msgstr ""
 
-#: weko_index_tree/admin.py:137
+#: tests/conftest.py:201
+msgid "Creative Commons CC0 1.0 Universal Public Domain Designation"
+msgstr ""
+
+#: tests/conftest.py:216
+msgid "Creative Commons Attribution 3.0 Unported (CC BY 3.0)"
+msgstr ""
+
+#: tests/conftest.py:228
+msgid "Creative Commons Attribution-ShareAlike 3.0 Unported (CC BY-SA 3.0)"
+msgstr ""
+
+#: tests/conftest.py:242
+msgid "Creative Commons Attribution-NoDerivs 3.0 Unported (CC BY-ND 3.0)"
+msgstr ""
+
+#: tests/conftest.py:256
+msgid "Creative Commons Attribution-NonCommercial 3.0 Unported (CC BY-NC 3.0)"
+msgstr ""
+
+#: tests/conftest.py:270
+msgid ""
+"Creative Commons Attribution-NonCommercial-ShareAlike 3.0 Unported (CC "
+"BY-NC-SA 3.0)"
+msgstr ""
+
+#: tests/conftest.py:284
+msgid ""
+"Creative Commons Attribution-NonCommercial-NoDerivs 3.0 Unported (CC BY-"
+"NC-ND 3.0)"
+msgstr ""
+
+#: tests/conftest.py:299
+msgid "Creative Commons Attribution 4.0 International (CC BY 4.0)"
+msgstr ""
+
+#: tests/conftest.py:311
+msgid "Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)"
+msgstr ""
+
+#: tests/conftest.py:325
+msgid ""
+"Creative Commons Attribution-NoDerivatives 4.0 International (CC BY-ND "
+"4.0)"
+msgstr ""
+
+#: tests/conftest.py:339
+msgid ""
+"Creative Commons Attribution-NonCommercial 4.0 International (CC BY-NC "
+"4.0)"
+msgstr ""
+
+#: tests/conftest.py:353
+msgid ""
+"Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International "
+"(CC BY-NC-SA 4.0)"
+msgstr ""
+
+#: tests/conftest.py:367
+msgid ""
+"Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 "
+"International (CC BY-NC-ND 4.0)"
+msgstr ""
+
+#: tests/test_utils.py:664 weko_index_tree/api.py:543
+#: weko_index_tree/rest.py:341 weko_index_tree/rest.py:386
+#: weko_index_tree/utils.py:994
+msgid "Index Delete is in progress on another device."
+msgstr ""
+
+#: tests/test_utils.py:679 weko_index_tree/utils.py:1000
+msgid ""
+"The index cannot be deleted because there is a link from an item that has"
+" a DOI."
+msgstr ""
+
+#: tests/test_utils.py:689 weko_index_tree/utils.py:1004
+msgid ""
+"This index cannot be deleted because the item belonging to this index is "
+"being edited."
+msgstr ""
+
+#: tests/test_utils.py:699 weko_index_tree/utils.py:1006
+msgid "The index cannot be deleted becase the index in harvester settings."
+msgstr ""
+
+#: weko_index_tree/admin.py:61
+msgid "IndexLink flag was updated."
+msgstr ""
+
+#: weko_index_tree/admin.py:96
 msgid "No file part"
 msgstr ""
 
-#: weko_index_tree/admin.py:142
+#: weko_index_tree/admin.py:101
 msgid "No selected file"
 msgstr ""
 
-#: weko_index_tree/admin.py:157 weko_index_tree/admin.py:166
-#: weko_index_tree/admin.py:175
+#: weko_index_tree/admin.py:119
 msgid "Setting"
 msgstr ""
 
-#: weko_index_tree/admin.py:158
-msgid "Index Tree"
-msgstr ""
-
-#: weko_index_tree/admin.py:167
+#: weko_index_tree/admin.py:120
 msgid "Index Link"
 msgstr ""
 
-#: weko_index_tree/admin.py:176
+#: weko_index_tree/admin.py:128
+msgid "Index Tree"
+msgstr ""
+
+#: weko_index_tree/admin.py:129
 msgid "Edit Tree"
+msgstr ""
+
+#: weko_index_tree/api.py:485
+msgid "Select an index to move."
+msgstr ""
+
+#: weko_index_tree/api.py:490 weko_index_tree/api.py:497
+#: weko_index_tree/api.py:535
+msgid "Fail move an index."
+msgstr ""
+
+#: weko_index_tree/api.py:523
+msgid "You can not move the index."
+msgstr ""
+
+#: weko_index_tree/api.py:549 weko_index_tree/rest.py:389
+msgid ""
+"The index cannot be kept private because there are links from items that "
+"have a DOI."
+msgstr ""
+
+#: weko_index_tree/rest.py:379
+msgid "The index cannot be updated becase import is in progress."
+msgstr ""
+
+#: weko_index_tree/rest.py:392
+msgid ""
+"Index harvests cannot be kept private because there are links from items "
+"that have a DOI."
+msgstr ""
+
+#: weko_index_tree/rest.py:443
+msgid "The index cannot be deleted becase import is in progress."
+msgstr ""
+
+#: weko_index_tree/rest.py:596
+msgid "The index cannot be moved becase import is in progress."
+msgstr ""
+
+#: weko_index_tree/rest.py:606
+msgid "Index moved successfully."
+msgstr ""
+
+#: weko_index_tree/scopes.py:44
+msgid "Allow create index."
+msgstr ""
+
+#: weko_index_tree/scopes.py:47
+msgid "Allow read index."
+msgstr ""
+
+#: weko_index_tree/scopes.py:50
+msgid "Allow update index."
+msgstr ""
+
+#: weko_index_tree/scopes.py:53
+msgid "Allow delete index."
 msgstr ""
 
 #: weko_index_tree/templates/weko_index_tree/base.html:33
@@ -55,55 +201,3 @@ msgstr ""
 msgid "Start upload"
 msgstr ""
 
-#:
-msgid "You cannot keep an item private because it has a DOI."
-msgstr ""
-
-#:
-msgid "Please wait a moment."
-msgstr ""
-
-#:
-msgid "The item cannot be deleted because it has a DOI."
-msgstr ""
-
-#:
-msgid "Since the item has a DOI, it must be associated with an index whose index status is "Public" and whose Harvest Publishing is "Public"."
-msgstr ""
-
-#:
-msgid "The index cannot be kept private because there are links from items that have a DOI."
-msgstr ""
-
-#:
-msgid "Index harvests cannot be kept private because there are links from items that have a DOI."
-msgstr ""
-
-#:
-msgid "The index cannot be deleted because there is a link from an item that has a DOI."
-msgstr ""
-
-#:
-msgid "When assigning a DOI to an item, it must be associated with an index whose index status is "Public" and Harvest Publishing is "Public"."
-msgstr ""
-
-msgid "This index cannot be deleted because the item belonging to this index is being edited by the import function."
-msgstr ""
-
-msgid "The index cannot be kept publication date to a future date because there are links from items that have a DOI."
-msgstr ""
-
-msgid "The index cannot be updated becase import is in progress."
-msgstr ""
-
-msgid "The index cannot be deleted becase import is in progress."
-msgstr ""
-
-msgid "The index cannot be moved becase import is in progress."
-msgstr ""
-
-msgid "Index Delete is in progress on another device."
-msgstr ""
-
-msgid "Select an index to move."
-msgstr ""

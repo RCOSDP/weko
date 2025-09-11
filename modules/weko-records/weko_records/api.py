@@ -24,7 +24,6 @@ import urllib.parse
 import pickle
 from typing import Union
 import json
-import copy
 import re
 import sys
 import traceback
@@ -43,7 +42,7 @@ from invenio_records.signals import after_record_delete, after_record_insert, \
     before_record_insert, before_record_revert, before_record_update
 from invenio_search import RecordsSearch
 from jsonpatch import apply_patch
-from sqlalchemy import cast, String
+from sqlalchemy import desc, cast, String
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm.attributes import flag_modified
 from sqlalchemy.sql.expression import desc
@@ -55,6 +54,7 @@ from .fetchers import weko_record_fetcher
 from .models import (
     FeedbackMailList as _FeedbackMailList,
     RequestMailList as _RequestMailList,
+    ItemApplication as _ItemApplication,
     FileMetadata, ItemMetadata, ItemReference, ItemType,
     ItemTypeEditHistory as ItemTypeEditHistoryModel,
     ItemTypeMapping, ItemTypeName, ItemTypeProperty,
@@ -1621,6 +1621,20 @@ class ItemTypeProps(RecordBase):
         :param form_array: form (array) in JSON format.
         :returns: A new :class:`Record` instance.
         """
+        if not name:
+            raise ValueError(
+                'The property name is required and cannot be empty.'
+            )
+
+        duplicated_prop = ItemTypeProperty.query.filter(
+            ItemTypeProperty.name == name,
+            ItemTypeProperty.id != property_id
+        ).first()
+        if duplicated_prop:
+            raise ValueError(
+                f'The property name "{name}" already exists.'
+            )
+
         with db.session.begin_nested():
             record = cls(schema)
 
@@ -1645,6 +1659,53 @@ class ItemTypeProps(RecordBase):
                                                 form=form_single,
                                                 forms=form_array)
 
+            db.session.add(record.model)
+
+        after_record_insert.send(
+            current_app._get_current_object(),
+            record=record
+        )
+        return record
+
+    @classmethod
+    def create_with_property_id(cls, property_id=None, name=None, schema=None,
+                                form_single=None, form_array=None):
+        """Create a new ItemTypeProperty instance and store it in the database.
+
+        :param property_id: ID of Itemtype property.
+        :param name: Property name.
+        :param schema: Property in JSON format.
+        :param form_single: form (single) in JSON format.
+        :param form_array: form (array) in JSON format.
+        :returns: A new :class:`Record` instance.
+        """
+        if not name:
+            raise ValueError(
+                'The property name is required and cannot be empty.'
+            )
+
+        duplicated_prop = ItemTypeProperty.query.filter(
+            ItemTypeProperty.name == name,
+            ItemTypeProperty.id != property_id
+        ).first()
+        if duplicated_prop:
+            raise ValueError(
+                f'The property name "{name}" already exists.'
+            )
+
+        with db.session.begin_nested():
+            record = cls(schema)
+
+            before_record_insert.send(
+                current_app._get_current_object(),
+                record=record
+            )
+
+            record.model = ItemTypeProperty(name=name,
+                                            schema=schema,
+                                            form=form_single,
+                                            forms=form_array,
+                                            id=property_id)
             db.session.add(record.model)
 
         after_record_insert.send(
@@ -2678,7 +2739,7 @@ class RequestMailList(object):
                 else:
                     query_object.mail_list = request_maillist
                     db.session.merge(query_object)
-            db.session.commit()
+
         except SQLAlchemyError:
             db.session.rollback()
             return False
@@ -2761,6 +2822,67 @@ class RequestMailList(object):
 
         :param item_ids: item_id of target request_mail_list
         """
+        for item_id in item_ids:
+            cls.delete(item_id)
+
+class ItemApplication(object):
+
+    @classmethod
+    def update(cls, item_id, item_application):
+        try:
+            with db.session.begin_nested():
+                query_object = _ItemApplication.query.filter_by(
+                    item_id=item_id).one_or_none()
+                if not query_object:
+                    query_object = _ItemApplication(
+                        item_id=item_id,
+                        item_application=item_application
+                    )
+                    db.session.add(query_object)
+                else:
+                    query_object.item_application = item_application
+                    db.session.merge(query_object)
+            db.session.commit()
+        except SQLAlchemyError:
+            db.session.rollback()
+            return False
+        return True
+
+    @classmethod
+    def update_by_list_item_id(cls, item_ids, item_application):
+        for item_id in item_ids:
+            cls.update(item_id, item_application)
+
+    @classmethod
+    def get_item_application_by_item_id(cls, item_id):
+        try:
+            with db.session.no_autoflush:
+                query_object = _ItemApplication.query.filter_by(
+                    item_id=item_id).one_or_none()
+                if query_object and query_object.item_application:
+                    return query_object.item_application
+                else:
+                    return {}
+        except SQLAlchemyError:
+            return {}
+
+    @classmethod
+    def delete(cls, item_id):
+        try:
+            cls.delete_without_commit(item_id)
+            db.session.commit()
+        except SQLAlchemyError:
+            db.session.rollback()
+            return False
+        return True
+
+    @classmethod
+    def delete_without_commit(cls, item_id):
+        with db.session.begin_nested():
+            _ItemApplication.query.filter_by(item_id=item_id).delete()
+
+    @classmethod
+    def delete_by_list_item_id(cls, item_ids):
         for item_id in item_ids:
             cls.delete(item_id)
 
@@ -2894,7 +3016,7 @@ class ItemLink(object):
 
         return ret
 
-    def update(self, items):
+    def update(self, items, require_commit=True):
         """Update list item link of current record.
 
         This method updates the relationships between the current item
@@ -2905,6 +3027,8 @@ class ItemLink(object):
         Args:
             items(list): List of dictionaries containing
                 'item_id' and 'sele_id' (relationship type).
+            require_commit (bool):
+                If True, commit the transaction after processing.
         Returns:
             str: Error message if any, otherwise None.
         """
@@ -3020,22 +3144,26 @@ class ItemLink(object):
                 if created:
                     self.bulk_create(created)
 
-            # Commit the transaction if all operations succeed
-            db.session.commit()
+            if require_commit:
+                # Commit the transaction if all operations succeed
+                db.session.commit()
             for deleted_link in deleted:
                 UserActivityLogger.info(
                     operation="ITEM_DELETE_LINK",
-                    target_key=deleted_link["dst_item_pid"]
+                    target_key=deleted_link["dst_item_pid"],
+                    require_commit=require_commit
                 )
             for updated_link in updated:
                 UserActivityLogger.info(
                     operation="ITEM_UPDATE_LINK",
-                    target_key=updated_link["dst_item_pid"]
+                    target_key=updated_link["dst_item_pid"],
+                    require_commit=require_commit
                 )
             for created_link in created:
                 UserActivityLogger.info(
                     operation="ITEM_CREATE_LINK",
-                    target_key=created_link["dst_item_pid"]
+                    target_key=created_link["dst_item_pid"],
+                    require_commit=require_commit
                 )
         except IntegrityError as ex:
             # Log and handle integrity errors (e.g., duplicate entries)

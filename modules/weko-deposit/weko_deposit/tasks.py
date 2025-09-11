@@ -27,8 +27,6 @@ import time
 import copy
 from time import sleep
 from io import StringIO
-import subprocess
-import time
 
 from celery import shared_task
 from celery.utils.log import get_task_logger

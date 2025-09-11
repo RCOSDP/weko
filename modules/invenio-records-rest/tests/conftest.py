@@ -449,7 +449,7 @@ def record_data_with_itemtype(id, index_path):
         "item_type_id":"15",
         "publish_date":"2023-10-25",
         "publish_status":"0",
-        "weko_shared_id":-1,
+        "weko_shared_ids":[],
         "item_1617186331708":{"attribute_name":"Title","attribute_value_mlt":[{"subitem_1551255647225":"test_item{}".format(id),"subitem_1551255648112":"ja"}]},
         "item_1617258105262":{"attribute_name":"Resource Type","attribute_value_mlt":[{"resourceuri":"http://purl.org/coar/resource_type/c_5794","resourcetype":"conference paper"}]},
         "relation_version_is_last":True

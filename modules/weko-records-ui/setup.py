@@ -90,7 +90,7 @@ setup(
             'weko_records_ui = weko_records_ui:WekoRecordsUI',
         ],
         'invenio_base.api_apps': [
-            'weko_records_ui_rest = weko_records_ui.ext:WekoRecordsREST',
+            'weko_records_ui_rest = weko_records_ui:WekoRecordsREST',
             'weko_records_ui_cites_rest = weko_records_ui:WekoRecordsCitesREST',
         ],
         'invenio_admin.views': [

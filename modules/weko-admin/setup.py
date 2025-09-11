@@ -138,7 +138,9 @@ setup(
             'restricted_access_adminview = weko_admin.admin:restricted_access_adminview',
             'facet_search_adminview = weko_admin.admin:facet_search_adminview',
             'cris_linkage_adminview = weko_admin.admin:cris_linkage_adminview' ,
-            'reindex_elasticsearch_adminview = weko_admin.admin:reindex_elasticsearch_adminview'
+            'reindex_elasticsearch_adminview = weko_admin.admin:reindex_elasticsearch_adminview',
+            #管理者画面に追加するプロフィール設定のビューを追加
+            'profile_settings_adminview = weko_admin.admin:profile_settings_adminview',
         ],
         'invenio_access.actions': [
             'page_style_access = weko_admin.permissions:action_admin_access',
@@ -172,7 +174,10 @@ setup(
             'weko_admin_restricted_access = weko_admin.bundles:weko_admin_restricted_access_js',
             'weko_admin_facet_search = weko_admin.bundles:weko_admin_facet_search_js',
             'weko_admin_cris_linkage_js = weko_admin.bundles:weko_admin_cris_linkage_js',
-            'weko_admin_reindex_elasticsearch_js = weko_admin.bundles:reindex_elasticsearch_js'
+            'weko_admin_reindex_elasticsearch_js = weko_admin.bundles:reindex_elasticsearch_js',
+            #プロフィール設定のJSとCSSのバンドルを追加
+            'weko_admin_profile_settings = weko_admin.bundles:profile_set_js',
+            'weko_admin_profile_settings_css = weko_admin.bundles:profile_set_css',
         ],
         'invenio_db.models': [
             'weko_admin = weko_admin.models',

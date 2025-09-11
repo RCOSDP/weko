@@ -344,3 +344,25 @@ def indices(db):
     db.session.add(index_4)
     db.session.commit()
     return [index_1, index_2, index_3, index_4]
+
+@pytest.fixture()
+def weko_roles(app):
+    """Create roles.
+
+    Args:
+        app (Flask): Flask application.
+    
+    Returns:
+        dict: Dictionary of roles.
+    """
+    ds = app.extensions["invenio-accounts"].datastore
+    sysadmin_role = ds.create_role(name='System Administrator')
+    repoadmin_role = ds.create_role(name='Repository Administrator')
+    contributor_role = ds.create_role(name='Contributor')
+    comadmin_role = ds.create_role(name='Community Administrator')
+    return {
+        'sysadmin': sysadmin_role,
+        'repoadmin': repoadmin_role,
+        'contributor': contributor_role,
+        'comadmin': comadmin_role
+    }

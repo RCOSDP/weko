@@ -1854,3 +1854,34 @@ msgstr ""
 msgid "Update"
 msgstr ""
 
+msgid "restricted_error_message"
+msgstr ""
+
+msgid "password check function"
+msgstr ""
+
+msgid "application for use of items without content"
+msgstr ""
+
+msgid "item types available for application"
+msgstr ""
+
+msgid "item type not available for use application"
+msgstr ""
+
+msgid "file preview in approval actions"
+msgstr ""
+
+msgid "edit mail templates"
+msgstr ""
+
+msgid "display request form"
+msgstr ""
+
+#: weko_admin/template/weko_admin/admin/search_management_setting.html
+msgid "Index Tree/Facet Display Setting"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:
+msgid "Failed to create due to server error."
+msgstr ""

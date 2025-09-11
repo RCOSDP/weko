@@ -96,6 +96,13 @@
 {% endblock page_body %}
 
 {%- block page_body_main %}
+  <input type="hidden" value="{{ _('Chinese') }}" id="lang_chinese">
+  <input type="hidden" value="{{ _('English') }}" id="lang_english">
+  <input type="hidden" value="{{ _('French') }}" id="lang_french">
+  <input type="hidden" value="{{ _('German') }}" id="lang_german">
+  <input type="hidden" value="{{ _('Japanese') }}" id="lang_japanese">
+  <input type="hidden" value="{{ _('Korean') }}" id="lang_korean">
+  <input type="hidden" value="{{ _('Russian') }}" id="lang_russian">
   <div class="hide" id="cur_index_id">{{index_id}}</div>
   <div class="row row-4">
     <div class="col-sm-12 col-md-12 col-lg-12">

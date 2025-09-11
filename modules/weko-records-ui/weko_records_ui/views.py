@@ -27,21 +27,21 @@ import traceback
 import uuid
 import copy
 import sys
-import urllib.parse
+from urllib.parse import quote, urlparse
 
 import six
 import werkzeug
 from flask import Blueprint, abort, current_app, escape, flash, json, \
     jsonify, make_response, redirect, render_template, request, url_for
-from flask_babelex import gettext as _
+from flask_babelex import get_locale, gettext as _
 from flask_login import login_required
 from flask_security import current_user
 from sqlalchemy.orm.exc import NoResultFound
-from invenio_cache import cached_unless_authenticated
 from invenio_db import db
 from invenio_files_rest.models import ObjectVersion, FileInstance
 from invenio_files_rest.permissions import has_update_version_role
 from invenio_i18n.ext import current_i18n
+from invenio_mail.models import MailTemplateGenres
 from invenio_oaiserver.response import getrecord
 from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidstore.errors import PIDDoesNotExistError
@@ -52,27 +52,26 @@ from invenio_records_ui.utils import obj_or_import_string
 from lxml import etree
 from weko_accounts.views import _redirect_method
 from weko_admin.models import AdminSettings
-from weko_admin.utils import get_search_setting
+from weko_admin.utils import get_search_setting, get_restricted_access
 from weko_deposit.api import WekoRecord
 from weko_deposit.pidstore import get_record_without_version
 from weko_index_tree.api import Indexes
 from weko_index_tree.models import IndexStyle
 from weko_index_tree.utils import get_index_link_list
 from weko_logging.activity_logger import UserActivityLogger
-from weko_records.api import ItemLink, Mapping, ItemTypes, RequestMailList
-from weko_records.serializers import citeproc_v1
+from weko_records.api import ItemLink, ItemTypes, RequestMailList
 from weko_records.serializers.utils import get_mapping
 from weko_records.utils import custom_record_medata_for_export, \
     remove_weko2_special_character, selected_value_by_language
+from weko_records_ui.api import get_item_provide_list
 from weko_search_ui.api import get_search_detail_keyword
 from weko_schema_ui.models import PublishStatus
 from weko_user_profiles.models import UserProfile
 from weko_workflow.api import WorkFlow
-
 from weko_records_ui.fd import add_signals_info
 from weko_records_ui.utils import check_items_settings, get_file_info_list, is_workflow_activity_work
 from weko_records_ui.external import call_external_system
-from weko_workflow.utils import get_item_info, process_send_mail, set_mail_info
+from weko_workflow.utils import extract_term_description, get_item_info, set_mail_info ,is_terms_of_use_only, process_send_mail
 
 from .ipaddr import check_site_license_permission
 from .models import FilePermission, PDFCoverPageSettings
@@ -348,6 +347,21 @@ def get_usage_workflow(file_json):
                     return data.get("workflow_id")
     return None
 
+@blueprint.app_template_filter('get_item_usage_workflow')
+def get_item_usage_workflow(record):
+    """Get correct usage workflow to redirect user.
+    :param record
+    :return: result tuple of (termsDesription, provide)
+    """
+    provide_list = get_item_provide_list(record.id)
+    # set terms description
+    termsDescription_ja, termsDescription_en = extract_term_description(provide_list)
+    locale = get_locale()
+    termsDescription = termsDescription_en
+    if locale.get_language_name('en') == 'Japanese' and termsDescription_ja:
+        termsDescription = termsDescription_ja
+
+    return termsDescription, provide_list.get("workflow")
 
 @blueprint.app_template_filter('get_workflow_detail')
 def get_workflow_detail(workflow_id):
@@ -358,7 +372,7 @@ def get_workflow_detail(workflow_id):
     """
     workflow_detail = WorkFlow().get_workflow_by_id(workflow_id)
     if workflow_detail:
-        return workflow_detail
+        return workflow_detail,is_terms_of_use_only(workflow_id)
     else:
         abort(404)
 
@@ -696,6 +710,23 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
     if file_order >= 0 and files and files[file_order].get('url') and files[file_order]['url'].get('url'):
         file_url = files[file_order]['url']['url']
 
+    mailcheckflag=request.args.get("v")
+
+    with_files = False
+    for content in record.get_file_data():
+        if content.get('filename'):
+            with_files = True
+
+    restricted_errorMsg = ''
+    restricted_access = get_restricted_access('error_msg')
+    restricted_errorMsg = restricted_access['content'].get(current_lang, None)['content']
+
+    onetime_file_name = ''
+    onetime_file_url = request.args.get("onetime_file_url")
+    if onetime_file_url:
+        k = urlparse(onetime_file_url)
+        onetime_file_name = k.path.split("/")[-1]
+
     # Get communities info
     belonging_community = []
     for navi in record.navi:
@@ -710,14 +741,24 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
 
     # Get Settings
     enable_request_maillist = False
-    items_display_settings = AdminSettings.get(name='items_display_settings',
-                                        dict_to_object=False)
-    if items_display_settings:
-        enable_request_maillist = items_display_settings.get('display_request_form', False)
+    is_no_content_item_application = False
+    password_checkflag = False
+    is_display_request_form = False
+    restricted_access_settings = AdminSettings.get(name="restricted_access", dict_to_object=False)
+    if restricted_access_settings:
+        # enable password
+        password_checkflag = restricted_access_settings.get('password_enable', False)
 
-    # Get request recipients
-    request_recipients = RequestMailList.get_mail_list_by_item_id(pid.object_uuid)
-    is_display_request_form = enable_request_maillist and (True if request_recipients else False)
+        # Check request form permission
+        enable_request_maillist = restricted_access_settings.get('display_request_form', False)
+        # Get request recipients
+        request_recipients = RequestMailList.get_mail_list_by_item_id(pid.object_uuid)
+        is_display_request_form = enable_request_maillist and (True if request_recipients else False)
+
+        # Check item application permission
+        item_application_settings = restricted_access_settings.get("item_application", {})
+        is_no_content_item_application = item_application_settings.get("item_application_enable", False) \
+            and int(item_type_id) in item_application_settings.get("application_item_types", [])
 
     return render_template(
         template,
@@ -749,8 +790,10 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         files_thumbnail=files_thumbnail,
         can_edit=can_edit,
         open_day_display_flg=open_day_display_flg,
+        password_checkflag=password_checkflag,
         path_name_dict=path_name_dict,
         is_display_file_preview=is_display_file_preview,
+        is_no_content_item_application=is_no_content_item_application,
         # experimental implementation 20210502
         title_name=title_name,
         rights_values=rights_values,
@@ -762,6 +805,11 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         flg_display_resourcetype = current_app.config.get('WEKO_RECORDS_UI_DISPLAY_RESOURCE_TYPE') ,
         search_author_flg=search_author_flg,
         show_secret_URL=_get_show_secret_url_button(record,filename),
+        mailcheckflag = mailcheckflag,
+        onetime_file_url = onetime_file_url,
+        onetime_file_name = onetime_file_name,
+        restricted_errorMsg = restricted_errorMsg,
+        with_files = with_files,
         belonging_community=belonging_community,
         **ctx,
         **kwargs
@@ -797,15 +845,24 @@ def create_secret_url_and_send_mail(pid:PersistentIdentifier, record:WekoRecord,
     #generate url and regist db(FileSecretDownload)
     result = create_secret_url(pid.pid_value,filename,current_user.email , restricted_fullname , restricted_data_name)
 
-    #send mail
-    mail_pattern_name:str = current_app.config.get('WEKO_RECORDS_UI_MAIL_TEMPLATE_SECRET_URL')
-
+    # set mail infomation
     mail_info = set_mail_info(get_item_info(pid.object_uuid), type("" ,(object,),dict(activity_id = '')))
     mail_info.update(result)
-    if process_send_mail( mail_info = mail_info, mail_pattern_name=mail_pattern_name) :
-        return _('Success Secret URL Generate')
-    else:
-        abort(500)
+    
+    # query secret mail template record
+    secret_genre_id = current_app.config.get('WEKO_RECORDS_UI_MAIL_TEMPLATE_SECRET_GENRE_ID', -1)
+    secret_genre = MailTemplateGenres.query.get(secret_genre_id)
+    secret_mail_template = None
+    if secret_genre:
+        secret_mail_template = next(iter(secret_genre.templates or []), None)
+
+    #send mail
+    if secret_mail_template:
+        send_result = process_send_mail(mail_info, secret_mail_template.id)
+        if send_result:
+            return _('Success Secret URL Generate')
+
+    abort(500)
 
 def _get_show_secret_url_button(record : WekoRecord, filename :str) -> bool:
     """
@@ -828,9 +885,9 @@ def _get_show_secret_url_button(record : WekoRecord, filename :str) -> bool:
     has_parmission = False
     # Registered user
     owner_user_id = [int(record['owner'])] if record.get('owner') else []
-    shared_user_id = [int(record['weko_shared_id'])] if int(record.get('weko_shared_id', -1)) != -1 else []
+    shared_user_ids = [int(uid) for uid in record.get('weko_shared_ids', [])]
     if current_user and current_user.is_authenticated and \
-        current_user.id in owner_user_id + shared_user_id:
+        current_user.id in owner_user_id + shared_user_ids:
         has_parmission = True
     # Super users
     supers = current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER']
@@ -851,6 +908,7 @@ def _get_show_secret_url_button(record : WekoRecord, filename :str) -> bool:
 
     # all true is show
     return enable and has_parmission and is_secret_file
+
 
 @blueprint.route('/r/<parent_pid_value>', methods=['GET'])
 @blueprint.route('/r/<parent_pid_value>.<int:version>', methods=['GET'])
@@ -987,6 +1045,7 @@ def file_version_update():
 @blueprint.app_template_filter('citation')
 def citation(record, pid, style=None, ln=None):
     """Render citation for record according to style and language."""
+    from weko_records.serializers import citeproc_v1
     locale = ln or "en-US"  # ln or current_i18n.language
     style = style or "aapg-bulletin"  # style or 'science'
     try:
@@ -1160,7 +1219,7 @@ def encode_filename(s):
     """
     if s:
         part = s.split('/')
-        part[-1] = urllib.parse.quote(part[-1], safe='')
+        part[-1] = quote(part[-1], safe='')
         s = "/".join(part)
     return s
 

@@ -228,7 +228,7 @@ def test_update_fail(location, s3fs, s3fs_testpath, get_md5):
     """Test update of file."""
 
     def fail_callback(total, size):
-        assert exists(s3fs_testpath)
+        assert fs.exists(s3fs_testpath)
         raise Exception('Something bad happened')
 
     s3fs.initialize(size=100)
