@@ -1,4 +1,3 @@
-
 import pytest
 from mock import patch
 import json
@@ -251,7 +250,7 @@ def test_get_auto_fill_record_data_doi(client_api,db,users,mocker):
     }
     res = client_api.post(url,json=data)
     assert res.status_code == 200
-    assert json.loads(res.data) == {"result":"return_doi_record_data","items":"","error":""}
+    assert json.loads(res.data) == {"result":"return_doi_record_data","items":"","error":"","resource_type": ""}
     mock_doi_record.assert_called_with("data","1","")
 
     # api_type is CrossRef
@@ -263,8 +262,8 @@ def test_get_auto_fill_record_data_doi(client_api,db,users,mocker):
     }
     res = client_api.post(url,json=data)
     assert res.status_code == 200
-    assert json.loads(res.data) == {"result":"return_crossref_record_data","items":"","error":""}
-    mock_crossref_record.assert_called_with("test_crf@test.org","data","1")
+    assert json.loads(res.data) == {"result":"return_crossref_record_data","items":"","error":"","resource_type": ""}
+    mock_crossref_record.assert_called_with("test_crf@test.org","data","1", False)
 
     # api_type not exist
     data = {
@@ -274,7 +273,7 @@ def test_get_auto_fill_record_data_doi(client_api,db,users,mocker):
     }
     res = client_api.post(url,json=data)
     assert res.status_code == 200
-    assert json.loads(res.data) == {"result":"","items":"","error":"XXX is NOT support autofill feature."}
+    assert json.loads(res.data) == {"result":"","items":"","error":"XXX is NOT support autofill feature.","resource_type": ""}
 
 
 # def get_item_auto_fill_journal(activity_id):
