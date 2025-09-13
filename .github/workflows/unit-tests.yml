@@ -122,19 +122,43 @@ jobs:
 
       - name: Start container for ${{ matrix.module }}
         run: |
-          docker compose -f docker-compose2.yml up -d
+          chmod +x install.sh
+          ./install.sh
+        env:
+          DOCKER_BUILDKIT: 1
+          COMPOSE_DOCKER_CLI_BUILD: 1
 
-      - name: Wait for web to be ready
+      - name: Wait for services to be ready
         run: |
-          for i in {1..60}; do
-            if docker compose -f docker-compose2.yml exec -T web curl -k -f https://localhost/ping > /dev/null 2>&1; then
-              echo "Web is up!"
+          echo "Waiting for WEKO services to start..."
+          start_time=$(date +%s)
+          max_attempts=60
+          attempt=0
+          while [ $attempt -lt $max_attempts ]; do
+            attempt=$((attempt + 1))
+            current_time=$(date +%s)
+            elapsed=$((current_time - start_time))
+            echo "Attempt $attempt/$max_attempts (${elapsed}s elapsed): Checking WEKO availability..."
+            # Check if we can connect to the service
+            if curl -f -s --insecure https://localhost/ping > /dev/null 2>&1; then
+              echo "✓ WEKO is ready! (took ${elapsed}s)"
               exit 0
+            else
+              # Get HTTP response code for debugging
+              http_code=$(curl -s -o /dev/null -w "%{http_code}" --insecure https://localhost/ping 2>/dev/null || echo "connection_failed")
+              echo "  ✗ HTTP response: $http_code"
             fi
-            sleep 60
+            if [ $attempt -lt $max_attempts ]; then
+              echo "  → Retrying in 5 seconds..."
+              sleep 5
+            fi
           done
-          echo "Web did not become ready in time"
-          docker compose logs
+          echo ""
+          echo "❌ WEKO failed to start within 300 seconds"
+          echo "Final HTTP response: $(curl -s -o /dev/null -w "%{http_code}" --insecure https://localhost/ping 2>/dev/null || echo "connection_failed")"
+          echo ""
+          echo "Container status:"
+          docker compose -f docker-compose2.yml ps
           exit 1
       
       - name: Install test dependencies
