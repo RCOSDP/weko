@@ -128,6 +128,7 @@ redis==2.10.6
 requests==2.18.4
 requests-oauthlib==1.1.0
 rocrate==0.6.0
+schema-salad==8.4.20230808163024
 Sickle==0.6.4
 simplegeneric==0.8.1
 simplejson==3.12.0
