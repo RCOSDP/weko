@@ -265,7 +265,7 @@
                             {%- if file.mimetype == 'application/rdm-project' -%}
                               <!-- Show button 'Import to GakuNin RDM' -->
                               {%- set absolute_file_url = request.scheme + '://' + request.host + file_url %}
-                              {%- set gakunin_rdm_url = config.WEKO_GAKUNIN_RDM_URL.rstrip('/') + '/metadata/packages/projects/' %}
+                              {%- set gakunin_rdm_url = config.WEKO_RECORDS_UI_GAKUNIN_RDM_URL.rstrip('/') + '/metadata/packages/projects/' %}
                               {%- set is_item_public = (record.publish_status == '0') %}
                               {%- set is_file_public = (file.accessrole == 'open_access') %}
                               {%- if is_item_public and is_file_public -%}
