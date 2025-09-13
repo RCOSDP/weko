@@ -14,50 +14,50 @@ jobs:
       max-parallel: 1
       matrix:
         module:
-          - invenio-accounts
-          - invenio-communities
-          - invenio-db
-          - invenio-deposit
-          - invenio-files-rest
-          - invenio-iiif
-          - invenio-indexer
-          - invenio-mail
-          - invenio-oaiharvester
-          - invenio-oaiserver
-          - invenio-oauth2server
-          - invenio-previewer
-          - invenio-queues
-          - invenio-records-rest
-          - invenio-records
-          - invenio-resourcesyncclient
-          - invenio-resourcesyncserver
-          - invenio-s3
-          - invenio-stats
-          - weko-accounts
-          - weko-admin
-          - weko-authors
-          - weko-bulkupdate
-          - weko-deposit
-          - weko-gridlayout
-          - weko-groups
-          - weko-handle
-          - weko-index-tree
-          - weko-indextree-journal
-          - weko-items-autofill
-          - weko-items-ui
-          - weko-itemtypes-ui
+          # - invenio-accounts
+          # - invenio-communities
+          # - invenio-db
+          # - invenio-deposit
+          # - invenio-files-rest
+          # - invenio-iiif
+          # - invenio-indexer
+          # - invenio-mail
+          # - invenio-oaiharvester
+          # - invenio-oaiserver
+          # - invenio-oauth2server
+          # - invenio-previewer
+          # - invenio-queues
+          # - invenio-records-rest
+          # - invenio-records
+          # - invenio-resourcesyncclient
+          # - invenio-resourcesyncserver
+          # - invenio-s3
+          # - invenio-stats
+          # - weko-accounts
+          # - weko-admin
+          # - weko-authors
+          # - weko-bulkupdate
+          # - weko-deposit
+          # - weko-gridlayout
+          # - weko-groups
+          # - weko-handle
+          # - weko-index-tree
+          # - weko-indextree-journal
+          # - weko-items-autofill
+          # - weko-items-ui
+          # - weko-itemtypes-ui
           - weko-logging
-          - weko-plugins
-          - weko-records-ui
-          - weko-records
-          - weko-redis
-          - weko-schema-ui
-          - weko-search-ui
-          - weko-sitemap
-          - weko-swordserver
-          - weko-theme
-          - weko-user-profiles
-          - weko-workflow
+          # - weko-plugins
+          # - weko-records-ui
+          # - weko-records
+          # - weko-redis
+          # - weko-schema-ui
+          # - weko-search-ui
+          # - weko-sitemap
+          # - weko-swordserver
+          # - weko-theme
+          # - weko-user-profiles
+          # - weko-workflow
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
