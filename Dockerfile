@@ -24,7 +24,7 @@
 
 
 # Use Python-3.6:
-FROM python:3.6-slim-buster as stage_1
+FROM python:3.6-slim-buster AS stage_1
 
 # Configure Weko instance:
 ENV INVENIO_WEB_HOST=127.0.0.1
@@ -78,7 +78,7 @@ COPY --chown=invenio:invenio tika /code/tika
 
 FROM stage_3 AS stage_4
 # Create Weko instance:
-RUN chmod +x /code/scripts/create-instance.sh;/code/scripts/create-instance.sh
+RUN chmod +x /code/scripts/create-instance.sh && /code/scripts/create-instance.sh
 
 
 
@@ -87,7 +87,7 @@ FROM stage_4 AS stage_5
 USER invenio
 WORKDIR /code
 COPY --chown=invenio:invenio scripts/instance.cfg /code/scripts/instance.cfg
-RUN chmod +x /code/scripts/create-instance2.sh;/code/scripts/create-instance2.sh
+RUN chmod +x /code/scripts/create-instance2.sh && /code/scripts/create-instance2.sh
 
 FROM stage_5 AS build-env
 # Make given VENV default:
