@@ -478,17 +478,9 @@ ${INVENIO_WEB_INSTANCE} widget init
 
 # create-facet-search-setting-begin
 ${INVENIO_WEB_INSTANCE} facet_search_setting create \
-       "Data Language"	"デ一タの言語"	"language"	"[]"	True   SelectBox     1      True   
+       "access"	"アクセス権"	"accessRights"	"[]"	True	SelectBox	1	True	"OR"
 ${INVENIO_WEB_INSTANCE} facet_search_setting create \
-       "Access"	"アクセス制限"	"accessRights"	"[]"	True   SelectBox     2      True
+	"geo location"	"位置情報"	"geoLocation.geoLocationPlace"	"[]"	True	SelectBox	2	True	"OR"
 ${INVENIO_WEB_INSTANCE} facet_search_setting create \
-       "Location"	"地域"	"geoLocation.geoLocationPlace"	"[]"	True   SelectBox     3      True
-${INVENIO_WEB_INSTANCE} facet_search_setting create \
-       "Temporal"	"時間的範囲"	"temporal"	"[]"	True   SelectBox     4      True
-${INVENIO_WEB_INSTANCE} facet_search_setting create \
-       "Topic"	"トピック"	"subject.value"	"[]"	True   SelectBox     5      True
-${INVENIO_WEB_INSTANCE} facet_search_setting create \
-       "Distributor"	"配布者"	"contributor.contributorName"	"[{'agg_value': 'Distributor', 'agg_mapping': 'contributor.@attributes.contributorType'}]"	True   SelectBox     6      True
-${INVENIO_WEB_INSTANCE} facet_search_setting create \
-       "Data Type"	"デ一タタイプ"	"description.value"	"[{'agg_value': 'Other', 'agg_mapping': 'description.descriptionType'}]"	True   SelectBox     7      True
+	"subject"	"主題"	"subject.value"	"[]"	True	SelectBox	3	True	"OR"
 # create-facet-search-setting-end
