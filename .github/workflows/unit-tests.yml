@@ -6,51 +6,9 @@ env:
   IMAGE_TAG: ghcr.io/rcosdp/weko:${{ github.sha }}
 
 jobs:
-  prepare-image:
-    runs-on: ubuntu-24.04
-    outputs:
-      image_tag: ${{ env.IMAGE_TAG }}
-      image_exists: ${{ steps.check-image.outputs.exists }}
-    steps:
-      - name: Login to GHCR
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          #username: ${{ github.actor }}
-          username: mhaya
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Check if image exists on GHCR
-        id: check-image
-        run: |
-          if docker manifest inspect $IMAGE_TAG > /dev/null 2>&1; then
-            echo "exists=true" >> $GITHUB_OUTPUT
-          else
-            echo "exists=false" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Checkout
-        if: steps.check-image.outputs.exists == 'false'
-        uses: actions/checkout@v4
-
-      - name: Set up Docker Buildx
-        if: steps.check-image.outputs.exists == 'false'
-        uses: docker/setup-buildx-action@v3
-
-      - name: Build & push image (if not exists)
-        if: steps.check-image.outputs.exists == 'false'
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: ./Dockerfile
-          push: true
-          tags: ${{ env.IMAGE_TAG }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
   test:
-    needs: prepare-image
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
     strategy:
       fail-fast: false
       max-parallel: 1
@@ -100,79 +58,86 @@ jobs:
           - weko-theme
           - weko-user-profiles
           - weko-workflow
-
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+    - name: Checkout code
+      uses: actions/checkout@v4
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
 
-      - name: Login to GitHub Container Registry
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          # username: ${{ github.actor }}
-          username: mhaya
-          password: ${{ secrets.GITHUB_TOKEN }}
+    - name: Install system dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y docker-compose fonts-noto-cjk fonts-noto-color-emoji
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
 
-      - name: Pull base image
-        run: docker pull ${{ needs.prepare-image.outputs.image_tag }}
+    - name: Cache Docker layers
+      uses: actions/cache@v3
+      with:
+        path: /tmp/.buildx-cache
+        key: ${{ runner.os }}-buildx-${{ github.sha }}
+        restore-keys: |
+          ${{ runner.os }}-buildx-
+    - name: Start WEKO containers
+      run: |
+        chmod +x install.sh
+        ./install.sh
+      env:
+        DOCKER_BUILDKIT: 1
+        COMPOSE_DOCKER_CLI_BUILD: 1
 
+    - name: Wait for services to be ready
+      run: |
+        echo "Waiting for WEKO services to start..."
+        start_time=$(date +%s)
+        max_attempts=60
+        attempt=0
+        while [ $attempt -lt $max_attempts ]; do
+          attempt=$((attempt + 1))
+          current_time=$(date +%s)
+          elapsed=$((current_time - start_time))
+          echo "Attempt $attempt/$max_attempts (${elapsed}s elapsed): Checking WEKO availability..."
+          # Check if we can connect to the service
+          if curl -f -s --insecure https://localhost/ > /dev/null 2>&1; then
+            echo "✓ WEKO is ready! (took ${elapsed}s)"
+            exit 0
+          else
+            # Get HTTP response code for debugging
+            http_code=$(curl -s -o /dev/null -w "%{http_code}" --insecure https://localhost/ 2>/dev/null || echo "connection_failed")
+            echo "  ✗ HTTP response: $http_code"
+          fi
+          if [ $attempt -lt $max_attempts ]; then
+            echo "  → Retrying in 5 seconds..."
+            sleep 5
+          fi
+        done
+        echo ""
+        echo "❌ WEKO failed to start within 300 seconds"
+        echo "Final HTTP response: $(curl -s -o /dev/null -w "%{http_code}" --insecure https://localhost/ 2>/dev/null || echo "connection_failed")"
+        echo ""
+        echo "Container status:"
+        docker compose -f docker-compose2.yml ps
+        exit 1
 
-      - name: Start container for ${{ matrix.module }}
-        run: |
-          chmod +x install.sh
-          ./install.sh
-        env:
-          DOCKER_BUILDKIT: 1
-          COMPOSE_DOCKER_CLI_BUILD: 1
-
-      - name: Wait for services to be ready
-        run: |
-          echo "Waiting for WEKO services to start..."
-          start_time=$(date +%s)
-          max_attempts=60
-          attempt=0
-          while [ $attempt -lt $max_attempts ]; do
-            attempt=$((attempt + 1))
-            current_time=$(date +%s)
-            elapsed=$((current_time - start_time))
-            echo "Attempt $attempt/$max_attempts (${elapsed}s elapsed): Checking WEKO availability..."
-            # Check if we can connect to the service
-            if curl -f -s --insecure https://localhost/ping > /dev/null 2>&1; then
-              echo "✓ WEKO is ready! (took ${elapsed}s)"
-              exit 0
-            else
-              # Get HTTP response code for debugging
-              http_code=$(curl -s -o /dev/null -w "%{http_code}" --insecure https://localhost/ping 2>/dev/null || echo "connection_failed")
-              echo "  ✗ HTTP response: $http_code"
-            fi
-            if [ $attempt -lt $max_attempts ]; then
-              echo "  → Retrying in 5 seconds..."
-              sleep 5
-            fi
-          done
-          echo ""
-          echo "❌ WEKO failed to start within 300 seconds"
-          echo "Final HTTP response: $(curl -s -o /dev/null -w "%{http_code}" --insecure https://localhost/ping 2>/dev/null || echo "connection_failed")"
-          echo ""
-          echo "Container status:"
-          docker compose -f docker-compose2.yml ps
-          exit 1
-      
-      - name: Install test dependencies
-        run: |
+    - name: Install test dependencies
+      run: |
           docker compose -f docker-compose2.yml exec -T web bash -c "pip install --upgrade pip && pip install tox tox-setuptools-version pytest-timeout"
 
-      - name: Run tox in ${{ matrix.module }}
-        run: |
+    - name: Run tox in ${{ matrix.module }}
+      run: |
           docker compose -f docker-compose2.yml exec -T web bash -c "cd modules/${{ matrix.module }} && tox"
 
-      - name: Show logs if failed
-        if: failure()
-        run: docker compose -f docker-compose2.yml logs
+    - name: Show logs if failed
+      if: failure()
+      run: docker compose -f docker-compose2.yml logs
 
-      - name: Stop containers
-        if: always()
-        run: docker compose -f docker-compose2.yml down
+    - name: Stop containers
+      if: always()
+      run: |
+        docker compose -f docker-compose2.yml down -v
+        docker system prune -f
+      
+      
