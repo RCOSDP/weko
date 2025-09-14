@@ -263,6 +263,33 @@
                         {%- if file.version_id %}
                           {%- set download_id = 'download-' + file.version_id %}
                           {%- if (access_permission and billing_file_access_permission) or not clickable -%}
+                            {%- if file.mimetype == 'application/rdm-project' -%}
+                              <!-- Show button 'Import to GakuNin RDM' -->
+                              {%- set absolute_file_url = request.scheme + '://' + request.host + file_url %}
+                              {%- set gakunin_rdm_url = config.WEKO_RECORDS_UI_GAKUNIN_RDM_URL.rstrip('/') + '/metadata/packages/projects/' %}
+                              {%- set is_item_public = (record.publish_status == '0') %}
+                              {%- set is_file_public = (file.accessrole == 'open_access') %}
+                              {%- if is_item_public and is_file_public -%}
+                                <a class="action-anchor" href="{{gakunin_rdm_url}}?url={{absolute_file_url|urlencode}}">
+                                  <button class="img-rounded action-button button-sm" id="{{download_id}}_rdm" style="width: auto;">
+                                    <i class="action-icon fa fa-share-alt"></i>
+                                    {{_('Import to GakuNin RDM')}}
+                                  </button>
+                                </a>
+                              {%- else -%}
+                                {%- if not is_item_public and not is_file_public -%}
+                                  {%- set tooltip_message = _('Item is not published and file is not publicly accessible') -%}
+                                {%- elif not is_item_public -%}
+                                  {%- set tooltip_message = _('Item is not published') -%}
+                                {%- elif not is_file_public -%}
+                                  {%- set tooltip_message = _('File is not publicly accessible') -%}
+                                {%- endif -%}
+                                <button class="img-rounded action-button button-sm" id="{{download_id}}_rdm" style="width: auto; opacity: 0.7; cursor: not-allowed;" disabled title="{{tooltip_message}}">
+                                  <i class="action-icon fa fa-share-alt"></i>
+                                  {{_('Import to GakuNin RDM')}}
+                                </button>
+                              {%- endif -%}
+                            {%- endif -%}
                             <!-- User has permission download. -->
                             <a class="action-anchor" href="{{file_url}}">
                               <button class="img-rounded action-button button-sm" id="{{download_id}}">

@@ -988,3 +988,15 @@ msgstr "Download / Preview is available from {}/{}/{}."
 
 msgid "Email address(reconfirmation)"
 msgstr ""
+
+msgid "Import to GakuNin RDM"
+msgstr "Import to GakuNin RDM"
+
+msgid "Item is not published"
+msgstr "Item is not published"
+
+msgid "File is not publicly accessible"
+msgstr "File is not publicly accessible"
+
+msgid "Item is not published and file is not publicly accessible"
+msgstr "Item is not published and file is not publicly accessible"

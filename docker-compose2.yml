@@ -369,8 +369,8 @@ services:
     volumes:
       - static_data:/home/invenio/.virtualenvs/invenio/var/instance/static
       - data_data:/home/invenio/.virtualenvs/invenio/var/instance/data
-#      - letsencrypt_etc:/etc/letsencrypt
-#      - letsencrypt_html:/var/www/html
+      # - letsencrypt_etc:/etc/letsencrypt
+      # - letsencrypt_html:/var/www/html
     links:
       - web
       - inbox
@@ -379,12 +379,12 @@ services:
         limits:
           memory: 300m
 
-#  certbot:
-#    image: certbot/certbot:latest
-#    volumes:
-#      - letsencrypt_etc:/etc/letsencrypt
-#      - letsencrypt_html:/var/www/html
-#    command: ["--version"]
+  # certbot:
+  #  image: certbot/certbot:latest
+  #  volumes:
+  #    - letsencrypt_etc:/etc/letsencrypt
+  #    - letsencrypt_html:/var/www/html
+  #  command: ["--version"]
 
   flower:
     restart: "always"
