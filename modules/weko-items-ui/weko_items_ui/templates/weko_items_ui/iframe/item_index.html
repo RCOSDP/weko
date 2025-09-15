@@ -19,7 +19,7 @@
 #}
 
 {%- extends config.WEKO_WORKFLOW_BASE_TEMPLATE %}
-{%- from "invenio_communities/macros.html" import community_header %}
+{%- from "invenio_communities/macros.html" import community_header with context  %}
 
 {%- block css %}
   {{ super() }}
@@ -62,9 +62,16 @@
 {%- endblock page_footer %}
 
 {% set guest_email = None %}
-{% if activity and activity.extra_info and 'guest_mail' in activity.extra_info %}
-  {% set guest_email = activity.extra_info.guest_mail %}
+{% set application_record_id = None %}
+{% if activity and activity.extra_info %}
+  {% if 'guest_mail' in activity.extra_info %}
+    {% set guest_email = activity.extra_info.guest_mail %}
+  {% endif %}
+  {% if "record_id" in activity.extra_info %}
+    {% set application_record_id = activity.extra_info.record_id %}
+  {% endif %}
 {% endif %}
+
 {%- block page_body_main %}
 {{ form.csrf_token }}
 <div class="row" style="height:100%">
@@ -165,7 +172,7 @@
                   <label>{{_('Item')}}</label>
                </div>
                <div class="col-xs-11 col-md-11 col-lg-11">
-                   <a href="#" id="link_record_detail">{{ item.get('title_ja', item.get('title')) if item }}</a>
+                   <a href="#" id="link_record_detail">{{ activity.title if activity.title }}</a>
                </div>
           </div>
         </div>
@@ -279,6 +286,10 @@
     {%- if community %}
     <a class="btn btn-info pull-left back-button"
       href="{{url_for('weko_workflow.index',community=community.id)}}">
+        <span class="glyphicon glyphicon-chevron-left"></span>
+            {{_('Back')}}</a>
+    {%- elif guest_email and application_record_id %}
+    <a class="btn btn-info pull-left back-button" href="/records/{{ application_record_id }}">
         <span class="glyphicon glyphicon-chevron-left"></span>
             {{_('Back')}}</a>
     {%- else %}

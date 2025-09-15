@@ -20,6 +20,8 @@
 
 """Forms for user profiles."""
 
+import re
+
 from flask import current_app
 from flask_babelex import lazy_gettext as _
 from flask_login import current_user
@@ -27,17 +29,17 @@ from flask_security.forms import email_required, email_validator, \
     unique_user_email
 from flask_wtf import FlaskForm
 from sqlalchemy.orm.exc import NoResultFound
-from wtforms import FormField, SelectField, StringField, SubmitField
+from wtforms.widgets import PasswordInput
+from wtforms import FormField, HiddenField, SelectField, StringField, SubmitField, PasswordField
 from wtforms.validators import DataRequired, EqualTo, StopValidation, \
     ValidationError
 
 from .api import current_userprofile
-from .config import USERPROFILES_LANGUAGE_LIST, USERPROFILES_TIMEZONE_LIST, \
-    WEKO_USERPROFILES_INSTITUTE_POSITION_LIST, \
-    WEKO_USERPROFILES_OTHERS_INPUT_DETAIL, WEKO_USERPROFILES_POSITION_LIST
+from .config import USERPROFILES_LANGUAGE_LIST, USERPROFILES_TIMEZONE_LIST, WEKO_USERPROFILES_INSTITUTE_POSITION_LIST, WEKO_USERPROFILES_POSITION_LIST
 from .models import UserProfile
-from .validators import USERNAME_RULES, validate_username
-
+from .validators import USERNAME_RULES
+from weko_admin.models import AdminSettings
+from collections import OrderedDict
 
 def strip_filter(text):
     """Filter for trimming whitespace.
@@ -54,6 +56,16 @@ def current_user_email(form, field):
         raise StopValidation()
 
 
+def check_length_100_characters(form, field):
+    """Check length 100.
+
+    :param form:
+    :param field:
+    """
+    if len(field.data) > 100:
+        raise ValidationError(_("Text field must be less than 100 characters."))
+
+
 def check_phone_number(form, field):
     """Validate phone number.
 
@@ -66,30 +78,116 @@ def check_phone_number(form, field):
     if not all([x.isdigit() for x in field]):
         raise ValidationError(_('Phone Number format is incorrect.'))
 
-
-def check_length_100_characters(form, field):
-    """Check length 100.
-
-    :param form:
-    :param field:
-    """
-    if len(field.data) > 100:
-        raise ValidationError(_("Text field must be less than 100 characters."))
-
-
 def check_other_position(form, field):
     """Check other position.
 
     @param form:
     @param field:
     """
-    if form.position.data != WEKO_USERPROFILES_OTHERS_INPUT_DETAIL:
+    #設定されたリストに存在するOthersではなく、文字列としての【その他】もしくは【Others】を判別するバリデーション
+    if form.position.data != current_app.config.get("WEKO_USERPROFILES_OTHERS_INPUT_DETAIL") \
+        and not form.position.data in ["その他", "Others"]:
         if len(strip_filter(field.data)) > 0:
             raise ValidationError(_("Position is being inputted "
                                     "(Only input when selecting 'Others')"))
     else:
         if len(strip_filter(field.data)) == 0:
             raise ValidationError(_('Position not provided.'))
+
+
+#識別子を判別するためのバリデーション
+def validate_digits(form, field):
+    """Validate digits.
+
+    @param form:
+    @param field:
+    """
+    if field.data == "None":
+        return
+    error_message = _('Only digits are allowed.')
+    if not re.fullmatch(r'[0-9]*', field.data):
+        raise ValidationError(error_message)
+
+
+def custom_profile_form_factory(profile_cls):
+    """Create a custom profile form class based on configuration settings.
+    Args:
+        profile_cls (class): Base profile form class to extend.
+    Returns:
+        class: A dynamically created ProfileForm class.
+    """
+    if not issubclass(profile_cls, ProfileForm):
+        profile_cls = ProfileForm
+
+    # Get profile configuration settings
+    profile_setting = AdminSettings.get('profiles_items_settings', dict_to_object=False)
+
+    # Create the ProfileForm class dynamically
+    if profile_setting is None:
+        if current_app.config.get("WEKO_USERPROFILES_DEFAULT_FIELDS_SETTINGS", {}):
+            profile_setting = current_app.config.get("WEKO_USERPROFILES_DEFAULT_FIELDS_SETTINGS")
+        else:
+            raise ValueError("Could not retrieve profile configuration settings.")
+
+    # Sort profile_setting by 'order' key
+    sorted_profile_setting = OrderedDict(sorted(profile_setting.items(), key=lambda x: x[1].get("order", 0)))
+    # Iterate over the sorted configuration and add fields to the form class
+    for key, value in sorted_profile_setting.items():
+        # Check if the field should be visible
+        if value['visible']:
+            field_format = value['format']
+            # Create the field based on the current_type
+            if field_format == 'select':
+                # Check if format is select
+                if not isinstance(value['options'], list):
+                    raise ValueError(f"Invalid 'options' value in field: {key}")
+                field = SelectField(
+                    _(value['label_name']),
+                    filters=[strip_filter],
+                    choices=[('','')] + [(choice, _(choice)) for choice in value['options']]
+                )
+            elif field_format == 'identifier':
+                # Check if the field is a identifier
+                validators = [validate_digits]
+                field = StringField(
+                    _(value['label_name']),
+                    validators=validators,
+                    filters=[strip_filter]
+                )
+            elif field_format == 'text':
+                # Check if the field is a text field
+                validators = [check_length_100_characters]
+                field = StringField(
+                    _(value['label_name']),
+                    validators=validators,
+                    filters=[strip_filter]
+                )
+            elif field_format == 'phonenumber':
+                # Check if the field is a phone number
+                validators = [check_phone_number]
+                field = StringField(
+                    _(value['label_name']),
+                    validators=validators,
+                    filters=[strip_filter]
+                )
+            elif field_format == 'position(other)':
+                # Check if the field is other position field
+                validators = [check_other_position]
+                field = StringField(
+                    _(value['label_name']),
+                    validators=validators,
+                    filters=[strip_filter]
+                )
+            else:
+                raise ValueError(f"Invalid 'format' value in field: {key}")
+        else:
+            field = HiddenField(_(value['label_name']))
+
+        # Add the field to the ProfileForm class dynamically
+        setattr(profile_cls, key, field)
+
+    # Return the dynamically created ProfileForm class
+    return profile_cls
 
 
 class ProfileForm(FlaskForm):
@@ -143,6 +241,45 @@ class ProfileForm(FlaskForm):
         ]
     )
 
+    access_key = PasswordField(
+        # NOTE: Form field label
+        _('access key'),
+        # NOTE: Form field help text
+        description=_('Please enter if you use your own S3 Bucket.'),
+        validators=[check_length_100_characters],
+        filters=[strip_filter],
+        widget=PasswordInput(hide_value=False),
+    )
+
+    secret_key = PasswordField(
+        # NOTE: Form field label
+        _('secret key'),
+        # NOTE: Form field help text
+        description=_('Please enter if you use your own S3 Bucket.'),
+        validators=[check_length_100_characters],
+        filters=[strip_filter],
+        widget=PasswordInput(hide_value=False),
+    )
+
+    s3_endpoint_url = StringField(
+        # NOTE: Form field label
+        _('endpoint url'),
+        # NOTE: Form field help text
+        description=_('Please enter if you use your own S3 Bucket.'),
+        validators=[check_length_100_characters],
+        filters=[strip_filter],
+    )
+
+    s3_region_name = StringField(
+        # NOTE: Form field label
+        _('region name'),
+        description=_('Please enter if you specify your own S3 Bucket region.'),
+        # NOTE: Form field help text
+        validators=[check_length_100_characters],
+        filters=[strip_filter],
+    )
+
+
     fullname = StringField(
         # NOTE: Form label
         _('Fullname'),
@@ -184,7 +321,7 @@ class ProfileForm(FlaskForm):
     )
 
     # Other Position
-    otherPosition = StringField(
+    item1 = StringField(
         _('Position (Others)'),
         validators=[
             check_other_position
@@ -193,7 +330,7 @@ class ProfileForm(FlaskForm):
     )
 
     # Phone number
-    phoneNumber = StringField(
+    item2 = StringField(
         _('Phone number'),
         validators=[
             DataRequired(message=_('Phone number not provided.')),
@@ -203,7 +340,7 @@ class ProfileForm(FlaskForm):
 
     # Affiliation institute 1
     # Affiliation institute name (n)
-    instituteName = StringField(
+    item3 = StringField(
         _('Affiliated Institution Name'),
         validators=[
             check_length_100_characters
@@ -212,7 +349,7 @@ class ProfileForm(FlaskForm):
     )
 
     # Affiliation institute position (n)
-    institutePosition = SelectField(
+    item4 = SelectField(
         _('Affiliated Institution Position'),
         filters=[strip_filter],
         choices=WEKO_USERPROFILES_INSTITUTE_POSITION_LIST
@@ -220,7 +357,7 @@ class ProfileForm(FlaskForm):
 
     # Affiliation institute 2
     # Affiliation institute name (n)
-    instituteName2 = StringField(
+    item5 = StringField(
         _('Affiliated Institution Name'),
         validators=[
             check_length_100_characters
@@ -229,7 +366,7 @@ class ProfileForm(FlaskForm):
     )
 
     # Affiliation institute position (n)
-    institutePosition2 = SelectField(
+    item6 = SelectField(
         _('Affiliated Institution Position'),
         filters=[strip_filter],
         choices=WEKO_USERPROFILES_INSTITUTE_POSITION_LIST
@@ -237,7 +374,7 @@ class ProfileForm(FlaskForm):
 
     # Affiliation institute 3
     # Affiliation institute name (n)
-    instituteName3 = StringField(
+    item7 = StringField(
         _('Affiliated Institution Name'),
         validators=[
             check_length_100_characters
@@ -246,7 +383,7 @@ class ProfileForm(FlaskForm):
     )
 
     # Affiliation institute position (n)
-    institutePosition3 = SelectField(
+    item8 = SelectField(
         _('Affiliated Institution Position'),
         filters=[strip_filter],
         choices=WEKO_USERPROFILES_INSTITUTE_POSITION_LIST
@@ -254,7 +391,7 @@ class ProfileForm(FlaskForm):
 
     # Affiliation institute 4
     # Affiliation institute name (n)
-    instituteName4 = StringField(
+    item9 = StringField(
         _('Affiliated Institution Name'),
         validators=[
             check_length_100_characters
@@ -263,7 +400,7 @@ class ProfileForm(FlaskForm):
     )
 
     # Affiliation institute position (n)
-    institutePosition4 = SelectField(
+    item10 = SelectField(
         _('Affiliated Institution Position'),
         filters=[strip_filter],
         choices=WEKO_USERPROFILES_INSTITUTE_POSITION_LIST
@@ -271,7 +408,7 @@ class ProfileForm(FlaskForm):
 
     # Affiliation institute 5
     # Affiliation institute name (n)
-    instituteName5 = StringField(
+    item11 = StringField(
         _('Affiliated Institution Name'),
         validators=[
             check_length_100_characters
@@ -280,11 +417,12 @@ class ProfileForm(FlaskForm):
     )
 
     # Affiliation institute position (n)
-    institutePosition5 = SelectField(
+    item12 = SelectField(
         _('Affiliated Institution Position'),
         filters=[strip_filter],
         choices=WEKO_USERPROFILES_INSTITUTE_POSITION_LIST
     )
+
 
     def validate_username(form, field):
         """Wrap username validator for WTForms."""
@@ -297,7 +435,6 @@ class ProfileForm(FlaskForm):
                 raise ValidationError(_('Username already exists.'))
         except NoResultFound:
             return
-
 
 class EmailProfileForm(ProfileForm):
     """Form to allow editing of email address."""

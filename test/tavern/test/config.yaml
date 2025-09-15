@@ -1,0 +1,40 @@
+name: server information
+description: environment variables for the test
+
+variables:
+  host: https://localhost
+  title_keys:
+    10001: item_1617186331708.0.subitem_1551255647225
+    30001: item_30001_title0.0.subitem_title
+    30002: item_30002_title0.0.subitem_title
+  file_keys:
+    10001: item_1617604990215
+    30001: item_30001_file22
+    30002: item_30002_file35
+  creator_keys:
+    30001: item_30001_creator2
+    30002: item_30002_creator2
+  action_version:
+    3: 1.0.1
+    4: 2.0.0
+    5: 1.0.1
+    6: 1.0.0
+    7: 1.0.0
+  expected_json:
+    item_registration:
+      success_case: item_registration/success_case.json
+      required_field_missing: item_registration/required_field_missing.json
+      invalid_choice: item_registration/invalid_choice.json
+    w-oa-03:
+      success_case: w-oa-03/success_case.json
+      duplicate_item: w-oa-03/duplicate_item.json
+    w-oa-15:
+      success_case: w-oa-15/success_case.json
+  create_info:
+    w-oa-03: request_params/w-oa-03/create_item_info.json
+    w-oa-03_duplicate: request_params/w-oa-03/create_item_info_duplicate.json
+    w-oa-03_dup_author: request_params/w-oa-03/create_item_info_dup_author.json
+  author_info:
+    w-oa-03: request_params/w-oa-03/authors.json
+    w-oa-15: request_params/w-oa-15/authors.json
+  application_name: "Tavern Test"

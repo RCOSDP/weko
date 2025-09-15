@@ -21,6 +21,7 @@
 """Blueprint for weko-search-ui."""
 
 import time
+import traceback
 from xml.etree import ElementTree
 
 from blinker import Namespace
@@ -35,16 +36,11 @@ from invenio_i18n.ext import current_i18n
 from sqlalchemy.sql.expression import func
 from weko_admin.models import AdminSettings
 from weko_admin.utils import get_search_setting
-from weko_gridlayout.utils import (
-    get_widget_design_page_with_main,
-    main_design_has_main_widget,
-)
 from weko_index_tree.api import Indexes
 from weko_index_tree.models import IndexStyle
 from weko_index_tree.utils import get_index_link_list
-from weko_records.api import ItemLink
+from weko_records.api import ItemLink, FeedbackMailList
 from weko_records_ui.ipaddr import check_site_license_permission
-from weko_theme.utils import get_design_layout
 from weko_workflow.utils import (
     get_allow_multi_thumbnail,
     get_record_by_root_ver,
@@ -58,7 +54,6 @@ from .config import WEKO_SEARCH_TYPE_DICT
 from .utils import (
     check_index_access_permissions,
     check_permission,
-    get_feedback_mail_list,
     get_journal_info,
 )
 
@@ -106,6 +101,7 @@ def search():
             community_id = comm.id
 
     # Get the design for widget rendering
+    from weko_theme.utils import get_design_layout
     page, render_widgets = get_design_layout(
         community_id or current_app.config["WEKO_THEME_DEFAULT_COMMUNITY"]
     )
@@ -362,7 +358,7 @@ def journal_detail(index_id=0):
 @login_required
 def search_feedback_mail_list():
     """Render a check view."""
-    result = get_feedback_mail_list()
+    result = FeedbackMailList.get_feedback_mail_list()
     return jsonify(result)
 
 
@@ -396,7 +392,7 @@ def get_path_name_dict(path_str=""):
 def gettitlefacet():
     """Soft getname Facet Search."""
     from weko_admin.utils import get_title_facets
-    titles, order, uiTypes, isOpens, displayNumbers = get_title_facets()
+    titles, order, uiTypes, isOpens, displayNumbers, searchConditions = get_title_facets()
     result = {
         "status": True,
         "data": {
@@ -404,8 +400,11 @@ def gettitlefacet():
             "order": order,
             "uiTypes": uiTypes,
             "isOpens": isOpens,
-            "displayNumbers": displayNumbers
-        }
+            "displayNumbers": displayNumbers,
+            "searchConditions": searchConditions
+        },
+        "isFacetLangDisplay":
+            current_app.config["WEKO_SEARCH_UI_FACET_LANG_DISP_FLG"]
     }
     return jsonify(result), 200
 
@@ -415,22 +414,70 @@ def get_last_item_id():
     """Get last item id."""
     result = {"last_id": ""}
     try:
-        data = db.session.query(
-            func.max(
-                func.to_number(
-                    PersistentIdentifier.pid_value,
-                    current_app.config["WEKO_SEARCH_UI_TO_NUMBER_FORMAT"]
+        is_super = any(role.name in current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER'] for role in current_user.roles)
+
+        if is_super:
+            data = db.session.query(
+                func.max(
+                    func.to_number(
+                        PersistentIdentifier.pid_value,
+                        current_app.config["WEKO_SEARCH_UI_TO_NUMBER_FORMAT"]
+                    )
                 )
-            )
-        ).filter(
-            PersistentIdentifier.status == PIDStatus.REGISTERED,
-            PersistentIdentifier.pid_type == 'recid',
-            PersistentIdentifier.pid_value.notlike("%.%")
-        ).one_or_none()
-        if data[0]:
-            result["last_id"] = str(data[0])
+            ).filter(
+                PersistentIdentifier.status == PIDStatus.REGISTERED,
+                PersistentIdentifier.pid_type == 'recid',
+                PersistentIdentifier.pid_value.notlike("%.%")
+            ).one_or_none()
+            if data[0]:
+                result["last_id"] = str(data[0])
+        else:
+            from invenio_indexer.api import RecordIndexer
+            from invenio_communities.models import Community
+            index_id_list = []
+            repositories = Community.get_repositories_by_user(current_user)
+            for repository in repositories:
+                index = Indexes.get_child_list_recursive(repository.root_node_id)
+                index_id_list.extend(index)
+
+            index = current_app.config['SEARCH_UI_SEARCH_INDEX']
+            query = {
+                "query": {
+                    "bool": {
+                        "filter": [
+                            {
+                                "bool": {
+                                    "must_not": {
+                                        "regexp": {
+                                            "control_number": ".*\\..*"
+                                        }
+                                    }
+                                }
+                            },
+                            {
+                                "terms": {
+                                    "path": index_id_list
+                                }
+                            }
+                        ]
+                    }
+                },
+                "size": 1,
+                "_source": False,
+                "sort": [
+                    {
+                        "control_number": {
+                            "order": "desc"
+                        }
+                    }
+                ]
+            }
+            results = RecordIndexer().client.search(index=index, body=query)
+            if "hits" in results and "hits" in results["hits"] and results["hits"]["hits"]:
+                result["last_id"] = results["hits"]["hits"][0].get("sort", [])
     except Exception as ex:
         current_app.logger.error(ex)
+        traceback.print_exc()
     return jsonify(data=result), 200
 
 @blueprint.teardown_request

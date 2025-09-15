@@ -21,63 +21,72 @@
 """Blueprint for weko-items-ui."""
 
 import json
-import os
+import requests
 import sys
+import traceback
 from copy import deepcopy
 from datetime import date, datetime, timedelta
 
-import redis
-from redis import sentinel
-from flask import Blueprint, abort, current_app, flash, jsonify, redirect, \
+from flask import (
+    Blueprint, abort, current_app, flash, jsonify, redirect,
     render_template, request, session, url_for
+)
 from flask_babelex import gettext as _
 from flask_login import login_required
 from flask_security import current_user
 from flask_wtf import FlaskForm
-from invenio_db import db
-from invenio_i18n.ext import current_i18n
-from invenio_pidrelations.contrib.versioning import PIDVersioning
-from invenio_pidstore.resolver import Resolver
-from invenio_pidstore.errors import PIDDoesNotExistError
-from invenio_records_ui.signals import record_viewed
-from simplekv.memory.redisstore import RedisStore
-from sqlalchemy.exc import SQLAlchemyError
-from weko_accounts.utils import login_required_customize
-from weko_admin.models import AdminSettings, RankingSettings
-from weko_deposit.api import WekoRecord
-from weko_groups.api import Group
-from weko_index_tree.utils import check_index_permissions, get_index_id, \
-    get_user_roles
-from weko_records.api import ItemTypes
-from weko_records_ui.ipaddr import check_site_license_permission
-from weko_records_ui.permissions import check_file_download_permission
-from weko_redis.redis import RedisConnection
-from weko_workflow.api import GetCommunity, WorkActivity, WorkFlow
-from weko_workflow.utils import check_an_item_is_locked, \
-    get_record_by_root_ver, get_thumbnails, prepare_edit_workflow, \
-    set_files_display_type
-from weko_schema_ui.models import PublishStatus
+from sqlalchemy.exc import SQLAlchemyError, StatementError
 from werkzeug.utils import import_string
 from webassets.exceptions import BuildError
 from werkzeug.exceptions import BadRequest
 
+from invenio_db import db
+from invenio_i18n.ext import current_i18n
+from invenio_pidrelations.contrib.versioning import PIDVersioning
+from invenio_pidstore.models import PersistentIdentifier
+from invenio_pidstore.resolver import Resolver
+from invenio_pidstore.errors import PIDDoesNotExistError
+from invenio_records_ui.signals import record_viewed
+from requests.adapters import HTTPAdapter
+from urllib3 import Retry
+from weko_accounts.utils import login_required_customize
+from weko_admin.models import AdminSettings, RankingSettings
+from weko_deposit.api import WekoRecord
+from weko_deposit.pidstore import get_record_without_version
+from weko_groups.api import Group
+from weko_index_tree.utils import (
+    check_index_permissions, get_index_id, get_user_roles
+)
+from weko_records.api import ItemTypes
+from weko_records_ui.external import get_oa_token
+from weko_records_ui.ipaddr import check_site_license_permission
+from weko_records_ui.permissions import check_file_download_permission
+from weko_redis.redis import RedisConnection
+from weko_schema_ui.models import PublishStatus
+from weko_workflow.api import GetCommunity, WorkActivity, WorkFlow as WorkFlows
+from weko_workflow.utils import (
+    check_an_item_is_locked, get_record_by_root_ver, get_thumbnails,
+    prepare_edit_workflow, set_files_display_type, prepare_delete_workflow
+)
+
 from .permissions import item_permission
-from .utils import _get_max_export_items, check_item_is_being_edit, \
-    export_items, get_current_user, get_data_authors_prefix_settings, \
-    get_data_authors_affiliation_settings, \
-    get_list_email, get_list_username, get_ranking, get_user_info_by_email, \
-    get_user_info_by_username, get_user_information, get_user_permission, \
-    get_workflow_by_item_type_id, hide_form_items, is_schema_include_key, \
-    remove_excluded_items_in_json_schema, sanitize_input_data, save_title, \
-    set_multi_language_name, to_files_js, translate_schema_form, \
-    translate_validation_message, update_index_tree_for_record, \
-    update_json_schema_by_activity_id, update_schema_form_by_activity_id, \
-    update_sub_items_by_user_role, validate_form_input_data, validate_user, \
-    validate_user_mail_and_index
+from .utils import (
+    _get_max_export_items, check_item_is_being_edit,
+    export_items, get_current_user, get_data_authors_prefix_settings,
+    get_data_authors_affiliation_settings, get_list_email, get_list_username,
+    get_ranking, get_user_info_by_email, get_user_info_by_username,
+    get_user_information, get_workflow_by_item_type_id,
+    hide_form_items, is_schema_include_key, remove_excluded_items_in_json_schema,
+    sanitize_input_data, save_title, set_multi_language_name, to_files_js,
+    translate_schema_form, translate_validation_message, update_index_tree_for_record,
+    update_json_schema_by_activity_id, update_schema_form_by_activity_id,
+    update_sub_items_by_user_role, validate_form_input_data, validate_user,
+    validate_user_mail_and_index, get_weko_link, is_duplicate_record,
+    lock_item_will_be_edit
+)
 from .config import WEKO_ITEMS_UI_FORM_TEMPLATE,WEKO_ITEMS_UI_ERROR_TEMPLATE
 from weko_theme.config import WEKO_THEME_DEFAULT_COMMUNITY
 
-from sqlalchemy.exc import StatementError
 
 blueprint = Blueprint(
     'weko_items_ui',
@@ -94,6 +103,79 @@ blueprint_api = Blueprint(
     static_folder='static',
     url_prefix="/items",
 )
+
+#  OAポリシー取得エンドポイント
+@blueprint.route("/api/oa_policies", methods=["GET"])
+@login_required
+def get_oa_policy():
+    """
+    OAポリシー情報を取得するAPIエンドポイント。
+
+    リクエストパラメータ:
+        - issn (str): ISSN番号
+        - eissn (str): eISSN番号
+        - title (str): 雑誌名
+
+    レスポンス:
+        - 成功時: {"policy_url": "取得したポリシーURL"}
+        - 失敗時: {"error": "エラーメッセージ"}, HTTPステータスコード
+    """
+    issn = request.args.get("issn", "").strip()
+    eissn = request.args.get("eissn", "").strip()
+    title = request.args.get("title", "").strip()
+
+    if not issn and not eissn and not title:
+        return jsonify({"error": "Please enter ISSN, eISSN, or journal title"}), 400
+
+    # get oa token
+    token = get_oa_token()
+    if not token:
+        return jsonify({"error": _("Authentication error occurred")}), 401
+
+    headers = {"Authorization": f"Bearer {token}"}
+    params = {"issn": issn, "eissn": eissn, "title": title}
+
+    # APIリクエスト送信
+    api_url = current_app.config.get("WEKO_RECORDS_UI_OA_GET_OA_POLICIES_URL", "")
+    if api_url and isinstance(api_url, str):
+        current_app.logger.debug("call OA policy status api")
+        try:
+            with requests.Session() as s:
+                retries = Retry(
+                    total=current_app.config.get(
+                        "WEKO_RECORDS_UI_OA_API_RETRY_COUNT"),
+                    status_forcelist=[500, 502, 503, 504])
+                s.mount('https://', HTTPAdapter(max_retries=retries))
+                s.mount('http://', HTTPAdapter(max_retries=retries))
+                response = s.get(
+                    api_url, headers=headers,params=params
+                )
+                if response.status_code == 200:
+                    data = response.json()
+                    return jsonify({
+                        "policy_url": data.get("url")
+                    })
+                elif response.status_code == 404:
+                    return jsonify({"error": _("No matching policy")}), 404
+                elif response.status_code == 429:
+                    return jsonify({"error": _("Request limit exceeded")}), 429
+                elif response.status_code == 500:
+                    return jsonify({"error": _("Internal server error")}), 500
+                else:
+                    return jsonify({"error": _("An unknown error occurred")}), 500
+
+        except requests.exceptions.RequestException as req_err:
+            current_app.logger.error(req_err)
+            current_app.logger.error(traceback.format_exc())
+            return jsonify({"error": _("API Request Failed")}), 500
+        except Exception as e:
+            current_app.logger.error(e)
+            current_app.logger.error(traceback.format_exc())
+            return jsonify({"error": _("An unknown error occurred")}), 500
+    else:
+        current_app.logger.error("WEKO_RECORDS_UI_OA_GET_OA_POLICIES_URL is not set or invalid")
+        return jsonify({"error": "Invalid API URL"}), 400
+
 
 @blueprint.route('/', methods=['GET'])
 @blueprint.route('/<int:item_type_id>', methods=['GET'])
@@ -120,10 +202,10 @@ def index(item_type_id=0):
             content:
                 text/html
           302:
-            description: 
+            description:
           403:
             description: no item_permission
-            
+
     """
     try:
         from weko_theme.utils import get_design_layout
@@ -144,7 +226,7 @@ def index(item_type_id=0):
         json_schema = '/items/jsonschema/{}'.format(item_type_id)
         schema_form = '/items/schemaform/{}'.format(item_type_id)
         need_file, need_billing_file = is_schema_include_key(item_type.schema)
-        
+
         return render_template(
             current_app.config.get('WEKO_ITEMS_UI_FORM_TEMPLATE',WEKO_ITEMS_UI_FORM_TEMPLATE),
             page=page,
@@ -226,27 +308,67 @@ def iframe_save_model():
     """
     try:
         data = request.get_json()
-        # remove either check temp data
+
+        if not data:
+            return jsonify(code=1, msg="リクエストデータがありません"), 400
+
+        recid = None
+        work_activity = WorkActivity()
+        activity_session = session.get('activity_info', {})
+        activity_id = activity_session.get('activity_id', None)
+        if activity_id:
+            activity = work_activity.get_activity_by_id(activity_id)
+            if activity and activity.item_id:
+                current_pid = PersistentIdentifier.get_by_object(
+                    pid_type="recid", object_type="rec", object_uuid=activity.item_id
+                )
+                pid_without_ver = get_record_without_version(current_pid)
+                recid = pid_without_ver.pid_value
+        if recid and data.get("metainfo"):
+            data["metainfo"]["id"] = recid
+
+        is_duplicate, recid_list, recid_links = is_duplicate_record(
+            data, exclude_ids=[int(recid)] if recid else []
+        )
+        if is_duplicate:
+            return jsonify({
+                "code": 1,
+                "msg": _('The same item may have been registered.'),
+                "recid_list": recid_list,
+                "duplicate_links": recid_links,
+                "is_duplicate": is_duplicate,
+            })
+
         if data and data.get('metainfo'):
             metainfo = deepcopy(data.get('metainfo'))
-            for key in metainfo.keys():
+            for key in list(metainfo.keys()):
                 if key.startswith('either_valid_'):
                     del data['metainfo'][key]
+        # double check
+        for key, item in data.get('metainfo').items():
+            if type(item) == list:
+                for setting_vals in item:
+                    if type(setting_vals) is dict:
+                        for setting_key in setting_vals:
+                            if setting_key == 'roles' or setting_key == 'provide':
+                                setting_vals[setting_key] = [dict(s) for s in set(frozenset(d.items()) for d in setting_vals[setting_key])]
 
-        activity_session = session['activity_info']
-        activity_id = activity_session.get('activity_id', None)
+        # セッション取得
         if activity_id:
             sanitize_input_data(data)
             save_title(activity_id, data)
-            activity = WorkActivity()
-            activity.upt_activity_metadata(activity_id, json.dumps(data))
+            # メタデータからweko_linkを作成します。
+            weko_link = get_weko_link(data)
+            data["weko_link"] = weko_link
+            work_activity.upt_activity_metadata(activity_id, json.dumps(data))
             db.session.commit()
     except Exception as ex:
         db.session.rollback()
         current_app.logger.exception("{}".format(ex))
-        return jsonify(code=1, msg='Model save error')
-    return jsonify(code=0, msg='Model save success at {} (utc)'.format(
-        datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')))
+        return jsonify(code=1, msg='Model save error'), 500  # HTTP 500 エラーを返す
+
+    return jsonify(code=0, msg='Model save success at {} (UTC)'.format(
+        datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S'))), 200
 
 
 @blueprint.route('/iframe/success', methods=['GET'])
@@ -469,10 +591,10 @@ def iframe_items_index(pid_value='0'):
             if cur_activity is None:
                 abort(400)
 
-            workflow = WorkFlow()
+            workflow = WorkFlows()
             workflow_detail = workflow.get_workflow_by_id(
                 cur_activity.workflow_id)
-            
+
             if workflow_detail and workflow_detail.index_tree_id:
                 index_id = get_index_id(cur_activity.activity_id)
                 update_index_tree_for_record(pid_value, index_id)
@@ -519,9 +641,9 @@ def iframe_items_index(pid_value='0'):
             # current_app.logger.debug("session['itemlogin_histories']: {}".format(session['itemlogin_histories']))
             # current_app.logger.debug("session['itemlogin_res_check']: {}".format(session['itemlogin_res_check']))
             # current_app.logger.debug("session['itemlogin_pid']: {}".format(session['itemlogin_pid']))
-            
+
             form = FlaskForm(request.form)
-            
+
             return render_template(
                 'weko_items_ui/iframe/item_index.html',
                 page=page,
@@ -628,7 +750,8 @@ def default_view_method(pid, record, template=None):
     files = to_files_js(record)
     record = record.item_metadata
     endpoints = {}
-    activity_session = session['activity_info']
+    # activity_session = session['activity_info']
+    activity_session = session.get('activity_info',{})
     activity_id = activity_session.get('activity_id', None)
     if activity_id:
         activity = WorkActivity()
@@ -789,37 +912,118 @@ def validate_user_info():
 
     return jsonify(result)
 
+@blueprint_api.route('/validate_users_info', methods=['POST'])
+def validate_users_info():
+    """validate_users_info.
 
-@blueprint_api.route('/get_user_info/<int:owner>/<int:shared_user_id>',
-                     methods=['GET'])
+    Host the api which provide 2 service:
+        Validate users list information: check if users is exist
+
+    request:
+        header: Content type must be json
+        data:
+            'results': [
+                {
+                    'username' : The username,
+                    'email' : The email,
+                    'owner' : True/False
+                }
+            ]
+    return: response pack:
+        [
+            {
+                'owner' : True/False,
+                'info': users information if users is valid,
+                'validation': 'true' if user is valid, other case return 'false',
+                'error': return error message, empty if no error occurs
+            }
+        ]
+
+    How to use: Validation: fill both username and email
+    """
+    result = {'results':[]}
+
+    if request.headers['Content-Type'] != 'application/json':
+        """Check header of request"""
+        result['error'] = _('Header Error')
+        return jsonify(result)
+    
+    data_list = request.get_json()
+    for data in data_list:
+        info = {
+            'owner': False,
+            'info': '',
+            'validation': False,
+            'error': ''
+        }
+        username = data.get('username', '')
+        email = data.get('email', '')
+
+        try:
+            info['owner'] = data.get('owner', False)
+            if username != "":
+                if email == "":
+                    info['info'] = get_user_info_by_username(username)
+                    if not info['info']:
+                        raise Exception('Not Found Username')
+                    info['validation'] = True
+                else:
+                    validate_data = validate_user(username, email)
+                    info['info'] = validate_data['results']
+                    info['validation'] = validate_data['validation']
+                    if validate_data['error'] != "":
+                        raise Exception(validate_data['error'])
+                result['results'].append(info)
+
+            if email != "" and username == "":
+                info['info'] = get_user_info_by_email(email)
+                if not info['info']:
+                    raise Exception('Not Found Email')
+                info['validation'] = True
+                result['results'].append(info)
+
+        except Exception as e:
+            info['error'] = str(e)
+            result['results'].append(info)
+
+    return jsonify(result)
+
+@blueprint_api.route('/get_user_info/<int:owner>', methods=['GET'])
 @item_permission.require(http_exception=403)
-def get_user_info(owner, shared_user_id):
+def get_user_info(owner):
     """get_user_info.
 
-    Get username and password by querying user id
+    Get username and email by querying user id
 
     param:
-        user_id: The user ID
-    return: The result json:
+        user_ids: The user ID list
+    return: The result json list:
+        userid: The userid,
         username: The username,
         email: The email,
         error: null if no error occurs
     """
-    result = {
+    result = []
+
+    shared_user_ids = request.args.getlist('shared_user_ids', type=int)
+    shared_user_ids.append(owner)
+    user_infos = get_user_information(shared_user_ids)
+    for user_info in user_infos:
+        info = {
+        'userid': '',
         'username': '',
         'email': '',
         'owner': False,
         'error': ''
-    }
-    try:
-        user_info = get_user_information(shared_user_id)
-        result['username'] = user_info['username']
-        result['email'] = user_info['email']
-        if owner != 0:
-            result['owner'] = get_user_permission(owner)
-    except Exception as e:
-        result['error'] = str(e)
-
+        }
+        info['userid'] = user_info['userid']
+        info['username'] = user_info['username']
+        info['email'] = user_info['email']
+        if owner == user_info['userid']:
+            info['owner'] = True
+        
+        result.append(info)
+    
     return jsonify(result)
 
 
@@ -842,10 +1046,67 @@ def get_current_login_user_id():
 
     return jsonify(result)
 
+@blueprint_api.route('/is_login_user_email/<string:email>', methods=['GET'])
+def is_login_user_email(email):
+    result = {
+        'is_login_user': False,
+        'error': '',
+    }
+    # get user_id from delete email
+    user_info = get_user_info_by_email(email)
+    current_user_id = int(get_current_user())
+    if (user_info != None and user_info['user_id'] == current_user_id):
+        message = _("Logged-in user cannot be deleted.")
+        result['error'] = message
+        result['is_login_user'] = True
 
-@blueprint_api.route('/prepare_edit_item', methods=['POST'])
+    return jsonify(result)
+
+@blueprint_api.route('/is_login_user_ids', methods=['GET'])
+def is_login_user_ids():
+    ids = request.args.getlist('ids')
+    result = {
+        'is_login_user' : False,
+        'error': ''
+    }
+    #admin user
+    supers = current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER'] + current_app.config['WEKO_PERMISSION_ROLE_COMMUNITY']
+    is_admin = False
+    for role in list(current_user.roles or []):
+        if role.name in supers:
+            is_admin = True
+    if not is_admin:
+        for target_id in ids:
+            if int(target_id) == int(get_current_user()):
+                result['is_login_user'] = True
+                result['error'] = _("Logged-in user cannot be deleted.")
+                break
+    else:
+        result['is_login_user'] = False
+    return jsonify(result)
+
+@blueprint_api.route('/get_userinfo_by_emails', methods=['GET'])
+def get_userinfo_by_emails():
+    emails = request.args.getlist('emails')
+    user_infos = []
+    for email in emails :
+        # Flaskのrequest.args.getでは記号「+」が空白になる為、変換する
+        email = email.replace(' ', '+')
+        user_info = get_user_info_by_email(email)
+        if not user_info or ('error' in user_info):
+            raise ConnectionError("wrong email or Cannot connect to server!")
+        
+        user_info['user_id'] = user_info['user_id']
+        user_info['username'] = user_info['username']
+        user_info['email'] = user_info['email']
+        user_infos.append(user_info)
+
+    return jsonify(user_infos)
+
+
+@blueprint.route('/prepare_edit_item', methods=['POST'])
 @login_required
-def prepare_edit_item():
+def prepare_edit_item(id=None, community=None):
     """Prepare_edit_item.
 
     Host the api which provide 2 service:
@@ -855,49 +1116,56 @@ def prepare_edit_item():
         header: Content type must be json
         data:
             pid_value: pid_value
-    return: The result json:
-        code: status code,
-        msg: meassage result,
-        data: url redirect
+    Args:
+        id (str): pid_value
+        community (str): community id
+
+    Returns:
+        Response: JSON response with code and message.
+            - code: status code,
+            - msg: meassage result,
+            - data: url redirect
     """
-    err_code = current_app.config.get('WEKO_ITEMS_UI_API_RETURN_CODE_ERROR',
-                                      -1)
-    if request.headers['Content-Type'] != 'application/json':
-        """Check header of request"""
-        return jsonify(
-            code=err_code,
-            msg=_('Header Error')
-        )
+    err_code = current_app.config.get(
+        'WEKO_ITEMS_UI_API_RETURN_CODE_ERROR', -1
+    )
 
-    post_activity = request.get_json()
-    getargs = request.args
-    pid_value = post_activity.get('pid_value')
-    community = getargs.get('community', None)
+    if not id and request:
+        if request.headers['Content-Type'] != 'application/json':
+            """Check header of request"""
+            return jsonify(code=err_code, msg=_('Header Error'))
 
-    # Cache Storage
-    redis_connection = RedisConnection()
-    sessionstorage = redis_connection.connection(db=current_app.config['ACCOUNTS_SESSION_REDIS_DB_NO'], kv = True)
-    if sessionstorage.redis.exists("pid_{}_will_be_edit".format(pid_value)):
-        return jsonify(
-            code=err_code,
-            msg=_('This Item is being edited.')
-        )
-    else:
-        sessionstorage.put(
-            "pid_{}_will_be_edit".format(pid_value),
-            str(current_user.get_id()).encode('utf-8'),
-            ttl_secs=3)
+    post_activity = request.get_json() or {}
+    getargs = request.args if request else {}
+    pid_value = id or post_activity.get('pid_value')
+    community = community or getargs.get('community', None)
 
     if pid_value:
+        # Check redis cache
+        if not lock_item_will_be_edit(pid_value):
+            current_app.logger.error(f"Item {pid_value} is being edited.")
+            return jsonify(
+                code=err_code,
+                msg=_('This Item is being edited.')
+            )
+
+        pid_value = str(pid_value)
         record_class = import_string('weko_deposit.api:WekoDeposit')
         resolver = Resolver(pid_type='recid',
                             object_type='rec',
                             getter=record_class.get_record)
         recid, deposit = resolver.resolve(pid_value)
-        authenticators = [str(deposit.get('owner')),
-                          str(deposit.get('weko_shared_id'))]
-        user_id = str(get_current_user())
-        activity = WorkActivity()
+
+        if not deposit:
+            return jsonify(
+                code=err_code,
+                msg=_('Record does not exist.')
+            )
+
+        authenticators = [int(deposit.get('owner'))] \
+            + deposit.get('weko_shared_ids') if deposit.get('weko_shared_ids') is not None else []
+        user_id = int(get_current_user())
+        work_activity = WorkActivity()
         latest_pid = PIDVersioning(child=recid).last_child
 
         # ! Check User's Permissions
@@ -908,12 +1176,6 @@ def prepare_edit_item():
             )
 
         # ! Check dependency ItemType
-        if not ItemTypes.get_latest():
-            return jsonify(
-                code=err_code,
-                msg=_("You do not even have an ItemType.")
-            )
-
         item_type_id = deposit.get('item_type_id')
         item_type = ItemTypes.get_by_id(item_type_id)
         if not item_type:
@@ -922,42 +1184,36 @@ def prepare_edit_item():
                 msg=_("Dependency ItemType not found.")
             )
 
-        if not deposit:
-            return jsonify(
-                code=err_code,
-                msg=_('Record does not exist.')
-            )
-
         # Check Record is in import progress
         if check_an_item_is_locked(pid_value):
             return jsonify(
                 code=err_code,
-                msg=_('Item cannot be edited because '
-                      'the import is in progress.')
+                msg=_('Item cannot be edited because the import is in progress.')
             )
 
         # ! Check Record is being edit
         item_uuid = latest_pid.object_uuid
-        post_workflow = activity.get_workflow_activity_by_item_id(item_uuid)
+        latest_activity = work_activity.get_workflow_activity_by_item_id(item_uuid)
 
-        if post_workflow:
-            is_begin_edit = check_item_is_being_edit(recid, post_workflow, activity)
-            if is_begin_edit:
-                return jsonify(
-                    code=err_code,
-                    msg=_('This Item is being edited.'),
-                    activity_id=is_begin_edit
-                )
+        is_begin_edit = check_item_is_being_edit(recid, latest_activity, work_activity)
+        if is_begin_edit:
+            current_app.logger.info(f"Item {pid_value} is being edited.")
+            return jsonify(
+                code=err_code,
+                msg=_('This Item is being edited.'),
+                activity_id=is_begin_edit
+            )
 
-        if post_workflow:
-            post_activity['workflow_id'] = post_workflow.workflow_id
-            post_activity['flow_id'] = post_workflow.flow_id
+        if latest_activity:
+            post_activity['workflow_id'] = latest_activity.workflow_id
+            post_activity['flow_id'] = latest_activity.flow_id
         else:
-            post_workflow = activity.get_workflow_activity_by_item_id(
+            latest_activity = work_activity.get_workflow_activity_by_item_id(
                 recid.object_uuid
             )
-            workflow = get_workflow_by_item_type_id(item_type.name_id,
-                                                    item_type_id)
+            workflow = get_workflow_by_item_type_id(
+                item_type.name_id, item_type_id, with_deleted=False
+            )
             if not workflow:
                 return jsonify(
                     code=err_code,
@@ -965,24 +1221,25 @@ def prepare_edit_item():
                 )
             post_activity['workflow_id'] = workflow.id
             post_activity['flow_id'] = workflow.flow_id
+
         post_activity['itemtype_id'] = item_type_id
         post_activity['community'] = community
-        post_activity['post_workflow'] = post_workflow
+        post_activity['post_workflow'] = latest_activity
 
         try:
             rtn = prepare_edit_workflow(post_activity, recid, deposit)
             db.session.commit()
         except SQLAlchemyError as ex:
             current_app.logger.error('sqlalchemy error: {}'.format(ex))
+            traceback.format_exc()
             db.session.rollback()
             return jsonify(
                 code=err_code,
                 msg=_('An error has occurred.')
             )
-        except BaseException as ex:
-            import traceback
-            current_app.logger.error(traceback.format_exc())
+        except Exception as ex:
             current_app.logger.error('Unexpected error: {}'.format(ex))
+            traceback.format_exc()
             db.session.rollback()
             return jsonify(
                 code=err_code,
@@ -1010,6 +1267,186 @@ def prepare_edit_item():
     )
 
 
+@blueprint.route('/prepare_delete_item', methods=['POST'])
+@login_required
+def prepare_delete_item(id=None, community=None, shared_user_ids=[]):
+    """Prepare delete item.
+
+    Delete item directly or create delete activity.
+
+    Request:
+        header: Content type must be json
+        data:
+            pid_value: pid_value
+        query:
+            community: community id
+
+    Args:
+        id (str): pid_value
+        community (str): community id
+        shared_user_ids (list): shared user ids
+
+    Returns:
+        Response: JSON response with code and message.
+    """
+    err_code = current_app.config.get(
+        'WEKO_ITEMS_UI_API_RETURN_CODE_ERROR', -1
+    )
+
+    if not id and request:
+        if request.headers['Content-Type'] != 'application/json':
+            """Check header of request"""
+            return jsonify(code=err_code, msg=_('Header Error'))
+
+    post_activity = request.get_json() or {}
+    getargs = request.args if request else {}
+    del_value = id or post_activity.get('pid_value')
+    community = community or getargs.get('community', None)
+
+    if del_value:
+        del_value = str(del_value)
+        pid_value = del_value.replace("del_ver_", "")
+
+        # Check redis cache
+        if not lock_item_will_be_edit(pid_value.split(".")[0]):
+            current_app.logger.error(f"Item {pid_value} is being edited.")
+            return jsonify(
+                code=err_code,
+                msg=_('This Item is being edited.')
+            )
+
+        record_class = import_string('weko_deposit.api:WekoDeposit')
+        resolver = Resolver(
+            pid_type='recid', object_type='rec',
+            getter=record_class.get_record
+        )
+        recid, deposit = resolver.resolve(pid_value)
+
+        if not deposit:
+            return jsonify(
+                code=err_code,
+                msg=_('Record does not exist.')
+            )
+
+        authenticators = [str(deposit.get('owner'))] + \
+                         [str(uid) for uid in deposit.get('weko_shared_ids', [])]
+        user_id = str(current_user.get_id())
+        work_activity = WorkActivity()
+        latest_pid = PIDVersioning(child=recid).last_child
+
+        # ! Check User's Permissions
+        if user_id not in authenticators and not get_user_roles(is_super_role=True)[0]:
+            return jsonify(
+                code=err_code,
+                msg=_("You are not allowed to edit this item.")
+            )
+
+        # ! Check dependency ItemType
+        item_type_id = deposit.get('item_type_id')
+        item_type = ItemTypes.get_by_id(item_type_id)
+        if not item_type:
+            return jsonify(
+                code=err_code,
+                msg=_("Dependency ItemType not found.")
+            )
+
+        # Check Record is in import progress
+        if check_an_item_is_locked(pid_value):
+            return jsonify(
+                code=err_code,
+                msg=_('Item cannot be edited because the import is in progress.')
+            )
+
+        workflow, workflow_id = None, None
+        # ! Check Record is being edit
+        item_uuid = latest_pid.object_uuid
+        latest_activity = work_activity.get_workflow_activity_by_item_id(item_uuid)
+
+        is_begin_edit = check_item_is_being_edit(recid, latest_activity, work_activity)
+        if is_begin_edit:
+            current_app.logger.info(f"Item {pid_value} is being edited.")
+            return jsonify(
+                code=err_code,
+                msg=_('This Item is being edited.'),
+                activity_id=is_begin_edit
+            )
+
+        if latest_activity:
+            workflow = WorkFlows().get_workflow_by_id(latest_activity.workflow_id)
+            if not workflow.is_deleted:
+                workflow_id = latest_activity.workflow_id
+
+        if not workflow_id:
+            workflow = get_workflow_by_item_type_id(
+                item_type.name_id, item_type_id, with_deleted=False
+            )
+            if workflow:
+                workflow_id = workflow.id
+
+        post_activity['itemtype_id'] = item_type_id
+        post_activity['community'] = community
+        post_activity['workflow_id'] = workflow_id
+        post_activity["title"] = deposit.get("item_title") or None
+
+        from .utils import send_mail_item_deleted
+
+        if not workflow or workflow.delete_flow_id is None:
+            from weko_records_ui.views import soft_delete
+            soft_delete(del_value)
+            send_mail_item_deleted(pid_value, deposit, user_id, shared_user_ids)
+            return jsonify(
+                code=0,
+                msg="success",
+                data=dict(redirect=request.referrer)
+            )
+
+        post_activity['flow_id'] = workflow.delete_flow_id
+        post_activity['shared_user_ids'] = shared_user_ids
+
+        try:
+            rtn = prepare_delete_workflow(post_activity, recid, deposit)
+            db.session.commit()
+        except SQLAlchemyError as ex:
+            current_app.logger.error('sqlalchemy error: {}'.format(ex))
+            traceback.format_exc()
+            db.session.rollback()
+            return jsonify(
+                code=err_code,
+                msg=_('An error has occurred.')
+            )
+        except Exception as ex:
+            current_app.logger.error('Unexpected error: {}'.format(ex))
+            traceback.format_exc()
+            db.session.rollback()
+            return jsonify(
+                code=err_code,
+                msg=_('An error has occurred.')
+            )
+
+        if community:
+            comm = GetCommunity.get_community_by_id(community)
+            url_redirect = url_for(
+                'weko_workflow.display_activity',
+                activity_id=rtn.activity_id, community=comm.id
+            )
+        else:
+            url_redirect = url_for(
+                'weko_workflow.display_activity',
+                activity_id=rtn.activity_id
+            )
+
+        return jsonify(
+            code=0,
+            msg='success',
+            data=dict(redirect=url_redirect)
+        )
+
+    return jsonify(
+        code=err_code,
+        msg=_('An error has occurred.')
+    )
+
+
 @blueprint.route('/ranking', methods=['GET'])
 def ranking():
     """Ranking page view."""
@@ -1024,7 +1461,7 @@ def ranking():
         upd_data.statistical_period = dafault_data['statistical_period']
         upd_data.display_rank = dafault_data['display_rank']
         upd_data.rankings = dafault_data['rankings']
-        RankingSettings.update(data=upd_data) 
+        RankingSettings.update(data=upd_data)
         settings = RankingSettings.get()
 
     # get statistical period
@@ -1037,7 +1474,7 @@ def ranking():
     page, render_widgets = get_design_layout(
         current_app.config['WEKO_THEME_DEFAULT_COMMUNITY'])
 
-    
+
     rankings = get_ranking(settings)
 
     x = rankings.get('most_searched_keywords')
@@ -1169,7 +1606,7 @@ def validate():
         request_data.get('data')
     )
 
-        
+
     return jsonify(result)
 
 
@@ -1220,7 +1657,6 @@ def check_validation_error_msg(activity_id):
 @blueprint.route('/', methods=['GET'])
 @blueprint.route('/corresponding-activity', methods=['GET'])
 @login_required
-@item_permission.require(http_exception=403)
 def corresponding_activity_list():
     """Get corresponding usage & output activity list.
 
@@ -1263,9 +1699,11 @@ def get_authors_affiliation_settings():
     if author_affiliation_settings is not None:
         results = []
         for affiliation in author_affiliation_settings:
+            name = affiliation.name
             scheme = affiliation.scheme
             url = affiliation.url
             result = dict(
+                name=name,
                 scheme=scheme,
                 url=url
             )
@@ -1303,7 +1741,7 @@ def check_record_doi(pid_value='0'):
 @blueprint_api.route('/check_record_doi_indexes/<string:pid_value>',
                      methods=['GET'])
 @login_required
-def check_record_doi_indexes(pid_value='0'):
+def check_record_doi_indexes(pid_value='0', doi='0'):
     """Check restrict DOI and Indexes.
 
     Args:
@@ -1313,8 +1751,8 @@ def check_record_doi_indexes(pid_value='0'):
         _type_: _description_
     Rises:
         invenio_pidstore.errors.PIDDoesNotExistError
-    """    
-    doi = int(request.args.get('doi', '0'))
+    """
+    doi = int(request.args.get('doi') or doi)
     record = WekoRecord.get_record_by_pid(pid_value)
     if (record.pid_doi or doi > 0) and \
             not check_index_permissions(record=record, is_check_doi=True):

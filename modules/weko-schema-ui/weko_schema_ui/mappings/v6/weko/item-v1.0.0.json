@@ -157,6 +157,19 @@
             }
           }
         },
+        "request_mail_list": {
+          "type": "nested",
+          "properties": {
+            "author_id": {
+              "type": "keyword",
+              "index": true
+            },
+            "email": {
+              "type": "keyword",
+              "index": true
+            }
+          }
+        },
         "alternative": {
           "type": "keyword",
           "index": true,
@@ -396,7 +409,7 @@
             "search_other"
           ]
         },
-        "versionType": {
+        "versiontype": {
           "type": "text",
           "copy_to": [
             "search_other"

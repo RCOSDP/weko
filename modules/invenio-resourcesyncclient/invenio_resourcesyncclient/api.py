@@ -29,6 +29,7 @@ import tempfile
 import traceback
 
 from flask import current_app, request, send_file
+from invenio_communities.models import Community
 from invenio_db import db
 from sqlalchemy.exc import SQLAlchemyError
 from weko_index_tree.api import Indexes
@@ -81,12 +82,8 @@ class ResyncHandler(object):
             'base_url': self.base_url,
             'index_name': index_name,
             'created': self.created,
-            'from_date': self.from_date.strftime(
-                '%Y-%m-%dT%H:%M:%S%z'
-            ) if self.from_date else None,
-            'to_date': self.to_date.strftime(
-                '%Y-%m-%dT%H:%M:%S%z'
-            ) if self.to_date else None,
+            'from_date': self.from_date if self.from_date else None,
+            'to_date': self.to_date if self.to_date else None,
             'updated': self.updated,
             'resync_save_dir': self.resync_save_dir,
             'resync_mode': self.resync_mode,
@@ -312,7 +309,7 @@ class ResyncHandler(object):
             return False
 
     @classmethod
-    def get_list_resync(cls, type_result='obj'):
+    def get_list_resync(cls, type_result='obj',user=None):
         """
         Update the index detail info.
 
@@ -320,15 +317,27 @@ class ResyncHandler(object):
         """
         try:
             with db.session.begin_nested():
-                resyncs = db.session.query(ResyncIndexes).filter().order_by(
-                    db.asc(ResyncIndexes.id)
-                ).all()
+                if not user:
+                    resyncs = db.session.query(ResyncIndexes).filter().order_by(db.asc(ResyncIndexes.id)).all()
+                else:
+                    is_super = any(role.name in current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER'] for role in user.roles)
+                    if is_super:
+                        resyncs = db.session.query(ResyncIndexes).filter().order_by(db.asc(ResyncIndexes.id)).all()
+                    else:
+                        index_list = []
+                        repositories = Community.get_repositories_by_user(user)
+                        for repository in repositories:
+                            index = Indexes.get_child_list_recursive(repository.root_node_id)
+                            index_list.extend(index)
+                        resyncs = db.session.query(ResyncIndexes).filter(ResyncIndexes.index_id.in_(index_list)).order_by(db.asc(ResyncIndexes.id)).all()
+
                 if type_result == 'obj':
                     return [ResyncHandler.from_modal(res) for res in resyncs]
                 else:
                     return resyncs
         except Exception as ex:
-            current_app.logger.debug(ex)
+            current_app.logger.error(ex)
+            traceback.print_exc()
             return False
 
     def get_logs(self):

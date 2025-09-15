@@ -1,0 +1,326 @@
+{
+    "pubdate": "yyyy-mm-dd",
+    "item_1617186331708": [
+        {
+            "subitem_1551255647225": "",
+            "subitem_1551255648112": ""
+        }
+    ],
+    "item_1617186385884": [
+        {
+            "subitem_1551255720400": "",
+            "subitem_1551255721061": ""
+        }
+    ],
+    "item_1617186419668": [
+        {
+            "iscreator": "",
+            "givenNames": [
+                {
+                    "givenName": "",
+                    "givenNameLang": ""
+                }
+            ],
+            "familyNames": [
+                {
+                    "familyName": "",
+                    "familyNameLang": ""
+                }
+            ],
+            "creatorMails": [
+                {
+                    "creatorMail": ""
+                }
+            ],
+            "creatorNames": [
+                {
+                    "creatorName": "",
+                    "creatorNameLang": ""
+                }
+            ],
+            "nameIdentifiers": [
+                {
+                    "nameIdentifier": "",
+                    "nameIdentifierURI": "",
+                    "nameIdentifierScheme": ""
+                }
+            ],
+            "creatorAffiliations": [
+                {
+                    "affiliationNames": [
+                        {
+                            "affiliationName": "",
+                            "affiliationNameLang": ""
+                        }
+                    ],
+                    "affiliationNameIdentifiers": [
+                        {
+                            "affiliationNameIdentifier": "",
+                            "affiliationNameIdentifierURI": "",
+                            "affiliationNameIdentifierScheme": ""
+                        }
+                    ]
+                }
+            ],
+            "creatorAlternatives": [
+                {
+                    "creatorAlternative": "",
+                    "creatorAlternativeLang": ""
+                }
+            ]
+        }
+    ],
+    "item_1617186476635": {
+        "subitem_1522299639480": "",
+        "subitem_1600958577026": ""
+    },
+    "item_1617186499011": [
+        {
+            "subitem_1522650717957": "",
+            "subitem_1522650727486": "",
+            "subitem_1522651041219": ""
+        }
+    ],
+    "item_1617186609386": [
+        {
+            "subitem_1522299896455": "",
+            "subitem_1522300014469": "",
+            "subitem_1522300048512": "",
+            "subitem_1523261968819": ""
+        }
+    ],
+    "item_1617186626617": [
+        {
+            "subitem_description": "",
+            "subitem_description_type": "",
+            "subitem_description_language": ""
+        }
+    ],
+    "item_1617186643794": [
+        {
+            "subitem_1522300295150": "",
+            "subitem_1522300316516": ""
+        }
+    ],
+    "item_1617186702042": [
+        {
+            "subitem_1551255818386": ""
+        }
+    ],
+    "item_1617186901218": [
+        {
+            "subitem_1522399143519": {
+                "subitem_1522399281603": "",
+                "subitem_1522399333375": ""
+            },
+            "subitem_1522399412622": [
+                {
+                    "subitem_1522399416691": "",
+                    "subitem_1522737543681": ""
+                }
+            ],
+            "subitem_1522399571623": {
+                "subitem_1522399585738": "",
+                "subitem_1522399628911": ""
+            },
+            "subitem_1522399651758": [
+                {
+                    "subitem_1522721910626": "",
+                    "subitem_1522721929892": ""
+                }
+            ]
+        }
+    ],
+    "item_1617186920753": [
+        {
+            "subitem_1522646500366": "",
+            "subitem_1522646572813": ""
+        }
+    ],
+    "item_1617187056579": {
+        "bibliographicPageEnd": "",
+        "bibliographic_titles": [
+            {
+                "bibliographic_title": "",
+                "bibliographic_titleLang": ""
+            }
+        ],
+        "bibliographicPageStart": "",
+        "bibliographicIssueDates": {
+            "bibliographicIssueDate": "yyyy-mm-dd",
+            "bibliographicIssueDateType": ""
+        },
+        "bibliographicIssueNumber": "",
+        "bibliographicVolumeNumber": "",
+        "bibliographicNumberOfPages": ""
+    },
+    "item_1617187087799": {
+        "subitem_1551256171004": ""
+    },
+    "item_1617187112279": [
+        {
+            "subitem_1551256126428": "",
+            "subitem_1551256129013": ""
+        }
+    ],
+    "item_1617187136212": {
+        "subitem_1551256096004": "yyyy-mm-dd"
+    },
+    "item_1617258105262": {
+        "resourceuri": "",
+        "resourcetype": ""
+    },
+    "item_1617265215918": {
+        "subitem_1522305645492": "",
+        "subitem_1600292170262": ""
+    },
+    "item_1617349709064": [
+        {
+            "givenNames": [
+                {
+                    "givenName": "",
+                    "givenNameLang": ""
+                }
+            ],
+            "familyNames": [
+                {
+                    "familyName": "",
+                    "familyNameLang": ""
+                }
+            ],
+            "contributorType": "",
+            "nameIdentifiers": [
+                {
+                    "nameIdentifier": "",
+                    "nameIdentifierURI": "",
+                    "nameIdentifierScheme": ""
+                }
+            ],
+            "contributorMails": [
+                {
+                    "contributorMail": ""
+                }
+            ],
+            "contributorNames": [
+                {
+                    "lang": "",
+                    "contributorName": ""
+                }
+            ],
+            "contributorAffiliations": [
+                {
+                    "contributorAffiliationNames": [
+                        {
+                            "contributorAffiliationName": "",
+                            "contributorAffiliationNameLang": ""
+                        }
+                    ],
+                    "contributorAffiliationNameIdentifiers": [
+                        {
+                            "contributorAffiliationURI": "",
+                            "contributorAffiliationScheme": "",
+                            "contributorAffiliationNameIdentifier": ""
+                        }
+                    ]
+                }
+            ],
+            "contributorAlternatives": [
+                {
+                    "contributorAlternative": "",
+                    "contributorAlternativeLang": ""
+                }
+            ]
+        }
+    ],
+    "item_1617353299429": [
+        {
+            "subitem_1522306207484": "",
+            "subitem_1522306287251": {
+                "subitem_1522306382014": "",
+                "subitem_1522306436033": ""
+            },
+            "subitem_1523320863692": [
+                {
+                    "subitem_1523320867455": "",
+                    "subitem_1523320909613": ""
+                }
+            ]
+        }
+    ],
+    "item_1617604990215": [
+        {
+            "url": {
+                "url": "",
+                "label": "",
+                "objectType": ""
+            },
+            "date": [
+                {
+                    "dateType": "",
+                    "dateValue": "yyyy-mm-dd"
+                }
+            ],
+            "format": "",
+            "groups": "",
+            "version": "",
+            "fileDate": [
+                {
+                    "fileDateType": "",
+                    "fileDateValue": "yyyy-mm-dd"
+                }
+            ],
+            "filename": "",
+            "filesize": [
+                {
+                    "value": ""
+                }
+            ],
+            "accessrole": "",
+            "displaytype": "",
+            "licensefree": "",
+            "licensetype": ""
+        }
+    ],
+    "item_1617611018077": [
+        {
+            "nameIdentifiers": [
+                {
+                    "nameIdentifier": "",
+                    "nameIdentifierURI": "",
+                    "nameIdentifierScheme": ""
+                }
+            ],
+            "rightHolderNames": [
+                {
+                    "rightHolderName": "",
+                    "rightHolderLanguage": ""
+                }
+            ]
+        }
+    ],
+    "item_1617620290792": [
+        {
+            "subitem_1565671149650": "",
+            "subitem_1565671169640": "",
+            "subitem_1565671178623": ""
+        }
+    ],
+    "item_1617944231687": [
+        {
+            "subitem_1551256015892": [
+                {
+                    "subitem_1551256027296": "",
+                    "subitem_1551256029891": ""
+                }
+            ],
+            "subitem_1551256037922": [
+                {
+                    "subitem_1551256042287": "",
+                    "subitem_1551256047619": ""
+                }
+            ]
+        }
+    ],
+    "$schema": "/items/jsonschema/10001",
+    "shared_user_id": -1
+}

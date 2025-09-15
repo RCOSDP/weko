@@ -20,11 +20,7 @@
 
 """Flask extension for weko-theme."""
 
-from weko_records.utils import get_keywords_data_load
-from weko_search_ui.api import get_search_detail_keyword
-
 from . import config
-from .views import blueprint
 
 
 class WekoTheme(object):
@@ -43,6 +39,9 @@ class WekoTheme(object):
 
         :param app: The Flask application.
         """
+        from weko_records.utils import get_keywords_data_load
+        from weko_search_ui.api import get_search_detail_keyword
+        from .views import blueprint
         self.init_config(app)
         app.register_blueprint(blueprint)
         app.extensions['weko-theme'] = self

@@ -90,6 +90,12 @@ file_action_js = Bundle(
     output="gen/weko_records_ui_file_action.%(version)s.js",
 )
 
+bucket_js = Bundle(
+    'js/weko_records_ui/bucket.js',
+    filters='jsmin',
+    output="gen/weko_records_ui_bucket_js.%(version)s.js",
+)
+
 bootstrap_popover_js = Bundle(
     'js/weko_records_ui/bootstrap-popover-x.min.js',
     filters='jsmin',

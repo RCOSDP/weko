@@ -1,0 +1,111 @@
+{# -*- coding: utf-8 -*-
+  #
+  # This file is part of WEKO3.
+  # Copyright (C) 2017 National Institute of Informatics.
+  #
+  # WEKO3 is free software; you can redistribute it
+  # and/or modify it under the terms of the GNU General Public License as
+  # published by the Free Software Foundation; either version 2 of the
+  # License, or (at your option) any later version.
+  #
+  # WEKO3 is distributed in the hope that it will be
+  # useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+  # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+  # General Public License for more details.
+  #
+  # You should have received a copy of the GNU General Public License
+  # along with WEKO3; if not, write to the
+  # Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+  # MA 02111-1307, USA.
+  #}
+
+
+{%- extends admin_base_template %}
+
+{%- block css %}
+  {{ super() }}
+  {% assets "weko_admin_item_import_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+  {% assets "weko_items_ui_indextree_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+{%- endblock css %}
+
+{%- block javascript %}
+  {{ super() }}
+  {% assets "weko_admin_item_rocrate_import_js" %}<script type="text/babel" src="{{ ASSET_URL }}"></script>{% endassets %}
+  {% assets "weko_admin_statistics_reactjs_lib" %}<script type="text/javascript" src="{{ ASSET_URL }}"></script>{% endassets %}
+  {% assets "weko_admin_react_bootstrap_js" %}<script type="text/javascript" src="{{ ASSET_URL }}"></script>{% endassets %}
+  {% assets "weko_moment_js" %}<script type="text/javascript" src="{{ ASSET_URL }}"></script>{% endassets %}
+{%- endblock javascript %}
+
+{%- block body %}
+<div id="root" class="col-xs-12"></div>
+{{ form.csrf_token }}
+<input id="import" type="hidden" value="{{_('RO-Crate Import')}}" />
+<input id="import_label" type="hidden" value="{{_('Import')}}" />
+<input id="list" type="hidden" value="{{_('List')}}" />
+<input id="import_file" type="hidden" value="{{_('Import File')}}" />
+<input id="import_index" type="hidden" value="{{_('Import Index')}}" />
+<input id="work_flow" type="hidden" value="{{_('WorkFlow')}}" />
+<input id="select_file" type="hidden" value="{{_('Select File')}}" />
+<input id="select_index" type="hidden" value="{{_('Select Index')}}" />
+<input id="select_work_flow" type="hidden" value="{{_('Select WorkFlow')}}" />
+<input id="selected_file_name" type="hidden" value="{{_('Selected file name')}}" />
+<input id="selected_index" type="hidden" value="{{_('Selected index')}}" />
+<input id="selected_work_flow" type="hidden" value="{{_('Selected workflow')}}" />
+<input id="index_tree" type="hidden" value="{{_('Index Tree')}}" />
+<input id="designate_index" type="hidden" value="{{_('Designate Index')}}" />
+<input id="work_flow_2" type="hidden" value="{{_('Workflow')}}" />
+<input id="item_type" type="hidden" value="{{_('Item Type')}}" />
+<input id="select_mapping" type="hidden" value="{{_('Select Mapping')}}" />
+<input id="flow" type="hidden" value="{{_('Flow')}}" />
+<input id="select" type="hidden" value="{{_('Select')}}" />
+<input id="cancel" type="hidden" value="{{_('Cancel')}}" />
+<input id="check" type="hidden" value="{{_('Check')}}" />
+<input id="change_identifier_mode" type="hidden" value="{{_('Change Identifier Mode.')}}" />
+<input id="i_agree" type="hidden" value="{{_('I agree to the terms of use.')}}" />
+<input id="change_doi_mode" type="hidden" value="{{_('Change DOI Mode')}}" />
+<!--label check-->
+<input id="summary" type="hidden" value="{{_('Summary')}}" />
+<input id="total" type="hidden" value="{{_('Total')}}" />
+<input id="new_item" type="hidden" value="{{_('New Item')}}" />
+<input id="update_item" type="hidden" value="{{_('Update Item')}}" />
+<input id="check_error" type="hidden" value="{{_('Check Error')}}" />
+<input id="download" type="hidden" value="{{_('import_btn_download')}}" />
+<input id="no" type="hidden" value="{{_('No.')}}" />
+<input id="item_id" type="hidden" value="{{_('Item ID')}}" />
+<input id="title" type="hidden" value="{{_('Title')}}" />
+<input id="check_result" type="hidden" value="{{_('Check Result')}}" />
+<input id="error" type="hidden" value="{{_('Error')}}" />
+<input id="warning" type="hidden" value="{{_('Warning')}}" />
+<input id="not_match" type="hidden" value="{{_('Not match')}}" />
+<input id="register" type="hidden" value="{{_('Register')}}" />
+<input id="keep" type="hidden" value="{{_('Keep Version')}}" />
+<input id="upgrade" type="hidden" value="{{_('Upgrade Version')}}" />
+<input id="register_with" type="hidden" value="{{_('Register with [Change Identifier Mode].')}}" />
+<!--label result-->
+<input id="start_date" type="hidden" value="{{_('Start Date')}}" />
+<input id="end_date" type="hidden" value="{{_('End Date')}}" />
+<input id="import_result" type="hidden" value="{{_('Import Result')}}" />
+<input id="end" type="hidden" value="{{_('End')}}" />
+<input id="status" type="hidden" value="{{_('Status')}}" />
+<input id="done" type="hidden" value="{{_('Done')}}" />
+<input id="processing" type="hidden" value="{{_('Processing')}}" />
+<input id="waiting" type="hidden" value="{{_('Waiting')}}" />
+<input id="result" type="hidden" value="{{_('Result')}}" />
+<input id="succses" type="hidden" value="{{_('Success')}}" />
+<input id="error" type="hidden" value="{{_('Error')}}" />
+<input id="next" type="hidden" value="{{_('Next')}}" />
+<input id="mapping_templates" type="hidden" value="{{_('Mapping')}}" />
+<input id="error_download" type="hidden" value="{{_('Failed to download.')}}" />
+<input id="error_get_lstMapping" type="hidden" value="{{_('Failed to get mapping list.')}}" />
+<input id="internal_server_error" type="hidden" value="{{_('Internal server error')}}" />
+<input id="not_available_error_another" type="hidden" value="{{_('Import is in progress on another device.')}}" />
+<input id="not_available_error" type="hidden" value="{{_('Import is in progress.')}}" />
+<input id="celery_not_run" type="hidden" value="{{_('Celery is not running.')}}" />
+<input id="is_duplicated_doi" type="hidden" value="{{_('This DOI has been already grant for another item. Please specify another DOI.')}}" />
+<input id="is_withdraw_doi" type="hidden" value="{{_('import_error_msg_is_withdraw_doi')}}" />
+<input id="item_is_deleted" type="hidden" value="{{_('The corresponding item has been deleted.')}}" />
+<input id="item_is_being_edit" type="hidden" value="{{_('Cannot update because the corresponding item is being edited.')}}" />
+
+<pre class="hide" id="file_format">{{file_format}}</pre>
+<pre class="hide" id="workflows">{{workflows}}</pre>
+{%- endblock body %}

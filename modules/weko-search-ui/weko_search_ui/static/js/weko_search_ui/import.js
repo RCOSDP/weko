@@ -19,10 +19,12 @@ const total_label = document.getElementById("total").value;
 const new_item_label = document.getElementById("new_item").value;
 const update_item_label = document.getElementById("update_item").value;
 const check_error_label = document.getElementById("check_error").value;
+const waring_item_label = document.getElementById("warning").value;
 const download = document.getElementById("download").value;
 const no = document.getElementById("no").value;
 const item_id = document.getElementById("item_id").value;
 const title = document.getElementById("title").value;
+const doi = document.getElementById("doi").value;
 const check_result = document.getElementById("check_result").value;
 const error = document.getElementById("error").value;
 const warning = document.getElementById("warning").value;
@@ -35,12 +37,14 @@ const register_with = document.getElementById("register_with").value;
 //label result
 const start_date = document.getElementById("start_date").value;
 const end_date = document.getElementById("end_date").value;
-const action = document.getElementById("action").value;
+const importResult = document.getElementById("import_result").value;
 const end = document.getElementById("end").value;
-const work_flow_status = document.getElementById("work_flow_status").value;
+const statusLabel = document.getElementById("status").value;
 const done = document.getElementById("done").value;
-const to_do = document.getElementById("to_do").value;
+const processing = document.getElementById("processing").value;
+const waiting = document.getElementById("waiting").value;
 const result_label = document.getElementById("result").value;
+const succses = document.getElementById("succses").value;
 const next = document.getElementById("next").value;
 const error_download = document.getElementById("error_download").value;
 const error_get_lstItemType = document.getElementById("error_get_lstItemType").value;
@@ -81,26 +85,33 @@ function showErrorMsg(msg) {
     '&times;</button>' + msg + '</div>');
 }
 
-function getResultErrorMsg(error_id) {
-  let msg = '';
-  switch (error_id) {
-    case 'is_duplicated_doi':
-      msg = is_duplicated_doi;
-      break;
-    case 'is_withdraw_doi':
-      msg = is_withdraw_doi;
-      break;
-    case 'item_is_deleted':
-      msg = item_is_deleted;
-      break;
-    case 'item_is_being_edit':
-      msg = item_is_being_edit;
-      break;
-  }
-  if (msg === '') {
-    return 'Error';
-  } else {
-    return 'Error: ' + msg;
+function getTaskResult(task_result) {
+  if (!task_result) return '';
+  if (task_result.success) return succses;
+
+  const errorMessages = {
+    is_duplicated_doi,
+    is_withdraw_doi,
+    item_is_deleted,
+    item_is_being_edit
+  };
+  const msg = errorMessages[task_result.error_id] || '';
+  return msg === '' ? '' : error + ': ' + msg;
+}
+
+function getTaskStatusLabel(taskStatus) {
+  if (!taskStatus) return '';
+  switch (taskStatus) {
+    case "PENDING":
+      return waiting;
+    case "STARTED":
+      return processing;
+    case "SUCCESS":
+      return done;
+    case "FAILURE":
+      return "FAILURE";
+    default:
+      return '';
   }
 }
 
@@ -178,12 +189,12 @@ class MainLayout extends React.Component {
     closeError();
     this.setState({ isChecking: true });
 
-    var  csrf_token=$('#csrf_token').val();
+    var csrf_token = $('#csrf_token').val();
     $.ajaxSetup({
-      beforeSend: function(xhr, settings) {
-         if (!/^(GET|HEAD|OPTIONS|TRACE)$/i.test(settings.type) && !this.crossDomain){
-             xhr.setRequestHeader("X-CSRFToken", csrf_token);
-         }
+      beforeSend: function (xhr, settings) {
+        if (!/^(GET|HEAD|OPTIONS|TRACE)$/i.test(settings.type) && !this.crossDomain) {
+          xhr.setRequestHeader("X-CSRFToken", csrf_token);
+        }
       }
     });
 
@@ -222,8 +233,8 @@ class MainLayout extends React.Component {
 
       if ('list_record' in response) {
         const is_import = response.list_record.filter(item => {
-          return !item.errors || item.errors.length === 0;
-        }).length <= 0;
+          return item.errors && item.errors.length > 0;
+        }).length > 0;
         that.setState(() => {
           return {
             list_record: response.list_record,
@@ -289,7 +300,8 @@ class MainLayout extends React.Component {
       type: 'POST',
       data: JSON.stringify({
         list_record: list_record.filter(item => !item.errors),
-        data_path
+        data_path,
+        list_doi: $('[name="list_doi"]:not(:disabled)').map((_, el) => $(el).val()).get()
       }),
       contentType: "application/json; charset=utf-8",
       dataType: "json",
@@ -813,6 +825,7 @@ class CheckComponent extends React.Component {
       new_item: 0,
       update_item: 0,
       check_error: 0,
+      warning_item: 0,
       list_record: []
     }
     this.handleGenerateData = this.handleGenerateData.bind(this)
@@ -834,12 +847,16 @@ class CheckComponent extends React.Component {
     const update_item = list_record.filter((item) => {
       return item.status && (item.status === 'keep' || item.status === 'upgrade')
     }).length
+    const warning_item = list_record.filter((item) => {
+      return item.warnings && item.warnings.length > 0
+    }).length
 
     this.setState({
       total: list_record.length,
       check_error: check_error,
       new_item: new_item,
       update_item: update_item,
+      warning_item: warning_item,
       list_record: list_record
     })
   }
@@ -854,14 +871,14 @@ class CheckComponent extends React.Component {
   create_errors(errors) {
     let result = "";
     if (errors[0]) {
-      
-      for(let i = 0;i < errors.length; i++) {
+
+      for (let i = 0; i < errors.length; i++) {
         result += "ERRORS: " + errors[i];
-        if (i != errors.length -1 ){
+        if (i != errors.length - 1) {
           result += "; ";
         }
       }
-    }else{
+    } else {
       result = "ERRORS";
     }
     return result
@@ -889,7 +906,7 @@ class CheckComponent extends React.Component {
       contentType: "application/json; charset=utf-8",
       success: function (response) {
         const date = moment()
-        const fileName = 'check_' + date.format("YYYY-DD-MM") + '.' + file_format;
+        const fileName = 'check_' + date.format("YYYY-MM-DD") + '.' + file_format;
 
         const blob = new Blob([response], { type: 'text/' + file_format });
         if (window.navigator && window.navigator.msSaveOrOpenBlob) {
@@ -917,7 +934,7 @@ class CheckComponent extends React.Component {
   }
 
   render() {
-    const { total, list_record, update_item, new_item, check_error } = this.state
+    const { total, list_record, update_item, new_item, check_error, warning_item } = this.state
     const { is_import, isShowMessage } = this.props
     return (
       <div className="check-component">
@@ -954,6 +971,10 @@ class CheckComponent extends React.Component {
                   <div>{check_error_label}:</div>
                   <div>{check_error}</div>
                 </div>
+                <div className="flex-box">
+                  <div>{waring_item_label}:</div>
+                  <div>{warning_item}</div>
+                </div>
               </div>
               <div className="col-lg-10 col-md-9 text-align-right">
                 <button
@@ -973,6 +994,7 @@ class CheckComponent extends React.Component {
                   <th><p className="item_type">{item_type}</p></th>
                   <th><p className="item_id">{item_id}</p></th>
                   <th>{title}</th>
+                  <th>{doi}</th>
                   <th><p className="check_result">{check_result}</p></th>
                 </tr>
               </thead>
@@ -993,6 +1015,11 @@ class CheckComponent extends React.Component {
                             {item['item_title'] ? item['item_title'] : ''}
                           </p>
 
+                        </td>
+                        <td>
+                          <div class="form-inline">
+                            <input class="form-control" type="text" name="list_doi" disabled={item.errors && item.errors.length > 0} />
+                          </div>
                         </td>
                         <td>
                           {
@@ -1035,12 +1062,12 @@ class ResultComponent extends React.Component {
     const { tasks } = this.props
     const result = tasks.map((item, key) => {
       return {
-        'No': key + 1,
-        'Start Date': item.start_date ? item.start_date : '',
-        'End Date': item.end_date ? item.end_date : '',
-        'Item Id': item.item_id || '',
-        'Action': item.task_result ? (item.task_result.success ? "End" : getResultErrorMsg(item.task_result.error_id)) : "Start",
-        'Work Flow Status': item.task_status ? item.task_status === "PENDING" ? "To Do" : item.task_status === "SUCCESS" ? "Done" : item.task_status === "FAILURE" ? "FAILURE" : '' : ''
+        [no]: key + 1,
+        [start_date]: item.start_date ? item.start_date : '',
+        [end_date]: item.end_date ? item.end_date : '',
+        [item_id]: item.item_id || '',
+        [statusLabel]: getTaskStatusLabel(item.task_status),
+        [importResult]: getTaskResult(item.task_result)
       }
     })
     const data = {
@@ -1054,7 +1081,7 @@ class ResultComponent extends React.Component {
       contentType: "application/json; charset=utf-8",
       success: function (response) {
         const date = moment()
-        const fileName = 'List_Download_' + date.format("YYYY-DD-MM") + '.' + file_format;
+        const fileName = 'List_Download_' + date.format("YYYY-MM-DD") + '.' + file_format;
 
         const blob = new Blob([response], { type: 'text/' + file_format });
         if (window.navigator && window.navigator.msSaveOrOpenBlob) {
@@ -1098,12 +1125,12 @@ class ResultComponent extends React.Component {
           <table class="table table-striped table-bordered">
             <thead>
               <tr>
-                <th>{no}</th>
+                <th className="id">{no}</th>
                 <th className="start_date"><p className="t_head">{start_date}</p></th>
                 <th className="end_date"><p className="t_head ">{end_date}</p></th>
-                <th><p className="t_head item_id">{item_id}</p></th>
-                <th><p className="t_head action">{action}</p></th>
-                <th><p className="t_head wf_status">{work_flow_status}</p></th>
+                <th className="t_head item_id">{item_id}</th>
+                <th className="t_head wf_status">{statusLabel}</th>
+                <th><p className="t_head action">{importResult}</p></th>
               </tr>
             </thead>
             <tbody>
@@ -1111,18 +1138,14 @@ class ResultComponent extends React.Component {
                 tasks.map((item, key) => {
                   return (
                     <tr key={key}>
-                      <td>
-                        {key + 1}
-                      </td>
+                      <td>{key + 1}</td>
                       <td>{item.start_date ? item.start_date : ''}</td>
                       <td>{item.end_date ? item.end_date : ''}</td>
-                      <td>{item.item_id || ''}</td>
-                      <td>{item.task_result ? (item.task_result.success ? end : getResultErrorMsg(item.task_result.error_id)) : "Start"}</td>
-                      <td>
-                        {item.task_status && item.task_status === "PENDING" ? to_do : ''}
-                        {item.task_status && item.task_status === "SUCCESS" ? done : ''}
-                        {item.task_status && item.task_status === "FAILURE" ? "FAILURE" : ''}
+                      <td><a href={item.item_id ? "/records/" + item.item_id : ''} target="_blank">
+                          {item.item_id || ''}</a>
                       </td>
+                      <td>{getTaskStatusLabel(item.task_status)}</td>
+                      <td>{getTaskResult(item.task_result)}</td>
                     </tr>
                   )
                 })
