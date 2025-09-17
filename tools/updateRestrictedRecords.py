@@ -450,8 +450,8 @@ if __name__ == '__main__':
                 update_item_type()
                 update_item_metadata()
                 update_records_metadata()
-            db.session.commit()
             update_admin_settings()
+            db.session.commit()
             current_app.logger.info('restricted records update end')
             current_app.logger.info('ElasticSearch data update start')
             elasticsearch_reindex(True)
@@ -461,4 +461,5 @@ if __name__ == '__main__':
         except SQLAlchemyError as ex:
             current_app.logger.info(str(ex))
             current_app.logger.info("records rollback")
+            db.session.rollback()
 
