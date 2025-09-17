@@ -668,18 +668,15 @@ def extract_pdf_and_update_file_contents_with_index_api(
             break
         except ConflictError:
             current_app.logger.error(
-                f"Version conflict error occurred while updating file content. \
-                    Retrying {attempt + 1}/{retry_count}")
+                f"Version conflict error occurred while updating file content. Retrying {attempt + 1}/{retry_count}")
             time.sleep(retry_delay)
         except NotFoundError:
             current_app.logger.error(
-                f"The document targeted for content update({record_uuid}) \
-                    does not exist. Retrying {attempt + 1}/{retry_count}")
+                f"The document targeted for content update({record_uuid}) does not exist. Retrying {attempt + 1}/{retry_count}")
             time.sleep(retry_delay)
         except Exception:
             current_app.logger.error(
-                f"An error occurred({record_uuid}). \
-                    Retrying {attempt + 1}/{retry_count}")
+                f"An error occurred({record_uuid}). Retrying {attempt + 1}/{retry_count}")
             time.sleep(retry_delay)
 
 
