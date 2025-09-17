@@ -17,6 +17,8 @@ import click
 import json
 import pytz
 from celery import current_app as current_celery_app
+from invenio_db import db
+from sqlalchemy.exc import SQLAlchemyError
 from elasticsearch.helpers import bulk
 from flask import current_app
 from invenio_records.api import Record
@@ -185,7 +187,9 @@ class RecordIndexer(object):
         :param dict es_bulk_kwargs: Passed to
             :func:`elasticsearch:elasticsearch.helpers.bulk`.
         """
-        from weko_deposit.utils import update_pdf_contents_es
+        from weko_deposit.utils import (
+            update_pdf_contents_es, update_pdf_contents_es_with_index_api
+            ) # avoid circular import
         success = 0
         fail = 0
         self.count = 0
@@ -193,7 +197,7 @@ class RecordIndexer(object):
         req_timeout = current_app.config['INDEXER_BULK_REQUEST_TIMEOUT']
         while True:
             with current_celery_app.pool.acquire(block=True) as conn:
-                # check 
+                # check
                 b4_queues_cnt = 0
                 with conn.channel() as chan:
                     name, b4_queues_cnt, consumers = chan.queue_declare(queue=current_app.config['INDEXER_MQ_ROUTING_KEY'], passive=True)
@@ -213,14 +217,14 @@ class RecordIndexer(object):
                         ids = [message.decode().get("id") for message in messages]
                         _success,_fail  = bulk(
                             self.client,
-                            self._actionsiter(messages,with_deleted=with_deleted),
+                            self._actionsiter_sync_version(messages),
                             stats_only=True,
                             request_timeout=req_timeout,
                             # raise_on_error=True,
                             # raise_on_exception=True,
                             **es_bulk_kwargs
                         )
-                        update_pdf_contents_es(ids)
+                        update_pdf_contents_es_with_index_api(ids)
                         success = success + _success
                         fail = fail + _fail
                     except BulkIndexError as be:
@@ -250,7 +254,7 @@ class RecordIndexer(object):
                             success = success + (len(error_ids)-len(be2.errors))
                             fail = fail + len(be2.errors)
                             for error in be2.errors:
-                                click.secho("{}, {}".format(error['index']['_id'],error['index']['error']['type']),fg='red')   
+                                click.secho("{}, {}".format(error['index']['_id'],error['index']['error']['type']),fg='red')
                     except ConnectionError as ce:
                         with conn.channel() as chan:
                             name, af_queues_cnt, consumers = chan.queue_declare(queue=current_app.config['INDEXER_MQ_ROUTING_KEY'], passive=True)
@@ -281,9 +285,9 @@ class RecordIndexer(object):
                         current_app.logger.error(e)
                         current_app.logger.error(traceback.format_exc())
                         break
-                
+
         count = (success,fail)
-        click.secho("count(success, error): {}".format(count),fg='green')              
+        click.secho("count(success, error): {}".format(count),fg='green')
         return count
 
     @contextmanager
@@ -338,7 +342,7 @@ class RecordIndexer(object):
                 current_app.logger.error(
                     "Failed to index record {0}".format(payload.get('id')),
                     exc_info=True)
-    
+
     def _actionsiter2(self, ids, with_deleted=False):
         """Iterate bulk actions.
 
@@ -346,7 +350,28 @@ class RecordIndexer(object):
         """
         for id in ids:
             yield self._index_action2(id, True, with_deleted=with_deleted)
-            
+
+    def _actionsiter_sync_version(self, message_iterator):
+        """Iterate bulk actions.
+
+        :param message_iterator: Iterator yielding messages from a queue.
+        """
+        for message in message_iterator:
+            payload = message.decode()
+            try:
+                if payload['op'] == 'delete':
+                    yield self._delete_action(payload)
+                else:
+                    yield self._index_action_sync_version(payload)
+                message.ack()
+            except NoResultFound:
+                message.reject()
+            except Exception:
+                message.reject()
+                current_app.logger.error(
+                    f"Failed to index record {0}".format(payload.get('id')),
+                    exc_info=True)
+
     def _delete_action(self, payload):
         """Bulk delete action.
 
@@ -371,7 +396,7 @@ class RecordIndexer(object):
         :param payload: Decoded message body.
         :returns: Dictionary defining an Elasticsearch bulk 'index' action.
         """
-        
+
         return self._index_action2(payload['id'], with_deleted=with_deleted)
 
     def _index_action2(self, id,deleteFile=False,with_deleted=False):
@@ -382,8 +407,8 @@ class RecordIndexer(object):
         """
         record = Record.get_record(id)
         self.count = self.count + 1
-        click.secho("Indexing ID:{}, Count:{}".format(id,self.count),fg='green') 
-        
+        click.secho("Indexing ID:{}, Count:{}".format(id,self.count),fg='green')
+
         self.latest_item_id = id
         index, doc_type = self.record_to_index(record)
 
@@ -392,12 +417,12 @@ class RecordIndexer(object):
         body_size = len(json.dumps(body))
         max_body_size = current_app.config['INDEXER_MAX_BODY_SIZE']
 
-        
+
         if deleteFile or (body_size>max_body_size):
             if 'content' in body:
                 for i in range(len(body['content'])):
                     body['content'][i]['file'] = ""
-        
+
         action = {
             '_op_type': 'index',
             '_index': index,
@@ -410,7 +435,61 @@ class RecordIndexer(object):
         action.update(arguments)
 
         return action
-    
+
+    def _index_action_sync_version(self, payload):
+        """Bulk index action.
+
+        :param payload: Decoded message body.
+        :returns: Dictionary defining an Elasticsearch bulk 'index' action.
+        """
+        from weko_deposit.api import WekoIndexer # avoid circular import
+        record_id = payload['id']
+        record = Record.get_record(record_id)
+
+        indexer = WekoIndexer()
+        indexer.get_es_index()
+        res = indexer.get_metadata_by_item_id(record_id)
+        es_version = res.get('_version')
+
+        try:
+            if record.model.version_id < es_version:
+                record.model.version_id = es_version
+                db.session.commit()
+
+        except SQLAlchemyError:
+            current_app.logger.error(
+                f'SQLAlchemy error occurred while updating the version_id in records_metadata for id: {record_id}.')
+            traceback.print_exc()
+
+        self.count = self.count + 1
+        click.secho(f"Indexing ID:{record_id}, Count:{self.count}", fg='green')
+
+        self.latest_item_id = record_id
+        index, doc_type = self.record_to_index(record)
+
+        arguments = {}
+        body = self._prepare_record(record, index, doc_type, arguments)
+
+        body_size = len(json.dumps(body))
+        max_body_size = current_app.config['INDEXER_MAX_BODY_SIZE']
+
+        if body_size>max_body_size:
+            if 'content' in body:
+                for i in range(len(body['content'])):
+                    body['content'][i]['file'] = ""
+
+        action = {
+            '_op_type': 'index',
+            '_index': index,
+            '_type': doc_type,
+            '_id': str(record.id),
+            '_version': record.revision_id,
+            '_version_type': self._version_type,
+            '_source': body
+        }
+        action.update(arguments)
+        return action
+
     @staticmethod
     def _prepare_record(record, index, doc_type, arguments=None, **kwargs):
         """Prepare record data for indexing.
