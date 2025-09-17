@@ -706,6 +706,89 @@ def db_oaischema(app, db):
         db.session.add(jpcoar_mapping)
         db.session.add(jpcoar_v1_mapping)
 
+@pytest.fixture()
+def prepare_key_map():
+    key_map = {
+        "creator": {
+            "ids_key": "nameIdentifiers",
+            "id_scheme_key": "nameIdentifierScheme",
+            "id_key": "nameIdentifier",
+            "id_uri_key": "nameIdentifierURI",
+            "names_key": "creatorNames",
+            "name_key": "creatorName",
+            "name_lang_key": "creatorNameLang",
+            "name_type_key": "creatorNameType",
+            "fnames_key": "familyNames",
+            "fname_key": "familyName",
+            "fname_lang_key": "familyNameLang",
+            "gnames_key": "givenNames",
+            "gname_key": "givenName",
+            "gname_lang_key": "givenNameLang",
+            "mails_key": "creatorMails",
+            "mail_key": "creatorMail",
+            "affiliations_key": "creatorAffiliations",
+            "affiliation_ids_key": "affiliationNameIdentifiers",
+            "affiliation_id_key": "affiliationNameIdentifier",
+            "affiliation_id_uri_key": "affiliationNameIdentifierURI",            
+            "affiliation_id_scheme_key": "affiliationNameIdentifierScheme",
+            "affiliation_names_key": "affiliationNames",
+            "affiliation_name_key": "affiliationName",
+            "affiliation_name_lang_key": "affiliationNameLang"
+        },
+        "contributor": {
+            "ids_key": "nameIdentifiers",
+            "id_scheme_key": "nameIdentifierScheme",
+            "id_key": "nameIdentifier",
+            "id_uri_key": "nameIdentifierURI",
+            "names_key": "contributorNames",
+            "name_key": "contributorName",
+            "name_lang_key": "lang",
+            "name_type_key": "nameType",
+            "fnames_key": "familyNames",
+            "fname_key": "familyName",
+            "fname_lang_key": "familyNameLang",
+            "gnames_key": "givenNames",
+            "gname_key": "givenName",
+            "gname_lang_key": "givenNameLang",
+            "mails_key": "contributorMails",
+            "mail_key": "contributorMail",
+            "affiliations_key": "contributorAffiliations",
+            "affiliation_ids_key": "contributorAffiliationNameIdentifiers",
+            "affiliation_id_key": "contributorAffiliationNameIdentifier",
+            "affiliation_id_uri_key": "contributorAffiliationURI",            
+            "affiliation_id_scheme_key": "contributorAffiliationScheme",
+            "affiliation_names_key": "contributorAffiliationNames",
+            "affiliation_name_key": "contributorAffiliationName",
+            "affiliation_name_lang_key": "contributorAffiliationNameLang"
+        },
+        "full_name": {
+            "ids_key": "nameIdentifiers",
+            "id_scheme_key": "nameIdentifierScheme",
+            "id_key": "nameIdentifier",
+            "id_uri_key": "nameIdentifierURI",
+            "names_key": "names",
+            "name_key": "name",
+            "name_lang_key": "nameLang",
+            "name_type_key": None,
+            "fnames_key": "familyNames",
+            "fname_key": "familyName",
+            "fname_lang_key": "familyNameLang",
+            "gnames_key": "givenNames",
+            "gname_key": "givenName",
+            "gname_lang_key": "givenNameLang",
+            "mails_key": "mails",
+            "mail_key": "mail",
+            "affiliations_key": "affiliations",
+            "affiliation_ids_key": "nameIdentifiers",
+            "affiliation_id_key": "nameIdentifier",
+            "affiliation_id_uri_key": "nameIdentifierURI",            
+            "affiliation_id_scheme_key": "nameIdentifierScheme",
+            "affiliation_names_key": "affiliationNames",
+            "affiliation_name_key": "affiliationName",
+            "affiliation_name_lang_key": "lang"
+        }
+    }
+    return key_map
 
 @pytest.fixture()
 def prepare_formatsysbib():

@@ -68,267 +68,6 @@ def update_items_by_authorInfo(user_id, target, origin_pkid_list=[], origin_id_l
         ORIGIN_LABEL: []
     }
 
-    def _get_author_prefix():
-        result = {}
-        settings = AuthorsPrefixSettings.query.all()
-        if settings:
-            for s in settings:
-                result[str(s.id)] = {
-                    'scheme': s.scheme,
-                    'url': s.url
-                }
-        return result
-
-    def _get_affiliation_id():
-        result = {}
-        settings = AuthorsAffiliationSettings.query.all()
-        if settings:
-            for s in settings:
-                result[str(s.id)] = {
-                    'scheme': s.scheme,
-                    'url': s.url
-                }
-        return result    
-
-    def _change_to_meta(target, author_prefix, affiliation_id, key_map):
-        target_id = None
-        meta = {}
-        if target:
-            family_names = []
-            given_names = []
-            full_names = []
-            identifiers = []
-            mails = []
-            affiliation_identifiers = []
-            affiliation_names = []
-            affiliations = []
-
-            for name in target.get('authorNameInfo', []):
-                if not bool(name.get('nameShowFlg', "true")):
-                    continue
-                family_names.append({
-                    key_map['fname_key']: name.get('familyName', ''),
-                    key_map['fname_lang_key']: name.get('language', '')
-                })
-                given_names.append({
-                    key_map['gname_key']: name.get('firstName', ''),
-                    key_map['gname_lang_key']: name.get('language', '')
-                })
-                full_names.append({
-                    key_map['name_key']: "{}, {}".format(
-                        name.get('familyName', ''),
-                        name.get('firstName', '')),
-                    key_map['name_lang_key']: name.get('language', '')
-                })
-
-            for id in target.get('authorIdInfo', []):
-                if not bool(id.get('authorIdShowFlg', "true")):
-                    continue
-                prefix_info = author_prefix.get(id.get('idType', ""), {})
-                if prefix_info:
-                    id_info = {
-                        key_map['id_scheme_key']: prefix_info['scheme'],
-                        key_map['id_key']: id.get('authorId', '')
-                    }
-                    if prefix_info['url']:
-                        if '##' in prefix_info['url']:
-                            url = prefix_info['url'].replace(
-                                '##', id.get('authorId', ''))
-                        else:
-                            url = prefix_info['url']
-                        id_info.update({key_map['id_uri_key']: url})
-                    identifiers.append(id_info)
-
-                    if prefix_info['scheme'] == 'WEKO':
-                        target_id = id.get('authorId', '')
-
-            for email in target.get('emailInfo', []):
-                mails.append({
-                    key_map['mail_key']: email.get('email', '')
-                })
-
-            for affiliation in target.get('affiliationInfo', []):
-                for identifier in affiliation.get('identifierInfo', []):
-                    if not bool(identifier.get('identifierShowFlg', 'true')):
-                        continue
-                    affiliation_id_info = affiliation_id.get(identifier.get('affiliationIdType', ''), {})
-                    if affiliation_id_info:
-                        id_info = {
-                            key_map['affiliation_id_scheme_key']: affiliation_id_info['scheme'],
-                            key_map['affiliation_id_key']: identifier.get('affiliationId', '')
-                        }
-                        if affiliation_id_info['url']:
-                            if '##' in affiliation_id_info['url']:
-                                url = affiliation_id_info['url'].replace(
-                                    '##', identifier.get('affiliationId', ''))
-                            else:
-                                url = affiliation_id_info['url']
-                            id_info.update({key_map['affiliation_id_uri_key']: url})
-                        affiliation_identifiers.append(id_info)
-
-                for name in affiliation.get('affiliationNameInfo', []):
-                    if not bool(name.get('affiliationNameShowFlg', 'true')):
-                        continue
-                    affiliation_names.append({
-                        key_map['affiliation_name_key']: name.get('affiliationName', ''),
-                        key_map['affiliation_name_lang_key']: name.get('affiliationNameLang', '')
-                    })
-
-                affiliations.append({
-                    key_map['affiliation_ids_key']: affiliation_identifiers,
-                    key_map['affiliation_names_key']: affiliation_names
-                })
-
-            if family_names:
-                meta.update({
-                    key_map['fnames_key']: family_names
-                })
-            if given_names:
-                meta.update({
-                    key_map['gnames_key']: given_names
-                })
-            if full_names:
-                meta.update({
-                    key_map['names_key']: full_names
-                })
-            if identifiers:
-                meta.update({
-                    key_map['ids_key']: identifiers
-                })
-            if mails:
-                meta.update({
-                    key_map['mails_key']: mails
-                })
-            if affiliations:
-                meta.update({
-                    key_map['affiliations_key']: affiliations
-                })
-        return target_id, meta
-
-    def _update_author_data(item_id, record_ids):
-        temp_list = []
-        try:
-            pid = PersistentIdentifier.get('recid', item_id)
-            dep = WekoDeposit.get_record(pid.object_uuid)
-            author_link = set()
-            author_data = {}
-            for k, v in dep.items():
-                if isinstance(v, dict) \
-                    and v.get('attribute_value_mlt') \
-                        and isinstance(v['attribute_value_mlt'], list):
-                    data_list = v['attribute_value_mlt']
-                    prop_type = None
-                    for index, data in enumerate(data_list):
-                        if isinstance(data, dict) \
-                                and 'nameIdentifiers' in data:
-                            if 'creatorNames' in data:
-                                prop_type = 'creator'
-                            elif 'contributorNames' in data:
-                                prop_type = 'contributor'
-                            elif 'names' in data:
-                                prop_type = 'full_name'
-                            else:
-                                continue
-                            origin_id = -1
-                            change_flag = False
-                            for id in data.get('nameIdentifiers', []):
-                                if id.get('nameIdentifierScheme', '') == 'WEKO':
-                                    author_link.add(id['nameIdentifier'])
-                                    if id['nameIdentifier'] in origin_pkid_list:
-                                        origin_id = id['nameIdentifier']
-                                        change_flag = True
-                                        record_ids.append(pid.object_uuid)
-                                        break
-                                else:
-                                    continue
-                            if change_flag:
-                                target_id, new_meta = _change_to_meta(
-                                    target, author_prefix, affiliation_id, key_map[prop_type])
-                                dep[k]['attribute_value_mlt'][index].update(
-                                    new_meta)
-                                author_data.update(
-                                    {k: dep[k]['attribute_value_mlt']})
-                                if origin_id != target_id:
-                                    temp_list.append(origin_id)
-                                    author_link.remove(origin_id)
-                                    author_link.add(target_id)
-
-            dep['author_link'] = list(author_link)
-            dep.update_item_by_task()
-            obj = ItemsMetadata.get_record(pid.object_uuid)
-            obj.update(author_data)
-            obj.commit()
-            process_counter[SUCCESS_LABEL].append({"record_id": item_id, "author_ids": temp_list, "message": ""})
-            return pid.object_uuid, author_link
-        except PIDDoesNotExistError as pid_error:
-            current_app.logger.error("PID {} does not exist.".format(item_id))
-            process_counter[FAIL_LABEL].append({"record_id": item_id, "author_ids": temp_list, "message": "PID {} does not exist.".format(item_id)})
-            return None, set()
-        except Exception as ex:
-            current_app.logger.error(ex)
-            process_counter[FAIL_LABEL].append({"record_id": item_id, "author_ids": temp_list, "message": str(ex)})
-            return None, set()
-
-    def _process(data_size, data_from):
-        res = False
-        query_q = {
-            "query": {
-                "bool": {
-                    "must": [
-                        {
-                            "query_string": {
-                                "query": "publish_status: {} AND relation_version_is_last:true".format(
-                                    PublishStatus.PUBLIC.value)
-                            }
-                        }, {
-                            "terms": {
-                                "author_link.raw": origin_pkid_list
-                            }
-                        }]
-                }
-            },
-            "_source": [
-                "control_number"
-            ],
-            "size": data_size,
-            "from": data_from
-        }
-        search = RecordsSearch(
-            index=current_app.config['INDEXER_DEFAULT_INDEX'],). \
-            update_from_dict(query_q).execute().to_dict()
-
-        record_ids = []
-        update_es_authorinfo = []
-        for item in search['hits']['hits']:
-            item_id = item['_source']['control_number']
-            object_uuid, author_link = _update_author_data(item_id, record_ids)
-            if object_uuid:
-                update_es_authorinfo.append({
-                    'id': object_uuid, 'author_link': list(author_link)})
-        db.session.commit()
-        # update record to ES
-        if record_ids:
-            sleep(20)
-            query = (x[0] for x in PersistentIdentifier.query.filter(
-                PersistentIdentifier.object_uuid.in_(record_ids)
-            ).values(
-                PersistentIdentifier.object_uuid
-            ))
-            RecordIndexer().bulk_index(query)
-            RecordIndexer().process_bulk_queue(
-                es_bulk_kwargs={'raise_on_error': True})
-        if update_es_authorinfo:
-            sleep(20)
-            for d in update_es_authorinfo:
-                dep = WekoDeposit.get_record(d['id'])
-                dep.update_author_link(d['author_link'])
-
-        data_total = search['hits']['total']
-        if data_total > data_size + data_from:
-            return len(update_es_authorinfo), True
-        else:
-            return len(update_es_authorinfo), False
-
     key_map = {
         "creator": {
             "ids_key": "nameIdentifiers",
@@ -338,6 +77,7 @@ def update_items_by_authorInfo(user_id, target, origin_pkid_list=[], origin_id_l
             "names_key": "creatorNames",
             "name_key": "creatorName",
             "name_lang_key": "creatorNameLang",
+            "name_type_key": "creatorNameType",
             "fnames_key": "familyNames",
             "fname_key": "familyName",
             "fname_lang_key": "familyNameLang",
@@ -363,6 +103,7 @@ def update_items_by_authorInfo(user_id, target, origin_pkid_list=[], origin_id_l
             "names_key": "contributorNames",
             "name_key": "contributorName",
             "name_lang_key": "lang",
+            "name_type_key": "nameType",
             "fnames_key": "familyNames",
             "fname_key": "familyName",
             "fname_lang_key": "familyNameLang",
@@ -388,6 +129,7 @@ def update_items_by_authorInfo(user_id, target, origin_pkid_list=[], origin_id_l
             "names_key": "names",
             "name_key": "name",
             "name_lang_key": "nameLang",
+            "name_type_key": None,
             "fnames_key": "familyNames",
             "fname_key": "familyName",
             "fname_lang_key": "familyNameLang",
@@ -415,7 +157,7 @@ def update_items_by_authorInfo(user_id, target, origin_pkid_list=[], origin_id_l
         counter = 0
         while True:
             current_app.logger.debug("process data from {}.".format(data_from))
-            c, next = _process(data_size, data_from)
+            c, next = _process(data_size, data_from, process_counter, target, origin_pkid_list, key_map, author_prefix, affiliation_id)
             counter += c
             data_from += data_size
             if not next:
@@ -444,6 +186,261 @@ def update_items_by_authorInfo(user_id, target, origin_pkid_list=[], origin_id_l
                       format(e))
         update_items_by_authorInfo.retry(countdown=3, exc=e, max_retries=1)
 
+def _get_author_prefix():
+    result = {}
+    settings = AuthorsPrefixSettings.query.all()
+    if settings:
+        for s in settings:
+            result[str(s.id)] = {
+                'scheme': s.scheme,
+                'url': s.url
+            }
+    return result
+
+def _get_affiliation_id():
+    result = {}
+    settings = AuthorsAffiliationSettings.query.all()
+    if settings:
+        for s in settings:
+            result[str(s.id)] = {
+                'scheme': s.scheme,
+                'url': s.url
+            }
+    return result
+
+def _process(data_size, data_from, process_counter, target, origin_pkid_list, key_map, author_prefix, affiliation_id):
+    res = False
+    query_q = {
+        "query": {
+            "bool": {
+                "must": [
+                    {
+                        "query_string": {
+                            "query": "publish_status: {} AND relation_version_is_last:true".format(
+                                PublishStatus.PUBLIC.value)
+                        }
+                    }, {
+                        "terms": {
+                            "author_link.raw": origin_pkid_list
+                        }
+                    }]
+            }
+        },
+        "_source": [
+            "control_number"
+        ],
+        "size": data_size,
+        "from": data_from
+    }
+    search = RecordsSearch(
+        index=current_app.config['INDEXER_DEFAULT_INDEX'],). \
+        update_from_dict(query_q).execute().to_dict()
+    record_ids = []
+    update_es_authorinfo = []
+    for item in search['hits']['hits']:
+        item_id = item['_source']['control_number']
+        object_uuid, record_ids, author_link = _update_author_data(item_id, record_ids, process_counter, target, origin_pkid_list, key_map, author_prefix, affiliation_id)
+        if object_uuid:
+            update_es_authorinfo.append({
+                'id': object_uuid, 'author_link': list(author_link)})
+    db.session.commit()
+    # update record to ES
+    if record_ids:
+        sleep(20)
+        query = (x[0] for x in PersistentIdentifier.query.filter(
+            PersistentIdentifier.object_uuid.in_(record_ids)
+        ).values(
+            PersistentIdentifier.object_uuid
+        ))
+        RecordIndexer().bulk_index(query)
+        RecordIndexer().process_bulk_queue(
+            es_bulk_kwargs={'raise_on_error': True})
+    if update_es_authorinfo:
+        sleep(20)
+        for d in update_es_authorinfo:
+            dep = WekoDeposit.get_record(d['id'])
+            dep.update_author_link(d['author_link'])
+    data_total = search['hits']['total']
+    if data_total > data_size + data_from:
+        return len(update_es_authorinfo), True
+    else:
+        return len(update_es_authorinfo), False
+
+def _update_author_data(item_id, record_ids, process_counter, target, origin_pkid_list, key_map, author_prefix, affiliation_id):
+    temp_list = []
+    try:
+        pid = PersistentIdentifier.get('recid', item_id)
+        dep = WekoDeposit.get_record(pid.object_uuid)
+        author_link = set()
+        author_data = {}
+        for k, v in dep.items():
+            if isinstance(v, dict) \
+                and v.get('attribute_value_mlt') \
+                    and isinstance(v['attribute_value_mlt'], list):
+                data_list = v['attribute_value_mlt']
+                prop_type = None
+                for index, data in enumerate(data_list):
+                    if isinstance(data, dict) \
+                            and 'nameIdentifiers' in data:
+                        if 'creatorNames' in data:
+                            prop_type = 'creator'
+                        elif 'contributorNames' in data:
+                            prop_type = 'contributor'
+                        elif 'names' in data:
+                            prop_type = 'full_name'
+                        else:
+                            continue
+                        origin_id = -1
+                        change_flag = False
+                        for id in data.get('nameIdentifiers', []):
+                            if id.get('nameIdentifierScheme', '') == 'WEKO':
+                                author_link.add(id['nameIdentifier'])
+                                if id['nameIdentifier'] in origin_pkid_list:
+                                    origin_id = id['nameIdentifier']
+                                    change_flag = True
+                                    record_ids.append(pid.object_uuid)
+                                    break
+                            else:
+                                continue
+                        if change_flag:
+                            target_id, new_meta = _change_to_meta(
+                                target, author_prefix, affiliation_id, key_map[prop_type], dep[k]["attribute_value_mlt"][index].get(key_map[prop_type]["names_key"], None))
+                            dep[k]['attribute_value_mlt'][index].update(
+                                new_meta)
+                            author_data.update(
+                                {k: dep[k]['attribute_value_mlt']})
+                            if origin_id != target_id:
+                                temp_list.append(origin_id)
+                                author_link.remove(origin_id)
+                                author_link.add(target_id)
+        dep['author_link'] = list(author_link)
+        dep.update_item_by_task()
+        obj = ItemsMetadata.get_record(pid.object_uuid)
+        obj.update(author_data)
+        obj.commit()
+        process_counter[SUCCESS_LABEL].append({"record_id": item_id, "author_ids": temp_list, "message": ""})
+        return pid.object_uuid, record_ids, author_link
+    except PIDDoesNotExistError as pid_error:
+        current_app.logger.error("PID {} does not exist.".format(item_id))
+        process_counter[FAIL_LABEL].append({"record_id": item_id, "author_ids": temp_list, "message": "PID {} does not exist.".format(item_id)})
+        return None, set(), {}
+    except Exception as ex:
+        current_app.logger.error(ex)
+        process_counter[FAIL_LABEL].append({"record_id": item_id, "author_ids": temp_list, "message": str(ex)})
+        return None, set(), {}
+
+def _change_to_meta(target, author_prefix, affiliation_id, key_map, item_names_data):
+    target_id = None
+    meta = {}
+    if target:
+        family_names = []
+        given_names = []
+        full_names = []
+        identifiers = []
+        mails = []
+        affiliation_identifiers = []
+        affiliation_names = []
+        affiliations = []
+        for name in target.get('authorNameInfo', []):
+            if not bool(name.get('nameShowFlg', "true")):
+                continue
+            family_names.append({
+                key_map['fname_key']: name.get('familyName', ''),
+                key_map['fname_lang_key']: name.get('language', '')
+            })
+            given_names.append({
+                key_map['gname_key']: name.get('firstName', ''),
+                key_map['gname_lang_key']: name.get('language', '')
+            })
+            full_names.append({
+                key_map['name_key']: "{}, {}".format(
+                    name.get('familyName', ''),
+                    name.get('firstName', '')),
+                key_map['name_lang_key']: name.get('language', '')
+            })
+        for id in target.get('authorIdInfo', []):
+            if not bool(id.get('authorIdShowFlg', "true")):
+                continue
+            prefix_info = author_prefix.get(id.get('idType', ""), {})
+            if prefix_info:
+                id_info = {
+                    key_map['id_scheme_key']: prefix_info['scheme'],
+                    key_map['id_key']: id.get('authorId', '')
+                }
+                if prefix_info['url']:
+                    if '##' in prefix_info['url']:
+                        url = prefix_info['url'].replace(
+                            '##', id.get('authorId', ''))
+                    else:
+                        url = prefix_info['url']
+                    id_info.update({key_map['id_uri_key']: url})
+                identifiers.append(id_info)
+                if prefix_info['scheme'] == 'WEKO':
+                    target_id = id.get('authorId', '')
+        for email in target.get('emailInfo', []):
+            mails.append({
+                key_map['mail_key']: email.get('email', '')
+            })
+        for affiliation in target.get('affiliationInfo', []):
+            for identifier in affiliation.get('identifierInfo', []):
+                if not bool(identifier.get('identifierShowFlg', 'true')):
+                    continue
+                affiliation_id_info = affiliation_id.get(identifier.get('affiliationIdType', ''), {})
+                if affiliation_id_info:
+                    id_info = {
+                        key_map['affiliation_id_scheme_key']: affiliation_id_info['scheme'],
+                        key_map['affiliation_id_key']: identifier.get('affiliationId', '')
+                    }
+                    if affiliation_id_info['url']:
+                        if '##' in affiliation_id_info['url']:
+                            url = affiliation_id_info['url'].replace(
+                                '##', identifier.get('affiliationId', ''))
+                        else:
+                            url = affiliation_id_info['url']
+                        id_info.update({key_map['affiliation_id_uri_key']: url})
+                    affiliation_identifiers.append(id_info)
+            for name in affiliation.get('affiliationNameInfo', []):
+                if not bool(name.get('affiliationNameShowFlg', 'true')):
+                    continue
+                affiliation_names.append({
+                    key_map['affiliation_name_key']: name.get('affiliationName', ''),
+                    key_map['affiliation_name_lang_key']: name.get('affiliationNameLang', '')
+                })
+            affiliations.append({
+                key_map['affiliation_ids_key']: affiliation_identifiers,
+                key_map['affiliation_names_key']: affiliation_names
+            })
+        if family_names:
+            meta.update({
+                key_map['fnames_key']: family_names
+            })
+        if given_names:
+            meta.update({
+                key_map['gnames_key']: given_names
+            })
+        if full_names:
+            if item_names_data:
+                for idx, fn in enumerate(item_names_data):
+                    if len(full_names) > idx and key_map["name_type_key"]:
+                        full_names[idx][key_map["name_type_key"]] = item_names_data[idx].get(key_map["name_type_key"])
+                    else:
+                        break
+            meta.update({
+                key_map['names_key']: full_names
+            })
+        if identifiers:
+            meta.update({
+                key_map['ids_key']: identifiers
+            })
+        if mails:
+            meta.update({
+                key_map['mails_key']: mails
+            })
+        if affiliations:
+            meta.update({
+                key_map['affiliations_key']: affiliations
+            })
+    return target_id, meta
 
 def get_origin_data(origin_pkid_list):
     author_data = Authors.query.filter(Authors.id.in_(origin_pkid_list)).all()
