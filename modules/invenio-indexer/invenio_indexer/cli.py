@@ -26,7 +26,7 @@ from sqlalchemy.dialects import postgresql
 from weko_records.models import ItemMetadata
 
 from .api import RecordIndexer
-from .tasks import process_bulk_queue
+from .tasks import process_bulk_queue_reindex
 
 
 def abort_if_false(ctx, param, value):
@@ -58,36 +58,39 @@ def abort_if_false(ctx, param, value):
 @click.option(
     '--with_deleted', type=bool,default=True,
     help='Include deleted records in the indexing process.')
+@click.option('--stats-only', type=bool, default=False,
+              help='Only show indexing statistics without performing indexing.')
 @with_appcontext
 def run(delayed, concurrency, version_type=None, queue=None,
-        raise_on_error=True,raise_on_exception=True,chunk_size=500,max_chunk_bytes=104857600,max_retries=0,initial_backoff=2,max_backoff=600, with_deleted=True):
+        raise_on_error=True,raise_on_exception=True,chunk_size=500,max_chunk_bytes=104857600,max_retries=0,initial_backoff=2,max_backoff=600, with_deleted=True, stats_only=True):
     """Run bulk record indexing."""
     if delayed:
         celery_kwargs = {
             'kwargs': {
                 'version_type': version_type,
-                'es_bulk_kwargs': {'raise_on_error': raise_on_error,'chunk_size':chunk_size,'max_chunk_bytes':max_chunk_bytes,'max_retries': max_retries,'initial_backoff': initial_backoff,'max_backoff': max_backoff},
+                'es_bulk_kwargs': {'raise_on_error': raise_on_error,'chunk_size':chunk_size,'max_chunk_bytes':max_chunk_bytes,'max_retries': max_retries,'initial_backoff': initial_backoff,'max_backoff': max_backoff, 'stats_only': stats_only},
                 'with_deleted': with_deleted
             }
         }
-        
+
         click.secho(
             'Starting {0} tasks for indexing records...'.format(concurrency),
             fg='green')
         if queue is not None:
             celery_kwargs.update({'queue': queue})
         for c in range(0, concurrency):
-            process_bulk_queue.apply_async(**celery_kwargs)
+            process_bulk_queue_reindex.apply_async(**celery_kwargs)
     else:
         click.secho('Indexing records...', fg='green')
-        RecordIndexer(version_type=version_type).process_bulk_queue(
+        RecordIndexer(version_type=version_type).process_bulk_queue_reindex(
             es_bulk_kwargs={'raise_on_error': raise_on_error,
                             'raise_on_exception': raise_on_exception,
                             'chunk_size':chunk_size,
                             'max_chunk_bytes':max_chunk_bytes,
                             'max_retries': max_retries,
                             'initial_backoff': initial_backoff,
-                            'max_backoff': max_backoff},
+                            'max_backoff': max_backoff,
+                            'stats_only': stats_only},
             with_deleted=with_deleted)
 
 
@@ -163,15 +166,15 @@ def reindex(pid_type, include_delete,skip_exists,size,item_type_id,file):
             hits = _res['hits']['hits']
             _ids = [x["_id"] for x in hits]
             ids.extend(_ids)
-        
+
         _tmp = set(_values)
         _ids = set(ids)
-        diff = list(_tmp - _ids) 
+        diff = list(_tmp - _ids)
         _values = (x for x in diff)
         # cnt = sum(1 for _ in diff)
 
     print("type: {}".format(type(_values)))
-    print("values: {}".format(_values)) 
+    print("values: {}".format(_values))
     _values, _values2 = itertools.tee(_values)
     cnt = sum(1 for _ in _values2)
     click.secho('Queueing {} records..'.format(cnt),fg='green')
