@@ -702,7 +702,7 @@ def update_file_content_with_index_api(record_uuid, file_datas):
             content["attachment"]["content"] = file_datas[content.get("filename")]
     es_data["content"] = contents
 
-    ret = indexer.client.index(
+    indexer.client.index(
         index=indexer.es_index,
         id=str(record_uuid),
         body=es_data,
