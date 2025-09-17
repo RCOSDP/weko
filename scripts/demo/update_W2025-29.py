@@ -1,12 +1,14 @@
+import sys
+
 from invenio_db import db
 from properties import property_config
 from register_properties import del_properties, get_properties_id, register_properties_from_folder
 from tools import updateRestrictedRecords
 import renew_all_item_types
 
-def main():
+def main(restricted_item_type_id):
     print("run updateRestrictedRecords")
-    updateRestrictedRecords.main(123)
+    updateRestrictedRecords.main(restricted_item_type_id)
     print("run register_properties_only_specified")
     register_properties_only_specified()
     print("run renew_all_item_types")
@@ -27,4 +29,10 @@ def register_properties_only_specified():
 
 
 if __name__ == "__main__":
-    main()
+    args = sys.argv
+    if len(args) > 1:
+        restricted_item_type_id = int(args[1])
+        main()
+    else:
+        print("Please provide restricted_item_type_id as an argument.")
+        sys.exit(1)
