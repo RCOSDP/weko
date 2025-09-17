@@ -5,7 +5,7 @@ from properties import property_config
 import traceback
 import argparse
 
-def main():
+def main(args=None):
     try:
         _renew_type = args.renew_type if args else ''
         _renew_value = args.renew_value if args else 'None'
@@ -35,4 +35,4 @@ if __name__ == '__main__':
         args = parser.parse_args()
     except:
         args = None
-    main()
+    main(args)

@@ -17,6 +17,32 @@ from weko_records.models import ItemMetadata, ItemType, ItemTypeProperty
 import weko_schema_ui
 from weko_admin.models import AdminSettings
 
+def main(restricted_item_type_id):
+    """Main context."""
+    # for logging
+    current_app.logger.info('restricted records update start')
+    start_time = time.perf_counter()
+
+    try:
+        with db.session.begin_nested():
+            update_item_type_property(restricted_item_type_id)
+            update_item_type()
+            update_item_metadata()
+            update_records_metadata()
+        update_admin_settings()
+        db.session.commit()
+        current_app.logger.info('restricted records update end')
+        # current_app.logger.info('ElasticSearch data update start')
+        # elasticsearch_reindex(True)
+        # current_app.logger.info('ElasticSearch data update end')
+        end_time = time.perf_counter()
+        current_app.logger.info(str(end_time - start_time) + ' sec.')
+    except SQLAlchemyError as ex:
+        db.session.rollback()
+        current_app.logger.error(str(ex))
+        current_app.logger.error("records rollback")
+        current_app.logger.error(traceback.format_exc())
+
 
 def update_item_type_property(restricted_item_type_id):
     """update item_type_property record (specified id only)"""
@@ -433,35 +459,11 @@ def _elasticsearch_remake_item_index(index_name):
     return returnlist
 
 if __name__ == '__main__':
-    """Main context."""
     # start command
     # > invenio shell updateRestrictedRecords.py <restricted_item_type_property_id>
-    
-    # for logging
-    current_app.logger.info('restricted records update start')
-    start_time = time.perf_counter()
 
     args = sys.argv
     if len(args) > 1:
-        # get restricted item_type id
         restricted_item_type_id = int(args[1])
-        try:
-            with db.session.begin_nested():
-                update_item_type_property(restricted_item_type_id)
-                update_item_type()
-                update_item_metadata()
-                update_records_metadata()
-            update_admin_settings()
-            db.session.commit()
-            current_app.logger.info('restricted records update end')
-            # current_app.logger.info('ElasticSearch data update start')
-            # elasticsearch_reindex(True)
-            # current_app.logger.info('ElasticSearch data update end')
-            end_time = time.perf_counter()
-            current_app.logger.info(str(end_time - start_time) + ' sec.')
-        except SQLAlchemyError as ex:
-            db.session.rollback()
-            current_app.logger.error(str(ex))
-            current_app.logger.error("records rollback")
-            current_app.logger.error(traceback.format_exc())
+        main(restricted_item_type_id)
 
