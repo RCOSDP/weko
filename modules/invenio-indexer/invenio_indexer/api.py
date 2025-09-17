@@ -189,7 +189,7 @@ class RecordIndexer(object):
         :param dict es_bulk_kwargs: Passed to
             :func:`elasticsearch:elasticsearch.helpers.bulk`.
         """
-        from weko_deposit.utils import update_pdf_contents_es  # avoid circular import
+        from weko_deposit.utils import update_pdf_contents_es
         success = 0
         fail = 0
         self.count = 0
@@ -288,7 +288,6 @@ class RecordIndexer(object):
 
         count = (success,fail)
         click.secho("count(success, error): {}".format(count),fg='green')
-
         return count
 
     def process_bulk_queue_reindex(self, es_bulk_kwargs=None, with_deleted=False):
