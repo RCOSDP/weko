@@ -5,7 +5,7 @@ from flask import current_app
 from invenio_db import db
 from properties import property_config
 from register_properties import del_properties, get_properties_id, register_properties_from_folder
-from tools import updateRestrictedRecords
+from tools import updateRestrictedRecords, update_weko_links
 
 from weko_records.api import ItemTypes
 
@@ -18,6 +18,8 @@ def main(restricted_item_type_id):
         register_properties_only_specified()
         current_app.logger.info("run renew_all_item_types")
         renew_all_item_types()
+        current_app.logger.info("run update_weko_links")
+        update_weko_links.main()
     except Exception as ex:
         current_app.logger.error(ex)
         db.session.rollback()
