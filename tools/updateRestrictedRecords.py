@@ -453,9 +453,9 @@ if __name__ == '__main__':
             update_admin_settings()
             db.session.commit()
             current_app.logger.info('restricted records update end')
-            current_app.logger.info('ElasticSearch data update start')
-            elasticsearch_reindex(True)
-            current_app.logger.info('ElasticSearch data update end')
+            # current_app.logger.info('ElasticSearch data update start')
+            # elasticsearch_reindex(True)
+            # current_app.logger.info('ElasticSearch data update end')
             end_time = time.perf_counter()
             current_app.logger.info(str(end_time - start_time) + ' sec.')
         except SQLAlchemyError as ex:

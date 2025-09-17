@@ -25,35 +25,12 @@ CREATE TABLE public.item_application (
 
 -- mail_template.sql
 
---
--- Create Mail Templates and Mail Template Categories
---
-
-CREATE TABLE public.mail_template_genres (
-	id serial NOT NULL,
-	name varchar(255) NOT NULL,
-	CONSTRAINT pk_mail_template_genres PRIMARY KEY (id)
-);
-
 INSERT INTO public.mail_template_genres
 	(id, name)
 	VALUES
 		(1, 'Notification of secret URL provision'),
 		(2, 'Guidance to the application form'),
 		(3, 'Others');
-
-
--- public.mail_templates definition
-
-CREATE TABLE public.mail_templates (
-	id serial4 NOT NULL,
-	mail_subject varchar(255) NULL,
-	mail_body text NULL,
-	default_mail bool NULL,
-	genre_id int4 NOT NULL DEFAULT 3,
-	CONSTRAINT pk_mail_templates PRIMARY KEY (id),
-	CONSTRAINT fk_mail_templates_genre_id_mail_template_genres FOREIGN KEY (genre_id) REFERENCES public.mail_template_genres(id) ON DELETE RESTRICT ON UPDATE CASCADE
-);
 
 --
 -- Data for Name: mail_templates; Type: TABLE DATA; Schema: public; Owner: invenio
