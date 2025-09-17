@@ -1,3 +1,5 @@
+BEGIN;
+
 -- W2023-23-item-application.sql
 
 -- public.workflow_activity_item_application definition
@@ -822,3 +824,10 @@ ALTER TABLE resync_indexes ALTER COLUMN saving_format TYPE character varying(20)
 
 ALTER TABLE public.feedback_mail_list ADD COLUMN account_author text;
 ALTER TABLE public.index ADD COLUMN is_deleted boolean DEFAULT false;
+
+-- public.authors_prefix_settings.sql
+
+INSERT INTO public.authors_prefix_settings(name, scheme, url, created, updated) VALUES 
+('researchmap', 'researchmap', 'https://researchmap.jp/##', TIMESTAMP '2024-01-01 00:00:00.000', TIMESTAMP '2024-01-01 00:00:00.000');
+
+COMMIT;

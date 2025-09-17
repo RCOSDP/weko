@@ -2,6 +2,7 @@ import os
 import time
 import json
 import sys
+import traceback
 import requests
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm.attributes import flag_modified
@@ -459,7 +460,8 @@ if __name__ == '__main__':
             end_time = time.perf_counter()
             current_app.logger.info(str(end_time - start_time) + ' sec.')
         except SQLAlchemyError as ex:
-            current_app.logger.info(str(ex))
-            current_app.logger.info("records rollback")
             db.session.rollback()
+            current_app.logger.error(str(ex))
+            current_app.logger.error("records rollback")
+            current_app.logger.error(traceback.format_exc())
 
