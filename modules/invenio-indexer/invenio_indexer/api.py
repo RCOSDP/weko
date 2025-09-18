@@ -30,6 +30,8 @@ from elasticsearch.helpers import BulkIndexError
 from elasticsearch.exceptions import ConnectionTimeout,ConnectionError
 from invenio_db import db
 from sqlalchemy.exc import SQLAlchemyError
+import datetime
+import math
 
 from .proxies import current_record_to_index
 from .signals import before_record_index
@@ -302,6 +304,7 @@ class RecordIndexer(object):
         unprocessed = 0
         self.count = 0
         self.success_ids = []
+        self.target_chunks = 0
         messages_count = 0
         count = (success,fail)
         req_timeout = current_app.config['INDEXER_BULK_REQUEST_TIMEOUT']
@@ -322,6 +325,8 @@ class RecordIndexer(object):
                 try:
                     messages = list(consumer.iterqueue())
                     messages_count = len(messages)
+                    self.target_chunks = math.ceil(messages_count / es_bulk_kwargs["chunk_size"])
+                    click.secho("messages count:{}, target chunks:{}".format(messages_count, self.target_chunks),fg='green')
                     _success,_fail  = self.reindex_bulk(
                         self.client,
                         self._actionsiter_sync_version(messages),
@@ -665,6 +670,8 @@ class RecordIndexer(object):
         success, failed = 0, 0
         errors = []
         success_ids = []
+        current_chunk = 1
+        chunk_progress = f"{current_chunk}/{self.target_chunks}"
         ignore_status = kwargs.pop('ignore_status', None)
         span_name = kwargs.pop('span_name', None)
         kwargs.pop('yield_ok', None)
@@ -679,30 +686,51 @@ class RecordIndexer(object):
                 streaming_bulk_kwargs["span_name"] = span_name
             if ignore_status is not None:
                 streaming_bulk_kwargs["ignore_status"] = ignore_status
-
+            item_count = 0
+            log_list = []
             for ok, item in streaming_bulk(
                 *streaming_bulk_args,
                 *args,
                 **streaming_bulk_kwargs,
                 **kwargs
             ):
+                item_count += 1
                 if not ok:
                     if not stats_only:
                         errors.append(item)
                     failed += 1
+                    log_list.append({"id": item['index']['_id'], "Status": "Fail"})
                 else:
                     success += 1
+                    log_list.append({"id": item['index']['_id'], "Status": "Success"})
+                if item_count % kwargs["chunk_size"] == 0:
+                    date = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')
+                    for log in log_list:
+                        if log["Status"] == "Success":
+                            click.secho("[{}] ID: {}, Status: {}, Chunk: {}".format(date, log["id"], log["Status"], chunk_progress), fg='green')
+                        else:
+                            click.secho("[{}] ID : {}, Status: {}, Chunk: {}".format(date, log["id"], log["Status"], chunk_progress), fg='red')
+                    current_chunk += 1
+                    chunk_progress = f"{current_chunk}/{self.target_chunks}"
+                    log_list = []
+
+            date = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')
+            for log in log_list:
+                if log["Status"] == "Success":
+                    click.secho("[{}] ID: {}, Status: {}, Chunk: {}".format(date, log["id"], log["Status"], chunk_progress), fg='green')
+                else:
+                    click.secho("[{}] ID : {}, Status: {}, Chunk: {}".format(date, log["id"], log["Status"], chunk_progress), fg='red')
             self.success_ids = success_ids
             return (success, failed) if stats_only else (success, errors)
         except BulkIndexError:
             self.success_ids = success_ids
             raise
-        except ConnectionError as ce:
-            self.success_ids = success_ids
-            raise BulkConnectionError(success, failed, errors, ce) from ce
         except ConnectionTimeout as cte:
             self.success_ids = success_ids
             raise BulkConnectionTimeout(success, failed, errors, cte) from cte
+        except ConnectionError as ce:
+            self.success_ids = success_ids
+            raise BulkConnectionError(success, failed, errors, ce) from ce
         except Exception as e:
             self.success_ids = success_ids
             raise BulkException(success, failed, errors, e) from e
@@ -752,10 +780,10 @@ class BulkBaseException(Exception):
         self.errors = errors
         self.original_exception = original_exception
 
-class BulkConnectionError(BulkBaseException, ConnectionError):
+class BulkConnectionTimeout(BulkBaseException, ConnectionTimeout):
     pass
 
-class BulkConnectionTimeout(BulkBaseException, ConnectionTimeout):
+class BulkConnectionError(BulkBaseException, ConnectionError):
     pass
 
 class BulkException(BulkBaseException):
