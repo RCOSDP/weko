@@ -75,22 +75,6 @@ class Authors(db.Model, Timestamp):
     )
     """json for author info"""
 
-    repository_id = db.Column(
-        db.JSON().with_variant(
-            postgresql.JSONB(none_as_null=True),
-            'postgresql',
-        ).with_variant(
-            JSONType(),
-            'sqlite',
-        ).with_variant(
-            JSONType(),
-            'mysql',
-        ),
-        default=lambda: dict(),
-        nullable=True
-    )
-    """repository_id of the authors"""
-
     communities = db.relationship(
         'Community',
         secondary='author_community_relations',
@@ -246,22 +230,6 @@ class AuthorsPrefixSettings(db.Model, Timestamp):
         onupdate=datetime.utcnow)
     """ Updated date."""
 
-    repository_id = db.Column(
-        db.JSON().with_variant(
-            postgresql.JSONB(none_as_null=True),
-            'postgresql',
-        ).with_variant(
-            JSONType(),
-            'sqlite',
-        ).with_variant(
-            JSONType(),
-            'mysql',
-        ),
-        default=lambda: dict(),
-        nullable=True
-    )
-    """repository_id of prefix settings"""
-
     communities = db.relationship(
         'Community',
         secondary='author_prefix_community_relations',
@@ -399,22 +367,6 @@ class AuthorsAffiliationSettings(db.Model, Timestamp):
         default=datetime.utcnow,
         onupdate=datetime.utcnow)
     """ Updated date."""
-
-    repository_id = db.Column(
-        db.JSON().with_variant(
-            postgresql.JSONB(none_as_null=True),
-            'postgresql',
-        ).with_variant(
-            JSONType(),
-            'sqlite',
-        ).with_variant(
-            JSONType(),
-            'mysql',
-        ),
-        default=lambda: dict(),
-        nullable=True
-    )
-    """repository_id of affiliation organization."""
 
     communities = db.relationship(
         'Community',
