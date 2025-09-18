@@ -113,6 +113,7 @@ WEKO_SWORDSERVER_BAGIT_VERIFICATION = True
 
 WEKO_SWORDSERVER_DEPOSIT_ROLE_ENABLE = [
     "System Administrator",
-    "Repository Administrator"
+    "Repository Administrator",
+    "Contributor"
 ]
 """ Roles that can deposit items with token authentication. """
