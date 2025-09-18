@@ -585,9 +585,11 @@ class RecordIndexer(object):
                 db.session.commit()
 
         except SQLAlchemyError:
+            db.session.rollback()
             current_app.logger.error(
                 f'SQLAlchemy error occurred while updating the version_id in records_metadata for id: {record_id}.')
             traceback.print_exc()
+            raise
 
         self.count = self.count + 1
         click.secho(f"Indexing ID:{record_id}, Count:{self.count}", fg='green')
