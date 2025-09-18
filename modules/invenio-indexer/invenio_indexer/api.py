@@ -725,12 +725,12 @@ class RecordIndexer(object):
         except BulkIndexError:
             self.success_ids = success_ids
             raise
-        except ConnectionTimeout as cte:
-            self.success_ids = success_ids
-            raise BulkConnectionTimeout(success, failed, errors, cte) from cte
         except ConnectionError as ce:
             self.success_ids = success_ids
             raise BulkConnectionError(success, failed, errors, ce) from ce
+        except ConnectionTimeout as cte:
+            self.success_ids = success_ids
+            raise BulkConnectionTimeout(success, failed, errors, cte) from cte
         except Exception as e:
             self.success_ids = success_ids
             raise BulkException(success, failed, errors, e) from e
@@ -780,10 +780,10 @@ class BulkBaseException(Exception):
         self.errors = errors
         self.original_exception = original_exception
 
-class BulkConnectionTimeout(BulkBaseException, ConnectionTimeout):
+class BulkConnectionError(BulkBaseException, ConnectionError):
     pass
 
-class BulkConnectionError(BulkBaseException, ConnectionError):
+class BulkConnectionTimeout(BulkBaseException, ConnectionTimeout):
     pass
 
 class BulkException(BulkBaseException):
