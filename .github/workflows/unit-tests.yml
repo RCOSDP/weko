@@ -1,43 +1,22 @@
-name: Tests
+name: Unit Tests (Docker Matrix)
 
 on: [push, pull_request]
 
 jobs:
   test:
-    name: Test
-    runs-on: ubuntu-20.04
-    services:
-      postgres:
-        image: postgres:12
-        ports:
-          - 5432:5432
-        env:
-          POSTGRES_USER: invenio
-          POSTGRES_PASSWORD: dbpass123
-      elasticsearch:
-        image: elasticsearch:6.8.23
-        ports:
-          - 9200:9200
-      rabbitmq:
-        image: rabbitmq:latest
-      redis:
-        image: redis:latest
-        ports:
-          - 6379:6379
-    env:
-      SQLALCHEMY_DATABASE_URI: postgresql+psycopg2://invenio:dbpass123@localhost:5432/wekotest
-      CACHE_REDIS_URL: redis://localhost:6379/0
-      SEARCH_ELASTIC_HOSTS: localhost
-    timeout-minutes: 60
+    name: Test ${{ matrix.module }} in Docker Compose
+    runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
       matrix:
         module:
+          - invenio-accounts
           - invenio-communities
           - invenio-db
           - invenio-deposit
           - invenio-files-rest
           - invenio-iiif
+          - invenio-indexer
           - invenio-mail
           - invenio-oaiharvester
           - invenio-oaiserver
@@ -65,46 +44,57 @@ jobs:
           - weko-itemtypes-ui
           - weko-logging
           - weko-plugins
-          - weko-records
           - weko-records-ui
+          - weko-records
+          - weko-redis
           - weko-schema-ui
           - weko-search-ui
           - weko-sitemap
+          - weko-swordserver
           - weko-theme
           - weko-user-profiles
           - weko-workflow
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Cache
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cache/pip
-            venv
-          key: unit-test
-      - name: Install system packages
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Ensure docker compose v2
         run: |
-          sudo apt-get update
-          sudo apt-get install python3-setuptools libpq-dev libedit-dev libsqlite3-dev
-      - name: Setup python
-        uses: actions/setup-python@v5
-        with:
-          python-version: 3.6.15
-      - name: Create venv
-        run: python -m venv venv
-      - name: Install python dependencies
+          docker compose version || {
+            DOCKER_CONFIG=${DOCKER_CONFIG:-$HOME/.docker}
+            mkdir -p $DOCKER_CONFIG/cli-plugins
+            curl -SL https://github.com/docker/compose/releases/latest/download/docker-compose-linux-x86_64 \
+              -o $DOCKER_CONFIG/cli-plugins/docker-compose
+            chmod +x $DOCKER_CONFIG/cli-plugins/docker-compose
+            docker compose version
+          }
+
+      - name: Build containers
+        run: docker compose build
+
+      - name: Start containers
+        run: docker compose up -d
+
+      - name: Wait for services to be healthy
         run: |
-          source venv/bin/activate
-          python -m pip install -U 'setuptools==57.5.0' wheel 'pip==20.2.4' coveralls PyYAML
-          pip install -r packages.txt
-          pip install --no-deps -r packages-invenio.txt
-          sed -E 's/\/code\///g' requirements-weko-modules.txt | xargs pip install --no-deps
-          python -m pip uninstall -y 'coverage' 'pytest' 'pytest-cov' 'pytest-invenio' 'mock' 'urllib3' 'responses' 'moto'
-          python -m pip install 'coverage==4.5.4' 'pytest==5.4.3' 'pytest-cov==2.10.1' 'pytest-invenio==1.3.4' 'mock==3.0.5' 'urllib3==1.21.1' 'responses==0.10.3' 'moto==1.3.5' pytest-mock
-      - name: Run tests
+          sleep 15  # 必要に応じて待機時間を調整
+
+      - name: Install test dependencies in container
         run: |
-          source venv/bin/activate
-          cd modules/${{ matrix.module }}
-          python -m pip install .
-          python setup.py test
+          docker compose exec -T web bash -c "pip install --upgrade pip && pip install tox tox-setuptools-version pytest-timeout"
+
+      - name: Run tox in module
+        run: |
+          docker compose exec -T web bash -c "cd modules/${{ matrix.module }} && tox"
+
+      - name: Show logs (for debug)
+        if: failure()
+        run: docker compose logs
+
+      - name: Stop and remove containers
+        if: always()
+        run: docker compose down
