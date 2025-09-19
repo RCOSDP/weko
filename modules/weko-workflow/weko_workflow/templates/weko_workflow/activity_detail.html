@@ -300,7 +300,7 @@
                 <button type="button" class="btn btn-primary action-big-button" id="btn-approval-req">{{_('Approval Request')}}</button>
                 <button type="button" class="btn btn-primary done-button" id="btn-finish">{{_('Done')}}</button>
               {%- elif 'approval' == cur_step or 'approval_advisor' == cur_step or 'approval_guarantor' == cur_step or 'approval_administrator' == cur_step %}
-                <button type="button" class="btn btn-danger action-button" id="btn-reject">{{_('Reject')}}</button>
+                <button type="button" class="btn btn-info action-button" id="btn-reject"><span class="glyphicon glyphicon-chevron-left"></span> {{_('Back')}}</button>
                 <button type="button" class="btn btn-primary save-button" id="btn-draft">
                   <span class="glyphicon glyphicon-saved"></span> {{_('Save')}}</button>
                 <button type="button" class="btn btn-info action-button" id="btn-approval">{{_('Approval')}}</button>
