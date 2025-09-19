@@ -219,7 +219,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     return React.createElement(
       'div',
-      { style: { position: 'relative', marginBottom: '20px', maxWidth: '300px' } },
+      { style: { position: 'relative', marginTop: '10px', marginBottom: '10px', marginLeft: '5px', maxWidth: '300px' } },
       React.createElement('input', {
         type: 'text',
         id: 'search-input',
