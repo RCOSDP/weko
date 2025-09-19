@@ -977,11 +977,15 @@ def item_register_save():
             handle_check_and_prepare_index_tree(list_record, True, [])
         handle_check_and_prepare_publish_status(list_record)
         if file_path_list:
-            handle_check_file_metadata(list_record, data_path)
+                handle_check_file_metadata(list_record, data_path)
 
         if list_record[0].get("errors"):
             result['error'] = ', '.join(list_record[0].get("errors", ["error!!"]))
             return result
+
+        # clear session activity_info for WekoDeposit.create
+        if session and 'activity_info' in session:
+            del session['activity_info']
 
         if settings.workFlow_select_flg == "0":
             # registration by workflow
