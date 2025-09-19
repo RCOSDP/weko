@@ -9,11 +9,12 @@
 """Test API."""
 
 from __future__ import absolute_import, print_function
-
+import types
 import json
 import uuid
 
 import pytz
+import pytest
 from celery.messaging import establish_connection
 from invenio_db import db
 from invenio_records.api import Record
@@ -27,6 +28,27 @@ from mock import MagicMock, patch
 from invenio_indexer.api import BulkRecordIndexer, RecordIndexer
 from invenio_indexer.signals import before_record_index
 
+class DummyRecord:
+    def __init__(self, id, version_id, revision_id, created=None, updated=None):
+        self.id = id
+        self.model = types.SimpleNamespace(version_id=version_id)
+        self.revision_id = revision_id
+        self.created = created
+        self.updated = updated
+    def dumps(self):
+        return {'dummy': True}
+class DummyMessage:
+    def __init__(self, payload):
+        self._payload = payload
+        self.acked = False
+        self.rejected = False
+    def decode(self):
+        return self._payload
+    def ack(self):
+        self.acked = True
+    def reject(self):
+        self.rejected = True
+
 # .tox/c1/bin/pytest --cov=invenio_indexer tests/test_api.py -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-indexer/.tox/c1/tmp
 
 # .tox/c1/bin/pytest --cov=invenio_indexer tests/test_api.py::test_indexer_bulk_index -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-indexer/.tox/c1/tmp
@@ -39,7 +61,7 @@ def test_indexer_bulk_index(app, queue):
             id2 = uuid.uuid4()
             indexer.bulk_index([id1, id2])
             indexer.bulk_delete([id1, id2])
-            
+
             consumer = Consumer(
                 connection=c,
                 queue=indexer.mq_queue.name,
@@ -280,3 +302,124 @@ def test_bulkrecordindexer_index_delete_by_record(app, queue):
             data1 = messages[1].decode()
             assert data1['id'] == str(recid)
             assert data1['op'] == 'delete'
+
+@pytest.mark.parametrize(
+    "body, expected_file, has_content, version_id, es_version, expect_commit, max_body_size, expect_error",
+    [
+        # If body_size > max_body_size and content exists, commit because version_id < es_version
+        ({'content': [{'file': 'a'*100}]}, '', True, 1, 3, True, 10, False),
+        # If body_size > max_body_size and no content, commit because version_id < es_version
+        ({'foo': 'bar', 'file': 'a'*100}, 'a'*100, False, 1, 3, True, 10, False),
+        # Normal commit
+        ({'foo': 'bar', 'content': [{'file': 'abc'}]}, 'abc', True, 1, 3, True, 1000, False),
+        # No commit
+        ({'foo': 'bar', 'content': [{'file': 'abc'}]}, 'abc', True, 5, 3, False, 1000, False),
+        # SQLAlchemyError occurs
+        ({'foo': 'bar', 'content': [{'file': 'abc'}]}, 'abc', True, 1, 3, False, 1000, True),
+    ]
+)
+def test__index_action_sync_version_cases(monkeypatch, body, expected_file, has_content, version_id, es_version, expect_commit, max_body_size, expect_error):
+    import sys
+    import sqlalchemy
+
+    def setup_indexer_and_env():
+        # Setup dummy record and monkeypatch Record.get_record
+        dummy_record = DummyRecord('rid', version_id, 2)
+        monkeypatch.setattr('invenio_indexer.api.Record', types.SimpleNamespace(get_record=lambda rid: dummy_record))
+        # Setup dummy WekoIndexer
+        class DummyWekoIndexer:
+            def get_es_index(self): return None
+            def get_metadata_by_item_id(self, rid): return {'_version': es_version}
+        sys.modules['weko_deposit.api'] = types.SimpleNamespace(WekoIndexer=DummyWekoIndexer)
+        # Setup dummy DB session
+        committed = {'called': False}
+        class DummySession:
+            def commit(self):
+                if expect_error:
+                    raise sqlalchemy.exc.SQLAlchemyError('sqlalchemy')
+                committed['called'] = True
+            def rollback(self):
+                pass
+        monkeypatch.setattr('invenio_indexer.api.db', types.SimpleNamespace(session=DummySession()))
+        # Setup dummy logger and traceback
+        called = {'error': False, 'trace': False}
+        class DummyLogger:
+            def error(self, *a, **k): called['error'] = True
+        monkeypatch.setattr('invenio_indexer.api.current_app', types.SimpleNamespace(
+            logger=DummyLogger(),
+            config={'INDEXER_MAX_BODY_SIZE': max_body_size}
+        ))
+        monkeypatch.setattr('invenio_indexer.api.click', types.SimpleNamespace(secho=lambda *a, **k: None))
+        monkeypatch.setattr('invenio_indexer.api.traceback', types.SimpleNamespace(print_exc=lambda: called.update({'trace': True})))
+        # Setup indexer
+        indexer = RecordIndexer(search_client=None)
+        indexer.count = 0
+        indexer.record_to_index = lambda record: ('idx', 'doc')
+        indexer._prepare_record = lambda record, index, doc_type, arguments: body.copy()
+        return indexer, committed, called
+
+    payload = {'id': 'rid'}
+    indexer, committed, called = setup_indexer_and_env()
+
+    if expect_error:
+        with pytest.raises(sqlalchemy.exc.SQLAlchemyError):
+            indexer._index_action_sync_version(payload)
+        assert called['error']
+        assert called['trace']
+        assert not committed['called']
+    else:
+        action = indexer._index_action_sync_version(payload)
+        if has_content:
+            assert action['_source']['content'][0]['file'] == expected_file
+        else:
+            assert action['_source']['file'] == expected_file
+            assert 'content' not in action['_source']
+        if expect_commit:
+            assert committed['called']
+        else:
+            assert not committed['called']
+
+def test__actionsiter_sync_version_exception(monkeypatch):
+    """Test that reject and logger.error are called when an exception occurs in _actionsiter_sync_version."""
+    indexer = RecordIndexer(search_client=None)
+    # Raise exception in index side (could be _delete_action or _index_action_sync_version)
+    def raise_exc(payload):
+        raise Exception('test error')
+    monkeypatch.setattr(indexer, '_index_action_sync_version', raise_exc)
+    # Detect logger.error call
+    called = {'error': False}
+    monkeypatch.setattr('invenio_indexer.api.current_app', types.SimpleNamespace(
+        logger=types.SimpleNamespace(error=lambda *a, **k: called.update({'error': True}))
+    ))
+    msg = DummyMessage({'op': 'index', 'id': 'rid'})
+    # Execute
+    result = list(indexer._actionsiter_sync_version([msg]))
+    assert msg.rejected
+    assert not msg.acked
+    assert called['error']
+
+def test__actionsiter_sync_version_noresultfound(monkeypatch):
+    """Test that reject is called when NoResultFound occurs in _actionsiter_sync_version."""
+    indexer = RecordIndexer(search_client=None)
+    from sqlalchemy.orm.exc import NoResultFound
+    # Make Record.get_record raise NoResultFound
+    monkeypatch.setattr('invenio_indexer.api.Record', types.SimpleNamespace(get_record=lambda rid: (_ for _ in ()).throw(NoResultFound('not found'))))
+    msg = DummyMessage({'op': 'index', 'id': 'rid'})
+    list(indexer._actionsiter_sync_version([msg]))
+    assert msg.rejected
+    assert not msg.acked
+
+def test__actionsiter_sync_version_delete(monkeypatch):
+    """Test that _delete_action is called and acked when delete pattern in _actionsiter_sync_version."""
+    indexer = RecordIndexer(search_client=None)
+    called = {'delete': False}
+    # Detect _delete_action call
+    def dummy_delete_action(payload):
+        called['delete'] = True
+        return {'_op_type': 'delete'}
+    monkeypatch.setattr(indexer, '_delete_action', dummy_delete_action)
+    msg = DummyMessage({'op': 'delete', 'id': 'rid'})
+    list(indexer._actionsiter_sync_version([msg]))
+    assert called['delete']
+    assert msg.acked
+    assert not msg.rejected
