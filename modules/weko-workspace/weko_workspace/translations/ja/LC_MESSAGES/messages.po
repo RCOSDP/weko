@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: weko-workspace 0.1.0.dev20250201\n"
 "Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
-"POT-Creation-Date: 2025-05-28 19:09+0900\n"
+"POT-Creation-Date: 2025-09-19 10:42+0900\n"
 "PO-Revision-Date: 2018-08-06 13:44+0900\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ja\n"
@@ -19,144 +19,150 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.5.1\n"
 
-#: weko_workspace/config.py:253 weko_workspace/config.py:254
-#: weko_workspace/config.py:264 weko_workspace/config.py:265
-#: weko_workspace/config.py:266 weko_workspace/config.py:267
-#: weko_workspace/config.py:268 weko_workspace/config.py:270
-#: weko_workspace/config.py:271 weko_workspace/config.py:272
-#: weko_workspace/config.py:273 weko_workspace/utils.py:252
-msgid "Unlinked"
-msgstr "未連携"
-
-#: weko_workspace/config.py:255
-msgid "Metadata Registered"
-msgstr "メタデータ登録済"
-
-#: weko_workspace/config.py:256
-msgid "Fulltext Requested"
-msgstr "本文依頼中"
-
-#: weko_workspace/config.py:257
-msgid "Fulltext Provided"
-msgstr "本文提供済"
-
-#: weko_workspace/config.py:258
-msgid "Unlinked (Fulltext Requested)"
-msgstr "未連携（本文依頼中）"
-
-#: weko_workspace/config.py:259
-msgid "Unlinked (Fulltext Provided)"
-msgstr "未連携（本文提供済）"
-
-#: weko_workspace/config.py:260
-msgid "OA"
-msgstr "OA済"
-
-#: weko_workspace/config.py:261
-msgid "Embargo OA"
-msgstr "エンバーゴ"
-
-#: weko_workspace/config.py:262
-msgid "Not OA"
-msgstr "非OA"
-
-#: weko_workspace/config.py:263
-msgid "Opened Limitedly"
-msgstr "制限公開"
-
-#: weko_workspace/config.py:269
-msgid "Opened Elsewhere"
-msgstr "OA済み（外部サイト）"
-
-#: tests/conftest.py:200 weko_workspace/config.py:847
+#: tests/conftest.py:202
 msgid "write your own license"
 msgstr ""
 
-#: tests/conftest.py:205 weko_workspace/config.py:852
+#: tests/conftest.py:207
 msgid "Creative Commons CC0 1.0 Universal Public Domain Designation"
 msgstr ""
 
-#: tests/conftest.py:220 weko_workspace/config.py:867
+#: tests/conftest.py:222
 msgid "Creative Commons Attribution 3.0 Unported (CC BY 3.0)"
 msgstr ""
 
-#: tests/conftest.py:232 weko_workspace/config.py:879
+#: tests/conftest.py:234
 msgid "Creative Commons Attribution-ShareAlike 3.0 Unported (CC BY-SA 3.0)"
 msgstr ""
 
-#: tests/conftest.py:246 weko_workspace/config.py:893
+#: tests/conftest.py:248
 msgid "Creative Commons Attribution-NoDerivs 3.0 Unported (CC BY-ND 3.0)"
 msgstr ""
 
-#: tests/conftest.py:260 weko_workspace/config.py:907
+#: tests/conftest.py:262
 msgid "Creative Commons Attribution-NonCommercial 3.0 Unported (CC BY-NC 3.0)"
 msgstr ""
 
-#: tests/conftest.py:274 weko_workspace/config.py:921
+#: tests/conftest.py:276
 msgid ""
 "Creative Commons Attribution-NonCommercial-ShareAlike 3.0 Unported (CC "
 "BY-NC-SA 3.0)"
 msgstr ""
 
-#: tests/conftest.py:288 weko_workspace/config.py:935
+#: tests/conftest.py:290
 msgid ""
 "Creative Commons Attribution-NonCommercial-NoDerivs 3.0 Unported (CC BY-"
 "NC-ND 3.0)"
 msgstr ""
 
-#: tests/conftest.py:303 weko_workspace/config.py:950
+#: tests/conftest.py:305
 msgid "Creative Commons Attribution 4.0 International (CC BY 4.0)"
 msgstr ""
 
-#: tests/conftest.py:315 weko_workspace/config.py:962
+#: tests/conftest.py:317
 msgid "Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)"
 msgstr ""
 
-#: tests/conftest.py:329 weko_workspace/config.py:976
+#: tests/conftest.py:331
 msgid ""
 "Creative Commons Attribution-NoDerivatives 4.0 International (CC BY-ND "
 "4.0)"
 msgstr ""
 
-#: tests/conftest.py:343 weko_workspace/config.py:990
+#: tests/conftest.py:345
 msgid ""
 "Creative Commons Attribution-NonCommercial 4.0 International (CC BY-NC "
 "4.0)"
 msgstr ""
 
-#: tests/conftest.py:357 weko_workspace/config.py:1004
+#: tests/conftest.py:359
 msgid ""
 "Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International "
 "(CC BY-NC-SA 4.0)"
 msgstr ""
 
-#: tests/conftest.py:371 weko_workspace/config.py:1018
+#: tests/conftest.py:373
 msgid ""
 "Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 "
 "International (CC BY-NC-ND 4.0)"
 msgstr ""
 
-#: weko_workspace/views.py:112
+#: weko_workspace/config.py:267 weko_workspace/config.py:268
+#: weko_workspace/config.py:278 weko_workspace/config.py:279
+#: weko_workspace/config.py:280 weko_workspace/config.py:281
+#: weko_workspace/config.py:282 weko_workspace/config.py:284
+#: weko_workspace/config.py:285 weko_workspace/config.py:286
+#: weko_workspace/config.py:287 weko_workspace/utils.py:291
+msgid "Unlinked"
+msgstr "未連携"
+
+#: weko_workspace/config.py:269
+msgid "Metadata Registered"
+msgstr "メタデータ登録済"
+
+#: weko_workspace/config.py:270
+msgid "Fulltext Requested"
+msgstr "本文依頼中"
+
+#: weko_workspace/config.py:271
+msgid "Fulltext Provided"
+msgstr "本文提供済"
+
+#: weko_workspace/config.py:272
+msgid "Unlinked (Fulltext Requested)"
+msgstr "未連携（本文依頼中）"
+
+#: weko_workspace/config.py:273
+msgid "Unlinked (Fulltext Provided)"
+msgstr "未連携（本文提供済）"
+
+#: weko_workspace/config.py:274
+msgid "OA"
+msgstr "OA済"
+
+#: weko_workspace/config.py:275
+msgid "Embargo OA"
+msgstr "エンバーゴ"
+
+#: weko_workspace/config.py:276
+msgid "Not OA"
+msgstr "非OA"
+
+#: weko_workspace/config.py:277
+msgid "Opened Limitedly"
+msgstr "制限公開"
+
+#: weko_workspace/config.py:283
+msgid "Opened Elsewhere"
+msgstr "OA済み（外部サイト）"
+
+#: weko_workspace/views.py:113
 #, python-format
 msgid "%(icon)s Workspace"
 msgstr "%(icon)s ワークスペース"
 
-#: weko_workspace/views.py:658
+#: weko_workspace/views.py:660
 msgid "The item type or workflow used for item registration has not been set."
 msgstr "アイテム登録に使用するアイテムタイプまたはワークフローが設定されていません。"
 
-#: weko_workspace/views.py:777 weko_workspace/views.py:810
-#: weko_workspace/views.py:842 weko_workspace/views.py:873
+#: weko_workspace/views.py:779 weko_workspace/views.py:812
+#: weko_workspace/views.py:844 weko_workspace/views.py:875
 msgid "Header Error"
 msgstr ""
 
-#: weko_workspace/views.py:934
+#: weko_workspace/views.py:936
 msgid "Workflow ID is not set."
 msgstr ""
 
-#: weko_workspace/views.py:939
+#: weko_workspace/views.py:941
 msgid "Item type ID is not set."
 msgstr ""
+
+#: weko_workspace/views.py:985
+msgid ""
+"The number of uploaded files does not match the number of files in the "
+"metadata."
+msgstr "アップロードされたファイルの数と、メタデータ内のファイルの数が一致しません。"
 
 #: weko_workspace/templates/weko_workspace/item_register.html:125
 msgid "DOI Input"

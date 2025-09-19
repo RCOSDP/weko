@@ -567,7 +567,14 @@ function toObject(arr) {
           $rootScope.filesVM.files[idx_of_file].hide = false;
           $rootScope.filesVM.files[idx_of_file].position = file.position;
         }
+        $scope.removeFileForm(file.name);
         $rootScope.filesVM.remove(file);
+
+        $scope.initFilenameList();
+        $scope.hiddenPubdate();
+        $scope.updateNumFiles();
+        $scope.reOrderAndClearMetadataOfFileContents();
+        $scope.changePositionFileName();
       }
 
       $scope.resetFilesPosition = function (replace_position) {
@@ -601,6 +608,13 @@ function toObject(arr) {
             }
           });
           this.resetFilesPosition();
+
+          $scope.initFilenameList();
+          $scope.hiddenPubdate();
+          $scope.addFileFormAndFill();
+          $scope.updateNumFiles();
+          $scope.reOrderAndClearMetadataOfFileContents();
+          $scope.changePositionFileName();
 
           // Generate error message and show modal
           if (duplicateFiles.length > 0) {
@@ -2120,12 +2134,12 @@ function toObject(arr) {
         });
       }
 
-      $scope.removeFileForm = function (version_id) {
+      $scope.removeFileForm = function (file_key) {
         let model = $rootScope.recordsVM.invenioRecordsModel;
         $scope.searchFilemetaKey();
         $scope.filemeta_keys.forEach(function (filemeta_key) {
           model[filemeta_key] = model[filemeta_key].filter(function (fileInfo) {
-            return fileInfo.version_id != version_id;
+            return fileInfo.filename != file_key;
           });
         });
       }
