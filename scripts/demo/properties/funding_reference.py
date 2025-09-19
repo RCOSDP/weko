@@ -121,7 +121,7 @@ def schema(title="", multi_flag=multiple_flag):
                             "type": ["null", "string"],
                             "format": "select",
                             "enum": config.FUNDER_IDENTIFIER_TYPE_VAL,
-                            "title": "識別子タイプ",
+                            "title": "助成機関識別子タイプ",
                         },
                         "subitem_funder_identifier": {
                             "format": "text",
