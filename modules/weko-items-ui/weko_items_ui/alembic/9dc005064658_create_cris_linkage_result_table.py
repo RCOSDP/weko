@@ -23,6 +23,8 @@ def upgrade():
     """Upgrade database."""
     op.create_table(
         'cris_linkage_result',
+        sa.Column('created', sa.DateTime(), nullable=False),
+        sa.Column('updated', sa.DateTime(), nullable=False),
         sa.Column('recid', sa.Integer(), nullable=False),
         sa.Column('cris_institution', sa.Text(), nullable=False),
         sa.Column('last_linked_date', sa.DateTime(), nullable=True),
