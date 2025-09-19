@@ -1535,6 +1535,7 @@ class WekoDeposit(Deposit):
             else:
                 dc, jrc, is_edit = json_loader(
                     data, self.pid, owner_id=owner_id, creator_id=creator_id)
+
             # dataのownerとownersを合わせる
             if current_user and current_user.is_authenticated:
                 data['owners'] = [int(data.get('owner', current_user.id))]
