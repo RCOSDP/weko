@@ -7010,8 +7010,8 @@ def test_edit_item_direct_after_login_12(client, users, db_register, users_index
     assert res.status_code == status_code
 
 
-# .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_display_activity_with_item_link -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
-def test_display_activity_with_item_link(client, users, item_type,db_register_fullaction, mocker):
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_display_activity_item_link_with_item_link -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_display_activity_item_link_with_item_link(client, users, item_type,db_register_fullaction, mocker):
     """Test display_activity when action_endpoint is 'item_link' and recid exists."""
     from weko_workflow.views import display_activity
     
@@ -7094,12 +7094,11 @@ def test_display_activity_with_item_link(client, users, item_type,db_register_fu
                                 call_args = mock_render_template.call_args
                                 context = call_args[1] if len(call_args) > 1 else call_args[0][1] if len(call_args[0]) > 1 else {}
                                 assert 'item_link' in context
-                                print(mock_item_link_info)
                                 assert context['item_link'] == mock_item_link_info
+    
 
-
-# .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_display_activity_with_no_item_link -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
-def test_display_activity_with_no_item_link(client, users, item_type,db_register_fullaction, mocker):
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_display_activity_item_link_with_no_item_link -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_display_activity_item_link_with_no_item_link(client, users, item_type,db_register_fullaction, mocker):
     """Test display_activity when action_endpoint is 'item_link' and recid exists."""
     from weko_workflow.views import display_activity
     
@@ -7177,11 +7176,12 @@ def test_display_activity_with_no_item_link(client, users, item_type,db_register
                                 context = call_args[1] if len(call_args) > 1 else call_args[0][1] if len(call_args[0]) > 1 else {}
                                 assert 'item_link' in context
                                 assert context['item_link'] == []
+                                
 
 
 
-# .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_display_activity_with_item_link_exception -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
-def test_display_activity_with_item_link_exception(client, users, item_type,db_register_fullaction, mocker):
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_display_activity_item_link_with_item_link_exception -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_display_activity_item_link_with_item_link_exception(client, users, item_type,db_register_fullaction, mocker):
     """Test display_activity when action_endpoint is 'item_link' and recid exists."""
     from weko_workflow.views import display_activity
     
@@ -7258,3 +7258,275 @@ def test_display_activity_with_item_link_exception(client, users, item_type,db_r
                                 call_args = mock_render_template.call_args
                                 context = call_args[1] if len(call_args) > 1 else call_args[0][1] if len(call_args[0]) > 1 else {}
                                 assert 'item_link' not in context
+
+
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_display_activity_approval_with_relation -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_display_activity_approval_with_relation(client, users, item_type, db_register_fullaction, mocker):
+    """Test display_activity when action_endpoint is 'approval' with relation data."""
+    from weko_workflow.views import display_activity
+    
+    login(client=client, email=users[2]["email"])
+    
+    # Mock data setup
+    action_id = 4
+    activity_detail = MagicMock()
+    activity_detail.activity_status = 'action_doing'
+    cur_action = MagicMock()
+    cur_action.action_endpoint = 'approval'
+    histories = []
+    item_metadata = {'title': 'Test Item'}
+    steps = []
+    temporary_comment = None
+    workflow_detail = MagicMock()
+    workflow_detail.itemtype_id = 1
+    workflow_detail.open_restricted = True
+    owner_id = 1
+    shared_user_ids = []
+    
+    # Create mock PID with pid_value
+    test_pid = MagicMock()
+    test_pid.pid_value = '1'
+    
+    # Mock community
+    test_comm = MagicMock()
+    test_comm.id = 'test_comm'
+    
+    # Mock license list
+    license_list = [{'license_id': 1, 'license_name': 'CC BY'}]
+    
+    # Mock record detail
+    record_detail_alt = {'title': 'Alternative Record'}
+    
+    # Mock item link data that should be included in relation
+    mock_item_link_info = [
+        {'item_links': '2', 'item_title': 'Related Item 1', 'value': 'URI'},
+        {'item_links': '3', 'item_title': 'Related Item 2', 'value': 'DOI'}
+    ]
+    
+    # Item login return values
+    template_url = "weko_items_ui/iframe/item_edit.html"
+    need_file = False
+    need_billing_file = False
+    record = MagicMock()
+    record = {"test": "data"}
+    json_schema = "test"
+    schema_form = {}
+    item_save_uri = "/test/save"
+    files = []
+    endpoints = {}
+    need_thumbnail = False
+    files_thumbnail = []
+    allow_multi_thumbnail = False
+    
+    # Mock render_template to capture context
+    mock_render_template = mocker.patch('weko_workflow.views.render_template', return_value='')
+    
+    # Call the display_activity function
+    url = url_for('weko_workflow.display_activity', activity_id='1')
+    
+    # Setup all mocks
+    with patch('weko_workflow.views.get_activity_display_info',
+               return_value=(cur_action.action_endpoint, action_id, activity_detail, cur_action,
+                           histories, item_metadata, steps, temporary_comment, workflow_detail,
+                           owner_id, shared_user_ids)):
+        with patch('weko_workflow.views.ItemLink.get_item_link_info', 
+                   return_value=mock_item_link_info) as mock_get_item_link:
+            with patch('weko_workflow.views.item_login', 
+                       return_value=(template_url, need_file, need_billing_file, record, json_schema,
+                                   schema_form, item_save_uri, files, endpoints, need_thumbnail,
+                                   files_thumbnail, allow_multi_thumbnail)):
+                with patch('weko_workflow.views.get_pid_and_record', return_value=(test_pid, record)):
+                    with patch('weko_workflow.views.GetCommunity.get_community_by_id', return_value=test_comm):
+                        with patch('weko_records_ui.utils.get_list_licence', return_value=license_list):
+                            with patch('weko_workflow.views.get_main_record_detail', return_value=record_detail_alt):
+                                res = client.post(url)
+                                
+                                # Verify ItemLink.get_item_link_info was called
+                                mock_get_item_link.assert_called_with('1')
+                                
+                                # Verify render_template was called
+                                mock_render_template.assert_called()
+                                
+                                # Verify the context passed to render_template contains record with relation
+                                call_args = mock_render_template.call_args
+                                context = call_args[1] if len(call_args) > 1 else call_args[0][1] if len(call_args[0]) > 1 else {}
+                                assert 'record' in context
+                                assert context['record']['relation'] == mock_item_link_info
+
+
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_display_activity_approval_without_relation -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_display_activity_approval_without_relation(client, users, item_type, db_register_fullaction, mocker):
+    """Test display_activity when action_endpoint is 'approval' without relation data."""
+    from weko_workflow.views import display_activity
+    
+    login(client=client, email=users[2]["email"])
+    
+    # Mock data setup
+    action_id = 4
+    activity_detail = MagicMock()
+    activity_detail.activity_status = 'action_doing'
+    cur_action = MagicMock()
+    cur_action.action_endpoint = 'approval'
+    histories = []
+    item_metadata = {'title': 'Test Item'}
+    steps = []
+    temporary_comment = None
+    workflow_detail = MagicMock()
+    workflow_detail.itemtype_id = 1
+    workflow_detail.open_restricted = True
+    owner_id = 1
+    shared_user_ids = []
+    
+    # Create mock PID with pid_value
+    test_pid = MagicMock()
+    test_pid.pid_value = '1'
+    
+    # Mock community
+    test_comm = MagicMock()
+    test_comm.id = 'test_comm'
+    
+    # Mock license list
+    license_list = [{'license_id': 1, 'license_name': 'CC BY'}]
+    
+    # Mock record detail
+    record_detail_alt = {'title': 'Alternative Record'}
+    
+    # Item login return values
+    template_url = "weko_items_ui/iframe/item_edit.html"
+    need_file = False
+    need_billing_file = False
+    record = MagicMock()
+    record = {"test": "data"}
+    json_schema = "test"
+    schema_form = {}
+    item_save_uri = "/test/save"
+    files = []
+    endpoints = {}
+    need_thumbnail = False
+    files_thumbnail = []
+    allow_multi_thumbnail = False
+    
+    # Mock render_template to capture context
+    mock_render_template = mocker.patch('weko_workflow.views.render_template', return_value='')
+    
+    # Call the display_activity function
+    url = url_for('weko_workflow.display_activity', activity_id='1')
+    
+    # Setup all mocks
+    with patch('weko_workflow.views.get_activity_display_info',
+               return_value=(cur_action.action_endpoint, action_id, activity_detail, cur_action,
+                           histories, item_metadata, steps, temporary_comment, workflow_detail,
+                           owner_id, shared_user_ids)):
+        with patch('weko_workflow.views.ItemLink.get_item_link_info', 
+                   return_value=None) as mock_get_item_link:
+            with patch('weko_workflow.views.item_login', 
+                       return_value=(template_url, need_file, need_billing_file, record, json_schema,
+                                   schema_form, item_save_uri, files, endpoints, need_thumbnail,
+                                   files_thumbnail, allow_multi_thumbnail)):
+                with patch('weko_workflow.views.get_pid_and_record', return_value=(test_pid, record)):
+                    with patch('weko_workflow.views.GetCommunity.get_community_by_id', return_value=test_comm):
+                        with patch('weko_records_ui.utils.get_list_licence', return_value=license_list):
+                            with patch('weko_workflow.views.get_main_record_detail', return_value=record_detail_alt):
+                                res = client.post(url)
+                                
+                                # Verify ItemLink.get_item_link_info was called
+                                mock_get_item_link.assert_called_with('1')
+                                
+                                # Verify render_template was called
+                                mock_render_template.assert_called()
+                                
+                                # Verify the context passed to render_template contains record with empty relation
+                                call_args = mock_render_template.call_args
+                                context = call_args[1] if len(call_args) > 1 else call_args[0][1] if len(call_args[0]) > 1 else {}
+                                assert 'record' in context
+                                assert context['record']['relation'] == []
+
+
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_display_activity_approval_with_relation_exception -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_display_activity_approval_with_relation_exception(client, users, item_type, db_register_fullaction, mocker):
+    """Test display_activity when action_endpoint is 'approval' and ItemLink.get_item_link_info raises exception."""
+    from weko_workflow.views import display_activity
+    
+    login(client=client, email=users[2]["email"])
+    
+    # Mock data setup
+    action_id = 4
+    activity_detail = MagicMock()
+    activity_detail.activity_status = 'action_doing'
+    cur_action = MagicMock()
+    cur_action.action_endpoint = 'approval'
+    histories = []
+    item_metadata = {'title': 'Test Item'}
+    steps = []
+    temporary_comment = None
+    workflow_detail = MagicMock()
+    workflow_detail.itemtype_id = 1
+    workflow_detail.open_restricted = True
+    owner_id = 1
+    shared_user_ids = []
+    
+    # Create mock PID with pid_value
+    test_pid = MagicMock()
+    test_pid.pid_value = '1'
+    
+    # Mock community
+    test_comm = MagicMock()
+    test_comm.id = 'test_comm'
+    
+    # Mock license list
+    license_list = [{'license_id': 1, 'license_name': 'CC BY'}]
+    
+    # Mock record detail
+    record_detail_alt = {'title': 'Alternative Record'}
+    
+    # Item login return values
+    template_url = "weko_items_ui/iframe/item_edit.html"
+    need_file = False
+    need_billing_file = False
+    record = MagicMock()
+    record = {"test":"data"}
+    json_schema = "test"
+    schema_form = {}
+    item_save_uri = "/test/save"
+    files = []
+    endpoints = {}
+    need_thumbnail = False
+    files_thumbnail = []
+    allow_multi_thumbnail = False
+    
+    # Mock render_template to capture context
+    mock_render_template = mocker.patch('weko_workflow.views.render_template', return_value='')
+    
+    
+    # Call the display_activity function
+    url = url_for('weko_workflow.display_activity', activity_id='1')
+    
+    # Setup all mocks
+    with patch('weko_workflow.views.get_activity_display_info',
+               return_value=(cur_action.action_endpoint, action_id, activity_detail, cur_action,
+                           histories, item_metadata, steps, temporary_comment, workflow_detail,
+                           owner_id, shared_user_ids)):
+        with patch('weko_workflow.views.ItemLink.get_item_link_info', 
+                   side_effect=Exception("Test exception")) as mock_get_item_link:
+            with patch('weko_workflow.views.item_login', 
+                       return_value=(template_url, need_file, need_billing_file, record, json_schema,
+                                   schema_form, item_save_uri, files, endpoints, need_thumbnail,
+                                   files_thumbnail, allow_multi_thumbnail)):
+                with patch('weko_workflow.views.get_pid_and_record', return_value=(test_pid, record)):
+                    with patch('weko_workflow.views.GetCommunity.get_community_by_id', return_value=test_comm):
+                        with patch('weko_records_ui.utils.get_list_licence', return_value=license_list):
+                            with patch('weko_workflow.views.get_main_record_detail', return_value=record_detail_alt):
+                                res = client.post(url)
+                                
+                                # Verify ItemLink.get_item_link_info was called
+                                mock_get_item_link.assert_called_with('1')
+                                
+                                # Verify render_template was called
+                                mock_render_template.assert_called()
+                                
+                                # Verify the context passed to render_template contains record with empty relation on exception
+                                call_args = mock_render_template.call_args
+                                context = call_args[1] if len(call_args) > 1 else call_args[0][1] if len(call_args[0]) > 1 else {}
+                                assert 'record' in context
+                                assert context['record']['relation'] == []
+                                
