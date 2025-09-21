@@ -7176,7 +7176,6 @@ def test_display_activity_with_no_item_link(client, users, item_type,db_register
                                 call_args = mock_render_template.call_args
                                 context = call_args[1] if len(call_args) > 1 else call_args[0][1] if len(call_args[0]) > 1 else {}
                                 assert 'item_link' in context
-                                print(context['item_link'])
                                 assert context['item_link'] == []
 
 

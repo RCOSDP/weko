@@ -3151,19 +3151,19 @@ class ItemLink(object):
                 UserActivityLogger.info(
                     operation="ITEM_DELETE_LINK",
                     target_key=deleted_link["dst_item_pid"],
-                    require_commit=require_commit
+                    required_commit=require_commit
                 )
             for updated_link in updated:
                 UserActivityLogger.info(
                     operation="ITEM_UPDATE_LINK",
                     target_key=updated_link["dst_item_pid"],
-                    require_commit=require_commit
+                    required_commit=require_commit
                 )
             for created_link in created:
                 UserActivityLogger.info(
                     operation="ITEM_CREATE_LINK",
                     target_key=created_link["dst_item_pid"],
-                    require_commit=require_commit
+                    required_commit=require_commit
                 )
         except IntegrityError as ex:
             # Log and handle integrity errors (e.g., duplicate entries)
