@@ -44,8 +44,8 @@ export default defineNuxtConfig({
   },
   runtimeConfig: {
     public: {
-      clientId: 'qIx5G7vr9ZF8Fy4171xUSaG5ZVd51FdHCDrl8oM7',
-      redirectURI: 'http://localhost:3000',
+      clientId: 'KVKymVW0sVb8nFSXqCgS96UjbZ9ZhreyT0Nt2VxB',
+      redirectURI: 'http://ams.ir.rcos.nii.ac.jp/',
       apiTimeout: 10000, // api response timeout (ms)
       tokenRefreshLimit: 600, // refresh access token before time (s)
       contact: {
@@ -55,7 +55,7 @@ export default defineNuxtConfig({
         display: 5 // number of items displayed in DL ranking
       }
     },
-    clientSecret: 'LLwKok4nIrOs1Kn44IrDWJFIOdiAGGgDHVlbC1QCu4Vc8jQRjuPSXSxJjQw0',
+    clientSecret: 'W3801Bel1eAz4w3RVNnCBd6mfrADfE5O2woWDhNGdFaSwKxgIo9VCUMGhMED',
     // email setting for contact
     contact: {
       to: 'sample@sample.co.jp',

@@ -26,7 +26,7 @@ details.
       <script type="text/javascript">
         <!--
 // To use this JavaScript, please access:
-// https://ds.gakunin.nii.ac.jp/WAYF/embedded-wayf.js/snippet.html
+// https://test-ds.gakunin.nii.ac.jp/WAYF/embedded-wayf.js/snippet.html
 // and copy/paste the resulting HTML snippet to an unprotected web page that 
 // you want the embedded WAYF to be displayed
  
@@ -35,7 +35,7 @@ details.
  
 // URL of the WAYF to use
 // [Mandatory]
-//var wayf_URL = "https://ds.gakunin.nii.ac.jp/WAYF";
+//var wayf_URL = "https://test-ds.gakunin.nii.ac.jp/WAYF";
 var wayf_URL = "https://test-ds.gakunin.nii.ac.jp/WAYF";
 
 // EntityID of the Service Provider that protects this Resource
@@ -225,6 +225,9 @@ var wayf_show_categories =  true;
 // var wayf_additional_idps = [ ];
  
 // Example of how to add Identity Provider from other federations
+var wayf_additional_idps = [
+            {name:"Orthros-Test",entityID:"https://core-stg.orthros.gakunin.nii.ac.jp/idp"}
+];
 // var wayf_additional_idps = [ 
 //        
 //        {name:"International University X",
@@ -279,7 +282,7 @@ var wayf_show_categories =  true;
 
       <script type="text/javascript" charset="UTF-8">
         <!--
-document.write('<script type="text/javascript" src="https://ds.gakunin.nii.ac.jp/WAYF/embedded-wayf.js?' + (new Date().getTime()) + '"></scr'+'ipt>');
+document.write('<script type="text/javascript" src="https://test-ds.gakunin.nii.ac.jp/WAYF/embedded-wayf.js?' + (new Date().getTime()) + '"></scr'+'ipt>');
 //-->
       </script>
 

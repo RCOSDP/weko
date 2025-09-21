@@ -378,6 +378,8 @@ services:
       resources:
         limits:
           memory: 300m
+    extra_hosts:
+      - ams.ir.rcos.nii.ac.jp:127.0.0.1
 
 #  certbot:
 #    image: certbot/certbot:latest

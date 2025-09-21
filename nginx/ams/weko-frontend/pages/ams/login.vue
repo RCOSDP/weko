@@ -349,8 +349,8 @@ onMounted(() => {
         window.wayf_additional_idps = [
           {
             'entityID': '${shibLogin.orthrosURL}',
-            'name': 'Orthros',
-            'search': ['${shibLogin.orthrosURL}', 'Orthros']
+            'name': 'Orthros-Test',
+            'search': ['${shibLogin.orthrosURL}', 'Orthros-Test']
           },
         ];
         window.wayf_URL = '${shibLogin.dsURL}';

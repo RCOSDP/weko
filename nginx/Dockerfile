@@ -17,21 +17,21 @@ RUN apt-get build-dep -y nginx=1.20.1
 # https://github.com/samizdatco/nginx-http-auth-digest
 RUN wget "https://github.com/samizdatco/nginx-http-auth-digest/archive/master.zip" -O nginx-http-auth-digest.zip
 # https://github.com/nginx-shib/nginx-http-shibboleth
-RUN wget "https://github.com/nginx-shib/nginx-http-shibboleth/archive/v2.0.1.tar.gz" -O nginx-http-shibboleth-2.0.1.tar.gz
+RUN wget "https://github.com/nginx-shib/nginx-http-shibboleth/archive/v2.0.2.tar.gz" -O nginx-http-shibboleth-2.0.2.tar.gz
 RUN wget "https://github.com/openresty/headers-more-nginx-module/archive/v0.33.tar.gz" -O headers-more-nginx-module-0.33.tar.gz
 RUN wget "https://github.com/apache/incubator-pagespeed-ngx/archive/v1.13.35.2-stable.tar.gz" -O incubator-pagespeed-ngx-1.13.35.2-stable.tar.gz
 RUN wget "https://github.com/FRiCKLE/ngx_cache_purge/archive/2.3.tar.gz" -O ngx_cache_purge-2.3.tar.gz
 
 RUN unzip nginx-http-auth-digest.zip && \
-  tar zxf nginx-http-shibboleth-2.0.1.tar.gz && \
+  tar zxf nginx-http-shibboleth-2.0.2.tar.gz && \
   tar zxf headers-more-nginx-module-0.33.tar.gz && \
   tar zxvf incubator-pagespeed-ngx-1.13.35.2-stable.tar.gz && \
   tar zxf ngx_cache_purge-2.3.tar.gz
 
 RUN cd /tmp/incubator-pagespeed-ngx-1.13.35.2-stable ; wget https://dl.google.com/dl/page-speed/psol/1.13.35.2-x64.tar.gz ; tar -xzvf 1.13.35.2-x64.tar.gz
-#RUN sed -i "s#--modules-path=/usr/lib/nginx/modules#--modules-path=/usr/lib/nginx/modules --add-module=/tmp/headers-more-nginx-module-0.33 --add-module=/tmp/nginx-http-shibboleth-2.0.1 --add-module=/tmp/nginx-http-auth-digest-master --add-module=/tmp/incubator-pagespeed-ngx-1.13.35.2-stable --add-module=/tmp/ngx_cache_purge-2.3 #g" nginx-1.18.0/debian/rules
+#RUN sed -i "s#--modules-path=/usr/lib/nginx/modules#--modules-path=/usr/lib/nginx/modules --add-module=/tmp/headers-more-nginx-module-0.33 --add-module=/tmp/nginx-http-shibboleth-2.0.2 --add-module=/tmp/nginx-http-auth-digest-master --add-module=/tmp/incubator-pagespeed-ngx-1.13.35.2-stable --add-module=/tmp/ngx_cache_purge-2.3 #g" nginx-1.18.0/debian/rules
 #RUN cd nginx-1.18.0 && dpkg-buildpackage -b
-RUN sed -i "s#--modules-path=/usr/lib/nginx/modules#--modules-path=/usr/lib/nginx/modules --add-module=/tmp/headers-more-nginx-module-0.33 --add-module=/tmp/nginx-http-shibboleth-2.0.1 --add-module=/tmp/nginx-http-auth-digest-master --add-module=/tmp/incubator-pagespeed-ngx-1.13.35.2-stable --add-module=/tmp/ngx_cache_purge-2.3 #g" nginx-1.20.1/debian/rules
+RUN sed -i "s#--modules-path=/usr/lib/nginx/modules#--modules-path=/usr/lib/nginx/modules --add-module=/tmp/headers-more-nginx-module-0.33 --add-module=/tmp/nginx-http-shibboleth-2.0.2 --add-module=/tmp/nginx-http-auth-digest-master --add-module=/tmp/incubator-pagespeed-ngx-1.13.35.2-stable --add-module=/tmp/ngx_cache_purge-2.3 #g" nginx-1.20.1/debian/rules
 RUN cd nginx-1.20.1 && dpkg-buildpackage -b
 
 FROM ubuntu:focal AS nginx-stage_1
@@ -39,6 +39,7 @@ FROM ubuntu:focal AS nginx-stage_1
 ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get install -y openssl wget curl unzip supervisor shibboleth-sp-common shibboleth-sp-utils php-fpm php-curl fcgiwrap python3-pip
 RUN pip3 install requests
+
 
 WORKDIR /tmp
 #COPY --from=nginx-with-shib /tmp/nginx_1.18.0-2~focal_amd64.deb .
@@ -56,33 +57,60 @@ ADD attribute-policy.xml /etc/shibboleth/attribute-policy.xml
 RUN sed -i 's/\/run\/php/\/tmp/g' /etc/php/7.4/fpm/php-fpm.conf
 RUN sed -i 's/\/run\/php/\/tmp/g' /etc/php/7.4/fpm/pool.d/www.conf
 
-ADD ./keys/server.crt /etc/shibboleth/server.crt
-ADD ./keys/server.key /etc/shibboleth/server.key
-
+RUN mkdir -p /etc/shibboleth/cert
+ADD ./gakunin-test-signer-2020.cer /etc/shibboleth/cert/gakunin-test-signer-2020.cer
+RUN mkdir  /etc/shibboleth/keys
+ADD ./keys/shib.crt /etc/shibboleth/keys/server.crt
+ADD ./keys/shib.key /etc/shibboleth/keys/server.key
+ADD ./idp-metadata.xml /etc/shibboleth/idp-metadata.xml
+RUN mkdir -p /etc/shibboleth/metadata
+ADD ./orthros-idp-metadata.xml /etc/shibboleth/metadata/orthros-idp-metadata.xml
+ADD ./orthrosstg-idp-metadata.xml /etc/shibboleth/metadata/orthrosstg-idp-metadata.xml
+ADD ./sptestcgidp-metadata.xml /etc/shibboleth/metadata/sptestcgidp-metadata.xml
+RUN chown -R _shibd /etc/shibboleth
 
 RUN rm /etc/nginx/conf.d/default.conf
 RUN rm /etc/nginx/nginx.conf
-ADD weko.conf /etc/nginx/conf.d/
+COPY weko-ams.conf /etc/nginx/conf.d/weko.conf
 ADD nginx.conf /etc/nginx/nginx.conf
 ADD ./keys/server.crt /etc/nginx/server.crt
 ADD ./keys/server.key /etc/nginx/server.key
-ADD ./idp-metadata.xml /etc/shibboleth/idp-metadata.xml
-ADD ./orthros-idp-metadata.xml /etc/shibboleth/orthros-idp-metadata.xml
 ADD ./htpasswd /etc/nginx/.htpasswd
 ADD ./htdigest /etc/nginx/.htdigest
 ADD redirect_list.map /etc/nginx/redirect_list.map
 
+
 RUN chmod 400 /etc/nginx/server.key
 
 RUN mkdir  /usr/share/nginx/html/secure
-#ADD ./phpinfo.php /usr/share/nginx/html/secure/phpinfo.php
+ADD ./phpinfo.php /usr/share/nginx/html/secure/phpinfo.php
+ADD ./info.py /usr/share/nginx/html/secure/info.py
 #ADD ./index.php /usr/share/nginx/html/secure/index.php
 ADD ./login.py /usr/share/nginx/html/secure/login.py
+RUN chmod 755 /usr/share/nginx/html/secure/phpinfo.php
 RUN chmod 755 /usr/share/nginx/html/secure/login.py
+RUN chmod 755 /usr/share/nginx/html/secure/info.py
+
+RUN mkdir /usr/share/nginx/html/cert
+ADD ./keys/shib.crt /usr/share/nginx/html/cert/self-signed.crt
 
 ADD ./shib_clear_headers /etc/nginx/shib_clear_headers
 ADD ./shib_fastcgi_params /etc/nginx/shib_fastcgi_params
 
+RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash -
+RUN apt-get update && apt-get install -y nodejs
+ADD ./ams/weko-frontend /usr/local/weko-frontend
+WORKDIR /usr/local/weko-frontend
+RUN npm install
+RUN export NODE_OPTIONS=--max_old_space_size=4096
+RUN npm run build
+RUN npm install -g pm2
+EXPOSE 3000
 
-CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/supervisord.conf"]
+ADD ./startup.sh /usr/local
+ADD ./ecosystem.config.js /usr/local
+RUN chmod +x /usr/local/startup.sh
+RUN chmod +x /usr/local/ecosystem.config.js
+
+CMD ["/usr/local/startup.sh"]
 

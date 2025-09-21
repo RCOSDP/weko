@@ -1,4 +1,4 @@
-const weko = 'ams-dev.ir.rcos.nii.ac.jp';
+const weko = 'ams.ir.rcos.nii.ac.jp';
 
 export default defineAppConfig({
   wekoOrigin: 'https://' + weko,
@@ -8,10 +8,10 @@ export default defineAppConfig({
   amsApi: '/api/ams',
   export: {
     jpcoar:
-      'https://' + weko + '/oai?verb=GetRecord&metadataPrefix=jpcoar_1.0&identifier=oai:ams-dev.ir.rcos.nii.ac.jp:',
+      'https://' + weko + '/oai?verb=GetRecord&metadataPrefix=jpcoar_1.0&identifier=oai:ams.ir.rcos.nii.ac.jp:',
     dublincore:
-      'https://' + weko + '/oai?verb=GetRecord&metadataPrefix=oai_dc&identifier=oai:ams-dev.ir.rcos.nii.ac.jp:',
-    ddi: 'https://' + weko + '/oai?verb=GetRecord&metadataPrefix=ddi&identifier=oai:ams-dev.ir.rcos.nii.ac.jp:'
+      'https://' + weko + '/oai?verb=GetRecord&metadataPrefix=oai_dc&identifier=oai:ams.ir.rcos.nii.ac.jp:',
+    ddi: 'https://' + weko + '/oai?verb=GetRecord&metadataPrefix=ddi&identifier=oai:ams.ir.rcos.nii.ac.jp:'
   },
   /** RO-Crate Mapping setting */
   roCrate: {
@@ -161,12 +161,12 @@ export default defineAppConfig({
    */
   shibLogin: {
     // 本番環境
-    dsURL: 'https://ds.gakunin.nii.ac.jp/WAYF',
-    orthrosURL: 'https://core.orthros.gakunin.nii.ac.jp/idp',
+    // dsURL: 'https://ds.gakunin.nii.ac.jp/WAYF',
+    // orthrosURL: 'https://core.orthros.gakunin.nii.ac.jp/idp',
     // テスト環境
-    // dsURL: 'https://test-ds.gakunin.nii.ac.jp/WAYF',
-    // orthrosURL: 'https://core-stg.orthros.gakunin.nii.ac.jp/idp',
-    entityID: 'https://' + weko + '/shibboleth',
+    dsURL: 'https://test-ds.gakunin.nii.ac.jp/WAYF',
+    orthrosURL: 'https://core-stg.orthros.gakunin.nii.ac.jp/idp',
+    entityID: 'https://' + weko + '/shibboleth-sp',
     handlerURL: 'https://' + weko + '/Shibboleth.sso',
     returnURL: 'https://' + weko + '/secure/login.py?next=ams'
   }

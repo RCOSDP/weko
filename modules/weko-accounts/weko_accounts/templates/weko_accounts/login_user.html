@@ -256,6 +256,9 @@
           // var wayf_additional_idps = [ ];
           
           // Example of how to add Identity Provider from other federations
+          var wayf_additional_idps = [
+            {name:"Orthros-Test",entityID:"https://core-stg.orthros.gakunin.nii.ac.jp/idp"}
+          ];
           // var wayf_additional_idps = [ 
           //        
           //        {name:"International University X",
@@ -272,6 +275,7 @@
           // var wayf_discofeed_url = "https://point.switch.ch/Shibboleth.sso/DiscoFeed";
           // [Optional, commented out by default]
           // var wayf_discofeed_url = "";
+          
           
           // The path of Cookie created by SP is set. As for default configuration, 
           // the path of an access place is set.
@@ -310,7 +314,7 @@
   
         <script type="text/javascript" charset="UTF-8">
           <!--
-          document.write('<script type="text/javascript" src="https://ds.gakunin.nii.ac.jp/WAYF/embedded-wayf.js?' + (new Date().getTime()) + '"></scr'+'ipt>');
+          document.write('<script type="text/javascript" src="https://test-ds.gakunin.nii.ac.jp/WAYF/embedded-wayf.js?' + (new Date().getTime()) + '"></scr'+'ipt>');
           //-->
         </script>
   

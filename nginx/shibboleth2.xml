@@ -1,134 +1,73 @@
+<?xml version="1.0"?>
 <SPConfig xmlns="urn:mace:shibboleth:3.0:native:sp:config"
-    xmlns:conf="urn:mace:shibboleth:3.0:native:sp:config"
-    clockSkew="180">
-
-    <OutOfProcess tranLogFormat="%u|%s|%IDP|%i|%ac|%t|%attr|%n|%b|%E|%S|%SS|%L|%UA|%a" />
- <UnixListener address="/tmp/shibd.sock"/>
-  
-    <!--
-    By default, in-memory StorageService, ReplayCache, ArtifactMap, and SessionCache
-    are used. See example-shibboleth2.xml for samples of explicitly configuring them.
-    -->
-    <RequestMapper type="XML">
+  xmlns:conf="urn:mace:shibboleth:3.0:native:sp:config" clockSkew="180">
+  <OutOfProcess tranLogFormat="%u|%s|%IDP|%i|%ac|%t|%attr|%n|%b|%E|%S|%SS|%L|%UA|%a" />
+  <UnixListener address="/tmp/shibd.sock" />
+  <RequestMapper type="XML">
     <RequestMap>
-        <Host name="weko3.example.org"
-                authType="shibboleth"
-                requireSession="true"
-                redirectToSSL="443">
-            <Path name="/secure" />
-            <!-- other Path, PathRegex or Query elements here -->
-        </Host>
-        <!-- other Host or HostRegex elements here -->
+      <Host name="ams.ir.rcos.nii.ac.jp" authType="shibboleth" requireSession="true"
+        redirectToSSL="443">
+        <Path name="/secure" />
+      </Host>
     </RequestMap>
-    </RequestMapper>
-
-    <!-- The ApplicationDefaults element is where most of Shibboleth's SAML bits are defined. -->
-    <ApplicationDefaults entityID="https://weko3.example.org/shibboleth-sp"
-        REMOTE_USER="eppn persistent-id targeted-id"
-        cipherSuites="DEFAULT:!EXP:!LOW:!aNULL:!eNULL:!DES:!IDEA:!SEED:!RC4:!3DES:!kRSA:!SSLv2:!SSLv3:!TLSv1:!TLSv1.1">
-
-        <!--
-        Controls session lifetimes, address checks, cookie handling, and the protocol handlers.
-        Each Application has an effectively unique handlerURL, which defaults to "/Shibboleth.sso"
-        and should be a relative path, with the SP computing the full value based on the virtual
-        host. Using handlerSSL="true" will force the protocol to be https. You should also set
-        cookieProps to "https" for SSL-only sites. Note that while we default checkAddress to
-        "false", this makes an assertion stolen in transit easier for attackers to misuse.
-        -->
-        <Sessions lifetime="28800" timeout="3600" relayState="ss:mem"
-                  checkAddress="false" handlerSSL="false" cookieProps="http">
-
-            <!--
-            Configures SSO for a default IdP. To properly allow for >1 IdP, remove
-            entityID property and adjust discoveryURL to point to discovery service.
-            You can also override entityID on /Login query string, or in RequestMap/htaccess.
-            -->
-            <SSO entityID="https://weko3.example.org/idp/simplesamlphp"
-                 discoveryProtocol="SAMLDS" discoveryURL="https://ds.example.org/DS/WAYF">
-              SAML2
-            </SSO>
-
-            <!-- SAML and local-only logout. -->
-            <Logout>SAML2 Local</Logout>
-
-            <!-- Administrative logout. -->
-            <LogoutInitiator type="Admin" Location="/Logout/Admin" acl="127.0.0.1 ::1" />
-          
-            <!-- Extension service that generates "approximate" metadata based on SP configuration. -->
-            <Handler type="MetadataGenerator" Location="/Metadata" signing="false"/>
-
-            <!-- Status reporting service. -->
-            <!--
-                <Handler type="Status" Location="/Status" acl="127.0.0.1 ::1"/>
-            -->
-            <Handler type="Status" Location="/Status" acl="127.0.0.1 ::1 0.0.0.0/0"/>
-
-            <!-- Session diagnostic service. -->
-            <Handler type="Session" Location="/Session" showAttributeValues="false"/>
-
-            <!-- JSON feed of discovery information. -->
-            <Handler type="DiscoveryFeed" Location="/DiscoFeed"/>
-        </Sessions>
-
-        <!--
-        Allows overriding of error template information/filenames. You can
-        also add your own attributes with values that can be plugged into the
-        templates, e.g., helpLocation below.
-        -->
-        <Errors supportContact="root@localhost"
-            helpLocation="/about.html"
-            styleSheet="/shibboleth-sp/main.css"/>
-
-        <!-- Example of locally maintained metadata. -->
-        <!--
-        <MetadataProvider type="XML" validate="true" path="partner-metadata.xml"/>
-        -->
-
-        <MetadataProvider type="XML" validate="true" path="idp-metadata.xml"/>
-
-        <MetadataProvider type="XML" validate="true" path="https://core.orthros.gakunin.nii.ac.jp/idp" />
-
-        <!-- Example of remotely supplied batch of signed metadata. -->
-        <!--
-        <MetadataProvider type="XML" validate="true"
-	            url="http://federation.org/federation-metadata.xml"
-              backingFilePath="federation-metadata.xml" maxRefreshDelay="7200">
-            <MetadataFilter type="RequireValidUntil" maxValidityInterval="2419200"/>
-            <MetadataFilter type="Signature" certificate="fedsigner.pem" verifyBackup="false"/>
-            <DiscoveryFilter type="Blacklist" matcher="EntityAttributes" trimTags="true" 
-              attributeName="http://macedir.org/entity-category"
-              attributeNameFormat="urn:oasis:names:tc:SAML:2.0:attrname-format:uri"
-              attributeValue="http://refeds.org/category/hide-from-discovery" />
-        </MetadataProvider>
-        -->
-
-        <!-- Example of remotely supplied "on-demand" signed metadata. -->
-        <!--
-        <MetadataProvider type="MDQ" validate="true" cacheDirectory="mdq"
-	            baseUrl="http://mdq.federation.org" ignoreTransport="true">
-            <MetadataFilter type="RequireValidUntil" maxValidityInterval="2419200"/>
-            <MetadataFilter type="Signature" certificate="mdqsigner.pem" />
-        </MetadataProvider>
-        -->
-
-        <!-- Map to extract attributes from SAML assertions. -->
-        <AttributeExtractor type="XML" validate="true" reloadChanges="false" path="attribute-map.xml"/>
-
-        <!-- Default filtering policy for recognized attributes, lets other data pass. -->
-        <AttributeFilter type="XML" validate="true" path="attribute-policy.xml"/>
-
-        <!-- Simple file-based resolvers for separate signing/encryption keys. -->
-        <CredentialResolver type="File" use="signing"
-            key="server.key" certificate="server.crt"/>
-        <CredentialResolver type="File" use="encryption"
-            key="server.key" certificate="server.crt"/>
-        
-    </ApplicationDefaults>
-    
-    <!-- Policies that determine how to process and authenticate runtime messages. -->
-    <SecurityPolicyProvider type="XML" validate="true" path="security-policy.xml"/>
-
-    <!-- Low-level configuration about protocols and bindings available for use. -->
-    <ProtocolProvider type="XML" validate="true" reloadChanges="false" path="protocols.xml"/>
-
+  </RequestMapper>
+  <ApplicationDefaults entityID="https://ams.ir.rcos.nii.ac.jp/shibboleth-sp"
+    REMOTE_USER="eppn persistent-id targeted-id"
+    cipherSuites="DEFAULT:!EXP:!LOW:!aNULL:!eNULL:!DES:!IDEA:!SEED:!RC4:!3DES:!kRSA:!SSLv2:!SSLv3:!TLSv1:!TLSv1.1">
+    <Sessions lifetime="28800" timeout="3600" relayState="ss:mem" checkAddress="false"
+      handlerSSL="false" cookieProps="http">
+      <SSO entityID="https://idp.repo.nii.ac.jp/idp/shibboleth" discoveryProtocol="SAMLDS"
+        discoveryURL="test-ds.gakunin.nii.ac.jp/WAYF">
+        SAML2
+      </SSO>
+      <Logout>SAML2 Local</Logout>
+      <LogoutInitiator type="Admin" Location="/Logout/Admin" acl="127.0.0.1 ::1" />
+      <Handler type="MetadataGenerator" Location="/Metadata" signing="false" />
+      <Handler type="Status" Location="/Status" acl="127.0.0.1 ::1" />
+      <Handler type="Session" Location="/Session" showAttributeValues="false" />
+      <Handler type="DiscoveryFeed" Location="/DiscoFeed" />
+      <SessionInitiator type="Chaining" Location="/DS" isDefault="true" id="DS">
+        <SessionInitiator type="SAML2" template="bindingTemplate.html" />
+        <SessionInitiator type="Shib1" />
+        <SessionInitiator type="SAMLDS" URL="https://test-ds.gakunin.nii.ac.jp/WAYF" />
+      </SessionInitiator>
+    </Sessions>
+    <Errors supportContact="root@localhost" helpLocation="/about.html"
+      styleSheet="/shibboleth/main.css" />
+    <MetadataProvider type="XML" validate="true"
+      url="https://metadata.gakunin.nii.ac.jp/gakunin-test-metadata.xml"
+      backingFilePath="federation-metadata.xml" maxRefreshDelay="7200">
+      <MetadataFilter type="RequireValidUntil" maxValidityInterval="1296000" />
+      <MetadataFilter type="Signature"
+        certificate="/etc/shibboleth/cert/gakunin-test-signer-2020.cer" verifyBackup="false" />
+      <DiscoveryFilter type="Blacklist" matcher="EntityAttributes" trimTags="true"
+        attributeName="http://macedir.org/entity-category"
+        attributeNameFormat="urn:oasis:names:tc:SAML:2.0:attrname-format:uri"
+        attributeValue="http://refeds.org/category/hide-from-discovery" />
+      <TransportOption provider="CURL" option="64">1</TransportOption>
+      <TransportOption provider="CURL" option="81">2</TransportOption>
+      <TransportOption provider="CURL" option="10065">/etc/ssl/certs/ca-certificates.crt</TransportOption>
+    </MetadataProvider>
+    <!-- <MetadataProvider type="XML" path="/etc/shibboleth/metadata/orthros-idp-metadata.xml"/> -->
+    <MetadataProvider type="XML" path="/etc/shibboleth/metadata/orthrosstg-idp-metadata.xml"/>
+    <MetadataProvider type="XML" path="/etc/shibboleth/metadata/sptestcgidp-metadata.xml"/>
+    <AttributeExtractor type="XML" validate="true" reloadChanges="false" path="attribute-map.xml" />
+    <AttributeResolver type="SimpleAggregation" attributeId="eppn"
+      format="urn:oid:1.3.6.1.4.1.5923.1.1.1.6">
+      <Entity>https://sptest.cg.gakunin.jp/idp/shibboleth</Entity>
+      <saml2:Attribute
+        xmlns:saml2="urn:oasis:names:tc:SAML:2.0:assertion"
+        Name="urn:oid:1.3.6.1.4.1.5923.1.5.1.1"
+        NameFormat="urn:oasis:names:tc:SAML:2.0:attrname-format:uri"
+        FriendlyName="isMemberOf" />
+    </AttributeResolver>
+    <AttributeFilter type="XML" validate="true" path="attribute-policy.xml" />
+    <CredentialResolver type="Chaining">
+      <CredentialResolver type="File" key="keys/server.key" certificate="keys/server.crt" />
+      <CredentialResolver type="File" use="encryption" key="keys/server.key"
+        certificate="keys/server.crt" />
+    </CredentialResolver>
+  </ApplicationDefaults>
+  <SecurityPolicyProvider type="XML" validate="true" path="security-policy.xml" />
+  <ProtocolProvider type="XML" validate="true" reloadChanges="false" path="protocols.xml" />
 </SPConfig>
