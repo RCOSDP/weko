@@ -793,9 +793,13 @@ def check_index_permissions(record=None, index_id=None, index_path_list=None,
         """
         from weko_records_ui.utils import is_future
         can_view = False
+        role_names = [role.name for role in current_user.roles] 
         if roles[0]:
             # In case admin role.
             can_view = True
+        elif bool(set(current_app.config.get('WEKO_PERMISSION_ROLE_COMMUNITY')) & set(role_names)):
+            # In case community admin role.
+            can_view = _check_community_admin_permission(index_data)
         elif index_data.public_state:
             check_user_role = check_roles(roles, index_data.browsing_role) or \
                 check_groups(groups, index_data.browsing_group)
@@ -820,6 +824,25 @@ def check_index_permissions(record=None, index_id=None, index_path_list=None,
             index_data.harvest_public_state
 
         return public_state
+
+    def _check_community_admin_permission(index_data) -> bool:
+        """Check community admin permission.
+
+        Args:
+            index_data (): Index data which is to be checked.
+
+        Returns:
+            [bool]: True if the user can access index.
+        """
+        from .api import Indexes
+        authorized_index_id_list = []
+        repositories = Community.get_repositories_by_user(current_user)
+        for repository in repositories:
+            authorized_index_id_list.extend(
+                Indexes.get_child_list_recursive(repository.root_node_id))
+        if str(index_data.cid) in authorized_index_id_list:
+            return True
+        return False
 
     def _check_for_index_groups(_index_groups):
         """Check for index groups.
@@ -872,7 +895,7 @@ def check_index_permissions(record=None, index_id=None, index_path_list=None,
 
     if not is_check_doi:
         # Get user roles and user groups.
-        roles = get_user_roles(is_super_role=True)
+        roles = get_user_roles(is_super_role=False)
         groups = get_user_groups()
         check_index_method = _check_index_permission
     else:
