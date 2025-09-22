@@ -385,7 +385,7 @@ class RecordIndexer(object):
                     unprocessed = messages_count - (success + fail) if messages_count > (success + fail) else 0
                     update_pdf_contents_es_with_index_api(self.success_ids)
                 except (BulkConnectionTimeout, ConnectionTimeout) as ce:
-                    click.secho("Error: {}".format(ce),fg='red')
+                    click.secho("Error: {}".format(ce.errors),fg='red')
                     click.secho("INDEXER_BULK_REQUEST_TIMEOUT: {} sec".format(req_timeout),fg='red')
                     click.secho("Please change value of INDEXER_BULK_REQUEST_TIMEOUT and retry it.",fg='red')
                     click.secho("processing: {}".format(self.count),fg='red')
@@ -406,6 +406,26 @@ class RecordIndexer(object):
                         fail = len(errors)
                     unprocessed = messages_count - (success + fail) if messages_count > (success + fail) else 0
                     update_pdf_contents_es_with_index_api(self.success_ids)
+                except (BulkConnectionError, ConnectionError) as ce:
+                    with conn.channel() as chan:
+                        name, af_queues_cnt, consumers = chan.queue_declare(queue=current_app.config['INDEXER_MQ_ROUTING_KEY'], passive=True)
+                        current_app.logger.debug("name:{}, queues:{}, consumers:{}".format(name, af_queues_cnt, consumers))
+                        if '_success' in locals() or '_fail' in locals():
+                            success = _success
+                            fail = _fail
+                            errors = []
+                            if isinstance(fail, list):
+                                errors = fail
+                        else:
+                            success = ce.success if hasattr(ce, 'success') else 0
+                            fail = ce.failed if hasattr(ce, 'failed') else 0
+                            errors = ce.errors if hasattr(ce, 'errors') else []
+                        if len(errors) > 0:
+                            for error in errors:
+                                click.secho("{}, {}".format(error['index']['_id'],error['index']['error']['type']),fg='red')
+                            fail = len(errors)
+                        unprocessed = messages_count - (success + fail) if messages_count > (success + fail) else 0
+                        update_pdf_contents_es_with_index_api(self.success_ids)
                 except (BulkException, Exception) as e:
                     current_app.logger.error(e)
                     current_app.logger.error(traceback.format_exc())
@@ -761,12 +781,12 @@ class RecordIndexer(object):
         except BulkIndexError:
             self.success_ids = success_ids
             raise
-        except ConnectionError as ce:
-            self.success_ids = success_ids
-            raise BulkConnectionError(success, failed, errors, ce) from ce
         except ConnectionTimeout as cte:
             self.success_ids = success_ids
             raise BulkConnectionTimeout(success, failed, errors, cte) from cte
+        except ConnectionError as ce:
+            self.success_ids = success_ids
+            raise BulkConnectionError(success, failed, errors, ce) from ce
         except Exception as e:
             self.success_ids = success_ids
             raise BulkException(success, failed, errors, e) from e
@@ -830,6 +850,7 @@ class BulkBaseException(Exception):
         self.failed = failed
         self.errors = errors
         self.original_exception = original_exception
+
 
 class BulkConnectionError(BulkBaseException, ConnectionError):
     """
