@@ -30,6 +30,7 @@ from elasticsearch.exceptions import NotFoundError
 from invenio_indexer.api import RecordIndexer
 
 from invenio_accounts.testutils import login_user_via_session
+from invenio_communities.models import Community
 from invenio_search import current_search_client
 from flask import current_app
 from weko_authors.models import Authors, AuthorsPrefixSettings, AuthorsAffiliationSettings
@@ -51,7 +52,7 @@ class MockIndexer():
 
         def search(self, index=None, doc_type=None, body=None):
             return {"hits": {"hits": [{"_source":
-                    {"authorNameInfo": "", "authorIdInfo": "", "emailInfo": ""}
+                    {"authorNameInfo": "", "authorIdInfo": "", "emailInfo": "", "pk_id": ""}
                     }]}}
 
         def index(self, index=None, doc_type=None, body=None):
@@ -217,6 +218,19 @@ def test_create_author(client, users, mocker):
     assert res.status_code == 500
     assert get_json(res) == {"msg": "Failed"}
 
+    # 条件: validate_community_idsで例外が発生する場合
+    # 入力: 正常なauthorIdInfoとaffiliationInfo
+    # 期待結果: ステータスコード400、メッセージ"Failed"
+    input_data = {
+        "authorIdInfo": [{"idType": "1", "authorId": "123"}],
+        "affiliationInfo": [{"startDate": "2021-01-01", "endDate": "2021-12-31"}],
+        "communityIds": ["invalid_id"]
+    }
+    mocker.patch('weko_authors.views.validate_weko_id', return_value=(True, ""))
+    mocker.patch('weko_authors.views.WekoAuthors.create', return_value=None)
+    res = client.post(url, data=json.dumps(input_data), content_type='application/json')
+    assert res.status_code == 400
+    assert get_json(res) == {"msg": "Community ID(s) invalid_id does not exist."}
 
 
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_views.py::test_update_author_acl_guest -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
@@ -356,6 +370,8 @@ def test_update_author(client, users, mocker):
     mocker.patch('weko_authors.views.validate_weko_id', return_value=(True, ""))
     mocker.patch('weko_authors.views.check_period_date', return_value=(True, ""))
     mocker.patch('weko_authors.views.WekoAuthors.update', return_value=None)
+    mock_author = mocker.patch("weko_authors.views.Authors")
+    mock_author.query.return_value.get.return_value = [MagicMock(communities=[])]
     res = client.post(url, data=json.dumps(input_data), content_type='application/json')
     assert res.status_code == 200
     assert get_json(res) == {"msg": "Success"}
@@ -393,6 +409,24 @@ def test_update_author(client, users, mocker):
     res = client.post(url, data=json.dumps(input_data), content_type='application/json')
     assert res.status_code == 500
     assert get_json(res) == {"msg": "Failed"}
+
+    # 条件: validate_community_idsで例外が発生する場合
+    # 入力: 正常なauthorIdInfoとaffiliationInfo
+    # 期待結果: ステータスコード500、メッセージ"Failed"
+    input_data = {
+        "forceChangeFlag": "false",
+        "author":{
+            "pk_id": "1",
+            "authorIdInfo": [{"idType": "1", "authorId": "123"}],
+            "affiliationInfo": [{"startDate": "2021-01-01", "endDate": "2021-12-31"}],
+            "communityIds": ["invalid_id"]
+        }
+    }
+    mocker.patch('weko_authors.views.validate_weko_id', return_value=(True, ""))
+    mocker.patch('weko_authors.views.WekoAuthors.update', return_value=None)
+    res = client.post(url, data=json.dumps(input_data), content_type='application/json')
+    assert res.status_code == 400
+    assert get_json(res) == {"msg": "Community ID(s) invalid_id does not exist."}
 
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_views.py::test_delete_author_acl_guest -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
 def test_delete_author_acl_guest(client):
@@ -459,10 +493,10 @@ def test_delete_author(client, db,users, esindex, create_author, mocker):
     id = 2
     es_id = create_author(json.loads(json.dumps(test_data)), id)
 
-    with patch("weko_authors.db.session.commit",side_effect=Exception("test_error")):
+    with patch("weko_authors.views.db.session.merge",side_effect=Exception("test_error")):
         input = {"pk_id": str(id),"Id":es_id}
         res = client.post(url,json=input)
-        assert res.status_code == 200
+        assert res.status_code == 500
         result = Authors.query.filter_by(id=id).one()
         assert result.is_deleted == False
         res = current_search_client.get(index=current_app.config["WEKO_AUTHORS_ES_INDEX_NAME"],doc_type=current_app.config['WEKO_AUTHORS_ES_DOC_TYPE'],id=es_id)
@@ -480,7 +514,12 @@ def test_delete_author(client, db,users, esindex, create_author, mocker):
     assert res.status_code == 200
     assert get_json(res) == {"msg": "Header Error"}
 
-
+    # check_delete_author failed
+    input = {"pk_id": str(id),"Id":es_id}
+    with patch("weko_authors.views.check_delete_author", return_value=(False,"test_error")):
+        res = client.post(url, json=input)
+        assert res.status_code == 403
+        assert res.get_data().decode("utf-8") == 'test_error'
 
 
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_views.py::test_get_acl_guest -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
@@ -973,6 +1012,68 @@ def test_gatherById(client, users, authors):
             assert Authors.query.filter_by(id="1").one().gather_flg == 0
             assert Authors.query.filter_by(id="2").one().gather_flg == 1
 
+
+# .tox/c1/bin/pytest --cov=weko_authors tests/test_views.py::test_get_managed_communities_acl_guest -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
+def test_get_managed_communities_acl_guest(client):
+    url = url_for("weko_authors.get_managed_communities")
+    res = client.get(url)
+    assert res.status_code == 302
+    assert res.location == url_for('security.login',next="/api/authors/managed_communities",_external=True)
+
+
+# .tox/c1/bin/pytest --cov=weko_authors tests/test_views.py::test_get_managed_communities_acl_users -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
+@pytest.mark.parametrize('index, is_permission', [
+    (0,True), # sysadmin
+    (1,True), # repoadmin
+    (2,True), # comadmin
+    (3,True), # contributor
+    (4,False), # generaluser
+    (5,False), # originalroleuser
+    (6,True), # originalroleuser2
+    (7,False), # user
+    (8,False), # student
+])
+def test_get_managed_communities_acl_users(client, users, index, is_permission):
+    url = url_for("weko_authors.get_managed_communities")
+    login_user_via_session(client=client, email=users[index]['email'])
+
+    res = client.get(url)
+    assert_role(res, is_permission)
+
+
+# .tox/c1/bin/pytest --cov=weko_authors tests/test_views.py::test_get_managed_communities -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
+def test_get_managed_communities(client, users, db):
+    url = url_for("weko_authors.get_managed_communities")
+    login_user_via_session(client=client, email=users[0]['email'])
+
+    with patch("weko_authors.views.get_managed_community") as mock_get:
+        mock_get.return_value = ([MagicMock(id="community1"), MagicMock(id="community2")], True)
+        res = client.get(url)
+        assert res.status_code == 200
+        assert get_json(res) == {"communityIds": ["community1", "community2"], "isAdmin": True,
+                                 "activityCommunityId": None}
+
+        mock_get.return_value = ([], False)
+        res = client.get(url)
+        assert res.status_code == 200
+        assert get_json(res) == {"communityIds": [], "isAdmin": False,
+                                 "activityCommunityId": None}
+
+        mock_get.return_value = ([], True)
+        with patch("weko_workflow.api.WorkActivity") as mock_activity:
+            mock_activity.get_activity_by_id.return_value = MagicMock(activity_community_id="community2")
+            res = client.get(url, query_string={"activity_id": "test_activity_id"})
+            assert res.status_code == 200
+            assert get_json(res) == {"communityIds": [], "isAdmin": True,
+                                    "activityCommunityId": "community2"}
+
+            mock_activity.get_activity_by_id.return_value = None
+            res = client.get(url, query_string={"activity_id": "test_activity_id"})
+            assert res.status_code == 200
+            assert get_json(res) == {"communityIds": [], "isAdmin": True,
+                                    "activityCommunityId": None}
+
+
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_views.py::test_get_prefix_list_acl_guest -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
 def test_get_prefix_list_acl_guest(client):
     url = url_for("weko_authors.get_prefix_list")
@@ -1000,7 +1101,7 @@ def test_get_prefix_list_acl_users(client, users, authors_prefix_settings, index
     assert_role(res, is_permission)
 
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_views.py::test_get_prefix_list -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
-def test_get_prefix_list(client, db, users):
+def test_get_prefix_list(client, db, users, community):
     url = url_for("weko_authors.get_prefix_list")
     login_user_via_session(client=client, email=users[0]['email'])
 
@@ -1009,6 +1110,7 @@ def test_get_prefix_list(client, db, users):
     assert res.status_code == 200
     assert get_json(res) == []
 
+    # exist settings without community
     orcid = AuthorsPrefixSettings(name="ORCID",scheme="ORCID",url="https://orcid.org/##")
     db.session.add(orcid)
     db.session.commit()
@@ -1020,6 +1122,22 @@ def test_get_prefix_list(client, db, users):
     assert result["scheme"] == "ORCID"
     assert result["url"] == "https://orcid.org/##"
     assert result["id"] == 1
+    assert result["communityIds"] == []
+
+    # exist settings with community
+    com = Community.query.get("community1")
+    orcid = AuthorsPrefixSettings.query.get(1)
+    orcid.communities.append(com)
+    db.session.commit()
+
+    res = client.get(url)
+    assert res.status_code == 200
+    result = get_json(res)[0]
+    assert result["name"] == "ORCID"
+    assert result["scheme"] == "ORCID"
+    assert result["url"] == "https://orcid.org/##"
+    assert result["id"] == 1
+    assert result["communityIds"] == ["community1"]
 
 
 
@@ -1050,7 +1168,7 @@ def test_get_affiliation_list_acl_users(client, users, authors_prefix_settings, 
     assert_role(res, is_permission)
 
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_views.py::test_get_affiliation_list -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
-def test_get_affiliation_list(client, db, users):
+def test_get_affiliation_list(client, db, users, community):
     url = url_for("weko_authors.get_affiliation_list")
     login_user_via_session(client=client, email=users[0]['email'])
 
@@ -1059,6 +1177,7 @@ def test_get_affiliation_list(client, db, users):
     assert res.status_code == 200
     assert get_json(res) == []
 
+    # exist settings without community
     orcid = AuthorsAffiliationSettings(name="ISNI",scheme="ISNI",url="http://www.isni.org/isni/##")
     db.session.add(orcid)
     db.session.commit()
@@ -1070,6 +1189,22 @@ def test_get_affiliation_list(client, db, users):
     assert result["scheme"] == "ISNI"
     assert result["url"] == "http://www.isni.org/isni/##"
     assert result["id"] == 1
+    assert result["communityIds"] == []
+
+    # exist settings with community
+    com = Community.query.get("community1")
+    isni = AuthorsAffiliationSettings.query.get(1)
+    isni.communities.append(com)
+    db.session.commit()
+
+    res = client.get(url)
+    assert res.status_code == 200
+    result = get_json(res)[0]
+    assert result["name"] == "ISNI"
+    assert result["scheme"] == "ISNI"
+    assert result["url"] == "http://www.isni.org/isni/##"
+    assert result["id"] == 1
+    assert result["communityIds"] == ["community1"]
 
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_views.py::test_get_list_schema_acl_guest -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
 def test_get_list_schema_acl_guest(client):
@@ -1101,8 +1236,8 @@ def test_get_list_schema(client, users):
     url = url_for("weko_authors.get_list_schema")
     login_user_via_session(client=client, email=users[0]['email'])
     test = {
-        "list":['e-Rad', 'NRID', 'ORCID', 'ISNI', 'VIAF', 'AID','kakenhi', 'Ringgold', 'GRID', 'ROR', 'Other'],
-        "index":10
+        "list":['e-Rad', 'NRID', 'ORCID', 'ISNI', 'VIAF', 'AID','kakenhi', 'Ringgold', 'GRID', 'ROR', 'researchmap', 'Other'],
+        "index":11
     }
     res = client.get(url)
     assert get_json(res) == test
@@ -1168,7 +1303,7 @@ def test_update_prefix_acl_guest(client):
     (7,False), # user
     (8,False), # student
 ])
-def test_update_prefix_acl_users(client, users, authors_prefix_settings, index, is_permission):
+def test_update_prefix_acl_users(client, users, authors_prefix_settings, mocker, index, is_permission):
     """
     Test of update author prefix.
     :param client: The flask client.
@@ -1176,12 +1311,13 @@ def test_update_prefix_acl_users(client, users, authors_prefix_settings, index, 
     # login
     url = url_for("weko_authors.update_prefix")
     login_user_via_session(client=client, email=users[index]['email'])
-    input = {"schema":"None"}
+    mocker.patch("weko_authors.views.validate_community_ids")
+    input = {"id": 1, "name":"none_name", "scheme":"None", "url":"https://test_none/##"}
     res = client.post(url,json=input)
     assert_role(res, is_permission)
 
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_views.py::test_update_prefix -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
-def test_update_prefix(client, users, authors_prefix_settings):
+def test_update_prefix(client, users, authors_prefix_settings, community):
     url = url_for("weko_authors.update_prefix")
     login_user_via_session(client=client, email=users[0]['email'])
 
@@ -1193,6 +1329,7 @@ def test_update_prefix(client, users, authors_prefix_settings):
     assert result.scheme == "None"
     assert result.name == "none_name"
     assert result.url == "https://test_none/##"
+    assert result.communities == []
     assert get_json(res) == {"code":200,"msg":'Success'}
 
     # try to update the scheme of setting with KAKEN2 in scheme to a existing scheme
@@ -1203,7 +1340,34 @@ def test_update_prefix(client, users, authors_prefix_settings):
 
     # raise Exception
     res = client.post(url,data="not_correct_data")
-    assert get_json(res) == {"code":204,"msg":'Failed'}
+    assert get_json(res) == {"code":500, "msg":'Failed'}
+
+    # communityIds is empty list
+    id = 2
+    input = {"id":id,"scheme":"None","name":"none_name","url":"https://test_none/##", "communityIds":[]}
+    res = client.post(url,json=input)
+    result = AuthorsPrefixSettings.query.filter_by(id=id).one()
+    assert result.scheme == "None"
+    assert result.name == "none_name"
+    assert result.url == "https://test_none/##"
+    assert result.communities == []
+    assert get_json(res) == {"code":200,"msg":'Success'}
+
+    # communityIds is valid
+    id = 2
+    input = {"id":id,"scheme":"None","name":"none_name","url":"https://test_none/##", "communityIds":["community1"]}
+    res = client.post(url,json=input)
+    result = AuthorsPrefixSettings.query.filter_by(id=id).one()
+    assert result.communities[0].id == "community1"
+    assert get_json(res) == {"code":200,"msg":'Success'}
+
+    # communityIds is invalid
+    id = 2
+    input = {"id":id,"scheme":"None","name":"none_name","url":"https://test_none/##", "communityIds":["invalid_community"]}
+    res = client.post(url,json=input)
+    result = AuthorsPrefixSettings.query.filter_by(id=id).one()
+    assert result.communities[0].id == "community1"
+    assert get_json(res) == {"code":400,"msg":'Community ID(s) invalid_community does not exist.'}
 
 
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_views.py::test_delete_prefix_acl_guest -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
@@ -1250,6 +1414,13 @@ def test_delete_prefix(client, users, authors_prefix_settings):
     assert get_json(res) == {"msg": "Success"}
     assert AuthorsPrefixSettings.query.filter_by(id=1).one_or_none() is None
 
+    with patch("weko_authors.views.check_delete_prefix",return_value=(False, "test_msg")):
+        url = url_for('weko_authors.delete_prefix', id=2)
+        res = client.delete(url)
+        assert res.status_code == 400
+        assert get_json(res) == {"msg":'test_msg'}
+        assert AuthorsPrefixSettings.query.filter_by(id=2).one_or_none() is not None
+
 
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_views.py::test_create_prefix_acl_guest -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
 def test_create_prefix_acl_guest(client):
@@ -1289,7 +1460,7 @@ def test_create_prefix_acl_users(client, users, index, is_permission):
     assert_role(res, is_permission)
 
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_views.py::test_create_prefix -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
-def test_create_prefix(client, users):
+def test_create_prefix(client, users, community):
     login_user_via_session(client=client, email=users[0]['email'])
     url = url_for("weko_authors.create_prefix")
 
@@ -1297,7 +1468,9 @@ def test_create_prefix(client, users):
     # not exist scheme setting
     res = client.put(url,json=input)
     assert get_json(res) == {"code":200,"msg":"Success"}
-    assert AuthorsPrefixSettings.query.filter_by(name="test0").one()
+    result = AuthorsPrefixSettings.query.filter_by(name="test0").one()
+    assert result
+    assert result.communities == []
 
     # exist scheme setting
     res = client.put(url,json=input)
@@ -1306,7 +1479,31 @@ def test_create_prefix(client, users):
     # raise exception
     with patch("weko_authors.views.get_author_prefix_obj", side_effect=Exception("test_error")):
         res = client.put(url,json=input)
-        assert get_json(res) == {"code":204,"msg":'Failed'}
+        assert get_json(res) == {"code":500,"msg":'Failed'}
+
+    # communityIds is empty list
+    input = {'name': 'test1', 'scheme': 'test1', 'url': 'https://test1/##', "communityIds":[]}
+    res = client.put(url,json=input)
+    assert get_json(res) == {"code":200,"msg":"Success"}
+    result = AuthorsPrefixSettings.query.filter_by(name="test1").one()
+    assert result
+    assert result.communities == []
+
+    # communityIds is valid
+    input = {'name': 'test2', 'scheme': 'test2', 'url': 'https://test2/##', "communityIds":["community1"]}
+    res = client.put(url,json=input)
+    assert get_json(res) == {"code":200,"msg":"Success"}
+    result = AuthorsPrefixSettings.query.filter_by(name="test2").one()
+    assert result
+    assert result.communities[0].id == "community1"
+
+    # communityIds is invalid
+    input = {'name': 'test3', 'scheme': 'test3', 'url': 'https://test3/##', "communityIds":["invalid_community"]}
+    res = client.put(url,json=input)
+    assert get_json(res) == {"code":400,"msg":'Community ID(s) invalid_community does not exist.'}
+    result = AuthorsPrefixSettings.query.filter_by(name="test3").one_or_none()
+    assert result is None
+
 
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_views.py::test_update_affiliation_acl_guest -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
 def test_update_affiliation_acl_guest(client):
@@ -1327,15 +1524,16 @@ def test_update_affiliation_acl_guest(client):
     (7,False), # user
     (8,False), # student
 ])
-def test_update_affiliation_acl_users(client, users, authors_affiliation_settings, index, is_permission):
+def test_update_affiliation_acl_users(client, users, mocker, authors_affiliation_settings, index, is_permission):
     login_user_via_session(client=client, email=users[index]['email'])
     url = url_for("weko_authors.update_affiliation")
+    mocker.patch("weko_authors.views.validate_community_ids")
     input = {'id':1,'name': 'ISNI', 'scheme': 'ISNI', 'url': 'https://test0/##'}
     res = client.post(url,json=input)
     assert_role(res, is_permission)
 
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_views.py::test_update_affiliation -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
-def test_update_affiliation(client, users, authors_affiliation_settings):
+def test_update_affiliation(client, users, authors_affiliation_settings, community):
     login_user_via_session(client=client, email=users[0]['email'])
     url = url_for("weko_authors.update_affiliation")
 
@@ -1356,7 +1554,34 @@ def test_update_affiliation(client, users, authors_affiliation_settings):
     # raise Exception
     with patch("weko_authors.views.get_author_affiliation_obj", side_effect=Exception("test_error")):
         res = client.post(url,json=input)
-        assert get_json(res) == {"code":204, "msg": "Failed"}
+        assert get_json(res) == {"code":500, "msg": "Failed"}
+
+    # communityIds is empty list
+    id = 1
+    input = {"id":id,"scheme":"None","name":"none_name","url":"https://test_none/##", "communityIds":[]}
+    res = client.post(url,json=input)
+    result = AuthorsAffiliationSettings.query.filter_by(id=id).one()
+    assert result.scheme == "None"
+    assert result.name == "none_name"
+    assert result.url == "https://test_none/##"
+    assert result.communities == []
+    assert get_json(res) == {"code":200,"msg":'Success'}
+
+    # communityIds is valid
+    id = 1
+    input = {"id":id,"scheme":"None","name":"none_name","url":"https://test_none/##", "communityIds":["community1"]}
+    res = client.post(url,json=input)
+    result = AuthorsAffiliationSettings.query.filter_by(id=id).one()
+    assert result.communities[0].id == "community1"
+    assert get_json(res) == {"code":200,"msg":'Success'}
+
+    # communityIds is invalid
+    id = 1
+    input = {"id":id,"scheme":"None","name":"none_name","url":"https://test_none/##", "communityIds":["invalid_community"]}
+    res = client.post(url,json=input)
+    result = AuthorsAffiliationSettings.query.filter_by(id=id).one()
+    assert result.communities[0].id == "community1"
+    assert get_json(res) == {"code":400,"msg":'Community ID(s) invalid_community does not exist.'}
 
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_views.py::test_delete_prefix_acl_guest -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
 def test_delete_affiliation_acl_guest(client, authors_affiliation_settings):
@@ -1401,6 +1626,14 @@ def test_delete_affiliation(client, users, authors_affiliation_settings):
     assert get_json(res) == {"msg": "Success"}
     assert AuthorsAffiliationSettings.query.filter_by(id=1).one_or_none() is None
 
+    with patch("weko_authors.views.check_delete_affiliation",return_value=(False, "test_msg")):
+        url = url_for('weko_authors.delete_affiliation', id=2)
+        res = client.delete(url)
+        assert res.status_code == 400
+        assert get_json(res) == {"msg":'test_msg'}
+        assert AuthorsAffiliationSettings.query.filter_by(id=2).one_or_none() is not None
+
+
 
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_views.py::test_create_affiliation_acl_guest -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
 def test_create_affiliation_acl_guest(client):
@@ -1440,7 +1673,7 @@ def test_create_affiliation_acl_users(client, users, index, is_permission):
     assert_role(res, is_permission)
 
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_views.py::test_create_affiliation -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
-def test_create_affiliation(client, users):
+def test_create_affiliation(client, users, community):
     login_user_via_session(client=client, email=users[0]['email'])
     url = url_for("weko_authors.create_affiliation")
 
@@ -1457,7 +1690,30 @@ def test_create_affiliation(client, users):
     # raise exception
     with patch("weko_authors.views.get_author_affiliation_obj", side_effect=Exception("test_error")):
         res = client.put(url,json=input)
-        assert get_json(res) == {"code":204,"msg":'Failed'}
+        assert get_json(res) == {"code":500,"msg":'Failed'}
+
+    # communityIds is empty list
+    input = {'name': 'test1', 'scheme': 'test1', 'url': 'https://test1/##', "communityIds":[]}
+    res = client.put(url,json=input)
+    assert get_json(res) == {"code":200,"msg":"Success"}
+    result = AuthorsAffiliationSettings.query.filter_by(name="test1").one()
+    assert result
+    assert result.communities == []
+
+    # communityIds is valid
+    input = {'name': 'test2', 'scheme': 'test2', 'url': 'https://test2/##', "communityIds":["community1"]}
+    res = client.put(url,json=input)
+    assert get_json(res) == {"code":200,"msg":"Success"}
+    result = AuthorsAffiliationSettings.query.filter_by(name="test2").one()
+    assert result
+    assert result.communities[0].id == "community1"
+
+    # communityIds is invalid
+    input = {'name': 'test3', 'scheme': 'test3', 'url': 'https://test3/##', "communityIds":["invalid_community"]}
+    res = client.put(url,json=input)
+    assert get_json(res) == {"code":400,"msg":'Community ID(s) invalid_community does not exist.'}
+    result = AuthorsAffiliationSettings.query.filter_by(name="test3").one_or_none()
+    assert result is None
 
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_views.py::test_dbsession_clean -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
 def test_dbsession_clean(app, db):

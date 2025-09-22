@@ -45,7 +45,8 @@ from weko_authors.utils import (
 
 from .errors import (
     VersionNotFoundRESTError, InvalidDataRESTError, AuthorBaseRESTError,
-    AuthorNotFoundRESTError, AuthorInternalServerError, AuthorsPermissionError
+    AuthorNotFoundRESTError, AuthorInternalServerError, AuthorsPermissionError,
+    AuthorsValidationError
 )
 from .scopes import (
     author_search_scope,
@@ -244,6 +245,7 @@ class AuthorDBManagementAPI(ContentNegotiatedMethodView):
             familyname = request.args.get("familyname")
             idtype = request.args.get("idtype")
             authorid = request.args.get("authorid")
+            communityid = request.args.get("communityid")
 
             if (idtype and not authorid) or (authorid and not idtype):
                 raise BadRequest("Both 'idtype' and 'authorid' must be specified together or omitted.")
@@ -265,6 +267,11 @@ class AuthorDBManagementAPI(ContentNegotiatedMethodView):
                     }
                 }
             }
+
+            if communityid:
+                search_query["query"]["bool"]["must"].append({
+                    "term": {"communityIds": communityid}
+                })
 
             if fullname:
                 parts = fullname.split(" ", 1)

@@ -199,7 +199,7 @@ msgstr "指定されたコミュニティID「{}」は存在しません。"
 #: weko_authors/utils.py:1862 weko_authors/utils.py:1878
 #: weko_authors/utils.py:1884 weko_authors/utils.py:1934
 msgid "You do not have permission for this {}’s communities: {}."
-msgstr "コミュニティ「{}」の管理権限がありません。"
+msgstr "{}に紐づく、コミュニティ「{}」の管理権限がありません。"
 
 #: weko_authors/templates/weko_authors/admin/author_import.html:46
 #: weko_authors/templates/weko_authors/macros/tabs_selector.html:22

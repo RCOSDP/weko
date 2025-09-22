@@ -300,7 +300,6 @@ def delete_export_status(user_id):
 
 def get_export_url(user_id):
     """Get exported info from cache."""
-    # return current_cache.get(current_app.config.get("WEKO_AUTHORS_EXPORT_CACHE_URL_KEY")) or {}
     key = f'{current_app.config.get("WEKO_AUTHORS_EXPORT_CACHE_URL_KEY")}_{user_id}'
     return current_cache.get(key) or {}
 
@@ -321,7 +320,6 @@ def delete_export_url(user_id):
     """Delete exported URL from cache."""
     key = f'{current_app.config.get("WEKO_AUTHORS_EXPORT_CACHE_URL_KEY")}_{user_id}'
     current_cache.delete(key)
-    # current_cache.delete(current_app.config.get("WEKO_AUTHORS_EXPORT_CACHE_URL_KEY"))
 
 def handle_exception(ex, attempt, retrys, interval, stop_point=0):
     """Manage sleep and retries.
@@ -497,10 +495,7 @@ def export_prefix(target, user_id):
             elif target == "affiliation_id":
                 prefix = WekoAuthors.get_affiliation_id_all(community_ids=community_ids)
 
-            community_length = max(list(map(
-                lambda x: len(x.communities), prefix
-            )))
-            current_app.logger.error(f"Community length: {community_length}")
+            community_length = max(len(x.communities) for x in prefix) if prefix else 1
 
             row_header += [f"community_ids[{i}]" for i in range(community_length)]
             row_label_en += [f"Community ID[{i}]" for i in range(community_length)]
@@ -1058,8 +1053,9 @@ def unpackage_and_check_import_file_for_prefix(file_format, file_name, temp_file
                             header_key = re.sub(r'\[\d+\]$', '', raw_header)
                             is_array = '[' in raw_header
                             if is_array:
+                                tmp_data.setdefault(header_key, [])
                                 if data:
-                                    tmp_data.setdefault(header_key, []).append(data)
+                                    tmp_data[header_key].append(data)
                             else:
                                 tmp_data[header_key] = data
                     except Exception as ex:
@@ -1195,8 +1191,8 @@ def validate_import_data_for_prefix(file_data, target):
                     check, message = check_delete_prefix(item.get('id'))
                 elif target == "affiliation_id":
                     check, message = check_delete_affiliation(item.get('id'))
-                    if not check:
-                        errors.append(message)
+                if not check:
+                    errors.append(message)
         except AuthorsValidationError as ex:
             errors.append(ex.description)
 
@@ -1851,7 +1847,7 @@ def validate_community_ids(new_ids, old_ids=None, is_create=False, activity_id=N
 
     if is_super:
         return list(new_ids)
-
+    activity = None
     if activity_id:
         from weko_workflow.api import WorkActivity
         activity = WorkActivity.get_activity_by_id(activity_id)
@@ -1873,7 +1869,7 @@ def validate_community_ids(new_ids, old_ids=None, is_create=False, activity_id=N
         if not (old_ids & managed_ids):
             raise AuthorsPermissionError(description=_('You cannot manage this record.'))
         if not (new_ids & managed_ids):
-            raise AuthorsPermissionError(description=_('You must include at least one managed community.'))
+            raise AuthorsValidationError(description=_('You must include at least one managed community.'))
 
         added = new_ids - old_ids
         removed = old_ids - new_ids
@@ -1904,6 +1900,7 @@ def get_managed_community(user):
         bool: Flag indicating if the user is a super user.
     """
     managed_communities = []
+    is_super = False
     if user.is_authenticated:
         try:
             is_super = any(role.name in current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER'] for role in user.roles)
@@ -1914,6 +1911,7 @@ def get_managed_community(user):
         except Exception as e:
             current_app.logger.error(f"Error fetching managed communities: {e}")
             traceback.print_exc()
+            raise
     return managed_communities, is_super
 
 

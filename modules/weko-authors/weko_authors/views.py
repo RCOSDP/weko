@@ -169,7 +169,7 @@ def update_author():
             return jsonify(msg=_('The end date must be after the start date.')), 500
 
         #communityIdsのバリデーションチェック
-        old = Authors.query.get(data.get('id'))
+        old = Authors.query.get(pk_id)
         old_community_ids = [c.id for c in old.communities]
         data["communityIds"] = validate_community_ids(
             data.get("communityIds", []), old_ids=old_community_ids)

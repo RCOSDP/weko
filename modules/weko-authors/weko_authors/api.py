@@ -482,10 +482,7 @@ class WekoAuthors(object):
 
                 community_mappings['max'] = max(
                     community_mappings.get('max', 1),
-                    max(list(map(
-                        lambda x: len(x.communities),
-                        authors
-                    )))
+                    max((len(x.communities) for x in authors), default=0)
                 )
 
             # Finally, subtract the WEKOID part from the maximum value
@@ -667,11 +664,9 @@ class WekoAuthors(object):
                                     row.append(val)
 
             # Process mapping for each community
-            for i in range(community_mappings.get("max", 1)):
-                if i >= len(author.communities):
-                    row.append(None)
-                else:
-                    row.append(author.communities[i].id)
+            com_ids = [c.id for c in author.communities]
+            com_ids.extend([None] * (community_mappings.get("max", 1) - len(com_ids)))
+            row.extend(com_ids)
 
             row_data.append(row)
 
@@ -686,12 +681,10 @@ class WekoAuthors(object):
             # Exclude WEKO's own prefix for author identifier prefixes
             if target_prefix == "id_prefix" and prefix.scheme == "WEKO":
                 continue
-            row = [prefix.scheme, prefix.name, prefix.url, None]
-            for i in range(community_length):
-                if i >= len(prefix.communities):
-                    row.append(None)
-                else:
-                    row.append(prefix.communities[i].id)
+
+            ids = [c.id for c in prefix.communities]
+            ids.extend([None] * (community_length - len(ids)))
+            row = [prefix.scheme, prefix.name, prefix.url, None] + ids
             row_data.append(row)
 
         return row_data
