@@ -2985,14 +2985,13 @@ def test_save_activity_data(mocker):
 
     data = {
         "activity_id":"test_id",
-        "title":"test title",
         "shared_user_ids":[{"user":1}],
         "approval1":"test1@test.org",
         "approval2":"test2@test.org"
     }
     mock_update = mocker.patch("weko_workflow.utils.WorkActivity.update_activity")
     save_activity_data(data)
-    mock_update.assert_called_with("test_id",{"title":"test title","shared_user_ids":[{"user":1}],"approval1":"test1@test.org","approval2":"test2@test.org"})
+    mock_update.assert_called_with("test_id",{"shared_user_ids":[{"user":1}],"approval1":"test1@test.org","approval2":"test2@test.org"})
 
 # def save_activity_data(data: dict) -> NoReturn:
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_save_activity_data_1 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
@@ -3000,7 +2999,6 @@ def test_save_activity_data_1(db_register_full_action, mocker):
     mock_update = mocker.patch("weko_workflow.utils.WorkActivity.update_activity")
     data = {
         "activity_id":db_register_full_action['activities'][0].activity_id,
-        "title":"test title",
         "shared_user_ids":[],
         "approval1":"test1@test.org",
         "approval2":"test2@test.org"
@@ -3014,7 +3012,6 @@ def test_save_activity_data_1(db_register_full_action, mocker):
 def test_save_activity_data_2(db_register_full_action, mocker):
     data = {
         "activity_id":db_register_full_action['activities'][0].activity_id,
-        "title":"test title",
         "shared_user_ids":[{"user":3}],
         "approval1":"test1@test.org",
         "approval2":"test2@test.org"

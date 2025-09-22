@@ -3515,7 +3515,7 @@ def save_activity_data(data: dict) -> NoReturn:
     """
     activity_id = data.get("activity_id")
     activity_data = {
-        "title": data.get("title"),
+        # "title": data.get("title"),
         "shared_user_ids": data.get("shared_user_ids"),
         "approval1": data.get("approval1"),
         "approval2": data.get("approval2"),
