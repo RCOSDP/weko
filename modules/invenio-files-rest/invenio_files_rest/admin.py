@@ -23,6 +23,7 @@ from flask_security import current_user
 from flask_wtf import FlaskForm
 from invenio_admin.filters import FilterConverter
 from invenio_admin.forms import LazyChoices
+from invenio_db import db
 from markupsafe import Markup
 from sqlalchemy.exc import SQLAlchemyError
 from wtforms.fields import PasswordField
@@ -45,9 +46,9 @@ def validate_uri(form, field):
     """
     Validate the URI field based on the value of the 'type' field.
 
-    This function checks if the 'type' field in the form is set to 
-    'FILES_REST_LOCATION_TYPE_S3_VIRTUAL_HOST_VALUE'. If so, it ensures 
-    that the URI field starts with 'https://'. If the condition is not 
+    This function checks if the 'type' field in the form is set to
+    'FILES_REST_LOCATION_TYPE_S3_VIRTUAL_HOST_VALUE'. If so, it ensures
+    that the URI field starts with 'https://'. If the condition is not
     met, a ValidationError is raised.
 
     Args:
@@ -55,7 +56,7 @@ def validate_uri(form, field):
         field (wtforms.Field): The field being validated (URI field).
 
     Raises:
-        ValidationError: If the URI does not start with 'https://' when 
+        ValidationError: If the URI does not start with 'https://' when
         the 'type' field is set to 'FILES_REST_LOCATION_TYPE_S3_VIRTUAL_HOST_VALUE'.
     """
     if form.type.data == \
@@ -185,13 +186,17 @@ class LocationModelView(ModelView):
             ValidationError: If another location is already set as default.
         """
         if model.default:
-            query = Location.query.filter_by(default=True)
-            if model.id:
-                query = query.filter(Location.id != model.id)
-            if query.first():
-                raise ValidationError(
-                    _("Cannot save because another location is already set as default.")
-                )
+            with db.session.no_autoflush:
+                query = Location.query.filter_by(default=True)
+                if model.id:
+                    query = query.filter(Location.id != model.id)
+                if query.first():
+                    current_app.logger.error(
+                        "ValidationError: Cannot save because another location is already set as default."
+                    )
+                    raise ValidationError(
+                        _("Cannot save because another location is already set as default.")
+                    )
 
         if is_created:
             model.s3_send_file_directly = True
