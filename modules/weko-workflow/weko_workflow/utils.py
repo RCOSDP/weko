@@ -4591,8 +4591,8 @@ def check_authority_by_admin(activity, user=None):
             index_ids = []
             role_ids = [role.id for role in user.roles]
             from invenio_communities.models import Community
-            comm_list = Community.query.filter(
-                Community.id_role.in_(role_ids)
+            comm_list = Community.get_by_user(
+                role_ids, with_deleted=True
             ).all()
             for comm in comm_list:
                 index_ids += [str(i.cid) for i in Indexes.get_self_list(comm.root_node_id)

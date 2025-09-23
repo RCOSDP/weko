@@ -394,8 +394,8 @@ class ItemImportView(BaseView):
                     role_ids.append(role.id)
         if role_ids:
             from invenio_communities.models import Community
-            comm_data = Community.query.filter(
-                Community.id_role.in_(role_ids)
+            comm_data = Community.get_by_user(
+                role_ids, with_deleted=True
             ).all()
             for comm in comm_data:
                 can_edit_indexes += [i.cid for i in Indexes.get_self_list(comm.root_node_id)]
@@ -842,8 +842,8 @@ class ItemRocrateImportView(BaseView):
                     role_ids.append(role.id)
         if role_ids:
             from invenio_communities.models import Community
-            comm_data = Community.query.filter(
-                Community.id_role.in_(role_ids)
+            comm_data = Community.get_by_user(
+                role_ids, with_deleted=True
             ).all()
             for comm in comm_data:
                 can_edit_indexes += [i.cid for i in Indexes.get_self_list(comm.root_node_id)]

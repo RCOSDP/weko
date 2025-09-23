@@ -510,8 +510,8 @@ class Indexes(object):
                 if not ret['is_ok'] and role_ids:
                     can_edit_list = []
                     from invenio_communities.models import Community
-                    comm_data = Community.query.filter(
-                        Community.id_role.in_(role_ids)
+                    comm_data = Community.get_by_user(
+                        role_ids, with_deleted=True
                     ).all()
                     for comm in comm_data:
                         can_edit_list += [i.cid for i in cls.get_self_list(comm.root_node_id)]
