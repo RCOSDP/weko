@@ -589,25 +589,21 @@ def test__index_action_sync_version_cases(monkeypatch, body, expected_file, has_
 
     payload = {'id': 'rid'}
     indexer, committed, called = setup_indexer_and_env()
-
     if expect_error:
         with pytest.raises(sqlalchemy.exc.SQLAlchemyError):
             indexer._index_action_sync_version(payload)
-        assert called['error'] is True
-        assert called['trace'] is True
-        assert committed['called'] is False
+        assert called['error'] == expect_error
+        assert called['trace'] == expect_error
+        assert committed['called'] == expect_commit
     else:
-        # 値を直接assertする形式に変更
         if has_content:
-            assert indexer._index_action_sync_version(payload)['_source']['content'][0]['file'] == expected_file
+            result = indexer._index_action_sync_version(payload)
+            assert result['_source']['content'][0]['file'] == expected_file
         else:
             result = indexer._index_action_sync_version(payload)
             assert result['_source']['file'] == expected_file
             assert 'content' not in result['_source']
-        if expect_commit:
-            assert committed['called'] is True
-        else:
-            assert committed['called'] is False
+        assert committed['called'] == expect_commit
 
 def test__actionsiter_sync_version_exception(monkeypatch):
     """Test that reject and logger.error are called when an exception occurs in _actionsiter_sync_version."""
@@ -624,9 +620,9 @@ def test__actionsiter_sync_version_exception(monkeypatch):
     msg = DummyMessage({'op': 'index', 'id': 'rid'})
     # Execute
     result = list(indexer._actionsiter_sync_version([msg]))
-    assert msg.rejected
-    assert not msg.acked
-    assert called['error']
+    assert msg.rejected is True
+    assert msg.acked is False
+    assert called['error'] is True
 
 def test__actionsiter_sync_version_noresultfound(monkeypatch):
     """Test that reject is called when NoResultFound occurs in _actionsiter_sync_version."""
@@ -636,8 +632,8 @@ def test__actionsiter_sync_version_noresultfound(monkeypatch):
     monkeypatch.setattr('invenio_indexer.api.Record', types.SimpleNamespace(get_record=lambda rid: (_ for _ in ()).throw(NoResultFound('not found'))))
     msg = DummyMessage({'op': 'index', 'id': 'rid'})
     list(indexer._actionsiter_sync_version([msg]))
-    assert msg.rejected
-    assert not msg.acked
+    assert msg.rejected is True
+    assert msg.acked is False
 
 def test__actionsiter_sync_version_delete(monkeypatch):
     """Test that _delete_action is called and acked when delete pattern in _actionsiter_sync_version."""
@@ -650,9 +646,9 @@ def test__actionsiter_sync_version_delete(monkeypatch):
     monkeypatch.setattr(indexer, '_delete_action', dummy_delete_action)
     msg = DummyMessage({'op': 'delete', 'id': 'rid'})
     list(indexer._actionsiter_sync_version([msg]))
-    assert called['delete']
-    assert msg.acked
-    assert not msg.rejected
+    assert called['delete'] is True
+    assert msg.acked is True
+    assert msg.rejected is False
 
 # .tox/c1/bin/pytest --cov=invenio_indexer tests/test_api.py::test_bulk_base_exception -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_bulk_base_exception():
