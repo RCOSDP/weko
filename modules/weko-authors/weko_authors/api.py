@@ -688,3 +688,105 @@ class WekoAuthors(object):
             row_data.append(row)
 
         return row_data
+
+import click
+from invenio_search import current_search_client
+from elasticsearch.helpers import bulk
+from elasticsearch.helpers import BulkIndexError
+from elasticsearch.exceptions import ConnectionTimeout, ConnectionError
+import traceback
+class AuthorIndexer():
+    def __init__(self, search_client, version_type, author_to_index):
+        self.client = search_client or current_search_client
+        self._version_type = version_type
+        self._author_to_index = author_to_index
+        
+    def author_to_index(self):
+        index = current_app.config['WEKO_AUTHORS_ES_INDEX_NAME']
+        doc_type = current_app.config['WEKO_AUTHORS_ES_DOC_TYPE']
+        return index, doc_type
+
+    def bulk_process_authors(self,es_bulk_kwargs, uuids = [],start_date=None,end_date=None,with_deleted=True,skip_exists=False):
+        success = 0
+        fail = 0
+        unprocesses = 0
+        req_timeout = current_app.config['INDEXER_BULK_REQUEST_TIMEOUT']
+        self.count = 0
+        if skip_exists:
+            # esから登録済みのドキュメントidを取得
+            es_uuids = []
+        try:
+            if len(uuids) == 0:
+                authors = WekoAuthors().get_all(with_deleted=with_deleted, with_gather=False)
+                uuids = [str(author.id) for author in authors]
+                
+            _success, _fail = bulk(
+                self.client,
+                self.generate_actions(uuids, start_date, end_date, with_deleted, es_uuids),
+                request_timeout=req_timeout,
+                **es_bulk_kwargs
+            )
+            success += _success
+            fail += _fail
+        except SQLAlchemyError as e:
+            current_app.logger.error(e)
+            db.session.rollback()
+        except BulkIndexError as e:
+            _fail = len(e.errors)
+            _success = self.count - _fail
+            _unprocessed = len(uuids) - self.count
+            
+            fail += _fail
+            success += _success
+            unprocesses += _unprocessed
+            for error in e.errors:
+                current_app.logger.error("{}, {}".format(error['index']['_id'],error['index']['error']['type']))
+        except ConnectionError as ce:
+            current_app.logger.error("Connection error occurred: {}".format(ce))
+            success += len(uuids)-len(e.errors)
+        except ConnectionTimeout as ce:
+            current_app.logger.error("Error: {}".format(ce))
+            current_app.logger.error("INDEXER_BULK_REQUEST_TIMEOUT: {} sec".format(req_timeout))
+            current_app.logger.error("Please change value of INDEXER_BULK_REQUEST_TIMEOUT and retry it.")
+            current_app.logger.error("processing: {}".format(self.count))
+            current_app.logger.error("latest processing id: {}".format(self.latest_item_id))
+        except Exception as e:
+            current_app.logger.error(e)
+            current_app.logger.error(traceback.format_exc())
+        count = (success,fail,unprocesses)
+        click.secho("count(success, error, unprocessed): {}".format(count),fg='green')
+
+        return count
+
+
+    def generate_actions(self,uuids=[],start_date=None, end_date=None,with_deleted=True,es_uuids=[]):
+        index, doc_type = self.author_to_index()
+        filters  =[]
+        if not with_deleted:
+            filters.append(Authors.is_deleted.is_(False))
+        if start_date:
+            filters.append(Authors.updated >= start_date)
+        if end_date:
+            filters.append(Authors.updated < end_date)
+        query = Authors.query.filter(*filters)
+        authors = query.all()
+        if len(authors) == 0:
+            click.echo("Error: No authors were found for processing, so the operation was stopped.",fg="red")
+        for author in authors:
+            self.count += 1
+            if str(author.id) in es_uuids:
+                click.echo(f"Warning: {author.id} was skipped because it already exists in Elasticsearch.", fg='yellow')
+                continue
+            body = self._prepare_author(author)
+            action = {
+                "_op_type": "index",
+                "_index": index,
+                "_type": doc_type,
+                "_id": str(author.id),
+                "_source": body
+            }
+
+            click.secho(f"Indexing author id: {author.id}, Count:{self.count}", fg='green')
+            yield action
+    def _prepare_author(self, author):
+        return author.json
