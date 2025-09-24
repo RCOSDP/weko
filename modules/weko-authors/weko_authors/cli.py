@@ -61,15 +61,13 @@ import os
 @click.option('--yes-i-know', is_flag=True, callback=abort_if_false,
               expose_value=False,
               prompt='Do you really want to reindex all records?')
-@click.option('--skip-exists', is_flag=True, default=False,
-              help='Skip records that are already indexed.')
 @click.option('-f','--file', type=str, default=None,
               help='Path to a file containing author IDs to reindex.')
 @click.option('--id', type=str,help='Specific author ID to reindex.')
 @click.option('--start-date', type=str,help='Start date for reindexing (YYYY-MM-DD).')
 @click.option('--end-date', type=str,help='End date for reindexing (YYYY-MM-DD).')
 @click.option(
-    '--with_deleted', type=bool,default=True,
+    '--with-deleted', type=bool,default=True,
     help='Include deleted records in the indexing process.')
 @click.option(
     '--raise-on-error', type=bool,default=True,
@@ -82,7 +80,7 @@ import os
 @click.option('--max-retries',type=int,default=0,help='maximum number of times a document will be retired when 429 is received, set to 0 (default) for no retries on 429')
 @click.option('--initial_backoff',type=int,default=2,help='number of secconds we should wait before the first retry.')
 @click.option('--max-backoff',type=int,default=600,help='maximim number of seconds a retry will wait')
-def reindex(skip_exists, file, id, start_date, end_date, with_deleted=True,
+def reindex(file, id, start_date, end_date, with_deleted=True,
             raise_on_error=True,raise_on_exception=True,chunk_size=500,
             max_chunk_bytes=104857600,max_retries=0,initial_backoff=2,
             max_backoff=600):
@@ -116,6 +114,6 @@ def reindex(skip_exists, file, id, start_date, end_date, with_deleted=True,
         "stats_onlye": False
     }
     click.secho('Reindexing authors...', fg='green')
-    AuthorIndexer().bulk_process_authors(es_bulk_kwargs, uuids, start_date, end_date, with_deleted, skip_exists)
+    AuthorIndexer().bulk_process_authors(es_bulk_kwargs, uuids, start_date, end_date, with_deleted)
     click.secho('Authors reindexed successfully.', fg='green')
 
