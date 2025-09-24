@@ -66,7 +66,10 @@ def get_weko_contents(getargs):
     height = style.height
     index_link_enabled = style.index_link_enabled
 
-    index_link_list = get_index_link_list()
+    index_link_list = []
+    if index_link_enabled:
+        index_link_list = get_index_link_list()
+
     detail_condition = get_search_detail_keyword('')
     check_site_license_permission()
 
