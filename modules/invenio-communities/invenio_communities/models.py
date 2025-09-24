@@ -342,6 +342,15 @@ class Community(db.Model, Timestamp):
         return q.order_by(db.asc(Community.title)).all()
 
     @classmethod
+    def get_by_ids(cls, community_ids, with_deleted=False):
+        """Get communities by ids."""
+        q = cls.query.filter(cls.id.in_(community_ids))
+        if not with_deleted:
+            q = q.filter(cls.deleted_at.is_(None))
+
+        return q.order_by(db.asc(Community.id)).all()
+
+    @classmethod
     def filter_communities(cls, p, so, with_deleted=False):
         """Search for communities.
 

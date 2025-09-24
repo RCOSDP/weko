@@ -32,6 +32,7 @@ from flask.helpers import url_for
 from flask.json import jsonify
 from flask_admin import BaseView, expose
 from flask_babelex import gettext as _
+from flask_security import current_user
 from invenio_files_rest.models import FileInstance
 from invenio_cache import current_cache
 from weko_logging.activity_logger import UserActivityLogger
@@ -108,11 +109,12 @@ class ExportView(BaseView):
     @expose('/download/' + WEKO_AUTHORS_EXPORT_FILE_NAME, methods=['GET'])
     def download(self):
         """Download the export file."""
-        data = get_export_url()
+        user_id = current_user.get_id()
+        data = get_export_url(user_id)
         if data.get('file_uri'):
             file_instance = FileInstance.get_by_uri(data.get('file_uri'))
             export_target = current_cache.get(
-                current_app.config['WEKO_AUTHORS_EXPORT_TARGET_CACHE_KEY']
+                f'{current_app.config["WEKO_AUTHORS_EXPORT_TARGET_CACHE_KEY"]}_{user_id}'
             )
             base_file_name = check_file_name(export_target)
             file_name = "{}_{}.{}".format(
@@ -133,25 +135,25 @@ class ExportView(BaseView):
     @expose('/check_status', methods=['GET'])
     def check_status(self):
         """Api check export status."""
-
+        user_id = current_user.get_id()
         # Get the point where processing paused
         stop_point = current_cache.get(
-            current_app.config["WEKO_AUTHORS_EXPORT_CACHE_STOP_POINT_KEY"]
+            f'{current_app.config["WEKO_AUTHORS_EXPORT_CACHE_STOP_POINT_KEY"]}_{user_id}'
         )
 
-        status = get_export_status()
+        status = get_export_status(user_id)
         if not status:
-            status = get_export_url()
+            status = get_export_url(user_id)
         elif status.get('task_id'):
             task = export_all.AsyncResult(status.get('task_id'))
             if task.successful() or task.failed() \
                     or task.state == states.REVOKED:
-                delete_export_status()
-                status = get_export_url()
+                delete_export_status(user_id)
+                status = get_export_url(user_id)
                 if not task.result and not stop_point:
                     status['error'] = 'export_fail'
             else:
-                status['file_uri'] = get_export_url().get('file_uri', '')
+                status['file_uri'] = get_export_url(user_id).get('file_uri', '')
 
         if stop_point:
             status['stop_point'] = stop_point
@@ -163,7 +165,7 @@ class ExportView(BaseView):
         if file_instance:
             # Change filename with export_target
             export_target = current_cache.get(
-                current_app.config['WEKO_AUTHORS_EXPORT_TARGET_CACHE_KEY']
+                f'{current_app.config["WEKO_AUTHORS_EXPORT_TARGET_CACHE_KEY"]}_{user_id}'
             )
             base_file_name = check_file_name(export_target)
             status['filename'] = "{}_{}.{}".format(
@@ -187,8 +189,9 @@ class ExportView(BaseView):
         """Process export authors."""
         data = request.get_json()
         export_target = data.get("isTarget", "")
+        user_id = current_user.get_id()
         # Remove previous export url.
-        delete_export_url()
+        delete_export_url(user_id)
         if export_target == "author_db":
             temp_folder_path = os.path.join(
                 tempfile.gettempdir(),
@@ -197,6 +200,7 @@ class ExportView(BaseView):
             os.makedirs(temp_folder_path, exist_ok=True)
             prefix = (
                 current_app.config["WEKO_AUTHORS_EXPORT_TMP_PREFIX"]
+                + str(user_id) + "_"
                 + datetime.datetime.now().strftime("%Y%m%d%H%M")
             )
 
@@ -207,13 +211,14 @@ class ExportView(BaseView):
                 temp_file_path = temp_file.name
 
             # cache the temporary file path
+            key = f'{current_app.config["WEKO_AUTHORS_EXPORT_CACHE_TEMP_FILE_PATH_KEY"]}_{user_id}'
             update_cache_data(
-                current_app.config["WEKO_AUTHORS_EXPORT_CACHE_TEMP_FILE_PATH_KEY"],
+                key,
                 temp_file_path,
                 current_app.config["WEKO_AUTHORS_CACHE_TTL"]
             )
-        task = export_all.delay(export_target)
-        set_export_status(task_id=task.id)
+        task = export_all.delay(export_target, user_id)
+        set_export_status(user_id, task_id=task.id)
         return jsonify({
             'code': 200,
             'data': {'task_id': task.id}
@@ -225,23 +230,24 @@ class ExportView(BaseView):
         """Cancel export progress."""
         result = {'status': 'fail'}
         try:
-            status = get_export_status()
+            user_id = current_user.get_id()
+            status = get_export_status(user_id)
             # if stop_point is exists, delete stop_point and temp_file_path
             if current_cache.get(
-                current_app.config["WEKO_AUTHORS_EXPORT_CACHE_STOP_POINT_KEY"]
+                f'{current_app.config["WEKO_AUTHORS_EXPORT_CACHE_STOP_POINT_KEY"]}_{user_id}'
             ):
                 current_cache.delete(
-                    current_app.config["WEKO_AUTHORS_EXPORT_CACHE_STOP_POINT_KEY"]
+                    f'{current_app.config["WEKO_AUTHORS_EXPORT_CACHE_STOP_POINT_KEY"]}_{user_id}'
                 )
                 temp_file_path=current_cache.get(
-                    current_app.config["WEKO_AUTHORS_EXPORT_CACHE_TEMP_FILE_PATH_KEY"]
+                    f'{current_app.config["WEKO_AUTHORS_EXPORT_CACHE_TEMP_FILE_PATH_KEY"]}_{user_id}'
                 )
                 if temp_file_path:
                     os.remove(temp_file_path)
-                    current_cache.delete(current_app.config["WEKO_AUTHORS_EXPORT_CACHE_TEMP_FILE_PATH_KEY"])
+                    current_cache.delete(f'{current_app.config["WEKO_AUTHORS_EXPORT_CACHE_TEMP_FILE_PATH_KEY"]}_{user_id}')
             if status and status.get('task_id'):
                 revoke(status.get('task_id'), terminate=True)
-                delete_export_status()
+                delete_export_status(user_id)
                 result['status'] = 'success'
         except Exception as ex:
             current_app.logger.error(ex)
@@ -256,8 +262,8 @@ class ExportView(BaseView):
     @expose('/resume', methods=['POST'])
     def resume(self):
         """Resume export progress."""
-
-        delete_export_url()
+        user_id = current_user.get_id()
+        delete_export_url(user_id)
         temp_folder_path = os.path.join(
             tempfile.gettempdir(),
             current_app.config.get("WEKO_AUTHORS_EXPORT_TMP_DIR")
@@ -265,6 +271,7 @@ class ExportView(BaseView):
         os.makedirs(temp_folder_path, exist_ok=True)
         prefix = (
             current_app.config["WEKO_AUTHORS_EXPORT_TMP_PREFIX"]
+            + str(user_id) + "_"
             + datetime.datetime.now().strftime("%Y%m%d%H%M")
         )
 
@@ -274,12 +281,12 @@ class ExportView(BaseView):
         ) as temp_file:
             temp_file_path = temp_file.name
         update_cache_data(
-            current_app.config["WEKO_AUTHORS_EXPORT_CACHE_TEMP_FILE_PATH_KEY"],
+            f'{current_app.config["WEKO_AUTHORS_EXPORT_CACHE_TEMP_FILE_PATH_KEY"]}_{user_id}',
             temp_file_path,
             current_app.config["WEKO_AUTHORS_CACHE_TTL"]
         )
-        task = export_all.delay("author_db")
-        set_export_status(task_id=task.id)
+        task = export_all.delay("author_db", user_id)
+        set_export_status(user_id, task_id=task.id)
         return jsonify({
             'code': 200,
             'data': {'task_id': task.id}

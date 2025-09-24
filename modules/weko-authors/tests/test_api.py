@@ -48,7 +48,7 @@ class TestWekoAuthors:
     @pytest.mark.parametrize('base_app',[dict(
         is_es=True
     )],indirect=['base_app'])
-    def test_create(self,app,db,esindex, mocker):
+    def test_create(self,app,db,esindex, mocker, users):
         id = 1
         es_id = uuid.uuid4()
         with patch("weko_authors.api.Authors.get_sequence",return_value=id):
@@ -77,13 +77,45 @@ class TestWekoAuthors:
                     with pytest.raises(NotFoundError):
                         res = current_search_client.get(index=current_app.config["WEKO_AUTHORS_ES_INDEX_NAME"],doc_type=current_app.config['WEKO_AUTHORS_ES_DOC_TYPE'],id=str(es_id))
 
+        from invenio_communities.models import Community
+        com1 = Community.query.get("comm01")
+        id = 3
+        es_id = uuid.uuid4()
+        with patch("weko_authors.api.Authors.get_sequence",return_value=id):
+            with patch("weko_authors.api.uuid.uuid4",return_value = es_id):
+                data = {
+                    "authorNameInfo": [{"familyName": "テスト","firstName": "ハナコ","fullName": "","language": "ja-Kana","nameFormat": "familyNmAndNm","nameShowFlg": "true"}],
+                    "authorIdInfo": [{"idType": "2","authorId": "01234","authorIdShowFlg": "true"}],
+                    "emailInfo": [{"email": "example@com"}],
+                    "is_deleted":"false",
+                    "communityIds": ["comm01"],
+                }
+                WekoAuthors.create(data)
+                db.session.commit()
+                author = Authors.query.filter_by(id=id).one()
+                test = {
+                    "authorNameInfo": [{"familyName": "テスト","firstName": "ハナコ","fullName": "","language": "ja-Kana","nameFormat": "familyNmAndNm","nameShowFlg": "true"}],
+                    "authorIdInfo": [{"idType": "2","authorId": "01234","authorIdShowFlg": "true"}],
+                    "emailInfo": [{"email": "example@com"}],
+                    "is_deleted":"false",
+                    "gather_flg": 0,
+                    "id": str(es_id),
+                    "pk_id": "3"
+                }
+                assert author
+                assert author.json == test
+                assert author.communities[0].id == com1.id
+                res = current_search_client.get(index=current_app.config["WEKO_AUTHORS_ES_INDEX_NAME"],doc_type=current_app.config['WEKO_AUTHORS_ES_DOC_TYPE'],id=str(es_id))
+                assert res["_source"]["pk_id"]==str(id)
+                assert res["_source"]["communityIds"]==["comm01"]
+
 #     def update(cls, author_id, data):
 #         def update_es_data(data):
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_api.py::TestWekoAuthors::test_update -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
     @pytest.mark.parametrize('base_app',[dict(
         is_es=True
     )],indirect=['base_app'])
-    def test_update(self,app,db,esindex,create_author,mocker):
+    def test_update(self,app,db,esindex,create_author,mocker, users):
         mocker.patch("weko_deposit.tasks.update_items_by_authorInfo.delay")
         test_data = {
             "authorNameInfo": [{"familyName": "テスト","firstName": "ハナコ","fullName": "","language": "ja-Kana","nameFormat": "familyNmAndNm","nameShowFlg": "true"}],
@@ -106,8 +138,25 @@ class TestWekoAuthors:
         db.session.commit()
         author = Authors.query.filter_by(id=author_id).one()
         assert author.json["is_deleted"] == False
+        assert author.communities == []
         res = current_search_client.get(index=current_app.config["WEKO_AUTHORS_ES_INDEX_NAME"],doc_type=current_app.config['WEKO_AUTHORS_ES_DOC_TYPE'],id=es_id)
         assert res["_source"]["is_deleted"] == False
+        assert res["_source"]["communityIds"] == []
+
+        # set communityIDs
+        data = {
+            "authorNameInfo": [{"familyName": "テスト","firstName": "ハナコ","fullName": "","language": "ja-Kana","nameFormat": "familyNmAndNm","nameShowFlg": "true"}],
+            "authorIdInfo": [{"idType": "2","authorId": "01234","authorIdShowFlg": "true"}],
+            "emailInfo": [{"email": "example@com"}],
+            "is_deleted": False,
+            "communityIds": ["comm01"]
+        }
+        WekoAuthors.update(author_id,data)
+        db.session.commit()
+        author = Authors.query.filter_by(id=author_id).one()
+        assert author.communities[0].id == "comm01"
+        res = current_search_client.get(index=current_app.config["WEKO_AUTHORS_ES_INDEX_NAME"],doc_type=current_app.config['WEKO_AUTHORS_ES_DOC_TYPE'],id=es_id)
+        assert res["_source"]["communityIds"] == ["comm01"]
 
         # is_deleted is true
         data={
@@ -318,6 +367,24 @@ class TestWekoAuthors:
             mocker.patch.object(Authors, 'id', return_value = "test_id")
             result = WekoAuthors.get_records_count(with_deleted=False, with_gather=True)
 
+# .tox/c1/bin/pytest --cov=weko_authors tests/test_api.py::TestWekoAuthors::test_get_records_count_with_community -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
+    def test_get_records_count_with_community(self, app, db, authors, community):
+        authors[1].communities = [community[0]]
+        authors[2].communities = [community[0]]
+        authors[3].communities = [community[0]]
+        db.session.commit()
+        result = WekoAuthors.get_records_count(
+            with_deleted=True, with_gather=True, community_ids=["community1"])
+        assert result == 3
+
+        result = WekoAuthors.get_records_count(
+            with_deleted=True, with_gather=False, community_ids=["community1"])
+        assert result == 2
+
+        result = WekoAuthors.get_records_count(
+            with_deleted=False, with_gather=True, community_ids=["community1"])
+        assert result == 2
+
 #     def get_author_for_validation(cls):
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_api.py::TestWekoAuthors::test_get_author_for_validation -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
     def test_get_author_for_validation(self,authors,mocker):
@@ -343,6 +410,18 @@ class TestWekoAuthors:
         result = WekoAuthors.get_id_prefix_all()
         assert result == []
 
+# .tox/c1/bin/pytest --cov=weko_authors tests/test_api.py::TestWekoAuthors::test_get_id_prefix_all_with_community -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
+    def test_get_id_prefix_all_with_community(self, authors_prefix_settings, db, community):
+        authors_prefix_settings[0].communities = [community[0]]
+        db.session.commit()
+
+        results = WekoAuthors.get_id_prefix_all(community_ids=["community1"])
+        assert results == [authors_prefix_settings[0]]
+
+        AuthorsPrefixSettings.query.delete()
+        db.session.commit()
+        result = WekoAuthors.get_id_prefix_all(community_ids=["community1"])
+        assert result == []
 
 
 #     def get_scheme_of_id_prefix(cls):
@@ -373,6 +452,19 @@ class TestWekoAuthors:
         AuthorsAffiliationSettings.query.delete()
         db.session.commit()
         result = WekoAuthors.get_affiliation_id_all()
+        assert result == []
+
+# .tox/c1/bin/pytest --cov=weko_authors tests/test_api.py::TestWekoAuthors::test_get_affiliation_id_all_with_community -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
+    def test_get_affiliation_id_all_with_community(self, authors_affiliation_settings, db, community):
+        authors_affiliation_settings[0].communities = [community[0]]
+        db.session.commit()
+
+        results = WekoAuthors.get_affiliation_id_all(community_ids=["community1"])
+        assert results == [authors_affiliation_settings[0]]
+
+        AuthorsAffiliationSettings.query.delete()
+        db.session.commit()
+        result = WekoAuthors.get_affiliation_id_all(community_ids=["community1"])
         assert result == []
 
 
@@ -409,38 +501,38 @@ class TestWekoAuthors:
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_api.py::TestWekoAuthors::test_prepare_export_prefix -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
     def test_prepare_export_prefix(self,authors_affiliation_settings,db,authors_prefix_settings):
         data = [
-            ['ORCID', 'ORCID', 'https://orcid.org/##'],
-            ['CiNii', 'CiNii', 'https://ci.nii.ac.jp/author/##'],
-            ['KAKEN2', 'KAKEN2', 'https://nrid.nii.ac.jp/nrid/##'],
-            ['ROR', 'ROR', 'https://ror.org/##']
+            ['ORCID', 'ORCID', 'https://orcid.org/##', None, None],
+            ['CiNii', 'CiNii', 'https://ci.nii.ac.jp/author/##', None, None],
+            ['KAKEN2', 'KAKEN2', 'https://nrid.nii.ac.jp/nrid/##', None, None],
+            ['ROR', 'ROR', 'https://ror.org/##', None, None]
         ]
         tests = WekoAuthors.get_id_prefix_all()
-        result = WekoAuthors.prepare_export_prefix('id_prefix', tests)
+        result = WekoAuthors.prepare_export_prefix('id_prefix', tests, 1)
         assert result == data
 
         data = [
-            ['ISNI', 'ISNI', 'http://www.isni.org/isni/##'],
-            ['GRID', 'GRID', 'https://www.grid.ac/institutes/##'],
-            ['Ringgold', 'Ringgold', None],
-            ['kakenhi', 'kakenhi', None]
+            ['ISNI', 'ISNI', 'http://www.isni.org/isni/##', None, None, None],
+            ['GRID', 'GRID', 'https://www.grid.ac/institutes/##', None, None, None],
+            ['Ringgold', 'Ringgold', None, None, None, None],
+            ['kakenhi', 'kakenhi', None, None, None, None]
         ]
         tests = WekoAuthors.get_affiliation_id_all()
-        result = WekoAuthors.prepare_export_prefix('id_prefix', tests)
+        result = WekoAuthors.prepare_export_prefix('id_prefix', tests, 2)
         assert result == data
 
         data = [
-            ['WEKO', 'WEKO', None],
-            ['ORCID', 'ORCID', 'https://orcid.org/##'],
-            ['CiNii', 'CiNii', 'https://ci.nii.ac.jp/author/##'],
-            ['KAKEN2', 'KAKEN2', 'https://nrid.nii.ac.jp/nrid/##'],
-            ['ROR', 'ROR', 'https://ror.org/##']
+            ['WEKO', 'WEKO', None, None],
+            ['ORCID', 'ORCID', 'https://orcid.org/##', None],
+            ['CiNii', 'CiNii', 'https://ci.nii.ac.jp/author/##', None],
+            ['KAKEN2', 'KAKEN2', 'https://nrid.nii.ac.jp/nrid/##', None],
+            ['ROR', 'ROR', 'https://ror.org/##', None]
         ]
         tests = WekoAuthors.get_id_prefix_all()
-        result = WekoAuthors.prepare_export_prefix('affiliation_id', tests)
+        result = WekoAuthors.prepare_export_prefix('affiliation_id', tests, 0)
         assert result == data
 
         test = []
-        result = WekoAuthors.prepare_export_prefix('id_prefix', test)
+        result = WekoAuthors.prepare_export_prefix('id_prefix', test, 1)
         assert result == []
 
 
@@ -481,6 +573,33 @@ class TestWekoAuthors:
         with pytest.raises(Exception):
             mocker.patch.object(Authors, 'id', return_value = None)
             WekoAuthors.get_by_range(0, 10, True, True)
+
+# .tox/c1/bin/pytest --cov=weko_authors tests/test_api.py::TestWekoAuthors::test_get_by_range_with_community -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
+    @pytest.mark.parametrize('base_app',[dict(
+        is_es=True
+    )],indirect=['base_app'])
+    def test_get_by_range_with_community(self, app, db, authors, community):
+        authors[1].communities = [community[0]]
+        authors[2].communities = [community[0]]
+        authors[3].communities = [community[0]]
+        db.session.commit()
+
+        result = WekoAuthors.get_by_range(0, 10, False, False, community_ids=["community1"])
+        authors_copy = authors.copy()
+        authors_copy.pop(0)
+        authors_copy.pop(2)
+        assert authors_copy == result
+
+        result = WekoAuthors.get_by_range(0, 10, True, False, community_ids=["community1"])
+        assert authors_copy == result
+
+        result = WekoAuthors.get_by_range(0, 10, False, True, community_ids=["community1"])
+        assert authors_copy == result
+
+        result = WekoAuthors.get_by_range(0, 10, True, True, community_ids=["community1"])
+        authors_copy = authors.copy()
+        authors_copy.pop(0)
+        assert authors_copy == result
 
 #     def get_pk_id_by_weko_id(cls, weko_id):
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_api.py::TestWekoAuthors::test_get_pk_id_by_weko_id -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
@@ -536,24 +655,28 @@ from sqlalchemy.exc import SQLAlchemyError
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_api.py::TestWekoAuthorsMappingMaxItem -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-authors/.tox/c1/tmp
 class TestWekoAuthorsMappingMaxItem:
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_api.py::TestWekoAuthorsMappingMaxItem::test_mapping_max_item_normal_case -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-authors/.tox/c1/tmp
-    def test_mapping_max_item_normal_case(self, app, db, authors, mocker):
+    def test_mapping_max_item_normal_case(self, app, db, authors, mocker, community):
         mappings = [{'json_id': 'authorIdInfo', 'child': [{'json_id': 'idType'}, {'json_id': 'authorId'}]}]
         affiliation_mappings = {'json_id': 'affiliationInfo', 'child': [{'json_id': 'identifierInfo', 'child': [{'json_id': 'idType'}, {'json_id': 'affiliationId'}]}]}
+        community_mappings = {"label_en": "Community", "label_jp": "コミュニティ", "json_id": "communityIds"}
         records_count = 2
 
-        result_mappings, result_affiliation_mappings = WekoAuthors.mapping_max_item(mappings, affiliation_mappings, records_count)
+        result_mappings, result_affiliation_mappings, result_community_mappings = WekoAuthors.mapping_max_item(mappings, affiliation_mappings, community_mappings, records_count)
         assert result_mappings[0]['max'] > 1
         assert 'max' in result_affiliation_mappings
+        assert 'max' in result_community_mappings
 
-        result_mappings, result_affiliation_mappings = WekoAuthors.mapping_max_item(mappings, None, records_count)
+        result_mappings, result_affiliation_mappings, result_community_mappings = WekoAuthors.mapping_max_item(mappings, None, None, records_count)
         assert result_mappings[0]['max'] > 1
         assert result_affiliation_mappings["max"]== [{'identifierInfo': 2, 'affiliationNameInfo': 1, 'affiliationPeriodInfo': 1}]
+        assert result_community_mappings["max"] == 1
 
         # Authors is None
         mocker.patch("weko_authors.api.WekoAuthors.get_by_range",return_value=[])
-        result_mappings, result_affiliation_mappings = WekoAuthors.mapping_max_item(mappings, None, records_count)
+        result_mappings, result_affiliation_mappings, result_community_mappings = WekoAuthors.mapping_max_item(mappings, None, community_mappings, records_count)
         assert result_mappings[0]["max"] == 1
         assert result_affiliation_mappings["max"] == []
+        assert result_community_mappings["max"] == 1
 
         # Author dont has element
         author = {
@@ -564,25 +687,36 @@ class TestWekoAuthorsMappingMaxItem:
                 }]
         }
         mappings = [{'json_id': 'authorIdInfo', "max":0, 'child': [{'json_id': 'idType'}, {'json_id': 'authorId'}]}]
-        authors = [Authors(json=author)]
-        mocker.patch("weko_authors.api.WekoAuthors.get_by_range",return_value=authors)
-        result_mappings, result_affiliation_mappings = WekoAuthors.mapping_max_item(mappings, None, records_count)
+        mock_authors = [Authors(json=author)]
+        mocker.patch("weko_authors.api.WekoAuthors.get_by_range",return_value=mock_authors)
+        result_mappings, result_affiliation_mappings, result_community_mappings = WekoAuthors.mapping_max_item(mappings, None, community_mappings, records_count)
 
         assert result_mappings
         assert result_affiliation_mappings
+        assert result_community_mappings
+
+        # Author related communities
+        authors[0].communities = [community[0]]
+        authors[1].communities = [community[0], community[1]]
+        mock_authors = [authors[0], authors[1]]
+        mocker.patch("weko_authors.api.WekoAuthors.get_by_range",return_value=mock_authors)
+        result_mappings, result_affiliation_mappings, result_community_mappings = WekoAuthors.mapping_max_item(mappings, None, community_mappings, records_count)
+        assert result_mappings[0]['max'] > 1
+        assert result_affiliation_mappings["max"]== [{'identifierInfo': 2, 'affiliationNameInfo': 1, 'affiliationPeriodInfo': 1}]
+        assert result_community_mappings["max"] == 2
 
 
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_api.py::TestWekoAuthorsMappingMaxItem::test_mapping_max_item_sqlalchemy_error -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-authors/.tox/c1/tmp
     def test_mapping_max_item_sqlalchemy_error(self, app, db, authors):
         with patch('weko_authors.api.WekoAuthors.get_records_count', side_effect=SQLAlchemyError):
             with pytest.raises(SQLAlchemyError):
-                WekoAuthors.mapping_max_item(None, None, None)
+                WekoAuthors.mapping_max_item(None, None, None, None)
 
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_api.py::TestWekoAuthorsMappingMaxItem::test_mapping_max_item_other_exception -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-authors/.tox/c1/tmp
     def test_mapping_max_item_other_exception(self, app, db, authors):
         with patch('weko_authors.api.WekoAuthors.get_records_count', side_effect=Exception):
             with pytest.raises(Exception):
-                WekoAuthors.mapping_max_item(None, None, None)
+                WekoAuthors.mapping_max_item(None, None, None, None)
 
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_api.py::TestWekoAuthorsMappingMaxItem::test_mapping_max_item_retry -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-authors/.tox/c1/tmp
     def test_mapping_max_item_retry(self, app, db, authors, mocker):
@@ -599,7 +733,7 @@ class TestWekoAuthorsMappingMaxItem:
 
             # First call to mapping_max_item raises SQLAlchemyError, second call succeeds
             with patch("weko_authors.api.WekoAuthors.get_records_count", side_effect=[SQLAlchemyError, 2]):
-                result_mappings, result_affiliation_mappings = WekoAuthors.mapping_max_item(mappings, affiliation_mappings, None)
+                result_mappings, result_affiliation_mappings, result_community_mappings = WekoAuthors.mapping_max_item(mappings, affiliation_mappings, None, None)
 
                 # Verify that rollback and sleep were called
                 mock_rollback.assert_called_once()
@@ -608,17 +742,19 @@ class TestWekoAuthorsMappingMaxItem:
                 # Verify the results
                 assert result_mappings
                 assert result_affiliation_mappings
+                assert result_community_mappings
 
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_api.py::TestWekoAuthorsPrepareExport -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-authors/.tox/c1/tmp
 class TestWekoAuthorsPrepareExport:
     # .tox/c1/bin/pytest --cov=weko_authors tests/test_api.py::TestWekoAuthorsPrepareExport::test_prepare_export_data_full_data -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-authors/.tox/c1/tmp
     def test_prepare_export_data_full_data(self, app, db, authors_prefix_settings, authors_affiliation_settings, authors2, mocker):
-        res_header, res_label_en, res_label_jp, res_row_data = WekoAuthors.prepare_export_data(None, None, None, None, None, 0, 2)
+        res_header, res_label_en, res_label_jp, res_row_data = WekoAuthors.prepare_export_data(None, None, None, None, None, None, 0, 2)
 
         assert res_header
         assert res_label_en
         assert res_label_jp
-        assert res_row_data == [['1', '1', 'テスト', '太郎', 'ja', 'familyNmAndNm', 'Y', 'ORCID', '1234', 'Y', 'CiNii', '12345', 'Y', 'test.taro@test.org', '', None, None, None, None, None, None, '', 'ja', 'Y', None, None, None, None, None, None, None, None, None, None, None, None, None], ['2', '2', 'test', 'smith', 'en', 'familyNmAndNm', 'Y', 'ORCID', '5678', 'Y', None, None, None, 'test.smith@test.org', '', 'ISNI', '1234', 'Y', 'GRID', '12345', 'Y', '', 'ja', 'Y', None, None, 'ISNI', '1234', 'Y', 'GRID', '12345', 'Y', '', 'ja', 'Y', None, None]]
+        assert res_row_data == [['1', '1', 'テスト', '太郎', 'ja', 'familyNmAndNm', 'Y', 'ORCID', '1234', 'Y', 'CiNii', '12345', 'Y', 'test.taro@test.org', '', None, None, None, None, None, None, '', 'ja', 'Y', None, None, None, None, None, None, None, None, None, None, None, None, None, None],
+                                ['2', '2', 'test', 'smith', 'en', 'familyNmAndNm', 'Y', 'ORCID', '5678', 'Y', None, None, None, 'test.smith@test.org', '', 'ISNI', '1234', 'Y', 'GRID', '12345', 'Y', '', 'ja', 'Y', None, None, 'ISNI', '1234', 'Y', 'GRID', '12345', 'Y', '', 'ja', 'Y', None, None, None]]
 
 
     @pytest.fixture
@@ -646,6 +782,7 @@ class TestWekoAuthorsPrepareExport:
             }
 
 
+    # .tox/c1/bin/pytest --cov=weko_authors tests/test_api.py::TestWekoAuthorsPrepareExport::test_prepare_export_data_all_params_provided -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-authors/.tox/c1/tmp
     def test_prepare_export_data_all_params_provided(self, app, db, mock_dependencies):
         """
         正常系：全てのパラメータが適切に指定されている場合
@@ -677,6 +814,10 @@ class TestWekoAuthorsPrepareExport:
             ]
         }
 
+        community_mappings = {
+            "label_en": "Community", "label_jp": "コミュニティ", "json_id": "communityIds", "max": 1
+        }
+
         authors = [
             MagicMock(json={
                 'simple_field': 'simple value',
@@ -696,7 +837,7 @@ class TestWekoAuthorsPrepareExport:
                         ]
                     }
                 ]
-            })
+            }, communities=[MagicMock(id="community1")])
         ]
 
         schemes = {
@@ -713,7 +854,7 @@ class TestWekoAuthorsPrepareExport:
 
         # 関数実行
         result = WekoAuthors.prepare_export_data(
-            mappings, affiliation_mappings, authors, schemes, aff_schemes, start, size
+            mappings, affiliation_mappings, community_mappings, authors, schemes, aff_schemes, start, size
         )
 
         # 結果検証
@@ -744,6 +885,9 @@ class TestWekoAuthorsPrepareExport:
         assert 'University A' in author_row
         assert '英語' in author_row or 'en' in author_row
 
+        # コミュニティ情報が正しく処理されていることを確認
+        assert 'community1' in author_row
+
         # モック関数が呼び出されていないことを確認（すべてのパラメータが提供されているため）
         mock_dependencies['mock_mapping_max_item'].assert_not_called()
         mock_dependencies['mock_get_by_range'].assert_not_called()
@@ -758,15 +902,16 @@ class TestWekoAuthorsPrepareExport:
         # モックの準備
         test_mappings = [{'json_id': 'test_field', 'label_en': 'Test', 'label_jp': 'テスト'}]
         test_aff_mappings = {'json_id': 'affiliationInfo', 'max': [], 'child': []}
+        test_com_mappings = {'json_id': 'communityIds', 'label_en': 'Community', 'label_jp': 'コミュニティ'}
         test_authors = [MagicMock(json={'test_field': 'test value'})]
 
-        mock_dependencies['mock_mapping_max_item'].return_value = (test_mappings, test_aff_mappings)
+        mock_dependencies['mock_mapping_max_item'].return_value = (test_mappings, test_aff_mappings, test_com_mappings)
         mock_dependencies['mock_get_by_range'].return_value = test_authors
         mock_dependencies['mock_get_identifier_scheme_info'].return_value = {'1': {'scheme': 'TEST'}}
         mock_dependencies['mock_get_affiliation_identifier_scheme_info'].return_value = {'1': {'scheme': 'TEST_AFF'}}
 
         # 関数実行（すべてNoneで渡す）
-        result = WekoAuthors.prepare_export_data(None, None, None, None, None, 0, 10)
+        result = WekoAuthors.prepare_export_data(None, None, None, None, None, None, 0, 10)
 
         # 結果検証
         row_header, row_label_en, row_label_jp, row_data = result
@@ -805,6 +950,10 @@ class TestWekoAuthorsPrepareExport:
             'max': []
         }
 
+        community_mappings = {
+            "label_en": "Community", "label_jp": "コミュニティ", "json_id": "communityIds",
+        }
+
         authors = [
             MagicMock(json={
                 'simple_field': 'simple value',
@@ -818,7 +967,7 @@ class TestWekoAuthorsPrepareExport:
 
         # 関数実行
         result = WekoAuthors.prepare_export_data(
-            mappings, affiliation_mappings, authors, {}, {}, 0, 10
+            mappings, affiliation_mappings, community_mappings, authors, {}, {}, 0, 10
         )
 
         # 結果検証
@@ -859,6 +1008,10 @@ class TestWekoAuthorsPrepareExport:
             'max': []
         }
 
+        community_mappings = {
+            "label_en": "Community", "label_jp": "コミュニティ", "json_id": "communityIds",
+        }
+
         authors = [
             MagicMock(json={
                 'authorIdInfo': [
@@ -878,7 +1031,7 @@ class TestWekoAuthorsPrepareExport:
 
         # 関数実行
         result = WekoAuthors.prepare_export_data(
-            mappings, affiliation_mappings, authors, schemes, {}, 0, 10
+            mappings, affiliation_mappings, community_mappings, authors, schemes, {}, 0, 10
         )
 
         # 結果検証
@@ -987,6 +1140,15 @@ class TestWekoAuthorsPrepareExport:
             ]
         }
 
+    @pytest.fixture
+    def sample_community_mappings(self):
+        """Fixture for sample community mappings."""
+        return {
+            "label_en": "Community",
+            "label_jp": "コミュニティ",
+            "json_id": "communityIds",
+            "max": 1
+        }
 
     @pytest.fixture
     def sample_authors(self):
@@ -1035,12 +1197,13 @@ class TestWekoAuthorsPrepareExport:
         }
 
 
-    def test_mask_processing(self, app, db, sample_mappings, sample_affiliation_mappings, sample_authors,
-                            sample_schemes, sample_aff_schemes):
+    def test_mask_processing(self, app, db, sample_mappings, sample_affiliation_mappings, sample_community_mappings,
+                             sample_authors, sample_schemes, sample_aff_schemes):
         """Test case 7: mask processing is correctly applied."""
         row_header, row_label_en, row_label_jp, row_data = WekoAuthors.prepare_export_data(
             sample_mappings,
             sample_affiliation_mappings,
+            sample_community_mappings,
             sample_authors,
             sample_schemes,
             sample_aff_schemes,
@@ -1057,12 +1220,13 @@ class TestWekoAuthorsPrepareExport:
         assert row_data[0][language_index] == 'English'  # 'en' should be masked to 'English'
 
 
-    def test_affiliation_info_processing(self, app, db, sample_mappings, sample_affiliation_mappings, sample_authors,
-                                        sample_schemes, sample_aff_schemes):
+    def test_affiliation_info_processing(self, app, db, sample_mappings, sample_affiliation_mappings, sample_community_mappings,
+                                         sample_authors, sample_schemes, sample_aff_schemes):
         """Test case 8: affiliation information is correctly processed."""
         row_header, row_label_en, row_label_jp, row_data = WekoAuthors.prepare_export_data(
             sample_mappings,
             sample_affiliation_mappings,
+            sample_community_mappings,
             sample_authors,
             sample_schemes,
             sample_aff_schemes,
@@ -1094,7 +1258,7 @@ class TestWekoAuthorsPrepareExport:
     @patch('weko_authors.api.WekoAuthors.get_identifier_scheme_info')
     @patch('weko_authors.api.WekoAuthors.get_affiliation_identifier_scheme_info')
     def test_affiliation_info_missing_data(self, mock_aff_scheme, mock_scheme, mock_get, mock_map,
-                                        sample_mappings, sample_affiliation_mappings,
+                                        sample_mappings, sample_affiliation_mappings, sample_community_mappings,
                                         sample_schemes, sample_aff_schemes, app, db):
         """Test case 8: handling of missing affiliation data."""
         # Author with partial affiliation data
@@ -1121,7 +1285,7 @@ class TestWekoAuthorsPrepareExport:
         ]
 
         # Configure mocks to return our test data
-        mock_map.return_value = (sample_mappings, sample_affiliation_mappings)
+        mock_map.return_value = (sample_mappings, sample_affiliation_mappings, sample_community_mappings)
         mock_get.return_value = authors_with_missing
         mock_scheme.return_value = sample_schemes
         mock_aff_scheme.return_value = sample_aff_schemes
@@ -1129,6 +1293,7 @@ class TestWekoAuthorsPrepareExport:
         row_header, row_label_en, row_label_jp, row_data = WekoAuthors.prepare_export_data(
             None,  # Let the method fetch mappings
             None,  # Let the method fetch affiliation mappings
+            None,  # Let the method fetch community mappings
             None,  # Let the method fetch authors
             None,  # Let the method fetch schemes
             None,  # Let the method fetch affiliation schemes

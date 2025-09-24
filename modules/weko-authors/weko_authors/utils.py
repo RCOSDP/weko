@@ -44,7 +44,10 @@ from redis.exceptions import RedisError
 
 from flask import current_app, jsonify
 from flask_babelex import gettext as _
+from flask_security import current_user
+from invenio_accounts.models import User
 from invenio_cache import current_cache
+from invenio_communities.models import Community
 from invenio_db import db
 from invenio_indexer.api import RecordIndexer
 
@@ -53,6 +56,7 @@ from .contrib.validation import (
     validate_map, validate_required, check_weko_id_is_exits_for_import
 )
 from .api import WekoAuthors
+from .errors import AuthorsValidationError, AuthorsPermissionError
 from .models import AuthorsPrefixSettings, AuthorsAffiliationSettings, Authors
 
 def update_cache_data(key: str, value: str, timeout=None):
@@ -269,34 +273,38 @@ def check_period_date(data):
                                 return False, "start is after end"
     return True, None
 
-def get_export_status():
+def get_export_status(user_id):
     """Get export status from cache."""
-    return current_cache.get(current_app.config.get("WEKO_AUTHORS_EXPORT_CACHE_STATUS_KEY")) or {}
+    key = f'{current_app.config.get("WEKO_AUTHORS_EXPORT_CACHE_STATUS_KEY")}_{user_id}'
+    return current_cache.get(key) or {}
 
 
-def set_export_status(start_time=None, task_id=None):
+def set_export_status(user_id, start_time=None, task_id=None):
     """Set export status into cache."""
-    data = get_export_status() or dict()
+    data = get_export_status(user_id) or dict()
     if start_time:
         data['start_time'] = start_time
     if task_id:
         data['task_id'] = task_id
 
-    current_cache.set(current_app.config.get("WEKO_AUTHORS_EXPORT_CACHE_STATUS_KEY"), data, timeout=0)
+    key = f'{current_app.config.get("WEKO_AUTHORS_EXPORT_CACHE_STATUS_KEY")}_{user_id}'
+    current_cache.set(key, data, timeout=0)
     return data
 
 
-def delete_export_status():
+def delete_export_status(user_id):
     """Delete export status."""
-    current_cache.delete(current_app.config.get("WEKO_AUTHORS_EXPORT_CACHE_STATUS_KEY"))
+    key = f'{current_app.config.get("WEKO_AUTHORS_EXPORT_CACHE_STATUS_KEY")}_{user_id}'
+    current_cache.delete(key)
 
 
-def get_export_url():
+def get_export_url(user_id):
     """Get exported info from cache."""
-    return current_cache.get(current_app.config.get("WEKO_AUTHORS_EXPORT_CACHE_URL_KEY")) or {}
+    key = f'{current_app.config.get("WEKO_AUTHORS_EXPORT_CACHE_URL_KEY")}_{user_id}'
+    return current_cache.get(key) or {}
 
 
-def save_export_url(start_time, end_time, file_uri):
+def save_export_url(start_time, end_time, file_uri, user_id):
     """Save exported info into cache."""
     data = dict(
         start_time=start_time,
@@ -304,12 +312,14 @@ def save_export_url(start_time, end_time, file_uri):
         file_uri=file_uri
     )
 
-    current_cache.set(current_app.config.get("WEKO_AUTHORS_EXPORT_CACHE_URL_KEY"), data, timeout=0)
+    key = f'{current_app.config.get("WEKO_AUTHORS_EXPORT_CACHE_URL_KEY")}_{user_id}'
+    current_cache.set(key, data, timeout=0)
     return data
 
-def delete_export_url():
+def delete_export_url(user_id):
     """Delete exported URL from cache."""
-    current_cache.delete(current_app.config.get("WEKO_AUTHORS_EXPORT_CACHE_URL_KEY"))
+    key = f'{current_app.config.get("WEKO_AUTHORS_EXPORT_CACHE_URL_KEY")}_{user_id}'
+    current_cache.delete(key)
 
 def handle_exception(ex, attempt, retrys, interval, stop_point=0):
     """Manage sleep and retries.
@@ -335,7 +345,7 @@ def handle_exception(ex, attempt, retrys, interval, stop_point=0):
     current_app.logger.info(f"Connection failed, retrying in {interval} seconds...")
     sleep(interval)
 
-def export_authors():
+def export_authors(user_id):
     """Export all authors.
 
     Returns:
@@ -347,7 +357,7 @@ def export_authors():
     interval = current_app.config["WEKO_AUTHORS_BULK_EXPORT_RETRY_INTERVAL"]
     size =  current_app.config.get("WEKO_AUTHORS_EXPORT_BATCH_SIZE", 1000)
     stop_point = current_cache.get(
-        current_app.config["WEKO_AUTHORS_EXPORT_CACHE_STOP_POINT_KEY"]
+        f'{current_app.config["WEKO_AUTHORS_EXPORT_CACHE_STOP_POINT_KEY"]}_{user_id}'
     )
     mappings = []
     schemes = {}
@@ -361,19 +371,24 @@ def export_authors():
                 # get mapping
                 mappings = deepcopy(current_app.config["WEKO_AUTHORS_FILE_MAPPING"])
                 affiliation_mappings = deepcopy(current_app.config["WEKO_AUTHORS_FILE_MAPPING_FOR_AFFILIATION"])
+                community_mappings = deepcopy(current_app.config["WEKO_AUTHORS_FILE_MAPPING_FOR_COMMUNITY"])
+
+                user = User.query.get(user_id)
+                communities, is_super = get_managed_community(user)
+                community_ids = [c.id for c in communities] if not is_super else None
 
                 # get the number of authors (excluding deleted and merged authors)
-                records_count = WekoAuthors.get_records_count(False, False)
+                records_count = WekoAuthors.get_records_count(False, False, community_ids)
                 # Get the maximum value of multiple items on the mapping
-                mappings, affiliation_mappings = \
-                    WekoAuthors.mapping_max_item(mappings, affiliation_mappings, records_count)
+                mappings, affiliation_mappings, community_mappings = \
+                    WekoAuthors.mapping_max_item(mappings, affiliation_mappings, community_mappings, records_count)
 
                 schemes = WekoAuthors.get_identifier_scheme_info()
                 aff_schemes = WekoAuthors.get_affiliation_identifier_scheme_info()
 
                 # Get the path of the temporary file
                 temp_file_path=current_cache.get(
-                    current_app.config["WEKO_AUTHORS_EXPORT_CACHE_TEMP_FILE_PATH_KEY"])
+                    f'{current_app.config["WEKO_AUTHORS_EXPORT_CACHE_TEMP_FILE_PATH_KEY"]}_{user_id}')
                 break
             except SQLAlchemyError as ex:
                 traceback.print_exc(file=stdout)
@@ -389,7 +404,7 @@ def export_authors():
         start_point = stop_point if stop_point else 0
 
         current_cache.delete(
-            current_app.config["WEKO_AUTHORS_EXPORT_CACHE_STOP_POINT_KEY"])
+            f'{current_app.config["WEKO_AUTHORS_EXPORT_CACHE_STOP_POINT_KEY"]}_{user_id}')
         # Get authors 1000 at a time and write data
         for i in range(start_point, records_count, size):
             current_app.logger.info(f"Export authors start_point：{start_point}")
@@ -403,9 +418,9 @@ def export_authors():
                 current_app.logger.info(f"Export authors retry count：{attempt}")
                 try:
                     # Get author information from start in WEKO_EXPORT_BATCH_SIZE units
-                    authors = WekoAuthors.get_by_range(i, size, False, False)
+                    authors = WekoAuthors.get_by_range(i, size, False, False, community_ids)
                     row_header, row_label_en, row_label_jp, row_data =\
-                        WekoAuthors.prepare_export_data(mappings, affiliation_mappings, authors, schemes, aff_schemes, i, size)
+                        WekoAuthors.prepare_export_data(mappings, affiliation_mappings, community_mappings, authors, schemes, aff_schemes, i, size)
                     break
                 except SQLAlchemyError as ex:
                     traceback.print_exc(file=stdout)
@@ -417,12 +432,12 @@ def export_authors():
                     traceback.print_exc(file=stdout)
                     handle_exception(ex, attempt, retrys, interval, stop_point=i)
             # Write to temporary file
-            write_to_tempfile(i, row_header, row_label_en, row_label_jp, row_data)
+            write_to_tempfile(i, row_header, row_label_en, row_label_jp, row_data, user_id)
         # Save the completed temporary file to file instance
         with open(temp_file_path, 'rb') as f:
             reader = io.BufferedReader(f)
             # save data into location
-            cache_url = get_export_url()
+            cache_url = get_export_url(user_id)
             if not cache_url:
                 file = FileInstance.create()
                 file.set_contents(
@@ -438,19 +453,19 @@ def export_authors():
     except Exception as ex:
         db.session.rollback()
         # If stop_point is not set, delete the temporary file
-        if not current_cache.get(current_app.config["WEKO_AUTHORS_EXPORT_CACHE_STOP_POINT_KEY"]):
+        if not current_cache.get(f'{current_app.config["WEKO_AUTHORS_EXPORT_CACHE_STOP_POINT_KEY"]}_{user_id}'):
             os.remove(temp_file_path)
         current_app.logger.error(ex)
         traceback.print_exc(file=stdout)
     current_cache.set(
-        current_app.config.get("WEKO_AUTHORS_EXPORT_TARGET_CACHE_KEY"),
+        f'{current_app.config.get("WEKO_AUTHORS_EXPORT_TARGET_CACHE_KEY")}_{user_id}',
         "author_db",
         timeout=0
     )
 
     return file_uri
 
-def export_prefix(target):
+def export_prefix(target, user_id):
     """Export id_prefix or affiliation_id.
 
     Args:
@@ -471,11 +486,22 @@ def export_prefix(target):
 
     for attempt in range(retrys):
         try:
+            user = User.query.get(user_id)
+            communities, is_super = get_managed_community(user)
+            community_ids = [c.id for c in communities] if not is_super else None
+
             if target == "id_prefix":
-                prefix = WekoAuthors.get_id_prefix_all()
+                prefix = WekoAuthors.get_id_prefix_all(community_ids=community_ids)
             elif target == "affiliation_id":
-                prefix = WekoAuthors.get_affiliation_id_all()
-            row_data = WekoAuthors.prepare_export_prefix(target, prefix)
+                prefix = WekoAuthors.get_affiliation_id_all(community_ids=community_ids)
+
+            community_length = max(len(x.communities) for x in prefix) if prefix else 1
+
+            row_header += [f"community_ids[{i}]" for i in range(community_length)]
+            row_label_en += [f"Community ID[{i}]" for i in range(community_length)]
+            row_label_jp += [f"コミュニティID[{i}]" for i in range(community_length)]
+
+            row_data = WekoAuthors.prepare_export_prefix(target, prefix, community_length)
             # write file data to a stream
             file_io = io.StringIO()
             if current_app.config.get('WEKO_ADMIN_OUTPUT_FORMAT', 'tsv').lower() == 'csv':
@@ -490,7 +516,7 @@ def export_prefix(target):
                 file_io.getvalue().encode("utf-8-sig")))
 
             # save data into location
-            cache_url = get_export_url()
+            cache_url = get_export_url(user_id)
             if not cache_url:
                 file = FileInstance.create()
                 file.set_contents(
@@ -502,7 +528,7 @@ def export_prefix(target):
             file_uri = file.uri if file else None
             db.session.commit()
             current_cache.set(
-                current_app.config.get("WEKO_AUTHORS_EXPORT_TARGET_CACHE_KEY"),
+                f'{current_app.config.get("WEKO_AUTHORS_EXPORT_TARGET_CACHE_KEY")}_{user_id}',
                 target,
                 timeout=0
             )
@@ -537,7 +563,7 @@ def check_file_name(export_target):
         file_base_name = current_app.config.get('WEKO_AUTHORS_AFFILIATION_EXPORT_FILE_NAME')
     return file_base_name
 
-def write_to_tempfile(start, row_header, row_label_en, row_label_jp, row_data):
+def write_to_tempfile(start, row_header, row_label_en, row_label_jp, row_data, user_id):
     """Write data to a temporary file.
 
     Args:
@@ -549,7 +575,7 @@ def write_to_tempfile(start, row_header, row_label_en, row_label_jp, row_data):
     """
     # Get the path of the temporary file
     temp_file_path=current_cache.get( \
-        current_app.config["WEKO_AUTHORS_EXPORT_CACHE_TEMP_FILE_PATH_KEY"])
+        f'{current_app.config["WEKO_AUTHORS_EXPORT_CACHE_TEMP_FILE_PATH_KEY"]}_{user_id}')
 
     # Open the file and write data
     try:
@@ -885,6 +911,21 @@ def validate_import_data(file_format, file_data, mapping_ids, mapping, list_impo
         # set status
         set_record_status(file_format, existed_authors_id, item, errors, warnings)
 
+        try:
+            community_ids= item.get('communityIds')
+            if item.get('status') == 'new':
+                item["communityIds"] = validate_community_ids(community_ids, is_create=True)
+            elif item.get('status') == 'update':
+                old = Authors.query.get(pk_id)
+                old_community_ids = [c.id for c in old.communities]
+                item["communityIds"] = validate_community_ids(community_ids, old_ids=old_community_ids)
+            elif item.get('status') == 'deleted':
+                check, message = check_delete_author(pk_id)
+                if not check:
+                    errors.append(message)
+        except AuthorsValidationError as e:
+            errors.append(e.description)
+
         # get data folow by mapping
         data_by_mapping = {}
         for _key in mapping_ids:
@@ -1008,7 +1049,15 @@ def unpackage_and_check_import_file_for_prefix(file_format, file_name, temp_file
                     tmp_data ={}
                     try:
                         for num, data in enumerate(data_row, start=0):
-                            tmp_data[header[num]] = data
+                            raw_header = header[num]
+                            header_key = re.sub(r'\[\d+\]$', '', raw_header)
+                            is_array = '[' in raw_header
+                            if is_array:
+                                tmp_data.setdefault(header_key, [])
+                                if data:
+                                    tmp_data[header_key].append(data)
+                            else:
+                                tmp_data[header_key] = data
                     except Exception as ex:
                         current_app.logger.error(ex)
                         traceback.print_exc()
@@ -1037,9 +1086,17 @@ def handle_check_consistence_with_mapping_for_prefix(keys, header):
         list: Not consistent items.
     """
     not_consistent_list = []
+    idx_pattern = re.compile(r'^(?P<base>[^\[\]]+)\[(?P<idx>\d+)\]$')
+
     for item in header:
-        if item not in keys:
-            not_consistent_list.append(item)
+        m = idx_pattern.match(item)
+        if m:
+            base = m.group('base')
+            if f"{base}[0]" not in keys:
+                not_consistent_list.append(item)
+        else:
+            if item not in keys:
+                not_consistent_list.append(item)
     return not_consistent_list
 
 def validate_import_data_for_prefix(file_data, target):
@@ -1080,6 +1137,7 @@ def validate_import_data_for_prefix(file_data, target):
         name = item.get('name', "")
         url = item.get('url', "")
         is_deleted = item.get('is_deleted')
+        community_ids = item.get("community_ids", [])
         # Check if the 'scheme' key is empty
         if not scheme:
             errors.append(_("Scheme is required item."))
@@ -1117,6 +1175,27 @@ def validate_import_data_for_prefix(file_data, target):
             errors.append(_("The specified scheme is duplicated."))
         else:
             list_import_scheme.append(scheme)
+
+        try:
+            if item.get('status') == 'new':
+                item["community_ids"] = validate_community_ids(community_ids, is_create=True)
+            elif item.get('status') == 'update':
+                if target == "id_prefix":
+                    old = AuthorsPrefixSettings.query.get(item.get('id'))
+                elif target == "affiliation_id":
+                    old = AuthorsAffiliationSettings.query.get(item.get('id'))
+                old_community_ids = [c.id for c in old.communities]
+                item["community_ids"] = validate_community_ids(community_ids, old_ids=old_community_ids)
+            elif item.get('status') == 'deleted':
+                if target == "id_prefix":
+                    check, message = check_delete_prefix(item.get('id'))
+                elif target == "affiliation_id":
+                    check, message = check_delete_affiliation(item.get('id'))
+                if not check:
+                    errors.append(message)
+        except AuthorsValidationError as ex:
+            errors.append(ex.description)
+
         if errors:
             item['errors'] = item['errors'] + errors \
                 if item.get('errors') else errors
@@ -1731,3 +1810,155 @@ def get_check_base_name():
         current_app.config["WEKO_AUTHORS_IMPORT_CACHE_USER_TSV_FILE_KEY"])
     base_file_name = os.path.splitext(os.path.basename(temp_file_path))[0]
     return f"{base_file_name}-check"
+
+
+def validate_community_ids(new_ids, old_ids=None, is_create=False, activity_id=None):
+    """Validate community IDs.
+
+    Args:
+        new_ids (iterable): The new community IDs.
+        old_ids (iterable): The old community IDs.
+        is_create (bool): Flag indicating if this is a create operation.
+        activity_id (str): The activity ID.
+
+    Returns:
+        list: Validated community IDs.
+
+    Raises:
+        AuthorsValidationError: If the community IDs are invalid.
+    """
+    new_ids = set(new_ids)
+    old_ids = set(old_ids) if old_ids else set()
+
+    # 形式チェック
+    for cid in new_ids:
+        if not re.match(r'^[a-zA-Z0-9_-]+$', cid):
+            raise AuthorsValidationError(description=_("Invalid community ID format: {}").format(cid))
+
+    # 存在チェック
+    existing_ids = {c.id for c in Community.query.filter(Community.id.in_(new_ids)).all()}
+    missing_ids = new_ids - existing_ids
+    if missing_ids:
+        raise AuthorsValidationError(description=_("Community ID(s) {} does not exist.").format(", ".join(missing_ids)))
+
+    # 権限チェック
+    managed_communities, is_super = get_managed_community(current_user)
+    managed_ids = {c.id for c in managed_communities}
+
+    if is_super:
+        return list(new_ids)
+    activity = None
+    if activity_id:
+        from weko_workflow.api import WorkActivity
+        activity = WorkActivity.get_activity_by_id(activity_id)
+    if activity:
+        if activity.activity_community_id is None:
+            if not new_ids:
+                return list(new_ids)
+        elif activity.activity_community_id not in managed_ids:
+            managed_ids.add(activity.activity_community_id)
+
+    if is_create:
+        unauthorized = new_ids - managed_ids
+        if unauthorized:
+            raise AuthorsPermissionError(description=_('You do not have permission for this {}’s communities: {}.').format(_("Author ID"), ", ".join(unauthorized)))
+        if not (new_ids & managed_ids):
+            raise AuthorsValidationError(description=_('You must include at least one managed community.'))
+
+    else:
+        if not (old_ids & managed_ids):
+            raise AuthorsPermissionError(description=_('You cannot manage this record.'))
+        if not (new_ids & managed_ids):
+            raise AuthorsValidationError(description=_('You must include at least one managed community.'))
+
+        added = new_ids - old_ids
+        removed = old_ids - new_ids
+
+        unauthorized_add = added - managed_ids
+        if unauthorized_add:
+            raise AuthorsPermissionError(
+                description=_('You do not have permission for this {}’s communities: {}.').format(_("Author ID"), ", ".join(unauthorized_add))
+            )
+
+        unauthorized_remove = removed - managed_ids
+        if unauthorized_remove:
+            raise AuthorsPermissionError(
+                description=_('You do not have permission for this {}’s communities: {}.').format(_("Author ID"), ", ".join(unauthorized_remove))
+            )
+
+    return list(new_ids)
+
+
+def get_managed_community(user):
+    """Get communities managed by the user.
+
+    Args:
+        user (User): The user object.
+
+    Returns:
+        list: List of communities managed by the user.
+        bool: Flag indicating if the user is a super user.
+    """
+    managed_communities = []
+    is_super = False
+    if user.is_authenticated:
+        try:
+            is_super = any(role.name in current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER'] for role in user.roles)
+            if is_super:
+                managed_communities = Community.query.all()
+            else:
+                managed_communities = Community.get_repositories_by_user(user)
+        except Exception as e:
+            current_app.logger.error(f"Error fetching managed communities: {e}")
+            traceback.print_exc()
+            raise
+    return managed_communities, is_super
+
+
+def check_delete_entity(entity, entity_type, id):
+    """Check if the current user can delete the specified entity.
+
+    Args:
+        entity: The entity class to check.
+        entity_type: The type of the entity (for error messages).
+        id: The ID of the entity to check.
+
+    Returns:
+        tuple: (bool, str) indicating if the user can delete the entity and an error message if not.
+    """
+    entity_instance = entity.query.get(id)
+    if not entity_instance:
+        return False, _('{} not found.').format(entity_type)
+    communities = entity_instance.communities
+
+    # 現在のユーザーが管理しているコミュニティを取得
+    managed_communities, is_super = get_managed_community(current_user)
+    managed_community_ids = {comm.id for comm in managed_communities}
+
+    if is_super:
+        return True, None
+    elif communities == []:
+        # entityに関連付けられているコミュニティがない場合はリポジトリ管理者以上のみ削除可能
+        return False, _('You cannot manage this record.')
+    else:
+        # entityに関連付けられているすべてのコミュニティの管理者であれば削除可能
+        unauthorized_communities = [com.id for com in communities
+                                    if com.id not in managed_community_ids]
+        if not unauthorized_communities:
+            return True, None
+        return False, _('You do not have permission for this {}’s communities: {}.').format(
+            entity_type, ", ".join(unauthorized_communities)
+        )
+
+
+def check_delete_author(id):
+    """Check if the current user can delete the specified author."""
+    return check_delete_entity(Authors, _('Author ID'), id)
+
+def check_delete_prefix(id):
+    """Check if the current user can delete the specified prefix."""
+    return check_delete_entity(AuthorsPrefixSettings, _('ID Prefix'), id)
+
+def check_delete_affiliation(id):
+    """Check if the current user can delete the specified affiliation."""
+    return check_delete_entity(AuthorsAffiliationSettings, _('Affiliation ID'), id)
