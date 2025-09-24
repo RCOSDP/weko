@@ -272,10 +272,10 @@ def main():
                                 change_flag = True
 
                     if change_flag:
-                        # ES更新処理
-                        indexer = WekoIndexer()
-                        indexer.get_es_index()
-                        indexer.upload_metadata(rec.json, uuid, rec.version_id)
+                        # # ES更新処理
+                        # indexer = WekoIndexer()
+                        # indexer.get_es_index()
+                        # indexer.upload_metadata(rec.json, uuid, rec.version_id)
                         # DB保存
                         flag_modified(item, "json")
                         flag_modified(rec, "json")
