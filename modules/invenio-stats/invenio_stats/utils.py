@@ -808,7 +808,7 @@ class QuerySitelicenseReportsHelper(object):
         """
         def Calculation(query_list, all_res, datelist):
             """Calculation.
-            
+
             Args:
                 query_list (list): List query name.
                 all_res (dict): Dict Aggregation data.
@@ -852,10 +852,13 @@ class QuerySitelicenseReportsHelper(object):
                                     index_id = i['index_id']
                                 if index_id:
                                     id_list = index_id.split('|')
-                                    for id in id_list:
-                                        cid = id.split('/')[-1]
-                                        index_issn = Index.get_index_by_id(cid).online_issn
-                                        if index_issn in issn_list:
+                                    for ids in id_list:
+                                        cid = ids.split('/')[-1]
+                                        idx_info = Index.get_index_by_id(int(cid))
+                                        index_issn = ''
+                                        if idx_info:
+                                            index_issn = getattr(idx_info, "online_issn", '')
+                                        if index_issn and index_issn in issn_list:
                                             if i['site_license_name'] in result:
                                                 result[i['site_license_name']][k][index_issn][str(date)] += i['count']
                                             else:
