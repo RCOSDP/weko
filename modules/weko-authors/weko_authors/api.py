@@ -726,9 +726,10 @@ class AuthorIndexer():
             else:
                 _fail_len = _fail
             fail += _fail_len
-            unprocesses += len(uuids) - _success - _fail_len
+            unprocesses += self.count - _success - _fail_len
         except SQLAlchemyError as e:
-            click.secho(e)
+            current_app.logger.error(e)
+            current_app.logger.error(traceback.format_exc())
             db.session.rollback()
         except BulkIndexError as e:
             _fail = len(e.errors)
@@ -749,8 +750,8 @@ class AuthorIndexer():
             click.secho("processing: {}".format(self.count),fg="red")
             click.secho("latest processing id: {}".format(self.latest_item_id),fg="red")
         except Exception as e:
-            click.secho(e)
-            click.secho(traceback.format_exc())
+            current_app.logger.error(e)
+            current_app.logger.error(traceback.format_exc())
         count = (success,fail,unprocesses)
         click.secho("count(success, error, unprocessed): {}".format(count),fg='green')
 
