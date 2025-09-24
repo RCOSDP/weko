@@ -111,7 +111,7 @@ def reindex(file, id, start_date, end_date, with_deleted=True,
         "max_retries": max_retries,
         "initial_backoff": initial_backoff,
         "max_backoff": max_backoff,
-        "stats_onlye": False
+        "stats_only": False
     }
     click.secho('Reindexing authors...', fg='green')
     AuthorIndexer().bulk_process_authors(es_bulk_kwargs, uuids, start_date, end_date, with_deleted)
