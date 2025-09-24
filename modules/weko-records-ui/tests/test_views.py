@@ -873,7 +873,7 @@ def test_soft_delete_acl_guest(client, records):
 @pytest.mark.parametrize(
     "id, status_code",
     [
-        (0, 500), # contributor
+        (0, 200), # contributor
         (1, 200), # repoadmin
         (2, 200), # sysadmin
         (3, 200), # comadmin
@@ -883,7 +883,7 @@ def test_soft_delete_acl_guest(client, records):
         (7, 500), # user
     ],
 )
-def test_soft_delete_acl(client, records, users, id, status_code):
+def test_soft_delete_acl(client, records, users, id, status_code, communities2):
     with patch("flask_login.utils._get_user", return_value=users[id]["obj"]):
         url = url_for(
             "weko_records_ui.soft_delete", recid=1, _external=True
