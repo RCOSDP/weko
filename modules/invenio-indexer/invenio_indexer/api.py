@@ -364,26 +364,6 @@ class RecordIndexer(object):
                     update_pdf_contents_es_with_index_api(self.success_ids)
                     for error in be.errors:
                         click.secho("{}, {}".format(error['index']['_id'],error['index']['error']['type']),fg='red')
-                except (BulkConnectionError, ConnectionError) as ce:
-                    with conn.channel() as chan:
-                        name, af_queues_cnt, consumers = chan.queue_declare(queue=current_app.config['INDEXER_MQ_ROUTING_KEY'], passive=True)
-                        current_app.logger.debug("name:{}, queues:{}, consumers:{}".format(name, af_queues_cnt, consumers))
-                    if '_success' in locals() or '_fail' in locals():
-                        success = _success
-                        fail = _fail
-                        errors = []
-                        if isinstance(fail, list):
-                            errors = fail
-                    else:
-                        success = ce.success if hasattr(ce, 'success') else 0
-                        fail = ce.failed if hasattr(ce, 'failed') else 0
-                        errors = ce.errors if hasattr(ce, 'errors') else []
-                    if len(errors) > 0:
-                        for error in errors:
-                            click.secho("{}, {}".format(error['index']['_id'],error['index']['error']['type']),fg='red')
-                        fail = len(errors)
-                    unprocessed = messages_count - (success + fail) if messages_count > (success + fail) else 0
-                    update_pdf_contents_es_with_index_api(self.success_ids)
                 except (BulkConnectionTimeout, ConnectionTimeout) as ce:
                     click.secho("Error: {}".format(ce.errors),fg='red')
                     click.secho("INDEXER_BULK_REQUEST_TIMEOUT: {} sec".format(req_timeout),fg='red')
@@ -766,7 +746,7 @@ class RecordIndexer(object):
                         if log["Status"] == "Success":
                             click.secho("[{}] ID: {}, Status: {}, Chunk: {}".format(date, log["id"], log["Status"], chunk_progress), fg='green')
                         else:
-                            click.secho("[{}] ID : {}, Status: {}, Chunk: {}".format(date, log["id"], log["Status"], chunk_progress), fg='red')
+                            click.secho("[{}] ID: {}, Status: {}, Chunk: {}".format(date, log["id"], log["Status"], chunk_progress), fg='red')
                     current_chunk += 1
                     chunk_progress = f"{current_chunk}/{self.target_chunks}"
                     log_list = []
@@ -775,7 +755,7 @@ class RecordIndexer(object):
                 if log["Status"] == "Success":
                     click.secho("[{}] ID: {}, Status: {}, Chunk: {}".format(date, log["id"], log["Status"], chunk_progress), fg='green')
                 else:
-                    click.secho("[{}] ID : {}, Status: {}, Chunk: {}".format(date, log["id"], log["Status"], chunk_progress), fg='red')
+                    click.secho("[{}] ID: {}, Status: {}, Chunk: {}".format(date, log["id"], log["Status"], chunk_progress), fg='red')
             self.success_ids = success_ids
             return (success, failed) if stats_only else (success, errors)
         except BulkIndexError:
