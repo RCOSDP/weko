@@ -1,5 +1,348 @@
 BEGIN;
 
+-- converted from alembic revisions
+
+-- modules/invenio-accounts/invenio_accounts/alembic/b5c2d8a5bf90_create_invenio_accounts_branch.py
+ALTER TABLE accounts_user_session_activity ADD COLUMN orgniazation_name VARCHAR(255);
+
+-- modules/invenio-communities/invenio_communities/alembic/d2d56dc5e385_add_column.py
+ALTER TABLE communities_community ADD COLUMN thumbnail_path TEXT;
+ALTER TABLE communities_community ADD COLUMN login_menu_enabled BOOLEAN NOT NULL DEFAULT FALSE;
+ALTER TABLE communities_community ADD COLUMN catalog_json JSONB;
+ALTER TABLE communities_community ADD COLUMN cnri TEXT;
+
+-- modules/invenio-communities/invenio_communities/alembic/1b352b00f1ed_add_columns.py
+ALTER TABLE communities_community ADD COLUMN content_policy TEXT;
+ALTER TABLE communities_community ADD COLUMN group_id INTEGER;
+ALTER TABLE communities_community ADD CONSTRAINT fk_communities_community_group_id_accounts_role FOREIGN KEY (group_id) REFERENCES accounts_role(id);
+
+-- modules/invenio-files-rest/invenio_files_rest/alembic/8644b32a3eec_add_column_files_location.py
+ALTER TABLE files_location ADD COLUMN s3_default_block_size BIGINT;
+ALTER TABLE files_location ADD COLUMN s3_maximum_number_of_parts BIGINT;
+ALTER TABLE files_location ADD COLUMN s3_region_name VARCHAR(128);
+ALTER TABLE files_location ADD COLUMN s3_signature_version VARCHAR(20);
+ALTER TABLE files_location ADD COLUMN s3_url_expiration BIGINT;
+
+-- modules/invenio-mail/invenio_mail/alembic/ddbb24276fdc_create_mail_templates_table.py
+CREATE TABLE mail_template_genres (
+    id SERIAL,
+    name VARCHAR(255) NOT NULL DEFAULT '',
+    CONSTRAINT pk_mail_template_genres PRIMARY KEY (id)
+);
+CREATE TABLE mail_templates (
+    id SERIAL,
+    mail_subject VARCHAR(255),
+    mail_body TEXT,
+    default_mail BOOLEAN,
+    genre_id INTEGER NOT NULL DEFAULT 3,
+    CONSTRAINT pk_mail_templates PRIMARY KEY (id),
+    CONSTRAINT fk_mail_templates_genre_id_mail_template_genres
+        FOREIGN KEY (genre_id)
+        REFERENCES mail_template_genres(id)
+        ON DELETE RESTRICT
+        ON UPDATE CASCADE
+);
+
+-- modules/invenio-mail/invenio_mail/alembic/b1495e98969b_create_mailtemplateusers.py
+CREATE TYPE mailtype AS ENUM ('recipient', 'cc', 'bcc');
+CREATE TABLE mail_template_users (
+    created TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    template_id INTEGER NOT NULL,
+    user_id INTEGER NOT NULL,
+    mail_type mailtype NOT NULL,
+    CONSTRAINT pk_mail_template_users PRIMARY KEY (template_id, user_id, mail_type),
+    CONSTRAINT fk_mail_template_users_template_id_mail_templates
+        FOREIGN KEY (template_id) REFERENCES mail_templates(id) ON DELETE CASCADE,
+    CONSTRAINT fk_mail_template_users_user_id_accounts_user
+        FOREIGN KEY (user_id) REFERENCES accounts_user(id) ON DELETE CASCADE
+);
+
+-- modules/weko-admin/weko_admin/alembic/7dc0b1ab5631_add_columns.py
+ALTER TABLE feedback_email_setting ADD COLUMN repository_id VARCHAR(100) NOT NULL DEFAULT 'Root Index';
+ALTER TABLE feedback_mail_history ADD COLUMN repository_id VARCHAR(100) NOT NULL DEFAULT 'Root Index';
+ALTER TABLE stats_email_address ADD COLUMN repository_id VARCHAR(100) DEFAULT 'Root Index';
+
+-- modules/weko-authors/weko_authors/alembic/1e377b157a5d_add_repository_id_column.py
+ALTER TABLE authors ADD COLUMN repository_id JSONB;
+ALTER TABLE authors_affiliation_settings ADD COLUMN repository_id JSONB;
+ALTER TABLE authors_prefix_settings ADD COLUMN repository_id JSONB;
+
+-- modules/weko-authors/weko_authors/alembic/b2ce1889616c_create_author_community_relation_tables.py
+CREATE TABLE author_affiliation_community_relations (
+    created TIMESTAMP NOT NULL,
+    updated TIMESTAMP NOT NULL,
+    affiliation_id BIGINT NOT NULL,
+    community_id VARCHAR(100) NOT NULL,
+    CONSTRAINT fk_author_affiliation_community_relations_affiliation_id_authors_affiliation_settings
+        FOREIGN KEY (affiliation_id) REFERENCES authors_affiliation_settings(id) ON DELETE CASCADE,
+    CONSTRAINT fk_author_affiliation_community_relations_community_id_communities_community
+        FOREIGN KEY (community_id) REFERENCES communities_community(id) ON DELETE CASCADE,
+    CONSTRAINT pk_author_affiliation_community_relations PRIMARY KEY (affiliation_id, community_id)
+);
+CREATE TABLE author_community_relations (
+    created TIMESTAMP NOT NULL,
+    updated TIMESTAMP NOT NULL,
+    author_id BIGINT NOT NULL,
+    community_id VARCHAR(100) NOT NULL,
+    CONSTRAINT fk_author_community_relations_author_id_authors
+        FOREIGN KEY (author_id) REFERENCES authors(id) ON DELETE CASCADE,
+    CONSTRAINT fk_author_community_relations_community_id_communities_community
+        FOREIGN KEY (community_id) REFERENCES communities_community(id) ON DELETE CASCADE,
+    CONSTRAINT pk_author_community_relations PRIMARY KEY (author_id, community_id)
+);
+CREATE TABLE author_prefix_community_relations (
+    created TIMESTAMP NOT NULL,
+    updated TIMESTAMP NOT NULL,
+    prefix_id BIGINT NOT NULL,
+    community_id VARCHAR(100) NOT NULL,
+    CONSTRAINT fk_author_prefix_community_relations_community_id_communities_community
+        FOREIGN KEY (community_id) REFERENCES communities_community(id) ON DELETE CASCADE,
+    CONSTRAINT fk_author_prefix_community_relations_prefix_id_authors_prefix_settings
+        FOREIGN KEY (prefix_id) REFERENCES authors_prefix_settings(id) ON DELETE CASCADE,
+    CONSTRAINT pk_author_prefix_community_relations PRIMARY KEY (prefix_id, community_id)
+);
+
+-- modules/weko-index-tree/weko_index_tree/alembic/efd70c593f4b_update_index.py
+ALTER TABLE index ADD COLUMN index_url TEXT;
+ALTER TABLE index ADD COLUMN cnri TEXT;
+
+-- modules/weko-indextree-journal/weko_indextree_journal/alembic/b6cb93e7e896_add_column.py
+ALTER TABLE journal ADD COLUMN abstract TEXT;
+ALTER TABLE journal ADD COLUMN code_issnl TEXT;
+
+-- modules/weko-logging/weko_logging/alembic/9135a3e69760_create_user_activity_log_table.py
+CREATE TABLE user_activity_logs (
+    id SERIAL,
+    date TIMESTAMP NOT NULL,
+    user_id INTEGER,
+    community_id VARCHAR(100),
+    log_group_id INTEGER,
+    log JSONB NOT NULL,
+    remarks TEXT,
+    CONSTRAINT pk_user_activity_logs PRIMARY KEY (id),
+    CONSTRAINT fk_user_activity_active_user_id
+        FOREIGN KEY (user_id) REFERENCES accounts_user(id) ON DELETE SET NULL,
+    CONSTRAINT fk_user_activity_community_id
+        FOREIGN KEY (community_id) REFERENCES communities_community(id) ON DELETE SET NULL
+);
+CREATE SEQUENCE user_activity_log_group_id_seq;
+
+-- modules/weko-notifications/weko_notifications/alembic/9ef65066e0d3_create_notifications_user_settings_table.py
+CREATE TABLE notifications_user_settings (
+    created TIMESTAMP NOT NULL,
+    updated TIMESTAMP NOT NULL,
+    user_id INTEGER NOT NULL,
+    user_profile_id INTEGER,
+    subscribe_email BOOLEAN NOT NULL,
+    CONSTRAINT pk_notifications_user_settings PRIMARY KEY (user_id),
+    CONSTRAINT fk_notifications_user_settings_user_id_accounts_user
+        FOREIGN KEY (user_id) REFERENCES accounts_user(id) ON DELETE CASCADE,
+    CONSTRAINT fk_notifications_user_settings_user_profile_id_userprofiles_userprofile
+        FOREIGN KEY (user_profile_id) REFERENCES userprofiles_userprofile(user_id)
+);
+
+-- modules/weko-records/weko_records/alembic/1619a115156f_add_repository_id_column.py
+ALTER TABLE feedback_mail_list ADD COLUMN repository_id VARCHAR(100) NOT NULL DEFAULT 'Root Index';
+ALTER TABLE sitelicense_info ADD COLUMN repository_id VARCHAR(100) NOT NULL DEFAULT 'Root Index';
+
+-- modules/weko-records/weko_records/alembic/89c58783bf65_create_jsonld_mappings_table.py
+CREATE TABLE jsonld_mappings (
+    created TIMESTAMP NOT NULL,
+    updated TIMESTAMP NOT NULL,
+    id SERIAL NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    mapping JSONB NOT NULL,
+    item_type_id INTEGER NOT NULL,
+    version_id INTEGER NOT NULL,
+    is_deleted BOOLEAN NOT NULL DEFAULT FALSE,
+    CONSTRAINT pk_jsonld_mappings PRIMARY KEY (id),
+    CONSTRAINT fk_jsonld_mappings_item_type_id_item_type
+        FOREIGN KEY (item_type_id) REFERENCES item_type(id)
+);
+CREATE INDEX ix_jsonld_mappings_item_type_id ON jsonld_mappings (item_type_id);
+CREATE TABLE jsonld_mappings_version (
+    created TIMESTAMP,
+    updated TIMESTAMP,
+    id INTEGER NOT NULL,
+    name VARCHAR(255),
+    mapping JSONB,
+    item_type_id INTEGER,
+    version_id INTEGER,
+    is_deleted BOOLEAN,
+    transaction_id BIGINT NOT NULL,
+    end_transaction_id BIGINT,
+    operation_type SMALLINT NOT NULL,
+    CONSTRAINT pk_jsonld_mappings_version PRIMARY KEY (id, transaction_id)
+);
+CREATE INDEX ix_jsonld_mappings_version_transaction_id ON jsonld_mappings_version (transaction_id);
+CREATE INDEX ix_jsonld_mappings_version_item_type_id ON jsonld_mappings_version (item_type_id);
+CREATE INDEX ix_jsonld_mappings_version_operation_type ON jsonld_mappings_version (operation_type);
+CREATE INDEX ix_jsonld_mappings_version_end_transaction_id ON jsonld_mappings_version (end_transaction_id);
+
+-- modules/weko-records/weko_records/alembic/e3b07ec6e628_add_oa_status_table.py
+CREATE TABLE oa_status (
+    created TIMESTAMP NOT NULL,
+    updated TIMESTAMP NOT NULL,
+    oa_article_id INTEGER NOT NULL,
+    oa_status TEXT,
+    weko_item_pid VARCHAR(255),
+    CONSTRAINT pk_oa_status PRIMARY KEY (oa_article_id)
+);
+
+-- modules/weko-records-ui/weko_records_ui/alembic/e0b1ef08d08c_create_file_url_download_log_table.py
+DROP TABLE IF EXISTS file_onetime_download;
+CREATE TABLE file_onetime_download (
+    created TIMESTAMP NOT NULL,
+    updated TIMESTAMP NOT NULL,
+    id SERIAL,
+    approver_id INTEGER NOT NULL,
+    record_id VARCHAR(255) NOT NULL,
+    file_name VARCHAR(255) NOT NULL,
+    expiration_date TIMESTAMP NOT NULL,
+    download_limit INTEGER NOT NULL,
+    download_count INTEGER NOT NULL DEFAULT 0,
+    user_mail VARCHAR(255) NOT NULL,
+    is_guest BOOLEAN NOT NULL,
+    is_deleted BOOLEAN NOT NULL DEFAULT FALSE,
+    extra_info JSON NOT NULL DEFAULT '{}',
+    CONSTRAINT pk_file_onetime_download PRIMARY KEY (id),
+    CONSTRAINT fk_file_onetime_download_approver_id_accounts_user FOREIGN KEY (approver_id) REFERENCES accounts_user(id),
+    CONSTRAINT check_expiration_date CHECK (created < expiration_date),
+    CONSTRAINT check_download_limit_positive CHECK (download_limit > 0),
+    CONSTRAINT check_download_count_limit CHECK (download_count <= download_limit)
+);
+DROP TABLE IF EXISTS file_secret_download;
+CREATE TABLE file_secret_download (
+    created TIMESTAMP NOT NULL,
+    updated TIMESTAMP NOT NULL,
+    id SERIAL,
+    creator_id INTEGER NOT NULL,
+    record_id VARCHAR(255) NOT NULL,
+    file_name VARCHAR(255) NOT NULL,
+    label_name VARCHAR(255) NOT NULL,
+    expiration_date TIMESTAMP NOT NULL,
+    download_limit INTEGER NOT NULL,
+    download_count INTEGER NOT NULL DEFAULT 0,
+    is_deleted BOOLEAN NOT NULL DEFAULT FALSE,
+    CONSTRAINT pk_file_secret_download PRIMARY KEY (id),
+    CONSTRAINT fk_file_secret_download_creator_id_accounts_user FOREIGN KEY (creator_id) REFERENCES accounts_user(id),
+    CONSTRAINT check_expiration_date CHECK (created < expiration_date),
+    CONSTRAINT check_download_limit_positive CHECK (download_limit > 0),
+    CONSTRAINT check_download_count_limit CHECK (download_count <= download_limit)
+);
+CREATE TYPE urltype AS ENUM ('SECRET', 'ONETIME');
+CREATE TYPE accessstatus AS ENUM ('OPEN_NO', 'OPEN_DATE', 'OPEN_RESTRICTED');
+CREATE TABLE file_url_download_log (
+    created TIMESTAMP NOT NULL,
+    updated TIMESTAMP NOT NULL,
+    id SERIAL,
+    url_type urltype NOT NULL,
+    secret_url_id INTEGER,
+    onetime_url_id INTEGER,
+    ip_address INET,
+    access_status accessstatus NOT NULL,
+    used_token VARCHAR(255) NOT NULL,
+    CONSTRAINT pk_file_url_download_log PRIMARY KEY (id),
+    CONSTRAINT fk_file_url_download_log_secret_url_id_file_secret_download FOREIGN KEY (secret_url_id) REFERENCES file_secret_download(id),
+    CONSTRAINT fk_file_url_download_log_onetime_url_id_file_onetime_download FOREIGN KEY (onetime_url_id) REFERENCES file_onetime_download(id),
+    CONSTRAINT chk_url_id CHECK (
+        (url_type = 'SECRET' AND secret_url_id IS NOT NULL AND onetime_url_id IS NULL)
+        OR
+        (url_type = 'ONETIME' AND onetime_url_id IS NOT NULL AND secret_url_id IS NULL)
+    ),
+    CONSTRAINT chk_ip_address CHECK (
+        (url_type = 'SECRET' AND ip_address IS NOT NULL)
+        OR
+        (url_type = 'ONETIME' AND ip_address IS NULL)
+    ),
+    CONSTRAINT chk_access_status CHECK (
+        (url_type = 'SECRET' AND (access_status = 'OPEN_NO' OR access_status = 'OPEN_DATE'))
+        OR
+        (url_type = 'ONETIME' AND access_status = 'OPEN_RESTRICTED')
+    )
+);
+
+-- modules/weko-swordserver/weko_swordserver/alembic/ce82f0d78dcb_create_sword_clients_table.py
+CREATE TABLE sword_clients (
+    created TIMESTAMP NOT NULL,
+    updated TIMESTAMP NOT NULL,
+    id SERIAL NOT NULL,
+    client_id VARCHAR(255) NOT NULL,
+    active BOOLEAN,
+    registration_type_id SMALLINT NOT NULL,
+    mapping_id INTEGER NOT NULL,
+    workflow_id INTEGER,
+    duplicate_check BOOLEAN NOT NULL,
+    meta_data_api JSONB,
+    CONSTRAINT pk_sword_clients PRIMARY KEY (id),
+    CONSTRAINT fk_sword_clients_client_id_oauth2server_client
+        FOREIGN KEY (client_id) REFERENCES oauth2server_client(client_id) ON DELETE CASCADE,
+    CONSTRAINT fk_sword_clients_mapping_id_jsonld_mappings
+        FOREIGN KEY (mapping_id) REFERENCES jsonld_mappings(id),
+    CONSTRAINT fk_sword_clients_workflow_id_workflow_workflow
+        FOREIGN KEY (workflow_id) REFERENCES workflow_workflow(id)
+);
+CREATE UNIQUE INDEX ix_sword_clients_client_id ON sword_clients (client_id);
+
+-- modules/weko-user-profiles/weko_user_profiles/alembic/ac4ff52361f4_add_column_userprofile.py
+ALTER TABLE userprofiles_userprofile ADD COLUMN s3_endpoint_url VARCHAR(128);
+ALTER TABLE userprofiles_userprofile ADD COLUMN s3_region_name VARCHAR(128);
+ALTER TABLE userprofiles_userprofile ADD COLUMN access_key VARCHAR(128);
+ALTER TABLE userprofiles_userprofile ADD COLUMN secret_key VARCHAR(128);
+
+-- modules/weko-user-profiles/weko_user_profiles/alembic/250f0661704b_userprofiles_userprofile.py
+ALTER TABLE userprofiles_userprofile ADD COLUMN item13 VARCHAR(255);
+ALTER TABLE userprofiles_userprofile ADD COLUMN item14 VARCHAR(255);
+ALTER TABLE userprofiles_userprofile ADD COLUMN item15 VARCHAR(255);
+ALTER TABLE userprofiles_userprofile ADD COLUMN item16 VARCHAR(255);
+
+-- modules/weko-workflow/weko_workflow/alembic/841860bb1333_add_activity_request_mail.py
+CREATE TABLE workflow_activity_request_mail (
+    status VARCHAR(1) NOT NULL,
+    created TIMESTAMP NOT NULL,
+    updated TIMESTAMP NOT NULL,
+    id SERIAL,
+    activity_id VARCHAR(24) NOT NULL,
+    display_request_button BOOLEAN NOT NULL DEFAULT FALSE,
+    request_maillist JSONB,
+    CONSTRAINT pk_workflow_activity_request_mail PRIMARY KEY (id)
+);
+CREATE INDEX ix_workflow_activity_request_mail_activity_id ON workflow_activity_request_mail (activity_id);
+
+-- modules/weko-workflow/weko_workflow/alembic/a560202ff0ac_add_columns_for_deleting_items.py
+ALTER TABLE workflow_flow_define ADD COLUMN flow_type SMALLINT;
+UPDATE workflow_flow_define SET flow_type = 1;
+ALTER TABLE workflow_flow_define ALTER COLUMN flow_type SET NOT NULL;
+ALTER TABLE workflow_workflow ADD COLUMN delete_flow_id INTEGER;
+ALTER TABLE workflow_workflow
+ADD CONSTRAINT fk_workflow_workflow_delete_flow_id_workflow_flow_define
+FOREIGN KEY (delete_flow_id) REFERENCES workflow_flow_define(id) ON DELETE SET NULL;
+
+-- modules/weko-workflow/weko_workflow/alembic/f312b8c2839a_add_columns.py
+ALTER TABLE workflow_flow_define ADD COLUMN repository_id VARCHAR(100) NOT NULL DEFAULT 'Root Index';
+ALTER TABLE workflow_workflow ADD COLUMN repository_id VARCHAR(100) NOT NULL DEFAULT 'Root Index';
+
+-- modules/weko-workspace/weko_workspace/alembic/197013eb095f_add_tables_for_weko_workspace.py
+CREATE TABLE workspace_default_conditions (
+    created TIMESTAMP NOT NULL,
+    updated TIMESTAMP NOT NULL,
+    user_id INTEGER NOT NULL,
+    default_con JSONB NOT NULL,
+    CONSTRAINT pk_workspace_default_conditions PRIMARY KEY (user_id)
+);
+CREATE TABLE workspace_status_management (
+    created TIMESTAMP NOT NULL,
+    updated TIMESTAMP NOT NULL,
+    user_id INTEGER NOT NULL,
+    recid INTEGER NOT NULL,
+    is_favorited BOOLEAN NOT NULL DEFAULT FALSE,
+    is_read BOOLEAN NOT NULL DEFAULT FALSE,
+    CONSTRAINT pk_workspace_status_management PRIMARY KEY (user_id, recid)
+);
+
+-- combined sql files
+
 -- W2023-23-item-application.sql
 
 -- public.workflow_activity_item_application definition
