@@ -69,39 +69,39 @@ ALTER TABLE authors_affiliation_settings ADD COLUMN repository_id JSONB;
 ALTER TABLE authors_prefix_settings ADD COLUMN repository_id JSONB;
 
 -- modules/weko-authors/weko_authors/alembic/b2ce1889616c_create_author_community_relation_tables.py
-CREATE TABLE author_affiliation_community_relations (
-    created TIMESTAMP NOT NULL,
-    updated TIMESTAMP NOT NULL,
-    affiliation_id BIGINT NOT NULL,
-    community_id VARCHAR(100) NOT NULL,
-    CONSTRAINT fk_author_affiliation_community_relations_affiliation_id_authors_affiliation_settings
-        FOREIGN KEY (affiliation_id) REFERENCES authors_affiliation_settings(id) ON DELETE CASCADE,
-    CONSTRAINT fk_author_affiliation_community_relations_community_id_communities_community
-        FOREIGN KEY (community_id) REFERENCES communities_community(id) ON DELETE CASCADE,
-    CONSTRAINT pk_author_affiliation_community_relations PRIMARY KEY (affiliation_id, community_id)
-);
-CREATE TABLE author_community_relations (
-    created TIMESTAMP NOT NULL,
-    updated TIMESTAMP NOT NULL,
-    author_id BIGINT NOT NULL,
-    community_id VARCHAR(100) NOT NULL,
-    CONSTRAINT fk_author_community_relations_author_id_authors
-        FOREIGN KEY (author_id) REFERENCES authors(id) ON DELETE CASCADE,
-    CONSTRAINT fk_author_community_relations_community_id_communities_community
-        FOREIGN KEY (community_id) REFERENCES communities_community(id) ON DELETE CASCADE,
-    CONSTRAINT pk_author_community_relations PRIMARY KEY (author_id, community_id)
-);
-CREATE TABLE author_prefix_community_relations (
-    created TIMESTAMP NOT NULL,
-    updated TIMESTAMP NOT NULL,
-    prefix_id BIGINT NOT NULL,
-    community_id VARCHAR(100) NOT NULL,
-    CONSTRAINT fk_author_prefix_community_relations_community_id_communities_community
-        FOREIGN KEY (community_id) REFERENCES communities_community(id) ON DELETE CASCADE,
-    CONSTRAINT fk_author_prefix_community_relations_prefix_id_authors_prefix_settings
-        FOREIGN KEY (prefix_id) REFERENCES authors_prefix_settings(id) ON DELETE CASCADE,
-    CONSTRAINT pk_author_prefix_community_relations PRIMARY KEY (prefix_id, community_id)
-);
+-- CREATE TABLE author_affiliation_community_relations (
+--     created TIMESTAMP NOT NULL,
+--     updated TIMESTAMP NOT NULL,
+--     affiliation_id BIGINT NOT NULL,
+--     community_id VARCHAR(100) NOT NULL,
+--     CONSTRAINT fk_author_affiliation_community_relations_affiliation_id_authors_affiliation_settings
+--         FOREIGN KEY (affiliation_id) REFERENCES authors_affiliation_settings(id) ON DELETE CASCADE,
+--     CONSTRAINT fk_author_affiliation_community_relations_community_id_communities_community
+--         FOREIGN KEY (community_id) REFERENCES communities_community(id) ON DELETE CASCADE,
+--     CONSTRAINT pk_author_affiliation_community_relations PRIMARY KEY (affiliation_id, community_id)
+-- );
+-- CREATE TABLE author_community_relations (
+--     created TIMESTAMP NOT NULL,
+--     updated TIMESTAMP NOT NULL,
+--     author_id BIGINT NOT NULL,
+--     community_id VARCHAR(100) NOT NULL,
+--     CONSTRAINT fk_author_community_relations_author_id_authors
+--         FOREIGN KEY (author_id) REFERENCES authors(id) ON DELETE CASCADE,
+--     CONSTRAINT fk_author_community_relations_community_id_communities_community
+--         FOREIGN KEY (community_id) REFERENCES communities_community(id) ON DELETE CASCADE,
+--     CONSTRAINT pk_author_community_relations PRIMARY KEY (author_id, community_id)
+-- );
+-- CREATE TABLE author_prefix_community_relations (
+--     created TIMESTAMP NOT NULL,
+--     updated TIMESTAMP NOT NULL,
+--     prefix_id BIGINT NOT NULL,
+--     community_id VARCHAR(100) NOT NULL,
+--     CONSTRAINT fk_author_prefix_community_relations_community_id_communities_community
+--         FOREIGN KEY (community_id) REFERENCES communities_community(id) ON DELETE CASCADE,
+--     CONSTRAINT fk_author_prefix_community_relations_prefix_id_authors_prefix_settings
+--         FOREIGN KEY (prefix_id) REFERENCES authors_prefix_settings(id) ON DELETE CASCADE,
+--     CONSTRAINT pk_author_prefix_community_relations PRIMARY KEY (prefix_id, community_id)
+-- );
 
 -- modules/weko-index-tree/weko_index_tree/alembic/efd70c593f4b_update_index.py
 ALTER TABLE index ADD COLUMN index_url TEXT;
@@ -191,77 +191,77 @@ CREATE TABLE oa_status (
 );
 
 -- modules/weko-records-ui/weko_records_ui/alembic/e0b1ef08d08c_create_file_url_download_log_table.py
-DROP TABLE IF EXISTS file_onetime_download;
-CREATE TABLE file_onetime_download (
-    created TIMESTAMP NOT NULL,
-    updated TIMESTAMP NOT NULL,
-    id SERIAL,
-    approver_id INTEGER NOT NULL,
-    record_id VARCHAR(255) NOT NULL,
-    file_name VARCHAR(255) NOT NULL,
-    expiration_date TIMESTAMP NOT NULL,
-    download_limit INTEGER NOT NULL,
-    download_count INTEGER NOT NULL DEFAULT 0,
-    user_mail VARCHAR(255) NOT NULL,
-    is_guest BOOLEAN NOT NULL,
-    is_deleted BOOLEAN NOT NULL DEFAULT FALSE,
-    extra_info JSON NOT NULL DEFAULT '{}',
-    CONSTRAINT pk_file_onetime_download PRIMARY KEY (id),
-    CONSTRAINT fk_file_onetime_download_approver_id_accounts_user FOREIGN KEY (approver_id) REFERENCES accounts_user(id),
-    CONSTRAINT check_expiration_date CHECK (created < expiration_date),
-    CONSTRAINT check_download_limit_positive CHECK (download_limit > 0),
-    CONSTRAINT check_download_count_limit CHECK (download_count <= download_limit)
-);
-DROP TABLE IF EXISTS file_secret_download;
-CREATE TABLE file_secret_download (
-    created TIMESTAMP NOT NULL,
-    updated TIMESTAMP NOT NULL,
-    id SERIAL,
-    creator_id INTEGER NOT NULL,
-    record_id VARCHAR(255) NOT NULL,
-    file_name VARCHAR(255) NOT NULL,
-    label_name VARCHAR(255) NOT NULL,
-    expiration_date TIMESTAMP NOT NULL,
-    download_limit INTEGER NOT NULL,
-    download_count INTEGER NOT NULL DEFAULT 0,
-    is_deleted BOOLEAN NOT NULL DEFAULT FALSE,
-    CONSTRAINT pk_file_secret_download PRIMARY KEY (id),
-    CONSTRAINT fk_file_secret_download_creator_id_accounts_user FOREIGN KEY (creator_id) REFERENCES accounts_user(id),
-    CONSTRAINT check_expiration_date CHECK (created < expiration_date),
-    CONSTRAINT check_download_limit_positive CHECK (download_limit > 0),
-    CONSTRAINT check_download_count_limit CHECK (download_count <= download_limit)
-);
-CREATE TYPE urltype AS ENUM ('SECRET', 'ONETIME');
-CREATE TYPE accessstatus AS ENUM ('OPEN_NO', 'OPEN_DATE', 'OPEN_RESTRICTED');
-CREATE TABLE file_url_download_log (
-    created TIMESTAMP NOT NULL,
-    updated TIMESTAMP NOT NULL,
-    id SERIAL,
-    url_type urltype NOT NULL,
-    secret_url_id INTEGER,
-    onetime_url_id INTEGER,
-    ip_address INET,
-    access_status accessstatus NOT NULL,
-    used_token VARCHAR(255) NOT NULL,
-    CONSTRAINT pk_file_url_download_log PRIMARY KEY (id),
-    CONSTRAINT fk_file_url_download_log_secret_url_id_file_secret_download FOREIGN KEY (secret_url_id) REFERENCES file_secret_download(id),
-    CONSTRAINT fk_file_url_download_log_onetime_url_id_file_onetime_download FOREIGN KEY (onetime_url_id) REFERENCES file_onetime_download(id),
-    CONSTRAINT chk_url_id CHECK (
-        (url_type = 'SECRET' AND secret_url_id IS NOT NULL AND onetime_url_id IS NULL)
-        OR
-        (url_type = 'ONETIME' AND onetime_url_id IS NOT NULL AND secret_url_id IS NULL)
-    ),
-    CONSTRAINT chk_ip_address CHECK (
-        (url_type = 'SECRET' AND ip_address IS NOT NULL)
-        OR
-        (url_type = 'ONETIME' AND ip_address IS NULL)
-    ),
-    CONSTRAINT chk_access_status CHECK (
-        (url_type = 'SECRET' AND (access_status = 'OPEN_NO' OR access_status = 'OPEN_DATE'))
-        OR
-        (url_type = 'ONETIME' AND access_status = 'OPEN_RESTRICTED')
-    )
-);
+-- DROP TABLE IF EXISTS file_onetime_download;
+-- CREATE TABLE file_onetime_download (
+--     created TIMESTAMP NOT NULL,
+--     updated TIMESTAMP NOT NULL,
+--     id SERIAL,
+--     approver_id INTEGER NOT NULL,
+--     record_id VARCHAR(255) NOT NULL,
+--     file_name VARCHAR(255) NOT NULL,
+--     expiration_date TIMESTAMP NOT NULL,
+--     download_limit INTEGER NOT NULL,
+--     download_count INTEGER NOT NULL DEFAULT 0,
+--     user_mail VARCHAR(255) NOT NULL,
+--     is_guest BOOLEAN NOT NULL,
+--     is_deleted BOOLEAN NOT NULL DEFAULT FALSE,
+--     extra_info JSON NOT NULL DEFAULT '{}',
+--     CONSTRAINT pk_file_onetime_download PRIMARY KEY (id),
+--     CONSTRAINT fk_file_onetime_download_approver_id_accounts_user FOREIGN KEY (approver_id) REFERENCES accounts_user(id),
+--     CONSTRAINT check_expiration_date CHECK (created < expiration_date),
+--     CONSTRAINT check_download_limit_positive CHECK (download_limit > 0),
+--     CONSTRAINT check_download_count_limit CHECK (download_count <= download_limit)
+-- );
+-- DROP TABLE IF EXISTS file_secret_download;
+-- CREATE TABLE file_secret_download (
+--     created TIMESTAMP NOT NULL,
+--     updated TIMESTAMP NOT NULL,
+--     id SERIAL,
+--     creator_id INTEGER NOT NULL,
+--     record_id VARCHAR(255) NOT NULL,
+--     file_name VARCHAR(255) NOT NULL,
+--     label_name VARCHAR(255) NOT NULL,
+--     expiration_date TIMESTAMP NOT NULL,
+--     download_limit INTEGER NOT NULL,
+--     download_count INTEGER NOT NULL DEFAULT 0,
+--     is_deleted BOOLEAN NOT NULL DEFAULT FALSE,
+--     CONSTRAINT pk_file_secret_download PRIMARY KEY (id),
+--     CONSTRAINT fk_file_secret_download_creator_id_accounts_user FOREIGN KEY (creator_id) REFERENCES accounts_user(id),
+--     CONSTRAINT check_expiration_date CHECK (created < expiration_date),
+--     CONSTRAINT check_download_limit_positive CHECK (download_limit > 0),
+--     CONSTRAINT check_download_count_limit CHECK (download_count <= download_limit)
+-- );
+-- CREATE TYPE urltype AS ENUM ('SECRET', 'ONETIME');
+-- CREATE TYPE accessstatus AS ENUM ('OPEN_NO', 'OPEN_DATE', 'OPEN_RESTRICTED');
+-- CREATE TABLE file_url_download_log (
+--     created TIMESTAMP NOT NULL,
+--     updated TIMESTAMP NOT NULL,
+--     id SERIAL,
+--     url_type urltype NOT NULL,
+--     secret_url_id INTEGER,
+--     onetime_url_id INTEGER,
+--     ip_address INET,
+--     access_status accessstatus NOT NULL,
+--     used_token VARCHAR(255) NOT NULL,
+--     CONSTRAINT pk_file_url_download_log PRIMARY KEY (id),
+--     CONSTRAINT fk_file_url_download_log_secret_url_id_file_secret_download FOREIGN KEY (secret_url_id) REFERENCES file_secret_download(id),
+--     CONSTRAINT fk_file_url_download_log_onetime_url_id_file_onetime_download FOREIGN KEY (onetime_url_id) REFERENCES file_onetime_download(id),
+--     CONSTRAINT chk_url_id CHECK (
+--         (url_type = 'SECRET' AND secret_url_id IS NOT NULL AND onetime_url_id IS NULL)
+--         OR
+--         (url_type = 'ONETIME' AND onetime_url_id IS NOT NULL AND secret_url_id IS NULL)
+--     ),
+--     CONSTRAINT chk_ip_address CHECK (
+--         (url_type = 'SECRET' AND ip_address IS NOT NULL)
+--         OR
+--         (url_type = 'ONETIME' AND ip_address IS NULL)
+--     ),
+--     CONSTRAINT chk_access_status CHECK (
+--         (url_type = 'SECRET' AND (access_status = 'OPEN_NO' OR access_status = 'OPEN_DATE'))
+--         OR
+--         (url_type = 'ONETIME' AND access_status = 'OPEN_RESTRICTED')
+--     )
+-- );
 
 -- modules/weko-swordserver/weko_swordserver/alembic/ce82f0d78dcb_create_sword_clients_table.py
 CREATE TABLE sword_clients (
