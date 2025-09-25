@@ -23,9 +23,12 @@ from invenio_pidstore.resolver import Resolver
 
 from weko_accounts.models import ShibbolethUser
 from weko_admin.models import AdminSettings
-from weko_deposit.api import WekoDeposit
+from weko_deposit.api import WekoDeposit, WekoRecord
 
-from weko_items_ui.utils import check_item_is_being_edit
+from weko_items_ui.utils import (
+    check_item_is_being_edit, send_mail_direct_registered, send_mail_item_deleted
+)
+from weko_notifications.utils import notify_item_imported, notify_item_deleted
 from weko_records_ui.utils import soft_delete
 from weko_search_ui.config import SWORD_METADATA_FILE, ROCRATE_METADATA_FILE
 from weko_search_ui.utils import (
@@ -536,3 +539,35 @@ def delete_item_directly(recid, request_info=None):
 
     soft_delete(recid)
     db.session.commit()
+
+
+def notify_about_item(case, recid, user_id, record=None, shared_ids=[]):
+    """Notify about item.
+
+    Notify about item for import or delete.
+
+    Args:
+        case (str): Case of notification. "import", "update" or "delete".
+        recid (str): Record ID.
+        user_id (int): User ID.
+        record (WekoRecord, optional): WekoRecord instance. Defaults to None.
+        shared_ids (list, optional): Contributor IDs. Defaults to an empty list.
+    """
+    if not current_app.config.get("WEKO_NOTIFICATIONS"):
+        return
+
+    if not record:
+        record = WekoRecord.get_record_by_pid(recid)
+
+    if case in ["import", "update"]:
+        notify_item_imported(
+            user_id, recid, user_id, record["item_title"], shared_ids
+        )
+        send_mail_direct_registered(recid, record, user_id, shared_ids)
+
+    if case == "delete":
+        notify_item_deleted(
+            user_id, recid, user_id, record["item_title"], shared_ids
+        )
+        send_mail_item_deleted(recid, record, user_id, shared_ids)
+        

@@ -19,7 +19,8 @@ from weko_swordserver.utils import (
     is_valid_file_hash,
     update_item_ids,
     check_deletion_type,
-    delete_item_directly
+    delete_item_directly,
+    notify_about_item,
 )
 from .helpers import json_data
 from weko_swordserver.errors import ErrorType, WekoSwordserverException
@@ -561,3 +562,44 @@ def test_delete_item_directly(
     else:
         delete_item_directly(recid)
         soft_delete_mock.assert_called_once_with(recid)
+
+
+# def notify_about_item(case, recid, user_id, record=None, shared_ids=[]):
+# .tox/c1/bin/pytest --cov=weko_swordserver tests/test_utils.py::test_notify_about_item -v -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp --full-trace
+def test_notify_about_item(app):
+    app.config["WEKO_NOTIFICATIONS"] = False
+    recid = "2000001"
+    record = {"item_title": "Test Item"}
+    user_id = 1
+
+    with patch("weko_swordserver.utils.notify_item_imported") as mock_notify, \
+            patch("weko_swordserver.utils.notify_item_deleted") as mock_notify_deleted:
+        notify_about_item("import", recid, user_id, record)
+        mock_notify.assert_not_called()
+        mock_notify_deleted.assert_not_called()
+
+    app.config["WEKO_NOTIFICATIONS"] = True
+
+    with patch("weko_swordserver.utils.notify_item_imported") as mock_notify, \
+            patch("weko_swordserver.utils.send_mail_direct_registered") as mock_send_mail, \
+            patch("weko_swordserver.utils.notify_item_deleted") as mock_notify_deleted, \
+            patch("weko_swordserver.utils.WekoRecord.get_record_by_pid") as mock_record:
+        mock_record.return_value = record
+
+        notify_about_item("import", recid, user_id)
+
+        mock_record.assert_called_once_with(recid)
+        mock_notify.assert_called_once_with(user_id, recid, user_id, record["item_title"], [])
+        mock_send_mail.assert_called_once_with(recid, record, user_id, [])
+        mock_notify_deleted.assert_not_called()
+
+    with patch("weko_swordserver.utils.notify_item_imported") as mock_notify, \
+            patch("weko_swordserver.utils.notify_item_deleted") as mock_notify_deleted, \
+            patch("weko_swordserver.utils.send_mail_item_deleted") as mock_send_mail_deleted, \
+            patch("weko_swordserver.utils.WekoRecord.get_record_by_pid") as mock_record:
+        notify_about_item("delete", recid, user_id, record, shared_ids=[2, 3])
+
+        mock_record.assert_not_called()
+        mock_notify.assert_not_called()
+        mock_notify_deleted.assert_called_once_with(user_id, recid, user_id, record["item_title"], [2, 3])
+        mock_send_mail_deleted.assert_called_once_with(recid, record, user_id, [2, 3])

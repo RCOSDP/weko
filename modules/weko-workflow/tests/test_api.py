@@ -472,7 +472,7 @@ class TestWorkActivity:
             login_user(users[0]['obj'])
             activities, max_page, size, page, name_param, count = \
                 activity.get_activity_list(conditions, False)
-            
+
             if conditions.get('tab')[0] == 'todo':
                 assert size == conditions.get('sizetodo')[0] if conditions.get('sizetodo') else '20'
                 assert page == conditions.get('pagestodo')[0] if conditions.get('pagestodo') else '1'
@@ -647,12 +647,12 @@ class TestWorkActivity:
             },
             3:{# test_role01_user
                 "todo":[42, 38, 37, 34, 33, 32, 31, 27, 22, 21, 19, 18, 16, 14, 5],
-                "wait":[17], 
+                "wait":[17],
                 "all":[42, 41, 40, 39, 38, 37, 36, 35, 34, 33, 32, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 19, 18, 16, 14, 5]
             },
             4:{# test_role01_comadmin
                 "todo":[42, 41, 40, 38, 34, 32, 26, 23, 22, 18, 16, 14, 12, 11, 10, 7, 6, 5],
-                "wait":[39], 
+                "wait":[39],
                 "all":[42, 41, 40, 38, 34, 32, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5]
             },
             5:{# test_role02_user
@@ -738,7 +738,7 @@ class TestWorkActivity:
         result = activity.get_usage_report_activities([str(activity.activity_id) for activity in activity_usage_report], size=5, page=2)
         assert len(result) == 5
         assert result == activity_usage_report[5:10]
-    
+
     # .tox/c1/bin/pytest --cov=weko_workflow tests/test_api.py::TestWorkActivity::test_count_all_usage_report_activities -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
     def test_count_all_usage_report_activities(app, activity_usage_report):
         activity = WorkActivity()
@@ -1111,27 +1111,89 @@ def test_workactivity_notify_about_activity_invalid_case(app, db, db_register, m
 
 
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_api.py::test_workactivity_get_params_for_registrant -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
-def test_workactivity_get_params_for_registrant(app, users, db_register, db_records, db_user_profile):
-    mock_activity = MagicMock(
-        activity_login_user=users[0]["id"],
-        activity_update_user=users[1]["id"],
-        shared_user_id=-1,
-        item_id=db_records[2][2].id,
-    )
-    activity_obj = WorkActivity()
-    set_target_id, recid, actor_id, actor_name = activity_obj._get_params_for_registrant(mock_activity)
-    assert set_target_id == {users[0]["id"]}
-    assert recid == db_records[2][0]
-    assert actor_id == users[1]["id"]
-    assert actor_name == None
+def test_workactivity_get_params_for_registrant(app, users, db_register_full_action, db_records):
 
-    mock_activity.shared_user_id = users[2]["id"]
-    mock_activity.activity_update_user = users[2]["id"]
-    set_target_id, recid, actor_id, actor_name = activity_obj._get_params_for_registrant(mock_activity)
-    assert set_target_id == {users[0]["id"]}
-    assert recid == db_records[2][0]
-    assert actor_id == users[2]["id"]
-    assert actor_name == db_user_profile.username
+    activity_obj = WorkActivity()
+
+    # case: not shared_user_ids
+    # activity_login_user == activity_update_user: directly registration
+    with patch("weko_workflow.api.UserProfile.get_by_userid") as mock_get_user_profile:
+        mock_user_profile = MagicMock(username="test_username")
+        mock_get_user_profile.return_value = mock_user_profile
+        mock_activity = MagicMock(
+            activity_login_user=users[0]["id"],
+            activity_update_user=users[0]["id"],
+            shared_user_ids=None,
+            item_id=db_records[2][2].id,
+        )
+
+        set_target_id, recid, actor_id, actor_name = activity_obj._get_params_for_registrant(mock_activity)
+
+        assert set_target_id == set()
+        assert recid == db_records[2][0]
+        assert actor_id == users[0]["id"]
+        assert actor_name == mock_user_profile.username
+        mock_get_user_profile.assert_called_once_with(users[0]["id"])
+
+    # case: not shared_user_ids
+    # activity_login_user != activity_update_user: item approvaled
+    with patch("weko_workflow.api.UserProfile.get_by_userid") as mock_get_user_profile:
+        mock_user_profile = MagicMock(username="test_username")
+        mock_get_user_profile.return_value = mock_user_profile
+        mock_activity = MagicMock(
+            activity_login_user=users[0]["id"],
+            activity_update_user=users[2]["id"],
+            shared_user_ids=None,
+            item_id=db_records[2][2].id,
+        )
+
+        set_target_id, recid, actor_id, actor_name = activity_obj._get_params_for_registrant(mock_activity)
+
+        assert set_target_id == {users[0]["id"]}
+        assert recid == db_records[2][0]
+        assert actor_id == users[2]["id"]
+        assert actor_name == mock_user_profile.username
+        mock_get_user_profile.assert_called_once_with(users[2]["id"])
+
+    # case: shared_user_ids
+    # activity_login_user == activity_update_user: directly registration
+    with patch("weko_workflow.api.UserProfile.get_by_userid") as mock_get_user_profile:
+        mock_user_profile = MagicMock(username="test_username")
+        mock_get_user_profile.return_value = mock_user_profile
+        mock_activity = MagicMock(
+            activity_login_user=users[0]["id"],
+            activity_update_user=users[0]["id"],
+            shared_user_ids=[{"user": users[1]["id"]}, {"user": users[3]["id"]}],
+            item_id=db_records[2][2].id,
+        )
+
+        set_target_id, recid, actor_id, actor_name = activity_obj._get_params_for_registrant(mock_activity)
+
+        assert set_target_id == {users[1]["id"], users[3]["id"]}
+        assert recid == db_records[2][0]
+        assert actor_id == users[1]["id"]
+        assert actor_name == mock_user_profile.username
+        mock_get_user_profile.assert_called_once_with(users[1]["id"])
+
+    # case: shared_user_ids
+    # activity_login_user != activity_update_user: item approvaled
+    with patch("weko_workflow.api.UserProfile.get_by_userid") as mock_get_user_profile:
+        mock_user_profile = MagicMock(username="test_username")
+        mock_get_user_profile.return_value = mock_user_profile
+        mock_activity = MagicMock(
+            activity_login_user=users[0]["id"],
+            activity_update_user=users[2]["id"],
+            shared_user_ids=[{"user": users[1]["id"]}, {"user": users[3]["id"]}],
+            item_id=db_records[2][2].id,
+        )
+
+        set_target_id, recid, actor_id, actor_name = activity_obj._get_params_for_registrant(mock_activity)
+
+        assert set_target_id == {users[0]["id"], users[1]["id"], users[3]["id"]}
+        assert recid == db_records[2][0]
+        assert actor_id == users[2]["id"]
+        assert actor_name == mock_user_profile.username
+        mock_get_user_profile.assert_called_once_with(users[2]["id"])
 
 
 @pytest.fixture
@@ -1276,7 +1338,7 @@ def test_workactivity_notify_about_activity_wiht_case_invalid_activity(
 
 
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_api.py::test_workactivity_get_params_for_approver -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
-def test_workactivity_get_params_for_approver(app, users, db, db_register, mocker, db_records, db_user_profile):
+def test_workactivity_get_params_for_approver(app, users, db, db_register_full_action, mocker, db_records, db_user_profile):
     from invenio_communities.models import Community
     from weko_index_tree.models import Index
 
@@ -1289,7 +1351,7 @@ def test_workactivity_get_params_for_approver(app, users, db, db_register, mocke
                         root_node_id=index.id)
     db.session.add(comm)
     db.session.commit()
-    flow_define = db_register["flow_define"]
+    flow_define = db_register_full_action["flow_define"]
 
     mock_activity1 = MagicMock(
         activity_login_user=users[0]["id"],
@@ -1958,10 +2020,10 @@ def test_query_activities_by_tab_is_wait(users, db):
                     _Activity.shared_user_ids == [],
                 )
                 )
-        expected = "AND (workflow_activity.activity_login_user = ? OR (workflow_activity.shared_user_ids LIKE '%' + ? || '%')) AND (workflow_flow_action_role.action_user != ? AND workflow_flow_action_role.action_user_exclude = ? AND (workflow_activity.shared_user_ids NOT LIKE '%' + ? || '%') OR workflow_flow_action_role.action_role NOT IN (?) AND workflow_flow_action_role.action_role_exclude = ? AND (workflow_activity.shared_user_ids NOT LIKE '%' + ? || '%') OR workflow_activity_action.action_handler != ? AND (workflow_activity.shared_user_ids NOT LIKE '%' + ? || '%') OR (workflow_activity.shared_user_ids LIKE '%' + ? || '%') AND workflow_flow_action_role.action_user != workflow_activity.activity_login_user AND workflow_flow_action_role.action_user_exclude = ? OR (workflow_activity.shared_user_ids LIKE '%' + ? || '%') AND workflow_activity_action.action_handler != workflow_activity.activity_login_user)"  
+        expected = "AND (workflow_activity.activity_login_user = ? OR (workflow_activity.shared_user_ids LIKE '%' + ? || '%')) AND (workflow_flow_action_role.action_user != ? AND workflow_flow_action_role.action_user_exclude = ? AND (workflow_activity.shared_user_ids NOT LIKE '%' + ? || '%') OR workflow_flow_action_role.action_role NOT IN (?) AND workflow_flow_action_role.action_role_exclude = ? AND (workflow_activity.shared_user_ids NOT LIKE '%' + ? || '%') OR workflow_activity_action.action_handler != ? AND (workflow_activity.shared_user_ids NOT LIKE '%' + ? || '%') OR (workflow_activity.shared_user_ids LIKE '%' + ? || '%') AND workflow_flow_action_role.action_user != workflow_activity.activity_login_user AND workflow_flow_action_role.action_user_exclude = ? OR (workflow_activity.shared_user_ids LIKE '%' + ? || '%') AND workflow_activity_action.action_handler != workflow_activity.activity_login_user)"
         ret = WorkActivity.query_activities_by_tab_is_wait(query, True, [1])
         assert str(ret).find(expected)
-    
+
     current_app.config['WEKO_WORKFLOW_ENABLE_SHOW_ACTIVITY'] = True
     with patch("flask_login.utils._get_user", return_value=users[0]['obj']):
         query = db.session.query(
@@ -1989,7 +2051,7 @@ def test_query_activities_by_tab_is_wait(users, db):
         expected = "AND (workflow_activity.activity_login_user = ?) AND ((workflow_flow_action_role.action_user != ? AND workflow_flow_action_role.action_user_exclude = '0') OR (workflow_flow_action_role.action_role NOT IN (?) AND workflow_flow_action_role.action_role_exclude = '0') OR (workflow_activity_action.action_handler != ? ))"
         ret = WorkActivity.query_activities_by_tab_is_wait(query, False, [])
         assert str(ret).find(expected)
-    
+
 # def query_activities_by_tab_is_all(query, is_community_admin, community_user_ids)
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_api.py::test_query_activities_by_tab_is_all -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_query_activities_by_tab_is_all(users, db):
@@ -2005,11 +2067,11 @@ def test_query_activities_by_tab_is_all(users, db):
                     _Activity.activity_update_user == User.id,
                 )
             )
-        
+
         expected = "(workflow_activity.shared_user_ids LIKE '%' || ? || '%') AND workflow_flow_action.action_id != ?"
         ret = WorkActivity.query_activities_by_tab_is_all(query, is_community_admin, community_user_ids)
         assert str(ret).find(expected)
-        
+
         is_community_admin = True
         community_user_ids = [3]
         expected = "(workflow_activity.activity_update_user LIKE '%' || ? || '%')"
@@ -2266,7 +2328,7 @@ def test_get_user_ids_of_request_mails_by_record_id(workflow, users, mocker):
     with patch("weko_workflow.api.RequestMailList.get_mail_list_by_item_id", return_value=requestmails[2]):
         ids = activity.get_user_ids_of_request_mails_by_record_id(0)
         assert ids == [User.query.filter_by(email="contributor@test.org").one_or_none().id]
-    
+
 
 
 # def check_user_role_for_mail
@@ -2277,7 +2339,7 @@ def test_check_user_role_for_mail(users):
     roles={'allow':[5],'deny':[]}
     assert activity.check_user_role_for_mail(users[2]["id"], roles)
 
-    # user is cont, cont in allow 
+    # user is cont, cont in allow
     roles={'allow':[3],'deny':[]}
     assert activity.check_user_role_for_mail(users[0]["id"], roles)
 
@@ -2292,7 +2354,7 @@ def test_check_user_role_for_mail(users):
     # user is cont, cont not in deny
     roles={'allow':[],'deny':[2]}
     assert activity.check_user_role_for_mail(users[0]["id"], roles)
-                             
+
 # def get_recirds_for_request_mail_by_mailaddress
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_api.py::test_get_recirds_for_request_mail_by_mailaddress -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_get_recirds_for_request_mail_by_mailaddress(db,mocker):
@@ -2302,7 +2364,7 @@ def test_get_recirds_for_request_mail_by_mailaddress(db,mocker):
         _RequestMailList(item_id="1235",mail_list=[{"email": "wekosoftware@nii.ac.jp", "author_id": ""}])
     ]
     mocker.patch("weko_workflow.api.RequestMailList.get_request_mail_by_mailaddress",return_value = request_mail_list)
-    
+
     with patch("weko_workflow.api.PersistentIdentifier.get_by_object", return_value = PersistentIdentifier(pid_value = 1)):
         recids_list = activity.get_recids_for_request_mail_by_mailaddress("wekosoftware@nii.ac.jp")
         assert recids_list

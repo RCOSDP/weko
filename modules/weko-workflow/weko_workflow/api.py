@@ -1429,7 +1429,7 @@ class WorkActivity(object):
             else:
                 identifier = action_identifier
         return identifier
-    
+
     def get_activity_item_application(self, activity_id):
         with db.session.no_autoflush:
             item_application = ActivityItemApplication.query.filter_by(
@@ -1904,7 +1904,7 @@ class WorkActivity(object):
                                 _Activity.temp_data.op("#>>")("{'metainfo', 'shared_user_ids'}").contains(self_user_id_json),
                                 _Activity.temp_data.op("#>>")("{'metainfo', 'owner'}") == str(self_user_id),
                             ),
-                            _FlowActionRole.action_user 
+                            _FlowActionRole.action_user
                             != _Activity.activity_login_user,
                             _FlowActionRole.action_user_exclude == '0'
                         ),
@@ -2111,7 +2111,7 @@ class WorkActivity(object):
                     ),
                     and_(
                         _FlowActionRole.action_item_registrant == True,
-                        _ItemMetadata.json.op('->>')('owner') == current_user.get_id() 
+                        _ItemMetadata.json.op('->>')('owner') == current_user.get_id()
                     ),
                     and_(
                         _FlowActionRole.action_request_mail == True,
@@ -2624,7 +2624,7 @@ class WorkActivity(object):
                 continue
             user_ids.append(temp_user_info.id)
         return user_ids
-    
+
     def get_user_ids_of_request_mails_by_record_id(self, record_id):
         """
         Get user information of request_mails by record_id
@@ -2657,8 +2657,8 @@ class WorkActivity(object):
         """
         Check user_id's role in roles
         :param record_id: int, user's id
-               roles: get_activity_action_role's return,ex: roles={'allow':[1],'deny':[]} 
-        :return: return ids of request mails that set to item  
+               roles: get_activity_action_role's return,ex: roles={'allow':[1],'deny':[]}
+        :return: return ids of request mails that set to item
         """
         user_role = db.session.query(Role).join(userrole).filter_by(user_id=user_id).all()
         is_approver = True
@@ -2678,8 +2678,8 @@ class WorkActivity(object):
             elif roles['allow'] and role.id not in roles['allow']:
                 is_approver = False
         return is_approver
-    
-    def get_recids_for_request_mail_by_mailaddress(self, address):   
+
+    def get_recids_for_request_mail_by_mailaddress(self, address):
         request_mail_list =  RequestMailList.get_request_mail_by_mailaddress(address)
         recid_list=[]
         for request_mail in request_mail_list:
@@ -3219,24 +3219,28 @@ class WorkActivity(object):
         """Get notification parameters for registrant."""
         with db.session.begin_nested():
             set_target_id = {activity.activity_login_user}
-            is_shared = bool(activity.shared_user_ids)
+            shared_user_ids = [
+                s.get('user') for s in activity.shared_user_ids or []
+            ]
+            is_shared = len(shared_user_ids) > 0
             if is_shared:
-                set_target_id.update([s.get('user') for s in activity.shared_user_ids])
+                set_target_id.update(shared_user_ids)
 
             recid = (
                 PersistentIdentifier
                 .get_by_object("recid", "rec", activity.item_id)
             )
             actor_id = activity.activity_update_user
+            set_target_id.discard(actor_id)
+
+            if is_shared and actor_id == activity.activity_login_user:
+                actor_id = shared_user_ids[0]
 
             actor_profile = UserProfile.get_by_userid(actor_id)
             actor_name = (
                 actor_profile.username
                 if actor_profile is not None else None
             )
-
-            # if self delete, not notify
-            set_target_id.discard(actor_id)
 
         return set_target_id, recid, actor_id, actor_name
 
@@ -3246,7 +3250,13 @@ class WorkActivity(object):
                 PersistentIdentifier
                 .get_by_object("recid", "rec", activity.item_id)
             )
-            actor_id = activity.activity_login_user
+            shared_user_ids = [
+                s.get('user') for s in activity.shared_user_ids or []
+            ]
+            actor_id = (
+                shared_user_ids[0]
+                if shared_user_ids else activity.activity_login_user
+            )
 
             actor_profile = UserProfile.get_by_userid(actor_id)
             actor_name = (
