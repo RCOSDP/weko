@@ -67,6 +67,7 @@ from weko_index_tree.utils import (
     check_index_permissions, get_index_id, get_user_roles
 )
 from weko_notifications.models import NotificationsUserSettings
+from weko_notifications.utils import _get_params_for_registrant
 from weko_records.api import FeedbackMailList, JsonldMapping, RequestMailList, ItemTypes, Mapping, ItemApplication
 from weko_records.serializers.utils import get_item_type_name
 from weko_records.utils import replace_fqdn_of_file_metadata
@@ -5336,14 +5337,8 @@ def get_notification_targets(deposit, user_id, shared_ids):
             - "settings" (dict): A dictionary mapping user IDs to their notification settings.
             - "profiles" (dict): A dictionary mapping user IDs to their user profiles.
     """
-    owners = deposit.get("_deposit", {}).get("owners", [])
-    set_target_id = set(owners)
-    is_shared = bool(shared_ids)
-    if is_shared:
-        set_target_id.update(shared_ids)
-    set_target_id.discard(int(user_id))
-
-    target_ids = list(set_target_id)
+    owner = deposit["owner"]
+    target_ids, _ = _get_params_for_registrant(int(owner), int(owner), shared_ids)
     current_app.logger.debug(f"[get_notification_targets] target_ids: {target_ids}")
 
     try:
