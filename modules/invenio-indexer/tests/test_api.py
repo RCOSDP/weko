@@ -24,8 +24,7 @@ from kombu.compat import Consumer
 from kombu import Exchange, Queue
 
 from mock import MagicMock, patch
-
-from invenio_indexer.api import BulkRecordIndexer, RecordIndexer
+from unittest.mock import call
 from invenio_indexer.api import BulkRecordIndexer, RecordIndexer, BulkBaseException, BulkConnectionTimeout, BulkConnectionError, BulkException
 from invenio_indexer.signals import before_record_index
 from elasticsearch import ConnectionError, ConnectionTimeout
@@ -208,9 +207,9 @@ def test_process_bulk_queue_reindex(app, queue):
                 with patch('invenio_indexer.api.RecordIndexer._actionsiter_sync_version', return_value=[{}]*10):
                     indexer = RecordIndexer()
                     result = indexer.process_bulk_queue_reindex(es_bulk_kwargs=es_bulk_kwargs)
-                assert result[0] == 8  # success数
-                assert result[1] == 2  # fail数
-                assert errors[0]['index']['error']['type'] == "version_conflict"
+                    assert result[0] == 8  # success数
+                    assert result[1] == 2  # fail数
+                    assert errors[0]['index']['error']['type'] == "version_conflict"
 
             # ConnectionError
             errors = [
@@ -254,6 +253,87 @@ def test_process_bulk_queue_reindex(app, queue):
                     assert result[1] == 1  # fail数
                     assert errors[0]['index']['error']['type'] == 'Exception'
 
+            # BulkIndexError (when errors is an empty list)
+            errors = []
+            app.config['SEARCH_UI_SEARCH_INDEX'] = 'test-index'
+            def mock_reindex_bulk_be_empty(self, client, actions, **kwargs):
+                self.count = 10
+                raise DummyBulkIndexError(errors)
+
+            with patch('invenio_indexer.api.RecordIndexer.reindex_bulk', new=mock_reindex_bulk_be_empty):
+                with patch('invenio_indexer.api.RecordIndexer._actionsiter_sync_version', return_value=[{}]*10):
+                    indexer = RecordIndexer()
+                    result = indexer.process_bulk_queue_reindex(es_bulk_kwargs=es_bulk_kwargs)
+                assert result[0] == 10  # Number of successes (all considered successful)
+                assert result[1] == 0   # Number of failures
+                assert errors == []
+
+            # ConnectionError (when errors is an empty list)
+            errors = []
+            es_conn_error = ConnectionError("ConnectionError!", {}, {})
+            with patch('invenio_indexer.api.RecordIndexer.reindex_bulk', side_effect=DummyBulkConnectionError(success=10, failed=0, errors=errors, original_exception=es_conn_error)):
+                with patch('invenio_indexer.api.RecordIndexer._actionsiter_sync_version', return_value=[{}]*10):
+                    indexer = RecordIndexer()
+                    result = indexer.process_bulk_queue_reindex(es_bulk_kwargs=es_bulk_kwargs)
+                    assert result[0] == 10  # Number of successes
+                    assert result[1] == 0   # Number of failures
+                    assert errors == []
+
+            # ConnectionTimeout (when errors is an empty list)
+            errors = []
+            es_conn_error = ConnectionTimeout("ConnectionTimeout!", {}, {})
+            def mock_reindex_bulk_ct_empty(client, actions, **kwargs):
+                indexer.latest_item_id = 9
+                raise DummyBulkConnectionTimeout(success=10, failed=0, errors=errors, original_exception=es_conn_error)
+            with patch('invenio_indexer.api.RecordIndexer.reindex_bulk', side_effect=mock_reindex_bulk_ct_empty):
+                with patch('invenio_indexer.api.RecordIndexer._actionsiter_sync_version', return_value=[{}]*10):
+                    indexer = RecordIndexer()
+                    result = indexer.process_bulk_queue_reindex(es_bulk_kwargs=es_bulk_kwargs)
+                    assert result[0] == 10  # Number of successes
+                    assert result[1] == 0   # Number of failures
+                    assert errors == []
+
+            # Exception (when errors is an empty list)
+            errors = []
+            es_conn_error = Exception("Exception!", {}, {})
+            def mock_reindex_bulk_exception_empty(client, actions, **kwargs):
+                indexer.latest_item_id = 9
+                raise DummyBulkException(success=10, failed=0, errors=errors, original_exception=es_conn_error)
+            with patch('invenio_indexer.api.RecordIndexer.reindex_bulk', side_effect=mock_reindex_bulk_exception_empty):
+                with patch('invenio_indexer.api.RecordIndexer._actionsiter_sync_version', return_value=[{}]*10):
+                    indexer = RecordIndexer()
+                    result = indexer.process_bulk_queue_reindex(es_bulk_kwargs=es_bulk_kwargs)
+                    assert result[0] == 10  # Number of successes
+                    assert result[1] == 0   # Number of failures
+                    assert errors == []
+
+
+
+def test_process_bulk_queue_reindex_for_error_loop(app):
+    with app.app_context():
+        indexer = RecordIndexer()
+        es_bulk_kwargs = {"chunk_size": 500}
+
+        # Mock for reindex_bulk: _fail is a list
+        def mock_reindex_bulk(*args, **kwargs):
+            _success = 2
+            _fail = [
+                {"index": {"_id": "id1", "error": {"type": "ConnectionError"}}},
+                {"index": {"_id": "id2", "error": {"type": "Timeout"}}}
+            ]
+            return _success, _fail
+
+        with patch('invenio_indexer.api.RecordIndexer.reindex_bulk', side_effect=mock_reindex_bulk), \
+             patch('invenio_indexer.api.RecordIndexer._actionsiter_sync_version', return_value=[{}]*4), \
+             patch('weko_deposit.utils.update_pdf_contents_es_with_index_api', lambda ids: None), \
+             patch('click.secho') as mock_secho:
+            result = indexer.process_bulk_queue_reindex(es_bulk_kwargs=es_bulk_kwargs)
+            assert result[0] == 2
+            assert result[1] == 2
+            # click.secho should be called twice in the for error in _fail: loop
+            assert any("id1" in str(c) and "ConnectionError" in str(c) for c in mock_secho.call_args_list)
+            assert any("id2" in str(c) and "Timeout" in str(c) for c in mock_secho.call_args_list)
+
 class DummyBulkIndexError(BulkIndexError):
     def __init__(self, errors):
         super().__init__(errors)
@@ -285,7 +365,6 @@ class DummyBulkException(BulkException):
         self.errors = errors
         self.original_exception = original_exception
 
-import pytest
 # .tox/c1/bin/pytest --cov=invenio_indexer tests/test_api.py::test_reindex_bulk -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_reindex_bulk():
     def dummy_streaming_bulk_success(*args, **kwargs):
@@ -305,7 +384,7 @@ def test_reindex_bulk():
     client = MagicMock()
     actions = [{}] * 10
     with patch('invenio_indexer.api.streaming_bulk', dummy_streaming_bulk_success):
-        result = indexer.reindex_bulk(client, actions, stats_only=True, chunk_size=500)
+        result = indexer.reindex_bulk(client, actions, stats_only=True, chunk_size=500, name_space='test', ignore_status=[400])
     assert result[0] == 10
     assert result[1] == 0
 
@@ -406,6 +485,40 @@ def test_reindex_bulk():
             indexer.reindex_bulk(client, actions, stats_only=False, chunk_size=500)
         assert e.value.success == 7
 
+def test_reindex_bulk_chunk_logging():
+    # Dummy for streaming_bulk: Assumes chunk logs are output every 2 items
+    def dummy_streaming_bulk(*args, **kwargs):
+        for i in range(4):
+            if i % 2 == 0:
+                yield True, {'index': {'_id': f'id{i}'}}
+            else:
+                yield False, {'index': {'_id': f'id{i}'}}
+
+    indexer = RecordIndexer()
+    indexer.target_chunks = 2  # Set chunk size to 2
+    client = MagicMock()
+    actions = [{}] * 4
+
+    with patch('invenio_indexer.api.streaming_bulk', dummy_streaming_bulk), \
+         patch('click.secho') as mock_secho:
+        result = indexer.reindex_bulk(client, actions, stats_only=True, chunk_size=2)
+
+    assert mock_secho.call_count == 4
+    first_chunk = [
+        call(f"[", fg='green'),  # Success
+        call(f"[", fg='red'),    # Fail
+    ]
+    second_chunk = [
+        call(f"[", fg='green'),
+        call(f"[", fg='red'),
+    ]
+    calls = mock_secho.call_args_list
+    assert any("ID: id0, Status: Success, Chunk: 1/2" in str(c) and "fg='green'" in str(c) for c in calls)
+    assert any("ID : id1, Status: Fail, Chunk: 1/2" in str(c) and "fg='red'" in str(c) for c in calls)
+    assert any("ID: id2, Status: Success, Chunk: 2/2" in str(c) and "fg='green'" in str(c) for c in calls)
+    assert any("ID : id3, Status: Fail, Chunk: 2/2" in str(c) and "fg='red'" in str(c) for c in calls)
+    assert result[0] == 2  # Number of successes
+    assert result[1] == 2  # Number of failures
 
 def test_index(app):
     """Test record indexing."""
