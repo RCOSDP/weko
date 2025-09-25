@@ -85,8 +85,8 @@ require([
     });
   });
 
-  const del_msg = document.getElementById('del_msg').textContent;
-  const del_ver_msg = document.getElementById('del_ver_msg').textContent;
+  const del_msg = document.getElementById('del_msg')?.textContent;
+  const del_ver_msg = document.getElementById('del_ver_msg')?.textContent;
   $('a#btn_delete').on('click', function () {
     $('#confirm_delete_content').text(del_msg);
     $('#confirm_delete').modal('show');
