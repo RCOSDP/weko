@@ -205,7 +205,10 @@ class Flow(object):
                 query = query.order_by(asc(_Flow.flow_id))
             else:
                 role_ids = [role.id for role in current_user.roles]
-                repository_ids = [community.id for community in Community.query.filter(Community.group_id.in_(role_ids)).all()]
+                communities = Community.get_by_user(
+                    role_ids, with_deleted=True
+                ).all()
+                repository_ids = [community.id for community in communities]
                 query = query.filter(_Flow.repository_id.in_(repository_ids)).order_by(asc(_Flow.flow_id))
             return query.all()
 
@@ -553,7 +556,10 @@ class WorkFlow(object):
                 query = query.order_by(asc(_WorkFlow.flows_id))
             else:
                 role_ids = [role.id for role in user.roles]
-                repository_ids = [community.id for community in Community.query.filter(Community.group_id.in_(role_ids)).all()]
+                communities = Community.get_by_user(
+                    role_ids, with_deleted=True
+                ).all()
+                repository_ids = [community.id for community in communities]
                 query = query.filter(_WorkFlow.repository_id.in_(repository_ids)).order_by(asc(_WorkFlow.flows_id))
             return query.all()
 
@@ -2256,10 +2262,12 @@ class WorkActivity(object):
             role_ids = [role.id for role in current_user.roles]
         if role_ids:
             from invenio_communities.models import Community
-            comm_list = Community.query.filter(
-                Community.id_role.in_(role_ids)
+            comm_list = Community.get_by_user(
+                role_ids, with_deleted=True
             ).all()
-            com_roles = list(set([comm.id_role for comm in comm_list]))
+            com_roles = list(
+                set([comm.id_role for comm in comm_list]).union(
+                    set([comm.group_id for comm in comm_list])))            
 
             if com_roles:
                 com_users = User.query.outerjoin(userrole).outerjoin(Role) \
@@ -2295,8 +2303,8 @@ class WorkActivity(object):
             if is_community_admin:
                 cur_role = [role.id for role in current_user.roles]
                 from invenio_communities.models import Community
-                comm_list = Community.query.filter(
-                    Community.id_role.in_(cur_role)
+                comm_list = Community.get_by_user(
+                    cur_role, with_deleted=True
                 ).all()
                 for comm in comm_list:
                     comadmin_index_list += [str(i.cid) for i in Indexes.get_self_list(comm.root_node_id)
