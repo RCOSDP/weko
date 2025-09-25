@@ -915,7 +915,7 @@ class StatisticMail:
         """Send mail to receiver.
 
         Arguments:
-            receiver {string} -- receiver mail address
+            recipient {string} -- receiver mail address
             body {string} -- mail content
             subject {string} -- mail subject
 
@@ -929,7 +929,7 @@ class StatisticMail:
         rf = {
             'subject': subject,
             'body': body,
-            'recipients': recipient
+            'recipients': [recipient]
         }
         current_app.logger.debug("END Prepare Feedback Mail Data")
         return MailSettingView.send_statistic_mail(rf)
