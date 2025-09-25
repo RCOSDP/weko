@@ -202,6 +202,7 @@ def delete_author():
 
     check, message = check_delete_author(data['pk_id'])
     if not check:
+        current_app.logger.error(f"AUTHOR_DELETE denied: pk_id={data['pk_id']}")
         return make_response(message, 403)
 
     try:
