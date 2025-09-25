@@ -1174,6 +1174,8 @@ class ItemBulkExport(BaseView):
     @expose("/check_export_status", methods=["GET"])
     def check_export_status(self):
         """Check export status."""
+        if not current_user.is_authenticated:
+            abort(302)
         check_celery = check_celery_is_run()
         check_life_time = check_session_lifetime()
         export_status, download_uri, message, run_message, \
