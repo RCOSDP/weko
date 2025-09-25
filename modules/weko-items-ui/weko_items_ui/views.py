@@ -1397,7 +1397,11 @@ def prepare_delete_item(id=None, community=None, shared_user_ids=[]):
             return jsonify(
                 code=0,
                 msg="success",
-                data={"redirect": url_for("invenio_records_ui.recid", pid_value=object_id)}
+                data={
+                    "redirect": url_for(
+                        "invenio_records_ui.recid", pid_value=recid
+                    )
+                }
             )
 
         post_activity['flow_id'] = workflow.delete_flow_id
