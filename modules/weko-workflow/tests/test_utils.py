@@ -2280,7 +2280,7 @@ def test_get_default_mail_sender(db):
     assert result == "test_sender"
 # def set_mail_info(item_info, activity_detail, guest_user=False):
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_set_mail_info -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
-def test_set_mail_info(app, db_register, mocker, records_restricted, db_records, db):
+def test_set_mail_info(app, db_register_full_action, mocker, db_records, db):
     config = current_app.config
     mocker.patch("weko_workflow.utils.get_site_info_name",return_value=("name_en","name_ja"))
     mocker.patch("weko_workflow.utils.get_default_mail_sender",return_value="default_sender")
@@ -2300,16 +2300,13 @@ def test_set_mail_info(app, db_register, mocker, records_restricted, db_records,
         "subitem_title":"test_sub_title",
         "subitem_advisor_university/institution":"test advisor university",
         "subitem_guarantor_university/institution":"test guarantor university",
-        "subitem_fullname":"test access name",
-        'subitem_university/institution':"test_restricted_institution",
         "subitem_restricted_access_research_title":"test_restricted_research_title",
         "subitem_restricted_access_dataset_usage":"test_restricted_dataset",
         "subitem_restricted_access_application_date":"test_restricted_date",
-        "subitem_mail_address":"restricted@test.org",
         "subitem_restricted_access_research_plan":"restricted_research_plan"
     }
 
-    activity_id = db_register["activities"][0].activity_id
+    activity_id = db_register_full_action["activities"][0].activity_id
 
     test = {
         "university_institution":"test_institution",
@@ -2335,15 +2332,15 @@ def test_set_mail_info(app, db_register, mocker, records_restricted, db_records,
         "restricted_research_title":"test_restricted_research_title",
         "restricted_data_name":"test_restricted_dataset",
         "restricted_application_date":"test_restricted_date",
-        "restricted_mail_address":"restricted@test.org",
+        "restricted_mail_address":"test@test.org",
         "restricted_download_link":"",
         "restricted_expiration_date":"",
         "restricted_approver_name":"",
         "restricted_approver_affiliation":"",
         "restricted_site_name_ja":"name_ja",
         "restricted_site_name_en":"name_en",
-        # "restricted_institution_name_ja":config["THEME_INSTITUTION_NAME"]["ja"],
-        # "restricted_institution_name_en":config["THEME_INSTITUTION_NAME"]["en"],
+        "restricted_institution_name_ja":config["THEME_INSTITUTION_NAME"]["ja"],
+        "restricted_institution_name_en":config["THEME_INSTITUTION_NAME"]["en"],
         "restricted_site_mail":"default_sender",
         "restricted_site_url":"https://localhost",
         "mail_recipient":"test@test.org",
@@ -2354,7 +2351,7 @@ def test_set_mail_info(app, db_register, mocker, records_restricted, db_records,
         "restricted_research_plan":"restricted_research_plan"
     }
     with app.test_request_context():
-        result = set_mail_info(item_info,db_register["activities"][0],True)
+        result = set_mail_info(item_info,db_register_full_action["activities"][0],True)
         assert result == test
 
     test = {
@@ -2381,15 +2378,15 @@ def test_set_mail_info(app, db_register, mocker, records_restricted, db_records,
         "restricted_research_title":"test_restricted_research_title",
         "restricted_data_name":"test_restricted_dataset",
         "restricted_application_date":"test_restricted_date",
-        "restricted_mail_address":"restricted@test.org",
+        "restricted_mail_address":"test@test.org",
         "restricted_download_link":"",
         "restricted_expiration_date":"",
         "restricted_approver_name":"",
         "restricted_approver_affiliation":"",
         "restricted_site_name_ja":"name_ja",
         "restricted_site_name_en":"name_en",
-        # "restricted_institution_name_ja":config["THEME_INSTITUTION_NAME"]["ja"],
-        # "restricted_institution_name_en":config["THEME_INSTITUTION_NAME"]["en"],
+        "restricted_institution_name_ja":config["THEME_INSTITUTION_NAME"]["ja"],
+        "restricted_institution_name_en":config["THEME_INSTITUTION_NAME"]["en"],
         "restricted_site_mail":"default_sender",
         "restricted_site_url":"https://localhost",
         "mail_recipient":"test@test.org",
@@ -2400,14 +2397,14 @@ def test_set_mail_info(app, db_register, mocker, records_restricted, db_records,
         "restricted_research_plan":"restricted_research_plan"
     }
     with app.test_request_context():
-        result = set_mail_info(item_info,db_register["activities"][0],False)
+        result = set_mail_info(item_info,db_register_full_action["activities"][0],False)
         assert result == test
 
     with app.test_request_context():
        record = WekoRecord.get_record(db_records[0][2].id)
        with patch("weko_workflow.utils.WekoRecord.get_record_by_pid", return_value = record):
            with patch("weko_workflow.utils.url_for", return_value = 'records/1'):
-                result = set_mail_info(item_info,db_register["activities"][9],False)
+                result = set_mail_info(item_info,db_register_full_action["activities"][9],False)
                 assert result["landing_url"] != ""
 
     with app.test_request_context():
@@ -2416,7 +2413,7 @@ def test_set_mail_info(app, db_register, mocker, records_restricted, db_records,
             with patch("weko_workflow.utils.url_for", return_value = 'records/1'):
                 with patch("weko_workflow.utils.WekoRecord.get_file_data", return_value = [{"filename":"aaa.txt"}]):
                     with patch("weko_workflow.utils.extract_term_description", return_value=("","")):
-                        result = set_mail_info(item_info,db_register["activities"][10],False)
+                        result = set_mail_info(item_info,db_register_full_action["activities"][10],False)
                         assert result["terms_of_use_jp"] == ""
                         assert result["terms_of_use_en"] == ""
 
@@ -2430,7 +2427,7 @@ def test_set_mail_info(app, db_register, mocker, records_restricted, db_records,
                     with db.session.begin_nested():
                         db.session.add(item_application_1)
                     db.session.commit()
-                    db_register["activities"][10].extra_info = {"file_name":"recid/15"}
+                    db_register_full_action["activities"][10].extra_info = {"file_name":"recid/15"}
                     persistent_identifier = PersistentIdentifier(
                         pid_type="recid",
                         pid_value=item_id_1,
@@ -2440,7 +2437,7 @@ def test_set_mail_info(app, db_register, mocker, records_restricted, db_records,
                         object_uuid=uuid.uuid4(),
                     )                        
                     mocker.patch("weko_workflow.utils.PersistentIdentifier.get", return_value = persistent_identifier)
-                    result = set_mail_info(item_info,db_register["activities"][10],False)
+                    result = set_mail_info(item_info,db_register_full_action["activities"][10],False)
                     assert result["terms_of_use_jp"] == ""
                     assert result["terms_of_use_en"] == ""
 
@@ -2449,7 +2446,7 @@ def test_set_mail_info(app, db_register, mocker, records_restricted, db_records,
         with patch("weko_workflow.utils.WekoRecord.get_record_by_pid", return_value = record):
             with patch("weko_workflow.utils.url_for", return_value = 'records/1'):
                 with patch("weko_workflow.utils.extract_term_description", return_value=("test_terms_ja","test_terms_en")):
-                    result = set_mail_info(item_info,db_register["activities"][11],False)
+                    result = set_mail_info(item_info,db_register_full_action["activities"][11],False)
 
     with app.test_request_context():
         record = WekoRecord.get_record(db_records[0][2].id)
@@ -2457,7 +2454,7 @@ def test_set_mail_info(app, db_register, mocker, records_restricted, db_records,
             # with patch("weko_workflow.utils.url_for", return_value = 'records/1'):
                 with patch("weko_workflow.utils.WekoRecord.get_file_data", return_value = [{"filename":"aaa.txt"}]):
                     with patch("weko_workflow.utils.extract_term_description", return_value=("","")):
-                        result = set_mail_info(item_info,db_register["activities"][10],False)
+                        result = set_mail_info(item_info,db_register_full_action["activities"][10],False)
 
 class MockDict():
     def __init__(self, data):
@@ -2985,14 +2982,13 @@ def test_save_activity_data(mocker):
 
     data = {
         "activity_id":"test_id",
-        "title":"test title",
         "shared_user_ids":[{"user":1}],
         "approval1":"test1@test.org",
         "approval2":"test2@test.org"
     }
     mock_update = mocker.patch("weko_workflow.utils.WorkActivity.update_activity")
     save_activity_data(data)
-    mock_update.assert_called_with("test_id",{"title":"test title","shared_user_ids":[{"user":1}],"approval1":"test1@test.org","approval2":"test2@test.org"})
+    mock_update.assert_called_with("test_id",{"shared_user_ids":[{"user":1}],"approval1":"test1@test.org","approval2":"test2@test.org"})
 
 # def save_activity_data(data: dict) -> NoReturn:
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_save_activity_data_1 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
@@ -3000,7 +2996,6 @@ def test_save_activity_data_1(db_register_full_action, mocker):
     mock_update = mocker.patch("weko_workflow.utils.WorkActivity.update_activity")
     data = {
         "activity_id":db_register_full_action['activities'][0].activity_id,
-        "title":"test title",
         "shared_user_ids":[],
         "approval1":"test1@test.org",
         "approval2":"test2@test.org"
@@ -3014,7 +3009,6 @@ def test_save_activity_data_1(db_register_full_action, mocker):
 def test_save_activity_data_2(db_register_full_action, mocker):
     data = {
         "activity_id":db_register_full_action['activities'][0].activity_id,
-        "title":"test title",
         "shared_user_ids":[{"user":3}],
         "approval1":"test1@test.org",
         "approval2":"test2@test.org"

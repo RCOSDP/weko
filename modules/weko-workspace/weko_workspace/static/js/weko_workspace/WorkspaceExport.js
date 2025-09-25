@@ -5,8 +5,6 @@ document.addEventListener('DOMContentLoaded', function () {
     exportButton.addEventListener('click', function () {
       showExportModal(); // エクスポート用モーダルを表示
     });
-  } else {
-    console.error("アイテム出力ボタン (#btn_export) が見つかりません。");
   }
 
   // チェックされたアイテムのIDを取得する関数
@@ -27,13 +25,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
       exportItemListToTSV(window.workspaceItemList, true, selectedIds);
     });
-  } else {
-    console.error('「選択アイテム出力」ボタン (export_selected) が見つかりません。');
   }
 });
 // エラーメッセージを画面に表示する関数
 function showErrorMessage(message) {
-  console.error(message);
+  // console.error(message);
 
   // 既存のエラーメッセージを削除
   const existingError = document.getElementById("exportErrorMessage");
@@ -76,13 +72,14 @@ function showExportModal() {
         transform: translate(-50%, -50%);
         background: white;
         width: 400px;
-        height: 150px;
+        height: max-content;
         padding: 20px;
         border-radius: 8px;
         box-shadow: 0px 4px 8px rgba(0,0,0,0.15);
         z-index: 1000;
         text-align: center;
     ">
+      <div style="height: auto;">
         <h2 style="font-size: 14px; margin-bottom: 10px;">以下のオプションを選択してください:</h2>
         <div style="
                 width: 100%;
@@ -107,6 +104,7 @@ function showExportModal() {
             font-size: 18px;
             cursor: pointer;
         ">&times;</button>
+      </div>
     </div>
     <div id="modalBackdrop" style="
         position: fixed;
@@ -154,8 +152,6 @@ function handleExportButtonClick(selectedOnly = false) {
       return;
     }
   }
-
-  console.log("出力対象のアイテム:", items.length, "選択アイテム:", selectedIds.length);
 
   // アイテムが取得できなかった場合
   if (!items.length) {
