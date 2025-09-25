@@ -220,9 +220,10 @@ def change_metadata(prop_type: str, key: str, item, rec=None):
 
     return change_flag
 
-def main():
+def main(startDate=None,endDate=None,recordId=None,itemTypeId=None, from_cmd=False):
     # 引数を取得
-    startDate, endDate, recordId, itemTypeId = parse_args()
+    if from_cmd:
+        startDate, endDate, recordId, itemTypeId = parse_args()
 
     # チェック用辞書を初期化
     check_item_keys = {}
@@ -693,4 +694,4 @@ def change_jpcoar_catalog_metadata(key, item, rec=None) -> bool:
 
 
 if __name__ == '__main__':
-    main()
+    main(from_cmd=True)
