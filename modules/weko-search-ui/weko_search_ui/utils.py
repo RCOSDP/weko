@@ -2064,15 +2064,15 @@ def register_item_metadata(item, root_path, owner, is_gakuninrdm=False, request_
                 pid, keep_version=True, is_import=True
             )
             item_link_draft_pid = ItemLink(_draft_pid.pid_value)
-            item_link_draft_pid.update(link_data, require_commit=False)
+            item_link_draft_pid.update(link_data, required_commit=False)
 
         if item_application and can_import_item_application:
             ItemApplication.update(item_id=_deposit.id, item_application=item_application)
 
         item_link_latest_pid = ItemLink(_deposit.pid.pid_value)
-        item_link_latest_pid.update(link_data, require_commit=False)
+        item_link_latest_pid.update(link_data, required_commit=False)
         item_link_pid_without_ver = ItemLink(item_id)
-        item_link_pid_without_ver.update(link_data, require_commit=False)
+        item_link_pid_without_ver.update(link_data, required_commit=False)
 
 
 def update_publish_status(item_id, status):
