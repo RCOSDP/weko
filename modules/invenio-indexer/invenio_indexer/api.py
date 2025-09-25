@@ -739,6 +739,7 @@ class RecordIndexer(object):
                     log_list.append({"id": item['index']['_id'], "Status": "Fail"})
                 else:
                     success += 1
+                    success_ids.append(item['index']['_id'])
                     log_list.append({"id": item['index']['_id'], "Status": "Success"})
                 if item_count % kwargs["chunk_size"] == 0:
                     date = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')
