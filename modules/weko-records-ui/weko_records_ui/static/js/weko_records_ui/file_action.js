@@ -177,26 +177,35 @@ $(document).ready(function () {
     let user_mail_confirm = $('#user_mail_confirm').val();
     if (validateUserEmail(user_mail, user_mail_confirm)) {
       $('.user-mail').removeClass('has-error');
-      $('.user_mail_confirm').removeClass('has-error');
-      $("#confirm_email_btn").removeAttr("disabled");
+      let password_check = true;
+      let password_checkflag = document.getElementById("password_checkflag").value;
+      if (password_checkflag == "True"){
+        let password_for_download = $('#password_for_download').val();
+        let password_for_download_confirm = $('#password_for_download_confirm').val();
+        password_check = validatePassword(password_for_download, password_for_download_confirm);
+      }
+      if (password_check){
+        $("#confirm_email_btn").removeAttr("disabled");
+      }
     } else {
       $("#confirm_email_btn").attr("disabled", true);
       $('.user-mail').addClass('has-error');
-      $('.user_mail_confirm').addClass('has-error');
     }
   });
 
   $('#password_for_download, #password_for_download_confirm').on('input', function () {
+    let user_mail = $('#user_mail').val();
+    let user_mail_confirm = $('#user_mail_confirm').val();
     let password_for_download = $('#password_for_download').val();
     let password_for_download_confirm = $('#password_for_download_confirm').val();
     if (validatePassword(password_for_download, password_for_download_confirm)) {
-      $('.password_for_download').removeClass('has-error');
-      $('.password_for_download_confirm').removeClass('has-error');
-      $("#confirm_email_btn").removeAttr("disabled");
+      $('.password').removeClass('has-error');
+      if (validateUserEmail(user_mail, user_mail_confirm)){
+        $("#confirm_email_btn").removeAttr("disabled");
+      }
     } else {
       $("#confirm_email_btn").attr("disabled", true);
-      $('.password_for_download').addClass('has-error');
-      $('.password_for_download_confirm').addClass('has-error');
+      $('.password').addClass('has-error');
     }
   });
 });
