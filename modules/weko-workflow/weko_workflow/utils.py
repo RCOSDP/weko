@@ -2960,7 +2960,7 @@ def set_mail_info(item_info, activity_detail, guest_user=False):
         file_info = None
         if record:
             mail_info['landing_url'] = urljoin(request.url_root, url_for(
-                'invenio_records_ui.recid', pid_value=record.pid))
+                'invenio_records_ui.recid', pid_value=record.pid.pid_value))
             file_info = next((file_data for file_data in record.get_file_data()
                             if file_data.get('filename') == applying_filename),{})
         if file_info:
