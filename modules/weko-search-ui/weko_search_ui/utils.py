@@ -2999,11 +2999,17 @@ def handle_check_doi(list_record):
 
         doi_pidstore = identifier.check_pidstore_exist("doi", doi_link)
         if doi_pidstore and doi_pidstore.status == PIDStatus.DELETED:
+            current_app.logger.warning(
+                f"Specified DOI was withdrawn: {doi}"
+            )
             error = _(
                 "Specified DOI was withdrawn. Please specify another DOI."
             )
         # Check if DOI already exists, but allows to assign to self.
         elif doi_pidstore and doi_pidstore.object_uuid != object_uuid:
+            current_app.logger.warning(
+                f"Specified DOI is already exists: {doi}"
+            )
             error = _(
                 "Specified DOI has been used already for another item. "
                 "Please specify another DOI."

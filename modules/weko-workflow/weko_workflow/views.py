@@ -1033,6 +1033,8 @@ def display_activity(activity_id="0", community_id=None):
 
     # getargs = request.args
     ctx = {'community': None}
+    if request.args.get("c"):
+        community_id = request.args.get("c")
     # community_id = ""
     if community_id is not None:
         comm = GetCommunity.get_community_by_id(community_id)

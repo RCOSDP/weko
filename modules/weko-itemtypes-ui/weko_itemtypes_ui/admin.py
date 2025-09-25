@@ -139,7 +139,7 @@ class ItemTypeMetaDataView(BaseView):
         if record is None:
             current_app.logger.error(f"Item type not found: {item_type_id}")
             flash(_('Item type not found.'), 'error')
-            abort(404)
+            return Response(status=404)
 
         # Check harvesting_type
         if record.model.harvesting_type:
@@ -170,7 +170,7 @@ class ItemTypeMetaDataView(BaseView):
         workflow = WorkFlow()
         workflow_list = workflow.get_workflow_by_itemtype_id(item_type_id)
         if workflow_list:
-            current_app.logger.error("Item type {item_type_id} is used in workflow.")
+            current_app.logger.error(f"Item type {item_type_id} is used in workflow.")
             flash(
                 _('Cannot delete item type. It is used in some workflows.'),
                 'error'
