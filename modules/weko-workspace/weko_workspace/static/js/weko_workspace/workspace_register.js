@@ -567,7 +567,14 @@ function toObject(arr) {
           $rootScope.filesVM.files[idx_of_file].hide = false;
           $rootScope.filesVM.files[idx_of_file].position = file.position;
         }
+        $scope.removeFileForm(file.name);
         $rootScope.filesVM.remove(file);
+
+        $scope.initFilenameList();
+        $scope.hiddenPubdate();
+        $scope.updateNumFiles();
+        $scope.reOrderAndClearMetadataOfFileContents();
+        $scope.changePositionFileName();
       }
 
       $scope.resetFilesPosition = function (replace_position) {
@@ -601,6 +608,13 @@ function toObject(arr) {
             }
           });
           this.resetFilesPosition();
+
+          $scope.initFilenameList();
+          $scope.hiddenPubdate();
+          $scope.addFileFormAndFill();
+          $scope.updateNumFiles();
+          $scope.reOrderAndClearMetadataOfFileContents();
+          $scope.changePositionFileName();
 
           // Generate error message and show modal
           if (duplicateFiles.length > 0) {
@@ -1855,60 +1869,6 @@ function toObject(arr) {
           });
       }
 
-      $scope.loadFilesFromSession = function () {
-        //When switch language, Getting files uploaded.
-        let actionID = $("#activity_id").text();
-        let fileData = sessionStorage.getItem(actionID);
-        if (!fileData) {
-          $scope.setFilesModel();
-          return;
-        }
-        fileData = JSON.parse(fileData);
-        let bucketFiles = fileData['files'];
-        let bucketEndpoints = fileData['endpoints'];
-        let recordsModel = fileData['recordsModel'];
-        if (bucketFiles && bucketEndpoints) {
-          bucketFiles = JSON.parse(bucketFiles);
-          bucketEndpoints = JSON.parse(bucketEndpoints);
-          recordsModel = JSON.parse(recordsModel);
-          bucketEndpoints.html = '';
-          $rootScope.filesVM.files = bucketFiles;
-          $rootScope.filesVM.invenioFilesEndpoints = bucketEndpoints;
-          if (bucketEndpoints.hasOwnProperty('bucket')) {
-            $rootScope.$broadcast(
-              'invenio.records.endpoints.updated', bucketEndpoints
-            );
-          }
-          $scope.setFilesModel(recordsModel);
-        }
-      }
-
-      $scope.storeFilesToSession = function () {
-        if (!$rootScope.filesVM) {
-          return;
-        }
-        //Add file uploaded to sessionStorage when uploaded processing done
-        window.history.pushState("", "", $scope.currentUrl);
-        let actionID = $("#activity_id").text();
-        let data = {
-          "files": JSON.stringify($rootScope.filesVM.files),
-          "endpoints": JSON.stringify($rootScope.filesVM.invenioFilesEndpoints),
-          "recordsModel": JSON.stringify($rootScope.recordsVM.invenioRecordsModel),
-        }
-        //Add pid_value to sessionStorage when uploaded processing done
-        sessionStorage.setItem(actionID, JSON.stringify(data))
-        if ($rootScope.filesVM.invenioFilesEndpoints.self) {
-          let pid_value = $rootScope.filesVM.invenioFilesEndpoints.self.split("/")
-          if (pid_value.length > 0) {
-            let pid_value_data = {
-              "activity_id": actionID,
-              "pid_value_temp": pid_value[pid_value.length - 1]
-            }
-            sessionStorage.setItem("pid_value_data", JSON.stringify(pid_value_data))
-          }
-        }
-      }
-
       $scope.setFilesModel = function (recordsModel) {
         setTimeout(function (){
           let model = $rootScope.recordsVM.invenioRecordsModel;
@@ -1960,7 +1920,6 @@ function toObject(arr) {
       $rootScope.$on('invenio.records.loading.stop', function (ev) {
         $scope.hiddenPubdate();
         $scope.initUserGroups();
-        $scope.loadFilesFromSession();
         $scope.initFilenameList();
         $scope.searchTypeKey();
         $scope.setDataForLicenseType();
@@ -2146,7 +2105,6 @@ function toObject(arr) {
                 url: $scope.getFileURL(fileData.key)
               };
             }
-            $scope.saveFileNameToSessionStore(model[filemeta_key].length, fileData.key);
             // Push data to model
             if (fileData.replace_version_id) {
               $scope.replaceFileForm(fileData.replace_version_id, fileInfo);
@@ -2176,12 +2134,12 @@ function toObject(arr) {
         });
       }
 
-      $scope.removeFileForm = function (version_id) {
+      $scope.removeFileForm = function (file_key) {
         let model = $rootScope.recordsVM.invenioRecordsModel;
         $scope.searchFilemetaKey();
         $scope.filemeta_keys.forEach(function (filemeta_key) {
           model[filemeta_key] = model[filemeta_key].filter(function (fileInfo) {
-            return fileInfo.version_id != version_id;
+            return fileInfo.filename != file_key;
           });
         });
       }
@@ -2225,7 +2183,6 @@ function toObject(arr) {
           let fileName = $(this).val();
           if (fileName) {
             isClearInterval = true;
-            $scope.saveFileNameToSessionStore(index, fileName);
           }
           let disableFlag = !!filesObject[fileName];
           $(fileTextUrl).attr('disabled', disableFlag);
@@ -2233,28 +2190,6 @@ function toObject(arr) {
         if (isClearInterval) {
           $scope.clearDisableFileTextURLInterval();
         }
-      }
-
-      $scope.saveFileNameToSessionStore = function (index, fileName) {
-        index = index.toString();
-        let actionID = $("#activity_id").text();
-        let key = actionID + "_files_name";
-        let data = sessionStorage.getItem(key);
-        let fileNameData = data == null ? {} : JSON.parse(data);
-        fileNameData[index] = fileName;
-        sessionStorage.setItem(key, JSON.stringify(fileNameData));
-      }
-
-      $scope.getFileNameToSessionStore = function (index) {
-        index = index.toString();
-        let actionID = $("#activity_id").text();
-        let key = actionID + "_files_name";
-        let fileNameData = sessionStorage.getItem(key);
-        if (fileNameData == null || $.isEmptyObject(fileNameData)) {
-          return "";
-        }
-        fileNameData = JSON.parse(fileNameData);
-        return fileNameData[index];
       }
 
       // This is callback function - Please do NOT change function name
@@ -2270,9 +2205,6 @@ function toObject(arr) {
         //Check and fill data for file information.
         let model = $rootScope['recordsVM'].invenioRecordsModel;
         $scope.searchFilemetaKey();
-        let formIndex = form.key[1];
-        let beforeFileName = $scope.getFileNameToSessionStore(formIndex);
-        $scope.saveFileNameToSessionStore(formIndex, modelValue);
         var date;
         $.ajax({
           url: '/api/admin/get_server_date',
@@ -2291,13 +2223,6 @@ function toObject(arr) {
             if (fileInfo.filename === modelValue) {
               if (!fileInfo.url) {
                 fileInfo.url = {};
-              }
-              if (filesObject[beforeFileName]) {
-                fileInfo.filesize = [{
-                  value: ''
-                }];
-                fileInfo.format = '';
-                fileInfo.url.url = '';
               }
               if (filesObject[modelValue]) {
                 let fileData = filesObject[modelValue];
@@ -2411,39 +2336,6 @@ function toObject(arr) {
           delete file['replace_version_id'];
         });
       }
-
-      $rootScope.$on('invenio.uploader.upload.completed', function (ev) {
-        $scope.clearFileNameAfterReplace();
-        $scope.initFilenameList();
-        $scope.hiddenPubdate();
-        $scope.addFileFormAndFill();
-        $scope.updateNumFiles();
-        $scope.storeFilesToSession();
-        $scope.reOrderAndClearMetadataOfFileContents();
-        // Delay 1s after page render
-        setTimeout(function() {
-          // Change position of FileName
-          $scope.changePositionFileName();
-          $scope.listFileNeedRemoveAfterReplace.forEach(function (f) {
-            $rootScope.filesVM.remove(f);
-          });
-        }, 1000);
-      });
-
-      $scope.$on('invenio.uploader.file.deleted', function (ev, f) {
-        if (f.completed) {
-          $scope.initFilenameList();
-          $scope.hiddenPubdate();
-          $scope.removeFileForm(f.version_id);
-          $scope.updateNumFiles();
-          $scope.storeFilesToSession();
-          // Delay 1s after page render
-          setTimeout(function() {
-            // Change position of FileName
-            $scope.changePositionFileName();
-          }, 1000);
-        }
-      });
 
       $scope.getItemMetadata = function () {
         // Reset error message befor open modal.
@@ -3795,6 +3687,42 @@ function toObject(arr) {
       'wekoRecords.controllers',
     ]);
 
+    function FileNameCheckCtrl($scope, $rootScope){
+      $scope.deleteFromArrayFile = function(item, modelArray) {
+        // get uploaded files
+        let fileObjects={};
+        let filesVM = $rootScope["filesVM"];
+        if (filesVM && filesVM.hasOwnProperty("files")){
+          let filesUploaded = filesVM.files;
+          filesUploaded.forEach(function(file){
+            fileObjects[file.key] = file["version_id"];
+          });
+        }
+        // delete data
+        
+        if (modelArray) {
+          target = modelArray[item];
+          let flg = true;
+          if (fileObjects[target.filename] != undefined){
+            if (fileObjects[target.filename] == target.version_id){
+              flg = false;
+            }
+          }
+          if (flg){
+            modelArray.splice(item, 1);
+          }
+        }
+        return modelArray;
+      }
+    }
+
+    FileNameCheckCtrl.$inject = [
+      '$scope',
+      '$rootScope',
+    ];
+    angular.module('fileNameCheck',[])
+      .controller('FileNameCheckCtrl', FileNameCheckCtrl);
+
     angular.module('uploadThumbnail', ['schemaForm', 'invenioFiles'])
     .controller('UploadController', function ($scope, $rootScope, InvenioFilesAPI) {
         'use strict';
@@ -3822,7 +3750,7 @@ function toObject(arr) {
         'mgcrea.ngStrap.modal', 'pascalprecht.translate', 'ui.sortable',
         'ui.select', 'mgcrea.ngStrap.select', 'mgcrea.ngStrap.datepicker',
         'mgcrea.ngStrap.helpers.dateParser', 'mgcrea.ngStrap.tooltip',
-        'invenioFiles'
+        'invenioFiles', 'fileNameCheck'
       ]
     );
   });
