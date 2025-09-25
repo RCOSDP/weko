@@ -1149,3 +1149,7 @@ msgstr ""
 msgid "Failed to get mapping list."
 msgstr ""
 
+#: weko_search_ui/templates/weko_search_ui/admin/import.html:106
+#: weko_search_ui/templates/weko_search_ui/admin/rocrate_import.html:108
+msgid "Failed to update Elasticsearch."
+msgstr ""

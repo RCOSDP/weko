@@ -2328,22 +2328,13 @@ def import_items_to_system(
             exec_info = sys.exc_info()
             tb_info = traceback.format_tb(exec_info[2])
             opration = "ITEM_CREATE" if item.get("status") == "new" else "ITEM_UPDATE"
-            print(request_info)
             UserActivityLogger.error(
                 operation=opration,
                 target_key=item.get("id"),
                 remarks=tb_info[0],
                 request_info=request_info,
             )
-            error_id = None
-            if (
-                ex.args
-                and len(ex.args)
-                and isinstance(ex.args[0], dict)
-                and ex.args[0].get("error_id")
-            ):
-                error_id = ex.args[0].get("error_id")
-
+            error_id = 'failed_to_update_elasticsearch'
             return {"success": False, "error_id": error_id}
         except ElasticsearchException as ex:
             current_app.logger.error("elasticsearch  error: ", ex)
@@ -2368,15 +2359,7 @@ def import_items_to_system(
                 remarks=tb_info[0],
                 request_info=request_info,
             )
-            error_id = None
-            if (
-                ex.args
-                and len(ex.args)
-                and isinstance(ex.args[0], dict)
-                and ex.args[0].get("error_id")
-            ):
-                error_id = ex.args[0].get("error_id")
-
+            error_id = 'failed_to_update_elasticsearch'
             return {"success": False, "error_id": error_id}
         except redis.RedisError as ex:
             current_app.logger.error(f"redis  error: {ex}")
