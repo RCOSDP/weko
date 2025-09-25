@@ -1403,8 +1403,8 @@ def prepare_delete_item(id=None, community=None, shared_user_ids=[]):
         post_activity['flow_id'] = workflow.delete_flow_id
         # Add shared_user_ids to activity info
         shared_user_ids_activity_info = [
-            {"user": user_info} if isinstance(user_info, int) else user_info \
-                for user_info in shared_user_ids
+            {"user": int(user_info)} if not isinstance(user_info, dict)
+            else user_info for user_info in shared_user_ids
         ]
         post_activity['shared_user_ids'] = shared_user_ids_activity_info
 
