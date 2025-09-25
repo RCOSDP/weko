@@ -1151,3 +1151,7 @@ msgstr "マッピング"
 msgid "Failed to get mapping list."
 msgstr "マッピング定義リストの取得に失敗しました。"
 
+#: weko_search_ui/templates/weko_search_ui/admin/import.html:106
+#: weko_search_ui/templates/weko_search_ui/admin/rocrate_import.html:108
+msgid "Failed to update Elasticsearch."
+msgstr "Elasticsearchの更新に失敗しました。"

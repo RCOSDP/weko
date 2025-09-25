@@ -620,12 +620,12 @@ class TestStatisticMail:
 
         # is_sending_feedback is False, stats_date is None
         with patch("weko_admin.utils.FeedbackMail.get_feed_back_email_setting",return_value={"is_sending_feedback":False}):
-            result = StatisticMail.send_mail_to_all(None,None)
+            result = StatisticMail.send_mail_to_all()
             assert result == None
 
         # list_mail_data is None, get_feedback_mail_list is None
-        with patch("weko_search_ui.utils.get_feedback_mail_list", return_value=None):
-            result = StatisticMail.send_mail_to_all(None,None)
+        with patch("weko_records.api.FeedbackMailList.get_feedback_mail_list", return_value=None):
+            result = StatisticMail.send_mail_to_all()
             assert result == None
 
         mail_data = {
@@ -633,24 +633,24 @@ class TestStatisticMail:
             "test.taro@test.org":{"author_id":"1","items":{}},
             "test.hanako@test.org":{"author_id":"2","items":{}}
         }
-        mocker.patch("weko_search_ui.utils.get_feedback_mail_list", return_value=mail_data)
+        mocker.patch("weko_records.api.FeedbackMailList.get_feedback_mail_list", return_value=mail_data)
         # system_default_language is ja
         with patch("weko_admin.utils.get_system_default_language", return_value="ja"):
-            result = StatisticMail.send_mail_to_all(None,"2022-11")
+            result = StatisticMail.send_mail_to_all()
         # system_default_language is other
         with patch("weko_admin.utils.get_system_default_language", return_value="du"):
-            result = StatisticMail.send_mail_to_all(None,"2022-11")
+            result = StatisticMail.send_mail_to_all()
 
         # system_default_language is en
         # host_url[-1] is "/"
         current_app.config.update(THEME_SITEURL="https://localhost/")
-        result = StatisticMail.send_mail_to_all(None,"2022-11")
+        result = StatisticMail.send_mail_to_all()
 
         with patch("weko_admin.utils.StatisticMail.send_mail", side_effect=[True, False]):
-            StatisticMail.send_mail_to_all(mail_data,"2022-11")
+            StatisticMail.send_mail_to_all()
 
         with patch("weko_admin.utils.StatisticMail.build_statistic_mail_subject", side_effect=Exception("test_error")):
-            StatisticMail.send_mail_to_all(mail_data,"2022-11")
+            StatisticMail.send_mail_to_all()
 
 
 #     def get_banned_mail(cls, list_banned_mail):

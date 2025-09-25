@@ -41,7 +41,7 @@ from weko_workflow.utils import check_an_item_is_locked
 
 from .api import SwordClient
 from .errors import ErrorType, WekoSwordserverException
-
+from invenio_db import db
 
 def check_import_file_format(file, packaging):
     """Check inport file format.
@@ -538,6 +538,7 @@ def delete_item_directly(recid, request_info=None):
         )
 
     soft_delete(recid)
+    db.session.commit()
 
 
 def notify_about_item(case, recid, user_id, record=None, shared_ids=[]):
@@ -569,3 +570,4 @@ def notify_about_item(case, recid, user_id, record=None, shared_ids=[]):
             user_id, recid, user_id, record["item_title"], shared_ids
         )
         send_mail_item_deleted(recid, record, user_id, shared_ids)
+        

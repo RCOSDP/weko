@@ -338,23 +338,33 @@ class TestExportView():
         assert json.loads(res.data) == test
 
         # get file instance
-        mocker_get_by_uri = mocker.patch("weko_authors.admin.FileInstance.get_by_uri")
-        expected_date = datetime.now()
-        mocker_get_by_uri.return_value = MockFileInstance(expected_date)
-        res = client.get(url)
-        expected_filename = "Creator_export_all_" + expected_date.strftime("%Y%m%d%H%M") + ".tsv"
-        test = {'code': 200, 'data': {'download_link': '', 'filename': expected_filename, 'key': 'authors_export_status'}}
-        assert json.loads(res.data) == test
+        try:
+            with patch("weko_authors.admin.FileInstance.get_by_uri") as mocker_get_by_uri:
+                current_cache.set(
+                    current_app.config.get("WEKO_AUTHORS_EXPORT_TARGET_CACHE_KEY"),
+                    "author_db",
+                    timeout=0
+                )
+                expected_date = datetime.now()
+                mocker_get_by_uri.return_value = MockFileInstance(expected_date)
+                res = client.get(url)
+                expected_filename = "Creator_export_all_" + expected_date.strftime("%Y%m%d%H%M") + ".tsv"
+                test = {'code': 200, 'data': {'download_link': '', 'filename': expected_filename, 'key': 'authors_export_status'}}
+                assert json.loads(res.data) == test
+        finally:
+            delete_cache_data(current_app.config.get("WEKO_AUTHORS_EXPORT_TARGET_CACHE_KEY"))
 
         # not get_export_status
-        current_cache.set("weko_authors_export_stop_point",{"key":"authors_export_stop_point"})
-        current_cache.set("weko_authors_export_status", [])
-        current_cache.set("weko_authors_exported_url",{"key":"authors_exported_url","file_uri":"test_file.txt"})
-        mocker.patch("weko_authors.admin.export_all.AsyncResult",return_value=MockAsyncResult("test_id","SUCCESS","result"))
-        res = client.get(url)
-        test = {'code': 200, 'data': {'download_link':'http://app/admin/authors/export/download/Creator_export_all','filename':'','key':'authors_exported_url','stop_point':{'key':'authors_export_stop_point'}}}
-        assert json.loads(res.data)==test
-        delete_cache_data("weko_authors_export_stop_point")
+        try:
+            current_cache.set("weko_authors_export_stop_point",{"key":"authors_export_stop_point"})
+            current_cache.set("weko_authors_export_status", [])
+            current_cache.set("weko_authors_exported_url",{"key":"authors_exported_url","file_uri":"test_file.txt"})
+            mocker.patch("weko_authors.admin.export_all.AsyncResult",return_value=MockAsyncResult("test_id","SUCCESS","result"))
+            res = client.get(url)
+            test = {'code': 200, 'data': {'download_link':'http://app/admin/authors/export/download/Creator_export_all','filename':'','key':'authors_exported_url','stop_point':{'key':'authors_export_stop_point'}}}
+            assert json.loads(res.data)==test
+        finally:
+            delete_cache_data("weko_authors_export_stop_point")
 
         # exsit FileInstance.get_by_uri
         current_cache.set("weko_authors_export_status",{"key":"authors_export_status","task_id":"test_task"})
@@ -735,10 +745,13 @@ class TestImportView():
             ],
         }
         mocker.patch("weko_authors.admin.check_is_import_available",return_value={"is_available":True})
-        current_cache.set("cache_result_over_max_file_path_key",{"key":"cache_result_over_max_file_path_key"})
+        current_cache.set(current_app.config["WEKO_AUTHORS_IMPORT_CACHE_RESULT_OVER_MAX_FILE_PATH_KEY"],
+                          {"key":"cache_result_over_max_file_path_key"})
         mocker.patch("os.remove")
-        current_cache.set("authors_import_result_file_path",{"key":"authors_import_result_file_path"})
-        current_cache.set("result_summary_key",{"key":"result_summary_key"})
+        current_cache.set(current_app.config["WEKO_AUTHORS_IMPORT_CACHE_RESULT_FILE_PATH_KEY"],
+                          {"key":"authors_import_result_file_path"})
+        current_cache.set(current_app.config["WEKO_AUTHORS_IMPORT_CACHE_RESULT_SUMMARY_KEY"],
+                          {"key":"result_summary_key"})
         mocker.patch("weko_authors.admin.prepare_import_data",return_value=([
                 {"pk_id": "test_id0", "current_weko_id": "1000", "weko_id": "1000"},
                 {"pk_id": "test_id1", "current_weko_id": "1001", "weko_id": "1001"},
@@ -798,9 +811,9 @@ class TestImportView():
             ],
         }
         mocker.patch("weko_authors.admin.check_is_import_available",return_value={"is_available":True})
-        current_cache.set("cache_result_over_max_file_path_key",None)
-        current_cache.set("authors_import_result_file_path",None)
-        current_cache.set("result_summary_key",None)
+        current_cache.set(current_app.config["WEKO_AUTHORS_IMPORT_CACHE_RESULT_OVER_MAX_FILE_PATH_KEY"],None)
+        current_cache.set(current_app.config["WEKO_AUTHORS_IMPORT_CACHE_RESULT_FILE_PATH_KEY"], None)
+        current_cache.set(current_app.config["WEKO_AUTHORS_IMPORT_CACHE_RESULT_SUMMARY_KEY"],None)
         mocker.patch("weko_authors.admin.prepare_import_data",return_value=([
                 {"pk_id": "test_id0", "current_weko_id": "1000", "weko_id": "1000"},
                 {"pk_id": "test_id1", "current_weko_id": "1001", "weko_id": "1001"},
@@ -849,13 +862,14 @@ class TestImportView():
                 {"pk_id": "test_id1", "scheme": "GRID", "name": "name1"},
             ],
         }
-        mock_logger = MagicMock()
-        current_app.logger = mock_logger
+        mock_logger_error = MagicMock()
+        current_app.logger.error = mock_logger_error
         mocker.patch("weko_authors.admin.check_is_import_available",return_value={"is_available":True})
-        current_cache.set("cache_result_over_max_file_path_key",{"key":"cache_result_over_max_file_path_key"})
+        current_cache.set(current_app.config["WEKO_AUTHORS_IMPORT_CACHE_RESULT_OVER_MAX_FILE_PATH_KEY"],
+                          {"key": "cache_result_over_max_file_path_key"})
         mocker.patch("os.remove", side_effect=FileNotFoundError)
         client.post(url, data=json.dumps(data), content_type='application/json')
-        mock_logger.error.assert_called_once_with("Error deleting {'key': 'cache_result_over_max_file_path_key'}: ")
+        mock_logger_error.assert_called_once_with("Error deleting {'key': 'cache_result_over_max_file_path_key'}: ")
 
         #  Exception (result_file_path is true)
         data = {
@@ -866,13 +880,14 @@ class TestImportView():
                 {"pk_id": "test_id1", "scheme": "GRID", "name": "name1"},
             ],
         }
-        mock_logger = MagicMock()
-        current_app.logger = mock_logger
+        mock_logger_error = MagicMock()
+        current_app.logger.error = mock_logger_error
         mocker.patch("weko_authors.admin.check_is_import_available",return_value={"is_available":True})
-        current_cache.set("authors_import_result_file_path",{"key":"authors_import_result_file_path"})
+        current_cache.set(current_app.config["WEKO_AUTHORS_IMPORT_CACHE_RESULT_FILE_PATH_KEY"],
+                {"key": "authors_import_result_file_path"})
         mocker.patch("os.remove", side_effect=FileNotFoundError)
         client.post(url, data=json.dumps(data), content_type='application/json')
-        mock_logger.error.assert_called_once_with("Error deleting {'key': 'authors_import_result_file_path'}: ")
+        mock_logger_error.assert_called_once_with("Error deleting {'key': 'authors_import_result_file_path'}: ")
 
     # def check_import_status(self):
     # .tox/c1/bin/pytest --cov=weko_authors tests/test_admin.py::TestImportView::test_check_import_status_acl_guest -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp

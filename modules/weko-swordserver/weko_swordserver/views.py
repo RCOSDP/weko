@@ -62,7 +62,6 @@ from .utils import (
 )
 from weko_accounts.utils import limiter
 
-
 class SwordState:
     accepted = "http://purl.org/net/sword/3.0/state/accepted"
     inProgress = "http://purl.org/net/sword/3.0/state/inProgress"
@@ -672,6 +671,7 @@ def put_object(recid):
     owner = -1
     if current_user.is_authenticated:
         owner = current_user.id
+    UserActivityLogger.issue_log_group_id(None)
     request_info = {
         "remote_addr": request.remote_addr,
         "referrer": request.referrer,
@@ -1004,6 +1004,7 @@ def delete_object(recid):
     owner = -1
     if current_user.is_authenticated:
         owner = current_user.id
+    UserActivityLogger.issue_log_group_id(None)
     request_info = {
         "remote_addr": request.remote_addr,
         "referrer": request.referrer,

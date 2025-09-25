@@ -36,6 +36,7 @@ from flask_babelex import gettext as _
 from flask_babelex import get_locale as get_current_locale
 from flask_login import current_user
 from marshmallow import ValidationError
+from sqlalchemy import or_
 from sqlalchemy.exc import SQLAlchemyError
 from werkzeug.exceptions import BadRequest
 from werkzeug.http import generate_etag
@@ -317,7 +318,10 @@ class IndexActionResource(ContentNegotiatedMethodView):
                 indexes = [i.id for i in Indexes.get_all_parent_indexes(index_id)]
                 comm_data = Community.query.filter(
                     Community.root_node_id.in_(indexes),
-                    Community.id_role.in_(role_ids)
+                    or_(
+                        Community.group_id.in_(role_ids),
+                        Community.id_role.in_(role_ids)
+                    )
                 ).all()
                 if comm_data:
                     can_edit = True
@@ -560,8 +564,8 @@ class IndexTreeActionResource(ContentNegotiatedMethodView):
                             role_ids.append(role.id)
                 if role_ids:
                     from invenio_communities.models import Community
-                    comm_list = Community.query.filter(
-                        Community.group_id.in_(role_ids)
+                    comm_list = Community.get_by_user(
+                        role_ids, with_deleted=True
                     ).all()
                     check_list = []
                     for comm in comm_list:

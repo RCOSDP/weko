@@ -66,6 +66,7 @@ from flask_babelex import gettext as _
 from flask_babelex import to_user_timezone, to_utc
 from flask_login import current_user, login_user, LoginManager
 from invenio_cache import current_cache
+from invenio_communities.models import Community
 from invenio_i18n.ext import current_i18n
 from invenio_pidstore.models import PersistentIdentifier
 from invenio_search import RecordsSearch
@@ -581,6 +582,21 @@ def test_check_index_permissions(app, db, users, test_indices, db_records):
             assert check_index_permissions(record={"path": "1"})==False
             assert check_index_permissions(index_id="1")==False
             assert check_index_permissions(index_path_list=["1", "2"], is_check_doi=True)==True
+
+    # comadmin
+    with patch("flask_login.utils._get_user", return_value=users[4]['obj']):
+        with app.test_request_context(headers=[("Accept-Language", "en")]):
+            community = Community(root_node_id=1)
+            with patch('weko_index_tree.utils.Community.get_repositories_by_user', return_value=[community]):
+                assert check_index_permissions()==False
+                assert check_index_permissions(record={"path": "1"})==True
+                assert check_index_permissions(index_id="1")==True
+                assert check_index_permissions(index_path_list=["1", "2"], is_check_doi=True)==True
+            with patch('weko_index_tree.utils.Community.get_repositories_by_user', return_value=[]):
+                assert check_index_permissions()==False
+                assert check_index_permissions(record={"path": "1"})==False
+                assert check_index_permissions(index_id="1")==False
+                assert check_index_permissions(index_path_list=["1", "2"], is_check_doi=True)==True
 
 
 #+++ def __get_redis_store():

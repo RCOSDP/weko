@@ -146,7 +146,7 @@ def call_external_system(old_record=None,
                     operation="ITEM_EXTERNAL_LINK",
                     target_key=pid_value_without_ver,
                     request_info=request_info,
-                    remarks=remarks,
+                    remarks=json.dumps(remarks, default=str, ensure_ascii=False),
                     required_commit=False,
                 )
 

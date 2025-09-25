@@ -5644,7 +5644,18 @@ def send_mail_from_notification_info(get_info_func, context_obj, content_creator
 
             recipient = target.email
             current_app.logger.debug(f"[send_mail] Sending to: {target.id}")
-            res = send_mail(mail_data.get("subject"), recipient, mail_data.get("body"))
+
+            # get mail info
+            mail_info = {
+                "mail_subject": mail_data.get("subject"),
+                "mail_body": mail_data.get("body"),
+                "mail_recipients": [target.email],
+                "mail_cc": [],
+                "mail_bcc": []
+            }
+
+            # send mail
+            res = send_mail(mail_info)
 
             if res:
                 send_count += 1

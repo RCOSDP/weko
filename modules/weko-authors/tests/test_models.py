@@ -61,21 +61,22 @@ class TestAuthors:
         with patch("weko_authors.models.db.session.execute", side_effect=session.execute):
             result = Authors.get_sequence(None)
             assert result == 3
-# .tox/c1/bin/pytest --cov=weko_authors tests/test_models.py::TestAuthors::test_get_first_email_by_id -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-authors/.tox/c1/tmp
-    def test_get_first_email_by_id(self, authors):
+
+# .tox/c1/bin/pytest --cov=weko_authors tests/test_models.py::TestAuthors::test_get_emails_by_id -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-authors/.tox/c1/tmp
+    def test_get_emails_by_id(self, authors):
         # not find author
-        result = Authors.get_first_email_by_id(1000)
-        assert result == None
+        result = Authors.get_emails_by_id(1000)
+        assert result == []
 
         # find author
-        result = Authors.get_first_email_by_id(1)
-        assert result == "test.taro@test.org"
+        result = Authors.get_emails_by_id(1)
+        assert result == ["test.taro@test.org"]
 
         # raise Exception
         with patch("flask_sqlalchemy._QueryProperty.__get__") as mock_query:
             mock_query.return_value.filter_by.return_value.one_or_none.side_effect=Exception("test_error")
-            result = Authors.get_first_email_by_id(1)
-            assert result == None
+            result = Authors.get_emails_by_id(1)
+            assert result == []
 
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_models.py::TestAuthors::test_get_author_by_id -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-authors/.tox/c1/tmp
     def test_get_author_by_id(self, db):

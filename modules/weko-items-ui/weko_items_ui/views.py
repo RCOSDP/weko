@@ -1397,11 +1397,16 @@ def prepare_delete_item(id=None, community=None, shared_user_ids=[]):
             return jsonify(
                 code=0,
                 msg="success",
-                data=dict(redirect=request.referrer)
+                data={"redirect": url_for("invenio_records_ui.recid", pid_value=object_id)}
             )
 
         post_activity['flow_id'] = workflow.delete_flow_id
-        post_activity['shared_user_ids'] = shared_user_ids
+        # Add shared_user_ids to activity info
+        shared_user_ids_activity_info = [
+            {"user": int(user_info)} if not isinstance(user_info, dict)
+            else user_info for user_info in shared_user_ids
+        ]
+        post_activity['shared_user_ids'] = shared_user_ids_activity_info
 
         try:
             rtn = prepare_delete_workflow(post_activity, recid, deposit)

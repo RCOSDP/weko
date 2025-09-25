@@ -13,7 +13,29 @@
 ### バグフィックス
 ### 脆弱性対応等
 
-## [v1.0.7b] [v1.0.8b] [v1.0.9b] 2025-01-06
+## [v1.0.8a] 2025-07-08
+### バグフィックス
+- tikaライブラリがDockerイメージに格納されていなかった問題を修正しました。
+
+## [v1.0.8] 2025-05-20
+### 既存機能の変更
+- tikaプロセスがメモリを消費している問題を改善しました。
+- インデックス表示処理に含まれていた非効率な処理を効率化することで、インデックス表示を高速化しました。
+- 初期インストール時のElasticsearchインデックス作成タイムアウト時間を30s→2mに変更しました。
+### バグフィックス
+- DBの接続タイムアウトにより一括インポート・一括エクスポートが失敗する問題を修正しました。
+- Citation formatting for recordによる500エラーを修正しました
+- DBセッション切れにより、「他のアクティビティを既に開いています」と表示され、アイテムを編集できない問題を修正しました。
+‐ Redis のTTLが無期限と設定されることで、アクティビティがロックされる問題を修正しました。
+- アクティビティにアクセスしようとすると、「The item you are editing has already been deleted.」とポップアップが表示される問題を改善しました。
+- 想定していないクエリパラメータにより500エラーが発生している問題を修正しました。
+- /items/exportで500エラーが発生している問題を修正しました。
+- /admin/load_widget_design_settingで500エラーが発生している問題を修正しました。
+- /get_uriで500エラーが発生している問題を修正しました。
+- /api/stats/<record_id>で500エラーが発生している問題を修正しました。
+
+
+## [v1.0.7b] 2025-01-06
 ### 既存機能の変更
 - 移行機関とのデータ互換性を向上させました。
 - reindex対象としてitemtype idを指定できるようになりました。
@@ -133,8 +155,9 @@
 - ログイン後、アイテム詳細画面でPublish Statusが表示されなくなる問題を修正
 
 
-[v1.0.9] https://github.com/RCOSDP/weko/compare/v1.0.8...v1.0.9
-[v1.0.8] https://github.com/RCOSDP/weko/compare/v1.0.7...v1.0.8
 [v1.0.7] https://github.com/RCOSDP/weko/compare/v0.9.6...v1.0.7
 [v1.0.7a] https://github.com/RCOSDP/weko/compare/v1.0.7...v1.0.7a
 [v1.0.7a2] https://github.com/RCOSDP/weko/compare/v1.0.7a...v1.0.7a2
+[v1.0.7b] https://github.com/RCOSDP/weko/compare/v1.0.7a2...v1.0.7b
+[v1.0.8] https://github.com/RCOSDP/weko/compare/v1.0.7b...v1.0.8
+[v1.0.8a] https://github.com/RCOSDP/weko/compare/v1.0.8...v1.0.8a

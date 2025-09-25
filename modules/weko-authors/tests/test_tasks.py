@@ -46,7 +46,7 @@ def test_export_all(app,mocker):
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_tasks.py::test_01_import_author -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
 def test_01_import_author(app):
     with patch("weko_authors.tasks.import_author_to_system"):
-        result = import_author({"status":"", "weko_id":"", "current_weko_id":""}, True)
+        result = import_author({"status":"", "weko_id":"", "current_weko_id":""}, True, {})
         assert result["status"] == "SUCCESS"
 
 
@@ -54,7 +54,7 @@ def test_01_import_author(app):
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_tasks.py::test_02_import_author -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
 def test_02_import_author(app, caplog: LogCaptureFixture):
     with patch("weko_authors.tasks.import_author_to_system",side_effect=SQLAlchemyError("SQLAlchemyError")):
-        result = import_author({"status":"", "weko_id":"", "current_weko_id":""}, True)
+        result = import_author({"status":"", "weko_id":"", "current_weko_id":""}, True, {})
     info_logs = [record for record in caplog.record_tuples if record[1] == logging.ERROR]
     expected = [('testapp', logging.ERROR, 'SQLAlchemyError')] * 6
     assert info_logs == expected
@@ -65,7 +65,7 @@ def test_02_import_author(app, caplog: LogCaptureFixture):
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_tasks.py::test_03_import_author -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
 def test_03_import_author(app, caplog: LogCaptureFixture):
     with patch("weko_authors.tasks.import_author_to_system",side_effect=ElasticsearchException("ElasticsearchException")):
-        result = import_author({"status":"", "weko_id":"", "current_weko_id":""}, True)
+        result = import_author({"status":"", "weko_id":"", "current_weko_id":""}, True, {})
     info_logs = [record for record in caplog.record_tuples if record[1] == logging.ERROR]
     expected = [('testapp', logging.ERROR, 'ElasticsearchException')] * 6
     assert info_logs == expected
@@ -76,7 +76,7 @@ def test_03_import_author(app, caplog: LogCaptureFixture):
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_tasks.py::test_04_import_author -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
 def test_04_import_author(app, caplog: LogCaptureFixture):
     with patch("weko_authors.tasks.import_author_to_system",side_effect=TimeoutError("TimeoutError")):
-        result = import_author({"status":"", "weko_id":"", "current_weko_id":""}, True)
+        result = import_author({"status":"", "weko_id":"", "current_weko_id":""}, True, {})
     info_logs = [record for record in caplog.record_tuples if record[1] == logging.ERROR]
     expected = [('testapp', logging.ERROR, 'TimeoutError')] * 6
     assert info_logs == expected
@@ -87,7 +87,7 @@ def test_04_import_author(app, caplog: LogCaptureFixture):
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_tasks.py::test_05_import_author -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
 def test_05_import_author(app, caplog: LogCaptureFixture):
     with patch("weko_authors.tasks.import_author_to_system",side_effect=TimeoutError({"error_id": 123, "message": "An error occurred"})):
-        result = import_author({"status":"", "weko_id":"", "current_weko_id":""}, True)
+        result = import_author({"status":"", "weko_id":"", "current_weko_id":""}, True, {})
     info_logs = [record for record in caplog.record_tuples if record[1] == logging.ERROR]
     expected = [('testapp', logging.ERROR, "{'error_id': 123, 'message': 'An error occurred'}")] * 6
     assert info_logs == expected
@@ -256,6 +256,7 @@ class TestImportAuthorsFromTempFiles:
                 call('/data/test_check_base-part2')
             ])
 
+    # .tox/c1/bin/pytest --cov=weko_authors tests/test_tasks.py::TestImportAuthorsFromTempFiles::test_import_authors_from_temp_files_with_batch_size -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-authors/.tox/c1/tmp
     def test_import_authors_from_temp_files_with_batch_size(self, app2, mock_update_cache_data, mock_get_check_base_name,
                                                         mock_import_authors_for_over_max):
         """
@@ -272,6 +273,7 @@ class TestImportAuthorsFromTempFiles:
         # テスト用データの準備
         reached_point = {"part_number": 1, "count": 0}
         max_part = 1
+        request_info = {"key": "request_info"}
 
         # 一時ファイルの内容をモック（5人の著者）
         part1_data = [
@@ -299,14 +301,14 @@ class TestImportAuthorsFromTempFiles:
             patch('builtins.open', side_effect=mock_open_side_effect):
 
             # 関数実行
-            import_authors_from_temp_files(reached_point, max_part)
+            import_authors_from_temp_files(reached_point, max_part, request_info)
 
             # アサーション
             # import_authors_for_over_maxが呼ばれたことを確認
             assert mock_import_authors_for_over_max.call_count == 1
 
             # 最初のバッチ（0, 1）
-            mock_import_authors_for_over_max.assert_any_call(part1_data[0:4])
+            mock_import_authors_for_over_max.assert_any_call(part1_data[0:4], request_info=request_info)
 
     def test_import_authors_from_temp_files_file_not_found(self, app2, mock_update_cache_data, mock_get_check_base_name,
                                                         mock_import_authors_for_over_max):

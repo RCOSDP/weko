@@ -1527,11 +1527,15 @@ class WekoDeposit(Deposit):
             if not data:
                 data = self.data
             owner_id = data.get("owner", None)
+            deposit_owners = data.get("owners", None)
+            creator_id = str(deposit_owners[0]) if deposit_owners else None
             if str(self.pid.pid_value).endswith(".0"):
-                dc, jrc, is_edit = json_loader(data, self.pid, owner_id=owner_id,replace_field=False)
+                dc, jrc, is_edit = json_loader(
+                    data, self.pid, owner_id=owner_id,replace_field=False, creator_id=creator_id)
             else:
-                dc, jrc, is_edit = json_loader(data, self.pid, owner_id=owner_id)
-            
+                dc, jrc, is_edit = json_loader(
+                    data, self.pid, owner_id=owner_id, creator_id=creator_id)
+
             # dataのownerとownersを合わせる
             if current_user and current_user.is_authenticated:
                 data['owners'] = [int(data.get('owner', current_user.id))]
@@ -1872,7 +1876,7 @@ class WekoDeposit(Deposit):
         self.indexer.update_request_mail_list(request_mail)
 
     def update_feedback_mail(self):
-        """ 
+        """
 
         Index feedback mail list.
 

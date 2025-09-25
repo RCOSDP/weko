@@ -17,7 +17,9 @@ from datetime import datetime
 
 from flask import current_app, request
 from requests import HTTPError
+from invenio_pidstore.models import PersistentIdentifier
 
+from weko_deposit.api import WekoDeposit
 from weko_user_profiles.config import USERPROFILES_TIMEZONE_LIST
 from weko_user_profiles.models import UserProfile
 
@@ -201,6 +203,28 @@ def _get_params_for_registrant(target_id, actor_id, shared_ids=[]):
 
     return set_target_id, actor_name
 
+
+def get_item_title(recid):
+    """Get item title from recid.
+
+    Args:
+        recid (str): The record ID.
+
+    Returns:
+        str | None: The item title.
+    """
+    try:
+        pid = PersistentIdentifier.get("recid", recid)
+        deposit = WekoDeposit.get_record(pid.object_uuid)
+        return deposit.get("item_title")
+    except Exception as ex:
+        current_app.logger.error(
+            "Failed to get item title from recid: {}".format(recid)
+        )
+        traceback.print_exc()
+        return None
+
+
 def notify_item_imported(
     target_id, recid, actor_id, object_name=None, shared_ids=[]
 ):
@@ -222,6 +246,9 @@ def notify_item_imported(
     from .notifications import Notification
     for target_id in set_target_id:
         try:
+            if object_name is None:
+                # Get title from recid
+                object_name = get_item_title(recid)
             Notification.create_item_registered(
                 target_id, recid, actor_id,
                 actor_name=actor_name, object_name=object_name,
@@ -265,6 +292,9 @@ def notify_item_deleted(
     from .notifications import Notification
     for target_id in set_target_id:
         try:
+            if object_name is None:
+                # Get title from recid
+                object_name = get_item_title(recid)
             Notification.create_item_deleted(
                 target_id, recid, actor_id,
                 actor_name=actor_name, object_name=object_name

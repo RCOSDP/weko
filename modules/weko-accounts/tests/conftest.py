@@ -41,6 +41,7 @@ from invenio_accounts.testutils import create_test_user
 from invenio_communities.models import Community
 from invenio_db import InvenioDB, db as db_
 from invenio_i18n import InvenioI18N
+from invenio_oauth2server import InvenioOAuth2Server
 from weko_admin import WekoAdmin
 from weko_admin.models import SessionLifetime
 from weko_index_tree.models import Index
@@ -68,7 +69,7 @@ def base_app(instance_path):
     app_.config.update(
         SECRET_KEY='SECRET_KEY',
         TESTING=True,
-        SERVER_NAME='TEST_SERVER.localdomain',
+        SERVER_NAME='test_server.localdomain',
         # SQLALCHEMY_DATABASE_URI=os.environ.get(
         #  'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'),
         SQLALCHEMY_DATABASE_URI=os.getenv('SQLALCHEMY_DATABASE_URI',
@@ -100,6 +101,7 @@ def base_app(instance_path):
     InvenioAccounts(app_)
     InvenioAccess(app_)
     InvenioAdmin(app_)
+    InvenioOAuth2Server(app_)
     WekoAccounts(app_)
     WekoRecordsUI(app_)
     WekoAdmin(app_)
