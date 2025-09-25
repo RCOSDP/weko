@@ -2174,6 +2174,8 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
         // Key for dectecting affiliated institution
         const affiliatedInstitutionName = 'subitem_affiliated_institution_name';
         const affiliatedInstitutionPosition = 'subitem_affiliated_institution_position';
+        const restictedInstitutionName = 'subitem_restricted_access_institution_name';
+        const restictedInstitutionPosition = 'subitem_restricted_access_institution_position';
         for (let key in $rootScope.recordsVM.invenioRecordsSchema.properties) {
           var currentInvenioRecordsSchema = $rootScope.recordsVM.invenioRecordsSchema.properties[key];
           if (currentInvenioRecordsSchema.properties) {
@@ -2215,6 +2217,30 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
                     $scope.setFormReadOnly(subKey);
                   }
                 }
+              }
+            }
+          }
+          else if (currentInvenioRecordsSchema.type == "array" && currentInvenioRecordsSchema.items.properties) {
+            let containRestrictedInstitution = currentInvenioRecordsSchema.items.properties.hasOwnProperty(restictedInstitutionName);
+            if (containRestrictedInstitution) {
+              $rootScope.recordsVM.invenioRecordsModel[key] = [];
+              var currentInvenioRecordsModel = $rootScope.recordsVM.invenioRecordsModel[key];
+              // get arr Affiliated institution form the result data
+              var arrAffiliatedData = data.results['subitem_affiliated_institution'];
+              if (arrAffiliatedData && arrAffiliatedData.length > 0) {
+                // Set value for each pair of Affiliated Institution data
+                $rootScope.recordsVM.invenioRecordsModel[key] = arrAffiliatedData.map((value) => {
+                  var institutionInfo = {
+                    [restictedInstitutionName]: value.subitem_affiliated_institution_name
+                  };
+                  if (currentInvenioRecordsSchema.items.properties.subitem_restricted_access_institution_position.type == "select") {
+                    let institutionPosition = $scope.translationsInstitutePosition(value.subitem_affiliated_institution_position);
+                    institutionInfo[restictedInstitutionPosition] = institutionPosition;
+                  } else {
+                    institutionInfo[restictedInstitutionPosition] = value.subitem_affiliated_institution_position;
+                  }
+                  return institutionInfo
+                });
               }
             }
           }
@@ -2419,6 +2445,7 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
 
       $scope.autoFillInstitutionPosition = function () {
         let key = 'subitem_institution_position';
+        let restricted_key = 'subitem_restricted_access_institution_position';
         let schemaProperties = $rootScope.recordsVM.invenioRecordsSchema.properties;
         let formProperties = $rootScope.recordsVM.invenioRecordsForm;
         //Get "Institution Position" from select html.
@@ -2427,8 +2454,12 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
         for (i=0; i< options.length; i++){
           enumData.push([options[i].value, options[i].text]);
         }
+        // Set enum and titleMap for "Institution Position"
         $scope.setEnumForSchemaByKey(key, schemaProperties, enumData);
         $scope.setTitleMapForFormByKey(key, formProperties, enumData);
+        // Set enum and titleMap for "Restricted Access Institution Position"
+        $scope.setEnumForSchemaByKey(restricted_key, schemaProperties, enumData);
+        $scope.setTitleMapForFormByKey(restricted_key, formProperties, enumData);
         return true;
       }
 
