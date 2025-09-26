@@ -787,9 +787,32 @@ def test_indexes_get_index_tree(i18n_app, db, redis_connect, users, db_records, 
         res = Indexes.get_browsing_tree_ignore_more(1)
         assert len(res)==1
 
+        # get_browsing_reset_tree_ignore_more
+        with patch("weko_index_tree.api.RedisConnection", side_effect=RedisError):
+            res = Indexes.get_browsing_reset_tree_ignore_more(0)
+            assert len(res)==3
+
+        with patch("weko_index_tree.api.RedisConnection", side_effect=KeyError):
+            res = Indexes.get_browsing_reset_tree_ignore_more(0)
+            assert len(res)==3
+
+        res = Indexes.get_browsing_reset_tree_ignore_more(0)
+        assert len(res)==3
+        assert len(res[2].get("children"))==0
+        assert "browsing_group" not in res[2]
+        assert "browsing_role" not in res[2]
+        assert "contribute_group" not in res[2]
+        assert "contribute_role" not in res[2]
+        assert "public_date" not in res[2]
+        assert "public_state" not in res[2]
+
         # get_browsing_tree_paths
         res = Indexes.get_browsing_tree_paths(None)
         assert res==['1', '1/11', '2', '2/21', '2/22', '3']
+
+        with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
+            res = Indexes.get_browsing_tree_paths(None)
+            assert res==['1', '1/11', '2', '2/21', '2/22', '3', '3/31']
 
         res = Indexes.get_browsing_tree_paths(11)
         assert res==['11']
