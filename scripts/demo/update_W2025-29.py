@@ -46,12 +46,25 @@ def register_properties_only_specified():
 
 def renew_all_item_types():
     try:
+        fix_ids = []
         itemtypes = ItemTypes.get_all()
         for itemtype in itemtypes:
             ret = ItemTypes.reload(itemtype.id)
             current_app.logger.info("itemtype id:{}, itemtype name:{}".format(itemtype.id,itemtype.item_type_name.name))
             current_app.logger.info(ret['msg'])
+            print(f"[FIX][renew_all_item_types]item_type:{itemtype.id}")
+            is_fix_mapping = False
+            if "mapping" in ret.get("msg",""):
+                is_fix_mapping = True
+            else:
+                is_fix_mapping = False
+            fix_ids.append((itemtype.id, is_fix_mapping))
         db.session.commit()
+        
+        for (itemtype_id, is_fix_mapping) in fix_ids:
+            print(f"[FIX][renew_all_item_types]item_type:{itemtype_id}")
+            if is_fix_mapping:
+                print(f"[FIX][renew_all_item_types]item_type_mapping:{itemtype_id}(item_type_id)")
     except:
         current_app.logger.error(traceback.format_exc())
         db.session.rollback()

@@ -55,6 +55,7 @@ def update_item_type_property(restricted_item_type_id):
             target_obj.form = json.load(form_file)
         with open('tools/restricted_jsons/item_type_property/forms.json', 'r') as forms_file:
             target_obj.forms = json.load(forms_file)
+        print(f"[FIX][updateRestrictedRecords.py]item_type_property:{target_obj.id}")
     else:
         current_app.logger.error('id: ' + str(restricted_item_type_id) + ' not found')
 
@@ -152,6 +153,7 @@ def update_item_type():
         # render
         target.render = _format_new_render(dict(target.render), key, schema, form_roles, render)
         flag_modified(target, "render")
+        print(f"[FIX][updateRestrictedRecords.py]item_type:{target.id}")
 
     current_app.logger.info('update item_type records success')
 
@@ -181,6 +183,7 @@ def update_item_metadata():
         if 'shared_user_ids' not in record.json.keys() and 'shared_user_id' in record.json.keys()]
     for record in target_records:
         record.json = _format_json(dict(record.json))
+        print(f"[FIX][updateRestrictedRecords.py]item_metadata:{record.id}")
 
     current_app.logger.info('update item_metadata records success')
 
@@ -212,6 +215,7 @@ def update_records_metadata():
         if ('weko_shared_ids' not in record.json.keys()) and ('weko_shared_id' in record.json.keys())]
     for record in target_records:
         record.json = _format_json(dict(record.json))
+        print(f"[FIX][updateRestrictedRecords.py]records_metadata:{record.id}")
 
     current_app.logger.info('update record_metadata records success')
 
@@ -226,6 +230,7 @@ def update_admin_settings():
                                                         "secret_download_limit_unlimited_chk": False,
                                                         "secret_expiration_date_unlimited_chk": False}
     AdminSettings.update('restricted_access', restricted_access)
+    print(f"[FIX][updateRestrictedRecords.py]admin_settings:restricted_access")
 
 def elasticsearch_reindex( is_db_to_es ):
     """ 

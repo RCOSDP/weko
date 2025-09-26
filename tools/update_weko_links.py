@@ -48,6 +48,7 @@ def update_records_metadata(db_list):
                         """, (json.dumps(json_data), id))
                         update_logs.append((id, json_data))
                         print(f'Updated record id: {id}')
+                        print(f"[FIX][update_weko_links.py]records_metadata:{id}")
     except:
         print(f'ERROR: {traceback.print_exc()}')
         
@@ -90,6 +91,7 @@ def update_workflow_activity(db_list):
                         """, (json.dumps(json_data), id))
                         
                         print(f'Updated workflow id: {id}')
+                        print(f"[FIX][update_weko_links.py]workflow_activity:{id}")
                 # 編集を開始して、セーブしてあるtemp_dataが存在するワークフローについての処理
                 elif isinstance(json_str, str):
                     json_data = json.loads(json_str)
@@ -104,6 +106,7 @@ def update_workflow_activity(db_list):
                         """, (json.dumps(json_data, ensure_ascii=False), id))
                     update_logs.append((id, json_data))
                     print(f'Updated workflow id: {id}')
+                    print(f"[FIX][update_weko_links.py]workflow_activity:{id}")
     except:
         print(f'ERROR: {traceback.print_exc()}')
 

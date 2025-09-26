@@ -280,6 +280,8 @@ def main(startDate=None,endDate=None,recordId=None,itemTypeId=None, from_cmd=Fal
                         # DB保存
                         flag_modified(item, "json")
                         flag_modified(rec, "json")
+                        print(f"[FIX][fix_metadata_53602.py]item_metadata:{item.id}")
+                        print(f"[FIX][fix_metadata_53602.py]records_metadata:{rec.id}")
                         db.session.commit()
 
             except (OperationalError, SQLAlchemyError, ConnectionError) as e:
@@ -325,6 +327,7 @@ def main(startDate=None,endDate=None,recordId=None,itemTypeId=None, from_cmd=Fal
                         activity.temp_data = json.dumps(temp_data)
                         flag_modified(activity, "temp_data")
                         db.session.commit()
+                        print(f"[FIX][fix_metadata_53602.py]workflow_activity:{activity.id}")
                 except (OperationalError, SQLAlchemyError) as e:
                     sys.stderr.write(f"Error updating Activity ID={data.activity_id}: {e}")
                     db.session.rollback()

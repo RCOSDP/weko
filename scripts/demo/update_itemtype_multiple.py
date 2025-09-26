@@ -153,7 +153,7 @@ def main():
 
         db.session.commit()
         
-        
+        print(f"[FIX][update_itemtype_multiple.py]item_type:{itemType.id}")
         print("session commited.")
     except Exception as e:
         print(traceback.format_exc())
