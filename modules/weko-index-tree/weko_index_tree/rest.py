@@ -535,8 +535,10 @@ class IndexTreeActionResource(ContentNegotiatedMethodView):
                     tree = self.record_class.get_contribute_tree(pid)
             elif action and 'browsing' in action and comm_id is None:
                 if more_id_list is None:
-                    tree = self.record_class.get_browsing_tree()
-
+                    if current_user and current_user.is_authenticated:
+                        tree = self.record_class.get_browsing_tree()
+                    else:
+                        tree = self.record_class.get_browsing_reset_tree()
                 else:
                     tree = self.record_class.get_more_browsing_tree(
                         more_ids=more_ids)

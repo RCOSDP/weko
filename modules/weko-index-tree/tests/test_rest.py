@@ -593,6 +593,21 @@ class TestIndexTreeActionResource:
             assert redis_connect.redis.exists("index_tree_view_test_ja") == False
             assert redis_connect.redis.exists("index_tree_view_test_en") == False
 
+# .tox/c1/bin/pytest --cov=weko_index_tree tests/test_rest.py::TestIndexTreeActionResource::test_get -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-index-tree/.tox/c1/tmp
+    def test_get(self, client_rest, users, test_indices, without_session_remove):
+        os.environ["INVENIO_WEB_HOST_NAME"] = "test"
+        # guest_user
+        res = client_rest.get("/tree?action=browsing", content_type="application/json")
+        assert res.status_code == 200
+        data = json.loads(res.get_data())
+        assert len(data[2]["children"]) == 0
+
+        # login_user
+        login_user_via_session(client=client_rest, email=users[3]["email"])
+        res = client_rest.get("/tree?action=browsing", content_type="application/json")
+        assert res.status_code == 200
+        data = json.loads(res.get_data())
+        assert len(data[2]["children"]) == 1
 
 # .tox/c1/bin/pytest --cov=weko_index_tree tests/test_rest.py::test_get_parent_index_tree -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko_index_tree/.tox/c1/tmp --full-trace
 def test_get_parent_index_tree(client_rest, users, test_indices):
