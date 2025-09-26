@@ -749,6 +749,25 @@ def test_indexes_get_index_tree(i18n_app, db, redis_connect, users, db_records, 
         res = Indexes.get_browsing_tree(1)
         assert len(res)==1
 
+        # get_browsing_reset_tree
+        with patch("weko_index_tree.api.RedisConnection", side_effect=RedisError):
+            res = Indexes.get_browsing_reset_tree(0)
+            assert len(res)==3
+
+        with patch("weko_index_tree.api.RedisConnection", side_effect=KeyError):
+            res = Indexes.get_browsing_reset_tree(0)
+            assert len(res)==3
+
+        res = Indexes.get_browsing_reset_tree(0)
+        assert len(res)==3
+        assert len(res[2].get("children"))==0
+        assert "browsing_group" not in res[2]
+        assert "browsing_role" not in res[2]
+        assert "contribute_group" not in res[2]
+        assert "contribute_role" not in res[2]
+        assert "public_date" not in res[2]
+        assert "public_state" not in res[2]
+
         # get_more_browsing_tree
         res = Indexes.get_more_browsing_tree()
         assert len(res)==3

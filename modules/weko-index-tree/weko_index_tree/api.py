@@ -50,7 +50,8 @@ from .models import Index
 from .utils import cached_index_tree_json, check_doi_in_index, \
     check_restrict_doi_with_indexes, filter_index_list_by_role, \
     get_index_id_list, get_publish_index_id_list, get_tree_json, \
-    get_user_roles, is_index_locked, reset_tree, sanitize, save_index_trees_to_redis
+    get_user_roles, is_index_locked, reset_tree, sanitize, save_index_trees_to_redis, \
+    save_index_reset_trees_to_redis
 
 
 class Indexes(object):
@@ -669,6 +670,29 @@ class Indexes(object):
         else:
             tree = cls.get_index_tree(pid)
         reset_tree(tree)
+        return tree
+
+    @classmethod
+    def get_browsing_reset_tree(cls, pid=0):
+        """Get browsing reset_tree."""
+        try:
+            redis_connection = RedisConnection()
+            datastore = redis_connection.connection(
+                db=current_app.config["CACHE_REDIS_DB"], kv=True
+            )
+            v = datastore.get(
+                "index_reset_tree_view_"
+                + os.environ.get("INVENIO_WEB_HOST_NAME")
+                + "_"
+                + current_i18n.language
+            ).decode("UTF-8")
+            tree = json.loads(str(v))
+        except RedisError:
+            tree = cls.get_browsing_tree(pid)
+            save_index_reset_trees_to_redis(tree)
+        except KeyError:
+            tree = cls.get_browsing_tree(pid)
+            save_index_reset_trees_to_redis(tree)
         return tree
 
     @classmethod
