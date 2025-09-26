@@ -9,6 +9,7 @@ from tools import updateRestrictedRecords, update_weko_links
 
 from weko_records.api import ItemTypes
 
+from . import update_feedback_mail_list_to_db
 
 def main(restricted_item_type_id):
     try:
@@ -20,6 +21,9 @@ def main(restricted_item_type_id):
         renew_all_item_types()
         current_app.logger.info("run update_weko_links")
         update_weko_links.main()
+        current_app.logger.info("run update_feedback_mail_list_to_db")
+        update_feedback_mail_list_to_db.main()
+        current_app.logger.info("All updates completed successfully.")
     except Exception as ex:
         current_app.logger.error(ex)
         db.session.rollback()
