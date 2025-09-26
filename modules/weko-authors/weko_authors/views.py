@@ -759,6 +759,7 @@ def delete_prefix(id):
     """Delete authors prefix settings."""
     check, message = check_delete_prefix(id)
     if not check:
+        current_app.logger.error(f"Denied to delete authors prefix settings: id={id}")
         return jsonify(msg=message), 400
     AuthorsPrefixSettings.delete(id)
     return jsonify(msg=_('Success'))
@@ -827,6 +828,7 @@ def delete_affiliation(id):
     """Delete authors affiliation settings."""
     check, message = check_delete_affiliation(id)
     if not check:
+        current_app.logger.error(f"Denied to delete authors affiliation settings: id={id}")
         return jsonify(msg=message), 400
     AuthorsAffiliationSettings.delete(id)
     return jsonify(msg=_('Success'))
