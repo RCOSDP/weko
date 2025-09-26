@@ -313,7 +313,7 @@ def save_export_url(start_time, end_time, file_uri, user_id):
     )
 
     key = f'{current_app.config.get("WEKO_AUTHORS_EXPORT_CACHE_URL_KEY")}_{user_id}'
-    current_cache.set(key, data, timeout=0)
+    current_cache.set(key, data, timeout=current_app.config.get("WEKO_AUTHORS_CACHE_TTL"))
     return data
 
 def delete_export_url(user_id):
@@ -1682,6 +1682,7 @@ def import_id_prefix_to_system(id_prefix):
                             AuthorsPrefixSettings.create(**id_prefix)
                     elif status == 'update':
                         if check is None or check.id == id_prefix['id']:
+                            id_prefix['community_ids'] = id_prefix.get('community_ids', [])
                             AuthorsPrefixSettings.update(**id_prefix)
                     elif status == 'deleted':
                         used_external_id_prefix,_ = WekoAuthors.get_used_scheme_of_id_prefix()
@@ -1731,6 +1732,7 @@ def import_affiliation_id_to_system(affiliation_id):
                             AuthorsAffiliationSettings.create(**affiliation_id)
                     elif status == 'update':
                         if check is None or check.id == affiliation_id['id']:
+                            affiliation_id['community_ids'] = affiliation_id.get('community_ids', [])
                             AuthorsAffiliationSettings.update(**affiliation_id)
                     elif status == 'deleted':
                         used_external_id_prefix,_ = WekoAuthors.get_used_scheme_of_affiliation_id()
