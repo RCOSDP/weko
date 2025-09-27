@@ -453,7 +453,7 @@ def base_app(instance_path):
             "Community Administrator",
             "Guest",
             "Authenticated User"
-        ]
+        ],
         WEKO_INDEX_TREE_SHOW_MODAL=False
     )
     app_.url_map.converters['pid'] = PIDConverter
