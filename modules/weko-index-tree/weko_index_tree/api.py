@@ -276,10 +276,14 @@ class Indexes(object):
                         contribute_allowed_mix_group_ids if "gr" not in group_id
                 ]
 
-                if data in ["browsing_role", "browsing_group"]:
-                    cls.update_browsing_roles_groups(index, index_setting, True, True)
-                if data in ["contribute_role", "contribute_group"]:
-                    cls.update_contribute_roles_groups(index, index_setting, True, True)
+                if data.keys() & set(["browsing_role", "browsing_group"]):
+                    cls.update_browsing_roles_groups(
+                        index, index_setting, True, True
+                    )
+                if data.keys() & set(["contribute_role", "contribute_group"]):
+                    cls.update_contribute_roles_groups(
+                        index, index_setting, True, True
+                    )
 
                 recs_group = {
                     "recursive_coverpage_check": partial(
