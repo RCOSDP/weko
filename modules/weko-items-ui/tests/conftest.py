@@ -52,6 +52,7 @@ from invenio_deposit.config import (
 )
 from invenio_files_rest.models import Location, Bucket,ObjectVersion
 from invenio_records_files.api import RecordsBuckets
+from invenio_records_ui import InvenioRecordsUI
 from invenio_files_rest import InvenioFilesREST
 from invenio_files_rest.config import FILES_REST_STORAGE_CLASS_LIST
 from invenio_files_rest.models import Location
@@ -268,6 +269,7 @@ def base_app(instance_path):
     InvenioAccess(app_)
     InvenioPIDStore(app_)
     InvenioRecords(app_)
+    InvenioRecordsUI(app_)
     InvenioFilesREST(app_)
     InvenioJSONSchemas(app_)
     InvenioSearch(app_)
