@@ -591,6 +591,12 @@ class ItemTypeMetaDataView(BaseView):
             for row_id in table_row_ids:
                 # Extract the property ID from 'input_type'
                 input_type = meta_list.get(row_id).get('input_type')
+                default_type_list = [
+                    t.get('value')
+                    for t in current_app.config['WEKO_ITEMTYPES_UI_DEFAULT_PROPERTIES'].values()
+                ]
+                if input_type in default_type_list:
+                    continue
                 prop_id = int(input_type[4:])
                 record = ItemTypeProps.get_record(prop_id)
 
