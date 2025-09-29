@@ -2475,6 +2475,13 @@ def import_items_to_activity(item, request_info):
             .format(headless.activity_id)
         )
         traceback.print_exc()
+        exec_info = sys.exc_info()
+        tb_info = traceback.format_tb(exec_info[2])
+        UserActivityLogger.error(
+            operation="ITEM_IMPORT",
+            request_info=request_info,
+            remarks=tb_info[0]
+        )
         url = headless.detail
         recid = headless.recid
         current_action = headless.current_action
