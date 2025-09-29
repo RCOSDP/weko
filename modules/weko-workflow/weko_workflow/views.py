@@ -2467,7 +2467,7 @@ def cancel_action(activity_id='0', action_id=0):
         res = ResponseMessageSchema().load({"code":-1, "msg":'Error! Cannot process quit activity!'})
         return jsonify(res.data), 500
 
-    if session.get("guest_url"):
+    if not current_user.is_authenticated and session.get("guest_url"):
         url = session.get("guest_url")
     else:
         url = url_for('weko_workflow.display_activity',
