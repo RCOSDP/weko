@@ -1863,9 +1863,14 @@ class WorkActivity(object):
                                     _FlowActionRole.action_user_exclude != '0',
                                 )
                             ),
-                            not_(cast(_Activity.shared_user_ids, String).contains(self_user_id_json)),
-                            not_(_Activity.temp_data.op("#>>")("{'metainfo', 'shared_user_ids'}").contains(self_user_id_json),),
-                            not_(_Activity.temp_data.op("#>>")("{'metainfo', 'owner'}") == str(self_user_id)),
+                            or_(
+                                and_(
+                                    not_(cast(_Activity.shared_user_ids, String).contains(self_user_id_json)),
+                                    not_(_Activity.temp_data.op("#>>")("{'metainfo', 'shared_user_ids'}").contains(self_user_id_json),),
+                                    not_(_Activity.temp_data.op("#>>")("{'metainfo', 'owner'}") == str(self_user_id)),
+                                ),
+                                _Activity.shared_user_ids.is_(None),
+                            )
                         ),
                         and_(
                             or_(
@@ -1878,15 +1883,25 @@ class WorkActivity(object):
                                     _FlowActionRole.action_role_exclude != '0'
                                 )
                             ),
-                            not_(cast(_Activity.shared_user_ids, String).contains(self_user_id_json)),
-                            not_(_Activity.temp_data.op("#>>")("{'metainfo', 'shared_user_ids'}").contains(self_user_id_json),),
-                            not_(_Activity.temp_data.op("#>>")("{'metainfo', 'owner'}") == str(self_user_id)),
+                            or_(
+                                and_(
+                                    not_(cast(_Activity.shared_user_ids, String).contains(self_user_id_json)),
+                                    not_(_Activity.temp_data.op("#>>")("{'metainfo', 'shared_user_ids'}").contains(self_user_id_json),),
+                                    not_(_Activity.temp_data.op("#>>")("{'metainfo', 'owner'}") == str(self_user_id)),
+                                ),
+                                _Activity.shared_user_ids.is_(None),
+                            )
                         ),
                         and_(
                             ActivityAction.action_handler != self_user_id,
-                            not_(cast(_Activity.shared_user_ids, String).contains(self_user_id_json)),
-                            not_(_Activity.temp_data.op("#>>")("{'metainfo', 'shared_user_ids'}").contains(self_user_id_json),),
-                            not_(_Activity.temp_data.op("#>>")("{'metainfo', 'owner'}") == str(self_user_id)),
+                            or_(
+                                and_(
+                                    not_(cast(_Activity.shared_user_ids, String).contains(self_user_id_json)),
+                                    not_(_Activity.temp_data.op("#>>")("{'metainfo', 'shared_user_ids'}").contains(self_user_id_json),),
+                                    not_(_Activity.temp_data.op("#>>")("{'metainfo', 'owner'}") == str(self_user_id)),
+                                ),
+                                _Activity.shared_user_ids.is_(None),
+                            )
                         ),
                         and_(
                             or_(
