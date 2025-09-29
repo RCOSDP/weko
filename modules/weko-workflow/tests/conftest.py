@@ -582,7 +582,8 @@ def base_app(instance_path, search_class, cache_config):
         ],
         WEKO_WORKFLOW_APPROVAL_PREVIEW=WEKO_WORKFLOW_APPROVAL_PREVIEW,
         WEKO_WORKFLOW_USAGE_REPORT_WORKFLOW_NAME = '利用報告/Data Usage Report',
-        WEKO_WORKFLOW_TODO_TAB = 'todo'
+        WEKO_WORKFLOW_TODO_TAB = 'todo',
+        WEKO_HANDLE_CREDS_JSON_PATH='/code/modules/resources/handle_creds.json',
     )
 
     app_.testing = True
@@ -5017,33 +5018,36 @@ def application_api_request_body(app, item_type):
     return bodies
 
 @pytest.fixture()
-def indextree(client, users):
+def indextree(client, users, app):
     indicies = []
     index_metadata1 = {
         "id": 1001,
         "parent": 0,
         "value": "test index1",
     }
+    with app.test_request_context():
+        with patch("b2handle.handleclient.EUDATHandleClient.register_handle") as mock_register_handle:
+            mock_register_handle.return_value = "20.500.12345/FK2-1234567890"
+            # create index
+            with patch("flask_login.utils._get_user", return_value=users[2]["obj"]):
+                assert Indexes.create(index_metadata1["parent"], index_metadata1)
+                index = Index.get_index_by_id(index_metadata1["id"])
+                index.public_state = True
+                index.harvest_public_state = True
+            indicies.append(index_metadata1)
 
-    with patch("flask_login.utils._get_user", return_value=users[2]["obj"]):
-        assert Indexes.create(index_metadata1["parent"], index_metadata1)
-        index = Index.get_index_by_id(index_metadata1["id"])
-        index.public_state = True
-        index.harvest_public_state = True
-    indicies.append(index_metadata1)
+            index_metadata2 = {
+                "id": 1002,
+                "parent": 0,
+                "value": "test index2",
+            }
 
-    index_metadata2 = {
-        "id": 1002,
-        "parent": 0,
-        "value": "test index2",
-    }
-
-    with patch("flask_login.utils._get_user", return_value=users[2]["obj"]):
-        assert Indexes.create(index_metadata2["parent"], index_metadata2)
-        index = Index.get_index_by_id(index_metadata2["id"])
-        index.public_state = True
-        index.harvest_public_state = True
-    indicies.append(index_metadata2)
+            with patch("flask_login.utils._get_user", return_value=users[2]["obj"]):
+                assert Indexes.create(index_metadata2["parent"], index_metadata2)
+                index = Index.get_index_by_id(index_metadata2["id"])
+                index.public_state = True
+                index.harvest_public_state = True
+            indicies.append(index_metadata2)
 
     return indicies
 
