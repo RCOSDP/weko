@@ -1605,7 +1605,7 @@ class WekoDeposit(Deposit):
         self['_deposit']['owner'] = int(dc['owner'])
         self['_deposit']['owners'] = [int(dc['owner'])]
         self['_deposit']['weko_shared_ids'] = dc['weko_shared_ids']
-        self['_deposit']['created_by'] = int(current_user.id) if current_user and current_user.is_authenticated else 1
+        self['_deposit']['created_by'] = int(self.data.get('created_by', current_user.id))
 
         if data:
             self.delete_item_metadata(data)

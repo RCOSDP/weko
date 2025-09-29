@@ -1030,92 +1030,87 @@ class TestWekoDeposit:
                             ('item_1617258105262', {'attribute_name': 'Resource Type', 'attribute_value_mlt': [{'resourceuri': 'http://purl.org/coar/resource_type/c_5794', 'resourcetype': 'conference paper'}]}), 
                             ('item_title', 'title'), ('item_type_id', '1'), ('control_number', 1), ('author_link', []), 
                             ('_oai', {'id': '1'}), ('weko_shared_ids', []), ('owner', 1), ('owners', [1]), ('publish_date', '2022-08-20'), 
-                            ('title', ['title']), ('relation_version_is_last', True), ('path', ['1']), ('publish_status','0')])
+                            ('title', ['title']), ('relation_version_is_last', True), ('path', ['1']), ('publish_status','0'), ('weko_link', '')])
         test2 = None
 
         with patch("weko_index_tree.api.Indexes.get_path_list", return_value=['1']):
-
-            ret1,ret2 = deposit.convert_item_metadata(index_obj,record_data)
-            assert set(ret1) == set(test1)
-            assert ret2 == test2
-
-            with patch("weko_deposit.api.RedisConnection.connection",side_effect=BaseException("test_error")):
-                with pytest.raises(HTTPException) as httperror:
-                    ret = deposit.convert_item_metadata(index_obj,{})
-                    assert httperror.value.code == 500
-                    assert httperror.value.data == "Failed to register item!"
-
-            with patch("weko_deposit.api.json_loader",side_effect=RuntimeError):
-                with pytest.raises(RuntimeError):
-                    ret = deposit.convert_item_metadata(index_obj,record_data)
-            with patch("weko_deposit.api.json_loader",side_effect=ValueError):
-                with pytest.raises(ValueError):
-                    deposit.convert_item_metadata(index_obj,record_data)
-            with patch("weko_deposit.api.json_loader",side_effect=BaseException("test_error")):
-                with pytest.raises(HTTPException) as httperror:
-                    ret = deposit.convert_item_metadata(index_obj,record_data)
-                    assert httperror.value.code == 500
-                    assert httperror.value.data == "MAPPING_ERROR"
-
-            with patch("weko_deposit.api.WekoDeposit.convert_type_shared_user_ids",return_value={}):
-                record['item_data']['shared_user_ids'] = []
-                deposit = record['deposit']
-                record_data = record['item_data']
-                ret3, _ = deposit.convert_item_metadata(index_obj, record_data)
-                assert ret3['weko_shared_ids'] == []
             with app.test_client() as client:
                 # ログインする
                 response = client.post(url_for_security('login'),
                                    data={'email': users[0]["email"], 'password': '123456'},
                                    environ_base={'REMOTE_ADDR': '127.0.0.1'})
                 assert response.status_code == 302
+
+                ret1,ret2 = deposit.convert_item_metadata(index_obj,record_data)
+                assert set(ret1) == set(test1)
+                assert ret2 == test2
+
+                with patch("weko_deposit.api.RedisConnection.connection",side_effect=BaseException("test_error")):
+                    with pytest.raises(HTTPException) as httperror:
+                        ret = deposit.convert_item_metadata(index_obj,{})
+                        assert httperror.value.code == 500
+                        assert httperror.value.data == "Failed to register item!"
+
+                with patch("weko_deposit.api.json_loader",side_effect=RuntimeError):
+                    with pytest.raises(RuntimeError):
+                        ret = deposit.convert_item_metadata(index_obj,record_data)
+                with patch("weko_deposit.api.json_loader",side_effect=ValueError):
+                    with pytest.raises(ValueError):
+                        deposit.convert_item_metadata(index_obj,record_data)
+                with patch("weko_deposit.api.json_loader",side_effect=BaseException("test_error")):
+                    with pytest.raises(HTTPException) as httperror:
+                        ret = deposit.convert_item_metadata(index_obj,record_data)
+                        assert httperror.value.code == 500
+                        assert httperror.value.data == "MAPPING_ERROR"
+
+                with patch("weko_deposit.api.WekoDeposit.convert_type_shared_user_ids",return_value={}):
+                    record['item_data']['shared_user_ids'] = []
+                    deposit = record['deposit']
+                    record_data = record['item_data']
+                    ret3, _ = deposit.convert_item_metadata(index_obj, record_data)
+                    assert ret3['weko_shared_ids'] == []
+
                 record['item_data']['shared_user_ids'] = []
                 deposit = record['deposit']
                 record_data = record['item_data']
                 ret3, _ = deposit.convert_item_metadata(index_obj, record_data)
                 assert ret3['weko_shared_ids'] == []
 
-            record['item_data']['shared_user_ids'] = []
-            deposit = record['deposit']
-            record_data = record['item_data']
-            ret3, _ = deposit.convert_item_metadata(index_obj, record_data)
-            assert ret3['weko_shared_ids'] == []
+                record['item_data']['shared_user_ids'] = [2,3]
+                deposit = record['deposit']
+                record_data = record['item_data']
+                ret3, _ = deposit.convert_item_metadata(index_obj, record_data)
+                assert ret3['weko_shared_ids'] == [2,3]
 
-            record['item_data']['shared_user_ids'] = [2,3]
-            deposit = record['deposit']
-            record_data = record['item_data']
-            ret3, _ = deposit.convert_item_metadata(index_obj, record_data)
-            assert ret3['weko_shared_ids'] == [2,3]
+                # data = None
+                with pytest.raises(BaseException):
+                    record['item_data']['shared_user_ids'] = []
+                    deposit = record['deposit']
+                    ret, _ = deposit.convert_item_metadata(index_obj)
+                    assert error.value.code == 500
 
-            # data = None
-            with pytest.raises(BaseException):
-                record['item_data']['shared_user_ids'] = []
+                # data = None and radis exist
+                redis_connection = RedisConnection()
+                datastore = redis_connection.connection(db=app.config['CACHE_REDIS_DB'], kv = True)
+                cache_key = app.config['WEKO_DEPOSIT_ITEMS_CACHE_PREFIX'].format(pid_value=deposit.pid.pid_value)
+                print("cache_key:{}".format(cache_key))
+                datastore.put(cache_key, json.dumps(record['item_data']).encode('utf-8'))
                 deposit = record['deposit']
                 ret, _ = deposit.convert_item_metadata(index_obj)
-                assert error.value.code == 500
+                assert ret['weko_shared_ids'] == []
 
-            # data = None and radis exist
-            redis_connection = RedisConnection()
-            datastore = redis_connection.connection(db=app.config['CACHE_REDIS_DB'], kv = True)
-            cache_key = app.config['WEKO_DEPOSIT_ITEMS_CACHE_PREFIX'].format(pid_value=deposit.pid.pid_value)
-            print("cache_key:{}".format(cache_key))
-            datastore.put(cache_key, json.dumps(record['item_data']).encode('utf-8'))
-            deposit = record['deposit']
-            ret, _ = deposit.convert_item_metadata(index_obj)
-            assert ret['weko_shared_ids'] == []
+                # actions == 'publish'
+                deposit = record['deposit']
+                record_data = record['item_data']
+                ret, _ = deposit.convert_item_metadata(index_obj_1, record_data)
+                assert ret['publish_status'] == '0'
 
-            # actions == 'publish'
-            deposit = record['deposit']
-            record_data = record['item_data']
-            ret, _ = deposit.convert_item_metadata(index_obj_1, record_data)
-            assert ret['publish_status'] == '0'
-
-            # 'shared_user_ids' in self
-            deposit = record['deposit']
-            deposit['shared_user_ids'] = [1]
-            record_data = record['item_data']
-            ret, _ = deposit.convert_item_metadata(index_obj, record_data)
-            assert 'shared_user_ids' not in ret
+                # 'shared_user_ids' in self
+                deposit = record['deposit']
+                deposit['shared_user_ids'] = [1]
+                record_data = record['item_data']
+                ret, _ = deposit.convert_item_metadata(index_obj, record_data)
+                assert 'shared_user_ids' not in ret
 
         with patch("weko_index_tree.api.Indexes.get_path_list", return_value=[]):
             with pytest.raises(PIDResolveRESTError) as error:
