@@ -2291,9 +2291,6 @@ def make_stats_file(item_type_id, recids, list_item_role, export_path=""):
             [''] * (max_feedback_mail - len(feedback_mail_list))
         )
 
-        # Exporting .researchmap_linkage is ALWAYS blank
-        records.attr_output[recid].append('')
-
         if can_export_request_mail:
             request_mail_list = records.attr_data['request_mail_list'] \
                 .get(recid, [])
@@ -2301,6 +2298,9 @@ def make_stats_file(item_type_id, recids, list_item_role, export_path=""):
             records.attr_output[recid].extend(
                 [''] * (max_request_mail - len(request_mail_list))
             )
+
+        # Exporting .researchmap_linkage is ALWAYS blank
+        records.attr_output[recid].append('')
 
         if can_export_item_application:
             item_application = records.attr_data['item_application'].get(recid, {})
