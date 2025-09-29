@@ -86,7 +86,7 @@ from weko_workflow.scopes import activity_scope
 from weko_theme.config import THEME_INSTITUTION_NAME
 from sqlalchemy_utils.functions import create_database, database_exists, \
     drop_database
-from tests.helpers import json_data, create_record, fill_oauth2_headers, create_activity, create_flow
+from .helpers import json_data, create_record, fill_oauth2_headers, create_activity, create_flow
 from invenio_files_rest.models import Location, Bucket,ObjectVersion
 from invenio_files_rest import InvenioFilesREST
 from invenio_records import InvenioRecords
@@ -1365,9 +1365,9 @@ def db_register_full_action(app, db, db_records, users, action_data, item_type):
                      send_mail_setting={})
     flow_action4 = FlowAction(status='N',
                      flow_id=flow_define.flow_id,
-                     action_id=3,
+                     action_id=4,
                      action_version='1.0.0',
-                     action_order=1,
+                     action_order=4,
                      action_condition='',
                      action_status='A',
                      action_date=datetime.strptime('2018/07/28 0:00:00','%Y/%m/%d %H:%M:%S'),
