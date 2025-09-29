@@ -3259,7 +3259,7 @@ def test_cancel_action2(client, users,db, db_register_full_action, db_records, a
     (5, 200),
     (6, 200),
 ])
-def test_cancel_action3(client, users,db, db_register, db_records, add_file, users_index, status_code, mocker):
+def test_cancel_action3(client, users,db, db_register_full_action, db_records, add_file, users_index, status_code, mocker):
     """
     Test cancel_action add case
 
@@ -3267,7 +3267,7 @@ def test_cancel_action3(client, users,db, db_register, db_records, add_file, use
         client (fixture): cliant settings
         users (fixture): user settings
         db (fixture): db settings
-        db_register (fixture): add FlowDefine, FlowAction, WorkFlow, Activity, ActivityAction, ActionFeedbackMail, ActivityHistory
+        db_register_full_action (fixture): add FlowDefine, FlowAction, WorkFlow, Activity, ActivityAction, ActionFeedbackMail, ActivityHistory
         db_records (fixture): set pid data
         add_file (fixture): test file, bucket
         users_index (parametrize): test user
@@ -3316,7 +3316,7 @@ def test_cancel_action3(client, users,db, db_register, db_records, add_file, use
 
 
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_cancel_action_guest -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
-def test_cancel_action_guest(guest, db, db_register_full_action):
+def test_cancel_action_guest(guest, db, db_register_full_action, mocker):
     input = {
         "action_version": "1.0.0",
         "commond":"this is test comment."
@@ -3329,6 +3329,7 @@ def test_cancel_action_guest(guest, db, db_register_full_action):
     with db.session.begin_nested():
         db.session.add(activity_guest)
     db.session.commit()
+    mocker.patch("weko_workflow.views.validate_action_role_user", return_value=(False, False, False))
     url = url_for("weko_workflow.cancel_action",
                   activity_id="99", action_id=1)
     redirect_url = url_for("weko_workflow.display_guest_activity",file_name="test_file")
