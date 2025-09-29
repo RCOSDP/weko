@@ -229,6 +229,10 @@ def test_check_phone_number():
     field = MockData("12-345")
     check_phone_number({},field)
 
+    # empty
+    field = MockData("")
+    check_phone_number({},field)
+
 #.tox/c1/bin/pytest --cov=weko_user_profiles tests/test_forms.py::test_validate_digits -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-user-profiles/.tox/c1/tmp
 #識別子のバリデーション
 def test_validate_digits():
