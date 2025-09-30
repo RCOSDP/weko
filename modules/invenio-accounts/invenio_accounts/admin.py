@@ -206,7 +206,7 @@ class UserView(ModelView):
                                 'Repository Administrator')
     _com_role = os.environ.get('INVENIO_ROLE_COMMUNITY',
                                'Community Administrator')
-    _admin_roles = [_system_role, _repo_role, _com_role]
+    _admin_roles = [_system_role,]
 
     @property
     def can_create(self):
