@@ -21521,7 +21521,7 @@ def test_prepare_delete_item_login(client_api, users, db_itemtype_15, mocker):
     # no request
     with patch("weko_records_ui.views.soft_delete") as mock_soft_delete, \
             patch("weko_items_ui.views.prepare_delete_workflow") as mock_prepare_workflow:
-        ret = prepare_delete_item(1, "", shared_user_id=3)
+        ret = prepare_delete_item(1, "", shared_user_ids=[3])
         assert ret.status_code == 200
         assert ret.json["msg"] == "success"
         mock_soft_delete.assert_not_called()
