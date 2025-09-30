@@ -139,21 +139,39 @@ class UserView(ModelView):
 
     def get_query(self):
         """Return a query for the model type."""
-        if any(role.name in current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER'] for role in current_user.roles):
-            return self.session.query(self.model)
-        else:
-            repositories = Community.get_repositories_by_user(current_user)
-            groups = [repository.group for repository in repositories]
-            return self.session.query(self.model).filter(self.model.roles.any(Role.id.in_([group.id for group in groups])))
+        query = super().get_query()
+        if any(
+            role.name in current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER']
+            for role in current_user.roles
+        ):
+            return query
+
+        repositories = Community.get_repositories_by_user(current_user)
+        groups = [
+            repository.group for repository in repositories
+            if repository.group is not None
+        ]
+        return query.filter(
+            self.model.roles.any(Role.id.in_([group.id for group in groups]))
+        )
 
     def get_count_query(self):
         """Return a the count query for the model type"""
-        if any(role.name in current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER'] for role in current_user.roles):
-            return self.session.query(func.count('*')).select_from(self.model)
-        else:
-            repositories = Community.get_repositories_by_user(current_user)
-            groups = [repository.group for repository in repositories]
-            return self.session.query(func.count('*')).select_from(self.model).filter(self.model.roles.any(Role.id.in_([group.id for group in groups])))
+        query = super().get_count_query()
+        if any(
+            role.name in current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER']
+            for role in current_user.roles
+        ):
+            return query
+
+        repositories = Community.get_repositories_by_user(current_user)
+        groups = [
+            repository.group for repository in repositories
+            if repository.group is not None
+        ]
+        return query.filter(
+            self.model.roles.any(Role.id.in_([group.id for group in groups]))
+        )
 
     @action('inactivate', _('Inactivate'),
             _('Are you sure you want to inactivate selected users?'))
@@ -200,12 +218,15 @@ class UserView(ModelView):
             current_app.logger.exception(str(exc))  # pragma: no cover
             flash(_('Failed to activate users.'), 'error')  # pragma: no cover
 
-    _system_role = os.environ.get('INVENIO_ROLE_SYSTEM',
-                                  'System Administrator')
-    _repo_role = os.environ.get('INVENIO_ROLE_REPOSITORY',
-                                'Repository Administrator')
-    _com_role = os.environ.get('INVENIO_ROLE_COMMUNITY',
-                               'Community Administrator')
+    _system_role = os.environ.get(
+        'INVENIO_ROLE_SYSTEM', 'System Administrator'
+    )
+    _repo_role = os.environ.get(
+        'INVENIO_ROLE_REPOSITORY', 'Repository Administrator'
+    )
+    _com_role = os.environ.get(
+        'INVENIO_ROLE_COMMUNITY', 'Community Administrator'
+    )
     _admin_roles = [_system_role,]
 
     @property
@@ -216,12 +237,16 @@ class UserView(ModelView):
     @property
     def can_edit(self):
         """Check permission for Editing."""
-        return any(role.name in self._admin_roles for role in current_user.roles)
+        return any(
+            role.name in self._admin_roles for role in current_user.roles
+        )
 
     @property
     def can_delete(self):
         """Check permission for Deleting."""
-        return any(role.name in self._admin_roles for role in current_user.roles)
+        return any(
+            role.name in self._admin_roles for role in current_user.roles
+        )
 
 
 class RoleView(ModelView):
