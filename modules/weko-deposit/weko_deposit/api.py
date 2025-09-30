@@ -21,6 +21,7 @@
 """Weko Deposit API."""
 import copy
 import inspect
+import os
 import sys
 import uuid
 import io
@@ -37,6 +38,7 @@ from elasticsearch.exceptions import TransportError
 from elasticsearch.helpers import bulk
 from flask import abort, current_app, json, request, session
 from flask_security import current_user
+from invenio_accounts.models import User, Role
 from invenio_db import db
 from invenio_deposit.api import Deposit, index, preserve
 from invenio_deposit.errors import MergeConflict
@@ -1599,13 +1601,20 @@ class WekoDeposit(Deposit):
         # elif 'status' in self:
         #     self.data['status'] = self['status']
 
+        # get system admin user
+        sys_role = Role.query.filter_by(
+            name=os.environ.get('INVENIO_ROLE_SYSTEM', 'System Administrator')).first()
+        system_admin = User.query.filter(User.roles.any(id=sys_role.id)).first()
+
         if 'shared_user_ids' in self:
             self.pop('shared_user_ids')
         # update '_deposit':{'owners':[?]} by owner for record_metadata
         self['_deposit']['owner'] = int(dc['owner'])
         self['_deposit']['owners'] = [int(dc['owner'])]
         self['_deposit']['weko_shared_ids'] = dc['weko_shared_ids']
-        self['_deposit']['created_by'] = int(self.data.get('created_by', current_user.id))
+        self['_deposit']['created_by'] = int(
+            self.data.get('created_by', 
+                          current_user.id if current_user and current_user.is_authenticated else system_admin.id))
 
         if data:
             self.delete_item_metadata(data)
