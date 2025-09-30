@@ -7,7 +7,23 @@ from properties import property_config
 from register_properties import del_properties, get_properties_id, register_properties_from_folder
 from tools import updateRestrictedRecords, update_weko_links
 
+from invenio_files_rest.models import (
+    timestamp_before_update as ifr_timestamp_before_update,
+    Timestamp as ifr_Timestamp
+)
+from invenio_mail.models import (
+    timestamp_before_update as im_timestamp_before_update,
+    Timestamp as im_Timestamp
+)
+from invenio_records.models import (
+    timestamp_before_update as ir_timestamp_before_update,
+    Timestamp as ir_Timestamp
+)
 from weko_records.api import ItemTypes
+from weko_records.models import (
+    timestamp_before_update as weko_timestamp_before_update,
+    Timestamp as Weko_Timestamp,
+)
 
 from . import update_feedback_mail_list_to_db
 
@@ -57,9 +73,31 @@ def renew_all_item_types():
 
 if __name__ == "__main__":
     args = sys.argv
-    if len(args) > 1:
-        restricted_item_type_id = int(args[1])
-        main(restricted_item_type_id)
-    else:
-        print("Please provide restricted_item_type_id as an argument.")
-        sys.exit(1)
+    db.event.remove(db.session, 'before_update', ifr_timestamp_before_update)
+    db.event.remove(db.session, 'before_update', im_timestamp_before_update)
+    db.event.remove(db.session, 'before_update', ir_timestamp_before_update)
+    db.event.remove(db.session, 'before_update', weko_timestamp_before_update)
+    try:
+        if len(args) > 1:
+            restricted_item_type_id = int(args[1])
+            main(restricted_item_type_id)
+        else:
+            print("Please provide restricted_item_type_id as an argument.")
+            sys.exit(1)
+    finally:
+        db.event.listen(
+            ifr_Timestamp, "before_update",
+            ifr_timestamp_before_update, propagate=True
+        )
+        db.event.listen(
+            im_Timestamp, "before_update",
+            im_timestamp_before_update, propagate=True
+        )
+        db.event.listen(
+            ir_Timestamp, "before_update",
+            ir_timestamp_before_update, propagate=True
+        )
+        db.event.listen(
+            Weko_Timestamp, "before_update",
+            weko_timestamp_before_update, propagate=True
+        )
