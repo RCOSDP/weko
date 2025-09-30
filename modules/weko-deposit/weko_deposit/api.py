@@ -21,6 +21,7 @@
 """Weko Deposit API."""
 import copy
 import inspect
+import os
 import sys
 import uuid
 import io
@@ -1601,7 +1602,8 @@ class WekoDeposit(Deposit):
         #     self.data['status'] = self['status']
 
         # get system admin user
-        sys_role = Role.query.filter_by(name='System Administrator').first()
+        sys_role = Role.query.filter_by(
+            name=os.environ.get('INVENIO_ROLE_SYSTEM', 'System Administrator')).first()
         system_admin = User.query.filter(User.roles.any(id=sys_role.id)).first()
 
         if 'shared_user_ids' in self:
