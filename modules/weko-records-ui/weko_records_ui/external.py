@@ -22,6 +22,7 @@
 
 import json
 import traceback
+from enum import Enum
 from flask import current_app
 from urllib3.util.retry import Retry
 import requests
@@ -31,6 +32,20 @@ from weko_deposit.api import WekoRecord
 from weko_records.models import ItemReference, OaStatus
 from weko_admin.models import ApiCertificate
 from weko_logging.activity_logger import UserActivityLogger
+from weko_schema_ui.models import PublishStatus
+
+
+class OAPublishStatus(Enum):
+    """Publish status for OA assist."""
+
+    DELETED = -1
+    """Publish status of deleted item."""
+
+    DRAFT = 0
+    """Publish status of draft item."""
+    
+    PUBLISHED = 1
+    """Publish status of published item."""
 
 
 def call_external_system(old_record=None,
@@ -85,9 +100,20 @@ def call_external_system(old_record=None,
             record.get("pubdate",{}).get("attribute_value")
         ITEM_ACTION = current_app.config.get("ITEM_ACTION")
         if action == ITEM_ACTION.DELETED:
-            data["item_info"]["publish_status"] = -1
+            # case delete item
+            data["item_info"]["publish_status"] = OAPublishStatus.DELETED.value
         else:
-            data["item_info"]["publish_status"] = int(record.get("publish_status"))
+            publish_status = record.get("publish_status")
+            request_status = None
+            if str(publish_status) == PublishStatus.PUBLIC.value:
+                # case public item
+                request_status = OAPublishStatus.PUBLISHED.value
+            elif str(publish_status) in [
+                PublishStatus.NEW.value, PublishStatus.PRIVATE.value
+            ]:
+                # case private item or new item
+                request_status = OAPublishStatus.DRAFT.value
+            data["item_info"]["publish_status"] = request_status
 
         files = []
         for property in record.values():
