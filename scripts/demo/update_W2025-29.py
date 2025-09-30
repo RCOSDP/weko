@@ -32,19 +32,19 @@ def main(restricted_item_type_id, start_time):
     try:
         current_app.logger.info("run updateRestrictedRecords")
         updateRestrictedRecords.main(restricted_item_type_id)
-        show_exec_time(start_time, "update_restricted_records")
+        current_time = show_exec_time(start_time, "update_restricted_records")
         current_app.logger.info("run register_properties_only_specified")
         register_properties_only_specified()
-        show_exec_time(start_time, "register_properties_only_specified")
+        current_time = show_exec_time(current_time, "register_properties_only_specified")
         current_app.logger.info("run renew_all_item_types")
         renew_all_item_types()
-        show_exec_time(start_time, "renew_all_item_types")
+        current_time = show_exec_time(current_time, "renew_all_item_types")
         current_app.logger.info("run update_weko_links")
         update_weko_links.main()
-        show_exec_time(start_time, "update_weko_links")
+        current_time = show_exec_time(current_time, "update_weko_links")
         current_app.logger.info("run update_feedback_mail_list_to_db")
         update_feedback_mail_list_to_db.main()
-        show_exec_time(start_time, "update_feedback_mail_list_to_db")
+        current_time = show_exec_time(current_time, "update_feedback_mail_list_to_db")
         current_app.logger.info("All updates completed successfully.")
     except Exception as ex:
         current_app.logger.error(ex)
@@ -83,6 +83,7 @@ def show_exec_time(start_time, process_name):
     current_app.logger.info(
         f"{process_name} elapsed time: {elapsed_time:.2f} seconds"
     )
+    return end_time
 
 
 if __name__ == "__main__":
