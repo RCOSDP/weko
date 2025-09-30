@@ -173,6 +173,20 @@ class UserView(ModelView):
             self.model.roles.any(Role.id.in_([group.id for group in groups]))
         )
 
+    def is_action_allowed(self, name):
+        """Check if user is allowed to perform the action.
+        Args:
+            name (str): The action name.
+        Returns:
+            bool: True if action is allowed.
+        """
+        if hasattr(self, f"can_{name}"):
+            return getattr(self, f"can_{name}")
+
+        return any(
+            role.name in self._admin_roles for role in current_user.roles
+        )
+
     @action('inactivate', _('Inactivate'),
             _('Are you sure you want to inactivate selected users?'))
     @commit
@@ -248,6 +262,19 @@ class UserView(ModelView):
             role.name in self._admin_roles for role in current_user.roles
         )
 
+    @property
+    def can_activate(self):
+        """Check permission for activating."""
+        return any(
+            role.name in self._admin_roles for role in current_user.roles
+        )
+
+    @property
+    def can_inactivate(self):
+        """Check permission for inactivating."""
+        return any(
+            role.name in self._admin_roles for role in current_user.roles
+        )
 
 class RoleView(ModelView):
     """Admin view for roles."""
