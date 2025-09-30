@@ -1,4 +1,5 @@
 import sys
+import time
 import traceback
 
 from flask import current_app
@@ -27,18 +28,23 @@ from weko_records.models import (
 
 from . import update_feedback_mail_list_to_db
 
-def main(restricted_item_type_id):
+def main(restricted_item_type_id, start_time):
     try:
         current_app.logger.info("run updateRestrictedRecords")
         updateRestrictedRecords.main(restricted_item_type_id)
+        show_exec_time(start_time, "update_restricted_records")
         current_app.logger.info("run register_properties_only_specified")
         register_properties_only_specified()
+        show_exec_time(start_time, "register_properties_only_specified")
         current_app.logger.info("run renew_all_item_types")
         renew_all_item_types()
+        show_exec_time(start_time, "renew_all_item_types")
         current_app.logger.info("run update_weko_links")
         update_weko_links.main()
+        show_exec_time(start_time, "update_weko_links")
         current_app.logger.info("run update_feedback_mail_list_to_db")
         update_feedback_mail_list_to_db.main()
+        show_exec_time(start_time, "update_feedback_mail_list_to_db")
         current_app.logger.info("All updates completed successfully.")
     except Exception as ex:
         current_app.logger.error(ex)
@@ -71,7 +77,19 @@ def renew_all_item_types():
         db.session.rollback()
 
 
+def show_exec_time(start_time, process_name):
+    end_time = time.perf_counter()
+    elapsed_time = end_time - start_time
+    current_app.logger.info(
+        f"{process_name} elapsed time: {elapsed_time:.2f} seconds"
+    )
+
+
 if __name__ == "__main__":
+    # Log start time
+    current_app.logger.info("Start update_W2025-29.py")
+    start_time = time.perf_counter()
+
     args = sys.argv
     db.event.remove(db.session, 'before_update', ifr_timestamp_before_update)
     db.event.remove(db.session, 'before_update', im_timestamp_before_update)
@@ -80,7 +98,7 @@ if __name__ == "__main__":
     try:
         if len(args) > 1:
             restricted_item_type_id = int(args[1])
-            main(restricted_item_type_id)
+            main(restricted_item_type_id, start_time)
         else:
             print("Please provide restricted_item_type_id as an argument.")
             sys.exit(1)
@@ -101,3 +119,10 @@ if __name__ == "__main__":
             Weko_Timestamp, "before_update",
             weko_timestamp_before_update, propagate=True
         )
+
+    # Log end time
+    end_time = time.perf_counter()
+    elapsed_time = end_time - start_time
+    current_app.logger.info(
+        f"End update_W2025-29.py, elapsed time: {elapsed_time:.2f} seconds"
+    )
