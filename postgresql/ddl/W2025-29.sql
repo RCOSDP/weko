@@ -64,6 +64,7 @@ ALTER TABLE feedback_mail_history ADD COLUMN repository_id VARCHAR(100) NOT NULL
 ALTER TABLE stats_email_address ADD COLUMN repository_id VARCHAR(100) DEFAULT 'Root Index';
 
 -- modules/weko-authors/weko_authors/alembic/1e377b157a5d_add_repository_id_column.py
+-- If updating v1.0.8 to v2.0.0 or later, please make sure to not use this query.
 ALTER TABLE authors ADD COLUMN repository_id JSONB;
 ALTER TABLE authors_affiliation_settings ADD COLUMN repository_id JSONB;
 ALTER TABLE authors_prefix_settings ADD COLUMN repository_id JSONB;
@@ -1145,7 +1146,7 @@ INSERT INTO public.jsonld_mappings(created, updated, id, name, mapping, item_typ
 
 -- fix_issue_37736.sql
 
-ALTER TABLE site_info DROP COLUMN addthis_user_id;
+-- ALTER TABLE site_info DROP COLUMN addthis_user_id;
 
 -- fix_issue_39700.sql
 
