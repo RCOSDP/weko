@@ -1399,7 +1399,7 @@ def prepare_delete_item(id=None, community=None, shared_user_ids=[]):
                 msg="success",
                 data={
                     "redirect": url_for(
-                        "invenio_records_ui.recid", pid_value=recid
+                        "invenio_records_ui.recid", pid_value=pid_value
                     )
                 }
             )
