@@ -792,22 +792,26 @@ def check_index_permissions(record=None, index_id=None, index_path_list=None,
 
         """
         from weko_records_ui.utils import is_future
-        can_view = False
+        in_admin_view_scope = False
         role_names = [role.name for role in current_user.roles] 
         if roles[0]:
             # In case admin role.
-            can_view = True
+            in_admin_view_scope = True
         elif bool(set(current_app.config.get('WEKO_PERMISSION_ROLE_COMMUNITY')) & set(role_names)):
             # In case community admin role.
-            can_view = _check_community_admin_permission(index_data)
-        elif index_data.public_state:
+            in_admin_view_scope = _check_community_admin_permission(index_data)
+
+        is_content_public = False
+        if index_data.public_state:
             check_user_role = check_roles(roles, index_data.browsing_role) or \
                 check_groups(groups, index_data.browsing_group)
             check_public_date = \
                 not is_future(index_data.public_date) \
                 if index_data.public_date else True
             if check_user_role and check_public_date:
-                can_view = True
+                is_content_public = True
+
+        can_view = is_content_public or in_admin_view_scope
         return can_view
 
     def _check_index_permission_for_doi(index_data) -> bool:

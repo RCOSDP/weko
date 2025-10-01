@@ -1157,18 +1157,7 @@ class IndexManagementAPI(ContentNegotiatedMethodView):
 
             index_data = {
                 **index_info,
-                **({"browsing_group": {
-                    "allow": [
-                        {"id": role}
-                        for role in index_info["browsing_group"].split(",")
-                    ]
-                }} if "browsing_group" in index_info else {}),
-                **({"contribute_group": {
-                    "allow": [
-                        {"id": role}
-                        for role in index_info["contribute_group"].split(",")
-                    ]
-                }} if "contribute_group" in index_info else {})
+                **self._get_allowed_group_roles(index_info)
             }
 
             updated_index = self.record_class.update(index_id, **index_data)
@@ -1262,18 +1251,7 @@ class IndexManagementAPI(ContentNegotiatedMethodView):
         try:
             index_data = {
                 **index_info,
-                **({"browsing_group": {
-                    "allow": [
-                        {"id": role}
-                        for role in index_info["browsing_group"].split(",")
-                    ]
-                }} if "browsing_group" in index_info else {}),
-                **({"contribute_group": {
-                    "allow": [
-                        {"id": role}
-                        for role in index_info["contribute_group"].split(",")
-                    ]
-                }} if "contribute_group" in index_info else {})
+                **self._get_allowed_group_roles(index_info)
             }
 
             index = self.record_class.get_index(index_id)
@@ -1530,3 +1508,37 @@ class IndexManagementAPI(ContentNegotiatedMethodView):
                 save_index_trees_to_redis(tree_ja, lang=lang_code)
             else:
                 save_index_trees_to_redis(tree, lang=lang_code)
+
+
+    def _get_allowed_group_roles(self, index_info):
+        """Convert group strings to allowed group roles.
+        Args:
+            index_info (dict): The index information containing group strings.
+        Returns:
+            dict: A dictionary with allowed group roles.
+        """
+        def _get_allowed_list(self, group_str): 
+            """Convert group string to allowed group roles."""
+            return {
+                "allow": [{"id": role} for role in group_str.split(",")]
+            } if group_str else {}
+
+        # Convert group strings to allowed group roles
+        allowed_roles_groups = {}
+        if "browsing_group" in index_info:
+            allowed_roles_groups["browsing_group"] = _get_allowed_list(
+                self, index_info["browsing_group"]
+            )
+        if "contribute_group" in index_info:
+            allowed_roles_groups["contribute_group"] = _get_allowed_list(
+                self, index_info["contribute_group"]
+            )
+        if "browsing_role" in index_info:
+            allowed_roles_groups["browsing_role"] = _get_allowed_list(
+                self, index_info["browsing_role"]
+            )
+        if "contribute_role" in index_info:
+            allowed_roles_groups["contribute_role"] = _get_allowed_list(
+                self, index_info["contribute_role"]
+            )
+        return allowed_roles_groups

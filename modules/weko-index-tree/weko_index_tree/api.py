@@ -227,7 +227,7 @@ class Indexes(object):
                         if isinstance(v, str) and len(v) == 0:
                             continue
                     if isinstance(v, dict):
-                        v = ",".join(map(lambda x: str(x["id"]), v["allow"]))
+                        v = ",".join(map(lambda x: str(x["id"]), v.get("allow", [])))
                     if isinstance(v, str) and "public_date" in k:
                         if len(v) > 0:
                             v = datetime.strptime(v, "%Y%m%d")
@@ -239,9 +239,8 @@ class Indexes(object):
                     if "have_children" in k:
                         continue
                     setattr(index, k, v)
-                    
+
                 index_setting ={}
-                    
                 # get browsing role and contribute role from browsing group and contribute group
                 index_setting["browsing_role_ids"] = [
                     str(role.get("id")) for role in \
@@ -277,8 +276,14 @@ class Indexes(object):
                         contribute_allowed_mix_group_ids if "gr" not in group_id
                 ]
 
-                cls.update_browsing_roles_groups(index, index_setting, True, True)
-                cls.update_contribute_roles_groups(index, index_setting, True, True)
+                if data.keys() & set(["browsing_role", "browsing_group"]):
+                    cls.update_browsing_roles_groups(
+                        index, index_setting, True, True
+                    )
+                if data.keys() & set(["contribute_role", "contribute_group"]):
+                    cls.update_contribute_roles_groups(
+                        index, index_setting, True, True
+                    )
 
                 recs_group = {
                     "recursive_coverpage_check": partial(
