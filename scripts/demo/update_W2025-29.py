@@ -48,6 +48,7 @@ def main(restricted_item_type_id, start_time):
         current_app.logger.info("All updates completed successfully.")
     except Exception as ex:
         current_app.logger.error(ex)
+        traceback.print_exc()
         db.session.rollback()
 
 
