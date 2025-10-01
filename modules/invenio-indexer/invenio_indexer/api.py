@@ -554,7 +554,8 @@ class RecordIndexer(object):
             except SQLAlchemyError:
                 db.session.rollback()
                 current_app.logger.error(
-                    f'SQLAlchemy error occurred while updating the version_id in records_metadata for id: {record_id}.')
+                    f'SQLAlchemy error occurred while updating the version_id in records_metadata for id: {payload.get("id", "unknown")}.'
+                )
                 message.reject()
             except Exception:
                 message.reject()

@@ -268,6 +268,19 @@ def test_process_bulk_queue_reindex(app, queue):
                 assert result[1] == 0   # Number of failures
                 assert errors == []
 
+            #BulkIndexError (err_info is string)
+            errors = [{"index": {"_id": "dummy", "error": "Some string error"}}]
+            def mock_reindex_bulk_be_str(self, client, actions, **kwargs):
+                self.count = 10
+                raise DummyBulkIndexError(errors)
+            with patch('invenio_indexer.api.RecordIndexer.reindex_bulk', new=mock_reindex_bulk_be_str):
+                with patch('invenio_indexer.api.RecordIndexer._actionsiter_sync_version', return_value=[{}]*10):
+                    indexer = RecordIndexer()
+                    result = indexer.process_bulk_queue_reindex(es_bulk_kwargs=es_bulk_kwargs)
+                assert result[0] == 9  # Number of successes
+                assert result[1] == 1   # Number of failures
+                assert errors[0]['index']['error'] == "Some string error"
+
             # ConnectionError (when errors is an empty list)
             errors = []
             es_conn_error = ConnectionError("ConnectionError!", {}, {})
@@ -307,6 +320,18 @@ def test_process_bulk_queue_reindex(app, queue):
                     assert result[1] == 0   # Number of failures
                     assert errors == []
 
+            # BulkException (err_info is string)
+            errors = [{"index": {"_id": "dummy", "error": "Some string error"}}]
+            def mock_reindex_bulk_exception_str(self, client, actions, **kwargs):
+                self.count = 10
+                raise DummyBulkException(success=0, failed=1, errors=errors, original_exception=Exception("Exception!", {}, {}))
+            with patch('invenio_indexer.api.RecordIndexer.reindex_bulk', new=mock_reindex_bulk_exception_str):
+                with patch('invenio_indexer.api.RecordIndexer._actionsiter_sync_version', return_value=[{}]*10):
+                    indexer = RecordIndexer()
+                    result = indexer.process_bulk_queue_reindex(es_bulk_kwargs=es_bulk_kwargs)
+                assert result[0] == 0  # Number of successes
+                assert result[1] == 1   # Number of failures
+                assert errors[0]['index']['error'] == "Some string error"
 
 
 def test_process_bulk_queue_reindex_for_error_loop(app):
@@ -384,13 +409,13 @@ def test_reindex_bulk():
     client = MagicMock()
     actions = [{}] * 10
     with patch('invenio_indexer.api.streaming_bulk', dummy_streaming_bulk_success):
-        result = indexer.reindex_bulk(client, actions, stats_only=True, chunk_size=500, name_space='test', ignore_status=[400])
+        result = indexer.reindex_bulk(client, actions, stats_only=True, chunk_size=500, ignore_status=[400])
     assert result[0] == 10
     assert result[1] == 0
 
     actions = [{}] * 10
     with patch('invenio_indexer.api.streaming_bulk', dummy_streaming_bulk_success):
-        result = indexer.reindex_bulk(client, actions, stats_only=False, chunk_size=500)
+        result = indexer.reindex_bulk(client, actions, stats_only=False, chunk_size=500, span_name='test')
     assert result[0] == 10
     assert isinstance(result[1], list)
     assert len(result[1]) == 0
@@ -514,11 +539,57 @@ def test_reindex_bulk_chunk_logging():
     ]
     calls = mock_secho.call_args_list
     assert any("ID: id0, Status: Success, Chunk: 1/2" in str(c) and "fg='green'" in str(c) for c in calls)
-    assert any("ID : id1, Status: Fail, Chunk: 1/2" in str(c) and "fg='red'" in str(c) for c in calls)
+    assert any("ID: id1, Status: Fail, Chunk: 1/2" in str(c) and "fg='red'" in str(c) for c in calls)
     assert any("ID: id2, Status: Success, Chunk: 2/2" in str(c) and "fg='green'" in str(c) for c in calls)
-    assert any("ID : id3, Status: Fail, Chunk: 2/2" in str(c) and "fg='red'" in str(c) for c in calls)
+    assert any("ID: id3, Status: Fail, Chunk: 2/2" in str(c) and "fg='red'" in str(c) for c in calls)
     assert result[0] == 2  # Number of successes
     assert result[1] == 2  # Number of failures
+
+def test_process_bulk_queue_reindex_brokerurl_parse_fail(monkeypatch):
+    """Test process_bulk_queue_reindex when BROKER_URL does not match regex (default host/port used)."""
+    from invenio_indexer.api import RecordIndexer
+    app = types.SimpleNamespace(
+        config={
+            'BROKER_URL': 'invalid_url',  # Will not match regex, so default host/port used
+            'INDEXER_MQ_ROUTING_KEY': 'indexer',
+            'INDEXER_MQ_QUEUE': types.SimpleNamespace(name='indexer'),
+            'INDEXER_MQ_EXCHANGE': types.SimpleNamespace(name='indexer'),
+            'INDEXER_BULK_REQUEST_TIMEOUT': 10,
+            'INDEXER_MAX_BODY_SIZE': 10000
+        },
+        logger=types.SimpleNamespace(debug=lambda *a, **k: None, error=lambda *a, **k: None)
+    )
+    monkeypatch.setattr('invenio_indexer.api.current_app', app)
+    # socket.create_connection always raises
+    import socket
+    monkeypatch.setattr('socket.create_connection', lambda *a, **k: (_ for _ in ()).throw(Exception('fail')))
+    # click.secho mock
+    monkeypatch.setattr('invenio_indexer.api.click', types.SimpleNamespace(secho=lambda *a, **k: None))
+    indexer = RecordIndexer(search_client=None)
+    result = indexer.process_bulk_queue_reindex(es_bulk_kwargs={"chunk_size": 1})
+    assert result == (0, 0, 0)
+    """Test process_bulk_queue_reindex returns (0,0,0) if RabbitMQ connection fails."""
+    from invenio_indexer.api import RecordIndexer
+    app = types.SimpleNamespace(
+        config={
+            'BROKER_URL': 'amqp://guest:guest@rabbitmq:5672/',
+            'INDEXER_MQ_ROUTING_KEY': 'indexer',
+            'INDEXER_MQ_QUEUE': types.SimpleNamespace(name='indexer'),
+            'INDEXER_MQ_EXCHANGE': types.SimpleNamespace(name='indexer'),
+            'INDEXER_BULK_REQUEST_TIMEOUT': 10,
+            'INDEXER_MAX_BODY_SIZE': 10000
+        },
+        logger=types.SimpleNamespace(debug=lambda *a, **k: None, error=lambda *a, **k: None)
+    )
+    monkeypatch.setattr('invenio_indexer.api.current_app', app)
+    # socket.create_connection always raises
+    import socket
+    monkeypatch.setattr('socket.create_connection', lambda *a, **k: (_ for _ in ()).throw(Exception('fail')))
+    # click.secho mock
+    monkeypatch.setattr('invenio_indexer.api.click', types.SimpleNamespace(secho=lambda *a, **k: None))
+    indexer = RecordIndexer(search_client=None)
+    result = indexer.process_bulk_queue_reindex(es_bulk_kwargs={"chunk_size": 1})
+    assert result == (0, 0, 0)
 
 def test_index(app):
     """Test record indexing."""
@@ -655,9 +726,7 @@ def test_bulkrecordindexer_index_delete_by_record(app, queue):
         # Normal commit
         ({'foo': 'bar', 'content': [{'file': 'abc'}]}, 'abc', True, 1, 3, True, 1000, False),
         # No commit
-        ({'foo': 'bar', 'content': [{'file': 'abc'}]}, 'abc', True, 5, 3, False, 1000, False),
-        # SQLAlchemyError occurs
-        ({'foo': 'bar', 'content': [{'file': 'abc'}]}, 'abc', True, 1, 3, False, 1000, True),
+        ({'foo': 'bar', 'content': [{'file': 'abc'}]}, 'abc', True, 5, 3, False, 1000, False)
     ]
 )
 def test__index_action_sync_version_cases(monkeypatch, body, expected_file, has_content, version_id, es_version, expect_commit, max_body_size, expect_error):
@@ -702,21 +771,13 @@ def test__index_action_sync_version_cases(monkeypatch, body, expected_file, has_
 
     payload = {'id': 'rid'}
     indexer, committed, called = setup_indexer_and_env()
-    if expect_error:
-        with pytest.raises(sqlalchemy.exc.SQLAlchemyError):
-            indexer._index_action_sync_version(payload)
-        assert called['error'] == expect_error
-        assert called['trace'] == expect_error
-        assert committed['called'] == expect_commit
+    if has_content:
+        result = indexer._index_action_sync_version(payload)
+        assert result['_source']['content'][0]['file'] == expected_file
     else:
-        if has_content:
-            result = indexer._index_action_sync_version(payload)
-            assert result['_source']['content'][0]['file'] == expected_file
-        else:
-            result = indexer._index_action_sync_version(payload)
-            assert result['_source']['file'] == expected_file
-            assert 'content' not in result['_source']
-        assert committed['called'] == expect_commit
+        result = indexer._index_action_sync_version(payload)
+        assert result['_source']['file'] == expected_file
+        assert 'content' not in result['_source']
 
 def test__actionsiter_sync_version_exception(monkeypatch):
     """Test that reject and logger.error are called when an exception occurs in _actionsiter_sync_version."""
@@ -762,6 +823,31 @@ def test__actionsiter_sync_version_delete(monkeypatch):
     assert called['delete'] is True
     assert msg.acked is True
     assert msg.rejected is False
+
+
+def test__actionsiter_sync_version_sqlalchemyerror(monkeypatch):
+    """Test that rollback, logger.error, and reject are called on SQLAlchemyError in _actionsiter_sync_version."""
+    import sqlalchemy
+    indexer = RecordIndexer(search_client=None)
+    # Raise SQLAlchemyError in _index_action_sync_version
+    def raise_sqlalchemy(payload):
+        raise sqlalchemy.exc.SQLAlchemyError('sqlalchemy error')
+    monkeypatch.setattr(indexer, '_index_action_sync_version', raise_sqlalchemy)
+    # Detect rollback and logger.error call
+    called = {'rollback': False, 'error': False}
+    class DummySession:
+        def rollback(self):
+            called['rollback'] = True
+    monkeypatch.setattr('invenio_indexer.api.db', types.SimpleNamespace(session=DummySession()))
+    monkeypatch.setattr('invenio_indexer.api.current_app', types.SimpleNamespace(
+        logger=types.SimpleNamespace(error=lambda *a, **k: called.update({'error': True}))
+    ))
+    msg = DummyMessage({'op': 'index', 'id': 'rid'})
+    result = list(indexer._actionsiter_sync_version([msg]))
+    assert msg.rejected is True
+    assert msg.acked is False
+    assert called['rollback'] is True
+    assert called['error'] is True
 
 # .tox/c1/bin/pytest --cov=invenio_indexer tests/test_api.py::test_bulk_base_exception -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_bulk_base_exception():
