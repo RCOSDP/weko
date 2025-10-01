@@ -601,14 +601,13 @@ class IndexTreeActionResource(ContentNegotiatedMethodView):
                                 community.root_node_id, possible_ancestor_ids
                             ):
                                 top_community_nodes.append(community)
-                    
+
                     check_list = []
                     for comm in top_community_nodes:
-                        top_index_node_ids = [comm.root_node_id]
-                        for index_id in top_index_node_ids:
-                            if index_id not in check_list:
-                                tree += self.record_class.get_index_tree(index_id)
-                                check_list.append(index_id)
+                        index_id = comm.root_node_id
+                        if index_id not in check_list:
+                            tree += self.record_class.get_index_tree(index_id)
+                            check_list.append(index_id)
 
             return make_response(jsonify(tree), 200)
         except Exception as ex:
