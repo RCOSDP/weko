@@ -88,7 +88,7 @@ def update_item_type():
             if all([prop in nested_props.keys() for prop in target_nested_props]):
                 return True
         return False
-    
+
     def _get_restricted_item_type_key(item_type):
         """get restricted item type key"""
         target_nested_props = ['filename', 'provide', 'terms', 'termsDescription']
@@ -100,37 +100,59 @@ def update_item_type():
             if all([prop in nested_props.keys() for prop in target_nested_props]):
                 return key
         return None
-    
+
     def _format_new_schema(target_schema, key, schema_roles):
-        """get new format of schema (add 'roles', del 'groups', 'dataType')"""
+        """format new schema
+        get new format of schema (add 'roles', del 'groups', 'dataType')
         
+        Args:
+            target_schema (dict): original schema
+            key (str): target property key
+            schema_roles (dict): roles to be added
+        Returns:
+            dict: formatted schema
+        """
         properties = target_schema['properties'][key]['items']['properties']
-        filtered_properties = {k: v for k, v in properties.items() if k not in ['groups', 'dataType']}
+        filtered_properties = {
+            k: v for k, v in properties.items()
+            if k not in ['groups', 'dataType']
+        }
         if 'roles' not in filtered_properties.keys():
             filtered_properties['roles'] = schema_roles
         target_schema['properties'][key]['items']['properties'] = filtered_properties
         return dict(target_schema)
-    
+
     def _format_new_form(target_form, key, form_roles):
-        """get new format of form (add 'roles', del 'groups', 'dataType')"""
+        """format new form
+            get new format of form (add 'roles', del 'groups', 'dataType')
+        Args:
+            target_form (list): original form
+            key (str): target property key
+            form_roles (dict): roles to be added
+        Returns:
+            list: formatted form
+        """
         new_form = []
         for element in target_form:
             if isinstance(element, dict) and element.get('key') == key:
                 remove_elements_key = [key + '[].groups', key + '[].dataType']
-                filterd_items = [item for item in element['items'] if item['key'] not in remove_elements_key]
+                filterd_items = [
+                    item for item in element['items']
+                    if item['key'] not in remove_elements_key
+                ]
                 if (key + '[].roles') not in [item['key'] for item in filterd_items]:
                     filterd_items.append(form_roles)
                 element['items'] = filterd_items
             new_form.append(element)
         return new_form
-    
+
     def _format_new_render(target_render, key, schema_roles, form_roles, render_roles):
         """get new format of render (add 'roles', del 'groups', 'dataType')"""
         # schemaeditor schema
-        schemaeditor_schema = target_render['schemaeditor']['schema'][key]['properties']
+        schemaeditor_schema = target_render['schemaeditor']['schema']['properties'][key]
         new_schemaeditor_schema = {k: v for k, v in schemaeditor_schema.items() if k not in ['groups', 'dataType']}
         new_schemaeditor_schema['roles'] = render_roles
-        target_render['schemaeditor']['schema'][key]['properties'] = new_schemaeditor_schema
+        target_render['schemaeditor']['schema']['properties'][key] = new_schemaeditor_schema
         # table row map form
         table_row_map_form = target_render['table_row_map']['form']
         target_render['table_row_map']['form'] = _format_new_form(table_row_map_form, key, form_roles)
@@ -149,22 +171,28 @@ def update_item_type():
     render = None
     with open('tools/restricted_jsons/item_type/roles_render.json', 'r') as render_file:
         render = json.load(render_file)
-    
-    all_item_types = ItemType.query.filter(ItemType.is_deleted.is_(False)).order_by(ItemType.name_id, ItemType.tag).all()
-    restricted_item_types = [item_type for item_type in all_item_types if _check_restricted_item_type(item_type)]
-    for target in restricted_item_types:
+
+    # update item_type records
+    query = ItemType.query.filter(ItemType.is_deleted.is_(False)).order_by(ItemType.name_id, ItemType.tag).statement
+    results = db.engine.execution_options(stream_results=True).execute(query)
+    for result in results:
+        # restricted_item_types = [item_type for item_type in all_item_types if _check_restricted_item_type(item_type)]
+        if not _check_restricted_item_type(result):
+            continue
+
+        item_type = ItemType.query.get(result.id)
         # update item type
-        key = _get_restricted_item_type_key(target)
+        key = _get_restricted_item_type_key(item_type)
         # schema
-        target.schema = _format_new_schema(dict(target.schema), key, schema)
-        flag_modified(target, "schema")
+        item_type.schema = _format_new_schema(dict(item_type.schema), key, schema)
+        flag_modified(item_type, "schema")
         # form
         form_roles = json.loads(json.dumps(form).replace('<key>', key))
-        target.form = _format_new_form(list(target.form), key, form_roles)
-        flag_modified(target, "form")
+        item_type.form = _format_new_form(list(item_type.form), key, form_roles)
+        flag_modified(item_type, "form")
         # render
-        target.render = _format_new_render(dict(target.render), key, schema, form_roles, render)
-        flag_modified(target, "render")
+        item_type.render = _format_new_render(dict(item_type.render), key, schema, form_roles, render)
+        flag_modified(item_type, "render")
 
     current_app.logger.info('update item_type records success')
 
@@ -189,11 +217,17 @@ def update_item_metadata():
 
         return record_json
 
-    records = ItemMetadata.query.all()
-    target_records = [record for record in records \
-        if 'shared_user_ids' not in record.json.keys() and 'shared_user_id' in record.json.keys()]
-    for record in target_records:
-        record.json = _format_json(dict(record.json))
+    # update item_metadata records
+    query = """
+        SELECT id FROM item_metadata
+        WHERE NOT (json ? 'shared_user_ids')
+        AND json ? 'shared_user_id'
+    """
+    results = db.engine.execution_options(stream_results=True).execute(query)
+    for result in results:
+        item_metadata = ItemMetadata.query.get(result.id)
+        item_metadata.json = _format_json(dict(item_metadata.json))
+        flag_modified(item_metadata, "json")
 
     current_app.logger.info('update item_metadata records success')
 
@@ -220,11 +254,17 @@ def update_records_metadata():
             record_json['_deposit']['weko_shared_ids'] = [shared_user_id]
         return record_json
 
-    records = RecordMetadata.query.all()
-    target_records = [record for record in records \
-        if ('weko_shared_ids' not in record.json.keys()) and ('weko_shared_id' in record.json.keys())]
-    for record in target_records:
-        record.json = _format_json(dict(record.json))
+    # update records_metadata records
+    query = """
+        SELECT id FROM records_metadata
+        WHERE NOT (json ? 'weko_shared_ids')
+        AND json ? 'weko_shared_id'
+    """
+    results = db.engine.execution_options(stream_results=True).execute(query)
+    for result in results:
+        record_metadata = RecordMetadata.query.get(result.id)
+        record_metadata.json = _format_json(dict(record_metadata.json))
+        flag_modified(record_metadata, "json")
 
     current_app.logger.info('update record_metadata records success')
 
@@ -234,10 +274,12 @@ def update_admin_settings():
     if not restricted_access:
         restricted_access = current_app.config['WEKO_ADMIN_RESTRICTED_ACCESS_SETTINGS']
     else:
-        restricted_access['secret_URL_file_download'] = {"secret_download_limit": 10,
-                                                        "secret_expiration_date": 30,
-                                                        "secret_download_limit_unlimited_chk": False,
-                                                        "secret_expiration_date_unlimited_chk": False}
+        restricted_access['secret_URL_file_download'] = {
+            "secret_download_limit": 10,
+            "secret_expiration_date": 30,
+            "secret_download_limit_unlimited_chk": False,
+            "secret_expiration_date_unlimited_chk": False
+        }
     AdminSettings.update('restricted_access', restricted_access)
 
 def elasticsearch_reindex( is_db_to_es ):
