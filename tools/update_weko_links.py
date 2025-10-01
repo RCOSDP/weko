@@ -57,7 +57,7 @@ from weko_deposit.api import WekoIndexer
 from weko_workflow.models import Activity
 
 # 後ほどまとめてリインデックスする等でElasticsearchの更新をスキップする場合はTrueに設定
-skip_es_update = False
+skip_es_update = True
 
 def get_weko_link(metadata):
     """
