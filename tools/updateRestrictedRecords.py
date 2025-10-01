@@ -258,7 +258,7 @@ def update_records_metadata():
     query = """
         SELECT id FROM records_metadata
         WHERE NOT (json ? 'weko_shared_ids')
-        AND json ? 'shared_user_id'
+        AND json ? 'weko_shared_id'
     """
     results = db.engine.execution_options(stream_results=True).execute(query)
     for result in results:
