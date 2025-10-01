@@ -254,7 +254,7 @@ class RecordIndexer(object):
                             success = success + (len(error_ids)-len(be2.errors))
                             fail = fail + len(be2.errors)
                             for error in be2.errors:
-                                click.secho("{}, {}".format(error['index']['_id'],error['index']['error']['type']),fg='red')
+                                click.secho("[ERROR] {}, {}".format(error['index']['_id'],error['index']['error']['type']),fg='red')
                     except ConnectionError as ce:
                         with conn.channel() as chan:
                             name, af_queues_cnt, consumers = chan.queue_declare(queue=current_app.config['INDEXER_MQ_ROUTING_KEY'], passive=True)
@@ -371,7 +371,7 @@ class RecordIndexer(object):
                     if isinstance(_fail, list):
                         fail = len(_fail)
                         for error in _fail:
-                            click.secho("{}, {}".format(error['index']['_id'],error['index']['error']['type']),fg='red')
+                            click.secho("[ERROR] {}, {}".format(error['index']['_id'],error['index']['error']['type']),fg='red')
                     else:
                         fail = _fail
                     unprocessed = messages_count - (success + fail) if messages_count > (success + fail) else 0
@@ -390,7 +390,7 @@ class RecordIndexer(object):
                             error_type = err_info.get('type', 'unknown')
                         else:
                             error_type = str(err_info)
-                        click.secho("{}, {}".format(err.get('_id', ''), error_type), fg='red')
+                        click.secho("[ERROR] {}, {}".format(err.get('_id', ''), error_type), fg='red')
                 except (BulkConnectionTimeout, ConnectionTimeout) as ce:
                     click.secho("Error: {}".format(ce.errors),fg='red')
                     click.secho("INDEXER_BULK_REQUEST_TIMEOUT: {} sec".format(req_timeout),fg='red')
@@ -409,7 +409,7 @@ class RecordIndexer(object):
                         errors = ce.errors if hasattr(ce, 'errors') else []
                     if len(errors) > 0:
                         for error in errors:
-                            click.secho("{}, {}".format(error['index']['_id'],error['index']['error']['type']),fg='red')
+                            click.secho("[ERROR] {}, {}".format(error['index']['_id'],error['index']['error']['type']),fg='red')
                         fail = len(errors)
                     unprocessed = messages_count - (success + fail) if messages_count > (success + fail) else 0
                     update_pdf_contents_es_with_index_api(self.success_ids)
@@ -429,7 +429,7 @@ class RecordIndexer(object):
                             errors = ce.errors if hasattr(ce, 'errors') else []
                         if len(errors) > 0:
                             for error in errors:
-                                click.secho("{}, {}".format(error['index']['_id'],error['index']['error']['type']),fg='red')
+                                click.secho("[ERROR] {}, {}".format(error['index']['_id'],error['index']['error']['type']),fg='red')
                             fail = len(errors)
                         unprocessed = messages_count - (success + fail) if messages_count > (success + fail) else 0
                         update_pdf_contents_es_with_index_api(self.success_ids)
@@ -454,7 +454,7 @@ class RecordIndexer(object):
                                 error_type = err_info.get('type', 'unknown')
                             else:
                                 error_type = str(err_info)
-                            click.secho("{}, {}".format(err.get('_id', ''), error_type), fg='red')
+                            click.secho("[ERROR] {}, {}".format(err.get('_id', ''), error_type), fg='red')
                         fail = len(errors)
                     unprocessed = messages_count - (success + fail) if messages_count > (success + fail) else 0
                     update_pdf_contents_es_with_index_api(self.success_ids)
@@ -551,6 +551,11 @@ class RecordIndexer(object):
                 message.ack()
             except NoResultFound:
                 message.reject()
+            except SQLAlchemyError:
+                db.session.rollback()
+                current_app.logger.error(
+                    f'SQLAlchemy error occurred while updating the version_id in records_metadata for id: {record_id}.')
+                message.reject()
             except Exception:
                 message.reject()
                 current_app.logger.error(
@@ -645,17 +650,8 @@ class RecordIndexer(object):
         res = indexer.get_metadata_by_item_id(record_id)
         es_version = res.get('_version')
 
-        try:
-            if record.model.version_id < es_version:
-                record.model.version_id = es_version
-                db.session.commit()
-
-        except SQLAlchemyError:
-            db.session.rollback()
-            current_app.logger.error(
-                f'SQLAlchemy error occurred while updating the version_id in records_metadata for id: {record_id}.')
-            traceback.print_exc()
-            raise
+        if record.model.version_id < es_version:
+            record.model.version_id = es_version
 
         self.count = self.count + 1
         click.secho(f"Indexing ID:{record_id}, Count:{self.count}", fg='green')
@@ -684,6 +680,7 @@ class RecordIndexer(object):
             '_source': body
         }
         action.update(arguments)
+        db.session.commit()
         return action
 
     @staticmethod
