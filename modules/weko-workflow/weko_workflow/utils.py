@@ -27,7 +27,7 @@ from collections import OrderedDict
 from copy import deepcopy
 from datetime import datetime, timedelta
 import sys
-from typing import List, NoReturn, Optional, Tuple, Union
+from typing import List, NoReturn, Optional, Tuple, Union, cast
 import traceback
 
 import pytz
@@ -1337,26 +1337,23 @@ class IdentifierHandle(object):
     def check_pidstore_exist(self, pid_type, chk_value=None):
         """Get check whether PIDStore object exist.
 
-        Arguments:
-            pid_type     -- {string} 'doi' (default) or 'hdl'
-            chk_value    -- {string} object_uuid or pid_value
+        Args:
+            pid_type (str): 'doi' (default) or 'hdl'
+            chk_value (str): object_uuid or pid_value
 
         Returns:
-            return       -- PID object if exist
+            list[PersistentIdentifier]: list of PID object or empty list
 
         """
-        try:
-            with db.session.no_autoflush:
-                if not chk_value:
-                    return PersistentIdentifier.query.filter_by(
-                        pid_type=pid_type,
-                        object_uuid=self.item_uuid).all()
-                return PersistentIdentifier.query.filter_by(
+        with db.session.no_autoflush:
+            if not chk_value:
+                records = PersistentIdentifier.query.filter_by(
                     pid_type=pid_type,
-                    pid_value=chk_value).one_or_none()
-        except PIDDoesNotExistError as pid_not_exist:
-            current_app.logger.error(pid_not_exist)
-            return None
+                    object_uuid=self.item_uuid).all()
+            records = PersistentIdentifier.query.filter_by(
+                pid_type=pid_type,
+                pid_value=chk_value).all()
+        return cast(List[PersistentIdentifier], records)
 
     def register_pidstore(self, pid_type, reg_value):
         """Register Persistent Identifier Object.
@@ -2279,7 +2276,7 @@ def check_existed_doi(doi_link):
             respon['isExistDOI'] = True
             respon['msg'] = _('This DOI has been used already for another '
                               'item. Please input another DOI.')
-            if doi_pidstore.status == PIDStatus.DELETED:
+            if any(doi.status == PIDStatus.DELETED for doi in doi_pidstore):
                 respon['isWithdrawnDoi'] = True
                 respon['msg'] = _(
                     'This DOI was withdrawn. Please input another DOI.')

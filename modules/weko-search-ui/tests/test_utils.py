@@ -1914,7 +1914,7 @@ def test_handle_check_doi(app,identifier):
     mock_doi.object_uuid = mock_record.pid_recid.object_uuid
     with patch("weko_search_ui.utils.WekoRecord.get_record_by_pid", return_value=mock_record), \
             patch("weko_search_ui.utils.IdentifierHandle.__init__", return_value=None), \
-            patch("weko_search_ui.utils.IdentifierHandle.check_pidstore_exist", return_value=mock_doi):
+            patch("weko_search_ui.utils.IdentifierHandle.check_pidstore_exist", return_value=[mock_doi]):
         handle_check_doi([item])
     assert item == expect
 
@@ -1928,7 +1928,7 @@ def test_handle_check_doi(app,identifier):
     mock_doi.object_uuid = uuid.uuid4()
     with patch("weko_search_ui.utils.WekoRecord.get_record_by_pid", return_value=mock_record), \
             patch("weko_search_ui.utils.IdentifierHandle.__init__", return_value=None), \
-            patch("weko_search_ui.utils.IdentifierHandle.check_pidstore_exist", return_value=mock_doi):
+            patch("weko_search_ui.utils.IdentifierHandle.check_pidstore_exist", return_value=[mock_doi]):
         handle_check_doi([item])
     assert item == expect
 
@@ -1942,7 +1942,7 @@ def test_handle_check_doi(app,identifier):
     mock_doi.object_uuid = mock_record.pid_recid.object_uuid
     with patch("weko_search_ui.utils.WekoRecord.get_record_by_pid", return_value=mock_record), \
             patch("weko_search_ui.utils.IdentifierHandle.__init__", return_value=None), \
-            patch("weko_search_ui.utils.IdentifierHandle.check_pidstore_exist", return_value=mock_doi):
+            patch("weko_search_ui.utils.IdentifierHandle.check_pidstore_exist", return_value=[mock_doi]):
         handle_check_doi([item])
     assert item == expect
 
@@ -1954,7 +1954,7 @@ def test_handle_check_doi(app,identifier):
     mock_doi.object_uuid = mock_record.pid_recid.object_uuid
     with patch("weko_search_ui.utils.WekoRecord.get_record_by_pid", side_effect=SQLAlchemyError()), \
             patch("weko_search_ui.utils.IdentifierHandle.__init__", return_value=None), \
-            patch("weko_search_ui.utils.IdentifierHandle.check_pidstore_exist", return_value=mock_doi):
+            patch("weko_search_ui.utils.IdentifierHandle.check_pidstore_exist", return_value=[mock_doi]):
         handle_check_doi([item])
     assert item == expect
 
@@ -1967,7 +1967,7 @@ def test_handle_check_doi(app,identifier):
     mock_doi.status = PIDStatus.REGISTERED
     mock_doi.object_uuid = uuid.uuid4()
     with patch("weko_search_ui.utils.IdentifierHandle.__init__", return_value=None), \
-            patch("weko_search_ui.utils.IdentifierHandle.check_pidstore_exist", return_value=mock_doi):
+            patch("weko_search_ui.utils.IdentifierHandle.check_pidstore_exist", return_value=[mock_doi]):
         handle_check_doi([item])
     assert item == expect
 
@@ -2161,20 +2161,16 @@ def test_handle_check_doi(app,identifier):
         if doi_link == "https://doi.org/xyz.jalc/12345":
             doi.status = PIDStatus.REGISTERED
             doi.object_uuid = "uuid-17"
-            return doi
-        elif doi_link == "https://doi.org/xyz.jalc/12344":
-            return None
+            return [doi]
         elif doi_link == "https://doi.org/xyz.jalc/12346":
             doi.status = PIDStatus.REGISTERED
             doi.object_uuid = "uuid-15"
-            return doi
-        elif doi_link == "https://doi.org/xyz.jalc/12347":
-            doi.status = PIDStatus.REGISTERED
-            doi.object_uuid = "uuid-16"
+            return [doi]
         elif doi_link == "https://doi.org/xyz.jalc/12399":
             doi.status = PIDStatus.REGISTERED
             doi.object_uuid = "uuid-18"
-            return doi
+            return [doi]
+        return []
 
     with patch("weko_search_ui.utils.WekoRecord.get_record_by_pid", side_effect=mock_get_record_by_pid), \
             patch("weko_search_ui.utils.IdentifierHandle.__init__", return_value=None), \
