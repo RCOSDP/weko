@@ -26,7 +26,7 @@ from weko_records.models import (
     Timestamp as Weko_Timestamp,
 )
 
-from . import update_feedback_mail_list_to_db
+from scripts.demo import update_feedback_mail_list_to_db
 
 def main(restricted_item_type_id, start_time):
     try:
@@ -92,10 +92,10 @@ if __name__ == "__main__":
     start_time = time.perf_counter()
 
     args = sys.argv
-    db.event.remove(db.session, 'before_update', ifr_timestamp_before_update)
-    db.event.remove(db.session, 'before_update', im_timestamp_before_update)
-    db.event.remove(db.session, 'before_update', ir_timestamp_before_update)
-    db.event.remove(db.session, 'before_update', weko_timestamp_before_update)
+    db.event.remove(ifr_Timestamp, 'before_update', ifr_timestamp_before_update)
+    db.event.remove(im_Timestamp, 'before_update', im_timestamp_before_update)
+    db.event.remove(ir_Timestamp, 'before_update', ir_timestamp_before_update)
+    db.event.remove(Weko_Timestamp, 'before_update', weko_timestamp_before_update)
     try:
         if len(args) > 1:
             restricted_item_type_id = int(args[1])
