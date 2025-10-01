@@ -309,6 +309,27 @@ class RecordIndexer(object):
             BulkException: For other exceptions during bulk indexing.
         """
         from weko_deposit.utils import update_pdf_contents_es_with_index_api # avoid circular import
+        import socket
+        import re
+        broker_url = current_app.config.get('BROKER_URL')
+        # Extract host and port from BROKER_URL, fallback to default if not found
+        m = re.match(r'.*://.*@(.*):(\d+)', broker_url)
+        if m:
+            rabbit_host = m.group(1)
+            rabbit_port = int(m.group(2))
+        else:
+            rabbit_host = 'rabbitmq'
+            rabbit_port = 5672
+        try:
+            with socket.create_connection((rabbit_host, rabbit_port), timeout=3):
+                rabbitmq_conn = True
+        except Exception as e:
+            rabbitmq_conn = False
+        # Check RabbitMQ connectivity before proceeding
+        if not rabbitmq_conn:
+            click.secho(f"Cannot connect to RabbitMQ({rabbit_host}:{rabbit_port}) (socket connection failed)", fg='red')
+            return (0, 0, 0)
+
         success = 0
         fail = 0
         unprocessed = 0
@@ -363,7 +384,13 @@ class RecordIndexer(object):
                     unprocessed = messages_count - self.count
                     update_pdf_contents_es_with_index_api(self.success_ids)
                     for error in be.errors:
-                        click.secho("{}, {}".format(error['index']['_id'],error['index']['error']['type']),fg='red')
+                        err = error['index']
+                        err_info = err.get('error')
+                        if isinstance(err_info, dict):
+                            error_type = err_info.get('type', 'unknown')
+                        else:
+                            error_type = str(err_info)
+                        click.secho("{}, {}".format(err.get('_id', ''), error_type), fg='red')
                 except (BulkConnectionTimeout, ConnectionTimeout) as ce:
                     click.secho("Error: {}".format(ce.errors),fg='red')
                     click.secho("INDEXER_BULK_REQUEST_TIMEOUT: {} sec".format(req_timeout),fg='red')
@@ -421,7 +448,13 @@ class RecordIndexer(object):
                         errors = e.errors if hasattr(e, 'errors') else []
                     if len(errors) > 0:
                         for error in errors:
-                            click.secho("{}, {}".format(error['index']['_id'],error['index']['error']['type']),fg='red')
+                            err = error['index']
+                            err_info = err.get('error')
+                            if isinstance(err_info, dict):
+                                error_type = err_info.get('type', 'unknown')
+                            else:
+                                error_type = str(err_info)
+                            click.secho("{}, {}".format(err.get('_id', ''), error_type), fg='red')
                         fail = len(errors)
                     unprocessed = messages_count - (success + fail) if messages_count > (success + fail) else 0
                     update_pdf_contents_es_with_index_api(self.success_ids)
@@ -646,7 +679,7 @@ class RecordIndexer(object):
             '_index': index,
             '_type': doc_type,
             '_id': str(record.id),
-            '_version': record.version_id,
+            '_version': record.model.version_id,
             '_version_type': self._version_type,
             '_source': body
         }
