@@ -1800,7 +1800,7 @@ class WorkActivity(object):
         return query if is_within else ~query
 
     @staticmethod
-    def query_activities_by_tab_is_wait(query, is_community_admin, comadmin_index_list):
+    def query_activities_by_tab_is_wait(query, is_admin, is_community_admin, comadmin_index_list):
         """
         Query activities by tab is wait.
 
@@ -1810,6 +1810,7 @@ class WorkActivity(object):
         self_user_id = int(current_user.get_id())
         self_user_id_json = json.dumps({"user" : self_user_id})
         self_group_ids = [role.id for role in current_user.roles]
+        action_handler = [self_user_id, -1] if is_admin else [self_user_id]
         query = query \
             .filter(_FlowAction.action_id == _Activity.action_id) \
             .filter(_Flow.flow_id==_FlowAction.flow_id)\
@@ -1836,7 +1837,7 @@ class WorkActivity(object):
                             _FlowActionRole.action_role_exclude == '0'
                         ),
                         and_(
-                            ActivityAction.action_handler != self_user_id
+                            ActivityAction.action_handler.notin_(action_handler),
                         )
                     )
                 )
@@ -1893,7 +1894,7 @@ class WorkActivity(object):
                             )
                         ),
                         and_(
-                            ActivityAction.action_handler != self_user_id,
+                            ActivityAction.action_handler.notin_(action_handler),
                             or_(
                                 and_(
                                     not_(cast(_Activity.shared_user_ids, String).contains(self_user_id_json)),
@@ -2337,7 +2338,7 @@ class WorkActivity(object):
                 if size_wait and size_wait[0].isnumeric():
                     size = size_wait[0]
                 query_action_activities = self.query_activities_by_tab_is_wait(
-                    query_action_activities, is_community_admin, comadmin_index_list)
+                    query_action_activities, is_admin, is_community_admin, comadmin_index_list)
             # query activities by tab is all
             elif tab == WEKO_WORKFLOW_ALL_TAB:
                 page_all = conditions.get('pagesall')

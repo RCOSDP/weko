@@ -2020,9 +2020,73 @@ def test_query_activities_by_tab_is_wait(users, db):
                     _Activity.shared_user_ids == [],
                 )
                 )
-        expected = "AND (workflow_activity.activity_login_user = ? OR (workflow_activity.shared_user_ids LIKE '%' + ? || '%')) AND (workflow_flow_action_role.action_user != ? AND workflow_flow_action_role.action_user_exclude = ? AND (workflow_activity.shared_user_ids NOT LIKE '%' + ? || '%') OR workflow_flow_action_role.action_role NOT IN (?) AND workflow_flow_action_role.action_role_exclude = ? AND (workflow_activity.shared_user_ids NOT LIKE '%' + ? || '%') OR workflow_activity_action.action_handler != ? AND (workflow_activity.shared_user_ids NOT LIKE '%' + ? || '%') OR (workflow_activity.shared_user_ids LIKE '%' + ? || '%') AND workflow_flow_action_role.action_user != workflow_activity.activity_login_user AND workflow_flow_action_role.action_user_exclude = ? OR (workflow_activity.shared_user_ids LIKE '%' + ? || '%') AND workflow_activity_action.action_handler != workflow_activity.activity_login_user)"
-        ret = WorkActivity.query_activities_by_tab_is_wait(query, True, [1])
-        assert str(ret).find(expected)
+        expected = "AND (" \
+                        "workflow_activity.activity_login_user = %(activity_login_user_1)s " \
+                        "OR (CAST(workflow_activity.shared_user_ids AS VARCHAR) LIKE '%%' || %(param_1)s || '%%') " \
+                        "OR ((workflow_activity.temp_data #>> %(temp_data_1)s) LIKE '%%' || %(param_2)s || '%%') " \
+                        "OR (workflow_activity.temp_data #>> %(temp_data_2)s) = %(param_3)s) " \
+                    "AND (" \
+                        "(" \
+                            "workflow_flow_action_role.action_user != %(action_user_1)s " \
+                            "AND workflow_flow_action_role.action_user_exclude = %(action_user_exclude_1)s " \
+                            "OR workflow_flow_action_role.action_user = %(action_user_2)s " \
+                            "AND workflow_flow_action_role.action_user_exclude != %(action_user_exclude_2)s" \
+                        ") " \
+                        "AND (" \
+                            "(CAST(workflow_activity.shared_user_ids AS VARCHAR) NOT LIKE '%%' || %(param_4)s || '%%') " \
+                            "AND ((workflow_activity.temp_data #>> %(temp_data_3)s) NOT LIKE '%%' || %(param_5)s || '%%') " \
+                            "AND (workflow_activity.temp_data #>> %(temp_data_4)s) != %(param_6)s " \
+                            "OR workflow_activity.shared_user_ids IS NULL) " \
+                        "OR (" \
+                            "workflow_flow_action_role.action_role NOT IN (%(action_role_1)s) " \
+                            "AND workflow_flow_action_role.action_role_exclude = %(action_role_exclude_1)s " \
+                            "OR workflow_flow_action_role.action_role IN (%(action_role_2)s) "\
+                            "AND workflow_flow_action_role.action_role_exclude != %(action_role_exclude_2)s" \
+                        ") " \
+                        "AND (" \
+                            "(CAST(workflow_activity.shared_user_ids AS VARCHAR) NOT LIKE '%%' || %(param_7)s || '%%') " \
+                            "AND ((workflow_activity.temp_data #>> %(temp_data_5)s) NOT LIKE '%%' || %(param_8)s || '%%') " \
+                            "AND (workflow_activity.temp_data #>> %(temp_data_6)s) != %(param_9)s " \
+                            "OR workflow_activity.shared_user_ids IS NULL) " \
+                        "OR workflow_activity_action.action_handler NOT IN (%(action_handler_1)s) " \
+                        "AND (" \
+                            "(CAST(workflow_activity.shared_user_ids AS VARCHAR) NOT LIKE '%%' || %(param_10)s || '%%') " \
+                            "AND ((workflow_activity.temp_data #>> %(temp_data_7)s) NOT LIKE '%%' || %(param_11)s || '%%') " \
+                            "AND (workflow_activity.temp_data #>> %(temp_data_8)s) != %(param_12)s " \
+                            "OR workflow_activity.shared_user_ids IS NULL" \
+                        ") " \
+                        "OR (" \
+                            "workflow_flow_action_role.action_user != workflow_activity.activity_login_user " \
+                            "AND workflow_flow_action_role.action_user_exclude = %(action_user_exclude_3)s " \
+                            "OR workflow_flow_action_role.action_user = workflow_activity.activity_login_user " \
+                            "AND workflow_flow_action_role.action_user_exclude != %(action_user_exclude_4)s" \
+                        ") " \
+                        "AND (" \
+                            "(CAST(workflow_activity.shared_user_ids AS VARCHAR) LIKE '%%' || %(param_13)s || '%%') " \
+                            "OR ((workflow_activity.temp_data #>> %(temp_data_9)s) LIKE '%%' || %(param_14)s || '%%') " \
+                            "OR (workflow_activity.temp_data #>> %(temp_data_10)s) = %(param_15)s) " \
+                        "AND workflow_flow_action_role.action_user != workflow_activity.activity_login_user " \
+                        "AND workflow_flow_action_role.action_user_exclude = %(action_user_exclude_5)s " \
+                        "OR (" \
+                            "(CAST(workflow_activity.shared_user_ids AS VARCHAR) LIKE '%%' || %(param_16)s || '%%') " \
+                            "OR ((workflow_activity.temp_data #>> %(temp_data_11)s) LIKE '%%' || %(param_17)s || '%%') " \
+                            "OR (workflow_activity.temp_data #>> %(temp_data_12)s) = %(param_18)s) " \
+                        "AND workflow_activity_action.action_handler != workflow_activity.activity_login_user) " \
+                    "AND NOT (" \
+                        "EXISTS (" \
+                            "SELECT * \nFROM jsonb_array_elements_text(records_metadata.json -> %(json_1)s) AS elem \nWHERE CAST(elem AS VARCHAR) IN (%(param_19)s)))"
+        ret = WorkActivity.query_activities_by_tab_is_wait(query, False, True, [1])
+        assert str(ret).find(expected) != -1
+
+    # admin user
+    with patch("flask_login.utils._get_user", return_value=users[1]['obj']):
+        admin_expected = expected.replace(
+            " AND NOT (EXISTS (SELECT * \nFROM jsonb_array_elements_text(records_metadata.json -> %(json_1)s) AS elem \nWHERE CAST(elem AS VARCHAR) IN (%(param_19)s)))", ""
+        ).replace(
+            "%(action_handler_1)s", "%(action_handler_1)s, %(action_handler_2)s"
+        )
+        ret = WorkActivity.query_activities_by_tab_is_wait(query, True, False, [1])
+        assert str(ret).find(admin_expected) != -1
 
     current_app.config['WEKO_WORKFLOW_ENABLE_SHOW_ACTIVITY'] = True
     with patch("flask_login.utils._get_user", return_value=users[0]['obj']):
@@ -2048,9 +2112,23 @@ def test_query_activities_by_tab_is_wait(users, db):
                     _Activity.shared_user_ids == [],
                 )
                 )
-        expected = "AND (workflow_activity.activity_login_user = ?) AND ((workflow_flow_action_role.action_user != ? AND workflow_flow_action_role.action_user_exclude = '0') OR (workflow_flow_action_role.action_role NOT IN (?) AND workflow_flow_action_role.action_role_exclude = '0') OR (workflow_activity_action.action_handler != ? ))"
-        ret = WorkActivity.query_activities_by_tab_is_wait(query, False, [])
-        assert str(ret).find(expected)
+        expected = "AND workflow_activity.activity_login_user = %(activity_login_user_1)s " \
+                    "AND (" \
+                        "workflow_flow_action_role.action_user != %(action_user_1)s " \
+                        "AND workflow_flow_action_role.action_user_exclude = %(action_user_exclude_1)s " \
+                        "OR workflow_flow_action_role.action_role NOT IN (%(action_role_1)s) " \
+                        "AND workflow_flow_action_role.action_role_exclude = %(action_role_exclude_1)s " \
+                        "OR workflow_activity_action.action_handler NOT IN (%(action_handler_1)s))"
+        ret = WorkActivity.query_activities_by_tab_is_wait(query, False, False, [])
+        assert str(ret).find(expected) != -1
+    
+    # admin user
+    with patch("flask_login.utils._get_user", return_value=users[1]['obj']):
+        admin_expected = expected.replace(
+            "%(action_handler_1)s", "%(action_handler_1)s, %(action_handler_2)s"
+        )
+        ret = WorkActivity.query_activities_by_tab_is_wait(query, True, False, [])
+        assert str(ret).find(admin_expected) != -1
 
 # def query_activities_by_tab_is_all(query, is_community_admin, community_user_ids)
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_api.py::test_query_activities_by_tab_is_all -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
