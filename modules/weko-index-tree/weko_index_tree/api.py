@@ -808,9 +808,6 @@ class Indexes(object):
 
         gakunin_map_prefix = gakunin_map_pattern.get("prefix", "jc")
         role_keyword = gakunin_map_pattern.get("role_keyword", "roles")
-        default_weko_role_names = current_app.config.get(
-            'WEKO_PERMISSION_ROLE_USER', []
-        ) + ['Authenticated User', 'Guest']
 
         for role in roles:
             role_name = role.get("name", "")
