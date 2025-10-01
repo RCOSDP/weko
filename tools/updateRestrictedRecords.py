@@ -1,4 +1,5 @@
 import os
+import logging
 import time
 import json
 import sys
@@ -19,7 +20,19 @@ from weko_admin.models import AdminSettings
 
 def main(restricted_item_type_id):
     """Main context."""
-    # for logging
+    # for logging set to info level
+    format = '[%(asctime)s,%(msecs)03d][%(levelname)s] \033[32mweko\033[0m - '\
+            '%(message)s [file %(pathname)s line %(lineno)d in %(funcName)s]'
+    datefmt = '%Y-%m-%d %H:%M:%S'
+    formatter = logging.Formatter(fmt=format, datefmt=datefmt)
+
+    current_app.logger.setLevel("INFO")
+    if current_app.logger.handlers:
+        # if app.logger has handlers, set level and formatter
+        for h in current_app.logger.handlers:
+            h.setLevel("INFO")
+            h.setFormatter(formatter)
+
     current_app.logger.info('restricted records update start')
     start_time = time.perf_counter()
 
