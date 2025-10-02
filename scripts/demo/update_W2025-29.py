@@ -48,7 +48,6 @@ def main(restricted_item_type_id, start_time):
         current_app.logger.info("run updateRestrictedRecords")
         updateRestrictedRecords.main(restricted_item_type_id)
         current_time = show_exec_time(start_time, "update_restricted_records")
-        current_app.logger.info("run register_properties_only_specified")
         register_properties_only_specified()
         current_time = show_exec_time(current_time, "register_properties_only_specified")
         renew_all_item_types()
@@ -68,12 +67,15 @@ def main(restricted_item_type_id, start_time):
 def register_properties_only_specified():
     exclusion_list = [int(x) for x in property_config.EXCLUSION_LIST]
     try:
+        current_app.logger.info("Start register_properties_only_specified")
         specified_list = property_config.SPECIFIED_LIST
         del_properties(specified_list)
         exclusion_list += get_properties_id()
         register_properties_from_folder(exclusion_list, specified_list)
         db.session.commit()
-    except:
+        current_app.logger.info("End register_properties_only_specified")
+    except Exception as ex:
+        current_app.logger.error(ex)
         current_app.logger.error(traceback.format_exc())
         db.session.rollback()
 
