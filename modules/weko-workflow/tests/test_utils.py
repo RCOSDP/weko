@@ -27,9 +27,10 @@ from flask_login.utils import login_user,logout_user
 from tests.helpers import json_data, create_activity
 from invenio_mail.models import MailConfig
 from weko_admin.models import SiteInfo, Identifier
+from weko_records.models import ItemType
 from weko_records_ui.models import FilePermission,FileOnetimeDownload
 from weko_user_profiles import UserProfile
-from weko_records.api import ItemTypes, ItemsMetadata
+from weko_records.api import ItemTypes, ItemsMetadata, Mapping
 from weko_user_profiles.config import WEKO_USERPROFILES_POSITION_LIST,WEKO_USERPROFILES_INSTITUTE_POSITION_LIST
 from weko_workflow.models import ActivityHistory,GuestActivity
 from weko_workflow.config import WEKO_WORKFLOW_FILTER_PARAMS,IDENTIFIER_GRANT_LIST
@@ -827,9 +828,44 @@ def test_get_item_value_in_deep():
         assert r == test[i]
 
 
-#     def __init__(self, item_id):
+# class IdentifierHandle(object):
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::TestIdentifierHandle::test___init__ -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+class TestIdentifierHandle:
+    # def __init__(self, item_id):
+    # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::TestIdentifierHandle::test___init__ -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+    def test___init__(self, app):
+        obj = IdentifierHandle()
+        assert obj
+
+        item_uuid = uuid.uuid4()
+        with patch("weko_workflow.utils.WekoRecord.get_record", return_value=MagicMock(spec=WekoRecord)) as mock_get_record, \
+                patch("weko_workflow.utils.ItemTypes.get_by_id", return_value=MagicMock(spec=ItemType, id=1)) as mock_get_by_id, \
+                patch("weko_workflow.utils.Mapping.get_record", return_value=MagicMock(spec=Mapping)) as mock_get_mapping, \
+                patch("weko_workflow.utils.ItemsMetadata.get_record", return_value=MagicMock(spec=ItemsMetadata)) as mock_get_metadata, \
+                patch("weko_workflow.utils.get_full_mapping", return_value={"mapping": "mapping"}) as mock_mapping_data:
+            obj = IdentifierHandle(item_uuid)
+        assert obj.item_uuid == item_uuid
+        assert obj.item_record is not None
+        mock_get_record.assert_called_once_with(item_uuid)
+        mock_get_by_id.assert_called()
+        mock_get_mapping.assert_called_once_with(1)
+        mock_mapping_data.assert_called_once()
+        mock_get_metadata.assert_called_once_with(item_uuid)
+
 #     def get_pidstore(self, pid_type='doi', object_uuid=None):
-#     def check_pidstore_exist(self, pid_type, chk_value=None):
+
+    # def check_pidstore_exist(self, pid_type, chk_value=None):
+    # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::TestIdentifierHandle::test_check_pidstore_exist -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+    def test_check_pidstore_exist(self, db, mocker):
+        mock_persistent_identifier = mocker.patch("weko_workflow.utils.PersistentIdentifier")
+        mock_query = MagicMock()
+        mock_query.filter_by.return_value = mock_query
+        mock_query.all.return_value = [MagicMock(pid_value="10.1234/abcd")]
+        mock_persistent_identifier.query = mock_query
+        
+        records = IdentifierHandle().check_pidstore_exist("doi", "10.1234/abcd")
+        assert records[0].pid_value == "10.1234/abcd"
+
 #     def register_pidstore(self, pid_type, reg_value):
 #     def delete_pidstore_doi(self, pid_value=None):
 #     def remove_idt_registration_metadata(self):
