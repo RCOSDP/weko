@@ -49,6 +49,7 @@ import json
 import traceback
 
 from elasticsearch import Elasticsearch
+from flask import current_app
 from invenio_db import db
 from invenio_pidstore.models import PersistentIdentifier
 from invenio_records.models import RecordMetadata
@@ -112,29 +113,30 @@ def update_records_metadata():
     """
     アイテムメタデータおよび編集中ワークフローのtemp_dataを更新する
     """
-    print(f"  {datetime.now().isoformat()} - Updating records_metadata and workflow_activity...")
+    current_app.logger.info(f"  {datetime.now().isoformat()} - Updating records_metadata and workflow_activity...")
     es = Elasticsearch(
             'http://' + os.environ.get('INVENIO_ELASTICSEARCH_HOST', 'localhost') + ':9200')
     
     # 対象アイテムのrecidのリストを取得
 
-    recids = PersistentIdentifier.query.filter(
+    query = PersistentIdentifier.query.filter(
         PersistentIdentifier.pid_type == 'recid',
         PersistentIdentifier.status == 'R'
-    ).with_entities(PersistentIdentifier.pid_value).all()
-    recids = [r[0] for r in recids]
+    ).with_entities(PersistentIdentifier.pid_value).statement
+    results = db.engine.execution_options(stream_results=True).execute(query)
+    recids = [r[0] for r in results]
 
-    print(f"  {datetime.now().isoformat()} - Found {len(recids)} recids to process.")
+    current_app.logger.info(f"  {datetime.now().isoformat()} - Found {len(recids)} recids to process.")
 
     for recid in recids:
         try:
-            print(f"  Processing recid: {recid}")
+            current_app.logger.info(f"  Processing recid: {recid}")
 
             # ==ネストトランザクション開始：アイテム毎にコミットする==
             with db.session.begin_nested():
                 # 最新バージョンおよび x.0 の　records_metadata を更新する
                 # recid または recid.0 のレコードを取得
-                records = db.session.query(RecordMetadata).filter(
+                query = db.session.query(RecordMetadata.id).filter(
                     RecordMetadata.id.in_(
                         db.session.query(PersistentIdentifier.object_uuid).filter(
                             PersistentIdentifier.pid_type == 'recid',
@@ -144,18 +146,21 @@ def update_records_metadata():
                             )
                         )
                     )
-                ).all()
-                print(f"    Found {len(records)} records_metadata entries to process.")
+                ).statement
+                results = db.engine.execution_options(stream_results=True).execute(query)
+                record_metadata_ids = [r[0] for r in results]
+                current_app.logger.info(f"    Found {len(record_metadata_ids)} records_metadata entries to process.")
 
-                for record in records:
+                for record_metadata_id in record_metadata_ids:
                     # records_metadata の weko_link を更新する
+                    record = RecordMetadata.query.get(record_metadata_id)
                     json_data = {**record.json}
                     item_id = record.id
                     weko_link = {}
                     if 'weko_link' in json_data:
                         # すでにweko_linkが存在するrecords_metadataはスキップ
                         weko_link = json_data['weko_link']
-                        print(f'    weko_link already exists, skipping update records_metadata item_id: {item_id}')
+                        current_app.logger.info(f'    weko_link already exists, skipping update records_metadata item_id: {item_id}')
                         pass
                     else:
                         if 'author_link' in json_data:
@@ -181,10 +186,10 @@ def update_records_metadata():
                             record.json = json_data
 
                         db.session.merge(record)
-                        print(f'    Updated records_metadata item_id: {item_id}')
+                        current_app.logger.info(f'    Updated records_metadata item_id: {item_id}')
 
                     # 編集中の workflow_activity の temp_data を更新する
-                    activities = Activity.query.filter(
+                    query = Activity.query.filter(
                         Activity.item_id == item_id,
                         and_(
                             Activity.action_status != 'F',
@@ -194,9 +199,12 @@ def update_records_metadata():
                             Activity.temp_data != None,
                             Activity.temp_data != {}
                         )
-                    ).all()
-                    print(f"    Found {len(activities)} workflow_activity entries to process.")
-                    for activity in activities:
+                    ).with_entities(Activity.id).statement
+                    results = db.engine.execution_options(stream_results=True).execute(query)
+                    activitiy_ids = [r[0] for r in results]
+                    current_app.logger.info(f"    Found {len(activitiy_ids)} workflow_activity entries to process.")
+                    for activity_id in activitiy_ids:
+                        activity = Activity.query.get(activity_id)
                         json_str = activity.temp_data
                         if json_str:
                             json_data = json.loads(json_str)
@@ -210,7 +218,7 @@ def update_records_metadata():
                             activity.temp_data = json.dumps(json_data, ensure_ascii=False)
 
                             db.session.merge(activity)
-                            print(f'    Updated workflow_activity id: {activity.id}')
+                            current_app.logger.info(f'    Updated workflow_activity id: {activity.id}')
 
                     # Elasticsearchにweko_linkを追加する
                     if not skip_es_update:
@@ -236,21 +244,21 @@ def update_records_metadata():
                                 body=body,
                                 version=es_version
                             )
-                        print(f'    Updated Elasticsearch item_id: {item_id}')
+                        current_app.logger.info(f'    Updated Elasticsearch item_id: {item_id}')
             # ==ネストトランザクション終了：アイテム毎にコミットする==
 
-            print(f'  Finished processing recid: {recid}')
+            current_app.logger.info(f'  Finished processing recid: {recid}')
 
         except Exception as e:
             # エラーが起きたアイテムはロールバックして次に進む
-            print(f'  Error occurred while processing recid: {recid}')
+            current_app.logger.error(f'  Error occurred while processing recid: {recid}')
             traceback.print_exc()
             continue
 
     # 変更をデータベースに保存
     db.session.commit()
 
-    print(f"  {datetime.now().isoformat()} - Finished updating records_metadata and workflow_activity.")
+    current_app.logger.info(f"  {datetime.now().isoformat()} - Finished updating records_metadata and workflow_activity.")
 
 
 def get_working_activity_ids():
@@ -261,33 +269,34 @@ def get_working_activity_ids():
         list: Activityテーブルのid（アクティビティID）のリスト
     """
     # item_idがNoneかつtemp_dataがNoneでないActivity.idのリストを取得
-    ids = Activity.query.filter(
+    query = Activity.query.filter(
         Activity.item_id.is_(None),
         Activity.temp_data != None
-    ).with_entities(Activity.id).all()
-    return [r[0] for r in ids]
+    ).with_entities(Activity.id).statement
+    results = db.engine.execution_options(stream_results=True).execute(query)
+    return [r[0] for r in results]
 
 def update_workflow_activities():
     """
     登録途中のワークフローのtemp_dataを更新する
     """
-    print(f"  {datetime.now().isoformat()} - Updating workflow_activity for in-progress workflows...")
+    current_app.logger.info(f"  {datetime.now().isoformat()} - Updating workflow_activity for in-progress workflows...")
     # 対象アクティビティIDリストを取得
     working_activity_ids = get_working_activity_ids()
-    print(f"  {datetime.now().isoformat()} - Found {len(working_activity_ids)} workflow activities to process.")
-    for id in working_activity_ids:
+    current_app.logger.info(f"  {datetime.now().isoformat()} - Found {len(working_activity_ids)} workflow activities to process.")
+    for activity_id in working_activity_ids:
         try:
-            print(f"  Processing workflow activity id: {id}")
+            current_app.logger.info(f"  Processing workflow activity id: {activity_id}")
             with db.session.begin_nested():
                 # activityを取得
-                activity = Activity.query.get(id)
+                activity = Activity.query.get(activity_id)
                 # workflow_activity の temp_data を更新する
                 json_str = activity.temp_data
                 if json_str:
                     json_data = json.loads(json_str)
                     if 'weko_link' in json_data:
                         # すでにweko_linkが存在する場合はスキップ
-                        print(f'    weko_link already exists, skipping activity id: {id}')
+                        current_app.logger.info(f'    weko_link already exists, skipping activity id: {id}')
                         continue
 
                     # # weko_linkを追加してコミット
@@ -298,17 +307,17 @@ def update_workflow_activities():
 
                     db.session.merge(activity)
             
-            print(f'    Updated workflow id: {id}')
+            current_app.logger.info(f'    Updated workflow id: {id}')
         except Exception as e:
             # このレコードはロールバックして次に進む
-            print(f'    Error occurred while processing activity id: {id}')
+            current_app.logger.error(f'    Error occurred while processing activity id: {id}')
             traceback.print_exc()
             continue
 
     # 変更をデータベースに保存
     db.session.commit()
     
-    print(f"  {datetime.now().isoformat()} - Finished updating workflow_activity.")
+    current_app.logger.info(f"  {datetime.now().isoformat()} - Finished updating workflow_activity.")
 
 def main():
     # アイテムメタデータおよび編集中ワークフローのtemp_dataを更新する
@@ -320,10 +329,10 @@ def main():
 
 if __name__ == '__main__':
     starttime = datetime.now()
-    print(f"{starttime.isoformat()} - Starting update_weko_links.py")
+    current_app.logger.info(f"{starttime.isoformat()} - Starting update_weko_links.py")
 
     main()
 
     endtime = datetime.now()
-    print(f"{endtime.isoformat()} - Finished update_weko_links.py")
-    print(f"Duration: {endtime - starttime}")
+    current_app.logger.info(f"{endtime.isoformat()} - Finished update_weko_links.py")
+    current_app.logger.info(f"Duration: {endtime - starttime}")
