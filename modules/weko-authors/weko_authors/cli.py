@@ -7,7 +7,7 @@ def abort_if_false(ctx, param, value):
     """Abort command is value is False."""
     if not value:
         ctx.abort()
-        
+
 @click.group()
 def authors():
     """Authors commands."""
@@ -48,14 +48,14 @@ def validate_date(start_date, end_date):
             end_date = normalize_date(end_date)
         except ValueError as e:
             raise click.UsageError(str(e))
-    
+
     date_format = "%Y-%m-%dT%H:%M:%S"
     dt_start = datetime.strptime(start_date, date_format) if start_date else None
     dt_end = datetime.strptime(end_date, date_format) if end_date else None
     if dt_start and dt_end and dt_start > dt_end:
         raise click.UsageError("start_dateはend_date以前の日付を指定してください")
     return start_date, end_date
-    
+
 import os
 @authors.command('reindex')
 @click.option('--yes-i-know', is_flag=True, callback=abort_if_false,
@@ -80,6 +80,7 @@ import os
 @click.option('--max-retries',type=int,default=0,help='maximum number of times a document will be retired when 429 is received, set to 0 (default) for no retries on 429')
 @click.option('--initial_backoff',type=int,default=2,help='number of secconds we should wait before the first retry.')
 @click.option('--max-backoff',type=int,default=600,help='maximim number of seconds a retry will wait')
+@with_appcontext
 def reindex(file, id, start_date, end_date, with_deleted=True,
             raise_on_error=True,raise_on_exception=True,chunk_size=500,
             max_chunk_bytes=104857600,max_retries=0,initial_backoff=2,
@@ -100,7 +101,7 @@ def reindex(file, id, start_date, end_date, with_deleted=True,
             raise click.UsageError(f'Error reading file {file}: {e}')
     elif id:
         uuids = [id]
-    
+
     start_date, end_date = validate_date(start_date, end_date)
 
     es_bulk_kwargs = {

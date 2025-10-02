@@ -29,6 +29,7 @@ from invenio_db import db
 from invenio_indexer.api import RecordIndexer
 from sqlalchemy.sql.functions import func
 from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.dialects.postgresql import JSONB
 from time import sleep
 from invenio_communities.models import Community
 import click
@@ -760,18 +761,17 @@ class AuthorIndexer():
 
     def generate_actions(self,uuids=[],start_date=None, end_date=None,with_deleted=True):
         index, doc_type = self.author_to_index()
+        filters = []
         if len(uuids) > 0:
             authors = []
             for uuid in uuids:
-                filters.append(Authors.id==uuid)
-                query = Authors.query.filter(Authors.id==uuid)
+                query = Authors.query.filter(Authors.json.cast(JSONB)['id'].astext == str(uuid))
                 if not with_deleted:
                     query = query.filter(Authors.is_deleted.is_(False))
                 author = query.one_or_none()
                 if author:
                     authors.append(author)
         else:
-            filters  =[]
             if not with_deleted:
                 filters.append(Authors.is_deleted.is_(False))
             if start_date:
@@ -781,7 +781,7 @@ class AuthorIndexer():
             query = Authors.query.filter(*filters)
             authors = query.all()
         if len(authors) == 0:
-            click.echo("Error: No authors were found for processing, so the operation was stopped.",fg="red")
+            click.secho("Error: No authors were found for processing, so the operation was stopped.",fg="red")
         for author in authors:
 
             body = self._prepare_author(author)
@@ -789,12 +789,17 @@ class AuthorIndexer():
                 "_op_type": "index",
                 "_index": index,
                 "_type": doc_type,
-                "_id": str(author.id),
+                "_id": str(author.json['id']),
                 "_source": body
             }
             self.count += 1
-            click.secho(f"Indexing author id: {author.id}, Count:{self.count}", fg='green')
+            click.secho(f"Indexing author id: {author.json['id']}, Count:{self.count}", fg='green')
             yield action
 
     def _prepare_author(self, author):
-        return author.json
+        author_data = json.loads(json.dumps(author.json))
+        if hasattr(author, 'communities') and author.communities:
+            author_data["communityIds"] = [community.id for community in author.communities]
+        else:
+            author_data["communityIds"] = []
+        return author_data

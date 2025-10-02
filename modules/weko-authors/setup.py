@@ -82,6 +82,9 @@ setup(
     include_package_data=True,
     platforms='any',
     entry_points={
+        'flask.commands': [
+            'authors = weko_authors.cli:authors',
+        ],
         'invenio_base.apps': [
             'weko_authors = weko_authors:WekoAuthors',
         ],
