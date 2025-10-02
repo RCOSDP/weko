@@ -20,23 +20,10 @@ from weko_admin.models import AdminSettings
 
 def main(restricted_item_type_id):
     """Main context."""
-    # for logging set to info level
-    format = '[%(asctime)s,%(msecs)03d][%(levelname)s] \033[32mweko\033[0m - '\
-            '%(message)s [file %(pathname)s line %(lineno)d in %(funcName)s]'
-    datefmt = '%Y-%m-%d %H:%M:%S'
-    formatter = logging.Formatter(fmt=format, datefmt=datefmt)
-
-    current_app.logger.setLevel("INFO")
-    if current_app.logger.handlers:
-        # if app.logger has handlers, set level and formatter
-        for h in current_app.logger.handlers:
-            h.setLevel("INFO")
-            h.setFormatter(formatter)
-
-    current_app.logger.info('restricted records update start')
-    start_time = time.perf_counter()
+    # start_time = time.perf_counter()
 
     try:
+        current_app.logger.info('restricted records update start')
         with db.session.begin_nested():
             update_item_type_property(restricted_item_type_id)
             update_item_type()
@@ -48,8 +35,8 @@ def main(restricted_item_type_id):
         # current_app.logger.info('ElasticSearch data update start')
         # elasticsearch_reindex(True)
         # current_app.logger.info('ElasticSearch data update end')
-        end_time = time.perf_counter()
-        current_app.logger.info(str(end_time - start_time) + ' sec.')
+        # end_time = time.perf_counter()
+        # current_app.logger.info(str(end_time - start_time) + ' sec.')
     except SQLAlchemyError as ex:
         db.session.rollback()
         current_app.logger.error(str(ex))
@@ -161,6 +148,8 @@ def update_item_type():
         target_render['table_row_map']['schema'] = _format_new_schema(table_row_map_schema, key, schema_roles)
         return target_render
 
+    current_app.logger.info('update item_type records start')
+
     # load json data
     schema = None
     with open('tools/restricted_jsons/item_type/roles_schema.json', 'r') as schema_file:
@@ -173,14 +162,18 @@ def update_item_type():
         render = json.load(render_file)
 
     # update item_type records
-    query = ItemType.query.filter(ItemType.is_deleted.is_(False)).order_by(ItemType.name_id, ItemType.tag).statement
+    query =  db.session.query(ItemType.id).filter(
+        ItemType.is_deleted.is_(False)
+    ).order_by(ItemType.name_id, ItemType.tag).statement
     results = db.engine.execution_options(stream_results=True).execute(query)
-    for result in results:
-        # restricted_item_types = [item_type for item_type in all_item_types if _check_restricted_item_type(item_type)]
-        if not _check_restricted_item_type(result):
+    item_type_ids = [r[0] for r in results]
+    current_app.logger.info('target item_type count: ' + str(len(item_type_ids)))
+    
+    for item_type_id in item_type_ids:
+        item_type = ItemType.query.get(item_type_id)
+        if not _check_restricted_item_type(item_type):
             continue
 
-        item_type = ItemType.query.get(result.id)
         # update item type
         key = _get_restricted_item_type_key(item_type)
         # schema
@@ -193,6 +186,8 @@ def update_item_type():
         # render
         item_type.render = _format_new_render(dict(item_type.render), key, schema, form_roles, render)
         flag_modified(item_type, "render")
+        
+        current_app.logger.info(f'    Updated item_type id: {item_type.id}')
 
     current_app.logger.info('update item_type records success')
 
@@ -216,6 +211,8 @@ def update_item_metadata():
             record_json['weko_shared_ids'] = [shared_user_id]
 
         return record_json
+    
+    current_app.logger.info('update item_metadata records start')
 
     # update item_metadata records
     query = """
@@ -224,10 +221,13 @@ def update_item_metadata():
         AND json ? 'shared_user_id'
     """
     results = db.engine.execution_options(stream_results=True).execute(query)
-    for result in results:
-        item_metadata = ItemMetadata.query.get(result.id)
+    item_metadata_ids = [r[0] for r in results]
+    current_app.logger.info('target item_metadata count: ' + str(len(item_metadata_ids)))
+    for item_metadata_id in item_metadata_ids:
+        item_metadata = ItemMetadata.query.get(item_metadata_id)
         item_metadata.json = _format_json(dict(item_metadata.json))
         flag_modified(item_metadata, "json")
+        current_app.logger.info(f'    Updated item_metadata id: {item_metadata.id}')
 
     current_app.logger.info('update item_metadata records success')
 
@@ -254,6 +254,8 @@ def update_records_metadata():
             record_json['_deposit']['weko_shared_ids'] = [shared_user_id]
         return record_json
 
+    current_app.logger.info('update record_metadata records start')
+
     # update records_metadata records
     query = """
         SELECT id FROM records_metadata
@@ -261,15 +263,20 @@ def update_records_metadata():
         AND json ? 'weko_shared_id'
     """
     results = db.engine.execution_options(stream_results=True).execute(query)
-    for result in results:
-        record_metadata = RecordMetadata.query.get(result.id)
+    record_metadata_ids = [r[0] for r in results]
+    current_app.logger.info('target record_metadata count: ' + str(len(record_metadata_ids)))
+    for record_metadata_id in record_metadata_ids:
+        record_metadata = RecordMetadata.query.get(record_metadata_id)
         record_metadata.json = _format_json(dict(record_metadata.json))
         flag_modified(record_metadata, "json")
+        current_app.logger.info(f'    Updated record_metadata id: {record_metadata.id}')
 
     current_app.logger.info('update record_metadata records success')
 
 def update_admin_settings():
     """update admin_settings for secret_URL_download """
+    current_app.logger.info('update admin_settings start')
+    
     restricted_access = AdminSettings.get('restricted_access', False)
     if not restricted_access:
         restricted_access = current_app.config['WEKO_ADMIN_RESTRICTED_ACCESS_SETTINGS']
@@ -281,6 +288,8 @@ def update_admin_settings():
             "secret_expiration_date_unlimited_chk": False
         }
     AdminSettings.update('restricted_access', restricted_access)
+    
+    current_app.logger.info('update admin_settings success')
 
 def elasticsearch_reindex( is_db_to_es ):
     """ 

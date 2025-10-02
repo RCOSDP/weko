@@ -1,3 +1,4 @@
+import logging
 import sys
 import time
 import traceback
@@ -22,6 +23,7 @@ from invenio_records.models import (
 )
 from weko_records.api import ItemTypes
 from weko_records.models import (
+    ItemTypeName, ItemType,
     timestamp_before_update as weko_timestamp_before_update,
     Timestamp as Weko_Timestamp,
 )
@@ -29,17 +31,27 @@ from weko_records.models import (
 from scripts.demo import update_feedback_mail_list_to_db
 
 def main(restricted_item_type_id, start_time):
+    # for logging set to info level
+    format = '[%(asctime)s,%(msecs)03d][%(levelname)s] \033[32mweko\033[0m - '\
+            '%(message)s [file %(pathname)s line %(lineno)d in %(funcName)s]'
+    datefmt = '%Y-%m-%d %H:%M:%S'
+    formatter = logging.Formatter(fmt=format, datefmt=datefmt)
+
+    current_app.logger.setLevel("INFO")
+    if current_app.logger.handlers:
+        # if app.logger has handlers, set level and formatter
+        for h in current_app.logger.handlers:
+            h.setLevel("INFO")
+            h.setFormatter(formatter)
+
     try:
         current_app.logger.info("run updateRestrictedRecords")
         updateRestrictedRecords.main(restricted_item_type_id)
         current_time = show_exec_time(start_time, "update_restricted_records")
-        current_app.logger.info("run register_properties_only_specified")
         register_properties_only_specified()
         current_time = show_exec_time(current_time, "register_properties_only_specified")
-        current_app.logger.info("run renew_all_item_types")
         renew_all_item_types()
         current_time = show_exec_time(current_time, "renew_all_item_types")
-        current_app.logger.info("run update_weko_links")
         update_weko_links.main()
         current_time = show_exec_time(current_time, "update_weko_links")
         current_app.logger.info("run update_feedback_mail_list_to_db")
@@ -55,24 +67,34 @@ def main(restricted_item_type_id, start_time):
 def register_properties_only_specified():
     exclusion_list = [int(x) for x in property_config.EXCLUSION_LIST]
     try:
+        current_app.logger.info("Start register_properties_only_specified")
         specified_list = property_config.SPECIFIED_LIST
         del_properties(specified_list)
         exclusion_list += get_properties_id()
         register_properties_from_folder(exclusion_list, specified_list)
         db.session.commit()
-    except:
+        current_app.logger.info("End register_properties_only_specified")
+    except Exception as ex:
+        current_app.logger.error(ex)
         current_app.logger.error(traceback.format_exc())
         db.session.rollback()
 
 
 def renew_all_item_types():
     try:
-        itemtypes = ItemTypes.get_all()
-        for itemtype in itemtypes:
-            ret = ItemTypes.reload(itemtype.id)
-            current_app.logger.info("itemtype id:{}, itemtype name:{}".format(itemtype.id,itemtype.item_type_name.name))
+        current_app.logger.info("Start renew_all_item_types")
+        query = db.session.query(ItemType.id).statement
+        results = db.engine.execution_options(stream_results=True).execute(query)
+        item_type_ids = [r[0] for r in results]
+        current_app.logger.info("target item_type count: " + str(len(item_type_ids)))
+        
+        for item_type_id in item_type_ids:
+            ret = ItemTypes.reload(item_type_id)
+            item_type_name = ItemTypeName.query.get(item_type_id)
+            current_app.logger.info("itemtype id:{}, itemtype name:{}".format(item_type_id,item_type_name.name))
             current_app.logger.info(ret['msg'])
         db.session.commit()
+        current_app.logger.info("End renew_all_item_types")
     except:
         current_app.logger.error(traceback.format_exc())
         db.session.rollback()
