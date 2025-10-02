@@ -784,33 +784,45 @@ class Indexes(object):
 
     @classmethod
     def filter_roles(cls, roles):
-        """特定の条件に基づいてロールをフィルタリングします。
-
+        """Filter roles to gakunin_map group roles, gakunin_map general roles, other roles.
+        
         Args:
-            roles (list): フィルタリング対象のロールのリスト。
-
+            roles (list): List of role dictionaries to be filtered.
         Returns:
-            tuple: 2つのリストを含むタプル。
-                - filtered_roles: 特定の条件を満たすロールのリスト。
-                - excluded_roles: 特定の条件を満たさないロールのリスト。
+            tuple: A tuple containing two lists:
+                - List of roles that are gakunin_map group roles.
+                - List of roles that are either other roles or gakunin_map general roles.
+        Raises:
+            TypeError: If the input is not a list.
         """
         if not isinstance(roles, list):
             raise TypeError("roles must be a list")
 
-        roles_gakunin_map_group = []
+        gakunin_map_role_groups = []
+        gakunin_map_general_groups = []
         other_roles = []
 
-        gakunin_map_prefix = current_app.config['WEKO_ACCOUNTS_GAKUNIN_GROUP_PATTERN_DICT']['prefix']
-        role_keyword = current_app.config['WEKO_ACCOUNTS_GAKUNIN_GROUP_PATTERN_DICT']['role_keyword']
-        default_weko_role_names = current_app.config['WEKO_PERMISSION_ROLE_USER'] + ['Authenticated User', 'Guest']
+        gakunin_map_pattern = current_app.config.get(
+            "WEKO_ACCOUNTS_GAKUNIN_GROUP_PATTERN_DICT", {}
+        )
+
+        gakunin_map_prefix = gakunin_map_pattern.get("prefix", "jc")
+        role_keyword = gakunin_map_pattern.get("role_keyword", "roles")
+
         for role in roles:
-            # ロール名が設定されたキーワードに含まれていない、かつロール名が設定されたプレフィックスに含まれていない、かつロール名が'WEKO_PERMISSION_ROLE_USER','Authenticated User','Guest'のいずれでもないことを確認します。
-            if not (role["name"].startswith(gakunin_map_prefix) and role_keyword in role["name"]) and \
-                    role["name"] not in default_weko_role_names:
-                roles_gakunin_map_group.append({'id': role['id'], 'name': role['name']})
+            role_name = role.get("name", "")
+            role_info = {"id": role.get("id"), "name": role_name}
+            if role_name.startswith(gakunin_map_prefix):
+                if role_keyword in role_name:
+                    # gakunin_map group role
+                    gakunin_map_role_groups.append(role)
+                else:
+                    # gakunin_map general role
+                    gakunin_map_general_groups.append(role)
             else:
-                other_roles.append({'id': role['id'], 'name': role['name']})
-        return roles_gakunin_map_group, other_roles
+                other_roles.append(role)
+
+        return gakunin_map_general_groups, other_roles + gakunin_map_role_groups
 
     @classmethod
     def get_index_with_role(cls, index_id):

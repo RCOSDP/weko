@@ -509,6 +509,27 @@ class IndexTreeActionResource(ContentNegotiatedMethodView):
                     if len(i['children']) > 0:
                         _check_edit_permission(is_admin, i['children'], can_edit_indexes)
 
+        def _is_decendent(index_node_id, possible_ancestor_ids):
+            """Check if the index_node_id is a descendant of any node in possible_ancestor_ids.
+            Args:
+                index_node_id (int): The ID of the index node to check.
+                possible_ancestor_ids (list): A list of possible ancestor node IDs.
+            Returns:
+                bool: True if index_node_id is a descendant of any node in possible_ancestor_ids, False otherwise.
+            """
+            target_node = self.record_class.get_index(index_node_id)
+            parent_node_id = target_node.parent
+            while parent_node_id is not None and parent_node_id != 0:
+                # If the parent node is one of possible ancestors, return True
+                if parent_node_id in possible_ancestor_ids:
+                    return True
+                # Move to the next parent node
+                target_node = self.record_class.get_index(parent_node_id)
+                if target_node is None:
+                    break
+                parent_node_id = target_node.parent
+            return False
+
         from invenio_communities.models import Community
         try:
             action = request.values.get('action')
@@ -564,19 +585,29 @@ class IndexTreeActionResource(ContentNegotiatedMethodView):
                             role_ids.append(role.id)
                 if role_ids:
                     from invenio_communities.models import Community
-                    comm_list = Community.get_by_user(
+                    communities = Community.get_by_user(
                         role_ids, with_deleted=True
                     ).all()
+                    top_community_nodes = []
+                    if len (communities) < 2:
+                        top_community_nodes = communities
+                    else:
+                        for community in communities:
+                            possible_ancestor_ids = [
+                                c.root_node_id for c in communities
+                                if c.id != community.id
+                            ]
+                            if not _is_decendent(
+                                community.root_node_id, possible_ancestor_ids
+                            ):
+                                top_community_nodes.append(community)
+
                     check_list = []
-                    for comm in comm_list:
-                        indexes = [
-                            i.id for i in Indexes.get_all_parent_indexes(comm.root_node_id)
-                            if i.parent == 0
-                        ]
-                        for index_id in indexes:
-                            if index_id not in check_list:
-                                tree += self.record_class.get_index_tree(index_id)
-                                check_list.append(index_id)
+                    for comm in top_community_nodes:
+                        index_id = comm.root_node_id
+                        if index_id not in check_list:
+                            tree += self.record_class.get_index_tree(index_id)
+                            check_list.append(index_id)
 
             return make_response(jsonify(tree), 200)
         except Exception as ex:
