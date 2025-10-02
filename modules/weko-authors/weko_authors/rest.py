@@ -388,9 +388,13 @@ class AuthorDBManagementAPI(ContentNegotiatedMethodView):
             )
 
             self.validate_author_data(author_data, author_data.get("pk_id"))
-            author_data["communityIds"] = validate_community_ids(
-                author_data.get("communityIds", []), is_create=True
-            )
+            try:
+                author_data["communityIds"] = validate_community_ids(
+                    author_data.get("communityIds", []), is_create=True
+                )
+            except AuthorsValidationError as ex:
+                current_app.logger.error(f"Community IDs validation error: {ex.description}")
+                raise
 
             author_data = self.process_authors_data_before(author_data)
             self.handle_weko_id(author_data)
@@ -605,8 +609,12 @@ class AuthorDBManagementAPI(ContentNegotiatedMethodView):
             else:
                 old = Authors.query.get(pk_id)
             old_community_ids = [c.id for c in old.communities]
-            author_data["communityIds"] = validate_community_ids(
-                community_ids, old_ids=old_community_ids)
+            try:
+                author_data["communityIds"] = validate_community_ids(
+                    community_ids, old_ids=old_community_ids)
+            except AuthorsValidationError as ex:
+                current_app.logger.error(f"Community IDs validation error: {ex.description}")
+                raise
 
             # scheme -> id
             author_data = self.process_authors_data_before(author_data)
