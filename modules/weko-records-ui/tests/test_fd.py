@@ -334,11 +334,17 @@ def test_file_download_onetime(app, records, itemtypes, users, db_fileonetimedow
         with patch('weko_records_ui.fd.AdminSettings.get', return_value=adminsetting):    
             with patch("flask.templating._render", return_value=""):
                 with patch("weko_records_ui.fd.get_onetime_download", return_value=db_fileonetimedownload):
-                    #with patch("weko_records_ui.fd.parse_one_time_download_token", return_value=(True, [1])):
-                        res = client.post('/record/3/file/onetime/helloworld.zip',
-                                    data={'input_password':'test_pass'},
-                                    content_type='application/json')
-                        assert res.status_code == 200
+                    with patch("weko_records_ui.fd.parse_one_time_download_token",
+                               return_value=("", (recid.pid_value, mailaddress, "helloworld.pdf", ""))):
+                        with patch("weko_records_ui.fd.validate_onetime_download_token", return_value=_rv):
+                            with patch("weko_records_ui.fd.record_file_factory", return_value=file_object):
+                                with patch('weko_records_ui.fd.check_and_send_usage_report',return_value =""):
+                                    with patch('weko_records_ui.fd.update_onetime_download',return_value =True):
+                                        with app.test_request_context('/record/1/file/onetime/helloworld.pdf?mailaddress=user@email&isajax=true',
+                                                                    method='POST',
+                                                                    json={'input_password': 'test_pass'}):
+                                            res = file_download_onetime(recid,record)
+                                            assert 'guest_token' in res.keys()
 
 # def _is_terms_of_use_only(file_obj:dict , req :dict) -> bool:
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_fd.py::test__is_terms_of_use_only -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
