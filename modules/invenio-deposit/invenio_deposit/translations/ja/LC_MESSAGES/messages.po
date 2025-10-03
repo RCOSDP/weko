@@ -1,0 +1,49 @@
+# Japanese translations for invenio-deposit.
+# Copyright (C) 2025 CERN
+# This file is distributed under the same license as the invenio-deposit
+# project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2025.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: invenio-deposit 1.0.0a9\n"
+"Report-Msgid-Bugs-To: info@inveniosoftware.org\n"
+"POT-Creation-Date: 2025-10-03 13:42+0900\n"
+"PO-Revision-Date: 2025-10-03 13:43+0900\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: ja\n"
+"Language-Team: ja <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=0\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.5.1\n"
+
+#: invenio_deposit/scopes.py:45
+msgid "Allow upload (but not publishing)."
+msgstr ""
+
+#: invenio_deposit/scopes.py:49
+msgid "Allow publishing of uploads."
+msgstr ""
+
+#: invenio_deposit/templates/invenio_deposit/index.html:57
+msgid "Search uploads..."
+msgstr ""
+
+#: invenio_deposit/templates/invenio_deposit/index.html:65
+msgid "Loading..."
+msgstr ""
+
+#: invenio_deposit/templates/invenio_deposit/index.html:74
+msgid "New Upload"
+msgstr ""
+
+#: invenio_deposit/templates/invenio_deposit/index.html:83
+msgid "Search failed."
+msgstr ""
+
+#: invenio_deposit/templates/invenio_deposit/index.html:99
+msgid "Sort"
+msgstr ""
+
