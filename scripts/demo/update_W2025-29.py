@@ -30,7 +30,16 @@ from weko_records.models import (
 
 from scripts.demo import update_feedback_mail_list_to_db
 
-def main(restricted_item_type_id, start_time):
+def main(restricted_item_type_id, start_time, batch_size=500):
+    """Main context.
+    Args:
+        restricted_item_type_id: int
+            restricted item type id
+        start_time: float
+            script start time
+        batch_size: int
+            number of items to process at once
+    """
     # for logging set to info level
     format = '[%(asctime)s,%(msecs)03d][%(levelname)s] \033[32mweko\033[0m - '\
             '%(message)s [file %(pathname)s line %(lineno)d in %(funcName)s]'
@@ -46,13 +55,13 @@ def main(restricted_item_type_id, start_time):
 
     try:
         current_app.logger.info("run updateRestrictedRecords")
-        updateRestrictedRecords.main(restricted_item_type_id)
+        updateRestrictedRecords.main(restricted_item_type_id, batch_size=batch_size)
         current_time = show_exec_time(start_time, "update_restricted_records")
         register_properties_only_specified()
         current_time = show_exec_time(current_time, "register_properties_only_specified")
         renew_all_item_types()
         current_time = show_exec_time(current_time, "renew_all_item_types")
-        update_weko_links.main()
+        update_weko_links.main(batch_size=batch_size)
         current_time = show_exec_time(current_time, "update_weko_links")
         current_app.logger.info("run update_feedback_mail_list_to_db")
         update_feedback_mail_list_to_db.main()
@@ -60,7 +69,7 @@ def main(restricted_item_type_id, start_time):
         current_app.logger.info("All updates completed successfully.")
     except Exception as ex:
         current_app.logger.error(ex)
-        traceback.print_exc()
+        current_app.logger.error(traceback.format_exc())
         db.session.rollback()
 
 
@@ -95,12 +104,23 @@ def renew_all_item_types():
             current_app.logger.info(ret['msg'])
         db.session.commit()
         current_app.logger.info("End renew_all_item_types")
-    except:
+    except Exception as ex:
+        current_app.logger.error(ex)
         current_app.logger.error(traceback.format_exc())
         db.session.rollback()
 
 
 def show_exec_time(start_time, process_name):
+    """Show elapsed time for each process.
+    Args:
+        start_time: float
+            start time of the process
+        process_name: str
+            name of the process
+    Returns:
+        end_time: float
+            end time of the process
+    """
     end_time = time.perf_counter()
     elapsed_time = end_time - start_time
     current_app.logger.info(
@@ -120,9 +140,13 @@ if __name__ == "__main__":
     db.event.remove(ir_Timestamp, 'before_update', ir_timestamp_before_update)
     db.event.remove(Weko_Timestamp, 'before_update', weko_timestamp_before_update)
     try:
-        if len(args) > 1:
+        if len(args) == 1:
             restricted_item_type_id = int(args[1])
             main(restricted_item_type_id, start_time)
+        elif len(args) == 2:
+            restricted_item_type_id = int(args[1])
+            batch_size = int(args[2])
+            main(restricted_item_type_id, start_time, batch_size=batch_size)
         else:
             print("Please provide restricted_item_type_id as an argument.")
             sys.exit(1)

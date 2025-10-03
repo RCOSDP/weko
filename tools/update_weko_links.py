@@ -109,14 +109,14 @@ def get_weko_link(metadata):
         weko_link[weko_id] = weko_id
     return weko_link
 
-def update_records_metadata():
+def update_records_metadata(batch_size=500):
     """
     アイテムメタデータおよび編集中ワークフローのtemp_dataを更新する
     """
     current_app.logger.info(f"  {datetime.now().isoformat()} - Updating records_metadata and workflow_activity...")
     es = Elasticsearch(
             'http://' + os.environ.get('INVENIO_ELASTICSEARCH_HOST', 'localhost') + ':9200')
-    
+
     # 対象アイテムのrecidのリストを取得
 
     query = PersistentIdentifier.query.filter(
@@ -128,132 +128,132 @@ def update_records_metadata():
 
     current_app.logger.info(f"  {datetime.now().isoformat()} - Found {len(recids)} recids to process.")
 
-    for recid in recids:
-        try:
-            current_app.logger.info(f"  Processing recid: {recid}")
+    pages = [recids[i:i + batch_size] for i in range(0, len(recids), batch_size)]
 
-            # ==ネストトランザクション開始：アイテム毎にコミットする==
-            with db.session.begin_nested():
-                # 最新バージョンおよび x.0 の　records_metadata を更新する
-                # recid または recid.0 のレコードを取得
-                query = db.session.query(RecordMetadata.id).filter(
-                    RecordMetadata.id.in_(
-                        db.session.query(PersistentIdentifier.object_uuid).filter(
-                            PersistentIdentifier.pid_type == 'recid',
-                            or_(
-                                (PersistentIdentifier.pid_value == str(recid)),
-                                (PersistentIdentifier.pid_value == f"{recid}.0")
+    for page in pages:
+        current_app.logger.info(f"  Processing page {pages.index(page) + 1}/{len(pages)}...")
+        for recid in page:
+            try:
+                current_app.logger.info(f"  Processing recid: {recid}")
+
+                # ==ネストトランザクション開始：アイテム毎にコミットする==
+                with db.session.begin_nested():
+                    # 最新バージョンおよび x.0 の　records_metadata を更新する
+                    # recid または recid.0 のレコードを取得
+                    record_metadata_records = RecordMetadata.query.filter(
+                        RecordMetadata.id.in_(
+                            db.session.query(PersistentIdentifier.object_uuid).filter(
+                                PersistentIdentifier.pid_type == 'recid',
+                                or_(
+                                    (PersistentIdentifier.pid_value == str(recid)),
+                                    (PersistentIdentifier.pid_value == f"{recid}.0")
+                                )
                             )
                         )
-                    )
-                ).statement
-                results = db.engine.execution_options(stream_results=True).execute(query)
-                record_metadata_ids = [r[0] for r in results]
-                current_app.logger.info(f"    Found {len(record_metadata_ids)} records_metadata entries to process.")
+                    ).all()
+                    current_app.logger.info(f"    Found {len(record_metadata_records)} records_metadata entries to process.")
 
-                for record_metadata_id in record_metadata_ids:
-                    # records_metadata の weko_link を更新する
-                    record = RecordMetadata.query.get(record_metadata_id)
-                    json_data = {**record.json}
-                    item_id = record.id
-                    weko_link = {}
-                    if 'weko_link' in json_data:
-                        # すでにweko_linkが存在するrecords_metadataはスキップ
-                        weko_link = json_data['weko_link']
-                        current_app.logger.info(f'    weko_link already exists, skipping update records_metadata item_id: {item_id}')
-                        pass
-                    else:
-                        if 'author_link' in json_data:
-                            # author_linkからweko_linkを作成
-                            """
-                            weko_linkは pk_id をキー、WEKOID を値とする辞書型のデータ
-                                例：{"2": "10002"}
-
-                            改修前（マイグレーション前）は 必ず「pk_id = WEKOID」となる仕様であり、 
-                            アイテムメタデータ内のauthor_link の配列内にはWEKOIDが登録される仕様となっていた。
-                            よってマイグレーション時は対象アイテムのメタデータ内のauthor_linkを取得し、
-                            その各要素をキーおよび値として持つ辞書を作成し、格納すればよい。
-                                例：author_link = [ "2", "3" ] 
-                                    → weko_link = { "2": "2", "3": "3" }
-                            """
-                            author_link = json_data['author_link']
-                            weko_link = {str(item): str(item) for item in author_link}
-                            json_data['weko_link'] = weko_link
-                            record.json = json_data
-                        else:
-                            # author_linkが存在しない場合はweko_linkを空で作成
-                            json_data['weko_link'] = weko_link
-                            record.json = json_data
-
-                        db.session.merge(record)
-                        current_app.logger.info(f'    Updated records_metadata item_id: {item_id}')
-
-                    # 編集中の workflow_activity の temp_data を更新する
-                    query = Activity.query.filter(
-                        Activity.item_id == item_id,
-                        and_(
-                            Activity.action_status != 'F',
-                            Activity.action_status != 'C'
-                        ),
-                        and_(
-                            Activity.temp_data != None,
-                            Activity.temp_data != {}
-                        )
-                    ).with_entities(Activity.id).statement
-                    results = db.engine.execution_options(stream_results=True).execute(query)
-                    activitiy_ids = [r[0] for r in results]
-                    current_app.logger.info(f"    Found {len(activitiy_ids)} workflow_activity entries to process.")
-                    for activity_id in activitiy_ids:
-                        activity = Activity.query.get(activity_id)
-                        json_str = activity.temp_data
-                        if json_str:
-                            json_data = json.loads(json_str)
-                            if 'weko_link' in json_data:
-                                # すでにweko_linkが存在する場合はスキップ
-                                continue
-
-                            # weko_linkを追加
-                            activity_weko_link = get_weko_link(json_data)
-                            json_data['weko_link'] = activity_weko_link
-                            activity.temp_data = json.dumps(json_data, ensure_ascii=False)
-
-                            db.session.merge(activity)
-                            current_app.logger.info(f'    Updated workflow_activity id: {activity.id}')
-
-                    # Elasticsearchにweko_linkを追加する
-                    if not skip_es_update:
-                        indexer = WekoIndexer()
-                        es_metadata = indexer.get_metadata_by_item_id(item_id)
-                        if es_metadata and '_source' in es_metadata and 'weko_link' in es_metadata["_source"]:
-                            # すでにweko_linkが存在する場合はスキップ
+                    for record in record_metadata_records:
+                        # records_metadata の weko_link を更新する
+                        json_data = {**record.json}
+                        item_id = record.id
+                        weko_link = {}
+                        if 'weko_link' in json_data:
+                            # すでにweko_linkが存在するrecords_metadataはスキップ
+                            weko_link = json_data['weko_link']
+                            current_app.logger.info(f'    weko_link already exists, skipping update records_metadata item_id: {item_id}')
                             pass
                         else:
-                            es_version = es_metadata["_version"]
-                            es_metadata["_source"]["weko_link"] = weko_link
-                            body = {
-                                "doc": {
-                                    "_item_metadata": es_metadata["_source"]["_item_metadata"],
-                                    "weko_link": es_metadata["_source"]["weko_link"]
-                                }
-                            }
+                            if 'author_link' in json_data:
+                                # author_linkからweko_linkを作成
+                                """
+                                weko_linkは pk_id をキー、WEKOID を値とする辞書型のデータ
+                                    例：{"2": "10002"}
 
-                            es.update(
-                                index=es_metadata["_index"], # [prefix]-weko-item-v1.0.0
-                                id=item_id,
-                                doc_type="_doc",
-                                body=body,
-                                version=es_version
+                                改修前（マイグレーション前）は 必ず「pk_id = WEKOID」となる仕様であり、
+                                アイテムメタデータ内のauthor_link の配列内にはWEKOIDが登録される仕様となっていた。
+                                よってマイグレーション時は対象アイテムのメタデータ内のauthor_linkを取得し、
+                                その各要素をキーおよび値として持つ辞書を作成し、格納すればよい。
+                                    例：author_link = [ "2", "3" ]
+                                        → weko_link = { "2": "2", "3": "3" }
+                                """
+                                author_link = json_data['author_link']
+                                weko_link = {str(item): str(item) for item in author_link}
+                                json_data['weko_link'] = weko_link
+                                record.json = json_data
+                            else:
+                                # author_linkが存在しない場合はweko_linkを空で作成
+                                json_data['weko_link'] = weko_link
+                                record.json = json_data
+
+                            db.session.merge(record)
+                            current_app.logger.info(f'    Updated records_metadata item_id: {item_id}')
+
+                        # 編集中の workflow_activity の temp_data を更新する
+                        activities = Activity.query.filter(
+                            Activity.item_id == item_id,
+                            and_(
+                                Activity.action_status != 'F',
+                                Activity.action_status != 'C'
+                            ),
+                            and_(
+                                Activity.temp_data != None,
+                                Activity.temp_data != {}
                             )
-                        current_app.logger.info(f'    Updated Elasticsearch item_id: {item_id}')
-            # ==ネストトランザクション終了：アイテム毎にコミットする==
+                        ).all()
+                        # results = db.engine.execution_options(stream_results=True).execute(query)
+                        # activitiy_ids = [r[0] for r in results]
+                        current_app.logger.info(f"    Found {len(activities)} workflow_activity entries to process.")
+                        for activity in activities:
+                            json_str = activity.temp_data
+                            if json_str:
+                                json_data = json.loads(json_str)
+                                if 'weko_link' in json_data:
+                                    # すでにweko_linkが存在する場合はスキップ
+                                    continue
 
-            current_app.logger.info(f'  Finished processing recid: {recid}')
+                                # weko_linkを追加
+                                activity_weko_link = get_weko_link(json_data)
+                                json_data['weko_link'] = activity_weko_link
+                                activity.temp_data = json.dumps(json_data, ensure_ascii=False)
 
-        except Exception as e:
-            # エラーが起きたアイテムはロールバックして次に進む
-            current_app.logger.error(f'  Error occurred while processing recid: {recid}')
-            traceback.print_exc()
-            continue
+                                db.session.merge(activity)
+                                current_app.logger.info(f'    Updated workflow_activity id: {activity.id}')
+
+                        # Elasticsearchにweko_linkを追加する
+                        if not skip_es_update:
+                            indexer = WekoIndexer()
+                            es_metadata = indexer.get_metadata_by_item_id(item_id)
+                            if es_metadata and '_source' in es_metadata and 'weko_link' in es_metadata["_source"]:
+                                # すでにweko_linkが存在する場合はスキップ
+                                pass
+                            else:
+                                es_version = es_metadata["_version"]
+                                es_metadata["_source"]["weko_link"] = weko_link
+                                body = {
+                                    "doc": {
+                                        "_item_metadata": es_metadata["_source"]["_item_metadata"],
+                                        "weko_link": es_metadata["_source"]["weko_link"]
+                                    }
+                                }
+
+                                es.update(
+                                    index=es_metadata["_index"], # [prefix]-weko-item-v1.0.0
+                                    id=item_id,
+                                    doc_type="_doc",
+                                    body=body,
+                                    version=es_version
+                                )
+                            current_app.logger.info(f'    Updated Elasticsearch item_id: {item_id}')
+                # ==ネストトランザクション終了：アイテム毎にコミットする==
+
+                current_app.logger.info(f'  Finished processing recid: {recid}')
+
+            except Exception as e:
+                # エラーが起きたアイテムはロールバックして次に進む
+                current_app.logger.error(f'  Error occurred while processing recid: {recid}')
+                traceback.print_exc()
+                continue
 
     # 変更をデータベースに保存
     db.session.commit()
@@ -276,7 +276,7 @@ def get_working_activity_ids():
     results = db.engine.execution_options(stream_results=True).execute(query)
     return [r[0] for r in results]
 
-def update_workflow_activities():
+def update_workflow_activities(batch_size=500):
     """
     登録途中のワークフローのtemp_dataを更新する
     """
@@ -284,47 +284,57 @@ def update_workflow_activities():
     # 対象アクティビティIDリストを取得
     working_activity_ids = get_working_activity_ids()
     current_app.logger.info(f"  {datetime.now().isoformat()} - Found {len(working_activity_ids)} workflow activities to process.")
-    for activity_id in working_activity_ids:
-        try:
-            current_app.logger.info(f"  Processing workflow activity id: {activity_id}")
-            with db.session.begin_nested():
-                # activityを取得
-                activity = Activity.query.get(activity_id)
-                # workflow_activity の temp_data を更新する
-                json_str = activity.temp_data
-                if json_str:
-                    json_data = json.loads(json_str)
-                    if 'weko_link' in json_data:
-                        # すでにweko_linkが存在する場合はスキップ
-                        current_app.logger.info(f'    weko_link already exists, skipping activity id: {id}')
-                        continue
 
-                    # # weko_linkを追加してコミット
-                    weko_link = get_weko_link(json_data)
-                    json_data['weko_link'] = weko_link
-                    # del json_data['weko_link']  # テスト用にweko_linkを削除
-                    activity.temp_data = json.dumps(json_data, ensure_ascii=False)
+    pages = [working_activity_ids[i:i + batch_size] for i in range(0, len(working_activity_ids), batch_size)]
 
-                    db.session.merge(activity)
-            
-            current_app.logger.info(f'    Updated workflow id: {id}')
-        except Exception as e:
-            # このレコードはロールバックして次に進む
-            current_app.logger.error(f'    Error occurred while processing activity id: {id}')
-            traceback.print_exc()
-            continue
+    for page in pages:
+        current_app.logger.info(f"  Processing page {pages.index(page) + 1}/{len(pages)}...")
+        activities = Activity.query.filter(Activity.id.in_(page)).all()
+        for activity in activities:
+            try:
+                current_app.logger.info(f"  Processing workflow activity id: {activity.id}")
+                with db.session.begin_nested():
+                    # workflow_activity の temp_data を更新する
+                    json_str = activity.temp_data
+                    if json_str:
+                        json_data = json.loads(json_str)
+                        if 'weko_link' in json_data:
+                            # すでにweko_linkが存在する場合はスキップ
+                            current_app.logger.info(f'    weko_link already exists, skipping activity id: {id}')
+                            continue
+
+                        # # weko_linkを追加してコミット
+                        weko_link = get_weko_link(json_data)
+                        json_data['weko_link'] = weko_link
+                        # del json_data['weko_link']  # テスト用にweko_linkを削除
+                        activity.temp_data = json.dumps(json_data, ensure_ascii=False)
+
+                        db.session.merge(activity)
+
+                current_app.logger.info(f'    Updated workflow id: {id}')
+            except Exception as e:
+                # このレコードはロールバックして次に進む
+                current_app.logger.error(f'    Error occurred while processing activity id: {id}')
+                traceback.print_exc()
+                continue
 
     # 変更をデータベースに保存
     db.session.commit()
-    
+
     current_app.logger.info(f"  {datetime.now().isoformat()} - Finished updating workflow_activity.")
 
-def main():
+
+def main(batch_size=500):
+    """Main context.
+    Args:
+        batch_size: int
+            一度に処理するアイテム数
+    """
     # アイテムメタデータおよび編集中ワークフローのtemp_dataを更新する
-    update_records_metadata()
+    update_records_metadata(batch_size)
 
     # 登録途中のワークフローのtemp_dataを更新する
-    update_workflow_activities()
+    update_workflow_activities(batch_size)
 
 
 if __name__ == '__main__':
