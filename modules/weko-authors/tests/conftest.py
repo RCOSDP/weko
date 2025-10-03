@@ -159,7 +159,7 @@ def base_app(request, instance_path,search_class):
         WEKO_AUTHORS_EXPORT_TMP_DIR =   "authors_export",
         WEKO_AUTHORS_IMPORT_CACHE_USER_TSV_FILE_KEY = 'authors_import_user_file_key',
         WEKO_AUTHORS_IMPORT_TMP_DIR = "authors_import",
-        WEKO_AUTHORS_FILE_MAPPING_FOR_PREFIX =["scheme", "name", "url", "is_deleted"],
+        WEKO_AUTHORS_FILE_MAPPING_FOR_PREFIX =["scheme", "name", "url", "is_deleted", "community_ids[0]"],
         WEKO_AUTHORS_IMPORT_TMP_PREFIX = 'authors_import_',
         WEKO_AUTHORS_IMPORT_BATCH_SIZE = 100,
         WEKO_AUTHORS_IMPORT_MAX_NUM_OF_DISPLAYS = 1000,
@@ -178,6 +178,8 @@ def base_app(request, instance_path,search_class):
         WEKO_AUTHORS_IMPORT_CACHE_RESULT_FILE_PATH_KEY = "authors_import_result_file_path",
         WEKO_AUTHORS_IMPORT_CACHE_RESULT_SUMMARY_KEY= "result_summary_key",
         WEKO_AUTHORS_IMPORT_CACHE_OVER_MAX_TASK_KEY = "authors_import_over_max_task",
+        WEKO_PERMISSION_SUPER_ROLE_USER = ['System Administrator', 'Repository Administrator'],
+        WEKO_PERMISSION_ROLE_COMMUNITY = ['Community Administrator']
     )
     Babel(app_)
     Menu(app_)
@@ -884,7 +886,7 @@ def auth_headers_bad_content_type(client_api, json_headers, create_token_user_sy
 
 
 @pytest.fixture
-def author_records_for_test(app, esindex, db):
+def author_records_for_test(app, esindex, db, community):
     record_1_data = {
         "emailInfo": [{"email": "sample@xxx.co.jp"}],
         "authorIdInfo": [
@@ -897,7 +899,8 @@ def author_records_for_test(app, esindex, db):
         "affiliationInfo": [{
             "identifierInfo": [{"affiliationId": "https://ror.org/##", "affiliationIdType": "3", "identifierShowFlg": "true"}],
             "affiliationNameInfo": [{"affiliationName": "NII", "affiliationNameLang": "en", "affiliationNameShowFlg": "true"}]
-        }]
+        }],
+        "communityIds": ["community1"]
     }
 
     record_2_data = {
@@ -967,3 +970,16 @@ def author_records_for_test(app, esindex, db):
         "3": result[2],
         "4": result[3]
     }
+
+@pytest.fixture()
+def community(db, users):
+    """Create communities."""
+    index = Index.query.first()
+    rtn = []
+    for i in range(1, 4):
+        rtn.append(Community.create(community_id=f"community{i}", role_id=users[0]["obj"].roles[0].id,
+                                      id_user=users[0]["id"], title=f"test community {i}",
+                                      description=(f"this is test community {i}"),
+                                      root_node_id=index.id))
+    db.session.commit()
+    return rtn

@@ -380,7 +380,7 @@
       {%- endblock history_panel %}
     </div>
     {%- if community %}
-       <button class="btn btn-info pull-left back-button" onClick="window.location.href='{{url_for('weko_workflow.index',community=community.id)}}';$(this).prop('disabled', true)">
+       <button class="btn btn-info pull-left back-button" onClick="window.location.href='{{url_for('weko_workflow.index',c=community.id)}}';$(this).prop('disabled', true)">
          <span class="glyphicon glyphicon-chevron-left"></span> {{_('Back')}}</button>
     {%- else %}
       {%- if guest_email and application_record_id %}

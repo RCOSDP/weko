@@ -2792,16 +2792,16 @@ class WorkActivity(object):
         getargs = request.args
         ctx = {'community': None}
         community_id = ""
-        if 'community' in getargs:
+        if 'c' in getargs:
             comm = GetCommunity.get_community_by_id(
-                request.args.get('community'))
+                request.args.get('c'))
             ctx = {'community': comm}
             if comm is not None:
                 community_id = comm.id
 
         # display_activity of Identifier grant
         if action_endpoint == 'identifier_grant' and item:
-            community_id = request.args.get('community', None)
+            community_id = request.args.get('c', None)
             if not community_id:
                 community_id = 'Root Index'
             identifier_setting = get_identifier_setting(community_id)

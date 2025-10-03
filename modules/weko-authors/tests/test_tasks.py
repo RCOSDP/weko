@@ -29,16 +29,23 @@ def test_export_all(app,mocker):
     mocker.patch("weko_authors.tasks.set_export_status")
     mocker.patch("weko_authors.tasks.save_export_url")
     mocker.patch("weko_authors.tasks.export_authors",return_value="test_url.txt")
+    mocker.patch("weko_authors.tasks.export_prefix",return_value="prefix_url.txt")
 
-    result = export_all('author_db')
+    result = export_all('author_db', user_id=1)
     assert result == "test_url.txt"
 
-    mocker.patch("weko_authors.tasks.export_authors",return_value=None)
-    result = export_all('id_prefix')
+    result = export_all('id_prefix', user_id=2)
+    assert result == "prefix_url.txt"
+
+    mocker.patch("weko_authors.tasks.export_authors", return_value=None)
+    result = export_all('author_db', user_id=3)
     assert result == None
 
-    mocker.patch("weko_authors.tasks.export_authors",side_effect=Exception)
-    result = export_all('XXXX')
+    result = export_all('XXXX', user_id=4)
+    assert result == None
+
+    mocker.patch("weko_authors.tasks.export_authors", side_effect=Exception)
+    result = export_all('author_db', user_id=5)
     assert result == None
 
 

@@ -119,7 +119,7 @@
   </table>
   <div class="hide" id="post_uri">{{url_for('weko_workflow.init_activity')}}</div>
     {%-if community%}
-      {%- set back_url = url_for('weko_workflow.index',community=community.id) -%}
+      {%- set back_url = url_for('weko_workflow.index',c=community.id) -%}
     {%- else%}
       {%- set back_url = url_for('weko_workflow.index') -%}
     {%- endif%}

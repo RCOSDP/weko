@@ -222,7 +222,8 @@ class ItemTypeNames(RecordBase):
             query = ItemTypeName.query.filter_by(id=id_)
             if not with_deleted:
                 query = query.filter_by(is_active=True)  # noqa
-            return query.one_or_none()
+            obj = query.one_or_none()
+            return obj if isinstance(obj, ItemTypeName) else None
 
     @classmethod
     def get_name_and_id_all(cls):
@@ -230,7 +231,8 @@ class ItemTypeNames(RecordBase):
         query = db.session.query(ItemTypeName).with_entities(ItemTypeName.name, ItemTypeName.id)
         return query.all()
 
-    def delete(self, force=False):
+    @classmethod
+    def delete(cls, id_, force=False):
         """Delete an item type name.
 
         If `force` is ``False``, the record is soft-deleted: record data will
@@ -247,27 +249,36 @@ class ItemTypeNames(RecordBase):
         #. Send a signal :data:`weko_records.signals.after_record_delete`
            with the current deleted record as parameter.
 
-        :param force: if ``True``, deletes the current item type name
-               from the database, otherwise soft-deletes it.
-        :returns: The deleted :class:`ItemTypeName` instance.
+        Args:
+            id_ (int): Identifier of item type name.
+            force (bool): If ``True``, deletes the current item type name
+                          from the database, otherwise soft-deletes it.
+
+        Returns:
+            bool: `True` if the item type name was deleted, `False` if it
+                  was not found.
         """
+
         with db.session.begin_nested():
+            obj = cls.get_record(id_)
+            if obj is None:
+                return False
+
             before_record_delete.send(
                 current_app._get_current_object(),
-                record=self
+                record=obj
             )
-
             if force:
-                db.session.delete(self)
+                db.session.delete(obj)
             else:
-                self.is_active = False
-                db.session.merge(self)
+                obj.is_active = False
+                db.session.merge(obj)
 
         after_record_delete.send(
             current_app._get_current_object(),
-            record=self
+            record=obj
         )
-        return self
+        return True
 
     def restore(self):
         """Restore an logically deleted item type name.
@@ -1525,7 +1536,7 @@ class JsonldMapping():
         if not isinstance(obj, ItemTypeJsonldMapping):
             return None
         obj.is_deleted = True
-        db.session.commit()
+        db.session.merge(obj)
         return obj
 
 
@@ -1906,23 +1917,24 @@ class ItemsMetadata(RecordBase):
             return query.all()
 
     @classmethod
-    def get_registered_item_metadata(cls, item_type_id):
-        """Retrieve multiple records by item types identifier.
+    def count_registered_item_metadata(cls, item_type_id):
+        """Count the number of registered item metadata by item type identifier.
 
-        :param item_type_id: Identifier of item type.
-        :returns: A list of :class:`Record` instance.
+        Args:
+            item_type_id (int): Identifier of item type.
+        Returns:
+            int: Count of registered item metadata.
         """
         with db.session.no_autoflush:
-            # Get all item metadata registered by item_type_id
-            items = ItemMetadata.query.filter_by(item_type_id=item_type_id).all()
-            item_metadata_array = [str(item.id) for item in items]
-            # Get all persistent identifier which are not deleted.
-            persistent_identifier = PersistentIdentifier.query.filter(
-                PersistentIdentifier.object_uuid.in_(item_metadata_array),
-                PersistentIdentifier.pid_type == 'recid',
+            query = db.session.query(PersistentIdentifier).join(
+                ItemMetadata,
+                PersistentIdentifier.object_uuid == ItemMetadata.id
+            ).filter(
+                ItemMetadata.item_type_id == item_type_id,
+                PersistentIdentifier.pid_type == "recid",
                 PersistentIdentifier.status == PIDStatus.REGISTERED
-            ).all()
-            return persistent_identifier
+            )
+            return query.count()
 
     @classmethod
     def get_by_object_id(cls, object_id):

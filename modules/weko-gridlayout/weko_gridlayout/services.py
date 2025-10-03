@@ -1041,7 +1041,7 @@ class WidgetDesignPageServices:
                 url = '/'
                 if repository_id != current_app.config[
                         'WEKO_THEME_DEFAULT_COMMUNITY']:
-                    url += '?community=' + repository_id
+                    url += '?c=' + repository_id
                 result['data'] = {
                     'id': page_id,
                     'title': 'Main Layout',

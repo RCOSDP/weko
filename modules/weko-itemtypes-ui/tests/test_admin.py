@@ -8,16 +8,16 @@ from zipfile import ZIP_DEFLATED, ZipFile
 import pytest
 import uuid
 import copy
-from mock import patch
 from io import BytesIO
+from unittest.mock import patch, MagicMock
 from werkzeug.datastructures import FileStorage
 from flask import url_for,make_response,json,current_app
+from sqlalchemy.exc import SQLAlchemyError
 
 from invenio_accounts.testutils import login_user_via_session
-from invenio_pidstore.models import PersistentIdentifier
 from weko_admin.models import BillingPermission
-from weko_records.models import ItemMetadata, ItemTypeProperty
-from weko_records.api import Mapping
+from weko_records.models import ItemTypeProperty, ItemTypeName, ItemType
+from weko_records.api import ItemTypeNames, Mapping
 from weko_records_ui.models import RocrateMapping
 from weko_workflow.models import WorkFlow, FlowDefine
 
@@ -30,7 +30,7 @@ def assert_statuscode_with_role(response,is_admin,error_code=403):
         assert response.status_code == error_code
 # class ItemTypeMetaDataView(BaseView):
 class TestItemTypeMetaDataView:
-    
+
 #     def index(self, item_type_id=0):
 # .tox/c1/bin/pytest --cov=weko_itemtypes_ui tests/test_admin.py::TestItemTypeMetaDataView::test_index_acl -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-itemtypes-ui/.tox/c1/tmp
     @pytest.mark.parametrize("index,is_permission",[
@@ -84,15 +84,15 @@ class TestItemTypeMetaDataView:
 # .tox/c1/bin/pytest --cov=weko_itemtypes_ui tests/test_admin.py::TestItemTypeMetaDataView::test_render_itemtype -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-itemtypes-ui/.tox/c1/tmp
     def test_render_itemtype(self,client,admin_view,item_type,users,):
         login_user_via_session(client=client,email=users[0]["email"])
-        
+
         url = url_for("itemtypesregister.render_itemtype",item_type_id=2)
         res = client.get(url)
         result = json.loads(res.data)
         assert result["edit_notes"] == {}
         assert result["table_row"] != []
         assert result["meta_list"] != {}
-        
-        
+
+
         # url = url_for("itemtypesregister.render_itemtype",item_type_id=0)
         # res = client.get(url)
         # result = json.loads(res.data)
@@ -108,66 +108,108 @@ class TestItemTypeMetaDataView:
 #     def delete_itemtype(self, item_type_id=0):
 # .tox/c1/bin/pytest --cov=weko_itemtypes_ui tests/test_admin.py::TestItemTypeMetaDataView::test_delete_itemtype -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-itemtypes-ui/.tox/c1/tmp
     def test_delete_itemtype(self,client,admin_view,db,users,item_type,mocker):
+
+        item_type1 = item_type[0]["item_type"]
+        item_type2 = item_type[1]["item_type"]
+
         login_user_via_session(client=client,email=users[0]["email"])
-        
-        with patch("weko_itemtypes_ui.admin.is_import_running", return_value="is_import_running"):
-            url = url_for("itemtypesregister.delete_itemtype")
+        # item import is running
+        with patch("weko_itemtypes_ui.admin.is_import_running", return_value="is_import_running"), \
+                patch("weko_itemtypes_ui.admin.flash") as mock_flash:
+            url = url_for("itemtypesregister.delete_itemtype", item_type_id=item_type1.id)
             res = client.post(url)
-            assert json.loads(res.data)["code"] == -1
-            
-        with patch("weko_itemtypes_ui.admin.is_import_running", return_value=None), \
-            patch("weko_workflow.utils.get_cache_data", return_value=False):
-            
-            url = url_for("itemtypesregister.delete_itemtype",item_type_id=0)
-            res = client.post(url)
-            assert json.loads(res.data)["code"] == -1
-            
-            url = url_for("itemtypesregister.delete_itemtype",item_type_id=1)
-            mock_flash = mocker.patch("weko_itemtypes_ui.admin.flash")
-            res = client.post(url)
-            mock_flash.assert_called_with("Cannot delete Item type for Harvesting.","error")
-            assert json.loads(res.data)["code"] == -1
-            
-            item_type1 = item_type[0]["item_type"]
-            item_type1.harvesting_type = False
-            item_type2 = item_type[1]["item_type"]
-            item_type2.harvesting_type = False
-            db.session.merge(item_type1)
-            db.session.merge(item_type2)
-            item = ItemMetadata(item_type_id=item_type1.id,json={})
-            
-            db.session.add(item)
-            db.session.commit()
-            pid = PersistentIdentifier(
-                pid_type="recid",
-                pid_value="1",
-                status="R",
-                object_type="rec",
-                object_uuid=item.id
-            )
-            db.session.add(pid)
-            db.session.commit()
-            mock_flash = mocker.patch("weko_itemtypes_ui.admin.flash")
-            url = url_for("itemtypesregister.delete_itemtype",item_type_id=item_type1.id)
-            res = client.post(url)
-            mock_flash.assert_called_with("Cannot delete due to child existing item types.","error")
-            assert json.loads(res.data)["code"] == -1
+            mock_flash.assert_called_with("Cannot delete item type. Import is in progress.","error")
+            assert res.status_code == 400
 
-        with patch("weko_itemtypes_ui.admin.is_import_running", return_value=None), \
-            patch("weko_workflow.utils.get_cache_data", return_value=True):
-            mock_flash = mocker.patch("weko_itemtypes_ui.admin.flash")
-            url = url_for("itemtypesregister.delete_itemtype",item_type_id=item_type2.id)
-            res = client.post(url)
-            mock_flash.assert_called_with("Item type cannot be deleted becase import is in progress.","error")
-            assert json.loads(res.data)["code"] == -1
+        # item import is not running
+        mocker.patch("weko_itemtypes_ui.admin.is_import_running", return_value=None)
 
-        with patch("weko_itemtypes_ui.admin.is_import_running", return_value=None), \
-            patch("weko_workflow.utils.get_cache_data", return_value=False):
-            mock_flash = mocker.patch("weko_itemtypes_ui.admin.flash")
-            url = url_for("itemtypesregister.delete_itemtype",item_type_id=item_type2.id)
+        with patch("weko_itemtypes_ui.admin.flash") as mock_flash:
+            # invalid item_type_id
+            url = url_for("itemtypesregister.delete_itemtype", item_type_id=0)
+            res = client.post(url)
+            mock_flash.assert_called_with("Item type not found.", "error")
+            assert res.status_code == 404
+
+        with patch("weko_itemtypes_ui.admin.flash") as mock_flash:
+            # item type is used for harvesting
+            url = url_for("itemtypesregister.delete_itemtype", item_type_id=999)
+            res = client.post(url)
+            mock_flash.assert_called_with("Item type not found.", "error")
+            assert res.status_code == 404
+
+        with patch("weko_itemtypes_ui.admin.flash") as mock_flash:
+            # item type is used for harvesting
+            url = url_for("itemtypesregister.delete_itemtype", item_type_id=item_type1.id)
+            res = client.post(url)
+            mock_flash.assert_called_with("Cannot delete item type. It is used for harvesting.", "error")
+            assert res.status_code == 400
+
+        # item type is not used for harvesting
+        item_type1.harvesting_type = False
+        item_type2.harvesting_type = False
+        db.session.commit()
+
+
+        # item type is already used for item
+        with patch("weko_itemtypes_ui.admin.flash") as mock_flash, \
+                patch("weko_itemtypes_ui.admin.ItemsMetadata.count_registered_item_metadata", return_value=10):
+            url = url_for("itemtypesregister.delete_itemtype", item_type_id=item_type1.id)
+            res = client.post(url)
+            mock_flash.assert_called_with("Cannot delete item type. Item of this type already exists.", "error")
+            assert res.status_code == 400
+
+        # item type is not used for workflow
+        with patch("weko_itemtypes_ui.admin.flash") as mock_flash, \
+                patch("weko_itemtypes_ui.admin.ItemsMetadata.count_registered_item_metadata", return_value=0), \
+                patch("weko_itemtypes_ui.admin.WorkFlow.get_workflow_by_itemtype_id", return_value=[MagicMock()]):
+            url = url_for("itemtypesregister.delete_itemtype", item_type_id=item_type2.id)
+            res = client.post(url)
+            mock_flash.assert_called_with("Cannot delete item type. It is used in some workflows.", "error")
+            assert res.status_code == 400
+
+        # item type has sword api settings and used for sword api settings
+        with patch("weko_itemtypes_ui.admin.flash") as mock_flash, \
+                patch("weko_itemtypes_ui.admin.ItemsMetadata.count_registered_item_metadata", return_value=0), \
+                patch("weko_itemtypes_ui.admin.WorkFlow.get_workflow_by_itemtype_id", return_value=[]), \
+                patch("weko_itemtypes_ui.admin.JsonldMapping.get_by_itemtype_id", return_value=[MagicMock(id=1)]), \
+                patch("weko_itemtypes_ui.admin.SwordClient.get_clients_by_mapping_id", return_value=MagicMock(client_id="test_client")):
+            url = url_for("itemtypesregister.delete_itemtype", item_type_id=item_type1.id)
+            res = client.post(url)
+            mock_flash.assert_called_with("Cannot delete item type. It is used in SWORD API JSON-LD import settings.", "error")
+            assert res.status_code == 400
+
+        # item type has jsonld mapping but not used for sword api settings
+        with patch("weko_itemtypes_ui.admin.flash") as mock_flash, \
+                patch("weko_itemtypes_ui.admin.ItemsMetadata.count_registered_item_metadata", return_value=0), \
+                patch("weko_itemtypes_ui.admin.WorkFlow.get_workflow_by_itemtype_id", return_value=[]), \
+                patch("weko_itemtypes_ui.admin.JsonldMapping.get_by_itemtype_id", return_value=[MagicMock(id=1)]), \
+                patch("weko_itemtypes_ui.admin.SwordClient.get_clients_by_mapping_id", return_value=None), \
+                patch("weko_itemtypes_ui.admin.UserActivityLogger.info") as mock_logger:
+            url = url_for("itemtypesregister.delete_itemtype", item_type_id=item_type1.id)
             res = client.post(url)
             mock_flash.assert_called_with("Deleted Item type successfully.")
-            assert json.loads(res.data)["code"] == 0
+            mock_logger.assert_called_with(operation="ITEM_TYPE_DELETE", target_key=item_type1.id)
+            assert res.status_code == 204
+            assert ItemTypeName.query.filter_by(id=item_type1.name_id).first().is_active is False
+            assert ItemType.query.filter_by(id=item_type1.id).first().is_deleted is True
+
+        # db error when deleting item type, shuld be rollback
+        with patch("weko_itemtypes_ui.admin.flash") as mock_flash, \
+                patch("weko_itemtypes_ui.admin.ItemsMetadata.count_registered_item_metadata", return_value=0), \
+                patch("weko_itemtypes_ui.admin.WorkFlow.get_workflow_by_itemtype_id", return_value=[]), \
+                patch("weko_itemtypes_ui.admin.JsonldMapping.get_by_itemtype_id", return_value=[MagicMock(id=2)]), \
+                patch("weko_itemtypes_ui.admin.SwordClient.get_clients_by_mapping_id", return_value=None), \
+                patch("weko_itemtypes_ui.admin.JsonldMapping.delete", side_effect=SQLAlchemyError("DB Error")), \
+                patch("weko_itemtypes_ui.admin.UserActivityLogger.error") as mock_logger:
+            url = url_for("itemtypesregister.delete_itemtype", item_type_id=item_type2.id)
+            res = client.post(url)
+            mock_flash.assert_called_with("Unexpected error. Failed to delete item type.", "error")
+            mock_logger.assert_called_once()
+            assert res.status_code == 500
+            assert ItemTypeName.query.filter_by(id=item_type2.name_id).first().is_active is True
+            assert ItemType.query.filter_by(id=item_type2.id).first().is_deleted is False
+
 
 # .tox/c1/bin/pytest --cov=weko_itemtypes_ui tests/test_admin.py::TestItemTypeMetaDataView::test_register_acl -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-itemtypes-ui/.tox/c1/tmp
 #     def register(self, item_type_id=0):
@@ -188,7 +230,7 @@ class TestItemTypeMetaDataView:
             res = client.post(url,headers={"Content-Type":"application/json"})
             assert json.loads(res.data)=={'msg': 'Item type cannot be updated becase import is in progress.'}
             assert res.status_code == 400
-        
+
         with patch("weko_itemtypes_ui.admin.is_import_running", return_value=None),\
             patch("weko_workflow.utils.get_cache_data", return_value=True):
             res = client.post(url,json={})
@@ -210,7 +252,7 @@ class TestItemTypeMetaDataView:
             url = url_for("itemtypesregister.register")
             res = client.post(url,headers={"Content-Type":"plain/text"})
             assert json.loads(res.data)["msg"] == "Header Error"
-            
+
             data = {
                 "table_row_map":{
                     "schema":{"object":"test schema"},
@@ -222,15 +264,15 @@ class TestItemTypeMetaDataView:
             form = copy.deepcopy(data["table_row_map"]["form"])
             mocker.patch("weko_itemtypes_ui.admin.fix_json_schema",return_value=schema)
             mocker.patch("weko_itemtypes_ui.admin.update_text_and_textarea",return_value=(schema,form))
-            
+
             # raise ValueError
             mocker.patch("weko_itemtypes_ui.admin.update_required_schema_not_exist_in_form",return_value={})
             res = client.post(url,json=data,headers={"Content-Type":"application/json"})
             assert res.status_code == 400
             result = json.loads(res.data)
             assert result["msg"] == "Failed to register Item type. Schema is in wrong format."
-            
-            
+
+
             flow_define = FlowDefine(id=1,flow_id=uuid.uuid4(),
                                 flow_name='Registration Flow',
                                 flow_user=1)
@@ -257,7 +299,7 @@ class TestItemTypeMetaDataView:
             result = json.loads(res.data)
             res.status_code == 400
             assert result["msg"] == "Failed to register Item type. Schema is in wrong format."
-        
+
         with patch("weko_itemtypes_ui.admin.is_import_running", return_value=None),\
             patch("weko_workflow.utils.get_cache_data", return_value=False):
             url = url_for("itemtypesregister.register",item_type_id=0)
@@ -266,24 +308,24 @@ class TestItemTypeMetaDataView:
             result = json.loads(res.data)
             assert result["msg"] == "Successfuly registered Item type."
             assert result["redirect_url"] == "/admin/itemtypes/8"
-        
+
 #     def restore_itemtype(self, item_type_id=0):
 # .tox/c1/bin/pytest --cov=weko_itemtypes_ui tests/test_admin.py::TestItemTypeMetaDataView::test_restore_itemtype -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-itemtypes-ui/.tox/c1/tmp
     def test_restore_itemtype(self,client,db,admin_view,users,item_type):
         login_user_via_session(client=client,email=users[0]["email"])
         url = url_for("itemtypesregister.restore_itemtype")
-        
+
         res = client.post(url)
         result = json.loads(res.data)
         assert result["code"] == -1
         assert result["msg"] == 'An error has occurred.'
-        
+
         url = url_for("itemtypesregister.restore_itemtype",item_type_id=1)
         res = client.post(url)
         result = json.loads(res.data)
         assert result["code"] == -1
         assert result["msg"] == 'An error has occurred.'
-        
+
         item_type1 = item_type[0]["item_type"]
         item_type1.is_deleted=True
         db.session.merge(item_type1)
@@ -294,7 +336,7 @@ class TestItemTypeMetaDataView:
         result = json.loads(res.data)
         assert result["code"] == 0
         assert result["msg"] == 'Restored Item type successfully.'
-        
+
         item_type1 = item_type[0]["item_type"]
         item_type1.is_deleted=True
         db.session.merge(item_type1)
@@ -304,7 +346,7 @@ class TestItemTypeMetaDataView:
             result = json.loads(res.data)
             assert result["code"] == -1
             assert result["msg"] == 'Failed to restore Item type.'
-        
+
 #     def get_property_list(self, property_id=0):
 # .tox/c1/bin/pytest --cov=weko_itemtypes_ui tests/test_admin.py::TestItemTypeMetaDataView::test_get_property_list -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-itemtypes-ui/.tox/c1/tmp
     def test_get_property_list(self,client,admin_view,db,itemtype_props,admin_settings,users,mocker):
@@ -313,7 +355,7 @@ class TestItemTypeMetaDataView:
         billing_permission = BillingPermission(user_id=1,is_active=True)
         db.session.add(billing_permission)
         db.session.commit()
-        
+
         res = client.get(url,query_string={"lang":"en"})
         result = json.loads(res.data)
         test = {
@@ -324,7 +366,7 @@ class TestItemTypeMetaDataView:
             "defaults":{'1': {'name': 'Text Field', 'value': 'text'},'2': {'name': 'Text Area', 'value': 'textarea'},'3': {'name': 'Check Box', 'value': 'checkboxes'},'4': {'name': 'Radio Button', 'value': 'radios'},'5': {'name': 'List Box', 'value': 'select'},'6': {'name': 'Date', 'value': 'datetime'}},
         }
         assert result == test
-        
+
         # settings.show_flag is false,billing_perm.is_active is false
         billing_permission.is_active=False
         db.session.merge(billing_permission)
@@ -352,7 +394,7 @@ class TestItemTypeMetaDataView:
             "defaults":{'1': {'name': 'Text Field', 'value': 'text'},'2': {'name': 'Text Area', 'value': 'textarea'},'3': {'name': 'Check Box', 'value': 'checkboxes'},'4': {'name': 'Radio Button', 'value': 'radios'},'5': {'name': 'List Box', 'value': 'select'},'6': {'name': 'Date', 'value': 'datetime'}},
         }
         assert result == test
-        # 
+        #
         current_app.config.update(
             WEKO_ITEMTYPES_UI_SHOW_DEFAULT_PROPERTIES=False
         )
@@ -477,6 +519,38 @@ class TestItemTypeMetaDataView:
         mock_render.assert_called_with('weko_itemtypes_ui/admin/error.html')
         assert 'item_type_id=1 is cannot export' in caplog.text
 
+        # not exist itemtype
+        url = url_for("itemtypesregister.export",item_type_id=100)
+        mock_render = mocker.patch("weko_itemtypes_ui.admin.ItemTypeMetaDataView.render",return_value=make_response())
+
+        res = client.get(url)
+        mock_render.assert_called_with("weko_itemtypes_ui/admin/error.html")
+
+        url = url_for("itemtypesregister.export",item_type_id=1)
+        mock_send = mocker.patch("weko_itemtypes_ui.admin.send_file",return_value=make_response())#
+        class MockZip:
+            def __init__(self,fp,mode,compression):
+                self.fp=fp
+            def writestr(self,filename,data):
+                self.fp.data[filename]=data
+            def __enter__(self):
+                return self
+            def __exit__(self, exc_type, exc_value, traceback):
+                pass
+        class MockBytesIO():
+            def __init__(self):
+                self.data = {}
+            def seek(self,flg):
+                pass
+        mocker.patch("weko_itemtypes_ui.admin.io.BytesIO",side_effect=MockBytesIO)
+        mocker.patch("weko_itemtypes_ui.admin.ZipFile",side_effect=MockZip)
+        res = client.get(url)
+        fp,kwargs = mock_send.call_args
+        assert "ItemType.json" in fp[0].data
+        assert "ItemTypeName.json" in fp[0].data
+        assert "ItemTypeMapping.json" in fp[0].data
+        assert "ItemTypeProperty.json" in fp[0].data
+
 #     def item_type_import(self):
 # .tox/c1/bin/pytest --cov=weko_itemtypes_ui tests/test_admin.py::TestItemTypeMetaDataView::test_item_type_import -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-itemtypes-ui/.tox/c1/tmp
     @patch('weko_itemtypes_ui.utils.fix_json_schema')
@@ -589,7 +663,7 @@ class TestItemTypeMetaDataView:
             'Failed to import the item type. '
             '"render" is missing or invalid in ItemType.json.'
         )
-        
+
         # Error if 'render' value does not have a 'table_row' key
         file = BytesIO(zip_file.getvalue())
         no_table_row_zip = BytesIO()
@@ -776,11 +850,11 @@ class TestItemTypeMetaDataView:
             res = client.post(url, data=data, content_type='multipart/form-data')
             assert res.status_code == 400
             assert 'Failed to import the item type' in json.loads(res.data)['msg']
-        
+
         # Import suceeds but duplicated IDs reported
         with patch.dict(
             current_app.config,
-            {'WEKO_ITEMTYPES_UI_FORCED_IMPORT_ENABLED': True} 
+            {'WEKO_ITEMTYPES_UI_FORCED_IMPORT_ENABLED': True}
         ):
             test_id = 1
             expected_json = {
@@ -852,7 +926,7 @@ class TestItemTypePropertiesView():
         billing_permission = BillingPermission(user_id=1,is_active=False)
         db.session.add(billing_permission)
         db.session.commit()
-        
+
         url = url_for("itemtypesproperties.index")
         test_props = itemtype_props.copy()
         test_props.pop(3)
@@ -864,13 +938,13 @@ class TestItemTypePropertiesView():
             lists=test_props,
             lang_code="en"
         )
-        
+
         billing_permission.is_active=True
         db.session.merge(billing_permission)
         db.session.commit()
         test_props=itemtype_props.copy()
         test_props.pop(3)
-        
+
         mock_render = mocker.patch("weko_itemtypes_ui.admin.ItemTypePropertiesView.render",return_value=make_response())
         res = client.get(url)
         mock_render.assert_called_with(
@@ -906,7 +980,7 @@ class TestItemTypePropertiesView():
         assert result["schema"] == {"properties":{"filename":{"items":["test_file"]}}}
         assert result["form"] == {"title_i18n":{"en":"test_name_en"}}
         assert result["forms"] == {}
-        
+
 #     def custom_property_new(self, property_id=0):
 # .tox/c1/bin/pytest --cov=weko_itemtypes_ui tests/test_admin.py::TestItemTypePropertiesView::test_custom_property_new -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-itemtypes-ui/.tox/c1/tmp
     @pytest.mark.parametrize("index,is_permission",[
@@ -945,13 +1019,13 @@ class TestItemTypePropertiesView():
                                                        delflg=False).first()
         assert result.name == "new_prop"
         assert result.schema == {"key_schema":"value_schema"}
-        
+
         # raise Exception
         with patch("weko_itemtypes_ui.admin.ItemTypeProps.create",side_effect=Exception):
             res = client.post(url,json=data,headers={"Content-Type":"application/json"})
             assert res.status_code == 200
             assert json.loads(res.data)["msg"] == 'Failed to save property.'
-        
+
         # header is not application/json
         data = "test_data"
         res = client.post(url,headers={"Content-Type":"text/plain"})
@@ -985,14 +1059,14 @@ class TestItemTypeMappingView:
             mock_render = mocker.patch("weko_itemtypes_ui.admin.ItemTypeMappingView.render",return_value=make_response())
             res = client.get(url)
             mock_render.assert_called_with("weko_itemtypes_ui/admin/error.html")
-        
+
         # item_type is None
         mock_render = mocker.patch("weko_itemtypes_ui.admin.redirect",return_value=make_response())
         res = client.get(url)
         mock_render.assert_called_with(
             "/admin/itemtypes/mapping/1"
         )
-        
+
         url = url_for("itemtypesmapping.index",ItemTypeID=7)
         mock_render = mocker.patch("weko_itemtypes_ui.admin.ItemTypeMappingView.render",return_value=make_response())
         mocker.patch("weko_itemtypes_ui.admin.remove_xsd_prefix",return_value="called remove_xsd_prefix")
@@ -1067,7 +1141,7 @@ class TestItemTypeMappingView:
         res = client.post(url,data="test",headers={"Content-Type":"text/plain"})
         assert res.status_code == 200
         assert json.loads(res.data)["msg"] == "Header Error"
-        
+
         data = {
             "item_type_id":1,
             "mapping":{"key":"test_mapping"}
@@ -1080,14 +1154,14 @@ class TestItemTypeMappingView:
             assert result["duplicate"] == True
             assert result["err_items"] == ["item1","item2"]
             assert result["msg"] == "Duplicate mapping as below:"
-        
+
         with patch("weko_itemtypes_ui.admin.check_duplicate_mapping",return_value=[]):
             # nomal
             res = client.post(url,json=data)
             assert res.status_code==200
             assert json.loads(res.data)["msg"] == 'Successfully saved new mapping.'
             assert  Mapping.get_record(1) == {"key":"test_mapping"}
-            
+
             # raise Exception
             with patch("weko_itemtypes_ui.admin.Mapping.create",side_effect=BaseException):
                 res = client.post(url,json=data)
@@ -1112,13 +1186,13 @@ class TestItemTypeMappingView:
     def test_schema_list(self,client,admin_view,users,oaiserver_schema):
         login_user_via_session(client,email=users[0]["email"])
         #test = {"oai_dc_mapping":{"dc:title": {"type": {"minOccurs": 1, "maxOccurs": 1, "attributes": [{"ref": "xml:lang", "name": "xml:lang", "use": "optional"}]}}, "dc:creator": {"type": {"minOccurs": 1, "maxOccurs": 1, "attributes": [{"ref": "xml:lang", "name": "xml:lang", "use": "optional"}]}}, "dc:subject": {"type": {"minOccurs": 1, "maxOccurs": 1, "attributes": [{"ref": "xml:lang", "name": "xml:lang", "use": "optional"}]}}, "dc:description": {"type": {"minOccurs": 1, "maxOccurs": 1, "attributes": [{"ref": "xml:lang", "name": "xml:lang", "use": "optional"}]}}, "dc:publisher": {"type": {"minOccurs": 1, "maxOccurs": 1, "attributes": [{"ref": "xml:lang", "name": "xml:lang", "use": "optional"}]}}, "dc:contributor": {"type": {"minOccurs": 1, "maxOccurs": 1, "attributes": [{"ref": "xml:lang", "name": "xml:lang", "use": "optional"}]}}, "dc:date": {"type": {"minOccurs": 1, "maxOccurs": 1, "attributes": [{"ref": "xml:lang", "name": "xml:lang", "use": "optional"}]}}, "dc:type": {"type": {"minOccurs": 1, "maxOccurs": 1, "attributes": [{"ref": "xml:lang", "name": "xml:lang", "use": "optional"}]}}, "dc:format": {"type": {"minOccurs": 1, "maxOccurs": 1, "attributes": [{"ref": "xml:lang", "name": "xml:lang", "use": "optional"}]}}, "dc:identifier": {"type": {"minOccurs": 1, "maxOccurs": 1, "attributes": [{"ref": "xml:lang", "name": "xml:lang", "use": "optional"}]}}, "dc:source": {"type": {"minOccurs": 1, "maxOccurs": 1, "attributes": [{"ref": "xml:lang", "name": "xml:lang", "use": "optional"}]}}, "dc:language": {"type": {"minOccurs": 1, "maxOccurs": 1, "attributes": [{"ref": "xml:lang", "name": "xml:lang", "use": "optional"}]}}, "dc:relation": {"type": {"minOccurs": 1, "maxOccurs": 1, "attributes": [{"ref": "xml:lang", "name": "xml:lang", "use": "optional"}]}}, "dc:coverage": {"type": {"minOccurs": 1, "maxOccurs": 1, "attributes": [{"ref": "xml:lang", "name": "xml:lang", "use": "optional"}]}}, "dc:rights": {"type": {"minOccurs": 1, "maxOccurs": 1, "attributes": [{"ref": "xml:lang", "name": "xml:lang", "use": "optional"}]}}}}
-        test = {'oai_dc_mapping': {'contributor': {'type': {'attributes': [{'name': 'xml:lang', 'ref': 'xml:lang', 'use': 'optional'}], 'maxOccurs': 1, 'minOccurs': 1}}, 'coverage': {'type': {'attributes': [{'name': 'xml:lang', 'ref': 'xml:lang', 'use': 'optional'}], 'maxOccurs': 1, 'minOccurs': 1}}, 'creator': {'type': {'attributes': [{'name': 'xml:lang', 'ref': 'xml:lang', 'use': 'optional'}], 'maxOccurs': 1, 'minOccurs': 1}}, 'date': {'type': {'attributes': [{'name': 'xml:lang', 'ref': 'xml:lang', 'use': 'optional'}], 'maxOccurs': 1, 'minOccurs': 1}}, 'description': {'type': {'attributes': [{'name': 'xml:lang', 'ref': 'xml:lang', 'use': 'optional'}], 'maxOccurs': 1, 'minOccurs': 1}}, 'format': {'type': {'attributes': [{'name': 'xml:lang', 'ref': 'xml:lang', 'use': 'optional'}], 'maxOccurs': 1, 'minOccurs': 1}}, 'identifier': {'type': {'attributes': [{'name': 'xml:lang', 'ref': 'xml:lang', 'use': 'optional'}], 'maxOccurs': 1, 'minOccurs': 1}}, 'language': {'type': {'attributes': [{'name': 'xml:lang', 'ref': 'xml:lang', 'use': 'optional'}], 'maxOccurs': 1, 'minOccurs': 1}}, 'publisher': {'type': {'attributes': [{'name': 'xml:lang', 'ref': 'xml:lang', 'use': 'optional'}], 'maxOccurs': 1, 'minOccurs': 1}}, 'relation': {'type': {'attributes': [{'name': 'xml:lang', 'ref': 'xml:lang', 'use': 'optional'}], 'maxOccurs': 1, 'minOccurs': 1}}, 'rights': {'type': {'attributes': [{'name': 'xml:lang', 'ref': 'xml:lang', 'use': 'optional'}], 'maxOccurs': 1, 'minOccurs': 1}}, 'source': {'type': {'attributes': [{'name': 'xml:lang', 'ref': 'xml:lang', 'use': 'optional'}], 'maxOccurs': 1, 'minOccurs': 1}}, 'subject': {'type': {'attributes': [{'name': 'xml:lang', 'ref': 'xml:lang', 'use': 'optional'}], 'maxOccurs': 1, 'minOccurs': 1}}, 'title': {'type': {'attributes': [{'name': 'xml:lang', 'ref': 'xml:lang', 'use': 'optional'}], 'maxOccurs': 1, 'minOccurs': 1}}, 'type': {'type': {'attributes': [{'name': 'xml:lang', 'ref': 'xml:lang', 'use': 'optional'}], 'maxOccurs': 1, 'minOccurs': 1}}}} 
+        test = {'oai_dc_mapping': {'contributor': {'type': {'attributes': [{'name': 'xml:lang', 'ref': 'xml:lang', 'use': 'optional'}], 'maxOccurs': 1, 'minOccurs': 1}}, 'coverage': {'type': {'attributes': [{'name': 'xml:lang', 'ref': 'xml:lang', 'use': 'optional'}], 'maxOccurs': 1, 'minOccurs': 1}}, 'creator': {'type': {'attributes': [{'name': 'xml:lang', 'ref': 'xml:lang', 'use': 'optional'}], 'maxOccurs': 1, 'minOccurs': 1}}, 'date': {'type': {'attributes': [{'name': 'xml:lang', 'ref': 'xml:lang', 'use': 'optional'}], 'maxOccurs': 1, 'minOccurs': 1}}, 'description': {'type': {'attributes': [{'name': 'xml:lang', 'ref': 'xml:lang', 'use': 'optional'}], 'maxOccurs': 1, 'minOccurs': 1}}, 'format': {'type': {'attributes': [{'name': 'xml:lang', 'ref': 'xml:lang', 'use': 'optional'}], 'maxOccurs': 1, 'minOccurs': 1}}, 'identifier': {'type': {'attributes': [{'name': 'xml:lang', 'ref': 'xml:lang', 'use': 'optional'}], 'maxOccurs': 1, 'minOccurs': 1}}, 'language': {'type': {'attributes': [{'name': 'xml:lang', 'ref': 'xml:lang', 'use': 'optional'}], 'maxOccurs': 1, 'minOccurs': 1}}, 'publisher': {'type': {'attributes': [{'name': 'xml:lang', 'ref': 'xml:lang', 'use': 'optional'}], 'maxOccurs': 1, 'minOccurs': 1}}, 'relation': {'type': {'attributes': [{'name': 'xml:lang', 'ref': 'xml:lang', 'use': 'optional'}], 'maxOccurs': 1, 'minOccurs': 1}}, 'rights': {'type': {'attributes': [{'name': 'xml:lang', 'ref': 'xml:lang', 'use': 'optional'}], 'maxOccurs': 1, 'minOccurs': 1}}, 'source': {'type': {'attributes': [{'name': 'xml:lang', 'ref': 'xml:lang', 'use': 'optional'}], 'maxOccurs': 1, 'minOccurs': 1}}, 'subject': {'type': {'attributes': [{'name': 'xml:lang', 'ref': 'xml:lang', 'use': 'optional'}], 'maxOccurs': 1, 'minOccurs': 1}}, 'title': {'type': {'attributes': [{'name': 'xml:lang', 'ref': 'xml:lang', 'use': 'optional'}], 'maxOccurs': 1, 'minOccurs': 1}}, 'type': {'type': {'attributes': [{'name': 'xml:lang', 'ref': 'xml:lang', 'use': 'optional'}], 'maxOccurs': 1, 'minOccurs': 1}}}}
         url = url_for("itemtypesmapping.schema_list")
         # not exist SchemaName
         res = client.get(url)
         assert res.status_code == 200
         assert json.loads(res.data) == test
-        
+
         # exist Schema
         url = url_for("itemtypesmapping.schema_list",SchemaName="oai_dc_mapping")
         res = client.get(url)
