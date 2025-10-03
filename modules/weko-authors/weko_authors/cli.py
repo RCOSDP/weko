@@ -35,25 +35,31 @@ def normalize_date(date):
     elif re.fullmatch(r"\d{4}", date):
         return f"{date}-01-01T00:00:00"
     else:
-        raise ValueError("start_dateの形式が不正です")
+        raise ValueError("Error: The format of the {} option is incorrect. Supported formats are yyyy-MM-ddTHH:mm:ss, yyyy-MM-dd, yyyy-MM and yyyy.")
 
 def validate_date(start_date, end_date):
     if start_date:
         try:
             start_date = normalize_date(start_date)
         except ValueError as e:
-            raise click.UsageError(str(e))
+            raise click.UsageError(str(e).format("--start-date"))
     if end_date:
         try:
             end_date = normalize_date(end_date)
         except ValueError as e:
-            raise click.UsageError(str(e))
+            raise click.UsageError(str(e).format("--end-date"))
 
     date_format = "%Y-%m-%dT%H:%M:%S"
-    dt_start = datetime.strptime(start_date, date_format) if start_date else None
-    dt_end = datetime.strptime(end_date, date_format) if end_date else None
+    try:
+        dt_start = datetime.strptime(start_date, date_format) if start_date else None
+    except ValueError as e:
+        raise click.UsageError("Error: --start-date option is out of range.")
+    try:
+        dt_end = datetime.strptime(end_date, date_format) if end_date else None
+    except ValueError as e:
+        raise click.UsageError("Error: --end-date option is out of range.")
     if dt_start and dt_end and dt_start > dt_end:
-        raise click.UsageError("start_dateはend_date以前の日付を指定してください")
+        raise click.UsageError("Error: The --start-date must be earlier than the --end-date.")
     return start_date, end_date
 
 import os
@@ -99,6 +105,10 @@ def reindex(file, id, start_date, end_date, with_deleted=True,
                 uuids = [line.strip() for line in f if line.strip()]
         except Exception as e:
             raise click.UsageError(f'Error reading file {file}: {e}')
+
+        # Check if the file is empty
+        if not uuids:
+            raise click.UsageError(f"Error: No UUIDs were found for processing.")
     elif id:
         uuids = [id]
 

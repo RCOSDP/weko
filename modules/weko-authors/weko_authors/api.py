@@ -742,14 +742,13 @@ class AuthorIndexer():
             unprocesses += _unprocessed
             for error in e.errors:
                 click.secho("{}, {}".format(error['index']['_id'],error['index']['error']['type']),fg='red')
-        except ConnectionError as ce:
-            click.secho("Connection error occurred: {}".format(ce),fg='red')
         except ConnectionTimeout as ce:
             click.secho("Error: {}".format(ce),fg="red")
             click.secho("INDEXER_BULK_REQUEST_TIMEOUT: {} sec".format(req_timeout),fg="red")
             click.secho("Please change value of INDEXER_BULK_REQUEST_TIMEOUT and retry it.",fg="red")
             click.secho("processing: {}".format(self.count),fg="red")
-            click.secho("latest processing id: {}".format(self.latest_item_id),fg="red")
+        except ConnectionError as ce:
+            click.secho("Connection error occurred: {}".format(ce),fg='red')
         except Exception as e:
             current_app.logger.error(e)
             current_app.logger.error(traceback.format_exc())

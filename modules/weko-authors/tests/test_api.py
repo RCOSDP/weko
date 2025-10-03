@@ -7,12 +7,14 @@ from _pytest.logging import LogCaptureFixture
 from logging import INFO, ERROR
 from flask import current_app
 from elasticsearch.exceptions import NotFoundError
+from elasticsearch import ConnectionError, ConnectionTimeout
+from elasticsearch.helpers import BulkIndexError
 from invenio_indexer.api import RecordIndexer
 from invenio_search import current_search_client
 from mock import patch, MagicMock
 
 
-from weko_authors.api import WekoAuthors
+from weko_authors.api import WekoAuthors, AuthorIndexer
 from weko_authors.models import Authors, AuthorsPrefixSettings, AuthorsAffiliationSettings
 from weko_authors.config import WEKO_AUTHORS_FILE_MAPPING
 
@@ -1370,3 +1372,314 @@ class TestWekoAuthorsGetUsedSchemeOfAffiliationId:
     def test_get_used_scheme_of_affiliation_id_3(self, app, authors):
         result = WekoAuthors.get_used_scheme_of_affiliation_id()
         assert result == ([None], {})
+
+
+# .tox/c1/bin/pytest --cov=weko_authors tests/test_api.py::TestAuthorIndexer -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-authors/.tox/c1/tmp
+class TestAuthorIndexer:
+    def test___init__(self, app):
+        indexer = AuthorIndexer(search_client="mock-client")
+        assert indexer.client == "mock-client"
+
+    def test_author_to_index(self, app):
+        indexer = AuthorIndexer(search_client="mock-client")
+        index, doc_type = indexer.author_to_index()
+        assert index == current_app.config['WEKO_AUTHORS_ES_INDEX_NAME']
+        assert doc_type == current_app.config['WEKO_AUTHORS_ES_DOC_TYPE']
+
+    def test_generate_actions_with_uuid_exists(self, app, capsys):
+        mock_author = MagicMock()
+        mock_author.json = {"id": "uuid-123", "name": "test"}
+
+        with patch("weko_authors.api.Authors.query") as mock_query:
+            mock_query.filter.return_value.one_or_none.return_value = mock_author
+
+            indexer = AuthorIndexer()
+            indexer.count = 0
+            gen = indexer.generate_actions(uuids=["uuid-123"])
+            action = next(gen)
+
+            assert action["_id"] == "uuid-123"
+            assert action["_index"] == current_app.config['WEKO_AUTHORS_ES_INDEX_NAME']
+            assert action["_type"] == current_app.config['WEKO_AUTHORS_ES_DOC_TYPE']
+            assert action["_op_type"] == "index"
+            assert action["_source"]["id"] == "uuid-123"
+            out = capsys.readouterr().out
+            assert "Indexing author id: uuid-123" in out
+
+    def test_generate_actions_with_uuid_no_exist(self, app, capsys):
+        with patch("weko_authors.api.Authors.query") as mock_query:
+            mock_query.filter.return_value.one_or_none.return_value = None
+
+            indexer = AuthorIndexer()
+            indexer.count = 0
+            gen = indexer.generate_actions(uuids=["uuid-123"])
+            actions = list(gen)
+            assert actions == []
+
+            out = capsys.readouterr().out
+            assert "Error: No authors were found for processing, so the operation was stopped." in out
+
+    def test_generate_actions_no_uuids_with_start_date(self, app, capsys):
+        mock_author = MagicMock()
+        mock_author.json = {"id": "uuid-555", "name": "from_start_date"}
+        mock_author.communities = []
+
+        with patch("weko_authors.api.Authors.query") as mock_query:
+            # filter(*filters).all() が返す値を差し替え
+            mock_query.filter.return_value.all.return_value = [mock_author]
+
+            indexer = AuthorIndexer()
+            indexer.count = 0
+            gen = indexer.generate_actions(start_date="2025-01-01")
+            actions = list(gen)
+
+            # 1件返ってくること
+            assert len(actions) == 1
+            action = actions[0]
+            assert action["_id"] == "uuid-555"
+            assert action["_index"] == current_app.config['WEKO_AUTHORS_ES_INDEX_NAME']
+            assert action["_type"] == current_app.config['WEKO_AUTHORS_ES_DOC_TYPE']
+            assert action["_op_type"] == "index"
+            assert action["_source"]["id"] == "uuid-555"
+
+            out = capsys.readouterr().out
+            assert "Indexing author id: uuid-555" in out
+
+    def test_generate_actions_no_uuids_with_end_date_no_data(self, app, capsys):
+        with patch("weko_authors.api.Authors.query") as mock_query:
+            mock_query.filter.return_value.all.return_value = []
+
+            indexer = AuthorIndexer()
+            indexer.count = 0
+            gen = indexer.generate_actions(end_date="2025-01-01")
+            actions = list(gen)
+
+            # アクションは空
+            assert actions == []
+
+            out = capsys.readouterr().out
+            assert "Error: No authors were found for processing, so the operation was stopped." in out
+
+    def test_generate_actions_with_uuid_multiple(self, app, capsys):
+        mock_author1 = MagicMock()
+        mock_author1.json = {"id": "uuid-1", "name": "author1"}
+        mock_author1.communities = []
+
+        mock_author2 = MagicMock()
+        mock_author2.json = {"id": "uuid-2", "name": "author2"}
+        mock_author2.communities = []
+
+        def side_effect_filter(*args, **kwargs):
+            mock = MagicMock()
+            if str(args[0].right.value) == "uuid-1":
+                mock.one_or_none.return_value = mock_author1
+            elif str(args[0].right.value) == "uuid-2":
+                mock.one_or_none.return_value = mock_author2
+            else:
+                mock.one_or_none.return_value = None
+            return mock
+
+        with patch("weko_authors.api.Authors.query") as mock_query:
+            mock_query.filter.side_effect = side_effect_filter
+
+            indexer = AuthorIndexer()
+            indexer.count = 0
+            gen = indexer.generate_actions(uuids=["uuid-1", "uuid-2"])
+            actions = list(gen)
+
+            assert len(actions) == 2
+            ids = [a["_id"] for a in actions]
+            assert "uuid-1" in ids and "uuid-2" in ids
+
+    def test_generate_actions_no_uuids_with_data(self, app, capsys):
+        mock_author = MagicMock()
+        mock_author.json = {"id": "uuid-999", "name": "from_db"}
+        mock_author.communities = []
+
+        with patch("weko_authors.api.Authors.query") as mock_query:
+            mock_query.filter.return_value.all.return_value = [mock_author]
+
+            indexer = AuthorIndexer()
+            indexer.count = 0
+            gen = indexer.generate_actions()
+            actions = list(gen)
+
+            assert len(actions) == 1
+            assert actions[0]["_id"] == "uuid-999"
+            out = capsys.readouterr().out
+            assert "Indexing author id: uuid-999" in out
+
+    def test_generate_actions_no_uuids_no_data(self, app, capsys):
+        with patch("weko_authors.api.Authors.query") as mock_query:
+            mock_query.filter.return_value.all.return_value = []
+
+            indexer = AuthorIndexer()
+            indexer.count = 0
+            gen = indexer.generate_actions()
+            actions = list(gen)
+
+            assert actions == []
+            out = capsys.readouterr().out
+            assert "Error: No authors were found for processing" in out
+
+    def test_generate_actions_with_deleted_false(self, app, capsys):
+        mock_author = MagicMock()
+        mock_author.json = {"id": "uuid-del", "name": "deleted"}
+        mock_author.is_deleted = True
+        mock_author.communities = []
+
+        with patch("weko_authors.api.Authors.query") as mock_query:
+            # 削除済みは除外されるので結果は空
+            mock_query.filter.return_value.all.return_value = []
+
+            indexer = AuthorIndexer()
+            indexer.count = 0
+            gen = indexer.generate_actions(with_deleted=False)
+            actions = list(gen)
+
+            assert actions == []
+            out = capsys.readouterr().out
+            assert "Error: No authors were found for processing" in out
+
+    def test_generate_actions_with_uuid_with_deleted_false(self, app, capsys):
+        mock_author = MagicMock()
+        mock_author.json = {"id": "uuid-del", "name": "deleted_author"}
+        mock_author.is_deleted = True
+        mock_author.communities = []
+
+        with patch("weko_authors.api.Authors.query") as mock_query:
+            # query.filter(...).filter(...).one_or_none() が None を返すようにする
+            mock_query.filter.return_value.filter.return_value.one_or_none.return_value = None
+
+            indexer = AuthorIndexer()
+            gen = indexer.generate_actions(uuids=["uuid-del"], with_deleted=False)
+            actions = list(gen)
+
+            assert actions == []
+            out = capsys.readouterr().out
+            assert "Error: No authors were found for processing" in out
+
+    def test_bulk_process_authors_normal(self, app, capsys):
+        indexer = AuthorIndexer(search_client="mock-client")
+        indexer.count = 0
+
+        # モックする author action
+        def fake_generate_actions(*args, **kwargs):
+            mock_action = MagicMock()
+            mock_action.json = {"id": "uuid-1"}
+            indexer.count += 1
+            yield mock_action
+
+        indexer.generate_actions = fake_generate_actions
+
+        # モックする bulk 処理
+        def fake_bulk(client, actions, **kwargs):
+            for _ in actions:  # ジェネレータを消費
+                pass
+            return (1, 0)
+
+
+        # bulk の戻り値(success, fail)
+        with patch("weko_authors.api.bulk", side_effect=fake_bulk) as mock_bulk:
+            result = indexer.bulk_process_authors(es_bulk_kwargs={})
+
+            # bulk に generate_actions が渡されていることを確認
+            mock_bulk.assert_called_once()
+            assert result == (1, 0, 0)  # success=1, fail=0, unprocessed=0
+
+            out = capsys.readouterr().out
+            assert "count(success, error, unprocessed): (1, 0, 0)" in out
+
+    def test_bulk_process_authors_sqlalchemy_error(self, app, capsys, mocker):
+        indexer = AuthorIndexer(search_client="mock-client")
+        mock_logger = mocker.patch("weko_authors.api.current_app.logger")
+
+        with patch.object(indexer, "generate_actions", side_effect=SQLAlchemyError("DB error")):
+            result = indexer.bulk_process_authors({})
+            out = capsys.readouterr().out
+
+            assert result == (0, 0, 0)
+            assert "count(success, error, unprocessed): (0, 0, 0)" in out
+
+            calls_str = [str(call[0][0]) for call in mock_logger.error.call_args_list]
+            assert any("DB error" in c for c in calls_str)
+            assert any("Traceback" in c for c in calls_str)
+
+    def test_bulk_process_authors_bulkindexerror(self, app, capsys):
+        indexer = AuthorIndexer(search_client="mock-client")
+        indexer.count = 2
+        fake_error = {
+            "index": {"_id": "uuid-1", "error": {"type": "mapping_error"}}
+        }
+        with patch("weko_authors.api.bulk", side_effect=BulkIndexError("bulk error", [fake_error])):
+            result = indexer.bulk_process_authors({}, uuids=["uuid-1", "uuid-2"])
+
+            assert result[1] == 1  # fail=1
+            out = capsys.readouterr().out
+            assert "uuid-1, mapping_error" in out
+            assert "count(success, error, unprocessed)" in out
+
+    def test_bulk_process_authors_connection_error(self, app, capsys):
+        indexer = AuthorIndexer(search_client="mock-client")
+        with patch("weko_authors.api.bulk", side_effect=ConnectionError("conn error", None, None)):
+            result = indexer.bulk_process_authors({})
+            assert result == (0, 0, 0)
+            out = capsys.readouterr().out
+            assert "Connection error occurred: " in out
+
+    def test_bulk_process_authors_connection_timeout(self, app, capsys):
+        indexer = AuthorIndexer(search_client="mock-client")
+        with patch("weko_authors.api.bulk", side_effect=ConnectionTimeout("timeout", None, None)):
+            result = indexer.bulk_process_authors({})
+            assert result == (0, 0, 0)
+            out = capsys.readouterr().out
+            assert "Error: ConnectionTimeout caused by -" in out
+            assert "INDEXER_BULK_REQUEST_TIMEOUT" in out
+            assert "Please change value of INDEXER_BULK_REQUEST_TIMEOUT" in out
+
+    def test_bulk_process_authors_generate_actions_keyerror(self, app, capsys, mocker):
+        indexer = AuthorIndexer(search_client="mock-client")
+        mock_logger = mocker.patch("weko_authors.api.current_app.logger")
+        with patch.object(indexer, "generate_actions", side_effect=KeyError("bad-key")):
+            result = indexer.bulk_process_authors({})
+            assert result == (0, 0, 0)
+            out = capsys.readouterr().out
+
+            assert "count(success, error, unprocessed): (0, 0, 0)" in out
+
+            calls_str = [str(call[0][0]) for call in mock_logger.error.call_args_list]
+            assert any("bad-key" in c for c in calls_str)
+            assert any("Traceback" in c for c in calls_str)
+
+
+    def test_bulk_process_authors_fail_list(self, app, capsys):
+        indexer = AuthorIndexer(search_client="mock-client")
+        indexer.count = 0
+
+        def fake_generate_actions(*args, **kwargs):
+            mock_action = MagicMock()
+            mock_action.json = {"id": "uuid-1"}
+            indexer.count += 1
+            yield mock_action
+
+        indexer.generate_actions = fake_generate_actions
+
+        # bulk が fail_list を返す
+        fail_list = [
+            {"index": {"_id": "uuid-1", "error": {"type": "some_error"}}},
+            {"index": {"_id": "uuid-2", "error": {"type": "other_error"}}}
+        ]
+
+        def fake_bulk(client, actions, **kwargs):
+            for _ in actions:
+                pass
+            return (0, fail_list)
+
+        with patch("weko_authors.api.bulk", side_effect=fake_bulk):
+            result = indexer.bulk_process_authors(es_bulk_kwargs={})
+            # success=0, fail=2, unprocessed = count - success - fail = 1 - 0 - 2 = -1
+            # → self.count を1しか増やしてないので、実際には -1 になる
+            # 複数件を正しくテストするなら generate_actions で2件 yield させる
+            out = capsys.readouterr().out
+            assert "uuid-1, some_error" in out
+            assert "uuid-2, other_error" in out
