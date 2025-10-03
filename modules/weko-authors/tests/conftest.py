@@ -19,6 +19,7 @@ from sqlalchemy import inspect
 
 import pytest
 from flask import Flask, url_for, Response
+from flask.cli import ScriptInfo
 from flask_babelex import Babel
 from sqlalchemy_utils.functions import create_database, database_exists
 
@@ -980,3 +981,8 @@ def community(db, users):
                                       root_node_id=index.id))
     db.session.commit()
     return rtn
+
+@pytest.fixture()
+def script_info(app):
+    """Get ScriptInfo object for testing CLI."""
+    return ScriptInfo(create_app=lambda info: app)
