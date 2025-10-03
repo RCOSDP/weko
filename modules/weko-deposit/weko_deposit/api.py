@@ -1141,6 +1141,80 @@ class WekoDeposit(Deposit):
                                     'WEKO_MIMETYPE_WHITELIST_FOR_ES']
                                 content = lst.copy()
                                 attachment = {}
+                                if file.obj.mimetype in mimetypes:
+                                    try:
+                                        with file.obj.file.storage().open(mode='rb') as fp:
+                                            data = ""
+                                            if file.obj.mimetype in current_app.config['WEKO_DEPOSIT_TEXTMIMETYPE_WHITELIST_FOR_ES']:
+                                                data = fp.read(current_app.config['WEKO_DEPOSIT_FILESIZE_LIMIT'])
+                                                inf = chardet.detect(data)
+                                                data = data.decode(inf['encoding'], errors='replace')
+                                            else:
+                                                file_instance = file.obj.file
+                                                file_info = {
+                                                    "uri": file_instance.uri,
+                                                    "size": file_instance.size,
+                                                }
+                                                reading_targets[filename] = file_info
+                                            attachment["content"] = data
+                                    except FileNotFoundError as se:
+                                        current_app.logger.error("FileNotFoundError: {}".format(se))
+                                        current_app.logger.error("file.obj: {}".format(file.obj))
+
+                                content.update({"attachment": attachment})
+                                contents.append(content)
+                            except Exception as e2:
+                                import traceback
+                                current_app.logger.error(e2)
+                                current_app.logger.error(
+                                    traceback.format_exc())
+                                abort(500, '{}'.format(str(e2)))
+                            break
+            self.jrc.update({'content': contents})
+        return reading_targets
+
+
+    def get_content_files_reindex_command(self):
+        """ 
+
+        Get content file metadata.
+
+        Args:
+            None
+        Returns:
+            None
+
+        """
+        from weko_workflow.utils import get_url_root
+        contents = []
+        fmd = self.get_file_data()
+        reading_targets = {}
+        if fmd:
+            for file in self.files:
+                if isinstance(fmd, list):
+                    for lst in fmd:
+                        filename = lst.get('filename')
+                        if file.obj.key == filename:
+                            lst.update({'mimetype': file.obj.mimetype})
+                            lst.update(
+                                {'version_id': str(file.obj.version_id)})
+
+                            # update file url
+                            url_metadata = lst.get('url', {})
+                            url_metadata['url'] = '{}record/{}/files/{}' \
+                                .format(get_url_root(),
+                                        self['recid'], filename)
+                            lst.update({'url': url_metadata})
+
+                            # update file_files's json
+                            file.obj.file.update_json(lst)
+
+                            # upload file metadata to Elasticsearch
+                            try:
+                                mimetypes = current_app.config[
+                                    'WEKO_MIMETYPE_WHITELIST_FOR_ES']
+                                content = lst.copy()
+                                attachment = {}
                                 mimetype = file.obj.mimetype
                                 if mimetype in mimetypes:
                                     try:
@@ -1175,7 +1249,31 @@ class WekoDeposit(Deposit):
             self.jrc.update({'content': contents})
         return reading_targets
 
+
     def get_pdf_info(self):
+        """Get the path and size of the registered PDF file
+        
+        Returns:
+            pdf_files(dict): pdf_files ex: {'test1.pdf': {'uri': '/var/tmp/tmp5beo2byv/e2/5a/e1af-d89b-4ce0-bd01-a78833acbe1e/data', 'size': 1252395}"
+        """
+        pdf_files = {}
+        fmd = self.get_file_data()
+        if fmd:
+            for file in self.files:
+                for lst in fmd:
+                    filename = lst.get('filename')
+                    if file.obj.key != filename:
+                        continue
+                    if file.obj.mimetype not in current_app.config['WEKO_DEPOSIT_TEXTMIMETYPE_WHITELIST_FOR_ES']:
+                        file_instance = file.obj.file
+                        file_info = {
+                            "uri": file_instance.uri,
+                            "size": file_instance.size
+                        }
+                        pdf_files[filename] = file_info
+        return pdf_files
+
+    def get_pdf_info_reindex_command(self):
         """Get the path and size of the registered PDF file
         
         Returns:
