@@ -254,7 +254,7 @@ class RecordIndexer(object):
                             success = success + (len(error_ids)-len(be2.errors))
                             fail = fail + len(be2.errors)
                             for error in be2.errors:
-                                click.secho("[ERROR] {}, {}".format(error['index']['_id'],error['index']['error']['type']),fg='red')
+                                click.secho("{}, {}".format(error['index']['_id'],error['index']['error']['type']),fg='red')
                     except ConnectionError as ce:
                         with conn.channel() as chan:
                             name, af_queues_cnt, consumers = chan.queue_declare(queue=current_app.config['INDEXER_MQ_ROUTING_KEY'], passive=True)
