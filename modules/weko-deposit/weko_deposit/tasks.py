@@ -24,8 +24,8 @@ import csv
 import json
 from time import sleep
 from io import StringIO
-import subprocess
 import time
+import tempfile
 
 from celery import shared_task
 from celery.utils.log import get_task_logger
@@ -539,14 +539,12 @@ def extract_pdf_and_update_file_contents(files, record_uuid, retry_count=3, retr
     """Extract text from pdf and update es document
     
     Args:
-        files(dict): pdf_files uri and size. ex: {'test1.pdf': {'uri': '/var/tmp/tmp5beo2byv/e2/5a/e1af-d89b-4ce0-bd01-a78833acbe1e/data', 'size': 1252395}"
+        files(dict): pdf_files uri and size,is_pdf flag. ex: {'test1.pdf': {'uri': '/var/tmp/data', 'size': 1252395,'is_pdf':True}"
         record_uuid(str): The id of the document to update.
         retry_count(int, Optional): The number of times to retry. Defaults to 3.
         retry_delay(int, Optional): The number of seconds to wait between retries. Defaults to 1.
     """
-    tika_jar_path = os.environ.get("TIKA_JAR_FILE_PATH")
-    if not tika_jar_path or os.path.isfile(tika_jar_path) is False:
-        raise Exception("not exist tika jar file.")
+    from weko_deposit.utils import extract_text_from_pdf, extract_text_with_tika
     file_datas = {}
     for filename, file in files.items():
         data = ""
@@ -557,17 +555,21 @@ def extract_pdf_and_update_file_contents(files, record_uuid, retry_count=3, retr
             )
 
             with storage.open(mode="rb") as fp:
-                buffer = fp.read(current_app.config['WEKO_DEPOSIT_FILESIZE_LIMIT'])
-                args = ["java", "-jar", tika_jar_path, "-t"]
-                result = subprocess.run(
-                    args,
-                    input=buffer,
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.PIPE,
-                )
-                if result.returncode != 0:
-                    raise Exception("raise in tika: {}".format(result.stderr.decode("utf-8")))
-                data = "".join(result.stdout.decode("utf-8").splitlines())
+                with tempfile.NamedTemporaryFile(delete=True) as tmp:
+                    while True:
+                        chunk = fp.read(1024 * 1024)
+                        if not chunk:
+                            break
+                        tmp.write(chunk)
+                    tmp.flush()
+                    
+                    is_pdf = file.get("is_pdf", False)
+                    tmp_filename = tmp.name
+                    file_size_limit = current_app.config['WEKO_DEPOSIT_FILESIZE_LIMIT']
+                    if is_pdf:
+                        data = extract_text_from_pdf(tmp_filename,file_size_limit)
+                    else:
+                        data = extract_text_with_tika(tmp_filename,file_size_limit)
         except FileNotFoundError as ex:
             current_app.logger.error(ex)
         except ResourceNotFoundError as ex:
@@ -575,10 +577,11 @@ def extract_pdf_and_update_file_contents(files, record_uuid, retry_count=3, retr
         except Exception as ex:
             current_app.logger.error(ex)
         file_datas[filename] = data
-
+    success = False
     for attempt in range(retry_count):
         try:
             update_file_content(record_uuid, file_datas)
+            success = True
             break
         except ConflictError:
             current_app.logger.error(f"Version conflict error occurred while updating file content. Retrying {attempt + 1}/{retry_count}")
@@ -589,6 +592,8 @@ def extract_pdf_and_update_file_contents(files, record_uuid, retry_count=3, retr
         except Exception:
             current_app.logger.error(f"An error occurred({record_uuid}). Retrying {attempt + 1}/{retry_count}")
             time.sleep(retry_delay)
+    if not success:
+        current_app.logger.error(f"Failed to update file content after {retry_count} attempts. record_uuid: {record_uuid}")
 
 def update_file_content(record_uuid, file_datas):
     """Update the content of the es document

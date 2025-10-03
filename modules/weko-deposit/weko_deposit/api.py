@@ -29,6 +29,7 @@ from collections import OrderedDict
 from datetime import datetime, timezone,date
 from typing import NoReturn, Union
 from tika import parser
+from fs.errors import ResourceNotFoundError
 
 import redis
 from redis import sentinel
@@ -1140,11 +1141,12 @@ class WekoDeposit(Deposit):
                                     'WEKO_MIMETYPE_WHITELIST_FOR_ES']
                                 content = lst.copy()
                                 attachment = {}
-                                if file.obj.mimetype in mimetypes:
+                                mimetype = file.obj.mimetype
+                                if mimetype in mimetypes:
                                     try:
                                         with file.obj.file.storage().open(mode='rb') as fp:
                                             data = ""
-                                            if file.obj.mimetype in current_app.config['WEKO_DEPOSIT_TEXTMIMETYPE_WHITELIST_FOR_ES']:
+                                            if mimetype in current_app.config['WEKO_DEPOSIT_TEXTMIMETYPE_WHITELIST_FOR_ES']:
                                                 data = fp.read(current_app.config['WEKO_DEPOSIT_FILESIZE_LIMIT'])
                                                 inf = chardet.detect(data)
                                                 data = data.decode(inf['encoding'], errors='replace')
@@ -1153,10 +1155,11 @@ class WekoDeposit(Deposit):
                                                 file_info = {
                                                     "uri": file_instance.uri,
                                                     "size": file_instance.size,
+                                                    "is_pdf": mimetype == 'application/pdf'
                                                 }
                                                 reading_targets[filename] = file_info
                                             attachment["content"] = data
-                                    except FileNotFoundError as se:
+                                    except (FileNotFoundError, ResourceNotFoundError) as se:
                                         current_app.logger.error("FileNotFoundError: {}".format(se))
                                         current_app.logger.error("file.obj: {}".format(file.obj))
 
@@ -1186,11 +1189,15 @@ class WekoDeposit(Deposit):
                     filename = lst.get('filename')
                     if file.obj.key != filename:
                         continue
+                    mimetype = file.obj.mimetype
+                    if mimetype not in current_app.config['WEKO_MIMETYPE_WHITELIST_FOR_ES']:
+                        continue
                     if file.obj.mimetype not in current_app.config['WEKO_DEPOSIT_TEXTMIMETYPE_WHITELIST_FOR_ES']:
                         file_instance = file.obj.file
                         file_info = {
                             "uri": file_instance.uri,
-                            "size": file_instance.size
+                            "size": file_instance.size,
+                            "is_pdf": mimetype == 'application/pdf'
                         }
                         pdf_files[filename] = file_info
         return pdf_files
