@@ -84,6 +84,7 @@
 
 {%- block page_body_main %}
 {{ form.csrf_token }}
+<input type="hidden" id="" value="{{ _('You cannot change the resource type of items that have been grant a DOI.')}}"
 <!--Approval confirm modal-->
 {% from "weko_theme/macros/modal_page.html" import approval_modal %}
 {{approval_modal('confirm_modal', 'confirm_approval_btn', _('OK'),_('JGSS'),_('Use of JGSS data is considered as Continue. If you approve, this usage report will end. It is not able to restore an usage report that has ended. Do you want to continue?'))}}

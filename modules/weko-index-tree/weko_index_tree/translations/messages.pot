@@ -9,102 +9,102 @@ msgid ""
 msgstr ""
 "Project-Id-Version: weko-index-tree 0.1.0.dev20170000\n"
 "Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
-"POT-Creation-Date: 2025-07-09 17:46+0900\n"
+"POT-Creation-Date: 2025-10-03 14:20+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.9.1\n"
+"Generated-By: Babel 2.5.1\n"
 
-#: tests/conftest.py:196
+#: tests/conftest.py:197
 msgid "write your own license"
 msgstr ""
 
-#: tests/conftest.py:201
+#: tests/conftest.py:202
 msgid "Creative Commons CC0 1.0 Universal Public Domain Designation"
 msgstr ""
 
-#: tests/conftest.py:216
+#: tests/conftest.py:217
 msgid "Creative Commons Attribution 3.0 Unported (CC BY 3.0)"
 msgstr ""
 
-#: tests/conftest.py:228
+#: tests/conftest.py:229
 msgid "Creative Commons Attribution-ShareAlike 3.0 Unported (CC BY-SA 3.0)"
 msgstr ""
 
-#: tests/conftest.py:242
+#: tests/conftest.py:243
 msgid "Creative Commons Attribution-NoDerivs 3.0 Unported (CC BY-ND 3.0)"
 msgstr ""
 
-#: tests/conftest.py:256
+#: tests/conftest.py:257
 msgid "Creative Commons Attribution-NonCommercial 3.0 Unported (CC BY-NC 3.0)"
 msgstr ""
 
-#: tests/conftest.py:270
+#: tests/conftest.py:271
 msgid ""
 "Creative Commons Attribution-NonCommercial-ShareAlike 3.0 Unported (CC "
 "BY-NC-SA 3.0)"
 msgstr ""
 
-#: tests/conftest.py:284
+#: tests/conftest.py:285
 msgid ""
 "Creative Commons Attribution-NonCommercial-NoDerivs 3.0 Unported (CC BY-"
 "NC-ND 3.0)"
 msgstr ""
 
-#: tests/conftest.py:299
+#: tests/conftest.py:300
 msgid "Creative Commons Attribution 4.0 International (CC BY 4.0)"
 msgstr ""
 
-#: tests/conftest.py:311
+#: tests/conftest.py:312
 msgid "Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)"
 msgstr ""
 
-#: tests/conftest.py:325
+#: tests/conftest.py:326
 msgid ""
 "Creative Commons Attribution-NoDerivatives 4.0 International (CC BY-ND "
 "4.0)"
 msgstr ""
 
-#: tests/conftest.py:339
+#: tests/conftest.py:340
 msgid ""
 "Creative Commons Attribution-NonCommercial 4.0 International (CC BY-NC "
 "4.0)"
 msgstr ""
 
-#: tests/conftest.py:353
+#: tests/conftest.py:354
 msgid ""
 "Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International "
 "(CC BY-NC-SA 4.0)"
 msgstr ""
 
-#: tests/conftest.py:367
+#: tests/conftest.py:368
 msgid ""
 "Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 "
 "International (CC BY-NC-ND 4.0)"
 msgstr ""
 
-#: tests/test_utils.py:664 weko_index_tree/api.py:543
-#: weko_index_tree/rest.py:341 weko_index_tree/rest.py:386
-#: weko_index_tree/utils.py:994
+#: tests/test_utils.py:680 weko_index_tree/api.py:565
+#: weko_index_tree/rest.py:345 weko_index_tree/rest.py:390
+#: weko_index_tree/utils.py:1021
 msgid "Index Delete is in progress on another device."
 msgstr ""
 
-#: tests/test_utils.py:679 weko_index_tree/utils.py:1000
+#: tests/test_utils.py:695 weko_index_tree/utils.py:1027
 msgid ""
 "The index cannot be deleted because there is a link from an item that has"
 " a DOI."
 msgstr ""
 
-#: tests/test_utils.py:689 weko_index_tree/utils.py:1004
+#: tests/test_utils.py:705 weko_index_tree/utils.py:1031
 msgid ""
 "This index cannot be deleted because the item belonging to this index is "
 "being edited."
 msgstr ""
 
-#: tests/test_utils.py:699 weko_index_tree/utils.py:1006
+#: tests/test_utils.py:715 weko_index_tree/utils.py:1033
 msgid "The index cannot be deleted becase the index in harvester settings."
 msgstr ""
 
@@ -112,68 +112,69 @@ msgstr ""
 msgid "IndexLink flag was updated."
 msgstr ""
 
-#: weko_index_tree/admin.py:96
+#: weko_index_tree/admin.py:98
 msgid "No file part"
 msgstr ""
 
-#: weko_index_tree/admin.py:101
+#: weko_index_tree/admin.py:103
 msgid "No selected file"
 msgstr ""
 
-#: weko_index_tree/admin.py:119
+#: weko_index_tree/admin.py:121
 msgid "Setting"
 msgstr ""
 
-#: weko_index_tree/admin.py:120
+#: weko_index_tree/admin.py:122
 msgid "Index Link"
 msgstr ""
 
-#: weko_index_tree/admin.py:128
+#: weko_index_tree/admin.py:130
+#: weko_index_tree/templates/weko_index_tree/tree_edit.html:46
 msgid "Index Tree"
 msgstr ""
 
-#: weko_index_tree/admin.py:129
+#: weko_index_tree/admin.py:131
 msgid "Edit Tree"
 msgstr ""
 
-#: weko_index_tree/api.py:485
+#: weko_index_tree/api.py:507
 msgid "Select an index to move."
 msgstr ""
 
-#: weko_index_tree/api.py:490 weko_index_tree/api.py:497
-#: weko_index_tree/api.py:535
+#: weko_index_tree/api.py:512 weko_index_tree/api.py:519
+#: weko_index_tree/api.py:557
 msgid "Fail move an index."
 msgstr ""
 
-#: weko_index_tree/api.py:523
+#: weko_index_tree/api.py:545
 msgid "You can not move the index."
 msgstr ""
 
-#: weko_index_tree/api.py:549 weko_index_tree/rest.py:389
+#: weko_index_tree/api.py:571 weko_index_tree/rest.py:393
 msgid ""
 "The index cannot be kept private because there are links from items that "
 "have a DOI."
 msgstr ""
 
-#: weko_index_tree/rest.py:379
+#: weko_index_tree/rest.py:383
 msgid "The index cannot be updated becase import is in progress."
 msgstr ""
 
-#: weko_index_tree/rest.py:392
+#: weko_index_tree/rest.py:396
 msgid ""
 "Index harvests cannot be kept private because there are links from items "
 "that have a DOI."
 msgstr ""
 
-#: weko_index_tree/rest.py:443
+#: weko_index_tree/rest.py:447
 msgid "The index cannot be deleted becase import is in progress."
 msgstr ""
 
-#: weko_index_tree/rest.py:596
+#: weko_index_tree/rest.py:631
 msgid "The index cannot be moved becase import is in progress."
 msgstr ""
 
-#: weko_index_tree/rest.py:606
+#: weko_index_tree/rest.py:641
 msgid "Index moved successfully."
 msgstr ""
 
@@ -199,5 +200,35 @@ msgstr ""
 
 #: weko_index_tree/templates/weko_index_tree/base.html:38
 msgid "Start upload"
+msgstr ""
+
+#: weko_index_tree/templates/weko_index_tree/tree_edit.html:54
+msgid "Send"
+msgstr ""
+
+#: weko_index_tree/templates/weko_index_tree/tree_edit.html:69
+msgid "Result"
+msgstr ""
+
+#: weko_index_tree/templates/weko_index_tree/tree_edit.html:77
+msgid "Close"
+msgstr ""
+
+#: weko_index_tree/templates/weko_index_tree/admin/index_link_setting.html:30
+msgid "Life Time"
+msgstr ""
+
+#: weko_index_tree/templates/weko_index_tree/admin/index_link_setting.html:43
+#: weko_index_tree/templates/weko_index_tree/admin/index_link_setting.html:45
+msgid "Enable"
+msgstr ""
+
+#: weko_index_tree/templates/weko_index_tree/admin/index_link_setting.html:51
+#: weko_index_tree/templates/weko_index_tree/admin/index_link_setting.html:53
+msgid "Disable"
+msgstr ""
+
+#: weko_index_tree/templates/weko_index_tree/admin/index_link_setting.html:61
+msgid "Update"
 msgstr ""
 

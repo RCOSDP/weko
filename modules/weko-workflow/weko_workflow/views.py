@@ -2467,7 +2467,7 @@ def cancel_action(activity_id='0', action_id=0):
             activity_id=activity_id, action_id=action_id,
             action_status=ActionStatusPolicy.ACTION_DOING,
             action_order=activity_detail.action_order)
-        res = ResponseMessageSchema().load({"code":-1, "msg":'Error! Cannot process quit activity!'})
+        res = ResponseMessageSchema().load({"code":-1, "msg":_('Error! Cannot process quit activity!')})
         return jsonify(res.data), 500
 
     if not current_user.is_authenticated and session.get("guest_url"):
