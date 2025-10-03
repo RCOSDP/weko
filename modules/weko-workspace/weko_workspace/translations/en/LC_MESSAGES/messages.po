@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: weko-workspace 0.1.0.dev20250201\n"
 "Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
-"POT-Creation-Date: 2025-09-19 10:42+0900\n"
+"POT-Creation-Date: 2025-10-03 16:33+0900\n"
 "PO-Revision-Date: 2018-08-06 13:44+0900\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -227,7 +227,7 @@ msgstr ""
 
 #: weko_workspace/templates/weko_workspace/item_register.html:343
 #: weko_workspace/templates/weko_workspace/item_register.html:372
-#: weko_workspace/templates/weko_workspace/workspace_body_contents.html:30
+#: weko_workspace/templates/weko_workspace/workspace_body_contents.html:44
 msgid "Cancel"
 msgstr ""
 
@@ -244,97 +244,97 @@ msgstr ""
 msgid "The item is successfully registered."
 msgstr ""
 
-#: weko_workspace/templates/weko_workspace/workspace_body_contents.html:25
-msgid "Export Item List"
+#: weko_workspace/templates/weko_workspace/workspace_body_contents.html:26
+msgid "Please press Enter after inputting to search."
 msgstr ""
 
 #: weko_workspace/templates/weko_workspace/workspace_body_contents.html:27
+msgid "No results found matching your search criteria."
+msgstr ""
+
+#: weko_workspace/templates/weko_workspace/workspace_body_contents.html:40
+msgid "Export Item List"
+msgstr ""
+
+#: weko_workspace/templates/weko_workspace/workspace_body_contents.html:41
 msgid "Please select the following option:"
 msgstr ""
 
-#: weko_workspace/templates/weko_workspace/workspace_body_contents.html:28
+#: weko_workspace/templates/weko_workspace/workspace_body_contents.html:42
 msgid "Selected Items"
 msgstr ""
 
-#: weko_workspace/templates/weko_workspace/workspace_body_contents.html:29
+#: weko_workspace/templates/weko_workspace/workspace_body_contents.html:43
 msgid "All Items"
 msgstr ""
 
-#: weko_workspace/templates/weko_workspace/workspace_body_contents.html:31
+#: weko_workspace/templates/weko_workspace/workspace_body_contents.html:45
 msgid ""
 "Error: There is no Selected items. Please check the item you want to "
 "export"
 msgstr ""
 
-#: weko_workspace/templates/weko_workspace/workspace_body_contents.html:33
-msgid "Please press Enter after inputting to search."
-msgstr ""
-
-#: weko_workspace/templates/weko_workspace/workspace_body_contents.html:34
-msgid "No results found matching your search criteria."
-msgstr ""
-
-#: weko_workspace/templates/weko_workspace/workspace_body_contents.html:54
+#: weko_workspace/templates/weko_workspace/workspace_body_contents.html:53
 msgid "Filter Display"
 msgstr ""
 
-#: weko_workspace/templates/weko_workspace/workspace_body_contents.html:56
+#: weko_workspace/templates/weko_workspace/workspace_body_contents.html:55
 msgid "Publication Date"
 msgstr ""
 
-#: weko_workspace/templates/weko_workspace/workspace_body_contents.html:57
+#: weko_workspace/templates/weko_workspace/workspace_body_contents.html:56
 msgid "Title"
 msgstr ""
 
-#: weko_workspace/templates/weko_workspace/workspace_body_contents.html:58
+#: weko_workspace/templates/weko_workspace/workspace_body_contents.html:57
 msgid "Number of accesses"
 msgstr ""
 
-#: weko_workspace/templates/weko_workspace/workspace_body_contents.html:59
+#: weko_workspace/templates/weko_workspace/workspace_body_contents.html:58
 msgid "Number of downloads"
 msgstr ""
 
-#: weko_workspace/templates/weko_workspace/workspace_body_contents.html:80
+#: weko_workspace/templates/weko_workspace/workspace_body_contents.html:79
 msgid "This item is excluded from the default condition save target."
 msgstr ""
 
-#: weko_workspace/templates/weko_workspace/workspace_body_contents.html:81
+#: weko_workspace/templates/weko_workspace/workspace_body_contents.html:80
 msgid "Would you like to remove the filter conditions?"
 msgstr ""
 
-#: weko_workspace/templates/weko_workspace/workspace_body_contents.html:85
+#: weko_workspace/templates/weko_workspace/workspace_body_contents.html:84
 msgid "Filter"
 msgstr ""
 
-#: weko_workspace/templates/weko_workspace/workspace_body_contents.html:89
+#: weko_workspace/templates/weko_workspace/workspace_body_contents.html:88
 msgid "Clear"
 msgstr ""
 
-#: weko_workspace/templates/weko_workspace/workspace_body_contents.html:93
+#: weko_workspace/templates/weko_workspace/workspace_body_contents.html:92
 msgid "Save"
 msgstr ""
 
-#: weko_workspace/templates/weko_workspace/workspace_body_contents.html:97
+#: weko_workspace/templates/weko_workspace/workspace_body_contents.html:96
 msgid "Reset"
 msgstr ""
 
-#: weko_workspace/templates/weko_workspace/workspace_body_contents.html:118
+#: weko_workspace/templates/weko_workspace/workspace_body_contents.html:117
 msgid "Relation"
 msgstr ""
 
-#: weko_workspace/templates/weko_workspace/workspace_body_contents.html:119
+#: weko_workspace/templates/weko_workspace/workspace_body_contents.html:118
 msgid "Document file"
 msgstr ""
 
-#: weko_workspace/templates/weko_workspace/workspace_body_contents.html:120
+#: weko_workspace/templates/weko_workspace/workspace_body_contents.html:119
 msgid "Published"
 msgstr ""
 
-#: weko_workspace/templates/weko_workspace/workspace_body_contents.html:121
+#: weko_workspace/templates/weko_workspace/workspace_body_contents.html:120
 msgid "Embargo"
 msgstr ""
 
-#: weko_workspace/templates/weko_workspace/workspace_body_contents.html:122
+#: weko_workspace/templates/weko_workspace/workspace_body_contents.html:121
 msgid "Restricted"
 msgstr ""
 
