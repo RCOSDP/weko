@@ -29,8 +29,15 @@ from invenio_db import db
 from invenio_indexer.api import RecordIndexer
 from sqlalchemy.sql.functions import func
 from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.dialects.postgresql import JSONB
 from time import sleep
 from invenio_communities.models import Community
+import click
+from invenio_search import current_search_client
+from elasticsearch.helpers import bulk
+from elasticsearch.helpers import BulkIndexError
+from elasticsearch.exceptions import ConnectionTimeout, ConnectionError
+import traceback
 
 from .models import (
     Authors, AuthorsPrefixSettings, AuthorsAffiliationSettings,
@@ -688,3 +695,110 @@ class WekoAuthors(object):
             row_data.append(row)
 
         return row_data
+
+
+class AuthorIndexer():
+    def __init__(self, search_client=None):
+        self.client = search_client or current_search_client
+
+    def author_to_index(self):
+        index = current_app.config['WEKO_AUTHORS_ES_INDEX_NAME']
+        doc_type = current_app.config['WEKO_AUTHORS_ES_DOC_TYPE']
+        return index, doc_type
+
+    def bulk_process_authors(self,es_bulk_kwargs, uuids = [],start_date=None,end_date=None,with_deleted=True):
+        success = 0
+        fail = 0
+        unprocesses = 0
+        req_timeout = current_app.config['INDEXER_BULK_REQUEST_TIMEOUT']
+        self.count = 0
+        try:
+            _success, _fail = bulk(
+                self.client,
+                self.generate_actions(uuids, start_date, end_date, with_deleted),
+                request_timeout=req_timeout,
+                **es_bulk_kwargs
+            )
+            success += _success
+            if isinstance(_fail, list):
+                _fail_len = len(_fail)
+                for error in _fail:
+                    click.secho("{}, {}".format(error['index']['_id'],error['index']['error']['type']),fg='red')
+            else:
+                _fail_len = _fail
+            fail += _fail_len
+            unprocesses += self.count - _success - _fail_len
+        except SQLAlchemyError as e:
+            current_app.logger.error(e)
+            current_app.logger.error(traceback.format_exc())
+            db.session.rollback()
+        except BulkIndexError as e:
+            _fail = len(e.errors)
+            _success = self.count - _fail
+            _unprocessed = len(uuids) - self.count
+
+            fail += _fail
+            success += _success
+            unprocesses += _unprocessed
+            for error in e.errors:
+                click.secho("{}, {}".format(error['index']['_id'],error['index']['error']['type']),fg='red')
+        except ConnectionTimeout as ce:
+            click.secho("Error: {}".format(ce),fg="red")
+            click.secho("INDEXER_BULK_REQUEST_TIMEOUT: {} sec".format(req_timeout),fg="red")
+            click.secho("Please change value of INDEXER_BULK_REQUEST_TIMEOUT and retry it.",fg="red")
+            click.secho("processing: {}".format(self.count),fg="red")
+        except ConnectionError as ce:
+            click.secho("Connection error occurred: {}".format(ce),fg='red')
+        except Exception as e:
+            current_app.logger.error(e)
+            current_app.logger.error(traceback.format_exc())
+        count = (success,fail,unprocesses)
+        click.secho("count(success, error, unprocessed): {}".format(count),fg='green')
+
+        return count
+
+
+    def generate_actions(self,uuids=[],start_date=None, end_date=None,with_deleted=True):
+        index, doc_type = self.author_to_index()
+        filters = []
+        if len(uuids) > 0:
+            authors = []
+            for uuid in uuids:
+                query = Authors.query.filter(Authors.json.cast(JSONB)['id'].astext == str(uuid))
+                if not with_deleted:
+                    query = query.filter(Authors.is_deleted.is_(False))
+                author = query.one_or_none()
+                if author:
+                    authors.append(author)
+        else:
+            if not with_deleted:
+                filters.append(Authors.is_deleted.is_(False))
+            if start_date:
+                filters.append(Authors.updated >= start_date)
+            if end_date:
+                filters.append(Authors.updated < end_date)
+            query = Authors.query.filter(*filters)
+            authors = query.all()
+        if len(authors) == 0:
+            click.secho("Error: No authors were found for processing, so the operation was stopped.",fg="red")
+        for author in authors:
+
+            body = self._prepare_author(author)
+            action = {
+                "_op_type": "index",
+                "_index": index,
+                "_type": doc_type,
+                "_id": str(author.json['id']),
+                "_source": body
+            }
+            self.count += 1
+            click.secho(f"Indexing author id: {author.json['id']}, Count:{self.count}", fg='green')
+            yield action
+
+    def _prepare_author(self, author):
+        author_data = json.loads(json.dumps(author.json))
+        if hasattr(author, 'communities') and author.communities:
+            author_data["communityIds"] = [community.id for community in author.communities]
+        else:
+            author_data["communityIds"] = []
+        return author_data
