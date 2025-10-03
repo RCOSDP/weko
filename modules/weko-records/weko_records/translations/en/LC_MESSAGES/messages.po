@@ -1,19 +1,19 @@
-# Japanese translations for weko-records.
-# Copyright (C) 2018 National Institute of Informatics
+# English translations for weko-records.
+# Copyright (C) 2025 National Institute of Informatics
 # This file is distributed under the same license as the weko-records
 # project.
-# FIRST AUTHOR <EMAIL@ADDRESS>, 2018.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2025.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: weko-records 0.1.0.dev20170000\n"
 "Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
 "POT-Creation-Date: 2025-10-03 16:43+0900\n"
-"PO-Revision-Date: 2018-04-12 10:50+0900\n"
+"PO-Revision-Date: 2025-10-03 16:44+0900\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
-"Language: ja\n"
-"Language-Team: ja <LL@li.org>\n"
-"Plural-Forms: nplurals=1; plural=0\n"
+"Language: en\n"
+"Language-Team: en <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1)\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -21,11 +21,11 @@ msgstr ""
 
 #: weko_records/api.py:389
 msgid "Invalid id."
-msgstr "無効なIDです"
+msgstr ""
 
 #: weko_records/api.py:422
 msgid "Invalid name."
-msgstr "無効な名前です"
+msgstr ""
 
 #: weko_records/scopes.py:35
 msgid "Allow update OA status."

@@ -83,6 +83,10 @@
     <div class="row"></div>
     <hr />
     <div class="row"></div>
+    <input type="hidden" id="merge_mode_contents1" value="{{_('similar merge(similar data priority)')}}"/>
+    <input type="hidden" id="merge_mode_contents2" value="{{_('similar merge(input data priority)')}}"/>
+    <input type="hidden" id="merge_mode_contents3" value="{{_('merge')}}"/>
+    <input type="hidden" id="merge_mode_contents4" value="{{_('force')}}"/>
     <form method="POST" name="researchmap_form" action={{ url_for('cris_linkage.save_merge_mode') }}>
 
       <div class="row col-md-12">

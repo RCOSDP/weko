@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: weko-notifications 1.0.0.dev20250000\n"
 "Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
-"POT-Creation-Date: 2025-05-01 14:04+0900\n"
+"POT-Creation-Date: 2025-10-03 16:37+0900\n"
 "PO-Revision-Date: 2025-03-16 16:28+0900\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -23,68 +23,76 @@ msgstr ""
 msgid "Email notifications require a confirmed email address."
 msgstr ""
 
-#: weko_notifications/forms.py:44
+#: weko_notifications/forms.py:44 weko_notifications/views.py:119
 msgid "Failed to get subscription information. Please try again."
 msgstr ""
 
-#: weko_notifications/forms.py:53
+#: weko_notifications/forms.py:52
 msgid "Notifications settings updated."
 msgstr ""
 
-#: weko_notifications/forms.py:56
+#: weko_notifications/forms.py:55
 msgid "Failed to update your notifications settings."
 msgstr ""
 
 #. NOTE: Form field label
-#: weko_notifications/forms.py:66
+#: weko_notifications/forms.py:65
 msgid "Web push"
 msgstr ""
 
 #. NOTE: Form field help text
-#: weko_notifications/forms.py:68
+#: weko_notifications/forms.py:67
 msgid "Receive notifications via web push."
 msgstr ""
 "Receive web push notifications in this browser. Please refrain from using"
 " this feature on shared devices."
 
-#: weko_notifications/forms.py:72
+#: weko_notifications/forms.py:71
 msgid "Web push endpoint"
 msgstr ""
 
-#: weko_notifications/forms.py:75
+#: weko_notifications/forms.py:74
 msgid "Web push expiration time"
 msgstr ""
 
-#: weko_notifications/forms.py:78
+#: weko_notifications/forms.py:77
 msgid "Web push p256dh"
 msgstr ""
 
-#: weko_notifications/forms.py:81
+#: weko_notifications/forms.py:80
 msgid "Web push auth"
 msgstr ""
 
-#: weko_notifications/forms.py:84
+#: weko_notifications/forms.py:83
 msgid "Email"
 msgstr ""
 
-#: weko_notifications/forms.py:85
+#: weko_notifications/forms.py:84
 msgid "Receive notifications via email."
 msgstr ""
 "Receive email notifications via the verified email address in your "
 "Profile."
 
-#: weko_notifications/views.py:72
+#: weko_notifications/views.py:87
 #, python-format
 msgid "%(icon)s Notifications"
 msgstr ""
 
 #: weko_notifications/templates/weko_notifications/settings/notifications.html:25
-#: weko_notifications/views.py:76
+#: weko_notifications/views.py:91
 msgid "Notifications"
 msgstr ""
 
-#: weko_notifications/views.py:127
+#: weko_notifications/views.py:108 weko_notifications/views.py:153
 msgid "Failed to update push subscription."
+msgstr ""
+
+#: weko_notifications/views.py:191
+msgid "Unauthorized access."
+msgstr ""
+
+#: weko_notifications/views.py:204
+msgid "Notifications retrieved successfully."
 msgstr ""
 
 #: weko_notifications/templates/weko_notifications/index.html:12
