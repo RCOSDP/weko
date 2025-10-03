@@ -254,7 +254,7 @@ class RecordIndexer(object):
                             success = success + (len(error_ids)-len(be2.errors))
                             fail = fail + len(be2.errors)
                             for error in be2.errors:
-                                click.secho("{}, {}".format(error['index']['_id'],error['index']['error']['type']),fg='red')
+                                click.secho("[ERROR] {}, {}".format(error['index']['_id'],error['index']['error']['type']),fg='red')
                     except ConnectionError as ce:
                         with conn.channel() as chan:
                             name, af_queues_cnt, consumers = chan.queue_declare(queue=current_app.config['INDEXER_MQ_ROUTING_KEY'], passive=True)
@@ -309,6 +309,27 @@ class RecordIndexer(object):
             BulkException: For other exceptions during bulk indexing.
         """
         from weko_deposit.utils import update_pdf_contents_es_with_index_api # avoid circular import
+        import socket
+        import re
+        broker_url = current_app.config.get('BROKER_URL')
+        # Extract host and port from BROKER_URL, fallback to default if not found
+        m = re.match(r'.*://.*@(.*):(\d+)', broker_url)
+        if m:
+            rabbit_host = m.group(1)
+            rabbit_port = int(m.group(2))
+        else:
+            rabbit_host = 'rabbitmq'
+            rabbit_port = 5672
+        try:
+            with socket.create_connection((rabbit_host, rabbit_port), timeout=3):
+                rabbitmq_conn = True
+        except Exception as e:
+            rabbitmq_conn = False
+        # Check RabbitMQ connectivity before proceeding
+        if not rabbitmq_conn:
+            click.secho(f"Cannot connect to RabbitMQ({rabbit_host}:{rabbit_port}) (socket connection failed)", fg='red')
+            return (0, 0, 0)
+
         success = 0
         fail = 0
         unprocessed = 0
@@ -350,7 +371,7 @@ class RecordIndexer(object):
                     if isinstance(_fail, list):
                         fail = len(_fail)
                         for error in _fail:
-                            click.secho("{}, {}".format(error['index']['_id'],error['index']['error']['type']),fg='red')
+                            click.secho("[ERROR] {}, {}".format(error['index']['_id'],error['index']['error']['type']),fg='red')
                     else:
                         fail = _fail
                     unprocessed = messages_count - (success + fail) if messages_count > (success + fail) else 0
@@ -363,27 +384,13 @@ class RecordIndexer(object):
                     unprocessed = messages_count - self.count
                     update_pdf_contents_es_with_index_api(self.success_ids)
                     for error in be.errors:
-                        click.secho("{}, {}".format(error['index']['_id'],error['index']['error']['type']),fg='red')
-                except (BulkConnectionError, ConnectionError) as ce:
-                    with conn.channel() as chan:
-                        name, af_queues_cnt, consumers = chan.queue_declare(queue=current_app.config['INDEXER_MQ_ROUTING_KEY'], passive=True)
-                        current_app.logger.debug("name:{}, queues:{}, consumers:{}".format(name, af_queues_cnt, consumers))
-                    if '_success' in locals() or '_fail' in locals():
-                        success = _success
-                        fail = _fail
-                        errors = []
-                        if isinstance(fail, list):
-                            errors = fail
-                    else:
-                        success = ce.success if hasattr(ce, 'success') else 0
-                        fail = ce.failed if hasattr(ce, 'failed') else 0
-                        errors = ce.errors if hasattr(ce, 'errors') else []
-                    if len(errors) > 0:
-                        for error in errors:
-                            click.secho("{}, {}".format(error['index']['_id'],error['index']['error']['type']),fg='red')
-                        fail = len(errors)
-                    unprocessed = messages_count - (success + fail) if messages_count > (success + fail) else 0
-                    update_pdf_contents_es_with_index_api(self.success_ids)
+                        err = error['index']
+                        err_info = err.get('error')
+                        if isinstance(err_info, dict):
+                            error_type = err_info.get('type', 'unknown')
+                        else:
+                            error_type = str(err_info)
+                        click.secho("[ERROR] {}, {}".format(err.get('_id', ''), error_type), fg='red')
                 except (BulkConnectionTimeout, ConnectionTimeout) as ce:
                     click.secho("Error: {}".format(ce.errors),fg='red')
                     click.secho("INDEXER_BULK_REQUEST_TIMEOUT: {} sec".format(req_timeout),fg='red')
@@ -402,7 +409,7 @@ class RecordIndexer(object):
                         errors = ce.errors if hasattr(ce, 'errors') else []
                     if len(errors) > 0:
                         for error in errors:
-                            click.secho("{}, {}".format(error['index']['_id'],error['index']['error']['type']),fg='red')
+                            click.secho("[ERROR] {}, {}".format(error['index']['_id'],error['index']['error']['type']),fg='red')
                         fail = len(errors)
                     unprocessed = messages_count - (success + fail) if messages_count > (success + fail) else 0
                     update_pdf_contents_es_with_index_api(self.success_ids)
@@ -422,7 +429,7 @@ class RecordIndexer(object):
                             errors = ce.errors if hasattr(ce, 'errors') else []
                         if len(errors) > 0:
                             for error in errors:
-                                click.secho("{}, {}".format(error['index']['_id'],error['index']['error']['type']),fg='red')
+                                click.secho("[ERROR] {}, {}".format(error['index']['_id'],error['index']['error']['type']),fg='red')
                             fail = len(errors)
                         unprocessed = messages_count - (success + fail) if messages_count > (success + fail) else 0
                         update_pdf_contents_es_with_index_api(self.success_ids)
@@ -441,7 +448,13 @@ class RecordIndexer(object):
                         errors = e.errors if hasattr(e, 'errors') else []
                     if len(errors) > 0:
                         for error in errors:
-                            click.secho("{}, {}".format(error['index']['_id'],error['index']['error']['type']),fg='red')
+                            err = error['index']
+                            err_info = err.get('error')
+                            if isinstance(err_info, dict):
+                                error_type = err_info.get('type', 'unknown')
+                            else:
+                                error_type = str(err_info)
+                            click.secho("[ERROR] {}, {}".format(err.get('_id', ''), error_type), fg='red')
                         fail = len(errors)
                     unprocessed = messages_count - (success + fail) if messages_count > (success + fail) else 0
                     update_pdf_contents_es_with_index_api(self.success_ids)
@@ -538,6 +551,12 @@ class RecordIndexer(object):
                 message.ack()
             except NoResultFound:
                 message.reject()
+            except SQLAlchemyError:
+                db.session.rollback()
+                current_app.logger.error(
+                    f'SQLAlchemy error occurred while updating the version_id in records_metadata for id: {payload.get("id", "unknown")}.'
+                )
+                message.reject()
             except Exception:
                 message.reject()
                 current_app.logger.error(
@@ -632,17 +651,8 @@ class RecordIndexer(object):
         res = indexer.get_metadata_by_item_id(record_id)
         es_version = res.get('_version')
 
-        try:
-            if record.model.version_id < es_version:
-                record.model.version_id = es_version
-                db.session.commit()
-
-        except SQLAlchemyError:
-            db.session.rollback()
-            current_app.logger.error(
-                f'SQLAlchemy error occurred while updating the version_id in records_metadata for id: {record_id}.')
-            traceback.print_exc()
-            raise
+        if record.model.version_id < es_version:
+            record.model.version_id = es_version
 
         self.count = self.count + 1
         click.secho(f"Indexing ID:{record_id}, Count:{self.count}", fg='green')
@@ -666,11 +676,12 @@ class RecordIndexer(object):
             '_index': index,
             '_type': doc_type,
             '_id': str(record.id),
-            '_version': record.revision_id,
+            '_version': record.model.version_id,
             '_version_type': self._version_type,
             '_source': body
         }
         action.update(arguments)
+        db.session.commit()
         return action
 
     @staticmethod
@@ -759,6 +770,7 @@ class RecordIndexer(object):
                     log_list.append({"id": item['index']['_id'], "Status": "Fail"})
                 else:
                     success += 1
+                    success_ids.append(item['index']['_id'])
                     log_list.append({"id": item['index']['_id'], "Status": "Success"})
                 if item_count % kwargs["chunk_size"] == 0:
                     date = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')
@@ -766,7 +778,7 @@ class RecordIndexer(object):
                         if log["Status"] == "Success":
                             click.secho("[{}] ID: {}, Status: {}, Chunk: {}".format(date, log["id"], log["Status"], chunk_progress), fg='green')
                         else:
-                            click.secho("[{}] ID : {}, Status: {}, Chunk: {}".format(date, log["id"], log["Status"], chunk_progress), fg='red')
+                            click.secho("[{}] ID: {}, Status: {}, Chunk: {}".format(date, log["id"], log["Status"], chunk_progress), fg='red')
                     current_chunk += 1
                     chunk_progress = f"{current_chunk}/{self.target_chunks}"
                     log_list = []
@@ -775,7 +787,7 @@ class RecordIndexer(object):
                 if log["Status"] == "Success":
                     click.secho("[{}] ID: {}, Status: {}, Chunk: {}".format(date, log["id"], log["Status"], chunk_progress), fg='green')
                 else:
-                    click.secho("[{}] ID : {}, Status: {}, Chunk: {}".format(date, log["id"], log["Status"], chunk_progress), fg='red')
+                    click.secho("[{}] ID: {}, Status: {}, Chunk: {}".format(date, log["id"], log["Status"], chunk_progress), fg='red')
             self.success_ids = success_ids
             return (success, failed) if stats_only else (success, errors)
         except BulkIndexError:

@@ -23,11 +23,12 @@
 import pytest
 import uuid
 import os
+import types
 from tests.helpers import json_data, create_record_with_pdf
 from mock import patch, MagicMock
 from weko_authors.models import AuthorsAffiliationSettings,AuthorsPrefixSettings
 from weko_deposit.api import WekoIndexer
-from weko_deposit.tasks import update_items_by_authorInfo, extract_pdf_and_update_file_contents, update_file_content
+from weko_deposit.tasks import update_items_by_authorInfo, extract_pdf_and_update_file_contents, update_file_content, extract_pdf_and_update_file_contents_with_index_api, update_file_content_with_index_api
 
 [
     {
@@ -65,7 +66,7 @@ class MockRecordsSearch:
             return self.MockExecute()
     def __init__(self, index=None):
         pass
-    
+
     def update_from_dict(self,query=None):
         return self.MockQuery()
 
@@ -95,7 +96,7 @@ def test_update_authorInfo(app, db, records,mocker):
         ],
         'emailInfo': []
     }
-    
+
     mock_recordssearch = MagicMock(side_effect=MockRecordsSearch)
     with patch("weko_deposit.tasks.RecordsSearch", mock_recordssearch):
         with patch("weko_deposit.tasks.RecordIndexer", MockRecordIndexer):
@@ -142,7 +143,7 @@ def test_update_authorInfo(app, db, records,mocker):
     db.session.add(grid)
     db.session.add(ringgold)
     db.session.commit()
-    
+
 
     _target = {
         'authorNameInfo': [
@@ -367,3 +368,101 @@ def test_update_file_content(app, db, location):
         {"content":"this is not_exist.pdf"},
     ]
     assert attachments == test
+
+# .tox/c1/bin/pytest --cov=weko_deposit tests/test_tasks.py::test_extract_pdf_and_update_file_contents_with_index_api_cases -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
+@pytest.mark.parametrize("tika_path, isfile, storage_exception, subprocess_returncode, update_side_effect, expect_error_attr, expect_content", [
+    ("/tmp/tika.jar", True, None, 0, None, None, "abc"),  # normal
+    (None, True, None, 0, None, Exception, None),  # tika jar not found
+    ("/tmp/tika.jar", True, FileNotFoundError("not found"), 0, None, "file_error", None),  # storage_factory error
+    ("/tmp/tika.jar", True, None, 1, None, "subprocess_error", None),  # subprocess error
+    ("/tmp/tika.jar", True, None, 0, "conflict", "update_error", None),  # ConflictError
+    ("/tmp/tika.jar", True, None, 0, "notfound", "update_error", None),  # NotFoundError
+    ("/tmp/tika.jar", True, "ResourceNotFoundError", 0, None, None, None),  # ResourceNotFoundError
+    ("/tmp/tika.jar", True, None, 0, "other", "update_error", None),  # other exception
+])
+def test_extract_pdf_and_update_file_contents_with_index_api_cases(monkeypatch, tika_path, isfile, storage_exception, subprocess_returncode, update_side_effect, expect_error_attr, expect_content):
+    if tika_path is not None:
+        monkeypatch.setenv("TIKA_JAR_FILE_PATH", tika_path)
+    else:
+        monkeypatch.delenv("TIKA_JAR_FILE_PATH", raising=False)
+    monkeypatch.setattr(os.path, "isfile", lambda path: isfile)
+    class DummyStorage:
+        def open(self, mode):
+            class DummyFP:
+                def read(self, size): return b'data'
+                def __enter__(self): return self
+                def __exit__(self, exc_type, exc_val, exc_tb): pass
+            return DummyFP()
+    if storage_exception == 'ResourceNotFoundError':
+        import weko_deposit.tasks as tasks_mod
+        monkeypatch.setattr("weko_deposit.tasks.current_files_rest", types.SimpleNamespace(storage_factory=lambda fileurl, size: (_ for _ in ()).throw(tasks_mod.ResourceNotFoundError("not found"))))
+    elif storage_exception:
+        monkeypatch.setattr("weko_deposit.tasks.current_files_rest", types.SimpleNamespace(storage_factory=lambda fileurl, size: (_ for _ in ()).throw(storage_exception)))
+    else:
+        monkeypatch.setattr("weko_deposit.tasks.current_files_rest", types.SimpleNamespace(storage_factory=lambda fileurl, size: DummyStorage()))
+    dummy_logger = types.SimpleNamespace(error=lambda x: setattr(monkeypatch, expect_error_attr, x) if expect_error_attr and expect_error_attr is not Exception else None)
+    dummy_app = types.SimpleNamespace(config={'WEKO_DEPOSIT_FILESIZE_LIMIT': 100}, logger=dummy_logger)
+    monkeypatch.setattr("weko_deposit.tasks.current_app", dummy_app)
+    monkeypatch.setattr("weko_deposit.tasks.subprocess", types.SimpleNamespace(
+        run=lambda *a, **k: types.SimpleNamespace(returncode=subprocess_returncode, stdout=b'abc\n', stderr=b''),
+        PIPE=object()
+    ))
+    import weko_deposit.tasks as tasks_mod
+    if update_side_effect == 'conflict':
+        monkeypatch.setattr("weko_deposit.tasks.update_file_content_with_index_api", lambda *a, **k: (_ for _ in ()).throw(tasks_mod.ConflictError()))
+    elif update_side_effect == 'notfound':
+        monkeypatch.setattr("weko_deposit.tasks.update_file_content_with_index_api", lambda *a, **k: (_ for _ in ()).throw(tasks_mod.NotFoundError()))
+    elif update_side_effect == 'other':
+        monkeypatch.setattr("weko_deposit.tasks.update_file_content_with_index_api", lambda *a, **k: (_ for _ in ()).throw(Exception("other")))
+    else:
+        called = {}
+        def dummy_update(record_uuid, file_datas):
+            called['called'] = (record_uuid, file_datas)
+        monkeypatch.setattr("weko_deposit.tasks.update_file_content_with_index_api", dummy_update)
+    file_dict = {'f.pdf': {'uri': 'u', 'size': 1}}
+    if expect_error_attr == Exception:
+        with pytest.raises(Exception, match="not exist tika jar file."):
+            extract_pdf_and_update_file_contents_with_index_api(file_dict, 'rid')
+    else:
+        extract_pdf_and_update_file_contents_with_index_api(file_dict, 'rid')
+        if expect_content:
+            assert called['called'][0] == 'rid'
+            assert called['called'][1]['f.pdf'] == expect_content
+        if expect_error_attr and expect_error_attr is not Exception:
+            assert hasattr(monkeypatch, expect_error_attr)
+
+
+# .tox/c1/bin/pytest --cov=weko_deposit tests/test_tasks.py::test_update_file_content_with_index_api_cases -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
+@pytest.mark.parametrize("content, file_datas, expected", [
+    ([{'filename': 'f1', 'attachment': {'content': ''}}, {'filename': 'f2', 'attachment': {'content': ''}}, {'filename': 'f3'}], {'f1': 'abc', 'f2': 'def'}, ['abc', 'def', None]),
+    ([{'filename': 'f1', 'attachment': {'content': ''}}], {'f2': 'zzz'}, [None]),
+    ([], {'f1': 'abc'}, []),
+    ([{'filename': 'f1'}, {'filename': 'f2', 'attachment': {'content': ''}}], {'f1': 'abc', 'f2': 'def'}, [None, 'def']),
+])
+def test_update_file_content_with_index_api_cases(monkeypatch, content, file_datas, expected):
+    called = {}
+    class DummyClient:
+        def index(self, **kwargs):
+            called['body'] = kwargs['body']
+            return {'result': 'ok'}
+    class DummyIndexer:
+        def __init__(self):
+            self.client = DummyClient()
+            self.es_index = 'idx'
+            self.es_doc_type = 'doc'
+        def get_es_index(self): pass
+        def get_metadata_by_item_id(self, rid):
+            return {
+                '_source': {'content': content} if content is not None else {},
+                '_version': 1,
+                '_type': 'doc'
+            }
+    monkeypatch.setattr("weko_deposit.tasks.WekoIndexer", DummyIndexer)
+    update_file_content_with_index_api('rid', file_datas)
+    if content:
+        result = called['body']['content']
+        for i, exp in enumerate(expected):
+            if exp is not None:
+                assert result[i].get('attachment', {}).get('content') == exp
+            else:
+                assert 'attachment' not in result[i] or result[i]['attachment'].get('content') == ''
