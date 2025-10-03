@@ -1,43 +1,26 @@
-name: Tests
+name: Unit Tests (Smart Image Build)
 
 on: [push, pull_request]
 
+env:
+  IMAGE_TAG: ghcr.io/rcosdp/weko:${{ github.sha }}
+
 jobs:
   test:
-    name: Test
-    runs-on: ubuntu-20.04
-    services:
-      postgres:
-        image: postgres:12
-        ports:
-          - 5432:5432
-        env:
-          POSTGRES_USER: invenio
-          POSTGRES_PASSWORD: dbpass123
-      elasticsearch:
-        image: elasticsearch:6.8.23
-        ports:
-          - 9200:9200
-      rabbitmq:
-        image: rabbitmq:latest
-      redis:
-        image: redis:latest
-        ports:
-          - 6379:6379
-    env:
-      SQLALCHEMY_DATABASE_URI: postgresql+psycopg2://invenio:dbpass123@localhost:5432/wekotest
-      CACHE_REDIS_URL: redis://localhost:6379/0
-      SEARCH_ELASTIC_HOSTS: localhost
+    runs-on: ubuntu-latest
     timeout-minutes: 60
     strategy:
       fail-fast: false
+      max-parallel: 4
       matrix:
         module:
+          - invenio-accounts
           - invenio-communities
           - invenio-db
           - invenio-deposit
           - invenio-files-rest
           - invenio-iiif
+          - invenio-indexer
           - invenio-mail
           - invenio-oaiharvester
           - invenio-oaiserver
@@ -65,8 +48,9 @@ jobs:
           - weko-itemtypes-ui
           - weko-logging
           - weko-plugins
-          - weko-records
           - weko-records-ui
+          - weko-records
+          - weko-redis
           - weko-schema-ui
           - weko-search-ui
           - weko-sitemap
@@ -75,37 +59,89 @@ jobs:
           - weko-user-profiles
           - weko-workflow
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: Cache
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cache/pip
-            venv
-          key: unit-test
-      - name: Install system packages
-        run: |
-          sudo apt-get update
-          sudo apt-get install python3-setuptools libpq-dev libedit-dev libsqlite3-dev
-      - name: Setup python
-        uses: actions/setup-python@v5
-        with:
-          python-version: 3.6.15
-      - name: Create venv
-        run: python -m venv venv
-      - name: Install python dependencies
-        run: |
-          source venv/bin/activate
-          python -m pip install -U 'setuptools==57.5.0' wheel 'pip==20.2.4' coveralls PyYAML
-          pip install -r packages.txt
-          pip install --no-deps -r packages-invenio.txt
-          sed -E 's/\/code\///g' requirements-weko-modules.txt | xargs pip install --no-deps
-          python -m pip uninstall -y 'coverage' 'pytest' 'pytest-cov' 'pytest-invenio' 'mock' 'urllib3' 'responses' 'moto'
-          python -m pip install 'coverage==4.5.4' 'pytest==5.4.3' 'pytest-cov==2.10.1' 'pytest-invenio==1.3.4' 'mock==3.0.5' 'urllib3==1.21.1' 'responses==0.10.3' 'moto==1.3.5' pytest-mock
-      - name: Run tests
-        run: |
-          source venv/bin/activate
-          cd modules/${{ matrix.module }}
-          python -m pip install .
-          python setup.py test
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+
+    - name: Install system dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y docker-compose fonts-noto-cjk fonts-noto-color-emoji
+
+    - name: Change owner
+      run: sudo chown -R 1000:1000 ./modules 
+        
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Cache Docker layers
+      uses: actions/cache@v3
+      with:
+        path: /tmp/.buildx-cache
+        key: ${{ runner.os }}-buildx-${{ github.sha }}
+        restore-keys: |
+          ${{ runner.os }}-buildx-
+    - name: Start WEKO containers
+      run: |
+        chmod +x install.sh
+        ./install.sh
+      env:
+        DOCKER_BUILDKIT: 1
+        COMPOSE_DOCKER_CLI_BUILD: 1
+
+    - name: Wait for services to be ready
+      run: |
+        echo "Waiting for WEKO services to start..."
+        start_time=$(date +%s)
+        max_attempts=60
+        attempt=0
+        while [ $attempt -lt $max_attempts ]; do
+          attempt=$((attempt + 1))
+          current_time=$(date +%s)
+          elapsed=$((current_time - start_time))
+          echo "Attempt $attempt/$max_attempts (${elapsed}s elapsed): Checking WEKO availability..."
+          # Check if we can connect to the service
+          if curl -f -s --insecure https://localhost/ > /dev/null 2>&1; then
+            echo "✓ WEKO is ready! (took ${elapsed}s)"
+            exit 0
+          else
+            # Get HTTP response code for debugging
+            http_code=$(curl -s -o /dev/null -w "%{http_code}" --insecure https://localhost/ 2>/dev/null || echo "connection_failed")
+            echo "  ✗ HTTP response: $http_code"
+          fi
+          if [ $attempt -lt $max_attempts ]; then
+            echo "  → Retrying in 5 seconds..."
+            sleep 5
+          fi
+        done
+        echo ""
+        echo "❌ WEKO failed to start within 300 seconds"
+        echo "Final HTTP response: $(curl -s -o /dev/null -w "%{http_code}" --insecure https://localhost/ 2>/dev/null || echo "connection_failed")"
+        echo ""
+        echo "Container status:"
+        docker compose -f docker-compose2.yml ps
+        exit 1
+
+    - name: Install test dependencies
+      run: |
+          docker compose -f docker-compose2.yml exec -T web bash -c "pip install --upgrade pip && pip install tox tox-setuptools-version pytest-timeout"
+
+    - name: Run tox in ${{ matrix.module }}
+      run: |
+          docker compose -f docker-compose2.yml exec -T web bash -c "cd modules/${{ matrix.module }} && tox"
+
+    - name: Show logs if failed
+      if: failure()
+      run: docker compose -f docker-compose2.yml logs
+
+    - name: Stop containers
+      if: always()
+      run: |
+        docker compose -f docker-compose2.yml down -v
+        docker system prune -f
+      
+      

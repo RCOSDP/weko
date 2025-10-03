@@ -1025,6 +1025,15 @@ class WekoDeposit(Deposit):
                         for content in self.jrc['content']:
                             if 'attachment' in content and 'content' in content.get('attachment'):
                                 del content['attachment']['content']
+            
+                try:
+                    feedback_mail_list = FeedbackMailList.get_mail_list_by_item_id(self.id)
+                    if feedback_mail_list:
+                        self.update_feedback_mail()
+                    else:
+                        self.remove_feedback_mail()
+                except TransportError as err:    
+                    raise err
 
                 # Remove large base64 files for release memory
                 if self.jrc.get('content'):
