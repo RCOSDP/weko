@@ -943,6 +943,10 @@ class ItemTypes(RecordBase):
         # with db.session.begin_nested():
         result = {"msg":"Update ItemType({})".format(itemtype_id),"code":0}
         item_type = ItemTypes.get_by_id(itemtype_id)
+        if not item_type:
+            result = {"msg":"ItemType({}) is not exist.".format(itemtype_id),"code":1}
+            return result
+        
         data = pickle.loads(pickle.dumps(item_type.render, -1))
 
         pat1 = re.compile(r'cus_(\d+)')

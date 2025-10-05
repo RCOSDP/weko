@@ -19,14 +19,14 @@ from weko_records.models import ItemMetadata, ItemType, ItemTypeProperty
 import weko_schema_ui
 from weko_admin.models import AdminSettings
 
-def main(restricted_item_type_id, run_es_reindex=False):
+def main(restricted_item_type_id, batch_size=500, run_es_reindex=False):
     """Main context."""
 
     try:
         current_app.logger.info('restricted records update start')
         with db.session.begin_nested():
             update_item_type_property(restricted_item_type_id)
-            update_item_type()
+            update_item_type(batch_size=batch_size)
             # item_metadata and records_metadata update are skipped because of running by sql script.
             # update_item_metadata()
             # update_records_metadata()
@@ -56,12 +56,12 @@ def update_item_type_property(restricted_item_type_id):
         with open('tools/restricted_jsons/item_type_property/forms.json', 'r') as forms_file:
             target_obj.forms = json.load(forms_file)
     else:
-        current_app.logger.error('id: ' + str(restricted_item_type_id) + ' not found')
+        current_app.logger.warning('id: ' + str(restricted_item_type_id) + ' not found')
 
     current_app.logger.info('update item_type_property records success')
 
 
-def update_item_type():
+def update_item_type(batch_size=500):
     """update item_type records"""
 
     def _check_restricted_item_type(item_type):
@@ -241,7 +241,6 @@ def update_records_metadata(bach_size=100):
 
     def _format_json(record_json):
         """get new format of json"""
-        current_app.logger.error(f"record_json before update: {record_json}")
         owner_id = int(record_json.pop('owner', -1))
         shared_user_id = int(record_json.pop('weko_shared_id', -1))
 
@@ -255,7 +254,6 @@ def update_records_metadata(bach_size=100):
 
         record_json['weko_shared_ids'] = shared_user_ids
         record_json['_deposit']['weko_shared_ids'] = shared_user_ids
-        current_app.logger.error(f"record_json after update: {record_json}")
         return record_json
 
     current_app.logger.info('update record_metadata records start')

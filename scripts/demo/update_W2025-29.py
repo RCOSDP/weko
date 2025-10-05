@@ -99,9 +99,13 @@ def renew_all_item_types():
         
         for item_type_id in item_type_ids:
             ret = ItemTypes.reload(item_type_id)
+            if ret.get("code") != 0:
+                current_app.logger.error("Failed to renew item_type_id:{}".format(item_type_id))
+                current_app.logger.error(ret.get("msg"))
+                continue
             item_type_name = ItemTypeName.query.get(item_type_id)
-            current_app.logger.info("itemtype id:{}, itemtype name:{}".format(item_type_id,item_type_name.name))
-            current_app.logger.info(ret['msg'])
+            name = item_type_name.name if item_type_name else "No Name"
+            current_app.logger.info("itemtype id:{}, itemtype name:{}".format(item_type_id, name))
         db.session.commit()
         current_app.logger.info("End renew_all_item_types")
     except Exception as ex:
@@ -140,10 +144,10 @@ if __name__ == "__main__":
     db.event.remove(ir_Timestamp, 'before_update', ir_timestamp_before_update)
     db.event.remove(Weko_Timestamp, 'before_update', weko_timestamp_before_update)
     try:
-        if len(args) == 1:
+        if len(args) == 2:
             restricted_item_type_id = int(args[1])
             main(restricted_item_type_id, start_time)
-        elif len(args) == 2:
+        elif len(args) == 3:
             restricted_item_type_id = int(args[1])
             batch_size = int(args[2])
             main(restricted_item_type_id, start_time, batch_size=batch_size)
