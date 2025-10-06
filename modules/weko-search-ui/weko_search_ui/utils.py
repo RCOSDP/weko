@@ -3144,12 +3144,18 @@ def handle_check_doi(list_record):
         doi_link = doi_domain + "/" + doi
 
         doi_pidstore = identifier.check_pidstore_exist("doi", doi_link)
-        if doi_pidstore and doi_pidstore.status == PIDStatus.DELETED:
+        if any(doi.status == PIDStatus.DELETED for doi in doi_pidstore):
+            current_app.logger.warning(
+                f"Specified DOI was withdrawn: {doi}"
+            )
             error = _(
                 "Specified DOI was withdrawn. Please specify another DOI."
             )
         # Check if DOI already exists, but allows to assign to self.
-        elif doi_pidstore and doi_pidstore.object_uuid != object_uuid:
+        elif any(doi.object_uuid != object_uuid for doi in doi_pidstore):
+            current_app.logger.warning(
+                f"Specified DOI is already exists: {doi}"
+            )
             error = _(
                 "Specified DOI has been used already for another item. "
                 "Please specify another DOI."
@@ -3424,7 +3430,7 @@ def handle_check_operation_flags(list_record, data_path):
         error = None
         if record.get("status") == "new" and flg:
             error = _(
-                "The 'wk:metadataReplace' flag cannot be used "
+                "'wk:metadataReplace' flag cannot be used "
                 "when registering an item."
             )
         elif flg:

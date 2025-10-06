@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: weko-flow 0.1.0.dev20170000\n"
 "Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
-"POT-Creation-Date: 2019-04-25 18:55+0900\n"
+"POT-Creation-Date: 2025-10-03 16:39+0900\n"
 "PO-Revision-Date: 2018-08-01 12:12+0900\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -18,15 +18,15 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.5.1\n"
 
-#: weko_plugins/admin.py:131
+#: weko_plugins/admin.py:122
 msgid "Plugins"
 msgstr ""
 
-#: weko_plugins/admin.py:132
+#: weko_plugins/admin.py:123
 msgid "Plugin List"
 msgstr ""
 
-#: weko_plugins/views.py:41
+#: weko_plugins/views.py:39
 msgid "weko-plugins"
 msgstr ""
 
@@ -39,54 +39,77 @@ msgstr ""
 msgid "Sending"
 msgstr "Send"
 
+#: weko_plugins/templates/weko_plugins/admin/plugin_setting.html:43
 #: weko_plugins/templates/weko_plugins/plugin_setting.html:42
 msgid "Reset"
 msgstr ""
 
+#: weko_plugins/templates/weko_plugins/admin/plugin_detail.html:35
 #: weko_plugins/templates/weko_plugins/macros/display_plugin.html:24
 msgid "Name"
 msgstr ""
 
+#: weko_plugins/templates/weko_plugins/admin/plugin_detail.html:41
 #: weko_plugins/templates/weko_plugins/macros/display_plugin.html:30
 msgid "Author"
 msgstr ""
 
+#: weko_plugins/templates/weko_plugins/admin/plugin_detail.html:47
 #: weko_plugins/templates/weko_plugins/macros/display_plugin.html:36
 msgid "Description"
 msgstr ""
 
+#: weko_plugins/templates/weko_plugins/admin/plugin_detail.html:53
 #: weko_plugins/templates/weko_plugins/macros/display_plugin.html:42
 msgid "ID"
 msgstr ""
 
+#: weko_plugins/templates/weko_plugins/admin/plugin_detail.html:59
 #: weko_plugins/templates/weko_plugins/macros/display_plugin.html:48
 msgid "Version"
 msgstr ""
 
+#: weko_plugins/templates/weko_plugins/admin/plugin_detail.html:65
 #: weko_plugins/templates/weko_plugins/macros/display_plugin.html:54
 msgid "License"
 msgstr ""
 
+#: weko_plugins/templates/weko_plugins/admin/plugin_detail.html:75
 #: weko_plugins/templates/weko_plugins/macros/display_plugin.html:64
 #: weko_plugins/templates/weko_plugins/macros/display_plugin.html:67
 msgid "WebSite"
 msgstr ""
 
-#~ msgid "Setting"
-#~ msgstr ""
+#: weko_plugins/templates/weko_plugins/admin/plugin_detail.html:82
+#: weko_plugins/templates/weko_plugins/admin/plugin_list.html:43
+msgid "Setting"
+msgstr ""
 
-#~ msgid "Disable"
-#~ msgstr ""
+#: weko_plugins/templates/weko_plugins/admin/plugin_detail.html:87
+#: weko_plugins/templates/weko_plugins/admin/plugin_list.html:48
+msgid "Disable"
+msgstr ""
 
-#~ msgid "Enable"
-#~ msgstr ""
+#: weko_plugins/templates/weko_plugins/admin/plugin_detail.html:93
+#: weko_plugins/templates/weko_plugins/admin/plugin_list.html:53
+msgid "Enable"
+msgstr ""
 
-#~ msgid "Delete"
-#~ msgstr ""
+#: weko_plugins/templates/weko_plugins/admin/plugin_detail.html:98
+#: weko_plugins/templates/weko_plugins/admin/plugin_list.html:58
+msgid "Delete"
+msgstr ""
 
-#~ msgid "Back"
-#~ msgstr ""
+#: weko_plugins/templates/weko_plugins/admin/plugin_detail.html:105
+#: weko_plugins/templates/weko_plugins/admin/plugin_setting.html:50
+msgid "Back"
+msgstr ""
 
-#~ msgid "Detail"
-#~ msgstr ""
+#: weko_plugins/templates/weko_plugins/admin/plugin_list.html:39
+msgid "Detail"
+msgstr ""
+
+#: weko_plugins/templates/weko_plugins/admin/plugin_setting.html:40
+msgid "Send"
+msgstr ""
 

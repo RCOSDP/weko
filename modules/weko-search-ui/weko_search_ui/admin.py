@@ -285,10 +285,10 @@ class ItemManagementBulkSearch(BaseView):
             )
             else None
         )
-        if "community" in get_args:
+        if "c" in get_args:
             from weko_workflow.api import GetCommunity
 
-            comm = GetCommunity.get_community_by_id(request.args.get("community"))
+            comm = GetCommunity.get_community_by_id(request.args.get("c"))
             ctx = {"community": comm}
             if comm is not None:
                 community_id = comm.id

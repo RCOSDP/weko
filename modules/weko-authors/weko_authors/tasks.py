@@ -49,19 +49,19 @@ from .utils import (
 )
 
 @shared_task
-def export_all(export_target):
+def export_all(export_target, user_id):
     """Export all creator."""
     try:
         start_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        set_export_status(start_time=start_time)
+        set_export_status(user_id, start_time=start_time)
         file_uri = None
         if export_target == "author_db":
-            file_uri = export_authors()
+            file_uri = export_authors(user_id)
         elif export_target == "id_prefix" or export_target == "affiliation_id":
-            file_uri = export_prefix(export_target)
+            file_uri = export_prefix(export_target, user_id)
         if file_uri:
             end_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            save_export_url(start_time, end_time, file_uri)
+            save_export_url(start_time, end_time, file_uri, user_id)
 
         return file_uri
     except Exception as ex:

@@ -8,11 +8,12 @@ import datetime
 import json
 from unittest.mock import mock_open
 
+from invenio_accounts.testutils import login_user_via_session
 from invenio_indexer.api import RecordIndexer
 from invenio_cache import current_cache
 import csv
 
-from weko_authors.models import Authors
+from weko_authors.models import Authors, AuthorsPrefixSettings, AuthorsAffiliationSettings
 from weko_authors.config import WEKO_AUTHORS_FILE_MAPPING
 from weko_authors.utils import (
     get_author_prefix_obj,
@@ -50,9 +51,15 @@ from weko_authors.utils import (
     band_check_file_for_user,
     prepare_import_data,
     write_to_tempfile,
-    create_result_file_for_user
+    create_result_file_for_user,
+    validate_community_ids,
+    get_managed_community,
+    check_delete_entity,
+    check_delete_author,
+    check_delete_prefix,
+    check_delete_affiliation
 )
-
+from weko_authors.errors import AuthorsValidationError, AuthorsPermissionError
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_utils.py -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-authors/.tox/c1/tmp
 
 
@@ -106,47 +113,54 @@ def test_check_email_existed(app,mocker):
 # def get_export_status():
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_utils.py::test_get_export_status -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
 def test_get_export_status(app):
-    current_cache.set("weko_authors_export_status","test_value")
-    result = get_export_status()
+    current_cache.set("weko_authors_export_status_1000","test_value")
+    result = get_export_status(user_id=1000)
     assert result == "test_value"
+
+    result = get_export_status(user_id=1)
+    assert result == {}
+
+    current_cache.delete("weko_authors_export_status_1000")
 
 
 # def set_export_status(start_time=None, task_id=None):
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_utils.py::test_set_export_status -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
 def test_set_export_status(app):
-    current_cache.delete("weko_authors_export_status")
-    result = set_export_status()
+    current_cache.delete("weko_authors_export_status_1000")
+    result = set_export_status(1000)
     assert result == {}
-    assert current_cache.get("weko_authors_export_status") == {}
+    assert current_cache.get("weko_authors_export_status_1000") == {}
 
-    result = set_export_status("start_time","test_task_id")
+    result = set_export_status(1000, "start_time", "test_task_id")
     assert result == {"start_time":"start_time","task_id":"test_task_id"}
-    assert current_cache.get("weko_authors_export_status") == {"start_time":"start_time","task_id":"test_task_id"}
+    assert current_cache.get("weko_authors_export_status_1000") == {"start_time":"start_time","task_id":"test_task_id"}
+
+    current_cache.delete("weko_authors_export_status_1000")
 
 # def delete_export_status():
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_utils.py::test_delete_export_status -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
 def test_delete_export_status(app):
-    current_cache.set("weko_authors_export_status","test_value")
-    delete_export_status()
-    assert current_cache.get("weko_authors_export_status") == None
+    current_cache.set("weko_authors_export_status_1000","test_value")
+    delete_export_status(1000)
+    assert current_cache.get("weko_authors_export_status_1000") == None
 
 
 # def get_export_url():
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_utils.py::test_get_export_url -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
 def test_get_export_url(app):
-    current_cache.set("weko_authors_exported_url","test/test.txt")
-    result = get_export_url()
+    current_cache.set("weko_authors_exported_url_1000","test/test.txt")
+    result = get_export_url(1000)
     assert result == "test/test.txt"
-    current_cache.delete("weko_authors_exported_url")
+    current_cache.delete("weko_authors_exported_url_1000")
 
 
 # def save_export_url(start_time, end_time, file_uri):
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_utils.py::test_get_export_url -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
 def test_save_export_url(app):
-    result = save_export_url("start_time","end_time","test_file.txt")
+    result = save_export_url("start_time","end_time","test_file.txt", 1000)
     assert result == {"start_time":"start_time","end_time":"end_time","file_uri":"test_file.txt"}
-    assert current_cache.get("weko_authors_exported_url") == {"start_time":"start_time","end_time":"end_time","file_uri":"test_file.txt"}
-    current_cache.delete("weko_authors_exported_url")
+    assert current_cache.get("weko_authors_exported_url_1000") == {"start_time":"start_time","end_time":"end_time","file_uri":"test_file.txt"}
+    current_cache.delete("weko_authors_exported_url_1000")
 
 
 
@@ -587,10 +601,14 @@ def test_validate_import_data(authors_prefix_settings,mocker):
             "emailInfo": [{"email": "test.taro@test.org"}],
             "is_deleted": "",
             "status": "update",
+            "communityIds":[]
         }
     ]
     mocker.patch("weko_authors.utils.WekoAuthors.get_weko_id_by_pk_id",return_value="1")
     mocker.patch("weko_authors.utils.check_weko_id_is_exits_for_import",return_value=[])
+    mock_author = mocker.patch("weko_authors.utils.Authors")
+    mock_author.query.return_value.get.return_value = [MagicMock(communities=MagicMock(id="community_id"))]
+    mocker.patch("weko_authors.utils.validate_community_ids", return_value=[])
     result = validate_import_data(file_format,file_data,mapping_ids,mapping,list_import_id)
     assert result == test
 
@@ -655,6 +673,7 @@ def test_validate_import_data(authors_prefix_settings,mocker):
             "emailInfo": [{"email": "test.taro@test.org"}],
             "is_deleted": "",
             "status": "update",
+            "communityIds": [],
         },
         {
             "pk_id": "1",
@@ -674,6 +693,7 @@ def test_validate_import_data(authors_prefix_settings,mocker):
             "is_deleted": "",
             "status": "update",
             "errors": ["There is duplicated data in the tsv file."],
+            "communityIds": []
         },
     ]
     result = validate_import_data(file_format,file_data,mapping_ids,mapping,list_import_id)
@@ -751,6 +771,7 @@ def test_validate_import_data(authors_prefix_settings,mocker):
             "is_deleted": "",
             "status": "update",
             "errors": ["authorNameInfo[0].familyName is required item."],
+            "communityIds": []
         }
     ]
     mocker.patch("weko_authors.utils.WekoAuthors.get_weko_id_by_pk_id",return_value="1")
@@ -827,6 +848,7 @@ def test_validate_import_data(authors_prefix_settings,mocker):
             "is_deleted": "",
             "status": "update",
             "errors": ["authorNameInfo[0].language should be set by one of ['ja', 'en']."],
+            "communityIds": []
         }
     ]
     mocker.patch("weko_authors.utils.WekoAuthors.get_weko_id_by_pk_id",return_value="1")
@@ -916,6 +938,7 @@ def test_validate_import_data(authors_prefix_settings,mocker):
             "status": "new",
             "errors": ["Specified WEKO ID already exist.", "validator error"],
             "warnings": ["idType warning"],
+            "communityIds": []
         }
     ]
     mocker.patch("weko_authors.utils.WekoAuthors.get_weko_id_by_pk_id",return_value="1")
@@ -1006,6 +1029,7 @@ def test_validate_import_data(authors_prefix_settings,mocker):
             "emailInfo": [{"email": "test.taro@test.org"}],
             "is_deleted": "",
             "status": "update",
+            "communityIds": []
         }
     ]
     mocker.patch("weko_authors.utils.WekoAuthors.get_weko_id_by_pk_id",return_value="1")
@@ -1014,6 +1038,429 @@ def test_validate_import_data(authors_prefix_settings,mocker):
     mocker.patch("weko_authors.utils.validate_external_author_identifier",return_value="")
     mocker.patch("weko_authors.utils.autofill_data")
     mocker.patch("weko_authors.utils.convert_data_by_mask")
+    result = validate_import_data(file_format,file_data,mapping_ids,mapping,list_import_id)
+    assert result == test
+
+    # validate_commmunity_ids raise exception
+    mocker.patch("weko_authors.utils.validate_community_ids", side_effect=AuthorsValidationError(description="test"))
+    file_format = "tsv"
+    file_data = [
+        {
+            "pk_id": "1",
+            "weko_id": "1",
+            "authorNameInfo": [
+                {
+                    "familyName": "テスト",
+                    "firstName": "太郎",
+                    "language": "ja",
+                    "nameFormat": "familyNmAndNm",
+                    "nameShowFlg": "Y",
+                }
+            ],
+            "authorIdInfo": [
+                {"idType": "ORCID", "authorId": "1234", "authorIdShowFlg": "Y"}
+            ],
+            "emailInfo": [{"email": "test.taro@test.org"}],
+            "is_deleted": "",
+        }
+    ]
+    mapping_ids = ["pk_id",
+                 "authorNameInfo[0].familyName",
+                 "authorNameInfo[0].firstName",
+                 "authorNameInfo[0].language",
+                 "authorNameInfo[0].nameFormat",
+                 "authorNameInfo[0].nameShowFlg",
+                 "authorIdInfo[0].idType",
+                 "authorIdInfo[0].authorId",
+                 "authorIdInfo[0].authorIdShowFlg",
+                 "emailInfo[0].email",
+                 "is_deleted"
+                 ]
+    mapping = [
+        {"key": "pk_id", "validation": {}},
+        {"key": "authorNameInfo[0].familyName", "validation": {}},
+        {"key": "authorNameInfo[0].firstName", "validation": {}},
+        {"key": "authorNameInfo[0].language", "validation": {"map": ["ja", "en"]}},
+        {"key": "authorNameInfo[0].nameFormat", "validation": {"map": ["familyNmAndNm"]}},
+        {"key": "authorNameInfo[0].nameShowFlg", "validation": {"map": ["Y", "N"]}},
+        {
+            "key": "authorIdInfo[0].idType",
+            "validation": {
+                "validator": {
+                    "class_name": "weko_authors.contrib.validation",
+                    "func_name": "validate_identifier_scheme",
+                }
+            },
+        },
+        {
+            "key": "authorIdInfo[0].authorId",
+            "validation": {"required": {"if": ["authorIdInfo[0].idType"]}},
+        },
+        {"key": "authorIdInfo[0].authorIdShowFlg", "validation": {"map": ["Y", "N"]}},
+        {"key": "emailInfo[0].email", "validation": {}},
+        {"key": "is_deleted", "validation": {"map": ["D"]}},
+    ]
+    list_import_id = []
+    test = [
+        {
+            "pk_id": "1",
+            "weko_id": "1",
+            "current_weko_id": "1",
+            "authorNameInfo": [
+                {
+                    "familyName": "テスト",
+                    "firstName": "太郎",
+                    "language": "ja",
+                    "nameFormat": "familyNmAndNm",
+                    "nameShowFlg": "Y",
+                }
+            ],
+            "authorIdInfo": [{"idType": "2", "authorId": "1234", "authorIdShowFlg": "Y"}],
+            "emailInfo": [{"email": "test.taro@test.org"}],
+            "is_deleted": "",
+            "status": "update",
+            "errors": ["test"],
+        }
+    ]
+    result = validate_import_data(file_format,file_data,mapping_ids,mapping,list_import_id)
+    assert result == test
+
+    # is_deleted = D
+    file_format = "tsv"
+    file_data = [
+        {
+            "pk_id": "1",
+            "weko_id": "1",
+            "authorNameInfo": [
+                {
+                    "familyName": "テスト",
+                    "firstName": "太郎",
+                    "language": "ja",
+                    "nameFormat": "familyNmAndNm",
+                    "nameShowFlg": "Y",
+                }
+            ],
+            "authorIdInfo": [
+                {"idType": "ORCID", "authorId": "1234", "authorIdShowFlg": "Y"}
+            ],
+            "emailInfo": [{"email": "test.taro@test.org"}],
+            "is_deleted": "D",
+        }
+    ]
+    mapping_ids = ["pk_id",
+                 "authorNameInfo[0].familyName",
+                 "authorNameInfo[0].firstName",
+                 "authorNameInfo[0].language",
+                 "authorNameInfo[0].nameFormat",
+                 "authorNameInfo[0].nameShowFlg",
+                 "authorIdInfo[0].idType",
+                 "authorIdInfo[0].authorId",
+                 "authorIdInfo[0].authorIdShowFlg",
+                 "emailInfo[0].email",
+                 "is_deleted"
+                 ]
+    mapping = [
+        {"key": "pk_id", "validation": {}},
+        {"key": "authorNameInfo[0].familyName", "validation": {}},
+        {"key": "authorNameInfo[0].firstName", "validation": {}},
+        {"key": "authorNameInfo[0].language", "validation": {"map": ["ja", "en"]}},
+        {"key": "authorNameInfo[0].nameFormat", "validation": {"map": ["familyNmAndNm"]}},
+        {"key": "authorNameInfo[0].nameShowFlg", "validation": {"map": ["Y", "N"]}},
+        {
+            "key": "authorIdInfo[0].idType",
+            "validation": {
+                "validator": {
+                    "class_name": "weko_authors.contrib.validation",
+                    "func_name": "validate_identifier_scheme",
+                }
+            },
+        },
+        {
+            "key": "authorIdInfo[0].authorId",
+            "validation": {"required": {"if": ["authorIdInfo[0].idType"]}},
+        },
+        {"key": "authorIdInfo[0].authorIdShowFlg", "validation": {"map": ["Y", "N"]}},
+        {"key": "emailInfo[0].email", "validation": {}},
+        {"key": "is_deleted", "validation": {"map": ["D"]}},
+    ]
+    list_import_id = []
+    test = [
+        {
+            "pk_id": "1",
+            "weko_id": "1",
+            "current_weko_id": "1",
+            "authorNameInfo": [
+                {
+                    "familyName": "テスト",
+                    "firstName": "太郎",
+                    "language": "ja",
+                    "nameFormat": "familyNmAndNm",
+                    "nameShowFlg": "Y",
+                }
+            ],
+            "authorIdInfo": [{"idType": "2", "authorId": "1234", "authorIdShowFlg": "Y"}],
+            "emailInfo": [{"email": "test.taro@test.org"}],
+            "is_deleted": "D",
+            "status": "deleted"
+        }
+    ]
+    mocker.patch("weko_authors.utils.WekoAuthors.get_weko_id_by_pk_id",return_value="1")
+    mocker.patch("weko_authors.utils.check_weko_id_is_exits_for_import",return_value=[])
+    mocker.patch("weko_authors.utils.get_count_item_link", return_value=0)
+    mocker.patch("weko_authors.utils.check_delete_author", return_value=(True, None))
+    result = validate_import_data(file_format,file_data,mapping_ids,mapping,list_import_id)
+    assert result == test
+
+    # is_deleted = D and check_delete_author return False
+    file_format = "tsv"
+    file_data = [
+        {
+            "pk_id": "1",
+            "weko_id": "1",
+            "authorNameInfo": [
+                {
+                    "familyName": "テスト",
+                    "firstName": "太郎",
+                    "language": "ja",
+                    "nameFormat": "familyNmAndNm",
+                    "nameShowFlg": "Y",
+                }
+            ],
+            "authorIdInfo": [
+                {"idType": "ORCID", "authorId": "1234", "authorIdShowFlg": "Y"}
+            ],
+            "emailInfo": [{"email": "test.taro@test.org"}],
+            "is_deleted": "D",
+        }
+    ]
+    mapping_ids = ["pk_id",
+                 "authorNameInfo[0].familyName",
+                 "authorNameInfo[0].firstName",
+                 "authorNameInfo[0].language",
+                 "authorNameInfo[0].nameFormat",
+                 "authorNameInfo[0].nameShowFlg",
+                 "authorIdInfo[0].idType",
+                 "authorIdInfo[0].authorId",
+                 "authorIdInfo[0].authorIdShowFlg",
+                 "emailInfo[0].email",
+                 "is_deleted"
+                 ]
+    mapping = [
+        {"key": "pk_id", "validation": {}},
+        {"key": "authorNameInfo[0].familyName", "validation": {}},
+        {"key": "authorNameInfo[0].firstName", "validation": {}},
+        {"key": "authorNameInfo[0].language", "validation": {"map": ["ja", "en"]}},
+        {"key": "authorNameInfo[0].nameFormat", "validation": {"map": ["familyNmAndNm"]}},
+        {"key": "authorNameInfo[0].nameShowFlg", "validation": {"map": ["Y", "N"]}},
+        {
+            "key": "authorIdInfo[0].idType",
+            "validation": {
+                "validator": {
+                    "class_name": "weko_authors.contrib.validation",
+                    "func_name": "validate_identifier_scheme",
+                }
+            },
+        },
+        {
+            "key": "authorIdInfo[0].authorId",
+            "validation": {"required": {"if": ["authorIdInfo[0].idType"]}},
+        },
+        {"key": "authorIdInfo[0].authorIdShowFlg", "validation": {"map": ["Y", "N"]}},
+        {"key": "emailInfo[0].email", "validation": {}},
+        {"key": "is_deleted", "validation": {"map": ["D"]}},
+    ]
+    list_import_id = []
+    test = [
+        {
+            "pk_id": "1",
+            "weko_id": "1",
+            "current_weko_id": "1",
+            "authorNameInfo": [
+                {
+                    "familyName": "テスト",
+                    "firstName": "太郎",
+                    "language": "ja",
+                    "nameFormat": "familyNmAndNm",
+                    "nameShowFlg": "Y",
+                }
+            ],
+            "authorIdInfo": [{"idType": "2", "authorId": "1234", "authorIdShowFlg": "Y"}],
+            "emailInfo": [{"email": "test.taro@test.org"}],
+            "is_deleted": "D",
+            "status": "deleted",
+            "errors": ["test_error"]
+        }
+    ]
+    mocker.patch("weko_authors.utils.check_delete_author", return_value=(False, "test_error"))
+    result = validate_import_data(file_format,file_data,mapping_ids,mapping,list_import_id)
+    assert result == test
+
+    # validate_commmunity_ids raise exception
+    mocker.patch("weko_authors.utils.validate_community_ids", side_effect=AuthorsValidationError(description="test"))
+    file_format = "tsv"
+    file_data = [
+        {
+            "pk_id": "1",
+            "weko_id": "1",
+            "authorNameInfo": [
+                {
+                    "familyName": "テスト",
+                    "firstName": "太郎",
+                    "language": "ja",
+                    "nameFormat": "familyNmAndNm",
+                    "nameShowFlg": "Y",
+                }
+            ],
+            "authorIdInfo": [
+                {"idType": "ORCID", "authorId": "1234", "authorIdShowFlg": "Y"}
+            ],
+            "emailInfo": [{"email": "test.taro@test.org"}],
+            "is_deleted": "",
+        }
+    ]
+    mapping_ids = ["pk_id",
+                 "authorNameInfo[0].familyName",
+                 "authorNameInfo[0].firstName",
+                 "authorNameInfo[0].language",
+                 "authorNameInfo[0].nameFormat",
+                 "authorNameInfo[0].nameShowFlg",
+                 "authorIdInfo[0].idType",
+                 "authorIdInfo[0].authorId",
+                 "authorIdInfo[0].authorIdShowFlg",
+                 "emailInfo[0].email",
+                 "is_deleted"
+                 ]
+    mapping = [
+        {"key": "pk_id", "validation": {}},
+        {"key": "authorNameInfo[0].familyName", "validation": {}},
+        {"key": "authorNameInfo[0].firstName", "validation": {}},
+        {"key": "authorNameInfo[0].language", "validation": {"map": ["ja", "en"]}},
+        {"key": "authorNameInfo[0].nameFormat", "validation": {"map": ["familyNmAndNm"]}},
+        {"key": "authorNameInfo[0].nameShowFlg", "validation": {"map": ["Y", "N"]}},
+        {
+            "key": "authorIdInfo[0].idType",
+            "validation": {
+                "validator": {
+                    "class_name": "weko_authors.contrib.validation",
+                    "func_name": "validate_identifier_scheme",
+                }
+            },
+        },
+        {
+            "key": "authorIdInfo[0].authorId",
+            "validation": {"required": {"if": ["authorIdInfo[0].idType"]}},
+        },
+        {"key": "authorIdInfo[0].authorIdShowFlg", "validation": {"map": ["Y", "N"]}},
+        {"key": "emailInfo[0].email", "validation": {}},
+        {"key": "is_deleted", "validation": {"map": ["D"]}},
+    ]
+    list_import_id = []
+    test = [
+        {
+            "pk_id": "1",
+            "weko_id": "1",
+            "current_weko_id": "1",
+            "authorNameInfo": [
+                {
+                    "familyName": "テスト",
+                    "firstName": "太郎",
+                    "language": "ja",
+                    "nameFormat": "familyNmAndNm",
+                    "nameShowFlg": "Y",
+                }
+            ],
+            "authorIdInfo": [{"idType": "2", "authorId": "1234", "authorIdShowFlg": "Y"}],
+            "emailInfo": [{"email": "test.taro@test.org"}],
+            "is_deleted": "",
+            "status": "update",
+            "errors": ["test"],
+        }
+    ]
+    result = validate_import_data(file_format,file_data,mapping_ids,mapping,list_import_id)
+    assert result == test
+
+    # invalid status and not work set_record_status
+    file_format = "tsv"
+    file_data = [
+        {
+            "pk_id": "1",
+            "weko_id": "1",
+            "authorNameInfo": [
+                {
+                    "familyName": "テスト",
+                    "firstName": "太郎",
+                    "language": "ja",
+                    "nameFormat": "familyNmAndNm",
+                    "nameShowFlg": "Y",
+                }
+            ],
+            "authorIdInfo": [
+                {"idType": "ORCID", "authorId": "1234", "authorIdShowFlg": "Y"}
+            ],
+            "emailInfo": [{"email": "test.taro@test.org"}],
+            "is_deleted": "",
+            "status": "invalid"
+        }
+    ]
+    mapping_ids = ["pk_id",
+                 "authorNameInfo[0].familyName",
+                 "authorNameInfo[0].firstName",
+                 "authorNameInfo[0].language",
+                 "authorNameInfo[0].nameFormat",
+                 "authorNameInfo[0].nameShowFlg",
+                 "authorIdInfo[0].idType",
+                 "authorIdInfo[0].authorId",
+                 "authorIdInfo[0].authorIdShowFlg",
+                 "emailInfo[0].email",
+                 "is_deleted"
+                 ]
+    mapping = [
+        {"key": "pk_id", "validation": {}},
+        {"key": "authorNameInfo[0].familyName", "validation": {}},
+        {"key": "authorNameInfo[0].firstName", "validation": {}},
+        {"key": "authorNameInfo[0].language", "validation": {"map": ["ja", "en"]}},
+        {"key": "authorNameInfo[0].nameFormat", "validation": {"map": ["familyNmAndNm"]}},
+        {"key": "authorNameInfo[0].nameShowFlg", "validation": {"map": ["Y", "N"]}},
+        {
+            "key": "authorIdInfo[0].idType",
+            "validation": {
+                "validator": {
+                    "class_name": "weko_authors.contrib.validation",
+                    "func_name": "validate_identifier_scheme",
+                }
+            },
+        },
+        {
+            "key": "authorIdInfo[0].authorId",
+            "validation": {"required": {"if": ["authorIdInfo[0].idType"]}},
+        },
+        {"key": "authorIdInfo[0].authorIdShowFlg", "validation": {"map": ["Y", "N"]}},
+        {"key": "emailInfo[0].email", "validation": {}},
+        {"key": "is_deleted", "validation": {"map": ["D"]}},
+    ]
+    list_import_id = []
+    test = [
+        {
+            "pk_id": "1",
+            "weko_id": "1",
+            "current_weko_id": "1",
+            "authorNameInfo": [
+                {
+                    "familyName": "テスト",
+                    "firstName": "太郎",
+                    "language": "ja",
+                    "nameFormat": "familyNmAndNm",
+                    "nameShowFlg": "Y",
+                }
+            ],
+            "authorIdInfo": [{"idType": "2", "authorId": "1234", "authorIdShowFlg": "Y"}],
+            "emailInfo": [{"email": "test.taro@test.org"}],
+            "is_deleted": "",
+            "status": "invalid",
+        }
+    ]
+    mocker.patch("weko_authors.utils.validate_community_ids", return_value=[])
+    mocker.patch("weko_authors.utils.set_record_status")
     result = validate_import_data(file_format,file_data,mapping_ids,mapping,list_import_id)
     assert result == test
 
@@ -1571,15 +2018,15 @@ class TestDeleteExportUrl:
     # 正常系: キャッシュキーが存在する場合
     def test_delete_export_url_key_exists(self, app2):
         with patch('weko_authors.utils.current_cache') as mock_cache:
-            delete_export_url()
-            mock_cache.delete.assert_called_once_with(current_app.config["WEKO_AUTHORS_EXPORT_CACHE_URL_KEY"])
+            delete_export_url(1000)
+            mock_cache.delete.assert_called_once_with(f"{current_app.config['WEKO_AUTHORS_EXPORT_CACHE_URL_KEY']}_1000")
 
     # 正常系: キャッシュキーが存在しない場合
     def test_delete_export_url_key_not_exists(self, app2):
         with patch('weko_authors.utils.current_cache') as mock_cache:
             mock_cache.delete.return_value = None  # Simulate key not existing
-            delete_export_url()
-            mock_cache.delete.assert_called_once_with(current_app.config["WEKO_AUTHORS_EXPORT_CACHE_URL_KEY"])
+            delete_export_url(1000)
+            mock_cache.delete.assert_called_once_with(f"{current_app.config['WEKO_AUTHORS_EXPORT_CACHE_URL_KEY']}_1000")
 
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_utils.py::TestHandleException -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-authors/.tox/c1/tmp
 class TestHandleException:
@@ -1622,6 +2069,7 @@ class TestExportAuthors:
             "WEKO_AUTHORS_EXPORT_CACHE_STOP_POINT_KEY": "stop_point_key",
             "WEKO_AUTHORS_FILE_MAPPING": {"key": "value"},
             "WEKO_AUTHORS_FILE_MAPPING_FOR_AFFILIATION": {"aff_key": "aff_value"},
+            "WEKO_AUTHORS_FILE_MAPPING_FOR_COMMUNITY": {"comm_key": "comm_value"},
             "WEKO_AUTHORS_EXPORT_CACHE_TEMP_FILE_PATH_KEY": "temp_file_path_key",
             "WEKO_AUTHORS_EXPORT_TARGET_CACHE_KEY": "target_cache_key"
         }
@@ -1643,18 +2091,23 @@ class TestExportAuthors:
             patch('weko_authors.utils.handle_exception') as mock_handle, \
             patch('weko_authors.utils.io.BufferedReader') as mock_reader, \
             patch('weko_authors.utils.traceback') as mock_traceback, \
-            patch('weko_authors.utils.stdout') as mock_stdout:
+            patch('weko_authors.utils.stdout') as mock_stdout, \
+            patch('weko_authors.utils.User.query') as mock_user_query, \
+            patch('weko_authors.utils.get_managed_community') as mock_get_community:
 
             # モックオブジェクトの設定
             mock_app.config = setup_app_config
             mock_app.logger = MagicMock()
 
-            mock_cache.get.side_effect = lambda key: None if key == "stop_point_key" else "/tmp/test_file.csv"
+            mock_cache.get.side_effect = lambda key: None if key == "stop_point_key_1" else "/tmp/test_file.csv"
             mock_cache.delete = MagicMock()
             mock_cache.set = MagicMock()
 
+            mock_user_query.get.return_value = MagicMock()
+            mock_get_community.return_value = ([MagicMock()], True)
+
             mock_weko.get_records_count.return_value = 2000
-            mock_weko.mapping_max_item.return_value = ({"key": "value"}, {"aff_key": "aff_value"})
+            mock_weko.mapping_max_item.return_value = ({"key": "value"}, {"aff_key": "aff_value"}, {"comm_key": "comm_value"})
             mock_weko.get_identifier_scheme_info.return_value = {"scheme1": "info1"}
             mock_weko.get_affiliation_identifier_scheme_info.return_value = {"aff_scheme1": "aff_info1"}
             mock_weko.get_by_range.return_value = [{"id": 1}, {"id": 2}]
@@ -1694,7 +2147,9 @@ class TestExportAuthors:
                 'reader_instance': mock_reader_instance,
                 'file_instance': mock_file_instance,
                 'traceback': mock_traceback,
-                'stdout': mock_stdout
+                'stdout': mock_stdout,
+                'get_community': mock_get_community,
+                'user_query': mock_user_query
             }
 
 
@@ -1711,16 +2166,16 @@ class TestExportAuthors:
         """
 
 
-        result = export_authors()
+        result = export_authors(1)
 
         # 検証
         assert result == "file://test_uri"
-        mock_dependencies['cache'].delete.assert_called_once_with("stop_point_key")
+        mock_dependencies['cache'].delete.assert_called_once_with("stop_point_key_1")
         mock_dependencies['write'].assert_called()
         mock_dependencies['os'].remove.assert_called_once_with("/tmp/test_file.csv")
         mock_dependencies['db'].session.commit.assert_called_once()
         mock_dependencies['cache'].set.assert_called_once_with(
-            "target_cache_key", "author_db", timeout=0
+            "target_cache_key_1", "author_db", timeout=0
         )
 
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_utils.py::TestExportAuthors::test_with_stop_point -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-authors/.tox/c1/tmp
@@ -1735,16 +2190,16 @@ class TestExportAuthors:
         - キャッシュからstop_pointが削除される
         """
         # stop_pointを設定
-        mock_dependencies['cache'].get.side_effect = lambda key: 500 if key == "stop_point_key" else "/tmp/test_file.csv"
+        mock_dependencies['cache'].get.side_effect = lambda key: 500 if key == "stop_point_key_1" else "/tmp/test_file.csv"
 
-        result = export_authors()
+        result = export_authors(1)
 
         # 検証
         assert result == "file://test_uri"
-        mock_dependencies['cache'].delete.assert_called_once_with("stop_point_key")
+        mock_dependencies['cache'].delete.assert_called_once_with("stop_point_key_1")
         # 500から始まって1500で終わることを確認
         mock_dependencies['app'].logger.info.assert_any_call("Export authors start_point：500")
-        mock_dependencies['weko'].get_by_range.assert_called_with(1500, 1000, False, False)
+        mock_dependencies['weko'].get_by_range.assert_called_with(1500, 1000, False, False, None)
 
 
     def test_with_existing_cache_url(self, mock_dependencies):
@@ -1761,7 +2216,7 @@ class TestExportAuthors:
 
 
 
-        result = export_authors()
+        result = export_authors(1)
 
         # 検証
         assert result == "file://test_uri"
@@ -1784,12 +2239,12 @@ class TestExportAuthors:
 
 
 
-        result = export_authors()
+        result = export_authors(1)
 
         # 検証
         assert result == "file://test_uri"
         mock_dependencies['handle'].assert_called_once()
-        mock_dependencies['weko'].get_records_count.assert_called_with(False, False)
+        mock_dependencies['weko'].get_records_count.assert_called_with(False, False, None)
 
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_utils.py::TestExportAuthors::test_redis_error_on_mapping_with_retry_success -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-authors/.tox/c1/tmp
     def test_redis_error_on_mapping_with_retry_success(self, mock_dependencies):
@@ -1802,11 +2257,11 @@ class TestExportAuthors:
         - 非nullのfile_uriが返される
         """
         # 1回目のマッピング取得でRedisエラー、2回目は成功するように設定
-        mock_dependencies['weko'].mapping_max_item.side_effect = [RedisError("Redis Error"), ({"key": "value"}, {"aff_key": "aff_value"})]
+        mock_dependencies['weko'].mapping_max_item.side_effect = [RedisError("Redis Error"), ({"key": "value"}, {"aff_key": "aff_value"}, {"com_key": "com_value"})]
 
 
 
-        result = export_authors()
+        result = export_authors(1)
 
         # 検証
         assert result == "file://test_uri"
@@ -1827,7 +2282,7 @@ class TestExportAuthors:
 
 
 
-        result = export_authors()
+        result = export_authors(1)
 
         # 検証
         assert result == "file://test_uri"
@@ -1848,7 +2303,7 @@ class TestExportAuthors:
 
 
 
-        result = export_authors()
+        result = export_authors(1)
 
         # 検証
         mock_dependencies['handle'].assert_called_once_with(
@@ -1877,7 +2332,7 @@ class TestExportAuthors:
 
 
 
-        result = export_authors()
+        result = export_authors(1)
 
         # 検証
         mock_dependencies['handle'].assert_called_once_with(
@@ -1900,10 +2355,30 @@ class TestExportAuthors:
         # 1回目のマッピング取得でRedisエラー、2回目は成功するように設定
         mock_dependencies['weko'].prepare_export_data.side_effect = [TimeoutError("TimeoutError"), ({"key": "value"}, {"aff_key": "aff_value"})]
 
-        result = export_authors()
+        result = export_authors(1)
 
         # 検証
         mock_dependencies['handle'].assert_called_once()
+
+    # .tox/c1/bin/pytest --cov=weko_authors tests/test_utils.py::TestExportAuthors::test_with_community_filter -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-authors/.tox/c1/tmp
+    def test_with_community_filter(self, mock_dependencies):
+        """
+        テストケース10: 正常系 - コミュニティフィルターが適用される場合
+        条件: get_managed_community()がコミュニティリストを返す
+        入力: コミュニティリストが存在する
+        期待結果:
+        - get_by_range()がコミュニティフィルターを使用して呼び出される
+        - 処理が正常に完了し、非nullのfile_uriが返される
+        """
+        mock_dependencies['get_community'].return_value = ([MagicMock(id="community_id")], False)
+
+        result = export_authors(1)
+
+        # 検証
+        assert result == "file://test_uri"
+        mock_dependencies['get_community'].assert_called_once()
+        mock_dependencies['weko'].get_by_range.assert_called_with(1000, 1000, False, False, ["community_id"])
+
 
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_utils.py::TestExportPrefix -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-authors/.tox/c1/tmp
 class TestExportPrefix:
@@ -1915,11 +2390,17 @@ class TestExportPrefix:
             patch('invenio_files_rest.models.FileInstance') as mock_file_instance, \
             patch('invenio_files_rest.models.Location') as mock_location, \
             patch('weko_authors.utils.current_cache') as mock_current_cache, \
-            patch('weko_authors.utils.db') as mock_db:
+            patch('weko_authors.utils.db') as mock_db, \
+            patch('weko_authors.utils.User.query') as mock_user_query, \
+            patch('weko_authors.utils.get_managed_community') as mock_get_community:
 
             # モックの設定
-            mock_weko_authors.get_id_prefix_all.return_value = ['test_prefix']
-            mock_weko_authors.prepare_export_prefix.return_value = [['scheme1', 'name1', 'url1', 'false']]
+            mock_user_query.get.return_value = MagicMock()
+            mock_get_community.return_value = ([MagicMock(id="community_id")], True)
+
+            mock_prefix = MagicMock(communities=['community_obj'])
+            mock_weko_authors.get_id_prefix_all.return_value = [mock_prefix]
+            mock_weko_authors.prepare_export_prefix.return_value = [['scheme1', 'name1', 'url1', 'false', 'None']]
             mock_get_export_url.return_value = None
 
             mock_file = Mock()
@@ -1936,15 +2417,15 @@ class TestExportPrefix:
             app.config['WEKO_ADMIN_OUTPUT_FORMAT'] = 'tsv'
             app.config['WEKO_AUTHORS_EXPORT_TARGET_CACHE_KEY'] = 'test_cache_key'
 
-            result = export_prefix('id_prefix')
+            result = export_prefix('id_prefix', 1000)
 
             # 検証
             assert result == 'test_uri'
             mock_weko_authors.get_id_prefix_all.assert_called_once()
-            mock_weko_authors.prepare_export_prefix.assert_called_once_with('id_prefix', ['test_prefix'])
+            mock_weko_authors.prepare_export_prefix.assert_called_once_with('id_prefix', [mock_prefix], 1)
             mock_file.set_contents.assert_called_once()
             mock_db.session.commit.assert_called_once()
-            mock_current_cache.set.assert_called_once_with('test_cache_key', 'id_prefix', timeout=0)
+            mock_current_cache.set.assert_called_once_with('test_cache_key_1000', 'id_prefix', timeout=0)
 
     def test_export_prefix_affiliation_id_success(self, app):
         """正常系: affiliation_idの正常エクスポート"""
@@ -1954,11 +2435,17 @@ class TestExportPrefix:
             patch('invenio_files_rest.models.FileInstance') as mock_file_instance, \
             patch('invenio_files_rest.models.Location') as mock_location, \
             patch('weko_authors.utils.current_cache') as mock_current_cache, \
-            patch('weko_authors.utils.db') as mock_db:
+            patch('weko_authors.utils.db') as mock_db, \
+            patch('weko_authors.utils.User.query') as mock_user_query, \
+            patch('weko_authors.utils.get_managed_community') as mock_get_community:
 
             # モックの設定
-            mock_weko_authors.get_affiliation_id_all.return_value = ['test_affiliation']
-            mock_weko_authors.prepare_export_prefix.return_value = [['scheme1', 'name1', 'url1', 'false']]
+            mock_user_query.get.return_value = MagicMock()
+            mock_get_community.return_value = ([MagicMock(id="community_id")], True)
+
+            mock_affiliation = MagicMock(communities=['community_obj'])
+            mock_weko_authors.get_affiliation_id_all.return_value = [mock_affiliation]
+            mock_weko_authors.prepare_export_prefix.return_value = [['scheme1', 'name1', 'url1', 'false', 'None']]
             mock_get_export_url.return_value = None
 
             mock_file = Mock()
@@ -1975,15 +2462,15 @@ class TestExportPrefix:
             app.config['WEKO_ADMIN_OUTPUT_FORMAT'] = 'tsv'
             app.config['WEKO_AUTHORS_EXPORT_TARGET_CACHE_KEY'] = 'test_cache_key'
 
-            result = export_prefix('affiliation_id')
+            result = export_prefix('affiliation_id', 1000)
 
             # 検証
             assert result == 'test_uri'
             mock_weko_authors.get_affiliation_id_all.assert_called_once()
-            mock_weko_authors.prepare_export_prefix.assert_called_once_with('affiliation_id', ['test_affiliation'])
+            mock_weko_authors.prepare_export_prefix.assert_called_once_with('affiliation_id', [mock_affiliation], 1)
             mock_file.set_contents.assert_called_once()
             mock_db.session.commit.assert_called_once()
-            mock_current_cache.set.assert_called_once_with('test_cache_key', 'affiliation_id', timeout=0)
+            mock_current_cache.set.assert_called_once_with('test_cache_key_1000', 'affiliation_id', timeout=0)
 
     def test_export_prefix_csv_format(self, app):
         """正常系: CSVフォーマットでの出力"""
@@ -1993,10 +2480,16 @@ class TestExportPrefix:
             patch('invenio_files_rest.models.FileInstance') as mock_file_instance, \
             patch('invenio_files_rest.models.Location') as mock_location, \
             patch('weko_authors.utils.current_cache') as mock_current_cache, \
-            patch('weko_authors.utils.db') as mock_db:
+            patch('weko_authors.utils.db') as mock_db, \
+            patch('weko_authors.utils.User.query') as mock_user_query, \
+            patch('weko_authors.utils.get_managed_community') as mock_get_community:
 
             # モックの設定
-            mock_weko_authors.get_id_prefix_all.return_value = ['test_prefix']
+            mock_user_query.get.return_value = MagicMock()
+            mock_get_community.return_value = ([MagicMock(id="community_id")], True)
+
+            mock_prefix = MagicMock(communities=['community_obj'])
+            mock_weko_authors.get_id_prefix_all.return_value = [mock_prefix]
             mock_weko_authors.prepare_export_prefix.return_value = [['scheme1', 'name1', 'url1', 'false']]
             mock_get_export_url.return_value = None
 
@@ -2009,7 +2502,7 @@ class TestExportPrefix:
             app.config['WEKO_AUTHORS_BULK_EXPORT_RETRY_INTERVAL'] = 0
             app.config['WEKO_ADMIN_OUTPUT_FORMAT'] = 'csv'
 
-            result = export_prefix('id_prefix')
+            result = export_prefix('id_prefix', 1000)
 
             # 検証
             assert result == 'test_uri'
@@ -2023,10 +2516,16 @@ class TestExportPrefix:
             patch('invenio_files_rest.models.FileInstance') as mock_file_instance, \
             patch('invenio_files_rest.models.Location') as mock_location, \
             patch('weko_authors.utils.current_cache') as mock_current_cache, \
-            patch('weko_authors.utils.db') as mock_db:
+            patch('weko_authors.utils.db') as mock_db, \
+            patch('weko_authors.utils.User.query') as mock_user_query, \
+            patch('weko_authors.utils.get_managed_community') as mock_get_community:
 
             # モックの設定
-            mock_weko_authors.get_id_prefix_all.return_value = ['test_prefix']
+            mock_user_query.get.return_value = MagicMock()
+            mock_get_community.return_value = ([MagicMock(id="community_id")], True)
+
+            mock_prefix = MagicMock(communities=['community_obj'])
+            mock_weko_authors.get_id_prefix_all.return_value = [mock_prefix]
             mock_weko_authors.prepare_export_prefix.return_value = [['scheme1', 'name1', 'url1', 'false']]
             mock_get_export_url.return_value = None
 
@@ -2039,7 +2538,7 @@ class TestExportPrefix:
             app.config['WEKO_AUTHORS_BULK_EXPORT_RETRY_INTERVAL'] = 0
             app.config['WEKO_ADMIN_OUTPUT_FORMAT'] = 'tsv'
 
-            result = export_prefix('id_prefix')
+            result = export_prefix('id_prefix', 1000)
 
             # 検証
             assert result == 'test_uri'
@@ -2052,10 +2551,16 @@ class TestExportPrefix:
             patch('weko_authors.utils.get_export_url') as mock_get_export_url, \
             patch('invenio_files_rest.models.FileInstance') as mock_file_instance, \
             patch('weko_authors.utils.current_cache') as mock_current_cache, \
-            patch('weko_authors.utils.db') as mock_db:
+            patch('weko_authors.utils.db') as mock_db, \
+            patch('weko_authors.utils.User.query') as mock_user_query, \
+            patch('weko_authors.utils.get_managed_community') as mock_get_community:
 
             # モックの設定
-            mock_weko_authors.get_id_prefix_all.return_value = ['test_prefix']
+            mock_user_query.get.return_value = MagicMock()
+            mock_get_community.return_value = ([MagicMock(id="community_id")], True)
+
+            mock_prefix = MagicMock(communities=['community_obj'])
+            mock_weko_authors.get_id_prefix_all.return_value = [mock_prefix]
             mock_weko_authors.prepare_export_prefix.return_value = [['scheme1', 'name1', 'url1', 'false']]
             mock_get_export_url.return_value = {'file_uri': 'cached_uri'}
 
@@ -2069,7 +2574,7 @@ class TestExportPrefix:
             app.config['WEKO_ADMIN_OUTPUT_FORMAT'] = 'tsv'
             app.config['WEKO_AUTHORS_EXPORT_TARGET_CACHE_KEY'] = 'test_cache_key'
 
-            result = export_prefix('id_prefix')
+            result = export_prefix('id_prefix', 1000)
 
             # 検証
             assert result == 'cached_uri'
@@ -2086,10 +2591,16 @@ class TestExportPrefix:
             patch('invenio_files_rest.models.FileInstance') as mock_file_instance, \
             patch('invenio_files_rest.models.Location') as mock_location, \
             patch('weko_authors.utils.current_cache') as mock_current_cache, \
-            patch('weko_authors.utils.db') as mock_db:
+            patch('weko_authors.utils.db') as mock_db, \
+            patch('weko_authors.utils.User.query') as mock_user_query, \
+            patch('weko_authors.utils.get_managed_community') as mock_get_community:
 
             # モックの設定
-            mock_weko_authors.get_id_prefix_all.return_value = ['test_prefix']
+            mock_user_query.get.return_value = MagicMock()
+            mock_get_community.return_value = ([MagicMock(id="community_id")], True)
+
+            mock_prefix = MagicMock(communities=['community_obj'])
+            mock_weko_authors.get_id_prefix_all.return_value = [mock_prefix]
             mock_weko_authors.prepare_export_prefix.return_value = [['scheme1', 'name1', 'url1', 'false']]
             mock_get_export_url.return_value = None
 
@@ -2105,7 +2616,7 @@ class TestExportPrefix:
             app.config['WEKO_AUTHORS_BULK_EXPORT_MAX_RETRY'] = 3
             app.config['WEKO_AUTHORS_BULK_EXPORT_RETRY_INTERVAL'] = 0
 
-            result = export_prefix('id_prefix')
+            result = export_prefix('id_prefix', 1000)
 
             # 検証
             assert result == 'new_uri'
@@ -2121,10 +2632,16 @@ class TestExportPrefix:
             patch('invenio_files_rest.models.Location') as mock_location, \
             patch('weko_authors.utils.current_cache') as mock_current_cache, \
             patch('weko_authors.utils.db') as mock_db, \
-            patch('weko_authors.utils.handle_exception') as mock_handle_exception:
+            patch('weko_authors.utils.handle_exception') as mock_handle_exception, \
+            patch('weko_authors.utils.User.query') as mock_user_query, \
+            patch('weko_authors.utils.get_managed_community') as mock_get_community:
+
+            mock_user_query.get.return_value = MagicMock()
+            mock_get_community.return_value = ([MagicMock(id="community_id")], True)
 
             # 1回目はエラー、2回目は成功するように設定
-            mock_weko_authors.get_id_prefix_all.side_effect = [SQLAlchemyError("DB Error"), ['test_prefix']]
+            mock_prefix = MagicMock(communities=['community_obj'])
+            mock_weko_authors.get_id_prefix_all.side_effect = [SQLAlchemyError("DB Error"), [mock_prefix]]
             mock_weko_authors.prepare_export_prefix.return_value = [['scheme1', 'name1', 'url1', 'false']]
             mock_get_export_url.return_value = None
 
@@ -2140,7 +2657,7 @@ class TestExportPrefix:
             app.config['WEKO_AUTHORS_BULK_EXPORT_MAX_RETRY'] = 3
             app.config['WEKO_AUTHORS_BULK_EXPORT_RETRY_INTERVAL'] = 0
 
-            result = export_prefix('id_prefix')
+            result = export_prefix('id_prefix', 1000)
 
             # 検証
             assert result == 'test_uri'
@@ -2151,16 +2668,21 @@ class TestExportPrefix:
         """異常系: SQLAlchemyエラー発生（全リトライ失敗）"""
         # モックの準備
         with patch('weko_authors.utils.WekoAuthors') as mock_weko_authors, \
-            patch('weko_authors.utils.handle_exception') as mock_handle_exception:
+            patch('weko_authors.utils.handle_exception') as mock_handle_exception, \
+            patch('weko_authors.utils.User.query') as mock_user_query, \
+            patch('weko_authors.utils.get_managed_community') as mock_get_community:
 
             # 全てのリトライでエラーを発生させる
             mock_weko_authors.get_id_prefix_all.side_effect = SQLAlchemyError("DB Error")
+
+            mock_user_query.get.return_value = MagicMock()
+            mock_get_community.return_value = ([MagicMock(id="community_id")], True)
 
             # テスト対象の関数を実行
             app.config['WEKO_AUTHORS_BULK_EXPORT_MAX_RETRY'] = 3
             app.config['WEKO_AUTHORS_BULK_EXPORT_RETRY_INTERVAL'] = 0
 
-            result = export_prefix('id_prefix')
+            result = export_prefix('id_prefix', 1000)
 
             # 検証
             assert result is None
@@ -2176,10 +2698,16 @@ class TestExportPrefix:
             patch('invenio_files_rest.models.Location') as mock_location, \
             patch('weko_authors.utils.current_cache') as mock_current_cache, \
             patch('weko_authors.utils.db') as mock_db, \
-            patch('weko_authors.utils.handle_exception') as mock_handle_exception:
+            patch('weko_authors.utils.handle_exception') as mock_handle_exception, \
+            patch('weko_authors.utils.User.query') as mock_user_query, \
+            patch('weko_authors.utils.get_managed_community') as mock_get_community:
 
             # モックの設定
-            mock_weko_authors.get_id_prefix_all.return_value = ['test_prefix']
+            mock_user_query.get.return_value = MagicMock()
+            mock_get_community.return_value = ([MagicMock(id="community_id")], True)
+
+            mock_prefix = MagicMock(communities=['community_obj'])
+            mock_weko_authors.get_id_prefix_all.return_value = [mock_prefix]
             mock_weko_authors.prepare_export_prefix.return_value = [['scheme1', 'name1', 'url1', 'false']]
             mock_get_export_url.return_value = None
 
@@ -2199,7 +2727,7 @@ class TestExportPrefix:
             app.config['WEKO_AUTHORS_BULK_EXPORT_RETRY_INTERVAL'] = 0
             app.config['WEKO_AUTHORS_EXPORT_TARGET_CACHE_KEY'] = 'test_cache_key'
 
-            result = export_prefix('id_prefix')
+            result = export_prefix('id_prefix', 1000)
 
             # 検証
             assert result == 'test_uri'
@@ -2215,10 +2743,16 @@ class TestExportPrefix:
             patch('invenio_files_rest.models.Location') as mock_location, \
             patch('weko_authors.utils.current_cache') as mock_current_cache, \
             patch('weko_authors.utils.db') as mock_db, \
-            patch('weko_authors.utils.handle_exception') as mock_handle_exception:
+            patch('weko_authors.utils.handle_exception') as mock_handle_exception, \
+            patch('weko_authors.utils.User.query') as mock_user_query, \
+            patch('weko_authors.utils.get_managed_community') as mock_get_community:
 
             # モックの設定
-            mock_weko_authors.get_id_prefix_all.return_value = ['test_prefix']
+            mock_user_query.get.return_value = MagicMock()
+            mock_get_community.return_value = ([MagicMock(id="community_id")], True)
+
+            mock_prefix = MagicMock(communities=['community_obj'])
+            mock_weko_authors.get_id_prefix_all.return_value = [mock_prefix]
             mock_weko_authors.prepare_export_prefix.return_value = [['scheme1', 'name1', 'url1', 'false']]
             mock_get_export_url.return_value = None
 
@@ -2238,7 +2772,7 @@ class TestExportPrefix:
             app.config['WEKO_AUTHORS_BULK_EXPORT_RETRY_INTERVAL'] = 0
             app.config['WEKO_AUTHORS_EXPORT_TARGET_CACHE_KEY'] = 'test_cache_key'
 
-            result = export_prefix('id_prefix')
+            result = export_prefix('id_prefix', 1000)
 
             # 検証
             assert result is 'test_uri'
@@ -2253,10 +2787,17 @@ class TestExportPrefix:
             patch('invenio_files_rest.models.Location') as mock_location, \
             patch('weko_authors.utils.current_cache') as mock_current_cache, \
             patch('weko_authors.utils.db') as mock_db, \
-            patch('weko_authors.utils.handle_exception') as mock_handle_exception:
+            patch('weko_authors.utils.handle_exception') as mock_handle_exception, \
+            patch('weko_authors.utils.User.query') as mock_user_query, \
+            patch('weko_authors.utils.get_managed_community') as mock_get_community:
+
+            mock_user_query.get.return_value = MagicMock()
+            mock_get_community.return_value = ([MagicMock(id="community_id")], True)
+
+            mock_prefix = MagicMock(communities=['community_obj'])
 
             # 1回目はエラー、2回目は成功するように設定
-            mock_weko_authors.get_id_prefix_all.side_effect = [TimeoutError("Timeout"), ['test_prefix']]
+            mock_weko_authors.get_id_prefix_all.side_effect = [TimeoutError("Timeout"), [mock_prefix]]
             mock_weko_authors.prepare_export_prefix.return_value = [['scheme1', 'name1', 'url1', 'false']]
             mock_get_export_url.return_value = None
 
@@ -2272,7 +2813,7 @@ class TestExportPrefix:
             app.config['WEKO_AUTHORS_BULK_EXPORT_MAX_RETRY'] = 3
             app.config['WEKO_AUTHORS_BULK_EXPORT_RETRY_INTERVAL'] = 0
 
-            result = export_prefix('id_prefix')
+            result = export_prefix('id_prefix', 1000)
 
             # 検証
             assert result == 'test_uri'
@@ -2283,7 +2824,12 @@ class TestExportPrefix:
         """異常系: TimeoutErrorエラー発生（全リトライ失敗）"""
         # モックの準備
         with patch('weko_authors.utils.WekoAuthors') as mock_weko_authors, \
-            patch('weko_authors.utils.handle_exception') as mock_handle_exception:
+            patch('weko_authors.utils.handle_exception') as mock_handle_exception, \
+            patch('weko_authors.utils.User.query') as mock_user_query, \
+            patch('weko_authors.utils.get_managed_community') as mock_get_community:
+
+            mock_user_query.get.return_value = MagicMock()
+            mock_get_community.return_value = ([MagicMock(id="community_id")], True)
 
             # 全てのリトライでエラーを発生させる
             mock_weko_authors.get_id_prefix_all.side_effect = TimeoutError("Timeout")
@@ -2292,7 +2838,7 @@ class TestExportPrefix:
             app.config['WEKO_AUTHORS_BULK_EXPORT_MAX_RETRY'] = 3
             app.config['WEKO_AUTHORS_BULK_EXPORT_RETRY_INTERVAL'] = 0
 
-            result = export_prefix('id_prefix')
+            result = export_prefix('id_prefix', 1000)
 
             # 検証
             assert result is None
@@ -2379,6 +2925,15 @@ def test_unpackage_and_check_import_file_for_prefix(app):
         mock_getEncode.return_value = 'path/to/tempfile'
         mock_csv.return_value = iter(data)
         result = unpackage_and_check_import_file_for_prefix('csv', 'test.csv', 'path/to/tempfile')
+        test = [{'scheme': '789', 'name': 'ccc', 'url': 'http://example.net', 'is_deleted': ''},
+                {'scheme': '789', 'name': 'ccc', 'url': 'http://example.net', 'is_deleted': ''},
+                {'scheme': '789', 'name': 'ccc', 'url': 'http://example.net', 'is_deleted': ''},
+                {'scheme': '789', 'name': 'ccc', 'url': 'http://example.net', 'is_deleted': ''},
+                {'scheme': '789', 'name': 'ccc', 'url': 'http://example.net', 'is_deleted': ''},
+                {'scheme': '789', 'name': 'ccc', 'url': 'http://example.net', 'is_deleted': ''},
+                {'scheme': '789', 'name': 'ccc', 'url': 'http://example.net', 'is_deleted': ''}]
+        assert result == test
+
 
     data_2 = [
         [],
@@ -2465,8 +3020,44 @@ def test_unpackage_and_check_import_file_for_prefix(app):
             mock_getEncode.return_value = 'path/to/tempfile'
             mock_csv.return_value = iter(data_6)
             unpackage_and_check_import_file_for_prefix('csv', 'test.csv', 'path/to/tempfile')
-            assert str(msg.value) == "{'error_msg': 'The following metadata keys are duplicated.<br/>scheme'}"
+        assert str(msg.value) == "{'error_msg': 'Cannot read CSV file correctly.'}"
 
+    # with community_ids
+    data_7 = [
+        [],
+        ["scheme", "name", "url", "is_deleted", "community_ids[0]", "community_ids[1]"],
+        ["123", "aaa", "http://example.com", '', '', ''],
+        ["456", "bbb", "http://example.org", '', '', ''],
+        ["789", "ccc", "http://example.net", '', 'com1', 'com2'],
+        ["111", "ddd", "http://example.jp", '', 'com1', '' ],
+        ["222", "eee", "http://example.jp", '', '', '' ]
+    ]
+    with patch("weko_authors.utils.getEncode") as mock_getEncode,\
+        patch("weko_authors.utils.open") as mock_writer,\
+        patch("weko_authors.utils.csv.reader") as mock_csv:
+        mock_getEncode.return_value = 'path/to/tempfile'
+        mock_csv.return_value = iter(data_7)
+        result = unpackage_and_check_import_file_for_prefix('csv', 'test.csv', 'path/to/tempfile')
+        assert result == [{"scheme": "789", "name": "ccc", "url": "http://example.net", "is_deleted": "", "community_ids": ["com1", "com2"]},
+                          {"scheme": "111", "name": "ddd", "url": "http://example.jp", "is_deleted": "", "community_ids": ["com1"]},
+                          {"scheme": "222", "name": "eee", "url": "http://example.jp", "is_deleted": "", "community_ids": []}]
+
+    # with invalid community_id's index
+    data_8 = [
+        [],
+        ["scheme", "name", "url", "is_deleted", "community_ids[x]"],
+        ["123", "aaa", "http://example.com", '', ''],
+        ["456", "bbb", "http://example.org", '', ''],
+        ["789", "ccc", "http://example.net", '', 'com1'],
+    ]
+    with patch("weko_authors.utils.getEncode") as mock_getEncode,\
+        patch("weko_authors.utils.open") as mock_writer,\
+        patch("weko_authors.utils.csv.reader") as mock_csv:
+        mock_getEncode.return_value = 'path/to/tempfile'
+        mock_csv.return_value = iter(data_8)
+        with pytest.raises(Exception) as msg:
+            unpackage_and_check_import_file_for_prefix('csv', 'test.csv', 'path/to/tempfile')
+        assert str(msg.value) == "{'error_msg': 'Specified item does not consistency with DB item.<br/>community_ids[x]'}"        
 
 # def get_check_base_name():
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_utils.py::test_get_check_base_name -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
@@ -2499,11 +3090,41 @@ def test_get_check_result(app):
 # def handle_check_consistence_with_mapping_for_prefix(keys, header):
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_utils.py::test_handle_check_consistence_with_mapping_for_prefix -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
 def test_handle_check_consistence_with_mapping_for_prefix(app):
-    result = handle_check_consistence_with_mapping_for_prefix(["scheme", "name", "url", "is_deleted"], ["scheme", "name", "url", "is_deleted"])
-    assert result ==[]
+    result = handle_check_consistence_with_mapping_for_prefix(
+        ["scheme", "name", "url", "is_deleted"],
+        ["scheme", "name", "url", "is_deleted"]
+    )
+    assert result == []
 
-    result = handle_check_consistence_with_mapping_for_prefix(["scheme", "name", "url", "is_deleted"], ["scheme", "name", "url", "is_deleted", "extra_field"])
+    result = handle_check_consistence_with_mapping_for_prefix(
+        ["scheme", "name", "url", "is_deleted"],
+        ["scheme", "name", "url", "is_deleted", "extra_field"]
+    )
     assert result == ["extra_field"]
+
+    result = handle_check_consistence_with_mapping_for_prefix(
+        ["community_ids[0]"],
+        ["community_ids[0]", "community_ids[1]"]
+    )
+    assert result == []
+
+    result = handle_check_consistence_with_mapping_for_prefix(
+        ["community_ids[0]"],
+        ["community_ids[0]", "community_ids[5]"]
+    )
+    assert result == []
+
+    result = handle_check_consistence_with_mapping_for_prefix(
+        ["scheme", "name", "url", "is_deleted", "community_ids[0]"],
+        ["scheme", "name", "url", "is_deleted", "community_ids[1]", "extra_field"]
+    )
+    assert result == ["extra_field"]
+
+    result = handle_check_consistence_with_mapping_for_prefix(
+        ["scheme", "name", "url", "is_deleted", "community_ids[0]"],
+        ["scheme", "name", "url", "is_deleted", "extra_field[0]"]
+    )
+    assert result == ["extra_field[0]"]
 
 
 # def check_import_data_for_prefix(target, file_name: str, file_content: str):
@@ -2541,60 +3162,64 @@ def test_check_import_data_for_prefix(app):
 
 # def validate_import_data_for_prefix(file_data, target):
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_utils.py::test_validate_import_data_for_prefix -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
-def test_validate_import_data_for_prefix(authors_prefix_settings):
+def test_validate_import_data_for_prefix(authors_prefix_settings, authors_affiliation_settings, mocker):
+    mock_validate_com = mocker.patch("weko_authors.utils.validate_community_ids", return_value=[])
+    mock_check_del_prefix = mocker.patch("weko_authors.utils.check_delete_prefix", return_value=(True, None))
+    mock_check_del_aff = mocker.patch("weko_authors.utils.check_delete_affiliation", return_value=(True, None))
+
     with patch('weko_authors.utils.WekoAuthors.get_scheme_of_id_prefix') as mock_prefix,\
         patch('weko_authors.utils.WekoAuthors.get_scheme_of_affiliaiton_id'):
         mock_prefix.return_value = ['ORCID']
         result = validate_import_data_for_prefix([{'scheme': 'ORCID', 'name': 'ORCID', 'url': 'http://orcid.org', 'is_deleted': ''}], target = 'id_prefix')
-    assert result == [{'scheme': 'ORCID', 'name': 'ORCID', 'url': 'http://orcid.org', 'is_deleted': '', 'status': 'update', 'id': 2}]
+    assert result == [{'scheme': 'ORCID', 'name': 'ORCID', 'url': 'http://orcid.org', 'is_deleted': '', 'status': 'update', 'id': 2, 'community_ids': []}]
 
-    with patch('weko_authors.utils.WekoAuthors.get_scheme_of_id_prefix') as mock_prefix,\
-        patch('weko_authors.utils.WekoAuthors.get_scheme_of_affiliaiton_id'):
-        mock_prefix.return_value = ['ORCID']
+    with patch('weko_authors.utils.WekoAuthors.get_scheme_of_id_prefix'), \
+        patch('weko_authors.utils.WekoAuthors.get_scheme_of_affiliaiton_id') as mock_aff:
+        mock_aff.return_value = ['ISNI']
         result = validate_import_data_for_prefix([{'scheme': 'ISNI', 'name': 'ISNI', 'url': 'http://isni.org', 'is_deleted': ''}], target = 'affiliation_id')
-    assert result == [{'scheme': 'ISNI', 'name': 'ISNI', 'url': 'http://isni.org', 'is_deleted': '', 'status': 'new'}]
+    assert result == [{'scheme': 'ISNI', 'name': 'ISNI', 'url': 'http://isni.org', 'is_deleted': '', 'status': 'update', 'id': 1, 'community_ids': []}]
 
     with patch('weko_authors.utils.WekoAuthors.get_scheme_of_id_prefix') as mock_prefix,\
         patch('weko_authors.utils.WekoAuthors.get_scheme_of_affiliaiton_id'):
         mock_prefix.return_value = ['ORCID']
         result = validate_import_data_for_prefix([{'scheme': '', 'name': 'ORCID', 'url': 'http://orcid.org', 'is_deleted': ''}], target = 'id_prefix')
-    assert result == [{'scheme': '', 'name': 'ORCID', 'url': 'http://orcid.org', 'is_deleted': '', 'status': 'new', 'errors': ['Scheme is required item.']}]
+    assert result == [{'scheme': '', 'name': 'ORCID', 'url': 'http://orcid.org', 'is_deleted': '', 'status': 'new', 'errors': ['Scheme is required item.'], 'community_ids': []}]
 
     with patch('weko_authors.utils.WekoAuthors.get_scheme_of_id_prefix') as mock_prefix,\
         patch('weko_authors.utils.WekoAuthors.get_scheme_of_affiliaiton_id'):
         mock_prefix.return_value = ['ORCID']
         result = validate_import_data_for_prefix([{'scheme': 'WEKO', 'name': 'WEKO', 'url': 'http://weko.org', 'is_deleted': ''}], target = 'id_prefix')
-    assert result == [{'scheme': 'WEKO', 'name': 'WEKO', 'url': 'http://weko.org', 'is_deleted': '', 'status': 'new', 'errors': ['The scheme WEKO cannot be used.']}]
+    assert result == [{'scheme': 'WEKO', 'name': 'WEKO', 'url': 'http://weko.org', 'is_deleted': '', 'status': 'new', 'errors': ['The scheme WEKO cannot be used.'], 'community_ids': []}]
 
     with patch('weko_authors.utils.WekoAuthors.get_scheme_of_id_prefix') as mock_prefix,\
         patch('weko_authors.utils.WekoAuthors.get_scheme_of_affiliaiton_id'):
         mock_prefix.return_value = ['ORCID']
         result = validate_import_data_for_prefix([{'scheme': 'ORCID', 'name': '', 'url': 'http://orcid.org', 'is_deleted': ''}], target = 'id_prefix')
-    assert result == [{'scheme': 'ORCID', 'name': '', 'url': 'http://orcid.org', 'is_deleted': '', 'id': 2, 'status': 'update', 'errors': ['Name is required item.']}]
+    assert result == [{'scheme': 'ORCID', 'name': '', 'url': 'http://orcid.org', 'is_deleted': '', 'id': 2, 'status': 'update', 'errors': ['Name is required item.'], 'community_ids': []}]
 
     with patch('weko_authors.utils.WekoAuthors.get_scheme_of_id_prefix') as mock_prefix,\
         patch('weko_authors.utils.WekoAuthors.get_scheme_of_affiliaiton_id'):
         mock_prefix.return_value = ['ORCID']
         result = validate_import_data_for_prefix([{'scheme': '', 'name': 'ORCID', 'url': 'http://orcid.org', 'is_deleted': ''}], target = 'id_prefix')
-    assert result == [{'scheme': '', 'name': 'ORCID', 'url': 'http://orcid.org', 'is_deleted': '', 'status': 'new', 'errors': ['Scheme is required item.']}]
+    assert result == [{'scheme': '', 'name': 'ORCID', 'url': 'http://orcid.org', 'is_deleted': '', 'status': 'new', 'errors': ['Scheme is required item.'], 'community_ids': []}]
 
     with patch('weko_authors.utils.WekoAuthors.get_scheme_of_id_prefix') as mock_prefix,\
         patch('weko_authors.utils.WekoAuthors.get_scheme_of_affiliaiton_id'):
         mock_prefix.return_value = ['ORCID']
         result = validate_import_data_for_prefix([{'scheme': 'WEKO', 'name': 'WEKO', 'url': 'http://weko.org', 'is_deleted': ''}], target = 'id_prefix')
-    assert result == [{'scheme': 'WEKO', 'name': 'WEKO', 'url': 'http://weko.org', 'is_deleted': '', 'status': 'new', 'errors': ['The scheme WEKO cannot be used.']}]
+    assert result == [{'scheme': 'WEKO', 'name': 'WEKO', 'url': 'http://weko.org', 'is_deleted': '', 'status': 'new', 'errors': ['The scheme WEKO cannot be used.'], 'community_ids': []}]
 
     with patch('weko_authors.utils.WekoAuthors.get_scheme_of_id_prefix') as mock_prefix,\
         patch('weko_authors.utils.WekoAuthors.get_scheme_of_affiliaiton_id'):
         mock_prefix.return_value = ['ORCID']
         result = validate_import_data_for_prefix([{'scheme': 'ORCID', 'name': '', 'url': 'http://orcid.org', 'is_deleted': ''}], target = 'id_prefix')
-    assert result == [{'scheme': 'ORCID', 'name': '', 'url': 'http://orcid.org', 'is_deleted': '', 'id': 2, 'status': 'update', 'errors': ['Name is required item.']}]
+    assert result == [{'scheme': 'ORCID', 'name': '', 'url': 'http://orcid.org', 'is_deleted': '', 'id': 2, 'status': 'update', 'errors': ['Name is required item.'], 'community_ids': []}]
 
     with patch('weko_authors.utils.WekoAuthors.get_scheme_of_id_prefix') as mock_prefix,\
         patch('weko_authors.utils.WekoAuthors.get_scheme_of_affiliaiton_id'):
         mock_prefix.return_value = ['ORCID']
         result = validate_import_data_for_prefix([{'scheme': 'ORCID', 'name': 'ORCID', 'url': 'orcid', 'is_deleted': ''}], target = 'id_prefix')
-    assert result == [{'scheme': 'ORCID', 'name': 'ORCID', 'url': 'orcid', 'is_deleted': '', 'id': 2, 'status': 'update', 'errors': ['URL is not URL format.']}]
+    assert result == [{'scheme': 'ORCID', 'name': 'ORCID', 'url': 'orcid', 'is_deleted': '', 'id': 2, 'status': 'update', 'errors': ['URL is not URL format.'], 'community_ids': []}]
 
     with patch('weko_authors.utils.WekoAuthors.get_scheme_of_id_prefix') as mock_prefix,\
         patch('weko_authors.utils.WekoAuthors.get_scheme_of_affiliaiton_id'):
@@ -2617,8 +3242,29 @@ def test_validate_import_data_for_prefix(authors_prefix_settings):
         patch('weko_authors.utils.WekoAuthors.get_scheme_of_affiliaiton_id'):
         mock_prefix.return_value = ['ORCID']
         result = validate_import_data_for_prefix([{'scheme': 'ORCID', 'name': 'ORCID', 'url': 'http://orcid.org', 'is_deleted': ''}, {'scheme': 'ORCID', 'name': 'ORCID', 'url': 'http://orcid.org', 'is_deleted': ''}], target = 'id_prefix')
-    assert result == [{'scheme': 'ORCID', 'name': 'ORCID', 'url': 'http://orcid.org', 'is_deleted': '', 'id': 2, 'status': 'update'}, {'scheme': 'ORCID', 'name': 'ORCID', 'url': 'http://orcid.org', 'is_deleted': '', 'id': 2, 'status': 'update', 'errors': ['The specified scheme is duplicated.']}]
+    assert result == [{'scheme': 'ORCID', 'name': 'ORCID', 'url': 'http://orcid.org', 'is_deleted': '', 'id': 2, 'status': 'update', 'community_ids': []}, {'scheme': 'ORCID', 'name': 'ORCID', 'url': 'http://orcid.org', 'is_deleted': '', 'id': 2, 'status': 'update', 'errors': ['The specified scheme is duplicated.'], 'community_ids': []}]
 
+    with patch('weko_authors.utils.WekoAuthors.get_scheme_of_id_prefix'), \
+        patch('weko_authors.utils.WekoAuthors.get_scheme_of_affiliaiton_id') as mock_aff, \
+        patch('weko_authors.utils.validate_community_ids') as mock_validate_com:
+        mock_validate_com.side_effect = AuthorsValidationError(description="test_error")
+        mock_aff.return_value = ['ISNI']
+        result = validate_import_data_for_prefix([{'scheme': 'ISNI', 'name': 'ISNI', 'url': 'http://www.isni.org/isni/##', 'is_deleted': ''}], target = 'affiliation_id')
+    assert result == [{'scheme': 'ISNI', 'name': 'ISNI', 'url': 'http://www.isni.org/isni/##', 'is_deleted': '', 'id': 1, 'status': 'update', 'errors': ['test_error']}]
+
+    with patch('weko_authors.utils.WekoAuthors.get_scheme_of_id_prefix'), \
+        patch('weko_authors.utils.WekoAuthors.get_scheme_of_affiliaiton_id') as mock_aff, \
+        patch('weko_authors.utils.check_delete_affiliation') as mock_check_delete_aff:
+        mock_aff.return_value = ['ISNI']
+        mock_check_delete_aff.return_value = (False, 'test_error')
+        result = validate_import_data_for_prefix([{'scheme': 'ISNI', 'name': 'ISNI', 'url': 'http://www.isni.org/isni/##', 'is_deleted': 'D'}], target = 'affiliation_id')
+    assert result == [{'scheme': 'ISNI', 'name': 'ISNI', 'url': 'http://www.isni.org/isni/##', 'is_deleted': 'D', 'id': 1, 'status': 'deleted', 'errors': ['test_error']}]
+
+    # invalid target
+    with patch('weko_authors.utils.WekoAuthors.get_scheme_of_id_prefix'), \
+        patch('weko_authors.utils.WekoAuthors.get_scheme_of_affiliaiton_id'):
+        with pytest.raises(UnboundLocalError):
+            validate_import_data_for_prefix([{'scheme': 'ISNI', 'name': 'ISNI', 'url': 'http://isni.org', 'is_deleted': ''}], target = 'invalid_target')
 
 # def import_id_prefix_to_system(id_prefix):
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_utils.py::test_import_id_prefix_to_system -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
@@ -3197,17 +3843,18 @@ def test_write_to_tempfile(app, mocker):
     row_label_en = ["label_en1", "label_en2"]
     row_label_jp = ["label_jp1", "label_jp2"]
     row_data = [["data1", "data2"], ["data3", "data4"]]
-    current_cache.delete("weko_authors_export_temp_file_path_key")
+    user_id = 1000
+    current_cache.delete("weko_authors_export_temp_file_path_key_1000")
     mock_open = mocker.patch("builtins.open", mocker.mock_open())
-    write_to_tempfile(start, row_header, row_label_en, row_label_jp, row_data)
+    write_to_tempfile(start, row_header, row_label_en, row_label_jp, row_data, user_id)
     mock_open.assert_called_with(None, 'a', newline='', encoding='utf-8-sig')
-    current_cache.set("weko_authors_export_temp_file_path_key",{"key":"authors_export_temp_file_path_key"})
+    current_cache.set("weko_authors_export_temp_file_path_key_1000",{"key":"authors_export_temp_file_path_key"})
     start = 1
-    write_to_tempfile(start, row_header, row_label_en, row_label_jp, row_data)
+    write_to_tempfile(start, row_header, row_label_en, row_label_jp, row_data, user_id)
     mock_open.assert_called_with({"key":"authors_export_temp_file_path_key"}, 'a', newline='', encoding='utf-8-sig')
     mock_logger = mocker.patch("weko_authors.utils.current_app.logger")
     mock_open.side_effect = Exception("File write error")
-    write_to_tempfile(start, row_header, row_label_en, row_label_jp, row_data)
+    write_to_tempfile(start, row_header, row_label_en, row_label_jp, row_data, user_id)
     mock_logger.error.assert_called()
 
 # def create_result_file_for_user(json):
@@ -3256,3 +3903,195 @@ def test_create_result_file_for_user(app, mocker):
     current_cache.delete(result_path_key)
     res = create_result_file_for_user(json)
     assert res == None
+
+
+# .tox/c1/bin/pytest --cov=weko_authors tests/test_utils.py::test_validate_community_ids -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-authors/.tox/c1/tmp
+def test_validate_community_ids(client, app, users, community):
+    login_user_via_session(client=client, email=users[0]['email'])
+    with patch("weko_authors.utils.get_managed_community") as mock_managed_community:
+        # correct data
+        mock_managed_community.return_value = ([MagicMock(id="community1"), MagicMock(id="community2")], False)
+        new_ids = ["community1", "community2"]
+        result = validate_community_ids(new_ids, is_create=True)
+        assert set(result) == set(["community1", "community2"])
+
+        # super user
+        mock_managed_community.return_value = ([MagicMock(id="community1")], True)
+        new_ids = ["community1"]
+        result = validate_community_ids(new_ids, is_create=True)
+        assert result == ["community1"]
+
+        # update
+        mock_managed_community.return_value = ([MagicMock(id="community1"), MagicMock(id="community2")], False)
+        new_ids = ["community1", "community2"]
+        old_ids = ["community1"]
+        result = validate_community_ids(new_ids, old_ids=old_ids, is_create=False)
+        assert set(result) == set(["community1", "community2"])
+
+        # activity_id with activity_community_id exist
+        with patch("weko_workflow.api.WorkActivity") as mock_activity:
+            mock_activity.get_activity_by_id.return_value = MagicMock(activity_community_id="community3")
+            new_ids = ["community3", "community1"]
+            result = validate_community_ids(new_ids, is_create=True, activity_id="1")
+            assert set(result) == set(["community3", "community1"])
+
+        # activity_id with activity_community_id exist and in managed_community
+            mock_activity.get_activity_by_id.return_value = MagicMock(activity_community_id="community2")
+            new_ids = ["community2", "community1"]
+            result = validate_community_ids(new_ids, is_create=True, activity_id="1")
+            assert set(result) == set(["community2", "community1"])
+
+        # activity_id with no exist activity_community_id
+            mock_activity.get_activity_by_id.return_value = MagicMock(activity_community_id=None)
+            result = validate_community_ids([], is_create=True, activity_id="1")
+            assert result == []
+
+        # activity_id with no exist activity_community_id but new_ids included managed community_id
+            mock_activity.get_activity_by_id.return_value = MagicMock(activity_community_id=None)
+            new_ids = ["community1"]
+            result = validate_community_ids(new_ids, is_create=True, activity_id="1")
+            assert result == ["community1"]
+
+        # invalid community_id
+        new_ids = ["invalid id"]
+        with pytest.raises(AuthorsValidationError) as e:
+            validate_community_ids(new_ids, is_create=True)
+            assert e.description == "Invalid community ID format: invalid id"
+
+        # no exist community_id
+        new_ids = ["not_exist"]
+        with pytest.raises(AuthorsValidationError) as e:
+            validate_community_ids(new_ids, is_create=True)
+            assert e.description == "Community ID(s) not_exist does not exist."
+
+        # new_ids included not managed community_id
+        new_ids = ["community1", "community3"]
+        with pytest.raises(AuthorsPermissionError) as e:
+            validate_community_ids(new_ids, is_create=True)
+            assert e.description == 'You do not have permission for this Author ID’s communities: community3.'
+
+        # new_ids not included managed community_id
+        new_ids = []
+        with pytest.raises(AuthorsValidationError) as e:
+            validate_community_ids(new_ids, is_create=True)
+            assert e.description == 'You must include at least one managed community.'
+
+        # olds_ids not included managed community_id
+        new_ids = ["community1"]
+        old_ids = ["community3"]
+        with pytest.raises(AuthorsPermissionError) as e:
+            validate_community_ids(new_ids, old_ids=old_ids, is_create=False)
+            assert e.description == 'You cannot manage this record.'
+
+        # new_ids not include managed community_id when update
+        new_ids = []
+        old_ids = ["community1"]
+        with pytest.raises(AuthorsValidationError) as e:
+            validate_community_ids(new_ids, old_ids=old_ids, is_create=False)
+            assert e.description == 'You must include at least one managed community.'
+
+        # not managed id added when update
+        new_ids = ["community1", "community3"]
+        old_ids = ["community1"]
+        with pytest.raises(AuthorsPermissionError) as e:
+            validate_community_ids(new_ids, old_ids=old_ids, is_create=False)
+            assert e.description == 'You do not have permission for this Author ID’s communities: community3.'
+
+        # not managed id removed when update
+        new_ids = ["community1"]
+        old_ids = ["community1", "community3"]
+        with pytest.raises(AuthorsPermissionError) as e:
+            validate_community_ids(new_ids, old_ids=old_ids, is_create=False)
+            assert e.description == 'You do not have permission for this Author ID’s communities: community3.'
+
+
+# .tox/c1/bin/pytest --cov=weko_authors tests/test_utils.py::test_get_managed_community -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-authors/.tox/c1/tmp
+def test_get_managed_community(client, app, users, community):
+    user = users[0]["obj"]
+    result, is_super = get_managed_community(user)
+    assert is_super == True
+    assert len(result) == 4
+
+    with patch("weko_authors.utils.Community") as mock_community:
+        mock_community.get_repositories_by_user.return_value = [community[0]]
+        user = users[2]["obj"]
+        result, is_super = get_managed_community(user)
+        assert is_super == False
+        assert len(result) == 1
+
+        mock_community.get_repositories_by_user.side_effect = Exception("test_error")
+        with pytest.raises(Exception) as e:
+            get_managed_community(user)
+            assert str(e) == "test_error"
+
+    user = MagicMock(is_authenticated=False)
+    result, is_super = get_managed_community(user)
+    assert is_super == False
+    assert len(result) == 0
+
+
+# .tox/c1/bin/pytest --cov=weko_authors tests/test_utils.py::test_check_delete_entity -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-authors/.tox/c1/tmp
+def test_check_delete_entity(app):
+    with patch("weko_authors.utils.get_managed_community") as mock_managed_community:
+        # not found
+        mock_entity = MagicMock()
+        mock_communities = [MagicMock(id="community1"), MagicMock(id="community2")]
+        mock_instance = MagicMock(communities=mock_communities)
+        mock_entity.query.get.return_value = None
+
+        result = check_delete_entity(mock_entity, "entity_type", 1)
+        assert result == (False, "entity_type not found.")
+
+        # is_super
+        mock_entity.query.get.return_value = mock_instance
+        mock_managed_community.return_value = ([], True)
+        result = check_delete_entity(mock_entity, "entity_type", 1)
+        assert result == (True, None)
+
+        # all communities managed
+        mock_managed_community.return_value = ([MagicMock(id="community1"), MagicMock(id="community2")], False)
+        result = check_delete_entity(mock_entity, "entity_type", 1)
+        assert result == (True, None)
+
+        # some communities unmanaged
+        mock_managed_community.return_value = ([MagicMock(id="community1")], False)
+        result = check_delete_entity(mock_entity, "entity_type", 1)
+        assert result == (False, 'You do not have permission for this entity_type’s communities: community2.')
+
+        # no communities and normal user
+        mock_communities = []
+        mock_instance = MagicMock(communities=mock_communities)
+        mock_entity.query.get.return_value = mock_instance
+        result = check_delete_entity(mock_entity, "entity_type", 1)
+        assert result == (False, 'You cannot manage this record.')
+
+
+# .tox/c1/bin/pytest --cov=weko_authors tests/test_utils.py::test_check_delete_author -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-authors/.tox/c1/tmp
+def test_check_delete_author():
+    with patch("weko_authors.utils.check_delete_entity") as mock_check:
+        mock_check.return_value = (True, None)
+
+        result = check_delete_author(123)
+
+        mock_check.assert_called_once_with(Authors, "Author ID", 123)
+        assert result == (True, None)
+
+# .tox/c1/bin/pytest --cov=weko_authors tests/test_utils.py::test_check_delete_prefix -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-authors/.tox/c1/tmp
+def test_check_delete_prefix():
+    with patch("weko_authors.utils.check_delete_entity") as mock_check:
+        mock_check.return_value = (False, "error")
+
+        result = check_delete_prefix(456)
+
+        mock_check.assert_called_once_with(AuthorsPrefixSettings, "ID Prefix", 456)
+        assert result == (False, "error")
+
+# .tox/c1/bin/pytest --cov=weko_authors tests/test_utils.py::test_check_delete_affiliation -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-authors/.tox/c1/tmp
+def test_check_delete_affiliation():
+    with patch("weko_authors.utils.check_delete_entity") as mock_check:
+        mock_check.return_value = (True, None)
+
+        result = check_delete_affiliation(789)
+
+        mock_check.assert_called_once_with(AuthorsAffiliationSettings, "Affiliation ID", 789)
+        assert result == (True, None)

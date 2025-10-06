@@ -82,7 +82,7 @@ def schema(title="", multi_flag=multiple_flag):
                     "type": ["null", "string"],
                     "format": "select",
                     "enum": [None] + list(peer_reviewd_dict.keys()),
-                    "currentEnum": peer_reviewd_dict.keys,
+                    "currentEnum": list(peer_reviewd_dict.keys()),
                     "title": "査読の有無",
                     "title_i18n": {"en": "Peer reviewed/Not peer reviewed", "ja": "査読の有無"},
                 },

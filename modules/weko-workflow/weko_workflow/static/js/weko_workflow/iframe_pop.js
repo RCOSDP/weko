@@ -10,7 +10,7 @@ require([
     });
   })
   */
-  
+
   /**
    * Start Loading
    * @param actionButton
@@ -73,7 +73,7 @@ require([
             if (!redirectUrl) {
               redirectUrl = "/workflow/activity/detail/" + $("#activity_id").text().trim();
               if (community_id) {
-                redirectUrl += '?community=' + community_id;
+                redirectUrl += '?c=' + community_id;
               }
             }
             parent.document.location.href = redirectUrl;

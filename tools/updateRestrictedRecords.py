@@ -1,5 +1,6 @@
 import os
 import logging
+import gc
 import time
 import json
 import sys
@@ -18,25 +19,24 @@ from weko_records.models import ItemMetadata, ItemType, ItemTypeProperty
 import weko_schema_ui
 from weko_admin.models import AdminSettings
 
-def main(restricted_item_type_id):
+def main(restricted_item_type_id, batch_size=500, run_es_reindex=False):
     """Main context."""
-    # start_time = time.perf_counter()
 
     try:
         current_app.logger.info('restricted records update start')
         with db.session.begin_nested():
             update_item_type_property(restricted_item_type_id)
-            update_item_type()
-            update_item_metadata()
-            update_records_metadata()
+            update_item_type(batch_size=batch_size)
+            # item_metadata and records_metadata update are skipped because of running by sql script.
+            # update_item_metadata()
+            # update_records_metadata()
         update_admin_settings()
         db.session.commit()
         current_app.logger.info('restricted records update end')
-        # current_app.logger.info('ElasticSearch data update start')
-        # elasticsearch_reindex(True)
-        # current_app.logger.info('ElasticSearch data update end')
-        # end_time = time.perf_counter()
-        # current_app.logger.info(str(end_time - start_time) + ' sec.')
+        if run_es_reindex:
+            current_app.logger.info('ElasticSearch data update start')
+            elasticsearch_reindex(True)
+            current_app.logger.info('ElasticSearch data update end')
     except SQLAlchemyError as ex:
         db.session.rollback()
         current_app.logger.error(str(ex))
@@ -56,12 +56,12 @@ def update_item_type_property(restricted_item_type_id):
         with open('tools/restricted_jsons/item_type_property/forms.json', 'r') as forms_file:
             target_obj.forms = json.load(forms_file)
     else:
-        current_app.logger.error('id: ' + str(restricted_item_type_id) + ' not found')
+        current_app.logger.warning('id: ' + str(restricted_item_type_id) + ' not found')
 
     current_app.logger.info('update item_type_property records success')
 
 
-def update_item_type():
+def update_item_type(batch_size=500):
     """update item_type records"""
 
     def _check_restricted_item_type(item_type):
@@ -192,26 +192,24 @@ def update_item_type():
     current_app.logger.info('update item_type records success')
 
 
-def update_item_metadata():
+def update_item_metadata(bach_size=100):
     """update item_metadata records"""
 
     def _format_json(record_json):
         """get new format of json"""
         owner_id = int(record_json.pop('owner', -1))
-        shared_user_id = record_json.pop('shared_user_id', -1)
+        shared_user_id = int(record_json.pop('shared_user_id', -1))
 
         if owner_id:
             record_json['owner'] = owner_id
+            
+        shared_user_ids = [shared_user_id] if shared_user_id and shared_user_id > 0 else []
 
-        if not shared_user_id or shared_user_id < 1:
-            record_json['shared_user_ids'] = []
-            record_json['weko_shared_ids'] = []
-        else:
-            record_json['shared_user_ids'] = [shared_user_id]
-            record_json['weko_shared_ids'] = [shared_user_id]
+        record_json['shared_user_ids'] = shared_user_ids
+        record_json['weko_shared_ids'] = shared_user_ids
 
         return record_json
-    
+
     current_app.logger.info('update item_metadata records start')
 
     # update item_metadata records
@@ -223,35 +221,39 @@ def update_item_metadata():
     results = db.engine.execution_options(stream_results=True).execute(query)
     item_metadata_ids = [r[0] for r in results]
     current_app.logger.info('target item_metadata count: ' + str(len(item_metadata_ids)))
-    for item_metadata_id in item_metadata_ids:
-        item_metadata = ItemMetadata.query.get(item_metadata_id)
-        item_metadata.json = _format_json(dict(item_metadata.json))
-        flag_modified(item_metadata, "json")
-        current_app.logger.info(f'    Updated item_metadata id: {item_metadata.id}')
+
+    pages = [item_metadata_ids[i:i + bach_size] for i in range(0, len(item_metadata_ids), bach_size)]
+    for item_metadata_id_batch in pages:
+        item_metadata_list = ItemMetadata.query.filter(
+            ItemMetadata.id.in_(item_metadata_id_batch)
+        ).all()
+        for item_metadata in item_metadata_list:
+            item_metadata.json = _format_json(dict(item_metadata.json))
+            flag_modified(item_metadata, "json")
+            current_app.logger.info(f'    Updated item_metadata id: {item_metadata.id}')
+            gc.collect()
 
     current_app.logger.info('update item_metadata records success')
 
 
-def update_records_metadata():
+def update_records_metadata(bach_size=100):
     """update records_metadata records"""
 
     def _format_json(record_json):
         """get new format of json"""
         owner_id = int(record_json.pop('owner', -1))
-        shared_user_id = record_json.pop('weko_shared_id', -1)
+        shared_user_id = int(record_json.pop('weko_shared_id', -1))
 
         if owner_id > 0:
             record_json['owner'] = owner_id
             record_json['owners'] = [owner_id]
             record_json['_deposit']['owner'] = owner_id
             record_json['_deposit']['owners'] = [owner_id]
-        
-        if not shared_user_id or shared_user_id < 1:
-            record_json['weko_shared_ids'] = []
-            record_json['_deposit']['weko_shared_ids'] = []
-        else:
-            record_json['weko_shared_ids'] = [shared_user_id]
-            record_json['_deposit']['weko_shared_ids'] = [shared_user_id]
+
+        shared_user_ids = [shared_user_id] if shared_user_id and shared_user_id > 0 else []
+
+        record_json['weko_shared_ids'] = shared_user_ids
+        record_json['_deposit']['weko_shared_ids'] = shared_user_ids
         return record_json
 
     current_app.logger.info('update record_metadata records start')
@@ -265,11 +267,19 @@ def update_records_metadata():
     results = db.engine.execution_options(stream_results=True).execute(query)
     record_metadata_ids = [r[0] for r in results]
     current_app.logger.info('target record_metadata count: ' + str(len(record_metadata_ids)))
-    for record_metadata_id in record_metadata_ids:
-        record_metadata = RecordMetadata.query.get(record_metadata_id)
-        record_metadata.json = _format_json(dict(record_metadata.json))
-        flag_modified(record_metadata, "json")
-        current_app.logger.info(f'    Updated record_metadata id: {record_metadata.id}')
+
+    current_app.logger.info(f'record_metadata_ids: {record_metadata_ids}')
+    pages = [record_metadata_ids[i:i + bach_size] for i in range(0, len(record_metadata_ids), bach_size)]
+    for record_metadata_id_batch in pages:
+        # record_metadata_id_batch = record_metadata_ids[page:page+bach_size]
+        record_metadata_list = RecordMetadata.query.filter(
+            RecordMetadata.id.in_(record_metadata_id_batch)
+        ).all()
+        for record_metadata in record_metadata_list:
+            record_metadata.json = _format_json(dict(record_metadata.json))
+            flag_modified(record_metadata, "json")
+            current_app.logger.info(f'    Updated record_metadata id: {record_metadata.id}')
+            gc.collect()
 
     current_app.logger.info('update record_metadata records success')
 
