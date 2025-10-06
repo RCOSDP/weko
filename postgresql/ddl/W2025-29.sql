@@ -1174,4 +1174,22 @@ ALTER TABLE public.index ADD COLUMN is_deleted boolean DEFAULT false;
 INSERT INTO public.authors_prefix_settings(name, scheme, url, created, updated) VALUES 
 ('researchmap', 'researchmap', 'https://researchmap.jp/##', TIMESTAMP '2024-01-01 00:00:00.000', TIMESTAMP '2024-01-01 00:00:00.000');
 
+-- researchmap
+
+CREATE TABLE cris_linkage_result (
+    created TIMESTAMP NOT NULL,
+    updated TIMESTAMP NOT NULL,
+    recid INTEGER NOT NULL,
+    cris_institution text NOT NULL,
+    last_linked_date TIMESTAMP,
+    last_linked_item UUID,
+    succeed BOOLEAN,
+    failed_log TEXT NOT NULL DEFAULT '',
+    CONSTRAINT pk_cris_linkage_result PRIMARY KEY (recid, cris_institution),
+    CONSTRAINT fk_cris_linkage_result_recid_pidstore_recid
+        FOREIGN KEY (recid) REFERENCES pidstore_recid(recid),
+    CONSTRAINT fk_cris_linkage_result_last_linked_item_item_metadata
+        FOREIGN KEY (last_linked_item) REFERENCES item_metadata(id)
+);
+
 COMMIT;
