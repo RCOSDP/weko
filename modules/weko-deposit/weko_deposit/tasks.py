@@ -88,7 +88,7 @@ def update_items_by_authorInfo(user_id, target, origin_pkid_list=[], origin_id_l
                     'scheme': s.scheme,
                     'url': s.url
                 }
-        return result    
+        return result
 
     def _change_to_meta(target, author_prefix, affiliation_id, key_map):
         target_id = None
@@ -349,7 +349,7 @@ def update_items_by_authorInfo(user_id, target, origin_pkid_list=[], origin_id_l
             "affiliations_key": "creatorAffiliations",
             "affiliation_ids_key": "affiliationNameIdentifiers",
             "affiliation_id_key": "affiliationNameIdentifier",
-            "affiliation_id_uri_key": "affiliationNameIdentifierURI",            
+            "affiliation_id_uri_key": "affiliationNameIdentifierURI",
             "affiliation_id_scheme_key": "affiliationNameIdentifierScheme",
             "affiliation_names_key": "affiliationNames",
             "affiliation_name_key": "affiliationName",
@@ -374,7 +374,7 @@ def update_items_by_authorInfo(user_id, target, origin_pkid_list=[], origin_id_l
             "affiliations_key": "contributorAffiliations",
             "affiliation_ids_key": "contributorAffiliationNameIdentifiers",
             "affiliation_id_key": "contributorAffiliationNameIdentifier",
-            "affiliation_id_uri_key": "contributorAffiliationURI",            
+            "affiliation_id_uri_key": "contributorAffiliationURI",
             "affiliation_id_scheme_key": "contributorAffiliationScheme",
             "affiliation_names_key": "contributorAffiliationNames",
             "affiliation_name_key": "contributorAffiliationName",
@@ -399,7 +399,7 @@ def update_items_by_authorInfo(user_id, target, origin_pkid_list=[], origin_id_l
             "affiliations_key": "affiliations",
             "affiliation_ids_key": "nameIdentifiers",
             "affiliation_id_key": "nameIdentifier",
-            "affiliation_id_uri_key": "nameIdentifierURI",            
+            "affiliation_id_uri_key": "nameIdentifierURI",
             "affiliation_id_scheme_key": "nameIdentifierScheme",
             "affiliation_names_key": "affiliationNames",
             "affiliation_name_key": "affiliationName",
@@ -458,7 +458,7 @@ def update_db_es_data(origin_pkid_list, origin_id_list):
                 author_data.gather_flg = 1
                 db.session.merge(author_data)
         db.session.commit()
-    
+
         # update ES of Author
         update_author_q = {
             "query": {
@@ -537,7 +537,7 @@ def make_stats_file(raw_stats):
 @shared_task(ignore_result=True)
 def extract_pdf_and_update_file_contents(files, record_uuid, retry_count=3, retry_delay=1):
     """Extract text from pdf and update es document
-    
+
     Args:
         files(dict): pdf_files uri and size. ex: {'test1.pdf': {'uri': '/var/tmp/tmp5beo2byv/e2/5a/e1af-d89b-4ce0-bd01-a78833acbe1e/data', 'size': 1252395}"
         record_uuid(str): The id of the document to update.
@@ -595,7 +595,7 @@ def update_file_content(record_uuid, file_datas):
     Args:
         record_uuid (str): The id of the document to update.
         file_datas (dict): A dictionary of file names and contents.
-    
+
     Raises:
         ConflictError: Elasticsearch document version conflict error
         NotFoundError: No document to update error
@@ -616,4 +616,97 @@ def update_file_content(record_uuid, file_datas):
         doc_type=indexer.es_doc_type,
         id=str(record_uuid),
         body=update_body
+    )
+
+
+@shared_task(ignore_result=True)
+def extract_pdf_and_update_file_contents_with_index_api(
+    files, record_uuid, retry_count=3, retry_delay=1):
+    """Extract text from pdf and update es document
+    Args:
+        files(dict): pdf_files uri and size. ex: {'test1.pdf': {'uri': '/var/tmp/tmp5beo2byv/e2/5a/e1af-d89b-4ce0-bd01-a78833acbe1e/data', 'size': 1252395}"
+        record_uuid(str): The id of the document to update.
+        retry_count(int, Optional): The number of times to retry. Defaults to 3.
+        retry_delay(int, Optional): The number of seconds to wait between retries. Defaults to 1.
+    """
+    tika_jar_path = os.environ.get("TIKA_JAR_FILE_PATH")
+    if not tika_jar_path or os.path.isfile(tika_jar_path) is False:
+        raise Exception("not exist tika jar file.")
+    file_datas = {}
+    for filename, file in files.items():
+        data = ""
+        try:
+            storage = current_files_rest.storage_factory(
+                fileurl=file["uri"],
+                size=file["size"],
+            )
+
+            with storage.open(mode="rb") as fp:
+                buffer = fp.read(current_app.config['WEKO_DEPOSIT_FILESIZE_LIMIT'])
+                args = ["java", "-jar", tika_jar_path, "-t"]
+                result = subprocess.run(
+                    args,
+                    input=buffer,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    check=False
+                )
+                if result.returncode != 0:
+                    raise Exception(f"raise in tika: {result.stderr.decode('utf-8')}")
+                data = "".join(result.stdout.decode("utf-8").splitlines())
+        except FileNotFoundError as ex:
+            current_app.logger.error(ex)
+        except ResourceNotFoundError as ex:
+            current_app.logger.error(ex)
+        except Exception as ex:
+            current_app.logger.error(ex)
+        file_datas[filename] = data
+
+    for attempt in range(retry_count):
+        try:
+            update_file_content_with_index_api(record_uuid, file_datas)
+            break
+        except ConflictError:
+            current_app.logger.error(
+                f"Version conflict error occurred while updating file content. Retrying {attempt + 1}/{retry_count}")
+            time.sleep(retry_delay)
+        except NotFoundError:
+            current_app.logger.error(
+                f"The document targeted for content update({record_uuid}) does not exist. Retrying {attempt + 1}/{retry_count}")
+            time.sleep(retry_delay)
+        except Exception:
+            current_app.logger.error(
+                f"An error occurred({record_uuid}). Retrying {attempt + 1}/{retry_count}")
+            time.sleep(retry_delay)
+
+
+def update_file_content_with_index_api(record_uuid, file_datas):
+    """Update the content of the es document
+    Args:
+        record_uuid (str): The id of the document to update.
+        file_datas (dict): A dictionary of file names and contents.
+
+    Raises:
+        ConflictError: Elasticsearch document version conflict error
+        NotFoundError: No document to update error
+    """
+    indexer = WekoIndexer()
+    indexer.get_es_index()
+    res = indexer.get_metadata_by_item_id(record_uuid)
+    es_data = res.get("_source",{})
+    contents = es_data.get("content",[])
+    for content in contents:
+        if content.get("filename") not in list(file_datas.keys()):
+            continue
+        if content.get("attachment",{}):
+            content["attachment"]["content"] = file_datas[content.get("filename")]
+    es_data["content"] = contents
+
+    indexer.client.index(
+        index=indexer.es_index,
+        id=str(record_uuid),
+        body=es_data,
+        version=res.get('_version'),
+        version_type = "external_gte",
+        doc_type=res.get("_type")
     )
