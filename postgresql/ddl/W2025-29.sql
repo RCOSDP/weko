@@ -1233,6 +1233,7 @@ SET json = (
 			END,
 		'owner', (json #>> '{owner}')::numeric
 	)
+);
 
 -- researchmap
 
