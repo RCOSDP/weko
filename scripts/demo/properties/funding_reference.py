@@ -123,6 +123,11 @@ def schema(title="", multi_flag=multiple_flag):
                             "enum": config.FUNDER_IDENTIFIER_TYPE_VAL,
                             "title": "助成機関識別子タイプ",
                         },
+                        "subitem_funder_identifier_type_uri": {
+                            "format": "text",
+                            "title": "助成機関識別子タイプURI",
+                            "type": "string",
+                        },
                         "subitem_funder_identifier": {
                             "format": "text",
                             "title": "助成機関識別子",
@@ -138,16 +143,16 @@ def schema(title="", multi_flag=multiple_flag):
                         "type": "object",
                         "format": "object",
                         "properties": {
+                            "subitem_funder_name": {
+                                "format": "text",
+                                "title": "助成機関名",
+                                "type": "string",
+                            },
                             "subitem_funder_name_language": {
                                 "type": ["null", "string"],
                                 "format": "select",
                                 "enum": config.LANGUAGE_VAL2_1,
                                 "title": "言語",
-                            },
-                            "subitem_funder_name": {
-                                "format": "text",
-                                "title": "助成機関名",
-                                "type": "string",
                             },
                         },
                     },
@@ -183,16 +188,16 @@ def schema(title="", multi_flag=multiple_flag):
                         "type": "object",
                         "format": "object",
                         "properties": {
+                            "subitem_funding_stream": {
+                                "format": "text",
+                                "title": "プログラム情報",
+                                "type": "string",
+                            },
                             "subitem_funding_stream_language": {
                                 "type": ["null", "string"],
                                 "format": "select",
                                 "enum": config.LANGUAGE_VAL2_1,
                                 "title": "言語",
-                            },
-                            "subitem_funding_stream": {
-                                "format": "text",
-                                "title": "プログラム情報",
-                                "type": "string",
                             },
                         },
                     },
@@ -228,16 +233,16 @@ def schema(title="", multi_flag=multiple_flag):
                         "type": "object",
                         "format": "object",
                         "properties": {
+                            "subitem_award_title": {
+                                "format": "text",
+                                "title": "研究課題名",
+                                "type": "string",
+                            },
                             "subitem_award_title_language": {
                                 "type": ["null", "string"],
                                 "format": "select",
                                 "enum": config.LANGUAGE_VAL2_1,
                                 "title": "言語",
-                            },
-                            "subitem_award_title": {
-                                "format": "text",
-                                "title": "研究課題名",
-                                "type": "string",
                             },
                         },
                     },
@@ -277,22 +282,25 @@ def form(
                             "type": "select",
                         },
                         {
-                            "key": "{}.subitem_funder_identifiers.subitem_funder_identifier_type_uri".format(
-                                key
-                            ),
-                            "title": "助成機関識別子URI",
-                            "title_i18n": {
-                                "en": "Funder Identifier Type URI",
-                                "ja": "助成機関識別子タイプURI",
-                            },
-                            "type": "text",
-                        },
-                        {
                             "key": "{}.subitem_funder_identifiers.subitem_funder_identifier".format(
                                 key
                             ),
                             "title": "助成機関識別子",
-                            "title_i18n": {"en": "Funder Identifier", "ja": "助成機関識別子"},
+                            "title_i18n": {
+                                "en": "Funder Identifier",
+                                "ja": "助成機関識別子",
+                            },
+                            "type": "text",
+                        },
+                        {
+                            "key": "{}.subitem_funder_identifiers.subitem_funder_identifier_type_uri".format(
+                                key
+                            ),
+                            "title": "助成機関識別子タイプURI",
+                            "title_i18n": {
+                                "en": "Funder Identifier Type URI",
+                                "ja": "助成機関識別子タイプURI",
+                            },
                             "type": "text",
                         },
                     ],
@@ -342,6 +350,17 @@ def form(
                                 config.FUNDING_STREAM_IDENTIFIER_TYPE
                             ),
                             "type": "select",
+                        },
+                        {
+                            "key": "{}.subitem_funding_stream_identifiers.subitem_funding_stream_identifier".format(
+                                key
+                            ),
+                            "title": "研究課題番号タイプ",
+                            "title_i18n": {
+                                "en": "Funding Stream Identifier",
+                                "ja": "研究課題番号タイプ",
+                            },
+                            "type": "text",
                         },
                         {
                             "key": "{}.subitem_funding_stream_identifiers.subitem_funding_stream_identifier_type_uri".format(
@@ -395,7 +414,7 @@ def form(
                                 "ja": "プログラム情報",
                             },
                             "type": "text",
-                        },
+                        }
                     ],
                     "key": "{}.subitem_funding_streams".format(key),
                     "style": {"add": "btn-success"},
@@ -404,22 +423,6 @@ def form(
                 },
                 {
                     "items": [
-                        {
-                            "key": "{}.subitem_award_numbers.subitem_award_uri".format(
-                                key
-                            ),
-                            "title": "研究課題番号URI",
-                            "title_i18n": {"en": "Award Number URI", "ja": "研究課題番号URI"},
-                            "type": "text",
-                        },
-                        {
-                            "key": "{}.subitem_award_numbers.subitem_award_number".format(
-                                key
-                            ),
-                            "title": "研究課題番号",
-                            "title_i18n": {"en": "Award Number", "ja": "研究課題番号"},
-                            "type": "text",
-                        },
                         {
                             "key": "{}.subitem_award_numbers.subitem_award_number_type".format(
                                 key
@@ -431,6 +434,25 @@ def form(
                             },
                             "titleMap": get_select_value(config.AWARD_NUMBER_TYPE),
                             "type": "select",
+                        },
+                        {
+                            "key": "{}.subitem_award_numbers.subitem_award_number".format(
+                                key
+                            ),
+                            "title": "研究課題番号",
+                            "title_i18n": {"en": "Award Number", "ja": "研究課題番号"},
+                            "type": "text",
+                        },
+                        {
+                            "key": "{}.subitem_award_numbers.subitem_award_uri".format(
+                                key
+                            ),
+                            "title": "研究課題番号URI",
+                            "title_i18n": {
+                                "en": "Award Number URI",
+                                "ja": "研究課題番号URI",
+                            },
+                            "type": "text",
                         },
                     ],
                     "key": "{}.subitem_award_numbers".format(key),

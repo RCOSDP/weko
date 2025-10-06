@@ -1,6 +1,7 @@
 from invenio_db import db
 from weko_records.api import ItemTypes
 from properties import property_config
+import properties
 
 import traceback
 import argparse
@@ -25,7 +26,6 @@ def main():
         print(traceback.format_exc())
         db.session.rollback()
 
-        
 
 if __name__ == '__main__':
     try:

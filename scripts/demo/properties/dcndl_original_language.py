@@ -19,7 +19,6 @@ mapping = {
     "jpcoar_mapping": {
         "originalLanguage": {
             "@value": "original_language",
-            "@attributes": {"xml:lang": "original_language_language"},
         }
     },
     "junii2_mapping": "",
