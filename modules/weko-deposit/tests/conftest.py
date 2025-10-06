@@ -195,6 +195,16 @@ def base_app(instance_path):
             "Repository Administrator",
         ],
         WEKO_PERMISSION_ROLE_COMMUNITY=["Community Administrator"],
+        WEKO_MIMETYPE_WHITELIST_FOR_ES = [
+            'text/plain',
+            'application/msword',
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            'application/vnd.ms-excel',
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'application/vnd.ms-powerpoint',
+            'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+            'application/pdf',
+        ]
     )
     # with ESTestServer(timeout=30) as server:
     Babel(app_)

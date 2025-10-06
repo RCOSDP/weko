@@ -19,7 +19,7 @@
 # MA 02111-1307, USA.
 
 from weko_deposit.api import WekoDeposit
-from weko_deposit.utils import update_pdf_contents_es, update_pdf_contents_es_with_index_api
+from weko_deposit.utils import update_pdf_contents_es, extract_text_from_pdf, extract_text_with_tika, update_pdf_contents_es_with_index_api
 from sqlalchemy.orm.exc import NoResultFound
 import types
 from mock import patch
@@ -80,3 +80,57 @@ def test_update_pdf_contents_es_with_index_api_noresult(app, mocker):
                 update_pdf_contents_es_with_index_api(record_ids)
                 assert hasattr(dummy_logger, 'logged')
                 assert hasattr(dummy_trace, 'called')
+
+
+import os
+    
+import pytest
+# .tox/c1/bin/pytest --cov=weko_deposit tests/test_utils.py::test_extract_text_from_pdf -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
+def test_extract_text_from_pdf():
+    filepath = os.path.join(os.path.dirname(__file__),"data","test_files","test_file_1.2M.pdf")
+    
+    # file size > max_size
+    data = extract_text_from_pdf(filepath, 10000)
+    assert len(data.encode('utf-8')) <= 10000
+    assert data.count("test file page") < 1240
+
+    # file size <= max_size
+    data = extract_text_from_pdf(filepath, 100000000)
+    assert len(data.encode('utf-8')) == 19561
+    assert data.count("test file page") == 1240
+
+    # not exist file
+    filepath = "not_exist_file.pdf"
+    with pytest.raises(FileNotFoundError) as e:
+        data = extract_text_from_pdf(filepath, 10000)
+    assert str(e.value) == "/code/modules/weko-deposit/not_exist_file.pdf"
+
+from mock import MagicMock
+# .tox/c1/bin/pytest --cov=weko_deposit tests/test_utils.py::test_extract_text_with_tika -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
+def test_extract_text_with_tika():
+    filepath = os.path.join(os.path.dirname(__file__),"data","test_files","sample_word.docx")
+    # not exist tika jar file.
+    mock_env_not_exist_tika = {"TIKA_JAR_FILE_PATH": "/not/exist/path/tika-server.jar"}
+    with patch.dict(os.environ, mock_env_not_exist_tika, clear=False):
+        with pytest.raises(Exception) as e:
+            data = extract_text_with_tika(filepath, 100)
+        assert str(e.value) == "not exist tika jar file."
+
+    # error with subprocess
+    mock_run = MagicMock()
+    mock_run.returncode.return_value=1
+    mock_run.stderr.decode.return_value="test_error"
+    with patch("weko_deposit.utils.subprocess.run", return_value=mock_run):
+        with pytest.raises(Exception) as e:
+            data = extract_text_with_tika(filepath, 100)
+        assert str(e.value) == "raise in tika: test_error"
+    
+    # file size > max_size
+    data = extract_text_with_tika(filepath, 50)
+    assert len(data.encode('utf-8')) < 50
+    assert data == "これはテスト用のサンプルwordファイ"
+    
+    # file size <= max_size
+    data = extract_text_with_tika(filepath, 5000)
+    assert len(data.encode('utf-8')) > 50
+    assert data == "これはテスト用のサンプルwordファイルです中身は特に意味がありません"
