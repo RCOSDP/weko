@@ -971,7 +971,7 @@ msgstr "Download"
 
 #: weko_search_ui/templates/weko_search_ui/admin/import.html:74
 msgid "DOI"
-msgstr ""
+msgstr "Metadata Retrieve DOI"
 
 #: weko_search_ui/templates/weko_search_ui/admin/import.html:75
 #: weko_search_ui/templates/weko_search_ui/admin/rocrate_import.html:76
