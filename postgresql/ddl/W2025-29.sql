@@ -1162,6 +1162,7 @@ SELECT 'zh-tw', '中文 (繁体)', 'false', 0, 'true' FROM (SELECT COUNT(*) as c
 
 -- 202409_BioResource_ddl.sql
 
+ALTER TABLE facet_search_setting ADD COLUMN search_condition character varying(3) DEFAULT 'OR' NOT NULL;
 ALTER TABLE resync_indexes ALTER COLUMN saving_format TYPE character varying(20);
 
 -- v1.0.8.sql
