@@ -115,7 +115,7 @@ def update_pdf_contents_es_with_index_api(record_ids):
     deposits = WekoDeposit.get_records(record_ids)
     for dep in deposits:
         try:
-            file_infos = dep.get_pdf_info()
+            file_infos = dep.get_pdf_info_reindex_command()
             extract_pdf_and_update_file_contents_with_index_api.apply_async((
                 file_infos, str(dep.id)))
         except NoResultFound:
