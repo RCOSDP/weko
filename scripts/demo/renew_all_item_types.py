@@ -11,13 +11,14 @@ def main():
         _renew_type = args.renew_type if args else ''
         _renew_value = args.renew_value if args else 'None'
         specified_list = property_config.SPECIFIED_LIST if _renew_type == 'only_specified' else []
+        mapping = get_properties_mapping()
         itemtypes = ItemTypes.get_all()
         print("Process property id list:{}".format(specified_list))
         for itemtype in itemtypes:
             if _renew_type == 'only_specified':
-                ret = ItemTypes.reload(itemtype.id, specified_list, _renew_value)
+                ret = ItemTypes.reload(itemtype.id, mapping, specified_list, _renew_value)
             else:
-                ret = ItemTypes.reload(itemtype.id)
+                ret = ItemTypes.reload(itemtype.id, mapping)
             print("itemtype id:{}, itemtype name:{}".format(itemtype.id,itemtype.item_type_name.name))
             print(ret['msg'])
         db.session.commit()
@@ -26,6 +27,13 @@ def main():
         print(traceback.format_exc())
         db.session.rollback()
 
+def get_properties_mapping():
+    mapping = {}
+    for i in dir(properties):
+        prop = getattr(properties, i)
+        if getattr(prop, 'property_id', None) and prop.property_id:
+            mapping[int(prop.property_id)] = prop.mapping
+    return mapping
 
 if __name__ == '__main__':
     try:

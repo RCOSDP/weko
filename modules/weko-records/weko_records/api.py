@@ -978,11 +978,12 @@ class ItemTypes(RecordBase):
 
 
     @classmethod
-    def reload(cls, itemtype_id, specified_list=[], renew_value='None'):
+    def reload(cls, itemtype_id, mapping_dict, specified_list=[], renew_value='None'):
         """reload itemtype properties.
 
         Args:
             itemtype_id (_type_): _description_
+            mapping_dict: properties mapping data
             specified_list: renew properties id list
             renew_value: None, ALL, VAL, LOC
         """
@@ -1004,6 +1005,9 @@ class ItemTypes(RecordBase):
                             continue
                         _prop = ItemTypeProps.get_record(_property_id)
                         if _prop:
+                            # fix mapping
+                            if _property_id in mapping_dict:
+                                data['table_row_map']['mapping'][_prop_id] = mapping_dict.get(_property_id)
                             # data['meta_list'][_prop_id] = json.loads('{"input_maxItems": "9999","input_minItems": "1","input_type": "cus_'+str(_prop.id)+'","input_value": "","option": {"crtf": false,"hidden": false,"multiple": true,"oneline": false,"required": false,"showlist": false},"title": "'+_prop.name+'","title_i18n": {"en": "", "ja": "'+_prop.name+'"}}')
                             # data['schemaeditor']['schema'][_prop_id]=pickle.loads(pickle.dumps(_prop.schema, -1))
                             if multiple_flg:
@@ -1075,14 +1079,12 @@ class ItemTypes(RecordBase):
                                       render=data)
         mapping = Mapping.get_record(itemtype_id)
         if mapping:
-            _a = [p for p in data.get("table_row") if p in mapping]
-            if len(_a) is not len(data.get("table_row")):
-                mapping.model.mapping = table_row_map.get('mapping')
-                flag_modified(mapping.model, 'mapping')
-                db.session.add(mapping.model)
-                result['msg'] = "Fix ItemType({}) mapping".format(itemtype_id)
-                result['code'] = 0
-
+            mapping.model.mapping = table_row_map.get('mapping')
+            flag_modified(mapping.model, 'mapping')
+            db.session.add(mapping.model)
+            result['msg'] = "Fix ItemType({}) mapping".format(itemtype_id)
+            result['code'] = 0  
+        
         ItemTypeEditHistory.create_or_update(
             item_type_id=record.model.id,
             user_id=1,

@@ -133,6 +133,11 @@ def schema(title="", multi_flag=multiple_flag):
                             "title": "助成機関識別子",
                             "type": "string",
                         },
+                        "subitem_funder_identifier_type_uri": {
+                            "format": "text",
+                            "title": "助成機関識別子URI",
+                            "type": "string",
+                        },
                     },
                     "title": "助成機関識別子",
                 },
