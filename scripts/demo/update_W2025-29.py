@@ -69,8 +69,11 @@ def main(restricted_item_type_id, start_time, batch_size=500):
         update_feedback_mail_list_to_db.main() # 著者DBのweko idの変更。それに伴うメタデータの変更
         current_time = show_exec_time(current_time, "update_feedback_mail_list_to_db")
         update_itemtype_multiple_main()# Multipleという名前のアイテムタイプを修正（アイテムの変更なし)
+        current_time = show_exec_time(current_time, "update_itemtype_multiple_main")
         fix_issue_47128_newbuild_main() # harvesting_type=Trueかつitemtype_id=12の修正＋アイテムの修正
+        current_time = show_exec_time(current_time, "fix_issue_47128_newbuild_main")
         fix_metadata_53602_main() # プロパティ変更を全アイテムのメタデータに適用
+        current_time = show_exec_time(current_time, "fix_metadata_53602_main")
         get_update_item_info_W2025_29_sql() # SQLベースの処理で更新されたID一覧を取得
         current_app.logger.info("All updates completed successfully.")
     except Exception as ex:
