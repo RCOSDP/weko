@@ -55,6 +55,7 @@ def update_item_type_property(restricted_item_type_id):
             target_obj.form = json.load(form_file)
         with open('tools/restricted_jsons/item_type_property/forms.json', 'r') as forms_file:
             target_obj.forms = json.load(forms_file)
+        print(f"[FIX][updateRestrictedRecords.py]item_type_property:{target_obj.id}")
     else:
         current_app.logger.warning('id: ' + str(restricted_item_type_id) + ' not found')
 
@@ -188,6 +189,7 @@ def update_item_type(batch_size=500):
         flag_modified(item_type, "render")
         
         current_app.logger.info(f'    Updated item_type id: {item_type.id}')
+        print(f"[FIX][updateRestrictedRecords.py]item_type:{target.id}")
 
     current_app.logger.info('update item_type records success')
 
@@ -231,7 +233,9 @@ def update_item_metadata(bach_size=100):
             item_metadata.json = _format_json(dict(item_metadata.json))
             flag_modified(item_metadata, "json")
             current_app.logger.info(f'    Updated item_metadata id: {item_metadata.id}')
+            print(f"[FIX][updateRestrictedRecords.py]item_metadata:{item_metadata.id}")
             gc.collect()
+            
 
     current_app.logger.info('update item_metadata records success')
 
@@ -279,7 +283,9 @@ def update_records_metadata(bach_size=100):
             record_metadata.json = _format_json(dict(record_metadata.json))
             flag_modified(record_metadata, "json")
             current_app.logger.info(f'    Updated record_metadata id: {record_metadata.id}')
+            print(f"[FIX][updateRestrictedRecords.py]records_metadata:{record_metadata.id}")
             gc.collect()
+        
 
     current_app.logger.info('update record_metadata records success')
 
@@ -300,6 +306,7 @@ def update_admin_settings():
     AdminSettings.update('restricted_access', restricted_access)
     
     current_app.logger.info('update admin_settings success')
+    print(f"[FIX][updateRestrictedRecords.py]admin_settings:restricted_access")
 
 def elasticsearch_reindex( is_db_to_es ):
     """ 

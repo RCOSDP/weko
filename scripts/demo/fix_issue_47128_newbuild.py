@@ -122,6 +122,7 @@ def main():
                 flag_modified(item_type, "render")
                 db.session.merge(item_type)
                 db.session.commit()
+                print(f"[FIX][fix_issue47128_newbuild.py]item_type:{item_type.id}")
                 print(datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S'), 'Update item key of item type ({}) is success.'.format(item_type.id))
             except Exception as ex:
                 db.session.rollback()
@@ -139,6 +140,7 @@ def main():
                     flag_modified(mapping, "mapping")
                     db.session.merge(mapping)
                     db.session.commit()
+                    print(f"[FIX][fix_issue47128_newbuild.py]item_type_mapping:{mapping.id}")
                     print(
                         datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S'),
                         'Update item key of item type mapping (item_type_id: {}, version_id: {}) is success.'.format(mapping.item_type_id, mapping.version_id))
@@ -374,6 +376,8 @@ def main():
                     db.session.merge(item)
                     db.session.merge(rec)
                     db.session.commit()
+                    print(f"[FIX][fix_issue47128_newbuild.py]item_metadata:{item.id}")
+                    print(f"[FIX][fix_issue47128_newbuild.py]records_metadata:{rec.id}")
                     success_count += 1
                 else:
                     skip_count += 1

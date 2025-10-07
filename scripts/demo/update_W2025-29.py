@@ -99,6 +99,7 @@ def register_properties_only_specified():
 
 def renew_all_item_types():
     try:
+        fix_ids = []
         current_app.logger.info("Start renew_all_item_types")
         query = db.session.query(ItemType.id).statement
         results = db.engine.execution_options(stream_results=True).execute(query)
@@ -114,7 +115,18 @@ def renew_all_item_types():
             item_type_name = ItemTypeName.query.get(item_type_id)
             name = item_type_name.name if item_type_name else "No Name"
             current_app.logger.info("itemtype id:{}, itemtype name:{}".format(item_type_id, name))
+            is_fix_mapping = False
+            if "mapping" in ret.get("msg",""):
+                is_fix_mapping = True
+            else:
+                is_fix_mapping = False
+            fix_ids.append((item_type_id, is_fix_mapping))
         db.session.commit()
+        
+        for (itemtype_id, is_fix_mapping) in fix_ids:
+            print(f"[FIX][renew_all_item_types]item_type:{itemtype_id}")
+            if is_fix_mapping:
+                print(f"[FIX][renew_all_item_types]item_type_mapping:{itemtype_id}(item_type_id)")
         current_app.logger.info("End renew_all_item_types")
     except Exception as ex:
         current_app.logger.error(ex)
