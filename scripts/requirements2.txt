@@ -108,7 +108,6 @@ invenio-pidrelations==1.0.0a4
 invenio-pidstore==1.0.0
 invenio-query-parser==0.6.0
 invenio-records-files==1.0.0a10
-invenio-records-rest==1.0.0
 invenio-records-ui==1.0.0
 invenio-rest==1.1.2
 invenio-theme==1.0.0b4
@@ -236,3 +235,36 @@ xmlschema==0.9.30
 xmltodict==0.12.0
 zipp==3.6.0
 zope.interface==5.5.2
+-e git+https://github.com/RCOSDP/invenio-search.git@cff9744c5dc651893a9c51672c5b8da9adc21e16#egg=invenio_search
+-e ../modules/invenio-communities
+-e ../modules/invenio-db
+-e ../modules/invenio-deposit
+-e ../modules/invenio-files-rest
+-e ../modules/invenio-indexer
+-e ../modules/invenio-mail
+-e ../modules/invenio-stats
+-e ../modules/invenio-oaiserver
+-e ../modules/invenio-oauth2server
+-e ../modules/invenio-previewer
+-e ../modules/invenio-records
+-e ../modules/invenio-records-rest
+-e ../modules/weko-accounts
+-e ../modules/weko-admin
+-e ../modules/weko-authors
+-e ../modules/weko-deposit
+-e ../modules/weko-gridlayout
+-e ../modules/weko-groups
+-e ../modules/weko-handle
+-e ../modules/weko-index-tree
+-e ../modules/weko-indextree-journal
+-e ../modules/weko-items-ui
+-e ../modules/weko-items-autofill
+-e ../modules/weko-records
+-e ../modules/weko-records-ui
+-e ../modules/weko-redis
+-e ../modules/weko-search-ui
+-e ../modules/weko-schema-ui
+-e ../modules/weko-theme
+-e ../modules/weko-user-profiles
+-e ../modules/weko-workflow
+
