@@ -22,7 +22,6 @@ from invenio_records.models import (
     Timestamp as ir_Timestamp
 )
 from weko_records.api import ItemTypes
-from fix_issue_47128_jdcat import main as fix_issue_47128_jdcat_main
 from fix_issue_47128_newbuild import main as fix_issue_47128_newbuild_main
 from update_itemtype_multiple import main as update_itemtype_multiple_main
 from weko_records.models import (
@@ -70,10 +69,9 @@ def main(restricted_item_type_id, start_time, batch_size=500):
         update_feedback_mail_list_to_db.main() # 著者DBのweko idの変更。それに伴うメタデータの変更
         current_time = show_exec_time(current_time, "update_feedback_mail_list_to_db")
         update_itemtype_multiple_main()# Multipleという名前のアイテムタイプを修正（アイテムの変更なし)
-        fix_issue_47128_jdcat_main() # itemtype_id:12,20の修正＋アイテムの修正
         fix_issue_47128_newbuild_main() # harvesting_type=Trueかつitemtype_id=12の修正＋アイテムの修正
         fix_metadata_53602_main() # プロパティ変更を全アイテムのメタデータに適用
-        
+        get_update_item_info_W2025_29_sql() # SQLベースの処理で更新されたID一覧を取得
         current_app.logger.info("All updates completed successfully.")
     except Exception as ex:
         current_app.logger.error(ex)
@@ -105,7 +103,7 @@ def renew_all_item_types():
         results = db.engine.execution_options(stream_results=True).execute(query)
         item_type_ids = [r[0] for r in results]
         current_app.logger.info("target item_type count: " + str(len(item_type_ids)))
-        
+
         for item_type_id in item_type_ids:
             ret = ItemTypes.reload(item_type_id)
             if ret.get("code") != 0:
@@ -122,7 +120,7 @@ def renew_all_item_types():
                 is_fix_mapping = False
             fix_ids.append((item_type_id, is_fix_mapping))
         db.session.commit()
-        
+
         for (itemtype_id, is_fix_mapping) in fix_ids:
             print(f"[FIX][renew_all_item_types]item_type:{itemtype_id}")
             if is_fix_mapping:
@@ -151,6 +149,36 @@ def show_exec_time(start_time, process_name):
         f"{process_name} elapsed time: {elapsed_time:.2f} seconds"
     )
     return end_time
+
+def get_update_item_info_W2025_29_sql():
+    """Retrieve a list of IDs that are updated by SQL-based processes.
+
+    Some update operations in this script are performed directly via SQL.
+    This function is intended to obtain the list of IDs affected by those SQL updates.
+    """
+    from sqlalchemy import text
+    # Get data containing owner in json column from records_metadata
+    r_query = text("""
+        SELECT id
+        FROM records_metadata
+        WHERE json::text LIKE '%"owner"%'
+    """)
+    r_result = db.engine.execute(r_query)
+    r_ids = [row[0] for row in r_result]
+    for id in r_ids:
+        print(f"[FIX][W2025-29.sql]records_metadata:{id}")
+    # Get all data in item_metadata (no conditions)
+    i_query = text("""
+        SELECT id
+        FROM item_metadata
+    """)
+
+    i_result = db.engine.execute(i_query)
+    i_ids = [row[0] for row in i_result]
+
+    for id in i_ids:
+        print(f"[FIX][W2025-29.sql]item_metadata:{id}")
+
 
 
 if __name__ == "__main__":
