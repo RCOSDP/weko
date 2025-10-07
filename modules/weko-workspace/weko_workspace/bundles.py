@@ -24,7 +24,7 @@ from flask_assets import Bundle
 
 js_item_list = Bundle(
     'js/weko_workspace/WorkspaceItemList.js',
-    filters='requirejs',
+    filters='jsmin',
     output="gen/WorkspaceItemList.%(version)s.js"
 )
 

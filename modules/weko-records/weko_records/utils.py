@@ -76,7 +76,7 @@ def get_author_link(author_link, weko_link, value):
             author_link.append(pk_id)
             weko_link[str(pk_id)] = weko_id
 
-def json_loader(data, pid, owner_id=None, with_deleted=False, replace_field=True):
+def json_loader(data, pid, owner_id=None, with_deleted=False, replace_field=True, creator_id=None):
     """Convert the item data and mapping to jpcoar.
 
     :param data: json from item form post.
@@ -274,7 +274,7 @@ def json_loader(data, pid, owner_id=None, with_deleted=False, replace_field=True
         jrc_weko_creator_id = jrc.get("weko_creator_id", None)
         if not jrc_weko_creator_id:
             # in case first time create record
-            jrc.update(dict(weko_creator_id=current_user_id))
+            jrc.update(dict(weko_creator_id=creator_id or current_user_id))
         else:
             # just allow owner update shared_user_ids
             jrc.update(dict(weko_creator_id=jrc_weko_creator_id))

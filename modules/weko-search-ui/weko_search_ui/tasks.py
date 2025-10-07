@@ -335,7 +335,7 @@ def check_flag_metadata_replace(list_record):
     Args:
         list_record (list): List of record.
     """
-    error = _("`wk:metadata_replace` flag cannot be used in RO-Crate Import.")
+    error = _("'wk:metadataReplace' flag cannot be used in RO-Crate Import.")
     for item in list_record:
         if item.get("metadata_replace"):
             item["errors"] = (

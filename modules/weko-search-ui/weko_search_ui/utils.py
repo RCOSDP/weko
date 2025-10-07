@@ -53,6 +53,7 @@ from celery import chain
 from celery.result import AsyncResult
 from celery.task.control import revoke
 from elasticsearch import ElasticsearchException
+from elasticsearch.exceptions import ConnectionError
 from jsonschema import Draft4Validator
 from flask import abort, current_app, request, send_file
 from flask_babelex import gettext as _
@@ -2030,15 +2031,15 @@ def register_item_metadata(item, root_path, owner, is_gakuninrdm=False, request_
                 pid, keep_version=True, is_import=True
             )
             item_link_draft_pid = ItemLink(_draft_pid.pid_value)
-            item_link_draft_pid.update(link_data, require_commit=False)
+            item_link_draft_pid.update(link_data, required_commit=False)
 
         if item_application and can_import_item_application:
             ItemApplication.update(item_id=_deposit.id, item_application=item_application)
 
         item_link_latest_pid = ItemLink(_deposit.pid.pid_value)
-        item_link_latest_pid.update(link_data, require_commit=False)
+        item_link_latest_pid.update(link_data, required_commit=False)
         item_link_pid_without_ver = ItemLink(item_id)
-        item_link_pid_without_ver.update(link_data, require_commit=False)
+        item_link_pid_without_ver.update(link_data, required_commit=False)
 
 
 def update_publish_status(item_id, status):
@@ -2285,6 +2286,22 @@ def import_items_to_system(
                 error_id = ex.args[0].get("error_id")
 
             return {"success": False, "error_id": error_id}
+        except ConnectionError as ex:
+            current_app.logger.error("elasticsearch  error: ", ex)
+            db.session.rollback()
+            current_app.logger.error("item id: %s update error." % item["id"])
+            traceback.print_exc(file=sys.stdout)
+            exec_info = sys.exc_info()
+            tb_info = traceback.format_tb(exec_info[2])
+            opration = "ITEM_CREATE" if item.get("status") == "new" else "ITEM_UPDATE"
+            UserActivityLogger.error(
+                operation=opration,
+                target_key=item.get("id"),
+                remarks=tb_info[0],
+                request_info=request_info,
+            )
+            error_id = 'failed_to_update_elasticsearch'
+            return {"success": False, "error_id": error_id}
         except ElasticsearchException as ex:
             current_app.logger.error("elasticsearch  error: ", ex)
             if item.get("id"):
@@ -2308,15 +2325,7 @@ def import_items_to_system(
                 remarks=tb_info[0],
                 request_info=request_info,
             )
-            error_id = None
-            if (
-                ex.args
-                and len(ex.args)
-                and isinstance(ex.args[0], dict)
-                and ex.args[0].get("error_id")
-            ):
-                error_id = ex.args[0].get("error_id")
-
+            error_id = 'failed_to_update_elasticsearch'
             return {"success": False, "error_id": error_id}
         except redis.RedisError as ex:
             current_app.logger.error(f"redis  error: {ex}")
@@ -2432,6 +2441,13 @@ def import_items_to_activity(item, request_info):
             .format(headless.activity_id)
         )
         traceback.print_exc()
+        exec_info = sys.exc_info()
+        tb_info = traceback.format_tb(exec_info[2])
+        UserActivityLogger.error(
+            operation="ITEM_IMPORT",
+            request_info=request_info,
+            remarks=tb_info[0]
+        )
         url = headless.detail
         recid = headless.recid
         current_action = headless.current_action
@@ -3094,12 +3110,18 @@ def handle_check_doi(list_record):
         doi_link = doi_domain + "/" + doi
 
         doi_pidstore = identifier.check_pidstore_exist("doi", doi_link)
-        if doi_pidstore and doi_pidstore.status == PIDStatus.DELETED:
+        if any(doi.status == PIDStatus.DELETED for doi in doi_pidstore):
+            current_app.logger.warning(
+                f"Specified DOI was withdrawn: {doi}"
+            )
             error = _(
                 "Specified DOI was withdrawn. Please specify another DOI."
             )
         # Check if DOI already exists, but allows to assign to self.
-        elif doi_pidstore and doi_pidstore.object_uuid != object_uuid:
+        elif any(doi.object_uuid != object_uuid for doi in doi_pidstore):
+            current_app.logger.warning(
+                f"Specified DOI is already exists: {doi}"
+            )
             error = _(
                 "Specified DOI has been used already for another item. "
                 "Please specify another DOI."
@@ -3374,7 +3396,7 @@ def handle_check_operation_flags(list_record, data_path):
         error = None
         if record.get("status") == "new" and flg:
             error = _(
-                "The 'wk:metadataReplace' flag cannot be used "
+                "'wk:metadataReplace' flag cannot be used "
                 "when registering an item."
             )
         elif flg:

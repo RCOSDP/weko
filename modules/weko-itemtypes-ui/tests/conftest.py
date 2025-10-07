@@ -962,9 +962,10 @@ def create_itemtype_zip():
             'schema': {'type': 'object', 'properties': {'key': {'type': 'string'}}},
             'form': {},
             'render': {
-                    'table_row': ['item_' + str(id)],
+                    'table_row': ['item_' + str(id), 'item_text'],
                     'meta_list': {
-                        'item_' + str(id): {'input_type': 'cus_' + str(id)}
+                        'item_' + str(id): {'input_type': 'cus_' + str(id)},
+                        'item_text': {'input_type': 'text'}
                     }
                 },
             'tag': 1,

@@ -117,12 +117,12 @@ def test_publish_acl(client, records, users, id, status_code):
 def test_publish(client, records, users, communities, mocker):
     login_user_via_session(client=client, email=users[0]["email"])
     indexer, records_info = records
-    
+
     mock_commit = mocker.patch("weko_records_ui.views.db.session.commit")
     mock_commit2 = mocker.patch("invenio_records.api.Record.commit")
 
     mock_update_es_data = mocker.patch("weko_deposit.api.WekoIndexer.update_es_data")
-    
+
     # Test Case 1: community id exists
     mock_request = mocker.patch("weko_records_ui.views.request")
     mock_request.values = {"community": 1}
@@ -495,6 +495,7 @@ def test_default_view_method(app, records, itemtypes, indexstyle ,users):
     indexer, results = records
     record = results[0]["record"]
     recid = results[0]["recid"]
+    app.config['OAUTH2SERVER_JWT_AUTH_HEADER'] = 'Authorization'
     with app.test_request_context():
         with patch('weko_records_ui.views.check_original_pdf_download_permission', return_value=True):
             with patch("weko_records_ui.views.get_search_detail_keyword", return_value={}):
@@ -945,7 +946,7 @@ def test_soft_delete_with_del_ver_prefix(client, records, users, id, status_code
 def test_soft_delete_locked(client, records, users, id, status_code):
     """Test soft_delete when item is locked."""
     login_user_via_session(client=client, email=users[id]["email"])
-    
+
     # 51994 case.03(soft_delete)
     with patch("weko_records_ui.views.is_workflow_activity_work", return_value=True):
         res = client.post(url_for("weko_records_ui.soft_delete", recid=1, _external=True))
@@ -978,13 +979,13 @@ def test_soft_delete_exception(client, records, users):
                     # 51994 case.06, 07(soft_delete)
                     res = client.post(url_for("weko_records_ui.soft_delete", recid=1, _external=True))
 
-                    
+
                     pid = PersistentIdentifier.query.filter_by(pid_type='recid', pid_value='1').first()
                     assert pid.status == PIDStatus.REGISTERED
                     assert res.status_code == 500
                     assert res.json == expected_response
-    
-    
+
+
 # def restore(recid):
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_restore_acl_guest -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
 def test_restore_acl_guest(client, records):

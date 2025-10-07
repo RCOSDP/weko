@@ -21,6 +21,7 @@
 """Weko Deposit API."""
 import copy
 import inspect
+import os
 import sys
 import uuid
 import io
@@ -37,6 +38,7 @@ from elasticsearch.exceptions import TransportError
 from elasticsearch.helpers import bulk
 from flask import abort, current_app, json, request, session
 from flask_security import current_user
+from invenio_accounts.models import User, Role
 from invenio_db import db
 from invenio_deposit.api import Deposit, index, preserve
 from invenio_deposit.errors import MergeConflict
@@ -1536,11 +1538,15 @@ class WekoDeposit(Deposit):
             if not data:
                 data = self.data
             owner_id = data.get("owner", None)
+            deposit_owners = data.get("owners", None)
+            creator_id = str(deposit_owners[0]) if deposit_owners else None
             if str(self.pid.pid_value).endswith(".0"):
-                dc, jrc, is_edit = json_loader(data, self.pid, owner_id=owner_id,replace_field=False)
+                dc, jrc, is_edit = json_loader(
+                    data, self.pid, owner_id=owner_id,replace_field=False, creator_id=creator_id)
             else:
-                dc, jrc, is_edit = json_loader(data, self.pid, owner_id=owner_id)
-            
+                dc, jrc, is_edit = json_loader(
+                    data, self.pid, owner_id=owner_id, creator_id=creator_id)
+
             # dataのownerとownersを合わせる
             if current_user and current_user.is_authenticated:
                 data['owners'] = [int(data.get('owner', current_user.id))]
@@ -1604,13 +1610,20 @@ class WekoDeposit(Deposit):
         # elif 'status' in self:
         #     self.data['status'] = self['status']
 
+        # get system admin user
+        sys_role = Role.query.filter_by(
+            name=os.environ.get('INVENIO_ROLE_SYSTEM', 'System Administrator')).first()
+        system_admin = User.query.filter(User.roles.any(id=sys_role.id)).first()
+
         if 'shared_user_ids' in self:
             self.pop('shared_user_ids')
         # update '_deposit':{'owners':[?]} by owner for record_metadata
         self['_deposit']['owner'] = int(dc['owner'])
         self['_deposit']['owners'] = [int(dc['owner'])]
         self['_deposit']['weko_shared_ids'] = dc['weko_shared_ids']
-        self['_deposit']['created_by'] = int(current_user.id) if current_user and current_user.is_authenticated else 1
+        self['_deposit']['created_by'] = int(
+            self.data.get('created_by', 
+                          current_user.id if current_user and current_user.is_authenticated else system_admin.id))
 
         if data:
             self.delete_item_metadata(data)
@@ -1881,7 +1894,7 @@ class WekoDeposit(Deposit):
         self.indexer.update_request_mail_list(request_mail)
 
     def update_feedback_mail(self):
-        """ 
+        """
 
         Index feedback mail list.
 
@@ -2148,7 +2161,7 @@ class WekoRecord(Record):
         """
         navs = Indexes.get_path_name(self.get('path', []))
 
-        community = request.args.get('community', None)
+        community = request.args.get('c', None)
         if not community:
             return navs
 

@@ -205,7 +205,10 @@ class Flow(object):
                 query = query.order_by(asc(_Flow.flow_id))
             else:
                 role_ids = [role.id for role in current_user.roles]
-                repository_ids = [community.id for community in Community.query.filter(Community.group_id.in_(role_ids)).all()]
+                communities = Community.get_by_user(
+                    role_ids, with_deleted=True
+                ).all()
+                repository_ids = [community.id for community in communities]
                 query = query.filter(_Flow.repository_id.in_(repository_ids)).order_by(asc(_Flow.flow_id))
             return query.all()
 
@@ -553,7 +556,10 @@ class WorkFlow(object):
                 query = query.order_by(asc(_WorkFlow.flows_id))
             else:
                 role_ids = [role.id for role in user.roles]
-                repository_ids = [community.id for community in Community.query.filter(Community.group_id.in_(role_ids)).all()]
+                communities = Community.get_by_user(
+                    role_ids, with_deleted=True
+                ).all()
+                repository_ids = [community.id for community in communities]
                 query = query.filter(_WorkFlow.repository_id.in_(repository_ids)).order_by(asc(_WorkFlow.flows_id))
             return query.all()
 
@@ -1423,7 +1429,7 @@ class WorkActivity(object):
             else:
                 identifier = action_identifier
         return identifier
-    
+
     def get_activity_item_application(self, activity_id):
         with db.session.no_autoflush:
             item_application = ActivityItemApplication.query.filter_by(
@@ -1794,7 +1800,7 @@ class WorkActivity(object):
         return query if is_within else ~query
 
     @staticmethod
-    def query_activities_by_tab_is_wait(query, is_community_admin, comadmin_index_list):
+    def query_activities_by_tab_is_wait(query, is_admin, is_community_admin, comadmin_index_list):
         """
         Query activities by tab is wait.
 
@@ -1804,6 +1810,7 @@ class WorkActivity(object):
         self_user_id = int(current_user.get_id())
         self_user_id_json = json.dumps({"user" : self_user_id})
         self_group_ids = [role.id for role in current_user.roles]
+        action_handler = [self_user_id, -1] if is_admin else [self_user_id]
         query = query \
             .filter(_FlowAction.action_id == _Activity.action_id) \
             .filter(_Flow.flow_id==_FlowAction.flow_id)\
@@ -1830,7 +1837,7 @@ class WorkActivity(object):
                             _FlowActionRole.action_role_exclude == '0'
                         ),
                         and_(
-                            ActivityAction.action_handler != self_user_id
+                            ActivityAction.action_handler.notin_(action_handler),
                         )
                     )
                 )
@@ -1857,9 +1864,14 @@ class WorkActivity(object):
                                     _FlowActionRole.action_user_exclude != '0',
                                 )
                             ),
-                            not_(cast(_Activity.shared_user_ids, String).contains(self_user_id_json)),
-                            not_(_Activity.temp_data.op("#>>")("{'metainfo', 'shared_user_ids'}").contains(self_user_id_json),),
-                            not_(_Activity.temp_data.op("#>>")("{'metainfo', 'owner'}") == str(self_user_id)),
+                            or_(
+                                and_(
+                                    not_(cast(_Activity.shared_user_ids, String).contains(self_user_id_json)),
+                                    not_(_Activity.temp_data.op("#>>")("{'metainfo', 'shared_user_ids'}").contains(self_user_id_json),),
+                                    not_(_Activity.temp_data.op("#>>")("{'metainfo', 'owner'}") == str(self_user_id)),
+                                ),
+                                _Activity.shared_user_ids.is_(None),
+                            )
                         ),
                         and_(
                             or_(
@@ -1872,15 +1884,25 @@ class WorkActivity(object):
                                     _FlowActionRole.action_role_exclude != '0'
                                 )
                             ),
-                            not_(cast(_Activity.shared_user_ids, String).contains(self_user_id_json)),
-                            not_(_Activity.temp_data.op("#>>")("{'metainfo', 'shared_user_ids'}").contains(self_user_id_json),),
-                            not_(_Activity.temp_data.op("#>>")("{'metainfo', 'owner'}") == str(self_user_id)),
+                            or_(
+                                and_(
+                                    not_(cast(_Activity.shared_user_ids, String).contains(self_user_id_json)),
+                                    not_(_Activity.temp_data.op("#>>")("{'metainfo', 'shared_user_ids'}").contains(self_user_id_json),),
+                                    not_(_Activity.temp_data.op("#>>")("{'metainfo', 'owner'}") == str(self_user_id)),
+                                ),
+                                _Activity.shared_user_ids.is_(None),
+                            )
                         ),
                         and_(
-                            ActivityAction.action_handler != self_user_id,
-                            not_(cast(_Activity.shared_user_ids, String).contains(self_user_id_json)),
-                            not_(_Activity.temp_data.op("#>>")("{'metainfo', 'shared_user_ids'}").contains(self_user_id_json),),
-                            not_(_Activity.temp_data.op("#>>")("{'metainfo', 'owner'}") == str(self_user_id)),
+                            ActivityAction.action_handler.notin_(action_handler),
+                            or_(
+                                and_(
+                                    not_(cast(_Activity.shared_user_ids, String).contains(self_user_id_json)),
+                                    not_(_Activity.temp_data.op("#>>")("{'metainfo', 'shared_user_ids'}").contains(self_user_id_json),),
+                                    not_(_Activity.temp_data.op("#>>")("{'metainfo', 'owner'}") == str(self_user_id)),
+                                ),
+                                _Activity.shared_user_ids.is_(None),
+                            )
                         ),
                         and_(
                             or_(
@@ -1898,7 +1920,7 @@ class WorkActivity(object):
                                 _Activity.temp_data.op("#>>")("{'metainfo', 'shared_user_ids'}").contains(self_user_id_json),
                                 _Activity.temp_data.op("#>>")("{'metainfo', 'owner'}") == str(self_user_id),
                             ),
-                            _FlowActionRole.action_user 
+                            _FlowActionRole.action_user
                             != _Activity.activity_login_user,
                             _FlowActionRole.action_user_exclude == '0'
                         ),
@@ -2105,7 +2127,7 @@ class WorkActivity(object):
                     ),
                     and_(
                         _FlowActionRole.action_item_registrant == True,
-                        _ItemMetadata.json.op('->>')('owner') == current_user.get_id() 
+                        _ItemMetadata.json.op('->>')('owner') == current_user.get_id()
                     ),
                     and_(
                         _FlowActionRole.action_request_mail == True,
@@ -2256,10 +2278,12 @@ class WorkActivity(object):
             role_ids = [role.id for role in current_user.roles]
         if role_ids:
             from invenio_communities.models import Community
-            comm_list = Community.query.filter(
-                Community.id_role.in_(role_ids)
+            comm_list = Community.get_by_user(
+                role_ids, with_deleted=True
             ).all()
-            com_roles = list(set([comm.id_role for comm in comm_list]))
+            com_roles = list(
+                set([comm.id_role for comm in comm_list]).union(
+                    set([comm.group_id for comm in comm_list])))            
 
             if com_roles:
                 com_users = User.query.outerjoin(userrole).outerjoin(Role) \
@@ -2295,8 +2319,8 @@ class WorkActivity(object):
             if is_community_admin:
                 cur_role = [role.id for role in current_user.roles]
                 from invenio_communities.models import Community
-                comm_list = Community.query.filter(
-                    Community.id_role.in_(cur_role)
+                comm_list = Community.get_by_user(
+                    cur_role, with_deleted=True
                 ).all()
                 for comm in comm_list:
                     comadmin_index_list += [str(i.cid) for i in Indexes.get_self_list(comm.root_node_id)
@@ -2314,7 +2338,7 @@ class WorkActivity(object):
                 if size_wait and size_wait[0].isnumeric():
                     size = size_wait[0]
                 query_action_activities = self.query_activities_by_tab_is_wait(
-                    query_action_activities, is_community_admin, comadmin_index_list)
+                    query_action_activities, is_admin, is_community_admin, comadmin_index_list)
             # query activities by tab is all
             elif tab == WEKO_WORKFLOW_ALL_TAB:
                 page_all = conditions.get('pagesall')
@@ -2616,7 +2640,7 @@ class WorkActivity(object):
                 continue
             user_ids.append(temp_user_info.id)
         return user_ids
-    
+
     def get_user_ids_of_request_mails_by_record_id(self, record_id):
         """
         Get user information of request_mails by record_id
@@ -2649,8 +2673,8 @@ class WorkActivity(object):
         """
         Check user_id's role in roles
         :param record_id: int, user's id
-               roles: get_activity_action_role's return,ex: roles={'allow':[1],'deny':[]} 
-        :return: return ids of request mails that set to item  
+               roles: get_activity_action_role's return,ex: roles={'allow':[1],'deny':[]}
+        :return: return ids of request mails that set to item
         """
         user_role = db.session.query(Role).join(userrole).filter_by(user_id=user_id).all()
         is_approver = True
@@ -2670,8 +2694,8 @@ class WorkActivity(object):
             elif roles['allow'] and role.id not in roles['allow']:
                 is_approver = False
         return is_approver
-    
-    def get_recids_for_request_mail_by_mailaddress(self, address):   
+
+    def get_recids_for_request_mail_by_mailaddress(self, address):
         request_mail_list =  RequestMailList.get_request_mail_by_mailaddress(address)
         recid_list=[]
         for request_mail in request_mail_list:
@@ -2768,16 +2792,16 @@ class WorkActivity(object):
         getargs = request.args
         ctx = {'community': None}
         community_id = ""
-        if 'community' in getargs:
+        if 'c' in getargs:
             comm = GetCommunity.get_community_by_id(
-                request.args.get('community'))
+                request.args.get('c'))
             ctx = {'community': comm}
             if comm is not None:
                 community_id = comm.id
 
         # display_activity of Identifier grant
         if action_endpoint == 'identifier_grant' and item:
-            community_id = request.args.get('community', None)
+            community_id = request.args.get('c', None)
             if not community_id:
                 community_id = 'Root Index'
             identifier_setting = get_identifier_setting(community_id)
@@ -3211,24 +3235,28 @@ class WorkActivity(object):
         """Get notification parameters for registrant."""
         with db.session.begin_nested():
             set_target_id = {activity.activity_login_user}
-            is_shared = bool(activity.shared_user_ids)
+            shared_user_ids = [
+                s.get('user') for s in activity.shared_user_ids or []
+            ]
+            is_shared = len(shared_user_ids) > 0
             if is_shared:
-                set_target_id.update([s.get('user') for s in activity.shared_user_ids])
+                set_target_id.update(shared_user_ids)
 
             recid = (
                 PersistentIdentifier
                 .get_by_object("recid", "rec", activity.item_id)
             )
             actor_id = activity.activity_update_user
+            set_target_id.discard(actor_id)
+
+            if is_shared and actor_id == activity.activity_login_user:
+                actor_id = shared_user_ids[0]
 
             actor_profile = UserProfile.get_by_userid(actor_id)
             actor_name = (
                 actor_profile.username
                 if actor_profile is not None else None
             )
-
-            # if self delete, not notify
-            set_target_id.discard(actor_id)
 
         return set_target_id, recid, actor_id, actor_name
 
@@ -3238,7 +3266,13 @@ class WorkActivity(object):
                 PersistentIdentifier
                 .get_by_object("recid", "rec", activity.item_id)
             )
-            actor_id = activity.activity_login_user
+            shared_user_ids = [
+                s.get('user') for s in activity.shared_user_ids or []
+            ]
+            actor_id = (
+                shared_user_ids[0]
+                if shared_user_ids else activity.activity_login_user
+            )
 
             actor_profile = UserProfile.get_by_userid(actor_id)
             actor_name = (

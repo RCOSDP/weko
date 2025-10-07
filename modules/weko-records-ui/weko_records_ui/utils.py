@@ -990,11 +990,11 @@ def get_file_info_list(record, item_type=None):
                 else:
                     adt = dt.strptime(adtv, "%Y-%m-%d")
                 if is_future(adt):
-                    message = "Download is available from {}/{}/{}."
-                    p_file['future_date_message'] = _(message).format(
+                    message = _("Download is available from {}/{}/{}.")
+                    p_file['future_date_message'] = message.format(
                         adt.year, adt.month, adt.day)
-                    message = "Download / Preview is available from {}/{}/{}."
-                    p_file['download_preview_message'] = _(message).format(
+                    message = _("Download / Preview is available from {}/{}/{}.")
+                    p_file['download_preview_message'] = message.format(
                         adt.year, adt.month, adt.day)
 
     workflows = get_workflows()

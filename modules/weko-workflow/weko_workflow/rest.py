@@ -781,7 +781,7 @@ class FileApplicationActivity(ContentNegotiatedMethodView):
         step_item_login_url, need_file, need_billing_file, \
             record, json_schema, schema_form,\
             item_save_uri, files, endpoints, need_thumbnail, files_thumbnail, \
-            allow_multi_thumbnail \
+            allow_multi_thumbnail, _ \
             = item_login(item_type_id=workflow_detail.itemtype_id)
 
         application_item_type = is_usage_application_item_type(activity_detail)

@@ -219,7 +219,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     return React.createElement(
       'div',
-      { style: { position: 'relative', marginBottom: '20px', maxWidth: '300px' } },
+      { style: { position: 'relative', marginTop: '10px', marginBottom: '10px', marginLeft: '5px', maxWidth: '300px' } },
       React.createElement('input', {
         type: 'text',
         id: 'search-input',
@@ -469,8 +469,6 @@ document.addEventListener('DOMContentLoaded', function () {
             await refreshPage('/workspace', 'GET');
             console.error('リセットエラー:', error);
           }
-        } else {
-          console.log('リセットがキャンセルされました');
         }
       };
 
@@ -867,17 +865,13 @@ document.addEventListener('DOMContentLoaded', function () {
       }),
       searchContainer
     );
-  } else {
-    console.error('search-container が見つかりません');
   }
 
   // 初期表示
   if (workspaceItemList.length > 0 || Object.keys(defaultConditions).length > 0) {
-    console.log('初期化開始: データがロードされました', { workspaceItemList, defaultConditions });
     updateDisplay();
     setupToggle();
   } else {
-    console.warn('初期データが空です');
     mountButtons();
     bindRelatedButtons();
     setupToggle();

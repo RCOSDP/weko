@@ -72,6 +72,8 @@ def check_phone_number(form, field):
     @param form:
     @param field:
     """
+    if field.data == "":
+        return
     if len(field.data) > 15:
         raise ValidationError('Phone number must be less than 15 characters.')
     field = field.data.split("-")

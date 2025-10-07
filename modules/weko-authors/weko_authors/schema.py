@@ -197,6 +197,8 @@ class AuthorSchema(Schema):
     affiliationInfo = fields.List(fields.Nested(AffiliationInfoSchema))
     """List of affiliations associated with the author."""
 
+    communityIds = fields.List(fields.String())
+
     class Meta:
         strict = True
 
