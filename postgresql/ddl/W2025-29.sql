@@ -65,44 +65,44 @@ ALTER TABLE stats_email_address ADD COLUMN repository_id VARCHAR(100) DEFAULT 'R
 
 -- modules/weko-authors/weko_authors/alembic/1e377b157a5d_add_repository_id_column.py
 -- If updating v1.0.8 to v2.0.0 or later, please make sure to not use this query.
-ALTER TABLE authors ADD COLUMN repository_id JSONB;
-ALTER TABLE authors_affiliation_settings ADD COLUMN repository_id JSONB;
-ALTER TABLE authors_prefix_settings ADD COLUMN repository_id JSONB;
+-- ALTER TABLE authors ADD COLUMN repository_id JSONB;
+-- ALTER TABLE authors_affiliation_settings ADD COLUMN repository_id JSONB;
+-- ALTER TABLE authors_prefix_settings ADD COLUMN repository_id JSONB;
 
 -- modules/weko-authors/weko_authors/alembic/b2ce1889616c_create_author_community_relation_tables.py
--- CREATE TABLE author_affiliation_community_relations (
---     created TIMESTAMP NOT NULL,
---     updated TIMESTAMP NOT NULL,
---     affiliation_id BIGINT NOT NULL,
---     community_id VARCHAR(100) NOT NULL,
---     CONSTRAINT fk_author_affiliation_community_relations_affiliation_id_authors_affiliation_settings
---         FOREIGN KEY (affiliation_id) REFERENCES authors_affiliation_settings(id) ON DELETE CASCADE,
---     CONSTRAINT fk_author_affiliation_community_relations_community_id_communities_community
---         FOREIGN KEY (community_id) REFERENCES communities_community(id) ON DELETE CASCADE,
---     CONSTRAINT pk_author_affiliation_community_relations PRIMARY KEY (affiliation_id, community_id)
--- );
--- CREATE TABLE author_community_relations (
---     created TIMESTAMP NOT NULL,
---     updated TIMESTAMP NOT NULL,
---     author_id BIGINT NOT NULL,
---     community_id VARCHAR(100) NOT NULL,
---     CONSTRAINT fk_author_community_relations_author_id_authors
---         FOREIGN KEY (author_id) REFERENCES authors(id) ON DELETE CASCADE,
---     CONSTRAINT fk_author_community_relations_community_id_communities_community
---         FOREIGN KEY (community_id) REFERENCES communities_community(id) ON DELETE CASCADE,
---     CONSTRAINT pk_author_community_relations PRIMARY KEY (author_id, community_id)
--- );
--- CREATE TABLE author_prefix_community_relations (
---     created TIMESTAMP NOT NULL,
---     updated TIMESTAMP NOT NULL,
---     prefix_id BIGINT NOT NULL,
---     community_id VARCHAR(100) NOT NULL,
---     CONSTRAINT fk_author_prefix_community_relations_community_id_communities_community
---         FOREIGN KEY (community_id) REFERENCES communities_community(id) ON DELETE CASCADE,
---     CONSTRAINT fk_author_prefix_community_relations_prefix_id_authors_prefix_settings
---         FOREIGN KEY (prefix_id) REFERENCES authors_prefix_settings(id) ON DELETE CASCADE,
---     CONSTRAINT pk_author_prefix_community_relations PRIMARY KEY (prefix_id, community_id)
--- );
+CREATE TABLE author_affiliation_community_relations (
+    created TIMESTAMP NOT NULL,
+    updated TIMESTAMP NOT NULL,
+    affiliation_id BIGINT NOT NULL,
+    community_id VARCHAR(100) NOT NULL,
+    CONSTRAINT fk_author_affiliation_community_relations_affiliation_id_authors_affiliation_settings
+        FOREIGN KEY (affiliation_id) REFERENCES authors_affiliation_settings(id) ON DELETE CASCADE,
+    CONSTRAINT fk_author_affiliation_community_relations_community_id_communities_community
+        FOREIGN KEY (community_id) REFERENCES communities_community(id) ON DELETE CASCADE,
+    CONSTRAINT pk_author_affiliation_community_relations PRIMARY KEY (affiliation_id, community_id)
+);
+CREATE TABLE author_community_relations (
+    created TIMESTAMP NOT NULL,
+    updated TIMESTAMP NOT NULL,
+    author_id BIGINT NOT NULL,
+    community_id VARCHAR(100) NOT NULL,
+    CONSTRAINT fk_author_community_relations_author_id_authors
+        FOREIGN KEY (author_id) REFERENCES authors(id) ON DELETE CASCADE,
+    CONSTRAINT fk_author_community_relations_community_id_communities_community
+        FOREIGN KEY (community_id) REFERENCES communities_community(id) ON DELETE CASCADE,
+    CONSTRAINT pk_author_community_relations PRIMARY KEY (author_id, community_id)
+);
+CREATE TABLE author_prefix_community_relations (
+    created TIMESTAMP NOT NULL,
+    updated TIMESTAMP NOT NULL,
+    prefix_id BIGINT NOT NULL,
+    community_id VARCHAR(100) NOT NULL,
+    CONSTRAINT fk_author_prefix_community_relations_community_id_communities_community
+        FOREIGN KEY (community_id) REFERENCES communities_community(id) ON DELETE CASCADE,
+    CONSTRAINT fk_author_prefix_community_relations_prefix_id_authors_prefix_settings
+        FOREIGN KEY (prefix_id) REFERENCES authors_prefix_settings(id) ON DELETE CASCADE,
+    CONSTRAINT pk_author_prefix_community_relations PRIMARY KEY (prefix_id, community_id)
+);
 
 -- modules/weko-index-tree/weko_index_tree/alembic/efd70c593f4b_update_index.py
 ALTER TABLE index ADD COLUMN index_url TEXT;
@@ -192,6 +192,7 @@ CREATE TABLE oa_status (
 );
 
 -- modules/weko-records-ui/weko_records_ui/alembic/e0b1ef08d08c_create_file_url_download_log_table.py
+-- Uncomment after merging W2024-23
 -- DROP TABLE IF EXISTS file_onetime_download;
 -- CREATE TABLE file_onetime_download (
 --     created TIMESTAMP NOT NULL,
@@ -1146,6 +1147,7 @@ INSERT INTO public.jsonld_mappings(created, updated, id, name, mapping, item_typ
 
 -- fix_issue_37736.sql
 
+-- Decided not to delete
 -- ALTER TABLE site_info DROP COLUMN addthis_user_id;
 
 -- fix_issue_39700.sql
