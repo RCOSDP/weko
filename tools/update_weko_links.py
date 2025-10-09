@@ -388,6 +388,8 @@ def bulk_update_records_metadata(batch_size=500):
                     # show bulk update records_metadata ids
                     updated_ids = [r['id'] for r in bulk_records_metadata_data]
                     current_app.logger.info(f'    Updated records_metadata item_ids: {updated_ids}')
+                    for i in updated_ids:
+                        print(f"[FIX][update_weko_links.py]records_metadata:{i}")
                 
                 # bulk update activities
                 if new_activities:
@@ -395,6 +397,8 @@ def bulk_update_records_metadata(batch_size=500):
                     # show bulk update activity ids
                     updated_ids = [r['id'] for r in new_activities]
                     current_app.logger.info(f'    Updated workflow_activity ids: {updated_ids}')
+                    for i in updated_ids:
+                        print(f"[FIX][update_weko_links.py]workflow_activity:{i}")
 
                 current_app.logger.info(f'  Finished processing recids: {recid_chunk}')
 
@@ -536,6 +540,8 @@ def bulk_update_workflow_activities(batch_size=500):
                     # show bulk update activity ids
                     updated_ids = [r['id'] for r in new_activities]
                     current_app.logger.info(f'    Updated workflow_activity ids: {updated_ids}')
+                    for i in updated_ids:
+                        print(f"[FIX][update_weko_links.py]workflow_activity:{i}")
 
                 current_app.logger.info(f'  Finished processing activities: {[r["id"] for r in activities]}')
 

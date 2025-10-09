@@ -5,6 +5,7 @@ import traceback
 
 from flask import current_app
 from invenio_db import db
+import properties
 from properties import property_config
 from register_properties import del_properties, get_properties_id, register_properties_from_folder
 from tools import updateRestrictedRecords, update_weko_links
@@ -56,6 +57,7 @@ def main(restricted_item_type_id, start_time, batch_size=500):
             h.setFormatter(formatter)
 
     try:
+        get_update_item_info_W2025_29_sql() # SQLベースの処理で更新されたID一覧を取得
         current_app.logger.info("run updateRestrictedRecords")
         updateRestrictedRecords.main(restricted_item_type_id, batch_size=batch_size) # 制限公開用のアイテムタイプ変更。全アイテムの代理投稿者変更
         current_time = show_exec_time(start_time, "update_restricted_records")
@@ -74,7 +76,7 @@ def main(restricted_item_type_id, start_time, batch_size=500):
         current_time = show_exec_time(current_time, "fix_issue_47128_newbuild_main")
         fix_metadata_53602_main() # プロパティ変更を全アイテムのメタデータに適用
         current_time = show_exec_time(current_time, "fix_metadata_53602_main")
-        get_update_item_info_W2025_29_sql() # SQLベースの処理で更新されたID一覧を取得
+        
         current_app.logger.info("All updates completed successfully.")
     except Exception as ex:
         current_app.logger.error(ex)
@@ -97,6 +99,13 @@ def register_properties_only_specified():
         current_app.logger.error(traceback.format_exc())
         db.session.rollback()
 
+def get_properties_mapping():
+    mapping = {}
+    for i in dir(properties):
+        prop = getattr(properties, i)
+        if getattr(prop, 'property_id', None) and prop.property_id:
+            mapping[int(prop.property_id)] = prop.mapping
+    return mapping
 
 def renew_all_item_types():
     try:
@@ -106,9 +115,9 @@ def renew_all_item_types():
         results = db.engine.execution_options(stream_results=True).execute(query)
         item_type_ids = [r[0] for r in results]
         current_app.logger.info("target item_type count: " + str(len(item_type_ids)))
-
+        mapping = get_properties_mapping()
         for item_type_id in item_type_ids:
-            ret = ItemTypes.reload(item_type_id)
+            ret = ItemTypes.reload(item_type_id, mapping)
             if ret.get("code") != 0:
                 current_app.logger.error("Failed to renew item_type_id:{}".format(item_type_id))
                 current_app.logger.error(ret.get("msg"))
