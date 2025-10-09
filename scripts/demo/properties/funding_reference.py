@@ -123,11 +123,6 @@ def schema(title="", multi_flag=multiple_flag):
                             "enum": config.FUNDER_IDENTIFIER_TYPE_VAL,
                             "title": "助成機関識別子タイプ",
                         },
-                        "subitem_funder_identifier_type_uri": {
-                            "format": "text",
-                            "title": "助成機関識別子タイプURI",
-                            "type": "string",
-                        },
                         "subitem_funder_identifier": {
                             "format": "text",
                             "title": "助成機関識別子",
@@ -360,10 +355,10 @@ def form(
                             "key": "{}.subitem_funding_stream_identifiers.subitem_funding_stream_identifier".format(
                                 key
                             ),
-                            "title": "研究課題番号タイプ",
+                            "title": "プログラム情報識別子",
                             "title_i18n": {
                                 "en": "Funding Stream Identifier",
-                                "ja": "研究課題番号タイプ",
+                                "ja": "プログラム情報識別子",
                             },
                             "type": "text",
                         },
@@ -375,17 +370,6 @@ def form(
                             "title_i18n": {
                                 "en": "Funding Stream Identifier Type URI",
                                 "ja": "プログラム情報識別子タイプURI",
-                            },
-                            "type": "text",
-                        },
-                        {
-                            "key": "{}.subitem_funding_stream_identifiers.subitem_funding_stream_identifier".format(
-                                key
-                            ),
-                            "title": "プログラム情報識別子",
-                            "title_i18n": {
-                                "en": "Funding Stream Identifier",
-                                "ja": "プログラム情報識別子",
                             },
                             "type": "text",
                         },
