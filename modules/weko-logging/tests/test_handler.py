@@ -60,7 +60,7 @@ def test_emit(app, users, mocker, caplog, communities):
     assert len(caplog.records) == 3
     records = UserActivityLog.query.all()
     assert len(records) == 1
-    
+
     # Test Case 4: When community_id is not None
     logger = logging.getLogger("user-activity")
     logger.error("test", extra={
@@ -81,7 +81,7 @@ def test_emit(app, users, mocker, caplog, communities):
         "remarks": "test",
         "request_info": {
             "path": "https://test_server/cc/sample",
-            "args": {"community": "community_sample2"},
+            "args": {"c": "community_sample2"},
             "log_group_id": "log_group_123",
         },
     })
@@ -110,11 +110,11 @@ def test_get_community_id_from_path(app, mocker):
 
     # Test Case 3: When the path not contains "/c/" and the query param "community" exists
     mock_request.path = "https://test_server/cc/sample"
-    mock_request.args = {"community": "community_sample2"}
+    mock_request.args = {"c": "community_sample2"}
 
     community_id = UserActivityLogHandler.get_community_id_from_path(None)
     assert community_id == "community_sample2"
-    
+
     # Test Case 4: When the path not contains "/c/" (with request_info)
     request_info = {
         "path": "https://test_server/cc/sample",
@@ -133,7 +133,7 @@ def test_get_community_id_from_path(app, mocker):
     # Test Case 6: When the path not contains "/c/" and the query param "community" exists (with request_info)
     request_info = {
         "path": "https://test_server/cc/sample",
-        "args": {"community": "community_sample2"},
+        "args": {"c": "community_sample2"},
     }
 
     community_id = UserActivityLogHandler.get_community_id_from_path(request_info)
@@ -169,7 +169,7 @@ def test_get_summary_from_request(app, mocker):
     mock_request.path = None
     mock_request.oauth = None
     mock_request.args = {}
-    
+
     # Test Case 2: request has remote_addr
     mock_request.remote_addr = "172.0.0.1"
     actual2 = UserActivityLogHandler.get_summary_from_request()
@@ -185,7 +185,7 @@ def test_get_summary_from_request(app, mocker):
     assert actual3 == {
         "ip_address": "172.0.0.2",
     }
-    
+
     # Test Case 4: request has path
     mock_request.path = "https://test_server/cc/sample"
     actual4 = UserActivityLogHandler.get_summary_from_request()
@@ -193,7 +193,7 @@ def test_get_summary_from_request(app, mocker):
         "ip_address": "172.0.0.2",
         "path": "https://test_server/cc/sample",
     }
-    
+
     # Test Case 5: request has oauth
     mock_request.oauth = MagicMock()
     mock_request.oauth.client.client_id = "test_client_id"
@@ -203,10 +203,10 @@ def test_get_summary_from_request(app, mocker):
         "path": "https://test_server/cc/sample",
         "client_id": "test_client_id",
     }
-    
+
     # Test Case 6: request has args
     mock_request.args = {
-        "community": "community_sample2",
+        "c": "community_sample2",
     }
     actual6 = UserActivityLogHandler.get_summary_from_request()
     assert actual6 == {
@@ -214,6 +214,6 @@ def test_get_summary_from_request(app, mocker):
         "path": "https://test_server/cc/sample",
         "client_id": "test_client_id",
         "args": {
-            "community": "community_sample2",
+            "c": "community_sample2",
         },
     }

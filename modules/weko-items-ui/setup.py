@@ -131,6 +131,9 @@ setup(
         'invenio_celery.tasks': [
             'weko_items_ui = weko_items_ui.tasks',
         ],
+        'invenio_db.alembic': [
+            'weko_items_ui = weko_items_ui:alembic',
+        ],
     },
     extras_require=extras_require,
     install_requires=install_requires,

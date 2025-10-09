@@ -1,11 +1,7 @@
 schema_name = "jpcoar_mapping"
 target_namespace = None
 schema_location = "https://github.com/JPCOAR/schema/blob/master/2.0/jpcoar_scm.xsd"
-form_data = {
-    "name": "jpcoar",
-    "file_name": "jpcoar_scm.xsd",
-    "root_name": "jpcoar"
-}
+form_data = {"name": "jpcoar", "file_name": "jpcoar_scm.xsd", "root_name": "jpcoar"}
 namespaces = {
     "": "https://github.com/JPCOAR/schema/blob/master/2.0/",
     "dc": "http://purl.org/dc/elements/1.1/",
@@ -17,7 +13,7 @@ namespaces = {
     "jpcoar": "https://github.com/JPCOAR/schema/blob/master/2.0/",
     "dcterms": "http://purl.org/dc/terms/",
     "datacite": "https://schema.datacite.org/meta/kernel-4/",
-    "rioxxterms": "http://www.rioxx.net/schema/v2.0/rioxxterms/"
+    "rioxxterms": "http://www.rioxx.net/schema/v2.0/rioxxterms/",
 }
 xsd = {
     "dc:title": {
@@ -30,33 +26,21 @@ xsd = {
                     "name": "xml:lang",
                     "ref": "xml:lang",
                 }
-            ]
+            ],
         }
     },
     "dcterms:alternative": {
         "type": {
             "maxOccurs": "unbounded",
             "minOccurs": 0,
-            "attributes": [
-                {
-                    "use": "optional",
-                    "name": "xml:lang",
-                    "ref": "xml:lang"
-                }
-            ]
+            "attributes": [{"use": "optional", "name": "xml:lang", "ref": "xml:lang"}],
         }
     },
     "jpcoar:creator": {
         "type": {
             "maxOccurs": "unbounded",
             "minOccurs": 0,
-            "attributes": [
-                {
-                    "use": "optional",
-                    "name": "creatorType",
-                    "ref": None
-                }
-            ]
+            "attributes": [{"use": "optional", "name": "creatorType", "ref": None}],
         },
         "jpcoar:nameIdentifier": {
             "type": {
@@ -78,16 +62,12 @@ xsd = {
                                 "kakenhi",
                                 "Ringgold",
                                 "GRID",
-                                "ROR"
+                                "ROR",
                             ]
-                        }
+                        },
                     },
-                    {
-                        "use": "optional",
-                        "name": "nameIdentifierURI",
-                        "ref": None
-                    }
-                ]
+                    {"use": "optional", "name": "nameIdentifierURI", "ref": None},
+                ],
             }
         },
         "jpcoar:creatorName": {
@@ -95,11 +75,7 @@ xsd = {
                 "maxOccurs": "unbounded",
                 "minOccurs": 0,
                 "attributes": [
-                    {
-                        "use": "optional",
-                        "name": "xml:lang",
-                        "ref": "xml:lang"
-                    },
+                    {"use": "optional", "name": "xml:lang", "ref": "xml:lang"},
                     {
                         "use": "required",
                         "name": "nameType",
@@ -109,9 +85,9 @@ xsd = {
                                 "Organizational",
                                 "Personal",
                             ]
-                        }
-                    }
-                ]
+                        },
+                    },
+                ],
             }
         },
         "jpcoar:familyName": {
@@ -119,12 +95,8 @@ xsd = {
                 "maxOccurs": "unbounded",
                 "minOccurs": 0,
                 "attributes": [
-                    {
-                        "use": "optional",
-                        "name": "xml:lang",
-                        "ref": "xml:lang"
-                    }
-                ]
+                    {"use": "optional", "name": "xml:lang", "ref": "xml:lang"}
+                ],
             }
         },
         "jpcoar:givenName": {
@@ -132,12 +104,8 @@ xsd = {
                 "maxOccurs": "unbounded",
                 "minOccurs": 0,
                 "attributes": [
-                    {
-                        "use": "optional",
-                        "name": "xml:lang",
-                        "ref": "xml:lang"
-                    }
-                ]
+                    {"use": "optional", "name": "xml:lang", "ref": "xml:lang"}
+                ],
             }
         },
         "jpcoar:creatorAlternative": {
@@ -145,19 +113,12 @@ xsd = {
                 "maxOccurs": "unbounded",
                 "minOccurs": 0,
                 "attributes": [
-                    {
-                        "use": "optional",
-                        "name": "xml:lang",
-                        "ref": "xml:lang"
-                    }
-                ]
+                    {"use": "optional", "name": "xml:lang", "ref": "xml:lang"}
+                ],
             }
         },
         "jpcoar:affiliation": {
-            "type": {
-                "maxOccurs": "unbounded",
-                "minOccurs": 0
-            },
+            "type": {"maxOccurs": "unbounded", "minOccurs": 0},
             "jpcoar:nameIdentifier": {
                 "type": {
                     "maxOccurs": "unbounded",
@@ -175,14 +136,10 @@ xsd = {
                                     "GRID",
                                     "ROR",
                                 ]
-                            }
+                            },
                         },
-                        {
-                            "use": "optional",
-                            "name": "nameIdentifierURI",
-                            "ref": None
-                        }
-                    ]
+                        {"use": "optional", "name": "nameIdentifierURI", "ref": None},
+                    ],
                 }
             },
             "jpcoar:affiliationName": {
@@ -190,15 +147,11 @@ xsd = {
                     "maxOccurs": "unbounded",
                     "minOccurs": 0,
                     "attributes": [
-                        {
-                            "use": "optional",
-                            "name": "xml:lang",
-                            "ref": "xml:lang"
-                        }
-                    ]
+                        {"use": "optional", "name": "xml:lang", "ref": "xml:lang"}
+                    ],
                 }
-            }
-        }
+            },
+        },
     },
     "jpcoar:contributor": {
         "type": {
@@ -230,11 +183,11 @@ xsd = {
                             "Sponsor",
                             "Supervisor",
                             "WorkPackageLeader",
-                            "Other"
+                            "Other",
                         ]
-                    }
+                    },
                 }
-            ]
+            ],
         },
         "jpcoar:nameIdentifier": {
             "type": {
@@ -256,16 +209,12 @@ xsd = {
                                 "kakenhi",
                                 "Ringgold",
                                 "GRID",
-                                "ROR"
+                                "ROR",
                             ]
-                        }
+                        },
                     },
-                    {
-                        "use": "optional",
-                        "name": "nameIdentifierURI",
-                        "ref": None
-                    }
-                ]
+                    {"use": "optional", "name": "nameIdentifierURI", "ref": None},
+                ],
             }
         },
         "jpcoar:contributorName": {
@@ -273,11 +222,7 @@ xsd = {
                 "maxOccurs": "unbounded",
                 "minOccurs": 0,
                 "attributes": [
-                    {
-                        "use": "optional",
-                        "name": "xml:lang",
-                        "ref": "xml:lang"
-                    },
+                    {"use": "optional", "name": "xml:lang", "ref": "xml:lang"},
                     {
                         "use": "required",
                         "name": "nameType",
@@ -287,9 +232,9 @@ xsd = {
                                 "Organizational",
                                 "Personal",
                             ]
-                        }
-                    }
-                ]
+                        },
+                    },
+                ],
             }
         },
         "jpcoar:familyName": {
@@ -297,12 +242,8 @@ xsd = {
                 "maxOccurs": "unbounded",
                 "minOccurs": 0,
                 "attributes": [
-                    {
-                        "use": "optional",
-                        "name": "xml:lang",
-                        "ref": "xml:lang"
-                    }
-                ]
+                    {"use": "optional", "name": "xml:lang", "ref": "xml:lang"}
+                ],
             }
         },
         "jpcoar:givenName": {
@@ -310,12 +251,8 @@ xsd = {
                 "maxOccurs": "unbounded",
                 "minOccurs": 0,
                 "attributes": [
-                    {
-                        "use": "optional",
-                        "name": "xml:lang",
-                        "ref": "xml:lang"
-                    }
-                ]
+                    {"use": "optional", "name": "xml:lang", "ref": "xml:lang"}
+                ],
             }
         },
         "jpcoar:contributorAlternative": {
@@ -323,19 +260,12 @@ xsd = {
                 "maxOccurs": "unbounded",
                 "minOccurs": 0,
                 "attributes": [
-                    {
-                        "use": "optional",
-                        "name": "xml:lang",
-                        "ref": "xml:lang"
-                    }
-                ]
+                    {"use": "optional", "name": "xml:lang", "ref": "xml:lang"}
+                ],
             }
         },
         "jpcoar:affiliation": {
-            "type": {
-                "maxOccurs": "unbounded",
-                "minOccurs": 0
-            },
+            "type": {"maxOccurs": "unbounded", "minOccurs": 0},
             "jpcoar:nameIdentifier": {
                 "type": {
                     "maxOccurs": "unbounded",
@@ -353,14 +283,10 @@ xsd = {
                                     "GRID",
                                     "ROR",
                                 ]
-                            }
+                            },
                         },
-                        {
-                            "use": "optional",
-                            "name": "nameIdentifierURI",
-                            "ref": None
-                        }
-                    ]
+                        {"use": "optional", "name": "nameIdentifierURI", "ref": None},
+                    ],
                 }
             },
             "jpcoar:affiliationName": {
@@ -368,35 +294,27 @@ xsd = {
                     "maxOccurs": "unbounded",
                     "minOccurs": 0,
                     "attributes": [
-                        {
-                            "use": "optional",
-                            "name": "xml:lang",
-                            "ref": "xml:lang"
-                        }
-                    ]
+                        {"use": "optional", "name": "xml:lang", "ref": "xml:lang"}
+                    ],
                 }
-            }
-        }
+            },
+        },
     },
     "dcterms:accessRights": {
         "type": {
             "maxOccurs": 1,
             "minOccurs": 0,
             "attributes": [
-                {
-                    "use": "required",
-                    "name": "rdf:resource",
-                    "ref": "rdf:resource"
-                }
+                {"use": "required", "name": "rdf:resource", "ref": "rdf:resource"}
             ],
             "restriction": {
                 "enumeration": [
                     "embargoed access",
                     "metadata only access",
                     "open access",
-                    "restricted access"
+                    "restricted access",
                 ]
-            }
+            },
         }
     },
     "dc:rights": {
@@ -404,24 +322,13 @@ xsd = {
             "maxOccurs": "unbounded",
             "minOccurs": 0,
             "attributes": [
-                {
-                    "use": "optional",
-                    "name": "rdf:resource",
-                    "ref": "rdf:resource"
-                },
-                {
-                    "use": "optional",
-                    "name": "xml:lang",
-                    "ref": "xml:lang"
-                }
-            ]
+                {"use": "optional", "name": "rdf:resource", "ref": "rdf:resource"},
+                {"use": "optional", "name": "xml:lang", "ref": "xml:lang"},
+            ],
         }
     },
     "jpcoar:rightsHolder": {
-        "type": {
-            "maxOccurs": "unbounded",
-            "minOccurs": 0
-        },
+        "type": {"maxOccurs": "unbounded", "minOccurs": 0},
         "jpcoar:nameIdentifier": {
             "type": {
                 "maxOccurs": "unbounded",
@@ -441,16 +348,12 @@ xsd = {
                                 "AID",
                                 "kakenhi",
                                 "Ringgold",
-                                "GRID"
+                                "GRID",
                             ]
-                        }
+                        },
                     },
-                    {
-                        "use": "optional",
-                        "name": "nameIdentifierURI",
-                        "ref": None
-                    }
-                ]
+                    {"use": "optional", "name": "nameIdentifierURI", "ref": None},
+                ],
             }
         },
         "jpcoar:rightsHolderName": {
@@ -458,30 +361,18 @@ xsd = {
                 "maxOccurs": "unbounded",
                 "minOccurs": 0,
                 "attributes": [
-                    {
-                        "use": "optional",
-                        "name": "xml:lang",
-                        "ref": "xml:lang"
-                    }
-                ]
+                    {"use": "optional", "name": "xml:lang", "ref": "xml:lang"}
+                ],
             }
-        }
+        },
     },
     "jpcoar:subject": {
         "type": {
             "maxOccurs": "unbounded",
             "minOccurs": 0,
             "attributes": [
-                {
-                    "use": "optional",
-                    "name": "xml:lang",
-                    "ref": "xml:lang"
-                },
-                {
-                    "use": "optional",
-                    "name": "subjectURI",
-                    "ref": None
-                },
+                {"use": "optional", "name": "xml:lang", "ref": "xml:lang"},
+                {"use": "optional", "name": "subjectURI", "ref": None},
                 {
                     "use": "required",
                     "name": "subjectScheme",
@@ -502,9 +393,9 @@ xsd = {
                             "UDC",
                             "Other",
                         ]
-                    }
-                }
-            ]
+                    },
+                },
+            ],
         }
     },
     "datacite:description": {
@@ -512,11 +403,7 @@ xsd = {
             "maxOccurs": "unbounded",
             "minOccurs": 0,
             "attributes": [
-                {
-                    "use": "optional",
-                    "name": "xml:lang",
-                    "ref": "xml:lang"
-                },
+                {"use": "optional", "name": "xml:lang", "ref": "xml:lang"},
                 {
                     "use": "required",
                     "name": "descriptionType",
@@ -527,24 +414,18 @@ xsd = {
                             "Methods",
                             "TableOfContents",
                             "TechnicalInfo",
-                            "Other"
+                            "Other",
                         ]
-                    }
-                }
-            ]
+                    },
+                },
+            ],
         }
     },
     "dc:publisher": {
         "type": {
             "maxOccurs": "unbounded",
             "minOccurs": 0,
-            "attributes": [
-                {
-                    "use": "optional",
-                    "name": "xml:lang",
-                    "ref": "xml:lang"
-                }
-            ]
+            "attributes": [{"use": "optional", "name": "xml:lang", "ref": "xml:lang"}],
         }
     },
     "datacite:date": {
@@ -566,22 +447,18 @@ xsd = {
                             "Issued",
                             "Submitted",
                             "Updated",
-                            "Valid"
+                            "Valid",
                         ]
-                    }
+                    },
                 }
-            ]
+            ],
         }
     },
     "dc:language": {
         "type": {
             "maxOccurs": "unbounded",
             "minOccurs": 0,
-            "restriction": {
-                "patterns": [
-                    "^[a-z]{3}$"
-                ]
-            }
+            "restriction": {"patterns": ["^[a-z]{3}$"]},
         }
     },
     "dc:type": {
@@ -589,11 +466,7 @@ xsd = {
             "maxOccurs": 1,
             "minOccurs": 1,
             "attributes": [
-                {
-                    "use": "required",
-                    "name": "rdf:resource",
-                    "ref": "rdf:resource"
-                }
+                {"use": "required", "name": "rdf:resource", "ref": "rdf:resource"}
             ],
             "restriction": {
                 "enumeration": [
@@ -656,40 +529,22 @@ xsd = {
                     "software",
                     "technical documentation",
                     "workflow",
-                    "other"
+                    "other",
                 ]
-            }
+            },
         }
     },
-    "datacite:version": {
-        "type": {
-            "maxOccurs": 1,
-            "minOccurs": 0
-        }
-    },
+    "datacite:version": {"type": {"maxOccurs": 1, "minOccurs": 0}},
     "oaire:versiontype": {
         "type": {
             "maxOccurs": 1,
             "minOccurs": 0,
             "attributes": [
-                {
-                    "use": "required",
-                    "name": "rdf:resource",
-                    "ref": "rdf:resource"
-                }
+                {"use": "required", "name": "rdf:resource", "ref": "rdf:resource"}
             ],
             "restriction": {
-                "enumeration": [
-                    "AO",
-                    "SMUR",
-                    "AM",
-                    "P",
-                    "VoR",
-                    "CVoR",
-                    "EVoR",
-                    "NA"
-                ]
-            }
+                "enumeration": ["AO", "SMUR", "AM", "P", "VoR", "CVoR", "EVoR", "NA"]
+            },
         }
     },
     "jpcoar:identifier": {
@@ -701,15 +556,9 @@ xsd = {
                     "use": "required",
                     "name": "identifierType",
                     "ref": None,
-                    "restriction": {
-                        "enumeration": [
-                            "DOI",
-                            "HDL",
-                            "URI"
-                        ]
-                    }
+                    "restriction": {"enumeration": ["DOI", "HDL", "URI"]},
                 }
-            ]
+            ],
         }
     },
     "jpcoar:identifierRegistration": {
@@ -722,15 +571,10 @@ xsd = {
                     "name": "identifierType",
                     "ref": None,
                     "restriction": {
-                        "enumeration": [
-                            "JaLC",
-                            "Crossref",
-                            "DataCite",
-                            "PMID"
-                        ]
-                    }
+                        "enumeration": ["JaLC", "Crossref", "DataCite", "PMID"]
+                    },
                 }
-            ]
+            ],
         }
     },
     "jpcoar:relation": {
@@ -763,11 +607,11 @@ xsd = {
                             "isSupplementedBy",
                             "isIdenticalTo",
                             "isDerivedFrom",
-                            "isSourceOf"
+                            "isSourceOf",
                         ]
-                    }
+                    },
                 }
-            ]
+            ],
         },
         "jpcoar:relatedIdentifier": {
             "type": {
@@ -800,9 +644,9 @@ xsd = {
                                 "URI",
                                 "WOS",
                             ]
-                        }
+                        },
                     }
-                ]
+                ],
             }
         },
         "jpcoar:relatedTitle": {
@@ -810,117 +654,74 @@ xsd = {
                 "maxOccurs": "unbounded",
                 "minOccurs": 0,
                 "attributes": [
-                    {
-                        "use": "optional",
-                        "name": "xml:lang",
-                        "ref": "xml:lang"
-                    }
-                ]
+                    {"use": "optional", "name": "xml:lang", "ref": "xml:lang"}
+                ],
             }
-        }
+        },
     },
     "dcterms:temporal": {
         "type": {
             "maxOccurs": "unbounded",
             "minOccurs": 0,
-            "attributes": [
-                {
-                    "use": "optional",
-                    "name": "xml:lang",
-                    "ref": "xml:lang"
-                }
-            ]
+            "attributes": [{"use": "optional", "name": "xml:lang", "ref": "xml:lang"}],
         }
     },
     "datacite:geoLocation": {
-        "type": {
-            "maxOccurs": "unbounded",
-            "minOccurs": 0
-        },
+        "type": {"maxOccurs": "unbounded", "minOccurs": 0},
         "datacite:geoLocationPoint": {
-            "type": {
-                "maxOccurs": 1,
-                "minOccurs": 0
-            },
+            "type": {"maxOccurs": 1, "minOccurs": 0},
             "datacite:pointLongitude": {
                 "type": {
                     "maxOccurs": 1,
                     "minOccurs": 1,
-                    "restriction": {
-                        "maxInclusive": 180,
-                        "minInclusive": -180
-                    }
+                    "restriction": {"maxInclusive": 180, "minInclusive": -180},
                 }
             },
             "datacite:pointLatitude": {
                 "type": {
                     "maxOccurs": 1,
                     "minOccurs": 1,
-                    "restriction": {
-                        "maxInclusive": 90,
-                        "minInclusive": -90
-                    }
+                    "restriction": {"maxInclusive": 90, "minInclusive": -90},
                 }
-            }
+            },
         },
         "datacite:geoLocationBox": {
-            "type": {
-                "maxOccurs": 1,
-                "minOccurs": 0
-            },
+            "type": {"maxOccurs": 1, "minOccurs": 0},
             "datacite:westBoundLongitude": {
                 "type": {
                     "maxOccurs": 1,
                     "minOccurs": 1,
-                    "restriction": {
-                        "maxInclusive": 180,
-                        "minInclusive": -180
-                    }
+                    "restriction": {"maxInclusive": 180, "minInclusive": -180},
                 }
             },
             "datacite:eastBoundLongitude": {
                 "type": {
                     "maxOccurs": 1,
                     "minOccurs": 1,
-                    "restriction": {
-                        "maxInclusive": 180,
-                        "minInclusive": -180
-                    }
+                    "restriction": {"maxInclusive": 180, "minInclusive": -180},
                 }
             },
             "datacite:southBoundLatitude": {
                 "type": {
                     "maxOccurs": 1,
                     "minOccurs": 1,
-                    "restriction": {
-                        "maxInclusive": 90,
-                        "minInclusive": -90
-                    }
+                    "restriction": {"maxInclusive": 90, "minInclusive": -90},
                 }
             },
             "datacite:northBoundLatitude": {
                 "type": {
                     "maxOccurs": 1,
                     "minOccurs": 1,
-                    "restriction": {
-                        "maxInclusive": 90,
-                        "minInclusive": -90
-                    }
+                    "restriction": {"maxInclusive": 90, "minInclusive": -90},
                 }
-            }
+            },
         },
         "datacite:geoLocationPlace": {
-            "type": {
-                "maxOccurs": "unbounded",
-                "minOccurs": 0
-            }
-        }
+            "type": {"maxOccurs": "unbounded", "minOccurs": 0}
+        },
     },
     "jpcoar:fundingReference": {
-        "type": {
-            "maxOccurs": "unbounded",
-            "minOccurs": 0
-        },
+        "type": {"maxOccurs": "unbounded", "minOccurs": 0},
         "jpcoar:funderIdentifier": {
             "type": {
                 "maxOccurs": 1,
@@ -941,12 +742,8 @@ xsd = {
                             ]
                         },
                     },
-                    {
-                        "use": "optional",
-                        "name": "funderIdentifierTypeURI",
-                        "ref": None
-                    }
-                ]
+                    {"use": "optional", "name": "funderIdentifierTypeURI", "ref": None},
+                ],
             }
         },
         "jpcoar:funderName": {
@@ -954,12 +751,8 @@ xsd = {
                 "maxOccurs": "unbounded",
                 "minOccurs": 1,
                 "attributes": [
-                    {
-                        "use": "optional",
-                        "name": "xml:lang",
-                        "ref": "xml:lang"
-                    }
-                ]
+                    {"use": "optional", "name": "xml:lang", "ref": "xml:lang"}
+                ],
             }
         },
         "jpcoar:awardNumber": {
@@ -967,22 +760,14 @@ xsd = {
                 "maxOccurs": 1,
                 "minOccurs": 0,
                 "attributes": [
-                    {
-                        "use": "optional",
-                        "name": "awardURI",
-                        "ref": None
-                    },
+                    {"use": "optional", "name": "awardURI", "ref": None},
                     {
                         "use": "optional",
                         "name": "awardNumberType",
                         "ref": None,
-                        "restriction": {
-                            "enumeration": [
-                                "JGN"
-                            ]
-                        },
-                    }
-                ]
+                        "restriction": {"enumeration": ["JGN"]},
+                    },
+                ],
             }
         },
         "jpcoar:awardTitle": {
@@ -990,12 +775,8 @@ xsd = {
                 "maxOccurs": "unbounded",
                 "minOccurs": 0,
                 "attributes": [
-                    {
-                        "use": "optional",
-                        "name": "xml:lang",
-                        "ref": "xml:lang"
-                    }
-                ]
+                    {"use": "optional", "name": "xml:lang", "ref": "xml:lang"}
+                ],
             }
         },
         "jpcoar:fundingStreamIdentifier": {
@@ -1012,25 +793,27 @@ xsd = {
                                 "Crossref Funder",
                                 "JGN_fundingStream",
                             ]
-                        }
+                        },
                     },
                     {
                         "use": "optional",
                         "name": "fundingStreamIdentifierTypeURI",
                         "ref": None,
-                    }
-                ]
+                    },
+                ],
             }
         },
         "jpcoar:fundingStream": {
             "type": {
                 "maxOccurs": "unbounded",
                 "minOccurs": 0,
-                "attributes": [{
-                    "use": "optional",
-                    "name": "xml:lang",
-                    "ref": "xml:lang",
-                }]
+                "attributes": [
+                    {
+                        "use": "optional",
+                        "name": "xml:lang",
+                        "ref": "xml:lang",
+                    }
+                ],
             },
         },
     },
@@ -1043,91 +826,34 @@ xsd = {
                     "use": "required",
                     "name": "identifierType",
                     "ref": None,
-                    "restriction": {
-                        "enumeration": [
-                            "PISSN",
-                            "EISSN",
-                            "ISSN",
-                            "NCID"
-                        ]
-                    }
+                    "restriction": {"enumeration": ["PISSN", "EISSN", "ISSN", "NCID"]},
                 }
-            ]
+            ],
         }
     },
     "jpcoar:sourceTitle": {
         "type": {
             "maxOccurs": "unbounded",
             "minOccurs": 0,
-            "attributes": [
-                {
-                    "use": "optional",
-                    "name": "xml:lang",
-                    "ref": "xml:lang"
-                }
-            ]
+            "attributes": [{"use": "optional", "name": "xml:lang", "ref": "xml:lang"}],
         }
     },
-    "jpcoar:volume": {
-        "type": {
-            "maxOccurs": 1,
-            "minOccurs": 0
-        }
-    },
-    "jpcoar:issue": {
-        "type": {
-            "maxOccurs": 1,
-            "minOccurs": 0
-        }
-    },
-    "jpcoar:numPages": {
-        "type": {
-            "maxOccurs": 1,
-            "minOccurs": 0
-        }
-    },
-    "jpcoar:pageStart": {
-        "type": {
-            "maxOccurs": 1,
-            "minOccurs": 0
-        }
-    },
-    "jpcoar:pageEnd": {
-        "type": {
-            "maxOccurs": 1,
-            "minOccurs": 0
-        }
-    },
-    "dcndl:dissertationNumber": {
-        "type": {
-            "maxOccurs": 1,
-            "minOccurs": 0
-        }
-    },
+    "jpcoar:volume": {"type": {"maxOccurs": 1, "minOccurs": 0}},
+    "jpcoar:issue": {"type": {"maxOccurs": 1, "minOccurs": 0}},
+    "jpcoar:numPages": {"type": {"maxOccurs": 1, "minOccurs": 0}},
+    "jpcoar:pageStart": {"type": {"maxOccurs": 1, "minOccurs": 0}},
+    "jpcoar:pageEnd": {"type": {"maxOccurs": 1, "minOccurs": 0}},
+    "dcndl:dissertationNumber": {"type": {"maxOccurs": 1, "minOccurs": 0}},
     "dcndl:degreeName": {
         "type": {
             "maxOccurs": "unbounded",
             "minOccurs": 0,
-            "attributes": [
-                {
-                    "use": "optional",
-                    "name": "xml:lang",
-                    "ref": "xml:lang"
-                }
-            ]
+            "attributes": [{"use": "optional", "name": "xml:lang", "ref": "xml:lang"}],
         }
     },
-    "dcndl:dateGranted": {
-        "type": {
-            "maxOccurs": 1,
-            "minOccurs": 0
-        }
-    },
+    "dcndl:dateGranted": {"type": {"maxOccurs": 1, "minOccurs": 0}},
     "jpcoar:degreeGrantor": {
-        "type": {
-            "maxOccurs": "unbounded",
-            "minOccurs": 0
-        },
+        "type": {"maxOccurs": "unbounded", "minOccurs": 0},
         "jpcoar:nameIdentifier": {
             "type": {
                 "maxOccurs": "unbounded",
@@ -1147,16 +873,12 @@ xsd = {
                                 "AID",
                                 "kakenhi",
                                 "Ringgold",
-                                "GRID"
+                                "GRID",
                             ]
-                        }
+                        },
                     },
-                    {
-                        "use": "optional",
-                        "name": "nameIdentifierURI",
-                        "ref": None
-                    }
-                ]
+                    {"use": "optional", "name": "nameIdentifierURI", "ref": None},
+                ],
             }
         },
         "jpcoar:degreeGrantorName": {
@@ -1164,50 +886,30 @@ xsd = {
                 "maxOccurs": "unbounded",
                 "minOccurs": 0,
                 "attributes": [
-                    {
-                        "use": "optional",
-                        "name": "xml:lang",
-                        "ref": "xml:lang"
-                    }
-                ]
+                    {"use": "optional", "name": "xml:lang", "ref": "xml:lang"}
+                ],
             }
-        }
+        },
     },
     "jpcoar:conference": {
-        "type": {
-            "maxOccurs": "unbounded",
-            "minOccurs": 0
-        },
+        "type": {"maxOccurs": "unbounded", "minOccurs": 0},
         "jpcoar:conferenceName": {
             "type": {
                 "maxOccurs": "unbounded",
                 "minOccurs": 0,
                 "attributes": [
-                    {
-                        "use": "optional",
-                        "name": "xml:lang",
-                        "ref": "xml:lang"
-                    }
-                ]
+                    {"use": "optional", "name": "xml:lang", "ref": "xml:lang"}
+                ],
             }
         },
-        "jpcoar:conferenceSequence": {
-            "type": {
-                "maxOccurs": 1,
-                "minOccurs": 0
-            }
-        },
+        "jpcoar:conferenceSequence": {"type": {"maxOccurs": 1, "minOccurs": 0}},
         "jpcoar:conferenceSponsor": {
             "type": {
                 "maxOccurs": "unbounded",
                 "minOccurs": 0,
                 "attributes": [
-                    {
-                        "use": "optional",
-                        "name": "xml:lang",
-                        "ref": "xml:lang"
-                    }
-                ]
+                    {"use": "optional", "name": "xml:lang", "ref": "xml:lang"}
+                ],
             }
         },
         "jpcoar:conferenceDate": {
@@ -1222,8 +924,8 @@ xsd = {
                         "restriction": {
                             "maxInclusive": 12,
                             "minInclusive": 1,
-                            "totalDigits": 2
-                        }
+                            "totalDigits": 2,
+                        },
                     },
                     {
                         "use": "optional",
@@ -1232,8 +934,8 @@ xsd = {
                         "restriction": {
                             "maxInclusive": 2200,
                             "minInclusive": 1400,
-                            "totalDigits": 4
-                        }
+                            "totalDigits": 4,
+                        },
                     },
                     {
                         "use": "optional",
@@ -1242,8 +944,8 @@ xsd = {
                         "restriction": {
                             "maxInclusive": 31,
                             "minInclusive": 1,
-                            "totalDigits": 2
-                        }
+                            "totalDigits": 2,
+                        },
                     },
                     {
                         "use": "optional",
@@ -1252,8 +954,8 @@ xsd = {
                         "restriction": {
                             "maxInclusive": 31,
                             "minInclusive": 1,
-                            "totalDigits": 2
-                        }
+                            "totalDigits": 2,
+                        },
                     },
                     {
                         "use": "optional",
@@ -1262,14 +964,10 @@ xsd = {
                         "restriction": {
                             "maxInclusive": 12,
                             "minInclusive": 1,
-                            "totalDigits": 2
-                        }
+                            "totalDigits": 2,
+                        },
                     },
-                    {
-                        "use": "optional",
-                        "name": "xml:lang",
-                        "ref": "xml:lang"
-                    },
+                    {"use": "optional", "name": "xml:lang", "ref": "xml:lang"},
                     {
                         "use": "optional",
                         "name": "startYear",
@@ -1277,10 +975,10 @@ xsd = {
                         "restriction": {
                             "maxInclusive": 2200,
                             "minInclusive": 1400,
-                            "totalDigits": 4
-                        }
-                    }
-                ]
+                            "totalDigits": 4,
+                        },
+                    },
+                ],
             }
         },
         "jpcoar:conferenceVenue": {
@@ -1288,12 +986,8 @@ xsd = {
                 "maxOccurs": "unbounded",
                 "minOccurs": 0,
                 "attributes": [
-                    {
-                        "use": "optional",
-                        "name": "xml:lang",
-                        "ref": "xml:lang"
-                    }
-                ]
+                    {"use": "optional", "name": "xml:lang", "ref": "xml:lang"}
+                ],
             }
         },
         "jpcoar:conferencePlace": {
@@ -1301,41 +995,26 @@ xsd = {
                 "maxOccurs": "unbounded",
                 "minOccurs": 0,
                 "attributes": [
-                    {
-                        "use": "optional",
-                        "name": "xml:lang",
-                        "ref": "xml:lang"
-                    }
-                ]
+                    {"use": "optional", "name": "xml:lang", "ref": "xml:lang"}
+                ],
             }
         },
         "jpcoar:conferenceCountry": {
             "type": {
                 "maxOccurs": 1,
                 "minOccurs": 0,
-                "restriction": {
-                    "patterns": [
-                        "^[A-Z]{3}$"
-                    ]
-                }
+                "restriction": {"patterns": ["^[A-Z]{3}$"]},
             }
-        }
+        },
     },
     "jpcoar:file": {
-        "type": {
-            "maxOccurs": "unbounded",
-            "minOccurs": 0
-        },
+        "type": {"maxOccurs": "unbounded", "minOccurs": 0},
         "jpcoar:URI": {
             "type": {
                 "maxOccurs": 1,
                 "minOccurs": 0,
                 "attributes": [
-                    {
-                        "use": "optional",
-                        "name": "label",
-                        "ref": None
-                    },
+                    {"use": "optional", "name": "label", "ref": None},
                     {
                         "use": "optional",
                         "name": "objectType",
@@ -1348,25 +1027,15 @@ xsd = {
                                 "software",
                                 "summary",
                                 "thumbnail",
-                                "other"
+                                "other",
                             ]
-                        }
-                    }
-                ]
+                        },
+                    },
+                ],
             }
         },
-        "jpcoar:mimeType": {
-            "type": {
-                "maxOccurs": 1,
-                "minOccurs": 0
-            }
-        },
-        "jpcoar:extent": {
-            "type": {
-                "maxOccurs": "unbounded",
-                "minOccurs": 0
-            }
-        },
+        "jpcoar:mimeType": {"type": {"maxOccurs": 1, "minOccurs": 0}},
+        "jpcoar:extent": {"type": {"maxOccurs": "unbounded", "minOccurs": 0}},
         "datacite:date": {
             "type": {
                 "maxOccurs": "unbounded",
@@ -1386,19 +1055,14 @@ xsd = {
                                 "Issued",
                                 "Submitted",
                                 "Updated",
-                                "Valid"
+                                "Valid",
                             ]
-                        }
+                        },
                     }
-                ]
+                ],
             }
         },
-        "datacite:version": {
-            "type": {
-                "maxOccurs": 1,
-                "minOccurs": 0
-            }
-        }
+        "datacite:version": {"type": {"maxOccurs": 1, "minOccurs": 0}},
     },
     # "custom:system_file": {
     #     "type": {
@@ -1486,44 +1150,36 @@ xsd = {
             "type": {
                 "maxOccurs": "unbounded",
                 "minOccurs": 0,
-                "attributes": [{
-                    "use": "optional",
-                    "name": "xml:lang",
-                    "ref": "xml:lang"
-                }]
+                "attributes": [
+                    {"use": "optional", "name": "xml:lang", "ref": "xml:lang"}
+                ],
             }
         },
         "jpcoar:publisherDescription": {
             "type": {
                 "maxOccurs": "unbounded",
                 "minOccurs": 0,
-                "attributes": [{
-                    "use": "optional",
-                    "name": "xml:lang",
-                    "ref": "xml:lang"
-                }]
+                "attributes": [
+                    {"use": "optional", "name": "xml:lang", "ref": "xml:lang"}
+                ],
             }
         },
         "dcndl:location": {
             "type": {
                 "maxOccurs": "unbounded",
                 "minOccurs": 0,
-                "attributes": [{
-                    "use": "optional",
-                    "name": "xml:lang",
-                    "ref": "xml:lang"
-                }]
+                "attributes": [
+                    {"use": "optional", "name": "xml:lang", "ref": "xml:lang"}
+                ],
             }
         },
         "dcndl:publicationPlace": {
             "type": {
                 "maxOccurs": "unbounded",
                 "minOccurs": 0,
-                "attributes": [{
-                    "use": "optional",
-                    "name": "xml:lang",
-                    "ref": "xml:lang"
-                }]
+                "attributes": [
+                    {"use": "optional", "name": "xml:lang", "ref": "xml:lang"}
+                ],
             }
         },
     },
@@ -1531,66 +1187,41 @@ xsd = {
         "type": {
             "maxOccurs": "unbounded",
             "minOccurs": 0,
-            "attributes": [{
-                "use": "optional",
-                "name": "xml:lang",
-                "ref": "xml:lang"
-            }]
+            "attributes": [{"use": "optional", "name": "xml:lang", "ref": "xml:lang"}],
         },
     },
     "dcndl:edition": {
         "type": {
             "maxOccurs": "unbounded",
             "minOccurs": 0,
-            "attributes": [{
-                "use": "optional",
-                "name": "xml:lang",
-                "ref": "xml:lang"
-            }]
+            "attributes": [{"use": "optional", "name": "xml:lang", "ref": "xml:lang"}],
         },
     },
     "dcndl:volumeTitle": {
         "type": {
             "maxOccurs": "unbounded",
             "minOccurs": 0,
-            "attributes": [{
-                "use": "optional",
-                "name": "xml:lang",
-                "ref": "xml:lang"
-            }]
+            "attributes": [{"use": "optional", "name": "xml:lang", "ref": "xml:lang"}],
         },
     },
     "dcndl:originalLanguage": {
         "type": {
             "maxOccurs": "unbounded",
             "minOccurs": 0,
-            "attributes": [{
-                "use": "optional",
-                "name": "xml:lang",
-                "ref": "xml:lang"
-            }]
         },
     },
     "dcterms:extent": {
         "type": {
             "maxOccurs": "unbounded",
             "minOccurs": 0,
-            "attributes": [{
-                "use": "optional",
-                "name": "xml:lang",
-                "ref": "xml:lang"
-            }]
+            "attributes": [{"use": "optional", "name": "xml:lang", "ref": "xml:lang"}],
         },
     },
     "jpcoar:format": {
         "type": {
             "maxOccurs": "unbounded",
             "minOccurs": 0,
-            "attributes": [{
-                "use": "optional",
-                "name": "xml:lang",
-                "ref": "xml:lang"
-            }]
+            "attributes": [{"use": "optional", "name": "xml:lang", "ref": "xml:lang"}],
         },
     },
     "jpcoar:holdingAgent": {
@@ -1619,25 +1250,19 @@ xsd = {
                                 "MARC",
                                 "OCLC",
                             ]
-                        }
+                        },
                     },
-                    {
-                        "use": "optional",
-                        "name": "nameIdentifierURI",
-                        "ref": None
-                    }
-                ]
+                    {"use": "optional", "name": "nameIdentifierURI", "ref": None},
+                ],
             }
         },
         "jpcoar:holdingAgentName": {
             "type": {
                 "maxOccurs": "unbounded",
                 "minOccurs": 0,
-                "attributes": [{
-                    "use": "optional",
-                    "name": "xml:lang",
-                    "ref": "xml:lang"
-                }]
+                "attributes": [
+                    {"use": "optional", "name": "xml:lang", "ref": "xml:lang"}
+                ],
             }
         },
     },
@@ -1660,7 +1285,7 @@ xsd = {
             # ]
         },
     },
-    "jpcoar:catalog": { 
+    "jpcoar:catalog": {
         "type": {
             "maxOccurs": "unbounded",
             "minOccurs": 0,
@@ -1678,19 +1303,17 @@ xsd = {
                             "enumeration": [
                                 "HostingInstitution",
                             ]
-                        }
+                        },
                     }
-                ]
+                ],
             },
             "jpcoar:contributorName": {
                 "type": {
                     "maxOccurs": "unbounded",
                     "minOccurs": 1,
-                    "attributes": [{
-                        "use": "required",
-                        "name": "xml:lang",
-                        "ref": "xml:lang"
-                    }]
+                    "attributes": [
+                        {"use": "required", "name": "xml:lang", "ref": "xml:lang"}
+                    ],
                 },
             },
         },
@@ -1703,26 +1326,18 @@ xsd = {
                         "use": "required",
                         "name": "identifierType",
                         "ref": None,
-                        "restriction": {
-                            "enumeration": [
-                                "DOI",
-                                "HDL",
-                                "URI"
-                            ]
-                        }
+                        "restriction": {"enumeration": ["DOI", "HDL", "URI"]},
                     }
-                ]
+                ],
             }
         },
         "dc:title": {
             "type": {
                 "maxOccurs": "unbounded",
                 "minOccurs": 0,
-                "attributes": [{
-                    "use": "required",
-                    "name": "xml:lang",
-                    "ref": "xml:lang"
-                }]
+                "attributes": [
+                    {"use": "required", "name": "xml:lang", "ref": "xml:lang"}
+                ],
             },
         },
         "datacite:description": {
@@ -1730,11 +1345,7 @@ xsd = {
                 "maxOccurs": "unbounded",
                 "minOccurs": 0,
                 "attributes": [
-                    {
-                        "use": "optional",
-                        "name": "xml:lang",
-                        "ref": "xml:lang"
-                    },
+                    {"use": "optional", "name": "xml:lang", "ref": "xml:lang"},
                     {
                         "use": "required",
                         "name": "descriptionType",
@@ -1745,11 +1356,11 @@ xsd = {
                                 "Methods",
                                 "TableOfContents",
                                 "TechnicalInfo",
-                                "Other"
+                                "Other",
                             ]
-                        }
-                    }
-                ]
+                        },
+                    },
+                ],
             }
         },
         "jpcoar:subject": {
@@ -1757,16 +1368,8 @@ xsd = {
                 "maxOccurs": "unbounded",
                 "minOccurs": 0,
                 "attributes": [
-                    {
-                        "use": "optional",
-                        "name": "xml:lang",
-                        "ref": "xml:lang"
-                    },
-                    {
-                        "use": "optional",
-                        "name": "subjectURI",
-                        "ref": None
-                    },
+                    {"use": "optional", "name": "xml:lang", "ref": "xml:lang"},
+                    {"use": "optional", "name": "subjectURI", "ref": None},
                     {
                         "use": "required",
                         "name": "subjectScheme",
@@ -1786,9 +1389,9 @@ xsd = {
                                 "UDC",
                                 "Other",
                             ]
-                        }
-                    }
-                ]
+                        },
+                    },
+                ],
             }
         },
         "jpcoar:license": {
@@ -1796,11 +1399,7 @@ xsd = {
                 "maxOccurs": "unbounded",
                 "minOccurs": 0,
                 "attributes": [
-                    {
-                        "use": "optional",
-                        "name": "xml:lang",
-                        "ref": "xml:lang"
-                    },
+                    {"use": "optional", "name": "xml:lang", "ref": "xml:lang"},
                     {
                         "use": "required",
                         "name": "licenseType",
@@ -1811,14 +1410,10 @@ xsd = {
                                 "metadata",
                                 "thumbnail",
                             ]
-                        }
+                        },
                     },
-                    {
-                        "use": "required",
-                        "name": "rdf:resource",
-                        "ref": None
-                    },
-                ]
+                    {"use": "required", "name": "rdf:resource", "ref": None},
+                ],
             }
         },
         "dc:rights": {
@@ -1826,17 +1421,9 @@ xsd = {
                 "maxOccurs": "unbounded",
                 "minOccurs": 0,
                 "attributes": [
-                    {
-                        "use": "required",
-                        "name": "xml:lang",
-                        "ref": "xml:lang"
-                    },
-                    {
-                        "use": "required",
-                        "name": "rdf:resource",
-                        "ref": None
-                    },
-                ]
+                    {"use": "required", "name": "xml:lang", "ref": "xml:lang"},
+                    {"use": "required", "name": "rdf:resource", "ref": None},
+                ],
             }
         },
         "dcterms:accessRights": {
@@ -1844,32 +1431,20 @@ xsd = {
                 "maxOccurs": 1,
                 "minOccurs": 0,
                 "attributes": [
-                    {
-                        "use": "required",
-                        "ref": None,
-                        "name": "accessRights",
-                        "restriction": {
-                            "enumeration": [
-                                "embargoed access",
-                                "metadata only access",
-                                "restricted access",
-                                "open access"
-                            ]
-                        }
-                    },
-                    {
-                        "use": "required",
-                        "name": "rdf:resource",
-                        "ref": None
-                    },
-                ]
+                    {"use": "required", "name": "rdf:resource", "ref": None},
+                ],
+                "restriction": {
+                    "enumeration": [
+                        "embargoed access",
+                        "metadata only access",
+                        "open access",
+                        "restricted access",
+                    ]
+                },
             }
         },
         "jpcoar:file": {
-            "type": {
-                "maxOccurs": "unbounded",
-                "minOccurs": 0
-            },
+            "type": {"maxOccurs": "unbounded", "minOccurs": 0},
             "jpcoar:URI": {
                 "type": {
                     "maxOccurs": 1,
@@ -1883,9 +1458,9 @@ xsd = {
                                 "enumeration": [
                                     "thumbnail",
                                 ]
-                            }
+                            },
                         }
-                    ]
+                    ],
                 }
             },
         },

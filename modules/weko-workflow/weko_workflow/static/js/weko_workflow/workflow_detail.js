@@ -77,7 +77,7 @@ require([
       itemtype_id: $('#item_type_' + workflow_id).data('itemtype-id')
     };
     if (community != "") {
-      post_uri = post_uri + "?community=" + community;
+      post_uri = post_uri + "?c=" + community;
     }
     $.ajax({
       url: '/workflow/activity/user_lock',

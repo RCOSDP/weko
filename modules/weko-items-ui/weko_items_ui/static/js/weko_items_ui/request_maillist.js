@@ -97,14 +97,26 @@ class RequestMailTarget extends React.Component {
       <div class="list-group" className="style-selected-box" id="sltBoxListRequestEmail">
         {
           listEmail.map((item, id) => {
-            return (
-              <a className={`list-group-item list-group-item-action ${this.state.selectedId.indexOf(id) > -1 ? 'active' : ''}`}
-                onClick={() => { this.handleClick(id) }}
-                key={id}
-                value={item.author_id}>
-                {item.email}
-              </a>
-            )
+            let v = item.author_id + '_' + item.email
+            if (item.author_id) {
+              return (
+                <a className={`list-group-item list-group-item-action ${this.state.selectedId.indexOf(id) > -1 ? 'active' : ''}`}
+                  onClick={() => { this.handleClick(id) }}
+                  key={id}
+                  value={v}>
+                  {item.email}&nbsp;&nbsp;(Author&nbsp;ID:&nbsp;{item.author_id})
+                </a>
+              )
+            } else {
+              return (
+                <a className={`list-group-item list-group-item-action ${this.state.selectedId.indexOf(id) > -1 ? 'active' : ''}`}
+                  onClick={() => { this.handleClick(id) }}
+                  key={id}
+                  value={v}>
+                  {item.email}
+                </a>
+              )
+            }
           })
         }
         <input class="list-group-item list-group-item-action"

@@ -1138,7 +1138,7 @@ def prepare_edit_item(id=None, community=None):
     post_activity = request.get_json() or {}
     getargs = request.args if request else {}
     pid_value = id or post_activity.get('pid_value')
-    community = community or getargs.get('community', None)
+    community = community or getargs.get('c', None)
 
     if pid_value:
         # Check redis cache
@@ -1250,7 +1250,7 @@ def prepare_edit_item(id=None, community=None):
             comm = GetCommunity.get_community_by_id(community)
             url_redirect = url_for('weko_workflow.display_activity',
                                    activity_id=rtn.activity_id,
-                                   community=comm.id)
+                                   c=comm.id)
         else:
             url_redirect = url_for('weko_workflow.display_activity',
                                    activity_id=rtn.activity_id)
@@ -1301,7 +1301,7 @@ def prepare_delete_item(id=None, community=None, shared_user_ids=[]):
     post_activity = request.get_json() or {}
     getargs = request.args if request else {}
     del_value = id or post_activity.get('pid_value')
-    community = community or getargs.get('community', None)
+    community = community or getargs.get('c', None)
 
     if del_value:
         del_value = str(del_value)
@@ -1397,11 +1397,20 @@ def prepare_delete_item(id=None, community=None, shared_user_ids=[]):
             return jsonify(
                 code=0,
                 msg="success",
-                data=dict(redirect=request.referrer)
+                data={
+                    "redirect": url_for(
+                        "invenio_records_ui.recid", pid_value=pid_value
+                    )
+                }
             )
 
         post_activity['flow_id'] = workflow.delete_flow_id
-        post_activity['shared_user_ids'] = shared_user_ids
+        # Add shared_user_ids to activity info
+        shared_user_ids_activity_info = [
+            {"user": int(user_info)} if not isinstance(user_info, dict)
+            else user_info for user_info in shared_user_ids
+        ]
+        post_activity['shared_user_ids'] = shared_user_ids_activity_info
 
         try:
             rtn = prepare_delete_workflow(post_activity, recid, deposit)
@@ -1427,7 +1436,7 @@ def prepare_delete_item(id=None, community=None, shared_user_ids=[]):
             comm = GetCommunity.get_community_by_id(community)
             url_redirect = url_for(
                 'weko_workflow.display_activity',
-                activity_id=rtn.activity_id, community=comm.id
+                activity_id=rtn.activity_id, c=comm.id
             )
         else:
             url_redirect = url_for(
@@ -1558,9 +1567,9 @@ def export():
     community_id = ""
     ctx = {'community': None}
     cur_index_id = search_type if search_type not in ('0', '1',) else None
-    if 'community' in request.args:
+    if 'c' in request.args:
         from weko_workflow.api import GetCommunity
-        comm = GetCommunity.get_community_by_id(request.args.get('community'))
+        comm = GetCommunity.get_community_by_id(request.args.get('c'))
         ctx = {'community': comm}
         if comm is not None:
             community_id = comm.id

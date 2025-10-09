@@ -1125,8 +1125,8 @@ class RecordResource(ContentNegotiatedMethodView):
                 from invenio_communities.models import Community
                 from weko_index_tree.api import Indexes
 
-                comm_list = Community.query.filter(
-                    Community.id_role.in_(role_ids)
+                comm_list = Community.get_by_user(
+                    role_ids, with_deleted=True
                 ).all()
                 for comm in comm_list:
                     for index in Indexes.get_self_list(comm.root_node_id):

@@ -1,15 +1,15 @@
 # Translations template for invenio-mail.
-# Copyright (C) 2018 National Institute of Informatics
+# Copyright (C) 2025 National Institute of Informatics
 # This file is distributed under the same license as the invenio-mail
 # project.
-# FIRST AUTHOR <EMAIL@ADDRESS>, 2018.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2025.
 #
 #, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: invenio-mail 1.0.1\n"
 "Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
-"POT-Creation-Date: 2018-11-15 15:21+0900\n"
+"POT-Creation-Date: 2025-10-03 13:46+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,24 +18,62 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.5.1\n"
 
-#: invenio_mail/admin.py:59
-msgid "Mail settings have been updated."
+#: invenio_mail/admin.py:66
+msgid "Mail server can't be empty."
+msgstr ""
+
+#: invenio_mail/admin.py:69
+msgid "Mail port can't be empty."
+msgstr ""
+
+#: invenio_mail/admin.py:72
+msgid "Mail default sender can't be empty."
 msgstr ""
 
 #: invenio_mail/admin.py:82
+msgid "Mail settings have been updated."
+msgstr ""
+
+#: invenio_mail/admin.py:106
 msgid "Test mail sent."
 msgstr ""
 
-#: invenio_mail/admin.py:84
+#: invenio_mail/admin.py:108
 msgid "Failed to send mail."
 msgstr ""
 
-#: invenio_mail/admin.py:98
+#: invenio_mail/admin.py:182
+msgid ""
+"Invalid email addresses ({emails}) detected. Please correct them to match"
+" the addresses which are registered in WEKO."
+msgstr ""
+
+#: invenio_mail/admin.py:200
+msgid "Mail template was successfully updated."
+msgstr ""
+
+#: invenio_mail/admin.py:206
+msgid "Mail template update failed."
+msgstr ""
+
+#: invenio_mail/admin.py:223
+msgid "Mail template was successfully deleted."
+msgstr ""
+
+#: invenio_mail/admin.py:229
+msgid "Mail template delete failed."
+msgstr ""
+
+#: invenio_mail/admin.py:260 invenio_mail/admin.py:269
 msgid "Setting"
 msgstr ""
 
-#: invenio_mail/admin.py:99
+#: invenio_mail/admin.py:261
 msgid "Mail"
+msgstr ""
+
+#: invenio_mail/admin.py:270
+msgid "Mail Templates"
 msgstr ""
 
 #: invenio_mail/templates/invenio_mail/mail_setting.html:26
@@ -66,49 +104,44 @@ msgstr ""
 msgid "Password"
 msgstr ""
 
-#: invenio_mail/templates/invenio_mail/mail_setting.html:107
+#: invenio_mail/templates/invenio_mail/mail_setting.html:120
 msgid "Default sender"
 msgstr ""
 
-#: invenio_mail/templates/invenio_mail/mail_setting.html:119
+#: invenio_mail/templates/invenio_mail/mail_setting.html:135
 msgid "Update"
 msgstr ""
 
-#: invenio_mail/templates/invenio_mail/mail_setting.html:136
+#: invenio_mail/templates/invenio_mail/mail_setting.html:154
 msgid "Recipient"
 msgstr ""
 
-#: invenio_mail/templates/invenio_mail/mail_setting.html:144
+#: invenio_mail/templates/invenio_mail/mail_setting.html:162
+#: invenio_mail/templates/invenio_mail/mail_templates.html:59
 msgid "Subject"
 msgstr ""
 
-#: invenio_mail/templates/invenio_mail/mail_setting.html:152
+#: invenio_mail/templates/invenio_mail/mail_setting.html:170
 msgid "Body"
 msgstr ""
 
-#: invenio_mail/templates/invenio_mail/mail_setting.html:160
+#: invenio_mail/templates/invenio_mail/mail_setting.html:181
 msgid "Send"
 msgstr ""
 
-# Mail template genre table
-msgid "Notification of secret URL provision"
+#: invenio_mail/templates/invenio_mail/mail_templates.html:57
+msgid "Add"
 msgstr ""
 
-msgid "Guidance to the application form"
+#: invenio_mail/templates/invenio_mail/mail_templates.html:58
+msgid "Save"
 msgstr ""
 
-msgid "Others"
-msgstr ""
-
-# Mail template editing
-msgid "Subject"
-msgstr ""
-
+#: invenio_mail/templates/invenio_mail/mail_templates.html:60
 msgid "Recipients"
 msgstr ""
 
+#: invenio_mail/templates/invenio_mail/mail_templates.html:61
 msgid "Please input the Mail Subject and Mail Body."
 msgstr ""
 
-msgid "Invalid email addresses ({emails}) detected. Please correct them to match the addresses which are registered in WEKO."
-msgstr ""

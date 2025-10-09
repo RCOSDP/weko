@@ -16,10 +16,16 @@ def main():
         db.session.flush()
         print("  Successfully added 'peer_reviewed' to version_type property. (id = 1016)")
 
+        import properties
+        mapping = {}
+        for i in dir(properties):
+            prop = getattr(properties, i)
+            if getattr(prop, 'property_id', None) and prop.property_id == 1016:
+                mapping[int(prop.property_id)] = prop.mapping
         print("Reload all itemtypes")
         itemtypes = ItemTypes.get_all()
         for itemtype in itemtypes:
-                ret = ItemTypes.reload(itemtype.id)
+                ret = ItemTypes.reload(itemtype.id, mapping)
                 print(f"  itemtype id:{itemtype.id}, itemtype name:{itemtype.item_type_name.name}")
                 print(f"  {ret['msg']}")
         

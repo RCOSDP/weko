@@ -255,15 +255,15 @@ def form(
                             "type": "text",
                         },
                         {
-                            "key": "{}.nameIdentifiers[].nameIdentifierURI".format(key),
-                            "title": "識別子URI",
-                            "title_i18n": {"en": "Name Identifier URI", "ja": "識別子URI"},
-                            "type": "text",
-                        },
-                        {
                             "key": "{}.nameIdentifiers[].nameIdentifier".format(key),
                             "title": "識別子",
                             "title_i18n": {"en": "Name Identifier", "ja": "識別子"},
+                            "type": "text",
+                        },
+                        {
+                            "key": "{}.nameIdentifiers[].nameIdentifierURI".format(key),
+                            "title": "識別子URI",
+                            "title_i18n": {"en": "Name Identifier URI", "ja": "識別子URI"},
                             "type": "text",
                         },
                     ],
@@ -367,17 +367,6 @@ def form(
                             "add": "New",
                             "items": [
                                 {
-                                    "key": "{}.affiliations[].affiliationNameIdentifiers[].affiliationNameIdentifier".format(
-                                        key
-                                    ),
-                                    "title": "所属機関識別子",
-                                    "title_i18n": {
-                                        "en": "Affiliation Name Identifier",
-                                        "ja": "所属機関識別子",
-                                    },
-                                    "type": "text",
-                                },
-                                {
                                     "key": "{}.affiliations[].affiliationNameIdentifiers[].affiliationNameIdentifierScheme".format(
                                         key
                                     ),
@@ -390,6 +379,17 @@ def form(
                                         config.AFFILIATION_SCHEME_VAL
                                     ),
                                     "type": "select",
+                                },
+                                {
+                                    "key": "{}.affiliations[].affiliationNameIdentifiers[].affiliationNameIdentifier".format(
+                                        key
+                                    ),
+                                    "title": "所属機関識別子",
+                                    "title_i18n": {
+                                        "en": "Affiliation Name Identifier",
+                                        "ja": "所属機関識別子",
+                                    },
+                                    "type": "text",
                                 },
                                 {
                                     "key": "{}.affiliations[].affiliationNameIdentifiers[].affiliationNameIdentifierURI".format(

@@ -482,7 +482,7 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         record=record,
         info=send_info
     )
-    community_arg = request.args.get('community')
+    community_arg = request.args.get('c')
     community_id = ""
     ctx = {'community': None}
     if community_arg:
@@ -649,7 +649,7 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
 
     # Get the design for widget rendering
     page, render_widgets = get_design_layout(
-        request.args.get('community') or current_app.config[
+        request.args.get('c') or current_app.config[
             'WEKO_THEME_DEFAULT_COMMUNITY'])
 
     # if current_lang:

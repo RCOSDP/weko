@@ -552,10 +552,13 @@ class TestShibUserExtra:
             mocker.resetall()
 
             # _find_organization_name returns False
+            shibuser.shib_user = MagicMock(spec=ShibbolethUser)
+            shibuser.shib_user.shib_roles = MagicMock()
             mock_find_organization_name.return_value = False
             result = shibuser.check_in()
             assert result is None
             shibuser.user.roles.clear.assert_called_once()
+            shibuser.shib_user.shib_roles.clear.assert_called_once()
             mock_assign_user_role.assert_called_once()
             mock_get_roles_to_add.assert_called_once()
             mock_find_organization_name.assert_called_once()
