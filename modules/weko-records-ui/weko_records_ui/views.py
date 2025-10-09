@@ -495,8 +495,16 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
     # Get index style
     style = IndexStyle.get(
         current_app.config['WEKO_INDEX_TREE_STYLE_OPTIONS']['id'])
-    width = style.width if style else '3'
-    height = style.height if style else None
+    if not style:
+        IndexStyle.create(
+            current_app.config['WEKO_INDEX_TREE_STYLE_OPTIONS']['id'],
+            width=3,
+            height=None)
+        style = IndexStyle.get(
+            current_app.config['WEKO_INDEX_TREE_STYLE_OPTIONS']['id'])
+    width = style.width
+    height = style.height
+    index_link_enabled = style.index_link_enabled
 
     detail_condition = get_search_detail_keyword('')
 
@@ -657,7 +665,9 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
     # else:
     #     index_link_list = get_index_link_list()
 
-    index_link_list = get_index_link_list()
+    index_link_list = []
+    if index_link_enabled:
+        index_link_list = get_index_link_list()
 
     files_thumbnail = []
     if record.files:
@@ -781,7 +791,7 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         width=width,
         detail_condition=detail_condition,
         height=height,
-        index_link_enabled=style.index_link_enabled,
+        index_link_enabled=index_link_enabled,
         index_link_list=index_link_list,
         google_scholar_meta=google_scholar_meta,
         google_dataset_meta=google_dataset_meta,
