@@ -22,7 +22,7 @@
 import os
 import sys
 import traceback
-from datetime import date, datetime
+from datetime import date, datetime, time, timedelta, timezone
 from functools import wraps
 from operator import itemgetter
 
@@ -1177,11 +1177,88 @@ def save_index_trees_to_redis(tree, lang=None):
     except ConnectionError:
         current_app.logger.error("Fail save index_tree to redis")
 
+def save_index_reset_trees_to_redis(tree, lang=None):
+    """save index_reset_tree to redis for roles"""
+
+    def default(o):
+        if hasattr(o, "isoformat"):
+            return o.isoformat()
+        else:
+            return str(o)
+
+    redis = __get_redis_store()
+    if lang is None:
+        lang = current_i18n.language
+    try:
+        v = bytes(json.dumps(tree, default=default), encoding="utf-8")
+        now = to_user_timezone(datetime.now(timezone.utc))
+        expiration_date = datetime.combine(now.date() + timedelta(days=1), time())
+        ttl_secs = datetime.timestamp(to_utc(expiration_date)) - datetime.timestamp(to_utc(now))
+        redis.put(
+            "index_reset_tree_view_"
+            + os.environ.get("INVENIO_WEB_HOST_NAME")
+            + "_"
+            + lang,
+            v,
+            ttl_secs=ttl_secs,
+        )
+    except ConnectionError:
+        current_app.logger.error("Fail save index_reset_tree to redis")
+
+def save_index_reset_trees_ignore_more_to_redis(tree, lang=None):
+    """save_index_reset_tree_ignore_more to redis for roles"""
+
+    def default(o):
+        if hasattr(o, "isoformat"):
+            return o.isoformat()
+        else:
+            return str(o)
+
+    redis = __get_redis_store()
+    if lang is None:
+        lang = current_i18n.language
+    try:
+        v = bytes(json.dumps(tree, default=default), encoding="utf-8")
+        now = to_user_timezone(datetime.now(timezone.utc))
+        expiration_date = datetime.combine(now.date() + timedelta(days=1), time())
+        ttl_secs = datetime.timestamp(to_utc(expiration_date)) - datetime.timestamp(to_utc(now))
+        redis.put(
+            "index_reset_tree_ignore_more_view_"
+            + os.environ.get("INVENIO_WEB_HOST_NAME")
+            + "_"
+            + lang,
+            v,
+            ttl_secs=ttl_secs,
+        )
+    except ConnectionError:
+        current_app.logger.error("Fail save index_reset_tree_ignore_more to redis")
+
 def delete_index_trees_from_redis(lang):
     """delete index_tree from redis
     """
     redis = __get_redis_store()
     key = "index_tree_view_" + os.environ.get('INVENIO_WEB_HOST_NAME') + "_" + lang
+    if redis.redis.exists(key):
+        redis.delete(key)
+
+def delete_index_reset_trees_from_redis(lang):
+    """delete index_reset_tree from redis"""
+    redis = __get_redis_store()
+    key = (
+        "index_reset_tree_view_" + os.environ.get("INVENIO_WEB_HOST_NAME") + "_" + lang
+    )
+    if redis.redis.exists(key):
+        redis.delete(key)
+
+def delete_index_reset_ignore_more_trees_from_redis(lang):
+    """delete_index_reset_ignore_more_tree from redis"""
+    redis = __get_redis_store()
+    key = (
+        "index_reset_tree_ignore_more_view_"
+        + os.environ.get("INVENIO_WEB_HOST_NAME")
+        + "_"
+        + lang
+    )
     if redis.redis.exists(key):
         redis.delete(key)
 
