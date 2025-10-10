@@ -20,9 +20,9 @@ depends_on = None
 
 def upgrade():
     """Upgrade database."""
-    op.add_column('feedback_email_setting', sa.Column('repository_id', sa.String(length=100), nullable=False))
-    op.add_column('feedback_mail_history', sa.Column('repository_id', sa.String(length=100), nullable=False))
-    op.add_column('stats_email_address', sa.Column('repository_id', sa.String(length=100), nullable=True))
+    op.add_column('feedback_email_setting', sa.Column('repository_id', sa.String(length=100), nullable=False, server_default='Root Index'))
+    op.add_column('feedback_mail_history', sa.Column('repository_id', sa.String(length=100), nullable=False, server_default='Root Index'))
+    op.add_column('stats_email_address', sa.Column('repository_id', sa.String(length=100), nullable=True, server_default='Root Index'))
 
 
 def downgrade():

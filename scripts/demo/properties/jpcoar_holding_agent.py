@@ -36,7 +36,7 @@ mapping = {
     "junii2_mapping": "",
     "lido_mapping": "",
     "lom_mapping": "",
-    "oai_dc_mapping": {"publisher": {"@value": "subitem_publisher"}},
+    "oai_dc_mapping":"",
     "spase_mapping": "",
 }
 
@@ -158,7 +158,7 @@ def form(
                             },
                         },
                         {
-                            "key": "{}.holding_agent_names[].holding_agent_names_language".format(
+                            "key": "{}.holding_agent_names[].holding_agent_name_language".format(
                                 key
                             ),
                             "type": "select",

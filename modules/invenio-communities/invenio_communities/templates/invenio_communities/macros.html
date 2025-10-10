@@ -46,6 +46,12 @@
                   {%- include config.THEME_HEADER_LOGIN_TEMPLATE %}
                 {%- endif %}
               {%- endif %}
+              <div class="navbar-form navbar-right navbar-form2">
+                {%- if config.I18N_LANGUAGES %}
+                {% from "weko_theme/macros/language_selector.html" import language_selector_dropdown %}
+                {{ language_selector_dropdown() }}
+                {%- endif %}
+              </div>
             {% else %}
               {{community.title}}
               {%- if community.login_menu_enabled %}

@@ -206,6 +206,10 @@ def test_save_lang_list(api, users, redis_connect):
     login_user_via_session(client=api, email=users[0]["email"])
     redis_connect.put("index_tree_view_test_ja","test_ja_index_tree".encode("UTF-8"),ttl_secs=30)
     redis_connect.put("index_tree_view_test_en","test_en_index_tree".encode("UTF-8"),ttl_secs=30)
+    redis_connect.put("index_reset_tree_view_test_ja","test_ja_index_reset_tree".encode("UTF-8"),ttl_secs=30)
+    redis_connect.put("index_reset_tree_view_test_en","test_en_index_reset_tree".encode("UTF-8"),ttl_secs=30)
+    redis_connect.put("index_reset_tree_ignore_more_view_test_ja","test_ja_index_reset_tree_ignore_more".encode("UTF-8"),ttl_secs=30)
+    redis_connect.put("index_reset_tree_ignore_more_view_test_en","test_en_index_reset_tree_ignore_more".encode("UTF-8"),ttl_secs=30)
     # content_type != application/json
     res = api.post(url,data="test_data",content_type="plain/text")
     assert response_data(res) == {"msg":"Header Error"}
@@ -216,6 +220,10 @@ def test_save_lang_list(api, users, redis_connect):
         res = api.post(url,json=data)
         assert redis_connect.redis.exists("index_tree_view_test_ja") == True
         assert redis_connect.redis.exists("index_tree_view_test_en") == False
+        assert redis_connect.redis.exists("index_reset_tree_view_test_ja") == True
+        assert redis_connect.redis.exists("index_reset_tree_view_test_en") == False
+        assert redis_connect.redis.exists("index_reset_tree_ignore_more_view_test_ja") == True
+        assert redis_connect.redis.exists("index_reset_tree_ignore_more_view_test_en") == False
         assert response_data(res) == {"msg":"success"}
 
 

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: weko-admin 0.1.0.dev20170000\n"
 "Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
-"POT-Creation-Date: 2025-05-19 19:58+0900\n"
+"POT-Creation-Date: 2025-10-03 16:33+0900\n"
 "PO-Revision-Date: 2025-04-24 10:54+0900\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ja\n"
@@ -18,59 +18,59 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.5.1\n"
 
-#: tests/test_admin.py:1769 tests/test_admin.py:1775 tests/test_admin.py:1777
-#: tests/test_admin.py:1794 tests/test_admin.py:1802 tests/test_admin.py:1810
-#: tests/test_admin.py:1818 weko_admin/admin.py:143
+#: tests/test_admin.py:1846 tests/test_admin.py:1852 tests/test_admin.py:1854
+#: tests/test_admin.py:1871 tests/test_admin.py:1879 tests/test_admin.py:1887
+#: tests/test_admin.py:1895 weko_admin/admin.py:143
 msgid "completed"
 msgstr "処理が完了しました。"
 
-#: tests/test_admin.py:1827 weko_admin/admin.py:136
+#: tests/test_admin.py:1904 weko_admin/admin.py:136
 #: weko_admin/templates/weko_admin/admin/reindex_elasticsearch.html:43
 msgid "executing..."
 msgstr "実行中..."
 
-#: tests/test_admin.py:1837 weko_admin/admin.py:134
+#: tests/test_admin.py:1914 weko_admin/admin.py:134
 #: weko_admin/templates/weko_admin/admin/reindex_elasticsearch.html:42
 msgid "haserror"
 msgstr "エラー発生中につき実行できません。"
 
 #: tests/test_views.py:98 tests/test_views.py:111 tests/test_views.py:125
-#: weko_admin/views.py:153
+#: weko_admin/views.py:154
 msgid "15 mins"
 msgstr "15分"
 
 #: tests/test_views.py:98 tests/test_views.py:111 tests/test_views.py:125
-#: weko_admin/views.py:154
+#: weko_admin/views.py:155
 msgid "30 mins"
 msgstr "30分"
 
 #: tests/test_views.py:98 tests/test_views.py:111 tests/test_views.py:125
-#: weko_admin/views.py:155
+#: weko_admin/views.py:156
 msgid "45 mins"
 msgstr "45分"
 
 #: tests/test_views.py:98 tests/test_views.py:111 tests/test_views.py:125
-#: weko_admin/views.py:156
+#: weko_admin/views.py:157
 msgid "60 mins"
 msgstr "1時間"
 
 #: tests/test_views.py:99 tests/test_views.py:112 tests/test_views.py:126
-#: weko_admin/views.py:157
+#: weko_admin/views.py:158
 msgid "180 mins"
 msgstr "3時間"
 
 #: tests/test_views.py:99 tests/test_views.py:112 tests/test_views.py:126
-#: weko_admin/views.py:158
+#: weko_admin/views.py:159
 msgid "360 mins"
 msgstr "6時間"
 
 #: tests/test_views.py:99 tests/test_views.py:112 tests/test_views.py:126
-#: weko_admin/views.py:159
+#: weko_admin/views.py:160
 msgid "720 mins"
 msgstr "12時間"
 
 #: tests/test_views.py:99 tests/test_views.py:112 tests/test_views.py:126
-#: weko_admin/views.py:160
+#: weko_admin/views.py:161
 msgid "1440 mins"
 msgstr "1日"
 
@@ -131,14 +131,14 @@ msgid "Could Not Save Changes."
 msgstr "変更を保存できませんでした"
 
 #: weko_admin/admin.py:625 weko_admin/admin.py:651 weko_admin/admin.py:752
-#: weko_admin/admin.py:1022
+#: weko_admin/admin.py:1022 weko_admin/admin.py:2352 weko_admin/admin.py:2386
 #: weko_admin/templates/weko_admin/admin/jsonld_mapping_settings.html:37
 #: weko_admin/templates/weko_admin/admin/sword_api_jsonld_settings.html:37
 #: weko_admin/templates/weko_admin/admin/sword_api_settings.html:44
 msgid "Successfully Changed Settings."
 msgstr "設定を変更しました"
 
-#: weko_admin/admin.py:655 weko_admin/views.py:741
+#: weko_admin/admin.py:655 weko_admin/views.py:737
 msgid "Could not save data."
 msgstr "データを保存できませんでした"
 
@@ -152,6 +152,8 @@ msgid "Could not get restricted data."
 msgstr "制限付きデータを取得できませんでした"
 
 #: weko_admin/admin.py:756 weko_admin/admin.py:1025 weko_admin/admin.py:1028
+#: weko_admin/admin.py:2321 weko_admin/admin.py:2326 weko_admin/admin.py:2330
+#: weko_admin/admin.py:2355 weko_admin/admin.py:2365 weko_admin/admin.py:2389
 msgid "Failurely Changed Settings."
 msgstr "設定変更に失敗しました"
 
@@ -224,9 +226,9 @@ msgstr "項目名（英）"
 msgid "Item Name(JP)"
 msgstr "項目名（日）"
 
-#: weko_admin/admin.py:1366
+#: weko_admin/admin.py:1366 weko_admin/admin.py:1598
 #: weko_admin/templates/weko_admin/admin/facet_search_setting.html:52
-#: weko_admin/templates/weko_admin/admin/jsonld_mapping_settings.html:111
+#: weko_admin/templates/weko_admin/admin/jsonld_mapping_settings.html:112
 #: weko_admin/templates/weko_admin/admin/sword_api_jsonld_settings.html:155
 msgid "Mapping"
 msgstr "マッピング"
@@ -241,467 +243,525 @@ msgstr ""
 msgid "Active"
 msgstr "アクティブ"
 
-#: weko_admin/admin.py:1609 weko_admin/admin.py:1629 weko_admin/admin.py:1635
+#: weko_admin/admin.py:1595
+#: weko_admin/templates/weko_admin/admin/sword_api_jsonld_settings.html:86
+msgid "Application"
+msgstr "アプリケーション"
+
+#: weko_admin/admin.py:1596
+msgid "Creator"
+msgstr "作成者"
+
+#: weko_admin/admin.py:1597
+#: weko_admin/templates/weko_admin/admin/sword_api_jsonld_settings.html:122
+#: weko_admin/templates/weko_admin/admin/sword_api_settings.html:70
+msgid "Registration Type"
+msgstr "登録方式"
+
+#: weko_admin/admin.py:1599
+msgid "Workflow"
+msgstr "ワークフロー"
+
+#: weko_admin/admin.py:1632 weko_admin/admin.py:1648 weko_admin/admin.py:1654
 msgid "Active Message"
 msgstr "有効"
 
-#: weko_admin/admin.py:1611 weko_admin/admin.py:1631 weko_admin/admin.py:1637
+#: weko_admin/admin.py:1634 weko_admin/admin.py:1650 weko_admin/admin.py:1656
 msgid "Inactive Message"
 msgstr "無効"
 
-#: weko_admin/admin.py:1623
+#: weko_admin/admin.py:1640
 #: weko_admin/templates/weko_admin/admin/sword_api_jsonld_settings.html:126
 #: weko_admin/templates/weko_admin/admin/sword_api_settings.html:74
 msgid "Direct_Registration"
 msgstr "直接登録"
 
-#: weko_admin/admin.py:1625
+#: weko_admin/admin.py:1642
 #: weko_admin/templates/weko_admin/admin/sword_api_jsonld_settings.html:128
 #: weko_admin/templates/weko_admin/admin/sword_api_settings.html:76
 msgid "WorkFlow_Registration"
 msgstr "ワークフロー登録"
 
-#: weko_admin/admin.py:1987
+#: weko_admin/admin.py:1991
 msgid "SWORD API JSON-LD settings deleted."
 msgstr "SWORD APIの設定が削除されました。"
 
-#: weko_admin/admin.py:1993
+#: weko_admin/admin.py:1997
 msgid "Failed to delete SWORD API JSON-LD settings."
 msgstr "SWORD APIの設定の削除に失敗しました。"
 
-#: weko_admin/admin.py:2000
+#: weko_admin/admin.py:2004
 #: weko_admin/templates/weko_admin/admin/jsonld_mapping_settings.html:41
 #: weko_admin/templates/weko_admin/admin/sword_api_jsonld_settings.html:50
 msgid "Unapproved Items Exit."
 msgstr "このアプリケーションを使用するワークフローに未承認のアイテムがあります。すべて承認されるまで、設定の変更はできません。"
 
-#: weko_admin/admin.py:2056
-msgid "Deleted ItemType"
-msgstr "削除済みアイテムタイプ"
+#: weko_admin/admin.py:2045
+#: weko_admin/templates/weko_admin/admin/feedback_mail.html:57
+#: weko_admin/templates/weko_admin/admin/jsonld_mapping_settings.html:85
+msgid "Name"
+msgstr "名前"
 
-#: weko_admin/admin.py:2064
+#: weko_admin/admin.py:2046
+#: weko_admin/templates/weko_admin/admin/jsonld_mapping_settings.html:96
+#: weko_admin/templates/weko_admin/admin/sword_api_jsonld_settings.html:51
+msgid "Item Type"
+msgstr "アイテムタイプ"
+
+#: weko_admin/admin.py:2047
+msgid "Updated"
+msgstr "更新日"
+
+#: weko_admin/admin.py:2063
 msgid "Not Found ItemType"
 msgstr ""
 
-#: weko_admin/admin.py:2283 weko_admin/admin.py:2310 weko_admin/admin.py:2319
-#: weko_admin/admin.py:2328 weko_admin/admin.py:2337 weko_admin/admin.py:2346
-#: weko_admin/admin.py:2355 weko_admin/admin.py:2364 weko_admin/admin.py:2382
-#: weko_admin/admin.py:2391 weko_admin/admin.py:2400 weko_admin/admin.py:2409
-#: weko_admin/admin.py:2417 weko_admin/admin.py:2425
+#: weko_admin/admin.py:2322
+msgid "Please input at least one of client id key or private key"
+msgstr "client idキーまたはprivateキーのどちらか最低一つは入力してください"
+
+#: weko_admin/admin.py:2327
+msgid "client id key size too large."
+msgstr "client idキーのサイズが大きすぎます"
+
+#: weko_admin/admin.py:2331
+msgid "private key size too large."
+msgstr "privateキーのサイズが大きすぎます"
+
+#: weko_admin/admin.py:2366
+msgid "Please input Merge Mode"
+msgstr "マージモードを入力してください"
+
+#: weko_admin/admin.py:2397 weko_admin/admin.py:2424 weko_admin/admin.py:2433
+#: weko_admin/admin.py:2442 weko_admin/admin.py:2451 weko_admin/admin.py:2460
+#: weko_admin/admin.py:2469 weko_admin/admin.py:2478 weko_admin/admin.py:2496
+#: weko_admin/admin.py:2505 weko_admin/admin.py:2514 weko_admin/admin.py:2523
+#: weko_admin/admin.py:2532 weko_admin/admin.py:2540 weko_admin/admin.py:2591
 msgid "Setting"
 msgstr "設定"
 
-#: weko_admin/admin.py:2284
+#: weko_admin/admin.py:2398
 msgid "Style"
 msgstr "様式"
 
-#: weko_admin/admin.py:2292 weko_admin/admin.py:2301 weko_admin/admin.py:2373
+#: weko_admin/admin.py:2406 weko_admin/admin.py:2415 weko_admin/admin.py:2487
 msgid "Statistics"
 msgstr "統計"
 
-#: weko_admin/admin.py:2293
+#: weko_admin/admin.py:2407
 msgid "Report"
 msgstr "レポート"
 
-#: weko_admin/admin.py:2302
+#: weko_admin/admin.py:2416
 msgid "Feedback Mail"
 msgstr "フィードバックメール"
 
-#: weko_admin/admin.py:2311
+#: weko_admin/admin.py:2425
 msgid "Stats"
 msgstr "統計"
 
-#: weko_admin/admin.py:2320
+#: weko_admin/admin.py:2434
 #: weko_admin/templates/weko_admin/admin/log_analysis_settings.html:45
 msgid "Log Analysis"
 msgstr "ログ分析"
 
-#: weko_admin/admin.py:2329
+#: weko_admin/admin.py:2443
 #: weko_admin/templates/weko_admin/admin/site_info.html:50
 msgid "Language"
 msgstr "言語"
 
-#: weko_admin/admin.py:2338
+#: weko_admin/admin.py:2452
 msgid "WebAPI Account"
 msgstr "WebAPIアカウント"
 
-#: weko_admin/admin.py:2347
+#: weko_admin/admin.py:2461
 msgid "Ranking"
 msgstr "ランキング"
 
-#: weko_admin/admin.py:2356
+#: weko_admin/admin.py:2470
 #: weko_admin/templates/weko_admin/admin/feedback_mail.html:61
 msgid "Search"
 msgstr "検索"
 
-#: weko_admin/admin.py:2365 weko_admin/admin.py:2374 weko_admin/config.py:177
-#: weko_admin/config.py:182
+#: weko_admin/admin.py:2479 weko_admin/admin.py:2488 weko_admin/config.py:190
+#: weko_admin/config.py:195
 msgid "Site License"
 msgstr "サイトライセンス"
 
-#: weko_admin/admin.py:2383
+#: weko_admin/admin.py:2497
 msgid "File Preview"
 msgstr "ファイルプレビュー"
 
-#: weko_admin/admin.py:2392
-#, fuzzy
+#: weko_admin/admin.py:2506
 msgid "Item Export"
 msgstr "アイテム一括出力"
 
-#: weko_admin/admin.py:2401
+#: weko_admin/admin.py:2515
 msgid "Site Info"
 msgstr "サイト情報"
 
-#: weko_admin/admin.py:2410
+#: weko_admin/admin.py:2524
 msgid "Restricted Access"
 msgstr "サイトアクセス"
 
-#: weko_admin/admin.py:2418
+#: weko_admin/admin.py:2533
 msgid "Identifier"
 msgstr "識別子"
 
-#: weko_admin/admin.py:2426
+#: weko_admin/admin.py:2541
 msgid "Faceted Search"
 msgstr "ファセット検索"
 
-#: weko_admin/admin.py:2433
+#: weko_admin/admin.py:2548
 msgid "Maintenance"
 msgstr "メンテナンス"
 
-#: weko_admin/admin.py:2434
+#: weko_admin/admin.py:2549
 msgid "ElasticSearch Index"
 msgstr "インデックス再作成"
 
-#: weko_admin/admin.py:2442 weko_admin/admin.py:2450
+#: weko_admin/admin.py:2558
+msgid "Advanced"
+msgstr ""
+
+#: weko_admin/admin.py:2559
+msgid "Profile Settings"
+msgstr "プロファイル設定"
+
+#: weko_admin/admin.py:2567 weko_admin/admin.py:2575
 msgid "SWORD API"
 msgstr ""
 
-#: weko_admin/admin.py:2443
+#: weko_admin/admin.py:2568
 msgid "TSV/XML"
 msgstr ""
 
-#: weko_admin/admin.py:2451
+#: weko_admin/admin.py:2576
 msgid "JSON-LD"
 msgstr "JSON-LD"
 
-#: weko_admin/admin.py:2458
+#: weko_admin/admin.py:2583
 msgid "Item Types"
 msgstr "アイテムタイプ管理"
 
-#: weko_admin/admin.py:2459
+#: weko_admin/admin.py:2584
 msgid "JSON-LD Mapping"
 msgstr "JSON-LDマッピング"
+
+#: weko_admin/admin.py:2592
+msgid "CRIS Linkage"
+msgstr "CRIS 連携"
 
 #: weko_admin/api.py:129
 msgid "statistics report"
 msgstr "統計設定"
 
-#: weko_admin/config.py:152
+#: weko_admin/config.py:165
 msgid "No. Of File Downloads"
 msgstr "ファイルダウンロード数"
 
-#: weko_admin/config.py:153
+#: weko_admin/config.py:166
 msgid "No. Of File Previews"
 msgstr "ファイルプレビュー数"
 
-#: weko_admin/config.py:154
+#: weko_admin/config.py:167
 msgid "No. Of Paid File Downloads"
 msgstr "ファイルダウンロード数"
 
-#: weko_admin/config.py:155
+#: weko_admin/config.py:168
 msgid "No. Of Paid File Previews"
 msgstr "ファイルプレビュー数"
 
-#: weko_admin/config.py:156
+#: weko_admin/config.py:169
 msgid "Detail Views Per Index"
 msgstr "インデックス毎の詳細ビュー"
 
-#: weko_admin/config.py:157
+#: weko_admin/config.py:170
 msgid "Detail Views Count"
 msgstr "詳細ビュー数"
 
-#: weko_admin/config.py:158
+#: weko_admin/config.py:171
 msgid "Usage Count By User"
 msgstr "ユーザー別使用数"
 
-#: weko_admin/config.py:159
+#: weko_admin/config.py:172
 msgid "Search Keyword Ranking"
 msgstr "検索キーワードランキング"
 
-#: weko_admin/config.py:160
+#: weko_admin/config.py:173
 msgid "Number Of Access By Host"
 msgstr "ホスト別アクセス数"
 
-#: weko_admin/config.py:161
+#: weko_admin/config.py:174
 msgid "User Affiliation Information"
 msgstr "ユーザー所属情報"
 
-#: weko_admin/config.py:162
+#: weko_admin/config.py:175
 #: weko_admin/templates/weko_admin/email_templates/site_license_report.html:21
 msgid "Access Count By Site License"
 msgstr "サイトライセンス別アクセス数"
 
-#: weko_admin/config.py:167
+#: weko_admin/config.py:180
 msgid "Open-Access No. Of File Downloads"
 msgstr "オープンアクセスファイルダウンロード数"
 
-#: weko_admin/config.py:168
+#: weko_admin/config.py:181
 msgid "Open-Access No. Of File Previews"
 msgstr "オープンアクセスファイルプレビュー数"
 
-#: weko_admin/config.py:169
+#: weko_admin/config.py:182
 msgid "Access Number Breakdown By Site License"
 msgstr "サイトライセンス別アクセス番号内訳"
 
-#: weko_admin/config.py:175 weko_admin/config.py:180
+#: weko_admin/config.py:188 weko_admin/config.py:193
 msgid "File Name"
 msgstr "ファイル名"
 
-#: weko_admin/config.py:175 weko_admin/config.py:180 weko_admin/config.py:186
+#: weko_admin/config.py:188 weko_admin/config.py:193 weko_admin/config.py:199
 msgid "Registered Index Name"
 msgstr "登録インデックス名"
 
-#: weko_admin/config.py:176
+#: weko_admin/config.py:189
 msgid "No. Of Times Downloaded"
 msgstr "ダウンロード/表示回数"
 
-#: weko_admin/config.py:176 weko_admin/config.py:181
+#: weko_admin/config.py:189 weko_admin/config.py:194
 msgid "Non-Logged In User"
 msgstr "非ログインユーザー"
 
-#: weko_admin/config.py:177 weko_admin/config.py:182
+#: weko_admin/config.py:190 weko_admin/config.py:195
 msgid "Logged In User"
 msgstr "ログインユーザー"
 
-#: weko_admin/config.py:177 weko_admin/config.py:182
+#: weko_admin/config.py:190 weko_admin/config.py:195
 msgid "Admin"
 msgstr "管理者"
 
-#: weko_admin/config.py:178 weko_admin/config.py:183
+#: weko_admin/config.py:191 weko_admin/config.py:196
 msgid "Registrar"
 msgstr "登録者"
 
-#: weko_admin/config.py:181
+#: weko_admin/config.py:194
 msgid "No. Of Times Viewed"
 msgstr "ファイルプレビュー数"
 
-#: weko_admin/config.py:184
+#: weko_admin/config.py:197
 msgid "Index"
 msgstr "インデックス"
 
-#: weko_admin/config.py:184
+#: weko_admin/config.py:197
 msgid "No. Of Views"
 msgstr "ビュー数"
 
-#: weko_admin/config.py:186
+#: weko_admin/config.py:199
 msgid "Title"
 msgstr "タイトル"
 
-#: weko_admin/config.py:186
+#: weko_admin/config.py:199
 msgid "View Count"
 msgstr "ビュー数"
 
-#: weko_admin/config.py:187
+#: weko_admin/config.py:200
 msgid "Non-logged-in User"
 msgstr "非ログインユーザー"
 
-#: weko_admin/config.py:188
+#: weko_admin/config.py:201
 #: weko_admin/templates/weko_admin/admin/feedback_mail.html:49
 msgid "Mail address"
 msgstr "メールアドレス"
 
-#: weko_admin/config.py:189
+#: weko_admin/config.py:202
 msgid "Username"
 msgstr "ユーザー名"
 
-#: weko_admin/config.py:190
+#: weko_admin/config.py:203
 msgid "File download count"
 msgstr "ファイルダウンロード数"
 
-#: weko_admin/config.py:191
+#: weko_admin/config.py:204
 msgid "File playing count"
 msgstr "ファイル再生回数"
 
-#: weko_admin/config.py:192
+#: weko_admin/config.py:205
 #: weko_admin/templates/weko_admin/admin/report.html:131
 msgid "Search Keyword"
 msgstr "検索キーワード"
 
-#: weko_admin/config.py:192 weko_admin/config.py:197
+#: weko_admin/config.py:205 weko_admin/config.py:210
 #: weko_admin/templates/weko_admin/email_templates/site_license_report.html:25
 msgid "Number Of Searches"
 msgstr "検索数"
 
-#: weko_admin/config.py:193
+#: weko_admin/config.py:206
 msgid "Host"
 msgstr "ホスト"
 
-#: weko_admin/config.py:193
+#: weko_admin/config.py:206
 msgid "IP Address"
 msgstr "IPアドレス"
 
-#: weko_admin/config.py:194 weko_admin/config.py:196
+#: weko_admin/config.py:207 weko_admin/config.py:209
 #: weko_admin/templates/weko_admin/email_templates/site_license_report.html:24
 msgid "WEKO Top Page Access Count"
 msgstr "WEKOトップページアクセス数"
 
-#: weko_admin/config.py:195
+#: weko_admin/config.py:208
 msgid "Role"
 msgstr "ロール"
 
-#: weko_admin/config.py:195
+#: weko_admin/config.py:208
 msgid "Number Of Users"
 msgstr "利用者数"
 
-#: weko_admin/config.py:197
+#: weko_admin/config.py:210
 #: weko_admin/templates/weko_admin/email_templates/site_license_report.html:26
 msgid "Number Of Views"
 msgstr "ビュー数"
 
-#: weko_admin/config.py:198
+#: weko_admin/config.py:211
 #: weko_admin/templates/weko_admin/email_templates/site_license_report.html:27
 msgid "Number Of File download"
 msgstr "ファイルダウンロード数"
 
-#: weko_admin/config.py:199
+#: weko_admin/config.py:212
 #: weko_admin/templates/weko_admin/email_templates/site_license_report.html:28
 msgid "Number Of File Regeneration"
 msgstr "ファイル再生回数"
 
-#: weko_admin/config.py:204
+#: weko_admin/config.py:217
 msgid "FileDownload_"
 msgstr "ファイルダウンロード"
 
-#: weko_admin/config.py:205
+#: weko_admin/config.py:218
 msgid "FilePreview_"
 msgstr "ファイルプレビュー"
 
-#: weko_admin/config.py:206
+#: weko_admin/config.py:219
 msgid "PayFileDownload_"
 msgstr "ファイルダウンロード"
 
-#: weko_admin/config.py:207
+#: weko_admin/config.py:220
 msgid "PayFilePreview_"
 msgstr "ファイルプレビュー"
 
-#: weko_admin/config.py:208
+#: weko_admin/config.py:221
 msgid "IndexAccess_"
 msgstr "索引アクセス"
 
-#: weko_admin/config.py:209
+#: weko_admin/config.py:222
 msgid "DetailView_"
 msgstr "詳細ビュー"
 
-#: weko_admin/config.py:210
+#: weko_admin/config.py:223
 msgid "FileUsingPerUser_"
 msgstr "ユーザー毎のファイル使用"
 
-#: weko_admin/config.py:211
+#: weko_admin/config.py:224
 msgid "SearchCount_"
 msgstr "検索回数"
 
-#: weko_admin/config.py:212
+#: weko_admin/config.py:225
 msgid "UserAffiliate_"
 msgstr "加入ユーザー"
 
-#: weko_admin/config.py:213
+#: weko_admin/config.py:226
 msgid "SiteAccess_"
 msgstr "サイトアクセス"
 
-#: weko_admin/config.py:214
+#: weko_admin/config.py:227
 msgid "TopPageAccess_"
 msgstr "トップページへのアクセス"
 
-#: weko_admin/ext.py:75
+#: weko_admin/ext.py:87
 msgid "A translation string"
 msgstr "翻訳文字列"
 
-#: weko_admin/utils.py:235
+#: weko_admin/utils.py:233
 msgid "Input type is invalid. Please check again."
 msgstr "入力タイプが無効です。再度確認してください"
 
-#: weko_admin/utils.py:238 weko_admin/views.py:328 weko_admin/views.py:335
+#: weko_admin/utils.py:236 weko_admin/views.py:329 weko_admin/views.py:336
 msgid "Account information is invalid. Please check again."
 msgstr "アカウント情報が無効です。再度確認してください"
 
-#: weko_admin/utils.py:340
+#: weko_admin/utils.py:338
 msgid "Registered Users"
 msgstr "登録ユーザー"
 
-#: weko_admin/utils.py:384
+#: weko_admin/utils.py:382
 msgid "Aggregation Month"
 msgstr "月別集計"
 
-#: weko_admin/utils.py:401
+#: weko_admin/utils.py:399
 msgid "Total Detail Views"
 msgstr "詳細ビュー合計"
 
-#: weko_admin/utils.py:410
+#: weko_admin/utils.py:408
 msgid "Site license member"
 msgstr "サイトライセンスメンバー"
 
-#: weko_admin/utils.py:414
+#: weko_admin/utils.py:412
 msgid "Other than site license"
 msgstr "サイトライセンス外"
 
-#: weko_admin/utils.py:425
+#: weko_admin/utils.py:423
 msgid "Institution Name"
 msgstr "機関名"
 
-#: weko_admin/utils.py:1252
+#: weko_admin/utils.py:1250
 msgid "Cannot update Feedback email settings."
 msgstr ""
 
-#: weko_admin/utils.py:1279
+#: weko_admin/utils.py:1277
 msgid "Author is duplicated."
 msgstr " 著者が重複しています。"
 
 #: weko_admin/templates/weko_admin/admin/feedback_mail.html:48
-#: weko_admin/utils.py:1286
+#: weko_admin/utils.py:1284
 msgid "Duplicate Email Addresses."
 msgstr "メールアドレスが重複しています。"
 
-#: weko_admin/views.py:117
+#: weko_admin/views.py:118
 #, python-format
 msgid "%(icon)s Session"
 msgstr "%(icon)s セッション"
 
-#: weko_admin/views.py:123
+#: weko_admin/views.py:124
 msgid "Session"
 msgstr "セッション"
 
-#: weko_admin/views.py:148
+#: weko_admin/views.py:149
 msgid "Session lifetime was updated."
 msgstr "セッションライフタイムは更新されました"
 
-#: weko_admin/views.py:321
+#: weko_admin/views.py:322
 msgid "Header Error"
 msgstr "ヘッダエラー"
 
-#: weko_admin/views.py:736
+#: weko_admin/views.py:732
 msgid "Restricted Access was successfully updated."
 msgstr "制限公開の設定を変更しました。"
 
 #: weko_admin/templates/weko_admin/admin/feedback_mail.html:54
-#: weko_admin/views.py:801 weko_admin/views.py:836
+#: weko_admin/views.py:797 weko_admin/views.py:832
 msgid "Success"
 msgstr "成功"
 
-#: weko_admin/views.py:810
+#: weko_admin/views.py:806
 msgid "Failed to update due to server error."
 msgstr "サーバーエラーのため、更新に失敗しました。"
 
-#: weko_admin/views.py:815
+#: weko_admin/views.py:811
 msgid "Failed to create due to server error."
 msgstr "サーバーエラーのため、作成に失敗しました。"
 
-#: weko_admin/views.py:818
+#: weko_admin/views.py:814
 msgid ""
 "The item name/mapping is already exists. Please input other faceted "
 "item/mapping."
 msgstr "既に存在する項目名・マッピングです。別のファセット項目名・マッピングを入力してください。"
 
-#: weko_admin/views.py:843 weko_admin/views.py:846
+#: weko_admin/views.py:839 weko_admin/views.py:842
 msgid "Failed to delete due to server error."
 msgstr "サーバーエラーのため、削除に失敗しました。"
 
@@ -710,17 +770,19 @@ msgid "Welcome to"
 msgstr "ようこそ"
 
 #: weko_admin/templates/weko_admin/admin/block_style.html:89
+#: weko_admin/templates/weko_admin/admin/cris_linkage_setting.html:79
+#: weko_admin/templates/weko_admin/admin/cris_linkage_setting.html:114
 #: weko_admin/templates/weko_admin/admin/facet_search_setting.html:78
 #: weko_admin/templates/weko_admin/admin/feedback_mail.html:44
 #: weko_admin/templates/weko_admin/admin/file_preview_settings.html:62
 #: weko_admin/templates/weko_admin/admin/item_export_settings.html:94
-#: weko_admin/templates/weko_admin/admin/jsonld_mapping_settings.html:123
+#: weko_admin/templates/weko_admin/admin/jsonld_mapping_settings.html:124
 #: weko_admin/templates/weko_admin/admin/lang_settings.html:86
 #: weko_admin/templates/weko_admin/admin/log_analysis_settings.html:170
 #: weko_admin/templates/weko_admin/admin/log_analysis_settings.html:192
 #: weko_admin/templates/weko_admin/admin/ranking_settings.html:147
 #: weko_admin/templates/weko_admin/admin/report.html:239
-#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:52
+#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:53
 #: weko_admin/templates/weko_admin/admin/search_management_settings.html:442
 #: weko_admin/templates/weko_admin/admin/search_management_settings.html:479
 #: weko_admin/templates/weko_admin/admin/search_management_settings.html:589
@@ -742,6 +804,58 @@ msgstr "カラー設定"
 #: weko_admin/templates/weko_admin/admin/block_style.html:99
 msgid "Background1"
 msgstr "背景1"
+
+#: weko_admin/templates/weko_admin/admin/cris_linkage_setting.html:39
+msgid "researchmap"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/cris_linkage_setting.html:46
+msgid "API Key"
+msgstr "APIキー"
+
+#: weko_admin/templates/weko_admin/admin/cris_linkage_setting.html:51
+msgid "client id key"
+msgstr "client idキー"
+
+#: weko_admin/templates/weko_admin/admin/cris_linkage_setting.html:55
+#: weko_admin/templates/weko_admin/admin/cris_linkage_setting.html:67
+msgid "Select file"
+msgstr "ファイル選択"
+
+#: weko_admin/templates/weko_admin/admin/cris_linkage_setting.html:56
+#: weko_admin/templates/weko_admin/admin/cris_linkage_setting.html:68
+msgid "Registered"
+msgstr "登録済"
+
+#: weko_admin/templates/weko_admin/admin/cris_linkage_setting.html:56
+#: weko_admin/templates/weko_admin/admin/cris_linkage_setting.html:68
+#: weko_admin/templates/weko_admin/admin/site_info.html:47
+msgid "Selected file name"
+msgstr "選択したファイル名"
+
+#: weko_admin/templates/weko_admin/admin/cris_linkage_setting.html:63
+msgid "private key"
+msgstr "privateキー"
+
+#: weko_admin/templates/weko_admin/admin/cris_linkage_setting.html:86
+msgid "similar merge(similar data priority)"
+msgstr "マージ（類似データ優先）"
+
+#: weko_admin/templates/weko_admin/admin/cris_linkage_setting.html:87
+msgid "similar merge(input data priority)"
+msgstr "マージ（入力データ優先）"
+
+#: weko_admin/templates/weko_admin/admin/cris_linkage_setting.html:88
+msgid "merge"
+msgstr "追加（類似データがあればエラー）"
+
+#: weko_admin/templates/weko_admin/admin/cris_linkage_setting.html:89
+msgid "force"
+msgstr "追加（入力データ強制）"
+
+#: weko_admin/templates/weko_admin/admin/cris_linkage_setting.html:95
+msgid "Merge Mode"
+msgstr "マージモード"
 
 #: weko_admin/templates/weko_admin/admin/facet_search_setting.html:53
 msgid "Custom Aggregations"
@@ -841,8 +955,8 @@ msgstr "キャンセル"
 
 #: weko_admin/templates/weko_admin/admin/facet_search_setting.html:79
 #: weko_admin/templates/weko_admin/admin/feedback_mail.html:45
-#: weko_admin/templates/weko_admin/admin/jsonld_mapping_settings.html:128
-#: weko_admin/templates/weko_admin/admin/jsonld_mapping_settings.html:176
+#: weko_admin/templates/weko_admin/admin/jsonld_mapping_settings.html:129
+#: weko_admin/templates/weko_admin/admin/jsonld_mapping_settings.html:177
 #: weko_admin/templates/weko_admin/admin/ranking_settings.html:151
 #: weko_admin/templates/weko_admin/admin/site_info.html:59
 #: weko_admin/templates/weko_admin/admin/site_license_settings.html:70
@@ -850,7 +964,7 @@ msgid "Delete"
 msgstr "削除"
 
 #: weko_admin/templates/weko_admin/admin/facet_search_setting.html:80
-#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:64
+#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:73
 #: weko_admin/templates/weko_admin/admin/search_management_settings.html:568
 msgid "Add"
 msgstr "追加"
@@ -875,7 +989,7 @@ msgid "Confirmation"
 msgstr "確認"
 
 #: weko_admin/templates/weko_admin/admin/facet_search_setting.html:92
-#: weko_admin/templates/weko_admin/admin/jsonld_mapping_settings.html:167
+#: weko_admin/templates/weko_admin/admin/jsonld_mapping_settings.html:168
 msgid "Are you sure you want to delete it?"
 msgstr "削除してよろしいですか？"
 
@@ -937,21 +1051,16 @@ msgstr "エラー"
 msgid "List of authors who failed to send"
 msgstr "送信失敗した著者一覧"
 
-#: weko_admin/templates/weko_admin/admin/feedback_mail.html:57
-#: weko_admin/templates/weko_admin/admin/jsonld_mapping_settings.html:84
-msgid "Name"
-msgstr "名前"
-
 #: weko_admin/templates/weko_admin/admin/feedback_mail.html:58
 msgid "Resend"
 msgstr "再送信"
 
 #: weko_admin/templates/weko_admin/admin/feedback_mail.html:59
-#: weko_admin/templates/weko_admin/admin/jsonld_mapping_settings.html:150
-#: weko_admin/templates/weko_admin/admin/jsonld_mapping_settings.html:172
+#: weko_admin/templates/weko_admin/admin/jsonld_mapping_settings.html:151
+#: weko_admin/templates/weko_admin/admin/jsonld_mapping_settings.html:173
 #: weko_admin/templates/weko_admin/admin/log_analysis_settings.html:196
 #: weko_admin/templates/weko_admin/admin/report.html:288
-#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:75
+#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:86
 #: weko_admin/templates/weko_admin/admin/sword_api_jsonld_settings.html:264
 msgid "Close"
 msgstr "閉じる"
@@ -1023,11 +1132,6 @@ msgstr ""
 #: weko_admin/templates/weko_admin/admin/jsonld_mapping_settings.html:42
 msgid "This Mapping is using SWORD API."
 msgstr "このマッピングはSWORD API JSON-LDで使用されています。アイテムタイプの選択を変更することはできません。"
-
-#: weko_admin/templates/weko_admin/admin/jsonld_mapping_settings.html:95
-#: weko_admin/templates/weko_admin/admin/sword_api_jsonld_settings.html:51
-msgid "Item Type"
-msgstr "アイテムタイプ"
 
 #: weko_admin/templates/weko_admin/admin/lang_settings.html:47
 msgid "Target language"
@@ -1122,7 +1226,6 @@ msgid "waiting..."
 msgstr "実行可能"
 
 #: weko_admin/templates/weko_admin/admin/reindex_elasticsearch.html:47
-#, fuzzy
 msgid "Execute"
 msgstr "実行"
 
@@ -1253,7 +1356,7 @@ msgid "Are you sure you want to save changes?"
 msgstr "変更してもよろしいですか？"
 
 #: weko_admin/templates/weko_admin/admin/report.html:270
-#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:76
+#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:87
 msgid "Send Mail"
 msgstr "メール送信"
 
@@ -1273,100 +1376,130 @@ msgstr "ダウンロード回数"
 msgid "Expiration Date"
 msgstr "有効期限日数"
 
-#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:48
+#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:47
+msgid "restricted_error_message"
+msgstr "エラーメッセージ"
+
+#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:49
 msgid "Content File Download"
 msgstr "コンテンツファイルのダウンロード"
 
-#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:51
+#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:52
 msgid "Unlimited"
 msgstr "無制限"
 
-#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:53
+#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:54
 msgid "Usage Report Workflow Access"
 msgstr "利用報告ワークフローへのアクセス"
 
-#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:55
-#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:57
+#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:56
+#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:58
 #, python-format
 msgid "Must set a positive integer for %(name)s."
 msgstr "%(name)sは1以上の整数を設定する必要があります。"
 
-#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:58
 #: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:59
+#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:60
+#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:75
 #, python-format
 msgid "Please set %(name)s."
 msgstr "%(name)sを設定してください。"
 
-#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:61
+#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:62
+msgid "password check function"
+msgstr "非ログインユーザーのDLにおけるパスワードチェック機能"
+
+#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:63
+msgid "application for use of items without content"
+msgstr "コンテンツ未登録アイテムの利用申請"
+
+#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:64
+msgid "item types available for application"
+msgstr "コンテンツ未登録状態で利用申請可能なアイテムタイプ"
+
+#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:65
+msgid "item type not available for use application"
+msgstr "コンテンツ未登録状態で利用申請不可能なアイテムタイプ"
+
+#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:66
+msgid "file preview in approval actions"
+msgstr "承認アクションにおけるファイルプレビュー"
+
+#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:67
+msgid "edit mail templates"
+msgstr "メールテンプレート編集"
+
+#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:68
+msgid "display request form"
+msgstr "リクエストフォーム"
+
+#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:70
 #: weko_admin/templates/weko_admin/admin/search_management_settings.html:464
 #: weko_admin/templates/weko_admin/admin/search_management_settings.html:471
 msgid "English"
 msgstr ""
 
-#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:62
+#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:71
 #: weko_admin/templates/weko_admin/admin/search_management_settings.html:465
 #: weko_admin/templates/weko_admin/admin/search_management_settings.html:472
 msgid "Japanese"
 msgstr "日本語"
 
-#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:63
+#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:72
 msgid "Terms and Conditions"
 msgstr ""
 
-#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:65
+#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:74
 msgid "Please input the Terms and Conditions in English."
 msgstr "英語の利用規約を入力してください。"
 
-#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:68
+#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:79
 msgid "Activity"
 msgstr ""
 
-#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:69
-#, fuzzy
+#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:80
 msgid "Item"
-msgstr "タイトル"
+msgstr "アイテム"
 
-#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:70
+#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:81
 #: weko_admin/templates/weko_admin/admin/sword_api_jsonld_settings.html:135
 #: weko_admin/templates/weko_admin/admin/sword_api_settings.html:83
 msgid "WorkFlow"
 msgstr "ワークフロー"
 
-#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:71
-#, fuzzy
+#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:82
 msgid "Status"
 msgstr "統計"
 
-#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:72
-#, fuzzy
+#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:83
 msgid "User"
 msgstr "ユーザー"
 
-#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:73
+#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:84
 msgid "Usage Report Reminder Email"
 msgstr "利用報告督促メール"
 
-#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:74
+#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:85
 msgid "Confirm Usage Mail"
 msgstr "確認"
 
-#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:77
+#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:88
 msgid "Email is sent successfully."
 msgstr "メールを送信しました。"
 
-#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:78
+#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:89
 msgid "Failed to send mail."
 msgstr "メールの送信に失敗しました。"
 
-#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:79
+#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:90
 msgid "action_doing"
 msgstr ""
 
-#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:80
+#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:91
 msgid "Secret URL Download"
 msgstr "シークレットURLダウンロード"
 
-#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:81
+#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:92
 msgid "SecretURL Enabled"
 msgstr "機能有効化"
 
@@ -1584,10 +1717,6 @@ msgstr "ファイル選択"
 msgid "Select icon file"
 msgstr "アイコンファイルの選択"
 
-#: weko_admin/templates/weko_admin/admin/site_info.html:47
-msgid "Selected file name"
-msgstr "選択したファイル名"
-
 #: weko_admin/templates/weko_admin/admin/site_info.html:48
 msgid "Add site name"
 msgstr "サイト名の追加"
@@ -1649,10 +1778,6 @@ msgid "Tracking ID"
 msgstr "トラッキングID"
 
 #: weko_admin/templates/weko_admin/admin/site_info.html:67
-msgid "AddThis ID"
-msgstr "AddThis ID"
-
-#: weko_admin/templates/weko_admin/admin/site_info.html:68
 msgid "OGP Image"
 msgstr "OGPイメージ"
 
@@ -1752,15 +1877,6 @@ msgstr "ワークフローに設定されたアイテムタイプと、マッピ
 msgid "The workflow has been deleted"
 msgstr "ワークフローが削除されています。再度選択してください。"
 
-#: weko_admin/templates/weko_admin/admin/sword_api_jsonld_settings.html:86
-msgid "Application"
-msgstr "アプリケーション"
-
-#: weko_admin/templates/weko_admin/admin/sword_api_jsonld_settings.html:122
-#: weko_admin/templates/weko_admin/admin/sword_api_settings.html:70
-msgid "Registration Type"
-msgstr "登録方式"
-
 #: weko_admin/templates/weko_admin/admin/sword_api_jsonld_settings.html:148
 #: weko_admin/templates/weko_admin/admin/sword_api_settings.html:96
 msgid "WorkFlow Cautionary Note"
@@ -1772,8 +1888,8 @@ msgid "Duplicate Check"
 msgstr "重複チェック"
 
 #: weko_admin/templates/weko_admin/admin/sword_api_jsonld_settings.html:180
-msgid "Metadata Collection API"
-msgstr "メタデータ補完API"
+msgid "Metadata Retrieve API"
+msgstr "メタデータ取得API"
 
 #: weko_admin/templates/weko_admin/admin/sword_api_jsonld_settings.html:191
 msgid "Disable"
@@ -1820,7 +1936,6 @@ msgid "Attached file"
 msgstr "添付ファイル"
 
 #: weko_admin/templates/weko_admin/email_templates/site_license_report.html:22
-#, fuzzy
 msgid "Aggregation"
 msgstr "集計一覧"
 
@@ -1861,75 +1976,3 @@ msgstr "現行"
 msgid "Update"
 msgstr "更新"
 
-#: 
-msgid "CRIS Linkage"
-msgstr "CRIS 連携"
-
-msgid "similar merge(similar data priority)"
-msgstr "マージ（類似データ優先）"
-
-msgid "similar merge(input data priority)"
-msgstr "マージ（入力データ優先）"
-
-msgid "merge"
-msgstr "追加（類似データがあればエラー）"
-
-msgid "force"
-msgstr "追加（入力データ強制）"
-
-msgid "API Key"
-msgstr "APIキー"
-
-msgid "client id key"
-msgstr "client idキー"
-
-msgid "private key"
-msgstr "privateキー"
-
-msgid "Merge Mode"
-msgstr "マージモード"
-
-msgid "Select file"
-msgstr "ファイル選択"
-
-msgid "Selected file name"
-msgstr "選択したファイル名"
-
-msgid "Please input at least one of client id key or private key"
-msgstr "client idキーまたはprivateキーのどちらか最低一つは入力してください"
-
-msgid "Please input Merge Mode"
-msgstr "マージモードを入力してください"
-
-msgid "Registered"
-msgstr "登録済"
-
-msgid "client id key size too large."
-msgstr "client idキーのサイズが大きすぎます"
-
-msgid "private key size too large."
-msgstr "privateキーのサイズが大きすぎます"
-
-msgid "restricted_error_message"
-msgstr "エラーメッセージ"
-
-msgid "password check function"
-msgstr "非ログインユーザーのDLにおけるパスワードチェック機能"
-
-msgid "application for use of items without content"
-msgstr "コンテンツ未登録アイテムの利用申請"
-
-msgid "item types available for application"
-msgstr "コンテンツ未登録状態で利用申請可能なアイテムタイプ"
-
-msgid "item type not available for use application"
-msgstr "コンテンツ未登録状態で利用申請不可能なアイテムタイプ"
-
-msgid "file preview in approval actions"
-msgstr "承認アクションにおけるファイルプレビュー"
-
-msgid "edit mail templates"
-msgstr "メールテンプレート編集"
-
-msgid "display request form"
-msgstr "リクエストフォーム"

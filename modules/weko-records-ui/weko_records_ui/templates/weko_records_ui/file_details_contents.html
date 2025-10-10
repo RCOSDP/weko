@@ -21,7 +21,7 @@
 
 {%- set record_url = url_for('invenio_records_ui.recid', pid_value=pid.pid_value) %}
 {%- if community %}
-    {% set record_url = record_url + "?community=" + community.id %}
+    {% set record_url = record_url + "?c=" + community.id %}
 {% endif -%}
 {% from "weko_records_ui/box/preview_carousel.html" import preview_carousel %}
 {% from "weko_theme/macros/modal_page.html" import all_modal %}

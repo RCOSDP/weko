@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: weko-search-ui 0.1.0.dev20170000\n"
 "Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
-"POT-Creation-Date: 2025-09-09 09:59+0900\n"
+"POT-Creation-Date: 2025-10-03 00:25+0900\n"
 "PO-Revision-Date: 2025-04-09 22:35+0900\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ja\n"
@@ -124,11 +124,11 @@ msgstr "削除してよろしいですか？"
 msgid "No such index."
 msgstr ""
 
-#: weko_search_ui/admin.py:310 weko_search_ui/admin.py:1271
+#: weko_search_ui/admin.py:310 weko_search_ui/admin.py:1273
 msgid "Custom Sort"
 msgstr "カスタムソート"
 
-#: weko_search_ui/admin.py:312 weko_search_ui/admin.py:1262
+#: weko_search_ui/admin.py:312 weko_search_ui/admin.py:1264
 msgid "Bulk Delete"
 msgstr "一括削除"
 
@@ -140,33 +140,33 @@ msgstr "一括更新"
 #: weko_search_ui/templates/weko_search_ui/admin/export.html:53
 #: weko_search_ui/templates/weko_search_ui/admin/import.html:98
 #: weko_search_ui/templates/weko_search_ui/admin/rocrate_import.html:100
-#: weko_search_ui/utils.py:625 weko_search_ui/utils.py:762
+#: weko_search_ui/utils.py:626 weko_search_ui/utils.py:763
 msgid "Internal server error"
 msgstr "サーバ内部エラー"
 
-#: weko_search_ui/admin.py:1253 weko_search_ui/admin.py:1270
+#: weko_search_ui/admin.py:1255 weko_search_ui/admin.py:1272
 #: weko_search_ui/templates/weko_search_ui/admin/import.html:53
 #: weko_search_ui/templates/weko_search_ui/admin/rocrate_import.html:54
 msgid "Index Tree"
 msgstr "インデックスツリー"
 
-#: weko_search_ui/admin.py:1261 weko_search_ui/admin.py:1279
-#: weko_search_ui/admin.py:1288 weko_search_ui/admin.py:1298
+#: weko_search_ui/admin.py:1263 weko_search_ui/admin.py:1281
+#: weko_search_ui/admin.py:1290 weko_search_ui/admin.py:1300
 msgid "Items"
 msgstr "アイテム"
 
-#: weko_search_ui/admin.py:1280
+#: weko_search_ui/admin.py:1282
 #: weko_search_ui/templates/weko_search_ui/admin/import.html:42
 #: weko_search_ui/templates/weko_search_ui/admin/rocrate_import.html:43
 msgid "Import"
 msgstr "インポート"
 
-#: weko_search_ui/admin.py:1289
+#: weko_search_ui/admin.py:1291
 #: weko_search_ui/templates/weko_search_ui/admin/rocrate_import.html:42
 msgid "RO-Crate Import"
 msgstr "RO-Crate インポート"
 
-#: weko_search_ui/admin.py:1299
+#: weko_search_ui/admin.py:1301
 msgid "Bulk Export"
 msgstr "一括エクスポート"
 
@@ -228,354 +228,353 @@ msgid "\"{key}\" is not in itemtype, did you mean \"{similar_key}\"?"
 msgstr "「{key}」 はアイテムタイプに存在しません。「{similar_key}」であれば存在します。"
 
 #: weko_search_ui/tasks.py:339
-msgid "`wk:metadata_replace` flag cannot be used in RO-Crate Import."
-msgstr "RO-Crate インポートでは、`wk:metadata_replace`フラグを有効にできません。"
+msgid "'wk:metadataReplace' flag cannot be used in RO-Crate Import."
+msgstr "RO-Crate インポートでは、`wk:metadataReplace`フラグを有効にできません。"
 
 #: weko_search_ui/tasks.py:354
 msgid "`wk:isSplited` flag cannot be used in RO-Crate Import."
 msgstr "RO-Crate インポートでは、`wk:isSplited`フラグを有効にできません。"
 
-#: weko_search_ui/utils.py:627 weko_search_ui/utils.py:744
+#: weko_search_ui/utils.py:628 weko_search_ui/utils.py:745
 msgid ""
 "The format of the specified file {} does not support import. Please "
 "specify one of the following formats: zip, tar, gztar, bztar, xztar."
 msgstr "指定されたファイル{}の形式はインポートに対応していません。zip,tar,gztar,bztar,xztarいずれかの形式を指定してください。"
 
-#: weko_search_ui/utils.py:635
+#: weko_search_ui/utils.py:636
 msgid ""
 "The csv/tsv file was not found in the specified file {}. Check if the "
 "directory structure is correct."
 msgstr "指定されたファイル{}にcsv/tsvファイルが見つかりませんでした。ディレクトリ構成が正しいか確認してください。"
 
-#: weko_search_ui/utils.py:684
+#: weko_search_ui/utils.py:685
 msgid ""
 "The item type of the item to be imported is missing or has already been "
 "deleted."
 msgstr ""
 
-#: weko_search_ui/utils.py:751
+#: weko_search_ui/utils.py:752
 msgid ""
 "The xml file was not found in the specified file {}. Check if the "
 "directory structure is correct."
 msgstr ""
 
-#: weko_search_ui/utils.py:829
+#: weko_search_ui/utils.py:830
 msgid "The item type ID specified in the XML file does not exist."
 msgstr ""
 
-#: weko_search_ui/utils.py:1019
+#: weko_search_ui/utils.py:1020
 msgid ""
 "The format of the specified file {} dose not support import. Please "
 "specify a zip file."
 msgstr "指定されたファイル{}の形式はインポートに対応していません。zip形式のファイルを指定してください。"
 
-#: weko_search_ui/utils.py:1040
+#: weko_search_ui/utils.py:1041
 msgid "Failred to decode JSON-LD file: "
 msgstr "JSONファイルのデコードに失敗しました。 "
 
-#: weko_search_ui/utils.py:1043
+#: weko_search_ui/utils.py:1044
 msgid "Unexpected error occurred: "
 msgstr "予期しないエラーが発生しました。 "
 
-#: weko_search_ui/utils.py:1249
+#: weko_search_ui/utils.py:1250
 msgid ""
 "There is an error in the format of the first line of the header of the {}"
 " file."
 msgstr "{}ファイルのヘッダ１行目の形式に誤りがあります。"
 
-#: weko_search_ui/utils.py:1268
+#: weko_search_ui/utils.py:1269
 msgid "The item type ID specified in the {} file does not exist."
 msgstr "{}ファイルで指定されたアイテムタイプIDは存在しません。"
 
-#: weko_search_ui/utils.py:1277
+#: weko_search_ui/utils.py:1278
 msgid "Cannot register because the specified item type is not the latest version."
 msgstr "指定されたアイテムタイプが最新のバージョンでないため登録できません。"
 
-#: weko_search_ui/utils.py:1292
+#: weko_search_ui/utils.py:1293
 msgid "The following metadata keys are duplicated.<br/>{}"
 msgstr "以下のメタデータキーが重複しています。<br/>{}"
 
-#: weko_search_ui/utils.py:1315
+#: weko_search_ui/utils.py:1316
 msgid "The item does not consistent with the specified item type.<br/>{}"
 msgstr "指定されたアイテムタイプと項目が一致しません。<br/>{}"
 
-#: weko_search_ui/utils.py:1345
+#: weko_search_ui/utils.py:1346
 msgid "Cannot read {} file correctly."
 msgstr "{}ファイルが正しく読み込めません。"
 
-#: weko_search_ui/utils.py:1369
+#: weko_search_ui/utils.py:1370
 msgid ""
 "The following items are not registered because they do not exist in the "
 "specified item type. {}"
 msgstr "次の項目指定されたアイテムタイプに存在しないため登録されません。{}"
 
-#: weko_search_ui/utils.py:1379
+#: weko_search_ui/utils.py:1380
 msgid ""
 "The {} file could not be read. Make sure the file format is {} and that "
 "the file is UTF-8 encoded."
 msgstr "{}ファイルを読み込めませんでした。ファイル形式が{}であること、またそのファイルがUTF-8でエンコードされているかを確認してください。"
 
-#: weko_search_ui/utils.py:1410
+#: weko_search_ui/utils.py:1411
 msgid ""
 "The XML file could not be read. Make sure the file format is XML and that"
 " the file is UTF-8 encoded."
 msgstr ""
 
-#: weko_search_ui/utils.py:1482
+#: weko_search_ui/utils.py:1483
 msgid "Please specify item ID by half-width number."
 msgstr "アイテムIDは半角数字で指定してください。"
 
-#: weko_search_ui/utils.py:1497
+#: weko_search_ui/utils.py:1498
 msgid "Specified item type does not exist."
 msgstr "指定されたアイテムタイプが存在していません。"
 
-#: weko_search_ui/utils.py:1568
+#: weko_search_ui/utils.py:1569
 msgid "The same item may have been registered."
 msgstr "同じアイテムが登録されている可能性があります。"
 
-#: weko_search_ui/utils.py:1598
+#: weko_search_ui/utils.py:1599
 msgid "Specified URI and system URI do not match."
 msgstr "指定されたURIとシステムURIが一致しません。"
 
-#: weko_search_ui/utils.py:1610
+#: weko_search_ui/utils.py:1611
 msgid "Item does not exist in the system."
 msgstr "アイテムがシステムに存在しません。"
 
-#: weko_search_ui/utils.py:1617
+#: weko_search_ui/utils.py:1618
 msgid "Item already DELETED in the system."
-msgstr "リンク先アイテムは削除済です。"
+msgstr "アイテムは削除済です。"
 
-#: weko_search_ui/utils.py:1634
+#: weko_search_ui/utils.py:1635
 msgid "Please specify either \"Keep\" or \"Upgrade\"."
 msgstr "Keep、Upgradeのいずれかを指定してください。"
 
-#: weko_search_ui/utils.py:2578
+#: weko_search_ui/utils.py:2594
 msgid "Title is required item."
 msgstr "タイトルは必須項目です。"
 
-#: weko_search_ui/utils.py:2595
+#: weko_search_ui/utils.py:2611
 msgid "{} is required item."
 msgstr "{}は必須項目です。"
 
-#: weko_search_ui/utils.py:2598
+#: weko_search_ui/utils.py:2614
 msgid "Please set \"public\" or \"private\" for {}."
-msgstr "{}はpublic,privateのいずれかを設定してください。"
+msgstr "{}はpublic、privateのいずれかを設定してください。"
 
-#: weko_search_ui/utils.py:2639
+#: weko_search_ui/utils.py:2655
 msgid "The specified {} does not exist in system."
 msgstr "指定された{}はシステムに存在しません。"
 
-#: weko_search_ui/utils.py:2649
+#: weko_search_ui/utils.py:2665
 msgid "Specified {} does not match with existing index."
 msgstr "指定された{}はシステムのものと一致していません。"
 
-#: weko_search_ui/utils.py:2693
+#: weko_search_ui/utils.py:2709
 msgid "Your role cannot register items in this index."
 msgstr "ロールの権限が足りずこのインデックスにアイテム登録ができません。"
 
-#: weko_search_ui/utils.py:2714
+#: weko_search_ui/utils.py:2730
 msgid "Both of IndexID and POS_INDEX are not being set."
 msgstr "IndexID, POS_INDEXがどちらも設定されていません。"
 
-#: weko_search_ui/utils.py:2760 weko_search_ui/utils.py:2785
+#: weko_search_ui/utils.py:2776 weko_search_ui/utils.py:2801
 msgid "Specified {} is invalid."
 msgstr "指定された{}は不正です。"
 
-#: weko_search_ui/utils.py:2819
-#, fuzzy
+#: weko_search_ui/utils.py:2835
 msgid "If there is a info of content file, terms of use cannot be set."
 msgstr "コンテンツファイル情報がある場合、利用規約は設定できません。"
 
-#: weko_search_ui/utils.py:2826 weko_search_ui/utils.py:6078
+#: weko_search_ui/utils.py:2842 weko_search_ui/utils.py:6100
 msgid "The specified provinding method does not exist in the system"
 msgstr "指定する提供方法はシステムに存在しません。"
 
-#: weko_search_ui/utils.py:2831 weko_search_ui/utils.py:6073
+#: weko_search_ui/utils.py:2847 weko_search_ui/utils.py:6095
 msgid "The specified terms does not exist in the system"
 msgstr "指定する利用規約はシステムに存在しません。"
 
-#: weko_search_ui/utils.py:2923 weko_search_ui/utils.py:2956
-#: weko_search_ui/utils.py:3048 weko_search_ui/utils.py:3154
-#: weko_search_ui/utils.py:3176 weko_search_ui/utils.py:3211
+#: weko_search_ui/utils.py:2939 weko_search_ui/utils.py:2972
+#: weko_search_ui/utils.py:3064 weko_search_ui/utils.py:3176
+#: weko_search_ui/utils.py:3198 weko_search_ui/utils.py:3233
 msgid "Please specify {}."
 msgstr "{}を設定してください。"
 
-#: weko_search_ui/utils.py:2926 weko_search_ui/utils.py:3157
+#: weko_search_ui/utils.py:2942 weko_search_ui/utils.py:3179
 msgid "The specified {} exceeds the maximum length."
 msgstr "指定された{}が最大長を超えています。"
 
-#: weko_search_ui/utils.py:2941 weko_search_ui/utils.py:3098
-#: weko_search_ui/utils.py:3109 weko_search_ui/utils.py:3172
+#: weko_search_ui/utils.py:2957 weko_search_ui/utils.py:3114
+#: weko_search_ui/utils.py:3125 weko_search_ui/utils.py:3194
 msgid "Specified Prefix of {} is incorrect."
 msgstr "指定された{}のPrefixが誤っています。"
 
-#: weko_search_ui/utils.py:2949 weko_search_ui/utils.py:3092
-#: weko_search_ui/utils.py:3102
+#: weko_search_ui/utils.py:2965 weko_search_ui/utils.py:3108
+#: weko_search_ui/utils.py:3118
 msgid "{} cannot be set."
 msgstr "{}は設定できません。"
 
-#: weko_search_ui/utils.py:2958 weko_search_ui/utils.py:2962
-#: weko_search_ui/utils.py:3031 weko_search_ui/utils.py:3213
+#: weko_search_ui/utils.py:2974 weko_search_ui/utils.py:2978
+#: weko_search_ui/utils.py:3047 weko_search_ui/utils.py:3235
 msgid "Specified {} is different from existing {}."
 msgstr "指定された{}は登録している{}と異なっています。"
 
-#: weko_search_ui/utils.py:2982
+#: weko_search_ui/utils.py:2998
 msgid ""
 "When assigning a DOI to an item, it must be associated with an index "
 "whose index status is \"Public\" and Harvest Publishing is \"Public\"."
 msgstr ""
 
-#: weko_search_ui/utils.py:2987
+#: weko_search_ui/utils.py:3003
 msgid ""
 "Since the item has a DOI, it must be associated with an index whose index"
 " status is \"Public\" and whose Harvest Publishing is \"Public\"."
 msgstr "アイテムにDOIが付与されているため、インデックス状態が「公開」かつハーベスト公開が「公開」のインデックスに関連付けが必要です。"
 
-#: weko_search_ui/utils.py:2998
+#: weko_search_ui/utils.py:3014
 msgid "You cannot keep an item private because it has a DOI."
 msgstr "アイテムにDOIが付与されているため、アイテムを非公開にすることはできません。"
 
-#: weko_search_ui/utils.py:3052 weko_search_ui/utils.py:4352
+#: weko_search_ui/utils.py:3068 weko_search_ui/utils.py:4374
 msgid "DOI_RA should be set by one of JaLC, Crossref, DataCite, NDL JaLC."
 msgstr "DOI_RAはJaLC,Crossref,DataCite,NDL JaLCのいずれかを設定してください。"
 
-#: weko_search_ui/utils.py:3132
+#: weko_search_ui/utils.py:3151
 msgid "Specified DOI was withdrawn. Please specify another DOI."
 msgstr "指定されたDOIは取り下げられました。別のDOIを指定してください。"
 
-#: weko_search_ui/utils.py:3137
+#: weko_search_ui/utils.py:3159
 msgid ""
 "Specified DOI has been used already for another item. Please specify "
 "another DOI."
 msgstr "指定されたDOIは既に別のアイテムに付与されています。別のDOIを指定してください。"
 
-#: weko_search_ui/utils.py:3233
+#: weko_search_ui/utils.py:3255
 msgid ""
 "Specified DOI is duplicated with another import item. Please specify "
 "another DOI."
 msgstr "指定されたDOIはインポートファイル内で重複しています。別のDOIを指定してください。"
 
-#: weko_search_ui/utils.py:3266
+#: weko_search_ui/utils.py:3288
 msgid "Item Link type: '{}' is not one of {}."
 msgstr "リンクタイプ'{}'は次の決められた選択肢に含まれていません。{}"
 
-#: weko_search_ui/utils.py:3270
+#: weko_search_ui/utils.py:3292
 msgid "Please specify Item URL for item link."
 msgstr "アイテムリンク先のURLを指定してください。"
 
-#: weko_search_ui/utils.py:3284
+#: weko_search_ui/utils.py:3306
 msgid "Specified Item Link URI and system URI do not match."
 msgstr "指定されたアイテムリンク先URIとシステムURIが一致しません。"
 
-#: weko_search_ui/utils.py:3290
+#: weko_search_ui/utils.py:3312
 msgid "Linking item does not exist in the system."
 msgstr "リンク先アイテムがシステムに存在しません。"
 
-#: weko_search_ui/utils.py:3293
+#: weko_search_ui/utils.py:3315
 msgid "Linking item already deleted in the system."
 msgstr "リンク先アイテムは削除済です。"
 
-#: weko_search_ui/utils.py:3332
+#: weko_search_ui/utils.py:3354
 msgid "It is not allowed to create links to the item itself."
 msgstr "自身へのアイテムリンクを作成することはできません。"
 
-#: weko_search_ui/utils.py:3337
+#: weko_search_ui/utils.py:3359
 msgid "It is not allowed to create links other than {} between split items."
 msgstr "分割したアイテム間で{}以外のリンクを作成することはできません。"
 
-#: weko_search_ui/utils.py:3373
+#: weko_search_ui/utils.py:3395
 msgid "Duplicate Item Link."
 msgstr "重複するアイテムリンクを作成することはできません。"
 
-#: weko_search_ui/utils.py:3410
+#: weko_search_ui/utils.py:3432
 #, fuzzy
-msgid "The 'wk:metadataReplace' flag cannot be used when registering an item."
-msgstr "RO-Crate インポートでは、`wk:metadata_replace`フラグを有効にできません。"
+msgid "'wk:metadataReplace' flag cannot be used when registering an item."
+msgstr "RO-Crate インポートでは、`wk:metadataReplace`フラグを有効にできません。"
 
-#: weko_search_ui/utils.py:3727
+#: weko_search_ui/utils.py:3749
 msgid ""
 "One of the following required values ​​has not been "
 "registered.<br/>{}<br/>"
 msgstr "次のいずれかの必要値が登録していません。<br/>{}<br/>"
 
-#: weko_search_ui/utils.py:3732
+#: weko_search_ui/utils.py:3754
 msgid ""
 "The mapping of required items for DOI validation is not set. Please "
 "recheck the following mapping settings.<br/>{}"
 msgstr ""
 
-#: weko_search_ui/utils.py:3742
+#: weko_search_ui/utils.py:3764
 msgid "The following metadata are required.<br/>{}"
 msgstr "{}は必須項目です。"
 
-#: weko_search_ui/utils.py:3747
+#: weko_search_ui/utils.py:3769
 msgid "One of the following metadata is required.<br/>{}<br/>"
 msgstr "{}のいずれかを設定してください。"
 
-#: weko_search_ui/utils.py:3810 weko_search_ui/utils.py:3822
+#: weko_search_ui/utils.py:3832 weko_search_ui/utils.py:3844
 msgid "Please specify the date with any format of YYYY-MM-DD, YYYY-MM, YYYY."
 msgstr "日付はYYYY-MM-DD、YYYY-MM、YYYYのいずれかで指定してください。"
 
-#: weko_search_ui/utils.py:3816
+#: weko_search_ui/utils.py:3838
 msgid "Replace value of {} from {} to {}."
 msgstr "{}の値を{}から{}へ置き換えました。"
 
-#: weko_search_ui/utils.py:3839
+#: weko_search_ui/utils.py:3861
 msgid "Please specify PubDate with YYYY-MM-DD."
 msgstr "公開日はYYYY-MM-DDで指定してください。"
 
-#: weko_search_ui/utils.py:3869
+#: weko_search_ui/utils.py:3891
 msgid "ID is specified for the newly registered item. Ignore the ID and register."
 msgstr "新規登録アイテムにIDが指定されています。IDを無視して登録を行います。"
 
-#: weko_search_ui/utils.py:3952
+#: weko_search_ui/utils.py:3974
 msgid "Please specify Open Access Date with YYYY-MM-DD."
 msgstr "オープンアクセスの日付はYYYY-MM-DDで指定してください。"
 
-#: weko_search_ui/utils.py:4189 weko_search_ui/utils.py:4337
-#: weko_search_ui/utils.py:4343
+#: weko_search_ui/utils.py:4211 weko_search_ui/utils.py:4359
+#: weko_search_ui/utils.py:4365
 msgid "Please specify DOI prefix/suffix."
 msgstr "DOIは prefix/suffix の形式で指定して下さい。"
 
-#: weko_search_ui/utils.py:4329
+#: weko_search_ui/utils.py:4351
 msgid "The specified DOI is wrong and fixed with the registered DOI."
 msgstr ""
 
-#: weko_search_ui/utils.py:4332
+#: weko_search_ui/utils.py:4354
 msgid ""
 "The specified DOI RA is wrong and fixed with the correct DOI RA of the "
 "registered DOI."
 msgstr ""
 
-#: weko_search_ui/utils.py:4339 weko_search_ui/utils.py:4345
+#: weko_search_ui/utils.py:4361 weko_search_ui/utils.py:4367
 msgid "Please specify DOI suffix."
 msgstr ""
 
-#: weko_search_ui/utils.py:4348
+#: weko_search_ui/utils.py:4370
 msgid "Do not specify DOI suffix."
 msgstr ""
 
-#: weko_search_ui/utils.py:4354
+#: weko_search_ui/utils.py:4376
 msgid "Specified Prefix of DOI is incorrect."
 msgstr ""
 
-#: weko_search_ui/utils.py:4386
+#: weko_search_ui/utils.py:4408
 msgid ""
 "Please specify the image file(gif, jpg, jpe, jpeg, png, bmp, tiff, tif) "
 "for the thumbnail."
 msgstr "サムネイルは画像ファイル（gif, jpg, jpe, jpeg, png, bmp, tiff, tif）を指定してください。"
 
-#: weko_search_ui/utils.py:5505
+#: weko_search_ui/utils.py:5527
 msgid "The file specified in ({}) does not exist."
 msgstr "（{}）に指定したファイルが存在しません。"
 
-#: weko_search_ui/utils.py:5509
+#: weko_search_ui/utils.py:5531
 msgid ""
 "The file specified in ({}) does not exist.<br/>The file will not be "
 "updated. Update only the metadata with csv/tsv contents."
 msgstr "（{}）に指定したファイルが存在しません。<br/>ファイルの更新はしません。csv/tsv内容でメタデータのみ更新します。"
 
-#: weko_search_ui/utils.py:5796
+#: weko_search_ui/utils.py:5818
 msgid "The file name specified in {} and {} do not match."
 msgstr "{}に指定されたファイル名と{}が一致しません。"
 
@@ -1013,7 +1012,7 @@ msgstr "ダウンロード"
 
 #: weko_search_ui/templates/weko_search_ui/admin/import.html:74
 msgid "DOI"
-msgstr ""
+msgstr "メタデータ取得DOI"
 
 #: weko_search_ui/templates/weko_search_ui/admin/import.html:75
 #: weko_search_ui/templates/weko_search_ui/admin/rocrate_import.html:76
@@ -1126,6 +1125,11 @@ msgstr "該当アイテムは削除済です。"
 #: weko_search_ui/templates/weko_search_ui/admin/rocrate_import.html:107
 msgid "Cannot update because the corresponding item is being edited."
 msgstr "該当アイテムが編集中のため更新できません。"
+
+#: weko_search_ui/templates/weko_search_ui/admin/import.html:106
+#: weko_search_ui/templates/weko_search_ui/admin/rocrate_import.html:108
+msgid "Failed to update Elasticsearch."
+msgstr "Elasticsearchの更新に失敗しました。"
 
 #: weko_search_ui/templates/weko_search_ui/admin/item_list_display.html:88
 msgid "Edit"

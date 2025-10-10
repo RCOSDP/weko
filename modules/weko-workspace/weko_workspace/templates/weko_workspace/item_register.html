@@ -38,7 +38,6 @@
   <script src="{{ url_for('static', filename='js/babel-cores/browser.min.js') }}"></script>
   <script src="{{ url_for('static', filename='js/axios/axios.min.js') }}"></script>
 
-    {% assets "weko_theme_js_widget" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
     {% assets "invenio_deposit_dependencies_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
     {% assets "weko_admin_react_bootstrap_js" %}<script type="text/javascript" src="{{ ASSET_URL }}"></script>{% endassets %}
     {{ super() }}
@@ -48,6 +47,7 @@
     <script src="{{ url_for('static', filename='js/weko_items_ui/oapolicy.js') }}"></script>
     <!-- {% assets "weko_items_authors_search_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %} -->
     {% assets "weko_items_ui_js_dependencies" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+    {% assets "weko_theme_js_widget" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
   {%- endblock javascript %}
  
   {%- block page_header %}

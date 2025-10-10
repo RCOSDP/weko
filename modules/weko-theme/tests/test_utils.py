@@ -19,6 +19,20 @@ def test_get_weko_contents(i18n_app, users, client_request_args, communities,red
     with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
         assert get_weko_contents('comm1')
 
+    with patch("weko_theme.utils.get_index_link_list", return_value=[(11, 'TEST INDEX')]):
+        index_style = MagicMock()
+        index_style.index_link_enabled = False
+        with patch('weko_theme.utils.IndexStyle.get', return_value=index_style):
+            result = get_weko_contents('comm1')
+            assert result
+            assert not result['index_link_list']
+
+            index_style.index_link_enabled = True
+            with patch('weko_theme.utils.IndexStyle.get', return_value=index_style):
+                result = get_weko_contents('comm1')
+                assert result
+                assert result['index_link_list']
+
 
 # def get_community_id(getargs):
 def test_get_community_id(i18n_app, communities, db):

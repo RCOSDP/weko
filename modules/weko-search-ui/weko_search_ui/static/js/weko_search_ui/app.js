@@ -126,8 +126,8 @@ function getMessage(messageCode) {
 function searchResCtrl($scope, $rootScope, $http, $location) {
   var commInfo = $("#community").val();
   if (commInfo != "") {
-    $rootScope.commInfo = "?community=" + commInfo;
-    $rootScope.commInfoIndex = "&community=" + commInfo;
+    $rootScope.commInfo = "?c=" + commInfo;
+    $rootScope.commInfoIndex = "&c=" + commInfo;
   } else {
     $rootScope.commInfo = "";
     $rootScope.commInfoIndex = "";
@@ -258,7 +258,7 @@ function searchResCtrl($scope, $rootScope, $http, $location) {
 
   $rootScope.isCommunityRootIndex = function () {
     let url = new URL(window.location.href);
-    let community = url.searchParams.get("community");
+    let community = url.searchParams.get("c");
     let rootIndexTree = url.searchParams.get("root_index");
     return !!community && !!rootIndexTree;
   };

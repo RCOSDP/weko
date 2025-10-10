@@ -5,6 +5,7 @@ from flask_login import current_user
 from mock import patch, MagicMock
 
 from weko_admin.models import SearchManagement
+from weko_index_tree.models import Index
 from weko_search_ui.api import (
     SearchSetting,
     get_search_detail_keyword,
@@ -166,7 +167,81 @@ def test_get_search_detail_keyword(i18n_app, users, db,redis_connect):
         {"check_val":[{"checkStus":False,"contents":"test_itemtype01","id":"test_itemtype01"},{"checkStus":False,"contents":"test&#39;s itemtype02","id":"test&#39;s itemtype02"},{"checkStus":False,"contents":"","id":""}],"contents":"アイテムタイプ","contents_value":{"en":"Item Type","ja":"アイテムタイプ"},"id":"itemtype","inputType":"checkbox_list","inputVal":"","mapping":["itemtype"]}
     ]}
     assert json.loads(res) == test
-    
+
+# def get_search_detail_keyword(str):
+def test_get_search_detail_keyword_fix52136(i18n_app, users, db, redis_connect):
+    index1 = Index(# public_state is True
+        parent=0,
+        position=1,
+        index_name_english="test_index1",
+        index_link_name_english="test_index_link1",
+        harvest_public_state=False,
+        public_state=True,
+        browsing_role="3,-99",
+    )
+    db.session.add(index1)
+    index2 = Index(# public_state is True
+        parent=0,
+        position=2,
+        index_name_english="test_index2",
+        index_link_name_english="test_index_link2",
+        harvest_public_state=True,
+        public_state=True,
+        browsing_role="3,-99",
+    )
+    db.session.add(index2)
+    index3 = Index(# public_state is False
+        parent=1,
+        position=1,
+        index_name_english="test_index3",
+        index_link_name_english="test_index_link3",
+        harvest_public_state=True,
+        public_state=False,
+        browsing_role="3",
+    )
+    db.session.add(index3)
+    index4 = Index(# parent is private
+        parent=3,
+        position=1,
+        index_name_english="test_index4",
+        index_link_name_english="test_index_link4",
+        harvest_public_state=True,
+        public_state=True,
+        browsing_role="3,-99",
+    )
+    db.session.add(index4)
+    index5 = Index(# parent is public
+        parent=2,
+        position=1,
+        index_name_english="test_index5",
+        index_link_name_english="test_index_link5",
+        harvest_public_state=True,
+        public_state=True,
+        browsing_role="3,-99",
+    )
+    db.session.add(index5)
+    db.session.commit()
+
+    with patch.dict("os.environ", {"INVENIO_WEB_HOST_NAME": "test"}):
+        with patch("flask_login.utils._get_user", return_value=users[3]["obj"]):
+            result = get_search_detail_keyword("str")
+            assert isinstance(result, str)
+            result = json.loads(result)
+            assert len((result).get("condition_setting")) > 0
+            for k_v in result.get("condition_setting"):
+                if k_v.get("id") == "iid":
+                    assert len(k_v["check_val"]) == 5
+
+        result = get_search_detail_keyword("str")
+        assert isinstance(result, str)
+        result = json.loads(result)
+        assert len((result).get("condition_setting")) > 0
+        for k_v in result.get("condition_setting"):
+            if k_v.get("id") == "iid":
+                assert len(k_v["check_val"]) == 3
+        redis_connect.delete("index_tree_view_test_ja")
+        redis_connect.delete("index_reset_tree_view_test_ja")
+
 # def get_childinfo(index_tree, result_list=[], parename=""):
 def test_get_childinfo(i18n_app, users):
     index_tree = {

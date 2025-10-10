@@ -35,8 +35,8 @@ from .provider import OAIIDProvider
 from .query import get_records
 from .resumption_token import serialize
 from .utils import HARVEST_PRIVATE, OUTPUT_HARVEST, PRIVATE_INDEX, \
-    datetime_to_datestamp, get_index_state, handle_license_free, \
-    is_output_harvest, serializer, get_community_index_from_set
+    datetime_to_datestamp, get_index_state, get_index_state_by_id, \
+    handle_license_free, is_output_harvest, serializer, get_community_index_from_set
 
 NS_OAIPMH = 'http://www.openarchives.org/OAI/2.0/'
 NS_OAIPMH_XSD = 'http://www.openarchives.org/OAI/2.0/OAI-PMH.xsd'
@@ -406,8 +406,9 @@ def getrecord(**kwargs):
     e_tree, e_getrecord = verb(**kwargs)
     e_record = SubElement(e_getrecord, etree.QName(NS_OAIPMH, 'record'))
 
-    index_state = get_index_state()
     path_list = record.get('path') if 'path' in record else []
+    id_lst = [path.split('/')[-1] for path in path_list]
+    index_state = get_index_state_by_id(id_lst)
     _is_output = is_output_harvest(path_list, index_state)
     current_app.logger.debug("_is_output:{}".format(_is_output))
     current_app.logger.debug("path_list:{}".format(path_list))

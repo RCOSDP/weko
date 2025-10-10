@@ -41,6 +41,10 @@ class UserActivityLogger:
         community_id = UserActivityLogHandler.get_community_id_from_path(request_info)
 
         log_group_id = cls.get_log_group_id(request_info)
+        # If log_group_id is None, issue a new one
+        if log_group_id is None:
+            cls.issue_log_group_id(None)
+            log_group_id = cls.get_log_group_id(request_info)
 
         error_message = f"Error occurred: operation={operation}, log_group_id={log_group_id}, target_key={target_key}, "
         error_message += f"user_id={user_id}, community_id={community_id}"

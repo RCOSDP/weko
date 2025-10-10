@@ -285,7 +285,7 @@
     </div>
     {%- if community %}
     <a class="btn btn-info pull-left back-button"
-      href="{{url_for('weko_workflow.index',community=community.id)}}">
+      href="{{url_for('weko_workflow.index',c=community.id)}}">
         <span class="glyphicon glyphicon-chevron-left"></span>
             {{_('Back')}}</a>
     {%- elif guest_email and application_record_id %}
