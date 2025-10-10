@@ -65,10 +65,10 @@
             "value": "6.0"
         },
         "pubdate": "2022-09-02",
-        "shared_user_id": -1,
+        "shared_user_ids": [],
         "status": "published",
         "title": "title",
-        "weko_shared_id": -1,
+        "weko_shared_ids": [],
         "item_1617186385884": [
             {}
         ],

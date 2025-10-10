@@ -105,6 +105,8 @@ const SPECIFIC_INDEX_VALUE = '1';
                   }
                   $scope.dataJson['detail_condition'][count]['item_value'][itemtype_id]['path'] = regist[cnt].path1;
                   $scope.dataJson['detail_condition'][count]['item_value'][itemtype_id]['path_type'] = regist[cnt].pathtype1;
+                  $scope.dataJson['detail_condition'][count]['item_value'][itemtype_id]['condition_path'] = regist[cnt].conditionpath;
+                  $scope.dataJson['detail_condition'][count]['item_value'][itemtype_id]['condition_value'] = regist[cnt].conditionvalue;
                 }
 
                 if( regist[cnt].input_type == 'range' ) {
@@ -139,7 +141,9 @@ const SPECIFIC_INDEX_VALUE = '1';
             }
           }
         }
-
+        // Clear the registration target for advanced search items and allow registration to continue.
+        regist.splice(0);
+        
         let dbJson = $scope.dataJson;
 
         $http.post(url, dbJson).then(function successCallback(response) {
@@ -454,6 +458,8 @@ const SPECIFIC_INDEX_VALUE = '1';
                 var pathtype2 = $('#tr_lists' + count + ' > #setting_label > #setting_label2 > #label_list2 option:selected').text();
                 var path1 = $('#tr_lists' + count + ' > #setting_label > #setting_label1 > #path_text1').val();
                 var path2 = $('#tr_lists' + count + ' > #setting_label > #setting_label2 > #path_text2').val();
+                var conditionpath = $('#tr_lists' + count + ' > #setting_label > #setting_label3 > #condition_path_text').val();
+                var conditionvalue = $('#tr_lists' + count + ' > #setting_label > #setting_label4 > #condition_value_text').val();
                 var select_contents = $('#tr_lists' + count + ' > #item_id > #search_item option:selected').text();
                 var item_content = $('#tr_lists' + count + ' > #item_id > #contents_index').val();
                 var item_input_type = $('#tr_lists' + count + ' > #item_id > #search_item option:selected').val();
@@ -466,7 +472,9 @@ const SPECIFIC_INDEX_VALUE = '1';
                   path1: path1,
                   path2: path2,
                   pathtype1: pathtype1,
-                  pathtype2: pathtype2
+                  pathtype2: pathtype2,
+                  conditionpath: conditionpath,
+                  conditionvalue: conditionvalue
                 }
                 regist.push(reg_match);
               }
@@ -491,24 +499,32 @@ const SPECIFIC_INDEX_VALUE = '1';
           $('#' + tr_id + ' > #label_id > div > #label_id1').text("");
           $('#' + tr_id + ' > #label_id > div > #label_id2').text("");
           $('#' + tr_id + ' > #setting_label > #setting_label2').hide();
+          $('#' + tr_id + ' > #setting_label > #setting_label3').show();
+          $('#' + tr_id + ' > #setting_label > #setting_label4').show();
         }
 
         if ( select_inputType == 'range' ){
           $('#' + tr_id + ' > #label_id > div > #label_id1').text($("#gte").val());
           $('#' + tr_id + ' > #label_id > div > #label_id2').text($("#lte").val());
           $('#' + tr_id + ' > #setting_label > #setting_label2').show();
+          $('#' + tr_id + ' > #setting_label > #setting_label3').hide();
+          $('#' + tr_id + ' > #setting_label > #setting_label4').hide();
         }
 
         if ( select_inputType == 'geo_point' ){
           $('#' + tr_id + ' > #label_id > div > #label_id1').text($("#lat").val());
           $('#' + tr_id + ' > #label_id > div > #label_id2').text($("#lon").val());
           $('#' + tr_id + ' > #setting_label > #setting_label2').show();
+          $('#' + tr_id + ' > #setting_label > #setting_label3').hide();
+          $('#' + tr_id + ' > #setting_label > #setting_label4').hide();
         }
 
         if ( select_inputType == 'geo_shape' ){
           $('#' + tr_id + ' > #label_id > div > #label_id1').text($("#type").val());
           $('#' + tr_id + ' > #label_id > div > #label_id2').text($("#coordinates").val());
           $('#' + tr_id + ' > #setting_label > #setting_label2').show();
+          $('#' + tr_id + ' > #setting_label > #setting_label3').hide();
+          $('#' + tr_id + ' > #setting_label > #setting_label4').hide();
         }
 
         var flg = false;
@@ -517,6 +533,8 @@ const SPECIFIC_INDEX_VALUE = '1';
             $('#' + tr_id + ' > #setting_label > #setting_label1 > #path_text1').val(disp[cnt].path1);
             $('#' + tr_id + ' > #setting_label > #setting_label2 > #path_text2').val(disp[cnt].path2);
             $('#' + tr_id + ' > #item_id > #contents_index').val(disp[cnt].index);
+            $('#' + tr_id + ' > #setting_label > #setting_label3 > #condition_path_text').val(disp[cnt].conditionpath);
+            $('#' + tr_id + ' > #setting_label > #setting_label4 > #condition_value_text').val(disp[cnt].conditionvalue);
 
             if( disp[cnt].pathtype1 == 'xml' ) {
               $("#" + tr_id + " > #setting_label > #setting_label1 > #label_list1 option[value='1']").prop('selected', true);
@@ -538,6 +556,8 @@ const SPECIFIC_INDEX_VALUE = '1';
           $('#' + tr_id + ' > #setting_label > #setting_label2 > #path_text2').val("");
           $("#" + tr_id + " > #setting_label > #setting_label1 > #label_list1 option[value='0']").prop('selected', true);
           $("#" + tr_id + " > #setting_label > #setting_label2 > #label_list2 option[value='0']").prop('selected', true);
+          $('#' + tr_id + ' > #setting_label > #setting_label3 > #condition_path_text').val("");
+          $('#' + tr_id + ' > #setting_label > #setting_label4 > #condition_value_text').val("");
         }
       }
 
@@ -566,6 +586,8 @@ const SPECIFIC_INDEX_VALUE = '1';
             var item_path2 = "";
             var item_pathtype1 = "";
             var item_pathtype2 = "";
+            var item_conditionpath = "";
+            var item_conditionvalue = "";
 
             var item_val_sel = "";
             if( item_val[item_type_id] ) {
@@ -574,6 +596,8 @@ const SPECIFIC_INDEX_VALUE = '1';
               if( item_input_type == 'text'){
                 item_path1 = item_val_sel.path;
                 item_pathtype1 = item_val_sel.path_type;
+                item_conditionpath = item_val_sel.condition_path;
+                item_conditionvalue = item_val_sel.condition_value;
               }
 
               if( item_input_type == 'range'){
@@ -605,6 +629,8 @@ const SPECIFIC_INDEX_VALUE = '1';
               index: labelcnt,
               path1: item_path1,
               path2: item_path2,
+              conditionpath: item_conditionpath,
+              conditionvalue: item_conditionvalue,
               pathtype1: item_pathtype1,
               pathtype2: item_pathtype2
             };

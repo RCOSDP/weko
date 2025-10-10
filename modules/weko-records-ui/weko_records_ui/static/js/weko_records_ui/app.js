@@ -304,7 +304,9 @@
                         $('#btn_delete').removeAttr("disabled");
                         $('#btn_ver_delete').removeAttr("disabled");
                       } else {
-                        $http.post(url).then(
+                        $http.post(url, { pid_value: id }, {
+                            headers: { 'Content-Type': 'application/json' }
+                        }).then(
                             function(response) {
                                 $('[role="msg"]').hide();
                                 if (response.data.code === -1 && response.data.is_locked) {
@@ -319,7 +321,7 @@
                                     }
                                 } else {
                                     // success callback
-                                    $window.location.href = rdt;
+                                    $window.location.href = response.data?.data?.redirect || rdt;
                                 }
                             },
                             function(response) {
@@ -437,4 +439,8 @@ function OnLinkClick(uri, pid_value, accessrole) {
         }
       });
     window.open(uri);
+}
+
+function exportZip() {
+    document.getElementById("export_zip_form").submit()
 }

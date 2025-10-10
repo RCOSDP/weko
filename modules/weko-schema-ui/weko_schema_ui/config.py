@@ -120,6 +120,7 @@ WEKO_SCHEMA_JPCOAR_V1_RESOURCE_TYPE_REPLACE = {
     'research protocol': 'other',
     'source code':'software',
     'transcription': 'other',
+    'journal':'periodical',
 }
 """Resource type replace list for jpcoar v1.0"""
 
@@ -178,3 +179,9 @@ WEKO_SCHEMA_RELATION_TYPE = [
     'isSupplementTo','isIdenticalTo','isDerivedFrom','isSourceOf'
 ]
 """jpcoar:relation relationType Controlled Vocabularies"""
+
+WEKO_SCHEMA_DATE_DEFAULT_DATETYPE = "Issued"
+
+WEKO_SCHEMA_DATE_DATETYPE_MAPPING = {
+    'departmental bulletin paper': WEKO_SCHEMA_DATE_DEFAULT_DATETYPE
+}

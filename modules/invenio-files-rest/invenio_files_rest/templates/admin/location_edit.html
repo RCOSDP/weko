@@ -16,30 +16,88 @@ window.onload = function(){
   var s3EndpointUrlInput = getElementByXpath("//label[@for='s3_endpoint_url']/..//input")
   var s3SendFileDirectlyField = getElementByXpath("//label[@for='s3_send_file_directly']/..")
   var s3SendFileDirectlyInput = getElementByXpath("//label[@for='s3_send_file_directly']/..//input")
+  var s3DefaultBlockSize = getElementByXpath("//label[@for='s3_default_block_size']/..")
+  var s3DefaultBlockSizeInput = getElementByXpath("//label[@for='s3_default_block_size']/..//input")
+  var s3MaximumNumberOfParts = getElementByXpath("//label[@for='s3_maximum_number_of_parts']/..")
+  var s3MaximumNumberOfPartsInput = getElementByXpath("//label[@for='s3_maximum_number_of_parts']/..//input")
+  var s3RegionName = getElementByXpath("//label[@for='s3_region_name']/..")
+  var s3RegionNameInput = getElementByXpath("//label[@for='s3_region_name']/..//input")
+  var s3SignatureVersion = getElementByXpath("//label[@for='s3_signature_version']/..")
+  var s3SignatureVersionInput = getElementByXpath("//label[@for='s3_signature_version']/..//input")
+  var s3UrlExpiration = getElementByXpath("//label[@for='s3_url_expiration']/..")
+  var s3UrlExpirationInput = getElementByXpath("//label[@for='s3_url_expiration']/..//input")
+
   function checkLocationType() {
-    if (typeSpan.getAttribute('title') == 'Amazon S3') {
+    const labels = document.querySelectorAll('label');
+    let content = '';
+    content = s3MaximumNumberOfParts.textContent;
+    labels.forEach(label => {
+                const forId = label.getAttribute('for');
+                if (forId === "s3_maximum_number_of_parts") {
+                  content = label.textContent;
+                  if (content.length > 8) {
+                    content = content.slice(0, 8) + '\n' + content.slice(8);
+                    label.textContent = content;
+                  }
+                }
+            });
+    if (typeSpan.getAttribute('title') == 'S3 Path') {
       accessKeyField.style.display = ''
       accessKeyInput.required = true
       secretKeyField.style.display = ''
       secretKeyInput.required = true
       s3EndpointUrlField.style.display = ''
       s3SendFileDirectlyField.style.display = ''
-      s3SendFileDirectlyInput.checked = true
+      if (s3DefaultBlockSizeInput.value === ''){
+        s3DefaultBlockSizeInput.value = 5242880
+      }
+      if (s3MaximumNumberOfPartsInput.value === ''){
+        s3MaximumNumberOfPartsInput.value = 10000
+      }
+      if (s3UrlExpirationInput.value === ''){
+        s3UrlExpirationInput.value = 60
+      }
+      s3RegionNameInput.required = true
+    } else if (typeSpan.getAttribute('title') == 'S3 Virtural Host') {
+      accessKeyField.style.display = ''
+      accessKeyInput.required = true
+      secretKeyField.style.display = ''
+      secretKeyInput.required = true
+      s3EndpointUrlField.style.display = 'none'
+      s3SendFileDirectlyField.style.display = ''
+      if (s3DefaultBlockSizeInput.value === ''){
+        s3DefaultBlockSizeInput.value = 5242880
+      }
+      if (s3MaximumNumberOfPartsInput.value === ''){
+        s3MaximumNumberOfPartsInput.value = 10000
+      }
+      if (s3UrlExpirationInput.value === ''){
+        s3UrlExpirationInput.value = 60
+      }
+      s3RegionNameInput.required = true
     } else {
       accessKeyField.style.display = 'none'
       secretKeyField.style.display = 'none'
       s3EndpointUrlField.style.display = 'none'
       s3SendFileDirectlyField.style.display = 'none'
+      s3DefaultBlockSize.style.display = 'none'
+      s3MaximumNumberOfParts.style.display = 'none'
+      s3RegionName.style.display = 'none'
+      s3SignatureVersion.style.display = 'none'
+      s3UrlExpiration.style.display = 'none'
       accessKeyInput.value = null
       accessKeyInput.required = false
       secretKeyInput.value = null
       secretKeyInput.required = false
       s3EndpointUrlInput.value = null
-      s3SendFileDirectlyInput.checked = true
+      s3DefaultBlockSizeInput.value = null
+      s3MaximumNumberOfPartsInput.value = null
+      s3RegionNameInput.value = null
+      s3RegionNameInput.required = false
+      s3UrlExpirationInput.value = null
     }
   }
   checkLocationType()
-  typeSpan.addEventListener('DOMSubtreeModified', checkLocationType)
 }
 </script>
 {% endblock %}

@@ -35,6 +35,8 @@ from flask_admin.contrib.sqla import ModelView, tools
 from flask_admin.helpers import get_redirect_target
 from flask_admin.model import helpers, typefmt
 from flask_babelex import gettext as _
+from flask_login import current_user
+from invenio_communities.models import Community
 from jinja2 import contextfunction
 from sqlalchemy import func
 from wtforms.fields import StringField
@@ -183,6 +185,7 @@ class WidgetSettingView(ModelView):
             list_forms=list_forms,
             delete_form=delete_form,
             action_form=action_form,
+            extra_args=view_args.extra_args,
 
             # List
             list_columns=self._list_columns,
@@ -382,12 +385,27 @@ class WidgetSettingView(ModelView):
                           error=str(ex)), 'error')
 
     def get_query(self):
-        return self.session.query(
-            self.model).filter(self.model.is_deleted == 'False')
+        if any(role.name in current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER'] for role in current_user.roles):
+            return self.session.query(self.model).filter(
+                self.model.is_deleted == 'False')
+        else:
+            repositories = Community.get_repositories_by_user(current_user)
+            repository_ids = [repository.id for repository in repositories]
+            return self.session.query(self.model).filter(
+                self.model.is_deleted == 'False').filter(
+                    self.model.repository_id.in_(repository_ids))
 
     def get_count_query(self):
-        return self.session.query(
-            func.count('*')).filter(self.model.is_deleted == 'False')
+        if any(role.name in current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER'] for role in current_user.roles):
+            return self.session.query(func.count('*')).filter(
+                self.model.is_deleted == 'False')
+        else:
+            repositories = Community.get_repositories_by_user(current_user)
+            repository_ids = [repository.id for repository in repositories]
+            return self.session.query(func.count('*')).filter(
+                self.model.is_deleted == 'False').filter(
+                    self.model.repository_id.in_(repository_ids))
+
 
     def delete_model(self, model, session=None):
         """Delete model.

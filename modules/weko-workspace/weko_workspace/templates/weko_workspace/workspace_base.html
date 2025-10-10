@@ -1,0 +1,63 @@
+{#
+  # This file is part of WEKO3.
+  # Copyright (C) 2017 National Institute of Informatics.
+  #
+  # WEKO3 is free software; you can redistribute it
+  # and/or modify it under the terms of the GNU General Public License as
+  # published by the Free Software Foundation; either version 2 of the
+  # License, or (at your option) any later version.
+  #
+  # WEKO3 is distributed in the hope that it will be
+  # useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+  # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+  # General Public License for more details.
+  #
+  # You should have received a copy of the GNU General Public License
+  # along with WEKO3; if not, write to the
+  # Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+  # MA 02111-1307, USA.
+  #}
+<!DOCTYPE html>
+<html {% if html_css_classes %} class="{{ html_css_classes|join(' ') }}" {% endif %}
+  lang="{{ current_i18n.locale.language|safe }}" dir="{{ current_i18n.locale.text_direction }}">
+  {%- block css %}
+  {% assets "weko_theme_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+  {% assets "weko_theme_css_bootstrap" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+  {% assets "weko_theme_css_buttons" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+  {% assets "weko_theme_css_widget" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+  {% assets "weko_admin_quill_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+
+  {% assets "workspace_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+  {%- endblock css %}
+
+  {%- block js %}
+  
+  <script src="{{ url_for('static', filename='js/react/react.production.min.js') }}" crossorigin></script>
+  <script src="{{ url_for('static', filename='js/react/react-dom.production.min.js') }}" crossorigin></script>
+
+  <script type="text/javascript">
+    window.workspaceItemList = {{ workspaceItemList | tojson | safe }};
+    window.defaultconditions = {{ defaultconditions | tojson | safe }};
+  </script>
+
+  {%- assets "workspace_item_list_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+  <script type="text/javascript" src="static/js/weko_workspace/WorkspaceExport.js"></script>
+
+  {%- endblock js %}
+
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    {%- from "weko_theme/macros/site_info.html" import site_info %}
+    {{ site_info() }}
+  </head>
+  <body>
+    {% include config.THEME_JAVASCRIPT_TEMPLATE %}
+    {% include 'weko_theme/header.html' %}
+    {% include 'weko_workspace/workspace_body_contents.html' %}
+    {% include 'weko_theme/footer.html' %}
+  </body>
+</html>

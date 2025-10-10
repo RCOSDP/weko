@@ -46,15 +46,21 @@ WEKO_INDEX_TREE_API = "/api/tree/index/"
 
 WEKO_INDEX_TREE_LIST_API = "/api/tree"
 
-_IID = 'iid(tid,record_class="weko_index_tree.api:Indexes")'
-
 WEKO_INDEX_TREE_REST_ENDPOINTS = dict(
     tid=dict(
         record_class='weko_index_tree.api:Indexes',
         index_route='/tree/index/<int:index_id>',
+        get_index_tree='/<string:version>/tree/index/<int:index_id>',
+        get_index_root_tree='/<string:version>/tree/index',
+        get_parent_index_tree='/<string:version>/tree/index/<int:index_id>/parent',
         tree_route='/tree',
         item_tree_route='/tree/<string:pid_value>',
         index_move_route='/tree/move/<int:index_id>',
+        api_get_all_index_jp_en='/<string:version>/tree',
+        api_get_index_tree='/<string:version>/tree/<int:index_id>',
+        api_create_index='/<string:version>/tree/index',
+        api_update_index='/<string:version>/tree/index/<int:index_id>',
+        api_delete_index='/<string:version>/tree/index/<int:index_id>',
         default_media_type='application/json',
         create_permission_factory_imp='weko_index_tree.permissions:index_tree_permission',
         read_permission_factory_imp='weko_index_tree.permissions:index_tree_permission',
@@ -92,3 +98,9 @@ WEKO_INDEX_TREE_STATE_TIME_LIFE_SECONDS = 60
 
 WEKO_INDEX_TREE_INDEX_LOCK_KEY_PREFIX = "lock_index_"
 """Index lock key prefix."""
+
+WEKO_INDEX_TREE_PUBLIC_DEFAULT_TIMEZONE = 'Asia/Tokyo'
+"""Default time zone for index publication date."""
+
+#インデックス公開ロック機能設定コンフィグ
+WEKO_INDEX_TREE_SHOW_MODAL = False

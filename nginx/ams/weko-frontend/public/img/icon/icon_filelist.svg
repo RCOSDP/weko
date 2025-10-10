@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="31" height="24" viewBox="0 0 31 24">
+  <defs>
+    <clipPath id="clip-path">
+      <rect id="長方形_1513" data-name="長方形 1513" width="27" height="21" transform="translate(336 1119)" fill="#fff" stroke="#707070" stroke-width="1"/>
+    </clipPath>
+    <clipPath id="clip-path-2">
+      <path id="パス_381" data-name="パス 381" d="M0,0H4V17H27v4H0Z" transform="translate(336 1119)" fill="#fff" stroke="#707070" stroke-width="1"/>
+    </clipPath>
+  </defs>
+  <g id="グループ_1071" data-name="グループ 1071" transform="translate(-297 -250)">
+    <g id="icon-filelist" transform="translate(-35 -869)" clip-path="url(#clip-path)">
+      <path id="folder_FILL0_wght400_GRAD0_opsz48" d="M82.969,277a1.865,1.865,0,0,1-1.378-.607A1.907,1.907,0,0,1,81,275.031V257.969a1.907,1.907,0,0,1,.591-1.362A1.865,1.865,0,0,1,82.969,256h9.188l1.969,1.969h11.156a2.083,2.083,0,0,1,1.969,1.969v15.094A2.083,2.083,0,0,1,105.281,277Zm0-19.031v17.063h22.313V259.938H93.3l-1.969-1.969Zm0,0v0Z" transform="translate(255 863)" fill="#fff"/>
+    </g>
+    <g id="マスクグループ_32" data-name="マスクグループ 32" transform="translate(-39 -866)" clip-path="url(#clip-path-2)">
+      <path id="folder_FILL0_wght400_GRAD0_opsz48-2" data-name="folder_FILL0_wght400_GRAD0_opsz48" d="M82.969,277a1.865,1.865,0,0,1-1.378-.607A1.907,1.907,0,0,1,81,275.031V257.969a1.907,1.907,0,0,1,.591-1.362A1.865,1.865,0,0,1,82.969,256h9.188l1.969,1.969h11.156a2.083,2.083,0,0,1,1.969,1.969v15.094A2.083,2.083,0,0,1,105.281,277Zm0-19.031v17.063h22.313V259.938H93.3l-1.969-1.969Zm0,0v0Z" transform="translate(255 863)" fill="#fff"/>
+    </g>
+  </g>
+</svg>

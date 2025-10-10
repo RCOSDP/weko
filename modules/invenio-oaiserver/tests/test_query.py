@@ -75,7 +75,7 @@ def test_get_affected_records(es_app):
 # .tox/c1/bin/pytest --cov=invenio_oaiserver tests/test_query.py::test_get_records -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-oaiserver/.tox/c1/tmp
 def test_get_records(es_app,db, mock_execute):
     indexes = list()
-    for i in range(10):
+    for i in range(11):
         indexes.append(
             Index(
                 parent=0,
@@ -88,6 +88,8 @@ def test_get_records(es_app,db, mock_execute):
                 browsing_role="3,-99"
             )
         )
+    indexes[-1].is_deleted = True
+
     rec_uuid1 = uuid.uuid4()
     identifier1 = PersistentIdentifier.create('doi', "https://doi.org/00001",object_type='rec', object_uuid=rec_uuid1,status=PIDStatus.REGISTERED)
 
@@ -178,3 +180,127 @@ def test_get_records(es_app,db, mock_execute):
         assert result.next_num == 2
         result_items = [r for r in result.items]
         assert result_items == test
+
+# .tox/c1/bin/pytest --cov=invenio_oaiserver tests/test_query.py::test_get_records_with_set -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-oaiserver/.tox/c1/tmp
+def test_get_records_with_set(es_app,db, users):
+    from elasticsearch import Elasticsearch
+    from invenio_communities.models import Community
+    indexes = list()
+    ids = [123,456,789]
+    for i in range(3):
+        indexes.append(
+            Index(
+                id=ids[i],
+                parent=ids[i-1] if i > 0 else 0,
+                position=1,
+                index_name_english=f"test_index{i}",
+                index_link_name_english=f"test_index_link{i}",
+                harvest_public_state=True,
+                public_state=True,
+                public_date=datetime(2000,1,1),
+                browsing_role="3,-99"
+            )
+        )
+    
+    rec_uuid1 = uuid.uuid4()
+    rec_data1 = {"title":["test_item1"],
+                 "path":["123"],
+                 "_oai":{"id":"oai:test:00001","sets":["123"]},
+                 "relation_version_is_last":"true",
+                 "control_number":"1",
+                 "publish_status":"0",
+                 "_updated": "2022-01-01T00:00:00"
+                 }
+    rec1 = RecordMetadata(id=rec_uuid1,json=rec_data1)
+    
+    rec_uuid2 = uuid.uuid4()
+    rec_data2 = {"title":["test_item2"],
+                 "path":["456"],
+                 "_oai":{"id":"oai:test:00002", "sets":["456"]},
+                 "relation_version_is_last":"true",
+                 "control_number":"2",
+                 "publish_status":"0",
+                 "_updated": "2022-01-01T00:00:00"
+                 }
+    rec2 = RecordMetadata(id=rec_uuid2,json=rec_data2)
+    
+    rec_uuid3 = uuid.uuid4()
+    rec_data3 = {"title":["test_item3"],
+                 "path":["789"],
+                 "_oai":{"id":"oai:test:00003", "sets":["789"]},
+                 "relation_version_is_last":"true",
+                 "control_number":"3",
+                 "publish_status":"0",
+                 "_updated": "2022-01-01T00:00:00"
+                 }
+    rec3 = RecordMetadata(id=rec_uuid3,json=rec_data3)
+    
+    db.session.add_all(indexes)
+    db.session.add(rec1)
+    db.session.add(rec2)
+    db.session.add(rec3)
+    db.session.commit()
+    
+    es_info = dict(index=current_app.config['INDEXER_DEFAULT_INDEX'],
+                    doc_type=current_app.config['INDEXER_DEFAULT_DOCTYPE'],
+                    version=1,
+                    version_type="external_gte",
+                    refresh="wait_for")
+    body1 = dict(id=str(rec_uuid1), body=rec_data1)
+    body2 = dict(id=str(rec_uuid2), body=rec_data2)
+    body3 = dict(id=str(rec_uuid3), body=rec_data3)
+    current_search_client.index(**es_info,**body1)
+    current_search_client.index(**es_info,**body2)
+    current_search_client.index(**es_info,**body3)
+    
+    comm1 = Community.create(community_id="test_comm", role_id=users[0]["id"],
+                            id_user=users[0]["id"], title="test community",
+                            description="this is test community",
+                            root_node_id=indexes[0].id)
+    db.session.add(comm1)
+    db.session.commit()
+    
+    data = {"set":"123"}
+    result = get_records(**data)
+    assert result.total == 3
+    result_items = [r for r in result.items]
+    assert result_items[0]["json"]["_source"] == rec_data1
+    assert result_items[1]["json"]["_source"] == rec_data2
+    assert result_items[2]["json"]["_source"] == rec_data3
+    
+    data = {"set":"123:456"}
+    result = get_records(**data)
+    assert result.total == 2
+    result_items = [r for r in result.items]
+    assert result_items[0]["json"]["_source"] == rec_data2
+    assert result_items[1]["json"]["_source"] == rec_data3
+    
+    data = {"set":"123:456:789"}
+    result = get_records(**data)
+    assert result.total == 1
+    result_items = [r for r in result.items]
+    assert result_items[0]["json"]["_source"] == rec_data3
+    
+    data = {"set":"user-test_comm"}
+    result = get_records(**data)
+    assert result.total == 3
+    result_items = [r for r in result.items]
+    assert result_items[0]["json"]["_source"] == rec_data1
+    assert result_items[1]["json"]["_source"] == rec_data2
+    assert result_items[2]["json"]["_source"] == rec_data3
+    
+    data = {"set":"test_comm"}
+    result = get_records(**data)
+    assert result.total == 3
+    result_items = [r for r in result.items]
+    assert result_items[0]["json"]["_source"] == rec_data1
+    assert result_items[1]["json"]["_source"] == rec_data2
+    assert result_items[2]["json"]["_source"] == rec_data3
+    
+    data = {"set":"999"}
+    result = get_records(**data)
+    assert result.total == 0
+    
+    data = {"set":"aaa"}
+    result = get_records(**data)
+    assert result.total == 0

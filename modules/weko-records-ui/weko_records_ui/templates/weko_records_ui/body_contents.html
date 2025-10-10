@@ -22,7 +22,7 @@
 {% from "weko_records_ui/box/preview_carousel.html" import preview_carousel %}
 {% from "weko_theme/macros/modal_page.html" import all_modal, email_modal %}
 
-{{ email_modal('email_modal', 'confirm_email_btn', _('Send'),_('Please input email address.')) }}
+{{ email_modal('email_modal', 'confirm_email_btn', _('Send'),_('Please input email address.'),password_checkflag,with_files) }}
 {{ all_modal() }}
 
 {%- block javascript %}
@@ -31,6 +31,7 @@
 
 {% from "weko_records_ui/item_detail.html" import output_item_detail with context %}
 {% from "weko_records_ui/_macros.html" import check_download_file with context %}
+{% from "weko_records_ui/box/item_usage_application.html" import check_item_application with context %}
 <label id="confirm_title" hidden>{{_('Confirm')}}</label>
 <label id="ok_label" hidden>{{_('OK')}}</label>
 <label id="cancel_label" hidden>{{_('Cancel')}}</label>
@@ -171,7 +172,7 @@
                           <!-- Show FileName/Label -->
                           {%- if access_permission and billing_file_access_permission -%}
                             <a class="forcewrap{{ billing_file_class }}" {{ billing_file_data }} {{ billing_file_url }}
-                              {% if text_url %} href="javascript:OnLinkClick('{{ text_url }}', {{ pid.pid_value }}, '{{ file.accessrole }}')" {% endif %}>
+                              {% if text_url %} href="#" onclick="OnLinkClick('{{ text_url }}', {{ pid.pid_value }}, '{{ file.accessrole }}'); return false;" {% endif %}>
                               {% autoescape false %}
                               {{ file_label | escape_str }} {{ filesize }}
                               {% endautoescape %}
@@ -262,6 +263,33 @@
                         {%- if file.version_id %}
                           {%- set download_id = 'download-' + file.version_id %}
                           {%- if (access_permission and billing_file_access_permission) or not clickable -%}
+                            {%- if file.mimetype == 'application/rdm-project' -%}
+                              <!-- Show button 'Import to GakuNin RDM' -->
+                              {%- set absolute_file_url = request.scheme + '://' + request.host + file_url %}
+                              {%- set gakunin_rdm_url = config.WEKO_RECORDS_UI_GAKUNIN_RDM_URL.rstrip('/') + '/metadata/packages/projects/' %}
+                              {%- set is_item_public = (record.publish_status == '0') %}
+                              {%- set is_file_public = (file.accessrole == 'open_access') or (file.accessrole == 'open_date' and not file.future_date_message) %}
+                              {%- if is_item_public and is_file_public -%}
+                                <a class="action-anchor" href="{{gakunin_rdm_url}}?url={{absolute_file_url|urlencode}}">
+                                  <button class="img-rounded action-button button-sm" id="{{download_id}}_rdm" style="width: auto;">
+                                    <i class="action-icon fa fa-share-alt"></i>
+                                    {{_('Import to GakuNin RDM')}}
+                                  </button>
+                                </a>
+                              {%- else -%}
+                                {%- if not is_item_public and not is_file_public -%}
+                                  {%- set tooltip_message = _('Item is not published and file is not publicly accessible') -%}
+                                {%- elif not is_item_public -%}
+                                  {%- set tooltip_message = _('Item is not published') -%}
+                                {%- elif not is_file_public -%}
+                                  {%- set tooltip_message = _('File is not publicly accessible') -%}
+                                {%- endif -%}
+                                <button class="img-rounded action-button button-sm" id="{{download_id}}_rdm" style="width: auto; opacity: 0.7; cursor: not-allowed;" disabled title="{{tooltip_message}}">
+                                  <i class="action-icon fa fa-share-alt"></i>
+                                  {{_('Import to GakuNin RDM')}}
+                                </button>
+                              {%- endif -%}
+                            {%- endif -%}
                             <!-- User has permission download. -->
                             <a class="action-anchor" href="{{file_url}}">
                               <button class="img-rounded action-button button-sm" id="{{download_id}}">
@@ -281,7 +309,7 @@
                           {% set file_detail_url = file_details_url + '?file_order=' + file.file_order|string %}
                         {%- endif -%}
                         {%- if community -%}
-                          {% set file_detail_url = file_detail_url + "&community=" + community.id %}
+                          {% set file_detail_url = file_detail_url + "&c=" + community.id %}
                         {%- endif -%}
                         <a class="action-anchor" href="{{ file_detail_url }}">
                           <button class="img-rounded action-button button-sm">
@@ -356,7 +384,11 @@
         {% endif%}
         {% endif %}
           <div class="table-responsive" style="display: inline-block; _display: inline;">
+            {%- if community -%}
+              {{ output_item_detail(record, files, files_thumbnail, pid, record.items_show_list, true, is_logged_in, open_day_display_flg, m_community=community.id) }}
+            {%- else -%}
               {{ output_item_detail(record, files, files_thumbnail, pid, record.items_show_list, true, is_logged_in, open_day_display_flg) }}
+            {%- endif -%}
           </div>
           {%- if 'main_entry_personal_name' in record %}
           <p class="record_authors">
@@ -375,29 +407,12 @@
                 <a class="btn btn-primary edit-button" href="#!" id="btn_edit" data-pid-value="{{ pid.pid_value }}"
                   {%- if community -%}data-community="{{ community.id }}" {%- endif -%}>
                   <span class="glyphicon glyphicon-edit" aria-hidden="true"></span> {{_('Edit')}}</a>
-                <a class="btn btn-danger delete-button" id="btn_delete" ng-click="openConfirm(
-                  'del_item',
-                  '{{'/records/soft_delete/'+ pid.pid_value}}',
-                  '{{url_for('weko_search_ui.search')}}',
-                  '{{pid.pid_value}}')">
+                <a class="btn btn-danger delete-button" href="#!" id="btn_delete">
                   <span class="glyphicon glyphicon-trash" aria-hidden="true"></span> {{_('Delete')}}</a>
               {% endif %}
               {% if active_versions|length > 1 %}
-                {%- if not pid | pid_value_version %} 
-                  <a class="btn btn-danger delete-button" style="width: 180px" id="btn_ver_delete" ng-click="openConfirm(
-                    'del_ver',
-                    '{{'/records/soft_delete/del_ver_'+ all_versions[-1].pid_value}}',
-                    '{{url_for('weko_search_ui.search')}}',
-                    '{{all_versions[-1].pid_value}}')">
-                    <span class="glyphicon glyphicon-trash" aria-hidden="true"></span> {{_('Delete this version')}}</a>
-                {%- else -%} 
-                    <a class="btn btn-danger delete-button" style="width: 180px" id="btn_ver_delete" ng-click="openConfirm(
-                      'del_ver',
-                      '{{'/records/soft_delete/del_ver_'+ pid.pid_value}}',
-                      '{{url_for('weko_search_ui.search')}}',
-                      '{{pid.pid_value}}')">
-                      <span class="glyphicon glyphicon-trash" aria-hidden="true"></span> {{_('Delete this version')}}</a>
-                {% endif -%}
+                <a class="btn btn-danger delete-button" href="#!" id="btn_ver_delete" style="width: 180px">
+                  <span class="glyphicon glyphicon-trash" aria-hidden="true"></span> {{_('Delete this version')}}</a>
               {% endif %}
             <input id="edit_message" type="hidden"
               value="{{_('The workflow is being edited.')}}" />
@@ -432,6 +447,12 @@
               {% endif %}
             {% endif %}
           {% endif %}
+          {% if is_display_request_form %}
+            {%- include "weko_records_ui/box/request.html" %}
+          {% endif %}
+      {% if is_no_content_item_application %}
+        {{ check_item_application(record, community, url_for_security) }}
+      {% endif %}
 		  {% if config.WEKO_RECORDS_UI_DISPLAY_VERSION_BOX_FLG %}
              {%- include "weko_records_ui/box/versions.html" %}
 		  {% endif %}
@@ -441,13 +462,61 @@
 		  {% if config.WEKO_RECORDS_UI_DISPLAY_EXPORT_BOX_FLG %}
               {%- include "weko_records_ui/box/export.html" %}
 		  {% endif %}
+		  {% if config.WEKO_RECORDS_UI_DISPLAY_COMMUNITIES_BOX_FLG %}
+             {%- include "weko_records_ui/box/communities.html" %}
+		  {% endif %}
           <!-- end demo block -->
         </div>
       </div>
     </div>
   </div>
 </div>
-<div class="modal fade" id="confirm_download" tabindex="-1" role="dialog">
+
+<!-- Confirm Delete Modal -->
+<div class="modal fade" tabindex="-1" role="dialog" id="confirm_delete">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span></button>
+        <h3 class="modal-title"><span class="glyphicon glyphicon-info-sign"></span>{{_('Confirm')}}</h3>
+      </div>
+      <div class="modal-body">
+        <p id="confirm_delete_content"></p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" id="confirm_delete_button" class="btn btn-primary"
+          data-pid-value="{{ pid.pid_value }}" {%- if community -%}data-community="{{ community.id }}" {%- endif -%}>{{_('OK')}}</button>
+        <button type="button" class="btn btn-default" data-dismiss="modal">{{_('Cancel')}}</button>
+      </div>
+    </div><!-- /.modal-content -->
+  </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+
+<!-- Confirm Delete Version Modal -->
+<div class="modal fade" tabindex="-1" role="dialog" id="confirm_ver_delete">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+            aria-hidden="true">&times;</span></button>
+        <h3 class="modal-title"><span class="glyphicon glyphicon-info-sign"></span>{{_('Confirm')}}</h3>
+      </div>
+      <div class="modal-body">
+        <p id="confirm_ver_delete_content"></p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" id="confirm_ver_delete_button" class="btn btn-primary"
+          {%- if not pid | pid_value_version %}data-pid-value="{{ 'del_ver_' + all_versions[-1].pid_value }}"{%- else -%}data-pid-value="{{ 'del_ver_' + pid.pid_value }}"{% endif -%}
+          {%- if community -%}data-community="{{ community.id }}" {%- endif -%}>{{_('OK')}}</button>
+        <button type="button" class="btn btn-default" data-dismiss="modal">{{_('Cancel')}}</button>
+      </div>
+    </div><!-- /.modal-content -->
+  </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+
+<!-- Confirm Download Modal -->
+<div class="modal fade" tabindex="-1" role="dialog" id="confirm_download">
   <div class="modal-dialog" role="document">
     <div class="modal-content">
       <div class="modal-header">
@@ -467,6 +536,61 @@
     </div><!-- /.modal-content -->
   </div><!-- /.modal-dialog -->
 </div><!-- /.modal -->
+{%-if mailcheckflag %}
+<input id="password_checkflag" type="hidden" value='{{ password_checkflag }}'/>
+  <div class="modal fade" tabindex="-1" role="dialog" id="mailcheck_download_modal">
+    <div class="modal-dialog" role="document" style="display: table; width: 650px">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" id="close_btn" data-dismiss="modal"
+                    aria-label="Close"><span aria-hidden="true">&times;</span>
+            </button>
+            <h4 class="modal-title">
+              {%- if password_checkflag %}
+                {{ _('To download the files below, you will need to enter your email address and password.') }}
+              {%- else %}
+              {{ _('To download the files below, you will need to enter your email address.') }}
+              {%- endif %}
+            </h4>
+            <h4 class="modal-title">  {{_('File Name')}} :{{ onetime_file_name }}</h4>
+          </div>
+          <div class="modal-body">
+            <div class="form-group mail_form">
+              <label class="control-label"
+                    for="mail_form">{{ _('Email address') }}</label>
+              <input type="email" class="form-control" id="mail_form"
+                    aria-describedby="emailHelp"
+                    placeholder='{{ _("Email address") }}'>
+            </div>
+            {%- if password_checkflag %}
+              <div class="form-group input_password">
+                <label class="control-label"
+                      for="input_password">{{ _('Password') }}</label>
+                <input type="password" class="form-control" id="input_password"
+                      aria-describedby="passHelp"
+                      placeholder='{{ _("Password") }}'>
+                <div>{{_('If you have not set a password, please apply again.')}}</div>
+              </div>
+            {%- endif %}
+          </div>
+          <div class="modal-footer">
+                <button type="button" id="mailaddress_confirm_download" 
+                          class="btn btn-primary save-button">
+                  <span class="glyphicon glyphicon-check"></span>
+                {{ _('Send') }}
+                </button>
+                <button type="button" class="btn btn-info close-button"
+                      id="modal_close_btn" data-dismiss="modal">
+                  <span class="glyphicon glyphicon-remove"></span>
+                  {{ _('Cancel') }}
+                </button>
+            <input id= "url_element" type="hidden" data-onetime_file_url="{{ onetime_file_url }}">
+            <input id= "input_error_messsge" type="hidden" value="{{ _('Please input email address.') }}">
+          </div>
+        </div>
+    </div>
+  </div>
+{%- endif %}
 {% block css %}
 <style>
   #invenio-csl span.twitter-typeahead .tt-menu {
@@ -514,5 +638,12 @@
         $('#' + preview_id).click();
       }
     });
+    $(window).on('load', function () {
+    $("#mailcheck_download_modal").modal('toggle');
+     setTimeout(function () {
+       $("#mailcheck_download_modal").modal("show");
+    }, 0);
+    } 
+    );
   </script>
 {# {%- endblock javascript %} #}

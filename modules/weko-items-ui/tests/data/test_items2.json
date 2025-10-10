@@ -31,7 +31,7 @@
             "item_1568286510993",
             "item_1600165182071"
         ],
-        "shared_user_id": -1,
+        "shared_user_ids": [],
         "item_1532071014836": {
             "contributorType": "ContactPerson",
             "contributorMails": [
@@ -123,6 +123,15 @@
         "item_1569380622649": {
             "resourceuri": "http://purl.org/coar/resource_type/c_ddb1",
             "resourcetype": "dataset"
-        }
+        },
+        "feedback_mail_list":[
+            {"email":"contributor@test.org","author_id":""},
+            {"email":"user@test.org","author_id":""}
+        ],
+        "request_mail_list":[
+            {"email":"contributor@test.org","author_id":""}
+        ]
+    },
+    {
     }
 ]
