@@ -31,7 +31,9 @@ from weko_records.models import (
     Timestamp as Weko_Timestamp,
 )
 
-from scripts.demo import update_feedback_mail_list_to_db
+from scripts.demo import (
+    update_feedback_mail_list_to_db, add_peer_reviewed_to_version_type_property
+)
 
 def main(restricted_item_type_id, start_time, batch_size=500):
     """Main context.
@@ -76,7 +78,8 @@ def main(restricted_item_type_id, start_time, batch_size=500):
         current_time = show_exec_time(current_time, "fix_issue_47128_newbuild_main")
         fix_metadata_53602_main() # プロパティ変更を全アイテムのメタデータに適用
         current_time = show_exec_time(current_time, "fix_metadata_53602_main")
-        
+        add_peer_reviewed_to_version_type_property.main()
+        current_time = show_exec_time(current_time, "add_peer_reviewed_to_version_type_property")
         current_app.logger.info("All updates completed successfully.")
     except Exception as ex:
         current_app.logger.error(ex)
