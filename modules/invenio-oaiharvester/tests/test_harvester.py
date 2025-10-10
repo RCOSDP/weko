@@ -5,11 +5,12 @@ import json
 import pytz
 from datetime import datetime
 from lxml import etree
-from mock import patch
+from mock import patch, MagicMock
 import copy
 import xmltodict
 import dateutil
 from collections import OrderedDict
+from requests.exceptions import HTTPError
 from weko_records.api import Mapping
 from weko_records.models import ItemType,ItemTypeName
 from weko_records.serializers.utils import get_full_mapping
@@ -145,7 +146,8 @@ def test_list_sets():
 # .tox/c1/bin/pytest --cov=invenio_oaiharvester tests/test_harvester.py::test_list_records -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-oaiharvester/.tox/c1/tmp
 @responses.activate
 def test_list_records():
-    # result with resumptiontoken
+    # test case 1, 4
+    # resumptiontoken is none
     body1 = \
         '<OAI-PMH xmlns="http://www.openarchives.org/OAI/2.0/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.openarchives.org/OAI/2.0/ http://www.openarchives.org/OAI/2.0/OAI-PMH.xsd">'\
         '<responseDate>2023-03-01T10:54:40Z</responseDate>'\
@@ -156,7 +158,19 @@ def test_list_records():
         '<record>test_record2</record>'\
         '</ListRecords>'\
         '</OAI-PMH>'
-    # result without resummptiontoken
+    responses.add(
+        responses.GET,
+        "https://test.org/?verb=ListRecords&from=2023-01-10&until=2023-10-01&metadataPrefix=jpcoar_1.0&set=*",
+        body=body1,
+        content_type='text/xml'
+    )
+    records, rtoken = list_records("https://test.org/","2023-01-10","2023-10-01","jpcoar_1.0","*",resumption_token=None)
+    result = [str(etree.tostring(record),"utf-8") for record in records]
+    assert result == ['<record xmlns="http://www.openarchives.org/OAI/2.0/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">test_record1</record>', '<record xmlns="http://www.openarchives.org/OAI/2.0/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">test_record2</record>']
+    assert rtoken == "test_token"
+
+    # test case 2, 3
+    # resumptiontoken is not none
     body2 = \
         '<OAI-PMH xmlns="http://www.openarchives.org/OAI/2.0/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.openarchives.org/OAI/2.0/ http://www.openarchives.org/OAI/2.0/OAI-PMH.xsd">'\
         '<responseDate>2023-03-01T10:54:40Z</responseDate>'\
@@ -168,27 +182,34 @@ def test_list_records():
         '</OAI-PMH>'
     responses.add(
         responses.GET,
-        "https://test.org/?verb=ListRecords&from=2023-01-10&until=2023-10-01&metadataPrefix=jpcoar_1.0&set=*",
-        body=body1,
-        content_type='text/xml'
-    )
-    responses.add(
-        responses.GET,
-        "https://test.org/?verb=ListRecords&metadataPrefix=jpcoar_1.0&set=*&resumptionToken=test_token",
+       "https://test.org/?verb=ListRecords&resumptionToken=test_token",
         body=body2,
         content_type='text/xml'
     )
-    # resumptiontoken is none
-    records, rtoken = list_records("https://test.org/","2023-01-10","2023-10-01","jpcoar_1.0","*",resumption_token=None)
-    result = [str(etree.tostring(record),"utf-8") for record in records]
-    assert result == ['<record xmlns="http://www.openarchives.org/OAI/2.0/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">test_record1</record>', '<record xmlns="http://www.openarchives.org/OAI/2.0/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">test_record2</record>']
-    assert rtoken == "test_token"
-    
-    # resumptiontoken is not none
     records, rtoken = list_records("https://test.org/","2023-01-10","2023-10-01","jpcoar_1.0","*",resumption_token="test_token")
     result = [str(etree.tostring(record),"utf-8") for record in records]
     assert result == ['<record xmlns="http://www.openarchives.org/OAI/2.0/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">test_record3</record>', '<record xmlns="http://www.openarchives.org/OAI/2.0/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">test_record4</record>']
     assert rtoken == None
+
+    # test case 5
+    # HTTP Error
+    responses.add(
+        responses.GET,
+        "https://400_test.org/?verb=ListRecords&from=2023-11-10&until=2023-10-01&metadataPrefix=jpcoar_1.0&set=*",
+        status=404
+    )
+    with pytest.raises(HTTPError) as e:
+        list_records("https://400_test.org/","2023-11-10","2023-10-01","jpcoar_1.0","*",resumption_token=None)
+
+    # test case 6
+    # 500 Error
+    responses.add(
+        responses.GET,
+        "https://500_test.org/?verb=ListRecords&set=*",
+        status=500
+    )
+    with pytest.raises(HTTPError) as e:
+        list_records("https://500_test.org/",None,None,None,"*",resumption_token=None)
 
 
 # def map_field(schema):
