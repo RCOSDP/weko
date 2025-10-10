@@ -21,15 +21,15 @@
 """Configuration for weko-authors."""
 from invenio_stats.config import SEARCH_INDEX_PREFIX as index_prefix
 
-WEKO_AUTHORS_LIST_SCHEME = ['e-Rad', 'NRID', 'ORCID', 'ISNI', 'VIAF', 'AID',
+WEKO_AUTHORS_LIST_SCHEME = ['e-Rad', 'e-Rad_Researcher', 'NRID', 'ORCID', 'ISNI', 'VIAF', 'AID',
                             'kakenhi', 'Ringgold', 'GRID', 'ROR', 'researchmap', 'Other']
 """ List of Author Name Identifier Scheme """
 
-WEKO_AUTHORS_INDEX_ITEM_OTHER = 10
+WEKO_AUTHORS_INDEX_ITEM_OTHER = 11
 """ Item other index """
 
 WEKO_AUTHORS_LIST_SCHEME_AFFILIATION = [
-    'ISNI', 'GRID', 'Ringgold', 'kakenhi', 'Other'
+    'ISNI', 'GRID', 'Ringgold', 'kakenhi', 'ROR', 'Other'
 ]
 """ List of Affiliation Name Identifier Scheme """
 
@@ -212,7 +212,13 @@ WEKO_AUTHORS_FILE_MAPPING = [
     }
 ]
 
-WEKO_AUTHORS_FILE_MAPPING_FOR_PREFIX =["scheme", "name", "url", "is_deleted"]
+WEKO_AUTHORS_FILE_MAPPING_FOR_PREFIX = ["scheme", "name", "url", "is_deleted", "community_ids[0]"]
+
+WEKO_AUTHORS_FILE_MAPPING_FOR_COMMUNITY = {
+    "label_en": "Community",
+    "label_jp": "コミュニティ",
+    "json_id": "communityIds",
+}
 
 WEKO_AUTHORS_FILE_MAPPING_FOR_AFFILIATION ={
         "json_id": "affiliationInfo",

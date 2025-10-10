@@ -1,0 +1,55 @@
+# English translations for weko-schema-ui.
+# Copyright (C) 2025 National Institute of Informatics
+# This file is distributed under the same license as the weko-schema-ui
+# project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2025.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: weko-schema-ui 0.1.0.dev20170000\n"
+"Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
+"POT-Creation-Date: 2025-10-03 17:34+0900\n"
+"PO-Revision-Date: 2025-10-03 17:40+0900\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: en\n"
+"Language-Team: en <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1)\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.5.1\n"
+
+#: weko_schema_ui/admin.py:81
+msgid "Item Types"
+msgstr ""
+
+#: weko_schema_ui/admin.py:82
+msgid "OAI Schema"
+msgstr ""
+
+#: weko_schema_ui/templates/weko_schema_ui/admin/list.html:44
+msgid "Add Schema"
+msgstr ""
+
+#: weko_schema_ui/templates/weko_schema_ui/admin/list.html:51
+msgid "Schema Mapping Name"
+msgstr ""
+
+#: weko_schema_ui/templates/weko_schema_ui/admin/list.html:52
+msgid "Root Name"
+msgstr ""
+
+#: weko_schema_ui/templates/weko_schema_ui/admin/list.html:53
+msgid "Operation"
+msgstr ""
+
+#: weko_schema_ui/templates/weko_schema_ui/admin/list.html:68
+#: weko_schema_ui/templates/weko_schema_ui/admin/upload.html:78
+msgid "Delete"
+msgstr ""
+
+#: weko_schema_ui/templates/weko_schema_ui/admin/upload.html:71
+#: weko_schema_ui/templates/weko_schema_ui/admin/upload.html:106
+msgid "Save"
+msgstr ""
+

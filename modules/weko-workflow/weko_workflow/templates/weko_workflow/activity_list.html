@@ -230,7 +230,7 @@
             {%- for column in columns %}
               {%-if column == "activity_id" %}
                 {%-if community %}
-                  {% set activity_url =  url_for('weko_workflow.display_activity', activity_id=activity.activity_id, status=activity.type, community=community.id) %}
+                  {% set activity_url =  url_for('weko_workflow.display_activity', activity_id=activity.activity_id, status=activity.type, c=community.id) %}
                 {%-else %}
                   {% set activity_url =  url_for('weko_workflow.display_activity', activity_id=activity.activity_id, status=activity.type) %}
                 {%- endif %}
@@ -316,7 +316,7 @@
     {%- endif%}
     <div>
       {%-if community%}
-        <button class="btn btn-success pull-right" onClick="window.location.href='{{url_for('weko_workflow.new_activity', community=community.id)}}'; $(this).prop('disabled', true)">
+        <button class="btn btn-success pull-right" onClick="window.location.href='{{url_for('weko_workflow.new_activity', c=community.id)}}'; $(this).prop('disabled', true)">
           <span class="glyphicon glyphicon-plus"></span>&nbsp
           {{_('New Activity')}}</button>
       {%-else%}

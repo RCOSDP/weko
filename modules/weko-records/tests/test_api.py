@@ -21,33 +21,25 @@
 """Module tests."""
 
 from re import T
-# from tkinter import W
-import pytest
-from unittest import TestCase
-import json
-from elasticsearch import helpers
-from elasticsearch.exceptions import RequestError
-from flask_login.utils import login_user
-from invenio_records.api import Record
-from invenio_records.errors import MissingModelError
-from invenio_pidstore.models import PersistentIdentifier
-from weko_deposit.api import WekoDeposit
-from weko_index_tree.models import Index
-from unittest.mock import patch,MagicMock
 import uuid
+import pytest
+from datetime import datetime, timedelta
+from unittest import TestCase
+from unittest.mock import patch, MagicMock
+
+from elasticsearch import helpers
+from flask_login.utils import login_user
+from jsonschema.validators import Draft4Validator
 from sqlalchemy import text
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm.exc import NoResultFound
 
+from invenio_records.errors import MissingModelError
+from invenio_pidstore.models import PersistentIdentifier
 from weko_records.api import FeedbackMailList, RequestMailList, ItemApplication, FilesMetadata, ItemLink, \
     ItemsMetadata, ItemTypeEditHistory, ItemTypeNames, ItemTypeProps, \
     ItemTypes, Mapping, JsonldMapping, SiteLicense, RecordBase, WekoRecord
-from weko_records.models import ItemReference, ItemType, ItemTypeJsonldMapping, ItemTypeName, \
-    SiteLicenseInfo, SiteLicenseIpAddress, ItemTypeProperty
-from jsonschema.validators import Draft4Validator
-from datetime import datetime, timedelta
-from weko_records.models import ItemReference
-from unittest.mock import patch, MagicMock
+from weko_records.models import ItemReference, ItemTypeJsonldMapping, ItemTypeName, ItemTypeProperty
 
 # class RecordBase(dict):
 # .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::test_recordbase -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
@@ -136,7 +128,7 @@ def test_itemtypenames(app, db, item_type, item_type2):
     ItemTypeNames.update(data2)
 
     # def delete(self, force=False):
-    ItemTypeNames.delete(item_type_name)
+    ItemTypeNames.delete(item_type_name.id)
     assert item_type_name.id == 2
     item_type_name = ItemTypeNames.get_record(2)
     assert item_type_name is None
@@ -161,7 +153,7 @@ def test_itemtypenames(app, db, item_type, item_type2):
     # def delete(self, force=True):
     item_type_name = ItemTypeNames.get_record(3)
     assert item_type_name.id == 3
-    ItemTypeNames.delete(item_type_name, force=True)
+    ItemTypeNames.delete(item_type_name.id, force=True)
     item_type_name = ItemTypeNames.get_record(3)
     assert item_type_name is None
     item_type_name = ItemTypeNames.get_record(3, with_deleted=True)
@@ -1505,22 +1497,17 @@ def test_item_metadata_get_by_item_type_id(app, db):
 
 # class ItemsMetadata(RecordBase):
 #     def get_registered_item_metadata(cls, item_type_id):
-def test_get_registered_item_metadata_ItemsMetadata(app):
-    test = ItemsMetadata(data={})
-    data1 = MagicMock()
+def test_count_registered_item_metadata(app):
+    mock_db = MagicMock()
+    mock_query = MagicMock(name='query')
+    mock_query.join.return_value = mock_query
+    mock_query.filter.return_value = mock_query
+    mock_query.count.return_value = 1
+    mock_db.session.query.return_value = mock_query
 
-    def all_func():
-        all_magicmock = MagicMock()
-        all_magicmock.id = 1
-        return [all_magicmock]
-
-    data1.query = MagicMock()
-    data1.query.filter_by = MagicMock()
-    data1.query.filter_by.all = all_func
-
-    with patch("weko_records.api.ItemMetadata", return_value=data1):
-        with patch("weko_records.api.PersistentIdentifier", return_value=data1):
-            assert test.get_registered_item_metadata(item_type_id=1) != None
+    with patch("weko_records.api.db", mock_db):
+        result = ItemsMetadata.count_registered_item_metadata(item_type_id=1)
+        assert result == 1
 
 # class ItemsMetadata(RecordBase):
 #     def get_by_object_id(cls, object_id):
@@ -2758,10 +2745,12 @@ class TestJsonldMapping:
 
         # Successful delete
         JsonldMapping.delete(id=obj.id)
+        db.session.commit()
         assert (
             ItemTypeJsonldMapping.query.filter_by(id=obj.id).first().is_deleted == True
         )
 
         # Delete with non-existent id
         res = JsonldMapping.delete(id=999)
+        db.session.commit()
         assert res == None

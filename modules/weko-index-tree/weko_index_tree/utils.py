@@ -22,7 +22,7 @@
 import os
 import sys
 import traceback
-from datetime import date, datetime
+from datetime import date, datetime, time, timedelta, timezone
 from functools import wraps
 from operator import itemgetter
 
@@ -792,18 +792,26 @@ def check_index_permissions(record=None, index_id=None, index_path_list=None,
 
         """
         from weko_records_ui.utils import is_future
-        can_view = False
+        in_admin_view_scope = False
+        role_names = [role.name for role in current_user.roles] 
         if roles[0]:
             # In case admin role.
-            can_view = True
-        elif index_data.public_state:
+            in_admin_view_scope = True
+        elif bool(set(current_app.config.get('WEKO_PERMISSION_ROLE_COMMUNITY')) & set(role_names)):
+            # In case community admin role.
+            in_admin_view_scope = _check_community_admin_permission(index_data)
+
+        is_content_public = False
+        if index_data.public_state:
             check_user_role = check_roles(roles, index_data.browsing_role) or \
                 check_groups(groups, index_data.browsing_group)
             check_public_date = \
                 not is_future(index_data.public_date) \
                 if index_data.public_date else True
             if check_user_role and check_public_date:
-                can_view = True
+                is_content_public = True
+
+        can_view = is_content_public or in_admin_view_scope
         return can_view
 
     def _check_index_permission_for_doi(index_data) -> bool:
@@ -820,6 +828,25 @@ def check_index_permissions(record=None, index_id=None, index_path_list=None,
             index_data.harvest_public_state
 
         return public_state
+
+    def _check_community_admin_permission(index_data) -> bool:
+        """Check community admin permission.
+
+        Args:
+            index_data (): Index data which is to be checked.
+
+        Returns:
+            [bool]: True if the user can access index.
+        """
+        from .api import Indexes
+        authorized_index_id_list = []
+        repositories = Community.get_repositories_by_user(current_user)
+        for repository in repositories:
+            authorized_index_id_list.extend(
+                Indexes.get_child_list_recursive(repository.root_node_id))
+        if str(index_data.cid) in authorized_index_id_list:
+            return True
+        return False
 
     def _check_for_index_groups(_index_groups):
         """Check for index groups.
@@ -872,7 +899,7 @@ def check_index_permissions(record=None, index_id=None, index_path_list=None,
 
     if not is_check_doi:
         # Get user roles and user groups.
-        roles = get_user_roles(is_super_role=True)
+        roles = get_user_roles(is_super_role=False)
         groups = get_user_groups()
         check_index_method = _check_index_permission
     else:
@@ -1150,11 +1177,88 @@ def save_index_trees_to_redis(tree, lang=None):
     except ConnectionError:
         current_app.logger.error("Fail save index_tree to redis")
 
+def save_index_reset_trees_to_redis(tree, lang=None):
+    """save index_reset_tree to redis for roles"""
+
+    def default(o):
+        if hasattr(o, "isoformat"):
+            return o.isoformat()
+        else:
+            return str(o)
+
+    redis = __get_redis_store()
+    if lang is None:
+        lang = current_i18n.language
+    try:
+        v = bytes(json.dumps(tree, default=default), encoding="utf-8")
+        now = to_user_timezone(datetime.now(timezone.utc))
+        expiration_date = datetime.combine(now.date() + timedelta(days=1), time())
+        ttl_secs = datetime.timestamp(to_utc(expiration_date)) - datetime.timestamp(to_utc(now))
+        redis.put(
+            "index_reset_tree_view_"
+            + os.environ.get("INVENIO_WEB_HOST_NAME")
+            + "_"
+            + lang,
+            v,
+            ttl_secs=ttl_secs,
+        )
+    except ConnectionError:
+        current_app.logger.error("Fail save index_reset_tree to redis")
+
+def save_index_reset_trees_ignore_more_to_redis(tree, lang=None):
+    """save_index_reset_tree_ignore_more to redis for roles"""
+
+    def default(o):
+        if hasattr(o, "isoformat"):
+            return o.isoformat()
+        else:
+            return str(o)
+
+    redis = __get_redis_store()
+    if lang is None:
+        lang = current_i18n.language
+    try:
+        v = bytes(json.dumps(tree, default=default), encoding="utf-8")
+        now = to_user_timezone(datetime.now(timezone.utc))
+        expiration_date = datetime.combine(now.date() + timedelta(days=1), time())
+        ttl_secs = datetime.timestamp(to_utc(expiration_date)) - datetime.timestamp(to_utc(now))
+        redis.put(
+            "index_reset_tree_ignore_more_view_"
+            + os.environ.get("INVENIO_WEB_HOST_NAME")
+            + "_"
+            + lang,
+            v,
+            ttl_secs=ttl_secs,
+        )
+    except ConnectionError:
+        current_app.logger.error("Fail save index_reset_tree_ignore_more to redis")
+
 def delete_index_trees_from_redis(lang):
     """delete index_tree from redis
     """
     redis = __get_redis_store()
     key = "index_tree_view_" + os.environ.get('INVENIO_WEB_HOST_NAME') + "_" + lang
+    if redis.redis.exists(key):
+        redis.delete(key)
+
+def delete_index_reset_trees_from_redis(lang):
+    """delete index_reset_tree from redis"""
+    redis = __get_redis_store()
+    key = (
+        "index_reset_tree_view_" + os.environ.get("INVENIO_WEB_HOST_NAME") + "_" + lang
+    )
+    if redis.redis.exists(key):
+        redis.delete(key)
+
+def delete_index_reset_ignore_more_trees_from_redis(lang):
+    """delete_index_reset_ignore_more_tree from redis"""
+    redis = __get_redis_store()
+    key = (
+        "index_reset_tree_ignore_more_view_"
+        + os.environ.get("INVENIO_WEB_HOST_NAME")
+        + "_"
+        + lang
+    )
     if redis.redis.exists(key):
         redis.delete(key)
 

@@ -518,12 +518,15 @@ def file_download_onetime(pid, record,file_name=None, user_mail=None,login_flag=
     if not update_onetime_download(**update_data):
         return __make_error_response(is_ajax, error_msg=_("Unexpected error occurred."))
 
+    # Check mail address
+    verify_mail = mailaddress == user_mail
+
     restricted_access = AdminSettings.get(name='restricted_access',dict_to_object=False)
     password_for_download = onetime_download.extra_info.get("password_for_download", "")
     enable_check_password_for_guest = restricted_access and restricted_access.get('password_enable', False)
 
     passcheck_function = True
-    if enable_check_password_for_guest and user_mail:
+    if enable_check_password_for_guest and verify_mail:
         redis_connection = RedisConnection()
         datastore = redis_connection.connection(db=current_app.config['CACHE_REDIS_DB'])
         if request.method == "POST":
@@ -547,7 +550,7 @@ def file_download_onetime(pid, record,file_name=None, user_mail=None,login_flag=
 
     #　Guest Mailaddress Check
     if not current_user.is_authenticated:
-        if mailaddress == user_mail and passcheck_function:
+        if verify_mail and passcheck_function:
             return _download_file(file_object, False, 'en', file_object.obj, pid,
                                 record)
         else:

@@ -1,0 +1,103 @@
+# English translations for invenio-resourcesyncclient.
+# Copyright (C) 2025 National Institute of Informatics
+# This file is distributed under the same license as the
+# invenio-resourcesyncclient project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2025.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: invenio-resourcesyncclient 1.0.0.dev20200000\n"
+"Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
+"POT-Creation-Date: 2025-10-03 15:33+0900\n"
+"PO-Revision-Date: 2025-10-03 15:13+0900\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: en\n"
+"Language-Team: en <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1)\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.5.1\n"
+
+#: invenio_resourcesyncclient/admin.py:235
+msgid "Resource Sync"
+msgstr ""
+
+#: invenio_resourcesyncclient/admin.py:236
+msgid "Resync"
+msgstr ""
+
+#. NOTE: This is a note to a translator.
+#: invenio_resourcesyncclient/ext.py:30
+msgid "A translation string"
+msgstr ""
+
+#: invenio_resourcesyncclient/views.py:35
+msgid "INVENIO-ResourceSyncClient"
+msgstr ""
+
+#: invenio_resourcesyncclient/templates/invenio_resourcesyncclient/index.html:13
+#, python-format
+msgid "Welcome to %(module_name)s"
+msgstr ""
+
+#: invenio_resourcesyncclient/templates/invenio_resourcesyncclient/resync_client.html:40
+msgid "List"
+msgstr ""
+
+#: invenio_resourcesyncclient/templates/invenio_resourcesyncclient/resync_client.html:41
+msgid "Create"
+msgstr ""
+
+#: invenio_resourcesyncclient/templates/invenio_resourcesyncclient/resync_client.html:42
+msgid "Edit"
+msgstr ""
+
+#: invenio_resourcesyncclient/templates/invenio_resourcesyncclient/resync_client.html:43
+msgid "Detail"
+msgstr ""
+
+#: invenio_resourcesyncclient/templates/invenio_resourcesyncclient/resync_client.html:44
+msgid "Start Time"
+msgstr ""
+
+#: invenio_resourcesyncclient/templates/invenio_resourcesyncclient/resync_client.html:45
+msgid "End Time"
+msgstr ""
+
+#: invenio_resourcesyncclient/templates/invenio_resourcesyncclient/resync_client.html:46
+msgid "Status"
+msgstr ""
+
+#: invenio_resourcesyncclient/templates/invenio_resourcesyncclient/resync_client.html:47
+msgid "Log Type"
+msgstr ""
+
+#: invenio_resourcesyncclient/templates/invenio_resourcesyncclient/resync_client.html:48
+msgid "Processed Items"
+msgstr ""
+
+#: invenio_resourcesyncclient/templates/invenio_resourcesyncclient/resync_client.html:49
+msgid "Created Items"
+msgstr ""
+
+#: invenio_resourcesyncclient/templates/invenio_resourcesyncclient/resync_client.html:50
+msgid "Updated Items"
+msgstr ""
+
+#: invenio_resourcesyncclient/templates/invenio_resourcesyncclient/resync_client.html:51
+msgid "Deleted Items"
+msgstr ""
+
+#: invenio_resourcesyncclient/templates/invenio_resourcesyncclient/resync_client.html:52
+msgid "Error Items"
+msgstr ""
+
+#: invenio_resourcesyncclient/templates/invenio_resourcesyncclient/resync_client.html:53
+msgid "The input value for From Date is incorrect."
+msgstr ""
+
+#: invenio_resourcesyncclient/templates/invenio_resourcesyncclient/resync_client.html:54
+msgid "The input value for Until Date is incorrect."
+msgstr ""
+

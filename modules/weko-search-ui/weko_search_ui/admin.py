@@ -285,10 +285,10 @@ class ItemManagementBulkSearch(BaseView):
             )
             else None
         )
-        if "community" in get_args:
+        if "c" in get_args:
             from weko_workflow.api import GetCommunity
 
-            comm = GetCommunity.get_community_by_id(request.args.get("community"))
+            comm = GetCommunity.get_community_by_id(request.args.get("c"))
             ctx = {"community": comm}
             if comm is not None:
                 community_id = comm.id
@@ -394,8 +394,8 @@ class ItemImportView(BaseView):
                     role_ids.append(role.id)
         if role_ids:
             from invenio_communities.models import Community
-            comm_data = Community.query.filter(
-                Community.id_role.in_(role_ids)
+            comm_data = Community.get_by_user(
+                role_ids, with_deleted=True
             ).all()
             for comm in comm_data:
                 can_edit_indexes += [i.cid for i in Indexes.get_self_list(comm.root_node_id)]
@@ -842,8 +842,8 @@ class ItemRocrateImportView(BaseView):
                     role_ids.append(role.id)
         if role_ids:
             from invenio_communities.models import Community
-            comm_data = Community.query.filter(
-                Community.id_role.in_(role_ids)
+            comm_data = Community.get_by_user(
+                role_ids, with_deleted=True
             ).all()
             for comm in comm_data:
                 can_edit_indexes += [i.cid for i in Indexes.get_self_list(comm.root_node_id)]
@@ -1174,6 +1174,8 @@ class ItemBulkExport(BaseView):
     @expose("/check_export_status", methods=["GET"])
     def check_export_status(self):
         """Check export status."""
+        if not current_user.is_authenticated:
+            abort(302)
         check_celery = check_celery_is_run()
         check_life_time = check_session_lifetime()
         export_status, download_uri, message, run_message, \

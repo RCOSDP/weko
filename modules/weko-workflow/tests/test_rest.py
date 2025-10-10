@@ -24,7 +24,7 @@ import copy
 from datetime import datetime
 
 from flask import json, current_app
-from mock import patch
+from mock import patch, MagicMock
 import pytest
 
 from weko_workflow.rest import FileApplicationActivity
@@ -273,7 +273,7 @@ def test_ThrowOutActivity_post(app, client, db, db_register_approval, auth_heade
 
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_rest.py::test_FileApplicationActivity_post -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_FileApplicationActivity_post(app, client, db, db_register_for_application_api,
-                                      auth_headers, users, application_api_request_body, indextree, records_restricted):
+                                      auth_headers, users, application_api_request_body, indextree, mocker):
     """Test FileApplicationActivity.post method."""
 
     activity_id = db_register_for_application_api['activity1'].activity_id
@@ -292,6 +292,8 @@ def test_FileApplicationActivity_post(app, client, db, db_register_for_applicati
     index1 = indextree[0]
     index2 = indextree[1]
     activity1_extra_info = db_register_for_application_api['activity1'].extra_info
+    mock_task = mocker.patch("weko_deposit.tasks.extract_pdf_and_update_file_contents")
+    mock_task.apply_async = MagicMock()
 
     # Invalid version : 400 error
     body = {"aaa":"123"}
@@ -639,6 +641,7 @@ def test_FileApplicationActivity_post(app, client, db, db_register_for_applicati
     except:
         assert False
 
+    mocker.patch('weko_workflow.rest.handle_check_item_is_locked', return_value=None)
     # Server error : 500
     params = {"index_ids": index1["id"]}
     body = application_api_request_body[0]
