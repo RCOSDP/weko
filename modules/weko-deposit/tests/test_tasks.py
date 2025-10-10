@@ -1605,7 +1605,7 @@ class TestUpdateAuthorData:
 
 # .tox/c1/bin/pytest --cov=weko_deposit tests/test_tasks.py::test_extract_pdf_and_update_file_contents -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
 def test_extract_pdf_and_update_file_contents(app, db, location, caplog):
-    app.config["TIKA_JAE_FILE_PARH"] = "/code/tika/tika-app-2.6.0.jar"
+    app.config["TIKA_JAR_FILE_PATH"] = "/code/tika/tika-app-2.6.0.jar"
     indexer = WekoIndexer()
     indexer.get_es_index()
 
