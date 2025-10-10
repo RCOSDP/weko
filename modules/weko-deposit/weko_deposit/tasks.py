@@ -41,7 +41,8 @@ from invenio_pidstore.errors import PIDDoesNotExistError
 from invenio_pidstore.models import PersistentIdentifier
 from invenio_records.models import RecordMetadata
 from invenio_search import RecordsSearch
-from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.exc import SQLAlchemyError, DisconnectionError, TimeoutError
+from amqp.exceptions import ConnectionError
 from weko_authors.models import Authors, AuthorsPrefixSettings, AuthorsAffiliationSettings
 from weko_records.api import ItemsMetadata
 from weko_schema_ui.models import PublishStatus
@@ -168,24 +169,29 @@ def update_items_by_authorInfo( user_id, target, origin_pkid_list=[], origin_id_
         if update_gather_flg:
             process_counter[ORIGIN_LABEL] = get_origin_data(origin_pkid_list)
             update_db_es_data(origin_pkid_list, origin_id_list)
-            delete_cache_data("update_items_by_authorInfo_{}".format(user_id))
-            update_cache_data(
-                "update_items_status_{}".format(user_id),
-                json.dumps(process_counter),
-                current_app.config["WEKO_DEPOSIT_ITEM_UPDATE_STATUS_TTL"])
+    except (DisconnectionError, TimeoutError, ConnectionError) as e:
+        db.session.rollback()
+        retry_count = update_items_by_authorInfo.request.retries
+        countdown = current_app.config['WEKO_DEPOSIT_ITEM_UPDATE_RETRY_COUNTDOWN']
+        if retry_count < current_app.config['WEKO_DEPOSIT_ITEM_UPDATE_RETRY_COUNT']:
+            current_app.logger.exception('Retry due to connection error. err:{0}'.format(e))
+            countdown *= current_app.config['WEKO_DEPOSIT_ITEM_UPDATE_RETRY_BACKOFF_RATE'] ** retry_count
+        else:
+            current_app.logger.exception('Failed to update items by author data. err:{0}'.format(e))
+            process_counter[SUCCESS_LABEL] = []
+            process_counter[FAIL_LABEL] = [{"record_id": "ALL", "author_ids": [], "message": str(e)}]
+        update_items_by_authorInfo.retry(countdown=countdown, exc=e, max_retries=current_app.config['WEKO_DEPOSIT_ITEM_UPDATE_RETRY_COUNT'])
     except SQLAlchemyError as e:
         process_counter[SUCCESS_LABEL] = []
         process_counter[FAIL_LABEL] = [{"record_id": "ALL", "author_ids": [], "message": str(e)}]
+        db.session.rollback()
+        current_app.logger.exception('Failed to update items by author data. err:{0}'.format(e))
+    finally:
         delete_cache_data("update_items_by_authorInfo_{}".format(user_id))
         update_cache_data(
             "update_items_status_{}".format(user_id),
             json.dumps(process_counter),
             current_app.config["WEKO_DEPOSIT_ITEM_UPDATE_STATUS_TTL"])
-        db.session.rollback()
-        current_app.logger. \
-            exception('Failed to update items by author data. err:{0}'.
-                      format(e))
-        update_items_by_authorInfo.retry(countdown=3, exc=e, max_retries=1)
 
 def _get_author_prefix():
     result = {}
