@@ -165,6 +165,7 @@ WEKO_DEPOSIT_SYS_CREATOR_KEY = {
     'creator_type': 'creatorType', #? ADDED 20231017 CREATOR TYPE BUG FIX
     'creator_names': 'creatorNames',
     'creator_name': 'creatorName',
+    'creator_name_type': 'creatorNameType',
     'creator_lang': 'creatorNameLang',
     'family_names': 'familyNames',
     'family_name': 'familyName',
