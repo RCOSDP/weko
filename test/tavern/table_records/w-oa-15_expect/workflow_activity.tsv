@@ -1,0 +1,2 @@
+status	id	activity_id	activity_name	item_id	workflow_id	workflow_status	flow_id	action_id	action_status	activity_login_user	activity_update_user	activity_status	activity_start	activity_end	activity_community_id	activity_confirm_term_of_use	title	shared_user_id	temp_data	approval1	approval2	extra_info	action_order
+N	1	<<activity_id>>	NULL	NULL	1	NULL	1	3	M	2	2	M	<<activity_start>>	NULL	NULL	true	test1	-1	<<temp_data>>	NULL	NULL	{}	2

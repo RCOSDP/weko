@@ -47,6 +47,21 @@
   }
 </style>
 
+<div class="row content-font">
+  <div class="col-md-1"></div>
+  <div class="col-md-4">
+    <div class="">
+      <select class="form-control" id="repository_select" name="repository">
+        {% for repo in repositories %}
+          <option value="{{ repo.id }}" {% if repo.id == selected_repo_id %}selected{% endif %}>
+            {{ repo.id }}
+          </option>
+        {% endfor %}
+      </select>
+    </div>
+  </div>
+</div>
+<hr>
 <!-- Number of items registered -->
 <div class="row content-font">
   <div class="col-md-1"></div>

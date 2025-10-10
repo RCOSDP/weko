@@ -21,7 +21,7 @@
 
 {%- set record_url = url_for('invenio_records_ui.recid', pid_value=pid.pid_value) %}
 {%- if community %}
-    {% set record_url = record_url + "?community=" + community.id %}
+    {% set record_url = record_url + "?c=" + community.id %}
 {% endif -%}
 {% from "weko_records_ui/box/preview_carousel.html" import preview_carousel %}
 {% from "weko_theme/macros/modal_page.html" import all_modal %}
@@ -43,6 +43,7 @@
       <div class="row">
         <div class="col-sm-12 col-md-12 col-left">
           {%- block record_author %}
+            {%- set _files = files -%}
             {%- set files = record.files -%}
             {%- set record = record -%}
             {%- set deposit = record['_buckets']['deposit'] -%}
@@ -101,7 +102,9 @@
                             {%- endif -%}
                           {%- endif -%}
                           <a class="forcewrap{{billing_file_class}}" {{billing_file_data}} {{billing_file_url}}
-                          {% if file_url %} href="javascript:OnLinkClick('{{ file_url }}', {{ pid.pid_value }}, '{{ file.accessrole }}')" {% endif %}>{{ file.filename }} ({{ file.size|filesizeformat }})</a>
+                          {% if file_url %} href="#" onclick="OnLinkClick('{{ file_url }}', {{ pid.pid_value }}, '{{ file.accessrole }}'); return false;" {% endif %}>
+                          {{ file.filename }} ({{ file.size|filesizeformat }})
+                          </a>
 
                           <span>{{file.checksum.split(':')[0]}}</span>
                           <span class="break-word">{{file.checksum.split(':')[1]}}</span>
@@ -116,10 +119,21 @@
                             {%- endif -%}
                           {%- endif -%}
                           <div class="text-right">
-                            <a class="forcewrap{{billing_file_class}}" {{billing_file_data}} {{billing_file_url}} 
+                            <a class="forcewrap{{billing_file_class}}" {{billing_file_data}} {{billing_file_url}}
                             {% if original_file_url %} href="javascript:OnLinkClick('{{ original_file_url }}', {{ pid.pid_value }}, '{{ file.accessrole }}')" {% endif %}>{{_('Original')}}</a>
                           </div>
                         {%- endif -%}
+
+                        <input type="hidden" value="{{file.bucket}}" id="bucket_id_value"/>
+                        {% if record | check_permission %}
+                          {% if can_edit %}
+                          <input type="file" id="fileInput" style="display: none;" />
+                          <span style="white-space: nowrap;">
+                            <button onclick="replaceFile()">{{_('Replace the file content')}}</button>
+                            <button onclick="openBucketCopyModal()">{{_('Copy file to open bucket')}}</button>
+                          </span>
+                          {% endif %}
+                        {% endif %}
                       </td>
                       <td>
                         {%- if not 'simple' in file.displaytype -%}
@@ -170,11 +184,12 @@
               {% from "weko_records_ui/output_detail_data.html" import output_attribute_value_mlt %}
               {%- set display_file_info = record.display_file_info -%}
               <table class="table table-bordered table-striped detail-table">
+                <!-- Output Pubdate -->
+                {{ _files[0]['date'][0]['dateValue'] }}
+                <!-- Output File Information -->
                 {%- for info in display_file_info -%}
                   {%- if info['attribute_type'] == 'file' -%}
                     {{output_attribute_value_mlt(info['attribute_value_mlt'], 0,false)}}
-                  {%- elif info['attribute_name'] == 'PubDate' -%}
-                    {{output_attribute_value_mlt(info['attribute_value_mlt'], 0)}}
                   {%- endif -%}
                 {%- endfor -%}
               </table>
@@ -190,6 +205,12 @@
             <div class="row">
               <div class="col-sm-12 tab-content">
                 <div class="tab-pane active" id="versions">
+                  <input type="hidden" value="{{_('Copy Success. Take note of URL. This URL cannot be confirmed again once the screen is closed. If you have created a new bucket, please check that the bucket is set to public.')}}" id="copy_success_message"/>
+                  <input type="hidden" value="{{_('Please select the same named file as the original file.')}}" id="select_same_named_message"/>
+                  <input type="hidden" value="{{_('File replacement successful.')}}" id="file_replacement_successful"/>
+                  <input type="hidden" value="{{_('Replacing file failed.')}}" id="replacing_file_failed"/>
+                  <input type="hidden" value="{{ record_url }}" id="txt_record_url"/>
+                  <input type="hidden" value="{{ pid.pid_value }}" id="pid"/>
                   <input type="hidden" value="{{filename}}" id="txt_filename"/>
                   <input type="hidden" value="{{_('Show')}}" id="txt_show"/>
                   <input type="hidden" value="{{_('Hide')}}" id="txt_hide"/>
@@ -275,4 +296,87 @@
       </div>
     </div>
   </div>
+  <div id="loading" >
+    <h2>uploading...</h2>
+  </div>
 </div>
+
+<!-- Bucket Copy Modal -->
+<div class="modal fade" tabindex="-1" role="dialog" id="bucket_copy_modal">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal"
+            aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title">WEKO</h4>
+      </div>
+    <div class="modal-body" id="modal-main" style="height: 380px;">
+      <p id="modal-message"></p>
+      <p id="modal-guide" style="display:none">{{_('Chose bucket or input creating bucket name')}}</p>
+      <div class="col-sm-5 text-left">
+        <label for="bucket_select"><input type="radio" id="option1" name="bucket_option" value="select" checked>{{_('Bucket')}}</label>
+      </div>
+      <div class="col-sm-10">
+        <div class="custom-select">
+          <input type="text" id="search" class="form-control" placeholder="選択してください">
+          <ul class="options-list">
+          </ul>
+        </div>
+      </div>
+      <div class="col-sm-5 text-left">
+        <label for="bucket_name"><input type="radio" id="option2" name="bucket_option" value="create">{{_('New Creating Bucket Name')}}</label>
+      </div>
+      <div class="col-sm-10">
+        <textarea id="creating_bucket_name" class="form-control"></textarea>
+      </div>
+      <div class="col-sm-12">
+        <br>
+        <p id="modal-result-message" style="color: red;"></p>
+        <p id="modal-result-uri" style="color: red;"></p>
+      </div>
+    </div><!-- /.modal-content -->
+    <div class="modal-footer">
+      <button type="button" id="execution" class="btn btn-primary" onclick="copyFileToBucket()">
+        <span class="glyphicon glyphicon-check"></span>
+              {{_('Execution')}}
+      </button>
+      <button type="button" class="btn btn-info" data-dismiss="modal">
+            <span class="glyphicon glyphicon-remove"></span>
+                {{_('Close')}}
+      </button>
+    </div>
+  </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+<style>
+  .custom-select {
+      position: relative;
+  }
+  .options-list {
+      display: none;
+      position: absolute;
+      border: 1px solid #ccc;
+      background: white;
+      max-height: 150px;
+      overflow-y: auto;
+      z-index: 1000;
+  }
+  .options-list li {
+      padding: 8px;
+      cursor: pointer;
+  }
+  .options-list li:hover {
+      background-color: #f0f0f0;
+  }
+  #loading {
+      display: none; /* 初期状態では非表示 */
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(255, 255, 255, 0.8);
+      z-index: 1999;
+      text-align: center;
+      padding-top: 20%;
+  }
+</style>

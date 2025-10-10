@@ -1,0 +1,86 @@
+# Japanese translations for weko-logging.
+# Copyright (C) 2025 National Institute of Informatics
+# This file is distributed under the same license as the weko-logging
+# project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2025.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: weko-logging 0.1.0.dev20170000\n"
+"Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
+"POT-Creation-Date: 2025-10-03 16:35+0900\n"
+"PO-Revision-Date: 2025-05-13 10:26+0900\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: ja\n"
+"Language-Team: ja <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=0\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.5.1\n"
+
+#: weko_logging/admin.py:51
+msgid "Export task is running."
+msgstr "エクスポートタスクが実行中です。"
+
+#: weko_logging/admin.py:137
+msgid "Logs"
+msgstr "ログ"
+
+#: weko_logging/admin.py:138
+#: weko_logging/templates/weko_logging/admin/export_log.html:40
+msgid "Export"
+msgstr "エクスポート"
+
+#: weko_logging/templates/weko_logging/admin/export_log.html:37
+msgid "Export all logs"
+msgstr "すべてのログをエクスポート"
+
+#: weko_logging/templates/weko_logging/admin/export_log.html:38
+msgid "Download URL"
+msgstr "ダウンロードURL"
+
+#: weko_logging/templates/weko_logging/admin/export_log.html:39
+msgid "Status"
+msgstr "ステータス"
+
+#: weko_logging/templates/weko_logging/admin/export_log.html:41
+msgid "Are you sure you want to export all logs?"
+msgstr "すべてのログをエクスポートしてもよろしいですか？"
+
+#: weko_logging/templates/weko_logging/admin/export_log.html:42
+msgid "Confirm"
+msgstr "確認"
+
+#: weko_logging/templates/weko_logging/admin/export_log.html:43
+msgid "Execute"
+msgstr "実行"
+
+#: weko_logging/templates/weko_logging/admin/export_log.html:44
+msgid "Cancel"
+msgstr "キャンセル"
+
+#: weko_logging/templates/weko_logging/admin/export_log.html:45
+msgid "Are you sure you want to cancel process of exporting all logs?"
+msgstr "すべてのログのエクスポート処理をキャンセルしてもよろしいですか？"
+
+#: weko_logging/templates/weko_logging/admin/export_log.html:46
+msgid "Internal server error"
+msgstr "サーバ内部エラー"
+
+#: weko_logging/templates/weko_logging/admin/export_log.html:47
+msgid "Failed to export logs."
+msgstr "ログのエクスポートに失敗しました。"
+
+#: weko_logging/templates/weko_logging/admin/export_log.html:48
+msgid "Export is in progress on another device."
+msgstr "他の端末でエクスポートを実行中です。"
+
+#: weko_logging/templates/weko_logging/admin/export_log.html:49
+msgid "Failed to cancel export."
+msgstr "エクスポートのキャンセルに失敗しました。"
+
+#: weko_logging/templates/weko_logging/admin/export_log.html:50
+msgid "Celery is not running."
+msgstr "Celeryは動いていません。"
+

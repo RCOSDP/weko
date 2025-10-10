@@ -21,19 +21,30 @@
 """Views for weko-authors."""
 
 import re
+import sys
+import traceback
 import uuid
 from flask import Response, Blueprint, current_app, json, jsonify, make_response, request
 from flask_babelex import gettext as _
 from flask_login import login_required
 from flask_security import current_user
+from invenio_communities.models import Community
 from invenio_db import db
 from invenio_indexer.api import RecordIndexer
 from weko_schema_ui.models import PublishStatus
 
 from .config import WEKO_AUTHORS_IMPORT_KEY
 from .models import Authors, AuthorsAffiliationSettings, AuthorsPrefixSettings
+from .api import WekoAuthors
+from .errors import AuthorsValidationError
 from .permissions import author_permission
-from .utils import get_author_prefix_obj, get_author_affiliation_obj, get_count_item_link
+from .utils import (
+    get_author_prefix_obj, get_author_affiliation_obj, get_count_item_link,
+    validate_weko_id, check_period_date, validate_community_ids,
+    get_managed_community, check_delete_author, check_delete_prefix,
+    check_delete_affiliation
+)
+from weko_logging.activity_logger import UserActivityLogger
 
 blueprint = Blueprint(
     'weko_authors',
@@ -60,43 +71,60 @@ def create():
     if request.headers['Content-Type'] != 'application/json':
         return jsonify(msg=_('Header Error'))
 
-    session = db.session
-    new_id = Authors.get_sequence(session)
-
     data = request.get_json()
-    data["gather_flg"] = 0
-    data["is_deleted"] = "false"
-    data["pk_id"] = str(new_id)
-    data["authorIdInfo"].insert(0,
-                                {
-                                    "idType": "1",
-                                    "authorId": str(new_id),
-                                    "authorIdShowFlg": "true"
-                                })
-    es_data = json.loads(json.dumps(data))
-    es_id = str(uuid.uuid4())
-    data['id'] = es_id
+    activity_id = request.args.get('activity_id')
 
-    author_data = dict()
+    # weko_idを取得する。
+    author_id_info = data["authorIdInfo"]
+    weko_id = None
+    for i in author_id_info:
+        if i.get('idType') == '1':
+            weko_id = i.get('authorId')
+    if not weko_id:
+        return jsonify(msg=_('Please set WEKO ID.')), 500
 
-    author_data["id"] = new_id
-    author_data["json"] = data
+    #weko_idのバリーデーションチェック
     try:
-        with session.begin_nested():
-            author = Authors(**author_data)
-            session.add(author)
-        indexer = RecordIndexer()
-        
-        session.commit()
-        indexer.client.index(
-            index=current_app.config['WEKO_AUTHORS_ES_INDEX_NAME'],
-            doc_type=current_app.config['WEKO_AUTHORS_ES_DOC_TYPE'],
-            id=es_id,
-            body=es_data,
-        )
+        result_weko_id_check = validate_weko_id(weko_id)
+        if result_weko_id_check[0] == False and result_weko_id_check[1] == "not half digit":
+            # weko_idが半角数字でない場合はエラーを返す
+            return jsonify(msg=_('Please set the WEKOID in the half digit.')), 500
+        elif result_weko_id_check[0] == False and result_weko_id_check[1] == "already exists":
+            # weko_idが既に存在する場合はエラーを返す
+            return jsonify(msg=_('The value is already in use as WEKO ID.')), 500
     except Exception as ex:
-        session.rollback()
         current_app.logger.error(ex)
+        traceback.print_exc()
+        return jsonify(msg=_('Failed')), 500
+
+
+    #periodのバリーデーションチェック
+    result_period_check = check_period_date(data)
+    if result_period_check[0] == False and result_period_check[1] == "not date format":
+        return jsonify(msg=_('Please set the affiliation start date and end date in the format yyyy-MM-dd.')), 500
+    elif result_period_check[0] == False and result_period_check[1] == "start is after end":
+        return jsonify(msg=_('The end date must be after the start date.')), 500
+
+    #communityIdsのバリデーションチェック
+    try:
+        data["communityIds"] = validate_community_ids(
+            data.get("communityIds", []), is_create=True, activity_id=activity_id)
+    except AuthorsValidationError as ex:
+        current_app.logger.error(ex)
+        return jsonify(msg=ex.description), ex.code
+
+    try:
+        WekoAuthors.create(data)
+        UserActivityLogger.info(operation="AUTHOR_CREATE")
+    except Exception as ex:
+        current_app.logger.error(ex)
+        traceback.print_exc()
+        exec_info = sys.exc_info()
+        tb_info = traceback.format_tb(exec_info[2])
+        UserActivityLogger.error(
+            operation="AUTHOR_CREATE",
+            remarks=tb_info[0]
+        )
         return jsonify(msg=_('Failed')), 500
     return jsonify(msg=_('Success'))
 
@@ -109,33 +137,50 @@ def update_author():
     if request.headers['Content-Type'] != 'application/json':
         current_app.logger.debug(request.headers['Content-Type'])
         return jsonify(msg=_('Header Error'))
+    req = request.get_json()
+    data = req["author"]
+    force_change_flag = request.get_json()["forceChangeFlag"]
+    # weko_idを取得する。
+    weko_id = None
+    author_id_info = data["authorIdInfo"]
+    for i in author_id_info:
+        if i.get('idType') == '1':
+            weko_id = i.get('authorId')
+    if not weko_id:
+        return jsonify(msg=_('Please set WEKO ID.')), 500
+    pk_id = data["pk_id"]
 
-    user_id = current_user.get_id()
-    data = request.get_json()
     try:
-        with db.session.begin_nested():
-            author_data = Authors.query.filter_by(
-                id=json.loads(json.dumps(data))["pk_id"]).one()
-            author_data.json = data
-            db.session.merge(author_data)
-        db.session.commit()
-        
-        indexer = RecordIndexer()
-        body = {'doc': data}
-        indexer.client.update(
-            index=current_app.config['WEKO_AUTHORS_ES_INDEX_NAME'],
-            doc_type=current_app.config['WEKO_AUTHORS_ES_DOC_TYPE'],
-            id=json.loads(json.dumps(data))["id"],
-            body=body
-        )
-        from weko_deposit.tasks import update_items_by_authorInfo
-        
-        update_items_by_authorInfo.delay(
-            user_id,data, [json.loads(json.dumps(data))["pk_id"]], [json.loads(json.dumps(data))["id"]])
+        #weko_idのバリーデーションチェック
+        result_weko_id_check = validate_weko_id(weko_id, pk_id)
 
+        if result_weko_id_check[0] == False and result_weko_id_check[1] == "not half digit":
+            # weko_idが半角数字でない場合はエラーを返す
+            return jsonify(msg=_('Please set the WEKOID in the half digit.')), 500
+        elif result_weko_id_check[0] == False and result_weko_id_check[1] == "already exists":
+            # weko_idが既に存在する場合はエラーを返す
+            return jsonify(msg=_('The value is already in use as WEKO ID.')), 500
+
+        #periodのバリーデーションチェック
+        result_period_check = check_period_date(data)
+        if result_period_check[0] == False and result_period_check[1] == "not date format":
+            return jsonify(msg=_('Please set the affiliation start date and end date in the format yyyy-MM-dd.')), 500
+        elif result_period_check[0] == False and result_period_check[1] == "start is after end":
+            return jsonify(msg=_('The end date must be after the start date.')), 500
+
+        #communityIdsのバリデーションチェック
+        old = Authors.query.get(pk_id)
+        old_community_ids = [c.id for c in old.communities]
+        data["communityIds"] = validate_community_ids(
+            data.get("communityIds", []), old_ids=old_community_ids)
+
+        WekoAuthors.update(pk_id, data, force_change_flag)
+    except AuthorsValidationError as e:
+        current_app.logger.error(e)
+        return jsonify(msg=e.description), e.code
     except Exception as ex:
-        db.session.rollback()
         current_app.logger.error(ex)
+        traceback.print_exc()
         return jsonify(msg=_('Failed')), 500
 
     return jsonify(msg=_('Success'))
@@ -155,6 +200,11 @@ def delete_author():
             _('The author is linked to items and cannot be deleted.'),
             500)
 
+    check, message = check_delete_author(data['pk_id'])
+    if not check:
+        current_app.logger.error(f"AUTHOR_DELETE denied: pk_id={data['pk_id']}")
+        return make_response(message, 403)
+
     try:
         author_data = Authors.query.filter_by(
             id=json.loads(json.dumps(data))["pk_id"]).one()
@@ -164,16 +214,24 @@ def delete_author():
         author_data.json = json_data
         db.session.merge(author_data)
         db.session.commit()
+        UserActivityLogger.info(
+            operation="AUTHOR_DELETE",
+            target_key=json.loads(json.dumps(data))["pk_id"]
+        )
         RecordIndexer().client.update(
             id=json.loads(json.dumps(data))["Id"],
             index=current_app.config['WEKO_AUTHORS_ES_INDEX_NAME'],
             doc_type=current_app.config['WEKO_AUTHORS_ES_DOC_TYPE'],
             body={'doc': {'is_deleted': 'true'}}
         )
-        
+
     except Exception as ex:
         db.session.rollback()
         current_app.logger.error(ex)
+        UserActivityLogger.error(
+            operation="AUTHOR_DELETE",
+            target_key=json.loads(json.dumps(data))["pk_id"]
+        )
         return jsonify(msg=_('Failed')), 500
 
     return jsonify(msg=_('Success'))
@@ -256,10 +314,11 @@ def get():
     item_cnt_list = []
     for es_hit in result['hits']['hits']:
         author_id_info = es_hit['_source']['authorIdInfo']
-        if author_id_info:
+        pk_id = es_hit['_source']['pk_id']
+        if pk_id and author_id_info:
             author_id = author_id_info[0]['authorId']
             temp_str = json.dumps(query_item).replace(
-                "@author_id", author_id)
+                "@author_id", pk_id)
             result_itemCnt = indexer.client.search(
                 index=current_app.config['SEARCH_UI_SEARCH_INDEX'],
                 body=json.loads(temp_str)
@@ -268,7 +327,7 @@ def get():
                     and result_itemCnt['hits'] \
                     and result_itemCnt['hits']['total']:
                 item_cnt_list.append(
-                    {'key': author_id,
+                    {'key': pk_id,
                      'doc_count': result_itemCnt['hits']['total']})
 
     result['item_cnt'] = {'aggregations':
@@ -309,6 +368,49 @@ def getById():
     )
     return json.dumps(result)
 
+@blueprint_api.route("/get_max_weko_id", methods=['GET'])
+@login_required
+def get_max_weko_id():
+    """Get max weko id."""
+    query = {
+        "_source": ["authorIdInfo"],  # authorIdInfoフィールドのみを取得
+        "query": {
+            "bool": {
+                "must": [
+                    {"term": {"gather_flg": {"value": 0}}}
+                ],
+                "must_not": [
+                    {"term": {"is_deleted": True}}
+                ]
+            }
+        },
+        "size": 1000  # スクロールごとに取得するドキュメント数
+    }
+
+    indexer = RecordIndexer()
+    result = indexer.client.search(
+        index=current_app.config['WEKO_AUTHORS_ES_INDEX_NAME'],
+        body=query,
+        scroll='2m'  # スクロールの有効期限
+    )
+
+    max_author_id = 0
+    scroll_id = result['_scroll_id']
+
+    while len(result['hits']['hits']) > 0:
+        for hit in result['hits']['hits']:
+            author_id_info = hit['_source'].get('authorIdInfo', [])
+            for info in author_id_info:
+                if info.get('idType') == '1':
+                    author_id = int(info.get('authorId'))
+                    if author_id > max_author_id:
+                        max_author_id = author_id
+        result = indexer.client.scroll(
+            scroll_id=scroll_id,
+            scroll='2m'
+        )
+
+    return jsonify(max_author_id=max_author_id)
 
 @blueprint_api.route("/input", methods=['POST'])
 @login_required
@@ -483,12 +585,14 @@ def gatherById():
     )
     target_data = res.get("hits").get("hits")[0].get("_source")
 
+
     update_cache_data(
         "update_items_by_authorInfo_{}".format(user_id),
         gatherTo,
         current_app.config['WEKO_DEPOSIT_ITEM_UPDATE_TASK_TTL']
     )
-    update_items_by_authorInfo.delay(user_id, target_data,gatherFromPkId, gatherFrom,  True)
+    update_items_by_authorInfo.delay(user_id=user_id, target=target_data, origin_pkid_list=gatherFromPkId, origin_id_list=gatherFrom, update_gather_flg=True)
+
 
     return jsonify({'code': 0, 'msg': 'Success'})
 
@@ -545,6 +649,27 @@ def download_process_status():
         )
 
 
+@blueprint_api.route("/managed_communities", methods=["get"])
+@login_required
+@author_permission.require(http_exception=403)
+def get_managed_communities():
+    """Get managed communities."""
+    communities, is_super = get_managed_community(current_user)
+    community_ids = [community.id for community in communities]
+    activity_id = request.args.get("activity_id")
+    activity = None
+    if activity_id:
+        from weko_workflow.api import WorkActivity
+        activity = WorkActivity.get_activity_by_id(activity_id)
+
+    data = {
+        "communityIds": community_ids,
+        "isAdmin": is_super,
+        "activityCommunityId": activity.activity_community_id if activity else None
+    }
+    return jsonify(data)
+
+
 @blueprint_api.route("/search_prefix", methods=['get'])
 @login_required
 @author_permission.require(http_exception=403)
@@ -555,8 +680,9 @@ def get_prefix_list():
     data = []
     if settings:
         for s in settings:
-            tmp = s.__dict__
+            tmp = s.__dict__.copy()
             tmp.pop('_sa_instance_state', None)
+            tmp['communityIds'] = [community.id for community in s.communities]
             data.append(tmp)
     return jsonify(data)
 
@@ -571,8 +697,9 @@ def get_affiliation_list():
     data = []
     if settings:
         for s in settings:
-            tmp = s.__dict__
+            tmp = s.__dict__.copy()
             tmp.pop('_sa_instance_state', None)
+            tmp['communityIds'] = [community.id for community in s.communities]
             data.append(tmp)
     return jsonify(data)
 
@@ -609,15 +736,26 @@ def update_prefix():
     """Update authors prefix settings."""
     try:
         data = request.get_json()
+        community_ids = data.pop("communityIds", [])
+        old = AuthorsPrefixSettings.query.get(data.get('id'))
+        old_community_ids = [c.id for c in old.communities]
+
+        data['community_ids'] = validate_community_ids(community_ids, old_ids=old_community_ids)
+
         check = get_author_prefix_obj(data['scheme'])
         if check is None or check.id == data['id']:
             AuthorsPrefixSettings.update(**data)
-            return jsonify({'code': 200, 'msg': 'Success'})
+            return jsonify({'code': 200, 'msg': 'Success'}), 200
         else:
             return jsonify(
-                {'code': 400, 'msg': 'Specified scheme is already exist.'})
-    except Exception:
-        return jsonify({'code': 204, 'msg': 'Failed'})
+                {'code': 400, 'msg': 'Specified scheme is already exist.'}), 400
+    except AuthorsValidationError as ex:
+        current_app.logger.error(f"Failed to update authors prefix settings: {ex}")
+        return jsonify({'code': ex.code, 'msg': ex.description}), ex.code
+    except Exception as ex:
+        current_app.logger.error(f"Unexpected Error: {ex}")
+        traceback.print_exc()
+        return jsonify({'code': 500, 'msg': 'Failed'}), 500
 
 
 @blueprint_api.route("/delete_prefix/<id>", methods=['delete'])
@@ -625,6 +763,10 @@ def update_prefix():
 @author_permission.require(http_exception=403)
 def delete_prefix(id):
     """Delete authors prefix settings."""
+    check, message = check_delete_prefix(id)
+    if not check:
+        current_app.logger.error(f"Denied to delete authors prefix settings: id={id}")
+        return jsonify(msg=message), 400
     AuthorsPrefixSettings.delete(id)
     return jsonify(msg=_('Success'))
 
@@ -636,15 +778,24 @@ def create_prefix():
     """Add new authors prefix settings."""
     try:
         data = request.get_json()
+        community_ids = data.pop("communityIds", [])
+
+        data['community_ids'] = validate_community_ids(community_ids, is_create=True)
+
         check = get_author_prefix_obj(data['scheme'])
         if check is None:
             AuthorsPrefixSettings.create(**data)
-            return jsonify({'code': 200, 'msg': 'Success'})
+            return jsonify({'code': 200, 'msg': 'Success'}), 200
         else:
             return jsonify(
-                {'code': 400, 'msg': 'Specified scheme is already exist.'})
-    except Exception:
-        return jsonify({'code': 204, 'msg': 'Failed'})
+                {'code': 400, 'msg': 'Specified scheme is already exist.'}), 400
+    except AuthorsValidationError as ex:
+        current_app.logger.error(f"Failed to create authors prefix settings: {ex}")
+        return jsonify({'code': ex.code, 'msg': ex.description}), ex.code
+    except Exception as ex:
+        current_app.logger.error(f"Unexpected Error: {ex}")
+        traceback.print_exc()
+        return jsonify({'code': 500, 'msg': 'Failed'}), 500
 
 
 @blueprint_api.route("/edit_affiliation", methods=['post'])
@@ -654,15 +805,26 @@ def update_affiliation():
     """Update authors affiliation settings."""
     try:
         data = request.get_json()
+        community_ids = data.pop("communityIds", [])
+        old = AuthorsAffiliationSettings.query.get(data.get('id'))
+        old_community_ids = [c.id for c in old.communities]
+
+        data['community_ids'] = validate_community_ids(community_ids, old_ids=old_community_ids)
+
         check = get_author_affiliation_obj(data['scheme'])
         if check is None or check.id == data['id']:
             AuthorsAffiliationSettings.update(**data)
-            return jsonify({'code': 200, 'msg': 'Success'})
+            return jsonify({'code': 200, 'msg': 'Success'}), 200
         else:
             return jsonify(
-                {'code': 400, 'msg': 'Specified scheme is already exist.'})
-    except Exception:
-        return jsonify({'code': 204, 'msg': 'Failed'})
+                {'code': 400, 'msg': 'Specified scheme is already exist.'}), 400
+    except AuthorsValidationError as ex:
+        current_app.logger.error(f"Failed to update authors affiliation settings: {ex}")
+        return jsonify({'code': ex.code, 'msg': ex.description}), ex.code
+    except Exception as ex:
+        current_app.logger.error(f"Unexpected Error: {ex}")
+        traceback.print_exc()
+        return jsonify({'code': 500, 'msg': 'Failed'}), 500
 
 
 @blueprint_api.route("/delete_affiliation/<id>", methods=['delete'])
@@ -670,6 +832,10 @@ def update_affiliation():
 @author_permission.require(http_exception=403)
 def delete_affiliation(id):
     """Delete authors affiliation settings."""
+    check, message = check_delete_affiliation(id)
+    if not check:
+        current_app.logger.error(f"Denied to delete authors affiliation settings: id={id}")
+        return jsonify(msg=message), 400
     AuthorsAffiliationSettings.delete(id)
     return jsonify(msg=_('Success'))
 
@@ -681,15 +847,24 @@ def create_affiliation():
     """Add new authors affiliation settings."""
     try:
         data = request.get_json()
+        community_ids = data.pop("communityIds", [])
+
+        data['community_ids'] = validate_community_ids(community_ids, is_create=True)
+
         check = get_author_affiliation_obj(data['scheme'])
         if check is None:
             AuthorsAffiliationSettings.create(**data)
-            return jsonify({'code': 200, 'msg': 'Success'})
+            return jsonify({'code': 200, 'msg': 'Success'}), 200
         else:
             return jsonify(
-                {'code': 400, 'msg': 'Specified scheme is already exist.'})
-    except Exception:
-        return jsonify({'code': 204, 'msg': 'Failed'})
+                {'code': 400, 'msg': 'Specified scheme is already exist.'}), 400
+    except AuthorsValidationError as ex:
+        current_app.logger.error(f"Failed to create authors affiliation settings: {ex}")
+        return jsonify({'code': ex.code, 'msg': ex.description}), ex.code
+    except Exception as ex:
+        current_app.logger.error(f"Unexpected Error: {ex}")
+        traceback.print_exc()
+        return jsonify({'code': 500, 'msg': 'Failed'}), 500
 
 
 @blueprint.teardown_request

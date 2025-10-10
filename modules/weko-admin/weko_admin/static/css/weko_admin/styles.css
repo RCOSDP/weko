@@ -69,13 +69,18 @@
   border: 1px solid;
   border-color: #ddd;
   height: auto;
-  min-height: 504px;
-  max-height: 504px;
+  min-height: 400px;
+  max-height: 400px;
   margin-left: 10px;
 }
 
 .textarea_height {
   min-height: 200px;
+  height: auto;
+}
+
+.mail_template_height {
+  min-height: 450px;
   height: auto;
 }
 
@@ -117,4 +122,13 @@ label.field-required::after {
 
 .popup-mail-modal {
   width: 70%;
+}
+
+.settings_checkbox {
+  margin-right: 5px !important;
+  margin-left: 15px !important;
+}
+
+.errorMessage{
+  color:red;
 }

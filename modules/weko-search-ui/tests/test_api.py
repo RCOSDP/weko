@@ -5,6 +5,7 @@ from flask_login import current_user
 from mock import patch, MagicMock
 
 from weko_admin.models import SearchManagement
+from weko_index_tree.models import Index
 from weko_search_ui.api import (
     SearchSetting,
     get_search_detail_keyword,
@@ -103,38 +104,143 @@ def test_get_nested_sorting(i18n_app, users, app):
 
     assert SearchSetting.get_nested_sorting(key_str) == check_key
 
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_api.py::test_get_search_detail_keyword -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+# def get_search_detail_keyword(str):
+def test_get_search_detail_keyword(i18n_app, users, db,redis_connect):
+    from weko_records.models import ItemTypeName,ItemType
+    from weko_index_tree.models import Index
+    names = ["test_itemtype01", "test's itemtype02",""]
+    redis_connect.delete("index_tree_view_127.0.0.1_en")
+    for i, name in enumerate(names):
+        id = i+1
+        item_type_name = ItemTypeName(id=id,name=name)
+        db.session.add(item_type_name)
+        item_type = ItemType(name_id=id,schema={},form={},render={},tag=1)
+        db.session.add(item_type)
+        db.session.commit()
+    [{
+        "pid":"","cid":"","id":"","name":"","parent":"","children":[]
+    }]
+    db.session.add(Index(id=1,parent=0,position=0,index_name="test_index1",index_name_english="test_index1"))
+    db.session.add(Index(id=2,parent=0,position=1,index_name="test_index2",index_name_english="test_index2"))
+    db.session.add(Index(id=3,parent=2,position=0,index_name="test_index2_1",index_name_english="test_index2_1"))
+    db.session.add(Index(id=4,parent=2,position=1,index_name="test_index'2_2",index_name_english="test_index'2_2"))
+    db.session.commit()
+    index_tree = [
+        {"pid":0,"cid":1,"id":"1","name":"test_index1","children":[]},
+        {
+            "pid":0,"cid":2,"id":"2","name":"test_index2","children":[
+                {"pid":2,"cid":3,"id":"3","name":"test_index2_1","parent":"2","children":[]},
+                {"pid":2,"cid":4,"id":"4","name":"test_index&#39;2_2","parent":"2","children":[]}
+            ]},
+        {"pid":0,"cid":"","id":"5","name":"","chidren":[]}
+    ]
+    
+    # not exist search_management
+    with patch("weko_search_ui.api.Indexes.get_browsing_tree",return_value=index_tree):
+        res = get_search_detail_keyword("")
+    assert type(res) == str
+    res = json.loads(res)
+    assert len(res.get("condition_setting",[])) > 0
+    for r in res.get("condition_setting",[]):
+        if r.get("id") == "iid":
+            assert r.get("check_val") == [{"checkStus":False,"contents":"test_index1","id":1},{"checkStus":False,"contents":"test_index2","id":2},{"checkStus":False,"contents":"test_index2/test_index2_1","id":3},{"checkStus":False,"contents":"test_index2/test_index&#39;2_2","id":4},{"checkStus":False,"contents":"","id":""}]
+        if r.get("id") == "itemtype":
+            assert r.get("check_val") == [{"checkStus":False,"contents":"test_itemtype01","id":"test_itemtype01"},{"checkStus":False,"contents":"test&#39;s itemtype02","id":"test&#39;s itemtype02"},{"checkStus":False,"contents":"","id":""}]
+    
+    # exist search_management
+    search_management = SearchManagement(
+        search_conditions=[
+            {"id":"title","mapping":["title"],"contents":"","inputVal":"","inputType":"text","contents_value":{"en":"Title","ja":"タイトル"}},
+            {"id":"iid","mapping":["iid"],"contents":"","inputVal":"","check_val":[],"inputType":"checkbox_list","contents_value":{"en":"Index","ja":"インデックス"}},
+            {"id":"itemtype","mapping":["itemtype"],"contents":"","inputVal":"","check_val":[],"inputType":"checkbox_list","contents_value":{"en":"Item Type","ja":"アイテムタイプ"}}
+        ]
+    )
+    db.session.add(search_management)
+    db.session.commit()
+    with patch("weko_search_ui.api.Indexes.get_browsing_tree",return_value=index_tree):
+        res = get_search_detail_keyword("")
+    assert type(res) == str
+    test = {"condition_setting":[
+        {"contents":"タイトル","contents_value":{"en":"Title","ja":"タイトル"},"id":"title","inputType":"text","inputVal":"","mapping":["title"]},
+        {"check_val":[{"checkStus":False,"contents":"test_index1","id":1},{"checkStus":False,"contents":"test_index2","id":2},{"checkStus":False,"contents":"test_index2/test_index2_1","id":3},{"checkStus":False,"contents":"test_index2/test_index&#39;2_2","id":4},{"checkStus":False,"contents":"","id":""}],"contents":"インデックス","contents_value":{"en":"Index","ja":"インデックス"},"id":"iid","inputType":"checkbox_list","inputVal":"","mapping":["iid"]},
+        {"check_val":[{"checkStus":False,"contents":"test_itemtype01","id":"test_itemtype01"},{"checkStus":False,"contents":"test&#39;s itemtype02","id":"test&#39;s itemtype02"},{"checkStus":False,"contents":"","id":""}],"contents":"アイテムタイプ","contents_value":{"en":"Item Type","ja":"アイテムタイプ"},"id":"itemtype","inputType":"checkbox_list","inputVal":"","mapping":["itemtype"]}
+    ]}
+    assert json.loads(res) == test
 
 # def get_search_detail_keyword(str):
-def test_get_search_detail_keyword(i18n_app, users, db):
-    from sqlalchemy.sql import func
-    
-    test_1 = SearchManagement(
-        id=1,
-        default_dis_sort_index=json.dumps({"custom_sort": "custom_sort"}),
-        sort_setting={
-            "allow": [
-                {
-                    "id": "_rfind"
-                }
-            ]
-        },
-        default_dis_sort_keyword=json.dumps({"custom_sort": "custom_sort"})
+def test_get_search_detail_keyword_fix52136(i18n_app, users, db, redis_connect):
+    index1 = Index(# public_state is True
+        parent=0,
+        position=1,
+        index_name_english="test_index1",
+        index_link_name_english="test_index_link1",
+        harvest_public_state=False,
+        public_state=True,
+        browsing_role="3,-99",
     )
-    data_1 = [[1, 2], [3, 4]]
-    data_2 = [{
-        "id": 1,
-        "parent_name": "test"
-    }]
-
-    assert isinstance(get_search_detail_keyword("str"), str)
-    assert len(json.loads(get_search_detail_keyword("str")).get('condition_setting')) > 0
-
-    db.session.add(test_1)
+    db.session.add(index1)
+    index2 = Index(# public_state is True
+        parent=0,
+        position=2,
+        index_name_english="test_index2",
+        index_link_name_english="test_index_link2",
+        harvest_public_state=True,
+        public_state=True,
+        browsing_role="3,-99",
+    )
+    db.session.add(index2)
+    index3 = Index(# public_state is False
+        parent=1,
+        position=1,
+        index_name_english="test_index3",
+        index_link_name_english="test_index_link3",
+        harvest_public_state=True,
+        public_state=False,
+        browsing_role="3",
+    )
+    db.session.add(index3)
+    index4 = Index(# parent is private
+        parent=3,
+        position=1,
+        index_name_english="test_index4",
+        index_link_name_english="test_index_link4",
+        harvest_public_state=True,
+        public_state=True,
+        browsing_role="3,-99",
+    )
+    db.session.add(index4)
+    index5 = Index(# parent is public
+        parent=2,
+        position=1,
+        index_name_english="test_index5",
+        index_link_name_english="test_index_link5",
+        harvest_public_state=True,
+        public_state=True,
+        browsing_role="3,-99",
+    )
+    db.session.add(index5)
     db.session.commit()
 
-    with patch("weko_records.utils.get_keywords_data_load", return_value=data_1):
-        with patch("weko_search_ui.api.get_childinfo", return_value=data_2):
-            assert len(json.loads(get_search_detail_keyword("str")).get('condition_setting')) <= 0
+    with patch.dict("os.environ", {"INVENIO_WEB_HOST_NAME": "test"}):
+        with patch("flask_login.utils._get_user", return_value=users[3]["obj"]):
+            result = get_search_detail_keyword("str")
+            assert isinstance(result, str)
+            result = json.loads(result)
+            assert len((result).get("condition_setting")) > 0
+            for k_v in result.get("condition_setting"):
+                if k_v.get("id") == "iid":
+                    assert len(k_v["check_val"]) == 5
+
+        result = get_search_detail_keyword("str")
+        assert isinstance(result, str)
+        result = json.loads(result)
+        assert len((result).get("condition_setting")) > 0
+        for k_v in result.get("condition_setting"):
+            if k_v.get("id") == "iid":
+                assert len(k_v["check_val"]) == 3
+        redis_connect.delete("index_tree_view_test_ja")
+        redis_connect.delete("index_reset_tree_view_test_ja")
 
 # def get_childinfo(index_tree, result_list=[], parename=""):
 def test_get_childinfo(i18n_app, users):

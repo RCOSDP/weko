@@ -169,8 +169,12 @@ def create_index():
                 })
                 index = None
                 with current_app.test_request_context() as ctx:
-                    Indexes.create(pid, create_data)
-                    index = Indexes.update(index_id, **update_data)
+                    if Indexes.create(pid, create_data):
+                        index = Indexes.update(index_id, **update_data)
+                        if not index:
+                            return make_response("Could not update data.", 400)
+                    else:
+                        return make_response("Could not create data.", 400)
                 return make_response(json.dumps(dict(index)), 201)
             else:
                 return make_response("index_info can not be null.", 400)

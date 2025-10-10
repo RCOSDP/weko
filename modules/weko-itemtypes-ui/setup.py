@@ -95,6 +95,8 @@ setup(
             'weko_itemtypes_ui.admin:itemtype_properties_adminview',
             'weko_itemtypes_ui_mapping = '
             'weko_itemtypes_ui.admin:itemtype_mapping_adminview',
+            'weko_itemtypes_ui_rocrate_mapping = '
+            'weko_itemtypes_ui.admin:itemtype_rocrate_mapping_adminview',
         ],
         'invenio_base.api_blueprints': [
             'weko_itemtypes_ui = weko_itemtypes_ui.views:blueprint_api',
@@ -108,12 +110,16 @@ setup(
             ' = weko_itemtypes_ui.bundles:js_mapping',
             'weko_itemtypes_property_ui_js'
             ' = weko_itemtypes_ui.bundles:js_property',
+            'weko_itemtypes_rocrate_mapping_ui_js'
+            ' = weko_itemtypes_ui.bundles:js_rocrate_mapping',
             'weko_itemtypes_ui_dependencies_js'
             ' = weko_itemtypes_ui.bundles:js_dependencies',
             'weko_itemtypes_ui_schema_editor_js'
             ' = weko_itemtypes_ui.bundles:js_schema_editor',
             'weko_mapping_ui_css = weko_itemtypes_ui.bundles:style_mapping',
             'weko_itemtypes_ui_css = weko_itemtypes_ui.bundles:style',
+            'weko_rocrate_mapping_ui_css'
+            ' = weko_itemtypes_ui.bundles:style_rocrate_mapping',
         ],
         'invenio_access.actions': [
             'item_type_access = '

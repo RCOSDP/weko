@@ -1,15 +1,15 @@
 # Translations template for weko-groups.
-# Copyright (C) 2019 National Institute of Informatics
+# Copyright (C) 2025 National Institute of Informatics
 # This file is distributed under the same license as the weko-groups
 # project.
-# FIRST AUTHOR <EMAIL@ADDRESS>, 2019.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2025.
 #
 #, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: weko-groups 0.1.0.dev20170000\n"
 "Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
-"POT-Creation-Date: 2019-07-02 09:24+0000\n"
+"POT-Creation-Date: 2025-10-03 14:09+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -24,208 +24,208 @@ msgid ""
 "Put each email on new line."
 msgstr ""
 
-#: weko_groups/models.py:54
+#: weko_groups/models.py:55
 msgid "Users can self-subscribe."
 msgstr ""
 
-#: weko_groups/models.py:56
+#: weko_groups/models.py:57
 msgid "Users can self-subscribe but requires administrator approval."
 msgstr ""
 
-#: weko_groups/models.py:58
+#: weko_groups/models.py:59
 msgid "Subscription is by administrator invitation only."
 msgstr ""
 
-#: weko_groups/models.py:96
+#: weko_groups/models.py:97
 msgid "Group membership is fully public."
 msgstr ""
 
-#: weko_groups/models.py:98
+#: weko_groups/models.py:99
 msgid "Only group members can view other members."
 msgstr ""
 
-#: weko_groups/models.py:100
+#: weko_groups/models.py:101
 msgid "Only administrators can view members."
 msgstr ""
 
-#: weko_groups/models.py:152
+#: weko_groups/models.py:153
 msgid "Public"
 msgstr ""
 
-#: weko_groups/models.py:153
+#: weko_groups/models.py:154
 msgid "Group members"
 msgstr ""
 
-#: weko_groups/models.py:154
+#: weko_groups/models.py:155
 msgid "Group admins"
 msgstr ""
 
-#: weko_groups/models.py:159
+#: weko_groups/models.py:160
 msgid "Open"
 msgstr ""
 
-#: weko_groups/models.py:160
+#: weko_groups/models.py:161
 msgid "Open with approval"
 msgstr ""
 
-#: weko_groups/models.py:161
+#: weko_groups/models.py:162
 msgid "Closed"
 msgstr ""
 
-#: weko_groups/models.py:172 weko_groups/templates/weko_groups/index.html:75
+#: weko_groups/models.py:173 weko_groups/templates/weko_groups/index.html:75
 msgid "Name"
 msgstr ""
 
-#: weko_groups/models.py:173
+#: weko_groups/models.py:174
 msgid "Required. A name of a group."
 msgstr ""
 
-#: weko_groups/models.py:180
+#: weko_groups/models.py:181
 msgid "Description"
 msgstr ""
 
-#: weko_groups/models.py:181
+#: weko_groups/models.py:182
 msgid "Optional. A short description of the group. Default: Empty"
 msgstr ""
 
-#: weko_groups/models.py:194
+#: weko_groups/models.py:195
 msgid "Privacy Policy"
 msgstr ""
 
-#: weko_groups/models.py:204
+#: weko_groups/models.py:205
 msgid "Subscription Policy"
 msgstr ""
 
-#: weko_groups/models.py:544
+#: weko_groups/models.py:568
 msgid "Pending admin approval"
 msgstr ""
 
-#: weko_groups/models.py:545
+#: weko_groups/models.py:569
 msgid "Pending member approval"
 msgstr ""
 
-#: weko_groups/models.py:546
+#: weko_groups/models.py:570
 msgid "Active"
 msgstr ""
 
-#: weko_groups/views.py:100
+#: weko_groups/views.py:139
 #, python-format
 msgid "%(icon)s Groups"
 msgstr ""
 
 #: weko_groups/templates/weko_groups/new_member.html:32
-#: weko_groups/templates/weko_groups/pending.html:30 weko_groups/views.py:104
+#: weko_groups/templates/weko_groups/pending.html:30 weko_groups/views.py:143
 msgid "Groups"
 msgstr ""
 
-#: weko_groups/templates/weko_groups/index.html:54 weko_groups/views.py:134
+#: weko_groups/templates/weko_groups/index.html:54 weko_groups/views.py:173
 msgid "Requests"
 msgstr ""
 
-#: weko_groups/templates/weko_groups/index.html:52 weko_groups/views.py:155
+#: weko_groups/templates/weko_groups/index.html:52 weko_groups/views.py:194
 msgid "Invitations"
 msgstr ""
 
-#: weko_groups/views.py:172
+#: weko_groups/views.py:211
 msgid "New"
 msgstr ""
 
-#: weko_groups/views.py:188
+#: weko_groups/views.py:228
 #, python-format
 msgid "Group \"%(name)s\" created"
 msgstr ""
 
-#: weko_groups/views.py:191
+#: weko_groups/views.py:232
 msgid "Group creation failure"
 msgstr ""
 
 #: weko_groups/templates/weko_groups/index.html:99
-#: weko_groups/templates/weko_groups/members.html:35 weko_groups/views.py:202
-#: weko_groups/views.py:205
+#: weko_groups/templates/weko_groups/members.html:35 weko_groups/views.py:247
+#: weko_groups/views.py:250
 msgid "Manage"
 msgstr ""
 
-#: weko_groups/views.py:223
+#: weko_groups/views.py:269
 #, python-format
 msgid "Group \"%(name)s\" was updated"
 msgstr ""
 
-#: weko_groups/views.py:234
+#: weko_groups/views.py:281
 #, python-format
 msgid "You cannot edit group %(group_name)s"
 msgstr ""
 
-#: weko_groups/views.py:266
+#: weko_groups/views.py:315
 #, python-format
 msgid "Successfully removed group \"%(group_name)s\""
 msgstr ""
 
-#: weko_groups/views.py:271
+#: weko_groups/views.py:320
 #, python-format
 msgid "You cannot delete the group %(group_name)s"
 msgstr ""
 
 #: weko_groups/templates/weko_groups/index.html:76
 #: weko_groups/templates/weko_groups/index.html:107
-#: weko_groups/templates/weko_groups/new.html:39 weko_groups/views.py:283
-#: weko_groups/views.py:286
+#: weko_groups/templates/weko_groups/new.html:39 weko_groups/views.py:332
+#: weko_groups/views.py:335
 msgid "Members"
 msgstr ""
 
-#: weko_groups/views.py:320
+#: weko_groups/views.py:369
 #, python-format
 msgid "You are not allowed to see members of this group %(group_name)s."
 msgstr ""
 
-#: weko_groups/views.py:348
+#: weko_groups/views.py:399
 #, python-format
 msgid "You have successfully left %(group_name)s group."
 msgstr ""
 
-#: weko_groups/views.py:357
+#: weko_groups/views.py:408
 #, python-format
 msgid "You cannot leave the group %(group_name)s"
 msgstr ""
 
-#: weko_groups/views.py:387
+#: weko_groups/views.py:440
 #, python-format
 msgid "%(user)s accepted to %(group_name)s group."
 msgstr ""
 
-#: weko_groups/views.py:393
+#: weko_groups/views.py:446
 #, python-format
 msgid "You cannot approve memberships for the group %(group_name)s"
 msgstr ""
 
-#: weko_groups/views.py:423
+#: weko_groups/views.py:478
 #, python-format
 msgid "User %(user_email)s was removed from %(group_name)s group."
 msgstr ""
 
-#: weko_groups/views.py:428
+#: weko_groups/views.py:483
 #, python-format
 msgid "You cannot delete users of the group %(group_name)s"
 msgstr ""
 
-#: weko_groups/views.py:457
+#: weko_groups/views.py:514
 #, python-format
 msgid "You are now part of %(group_name)s group."
 msgstr ""
 
-#: weko_groups/views.py:485
+#: weko_groups/views.py:544
 #, python-format
 msgid "You have rejected invitation to %(group_name)s group."
 msgstr ""
 
-#: weko_groups/views.py:496
+#: weko_groups/views.py:555
 msgid "NewMember"
 msgstr ""
 
-#: weko_groups/views.py:513
+#: weko_groups/views.py:572
 msgid "Requests sent!"
 msgstr ""
 
-#: weko_groups/views.py:523
+#: weko_groups/views.py:582
 #, python-format
 msgid ""
 "You cannot invite users or yourself (i.e. join) to the group "
