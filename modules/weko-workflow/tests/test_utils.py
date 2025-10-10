@@ -21,7 +21,7 @@ from invenio_accounts.models import User
 from invenio_records_files.models import RecordsBuckets
 from invenio_files_rest.models import Bucket
 from invenio_cache import current_cache
-from invenio_pidstore.models import PersistentIdentifier, PIDStatus, RecordIdentifier
+from invenio_pidstore.models import PersistentIdentifier, PIDStatus, RecordIdentifier, PIDDoesNotExistError
 from flask_login.utils import login_user
 from .helpers import json_data, create_activity
 from invenio_mail.models import MailConfig, MailTemplateUsers
@@ -159,7 +159,9 @@ from weko_workflow.utils import (
     get_non_extract_files_by_recid,
     check_activity_settings
 )
-from weko_workflow.api import WorkActivity
+from weko_workflow.api import GetCommunity, UpdateItem, WorkActivity, WorkActivityHistory, WorkFlow
+from weko_workflow.models import Activity,ActionIdentifier
+from datetime import timedelta
 
 # def get_current_language():
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_get_current_language -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
@@ -1109,6 +1111,280 @@ def test_prepare_edit_workflow(app, workflow, db_records,users,mocker, order_if)
         deposit = db_records[6][6]
         res = prepare_edit_workflow(data,recid,deposit)
         assert res.activity_id != None
+
+        mocker.patch("weko_workflow.utils.IdentifierHandle.get_pidstore")
+        with patch("weko_deposit.api.WekoRecord.get_record_by_pid", return_value=None):
+            recid = db_records[4][0]
+            deposit = db_records[4][6]
+            res = prepare_edit_workflow(data,recid,deposit)
+            assert res.activity_id != None
+
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_prepare_edit_workflow_existing_draft_pid_and_bucket -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_prepare_edit_workflow_existing_draft_pid_and_bucket(app, workflow, db_records, users, mocker):
+    with app.test_request_context():
+        login_user(users[2]["obj"])
+        mocker.patch("weko_workflow.utils.WekoDeposit.update")
+        mocker.patch("weko_workflow.utils.WekoDeposit.commit")
+        mocker.patch("weko_workflow.utils.WekoDeposit.publish")
+
+        data = {
+            "flow_id": workflow["flow"].id,
+            "workflow_id": workflow["workflow"].id,
+            "community": 1,
+            "itemtype_id": 1,
+            "activity_login_user": 1,
+            "activity_update_user": 1
+        }
+        recid = db_records[3][0]
+        deposit = db_records[3][6]
+
+        # 52716-2 existing draft pid and bucket
+        res = prepare_edit_workflow(data, recid, deposit)
+        assert res.item_id != None
+
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_prepare_edit_workflow_existing_draft_pid_no_bucket -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_prepare_edit_workflow_existing_draft_pid_no_bucket(app, workflow, db_records, users, mocker):
+    with app.test_request_context():
+        login_user(users[2]["obj"])
+        draft_pid = db_records[12][0]
+        deposit = db_records[12][6]
+
+        before_count_bucket = Bucket.query.count()
+        before_count_records_buckets = RecordsBuckets.query.count()
+
+        mocker.patch("weko_workflow.utils.WekoDeposit.update")
+        mocker.patch("weko_workflow.utils.WekoDeposit.commit")
+        mocker.patch("weko_workflow.utils.WekoDeposit.publish")
+
+        mocker.patch("invenio_deposit.api.Deposit.files")
+        create_bucket_mock = mocker.patch("invenio_files_rest.models.Bucket.create")
+        data = {
+            "flow_id": workflow["flow"].id,
+            "workflow_id": workflow["workflow"].id,
+            "community": 1,
+            "itemtype_id": 1,
+            "activity_login_user": 1,
+            "activity_update_user": 1
+        }
+        mocker.patch("invenio_files_rest.models.Bucket.get" , return_value=None)
+
+        # 52716-3 existing draft pid but no bucket
+        with patch("invenio_records_files.models.RecordsBuckets.create", side_effect=SQLAlchemyError("Test Exception")) as create_records_buckets_mock:
+            with pytest.raises(SQLAlchemyError) as excinfo:
+                prepare_edit_workflow(data, draft_pid, deposit)
+
+                assert create_bucket_mock.called
+                assert create_records_buckets_mock.called
+                assert str(ex) == "Test Exception"
+
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_prepare_edit_workflow_check_doi -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_prepare_edit_workflow_check_doi(app, workflow, db_records, users, mocker):
+    with app.test_request_context():
+        login_user(users[2]["obj"])
+        mocker.patch("weko_workflow.utils.WekoDeposit.update")
+        mocker.patch("weko_workflow.utils.WekoDeposit.commit")
+        mocker.patch("weko_workflow.utils.WekoDeposit.publish")
+        draft_pid = db_records[3][0]
+        deposit = db_records[3][6]
+        data = {
+            "flow_id": workflow["flow"].id,
+            "workflow_id": workflow["workflow"].id,
+            "community": 1,
+            "itemtype_id": 1,
+            "activity_login_user": 1,
+            "activity_update_user": 1
+        }
+        mock_pid_doi = MagicMock()
+        # 52716-4 pid_doi.status == PIDStatus.DELETED
+        mock_pid_doi.status = PIDStatus.DELETED
+        with patch("weko_workflow.utils.IdentifierHandle.get_pidstore", return_value=mock_pid_doi):
+            rtn = prepare_edit_workflow(data, draft_pid, deposit)
+
+            action_identifier = ActionIdentifier.query.filter_by(activity_id=rtn.activity_id).first()
+            assert action_identifier.action_identifier_select == -3
+
+        # 52716-5 pid_doi.status is not PIDStatus.DELETED
+        mock_pid_doi.status = PIDStatus.REGISTERED
+        with patch("weko_workflow.utils.IdentifierHandle.get_pidstore", return_value=mock_pid_doi):
+            rtn = prepare_edit_workflow(data, draft_pid, deposit)
+
+            action_identifier = ActionIdentifier.query.filter_by(activity_id=rtn.activity_id).first()
+            assert action_identifier.action_identifier_select == -1
+
+        # 52716-6 pid_doi is None
+        mock_pid_doi = None
+        with patch("weko_workflow.utils.IdentifierHandle.get_pidstore", return_value=mock_pid_doi):
+            rtn = prepare_edit_workflow(data, draft_pid, deposit)
+
+            action_identifier = ActionIdentifier.query.filter_by(activity_id=rtn.activity_id).first()
+            assert action_identifier.action_identifier_select == 0
+
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_prepare_edit_workflow_existing_feedbackmail -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_prepare_edit_workflow_existing_feedbackmail(app, workflow, db_records, users, mocker):
+    with app.test_request_context():
+        login_user(users[2]["obj"])
+        mocker.patch("weko_workflow.utils.WekoDeposit.update")
+        mocker.patch("weko_workflow.utils.WekoDeposit.commit")
+        mocker.patch("weko_workflow.utils.WekoDeposit.publish")
+
+        data = {
+            "flow_id": workflow["flow"].id,
+            "workflow_id": workflow["workflow"].id,
+            "community": 1,
+            "itemtype_id": 1,
+            "activity_login_user": 1,
+            "activity_update_user": 1
+        }
+        recid = db_records[3][0]
+        deposit = db_records[3][6]
+
+        # 52716-7 feedbackmail exists
+        with patch("weko_workflow.utils.FeedbackMailList.get_mail_list_by_item_id", return_value=["test@example.com"]):
+            mock_create_or_update_action_feedbackmail = mocker.patch("weko_workflow.api.WorkActivity.create_or_update_action_feedbackmail")
+            res = prepare_edit_workflow(data, recid, deposit)
+
+            assert mock_create_or_update_action_feedbackmail.called
+
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_prepare_edit_workflow_rtn_none -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_prepare_edit_workflow_rtn_none(app, workflow, db_records, users, mocker):
+    with app.test_request_context():
+        login_user(users[2]["obj"])
+        mocker.patch("weko_workflow.utils.WekoDeposit.update")
+        mocker.patch("weko_workflow.utils.WekoDeposit.commit")
+        mocker.patch("weko_workflow.utils.WekoDeposit.publish")
+
+        data = {
+            "flow_id": workflow["flow"].id,
+            "workflow_id": workflow["workflow"].id,
+            "community": 1,
+            "itemtype_id": 1,
+            "activity_login_user": 1,
+            "activity_update_user": 1
+        }
+        recid = db_records[3][0]
+        deposit = db_records[3][6]
+
+        # 52716-9 failed init_activity
+        with patch("weko_workflow.api.WorkActivity.init_activity", return_value=None):
+            res = prepare_edit_workflow(data, recid, deposit)
+
+            assert res is None
+
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_prepare_edit_workflow_exception -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_prepare_edit_workflow_exception(app, workflow, db_records, users, mocker):
+    with app.test_request_context():
+        login_user(users[2]["obj"])
+        draft_pid = db_records[3][0]
+        deposit = db_records[3][6]
+        data = {
+            "flow_id": workflow["flow"].id,
+            "workflow_id": workflow["workflow"].id,
+            "community": 1,
+            "itemtype_id": 1,
+            "activity_login_user": 1,
+            "activity_update_user": 1
+        }
+        mocker.patch("weko_workflow.utils.WekoDeposit.update")
+        mocker.patch("weko_workflow.utils.WekoDeposit.publish")
+        # 52716-10 raises SQLAlchemyError
+        with patch("weko_workflow.utils.WekoDeposit.commit", side_effect=SQLAlchemyError("Test Exception")):
+            with pytest.raises(SQLAlchemyError) as excinfo:
+                prepare_edit_workflow(data, draft_pid, deposit)
+            assert str(excinfo.value) == "Test Exception"
+
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_prepare_edit_workflow_draft_item_exception -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_prepare_edit_workflow_draft_item_exception(app, workflow, db_records, users, mocker):
+    with app.test_request_context():
+        login_user(users[2]["obj"])
+        mocker.patch("weko_workflow.utils.WekoDeposit.update")
+        mocker.patch("weko_workflow.utils.WekoDeposit.commit")
+        mocker.patch("weko_workflow.utils.WekoDeposit.publish")
+        draft_pid = db_records[2][0]
+        deposit = db_records[2][6]
+        data = {
+            "flow_id": workflow["flow"].id,
+            "workflow_id": workflow["workflow"].id,
+            "community": 1,
+            "itemtype_id": 1,
+            "activity_login_user": 1,
+            "activity_update_user": 1
+        }
+        # 52716-11 failed prepare_draft_item
+        mocker.patch("weko_deposit.api.WekoDeposit.prepare_draft_item", return_value=None)
+        with pytest.raises(AttributeError) as excinfo:
+            prepare_edit_workflow(data, draft_pid, deposit)
+        assert "object has no attribute" in str(excinfo.value)
+
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_prepare_edit_workflow_get_record_exception -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_prepare_edit_workflow_get_record_exception(app, workflow, db_records, users, mocker):
+    with app.test_request_context():
+        login_user(users[2]["obj"])
+        mocker.patch("weko_workflow.utils.WekoDeposit.update")
+        mocker.patch("weko_workflow.utils.WekoDeposit.commit")
+        mocker.patch("weko_workflow.utils.WekoDeposit.publish")
+        draft_pid = db_records[3][0]
+        deposit = db_records[3][6]
+        data = {
+            "flow_id": workflow["flow"].id,
+            "workflow_id": workflow["workflow"].id,
+            "community": 1,
+            "itemtype_id": 1,
+            "activity_login_user": 1,
+            "activity_update_user": 1
+        }
+        # 52716-12 failed get_record
+        mocker.patch("weko_deposit.api.WekoDeposit.get_record", return_value=None)
+        with pytest.raises(AttributeError) as excinfo:
+            prepare_edit_workflow(data, draft_pid, deposit)
+        assert "object has no attribute" in str(excinfo.value)
+
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_prepare_edit_workflow_convert_item_exception -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_prepare_edit_workflow_convert_item_exception(app, workflow, db_records, users, mocker):
+    with app.test_request_context():
+        login_user(users[2]["obj"])
+        mocker.patch("weko_workflow.utils.WekoDeposit.update")
+        mocker.patch("weko_workflow.utils.WekoDeposit.commit")
+        mocker.patch("weko_workflow.utils.WekoDeposit.publish")
+        draft_pid = db_records[12][0]
+        deposit = db_records[12][6]
+        data = {
+            "flow_id": workflow["flow"].id,
+            "workflow_id": workflow["workflow"].id,
+            "community": 1,
+            "itemtype_id": 1,
+            "activity_login_user": 1,
+            "activity_update_user": 1
+        }
+        # 52716-13 failed convert_record_to_item_metadata
+        with pytest.raises(KeyError) as excinfo:
+            prepare_edit_workflow(data, draft_pid, deposit)
+        assert isinstance(excinfo.value, KeyError)
+
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_prepare_edit_workflow_pidstore_exception -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_prepare_edit_workflow_pidstore_exception(app, workflow, db_records, users, mocker):
+    with app.test_request_context():
+        login_user(users[2]["obj"])
+        mocker.patch("weko_workflow.utils.WekoDeposit.update")
+        mocker.patch("weko_workflow.utils.WekoDeposit.commit")
+        mocker.patch("weko_workflow.utils.WekoDeposit.publish")
+        draft_pid = db_records[3][0]
+        deposit = db_records[3][6]
+        data = {
+            "flow_id": workflow["flow"].id,
+            "workflow_id": workflow["workflow"].id,
+            "community": 1,
+            "itemtype_id": 1,
+            "activity_login_user": 1,
+            "activity_update_user": 1
+        }
+        # 52716-14 failed get_pidstore
+        with patch("weko_workflow.utils.get_parent_pid_with_type", side_effect=PIDDoesNotExistError("recid", draft_pid.pid_value)):
+            with pytest.raises(PIDDoesNotExistError):
+                rtn = prepare_edit_workflow(data, draft_pid, deposit)
+
+                action_identifier = ActionIdentifier.query.filter_by(activity_id=rtn.activity_id).first()
+                assert action_identifier.action_identifier_select == 0
+
 
 
 # def prepare_edit_workflow(post_activity, recid, deposit):
