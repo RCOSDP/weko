@@ -237,6 +237,33 @@ def get_index_state():
     return index_state
 
 
+def get_index_state_by_id(id_lst):
+    from weko_records_ui.utils import is_future
+    index_state = {}
+    ids = [index for own_id in id_lst for index in Indexes.get_all_parent_indexes(own_id)]
+    for index in ids:
+        index_id = str(index.id)
+        if not index.harvest_public_state:
+            index_state[index_id] = {
+                'parent': None,
+                'msg': HARVEST_PRIVATE
+            }
+        elif '-99' not in index.browsing_role \
+                or not index.public_state \
+                or (index.public_date and
+                    is_future(index.public_date)):
+            index_state[index_id] = {
+                'parent': None,
+                'msg': PRIVATE_INDEX
+            }
+        else:
+            index_state[index_id] = {
+                'parent': str(index.parent),
+                'msg': OUTPUT_HARVEST
+            }
+    return index_state
+
+
 def is_output_harvest(path_list, index_state):
     def _check(index_id):
         if index_id in index_state:

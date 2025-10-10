@@ -15,7 +15,7 @@ from invenio_mail.models import MailType
 
 # revision identifiers, used by Alembic.
 revision = 'b1495e98969b'
-down_revision = 'c509a18eb6a0'
+down_revision = 'ddbb24276fdc'
 branch_labels = ()
 depends_on = None
 

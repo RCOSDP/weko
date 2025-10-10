@@ -46,7 +46,7 @@
     <div class="panel panel-default">
       <div class="panel-heading clearfix">
           {%-if community %}
-            {%- set community_param = '&community=' + community.id -%}
+            {%- set community_param = '&c=' + community.id -%}
             {%- set param = '&root_index=true&q=' + community.index.id|string + community_param -%}
           {%- else %}
             {%- set param = '&q=0' -%}

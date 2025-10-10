@@ -56,8 +56,8 @@ from weko_records.api import FeedbackMailList, ItemLink, ItemsMetadata, WekoReco
 from invenio_pidrelations.serializers.utils import serialize_relations
 from weko_deposit.api import WekoDeposit, WekoFileObject, WekoIndexer, \
     WekoRecord, _FormatSysBibliographicInformation, _FormatSysCreator
-from weko_deposit.config import WEKO_DEPOSIT_BIBLIOGRAPHIC_TRANSLATIONS
-from invenio_accounts.testutils import login_user_via_session
+from weko_deposit.config import WEKO_DEPOSIT_BIBLIOGRAPHIC_TRANSLATIONS, WEKO_DEPOSIT_SYS_CREATOR_KEY
+from invenio_accounts.testutils import login_user_via_view,login_user_via_session
 from invenio_accounts.models import User
 from weko_items_ui.config import WEKO_ITEMS_UI_MS_MIME_TYPE
 from weko_workflow.models import Activity
@@ -1030,92 +1030,87 @@ class TestWekoDeposit:
                             ('item_1617258105262', {'attribute_name': 'Resource Type', 'attribute_value_mlt': [{'resourceuri': 'http://purl.org/coar/resource_type/c_5794', 'resourcetype': 'conference paper'}]}), 
                             ('item_title', 'title'), ('item_type_id', '1'), ('control_number', 1), ('author_link', []), 
                             ('_oai', {'id': '1'}), ('weko_shared_ids', []), ('owner', 1), ('owners', [1]), ('publish_date', '2022-08-20'), 
-                            ('title', ['title']), ('relation_version_is_last', True), ('path', ['1']), ('publish_status','0')])
+                            ('title', ['title']), ('relation_version_is_last', True), ('path', ['1']), ('publish_status','0'), ('weko_link', '')])
         test2 = None
 
         with patch("weko_index_tree.api.Indexes.get_path_list", return_value=['1']):
-
-            ret1,ret2 = deposit.convert_item_metadata(index_obj,record_data)
-            assert set(ret1) == set(test1)
-            assert ret2 == test2
-
-            with patch("weko_deposit.api.RedisConnection.connection",side_effect=BaseException("test_error")):
-                with pytest.raises(HTTPException) as httperror:
-                    ret = deposit.convert_item_metadata(index_obj,{})
-                    assert httperror.value.code == 500
-                    assert httperror.value.data == "Failed to register item!"
-
-            with patch("weko_deposit.api.json_loader",side_effect=RuntimeError):
-                with pytest.raises(RuntimeError):
-                    ret = deposit.convert_item_metadata(index_obj,record_data)
-            with patch("weko_deposit.api.json_loader",side_effect=ValueError):
-                with pytest.raises(ValueError):
-                    deposit.convert_item_metadata(index_obj,record_data)
-            with patch("weko_deposit.api.json_loader",side_effect=BaseException("test_error")):
-                with pytest.raises(HTTPException) as httperror:
-                    ret = deposit.convert_item_metadata(index_obj,record_data)
-                    assert httperror.value.code == 500
-                    assert httperror.value.data == "MAPPING_ERROR"
-
-            with patch("weko_deposit.api.WekoDeposit.convert_type_shared_user_ids",return_value={}):
-                record['item_data']['shared_user_ids'] = []
-                deposit = record['deposit']
-                record_data = record['item_data']
-                ret3, _ = deposit.convert_item_metadata(index_obj, record_data)
-                assert ret3['weko_shared_ids'] == []
             with app.test_client() as client:
                 # ログインする
                 response = client.post(url_for_security('login'),
                                    data={'email': users[0]["email"], 'password': '123456'},
                                    environ_base={'REMOTE_ADDR': '127.0.0.1'})
                 assert response.status_code == 302
+
+                ret1,ret2 = deposit.convert_item_metadata(index_obj,record_data)
+                assert set(ret1) == set(test1)
+                assert ret2 == test2
+
+                with patch("weko_deposit.api.RedisConnection.connection",side_effect=BaseException("test_error")):
+                    with pytest.raises(HTTPException) as httperror:
+                        ret = deposit.convert_item_metadata(index_obj,{})
+                        assert httperror.value.code == 500
+                        assert httperror.value.data == "Failed to register item!"
+
+                with patch("weko_deposit.api.json_loader",side_effect=RuntimeError):
+                    with pytest.raises(RuntimeError):
+                        ret = deposit.convert_item_metadata(index_obj,record_data)
+                with patch("weko_deposit.api.json_loader",side_effect=ValueError):
+                    with pytest.raises(ValueError):
+                        deposit.convert_item_metadata(index_obj,record_data)
+                with patch("weko_deposit.api.json_loader",side_effect=BaseException("test_error")):
+                    with pytest.raises(HTTPException) as httperror:
+                        ret = deposit.convert_item_metadata(index_obj,record_data)
+                        assert httperror.value.code == 500
+                        assert httperror.value.data == "MAPPING_ERROR"
+
+                with patch("weko_deposit.api.WekoDeposit.convert_type_shared_user_ids",return_value={}):
+                    record['item_data']['shared_user_ids'] = []
+                    deposit = record['deposit']
+                    record_data = record['item_data']
+                    ret3, _ = deposit.convert_item_metadata(index_obj, record_data)
+                    assert ret3['weko_shared_ids'] == []
+
                 record['item_data']['shared_user_ids'] = []
                 deposit = record['deposit']
                 record_data = record['item_data']
                 ret3, _ = deposit.convert_item_metadata(index_obj, record_data)
                 assert ret3['weko_shared_ids'] == []
 
-            record['item_data']['shared_user_ids'] = []
-            deposit = record['deposit']
-            record_data = record['item_data']
-            ret3, _ = deposit.convert_item_metadata(index_obj, record_data)
-            assert ret3['weko_shared_ids'] == []
+                record['item_data']['shared_user_ids'] = [2,3]
+                deposit = record['deposit']
+                record_data = record['item_data']
+                ret3, _ = deposit.convert_item_metadata(index_obj, record_data)
+                assert ret3['weko_shared_ids'] == [2,3]
 
-            record['item_data']['shared_user_ids'] = [2,3]
-            deposit = record['deposit']
-            record_data = record['item_data']
-            ret3, _ = deposit.convert_item_metadata(index_obj, record_data)
-            assert ret3['weko_shared_ids'] == [2,3]
+                # data = None
+                with pytest.raises(BaseException):
+                    record['item_data']['shared_user_ids'] = []
+                    deposit = record['deposit']
+                    ret, _ = deposit.convert_item_metadata(index_obj)
+                    assert error.value.code == 500
 
-            # data = None
-            with pytest.raises(BaseException):
-                record['item_data']['shared_user_ids'] = []
+                # data = None and radis exist
+                redis_connection = RedisConnection()
+                datastore = redis_connection.connection(db=app.config['CACHE_REDIS_DB'], kv = True)
+                cache_key = app.config['WEKO_DEPOSIT_ITEMS_CACHE_PREFIX'].format(pid_value=deposit.pid.pid_value)
+                print("cache_key:{}".format(cache_key))
+                datastore.put(cache_key, json.dumps(record['item_data']).encode('utf-8'))
                 deposit = record['deposit']
                 ret, _ = deposit.convert_item_metadata(index_obj)
-                assert error.value.code == 500
+                assert ret['weko_shared_ids'] == []
 
-            # data = None and radis exist
-            redis_connection = RedisConnection()
-            datastore = redis_connection.connection(db=app.config['CACHE_REDIS_DB'], kv = True)
-            cache_key = app.config['WEKO_DEPOSIT_ITEMS_CACHE_PREFIX'].format(pid_value=deposit.pid.pid_value)
-            print("cache_key:{}".format(cache_key))
-            datastore.put(cache_key, json.dumps(record['item_data']).encode('utf-8'))
-            deposit = record['deposit']
-            ret, _ = deposit.convert_item_metadata(index_obj)
-            assert ret['weko_shared_ids'] == []
+                # actions == 'publish'
+                deposit = record['deposit']
+                record_data = record['item_data']
+                ret, _ = deposit.convert_item_metadata(index_obj_1, record_data)
+                assert ret['publish_status'] == '0'
 
-            # actions == 'publish'
-            deposit = record['deposit']
-            record_data = record['item_data']
-            ret, _ = deposit.convert_item_metadata(index_obj_1, record_data)
-            assert ret['publish_status'] == '0'
-
-            # 'shared_user_ids' in self
-            deposit = record['deposit']
-            deposit['shared_user_ids'] = [1]
-            record_data = record['item_data']
-            ret, _ = deposit.convert_item_metadata(index_obj, record_data)
-            assert 'shared_user_ids' not in ret
+                # 'shared_user_ids' in self
+                deposit = record['deposit']
+                deposit['shared_user_ids'] = [1]
+                record_data = record['item_data']
+                ret, _ = deposit.convert_item_metadata(index_obj, record_data)
+                assert 'shared_user_ids' not in ret
 
         with patch("weko_index_tree.api.Indexes.get_path_list", return_value=[]):
             with pytest.raises(PIDResolveRESTError) as error:
@@ -1438,7 +1433,7 @@ class TestWekoRecord:
         result = results[0]
         record = result['record']
         # assert record.navi==[]
-        with app.test_request_context(query_string={"community":"test_com"}):
+        with app.test_request_context(query_string={"c":"test_com"}):
             assert record.navi==[]
 
     #     def item_type_info(self):
@@ -1767,7 +1762,27 @@ class Test_FormatSysCreator:
         with app.test_request_context():
             obj = _FormatSysCreator(prepare_creator)
             assert isinstance(obj,_FormatSysCreator)==True
-
+    
+    # 54105-17
+    # constructor parameter is None
+    # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::Test_FormatSysCreator::test_languages_empty_when_none -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
+    def test__init__none(self, app):
+        with app.test_request_context():
+            obj = _FormatSysCreator(None)
+            assert obj.languages == []
+    
+    # 54105-18
+    # not exists creator_names in WEKO_DEPOSIT_SYS_CREATOR_KEY
+    # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::Test_FormatSysCreator::test__init__not_exists_creator_names -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
+    def test__init__not_exists_creator_names(self, app, prepare_creator):
+        test_key = copy.deepcopy(WEKO_DEPOSIT_SYS_CREATOR_KEY)
+        test_key.pop('creator_names')
+        with patch('weko_deposit.api.WEKO_DEPOSIT_SYS_CREATOR_KEY', test_key):
+            with app.test_request_context():
+                obj = _FormatSysCreator(prepare_creator)
+                assert obj.languages == []
+        
+    # 54105-5
 #     def _get_creator_languages_order(self):
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::Test_FormatSysCreator::test__get_creator_languages_order -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
     def test__get_creator_languages_order(self,app,prepare_creator):
@@ -1776,7 +1791,23 @@ class Test_FormatSysCreator:
             assert isinstance(obj,_FormatSysCreator)==True
             obj._get_creator_languages_order()
             assert obj.languages==['ja', 'ja-Kana', 'en']
+    
+    # 54105-22
+    # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::Test_FormatSysCreator::test__get_creator_languages_order2 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
+    def test__get_creator_languages_order2(self,app,prepare_creator):
+        with app.test_request_context():
+            creator = copy.deepcopy(prepare_creator)
+            for creator_affiliation in creator.get(WEKO_DEPOSIT_SYS_CREATOR_KEY['creatorAffiliations']):
+                for affiliation_name in creator_affiliation.get(WEKO_DEPOSIT_SYS_CREATOR_KEY['affiliation_names']):
+                    affiliation_name[WEKO_DEPOSIT_SYS_CREATOR_KEY['affiliation_lang']] = 'fr'
 
+            obj = _FormatSysCreator(creator)
+            assert isinstance(obj,_FormatSysCreator)==True
+            obj._get_creator_languages_order()
+
+            assert obj.languages==['ja', 'ja-Kana', 'en', 'fr']
+
+    # 54105-1
     # def _format_creator_to_show_detail(self, language: str, parent_key: str,
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::Test_FormatSysCreator::test__format_creator_to_show_detail -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
     def test__format_creator_to_show_detail(self,app,prepare_creator):
@@ -1789,6 +1820,7 @@ class Test_FormatSysCreator:
             obj._format_creator_to_show_detail(language,parent_key,lst)
             assert lst==['Joho, Taro']
 
+    # 54105-2
     #* This is for testing only for the changes regarding creatorType
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::Test_FormatSysCreator::test__format_creator_to_show_detail_2 -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
     def test__format_creator_to_show_detail_2(self, app, prepare_creator):
@@ -1804,8 +1836,115 @@ class Test_FormatSysCreator:
                 parent_key,
                 lst
             ) is None
-
+            
+            assert lst ==  ["creator_type_test"]
+    
+    # 54105-6
+    # exists creatorName, creatorNameLang but not exists language = 'ja'
+    # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::Test_FormatSysCreator::test__format_creator_to_show_detail_not_exists_ja -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
+    def test__format_creator_to_show_detail_not_exists_ja(self,app,prepare_creator):
+        with app.test_request_context():
+            prepare_creator['creatorNames'] = [{'creatorName': 'ジョウホウ, タロウ', 'creatorNameLang': 'ja-Kana'}, {'creatorName': 'Joho, Taro', 'creatorNameLang': 'en'}]
+            obj = _FormatSysCreator(prepare_creator)
+            assert isinstance(obj,_FormatSysCreator)==True 
+            language = 'ja'
+            parent_key = 'creatorNames'
+            lst = []
+            obj._format_creator_to_show_detail(language,parent_key,lst)
             assert len(lst) == 0
+
+    # 54105-7
+    # not exists parent_key
+    # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::Test_FormatSysCreator::test__format_creator_to_show_detail_not_exists_parent_key -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
+    def test__format_creator_to_show_detail_not_exists_parent_key(self,app,prepare_creator):
+        with app.test_request_context():
+            obj = _FormatSysCreator(prepare_creator)
+            assert isinstance(obj,_FormatSysCreator)==True 
+            language = 'en'
+            parent_key = None
+            lst = []
+            obj._format_creator_to_show_detail(language,parent_key,lst)
+            assert len(lst) == 0
+    
+    # 54105-8
+    # not exists creatorNames
+    # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::Test_FormatSysCreator::test__format_creator_to_show_detail_not_exists_creatorNames -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
+    def test__format_creator_to_show_detail_not_exists_creatorNames(self,app,prepare_creator):
+        with app.test_request_context():
+            prepare_creator['creatorNames'] = None
+            obj = _FormatSysCreator(prepare_creator)
+            assert isinstance(obj,_FormatSysCreator)==True 
+            language = 'en'
+            parent_key = 'creatorNames'
+            lst = []
+            obj._format_creator_to_show_detail(language,parent_key,lst)
+            assert len(lst) == 0
+
+    # 54105-9
+    # multiple records language = 'en'
+    # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::Test_FormatSysCreator::test__format_creator_to_show_detail_multiple_hits -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
+    def test__format_creator_to_show_detail_multiple_hits(self,app,prepare_creator):
+        with app.test_request_context():
+            prepare_creator['creatorNames'] = [{'creatorName': 'Taro Yamada', 'creatorNameLang': 'en'}, {'creatorName': 'Joho, Taro', 'creatorNameLang': 'en'}]
+            obj = _FormatSysCreator(prepare_creator)
+            assert isinstance(obj,_FormatSysCreator)==True 
+            language = 'en'
+            parent_key = 'creatorNames'
+            lst = []
+            obj._format_creator_to_show_detail(language,parent_key,lst)
+            assert lst == ["Taro Yamada"]
+    
+    # 54105-10
+    # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::Test_FormatSysCreator::test__format_creator_to_show_detail_family_names -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
+    def test__format_creator_to_show_detail_family_names(self, app, prepare_creator):
+        with app.test_request_context():
+            obj = _FormatSysCreator(prepare_creator)
+            assert isinstance(obj,_FormatSysCreator)==True 
+            language = 'en'
+            parent_key = 'familyNames'
+            lst = []
+            obj._format_creator_to_show_detail(language,parent_key,lst)
+            assert lst==['Joho']
+    
+    # 54105-11
+    # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::Test_FormatSysCreator::test__format_creator_to_show_detail_given_names -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
+    def test__format_creator_to_show_detail_given_names(self, app, prepare_creator):
+        with app.test_request_context():
+            obj = _FormatSysCreator(prepare_creator)
+            assert isinstance(obj,_FormatSysCreator)==True 
+            language = 'en'
+            parent_key = 'givenNames'
+            lst = []
+            obj._format_creator_to_show_detail(language,parent_key,lst)
+            assert lst==['Taro']
+    
+    # 54105-12
+    # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::Test_FormatSysCreator::test__format_creator_to_show_detail_alternative_names -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
+    def test__format_creator_to_show_detail_alternative_names(self, app, prepare_creator):
+        with app.test_request_context():
+            obj = _FormatSysCreator(prepare_creator)
+            assert isinstance(obj,_FormatSysCreator)==True 
+            language = 'en'
+            parent_key = 'creatorAlternatives'
+            lst = []
+            obj._format_creator_to_show_detail(language,parent_key,lst)
+            assert lst==['Alternative Name']
+    
+    # 54105-13
+    # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::Test_FormatSysCreator::test__format_creator_to_show_detail_not_exists_creator_name -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
+    def test__format_creator_to_show_detail_not_exists_creator_name(self,app,prepare_creator):
+        with app.test_request_context():
+            for creator in prepare_creator['creatorNames']:
+                if creator['creatorNameLang'] == 'en':
+                    creator.pop('creatorName')
+
+            obj = _FormatSysCreator(prepare_creator)
+            assert isinstance(obj,_FormatSysCreator)==True 
+            language = 'en'
+            parent_key = 'creatorNames'
+            lst = []
+            obj._format_creator_to_show_detail(language,parent_key,lst)
+            assert lst==[]
 
     #     def _get_creator_to_show_popup(self, creators: Union[list, dict],
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::Test_FormatSysCreator::test__get_creator_to_show_popup -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
@@ -1861,14 +2000,16 @@ class Test_FormatSysCreator:
             obj._get_creator_based_on_language(creator_data,creator_list_temp,language)
             assert creator_list_temp==[{'givenName': '太郎', 'givenNameLang': 'ja'}]
 
+    # 54105-3
     # def format_creator(self) -> dict:
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::Test_FormatSysCreator::test_format_creator -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
     def test_format_creator(self,app,prepare_creator):
         with app.test_request_context():
             obj = _FormatSysCreator(prepare_creator)
             assert isinstance(obj,_FormatSysCreator)==True
-            assert obj.format_creator()=={'name': ['Joho, Taro'], 'order_lang': [{'ja': {'creatorName': ['情報, 太郎'], 'creatorAlternative': ['別名'], 'affiliationName': ['ISNI 所属機関'], 'affiliationNameIdentifier': [{'identifier': 'xxxxxx', 'uri': 'xxxxx'}]}}, {'ja-Kana': {'creatorName': ['ジョウホウ, タロウ'], 'creatorAlternative': [], 'affiliationName': [], 'affiliationNameIdentifier': []}}, {'en': {'creatorName': ['Joho, Taro'], 'creatorAlternative': ['Alternative Name'], 'affiliationName': [' Affilication Name'], 'affiliationNameIdentifier': [{'identifier': '', 'uri': ''}]}}]}
-
+            assert obj.format_creator()=={'name': ['Joho, Taro'], 'type': '', 'order_lang': [{'ja': {'creatorName': ['情報, 太郎'], 'creatorAlternative': ['別名'], 'affiliationName': ['ISNI 所属機関'], 'affiliationNameIdentifier': [{'identifier': 'xxxxxx', 'uri': 'xxxxx'}]}}, {'ja-Kana': {'creatorName': ['ジョウホウ, タロウ'], 'creatorAlternative': [], 'affiliationName': [], 'affiliationNameIdentifier': []}}, {'en': {'creatorName': ['Joho, Taro'], 'creatorAlternative': ['Alternative Name'], 'affiliationName': [' Affilication Name'], 'affiliationNameIdentifier': [{'identifier': '', 'uri': ''}]}}]}
+    
+    # 54105-4
     #* This is for testing only for the changes regarding creatorType
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::Test_FormatSysCreator::test_format_creator_2 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
     def test_format_creator_2(self, app, prepare_creator):
@@ -1883,14 +2024,164 @@ class Test_FormatSysCreator:
 
             returnData = obj.format_creator()
 
-            for item in returnData.get("order_lang"):
-                if item.get("ja"):
-                    assert "creatorType" not in list(item.get("ja").keys())
-                elif item.get("ja-Kana"):
-                    assert "creatorType" not in list(item.get("ja-Kana").keys())
-                elif item.get("en"):
-                    assert "creatorType" not in list(item.get("en").keys())
+            assert returnData == {'name': ['Joho, Taro'], 'type': 'creator_type_test', 'order_lang': [{'ja': {'creatorName': ['情報, 太郎'], 'creatorAlternative': ['別名'], 'affiliationName': ['ISNI 所属機関'], 'affiliationNameIdentifier': [{'identifier': 'xxxxxx', 'uri': 'xxxxx'}]}}, {'ja-Kana': {'creatorName': ['ジョウホウ, タロウ'], 'creatorAlternative': [], 'affiliationName': [], 'affiliationNameIdentifier': []}}, {'en': {'creatorName': ['Joho, Taro'], 'creatorAlternative': ['Alternative Name'], 'affiliationName': [' Affilication Name'], 'affiliationNameIdentifier': [{'identifier': '', 'uri': ''}]}}]}
+    
+    # 54105-23,24
+    # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::Test_FormatSysCreator::test_format_creator_not_dict_or_list -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
+    def test_format_creator_not_dict_or_list(self, app, prepare_creator):
+        with app.test_request_context():
+            mock_list = [['testValue1', 'testValue2']]
+            mock_list2 = [{'test1': 'creator1'}, {'test2': 'creator2'}]
+            with patch('weko_deposit.api._FormatSysCreator._get_creator_to_display_on_popup') as mock_popup:
+                mock_popup.side_effect = lambda creator_list_tmp: creator_list_tmp.extend(mock_list)
+                obj = _FormatSysCreator(prepare_creator)
+                result = obj.format_creator()
+                assert result['order_lang'] == []
 
+                mock_popup.side_effect = lambda creator_list_tmp: creator_list_tmp.extend(mock_list2)
+                obj = _FormatSysCreator(prepare_creator)
+                result = obj.format_creator()
+                assert result['order_lang'] == [{}, {}]
+
+    # 54105-27
+    # not exists creator_names in WEKO_DEPOSIT_SYS_CREATOR_KEY
+    # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::Test_FormatSysCreator::test_format_creator_not_exists_creator_names -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
+    def test_format_creator_not_exists_creator_names(self, app, prepare_creator):
+        test_key = copy.deepcopy(WEKO_DEPOSIT_SYS_CREATOR_KEY)
+        test_key.pop('creator_names')
+        with patch('weko_deposit.api.WEKO_DEPOSIT_SYS_CREATOR_KEY', test_key):
+            with app.test_request_context():
+                obj = _FormatSysCreator(prepare_creator)
+                des_creator = obj.format_creator()
+                assert des_creator == {}
+    
+    # 54105-28
+    # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::Test_FormatSysCreator::test_format_creator_exception -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
+    def test_format_creator_exception(self, app):
+        with app.test_request_context():
+            obj = _FormatSysCreator(None)
+            des_creator = obj.format_creator()
+            assert des_creator == {}
+    
+    # 54105-14～21
+    # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::Test_FormatSysCreator::test_format_creator_name -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
+    def test_format_creator_name(self, app, prepare_creator):
+        with app.test_request_context():
+            obj = _FormatSysCreator(prepare_creator)
+            # not exists creatorNameType
+            creator_data = {'creatorName': ['情報, 太郎']}
+            des_creator = {}
+            
+            assert isinstance(
+                obj,
+                _FormatSysCreator
+            ) == True
+
+            obj._format_creator_name(creator_data, des_creator)
+
+            assert des_creator['creatorName'] == ['情報, 太郎']
+
+            # exists creatorNameType
+            creator_data = {'creatorName': ['情報, 太郎'], 'creatorNameType': ['Personal']}
+            des_creator = {}
+
+            obj._format_creator_name(creator_data, des_creator)
+
+            assert des_creator['creatorName'] == ['情報, 太郎（Personal）']
+
+            # the counts of creatorName and creatorNameType are different
+            creator_data = {'creatorName': ['情報, 太郎', '資料'], 'creatorNameType': ['Personal']}
+            des_creator = {}
+
+            obj._format_creator_name(creator_data, des_creator)
+
+            assert des_creator['creatorName'] == ['情報, 太郎（Personal）', '資料']
+
+            # not exists creatorName but exists familyName and givenName
+            creator_data = {'familyName': ['情報'], 'givenName': ['太郎']}
+            des_creator = {}
+
+            obj._format_creator_name(creator_data, des_creator)
+
+            assert des_creator['creatorName'] == ['情報 太郎']
+
+            # the counts of familyName and givenName are different
+            creator_data = {'familyName': ['情報', '資料'], 'givenName': ['太郎']}
+            des_creator = {}
+
+            obj._format_creator_name(creator_data, des_creator)
+
+            assert des_creator['creatorName'] == ['情報 太郎', '資料']
+
+            # only exists familyName
+            creator_data = {'familyName': ['情報']}
+            des_creator = {}
+
+            obj._format_creator_name(creator_data, des_creator)
+
+            assert des_creator['creatorName'] == ['情報']
+
+            # only exists givenName
+            creator_data = {'givenName': ['太郎']}
+            des_creator = {}
+
+            obj._format_creator_name(creator_data, des_creator)
+
+            assert des_creator['creatorName'] == ['太郎']
+
+            # not exists creatorName, familyName and givenName
+            creator_data = {}
+            des_creator = {}
+
+            obj._format_creator_name(creator_data, des_creator)
+
+            assert des_creator['creatorName'] == None
+    
+    # 54105-29
+    # not exists creator_name in WEKO_DEPOSIT_SYS_CREATOR_KEY
+    # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::Test_FormatSysCreator::test_format_creator_name_not_exists_creator_name -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
+    def test_format_creator_name_not_exists_creator_name(self, app, prepare_creator):
+        test_key = copy.deepcopy(WEKO_DEPOSIT_SYS_CREATOR_KEY)
+        test_key.pop('creator_name')
+        creator_data = {}
+        des_creator = {}
+        with patch('weko_deposit.api.WEKO_DEPOSIT_SYS_CREATOR_KEY', test_key):
+            with app.test_request_context():
+                with pytest.raises(KeyError):
+                    obj = _FormatSysCreator(prepare_creator)
+                    des_creator = obj._format_creator_name(creator_data, des_creator)
+                    assert des_creator == {}
+    
+    # 54105-30
+    # not exists familyName in WEKO_DEPOSIT_SYS_CREATOR_KEY
+    # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::Test_FormatSysCreator::test_format_creator_name_not_exists_family_name -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
+    def test_format_creator_name_not_exists_family_name(self, app, prepare_creator):
+        test_key = copy.deepcopy(WEKO_DEPOSIT_SYS_CREATOR_KEY)
+        test_key.pop('family_name')
+        creator_data = {}
+        des_creator = {}
+        with patch('weko_deposit.api.WEKO_DEPOSIT_SYS_CREATOR_KEY', test_key):
+            with app.test_request_context():
+                with pytest.raises(KeyError):
+                    obj = _FormatSysCreator(prepare_creator)
+                    des_creator = obj._format_creator_name(creator_data, des_creator)
+                    assert des_creator == {}
+
+    # 54105-31
+    # not exists givenName in WEKO_DEPOSIT_SYS_CREATOR_KEY
+    # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::Test_FormatSysCreator::test_format_creator_name_not_exists_given_name -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
+    def test_format_creator_name_not_exists_given_name(self, app, prepare_creator):
+        test_key = copy.deepcopy(WEKO_DEPOSIT_SYS_CREATOR_KEY)
+        test_key.pop('given_name')
+        creator_data = {}
+        des_creator = {}
+        with patch('weko_deposit.api.WEKO_DEPOSIT_SYS_CREATOR_KEY', test_key):
+            with app.test_request_context():
+                with pytest.raises(KeyError):
+                    obj = _FormatSysCreator(prepare_creator)
+                    des_creator = obj._format_creator_name(creator_data, des_creator)
+                    assert des_creator == {}
+               
     # def _format_creator_on_creator_popup(self, creators: Union[dict, list],
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::Test_FormatSysCreator::test__format_creator_on_creator_popup -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
     def test__format_creator_on_creator_popup(self,app,prepare_creator):

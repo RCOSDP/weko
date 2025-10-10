@@ -29,7 +29,7 @@ mapping = {
     "junii2_mapping": "",
     "lido_mapping": "",
     "lom_mapping": "",
-    "oai_dc_mapping": {"type": {"@value": "subitem_version_type"}},
+    "oai_dc_mapping":"",
     "spase_mapping": "",
 }
 version_type = [None, "AO", "SMUR", "AM", "P", "VoR", "CVoR", "EVoR", "NA"]
@@ -82,7 +82,7 @@ def schema(title="", multi_flag=multiple_flag):
                     "type": ["null", "string"],
                     "format": "select",
                     "enum": [None] + list(peer_reviewd_dict.keys()),
-                    "currentEnum": peer_reviewd_dict.keys,
+                    "currentEnum": list(peer_reviewd_dict.keys()),
                     "title": "査読の有無",
                     "title_i18n": {"en": "Peer reviewed/Not peer reviewed", "ja": "査読の有無"},
                 },

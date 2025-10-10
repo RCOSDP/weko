@@ -30,7 +30,6 @@ from flask_login.config import EXEMPT_METHODS
 import hashlib
 
 from .config import WEKO_API_LIMIT_RATE_DEFAULT
-from weko_admin.models import AdminSettings
 
 limiter = Limiter(
     app=None,
@@ -111,6 +110,7 @@ def parse_attributes():
     error = False
 
     # Get attribute mapping from admin settings
+    from weko_admin.models import AdminSettings
     admin_settings = AdminSettings.get('attribute_mapping', dict_to_object=False)
 
     for header, attr in current_app.config[

@@ -13,7 +13,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = '250f0661704b'
-down_revision = 'c4d16e640acc'
+down_revision = 'ac4ff52361f4'
 branch_labels = ()
 depends_on = 'invenio_accounts'
 

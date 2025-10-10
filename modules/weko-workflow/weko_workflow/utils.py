@@ -28,7 +28,7 @@ from collections import OrderedDict
 from copy import deepcopy
 from datetime import datetime, timedelta
 import sys
-from typing import NoReturn, Optional, Tuple, Union
+from typing import List, NoReturn, Optional, Tuple, Union, cast
 import traceback
 from urllib.parse import urljoin
 
@@ -39,6 +39,12 @@ from flask_babelex import gettext as _
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from flask_security import current_user
+from passlib.handlers.oracle import oracle10
+from redis.exceptions import ResponseError
+from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.orm.exc import NoResultFound
+from werkzeug.utils import import_string
+
 from invenio_accounts.models import Role, User, userrole
 from invenio_cache import current_cache
 from invenio_db import db
@@ -53,9 +59,6 @@ from invenio_pidstore.models import PersistentIdentifier, \
 from invenio_pidstore.resolver import Resolver
 from invenio_records.models import RecordMetadata
 from invenio_records_files.models import RecordsBuckets
-from passlib.handlers.oracle import oracle10
-from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy.orm.exc import NoResultFound
 from weko_admin.models import AdminSettings, Identifier, SiteInfo
 from weko_admin.utils import get_restricted_access
 from weko_deposit.api import WekoDeposit, WekoRecord
@@ -79,7 +82,6 @@ from weko_workflow.config import IDENTIFIER_GRANT_LIST, \
     IDENTIFIER_GRANT_SUFFIX_METHOD, \
     WEKO_WORKFLOW_USAGE_APPLICATION_ITEM_TYPES_LIST, \
     WEKO_WORKFLOW_USAGE_REPORT_ITEM_TYPES_LIST
-from werkzeug.utils import import_string
 
 from .api import Flow, GetCommunity, UpdateItem, WorkActivity, \
     WorkActivityHistory, WorkFlow
@@ -89,7 +91,6 @@ from .errors import InvalidParameterValueError
 from .models import Action as _Action
 from .models import ActionStatusPolicy, Activity, ActivityStatusPolicy, \
     FlowAction, GuestActivity
-from redis.exceptions import ResponseError
 
 
 def _check_mail_setting(setting):
@@ -1344,26 +1345,23 @@ class IdentifierHandle(object):
     def check_pidstore_exist(self, pid_type, chk_value=None):
         """Get check whether PIDStore object exist.
 
-        Arguments:
-            pid_type     -- {string} 'doi' (default) or 'hdl'
-            chk_value    -- {string} object_uuid or pid_value
+        Args:
+            pid_type (str): 'doi' (default) or 'hdl'
+            chk_value (str): object_uuid or pid_value
 
         Returns:
-            return       -- PID object if exist
+            list[PersistentIdentifier]: list of PID object or empty list
 
         """
-        try:
-            with db.session.no_autoflush:
-                if not chk_value:
-                    return PersistentIdentifier.query.filter_by(
-                        pid_type=pid_type,
-                        object_uuid=self.item_uuid).all()
-                return PersistentIdentifier.query.filter_by(
+        with db.session.no_autoflush:
+            if not chk_value:
+                records = PersistentIdentifier.query.filter_by(
                     pid_type=pid_type,
-                    pid_value=chk_value).one_or_none()
-        except PIDDoesNotExistError as pid_not_exist:
-            current_app.logger.error(pid_not_exist)
-            return None
+                    object_uuid=self.item_uuid).all()
+            records = PersistentIdentifier.query.filter_by(
+                pid_type=pid_type,
+                pid_value=chk_value).all()
+        return cast(List[PersistentIdentifier], records)
 
     def register_pidstore(self, pid_type, reg_value):
         """Register Persistent Identifier Object.
@@ -2302,7 +2300,7 @@ def check_existed_doi(doi_link):
             respon['isExistDOI'] = True
             respon['msg'] = _('This DOI has been used already for another '
                               'item. Please input another DOI.')
-            if doi_pidstore.status == PIDStatus.DELETED:
+            if any(doi.status == PIDStatus.DELETED for doi in doi_pidstore):
                 respon['isWithdrawnDoi'] = True
                 respon['msg'] = _(
                     'This DOI was withdrawn. Please input another DOI.')
@@ -2959,8 +2957,10 @@ def set_mail_info(item_info, activity_detail, guest_user=False):
         record = WekoRecord.get_record_by_pid(applying_record_id)
         file_info = None
         if record:
-            mail_info['landing_url'] = urljoin(request.url_root, url_for(
-                'invenio_records_ui.recid', pid_value=record.pid))
+            mail_info['landing_url'] = urljoin(
+                request.url_root,
+                f'records/{record.pid.pid_value}',
+            )
             file_info = next((file_data for file_data in record.get_file_data()
                             if file_data.get('filename') == applying_filename),{})
         if file_info:
@@ -3515,7 +3515,7 @@ def save_activity_data(data: dict) -> NoReturn:
     """
     activity_id = data.get("activity_id")
     activity_data = {
-        "title": data.get("title"),
+        # "title": data.get("title"),
         "shared_user_ids": data.get("shared_user_ids"),
         "approval1": data.get("approval1"),
         "approval2": data.get("approval2"),
@@ -4007,8 +4007,8 @@ def prepare_data_for_guest_activity(activity_id: str) -> dict:
     ctx = {'community': None}
     getargs = request.args
     community_id = ""
-    if 'community' in getargs:
-        comm = GetCommunity.get_community_by_id(getargs.get('community'))
+    if 'c' in getargs:
+        comm = GetCommunity.get_community_by_id(getargs.get('c'))
         ctx = {'community': comm}
         community_id = comm.id
 
@@ -4214,7 +4214,7 @@ def process_send_approval_mails(activity_detail, actions_mail_setting,
                 if _check_mail_setting(setting):
                     process_send_mail(mail_info, setting["mail"])
                 setting =actions_mail_setting["previous"]\
-                    .get("inform_itemReg_for_registerPerson", {}) 
+                    .get("inform_itemReg_for_registerPerson", {})
                 if _check_mail_setting(setting):
                     if record.get('_deposit') and \
                     record['_deposit'].get('owners'):
@@ -4591,8 +4591,8 @@ def check_authority_by_admin(activity, user=None):
             index_ids = []
             role_ids = [role.id for role in user.roles]
             from invenio_communities.models import Community
-            comm_list = Community.query.filter(
-                Community.id_role.in_(role_ids)
+            comm_list = Community.get_by_user(
+                role_ids, with_deleted=True
             ).all()
             for comm in comm_list:
                 index_ids += [str(i.cid) for i in Indexes.get_self_list(comm.root_node_id)
@@ -5092,7 +5092,7 @@ def delete_user_lock_activity_cache(activity_id, data):
 
 def get_contributors(pid_value, user_id_list_json=None, owner_id=-1):
     from weko_items_ui.utils import get_user_information
-    
+
     userid_list = []
     # item登録済みユーザーデータ
     if pid_value:
@@ -5132,7 +5132,7 @@ def get_contributors(pid_value, user_id_list_json=None, owner_id=-1):
         if int(owner_id) != -1 and int(owner_id) == int(user_info['userid']):
             info['owner'] = True
         result.append(info)
-    
+
     return result
 
 def create_conditions_dict(status, limit, page):
@@ -5202,7 +5202,7 @@ def check_pretty(pretty):
 
 def create_limmiter():
     from .config import WEKO_WORKFLOW_API_LIMIT_RATE_DEFAULT
-    return Limiter(app=Flask(__name__), key_func=get_remote_address, default_limits=WEKO_WORKFLOW_API_LIMIT_RATE_DEFAULT)  
+    return Limiter(app=Flask(__name__), key_func=get_remote_address, default_limits=WEKO_WORKFLOW_API_LIMIT_RATE_DEFAULT)
 
 
 def convert_to_timezone(dt, user_timezone=None):

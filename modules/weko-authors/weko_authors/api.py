@@ -29,9 +29,20 @@ from invenio_db import db
 from invenio_indexer.api import RecordIndexer
 from sqlalchemy.sql.functions import func
 from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.dialects.postgresql import JSONB
 from time import sleep
+from invenio_communities.models import Community
+import click
+from invenio_search import current_search_client
+from elasticsearch.helpers import bulk
+from elasticsearch.helpers import BulkIndexError
+from elasticsearch.exceptions import ConnectionTimeout, ConnectionError
+import traceback
 
-from .models import Authors, AuthorsPrefixSettings, AuthorsAffiliationSettings
+from .models import (
+    Authors, AuthorsPrefixSettings, AuthorsAffiliationSettings,
+    AuthorCommunityRelations
+)
 
 
 class WekoAuthors(object):
@@ -47,14 +58,18 @@ class WekoAuthors(object):
         new_id = Authors.get_sequence(session)
         data["pk_id"] = str(new_id)
         data["gather_flg"] = 0
+        community_ids = data.pop("communityIds", [])
 
         es_id = str(uuid.uuid4())
         es_data = json.loads(json.dumps(data))
+        es_data["communityIds"] = community_ids
         try:
             with session.begin_nested():
                 data['id'] = es_id
                 author = Authors(id=new_id, json=data)
                 session.add(author)
+                session.flush()
+                author.add_communities(community_ids)
 
         except Exception as ex:
             session.rollback()
@@ -118,8 +133,11 @@ class WekoAuthors(object):
                     author.is_deleted = data.get('is_deleted', False)
                 else:
                     data['is_deleted'] = author.is_deleted
+                community_ids = data.pop("communityIds", [])
+                author.update_communities(community_ids)
                 es_id = author.json["id"] if author.json.get("id") else str(uuid.uuid4())
                 es_data = json.loads(json.dumps(data))
+                es_data["communityIds"] = community_ids
                 data['id'] = es_id
                 author.json = data
                 db.session.merge(author)
@@ -160,7 +178,7 @@ class WekoAuthors(object):
             return query.all()
 
     @classmethod
-    def get_by_range(cls,  start_point, sum, with_deleted=True, with_gather=True):
+    def get_by_range(cls,  start_point, sum, with_deleted=True, with_gather=True, community_ids=None):
         """Get authors by range."""
         filters = []
         try:
@@ -170,6 +188,9 @@ class WekoAuthors(object):
                 if not with_gather:
                     filters.append(Authors.gather_flg == 0)
                 query = Authors.query.filter(*filters)
+                if community_ids is not None:
+                    query = query.join(AuthorCommunityRelations, Authors.id == AuthorCommunityRelations.author_id)
+                    query = query.filter(AuthorCommunityRelations.community_id.in_(community_ids))
                 query = query.order_by(Authors.id)
                 query = query.offset(start_point).limit(sum)
                 return query.all()
@@ -178,7 +199,7 @@ class WekoAuthors(object):
             raise
 
     @classmethod
-    def get_records_count(cls, with_deleted=True, with_gather=True):
+    def get_records_count(cls, with_deleted=True, with_gather=True, community_ids=None):
         """Get authors's count."""
         filters = []
         try:
@@ -188,6 +209,9 @@ class WekoAuthors(object):
                 if not with_gather:
                     filters.append(Authors.gather_flg == 0)
                 query = Authors.query.filter(*filters)
+                if community_ids is not None:
+                    query = query.join(AuthorCommunityRelations, Authors.id == AuthorCommunityRelations.author_id)
+                    query = query.filter(AuthorCommunityRelations.community_id.in_(community_ids))
                 query = query.order_by(Authors.id)
                 return query.count()
         except Exception as ex:
@@ -324,10 +348,16 @@ class WekoAuthors(object):
 
 
     @classmethod
-    def get_id_prefix_all(cls):
+    def get_id_prefix_all(cls, community_ids=None):
         """Get all id_prefix."""
         with db.session.no_autoflush:
             query = AuthorsPrefixSettings.query
+            if community_ids is not None:
+                query = query.filter(
+                    AuthorsPrefixSettings.communities.any(
+                        Community.id.in_(community_ids)
+                    )
+                )
             query = query.order_by(AuthorsPrefixSettings.id)
 
             return query.all()
@@ -356,10 +386,16 @@ class WekoAuthors(object):
         return result
 
     @classmethod
-    def get_affiliation_id_all(cls):
+    def get_affiliation_id_all(cls, community_ids=None):
         """Get all affiliation_id."""
         with db.session.no_autoflush:
             query = AuthorsAffiliationSettings.query
+            if community_ids is not None:
+                query = query.filter(
+                    AuthorsAffiliationSettings.communities.any(
+                        Community.id.in_(community_ids)
+                    )
+                )
             query = query.order_by(AuthorsAffiliationSettings.id)
 
             return query.all()
@@ -387,7 +423,7 @@ class WekoAuthors(object):
         return result
 
     @classmethod
-    def mapping_max_item(cls, mappings, affiliation_mappings, records_count, retrys=0):
+    def mapping_max_item(cls, mappings, affiliation_mappings, community_mappings, records_count, retrys=0):
         """Mapping max item of multiple case."""
         try:
             size = current_app.config["WEKO_AUTHORS_EXPORT_BATCH_SIZE"]
@@ -396,6 +432,10 @@ class WekoAuthors(object):
             if not affiliation_mappings:
                 affiliation_mappings = deepcopy(
                     current_app.config["WEKO_AUTHORS_FILE_MAPPING_FOR_AFFILIATION"]
+                )
+            if not community_mappings:
+                community_mappings = deepcopy(
+                    current_app.config["WEKO_AUTHORS_FILE_MAPPING_FOR_COMMUNITY"]
                 )
             if not records_count:
                 records_count = cls.get_records_count(False, False)
@@ -447,6 +487,11 @@ class WekoAuthors(object):
                             if child_length > mapping_max[index][child["json_id"]]:
                                 mapping_max[index][child["json_id"]] = child_length
 
+                community_mappings['max'] = max(
+                    community_mappings.get('max', 1),
+                    max((len(x.communities) for x in authors), default=0)
+                )
+
             # Finally, subtract the WEKOID part from the maximum value
             for mapping in mappings:
                 if mapping['json_id'] == 'authorIdInfo':
@@ -463,7 +508,7 @@ class WekoAuthors(object):
                 db.session.rollback()
                 sleep(sleep_time)
                 result = cls.mapping_max_item(
-                    mappings=None, affiliation_mappings=None, \
+                    mappings=None, affiliation_mappings=None, community_mappings=None,
                     records_count=records_count, retrys=retrys
                 )
                 return result
@@ -472,20 +517,21 @@ class WekoAuthors(object):
         except Exception as ex:
             current_app.logger.error(ex)
             raise
-        return mappings, affiliation_mappings
+        return mappings, affiliation_mappings, community_mappings
 
     @classmethod
-    def prepare_export_data(cls, mappings, affiliation_mappings, authors, schemes, aff_schemes, start, size):
+    def prepare_export_data(cls, mappings, affiliation_mappings, community_mappings, authors, schemes, aff_schemes, start, size):
         """Prepare export data of all authors."""
         row_header = []
         row_label_en = []
         row_label_jp = []
         row_data = []
 
-        if not mappings or not affiliation_mappings:
-            mappings, affiliation_mappings = WekoAuthors.mapping_max_item(
+        if not mappings or not affiliation_mappings or not community_mappings:
+            mappings, affiliation_mappings, community_mappings = WekoAuthors.mapping_max_item(
                 deepcopy(current_app.config["WEKO_AUTHORS_FILE_MAPPING"]),
                 deepcopy(current_app.config["WEKO_AUTHORS_FILE_MAPPING_FOR_AFFILIATION"]),
+                deepcopy(current_app.config["WEKO_AUTHORS_FILE_MAPPING_FOR_COMMUNITY"]),
                 WekoAuthors.get_records_count(False, False)
             )
         if not authors:
@@ -525,6 +571,12 @@ class WekoAuthors(object):
                             '{}[{}][{}]'.format(c['label_en'], index, i))
                         row_label_jp.append(
                             '{}[{}][{}]'.format(c['label_jp'], index, i))
+
+        # Community information mapping
+        for i in range(0, community_mappings.get("max", 1)):
+            row_header.append('{}[{}]'.format(community_mappings["json_id"], i))
+            row_label_en.append('{}[{}]'.format(community_mappings["label_en"], i))
+            row_label_jp.append('{}[{}]'.format(community_mappings["label_jp"], i))
 
         row_header[0] = '#' + row_header[0]
         row_label_en[0] = '#' + row_label_en[0]
@@ -618,12 +670,17 @@ class WekoAuthors(object):
                                 else:
                                     row.append(val)
 
+            # Process mapping for each community
+            com_ids = [c.id for c in author.communities]
+            com_ids.extend([None] * (community_mappings.get("max", 1) - len(com_ids)))
+            row.extend(com_ids)
+
             row_data.append(row)
 
         return row_header, row_label_en, row_label_jp, row_data
 
     @classmethod
-    def prepare_export_prefix(cls, target_prefix, prefixes):
+    def prepare_export_prefix(cls, target_prefix, prefixes, community_length):
         """Prepare export data of id_prefix, affiliation_id."""
         row_data = []
 
@@ -631,7 +688,117 @@ class WekoAuthors(object):
             # Exclude WEKO's own prefix for author identifier prefixes
             if target_prefix == "id_prefix" and prefix.scheme == "WEKO":
                 continue
-            row = [prefix.scheme, prefix.name, prefix.url]
+
+            ids = [c.id for c in prefix.communities]
+            ids.extend([None] * (community_length - len(ids)))
+            row = [prefix.scheme, prefix.name, prefix.url, None] + ids
             row_data.append(row)
 
         return row_data
+
+
+class AuthorIndexer():
+    def __init__(self, search_client=None):
+        self.client = search_client or current_search_client
+
+    def author_to_index(self):
+        index = current_app.config['WEKO_AUTHORS_ES_INDEX_NAME']
+        doc_type = current_app.config['WEKO_AUTHORS_ES_DOC_TYPE']
+        return index, doc_type
+
+    def bulk_process_authors(self,es_bulk_kwargs, uuids = [],start_date=None,end_date=None,with_deleted=True):
+        success = 0
+        fail = 0
+        unprocesses = 0
+        req_timeout = current_app.config['INDEXER_BULK_REQUEST_TIMEOUT']
+        self.count = 0
+        try:
+            _success, _fail = bulk(
+                self.client,
+                self.generate_actions(uuids, start_date, end_date, with_deleted),
+                request_timeout=req_timeout,
+                **es_bulk_kwargs
+            )
+            success += _success
+            if isinstance(_fail, list):
+                _fail_len = len(_fail)
+                for error in _fail:
+                    click.secho("{}, {}".format(error['index']['_id'],error['index']['error']['type']),fg='red')
+            else:
+                _fail_len = _fail
+            fail += _fail_len
+            unprocesses += self.count - _success - _fail_len
+        except SQLAlchemyError as e:
+            current_app.logger.error(e)
+            current_app.logger.error(traceback.format_exc())
+            db.session.rollback()
+        except BulkIndexError as e:
+            _fail = len(e.errors)
+            _success = self.count - _fail
+            _unprocessed = len(uuids) - self.count
+
+            fail += _fail
+            success += _success
+            unprocesses += _unprocessed
+            for error in e.errors:
+                click.secho("{}, {}".format(error['index']['_id'],error['index']['error']['type']),fg='red')
+        except ConnectionTimeout as ce:
+            click.secho("Error: {}".format(ce),fg="red")
+            click.secho("INDEXER_BULK_REQUEST_TIMEOUT: {} sec".format(req_timeout),fg="red")
+            click.secho("Please change value of INDEXER_BULK_REQUEST_TIMEOUT and retry it.",fg="red")
+            click.secho("processing: {}".format(self.count),fg="red")
+        except ConnectionError as ce:
+            click.secho("Connection error occurred: {}".format(ce),fg='red')
+        except Exception as e:
+            current_app.logger.error(e)
+            current_app.logger.error(traceback.format_exc())
+        count = (success,fail,unprocesses)
+        click.secho("count(success, error, unprocessed): {}".format(count),fg='green')
+
+        return count
+
+
+    def generate_actions(self,uuids=[],start_date=None, end_date=None,with_deleted=True):
+        index, doc_type = self.author_to_index()
+        filters = []
+        if len(uuids) > 0:
+            authors = []
+            for uuid in uuids:
+                query = Authors.query.filter(Authors.json.cast(JSONB)['id'].astext == str(uuid))
+                if not with_deleted:
+                    query = query.filter(Authors.is_deleted.is_(False))
+                author = query.one_or_none()
+                if author:
+                    authors.append(author)
+        else:
+            if not with_deleted:
+                filters.append(Authors.is_deleted.is_(False))
+            if start_date:
+                filters.append(Authors.updated >= start_date)
+            if end_date:
+                filters.append(Authors.updated < end_date)
+            query = Authors.query.filter(*filters)
+            authors = query.all()
+        if len(authors) == 0:
+            click.secho("Error: No authors were found for processing, so the operation was stopped.",fg="red")
+        for author in authors:
+
+            body = self._prepare_author(author)
+            action = {
+                "_op_type": "index",
+                "_index": index,
+                "_type": doc_type,
+                "_id": str(author.json['id']),
+                "_source": body
+            }
+            self.count += 1
+            click.secho(f"Indexing author id: {author.json['id']}, Count:{self.count}", fg='green')
+            yield action
+
+    def _prepare_author(self, author):
+        author_data = json.loads(json.dumps(author.json))
+        if hasattr(author, 'communities') and author.communities:
+            author_data["communityIds"] = [community.id for community in author.communities]
+        else:
+            author_data["communityIds"] = []
+        return author_data

@@ -767,3 +767,6 @@ class FILE_OPEN_STATUS(Enum):
     EMBARGO = "embargo"
     PRIVATE = "private"
     RESTRICTED = "restricted"
+
+WEKO_RECORDS_UI_GAKUNIN_RDM_URL = "https://rdm.nii.ac.jp"
+"""URL of GakuNin RDM."""

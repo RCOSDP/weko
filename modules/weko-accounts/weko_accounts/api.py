@@ -321,6 +321,8 @@ class ShibUser(object):
 
         try:
             if current_app.config['WEKO_ACCOUNTS_SHIB_BIND_GAKUNIN_MAP_GROUPS']:
+                if self.shib_user:
+                    self.shib_user.shib_roles.clear()
                 roles_add = self._get_roles_to_add()
                 if not self._find_organization_name():
                     self._assign_roles_to_user(roles_add)

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: weko-user-profiles 0.1.0.dev20170000\n"
 "Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
-"POT-Creation-Date: 2019-07-02 02:08+0000\n"
+"POT-Creation-Date: 2025-10-03 16:39+0900\n"
 "PO-Revision-Date: 2025-04-21 09:27+0900\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ja\n"
@@ -19,22 +19,15 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.5.1\n"
 
-#. NOTE: Form field label
-#: weko_user_profiles/admin.py:66 weko_user_profiles/forms.py:59
-msgid "Username"
-msgstr "ユーザー名"
+#: weko_user_profiles/admin.py:376
+msgid "Record does not exist."
+msgstr ""
 
-#. NOTE: Form label
-#: weko_user_profiles/admin.py:67 weko_user_profiles/forms.py:73
-msgid "Timezone"
-msgstr "タイムゾーン"
+#: weko_user_profiles/admin.py:414
+msgid "Record was successfully saved."
+msgstr ""
 
-#. NOTE: Form label
-#: weko_user_profiles/admin.py:68 weko_user_profiles/forms.py:80
-msgid "Language"
-msgstr "言語"
-
-#: weko_user_profiles/admin.py:93
+#: weko_user_profiles/admin.py:458
 msgid "User Management"
 msgstr "ユーザー管理"
 
@@ -170,45 +163,260 @@ msgstr "日本語"
 msgid "English"
 msgstr "英語"
 
+#: weko_user_profiles/config.py:102
+msgid "Professor"
+msgstr "教授"
+
+#: weko_user_profiles/config.py:103
+msgid "Assistant Professor"
+msgstr "准教授"
+
+#: weko_user_profiles/config.py:104
+msgid "Full-time Instructor"
+msgstr "専任講師"
+
+#: weko_user_profiles/config.py:105
+msgid "Assistant Teacher"
+msgstr "助教"
+
+#: weko_user_profiles/config.py:106
+msgid "Full-time Researcher"
+msgstr "常勤研究員"
+
+#: weko_user_profiles/config.py:107
+msgid "Others (Input Detail)"
+msgstr "その他（具体的に入力）"
+
+#: weko_user_profiles/config.py:109
+msgid "JSPS Research Fellowship for Young Scientists (PD, SPD etc.)"
+msgstr "日本学術振興会特別研究員(PD, SPD等)"
+
+#: weko_user_profiles/config.py:115
+msgid "JSPS Research Fellowship for Young Scientists (DC1, DC2)"
+msgstr "日本学術振興会特別研究員(DC1, DC2)"
+
+#: weko_user_profiles/config.py:117
+msgid "Doctoral Course (Doctoral Program)"
+msgstr "博士課程(博士後期課程)"
+
+#: weko_user_profiles/config.py:118
+msgid "Master Course (Master Program)"
+msgstr "修士課程(博士前期課程)"
+
+#: weko_user_profiles/config.py:119
+msgid "Fellow Researcher"
+msgstr "研究生"
+
+#: weko_user_profiles/config.py:120
+msgid "Listener"
+msgstr "聴講生"
+
+#: weko_user_profiles/config.py:124
+msgid "Student"
+msgstr "学部生"
+
+#: weko_user_profiles/config.py:135
+msgid "Member"
+msgstr "会員"
+
+#: weko_user_profiles/config.py:136
+msgid "Committee member"
+msgstr "委員"
+
+#: weko_user_profiles/config.py:137
+msgid "Director/Officer"
+msgstr "理事・役員"
+
+#: weko_user_profiles/config.py:138
+msgid "President"
+msgstr "会長"
+
+#: weko_user_profiles/forms.py:66
+msgid "Text field must be less than 100 characters."
+msgstr "テキストフィールドの字数上限は100字です。"
+
+#: weko_user_profiles/forms.py:81
+msgid "Phone Number format is incorrect."
+msgstr "電話番号の形式が正しくありません。"
+
+#: weko_user_profiles/forms.py:93
+msgid "Position is being inputted (Only input when selecting 'Others')"
+msgstr "役職が入力されています（「その他」選択時のみ入力可能）"
+
+#: weko_user_profiles/forms.py:97 weko_user_profiles/forms.py:320
+msgid "Position not provided."
+msgstr "役職が指定されていません"
+
+#: weko_user_profiles/forms.py:109
+msgid "Only digits are allowed."
+msgstr ""
+
+#: weko_user_profiles/forms.py:147 weko_user_profiles/forms.py:155
+#: weko_user_profiles/forms.py:163 weko_user_profiles/forms.py:171
+#: weko_user_profiles/forms.py:179 weko_user_profiles/forms.py:186
+msgid "label_name"
+msgstr ""
+
+#. NOTE: Form field label
+#: weko_user_profiles/forms.py:200
+msgid "Username"
+msgstr "ユーザー名"
+
 #. NOTE: Form field help text
-#: weko_user_profiles/forms.py:61
+#: weko_user_profiles/forms.py:202
 #, python-format
 msgid "Required. %(username_rules)s"
 msgstr "%(username_rules)sは必須入力項目です"
 
-#: weko_user_profiles/forms.py:63
+#: weko_user_profiles/forms.py:204
 msgid "Username not provided."
 msgstr "ユーザー名を入力してください"
 
-#. NOTE: Form validation error.
-#: weko_user_profiles/forms.py:98
-msgid "Username already exists."
-msgstr "既に存在するユーザ名です．別のユーザ名を入力してください．"
+#. NOTE: Form label
+#: weko_user_profiles/forms.py:209
+msgid "Timezone"
+msgstr "タイムゾーン"
+
+#. NOTE: Form label
+#: weko_user_profiles/forms.py:216
+msgid "Language"
+msgstr "言語"
 
 #. NOTE: Form field label
-#: weko_user_profiles/forms.py:108
+#: weko_user_profiles/forms.py:223
 msgid "Email address"
 msgstr "メールアドレス"
 
 #. NOTE: Form field label
-#: weko_user_profiles/forms.py:120
+#: weko_user_profiles/forms.py:235
 msgid "Re-enter email address"
 msgstr "メールアドレスの再入力"
 
 #. NOTE: Form field help text
-#: weko_user_profiles/forms.py:122
+#: weko_user_profiles/forms.py:237
 msgid "Please re-enter your email address."
 msgstr "メールアドレスを再入力してください"
 
 #. NOTE: Form validation error.
-#: weko_user_profiles/forms.py:127
+#: weko_user_profiles/forms.py:242
 msgid "Email addresses do not match."
 msgstr "入力されたEメールアドレスが一致しません"
 
+#. NOTE: Form field label
+#: weko_user_profiles/forms.py:248
+msgid "access key"
+msgstr ""
+
+#. NOTE: Form field help text
+#: weko_user_profiles/forms.py:250 weko_user_profiles/forms.py:260
+#: weko_user_profiles/forms.py:270
+msgid "Please enter if you use your own S3 Bucket."
+msgstr "自身のS3バケット使用する場合は入力してください。"
+
+#. NOTE: Form field label
+#: weko_user_profiles/forms.py:258
+msgid "secret key"
+msgstr ""
+
+#. NOTE: Form field label
+#: weko_user_profiles/forms.py:268
+msgid "endpoint url"
+msgstr ""
+
+#. NOTE: Form field label
+#: weko_user_profiles/forms.py:277
+msgid "region name"
+msgstr ""
+
+#: weko_user_profiles/forms.py:278
+msgid "Please enter if you specify your own S3 Bucket region."
+msgstr "自身のS3バケットリージョン指定する場合は入力してください。"
+
+#. NOTE: Form field help text
+#. NOTE: Form label
+#: weko_user_profiles/forms.py:287
+msgid "Fullname"
+msgstr "氏名"
+
+#: weko_user_profiles/forms.py:289
+msgid "Full name not provided."
+msgstr "氏名が指定されていません"
+
+#: weko_user_profiles/forms.py:296
+msgid "University/Institution"
+msgstr "大学・機関"
+
+#: weko_user_profiles/forms.py:298
+msgid "University/Institution not provided."
+msgstr "大学・機関が指定されていません"
+
+#: weko_user_profiles/forms.py:306
+msgid "Affiliated Division/Department"
+msgstr "所属部局・部署"
+
+#: weko_user_profiles/forms.py:309
+msgid "Affiliated Division/Department not provided."
+msgstr "所属部局・部署が指定されていません"
+
+#: weko_user_profiles/forms.py:317
+msgid "Position"
+msgstr "役職"
+
+#: weko_user_profiles/forms.py:327
+msgid "Position (Others)"
+msgstr "役職（その他）"
+
+#: weko_user_profiles/forms.py:331
+msgid "Input when selecting Others"
+msgstr "その他の選択時に入力"
+
+#: weko_user_profiles/forms.py:336
+msgid "Phone number"
+msgstr "電話番号"
+
+#: weko_user_profiles/forms.py:338
+msgid "Phone number not provided."
+msgstr "電話番号が指定されていません"
+
+#: weko_user_profiles/forms.py:346 weko_user_profiles/forms.py:363
+#: weko_user_profiles/forms.py:380 weko_user_profiles/forms.py:397
+#: weko_user_profiles/forms.py:414
+msgid "Affiliated Institution Name"
+msgstr "所属学会名"
+
+#: weko_user_profiles/forms.py:355 weko_user_profiles/forms.py:372
+#: weko_user_profiles/forms.py:389 weko_user_profiles/forms.py:406
+#: weko_user_profiles/forms.py:423
+msgid "Affiliated Institution Position"
+msgstr "所属学会役職"
+
+#. NOTE: Form validation error.
+#: weko_user_profiles/forms.py:437
+msgid "Username already exists."
+msgstr "既に存在するユーザ名です．別のユーザ名を入力してください．"
+
 #. NOTE: Form button label
-#: weko_user_profiles/forms.py:136
+#: weko_user_profiles/forms.py:467
 msgid "Resend verification email"
 msgstr "確認メールを再送"
+
+#. NOTE: Flash message.
+#: weko_user_profiles/utils.py:90
+msgid "Verification email sent."
+msgstr "確認メールを送信しました"
+
+#. NOTE: Flash message after successful update of profile.
+#: weko_user_profiles/utils.py:136
+#, python-format
+msgid ""
+"Profile was updated. We have sent a verification email to %(email)s. "
+"Please check it."
+msgstr "プロフィールを更新しました %(email)s に確認メールを送信しましたので、ご確認ください"
+
+#. NOTE: Flash message after successful update of profile.
+#: weko_user_profiles/utils.py:142
+msgid "Profile was updated."
+msgstr "プロフィールを更新しました"
 
 #: weko_user_profiles/validators.py:30
 msgid ""
@@ -217,158 +425,24 @@ msgid ""
 msgstr "ユーザー名は3文字以上を指定してください(英数字, ハイフン, アンダーバーのみ使用可能)"
 
 #. NOTE: Menu item text (icon replaced by a user icon).
-#: weko_user_profiles/views.py:93
+#: weko_user_profiles/views.py:119
 #, python-format
 msgid "%(icon)s Profile"
 msgstr "%(icon)s プロフィール"
 
-#: weko_user_profiles/views.py:96
+#: weko_user_profiles/templates/weko_user_profiles/settings/profile.html:29
+#: weko_user_profiles/views.py:122
 msgid "Profile"
 msgstr "プロフィール"
 
-#. NOTE: Flash message.
-#: weko_user_profiles/views.py:143
-msgid "Verification email sent."
-msgstr "確認メールを送信しました"
-
-#. NOTE: Flash message after successful update of profile.
-#: weko_user_profiles/views.py:172
-#, python-format
-msgid ""
-"Profile was updated. We have sent a verification email to %(email)s. "
-"Please check it."
-msgstr "プロフィールを更新しました %(email)s に確認メールを送信しましたので、ご確認ください"
-
-#. NOTE: Flash message after successful update of profile.
-#: weko_user_profiles/views.py:178
-msgid "Profile was updated."
-msgstr "プロフィールを更新しました"
-
-### Label on 'Profile' screen
-msgid "University/Institution"
-msgstr "大学・機関"
-
-msgid "Affiliated Division/Department"
-msgstr "所属部局・部署"
-
-msgid "Position"
-msgstr "役職"
-
-msgid "Other Position"
+#: weko_user_profiles/templates/weko_user_profiles/settings/profile.html:37
+msgid "You have not yet verified your email address."
 msgstr ""
 
-msgid "Phone number"
-msgstr "電話番号"
+#: weko_user_profiles/templates/weko_user_profiles/settings/profile.html:58
+msgid "Cancel"
+msgstr ""
 
-msgid "Affiliated Institution Name"
-msgstr "所属学会名"
-
-msgid "Affiliated Institution Position"
-msgstr "所属学会役職"
-
-### Position's data list in combobox
-msgid "Professor"
-msgstr "教授"
-
-msgid "Assistant Professor"
-msgstr "准教授"
-
-msgid "Full-time Instructor"
-msgstr "専任講師"
-
-msgid "Assistant Teacher"
-msgstr "助教"
-
-msgid "Full-time Researcher"
-msgstr "常勤研究員"
-
-msgid "Others (Input Detail)"
-msgstr "その他（具体的に入力）"
-
-msgid "JSPS Research Fellowship for Young Scientists (PD, SPD etc.)"
-msgstr "日本学術振興会特別研究員(PD, SPD等)"
-
-msgid "JSPS Research Fellowship for Young Scientists (DC1, DC2)"
-msgstr "日本学術振興会特別研究員(DC1, DC2)"
-
-msgid "Doctoral Course (Doctoral Program)"
-msgstr "博士課程(博士後期課程)"
-
-msgid "Master Course (Master Program)"
-msgstr "修士課程(博士前期課程)"
-
-msgid "Fellow Researcher"
-msgstr "研究生"
-
-msgid "Listener"
-msgstr "聴講生"
-
-msgid "Student"
-msgstr "学部生"
-
-### Affiliated Institution Position's data list in combobox
-msgid "Member"
-msgstr "会員"
-
-msgid "Committee member"
-msgstr "委員"
-
-msgid "Director/Officer"
-msgstr "理事・役員"
-
-msgid "President"
-msgstr "会長"
-
-msgid "Input when selecting Others"
-msgstr "その他の選択時に入力"
-
-###
-### Message validate
-###
-msgid "University/Institution not provided."
-msgstr "大学・機関が指定されていません"
-
-msgid "Affiliated Division/Department not provided."
-msgstr "所属部局・部署が指定されていません"
-
-msgid "Position not provided."
-msgstr "役職が指定されていません"
-
-msgid "Phone number not provided."
-msgstr "電話番号が指定されていません"
-
-msgid "Affiliated Institution Name not provided."
-msgstr "所属学会名が指定されていません"
-
-msgid "Affiliated Institution Position not provided."
-msgstr "所属学会役職が指定されていません"
-
-msgid "Phone number must be less than 15 characters."
-msgstr "電話番号の字数上限は15字です。"
-
-msgid "Text field must be less than 100 characters."
-msgstr "テキストフィールドの字数上限は100字です。"
-
-msgid "Phone Number format is incorrect."
-msgstr "電話番号の形式が正しくありません。"
-
-msgid "Position is being inputted (Only input when selecting 'Others')"
-msgstr "役職が入力されています（「その他」選択時のみ入力可能）"
-
-msgid "Fullname"
-msgstr "氏名"
-
-msgid "Full name not provided."
-msgstr "氏名が指定されていません"
-
-msgid "Position (Others)"
-msgstr "役職（その他）"
-
-msgid "Endpoint URL must not begin with https://s3."
-msgstr "エンドポイントURLは https://s3. で始まる形式でないものにしてください。"
-
-msgid "Please enter if you use your own S3 Bucket."
-msgstr "自身のS3バケット使用する場合は入力してください。"
-
-msgid "Please enter if you specify your own S3 Bucket region."
-msgstr "自身のS3バケットリージョン指定する場合は入力してください。"
+#: weko_user_profiles/templates/weko_user_profiles/settings/profile.html:62
+msgid "Update Profile"
+msgstr ""

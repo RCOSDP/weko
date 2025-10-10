@@ -297,6 +297,73 @@ def test_iframe_success(client, db_register_full_action,users, db_records,mocker
             assert mock_args[0] == "weko_theme/error.html"
             assert mock_kwargs["error"] == "can not get data required for rendering"
 
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_new_activity -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_new_activity(client, db, users, mocker):
+    login(client=client, email=users[0]['email'])
+
+    with patch("weko_workflow.views.WorkFlow.get_workflow_list", return_value=['wf1', 'wf2']), \
+            patch("weko_workflow.views.WorkFlow.get_workflows_by_roles", return_value=['wf1']), \
+            patch("weko_workflow.views.GetCommunity.get_community_by_id") as mock_get_community, \
+            patch("weko_theme.utils.get_design_layout", return_value = ('page_obj', 'widgets')), \
+            patch("weko_workflow.utils.exclude_admin_workflow") as mock_exclude_admin_workflow, \
+            patch("weko_workflow.views.render_template") as mock_render_template:
+
+        mock_community = MagicMock()
+        mock_community.id = 'comm01'
+        mock_get_community.return_value = mock_community
+
+        mock_render_template.return_value = 'rendered_html'
+
+        url = url_for('weko_workflow.new_activity', c='comm01')
+        res = client.get(url)
+        assert res.status_code == 200
+        mock_render_template.assert_called_once()
+        args, kwargs = mock_render_template.call_args
+        assert kwargs['community_id'] == 'comm01'
+        assert kwargs['community'] == mock_community
+
+    with patch("weko_workflow.views.WorkFlow.get_workflow_list", return_value=['wf1', 'wf2']), \
+            patch("weko_workflow.views.WorkFlow.get_workflows_by_roles", return_value=['wf1']), \
+            patch("weko_workflow.views.GetCommunity.get_community_by_id") as mock_get_community, \
+            patch("weko_theme.utils.get_design_layout", return_value = ('page_obj', 'widgets')), \
+            patch("weko_workflow.utils.exclude_admin_workflow") as mock_exclude_admin_workflow, \
+            patch("weko_workflow.views.render_template") as mock_render_template:
+
+        mock_community = MagicMock()
+        mock_community.id = 'comm01'
+        mock_get_community.return_value = mock_community
+
+        mock_render_template.return_value = 'rendered_html'
+
+        url = url_for('weko_workflow.new_activity')
+        res = client.get(url)
+        assert res.status_code == 200
+        mock_render_template.assert_called_once()
+        args, kwargs = mock_render_template.call_args
+        assert kwargs['community_id'] == ""
+        assert kwargs['community'] is None
+
+    with patch("weko_workflow.views.WorkFlow.get_workflow_list", return_value=['wf1', 'wf2']), \
+            patch("weko_workflow.views.WorkFlow.get_workflows_by_roles", return_value=['wf1']), \
+            patch("weko_workflow.views.GetCommunity.get_community_by_id") as mock_get_community, \
+            patch("weko_theme.utils.get_design_layout", return_value = ('page_obj', 'widgets')), \
+            patch("weko_workflow.utils.exclude_admin_workflow") as mock_exclude_admin_workflow, \
+            patch("weko_workflow.views.render_template") as mock_render_template:
+
+        mock_community = MagicMock()
+        mock_community.id = 'comm01'
+        mock_get_community.return_value = None
+
+        mock_render_template.return_value = 'rendered_html'
+        url = url_for('weko_workflow.new_activity', c="comm01")
+        res = client.get(url)
+        assert res.status_code == 200
+        mock_render_template.assert_called_once()
+        args, kwargs = mock_render_template.call_args
+        assert kwargs['community_id'] == ""
+        assert kwargs['community'] is None
+
+
 
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_init_activity_acl_nologin -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_init_activity_acl_nologin(client,db_register2):
@@ -417,7 +484,7 @@ def test_init_activity_acl(app, client, users, users_index, status_code, item_ty
     q = ActivityAction.query.all()
     assert len(q) == 10
 
-    url = url_for('weko_workflow.init_activity', community='comm01')
+    url = url_for('weko_workflow.init_activity', c='comm01')
     input = {'workflow_id': str(workflow_id), 'flow_id': str(flow_def_id)}
     res = client.post(url, json=input)
     assert res.status_code == status_code
@@ -473,7 +540,7 @@ def test_init_activity_acl(app, client, users, users_index, status_code, item_ty
     q = ActivityAction.query.all()
     assert len(q) == 14
 
-    url = url_for('weko_workflow.init_activity', community='comm02')
+    url = url_for('weko_workflow.init_activity', c='comm02')
     input = {'workflow_id': workflow_id, 'flow_id': flow_def_id, 'itemtype_id': item_type_id}
     res = client.post(url, json=input)
     assert res.status_code == status_code
@@ -2764,7 +2831,7 @@ def test_next_action(app, client, db, users, db_register_fullaction, db_records,
 
     # identifier_select == IDENTIFIER_GRANT_SELECT_DICT['NotGrant']:
     ## item_id != pid_without_ver.object_uuid
-    ### not _old_v    
+    ### not _old_v
     with patch("weko_workflow.utils.IdentifierHandle.get_idt_registration_data",return_value=(None,None)):
         update_activity_order("7",7,5,item_id7)
         url = url_for("weko_workflow.next_action",
@@ -3241,7 +3308,7 @@ def test_cancel_action2(client, users,db, db_register_full_action, db_records, a
     (5, 200),
     (6, 200),
 ])
-def test_cancel_action3(client, users,db, db_register, db_records, add_file, users_index, status_code, mocker):
+def test_cancel_action3(client, users,db, db_register_full_action, db_records, add_file, users_index, status_code, mocker):
     """
     Test cancel_action add case
 
@@ -3249,7 +3316,7 @@ def test_cancel_action3(client, users,db, db_register, db_records, add_file, use
         client (fixture): cliant settings
         users (fixture): user settings
         db (fixture): db settings
-        db_register (fixture): add FlowDefine, FlowAction, WorkFlow, Activity, ActivityAction, ActionFeedbackMail, ActivityHistory
+        db_register_full_action (fixture): add FlowDefine, FlowAction, WorkFlow, Activity, ActivityAction, ActionFeedbackMail, ActivityHistory
         db_records (fixture): set pid data
         add_file (fixture): test file, bucket
         users_index (parametrize): test user
@@ -3298,7 +3365,7 @@ def test_cancel_action3(client, users,db, db_register, db_records, add_file, use
 
 
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_cancel_action_guest -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
-def test_cancel_action_guest(guest, db, db_register_full_action):
+def test_cancel_action_guest(guest, db, db_register_full_action, mocker):
     input = {
         "action_version": "1.0.0",
         "commond":"this is test comment."
@@ -3311,6 +3378,7 @@ def test_cancel_action_guest(guest, db, db_register_full_action):
     with db.session.begin_nested():
         db.session.add(activity_guest)
     db.session.commit()
+    mocker.patch("weko_workflow.views.validate_action_role_user", return_value=(False, False, False))
     url = url_for("weko_workflow.cancel_action",
                   activity_id="99", action_id=1)
     redirect_url = url_for("weko_workflow.display_guest_activity",file_name="test_file")

@@ -1,4 +1,5 @@
 # import pytest
+import json
 from mock import patch, MagicMock
 from pytest_mock import mocker
 from flask import current_app
@@ -17,7 +18,8 @@ get_article_id,
 get_file_counts,
 get_record_diff,
 get_pid_value_without_ver,
-validate_records
+validate_records,
+OAPublishStatus
 )
 
 
@@ -81,7 +83,7 @@ def test_call_external_system(app, records, mocker):
     api_cert = {
         "cert_data": {
             "client_id": "aaa",
-            "secret": "bbb"
+            "client_secret": "bbb"
         }
     }
     mocker.patch("weko_records_ui.external.ApiCertificate.select_by_api_code",
@@ -103,14 +105,14 @@ def test_call_external_system(app, records, mocker):
             update_api_mock.assert_not_called()
 
     # cases update api
-    token_api_response.text = "mocked_token"
+    token_api_response.text = '{"access_token": "mocked_token"}'
     mocker.patch('requests.Session.post', return_value=token_api_response)
 
     update_api_response = MagicMock()
     update_api_response.text = ""
     update_api_response.status_code = 200
 
-    with patch("flask.current_app.logger.info") as mock_logger:
+    with patch("weko_logging.activity_logger.UserActivityLogger.info") as mock_logger:
         result = {}
         result[EXTERNAL_SYSTEM.OA.value] = {"status": "ok"}
         update_api_response.json = lambda: {"status":"ok"}
@@ -128,31 +130,29 @@ def test_call_external_system(app, records, mocker):
         file_counts[FILE_OPEN_STATUS.PRIVATE.value] = 0
         file_counts[FILE_OPEN_STATUS.RESTRICTED.value] = 0
         data = {}
-        data["action"] = ITEM_ACTION.CREATED.value
+        data["status_action"] = ITEM_ACTION.CREATED.value
         data["item_info"] = {}
         data["item_info"]["pub_date"] = record1["pubdate"]["attribute_value"]
-        data["item_info"]["publish_status"] = int(record1.get("publish_status"))
         data["file_counts"] = file_counts
 
         # case create item
         with patch('requests.Session.put',
                     return_value=update_api_response) as update_api_mock:
+            data["item_info"]["publish_status"] = OAPublishStatus.PUBLISHED.value
             call_external_system(new_record=record1)
             update_api_mock.assert_called_once_with(
                 url, headers=headers, json=data
             )
-            result["action"] = ITEM_ACTION.CREATED.value
 
         # case delete item
         with patch('requests.Session.put',
                     return_value=update_api_response) as update_api_mock:
             call_external_system(old_record=record1)
-            data["action"] = ITEM_ACTION.DELETED.value
-            data["item_info"]["publish_status"] = int(PublishStatus.DELETE.value)
+            data["status_action"] = ITEM_ACTION.DELETED.value
+            data["item_info"]["publish_status"] = OAPublishStatus.DELETED.value
             update_api_mock.assert_called_once_with(
                 url, headers=headers, json=data
             )
-            result["action"] = ITEM_ACTION.DELETED.value
 
         # case update item
         with patch('requests.Session.put',
@@ -161,32 +161,48 @@ def test_call_external_system(app, records, mocker):
             record2 = copy.deepcopy(record1)
             record2["publish_status"] = PublishStatus.PRIVATE.value
             call_external_system(old_record=record1, new_record=record2)
-            data["action"] = ITEM_ACTION.UPDATED.value
-            data["item_info"]["publish_status"] = int(record2.get("publish_status"))
+            data["status_action"] = ITEM_ACTION.UPDATED.value
+            data["item_info"]["publish_status"] = OAPublishStatus.DRAFT.value
             update_api_mock.assert_called_once_with(
                 url, headers=headers, json=data
             )
-            result["action"] = ITEM_ACTION.UPDATED.value
 
         # case 500 error
         update_api_response.status_code = 500
         update_api_response.json = lambda: {"status":"ng", "message": "error"}
-        result[EXTERNAL_SYSTEM.OA.value] = {"status":"ng", "message": "error"}
-        result["action"] = ITEM_ACTION.CREATED.value
+        expected_remarks = {
+            "action": ITEM_ACTION.CREATED.value,
+            EXTERNAL_SYSTEM.OA.value: {"status":"ng", "message": "error"}
+        }
         with patch('requests.Session.put', return_value=update_api_response
                     ) as update_api_mock:
             call_external_system(new_record=record1)
             update_api_mock.assert_called_once()
-            mock_logger.assert_called_with(result)
+            mock_logger.assert_called_with(
+                operation="ITEM_EXTERNAL_LINK",
+                target_key="1",
+                request_info=None,
+                remarks=json.dumps(expected_remarks),
+                required_commit=False
+            )
 
         # case RequestException
-        result[EXTERNAL_SYSTEM.OA.value] = {"status":"error"}
+        expected_remarks = {
+            "action": ITEM_ACTION.CREATED.value,
+            EXTERNAL_SYSTEM.OA.value: {"status":"error"}
+        }
         with patch('requests.Session.put',
                     side_effect=requests.exceptions.RequestException
                     ) as update_api_mock:
             call_external_system(new_record=record1)
             update_api_mock.assert_called_once()
-            mock_logger.assert_called_with(result)
+            mock_logger.assert_called_with(
+                operation="ITEM_EXTERNAL_LINK",
+                target_key="1",
+                request_info=None,
+                remarks=json.dumps(expected_remarks),
+                required_commit=False
+            )
 
 
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_external.py::test_call_external_system_error_config -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
