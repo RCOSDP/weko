@@ -82,8 +82,15 @@ setup(
     include_package_data=True,
     platforms='any',
     entry_points={
+        'flask.commands': [
+            'authors = weko_authors.cli:authors',
+        ],
         'invenio_base.apps': [
             'weko_authors = weko_authors:WekoAuthors',
+        ],
+        'invenio_base.api_apps': [
+            'weko_authors = weko_authors:WekoAuthors',
+            'weko_authors_rest = weko_authors:WekoAuthorsREST',
         ],
         'invenio_admin.views': [
             'weko_authors_management = '
@@ -95,9 +102,6 @@ setup(
         ],
         'invenio_base.blueprints': [
             'weko_authors = weko_authors.views:blueprint',
-        ],
-        'invenio_base.api_apps': [
-            'weko_authors = weko_authors:WekoAuthors',
         ],
         'invenio_base.api_blueprints': [
             'weko_authors = weko_authors.views:blueprint_api',
@@ -130,6 +134,12 @@ setup(
         ],
         'invenio_access.actions': [
             'author_access = weko_authors.permissions:action_author_access',
+        ],
+        'invenio_oauth2server.scopes': [
+            'oauth_author_search_scope = weko_authors.scopes:author_search_scope',
+            'oauth_author_create_scope = weko_authors.scopes:author_create_scope',
+            'oauth_author_update_scope = weko_authors.scopes:author_update_scope',
+            'oauth_author_delete_scope = weko_authors.scopes:author_delete_scope',
         ],
     },
     extras_require=extras_require,

@@ -1,0 +1,537 @@
+{
+  "@context": [
+    "https://w3id.org/ro/crate/1.1/context",
+    {
+      "wk": "http://purl.org/wk/v1/wk-context.jsonld"
+    }
+  ],
+  "@graph": [
+    {
+      "@id": "./",
+      "@type": "Dataset",
+      "datePublished": "2025-06-06",
+      "name": "The Sample Dataset for WEKO",
+      "description": "Item metadata for Item ID: 2000001. Title: The Sample Dataset for WEKO.",
+      "identifier": "2000001",
+      "uri": "https://192.168.56.200/records/2000001",
+      "wk:index": [
+        "1623632832836"
+      ],
+      "wk:publishStatus": "public",
+      "wk:feedbackMail": [
+        "wekosoftware@nii.ac.jp"
+      ],
+      "wk:requestMail": [
+        "repoadmin@example.org"
+      ],
+      "wk:grant": [
+        {
+          "@id": "1234/5678"
+        },
+        {
+          "@id": "10.1234/5678"
+        }
+      ],
+      "wk:editMode": "Keep",
+      "dc:title": [
+        {
+          "@id": "#:title_0"
+        },
+        {
+          "@id": "#:title_1"
+        }
+      ],
+      "jpcoar:creator": [
+        {
+          "@id": "#:creator_2"
+        }
+      ],
+      "jpcoar:contributor": [
+        {
+          "@id": "#:contributor_9"
+        }
+      ],
+      "dcterms:accessRights": {
+        "@id": "#:accessRights_15"
+      },
+      "jpcoar:rightsHolder": [
+        {
+          "@id": "#:rightsHolder_16"
+        }
+      ],
+      "datacite:description": [
+        {
+          "@id": "#:description_18"
+        },
+        {
+          "@id": "#:description_19"
+        }
+      ],
+      "dc:language": [
+        {
+          "@id": "#:language_20"
+        }
+      ],
+      "dc:type": {
+        "@id": "#:type_21"
+      },
+      "jpcoar:relation": [
+        {
+          "@id": "#:relation_22"
+        },
+        {
+          "@id": "#:relation_25"
+        }
+      ],
+      "jpcoar:holdingAgent": [
+        {
+          "@id": "#:holdingAgent_45"
+        }
+      ],
+      "hasPart": [
+        {
+          "@id": "data/sample.txt"
+        },
+        {
+          "@id": "data/data.csv"
+        },
+        {
+          "@id": "data/0606/data.csv"
+        },
+        {
+          "@id": "https://example.com/test/sample/1"
+        }
+      ],
+      "wk:itemLinks": [],
+      "wk:metadataAutoFill": true
+    },
+    {
+      "@id": "ro-crate-metadata.json",
+      "@type": "CreativeWork",
+      "conformsTo": {
+        "@id": "https://w3id.org/ro/crate/1.1"
+      },
+      "about": {
+        "@id": "./"
+      }
+    },
+    {
+      "@id": "1234/5678",
+      "@type": "PropertyValue",
+      "jpcoar:identifier": "HDL"
+    },
+    {
+      "@id": "10.1234/5678",
+      "@type": "PropertyValue",
+      "jpcoar:identifier": "DOI",
+      "jpcoar:identifierRegistration": "DataCite"
+    },
+    {
+      "@id": "#:title_0",
+      "@type": "PropertyValue",
+      "value": "RO-Crate Sample Dataset",
+      "language": "en"
+    },
+    {
+      "@id": "#:title_1",
+      "@type": "PropertyValue",
+      "value": "RO-Crateサンプルデータセット",
+      "language": "ja"
+    },
+    {
+      "@id": "#:creator_2",
+      "@type": "Person",
+      "jpcoar:creatorAlternative": [
+        {
+          "@id": "#:creatorAlternative_3"
+        }
+      ],
+      "email": [
+        {
+          "@id": "#:email_4"
+        }
+      ],
+      "jpcoar:creatorName": [
+        {
+          "@id": "#:creatorName_5"
+        }
+      ],
+      "jpcoar:familyName": [
+        {
+          "@id": "#:familyName_6"
+        }
+      ],
+      "jpcoar:givenName": [
+        {
+          "@id": "#:givenName_7"
+        }
+      ],
+      "jpcoar:nameIdentifier": [
+        {
+          "@id": "#:nameIdentifier_8"
+        }
+      ]
+    },
+    {
+      "@id": "#:creatorAlternative_3",
+      "@type": "Person",
+      "value": "Sato, Taro",
+      "language": "en"
+    },
+    {
+      "@id": "#:email_4",
+      "@type": "Person",
+      "value": "test@test.com"
+    },
+    {
+      "@id": "#:creatorName_5",
+      "@type": "Person",
+      "value": "Weko, Taro",
+      "language": "en"
+    },
+    {
+      "@id": "#:familyName_6",
+      "@type": "Person",
+      "value": "Weko",
+      "language": "en"
+    },
+    {
+      "@id": "#:givenName_7",
+      "@type": "Person",
+      "value": "Taro",
+      "language": "en"
+    },
+    {
+      "@id": "#:nameIdentifier_8",
+      "@type": "Person",
+      "value": "1",
+      "nameIdentifierScheme": "WEKO"
+    },
+    {
+      "@id": "#:contributor_9",
+      "@type": "Person",
+      "email": [
+        {
+          "@id": "#:email_10"
+        }
+      ],
+      "jpcoar:contributorName": [
+        {
+          "@id": "#:contributorName_11"
+        }
+      ],
+      "jpcoar:familyName": [
+        {
+          "@id": "#:familyName_12"
+        }
+      ],
+      "jpcoar:givenName": [
+        {
+          "@id": "#:givenName_13"
+        }
+      ],
+      "jpcoar:nameIdentifier": [
+        {
+          "@id": "#:nameIdentifier_14"
+        }
+      ]
+    },
+    {
+      "@id": "#:email_10",
+      "@type": "Person",
+      "value": "jiro@sample.ac.jp"
+    },
+    {
+      "@id": "#:contributorName_11",
+      "@type": "Person",
+      "value": "Doe, John",
+      "language": "en"
+    },
+    {
+      "@id": "#:familyName_12",
+      "@type": "Person",
+      "value": "Doe",
+      "language": "en"
+    },
+    {
+      "@id": "#:givenName_13",
+      "@type": "Person",
+      "value": "John",
+      "language": "en"
+    },
+    {
+      "@id": "#:nameIdentifier_14",
+      "@type": "Person",
+      "value": "2",
+      "nameIdentifierScheme": "WEKO"
+    },
+    {
+      "@id": "#:accessRights_15",
+      "@type": "PropertyValue",
+      "value": "embargoed access",
+      "rdf:resource": "http://purl.org/coar/access_right/c_f1cf"
+    },
+    {
+      "@id": "#:rightsHolder_16",
+      "@type": "PropertyValue",
+      "jpcoar:rightsHolderName": [
+        {
+          "@id": "#:rightsHolderName_17"
+        }
+      ]
+    },
+    {
+      "@id": "#:rightsHolderName_17",
+      "@type": "PropertyValue",
+      "value": "ja",
+      "language": "国立情報学研究所（NII）"
+    },
+    {
+      "@id": "#:description_18",
+      "@type": "PropertyValue",
+      "value": "This is a sample file for the WEKO3 import feature for RO-Crate format items.",
+      "language": "en",
+      "descriptionType": "Abstract"
+    },
+    {
+      "@id": "#:description_19",
+      "@type": "PropertyValue",
+      "value": "これはWEKO3でRO-Crate形式のアイテムをインポートする機能のためのサンプルファイルです。",
+      "language": "ja",
+      "descriptionType": "Abstract"
+    },
+    {
+      "@id": "#:language_20",
+      "@type": "PropertyValue",
+      "value": "jpn"
+    },
+    {
+      "@id": "#:type_21",
+      "@type": "PropertyValue",
+      "value": "dataset",
+      "rdf:resource": "http://purl.org/coar/resource_type/c_ddb1"
+    },
+    {
+      "@id": "#:relation_22",
+      "@type": "PropertyValue",
+      "jpcoar:relatedTitle": [
+        {
+          "@id": "#:relatedTitle_23"
+        }
+      ],
+      "relationType": "isVersionOf",
+      "jpcoar:relatedIdentifier": {
+        "@id": "#:relatedIdentifier_24"
+      }
+    },
+    {
+      "@id": "#:relatedTitle_23",
+      "@type": "PropertyValue",
+      "language": "ja",
+      "value": "RO-Crateを用いた材料研究データのデータリポジトリへの登録"
+    },
+    {
+      "@id": "#:relatedIdentifier_24",
+      "@type": "PropertyValue",
+      "value": "https://doi.org/10.2964/jsik_2021_067",
+      "identifierType": "DOI"
+    },
+    {
+      "@id": "#:relation_25",
+      "@type": "PropertyValue",
+      "jpcoar:relatedTitle": [
+        {
+          "@id": "#:relatedTitle_26"
+        }
+      ],
+      "relationType": "requires",
+      "jpcoar:relatedIdentifier": {
+        "@id": "#:relatedIdentifier_27"
+      }
+    },
+    {
+      "@id": "#:relatedTitle_26",
+      "@type": "PropertyValue",
+      "language": "en",
+      "value": "ResearchObject/ro-crate: Research Object Crate"
+    },
+    {
+      "@id": "#:relatedIdentifier_27",
+      "@type": "PropertyValue",
+      "value": "https://github.com/ResearchObject/ro-crate",
+      "identifierType": "URI"
+    },
+    {
+      "@id": "#:date_29",
+      "@type": "Date",
+      "dateType": "Collected",
+      "value": "2024-11-10"
+    },
+    {
+      "@id": "#:extent_30",
+      "@type": "File",
+      "value": "475 B"
+    },
+    {
+      "@id": "#:URI_31",
+      "@type": "URL",
+      "value": "https://weko3.example.org/record/2000001/files/data.csv"
+    },
+    {
+      "@id": "#:date_33",
+      "@type": "Date",
+      "dateType": "Collected",
+      "value": "2025-06-06"
+    },
+    {
+      "@id": "#:extent_34",
+      "@type": "File",
+      "value": "475 B"
+    },
+    {
+      "@id": "#:URI_35",
+      "@type": "URL",
+      "value": "https://weko3.example.org/record/2000001/files/0606/data.csv"
+    },
+    {
+      "@id": "#:date_37",
+      "@type": "Date",
+      "dateType": "Created",
+      "value": "2024-11-11"
+    },
+    {
+      "@id": "#:date_38",
+      "@type": "Date",
+      "dateType": "Issued",
+      "value": "2024-09-01"
+    },
+    {
+      "@id": "#:extent_39",
+      "@type": "File",
+      "value": "333 B"
+    },
+    {
+      "@id": "#:URI_40",
+      "@type": "URL",
+      "value": "https://weko3.example.org/record/2000001/files/sample.txt"
+    },
+    {
+      "@id": "#:date_42",
+      "@type": "Date",
+      "dateType": "Issued",
+      "value": "2025-05-05"
+    },
+    {
+      "@id": "#:date_43",
+      "@type": "Date",
+      "dateType": "Updated",
+      "value": "2025-06-05"
+    },
+    {
+      "@id": "#:URI_44",
+      "@type": "URL",
+      "value": "https://example.com/test/sample/1"
+    },
+    {
+      "@id": "#:holdingAgent_45",
+      "@type": "PropertyValue",
+      "jpcoar:holdingAgentName": [
+        {
+          "@id": "#:holdingAgentName_46"
+        }
+      ]
+    },
+    {
+      "@id": "#:holdingAgentName_46",
+      "@type": "PropertyValue",
+      "value": "Example Organization"
+    },
+    {
+      "@id": "data/data.csv",
+      "@type": "File",
+      "dcterms:accessRights": "open_login",
+      "datePublished": "2025-06-06",
+      "datacite:date": [
+        {
+          "@id": "#:date_29"
+        }
+      ],
+      "name": "data.csv",
+      "jpcoar:extent": [
+        {
+          "@id": "#:extent_30"
+        }
+      ],
+      "jpcoar:mimeType": "text/csv",
+      "jpcoar:URI": {
+        "@id": "#:URI_31"
+      },
+      "wk:textExtraction": false
+    },
+    {
+      "@id": "data/0606/data.csv",
+      "@type": "File",
+      "dcterms:accessRights": "open_login",
+      "datePublished": "2025-06-06",
+      "datacite:date": [
+        {
+          "@id": "#:date_33"
+        }
+      ],
+      "name": "0606/data.csv",
+      "jpcoar:extent": [
+        {
+          "@id": "#:extent_34"
+        }
+      ],
+      "jpcoar:mimeType": "text/csv",
+      "jpcoar:URI": {
+        "@id": "#:URI_35"
+      },
+      "wk:textExtraction": true
+    },
+    {
+      "@id": "data/sample.txt",
+      "@type": "File",
+      "dcterms:accessRights": "open_access",
+      "datePublished": "2025-06-06",
+      "datacite:date": [
+        {
+          "@id": "#:date_37"
+        },
+        {
+          "@id": "#:date_38"
+        }
+      ],
+      "name": "sample.txt",
+      "jpcoar:extent": [
+        {
+          "@id": "#:extent_39"
+        }
+      ],
+      "jpcoar:mimeType": "text/plain",
+      "jpcoar:URI": {
+        "@id": "#:URI_40"
+      },
+      "wk:textExtraction": true
+    },
+    {
+      "@id": "https://example.com/test/sample/1",
+      "@type": "File",
+      "dcterms:accessRights": "open_no",
+      "datePublished": "2025-06-06",
+      "datacite:date": [
+        {
+          "@id": "#:date_42"
+        },
+        {
+          "@id": "#:date_43"
+        }
+      ],
+      "name": "reference sample",
+      "jpcoar:URI": {
+        "@id": "#:URI_44"
+      }
+    }
+  ]
+}

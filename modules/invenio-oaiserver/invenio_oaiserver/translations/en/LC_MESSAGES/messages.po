@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: weko_admin 0.1.0.dev20170000\n"
 "Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
-"POT-Creation-Date: 2018-01-04 16:17+0100\n"
+"POT-Creation-Date: 2025-10-03 14:44+0900\n"
 "PO-Revision-Date: 2018-01-04 16:19+0100\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -17,54 +17,89 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.1.1\n"
+"Generated-By: Babel 2.5.1\n"
 
-#: invenio_oaiserver/admin.py:60
+#: invenio_oaiserver/admin.py:47 invenio_oaiserver/admin.py:97
 msgid "OAI-PMH"
 msgstr ""
 
-#: invenio_oaiserver/admin.py:61
+#: invenio_oaiserver/admin.py:48
 msgid "Sets"
-msgstr "設定"
+msgstr ""
 
-#: invenio_oaiserver/models.py:52
+#: invenio_oaiserver/admin.py:69
+msgid "Output Set"
+msgstr ""
+
+#: invenio_oaiserver/admin.py:70 invenio_oaiserver/models.py:159
+msgid "Emails"
+msgstr ""
+
+#: invenio_oaiserver/admin.py:71 invenio_oaiserver/models.py:170
+msgid "Repository Name"
+msgstr ""
+
+#: invenio_oaiserver/admin.py:72
+msgid "Earliest Datastamp"
+msgstr ""
+
+#: invenio_oaiserver/admin.py:98
+msgid "Identify"
+msgstr ""
+
+#: invenio_oaiserver/models.py:37
 msgid "Identifier"
 msgstr ""
 
-#: invenio_oaiserver/models.py:53
+#: invenio_oaiserver/models.py:38
 msgid "Identifier of the set."
 msgstr ""
 
-#: invenio_oaiserver/models.py:61
+#: invenio_oaiserver/models.py:46
 msgid "Long name"
 msgstr ""
 
-#: invenio_oaiserver/models.py:62
+#: invenio_oaiserver/models.py:47
 msgid "Long name of the set."
 msgstr ""
 
-#: invenio_oaiserver/models.py:72
+#: invenio_oaiserver/models.py:57
 msgid "Description"
 msgstr ""
 
-#: invenio_oaiserver/models.py:73
+#: invenio_oaiserver/models.py:58
 msgid "Description of the set."
 msgstr ""
 
-#: invenio_oaiserver/models.py:82
+#: invenio_oaiserver/models.py:67
 msgid "Search pattern"
 msgstr ""
 
-#: invenio_oaiserver/models.py:83
+#: invenio_oaiserver/models.py:68
 msgid "Search pattern to select records"
 msgstr ""
 
-#: invenio_oaiserver/models.py:83
-msgid "outPutSetting"
-msgstr "出力"
+#: invenio_oaiserver/models.py:150
+msgid "OutPut Setting"
+msgstr ""
 
+#: invenio_oaiserver/models.py:151
+msgid "output setting of OAI-PMH"
+msgstr ""
 
-#: invenio_oaiserver/models.py:83
-msgid "Identify"
-msgstr "設定"
+#: invenio_oaiserver/models.py:160
+msgid "Emails of OAI-PMH."
+msgstr ""
+
+#: invenio_oaiserver/models.py:171
+msgid "Repository Name of OAI-PMH"
+msgstr ""
+
+#: invenio_oaiserver/models.py:181
+msgid "Earliest Data"
+msgstr ""
+
+#: invenio_oaiserver/models.py:182
+msgid "The earliest data of OAI-PMH"
+msgstr ""
 

@@ -1,0 +1,12 @@
+# -*- coding: utf-8 -*-
+#
+# Copyright (C) 2025 National Institute of Informatics.
+#
+# WEKO-Notifications is free software; you can redistribute it and/or modify
+# it under the terms of the MIT License; see LICENSE file for more details.
+#
+# TODO: Add development versions of some important dependencies here to get a
+#       warning when there are breaking upstream changes, e.g.:
+#
+#     -e git+git://github.com/mitsuhiko/werkzeug.git#egg=Werkzeug
+#     -e git+git://github.com/mitsuhiko/jinja2.git#egg=Jinja2

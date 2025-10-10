@@ -77,7 +77,7 @@ require([
       itemtype_id: $('#item_type_' + workflow_id).data('itemtype-id')
     };
     if (community != "") {
-      post_uri = post_uri + "?community=" + community;
+      post_uri = post_uri + "?c=" + community;
     }
     $.ajax({
       url: '/workflow/activity/user_lock',
@@ -277,7 +277,8 @@ require([
     let post_data = {
       commond: $('#input-comment').val(),
       action_version: act_ver,
-      community: community_id
+      community: community_id,
+      temporary_save: 0,
     };
     $.ajax({
       url: uri_apo,

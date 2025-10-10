@@ -26,6 +26,9 @@ WEKO_WORKFLOW_BASE_TEMPLATE = 'weko_workflow/base.html'
 WEKO_WORKFLOW_POP_PAGE = 'weko_workflow/admin/pop_page.html'
 """Default pop page template for the flow detail page."""
 
+WEKO_ADMIN_ACTIVITY_SETTINGS_TEMPLATE = 'weko_workflow/admin/activity_settings.html'
+"""Activity Settings template."""
+
 WEKO_WORKFLOW_OAPOLICY_SEARCH = 'oa_policy_{keyword}'
 """OA Policy cache."""
 
@@ -37,6 +40,9 @@ WEKO_WORKFLOW_MAX_ACTIVITY_ID = 99999
 
 WEKO_WORKFLOW_ACTIVITY_ID_FORMAT = 'A-{}-{}'
 """Activity Id's format (A-YYYYMMDD-NNNNN with NNNNN starts from 00001)."""
+
+WEKO_WORKFLOW_DELETION_ACTIVITY_ID_FORMAT = 'D-{}-{}'
+"""Deletion Activity Id's format (D-YYYYMMDD-NNNNN with NNNNN starts from 00001)."""
 
 WEKO_WORKFLOW_ACTION_ENDPOINTS = {
     'item_login': {
@@ -53,7 +59,7 @@ IDENTIFIER_GRANT_LIST = [(0, 'Not Grant', ''),
                          ]
 """Options list for Identifier Grant action."""
 
-IDENTIFIER_GRANT_SUFFIX_METHOD = 0 
+IDENTIFIER_GRANT_SUFFIX_METHOD = 0
 """
     Suffix input method for Identifier Grant action
 
@@ -309,6 +315,9 @@ WEKO_WORKFLOW_ACTION_GUARANTOR = ''
 WEKO_WORKFLOW_ACTION_ADVISOR = ''
 """Action Approval by Advisor"""
 
+WEKO_WORKFLOW_APPROVER_EMAIL_COLUMN_VISIBLE = True
+"""Approver email column visible"""
+
 WEKO_WORKFLOW_ACTIONS = [
     WEKO_WORKFLOW_ACTION_START,
     WEKO_WORKFLOW_ACTION_END,
@@ -316,6 +325,12 @@ WEKO_WORKFLOW_ACTIONS = [
     WEKO_WORKFLOW_ACTION_APPROVAL,
     WEKO_WORKFLOW_ACTION_ITEM_LINK,
     WEKO_WORKFLOW_ACTION_IDENTIFIER_GRANT
+]
+
+WEKO_WORKFLOW_DELETION_ACTIONS= [
+    WEKO_WORKFLOW_ACTION_START,
+    WEKO_WORKFLOW_ACTION_END,
+    WEKO_WORKFLOW_ACTION_APPROVAL
 ]
 """Action list"""
 
@@ -326,7 +341,9 @@ WEKO_WORKFLOW_COLUMNS = [
     'flows_name',
     'action_name',
     'StatusDesc',
-    'email'
+    'email' ,
+    'approver' ,
+    'approver_email'
 ]
 """Work flow activity columns"""
 
@@ -334,7 +351,8 @@ WEKO_WORKFLOW_FILTER_COLUMNS = [
     'workflow',
     'user',
     'item',
-    'status'
+    'status',
+    'action'
 ]
 """Work flow filters"""
 
@@ -371,7 +389,7 @@ WEKO_WORKFLOW_CONTINUE_APPROVAL = False
 
 WEKO_WORKFLOW_ENGLISH_MAIL_TEMPLATE_FOLDER_PATH = ''
 WEKO_WORKFLOW_JAPANESE_MAIL_TEMPLATE_FOLDER_PATH = ''
-WEKO_WORKFLOW_MAIL_TEMPLATE_FOLDER_PATH = ''
+WEKO_WORKFLOW_MAIL_TEMPLATE_FOLDER_PATH = 'modules/weko-workflow/weko_workflow/templates/weko_workflow/email_templates/'
 """Email template path"""
 
 WEKO_WORKFLOW_RECEIVE_USAGE_APP_BESIDE_PERFECTURE_AND_LOCATION_DATA_OF_GENERAL_USER = ''
@@ -425,11 +443,14 @@ WEKO_WORKFLOW_APPROVE_USAGE_REPORT = ""
 WEKO_WORKFLOW_APPROVE_OUTPUT_REGISTRATION = ""
 """Approve Output Registration mail template's filename"""
 
-WEKO_WORKFLOW_ACCESS_ACTIVITY_URL = ""
+WEKO_WORKFLOW_ACCESS_ACTIVITY_URL = "1"
 """Template access the URL"""
 
-WEKO_WORKFLOW_USAGE_REPORT_ACTIVITY_URL = ""
-"""Template access the URL"""
+WEKO_WORKFLOW_USAGE_REPORT_REMINDER_MAIL_TEMPLATE_ID = "6"
+"""Usage Repost reminder mail template id"""
+
+WEKO_WORKFLOW_REQUEST_FOR_REGISTER_USAGE_REPORT = '7'
+"""Mail template for Request for register Data Usage Report"""
 
 WEKO_WORKFLOW_DATE_FORMAT = "%Y-%m-%d"
 """Date format string."""
@@ -449,28 +470,16 @@ WEKO_WORKFLOW_IDENTIFIER_GRANT_WITHDRAWN = -3
 WEKO_WORKFLOW_SEND_MAIL_USER_GROUP = {}
 
 WEKO_WORKFLOW_FILTER_PARAMS = [
-    'createdfrom', 'createdto', 'workflow', 'user', 'item', 'status', 'tab',
+    'createdfrom', 'createdto', 'workflow', 'user', 'item', 'status', 'action', 'tab',
     'sizewait', 'sizetodo', 'sizeall', 'pagesall', 'pagestodo', 'pageswait'
 ]
 
 WEKO_WORKFLOW_ACTIVITY_TOKEN_PATTERN = "activity={} file_name={} date={} email={}"
 """Token pattern."""
 
-WEKO_WORKFLOW_APPROVE_DONE = 'email_pattern_approval_done.tpl'
-"""Mail template for Done Approval"""
+WEKO_WORKFLOW_USAGE_APPLICATION_ITEM_TYPES_LIST = [31001, 31002, 31004, 31005, 31006, 31007, 31008]
 
-WEKO_WORKFLOW_APPROVE_REJECTED = 'email_pattern_approval_rejected.tpl'
-"""Mail template for Rejected Approval"""
-
-WEKO_WORKFLOW_REQUEST_APPROVAL = 'email_pattern_request_approval.tpl'
-"""Mail template for Requested Approval"""
-
-WEKO_WORKFLOW_REQUEST_FOR_REGISTER_USAGE_REPORT = 'email_pattern_request_for_register_usage_report.tpl'
-"""Mail template for Request for register Data Usage Report"""
-
-WEKO_WORKFLOW_USAGE_APPLICATION_ITEM_TYPES_LIST = [31001, 31002]
-
-WEKO_WORKFLOW_USAGE_REPORT_ITEM_TYPES_LIST = [31003]
+WEKO_WORKFLOW_USAGE_REPORT_ITEM_TYPES_LIST = [3007, 31003]
 
 WEKO_WORKFLOW_USAGE_APPLICATION_ITEM_TITLE = '利用申請'
 
@@ -502,6 +511,8 @@ WEKO_WORKFLOW_GAKUNINRDM_DATA = [
 WEKO_WORKFLOW_GAKUNINRDM_PREFIX = 'GakuninRDM'
 """GekuninRDM prefix for logging."""
 
+WEKO_STR_TRUE = ['true', 't', 'yes', '1']
+
 WEKO_WORKFLOW_ACTIVITYLOG_ROLE_ENABLE = ["System Administrator","Repository Administrator"]
 """ Roles that can output activitylog"""
 
@@ -527,7 +538,7 @@ WEKO_WORKFLOW_ACTIVITYLOG_XLS_COLUMNS = [
     'title',
     'action_status',
     'activity_id',
-    'shared_user_id',
+    'shared_user_ids',
     'activity_login_user',
     'activity_name',
     'temp_data',
@@ -541,3 +552,46 @@ WEKO_WORKFLOW_ACTIVITYLOG_XLS_COLUMNS = [
     'action_name',
     'role_name'
 ]
+
+WEKO_ITEMS_UI_MULTIPLE_APPROVALS = True
+
+WEKO_WORKFLOW_REST_ENDPOINTS = dict(
+    activities=dict(
+        activities_route='/<string:version>/workflow/activities',
+        default_media_type='application/json',
+    ),
+    approve=dict(
+        route='/<string:version>/workflow/activities/<string:activity_id>/approve',
+        default_media_type='application/json',
+    ),
+    throw_out=dict(
+        route='/<string:version>/workflow/activities/<string:activity_id>/throw-out',
+        default_media_type='application/json',
+    ),
+    file_application=dict(
+        route='/<string:version>/workflow/activities/<string:activity_id>/application',
+        default_media_type='application/json',
+    ),
+)
+
+WEKO_WORKFLOW_API_LIMIT_RATE_DEFAULT = ['100 per minute']
+
+WEKO_WORKFLOW_API_ACCEPT_LANGUAGES = ['en', 'ja']
+
+WEKO_WORKFLOW_APPROVAL_PREVIEW = True
+"""Setting preview function during approval"""
+
+WEKO_WORKFLOW_ITEM_REGISTRANT_ID = -2
+"""Item registrant id."""
+
+WEKO_WORKFLOW_REQUEST_MAIL_ID = -3
+"""Request mail id."""
+
+WEKO_WORKFLOW_REGISTRATION_FLOW_TYPE = 1
+"""Registration flow type"""
+
+WEKO_WORKFLOW_DELETION_FLOW_TYPE = 2
+"""Deletion flow type"""
+
+WEKO_WORKFLOW_MAIL_DEFAULT_LANGUAGE = 'en'
+"""Default language for mail template"""

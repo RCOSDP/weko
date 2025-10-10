@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: weko-theme 0.1.0.dev20170000\n"
 "Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
-"POT-Creation-Date: 2021-02-16 02:37+0000\n"
+"POT-Creation-Date: 2025-10-03 16:58+0900\n"
 "PO-Revision-Date: 2019-04-25 15:56+0900\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -18,9 +18,85 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.5.1\n"
 
+#: tests/conftest.py:203
+msgid "write your own license"
+msgstr ""
+
+#: tests/conftest.py:208
+msgid "Creative Commons CC0 1.0 Universal Public Domain Designation"
+msgstr ""
+
+#: tests/conftest.py:223
+msgid "Creative Commons Attribution 3.0 Unported (CC BY 3.0)"
+msgstr ""
+
+#: tests/conftest.py:235
+msgid "Creative Commons Attribution-ShareAlike 3.0 Unported (CC BY-SA 3.0)"
+msgstr ""
+
+#: tests/conftest.py:249
+msgid "Creative Commons Attribution-NoDerivs 3.0 Unported (CC BY-ND 3.0)"
+msgstr ""
+
+#: tests/conftest.py:263
+msgid "Creative Commons Attribution-NonCommercial 3.0 Unported (CC BY-NC 3.0)"
+msgstr ""
+
+#: tests/conftest.py:277
+msgid ""
+"Creative Commons Attribution-NonCommercial-ShareAlike 3.0 Unported (CC "
+"BY-NC-SA 3.0)"
+msgstr ""
+
+#: tests/conftest.py:291
+msgid ""
+"Creative Commons Attribution-NonCommercial-NoDerivs 3.0 Unported (CC BY-"
+"NC-ND 3.0)"
+msgstr ""
+
+#: tests/conftest.py:306
+msgid "Creative Commons Attribution 4.0 International (CC BY 4.0)"
+msgstr ""
+
+#: tests/conftest.py:318
+msgid "Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)"
+msgstr ""
+
+#: tests/conftest.py:332
+msgid ""
+"Creative Commons Attribution-NoDerivatives 4.0 International (CC BY-ND "
+"4.0)"
+msgstr ""
+
+#: tests/conftest.py:346
+msgid ""
+"Creative Commons Attribution-NonCommercial 4.0 International (CC BY-NC "
+"4.0)"
+msgstr ""
+
+#: tests/conftest.py:360
+msgid ""
+"Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International "
+"(CC BY-NC-SA 4.0)"
+msgstr ""
+
+#: tests/conftest.py:374
+msgid ""
+"Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 "
+"International (CC BY-NC-ND 4.0)"
+msgstr ""
+
 #: weko_theme/templates/weko_theme/macros/tabs_selector.html:33
-#: weko_theme/utils.py:210
+#: weko_theme/utils.py:227
 msgid "Communities"
+msgstr ""
+
+#: weko_theme/static/oa/plotly-main-2.11.1/plotly-latest.min.js:22
+msgid "Unable to read from LocalStorage"
+msgstr ""
+
+#: weko_theme/static/oa/plotly-main-2.11.1/plotly-latest.min.js:22
+msgid "Unable to write to LocalStorage"
 msgstr ""
 
 #: weko_theme/templates/weko_theme/admin_header.html:86
@@ -60,7 +136,7 @@ msgid "Execution"
 msgstr ""
 
 #: weko_theme/templates/weko_theme/body_contents.html:58
-#: weko_theme/templates/weko_theme/body_contents.html:85
+#: weko_theme/templates/weko_theme/body_contents.html:87
 msgid "Display order"
 msgstr ""
 
@@ -136,15 +212,23 @@ msgstr ""
 msgid "Custom(Descending)"
 msgstr ""
 
-#: weko_theme/templates/weko_theme/body_contents.html:104
+#: weko_theme/templates/weko_theme/body_contents.html:78
+msgid "Relevance(Ascending)"
+msgstr ""
+
+#: weko_theme/templates/weko_theme/body_contents.html:79
+msgid "Relevance(Descending)"
+msgstr ""
+
+#: weko_theme/templates/weko_theme/body_contents.html:106
 msgid "The number of display"
 msgstr ""
 
-#: weko_theme/templates/weko_theme/body_contents.html:123
+#: weko_theme/templates/weko_theme/body_contents.html:125
 msgid "Search failed."
 msgstr ""
 
-#: weko_theme/templates/weko_theme/body_contents.html:129
+#: weko_theme/templates/weko_theme/body_contents.html:131
 msgid "Loading..."
 msgstr ""
 
@@ -152,25 +236,29 @@ msgstr ""
 msgid "Index Link"
 msgstr ""
 
-#: weko_theme/templates/weko_theme/body_index.html:52
+#: weko_theme/templates/weko_theme/body_index.html:54
 msgid "Index Tree"
 msgstr ""
 
 #: weko_theme/templates/weko_theme/body_search.html:27
+msgid "Search Keyword"
+msgstr ""
+
+#: weko_theme/templates/weko_theme/body_search.html:28
 msgid "Type and press enter to search"
 msgstr ""
 
-#: weko_theme/templates/weko_theme/body_search.html:33
-#: weko_theme/templates/weko_theme/body_search_detail_new.html:120
+#: weko_theme/templates/weko_theme/body_search.html:34
+#: weko_theme/templates/weko_theme/body_search_detail_new.html:175
 msgid "Search"
 msgstr ""
 
-#: weko_theme/templates/weko_theme/body_search.html:41
+#: weko_theme/templates/weko_theme/body_search.html:40
 msgid "Advanced"
 msgstr ""
 
-#: weko_theme/templates/weko_theme/body_search.html:43
-#: weko_theme/templates/weko_theme/macros/modal_page.html:67
+#: weko_theme/templates/weko_theme/body_search.html:42
+#: weko_theme/templates/weko_theme/macros/modal_page.html:91
 msgid "Close"
 msgstr ""
 
@@ -190,32 +278,53 @@ msgstr ""
 msgid "Enter Input Value"
 msgstr ""
 
-#: weko_theme/templates/weko_theme/body_search_detail_new.html:37
+#: weko_theme/templates/weko_theme/body_search_detail_new.html:73
 msgid "[[sub_sel_option.contents]]"
 msgstr ""
 
-#: weko_theme/templates/weko_theme/body_search_detail_new.html:46
+#: weko_theme/templates/weko_theme/body_search_detail_new.html:84
+#: weko_theme/templates/weko_theme/body_search_detail_new.html:91
 msgid "[[sub_check.contents]]"
 msgstr ""
 
-#: weko_theme/templates/weko_theme/body_search_detail_new.html:56
+#: weko_theme/templates/weko_theme/body_search_detail_new.html:102
 msgid "[[sub_radio.contents]]"
 msgstr ""
 
-#: weko_theme/templates/weko_theme/body_search_detail_new.html:83
+#: weko_theme/templates/weko_theme/body_search_detail_new.html:109
+msgid "Start Date"
+msgstr ""
+
+#: weko_theme/templates/weko_theme/body_search_detail_new.html:116
+msgid "End Date"
+msgstr ""
+
+#: weko_theme/templates/weko_theme/body_search_detail_new.html:124
+msgid "Field does not validate"
+msgstr ""
+
+#: weko_theme/templates/weko_theme/body_search_detail_new.html:138
 msgid "[[sub_attr.contents]]"
 msgstr ""
 
-#: weko_theme/templates/weko_theme/body_search_detail_new.html:108
+#: weko_theme/templates/weko_theme/body_search_detail_new.html:163
 msgid "Add Search Condition"
 msgstr ""
 
-#: weko_theme/templates/weko_theme/body_search_detail_new.html:126
+#: weko_theme/templates/weko_theme/body_search_detail_new.html:181
 msgid "Clear"
 msgstr ""
 
 #: weko_theme/templates/weko_theme/edit.html:25
 msgid "Top Page"
+msgstr ""
+
+#: weko_theme/templates/weko_theme/error.html:27
+msgid "Internal server error"
+msgstr ""
+
+#: weko_theme/templates/weko_theme/error.html:30
+msgid "Error identifier"
 msgstr ""
 
 #: weko_theme/templates/weko_theme/footer_editor.html:27
@@ -229,21 +338,25 @@ msgstr ""
 msgid "Toggle navigation"
 msgstr ""
 
-#: weko_theme/templates/weko_theme/header_login.html:24
+#: weko_theme/templates/weko_theme/header_login.html:32
 msgid "Log in"
 msgstr ""
 
-#: weko_theme/templates/weko_theme/header_login.html:27
+#: weko_theme/templates/weko_theme/header_login.html:36
 msgid "Sign up"
 msgstr ""
 
-#: weko_theme/templates/weko_theme/header_login.html:45
-#: weko_theme/templates/weko_theme/header_login.html:49
+#: weko_theme/templates/weko_theme/header_login.html:54
+#: weko_theme/templates/weko_theme/header_login.html:58
 msgid "Log out"
 msgstr ""
 
 #: weko_theme/templates/weko_theme/page_setting.html:33
 msgid "Settings"
+msgstr ""
+
+#: weko_theme/templates/weko_theme/admin/item_management_init.html:67
+msgid "Target Index"
 msgstr ""
 
 #: weko_theme/templates/weko_theme/macros/edit_tree_tabs_selector.html:22
@@ -266,345 +379,86 @@ msgstr ""
 msgid "Bulk Delete"
 msgstr ""
 
-#: weko_theme/templates/weko_theme/macros/language_selector.html:28
+#: weko_theme/templates/weko_theme/macros/language_selector.html:29
+#: weko_theme/templates/weko_theme/macros/language_selector.html:30
 msgid "Language:"
 msgstr ""
 
 #: weko_theme/templates/weko_theme/macros/modal_page.html:31
+#: weko_theme/templates/weko_theme/macros/modal_page.html:54
 msgid "WEKO"
 msgstr ""
 
 #: weko_theme/templates/weko_theme/macros/modal_page.html:39
-#: weko_theme/templates/weko_theme/macros/modal_page.html:94
+#: weko_theme/templates/weko_theme/macros/modal_page.html:118
+#: weko_theme/templates/weko_theme/macros/modal_page.html:184
 msgid "Cancel"
 msgstr ""
 
-#: weko_theme/templates/weko_theme/macros/tabs_selector.html:24
-#: weko_theme/templates/weko_theme/macros/tabs_selector.html:29
+#: weko_theme/templates/weko_theme/macros/modal_page.html:62
+msgid "OK"
+msgstr ""
+
+#: weko_theme/templates/weko_theme/macros/modal_page.html:141
+#: weko_theme/templates/weko_theme/macros/modal_page.html:144
+msgid "Email address"
+msgstr ""
+
+#: weko_theme/templates/weko_theme/macros/modal_page.html:148
+#: weko_theme/templates/weko_theme/macros/modal_page.html:151
+msgid "Email address(reconfirmation)"
+msgstr ""
+
+#: weko_theme/templates/weko_theme/macros/modal_page.html:156
+#: weko_theme/templates/weko_theme/macros/modal_page.html:159
+msgid "Password"
+msgstr ""
+
+#: weko_theme/templates/weko_theme/macros/modal_page.html:161
+msgid "password rule1"
+msgstr "Please set a password with at least 8 characters."
+
+#: weko_theme/templates/weko_theme/macros/modal_page.html:162
+msgid "password rule2"
+msgstr ""
+"Please include at least one uppercase letter, lowercase letter, number, "
+"and symbol."
+
+#: weko_theme/templates/weko_theme/macros/modal_page.html:163
+msgid "available characters"
+msgstr "available characters"
+
+#: weko_theme/templates/weko_theme/macros/modal_page.html:168
+#: weko_theme/templates/weko_theme/macros/modal_page.html:171
+msgid "Password(reconfirmation)"
+msgstr ""
+
+#: weko_theme/templates/weko_theme/macros/tabs_selector.html:23
+#: weko_theme/templates/weko_theme/macros/tabs_selector.html:28
 msgid "Top"
 msgstr ""
 
-#: weko_theme/templates/weko_theme/macros/tabs_selector.html:26
-#: weko_theme/templates/weko_theme/macros/tabs_selector.html:31
+#: weko_theme/templates/weko_theme/macros/tabs_selector.html:25
+#: weko_theme/templates/weko_theme/macros/tabs_selector.html:30
 msgid "WorkFlow"
 msgstr ""
+
+#: weko_theme/templates/weko_theme/macros/tabs_selector.html:36
+msgid "Ranking"
+msgstr ""
+
 
 #: weko_theme/templates/weko_theme/macros/tabs_selector.html:35
 msgid "Ranking"
 msgstr ""
 
-#~ msgid ""
-#~ "<p>Powered by <a href=\"%(link)s\" "
-#~ "style=\"color: #ffffff;\">CERN Data Centre &"
-#~ " Invenio</a><p>"
-#~ msgstr ""
-
-#~ msgid "Detail Search"
-#~ msgstr ""
-
-#~ msgid "Title"
-#~ msgstr ""
-
-#~ msgid "Author Name"
-#~ msgstr ""
-
-#~ msgid "Subject"
-#~ msgstr ""
-
-#~ msgid "Region"
-#~ msgstr ""
-
-#~ msgid "Subject Scheme"
-#~ msgstr ""
-
-#~ msgid "BSH"
-#~ msgstr ""
-
-#~ msgid "DDC"
-#~ msgstr ""
-
-#~ msgid "LCC"
-#~ msgstr ""
-
-#~ msgid "LCSH"
-#~ msgstr ""
-
-#~ msgid "MeSH"
-#~ msgstr ""
-
-#~ msgid "NDC"
-#~ msgstr ""
-
-#~ msgid "NDLC"
-#~ msgstr ""
-
-#~ msgid "NDLSH"
-#~ msgstr ""
-
-#~ msgid "UDC"
-#~ msgstr ""
-
-#~ msgid "Scival"
-#~ msgstr ""
-
-msgid "Other"
-msgstr ""
-
-#~ msgid "Description"
-#~ msgstr ""
-
-#~ msgid "Publisher"
-#~ msgstr ""
-
-#~ msgid "Contributors"
-#~ msgstr ""
-
-#~ msgid "Contents created date"
-#~ msgstr ""
-
-#~ msgid "Contents property"
-#~ msgstr ""
-
-#~ msgid "Accepted"
-#~ msgstr ""
-
-#~ msgid "Available"
-#~ msgstr ""
-
-#~ msgid "Collected"
-#~ msgstr ""
-
-#~ msgid "Copyrighted"
-#~ msgstr ""
-
-#~ msgid "Created"
-#~ msgstr ""
-
-#~ msgid "Issued"
-#~ msgstr ""
-
-#~ msgid "Submitted"
-#~ msgstr ""
-
-#~ msgid "Updated"
-#~ msgstr ""
-
-#~ msgid "Valid"
-#~ msgstr ""
-
-#~ msgid "Format"
-#~ msgstr ""
-
-#~ msgid "Journal Title"
-#~ msgstr ""
-
-#~ msgid "ＩＤ"
-#~ msgstr ""
-
-#~ msgid "identifier"
-#~ msgstr ""
-
-#~ msgid "URI"
-#~ msgstr ""
-
-#~ msgid "fullTextURL"
-#~ msgstr ""
-
-#~ msgid "selfDOI"
-#~ msgstr ""
-
-#~ msgid "ISBN"
-#~ msgstr ""
-
-#~ msgid "ISSN"
-#~ msgstr ""
-
-#~ msgid "NCID"
-#~ msgstr ""
-
-#~ msgid "pmid"
-#~ msgstr ""
-
-#~ msgid "doi"
-#~ msgstr ""
-
-#~ msgid "NAID"
-#~ msgstr ""
-
-#~ msgid "ichushi"
-#~ msgstr ""
-
-#~ msgid "Resource Type"
-#~ msgstr ""
-
-#~ msgid "Conference Paper"
-#~ msgstr ""
-
-#~ msgid "Departmental Bulletin Paper"
-#~ msgstr ""
-
-#~ msgid "Journal Article"
-#~ msgstr ""
-
-#~ msgid "Article"
-#~ msgstr ""
-
-#~ msgid "Book"
-#~ msgstr ""
-
-#~ msgid "Presentation"
-#~ msgstr ""
-
-#~ msgid "Data or Dataset"
-#~ msgstr ""
-
-#~ msgid "Research Paper"
-#~ msgstr ""
-
-#~ msgid "Technical Report"
-#~ msgstr ""
-
-#~ msgid "Thesis or Dissertation"
-#~ msgstr ""
-
-#~ msgid "Learning Material"
-#~ msgstr ""
-
-#~ msgid "Software"
-#~ msgstr ""
-
-#~ msgid "Item Type"
-#~ msgstr ""
-
-#~ msgid "Language"
-#~ msgstr ""
-
-#~ msgid "Japanese"
-#~ msgstr ""
-
-#~ msgid "English"
-#~ msgstr ""
-
-#~ msgid "French"
-#~ msgstr ""
-
-#~ msgid "Italian"
-#~ msgstr ""
-
-#~ msgid "German"
-#~ msgstr ""
-
-#~ msgid "Spanish"
-#~ msgstr ""
-
-#~ msgid "Chinese"
-#~ msgstr ""
-
-#~ msgid "Russian"
-#~ msgstr ""
-
-#~ msgid "Latin"
-#~ msgstr ""
-
-#~ msgid "Malay"
-#~ msgstr ""
-
-#~ msgid "Esperanto"
-#~ msgstr ""
-
-#~ msgid "Arabic"
-#~ msgstr ""
-
-#~ msgid "Greek"
-#~ msgstr ""
-
-#~ msgid "Korean"
-#~ msgstr ""
-
-#~ msgid "Period"
-#~ msgstr ""
-
-#~ msgid "Academic degree date"
-#~ msgstr ""
-
-#~ msgid "Author version flag"
-#~ msgstr ""
-
-#~ msgid "accepted"
-#~ msgstr ""
-
-#~ msgid "published"
-#~ msgstr ""
-
-#~ msgid "draft"
-#~ msgstr ""
-
-#~ msgid "submitted"
-#~ msgstr ""
-
-#~ msgid "updated"
-#~ msgstr ""
-
-#~ msgid "Academic degree number"
-#~ msgstr ""
-
-#~ msgid "Degree name"
-#~ msgstr ""
-
-#~ msgid "Institution for academic degree"
-#~ msgstr ""
-
-#~ msgid "Author ID"
-#~ msgstr ""
-
-#~ msgid "Index"
-#~ msgstr ""
-
-#~ msgid "Rights"
-#~ msgstr ""
-
-#~ msgid "CC BY"
-#~ msgstr ""
-
-#~ msgid "CC BY-SA"
-#~ msgstr ""
-
-#~ msgid "CC BY-ND"
-#~ msgstr ""
-
-#~ msgid "CC BY-NC"
-#~ msgstr ""
-
-#~ msgid "CC BY-NC-SA"
-#~ msgstr ""
-
-#~ msgid "ANY"
-#~ msgstr ""
-
-#~ msgid "Menu"
-#~ msgstr ""
-
-#~ msgid "Schema Management"
-#~ msgstr ""
-
-#~ msgid "Item Management"
-#~ msgstr ""
-
-#~ msgid "Search Management"
-#~ msgstr ""
-
-#~ msgid "Edit Tree"
-#~ msgstr ""
-
-#~ msgid "Management"
-#~ msgstr ""
-
-#~ msgid "Author Management"
-#~ msgstr ""
-
 #: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_Home"
 msgstr "Home"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_ホーム"
+msgstr ""
 
 #: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_Item Types"
@@ -679,6 +533,10 @@ msgid "Admin menu_Item Types_Properties"
 msgstr "Properties"
 
 #: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_Item Types_RO-Crate Mapping"
+msgstr "RO-Crate Mapping"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_Items_Bulk Update"
 msgstr "Bulk Update"
 
@@ -693,6 +551,10 @@ msgstr "Bulk Export"
 #: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_Items_Import"
 msgstr "Import"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_Items_RO-Crate Import"
+msgstr "RO-Crate Import"
 
 #: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_Index Tree_Edit Tree"
@@ -745,6 +607,10 @@ msgstr "Flow List"
 #: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_WorkFlow_WorkFlow List"
 msgstr "WorkFlow List"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_WorkFlow_WorkSpaceWorkFlow Setting"
+msgstr "WorkSpace WorkFlow Setting"
 
 #: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_Communities_Community"
@@ -863,6 +729,10 @@ msgid "Admin menu_Setting_Items"
 msgstr "Items"
 
 #: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_Setting_Activity List"
+msgstr "Activity List"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_Setting_Index Link"
 msgstr "Index Link"
 
@@ -923,6 +793,10 @@ msgid "Admin menu_Setting_Mail"
 msgstr "Mail"
 
 #: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_Setting_Mail Templates"
+msgstr "Mail Templates"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_Setting_WebAPI Account"
 msgstr "WebAPI Account"
 
@@ -933,6 +807,22 @@ msgstr "File Preview"
 #: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_Setting_Shibboleth"
 msgstr "Shibboleth"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_SWORD API"
+msgstr "SWORD API"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_SWORD API_TSV/XML"
+msgstr "TSV/XML"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_SWORD API_JSON-LD"
+msgstr "JSON-LD"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_Item Types_JSON-LD Mapping"
+msgstr "JSON-LD Mapping"
 
 #: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_Setting_Others"
@@ -946,12 +836,36 @@ msgstr "Restricted Access"
 msgid "Admin menu_Setting_Faceted Search"
 msgstr "Faceted Search"
 
-#: weko_admin/
-#: msgid "Maintenance"
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_Logs"
+msgstr "Logs"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_Logs_Export"
+msgstr "Export"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Other"
+msgstr ""
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_Maintenance"
 msgstr "Maintenance"
 
-#: weko_admin/
-#: msgid "ElasticSearch Index"
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_Maintenance_ElasticSearch Index"
 msgstr "ElasticSearch Index"
+
+
+#: weko_admin/
+#: msgid "CRIS Linkage"
+msgid "Admin menu_Setting_CRIS Linkage"
+msgstr "CRIS Linkage"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_Advanced"
+msgstr "Advanced"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_Advanced_Profile Settings"
+msgstr "Profile Settings"

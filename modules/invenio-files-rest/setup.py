@@ -65,6 +65,7 @@ install_requires = [
 
 setup_requires = [
     'pytest-runner>=2.7',
+    'Babel>=1.3',
 ]
 
 packages = find_packages()
@@ -144,6 +145,9 @@ setup(
         ],
         'invenio_db.models': [
             'invenio_files_rest = invenio_files_rest.models',
+        ],
+        'invenio_i18n.translations': [
+            'messages = invenio_files_rest',
         ],
     },
     extras_require=extras_require,

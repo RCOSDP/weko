@@ -143,7 +143,8 @@ STATS_QUERIES = {
     'get-file-download-per-site-license': {},
     'get-file-preview-per-site-license': {},
     'get-ranking-data': {},
-    'get-new-items-data': {}
+    'get-new-items-data': {},
+    'item-file-download-aggs': {},
 }
 
 STATS_PERMISSION_FACTORY = weko_permission_factory

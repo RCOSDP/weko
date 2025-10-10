@@ -1,0 +1,1 @@
+ALTER TABLE site_info DROP COLUMN addthis_user_id;

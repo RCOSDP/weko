@@ -23,9 +23,31 @@ import random
 import string
 from functools import wraps
 
-from flask import abort, current_app, request, session
+from flask import abort, current_app, request, session, Flask
+from flask_limiter import Limiter
 from flask_login import current_user
 from flask_login.config import EXEMPT_METHODS
+import hashlib
+
+from .config import WEKO_API_LIMIT_RATE_DEFAULT
+
+limiter = Limiter(
+    app=None,
+    key_func=lambda: f"{request.endpoint}_{get_remote_addr()}",
+    default_limits=WEKO_API_LIMIT_RATE_DEFAULT
+)
+"""Limiter for API rate per user.
+
+Limit the access rate for each endpoint.
+
+Example:
+
+    @blueprint.route("/")
+    @limiter.limit("10 per minute")
+    def api_view():
+        return "OK", 200
+
+"""
 
 
 def get_remote_addr():
@@ -41,7 +63,7 @@ def get_remote_addr():
 
     # current_app.logger.debug('{0} {1} {2}: {3}'.format(
     #     __file__, 'get_remote_addr()', 'request.headers', request.headers))
-    
+
     address = None
     if "WEKO_ACCOUNTS_REAL_IP" not in current_app.config or current_app.config["WEKO_ACCOUNTS_REAL_IP"] == None:
         address = request.headers.get('X-Real-IP', None)
@@ -57,7 +79,7 @@ def get_remote_addr():
         address = request.headers.get('X-Forwarded-For', None)
         if address is not None:
             _tmp = address.encode('utf-8').split(b',')
-            address = _tmp[0].strip().decode()            
+            address = _tmp[0].strip().decode()
     elif current_app.config["WEKO_ACCOUNTS_REAL_IP"] == "x_forwarded_for_rev":
         address = request.headers.get('X-Forwarded-For', None)
         if address is not None:
@@ -87,15 +109,31 @@ def parse_attributes():
     attrs = {}
     error = False
 
+    # Get attribute mapping from admin settings
+    from weko_admin.models import AdminSettings
+    admin_settings = AdminSettings.get('attribute_mapping', dict_to_object=False)
+
     for header, attr in current_app.config[
             'WEKO_ACCOUNTS_SSO_ATTRIBUTE_MAP'].items():
         required, name = attr
-        value = request.form.get(header, '') if request.method == 'POST' \
-            else request.args.get(header, '')
+        if admin_settings:
+            target = admin_settings.get(name, header)
+        else:
+            target = header
+        value = request.form.get(target, '') if request.method == 'POST' \
+            else request.args.get(target, '')
         attrs[name] = value
 
         if required and not value:
             error = True
+
+    if not error and not attrs.get('shib_user_name') and attrs.get('shib_eppn'):
+        if len(attrs['shib_eppn']) > current_app.config[
+                'WEKO_ACCOUNTS_SHIB_USER_NAME_NO_HASH_LENGTH']:
+            eppn = hashlib.sha256(attrs['shib_eppn'].encode('utf-8')).hexdigest()
+        else:
+            eppn = attrs['shib_eppn']
+        attrs['shib_user_name'] = current_app.config['WEKO_ACCOUNTS_GAKUNIN_USER_NAME_PREFIX'] + eppn
 
     return attrs, error
 
@@ -149,7 +187,7 @@ def login_required_customize(func):
     return decorated_view
 
 
-def roles_required(roles):
+def roles_required(roles, allow_anonymous=False):
     """Roles required.
 
     Args:
@@ -168,6 +206,8 @@ def roles_required(roles):
                     return func(*args, **kwargs)
                 abort(401)
             else:
+                if allow_anonymous:
+                    return func(*args, **kwargs)
                 can = False
                 for role in current_user.roles:
                     if role and role.name in roles:
@@ -178,3 +218,28 @@ def roles_required(roles):
             return func(*args, **kwargs)
         return decorated_view
     return decorator
+
+def get_sp_info():
+    """Get Service Provider (SP) information for Shibboleth login.
+    
+    Returns:
+        dict: A dictionary containing SP entityID, handlerURL, and return URL.
+    """
+    _shib_login_url = current_app.config['WEKO_ACCOUNTS_SHIB_IDP_LOGIN_URL']
+
+    session['next'] = request.args.get('next', '/')
+    return_url = _shib_login_url.format(request.url_root)
+
+    sp_entityID = 'https://' + current_app.config['WEB_HOST_NAME'] + '/shibboleth-sp'
+    if 'SP_ENTITYID' in current_app.config:
+        sp_entityID = current_app.config['SP_ENTITYID']
+    
+    sp_handlerURL = 'https://' + current_app.config['WEB_HOST_NAME'] + '/Shibboleth.sso'
+    if 'SP_HANDLERURL' in current_app.config:
+        sp_handlerURL = current_app.config['SP_HANDLERURL']
+
+    return {
+        'sp_entityID': sp_entityID,
+        'sp_handlerURL': sp_handlerURL,
+        'return_url': return_url,
+    }

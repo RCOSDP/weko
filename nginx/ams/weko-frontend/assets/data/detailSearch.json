@@ -1,0 +1,900 @@
+[
+  {
+    "id": 1,
+    "comment": "データセットの名称",
+    "i18n": "titleOfDataset",
+    "query": "title",
+    "type": "text",
+    "default": true,
+    "data": null
+  },
+  {
+    "id": 2,
+    "comment": "プロジェクト名",
+    "i18n": "projectName",
+    "query": "projectName",
+    "type": "checkbox",
+    "default": false,
+    "data": [
+      {
+        "id": 1,
+        "comment": "MS2合原PJ",
+        "i18n": "MS2 Aihara PJ",
+        "value": false
+      },
+      {
+        "id": 2,
+        "comment": "MS2大野PJ",
+        "i18n": "MS2 Ohno PJ",
+        "value": false
+      },
+      {
+        "id": 3,
+        "comment": "MS2片桐PJ",
+        "i18n": "MS2 Katagiri PJ",
+        "value": false
+      },
+      {
+        "id": 4,
+        "comment": "MS2高橋PJ",
+        "i18n": "MS2 Takahashi PJ",
+        "value": false
+      },
+      {
+        "id": 5,
+        "comment": "MS2松浦PJ",
+        "i18n": "MS2 Matsuura PJ",
+        "value": false
+      }
+    ]
+  },
+  {
+    "id": 3,
+    "comment": "データID",
+    "i18n": "dataId",
+    "query": "dataId",
+    "type": "text",
+    "default": false,
+    "data": null
+  },
+  {
+    "id": 4,
+    "comment": "メタデータ登録日",
+    "i18n": "dateRegisteredinMetadata",
+    "type": "date",
+    "queryFrom": "date_range1_from",
+    "queryTo": "date_range1_to",
+    "default": false,
+    "data": null
+  },
+  {
+    "id": 5,
+    "comment": "メタデータ更新日",
+    "i18n": "dateUpdatedinMetadata",
+    "type": "date",
+    "queryFrom": "date_range1_from",
+    "queryTo": "date_range1_to",
+    "default": false,
+    "data": null
+  },
+  {
+    "id": 6,
+    "comment": "データセットの分野",
+    "i18n": "datasetResearchField",
+    "query": "datasetResearchField",
+    "type": "checkbox",
+    "default": false,
+    "data": [
+      {
+        "id": 1,
+        "comment": "Natural Science",
+        "i18n": "Natural Science",
+        "value": false
+      },
+      {
+        "id": 2,
+        "comment": "Life Science",
+        "i18n": "Life Science",
+        "value": false
+      },
+      {
+        "id": 3,
+        "comment": "Informatics",
+        "i18n": "Informatics",
+        "value": false
+      },
+      {
+        "id": 4,
+        "comment": "Environmental science",
+        "i18n": "Environmental science",
+        "value": false
+      },
+      {
+        "id": 5,
+        "comment": "Nanotechnology/Materials",
+        "i18n": "Nanotechnology/Materials",
+        "value": false
+      },
+      {
+        "id": 6,
+        "comment": "Energy Engineering",
+        "i18n": "Energy Engineering",
+        "value": false
+      },
+      {
+        "id": 7,
+        "comment": "Manufacturing Technology",
+        "i18n": "Manufacturing Technology",
+        "value": false
+      },
+      {
+        "id": 8,
+        "comment": "Social Infrastructure",
+        "i18n": "Social Infrastructure",
+        "value": false
+      },
+      {
+        "id": 9,
+        "comment": "Frontier Technology",
+        "i18n": "Frontier Technology",
+        "value": false
+      },
+      {
+        "id": 10,
+        "comment": "Humanities & Social Sciences",
+        "i18n": "Humanities & Social Sciences",
+        "value": false
+      },
+      {
+        "id": 11,
+        "comment": "Others",
+        "i18n": "Others",
+        "value": false
+      }
+    ]
+  },
+  {
+    "id": 7,
+    "comment": "解析対象データ",
+    "i18n": "analysisType",
+    "query": "analysisType",
+    "type": "checkbox",
+    "default": false,
+    "data": [
+      {
+        "id": 1,
+        "comment": "Sequence data",
+        "i18n": "Sequence data",
+        "value": false
+      },
+      {
+        "id": 2,
+        "comment": "Epigenome data",
+        "i18n": "Epigenome data",
+        "value": false
+      },
+      {
+        "id": 3,
+        "comment": "Transcriptome data",
+        "i18n": "Transcriptome data",
+        "value": false
+      },
+      {
+        "id": 4,
+        "comment": "Proteome data",
+        "i18n": "Proteome data",
+        "value": false
+      },
+      {
+        "id": 5,
+        "comment": "Phosphoproteome data",
+        "i18n": "Phosphoproteome data",
+        "value": false
+      },
+      {
+        "id": 6,
+        "comment": "Metabolome data",
+        "i18n": "Metabolome data",
+        "value": false
+      },
+      {
+        "id": 7,
+        "comment": "Imaging data",
+        "i18n": "Imaging data",
+        "value": false
+      },
+      {
+        "id": 8,
+        "comment": "Other biological analysis data",
+        "i18n": "Other biological analysis data",
+        "value": false
+      }
+    ]
+  },
+  {
+    "id": 8,
+    "comment": "データ作成者 氏名",
+    "i18n": "nameOfDataCreator",
+    "query": "creator",
+    "type": "text",
+    "default": false,
+    "data": null
+  },
+  {
+    "id": 9,
+    "comment": "データ作成者 所属",
+    "i18n": "belongingOfDataCreator",
+    "query": "creativeWorkStatus",
+    "type": "text",
+    "default": false,
+    "data": null
+  },
+  {
+    "id": 10,
+    "comment": "データ作成者 連絡先",
+    "i18n": "contactOfDataCreator",
+    "query": "contactOfDataCreator",
+    "type": "text",
+    "default": false,
+    "data": null
+  },
+  {
+    "id": 11,
+    "comment": "データ管理者 氏名",
+    "i18n": "nameOfDataManager",
+    "query": "nameOfDataManager",
+    "type": "text",
+    "default": false,
+    "data": null
+  },
+  {
+    "id": 12,
+    "comment": "データ管理者 所属",
+    "i18n": "belongingOfDataManager",
+    "query": "belongingOfDataManager",
+    "type": "text",
+    "default": false,
+    "data": null
+  },
+  {
+    "id": 13,
+    "comment": "データ管理者 連絡先",
+    "i18n": "contactOfDataManager",
+    "query": "contactOfDataManager",
+    "type": "text",
+    "default": false,
+    "data": null
+  },
+  {
+    "id": 14,
+    "comment": "ライセンス",
+    "i18n": "license",
+    "query": "license",
+    "type": "checkbox",
+    "default": false,
+    "data": [
+      {
+        "id": 1,
+        "comment": "license_12",
+        "i18n": "CC0",
+        "value": false
+      },
+      {
+        "id": 2,
+        "comment": "license_6",
+        "i18n": "CC BY 3.0",
+        "value": false
+      },
+      {
+        "id": 3,
+        "comment": "license_0",
+        "i18n": "CC BY 4.0",
+        "value": false
+      },
+      {
+        "id": 4,
+        "comment": "license_7",
+        "i18n": "CC BY-SA 3.0",
+        "value": false
+      },
+      {
+        "id": 5,
+        "comment": "license_1",
+        "i18n": "CC BY-SA 4.0",
+        "value": false
+      },
+      {
+        "id": 6,
+        "comment": "license_8",
+        "i18n": "CC BY-ND 3.0",
+        "value": false
+      },
+      {
+        "id": 7,
+        "comment": "license_2",
+        "i18n": "CC BY-ND 4.0",
+        "value": false
+      },
+      {
+        "id": 8,
+        "comment": "license_9",
+        "i18n": "CC BY-NC 3.0",
+        "value": false
+      },
+      {
+        "id": 9,
+        "comment": "license_3",
+        "i18n": "CC BY-NC 4.0",
+        "value": false
+      },
+      {
+        "id": 10,
+        "comment": "license_10",
+        "i18n": "CC BY-NC-SA 3.0",
+        "value": false
+      },
+      {
+        "id": 11,
+        "comment": "license_4",
+        "i18n": "CC BY-NC-SA 4.0",
+        "value": false
+      },
+      {
+        "id": 12,
+        "comment": "license_11",
+        "i18n": "CC BY-NC-ND 3.0",
+        "value": false
+      },
+      {
+        "id": 13,
+        "comment": "license_5",
+        "i18n": "CC BY-NC-ND 4.0",
+        "value": false
+      },
+      {
+        "id": 14,
+        "comment": "license_free",
+        "i18n": "others",
+        "value": false
+      }
+    ]
+  },
+  {
+    "id": 15,
+    "comment": "モダリティ用メタデータファイルの有無",
+    "i18n": "presenceOfMetadataFiles",
+    "query": "presenceOfMetadataFiles",
+    "type": "radio",
+    "default": false,
+    "selected": "notSelected",
+    "data": [
+      {
+        "id": 1,
+        "comment": "notSelected",
+        "i18n": "notSelected",
+        "value": "on"
+      },
+      {
+        "id": 2,
+        "comment": "Yes",
+        "i18n": "Yes",
+        "value": false
+      },
+      {
+        "id": 3,
+        "comment": "No",
+        "i18n": "No",
+        "value": false
+      }
+    ]
+  },
+  {
+    "id": 16,
+    "comment": "連絡・許諾の要不要",
+    "i18n": "necessityOfContactPermission",
+    "query": "necessityOfContactPermission",
+    "type": "radio",
+    "default": false,
+    "selected": "notSelected",
+    "data": [
+      {
+        "id": 1,
+        "comment": "notSelected",
+        "i18n": "notSelected",
+        "value": "on"
+      },
+      {
+        "id": 2,
+        "comment": "Necessary",
+        "i18n": "Necessary",
+        "value": false
+      },
+      {
+        "id": 3,
+        "comment": "Unnecessary",
+        "i18n": "Unnecessary",
+        "value": false
+      }
+    ]
+  },
+  {
+    "id": 17,
+    "comment": "謝辞に記載の要不要",
+    "i18n": "necessityOfIncludingInAcknowledgments",
+    "query": "necessityOfIncludingInAcknowledgments",
+    "type": "radio",
+    "default": false,
+    "selected": "notSelected",
+    "data": [
+      {
+        "id": 1,
+        "comment": "notSelected",
+        "i18n": "notSelected",
+        "value": "on"
+      },
+      {
+        "id": 2,
+        "comment": "Necessary",
+        "i18n": "Necessary",
+        "value": false
+      },
+      {
+        "id": 3,
+        "comment": "Unnecessary",
+        "i18n": "Unnecessary",
+        "value": false
+      }
+    ]
+  },
+  {
+    "id": 18,
+    "comment": "有償・無償",
+    "i18n": "payOrFree",
+    "query": "payOrFree",
+    "type": "listbox",
+    "default": false,
+    "selected": "notSelected",
+    "data": [
+      {
+        "id": 1,
+        "comment": "notSelected",
+        "i18n": "notSelected",
+        "value": "on"
+      },
+      {
+        "id": 2,
+        "comment": "Pay",
+        "i18n": "Pay",
+        "value": false
+      },
+      {
+        "id": 3,
+        "comment": "Free",
+        "i18n": "Free",
+        "value": false
+      }
+    ]
+  },
+  {
+    "id": 19,
+    "comment": "商用利用の可否",
+    "i18n": "availabilityOfCommercialUse",
+    "query": "availabilityOfCommercialUse",
+    "type": "radio",
+    "default": false,
+    "selected": "notSelected",
+    "data": [
+      {
+        "id": 1,
+        "comment": "notSelected",
+        "i18n": "notSelected",
+        "value": "on"
+      },
+      {
+        "id": 2,
+        "comment": "possible",
+        "i18n": "possible",
+        "value": false
+      },
+      {
+        "id": 3,
+        "comment": "notPossible",
+        "i18n": "notPossible",
+        "value": false
+      }
+    ]
+  },
+  {
+    "id": 20,
+    "comment": "アクセス権",
+    "i18n": "authority",
+    "query": "accessMode",
+    "type": "checkbox",
+    "default": false,
+    "data": [
+      {
+        "id": 1,
+        "comment": "open access",
+        "i18n": "open access",
+        "value": false
+      },
+      {
+        "id": 2,
+        "comment": "restricted access",
+        "i18n": "restricted access",
+        "value": false
+      },
+      {
+        "id": 3,
+        "comment": "metadata only access",
+        "i18n": "metadata only access",
+        "value": false
+      },
+      {
+        "id": 4,
+        "comment": "embargoed access",
+        "i18n": "embargoed access",
+        "value": false
+      }
+    ]
+  },
+  {
+    "id": 21,
+    "comment": "リポジトリ情報",
+    "i18n": "repositoryInformation",
+    "query": "repositoryInformation",
+    "type": "checkbox",
+    "default": false,
+    "data": [
+      {
+        "id": 1,
+        "comment": "GakuNin RDM",
+        "i18n": "GakuNin RDM",
+        "value": false
+      },
+      {
+        "id": 2,
+        "comment": "NBDC Human Database",
+        "i18n": "NBDC Human Database",
+        "value": false
+      },
+      {
+        "id": 3,
+        "comment": "GEO",
+        "i18n": "GEO",
+        "value": false
+      },
+      {
+        "id": 4,
+        "comment": "OneDrive",
+        "i18n": "OneDrive",
+        "value": false
+      },
+      {
+        "id": 5,
+        "comment": "Dropbox",
+        "i18n": "Dropbox",
+        "value": false
+      },
+      {
+        "id": 6,
+        "comment": "Amazon S3",
+        "i18n": "Amazon S3",
+        "value": false
+      },
+      {
+        "id": 7,
+        "comment": "GitHub",
+        "i18n": "GitHub",
+        "value": false
+      },
+      {
+        "id": 8,
+        "comment": "BOX",
+        "i18n": "BOX",
+        "value": false
+      },
+      {
+        "id": 9,
+        "comment": "Google Drive",
+        "i18n": "Google Drive",
+        "value": false
+      },
+      {
+        "id": 10,
+        "comment": "Laboratory Storage",
+        "i18n": "Laboratory Storage",
+        "value": false
+      },
+      {
+        "id": 11,
+        "comment": "Other",
+        "i18n": "Other",
+        "value": false
+      }
+    ]
+  },
+  {
+    "id": 22,
+    "comment": "（ヒト）インフォームドコンセント（IC） 有・無・不要",
+    "i18n": "informedConsent",
+    "query": "informedConsent",
+    "type": "radio",
+    "default": false,
+    "selected": "notSelected",
+    "data": [
+      {
+        "id": 1,
+        "comment": "notSelected",
+        "i18n": "notSelected",
+        "value": "on"
+      },
+      {
+        "id": 2,
+        "comment": "Yes",
+        "i18n": "Yes",
+        "value": false
+      },
+      {
+        "id": 3,
+        "comment": "No",
+        "i18n": "No",
+        "value": false
+      },
+      {
+        "id": 4,
+        "comment": "Unnecessary",
+        "i18n": "Unnecessary",
+        "value": false
+      }
+    ]
+  },
+  {
+    "id": 23,
+    "comment": "（IC有の場合）第三者提供の同意",
+    "i18n": "consentForProvisionToAThirdParty",
+    "query": "consentForProvisionToAThirdParty",
+    "type": "radio",
+    "default": false,
+    "selected": "notSelected",
+    "data": [
+      {
+        "id": 1,
+        "comment": "notSelected",
+        "i18n": "notSelected",
+        "value": "on"
+      },
+      {
+        "id": 2,
+        "comment": "Yes",
+        "i18n": "Yes",
+        "value": false
+      },
+      {
+        "id": 3,
+        "comment": "No",
+        "i18n": "No",
+        "value": false
+      }
+    ]
+  },
+  {
+    "id": 24,
+    "comment": "（IC有の場合）海外提供",
+    "i18n": "overseasOfferings",
+    "query": "overseasOfferings",
+    "type": "radio",
+    "default": false,
+    "selected": "notSelected",
+    "data": [
+      {
+        "id": 1,
+        "comment": "notSelected",
+        "i18n": "notSelected",
+        "value": "on"
+      },
+      {
+        "id": 2,
+        "comment": "Yes",
+        "i18n": "Yes",
+        "value": false
+      },
+      {
+        "id": 3,
+        "comment": "No",
+        "i18n": "No",
+        "value": false
+      }
+    ]
+  },
+  {
+    "id": 25,
+    "comment": "（IC有の場合）産業利用等",
+    "i18n": "industrialUse",
+    "query": "industrialUse",
+    "type": "radio",
+    "default": false,
+    "selected": "notSelected",
+    "data": [
+      {
+        "id": 1,
+        "comment": "notSelected",
+        "i18n": "notSelected",
+        "value": "on"
+      },
+      {
+        "id": 2,
+        "comment": "Yes",
+        "i18n": "Yes",
+        "value": false
+      },
+      {
+        "id": 3,
+        "comment": "No",
+        "i18n": "No",
+        "value": false
+      }
+    ]
+  },
+  {
+    "id": 26,
+    "comment": "（IC無の場合）",
+    "i18n": "iCIsNo",
+    "query": "iCIsNo",
+    "type": "radio",
+    "default": false,
+    "selected": "notSelected",
+    "data": [
+      {
+        "id": 1,
+        "comment": "notSelected",
+        "i18n": "notSelected",
+        "value": "on"
+      },
+      {
+        "id": 2,
+        "comment": "Opt-out procedure",
+        "i18n": "Opt-out procedure",
+        "value": false
+      },
+      {
+        "id": 3,
+        "comment": "Agree not to",
+        "i18n": "Agree not to",
+        "value": false
+      }
+    ]
+  },
+  {
+    "id": 27,
+    "comment": "（ヒト）匿名加工の有無",
+    "i18n": "anonymousProcessing",
+    "query": "anonymousProcessing",
+    "type": "radio",
+    "default": false,
+    "selected": "notSelected",
+    "data": [
+      {
+        "id": 1,
+        "comment": "notSelected",
+        "i18n": "notSelected",
+        "value": "on"
+      },
+      {
+        "id": 2,
+        "comment": "Yes",
+        "i18n": "Yes",
+        "value": false
+      },
+      {
+        "id": 3,
+        "comment": "No",
+        "i18n": "No",
+        "value": false
+      }
+    ]
+  },
+  {
+    "id": 28,
+    "comment": "利益相反の有無",
+    "i18n": "conflictOfInterest",
+    "query": "conflictOfInterest",
+    "type": "radio",
+    "default": false,
+    "selected": "notSelected",
+    "data": [
+      {
+        "id": 1,
+        "comment": "notSelected",
+        "i18n": "notSelected",
+        "value": "on"
+      },
+      {
+        "id": 2,
+        "comment": "Yes",
+        "i18n": "Yes",
+        "value": false
+      },
+      {
+        "id": 3,
+        "comment": "No",
+        "i18n": "No",
+        "value": false
+      }
+    ]
+  },
+  {
+    "id": 30,
+    "comment": "識別子",
+    "i18n": "identifierText",
+    "query": "id",
+    "type": "text",
+    "default": false
+  },
+  {
+    "id": 31,
+    "comment": "識別子タイプ",
+    "i18n": "identifierType",
+    "query": "id_attr",
+    "type": "checkbox",
+    "default": false,
+    "selected": "notSelected",
+    "data": [
+      {
+        "comment": "identifier",
+        "i18n": "identifier",
+        "value": false
+      },
+      {
+        "comment": "URI",
+        "i18n": "URI",
+        "value": false
+      },
+      {
+        "comment": "fullTextURL",
+        "i18n": "fullTextURL",
+        "value": false
+      },
+      {
+        "comment": "selfDOI",
+        "i18n": "selfDOI",
+        "value": false
+      },
+      {
+        "comment": "ISBN",
+        "i18n": "ISBN",
+        "value": false
+      },
+      {
+        "comment": "ISSN",
+        "i18n": "ISSN",
+        "value": false
+      },
+      {
+        "comment": "NCID",
+        "i18n": "NCID",
+        "value": false
+      },
+      {
+        "comment": "pmid",
+        "i18n": "pmid",
+        "value": false
+      },
+      {
+        "comment": "doi",
+        "i18n": "doi",
+        "value": false
+      },
+      {
+        "comment": "NAID",
+        "i18n": "NAID",
+        "value": false
+      },
+      {
+        "comment": "ichushi",
+        "i18n": "ichushi",
+        "value": false
+      }
+    ]
+  }
+]

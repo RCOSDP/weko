@@ -39,6 +39,7 @@
           <tr>
             <th>{{_('No.')}}</th>
             <th>{{_('Flow')}}</th>
+            <th>{{_('Type')}}</th>
             <th>{{_('Status')}}</th>
             <th>{{_('Updated')}}</th>
           </tr>
@@ -48,6 +49,7 @@
           <tr>
             <th scope="row">{{loop.index}}</th>
             <td><a href="{{url_for('flowsetting.flow_detail', flow_id=flow.flow_id)}}">{{flow.flow_name}}</a></td>
+            <td>{{ _('For Delete') if flow.flow_type == 2 else '' }}</td>
             <td>{{_(flow.flow_status.value)}}</td>
             <td>{{flow.updated.date()}}</td>
           </tr>

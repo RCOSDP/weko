@@ -23,4 +23,4 @@
 from .ext import WekoRecords
 from .version import __version__
 
-__all__ = ('__version__', 'WekoRecords')
+__all__ = ('__version__', 'WekoRecords', 'WekoRecordsREST')

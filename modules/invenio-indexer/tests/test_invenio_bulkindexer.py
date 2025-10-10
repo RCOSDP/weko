@@ -49,7 +49,7 @@ def test_hook_initialization(base_app):
     app = base_app
     magic_hook = MagicMock()
     app.config['INDEXER_BEFORE_INDEX_HOOKS'] = [
-        magic_hook, 'test_invenio_bulkindexer:_global_magic_hook'
+        magic_hook, _global_magic_hook
     ]
     ext = InvenioIndexer(app)
 

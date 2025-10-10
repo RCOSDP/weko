@@ -1,44 +1,56 @@
 # Translations template for invenio-oauth2server.
-# Copyright (C) 2016 CERN
+# Copyright (C) 2025 CERN
 # This file is distributed under the same license as the
 # invenio-oauth2server project.
-# FIRST AUTHOR <EMAIL@ADDRESS>, 2016.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2025.
 #
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: invenio-oauth2server 1.0.0a10.dev20160729\n"
+"Project-Id-Version: invenio-oauth2server 1.0.0\n"
 "Report-Msgid-Bugs-To: info@inveniosoftware.org\n"
-"POT-Creation-Date: 2016-08-18 08:57+0200\n"
+"POT-Creation-Date: 2025-10-03 14:53+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.3.4\n"
+"Generated-By: Babel 2.5.1\n"
 
-#: invenio_oauth2server/forms.py:110
+#: invenio_oauth2server/admin.py:60
+msgid "OAuth Applications"
+msgstr ""
+
+#: invenio_oauth2server/admin.py:61 invenio_oauth2server/admin.py:70
+msgid "User Management"
+msgstr ""
+
+#: invenio_oauth2server/admin.py:69
+msgid "OAuth Application Tokens"
+msgstr ""
+
+#: invenio_oauth2server/forms.py:96
 #, python-format
 msgid "Invalid redirect URIs: %(urls)s"
 msgstr ""
 
-#: invenio_oauth2server/forms.py:142
+#: invenio_oauth2server/forms.py:128
 msgid "Redirect URIs (one per line)"
 msgstr ""
 
-#: invenio_oauth2server/forms.py:143
+#: invenio_oauth2server/forms.py:129
 msgid ""
 "One redirect URI per line. This is your application's authorization "
 "callback URLs. HTTPS must be used for all hosts except localhost (for "
 "testing purposes)."
 msgstr ""
 
-#: invenio_oauth2server/forms.py:152
+#: invenio_oauth2server/forms.py:138
 msgid "Client type"
 msgstr ""
 
-#: invenio_oauth2server/forms.py:153
+#: invenio_oauth2server/forms.py:139
 msgid ""
 "Select confidential if your application is capable of keeping the issued "
 "client secret confidential (e.g. a web application), select public if "
@@ -46,245 +58,262 @@ msgid ""
 " you select public, your application MUST validate the redirect URI."
 msgstr ""
 
-#: invenio_oauth2server/forms.py:160
+#: invenio_oauth2server/forms.py:146
 msgid "Confidential"
 msgstr ""
 
-#: invenio_oauth2server/forms.py:160
+#: invenio_oauth2server/forms.py:146
 msgid "Public"
 msgstr ""
 
-#: invenio_oauth2server/forms.py:169
+#: invenio_oauth2server/forms.py:155
 msgid "Name of personal access token."
 msgstr ""
 
-#: invenio_oauth2server/forms.py:175
+#: invenio_oauth2server/forms.py:160
+msgid "The name must be less than 40 characters long."
+msgstr ""
+
+#: invenio_oauth2server/forms.py:167
 msgid ""
 "Scopes assign permissions to your personal access token. A personal "
 "access token works just like a normal OAuth  access token for "
 "authentication against the API."
 msgstr ""
 
-#: invenio_oauth2server/models.py:138
+#: invenio_oauth2server/models.py:123
 msgid "Name"
 msgstr ""
 
-#: invenio_oauth2server/models.py:139
+#: invenio_oauth2server/models.py:124
 msgid "Name of application (displayed to users)."
 msgstr ""
 
-#: invenio_oauth2server/models.py:149
+#: invenio_oauth2server/models.py:134
 msgid "Description"
 msgstr ""
 
-#: invenio_oauth2server/models.py:150
+#: invenio_oauth2server/models.py:135
 msgid "Optional. Description of the application (displayed to users)."
 msgstr ""
 
-#: invenio_oauth2server/models.py:159
+#: invenio_oauth2server/models.py:144
 msgid "Website URL"
 msgstr ""
 
-#: invenio_oauth2server/models.py:160
+#: invenio_oauth2server/models.py:145
 msgid "URL of your application (displayed to users)."
 msgstr ""
 
-#: invenio_oauth2server/templates/invenio_oauth2server/authorize.html:27
-#: invenio_oauth2server/templates/invenio_oauth2server/authorize.html:29
-#: invenio_oauth2server/templates/invenio_oauth2server/authorize.html:57
-#: invenio_oauth2server/views/server.py:85
+#: invenio_oauth2server/scopes.py:20
+msgid "Allow access to email address (read-only)."
+msgstr ""
+
+#: invenio_oauth2server/templates/invenio_oauth2server/authorize.html:18
+#: invenio_oauth2server/templates/invenio_oauth2server/authorize.html:19
+#: invenio_oauth2server/templates/invenio_oauth2server/authorize.html:58
+#: invenio_oauth2server/views/server.py:69
 msgid "Authorize application"
 msgstr ""
 
-#: invenio_oauth2server/templates/invenio_oauth2server/authorize.html:30
+#: invenio_oauth2server/templates/invenio_oauth2server/authorize.html:20
 #, python-format
 msgid ""
 "Application '%(client_name)s' by '%(client_user)s' wants permission to "
-"access your account."
+"access your '%(current_user)s' account."
 msgstr ""
 
-#: invenio_oauth2server/templates/invenio_oauth2server/authorize.html:35
+#: invenio_oauth2server/templates/invenio_oauth2server/authorize.html:27
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/token_permission_view.html:29
 msgid "Review permissions"
 msgstr ""
 
-#: invenio_oauth2server/templates/invenio_oauth2server/authorize.html:47
+#: invenio_oauth2server/templates/invenio_oauth2server/authorize.html:43
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/token_permission_view.html:43
 msgid "Application"
 msgstr ""
 
-#: invenio_oauth2server/templates/invenio_oauth2server/authorize.html:50
+#: invenio_oauth2server/templates/invenio_oauth2server/authorize.html:46
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/token_permission_view.html:46
 msgid "Visit application website"
 msgstr ""
 
-#: invenio_oauth2server/templates/invenio_oauth2server/authorize.html:58
+#: invenio_oauth2server/templates/invenio_oauth2server/authorize.html:59
 msgid "Reject"
 msgstr ""
 
-#: invenio_oauth2server/templates/invenio_oauth2server/errors.html:28
-#: invenio_oauth2server/templates/invenio_oauth2server/errors.html:32
+#: invenio_oauth2server/templates/invenio_oauth2server/errors.html:18
+#: invenio_oauth2server/templates/invenio_oauth2server/errors.html:22
 msgid "Invalid authorization request"
 msgstr ""
 
-#: invenio_oauth2server/templates/invenio_oauth2server/errors.html:34
+#: invenio_oauth2server/templates/invenio_oauth2server/errors.html:24
 #, python-format
 msgid ""
 "The service that redirected your here made an invalid authorization "
 "request (error code: %(x_error)s)."
 msgstr ""
 
-#: invenio_oauth2server/templates/invenio_oauth2server/errors.html:41
+#: invenio_oauth2server/templates/invenio_oauth2server/errors.html:31
 msgid "Get me out of here!"
 msgstr ""
 
-#: invenio_oauth2server/templates/invenio_oauth2server/settings/client_new.html:27
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/client_new.html:17
 msgid "New OAuth Application"
 msgstr ""
 
-#: invenio_oauth2server/templates/invenio_oauth2server/settings/client_new.html:35
-#: invenio_oauth2server/templates/invenio_oauth2server/settings/token_new.html:36
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/client_new.html:25
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/token_new.html:26
 msgid "Cancel"
 msgstr ""
 
-#: invenio_oauth2server/templates/invenio_oauth2server/settings/client_new.html:36
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/client_new.html:26
 msgid "Register"
 msgstr ""
 
-#: invenio_oauth2server/templates/invenio_oauth2server/settings/client_view.html:26
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/client_view.html:16
 #, python-format
 msgid "Application / %(client_name)s"
 msgstr ""
 
-#: invenio_oauth2server/templates/invenio_oauth2server/settings/client_view.html:33
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/client_view.html:23
 msgid "Do not share the client secret with anyone!"
 msgstr ""
 
-#: invenio_oauth2server/templates/invenio_oauth2server/settings/client_view.html:39
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/client_view.html:29
 msgid "Reset client secret"
 msgstr ""
 
-#: invenio_oauth2server/templates/invenio_oauth2server/settings/client_view.html:56
-#: invenio_oauth2server/templates/invenio_oauth2server/settings/token_view.html:50
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/client_view.html:46
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/token_view.html:40
 msgid "Delete"
 msgstr ""
 
-#: invenio_oauth2server/templates/invenio_oauth2server/settings/client_view.html:57
-#: invenio_oauth2server/templates/invenio_oauth2server/settings/token_view.html:51
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/client_view.html:47
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/token_view.html:41
 msgid "Save"
 msgstr ""
 
-#: invenio_oauth2server/templates/invenio_oauth2server/settings/client_view.html:64
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/client_view.html:54
 msgid "OAuth 2.0 Endpoints"
 msgstr ""
 
-#: invenio_oauth2server/templates/invenio_oauth2server/settings/client_view.html:68
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/client_view.html:58
 msgid "Authorize URL (GET)"
 msgstr ""
 
-#: invenio_oauth2server/templates/invenio_oauth2server/settings/client_view.html:71
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/client_view.html:61
 msgid "Query parameters"
 msgstr ""
 
-#: invenio_oauth2server/templates/invenio_oauth2server/settings/client_view.html:78
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/client_view.html:68
 msgid "example request"
 msgstr ""
 
-#: invenio_oauth2server/templates/invenio_oauth2server/settings/client_view.html:92
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/client_view.html:82
 msgid "Access token URL (POST)"
 msgstr ""
 
-#: invenio_oauth2server/templates/invenio_oauth2server/settings/index.html:27
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/index.html:17
 msgid "Developer Applications"
 msgstr ""
 
-#: invenio_oauth2server/templates/invenio_oauth2server/settings/index.html:28
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/index.html:18
 msgid "New application"
 msgstr ""
 
-#: invenio_oauth2server/templates/invenio_oauth2server/settings/index.html:35
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/index.html:25
 #, python-format
 msgid "You have registered these applications to use the %(site_name)s API:"
 msgstr ""
 
-#: invenio_oauth2server/templates/invenio_oauth2server/settings/index.html:46
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/index.html:36
 #, python-format
 msgid ""
 "You have not yet registered any applications. Click the 'New application'"
 " button to create an application to access the %(site_name)s API."
 msgstr ""
 
-#: invenio_oauth2server/templates/invenio_oauth2server/settings/index.html:51
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/index.html:41
 msgid "Personal access tokens"
 msgstr ""
 
-#: invenio_oauth2server/templates/invenio_oauth2server/settings/index.html:52
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/index.html:42
 msgid "New token"
 msgstr ""
 
-#: invenio_oauth2server/templates/invenio_oauth2server/settings/index.html:59
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/index.html:49
 #, python-format
 msgid "Following are personal tokens used to access the %(site_name)s API:"
 msgstr ""
 
-#: invenio_oauth2server/templates/invenio_oauth2server/settings/index.html:70
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/index.html:60
 msgid ""
 "You have not yet created any personal access tokens. Click the 'New "
 "token' button to create a personal access token."
 msgstr ""
 
-#: invenio_oauth2server/templates/invenio_oauth2server/settings/index.html:75
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/index.html:65
 msgid "Authorized applications"
 msgstr ""
 
-#: invenio_oauth2server/templates/invenio_oauth2server/settings/index.html:80
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/index.html:70
 msgid "You have granted the following application access to your account:"
 msgstr ""
 
-#: invenio_oauth2server/templates/invenio_oauth2server/settings/index.html:86
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/index.html:76
 msgid "Revoke"
 msgstr ""
 
-#: invenio_oauth2server/templates/invenio_oauth2server/settings/index.html:94
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/index.html:84
 msgid "You have not yet granted any external applications access to your account."
 msgstr ""
 
-#: invenio_oauth2server/templates/invenio_oauth2server/settings/token_new.html:28
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/token_new.html:18
+#: tests/test_settings.py:39
 msgid "New personal access token"
 msgstr ""
 
-#: invenio_oauth2server/templates/invenio_oauth2server/settings/token_new.html:37
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/token_new.html:27
 msgid "Create"
 msgstr ""
 
-#: invenio_oauth2server/templates/invenio_oauth2server/settings/token_view.html:27
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/token_permission_view.html:16
+#, python-format
+msgid "Authorized application: %(client_name)s"
+msgstr ""
+
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/token_view.html:17
 #, python-format
 msgid "Personal access token / %(name)s"
 msgstr ""
 
-#: invenio_oauth2server/templates/invenio_oauth2server/settings/token_view.html:34
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/token_view.html:24
 msgid "Access token"
 msgstr ""
 
-#: invenio_oauth2server/templates/invenio_oauth2server/settings/token_view.html:36
+#: invenio_oauth2server/templates/invenio_oauth2server/settings/token_view.html:26
 msgid ""
 "Do not share this personal access token. It gives full access to your "
 "account."
 msgstr ""
 
-#: invenio_oauth2server/views/settings.py:102
+#: invenio_oauth2server/views/settings.py:95
 #, python-format
 msgid "%(icon)s Applications"
 msgstr ""
 
-#: invenio_oauth2server/views/settings.py:108
+#: invenio_oauth2server/views/settings.py:101
 msgid "Applications"
 msgstr ""
 
-#: invenio_oauth2server/views/settings.py:142
-#: invenio_oauth2server/views/settings.py:204
+#: invenio_oauth2server/views/settings.py:135
+#: invenio_oauth2server/views/settings.py:213
 msgid "New"
 msgstr ""
 
-#: invenio_oauth2server/views/settings.py:165
-#: invenio_oauth2server/views/settings.py:230
+#: invenio_oauth2server/views/settings.py:162
+#: invenio_oauth2server/views/settings.py:246
 msgid "Edit"
 msgstr ""
 

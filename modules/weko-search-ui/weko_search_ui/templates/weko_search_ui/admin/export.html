@@ -44,6 +44,8 @@
 <input id="export_item" type="hidden" value="{{_('Export item')}}" />
 <input id="download_url" type="hidden" value="{{_('Download URL')}}" />
 <input id="status" type="hidden" value="Status" />
+<input id="start_time" type="hidden" value="{{_('Export Start Time')}}" />
+<input id="finish_time" type="hidden" value="{{_('Export Finish Time')}}" />
 <input id="export" type="hidden" value="{{_('Export')}}" />
 <input id="export_messaage" type="hidden" value="{{_('Export message')}}" />
 <input id="run" type="hidden" value="{{_('Execute')}}" />
@@ -51,6 +53,7 @@
 <input id="internal_server_error" type="hidden" value="{{_('Internal server error')}}" />
 <input id="cancel_messaage" type="hidden" value="{{_('Cancel export message')}}" />
 <input id="celery_not_run" type="hidden" value="{{_('Celery is not running.')}}" />
+<input id="lifetime_not_one_day" type="hidden" value="{{ _('Session lifetime is not one day.') }}" />
 <input id="error_get_lstItemType" type="hidden" value="{{_('Failed to get item type list.')}}" />
 <input id="error_get_lastItemId" type="hidden" value="{{_('Failed to get last item ID.')}}" />
 {%- endblock body %}

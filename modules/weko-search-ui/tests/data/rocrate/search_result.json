@@ -1,0 +1,421 @@
+{
+    "took": 1089,
+    "timed_out": false,
+    "_shards": {
+        "total": 1,
+        "successful": 1,
+        "skipped": 0,
+        "failed": 0
+    },
+    "hits": {
+        "total": 1,
+        "max_score": null,
+        "hits": [
+            {
+                "_index": "tenant1-weko-item-v1.0.0",
+                "_type": "item-v1.0.0",
+                "_id": "83b61136-355a-4b6f-b239-5a52e67a204c",
+                "_version": 4,
+                "_score": null,
+                "_source": {
+                    "_item_metadata": {
+                        "_buckets": {
+                            "deposit": "83352276-fd00-4c35-b46d-80b3f58e61fb"
+                        },
+                        "_deposit": {
+                            "created_by": 1,
+                            "id": "2",
+                            "owner": "1",
+                            "owners": [
+                                1
+                            ],
+                            "owners_ext": {
+                                "displayname": "",
+                                "email": "wekosoftware@nii.ac.jp",
+                                "username": ""
+                            },
+                            "pid": {
+                                "revision_id": 0,
+                                "type": "depid",
+                                "value": "2"
+                            },
+                            "status": "published"
+                        },
+                        "_oai": {
+                            "id": "oai:136.187.110.102:00000002"
+                        },
+                        "author_link": [],
+                        "item_1617186331708": {
+                            "attribute_name": "データの名称",
+                            "attribute_value_mlt": [
+                                {
+                                    "subitem_1551255647225": "メタボリックシンドロームモデルマウスの多臓器遺伝子発現量データ",
+                                    "subitem_1551255648112": "ja"
+                                }
+                            ]
+                        },
+                        "item_1617258105262": {
+                            "attribute_name": "Resource Type",
+                            "attribute_value_mlt": [
+                                {
+                                    "resourcetype": "data paper",
+                                    "resourceuri": "http://purl.org/coar/resource_type/c_beb9"
+                                }
+                            ]
+                        },
+                        "item_1617605131499": {
+                            "attribute_name": "File",
+                            "attribute_type": "file",
+                            "attribute_value_mlt": [
+                                {
+                                    "accessrole": "open_access",
+                                    "date": [
+                                        {
+                                            "dateType": "Available",
+                                            "dateValue": "2023-06-01"
+                                        }
+                                    ],
+                                    "displaytype": "simple",
+                                    "fileDate": [
+                                        {
+                                            "fileDateType": "Collected",
+                                            "fileDateValue": "2023-06-01"
+                                        }
+                                    ],
+                                    "filename": "image_sample.png",
+                                    "filesize": [
+                                        {
+                                            "value": "4 KB"
+                                        }
+                                    ],
+                                    "format": "image/png",
+                                    "licensetype": "license_12",
+                                    "url": {
+                                        "label": "サンプルpng",
+                                        "objectType": "other",
+                                        "url": "https://136.187.110.102/record/2/files/image_sample.png"
+                                    },
+                                    "version": "0.0.1",
+                                    "version_id": "9a573cd4-1163-45ea-9572-9c2bbc853ba3"
+                                },
+                                {
+                                    "accessrole": "open_access",
+                                    "date": [
+                                        {
+                                            "dateType": "Available",
+                                            "dateValue": "2023-06-01"
+                                        }
+                                    ],
+                                    "displaytype": "preview",
+                                    "fileDate": [
+                                        {
+                                            "fileDateType": "Created",
+                                            "fileDateValue": "2023-06-01"
+                                        }
+                                    ],
+                                    "filename": "pdf_sample.pdf",
+                                    "filesize": [
+                                        {
+                                            "value": "45 KB"
+                                        }
+                                    ],
+                                    "format": "application/pdf",
+                                    "licensetype": "license_12",
+                                    "url": {
+                                        "label": "サンプルpdf",
+                                        "objectType": "summary",
+                                        "url": "https://136.187.110.102/record/2/files/pdf_sample.pdf"
+                                    },
+                                    "version": "0.0.1",
+                                    "version_id": "d8cb5ea2-36df-4882-966d-7b71486b8b88"
+                                }
+                            ]
+                        },
+                        "item_1685585050910": {
+                            "attribute_name": "掲載日・掲載更新日",
+                            "attribute_value_mlt": [
+                                {
+                                    "subitem_1685583626611": {
+                                        "subitem_1685583628794": "2023-06-01",
+                                        "subitem_1685583633388": "2023-06-01"
+                                    }
+                                }
+                            ]
+                        },
+                        "item_1685585100256": {
+                            "attribute_name": "データの説明",
+                            "attribute_value_mlt": [
+                                {
+                                    "subitem_1685583657917": {
+                                        "subitem_1685583662235": "メタボリックシンドロームの疾病前に予兆が発見できるどうかを検証するために、遺伝子発現データを経時的に取得すること",
+                                        "subitem_1685583663389": "メタボリックシンドロームの疾病前診断の実現を目的とした動物実験で、メタボリックシンドロームモデル（TSOD）マウスを使って経時的に多臓器遺伝子発現量を計測したデータ",
+                                        "subitem_1685583664589": "DNB, biomarker, mice, phenotype, metabolic syndrome, pre-disease, intervention"
+                                    }
+                                }
+                            ]
+                        },
+                        "item_1685585121449": {
+                            "attribute_name": "データの分野",
+                            "attribute_value_mlt": [
+                                {
+                                    "subitem_1685583691205": "生物学"
+                                },
+                                {
+                                    "subitem_1685583691205": "医学"
+                                }
+                            ]
+                        },
+                        "item_1685585134601": {
+                            "attribute_name": "データ種別",
+                            "attribute_value_mlt": [
+                                {
+                                    "subitem_1685583704205": "pdf, png"
+                                }
+                            ]
+                        },
+                        "item_1685585153905": {
+                            "attribute_name": "概略データ量",
+                            "attribute_value_mlt": [
+                                {
+                                    "subitem_1685583723733": {
+                                        "subitem_1685583725853": "49 KB",
+                                        "subitem_1685583728246": "1",
+                                        "subitem_1685583728790": "2",
+                                        "subitem_1685583729589": "3"
+                                    }
+                                }
+                            ]
+                        },
+                        "item_1685585170888": {
+                            "attribute_name": "データの提供・公開",
+                            "attribute_value_mlt": [
+                                {
+                                    "subitem_1685583776261": {
+                                        "subitem_1685583778214": "無償",
+                                        "subitem_1685583783175": "Paid",
+                                        "subitem_1685583783894": "Yes",
+                                        "subitem_1685583784534": "Public",
+                                        "subitem_1685583785118": "2023-06-01"
+                                    }
+                                }
+                            ]
+                        },
+                        "item_1685585189225": {
+                            "attribute_name": "リポジトリ",
+                            "attribute_value_mlt": [
+                                {
+                                    "subitem_1685584149443": {
+                                        "subitem_1685584151682": "GakuNin RDM",
+                                        "subitem_1685584154227": "注意事項1：FASTQデータやBAMデータは容量が大きいのでGakuNin RDMには置けません。必要な方はHDDを郵送しますので別途ご相談下さい。"
+                                    }
+                                }
+                            ]
+                        },
+                        "item_1685585204873": {
+                            "attribute_name": "データ作成者",
+                            "attribute_value_mlt": [
+                                {
+                                    "subitem_1685584180890": {
+                                        "subitem_1685584185026": "鈴木一郎",
+                                        "subitem_1685584186042": "東京大学",
+                                        "subitem_1685584186763": "ichiro@sample.com"
+                                    }
+                                }
+                            ]
+                        },
+                        "item_1685585220729": {
+                            "attribute_name": "データ管理者",
+                            "attribute_value_mlt": [
+                                {
+                                    "subitem_1685584314379": {
+                                        "subitem_1685584316145": "田中太郎",
+                                        "subitem_1685584316938": "亜細亜大学",
+                                        "subitem_1685584317442": "taro@sample.com"
+                                    }
+                                }
+                            ]
+                        },
+                        "item_1685585235282": {
+                            "attribute_name": "取得データの対象種別",
+                            "attribute_value_mlt": [
+                                {
+                                    "subitem_1685584345785": "ヒト"
+                                }
+                            ]
+                        },
+                        "item_1685585255047": {
+                            "attribute_name": "倫理審査委員会承認",
+                            "attribute_value_mlt": [
+                                {
+                                    "subitem_1685584362177": "不要"
+                                }
+                            ]
+                        },
+                        "item_1685585267647": {
+                            "attribute_name": "インフォームドコンセント",
+                            "attribute_value_mlt": [
+                                {
+                                    "subitem_1685584438154": {
+                                        "subitem_1685584440282": "No",
+                                        "subitem_1685584443266": "No",
+                                        "subitem_1685584443811": "Yes",
+                                        "subitem_1685584444282": "Yes"
+                                    }
+                                }
+                            ]
+                        },
+                        "item_1685585279416": {
+                            "attribute_name": "匿名加工の有無",
+                            "attribute_value_mlt": [
+                                {
+                                    "subitem_1685584563044": "Yes"
+                                }
+                            ]
+                        },
+                        "item_1685585292154": {
+                            "attribute_name": "利益相反の有無",
+                            "attribute_value_mlt": [
+                                {
+                                    "subitem_1685584593021": {
+                                        "subitem_1685584596756": "Yes"
+                                    }
+                                }
+                            ]
+                        },
+                        "item_1685585306232": {
+                            "attribute_name": "備考",
+                            "attribute_value_mlt": [
+                                {
+                                    "subitem_1685584629398": "特になし"
+                                }
+                            ]
+                        },
+                        "item_title": "メタボリックシンドロームモデルマウスの多臓器遺伝子発現量データ",
+                        "item_type_id": "40001",
+                        "owner": "1",
+                        "path": [
+                            "1685585680262"
+                        ],
+                        "pubdate": {
+                            "attribute_name": "PubDate",
+                            "attribute_value": "2023-06-01"
+                        },
+                        "publish_date": "2023-06-01",
+                        "publish_status": "0",
+                        "recid": "2",
+                        "relation_version_is_last": true,
+                        "title": [
+                            "メタボリックシンドロームモデルマウスの多臓器遺伝子発現量データ"
+                        ],
+                        "weko_shared_ids": []
+                    },
+                    "weko_creator_id": "1",
+                    "_updated": "2023-09-07T00:47:31.583844+00:00",
+                    "type": [
+                        "conference paper"
+                    ],
+                    "title": [
+                        "data1"
+                    ],
+                    "author_link": [],
+                    "path": [
+                        "1557819692844"
+                    ],
+                    "file": {
+                        "date": [
+                            {
+                                "dateType": "fileDate.fileDateType"
+                            }
+                        ],
+                        "extent": [
+                            "5 B"
+                        ],
+                        "mimeType": [
+                            "text/plain"
+                        ],
+                        "URI": [
+                            {
+                                "value": "https://192.168.56.102/record/1/files/dummy.txt"
+                            }
+                        ],
+                        "version": []
+                    },
+                    "itemtype": "プロトタイプ用アイテムタイプ",
+                    "_oai": {
+                        "sets": [
+                            "1557819692844"
+                        ],
+                        "id": "oai:ams-dev.ir.rcos.nii.ac.jp:00000001"
+                    },
+                    "_created": "2023-09-07T00:46:48.216930+00:00",
+                    "control_number": "1",
+                    "weko_shared_ids": [],
+                    "relation_version_is_last": true,
+                    "publish_date": "2023-09-07",
+                    "publish_status": "0"
+                },
+                "sort": [
+                    9223372036854775807
+                ]
+            }
+        ]
+    },
+    "aggregations": {
+        "Data Type": {
+            "doc_count": 0,
+            "Data Type": {
+                "doc_count_error_upper_bound": 0,
+                "sum_other_doc_count": 0,
+                "buckets": []
+            }
+        },
+        "Distributor": {
+            "doc_count": 0,
+            "Distributor": {
+                "doc_count_error_upper_bound": 0,
+                "sum_other_doc_count": 0,
+                "buckets": []
+            }
+        },
+        "Data Language": {
+            "doc_count": 1,
+            "Data Language": {
+                "doc_count_error_upper_bound": 0,
+                "sum_other_doc_count": 0,
+                "buckets": []
+            }
+        },
+        "Temporal": {
+            "doc_count": 1,
+            "Temporal": {
+                "doc_count_error_upper_bound": 0,
+                "sum_other_doc_count": 0,
+                "buckets": []
+            }
+        },
+        "Access": {
+            "doc_count": 1,
+            "Access": {
+                "doc_count_error_upper_bound": 0,
+                "sum_other_doc_count": 0,
+                "buckets": []
+            }
+        },
+        "Topic": {
+            "doc_count": 1,
+            "Topic": {
+                "doc_count_error_upper_bound": 0,
+                "sum_other_doc_count": 0,
+                "buckets": []
+            }
+        },
+        "Location": {
+            "doc_count": 1,
+            "Location": {
+                "doc_count_error_upper_bound": 0,
+                "sum_other_doc_count": 0,
+                "buckets": []
+            }
+        }
+    }
+}

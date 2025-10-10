@@ -1,0 +1,42 @@
+{
+    "@context": "https://api-trial.researchmap.jp/researcher.jsonld",
+    "@id": "https://api-trial.researchmap.jp/M1cQhPtdmlrSRFo4/published_papers/1358081?format=json",
+    "@type": "published_papers",
+    "@reverse": "https://api-trial.researchmap.jp/M1cQhPtdmlrSRFo4/published_papers",
+    "rm:id": "1358081",
+    "rm:user_id": "R000039316",
+    "display": "disclosed",
+    "major_achievement": false,
+    "rm:creator_id": "client_id:FdY6XmJTi5MbqZL$",
+    "rm:creator_type": "institution",
+    "rm:created": "2024-02-15T05:54:05Z",
+    "rm:modifier_id": "client_id:FdY6XmJTi5MbqZL$",
+    "rm:modifier_type": "institution",
+    "rm:modified": "2024-02-15T05:54:05Z",
+    "paper_title": {
+        "ja": "満艦飾",
+        "en": "full-schema"
+    },
+    "authors": {
+        "ja": [
+            {
+                "name": "WEKO, 太郎"
+            }
+        ]
+    },
+    "description": {
+        "ja": "描写"
+    },
+    "publisher": {
+        "ja": "出版者●●"
+    },
+    "publication_date": "2024-02-05",
+    "volume": "123",
+    "number": "456",
+    "starting_page": "1",
+    "ending_page": "10",
+    "languages": [
+        "jpn"
+    ],
+    "rm:is_open_access": false
+}
