@@ -37,8 +37,8 @@ setup_requires = [
 ]
 
 install_requires = [
-    "Flask>=1.0.4",
-    "six>=1.12.0",
+    "Flask>=0.11.1",
+    "Flask-BabelEx>=0.9.2",
 ]
 
 packages = find_packages()
@@ -67,9 +67,29 @@ setup(
     entry_points={
         "invenio_base.apps": [
             "weko_logging_fs = weko_logging.fs:WekoLoggingFS",
+            "weko_logging_user_activity = weko_logging.audit:WekoLoggingUserActivity",
         ],
         "invenio_base.api_apps": [
             "weko_logging_fs = weko_logging.fs:WekoLoggingFS",
+            "weko_logging_user_activity = weko_logging.audit:WekoLoggingUserActivity",
+        ],
+        "invenio_i18n.translations": [
+            "messages = weko_logging",
+        ],
+        "invenio_admin.views": [
+            "weko_logging_admin_log_export = weko_logging.admin:log_export_admin_view",
+        ],
+        "invenio_db.alembic": [
+            "weko_logging = weko_logging:alembic",
+        ],
+        "invenio_db.models": [
+            "weko_logging = weko_logging.models",
+        ],
+        "invenio_assets.bundles": [
+            "weko_logging_export_css = "
+            "weko_logging.bundles:weko_logging_export_css",
+            "weko_logging_export_js = "
+            "weko_logging.bundles:weko_logging_export_js",
         ],
     },
     extras_require=extras_require,

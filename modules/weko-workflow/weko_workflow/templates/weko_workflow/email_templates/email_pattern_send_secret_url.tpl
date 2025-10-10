@@ -1,4 +1,4 @@
-Subject：シークレットURL提供のお知らせ／Notice of providing secret URL	
+Subject：シークレットURL提供のお知らせ／Notice of providing secret URL
 
 [restricted_university_institution]
 [restricted_fullname]
@@ -9,7 +9,7 @@ Subject：シークレットURL提供のお知らせ／Notice of providing secre
 
 下記アドレスよりダウンロードすることができます。
 
-[restricted_download_link]
+[secret_url]
 
 このURLは[restricted_expiration_date][restricted_expiration_date_ja]まで有効です。ダウンロードは[restricted_download_count][restricted_download_count_ja]回まで可能です。
 
@@ -31,7 +31,7 @@ Secret URL for [file_name] registered in [restricted_data_name] is created.
 The data can be downloaded from the address below.
 
 
-[restricted_download_link]
+[secret_url]
 
 This URL is valid until [restricted_expiration_date][restricted_expiration_date_en]. You can download it up to [restricted_download_count][restricted_download_count_en] times.
 

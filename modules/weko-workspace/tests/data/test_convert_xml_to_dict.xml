@@ -1,0 +1,50 @@
+<?xml version="1.0" ?>
+<metadata>
+    <identifier>test-identifier</identifier>
+    <titles>
+        <title>Test Title</title>
+        <title>Dummy Title</title>
+    </titles>
+    <creators>
+        <creator>Test Creator 1</creator>
+        <creator>Test Creator 2</creator>
+    </creators>
+    <types>
+        <type>Test Type 1</type>
+        <type>Test Type 2</type>
+    </types>
+    <language>en</language>
+    <publisher>Test Publisher</publisher>
+    <descriptions>
+        <description>Test Description 1</description>
+        <description>Test Description 2</description>
+    </descriptions>
+    <organizations>
+        <organization>Test Organization 1</organization>
+        <organization>Test Organization 2</organization>
+    </organizations>
+    <publicationName>Test Publication Name</publicationName>
+    <issn>1234-5678</issn>
+    <eIssn>8765-4321</eIssn>
+    <isbns>
+        <isbn>978-3-16-148410-0</isbn>
+        <isbn>978-1-23-456789-0</isbn>
+    </isbns>
+    <volume>1</volume>
+    <number>2</number>
+    <startingPage>10</startingPage>
+    <pageRange>10-20</pageRange>
+    <publicationDates>
+        <publicationDate>2023-01-01</publicationDate>
+        <publicationDate>2023-02-01</publicationDate>
+    </publicationDates>
+    <keywords>
+        <keyword>Test Keyword 1</keyword>
+        <keyword>Test Keyword 2</keyword>
+    </keywords>
+    <doi>10.1234/test-doi</doi>
+    <postDates>
+        <postDate>2023-01-15</postDate>
+        <postDate>2023-02-15</postDate>
+    </postDates>
+</metadata>

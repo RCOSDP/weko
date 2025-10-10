@@ -48,6 +48,18 @@ def test_run_sync_import(app, test_resync):
     res[0].pop('execution_time')
     assert res == ({'task_state': 'SUCCESS', 'task_name': 'import', 'task_type': 'import', 'repository_name': 'weko', 'task_id': None},)
 
+    res = run_sync_import(60)
+    res[0].pop('start_time')
+    res[0].pop('end_time')
+    res[0].pop('execution_time')
+    assert res == ({'task_state': 'SUCCESS', 'task_name': 'import', 'task_type': 'import', 'repository_name': 'weko', 'task_id': None},)
+
+    res = run_sync_import(70)
+    res[0].pop('start_time')
+    res[0].pop('end_time')
+    res[0].pop('execution_time')
+    assert res == ({'task_state': 'SUCCESS', 'task_name': 'import', 'task_type': 'import', 'repository_name': 'weko', 'task_id': None},)
+
 #def get_record_from_file(rc):
 
 

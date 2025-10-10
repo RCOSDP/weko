@@ -9089,7 +9089,7 @@ msgstr ""
 
 #: ../../source/developer/database.rst:7923
 #: ../../source/developer/database.rst:7924
-msgid "shared_user_id"
+msgid "shared_user_ids"
 msgstr ""
 
 #: ../../source/developer/database.rst:7930

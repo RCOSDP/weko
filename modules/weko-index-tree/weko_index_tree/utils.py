@@ -20,18 +20,21 @@
 
 """Module of weko-index-tree utils."""
 import os
-from datetime import date, datetime
+import sys
+import traceback
+from datetime import date, datetime, time, timedelta, timezone
 from functools import wraps
 from operator import itemgetter
 
 from elasticsearch.exceptions import NotFoundError
 from elasticsearch_dsl.query import Bool, Exists, Q, QueryString
-from flask import Markup, current_app, session, json
+from flask import Markup, current_app, session, json, Flask
 from flask_babelex import get_locale
 from flask_babelex import gettext as _
 from flask_babelex import to_user_timezone, to_utc
 from flask_login import current_user
 from invenio_cache import current_cache
+from invenio_communities.models import Community
 from invenio_db import db
 from invenio_i18n.ext import current_i18n
 from invenio_pidstore.models import PersistentIdentifier
@@ -39,6 +42,7 @@ from invenio_search import RecordsSearch
 from simplekv.memory.redisstore import RedisStore
 from weko_admin.utils import is_exists_key_in_redis
 from weko_groups.models import Group
+from weko_logging.activity_logger import UserActivityLogger
 from weko_redis.redis import RedisConnection
 from weko_schema_ui.models import PublishStatus
 
@@ -91,7 +95,7 @@ def reset_tree(tree, path=None, more_ids=None, ignore_more=False):
     """
     if more_ids is None:
         more_ids = []
-    roles = get_user_roles(is_super_role=True)
+    roles = get_user_roles(is_super_role=False)
     groups = get_user_groups()
     if path is not None:
         id_tp = []
@@ -108,6 +112,75 @@ def reset_tree(tree, path=None, more_ids=None, ignore_more=False):
         if not ignore_more:
             reduce_index_by_more(tree=tree, more_ids=more_ids)
 
+def can_user_access_index(lst):
+    """Check if the specified user has access to the index item.
+
+    This function determines access permissions based on the user's roles and groups.
+    It checks whether the user has viewing or editing rights for the index item.
+    It also considers the public state and public date of the index to evaluate accessibility.
+
+    Args:
+        lst (dict): Dictionary representing the index item.
+
+    Returns:
+        bool: True if the user has access, False otherwise.
+    """
+    from weko_records_ui.utils import is_future
+
+    result, roles = get_user_roles(is_super_role=True)
+
+    groups = get_user_groups()
+
+    brw_role = lst.get('browsing_role', [])
+    brw_group = lst.get('browsing_group', [])
+    contribute_role = lst.get('contribute_role', [])
+    contribute_group = lst.get('contribute_group', [])
+    public_state = lst.get('public_state', False)
+    public_date = lst.get('public_date', None)
+
+    if not result:
+        if isinstance(public_date, str):
+            public_date = str_to_datetime(public_date, "%Y-%m-%dT%H:%M:%S")
+
+        if check_roles(roles, brw_role) or check_groups(groups, brw_group):
+            if public_state and (public_date is None or not is_future(public_date)):
+                result = True
+
+        if check_roles(roles, contribute_role) or check_groups(groups, contribute_group):
+            result = True
+
+    return result
+
+def can_admin_access_index(lst):
+    """Check if the specified user with admin role has access to the index item.
+
+    This function determines access permissions based on the user's admin roles.
+    It checks whether the user has administrative privileges directly on the index item,
+    or indirectly through one of its parent indexes.
+
+    Args:
+        lst (dict): Dictionary representing the index item.
+
+    Returns:
+        bool: True if the user has admin access to the index, False otherwise.
+    """
+    from .api import Indexes
+
+    result, roles = get_user_roles(is_super_role=False)
+
+    if not result:
+        if check_comadmin(roles, lst.get('id')):
+            result = True
+        else:
+            parent_id = lst.get('parent', 0)
+            while parent_id and parent_id != '0':
+                parent = Indexes.get_index(parent_id)
+                if parent and check_comadmin(roles, parent.id):
+                    result = True
+                    break
+                parent_id = parent.parent if parent else None
+
+    return result
 
 def get_tree_json(index_list, root_id):
     """Get Tree Json.
@@ -140,7 +213,7 @@ def get_tree_json(index_list, root_id):
         index_name = str(index_element.name).replace("&EMPTY&", "")
         index_name = Markup.escape(index_name)
         index_name = index_name.replace("\n", r"<br\>")
-        
+
         index_link_name = str(index_element.link_name).replace("&EMPTY&", "")
         index_link_name = index_link_name.replace("\n", r"<br\>")
 
@@ -301,6 +374,10 @@ def reduce_index_by_role(tree, roles, groups, browsing_role=True, plst=None):
             lst = tree[i]
 
             if isinstance(lst, dict):
+                if check_comadmin(roles[1], lst.get('id')):
+                    i += 1
+                    continue
+
                 contribute_role = lst.pop('contribute_role')
                 public_state = lst.pop('public_state')
                 public_date = lst.pop('public_date')
@@ -592,7 +669,9 @@ def get_record_in_es_of_index(index_id, recursively=True):
     @param index_id:
     @return:
     """
+    from weko_search_ui.utils import execute_search_with_pagination
     from .api import Indexes
+
     if recursively:
         child_idx = Indexes.get_child_list_recursive(index_id)
     else:
@@ -601,6 +680,7 @@ def get_record_in_es_of_index(index_id, recursively=True):
     query_string = "relation_version_is_last:true"
     search = RecordsSearch(
         index=current_app.config['SEARCH_UI_SEARCH_INDEX'])
+    search = search.sort({"control_number": {"order": "asc"}})
     must_query = [
         QueryString(query=query_string),
         Q("terms", path=child_idx),
@@ -612,9 +692,7 @@ def get_record_in_es_of_index(index_id, recursively=True):
     search = search.query(
         Bool(filter=must_query)
     )
-    records = search.execute().to_dict().get('hits', {}).get('hits', [])
-
-    return records
+    return execute_search_with_pagination(search, max_result_size=-1)
 
 
 def check_doi_in_list_record_es(index_id):
@@ -652,6 +730,7 @@ def check_restrict_doi_with_indexes(index_ids):
     """
     from .api import Indexes
     full_path_index_ids = [Indexes.get_full_path(_id) for _id in index_ids]
+    full_path_index_ids = [idx for idx in full_path_index_ids if idx != '']
     is_public = Indexes.is_public_state(full_path_index_ids)
     is_harvest_public = Indexes.get_harvest_public_state(full_path_index_ids)
     return not (is_public and is_harvest_public)
@@ -713,18 +792,26 @@ def check_index_permissions(record=None, index_id=None, index_path_list=None,
 
         """
         from weko_records_ui.utils import is_future
-        can_view = False
+        in_admin_view_scope = False
+        role_names = [role.name for role in current_user.roles] 
         if roles[0]:
             # In case admin role.
-            can_view = True
-        elif index_data.public_state:
+            in_admin_view_scope = True
+        elif bool(set(current_app.config.get('WEKO_PERMISSION_ROLE_COMMUNITY')) & set(role_names)):
+            # In case community admin role.
+            in_admin_view_scope = _check_community_admin_permission(index_data)
+
+        is_content_public = False
+        if index_data.public_state:
             check_user_role = check_roles(roles, index_data.browsing_role) or \
                 check_groups(groups, index_data.browsing_group)
             check_public_date = \
                 not is_future(index_data.public_date) \
                 if index_data.public_date else True
             if check_user_role and check_public_date:
-                can_view = True
+                is_content_public = True
+
+        can_view = is_content_public or in_admin_view_scope
         return can_view
 
     def _check_index_permission_for_doi(index_data) -> bool:
@@ -741,6 +828,25 @@ def check_index_permissions(record=None, index_id=None, index_path_list=None,
             index_data.harvest_public_state
 
         return public_state
+
+    def _check_community_admin_permission(index_data) -> bool:
+        """Check community admin permission.
+
+        Args:
+            index_data (): Index data which is to be checked.
+
+        Returns:
+            [bool]: True if the user can access index.
+        """
+        from .api import Indexes
+        authorized_index_id_list = []
+        repositories = Community.get_repositories_by_user(current_user)
+        for repository in repositories:
+            authorized_index_id_list.extend(
+                Indexes.get_child_list_recursive(repository.root_node_id))
+        if str(index_data.cid) in authorized_index_id_list:
+            return True
+        return False
 
     def _check_for_index_groups(_index_groups):
         """Check for index groups.
@@ -793,7 +899,7 @@ def check_index_permissions(record=None, index_id=None, index_path_list=None,
 
     if not is_check_doi:
         # Get user roles and user groups.
-        roles = get_user_roles(is_super_role=True)
+        roles = get_user_roles(is_super_role=False)
         groups = get_user_groups()
         check_index_method = _check_index_permission
     else:
@@ -818,15 +924,18 @@ def check_doi_in_index_and_child_index(index_id, recursively=True):
     Args:
         index_id (list): Record list.
     """
+    from weko_search_ui.utils import execute_search_with_pagination
     from .api import Indexes
 
     if recursively:
         child_idx = Indexes.get_child_list_recursive(index_id)
     else:
         child_idx = [index_id]
+
     query_string = "relation_version_is_last:true AND publish_status: {}".format(PublishStatus.PUBLIC.value)
     search = RecordsSearch(
         index=current_app.config['SEARCH_UI_SEARCH_INDEX'])
+    search = search.sort({"control_number": {"order": "asc"}})
     must_query = [
         QueryString(query=query_string),
         Q("terms", path=child_idx),
@@ -836,8 +945,7 @@ def check_doi_in_index_and_child_index(index_id, recursively=True):
     search = search.query(
         Bool(filter=must_query)
     )
-    records = search.execute().to_dict().get('hits', {}).get('hits', [])
-    return records
+    return execute_search_with_pagination(search, max_result_size=-1)
 
 
 def __get_redis_store():
@@ -941,6 +1049,7 @@ def is_index_locked(index_id):
     if is_exists_key_in_redis(
         current_app.config['WEKO_INDEX_TREE_INDEX_LOCK_KEY_PREFIX'] + str(
             index_id)):
+        current_app.logger.info(f"Index with ID {index_id} is locked.")
         return True
     return False
 
@@ -964,24 +1073,45 @@ def perform_delete_index(index_id, record_class, action: str):
     """
     is_unlock = True
     locked_key = []
+    errors = []
     try:
         msg = ''
         is_unlock, errors, locked_key = validate_before_delete_index(index_id)
         if len(errors) == 0:
             res = record_class.get_self_path(index_id)
             if not res:
+                current_app.logger.error(
+                    f"Index with ID {index_id} does not exist."
+                )
                 raise IndexDeletedRESTError()
             if action in ('move', 'all'):
-                result = record_class. \
-                    delete_by_action(action, index_id)
+                result = record_class.delete_by_action(action, index_id)
                 if not result:
+                    current_app.logger.error(
+                        f"Failed to delete index with ID {index_id}."
+                    )
                     raise IndexBaseRESTError(
                         description='Could not delete data.')
             msg = 'Index deleted successfully.'
         db.session.commit()
+        UserActivityLogger.info(
+            operation="INDEX_DELETE",
+            target_key=index_id
+        )
     except Exception as e:
         db.session.rollback()
-        current_app.logger.erorr(e)
+        current_app.logger.error(
+            f"Unexpected error: Failed to delete index: {index_id}"
+        )
+        traceback.print_exc()
+
+        exec_info = sys.exc_info()
+        tb_info = traceback.format_tb(exec_info[2])
+        UserActivityLogger.error(
+            operation="INDEX_DELETE",
+            target_key=index_id,
+            remarks=tb_info[0]
+        )
         msg = 'Failed to delete index.'
     finally:
         if is_unlock:
@@ -1012,23 +1142,25 @@ def get_editing_items_in_index(index_id, recursively=False):
     @return:
     """
     from weko_items_ui.utils import check_item_is_being_edit
-    from weko_workflow.utils import check_an_item_is_locked
+    from weko_workflow.utils import bulk_check_an_item_is_locked
 
     result = []
     records = get_record_in_es_of_index(index_id, recursively)
-    for record in records:
-        item_id = record.get('_source', {}).get(
-            '_item_metadata', {}).get('control_number')
-        if check_item_is_being_edit(
-            PersistentIdentifier.get('recid', item_id)) or \
-                check_an_item_is_locked(int(item_id)):
+    item_ids = [
+        record.get('_source', {}).get('_item_metadata', {}).get('control_number')
+        for record in records
+    ]
+    for item_id in item_ids:
+        if check_item_is_being_edit(PersistentIdentifier.get('recid', item_id)):
             result.append(item_id)
 
-    return result
+    result.extend(bulk_check_an_item_is_locked(item_ids))
+
+    return sorted(list(set(result)))
 
 def save_index_trees_to_redis(tree, lang=None):
     """save inde_tree to redis for roles
-    
+
     """
     def default(o):
         if hasattr(o, "isoformat"):
@@ -1040,10 +1172,66 @@ def save_index_trees_to_redis(tree, lang=None):
         lang = current_i18n.language
     try:
         v = bytes(json.dumps(tree, default=default), encoding='utf-8')
-        
+
         redis.put("index_tree_view_" + os.environ.get('INVENIO_WEB_HOST_NAME') + "_" + lang,v)
     except ConnectionError:
         current_app.logger.error("Fail save index_tree to redis")
+
+def save_index_reset_trees_to_redis(tree, lang=None):
+    """save index_reset_tree to redis for roles"""
+
+    def default(o):
+        if hasattr(o, "isoformat"):
+            return o.isoformat()
+        else:
+            return str(o)
+
+    redis = __get_redis_store()
+    if lang is None:
+        lang = current_i18n.language
+    try:
+        v = bytes(json.dumps(tree, default=default), encoding="utf-8")
+        now = to_user_timezone(datetime.now(timezone.utc))
+        expiration_date = datetime.combine(now.date() + timedelta(days=1), time())
+        ttl_secs = datetime.timestamp(to_utc(expiration_date)) - datetime.timestamp(to_utc(now))
+        redis.put(
+            "index_reset_tree_view_"
+            + os.environ.get("INVENIO_WEB_HOST_NAME")
+            + "_"
+            + lang,
+            v,
+            ttl_secs=ttl_secs,
+        )
+    except ConnectionError:
+        current_app.logger.error("Fail save index_reset_tree to redis")
+
+def save_index_reset_trees_ignore_more_to_redis(tree, lang=None):
+    """save_index_reset_tree_ignore_more to redis for roles"""
+
+    def default(o):
+        if hasattr(o, "isoformat"):
+            return o.isoformat()
+        else:
+            return str(o)
+
+    redis = __get_redis_store()
+    if lang is None:
+        lang = current_i18n.language
+    try:
+        v = bytes(json.dumps(tree, default=default), encoding="utf-8")
+        now = to_user_timezone(datetime.now(timezone.utc))
+        expiration_date = datetime.combine(now.date() + timedelta(days=1), time())
+        ttl_secs = datetime.timestamp(to_utc(expiration_date)) - datetime.timestamp(to_utc(now))
+        redis.put(
+            "index_reset_tree_ignore_more_view_"
+            + os.environ.get("INVENIO_WEB_HOST_NAME")
+            + "_"
+            + lang,
+            v,
+            ttl_secs=ttl_secs,
+        )
+    except ConnectionError:
+        current_app.logger.error("Fail save index_reset_tree_ignore_more to redis")
 
 def delete_index_trees_from_redis(lang):
     """delete index_tree from redis
@@ -1053,8 +1241,109 @@ def delete_index_trees_from_redis(lang):
     if redis.redis.exists(key):
         redis.delete(key)
 
+def delete_index_reset_trees_from_redis(lang):
+    """delete index_reset_tree from redis"""
+    redis = __get_redis_store()
+    key = (
+        "index_reset_tree_view_" + os.environ.get("INVENIO_WEB_HOST_NAME") + "_" + lang
+    )
+    if redis.redis.exists(key):
+        redis.delete(key)
+
+def delete_index_reset_ignore_more_trees_from_redis(lang):
+    """delete_index_reset_ignore_more_tree from redis"""
+    redis = __get_redis_store()
+    key = (
+        "index_reset_tree_ignore_more_view_"
+        + os.environ.get("INVENIO_WEB_HOST_NAME")
+        + "_"
+        + lang
+    )
+    if redis.redis.exists(key):
+        redis.delete(key)
+
 def str_to_datetime(str_dt, format):
     try:
         return datetime.strptime(str_dt, format)
     except ValueError:
         return None
+
+def get_descendant_index_names(index_id):
+    """Retrieve all indexes under the specified index_id
+        in the format of parent_index_name-/-child_index_name-/-grandchild_index_name.
+    """
+    def build_full_name(index):
+        """Retrieve the `full_index_name` of the specified index"""
+        names = []
+        current = index
+        while current:
+            names.append(current.index_name)
+            current = Index.query.get(current.parent) if current.parent else None
+        return "-/-".join(reversed(names))
+
+    def get_descendants(index):
+        """Retrieve all indexes under the specified index"""
+        descendants = []
+        children = db.session.query(Index).filter_by(parent=index.id).all()
+        for child in children:
+            descendants.append(build_full_name(child))
+            descendants.extend(get_descendants(child))
+        return descendants
+
+    root_index = Index.query.get(index_id)
+    if not root_index:
+        return []
+
+    result = [build_full_name(root_index)]
+    result.extend(get_descendants(root_index))
+    return result
+
+def get_item_ids_in_index(index_id):
+    """Retrieve all items under the specified index_id"""
+    records = get_all_records_in_index(index_id)
+    result = []
+    for record in records:
+        item_id = record.get('_source', {}).get('control_number')
+        if item_id:
+            result.append(item_id)
+    return result
+
+def get_all_records_in_index(index_id):
+    """Retrieve all records under the specified index_id"""
+    from .api import Indexes
+    child_idx = Indexes.get_child_list_recursive(index_id)
+    query_string = "relation_version_is_last:true"
+    size = 10000
+    search = RecordsSearch(
+        index=current_app.config['SEARCH_UI_SEARCH_INDEX']
+    ).query(
+        Bool(filter=[
+            QueryString(query=query_string),
+            Q("terms", path=child_idx),
+            Q("terms", publish_status=[
+                PublishStatus.PUBLIC.value,
+                PublishStatus.PRIVATE.value
+            ])
+        ])
+    ).sort('_doc').params(size=size)
+    # Use search_after to retrieve all records
+    records = []
+    page = search.execute().to_dict()
+    while page.get('hits', {}).get('hits', []):
+        records.extend(page.get('hits', {}).get('hits', []))
+        if len(page.get('hits', {}).get('hits', [])) < size:
+            break
+        search = search.extra(search_after=page.get('hits', {}).get('hits', [])[-1].get('sort'))
+        page = search.execute().to_dict()
+    return records
+
+def check_comadmin(roles, index_id):
+    """Check if the user is a community admin based on roles and group_id."""
+    if roles is not None and any(
+            role.name == current_app.config.get("WEKO_ADMIN_PERMISSION_ROLE_COMMUNITY")
+            for role in current_user.roles
+    ):
+        com_list = Community.get_by_root_node_id(index_id)
+        if any(com.group_id and com.group_id in roles for com in com_list):
+            return True
+    return False

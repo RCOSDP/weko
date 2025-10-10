@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2018 Esteban J. G. Gabancho.
+# Copyright (C) 2018, 2019, 2020 Esteban J. G. Gabancho.
 #
 # Invenio-S3 is free software; you can redistribute it and/or modify it
 # under the terms of the MIT License; see LICENSE file for more details.
@@ -22,13 +22,17 @@ cache:
   - pip
 
 env:
-  - REQUIREMENTS=lowest
-  - REQUIREMENTS=release DEPLOY=true
-  - REQUIREMENTS=devel
+  global:
+    - BOTO_CONFIG=/dev/null
+  matrix:
+    - REQUIREMENTS=lowest
+    - REQUIREMENTS=release DEPLOY=true
+    - REQUIREMENTS=devel
 
 python:
-  - "2.7"
-  - "3.5"
+  - "3.6"
+  - "3.7"
+  - "3.8"
 
 before_install:
   - "nvm install 6; nvm use 6"
@@ -41,6 +45,7 @@ before_install:
 install:
   - "travis_retry pip install -r .travis-${REQUIREMENTS}-requirements.txt"
   - "travis_retry pip install -e .[all]"
+  - "pip freeze"
 
 script:
   - "./run-tests.sh"
@@ -56,6 +61,6 @@ deploy:
   distributions: "sdist bdist_wheel"
   on:
     tags: true
-    python: "2.7"
+    python: "3.6"
     repo: inveniosoftware/invenio-s3
     condition: $DEPLOY = true

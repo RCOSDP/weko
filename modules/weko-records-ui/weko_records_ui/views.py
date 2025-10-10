@@ -25,20 +25,23 @@ import re
 import os
 import traceback
 import uuid
+import copy
+import sys
+from urllib.parse import quote, urlparse
 
 import six
 import werkzeug
 from flask import Blueprint, abort, current_app, escape, flash, json, \
     jsonify, make_response, redirect, render_template, request, url_for
-from flask_babelex import gettext as _
+from flask_babelex import get_locale, gettext as _
 from flask_login import login_required
 from flask_security import current_user
 from sqlalchemy.orm.exc import NoResultFound
-from invenio_cache import cached_unless_authenticated
 from invenio_db import db
 from invenio_files_rest.models import ObjectVersion, FileInstance
 from invenio_files_rest.permissions import has_update_version_role
 from invenio_i18n.ext import current_i18n
+from invenio_mail.models import MailTemplateGenres
 from invenio_oaiserver.response import getrecord
 from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidstore.errors import PIDDoesNotExistError
@@ -49,37 +52,41 @@ from invenio_records_ui.utils import obj_or_import_string
 from lxml import etree
 from weko_accounts.views import _redirect_method
 from weko_admin.models import AdminSettings
-from weko_admin.utils import get_search_setting
+from weko_admin.utils import get_search_setting, get_restricted_access
 from weko_deposit.api import WekoRecord
 from weko_deposit.pidstore import get_record_without_version
 from weko_index_tree.api import Indexes
 from weko_index_tree.models import IndexStyle
 from weko_index_tree.utils import get_index_link_list
-from weko_records.api import ItemLink, Mapping, ItemTypes
-from weko_records.serializers import citeproc_v1
+from weko_logging.activity_logger import UserActivityLogger
+from weko_records.api import ItemLink, ItemTypes, RequestMailList
 from weko_records.serializers.utils import get_mapping
 from weko_records.utils import custom_record_medata_for_export, \
     remove_weko2_special_character, selected_value_by_language
+from weko_records_ui.api import get_item_provide_list
 from weko_search_ui.api import get_search_detail_keyword
 from weko_schema_ui.models import PublishStatus
 from weko_user_profiles.models import UserProfile
 from weko_workflow.api import WorkFlow
-
 from weko_records_ui.fd import add_signals_info
 from weko_records_ui.utils import check_items_settings, get_file_info_list, is_workflow_activity_work
-from weko_workflow.utils import get_item_info, process_send_mail, set_mail_info
+from weko_records_ui.external import call_external_system
+from weko_workflow.utils import extract_term_description, get_item_info, set_mail_info ,is_terms_of_use_only, process_send_mail
 
 from .ipaddr import check_site_license_permission
 from .models import FilePermission, PDFCoverPageSettings
-from .permissions import check_content_clickable, check_created_id, \
-    check_file_download_permission, check_original_pdf_download_permission, \
+from .permissions import (
+    check_content_clickable, check_created_id, check_created_id_by_recid,
+    check_file_download_permission, check_original_pdf_download_permission,
     check_permission_period, file_permission_factory, get_permission
-from .utils import create_secret_url, get_billing_file_download_permission, \
+)
+from .utils import create_secret_url, export_preprocess, get_billing_file_download_permission, \
     get_google_detaset_meta, get_google_scholar_meta, get_groups_price, \
     get_min_price_billing_file_download, get_record_permalink, hide_by_email, \
     delete_version, is_show_email_of_creator,hide_by_itemtype
 from .utils import restore as restore_imp
 from .utils import soft_delete as soft_delete_imp
+from .api import get_s3_bucket_list, copy_bucket_to_s3, replace_file_bucket, get_file_place_info
 
 
 blueprint = Blueprint(
@@ -139,9 +146,11 @@ def publish(pid, record, template=None, **kwargs):
     from weko_deposit.api import WekoIndexer
     status = request.values.get('status')
     publish_status = record.get('publish_status')
+    comm_id = request.values.get('community')
 
     pid_ver = PIDVersioning(child=pid)
     last_record = WekoRecord.get_record_by_pid(pid_ver.last_child.pid_value)
+    old_record = copy.deepcopy(last_record)
 
     if not publish_status:
         record.update({'publish_status': (status or PublishStatus.PUBLIC.value)})
@@ -157,8 +166,18 @@ def publish(pid, record, template=None, **kwargs):
     indexer = WekoIndexer()
     indexer.update_es_data(record, update_revision=False, field='publish_status')
     indexer.update_es_data(last_record, update_revision=False, field='publish_status')
+    call_external_system(old_record=old_record, new_record=last_record)
 
-    return redirect(url_for('.recid', pid_value=pid.pid_value))
+    operation = "ITEM_PUBLISH" if publish_status else "ITEM_UNPUBLISH"
+    UserActivityLogger.info(
+        operation=operation,
+        target_key=record.get("recid"),
+    )
+
+    if comm_id:
+        return redirect(url_for('.recid', pid_value=pid.pid_value, community=comm_id))
+    else:
+        return redirect(url_for('.recid', pid_value=pid.pid_value))
 
 
 def export(pid, record, template=None, **kwargs):
@@ -172,34 +191,16 @@ def export(pid, record, template=None, **kwargs):
     :param kwargs: Additional view arguments based on URL rule.
     :return: The rendered template.
     """
-    formats = current_app.config.get('RECORDS_UI_EXPORT_FORMATS', {}).get(
-        pid.pid_type)
     schema_type = request.view_args.get('format')
-    fmt = formats.get(schema_type)
-    if fmt is False:
-        # If value is set to False, it means it was deprecated.
-        abort(410)
-    elif fmt is None:
-        abort(404)
+    data = export_preprocess(pid, record, schema_type)
+    response = make_response(data)
+
+    if 'json' in schema_type or 'bibtex' in schema_type:
+        response.headers['Content-Type'] = 'text/plain'
     else:
-        # Custom Record Metadata for export JSON
-        custom_record_medata_for_export(record)
-        if 'json' not in schema_type and 'bibtex' not in schema_type:
-            record.update({'@export_schema_type': schema_type})
+        response.headers['Content-Type'] = 'text/xml'
 
-        serializer = obj_or_import_string(fmt['serializer'])
-        data = serializer.serialize(pid, record)
-        if isinstance(data, six.binary_type):
-            data = data.decode('utf8')
-
-        response = make_response(data)
-
-        if 'json' in schema_type or 'bibtex' in schema_type:
-            response.headers['Content-Type'] = 'text/plain'
-        else:
-            response.headers['Content-Type'] = 'text/xml'
-
-        return response
+    return response
 
 
 @blueprint.app_template_filter('get_image_src')
@@ -287,8 +288,8 @@ def check_file_permission(record, fjson):
     Args:
         record (weko_deposit.api.WekoRecord): _description_
         fjson (dict): _description_
-    
-    """    
+
+    """
     return check_file_download_permission(record, fjson)
 
 
@@ -346,6 +347,21 @@ def get_usage_workflow(file_json):
                     return data.get("workflow_id")
     return None
 
+@blueprint.app_template_filter('get_item_usage_workflow')
+def get_item_usage_workflow(record):
+    """Get correct usage workflow to redirect user.
+    :param record
+    :return: result tuple of (termsDesription, provide)
+    """
+    provide_list = get_item_provide_list(record.id)
+    # set terms description
+    termsDescription_ja, termsDescription_en = extract_term_description(provide_list)
+    locale = get_locale()
+    termsDescription = termsDescription_en
+    if locale.get_language_name('en') == 'Japanese' and termsDescription_ja:
+        termsDescription = termsDescription_ja
+
+    return termsDescription, provide_list.get("workflow")
 
 @blueprint.app_template_filter('get_workflow_detail')
 def get_workflow_detail(workflow_id):
@@ -356,7 +372,7 @@ def get_workflow_detail(workflow_id):
     """
     workflow_detail = WorkFlow().get_workflow_by_id(workflow_id)
     if workflow_detail:
-        return workflow_detail
+        return workflow_detail,is_terms_of_use_only(workflow_id)
     else:
         abort(404)
 
@@ -459,14 +475,14 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         if hasattr(current_user, 'site_license_flag') else False
     send_info['site_license_name'] = current_user.site_license_name \
         if hasattr(current_user, 'site_license_name') else ''
-    
+
     record_viewed.send(
         current_app._get_current_object(),
         pid=pid,
         record=record,
         info=send_info
     )
-    community_arg = request.args.get('community')
+    community_arg = request.args.get('c')
     community_id = ""
     ctx = {'community': None}
     if community_arg:
@@ -479,8 +495,16 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
     # Get index style
     style = IndexStyle.get(
         current_app.config['WEKO_INDEX_TREE_STYLE_OPTIONS']['id'])
-    width = style.width if style else '3'
-    height = style.height if style else None
+    if not style:
+        IndexStyle.create(
+            current_app.config['WEKO_INDEX_TREE_STYLE_OPTIONS']['id'],
+            width=3,
+            height=None)
+        style = IndexStyle.get(
+            current_app.config['WEKO_INDEX_TREE_STYLE_OPTIONS']['id'])
+    width = style.width
+    height = style.height
+    index_link_enabled = style.index_link_enabled
 
     detail_condition = get_search_detail_keyword('')
 
@@ -490,7 +514,7 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         record["relation"] = res
     else:
         record["relation"] = {}
-    
+
     recstr = etree.tostring(
         getrecord(
             identifier=record['_oai'].get('id'),
@@ -501,7 +525,7 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
     et=etree.fromstring(recstr)
     google_scholar_meta = get_google_scholar_meta(record,record_tree=et)
     google_dataset_meta = get_google_detaset_meta(record,record_tree=et)
-    
+
     current_lang = current_i18n.language \
         if hasattr(current_i18n, 'language') else None
     # get title name
@@ -614,7 +638,7 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         display_stats = display_setting.get('display_stats')
     else:
         display_stats = True
-    
+
     items_display_settings = AdminSettings.get(name='items_display_settings',
                                         dict_to_object=False)
     if items_display_settings:
@@ -633,7 +657,7 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
 
     # Get the design for widget rendering
     page, render_widgets = get_design_layout(
-        request.args.get('community') or current_app.config[
+        request.args.get('c') or current_app.config[
             'WEKO_THEME_DEFAULT_COMMUNITY'])
 
     # if current_lang:
@@ -641,7 +665,9 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
     # else:
     #     index_link_list = get_index_link_list()
 
-    index_link_list = get_index_link_list()
+    index_link_list = []
+    if index_link_enabled:
+        index_link_list = get_index_link_list()
 
     files_thumbnail = []
     if record.files:
@@ -659,7 +685,7 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         # list_hidden = get_ignore_item(record['item_type_id'])
         # record = hide_by_itemtype(record, list_hidden)
         record = hide_by_email(record, item_type=item_type)
-    
+
     # Remove hide item
     from weko_items_ui.utils import get_ignore_item
     list_hidden = []
@@ -694,6 +720,56 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
     if file_order >= 0 and files and files[file_order].get('url') and files[file_order]['url'].get('url'):
         file_url = files[file_order]['url']['url']
 
+    mailcheckflag=request.args.get("v")
+
+    with_files = False
+    for content in record.get_file_data():
+        if content.get('filename'):
+            with_files = True
+
+    restricted_errorMsg = ''
+    restricted_access = get_restricted_access('error_msg')
+    restricted_errorMsg = restricted_access['content'].get(current_lang, None)['content']
+
+    onetime_file_name = ''
+    onetime_file_url = request.args.get("onetime_file_url")
+    if onetime_file_url:
+        k = urlparse(onetime_file_url)
+        onetime_file_name = k.path.split("/")[-1]
+
+    # Get communities info
+    belonging_community = []
+    for navi in record.navi:
+        path_arr = navi.path.split('/')
+        for path in path_arr:
+            index = Indexes.get_index(index_id=path)
+            from weko_workflow.api import GetCommunity
+            communities = GetCommunity.get_community_by_root_node_id(index.id)
+            if communities is not None:
+                for comm in communities:
+                    belonging_community.append(comm)
+
+    # Get Settings
+    enable_request_maillist = False
+    is_no_content_item_application = False
+    password_checkflag = False
+    is_display_request_form = False
+    restricted_access_settings = AdminSettings.get(name="restricted_access", dict_to_object=False)
+    if restricted_access_settings:
+        # enable password
+        password_checkflag = restricted_access_settings.get('password_enable', False)
+
+        # Check request form permission
+        enable_request_maillist = restricted_access_settings.get('display_request_form', False)
+        # Get request recipients
+        request_recipients = RequestMailList.get_mail_list_by_item_id(pid.object_uuid)
+        is_display_request_form = enable_request_maillist and (True if request_recipients else False)
+
+        # Check item application permission
+        item_application_settings = restricted_access_settings.get("item_application", {})
+        is_no_content_item_application = item_application_settings.get("item_application_enable", False) \
+            and int(item_type_id) in item_application_settings.get("application_item_types", [])
+
     return render_template(
         template,
         pid=pid,
@@ -704,6 +780,7 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         files=files,
         file_url=file_url,
         display_stats=display_stats,
+        is_display_request_form = is_display_request_form,
         filename=filename,
         can_download_original_pdf=can_download_original,
         is_logged_in=current_user and current_user.is_authenticated,
@@ -714,7 +791,7 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         width=width,
         detail_condition=detail_condition,
         height=height,
-        index_link_enabled=style.index_link_enabled,
+        index_link_enabled=index_link_enabled,
         index_link_list=index_link_list,
         google_scholar_meta=google_scholar_meta,
         google_dataset_meta=google_dataset_meta,
@@ -723,8 +800,10 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         files_thumbnail=files_thumbnail,
         can_edit=can_edit,
         open_day_display_flg=open_day_display_flg,
+        password_checkflag=password_checkflag,
         path_name_dict=path_name_dict,
         is_display_file_preview=is_display_file_preview,
+        is_no_content_item_application=is_no_content_item_application,
         # experimental implementation 20210502
         title_name=title_name,
         rights_values=rights_values,
@@ -736,16 +815,22 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         flg_display_resourcetype = current_app.config.get('WEKO_RECORDS_UI_DISPLAY_RESOURCE_TYPE') ,
         search_author_flg=search_author_flg,
         show_secret_URL=_get_show_secret_url_button(record,filename),
+        mailcheckflag = mailcheckflag,
+        onetime_file_url = onetime_file_url,
+        onetime_file_name = onetime_file_name,
+        restricted_errorMsg = restricted_errorMsg,
+        with_files = with_files,
+        belonging_community=belonging_community,
         **ctx,
         **kwargs
     )
 
 
 def create_secret_url_and_send_mail(pid:PersistentIdentifier, record:WekoRecord, filename:str, **kwargs) -> str:
-    """on click button 'Secret URL' 
+    """on click button 'Secret URL'
     generate secret URL and send mail.
     about entrypoint settings, see at .config RECORDS_UI_ENDPOINTS.recid_secret_url
-    
+
     Args:
         pid: PID object.
         record: Record object.
@@ -769,19 +854,28 @@ def create_secret_url_and_send_mail(pid:PersistentIdentifier, record:WekoRecord,
 
     #generate url and regist db(FileSecretDownload)
     result = create_secret_url(pid.pid_value,filename,current_user.email , restricted_fullname , restricted_data_name)
-    
-    #send mail
-    mail_pattern_name:str = current_app.config.get('WEKO_RECORDS_UI_MAIL_TEMPLATE_SECRET_URL')
 
+    # set mail infomation
     mail_info = set_mail_info(get_item_info(pid.object_uuid), type("" ,(object,),dict(activity_id = '')))
     mail_info.update(result)
-    if process_send_mail( mail_info = mail_info, mail_pattern_name=mail_pattern_name) :
-        return _('Success Secret URL Generate')
-    else:
-        abort(500)
+    
+    # query secret mail template record
+    secret_genre_id = current_app.config.get('WEKO_RECORDS_UI_MAIL_TEMPLATE_SECRET_GENRE_ID', -1)
+    secret_genre = MailTemplateGenres.query.get(secret_genre_id)
+    secret_mail_template = None
+    if secret_genre:
+        secret_mail_template = next(iter(secret_genre.templates or []), None)
+
+    #send mail
+    if secret_mail_template:
+        send_result = process_send_mail(mail_info, secret_mail_template.id)
+        if send_result:
+            return _('Success Secret URL Generate')
+
+    abort(500)
 
 def _get_show_secret_url_button(record : WekoRecord, filename :str) -> bool:
-    """ 
+    """
         Args:
             WekoRecord : records_metadata for target item
             str : target content name
@@ -794,25 +888,26 @@ def _get_show_secret_url_button(record : WekoRecord, filename :str) -> bool:
     if not restricted_access:
         restricted_access = current_app.config[
             'WEKO_ADMIN_RESTRICTED_ACCESS_SETTINGS']
-        
+
     enable:bool = restricted_access.get('secret_URL_file_download',{}).get('secret_enable',False)
 
     #2.check the user has permittion
     has_parmission = False
     # Registered user
-    user_id_list = [int(record['owner'])] if record.get('owner') else []
+    owner_user_id = [int(record['owner'])] if record.get('owner') else []
+    shared_user_ids = [int(uid) for uid in record.get('weko_shared_ids', [])]
     if current_user and current_user.is_authenticated and \
-        current_user.id in user_id_list:
+        current_user.id in owner_user_id + shared_user_ids:
         has_parmission = True
     # Super users
-    supers = current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER'] 
+    supers = current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER']
     for role in list(current_user.roles or []):
         if role.name in supers:
             has_parmission = True
 
     #3.check the file's accessrole is "open_no" ,or "open_date" and not open yet.
     is_secret_file = False
-    current_app.logger.info(record.get_file_data())
+    current_app.logger.debug(record.get_file_data())
     for content in record.get_file_data():
         if content.get('filename') == filename:
             if content.get('accessrole') == "open_no":
@@ -823,6 +918,7 @@ def _get_show_secret_url_button(record : WekoRecord, filename :str) -> bool:
 
     # all true is show
     return enable and has_parmission and is_secret_file
+
 
 @blueprint.route('/r/<parent_pid_value>', methods=['GET'])
 @blueprint.route('/r/<parent_pid_value>.<int:version>', methods=['GET'])
@@ -920,7 +1016,7 @@ def set_pdfcoverpage_header():
         except Exception as e:
             db.session.rollback()
             current_app.logger.error(e)
-    
+
     return redirect('/admin/pdfcoverpage')
 
 
@@ -959,6 +1055,7 @@ def file_version_update():
 @blueprint.app_template_filter('citation')
 def citation(record, pid, style=None, ln=None):
     """Render citation for record according to style and language."""
+    from weko_records.serializers import citeproc_v1
     locale = ln or "en-US"  # ln or current_i18n.language
     style = style or "aapg-bulletin"  # style or 'science'
     try:
@@ -976,7 +1073,7 @@ def citation(record, pid, style=None, ln=None):
 def soft_delete(recid):
     """
     Soft delete item.
-    
+
     Args:
         recid (str): record id.
     Returns:
@@ -984,10 +1081,16 @@ def soft_delete(recid):
             return json data
     """
     try:
-        if not has_update_version_role(current_user):
+        if not check_created_id_by_recid(recid.replace("del_ver_", "")):
             abort(403)
+        if not UserActivityLogger.issue_log_group_id(db.session):
+            current_app.logger.error(
+                'Failed to issue log group id for soft delete operation.')
+            abort(500)
+        starts_with_del_ver = True
         if recid.startswith('del_ver_'):
             recid = recid.replace('del_ver_', '')
+            current_app.logger.info(f"Delete version: {recid}")
             delete_version(recid)
         else:
             is_editing = False
@@ -1014,11 +1117,29 @@ def soft_delete(recid):
                 }
                 return make_response(jsonify(response_data), 200)
             soft_delete_imp(recid)
+            current_app.logger.info(f"Delete item: {recid}")
+            starts_with_del_ver = False
+
         db.session.commit()
+        UserActivityLogger.info(
+            operation="ITEM_DELETE",
+            target_key=recid
+        )
+        if not starts_with_del_ver:
+            old_record = WekoRecord.get_record_by_pid(recid)
+            call_external_system(old_record=old_record)
         return make_response('PID: ' + str(recid) + ' DELETED', 200)
     except Exception as ex:
         db.session.rollback()
-        current_app.logger.error(ex)
+        current_app.logger.error('Failed to delete item: %s', recid)
+        traceback.print_exc()
+        exec_info = sys.exc_info()
+        tb_info = traceback.format_tb(exec_info[2])
+        UserActivityLogger.error(
+            operation="ITEM_DELETE",
+            target_key=recid,
+            remarks=tb_info[0]
+        )
         if ex.args and len(ex.args) and isinstance(ex.args[0], dict) \
                 and ex.args[0].get('is_locked'):
             return jsonify(
@@ -1034,7 +1155,8 @@ def soft_delete(recid):
 def restore(recid):
     """Restore item."""
     try:
-        if not has_update_version_role(current_user):
+        record = WekoRecord.get_record_by_pid(recid)
+        if not check_created_id(record):
             abort(403)
         restore_imp(recid)
         return make_response('PID: ' + str(recid) + ' RESTORED', 200)
@@ -1092,6 +1214,26 @@ def escape_newline(s):
 
     return s
 
+
+@blueprint.app_template_filter('encode_filename')
+def encode_filename(s):
+    """Encode filename to be URL safe.
+
+    If filename contains special characters, it will be encoded to be URL safe.
+
+    Args:
+        s (str): The url containing filename to be encoded.
+
+    Returns:
+        str: The encoded filename.
+    """
+    if s:
+        part = s.split('/')
+        part[-1] = quote(part[-1], safe='')
+        s = "/".join(part)
+    return s
+
+
 def json_string_escape(s):
     opt = ''
     if s.endswith('"'):
@@ -1137,14 +1279,14 @@ def get_uri():
     """_summary_
     ---
       post:
-        description: 
+        description:
         requestBody:
             required: true
             content:
             application/json: {"uri":"https://localhost/record/1/files/001.jpg","pid_value":"1","accessrole":"1"}
         responses:
           200:
-    """  
+    """
     data = request.get_json()
     if not isinstance(data, dict):
         current_app.logger.error('Invalid request data')
@@ -1184,3 +1326,87 @@ def dbsession_clean(exception):
         except:
             db.session.rollback()
     db.session.remove()
+
+
+@blueprint.route("/records/get_bucket_list", methods=['GET'])
+def get_bucket_list():
+    try:
+        bucket_list = get_s3_bucket_list()
+        return jsonify(bucket_list)
+    except Exception as e:
+        current_app.logger.error(str(e))
+        return jsonify({'error': str(e)}), 400
+
+@blueprint.route("/records/copy_bucket", methods=['POST'])
+def copy_bucket():
+    data = request.get_json()
+    pid = data.get('pid')
+    filename = data.get('filename')
+    bucket_id = data.get('bucket_id')
+    checked = data.get('checked')
+    bucket_name = data.get('bucket_name')
+    try:
+        uri = copy_bucket_to_s3(pid, filename, bucket_id, checked=checked, bucket_name=bucket_name)
+        return jsonify(uri)
+    except Exception as e:
+        current_app.logger.error(str(e))
+        return jsonify({'error': str(e)}), 400
+
+
+@blueprint.route("/records/get_file_place", methods=['POST'])
+def get_file_place():
+    pid = request.form.get('pid')
+    bucket_id = request.form.get('bucket_id')
+    file_name = request.form.get('file_name')
+
+    try:
+        file_place, uri, new_bucket_id, new_version_id = get_file_place_info(pid, bucket_id, file_name)
+        result = {
+            'file_place': file_place,
+            'uri': uri,
+            'bucket_id': new_bucket_id,
+            'version_id': new_version_id
+        }
+        return jsonify(result)
+    except Exception as e:
+        current_app.logger.error(str(e))
+        return jsonify({'error': str(e)}), 400
+
+@blueprint.route("/records/replace_file", methods=['POST'])
+def replace_file():
+    return_file_place = request.form.get('return_file_place')
+
+    if (return_file_place == 'S3'):
+
+        pid = request.form.get('pid')
+        bucket_id = request.form.get('bucket_id')
+        file_name = request.form.get('file_name')
+        file_size = int(request.form.get('file_size'))
+        file_checksum = request.form.get('file_checksum')
+        new_bucket_id = request.form.get('new_bucket_id')
+        new_version_id = request.form.get('new_version_id')
+        try:
+            result = replace_file_bucket(pid, bucket_id, file_name=file_name,
+                                      file_size=file_size, new_bucket_id=new_bucket_id,
+                                      file_checksum=file_checksum,
+                                      new_version_id=new_version_id)
+            return jsonify(result)
+        except Exception as e:
+            current_app.logger.error(str(e))
+            return jsonify({'error': str(e)}), 400
+
+    else:
+        pid = request.form.get('pid')
+        bucket_id = request.form.get('bucket_id')
+        file = request.files['file']
+        file_name = request.form.get('file_name')
+        file_size = int(request.form.get('file_size'))
+
+        try:
+            result = replace_file_bucket(pid, bucket_id, file=file, file_name=file_name,
+                                      file_size=file_size)
+            return jsonify(result)
+        except Exception as e:
+            current_app.logger.error(str(e))
+            return jsonify({'error': str(e)}), 400
+

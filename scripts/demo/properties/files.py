@@ -5,6 +5,7 @@ from .property_func import (
     get_property_form,
     set_post_data,
     get_select_value,
+    make_title_map,
 )
 from . import property_config as config
 
@@ -140,7 +141,7 @@ def schema(title="", multi_flag=multiple_flag):
                 "licensetype": {
                     "type": ["null", "string"],
                     "format": "select",
-                    "enum": [],
+                    "enum": config.FILE_LICENSE_VAL[1:],
                     "title": "ライセンス",
                 },
                 "groups": {
@@ -341,7 +342,9 @@ def form(
                     "key": "{}.licensetype".format(key),
                     "title": "ライセンス",
                     "title_i18n": {"en": "License", "ja": "ライセンス"},
-                    "titleMap": [],
+                    "titleMap": make_title_map(
+                        config.FILE_LICENSE_LBL, config.FILE_LICENSE_VAL
+                    ),
                     "type": "select",
                 },
                 {

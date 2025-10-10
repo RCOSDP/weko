@@ -21,7 +21,3 @@ recursive-include docs Makefile
 recursive-include examples *.py
 recursive-include examples *.sh
 recursive-include tests *.py
-
-# added by check-manifest
-include *.properties
-include tox.ini

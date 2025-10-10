@@ -1,6 +1,7 @@
 from . import (
     default_article,
     default_conference_paper, 
+    default_ddi,
     default_departmental_bulletin_paper,
     default_harvest_article,
     default_harvest_book,

@@ -28,7 +28,21 @@ def terms_filter(field):
     :param field: Field name.
     :returns: Function that returns the Terms query.
     """
+    return terms_condition_filter(field, False)
+
+def terms_condition_filter(field, isAndFileter):
+    """Create a term filter.
+
+    :param field: Field name.
+    :param isAndFileter: AND condition if true. OR condition if false.
+    :returns: Function that returns the Terms query.
+    """
     def inner(values):
+        if len(values) > 1 and isAndFileter:
+            q_list = []
+            for value in values:
+                q_list.append(Q('term', **{field: value}))
+            return Q('bool', **{'must': q_list})
         return Q('terms', **{field: values})
     return inner
 
@@ -46,7 +60,6 @@ def range_filter(field, start_date_math=None, end_date_math=None, **kwargs):
         if len(values) != 1 or values[0].count('--') != 1 or values[0] == '--':
             raise RESTValidationError(
                 errors=[FieldError(field, 'Invalid range format.')])
-
         range_ends = values[0].split('--')
         range_args = dict()
 
@@ -73,8 +86,7 @@ def range_filter(field, start_date_math=None, end_date_math=None, **kwargs):
 
         args = kwargs.copy()
         args.update(range_args)
-
-        return Range(**{field: args})
+        return Q(Range(**{field: args}))
 
     return inner
 
@@ -98,7 +110,6 @@ def _post_filter(search, urlkwargs, definitions):
 
     for filter_ in filters:
         search = search.post_filter(filter_)
-
     return (search, urlkwargs)
 
 
@@ -108,7 +119,6 @@ def _query_filter(search, urlkwargs, definitions):
 
     for filter_ in filters:
         search = search.filter(filter_)
-
     return (search, urlkwargs)
 
 
@@ -129,11 +139,10 @@ def default_facets_factory(search, index):
         all fields and values used.
     """
     urlkwargs = MultiDict()
-
+        
     from weko_admin.utils import get_facet_search_query
     from weko_search_ui.permissions import search_permission
     facets = get_facet_search_query(search_permission.can()).get(index)
-
     if facets is not None:
         # Aggregations.
         search = _aggregations(search, facets.get("aggs", {}))

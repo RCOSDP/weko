@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: weko-indextree-journal 1.0.0.dev20190000\n"
 "Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
-"POT-Creation-Date: 2019-07-02 06:14+0000\n"
+"POT-Creation-Date: 2025-10-03 14:28+0900\n"
 "PO-Revision-Date: 2019-04-25 15:54+0900\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ja\n"
@@ -19,16 +19,32 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.5.1\n"
 
-#: weko_indextree_journal/admin.py:216
-msgid "Setting"
-msgstr "設定"
+#: weko_indextree_journal/admin.py:218
+msgid "Index Tree"
+msgstr "インデックスツリー"
 
-#: weko_indextree_journal/admin.py:217
-msgid "Index Journal"
+#: weko_indextree_journal/admin.py:219
+msgid "Journal Information"
 msgstr "雑誌情報"
 
 #. NOTE: This is a note to a translator.
 #: weko_indextree_journal/ext.py:28
 msgid "A translation string"
 msgstr "翻訳文字列"
+
+#: weko_indextree_journal/templates/weko_indextree_journal/journal.html:42
+msgid "Index Edit"
+msgstr ""
+
+#: weko_indextree_journal/templates/weko_indextree_journal/admin/index.html:62
+#: weko_indextree_journal/templates/weko_indextree_journal/journal.html:44
+#: weko_indextree_journal/templates/weko_indextree_journal/journal.html:51
+msgid "Journal"
+msgstr "雑誌"
+
+#: weko_indextree_journal/templates/weko_indextree_journal/admin/index.html:103
+#: weko_indextree_journal/templates/weko_indextree_journal/journal.html:85
+msgid "Save"
+msgstr ""
+
 
