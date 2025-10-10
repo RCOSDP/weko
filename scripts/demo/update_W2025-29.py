@@ -28,7 +28,9 @@ from weko_records.models import (
     Timestamp as Weko_Timestamp,
 )
 
-from scripts.demo import update_feedback_mail_list_to_db
+from scripts.demo import (
+    update_feedback_mail_list_to_db, add_peer_reviewed_to_version_type_property
+)
 
 def main(restricted_item_type_id, start_time, batch_size=500):
     """Main context.
@@ -66,6 +68,8 @@ def main(restricted_item_type_id, start_time, batch_size=500):
         current_app.logger.info("run update_feedback_mail_list_to_db")
         update_feedback_mail_list_to_db.main()
         current_time = show_exec_time(current_time, "update_feedback_mail_list_to_db")
+        add_peer_reviewed_to_version_type_property.main()
+        current_time = show_exec_time(current_time, "add_peer_reviewed_to_version_type_property")
         current_app.logger.info("All updates completed successfully.")
     except Exception as ex:
         current_app.logger.error(ex)
