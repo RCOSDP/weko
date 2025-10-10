@@ -78,6 +78,7 @@ def update_items_by_authorInfo( user_id, target, origin_pkid_list=[], origin_id_
             "names_key": "creatorNames",
             "name_key": "creatorName",
             "name_lang_key": "creatorNameLang",
+            "name_type_key": "creatorNameType",
             "fnames_key": "familyNames",
             "fname_key": "familyName",
             "fname_lang_key": "familyNameLang",
@@ -103,6 +104,7 @@ def update_items_by_authorInfo( user_id, target, origin_pkid_list=[], origin_id_
             "names_key": "contributorNames",
             "name_key": "contributorName",
             "name_lang_key": "lang",
+            "name_type_key": "nameType",
             "fnames_key": "familyNames",
             "fname_key": "familyName",
             "fname_lang_key": "familyNameLang",
@@ -128,6 +130,7 @@ def update_items_by_authorInfo( user_id, target, origin_pkid_list=[], origin_id_
             "names_key": "names",
             "name_key": "name",
             "name_lang_key": "nameLang",
+            "name_type_key": None,
             "fnames_key": "familyNames",
             "fname_key": "familyName",
             "fname_lang_key": "familyNameLang",
@@ -205,6 +208,7 @@ def _get_affiliation_id():
                 'url': s.url
             }
     return result
+
 
 def _process(data_size, data_from, process_counter, target, origin_pkid_list, key_map, author_prefix, affiliation_id, force_change):
     res = False
@@ -364,9 +368,10 @@ def _update_author_data(item_id, record_ids, process_counter, target, origin_pki
                             else:
                                 continue
                         if change_flag:
-                            target_id, new_meta = _change_to_meta(
-                                target, author_prefix, affiliation_id, key_map[prop_type], force_change)
                             # targetは著者DBの情報
+                            target_id, new_meta = _change_to_meta(
+                                target, author_prefix, affiliation_id, key_map[prop_type], dep[k]["attribute_value_mlt"][index].get(key_map[prop_type]["names_key"], None), force_change)
+
                             dep[k]['attribute_value_mlt'][index].update(
                                 new_meta)
                             author_data.update(
@@ -384,14 +389,13 @@ def _update_author_data(item_id, record_ids, process_counter, target, origin_pki
     except PIDDoesNotExistError as pid_error:
         current_app.logger.error("PID {} does not exist.".format(item_id))
         process_counter[FAIL_LABEL].append({"record_id": item_id, "author_ids": temp_list, "message": "PID {} does not exist.".format(item_id)})
-        return None, set(), {}
+        return None, set(), {}, {}
     except Exception as ex:
         current_app.logger.error(ex)
         process_counter[FAIL_LABEL].append({"record_id": item_id, "author_ids": temp_list, "message": str(ex)})
-        return None, set(), {}
+        return None, set(), {}, {}
 
-
-def _change_to_meta(target, author_prefix, affiliation_id, key_map, force_change=False):
+def _change_to_meta(target, author_prefix, affiliation_id, key_map, item_names_data, force_change=False):
     target_id = None
     meta = {}
     if target:
@@ -403,8 +407,23 @@ def _change_to_meta(target, author_prefix, affiliation_id, key_map, force_change
         affiliation_identifiers = []
         affiliation_names = []
         affiliations = []
-
-        # 著者識別子情報
+        for name in target.get('authorNameInfo', []):
+            if not bool(name.get('nameShowFlg', "true")):
+                continue
+            family_names.append({
+                key_map['fname_key']: name.get('familyName', ''),
+                key_map['fname_lang_key']: name.get('language', '')
+            })
+            given_names.append({
+                key_map['gname_key']: name.get('firstName', ''),
+                key_map['gname_lang_key']: name.get('language', '')
+            })
+            full_names.append({
+                key_map['name_key']: "{}, {}".format(
+                    name.get('familyName', ''),
+                    name.get('firstName', '')),
+                key_map['name_lang_key']: name.get('language', '')
+            })
         for id in target.get('authorIdInfo', []):
             if not bool(id.get('authorIdShowFlg', "true")):
                 continue
@@ -500,6 +519,12 @@ def _change_to_meta(target, author_prefix, affiliation_id, key_map, force_change
                 key_map['gnames_key']: given_names
             })
         if full_names:
+            if item_names_data:
+                for idx, fn in enumerate(item_names_data):
+                    if len(full_names) > idx and key_map["name_type_key"]:
+                        full_names[idx][key_map["name_type_key"]] = item_names_data[idx].get(key_map["name_type_key"])
+                    else:
+                        break
             meta.update({
                 key_map['names_key']: full_names
             })
