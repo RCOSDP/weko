@@ -1008,3 +1008,15 @@ msgstr ""
 msgid "Show All versions"
 msgstr ""
 
+
+msgid "Import to GakuNin RDM"
+msgstr ""
+
+msgid "Item is not published"
+msgstr ""
+
+msgid "File is not publicly accessible"
+msgstr ""
+
+msgid "Item is not published and file is not publicly accessible"
+msgstr ""

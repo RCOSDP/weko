@@ -1009,3 +1009,44 @@ msgstr ""
 msgid "Show All versions"
 msgstr ""
 
+msgid "This data is not available for undergraduate students or those who do not register their positions."
+msgstr "このデータは利用できません（学部生または役職が登録されていないため）"
+
+msgid "Email address"
+msgstr "メールアドレス"
+
+msgid "Email address(reconfirmation)"
+msgstr "メールアドレス（確認用）"
+
+msgid "MSG_WEKO_RECORDS_UI_IS_EDITING_TRUE"
+msgstr "該当アイテムは編集中のため、削除できません。"
+
+msgid "Print Terms and Conditions"
+msgstr "利用規約を印刷"
+
+msgid "Could not download file."
+msgstr "ファイルをダウンロードできませんでした"
+
+msgid "To download the files below, you will need to enter your email address and password."
+msgstr "以下のファイルのダウンロードには、メールアドレスとパスワードの入力が必要です。"
+
+msgid "To download the files below, you will need to enter your email address."
+msgstr "以下のファイルのダウンロードには、メールアドレスの入力が必要です。"
+
+msgid "If you have not set a password, please apply again."
+msgstr "パスワード未設定の場合は、再度申請を行ってください。"
+
+msgid "File Name"
+msgstr "ファイル名"
+
+msgid "Import to GakuNin RDM"
+msgstr "GakuNin RDMにインポート"
+
+msgid "Item is not published"
+msgstr "アイテムが公開されていません"
+
+msgid "File is not publicly accessible"
+msgstr "ファイルが公開されていません"
+
+msgid "Item is not published and file is not publicly accessible"
+msgstr "アイテムとファイルが公開されていません"

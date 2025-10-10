@@ -1,0 +1,139 @@
+name: UI Tests
+
+on:
+  push:
+    branches: [ '**' ]
+  pull_request:
+    branches: [ '**' ]
+  workflow_dispatch:
+
+jobs:
+  ui-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+
+    - name: Install system dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y docker-compose fonts-noto-cjk fonts-noto-color-emoji
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Cache Docker layers
+      uses: actions/cache@v3
+      with:
+        path: /tmp/.buildx-cache
+        key: ${{ runner.os }}-buildx-${{ github.sha }}
+        restore-keys: |
+          ${{ runner.os }}-buildx-
+
+    - name: Start WEKO containers
+      run: |
+        chmod +x install.sh
+        ./install.sh
+      env:
+        DOCKER_BUILDKIT: 1
+        COMPOSE_DOCKER_CLI_BUILD: 1
+
+    - name: Wait for services to be ready
+      run: |
+        echo "Waiting for WEKO services to start..."
+        start_time=$(date +%s)
+        max_attempts=60
+        attempt=0
+
+        while [ $attempt -lt $max_attempts ]; do
+          attempt=$((attempt + 1))
+          current_time=$(date +%s)
+          elapsed=$((current_time - start_time))
+
+          echo "Attempt $attempt/$max_attempts (${elapsed}s elapsed): Checking WEKO availability..."
+
+          # Check if we can connect to the service
+          if curl -f -s --insecure https://localhost/ > /dev/null 2>&1; then
+            echo "✓ WEKO is ready! (took ${elapsed}s)"
+            exit 0
+          else
+            # Get HTTP response code for debugging
+            http_code=$(curl -s -o /dev/null -w "%{http_code}" --insecure https://localhost/ 2>/dev/null || echo "connection_failed")
+            echo "  ✗ HTTP response: $http_code"
+          fi
+
+          if [ $attempt -lt $max_attempts ]; then
+            echo "  → Retrying in 5 seconds..."
+            sleep 5
+          fi
+        done
+
+        echo ""
+        echo "❌ WEKO failed to start within 300 seconds"
+        echo "Final HTTP response: $(curl -s -o /dev/null -w "%{http_code}" --insecure https://localhost/ 2>/dev/null || echo "connection_failed")"
+        echo ""
+        echo "Container status:"
+        docker compose -f docker-compose2.yml ps
+        exit 1
+
+    - name: Install UI test dependencies
+      run: |
+        cd ui-tests
+        pip install -r requirements.txt
+        playwright install chromium
+
+    - name: Run UI tests
+      run: |
+        cd ui-tests
+        mkdir -p reports test-results/videos
+        pytest --browser chromium --html=reports/report.html --self-contained-html
+      env:
+        WEKO_BASE_URL: https://localhost
+        WEKO_TEST_EMAIL: wekosoftware@nii.ac.jp
+        WEKO_TEST_PASSWORD: uspass123
+
+    - name: Upload test results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: ui-test-results
+        path: |
+          ui-tests/reports/
+          ui-tests/test-results/
+        retention-days: 30
+
+    - name: Upload container logs
+      uses: actions/upload-artifact@v4
+      if: failure()
+      with:
+        name: container-logs
+        path: |
+          docker-compose2.yml
+        retention-days: 7
+
+    - name: Get container logs on failure
+      if: failure()
+      run: |
+        echo "=== Docker Compose Services ==="
+        docker compose -f docker-compose2.yml ps
+        echo "=== Web Container Logs ==="
+        docker compose -f docker-compose2.yml logs web
+        echo "=== Worker Container Logs ==="
+        docker compose -f docker-compose2.yml logs worker
+        echo "=== PostgreSQL Container Logs ==="
+        docker compose -f docker-compose2.yml logs postgresql
+        echo "=== Elasticsearch Container Logs ==="
+        docker compose -f docker-compose2.yml logs elasticsearch
+
+    - name: Cleanup containers
+      if: always()
+      run: |
+        docker compose -f docker-compose2.yml down -v
+        docker system prune -f

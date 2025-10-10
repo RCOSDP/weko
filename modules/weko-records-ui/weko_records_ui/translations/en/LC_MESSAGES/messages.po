@@ -1015,3 +1015,47 @@ msgstr ""
 msgid "Show All versions"
 msgstr ""
 
+msgid "MSG_WEKO_RECORDS_UI_IS_EDITING_TRUE"
+msgstr "Cannot delete because it is being edited."
+
+msgid "Email address"
+msgstr ""
+
+msgid "Print Terms and Conditions"
+msgstr ""
+
+msgid "Could not download file."
+msgstr ""
+
+msgid "To download the files below, you will need to enter your email address and password."
+msgstr ""
+
+msgid "To download the files below, you will need to enter your email address."
+msgstr ""
+
+msgid "If you have not set a password, please apply again."
+msgstr ""
+
+msgid "File Name"
+msgstr ""
+
+msgid "Download is available from {}/{}/{}."
+msgstr "Download is available from {}/{}/{}."
+
+msgid "Download / Preview is available from {}/{}/{}."
+msgstr "Download / Preview is available from {}/{}/{}."
+
+msgid "Email address(reconfirmation)"
+msgstr ""
+
+msgid "Import to GakuNin RDM"
+msgstr "Import to GakuNin RDM"
+
+msgid "Item is not published"
+msgstr "Item is not published"
+
+msgid "File is not publicly accessible"
+msgstr "File is not publicly accessible"
+
+msgid "Item is not published and file is not publicly accessible"
+msgstr "Item is not published and file is not publicly accessible"
