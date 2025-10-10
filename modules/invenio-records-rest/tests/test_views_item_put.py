@@ -188,3 +188,24 @@ def test_validation_error(app, test_records, content_type):
         res = client.put(url, data=json.dumps(record.dumps()), headers=HEADERS)
         assert res.status_code == 200
         assert RecordMetadata.query.filter_by(id=obj_id).first().json['year']==2015
+
+@pytest.mark.parametrize('content_type', [
+    'application/json', 'application/json;charset=utf-8'
+])
+def test_put_with_path_and_index(app, es, test_records, search_url, content_type):
+    """Test PUT with path and index set to ['100']."""
+    HEADERS = [
+        ('Accept', 'application/json'),
+        ('Content-Type', 'application/json')
+    ]
+
+    pid, record = test_records[0]
+    record['path'] = ['100']
+    record['index'] = ['100']
+
+    with app.test_client() as client:
+        url = record_url(pid)
+        res = client.put(url, data=json.dumps(record.dumps()), headers=HEADERS)
+        assert res.status_code == 200
+        data = get_json(res)
+        assert data['metadata']['path'] == ['100']
