@@ -1,0 +1,99 @@
+[
+  {
+    "pos_index": [
+            "IndexA"
+        ],
+    "publish_status": "public",
+    "feedback_mail": [
+        "wekosoftware@nii.ac.jp"
+    ],
+    "doi_ra": "JaLC",
+    "edit_mode": "Keep",
+    "file_path": [
+        "sample.rst",
+        "folder_1/sample.rst",
+        "folder_2/folder_2_1/sample.rst"
+    ],
+    "metadata": {
+      "files_info": [
+        {
+          "key": "item_1617604990215"
+        }
+      ],
+      "item_1617604990215": [
+        {
+          "filesize": [
+            {
+              "value": "333"
+            }
+          ],
+          "version": "1.0",
+          "fileDate": [
+            {
+              "fileDateValue": "2023-01-18",
+              "fileDateType": "Created"
+            }
+          ],
+          "filename": "sample.rst",
+          "url": {
+            "url": "https://example.org/data/sample.rst",
+            "objectType": "fulltext",
+            "label": "sample.rst"
+          },
+          "format": "text/x-rst"
+        },
+        {
+          "filesize": [
+            {
+              "value": "4444"
+            }
+          ],
+          "version": "1.0",
+          "fileDate": [
+            {
+              "fileDateValue": "2025-04-03",
+              "fileDateType": "Created"
+            }
+          ],
+          "filename": "folder_1/sample.rst",
+          "url": {
+            "url": "https://example.org/data/folder_1/sample.rst",
+            "objectType": "fulltext",
+            "label": "folder_1/sample.rst"
+          },
+          "format": "text/x-rst"
+        },
+        {
+          "filesize": [
+            {
+              "value": "998"
+            }
+          ],
+          "version": "1.0",
+          "fileDate": [
+            {
+              "fileDateValue": "2025-04-03",
+              "fileDateType": "Created"
+            }
+          ],
+          "filename": "folder_2/folder_2_1/sample.rst",
+          "url": {
+            "url": "https://example.org/data/folder_2/folder_2_1/sample.rst",
+            "objectType": "fulltext",
+            "label": "folder_2/folder_2_1/sample.rst"
+          },
+          "format": "text/x-rst"
+        },
+        {
+          "url": {
+            "url": "https://sample.com/sample.mp3"
+          },
+          "format": "text/x-rst"
+        }
+      ]
+    },
+    "non_extract": [
+      "folder_2/folder_2_1/sample.rst"
+    ]
+  }
+]

@@ -22,6 +22,7 @@
 import ast
 
 import click
+import json
 from flask.cli import with_appcontext
 from weko_authors.models import AuthorsPrefixSettings, AuthorsAffiliationSettings
 
@@ -208,6 +209,40 @@ def create_settings(id, name, settings):
     except Exception as ex:
         click.secho(str(ex))
 
+@admin_settings.command('mapping_update')
+@click.option('--shib_eppn', type=str, default=None)
+@click.option('--shib_role_authority_name', type=str, default=None)
+@click.option('--shib_mail', type=str, default=None)
+@click.option('--shib_user_name', type=str, default=None)
+@with_appcontext
+def update_attribute_mapping(shib_eppn, shib_role_authority_name, shib_mail, shib_user_name):
+    """Update Attribute Mapping between Shibboleth and WEKO3."""
+    attribute_mappings = AdminSettings.get('attribute_mapping', dict_to_object=False)
+    if isinstance(attribute_mappings, str):
+        attribute_mappings = json.loads(attribute_mappings)
+
+    attributes = {
+        'shib_eppn': attribute_mappings.get('shib_eppn', ''),
+        'shib_role_authority_name': attribute_mappings.get('shib_role_authority_name', ''),
+        'shib_mail': attribute_mappings.get('shib_mail', ''),
+        'shib_user_name': attribute_mappings.get('shib_user_name', '')
+    }
+
+    try:
+        if shib_eppn is not None:
+            attributes['shib_eppn'] = shib_eppn
+        if shib_role_authority_name is not None:
+            attributes['shib_role_authority_name'] = shib_role_authority_name
+        if shib_mail is not None:
+            attributes['shib_mail'] = shib_mail
+        if shib_user_name is not None:
+            attributes['shib_user_name'] = shib_user_name
+
+        AdminSettings.update('attribute_mapping', attributes)
+        click.secho("Mapping and update were successful.")
+
+    except Exception as e:
+        click.secho(str(e))
 
 @click.group()
 def authors_prefix():
@@ -259,10 +294,11 @@ def facet_search_setting():
 @click.argument('ui_type')
 @click.argument('display_number')
 @click.argument('is_open')
+@click.argument('search_condition')
 @click.option('--active', is_flag=True, default=False)
 @click.option('--is_open', is_flag=True, default=False)
 @with_appcontext
-def insert_facet_search_to_db(name_en, name_jp, mapping, aggregations, active, ui_type, display_number, is_open):
+def insert_facet_search_to_db(name_en, name_jp, mapping, aggregations, active, ui_type, display_number, is_open, search_condition):
     """Insert facet search."""
     try:
         facet_search = {
@@ -273,7 +309,8 @@ def insert_facet_search_to_db(name_en, name_jp, mapping, aggregations, active, u
             'active': active,
             'ui_type': ui_type,
             'display_number': display_number,
-            'is_open': is_open
+            'is_open': is_open,
+            'search_condition': search_condition
         }
         FacetSearchSetting.create(facet_search)
         click.secho('insert facet search')

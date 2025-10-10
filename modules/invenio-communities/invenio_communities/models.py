@@ -34,6 +34,7 @@ from invenio_accounts.models import Role, User
 from invenio_db import db
 from invenio_records.api import Record
 from invenio_records.models import RecordMetadata
+from sqlalchemy import or_
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm.exc import FlushError
 from sqlalchemy_utils.models import Timestamp
@@ -45,7 +46,9 @@ from .errors import CommunitiesError, InclusionRequestExistsError, \
     InclusionRequestObsoleteError
 from .signals import inclusion_request_created
 from .utils import save_and_validate_logo
-
+from sqlalchemy.dialects import postgresql
+from sqlalchemy_utils.types import JSONType
+from sqlalchemy import cast, String
 
 class InclusionRequest(db.Model, Timestamp):
     """Association table for Community and Record models.
@@ -221,6 +224,31 @@ class Community(db.Model, Timestamp):
     deleted_at = db.Column(db.DateTime, nullable=True, default=None)
     """Time at which the community was soft-deleted."""
 
+    thumbnail_path = db.Column(db.Text, nullable=True, default='')
+    """thumbnail_path."""
+
+    login_menu_enabled = db.Column(db.Boolean, nullable=False, default=False)
+    """login_menu enabled or Disabled."""
+
+    catalog_json = db.Column(
+        db.JSON().with_variant(
+            postgresql.JSONB(none_as_null=True),
+            'postgresql',
+        ).with_variant(
+            JSONType(),
+            'sqlite',
+        ).with_variant(
+            JSONType(),
+            'mysql',
+        ),
+        default=[],
+        nullable=True
+    )
+    """catalog."""
+
+    cnri = db.Column(db.Text, nullable=True, default=None)
+    """thumbnail_path."""
+
     # root_node_id = db.Column(db.Text, nullable=False, default='')
 
     root_node_id = db.Column(
@@ -228,8 +256,17 @@ class Community(db.Model, Timestamp):
         db.ForeignKey(Index.id),
         nullable=False
     )
-
     """Id of Root Node"""
+
+    content_policy = db.Column(db.Text, nullable=True, default='')
+    """Community content policy."""
+
+    group_id = db.Column(
+        db.Integer,
+        db.ForeignKey(Role.id),
+        nullable=True
+    )
+    """Group of the community."""
 
     #
     # Relationships
@@ -248,6 +285,9 @@ class Community(db.Model, Timestamp):
                             backref='index',
                             foreign_keys=[root_node_id])
     """Relation to the owner (Index) of the community."""
+
+    group = db.relationship(Role, backref='group',
+                            foreign_keys=[group_id])
 
     def __repr__(self):
         """String representation of the community object."""
@@ -284,14 +324,41 @@ class Community(db.Model, Timestamp):
 
     @classmethod
     def get_by_user(cls, role_ids, with_deleted=False):
-        """Get a community."""
+        """Get communities by user roles.
+        Args:
+            role_ids: List of Role ids
+            with_deleted: Boolean value to include deleted communities
+        Returns:
+            List of Community Object Query
+        """
         query = cls.query.filter(
-            Community.id_role.in_(role_ids)
+            or_(
+                Community.group_id.in_(role_ids),
+                Community.id_role.in_(role_ids)
+            )
         )
         if not with_deleted:
             query = query.filter(cls.deleted_at.is_(None))
 
         return query.order_by(db.asc(Community.title))
+
+    @classmethod
+    def get_by_root_node_id(cls, root_node_id, with_deleted=False):
+        """Get communities by root_node_id."""
+        q = cls.query.filter_by(root_node_id=root_node_id)
+        if not with_deleted:
+            q = q.filter(cls.deleted_at.is_(None))
+
+        return q.order_by(db.asc(Community.title)).all()
+
+    @classmethod
+    def get_by_ids(cls, community_ids, with_deleted=False):
+        """Get communities by ids."""
+        q = cls.query.filter(cls.id.in_(community_ids))
+        if not with_deleted:
+            q = q.filter(cls.deleted_at.is_(None))
+
+        return q.order_by(db.asc(Community.id)).all()
 
     @classmethod
     def filter_communities(cls, p, so, with_deleted=False):
@@ -314,6 +381,7 @@ class Community(db.Model, Timestamp):
                 cls.id.ilike('%' + p + '%'),
                 cls.title.ilike('%' + p + '%'),
                 cls.description.ilike('%' + p + '%'),
+                cast(cls.catalog_json, String).ilike('%' + p + '%'),
             ))
 
         if so in current_app.config['COMMUNITIES_SORTING_OPTIONS']:
@@ -322,6 +390,18 @@ class Community(db.Model, Timestamp):
         else:
             query = query.order_by(db.desc(cls.ranking))
         return query
+
+    @classmethod
+    def get_repositories_by_user(cls, user):
+        """Get communities where user has roles and repositories.
+        Args:
+            user: User Object
+        Returns:
+            List of Community Object
+        """
+        role_ids = [role.id for role in user.roles]
+        query = cls.get_by_user(role_ids, with_deleted=True)
+        return query.all()
 
     def add_record(self, record):
         """Add a record to the community.
@@ -410,6 +490,14 @@ class Community(db.Model, Timestamp):
             raise CommunitiesError(community=self)
         else:
             self.deleted_at = None
+
+    def to_dict(self):
+        """Convert the Community object to a dictionary.
+
+        Returns:
+            dict: Dictionary representation of the Community object.
+        """
+        return {column.name: getattr(self, column.name) for column in self.__table__.columns}
 
     @property
     def is_deleted(self):

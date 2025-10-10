@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="22" height="15" viewBox="0 0 22 15">
+  <defs>
+    <clipPath id="clip-path">
+      <rect id="長方形_1583" data-name="長方形 1583" width="22" height="15" transform="translate(1143 23)" fill="#fff" stroke="#707070" stroke-width="1"/>
+    </clipPath>
+  </defs>
+  <g id="icon_detailed-search" transform="translate(-1143 -23)" clip-path="url(#clip-path)">
+    <path id="manage_search_FILL0_wght400_GRAD0_opsz48" d="M80,350v-1.615H90.769V350Zm0-5.654v-1.615h5.385v1.615Zm0-5.654v-1.615h5.385v1.615ZM100.408,350,96.1,345.692a5.111,5.111,0,0,1-1.508.808,5.244,5.244,0,0,1-1.669.269,5.388,5.388,0,1,1,5.385-5.385,5.244,5.244,0,0,1-.269,1.669,5.111,5.111,0,0,1-.808,1.508l4.308,4.308Zm-7.491-4.846a3.758,3.758,0,1,0-2.665-1.1A3.65,3.65,0,0,0,92.917,345.154Z" transform="translate(1063 -312.5)" fill="#fff"/>
+  </g>
+</svg>

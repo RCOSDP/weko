@@ -19,7 +19,7 @@ from invenio_stats.contrib.event_builders import build_celery_task_unique_id, \
 from invenio_stats.processors import EventsIndexer, anonymize_user, \
     flag_restricted, flag_robots
 from invenio_stats.queries import ESDateHistogramQuery, ESTermsQuery, \
-    ESWekoFileStatsQuery, ESWekoTermsQuery, ESWekoRankingQuery
+    ESWekoFileStatsQuery, ESWekoTermsQuery, ESWekoRankingQuery, ESWekoFileRankingQuery
 
 from weko_schema_ui.models import PublishStatus
 
@@ -362,6 +362,9 @@ def register_queries():
                 doc_type='file-download-day-aggregation',
                 group_fields=['file_key', 'index_list', 'userrole',
                               'site_license_flag', 'count'],
+                required_filters=dict(
+                    index_list='index_list',
+                ),
             )
         ),
         dict(
@@ -375,6 +378,7 @@ def register_queries():
                               'user_group_names', 'count'],
                 required_filters=dict(
                     is_billing_item='is_billing_item',
+                    index_list='index_list',
                 ),
             )
         ),
@@ -388,6 +392,7 @@ def register_queries():
                               'site_license_flag', 'count'],
                 required_filters=dict(
                     accessrole='accessrole',
+                    index_list='index_list',
                 ),
             )
         ),
@@ -399,6 +404,9 @@ def register_queries():
                 doc_type='file-preview-day-aggregation',
                 group_fields=['file_key', 'index_list', 'userrole',
                               'site_license_flag', 'count'],
+                required_filters=dict(
+                    index_list='index_list',
+                )
             )
         ),
         dict(
@@ -412,6 +420,7 @@ def register_queries():
                               'user_group_names', 'count'],
                 required_filters=dict(
                     is_billing_item='is_billing_item',
+                    index_list='index_list',
                 ),
             )
         ),
@@ -426,6 +435,7 @@ def register_queries():
                 required_filters=dict(
                     accessrole='accessrole',
                     # is_billing_item='is_billing_item',
+                    index_list='index_list',
                 ),
             )
         ),
@@ -600,6 +610,9 @@ def register_queries():
                 index='{}-stats-file-download'.format(search_index_prefix),
                 doc_type='file-download-day-aggregation',
                 group_fields=['cur_user_id', 'count'],
+                required_filters=dict(
+                    user_ids='cur_user_id',
+                )
             )
         ),
         dict(
@@ -609,6 +622,9 @@ def register_queries():
                 index='{}-stats-file-preview'.format(search_index_prefix),
                 doc_type='file-preview-day-aggregation',
                 group_fields=['cur_user_id', 'count'],
+                required_filters=dict(
+                    user_ids='cur_user_id',
+                )
             )
         ),
         dict(
@@ -685,6 +701,9 @@ def register_queries():
                 index='{}-stats-item-create'.format(search_index_prefix),
                 doc_type='item-create-day-aggregation',
                 aggregated_fields=['timestamp'],
+                required_filters=dict(
+                    item_ids='pid_value',
+                )
             )
         ),
         dict(
@@ -697,6 +716,9 @@ def register_queries():
                     count=('sum', 'count', {}),
                 ),
                 aggregated_fields=['remote_addr', 'hostname'],
+                required_filters=dict(
+                    index_list='record_index_names',
+                ),
             )
         ),
         dict(
@@ -709,6 +731,9 @@ def register_queries():
                     count=('sum', 'count', {}),
                 ),
                 aggregated_fields=['remote_addr', 'hostname'],
+                required_filters=dict(
+                    index_list='index_list',
+                ),
             )
         ),
         # For query item details (id, name, count)
@@ -722,11 +747,14 @@ def register_queries():
                     count=('sum', 'count', {}),
                 ),
                 aggregated_fields=['pid_value', 'record_name'],
+                required_filters=dict(
+                    index_list='record_index_names',
+                ),  
             )
         ),
         dict(
             query_name='get-file-download-per-item-report',
-            query_class=ESWekoTermsQuery,
+            query_class=ESTermsQuery,
             query_config=dict(
                 index='{}-stats-file-download'.format(search_index_prefix),
                 doc_type='file-download-day-aggregation',
@@ -734,6 +762,9 @@ def register_queries():
                     count=('sum', 'count', {}),
                 ),
                 aggregated_fields=['item_id', 'item_title'],
+                required_filters=dict(
+                    index_list='index_list',
+                ),
             )
         ),
         dict(
@@ -743,6 +774,9 @@ def register_queries():
                 index='{}-stats-record-view'.format(search_index_prefix),
                 doc_type='record-view-day-aggregation',
                 aggregated_fields=['timestamp'],
+                required_filters=dict(
+                    index_list='record_index_names',
+                ),
             )
         ),
         dict(
@@ -752,6 +786,9 @@ def register_queries():
                 index='{}-stats-file-download'.format(search_index_prefix),
                 doc_type='file-download-day-aggregation',
                 aggregated_fields=['timestamp'],
+                required_filters=dict(
+                    index_list='index_list',
+                ),
             )
         ),
         dict(
@@ -788,11 +825,14 @@ def register_queries():
                 index='{}-stats-record-view'.format(search_index_prefix),
                 doc_type='record-view-day-aggregation',
                 group_fields=['site_license_name', 'count'],
+                required_filters=dict(
+                    index_list='record_index_names',
+                )
             )
         ),
         dict(
             query_name='get-search-per-site-license',
-            query_class=ESTermsQuery,
+            query_class=ESWekoTermsQuery,
             query_config=dict(
                 index='{}-stats-search'.format(search_index_prefix),
                 doc_type='search-day-aggregation',
@@ -806,6 +846,9 @@ def register_queries():
                 index='{}-stats-file-download'.format(search_index_prefix),
                 doc_type='file-download-day-aggregation',
                 group_fields=['site_license_name', 'count'],
+                required_filters=dict(
+                    index_list='index_list',
+                )
             )
         ),
         dict(
@@ -815,6 +858,9 @@ def register_queries():
                 index='{}-stats-file-preview'.format(search_index_prefix),
                 doc_type='file-preview-day-aggregation',
                 group_fields=['site_license_name', 'count'],
+                required_filters=dict(
+                    index_list='index_list',
+                )
             )
         ),
         dict(
@@ -911,5 +957,40 @@ def register_queries():
                     }
                 }
             )
-        )
+        ),
+        dict(
+            query_name='item-file-download-aggs',
+            query_class=ESWekoFileRankingQuery,
+            query_config=dict(
+                index='{}-events-stats-file-download'.format(search_index_prefix),
+                doc_type='stats-file-download',
+                copy_fields=dict(),
+                metric_fields=dict(
+                    download_ranking=('terms', 'file_key', {})
+                ),
+                main_fields=['item_id'],
+                main_query={
+                    "query": {
+                        "bool": {
+                            "filter": [
+                                {
+                                    "term": {
+                                        "item_id": {
+                                            "value": "@item_id",
+                                            "boost": 1
+                                        }
+                                    }
+                                },
+                                {
+                                    "terms": {
+                                        "root_file_id": "@root_file_id_list"
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "size": 0
+                },
+            )
+        ),
     ]

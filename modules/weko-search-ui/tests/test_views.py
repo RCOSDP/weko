@@ -31,12 +31,12 @@ def test_search_acl_guest(app,client,db_register2,index_style,users,db_register)
     with patch("flask.templating._render", return_value=""):
         ret = client.get(url)
         assert ret.status_code == 200
-    
+
     url = url_for("weko_search_ui.search", search_type=0,_external=True)
     with patch("flask.templating._render", return_value=""):
         ret = client.get(url)
         assert ret.status_code == 200
-    
+
     url = url_for("weko_search_ui.search", community='c',_external=True)
     with patch("flask.templating._render", return_value=""):
         ret = client.get(url)
@@ -46,7 +46,7 @@ def test_search_acl_guest(app,client,db_register2,index_style,users,db_register)
     with patch("flask.templating._render", return_value=""):
         ret = client.get(url)
         assert ret.status_code == 200
-    
+
     url = url_for("weko_search_ui.search", item_link="1",_external=True)
     with patch("flask.templating._render", return_value=""):
         ret = client.get(url)
@@ -79,7 +79,7 @@ def test_search_acl(app,client,db_register2,index_style,users,db_register,id,sta
         with patch("flask.templating._render", return_value=""):
             ret = client.get(url)
             assert ret.status_code == status_code
-    
+
     url = url_for("weko_search_ui.search", community='c',_external=True)
     with patch("flask_login.utils._get_user", return_value=users[id]['obj']):
         with patch("flask.templating._render", return_value=""):
@@ -91,7 +91,7 @@ def test_search_acl(app,client,db_register2,index_style,users,db_register,id,sta
         with patch("flask.templating._render", return_value=""):
             ret = client.get(url)
             assert ret.status_code == status_code
-    
+
     url = url_for("weko_search_ui.search", item_link="1",_external=True)
     with patch("flask_login.utils._get_user", return_value=users[id]['obj']):
         with patch("flask.templating._render", return_value=""):
@@ -109,7 +109,7 @@ def test_opensearch_description_acl_guest(app,client_api,db_register2,index_styl
     with patch("flask.templating._render", return_value=""):
         ret = client_api.get(url)
         assert ret.status_code == 200
-        
+
 
 # def journal_detail(index_id=0):
 def test_journal_detail(i18n_app, users, indices):
@@ -148,9 +148,22 @@ def test_gettitlefacet(i18n_app, users, client, facet_search_setting):
         assert data.get("displayNumbers")
         assert data.get("isOpens")
         assert data.get("uiTypes")
-
+        assert data.get("searchConditions")
+        assert not result.get("isFacetLangDisplay")
 
 # def get_last_item_id():
 def test_get_last_item_id(i18n_app, users, db_activity):
     with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
-        assert get_last_item_id()
+        res, _ = get_last_item_id()
+        data = json.loads(res.data)
+        assert data["data"]["last_id"]
+
+@patch("invenio_communities.models.Community")
+@patch("invenio_indexer.api.RecordIndexer")
+def test_get_last_item_id_comadmin(mock_record_indexer, mock_community, i18n_app, users):
+    mock_record_indexer.return_value.client.search.return_value = {"hits": {"hits": [{"sort": ["456"]}]}}
+    mock_community.get_repositories_by_user.return_value = []
+    with patch("flask_login.utils._get_user", return_value=users[4]['obj']):
+        res, _ = get_last_item_id()
+        data = json.loads(res.data)
+        assert data["data"]["last_id"]

@@ -2,7 +2,6 @@ import pytest
 from weko_records_ui.utils import (
     is_future,
     create_usage_report_for_user,
-    get_data_usage_application_data,
     send_usage_report_mail_for_user,
     check_and_send_usage_report,
     update_onetime_download,
@@ -27,6 +26,7 @@ from weko_records_ui.utils import (
     get_billing_file_download_permission,
     get_list_licence,
     restore,
+    delete_version,
     soft_delete,
     is_billing_item,
     get_groups_price,
@@ -43,33 +43,30 @@ from weko_records_ui.utils import (
     get_terms,
     get_roles,
     check_items_settings,
-    #RoCrateConverter,
-    #create_tsv
+    get_data_by_key_array_json,
+    get_values_by_selected_lang,
+    export_preprocess,
+    get_data_by_key_array_json,
+    RoCrateConverter,
+    create_tsv
     )
 import base64
 from unittest.mock import MagicMock
 import copy
-import pytest
-import io
 from datetime import datetime as dt
 from datetime import timedelta
 from lxml import etree
 from fpdf import FPDF
-from invenio_records_files.utils import record_file_factory
-from flask import Flask, json, jsonify, session, url_for,current_app
-from flask_security.utils import login_user
-from invenio_accounts.testutils import login_user_via_session
+from flask import json, current_app
+from flask_babelex import to_utc 
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from mock import patch
-from weko_deposit.api import WekoRecord
+from weko_deposit.api import WekoRecord, WekoDeposit
 from weko_records_ui.models import FileOnetimeDownload, FileSecretDownload
-from weko_records.api import ItemTypes,Mapping
-from werkzeug.exceptions import NotFound
 from weko_admin.models import AdminSettings
-from weko_records.serializers.utils import get_mapping
-from weko_records.models import ItemType, ItemTypeMapping, ItemTypeName
 from flask_babelex import gettext as _
-from datetime import datetime ,timedelta
+import datetime
+from werkzeug.exceptions import Gone, NotFound
 
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
 
@@ -88,7 +85,7 @@ def test_is_future(app):
 def test_check_items_settings(app,db_admin_settings):
     with app.test_request_context():
         assert check_items_settings()==None
-    
+
     settings = AdminSettings(name='items_display_settings',settings={"items_display_email": False, "items_search_author": "name", "item_display_open_date": False})
     setting = settings.get("items_display_settings")
     with app.test_request_context():
@@ -103,7 +100,7 @@ def test_check_items_settings(app,db_admin_settings):
     setting = settings.get("items_display_settings")
     with app.test_request_context():
         assert check_items_settings(setting)==None
-    
+
     settings = AdminSettings(name='items_display_settings',settings={"item_display_open_date": False})
     setting = settings.get("items_display_settings")
     with app.test_request_context():
@@ -123,12 +120,12 @@ def test_check_items_settings(app,db_admin_settings):
     setting = settings.get("items_display_settings")
     with app.test_request_context():
         assert check_items_settings(setting)==None
-    
+
     settings = AdminSettings(name='items_display_settings',settings={})
     setting = settings.get("items_display_settings")
     with app.test_request_context():
         assert check_items_settings(setting)==None
-        
+
     setting = AdminSettings.get(name="items_display_settings")
     assert isinstance(setting,AdminSettings.Dict2Obj)==True
     with app.test_request_context():
@@ -210,12 +207,26 @@ def test_get_min_price_billing_file_download(users):
             get_min_price_billing_file_download(groups_price,billing_file_permission)
         except:
             pass
-        
+
 
 # def is_billing_item(item_type_id):
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_is_billing_item -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
 def test_is_billing_item(app,itemtypes):
     assert is_billing_item(1)==False
+
+
+# def delete_version(recid):
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_delete_version -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+def test_delete_version(app, records, users):
+    indexer, results = records
+    record = results[0]["record"]
+    recid = results[0]["recid"]
+
+    with patch("flask_login.utils._get_user", return_value=users[2]["obj"]):
+        delete_version(record.pid.pid_value + '.1')
+        pid = PersistentIdentifier.query.filter_by(
+            pid_type='recid', pid_value=record.pid.pid_value + '.1').first()
+        assert pid.status == PIDStatus.DELETED
 
 # def soft_delete(recid):
 #     def get_cache_data(key: str):
@@ -225,8 +236,10 @@ def test_soft_delete(app, records, users):
     indexer, results = records
     record = results[0]["record"]
     recid = results[0]["recid"]
-    assert soft_delete(record.pid.pid_value)==None
-    assert recid.status == PIDStatus.DELETED
+    with patch("weko_records_ui.utils.RequestMailList.delete") as delete_request_mail:
+        assert soft_delete(record.pid.pid_value)==None
+        assert recid.status == PIDStatus.DELETED
+        delete_request_mail.assert_called()
 
     with patch("flask_login.utils._get_user", return_value=users[2]["obj"]):
         assert soft_delete(record.pid.pid_value) == None
@@ -236,6 +249,11 @@ def test_soft_delete(app, records, users):
 
         with patch("weko_records_ui.utils.PIDVersioning", return_value=data1):
             assert soft_delete(record.pid.pid_value) == None
+
+    recid = results[0]["recid"]
+    with patch("weko_records_ui.utils.RequestMailList.delete") as delete_request_mail:
+        assert soft_delete(record.pid.pid_value)==None
+        delete_request_mail.assert_not_called()
 
 
 # def restore(recid):
@@ -264,7 +282,7 @@ def test_get_list_licence(app):
 def test_get_license_pdf(app):
     app.config['WEKO_RECORDS_UI_LICENSE_ICON_PDF_LOCATION'] = "/static/images/creative_commons/"
     lic ='license_12'
-    item_metadata_json={'id': '23.1', 'pid': {'type': 'depid', 'value': '23.1', 'revision_id': 0}, 'lang': 'ja', 'owner': '1', 'title': 'test', 'owners': [1], 'status': 'published', '$schema': '/items/jsonschema/15', 'pubdate': '2022-09-28', 'created_by': 1, 'owners_ext': {'email': 'wekosoftware@nii.ac.jp', 'username': '', 'displayname': ''}, 'shared_user_id': -1, 'item_1617186331708': [{'subitem_1551255647225': 'test', 'subitem_1551255648112': 'ja'}], 'item_1617258105262': {'resourceuri': 'http://purl.org/coar/resource_type/c_ddb1', 'resourcetype': 'dataset'}, 'item_1617605131499': [{'url': {'url': 'https://weko3.example.org/record/23.1/files/sample_arial.pdf'}, 'date': [{'dateType': 'Available', 'dateValue': '2022-09-28'}], 'format': 'application/pdf', 'filename': 'sample_arial.pdf', 'filesize': [{'value': '28 KB'}], 'mimetype': 'application/pdf', 'accessrole': 'open_access', 'version_id': '72b25fac-c471-44af-9971-c608f684f863', 'displaytype': 'preview', 'licensetype': 'license_12'}]}
+    item_metadata_json={'id': '23.1', 'pid': {'type': 'depid', 'value': '23.1', 'revision_id': 0}, 'lang': 'ja', 'owner': 1, 'title': 'test', 'owners': [1], 'status': 'published', '$schema': '/items/jsonschema/15', 'pubdate': '2022-09-28', 'created_by': 1, 'owners_ext': {'email': 'wekosoftware@nii.ac.jp', 'username': '', 'displayname': ''}, 'shared_user_ids': [], 'item_1617186331708': [{'subitem_1551255647225': 'test', 'subitem_1551255648112': 'ja'}], 'item_1617258105262': {'resourceuri': 'http://purl.org/coar/resource_type/c_ddb1', 'resourcetype': 'dataset'}, 'item_1617605131499': [{'url': {'url': 'https://weko3.example.org/record/23.1/files/sample_arial.pdf'}, 'date': [{'dateType': 'Available', 'dateValue': '2022-09-28'}], 'format': 'application/pdf', 'filename': 'sample_arial.pdf', 'filesize': [{'value': '28 KB'}], 'mimetype': 'application/pdf', 'accessrole': 'open_access', 'version_id': '72b25fac-c471-44af-9971-c608f684f863', 'displaytype': 'preview', 'licensetype': 'license_12'}]}
     file_item_id = 'item_1617605131499'
     footer_w =90
     footer_h = 4
@@ -293,6 +311,62 @@ def test_get_pair_value(app):
         assert name== ('ja_conference paperITEM00000001(public_open_access_open_access_simple)', 'ja')
         assert lang== ('en_conference paperITEM00000001(public_open_access_simple)', 'en')
 
+
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_get_values_by_selected_lang -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+def test_get_values_by_selected_lang(app):
+    # cur_lang
+    cur_lang = "ja"
+    source_title = [('ja',''),('','test0'),('ja','テスト1'), ('en','test'), ('ja','テスト2')]
+    test = ['テスト1', 'テスト2']
+    result = get_values_by_selected_lang(source_title, cur_lang)
+    assert result == test
+
+    # not cur_lang, none language is first
+    source_title = [('None Language', 'test1'), ('en', 'test2'), ('None Language', 'test3'), ('fr', 'test4')]
+    test = ['test1', 'test3']
+    result = get_values_by_selected_lang(source_title, cur_lang)
+    assert result == test
+
+    # not cur_lang, none language is not first, exist ja-Latn
+    source_title = [('en', 'test1'), ('en', 'test2'), ('ja-Latn', 'test3'), ('ja-Latn', 'test4')]
+    test = ['test3', 'test4']
+    result = get_values_by_selected_lang(source_title, cur_lang)
+    assert result == test
+
+    # not cur_lang, none language is not first, not exist ja-Latn, exist en
+    source_title = [('en', 'test1'), ('en', 'test2'), ('None Language', 'test3'), ('None Language', 'test4')]
+    test = ['test1', 'test2']
+    result = get_values_by_selected_lang(source_title, cur_lang)
+    assert result == test
+
+    # cur_lang=en, exist title_data_langs
+    cur_lang = 'en'
+    source_title = [('fr','test1'),('ch','test2'),('ch','test3'),('fr','test4')]
+    test = ['test1', 'test4']
+    result = get_values_by_selected_lang(source_title, cur_lang)
+    assert result == test
+
+    # cur_lang !=en, exist title_data_langs
+    cur_lang = "ja"
+    source_title = [('fr','test1'),('ch','test2'),('ch','test3'),('fr','test4')]
+    test = ['test1', 'test4']
+    result = get_values_by_selected_lang(source_title, cur_lang)
+    assert result == test
+
+    # return title_data_langs_none
+    app.config["WEKO_RECORDS_UI_LANG_DISP_FLG"] = True
+    cur_lang = "en"
+    source_title = [('ja','test0'),('None Language', 'test1'),('None Language', 'test2')]
+    test = ['test1', 'test2']
+    result = get_values_by_selected_lang(source_title, cur_lang)
+    assert result == test
+
+    # enとja-latnがない、noneがない、
+    cur_lang = 'en'
+    source_title = []
+    test = None
+    result = get_values_by_selected_lang(source_title, cur_lang)
+    assert result == test
 
 # def hide_item_metadata(record, settings=None, item_type_mapping=None,
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_hide_item_metadata -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
@@ -466,15 +540,101 @@ def test_get_file_info_list(app,records, itemtypes):
         ret =  get_file_info_list(record, item_type=itemtypes["item_type"])
         assert len(ret)==2
 
+    # 異常系
+    # 不正な数値を指定する
+    record['item_1617605131499']['attribute_value_mlt'][0]['filesize'][0]['value'] = '1.7976931348623157e+308/0 kb'
+    with app.test_request_context(headers=[("Accept-Language", "en")]):
+        ret =  get_file_info_list(record)
+        assert ret[1][0]['size'] == -1
+    record['item_1617605131499']['attribute_value_mlt'][0]['filesize'][0]['value'] = '5 kb'
+
+    # access == "open_login"
+    record['item_1617605131499']['attribute_value_mlt'][0]['accessrole'] = 'open_login'
+    with app.test_request_context(headers=[("Accept-Language", "en")]):
+        ret =  get_file_info_list(record)
+        assert ret[1][0]['future_date_message'] == 'Restricted Access'
+
+    # access == "open_date"
+    record['item_1617605131499']['attribute_value_mlt'][0]['accessrole'] = 'open_date'
+    # dateValue == None
+    record['item_1617605131499']['attribute_value_mlt'][0]['date'] = [{'dateType':'Available'}]
+    with app.test_request_context(headers=[("Accept-Language", "en")]):
+        ret =  get_file_info_list(record)
+        adt = str(datetime.date.max)
+        pdt = to_utc(dt.strptime(adt, '%Y-%m-%d')) 
+        assert ret[1][0]['future_date_message'] == "Download is available from {}/{}/{}.".format(pdt.year, pdt.month, pdt.day)
+        assert ret[1][0]['download_preview_message'] == "Download / Preview is available from {}/{}/{}.".format(pdt.year, pdt.month, pdt.day)
+    
+    # dateValue == 過去
+    past_time = dt.now() - timedelta(days=3)
+    past_time_str = str(past_time).split(' ')[0]
+    past_time_str = str(dt.strptime(past_time_str, '%Y-%m-%d')).split(' ')[0]
+    record['item_1617605131499']['attribute_value_mlt'][0]['date'][0]['dateValue'] = past_time_str
+    with app.test_request_context(headers=[("Accept-Language", "en")]):
+        ret =  get_file_info_list(record)
+        pdt = to_utc(past_time) 
+        assert ret[1][0]['future_date_message'] == ""
+        assert ret[1][0]['download_preview_message'] == ""
+
+    # dateValue == 未来
+    future_time = dt.now() + timedelta(days=3)
+    future_time_str = str(future_time).split(' ')[0]
+    future_time_str = str(dt.strptime(future_time_str, '%Y-%m-%d')).split(' ')[0]
+    record['item_1617605131499']['attribute_value_mlt'][0]['date'][0]['dateValue'] = future_time_str
+    with app.test_request_context(headers=[("Accept-Language", "en")]):
+        ret =  get_file_info_list(record)
+        pdt = to_utc(future_time) 
+        assert ret[1][0]['future_date_message'] == "Download is available from {}/{}/{}.".format(pdt.year, pdt.month, pdt.day)
+        assert ret[1][0]['download_preview_message'] == "Download / Preview is available from {}/{}/{}.".format(pdt.year, pdt.month, pdt.day)
+
+# def get_file_info_list(record):
+#     def get_file_size(p_file):
+#     def set_message_for_file(p_file):
+#     def get_data_by_key_array_json(key, array_json, get_key):
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_get_file_info_list_1 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+def test_get_file_info_list_1(app, make_record_need_restricted_access):
+    # roles = [{"role":1},{"role":2}]
+    record_1 = WekoRecord.get_record_by_pid(11)
+    record_1['item_1689228169922']['attribute_value_mlt'][0]['roles'] = [{"role":1},{"role":2}]
+    with app.test_request_context(headers=[("Accept-Language", "en")]):
+        is_display_file_preview, files =  get_file_info_list(record_1)
+        assert is_display_file_preview == True
+        assert len(files) == 1
+    
+    # 'provide': [{'role': '2', 'workflow': '3'}, {'role': 'none_loggin', 'workflow': '3'}, {'role': '1', 'workflow': '99'}, {'role': '3', 'workflow': '3'}]
+    # terms='term_free' termsDescription='利用規約本文'
+    record_2 = WekoRecord.get_record_by_pid(12)
+    with app.test_request_context(headers=[("Accept-Language", "en")]):
+        is_display_file_preview, files =  get_file_info_list(record_2)
+        assert is_display_file_preview == True
+        assert len(files) == 1
+
+    record_2['item_1689228169922']['attribute_value_mlt'][0]['terms'] = '100'
+    with app.test_request_context(headers=[("Accept-Language", "en")]):
+        is_display_file_preview, files =  get_file_info_list(record_2)
+        assert is_display_file_preview == True
+        assert len(files) == 1
+    
+# def get_data_by_key_array_json(record):
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_get_data_by_key_array_json -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+def test_get_data_by_key_array_json(app):
+    array_json = [{'id': 'test1', 'value':'value1'}, {'id': 'test2', 'value':'value2'}, {'hoge': 1}]
+    key = 'test2'
+    get_key = 'value'
+    assert 'value2' == get_data_by_key_array_json(key, array_json, get_key)
+    none_key = 'abc'
+    assert None == get_data_by_key_array_json(none_key, array_json, get_key)
+    assert None == get_data_by_key_array_json(key, [], get_key)
+
+
 # def create_usage_report_for_user(onetime_download_extra_info: dict):
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
 #def test_create_usage_report_for_user():
 #    assert False
 
-
-# def get_data_usage_application_data(record_metadata, data_result: dict):
-# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_get_data_usage_application_data -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
-def test_get_data_usage_application_data(app, db, workflows, records, users, db_file_permission):
+# def create_usage_report_for_user(onetime_download_extra_info: dict):
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_create_usage_report_for_user -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+def test_create_usage_report_for_user(app, db, workflows, records, users, db_file_permission):
     _onetime_download_extra_info = {
         'usage_application_activity_id': 'usage_application_activity_id_dummy1',
         'is_guest': False
@@ -509,17 +669,17 @@ def test_check_and_send_usage_report(app, db, users, db_file_permission):
         'filename': db_file_permission[0].file_name
     }
     app.config['WEKO_WORKFLOW_USAGE_REPORT_WORKFLOW_NAME'] = 'Data Usage Report'
-    
+
     #56
     assert not check_and_send_usage_report({"is_guest": False, "send_usage_report": False, "usage_application_activity_id": "A-20230101-00001"},users[7]['email'],_record, _file_obj)
-    
+
     data1 = MagicMock()
     data2 = MagicMock()
     data3 = MagicMock()
 
     def send_reminder_mail(x, y, z):
         return False
-    
+
     def send_reminder_mail_2(x, y, z):
         return True
 
@@ -534,7 +694,7 @@ def test_check_and_send_usage_report(app, db, users, db_file_permission):
         with patch("weko_records_ui.utils.create_usage_report_for_user", return_value=data1):
             with patch("weko_records_ui.utils.UsageReport", return_value=data3):
                 assert _("Failed to send mail.") == check_and_send_usage_report({"is_guest": False, "send_usage_report": True, "usage_application_activity_id": "A-20230101-00001"},users[7]['email'],data1, data2)
-    
+
         with patch("weko_records_ui.utils.create_usage_report_for_user", return_value=data1):
             data3.send_reminder_mail = send_reminder_mail_2
             with patch("weko_records_ui.utils.UsageReport", return_value=data3):
@@ -561,7 +721,7 @@ def test_generate_one_time_download_url(app):
         token = (token_str.decode('utf-8')).split(' ')
         assert token[0] == record_id
         assert token[1] == guest_mail
-        
+
 
 # def parse_one_time_download_token(token: str) -> Tuple[str, Tuple]:
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_parse_one_time_download_token -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
@@ -617,7 +777,7 @@ def test_is_private_index(app,records):
 
     with patch("weko_index_tree.api.Indexes.get_path_list", return_value=data1):
         assert is_private_index(record) == False
-    
+
     data1 = [
         [0, 1, 2, 3, 4, 5, False],
     ]
@@ -673,12 +833,11 @@ def test_get_valid_onetime_download():
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_create_onetime_download_url -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
 def test_create_onetime_download_url(app):
     with app.test_request_context():
-        assert create_onetime_download_url('ACT','helloworld.pdf','1','wekosoftware@nii.ac.jp') == None
+        assert create_onetime_download_url('ACT','helloworld.pdf','1','wekosoftware@nii.ac.jp','test_password')==None
 
-        data1 = []
-
-        with patch('weko_records_ui.utils.get_restricted_access', return_value=data1):
-            assert create_onetime_download_url('ACT','helloworld.pdf','1','wekosoftware@nii.ac.jp') == False
+    with app.test_request_context():
+        with patch('weko_records_ui.utils.get_restricted_access', return_value=""):
+            assert create_onetime_download_url('ACT','helloworld.pdf','1','wekosoftware@nii.ac.jp','test_password')==False
 
 
 # def update_onetime_download(**kwargs) -> NoReturn:
@@ -694,12 +853,12 @@ def test_get_workflows(app,users):
     with app.test_request_context():
         with patch("flask_login.utils._get_user", return_value=users[1]["obj"]):
             assert get_workflows()==[]
-        
+
         data1 = MagicMock()
 
         def get_workflow_list():
             return [data1]
-        
+
         data1.get_workflow_list = get_workflow_list
         data1.open_restricted = True
         data1.id = True
@@ -760,7 +919,7 @@ def test_get_google_detaset_meta(app, records, itemtypes, oaischema, oaiidentify
         indexer, results = records
         record = results[0]["record"]
         assert get_google_detaset_meta(record)=='{"@context": "https://schema.org/", "@type": "Dataset", "citation": ["http://hdl.handle.net/2261/0002005680", "https://repository.dl.itc.u-tokyo.ac.jp/records/2005680"], "creator": [{"@type": "Person", "alternateName": "creator alternative name", "familyName": "creator family name", "givenName": "creator given name", "identifier": "123", "name": "creator name"}], "description": "『史料編纂掛備用寫眞畫像圖畫類目録』（1905年）の「画像」（肖像画模本）の部に著録する資料の架番号の新旧対照表。史料編纂所所蔵肖像画模本データベースおよび『目録』版面画像へのリンク付き。『画像史料解析センター通信』98（2022年10月）に解説記事あり。", "distribution": [{"@type": "DataDownload", "contentUrl": "https://repository.dl.itc.u-tokyo.ac.jp/record/2005680/files/comparison_table_of_preparation_image_catalog.xlsx", "encodingFormat": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"}, {"@type": "DataDownload", "contentUrl": "https://raw.githubusercontent.com/RCOSDP/JDCat-base/main/apt.txt", "encodingFormat": "text/plain"}, {"@type": "DataDownload", "contentUrl": "https://raw.githubusercontent.com/RCOSDP/JDCat-base/main/environment.yml", "encodingFormat": "application/x-yaml"}, {"@type": "DataDownload", "contentUrl": "https://raw.githubusercontent.com/RCOSDP/JDCat-base/main/postBuild", "encodingFormat": "text/x-shellscript"}], "includedInDataCatalog": {"@type": "DataCatalog", "name": "https://localhost"}, "license": ["CC BY"], "name": "『史料編纂掛備用写真画像図画類目録』画像の部：新旧架番号対照表", "spatialCoverage": [{"@type": "Place", "geo": {"@type": "GeoCoordinates", "latitude": "point latitude test", "longitude": "point longitude test"}}, {"@type": "Place", "geo": {"@type": "GeoShape", "box": "1 3 2 4"}}, "geo location place test"]}'
-        
+
         app.config['WEKO_RECORDS_UI_GOOGLE_SCHOLAR_OUTPUT_RESOURCE_TYPE'] = None
         assert get_google_detaset_meta(record) == None
 
@@ -778,34 +937,34 @@ def test_create_secret_url(app,db,users,records):
     file_name= results[1]["filename"]
     record_id=results[1]["recid"].pid_value
     user_mail = users[0]["email"]
-    
-    db.session.add(AdminSettings(id=6,name='restricted_access',settings={"secret_URL_file_download": 
-            {"secret_enable": True, 
-            "secret_download_limit": 1, 
-            "secret_expiration_date": 9999999, 
+
+    db.session.add(AdminSettings(id=6,name='restricted_access',settings={"secret_URL_file_download":
+            {"secret_enable": True,
+            "secret_download_limit": 1,
+            "secret_expiration_date": 9999999,
             "secret_download_limit_unlimited_chk": False,
             "secret_expiration_date_unlimited_chk": False}}))
-    
+
     with app.test_request_context():
 
         #60
         #76
         # with db.session.begin_nested():
         return_dict = create_secret_url(file_name= file_name, record_id=record_id, user_mail=user_mail)
-            
+
         assert return_dict["restricted_download_count"] == '1'
         assert return_dict["restricted_download_count_ja"] == ""
         assert return_dict["restricted_download_count_en"] == ""
         assert return_dict['restricted_expiration_date'] == ""
         assert return_dict['restricted_expiration_date_ja'] == "無制限"
         assert return_dict['restricted_expiration_date_en'] == "Unlimited"
-        
+
         #61
         # with db.session.begin_nested():
-        db.session.merge(AdminSettings(id=6,name='restricted_access',settings={"secret_URL_file_download": 
-                {"secret_enable": True, 
-                "secret_download_limit": 9999999, 
-                "secret_expiration_date": 1, 
+        db.session.merge(AdminSettings(id=6,name='restricted_access',settings={"secret_URL_file_download":
+                {"secret_enable": True,
+                "secret_download_limit": 9999999,
+                "secret_expiration_date": 1,
                 "secret_download_limit_unlimited_chk": False,
                 "secret_expiration_date_unlimited_chk": False}}))
         return_dict = create_secret_url(file_name= file_name
@@ -814,17 +973,18 @@ def test_create_secret_url(app,db,users,records):
         assert return_dict["restricted_download_count"] == ""
         assert return_dict["restricted_download_count_ja"] == "無制限"
         assert return_dict["restricted_download_count_en"] == "Unlimited"
-        assert return_dict['restricted_expiration_date'] == (datetime.today() + timedelta(1)).strftime("%Y-%m-%d") 
+        assert return_dict['restricted_expiration_date'] == (datetime.date.today() + timedelta(1)).strftime("%Y-%m-%d")
         assert return_dict['restricted_expiration_date_ja'] == ""
         assert return_dict['restricted_expiration_date_en'] == ""
 
         #62
         #63
+        #test No.4(W2023-22 2)
         from re import match
-        assert match("^.+record\/" + record_id + "\/file\/secret\/"+file_name+"\?token=.+=$",return_dict["restricted_download_link"])
-        assert return_dict["restricted_download_link"] != ""
+        assert match("^.+record\/" + record_id + "\/file\/secret\/"+file_name+"\?token=.+=$",return_dict["secret_url"])
+        assert return_dict["secret_url"] != ""
         assert return_dict["mail_recipient"] == user_mail
-    
+
 
 # def parse_secret_download_token(token: str) -> Tuple[str, Tuple]:
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_parse_secret_download_token -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
@@ -837,14 +997,14 @@ def test_parse_secret_download_token(app ,db):
 
 
     # 66
-    # onetime_download pattern
-    assert parse_secret_download_token("MSB1c2VyQGV4YW1wbGUub3JnIDIwMjItMDktMjcgNDBDRkNGODFGM0FFRUI0Ng==") == ('', ('1', 'user@example.org', '2022-09-27', '40CFCF81F3AEEB46'))
+    # invalid args pattern
+    assert parse_secret_download_token("MSA1IDIwMjMtMDMtMDggMDA6NTI6MTkuNjI0NTUyIDZGQTdEMzIxQTk0OTU1MEQ=") == (_("Token is invalid."),())
 
     # 67
-    # secret_download pattern
-    error , res = parse_secret_download_token("MSA1IDIwMjMtMDMtMDggMDA6NTI6MTkuNjI0NTUyIDZGQTdEMzIxQTk0OTU1MEQ=")
-    assert error == 'Token is invalid.'
-    assert res == ()
+    # valid args pattern
+    error, res = parse_secret_download_token("MSA1IDIwMjMtMDMtMDhUMDA6NTI6MTkuNjI0NTUyIDZGQTdEMzIxQTk0OTU1MEQ=")
+    assert not error
+    assert res == ('1', '5', '2023-03-08T00:52:19.624552', '6FA7D321A949550D')
 
 # def validate_secret_download_token(
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_validate_secret_download_token -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
@@ -854,7 +1014,7 @@ def test_validate_secret_download_token(app):
         secret_download=FileSecretDownload(
             file_name= "eee.txt", record_id= '1',user_mail="repoadmin@example.org",expiration_date=999999,download_count=10
         )
-        secret_download.created = datetime(2023,3,8,0,52,19,624552)
+        secret_download.created = dt(2023,3,8,0,52,19,624552)
         secret_download.id = 5
         # 68
         res = validate_secret_download_token(secret_download=None , file_name= "eee.txt", record_id= '1', id= '5', date= '2023-03-08 00:52:19.624552', token= '6FA7D321A949550D')
@@ -876,16 +1036,16 @@ def test_validate_secret_download_token(app):
         secret_download2=FileSecretDownload(
             file_name= "eee.txt", record_id= '5',user_mail="repoadmin@example.org",expiration_date=-1,download_count=10
         )
-        secret_download2.created = datetime(2023,3,8,0,52,19,624552)
+        secret_download2.created = dt(2023,3,8,0,52,19,624552)
         secret_download2.id = 5
         res = validate_secret_download_token(secret_download=secret_download2 , file_name= "eee.txt", record_id= '1', id= '5', date= '2023-03-08 00:52:19.624552', token= '6FA7D321A949550D')
         assert res == (False , _("The expiration date for download has been exceeded."))
-        
+
         #71
         secret_download2.expiration_date = 99999999
         res = validate_secret_download_token(secret_download=secret_download2 , file_name= "eee.txt", record_id= '1', id= '5', date= '2023-03-08 00:52:19.624552', token= '6FA7D321A949550D')
         assert res == (True ,"")
-        
+
         # 72
         secret_download2.expiration_date = 9999999
         secret_download2.download_count = 0
@@ -909,14 +1069,14 @@ def test_get_secret_download(app ,db ):
                 file_name= "eee.txt", record_id= '1',user_mail="repoadmin@example.org",expiration_date=999999,download_count=10
             )
             db.session.add(secret_download)
-        
 
-        
+
+
         assert get_secret_download(file_name= secret_download.file_name
                             , record_id= secret_download.record_id
-                            , id= secret_download.id 
+                            , id= secret_download.id
                             , created =secret_download.created)
-        
+
         assert not get_secret_download(file_name= secret_download.file_name
                             , record_id= secret_download.record_id
                             , id= secret_download.id + 1
@@ -942,6 +1102,42 @@ def test_get_data_usage_application_data(app ,db):
         assert len(res) == 1
         assert res[0].download_count == 100
 
+
+# def update_secret_download(**kwargs) -> Optional[List[FileSecretDownload]]:
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_export_preprocess -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+def test_export_preprocess(app, records, esindex):
+    indexer, results = records
+    record = results[0]["record"]
+    recid = results[0]["recid"]
+
+    with app.test_request_context():
+        schema_type = 'json'
+        # export json
+        res = export_preprocess(recid, record, schema_type)
+        res_dict = json.loads(res)
+        assert 'created' in res_dict
+        assert res_dict['id'] == 1
+        assert res_dict['links'] == {}
+        assert res_dict['metadata'] == record
+        assert 'updated' in res_dict
+
+        # export BibTeX
+        export_preprocess(recid, record, 'bibtex')
+
+        # record update '@export_schema_type'
+        export_preprocess(recid, record, 'jpcoar_2.0')
+
+        # fmt is False
+        mock_config = {'RECORDS_UI_EXPORT_FORMATS': {recid.pid_type: {schema_type: False}}}
+        with patch('flask.current_app.config', mock_config), \
+                pytest.raises(Gone):
+            export_preprocess(recid, record, schema_type)
+
+        # fmt is None
+        mock_config = {}
+        with patch('flask.current_app.config', mock_config), \
+                pytest.raises(NotFound):
+            export_preprocess(recid, record, schema_type)
 
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_RoCrateConverter_convert -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
 def test_RoCrateConverter_convert(app, db):
@@ -1038,3 +1234,42 @@ def test_create_tsv(app, records):
         res_tsv = create_tsv(record.files)
         for field in WEKO_RECORDS_UI_TSV_FIELD_NAMES_DEFAULT:
             assert field in res_tsv.getvalue()
+
+
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_delete_version -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+def test_delete_version(app, records):
+    record1 = WekoRecord.get_record_by_pid("1")
+    PersistentIdentifier.create(
+        "recid",
+        "1.0",
+        object_type="rec",
+        object_uuid = record1.pid.object_uuid,
+        status=PIDStatus.REGISTERED,
+    )
+    with patch(
+        "weko_records_ui.utils.WekoDeposit.merge_data_to_record_without_version"):
+        with patch("weko_records_ui.utils.WekoDeposit.publish"):
+            with patch("weko_deposit.api.WekoIndexer.update_es_data"):
+                with patch(
+                    "weko_records_ui.utils.call_external_system") as mock_external:
+                    delete_version("1.1")
+                    mock_external.assert_called()
+                    assert mock_external.call_args[1]["old_record"] is not None
+                    assert mock_external.call_args[1]["new_record"] is not None
+
+    record2 = WekoRecord.get_record_by_pid("2")
+    PersistentIdentifier.create(
+        "recid",
+        "2.0",
+        object_type="rec",
+        object_uuid = record2.pid.object_uuid,
+        status=PIDStatus.REGISTERED,
+    )
+    with patch(
+        "weko_records_ui.utils.WekoDeposit.merge_data_to_record_without_version"):
+        with patch("weko_records_ui.utils.WekoDeposit.publish"):
+            with patch("weko_deposit.api.WekoIndexer.update_es_data"):
+                with patch(
+                    "weko_records_ui.utils.call_external_system") as mock_external:
+                    delete_version("2.0")
+                    mock_external.assert_not_called()

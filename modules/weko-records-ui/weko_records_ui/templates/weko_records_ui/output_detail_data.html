@@ -72,7 +72,7 @@
             {%- endfor -%}
         {%- else -%}
             {{ output_attribute_value_mlt_Init( record_detail_data ) }}
-        {%- endif -%}        
+        {%- endif -%}
     {%- endif -%}
 {% endmacro %}
 
@@ -112,17 +112,13 @@
  {%- if content -%}
   <tr  style="border: 0px !important;">
       {{ out_table_th(level) }}
-      {% set labels = label.split('.') %}
-      {%- if labels|length > 1 -%}
-          {% set label = labels[1] %}
-      {%- endif -%}
       <th scope="row" colspan="{{ label_colspan_default - level }}" style="border: 0px !important;">{{ label }}</th>
         {% autoescape false %}
             {%- if label == 'URL'  -%}
-                <td><a href="{{content}}">{{ content | escape_str }}</a></td>
+                <td><a href="{{content | encode_filename }}">{{ content | escape_str }}</a></td>
             {%- elif content|url_to_link -%}
-            <td><a href="{{content}}" target='_blank'>{{ content | escape_str }}</a></td>
-	    {%- else -%}
+                <td><a href="{{content}}" target='_blank'>{{ content | escape_str }}</a></td>
+	          {%- else -%}
                 <td class="multiple-line">{{ content | escape_str }}</td>
             {%- endif -%}
         {% endautoescape %}
@@ -211,7 +207,7 @@
                         {%- set nsflg.dispflg = True -%}
                     {%- endif -%}
                 {%- endfor -%}
-            {%- endif -%}        
+            {%- endif -%}
         {%- endif -%}
     {%- endfor -%}
     {%- for language_value in language_data -%}
@@ -249,7 +245,7 @@
                             {%- if value is string -%}
                                 {%- if attribute_data|length == 2 -%}
                                     {{ output_attribute_value_mlt(attribute_data, level) }}
-                                {%- else -%}    
+                                {%- else -%}
                                     {{ output_attribute_value_mlt_exceptlang(attribute_data,level) }}
                                 {%- endif -%}
                             {%- else -%}

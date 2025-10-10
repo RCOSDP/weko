@@ -18,14 +18,14 @@ user_results1 = [
 ]
 
 
-# def preload_pages(): 
+# def preload_pages():
 def test_preload_pages(i18n_app):
     from weko_gridlayout.views import preload_pages
 
     assert preload_pages() == None
 
 
-# def load_repository(): 
+# def load_repository():
 def test_load_repository(client, users):
     login_user_via_session(client=client, email=users[2]["email"])
     res = client.get(
@@ -359,7 +359,7 @@ def test_delete_widget_design_page_issue50978(client, users):
         assert res4.status_code == 400
 
 
-# def index(): 
+# def index():
 def test_index(client, users):
     login_user_via_session(client=client, email=users[2]['obj'].email)
     res = client.get(
@@ -368,7 +368,7 @@ def test_index(client, users):
     assert res.status_code == 200
 
 
-# def load_widget_design_page_setting(page_id: str, current_language=''): 
+# def load_widget_design_page_setting(page_id: str, current_language=''):
 def test_load_widget_design_page_setting(client, users):
     login_user_via_session(client=client, email=users[2]['obj'].email)
     res = client.get(
@@ -381,7 +381,7 @@ def test_load_widget_design_page_setting(client, users):
     assert res.status_code == 200
 
 
-# def save_widget_layout_setting(): 
+# def save_widget_layout_setting():
 def test_save_widget_layout_setting(client, users):
     login_user_via_session(client=client, email=users[2]['obj'].email)
     res = client.post(
@@ -416,7 +416,7 @@ def test_save_widget_layout_setting_issue50978(client, users):
     assert res4.status_code == 400
 
 
-# def save_widget_design_page(): 
+# def save_widget_design_page():
 def test_save_widget_design_page(client, users):
     login_user_via_session(client=client, email=users[2]['obj'].email)
     res = client.post(
@@ -445,7 +445,7 @@ def test_save_widget_design_page_issue50978(client, users):
     assert res4.status_code == 400
 
 
-# def delete_widget_design_page(): 
+# def delete_widget_design_page():
 def test_delete_widget_design_page(client, users):
     login_user_via_session(client=client, email=users[2]['obj'].email)
     res = client.post(
@@ -455,7 +455,7 @@ def test_delete_widget_design_page(client, users):
     assert res.status_code == 200
 
 
-# def load_widget_type(): 
+# def load_widget_type():
 def test_load_widget_type(client, users):
     login_user_via_session(client=client, email=users[2]['obj'].email)
     res = client.get(
@@ -465,7 +465,7 @@ def test_load_widget_type(client, users):
     assert res.status_code == 200
 
 
-# def save_widget_item(): 
+# def save_widget_item():
 def test_save_widget_item(client, users):
     login_user_via_session(client=client, email=users[2]['obj'].email)
     res = client.post(
@@ -475,7 +475,7 @@ def test_save_widget_item(client, users):
     assert res.status_code == 200
 
 
-# def delete_widget_item(): 
+# def delete_widget_item():
 def test_delete_widget_item(client, users):
     login_user_via_session(client=client, email=users[2]['obj'].email)
     res = client.post(
@@ -485,7 +485,7 @@ def test_delete_widget_item(client, users):
     assert res.status_code == 200
 
 
-# def get_account_role(): 
+# def get_account_role():
 def test_get_account_role(client, users):
     login_user_via_session(client=client, email=users[2]['obj'].email)
     res = client.get(
@@ -494,7 +494,7 @@ def test_get_account_role(client, users):
     assert res.status_code == 200
 
 
-# def get_system_lang(): 
+# def get_system_lang():
 def test_get_system_lang(client, users):
     res = client.get(
         url_for("weko_gridlayout_api.get_system_lang"),
@@ -502,7 +502,7 @@ def test_get_system_lang(client, users):
     assert res.status_code == 200
 
 
-# def get_new_arrivals_data(): 
+# def get_new_arrivals_data():
 def test_get_new_arrivals_data(client, users):
     res = client.get(
         url_for("weko_gridlayout_api.get_new_arrivals_data", widget_id=1),
@@ -510,7 +510,7 @@ def test_get_new_arrivals_data(client, users):
     assert res.status_code == 200
 
 
-# def get_rss_data(): 
+# def get_rss_data():
 # def test_get_rss_data(client, users):
 #     res = client.get(
 #         url_for(
@@ -524,7 +524,7 @@ def test_get_new_arrivals_data(client, users):
 #     assert res.status_code == 200
 
 
-# def get_widget_page_endpoints(widget_id, lang=''): 
+# def get_widget_page_endpoints(widget_id, lang=''):
 def test_get_widget_page_endpoints(client, users):
     with patch('weko_gridlayout.views.get_default_language', return_value={"lang_code": "en"}):
         res = client.get(
@@ -540,8 +540,8 @@ def test_get_widget_page_endpoints(client, users):
         assert res.status_code == 403
 
 
-# def view_widget_page(): 
-def test_view_widget_page(i18n_app): 
+# def view_widget_page():
+def test_view_widget_page(i18n_app):
     from weko_gridlayout.views import view_widget_page
 
     page = MagicMock()
@@ -559,8 +559,8 @@ def test_view_widget_page(i18n_app):
             pass
 
 
-# def handle_not_found(exception, **extra): 
-def test_handle_not_found(i18n_app): 
+# def handle_not_found(exception, **extra):
+def test_handle_not_found(i18n_app):
     from weko_gridlayout.views import handle_not_found
     from werkzeug.exceptions import NotFound
 
@@ -580,7 +580,7 @@ def test_handle_not_found(i18n_app):
         with patch('weko_gridlayout.views.get_weko_contents', return_value={}):
             with patch('weko_gridlayout.views.render_template', return_value={}):
                 assert handle_not_found(exception=notfound) != None
-    
+
     extra = MagicMock()
 
     with patch('weko_gridlayout.views.WidgetDesignPage.get_by_url', return_value=None):
@@ -594,13 +594,13 @@ def test_handle_not_found(i18n_app):
         pass
 
 
-# def _add_url_rule(url_or_urls): 
+# def _add_url_rule(url_or_urls):
 def test__add_url_rule(app):
     from weko_gridlayout.views import _add_url_rule
     url_or_urls = "url_or_urls"
-    
+
     assert _add_url_rule(url_or_urls) == None
-    
+
 # .tox/c1/bin/pytest --cov=weko_gridlayout tests/test_views.py::test_get_access_counter_record -vv -s -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-gridlayout/.tox/c1/tmp
 def test_get_access_counter_record(i18n_app, db, es, monkeypatch):
     current_cache.delete("access_counter")
@@ -675,7 +675,7 @@ def test_get_access_counter_record(i18n_app, db, es, monkeypatch):
         url="/page01",
         settings=json.dumps(page_setting1)
     )
-    
+
     # Use the same widget as main
     page_setting2 = [
         {
@@ -706,7 +706,7 @@ def test_get_access_counter_record(i18n_app, db, es, monkeypatch):
     db.session.add(widget_design_page2)
     db.session.add(widget_design_setting)
     db.session.commit()
-    
+
     uuid1=uuid.uuid4()
     es.index(
         index='{}stats-top-view-0001'.format(i18n_app.config['SEARCH_INDEX_PREFIX']),
@@ -762,7 +762,7 @@ def test_get_access_counter_record(i18n_app, db, es, monkeypatch):
                           repository_id="test_community01",
                           path="main",
                           current_language="en")
-                test = {"1":{"2024-03-08":{"access_counter":"0","all":{"192.168.56.1":{"count":9,"host":"None","ip":"192.168.56.1"},"count":9},"date":"2024-03-08-2024-03-10"}}}
+                test = {"1":{"2024-03-08":{"access_counter":"0","all":{"count":9},"date":"2024-03-08-2024-03-10"}}}
                 res = client.get(url)
                 assert res.status_code==200
                 assert json.loads(res.data) == test
@@ -770,7 +770,7 @@ def test_get_access_counter_record(i18n_app, db, es, monkeypatch):
                 assert args[0] == 'access_counter'
                 assert json.loads(args[1].data) == test
                 assert args[2] == 50
-            
+
             mock_cache_data = {"1":{"2024-03-08":{"access_counter":"0","all":{"192.168.56.1":{"count":9,"host":"None","ip":"192.168.56.1"},"count":9},"date":"2024-03-08-2024-03-10"}}}
             with patch("weko_gridlayout.views.current_cache.get", return_value=jsonify(mock_cache_data)):
                 with patch("weko_gridlayout.views.current_cache.set") as mock_set:
@@ -783,13 +783,13 @@ def test_get_access_counter_record(i18n_app, db, es, monkeypatch):
                     assert res.status_code==200
                     assert json.loads(res.data) == test
                     mock_set.assert_not_called()
-            
+
             with patch("weko_gridlayout.views.current_cache.set") as mock_set:
                 url = url_for("weko_gridlayout_api.get_access_counter_record",
                           repository_id="test_community01",
                           path="page01",
                           current_language="en")
-                test = {"2":{"2024-03-08":{"access_counter":"0","all":{"192.168.56.1":{"count":9,"host":"None","ip":"192.168.56.1"},"count":9},"date":"2024-03-08-2024-03-10"}}}
+                test = {"2":{"2024-03-08":{"access_counter":"0","all":{"count":9},"date":"2024-03-08-2024-03-10"}}}
                 res = client.get(url)
                 assert res.status_code==200
                 assert json.loads(res.data) == test
@@ -797,7 +797,6 @@ def test_get_access_counter_record(i18n_app, db, es, monkeypatch):
                 assert args[0] == 'access_counter'
                 assert json.loads(args[1].data) == test
                 assert args[2] == 50
-        
 
             # not exist widget_ids
             with patch("weko_gridlayout.services.WidgetDesignServices.get_widget_design_setting", return_value={}):
@@ -809,7 +808,7 @@ def test_get_access_counter_record(i18n_app, db, es, monkeypatch):
                 assert res.status_code==404
 
 
-# def upload_file(community_id): 
+# def upload_file(community_id):
 def test_upload_file(client, communities):
     with patch('weko_gridlayout.views.get_default_language', return_value={"lang_code": "en"}):
         res = client.post(
@@ -818,7 +817,7 @@ def test_upload_file(client, communities):
         assert res.status_code == 400
 
 
-# def uploaded_file(filename, community_id=0): 
+# def uploaded_file(filename, community_id=0):
 def test_uploaded_file(client, communities):
     def get_file(filename, community_id):
         return "test"
@@ -833,7 +832,7 @@ def test_uploaded_file(client, communities):
             pass
 
 
-# def unlocked_widget(): 
+# def unlocked_widget():
 def test_unlocked_widget(client):
     with patch('weko_gridlayout.views.WidgetItemServices.unlock_widget', return_value=False):
         res = client.post(

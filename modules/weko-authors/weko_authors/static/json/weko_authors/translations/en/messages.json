@@ -87,6 +87,14 @@
         null,
         "Add E-mail"
     ],
+    "Author_Community": [
+        null,
+        "Community"
+    ],
+    "Author_Add_Community": [
+        null,
+        "Add Community"
+    ],
     "Author_Identifier": [
         null,
         "Identifier"
@@ -102,6 +110,26 @@
     "Author_Add_Affiliation_Name": [
         null,
         "Add Affiliation Name"
+    ],
+    "Author_Affiliation_Period": [
+        null,
+        "Affiliation Period"
+    ],
+    "Author_Affiliation_Period_Start": [
+        null,
+        "Start Date"
+    ],
+    "Author_Affiliation_Period_End": [
+        null,
+        "End Date"
+    ],
+    "Author_Add_Affiliation_Period": [
+        null,
+        "Add Affiliation Period"
+    ],
+    "Author_Force_Change_Flag":[
+        null,
+        "Force Change Flag"
     ],
     "Author_Affiliation": [
         null,
@@ -183,6 +211,10 @@
         null,
         "URL"
     ],
+    "Prefix_Community": [
+        null,
+        "Community"
+    ],
     "Affiliation_Name": [
         null,
         "Name"
@@ -194,5 +226,9 @@
     "Affiliation_URL": [
         null,
         "URL"
+    ],
+    "Affiliation_Community": [
+        null,
+        "Community"
     ]
 }

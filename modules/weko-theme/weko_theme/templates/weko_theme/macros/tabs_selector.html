@@ -20,9 +20,9 @@
 
 {% macro tabs_selector(tab_value='top',community_id='') %}
   {%- if community_id %}
-    <li role="presentation" {% if tab_value=='top' %}class="active"{% endif %}><a href="/?community={{community_id}}">{{ _('Top') }}</a></li>
+    <li role="presentation" {% if tab_value=='top' %}class="active"{% endif %}><a href="/?c={{community_id}}">{{ _('Top') }}</a></li>
     {%- if current_user.is_authenticated and current_user.roles %}
-    <li role="presentation" {% if tab_value=='flow' %}class="active"{% endif %}><a href="{{url_for('weko_workflow.index',community=community_id)}}">{{ _('WorkFlow') }}</a></li>
+    <li role="presentation" {% if tab_value=='flow' %}class="active"{% endif %}><a href="{{url_for('weko_workflow.index',c=community_id)}}">{{ _('WorkFlow') }}</a></li>
     {%- endif %}
     {%- else %}
     <li role="presentation" {% if tab_value=='top' %}class="active"{% endif %}><a href="/">{{ _('Top') }}</a></li>
@@ -34,4 +34,7 @@
     {% endif %}
   {%- endif %}
   <li role="presentation" class="{{ check_ranking_show() }} {% if tab_value=='rank' %}active{% endif %}"><a href="{{url_for('weko_items_ui.ranking')}}">{{ _('Ranking') }}</a></li>
+  {%- if community_id %}
+    <li role="presentation" {% if tab_value=='content_policy' %}class="active"{% endif %}><a href="/c/{{community_id}}/content_policy">コンテンツポリシー</a></li>
+  {% endif %}
 {% endmacro %}

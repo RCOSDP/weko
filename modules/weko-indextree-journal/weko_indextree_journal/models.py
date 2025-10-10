@@ -65,6 +65,18 @@ class Journal(db.Model, Timestamp):
     publication_title = db.Column(db.Text, nullable=True, default='')
     """Title of the journal."""
 
+    abstract = db.Column(db.Text, nullable=True, default='')
+    """abstract of the journal."""
+
+    code_issnl = db.Column(db.Text, nullable=True, default='')
+    """ISSN-L of the journal."""
+    """
+        varchar(9)
+        It complies with the format of ISSN-L.
+          ISSN-L:
+            "^\\d{4}-?\\d{3}[0-9X]$"
+    """
+
     print_identifier = db.Column(db.Text, nullable=True, default='')
     """Print-format identifier of the journal."""
     """
