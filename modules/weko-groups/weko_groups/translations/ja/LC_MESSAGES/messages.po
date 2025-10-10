@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: weko-groups 0.1.0.dev20170000\n"
 "Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
-"POT-Creation-Date: 2019-07-02 09:24+0000\n"
+"POT-Creation-Date: 2025-10-03 14:09+0900\n"
 "PO-Revision-Date: 2018-01-22 11:17+0900\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ja\n"
@@ -20,214 +20,213 @@ msgstr ""
 "Generated-By: Babel 2.5.1\n"
 
 #: weko_groups/forms.py:88
-#, fuzzy
 msgid ""
 "Required. Provide list of the emails of the users you wish to be added. "
 "Put each email on new line."
 msgstr "必須.追加するユーザーのメールアドレスを入力してください．複数メールアドレスを入力する際は改行してください．"
 
-#: weko_groups/models.py:54
+#: weko_groups/models.py:55
 msgid "Users can self-subscribe."
 msgstr "ユーザーは自己購読できます"
 
-#: weko_groups/models.py:56
+#: weko_groups/models.py:57
 msgid "Users can self-subscribe but requires administrator approval."
 msgstr "管理者の許可があれば、ユーザーは自己購読できます"
 
-#: weko_groups/models.py:58
+#: weko_groups/models.py:59
 msgid "Subscription is by administrator invitation only."
 msgstr "管理者の招待があれば、購読できます"
 
-#: weko_groups/models.py:96
+#: weko_groups/models.py:97
 msgid "Group membership is fully public."
 msgstr "グループメンバーは公開されています"
 
-#: weko_groups/models.py:98
+#: weko_groups/models.py:99
 msgid "Only group members can view other members."
 msgstr "他のメンバーを表示できるのは、グループメンバーだけです"
 
-#: weko_groups/models.py:100
+#: weko_groups/models.py:101
 msgid "Only administrators can view members."
 msgstr "管理者のみがメンバーを表示できます"
 
-#: weko_groups/models.py:152
+#: weko_groups/models.py:153
 msgid "Public"
 msgstr "公開"
 
-#: weko_groups/models.py:153
+#: weko_groups/models.py:154
 msgid "Group members"
 msgstr "グループメンバー"
 
-#: weko_groups/models.py:154
+#: weko_groups/models.py:155
 msgid "Group admins"
 msgstr "グループ管理者"
 
-#: weko_groups/models.py:159
+#: weko_groups/models.py:160
 msgid "Open"
 msgstr "開く"
 
-#: weko_groups/models.py:160
+#: weko_groups/models.py:161
 msgid "Open with approval"
 msgstr "承認を得て開く"
 
-#: weko_groups/models.py:161
+#: weko_groups/models.py:162
 msgid "Closed"
 msgstr "閉じる"
 
-#: weko_groups/models.py:172 weko_groups/templates/weko_groups/index.html:75
+#: weko_groups/models.py:173 weko_groups/templates/weko_groups/index.html:75
 msgid "Name"
 msgstr "名前"
 
-#: weko_groups/models.py:173
+#: weko_groups/models.py:174
 msgid "Required. A name of a group."
 msgstr "グループ名は必須"
 
-#: weko_groups/models.py:180
+#: weko_groups/models.py:181
 msgid "Description"
 msgstr "説明"
 
-#: weko_groups/models.py:181
+#: weko_groups/models.py:182
 msgid "Optional. A short description of the group. Default: Empty"
 msgstr "グループの簡単な説明はオプションですオプションです デフォルト:空値"
 
-#: weko_groups/models.py:194
+#: weko_groups/models.py:195
 msgid "Privacy Policy"
 msgstr "プライバシーポリシー"
 
-#: weko_groups/models.py:204
+#: weko_groups/models.py:205
 msgid "Subscription Policy"
 msgstr "購読ポリシー"
 
-#: weko_groups/models.py:544
+#: weko_groups/models.py:568
 msgid "Pending admin approval"
 msgstr "保留中の管理者承認"
 
-#: weko_groups/models.py:545
+#: weko_groups/models.py:569
 msgid "Pending member approval"
 msgstr "保留中のメンバー承認"
 
-#: weko_groups/models.py:546
+#: weko_groups/models.py:570
 msgid "Active"
 msgstr "アクティブ"
 
-#: weko_groups/views.py:100
+#: weko_groups/views.py:139
 #, python-format
 msgid "%(icon)s Groups"
 msgstr "%(icon)s グループ"
 
 #: weko_groups/templates/weko_groups/new_member.html:32
-#: weko_groups/templates/weko_groups/pending.html:30 weko_groups/views.py:104
+#: weko_groups/templates/weko_groups/pending.html:30 weko_groups/views.py:143
 msgid "Groups"
 msgstr "グループ"
 
-#: weko_groups/templates/weko_groups/index.html:54 weko_groups/views.py:134
+#: weko_groups/templates/weko_groups/index.html:54 weko_groups/views.py:173
 msgid "Requests"
 msgstr "リクエスト"
 
-#: weko_groups/templates/weko_groups/index.html:52 weko_groups/views.py:155
+#: weko_groups/templates/weko_groups/index.html:52 weko_groups/views.py:194
 msgid "Invitations"
 msgstr "招待"
 
-#: weko_groups/views.py:172
+#: weko_groups/views.py:211
 msgid "New"
 msgstr "新規"
 
-#: weko_groups/views.py:188
+#: weko_groups/views.py:228
 #, python-format
 msgid "Group \"%(name)s\" created"
 msgstr "グループ \"%(name)s\" が作成されました"
 
-#: weko_groups/views.py:191
+#: weko_groups/views.py:232
 msgid "Group creation failure"
 msgstr "グループ作成に失敗しました"
 
 #: weko_groups/templates/weko_groups/index.html:99
-#: weko_groups/templates/weko_groups/members.html:35 weko_groups/views.py:202
-#: weko_groups/views.py:205
+#: weko_groups/templates/weko_groups/members.html:35 weko_groups/views.py:247
+#: weko_groups/views.py:250
 msgid "Manage"
 msgstr "管理"
 
-#: weko_groups/views.py:223
+#: weko_groups/views.py:269
 #, python-format
 msgid "Group \"%(name)s\" was updated"
 msgstr "グループ \"%(name)s\" が更新されました"
 
-#: weko_groups/views.py:234
+#: weko_groups/views.py:281
 #, python-format
 msgid "You cannot edit group %(group_name)s"
 msgstr "グループ %(group_name)s が編集できません"
 
-#: weko_groups/views.py:266
+#: weko_groups/views.py:315
 #, python-format
 msgid "Successfully removed group \"%(group_name)s\""
 msgstr "グループ \"%(group_name)s\\ が削除されました"
 
-#: weko_groups/views.py:271
+#: weko_groups/views.py:320
 #, python-format
 msgid "You cannot delete the group %(group_name)s"
 msgstr "グループ %(group_name)s が削除できません"
 
 #: weko_groups/templates/weko_groups/index.html:76
 #: weko_groups/templates/weko_groups/index.html:107
-#: weko_groups/templates/weko_groups/new.html:39 weko_groups/views.py:283
-#: weko_groups/views.py:286
+#: weko_groups/templates/weko_groups/new.html:39 weko_groups/views.py:332
+#: weko_groups/views.py:335
 msgid "Members"
 msgstr "メンバー"
 
-#: weko_groups/views.py:320
+#: weko_groups/views.py:369
 #, python-format
 msgid "You are not allowed to see members of this group %(group_name)s."
 msgstr "このグループ %(group_name)s のメンバーを見ることはできません"
 
-#: weko_groups/views.py:348
+#: weko_groups/views.py:399
 #, python-format
 msgid "You have successfully left %(group_name)s group."
 msgstr "グループ %(group_name)s を退会しました"
 
-#: weko_groups/views.py:357
+#: weko_groups/views.py:408
 #, python-format
 msgid "You cannot leave the group %(group_name)s"
 msgstr "グループ %(group_name)s から退会できません"
 
-#: weko_groups/views.py:387
-#, fuzzy, python-format
+#: weko_groups/views.py:440
+#, python-format
 msgid "%(user)s accepted to %(group_name)s group."
 msgstr "%(user)s は %(group_name)s グループに参加しました"
 
-#: weko_groups/views.py:393
+#: weko_groups/views.py:446
 #, python-format
 msgid "You cannot approve memberships for the group %(group_name)s"
 msgstr "グループ %(group_name)s の会員になることはできません"
 
-#: weko_groups/views.py:423
+#: weko_groups/views.py:478
 #, python-format
 msgid "User %(user_email)s was removed from %(group_name)s group."
 msgstr "ユーザー  %(user_email)s　がグループ %(group_name)s から削除されました"
 
-#: weko_groups/views.py:428
+#: weko_groups/views.py:483
 #, python-format
 msgid "You cannot delete users of the group %(group_name)s"
 msgstr "グループ %(group_name)s からユーザーを削除することができません"
 
-#: weko_groups/views.py:457
-#, fuzzy, python-format
+#: weko_groups/views.py:514
+#, python-format
 msgid "You are now part of %(group_name)s group."
 msgstr "あなたは現在グループ %(group_name)s の一員です"
 
-#: weko_groups/views.py:485
-#, fuzzy, python-format
+#: weko_groups/views.py:544
+#, python-format
 msgid "You have rejected invitation to %(group_name)s group."
 msgstr "グループ %(group_name)s への招待を拒否しました"
 
-#: weko_groups/views.py:496
+#: weko_groups/views.py:555
 msgid "NewMember"
 msgstr "新メンバー"
 
-#: weko_groups/views.py:513
+#: weko_groups/views.py:572
 msgid "Requests sent!"
 msgstr "リクエスト送信済み"
 
-#: weko_groups/views.py:523
+#: weko_groups/views.py:582
 #, python-format
 msgid ""
 "You cannot invite users or yourself (i.e. join) to the group "
@@ -249,7 +248,6 @@ msgstr "グループ追加"
 
 #: weko_groups/templates/weko_groups/index.html:42
 #: weko_groups/templates/weko_groups/index.html:60
-#, fuzzy
 msgid "New Group"
 msgstr "新規グループ"
 

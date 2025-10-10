@@ -169,7 +169,7 @@ def test_get_version_RecordSchemaCSLJSON(app):
         assert test.get_version({"metadata": ""}) != None
 
 
-# def get_issue_date(self, obj): 
+# def get_issue_date(self, obj):
 # .tox/c1/bin/pytest --cov=weko_records tests/test_serializers_schemas_csl.py::test_get_issue_date_RecordSchemaCSLJSON -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records/.tox/c1/tmp
 def test_get_issue_date_RecordSchemaCSLJSON(i18n_app,users):
     def obj(date):
@@ -179,7 +179,7 @@ def test_get_issue_date_RecordSchemaCSLJSON(i18n_app,users):
             'pubdate': {'attribute_name': 'PubDate', 'attribute_value': '2023-04-13', 'attribute_name_i18n': 'PubDate'}, 
             '_buckets': {'deposit': 'c7ab74b7-b0ce-4a1a-a186-e13fe2e33cc3'}, 
             '_deposit': {'id': '16', 'pid': {'type': 'depid', 'value': '16', 'revision_id': 0}, 'owner': '1', 'owners': [1], 'status': 'published', 'created_by': 1, 'owners_ext': {'email': 'wekosoftware@nii.ac.jp', 'username': '', 'displayname': ''}}, 
-            'item_title': 'test bug item', 'author_link': [], 'item_type_id': '15', 'publish_date': '2023-04-13', 'control_number': '16', 'publish_status': '0', 'weko_shared_id': -1, 
+            'item_title': 'test bug item', 'author_link': [], 'item_type_id': '15', 'publish_date': '2023-04-13', 'control_number': '16', 'publish_status': '0', 'weko_shared_ids': [],
             'item_1617186331708': {'attribute_name': 'Title', 'attribute_value_mlt': [{'subitem_1551255647225': 'test bug item', 'subitem_1551255648112': 'en'}]},
             'item_1617187056579': {
                 'attribute_name': 'Bibliographic Information', 
@@ -202,36 +202,36 @@ def test_get_issue_date_RecordSchemaCSLJSON(i18n_app,users):
             'record': metadata
         }
         return obj_data
-    
+
     with patch("flask_login.utils._get_user", return_value=users[0]["obj"]):
         schema = RecordSchemaCSLJSON()
         # not metadata
         data = obj("")
         result = schema.get_issue_date(data)
         assert bool(result) == False
-        
+
         # date format is "YYYY-MM-DD"
         data = obj("2013-10-02")
         result = schema.get_issue_date(data)
         assert result == {"date-parts":[[2013,10,2]]}
-        
+
         # date format is "YYYY-MM"
         data = obj("2013-10")
         result = schema.get_issue_date(data)
-        assert result == {"date-parts":[[2013,10,1]]}
-        
+        assert result == {"date-parts":[[2013,10]]}
+
         # date format is "YYYY"
         data = obj("2013")
         result = schema.get_issue_date(data)
-        assert result == {"date-parts":[[2013,1,1]]}
-        
+        assert result == {"date-parts":[[2013]]}
+
         # other date format
         with pytest.raises(ValidationError) as e:
             data = obj("incorrect_format")
             result = schema.get_issue_date(data)
         assert e.value.messages == ["Incorrect format"]
 
-# def get_page(self, obj): 
+# def get_page(self, obj):
 def test_get_page_RecordSchemaCSLJSON(app):
     obj = MagicMock()
 

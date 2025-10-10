@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: weko-itemtypes-ui 0.1.0.dev20170000\n"
 "Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
-"POT-Creation-Date: 2021-05-24 13:52+0900\n"
+"POT-Creation-Date: 2025-10-03 00:49+0900\n"
 "PO-Revision-Date: 2018-01-18 18:48+0900\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -17,89 +17,148 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.9.1\n"
+"Generated-By: Babel 2.5.1\n"
 
-#: weko_itemtypes_ui/admin.py:118
-msgid "Cannot delete Item type for Harvesting."
+#: weko_itemtypes_ui/admin.py:135
+msgid "Cannot delete item type. Import is in progress."
 msgstr ""
 
-#: weko_itemtypes_ui/admin.py:130
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_itemtype.html:92
-msgid "Cannot delete due to child existing item types."
+#: weko_itemtypes_ui/admin.py:141
+msgid "Item type not found."
 msgstr ""
 
-#: weko_itemtypes_ui/admin.py:150
-msgid "Failed to delete Item type."
+#: weko_itemtypes_ui/admin.py:149
+msgid "Cannot delete item type. It is used for harvesting."
 msgstr ""
 
-#: weko_itemtypes_ui/admin.py:155
+#: weko_itemtypes_ui/admin.py:165
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_itemtype.html:94
+msgid "Cannot delete item type. Item of this type already exists."
+msgstr ""
+
+#: weko_itemtypes_ui/admin.py:175
+msgid "Cannot delete item type. It is used in some workflows."
+msgstr ""
+
+#: weko_itemtypes_ui/admin.py:191
+msgid "Cannot delete item type. It is used in SWORD API JSON-LD import settings."
+msgstr ""
+
+#: weko_itemtypes_ui/admin.py:229
+msgid "Unexpected error. Failed to delete item type."
+msgstr ""
+
+#: weko_itemtypes_ui/admin.py:232
 msgid "Deleted Item type successfully."
 msgstr ""
 
-#: weko_itemtypes_ui/admin.py:158 weko_itemtypes_ui/admin.py:262
-msgid "An error has occurred."
-msgstr ""
-
-#: weko_itemtypes_ui/admin.py:168 weko_itemtypes_ui/admin.py:366
-#: weko_itemtypes_ui/admin.py:528
+#: weko_itemtypes_ui/admin.py:242 weko_itemtypes_ui/admin.py:770
+#: weko_itemtypes_ui/admin.py:939
 msgid "Header Error"
 msgstr ""
 
-#: weko_itemtypes_ui/admin.py:217
+#: weko_itemtypes_ui/admin.py:246
+msgid "Item type cannot be updated becase import is in progress."
+msgstr ""
+
+#: weko_itemtypes_ui/admin.py:342
 msgid "Failed to register Item type."
 msgstr ""
 
-#: weko_itemtypes_ui/admin.py:222 weko_itemtypes_ui/admin.py:224
+#: weko_itemtypes_ui/admin.py:347 weko_itemtypes_ui/admin.py:349
 msgid "Successfuly registered Item type."
 msgstr ""
 
-#: weko_itemtypes_ui/admin.py:255
+#: weko_itemtypes_ui/admin.py:381
 msgid "Failed to restore Item type."
 msgstr ""
 
-#: weko_itemtypes_ui/admin.py:260
+#: weko_itemtypes_ui/admin.py:386
 msgid "Restored Item type successfully."
 msgstr ""
 
-#: weko_itemtypes_ui/admin.py:306 weko_itemtypes_ui/admin.py:314
-msgid "Date (Type-less）"
+#: weko_itemtypes_ui/admin.py:388
+msgid "An error has occurred."
 msgstr ""
 
-#: weko_itemtypes_ui/admin.py:379
+#: weko_itemtypes_ui/admin.py:432 weko_itemtypes_ui/admin.py:440
+msgid "Date (Type-less)"
+msgstr ""
+
+#: weko_itemtypes_ui/admin.py:510
+msgid "No item type name Error"
+msgstr ""
+
+#: weko_itemtypes_ui/admin.py:512
+msgid "No file Error"
+msgstr ""
+
+#: weko_itemtypes_ui/admin.py:515
+msgid "Illegal mimetype Error"
+msgstr ""
+
+#: weko_itemtypes_ui/admin.py:520
+msgid "Failed to issue log group ID."
+msgstr ""
+
+#: weko_itemtypes_ui/admin.py:628
+msgid "Unregistered properties detected."
+msgstr ""
+
+#: weko_itemtypes_ui/admin.py:676
+msgid "Failed to import the item type."
+msgstr ""
+
+#: weko_itemtypes_ui/admin.py:682 weko_itemtypes_ui/admin.py:700
+msgid "The item type imported successfully."
+msgstr ""
+
+#: weko_itemtypes_ui/admin.py:691
+msgid ""
+"The item type imported successfully, but these property IDs were "
+"duplicated and were not imported:"
+msgstr ""
+
+#: weko_itemtypes_ui/admin.py:783
 msgid "Failed to save property."
 msgstr ""
 
-#: weko_itemtypes_ui/admin.py:380
+#: weko_itemtypes_ui/admin.py:784
 msgid "Saved property successfully."
 msgstr ""
 
-#: weko_itemtypes_ui/admin.py:537
+#: weko_itemtypes_ui/admin.py:951
 msgid "Duplicate mapping as below:"
 msgstr ""
 
-#: weko_itemtypes_ui/admin.py:544
+#: weko_itemtypes_ui/admin.py:971
 msgid "Unexpected error occurred."
 msgstr ""
 
-#: weko_itemtypes_ui/admin.py:545
+#: weko_itemtypes_ui/admin.py:972 weko_itemtypes_ui/admin.py:1063
 msgid "Successfully saved new mapping."
 msgstr ""
 
-#: weko_itemtypes_ui/admin.py:567 weko_itemtypes_ui/admin.py:577
-#: weko_itemtypes_ui/admin.py:587
+#: weko_itemtypes_ui/admin.py:1155 weko_itemtypes_ui/admin.py:1165
+#: weko_itemtypes_ui/admin.py:1175 weko_itemtypes_ui/admin.py:1185
 msgid "Item Types"
 msgstr ""
 
-#: weko_itemtypes_ui/admin.py:568
+#: weko_itemtypes_ui/admin.py:1156
 msgid "Metadata"
 msgstr ""
 
-#: weko_itemtypes_ui/admin.py:578
+#: weko_itemtypes_ui/admin.py:1166
 msgid "Properties"
 msgstr ""
 
-#: weko_itemtypes_ui/admin.py:588
+#: weko_itemtypes_ui/admin.py:1176
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_rocrate_mapping.html:216
 msgid "Mapping"
+msgstr ""
+
+#: weko_itemtypes_ui/admin.py:1186
+msgid "RO-Crate Mapping"
 msgstr ""
 
 #: weko_itemtypes_ui/config.py:48
@@ -123,7 +182,7 @@ msgid "List Box"
 msgstr ""
 
 #: weko_itemtypes_ui/config.py:53
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_itemtype.html:143
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_itemtype.html:189
 msgid "Date"
 msgstr ""
 
@@ -135,151 +194,162 @@ msgstr ""
 msgid "Send"
 msgstr ""
 
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_itemtype.html:237
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_mapping.html:619
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_itemtype.html:283
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_mapping.html:621
 #: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_property.html:151
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_rocrate_mapping.html:523
 #: weko_itemtypes_ui/templates/weko_itemtypes_ui/mapping.html:85
 msgid "Result"
 msgstr ""
 
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_itemtype.html:246
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_mapping.html:636
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_itemtype.html:292
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_mapping.html:638
 #: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_property.html:159
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_rocrate_mapping.html:536
 #: weko_itemtypes_ui/templates/weko_itemtypes_ui/mapping.html:93
 msgid "Close"
 msgstr ""
 
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_itemtype.html:46
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_itemtype.html:48
 msgid "Standard Item Type"
 msgstr ""
 
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_itemtype.html:47
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_itemtype.html:49
 msgid "Item Type for Harvesting"
 msgstr ""
 
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_itemtype.html:49
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_itemtype.html:51
 msgid "Deleted Item Type"
 msgstr ""
 
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_itemtype.html:82
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_itemtype.html:84
 msgid "Are you sure you want to delete this Item type?"
 msgstr ""
 
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_itemtype.html:85
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_itemtype.html:87
 msgid "Continue"
 msgstr ""
 
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_itemtype.html:86
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_itemtype.html:88
 msgid "Cancel"
 msgstr ""
 
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_itemtype.html:91
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_itemtype.html:93
 msgid "Cannot delete item type for harvesting."
 msgstr ""
 
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_itemtype.html:109
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_mapping.html:441
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_mapping.html:518
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_itemtype.html:96
+msgid "Export"
+msgstr ""
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_itemtype.html:97
+msgid "Import"
+msgstr ""
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_itemtype.html:155
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_mapping.html:443
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_mapping.html:520
 msgid "Item type name is blank."
 msgstr ""
 
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_itemtype.html:113
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_mapping.html:219
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_itemtype.html:159
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_rocrate_mapping.html:56
 msgid "Item Type"
 msgstr ""
 
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_itemtype.html:115
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_itemtype.html:161
 msgid "Input Type Name"
 msgstr ""
 
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_itemtype.html:117
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_itemtype.html:163
 msgid "Version Upgrade"
 msgstr ""
 
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_itemtype.html:120
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_itemtype.html:166
 msgid "New Registration"
 msgstr ""
 
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_itemtype.html:127
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_itemtype.html:173
 msgid "Do you want to register the content?"
 msgstr ""
 
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_itemtype.html:132
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_itemtype.html:178
 msgid "Item Name"
 msgstr "Element Name"
 
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_itemtype.html:133
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_itemtype.html:179
 msgid "Attribute"
 msgstr ""
 
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_itemtype.html:134
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_itemtype.html:180
 msgid "Option"
 msgstr ""
 
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_itemtype.html:135
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_itemtype.html:181
 msgid "Notes"
 msgstr ""
 
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_itemtype.html:136
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_itemtype.html:182
 msgid "Replacement"
 msgstr ""
 
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_itemtype.html:137
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_itemtype.html:182
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_mapping.html:180
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_mapping.html:288
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_mapping.html:337
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_mapping.html:459
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_mapping.html:463
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_mapping.html:488
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_mapping.html:539
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_mapping.html:543
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_mapping.html:569
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_mapping.html:575
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_itemtype.html:183
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_itemtype.html:228
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_mapping.html:182
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_mapping.html:290
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_mapping.html:339
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_mapping.html:461
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_mapping.html:465
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_mapping.html:490
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_mapping.html:541
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_mapping.html:545
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_mapping.html:571
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_mapping.html:577
 msgid "Delete"
 msgstr ""
 
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_itemtype.html:142
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_itemtype.html:188
 msgid "Publish Date"
 msgstr ""
 
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_itemtype.html:147
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_itemtype.html:193
 msgid "Required"
 msgstr ""
 
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_itemtype.html:150
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_itemtype.html:196
 msgid "Multiple"
 msgstr ""
 
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_itemtype.html:153
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_itemtype.html:199
 msgid "List Display"
 msgstr ""
 
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_itemtype.html:156
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_itemtype.html:202
 msgid "Specify Newline"
 msgstr ""
 
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_itemtype.html:159
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_itemtype.html:205
 msgid "Hide"
 msgstr ""
 
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_itemtype.html:172
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_itemtype.html:218
 msgid "Add Metadata"
 msgstr ""
 
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_itemtype.html:178
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_itemtype.html:224
 msgid "Restore"
 msgstr ""
 
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_itemtype.html:185
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_mapping.html:605
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_mapping.html:631
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_itemtype.html:231
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_mapping.html:607
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_mapping.html:633
 #: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_property.html:136
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_rocrate_mapping.html:508
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_rocrate_mapping.html:533
 msgid "Save"
 msgstr ""
 
 #: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_mapping.html:51
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_mapping.html:405
 msgid "Item Type List"
 msgstr "Item Type (Source)"
 
@@ -287,80 +357,92 @@ msgstr "Item Type (Source)"
 msgid "Schema List"
 msgstr "Schema (Target)"
 
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_mapping.html:89
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_mapping.html:91
 msgid "Item type added by system"
 msgstr "Element defined by System"
 
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_mapping.html:90
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_mapping.html:100
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_mapping.html:219
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_mapping.html:222
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_mapping.html:92
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_mapping.html:102
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_mapping.html:221
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_mapping.html:224
 msgid "Parent"
 msgstr ""
 
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_mapping.html:100
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_mapping.html:222
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_mapping.html:408
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_mapping.html:102
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_mapping.html:224
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_mapping.html:410
 msgid "Schema"
 msgstr ""
 
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_mapping.html:147
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_mapping.html:178
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_mapping.html:188
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_mapping.html:284
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_mapping.html:297
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_mapping.html:335
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_mapping.html:346
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_mapping.html:409
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_mapping.html:413
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_mapping.html:149
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_mapping.html:180
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_mapping.html:190
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_mapping.html:286
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_mapping.html:299
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_mapping.html:337
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_mapping.html:348
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_mapping.html:411
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_mapping.html:415
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_rocrate_mapping.html:133
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_rocrate_mapping.html:169
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_rocrate_mapping.html:248
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_rocrate_mapping.html:399
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_rocrate_mapping.html:491
 msgid "Add"
 msgstr ""
 
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_mapping.html:371
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_mapping.html:221
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_mapping.html:407
+msgid "Element"
+msgstr ""
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_mapping.html:373
 msgid "JPCOAR"
 msgstr ""
 
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_mapping.html:371
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_mapping.html:373
 msgid "(Attribute)"
 msgstr ""
 
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_mapping.html:381
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_mapping.html:529
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_mapping.html:383
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_mapping.html:531
 msgid "Enter Input Value"
 msgstr ""
 
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_mapping.html:405
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_mapping.html:408
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_mapping.html:407
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_mapping.html:410
 msgid "Child"
 msgstr ""
 
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_mapping.html:418
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_mapping.html:420
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_rocrate_mapping.html:488
 msgid "Add static value"
 msgstr ""
 
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_mapping.html:439
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_mapping.html:516
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_mapping.html:441
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_mapping.html:518
 msgid "Input static value"
 msgstr ""
 
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_mapping.html:452
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_mapping.html:454
 msgid "Input Field"
 msgstr ""
 
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_mapping.html:495
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_mapping.html:580
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_mapping.html:497
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_mapping.html:582
 msgid "Join"
 msgstr ""
 
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_mapping.html:499
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_mapping.html:501
 msgid "Link"
 msgstr ""
 
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_mapping.html:593
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_mapping.html:595
 msgid "Create"
 msgstr ""
 
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_mapping.html:626
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_mapping.html:628
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_rocrate_mapping.html:530
 msgid "OK"
 msgstr ""
 
@@ -394,6 +476,100 @@ msgstr ""
 msgid "Form(Multiple)"
 msgstr ""
 
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_rocrate_mapping.html:46
+msgid "Confirmation"
+msgstr ""
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_rocrate_mapping.html:47
+msgid "Would you like to cancel your changes?"
+msgstr ""
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_rocrate_mapping.html:71
+msgid "Layer"
+msgstr ""
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_rocrate_mapping.html:74
+msgid "Number of layers"
+msgstr ""
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_rocrate_mapping.html:86
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_rocrate_mapping.html:119
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_rocrate_mapping.html:189
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_rocrate_mapping.html:233
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_rocrate_mapping.html:273
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_rocrate_mapping.html:276
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_rocrate_mapping.html:304
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_rocrate_mapping.html:315
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_rocrate_mapping.html:339
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_rocrate_mapping.html:342
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_rocrate_mapping.html:356
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_rocrate_mapping.html:364
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_rocrate_mapping.html:384
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_rocrate_mapping.html:420
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_rocrate_mapping.html:442
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_rocrate_mapping.html:467
+msgid "Error"
+msgstr ""
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_rocrate_mapping.html:86
+msgid "Layer name is blank."
+msgstr ""
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_rocrate_mapping.html:107
+msgid "Tree structure"
+msgstr ""
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_rocrate_mapping.html:119
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_rocrate_mapping.html:189
+msgid "Node name is blank."
+msgstr ""
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_rocrate_mapping.html:184
+msgid "Node name"
+msgstr ""
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_rocrate_mapping.html:233
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_rocrate_mapping.html:384
+msgid "RO-Crate property is blank."
+msgstr ""
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_rocrate_mapping.html:260
+msgid "Specify language"
+msgstr ""
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_rocrate_mapping.html:273
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_rocrate_mapping.html:304
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_rocrate_mapping.html:315
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_rocrate_mapping.html:339
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_rocrate_mapping.html:356
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_rocrate_mapping.html:364
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_rocrate_mapping.html:420
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_rocrate_mapping.html:442
+msgid "Item property is blank."
+msgstr ""
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_rocrate_mapping.html:276
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_rocrate_mapping.html:342
+msgid "Item property index is blank."
+msgstr ""
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_rocrate_mapping.html:278
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_rocrate_mapping.html:344
+msgid "Specify list index"
+msgstr ""
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_rocrate_mapping.html:292
+msgid "Value"
+msgstr ""
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_rocrate_mapping.html:293
+msgid "Language"
+msgstr ""
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_rocrate_mapping.html:467
+msgid "Static value is blank."
+msgstr ""
+
 #: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/error.html:33
 msgid "You do not even have an itemtype."
 msgstr "No itemtypes"
@@ -405,64 +581,4 @@ msgstr ""
 #: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/error.html:34
 msgid "Register Itemtype"
 msgstr ""
-
-#~ msgid "Tee"
-#~ msgstr ""
-
-#~ msgid "'itemtype name'"
-#~ msgstr ""
-
-#~ msgid "itemtype list"
-#~ msgstr ""
-
-#~ msgid "Sending"
-#~ msgstr ""
-
-#~ msgid "create itemtype"
-#~ msgstr ""
-
-#~ msgid "itemtype name"
-#~ msgstr ""
-
-#~ msgid "JSONSchema"
-#~ msgstr ""
-
-#~ msgid "SchemaForm"
-#~ msgstr ""
-
-#~ msgid "Cannot delete because there is belonging item."
-#~ msgstr ""
-
-#~ msgid "Do you want to register the content？"
-#~ msgstr ""
-
-#~ msgid "Fail"
-#~ msgstr ""
-
-#~ msgid "Success"
-#~ msgstr ""
-
-#~ msgid "Property"
-#~ msgstr ""
-
-#~ msgid "Preview"
-#~ msgstr ""
-
-#~ msgid "Back"
-#~ msgstr ""
-
-#~ msgid "Linking"
-#~ msgstr ""
-
-msgid "Element"
-msgstr ""
-
-#~ msgid "Add2"
-#~ msgstr ""
-
-#~ msgid "Input fixed Value"
-#~ msgstr ""
-
-#~ msgid "Input fixed value"
-#~ msgstr ""
 

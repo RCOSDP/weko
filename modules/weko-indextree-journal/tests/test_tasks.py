@@ -27,7 +27,7 @@ def test_export_journal_task(app,db,test_indices):
         assert len(f.readlines()) == 1
     with open(filelist,"r") as f:
         assert filename in f.readlines()[0]
-        
+
     journal = Journal(
         id=1,
         index_id=1,
@@ -40,7 +40,9 @@ def test_export_journal_task(app,db,test_indices):
         publication_type="serial",
         access_type="F",
         language="en",
-        is_output=True
+        is_output=True,
+        abstract='',
+        code_issnl=''
     )
     db.session.add(journal)
     db.session.commit()
@@ -48,28 +50,28 @@ def test_export_journal_task(app,db,test_indices):
     result = export_journal_task(None)
     assert result == [['test journal 1', '', '', '2022-01-01', '', '', '2022-01-01', '', '', 'https://inveniosoftware.org/search?search_type=2&q=1', '', 1, '', 'abstract', '', '', 'serial', '', '', '', '', '', '', '', 'F', 'en', '', '', '', '', '', '', '', '']]
     with open(repository_file,"r") as f:
-        assert "https://inveniosoftware.org/search?search_type=2&q=1" in f.readlines()[1] 
+        assert "https://inveniosoftware.org/search?search_type=2&q=1" in f.readlines()[1]
     with open(filelist,"r") as f:
         assert filename in f.readlines()[0]
-    
+
     # THEME_SITEURL endwith "/"
     app.config['THEME_SITEURL'] = 'https://inveniosoftware.org/'
     result = export_journal_task(None)
     assert result == [['test journal 1', '', '', '2022-01-01', '', '', '2022-01-01', '', '', 'https://inveniosoftware.org/search?search_type=2&q=1', '', 1, '', 'abstract', '', '', 'serial', '', '', '', '', '', '', '', 'F', 'en', '', '', '', '', '', '', '', '']]
     with open(repository_file,"r") as f:
-        assert "https://inveniosoftware.org/search?search_type=2&q=1" in f.readlines()[1] 
+        assert "https://inveniosoftware.org/search?search_type=2&q=1" in f.readlines()[1]
     with open(filelist,"r") as f:
         assert filename in f.readlines()[0]
-    
+
     # raise Exception
     with patch("weko_indextree_journal.tasks.Journals.get_all_journals",side_effect=Exception("test_error")):
         result = export_journal_task(None)
         assert result == {}
         with open(repository_file,"r") as f:
-            assert "https://inveniosoftware.org/search?search_type=2&q=1" in f.readlines()[1] 
+            assert "https://inveniosoftware.org/search?search_type=2&q=1" in f.readlines()[1]
         with open(filelist,"r") as f:
             assert filename in f.readlines()[0]
-    
+
     # status is True
     db_processing_status = Journal_export_processing.query.first()
     db_processing_status.status = True
@@ -77,7 +79,7 @@ def test_export_journal_task(app,db,test_indices):
     db.session.commit()
     result = export_journal_task(None)
     with open(repository_file,"r") as f:
-        assert "https://inveniosoftware.org/search?search_type=2&q=1" in f.readlines()[1] 
+        assert "https://inveniosoftware.org/search?search_type=2&q=1" in f.readlines()[1]
     with open(filelist,"r") as f:
         assert filename in f.readlines()[0]
 
@@ -87,6 +89,6 @@ def test_export_journal_task(app,db,test_indices):
 def test_convert_none_to_blank():
     result = convert_none_to_blank(None)
     assert result == ""
-    
+
     result = convert_none_to_blank("value")
     assert result == "value"

@@ -1,0 +1,4462 @@
+{
+    "name": "デフォルトアイテムタイプ（フル）",
+    "schema": {
+        "pubdate": {
+            "title": "PubDate",
+            "type": "string",
+            "format": "datetime",
+            "min_date": "1000-01-01",
+            "max_date": "2999-12-31",
+            "required": true
+        },
+        "system_file": {
+            "title": "File Information",
+            "type": "object",
+            "format": "object",
+            "properties": {
+                "subitem_systemfile_size": {
+                    "title": "SYSTEMFILE Size",
+                    "type": "string",
+                    "format": "text"
+                },
+                "subitem_systemfile_version": {
+                    "title": "SYSTEMFILE Version",
+                    "type": "string",
+                    "format": "text"
+                },
+                "subitem_systemfile_datetime": {
+                    "title": "SYSTEMFILE DateTime",
+                    "type": "array",
+                    "format": "array",
+                    "items": {
+                        "type": "object",
+                        "format": "object",
+                        "properties": {
+                            "subitem_systemfile_datetime_date": {
+                                "title": "SYSTEMFILE DateTime Date",
+                                "type": "string",
+                                "format": "datetime",
+                                "min_date": "1000-01-01",
+                                "max_date": "2999-12-31"
+                            },
+                            "subitem_systemfile_datetime_type": {
+                                "title": "SYSTEMFILE DateTime Type",
+                                "type": "string",
+                                "format": "select",
+                                "enum": [
+                                    "Accepted",
+                                    "Available",
+                                    "Collected",
+                                    "Copyrighted",
+                                    "Created",
+                                    "Issued",
+                                    "Submitted",
+                                    "Updated",
+                                    "Valid"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "subitem_systemfile_filename": {
+                    "title": "SYSTEMFILE Filename",
+                    "type": "array",
+                    "format": "array",
+                    "items": {
+                        "type": "object",
+                        "format": "object",
+                        "properties": {
+                            "subitem_systemfile_filename_uri": {
+                                "title": "SYSTEMFILE Filename URI",
+                                "type": "string",
+                                "format": "text"
+                            },
+                            "subitem_systemfile_filename_type": {
+                                "title": "SYSTEMFILE Filename Type",
+                                "type": "string",
+                                "format": "select",
+                                "enum": [
+                                    "Abstract",
+                                    "Fulltext",
+                                    "Summary",
+                                    "Thumbnail",
+                                    "Other"
+                                ]
+                            },
+                            "subitem_systemfile_filename_label": {
+                                "title": "SYSTEMFILE Filename Label",
+                                "type": "string",
+                                "format": "text"
+                            }
+                        }
+                    }
+                },
+                "subitem_systemfile_mimetype": {
+                    "title": "SYSTEMFILE MimeType",
+                    "type": "string",
+                    "format": "text"
+                }
+            }
+        },
+        "item_30002_apc5": {
+            "title": "APC",
+            "type": "object",
+            "format": "object",
+            "properties": {
+                "subitem_apc": {
+                    "title": "APC",
+                    "type": [
+                        "null",
+                        "string"
+                    ],
+                    "format": "select",
+                    "enum": [
+                        null,
+                        "Paid",
+                        "Partially waived",
+                        "Fully waived",
+                        "Not charged",
+                        "Not required",
+                        "Unknown"
+                    ]
+                }
+            }
+        },
+        "item_30002_date11": {
+            "title": "Date",
+            "type": "array",
+            "min_items": 1,
+            "max_items": 9999,
+            "items": {
+                "type": "object",
+                "format": "object",
+                "properties": {
+                    "subitem_date_issued_type": {
+                        "title": "日付タイプ",
+                        "type": [
+                            "null",
+                            "string"
+                        ],
+                        "format": "select",
+                        "enum": [
+                            null,
+                            "Accepted",
+                            "Available",
+                            "Collected",
+                            "Copyrighted",
+                            "Created",
+                            "Issued",
+                            "Submitted",
+                            "Updated",
+                            "Valid"
+                        ]
+                    },
+                    "subitem_date_issued_datetime": {
+                        "title": "日付",
+                        "type": "string",
+                        "format": "datetime",
+                        "min_date": "1000-01-01",
+                        "max_date": "2999-12-31"
+                    }
+                }
+            }
+        },
+        "item_30002_file35": {
+            "title": "File",
+            "type": "array",
+            "min_items": 1,
+            "max_items": 9999,
+            "items": {
+                "type": "object",
+                "format": "object",
+                "properties": {
+                    "url": {
+                        "title": "本文URL",
+                        "type": "object",
+                        "format": "object",
+                        "properties": {
+                            "url": {
+                                "title": "本文URL",
+                                "type": "string",
+                                "format": "text"
+                            },
+                            "label": {
+                                "title": "ラベル",
+                                "type": "string",
+                                "format": "text"
+                            },
+                            "objectType": {
+                                "title": "オブジェクトタイプ",
+                                "type": [
+                                    "null",
+                                    "string"
+                                ],
+                                "format": "select",
+                                "enum": [
+                                    null,
+                                    "abstract",
+                                    "dataset",
+                                    "fulltext",
+                                    "iiif",
+                                    "software",
+                                    "summary",
+                                    "thumbnail",
+                                    "other"
+                                ]
+                            }
+                        }
+                    },
+                    "date": {
+                        "title": "公開日",
+                        "type": "array",
+                        "format": "array",
+                        "items": {
+                            "type": "object",
+                            "format": "object",
+                            "properties": {
+                                "dateType": {
+                                    "title": "タイプ",
+                                    "type": [
+                                        "null",
+                                        "string"
+                                    ],
+                                    "format": "select",
+                                    "enum": [
+                                        null,
+                                        "Available"
+                                    ]
+                                },
+                                "dateValue": {
+                                    "title": "公開日",
+                                    "type": "string",
+                                    "format": "datetime",
+                                    "min_date": "1000-01-01",
+                                    "max_date": "2999-12-31"
+                                }
+                            }
+                        }
+                    },
+                    "format": {
+                        "title": "フォーマット",
+                        "type": "string",
+                        "format": "text"
+                    },
+                    "groups": {
+                        "title": "グループ",
+                        "type": [
+                            "null",
+                            "string"
+                        ],
+                        "format": "select",
+                        "enum": []
+                    },
+                    "version": {
+                        "title": "バージョン情報",
+                        "type": "string",
+                        "format": "text"
+                    },
+                    "fileDate": {
+                        "title": "日付",
+                        "type": "array",
+                        "format": "array",
+                        "items": {
+                            "type": "object",
+                            "format": "object",
+                            "properties": {
+                                "fileDateType": {
+                                    "title": "日付タイプ",
+                                    "type": [
+                                        "null",
+                                        "string"
+                                    ],
+                                    "format": "select",
+                                    "enum": [
+                                        null,
+                                        "Accepted",
+                                        "Available",
+                                        "Collected",
+                                        "Copyrighted",
+                                        "Created",
+                                        "Issued",
+                                        "Submitted",
+                                        "Updated",
+                                        "Valid"
+                                    ]
+                                },
+                                "fileDateValue": {
+                                    "title": "日付",
+                                    "type": "string",
+                                    "format": "datetime",
+                                    "min_date": "1000-01-01",
+                                    "max_date": "2999-12-31"
+                                }
+                            }
+                        }
+                    },
+                    "filename": {
+                        "title": "ファイル名",
+                        "type": [
+                            "null",
+                            "string"
+                        ],
+                        "format": "text"
+                    },
+                    "filesize": {
+                        "title": "サイズ",
+                        "type": "array",
+                        "format": "array",
+                        "items": {
+                            "type": "object",
+                            "format": "object",
+                            "properties": {
+                                "value": {
+                                    "title": "サイズ",
+                                    "type": "string",
+                                    "format": "text"
+                                }
+                            }
+                        }
+                    },
+                    "accessrole": {
+                        "title": "アクセス",
+                        "type": [
+                            "null",
+                            "string"
+                        ],
+                        "format": "radios",
+                        "enum": [
+                            null,
+                            "open_access",
+                            "open_date",
+                            "open_login",
+                            "open_no"
+                        ]
+                    },
+                    "displaytype": {
+                        "title": "表示形式",
+                        "type": [
+                            "null",
+                            "string"
+                        ],
+                        "format": "select",
+                        "enum": [
+                            null,
+                            "detail",
+                            "simple",
+                            "preview"
+                        ]
+                    },
+                    "licensefree": {
+                        "title": "自由ライセンス",
+                        "type": "string",
+                        "format": "textarea"
+                    },
+                    "licensetype": {
+                        "title": "ライセンス",
+                        "type": [
+                            "null",
+                            "string"
+                        ],
+                        "format": "select",
+                        "enum": [
+                            null,
+                            "license_free",
+                            "license_12",
+                            "license_6",
+                            "license_7",
+                            "license_8",
+                            "license_9",
+                            "license_10",
+                            "license_11",
+                            "license_0",
+                            "license_1",
+                            "license_2",
+                            "license_3",
+                            "license_4",
+                            "license_5"
+                        ]
+                    }
+                }
+            }
+        },
+        "item_30002_title0": {
+            "title": "Title",
+            "type": "array",
+            "min_items": 1,
+            "max_items": 9999,
+            "items": {
+                "type": "object",
+                "format": "object",
+                "properties": {
+                    "subitem_title": {
+                        "title": "タイトル",
+                        "type": "string",
+                        "format": "text",
+                        "required": true
+                    },
+                    "subitem_title_language": {
+                        "title": "言語",
+                        "type": [
+                            "null",
+                            "string"
+                        ],
+                        "format": "select",
+                        "enum": [
+                            null,
+                            "ja",
+                            "ja-Kana",
+                            "ja-Latn",
+                            "en",
+                            "fr",
+                            "it",
+                            "de",
+                            "es",
+                            "zh-cn",
+                            "zh-tw",
+                            "ru",
+                            "la",
+                            "ms",
+                            "eo",
+                            "ar",
+                            "el",
+                            "ko"
+                        ],
+                        "required": true
+                    }
+                }
+            },
+            "required": true
+        },
+        "item_30002_rights6": {
+            "title": "Rights",
+            "type": "array",
+            "min_items": 1,
+            "max_items": 9999,
+            "items": {
+                "type": "object",
+                "format": "object",
+                "properties": {
+                    "subitem_rights": {
+                        "title": "権利情報",
+                        "type": "string",
+                        "format": "text"
+                    },
+                    "subitem_rights_language": {
+                        "title": "言語",
+                        "type": [
+                            "null",
+                            "string"
+                        ],
+                        "format": "select",
+                        "enum": [
+                            null,
+                            "ja",
+                            "ja-Kana",
+                            "ja-Latn",
+                            "en",
+                            "fr",
+                            "it",
+                            "de",
+                            "es",
+                            "zh-cn",
+                            "zh-tw",
+                            "ru",
+                            "la",
+                            "ms",
+                            "eo",
+                            "ar",
+                            "el",
+                            "ko"
+                        ]
+                    },
+                    "subitem_rights_resource": {
+                        "title": "権利情報Resource",
+                        "type": "string",
+                        "format": "text"
+                    }
+                }
+            }
+        },
+        "item_30002_creator2": {
+            "title": "Creator",
+            "type": "array",
+            "min_items": 1,
+            "max_items": 9999,
+            "items": {
+                "type": "object",
+                "format": "object",
+                "properties": {
+                    "iscreator": {
+                        "title": "iscreator",
+                        "type": "string",
+                        "format": "text"
+                    },
+                    "givenNames": {
+                        "title": "作成者名",
+                        "type": "array",
+                        "format": "array",
+                        "items": {
+                            "type": "object",
+                            "format": "object",
+                            "properties": {
+                                "givenName": {
+                                    "title": "名",
+                                    "type": "string",
+                                    "format": "text"
+                                },
+                                "givenNameLang": {
+                                    "title": "言語",
+                                    "type": [
+                                        "null",
+                                        "string"
+                                    ],
+                                    "format": "select",
+                                    "enum": [
+                                        null,
+                                        "ja",
+                                        "ja-Kana",
+                                        "ja-Latn",
+                                        "en",
+                                        "fr",
+                                        "it",
+                                        "de",
+                                        "es",
+                                        "zh-cn",
+                                        "zh-tw",
+                                        "ru",
+                                        "la",
+                                        "ms",
+                                        "eo",
+                                        "ar",
+                                        "el",
+                                        "ko"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "creatorType": {
+                        "title": "作成者タイプ",
+                        "type": "string",
+                        "format": "text"
+                    },
+                    "familyNames": {
+                        "title": "作成者姓",
+                        "type": "array",
+                        "format": "array",
+                        "items": {
+                            "type": "object",
+                            "format": "object",
+                            "properties": {
+                                "familyName": {
+                                    "title": "姓",
+                                    "type": "string",
+                                    "format": "text"
+                                },
+                                "familyNameLang": {
+                                    "title": "言語",
+                                    "type": [
+                                        "null",
+                                        "string"
+                                    ],
+                                    "format": "select",
+                                    "enum": [
+                                        null,
+                                        "ja",
+                                        "ja-Kana",
+                                        "ja-Latn",
+                                        "en",
+                                        "fr",
+                                        "it",
+                                        "de",
+                                        "es",
+                                        "zh-cn",
+                                        "zh-tw",
+                                        "ru",
+                                        "la",
+                                        "ms",
+                                        "eo",
+                                        "ar",
+                                        "el",
+                                        "ko"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "creatorMails": {
+                        "title": "作成者メールアドレス",
+                        "type": "array",
+                        "format": "array",
+                        "items": {
+                            "type": "object",
+                            "format": "object",
+                            "properties": {
+                                "creatorMail": {
+                                    "title": "メールアドレス",
+                                    "type": "string",
+                                    "format": "text"
+                                }
+                            }
+                        }
+                    },
+                    "creatorNames": {
+                        "title": "作成者姓名",
+                        "type": "array",
+                        "format": "array",
+                        "items": {
+                            "type": "object",
+                            "format": "object",
+                            "properties": {
+                                "creatorName": {
+                                    "title": "姓名",
+                                    "type": "string",
+                                    "format": "text"
+                                },
+                                "creatorNameLang": {
+                                    "title": "言語",
+                                    "type": [
+                                        "null",
+                                        "string"
+                                    ],
+                                    "format": "select",
+                                    "enum": [
+                                        null,
+                                        "ja",
+                                        "ja-Kana",
+                                        "ja-Latn",
+                                        "en",
+                                        "fr",
+                                        "it",
+                                        "de",
+                                        "es",
+                                        "zh-cn",
+                                        "zh-tw",
+                                        "ru",
+                                        "la",
+                                        "ms",
+                                        "eo",
+                                        "ar",
+                                        "el",
+                                        "ko"
+                                    ]
+                                },
+                                "creatorNameType": {
+                                    "title": "名前タイプ",
+                                    "type": [
+                                        "null",
+                                        "string"
+                                    ],
+                                    "format": "select",
+                                    "enum": [
+                                        null,
+                                        "Personal",
+                                        "Organizational"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "nameIdentifiers": {
+                        "title": "作成者識別子",
+                        "type": "array",
+                        "format": "array",
+                        "items": {
+                            "type": "object",
+                            "format": "object",
+                            "properties": {
+                                "nameIdentifier": {
+                                    "title": "作成者識別子",
+                                    "type": "string",
+                                    "format": "text"
+                                },
+                                "nameIdentifierURI": {
+                                    "title": "作成者識別子URI",
+                                    "type": "string",
+                                    "format": "text"
+                                },
+                                "nameIdentifierScheme": {
+                                    "title": "作成者識別子Scheme",
+                                    "type": [
+                                        "null",
+                                        "string"
+                                    ],
+                                    "format": "select",
+                                    "enum": []
+                                }
+                            }
+                        }
+                    },
+                    "creatorAffiliations": {
+                        "title": "作成者所属",
+                        "type": "array",
+                        "format": "array",
+                        "items": {
+                            "type": "object",
+                            "format": "object",
+                            "properties": {
+                                "affiliationNames": {
+                                    "title": "所属機関名",
+                                    "type": "array",
+                                    "format": "array",
+                                    "items": {
+                                        "type": "object",
+                                        "format": "object",
+                                        "properties": {
+                                            "affiliationName": {
+                                                "title": "所属機関名",
+                                                "type": "string",
+                                                "format": "text"
+                                            },
+                                            "affiliationNameLang": {
+                                                "title": "言語",
+                                                "type": [
+                                                    "null",
+                                                    "string"
+                                                ],
+                                                "format": "select",
+                                                "enum": [
+                                                    null,
+                                                    "ja",
+                                                    "ja-Kana",
+                                                    "ja-Latn",
+                                                    "en",
+                                                    "fr",
+                                                    "it",
+                                                    "de",
+                                                    "es",
+                                                    "zh-cn",
+                                                    "zh-tw",
+                                                    "ru",
+                                                    "la",
+                                                    "ms",
+                                                    "eo",
+                                                    "ar",
+                                                    "el",
+                                                    "ko"
+                                                ]
+                                            }
+                                        }
+                                    }
+                                },
+                                "affiliationNameIdentifiers": {
+                                    "title": "所属機関識別子",
+                                    "type": "array",
+                                    "format": "array",
+                                    "items": {
+                                        "type": "object",
+                                        "format": "object",
+                                        "properties": {
+                                            "affiliationNameIdentifier": {
+                                                "title": "所属機関識別子",
+                                                "type": "string",
+                                                "format": "text"
+                                            },
+                                            "affiliationNameIdentifierURI": {
+                                                "title": "所属機関識別子URI",
+                                                "type": "string",
+                                                "format": "text"
+                                            },
+                                            "affiliationNameIdentifierScheme": {
+                                                "title": "所属機関識別子Scheme",
+                                                "type": [
+                                                    "null",
+                                                    "string"
+                                                ],
+                                                "format": "select",
+                                                "enum": []
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "creatorAlternatives": {
+                        "title": "作成者別名",
+                        "type": "array",
+                        "format": "array",
+                        "items": {
+                            "type": "object",
+                            "format": "object",
+                            "properties": {
+                                "creatorAlternative": {
+                                    "title": "別名",
+                                    "type": "string",
+                                    "format": "text"
+                                },
+                                "creatorAlternativeLang": {
+                                    "title": "言語",
+                                    "type": [
+                                        "null",
+                                        "string"
+                                    ],
+                                    "format": "select",
+                                    "enum": [
+                                        null,
+                                        "ja",
+                                        "ja-Kana",
+                                        "ja-Latn",
+                                        "en",
+                                        "fr",
+                                        "it",
+                                        "de",
+                                        "es",
+                                        "zh-cn",
+                                        "zh-tw",
+                                        "ru",
+                                        "la",
+                                        "ms",
+                                        "eo",
+                                        "ar",
+                                        "el",
+                                        "ko"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "item_30002_subject8": {
+            "title": "Subject",
+            "type": "array",
+            "min_items": 1,
+            "max_items": 9999,
+            "items": {
+                "type": "object",
+                "format": "object",
+                "properties": {
+                    "subitem_subject": {
+                        "title": "主題",
+                        "type": "string",
+                        "format": "text"
+                    },
+                    "subitem_subject_uri": {
+                        "title": "主題URI",
+                        "type": "string",
+                        "format": "text"
+                    },
+                    "subitem_subject_scheme": {
+                        "title": "主題Scheme",
+                        "type": [
+                            "null",
+                            "string"
+                        ],
+                        "format": "select",
+                        "enum": [
+                            null,
+                            "BSH",
+                            "DDC",
+                            "e-Rad_field",
+                            "JEL",
+                            "LCC",
+                            "LCSH",
+                            "MeSH",
+                            "NDC",
+                            "NDLC",
+                            "NDLSH",
+                            "SciVal",
+                            "UDC",
+                            "Other"
+                        ]
+                    },
+                    "subitem_subject_language": {
+                        "title": "言語",
+                        "type": [
+                            "null",
+                            "string"
+                        ],
+                        "format": "select",
+                        "enum": [
+                            null,
+                            "ja",
+                            "ja-Kana",
+                            "ja-Latn",
+                            "en",
+                            "fr",
+                            "it",
+                            "de",
+                            "es",
+                            "zh-cn",
+                            "zh-tw",
+                            "ru",
+                            "la",
+                            "ms",
+                            "eo",
+                            "ar",
+                            "el",
+                            "ko"
+                        ]
+                    }
+                }
+            }
+        },
+        "item_30002_catalog39": {
+            "title": "catalog",
+            "type": "array",
+            "min_items": 1,
+            "max_items": 9999,
+            "items": {
+                "title": "catalog",
+                "type": "object",
+                "format": "object",
+                "properties": {
+                    "catalog_file": {
+                        "title": "File",
+                        "type": "object",
+                        "format": "object",
+                        "properties": {
+                            "catalog_file_uri": {
+                                "title": "File URI",
+                                "type": "string",
+                                "format": "text"
+                            },
+                            "catalog_file_object_type": {
+                                "title": "Object Type",
+                                "type": "string",
+                                "format": "select",
+                                "enum": [
+                                    "thumbnail"
+                                ]
+                            }
+                        }
+                    },
+                    "catalog_rights": {
+                        "title": "Rights",
+                        "type": "array",
+                        "format": "array",
+                        "items": {
+                            "type": "object",
+                            "format": "object",
+                            "properties": {
+                                "catalog_rights_right": {
+                                    "title": "Rights",
+                                    "type": "string",
+                                    "format": "text"
+                                },
+                                "catalog_right_language": {
+                                    "title": "Language",
+                                    "type": "string",
+                                    "format": "select",
+                                    "enum": [
+                                        null,
+                                        "ja",
+                                        "ja-Kana",
+                                        "ja-Latn",
+                                        "en",
+                                        "fr",
+                                        "it",
+                                        "de",
+                                        "es",
+                                        "zh-cn",
+                                        "zh-tw",
+                                        "ru",
+                                        "la",
+                                        "ms",
+                                        "eo",
+                                        "ar",
+                                        "el",
+                                        "ko"
+                                    ]
+                                },
+                                "catalog_right_rdf_resource": {
+                                    "title": "RDF Resource",
+                                    "type": "string",
+                                    "format": "text"
+                                }
+                            }
+                        }
+                    },
+                    "catalog_titles": {
+                        "title": "Title",
+                        "type": "array",
+                        "format": "array",
+                        "items": {
+                            "type": "object",
+                            "format": "object",
+                            "properties": {
+                                "catalog_title": {
+                                    "title": "Title",
+                                    "type": "string",
+                                    "format": "text"
+                                },
+                                "catalog_title_language": {
+                                    "title": "Language",
+                                    "type": "string",
+                                    "format": "select",
+                                    "enum": [
+                                        null,
+                                        "ja",
+                                        "ja-Kana",
+                                        "ja-Latn",
+                                        "en",
+                                        "fr",
+                                        "it",
+                                        "de",
+                                        "es",
+                                        "zh-cn",
+                                        "zh-tw",
+                                        "ru",
+                                        "la",
+                                        "ms",
+                                        "eo",
+                                        "ar",
+                                        "el",
+                                        "ko"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "catalog_licenses": {
+                        "title": "License",
+                        "type": "array",
+                        "format": "array",
+                        "items": {
+                            "type": "object",
+                            "format": "object",
+                            "properties": {
+                                "catalog_license": {
+                                    "title": "License",
+                                    "type": "string",
+                                    "format": "text"
+                                },
+                                "catalog_license_type": {
+                                    "title": "License Type",
+                                    "type": "string",
+                                    "format": "select",
+                                    "enum": [
+                                        "file",
+                                        "metadata",
+                                        "thumbnail"
+                                    ]
+                                },
+                                "catalog_license_language": {
+                                    "title": "Language",
+                                    "type": "string",
+                                    "format": "select",
+                                    "enum": [
+                                        null,
+                                        "ja",
+                                        "ja-Kana",
+                                        "ja-Latn",
+                                        "en",
+                                        "fr",
+                                        "it",
+                                        "de",
+                                        "es",
+                                        "zh-cn",
+                                        "zh-tw",
+                                        "ru",
+                                        "la",
+                                        "ms",
+                                        "eo",
+                                        "ar",
+                                        "el",
+                                        "ko"
+                                    ]
+                                },
+                                "catalog_license_rdf_resource": {
+                                    "title": "RDF Resource",
+                                    "type": "string",
+                                    "format": "text"
+                                }
+                            }
+                        }
+                    },
+                    "catalog_subjects": {
+                        "title": "Subject",
+                        "type": "array",
+                        "format": "array",
+                        "items": {
+                            "type": "object",
+                            "format": "object",
+                            "properties": {
+                                "catalog_subject": {
+                                    "title": "Subject",
+                                    "type": "string",
+                                    "format": "text"
+                                },
+                                "catalog_subject_uri": {
+                                    "title": "Subject URI",
+                                    "type": "string",
+                                    "format": "text"
+                                },
+                                "catalog_subject_scheme": {
+                                    "title": "Subject Scheme",
+                                    "type": "string",
+                                    "format": "select",
+                                    "enum": [
+                                        "BSH",
+                                        "DDC",
+                                        "e-Rad",
+                                        "LCC",
+                                        "LCSH",
+                                        "MeSH",
+                                        "NDC",
+                                        "NDLC",
+                                        "NDLSH",
+                                        "SciVal",
+                                        "UDC",
+                                        "Other"
+                                    ]
+                                },
+                                "catalog_subject_language": {
+                                    "title": "Language",
+                                    "type": "string",
+                                    "format": "select",
+                                    "enum": [
+                                        null,
+                                        "ja",
+                                        "ja-Kana",
+                                        "ja-Latn",
+                                        "en",
+                                        "fr",
+                                        "it",
+                                        "de",
+                                        "es",
+                                        "zh-cn",
+                                        "zh-tw",
+                                        "ru",
+                                        "la",
+                                        "ms",
+                                        "eo",
+                                        "ar",
+                                        "el",
+                                        "ko"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "catalog_identifiers": {
+                        "title": "Identifier",
+                        "type": "array",
+                        "format": "array",
+                        "items": {
+                            "type": "object",
+                            "format": "object",
+                            "properties": {
+                                "catalog_identifier": {
+                                    "title": "Identifier",
+                                    "type": "string",
+                                    "format": "text"
+                                },
+                                "catalog_identifier_type": {
+                                    "title": "Identifier Type",
+                                    "type": [
+                                        "null",
+                                        "string"
+                                    ],
+                                    "format": "select",
+                                    "enum": [
+                                        "DOI",
+                                        "HDL",
+                                        "URI"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "catalog_contributors": {
+                        "title": "Contributor",
+                        "type": "array",
+                        "format": "array",
+                        "items": {
+                            "type": "object",
+                            "format": "object",
+                            "properties": {
+                                "contributor_type": {
+                                    "title": "Contributor Type",
+                                    "type": "string",
+                                    "format": "select",
+                                    "enum": [
+                                        "HostingInstitution"
+                                    ]
+                                },
+                                "contributor_names": {
+                                    "title": "Contributor Name",
+                                    "type": "array",
+                                    "format": "array",
+                                    "items": {
+                                        "type": "object",
+                                        "format": "object",
+                                        "properties": {
+                                            "contributor_name": {
+                                                "title": "Contributor Name",
+                                                "type": "string",
+                                                "format": "text"
+                                            },
+                                            "contributor_name_language": {
+                                                "title": "Language",
+                                                "type": [
+                                                    "null",
+                                                    "string"
+                                                ],
+                                                "format": "select",
+                                                "enum": [
+                                                    null,
+                                                    "ja",
+                                                    "ja-Kana",
+                                                    "ja-Latn",
+                                                    "en",
+                                                    "fr",
+                                                    "it",
+                                                    "de",
+                                                    "es",
+                                                    "zh-cn",
+                                                    "zh-tw",
+                                                    "ru",
+                                                    "la",
+                                                    "ms",
+                                                    "eo",
+                                                    "ar",
+                                                    "el",
+                                                    "ko"
+                                                ]
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "catalog_descriptions": {
+                        "title": "Description",
+                        "type": "object",
+                        "format": "object",
+                        "properties": {
+                            "catalog_description": {
+                                "title": "Description",
+                                "type": "string",
+                                "format": "text"
+                            },
+                            "catalog_description_type": {
+                                "title": "Description Type",
+                                "type": "string",
+                                "format": "select",
+                                "enum": [
+                                    "Abstract",
+                                    "Methods",
+                                    "TableOfContents",
+                                    "TechnicalInfo",
+                                    "Other"
+                                ]
+                            },
+                            "catalog_description_language": {
+                                "title": "Language",
+                                "type": "string",
+                                "format": "select",
+                                "enum": [
+                                    null,
+                                    "ja",
+                                    "ja-Kana",
+                                    "ja-Latn",
+                                    "en",
+                                    "fr",
+                                    "it",
+                                    "de",
+                                    "es",
+                                    "zh-cn",
+                                    "zh-tw",
+                                    "ru",
+                                    "la",
+                                    "ms",
+                                    "eo",
+                                    "ar",
+                                    "el",
+                                    "ko"
+                                ]
+                            }
+                        }
+                    },
+                    "catalog_access_rights": {
+                        "title": "Access Rights",
+                        "type": "array",
+                        "format": "array",
+                        "items": {
+                            "type": "object",
+                            "format": "object",
+                            "properties": {
+                                "catalog_access_right": {
+                                    "title": "Access Rights",
+                                    "type": "string",
+                                    "format": "select",
+                                    "enum": [
+                                        "embargoed access",
+                                        "metadata only access",
+                                        "restricted access",
+                                        "open access"
+                                    ],
+                                    "uri": {
+                                        "embargoed access": "http://purl.org/coar/access_right/c_f1cf",
+                                        "metadata only access": "http://purl.org/coar/access_right/c_14cb",
+                                        "open access": "http://purl.org/coar/access_right/c_abf2",
+                                        "restricted access": "http://purl.org/coar/access_right/c_16ec"
+                                    }
+                                },
+                                "catalog_access_right_rdf_resource": {
+                                    "title": "RDF Resource",
+                                    "type": "string",
+                                    "format": "text"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "item_30002_edition41": {
+            "title": "edition",
+            "type": "array",
+            "min_items": 1,
+            "max_items": 9999,
+            "items": {
+                "title": "edition",
+                "type": "object",
+                "format": "object",
+                "properties": {
+                    "edition": {
+                        "title": "版",
+                        "type": "string",
+                        "format": "text"
+                    },
+                    "edition_language": {
+                        "title": "言語",
+                        "type": "string",
+                        "format": "select",
+                        "enum": [
+                            null,
+                            "ja",
+                            "ja-Kana",
+                            "ja-Latn",
+                            "en",
+                            "fr",
+                            "it",
+                            "de",
+                            "es",
+                            "zh-cn",
+                            "zh-tw",
+                            "ru",
+                            "la",
+                            "ms",
+                            "eo",
+                            "ar",
+                            "el",
+                            "ko"
+                        ]
+                    }
+                }
+            }
+        },
+        "item_30002_heading36": {
+            "title": "Heading",
+            "type": "array",
+            "min_items": 1,
+            "max_items": 9999,
+            "items": {
+                "type": "object",
+                "format": "object",
+                "properties": {
+                    "subitem_heading_headline": {
+                        "title": "小見出し",
+                        "type": "string",
+                        "format": "text"
+                    },
+                    "subitem_heading_language": {
+                        "title": "言語",
+                        "type": [
+                            "null",
+                            "string"
+                        ],
+                        "format": "select",
+                        "enum": [
+                            null,
+                            "ja",
+                            "ja-Kana",
+                            "ja-Latn",
+                            "en",
+                            "fr",
+                            "it",
+                            "de",
+                            "es",
+                            "zh-cn",
+                            "zh-tw",
+                            "ru",
+                            "la",
+                            "ms",
+                            "eo",
+                            "ar",
+                            "el",
+                            "ko"
+                        ]
+                    },
+                    "subitem_heading_banner_headline": {
+                        "title": "大見出し",
+                        "type": "string",
+                        "format": "text"
+                    }
+                }
+            }
+        },
+        "item_30002_version14": {
+            "title": "バージョン情報",
+            "type": "object",
+            "format": "object",
+            "properties": {
+                "subitem_version": {
+                    "title": "バージョン情報",
+                    "type": "string",
+                    "format": "text"
+                }
+            }
+        },
+        "item_30002_language12": {
+            "title": "Language",
+            "type": "array",
+            "min_items": 1,
+            "max_items": 9999,
+            "items": {
+                "type": "object",
+                "format": "object",
+                "properties": {
+                    "subitem_language": {
+                        "title": "言語",
+                        "type": [
+                            "null",
+                            "string"
+                        ],
+                        "format": "select",
+                        "enum": [
+                            null,
+                            "jpn",
+                            "eng",
+                            "aar",
+                            "abk",
+                            "afr",
+                            "aka",
+                            "amh",
+                            "ara",
+                            "arg",
+                            "asm",
+                            "ava",
+                            "ave",
+                            "aym",
+                            "aze",
+                            "bak",
+                            "bam",
+                            "bel",
+                            "ben",
+                            "bis",
+                            "bod",
+                            "bos",
+                            "bre",
+                            "bul",
+                            "cat",
+                            "ces",
+                            "cha",
+                            "che",
+                            "chu",
+                            "chv",
+                            "cor",
+                            "cos",
+                            "cre",
+                            "cym",
+                            "dan",
+                            "deu",
+                            "div",
+                            "dzo",
+                            "ell",
+                            "epo",
+                            "est",
+                            "eus",
+                            "ewe",
+                            "fao",
+                            "fas",
+                            "fij",
+                            "fin",
+                            "fra",
+                            "fry",
+                            "ful",
+                            "gla",
+                            "gle",
+                            "glg",
+                            "glv",
+                            "grn",
+                            "guj",
+                            "hat",
+                            "hau",
+                            "heb",
+                            "her",
+                            "hin",
+                            "hmo",
+                            "hrv",
+                            "hun",
+                            "hye",
+                            "ibo",
+                            "ido",
+                            "iii",
+                            "iku",
+                            "ile",
+                            "ina",
+                            "ind",
+                            "ipk",
+                            "isl",
+                            "ita",
+                            "jav",
+                            "kal",
+                            "kan",
+                            "kas",
+                            "kat",
+                            "kau",
+                            "kaz",
+                            "khm",
+                            "kik",
+                            "kin",
+                            "kir",
+                            "kom",
+                            "kon",
+                            "kor",
+                            "kua",
+                            "kur",
+                            "lao",
+                            "lat",
+                            "lav",
+                            "lim",
+                            "lin",
+                            "lit",
+                            "ltz",
+                            "lub",
+                            "lug",
+                            "mah",
+                            "mal",
+                            "mar",
+                            "mkd",
+                            "mlg",
+                            "mlt",
+                            "mon",
+                            "mri",
+                            "msa",
+                            "mya",
+                            "nau",
+                            "nav",
+                            "nbl",
+                            "nde",
+                            "ndo",
+                            "nep",
+                            "nld",
+                            "nno",
+                            "nob",
+                            "nor",
+                            "nya",
+                            "oci",
+                            "oji",
+                            "ori",
+                            "orm",
+                            "oss",
+                            "pan",
+                            "pli",
+                            "pol",
+                            "por",
+                            "pus",
+                            "que",
+                            "roh",
+                            "ron",
+                            "run",
+                            "rus",
+                            "sag",
+                            "san",
+                            "sin",
+                            "slk",
+                            "slv",
+                            "sme",
+                            "smo",
+                            "sna",
+                            "snd",
+                            "som",
+                            "sot",
+                            "spa",
+                            "sqi",
+                            "srd",
+                            "srp",
+                            "ssw",
+                            "sun",
+                            "swa",
+                            "swe",
+                            "tah",
+                            "tam",
+                            "tat",
+                            "tel",
+                            "tgk",
+                            "tgl",
+                            "tha",
+                            "tir",
+                            "ton",
+                            "tsn",
+                            "tso",
+                            "tuk",
+                            "tur",
+                            "twi",
+                            "uig",
+                            "ukr",
+                            "urd",
+                            "uzb",
+                            "ven",
+                            "vie",
+                            "vol",
+                            "wln",
+                            "wol",
+                            "xho",
+                            "yid",
+                            "yor",
+                            "zha",
+                            "zho",
+                            "zul"
+                        ]
+                    }
+                }
+            }
+        },
+        "item_30002_page_end28": {
+            "title": "終了ページ",
+            "type": "object",
+            "format": "object",
+            "properties": {
+                "subitem_end_page": {
+                    "title": "終了ページ",
+                    "type": "string",
+                    "format": "text"
+                }
+            }
+        },
+        "item_30002_relation18": {
+            "title": "Relation",
+            "type": "array",
+            "min_items": 1,
+            "max_items": 9999,
+            "items": {
+                "type": "object",
+                "format": "object",
+                "properties": {
+                    "subitem_relation_name": {
+                        "title": "関連名称",
+                        "type": "array",
+                        "format": "array",
+                        "items": {
+                            "type": "object",
+                            "format": "object",
+                            "properties": {
+                                "subitem_relation_name_text": {
+                                    "title": "関連名称",
+                                    "type": "string",
+                                    "format": "text"
+                                },
+                                "subitem_relation_name_language": {
+                                    "title": "言語",
+                                    "type": [
+                                        "null",
+                                        "string"
+                                    ],
+                                    "format": "select",
+                                    "enum": [
+                                        null,
+                                        "ja",
+                                        "ja-Kana",
+                                        "ja-Latn",
+                                        "en",
+                                        "fr",
+                                        "it",
+                                        "de",
+                                        "es",
+                                        "zh-cn",
+                                        "zh-tw",
+                                        "ru",
+                                        "la",
+                                        "ms",
+                                        "eo",
+                                        "ar",
+                                        "el",
+                                        "ko"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "subitem_relation_type": {
+                        "title": "関連タイプ",
+                        "type": [
+                            "null",
+                            "string"
+                        ],
+                        "format": "select",
+                        "enum": [
+                            null,
+                            "isVersionOf",
+                            "hasVersion",
+                            "isPartOf",
+                            "hasPart",
+                            "isReferencedBy",
+                            "references",
+                            "isFormatOf",
+                            "hasFormat",
+                            "isReplacedBy",
+                            "replaces",
+                            "isRequiredBy",
+                            "requires",
+                            "isSupplementedBy",
+                            "isSupplementTo",
+                            "isIdenticalTo",
+                            "isDerivedFrom",
+                            "isSourceOf",
+                            "isCitedBy",
+                            "Cites",
+                            "inSeries"
+                        ]
+                    },
+                    "subitem_relation_type_id": {
+                        "title": "関連識別子",
+                        "type": "object",
+                        "format": "object",
+                        "properties": {
+                            "subitem_relation_type_select": {
+                                "title": "識別子タイプ",
+                                "type": [
+                                    "null",
+                                    "string"
+                                ],
+                                "format": "select",
+                                "enum": [
+                                    null,
+                                    "ARK",
+                                    "arXiv",
+                                    "DOI",
+                                    "HDL",
+                                    "ICHUSHI",
+                                    "ISBN",
+                                    "J-GLOBAL",
+                                    "Local",
+                                    "PISSN",
+                                    "EISSN",
+                                    "ISSN",
+                                    "NAID",
+                                    "NCID",
+                                    "PMID",
+                                    "PURL",
+                                    "SCOPUS",
+                                    "URI",
+                                    "WOS",
+                                    "CRID"
+                                ]
+                            },
+                            "subitem_relation_type_id_text": {
+                                "title": "関連識別子",
+                                "type": "string",
+                                "format": "text"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "item_30002_temporal19": {
+            "title": "Temporal",
+            "type": "array",
+            "min_items": 1,
+            "max_items": 9999,
+            "items": {
+                "type": "object",
+                "format": "object",
+                "properties": {
+                    "subitem_temporal_text": {
+                        "title": "時間的範囲",
+                        "type": "string",
+                        "format": "text"
+                    },
+                    "subitem_temporal_language": {
+                        "title": "言語",
+                        "type": [
+                            "null",
+                            "string"
+                        ],
+                        "format": "select",
+                        "enum": [
+                            null,
+                            "ja",
+                            "ja-Kana",
+                            "ja-Latn",
+                            "en",
+                            "fr",
+                            "it",
+                            "de",
+                            "es",
+                            "zh-cn",
+                            "zh-tw",
+                            "ru",
+                            "la",
+                            "ms",
+                            "eo",
+                            "ar",
+                            "el",
+                            "ko"
+                        ]
+                    }
+                }
+            }
+        },
+        "system_identifier_doi": {
+            "title": "Persistent Identifier(DOI)",
+            "type": "object",
+            "format": "object",
+            "properties": {
+                "subitem_systemidt_identifier": {
+                    "title": "SYSTEMIDT Identifier",
+                    "type": "string",
+                    "format": "text"
+                },
+                "subitem_systemidt_identifier_type": {
+                    "title": "SYSTEMIDT Identifier Type",
+                    "type": "string",
+                    "format": "select",
+                    "enum": [
+                        "DOI",
+                        "HDL",
+                        "URI"
+                    ]
+                }
+            }
+        },
+        "system_identifier_hdl": {
+            "title": "Persistent Identifier(HDL)",
+            "type": "object",
+            "format": "object",
+            "properties": {
+                "subitem_systemidt_identifier": {
+                    "title": "SYSTEMIDT Identifier",
+                    "type": "string",
+                    "format": "text"
+                },
+                "subitem_systemidt_identifier_type": {
+                    "title": "SYSTEMIDT Identifier Type",
+                    "type": "string",
+                    "format": "select",
+                    "enum": [
+                        "DOI",
+                        "HDL",
+                        "URI"
+                    ]
+                }
+            }
+        },
+        "system_identifier_uri": {
+            "title": "Persistent Identifier(URI)",
+            "type": "object",
+            "format": "object",
+            "properties": {
+                "subitem_systemidt_identifier": {
+                    "title": "SYSTEMIDT Identifier",
+                    "type": "string",
+                    "format": "text"
+                },
+                "subitem_systemidt_identifier_type": {
+                    "title": "SYSTEMIDT Identifier Type",
+                    "type": "string",
+                    "format": "select",
+                    "enum": [
+                        "DOI",
+                        "HDL",
+                        "URI"
+                    ]
+                }
+            }
+        },
+        "item_30002_publisher10": {
+            "title": "Publisher",
+            "type": "array",
+            "min_items": 1,
+            "max_items": 9999,
+            "items": {
+                "type": "object",
+                "format": "object",
+                "properties": {
+                    "subitem_publisher": {
+                        "title": "出版者",
+                        "type": "string",
+                        "format": "text"
+                    },
+                    "subitem_publisher_language": {
+                        "title": "言語",
+                        "type": [
+                            "null",
+                            "string"
+                        ],
+                        "format": "select",
+                        "enum": [
+                            null,
+                            "ja",
+                            "ja-Kana",
+                            "ja-Latn",
+                            "en",
+                            "fr",
+                            "it",
+                            "de",
+                            "es",
+                            "zh-cn",
+                            "zh-tw",
+                            "ru",
+                            "la",
+                            "ms",
+                            "eo",
+                            "ar",
+                            "el",
+                            "ko"
+                        ]
+                    }
+                }
+            }
+        },
+        "item_30002_conference34": {
+            "title": "Conference",
+            "type": "array",
+            "min_items": 1,
+            "max_items": 9999,
+            "items": {
+                "type": "object",
+                "format": "object",
+                "properties": {
+                    "subitem_conference_date": {
+                        "title": "開催期間",
+                        "type": "object",
+                        "format": "object",
+                        "properties": {
+                            "subitem_conference_period": {
+                                "title": "開催期間",
+                                "type": "string",
+                                "format": "text"
+                            },
+                            "subitem_conference_end_day": {
+                                "title": "終了日",
+                                "type": "string",
+                                "format": "text"
+                            },
+                            "subitem_conference_end_year": {
+                                "title": "終了年",
+                                "type": "string",
+                                "format": "text"
+                            },
+                            "subitem_conference_end_month": {
+                                "title": "終了月",
+                                "type": "string",
+                                "format": "text"
+                            },
+                            "subitem_conference_start_day": {
+                                "title": "開始日",
+                                "type": "string",
+                                "format": "text"
+                            },
+                            "subitem_conference_start_year": {
+                                "title": "開始年",
+                                "type": "string",
+                                "format": "text"
+                            },
+                            "subitem_conference_start_month": {
+                                "title": "開始月",
+                                "type": "string",
+                                "format": "text"
+                            },
+                            "subitem_conference_date_language": {
+                                "title": "言語",
+                                "type": [
+                                    "null",
+                                    "string"
+                                ],
+                                "format": "select",
+                                "enum": [
+                                    null,
+                                    "ja",
+                                    "ja-Kana",
+                                    "ja-Latn",
+                                    "en",
+                                    "fr",
+                                    "it",
+                                    "de",
+                                    "es",
+                                    "zh-cn",
+                                    "zh-tw",
+                                    "ru",
+                                    "la",
+                                    "ms",
+                                    "eo",
+                                    "ar",
+                                    "el",
+                                    "ko"
+                                ]
+                            }
+                        }
+                    },
+                    "subitem_conference_names": {
+                        "title": "会議名",
+                        "type": "array",
+                        "format": "array",
+                        "items": {
+                            "type": "object",
+                            "format": "object",
+                            "properties": {
+                                "subitem_conference_name": {
+                                    "title": "会議名",
+                                    "type": "string",
+                                    "format": "text"
+                                },
+                                "subitem_conference_name_language": {
+                                    "title": "言語",
+                                    "type": [
+                                        "null",
+                                        "string"
+                                    ],
+                                    "format": "select",
+                                    "enum": [
+                                        null,
+                                        "ja",
+                                        "ja-Kana",
+                                        "ja-Latn",
+                                        "en",
+                                        "fr",
+                                        "it",
+                                        "de",
+                                        "es",
+                                        "zh-cn",
+                                        "zh-tw",
+                                        "ru",
+                                        "la",
+                                        "ms",
+                                        "eo",
+                                        "ar",
+                                        "el",
+                                        "ko"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "subitem_conference_places": {
+                        "title": "開催地",
+                        "type": "array",
+                        "format": "array",
+                        "items": {
+                            "type": "object",
+                            "format": "object",
+                            "properties": {
+                                "subitem_conference_place": {
+                                    "title": "開催地",
+                                    "type": "string",
+                                    "format": "text"
+                                },
+                                "subitem_conference_place_language": {
+                                    "title": "言語",
+                                    "type": [
+                                        "null",
+                                        "string"
+                                    ],
+                                    "format": "select",
+                                    "enum": [
+                                        null,
+                                        "ja",
+                                        "ja-Kana",
+                                        "ja-Latn",
+                                        "en",
+                                        "fr",
+                                        "it",
+                                        "de",
+                                        "es",
+                                        "zh-cn",
+                                        "zh-tw",
+                                        "ru",
+                                        "la",
+                                        "ms",
+                                        "eo",
+                                        "ar",
+                                        "el",
+                                        "ko"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "subitem_conference_venues": {
+                        "title": "開催会場",
+                        "type": "array",
+                        "format": "array",
+                        "items": {
+                            "type": "object",
+                            "format": "object",
+                            "properties": {
+                                "subitem_conference_venue": {
+                                    "title": "開催会場",
+                                    "type": "string",
+                                    "format": "text"
+                                },
+                                "subitem_conference_venue_language": {
+                                    "title": "言語",
+                                    "type": [
+                                        "null",
+                                        "string"
+                                    ],
+                                    "format": "select",
+                                    "enum": [
+                                        null,
+                                        "ja",
+                                        "ja-Kana",
+                                        "ja-Latn",
+                                        "en",
+                                        "fr",
+                                        "it",
+                                        "de",
+                                        "es",
+                                        "zh-cn",
+                                        "zh-tw",
+                                        "ru",
+                                        "la",
+                                        "ms",
+                                        "eo",
+                                        "ar",
+                                        "el",
+                                        "ko"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "subitem_conference_country": {
+                        "title": "開催国",
+                        "type": [
+                            "null",
+                            "string"
+                        ],
+                        "format": "select",
+                        "enum": [
+                            null,
+                            "JPN",
+                            "ABW",
+                            "AFG",
+                            "AGO",
+                            "AIA",
+                            "ALA",
+                            "ALB",
+                            "AND",
+                            "ARE",
+                            "ARG",
+                            "ARM",
+                            "ASM",
+                            "ATA",
+                            "ATF",
+                            "ATG",
+                            "AUS",
+                            "AUT",
+                            "AZE",
+                            "BDI",
+                            "BEL",
+                            "BEN",
+                            "BES",
+                            "BFA",
+                            "BGD",
+                            "BGR",
+                            "BHR",
+                            "BHS",
+                            "BIH",
+                            "BLM",
+                            "BLR",
+                            "BLZ",
+                            "BMU",
+                            "BOL",
+                            "BRA",
+                            "BRB",
+                            "BRN",
+                            "BTN",
+                            "BVT",
+                            "BWA",
+                            "CAF",
+                            "CAN",
+                            "CCK",
+                            "CHE",
+                            "CHL",
+                            "CHN",
+                            "CIV",
+                            "CMR",
+                            "COD",
+                            "COG",
+                            "COK",
+                            "COL",
+                            "COM",
+                            "CPV",
+                            "CRI",
+                            "CUB",
+                            "CUW",
+                            "CXR",
+                            "CYM",
+                            "CYP",
+                            "CZE",
+                            "DEU",
+                            "DJI",
+                            "DMA",
+                            "DNK",
+                            "DOM",
+                            "DZA",
+                            "ECU",
+                            "EGY",
+                            "ERI",
+                            "ESH",
+                            "ESP",
+                            "EST",
+                            "ETH",
+                            "FIN",
+                            "FJI",
+                            "FLK",
+                            "FRA",
+                            "FRO",
+                            "FSM",
+                            "GAB",
+                            "GBR",
+                            "GEO",
+                            "GGY",
+                            "GHA",
+                            "GIB",
+                            "GIN",
+                            "GLP",
+                            "GMB",
+                            "GNB",
+                            "GNQ",
+                            "GRC",
+                            "GRD",
+                            "GRL",
+                            "GTM",
+                            "GUF",
+                            "GUM",
+                            "GUY",
+                            "HKG",
+                            "HMD",
+                            "HND",
+                            "HRV",
+                            "HTI",
+                            "HUN",
+                            "IDN",
+                            "IMN",
+                            "IND",
+                            "IOT",
+                            "IRL",
+                            "IRN",
+                            "IRQ",
+                            "ISL",
+                            "ISR",
+                            "ITA",
+                            "JAM",
+                            "JEY",
+                            "JOR",
+                            "KAZ",
+                            "KEN",
+                            "KGZ",
+                            "KHM",
+                            "KIR",
+                            "KNA",
+                            "KOR",
+                            "KWT",
+                            "LAO",
+                            "LBN",
+                            "LBR",
+                            "LBY",
+                            "LCA",
+                            "LIE",
+                            "LKA",
+                            "LSO",
+                            "LTU",
+                            "LUX",
+                            "LVA",
+                            "MAC",
+                            "MAF",
+                            "MAR",
+                            "MCO",
+                            "MDA",
+                            "MDG",
+                            "MDV",
+                            "MEX",
+                            "MHL",
+                            "MKD",
+                            "MLI",
+                            "MLT",
+                            "MMR",
+                            "MNE",
+                            "MNG",
+                            "MNP",
+                            "MOZ",
+                            "MRT",
+                            "MSR",
+                            "MTQ",
+                            "MUS",
+                            "MWI",
+                            "MYS",
+                            "MYT",
+                            "NAM",
+                            "NCL",
+                            "NER",
+                            "NFK",
+                            "NGA",
+                            "NIC",
+                            "NIU",
+                            "NLD",
+                            "NOR",
+                            "NPL",
+                            "NRU",
+                            "NZL",
+                            "OMN",
+                            "PAK",
+                            "PAN",
+                            "PCN",
+                            "PER",
+                            "PHL",
+                            "PLW",
+                            "PNG",
+                            "POL",
+                            "PRI",
+                            "PRK",
+                            "PRT",
+                            "PRY",
+                            "PSE",
+                            "PYF",
+                            "QAT",
+                            "REU",
+                            "ROU",
+                            "RUS",
+                            "RWA",
+                            "SAU",
+                            "SDN",
+                            "SEN",
+                            "SGP",
+                            "SGS",
+                            "SHN",
+                            "SJM",
+                            "SLB",
+                            "SLE",
+                            "SLV",
+                            "SMR",
+                            "SOM",
+                            "SPM",
+                            "SRB",
+                            "SSD",
+                            "STP",
+                            "SUR",
+                            "SVK",
+                            "SVN",
+                            "SWE",
+                            "SWZ",
+                            "SXM",
+                            "SYC",
+                            "SYR",
+                            "TCA",
+                            "TCD",
+                            "TGO",
+                            "THA",
+                            "TJK",
+                            "TKL",
+                            "TKM",
+                            "TLS",
+                            "TON",
+                            "TTO",
+                            "TUN",
+                            "TUR",
+                            "TUV",
+                            "TWN",
+                            "TZA",
+                            "UGA",
+                            "UKR",
+                            "UMI",
+                            "URY",
+                            "USA",
+                            "UZB",
+                            "VAT",
+                            "VCT",
+                            "VEN",
+                            "VGB",
+                            "VIR",
+                            "VNM",
+                            "VUT",
+                            "WLF",
+                            "WSM",
+                            "YEM",
+                            "ZAF",
+                            "ZMB",
+                            "ZWE"
+                        ]
+                    },
+                    "subitem_conference_sequence": {
+                        "title": "回次",
+                        "type": "string",
+                        "format": "text"
+                    },
+                    "subitem_conference_sponsors": {
+                        "title": "主催機関",
+                        "type": "array",
+                        "format": "array",
+                        "items": {
+                            "type": "object",
+                            "format": "object",
+                            "properties": {
+                                "subitem_conference_sponsor": {
+                                    "title": "主催機関",
+                                    "type": "string",
+                                    "format": "text"
+                                },
+                                "subitem_conference_sponsor_language": {
+                                    "title": "言語",
+                                    "type": [
+                                        "null",
+                                        "string"
+                                    ],
+                                    "format": "select",
+                                    "enum": [
+                                        null,
+                                        "ja",
+                                        "ja-Kana",
+                                        "ja-Latn",
+                                        "en",
+                                        "fr",
+                                        "it",
+                                        "de",
+                                        "es",
+                                        "zh-cn",
+                                        "zh-tw",
+                                        "ru",
+                                        "la",
+                                        "ms",
+                                        "eo",
+                                        "ar",
+                                        "el",
+                                        "ko"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "item_30002_contributor3": {
+            "title": "Contributor",
+            "type": "array",
+            "min_items": 1,
+            "max_items": 9999,
+            "items": {
+                "type": "object",
+                "format": "object",
+                "properties": {
+                    "givenNames": {
+                        "title": "寄与者名",
+                        "type": "array",
+                        "format": "array",
+                        "items": {
+                            "type": "object",
+                            "format": "object",
+                            "properties": {
+                                "givenName": {
+                                    "title": "名",
+                                    "type": "string",
+                                    "format": "text"
+                                },
+                                "givenNameLang": {
+                                    "title": "言語",
+                                    "type": [
+                                        "null",
+                                        "string"
+                                    ],
+                                    "format": "select",
+                                    "enum": [
+                                        null,
+                                        "ja",
+                                        "ja-Kana",
+                                        "ja-Latn",
+                                        "en",
+                                        "fr",
+                                        "it",
+                                        "de",
+                                        "es",
+                                        "zh-cn",
+                                        "zh-tw",
+                                        "ru",
+                                        "la",
+                                        "ms",
+                                        "eo",
+                                        "ar",
+                                        "el",
+                                        "ko"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "familyNames": {
+                        "title": "寄与者姓",
+                        "type": "array",
+                        "format": "array",
+                        "items": {
+                            "type": "object",
+                            "format": "object",
+                            "properties": {
+                                "familyName": {
+                                    "title": "姓",
+                                    "type": "string",
+                                    "format": "text"
+                                },
+                                "familyNameLang": {
+                                    "title": "言語",
+                                    "type": [
+                                        "null",
+                                        "string"
+                                    ],
+                                    "format": "select",
+                                    "enum": [
+                                        null,
+                                        "ja",
+                                        "ja-Kana",
+                                        "ja-Latn",
+                                        "en",
+                                        "fr",
+                                        "it",
+                                        "de",
+                                        "es",
+                                        "zh-cn",
+                                        "zh-tw",
+                                        "ru",
+                                        "la",
+                                        "ms",
+                                        "eo",
+                                        "ar",
+                                        "el",
+                                        "ko"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "contributorType": {
+                        "title": "寄与者タイプ",
+                        "type": [
+                            "null",
+                            "string"
+                        ],
+                        "format": "select",
+                        "enum": [
+                            null,
+                            "ContactPerson",
+                            "DataCollector",
+                            "DataCurator",
+                            "DataManager",
+                            "Distributor",
+                            "Editor",
+                            "HostingInstitution",
+                            "Producer",
+                            "ProjectLeader",
+                            "ProjectManager",
+                            "ProjectMember",
+                            "RelatedPerson",
+                            "Researcher",
+                            "ResearchGroup",
+                            "Sponsor",
+                            "Supervisor",
+                            "WorkPackageLeader",
+                            "Other"
+                        ]
+                    },
+                    "nameIdentifiers": {
+                        "title": "寄与者識別子",
+                        "type": "array",
+                        "format": "array",
+                        "items": {
+                            "type": "object",
+                            "format": "object",
+                            "properties": {
+                                "nameIdentifier": {
+                                    "title": "寄与者識別子",
+                                    "type": "string",
+                                    "format": "text"
+                                },
+                                "nameIdentifierURI": {
+                                    "title": "寄与者識別子URI",
+                                    "type": "string",
+                                    "format": "text"
+                                },
+                                "nameIdentifierScheme": {
+                                    "title": "寄与者識別子Scheme",
+                                    "type": [
+                                        "null",
+                                        "string"
+                                    ],
+                                    "format": "select",
+                                    "enum": []
+                                }
+                            }
+                        }
+                    },
+                    "contributorMails": {
+                        "title": "寄与者メールアドレス",
+                        "type": "array",
+                        "format": "array",
+                        "items": {
+                            "type": "object",
+                            "format": "object",
+                            "properties": {
+                                "contributorMail": {
+                                    "title": "メールアドレス",
+                                    "type": "string",
+                                    "format": "text"
+                                }
+                            }
+                        }
+                    },
+                    "contributorNames": {
+                        "title": "寄与者姓名",
+                        "type": "array",
+                        "format": "array",
+                        "items": {
+                            "type": "object",
+                            "format": "object",
+                            "properties": {
+                                "lang": {
+                                    "title": "言語",
+                                    "type": [
+                                        "null",
+                                        "string"
+                                    ],
+                                    "format": "select",
+                                    "enum": [
+                                        null,
+                                        "ja",
+                                        "ja-Kana",
+                                        "ja-Latn",
+                                        "en",
+                                        "fr",
+                                        "it",
+                                        "de",
+                                        "es",
+                                        "zh-cn",
+                                        "zh-tw",
+                                        "ru",
+                                        "la",
+                                        "ms",
+                                        "eo",
+                                        "ar",
+                                        "el",
+                                        "ko"
+                                    ]
+                                },
+                                "nameType": {
+                                    "title": "名前タイプ",
+                                    "type": [
+                                        "null",
+                                        "string"
+                                    ],
+                                    "format": "select",
+                                    "enum": [
+                                        null,
+                                        "Personal",
+                                        "Organizational"
+                                    ]
+                                },
+                                "contributorName": {
+                                    "title": "姓名",
+                                    "type": "string",
+                                    "format": "text"
+                                }
+                            }
+                        }
+                    },
+                    "contributorAffiliations": {
+                        "title": "寄与者所属",
+                        "type": "array",
+                        "format": "array",
+                        "items": {
+                            "type": "object",
+                            "format": "object",
+                            "properties": {
+                                "contributorAffiliationNames": {
+                                    "title": "所属機関名",
+                                    "type": "array",
+                                    "format": "array",
+                                    "items": {
+                                        "type": "object",
+                                        "format": "object",
+                                        "properties": {
+                                            "contributorAffiliationName": {
+                                                "title": "所属機関名",
+                                                "type": "string",
+                                                "format": "text"
+                                            },
+                                            "contributorAffiliationNameLang": {
+                                                "title": "言語",
+                                                "type": [
+                                                    "null",
+                                                    "string"
+                                                ],
+                                                "format": "select",
+                                                "enum": [
+                                                    null,
+                                                    "ja",
+                                                    "ja-Kana",
+                                                    "ja-Latn",
+                                                    "en",
+                                                    "fr",
+                                                    "it",
+                                                    "de",
+                                                    "es",
+                                                    "zh-cn",
+                                                    "zh-tw",
+                                                    "ru",
+                                                    "la",
+                                                    "ms",
+                                                    "eo",
+                                                    "ar",
+                                                    "el",
+                                                    "ko"
+                                                ]
+                                            }
+                                        }
+                                    }
+                                },
+                                "contributorAffiliationNameIdentifiers": {
+                                    "title": "所属機関識別子",
+                                    "type": "array",
+                                    "format": "array",
+                                    "items": {
+                                        "type": "object",
+                                        "format": "object",
+                                        "properties": {
+                                            "contributorAffiliationURI": {
+                                                "title": "所属機関識別子URI",
+                                                "type": "string",
+                                                "format": "text"
+                                            },
+                                            "contributorAffiliationScheme": {
+                                                "title": "所属機関識別子Scheme",
+                                                "type": [
+                                                    "null",
+                                                    "string"
+                                                ],
+                                                "format": "select",
+                                                "enum": []
+                                            },
+                                            "contributorAffiliationNameIdentifier": {
+                                                "title": "所属機関識別子",
+                                                "type": "string",
+                                                "format": "text"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "contributorAlternatives": {
+                        "title": "寄与者別名",
+                        "type": "array",
+                        "format": "array",
+                        "items": {
+                            "type": "object",
+                            "format": "object",
+                            "properties": {
+                                "contributorAlternative": {
+                                    "title": "別名",
+                                    "type": "string",
+                                    "format": "text"
+                                },
+                                "contributorAlternativeLang": {
+                                    "title": "言語",
+                                    "type": [
+                                        "null",
+                                        "string"
+                                    ],
+                                    "format": "select",
+                                    "enum": [
+                                        null,
+                                        "ja",
+                                        "ja-Kana",
+                                        "ja-Latn",
+                                        "en",
+                                        "fr",
+                                        "it",
+                                        "de",
+                                        "es",
+                                        "zh-cn",
+                                        "zh-tw",
+                                        "ru",
+                                        "la",
+                                        "ms",
+                                        "eo",
+                                        "ar",
+                                        "el",
+                                        "ko"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "item_30002_description9": {
+            "title": "Description",
+            "type": "array",
+            "min_items": 1,
+            "max_items": 9999,
+            "items": {
+                "type": "object",
+                "format": "object",
+                "properties": {
+                    "subitem_description": {
+                        "title": "内容記述",
+                        "type": "string",
+                        "format": "textarea"
+                    },
+                    "subitem_description_type": {
+                        "title": "内容記述タイプ",
+                        "type": [
+                            "null",
+                            "string"
+                        ],
+                        "format": "select",
+                        "enum": [
+                            null,
+                            "Abstract",
+                            "Methods",
+                            "TableOfContents",
+                            "TechnicalInfo",
+                            "Other"
+                        ]
+                    },
+                    "subitem_description_language": {
+                        "title": "言語",
+                        "type": [
+                            "null",
+                            "string"
+                        ],
+                        "format": "select",
+                        "enum": [
+                            null,
+                            "ja",
+                            "ja-Kana",
+                            "ja-Latn",
+                            "en",
+                            "fr",
+                            "it",
+                            "de",
+                            "es",
+                            "zh-cn",
+                            "zh-tw",
+                            "ru",
+                            "la",
+                            "ms",
+                            "eo",
+                            "ar",
+                            "el",
+                            "ko"
+                        ]
+                    }
+                }
+            }
+        },
+        "item_30002_identifier16": {
+            "title": "Identifier",
+            "type": "array",
+            "min_items": 1,
+            "max_items": 9999,
+            "items": {
+                "type": "object",
+                "format": "object",
+                "properties": {
+                    "subitem_identifier_uri": {
+                        "title": "識別子",
+                        "type": "string",
+                        "format": "text"
+                    },
+                    "subitem_identifier_type": {
+                        "title": "識別子タイプ",
+                        "type": [
+                            "null",
+                            "string"
+                        ],
+                        "format": "select",
+                        "enum": [
+                            null,
+                            "DOI",
+                            "HDL",
+                            "URI"
+                        ]
+                    }
+                }
+            }
+        },
+        "item_30002_page_start27": {
+            "title": "開始ページ",
+            "type": "object",
+            "format": "object",
+            "properties": {
+                "subitem_start_page": {
+                    "title": "開始ページ",
+                    "type": "string",
+                    "format": "text"
+                }
+            }
+        },
+        "item_30002_degree_name31": {
+            "title": "Degree Name",
+            "type": "array",
+            "min_items": 1,
+            "max_items": 9999,
+            "items": {
+                "title": "学位名",
+                "type": "object",
+                "format": "object",
+                "properties": {
+                    "subitem_degreename": {
+                        "title": "学位名",
+                        "type": "string",
+                        "format": "text"
+                    },
+                    "subitem_degreename_language": {
+                        "title": "言語",
+                        "type": [
+                            "null",
+                            "string"
+                        ],
+                        "format": "select",
+                        "enum": [
+                            null,
+                            "ja",
+                            "ja-Kana",
+                            "ja-Latn",
+                            "en",
+                            "fr",
+                            "it",
+                            "de",
+                            "es",
+                            "zh-cn",
+                            "zh-tw",
+                            "ru",
+                            "la",
+                            "ms",
+                            "eo",
+                            "ar",
+                            "el",
+                            "ko"
+                        ]
+                    }
+                }
+            }
+        },
+        "item_30002_geolocation20": {
+            "title": "Geo Location",
+            "type": "array",
+            "min_items": 1,
+            "max_items": 9999,
+            "items": {
+                "type": "object",
+                "format": "object",
+                "properties": {
+                    "subitem_geolocation_box": {
+                        "title": "位置情報（空間）",
+                        "type": "object",
+                        "format": "object",
+                        "properties": {
+                            "subitem_east_longitude": {
+                                "title": "東部経度",
+                                "type": "string",
+                                "format": "text"
+                            },
+                            "subitem_north_latitude": {
+                                "title": "北部緯度",
+                                "type": "string",
+                                "format": "text"
+                            },
+                            "subitem_south_latitude": {
+                                "title": "南部緯度",
+                                "type": "string",
+                                "format": "text"
+                            },
+                            "subitem_west_longitude": {
+                                "title": "西部経度",
+                                "type": "string",
+                                "format": "text"
+                            }
+                        }
+                    },
+                    "subitem_geolocation_place": {
+                        "title": "位置情報（自由記述）",
+                        "type": "array",
+                        "format": "array",
+                        "items": {
+                            "type": "object",
+                            "format": "object",
+                            "properties": {
+                                "subitem_geolocation_place_text": {
+                                    "title": "位置情報（自由記述）",
+                                    "type": "string",
+                                    "format": "text"
+                                }
+                            }
+                        }
+                    },
+                    "subitem_geolocation_point": {
+                        "title": "位置情報（点）",
+                        "type": "object",
+                        "format": "object",
+                        "properties": {
+                            "subitem_point_latitude": {
+                                "title": "緯度",
+                                "type": "string",
+                                "format": "text"
+                            },
+                            "subitem_point_longitude": {
+                                "title": "経度",
+                                "type": "string",
+                                "format": "text"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "item_30002_access_rights4": {
+            "title": "アクセス権",
+            "type": "object",
+            "format": "object",
+            "properties": {
+                "subitem_access_right": {
+                    "title": "アクセス権",
+                    "type": [
+                        "null",
+                        "string"
+                    ],
+                    "format": "select",
+                    "enum": [
+                        null,
+                        "embargoed access",
+                        "metadata only access",
+                        "open access",
+                        "restricted access"
+                    ],
+                    "uri": {
+                        "embargoed access": "http://purl.org/coar/access_right/c_f1cf",
+                        "metadata only access": "http://purl.org/coar/access_right/c_14cb",
+                        "open access": "http://purl.org/coar/access_right/c_abf2",
+                        "restricted access": "http://purl.org/coar/access_right/c_16ec"
+                    }
+                },
+                "subitem_access_right_uri": {
+                    "title": "アクセス権URI",
+                    "type": "string",
+                    "format": "text"
+                }
+            }
+        },
+        "item_30002_date_granted32": {
+            "title": "学位授与年月日",
+            "type": "object",
+            "format": "object",
+            "properties": {
+                "subitem_dategranted": {
+                    "title": "学位授与年月日",
+                    "type": "string",
+                    "format": "datetime",
+                    "min_date": "1000-01-01",
+                    "max_date": "2999-12-31"
+                }
+            }
+        },
+        "item_30002_dcterms_date38": {
+            "title": "jpcoar_format",
+            "type": "array",
+            "min_items": 1,
+            "max_items": 9999,
+            "items": {
+                "title": "jpcoar_format",
+                "type": "object",
+                "format": "object",
+                "properties": {
+                    "jpcoar_format": {
+                        "title": "物理的形態",
+                        "type": "string",
+                        "format": "text"
+                    },
+                    "jpcoar_format_language": {
+                        "title": "Language",
+                        "type": "string",
+                        "format": "select",
+                        "enum": [
+                            null,
+                            "ja",
+                            "ja-Kana",
+                            "ja-Latn",
+                            "en",
+                            "fr",
+                            "it",
+                            "de",
+                            "es",
+                            "zh-cn",
+                            "zh-tw",
+                            "ru",
+                            "la",
+                            "ms",
+                            "eo",
+                            "ar",
+                            "el",
+                            "ko"
+                        ]
+                    }
+                }
+            }
+        },
+        "item_30002_issue_number25": {
+            "title": "号",
+            "type": "object",
+            "format": "object",
+            "properties": {
+                "subitem_issue": {
+                    "title": "号",
+                    "type": "string",
+                    "format": "text"
+                }
+            }
+        },
+        "item_30002_rights_holder7": {
+            "title": "Rights Holder",
+            "type": "array",
+            "min_items": 1,
+            "max_items": 9999,
+            "items": {
+                "type": "object",
+                "format": "object",
+                "properties": {
+                    "nameIdentifiers": {
+                        "title": "権利者識別子",
+                        "type": "array",
+                        "format": "array",
+                        "items": {
+                            "type": "object",
+                            "format": "object",
+                            "properties": {
+                                "nameIdentifier": {
+                                    "title": "権利者識別子",
+                                    "type": "string",
+                                    "format": "text"
+                                },
+                                "nameIdentifierURI": {
+                                    "title": "権利者識別子URI",
+                                    "type": "string",
+                                    "format": "text"
+                                },
+                                "nameIdentifierScheme": {
+                                    "title": "権利者識別子Scheme",
+                                    "type": [
+                                        "null",
+                                        "string"
+                                    ],
+                                    "format": "select",
+                                    "enum": []
+                                }
+                            }
+                        }
+                    },
+                    "rightHolderNames": {
+                        "title": "権利者名",
+                        "type": "array",
+                        "format": "array",
+                        "items": {
+                            "type": "object",
+                            "format": "object",
+                            "properties": {
+                                "rightHolderName": {
+                                    "title": "権利者名",
+                                    "type": "string",
+                                    "format": "text"
+                                },
+                                "rightHolderLanguage": {
+                                    "title": "言語",
+                                    "type": [
+                                        "null",
+                                        "string"
+                                    ],
+                                    "format": "select",
+                                    "enum": [
+                                        null,
+                                        "ja",
+                                        "ja-Kana",
+                                        "ja-Latn",
+                                        "en",
+                                        "fr",
+                                        "it",
+                                        "de",
+                                        "es",
+                                        "zh-cn",
+                                        "zh-tw",
+                                        "ru",
+                                        "la",
+                                        "ms",
+                                        "eo",
+                                        "ar",
+                                        "el",
+                                        "ko"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "item_30002_source_title23": {
+            "title": "Source Title",
+            "type": "array",
+            "min_items": 1,
+            "max_items": 9999,
+            "items": {
+                "type": "object",
+                "format": "object",
+                "properties": {
+                    "subitem_source_title": {
+                        "title": "収録物名",
+                        "type": "string",
+                        "format": "text"
+                    },
+                    "subitem_source_title_language": {
+                        "title": "言語",
+                        "type": [
+                            "null",
+                            "string"
+                        ],
+                        "format": "select",
+                        "enum": [
+                            null,
+                            "ja",
+                            "ja-Kana",
+                            "ja-Latn",
+                            "en",
+                            "fr",
+                            "it",
+                            "de",
+                            "es",
+                            "zh-cn",
+                            "zh-tw",
+                            "ru",
+                            "la",
+                            "ms",
+                            "eo",
+                            "ar",
+                            "el",
+                            "ko"
+                        ]
+                    }
+                }
+            }
+        },
+        "item_30002_version_type15": {
+            "title": "出版タイプ",
+            "type": "object",
+            "format": "object",
+            "properties": {
+                "subitem_version_type": {
+                    "title": "出版タイプ",
+                    "type": [
+                        "null",
+                        "string"
+                    ],
+                    "format": "select",
+                    "enum": [
+                        null,
+                        "AO",
+                        "SMUR",
+                        "AM",
+                        "P",
+                        "VoR",
+                        "CVoR",
+                        "EVoR",
+                        "NA"
+                    ],
+                    "uri": {
+                        "AO": "http://purl.org/coar/version/c_b1a7d7d4d402bcce",
+                        "SMUR": "http://purl.org/coar/version/c_71e4c1898caa6e32",
+                        "AM": "http://purl.org/coar/version/c_ab4af688f83e57aa",
+                        "P": "http://purl.org/coar/version/c_fa2ee174bc00049f",
+                        "VoR": "http://purl.org/coar/version/c_970fb48d4fbd8a85",
+                        "CVoR": "http://purl.org/coar/version/c_e19f295774971610",
+                        "EVoR": "http://purl.org/coar/version/c_dc82b40f9837b551",
+                        "NA": "http://purl.org/coar/version/c_be7fb7dd8ff6fe43"
+                    }
+                },
+                "subitem_peer_reviewed": {
+                    "title": "査読の有無",
+                    "type": [
+                        "null",
+                        "string"
+                    ],
+                    "format": "select",
+                    "enum": [
+                        null,
+                        "Peer reviewed",
+                        "Not peer reviewed"
+                    ]
+                },
+                "subitem_version_resource": {
+                    "title": "出版タイプResource",
+                    "type": "string",
+                    "format": "text"
+                }
+            }
+        },
+        "item_30002_volume_title44": {
+            "title": "volume_title",
+            "type": "array",
+            "min_items": 1,
+            "max_items": 9999,
+            "items": {
+                "title": "volume_title",
+                "type": "object",
+                "format": "object",
+                "properties": {
+                    "volume_title": {
+                        "title": "部編名",
+                        "type": "string",
+                        "format": "text"
+                    },
+                    "volume_title_language": {
+                        "title": "Language",
+                        "type": "string",
+                        "format": "select",
+                        "enum": [
+                            null,
+                            "ja",
+                            "ja-Kana",
+                            "ja-Latn",
+                            "en",
+                            "fr",
+                            "it",
+                            "de",
+                            "es",
+                            "zh-cn",
+                            "zh-tw",
+                            "ru",
+                            "la",
+                            "ms",
+                            "eo",
+                            "ar",
+                            "el",
+                            "ko"
+                        ]
+                    }
+                }
+            }
+        },
+        "item_30002_jpcoar_format40": {
+            "title": "original_language",
+            "type": "array",
+            "min_items": 1,
+            "max_items": 9999,
+            "items": {
+                "title": "original_language",
+                "type": "object",
+                "format": "object",
+                "properties": {
+                    "original_language": {
+                        "title": "Original Language",
+                        "type": "string",
+                        "format": "text"
+                    },
+                    "original_language_language": {
+                        "title": "Language",
+                        "type": "string",
+                        "format": "select",
+                        "enum": [
+                            null,
+                            "ja",
+                            "ja-Kana",
+                            "ja-Latn",
+                            "en",
+                            "fr",
+                            "it",
+                            "de",
+                            "es",
+                            "zh-cn",
+                            "zh-tw",
+                            "ru",
+                            "la",
+                            "ms",
+                            "eo",
+                            "ar",
+                            "el",
+                            "ko"
+                        ]
+                    }
+                }
+            }
+        },
+        "item_30002_resource_type13": {
+            "title": "Resource Type",
+            "type": "object",
+            "format": "object",
+            "properties": {
+                "resourceuri": {
+                    "title": "資源タイプ識別子",
+                    "type": "string",
+                    "format": "text",
+                    "required": true
+                },
+                "resourcetype": {
+                    "title": "資源タイプ",
+                    "type": [
+                        "null",
+                        "string"
+                    ],
+                    "format": "select",
+                    "enum": [
+                        null,
+                        "conference paper",
+                        "data paper",
+                        "departmental bulletin paper",
+                        "editorial",
+                        "journal",
+                        "journal article",
+                        "newspaper",
+                        "review article",
+                        "other periodical",
+                        "software paper",
+                        "article",
+                        "book",
+                        "book part",
+                        "cartographic material",
+                        "map",
+                        "conference output",
+                        "conference presentation",
+                        "conference proceedings",
+                        "conference poster",
+                        "aggregated data",
+                        "clinical trial data",
+                        "compiled data",
+                        "dataset",
+                        "encoded data",
+                        "experimental data",
+                        "genomic data",
+                        "geospatial data",
+                        "laboratory notebook",
+                        "measurement and test data",
+                        "observational data",
+                        "recorded data",
+                        "simulation data",
+                        "survey data",
+                        "image",
+                        "still image",
+                        "moving image",
+                        "video",
+                        "lecture",
+                        "design patent",
+                        "patent",
+                        "PCT application",
+                        "plant patent",
+                        "plant variety protection",
+                        "software patent",
+                        "trademark",
+                        "utility model",
+                        "report",
+                        "research report",
+                        "technical report",
+                        "policy report",
+                        "working paper",
+                        "data management plan",
+                        "sound",
+                        "thesis",
+                        "bachelor thesis",
+                        "master thesis",
+                        "doctoral thesis",
+                        "commentary",
+                        "design",
+                        "industrial design",
+                        "interactive resource",
+                        "layout design",
+                        "learning object",
+                        "manuscript",
+                        "musical notation",
+                        "peer review",
+                        "research proposal",
+                        "research protocol",
+                        "software",
+                        "source code",
+                        "technical documentation",
+                        "transcription",
+                        "workflow",
+                        "other"
+                    ],
+                    "uri": {
+                        "conference paper": "http://purl.org/coar/resource_type/c_5794",
+                        "data paper": "http://purl.org/coar/resource_type/c_beb9",
+                        "departmental bulletin paper": "http://purl.org/coar/resource_type/c_6501",
+                        "editorial": "http://purl.org/coar/resource_type/c_b239",
+                        "journal": "http://purl.org/coar/resource_type/c_0640",
+                        "journal article": "http://purl.org/coar/resource_type/c_6501",
+                        "newspaper": "http://purl.org/coar/resource_type/c_2fe3",
+                        "review article": "http://purl.org/coar/resource_type/c_dcae04bc",
+                        "other periodical": "http://purl.org/coar/resource_type/QX5C-AR31",
+                        "software paper": "http://purl.org/coar/resource_type/c_7bab",
+                        "article": "http://purl.org/coar/resource_type/c_6501",
+                        "book": "http://purl.org/coar/resource_type/c_2f33",
+                        "book part": "http://purl.org/coar/resource_type/c_3248",
+                        "cartographic material": "http://purl.org/coar/resource_type/c_12cc",
+                        "map": "http://purl.org/coar/resource_type/c_12cd",
+                        "conference output": "http://purl.org/coar/resource_type/c_c94f",
+                        "conference presentation": "http://purl.org/coar/resource_type/c_c94f",
+                        "conference proceedings": "http://purl.org/coar/resource_type/c_f744",
+                        "conference poster": "http://purl.org/coar/resource_type/c_6670",
+                        "aggregated data": "http://purl.org/coar/resource_type/ACF7-8YT9",
+                        "clinical trial data": "http://purl.org/coar/resource_type/c_cb28",
+                        "compiled data": "http://purl.org/coar/resource_type/FXF3-D3G7",
+                        "dataset": "http://purl.org/coar/resource_type/c_ddb1",
+                        "encoded data": "http://purl.org/coar/resource_type/AM6W-6QAW",
+                        "experimental data": "http://purl.org/coar/resource_type/63NG-B465",
+                        "genomic data": "http://purl.org/coar/resource_type/A8F1-NPV9",
+                        "geospatial data": "http://purl.org/coar/resource_type/2H0M-X761",
+                        "laboratory notebook": "http://purl.org/coar/resource_type/H41Y-FW7B",
+                        "measurement and test data": "http://purl.org/coar/resource_type/DD58-GFSX",
+                        "observational data": "http://purl.org/coar/resource_type/FF4C-28RK",
+                        "recorded data": "http://purl.org/coar/resource_type/CQMR-7K63",
+                        "simulation data": "http://purl.org/coar/resource_type/W2XT-7017",
+                        "survey data": "http://purl.org/coar/resource_type/NHD0-W6SY",
+                        "image": "http://purl.org/coar/resource_type/c_c513",
+                        "still image": "http://purl.org/coar/resource_type/c_ecc8",
+                        "moving image": "http://purl.org/coar/resource_type/c_8a7e",
+                        "video": "http://purl.org/coar/resource_type/c_12ce",
+                        "lecture": "http://purl.org/coar/resource_type/c_8544",
+                        "design patent": "http://purl.org/coar/resource_type/C53B-JCY5/",
+                        "patent": "http://purl.org/coar/resource_type/c_15cd",
+                        "PCT application": "http://purl.org/coar/resource_type/SB3Y-W4EH/",
+                        "plant patent": "http://purl.org/coar/resource_type/Z907-YMBB/",
+                        "plant variety protection": "http://purl.org/coar/resource_type/GPQ7-G5VE/",
+                        "software patent": "http://purl.org/coar/resource_type/MW8G-3CR8/",
+                        "trademark": "http://purl.org/coar/resource_type/H6QP-SC1X/",
+                        "utility model": "http://purl.org/coar/resource_type/9DKX-KSAF/",
+                        "report": "http://purl.org/coar/resource_type/c_93fc",
+                        "research report": "http://purl.org/coar/resource_type/c_18ws",
+                        "technical report": "http://purl.org/coar/resource_type/c_18gh",
+                        "policy report": "http://purl.org/coar/resource_type/c_186u",
+                        "working paper": "http://purl.org/coar/resource_type/c_8042",
+                        "data management plan": "http://purl.org/coar/resource_type/c_ab20",
+                        "sound": "http://purl.org/coar/resource_type/c_18cc",
+                        "thesis": "http://purl.org/coar/resource_type/c_46ec",
+                        "bachelor thesis": "http://purl.org/coar/resource_type/c_7a1f",
+                        "master thesis": "http://purl.org/coar/resource_type/c_bdcc",
+                        "doctoral thesis": "http://purl.org/coar/resource_type/c_db06",
+                        "commentary": "http://purl.org/coar/resource_type/D97F-VB57/",
+                        "design": "http://purl.org/coar/resource_type/542X-3S04/",
+                        "industrial design": "http://purl.org/coar/resource_type/JBNF-DYAD/",
+                        "interactive resource": "http://purl.org/coar/resource_type/c_e9a0",
+                        "layout design": "http://purl.org/coar/resource_type/BW7T-YM2G/",
+                        "learning object": "http://purl.org/coar/resource_type/c_e059",
+                        "manuscript": "http://purl.org/coar/resource_type/c_0040",
+                        "musical notation": "http://purl.org/coar/resource_type/c_18cw",
+                        "peer review": "http://purl.org/coar/resource_type/H9BQ-739P/",
+                        "research proposal": "http://purl.org/coar/resource_type/c_baaf",
+                        "research protocol": "http://purl.org/coar/resource_type/YZ1N-ZFT9/",
+                        "software": "http://purl.org/coar/resource_type/c_5ce6",
+                        "source code": "http://purl.org/coar/resource_type/QH80-2R4E/",
+                        "technical documentation": "http://purl.org/coar/resource_type/c_71bd",
+                        "transcription": "http://purl.org/coar/resource_type/6NC7-GK9S/",
+                        "workflow": "http://purl.org/coar/resource_type/c_393c",
+                        "other": "http://purl.org/coar/resource_type/c_1843"
+                    },
+                    "required": true
+                }
+            },
+            "required": true
+        },
+        "item_30002_volume_number24": {
+            "title": "巻",
+            "type": "object",
+            "format": "object",
+            "properties": {
+                "subitem_volume": {
+                    "title": "巻",
+                    "type": "string",
+                    "format": "text"
+                }
+            }
+        },
+        "item_30002_dataset_series42": {
+            "title": "dataset_series",
+            "type": "array",
+            "min_items": 1,
+            "max_items": 9999,
+            "items": {
+                "title": "dataset_series",
+                "type": "object",
+                "format": "object",
+                "properties": {
+                    "jpcoar_dataset_series": {
+                        "title": "Dataset Series",
+                        "type": "string",
+                        "format": "select",
+                        "enum": [
+                            "True",
+                            "False"
+                        ]
+                    }
+                }
+            }
+        },
+        "item_30002_dcterms_extent46": {
+            "title": "publisher_information",
+            "type": "array",
+            "min_items": 1,
+            "max_items": 9999,
+            "items": {
+                "title": "publisher_information",
+                "type": "object",
+                "format": "object",
+                "properties": {
+                    "publisher_names": {
+                        "title": "出版者名",
+                        "type": "array",
+                        "format": "array",
+                        "items": {
+                            "type": "object",
+                            "format": "object",
+                            "properties": {
+                                "publisher_name": {
+                                    "title": "出版者名",
+                                    "type": "string",
+                                    "format": "text"
+                                },
+                                "publisher_name_language": {
+                                    "title": "言語",
+                                    "type": "string",
+                                    "format": "select",
+                                    "enum": [
+                                        null,
+                                        "ja",
+                                        "ja-Kana",
+                                        "ja-Latn",
+                                        "en",
+                                        "fr",
+                                        "it",
+                                        "de",
+                                        "es",
+                                        "zh-cn",
+                                        "zh-tw",
+                                        "ru",
+                                        "la",
+                                        "ms",
+                                        "eo",
+                                        "ar",
+                                        "el",
+                                        "ko"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "publication_places": {
+                        "title": "出版地（国名コード）",
+                        "type": "array",
+                        "format": "array",
+                        "items": {
+                            "type": "object",
+                            "format": "object",
+                            "properties": {
+                                "publication_place": {
+                                    "title": "出版地（国名コード）",
+                                    "type": "string",
+                                    "format": "text"
+                                }
+                            }
+                        }
+                    },
+                    "publisher_locations": {
+                        "title": "出版地",
+                        "type": "array",
+                        "format": "array",
+                        "items": {
+                            "type": "object",
+                            "format": "object",
+                            "properties": {
+                                "publisher_location": {
+                                    "title": "出版地",
+                                    "type": "string",
+                                    "format": "text"
+                                }
+                            }
+                        }
+                    },
+                    "publisher_descriptions": {
+                        "title": "出版者注記",
+                        "type": "array",
+                        "format": "array",
+                        "items": {
+                            "type": "object",
+                            "format": "object",
+                            "properties": {
+                                "publisher_description": {
+                                    "title": "出版者注記",
+                                    "type": "string",
+                                    "format": "text"
+                                },
+                                "publisher_description_language": {
+                                    "title": "言語",
+                                    "type": [
+                                        "null",
+                                        "string"
+                                    ],
+                                    "format": "select",
+                                    "enum": [
+                                        null,
+                                        "ja",
+                                        "ja-Kana",
+                                        "ja-Latn",
+                                        "en",
+                                        "fr",
+                                        "it",
+                                        "de",
+                                        "es",
+                                        "zh-cn",
+                                        "zh-tw",
+                                        "ru",
+                                        "la",
+                                        "ms",
+                                        "eo",
+                                        "ar",
+                                        "el",
+                                        "ko"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "item_30002_degree_grantor33": {
+            "title": "Degree Grantor",
+            "type": "array",
+            "min_items": 1,
+            "max_items": 9999,
+            "items": {
+                "type": "object",
+                "format": "object",
+                "properties": {
+                    "subitem_degreegrantor": {
+                        "title": "学位授与機関名",
+                        "type": "array",
+                        "format": "array",
+                        "items": {
+                            "type": "object",
+                            "format": "object",
+                            "properties": {
+                                "subitem_degreegrantor_name": {
+                                    "title": "学位授与機関名",
+                                    "type": "string",
+                                    "format": "text"
+                                },
+                                "subitem_degreegrantor_language": {
+                                    "title": "言語",
+                                    "type": [
+                                        "null",
+                                        "string"
+                                    ],
+                                    "format": "select",
+                                    "enum": [
+                                        null,
+                                        "ja",
+                                        "ja-Kana",
+                                        "ja-Latn",
+                                        "en",
+                                        "fr",
+                                        "it",
+                                        "de",
+                                        "es",
+                                        "zh-cn",
+                                        "zh-tw",
+                                        "ru",
+                                        "la",
+                                        "ms",
+                                        "eo",
+                                        "ar",
+                                        "el",
+                                        "ko"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "subitem_degreegrantor_identifier": {
+                        "title": "学位授与機関識別子",
+                        "type": "array",
+                        "format": "array",
+                        "items": {
+                            "type": "object",
+                            "format": "object",
+                            "properties": {
+                                "subitem_degreegrantor_identifier_name": {
+                                    "title": "学位授与機関識別子",
+                                    "type": "string",
+                                    "format": "text"
+                                },
+                                "subitem_degreegrantor_identifier_scheme": {
+                                    "title": "学位授与機関識別子Scheme",
+                                    "type": [
+                                        "null",
+                                        "string"
+                                    ],
+                                    "format": "select",
+                                    "enum": [
+                                        null,
+                                        "kakenhi"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "item_30002_number_of_pages26": {
+            "title": "ページ数",
+            "type": "object",
+            "format": "object",
+            "properties": {
+                "subitem_number_of_pages": {
+                    "title": "ページ数",
+                    "type": "string",
+                    "format": "text"
+                }
+            }
+        },
+        "item_30002_alternative_title1": {
+            "title": "Alternative Title",
+            "type": "array",
+            "min_items": 1,
+            "max_items": 9999,
+            "items": {
+                "type": "object",
+                "format": "object",
+                "properties": {
+                    "subitem_alternative_title": {
+                        "title": "その他のタイトル",
+                        "type": "string",
+                        "format": "text"
+                    },
+                    "subitem_alternative_title_language": {
+                        "title": "言語",
+                        "type": [
+                            "null",
+                            "string"
+                        ],
+                        "format": "select",
+                        "enum": [
+                            null,
+                            "ja",
+                            "ja-Kana",
+                            "ja-Latn",
+                            "en",
+                            "fr",
+                            "it",
+                            "de",
+                            "es",
+                            "zh-cn",
+                            "zh-tw",
+                            "ru",
+                            "la",
+                            "ms",
+                            "eo",
+                            "ar",
+                            "el",
+                            "ko"
+                        ]
+                    }
+                }
+            }
+        },
+        "item_30002_funding_reference21": {
+            "title": "Funding Reference",
+            "type": "array",
+            "min_items": 1,
+            "max_items": 9999,
+            "items": {
+                "type": "object",
+                "format": "object",
+                "properties": {
+                    "subitem_award_titles": {
+                        "title": "研究課題名",
+                        "type": "array",
+                        "format": "array",
+                        "items": {
+                            "type": "object",
+                            "format": "object",
+                            "properties": {
+                                "subitem_award_title": {
+                                    "title": "研究課題名",
+                                    "type": "string",
+                                    "format": "text"
+                                },
+                                "subitem_award_title_language": {
+                                    "title": "言語",
+                                    "type": [
+                                        "null",
+                                        "string"
+                                    ],
+                                    "format": "select",
+                                    "enum": [
+                                        null,
+                                        "ja",
+                                        "ja-Kana",
+                                        "ja-Latn",
+                                        "en",
+                                        "fr",
+                                        "it",
+                                        "de",
+                                        "es",
+                                        "zh-cn",
+                                        "zh-tw",
+                                        "ru",
+                                        "la",
+                                        "ms",
+                                        "eo",
+                                        "ar",
+                                        "el",
+                                        "ko"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "subitem_funder_names": {
+                        "title": "助成機関名",
+                        "type": "array",
+                        "format": "array",
+                        "items": {
+                            "type": "object",
+                            "format": "object",
+                            "properties": {
+                                "subitem_funder_name": {
+                                    "title": "助成機関名",
+                                    "type": "string",
+                                    "format": "text"
+                                },
+                                "subitem_funder_name_language": {
+                                    "title": "言語",
+                                    "type": [
+                                        "null",
+                                        "string"
+                                    ],
+                                    "format": "select",
+                                    "enum": [
+                                        null,
+                                        "ja",
+                                        "ja-Kana",
+                                        "ja-Latn",
+                                        "en",
+                                        "fr",
+                                        "it",
+                                        "de",
+                                        "es",
+                                        "zh-cn",
+                                        "zh-tw",
+                                        "ru",
+                                        "la",
+                                        "ms",
+                                        "eo",
+                                        "ar",
+                                        "el",
+                                        "ko"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "subitem_award_numbers": {
+                        "title": "研究課題番号",
+                        "type": "object",
+                        "format": "object",
+                        "properties": {
+                            "subitem_award_uri": {
+                                "title": "研究課題番号URI",
+                                "type": "string",
+                                "format": "text"
+                            },
+                            "subitem_award_number": {
+                                "title": "研究課題番号",
+                                "type": "string",
+                                "format": "text"
+                            },
+                            "subitem_award_number_type": {
+                                "title": "研究課題番号タイプ",
+                                "type": [
+                                    "null",
+                                    "string"
+                                ],
+                                "format": "select",
+                                "enum": [
+                                    null,
+                                    "JGN"
+                                ]
+                            }
+                        }
+                    },
+                    "subitem_funding_streams": {
+                        "title": "プログラム情報",
+                        "type": "array",
+                        "format": "array",
+                        "items": {
+                            "type": "object",
+                            "format": "object",
+                            "properties": {
+                                "subitem_funding_stream": {
+                                    "title": "プログラム情報",
+                                    "type": "string",
+                                    "format": "text"
+                                },
+                                "subitem_funding_stream_language": {
+                                    "title": "言語",
+                                    "type": [
+                                        "null",
+                                        "string"
+                                    ],
+                                    "format": "select",
+                                    "enum": [
+                                        null,
+                                        "ja",
+                                        "ja-Kana",
+                                        "ja-Latn",
+                                        "en",
+                                        "fr",
+                                        "it",
+                                        "de",
+                                        "es",
+                                        "zh-cn",
+                                        "zh-tw",
+                                        "ru",
+                                        "la",
+                                        "ms",
+                                        "eo",
+                                        "ar",
+                                        "el",
+                                        "ko"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "subitem_funder_identifiers": {
+                        "title": "助成機関識別子",
+                        "type": "object",
+                        "format": "object",
+                        "properties": {
+                            "subitem_funder_identifier": {
+                                "title": "助成機関識別子",
+                                "type": "string",
+                                "format": "text"
+                            },
+                            "subitem_funder_identifier_type": {
+                                "title": "識別子タイプ",
+                                "type": [
+                                    "null",
+                                    "string"
+                                ],
+                                "format": "select",
+                                "enum": [
+                                    null,
+                                    "Crossref Funder",
+                                    "e-Rad_funder",
+                                    "GRID",
+                                    "ISNI",
+                                    "ROR",
+                                    "Other"
+                                ]
+                            }
+                        }
+                    },
+                    "subitem_funding_stream_identifiers": {
+                        "title": "プログラム情報識別子",
+                        "type": "object",
+                        "format": "object",
+                        "properties": {
+                            "subitem_funding_stream_identifier": {
+                                "title": "プログラム情報識別子",
+                                "type": "string",
+                                "format": "text"
+                            },
+                            "subitem_funding_stream_identifier_type": {
+                                "title": "プログラム情報識別子タイプ",
+                                "type": [
+                                    "null",
+                                    "string"
+                                ],
+                                "format": "select",
+                                "enum": [
+                                    "Crossref Funder",
+                                    "JGN_fundingStream"
+                                ]
+                            },
+                            "subitem_funding_stream_identifier_type_uri": {
+                                "title": "プログラム情報識別子タイプURI",
+                                "type": "string",
+                                "format": "text"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "item_30002_original_language43": {
+            "title": "dcterms_date",
+            "type": "array",
+            "min_items": 1,
+            "max_items": 9999,
+            "items": {
+                "title": "dcterms_date",
+                "type": "object",
+                "format": "object",
+                "properties": {
+                    "subitem_dcterms_date": {
+                        "title": "日付（リテラル）",
+                        "type": "string",
+                        "format": "text"
+                    },
+                    "subitem_dcterms_date_language": {
+                        "title": "言語",
+                        "type": [
+                            "null",
+                            "string"
+                        ],
+                        "format": "select",
+                        "enum": [
+                            null,
+                            "ja",
+                            "ja-Kana",
+                            "ja-Latn",
+                            "en",
+                            "fr",
+                            "it",
+                            "de",
+                            "es",
+                            "zh-cn",
+                            "zh-tw",
+                            "ru",
+                            "la",
+                            "ms",
+                            "eo",
+                            "ar",
+                            "el",
+                            "ko"
+                        ]
+                    }
+                }
+            }
+        },
+        "item_30002_source_identifier22": {
+            "title": "Source Identifier",
+            "type": "array",
+            "min_items": 1,
+            "max_items": 9999,
+            "items": {
+                "type": "object",
+                "format": "object",
+                "properties": {
+                    "subitem_source_identifier": {
+                        "title": "収録物識別子",
+                        "type": "string",
+                        "format": "text"
+                    },
+                    "subitem_source_identifier_type": {
+                        "title": "収録物識別子タイプ",
+                        "type": [
+                            "null",
+                            "string"
+                        ],
+                        "format": "select",
+                        "enum": [
+                            null,
+                            "PISSN",
+                            "EISSN",
+                            "ISSN",
+                            "NCID"
+                        ]
+                    }
+                }
+            }
+        },
+        "item_30002_holding_agent_name37": {
+            "title": "holding_agent_name",
+            "type": "array",
+            "min_items": 1,
+            "max_items": 9999,
+            "items": {
+                "title": "holding_agent_name",
+                "type": "object",
+                "format": "object",
+                "properties": {
+                    "holding_agent_names": {
+                        "title": "所蔵機関名",
+                        "type": "array",
+                        "format": "array",
+                        "items": {
+                            "type": "object",
+                            "format": "object",
+                            "properties": {
+                                "holding_agent_name": {
+                                    "title": "所蔵機関名",
+                                    "type": "string",
+                                    "format": "text"
+                                },
+                                "holding_agent_name_language": {
+                                    "title": "Language",
+                                    "type": "string",
+                                    "format": "select",
+                                    "enum": [
+                                        null,
+                                        "ja",
+                                        "ja-Kana",
+                                        "ja-Latn",
+                                        "en",
+                                        "fr",
+                                        "it",
+                                        "de",
+                                        "es",
+                                        "zh-cn",
+                                        "zh-tw",
+                                        "ru",
+                                        "la",
+                                        "ms",
+                                        "eo",
+                                        "ar",
+                                        "el",
+                                        "ko"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "holding_agent_name_identifier": {
+                        "title": "所蔵機関識別子",
+                        "type": "object",
+                        "format": "object",
+                        "properties": {
+                            "holding_agent_name_identifier_uri": {
+                                "title": "所蔵機関識別子URI",
+                                "type": "string",
+                                "format": "text"
+                            },
+                            "holding_agent_name_identifier_value": {
+                                "title": "所蔵機関識別子",
+                                "type": "string",
+                                "format": "text"
+                            },
+                            "holding_agent_name_identifier_scheme": {
+                                "title": "所蔵機関識別子スキーマ",
+                                "type": "string",
+                                "format": "select",
+                                "enum": [
+                                    null,
+                                    "kakenhi",
+                                    "ISNI",
+                                    "Ringgold",
+                                    "GRID",
+                                    "ROR",
+                                    "FANO",
+                                    "ISIL",
+                                    "MARC",
+                                    "OCLC"
+                                ]
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "item_30002_dissertation_number30": {
+            "title": "dissertation_number",
+            "type": "object",
+            "format": "object",
+            "properties": {
+                "subitem_dissertationnumber": {
+                    "title": "学位授与番号",
+                    "type": "string",
+                    "format": "text"
+                }
+            }
+        },
+        "item_30002_publisher_information45": {
+            "title": "dcterms_extent",
+            "type": "array",
+            "min_items": 1,
+            "max_items": 9999,
+            "items": {
+                "title": "dcterms_extent",
+                "type": "object",
+                "format": "object",
+                "properties": {
+                    "dcterms_extent": {
+                        "title": "Extent",
+                        "type": "string",
+                        "format": "text"
+                    },
+                    "dcterms_extent_language": {
+                        "title": "Language",
+                        "type": "string",
+                        "format": "select",
+                        "enum": [
+                            null,
+                            "ja",
+                            "ja-Kana",
+                            "ja-Latn",
+                            "en",
+                            "fr",
+                            "it",
+                            "de",
+                            "es",
+                            "zh-cn",
+                            "zh-tw",
+                            "ru",
+                            "la",
+                            "ms",
+                            "eo",
+                            "ar",
+                            "el",
+                            "ko"
+                        ]
+                    }
+                }
+            }
+        },
+        "item_30002_identifier_registration17": {
+            "title": "identifier_registration",
+            "type": "object",
+            "format": "object",
+            "properties": {
+                "subitem_identifier_reg_text": {
+                    "title": "ID登録",
+                    "type": "string",
+                    "format": "text"
+                },
+                "subitem_identifier_reg_type": {
+                    "title": "ID登録タイプ",
+                    "type": [
+                        "null",
+                        "string"
+                    ],
+                    "format": "select",
+                    "enum": [
+                        null,
+                        "JaLC",
+                        "Crossref",
+                        "DataCite",
+                        "PMID"
+                    ]
+                }
+            }
+        },
+        "item_30002_bibliographic_information29": {
+            "title": "bibliographic_information",
+            "type": "object",
+            "format": "object",
+            "properties": {
+                "bibliographicPageEnd": {
+                    "title": "終了ページ",
+                    "type": "string",
+                    "format": "text"
+                },
+                "bibliographic_titles": {
+                    "title": "雑誌名",
+                    "type": "array",
+                    "format": "array",
+                    "items": {
+                        "type": "object",
+                        "format": "object",
+                        "properties": {
+                            "bibliographic_title": {
+                                "title": "タイトル",
+                                "type": "string",
+                                "format": "text"
+                            },
+                            "bibliographic_titleLang": {
+                                "title": "言語",
+                                "type": [
+                                    "null",
+                                    "string"
+                                ],
+                                "format": "select",
+                                "enum": [
+                                    null,
+                                    "ja",
+                                    "ja-Kana",
+                                    "ja-Latn",
+                                    "en",
+                                    "fr",
+                                    "it",
+                                    "de",
+                                    "es",
+                                    "zh-cn",
+                                    "zh-tw",
+                                    "ru",
+                                    "la",
+                                    "ms",
+                                    "eo",
+                                    "ar",
+                                    "el",
+                                    "ko"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "bibliographicPageStart": {
+                    "title": "開始ページ",
+                    "type": "string",
+                    "format": "text"
+                },
+                "bibliographicIssueDates": {
+                    "title": "発行日",
+                    "type": "object",
+                    "format": "object",
+                    "properties": {
+                        "bibliographicIssueDate": {
+                            "title": "日付",
+                            "type": "string",
+                            "format": "datetime",
+                            "min_date": "1000-01-01",
+                            "max_date": "2999-12-31"
+                        },
+                        "bibliographicIssueDateType": {
+                            "title": "日付タイプ",
+                            "type": [
+                                "null",
+                                "string"
+                            ],
+                            "format": "select",
+                            "enum": [
+                                null,
+                                "",
+                                "Issued"
+                            ]
+                        }
+                    }
+                },
+                "bibliographicIssueNumber": {
+                    "title": "号",
+                    "type": "string",
+                    "format": "text"
+                },
+                "bibliographicVolumeNumber": {
+                    "title": "巻",
+                    "type": "string",
+                    "format": "text"
+                },
+                "bibliographicNumberOfPages": {
+                    "title": "ページ数",
+                    "type": "string",
+                    "format": "text"
+                }
+            }
+        }
+    }
+}

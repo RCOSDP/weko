@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: invenio-mail 1.0.1\n"
 "Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
-"POT-Creation-Date: 2018-11-15 15:21+0900\n"
+"POT-Creation-Date: 2025-10-03 13:46+0900\n"
 "PO-Revision-Date: 2018-11-15 15:21+0900\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ja\n"
@@ -19,24 +19,62 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.5.1\n"
 
-#: invenio_mail/admin.py:59
+#: invenio_mail/admin.py:66
+msgid "Mail server can't be empty."
+msgstr ""
+
+#: invenio_mail/admin.py:69
+msgid "Mail port can't be empty."
+msgstr ""
+
+#: invenio_mail/admin.py:72
+msgid "Mail default sender can't be empty."
+msgstr ""
+
+#: invenio_mail/admin.py:82
 msgid "Mail settings have been updated."
 msgstr "メールの設定を更新しました"
 
-#: invenio_mail/admin.py:82
+#: invenio_mail/admin.py:106
 msgid "Test mail sent."
 msgstr "テストメールを送信しました。"
 
-#: invenio_mail/admin.py:84
+#: invenio_mail/admin.py:108
 msgid "Failed to send mail."
 msgstr "メールの送信に失敗しました。"
 
-#: invenio_mail/admin.py:98
+#: invenio_mail/admin.py:182
+msgid ""
+"Invalid email addresses ({emails}) detected. Please correct them to match"
+" the addresses which are registered in WEKO."
+msgstr "無効なメールアドレス ({emails}) が入力されています。WEKOに登録されているアドレスに修正してください。"
+
+#: invenio_mail/admin.py:200
+msgid "Mail template was successfully updated."
+msgstr ""
+
+#: invenio_mail/admin.py:206
+msgid "Mail template update failed."
+msgstr ""
+
+#: invenio_mail/admin.py:223
+msgid "Mail template was successfully deleted."
+msgstr ""
+
+#: invenio_mail/admin.py:229
+msgid "Mail template delete failed."
+msgstr ""
+
+#: invenio_mail/admin.py:260 invenio_mail/admin.py:269
 msgid "Setting"
 msgstr ""
 
-#: invenio_mail/admin.py:99
+#: invenio_mail/admin.py:261
 msgid "Mail"
+msgstr ""
+
+#: invenio_mail/admin.py:270
+msgid "Mail Templates"
 msgstr ""
 
 #: invenio_mail/templates/invenio_mail/mail_setting.html:26
@@ -67,27 +105,44 @@ msgstr "ユーザー名"
 msgid "Password"
 msgstr "パスワード"
 
-#: invenio_mail/templates/invenio_mail/mail_setting.html:107
+#: invenio_mail/templates/invenio_mail/mail_setting.html:120
 msgid "Default sender"
 msgstr "デフォルト送信元"
 
-#: invenio_mail/templates/invenio_mail/mail_setting.html:119
+#: invenio_mail/templates/invenio_mail/mail_setting.html:135
 msgid "Update"
 msgstr "更新"
 
-#: invenio_mail/templates/invenio_mail/mail_setting.html:136
+#: invenio_mail/templates/invenio_mail/mail_setting.html:154
 msgid "Recipient"
 msgstr "送信先"
 
-#: invenio_mail/templates/invenio_mail/mail_setting.html:144
+#: invenio_mail/templates/invenio_mail/mail_setting.html:162
+#: invenio_mail/templates/invenio_mail/mail_templates.html:59
 msgid "Subject"
 msgstr "件名"
 
-#: invenio_mail/templates/invenio_mail/mail_setting.html:152
+#: invenio_mail/templates/invenio_mail/mail_setting.html:170
 msgid "Body"
 msgstr "本文"
 
-#: invenio_mail/templates/invenio_mail/mail_setting.html:160
+#: invenio_mail/templates/invenio_mail/mail_setting.html:181
 msgid "Send"
 msgstr "送信"
+
+#: invenio_mail/templates/invenio_mail/mail_templates.html:57
+msgid "Add"
+msgstr ""
+
+#: invenio_mail/templates/invenio_mail/mail_templates.html:58
+msgid "Save"
+msgstr ""
+
+#: invenio_mail/templates/invenio_mail/mail_templates.html:60
+msgid "Recipients"
+msgstr "送信先"
+
+#: invenio_mail/templates/invenio_mail/mail_templates.html:61
+msgid "Please input the Mail Subject and Mail Body."
+msgstr "件名と本文は入力必須項目です。"
 

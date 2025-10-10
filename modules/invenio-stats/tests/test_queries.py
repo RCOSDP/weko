@@ -51,10 +51,11 @@ def test_query(app):
 
 # class ESDateHistogramQuery(ESQuery):
 # .tox/c1/bin/pytest --cov=invenio_stats tests/test_queries.py::test_date_histogram_query -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/invenio-stats/.tox/c1/tmp
-def test_date_histogram_query(app):
+def test_date_histogram_query(app, mocker):
     config_num = 8      # query_name='bucket-file-download-histogram'
     query_configs = register_queries()
     histogram_config = query_configs[config_num]['query_config']
+    app.config['STATS_WEKO_DEFAULT_TIMEZONE'] = MagicMock(return_value='Asia/Tokyo')
     # __init__
     with pytest.raises(ValueError):
         ESDateHistogramQuery(
@@ -87,6 +88,8 @@ def test_date_histogram_query(app):
     assert query.build_query('month', None, datetime.date(2023, 1, 1)).to_dict() == {'query': {'bool': {'filter': [{'range': {'timestamp': {'lte': '2023-01-01'}}}]}}, 'aggs': {'histogram': {'date_histogram': {'field': 'timestamp', 'interval': 'month', 'time_zone': 'Asia/Tokyo'}, 'aggs': {'value': {'sum': {'field': 'count'}}, 'top_hit': {'top_hits': {'size': 1, 'sort': {'timestamp': 'desc'}}}}}}, 'from': 0, 'size': 0}
     #53539 - case 9
     assert query.build_query('month', None, None, file_key='test_key').to_dict() == {'query': {'bool': {'filter': [{'term': {'file_key': 'test_key'}}]}}, 'aggs': {'histogram': {'date_histogram': {'field': 'timestamp', 'interval': 'month', 'time_zone': 'Asia/Tokyo'}, 'aggs': {'value': {'sum': {'field': 'count'}}, 'top_hit': {'top_hits': {'size': 1, 'sort': {'timestamp': 'desc'}}}}}}, 'from': 0, 'size': 0}
+    assert query.build_query('month', None, None, file_key=['key1', 'key2']).to_dict() == {'query': {'bool': {'filter': [{'terms': {'file_key': ['key1', 'key2']}}]}}, 'aggs': {'histogram': {'date_histogram': {'field': 'timestamp', 'interval': 'month', 'time_zone': 'Asia/Tokyo'}, 'aggs': {'value': {'sum': {'field': 'count'}}, 'top_hit': {'top_hits': {'size': 1, 'sort': {'timestamp': 'desc'}}}}}}, 'from': 0, 'size': 0}
+    assert query.build_query('month', None, None, file_key=['key1', 'key2', 'key3', 'key4']).to_dict() == {'query': {'bool': {'filter': [{'bool': {'should': [{'terms': {'file_key': ['key1', 'key2', 'key3']}}, {'terms': {'file_key': ['key4']}}]}}]}}, 'aggs': {'histogram': {'date_histogram': {'field': 'timestamp', 'interval': 'month', 'time_zone': 'Asia/Tokyo'}, 'aggs': {'value': {'sum': {'field': 'count'}}, 'top_hit': {'top_hits': {'size': 1, 'sort': {'timestamp': 'desc'}}}}}}, 'from': 0, 'size': 0}
 
     #53539 - case 10
     query = ESDateHistogramQuery(
@@ -178,7 +181,7 @@ def test_date_histogram_query(app):
                          [(["tests/data/ESTermsQuery_execute01.json"],
                            1,
                            "tests/data/ESTermsQuery_result01.json"),
-                          (["tests/data/ESTermsQuery_execute02.json", 
+                          (["tests/data/ESTermsQuery_execute02.json",
                             "tests/data/ESTermsQuery_execute01.json"],
                            1,
                            "tests/data/ESTermsQuery_result02.json"),
@@ -206,7 +209,8 @@ def test_terms_query2(app):
     config_num = 0        # query_name='get-celery-task-report'
     query_configs = register_queries()
     terms_config = query_configs[config_num]['query_config']
-    
+    app.config['STATS_WEKO_DEFAULT_TIMEZONE'] = MagicMock(return_value='Asia/Tokyo')
+
     # validate_arguments
     query = ESTermsQuery(
         query_name='test_total_count',
@@ -240,6 +244,9 @@ def test_terms_query2(app):
         **test_config
     )
     assert query.build_query(None, datetime.datetime(2023, 1, 1)).to_dict() == {'query': {'bool': {'filter': [{'range': {'timestamp': {'lte': '2023-01-01T00:00:00', 'time_zone': 'Asia/Tokyo'}}}]}}, 'aggs': {'value': {'sum': {'field': 'count'}}}, 'from': 0, 'size': 0}
+    assert query.build_query(None, None, task_name='task1').to_dict() == {'query': {'bool': {'filter': [{'term': {'task_name': 'task1'}}]}}, 'aggs': {'value': {'sum': {'field': 'count'}}}, 'from': 0, 'size': 0}
+    assert query.build_query(None, None, task_name=['task1', 'task2']).to_dict() == {'query': {'bool': {'filter': [{'terms': {'task_name': ['task1', 'task2']}}]}}, 'aggs': {'value': {'sum': {'field': 'count'}}}, 'from': 0, 'size': 0}
+    assert query.build_query(None, None, task_name=['task1', 'task2', 'task3', 'task4']).to_dict() == {'query': {'bool': {'filter': [{'bool': {'should': [{'terms': {'task_name': ['task1', 'task2', 'task3']}}, {'terms': {'task_name': ['task4']}}]}}]}}, 'aggs': {'value': {'sum': {'field': 'count'}}}, 'from': 0, 'size': 0}
 
     # process_query_result
     _res = {
@@ -378,6 +385,7 @@ def test_weko_terms_query(app):
     config_num = 1        # query_name='get-search-report'
     query_configs = register_queries()
     weko_terms_config = query_configs[config_num]['query_config']
+    app.config['STATS_WEKO_DEFAULT_TIMEZONE'] = MagicMock(return_value='Asia/Tokyo')
 
     # build_query
     test_config = copy.deepcopy(weko_terms_config)
@@ -442,3 +450,48 @@ def test_weko_ranking_query(app):
     app.config['STATS_WEKO_DEFAULT_TIMEZONE'] = MockFunc
     app.config['BABEL_DEFAULT_TIMEZONE'] = 'Asia/Tokyo'
     assert query.build_query(event_type='test').to_dict() == {'query': {'bool': {'must': [{'range': {'timestamp': {'gte': '', 'lte': '', 'time_zone': 'Asia/Tokyo'}}}]}}, 'aggs': {'my_buckets': {'terms': {'field': '', 'size': '', 'order': {'my_sum': 'desc'}}, 'aggs': {'my_sum': {'sum': {'field': ''}}}}}, 'size': 0}
+
+# .tox/c1/bin/pytest --cov=invenio_stats tests/test_queries.py::test_ESWekoFileRankingQuery -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-stats/.tox/c1/tmp
+def test_ESWekoFileRankingQuery(app, esindex):
+    import json
+    from invenio_stats.proxies import current_stats
+    query_download_total_cfg = current_stats.queries['item-file-download-aggs']
+    query_download_total = query_download_total_cfg.query_class(**query_download_total_cfg.query_config)
+
+    index = app.config["INDEXER_DEFAULT_INDEX"]
+    doc_type = "stats-file-download"
+
+    def register(i):
+        with open(f"tests/data/test_events/event_download{i:02}.json","r") as f:
+            esindex.index(index=index, doc_type=doc_type, id=f"{i}", body=json.load(f), refresh="true")
+
+    def delete(i):
+        esindex.delete(index=index, doc_type=doc_type, id=f"{i}", refresh="true")
+
+    # 19 Exist result
+    item_id = 1
+    register(item_id)
+    params = {
+        'item_id': str(item_id),
+        'root_file_id_list': ['root_file_id_01'],
+    }
+    assert query_download_total.run(**params) == {'start_date': None, 'end_date': None, 'download_ranking': {'doc_count_error_upper_bound': 0, 'sum_other_doc_count': 0, 'buckets': [{'key': 'test_file_01.txt', 'doc_count': 1}]}}
+    delete(item_id)
+
+    # 20 Not exist result
+    assert query_download_total.run(**params) == {'start_date': None, 'end_date': None, 'download_ranking': {'doc_count_error_upper_bound': 0, 'sum_other_doc_count': 0, 'buckets': []}}
+
+    # 21 Set period
+    for i in range(2,6):
+        register(i)
+    params = {
+        'item_id': str(item_id),
+        'root_file_id_list': ['root_file_id_02'],
+        'start_date': '2024-01-01',
+        'end_date': '2024-01-31T23:59:59',
+    }
+    res = query_download_total.run(**params)
+    assert res['download_ranking']['buckets'][0]['doc_count'] == 2
+    assert res['start_date'] == '2024-01-01T00:00:00'
+    assert res['end_date'] == '2024-01-31T23:59:59'
+

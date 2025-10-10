@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="27" height="21" viewBox="0 0 27 21">
+  <defs>
+    <clipPath id="clip-path">
+      <rect id="長方形_1513" data-name="長方形 1513" width="27" height="21" fill="#fff" stroke="#707070" stroke-width="1"/>
+    </clipPath>
+  </defs>
+  <g id="icon-filelist" clip-path="url(#clip-path)">
+    <path id="folder_FILL0_wght400_GRAD0_opsz48" d="M82.969,277a1.865,1.865,0,0,1-1.378-.607A1.907,1.907,0,0,1,81,275.031V257.969a1.907,1.907,0,0,1,.591-1.362A1.865,1.865,0,0,1,82.969,256h9.188l1.969,1.969h11.156a2.083,2.083,0,0,1,1.969,1.969v15.094A2.083,2.083,0,0,1,105.281,277Zm0-19.031v17.063h22.313V259.938H93.3l-1.969-1.969Zm0,0v0Z" transform="translate(-81 -256)" fill="#fff"/>
+  </g>
+</svg>

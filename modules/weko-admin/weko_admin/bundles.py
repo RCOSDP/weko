@@ -66,6 +66,20 @@ feedback_mail_js = Bundle(
     output="gen/weko_admin_feedback_mail.%(version)s.js",
 )
 
+#JSのバンドルを作成
+profile_set_js = Bundle(
+    'js/weko_admin/user-profile-settings.js',
+    filters='jsmin',
+    output="gen/profile_settings_adminview.%(version)s.js",
+)
+
+#CSSのバンドルを作成
+profile_set_css = Bundle(
+    'css/weko_admin/user-profiles-settings.css',
+    filters='jsmin',
+    output="gen/profile_settings_adminview.%(version)s.css",
+)
+
 log_analysis_js = Bundle(
     'js/weko_admin/log_analysis.js',
     output="gen/weko_admin_ui_log_analysis.%(version)s.js",
@@ -132,6 +146,16 @@ angular_js = NpmBundle(  # Already included in front-end
     output='gen/weko_admin_ui.angular_js.%(version)s.js',
 )
 
+weko_admin_sword_api_jsonld_js = Bundle(
+    'js/weko_admin/sword_api_jsonld_setting.js',
+    output="gen/weko_admin_sword_api_jsonld.%(version)s.js",
+)
+
+weko_admin_jsonld_mapping_js = Bundle(
+    'js/weko_admin/jsonld_mapping_setting.js',
+    output="gen/weko_admin_jsonld_mapping.%(version)s.js",
+)
+
 
 weko_admin_site_info_js = Bundle(
     'js/weko_admin/site_info.js',
@@ -160,6 +184,11 @@ weko_admin_restricted_access_js = NpmBundle(
 weko_admin_facet_search_js = NpmBundle(
     'js/weko_admin/facet_search_admin.js',
     output='gen/facet_search.%(version)s.js',
+)
+
+weko_admin_cris_linkage_js = NpmBundle(
+    'js/weko_admin/cris_linkage.js',
+    output='gen/cris_linkage.%(version)s.js',
 )
 
 reindex_elasticsearch_js = NpmBundle(

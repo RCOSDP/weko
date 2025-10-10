@@ -1,0 +1,218 @@
+{
+  "table_row": [
+    "item_test1_2",
+    "item_test1_3",
+    "item_test1_4",
+    "item_test1_5",
+    "item_test2_title",
+    "item_description"
+  ],
+  "meta_fix":{
+  },
+  "meta_list":{
+    "item_test1_1":{
+      "title": "Test Item1-1",
+      "option":{
+        "crtf": false,
+        "hidden": false,
+        "multiple": true,
+        "required": true,
+        "showlist": true
+      },
+      "input_type": "cus_67",
+      "title_i18n": { "en": "Test Item1-1", "ja": "テストアイテム１-１" },
+      "input_value": "",
+      "input_maxItems": "9999",
+      "input_minItems": "1"
+    },
+    "item_test1_2":{
+      "title": "Test Item1-2",
+      "option":{
+        "crtf": true,
+        "hidden": false,
+        "multiple": true,
+        "required": true,
+        "showlist": true
+      },
+      "input_type": "cus_67",
+      "title_i18n": { "en": "Test Item1-2", "ja": "テストアイテム１-２" },
+      "input_value": "",
+      "input_maxItems": "9999",
+      "input_minItems": "1"
+    },
+    "item_test1_3":{
+      "title": "Test Item1-3",
+      "option":{
+        "crtf": false,
+        "hidden": false,
+        "multiple": true,
+        "required": true,
+        "showlist": true
+      },
+      "input_type": "cus_67",
+      "title_i18n": { "en": "Test Item1-3", "ja": "テストアイテム１-３" },
+      "input_value": "",
+      "input_maxItems": "9999",
+      "input_minItems": "1"
+    },
+    "item_test1_4":{
+      "title": "Test Item1-4",
+      "option":{
+        "crtf": true,
+        "hidden": false,
+        "multiple": true,
+        "required": true,
+        "showlist": true
+      },
+      "input_type": "cus_67",
+      "title_i18n": { "en": "Test Item1-4", "ja": "テストアイテム１-４" },
+      "input_value": "",
+      "input_maxItems": "9999",
+      "input_minItems": "1"
+    },
+    "item_test1_5":{
+      "title": "Test Item1-5",
+      "option":{
+        "crtf": true,
+        "hidden": false,
+        "multiple": true,
+        "required": true,
+        "showlist": true
+      },
+      "input_type": "cus_67",
+      "title_i18n": { "en": "Test Item1-5", "ja": "テストアイテム１-5" },
+      "input_value": "",
+      "input_maxItems": "9999",
+      "input_minItems": "1"
+    },
+    "item_test2_title":{
+      "title":"Title",
+      "option": {
+        "crtf": true,
+        "hidden": false,
+        "multiple": true,
+        "required": true,
+        "showlist": false
+      },
+      "input_type": "cus_67",
+      "title_i18n": { "en": "Title", "ja": "タイトル" },
+      "input_value": "",
+      "input_maxItems": "9999",
+      "input_minItems": "1"
+    },
+    "item_test3_file":{
+      "title":"File",
+      "option": {
+        "crtf": true,
+        "hidden": false,
+        "multiple": true,
+        "required": true,
+        "showlist": true
+      }
+    },
+    "item_test4_thumbnail":{
+      "title":"Thumbnail",
+      "option": {
+        "crtf": true,
+        "hidden": false,
+        "multiple": true,
+        "required": true,
+        "showlist": true
+      }
+    },
+    "item_test20_description":{
+      "title":"Description",
+      "option": {
+        "crtf": true,
+        "hidden": false,
+        "multiple": true,
+        "required": true,
+        "showlist": true
+      }
+    },
+    "item_test21_relation":{
+      "title":"Relation",
+      "option": {
+        "crtf": true,
+        "hidden": false,
+        "multiple": true,
+        "required": true,
+        "showlist": true
+      }
+    },
+    "item_test22_date":{
+      "title":"Date",
+      "option": {
+        "crtf": true,
+        "hidden": false,
+        "multiple": true,
+        "required": true,
+        "showlist": true
+      }
+    },
+    "item_test4_2_thumbnail":{
+      "title":"Thumbnail2",
+      "option": {
+        "crtf": true,
+        "hidden": false,
+        "multiple": true,
+        "required": true,
+        "showlist": true
+      }
+    },
+    "item_test5_creator":{
+      "title":"Creator",
+      "option": {
+        "crtf": true,
+        "hidden": false,
+        "multiple": true,
+        "required": true,
+        "showlist": true
+      }
+    },
+    "item_test7_not_option":{
+      "title":"not option",
+      "option":{}
+    },
+    "item_test8_not_mlt":{
+      "title":"not mlt",
+      "option": {
+        "crtf": true,
+        "hidden": false,
+        "multiple": true,
+        "required": true,
+        "showlist": true
+      }
+    },
+    "item_test9":{
+      "title":"attribute_mlt_dict_in_dict",
+      "option": {
+        "crtf": true,
+        "hidden": false,
+        "multiple": true,
+        "required": true,
+        "showlist": true
+      }
+    },
+    "item_test11":{
+      "title":"attribute_mlt_str",
+      "option": {
+        "crtf": true,
+        "hidden": false,
+        "multiple": true,
+        "required": true,
+        "showlist": true
+      }
+    },
+    "item_test12.indot_item":{
+      "title":"dot in key item",
+      "option": {
+        "crtf": true,
+        "hidden": false,
+        "multiple": true,
+        "required": true,
+        "showlist": true
+      }
+    }
+  }
+}

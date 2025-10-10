@@ -66,7 +66,10 @@ def get_weko_contents(getargs):
     height = style.height
     index_link_enabled = style.index_link_enabled
 
-    index_link_list = get_index_link_list()
+    index_link_list = []
+    if index_link_enabled:
+        index_link_list = get_index_link_list()
+
     detail_condition = get_search_detail_keyword('')
     check_site_license_permission()
 
@@ -90,7 +93,7 @@ def get_weko_contents(getargs):
     ctx.update({
         "display_community": display_community
     })
-    
+
     return dict(
         community_id=community_id,
         detail_condition=detail_condition,
@@ -105,9 +108,9 @@ def get_community_id(getargs):  # TODO: Use this to refactor
     """Get the community data for specific args."""
     ctx = {'community': None}
     community_id = ""
-    if 'community' in getargs:
+    if 'c' in getargs:
         from weko_workflow.api import GetCommunity
-        comm = GetCommunity.get_community_by_id(getargs.get('community'))
+        comm = GetCommunity.get_community_by_id(getargs.get('c'))
         ctx = {'community': comm}
         if comm is not None:
             community_id = comm.id
@@ -126,7 +129,7 @@ def get_design_layout(repository_id):
 
     Returns:
         _type_: page, render_widgets
-    """    
+    """
     if not repository_id:
         return None, False
 
@@ -271,7 +274,7 @@ class MainScreenInitDisplaySetting:
                 display_format = current_index.display_format
         if display_format == '2':
             display_number = 100
-        
+
         if not init_disp_index:
             # In case is not found the index
             # set main screen initial display to the default

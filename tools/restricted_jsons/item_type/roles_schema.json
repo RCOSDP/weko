@@ -1,0 +1,20 @@
+{
+    "type": "array",
+    "items": {
+        "type": "object",
+        "format": "object",
+        "properties": {
+            "role": {
+                "type": [
+                    "null",
+                    "string"
+                ],
+                "title": "ロール",
+                "format": "select",
+                "currentEnum": []
+            }
+        }
+    },
+    "title": "ロール",
+    "format": "array"
+}
