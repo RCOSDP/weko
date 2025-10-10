@@ -1400,6 +1400,13 @@ class SiteInfo(db.Model):
     )
     """tracking id."""
 
+    addthis_user_id = db.Column(
+        db.Text,
+        nullable=True
+    )
+    """add this id."""
+    # Note: The column 'addthis_user_id' is deprecated and no longer in use.
+
     ogp_image = db.Column(
         db.Text,
         nullable=True

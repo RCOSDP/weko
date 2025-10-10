@@ -26,6 +26,7 @@ from operator import index
 
 from flask import current_app, json
 from flask_babelex import gettext as _
+from flask_login import current_user
 from invenio_db import db
 from invenio_i18n.ext import current_i18n
 from weko_admin import config as ad_config
@@ -181,7 +182,10 @@ def get_search_detail_keyword(str_):
         check_val.append(sub)
 
     check_val2 = []
-    index_browsing_tree = Indexes.get_browsing_tree()
+    if current_user and current_user.is_authenticated:
+        index_browsing_tree = Indexes.get_browsing_tree()
+    else:
+        index_browsing_tree = Indexes.get_browsing_reset_tree()
     for indextree in index_browsing_tree:
         index_parelist = []
         index_list = get_childinfo(indextree, index_parelist)

@@ -1,134 +1,168 @@
 # Translations template for weko-gridlayout.
-# Copyright (C) 2020 National Institute of Informatics
+# Copyright (C) 2025 National Institute of Informatics
 # This file is distributed under the same license as the weko-gridlayout
 # project.
-# FIRST AUTHOR <EMAIL@ADDRESS>, 2020.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2025.
 #
 #, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: weko-gridlayout 1.0.0.dev20190000\n"
 "Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
-"POT-Creation-Date: 2020-04-21 15:28+0700\n"
+"POT-Creation-Date: 2025-10-03 14:00+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.8.0\n"
+"Generated-By: Babel 2.5.1\n"
 
-#: weko_gridlayout/admin.py:261 weko_gridlayout/admin.py:318
+#: weko_gridlayout/admin.py:277 weko_gridlayout/admin.py:345
 msgid "Record does not exist."
 msgstr ""
 
-#: weko_gridlayout/admin.py:349
+#: weko_gridlayout/admin.py:376
 #, python-format
 msgid "Record was successfully deleted."
 msgid_plural "%(count)s records were successfully deleted."
 msgstr[0] ""
 msgstr[1] ""
 
-#: weko_gridlayout/admin.py:358
+#: weko_gridlayout/admin.py:385
 #, python-format
 msgid "Failed to delete records. %(error)s"
 msgstr ""
 
-#: weko_gridlayout/admin.py:376
+#: weko_gridlayout/admin.py:418
 #, python-format
 msgid ""
 "Cannot delete widget (ID: %(widget_id)s, because it's setting in Widget "
 "Design."
 msgstr ""
 
-#: weko_gridlayout/admin.py:392
+#: weko_gridlayout/admin.py:434
 #, python-format
 msgid "Failed to delete record. %(error)s"
 msgstr ""
 
-#: weko_gridlayout/admin.py:445
+#: weko_gridlayout/admin.py:492
 msgid "ID"
 msgstr ""
 
-#: weko_gridlayout/admin.py:446
+#: weko_gridlayout/admin.py:493
 msgid "Repository"
 msgstr ""
 
-#: weko_gridlayout/admin.py:447
+#: weko_gridlayout/admin.py:494
 msgid "Widget Type"
 msgstr ""
 
-#: weko_gridlayout/admin.py:448
+#: weko_gridlayout/admin.py:495
 msgid "Label"
 msgstr ""
 
-#: weko_gridlayout/admin.py:449
+#: weko_gridlayout/admin.py:496
 msgid "Enable"
 msgstr ""
 
-#: weko_gridlayout/admin.py:450
+#: weko_gridlayout/admin.py:497
 msgid "Has Frame Border"
 msgstr ""
 
-#: weko_gridlayout/admin.py:457 weko_gridlayout/admin.py:464
-msgid "Setting"
+#: weko_gridlayout/admin.py:504 weko_gridlayout/admin.py:511
+msgid "Web Design"
 msgstr ""
 
-#: weko_gridlayout/admin.py:458
+#: weko_gridlayout/admin.py:505
 msgid "Widget"
 msgstr ""
 
-#: weko_gridlayout/admin.py:465
-msgid "Widget Design"
+#: weko_gridlayout/admin.py:512
+msgid "Page Layout"
 msgstr ""
 
-#: weko_gridlayout/services.py:624
+#: weko_gridlayout/services.py:404
+msgid ""
+"Cannot update repository of this widget because it's setting in Widget "
+"Design."
+msgstr ""
+
+#: weko_gridlayout/services.py:409
+msgid "Widget is locked by another user."
+msgstr ""
+
+#: weko_gridlayout/services.py:686
 msgid ""
 "Failed to save design:\n"
 "                         Main contents may only be set to one layout."
 msgstr ""
 
-#: weko_gridlayout/services.py:629
+#: weko_gridlayout/services.py:691
 msgid ""
 "Failed to save design:\n"
 " Check input values."
 msgstr ""
 
-#: weko_gridlayout/services.py:633
+#: weko_gridlayout/services.py:695
 msgid "Failed to save design: Unexpected error."
 msgstr ""
 
-#: weko_gridlayout/services.py:758 weko_gridlayout/services.py:986
+#: weko_gridlayout/services.py:825 weko_gridlayout/services.py:1055
 msgid "Unable to retrieve page: Page not found."
 msgstr ""
 
-#: weko_gridlayout/services.py:761 weko_gridlayout/services.py:989
+#: weko_gridlayout/services.py:828 weko_gridlayout/services.py:1058
 msgid "Unable to retrieve page: Unexpected error."
 msgstr ""
 
-#: weko_gridlayout/services.py:800
-msgid "Unable to save page: URL already exists."
-msgstr ""
-
-#: weko_gridlayout/services.py:803
+#: weko_gridlayout/services.py:872
 msgid "Unable to save page: Unexpected error."
 msgstr ""
 
-#: weko_gridlayout/services.py:908
+#: weko_gridlayout/services.py:977
 msgid "Unable to delete page."
 msgstr ""
 
-#: weko_gridlayout/services.py:939
+#: weko_gridlayout/services.py:1008
 msgid "Unable to retrieve page list."
 msgstr ""
 
-#: weko_gridlayout/views.py:81
+#: weko_gridlayout/utils.py:997
+msgid "Bucket with UUID {} already exists."
+msgstr ""
+
+#: weko_gridlayout/utils.py:1030
+msgid "{} is greater than the maximum value allowed ({})."
+msgstr ""
+
+#: weko_gridlayout/utils.py:1039 weko_gridlayout/utils.py:1045
+msgid "The {} file is already exists."
+msgstr ""
+
+#: weko_gridlayout/utils.py:1133
+msgid "No file part"
+msgstr ""
+
+#: weko_gridlayout/utils.py:1136
+msgid "No selected file"
+msgstr ""
+
+#: weko_gridlayout/utils.py:1139
+msgid "Repository is required!"
+msgstr ""
+
+#: weko_gridlayout/views.py:83
 msgid "weko-gridlayout"
 msgstr ""
 
-#: weko_gridlayout/views.py:184 weko_gridlayout/views.py:250
-#: weko_gridlayout/views.py:268
+#: weko_gridlayout/views.py:190 weko_gridlayout/views.py:265
+#: weko_gridlayout/views.py:286
 msgid "Header Error"
+msgstr ""
+
+#: weko_gridlayout/views.py:606
+msgid "Can't unlock widget."
 msgstr ""
 
 #: weko_gridlayout/templates/weko_gridlayout/index.html:12
@@ -136,5 +170,11 @@ msgstr ""
 msgid "Welcome to %(module_name)s"
 msgstr ""
 
+#: weko_gridlayout/templates/weko_gridlayout/admin/edit_widget_settings.html:46
 msgid "Do you wan to unlock this widget?"
 msgstr ""
+
+#: weko_gridlayout/templates/weko_gridlayout/admin/edit_widget_settings.html:50
+msgid "Confirmation"
+msgstr ""
+

@@ -168,7 +168,7 @@ def test_post_service_document(app,client,db,users,make_crate,esindex,location,i
 
     result = client.post(url, data={"file": storage}, content_type="multipart/form-data", headers=headers)
     assert result.status_code == 403
-    assert result.json.get("error") == "Not allowed operation in your token scope."
+    assert result.json.get("error") == "Not allowed operation in your role or token scope."
 
     # error in result
     login_user_via_session(client=client, email=users[0]["email"])
@@ -487,7 +487,7 @@ def test_put_object(
 
     result = client.put(url, data={"file": storage}, content_type="multipart/form-data", headers=headers)
     assert result.status_code == 403
-    assert result.json.get("error") == "Not allowed operation in your token scope."
+    assert result.json.get("error") == "Not allowed operation in your role or token scope."
 
     # error in result
     login_user_via_session(client=client, email=users[0]["email"])
@@ -1019,7 +1019,7 @@ def test_delete_item(app, client, db, tokens, sword_client, users,es_records, mo
     }
     res = client.delete(url, headers=headers)
     assert res.status_code == 403
-    assert res.json.get("error") == "Not allowed operation in your token scope."
+    assert res.json.get("error") == "Not allowed operation in your role or token scope."
 
     # workflow deletion, have activity scope, approval
     login_user_via_session(client=client,email=users[1]["email"])
@@ -1117,7 +1117,7 @@ def test_handle_forbidden(client,sessionlifetime):
     with patch("weko_swordserver.views._create_error_document",side_effect=lambda x,y:{"type":x,"msg":y}):
         res = client.get(url)
         assert res.status_code == 403
-        assert res.json == {"type":"Forbidden","msg":"Not allowed operation in your token scope."}
+        assert res.json == {"type":"Forbidden","msg":"Not allowed operation in your role or token scope."}
 
 # def handle_ratelimit(ex):
 # .tox/c1/bin/pytest --cov=weko_swordserver tests/test_views.py::test_handle_ratelimit -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp

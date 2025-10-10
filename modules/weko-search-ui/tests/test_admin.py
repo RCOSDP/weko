@@ -934,6 +934,11 @@ class TestItemBulkExport:
         mocker.patch("weko_search_ui.admin.check_celery_is_run",return_value=True)
         mocker.patch("weko_search_ui.admin.check_session_lifetime",return_value=True)
         start_time_str = '2024/05/01 12:55:36'
+
+        url = url_for("items/bulk-export.check_export_status")
+        res = client.get(url)
+        assert res.status_code == 302
+        
         with patch("flask_login.utils._get_user", return_value=users[3]["obj"]):
             url = url_for("items/bulk-export.check_export_status")
             with patch('weko_search_ui.admin.get_export_status',

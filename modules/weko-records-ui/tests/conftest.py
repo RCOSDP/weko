@@ -920,6 +920,7 @@ def make_record(db, indexer, i, filepath, filename, mimetype, shared_ids, file_h
             "pid": {"type": "depid", "value": "{}".format(i), "revision_id": 0},
             "owners": [1],
             "status": "published",
+            "created_by": 2,
         },
         "item_title": "ja_conference paperITEM00000009(public_open_access_open_access_simple)",
         "author_link": ["4"],
@@ -6240,6 +6241,31 @@ def communities(app, indices, users, db):
         community_footer='community_footer',
         last_record_accepted=datetime.now(),
         root_node_id=indices[0].id,
+    )
+
+    db.session.add(community)
+    db.session.commit()
+    return [community]
+
+@pytest.fixture()
+def communities2(app, indices, users, db):
+    """Create communities."""
+    user_record = users[3]
+    user_obj = user_record["obj"]
+
+    community = Community(
+        id="community_sample",
+        group_id=4,
+        id_role=user_obj.roles[0].id,
+        id_user=user_record["id"],
+        title='Community 1',
+        description='Community 1 description',
+        page=1,
+        curation_policy='curation_policy',
+        community_header='community_header',
+        community_footer='community_footer',
+        last_record_accepted=datetime.now(),
+        root_node_id=2,
     )
 
     db.session.add(community)

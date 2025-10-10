@@ -12,6 +12,7 @@ from lxml import etree
 from weko_deposit.api import WekoRecord
 from werkzeug.exceptions import NotFound, Forbidden
 from jinja2.exceptions import TemplatesNotFound
+from weko_index_tree.models import IndexStyle
 from weko_workflow.models import (
     WorkFlow,
 )
@@ -117,12 +118,12 @@ def test_publish_acl(client, records, users, id, status_code):
 def test_publish(client, records, users, communities, mocker):
     login_user_via_session(client=client, email=users[0]["email"])
     indexer, records_info = records
-    
+
     mock_commit = mocker.patch("weko_records_ui.views.db.session.commit")
     mock_commit2 = mocker.patch("invenio_records.api.Record.commit")
 
     mock_update_es_data = mocker.patch("weko_deposit.api.WekoIndexer.update_es_data")
-    
+
     # Test Case 1: community id exists
     mock_request = mocker.patch("weko_records_ui.views.request")
     mock_request.values = {"community": 1}
@@ -491,10 +492,11 @@ def test_get_workflow_detail(app,workflows):
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_default_view_method -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
 #     """Display default view.
 #     def _get_rights_title(result, rights_key, rights_values, current_lang, meta_options):
-def test_default_view_method(app, records, itemtypes, indexstyle ,users):
+def test_default_view_method(app, records, itemtypes, indexstyle, users, db):
     indexer, results = records
     record = results[0]["record"]
     recid = results[0]["recid"]
+    app.config['OAUTH2SERVER_JWT_AUTH_HEADER'] = 'Authorization'
     with app.test_request_context():
         with patch('weko_records_ui.views.check_original_pdf_download_permission', return_value=True):
             with patch("weko_records_ui.views.get_search_detail_keyword", return_value={}):
@@ -589,6 +591,35 @@ def test_default_view_method(app, records, itemtypes, indexstyle ,users):
                             with patch('weko_records_ui.views.AdminSettings.get'
                                     , side_effect=lambda name , dict_to_object : {'password_enable' : True,"terms_and_conditions":""} if name == 'restricted_access' else None):
                                 assert default_view_method(recid, record ,'helloworld.pdf').status_code == 200
+
+                            with patch('weko_records_ui.views.get_index_link_list', return_value=[(11, 'TEST INDEX')]):
+                                style = db.session.query(IndexStyle).filter_by(id=app.config['WEKO_INDEX_TREE_STYLE_OPTIONS']['id']).first()
+                                db.session.delete(style)
+                                db.session.commit()
+                                assert default_view_method(recid, record ,'helloworld.pdf').status_code == 200
+                                with patch('weko_records_ui.views.render_template') as mock_render_template:
+                                    default_view_method(recid, record ,'helloworld.pdf')
+                                    kwargs = mock_render_template.call_args.kwargs
+                                    assert kwargs['width'] == '3'
+                                    assert kwargs['height'] == ''
+                                    assert not kwargs['index_link_enabled']
+
+                                index_style = MagicMock()
+                                index_style.index_link_enabled = False
+                                with patch('weko_records_ui.views.IndexStyle.get', return_value=index_style):
+                                    assert default_view_method(recid, record ,'helloworld.pdf').status_code == 200
+                                with patch('weko_records_ui.views.render_template') as mock_render_template:
+                                    default_view_method(recid, record ,'helloworld.pdf')
+                                    kwargs = mock_render_template.call_args.kwargs
+                                    assert not kwargs['index_link_list']
+
+                                index_style.index_link_enabled = True
+                                with patch('weko_records_ui.views.IndexStyle.get', return_value=index_style):
+                                    assert default_view_method(recid, record ,'helloworld.pdf').status_code == 200
+                                    with patch('weko_records_ui.views.render_template') as mock_render_template:
+                                        default_view_method(recid, record ,'helloworld.pdf')
+                                        kwargs = mock_render_template.call_args.kwargs
+                                        assert kwargs['index_link_list']
 
 
 # def default_view_method(pid, record, filename=None, template=None, **kwargs):
@@ -873,7 +904,7 @@ def test_soft_delete_acl_guest(client, records):
 @pytest.mark.parametrize(
     "id, status_code",
     [
-        (0, 500), # contributor
+        (0, 200), # contributor
         (1, 200), # repoadmin
         (2, 200), # sysadmin
         (3, 200), # comadmin
@@ -883,7 +914,7 @@ def test_soft_delete_acl_guest(client, records):
         (7, 500), # user
     ],
 )
-def test_soft_delete_acl(client, records, users, id, status_code):
+def test_soft_delete_acl(client, records, users, id, status_code, communities2):
     with patch("flask_login.utils._get_user", return_value=users[id]["obj"]):
         url = url_for(
             "weko_records_ui.soft_delete", recid=1, _external=True
@@ -945,7 +976,7 @@ def test_soft_delete_with_del_ver_prefix(client, records, users, id, status_code
 def test_soft_delete_locked(client, records, users, id, status_code):
     """Test soft_delete when item is locked."""
     login_user_via_session(client=client, email=users[id]["email"])
-    
+
     # 51994 case.03(soft_delete)
     with patch("weko_records_ui.views.is_workflow_activity_work", return_value=True):
         res = client.post(url_for("weko_records_ui.soft_delete", recid=1, _external=True))
@@ -978,13 +1009,13 @@ def test_soft_delete_exception(client, records, users):
                     # 51994 case.06, 07(soft_delete)
                     res = client.post(url_for("weko_records_ui.soft_delete", recid=1, _external=True))
 
-                    
+
                     pid = PersistentIdentifier.query.filter_by(pid_type='recid', pid_value='1').first()
                     assert pid.status == PIDStatus.REGISTERED
                     assert res.status_code == 500
                     assert res.json == expected_response
-    
-    
+
+
 # def restore(recid):
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_restore_acl_guest -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
 def test_restore_acl_guest(client, records):

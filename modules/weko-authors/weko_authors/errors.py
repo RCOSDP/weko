@@ -59,3 +59,16 @@ class AuthorInternalServerError(AuthorBaseRESTError):
 
     code = 500
     description = 'Internal Server Error'
+
+
+class AuthorsValidationError(AuthorBaseRESTError):
+    """Authors validation error."""
+
+    code = 400
+    description = 'Authors validation error.'
+
+class AuthorsPermissionError(AuthorsValidationError):
+    """Authors permission error."""
+
+    code = 403
+    description = 'Authors permission error.'

@@ -1,10 +1,9 @@
 import copy
-from unittest.mock import mock_open
 import pytest
 import uuid
 import json
 from os.path import dirname, join
-from mock import patch, MagicMock
+from unittest.mock import patch, MagicMock
 
 import datetime
 import base64
@@ -15,25 +14,25 @@ from flask import current_app,session
 from flask_babelex import gettext as _
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm.exc import NoResultFound
+from redis.exceptions import ResponseError
 from weko_deposit.pidstore import get_record_without_version
 from weko_deposit.api import WekoRecord, WekoDeposit
 from invenio_accounts.models import User
 from invenio_records_files.models import RecordsBuckets
 from invenio_files_rest.models import Bucket
 from invenio_cache import current_cache
-from invenio_pidstore.models import PersistentIdentifier, PIDStatus, RecordIdentifier
+from invenio_pidstore.models import PersistentIdentifier, PIDStatus, RecordIdentifier, PIDDoesNotExistError
 from flask_login.utils import login_user
-from tests.helpers import json_data, create_activity
+from .helpers import json_data, create_activity
 from invenio_mail.models import MailConfig, MailTemplateUsers
 from weko_admin.models import SiteInfo, Identifier
-from weko_records.models import FeedbackMailList, RequestMailList
+from weko_records.models import FeedbackMailList, ItemApplication, ItemType, RequestMailList
 from weko_records_ui.models import FilePermission,FileOnetimeDownload
 from weko_records_ui.utils import get_list_licence
 from weko_user_profiles import UserProfile
-from weko_records.models import ItemApplication
-from weko_records.api import ItemTypes, ItemsMetadata
+from weko_records.api import ItemTypes, ItemsMetadata, Mapping
 from weko_user_profiles.config import WEKO_USERPROFILES_POSITION_LIST,WEKO_USERPROFILES_INSTITUTE_POSITION_LIST
-from weko_workflow.models import ActivityHistory,GuestActivity
+from weko_workflow.models import Activity, ActivityHistory, GuestActivity
 from weko_workflow.config import WEKO_WORKFLOW_FILTER_PARAMS,IDENTIFIER_GRANT_LIST
 from weko_workflow.errors import InvalidParameterValueError
 from weko_workflow.utils import (
@@ -160,10 +159,9 @@ from weko_workflow.utils import (
     get_non_extract_files_by_recid,
     check_activity_settings
 )
-from weko_workflow.api import WorkActivity
-from weko_workflow.models import Activity
+from weko_workflow.api import GetCommunity, UpdateItem, WorkActivity, WorkActivityHistory, WorkFlow
+from weko_workflow.models import Activity,ActionIdentifier
 from datetime import timedelta
-from redis.exceptions import ResponseError
 
 # def get_current_language():
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_get_current_language -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
@@ -838,9 +836,44 @@ def test_get_item_value_in_deep():
         assert r == test[i]
 
 
-#     def __init__(self, item_id):
+# class IdentifierHandle(object):
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::TestIdentifierHandle::test___init__ -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+class TestIdentifierHandle:
+    # def __init__(self, item_id):
+    # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::TestIdentifierHandle::test___init__ -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+    def test___init__(self, app):
+        obj = IdentifierHandle()
+        assert obj
+
+        item_uuid = uuid.uuid4()
+        with patch("weko_workflow.utils.WekoRecord.get_record", return_value=MagicMock(spec=WekoRecord)) as mock_get_record, \
+                patch("weko_workflow.utils.ItemTypes.get_by_id", return_value=MagicMock(spec=ItemType, id=1)) as mock_get_by_id, \
+                patch("weko_workflow.utils.Mapping.get_record", return_value=MagicMock(spec=Mapping)) as mock_get_mapping, \
+                patch("weko_workflow.utils.ItemsMetadata.get_record", return_value=MagicMock(spec=ItemsMetadata)) as mock_get_metadata, \
+                patch("weko_workflow.utils.get_full_mapping", return_value={"mapping": "mapping"}) as mock_mapping_data:
+            obj = IdentifierHandle(item_uuid)
+        assert obj.item_uuid == item_uuid
+        assert obj.item_record is not None
+        mock_get_record.assert_called_once_with(item_uuid)
+        mock_get_by_id.assert_called()
+        mock_get_mapping.assert_called_once_with(1)
+        mock_mapping_data.assert_called_once()
+        mock_get_metadata.assert_called_once_with(item_uuid)
+
 #     def get_pidstore(self, pid_type='doi', object_uuid=None):
-#     def check_pidstore_exist(self, pid_type, chk_value=None):
+
+    # def check_pidstore_exist(self, pid_type, chk_value=None):
+    # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::TestIdentifierHandle::test_check_pidstore_exist -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+    def test_check_pidstore_exist(self, db, mocker):
+        mock_persistent_identifier = mocker.patch("weko_workflow.utils.PersistentIdentifier")
+        mock_query = MagicMock()
+        mock_query.filter_by.return_value = mock_query
+        mock_query.all.return_value = [MagicMock(pid_value="10.1234/abcd")]
+        mock_persistent_identifier.query = mock_query
+
+        records = IdentifierHandle().check_pidstore_exist("doi", "10.1234/abcd")
+        assert records[0].pid_value == "10.1234/abcd"
+
 #     def register_pidstore(self, pid_type, reg_value):
 #     def delete_pidstore_doi(self, pid_value=None):
 #     def remove_idt_registration_metadata(self):
@@ -983,10 +1016,10 @@ def test_get_actionid(action_data):
 def test_convert_record_to_item_metadata(db_records, db_itemtype):
     record = WekoRecord.get_record(db_records[0][2].id)
     result = convert_record_to_item_metadata(record)
-    test = {'id': '1', '$schema': '1', 'created_by': 1, 'pubdate': '2022-08-20', 'title': 'title', 
-            'shared_user_ids': [], 
-            'item_1617186331708': [{'subitem_1551255647225': 'title', 'subitem_1551255648112': 'ja','subitem_stop/continue': 'Continue'}], 
-            'item_1617186819068': {'subitem_identifier_reg_text': 'test/0000000001', 'subitem_identifier_reg_type': 'JaLC'}, 
+    test = {'id': '1', '$schema': '1', 'created_by': 1, 'pubdate': '2022-08-20', 'title': 'title',
+            'shared_user_ids': [],
+            'item_1617186331708': [{'subitem_1551255647225': 'title', 'subitem_1551255648112': 'ja','subitem_stop/continue': 'Continue'}],
+            'item_1617186819068': {'subitem_identifier_reg_text': 'test/0000000001', 'subitem_identifier_reg_type': 'JaLC'},
             'item_1617258105262': {'resourceuri': 'http://purl.org/coar/resource_type/c_5794', 'resourcetype': 'conference paper'},
             'item_1617605131499': [{'accessrole': 'open_access','date': [{'dateType': 'Available','dateValue': '2022-10-03'}],
             'displaytype': 'detail','filename': 'check_2022-03-10.tsv','filesize': [{'value': '460 B'}],
@@ -999,15 +1032,15 @@ def test_convert_record_to_item_metadata(db_records, db_itemtype):
     # record_metadataのjsonに"weko_shared_ids": []を設定する。
     record = WekoRecord.get_record(db_records[7][2].id)
     result = convert_record_to_item_metadata(record)
-    excepted = {'id': '194', 
-                '$schema': '1', 
-                'owner': 1, 
+    excepted = {'id': '194',
+                '$schema': '1',
+                'owner': 1,
                 'owners': [1],
                 'created_by': 1,
                 'pid': {'revision_id': 0, 'type': 'depid','value': '194'},
-                'pubdate': '2023-04-25', 
-                'title': 'テスト タイトル1', 
-                'shared_user_ids': [], 
+                'pubdate': '2023-04-25',
+                'title': 'テスト タイトル1',
+                'shared_user_ids': [],
                 'item_1617186331708': [{'subitem_1551255647225': 'テスト タイトル1', 'subitem_1551255648112': 'en'}]
                 }
     assert result == excepted
@@ -1015,15 +1048,15 @@ def test_convert_record_to_item_metadata(db_records, db_itemtype):
     # record_metadataのjsonに"weko_shared_ids": [6]を設定する。
     record = WekoRecord.get_record(db_records[8][2].id)
     result = convert_record_to_item_metadata(record)
-    excepted = {'id': '195', 
-                '$schema': '1', 
-                'owner': 1, 
+    excepted = {'id': '195',
+                '$schema': '1',
+                'owner': 1,
                 'owners': [1],
                 'created_by': 1,
                 'pid': {'revision_id': 0, 'type': 'depid','value': '195'},
-                'pubdate': '2023-04-25', 
-                'title': 'テスト タイトル2', 
-                'shared_user_ids': [6], 
+                'pubdate': '2023-04-25',
+                'title': 'テスト タイトル2',
+                'shared_user_ids': [6],
                 'item_1617186331708': [{'subitem_1551255647225': 'テスト タイトル2', 'subitem_1551255648112': 'en'}]
                 }
     assert result == excepted
@@ -1071,13 +1104,287 @@ def test_prepare_edit_workflow(app, workflow, db_records,users,mocker, order_if)
                 pi.one_or_none = MagicMock(return_value = None)
                 recid = db_records[7][0]
                 deposit = db_records[7][6]
-                result = prepare_edit_workflow(data,recid,deposit) 
+                result = prepare_edit_workflow(data,recid,deposit)
                 assert result.activity_id != None
 
         recid = db_records[6][0]
         deposit = db_records[6][6]
         res = prepare_edit_workflow(data,recid,deposit)
         assert res.activity_id != None
+
+        mocker.patch("weko_workflow.utils.IdentifierHandle.get_pidstore")
+        with patch("weko_deposit.api.WekoRecord.get_record_by_pid", return_value=None):
+            recid = db_records[4][0]
+            deposit = db_records[4][6]
+            res = prepare_edit_workflow(data,recid,deposit)
+            assert res.activity_id != None
+
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_prepare_edit_workflow_existing_draft_pid_and_bucket -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_prepare_edit_workflow_existing_draft_pid_and_bucket(app, workflow, db_records, users, mocker):
+    with app.test_request_context():
+        login_user(users[2]["obj"])
+        mocker.patch("weko_workflow.utils.WekoDeposit.update")
+        mocker.patch("weko_workflow.utils.WekoDeposit.commit")
+        mocker.patch("weko_workflow.utils.WekoDeposit.publish")
+
+        data = {
+            "flow_id": workflow["flow"].id,
+            "workflow_id": workflow["workflow"].id,
+            "community": 1,
+            "itemtype_id": 1,
+            "activity_login_user": 1,
+            "activity_update_user": 1
+        }
+        recid = db_records[3][0]
+        deposit = db_records[3][6]
+
+        # 52716-2 existing draft pid and bucket
+        res = prepare_edit_workflow(data, recid, deposit)
+        assert res.item_id != None
+
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_prepare_edit_workflow_existing_draft_pid_no_bucket -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_prepare_edit_workflow_existing_draft_pid_no_bucket(app, workflow, db_records, users, mocker):
+    with app.test_request_context():
+        login_user(users[2]["obj"])
+        draft_pid = db_records[12][0]
+        deposit = db_records[12][6]
+
+        before_count_bucket = Bucket.query.count()
+        before_count_records_buckets = RecordsBuckets.query.count()
+
+        mocker.patch("weko_workflow.utils.WekoDeposit.update")
+        mocker.patch("weko_workflow.utils.WekoDeposit.commit")
+        mocker.patch("weko_workflow.utils.WekoDeposit.publish")
+
+        mocker.patch("invenio_deposit.api.Deposit.files")
+        create_bucket_mock = mocker.patch("invenio_files_rest.models.Bucket.create")
+        data = {
+            "flow_id": workflow["flow"].id,
+            "workflow_id": workflow["workflow"].id,
+            "community": 1,
+            "itemtype_id": 1,
+            "activity_login_user": 1,
+            "activity_update_user": 1
+        }
+        mocker.patch("invenio_files_rest.models.Bucket.get" , return_value=None)
+
+        # 52716-3 existing draft pid but no bucket
+        with patch("invenio_records_files.models.RecordsBuckets.create", side_effect=SQLAlchemyError("Test Exception")) as create_records_buckets_mock:
+            with pytest.raises(SQLAlchemyError) as excinfo:
+                prepare_edit_workflow(data, draft_pid, deposit)
+
+                assert create_bucket_mock.called
+                assert create_records_buckets_mock.called
+                assert str(ex) == "Test Exception"
+
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_prepare_edit_workflow_check_doi -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_prepare_edit_workflow_check_doi(app, workflow, db_records, users, mocker):
+    with app.test_request_context():
+        login_user(users[2]["obj"])
+        mocker.patch("weko_workflow.utils.WekoDeposit.update")
+        mocker.patch("weko_workflow.utils.WekoDeposit.commit")
+        mocker.patch("weko_workflow.utils.WekoDeposit.publish")
+        draft_pid = db_records[3][0]
+        deposit = db_records[3][6]
+        data = {
+            "flow_id": workflow["flow"].id,
+            "workflow_id": workflow["workflow"].id,
+            "community": 1,
+            "itemtype_id": 1,
+            "activity_login_user": 1,
+            "activity_update_user": 1
+        }
+        mock_pid_doi = MagicMock()
+        # 52716-4 pid_doi.status == PIDStatus.DELETED
+        mock_pid_doi.status = PIDStatus.DELETED
+        with patch("weko_workflow.utils.IdentifierHandle.get_pidstore", return_value=mock_pid_doi):
+            rtn = prepare_edit_workflow(data, draft_pid, deposit)
+
+            action_identifier = ActionIdentifier.query.filter_by(activity_id=rtn.activity_id).first()
+            assert action_identifier.action_identifier_select == -3
+
+        # 52716-5 pid_doi.status is not PIDStatus.DELETED
+        mock_pid_doi.status = PIDStatus.REGISTERED
+        with patch("weko_workflow.utils.IdentifierHandle.get_pidstore", return_value=mock_pid_doi):
+            rtn = prepare_edit_workflow(data, draft_pid, deposit)
+
+            action_identifier = ActionIdentifier.query.filter_by(activity_id=rtn.activity_id).first()
+            assert action_identifier.action_identifier_select == -1
+
+        # 52716-6 pid_doi is None
+        mock_pid_doi = None
+        with patch("weko_workflow.utils.IdentifierHandle.get_pidstore", return_value=mock_pid_doi):
+            rtn = prepare_edit_workflow(data, draft_pid, deposit)
+
+            action_identifier = ActionIdentifier.query.filter_by(activity_id=rtn.activity_id).first()
+            assert action_identifier.action_identifier_select == 0
+
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_prepare_edit_workflow_existing_feedbackmail -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_prepare_edit_workflow_existing_feedbackmail(app, workflow, db_records, users, mocker):
+    with app.test_request_context():
+        login_user(users[2]["obj"])
+        mocker.patch("weko_workflow.utils.WekoDeposit.update")
+        mocker.patch("weko_workflow.utils.WekoDeposit.commit")
+        mocker.patch("weko_workflow.utils.WekoDeposit.publish")
+
+        data = {
+            "flow_id": workflow["flow"].id,
+            "workflow_id": workflow["workflow"].id,
+            "community": 1,
+            "itemtype_id": 1,
+            "activity_login_user": 1,
+            "activity_update_user": 1
+        }
+        recid = db_records[3][0]
+        deposit = db_records[3][6]
+
+        # 52716-7 feedbackmail exists
+        with patch("weko_workflow.utils.FeedbackMailList.get_mail_list_by_item_id", return_value=["test@example.com"]):
+            mock_create_or_update_action_feedbackmail = mocker.patch("weko_workflow.api.WorkActivity.create_or_update_action_feedbackmail")
+            res = prepare_edit_workflow(data, recid, deposit)
+
+            assert mock_create_or_update_action_feedbackmail.called
+
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_prepare_edit_workflow_rtn_none -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_prepare_edit_workflow_rtn_none(app, workflow, db_records, users, mocker):
+    with app.test_request_context():
+        login_user(users[2]["obj"])
+        mocker.patch("weko_workflow.utils.WekoDeposit.update")
+        mocker.patch("weko_workflow.utils.WekoDeposit.commit")
+        mocker.patch("weko_workflow.utils.WekoDeposit.publish")
+
+        data = {
+            "flow_id": workflow["flow"].id,
+            "workflow_id": workflow["workflow"].id,
+            "community": 1,
+            "itemtype_id": 1,
+            "activity_login_user": 1,
+            "activity_update_user": 1
+        }
+        recid = db_records[3][0]
+        deposit = db_records[3][6]
+
+        # 52716-9 failed init_activity
+        with patch("weko_workflow.api.WorkActivity.init_activity", return_value=None):
+            res = prepare_edit_workflow(data, recid, deposit)
+
+            assert res is None
+
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_prepare_edit_workflow_exception -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_prepare_edit_workflow_exception(app, workflow, db_records, users, mocker):
+    with app.test_request_context():
+        login_user(users[2]["obj"])
+        draft_pid = db_records[3][0]
+        deposit = db_records[3][6]
+        data = {
+            "flow_id": workflow["flow"].id,
+            "workflow_id": workflow["workflow"].id,
+            "community": 1,
+            "itemtype_id": 1,
+            "activity_login_user": 1,
+            "activity_update_user": 1
+        }
+        mocker.patch("weko_workflow.utils.WekoDeposit.update")
+        mocker.patch("weko_workflow.utils.WekoDeposit.publish")
+        # 52716-10 raises SQLAlchemyError
+        with patch("weko_workflow.utils.WekoDeposit.commit", side_effect=SQLAlchemyError("Test Exception")):
+            with pytest.raises(SQLAlchemyError) as excinfo:
+                prepare_edit_workflow(data, draft_pid, deposit)
+            assert str(excinfo.value) == "Test Exception"
+
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_prepare_edit_workflow_draft_item_exception -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_prepare_edit_workflow_draft_item_exception(app, workflow, db_records, users, mocker):
+    with app.test_request_context():
+        login_user(users[2]["obj"])
+        mocker.patch("weko_workflow.utils.WekoDeposit.update")
+        mocker.patch("weko_workflow.utils.WekoDeposit.commit")
+        mocker.patch("weko_workflow.utils.WekoDeposit.publish")
+        draft_pid = db_records[2][0]
+        deposit = db_records[2][6]
+        data = {
+            "flow_id": workflow["flow"].id,
+            "workflow_id": workflow["workflow"].id,
+            "community": 1,
+            "itemtype_id": 1,
+            "activity_login_user": 1,
+            "activity_update_user": 1
+        }
+        # 52716-11 failed prepare_draft_item
+        mocker.patch("weko_deposit.api.WekoDeposit.prepare_draft_item", return_value=None)
+        with pytest.raises(AttributeError) as excinfo:
+            prepare_edit_workflow(data, draft_pid, deposit)
+        assert "object has no attribute" in str(excinfo.value)
+
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_prepare_edit_workflow_get_record_exception -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_prepare_edit_workflow_get_record_exception(app, workflow, db_records, users, mocker):
+    with app.test_request_context():
+        login_user(users[2]["obj"])
+        mocker.patch("weko_workflow.utils.WekoDeposit.update")
+        mocker.patch("weko_workflow.utils.WekoDeposit.commit")
+        mocker.patch("weko_workflow.utils.WekoDeposit.publish")
+        draft_pid = db_records[3][0]
+        deposit = db_records[3][6]
+        data = {
+            "flow_id": workflow["flow"].id,
+            "workflow_id": workflow["workflow"].id,
+            "community": 1,
+            "itemtype_id": 1,
+            "activity_login_user": 1,
+            "activity_update_user": 1
+        }
+        # 52716-12 failed get_record
+        mocker.patch("weko_deposit.api.WekoDeposit.get_record", return_value=None)
+        with pytest.raises(AttributeError) as excinfo:
+            prepare_edit_workflow(data, draft_pid, deposit)
+        assert "object has no attribute" in str(excinfo.value)
+
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_prepare_edit_workflow_convert_item_exception -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_prepare_edit_workflow_convert_item_exception(app, workflow, db_records, users, mocker):
+    with app.test_request_context():
+        login_user(users[2]["obj"])
+        mocker.patch("weko_workflow.utils.WekoDeposit.update")
+        mocker.patch("weko_workflow.utils.WekoDeposit.commit")
+        mocker.patch("weko_workflow.utils.WekoDeposit.publish")
+        draft_pid = db_records[12][0]
+        deposit = db_records[12][6]
+        data = {
+            "flow_id": workflow["flow"].id,
+            "workflow_id": workflow["workflow"].id,
+            "community": 1,
+            "itemtype_id": 1,
+            "activity_login_user": 1,
+            "activity_update_user": 1
+        }
+        # 52716-13 failed convert_record_to_item_metadata
+        with pytest.raises(KeyError) as excinfo:
+            prepare_edit_workflow(data, draft_pid, deposit)
+        assert isinstance(excinfo.value, KeyError)
+
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_prepare_edit_workflow_pidstore_exception -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_prepare_edit_workflow_pidstore_exception(app, workflow, db_records, users, mocker):
+    with app.test_request_context():
+        login_user(users[2]["obj"])
+        mocker.patch("weko_workflow.utils.WekoDeposit.update")
+        mocker.patch("weko_workflow.utils.WekoDeposit.commit")
+        mocker.patch("weko_workflow.utils.WekoDeposit.publish")
+        draft_pid = db_records[3][0]
+        deposit = db_records[3][6]
+        data = {
+            "flow_id": workflow["flow"].id,
+            "workflow_id": workflow["workflow"].id,
+            "community": 1,
+            "itemtype_id": 1,
+            "activity_login_user": 1,
+            "activity_update_user": 1
+        }
+        # 52716-14 failed get_pidstore
+        with patch("weko_workflow.utils.get_parent_pid_with_type", side_effect=PIDDoesNotExistError("recid", draft_pid.pid_value)):
+            with pytest.raises(PIDDoesNotExistError):
+                rtn = prepare_edit_workflow(data, draft_pid, deposit)
+
+                action_identifier = ActionIdentifier.query.filter_by(activity_id=rtn.activity_id).first()
+                assert action_identifier.action_identifier_select == 0
+
 
 
 # def prepare_edit_workflow(post_activity, recid, deposit):
@@ -1210,7 +1517,7 @@ def test_handle_finish_workflow2(workflow, db_records, item_type, mocker):
     mocker.patch("weko_deposit.api.WekoDeposit.publish")
     mocker.patch("weko_deposit.api.WekoDeposit.commit")
     mocker.patch("invenio_oaiserver.tasks.update_records_sets.delay")
-    
+
     deposit = db_records[2][6]
     current_pid = db_records[2][0]
     recid = db_records[2][2]
@@ -1336,12 +1643,12 @@ def test_update_cache_data_timedelta(client):
     key = "test_key"
     value = "test_value"
     # expect current_app.config['PERMANENT_SESSION_LIFETIME']
-    fallback_timeout = timedelta(days=1)
+    fallback_timeout = datetime.timedelta(days=1)
 
     with patch("weko_workflow.utils.current_cache.set") as mock_set:
         with patch("weko_workflow.utils.current_app") as mock_app:
             # 51991 case.03(update_cache_data)
-            timeout = timedelta(seconds=60)
+            timeout = datetime.timedelta(seconds=60)
             update_cache_data(key, value, timeout)
             mock_set.assert_called_once_with(key, value, timeout=timeout)
 
@@ -1349,7 +1656,7 @@ def test_update_cache_data_timedelta(client):
         with patch("weko_workflow.utils.current_app") as mock_app:
             # 51991 case.04(update_cache_data)
             mock_app.config = {"PERMANENT_SESSION_LIFETIME": fallback_timeout}
-            timeout = timedelta(seconds=0)
+            timeout = datetime.timedelta(seconds=0)
             with pytest.raises(ResponseError):
                 update_cache_data(key, value, timeout=timeout)
                 mock_set.assert_any_call(key, value, timeout=fallback_timeout)
@@ -1617,7 +1924,7 @@ def test_send_mail_reminder(
     with pytest.raises(ValueError) as e:
         send_mail_reminder(test_mail_info)
     assert str(e.value) == 'Cannot get email subject'
-    
+
     # Test for ValueError when the 'body' key is missing
     missing_body_data = copy.deepcopy(test_mail_data)
     del missing_body_data['mail_body']
@@ -2280,7 +2587,7 @@ def test_get_default_mail_sender(db):
     assert result == "test_sender"
 # def set_mail_info(item_info, activity_detail, guest_user=False):
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_set_mail_info -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
-def test_set_mail_info(app, db_register, mocker, records_restricted, db_records, db):
+def test_set_mail_info(app, db_register_full_action, mocker, db_records, db):
     config = current_app.config
     mocker.patch("weko_workflow.utils.get_site_info_name",return_value=("name_en","name_ja"))
     mocker.patch("weko_workflow.utils.get_default_mail_sender",return_value="default_sender")
@@ -2300,16 +2607,13 @@ def test_set_mail_info(app, db_register, mocker, records_restricted, db_records,
         "subitem_title":"test_sub_title",
         "subitem_advisor_university/institution":"test advisor university",
         "subitem_guarantor_university/institution":"test guarantor university",
-        "subitem_fullname":"test access name",
-        'subitem_university/institution':"test_restricted_institution",
         "subitem_restricted_access_research_title":"test_restricted_research_title",
         "subitem_restricted_access_dataset_usage":"test_restricted_dataset",
         "subitem_restricted_access_application_date":"test_restricted_date",
-        "subitem_mail_address":"restricted@test.org",
         "subitem_restricted_access_research_plan":"restricted_research_plan"
     }
 
-    activity_id = db_register["activities"][0].activity_id
+    activity_id = db_register_full_action["activities"][0].activity_id
 
     test = {
         "university_institution":"test_institution",
@@ -2335,15 +2639,15 @@ def test_set_mail_info(app, db_register, mocker, records_restricted, db_records,
         "restricted_research_title":"test_restricted_research_title",
         "restricted_data_name":"test_restricted_dataset",
         "restricted_application_date":"test_restricted_date",
-        "restricted_mail_address":"restricted@test.org",
+        "restricted_mail_address":"test@test.org",
         "restricted_download_link":"",
         "restricted_expiration_date":"",
         "restricted_approver_name":"",
         "restricted_approver_affiliation":"",
         "restricted_site_name_ja":"name_ja",
         "restricted_site_name_en":"name_en",
-        # "restricted_institution_name_ja":config["THEME_INSTITUTION_NAME"]["ja"],
-        # "restricted_institution_name_en":config["THEME_INSTITUTION_NAME"]["en"],
+        "restricted_institution_name_ja":config["THEME_INSTITUTION_NAME"]["ja"],
+        "restricted_institution_name_en":config["THEME_INSTITUTION_NAME"]["en"],
         "restricted_site_mail":"default_sender",
         "restricted_site_url":"https://localhost",
         "mail_recipient":"test@test.org",
@@ -2354,7 +2658,7 @@ def test_set_mail_info(app, db_register, mocker, records_restricted, db_records,
         "restricted_research_plan":"restricted_research_plan"
     }
     with app.test_request_context():
-        result = set_mail_info(item_info,db_register["activities"][0],True)
+        result = set_mail_info(item_info,db_register_full_action["activities"][0],True)
         assert result == test
 
     test = {
@@ -2381,15 +2685,15 @@ def test_set_mail_info(app, db_register, mocker, records_restricted, db_records,
         "restricted_research_title":"test_restricted_research_title",
         "restricted_data_name":"test_restricted_dataset",
         "restricted_application_date":"test_restricted_date",
-        "restricted_mail_address":"restricted@test.org",
+        "restricted_mail_address":"test@test.org",
         "restricted_download_link":"",
         "restricted_expiration_date":"",
         "restricted_approver_name":"",
         "restricted_approver_affiliation":"",
         "restricted_site_name_ja":"name_ja",
         "restricted_site_name_en":"name_en",
-        # "restricted_institution_name_ja":config["THEME_INSTITUTION_NAME"]["ja"],
-        # "restricted_institution_name_en":config["THEME_INSTITUTION_NAME"]["en"],
+        "restricted_institution_name_ja":config["THEME_INSTITUTION_NAME"]["ja"],
+        "restricted_institution_name_en":config["THEME_INSTITUTION_NAME"]["en"],
         "restricted_site_mail":"default_sender",
         "restricted_site_url":"https://localhost",
         "mail_recipient":"test@test.org",
@@ -2400,14 +2704,14 @@ def test_set_mail_info(app, db_register, mocker, records_restricted, db_records,
         "restricted_research_plan":"restricted_research_plan"
     }
     with app.test_request_context():
-        result = set_mail_info(item_info,db_register["activities"][0],False)
+        result = set_mail_info(item_info,db_register_full_action["activities"][0],False)
         assert result == test
 
     with app.test_request_context():
        record = WekoRecord.get_record(db_records[0][2].id)
        with patch("weko_workflow.utils.WekoRecord.get_record_by_pid", return_value = record):
            with patch("weko_workflow.utils.url_for", return_value = 'records/1'):
-                result = set_mail_info(item_info,db_register["activities"][9],False)
+                result = set_mail_info(item_info,db_register_full_action["activities"][9],False)
                 assert result["landing_url"] != ""
 
     with app.test_request_context():
@@ -2416,7 +2720,7 @@ def test_set_mail_info(app, db_register, mocker, records_restricted, db_records,
             with patch("weko_workflow.utils.url_for", return_value = 'records/1'):
                 with patch("weko_workflow.utils.WekoRecord.get_file_data", return_value = [{"filename":"aaa.txt"}]):
                     with patch("weko_workflow.utils.extract_term_description", return_value=("","")):
-                        result = set_mail_info(item_info,db_register["activities"][10],False)
+                        result = set_mail_info(item_info,db_register_full_action["activities"][10],False)
                         assert result["terms_of_use_jp"] == ""
                         assert result["terms_of_use_en"] == ""
 
@@ -2430,7 +2734,7 @@ def test_set_mail_info(app, db_register, mocker, records_restricted, db_records,
                     with db.session.begin_nested():
                         db.session.add(item_application_1)
                     db.session.commit()
-                    db_register["activities"][10].extra_info = {"file_name":"recid/15"}
+                    db_register_full_action["activities"][10].extra_info = {"file_name":"recid/15"}
                     persistent_identifier = PersistentIdentifier(
                         pid_type="recid",
                         pid_value=item_id_1,
@@ -2438,9 +2742,9 @@ def test_set_mail_info(app, db_register, mocker, records_restricted, db_records,
                         status="R",
                         object_type="item",
                         object_uuid=uuid.uuid4(),
-                    )                        
+                    )
                     mocker.patch("weko_workflow.utils.PersistentIdentifier.get", return_value = persistent_identifier)
-                    result = set_mail_info(item_info,db_register["activities"][10],False)
+                    result = set_mail_info(item_info,db_register_full_action["activities"][10],False)
                     assert result["terms_of_use_jp"] == ""
                     assert result["terms_of_use_en"] == ""
 
@@ -2449,7 +2753,7 @@ def test_set_mail_info(app, db_register, mocker, records_restricted, db_records,
         with patch("weko_workflow.utils.WekoRecord.get_record_by_pid", return_value = record):
             with patch("weko_workflow.utils.url_for", return_value = 'records/1'):
                 with patch("weko_workflow.utils.extract_term_description", return_value=("test_terms_ja","test_terms_en")):
-                    result = set_mail_info(item_info,db_register["activities"][11],False)
+                    result = set_mail_info(item_info,db_register_full_action["activities"][11],False)
 
     with app.test_request_context():
         record = WekoRecord.get_record(db_records[0][2].id)
@@ -2457,13 +2761,13 @@ def test_set_mail_info(app, db_register, mocker, records_restricted, db_records,
             # with patch("weko_workflow.utils.url_for", return_value = 'records/1'):
                 with patch("weko_workflow.utils.WekoRecord.get_file_data", return_value = [{"filename":"aaa.txt"}]):
                     with patch("weko_workflow.utils.extract_term_description", return_value=("","")):
-                        result = set_mail_info(item_info,db_register["activities"][10],False)
+                        result = set_mail_info(item_info,db_register_full_action["activities"][10],False)
 
 class MockDict():
     def __init__(self, data):
         for key in data:
             setattr(self, key, data[key])
-    
+
 
 # def extract_term_description(file_info):
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_extract_term_description -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
@@ -2531,7 +2835,7 @@ def test_extract_term_description(db):
     test = "", ""
     with patch("weko_workflow.utils.AdminSettings.get", return_value = ""):
         assert extract_term_description(file_info) == test
-    
+
     #testNo.19(W2023-22 2)
     file_info = {"terms": 2}
     test = "", ""
@@ -2613,7 +2917,7 @@ def test_process_send_notification_mail(db,db_register, mocker, users):
         'approval': False,
         'reject': False
     }
-    
+
     with patch('weko_workflow.utils._check_mail_setting', return_value=True):
         process_send_notification_mail(activity,"item_login","next_step", action_mails_setting)
         mock_send_registration.assert_called_with(data, 'test_mail')
@@ -2985,14 +3289,13 @@ def test_save_activity_data(mocker):
 
     data = {
         "activity_id":"test_id",
-        "title":"test title",
         "shared_user_ids":[{"user":1}],
         "approval1":"test1@test.org",
         "approval2":"test2@test.org"
     }
     mock_update = mocker.patch("weko_workflow.utils.WorkActivity.update_activity")
     save_activity_data(data)
-    mock_update.assert_called_with("test_id",{"title":"test title","shared_user_ids":[{"user":1}],"approval1":"test1@test.org","approval2":"test2@test.org"})
+    mock_update.assert_called_with("test_id",{"shared_user_ids":[{"user":1}],"approval1":"test1@test.org","approval2":"test2@test.org"})
 
 # def save_activity_data(data: dict) -> NoReturn:
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_save_activity_data_1 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
@@ -3000,7 +3303,6 @@ def test_save_activity_data_1(db_register_full_action, mocker):
     mock_update = mocker.patch("weko_workflow.utils.WorkActivity.update_activity")
     data = {
         "activity_id":db_register_full_action['activities'][0].activity_id,
-        "title":"test title",
         "shared_user_ids":[],
         "approval1":"test1@test.org",
         "approval2":"test2@test.org"
@@ -3014,7 +3316,6 @@ def test_save_activity_data_1(db_register_full_action, mocker):
 def test_save_activity_data_2(db_register_full_action, mocker):
     data = {
         "activity_id":db_register_full_action['activities'][0].activity_id,
-        "title":"test title",
         "shared_user_ids":[{"user":3}],
         "approval1":"test1@test.org",
         "approval2":"test2@test.org"
@@ -3128,7 +3429,7 @@ def test_init_activity_for_guest_user(app,db_register_full_action,mocker):
         assert tmp_url == "http://TEST_SERVER.localdomain/workflow/activity/guest-user/test.txt?token=QS0yMDIyMTAwMy0wMDAwMSAyMDIyLTEwLTAxIGd1ZXN0QHRlc3Qub3JnIENFMDZGREZCMTU4MjNBNUM="
         _ , tmp_url = init_activity_for_guest_user(data,True)
         assert tmp_url == "http://TEST_SERVER.localdomain/workflow/activity/guest-user/test.txt?token=QS0yMDIyMTAwMy0wMDAwMSAyMDIyLTEwLTAxIGd1ZXN0QHRlc3Qub3JnIENFMDZGREZCMTU4MjNBNUM="
-        
+
 
 # def send_usage_application_mail_for_guest_user(guest_mail: str, temp_url: str):
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_send_usage_application_mail_for_guest_user -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
@@ -3367,7 +3668,7 @@ def test_get_activity_display_info(app,db, users, db_register_full_action, mocke
         assert steps == test_steps
         assert temporary_comment == None
         assert workflow_detail == db_register_full_action["workflow"]
-        
+
         mocker.patch("weko_workflow.utils.ItemsMetadata.get_record",side_effect=NoResultFound)
         activity.activity_status="C"
         db.session.merge(activity)
@@ -3852,7 +4153,7 @@ def test_process_send_approval_mails(app,db_register,users,mocker):
     # no1, not guest, approval is True,previous.inform_approval is True
     actions_mail_setting={
         "previous":{"inform_reject": {"mail": "0", "send": False}, "inform_itemReg": {"mail": "0", "send": False}, "inform_itemReg_for_registerPerson":{"mail": "0", "send": True},
-                     "inform_approval": {"mail": "0", "send": True}, "request_approval": {"mail": "0", "send": False}, 
+                     "inform_approval": {"mail": "0", "send": True}, "request_approval": {"mail": "0", "send": False},
                      "inform_reject_for_guest": {"mail": "0", "send": False}, "inform_approval_for_guest": {"mail": "0", "send": True},
                      "request_approval_for_guest": {"mail": "0", "send": False}},
         "next": {},
@@ -3876,7 +4177,7 @@ def test_process_send_approval_mails(app,db_register,users,mocker):
     mock_sender.assert_called_with(test_mail_info,"0")
 
     # no2, guest, approval is True,previous.inform_approval is True
-    
+
     mail_info={
         "restricted_download_link":"",
         "restricted_expiration_date":"",
@@ -3950,7 +4251,7 @@ def test_process_send_approval_mails(app,db_register,users,mocker):
         "previous":{},
         "next": {"inform_reject": {"mail": "0", "send": False}, "inform_itemReg": {"mail": "0", "send": False}, "inform_itemReg_for_registerPerson":{"mail": "0", "send": True},
                 "inform_approval": {"mail": "0", "send": False}, "request_approval": {"mail": "0", "send": False},
-                "inform_reject_for_guest": {"mail": "0", "send": False}, "inform_approval_for_guest": {"mail": "0", "send": False}, 
+                "inform_reject_for_guest": {"mail": "0", "send": False}, "inform_approval_for_guest": {"mail": "0", "send": False},
                 "request_approval_for_guest": {"mail": "0", "send": False}},
         "approval": True,
         "reject": False}
@@ -3967,7 +4268,7 @@ def test_process_send_approval_mails(app,db_register,users,mocker):
     actions_mail_setting={
         "previous":{"inform_reject": {"mail": "0", "send": False}, "inform_itemReg": {"mail": "0", "send": True}, "inform_itemReg_for_registerPerson":{"mail": "0", "send": False},
                    "inform_approval": {"mail": "0", "send": False}, "request_approval": {"mail": "0", "send": False},
-                     "inform_reject_for_guest": {"mail": "0", "send": False}, "inform_approval_for_guest": {"mail": "0", "send": False}, 
+                     "inform_reject_for_guest": {"mail": "0", "send": False}, "inform_approval_for_guest": {"mail": "0", "send": False},
                      "request_approval_for_guest": {"mail": "0", "send": False}},
         "next": {},
         "approval": True,
@@ -3991,7 +4292,7 @@ def test_process_send_approval_mails(app,db_register,users,mocker):
     actions_mail_setting={
         "previous":{"inform_reject": {"mail": "0", "send": False}, "inform_itemReg": {"mail": "0", "send": True}, "inform_itemReg_for_registerPerson":{"mail": "0", "send": True},
                    "inform_approval": {"mail": "0", "send": False}, "request_approval": {"mail": "0", "send": False},
-                     "inform_reject_for_guest": {"mail": "0", "send": False}, "inform_approval_for_guest": {"mail": "0", "send": False}, 
+                     "inform_reject_for_guest": {"mail": "0", "send": False}, "inform_approval_for_guest": {"mail": "0", "send": False},
                      "request_approval_for_guest": {"mail": "0", "send": False}},
         "next": {},
         "approval": True,
@@ -4018,7 +4319,7 @@ def test_process_send_approval_mails(app,db_register,users,mocker):
     actions_mail_setting={
         "previous":{"inform_reject": {"mail": "0", "send": False}, "inform_itemReg": {"mail": "0", "send": True}, "inform_itemReg_for_registerPerson":{"mail": "0", "send": True},
                    "inform_approval": {"mail": "0", "send": False}, "request_approval": {"mail": "0", "send": False},
-                     "inform_reject_for_guest": {"mail": "0", "send": False}, "inform_approval_for_guest": {"mail": "0", "send": False}, 
+                     "inform_reject_for_guest": {"mail": "0", "send": False}, "inform_approval_for_guest": {"mail": "0", "send": False},
                      "request_approval_for_guest": {"mail": "0", "send": False}},
         "next": {},
         "approval": True,
@@ -4121,7 +4422,7 @@ def test_process_send_approval_mails(app,db_register,users,mocker):
     # reject is True, previous.inform_reject is False
     actions_mail_setting={
         "previous":{"inform_reject": {"mail": "0", "send": False}, "inform_itemReg": {"mail": "0", "send": False}, "inform_itemReg_for_registerPerson":{"mail": "0", "send": True},
-                    "inform_approval": {"mail": "0", "send": False}, "request_approval": {"mail": "0", "send": False}, 
+                    "inform_approval": {"mail": "0", "send": False}, "request_approval": {"mail": "0", "send": False},
                     "inform_reject_for_guest": {"mail": "0", "send": False}, "inform_approval_for_guest": {"mail": "0", "send": False},
                     "request_approval_for_guest": {"mail": "0", "send": False}},
         "next": {},
@@ -4619,7 +4920,7 @@ def test_grant_access_rights_to_all_open_restricted_files(app ,db,users ):
             res = grant_access_rights_to_all_open_restricted_files(activity_id ,file_permission, activity_detail )
             # print(res)
             assert 'bbb.txt' in res["file_url"]
-            
+
             fps = FilePermission.find_by_activity(activity_id)
             assert len(fps) == 2
 

@@ -83,17 +83,17 @@ def form(
         _d = {
             "items": [
                 {
+                    "key": "{}.subitem_degreename".format(key),
+                    "title": "学位名",
+                    "title_i18n": {"en": "Degree Name", "ja": "学位名"},
+                    "type": "text",
+                },
+                {
                     "key": "{}.subitem_degreename_language".format(key),
                     "title": "言語",
                     "title_i18n": {"en": "Language", "ja": "言語"},
                     "titleMap": get_select_value(config.LANGUAGE_VAL2_1),
                     "type": "select",
-                },
-                {
-                    "key": "{}.subitem_degreename".format(key),
-                    "title": "学位名",
-                    "title_i18n": {"en": "Degree Name", "ja": "学位名"},
-                    "type": "text",
                 },
             ],
             "key": key.replace("[]", ""),

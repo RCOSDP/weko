@@ -92,7 +92,7 @@ class TestAuthorDBManagementAPI:
         is_es=True
     )],indirect=['base_app'])
     # .tox/c1/bin/pytest --cov=weko_authors tests/test_rest.py::TestAuthorDBManagementAPI::test_get_v1 -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko_index_tree/.tox/c1/tmp --full-trace | tee log.log
-    def test_get_v1(self, app, esindex, client_api, auth_headers_noroleuser, auth_headers_sysadmin, auth_headers_sysadmin_without_scope, author_records_for_test, authors_affiliation_settings, authors_prefix_settings):
+    def test_get_v1(self, app, esindex, client_api, auth_headers_noroleuser, auth_headers_sysadmin, auth_headers_sysadmin_without_scope, author_records_for_test, authors_affiliation_settings, authors_prefix_settings, community):
         """
         著者DB検索API - 著者情報取得
         - 正常系: 検索パラメータごとに正しくデータが取得できるか確認
@@ -109,6 +109,7 @@ class TestAuthorDBManagementAPI:
         self.run_get_authors(app, client_api, auth_headers_sysadmin, {"familyname": "User_3"}, 200, ['3','4'])  # 姓（ファミリーネーム）で検索し、著者ID 3 のみが返ることを確認
         self.run_get_authors(app, client_api, auth_headers_sysadmin, {"idtype": "WEKO", "authorid": "1"}, 200, ['1'])  # ID タイプが WEKO で ID が 1 の著者が正しく取得できるか確認
         self.run_get_authors(app, client_api, auth_headers_sysadmin, {"idtype": "ORCID", "authorid": "1"}, 200, [])  # ID タイプが WEKO で ID が 1 の著者が正しく取得できるか確認
+        self.run_get_authors(app, client_api, auth_headers_sysadmin, {"communityid": "community1"}, 200, ['1'])  # コミュニティIDで検索し、著者ID 1 のみが正しく取得できるか確認
 
         # 異常系テスト（不正なアクセスや無効なパラメータの確認）
         self.run_get_authors_invalid_version(app, client_api, auth_headers_sysadmin)  # 無効なAPIバージョンでのアクセスが 400（Bad Request） となることを確認
@@ -179,7 +180,7 @@ class TestAuthorDBManagementAPI:
     @pytest.mark.parametrize('base_app',[dict(
         is_es=True
     )],indirect=['base_app'])
-    def test_post_v1(self, app, client_api, auth_headers_noroleuser, auth_headers_sysadmin, author_records_for_test, authors_affiliation_settings, authors_prefix_settings, auth_headers_bad_content_type):
+    def test_post_v1(self, app, client_api, auth_headers_noroleuser, auth_headers_sysadmin, author_records_for_test, authors_affiliation_settings, authors_prefix_settings, auth_headers_bad_content_type, community):
         """
         著者情報登録API - 著者情報の登録テスト
         - 正常系: 正しく登録できるか確認
@@ -194,6 +195,11 @@ class TestAuthorDBManagementAPI:
         self.run_post_author(app, client_api, auth_headers_sysadmin, self.valid_author_data(), 200, "Author successfully registered.")  # 正常なデータ
         self.run_post_author(app, client_api, auth_headers_sysadmin, self.valid_author_data("ORCID", ""), 200, "Author successfully registered.")  # カーバレジのためのテストケース
         self.run_post_author(app, client_api, auth_headers_sysadmin, self.valid_author_data("ORCID", ""), 200, "Author successfully registered.")  # カーバレジのためのテストケース
+        # コミュニティ紐づけ
+        self.run_post_author(app, client_api, auth_headers_sysadmin, self.valid_author_data_with_community([]), 200, "Author successfully registered.") # 空のコミュニティリスト
+        self.run_post_author(app, client_api, auth_headers_sysadmin, self.valid_author_data_with_community(["community1"]), 200, "Author successfully registered.") # コミュニティIDを指定
+        self.run_post_author(app, client_api, auth_headers_sysadmin, self.valid_author_data_with_community(["community1", "community2", "community3"]), 200, "Author successfully registered.") # 複数のコミュニティIDを指定
+        self.run_post_author(app, client_api, auth_headers_sysadmin, self.valid_author_data_with_community(["community1", "community1"]), 200, "Author successfully registered.") # 重複するコミュニティIDを指定
 
         # 認証なしのリクエストが拒否されることを確認
         self.run_post_author_unauthorized(app, client_api)  # 認証なしでリクエストするとエラー
@@ -217,16 +223,19 @@ class TestAuthorDBManagementAPI:
         self.run_post_author(app, client_api, auth_headers_sysadmin, {"author": {"affiliationInfo": [{"affiliationPeriodInfo": [{"periodStart": "2025-03-21", "periodEnd": "2025-01-27"}]}]}}, 400, 'periodStart must be before periodEnd.')  # 開始日が終了日より後
         self.run_post_author(app, client_api, auth_headers_sysadmin, {"author": {"affiliationInfo": [{"identifierInfo": [{"affiliationId": "https://ror.org/##", "identifierShowFlg": "true"}]}]}}, 400, "Both 'affiliationIdType' and 'affiliationId' must be provided together.")  # affiliationIdType未指定
         self.run_post_author(app, client_api, auth_headers_sysadmin, {"author": {"affiliationInfo": [{"affiliationNameInfo": [{"affiliationName": "NII", "identifierShowFlg": "true"}]}]}}, 400, "Both 'affiliationName' and 'affiliationNameLang' must be provided together.")  # affiliationNameLang未指定
+        self.run_post_author(app, client_api, auth_headers_sysadmin, self.valid_author_data_with_community(""), 400, "Bad Request: Invalid payload, {'author': {'communityIds': ['Not a valid list.']}}")  # communityIdsがリストでない
+        self.run_post_author(app, client_api, auth_headers_sysadmin, self.valid_author_data_with_community(["#$%&"]), 400, 'Invalid community ID format: #$%&')  # communityIdsが不正な形式
+        self.run_post_author(app, client_api, auth_headers_sysadmin, self.valid_author_data_with_community(["invalid_community"]), 400, 'Community ID(s) invalid_community does not exist.')  # communityIdsが存在しないID
 
         # システムエラーの確認
         # DBエラーや例外発生時の動作を確認
-        self.run_post_author_db_error(app, client_api, auth_headers_sysadmin, self.valid_author_data())  # DBエラー発生時
+        self.run_post_author_db_error(app, client_api, auth_headers_sysadmin, self.valid_author_data("ORCID", ""))  # DBエラー発生時
         with patch("invenio_search.current_search_client.search", side_effect=Exception):
-            self.run_post_author(app, client_api, auth_headers_sysadmin, self.valid_author_data(), 500)  # 検索時に例外が発生した場合
+            self.run_post_author(app, client_api, auth_headers_sysadmin, self.valid_author_data("ORCID", ""), 500)  # 検索時に例外が発生した場合
         with patch("weko_authors.utils.get_author_prefix_obj", return_value=None):
-            self.run_post_author(app, client_api, auth_headers_sysadmin, self.valid_author_data(), 500)  # 著者プレフィックス取得時に例外が発生した場合
+            self.run_post_author(app, client_api, auth_headers_sysadmin, self.valid_author_data("ORCID", ""), 500)  # 著者プレフィックス取得時に例外が発生した場合
         with patch("weko_authors.utils.get_author_affiliation_obj", return_value=None):
-            self.run_post_author(app, client_api, auth_headers_sysadmin, self.valid_author_data(), 500)  # 著者所属情報取得時に例外が発生した場合
+            self.run_post_author(app, client_api, auth_headers_sysadmin, self.valid_author_data("ORCID", ""), 500)  # 著者所属情報取得時に例外が発生した場合
 
     def run_post_author(self, app, client_api, user_headers, request_data, expected_status, expected_message=None):
         """
@@ -313,12 +322,21 @@ class TestAuthorDBManagementAPI:
             }
         }
 
+    def valid_author_data_with_community(self, community_ids):
+        """
+        正常な著者データ（コミュニティ付き）
+        - コミュニティIDを含む著者データを返す
+        """
+        data = self.valid_author_data("ORCID", "")
+        data["author"]["communityIds"] = community_ids
+        return data
+
 
     @pytest.mark.parametrize('base_app',[dict(
         is_es=True
     )],indirect=['base_app'])
     # .tox/c1/bin/pytest --cov=weko_authors tests/test_rest.py::TestAuthorDBManagementAPI::test_put_v1 -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko_index_tree/.tox/c1/tmp --full-trace | tee log.log
-    def test_put_v1(self, app, client_api, auth_headers_noroleuser, auth_headers_sysadmin, author_records_for_test, authors_affiliation_settings, authors_prefix_settings, auth_headers_bad_content_type):
+    def test_put_v1(self, app, client_api, auth_headers_noroleuser, auth_headers_sysadmin, author_records_for_test, authors_affiliation_settings, authors_prefix_settings, auth_headers_bad_content_type, community):
         """
         著者情報更新API - 著者情報の更新テスト
         - 正常系: 正しく更新できるか確認
@@ -339,6 +357,11 @@ class TestAuthorDBManagementAPI:
             self.run_put_author(app, client_api, auth_headers_sysadmin, {"author": self.valid_update_data().get("author")}, es_id, 200, "Author successfully updated.")
             self.run_put_author(app, client_api, auth_headers_sysadmin, {"force_change": True, "author": self.valid_update_data().get("author")}, es_id, 200, "Author successfully updated.")
             self.run_put_author(app, client_api, auth_headers_sysadmin, {"author": self.valid_update_data().get("author")}, es_id, 200, "Author successfully updated.")
+            self.run_put_author(app, client_api, auth_headers_sysadmin, self.valid_update_data_with_community(["community1"]), es_id, 200, "Author successfully updated.")
+            self.run_put_author(app, client_api, auth_headers_sysadmin, self.valid_update_data_with_community(["community1", "community2", "community3"]), es_id, 200, "Author successfully updated.")
+            self.run_put_author(app, client_api, auth_headers_sysadmin, self.valid_update_data_with_community(["community1", "community1"]), es_id, 200, "Author successfully updated.")
+            self.run_put_author(app, client_api, auth_headers_sysadmin, self.valid_update_data_with_community([]), es_id, 200, "Author successfully updated.")
+
 
             data_no_weko = {
                 "author": {
@@ -383,6 +406,11 @@ class TestAuthorDBManagementAPI:
 
             self.run_put_author(app, client_api, auth_headers_sysadmin, {"author": self.valid_update_data().get("author")}, 999, 404, "Specified author does not exist.")
             self.run_put_author(app, client_api, auth_headers_sysadmin, {"author": self.valid_update_data().get("author")}, str(uuid.uuid4()), 404, "Specified author does not exist.")
+
+            self.run_put_author(app, client_api, auth_headers_sysadmin, self.valid_update_data_with_community(""), 1, 400, "Bad Request: Invalid payload, {'author': {'communityIds': ['Not a valid list.']}}")
+            self.run_put_author(app, client_api, auth_headers_sysadmin, self.valid_update_data_with_community(["#$%&"]), 1, 400, 'Invalid community ID format: #$%&')
+            self.run_put_author(app, client_api, auth_headers_sysadmin, self.valid_update_data_with_community(["invalid_community"]), 1, 400, 'Community ID(s) invalid_community does not exist.')
+
 
             # システムエラーの確認
             self.run_put_author_db_error(app, client_api, auth_headers_sysadmin, self.valid_update_data())
@@ -472,6 +500,15 @@ class TestAuthorDBManagementAPI:
             }
         }
 
+    def valid_update_data_with_community(self, community_ids):
+        """
+        正常な更新データ（コミュニティ付き）
+        - コミュニティIDを含む更新データを返す
+        """
+        data = self.valid_update_data()
+        data["author"]["communityIds"] = community_ids
+        return data
+
     @pytest.mark.parametrize('base_app',[dict(
         is_es=True
     )],indirect=['base_app'])
@@ -485,6 +522,9 @@ class TestAuthorDBManagementAPI:
         es_ids = author_records_for_test
         self.run_delete_author(app, client_api, auth_headers_sysadmin, 1, 200)
         self.run_delete_author(app, client_api, auth_headers_sysadmin, es_ids["2"], 200)
+
+        with patch("weko_authors.rest.check_delete_author", return_value=(False, "Failed to delete author.")):
+            self.run_delete_author(app, client_api, auth_headers_sysadmin, 3, 403, "Failed to delete author.")
 
         self.run_delete_author(app, client_api, auth_headers_sysadmin, "invalid", 400, "Invalid identifier format. Must be an integer ID or UUID.")
         self.run_delete_author(app, client_api, auth_headers_sysadmin, 999, 404, "Specified author does not exist.")

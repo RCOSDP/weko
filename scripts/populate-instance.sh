@@ -473,13 +473,21 @@ ${INVENIO_WEB_INSTANCE} authors_prefix default_settings \
 ${INVENIO_WEB_INSTANCE} authors_prefix default_settings \
        "ROR" "ROR" "https://ror.org/##"
 ${INVENIO_WEB_INSTANCE} authors_prefix default_settings \
-       "ISNI" "ISNI" "http://www.isni.org/isni/##"
+       "e-Rad_Researcher" "e-Rad_Researcher" ""
 ${INVENIO_WEB_INSTANCE} authors_prefix default_settings \
-       "VIAF" "VIAF" "https://viaf.org/viaf/##"
+       "NRID" "NRID【非推奨】" "https://nrid.nii.ac.jp/nrid/##"
+${INVENIO_WEB_INSTANCE} authors_prefix default_settings \
+       "ISNI" "ISNI" ""
+${INVENIO_WEB_INSTANCE} authors_prefix default_settings \
+       "VIAF" "VIAF" ""
 ${INVENIO_WEB_INSTANCE} authors_prefix default_settings \
        "AID" "AID" ""
 ${INVENIO_WEB_INSTANCE} authors_prefix default_settings \
-       "e-Rad_Researcher" "e-Rad_Researcher" ""
+       "kakenhi" "kakenhi【非推奨】" ""
+${INVENIO_WEB_INSTANCE} authors_prefix default_settings \
+       "Ringgold" "Ringgold" ""
+${INVENIO_WEB_INSTANCE} authors_prefix default_settings \
+       "GRID" "GRID【非推奨】" "" 
 ${INVENIO_WEB_INSTANCE} authors_prefix default_settings \
        "researchmap" "researchmap" "https://researchmap.jp/##"
 # create-default-authors-prefix-settings-end

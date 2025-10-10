@@ -576,7 +576,10 @@ class CommunityModelView(ModelView):
     def role_query_cond(self, role_ids):
         """Query conditions by role_id and user_id."""
         if role_ids:
-            return Community.group_id.in_(role_ids)
+            return or_(
+                Community.group_id.in_(role_ids),
+                Community.id_role.in_(role_ids)
+            )
 
     def get_query(self):
         """Return a query for the model type.

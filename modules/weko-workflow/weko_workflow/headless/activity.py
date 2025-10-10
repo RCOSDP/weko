@@ -155,7 +155,7 @@ class HeadlessActivity(WorkActivity):
         """str: activity detail URL."""
         return str(url_for(
             "weko_workflow.display_activity",
-            activity_id=self.activity_id, community=self.community,
+            activity_id=self.activity_id, c=self.community,
             _external=True
         )) if self._model else ""
 

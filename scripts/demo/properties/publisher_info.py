@@ -24,8 +24,18 @@ mapping = {
                     "xml:lang": "publisher_descriptions.publisher_description_language"
                 },
             },
-            "location": {"@value": "publisher_locations.publisher_location"},
-            "publicationPlace": {"@value": "publication_places.publication_place"},
+            "location": {
+                "@value": "publisher_locations.publisher_location",
+                "@attributes": {
+                    "xml:lang": "publisher_locations.publisher_location_language"
+                },
+            },
+            "publicationPlace": {
+                "@value": "publication_places.publication_place",
+                "@attributes": {
+                    "xml:lang": "publication_places.publication_place_language"
+                },
+            },
             "publisherName": {
                 "@value": "publisher_names.publisher_name",
                 "@attributes": {"xml:lang": "publisher_names.publisher_name_language"},
@@ -127,6 +137,14 @@ def schema(title="", multi_flag=multiple_flag):
                                 "format": "text",
                                 "title": "出版地",
                                 "title_i18n": {"ja": "出版地", "en": "Publication Place"},
+                            },
+                            "publisher_location_language": {
+                                "type": ["null", "string"],
+                                "format": "select",
+                                "enum": config.LANGUAGE_VAL2_1,
+                                "currentEnum": config.LANGUAGE_VAL2_1,
+                                "title": "言語",
+                                "title_i18n": {"ja": "言語", "en": "Language"},
                             }
                         },
                     },
@@ -147,6 +165,14 @@ def schema(title="", multi_flag=multiple_flag):
                                     "ja": "出版地（国名コード）",
                                     "en": "Publication Place (Country code)",
                                 },
+                            },
+                            "publication_place_language": {
+                                "type": ["null", "string"],
+                                "format": "select",
+                                "enum": config.LANGUAGE_VAL2_1,
+                                "currentEnum": config.LANGUAGE_VAL2_1,
+                                "title": "言語",
+                                "title_i18n": {"ja": "言語", "en": "Language"},
                             },
                         },
                     },
@@ -236,6 +262,15 @@ def form(
                             "type": "text",
                             "title": "出版地",
                             "title_i18n": {"ja": "出版地", "en": "Publication Place"},
+                        },
+                        {
+                            "key": "{}.publisher_locations[].publisher_location_language".format(
+                                key
+                            ),
+                            "type": "select",
+                            "title": "言語",
+                            "title_i18n": {"ja": "言語", "en": "Language"},
+                            "titleMap": get_select_value(config.LANGUAGE_VAL2_1),
                         }
                     ],
                     "style": {"add": "btn-success"},
@@ -259,6 +294,15 @@ def form(
                                 "ja": "出版地（国名コード）",
                                 "en": "Publication Place (Country code)",
                             },
+                        },
+                        {
+                            "key": "{}.publication_places[].publication_place_language".format(
+                                key
+                            ),
+                            "type": "select",
+                            "title": "言語",
+                            "title_i18n": {"ja": "言語", "en": "Language"},
+                            "titleMap": get_select_value(config.LANGUAGE_VAL2_1),
                         }
                     ],
                     "style": {"add": "btn-success"},

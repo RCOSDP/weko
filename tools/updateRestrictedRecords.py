@@ -1,7 +1,10 @@
 import os
+import logging
+import gc
 import time
 import json
 import sys
+import traceback
 import requests
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm.attributes import flag_modified
@@ -16,6 +19,30 @@ from weko_records.models import ItemMetadata, ItemType, ItemTypeProperty
 import weko_schema_ui
 from weko_admin.models import AdminSettings
 
+def main(restricted_item_type_id, batch_size=500, run_es_reindex=False):
+    """Main context."""
+
+    try:
+        current_app.logger.info('restricted records update start')
+        with db.session.begin_nested():
+            update_item_type_property(restricted_item_type_id)
+            update_item_type(batch_size=batch_size)
+            # item_metadata and records_metadata update are skipped because of running by sql script.
+            # update_item_metadata()
+            # update_records_metadata()
+        update_admin_settings()
+        db.session.commit()
+        current_app.logger.info('restricted records update end')
+        if run_es_reindex:
+            current_app.logger.info('ElasticSearch data update start')
+            elasticsearch_reindex(True)
+            current_app.logger.info('ElasticSearch data update end')
+    except SQLAlchemyError as ex:
+        db.session.rollback()
+        current_app.logger.error(str(ex))
+        current_app.logger.error("records rollback")
+        current_app.logger.error(traceback.format_exc())
+
 
 def update_item_type_property(restricted_item_type_id):
     """update item_type_property record (specified id only)"""
@@ -28,13 +55,14 @@ def update_item_type_property(restricted_item_type_id):
             target_obj.form = json.load(form_file)
         with open('tools/restricted_jsons/item_type_property/forms.json', 'r') as forms_file:
             target_obj.forms = json.load(forms_file)
+        print(f"[FIX][updateRestrictedRecords.py]item_type_property:{target_obj.id}")
     else:
-        current_app.logger.error('id: ' + str(restricted_item_type_id) + ' not found')
+        current_app.logger.warning('id: ' + str(restricted_item_type_id) + ' not found')
 
     current_app.logger.info('update item_type_property records success')
 
 
-def update_item_type():
+def update_item_type(batch_size=500):
     """update item_type records"""
 
     def _check_restricted_item_type(item_type):
@@ -48,7 +76,7 @@ def update_item_type():
             if all([prop in nested_props.keys() for prop in target_nested_props]):
                 return True
         return False
-    
+
     def _get_restricted_item_type_key(item_type):
         """get restricted item type key"""
         target_nested_props = ['filename', 'provide', 'terms', 'termsDescription']
@@ -60,37 +88,59 @@ def update_item_type():
             if all([prop in nested_props.keys() for prop in target_nested_props]):
                 return key
         return None
-    
+
     def _format_new_schema(target_schema, key, schema_roles):
-        """get new format of schema (add 'roles', del 'groups', 'dataType')"""
+        """format new schema
+        get new format of schema (add 'roles', del 'groups', 'dataType')
         
+        Args:
+            target_schema (dict): original schema
+            key (str): target property key
+            schema_roles (dict): roles to be added
+        Returns:
+            dict: formatted schema
+        """
         properties = target_schema['properties'][key]['items']['properties']
-        filtered_properties = {k: v for k, v in properties.items() if k not in ['groups', 'dataType']}
+        filtered_properties = {
+            k: v for k, v in properties.items()
+            if k not in ['groups', 'dataType']
+        }
         if 'roles' not in filtered_properties.keys():
             filtered_properties['roles'] = schema_roles
         target_schema['properties'][key]['items']['properties'] = filtered_properties
         return dict(target_schema)
-    
+
     def _format_new_form(target_form, key, form_roles):
-        """get new format of form (add 'roles', del 'groups', 'dataType')"""
+        """format new form
+            get new format of form (add 'roles', del 'groups', 'dataType')
+        Args:
+            target_form (list): original form
+            key (str): target property key
+            form_roles (dict): roles to be added
+        Returns:
+            list: formatted form
+        """
         new_form = []
         for element in target_form:
             if isinstance(element, dict) and element.get('key') == key:
                 remove_elements_key = [key + '[].groups', key + '[].dataType']
-                filterd_items = [item for item in element['items'] if item['key'] not in remove_elements_key]
+                filterd_items = [
+                    item for item in element['items']
+                    if item['key'] not in remove_elements_key
+                ]
                 if (key + '[].roles') not in [item['key'] for item in filterd_items]:
                     filterd_items.append(form_roles)
                 element['items'] = filterd_items
             new_form.append(element)
         return new_form
-    
+
     def _format_new_render(target_render, key, schema_roles, form_roles, render_roles):
         """get new format of render (add 'roles', del 'groups', 'dataType')"""
         # schemaeditor schema
-        schemaeditor_schema = target_render['schemaeditor']['schema'][key]['properties']
+        schemaeditor_schema = target_render['schemaeditor']['schema']['properties'][key]
         new_schemaeditor_schema = {k: v for k, v in schemaeditor_schema.items() if k not in ['groups', 'dataType']}
         new_schemaeditor_schema['roles'] = render_roles
-        target_render['schemaeditor']['schema'][key]['properties'] = new_schemaeditor_schema
+        target_render['schemaeditor']['schema']['properties'][key] = new_schemaeditor_schema
         # table row map form
         table_row_map_form = target_render['table_row_map']['form']
         target_render['table_row_map']['form'] = _format_new_form(table_row_map_form, key, form_roles)
@@ -98,6 +148,8 @@ def update_item_type():
         table_row_map_schema = target_render['table_row_map']['schema']
         target_render['table_row_map']['schema'] = _format_new_schema(table_row_map_schema, key, schema_roles)
         return target_render
+
+    current_app.logger.info('update item_type records start')
 
     # load json data
     schema = None
@@ -109,96 +161,152 @@ def update_item_type():
     render = None
     with open('tools/restricted_jsons/item_type/roles_render.json', 'r') as render_file:
         render = json.load(render_file)
+
+    # update item_type records
+    query =  db.session.query(ItemType.id).filter(
+        ItemType.is_deleted.is_(False)
+    ).order_by(ItemType.name_id, ItemType.tag).statement
+    results = db.engine.execution_options(stream_results=True).execute(query)
+    item_type_ids = [r[0] for r in results]
+    current_app.logger.info('target item_type count: ' + str(len(item_type_ids)))
     
-    all_item_types = ItemType.query.filter(ItemType.is_deleted.is_(False)).order_by(ItemType.name_id, ItemType.tag).all()
-    restricted_item_types = [item_type for item_type in all_item_types if _check_restricted_item_type(item_type)]
-    for target in restricted_item_types:
+    for item_type_id in item_type_ids:
+        item_type = ItemType.query.get(item_type_id)
+        if not _check_restricted_item_type(item_type):
+            continue
+
         # update item type
-        key = _get_restricted_item_type_key(target)
+        key = _get_restricted_item_type_key(item_type)
         # schema
-        target.schema = _format_new_schema(dict(target.schema), key, schema)
-        flag_modified(target, "schema")
+        item_type.schema = _format_new_schema(dict(item_type.schema), key, schema)
+        flag_modified(item_type, "schema")
         # form
         form_roles = json.loads(json.dumps(form).replace('<key>', key))
-        target.form = _format_new_form(list(target.form), key, form_roles)
-        flag_modified(target, "form")
+        item_type.form = _format_new_form(list(item_type.form), key, form_roles)
+        flag_modified(item_type, "form")
         # render
-        target.render = _format_new_render(dict(target.render), key, schema, form_roles, render)
-        flag_modified(target, "render")
+        item_type.render = _format_new_render(dict(item_type.render), key, schema, form_roles, render)
+        flag_modified(item_type, "render")
+        
+        current_app.logger.info(f'    Updated item_type id: {item_type.id}')
+        print(f"[FIX][updateRestrictedRecords.py]item_type:{target.id}")
 
     current_app.logger.info('update item_type records success')
 
 
-def update_item_metadata():
+def update_item_metadata(bach_size=100):
     """update item_metadata records"""
 
     def _format_json(record_json):
         """get new format of json"""
         owner_id = int(record_json.pop('owner', -1))
-        shared_user_id = record_json.pop('shared_user_id', -1)
+        shared_user_id = int(record_json.pop('shared_user_id', -1))
 
         if owner_id:
             record_json['owner'] = owner_id
+            
+        shared_user_ids = [shared_user_id] if shared_user_id and shared_user_id > 0 else []
 
-        if not shared_user_id or shared_user_id < 1:
-            record_json['shared_user_ids'] = []
-            record_json['weko_shared_ids'] = []
-        else:
-            record_json['shared_user_ids'] = [shared_user_id]
-            record_json['weko_shared_ids'] = [shared_user_id]
+        record_json['shared_user_ids'] = shared_user_ids
+        record_json['weko_shared_ids'] = shared_user_ids
 
         return record_json
 
-    records = ItemMetadata.query.all()
-    target_records = [record for record in records \
-        if 'shared_user_ids' not in record.json.keys() and 'shared_user_id' in record.json.keys()]
-    for record in target_records:
-        record.json = _format_json(dict(record.json))
+    current_app.logger.info('update item_metadata records start')
+
+    # update item_metadata records
+    query = """
+        SELECT id FROM item_metadata
+        WHERE NOT (json ? 'shared_user_ids')
+        AND json ? 'shared_user_id'
+    """
+    results = db.engine.execution_options(stream_results=True).execute(query)
+    item_metadata_ids = [r[0] for r in results]
+    current_app.logger.info('target item_metadata count: ' + str(len(item_metadata_ids)))
+
+    pages = [item_metadata_ids[i:i + bach_size] for i in range(0, len(item_metadata_ids), bach_size)]
+    for item_metadata_id_batch in pages:
+        item_metadata_list = ItemMetadata.query.filter(
+            ItemMetadata.id.in_(item_metadata_id_batch)
+        ).all()
+        for item_metadata in item_metadata_list:
+            item_metadata.json = _format_json(dict(item_metadata.json))
+            flag_modified(item_metadata, "json")
+            current_app.logger.info(f'    Updated item_metadata id: {item_metadata.id}')
+            print(f"[FIX][updateRestrictedRecords.py]item_metadata:{item_metadata.id}")
+            gc.collect()
+            
 
     current_app.logger.info('update item_metadata records success')
 
 
-def update_records_metadata():
+def update_records_metadata(bach_size=100):
     """update records_metadata records"""
 
     def _format_json(record_json):
         """get new format of json"""
         owner_id = int(record_json.pop('owner', -1))
-        shared_user_id = record_json.pop('weko_shared_id', -1)
+        shared_user_id = int(record_json.pop('weko_shared_id', -1))
 
         if owner_id > 0:
             record_json['owner'] = owner_id
             record_json['owners'] = [owner_id]
             record_json['_deposit']['owner'] = owner_id
             record_json['_deposit']['owners'] = [owner_id]
-        
-        if not shared_user_id or shared_user_id < 1:
-            record_json['weko_shared_ids'] = []
-            record_json['_deposit']['weko_shared_ids'] = []
-        else:
-            record_json['weko_shared_ids'] = [shared_user_id]
-            record_json['_deposit']['weko_shared_ids'] = [shared_user_id]
+
+        shared_user_ids = [shared_user_id] if shared_user_id and shared_user_id > 0 else []
+
+        record_json['weko_shared_ids'] = shared_user_ids
+        record_json['_deposit']['weko_shared_ids'] = shared_user_ids
         return record_json
 
-    records = RecordMetadata.query.all()
-    target_records = [record for record in records \
-        if ('weko_shared_ids' not in record.json.keys()) and ('weko_shared_id' in record.json.keys())]
-    for record in target_records:
-        record.json = _format_json(dict(record.json))
+    current_app.logger.info('update record_metadata records start')
+
+    # update records_metadata records
+    query = """
+        SELECT id FROM records_metadata
+        WHERE NOT (json ? 'weko_shared_ids')
+        AND json ? 'weko_shared_id'
+    """
+    results = db.engine.execution_options(stream_results=True).execute(query)
+    record_metadata_ids = [r[0] for r in results]
+    current_app.logger.info('target record_metadata count: ' + str(len(record_metadata_ids)))
+
+    current_app.logger.info(f'record_metadata_ids: {record_metadata_ids}')
+    pages = [record_metadata_ids[i:i + bach_size] for i in range(0, len(record_metadata_ids), bach_size)]
+    for record_metadata_id_batch in pages:
+        # record_metadata_id_batch = record_metadata_ids[page:page+bach_size]
+        record_metadata_list = RecordMetadata.query.filter(
+            RecordMetadata.id.in_(record_metadata_id_batch)
+        ).all()
+        for record_metadata in record_metadata_list:
+            record_metadata.json = _format_json(dict(record_metadata.json))
+            flag_modified(record_metadata, "json")
+            current_app.logger.info(f'    Updated record_metadata id: {record_metadata.id}')
+            print(f"[FIX][updateRestrictedRecords.py]records_metadata:{record_metadata.id}")
+            gc.collect()
+        
 
     current_app.logger.info('update record_metadata records success')
 
 def update_admin_settings():
     """update admin_settings for secret_URL_download """
+    current_app.logger.info('update admin_settings start')
+    
     restricted_access = AdminSettings.get('restricted_access', False)
     if not restricted_access:
         restricted_access = current_app.config['WEKO_ADMIN_RESTRICTED_ACCESS_SETTINGS']
     else:
-        restricted_access['secret_URL_file_download'] = {"secret_download_limit": 10,
-                                                        "secret_expiration_date": 30,
-                                                        "secret_download_limit_unlimited_chk": False,
-                                                        "secret_expiration_date_unlimited_chk": False}
+        restricted_access['secret_URL_file_download'] = {
+            "secret_download_limit": 10,
+            "secret_expiration_date": 30,
+            "secret_download_limit_unlimited_chk": False,
+            "secret_expiration_date_unlimited_chk": False
+        }
     AdminSettings.update('restricted_access', restricted_access)
+    
+    current_app.logger.info('update admin_settings success')
+    print(f"[FIX][updateRestrictedRecords.py]admin_settings:restricted_access")
 
 def elasticsearch_reindex( is_db_to_es ):
     """ 
@@ -432,33 +540,11 @@ def _elasticsearch_remake_item_index(index_name):
     return returnlist
 
 if __name__ == '__main__':
-    """Main context."""
     # start command
     # > invenio shell updateRestrictedRecords.py <restricted_item_type_property_id>
-    
-    # for logging
-    current_app.logger.info('restricted records update start')
-    start_time = time.perf_counter()
 
     args = sys.argv
     if len(args) > 1:
-        # get restricted item_type id
         restricted_item_type_id = int(args[1])
-        try:
-            with db.session.begin_nested():
-                update_item_type_property(restricted_item_type_id)
-                update_item_type()
-                update_item_metadata()
-                update_records_metadata()
-            db.session.commit()
-            update_admin_settings()
-            current_app.logger.info('restricted records update end')
-            current_app.logger.info('ElasticSearch data update start')
-            elasticsearch_reindex(True)
-            current_app.logger.info('ElasticSearch data update end')
-            end_time = time.perf_counter()
-            current_app.logger.info(str(end_time - start_time) + ' sec.')
-        except SQLAlchemyError as ex:
-            current_app.logger.info(str(ex))
-            current_app.logger.info("records rollback")
+        main(restricted_item_type_id)
 

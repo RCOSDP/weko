@@ -67,6 +67,7 @@ from weko_index_tree.utils import (
     check_index_permissions, get_index_id, get_user_roles
 )
 from weko_notifications.models import NotificationsUserSettings
+from weko_notifications.utils import _get_params_for_registrant
 from weko_records.api import FeedbackMailList, JsonldMapping, RequestMailList, ItemTypes, Mapping, ItemApplication
 from weko_records.serializers.utils import get_item_type_name
 from weko_records.utils import replace_fqdn_of_file_metadata
@@ -2290,9 +2291,6 @@ def make_stats_file(item_type_id, recids, list_item_role, export_path=""):
             [''] * (max_feedback_mail - len(feedback_mail_list))
         )
 
-        # Exporting .researchmap_linkage is ALWAYS blank
-        records.attr_output[recid].append('')
-
         if can_export_request_mail:
             request_mail_list = records.attr_data['request_mail_list'] \
                 .get(recid, [])
@@ -2300,6 +2298,9 @@ def make_stats_file(item_type_id, recids, list_item_role, export_path=""):
             records.attr_output[recid].extend(
                 [''] * (max_request_mail - len(request_mail_list))
             )
+
+        # Exporting .researchmap_linkage is ALWAYS blank
+        records.attr_output[recid].append('')
 
         if can_export_item_application:
             item_application = records.attr_data['item_application'].get(recid, {})
@@ -5336,14 +5337,8 @@ def get_notification_targets(deposit, user_id, shared_ids):
             - "settings" (dict): A dictionary mapping user IDs to their notification settings.
             - "profiles" (dict): A dictionary mapping user IDs to their user profiles.
     """
-    owners = deposit.get("_deposit", {}).get("owners", [])
-    set_target_id = set(owners)
-    is_shared = bool(shared_ids)
-    if is_shared:
-        set_target_id.update(shared_ids)
-    set_target_id.discard(int(user_id))
-
-    target_ids = list(set_target_id)
+    owner = deposit["owner"]
+    target_ids, _ = _get_params_for_registrant(int(owner), int(owner), shared_ids)
     current_app.logger.debug(f"[get_notification_targets] target_ids: {target_ids}")
 
     try:
@@ -5700,7 +5695,7 @@ def send_mail_item_deleted(pid_value, deposit, user_id, shared_ids=[]):
         return
 
 
-def send_mail_direct_registered(pid_value, user_id, share_ids=[]):
+def send_mail_direct_registered(pid_value, deposit, user_id, share_ids=[]):
     """
     Send a notification email for a directly registered item.
 
@@ -5713,7 +5708,6 @@ def send_mail_direct_registered(pid_value, user_id, share_ids=[]):
         int: The total number of successfully sent emails.
     """
     try:
-        deposit = WekoRecord.get_record_by_pid(pid_value)
         record_url = request.host_url + f"records/{pid_value}"
         current_app.logger.debug(f"[send_mail_direct_registered] pid_value: {pid_value}, user_id: {user_id}")
         return send_mail_from_notification_info(

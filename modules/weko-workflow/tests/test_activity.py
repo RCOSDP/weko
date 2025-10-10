@@ -83,7 +83,7 @@ class TestHeadlessActivity:
                 patch("weko_workflow.headless.activity.HeadlessActivity.get_activity_by_id") as mock_get_activity:
             url = url_for(
                 "weko_workflow.display_activity",
-                activity_id=mock_activity.activity_id, community=mock_activity.activity_community_id
+                activity_id=mock_activity.activity_id, c=mock_activity.activity_community_id
             )
             mock_init_activity.return_value = jsonify(
                 {"code": 0, "msg": "success", "data": {"redirect": url}}), 200
@@ -92,7 +92,7 @@ class TestHeadlessActivity:
             activity = HeadlessActivity()
             detail = activity.init_activity(
                 users[0]["id"], workflow_id=workflow["workflow"].id,
-                community=mock_activity.activity_community_id
+                c=mock_activity.activity_community_id
             )
 
             assert detail == url
@@ -176,7 +176,7 @@ class TestHeadlessActivity:
         with patch("weko_workflow.headless.activity.prepare_edit_item") as mock_prepare, \
                 patch("weko_workflow.headless.activity.HeadlessActivity.get_activity_by_id") as mock_get_activity,\
                 patch("weko_workflow.headless.activity.PersistentIdentifier.get_by_object") as mock_get_pid:
-            url = url_for("weko_workflow.display_activity", activity_id=mock_activity.activity_id, community=mock_activity.activity_community_id)
+            url = url_for("weko_workflow.display_activity", activity_id=mock_activity.activity_id, c=mock_activity.activity_community_id)
             mock_prepare.return_value = jsonify(
                 {"code": 0, "msg": "success", "data": {"redirect": url}}
             )
@@ -187,7 +187,7 @@ class TestHeadlessActivity:
 
             activity = HeadlessActivity()
             detail = activity.init_activity(
-                users[0]["id"], item_id="200001", community=mock_activity.activity_community_id
+                users[0]["id"], item_id="200001", c=mock_activity.activity_community_id
             )
 
             assert detail == url

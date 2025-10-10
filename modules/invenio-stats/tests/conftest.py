@@ -34,6 +34,8 @@ from kombu import Exchange, Queue
 from flask import Flask, appcontext_pushed, g
 from flask.cli import ScriptInfo
 from flask_celeryext import FlaskCeleryExt
+from flask_babelex import Babel
+
 from invenio_access import InvenioAccess
 from invenio_accounts import InvenioAccounts, InvenioAccountsREST
 from invenio_access.models import ActionRoles, ActionUsers
@@ -46,6 +48,7 @@ from invenio_files_rest import InvenioFilesREST
 from invenio_files_rest.models import Bucket, Location, ObjectVersion
 from invenio_marc21 import InvenioMARC21
 from invenio_indexer import InvenioIndexer
+from invenio_i18n import InvenioI18N
 from invenio_oauth2server import InvenioOAuth2Server, InvenioOAuth2ServerREST
 from invenio_oauth2server.models import Token
 from invenio_pidstore import InvenioPIDStore
@@ -254,7 +257,7 @@ def base_app(instance_path, mock_gethostbyaddr):
         CACHE_REDIS_URL="redis://redis:6379/0",
         CACHE_REDIS_DB=0,
         CACHE_REDIS_HOST="redis",
-
+        BABEL_DEFAULT_TIMEZONE='Asia/Tokyo',
         QUEUES_BROKER_URL="amqp://guest:guest@rabbitmq:5672//",
         # SQLALCHEMY_DATABASE_URI=os.environ.get(
         #     'SQLALCHEMY_DATABASE_URI', 'sqlite://'),
@@ -285,6 +288,8 @@ def base_app(instance_path, mock_gethostbyaddr):
         OAISERVER_ES_MAX_CLAUSE_COUNT = 3,
         INDEXER_DEFAULT_INDEX="test-events-stats-file-download-0001"
     ))
+    Babel(app_)
+    InvenioI18N(app_)
     FlaskCeleryExt(app_)
     InvenioAccess(app_)
     InvenioAccounts(app_)
