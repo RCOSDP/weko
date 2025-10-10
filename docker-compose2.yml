@@ -311,7 +311,7 @@ services:
 
   pgpool:
     restart: "always"
-    image: bitnami/pgpool
+    image: bitnamilegacy/pgpool
     environment:
       - PGPOOL_BACKEND_NODES=0:postgresql:5432
       - PGPOOL_SR_CHECK_USER=invenio
