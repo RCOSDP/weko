@@ -22,6 +22,7 @@ from invenio_indexer import cli
 from invenio_indexer.api import RecordIndexer
 
 
+# .tox/c1/bin/pytest --cov=invenio_indexer tests/test_cli.py::test_run -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_run(script_info):
     """Test run."""
     runner = CliRunner()
@@ -32,6 +33,19 @@ def test_run(script_info):
     res = runner.invoke(cli.run, ['-d', '-c', '2'], obj=script_info)
     assert 0 == res.exit_code
     assert 'Starting 2 tasks' in res.output
+
+    # stats_only オプションのテスト
+    runner = CliRunner()
+    res = runner.invoke(cli.run, ['--stats-only', 'False'], obj=script_info)
+    print(res.output)
+    assert 0 == res.exit_code
+    assert 'Indexing records' in res.output
+
+    runner = CliRunner()
+    res = runner.invoke(cli.run, ['--stats-only', 'True'], obj=script_info)
+    print(res.output)
+    assert 0 == res.exit_code
+    assert 'Indexing records' in res.output
 
 
 def test_reindex(app, script_info):
