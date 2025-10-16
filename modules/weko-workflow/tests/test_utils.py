@@ -138,6 +138,8 @@ from weko_workflow.utils import (
 )
 from weko_workflow.api import GetCommunity, UpdateItem, WorkActivity, WorkActivityHistory, WorkFlow
 from weko_workflow.models import Activity
+from datetime import timedelta
+from redis.exceptions import ResponseError
 
 # def get_current_language():
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_get_current_language -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
@@ -996,12 +998,61 @@ def test_delete_cache_data(client):
     delete_cache_data(key)
 # def update_cache_data(key: str, value: str, timeout=None):
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_update_cache_data -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
-def test_update_cache_data(client):
+@pytest.mark.parametrize('timeout', [
+    None,
+    100
+])
+def test_update_cache_data(client, timeout):
+    """
+    Test update_cache_data function
+
+    Args:
+        client (fixture): cliant setting
+    """
+    
     key = "test_key"
     value = "test_value"
-    update_cache_data(key, value, None)
     
-    update_cache_data(key, value, 100)
+    with patch("weko_workflow.utils.current_cache.set") as mock_set:
+        with patch("weko_workflow.utils.current_app"):
+            update_cache_data(key, value, timeout)
+            if timeout is None:
+                # 51991 case.01(update_cache_data)
+                mock_set.assert_called_once_with(key, value)
+            else:
+                # 51991 case.02(update_cache_data)
+                mock_set.assert_called_once_with(key, value, timeout=timeout)
+            
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_update_cache_data -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_update_cache_data_timedelta(client):
+    """
+    Test update_cache_data function use timedelta
+
+    Args:
+        client (fixture): cliant setting
+    """
+    
+    key = "test_key"
+    value = "test_value"
+    # expect current_app.config['PERMANENT_SESSION_LIFETIME']
+    fallback_timeout = timedelta(days=1)
+    
+    with patch("weko_workflow.utils.current_cache.set") as mock_set:
+        with patch("weko_workflow.utils.current_app") as mock_app:
+            # 51991 case.03(update_cache_data)
+            timeout = timedelta(seconds=60)
+            update_cache_data(key, value, timeout)
+            mock_set.assert_called_once_with(key, value, timeout=timeout)
+    
+    with patch("weko_workflow.utils.current_cache.set", side_effect=ResponseError('Test Error')) as mock_set:
+        with patch("weko_workflow.utils.current_app") as mock_app:        
+            # 51991 case.04(update_cache_data)
+            mock_app.config = {"PERMANENT_SESSION_LIFETIME": fallback_timeout}
+            timeout = timedelta(seconds=0)
+            with pytest.raises(ResponseError):
+                update_cache_data(key, value, timeout=timeout)
+                mock_set.assert_any_call(key, value, timeout=fallback_timeout)
+    
 # def get_cache_data(key: str):
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_get_cache_data -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_get_cache_data(client):

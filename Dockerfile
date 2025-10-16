@@ -74,12 +74,11 @@ COPY --chown=invenio:invenio packages-invenio.txt /code/packages-invenio.txt
 COPY --chown=invenio:invenio requirements-weko-modules.txt /code/requirements-weko-modules.txt
 COPY --chown=invenio:invenio invenio /code/invenio
 COPY --chown=invenio:invenio postgresql /code/postgresql
+COPY --chown=invenio:invenio tika /code/tika
 
 FROM stage_3 AS stage_4
 # Create Weko instance:
 RUN chmod +x /code/scripts/create-instance.sh;/code/scripts/create-instance.sh
-
-
 
 FROM stage_4 AS stage_5
 # Create Weko instance2:

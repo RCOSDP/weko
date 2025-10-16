@@ -265,7 +265,7 @@ def base_app(instance_path, search_class, request):
             "S": "Standard",
             "A": "Archive",
         },
-        CACHE_REDIS_URL="redis://redis:6379/0",
+        CACHE_REDIS_URL=os.environ.get("CACHE_REDIS_URL", "redis://redis:6379/0"),
         CACHE_REDIS_DB="0",
         CACHE_REDIS_HOST="redis",
         WEKO_INDEX_TREE_STATE_PREFIX="index_tree_expand_state",
@@ -284,7 +284,7 @@ def base_app(instance_path, search_class, request):
         # SQLALCHEMY_DATABASE_URI=os.environ.get(
         #     "SQLALCHEMY_DATABASE_URI", "sqlite:///test.db"
         # ),
-        SQLALCHEMY_DATABASE_URI='postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest',
+        SQLALCHEMY_DATABASE_URI=os.getenv('SQLALCHEMY_DATABASE_URI','postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest'),
         SEARCH_ELASTIC_HOSTS=os.environ.get("SEARCH_ELASTIC_HOSTS", "elasticsearch"),
         SQLALCHEMY_TRACK_MODIFICATIONS=True,
         JSONSCHEMAS_HOST="inveniosoftware.org",

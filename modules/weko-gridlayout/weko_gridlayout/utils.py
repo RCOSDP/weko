@@ -45,7 +45,7 @@ from sqlalchemy import asc
 from sqlalchemy.orm.exc import MultipleResultsFound
 from weko_admin.models import AdminLangSettings
 from weko_index_tree.api import Indexes
-from weko_records.api import Mapping
+from weko_records.api import Mapping, ItemTypes
 from weko_records.serializers.utils import get_mapping
 from weko_records_ui.utils import get_pair_value
 from weko_redis.redis import RedisConnection
@@ -167,6 +167,7 @@ def update_access_counter_item(item, data_result):
     item['preceding_message'] = data_result.get('preceding_message')
     item['following_message'] = data_result.get('following_message')
     item['other_message'] = data_result.get('other_message')
+    item['count_start_date'] = data_result.get('count_start_date')
 
 
 def update_new_arrivals_item(item, data_result):
@@ -321,6 +322,8 @@ def _build_access_counter_setting_data(result, setting):
         setting.get('other_message')) or ''
     result['preceding_message'] = Markup.escape(
         setting.get('preceding_message')) or ''
+    result['count_start_date'] = Markup.escape(
+        setting.get('count_start_date')) or ''
 
 
 def _build_new_arrivals_setting_data(result, setting):
@@ -495,6 +498,7 @@ def convert_data_to_edit_pack(data):
         result_settings['following_message'] = settings.get(
             'following_message')
         result_settings['other_message'] = settings.get('other_message')
+        result_settings['count_start_date'] = settings.get('count_start_date')
     if widget_type == config.WEKO_GRIDLAYOUT_NEW_ARRIVALS_TYPE:
         result_settings['new_dates'] = settings.get('new_dates')
         result_settings['display_result'] = settings.get('display_result')
@@ -715,11 +719,18 @@ def find_rss_value(data, keyword):
         if source.get('description') and source.get('description')[0]:
             from weko_items_ui.utils import get_options_and_order_list, get_hide_list_by_schema_form
 
-            meta_option, item_type_mapping = get_options_and_order_list(
-                source.get('_item_metadata').get('item_type_id'))
-            hide_list = get_hide_list_by_schema_form(
-                source.get('_item_metadata').get('item_type_id'))
-            item_map = get_mapping(source.get('_item_metadata').get('item_type_id'), "jpcoar_mapping")
+            item_type_id = source.get('_item_metadata').get('item_type_id')
+            item_type = ItemTypes.get_by_id(item_type_id)
+            hide_list = []
+            if item_type:
+                meta_option = get_options_and_order_list(
+                    item_type_id,
+                    item_type_data=ItemTypes(item_type.schema, model=item_type),
+                    mapping_flag=False)
+                hide_list = get_hide_list_by_schema_form(schemaform=item_type.render.get('table_row_map', {}).get('form', []))
+            else:
+                meta_option = get_options_and_order_list(item_type_id, mapping_flag=False)
+            item_map = get_mapping(item_type_id, "jpcoar_mapping", item_type=item_type)
             desc_typ_list = item_map.get('description.@attributes.descriptionType').split(',')
             desc_val_list = item_map.get('description.@value').split(',')
             for desc_val in desc_val_list:

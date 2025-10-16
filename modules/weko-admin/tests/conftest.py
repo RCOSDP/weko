@@ -145,7 +145,7 @@ def base_app(instance_path, cache_config,request ,search_class):
         GOOGLE_TRACKING_ID_USER="test_google_tracking_id",
         ADDTHIS_USER_ID="test_addthis_user_id",
         I18N_LANGUAGES=[("ja","Japanese"), ("en","English")],
-        CACHE_REDIS_URL='redis://redis:6379/0',
+        CACHE_REDIS_URL=os.environ.get("CACHE_REDIS_URL", "redis://redis:6379/0"),
         CACHE_REDIS_DB='0',
         CACHE_REDIS_HOST="redis",
         REDIS_PORT='6379',

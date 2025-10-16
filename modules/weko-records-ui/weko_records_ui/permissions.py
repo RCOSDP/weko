@@ -78,17 +78,19 @@ def file_permission_factory(record, *args, **kwargs):
 
     def can(self):
         fjson = kwargs.get('fjson')
-        return check_file_download_permission(record, fjson)
+        item_type = kwargs.get('item_type', None)
+        return check_file_download_permission(record, fjson, item_type)
 
     return type('FileDownLoadPermissionChecker', (), {'can': can})()
 
 
-def check_file_download_permission(record, fjson, is_display_file_info=False):
+def check_file_download_permission(record, fjson, is_display_file_info=False, item_type=None):
     """Check file download."""
-    def site_license_check():
+    def site_license_check(item_type):
         # site license permission check
-        obj = ItemTypes.get_by_id(record.get('item_type_id'))
-        if obj.item_type_name.has_site_license:
+        if not item_type:
+            item_type = ItemTypes.get_by_id(record.get('item_type_id'))
+        if item_type.item_type_name.has_site_license:
             return check_site_license_permission(
             ) | check_user_group_permission(fjson.get('groups'))
         return False
@@ -183,7 +185,7 @@ def check_file_download_permission(record, fjson, is_display_file_info=False):
 
                     if not is_can:
                         # site license permission check
-                        is_can = site_license_check()
+                        is_can = site_license_check(item_type)
 
             # access with login user
             elif 'open_login' in acsrole:
@@ -218,7 +220,7 @@ def check_file_download_permission(record, fjson, is_display_file_info=False):
                                 is_can = True
                         if not is_can:
                             # site license permission check
-                            is_can = site_license_check()
+                            is_can = site_license_check(item_type)
 
             #  can not access
             elif 'open_no' in acsrole:
@@ -228,7 +230,7 @@ def check_file_download_permission(record, fjson, is_display_file_info=False):
                     is_permission_user = __check_user_permission(
                         user_id_list)
                     if not current_user.is_authenticated or \
-                            not is_permission_user or site_license_check():
+                            not is_permission_user or site_license_check(item_type):
                         is_can = False
                 else:
                     if current_user_email in created_user_email_list:

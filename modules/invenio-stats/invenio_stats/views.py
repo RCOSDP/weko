@@ -7,6 +7,7 @@
 # under the terms of the MIT License; see LICENSE file for more details.
 
 """InvenioStats views."""
+import traceback
 import uuid
 
 import calendar
@@ -243,17 +244,27 @@ class QueryRecordViewCount(WekoQuery):
     def get(self, **kwargs):
         """Get total record view count."""
         record_id = kwargs.get('record_id')
-        return self.make_response(self.get_data(record_id, get_period=True))
+        try:
+            record_uuid = uuid.UUID(record_id)
+        except ValueError:
+            current_app.logger.error(traceback.format_exc())
+            abort(400)
+        return self.make_response(self.get_data(record_uuid, get_period=True))
 
     def post(self, **kwargs):
         """Get record view count with date."""
         record_id = kwargs.get('record_id')
         d = request.get_json(force=False)
-        if d['date'] == 'total':
-            date = None
-        else:
-            date = d['date']
-        return self.make_response(self.get_data(record_id, date))
+        try:
+            record_uuid = uuid.UUID(record_id)
+            if d['date'] == 'total':
+                date = None
+            else:
+                date = d['date']
+        except (TypeError, ValueError):
+            current_app.logger.error(traceback.format_exc())
+            abort(400)
+        return self.make_response(self.get_data(record_uuid, date))
 
 
 class QueryFileStatsCount(WekoQuery):

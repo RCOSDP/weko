@@ -154,7 +154,7 @@ curl -XPUT 'http://'${INVENIO_ELASTICSEARCH_HOST}':9200/_ilm/policy/weko_stats_p
 event_list=('celery-task' 'item-create' 'top-view' 'record-view' 'file-download' 'file-preview' 'search')
 for event_name in ${event_list[@]}
 do
-  curl -XPUT 'http://'${INVENIO_ELASTICSEARCH_HOST}':9200/'${SEARCH_INDEX_PREFIX}'-events-stats-'${event_name}'-000001' -H 'Content-Type: application/json' -d '
+  curl -XPUT 'http://'${INVENIO_ELASTICSEARCH_HOST}':9200/'${SEARCH_INDEX_PREFIX}'-events-stats-'${event_name}'-000001?timeout=2m' -H 'Content-Type: application/json' -d '
   {
     "aliases": {
       "'${SEARCH_INDEX_PREFIX}'-events-stats-'${event_name}'": {
@@ -162,7 +162,7 @@ do
       }
     }
   }'
-  curl -XPUT 'http://'${INVENIO_ELASTICSEARCH_HOST}':9200/'${SEARCH_INDEX_PREFIX}'-stats-'${event_name}'-000001' -H 'Content-Type: application/json' -d '
+  curl -XPUT 'http://'${INVENIO_ELASTICSEARCH_HOST}':9200/'${SEARCH_INDEX_PREFIX}'-stats-'${event_name}'-000001?timeout=2m' -H 'Content-Type: application/json' -d '
   {
     "aliases": {
       "'${SEARCH_INDEX_PREFIX}'-stats-'${event_name}'": {
@@ -452,6 +452,14 @@ ${INVENIO_WEB_INSTANCE} authors_prefix default_settings \
        "KAKEN2" "KAKEN2" "https://nrid.nii.ac.jp/nrid/##"
 ${INVENIO_WEB_INSTANCE} authors_prefix default_settings \
        "ROR" "ROR" "https://ror.org/##"
+${INVENIO_WEB_INSTANCE} authors_prefix default_settings \
+       "ISNI" "ISNI" "http://www.isni.org/isni/##"
+${INVENIO_WEB_INSTANCE} authors_prefix default_settings \
+       "VIAF" "VIAF" "https://viaf.org/viaf/##"
+${INVENIO_WEB_INSTANCE} authors_prefix default_settings \
+       "AID" "AID" ""
+${INVENIO_WEB_INSTANCE} authors_prefix default_settings \
+       "e-Rad_Researcher" "e-Rad_Researcher" ""
 # create-default-authors-prefix-settings-end
 
 # create-default-authors-affiliation-settings-begin

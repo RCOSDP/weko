@@ -37,12 +37,13 @@ from .opensearch import OpensearchEntryExtension, OpensearchExtension
 from .prism import PrismEntryExtension, PrismExtension
 
 
-def get_mapping(item_type_id, mapping_type):
+def get_mapping(item_type_id, mapping_type, item_type=None):
     """Format itemtype mapping data.
 
     [Key:Schema, Value:ItemId]
     :param item_type_id:
     :param mapping_type:
+    :param item_type:
     :return:
     """
     def get_schema_key_info(schema, parent_key, schema_json={}):
@@ -58,12 +59,16 @@ def get_mapping(item_type_id, mapping_type):
         return schema_json
 
     schema = {}
+    item_type_list = []
     item_type_mapping = Mapping.get_record(item_type_id)
-    item_type_list = ItemTypes.get_by_id(item_type_id).render.get('table_row')
+    if item_type:
+        item_type_list = item_type.render.get('table_row')
+    else:
+        item_type_list = ItemTypes.get_by_id(item_type_id).render.get('table_row')
     for item_id in item_type_list:
         if item_id in item_type_mapping:
             maps = item_type_mapping.get(item_id)
-            if mapping_type in maps.keys() and isinstance(maps[mapping_type], dict):
+            if isinstance(maps,dict) and mapping_type in maps.keys() and isinstance(maps[mapping_type], dict):
                 item_schema = get_schema_key_info(maps[mapping_type], '', {})
                 for k, v in item_schema.items():
                     if k in schema:

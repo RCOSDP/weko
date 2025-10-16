@@ -5,7 +5,30 @@ on: [push, pull_request]
 jobs:
   test:
     name: Test
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
+    services:
+      postgres:
+        image: postgres:12
+        ports:
+          - 5432:5432
+        env:
+          POSTGRES_USER: invenio
+          POSTGRES_PASSWORD: dbpass123
+      elasticsearch:
+        image: elasticsearch:6.8.23
+        ports:
+          - 9200:9200
+      rabbitmq:
+        image: rabbitmq:latest
+      redis:
+        image: redis:latest
+        ports:
+          - 6379:6379
+    env:
+      SQLALCHEMY_DATABASE_URI: postgresql+psycopg2://invenio:dbpass123@localhost:5432/wekotest
+      CACHE_REDIS_URL: redis://localhost:6379/0
+      SEARCH_ELASTIC_HOSTS: localhost
+    timeout-minutes: 60
     strategy:
       fail-fast: false
       matrix:
@@ -52,9 +75,9 @@ jobs:
           - weko-workflow
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
       - name: Cache
-        uses: actions/cache@v2
+        uses: actions/cache@v4
         with:
           path: |
             ~/.cache/pip
@@ -65,42 +88,23 @@ jobs:
           sudo apt-get update
           sudo apt-get install python3-setuptools libpq-dev libedit-dev libsqlite3-dev
       - name: Setup python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v5
         with:
-          python-version: 3.5.9
+          python-version: 3.6.15
       - name: Create venv
         run: python -m venv venv
       - name: Install python dependencies
         run: |
           source venv/bin/activate
-          python -m pip install -U setuptools wheel 'pip==20.2.4' coveralls PyYAML
+          python -m pip install -U 'setuptools==57.5.0' wheel 'pip==20.2.4' coveralls PyYAML
           pip install -r packages.txt
           pip install --no-deps -r packages-invenio.txt
           sed -E 's/\/code\///g' requirements-weko-modules.txt | xargs pip install --no-deps
           python -m pip uninstall -y 'coverage' 'pytest' 'pytest-cov' 'pytest-invenio' 'mock' 'urllib3' 'responses' 'moto'
-          python -m pip install 'coverage==4.5.4' 'pytest==5.4.3' 'pytest-cov==2.10.1' 'pytest-invenio==1.3.4' 'mock==3.0.5' 'urllib3==1.21.1' 'responses==0.10.3' 'moto==1.3.5'
+          python -m pip install 'coverage==4.5.4' 'pytest==5.4.3' 'pytest-cov==2.10.1' 'pytest-invenio==1.3.4' 'mock==3.0.5' 'urllib3==1.21.1' 'responses==0.10.3' 'moto==1.3.5' pytest-mock
       - name: Run tests
         run: |
           source venv/bin/activate
           cd modules/${{ matrix.module }}
           python -m pip install .
           python setup.py test
-      - name: Coveralls
-        if: ${{ success() || failure() }}
-        env:
-          COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
-        run: |
-          source venv/bin/activate
-          cp modules/${{ matrix.module }}/.coverage ./
-          coveralls
-
-  coveralls:
-    name: Coveralls webhook
-    needs: test
-    if: ${{ success() || failure() }}
-    runs-on: ubuntu-18.04
-    steps:
-      - name: Send webhook
-        env:
-          COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
-        run: curl -k https://coveralls.io/webhook?repo_token=${COVERALLS_REPO_TOKEN} -d "payload[build_num]=${GITHUB_SHA}$([[ $(echo ${GITHUB_REF} | cut -d / -f 2) == 'pull' ]] && echo -PR-$(echo ${GITHUB_REF} | cut -d / -f 3))&payload[status]=done"

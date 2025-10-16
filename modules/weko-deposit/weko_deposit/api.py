@@ -958,13 +958,16 @@ class WekoDeposit(Deposit):
                 set_timestamp(self.jrc, self.created, self.updated)
 
                 # Get file contents
-                self.get_content_files()
+                reading_targets = self.get_content_files()
 
                 try:
                     # Upload file content to Elasticsearch
                     self.indexer.upload_metadata(self.jrc,
                                                  self.pid.object_uuid,
                                                  self.revision_id)
+                    # Upload pdf file content to Elasticsearch
+                    from .tasks import extract_pdf_and_update_file_contents
+                    extract_pdf_and_update_file_contents.apply_async((reading_targets, str(self.pid.object_uuid)))
                 except TransportError as err:    
                     if self.jrc.get('content'):
                         for content in self.jrc['content']:
@@ -1110,6 +1113,7 @@ class WekoDeposit(Deposit):
         from weko_workflow.utils import get_url_root
         contents = []
         fmd = self.get_file_data()
+        reading_targets = {}
         if fmd:
             for file in self.files:
                 if isinstance(fmd, list):
@@ -1145,9 +1149,12 @@ class WekoDeposit(Deposit):
                                                 inf = chardet.detect(data)
                                                 data = data.decode(inf['encoding'], errors='replace')
                                             else:
-                                                reader = parser.from_buffer(fp.read(current_app.config['WEKO_DEPOSIT_FILESIZE_LIMIT']))
-                                                if reader is not None and "content" in reader and reader["content"] is not None:
-                                                    data = "".join(reader["content"].splitlines())
+                                                file_instance = file.obj.file
+                                                file_info = {
+                                                    "uri": file_instance.uri,
+                                                    "size": file_instance.size,
+                                                }
+                                                reading_targets[filename] = file_info
                                             attachment["content"] = data
                                     except FileNotFoundError as se:
                                         current_app.logger.error("FileNotFoundError: {}".format(se))
@@ -1163,6 +1170,30 @@ class WekoDeposit(Deposit):
                                 abort(500, '{}'.format(str(e2)))
                             break
             self.jrc.update({'content': contents})
+        return reading_targets
+
+    def get_pdf_info(self):
+        """Get the path and size of the registered PDF file
+        
+        Returns:
+            pdf_files(dict): pdf_files ex: {'test1.pdf': {'uri': '/var/tmp/tmp5beo2byv/e2/5a/e1af-d89b-4ce0-bd01-a78833acbe1e/data', 'size': 1252395}"
+        """
+        pdf_files = {}
+        fmd = self.get_file_data()
+        if fmd:
+            for file in self.files:
+                for lst in fmd:
+                    filename = lst.get('filename')
+                    if file.obj.key != filename:
+                        continue
+                    if file.obj.mimetype not in current_app.config['WEKO_DEPOSIT_TEXTMIMETYPE_WHITELIST_FOR_ES']:
+                        file_instance = file.obj.file
+                        file_info = {
+                            "uri": file_instance.uri,
+                            "size": file_instance.size
+                        }
+                        pdf_files[filename] = file_info
+        return pdf_files
 
     def get_file_data(self):
         """ 
@@ -2047,8 +2078,15 @@ class WekoRecord(Record):
             TypeError
         """
         from weko_items_ui.utils import get_options_and_order_list, get_hide_list_by_schema_form
-        meta_option, item_type_mapping = get_options_and_order_list(self.get('item_type_id'))
-        hide_list = get_hide_list_by_schema_form(self.get('item_type_id'))
+        item_type_id = self.get('item_type_id')
+        item_type = ItemTypes.get_by_id(item_type_id)
+        hide_list = []
+        if item_type:
+            meta_option, item_type_mapping = get_options_and_order_list(
+                item_type_id, item_type_data=ItemTypes(item_type.schema, model=item_type))
+            hide_list = get_hide_list_by_schema_form(schemaform=item_type.render.get('table_row_map', {}).get('form', []))
+        else:
+             meta_option, item_type_mapping = get_options_and_order_list(item_type_id)
         parent_key, title_key, language_key = self.__get_titles_key(
             item_type_mapping, meta_option, hide_list)
         title_metadata = self.get(parent_key)
@@ -2082,10 +2120,16 @@ class WekoRecord(Record):
         items = []
         settings = AdminSettings.get('items_display_settings')
         hide_email_flag = not settings.items_display_email
-        solst, meta_options = get_options_and_order_list(
-            self.get('item_type_id'))
-        hide_list = get_hide_list_by_schema_form(self.get('item_type_id'))
-        item_type = ItemTypes.get_by_id(self.get('item_type_id'))
+
+        item_type_id = self.get('item_type_id')
+        item_type = ItemTypes.get_by_id(item_type_id)
+        hide_list = []
+        if item_type:
+            solst, meta_options = get_options_and_order_list(
+                item_type_id, item_type_data=ItemTypes(item_type.schema, model=item_type))
+            hide_list = get_hide_list_by_schema_form(schemaform=item_type.render.get('table_row_map', {}).get('form', []))
+        else:
+             solst, meta_options = get_options_and_order_list(item_type_id)
         meta_list = item_type.render.get('meta_list', []) if item_type else {}
 
         for lst in solst:
@@ -2429,10 +2473,14 @@ class WekoRecord(Record):
 
         item_link.update(relation_data)
 
-    def get_file_data(self):
+    def get_file_data(self, item_type=None):
         """Get file data."""
         item_type_id = self.get('item_type_id')
-        solst, _ = get_options_and_order_list(item_type_id)
+        if item_type:
+            solst, _ = get_options_and_order_list(
+                item_type_id, item_type_data=ItemTypes(item_type.schema, model=item_type))
+        else:
+            solst, _ = get_options_and_order_list(item_type_id)
         items = []
         for lst in solst:
             key = lst[0]

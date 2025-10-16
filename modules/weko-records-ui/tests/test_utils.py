@@ -344,7 +344,7 @@ def test_hide_by_file(app,records):
 
 # def hide_by_email(item_metadata):
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_hide_by_email -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
-def test_hide_by_email(app,records):
+def test_hide_by_email(app,records, itemtypes):
     indexer, results = records
     record = results[0]["record"]
     test_record = copy.deepcopy(record)
@@ -353,6 +353,7 @@ def test_hide_by_email(app,records):
     record['item_1617186419668']['attribute_value_mlt'][2].pop('creatorMails')
     record['item_1617349709064']['attribute_value_mlt'][0].pop('contributorMails')
     assert hide_by_email(test_record)==record
+    assert hide_by_email(test_record, item_type=itemtypes["item_type"])==record
 
     record = {
         "item_type_id": "1",
@@ -455,11 +456,14 @@ def test_replace_license_free(app,records):
 #     def set_message_for_file(p_file):
 #     def get_data_by_key_array_json(key, array_json, get_key):
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_get_file_info_list -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
-def test_get_file_info_list(app,records):
+def test_get_file_info_list(app,records, itemtypes):
     indexer, results = records
     record = results[0]["record"]
     with app.test_request_context(headers=[("Accept-Language", "en")]):
         ret =  get_file_info_list(record)
+        assert len(ret)==2
+
+        ret =  get_file_info_list(record, item_type=itemtypes["item_type"])
         assert len(ret)==2
 
 # def create_usage_report_for_user(onetime_download_extra_info: dict):

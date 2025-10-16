@@ -31,6 +31,7 @@ import tempfile
 import traceback
 import uuid
 import zipfile
+import chardet
 from collections import Callable, OrderedDict
 from datetime import datetime
 from functools import partial, reduce, wraps
@@ -275,7 +276,7 @@ def get_journal_info(index_id=0):
 
         cur_lang = current_i18n.language
         journal = Journals.get_journal_by_index_id(index_id)
-        if len(journal) <= 0 or journal.get("is_output") is False:
+        if not journal or len(journal) <= 0 or journal.get("is_output") is False:
             return None
 
         for value in schema_data:
@@ -520,13 +521,15 @@ def check_import_items(file, is_change_identifier: bool, is_gakuninrdm=False,
     try:
         # Create temp dir for import data
         os.mkdir(data_path)
-
         with zipfile.ZipFile(file) as z:
             for info in z.infolist():
                 try:
-                    info.filename = info.orig_filename.encode("cp437").decode("cp932")
-                    if os.sep != "/" and os.sep in info.filename:
-                        info.filename = info.filename.replace(os.sep, "/")
+                    info.filename = info.orig_filename
+                    inf = chardet.detect(info.orig_filename)                    
+                    if inf['encoding'] is not None and inf['encoding'] == 'cp437':
+                        info.filename = info.orig_filename.encode("cp437").decode("cp932")
+                        if os.sep != "/" and os.sep in info.filename:
+                            info.filename = info.filename.replace(os.sep, "/")
                 except Exception:
                     current_app.logger.warning("-" * 60)
                     traceback.print_exc(file=sys.stdout)
@@ -1682,10 +1685,20 @@ def handle_item_title(list_record):
         
     for item in list_record:
         error = None
-        meta_option, item_type_mapping = get_options_and_order_list(item["item_type_id"])
-        hide_list = get_hide_list_by_schema_form(item["item_type_id"])
-        item_map = get_mapping(item["item_type_id"], "jpcoar_mapping")
-        # current_app.logger.debug("item_type_mapping: {}".format(item_type_mapping))
+        item_type_id = item["item_type_id"]
+
+        item_type = ItemTypes.get_by_id(item_type_id)
+        hide_list = []
+        if item_type:
+            meta_option = get_options_and_order_list(
+                item_type_id,
+                item_type_data=ItemTypes(item_type.schema, model=item_type),
+                mapping_flag=False)
+            hide_list = get_hide_list_by_schema_form(schemaform=item_type.render.get('table_row_map', {}).get('form', []))
+        else:
+            meta_option = get_options_and_order_list(item_type_id, mapping_flag=False)
+        item_map = get_mapping(item_type_id, 'jpcoar_mapping', item_type=item_type)
+
         # current_app.logger.debug("item_map: {}".format(item_map))
         title_data, _title_key = get_data_by_property(
             item["metadata"], item_map, "title.@value"
@@ -1715,7 +1728,7 @@ def handle_item_title(list_record):
                     ):
                         title_val = check_info_in_metadata(
                             lang_key, val_key, title_lang_data[0], item["metadata"]
-                        )
+                        )                        
                         item["item_title"] = title_val
                 if title_val:
                     break
@@ -3173,6 +3186,8 @@ def get_thumbnail_key(item_type_id=0):
         item_type = item_type.render
         schema = item_type.get("schemaeditor", {}).get("schema", {})
         for key, item in schema.items():
+            if not isinstance(item, dict):
+                continue
             if item.get("properties") and item["properties"].get("subitem_thumbnail"):
                 return key
 
@@ -3506,6 +3521,11 @@ def export_all(root_url, user_id, data, timezone):
                 record_ids = [(recid.pid_value, recid.object_uuid) 
                     for recid in recids if 'publish_status' in recid.json 
                     and recid.json['publish_status'] in [PublishStatus.PUBLIC.value, PublishStatus.PRIVATE.value]]
+                
+                if len(record_ids) == 0:
+                    item_types.remove(it)
+                    continue
+                
                 for recid, uuid in record_ids:
                     if counter % WEKO_SEARCH_UI_BULK_EXPORT_LIMIT == 0 and item_datas:
                         # Create export info file
@@ -3822,12 +3842,15 @@ def check_index_access_permissions(func):
             "search_type", WEKO_SEARCH_TYPE_DICT["FULL_TEXT"]
         )
         if search_type == WEKO_SEARCH_TYPE_DICT["INDEX"]:
-            cur_index_id = request.args.get("q", "0")
-            if not check_index_permissions(None, cur_index_id):
-                if not current_user.is_authenticated:
-                    return current_app.login_manager.unauthorized()
-                else:
-                    abort(403)
+            cur_index_id = request.args.get("q", "")
+            if cur_index_id.isdigit():
+                if not check_index_permissions(None, cur_index_id):
+                    if not current_user.is_authenticated:
+                        return current_app.login_manager.unauthorized()
+                    else:
+                        abort(403)
+            else:
+                abort(400)
         return func(*args, **kwargs)
 
     return decorated_view
