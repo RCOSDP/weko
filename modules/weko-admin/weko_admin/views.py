@@ -40,8 +40,7 @@ from invenio_db import db
 from sqlalchemy.orm import session
 from weko_accounts.utils import roles_required
 from weko_records.models import SiteLicenseInfo
-from weko_index_tree.utils import delete_index_reset_trees_from_redis, \
-    delete_index_reset_ignore_more_trees_from_redis
+
 from werkzeug.local import LocalProxy
 from .models import AdminSettings
 
@@ -222,7 +221,8 @@ def save_lang_list():
         return jsonify(msg='Header Error')
     result = 'success'
     data = request.get_json()
-    from weko_index_tree.utils import delete_index_trees_from_redis
+    from weko_index_tree.utils import delete_index_trees_from_redis, delete_index_reset_trees_from_redis, \
+        delete_index_reset_ignore_more_trees_from_redis
     for lang_code in [lang["lang_code"] for lang in data if not lang["is_registered"]]:
         delete_index_trees_from_redis(lang_code)
         delete_index_reset_trees_from_redis(lang_code)
