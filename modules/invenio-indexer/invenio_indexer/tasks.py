@@ -28,19 +28,6 @@ def process_bulk_queue(version_type=None, es_bulk_kwargs=None,with_deleted=False
     RecordIndexer(version_type=version_type).process_bulk_queue(
         es_bulk_kwargs=es_bulk_kwargs,with_deleted=with_deleted)
 
-@shared_task(ignore_result=True)
-def process_bulk_queue_reindex(version_type=None, es_bulk_kwargs=None,with_deleted=False):
-    """Process bulk indexing queue.
-
-    :param str version_type: Elasticsearch version type.
-    :param dict es_bulk_kwargs: Passed to
-        :func:`elasticsearch:elasticsearch.helpers.bulk`.
-
-    Note: You can start multiple versions of this task.
-    """
-    RecordIndexer(version_type=version_type).process_bulk_queue_reindex(
-        es_bulk_kwargs=es_bulk_kwargs,with_deleted=with_deleted)
-
 
 @shared_task(ignore_result=True)
 def index_record(record_uuid):

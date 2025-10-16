@@ -26,7 +26,7 @@ from sqlalchemy.dialects import postgresql
 from weko_records.models import ItemMetadata
 
 from .api import RecordIndexer
-from .tasks import process_bulk_queue_reindex
+from .tasks import process_bulk_queue
 
 
 def abort_if_false(ctx, param, value):
@@ -91,10 +91,10 @@ def run(delayed, concurrency, version_type=None, queue=None,
         if queue is not None:
             celery_kwargs.update({'queue': queue})
         for c in range(0, concurrency):
-            process_bulk_queue_reindex.apply_async(**celery_kwargs)
+            process_bulk_queue.apply_async(**celery_kwargs)
     else:
         click.secho('Indexing records...', fg='green')
-        RecordIndexer(version_type=version_type).process_bulk_queue_reindex(
+        RecordIndexer(version_type=version_type).process_bulk_queue(
             es_bulk_kwargs={
                 'raise_on_error': raise_on_error,
                 'raise_on_exception': raise_on_exception,

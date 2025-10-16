@@ -159,7 +159,7 @@ def run(version_type=None, raise_on_error=True,raise_on_exception=True,
         initial_backoff=2,max_backoff=600, stats_only=True):
     """Initialize indexing queue."""
     try:
-       RecordIndexer(version_type=version_type).process_bulk_queue_reindex(
+       RecordIndexer(version_type=version_type).process_bulk_queue(
                 es_bulk_kwargs={'raise_on_error': raise_on_error,
                             'raise_on_exception': raise_on_exception,
                             'chunk_size':chunk_size,
