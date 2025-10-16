@@ -58,6 +58,7 @@ jobs:
           - weko-theme
           - weko-user-profiles
           - weko-workflow
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
