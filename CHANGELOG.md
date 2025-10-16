@@ -12,6 +12,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Fixed
 ### Security
 
+## [v1.0.8b] 2025-10-16
+### Changed
+- Improved the performance of the reindex command.
+
 ## [v1.0.8a] 2025-07-08
 ### Fixed
 - Fixed an issue where the tika library was not included in the Docker image.
