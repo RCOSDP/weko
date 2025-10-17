@@ -742,12 +742,26 @@ class TestWekoDeposit:
             mock_self.get_file_data.return_value = None
             result = WekoDeposit.get_content_files(mock_self)
             assert result == {}
-
+            
+            rec_uuid = uuid.uuid4()
+            _, deposit = create_record_with_pdf(rec_uuid, 1)
+            deposit.jrc = {}
+            
             # Empty file data list
             mock_self.get_file_data.return_value = []
             result = WekoDeposit.get_content_files(mock_self)
             assert result == {}
+            ret = deposit.get_content_files()
 
+            assert ret["sample_word.docx"].get("is_pdf") == False
+            assert ret["test_file_1.2M.pdf"].get("is_pdf") == True
+            assert ret["test_file_82K.pdf"].get("is_pdf") == True
+            
+            for info in ret.values():
+                assert "uri" in info and info["uri"]
+                assert "size" in info and info["size"] < 1024
+                
+                
             # Text file extraction (success)
             mock_file = MagicMock()
             mock_file.obj = MagicMock()
@@ -832,11 +846,12 @@ class TestWekoDeposit:
         rec_uuid = uuid.uuid4()
         pdf_files, deposit = create_record_with_pdf(rec_uuid, 1)
         test = {}
-        for file_name, file_obj in pdf_files.items():
-            test[file_name]={"uri":file_obj.obj.file.uri,"size":file_obj.obj.file.size}
+        for file_name, file_info in pdf_files.items():
+            file_obj = file_info.get("file")
+            is_pdf = file_info.get("is_pdf")
+            test[file_name]={"uri":file_obj.obj.file.uri,"size":file_obj.obj.file.size,"is_pdf":is_pdf}
         res = deposit.get_pdf_info()
         assert res == test
-
 
     # def get_file_data(self):
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoDeposit::test_get_file_data -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp

@@ -145,7 +145,7 @@ msgstr "データを保存できませんでした"
 #: weko_admin/admin.py:666
 #, python-format
 msgid "Could not get restricted data: %s"
-msgstr "制限付きデータを取得できませんでした"
+msgstr "制限付きデータを取得できませんでした: %s"
 
 #: weko_admin/admin.py:667
 msgid "Could not get restricted data."

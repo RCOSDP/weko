@@ -30,6 +30,8 @@ import traceback
 from collections import OrderedDict
 from datetime import datetime, timezone,date
 from typing import NoReturn, Union
+from tika import parser
+from fs.errors import ResourceNotFoundError
 
 import redis
 from redis import sentinel
@@ -1212,9 +1214,9 @@ class WekoDeposit(Deposit):
                 mimetypes = current_app.config["WEKO_MIMETYPE_WHITELIST_FOR_ES"]
                 content = lst.copy()
                 attachment = {}
-
+                mimetype = file.obj.mimetype
                 if (
-                    file.obj.mimetype in mimetypes
+                    mimetype in mimetypes
                     and file.obj.key not in non_extract
                 ):
                     # Extract content from file
@@ -1224,7 +1226,7 @@ class WekoDeposit(Deposit):
                         )
                         with file.obj.file.storage().open(mode="rb") as fp:
                             data = ""
-                            if file.obj.mimetype in current_app.config[
+                            if mimetype in current_app.config[
                                 "WEKO_DEPOSIT_TEXTMIMETYPE_WHITELIST_FOR_ES"
                             ]:
                                 data = fp.read(
@@ -1236,7 +1238,8 @@ class WekoDeposit(Deposit):
                                 file_instance = file.obj.file
                                 file_info = {
                                     "uri": file_instance.uri,
-                                    "size": file_instance.size
+                                    "size": file_instance.size,
+                                    "is_pdf": mimetype == 'application/pdf'
                                 }
                                 reading_targets[lst["filename"]] = file_info
                             attachment["content"] = data
@@ -1255,6 +1258,7 @@ class WekoDeposit(Deposit):
         self.jrc.update({"content": contents})
         return reading_targets
 
+
     def get_pdf_info(self):
         """Get the path and size of the registered PDF file
 
@@ -1269,15 +1273,20 @@ class WekoDeposit(Deposit):
                     filename = lst.get('filename')
                     if file.obj.key != filename:
                         continue
-                    if file.obj.mimetype not in current_app.config['WEKO_DEPOSIT_TEXTMIMETYPE_WHITELIST_FOR_ES']:
+                    mimetype = file.obj.mimetype
+                    if mimetype not in current_app.config['WEKO_MIMETYPE_WHITELIST_FOR_ES']:
+                        continue
+                    if mimetype not in current_app.config['WEKO_DEPOSIT_TEXTMIMETYPE_WHITELIST_FOR_ES']:
                         file_instance = file.obj.file
                         file_info = {
                             "uri": file_instance.uri,
-                            "size": file_instance.size
+                            "size": file_instance.size,
+                            "is_pdf": mimetype == 'application/pdf'
                         }
                         pdf_files[filename] = file_info
         return pdf_files
-
+    
+    
     def get_file_data(self):
         """
         Get file data.

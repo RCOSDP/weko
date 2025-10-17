@@ -25,6 +25,7 @@ import json
 import subprocess
 import time
 import copy
+import tempfile
 from time import sleep
 from io import StringIO
 
@@ -640,18 +641,16 @@ def make_stats_file(raw_stats):
 
 
 @shared_task(ignore_result=True)
-def extract_pdf_and_update_file_contents(files, record_uuid, retry_count=3, retry_delay=1):
+def extract_pdf_and_update_file_contents(
+    files, record_uuid, retry_count=3, retry_delay=1):
     """Extract text from pdf and update es document
-
     Args:
-        files(dict): pdf_files uri and size. ex: {'test1.pdf': {'uri': '/var/tmp/tmp5beo2byv/e2/5a/e1af-d89b-4ce0-bd01-a78833acbe1e/data', 'size': 1252395}"
+        files(dict): pdf_files uri and size,is_pdf flag. ex: {'test1.pdf': {'uri': '/var/tmp/data', 'size': 1252395,'is_pdf':True}"
         record_uuid(str): The id of the document to update.
         retry_count(int, Optional): The number of times to retry. Defaults to 3.
         retry_delay(int, Optional): The number of seconds to wait between retries. Defaults to 1.
     """
-    tika_jar_path = os.environ.get("TIKA_JAR_FILE_PATH")
-    if not tika_jar_path or os.path.isfile(tika_jar_path) is False:
-        raise Exception("not exist tika jar file.")
+    from weko_deposit.utils import extract_text_from_pdf, extract_text_with_tika
     file_datas = {}
     for filename, file in files.items():
         data = ""
@@ -662,17 +661,21 @@ def extract_pdf_and_update_file_contents(files, record_uuid, retry_count=3, retr
             )
 
             with storage.open(mode="rb") as fp:
-                buffer = fp.read(current_app.config['WEKO_DEPOSIT_FILESIZE_LIMIT'])
-                args = ["java", "-jar", tika_jar_path, "-t"]
-                result = subprocess.run(
-                    args,
-                    input=buffer,
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.PIPE,
-                )
-                if result.returncode != 0:
-                    raise Exception("raise in tika: {}".format(result.stderr.decode("utf-8")))
-                data = "".join(result.stdout.decode("utf-8").splitlines())
+                with tempfile.NamedTemporaryFile(delete=True) as tmp:
+                    while True:
+                        chunk = fp.read(1024 * 1024)
+                        if not chunk:
+                            break
+                        tmp.write(chunk)
+                    tmp.flush()
+                    
+                    is_pdf = file.get("is_pdf", False)
+                    tmp_filename = tmp.name
+                    file_size_limit = current_app.config['WEKO_DEPOSIT_FILESIZE_LIMIT']
+                    if is_pdf:
+                        data = extract_text_from_pdf(tmp_filename,file_size_limit)
+                    else:
+                        data = extract_text_with_tika(tmp_filename,file_size_limit)
         except FileNotFoundError as ex:
             current_app.logger.error(ex)
         except ResourceNotFoundError as ex:
@@ -684,20 +687,26 @@ def extract_pdf_and_update_file_contents(files, record_uuid, retry_count=3, retr
     for attempt in range(retry_count):
         try:
             update_file_content(record_uuid, file_datas)
+            success = True
             break
         except ConflictError:
-            current_app.logger.error(f"Version conflict error occurred while updating file content. Retrying {attempt + 1}/{retry_count}")
+            current_app.logger.error(
+                f"Version conflict error occurred while updating file content. Retrying {attempt + 1}/{retry_count}")
             time.sleep(retry_delay)
         except NotFoundError:
-            current_app.logger.error(f"The document targeted for content update({record_uuid}) does not exist. Retrying {attempt + 1}/{retry_count}")
+            current_app.logger.error(
+                f"The document targeted for content update({record_uuid}) does not exist. Retrying {attempt + 1}/{retry_count}")
             time.sleep(retry_delay)
         except Exception:
-            current_app.logger.error(f"An error occurred({record_uuid}). Retrying {attempt + 1}/{retry_count}")
+            current_app.logger.error(
+                f"An error occurred({record_uuid}). Retrying {attempt + 1}/{retry_count}")
             time.sleep(retry_delay)
+    if not success:
+        current_app.logger.error(f"Failed to update file content after {retry_count} attempts. record_uuid: {record_uuid}")
+
 
 def update_file_content(record_uuid, file_datas):
     """Update the content of the es document
-
     Args:
         record_uuid (str): The id of the document to update.
         file_datas (dict): A dictionary of file names and contents.
@@ -716,10 +725,13 @@ def update_file_content(record_uuid, file_datas):
             continue
         if content.get("attachment",{}):
             content["attachment"]["content"] = file_datas[content.get("filename")]
-    update_body = {"doc":{"content":contents}}
-    indexer.client.update(
+    es_data["content"] = contents
+
+    indexer.client.index(
         index=indexer.es_index,
-        doc_type=indexer.es_doc_type,
         id=str(record_uuid),
-        body=update_body
+        body=es_data,
+        version=res.get('_version'),
+        version_type = "external_gte",
+        doc_type=res.get("_type")
     )
