@@ -10,24 +10,26 @@
 
 import datetime
 import time
-
 import flask_security
 import pytest
+import flask
 from flask import current_app, session
 from flask_security import url_for_security
 from invenio_db import db
 from simplekv.memory.redisstore import RedisStore
 from werkzeug.local import LocalProxy
+from mock import patch
 
 from invenio_accounts import testutils
 from invenio_accounts.models import SessionActivity
-from invenio_accounts.sessions import delete_session
+from invenio_accounts.sessions import delete_session, add_session
 
 _sessionstore = LocalProxy(lambda: current_app.
                            extensions['invenio-accounts'].sessionstore)
 _datastore = LocalProxy(lambda: current_app.extensions['security'].datastore)
 
 
+# .tox/c1/bin/pytest --cov=invenio_accounts tests/test_sessions.py::test_login_listener -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-accounts/.tox/c1/tmp
 def test_login_listener(app):
     """Test login listener."""
     with app.app_context():
@@ -37,8 +39,12 @@ def test_login_listener(app):
             query = db.session.query(SessionActivity)
             assert query.count() == 0
 
-            testutils.login_user_via_view(client, user.email,
-                                          user.password_plaintext)
+            testutils.login_user_via_view(
+                client,
+                user.email,
+                user.password_plaintext
+            )
+
             assert testutils.client_authenticated(client)
             # After logging in, a SessionActivity has been created
             # corresponding to the user's session.
@@ -48,7 +54,6 @@ def test_login_listener(app):
             session_entry = query.first()
             assert session_entry.user_id == user.id
             assert session_entry.sid_s == session.sid_s
-
 
 def test_repeated_login_session_population(app):
     """Verify session population on repeated login."""
@@ -298,3 +303,54 @@ def test_session_ip_no_country(app, users):
             [session] = SessionActivity.query.all()
             assert session.country is None
             assert session.ip == '139.191.247.1'
+
+
+# .tox/c1/bin/pytest --cov=invenio_accounts tests/test_sessions.py::test_add_session -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-accounts/.tox/c1/tmp
+def test_add_session(app):
+    """Test add_session function."""
+    with app.app_context():
+        user = testutils.create_test_user('test@example.org')
+        with app.test_client() as client:
+            query = db.session.query(SessionActivity)
+            assert query.count() == 0
+
+            # Create a test request context
+            with app.test_request_context():
+                session['user_id'] = user.id
+                session.sid_s = 'test_sid_s'  # Mock session ID
+                # Mock request.get_json to return specific data
+                with patch('flask.request.get_json', return_value={'jao': '相うえおIdP'}):
+                    add_session(session)
+
+            query = db.session.query(SessionActivity)
+            assert query.count() == 1
+
+            session_entry = query.first()
+            assert session_entry.user_id == user.id
+            assert session_entry.sid_s == 'test_sid_s'
+            assert session_entry.orgniazation_name == '相うえおIdP'
+
+
+def test_add_session_no_org(app):
+    """Test add_session function."""
+    with app.app_context():
+        user = testutils.create_test_user('test@example.org')
+        with app.test_client() as client:
+            query = db.session.query(SessionActivity)
+            assert query.count() == 0
+
+            # Create a test request context
+            with app.test_request_context():
+                session['user_id'] = user.id
+                session.sid_s = 'test_sid_s'  # Mock session ID
+                # Mock request.get_json to return specific data
+                with patch('flask.request.get_json', return_value={}):
+                    add_session(session)
+
+            query = db.session.query(SessionActivity)
+            assert query.count() == 1
+
+            session_entry = query.first()
+            assert session_entry.user_id == user.id
+            assert session_entry.sid_s == 'test_sid_s'
+            assert session_entry.orgniazation_name is None

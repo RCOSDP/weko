@@ -1,0 +1,187 @@
+/**
+ * -*- mode: text; coding: utf-8; -*-
+ *
+ * This file is part of WEKO3.
+ * Copyright (C) 2017 National Institute of Informatics.
+
+ * WEKO3 is free software; you can redistribute it
+ * and/or modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of the
+ * License, or (at your option) any later version.
+ *
+ * WEKO3 is distributed in the hope that it will be
+ * useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with WEKO3; if not, write to the
+ * Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+ * MA 02111-1307, USA.
+ */
+
+.header-mapping-list {
+  background: #C6DBF7;
+  border-top: 1px solid #bce8f1;
+  border-right: 1px solid #bce8f1;
+  border-left: 1px solid #bce8f1;
+}
+
+.body-mapping-list {
+  overflow-x: hidden;
+  overflow-y: scroll;
+  max-height: 440px;
+  border: 1px solid #bce8f1;
+  -webkit-box-shadow: 0 1px 1px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.05);
+}
+
+.body-mapping-list select,
+.body-mapping-list input[type="text"] {
+  width: 250px;
+}
+
+.body-mapping-list input[type="number"] {
+  width: 60px;
+}
+
+.body-mapping-list .check {
+  width: fit-content;
+}
+
+.item-property {
+  display: flex;
+  white-space: nowrap;
+}
+
+.lang-label {
+  width: 75px;
+  height: 34px;
+  margin-bottom: 15px;
+  padding-top: 7px;
+}
+
+.margin-h-none {
+  margin-left: 0px;
+  margin-right: 0px;
+}
+
+.padding-h-none {
+  padding-left: 0px;
+  padding-right: 0px;
+}
+
+.btn {
+  border-radius: 4px !important;
+}
+
+a.btn-collapse.collapsed:before {
+  content: '\25BC';
+  display: block;
+  color: #000;
+}
+
+a.btn-collapse:before {
+  content: '\25B2';
+  display: block;
+  color: #000;
+}
+
+.inline-block {
+  display: inline-block;
+}
+
+.block {
+  display: block;
+}
+
+.flex {
+  display: flex;
+}
+
+.flex-col {
+  display: flex;
+  flex-flow: column;
+}
+
+.node-flex {
+  display: flex;
+  align-items: center;
+}
+
+.width-fit {
+  width: fit-content;
+}
+
+.margin-r-ten {
+  margin-right: 10px !important;
+}
+
+.margin-b-ten {
+  margin-bottom: 10px;
+}
+
+.x-scroll {
+  overflow-x: scroll;
+}
+
+#layer-base ul,
+#tree-base ul {
+  list-style-type: none;
+}
+
+#layer-base li,
+#tree-base li {
+  margin-top: 1px;
+}
+
+#layer-base,
+#tree-base {
+  list-style-type: none;
+  margin: 0;
+  padding: 0;
+}
+
+.arrow {
+  cursor: pointer;
+  user-select: none;
+}
+
+.arrow::before {
+  content: "\25B6";
+  font-size: 18px;
+  color: black;
+  display: inline-block;
+  margin-right: 6px;
+}
+
+.arrow-down::before {
+  transform: rotate(90deg);
+}
+
+.nested {
+  display: none;
+}
+
+.active {
+  display: block;
+}
+
+.template {
+  display: none;
+}
+
+.button-node {
+  border: 0;
+}
+
+.error-message {
+  width: fit-content;
+  padding: 5px;
+  margin: 0px;
+}
+
+.lang-table td {
+  padding-right: 5px;
+  padding-bottom: 5px;
+}

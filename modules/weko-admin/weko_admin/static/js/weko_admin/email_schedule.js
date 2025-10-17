@@ -8,13 +8,20 @@ $(document).ready(function () {
 
   // Confirm schedule change
   $('#confirm_schedule_button').on('click', function () {
+    let repositorySelect = $('#repository_select').val();
+    $('<input>').attr({
+      type: 'hidden',
+      name: 'repository_select',
+      value: repositorySelect
+    }).appendTo('#email_sched_form');
+
     $('#email_sched_form').submit();
   });
 
   // Change selectable options based on frequency
   $('#email_sched_frequency').on('change', function () {
     var frequency = $(this).val();
-    switch(frequency) {
+    switch (frequency) {
       case 'monthly':
         $('#email_sched_details_weekly').addClass('hidden');
         $('.weekly-option').prop('selected', false);

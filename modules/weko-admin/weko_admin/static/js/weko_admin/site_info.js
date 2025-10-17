@@ -29,7 +29,6 @@ const select_icon_file_label = document.getElementById("select_icon_file_label")
 const select_file_name_label = document.getElementById("select_file_name_label").value;
 const success_mess = document.getElementById("success_mess").value;
 const google_tracking_id_user_label = document.getElementById("google_tracking_id_user_label").value;
-const addthis_user_id_label = document.getElementById("addthis_user_id_label").value;
 const ogp_image_label = document.getElementById("ogp_image_label").value;
 const lang_code_ja = 'ja'
 class MainLayout extends React.Component {
@@ -45,7 +44,6 @@ class MainLayout extends React.Component {
            favicon_name: "",
            favicon: "",
            google_tracking_id_user: "",
-           addthis_user_id: "",
            ogp_image: "",
            ogp_image_name: "",
            notify: [],
@@ -188,7 +186,7 @@ class MainLayout extends React.Component {
     }
 
     handleSave() {
-      const { site_name, copy_right, keyword, description, favicon_name, favicon, notify, google_tracking_id_user, addthis_user_id, ogp_image, ogp_image_name } = this.state
+      const { site_name, copy_right, keyword, description, favicon_name, favicon, notify, google_tracking_id_user, ogp_image, ogp_image_name } = this.state
       const validate = this.handleValidation()
       console.log("validate", validate)
       if (validate.status) {
@@ -210,7 +208,6 @@ class MainLayout extends React.Component {
             site_name: new_site_name,
             copy_right: copy_right,
             google_tracking_id_user: google_tracking_id_user,
-            addthis_user_id: addthis_user_id,
             keyword: keyword,
             description: description,
             favicon_name: favicon_name,
@@ -425,7 +422,7 @@ class MainLayout extends React.Component {
       })
     }
     render() {
-        const {errors,site_name,list_lang_register,copy_right,description,keyword, favicon,favicon_name,success, show_alert, list_error, notify, google_tracking_id_user, addthis_user_id, ogp_image, ogp_image_name} = this.state
+        const {errors,site_name,list_lang_register,copy_right,description,keyword, favicon,favicon_name,success, show_alert, list_error, notify, google_tracking_id_user, ogp_image, ogp_image_name} = this.state
         return (
             <div className="site_info row">
             {
@@ -601,22 +598,6 @@ class MainLayout extends React.Component {
                   </div>
                 </div>
 
-                <div className={`row form-group ${errors[`addthis_user_id`] && "has-error"}`}>
-                  <div className="col-md-2 text-right">
-                    <label>{addthis_user_id_label}</label>
-                  </div>
-                  <div className="col-md-6">
-                    <input
-                    type="text"
-                    className="form-control"
-                    id="addthis_user_id"
-                    value={addthis_user_id}
-                    onChange={(e)=> {
-                          this.handleChange('addthis_user_id', e.target.value)
-                        }}
-                    />
-                  </div>
-                </div>
 
               <div className={`row form-group ${errors[`ogp_image`] && "has-error"}`}>
                   <div className="col-md-2 text-right">

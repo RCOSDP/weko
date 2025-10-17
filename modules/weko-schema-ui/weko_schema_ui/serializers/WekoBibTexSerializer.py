@@ -27,6 +27,7 @@ from bibtexparser.bibdatabase import BibDatabase
 from bibtexparser.bwriter import BibTexWriter
 from flask import current_app
 
+from ..config import WEKO_SCHEMA_DATE_DEFAULT_DATETYPE, WEKO_SCHEMA_DATE_DATETYPE_MAPPING
 from ..schema import SchemaTree, cache_schema
 from .wekoxml import WekoXMLSerializer
 
@@ -133,6 +134,7 @@ class WekoBibTexSerializer():
         jp_jp = '{' + self.__ns['jpcoar'] + '}'
         jp_dc = '{' + self.__ns['dc'] + '}'
         jp_datacite = '{' + self.__ns['datacite'] + '}'
+        jp_dcndl = '{' + self.__ns['dcndl'] + '}'
         self.__find_pattern = './/{}'
 
         self.__fields_mapping = {
@@ -163,6 +165,17 @@ class WekoBibTexSerializer():
             BibTexFields.ANNOTE: 'none',
             BibTexFields.DOI: jp_jp + 'identifier',
             BibTexFields.URL: jp_jp + 'identifier',
+        }
+
+
+        date_default = jp_datacite + 'date[@dateType="@DATE_TYPE"]'
+
+        self.base_date_priority = [
+            date_default,
+        ]
+
+        self.date_priority_mapping = {
+            'departmental bulletin paper': [jp_dcndl + 'dateGranted']
         }
 
     def ____get_bibtex_type_fields(self, bibtex_type):
@@ -471,7 +484,7 @@ class WekoBibTexSerializer():
                         ','.join(lst_invalid_fields), record.get('recid')))
             return err_msg
 
-        db.entries.append(self.__get_bibtex_data(root, bibtex_type))
+        db.entries.append(self.__get_bibtex_data(root, bibtex_type, record))
         writer = BibTexWriter()
         result = writer.write(db)
         return result
@@ -523,6 +536,41 @@ class WekoBibTexSerializer():
                 type_result = bib_type
                 break
         return type_result
+
+    def __get_date_by_resource_type(self, root, record):
+        """Get date by resource type.
+
+        @param root:
+        @param record:
+        @return:
+        """
+        type_value = ''
+        date_priority_list = []
+        date_result = []
+
+        for element in root.findall('.//dc:type', self.__ns):
+            type_value = element.text
+        
+        date_type_mapping = current_app.config.get('WEKO_SCHEMA_DATE_DATETYPE_MAPPING', 
+                                                   WEKO_SCHEMA_DATE_DATETYPE_MAPPING)
+        default_date_type = current_app.config.get('WEKO_SCHEMA_DATE_DEFAULT_DATETYPE',
+                                                    WEKO_SCHEMA_DATE_DEFAULT_DATETYPE)
+        self.base_date_priority[0] = self.base_date_priority[0].replace(
+            '@DATE_TYPE', date_type_mapping.get(type_value, default_date_type))
+
+        if self.date_priority_mapping.get(type_value):
+            date_priority_list = self.date_priority_mapping.get(type_value)
+        date_priority_list += self.base_date_priority
+
+        for priority_path in date_priority_list:
+            for element in root.findall(
+                    self.__find_pattern.format(priority_path), self.__ns):
+                if element.text not in date_result:
+                    date_result.append(element.text)
+            if date_result:
+                return date_result
+
+        return record.get('pubdate', {}).get('attribute_value')
 
     def __validate_fields(self, root, bibtex_type):
         """Validate required fields of bibtex type.
@@ -620,18 +668,19 @@ class WekoBibTexSerializer():
         #     all_fields.extend(item)
         return all_fields
 
-    def __get_bibtex_data(self, root, bibtex_type):
+    def __get_bibtex_data(self, root, bibtex_type, record):
         """Get Bibtex data base on Bibtex type.
 
         @param root:
         @param bibtex_type:
+        @param record:
         @return:
         """
         def process_by_att(att, expected_val, existed_lst):
-            date_type = element.get(att)
-            if date_type and date_type.lower() == expected_val and \
+            att_type = element.get(att)
+            if att_type and att_type.lower() == expected_val and \
                     element.text not in existed_lst:
-                dates.append(element.text)
+                existed_lst.append(element.text)
 
         def process_author():
             author_lang = element.get(xml_ns + 'lang')
@@ -668,14 +717,11 @@ class WekoBibTexSerializer():
                 self.__find_pattern.format(self.__fields_mapping[field]), self.__ns)
             if len(elements) != 0:
                 value = ''
-                dates = []
                 for element in elements:
-                    if not element:
+                    if element is None or \
+                            field in [BibTexFields.YEAR, BibTexFields.MONTH]:
                         continue
-                    if field == BibTexFields.YEAR or \
-                            field == BibTexFields.MONTH:
-                        process_by_att('dateType', 'issued', dates)
-                    elif field == BibTexFields.AUTHOR:
+                    if field == BibTexFields.AUTHOR:
                         process_author()
                     elif field == BibTexFields.DOI:
                         process_by_att(xml_ns + 'identifierType', 'doi', dois)
@@ -692,10 +738,6 @@ class WekoBibTexSerializer():
                     page_start = value
                 elif field == BibTexFields.PAGE_END:
                     page_end = value
-                elif field == BibTexFields.YEAR or \
-                        field == BibTexFields.MONTH and len(dates) != 0:
-                    data[BibTexFields.YEAR.value], data[
-                        BibTexFields.MONTH.value] = self.__get_dates(dates)
                 elif field == BibTexFields.AUTHOR:
                     if creator[BibTexFields.AUTHOR.value]:
                         data[field.value] = and_str.join(
@@ -717,6 +759,8 @@ class WekoBibTexSerializer():
         if page_start != '' and page_end != '':
             data['pages'] = str(page_start) + '--' + str(page_end)
 
+        date_by_resource_type = self.__get_date_by_resource_type(root, record)
+        data['year'], data['month'] = self.__get_dates(date_by_resource_type)
         data['ENTRYTYPE'] = bibtex_type.value
         data['ID'] = self.__get_item_id(root)
 
@@ -734,11 +778,10 @@ class WekoBibTexSerializer():
         item_id = ''
         namespace = 'http://www.openarchives.org/OAI/2.0/'
         request_tag = '{' + namespace + '}' + 'request'
-        if isinstance(root, list):
-            for element in root:
-                if element and request_tag == element.tag:
-                    subs = element.get('identifier', '').split('/')
-                    item_id = subs[len(subs) - 1]
+        for element in root:
+            if element is not None and request_tag == element.tag:
+                subs = element.get('identifier', '').split('/')
+                item_id = subs[len(subs) - 1]
 
         return item_id
 
@@ -753,6 +796,8 @@ class WekoBibTexSerializer():
         """
         year = ''
         month = ''
+        if type(dates) is str:
+            dates = [dates]
         for element in dates:
             date_element = element.split('-')
             year += ', ' if year != '' else ''

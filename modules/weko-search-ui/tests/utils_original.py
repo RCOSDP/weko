@@ -18,7 +18,7 @@ from weko_search_ui.utils import (
     get_content_workflow,
     getEncode,
     validation_file_open_date,
-    check_import_items,
+    check_tsv_import_items,
     unpackage_import_file,
     handle_check_exist_record,
     handle_check_date,
@@ -247,8 +247,8 @@ def test_get_content_workflow():
 # def handle_generate_key_path(key) -> list:
 # def parse_to_json_form(data: list, item_path_not_existed=[], include_empty=False):
 
-#def check_import_items(file, is_change_identifier: bool, is_gakuninrdm=False):
-# def test_check_import_items(app,test_importdata,mocker):
+#def check_tsv_import_items(file, is_change_identifier: bool, is_gakuninrdm=False):
+# def test_check_tsv_import_items(app,test_importdata,mocker):
 #     app.config['WEKO_SEARCH_UI_IMPORT_TMP_PREFIX'] = 'importtest'
 #     filepath = os.path.join(os.path.dirname(os.path.realpath(__file__)),"data", "item_map.json")
 #     with open(filepath,encoding="utf-8") as f:
@@ -258,7 +258,7 @@ def test_get_content_workflow():
 #     with app.test_request_context():
 #         with set_locale('en'):
 #             for file in test_importdata:
-#                 assert check_import_items(file,False,False)==''
+#                 assert check_tsv_import_items(file,False,False)==''
 
 # def unpackage_import_file(data_path: str, csv_file_name: str, force_new=False):
 

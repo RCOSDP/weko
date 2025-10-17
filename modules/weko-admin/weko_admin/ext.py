@@ -33,7 +33,7 @@ from invenio_i18n.ext import current_i18n
 from invenio_i18n.views import set_lang
 
 from . import config
-from .models import AdminLangSettings, SessionLifetime, SiteInfo
+from .models import AdminLangSettings, AdminSettings, SessionLifetime, SiteInfo
 from .utils import overwrite_the_memory_config_with_db
 from .views import blueprint
 
@@ -51,6 +51,11 @@ class WekoAdmin(object):
             conf = current_app.config
             access_table = conf['WEKO_ADMIN_ACCESS_TABLE']
             system_admin = conf['WEKO_ADMIN_PERMISSION_ROLE_SYSTEM']
+            is_use_mail_templates = False
+            restricted_access_settings = AdminSettings.get("restricted_access", dict_to_object=False)
+            if restricted_access_settings:
+                is_use_mail_templates = restricted_access_settings.get("edit_mail_templates_enable", False)
+            is_display_restricted_settings = conf.get('WEKO_ADMIN_DISPLAY_RESTRICTED_SETTINGS', False)
             try:
                 roles = db.session.query(Role).join(userrole).filter_by(
                     user_id=current_user.get_id()).all()
@@ -59,6 +64,13 @@ class WekoAdmin(object):
                     'Could not determine roles - returning False: {}'.format(e))
                 roles = []
             for role in roles:  # Check if role can view endpoint
+                if endpoint == 'mailtemplates' and not is_use_mail_templates:
+                    return False
+                elif endpoint == 'restricted_access' and not is_display_restricted_settings \
+                    and role.name != system_admin:
+                        return False
+                elif endpoint == "profile_settings":
+                    return current_app.config.get("WEKO_USERPROFILES_CUSTOMIZE_ENABLED", False)
                 access_list = access_table[role.name] if role.name in access_table \
                     else []
                 if endpoint in access_list or role.name == system_admin:

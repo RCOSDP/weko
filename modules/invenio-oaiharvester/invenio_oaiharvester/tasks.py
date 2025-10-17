@@ -143,7 +143,7 @@ def map_indexes(index_specs, parent_id):
     res = []
     for spec in index_specs:
         idx = Index.query.filter_by(
-            harvest_spec=spec, parent=parent_id).first()
+            harvest_spec=spec, parent=parent_id, is_deleted=False).first()
         res.append(idx.id) if idx else None
     return res
 
@@ -445,6 +445,7 @@ def run_harvesting(id, start_time, user_data, request_info):
             nonlocal pause
             pause = True
         signal.signal(signal.SIGTERM, sigterm_handler)
+        _errormsg = []
         while True:
             records, rtoken = harvester_list_records(
                 harvesting.base_url,
@@ -459,6 +460,9 @@ def run_harvesting(id, start_time, user_data, request_info):
                 try:
                     process_item(record, harvesting, counter, request_info)
                     db.session.commit()
+                except ValueError as ex:
+                    _errormsg.append(str(ex))
+                    event_counter('error_items', counter)
                 except Exception as ex:
                     current_app.logger.debug(traceback.format_exc())
                     current_app.logger.error(
@@ -473,6 +477,8 @@ def run_harvesting(id, start_time, user_data, request_info):
             elif pause is True:
                 harvest_log.status = 'Suspended'
                 break
+        if _errormsg:
+            harvest_log.errmsg = '\n'.join(_errormsg)[:255]
     except Exception as ex:
         db.session.rollback()
         harvest_log.status = 'Failed'

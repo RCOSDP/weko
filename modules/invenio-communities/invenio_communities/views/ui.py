@@ -66,6 +66,7 @@ def sanitize_html(value):
         value,
         tags=current_app.config['COMMUNITIES_ALLOWED_TAGS'],
         attributes=current_app.config['COMMUNITIES_ALLOWED_ATTRS'],
+        styles=current_app.config['COMMUNITIES_ALLOWED_STYLES'],
         strip=True,
     ).strip()
 
@@ -191,6 +192,18 @@ def view(community):
     return render_template(
         current_app.config['THEME_FRONTPAGE_TEMPLATE'],
         sort_option=sort_options, detail_condition=detail_condition, community_id=community_id, width=width, height=height, ** ctx
+    )
+
+
+@blueprint.route('/<string:community_id>/content_policy/', methods=['GET'])
+@pass_community
+def content_policy(community):
+    """Display the content policy of a community."""
+    ctx = {'community': community}
+    community_id = community.id
+    return render_template(
+        'invenio_communities/content_policy.html',
+        community_id=community_id, ** ctx
     )
 
 
@@ -699,6 +712,7 @@ def community_list():
         'invenio_communities/communities_list.html',
         page=render_page,
         render_widgets=render_widgets,
+        communityModel = Community,
         **ctx)
 
 @blueprint.teardown_request

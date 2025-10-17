@@ -1,0 +1,128 @@
+{
+    "init": {
+        "code": 0,
+        "msg": "success",
+        "data": {
+            "redirect": "/workflow/activity/detail/A-{}-00001"
+        }
+    },
+    "author_prefix_settings": [
+        {
+            "name": "WEKO",
+            "scheme": "WEKO",
+            "url": ""
+        },
+        {
+            "name": "ORCID",
+            "scheme": "ORCID",
+            "url": "https://orcid.org/##"
+        },
+        {
+            "name": "CiNii",
+            "scheme": "CiNii",
+            "url": "https://ci.nii.ac.jp/author/##"
+        },
+        {
+            "name": "KAKEN2",
+            "scheme": "KAKEN2",
+            "url": "https://nrid.nii.ac.jp/nrid/##"
+        },
+        {
+            "name": "ROR",
+            "scheme": "ROR",
+            "url": "https://ror.org/##"
+        },
+        {
+            "name": "ISNI",
+            "scheme": "ISNI",
+            "url": "http://www.isni.org/isni/##"
+        },
+        {
+            "name": "VIAF",
+            "scheme": "VIAF",
+            "url": "https://viaf.org/viaf/##"
+        },
+        {
+            "name": "AID",
+            "scheme": "AID",
+            "url": ""
+        },
+        {
+            "name": "e-Rad_Researcher",
+            "scheme": "e-Rad_Researcher",
+            "url": ""
+        }
+    ],
+    "grouplist": {},
+    "validate": {
+        "is_valid": true,
+        "error": ""
+    },
+    "save_activity_data": {
+        "success": true,
+        "msg": ""
+    },
+    "iframe_model_save": {
+        "code": 0,
+        "msg": "Model save success at {} (UTC)"
+    },
+    "deposits_items": {
+        "id": 2000001,
+        "links": {
+            "bucket": "{}/api/files",
+            "discard": "{}/api/deposits/items/2000001/actions/discard",
+            "edit": "{}/api/deposits/items/2000001/actions/edit",
+            "files": "{}/api/deposits/items/2000001/files",
+            "html": "{}/deposit/2000001",
+            "iframe_tree": "/items/iframe/index/2000001",
+            "iframe_tree_upgrade": "/items/iframe/index/2000001.1",
+            "index": "/api/deposits/redirect/2000001",
+            "publish": "{}/api/deposits/items/2000001/actions/publish",
+            "r": "/items/index/2000001",
+            "self": "{}/api/deposits/items/2000001"
+        }
+    },
+    "deposits_redirect": {
+        "status": "success"
+    },
+    "tree": [
+        {
+            "children": [],
+            "cid": 1623632832836,
+            "coverpage_state": false,
+            "disabled": false,
+            "display_no": 5,
+            "emitLoadNextLevel": false,
+            "id": "1623632832836",
+            "index_link_enabled": false,
+            "is_deleted": false,
+            "link_name": "New Index",
+            "more_check": false,
+            "name": "Sample Index",
+            "pid": 0,
+            "position": 0,
+            "recursive_coverpage_check": false,
+            "settings": {
+                "checked": false,
+                "isCollapsedOnInit": true
+            },
+            "value": "Sample Index"
+        }
+    ],
+    "action_3": {
+        "code": 0,
+        "msg": "success"
+    },
+    "action_5": {
+        "code": 0,
+        "msg": "success"
+    },
+    "action_7": {
+        "code": 0,
+        "msg": "success"
+    },
+    "action_4": {
+        "code": 0,
+        "msg": "success"
+    }
+}

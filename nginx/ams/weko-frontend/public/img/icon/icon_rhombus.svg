@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="19" height="21" viewBox="0 0 19 21">
+  <defs>
+    <clipPath id="clip-path">
+      <rect id="長方形_1707" data-name="長方形 1707" width="19" height="21" fill="#fff" stroke="#707070" stroke-width="1"/>
+    </clipPath>
+  </defs>
+  <g id="icon_rhombus" clip-path="url(#clip-path)">
+    <path id="square_FILL0_wght400_GRAD0_opsz48" d="M0,10V0H10V10Zm.833-.833H9.167V.833H.833Zm0,0v0Z" transform="translate(9.571 3.5) rotate(45)" fill="#333" stroke="#333" stroke-width="1"/>
+  </g>
+</svg>

@@ -33,9 +33,13 @@ from flask_admin.contrib.sqla import ModelView
 from flask_babelex import gettext as _
 from flask_login import current_user
 from invenio_admin.forms import LazyChoices
+from invenio_communities.models import Community
 from invenio_db import db
 from markupsafe import Markup
+from sqlalchemy import func
 from weko_accounts.utils import get_remote_addr
+from weko_index_tree.api import Indexes
+from weko_index_tree.models import Index
 from weko_user_profiles.api import current_userprofile, localize_time
 
 from .api import send_run_status_mail
@@ -89,6 +93,19 @@ def control_btns():
         else:
             return Markup(pause_btn)
     return object_formatter
+
+
+def index_query():
+    """Get index list."""
+    if any(role.name in current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER'] for role in current_user.roles):
+        return Index.query.all()
+    else:
+        index_list = []
+        repositories = Community.get_repositories_by_user(current_user)
+        for repository in repositories:
+            index = Indexes.get_child_list_recursive(repository.root_node_id)
+            index_list.extend(index)
+        return Index.query.filter(Index.id.in_([int(index) for index in index_list])).all()
 
 
 class HarvestSettingView(ModelView):
@@ -214,6 +231,30 @@ class HarvestSettingView(ModelView):
             'daily', 'weekly', 'monthly']
         return super(HarvestSettingView, self).edit_view()
 
+
+    def get_query(self):
+        """Return a query for the model type."""
+        if any(role.name in current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER'] for role in current_user.roles):
+            return self.session.query(self.model)
+        else:
+            return self.session.query(self.model).filter(self._index_filter())
+
+    def get_count_query(self):
+        """Return a the count query for the model type."""
+        if any(role.name in current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER'] for role in current_user.roles):
+            return self.session.query(func.count('*')).select_from(self.model)
+        else:
+            return self.session.query(func.count('*')).select_from(self.model).filter(self._index_filter())
+
+    def _index_filter(self):
+        """Get index list."""
+        index_list = []
+        repositories = Community.get_repositories_by_user(current_user)
+        for repository in repositories:
+            index = Indexes.get_child_list_recursive(repository.root_node_id)
+            index_list.extend(index)
+        return self.model.index_id.in_([int(index) for index in index_list])
+
     details_template = 'invenio_oaiharvester/details.html'
     edit_template = 'invenio_oaiharvester/edit.html'
     can_create = True
@@ -247,6 +288,12 @@ class HarvestSettingView(ModelView):
             'OAIHARVESTER_UPDATE_STYLE_OPTIONS'].items()),
         auto_distribution=LazyChoices(lambda: current_app.config[
             'OAIHARVESTER_AUTO_DISTRIBUTION_OPTIONS'].items()))
+
+    form_args = {
+        'target_index': {
+            'query_factory': index_query
+        }
+    }
 
 
 harvest_admin_view = dict(

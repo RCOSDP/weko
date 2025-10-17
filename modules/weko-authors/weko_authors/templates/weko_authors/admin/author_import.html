@@ -43,13 +43,29 @@
   <input id="result" type="hidden" value="{{ _('Result') }}" />
   <input id="download" type="hidden" value="{{ _('Download') }}" />
   <input id="no" type="hidden" value="{{ _('No.') }}" />
-  <input id="weko_id" type="hidden" value="{{ _('WEKO ID') }}" />
+  <input id="pk_id" type="hidden" value="{{ _('Author ID') }}" />
+  <input id="current_weko_id" type="hidden" value="{{ _('Current WEKO ID') }}" />
+  <input id="new_weko_id" type="hidden" value="{{ _('New WEKO ID') }}" />
+  <input id="previous_weko_id" type="hidden" value="{{ _('Previous WEKO ID') }}" />
   <input id="name" type="hidden" value="{{ _('full_name') }}" />
 
   <!-- select -->
   <input id="select_file" type="hidden" value="{{ _('Select File') }}" />
   <input id="selected_file_name" type="hidden" value="{{ _('Selected file name') }}" />
   <input id="next" type="hidden" value="{{ _('Next') }}" />
+  <input id="cancel" type="hidden" value="{{_('Cancel')}}" />
+  <input id="force_change_mode" type="hidden" value="{{_('Force Change Mode')}}" />
+  <input id="disclaimer_1" type="hidden" value="{{_('Disclaimer:')}}" />
+  <input id="disclaimer_2" type="hidden" value="{{_('- When using this function, all metadata using author information is forcibly changed to match the author DB when updating.')}}" />
+  <input id="disclaimer_3" type="hidden" value="{{_('- If not used, only the author and affiliation identifiers are changed when updating.')}}" />
+  <input id="disclaimer_4" type="hidden" value="{{_('- Before starting this operation, you need fully understand the contents and metadata using AuthorDB at your institution.')}}" />
+  <input id="disclaimer_5" type="hidden" value="{{_('- Use this function on your own responsibility.')}}" />
+  <input id="disclaimer_6" type="hidden" value="{{_('- National Institute of Informatics (NII) does not take any responsibility for damages caused by using this function.')}}" />
+  <input id="i_agree" type="hidden" value="{{_('I agree to the terms of use.')}}" />
+  <input id="import_target" type="hidden" value="{{_('Import target')}}" />
+  <input id="author_db_label" type="hidden" value="{{_('Author DB')}}" />
+  <input id="id_prefix_label" type="hidden" value="{{_('ID Prefix')}}" />
+  <input id="affiliation_id_label" type="hidden" value="{{_('Affiliation ID')}}" />
 
   <!-- import -->
   <input id="summary" type="hidden" value="{{ _('Summary') }}" />
@@ -60,12 +76,18 @@
   <input id="check_error" type="hidden" value="{{ _('Result Error') }}" />
   <input id="mail_address" type="hidden" value="{{ _('Mail Address') }}" />
   <input id="check_result" type="hidden" value="{{ _('Check Result') }}" />
+  <input id="scheme" type="hidden" value="{{ _('Scheme') }}" />
+  <input id="scheme_name" type="hidden" value="{{ _('Scheme Name') }}" />
+  <input id="scheme_url" type="hidden" value="{{ _('URL') }}" />
 
   <!-- result -->
   <input id="start_date" type="hidden" value="{{ _('Start Date') }}" />
   <input id="end_date" type="hidden" value="{{ _('End Date') }}" />
   <input id="status" type="hidden" value="{{ _('Status') }}" />
   <input id="to_do" type="hidden" value="{{ _('To Do') }}" />
+  <input id="success" type="hidden" value="{{ _('Success') }}" />
+  <input id="failure" type="hidden" value="{{ _('Failure') }}" />
+  <input id="pending" type="hidden" value="{{ _('Pending') }}" />
   <input id="register_success" type="hidden" value="{{ _('Register Success') }}" />
   <input id="update_success" type="hidden" value="{{ _('Update Success') }}" />
   <input id="delete_success" type="hidden" value="{{ _('Delete Success') }}" />
@@ -78,6 +100,7 @@
   <input id="deleted" type="hidden" value="{{ _('Delete') }}" />
 
   <!-- error -->
+  <input id="different_format_file_for_target" type="hidden" value="{{ _('The selected target table and the import file format are different.') }}" />
   <input id="import_fail_error" type="hidden" value="{{ _('Failed to import.') }}" />
   <input id="delete_author_link" type="hidden" value="{{ _('The author is linked to items and cannot be deleted.') }}" />
   <input id="internal_server_error" type="hidden" value="{{ _('Internal server error') }}" />

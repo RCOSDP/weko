@@ -11,10 +11,10 @@ from invenio_communities.views.ui import (
     dbsession_clean
 )
 
-# .tox/c1/bin/pytest --cov=invenio_communities tests/test_views_ui.py -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-communities/.tox/c1/tmp    
+# .tox/c1/bin/pytest --cov=invenio_communities tests/test_views_ui.py -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-communities/.tox/c1/tmp
 
 # def sanitize_html(value):
-# .tox/c1/bin/pytest --cov=invenio_communities tests/test_views_ui.py::test_sanitize_html -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-communities/.tox/c1/tmp    
+# .tox/c1/bin/pytest --cov=invenio_communities tests/test_views_ui.py::test_sanitize_html -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-communities/.tox/c1/tmp
 def test_sanitize_html(app):
     text = '<script><a href="https://google.com"><p>test_url</p></a></script>'
     result = app.jinja_env.filters["sanitize_html"](text)
@@ -22,29 +22,30 @@ def test_sanitize_html(app):
 
 
 # def pass_community(f):
-# .tox/c1/bin/pytest --cov=invenio_communities tests/test_views_ui.py::test_pass_community -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-communities/.tox/c1/tmp    
+# .tox/c1/bin/pytest --cov=invenio_communities tests/test_views_ui.py::test_pass_community -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-communities/.tox/c1/tmp
 def test_pass_community(app,db,communities,mocker):
     result = pass_community(lambda x:x)(community_id="comm1")
     assert result.id == "comm1"
-    
+
     mock_abort = mocker.patch("invenio_communities.views.ui.abort",return_value=make_response())
     result = pass_community(lambda x:x)(community_id="not_exist_comm")
     mock_abort.assert_called_with(404)
 
 
 # def permission_required(action):
-# .tox/c1/bin/pytest --cov=invenio_communities tests/test_views_ui.py::test_permission_required -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-communities/.tox/c1/tmp    
+# .tox/c1/bin/pytest --cov=invenio_communities tests/test_views_ui.py::test_permission_required -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-communities/.tox/c1/tmp
 def test_permission_required(app,db,users,mocker):
-   
+
     index = Index()
     db.session.add(index)
     db.session.commit()
     comm0 = Community.create(community_id='comm1', role_id=3,
                              id_user=1, title='Title1',
                              description='Description1',
-                             root_node_id=1)
+                             root_node_id=1,
+                             group_id=1)
     db.session.commit()
-    
+
     with app.test_client() as client:
         with patch("flask_login.utils._get_user", return_value=users[2]["obj"]):
             client.get("/")
@@ -58,7 +59,7 @@ def test_permission_required(app,db,users,mocker):
             mock_abort.assert_called_with(403)
 
 # def format_item(item, template, name='item'):
-# .tox/c1/bin/pytest --cov=invenio_communities tests/test_views_ui.py::test_format_item -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-communities/.tox/c1/tmp    
+# .tox/c1/bin/pytest --cov=invenio_communities tests/test_views_ui.py::test_format_item -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-communities/.tox/c1/tmp
 def test_format_item(app,mocker):
     template_value = app.jinja_env.from_string("test_value: {{ name }}")
     mocker.patch("invenio_communities.utils.current_app.jinja_env.get_or_select_template",return_value=template_value)
@@ -67,9 +68,9 @@ def test_format_item(app,mocker):
     name = "name"
     result = app.jinja_env.filters["format_item"](item,template,name)
     assert result == "test_value: test_item"
-    
+
 # def mycommunities_ctx():
-# .tox/c1/bin/pytest --cov=invenio_communities tests/test_views_ui.py::test_mycommunities_ctx -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-communities/.tox/c1/tmp    
+# .tox/c1/bin/pytest --cov=invenio_communities tests/test_views_ui.py::test_mycommunities_ctx -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-communities/.tox/c1/tmp
 def test_mycommunities_ctx(app,db,users):
     index = Index()
     db.session.add(index)
@@ -77,7 +78,8 @@ def test_mycommunities_ctx(app,db,users):
     comm0 = Community.create(community_id='comm1', role_id=2,
                              id_user=2, title='Title1',
                              description='Description1',
-                             root_node_id=1)
+                             root_node_id=1,
+                             group_id=1)
     db.session.commit()
     with patch("flask_login.utils._get_user", return_value=users[1]["obj"]):
         result = app.jinja_env.filters["mycommunities_ctx"]()
@@ -86,7 +88,7 @@ def test_mycommunities_ctx(app,db,users):
 
 # def index():
 # def view(community):
-# .tox/c1/bin/pytest --cov=invenio_communities tests/test_views_ui.py::test_view -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-communities/.tox/c1/tmp    
+# .tox/c1/bin/pytest --cov=invenio_communities tests/test_views_ui.py::test_view -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-communities/.tox/c1/tmp
 def test_view(client,app,db,communities,mocker):
     app.config.update(
         WEKO_INDEX_TREE_STYLE_OPTIONS={
@@ -127,7 +129,7 @@ def test_view(client,app,db,communities,mocker):
     assert kwargs["community"].id == "comm1"
     assert kwargs["display_facet_search"] == False
     assert kwargs["display_index_tree"] == True
-    
+
     url = url_for("invenio_communities.view",community_id="comm1",view="weko")
     mock_render = mocker.patch("invenio_communities.views.ui.render_template",return_value=make_response())
     res = client.get(url)
@@ -143,40 +145,59 @@ def test_view(client,app,db,communities,mocker):
     assert kwargs["display_facet_search"] == False
     assert kwargs["display_index_tree"] == True
 
+# .tox/c1/bin/pytest --cov=invenio_communities tests/test_views_ui.py::test_content_policy -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-communities/.tox/c1/tmp
+def test_content_policy(client, app, db, communities, mocker):
+    comm = communities[0]
+    mock_render = mocker.patch("invenio_communities.views.ui.render_template",return_value=make_response())
+
+    # valid community
+    url = url_for("invenio_communities.content_policy", community_id=comm.id)
+    response = client.get(url)
+    assert response.status_code == 200
+    args, kwargs = mock_render.call_args
+    assert args[0] == "invenio_communities/content_policy.html"
+    assert kwargs["community"].id == comm.id
+
+    # invalid community
+    url = url_for("invenio_communities.content_policy", community_id="invalid_id")
+    response = client.get(url)
+    assert response.status_code == 404
 
 # # def detail(community):
 # # def search(community):
 # # def about(community):
 
 # def generic_item(community, template, **extra_ctx):
-# .tox/c1/bin/pytest --cov=invenio_communities tests/test_views_ui.py::test_generic_item -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-communities/.tox/c1/tmp    
+# .tox/c1/bin/pytest --cov=invenio_communities tests/test_views_ui.py::test_generic_item -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-communities/.tox/c1/tmp
 def test_generic_item(app,db,users,mocker):
     index = Index()
     db.session.add(index)
     db.session.commit()
     community = Community.create(community_id='comm1', role_id=2,
+                             page=0, ranking=0, curation_policy='',fixed_points=0, thumbnail_path='',catalog_json=[], login_menu_enabled=False,
                              id_user=2, title='Title1',
                              description='Description1',
-                             root_node_id=1)
+                             root_node_id=1,
+                             group_id=1)
     db.session.commit()
     with patch("flask_login.utils._get_user", return_value=users[1]["obj"]):
         mock_render = mocker.patch("invenio_communities.views.ui.render_template",return_value=make_response())
         result = generic_item(community,"test_template.html")
         args,kwargs = mock_render.call_args
-        
+
         assert args[0] == "test_template.html"
         assert kwargs["mycommunities"][0].id == "comm1"
         assert kwargs["is_owner"] == True
         assert kwargs["community"].id == "comm1"
         assert kwargs["detail"] == True
-        
+
 # # def new():
 # # def edit(community):
 # #    def read_color(scss_file, community):
 # # def delete(community):
 # # def curate(community):
 # def community_list():
-# .tox/c1/bin/pytest --cov=invenio_communities tests/test_views_ui.py::test_community_list -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-communities/.tox/c1/tmp    
+# .tox/c1/bin/pytest --cov=invenio_communities tests/test_views_ui.py::test_community_list -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-communities/.tox/c1/tmp
 def test_community_list(client,app,db,users,mocker):
     index = Index()
     db.session.add(index)
@@ -184,7 +205,8 @@ def test_community_list(client,app,db,users,mocker):
     community = Community.create(community_id='comm1', role_id=2,
                              id_user=2, title='Title1',
                              description='Description1',
-                             root_node_id=1)
+                             root_node_id=1,
+                             group_id=1)
     db.session.commit()
     app.config.update(
         WEKO_THEME_DEFAULT_COMMUNITY="Root Index"
@@ -210,7 +232,7 @@ def test_community_list(client,app,db,users,mocker):
         assert kwargs["display_community"] == False
 
 # def dbsession_clean(exception):
-# .tox/c1/bin/pytest --cov=invenio_communities tests/test_views_ui.py::test_dbsession_clean -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-communities/.tox/c1/tmp    
+# .tox/c1/bin/pytest --cov=invenio_communities tests/test_views_ui.py::test_dbsession_clean -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-communities/.tox/c1/tmp
 def test_dbsession_clean(app, db):
     user = create_test_user(email='test@test.org')
     user1 = db.session.merge(user)
@@ -222,20 +244,20 @@ def test_dbsession_clean(app, db):
     db.session.add(index)
     db.session.commit()
     # exist exception
-    com1 = Community(id=1,id_role=1,id_user=1,root_node_id=1,title="com1")
+    com1 = Community(id="1",id_role=1,id_user=1,root_node_id=1,title="com1",page=0, ranking=0, curation_policy='',fixed_points=0, thumbnail_path='',catalog_json=[], login_menu_enabled=False)
     db.session.add(com1)
     dbsession_clean(None)
-    assert Community.query.filter_by(id=1).first().title =="com1"
+    assert Community.query.filter_by(id="1").first().title =="com1"
 
     # raise Exception
-    com2 = Community(id=2,id_role=1,id_user=1,root_node_id=1,title="com2")
+    com2 = Community(id="2",id_role=1,id_user=1,root_node_id=1,title="com2",page=0, ranking=0, curation_policy='',fixed_points=0, thumbnail_path='',catalog_json=[], login_menu_enabled=False)
     db.session.add(com2)
     with patch("invenio_mail.views.db.session.commit",side_effect=Exception):
         dbsession_clean(None)
-        assert Community.query.filter_by(id=2).first() is None
+        assert Community.query.filter_by(id="2").first() is None
 
     # not exist exception
-    config3 = Community(id=3,id_role=1,id_user=1,root_node_id=1,title="com3")
+    config3 = Community(id="3",id_role=1,id_user=1,root_node_id=1,title="com3",page=0, ranking=0, curation_policy='',fixed_points=0, thumbnail_path='',catalog_json=[], login_menu_enabled=False)
     db.session.add(config3)
     dbsession_clean(Exception)
-    assert Community.query.filter_by(id=3).first() is None
+    assert Community.query.filter_by(id="3").first() is None

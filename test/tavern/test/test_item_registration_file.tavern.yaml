@@ -1,0 +1,300 @@
+test_name: アイテム登録_正常系_ファイル
+
+includes:
+  - !include config.yaml
+
+marks:
+  - usefixtures:
+    - login_sysadmin
+
+stages:
+  - name: workflow/activity/init
+    request:
+      url: "{host}/workflow/activity/init"
+      method: POST
+      verify: false
+      json:
+        flow_id: 1
+        itemtype_id: 30002
+        workflow_id: 1
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.verify_helper:response_verify_init_response
+        extra_kwargs:
+          file_name: "{expected_json.item_registration.success_case}"
+      save:
+        $ext:
+          function: helper.response_helper:response_save_next_path
+  - name: api/items/author_prefix_settings
+    request:
+      url: "{host}/api/items/author_prefix_settings"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.verify_helper:response_verify_common_response
+        extra_kwargs:
+          file_name: "{expected_json.item_registration.success_case}"
+          key: author_prefix_settings
+      save:
+        $ext:
+          function: helper.response_helper:response_save_author_prefix_settings
+  - name: accounts/settings/groups/grouplist
+    request:
+      url: "{host}/accounts/settings/groups/grouplist"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.verify_helper:response_verify_common_response
+        extra_kwargs:
+          file_name: "{expected_json.item_registration.success_case}"
+          key: grouplist
+      save:
+        $ext:
+          function: helper.response_helper:response_save_group_list
+  - name: "{next_path}"
+    request:
+      url: "{host}{next_path}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.response_helper:response_save_register_data
+          extra_kwargs:
+            file_name: item_type_30002.json
+  - name: api/deposits/items
+    request:
+      url: "{host}/api/deposits/items"
+      method: POST
+      verify: false
+      json:
+        $ext:
+          function: helper.request_helper:request_create_deposits_items_param
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.verify_helper:response_verify_deposits_items_response
+        extra_kwargs:
+          file_name: "{expected_json.item_registration.success_case}"
+          host: "{host}"
+      save:
+        $ext:
+          function: helper.response_helper:response_save_url
+  - name: "{url.bucket}"
+    request:
+      url: "{url.bucket}/test.txt"
+      method: PUT
+      verify: false
+      headers:
+        Content-Type: text/plain
+      file_body: ./upload_file/test.txt
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.response_helper:response_save_file_upload_info
+          extra_kwargs:
+            file_key: "{file_keys.30002}"
+            item_id: 30002
+  - name: api/items/validate
+    request:
+      url: "{host}/api/items/validate"
+      method: POST
+      verify: false
+      json:
+        $ext:
+          function: helper.request_helper:request_create_validate_param
+          extra_kwargs:
+            data: "{register_data}"
+            file_metadata: "{file_metadata}"
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.verify_helper:response_verify_common_response
+        extra_kwargs:
+          file_name: "{expected_json.item_registration.success_case}"
+          key: validate
+  - name: workflow/save_activity_data
+    request:
+      url: "{host}/workflow/save_activity_data"
+      method: POST
+      verify: false
+      json:
+        $ext:
+          function: helper.request_helper:request_create_save_activity_data_param
+          extra_kwargs:
+            activity_id: "{activity_id}"
+            data: "{register_data}"
+            title_key: "{title_keys.30002}"
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.verify_helper:response_verify_common_response
+        extra_kwargs:
+          file_name: "{expected_json.item_registration.success_case}"
+          key: save_activity_data
+  - name: items/iframe/model/save
+    request:
+      url: "{host}/items/iframe/model/save"
+      method: POST
+      verify: false
+      json:
+        $ext:
+          function: helper.request_helper:request_create_save_param
+          extra_kwargs:
+            data: "{register_data}"
+            url: "{url}"
+            file_upload_info: "{file_upload_info}"
+            file_metadata: "{file_metadata}"
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.verify_helper:response_verify_iframe_save_model_response
+        extra_kwargs:
+          file_name: "{expected_json.item_registration.success_case}"
+  - name: api/deposits/redirect/{recid}
+    request:
+      url: "{host}/api/deposits/redirect/{recid}"
+      method: PUT
+      verify: false
+      json:
+        $ext:
+          function: helper.request_helper:request_create_deposits_redirect_param
+          extra_kwargs:
+            data: "{register_data}"
+            title_key: "{title_keys.30002}"
+            file_metadata: "{file_metadata}"
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.verify_helper:response_verify_common_response
+        extra_kwargs:
+          file_name: "{expected_json.item_registration.success_case}"
+          key: deposits_redirect
+  - name: api/tree/{recid}
+    request:
+      url: "{host}/api/tree/{recid}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.verify_helper:response_verify_common_response
+        extra_kwargs:
+          file_name: "{expected_json.item_registration.success_case}"
+          key: tree
+      save:
+        $ext:
+          function: helper.response_helper:response_save_tree_data
+  - name: "{url.self}"
+    request:
+      url: "{url.self}"
+      method: PUT
+      verify: false
+      json:
+        $ext:
+          function: helper.request_helper:request_create_deposits_items_index_param
+          extra_kwargs:
+            indexes: "{tree_data}"
+    response:
+      status_code: 200
+  - name: workflow/activity/action/{activity_id}/3
+    request:
+      url: "{host}/workflow/activity/action/{activity_id}/3"
+      method: POST
+      verify: false
+      json:
+        $ext:
+          function: helper.request_helper:request_create_action_param
+          extra_kwargs:
+            action_version: "{action_version.3}"
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.verify_helper:response_verify_common_response
+        extra_kwargs:
+          file_name: "{expected_json.item_registration.success_case}"
+          key: action_3
+  - name: workflow/activity/action/{activity_id}/5
+    request:
+      url: "{host}/workflow/activity/action/{activity_id}/5"
+      method: POST
+      verify: false
+      json:
+        $ext:
+          function: helper.request_helper:request_create_action_param
+          extra_kwargs:
+            action_version: "{action_version.5}"
+            link_data: []
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.verify_helper:response_verify_common_response
+        extra_kwargs:
+          file_name: "{expected_json.item_registration.success_case}"
+          key: action_5
+  - name: workflow/activity/detail/{activity_id}?page=1&size=20
+    request:
+      url: "{host}/workflow/activity/detail/{activity_id}?page=1&size=20"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.response_helper:response_save_identifier_grant
+  - name: workflow/activity/action/{activity_id}/7
+    request:
+      url: "{host}/workflow/activity/action/{activity_id}/7"
+      method: POST
+      verify: false
+      json:
+        $ext:
+          function: helper.request_helper:request_create_action_param
+          extra_kwargs:
+            action_version: "{action_version.7}"
+            identifier: "{identifier_grant}"
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.verify_helper:response_verify_common_response
+        extra_kwargs:
+          file_name: "{expected_json.item_registration.success_case}"
+          key: action_7
+  - name: workflow/activity/action/{activity_id}/4
+    request:
+      url: "{host}/workflow/activity/action/{activity_id}/4"
+      method: POST
+      verify: false
+      json:
+        $ext:
+          function: helper.request_helper:request_create_action_param
+          extra_kwargs:
+            action_version: "{action_version.4}"
+            community: ''
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.verify_helper:response_verify_common_response
+        extra_kwargs:
+          file_name: "{expected_json.item_registration.success_case}"
+          key: action_4
+  - name: records/{recid}
+    request:
+      url: "{host}/records/{recid}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.verify_helper:response_verify_records_with_file
+        extra_kwargs:
+          folder_path: item_registration_file_expect
+          activity_id: "{activity_id}"
+          file_metadata: "{file_metadata}"

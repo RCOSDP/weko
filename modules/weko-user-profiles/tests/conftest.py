@@ -43,7 +43,7 @@ from invenio_db import db as db_
 from invenio_communities.models import Community
 
 from weko_index_tree.models import Index
-
+from weko_notifications import WekoNotifications
 
 from weko_user_profiles import WekoUserProfiles
 from weko_user_profiles.views import blueprint_ui_init,blueprint_api_init
@@ -71,12 +71,14 @@ def base_app(instance_path):
         LOGIN_DISABLED=False,
         SECRET_KEY='testing_key',
         SERVER_NAME='TEST_SERVER.localdomain',
+        THEME_SITEURL="https://localhost",
         SQLALCHEMY_DATABASE_URI=os.getenv('SQLALCHEMY_DATABASE_URI',
                                            'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest'),
         # SQLALCHEMY_DATABASE_URI=os.environ.get(
         #     'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'),
         TEST_USER_EMAIL='test_user@example.com',
         TEST_USER_PASSWORD='test_password',
+        WEKO_ADMIN_PROFILE_SETTING_TEMPLATE = 'weko_admin/admin/profiles_settings.html',
         TESTING=True,
         WTF_CSRF_ENABLED=False,
     )
@@ -87,7 +89,8 @@ def base_app(instance_path):
     InvenioAccess(app_)
     InvenioAccounts(app_)
     WekoUserProfiles(app_)
-    
+    WekoNotifications(app_)
+
     app_.register_blueprint(accounts_blueprint)
 
     yield app_
@@ -169,7 +172,7 @@ def users(app, db):
         originalroleuser = create_test_user(email='originalroleuser@test.org')
         originalroleuser2 = create_test_user(email='originalroleuser2@test.org')
         student = User.query.filter_by(email='student@test.org').first()
-        
+
     role_count = Role.query.filter_by(name='System Administrator').count()
     if role_count != 1:
         sysadmin_role = ds.create_role(name='System Administrator')
@@ -289,18 +292,22 @@ def user_profiles(db,users):
         university="test university",
         department="test department",
         position = "test position",
-        otherPosition="test other position",
-        phoneNumber="123-4567",
-        instituteName="test institute",
-        institutePosition="test institute position",
-        instituteName2="test institute2",
-        institutePosition2="test institute position2",
-        instituteName3="",
-        institutePosition3="",
-        instituteName4="",
-        institutePosition4="",
-        instituteName5="",
-        institutePosition5=""
+        item1="test other position",
+        item2="123-4567",
+        item3="test institute",
+        item4="test institute position",
+        item5="test institute2",
+        item6="test institute position2",
+        item7="",
+        item8="",
+        item9="",
+        item10="",
+        item11="",
+        item12="",
+        item13="",
+        item14="",
+        item15="",
+        item16=""
     )
     db.session.add(all_data)
     repo_profile = UserProfile(
@@ -313,18 +320,22 @@ def user_profiles(db,users):
         university="test university",
         department="test department",
         position = "test position",
-        otherPosition="test other position",
-        phoneNumber="123-4567",
-        instituteName="test institute",
-        institutePosition="test institute position",
-        instituteName2="test institute2",
-        institutePosition2="test institute position2",
-        instituteName3="",
-        institutePosition3="",
-        instituteName4="",
-        institutePosition4="",
-        instituteName5="",
-        institutePosition5=""
+        item1="test other position",
+        item2="123-4567",
+        item3="test institute",
+        item4="test institute position",
+        item5="test institute2",
+        item6="test institute position2",
+        item7="",
+        item8="",
+        item9="",
+        item10="",
+        item11="",
+        item12="",
+        item13="",
+        item14="",
+        item15="",
+        item16=""
     )
     db.session.add(repo_profile)
     not_validate_language = UserProfile(
@@ -337,19 +348,68 @@ def user_profiles(db,users):
         university="test university",
         department="test department",
         position = "test position",
-        otherPosition="test other position",
-        phoneNumber="123-4567",
-        instituteName="test institute",
-        institutePosition="test institute position",
-        instituteName2="test institute2",
-        institutePosition2="test institute position2",
-        instituteName3="",
-        institutePosition3="",
-        instituteName4="",
-        institutePosition4="",
-        instituteName5="",
-        institutePosition5=""
+        item1="test other position",
+        item2="123-4567",
+        item3="test institute",
+        item4="test institute position",
+        item5="test institute2",
+        item6="test institute position2",
+        item7="",
+        item8="",
+        item9="",
+        item10="",
+        item11="",
+        item12="",
+        item13="",
+        item14="",
+        item15="",
+        item16=""
     )
-    db.session.add(not_validate_language)
     db.session.commit()
-    return [all_data,repo_profile,not_validate_language]
+    return [
+        all_data,
+        repo_profile,
+        not_validate_language,
+    ]
+
+@pytest.fixture()
+def setup_data(db):
+    # Create a user
+    user = User(
+        email="sysadmin@test.org",
+        active=True
+    )
+    db.session.add(user)
+    db.session.commit()
+
+    # Create a user profile
+    profile_get_info = UserProfile(
+        user_id=user.id,
+        _username="sysadmin",
+        _displayname="sysadmin user",
+        fullname="test taro",
+        timezone="Etc/GMT",
+        language="ja",
+        university="test university",
+        department="test department",
+        position="test position",
+        item1="test other position",
+        item2="123-4567",
+        item3="test institute",
+        item4="test institute position",
+        item5="test institute2",
+        item6="test institute position2",
+        item7="test institute3",
+        item8="test institute position3",
+        item9="test institute4",
+        item10="test institute position4",
+        item11="test institute5",
+        item12="test institute position5",
+        item13="item 13",
+        item14="item 14",
+        item15="item 15",
+        item16="item 16"
+    )
+    db.session.add(profile_get_info)
+    db.session.commit()
+    return[profile_get_info]

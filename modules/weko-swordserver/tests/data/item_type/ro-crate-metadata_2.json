@@ -1,0 +1,160 @@
+{
+  "@context": [
+    "https://schema.org/",
+    "https://w3id.org/ro/crate/1.1/context"
+  ],
+  "@graph": [
+    {
+      "@id": "./",
+      "@type": "Dataset",
+      "author": {
+        "@id": "http://orcid.org/0000-0002-1825-0097"
+      },
+      "contributor": [
+        {
+          "@id": "http://orcid.org/0000-0002-1825-0085"
+        }
+      ],
+      "creator": {
+        "@id": "http://orcid.org/0000-0002-1825-0097"
+      },
+      "datePublished": "2024/11/15T01:59:48Z",
+      "accessMode": "public",
+      "description": "A simple example for swordserver.",
+      "isPartOf": {
+        "@id": "https://example.org/project/123",
+        "@type": "Project",
+        "name": "Project XYZ",
+        "sameAs": "https://192.168.56.101/tree/index/1623632832836"
+      },
+      "hasPart": [
+        {
+          "@id": "data/sample.rst"
+        }
+      ],
+      "name": "The Sample",
+      "Resource Type": {
+        "@id": "#resourcetype"
+      }
+    },
+    {
+      "@id": "ro-crate-metadata.json",
+      "@type": "CreativeWork",
+      "about": {
+        "@id": "./"
+      },
+      "conformsTo": {
+        "@id": "https://w3id.org/ro/crate/1.1"
+      }
+    },
+    {
+      "@id": "#resourcetype",
+      "type": "other",
+      "uri": ""
+    },
+    {
+      "@id": "#summary",
+      "@type": "Thing",
+      "summary": "the sample of simple itemtype"
+    },
+    {
+      "@id": "#datetime",
+      "@type": "DateTime",
+      "date": "2023-01-18",
+      "type": "Created"
+    },
+    {
+      "@id": "data/sample.rst",
+      "@type": "File",
+      "contentSize": "333",
+      "datetime": {
+        "@id": "#datetime"
+      },
+      "encodingFormat": "text/x-rst",
+      "identifier": {
+        "@id": "https://example.org/data/sample.rst",
+        "label": "sample.rst",
+        "type": "fulltext"
+      },
+      "name": "sample.rst",
+      "version": "1.0"
+    },
+    {
+      "@id": "http://orcid.org/0000-0002-1825-0097",
+      "@type": "Person",
+      "identifier": {
+        "@id": "https://orcid.org/0000-0002-1234-5678",
+        "scheme": "https://orcid.org",
+        "uri": "https://orcid.org/0000-0002-1234-5678"
+      },
+      "name": "Egon Willighagen"
+    },
+    {
+      "@id": "http://orcid.org/0000-0002-1825-0085",
+      "@type": "DataCurator",
+      "affiliation": {
+        "@id": "#affiliation"
+      },
+      "alternateName": {
+        "@id": "#alternateName"
+      },
+      "contributorType": "Researcher",
+      "email": "contributor@example.org",
+      "familyName": {
+        "@id": "#familyName"
+      },
+      "fullname": "Stian Soiland-Reyes",
+      "givenName": {
+        "@id": "#givenName"
+      },
+      "identifier": {
+        "@id": "https://orcid.org/0000-0002-1234-5679",
+        "scheme": "https://orcid.org",
+        "uri": "https://orcid.org/0000-0002-1234-5679"
+      },
+      "language": "en",
+      "nametype": "Personal"
+    },
+    {
+      "@id": "#alternateName",
+      "@type": "Thing",
+      "language": "en",
+      "name": "Stian S.R."
+    },
+    {
+      "@id": "#givenName",
+      "@type": "Thing",
+      "language": "en",
+      "name": "Stian"
+    },
+    {
+      "@id": "#familyName",
+      "@type": "Thing",
+      "language": "en",
+      "name": "Soiland-Reyes"
+    },
+    {
+      "@id": "#affiliation",
+      "@type": "Organization",
+      "identifier": {
+        "@id": "https://example.org/affiliation",
+        "scheme": "GRID",
+        "uri": "https://example.org/affiliation"
+      },
+      "language": "en",
+      "name": "University of Manchester"
+    },
+    {
+      "@id": "#title",
+      "@type": "Thing",
+      "language": "ja",
+      "name": "サンプルアイテム"
+    },
+    {
+      "@id": "#subtitle",
+      "@type": "Thing",
+      "language": "ja",
+      "name": "試しに作ってみた"
+    }
+  ]
+}

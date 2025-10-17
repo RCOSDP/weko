@@ -1,0 +1,34 @@
+{
+  "id": "urn:uuid:d90c0ed0-b2bc-44aa-bc80-642e7426d90d",
+  "@context": [
+    "https://www.w3.org/ns/activitystreams",
+    "https://coar-notify.net"
+  ],
+  "type": [
+    "Announce",
+    "coar-notify:IngestAction"
+  ],
+  "origin": {
+    "id": "https://example.repo.nii.ac.jp/",
+    "inbox": "https://example.repo.nii.ac.jp/inbox",
+    "type": "Service"
+  },
+  "target": {
+    "id": "https://example.repo.nii.ac.jp/users/3",
+    "inbox": "https://example.repo.nii.ac.jp/inbox",
+    "type": "Person"
+  },
+  "object": {
+    "id": "https://example.repo.nii.ac.jp/records/2000001",
+    "ietf:cite-as": "https://example.repo.nii.ac.jp/records/2000001",
+    "type": [
+      "Page",
+      "sorg:WebPage"
+    ]
+  },
+  "actor": {
+    "id": "https://example.repo.nii.ac.jp/users/4",
+    "type": "Person",
+    "name": "ADMIN"
+  }
+}

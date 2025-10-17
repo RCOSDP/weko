@@ -1,0 +1,14 @@
+{
+    "flow_id": 1,
+    "itemtype_id": 30002,
+    "workflow_id": 1,
+    "data_file": "request_params/w-oa-03/item_type_30002_dup_author.json",
+    "title_key": "item_30002_title0.0.subitem_title",
+    "action_version": {
+        "3": "1.0.1",
+        "4": "2.0.0",
+        "5": "1.0.1",
+        "6": "1.0.0",
+        "7": "1.0.0"
+    }
+}

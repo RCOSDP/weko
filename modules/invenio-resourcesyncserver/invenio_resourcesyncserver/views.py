@@ -13,10 +13,12 @@
 
 from __future__ import absolute_import, print_function
 
-from flask import Blueprint, Response, abort, redirect, url_for, current_app
+from flask import Blueprint, Response, abort, redirect, url_for, current_app, jsonify
+from flask_login import current_user
 from invenio_db import db
 from invenio_oaiserver.response import getrecord
 from lxml import etree
+from weko_index_tree.models import Index
 
 from .api import ChangeListHandler, ResourceListHandler
 from .utils import render_capability_xml, render_well_know_resourcesync

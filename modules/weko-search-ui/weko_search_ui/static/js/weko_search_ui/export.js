@@ -5,12 +5,15 @@ const item_id_label = document.getElementById("item_id").value;
 const export_item_label = document.getElementById("export_item").value;
 const download_url_label = document.getElementById("download_url").value;
 const status_label = document.getElementById("status").value;
+const start_time_label = document.getElementById('start_time').value;
+const finish_time_label = document.getElementById('finish_time').value;
 const export_label = document.getElementById("export").value;
 const export_messaage = document.getElementById("export_messaage").value;
 const cancel_messaage = document.getElementById("cancel_messaage").value;
 const run_label = document.getElementById("run").value;
 const cancel_label = document.getElementById("cancel").value;
 const celery_not_run = document.getElementById("celery_not_run").value;
+const lifetime_not_one_day = document.getElementById("lifetime_not_one_day").value;
 const error_get_lstItemType = document.getElementById("error_get_lstItemType").value;
 const error_get_lastItemId = document.getElementById("error_get_lastItemId").value;
 
@@ -60,6 +63,8 @@ class ExportComponent extends React.Component {
       isDisableExport: false,
       isDisableCancel: true,
       taskStatus: "",
+      startTime: "",
+      finishTime: "",
       isExport: false,
       confirmMessage: "",
       last_item_id: "",
@@ -166,7 +171,7 @@ class ExportComponent extends React.Component {
       url: urlCancelExport,
       success: function (response) {
         if (response.data) {
-          if (!response.data.cancel_status){
+          if (!response.data.cancel_status) {
             me.setState({
               isDisableExport: true,
               isDisableCancel: false
@@ -184,7 +189,7 @@ class ExportComponent extends React.Component {
         $('#errors').append(
           '<div class="alert alert-danger alert-dismissable">' +
           '<button type="button" class="close" data-dismiss="alert" aria-hidden="true">' +
-          '&times;</button>' + internal_server_error + '</div>');
+          '&times;</button>' + internal_server_error.value + '</div>');
       }
     });
   }
@@ -209,14 +214,15 @@ class ExportComponent extends React.Component {
         me.setState({
           isDisableExport: response.data.export_status,
           isDisableCancel: !response.data.export_status,
-          taskStatus: response.data.status
+          taskStatus: response.data.status,
+          startTime: response.data.start_time
         });
       },
       error: function () {
         $('#errors').append(
           '<div class="alert alert-danger alert-dismissable">' +
           '<button type="button" class="close" data-dismiss="alert" aria-hidden="true">' +
-          '&times;</button>' + internal_server_error + '</div>');
+          '&times;</button>' + internal_server_error.value + '</div>');
       }
     });
   }
@@ -242,9 +248,11 @@ class ExportComponent extends React.Component {
             esportRunMessage: response.data.export_run_msg,
             exportStatus: response.data.export_status,
             uriStatus: response.data.uri_status,
-            isDisableExport: response.data.export_status || !response.data.celery_is_run,
+            isDisableExport: response.data.export_status || !response.data.celery_is_run || !response.data.is_lifetime,
             isDisableCancel: !response.data.export_status,
-            taskStatus: response.data.status
+            taskStatus: response.data.status,
+            startTime: response.data.start_time,
+            finishTime: response.data.finish_time
           });
           if (!response.data.celery_is_run) {
             $('#errors').append(
@@ -252,12 +260,18 @@ class ExportComponent extends React.Component {
               '<button type="button" class="close" data-dismiss="alert" aria-hidden="true">' +
               '&times;</button>' + celery_not_run + '</div>');
           }
-          if (response.data.error_message) {
-            if(response.data.error_message.length>0){
+          if (!response.data.is_lifetime) {
             $('#errors').append(
               '<div class="alert alert-danger alert-dismissable">' +
               '<button type="button" class="close" data-dismiss="alert" aria-hidden="true">' +
-              '&times;</button>' + response.data.error_message + '</div>');
+              '&times;</button>' + lifetime_not_one_day + '</div>');
+          }
+          if (response.data.error_message) {
+            if (response.data.error_message.length > 0) {
+              $('#errors').append(
+                '<div class="alert alert-danger alert-dismissable">' +
+                '<button type="button" class="close" data-dismiss="alert" aria-hidden="true">' +
+                '&times;</button>' + response.data.error_message + '</div>');
             }
           }
         }
@@ -266,7 +280,7 @@ class ExportComponent extends React.Component {
         $('#errors').append(
           '<div class="alert alert-danger alert-dismissable">' +
           '<button type="button" class="close" data-dismiss="alert" aria-hidden="true">' +
-          '&times;</button>' + internal_server_error + '</div>');
+          '&times;</button>' + internal_server_error.value + '</div>');
       }
     });
   }
@@ -283,6 +297,8 @@ class ExportComponent extends React.Component {
       isDisableExport,
       isDisableCancel,
       taskStatus,
+      startTime,
+      finishTime,
       esportRunMessage,
       exportStatus,
       uriStatus,
@@ -309,7 +325,7 @@ class ExportComponent extends React.Component {
                 <label>{last_item_id_label}: {last_item_id}</label>
               </div>
             </div>
-            <br/>
+            <br />
             <div className="row">
               <div className="col-xs-12">
                 <label>{add_filter_label}</label>
@@ -317,11 +333,11 @@ class ExportComponent extends React.Component {
             </div>
             <div className="row">
               <div className="col-xs-12 text-center">
-                <div class="form-inline">
+                <div className="form-inline">
                   <label>{item_type_label}: </label>
-                  <select disabled={isDisableExport} class="form-control" onChange={this.SelectItemTypeChange}>{select_options}</select>&nbsp;
+                  <select disabled={isDisableExport} className="form-control" onChange={this.SelectItemTypeChange}>{select_options}</select>&nbsp;
                   <label>{item_id_label}: </label>
-                  <input disabled={isDisableExport} class="form-control" type="text" id="item_id_range" pattern="[0-9]*-[0-9]*" onChange={this.InputItemIdChange} value={item_id_range} placeholder="e.g.: 50 or 1-100 or 1- or -100"/>
+                  <input disabled={isDisableExport} className="form-control" type="text" id="item_id_range" pattern="[0-9]*-[0-9]*" onChange={this.InputItemIdChange} value={item_id_range} placeholder="e.g.: 50 or 1-100 or 1- or -100" />
                 </div>
               </div>
             </div>
@@ -342,6 +358,16 @@ class ExportComponent extends React.Component {
             <div className="row">
               <div className="col-xs-12">
                 <label>{status_label}: {taskStatus}</label>
+              </div>
+            </div>
+            <div className="row">
+              <div className="col-xs-12">
+                <label>{start_time_label}: {startTime}</label>
+              </div>
+            </div>
+            <div className="row">
+              <div className="col-xs-12">
+                <label>{finish_time_label}: {finishTime}</label>
               </div>
             </div>
             <div className="row">

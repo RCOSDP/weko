@@ -21,6 +21,7 @@ from mock import patch
 from os.path import dirname, join
 from pkg_resources import EntryPoint
 from werkzeug.utils import import_string
+from sqlalchemy_utils.functions import create_database, database_exists
 
 sys.path.append(os.path.dirname(__file__))
 
@@ -32,10 +33,14 @@ def db(app):
     db = invenio_db.db = shared.db = shared.SQLAlchemy(
         metadata=shared.MetaData(naming_convention=shared.NAMING_CONVENTION)
     )
+    db.init_app(app)
+    if not database_exists(str(db.engine.url)):
+        create_database(str(db.engine.url))
+
     yield db
     db.session.remove()
     db.drop_all()
-    os.remove(join(dirname(__file__),"../test.db"))
+    # os.remove(join(dirname(__file__),"../test.db"))
 
 
 @pytest.yield_fixture()

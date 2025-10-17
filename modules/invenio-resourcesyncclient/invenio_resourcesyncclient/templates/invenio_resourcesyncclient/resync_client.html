@@ -37,6 +37,22 @@
 {%- endblock javascript %}
 
 {%- block body %}
+<input class="resync-client-label" id="lblResyncClientList" type="hidden" value='{{_("List")}}'/>
+<input class="resync-client-label" id="lblResyncClientCreate" type="hidden" value='{{_("Create")}}'/>
+<input class="resync-client-label" id="lblResyncClientEdit" type="hidden" value='{{_("Edit")}}'/>
+<input class="resync-client-label" id="lblResyncClientDetail" type="hidden" value='{{_("Detail")}}'/>
+<input class="resync-client-label" id="lblResyncClientStart Time" type="hidden" value='{{_("Start Time")}}'/>
+<input class="resync-client-label" id="lblResyncClientEnd Time" type="hidden" value='{{_("End Time")}}'/>
+<input class="resync-client-label" id="lblResyncClientStatus" type="hidden" value='{{_("Status")}}'/>
+<input class="resync-client-label" id="lblResyncClientLog Type" type="hidden" value='{{_("Log Type")}}'/>
+<input class="resync-client-label" id="lblResyncClientProcessed Items" type="hidden" value='{{_("Processed Items")}}'/>
+<input class="resync-client-label" id="lblResyncClientCreated Items" type="hidden" value='{{_("Created Items")}}'/>
+<input class="resync-client-label" id="lblResyncClientUpdated Items" type="hidden" value='{{_("Updated Items")}}'/>
+<input class="resync-client-label" id="lblResyncClientDeleted Items" type="hidden" value='{{_("Deleted Items")}}'/>
+<input class="resync-client-label" id="lblResyncClientError Items" type="hidden" value='{{_("Error Items")}}'/>
+<input class="resync-client-label" id="lblResyncClientFromDate FormatErrorMsg" type="hidden" value='{{_("The input value for From Date is incorrect.")}}'/>
+<input class="resync-client-label" id="lblResyncClientUntilDate FormatErrorMsg" type="hidden" value='{{_("The input value for Until Date is incorrect.")}}'/>
+
 <pre class="hide" id="status">{{status}}</pre>
 <pre class="hide" id="resync_mode">{{resync_mode}}</pre>
 <pre class="hide" id="saving_format">{{saving_format}}</pre>

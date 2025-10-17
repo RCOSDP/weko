@@ -23,6 +23,8 @@
 
 """Tests for user profile models."""
 
+from mock import patch
+
 from invenio_accounts.models import User
 
 from weko_user_profiles import UserProfile, WekoUserProfiles
@@ -112,7 +114,7 @@ def test_delete_cascade(app,db):
 
         assert UserProfile.get_by_userid(u.id) is None
 
-
+# .tox/c1/bin/pytest --cov=weko_user_profiles tests/test_models.py::test_create_profile -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-user-profiles/.tox/c1/tmp
 def test_create_profile(app,db):
     """Test that userprofile can be patched using UserAccount constructor."""
     with app.app_context():
@@ -123,6 +125,14 @@ def test_create_profile(app,db):
         db.session.commit()
 
         user_id = user.id
+
+        profile = UserProfile(user=user, username="test_username")
+        # set displayname
+        profile.username = "test_displayname"
+        db.session.add(profile)
+        db.session.commit()
+
+        assert "test_displayname" == UserProfile.get_by_displayname("test_displayname").username
         # patch_user = User(
         #     id=user_id,
         #     email='updated_test@example.org',
@@ -165,3 +175,53 @@ def test_create_profile_with_null(app,db):
 
         user = User.query.get(user_id)
         assert user.profile is None
+
+
+# def get_institute_data(self):
+# .tox/c1/bin/pytest --cov=weko_user_profiles tests/test_models.py::test_get_institute_data -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-user-profiles/.tox/c1/tmp
+def test_get_institute_data(app,user_profiles):
+    """Test get_institute_data."""
+
+    # visible: all True
+    profile_conf = {
+        'fullname': {'visible': True}, 'displayname': {'visible': True},
+        'username': {'visible': True}, 'university': {'visible': True},
+        'department': {'visible': True}, 'position': {'visible': True},
+        'item1': {'visible': True}, 'item2': {'visible': True}, 'item3': {'visible': True},
+        'item4': {'visible': True}, 'item5': {'visible': True}, 'item6': {'visible': True},
+        'item7': {'visible': True}, 'item8': {'visible': True}, 'item9': {'visible': True},
+        'item10': {'visible': True}, 'item11': {'visible': True}, 'item12': {'visible': True},
+        'item13': {'visible': True}, 'item14': {'visible': True}, 'item15': {'visible': True},
+        'item16': {'visible': True}
+    }
+
+    with patch('weko_admin.models.AdminSettings.get', return_value=profile_conf):
+        expected = [{
+            "subitem_affiliated_institution_name": getattr(user_profiles[0], "item"+str(i)),
+            "subitem_affiliated_institution_position": getattr(user_profiles[0], "item"+str(i+1))
+        } for i in range(3, 13, 2)]
+        actual = UserProfile.query.filter_by(user_id = user_profiles[0].user_id).one().get_institute_data()
+        assert expected == actual
+
+    # visible: any False
+    profile_conf_any_false = {
+        'fullname': {'visible': True}, 'displayname': {'visible': True},
+        'username': {'visible': True}, 'university': {'visible': True},
+        'department': {'visible': True}, 'position': {'visible': True},
+        'item1': {'visible': True}, 'item2': {'visible': True}, 'item3': {'visible': False},
+        'item4': {'visible': True}, 'item5': {'visible': True}, 'item6': {'visible': False},
+        'item7': {'visible': True}, 'item8': {'visible': True}, 'item9': {'visible': True},
+        'item10': {'visible': True}, 'item11': {'visible': True}, 'item12': {'visible': True},
+        'item13': {'visible': True}, 'item14': {'visible': True}, 'item15': {'visible': True},
+        'item16': {'visible': True}
+    }
+
+    with patch('weko_admin.models.AdminSettings.get', return_value=profile_conf_any_false):
+        expected = [{
+            "subitem_affiliated_institution_name": getattr(user_profiles[0], "item"+str(i)),
+            "subitem_affiliated_institution_position": getattr(user_profiles[0], "item"+str(i+1))
+        } for i in range(3, 13, 2)]
+        expected[0]["subitem_affiliated_institution_name"] = ""
+        expected[1]["subitem_affiliated_institution_position"] = ""
+        actual = UserProfile.query.filter_by(user_id = user_profiles[0].user_id).one().get_institute_data()
+        assert expected == actual

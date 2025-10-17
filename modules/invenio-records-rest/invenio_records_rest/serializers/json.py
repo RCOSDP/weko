@@ -86,7 +86,7 @@ class JSONSerializerMixin(SerializerMixinInterface):
                 
                 item_roles = {
                     'weko_creator_id': hit['_source'].get('weko_creator_id'),
-                    'weko_shared_id':hit['_source'].get('weko_shared_id')
+                    'weko_shared_ids': hit['_source'].get('weko_shared_ids', [])
                 }
                 if hide_meta_data_for_role(item_roles) and 'item_type_id' in hit['_source']['_item_metadata']:
                     item_type_id = hit['_source']['_item_metadata']['item_type_id']

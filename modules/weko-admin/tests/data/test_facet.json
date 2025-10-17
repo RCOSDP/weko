@@ -1,0 +1,72 @@
+[
+    {
+        "name_en":"Data Language",
+        "name_jp":"データの言語",
+        "mapping":"language",
+        "ui_type":"SelectBox",
+        "display_number":null,
+        "aggregations":[],
+        "active":true,
+        "is_open":true
+    },
+    {
+        "name_en":"Access",
+        "name_jp":"アクセス制限",
+        "mapping":"accessRights",
+        "ui_type":"SelectBox",
+        "display_number":null,
+        "aggregations":[],
+        "active":true,
+        "is_open":true
+    },
+    {
+        "name_en":"Location",
+        "name_jp":"地域",
+        "mapping":"geoLocation.geoLocationPlace",
+        "ui_type":"CheckboxList",
+        "display_number":5,
+        "aggregations":[],
+        "active":true,
+        "is_open":true
+    },
+    {
+        "name_en":"Temporal",
+        "name_jp":"時間的範囲",
+        "mapping":"temporal",
+        "ui_type":"RangeSlider",
+        "display_number":null,
+        "aggregations":[],
+        "active":true,
+        "is_open":true
+    },
+    {
+        "name_en":"Topic",
+        "name_jp":"トピック",
+        "ui_type":"SelectBox",
+        "display_number":null,
+        "mapping":"subject.value",
+        "aggregations":[],
+        "active":true,
+        "is_open":false
+    },
+    {
+        "name_en":"Distributor",
+        "name_jp":"配布者",
+        "mapping":"contributor.contributorName",
+        "ui_type":"SelectBox",
+        "display_number":null,
+        "aggregations":[{"agg_value": "Distributor", "agg_mapping": "contributor.@attributes.contributorType"}],
+        "active":true,
+        "is_open":true
+    },
+    {
+        "name_en":"Data Type",
+        "name_jp":"データタイプ",
+        "mapping":"description.value",
+        "ui_type":"SelectBox",
+        "display_number":null,
+        "aggregations":[{"agg_value": "Other", "agg_mapping": "description.descriptionType"}],
+        "active":true,
+        "is_open":false
+    }
+]

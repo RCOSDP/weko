@@ -1,0 +1,50 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  align-items: flex-start; /* 左寄せ */
+}
+
+.item-group {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 20px;
+  border: 1px solid #ccc;
+  padding: 20px;
+  border-radius: 5px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.item-group > div {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.item-group > div > input[type="text"],
+.item-group > div > select,
+.item-group > div > label {
+  flex: 1;
+  padding: 10px;
+  font-size: 16px;
+  width: 100%; /* 幅を100%に設定 */
+  box-sizing: border-box; /* パディングを含めてサイズを計算 */
+}
+
+.item-group > .select-textbox {
+  margin-top: 10px;
+  padding: 10px; /* パディングを追加してサイズを大きくする */
+  font-size: 16px; /* フォントサイズを大きくする */
+  width: 70%;
+  box-sizing: border-box; /* パディングを含めてサイズを計算 */
+}
+
+.modal-header .close:hover {
+  opacity: 1; /* ホバー時の透明度を設定 */
+}
+
+/* テンプレートモーダルのサイズ */
+#alertContainer {
+  width: 100%;
+}

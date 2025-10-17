@@ -1,0 +1,184 @@
+{
+  "settings": {
+    "number_of_shards": 1,
+    "number_of_replicas": 1,
+    "index.mapping.total_fields.limit": 50000,
+    "analysis": {
+      "tokenizer": {
+        "ja_tokenizer": {
+          "type": "kuromoji_tokenizer",
+          "mode": "search"
+        },
+        "ngram_tokenizer": {
+          "type": "nGram",
+          "min_gram": 1,
+          "max_gram": 3,
+          "token_chars": [
+            "letter",
+            "digit"
+          ]
+        }
+      },
+      "char_filter": {
+        "weko_char_filter": {
+          "type": "mapping",
+          "mappings_path": "kui.txt"
+        }
+      },
+      "analyzer": {
+        "default": {
+          "tokenizer": "ngram_tokenizer",
+          "filter": [
+            "kuromoji_baseform",
+            "kuromoji_part_of_speech",
+            "cjk_width",
+            "stop",
+            "kuromoji_stemmer",
+            "lowercase"
+          ],
+          "char_filter": [
+            "weko_char_filter"
+          ]
+        },
+        "ngram_analyzer": {
+          "type": "custom",
+          "char_filter": [
+            "weko_char_filter",
+            "html_strip"
+          ],
+          "tokenizer": "ngram_tokenizer",
+          "filter": [
+            "cjk_width",
+            "lowercase"
+          ]
+        },
+        "wk_analyzer": {
+          "type": "custom",
+          "char_filter": [
+            "html_strip"
+          ],
+          "tokenizer": "standard",
+          "filter": [
+            "standard",
+            "lowercase",
+            "stop",
+            "cjk_width"
+          ]
+        },
+        "paths": {
+          "tokenizer": "path_hierarchy"
+        }
+      }
+    }
+  },
+  "mappings": {
+    "stats-file-download": {
+      "dynamic": "false",
+      "dynamic_templates": [
+        {
+          "date_fields": {
+            "match_mapping_type": "date",
+            "mapping": {
+              "format": "strict_date_hour_minute_second",
+              "type": "date"
+            }
+          }
+        }
+      ],
+      "date_detection": false,
+      "numeric_detection": false,
+      "properties": {
+        "accessrole": {
+          "type": "keyword"
+        },
+        "billing_file_price": {
+          "type": "keyword"
+        },
+        "bucket_id": {
+          "type": "keyword"
+        },
+        "collection": {
+          "type": "keyword"
+        },
+        "country": {
+          "type": "keyword"
+        },
+        "cur_user_id": {
+          "type": "keyword"
+        },
+        "file_id": {
+          "type": "keyword"
+        },
+        "file_key": {
+          "type": "keyword"
+        },
+        "hostname": {
+          "type": "keyword"
+        },
+        "index_list": {
+          "type": "keyword"
+        },
+        "is_billing_item": {
+          "type": "boolean"
+        },
+        "is_restricted": {
+          "type": "boolean"
+        },
+        "is_robot": {
+          "type": "boolean"
+        },
+        "item_id": {
+          "type": "keyword"
+        },
+        "item_title": {
+          "type": "keyword"
+        },
+        "referrer": {
+          "type": "keyword"
+        },
+        "remote_addr": {
+          "type": "keyword"
+        },
+        "root_file_id": {
+          "type": "keyword"
+        },
+        "site_license_flag": {
+          "type": "boolean"
+        },
+        "site_license_name": {
+          "type": "keyword"
+        },
+        "size": {
+          "type": "double"
+        },
+        "timestamp": {
+          "type": "date",
+          "format": "strict_date_hour_minute_second"
+        },
+        "unique_id": {
+          "type": "keyword"
+        },
+        "unique_session_id": {
+          "type": "keyword"
+        },
+        "user_group_list": {
+          "type": "nested",
+          "properties": {
+            "group_id": {
+              "type": "keyword"
+            },
+            "group_name": {
+              "type": "keyword"
+            }
+          }
+        },
+        "userrole": {
+          "type": "keyword"
+        },
+        "visitor_id": {
+          "type": "keyword"
+        }
+      }
+    }
+  }
+}

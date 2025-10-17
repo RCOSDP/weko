@@ -1,0 +1,45 @@
+{
+  "id": "urn:uuid:4123522e-8211-4bd2-9cef-24892a19b92f",
+  "@context": [
+    "https://www.w3.org/ns/activitystreams",
+    "https://coar-notify.net"
+  ],
+  "type": [
+    "Offer",
+    "coar-notify:EndorsementAction"
+  ],
+  "origin": {
+    "id": "http://test_server.localdomain/",
+    "inbox": "http://test_server.localdomain/inbox",
+    "type": "Service"
+  },
+  "target": {
+    "id": "http://test_server.localdomain/users/1",
+    "inbox": "http://test_server.localdomain/inbox",
+    "type": "Person"
+  },
+  "object": {
+    "id": "http://test_server.localdomain/records/2000001",
+    "ietf:cite-as": null,
+    "object": null,
+    "url": null,
+    "type": [
+      "Page",
+      "sorg:WebPage"
+    ],
+    "name": "A new record"
+  },
+  "actor": {
+    "id": "http://test_server.localdomain/users/3",
+    "type": "Person",
+    "name": "Alex"
+  },
+  "context": {
+    "id": "http://test_server.localdomain/workflow/activity/detail/A-20250306-00001",
+    "ietf:cite-as": null,
+    "type": [
+      "Page",
+      "sorg:WebPage"
+    ]
+  }
+}

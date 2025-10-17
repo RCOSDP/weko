@@ -1,0 +1,21 @@
+{
+    "pubdate": "2025-07-01",
+    "item_30002_title0": [
+        {
+            "subitem_title": "テストタイトル",
+            "subitem_title_language": "ja"
+        }
+    ],
+    "item_30002_resource_type13": {
+        "resourceuri": "http://purl.org/coar/resource_type/c_1843",
+        "resourcetype": "other"
+    },
+    "item_30002_identifier16": [
+        {
+            "subitem_identifier_uri": "http://doi.org/10.1234/example",
+            "subitem_identifier_type": "DOI"
+        }
+    ],
+    "$schema": "/items/jsonschema/30002",
+    "shared_user_id": -1
+}

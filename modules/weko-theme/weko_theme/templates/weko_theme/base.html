@@ -176,8 +176,9 @@
             learnMore: "詳細を見る",
           },
           contextualConsent:{
-            description: "サードパティ製アプリケーションを利用しています。",
-            acceptOnce: "一時的に同意する"
+            description: "{title}が提供する外部コンテンツを読み込みますか?",
+            acceptOnce: "一時的に同意する",
+            acceptAlways: "常に同意する"
           },
           ok: "同意",
           poweredBy: "Powered by Klaro",
@@ -237,9 +238,9 @@
           onlyOnce: true,
         },
         {
-          name: 'addthis',
+          name: 'facebook',
           default: false,
-          title: 'Addthis',
+          title: 'Facebook',
           purposes: ['analytics'],
           callback: function (consent, service) {
             console.log(
@@ -250,6 +251,20 @@
           optOut: false,
           onlyOnce: true,
         },
+        {
+          name: 'x',
+          default: false,
+          title: 'X',
+          purposes: ['analytics'],
+          callback: function (consent, service) {
+            console.log(
+              'User consent for service ' + service.name + ': consent=' + consent
+            );
+          },
+          required: false,
+          optOut: false,
+          onlyOnce: true,
+        }
       ],
     };
 

@@ -1,0 +1,51 @@
+{#
+# This file is part of WEKO3.
+# Copyright (C) 2017 National Institute of Informatics.
+#
+# WEKO3 is free software; you can redistribute it
+# and/or modify it under the terms of the GNU General Public License as
+# published by the Free Software Foundation; either version 2 of the
+# License, or (at your option) any later version.
+#
+# WEKO3 is distributed in the hope that it will be
+# useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with WEKO3; if not, write to the
+# Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+# MA 02111-1307, USA.
+#}
+
+{%- extends admin_base_template %}
+
+{%- block css %}
+  {{ super() }}
+  {% assets "weko_logging_export_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+{%- endblock css %}
+
+{%- block javascript %}
+  {{ super() }}
+  {% assets "weko_logging_export_js" %}<script type="text/babel" src="{{ ASSET_URL }}"></script>{% endassets %}
+  {% assets "weko_admin_statistics_reactjs_lib" %}<script type="text/javascript" src="{{ ASSET_URL }}"></script>{% endassets %}
+  {% assets "weko_admin_react_bootstrap_js" %}<script type="text/javascript" src="{{ ASSET_URL }}"></script>{% endassets %}
+{%- endblock javascript %}
+
+{%- block body %}
+  <div id="root" class="col-xs-12"></div>
+  <input id="export_logs" type="hidden" value="{{_('Export all logs')}}" />
+  <input id="download_url" type="hidden" value="{{_('Download URL')}}" />
+  <input id="status" type="hidden" value="{{_('Status')}}" />
+  <input id="export" type="hidden" value="{{_('Export')}}" />
+  <input id="export_message" type="hidden" value="{{_('Are you sure you want to export all logs?')}}" />
+  <input id="confirm_label" type="hidden" value="{{_('Confirm')}}" />
+  <input id="run" type="hidden" value="{{_('Execute')}}" />
+  <input id="cancel" type="hidden" value="{{_('Cancel')}}" />
+  <input id="cancel_message" type="hidden" value="{{_('Are you sure you want to cancel process of exporting all logs?')}}" />
+  <input id="internal_server_error" type="hidden" value="{{_('Internal server error')}}" />
+  <input id="is_exporting_error" type="hidden" value="{{_('Failed to export logs.')}}" />
+  <input id="is_exporting_other_device_error" type="hidden" value="{{_('Export is in progress on another device.')}}" />
+  <input id="cancel_export_error" type="hidden" value="{{_('Failed to cancel export.')}}" />
+  <input id="celery_not_run" type="hidden" value="{{_('Celery is not running.')}}" />
+{%- endblock body %}

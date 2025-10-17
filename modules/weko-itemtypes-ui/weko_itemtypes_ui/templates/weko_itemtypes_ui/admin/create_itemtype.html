@@ -38,6 +38,8 @@
 
 {%- block body %}
   <input id="lang-code" type="hidden" value="{{lang_code}}" />
+  <div id="infos"></div>
+  <div id="errors"></div>
   <div class="row">
     <div class="col-sm-12 col-md-12 col-lg-11">
       <div class="panel panel-info  gray-color-class">
@@ -89,7 +91,7 @@
                 </div>
               </div>
               <input type="hidden" value="{{_('Cannot delete item type for harvesting.')}}" id="msg_for_harvesting">
-              <input type="hidden" value="{{_('Cannot delete due to child existing item types.')}}" id="msg_for_belonging_item">
+              <input type="hidden" value="{{_('Cannot delete item type. Item of this type already exists.')}}" id="msg_for_belonging_item">
               <!-- button Import Export -->
               <button type="button" class="btn btn-primary mr-5" id="item_type_export" disabled>{{_('Export')}}</button>
               <button type="button" class="btn btn-primary" id="item_type_import">{{_('Import')}}</button>

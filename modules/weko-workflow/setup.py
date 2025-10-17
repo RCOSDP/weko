@@ -94,10 +94,13 @@ setup(
         ],
         'invenio_base.api_apps': [
             'weko_workflow_rest = weko_workflow:WekoWorkflow',
+            'weko_workflow_rest2 = weko_workflow.ext:WekoWorkflowREST',
         ],
         'invenio_admin.views': [
             'weko_workflow = weko_workflow.admin:workflow_adminview',
             'weko_flow = weko_workflow.admin:flow_adminview',
+            'weko_activity_settings = weko_workflow.admin:activity_settings_adminview',
+            'weko_workspaceworkflow = weko_workflow.admin:workspace_workflow_adminview',
         ],
         'invenio_assets.bundles': [
             'workflow_js = weko_workflow.bundles:js_workflow',

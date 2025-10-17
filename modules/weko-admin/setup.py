@@ -132,9 +132,15 @@ setup(
             'weko_admin_item_export_settings = weko_admin.admin:item_export_settings_adminview',
             'weko_admin_site_info = weko_admin.admin:site_info_settings_adminview',
             'weko_admin_identifier = weko_admin.admin:identifier_adminview',
+            'weko_admin_sword_api = weko_admin.admin:sword_api_settings_adminview',
+            'weko_admin_sword_jsonld_api = weko_admin.admin:sword_api_settings_jsonld_adminview',
+            'weko_admin_sword_jsonld_mapping_api = weko_admin.admin:sword_api_jsonld_mapping_adminview',
             'restricted_access_adminview = weko_admin.admin:restricted_access_adminview',
             'facet_search_adminview = weko_admin.admin:facet_search_adminview',
-            'reindex_elasticsearch_adminview = weko_admin.admin:reindex_elasticsearch_adminview'
+            'cris_linkage_adminview = weko_admin.admin:cris_linkage_adminview' ,
+            'reindex_elasticsearch_adminview = weko_admin.admin:reindex_elasticsearch_adminview',
+            #管理者画面に追加するプロフィール設定のビューを追加
+            'profile_settings_adminview = weko_admin.admin:profile_settings_adminview',
         ],
         'invenio_access.actions': [
             'page_style_access = weko_admin.permissions:action_admin_access',
@@ -160,12 +166,18 @@ setup(
             'weko_admin_admin_lte_js_dependecies = weko_admin.bundles:admin_lte_js_dependecies',
             'weko_admin_admin_lte_js = weko_admin.bundles:admin_lte_js',
             'weko_admin_angular_js = weko_admin.bundles:angular_js',
+            'weko_admin_sword_api_jsonld_js = weko_admin.bundles:weko_admin_sword_api_jsonld_js',
+            'weko_admin_jsonld_mapping_js = weko_admin.bundles:weko_admin_jsonld_mapping_js',
             'weko_admin_site_info = weko_admin.bundles:weko_admin_site_info_js',
             'weko_admin_site_info_css = weko_admin.bundles:weko_admin_site_info_css',
             'weko_admin_ng_js_tree = weko_admin.bundles:weko_admin_ng_js_tree_js',
             'weko_admin_restricted_access = weko_admin.bundles:weko_admin_restricted_access_js',
             'weko_admin_facet_search = weko_admin.bundles:weko_admin_facet_search_js',
-            'weko_admin_reindex_elasticsearch_js = weko_admin.bundles:reindex_elasticsearch_js'
+            'weko_admin_cris_linkage_js = weko_admin.bundles:weko_admin_cris_linkage_js',
+            'weko_admin_reindex_elasticsearch_js = weko_admin.bundles:reindex_elasticsearch_js',
+            #プロフィール設定のJSとCSSのバンドルを追加
+            'weko_admin_profile_settings = weko_admin.bundles:profile_set_js',
+            'weko_admin_profile_settings_css = weko_admin.bundles:profile_set_css',
         ],
         'invenio_db.models': [
             'weko_admin = weko_admin.models',

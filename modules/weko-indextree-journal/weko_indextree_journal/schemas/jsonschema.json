@@ -19,6 +19,22 @@
       "type": "string",
       "title": "Title"
     },
+    "abstract": {
+      "type": "string",
+      "title": "abstract"
+    },
+    "code_issnl": {
+      "type": "string",
+      "title": "Print-format ISSN-L",
+      "maxLength": 9,
+      "pattern": "^[0-9]{4}-[0-9]{3}[0-9X]$",
+      "validationMessage_i18n": {
+        "202": {
+          "en": "Print-format ISSN-L format is wrong",
+          "ja": "「ISSN-L」のフォーマットが正しくない。"
+        }
+      }
+    },
     "print_identifier": {
       "type": "string",
       "title": "Print-format identifier",

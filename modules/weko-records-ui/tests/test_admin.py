@@ -38,6 +38,10 @@ class TestItemSettingView():
                 data = {"submit": "a"}
                 res = client.post(url,data=data)
                 assert res.status == '200 OK'
+
+                with patch("weko_records_ui.admin.check_items_settings", side_effect = BaseException()):
+                    res = client.post(url,data=data)
+                    assert res.status == '400 BAD REQUEST'
         
                 data = {"submit": "set_search_author_form","displayRadios":"1", "openDateDisplayRadios":"1"}
                 res = client.post(url,data=data)
@@ -64,8 +68,6 @@ class TestItemSettingView():
                 res = client.post(url,data=data)
                 assert res.status == '200 OK'
 
-
-                
 
 # class PdfCoverPageSettingView(BaseView):
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_admin.py::TestPdfCoverPageSettingView -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp

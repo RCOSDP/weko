@@ -21,10 +21,9 @@
 """Configuration for weko-search-ui."""
 
 import pickle
+from flask_babelex import lazy_gettext as _
 
 from invenio_records_rest.config import RECORDS_REST_ENDPOINTS
-from invenio_records_rest.facets import terms_filter
-from invenio_records_rest.utils import allow_all
 from invenio_search import RecordsSearch
 from invenio_stats.config import SEARCH_INDEX_PREFIX as index_prefix
 
@@ -87,6 +86,9 @@ SEARCH_UI_JSTEMPLATE_SORT_ORDER = "templates/weko_search_ui/togglebutton.html"
 WEKO_ITEM_ADMIN_IMPORT_TEMPLATE = "weko_search_ui/admin/import.html"
 """import template for the import page."""
 
+WEKO_ITEM_ADMIN_ROCRATE_IMPORT_TEMPLATE = "weko_search_ui/admin/rocrate_import.html"
+"""import template for the rocrate import page."""
+
 WEKO_SEARCH_UI_ADMIN_EXPORT_TEMPLATE = "weko_search_ui/admin/export.html"
 """Template for the Admin Bulk Export page."""
 
@@ -127,6 +129,13 @@ RECORDS_REST_ENDPOINTS["recid"]["record_serializers"] = {
         "weko_records.serializers:csl_v1_response"
     ),
     "text/x-bibliography": ("weko_records.serializers:citeproc_v1_response"),
+}
+
+# Workspace endpoint
+RECORDS_REST_ENDPOINTS["worksapce"] = pickle.loads(pickle.dumps(RECORDS_REST_ENDPOINTS["recid"], -1))
+RECORDS_REST_ENDPOINTS["worksapce"]["list_route"] = "/workspace/search"
+RECORDS_REST_ENDPOINTS["worksapce"]["search_serializers"] = {
+    "application/json": ("weko_records.serializers:opensearch_v1_search"),
 }
 
 # RECORDS_REST_ENDPOINTS['recid']['read_permission_factory_imp'] = allow_all
@@ -236,6 +245,8 @@ WEKO_SEARCH_REST_ENDPOINTS = dict(
             "application/json": ("weko_records.serializers" ":json_v1_search"),
         },
         index_route="/index/",
+        search_api_route="/<string:version>/records",
+        search_result_list_route="/<string:version>/records/list",
         links_factory_imp="weko_search_ui.links:default_links_factory",
         default_media_type="application/json",
         max_result_window=10000,
@@ -248,20 +259,20 @@ WEKO_SEARCH_KEYWORDS_DICT = {
             "",
             {
                 "id_attr": {
-                    "identifier": ("relation.relatedIdentifier", "identifierType=*"),
+                    "identifier": ("relation.relatedIdentifier", "identifierType=identifier"),
                     "URI": ("identifier", "identifierType=*"),
-                    "fullTextURL": ("file.URI", "objectType=*"),
-                    "selfDOI": ("identifierRegistration", "identifierType=*"),
-                    "ISBN": ("relation.relatedIdentifier", "identifierType=ISBN"),
-                    "ISSN": ("sourceIdentifier", "identifierType=ISSN"),
+                    "fullTextURL": ("file.URI", "objectType=fullTextURL"),
+                    "selfDOI": ("identifierRegistration", "identifierType=selfDOI"),
+                    "ISBN": ("relation.relatedIdentifier", "identifierType=*"),
+                    "ISSN": ("sourceIdentifier", "identifierType=*"),
                     "NCID": [
-                        ("relation.relatedIdentifier", "identifierType=NCID"),
-                        ("sourceIdentifier", "identifierType=NCID"),
+                        ("relation.relatedIdentifier", "identifierType=*"),
+                        ("sourceIdentifier", "identifierType=*"),
                     ],
-                    "pmid": ("relation.relatedIdentifier", "identifierType=PMID"),
-                    "doi": ("relation.relatedIdentifier", "identifierType=DOI"),
-                    "NAID": ("relation.relatedIdentifier", "identifierType=NAID"),
-                    "ichushi": ("relation.relatedIdentifier", "identifierType=ICHUSHI"),
+                    "PMID": ("relation.relatedIdentifier", "identifierType=*"),
+                    "DOI": ("relation.relatedIdentifier", "identifierType=*"),
+                    "NAID": ("relation.relatedIdentifier", "identifierType=*"),
+                    "ICHUSHI": ("relation.relatedIdentifier", "identifierType=*"),
                 }
             },
         ),
@@ -342,7 +353,7 @@ WEKO_SEARCH_KEYWORDS_DICT = {
                 "ara",
                 "ell",
                 "kor",
-                "-",
+                "other"
             ]
         },
         "srctitle": ["sourceTitle", "sourceTitle.ja"],
@@ -469,7 +480,8 @@ WEKO_SYS_USER = "System Administrator"
 
 WEKO_REPO_USER = "Repository Administrator"
 
-WEKO_FLOW_DEFINE = {"flow_name": "Registration Flow"}
+WEKO_FLOW_DEFINE = {"flow_name": "Registration Flow",
+                    "repository_id": "Root Index",}
 
 WEKO_FLOW_DEFINE_LIST_ACTION = [
     {
@@ -512,12 +524,12 @@ WEKO_FLOW_DEFINE_LIST_ACTION = [
 WEKO_IMPORT_CHECK_LIST_NAME = ["No", "Item Type", "Item Id", "Title", "Check result"]
 
 WEKO_IMPORT_LIST_NAME = [
-    "No",
-    "Start Date",
-    "End Date",
-    "Item Id",
-    "Action",
-    "Work Flow Status",
+    _("No."),
+    _("Start Date"),
+    _("End Date"),
+    _("Item ID"),
+    _("Status"),
+    _("Import Result"),
 ]
 WEKO_ADMIN_LIFETIME_DEFAULT = 1800
 
@@ -546,6 +558,7 @@ WEKO_EXPORT_TEMPLATE_BASIC_ID = [
     ".pos_index[0]",
     ".publish_status",
     ".feedback_mail[0]",
+    ".researchmap_linkage",
     ".cnri",
     ".doi_ra",
     ".doi",
@@ -558,6 +571,7 @@ WEKO_EXPORT_TEMPLATE_BASIC_NAME = [
     ".POS_INDEX[0]",
     ".PUBLISH_STATUS",
     ".FEEDBACK_MAIL[0]",
+    ".RESEAECHMAP_LINKAGE",
     ".CNRI",
     ".DOI_RA",
     ".DOI",
@@ -570,6 +584,7 @@ WEKO_EXPORT_TEMPLATE_BASIC_OPTION = [
     "Allow Multiple",
     "Required",
     "Allow Multiple",
+    "",
     "",
     "",
     "",
@@ -708,19 +723,33 @@ WEKO_SEARCH_UI_TO_NUMBER_FORMAT = "99999999999999.99"
 WEKO_SEARCH_UI_BULK_EXPORT_RUN_MSG = "RUN_MSG_EXPORT_ALL"
 """Bulk export running message."""
 
-WEKO_SEARCH_UI_BULK_EXPORT_EXPIRED_TIME = 3
+WEKO_SEARCH_UI_BULK_EXPORT_FILE_CREATE_RUN_MSG = "RUN_MSG_EXPORT_ALL_FILE_CREATE"
+"""Bulk export file create running message."""
+
+WEKO_SEARCH_UI_BULK_EXPORT_EXPIRED_TIME = 1440
 """Template for the Admin Bulk Export page."""
+
+WEKO_SEARCH_UI_EXPORT_FILE_RETENTION_DAYS = 7
+"""Retention period for export files in days."""
+
+WEKO_SEARCH_UI_FILE_DOWNLOAD_TTL_BUFFER = 3600
+"""Time (in seconds) to extend file TTL during download."""
 
 WEKO_SEARCH_UI_BULK_EXPORT_TASKID_EXPIRED_TIME = 1
 
-WEKO_SEARCH_UI_BULK_EXPORT_LIMIT = 1000
-"""The number of items exported to tsv/csv file each once."""
+WEKO_SEARCH_UI_BULK_EXPORT_LIMIT = 300
+"""The number of items exported to tsv/csv file each once.
+Note: If set to 500 or more, errors may occur during export processing.
+"""
 
 WEKO_SEARCH_UI_BULK_EXPORT_RETRY = 5
 """Number of export retries."""
 
 WEKO_SEARCH_UI_IMPORT_TMP_PREFIX = "weko_import_"
 """Import tmp prefix."""
+
+WEKO_SEARCH_UI_ROCRATE_IMPORT_TMP_PREFIX = "weko_rocrate_import_"
+"""RO-Crate Import tmp prefix."""
 
 WEKO_SEARCH_UI_IMPORT_UNUSE_FILES_URI = "import_unuse_files_uri_{}"
 """Cache key unuse file. uri."""
@@ -732,3 +761,22 @@ CELERY_RESULT_PERSISTENT = True
 """ If set to True, result messages will be persistent. This means the messages will not be lost after a broker restart. The default is for the results to be transient."""
 CELERY_TASK_TRACK_STARTED=True
 """ If True the task will report its status as ‘started’ when the task is executed by a worker. """
+WEKO_SEARCH_UI_FACET_LANG_DISP_FLG = False
+""" Enable the Facet Search specified language display feature. """
+
+CHILD_INDEX_THUMBNAIL_WIDTH = 100
+""" child index thumbnail width in result index serch"""
+
+CHILD_INDEX_THUMBNAIL_HEIGHT = 100
+""" child index thumbnail height in result index serch"""
+
+WEKO_SEARCH_UI_RESULT_TMP_PREFIX = 'weko_search_result_list_'
+
+SWORD_METADATA_FILE = "metadata/sword.json"
+""" Metadata file name for SWORDBagIt. """
+
+ROCRATE_METADATA_FILE = "data/ro-crate-metadata.json"
+""" Metadata file name for RO-Crate+Bagit. """
+
+ROCRATE_METADATA_WK_CONTEXT_V1 = "http://purl.org/wk/v1/wk-context.jsonld"
+""" Metadata context file name for RO-Crate+Bagit. """

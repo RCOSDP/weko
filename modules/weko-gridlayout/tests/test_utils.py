@@ -694,12 +694,16 @@ def test_convert_data_to_edit_pack():
 
 
 # def build_rss_xml(data=None, index_id=0, page=1, count=20, term=0, lang=''):
+# .tox/c1/bin/pytest --cov=weko_gridlayout tests/test_utils.py::test_build_rss_xml -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-gridlayout/.tox/c1/tmp
 def test_build_rss_xml(i18n_app, indices):
     assert build_rss_xml(index_id=33)
     assert build_rss_xml()
     with patch("weko_gridlayout.utils.find_rss_value", return_value=""):
         assert build_rss_xml(data=["test"])
-    
+    with patch("weko_index_tree.api.Indexes.get_index", return_value=None):
+        res = build_rss_xml(index_id=33)
+        from weko_theme import config as theme_config
+        assert theme_config.THEME_SITENAME in res.get_data(as_text=True)
 
 # def find_rss_value(data, keyword):
 keywords = [

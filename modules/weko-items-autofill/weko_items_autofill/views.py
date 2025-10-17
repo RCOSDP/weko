@@ -8,6 +8,7 @@
 """Module of weko-items-autofill."""
 
 from __future__ import absolute_import, print_function
+import traceback
 
 from flask import Blueprint, current_app, jsonify, render_template, request
 from flask_babelex import gettext as _
@@ -15,9 +16,10 @@ from flask_login import login_required
 from invenio_db import db
 from weko_accounts.utils import login_required_customize
 from weko_admin.utils import get_current_api_certification
+from weko_items_ui.signals import cris_researchmap_linkage_request
 
-from .utils import get_cinii_record_data, get_crossref_record_data, \
-    get_title_pubdate_path, get_wekoid_record_data, get_workflow_journal
+from .utils import get_cinii_record_data, get_crossref_record_data, get_doi_record_data, \
+    get_researchmapid_record_data, get_title_pubdate_path, get_wekoid_record_data, get_workflow_journal
 
 blueprint = Blueprint(
     "weko_items_autofill",
@@ -53,6 +55,8 @@ def get_selection_option():
     """
     options = [{'value': 'Default', 'text': _('Select the ID')}]
     options.extend(current_app.config['WEKO_ITEMS_AUTOFILL_SELECT_OPTION'])
+    if not current_app.config['WEKO_ITEMS_AUTOFILL_TO_BE_USED']:
+        options.remove({'value': 'DOI', 'text': 'DOI'})
     result = {
         'options': options
     }
@@ -60,7 +64,7 @@ def get_selection_option():
 
 
 @blueprint_api.route('/get_title_pubdate_id/<int:item_type_id>',
-                     methods=['GET'])
+                    methods=['GET'])
 @login_required_customize
 def get_title_pubdate_id(item_type_id=0):
     """Get title and pubdate id.
@@ -82,7 +86,8 @@ def get_auto_fill_record_data():
     result = {
         'result': '',
         'items': '',
-        'error': ''
+        'error': '',
+        'resource_type' : ''
     }
     if request.headers['Content-Type'] != 'application/json':
         result['error'] = _('Header Error')
@@ -92,13 +97,24 @@ def get_auto_fill_record_data():
     api_type = data.get('api_type', '')
     search_data = data.get('search_data', '')
     item_type_id = data.get('item_type_id', '')
+    activity_id = data.get('activity_id', '')
+    exclude_duplicate_lang = data.get('exclude_duplicate_lang', False)
+    parmalink = data.get('parmalink', '')
+    achievement_type = data.get('achievement_type', '')
+    achievement_id = data.get('achievement_id', '')
 
     try:
         if api_type == 'CrossRef':
             pid_response = get_current_api_certification('crf')
             pid = pid_response['cert_data']
-            api_response = get_crossref_record_data(
-                pid, search_data, item_type_id)
+            if pid:
+                api_response = get_crossref_record_data(
+                    pid, search_data, item_type_id, exclude_duplicate_lang)
+            else:
+                current_app.logger.error(
+                    "CrossRef API certification is not set."
+                )
+                api_response = []
             result['result'] = api_response
         elif api_type == 'CiNii':
             api_response = get_cinii_record_data(
@@ -107,10 +123,20 @@ def get_auto_fill_record_data():
         elif api_type == 'WEKOID':
             result['result'] = get_wekoid_record_data(
                 search_data, item_type_id)
+        elif api_type == 'DOI':
+            doi_response = get_doi_record_data(
+                search_data, item_type_id, activity_id)
+            result['result'] = doi_response
+        elif api_type == 'researchmap':
+            result['result'] , result['resource_type'] = get_researchmapid_record_data(
+                parmalink, achievement_type ,achievement_id , item_type_id)
         else:
             result['error'] = api_type + ' is NOT support autofill feature.'
     except Exception as e:
+        current_app.logger.error("Failed to get autofill data.")
+        traceback.print_exc()
         result['error'] = str(e)
+
 
     return jsonify(result)
 

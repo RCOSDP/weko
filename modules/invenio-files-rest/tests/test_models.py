@@ -930,7 +930,7 @@ def test_fileinstance_send_file(app, db, dummy_location,dummy_s3_location,mocker
     with app.test_request_context():
         res = f.send_file('test.txt')
         assert int(res.headers['Content-Length']) == len(data)
-    
+
     data = {'url': {'url': 'https://test_server/record/1/files/test_file.docx'}, 'date': [{'dateType': 'Available', 'dateValue': '2023-04-06'}], 'format': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'filename': 'test_file.docx', 'filesize': [{'value': '31 KB'}], 'mimetype': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'accessrole': 'open_access', 'version_id': '174af28a-2a26-428c-ae90-1fae1dffd21c', 'displaytype': 'preview'}
     def mock_convert(pdf_dir,target_uri):
         if os.path.exists(pdf_dir):
@@ -940,19 +940,101 @@ def test_fileinstance_send_file(app, db, dummy_location,dummy_s3_location,mocker
             data = f.read()
         with open(pdf_dir+"/data.pdf","wb") as f:
             f.write(data)
-            
+
     mocker.patch("invenio_files_rest.storage.pyfs.PyFSFileStorage.open",return_value=open(os.path.join(os.path.dirname(__file__),"data/test_file.docx"),"rb"))
     with app.test_request_context("/record/1/files/test_file.docx"):
         with patch("invenio_files_rest.models.convert_to",side_effect=mock_convert) as mock_convert:
-            f = FileInstance(
-                id=1,
-                uri="s3://test_file.docx",
-                json=data,
-                readable=True
-            )
-            res = f.send_file("test_file.docx",True,"application/vnd.openxmlformats-officedocument.wordprocessingml.document",False,None,False,True)
-            mock_convert.assert_called_with("/tmp/pdf_dir/1","/tmp/convert_1/test_file.docx")
-            shutil.rmtree("/tmp/pdf_dir/1")
+            with patch("os.path.isfile",return_value=False):
+                f = FileInstance(
+                    id=1,
+                    uri="s3://test_file.docx",
+                    json=data,
+                    readable=True
+                )
+                res = f.send_file("test_file.docx",True,"application/vnd.openxmlformats-officedocument.wordprocessingml.document",False,None,False,True)
+                mock_convert.assert_called_with("/var/tmp/pdf_dir/1","/var/tmp/convert_1/test_file.docx")
+                shutil.rmtree("/var/tmp/pdf_dir/1")
+
+def test_fileinstance_send_file_s3_path1(app, db, dummy_location,dummy_s3_location,mocker):
+    """Test file instance send file."""
+    f = FileInstance.create()
+    # File not readable
+    pytest.raises(FileInstanceUnreadableError, f.send_file)
+
+    # Write data
+    data = b("test file instance set contents")
+    f.set_contents(BytesIO(data), default_location=dummy_location.uri)
+    db.session.commit()
+
+    # Send data
+    with app.test_request_context():
+        res = f.send_file('test.txt')
+        assert int(res.headers['Content-Length']) == len(data)
+
+    data = {'url': {'url': 'https://test_server/record/1/files/test_file.docx'}, 'date': [{'dateType': 'Available', 'dateValue': '2023-04-06'}], 'format': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'filename': 'test_file.docx', 'filesize': [{'value': '31 KB'}], 'mimetype': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'accessrole': 'open_access', 'version_id': '174af28a-2a26-428c-ae90-1fae1dffd21c', 'displaytype': 'preview'}
+    def mock_convert(pdf_dir,target_uri):
+        if os.path.exists(pdf_dir):
+            shutil.rmtree(pdf_dir)
+        os.makedirs(pdf_dir)
+        with open(target_uri,"rb") as f:
+            data = f.read()
+        with open(pdf_dir+"/data.pdf","wb") as f:
+            f.write(data)
+
+    mocker.patch("invenio_files_rest.storage.pyfs.PyFSFileStorage.open",return_value=open(os.path.join(os.path.dirname(__file__),"data/test_file.docx"),"rb"))
+    with app.test_request_context("/record/1/files/test_file.docx"):
+        with patch("invenio_files_rest.models.convert_to",side_effect=mock_convert) as mock_convert:
+            with patch("os.path.isfile",return_value=False):
+                f = FileInstance(
+                    id=1,
+                    uri="https://s3.amazonaws.com/bucket_name/test_file.docx",
+                    json=data,
+                    readable=True
+                )
+                res = f.send_file("test_file.docx",True,"application/vnd.openxmlformats-officedocument.wordprocessingml.document",False,None,False,True)
+                mock_convert.assert_called_with("/var/tmp/pdf_dir/1","/var/tmp/convert_1/test_file.docx")
+                shutil.rmtree("/var/tmp/pdf_dir/1")
+
+def test_fileinstance_send_file_s3_path2(app, db, dummy_location,dummy_s3_location,mocker):
+    """Test file instance send file."""
+    f = FileInstance.create()
+    # File not readable
+    pytest.raises(FileInstanceUnreadableError, f.send_file)
+
+    # Write data
+    data = b("test file instance set contents")
+    f.set_contents(BytesIO(data), default_location=dummy_location.uri)
+    db.session.commit()
+
+    # Send data
+    with app.test_request_context():
+        res = f.send_file('test.txt')
+        assert int(res.headers['Content-Length']) == len(data)
+
+    data = {'url': {'url': 'https://test_server/record/1/files/test_file.docx'}, 'date': [{'dateType': 'Available', 'dateValue': '2023-04-06'}], 'format': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'filename': 'test_file.docx', 'filesize': [{'value': '31 KB'}], 'mimetype': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'accessrole': 'open_access', 'version_id': '174af28a-2a26-428c-ae90-1fae1dffd21c', 'displaytype': 'preview'}
+    def mock_convert(pdf_dir,target_uri):
+        if os.path.exists(pdf_dir):
+            shutil.rmtree(pdf_dir)
+        os.makedirs(pdf_dir)
+        with open(target_uri,"rb") as f:
+            data = f.read()
+        with open(pdf_dir+"/data.pdf","wb") as f:
+            f.write(data)
+
+    mocker.patch("invenio_files_rest.storage.pyfs.PyFSFileStorage.open",return_value=open(os.path.join(os.path.dirname(__file__),"data/test_file.docx"),"rb"))
+    with app.test_request_context("/record/1/files/test_file.docx"):
+        with patch("invenio_files_rest.models.convert_to",side_effect=mock_convert) as mock_convert:
+            with patch("os.path.isfile",return_value=False):
+                f = FileInstance(
+                    id=1,
+                    uri="https://bucket_name.s3.us-east-1.amazonaws.com/test_file.docx",
+                    json=data,
+                    readable=True
+                )
+                res = f.send_file("test_file.docx",True,"application/vnd.openxmlformats-officedocument.wordprocessingml.document",False,None,False,True)
+                mock_convert.assert_called_with("/var/tmp/pdf_dir/1","/var/tmp/convert_1/test_file.docx")
+                shutil.rmtree("/var/tmp/pdf_dir/1")
+
 
 
 def test_fileinstance_validation(app, db, dummy_location):
@@ -1012,3 +1094,9 @@ def test_object_version_tags(app, db, dummy_location):
     ObjectVersion.query.delete()
     db.session.commit()
     assert ObjectVersionTag.query.count() == 0
+
+def test_get_location_all(app, db, dummy_location):
+    """Test validating the FileInstance."""
+    f = FileInstance.create()
+    locations = f.get_location_all()
+    assert locations == [dummy_location]

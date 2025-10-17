@@ -43,6 +43,7 @@ from invenio_files_rest.permissions import bucket_listmultiparts_all, \
     object_read_version_all
 from invenio_files_rest.storage import PyFSFileStorage
 from invenio_files_rest.views import blueprint
+from weko_logging.audit import WekoLoggingUserActivity
 
 
 @compiles(DropTable, 'postgresql')
@@ -77,7 +78,7 @@ def base_app():
         #     'SQLALCHEMY_DATABASE_URI',
         #     'sqlite:///:memory:'),
         SQLALCHEMY_DATABASE_URI=os.getenv('SQLALCHEMY_DATABASE_URI',
-                                           'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest'),       
+                                           'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest'),
         WTF_CSRF_ENABLED=False,
         SERVER_NAME='invenio.org',
         SECURITY_PASSWORD_SALT='TEST_SECURITY_PASSWORD_SALT',
@@ -94,6 +95,7 @@ def base_app():
     Babel(app_)
     Menu(app_)
     InvenioPreviewer(app_)
+    WekoLoggingUserActivity(app_)
 
     return app_
 
@@ -161,7 +163,7 @@ def dummy_s3_location(db):
     db.session.add(loc)
     db.session.commit()
     yield loc
-    
+
     shutil.rmtree(tmppath)
 
 

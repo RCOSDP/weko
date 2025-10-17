@@ -1,4 +1,5 @@
 import pytest
+from mock import patch
 
 from lxml import etree
 
@@ -91,12 +92,16 @@ def test_bibtexfields(app,db,db_oaischema):
 #     def __get_item_id(root):
 #     def __get_dates(dates):
 #     def __get_identifier(identifier_type, identifier_types_data):
+
 # .tox/c1/bin/pytest --cov=weko_schema_ui tests/test_WekoBibTexSerializer.py::test_wekobibtexserializer -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-schema-ui/.tox/c1/tmp
-def test_wekobibtexserializer(app, records, db_oaischema, itemtypes):
+def test_wekobibtexserializer(app, records, db_oaischema, itemtypes, esindex):
     from weko_schema_ui.serializers.WekoBibTexSerializer import WekoBibTexSerializer
     from weko_schema_ui.serializers.wekoxml import WekoXMLSerializer
 
     app.config['WEKO_SCHEMA_JPCOAR_V1_SCHEMA_NAME'] = 'jpcoar_mapping'
+
+    jp_dcndl = '{http://ndl.go.jp/dcndl/terms/}'
+    jp_datacite = '{https://schema.datacite.org/meta/kernel-4/}'
 
     indexer, results = records
     record = results[0]['record']
@@ -105,6 +110,94 @@ def test_wekobibtexserializer(app, records, db_oaischema, itemtypes):
     assert isinstance(serializer,WekoBibTexSerializer)
     ret = serializer.serialize(pid,record)
     assert ret=='@misc{,\n month = {},\n year = {}\n}\n\n'
+
+    # datetype = Available
+    serializer = WekoBibTexSerializer()
+    assert isinstance(serializer,WekoBibTexSerializer)
+    with patch.dict('weko_schema_ui.config.WEKO_SCHEMA_DATE_DATETYPE_MAPPING', {'dataset': 'Available'}):
+        ret = serializer.serialize(pid,record)
+        assert ret==(
+            '@misc{oai:weko3.example.org:00000001,\n'
+            ' author = {情報, 太郎 and Joho, Taro and 情報, 太郎 and Joho, Taro and 情報, 太郎 and Joho, Taro},\n'
+            ' month = {Jun},\n'
+            ' note = {Description\n'
+            'Description<br/>Description, 概要\n'
+            '概要\n'
+            '概要\n'
+            '概要},\n'
+            ' title = {ja_conference '
+            'paperITEM00000009(public_open_access_open_access_simple)},\n'
+            ' year = {2021},\n'
+            ' yomi = {ジョウホウ, タロウ and ジョウホウ, タロウ and ジョウホウ, タロウ}\n'
+            '}\n'
+            '\n'
+        )
+
+    # set date_priority_mapping
+    serializer = WekoBibTexSerializer()
+    assert isinstance(serializer,WekoBibTexSerializer)
+    serializer.date_priority_mapping = {'dataset': [jp_dcndl + 'dateGranted']}
+    ret = serializer.serialize(pid,record)
+    assert ret==(
+        '@misc{oai:weko3.example.org:00000001,\n'
+        ' author = {情報, 太郎 and Joho, Taro and 情報, 太郎 and Joho, Taro and 情報, 太郎 and Joho, Taro},\n'
+        ' month = {Jun},\n'
+        ' note = {Description\n'
+        'Description<br/>Description, 概要\n'
+        '概要\n'
+        '概要\n'
+        '概要},\n'
+        ' title = {ja_conference '
+        'paperITEM00000009(public_open_access_open_access_simple)},\n'
+        ' year = {2021},\n'
+        ' yomi = {ジョウホウ, タロウ and ジョウホウ, タロウ and ジョウホウ, タロウ}\n'
+        '}\n'
+        '\n'
+    )
+
+    # get pubdate
+    serializer = WekoBibTexSerializer()
+    assert isinstance(serializer,WekoBibTexSerializer)
+    with patch.dict('weko_schema_ui.config.WEKO_SCHEMA_DATE_DATETYPE_MAPPING', {'dataset': 'XXXXX'}):
+        ret = serializer.serialize(pid,record)
+        assert ret==(
+            '@misc{oai:weko3.example.org:00000001,\n'
+            ' author = {情報, 太郎 and Joho, Taro and 情報, 太郎 and Joho, Taro and 情報, 太郎 and Joho, Taro},\n'
+            ' month = {Aug},\n'
+            ' note = {Description\n'
+            'Description<br/>Description, 概要\n'
+            '概要\n'
+            '概要\n'
+            '概要},\n'
+            ' title = {ja_conference '
+            'paperITEM00000009(public_open_access_open_access_simple)},\n'
+            ' year = {2021},\n'
+            ' yomi = {ジョウホウ, タロウ and ジョウホウ, タロウ and ジョウホウ, タロウ}\n'
+            '}\n'
+            '\n'
+        )
+
+    # Duplicate Dates
+    serializer = WekoBibTexSerializer()
+    assert isinstance(serializer,WekoBibTexSerializer)
+    serializer.base_date_priority = [jp_datacite + 'date']
+    ret = serializer.serialize(pid,record)
+    assert ret==(
+        '@misc{oai:weko3.example.org:00000001,\n'
+        ' author = {情報, 太郎 and Joho, Taro and 情報, 太郎 and Joho, Taro and 情報, 太郎 and Joho, Taro},\n'
+        ' month = {Jun, Jun, },\n'
+        ' note = {Description\n'
+        'Description<br/>Description, 概要\n'
+        '概要\n'
+        '概要\n'
+        '概要},\n'
+        ' title = {ja_conference '
+        'paperITEM00000009(public_open_access_open_access_simple)},\n'
+        ' year = {2021, 2021, 2021},\n'
+        ' yomi = {ジョウホウ, タロウ and ジョウホウ, タロウ and ジョウホウ, タロウ}\n'
+        '}\n'
+        '\n'
+    )
 
     record = results[1]['record']
     pid = results[1]['recid']

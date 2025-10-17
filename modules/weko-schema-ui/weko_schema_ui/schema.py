@@ -227,7 +227,7 @@ class SchemaTree:
 
         """
         # current_app.logger.debug("record: {0}".format(record))
-        # record: {'links': {}, 'updated': '2021-12-04T11:56:48.821270+00:00', 'created': '2021-12-04T11:56:36.873504+00:00', 'metadata': {'_oai': {'id': 'oai:weko3.example.org:00000003', 'sets': ['1638615863439']}, 'path': ['1638615863439'], 'owner': '1', 'recid': '3', 'title': ['dd'], 'pubdate': {'attribute_name': 'PubDate', 'attribute_value': '2021-12-01'}, '_buckets': {'deposit': 'f60ad379-930c-4808-aee9-3454c707c2ed'}, '_deposit': {'id': '3', 'pid': {'type': 'depid', 'value': '3', 'revision_id': 0}, 'owner': '1', 'owners': [1], 'status': 'published', 'created_by': 1, 'owners_ext': {'email': 'wekosoftware@nii.ac.jp', 'username': '', 'displayname': ''}}, 'item_title': 'dd', 'author_link': [], 'item_type_id': '15', 'publish_date': '2021-12-01', 'publish_status': '0', 'weko_shared_id': -1, 'item_1617186331708': {'attribute_name': 'Title', 'attribute_value_mlt': [{'subitem_1551255647225': 'dd', 'subitem_1551255648112': 'ja'}]}, 'item_1617258105262': {'attribute_name': 'Resource Type', 'attribute_value_mlt': [{'resourceuri': 'http://purl.org/coar/resource_type/c_5794', 'resourcetype': 'conference paper'}]}, 'relation_version_is_last': True, 'json': {'_source': {'_item_metadata': {'system_identifier_doi': {'attribute_name': 'Identifier', 'attribute_value_mlt': [{'subitem_systemidt_identifier': 'https://localhost:8443/records/3', 'subitem_systemidt_identifier_type': 'URI'}]}}}}, 'system_identifier_doi': {'attribute_name': 'Identifier', 'attribute_value_mlt': [{'subitem_systemidt_identifier': 'https://localhost:8443/records/3', 'subitem_systemidt_identifier_type': 'URI'}]}}}
+        # record: {'links': {}, 'updated': '2021-12-04T11:56:48.821270+00:00', 'created': '2021-12-04T11:56:36.873504+00:00', 'metadata': {'_oai': {'id': 'oai:weko3.example.org:00000003', 'sets': ['1638615863439']}, 'path': ['1638615863439'], 'owner': '1', 'recid': '3', 'title': ['dd'], 'pubdate': {'attribute_name': 'PubDate', 'attribute_value': '2021-12-01'}, '_buckets': {'deposit': 'f60ad379-930c-4808-aee9-3454c707c2ed'}, '_deposit': {'id': '3', 'pid': {'type': 'depid', 'value': '3', 'revision_id': 0}, 'owner': '1', 'owners': [1], 'status': 'published', 'created_by': 1, 'owners_ext': {'email': 'wekosoftware@nii.ac.jp', 'username': '', 'displayname': ''}}, 'item_title': 'dd', 'author_link': [], 'item_type_id': '15', 'publish_date': '2021-12-01', 'publish_status': '0', 'weko_shared_ids': [], 'item_1617186331708': {'attribute_name': 'Title', 'attribute_value_mlt': [{'subitem_1551255647225': 'dd', 'subitem_1551255648112': 'ja'}]}, 'item_1617258105262': {'attribute_name': 'Resource Type', 'attribute_value_mlt': [{'resourceuri': 'http://purl.org/coar/resource_type/c_5794', 'resourcetype': 'conference paper'}]}, 'relation_version_is_last': True, 'json': {'_source': {'_item_metadata': {'system_identifier_doi': {'attribute_name': 'Identifier', 'attribute_value_mlt': [{'subitem_systemidt_identifier': 'https://localhost:8443/records/3', 'subitem_systemidt_identifier_type': 'URI'}]}}}}, 'system_identifier_doi': {'attribute_name': 'Identifier', 'attribute_value_mlt': [{'subitem_systemidt_identifier': 'https://localhost:8443/records/3', 'subitem_systemidt_identifier_type': 'URI'}]}}}
         # current_app.logger.debug("schema_name: {0}".format(schema_name))
         # schema_name: jpcoar_mapping
         
@@ -304,10 +304,11 @@ class SchemaTree:
                     mp = mjson.dumps()
                     if isinstance(mp, dict):
                         for k, v in mp.items():
-                            if k in self._record:
-                                self._record[k].update({self._schema_name: v.get(self._schema_name)})
-                            else:
-                                self._record[k] = {self._schema_name: v.get(self._schema_name)}
+                            if isinstance(v, dict):
+                                if k in self._record:
+                                    self._record[k].update({self._schema_name: v.get(self._schema_name)})
+                                else:
+                                    self._record[k] = {self._schema_name: v.get(self._schema_name)}
                 return _id
 
 
@@ -979,7 +980,7 @@ class SchemaTree:
                     'RESOURCE_TYPE_URI'][new_type]
 
         def replace_nameIdentifierScheme_for_jpcoar_v1(atr_vm_item):
-            if 'nameIdentifiers' in atr_vm_item and atr_vm_item['nameIdentifiers'] is not None:
+            if 'nameIdentifiers' in atr_vm_item and isinstance(atr_vm_item['nameIdentifiers'], dict):
                 for idx,val in enumerate(atr_vm_item['nameIdentifiers']):
                     if 'nameIdentifierScheme' in val and val['nameIdentifierScheme'] in current_app.config['WEKO_SCHEMA_JPCOAR_V1_NAMEIDSCHEME_REPLACE']:
                         new_type = current_app.config[
@@ -987,12 +988,12 @@ class SchemaTree:
                         val['nameIdentifierScheme'] = new_type
 
         def replace_nameIdentifierScheme_for_jpcoar_v2(atr_vm_item):
-            if 'nameIdentifiers' in atr_vm_item and atr_vm_item['nameIdentifiers'] is not None:
+            if 'nameIdentifiers' in atr_vm_item and isinstance(atr_vm_item['nameIdentifiers'], dict):
                 for idx,val in enumerate(atr_vm_item['nameIdentifiers']):
-                    if 'nameIdentifierScheme' in val and val['nameIdentifierScheme'] in current_app.config['WEKO_SCHEMA_JPCOAR_V2_NAMEIDSCHEME_REPLACE']:
+                    if 'nameIdentifier' in val and val['nameIdentifier'] in current_app.config['WEKO_SCHEMA_JPCOAR_V2_NAMEIDSCHEME_REPLACE']:
                         new_type = current_app.config[
-                        'WEKO_SCHEMA_JPCOAR_V2_NAMEIDSCHEME_REPLACE'][val['nameIdentifierScheme']]
-                        val['nameIdentifierScheme'] = new_type
+                        'WEKO_SCHEMA_JPCOAR_V2_NAMEIDSCHEME_REPLACE'][val['nameIdentifier']]
+                        val['nameIdentifier'] = new_type
                     
                 
 
@@ -1046,11 +1047,8 @@ class SchemaTree:
                     else:
                         # current_app.logger.error(item_type.schema["properties"][key_item_parent])
                         atr_name = ""
-                        if self._item_type and self._item_type.schema:
-                            if "properties" in self._item_type.schema:
-                                if key_item_parent in self._item_type.schema.get("properties"):
-                                    if "title" in  self._item_type.schema.get("properties").get(key_item_parent):
-                                        atr_name = self._item_type.schema["properties"][key_item_parent]["title"]
+                        if self._item_type and self._item_type.schema and "title" in self._item_type.schema.get("properties", {}).get(key_item_parent, {}):
+                             atr_name = self._item_type.schema["properties"][key_item_parent]["title"]
                         vlst_child = get_mapping_value(mpdic, {},
                                                            key_item_parent,
                                                            atr_name)

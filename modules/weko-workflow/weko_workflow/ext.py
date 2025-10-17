@@ -20,11 +20,7 @@
 
 """Flask extension for weko-workflow."""
 
-from weko_deposit.signals import item_created
-
 from . import config
-from .sessions import upt_activity_item
-from .views import depositactivity_blueprint, workflow_blueprint
 
 
 class WekoWorkflow(object):
@@ -43,6 +39,9 @@ class WekoWorkflow(object):
 
         :param app: The Flask application.
         """
+        from weko_deposit.signals import item_created
+        from .sessions import upt_activity_item
+        from .views import depositactivity_blueprint, workflow_blueprint
         self.init_config(app)
         item_created.connect(upt_activity_item, app)
         app.register_blueprint(workflow_blueprint)
@@ -62,4 +61,43 @@ class WekoWorkflow(object):
             )
         for k in dir(config):
             if k.startswith('WEKO_WORKFLOW_'):
+                app.config.setdefault(k, getattr(config, k))
+
+
+class WekoWorkflowREST(object):
+    """Workflow Rest Obj."""
+
+    def __init__(self, app=None):
+        """
+        Extension initialization.
+
+        :param app: An instance of :class:`flask.Flask`.
+        """
+        if app:
+            self.init_app(app)
+
+    def init_app(self, app):
+        """
+        Flask application initialization.
+        Initialize the REST endpoints.
+        Connect all signals if `DEPOSIT_REGISTER_SIGNALS` is True.
+
+        :param app: An instance of :class:`flask.Flask`.
+        """
+        from .rest import create_blueprint
+        self.init_config(app)
+        blueprint = create_blueprint(app, app.config['WEKO_WORKFLOW_REST_ENDPOINTS'])
+        app.register_blueprint(blueprint)
+        app.extensions['weko_workflow_rest'] = self
+
+    def init_config(self, app):
+        """
+        Initialize configuration.
+
+        :param app: An instance of :class:`flask.Flask`.
+        """
+        for k in dir(config):
+            if k.startswith('WEKO_WORKFLOW_'):
+                app.config.setdefault(k, getattr(config, k))
+            if k == 'WEKO_ITEMS_UI_MULTIPLE_APPROVALS':
                 app.config.setdefault(k, getattr(config, k))

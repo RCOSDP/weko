@@ -24,6 +24,7 @@ click>=6.7
 cookiecutter==1.6.0
 counter-robots==2018.6
 cryptography==2.1.4
+captcha==0.4
 datacite==1.0.1
 decorator==4.1.2
 dictdiffer==0.7.0
@@ -33,7 +34,7 @@ elasticsearch==6.1.1
 elasticsearch-dsl==6.4.0
 entrypoints==0.2.3
 Flask==1.0.4
-Flask-Admin==1.5.3
+flask-admin==1.5.4
 Flask-Alembic==2.0.1
 Flask-Assets==0.12
 Flask-BabelEx==0.9.4
@@ -103,6 +104,7 @@ parso==0.1.0
 passlib==1.7.1
 pexpect==4.3.0
 pickleshare==0.7.4
+Pillow==8.1.2
 pluggy>=0.11.0<1.0.0
 poyo==0.4.1
 prompt-toolkit==1.0.15
@@ -111,10 +113,10 @@ ptyprocess==0.5.2
 pycparser==2.18
 Pygments==2.2.0
 PyJWT==1.5.3
-#PyPDF2==1.26.0
--e git+https://github.com/RCOSDP/PyPDF2.git@fix/nii#egg=PyPDF2
+pypdf==4.3.1
+pypdf==5.0.1
 pyPEG2==2.15.2
-python-dateutil==2.6.1
+python-dateutil==2.8.2
 python-editor==1.0.3
 python-geoip==1.2
 pytz==2017.3
@@ -122,6 +124,7 @@ pyzmq==17.0.0
 redis==2.10.6
 requests==2.18.4
 requests-oauthlib==1.1.0
+rocrate==0.6.0
 Sickle==0.6.4
 simplegeneric==0.8.1
 simplejson==3.12.0
@@ -161,7 +164,6 @@ boto3==1.7.84
 s3fs==0.1.6
 #fpdf==1.7.2
 -e git+https://github.com/RCOSDP/pyfpdf.git@fix/nii#egg=fpdf
-Pillow==5.4.1
 Sickle==0.6.4
 Sphinx==1.8.4
 pytest>=4.2.0
@@ -172,7 +174,7 @@ xmltodict==0.12.0
 ftfy==4.4.3
 attrs==17.4.0
 b2handle==1.1.2
-resync==1.0.9
+resync==2.0.1
 email-validator==1.0.5
 iiif-prezi==0.3.0
 netaddr==0.8.0

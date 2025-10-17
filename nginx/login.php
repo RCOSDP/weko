@@ -2,7 +2,20 @@
 
 $base =  $_SERVER['REQUEST_SCHEME']."://".$_SERVER['SERVER_NAME'];
 
-  $url = $base."/weko/shib/login?next=%2F";
+// ERROR
+if(!$_SERVER['HTTP_WEKOSOCIETYAFFILIATION'] && $_SERVER['NO_CHECK_WEKOSOCIETYAFFILIATION'] != "TRUE"){
+  echo "<script type='text/javascript'>
+  window.alert('Permission is invalid');
+  window.location.href='".$base."';</script>";
+  //header("HTTP/1.1 403 Forbidden");
+  //header("Location: ".$base);
+}else{
+  if(isset($_REQUEST['next'])){
+    $next=$_REQUEST['next'];
+  }else{
+    $next='%2F';
+  }
+  $url = $base."/weko/shib/login?next=".$next;
   $curl = curl_init();
   $post_args=[];
   $post_args['SHIB_ATTR_USER_NAME']=$_SERVER['mail'];
@@ -35,6 +48,7 @@ $base =  $_SERVER['REQUEST_SCHEME']."://".$_SERVER['SERVER_NAME'];
   if (CURLE_OK !== $errno) {
         throw new RuntimeException($error, $errno);
   }
-
+  header("HTTP/1.1 302 Found");
   header("Location: ".$base.$result);
+}
 ?>

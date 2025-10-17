@@ -1,0 +1,269 @@
+{
+    "@context": "https://raw.githubusercontent.com/ddbj/rdf/main/context/bioproject.jsonld",
+    "properties": {
+        "Project": {
+            "Project": {
+                "ProjectID": {
+                    "ArchiveID": {
+                        "accession": "PRJNA1139741",
+                        "archive": "NCBI",
+                        "id": "1139741"
+                    },
+                    "CenterID": {
+                        "center": "GEO",
+                        "id": "0",
+                        "content": "GSE272976"
+                    }
+                },
+                "ProjectDescr": {
+                    "Name": "Molecular organization of autonomic, respiratory, and spinally-projecting neurons in the mouse ventrolateral medulla",
+                    "Title": "Molecular organization of autonomic, respiratory, and spinally-projecting neurons in the mouse ventrolateral medulla",
+                    "Description": "The ventrolateral medulla (VLM) is a crucial region in the brain for visceral and somatic control, serving as a significant source of synaptic input to the spinal cord. Experimental studies have shown that gene expression in individual VLM neurons is predictive of their function. However, the molecular and cellular organization of the VLM has remained uncertain. This study aimed to create a comprehensive dataset of VLM cells using single-cell RNA sequencing in male and female mice. The dataset was enriched with targeted sequencing of spinally-projecting and adrenergic/noradrenergic VLM neurons. Based on differentially expressed genes, the resulting dataset of 114,805 VLM cells identifies 23 subtypes of neurons, excluding those in the inferior olive, and 5 subtypes of astrocytes. Spinally-projecting neurons were found to be abundant in 7 subtypes of neurons, which were validated through in-situ hybridization. These subtypes included adrenergic/noradrenergic neurons, serotonergic neurons, and neurons expressing gene markers associated with pre-motor neurons in the ventromedial medulla. Further analysis of adrenergic/noradrenergic neurons and serotonergic neurons identified 9 and 6 subtypes, respectively, within each class of monoaminergic neurons. Marker genes that identify the neural network responsible for breathing were concentrated in 2 subtypes of neurons, delineated from each other by markers for excitatory and inhibitory neurons. These datasets are available for public download and for analysis with a user friendly interface. Collectively, this study provides a fine-scale molecular identification of cells in the VLM, forming the foundation for a better understanding of the VLM's role in vital functions and motor control.\rOverall design: We profiled gene expression in single cell nuclei of the adult male and female mouse ventrolateral medulla using the 10X Chromium Single Cell 3' Gene Expression system, in some cases after sorting cell nuclei labeled by Dbh-Cre activity (A5, C1) or via a retrograde AAV-Cre injected into the spinal cord (SpinalTRAPpos)",
+                    "ExternalLink": {
+                        "label": "",
+                        "dbXREF": {
+                            "db": "GEO",
+                            "ID": "GSE272976"
+                        }
+                    },
+                    "Grant": [
+                        {
+                            "GrantId": "R01 HL148004",
+                            "Title": "Role of presympathetic neurons of the hindbrain in cardiovascular control",
+                            "Agency": {
+                                "abbr": "National Heart, Lung, and Blood Institute",
+                                "content": "National Heart, Lung, and Blood Institute"
+                            },
+                            "PI": {
+                                "affil": "UNIVERSITY OF VIRGINIA CHARLOTTESVILLE",
+                                "auth": "era",
+                                "userid": "11315910",
+                                "Last": "Abbott",
+                                "Given": "Stephen"
+                            }
+                        },
+                        {
+                            "GrantId": "R01 HL153916",
+                            "Title": "Molecular and Functional Taxonomy of Cardiovagal Neurons",
+                            "Agency": {
+                                "abbr": "National Heart, Lung, and Blood Institute",
+                                "content": "National Heart, Lung, and Blood Institute"
+                            },
+                            "PI": {
+                                "affil": "UNIVERSITY OF VIRGINIA CHARLOTTESVILLE",
+                                "auth": "era",
+                                "userid": "11685199",
+                                "Last": "Campbell",
+                                "Given": "John N"
+                            }
+                        }
+                    ],
+                    "Publication": {
+                        "date": "2024-06-26T00:00:00Z",
+                        "id": "38918066",
+                        "status": "ePublished",
+                        "Reference": "38918066",
+                        "DbType": "ePubmed"
+                    },
+                    "Relevance": {
+                        "ModelOrganism": "Yes"
+                    }
+                },
+                "ProjectType": {
+                    "ProjectTypeSubmission": {
+                        "Target": {
+                            "capture": "eWhole",
+                            "material": "eTranscriptome",
+                            "sample_scope": "eMultiisolate",
+                            "Organism": {
+                                "species": "10090",
+                                "taxID": "10090",
+                                "OrganismName": "Mus musculus",
+                                "Supergroup": "eEukaryotes"
+                            }
+                        },
+                        "Method": {
+                            "method_type": "eSequencing"
+                        },
+                        "Objectives": {
+                            "Data": {
+                                "data_type": "eExpression"
+                            }
+                        },
+                        "ProjectDataTypeSet": {
+                            "DataType": "Transcriptome or Gene expression"
+                        }
+                    }
+                }
+            },
+            "Submission": {
+                "last_update": "2024-07-24",
+                "submission_id": "SUB14623870",
+                "submitted": "2024-07-24",
+                "Description": {
+                    "Organization": {
+                        "role": "owner",
+                        "type": "institute",
+                        "Name": {
+                            "content": "Biology, University of Virginia"
+                        },
+                        "Contact": {
+                            "email": "jnc4e@virginia.edu",
+                            "Address": {
+                                "Street": "485 MCCORMICK RD, GILMER HALL ROOM 229 PO BOX 400328",
+                                "City": "Charlottesville",
+                                "Sub": "VA",
+                                "Country": "USA"
+                            },
+                            "Name": {
+                                "First": "John",
+                                "Last": "Campbell"
+                            }
+                        }
+                    },
+                    "Access": "public"
+                }
+            },
+            "ProjectLinks": {
+                "Link": {
+                    "ProjectIDRef": {
+                        "archive": "NCBI",
+                        "id": "1139741",
+                        "accession": "PRJNA1139741"
+                    },
+                    "Hierarchical": {
+                        "type": "TopSingle",
+                        "MemberID": {
+                            "archive": "NCBI",
+                            "id": "9559",
+                            "accession": "PRJNA9559"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "identifier": "PRJNA1139741",
+    "distribution": {
+        "contentUrl": "https://ddbj.nig.ac.jp/resource/bioproject/PRJNA1139741",
+        "encodingFormat": "JSON",
+        "type": "TEST-TYPE"
+    },
+    "isPartOf": "BioProject",
+    "type": "bioproject",
+    "objectType": "BioProject",
+    "name": "TEST-NAME",
+    "url": "https://ddbj.nig.ac.jp/search/entry/bioproject/PRJNA1139741",
+    "organism": {
+        "identifier": "10090",
+        "name": "Mus musculus"
+    },
+    "title": "Molecular organization of autonomic, respiratory, and spinally-projecting neurons in the mouse ventrolateral medulla",
+    "description": "The ventrolateral medulla (VLM) is a crucial region in the brain for visceral and somatic control",
+    "organization": [
+     {
+       "name": "Baylor College of Medicine",
+       "role": "owner",
+       "organizationType": "center",
+       "abbreviation": "Baylor College of Medicine",
+       "url": "http://cropgenome.project.affrc.go.jp/kenkyu/koubo/sfc.html"
+     }
+    ],
+    "publication": [
+        {
+          "date": "2024-06-26T00:00:00Z",
+          "id": "38918066",
+          "status": "ePublished",
+          "Reference": "38918066",
+          "DbType": "ePubmed"
+        }
+    ],
+    "grant": [
+      {
+            "id": "R01 HL148004",
+            "title": "Role of presympathetic neurons of the hindbrain in cardiovascular control",
+            "agency": {
+                "abbreviation": "National Heart, Lung, and Blood Institute",
+                "name": "National Heart, Lung, and Blood Institute"
+            }
+      },
+      {
+        "id": "R01 HL153916",
+        "title": "Molecular and Functional Taxonomy of Cardiovagal Neurons",
+        "agency": {
+            "abbreviation": "National Heart, Lung, and Blood Institute",
+            "name": "National Heart, Lung, and Blood Institute"
+        }
+  }
+    ],
+    "externalLink": [
+      {
+        "label": "Genomics-based Technology for Agricultural Improvement",
+        "URL": "http://cropgenome.project.affrc.go.jp/kenkyu/koubo/sfc.html",
+        "type": "TEST-TYPE"
+      }
+    ],
+    "download": "TEST-DOWNLOAD",
+    "status": "public",
+    "visibility": "unrestricted-access",
+    "dateCreated": "2024-07-24",
+    "dateModified": "2024-07-24",
+    "datePublished": "2024-08-06T00:00:00Z",
+  "dbXrefs": [
+    {
+      "identifier": "PRJNA743060",
+      "type": "bioproject",
+      "url": "https://ddbj.nig.ac.jp/resource/bioproject/PRJNA743060"
+    },
+    {
+      "identifier": "PRJNA743045",
+      "type": "bioproject",
+      "url": "https://ddbj.nig.ac.jp/resource/bioproject/PRJNA743045"
+    },
+    {
+      "identifier": "SRA1253724",
+      "type": "sra-submission",
+      "url": "https://ddbj.nig.ac.jp/resource/sra-submission/SRA1253724"
+    },
+    {
+      "identifier": "SRA1253761",
+      "type": "sra-submission",
+      "url": "https://ddbj.nig.ac.jp/resource/sra-submission/SRA1253761"
+    },
+    {
+      "identifier": "SRX11329880",
+      "type": "sra-experiment",
+      "url": "https://ddbj.nig.ac.jp/resource/sra-experiment/SRX11329880"
+    },
+    {
+      "identifier": "SRX11331026",
+      "type": "sra-experiment",
+      "url": "https://ddbj.nig.ac.jp/resource/sra-experiment/SRX11331026"
+    },
+    {
+      "identifier": "SRR15017940",
+      "type": "sra-run",
+      "url": "https://ddbj.nig.ac.jp/resource/sra-run/SRR15017940"
+    },
+    {
+      "identifier": "SRR15019116",
+      "type": "sra-run",
+      "url": "https://ddbj.nig.ac.jp/resource/sra-run/SRR15019116"
+    },
+    {
+      "identifier": "SRP326529",
+      "type": "sra-study",
+      "url": "https://ddbj.nig.ac.jp/resource/sra-study/SRP326529"
+    },
+    {
+      "identifier": "SRP326582",
+      "type": "sra-study",
+      "url": "https://ddbj.nig.ac.jp/resource/sra-study/SRP326582"
+    },
+    {
+      "identifier": "SRS9365947",
+      "type": "sra-sample",
+      "url": "https://ddbj.nig.ac.jp/resource/sra-sample/SRS9365947"
+    }
+  ]
+}

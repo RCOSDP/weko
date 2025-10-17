@@ -103,6 +103,8 @@ services:
             - /code/modules/weko-items-autofill/weko_items_autofill.egg-info
             - /code/modules/weko-sitemap/weko_sitemap.egg-info
             - /code/modules/invenio-iiif/invenio_iiif.egg-info
+            - /code/modules/weko-swordserver/weko_swordserver.egg-info
+            - /code/modules/weko-workspace/weko_workspace.egg-info
         user: invenio
         image: weko.stage_1:latest
     stage_2:

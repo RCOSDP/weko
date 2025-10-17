@@ -22,7 +22,6 @@
 
 from . import config
 
-
 class WekoAuthors(object):
     """weko-authors extension."""
 
@@ -53,6 +52,43 @@ class WekoAuthors(object):
                 'WEKO_AUTHORS_BASE_TEMPLATE',
                 app.config['BASE_PAGE_TEMPLATE'],
             )
+        for k in dir(config):
+            if k.startswith('WEKO_AUTHORS_'):
+                app.config.setdefault(k, getattr(config, k))
+
+
+class WekoAuthorsREST(object):
+    """weko-authors extension."""
+
+    def __init__(self, app=None):
+        """
+        Extension initialization.
+
+        :param app: An instance of :class:`flask.Flask`.
+        """
+        if app:
+            self.init_app(app)
+
+    def init_app(self, app):
+        """
+        Flask application initialization.
+        Initialize the REST endpoints.
+        Connect all signals if `DEPOSIT_REGISTER_SIGNALS` is True.
+
+        :param app: An instance of :class:`flask.Flask`.
+        """
+        self.init_config(app)
+        from .rest import create_blueprint
+        blueprint = create_blueprint(app.config['WEKO_AUTHORS_REST_ENDPOINTS'])
+        app.register_blueprint(blueprint)
+        app.extensions['weko_authors_rest'] = self
+
+    def init_config(self, app):
+        """
+        Initialize configuration.
+
+        :param app: An instance of :class:`flask.Flask`.
+        """
         for k in dir(config):
             if k.startswith('WEKO_AUTHORS_'):
                 app.config.setdefault(k, getattr(config, k))

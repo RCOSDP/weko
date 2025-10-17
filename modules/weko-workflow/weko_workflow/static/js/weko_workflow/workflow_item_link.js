@@ -40,7 +40,7 @@ require([
           itemtype_id: $('#item_type_' + workflow_id).data('itemtype-id')
       };
       if(community != ""){
-        post_uri = post_uri+"?community="+ community;
+        post_uri = post_uri+"?c="+ community;
       }
       $.ajax({
           url: post_uri,
@@ -575,7 +575,7 @@ function searchResItemLinkCtrl($scope, $rootScope, $http, $location) {
           let community_id = $('#community_id').text();
           let redirectUrl = "/workflow/activity/detail/" + $("#activity_id").text().trim();
           if (community_id) {
-            redirectUrl += '?community=' + community_id;
+            redirectUrl += '?c=' + community_id;
           }
           parent.document.location.href = redirectUrl;
         } else {

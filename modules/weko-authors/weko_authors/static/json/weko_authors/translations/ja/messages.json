@@ -87,6 +87,14 @@
         null,
         "E-Mailを追加"
     ],
+    "Author_Community": [
+        null,
+        "コミュニティ"
+    ],
+    "Author_Add_Community": [
+        null,
+        "コミュニティを追加"
+    ],
     "Author_Identifier": [
         null,
         "所属機関識別子"
@@ -102,6 +110,26 @@
     "Author_Add_Affiliation_Name": [
         null,
         "所属機関名を追加"
+    ],
+    "Author_Affiliation_Period": [
+        null,
+        "所属期間"
+    ],
+    "Author_Affiliation_Period_Start": [
+        null,
+        "開始日"
+    ],
+    "Author_Affiliation_Period_End": [
+        null,
+        "終了日"
+    ],
+    "Author_Add_Affiliation_Period": [
+        null,
+        "所属期間を追加"
+    ],
+    "Author_Force_Change_Flag":[
+        null,
+        "強制変更フラグ"
     ],
     "Author_Affiliation": [
         null,
@@ -183,6 +211,10 @@
         null,
         "URL"
     ],
+    "Prefix_Community": [
+        null,
+        "コミュニティ"
+    ],
     "Affiliation_Name": [
         null,
         "所属機関識別子"
@@ -194,5 +226,9 @@
     "Affiliation_URL": [
         null,
         "URL"
+    ],
+    "Affiliation_Community": [
+        null,
+        "コミュニティ"
     ]
 }

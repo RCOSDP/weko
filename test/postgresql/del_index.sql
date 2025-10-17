@@ -64,7 +64,8 @@ CREATE TABLE public.index (
     owner_user_id integer,
     item_custom_sort jsonb,
     biblio_flag boolean,
-    online_issn text
+    online_issn text,
+    is_deleted boolean DEFAULT false
 );
 
 

@@ -1,0 +1,142 @@
+{
+  "pubdate": "2024-11-15",
+  "path": [
+    1623632832836
+  ],
+  "publish_status": "public",
+  "files_info": [
+    {
+      "key": "item_1617604990215",
+      "items": [
+        {
+          "filesize": [
+            {
+              "value": "333"
+            }
+          ],
+          "version": "1.0",
+          "fileDate": [
+            {
+              "fileDateValue": "2023-01-18",
+              "fileDateType": "Created"
+            }
+          ],
+          "filename": "sample.rst",
+          "url": {
+            "url": "https://example.org/data/sample.rst",
+            "objectType": "fulltext",
+            "label": "data/sample.rst"
+          },
+          "format": "text/x-rst"
+        }
+      ]
+    }
+  ],
+  "item_1617604990215": [
+    {
+      "filesize": [
+        {
+          "value": "333"
+        }
+      ],
+      "version": "1.0",
+      "fileDate": [
+        {
+          "fileDateValue": "2023-01-18",
+          "fileDateType": "Created"
+        }
+      ],
+      "filename": "sample.rst",
+      "url": {
+        "url": "https://example.org/data/sample.rst",
+        "objectType": "fulltext",
+        "label": "data/sample.rst"
+      },
+      "format": "text/x-rst"
+    }
+  ],
+  "item_1617186331708": [
+    {
+      "subitem_1551255647225": "サンプルアイテム",
+      "subitem_1551255648112": "ja"
+    }
+  ],
+  "item_1617186419668": [
+    {
+      "creatorNames": [
+        {
+          "creatorName": "Egon Willighagen"
+        }
+      ]
+    }
+  ],
+  "item_1617258105262": {
+    "resourcetype": "other",
+    "resourceuri": ""
+  },
+  "item_1617349709064": [
+    {
+      "givenNames": [
+        {
+          "givenName": "Stian",
+          "givenNameLang": "en"
+        }
+      ],
+      "familyNames": [
+        {
+          "familyName": "Soiland-Reyes",
+          "familyNameLang": "en"
+        }
+      ],
+      "contributorType": "DataCurator",
+      "nameIdentifiers": [
+        {
+          "nameIdentifier": "https://orcid.org/0000-0002-1234-5679",
+          "nameIdentifierURI": "https://orcid.org/0000-0002-1234-5679",
+          "nameIdentifierScheme": "https://orcid.org"
+        }
+      ],
+      "contributorMails": [
+        {
+          "contributorMail": "contributor@example.org"
+        }
+      ],
+      "contributorNames": [
+        {
+          "lang": "en",
+          "contributorName": "Stian Soiland-Reyes"
+        }
+      ],
+      "contributorAffiliations": [
+        {
+          "contributorAffiliationNames": [
+            {
+              "contributorAffiliationName": "University of Manchester",
+              "contributorAffiliationNameLang": "en"
+            }
+          ],
+          "contributorAffiliationNameIdentifiers": [
+            {
+              "contributorAffiliationURI": "https://example.org/affiliation",
+              "contributorAffiliationScheme": "GRID",
+              "contributorAffiliationNameIdentifier": "https://example.org/affiliation"
+            }
+          ]
+        }
+      ],
+      "contributorAlternatives": [
+        {
+          "contributorAlternative": "Stian S.R.",
+          "contributorAlternativeLang": "en"
+        }
+      ]
+    }
+  ],
+  "item_1732599253716": "{'@id': './', 'author.@id': 'http://orcid.org/0000-0002-1825-0097', 'author.identifier.@id': 'https://orcid.org/0000-0002-1234-5678', 'author.identifier.scheme': 'https://orcid.org', 'author.identifier.uri': 'https://orcid.org/0000-0002-1234-5678', 'contributor[0].@id': 'http://orcid.org/0000-0002-1825-0085', 'contributor[0].affiliation.@id': '#affiliation', 'contributor[0].alternateName.@id': '#alternateName', 'contributor[0].contributorType': 'Researcher', 'contributor[0].familyName.@id': '#familyName', 'contributor[0].givenName.@id': '#givenName', 'contributor[0].nametype': 'Personal', 'creator.@id': 'http://orcid.org/0000-0002-1825-0097', 'creator.identifier.@id': 'https://orcid.org/0000-0002-1234-5678', 'creator.identifier.scheme': 'https://orcid.org', 'creator.identifier.uri': 'https://orcid.org/0000-0002-1234-5678', 'creator.name': 'Egon Willighagen', 'datePublished': '2024/11/15T01:59:48Z', 'accessMode': 'public', 'description': 'A simple example for swordserver.', 'isPartOf.@id': 'https://example.org/project/123', 'isPartOf.name': 'Project XYZ', 'isPartOf.sameAs': 'https://192.168.56.101/tree/index/1623632832836', 'hasPart[0].datetime.@id': '#datetime', 'hasPart[0].identifier.label': 'sample.rst', 'name': 'The Sample', 'Resource Type.@id': '#resourcetype'}",
+  "item_1617186385884": [
+    {
+      "subitem_1551255720400": "試しに作ってみた",
+      "subitem_1551255721061": "ja"
+    }
+  ]
+}

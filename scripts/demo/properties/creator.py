@@ -288,9 +288,6 @@ def schema(title="", multi_flag=multiple_flag):
                                             # "enum": [],
                                             # "currentEnum": [],
                                             "enum": config.AFFILIATION_SCHEME_VAL,
-                                            "currentEnum": (
-                                                config.AFFILIATION_SCHEME_VAL
-                                            )[1:],
                                             "title": "所属機関識別子Scheme",
                                             "title_i18n": {
                                                 "en": "Affiliation Name Identifier Scheme",
@@ -462,20 +459,20 @@ def form(
                             "type": "select",
                         },
                         {
-                            "key": "{}.nameIdentifiers[].nameIdentifierURI".format(key),
-                            "title": "作成者識別子URI",
-                            "title_i18n": {
-                                "en": "Creator Name Identifier URI",
-                                "ja": "作成者識別子URI",
-                            },
-                            "type": "text",
-                        },
-                        {
                             "key": "{}.nameIdentifiers[].nameIdentifier".format(key),
                             "title": "作成者識別子",
                             "title_i18n": {
                                 "en": "Creator Name Identifier",
                                 "ja": "作成者識別子",
+                            },
+                            "type": "text",
+                        },
+                        {
+                            "key": "{}.nameIdentifiers[].nameIdentifierURI".format(key),
+                            "title": "作成者識別子URI",
+                            "title_i18n": {
+                                "en": "Creator Name Identifier URI",
+                                "ja": "作成者識別子URI",
                             },
                             "type": "text",
                         },
@@ -591,17 +588,6 @@ def form(
                             "add": "New",
                             "items": [
                                 {
-                                    "key": "{}.creatorAffiliations[].affiliationNameIdentifiers[].affiliationNameIdentifier".format(
-                                        key
-                                    ),
-                                    "title": "所属機関識別子",
-                                    "title_i18n": {
-                                        "en": "Affiliation Name Identifier",
-                                        "ja": "所属機関識別子",
-                                    },
-                                    "type": "text",
-                                },
-                                {
                                     "key": "{}.creatorAffiliations[].affiliationNameIdentifiers[].affiliationNameIdentifierScheme".format(
                                         key
                                     ),
@@ -611,9 +597,21 @@ def form(
                                         "ja": "所属機関識別子Scheme",
                                     },
                                     "titleMap": make_title_map(
-                                        config.AFFILIATION_SCHEME_LBL,config.AFFILIATION_SCHEME_VAL
+                                        config.AFFILIATION_SCHEME_LBL,
+                                        config.AFFILIATION_SCHEME_VAL,
                                     ),
                                     "type": "select",
+                                },
+                                {
+                                    "key": "{}.creatorAffiliations[].affiliationNameIdentifiers[].affiliationNameIdentifier".format(
+                                        key
+                                    ),
+                                    "title": "所属機関識別子",
+                                    "title_i18n": {
+                                        "en": "Affiliation Name Identifier",
+                                        "ja": "所属機関識別子",
+                                    },
+                                    "type": "text",
                                 },
                                 {
                                     "key": "{}.creatorAffiliations[].affiliationNameIdentifiers[].affiliationNameIdentifierURI".format(

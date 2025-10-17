@@ -1,4 +1,6 @@
+from unittest.mock import patch
 from flask import url_for
+from invenio_communities.models import Community
 
 import datetime
 import pytest
@@ -14,19 +16,19 @@ from jinja2.exceptions import TemplateNotFound, TemplateSyntaxError
     "id, status_code",
     [
         (0, 403), # contributor
-        (1, 403), # repoadmin
+        (1, 200), # repoadmin
         (2, 200), # sysadmin
-        (3, 403), # comadmin
+        (3, 200), # comadmin
         (4, 403), # generaluser
         (5, 403), # original role
-        (6, 403), # original role + repoadmin
+        (6, 200), # original role + repoadmin
         (7, 403), # no role
     ],
 )
 def test_AdminResyncClient_index(app, client, users, id, status_code):
     url = url_for('resync.index')
     login_user_via_session(client, email=users[id]["email"])
-    if id==2:
+    if status_code == 200:
         with pytest.raises(Exception) as e:
             res = client.get(url)
         assert e.type==TemplateNotFound
@@ -45,12 +47,12 @@ def test_AdminResyncClient_index(app, client, users, id, status_code):
     "id, status_code",
     [
         (0, 403), # contributor
-        (1, 403), # repoadmin
+        (1, 200), # repoadmin
         (2, 200), # sysadmin
-        (3, 403), # comadmin
+        (3, 200), # comadmin
         (4, 403), # generaluser
         (5, 403), # original role
-        (6, 403), # original role + repoadmin
+        (6, 200), # original role + repoadmin
         (7, 403), # no role
     ],
 )
@@ -73,34 +75,35 @@ def test_AdminResyncClient_action(app, client, users, test_indices, id, status_c
     login_user_via_session(client, email=users[id]["email"])
     res = client.post(url, headers=headers, data=json.dumps(_data))
     assert res.status_code == status_code
-    if id == 2:
+    if status_code == 200:
         assert json.loads(res.data)['success'] == False
         assert json.loads(res.data)['errmsg'] == ['Repository is required', 'Target Index is required', 'Base Url is required']
         _data["repository_name"] = "root"
         _data["index_id"] = "1"
         _data["base_url"] = "test"
-        res = client.post(url, headers=headers, data=json.dumps(_data))
-        assert json.loads(res.data)['success'] == False
         _data['from_date'] = None
         _data['to_date'] = None
         res = client.post(url, headers=headers, data=json.dumps(_data))
         assert json.loads(res.data)['success'] == True
 
     # get_list
-    url = url_for('resync.get_list')
-    res = client.get(url)
-    assert res.status_code == status_code
-    if id == 2:
-        res = json.loads(res.data)['data'][0]
-        res.pop("created")
-        res.pop("updated")
-        res == {'base_url': 'test', 'from_date': None, 'id': 1, 'index_id': 1, 'index_name': 'Test index 1', 'interval_by_day': 1, 'is_running': None, 'repository_name': 'root', 'result': None, 'resync_mode': 'Baseline', 'resync_save_dir': '', 'saving_format': 'JPCOAR-XML', 'status': 'Automatic', 'task_id': None, 'to_date': None}
+    repository = Community(root_node_id=1)
+    with patch("invenio_communities.models.Community.get_repositories_by_user",return_value=[repository]):
+        with patch("weko_index_tree.api.Indexes.get_child_list_recursive", return_value=[1]):
+            url = url_for('resync.get_list')
+            res = client.get(url)
+            assert res.status_code == status_code
+            if status_code == 200:
+                res = json.loads(res.data)['data'][0]
+                res.pop("created")
+                res.pop("updated")
+                res == {'base_url': 'test', 'from_date': None, 'id': 1, 'index_id': 1, 'index_name': 'Test index 1', 'interval_by_day': 1, 'is_running': None, 'repository_name': 'root', 'result': None, 'resync_mode': 'Baseline', 'resync_save_dir': '', 'saving_format': 'JPCOAR-XML', 'status': 'Automatic', 'task_id': None, 'to_date': None}
 
     # update_resync
     url = url_for('resync.update_resync', resync_id=2)
     res = client.post(url)
     assert res.status_code == status_code
-    if id == 2:
+    if status_code == 200:
         assert json.loads(res.data) == {'errmsg': ['Resync is not exist'], 'success': False}
         url = url_for('resync.update_resync', resync_id=1)
         res = client.post(url)
@@ -118,7 +121,7 @@ def test_AdminResyncClient_action(app, client, users, test_indices, id, status_c
     url = url_for('resync.delete_resync', resync_id=2)
     res = client.post(url)
     assert res.status_code == status_code
-    if id == 2:
+    if status_code == 200:
         assert json.loads(res.data) == {'errmsg': ['Resync is not exist'], 'success': False}
         url = url_for('resync.delete_resync', resync_id=1)
         res = client.post(url)
@@ -138,12 +141,12 @@ def test_AdminResyncClient_action(app, client, users, test_indices, id, status_c
     "id, status_code",
     [
         (0, 403), # contributor
-        (1, 403), # repoadmin
+        (1, 200), # repoadmin
         (2, 200), # sysadmin
-        (3, 403), # comadmin
+        (3, 200), # comadmin
         (4, 403), # generaluser
         (5, 403), # original role
-        (6, 403), # original role + repoadmin
+        (6, 200), # original role + repoadmin
         (7, 403), # no role
     ],
 )
@@ -152,7 +155,7 @@ def test_AdminResyncClient_get_logs(app, client, test_resync, users, test_indice
     login_user_via_session(client, email=users[id]["email"])
     res = client.get(url)
     assert res.status_code == status_code
-    if id == 2:
+    if status_code == 200:
         assert json.loads(res.data) == {'success': False}
         with pytest.raises(Exception) as e:
             url = url_for('resync.get_logs', resync_id=0)
@@ -170,12 +173,12 @@ def test_AdminResyncClient_get_logs(app, client, test_resync, users, test_indice
     "id, status_code",
     [
         (0, 403), # contributor
-        (1, 403), # repoadmin
+        (1, 200), # repoadmin
         (2, 200), # sysadmin
-        (3, 403), # comadmin
+        (3, 200), # comadmin
         (4, 403), # generaluser
         (5, 403), # original role
-        (6, 403), # original role + repoadmin
+        (6, 200), # original role + repoadmin
         (7, 403), # no role
     ],
 )
@@ -199,7 +202,7 @@ def test_AdminResyncClient_toggle_auto(app, client, test_resync, users, test_ind
     login_user_via_session(client, email=users[id]["email"])
     res = client.post(url)
     assert res.status_code == status_code
-    if id == 2:
+    if status_code == 200:
         assert json.loads(res.data) == {'success': False, 'errmsg': ["Resync is not automatic"]}
         url = url_for('resync.toggle_auto', resync_id=10)
         res = client.post(url)
@@ -211,3 +214,49 @@ def test_AdminResyncClient_toggle_auto(app, client, test_resync, users, test_ind
         res['data'].pop("updated")
         assert res['success'] == True
         assert res['data'] == {'base_url': 'test', 'from_date': None, 'id': 10, 'index_id': 1, 'index_name': 'Test index 1', 'interval_by_day': 1, 'is_running': None, 'repository_name': 'root', 'result': None, 'resync_mode': 'Baseline', 'resync_save_dir': '', 'saving_format': 'JPCOAR-XML', 'status': 'Automatic', 'task_id': None, 'to_date': None}
+
+
+# .tox/c1/bin/pytest --cov=invenio_resourcesyncclient tests/test_admin.py::test_get_repository -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-resourcesyncclient/.tox/c1/tmp
+def test_get_repository(app, client, users):
+    url = url_for('resync.get_repository')
+
+    # super role user
+    login_user_via_session(client, email=users[2]["email"])
+    data = {'id': 1, 'name': 'root', 'children': []}
+    with patch("weko_index_tree.api.Indexes.get_index_tree", return_value=[data]):
+        res = client.get(url)
+        assert res.status_code == 200
+        assert json.loads(res.data) == [{'id': 0, 'value': 'Root Index'},
+                                        {'id': 1, 'value': 'root <ID:1>'}]
+
+    # super role user with children
+    data = {'id': 1, 'name': 'root', 'children': [{'id': 2, 'name': 'child', 'children': []}]}
+    with patch("weko_index_tree.api.Indexes.get_index_tree", return_value=[data]):
+        res = client.get(url)
+        assert res.status_code == 200
+        assert json.loads(res.data) == [{'id': 0, 'value': 'Root Index'},
+                                        {'id': 1, 'value': 'root <ID:1>'},
+                                        {'id': 2, 'value': 'root <ID:1> / child <ID:2>'}]
+
+    # comadmin role user with repository
+    login_user_via_session(client, email=users[3]["email"])
+    mock_repo = Community(root_node_id=1)
+    data = {'id': 1, 'name': 'root', 'children': []}
+    with patch("invenio_communities.models.Community.get_repositories_by_user", return_value=[mock_repo]):
+        with patch("weko_index_tree.api.Indexes.get_index_tree", return_value=[data]):
+            res = client.get(url)
+            assert res.status_code == 200
+            assert json.loads(res.data) == [{'id': 1, 'value': 'root <ID:1>'}]
+
+    # comadmin role user with no repository
+    with patch("invenio_communities.models.Community.get_repositories_by_user", return_value=[]):
+        res = client.get(url)
+        assert res.status_code == 200
+        assert json.loads(res.data) == []
+
+    # comadmin role user with repository but no index
+    with patch("invenio_communities.models.Community.get_repositories_by_user", return_value=[mock_repo]):
+        with patch("weko_index_tree.api.Indexes.get_index_tree", return_value=[]):
+            res = client.get(url)
+            assert res.status_code == 200
+            assert json.loads(res.data) == []

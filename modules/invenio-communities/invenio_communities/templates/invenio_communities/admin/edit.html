@@ -2,6 +2,21 @@
 {% import 'admin/lib.html' as lib with context %}
 {% from 'admin/lib.html' import extra with context %} {# backward compatible #}
 
+{%- block css %}
+  {% assets "invenio_deposit_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+  {{ super() }}
+  <link href="{{ url_for('static', filename='scss/invenio_communities/extra_fields.css') }}" rel="stylesheet">
+  {% assets "invenio_communities_trumbowyg_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+{%- endblock css %}
+
+{%- block javascript %}
+  {% assets "invenio_deposit_dependencies_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+  {{ super() }}
+  {% assets "invenio_deposit_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+  {% assets "invenio_communities_trumbowyg_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+  <script src="{{ url_for('static', filename='js/invenio_communities/app.js') }}"></script>
+{%- endblock javascript %}
+
 {% block head %}
   {{ super() }}
   {{ lib.form_css() }}
@@ -13,33 +28,118 @@
     <li>
         <a href="{{ return_url }}">{{ _gettext('List') }}</a>
     </li>
-    {%- if admin_view.can_create -%}
-    <li>
-        <a href="{{ get_url('.create_view', url=return_url) }}">{{ _gettext('Create') }}</a>
-    </li>
+    {% if type == 'edit' %}
+      {%- if admin_view.can_create -%}
+      <li>
+          <a href="{{ get_url('.create_view', url=return_url) }}">{{ _gettext('Create') }}</a>
+      </li>
+      {%- endif -%}
+    {% else %}
+      <li class="active">
+        <a href="javascript:void(0)">{{ _gettext('Create') }}</a>
+      </li>
     {%- endif -%}
-    <li class="active">
-        <a href="javascript:void(0)">{{ _gettext('Edit') }}</a>
-    </li>
-    {%- if admin_view.can_view_details -%}
-    <li>
-        <a href="{{ get_url('.details_view', id=request.args.get('id'), url=return_url) }}">{{ _gettext('Details') }}</a>
-    </li>
+    {% if type == 'edit' %}
+      <li class="active">
+          <a href="javascript:void(0)">{{ _gettext('Edit') }}</a>
+      </li>
+      {%- if admin_view.can_view_details -%}
+      <li>
+          <a href="{{ get_url('.details_view', id=c_id, url=return_url) }}">{{ _gettext('Details') }}</a>
+      </li>
+      {%- endif -%}
     {%- endif -%}
   </ul>
   {% endblock %}
 
   {% block edit_form %}
-    {{ lib.render_form(form, return_url, extra(), form_opts) }}
+    {% call lib.form_tag(None) %}
+      {{ lib.render_form_fields([form.id]) }}
+      {{ lib.render_form_fields([form.cnri]) }}
+      {{ lib.render_form_fields([form.owner]) }}
+      {{ lib.render_form_fields([form.index]) }}
+      {{ lib.render_form_fields([form.group]) }}
+      {{ lib.render_form_fields([form.title]) }}
+      {{ lib.render_form_fields([form.description]) }}
+      {{ lib.render_form_fields([form.page]) }}
+      {{ lib.render_form_fields([form.curation_policy]) }}
+      {{ lib.render_form_fields([form.ranking]) }}
+      {{ lib.render_form_fields([form.fixed_points]) }}
+      {{ lib.render_form_fields([form.content_policy]) }}
+      {{ lib.render_form_fields([form.login_menu_enabled]) }}
+      {{ lib.render_form_fields([form.thumbnail]) }}
+    {% endcall %}
+  <div class="panel-body">
+    <div id="weko-records">
+      <invenio-records
+        {%- if pid %}
+          initialization="{{ config.DEPOSIT_RECORDS_EDIT_API.format(pid_value=pid.pid_value) }}"
+          links='{{links|tojson}}'
+        {%- else %}
+          initialization="{{ config.DEPOSIT_SEARCH_API }}"
+        {%- endif %}
+        response-params='{{ config.DEPOSIT_RESPONSE_MESSAGES | tojson }}'
+        extra-params='{"headers":{"Content-Type": "application/json"}}'
+        form="{{ schemaform }}"
+        {%- if record %}
+          record='{{ record | tojson }}'
+        {%- else %}
+          record='{}'
+        {%- endif %}
+        schema="{{ jsonschema }}">
+        <invenio-records-loading
+          template="{{ url_for('static', filename='node_modules/invenio-records-js/dist/templates/loading.html') }}">
+        </invenio-records-loading>
+        <invenio-records-alert
+          template="{{ url_for('static', filename='node_modules/invenio-records-js/dist/templates/alert.html') }}">
+        </invenio-records-alert>
+        <div ng-controller="WekoRecordsCtrl">
+          <button ng-show="false" id="btn_setAuthorInfo" class="btn btn-default" type="button" ng-click="setAuthorInfo()"></button>
+          <invenio-records-form
+            form-templates='{{ config.DEPOSIT_FORM_TEMPLATES | tojson }}'
+            form-templates-base="{{ url_for('static', filename=config.DEPOSIT_FORM_TEMPLATES_BASE) }}"
+            template="{{ url_for('static', filename=config.DEPOSIT_UI_JSTEMPLATE_FORM) }}">
+          </invenio-records-form>
+          <div class="row">
+            <div class="col-sm-9 col-sm-offset-4 text-center">
+              <button id="index-journal-submit" class="btn btn-primary" ng-click="saveData({{ type }});">
+              <span class="glyphicon glyphicon-save"></span>&nbsp
+              {{_('Save')}}</button>
+              <a href="{{ return_url }}" class="btn btn-danger">
+                <i class="fa fa-times"></i> {{ _('Cancel') }}
+              </a>
+              </div>
+          </div>
+        </div>
+      </invenio-records>
+    </div>
+  </div>
   {% endblock %}
 {% endblock %}
 
 {% block tail %}
   {{ super() }}
   {{ lib.form_js() }}
-  <script>
-    $(document).ready(function(){
-        $("#id").prop('readonly', true)
-    });
-  </script>
+  {% if type == 'edit' %}
+    <script>
+      $(document).ready(function(){
+          $("#id").prop('readonly', true)
+          $("#title").prop('placeholder', 'Please enter title (maximum characters:255)')
+          $("#title").prop('maxlength', 255)
+          $("#cnri").prop('readonly', true)
+          $("#thumbnail").prop('accept', "image/png, image/jpeg, image/jpg,")
+      });
+    </script>
+  {% else %}
+    <script>
+      $(document).ready(function(){
+          $("#id").prop('placeholder', 'Please enter ID (maximum characters:100)')
+          $("#id").prop('maxlength', 100)
+          $("#title").prop('placeholder', 'Please enter title (maximum characters:255)')
+          $("#title").prop('maxlength', 255)
+          $("#cnri").prop('readonly', true)
+          $("#thumbnail").prop('accept', "image/png, image/jpeg, image/jpg,")
+      });
+    </script>
+  {% endif %}
 {% endblock %}

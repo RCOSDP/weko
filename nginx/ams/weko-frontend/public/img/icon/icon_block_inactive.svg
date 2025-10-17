@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="16" height="12" viewBox="0 0 16 12">
+  <defs>
+    <clipPath id="clip-path">
+      <rect id="長方形_1746" data-name="長方形 1746" width="16" height="12" transform="translate(134.008 5)" fill="#fff" stroke="#707070" stroke-width="1"/>
+    </clipPath>
+  </defs>
+  <g id="icon_block_inactive" transform="translate(-134.008 -5)" clip-path="url(#clip-path)">
+    <rect id="長方形_1338" data-name="長方形 1338" width="4" height="4" transform="translate(137.008 6)" fill="#999"/>
+    <rect id="長方形_1339" data-name="長方形 1339" width="4" height="4" transform="translate(143.008 6)" fill="#999"/>
+    <rect id="長方形_1340" data-name="長方形 1340" width="4" height="4" transform="translate(137.008 12)" fill="#999"/>
+    <rect id="長方形_1341" data-name="長方形 1341" width="4" height="4" transform="translate(143.008 12)" fill="#999"/>
+  </g>
+</svg>

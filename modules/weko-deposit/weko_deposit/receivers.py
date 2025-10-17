@@ -12,7 +12,7 @@ from flask import current_app
 from invenio_pidstore.models import PIDStatus
 from invenio_pidstore.errors import PIDDoesNotExistError
 from invenio_records.models import RecordMetadata
-from weko_records.api import FeedbackMailList
+from weko_records.api import RequestMailList
 from weko_records.utils import json_loader
 from sqlalchemy.orm.exc import NoResultFound
 
@@ -20,7 +20,7 @@ from .api import WekoDeposit
 from .pidstore import get_record_without_version
 
 
-def append_file_content(sender, json=None, record=None, index=None, **kwargs):
+def append_file_content(sender, json={}, record=None, index=None, **kwargs):
     """Append file content to ES record."""
     try:
         dep = WekoDeposit.get_record(record.id)
@@ -44,7 +44,7 @@ def append_file_content(sender, json=None, record=None, index=None, **kwargs):
         dep.jrc = jrc
 
         # Update data based on data from DB
-        dep.jrc['weko_shared_id'] = im.get('weko_shared_id')
+        dep.jrc['weko_shared_ids'] = im.get('weko_shared_ids')
         dep.jrc['weko_creator_id'] = im.get('owner')
         dep.jrc['_item_metadata'] = im
         dep.jrc['control_number'] = im.get('recid')
@@ -62,24 +62,22 @@ def append_file_content(sender, json=None, record=None, index=None, **kwargs):
         ps = dict(publish_status=dep.get('publish_status'))
         dep.jrc.update(ps)
         json.update(dep.jrc)
-
-        # Updated FeedbackMail List
-        mail_list = FeedbackMailList.get_mail_list_by_item_id(record.id)
-        if mail_list:
-            feedback_mail = {
-                'feedback_mail_list': mail_list
+        request_mail_list = RequestMailList.get_mail_list_by_item_id(record.id)
+        if request_mail_list:
+            request_mail = {
+                'request_mail_list': request_mail_list
             }
-            json.update(feedback_mail)
+            json.update(request_mail)
 
         current_app.logger.info('FINISHED reindex record: {0}'.format(
             im['control_number']))
     except NoResultFound:
         current_app.logger.error('Indexing error: record does not exists: {0}'.format(
             record.id))
-        raise NoResultFound
+        raise
     except PIDDoesNotExistError:
         current_app.logger.error('Indexing error: pid does not exists: {0}'.format(
             record.id))
     except Exception:
         import traceback
-        current_app.logger.error(traceback.print_exc())
+        traceback.print_exc()

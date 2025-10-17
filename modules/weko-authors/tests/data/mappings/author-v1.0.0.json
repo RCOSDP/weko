@@ -1,0 +1,240 @@
+{
+  "settings": {
+    "index": {
+      "number_of_shards": "1",
+      "number_of_replicas": "1"
+    }
+  },
+  "mappings": {
+    "author-v1.0.0": {
+      "properties": {
+        "affiliationInfo": {
+          "properties": {
+            "affiliationNameInfo": {
+              "properties": {
+                "affiliationName": {
+                  "type": "text",
+                  "index": false
+                },
+                "affiliationNameLang": {
+                  "type": "text"
+                },
+                "affiliationNameShowFlg": {
+                  "type": "boolean"
+                }
+              }
+            },
+            "identifierInfo": {
+              "properties": {
+                "affiliationId": {
+                  "type": "text"
+                },
+                "affiliationIdType": {
+                  "type": "text",
+                  "index": false
+                },
+                "identifierShowFlg": {
+                  "type": "boolean"
+                }
+              }
+            }
+          }
+        },
+        "authorIdInfo": {
+          "properties": {
+            "authorId": {
+              "type": "text"
+            },
+            "authorIdShowFlg": {
+              "type": "boolean"
+            },
+            "idType": {
+              "type": "text",
+              "index": false
+            }
+          }
+        },
+        "authorNameInfo": {
+          "properties": {
+            "familyName": {
+              "type": "text"
+            },
+            "firstName": {
+              "type": "text"
+            },
+            "fullName": {
+              "type": "text",
+              "fields": {
+                "raw": {
+                  "type": "keyword"
+                }
+              }
+            },
+            "language": {
+              "type": "text",
+              "index": false
+            },
+            "nameFormat": {
+              "type": "text",
+              "index": false
+            },
+            "nameShowFlg": {
+              "type": "boolean"
+            }
+          }
+        },
+        "emailInfo": {
+          "properties": {
+            "email": {
+              "type": "text",
+              "fields": {
+                "raw": {
+                  "type": "keyword"
+                }
+              }
+            }
+          }
+        },
+        "gather_flg": {
+          "type": "long"
+        },
+        "id": {
+          "type": "text",
+          "fields": {
+            "keyword": {
+              "type": "keyword",
+              "ignore_above": 256
+            }
+          }
+        },
+        "is_deleted": {
+          "type": "boolean"
+        },
+        "pk_id": {
+          "type": "keyword"
+        },
+        "query": {
+          "properties": {
+            "bool": {
+              "properties": {
+                "must": {
+                  "properties": {
+                    "bool": {
+                      "properties": {
+                        "should": {
+                          "properties": {
+                            "bool": {
+                              "properties": {
+                                "must": {
+                                  "properties": {
+                                    "term": {
+                                      "properties": {
+                                        "is_deleted": {
+                                          "properties": {
+                                            "value": {
+                                              "type": "text",
+                                              "fields": {
+                                                "keyword": {
+                                                  "type": "keyword",
+                                                  "ignore_above": 256
+                                                }
+                                              }
+                                            }
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "term": {
+                      "properties": {
+                        "gather_flg": {
+                          "type": "long"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "match_all": {
+              "type": "object"
+            }
+          }
+        }
+      },
+      "_meta": {
+        "creation_date": "1704763206126",
+        "provided_name": "test-authors",
+        "max_result_window": "1000000",
+        "analysis": {
+          "analyzer": {
+            "ngram_analyzer": {
+              "filter": [
+                "cjk_width",
+                "lowercase"
+              ],
+              "char_filter": [
+                "html_strip"
+              ],
+              "type": "custom",
+              "tokenizer": "ngram_tokenizer"
+            },
+            "ja_analyzer": {
+              "filter": [
+                "kuromoji_baseform",
+                "kuromoji_part_of_speech",
+                "cjk_width",
+                "stop",
+                "kuromoji_stemmer",
+                "lowercase"
+              ],
+              "tokenizer": "ja_tokenizer"
+            },
+            "paths": {
+              "tokenizer": "path_hierarchy"
+            },
+            "wk_analyzer": {
+              "filter": [
+                "standard",
+                "lowercase",
+                "stop",
+                "cjk_width"
+              ],
+              "char_filter": [
+                "html_strip"
+              ],
+              "type": "custom",
+              "tokenizer": "standard"
+            }
+          },
+          "tokenizer": {
+            "ja_tokenizer": {
+              "mode": "search",
+              "type": "kuromoji_tokenizer"
+            },
+            "ngram_tokenizer": {
+              "token_chars": [
+                "letter",
+                "digit"
+              ],
+              "min_gram": "2",
+              "type": "nGram",
+              "max_gram": "3"
+            }
+          }
+        },
+        "uuid": "en03boXqSpGbBiCrGN4NIg",
+        "version": {
+          "created": "6082399"
+        }
+      }
+    }
+  }
+}

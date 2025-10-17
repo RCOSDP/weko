@@ -15,7 +15,7 @@ require([
     let community = $('#community_id').text();
     let community_para = ''
     if (community) {
-      community_para = '?community=' + community;
+      community_para = '?c=' + community;
     }
     if ($('#input-comment') && $('#input-comment').val()) {
       comment = $('#input-comment').val();

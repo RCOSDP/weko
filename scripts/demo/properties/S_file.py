@@ -52,7 +52,7 @@ mapping = {
     "junii2_mapping": "",
     "lido_mapping": "",
     "lom_mapping": "",
-    "oai_dc_mapping": "",
+    "oai_dc_mapping":  {"identifier": {"@value": "subitem_systemfile_filename_uri"}},
     "spase_mapping": "",
 }
 date_type = [

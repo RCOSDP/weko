@@ -46,6 +46,7 @@ from weko_redis.redis import RedisConnection
 from weko_records.models import ItemTypeProperty
 from weko_records.models import ItemType, ItemTypeMapping, ItemTypeName
 from weko_records.api import Mapping
+from weko_records_ui.config import WEKO_PERMISSION_SUPER_ROLE_USER
 from weko_index_tree.models import Index
 from weko_gridlayout import WekoGridLayout
 #from weko_admin import WekoAdmin
@@ -117,7 +118,8 @@ def base_app(instance_path):
         FILES_REST_DEFAULT_QUOTA_SIZE=None,
         FILES_REST_DEFAULT_MAX_FILE_SIZE=None,
         FILES_REST_OBJECT_KEY_MAX_LEN=255,
-        BABEL_DEFAULT_TIMEZONE='Asia/Tokyo'
+        BABEL_DEFAULT_TIMEZONE='Asia/Tokyo',
+        WEKO_PERMISSION_SUPER_ROLE_USER=WEKO_PERMISSION_SUPER_ROLE_USER
     )
     Babel(app_)
     InvenioDB(app_)
@@ -460,7 +462,7 @@ def indices(app, db):
 
         db.session.add(testIndexThree)
         db.session.add(testIndexThreeChild)
-        
+
     return {
         'index_dict': dict(testIndexThree),
         'index_non_dict': testIndexThree,
@@ -523,6 +525,7 @@ def communities(app, db, user, indices):
 
     return comm0
 
+
 @pytest.yield_fixture()
 def es(app):
     current_search_client.indices.delete(index='test-*')
@@ -534,16 +537,17 @@ def es(app):
         index='{}stats-top-view-0001'.format(app.config['SEARCH_INDEX_PREFIX']),
         body=aggr_top_view_mapping, ignore=[400, 404]
     )
-    
     try:
         yield current_search_client
     finally:
         current_search_client.indices.delete(index="test-*")
-    
+
+
 @pytest.fixture
 def redis_connect(app):
     redis_connection = RedisConnection().connection(db=app.config['CACHE_REDIS_DB'], kv = True)
     return redis_connection
+
 
 @pytest.fixture()
 def location(app, db):
@@ -556,6 +560,7 @@ def location(app, db):
     db.session.commit()
     return location
 
+
 @pytest.fixture
 def widget_upload(app,db,location):
     bucket_id = app.config['WEKO_GRIDLAYOUT_BUCKET_UUID']
@@ -567,11 +572,10 @@ def widget_upload(app,db,location):
                             location=location,
                             default_storage_class=storage_class)
     db.session.add(bucket)
-    
-            
+
     img = Image.new("L", (128, 128))
     img_bytes = io.BytesIO()
-    
+
     key = "{0}_{1}".format(0,"test.png")
     img.save(img_bytes, format='PNG')
     img_bytes.seek(0)
@@ -582,4 +586,3 @@ def widget_upload(app,db,location):
     db.session.add(obj)
     db.session.commit()
     return {"obj":obj,"key":key}
-                

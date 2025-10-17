@@ -1,0 +1,57 @@
+[
+    {
+        "affiliationInfo": [
+            {
+                "affiliationNameInfo": [
+                    {
+                        "affiliationName": "test機関",
+                        "afilliationNameLang": "ja",
+                        "affiliationNameShowFlg": "true"
+                    }
+                ],
+                "affiliationPeriodInfo": [
+                    {
+                        "periodEnd": "2025-03-17",
+                        "periodStart": "2000-02-11"
+                    }
+                ],
+                "identifierInfo": [
+                    {
+                        "affiliationId": "1000",
+                        "affiliationIdType": "1",
+                        "identifierShowFlg": "true"
+                    }
+                ]
+            }
+        ],
+        "authorIdInfo": [
+            {
+                "authorId": "10",
+                "authorIdShowFlg": "true",
+                "idType": "1"
+            },
+            {
+                "authorId": "100",
+                "authorIdShowFlg": "true",
+                "idType": "2"
+            }
+        ],
+        "authorNameInfo": [
+            {
+                "familyName": "test",
+                "firstName": "taro",
+                "fullName": "test taro",
+                "language": "en",
+                "nameFormat": "familyNmAndNm",
+                "nameShowFlg": "true"
+            }
+        ],
+        "emailInfo": [
+            {
+                "email": "test@exam.com"
+            }
+        ],
+        "id": "",
+        "pk_id": ""
+    }
+]

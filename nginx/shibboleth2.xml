@@ -77,10 +77,9 @@
 
         <!-- Example of locally maintained metadata. -->
 
-        <MetadataProvider type="XML" validate="false" file="idp-metadata.xml"/>
-        <MetadataProvider type="XML" validate="true"
-                url="https://wacren.wacren.eduid.africa/saml2/idp/metadata.php">
-        </MetadataProvider>
+        <MetadataProvider type="XML" validate="true" path="idp-metadata.xml"/>
+
+        <MetadataProvider type="XML" validate="true" path="https://core.orthros.gakunin.nii.ac.jp/idp" />
 
         <!-- Example of remotely supplied batch of signed metadata. -->
         <!--

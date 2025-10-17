@@ -237,6 +237,33 @@ def get_index_state():
     return index_state
 
 
+def get_index_state_by_id(id_lst):
+    from weko_records_ui.utils import is_future
+    index_state = {}
+    ids = [index for own_id in id_lst for index in Indexes.get_all_parent_indexes(own_id)]
+    for index in ids:
+        index_id = str(index.id)
+        if not index.harvest_public_state:
+            index_state[index_id] = {
+                'parent': None,
+                'msg': HARVEST_PRIVATE
+            }
+        elif '-99' not in index.browsing_role \
+                or not index.public_state \
+                or (index.public_date and
+                    is_future(index.public_date)):
+            index_state[index_id] = {
+                'parent': None,
+                'msg': PRIVATE_INDEX
+            }
+        else:
+            index_state[index_id] = {
+                'parent': str(index.parent),
+                'msg': OUTPUT_HARVEST
+            }
+    return index_state
+
+
 def is_output_harvest(path_list, index_state):
     def _check(index_id):
         if index_id in index_state:
@@ -254,3 +281,20 @@ def is_output_harvest(path_list, index_state):
         index_id = path.split('/')[-1]
         result = max([result, _check(index_id)])
     return result if result != 0 else HARVEST_PRIVATE
+
+
+def get_community_index_from_set(set):
+    """Get community index from set.
+    
+    Args:
+        set (str): Set string.
+    
+    Returns:
+        str: index_id of community.
+    """
+    from invenio_communities.models import Community
+    com_prefix = current_app.config['COMMUNITIES_OAI_FORMAT'].replace(
+        '{community_id}', '')
+    com_id = set.replace(com_prefix, '')
+    com = Community.query.filter_by(id=com_id).first()
+    return str(com.root_node_id) if com else None

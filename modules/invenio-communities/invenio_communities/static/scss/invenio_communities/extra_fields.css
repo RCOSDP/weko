@@ -1,0 +1,13 @@
+#login_menu_enabled {
+  border: none;
+  box-shadow: none;
+  display: flex;
+  list-style: none;
+  padding: 5px 0 0 0;
+  gap: 20px;
+}
+
+#thumbnail {
+  border: none;
+  box-shadow: none;
+}

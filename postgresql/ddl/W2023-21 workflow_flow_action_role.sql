@@ -1,0 +1,1 @@
+alter table workflow_flow_action_role add column action_item_registrant boolean not null default false

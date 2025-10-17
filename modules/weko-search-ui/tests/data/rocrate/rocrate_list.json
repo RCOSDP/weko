@@ -1,0 +1,192 @@
+[
+    {
+        "id": "1",
+        "metadata": {
+            "@context": "https://w3id.org/ro/crate/1.1/context",
+            "@graph": [
+                {
+                    "@id": "./",
+                    "@type": "Dataset",
+                    "datePublished": [
+                        "2023-06-01"
+                    ],
+                    "hasPart": [
+                        {
+                            "@id": "概要/"
+                        },
+                        {
+                            "@id": "データ/"
+                        }
+                    ],
+                    "mainEntity": [
+                        {
+                            "@id": "image_sample.png"
+                        },
+                        {
+                            "@id": "pdf_sample.pdf"
+                        }
+                    ],
+                    "title": [
+                        "メタボリックシンドロームモデルマウスの多臓器遺伝子発現量データ"
+                    ],
+                    "dateCreated": [
+                        "2023-06-01"
+                    ],
+                    "accessMode": [
+                        "Public"
+                    ],
+                    "genre": [
+                        "生物学",
+                        "医学"
+                    ],
+                    "creator": [
+                        "鈴木一郎",
+                        "東京大学"
+                    ],
+                    "keywords": [
+                        "DNB, biomarker, mice, phenotype, metabolic syndrome, pre-disease, intervention"
+                    ]
+                },
+                {
+                    "@id": "ro-crate-metadata.json",
+                    "@type": "CreativeWork",
+                    "conformsTo": {
+                        "@id": "https://w3id.org/ro/crate/1.1"
+                    },
+                    "about": {
+                        "@id": "./"
+                    }
+                },
+                {
+                    "@id": "image_sample.png",
+                    "@type": "File",
+                    "accessMode": "open_access",
+                    "dateCreated": "2023-06-01"
+                },
+                {
+                    "@id": "pdf_sample.pdf",
+                    "@type": "File",
+                    "accessMode": "open_access",
+                    "dateCreated": "2023-06-01"
+                },
+                {
+                    "@id": "概要/",
+                    "@type": "Dataset",
+                    "additionalType": "tab",
+                    "name": "概要",
+                    "hasPart": [
+                        {
+                            "@id": "概要/研究概要/"
+                        },
+                        {
+                            "@id": "概要/追加情報/"
+                        },
+                        {
+                            "@id": "概要/その他の情報/"
+                        }
+                    ]
+                },
+                {
+                    "@id": "概要/研究概要/",
+                    "@type": "Dataset",
+                    "additionalType": "section",
+                    "name": "研究概要",
+                    "hasPart": [
+                        {
+                            "@id": "概要/研究概要/実験の説明/"
+                        }
+                    ]
+                },
+                {
+                    "@id": "概要/研究概要/実験の説明/",
+                    "@type": "Dataset",
+                    "additionalType": "subsection",
+                    "name": "実験の説明",
+                    "text": [
+                        "メタボリックシンドロームの疾病前に予兆が発見できるどうかを検証するために、遺伝子発現データを経時的に取得すること"
+                    ]
+                },
+                {
+                    "@id": "概要/追加情報/",
+                    "@type": "Dataset",
+                    "additionalType": "section",
+                    "name": "追加情報",
+                    "hasPart": [
+                        {
+                            "@id": "概要/追加情報/追加情報の説明/"
+                        }
+                    ]
+                },
+                {
+                    "@id": "概要/追加情報/追加情報の説明/",
+                    "@type": "Dataset",
+                    "additionalType": "subsection",
+                    "name": "追加情報の説明",
+                    "text": [
+                        "メタボリックシンドロームの疾病前診断の実現を目的とした動物実験で、メタボリックシンドロームモデル（TSOD）マウスを使って経時的に多臓器遺伝子発現量を計測したデータ"
+                    ]
+                },
+                {
+                    "@id": "概要/その他の情報/",
+                    "@type": "Dataset",
+                    "additionalType": "section",
+                    "name": "その他の情報",
+                    "hasPart": [
+                        {
+                            "@id": "概要/その他の情報/リポジトリ/"
+                        },
+                        {
+                            "@id": "概要/その他の情報/利益相反の有無/"
+                        }
+                    ]
+                },
+                {
+                    "@id": "概要/その他の情報/リポジトリ/",
+                    "@type": "Dataset",
+                    "additionalType": "subsection",
+                    "name": "リポジトリ",
+                    "text": [
+                        "GakuNin RDM"
+                    ]
+                },
+                {
+                    "@id": "概要/その他の情報/利益相反の有無/",
+                    "@type": "Dataset",
+                    "additionalType": "subsection",
+                    "name": "利益相反の有無",
+                    "text": [
+                        "Yes"
+                    ]
+                },
+                {
+                    "@id": "データ/",
+                    "@type": "Dataset",
+                    "additionalType": "tab",
+                    "name": "データ",
+                    "hasPart": [
+                        {
+                            "@id": "データ/実験データ/"
+                        }
+                    ]
+                },
+                {
+                    "@id": "データ/実験データ/",
+                    "@type": "Dataset",
+                    "additionalType": "section",
+                    "name": "実験データ",
+                    "hasPart": [
+                        {
+                            "@id": "データ/実験データ/実験の説明/"
+                        }
+                    ]
+                },
+                {
+                    "@id": "データ/実験データ/実験の説明/",
+                    "@type": "Dataset",
+                    "additionalType": "subsection",
+                    "name": "実験の説明"
+                }
+            ]
+        }
+    }
+]

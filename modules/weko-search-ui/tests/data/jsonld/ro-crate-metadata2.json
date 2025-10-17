@@ -1,0 +1,434 @@
+{
+  "@context": [
+    "http://www.w3.org/ns/odrl.jsonld",
+    "http://localhost:8080/wk/0.1/context.jsonld",
+    "https://w3id.org/ro/crate/1.1/context"
+  ],
+  "@graph": [
+    {
+      "@id": "ro-crate-metadata.json",
+      "@type": "CreativeWork",
+      "about": {
+        "@id": "./"
+      },
+      "conformsTo": {
+        "@id": "https://w3id.org/ro/crate/1.1"
+      }
+    },
+    {
+      "@id": "./",
+      "@type": "Dataset",
+      "name": "The Sample Dataset for WEKO, split into two parts",
+      "description": "This is a sample dataset for WEKO in order to demonstrate the RO-Crate metadata. This dataset is split into two parts, and ignore the rood dataset properties.",
+      "hasPart": [
+        {
+          "@id": "_:JournalPaper1"
+        },
+        {
+          "@id": "_:EvidenceData1"
+        }
+      ],
+      "wk:isSplited": true
+    },
+    {
+      "@id": "_:JournalPaper1",
+      "@type": [
+        "Dataset",
+        "rdm:Dataset"
+      ],
+      "name": "The Sample Dataset for WEKO",
+      "description": "This is a sample dataset for WEKO in order to demonstrate the RO-Crate metadata.",
+      "dc:title": [
+        {
+          "@id": "_:title_1"
+        },
+        {
+          "@id": "_:title_2"
+        }
+      ],
+      "author": [
+        {
+          "@id": "_:Organization_1"
+        }
+      ],
+      "creator": [
+        {
+          "@id": "http://orcid.org/0000-0002-1825-0097"
+        }
+      ],
+      "contributor": [
+        {
+          "@id": "http://orcid.org/0000-0002-1825-0085"
+        }
+      ],
+      "datePublished": "2021-10-15",
+      "license": {
+        "@id": "https://creativecommons.org/licenses/by-nc-sa/3.0/au/"
+      },
+      "rdm:inProject": [
+        {
+          "@id": "_:Project_1"
+        }
+      ],
+      "hasPart": [
+        {
+          "@id": "data/sample.rst"
+        }
+      ],
+      "hasPolicy": [
+        {
+          "@id": "_:Policy1"
+        },
+        {
+          "@id": "_:Policy2"
+        }
+      ],
+      "wk:feedbackMail": [
+        "wekosoftware@nii.ac.jp"
+      ],
+      "identifier": "https://example.repo.nii.ac.jp/records/123456789",
+      "wk:index": [
+        "1623632832836"
+      ],
+      "wk:publishStatus": "public",
+      "wk:editMode": "Keep",
+      "dc:type": {
+        "@id": "http://purl.org/coar/resource_type/c_6501"
+      },
+      "wk:grant": [
+        {
+          "@id": "https://hdl.handle.net/1234/5678"
+        },
+        {
+          "@id": "https://doi.org/10.1234/5678"
+        }
+      ],
+      "wk:saveAsIs": false,
+      "wk:itemLinks": [
+        {
+          "@id": "_:itemLink1"
+        },
+        {
+          "@id": "_:itemLink2"
+        }
+      ]
+    },
+    {
+      "@id": "_:EvidenceData1",
+      "@type": [
+        "Dataset",
+        "rdm:Dataset"
+      ],
+      "name": "The Sample Dataset for WEKO",
+      "description": "This is a sample dataset for WEKO in order to demonstrate the RO-Crate metadata.",
+      "dc:title": [
+        {
+          "@id": "_:title_3"
+        },
+        {
+          "@id": "_:title_4"
+        }
+      ],
+      "author": [
+        {
+          "@id": "_:Organization_1"
+        }
+      ],
+      "creator": [
+        {
+          "@id": "http://orcid.org/0000-0002-1825-0097"
+        }
+      ],
+      "contributor": [
+        {
+          "@id": "http://orcid.org/0000-0002-1825-0085"
+        }
+      ],
+      "datePublished": "2021-10-15",
+      "license": {
+        "@id": "https://creativecommons.org/licenses/by-nc-sa/3.0/au/"
+      },
+      "rdm:inProject": [
+        {
+          "@id": "_:Project_1"
+        }
+      ],
+      "hasPart": [
+        {
+          "@id": "data/data.csv"
+        }
+      ],
+      "hasPolicy": [
+        {
+          "@id": "_:Policy1"
+        },
+        {
+          "@id": "_:Policy2"
+        }
+      ],
+      "wk:feedbackMail": [
+        "wekosoftware@nii.ac.jp"
+      ],
+      "identifier": "https://example.repo.nii.ac.jp/records/123456789",
+      "wk:index": [
+        "1623632832836"
+      ],
+      "wk:publishStatus": "public",
+      "wk:editMode": "Keep",
+      "dc:type": {
+        "@id": "http://purl.org/coar/resource_type/c_1843"
+      },
+      "wk:grant": [
+        {
+          "@id": "https://hdl.handle.net/1234/5678"
+        },
+        {
+          "@id": "https://doi.org/10.1234/5678"
+        }
+      ],
+      "wk:saveAsIs": false,
+      "wk:itemLinks": [
+        {
+          "@id": "_:itemLink3"
+        }
+      ]
+    },
+    {
+      "@id": "_:title_1",
+      "@type": "PropertyValue",
+      "name": "title",
+      "value": "The Sample Dataset for WEKO",
+      "language": "en"
+    },
+    {
+      "@id": "_:title_2",
+      "@type": "PropertyValue",
+      "name": "title",
+      "value": "WEKO用サンプルデータセット",
+      "language": "ja"
+    },
+    {
+      "@id": "_:title_3",
+      "@type": "PropertyValue",
+      "name": "title",
+      "value": "The Sample Dataset for WEKO, evidence part",
+      "language": "en"
+    },
+    {
+      "@id": "_:title_4",
+      "@type": "PropertyValue",
+      "name": "title",
+      "value": "WEKO用サンプルデータセットのエビデンス部分",
+      "language": "ja"
+    },
+    {
+      "@id": "https://creativecommons.org/licenses/by-nc-sa/3.0/au/",
+      "@type": "CreativeWork",
+      "description": "This work is licensed under the Creative Commons Attribution-NonCommercial-ShareAlike 3.0 Australia License. To view a copy of this license, visit http://creativecommons.org/licenses/by-nc-sa/3.0/au/ or send a letter to Creative Commons, PO Box 1866, Mountain View, CA 94042, USA.",
+      "identifier": "https://creativecommons.org/licenses/by-nc-sa/3.0/au/",
+      "name": "Attribution-NonCommercial-ShareAlike 3.0 Australia (CC BY-NC-SA 3.0 AU)"
+    },
+    {
+      "@id": "http://orcid.org/0000-0002-1825-0097",
+      "@type": "Person",
+      "name": "John Doe",
+      "language": "en",
+      "affiliation": {
+        "@id": "_:Organization_2"
+      }
+    },
+    {
+      "@id": "http://orcid.org/0000-0002-1825-0085",
+      "@type": "Person",
+      "name": "Kenji Ichikawa",
+      "language": "en"
+    },
+    {
+      "@id": "http://purl.org/coar/resource_type/c_6501",
+      "@type": "Concept",
+      "name": "journal article"
+    },
+    {
+      "@id": "http://purl.org/coar/resource_type/c_1843",
+      "@type": "Concept",
+      "name": "other"
+    },
+    {
+      "@id": "_:Project_1",
+      "@type": [
+        "Project",
+        "rdm:Project"
+      ],
+      "name": [
+        {
+          "@id": "_:Project_name"
+        }
+      ],
+      "rdm:name": [
+        {
+          "@id": "_:Project_name"
+        }
+      ]
+    },
+    {
+      "@id": "_:Project_name",
+      "@type": "Project",
+      "value": "MS2合原PJ|MS2 Aihara PJ",
+      "language": "ja"
+    },
+    {
+      "@id": "_:Policy1",
+      "@type": "Policy",
+      "name": "許諾が必要|Permission required",
+      "permission": [
+        {
+          "@id": "_:Permission1"
+        }
+      ]
+    },
+    {
+      "@id": "_:Policy2",
+      "@type": "Policy",
+      "name": "連絡が必要|Contact required",
+      "permission": [
+        {
+          "@id": "_:Permission2"
+        }
+      ]
+    },
+    {
+      "@id": "_:Permission1",
+      "@type": "Permission",
+      "target": "https://doi.org/10.xxxx/12345",
+      "action": "use",
+      "assignee": "http://example.org/user",
+      "duty": [
+        {
+          "@id": "_:Duty1"
+        }
+      ]
+    },
+    {
+      "@id": "_:Permission2",
+      "@type": "Permission",
+      "target": "https://doi.org/10.xxxx/12345",
+      "action": "use",
+      "assignee": "http://example.org/user",
+      "duty": [
+        {
+          "@id": "_:Duty2"
+        }
+      ]
+    },
+    {
+      "@id": "_:Duty1",
+      "@type": "Duty",
+      "action": "obtainConsent",
+      "assignee": "http://example.org/rightsholder"
+    },
+    {
+      "@id": "_:Duty2",
+      "@type": "Duty",
+      "action": "notify",
+      "assignee": "http://example.org/rightsholder"
+    },
+    {
+      "@id": "https://hdl.handle.net/1234/5678",
+      "@type": "URL",
+      "jpcoar:identifier": "HDL"
+    },
+    {
+      "@id": "https://doi.org/10.1234/5678",
+      "@type": "URL",
+      "jpcoar:identifier": "DOI",
+      "jpcoar:identifierRegistration": "DataCite"
+    },
+    {
+      "@id": "data/sample.rst",
+      "@type": "File",
+      "name": "sample.rst",
+      "contentSize": "333",
+      "dateCreated": {
+        "@id": "_:date_1"
+      },
+      "encodingFormat": "text/x-rst",
+      "url": {
+        "@id": "https://example.repo.nii.ac.jp/records/123456789/files/sample.rst"
+      },
+      "version": "1.0",
+      "wk:textExtraction": true,
+      "wk:accessMode": "open_access"
+    },
+    {
+      "@id": "data/data.csv",
+      "@type": "File",
+      "name": "data.csv",
+      "contentSize": "1234",
+      "dateCreated": {
+        "@id": "_:date_2"
+      },
+      "encodingFormat": "text/csv",
+      "url": {
+        "@id": "https://example.repo.nii.ac.jp/records/123456789/files/data.csv"
+      },
+      "version": "1.0",
+      "wk:textExtraction": false,
+      "wk:accessMode": "open_date",
+      "datePublished": "2024-11-22"
+    },
+    {
+      "@id": "_:date_1",
+      "@type": "PropertyValue",
+      "name": "Created",
+      "value": "2021-10-15"
+    },
+    {
+      "@id": "_:date_2",
+      "@type": "PropertyValue",
+      "name": "Created",
+      "value": "2021-10-15"
+    },
+    {
+      "@id": "https://example.repo.nii.ac.jp/records/123456789/files/sample.rst",
+      "@type": "URL",
+      "value": "abstract",
+      "url": "https://example.repo.nii.ac.jp/records/123456789/files/sample.rst"
+    },
+    {
+      "@id": "https://example.repo.nii.ac.jp/records/123456789/files/data.csv",
+      "@type": "URL",
+      "value": "dataset",
+      "url": "https://example.repo.nii.ac.jp/records/123456789/files/data.csv"
+    },
+    {
+      "@id": "_:Organization_1",
+      "@type": "Organization",
+      "name": "National Institute of Informatics",
+      "url": "https://www.nii.ac.jp/"
+    },
+    {
+      "@id": "_:Organization_2",
+      "@type": "Organization",
+      "name": "University of Manchester",
+      "url": "https://www.manchester.ac.uk/"
+    },
+    {
+      "@id": "_:itemLink1",
+      "@type": "PropertyValue",
+      "value": "isSupplementedBy",
+      "identifier": "_:EvidenceData1"
+    },
+    {
+      "@id": "_:itemLink2",
+      "@type": "PropertyValue",
+      "value": "isSupplementedBy",
+      "identifier": "https://example.repo.nii.ac.jp/records/123456789"
+    },
+    {
+      "@id": "_:itemLink3",
+      "@type": "PropertyValue",
+      "value": "isSupplementTo",
+      "identifier": "_:JournalPaper1"
+    }
+  ]
+}

@@ -20,6 +20,9 @@
 
 """Views for weko-user-profiles."""
 
+import traceback
+import requests
+
 from flask import Blueprint, current_app, jsonify, render_template, request
 from flask_babelex import lazy_gettext as _
 from flask_breadcrumbs import register_breadcrumb
@@ -29,7 +32,7 @@ from invenio_db import db
 
 from .api import current_userprofile
 from .forms import EmailProfileForm, ProfileForm, VerificationForm, \
-    confirm_register_form_factory, register_form_factory
+    confirm_register_form_factory, custom_profile_form_factory, register_form_factory
 from .models import UserProfile
 from .utils import get_user_profile_info, handle_profile_form, \
     handle_verification_form
@@ -133,8 +136,23 @@ def profile():
         elif form == 'verification':
             handle_verification_form(verification_form)
     except Exception as e:
+        traceback.print_exc()
         db.session.rollback()
         current_app.logger.error(e)
+
+    if current_app.config["WEKO_NOTIFICATIONS"]:
+        try:
+            from weko_notifications.utils import create_userprofile, inbox_url
+            create_userprofile(current_userprofile)
+            requests.post(
+                inbox_url(endpoint="/userprofile"),
+                json=create_userprofile(current_userprofile)
+            )
+        except Exception as ex:
+            current_app.logger.error(
+                f"Error sending user profile to inbox. user_id={current_user.id}"
+            )
+            traceback.print_exc()
 
     return render_template(
         current_app.config['USERPROFILES_PROFILE_TEMPLATE'],
@@ -145,7 +163,11 @@ def profile():
 def profile_form_factory():
     """Create a profile form."""
     if current_app.config['USERPROFILES_EMAIL_ENABLED']:
-        form = EmailProfileForm(
+        if current_app.config.get("WEKO_USERPROFILES_CUSTOMIZE_ENABLED", False):
+            form_cls = custom_profile_form_factory(EmailProfileForm)
+        else:
+            form_cls = EmailProfileForm
+        form = form_cls(
             formdata=None,
             username=current_userprofile.username,
             fullname=current_userprofile.fullname,
@@ -153,29 +175,41 @@ def profile_form_factory():
             language=current_userprofile.language,
             email=current_user.email,
             email_repeat=current_user.email,
+            access_key=current_userprofile.access_key,
+            secret_key=current_userprofile.secret_key,
+            s3_endpoint_url=current_userprofile.s3_endpoint_url,
+            s3_region_name=current_userprofile.s3_region_name,
             university=current_userprofile.university,
             department=current_userprofile.department,
             position=current_userprofile.position,
-            otherPosition=current_userprofile.otherPosition,
-            phoneNumber=current_userprofile.phoneNumber,
-            instituteName=current_userprofile.instituteName,
-            institutePosition=current_userprofile.institutePosition,
-            instituteName2=current_userprofile.instituteName2,
-            institutePosition2=current_userprofile.institutePosition2,
-            instituteName3=current_userprofile.instituteName3,
-            institutePosition3=current_userprofile.institutePosition3,
-            instituteName4=current_userprofile.instituteName4,
-            institutePosition4=current_userprofile.institutePosition4,
-            instituteName5=current_userprofile.instituteName5,
-            institutePosition5=current_userprofile.institutePosition5,
+            item1=current_userprofile.item1,
+            item2=current_userprofile.item2,
+            item3=current_userprofile.item3,
+            item4=current_userprofile.item4,
+            item5=current_userprofile.item5,
+            item6=current_userprofile.item6,
+            item7=current_userprofile.item7,
+            item8=current_userprofile.item8,
+            item9=current_userprofile.item9,
+            item10=current_userprofile.item10,
+            item11=current_userprofile.item11,
+            item12=current_userprofile.item12,
+            item13=current_userprofile.item13,
+            item14=current_userprofile.item14,
+            item15=current_userprofile.item15,
+            item16=current_userprofile.item16,
             prefix='profile', )
         return form
     else:
-        form = ProfileForm(
+        if current_app.config.get("WEKO_USERPROFILES_CUSTOMIZE_ENABLED", False):
+            form_cls = custom_profile_form_factory(ProfileForm)
+        else:
+            form_cls = ProfileForm
+        form = form_cls(
             formdata=None,
             obj=current_userprofile,
             prefix='profile', )
-        return form
+    return form
 
 @blueprint.teardown_request
 @blueprint_ui_init.teardown_request

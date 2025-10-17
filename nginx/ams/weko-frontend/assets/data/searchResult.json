@@ -1,0 +1,56 @@
+[
+  {
+    "id": 1,
+    "name": {
+      "i18n": "title",
+      "en": "Title",
+      "ja": "タイトル"
+    },
+    "roCrateKey": "subjectOf"
+  },
+  {
+    "id": 2,
+    "name": {
+      "i18n": "field",
+      "en": "Field",
+      "ja": "分野"
+    },
+    "roCrateKey": "genre"
+  },
+  {
+    "id": 3,
+    "name": {
+      "i18n": "creater",
+      "en": "Author",
+      "ja": "作成者"
+    },
+    "roCrateKey": "creator"
+  },
+  {
+    "id": 4,
+    "name": {
+      "i18n": null,
+      "en": "Author Affiliation",
+      "ja": "作成者所属"
+    },
+    "roCrateKey": "creativeWorkStatus"
+  },
+  {
+    "id": 5,
+    "name": {
+      "i18n": "classification",
+      "en": "Classification",
+      "ja": "ヒト/動物/その他"
+    },
+    "roCrateKey": "character"
+  },
+  {
+    "id": 6,
+    "name": {
+      "i18n": "authority",
+      "en": "Authority",
+      "ja": "アクセス権"
+    },
+    "roCrateKey": "accessMode"
+  }
+]

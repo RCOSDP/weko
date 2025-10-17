@@ -38,10 +38,11 @@ class PyFSFileStorage(FileStorage):
 
     """
 
-    def __init__(self, fileurl, size=None, modified=None, clean_dir=True):
+    def __init__(self, fileurl, size=None, modified=None, clean_dir=True, location=None):
         """Storage initialization."""
         self.fileurl = fileurl
         self.clean_dir = clean_dir
+        self.location = location
         super(PyFSFileStorage, self).__init__(size=size, modified=modified)
 
     def _get_fs(self, create_dir=True):
@@ -201,7 +202,10 @@ def pyfs_storage_factory(fileinstance=None, default_location=None,
     """Get factory function for creating a PyFS file storage instance."""
     # Either the FileInstance needs to be specified or all filestorage
     # class parameters need to be specified
+    from ..models import Location
     assert fileinstance or (fileurl and size)
+    location = None
+    locationList = Location.all()
 
     if fileinstance:
         # FIXME: Code here should be refactored since it assumes a lot on the
@@ -224,8 +228,16 @@ def pyfs_storage_factory(fileinstance=None, default_location=None,
                 current_app.config['FILES_REST_STORAGE_PATH_SPLIT_LENGTH'],
             )
 
+        location = next((loc for loc in locationList if str(loc.uri) == str(default_location)), None)
+
+    if location is None:
+        location = next((loc for loc in locationList if str(loc.uri) in str(fileurl)), None)
+        if location is None:
+            # if not match fileurl with location, then get default location
+            location = next((loc for loc in locationList if loc.default == True), None)
+
     return filestorage_class(
-        fileurl, size=size, modified=modified, clean_dir=clean_dir)
+        fileurl, size=size, modified=modified, clean_dir=clean_dir, location=location)
 
 
 def remove_dir_with_file(path):

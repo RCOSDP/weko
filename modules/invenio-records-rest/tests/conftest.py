@@ -249,6 +249,7 @@ def app(request):
         WEKO_PERMISSION_ROLE_COMMUNITY=WEKO_PERMISSION_ROLE_COMMUNITY,
         EMAIL_DISPLAY_FLG = True,
         WEKO_RECORDS_UI_LICENSE_DICT=WEKO_RECORDS_UI_LICENSE_DICT,
+        WEKO_RECORDS_UI_EMAIL_ITEM_KEYS = ['creatorMails', 'contributorMails', 'mails']
     )
 
     #app.config['RECORDS_REST_ENDPOINTS']['recid']['search_class'] = \
@@ -448,7 +449,7 @@ def record_data_with_itemtype(id, index_path):
         "item_type_id":"15",
         "publish_date":"2023-10-25",
         "publish_status":"0",
-        "weko_shared_id":-1,
+        "weko_shared_ids":[],
         "item_1617186331708":{"attribute_name":"Title","attribute_value_mlt":[{"subitem_1551255647225":"test_item{}".format(id),"subitem_1551255648112":"ja"}]},
         "item_1617258105262":{"attribute_name":"Resource Type","attribute_value_mlt":[{"resourceuri":"http://purl.org/coar/resource_type/c_5794","resourcetype":"conference paper"}]},
         "relation_version_is_last":True
@@ -546,6 +547,8 @@ def default_permissions(app):
     yield app
 
     app.extensions['invenio-records-rest'].reset_permission_factories()
+    # Conducted twice to increase coverage of patterns that cannot be reset.
+    app.extensions['invenio-records-rest'].reset_permission_factories()
 
 @pytest.fixture()
 def search_user(app, db):
@@ -639,7 +642,8 @@ def facet_search(db):
         active=True,
         ui_type="SelectBox",
         display_number=1,
-        is_open=True
+        is_open=True,
+        search_condition="AND"
     )
     db.session.add(control_number)
     db.session.commit()

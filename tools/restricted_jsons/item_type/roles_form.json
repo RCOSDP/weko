@@ -1,0 +1,26 @@
+{
+    "add": "New",
+    "key": "<key>[].roles",
+    "items": [
+        {
+            "key": "<key>[].roles[].role",
+            "type": "select",
+            "title": "ロール",
+            "titleMap": [],
+            "title_i18n": {
+                "en": "Role",
+                "ja": "ロール"
+            }
+        }
+    ],
+    "style": {
+        "add": "btn-success"
+    },
+    "title": "ロール",
+    "titleMap": [],
+    "condition": "model.<key>[arrayIndex].accessrole=='open_date'||model.<key>[arrayIndex].accessrole=='open_login'",
+    "title_i18n": {
+        "en": "Role",
+        "ja": "ロール"
+    }
+}

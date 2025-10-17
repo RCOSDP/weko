@@ -11,61 +11,168 @@
   <span ng-if="record.metadata.heading=='' && $index!=0">
     {{record.metadata.heading=vm.invenioSearchResults.hits.hits[$index-1].metadata.heading;""}}
   </span>
-  <div class="panel border-color-transparent">
-    <div class="panel-heading bg-color-white">
-      <div class="form-inline">
-        <ul class="leaders">
-          <li>
-            <span>
-              <a target="_self" ng-href="/records/{{ record.id }}{{commInfo}}">
-                <p class="glyphicon glyphicon-file" aria-hidden="true"></p>
-                {{record.metadata.hasOwnProperty('title')?record.metadata.title[0]:record.metadata['dc:title'][0]|escapeTitle}}
-              </a>
-            </span>
-            <span ng-if="record.metadata.pageStart.length > 0 || record.metadata.pageEnd.length > 0">
-              <p ng-if="record.metadata.pageStart[0] != '' && record.metadata.pageStart.length > 0 && record.metadata.pageEnd[0] != '' && record.metadata.pageEnd.length > 0">
-                {{record.metadata.pageStart[0]}} - {{record.metadata.pageEnd[0]}}
-              </p>
-              <p ng-if="record.metadata.pageStart[0] == '' || record.metadata.pageStart.length == 0 || record.metadata.pageEnd[0] == '' || record.metadata.pageEnd.length == 0">
-                {{record.metadata.pageStart[0]}}
-                {{record.metadata.pageEnd[0]}}
-              </p>
-            </span>
-            <span ng-if="record.metadata.pageStart.length == 0 && record.metadata.pageEnd.length == 0">
-              <p></p>
-            </span>
-          </li>
-        </ul>
-      </div>
-    </div>
-    <!--
-    <div class="panel-body">
-      <pre class="hide">{{record.metadata._comment}}</pre>
-      <div class="pull-right">
-        <ul class="list-inline">
-          <li ng-show="record.metadata.publisher.length > 0">
-            <a ng-click="showAuthors=!showAuthors">
-              {{ showAuthors ? 'Hide authors' : 'Show authors' }}
-            </a>
-          </li>
-          <li>
-            <a ng-click="showSource=!showSource">
-              {{ showSource ? 'Hide source' : 'Show source' }}
-            </a>
-          </li>
-        </ul>
-      </div>
-      <div ng-hide="!showAuthors">
-        <ul>
-          <div ng-repeat='author in record.metadata.creator'>
-            <li>{{ author|escapeAuthor }}</li>
+  <table cellspacing="0" cellpadding="0" border="0" width="100%">
+    <tr>
+      <td ng-hide="!record.metadata._thumbnail" class="fitwidth" style="vertical-align: top; padding-top: 10px;">
+        <img ng-if="record.metadata._thumbnail" ng-src="/record/{{ record.id }}/files/{{record.metadata._thumbnail.thumbnail_label}}"
+          alt="{{record.metadata._thumbnail.thumbnail_label}}" width="{{record.metadata._thumbnail.thumbnail_width}}">
+      </td>
+      <td style="vertical-align: top;">
+        <div class="panel border-color-transparent">
+          <div class="panel-heading bg-color-white">
+            <div class="form-inline">
+              <ul class="leaders">
+                <li>
+                  <span class="parent">
+                    <a target="_self" ng-href="/records/{{ record.id }}{{commInfo}}">
+                      <p class="glyphicon glyphicon-file" aria-hidden="true"></p>
+                      {{record.metadata.hasOwnProperty('title')?record.metadata.title[0]:record.metadata['dc:title'][0]|escapeTitle}}
+                    </a>
+                  </span>
+                  <div ng-if="record.metadata._creator_info.length > 0" class="parent-div">
+                  <span ng-repeat="author in record.metadata._creator_info track by $index">
+                    <span  ng-if="$index < 5">
+                      <span ng-if="author.creatorNames.creatorName">{{ author.creatorNames.creatorName|escapeTitle }}</span>
+                      <span ng-if="!author.creatorNames.creatorName && author.familyNames.familyName">{{ author.familyNames.familyName|escapeTitle }}, </span>
+                      <span ng-if="!author.creatorNames.creatorName && author.givenNames.givenName">{{ author.givenNames.givenName|escapeTitle }}</span>
+                      <span ng-repeat="nameIdentifier in author.nameIdentifiers track by $index">
+                        <a ng-if="nameIdentifier.nameIdentifierScheme=='ORCID'" href="{{ nameIdentifier.nameIdentifierURI }}" title="{{ nameIdentifier.nameIdentifierScheme }}:{{ nameIdentifier.nameIdentifier }}" alt="{{ nameIdentifier.nameIdentifierScheme }}:{{ nameIdentifier.nameIdentifier }}">
+                          <img style="display: inline-block; _display: inline;height: 1em;vertical-align: middle;" src="static/images/orcid.svg"/>
+                        </a>
+                        <a ng-if="!(nameIdentifier.nameIdentifierScheme=='ORCID') && !(nameIdentifier.nameIdentifierScheme=='WEKO') && nameIdentifier.nameIdentifierURI" title="{{ nameIdentifier.nameIdentifierScheme }}:{{ nameIdentifier.nameIdentifier }}" href="{{ nameIdentifier.nameIdentifierURI }}">
+                          <span style="display: inline-block; _display: inline;vertical-align: middle;background: #337ab7;border-radius: 50%;width: 1.2em;height: 1.2em;color: #fff;font-size: 0.8em;text-align: center;line-height: 1.2em;">{{ (nameIdentifier.nameIdentifierScheme)[0] }}</span>
+                        </a>
+                        <a ng-if="nameIdentifier.nameIdentifierScheme=='WEKO'" title="{{ nameIdentifier.nameIdentifierScheme }}:{{ nameIdentifier.nameIdentifier }}">
+                          <span style="display: inline-block; _display: inline;vertical-align: middle;background: #337ab7;border-radius: 50%;width: 1.2em;height: 1.2em;color: #fff;font-size: 0.8em;text-align: center;line-height: 1.2em;">{{ (nameIdentifier.nameIdentifierScheme)[0] }}</span>
+                        </a>
+                        </span>
+                      ;
+                    </span>
+                    <details ng-if="$index == 5" class="details-area">
+                      <summary class="and-more">and more</summary>
+                      <span ng-repeat="auth in record.metadata._creator_info.slice(5)">
+                        <span ng-if="auth.creatorNames.creatorName">{{ auth.creatorNames.creatorName|escapeTitle }}</span>
+                        <span ng-if="!auth.creatorNames.creatorName && auth.familyNames.familyName">{{ auth.familyNames.familyName|escapeTitle }}, </span>
+                        <span ng-if="!auth.creatorNames.creatorName && auth.givenNames.givenName">{{ auth.givenNames.givenName|escapeTitle }}</span>
+                        <span ng-repeat="nameIdentifier in auth.nameIdentifiers track by $index">
+                          <a ng-if="nameIdentifier.nameIdentifierScheme=='ORCID'" href="{{ nameIdentifier.nameIdentifierURI }}" title="{{ nameIdentifier.nameIdentifierScheme }}:{{ nameIdentifier.nameIdentifier }}" alt="{{ nameIdentifier.nameIdentifierScheme }}:{{ nameIdentifier.nameIdentifier }}">
+                            <img style="display: inline-block; _display: inline;height: 1em;vertical-align: middle;" src="static/images/orcid.svg"/>
+                          </a>
+                          <a ng-if="!(nameIdentifier.nameIdentifierScheme=='ORCID') && !(nameIdentifier.nameIdentifierScheme=='WEKO') && nameIdentifier.nameIdentifierURI" title="{{ nameIdentifier.nameIdentifierScheme }}:{{ nameIdentifier.nameIdentifier }}" href="{{ nameIdentifier.nameIdentifierURI }}">
+                            <span style="display: inline-block; _display: inline;vertical-align: middle;background: #337ab7;border-radius: 50%;width: 1.2em;height: 1.2em;color: #fff;font-size: 0.8em;text-align: center;line-height: 1.2em;">{{ (nameIdentifier.nameIdentifierScheme)[0] }}</span>
+                          </a>
+                          <a ng-if="nameIdentifier.nameIdentifierScheme=='WEKO'" title="{{ nameIdentifier.nameIdentifierScheme }}:{{ nameIdentifier.nameIdentifier }}">
+                            <span style="display: inline-block; _display: inline;vertical-align: middle;background: #337ab7;border-radius: 50%;width: 1.2em;height: 1.2em;color: #fff;font-size: 0.8em;text-align: center;line-height: 1.2em;">{{ (nameIdentifier.nameIdentifierScheme)[0] }}</span>
+                          </a>
+                          </span>
+                        ;
+                      </span>
+                    </details>
+                  </span></div>
+                  <span ng-if="record.metadata._date.length > 0" class="parent">
+                    <!-- <span ng-if="record.metadata.publish_date">pubdate/{{record.metadata.publish_date}}</span> -->
+                    <span ng-repeat="date in record.metadata._date track by $index">
+                      <span ng-if="date.subitem_date_issued_type && date.subitem_date_issued_datetime">{{date.subitem_date_issued_type}}/{{date.subitem_date_issued_datetime}}; </span>
+                    </span>
+                    <br/>
+                  </span>
+                  <div ng-if="record.metadata._files_info.length > 0" class="row">
+                    <!-- 小型携帯用ディスプレイ -->
+                    <div class="visible-xs-block">
+                      <div class="col-xs-4" ng-repeat="file_info in record.metadata._files_info |limitTo:3 track by $index"
+                        ng-hide="record.metadata._files_info.length > 3 && $index == 2">
+                        <a ng-href="{{file_info.url}}" target="{{file_info.extention?'_self':'_blank'}}" class="extention-button"
+                          data-toggle="tooltip" title="{{file_info.label}}, {{file_info.date[0].dateType}}/{{file_info.date[0].dateValue}}">
+                          {{file_info.extention?file_info.extention:'URL'|escapeTitle}}
+                        </a>
+                      </div>
+                      <div class="col-xs-4" ng-show="record.metadata._files_info.length > 3">
+                        <a ng-href="/records/{{ record.id }}{{commInfo}}" class="dot-button" style="white-space: nowrap;">
+                          ● ● ●
+                        </a>
+                      </div>
+                    </div>
+                    <!-- モバイル向けディスプレイ -->
+                    <div class="visible-sm-block">
+                      <div class="col-sm-3" ng-repeat="file_info in record.metadata._files_info |limitTo:4 track by $index"
+                        ng-hide="record.metadata._files_info.length > 4 && $index == 3">
+                        <a ng-href="{{file_info.url}}" target="{{file_info.extention?'_self':'_blank'}}" class="extention-button"
+                          data-toggle="tooltip" title="{{file_info.label}}, {{file_info.date[0].dateType}}/{{file_info.date[0].dateValue}}">
+                          {{file_info.extention?file_info.extention:'URL'|escapeTitle}}
+                        </a>
+                      </div>
+                      <div class="col-sm-3" ng-show="record.metadata._files_info.length > 4">
+                        <a ng-href="/records/{{ record.id }}{{commInfo}}" class="dot-button" style="white-space: nowrap;">
+                          ● ● ●
+                        </a>
+                      </div>
+                    </div>
+                    <!-- タブレット/デスクトップ用ディスプレイ -->
+                    <div class="visible-md-block visible-lg-block">
+                      <div class="col-md-2 col-lg-2"
+                        ng-repeat="file_info in record.metadata._files_info |limitTo:6 track by $index"
+                        ng-hide="record.metadata._files_info.length > 6 && $index == 5">
+                        <a ng-href="{{file_info.url}}" target="{{file_info.extention?'_self':'_blank'}}" class="extention-button"
+                          data-toggle="tooltip" title="{{file_info.label}}, {{file_info.date[0].dateType}}/{{file_info.date[0].dateValue}}">
+                          {{file_info.extention?file_info.extention:'URL'|escapeTitle}}
+                        </a>
+                      </div>
+                      <div class="col-md-2 col-lg-2" ng-show="record.metadata._files_info.length > 6">
+                        <a ng-href="/records/{{ record.id }}{{commInfo}}" class="dot-button" style="white-space: nowrap;">
+                          ● ● ●
+                        </a>
+                      </div>
+                    </div>
+                  </div>
+
+
+                  <span ng-if="record.metadata.pageStart.length > 0 || record.metadata.pageEnd.length > 0" class="page-info">
+                    <p ng-if="record.metadata.pageStart[0] != '' && record.metadata.pageStart.length > 0 && record.metadata.pageEnd[0] != '' && record.metadata.pageEnd.length > 0">
+                      {{record.metadata.pageStart[0]}} - {{record.metadata.pageEnd[0]}}
+                    </p>
+                    <p ng-if="record.metadata.pageStart[0] == '' || record.metadata.pageStart.length == 0 || record.metadata.pageEnd[0] == '' || record.metadata.pageEnd.length == 0">
+                      {{record.metadata.pageStart[0]}}
+                      {{record.metadata.pageEnd[0]}}
+                    </p>
+                  </span>
+                  <span ng-if="record.metadata.pageStart.length == 0 && record.metadata.pageEnd.length == 0" class="page-info">
+                    <p></p>
+                  </span>
+                </li>
+              </ul>
+            </div>
           </div>
-        </ul>
-      </div>
-      <div ng-hide="!showSource">
-        <pre class="pre-scrollable">{{ record | json }}</pre>
-      </div>
-    </div>
-    -->
-  </div>
+          <!--
+          <div class="panel-body">
+            <pre class="hide">{{record.metadata._comment}}</pre>
+            <div class="pull-right">
+              <ul class="list-inline">
+                <li ng-show="record.metadata.publisher.length > 0">
+                  <a ng-click="showAuthors=!showAuthors">
+                    {{ showAuthors ? 'Hide authors' : 'Show authors' }}
+                  </a>
+                </li>
+                <li>
+                  <a ng-click="showSource=!showSource">
+                    {{ showSource ? 'Hide source' : 'Show source' }}
+                  </a>
+                </li>
+              </ul>
+            </div>
+            <div ng-hide="!showAuthors">
+              <ul>
+                <div ng-repeat='author in record.metadata.creator'>
+                  <li>{{ author|escapeAuthor }}</li>
+                </div>
+              </ul>
+            </div>
+            <div ng-hide="!showSource">
+              <pre class="pre-scrollable">{{ record | json }}</pre>
+            </div>
+          </div>
+          -->
+        </div>
+      </td>
+    </tr>
+  </table>
 </div>

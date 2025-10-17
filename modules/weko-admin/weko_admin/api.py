@@ -22,6 +22,8 @@
 from __future__ import absolute_import, print_function
 
 import ast
+import sys
+import traceback
 
 import redis
 import re
@@ -53,7 +55,7 @@ def is_restricted_user(user_info):
         is_crawler = _is_crawler(user_info)
     except Exception as e:
         current_app.logger.error('Could not check for restricted users: ')
-        current_app.logger.error(e)
+        traceback.print_exc(file=sys.stdout)
         return False
     restricted_ip = False if restricted_ip is None else True
     return (restricted_ip or is_crawler)
@@ -66,14 +68,14 @@ def _is_crawler(user_info):
 
     :return: Boolean.
     """
-    
+
     restricted_agent_lists = LogAnalysisRestrictedCrawlerList.get_all_active()
     for restricted_agent_list in restricted_agent_lists:
-        empty_list = False            
+        empty_list = False
         try:
             redis_connection = RedisConnection()
             connection = redis_connection.connection(db=current_app.config['CRAWLER_REDIS_DB'], kv = False)
-       
+
             if current_app.config['WEKO_ADMIN_USE_REGEX_IN_CRAWLER_LIST']:
                 bot_regex_str = connection.get(restricted_agent_list.list_url)
                 if bot_regex_str == "":
@@ -92,7 +94,7 @@ def _is_crawler(user_info):
             raw_res = requests.get(restricted_agent_list.list_url).text
             if not raw_res:
                 continue
-            
+
             crawler_list = raw_res.split('\n')
             if current_app.config['WEKO_ADMIN_USE_REGEX_IN_CRAWLER_LIST']:
                 crawler_list = [agent.lower() for agent in crawler_list if agent and not agent.startswith('#')]
@@ -105,7 +107,7 @@ def _is_crawler(user_info):
                     connection.sadd(restricted_agent_list.list_url,restrict_ip)
                 connection.expire(restricted_agent_list.list_url, current_app.config["CRAWLER_REDIS_TTL"])
                 restrict_list = set(crawler_list)
-                
+
         if current_app.config['WEKO_ADMIN_USE_REGEX_IN_CRAWLER_LIST']:
             if bot_regex_str and (
                 re.search(bot_regex_str, user_info['user_agent'].lower()) or
@@ -223,7 +225,7 @@ def validate_csrf_header(request,csrf_header="X-CSRFToken"):
         CSRFError: _description_
         CSRFError: _description_
         CSRFError: _description_
-    """    
+    """
     try:
         csrf_token = request.headers.get(csrf_header)
         validate_csrf(csrf_token)
@@ -238,4 +240,3 @@ def validate_csrf_header(request,csrf_header="X-CSRFToken"):
 
         if not same_origin(request.referrer, good_referrer):
             raise CSRFError("The referrer does not match the host.")
-        

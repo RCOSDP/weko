@@ -15,7 +15,9 @@ from invenio_oaiserver.utils import (
     eprints_description,
     handle_license_free,
     get_index_state,
-    is_output_harvest
+    get_index_state_by_id,
+    is_output_harvest,
+    get_community_index_from_set
 )
 
 from tests.helpers import create_record2
@@ -181,6 +183,71 @@ def test_get_index_state(app, db):
     result = get_index_state()
     assert result == test
 
+# def get_index_state_by_id(id_lst):
+# .tox/c1/bin/pytest --cov=invenio_oaiserver tests/test_utils.py::test_get_index_state_by_id -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-oaiserver/.tox/c1/tmp
+def test_get_index_state_by_id(app, db):
+    from weko_index_tree.models import Index
+
+    index1 = Index( # harvest_public_state is False
+        parent=0,
+        position=1,
+        index_name_english="test_index1",
+        index_link_name_english="test_index_link1",
+        harvest_public_state=False,
+        public_state=True,
+        browsing_role="3,-99"
+    )
+    db.session.add(index1)
+    index2 = Index( # not a parent
+        parent=0,
+        position=2,
+        index_name_english="test_index2",
+        index_link_name_english="test_index_link2",
+        harvest_public_state=True,
+        public_state=True,
+        browsing_role="3,-99"
+    )
+    db.session.add(index2)
+    index3 = Index( # public_state is False
+        parent=1,
+        position=1,
+        index_name_english="test_index3",
+        index_link_name_english="test_index_link3",
+        harvest_public_state=True,
+        public_state=False,
+        browsing_role="3"
+    )
+    db.session.add(index3)
+    index4 = Index(
+        parent=3,
+        position=1,
+        index_name_english="test_index4",
+        index_link_name_english="test_index_link4",
+        harvest_public_state=True,
+        public_state=True,
+        browsing_role="3,-99"
+    )
+    db.session.add(index4)
+    index5 = Index(
+        parent=0,
+        position=3,
+        index_name_english="test_index5",
+        index_link_name_english="test_index_link5",
+        harvest_public_state=True,
+        public_state=True,
+        browsing_role="3,-99"
+    )
+    db.session.add(index5)
+    db.session.commit()
+    test = {
+        "1": {"parent": None, "msg": 2},
+        "3": {"parent": None, "msg": 1},
+        "4": {"parent": "3", "msg": 3},
+        "5": {"parent": "0", "msg": 3}
+    }
+    result = get_index_state_by_id(["4", "5"])
+    assert result == test
+
 #def is_output_harvest(path_list, index_state):
 #    def _check(index_id):
 # .tox/c1/bin/pytest --cov=invenio_oaiserver tests/test_utils.py::test_is_output_harvest -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-oaiserver/.tox/c1/tmp
@@ -192,3 +259,41 @@ def test_is_output_harvest(app):
     path_list = ["1","2","1000"]
     result = is_output_harvest(path_list,index_state)
     assert result == 3
+
+#def get_community_index_from_set(set):
+# .tox/c1/bin/pytest --cov=invenio_oaiserver tests/test_utils.py::test_get_community_index_from_set -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-oaiserver/.tox/c1/tmp
+def test_get_community_index_from_set(app, db, users):
+    from invenio_communities.models import Community
+    from weko_index_tree.models import Index
+    
+    index1 = Index(
+        parent=0,
+        position=1,
+        index_name_english="test_index1",
+        index_link_name_english="test_index_link1",
+        harvest_public_state=True,
+        public_state=True,
+        browsing_role="3,-99"
+    )
+    db.session.add(index1)
+    db.session.commit()
+    
+    comm1 = Community.create(community_id="test_comm", role_id=users[0]["id"],
+                            id_user=users[0]["id"], title="test community",
+                            description="this is test community",
+                            root_node_id=index1.id)
+    db.session.add(comm1)
+    db.session.commit()
+    
+    exist_com = comm1.id
+    result = get_community_index_from_set(exist_com)
+    assert result == str(index1.id)
+
+    # exist community with prefix
+    result = get_community_index_from_set("user-" + exist_com)
+    assert result == str(index1.id)
+
+    # no exist community
+    result = get_community_index_from_set("no_exist_comm")
+    assert result is None
+    

@@ -5,6 +5,7 @@ from .property_func import (
     get_property_form,
     set_post_data,
     get_select_value,
+    make_title_map
 )
 from . import property_config as config
 
@@ -83,6 +84,7 @@ def schema(title="", multi_flag=multiple_flag):
                                 "type": ["null", "string"],
                                 "format": "select",
                                 "title": "権利者識別子Scheme",
+                                "enum": config.CREATOR_IDENTIFIER_SCHEMA_VAL,
                             },
                             "nameIdentifier": {
                                 "format": "text",
@@ -149,24 +151,25 @@ def form(
                                 "en": "Right Holder Name Identifier Scheme",
                                 "ja": "権利者識別子Scheme",
                             },
-                            "titleMap": [],
+                            "titleMap": make_title_map(config.CREATOR_IDENTIFIER_SCHEMA_LBL, config.CREATOR_IDENTIFIER_SCHEMA_VAL),
                             "type": "select",
                         },
-                        {
-                            "key": "{}.nameIdentifiers[].nameIdentifierURI".format(key),
-                            "title": "権利者識別子URI",
-                            "title_i18n": {
-                                "en": "Right Holder Name Identifier URI",
-                                "ja": "権利者識別子URI",
-                            },
-                            "type": "text",
-                        },
+
                         {
                             "key": "{}.nameIdentifiers[].nameIdentifier".format(key),
                             "title": "権利者識別子",
                             "title_i18n": {
                                 "en": "Right Holder Name Identifier",
                                 "ja": "権利者識別子",
+                            },
+                            "type": "text",
+                        },
+                                                {
+                            "key": "{}.nameIdentifiers[].nameIdentifierURI".format(key),
+                            "title": "権利者識別子URI",
+                            "title_i18n": {
+                                "en": "Right Holder Name Identifier URI",
+                                "ja": "権利者識別子URI",
                             },
                             "type": "text",
                         },

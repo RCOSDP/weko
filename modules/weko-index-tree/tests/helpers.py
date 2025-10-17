@@ -6,14 +6,11 @@ import uuid
 from os.path import dirname, join
 
 from invenio_db import db
-from invenio_pidstore import current_pidstore
 from invenio_records import Record
 from weko_records.api import ItemsMetadata, WekoRecord
-from weko_deposit.pidstore import weko_deposit_minter
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus, Redirect
-from weko_deposit.api import WekoDeposit, WekoIndexer
-from invenio_search import InvenioSearch, RecordsSearch, current_search, current_search_client
-from invenio_search import current_search
+from weko_deposit.api import WekoDeposit
+from invenio_search import InvenioSearch, RecordsSearch
 import pytest
 from mock import patch
 from unittest.mock import MagicMock

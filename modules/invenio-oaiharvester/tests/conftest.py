@@ -40,6 +40,19 @@ import pytest
 from flask import Flask
 from flask.cli import ScriptInfo
 from flask_celeryext import FlaskCeleryExt
+from invenio_accounts import InvenioAccounts
+from invenio_accounts.models import User
+from invenio_accounts.testutils import create_test_user
+from invenio_db import InvenioDB, db
+from invenio_files_rest.models import Location
+from invenio_i18n import InvenioI18N
+from invenio_jsonschemas import InvenioJSONSchemas
+from invenio_pidrelations import InvenioPIDRelations
+from invenio_records import InvenioRecords
+from sqlalchemy_utils.functions import create_database, database_exists
+from weko_index_tree.models import Index
+from weko_search_ui import WekoSearchUI
+from weko_theme import WekoTheme
 from invenio_access import InvenioAccess
 from invenio_access.models import ActionUsers, ActionRoles
 from invenio_accounts import InvenioAccounts
@@ -68,7 +81,8 @@ from weko_schema_ui.models import OAIServerSchema
 from weko_theme import WekoTheme
 from weko_deposit import WekoDeposit
 from weko_records import WekoRecords
-from weko_records.api import ItemsMetadata 
+from weko_records.api import ItemsMetadata
+from weko_records_ui.config import WEKO_PERMISSION_SUPER_ROLE_USER
 
 
 from invenio_oaiharvester import InvenioOAIHarvester
@@ -121,7 +135,8 @@ def base_app(instance_path):
         },
         DEPOSIT_DEFAULT_JSONSCHEMA='deposits/deposit-v1.0.0.json',
         WEKO_SCHEMA_JPCOAR_V1_SCHEMA_NAME='jpcoar_v1_mapping',
-        WEKO_SCHEMA_DDI_SCHEMA_NAME='ddi_mapping'
+        WEKO_SCHEMA_DDI_SCHEMA_NAME='ddi_mapping',
+        WEKO_PERMISSION_SUPER_ROLE_USER=WEKO_PERMISSION_SUPER_ROLE_USER,
     )
     FlaskCeleryExt(app_)
     InvenioAccounts(app_)
@@ -211,7 +226,7 @@ def users(app, db):
         originalroleuser = create_test_user(email='originalroleuser@test.org')
         originalroleuser2 = create_test_user(email='originalroleuser2@test.org')
         student = User.query.filter_by(email='student@test.org').first()
-        
+
     role_count = Role.query.filter_by(name='System Administrator').count()
     if role_count != 1:
         sysadmin_role = ds.create_role(name='System Administrator')
@@ -347,7 +362,7 @@ def test_indices(app, db):
             online_issn=online_issn,
             harvest_spec=harvest_spec
         )
-    
+
     with db.session.begin_nested():
         db.session.add(base_index(1, 0, 0, datetime(2022, 1, 1), True, True, True, True, True, '1234-5678'))
         db.session.add(base_index(2, 0, 1))
@@ -652,6 +667,72 @@ def db_itemtype(app, db):
     )
     item_type_dc_mapping = ItemTypeMapping(id=12, item_type_id=12, mapping=item_type_dc_mapping)
 
+    # BioSample
+    item_type_biosample_name = ItemTypeName(
+        id=32102, name="Biosample", has_site_license=True, is_active=True
+    )
+    item_type_biosample_schema = dict()
+    with open("tests/data/itemtype_biosample_schema.json", "r") as f:
+        item_type_biosample_schema = json.load(f)
+
+    item_type_biosample_form = dict()
+    with open("tests/data/itemtype_biosample_form.json", "r") as f:
+        item_type_biosample_form = json.load(f)
+
+    item_type_biosample_render = dict()
+    with open("tests/data/itemtype_biosample_render.json", "r") as f:
+        item_type_biosample_render = json.load(f)
+
+    item_type_biosample_mapping = dict()
+    with open("tests/data/itemtype_biosample_mapping.json", "r") as f:
+        item_type_biosample_mapping = json.load(f)
+    item_type_biosample = ItemType(
+        id=32102,
+        name_id=32102,
+        harvesting_type=True,
+        schema=item_type_biosample_schema,
+        form=item_type_biosample_form,
+        render=item_type_biosample_render,
+        tag=1,
+        version_id=1,
+        is_deleted=False,
+    )
+
+    item_type_biosample_mapping = ItemTypeMapping(id=32102, item_type_id=32102, mapping=item_type_biosample_mapping)
+
+    # BioProject
+    item_type_bioproject_name = ItemTypeName(
+        id=32103, name="Bioproject", has_site_license=True, is_active=True
+    )
+    item_type_bioproject_schema = dict()
+    with open("tests/data/itemtype_bioproject_schema.json", "r") as f:
+        item_type_bioproject_schema = json.load(f)
+
+    item_type_bioproject_form = dict()
+    with open("tests/data/itemtype_bioproject_form.json", "r") as f:
+        item_type_bioproject_form = json.load(f)
+
+    item_type_bioproject_render = dict()
+    with open("tests/data/itemtype_bioproject_render.json", "r") as f:
+        item_type_bioproject_render = json.load(f)
+
+    item_type_bioproject_mapping = dict()
+    with open("tests/data/itemtype_bioproject_mapping.json", "r") as f:
+        item_type_bioproject_mapping = json.load(f)
+    item_type_bioproject = ItemType(
+        id=32103,
+        name_id=32103,
+        harvesting_type=True,
+        schema=item_type_bioproject_schema,
+        form=item_type_bioproject_form,
+        render=item_type_bioproject_render,
+        tag=1,
+        version_id=1,
+        is_deleted=False,
+    )
+
+    item_type_bioproject_mapping = ItemTypeMapping(id=32103, item_type_id=32103, mapping=item_type_bioproject_mapping)
+
     with db.session.begin_nested():
         db.session.add(item_type_multiple_name)
         db.session.add(item_type_multiple)
@@ -662,6 +743,12 @@ def db_itemtype(app, db):
         db.session.add(item_type_dc_name)
         db.session.add(item_type_dc)
         db.session.add(item_type_dc_mapping)
+        db.session.add(item_type_biosample_name)
+        db.session.add(item_type_biosample)
+        db.session.add(item_type_biosample_mapping)
+        db.session.add(item_type_bioproject_name)
+        db.session.add(item_type_bioproject)
+        db.session.add(item_type_bioproject_mapping)
     db.session.commit()
 
     return {
@@ -671,6 +758,12 @@ def db_itemtype(app, db):
         "item_type_ddi_name": item_type_ddi_name,
         "item_type_ddi": item_type_ddi,
         "item_type_ddi_mapping": item_type_ddi_mapping,
+        "item_type_biosample_name": item_type_biosample_name,
+        "item_type_biosample": item_type_biosample,
+        "item_type_biosample_mapping": item_type_biosample_mapping,
+        "item_type_bioproject_name": item_type_bioproject_name,
+        "item_type_bioproject": item_type_bioproject,
+        "item_type_bioproject_mapping": item_type_bioproject_mapping,
     }
 
 
@@ -730,7 +823,7 @@ def reset_class_value():
     )
     BaseMapper.itemtype_map = {}
     BaseMapper.identifiers = []
-    
+
     DCMapper.itemtype_map = {}
     DCMapper.identifiers = []
     DDIMapper.itemtype_map = {}
@@ -749,7 +842,7 @@ def create_record(db, record_data, item_data):
         db.session.add(rel)
         parent=None
         doi = None
-        
+
         if '.' in record_data["recid"]:
             parent = PersistentIdentifier.get("recid",int(float(record_data["recid"])))
             recid_p = PIDRelation.get_child_relations(parent).one_or_none()
@@ -771,7 +864,7 @@ def create_record(db, record_data, item_data):
         deposit = WekoDeposit(record, record.model)
 
         deposit.commit()
-        
+
     return recid, depid, record, item, parent, doi, deposit
 
 @pytest.fixture()
@@ -779,11 +872,10 @@ def db_records(app,db):
     record_datas = list()
     with open("tests/data/test_record/record_metadata.json") as f:
         record_datas = json.load(f)
-    
+
     item_datas = list()
     with open("tests/data/test_record/item_metadata.json") as f:
         item_datas = json.load(f)
-        
+
     for i in range(len(record_datas)):
         recid, depid, record, item, parent, doi, deposit = create_record(db,record_datas[i],item_datas[i])
-        

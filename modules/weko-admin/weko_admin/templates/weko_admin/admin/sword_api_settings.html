@@ -1,0 +1,118 @@
+{# -*- coding: utf-8 -*-
+#
+# This file is file is part of WEKO3.
+# Copyright (C) 2017 National Institute of Informatics.
+#
+# WEKO3 is free software; you can redistribute it
+# and/or modify it under the terms of the GNU General Public License as
+# published by the Free Software Foundation; either version 2 of the
+# License, or (at your option) any later version.
+#
+# WEKO3 is distributed in the hope that it will be
+# useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with WEKO3; if not, write to the
+# Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+# MA 02111-1307, USA.
+#}
+
+{%- extends admin_base_template %}
+
+{% block css %}
+{{ super() }}
+<link href="{{ url_for('static', filename='css/weko_admin/quill.snow.css') }}" rel="stylesheet">
+<link href="{{ url_for('static', filename='css/weko_admin/language.css') }}" rel="stylesheet">
+<link href="{{ url_for('static', filename='css/weko_admin/styles.css') }}" rel="stylesheet">
+{% endblock %}
+
+{%- block page_body_tabs %}
+  {% from "weko_theme/macros/edit_tabs_selector.html" import tabs_selector with context %}
+  {{ tabs_selector('item_type') }}
+{%- endblock page_body_tabs%}
+
+{%- block javascript %}
+  {{ super() }}
+    <script src="{{ url_for('static', filename='js/weko_admin/sword_api_settings.js') }}"></script>
+{%- endblock javascript %}
+
+{%- block body %}
+<div id="root"></div>
+<input id="Required_item" type="hidden" value="{{_('Required item is not inputted')}}" />
+<input id="Successfully_Changed" type="hidden" value="{{_('Successfully Changed Settings.')}}" />
+<input id="Failed_Changed" type="hidden" value="{{_('Failed To Change Settings')}}" />
+<input id="items_required_alert" type="hidden" value="{{_('The following items is required. Please recheck and input.')}}"/>
+<input id="workflow_deleted_alert" type="hidden" value="{{_('The selected Workflow has been deleted. Please recheck and input.')}}"/>
+<input id="current_settings" type="hidden" value='{{current_settings}}'/>
+<input id="current_settings_json" type="hidden" value='{{current_settings_json}}'/>
+<input id="deleted_workflows_name" type="hidden" value='{{deleted_workflow_name_dict}}'/>
+<input id="registration_type_value" type="hidden" value='{{registration_type_value}}'/>
+<input id="workflow_value" type="hidden" value='{{workflow_value}}'/>
+<input id="page_type" type="hidden" value='{{page_type}}'/>
+
+{% from "weko_admin/macros/sword_api_tabs_selector.html" import sword_api_tabs_selector with context %}
+{{ sword_api_tabs_selector(page_type) }}
+
+<div style="padding-top: 20px; padding-left: 20px;">
+  <div class="row form-group">
+    <div class="col-sm-2 text-left">
+        <label>{{_('Active')}}</label>
+    </div>
+    <div class="col-sm-6">
+      <input type="checkbox" id="active" name="active" {{active_value}} />
+    </div>
+  </div>
+
+  <div class="row form-group">
+    <div class="col-sm-2 text-left">
+        <label>{{_('Registration Type')}}</label>
+    </div>
+    <div class="col-sm-4" style="display: flex; justify-content: space-between;">
+      <label for="Direct"><input type="radio" name="registration_type" value="Direct" onchange="changeRegistrationType(value)"/>
+      {{_("Direct_Registration")}}</label>
+      <label for="Workflow"><input type="radio" name="registration_type" value="Workflow" onchange="changeRegistrationType(value)"/>
+      {{_("WorkFlow_Registration")}}</label>
+    </div>
+  </div>
+
+  <div class="form-group" id="workflow_div">
+    <div class="row">
+      <div class="col-sm-2 text-left">
+        <label for="workflow_list">{{_('WorkFlow')}}</label>
+      </div>
+      <div class="col-sm-8">
+      <select class="form-control" name="workflow" id="workflow" disabled>
+        <option selected hidden value=""></option>
+        {%- for workflow in workflows -%}
+        <option  value="{{ workflow.id }}">{{ workflow.flows_name }}</option>
+        {%- endfor -%}
+      </select>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-sm-2"></div>
+      <div class="col-sm-8">{{_('WorkFlow Cautionary Note')}}</div>
+    </div>
+  </div>
+
+  <div class="row form-group">
+    <div class="col-sm-2 text-left">
+        <label>{{_('Duplicate Check')}}</label>
+    </div>
+    <div class="col-sm-6">
+      <input type="checkbox" id="duplicate_check" name="duplicate_check" {{duplicate_check_value}} />
+    </div>
+  </div>
+
+  <div class="row form-group">
+    <div className="pull-right" style="margin-right: 15px;">
+        <button type="button" name="submit" class="btn btn-primary pull-right" value={{page_type}} onclick="saveDataFormat(value)">
+            <span class="glyphicon glyphicon-save"></span>&nbsp
+            {{_('Save')}}
+        </button>
+    </div>
+  </div>
+</div>
+{%- endblock body %}

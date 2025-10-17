@@ -192,6 +192,7 @@ LANGUAGE_VAL2_1 = [
     "el",
     "ko",
 ]
+
 LANGUAGE_VAL2_2 = [
     None,
     "ja",
@@ -818,31 +819,40 @@ COUNTRY_VAL = [
     "ZMB",
     "ZWE",
 ]
-AFFILIATION_SCHEME_LBL = [None, "kakenhi【非推奨】", "ISNI", "Ringgold【非推奨】", "GRID","ROR"]
-AFFILIATION_SCHEME_VAL = [None, "kakenhi", "ISNI", "Ringgold", "GRID","ROR"]
+AFFILIATION_SCHEME_LBL = [
+    None,
+    "kakenhi【非推奨】",
+    "ISNI",
+    "Ringgold",
+    "GRID【非推奨】",
+    "ROR",
+]
+AFFILIATION_SCHEME_VAL = [None, "kakenhi", "ISNI", "Ringgold", "GRID", "ROR"]
 CREATOR_IDENTIFIER_SCHEMA_LBL = [
-None,
-"e-Rad_Researcher",
-"e-Rad",
-"NRID【非推奨】", 
-"ORCID",
-"ISNI", 
-"VIAF", 
-"AID", 
-"kakenhi【非推奨】", 
-"Ringgold",
-"GRID【非推奨】",
-"ROR","WEKO"]
+    "",
+    "e-Rad",
+    "e-Rad_Researcher",
+    "NRID【非推奨】",
+    "ORCID",
+    "ISNI",
+    "VIAF",
+    "AID",
+    "kakenhi【非推奨】",
+    "Ringgold",
+    "GRID【非推奨】",
+    "ROR",
+    "WEKO"
+]
 CREATOR_IDENTIFIER_SCHEMA_VAL = [
 None,
 "e-Rad_Researcher",
 "e-Rad",
-"NRID", 
+"NRID",
 "ORCID",
-"ISNI", 
-"VIAF", 
-"AID", 
-"kakenhi", 
+"ISNI",
+"VIAF",
+"AID",
+"kakenhi",
 "Ringgold",
 "GRID",
 "ROR","WEKO"]
@@ -1032,3 +1042,39 @@ HOLDING_AGENT_NAMEID_SCHEMA_LBL = [
 ]
 
 FUNDING_STREAM_IDENTIFIER_TYPE = ["Crossref Funder", "JGN_fundingStream"]
+
+FILE_LICENSE_LBL = [
+    None,
+    "CC BY 4.0",
+    "CC BY-SA 4.0",
+    "CC BY-ND 4.0",
+    "CC BY-NC 4.0",
+    "CC BY-NC-SA 4.0",
+    "CC BY-NC-ND 4.0",
+    "CC BY 3.0",
+    "CC BY-SA 3.0",
+    "CC BY-ND 3.0",
+    "CC BY-NC 3.0",
+    "CC BY-NC-SA 3.0",
+    "CC BY-NC-ND 3.0",
+    "CC0",
+    "Other",
+]
+
+FILE_LICENSE_VAL = [
+    None,
+    "license_0",
+    "license_1",
+    "license_2",
+    "license_3",
+    "license_4",
+    "license_5",
+    "license_6",
+    "license_7",
+    "license_8",
+    "license_9",
+    "license_10",
+    "license_11",
+    "license_12",
+    "license_free",
+]

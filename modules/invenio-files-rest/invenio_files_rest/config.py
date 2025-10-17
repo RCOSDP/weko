@@ -11,7 +11,7 @@
 import tempfile
 from datetime import timedelta
 
-MAX_CONTENT_LENGTH = 64424509440 
+MAX_CONTENT_LENGTH = 64424509440
 """Maximum allowed content length for form data.
 
 This value limits the maximum file upload size via multipart-formdata and is
@@ -119,8 +119,12 @@ FILES_REST_TASK_WAIT_INTERVAL = 2
 FILES_REST_TASK_WAIT_MAX_SECONDS = 600
 """Maximum number of seconds to wait for a task to finish."""
 
-FILES_REST_LOCATION_TYPE_LIST = [('s3', 'Amazon S3')]
+FILES_REST_LOCATION_TYPE_LIST = [('s3', 'S3 Path'), ('s3_vh', 'S3 Virtural Host')]
 """Location type list"""
+
+FILES_REST_LOCATION_TYPE_S3_PATH_VALUE = 's3'
+
+FILES_REST_LOCATION_TYPE_S3_VIRTUAL_HOST_VALUE = 's3_vh'
 
 FILES_REST_UPLOAD_OWNER_FACTORIES = 'invenio_files_rest.serializer.file_uploaded_owner'
 """file update version"""
