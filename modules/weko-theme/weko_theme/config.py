@@ -46,10 +46,10 @@ THEME_HEADER_LOGIN_TEMPLATE = 'weko_theme/header_login.html'
 THEME_BODY_TEMPLATE = 'weko_theme/body.html'
 """Body template which is normally included in :data:`BASE_TEMPLATE`."""
 
-THEME_LOGO = 'images/weko-logo.png'
+THEME_LOGO = 'images/Rumbu_logo_white2.png'
 """The logo to be used on the header and on the cover."""
 
-THEME_LOGO_ADMIN = 'images/weko-logo.png'
+THEME_LOGO_ADMIN = 'images/Rumbu_logo_white2.png'
 """The logo to be used on the admin views header."""
 
 THEME_URL_LOGO_ADMIN = '/'
