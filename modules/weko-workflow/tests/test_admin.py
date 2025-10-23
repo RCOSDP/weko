@@ -4,8 +4,8 @@
 import uuid
 import pytest
 import uuid
-from mock import patch
-from flask import json, url_for, make_response
+from mock import patch,Mock
+from flask import json, url_for, make_response, current_app
 from invenio_accounts.testutils import login_user_via_session as login
 from werkzeug.exceptions import InternalServerError ,Forbidden
 from weko_workflow.admin import FlowSettingView,WorkFlowSettingView
@@ -86,7 +86,7 @@ class TestFlowSettingView:
         with patch("flask.templating._render", return_value=""):
             res =  client.get(url)
             assert res.status_code == status_code
-
+        
         #test No.10(W2023-22 2)
         url = '/admin/flowsetting/{}'.format("hoge")
         with patch("flask.templating._render", return_value=""):
@@ -100,7 +100,36 @@ class TestFlowSettingView:
             with patch("flask.templating._render", return_value=""):
                 res =  client.get(url)
                 assert res.status_code == 403
+        
+        mock_action_role = Mock()
+        mock_action_role.specify_property = "test"
+        mock_action_role.action_item_registrant = True
 
+        mock_action = Mock()
+        mock_action.action_role = mock_action_role
+
+        mock_flow = Mock()
+        mock_flow.flow_actions = [mock_action]
+        
+        with patch("weko_admin.models.AdminSettings.get",return_value={"edit_mail_templates_enable": True,"display_request_form": False}):
+            with patch("weko_workflow.api.Flow.get_flow_detail", return_value=mock_flow):
+                with patch("flask.templating._render", return_value=""):
+                    url = '/admin/flowsetting/{}'.format(flow_define.flow_id)
+                    res =  client.get(url)
+                    assert res.status_code == status_code
+                    assert mock_action_role.specify_property == "test"
+                    assert mock_action_role.action_item_registrant == True
+        
+        with patch("weko_admin.models.AdminSettings.get",return_value={"edit_mail_templates_enable": False,"display_request_form": False}):
+            with patch("weko_workflow.api.Flow.get_flow_detail", return_value=mock_flow):
+                with patch("flask.templating._render", return_value=""):
+                    url = '/admin/flowsetting/{}'.format(flow_define.flow_id)
+                    res =  client.get(url)
+                    assert res.status_code == status_code
+                    assert mock_action_role.specify_property == None
+                    assert mock_action_role.action_item_registrant == False
+
+                
     # def flow_detail(self, flow_id='0'):
     # .tox/c1/bin/pytest --cov=weko_workflow tests/test_admin.py::TestFlowSettingView::test_flow_detail_return_repositories -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
     def test_flow_detail_return_repositories(self,client,workflow,users):
@@ -112,7 +141,7 @@ class TestFlowSettingView:
             assert res.status_code == 200
             args, kwargs = mock_render.call_args
             assert len(args[1]["repositories"]) == 2
-
+         
         url = '/admin/flowsetting/{}'.format(0)
         login(client=client, email=users[3]['email'])
         with patch("flask.templating._render", return_value="") as mock_render:
@@ -395,6 +424,14 @@ class TestFlowSettingView:
             # sysadmin
             with patch('flask_login.utils._get_user',return_value=users[2]["obj"]):
                 assert FlowSettingView._check_auth(workflow["flow"].flow_id)
+                assert FlowSettingView._check_auth(workflow_open_restricted[1]["flow"].flow_id)
+
+                current_app.config.update(WEKO_ADMIN_RESTRICTED_ACCESS_DISPLAY_FLAG = True)
+                
+                assert FlowSettingView._check_auth(workflow_open_restricted[1]["flow"].flow_id)
+            
+            current_app.config.update(WEKO_ADMIN_RESTRICTED_ACCESS_DISPLAY_FLAG = False)
+
             #repoadmin
             with patch('flask_login.utils._get_user',return_value=users[1]["obj"]):
 
@@ -407,7 +444,10 @@ class TestFlowSettingView:
 
                 #102
                 assert FlowSettingView._check_auth(workflow["flow"].flow_id)
-                #103
+                assert FlowSettingView._check_auth(workflow_open_restricted[1]["flow"].flow_id)
+
+                current_app.config.update(WEKO_ADMIN_RESTRICTED_ACCESS_DISPLAY_FLAG = True)
+                
                 assert not FlowSettingView._check_auth(workflow_open_restricted[1]["flow"].flow_id)
 
 
@@ -456,6 +496,7 @@ class TestWorkFlowSettingView:
     ])
     def test_workflow_detail_acl(self,app ,client,db_register_full_action,workflow_open_restricted, db_register2,users,users_index,status_code,mocker):
         login(client=client, email=users[users_index]['email'])
+        checkbox=Mock()
         url = url_for('workflowsetting.workflow_detail',workflow_id='0',_external=True)
         mock_render =mocker.patch("flask.templating._render", return_value=make_response())
         res =  client.get(url)
@@ -472,10 +513,33 @@ class TestWorkFlowSettingView:
         res =  client.get(url)
         args, kwargs = mock_render.call_args
         assert args[1]["is_sysadmin"] == is_sysadmin
-        if not is_sysadmin:
-            assert res.status_code == 403
-        else:
+        assert res.status_code == status_code
+        assert args[1]['is_display_restricted_access_checkbox'] == False
+
+        current_app.config.update(WEKO_ADMIN_RESTRICTED_ACCESS_DISPLAY_FLAG = True)
+        login(client=client, email=users[users_index]['email'])
+        url = url_for('workflowsetting.workflow_detail',workflow_id='0',_external=True)
+        mock_render =mocker.patch("flask.templating._render", return_value=make_response())
+        res =  client.get(url)
+        assert res.status_code == status_code
+        is_sysadmin = users_index == 2
+        args, kwargs = mock_render.call_args
+        # 81
+        assert args[1]["is_sysadmin"] == is_sysadmin
+
+        wf:WorkFlow = workflow_open_restricted[0]["workflow"]
+        flows_id = wf.flows_id
+        url = url_for('workflowsetting.workflow_detail',workflow_id=flows_id,_external=True)
+        is_sysadmin = users_index == 2
+        res =  client.get(url)
+        args, kwargs = mock_render.call_args
+        assert args[1]["is_sysadmin"] == is_sysadmin
+        if is_sysadmin:
             assert res.status_code == status_code
+            assert args[1]['is_display_restricted_access_checkbox'] == True
+        else:
+            assert res.status_code == 403
+            assert args[1]['is_display_restricted_access_checkbox'] == False
 
         #117
         wf:WorkFlow = db_register_full_action["workflow"]

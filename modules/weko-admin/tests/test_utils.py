@@ -1604,7 +1604,7 @@ def test_get_restricted_access(app, admin_settings):
 #     def validate_usage_report_wf_access():
 #     def parse_usage_report_wf_access():
 # .tox/c1/bin/pytest --cov=weko_admin tests/test_utils.py::test_update_restricted_access -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
-def test_update_restricted_access(admin_settings):
+def test_update_restricted_access(admin_settings,mocker):
     data = {
         "terms_and_conditions": []
     }
@@ -1920,6 +1920,20 @@ def test_update_restricted_access(admin_settings):
     result = update_restricted_access(data)
     assert result == True
     assert 9999999 == get_restricted_access("usage_report_workflow_access").get("expiration_date_access")
+
+    mock_called= mocker.patch('weko_workflow.utils.reset_flow_action_roles_restricted_access')
+    data = {
+        "edit_mail_templates_enable": True
+    }
+    result = update_restricted_access(data)
+    mock_called.assert_not_called()
+
+    mock_called= mocker.patch('weko_workflow.utils.reset_flow_action_roles_restricted_access')
+    data = {
+        "edit_mail_templates_enable": False
+    }
+    result = update_restricted_access(data)
+    mock_called.assert_called_once()
 
 
 # class UsageReport:

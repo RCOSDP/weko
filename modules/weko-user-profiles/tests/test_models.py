@@ -182,13 +182,13 @@ def test_create_profile_with_null(app,db):
 def test_get_institute_data(app,user_profiles):
     """Test get_institute_data."""
 
-    # visible: all True
+    # enable_custom=False,visible: any False
     profile_conf = {
         'fullname': {'visible': True}, 'displayname': {'visible': True},
         'username': {'visible': True}, 'university': {'visible': True},
         'department': {'visible': True}, 'position': {'visible': True},
-        'item1': {'visible': True}, 'item2': {'visible': True}, 'item3': {'visible': True},
-        'item4': {'visible': True}, 'item5': {'visible': True}, 'item6': {'visible': True},
+        'item1': {'visible': True}, 'item2': {'visible': True}, 'item3': {'visible': False},
+        'item4': {'visible': True}, 'item5': {'visible': True}, 'item6': {'visible': False},
         'item7': {'visible': True}, 'item8': {'visible': True}, 'item9': {'visible': True},
         'item10': {'visible': True}, 'item11': {'visible': True}, 'item12': {'visible': True},
         'item13': {'visible': True}, 'item14': {'visible': True}, 'item15': {'visible': True},
@@ -200,10 +200,10 @@ def test_get_institute_data(app,user_profiles):
             "subitem_affiliated_institution_name": getattr(user_profiles[0], "item"+str(i)),
             "subitem_affiliated_institution_position": getattr(user_profiles[0], "item"+str(i+1))
         } for i in range(3, 13, 2)]
-        actual = UserProfile.query.filter_by(user_id = user_profiles[0].user_id).one().get_institute_data()
+        actual = UserProfile.query.filter_by(user_id = user_profiles[0].user_id).one().get_institute_data(False)
         assert expected == actual
 
-    # visible: any False
+    # enable_custom=True,visible: any False
     profile_conf_any_false = {
         'fullname': {'visible': True}, 'displayname': {'visible': True},
         'username': {'visible': True}, 'university': {'visible': True},

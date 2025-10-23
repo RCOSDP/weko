@@ -69,7 +69,7 @@ def setup_data(db):
 def test_get_user_profile_info(setup_data):
     user_id = setup_data['profile'].user_id
 
-    # 正常系
+    # enable_custom=False
     profile_conf = {
         'fullname': {'visible': True},
         'displayname': {'visible': True},
@@ -81,12 +81,12 @@ def test_get_user_profile_info(setup_data):
         'item2': {'visible': True},
         'item3': {'visible': True},
         'item4': {'visible': True},
-        'item5': {'visible': True},
+        'item5': {'visible': False},
         'item6': {'visible': True},
         'item7': {'visible': True},
         'item8': {'visible': True},
         'item9': {'visible': True},
-        'item10': {'visible': True},
+        'item10': {'visible': False},
         'item11': {'visible': True},
         'item12': {'visible': True},
         'item13': {'visible': True},
@@ -117,6 +117,8 @@ def test_get_user_profile_info(setup_data):
         }
         assert result == expected
 
+    current_app.config.update(WEKO_USERPROFILES_CUSTOMIZE_ENABLED = True)
+
     profile_conf2 = {
         'fullname': {'visible': False},
         'displayname': {'visible': False},
@@ -125,12 +127,12 @@ def test_get_user_profile_info(setup_data):
         'department': {'visible': False},
         'position': {'visible': False},
         'item1': {'visible': False},
-        'item2': {'visible': False},
+        'item2': {'visible': True},
         'item3': {'visible': False},
         'item4': {'visible': False},
         'item5': {'visible': False},
         'item6': {'visible': False},
-        'item7': {'visible': False},
+        'item7': {'visible': True},
         'item8': {'visible': False},
         'item9': {'visible': False},
         'item10': {'visible': False},
@@ -151,9 +153,11 @@ def test_get_user_profile_info(setup_data):
             "subitem_university/institution": "",
             "subitem_affiliated_division/department": "",
             "subitem_position": "",
-            "subitem_phone_number": "",
+            "subitem_phone_number": "123-4567",
             "subitem_position(others)": "",
-            "subitem_affiliated_institution": [],
+            "subitem_affiliated_institution":[
+                {"subitem_affiliated_institution_name": "test institute3", "subitem_affiliated_institution_position": "test institute position3", "subitem_affiliated_institution_position": ""}
+            ],
             'subitem_mail_address': 'sysadmin@test.org',
         }
         assert result == expected
