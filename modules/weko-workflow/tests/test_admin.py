@@ -496,7 +496,6 @@ class TestWorkFlowSettingView:
     ])
     def test_workflow_detail_acl(self,app ,client,db_register_full_action,workflow_open_restricted, db_register2,users,users_index,status_code,mocker):
         login(client=client, email=users[users_index]['email'])
-        checkbox=Mock()
         url = url_for('workflowsetting.workflow_detail',workflow_id='0',_external=True)
         mock_render =mocker.patch("flask.templating._render", return_value=make_response())
         res =  client.get(url)
