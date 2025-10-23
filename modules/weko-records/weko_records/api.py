@@ -680,15 +680,17 @@ class ItemTypes(RecordBase):
         Returns:
             ItemType: Item type model instance.
         """
+        obj = None
         with db.session.no_autoflush:
             query = ItemTypeName.query.filter_by(name=name_)
             if not with_deleted:
                 query = query.filter(ItemType.is_deleted.is_(False))  # noqa
             itemTypeName = query.one_or_none()
-            query = ItemType.query.filter_by(name_id=itemTypeName.id)
-            if not with_deleted:
-                query = query.filter(ItemType.is_deleted.is_(False))  # noqa
-            obj = query.one_or_none()
+            if itemTypeName:
+                query = ItemType.query.filter_by(name_id=itemTypeName.id)
+                if not with_deleted:
+                    query = query.filter(ItemType.is_deleted.is_(False))  # noqa
+                obj = query.one_or_none()
         return obj if isinstance(obj, ItemType) else None
 
     @classmethod

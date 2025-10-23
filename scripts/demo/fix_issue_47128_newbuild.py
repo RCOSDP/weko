@@ -80,18 +80,18 @@ def main():
     }
     print(datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S'), 'Fix issue 47128 is start. (newbuild)')
     try:
-        item_types = db.session.query(ItemType).filter(ItemType.harvesting_type==True).filter(ItemType.id==12).all()
-        for item_type in item_types:
+        item_type = ItemTypes.get_by_name('Multiple')
+        if item_type is None or not item_type.harvesting_type:
+            raise Exception("itemType is not found.")
+        else:
             # get/update item key
             try:
                 # update property id
-                for form in enumerate(item_type.render['table_row_map']['form']):
-                    if isinstance(form, dict) and 'key' in form:
-                        item_key = form['key']
-                        if item_key.startswith('item_'):
-                            prop_id = item_type.render['meta_list'][item_key]['input_type']
-                            if prop_id in prop_id_change.keys():
-                                item_type.render['meta_list'][item_key]['input_type'] = prop_id_change[prop_id]
+                for item_key in item_type.render['table_row']:
+                    if item_key.startswith('item_'):
+                        prop_id = item_type.render['meta_list'][item_key]['input_type']
+                        if prop_id in prop_id_change.keys():
+                            item_type.render['meta_list'][item_key]['input_type'] = prop_id_change[prop_id]
                 # get new item key
                 count = 1
                 id_match_key[item_type.id] = {}
@@ -167,8 +167,7 @@ def main():
                 print(ex)
 
         print('IMPORTANT: item key change table: {}'.format(id_match_key))
-        item_type_id_list = [str(i.id) for i in item_types]
-        item_list = db.session.query(ItemMetadata).filter(ItemMetadata.item_type_id.in_(item_type_id_list)).all()
+        item_list = db.session.query(ItemMetadata).filter(ItemMetadata.item_type_id==item_type.id).all()
         success_count = 0
         skip_count = 0
         update_flag = False

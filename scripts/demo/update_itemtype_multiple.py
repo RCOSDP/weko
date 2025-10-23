@@ -78,10 +78,8 @@ def main():
         i = 1
         with db.session.begin_nested():
             itemType = ItemTypes.get_by_name('Multiple')
-            if itemType is None:
-                itemType = ItemTypes.get_by_id(12,with_deleted=True)
-                if itemType is None:
-                    raise Exception("itemType is not found.")
+            if itemType is None or not itemType.harvesting_type:
+                raise Exception("itemType is not found.")
             if itemType:
                 cur_prop_ids = checkRegisterdProperty(itemType, new_prop_ids)
                 _render = pickle.loads(pickle.dumps(itemType.render, -1))
