@@ -316,11 +316,12 @@ def main(startDate=None,endDate=None,recordId=None,itemTypeId=None, from_cmd=Fal
                     if item_type_id not in check_item_keys:
                         get_item_type_info(check_item_keys, item_type_id, check_prop_ids)
 
-                    temp_data = json.loads(data.temp_data)
-                    for key, prop_type in check_item_keys[item_type_id].items():
-                        if key in temp_data and temp_data[key]:
-                            if change_metadata(prop_type, key, temp_data):
-                                change_flag = True
+                    if data.temp_data and isinstance(data.temp_data, str):
+                        temp_data = json.loads(data.temp_data)
+                        for key, prop_type in check_item_keys[item_type_id].items():
+                            if key in temp_data and temp_data[key]:
+                                if change_metadata(prop_type, key, temp_data):
+                                    change_flag = True
 
                     if change_flag:
                         activity = Activity.query.filter_by(activity_id=data.activity_id).one_or_none()
