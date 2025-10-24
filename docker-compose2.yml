@@ -311,11 +311,14 @@ services:
 
   pgpool:
     restart: "always"
-    image: bitnami/pgpool
+    image: pgpool/pgpool:4.2.2
     environment:
-      - PGPOOL_BACKEND_NODES=0:postgresql:5432
-      - PGPOOL_SR_CHECK_USER=invenio
-      - PGPOOL_SR_CHECK_PASSWORD=dbpass123
+      - PGPOOL_PARAMS_BACKEND_HOSTNAME0=postgresql
+      - PGPOOL_PARAMS_BACKEND_PORT0=5432
+      - PGPOOL_PARAMS_BACKEND_WEIGHT0=1
+      - PGPOOL_PARAMS_SR_CHECK_USER=invenio
+      - PGPOOL_PARAMS_SR_CHECK_PASSWORD=dbpass123
+      - PGPOOL_PARAMS_PORT=5432
       - PGPOOL_ENABLE_LDAP=no
       - PGPOOL_POSTGRES_USERNAME=postgres
       - PGPOOL_POSTGRES_PASSWORD=dbpass123
@@ -427,19 +430,19 @@ services:
     volumes:
       - mongo_data:/data/db
 
-#  kibana:
-#    build:
-#      context: .
-#      dockerfile: ./kibana/Dockerfile
-#    restart: "always"
-#    command: kibana
-#    ports:
-#      - "5601:5601"
-#    environment:
-#      - "ELASTICSEARCH_URL=http://elasticsearch:9200"
-#      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
-#    links:
-#      - elasticsearch
+  kibana:
+    build:
+      context: .
+      dockerfile: ./kibana/Dockerfile
+    restart: "always"
+    command: kibana
+    ports:
+      - "5601:5601"
+    environment:
+      - "ELASTICSEARCH_URL=http://elasticsearch:9200"
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    links:
+      - elasticsearch
 
 volumes:
   weko3_data:
