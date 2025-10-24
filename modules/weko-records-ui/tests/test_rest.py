@@ -273,13 +273,10 @@ def test_GetFileTerms_get_v1(app, client, db, make_record_need_restricted_access
     # WEKO_RECORDS_UI_RESTRICTED_API = False : 403 error
     pid_value = 12
     file_name = "dummy.txt"
-    terms_content = "利用規約本文"
-    etag = generate_etag(f"{file_name}_{terms_content}".encode("utf-8"))
     res = client.get(
         f'/{version}/records/{pid_value}/files/{file_name}/terms',
         headers=headers_sysadmin,
     )
-    res_data = json.loads(res.get_data())
     assert res.status_code == 403
 
     current_app.config.update(WEKO_RECORDS_UI_RESTRICTED_API = True)

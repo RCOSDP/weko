@@ -1511,7 +1511,6 @@ def test_next_action(app, client, db, users, db_register_fullaction, db_records,
             activity.action_status=None
             activity.extra_info=extra_info
             activity.temp_data = temp_data
-            # if item_id:
             activity.item_id=item_id
             db.session.merge(activity)
             pid = PersistentIdentifier.query.filter(
@@ -1543,8 +1542,6 @@ def test_next_action(app, client, db, users, db_register_fullaction, db_records,
     mocker.patch("weko_workflow.views.FeedbackMailList.delete_by_list_item_id")
     mock_signal = mocker.patch("weko_workflow.views.item_created.send")
     mocker.patch("weko_workflow.views.cris_researchmap_linkage_request.send")
-    # new_item = uuid.uuid4()
-    # mocker.patch("weko_workflow.views.handle_finish_workflow",return_value=new_item)
     mocker.patch("weko_deposit.api.WekoDeposit.publish",return_value=True)
     mocker.patch("weko_deposit.api.WekoDeposit.merge_data_to_record_without_version",return_value=db_records[0][6])
     mocker.patch("weko_deposit.api.WekoDeposit.commit",return_value=True)
@@ -2367,15 +2364,9 @@ def test_next_action(app, client, db, users, db_register_fullaction, db_records,
         assert data["code"] == result_code
         assert data["msg"] == result_msg
         q = Activity.query.filter(Activity.activity_id=="2").all()
-        # if users_index in [0, 4, 5]:
         assert len(q) == 1
-        # else:
-        #     assert len(q) == 0
         q = FileOnetimeDownload.query.filter(FileOnetimeDownload.file_name=="test", FileOnetimeDownload.record_id=="1").all()
-        # if users_index in [0, 4, 5]:
         assert len(q) == 0
-        # else:
-        #     assert len(q) == 1
 
     ## exist requestmail
     ### exist feedbackmail, exist maillist
@@ -2395,7 +2386,7 @@ def test_next_action(app, client, db, users, db_register_fullaction, db_records,
                     assert data["msg"] == result_msg
                     if check_role_approval():
                         update_request.assert_called()
-    
+
     # Permission is exist
     update_activity_order("2",4,6,item_id2,{"file_name":"test", "record_id": "1", "guest_mail": "guest@mail.com"})
     adminsetting = {"display_request_form": True,"edit_mail_templates_enable":True}
@@ -2421,7 +2412,7 @@ def test_next_action(app, client, db, users, db_register_fullaction, db_records,
                             mock_mail.assert_called()
 
     current_app.config.update(WEKO_ADMIN_RESTRICTED_ACCESS_DISPLAY_FLAG = True)
-    
+
     update_activity_order("2",4,6,item_id2,{"file_name":"test", "record_id": "1", "guest_mail": "guest@mail.com"})
     adminsetting = {"display_request_form": True,"edit_mail_templates_enable":False}
     permission = FilePermission(users[users_index]['id'], '1', 'test_file', '1', '1', 1)
@@ -2472,7 +2463,7 @@ def test_next_action(app, client, db, users, db_register_fullaction, db_records,
                             mock_mail.assert_called()
 
     current_app.config.update(WEKO_ADMIN_RESTRICTED_ACCESS_DISPLAY_FLAG = True)
-            
+
     update_activity_order("2",4,6,item_id2,{"file_name":"test", "record_id": "1", "guest_mail": "guest@mail.com"})
     adminsetting = {"display_request_form": True,"edit_mail_templates_enable":False}
     guest_activity = GuestActivity(user_mail='user@mail.com', record_id='1', file_name='test', activity_id='2', token='token')

@@ -586,7 +586,8 @@ def base_app(instance_path, search_class, cache_config):
         WEKO_WORKFLOW_USAGE_REPORT_WORKFLOW_NAME = '利用報告/Data Usage Report',
         WEKO_WORKFLOW_TODO_TAB = 'todo',
         WEKO_HANDLE_CREDS_JSON_PATH='/code/modules/resources/handle_creds.json',
-        WEKO_ADMIN_RESTRICTED_ACCESS_DISPLAY_FLAG=True,
+        WEKO_ADMIN_RESTRICTED_ACCESS_DISPLAY_FLAG = False,
+        WEKO_ADMIN_DISPLAY_RESTRICTED_SETTINGS = True,
         WEKO_RECORDS_UI_RESTRICTED_API= False,
         WEKO_ITEMS_UI_PROXY_POSTING = False
     )
@@ -1493,6 +1494,7 @@ def db_register_full_action(app, db, db_records, users, action_data, item_type):
         db.session.add(action_role_4_2)
         db.session.add(action_role_4_3)
         db.session.add(action_role_4_4)
+        db.session.add(action_role_5)
     db.session.commit()
 
     workflow = WorkFlow(flows_id=uuid.uuid4(),

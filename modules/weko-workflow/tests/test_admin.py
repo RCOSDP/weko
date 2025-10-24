@@ -66,7 +66,7 @@ class TestFlowSettingView:
         # (5, 200),
         # (6, 200),
     ])
-    def test_flow_detail_acl(self,client,workflow,db_register2,users,users_index,status_code,db):
+    def test_flow_detail_acl(self,client,workflow,db_register2,users,users_index,status_code,db,mocker):
         adminsetting=AdminSettings(id=1,name='items_display_settings',settings={})
         # Adminsettings display_request_form is None
         with db.session.begin_nested():
@@ -86,7 +86,7 @@ class TestFlowSettingView:
         with patch("flask.templating._render", return_value=""):
             res =  client.get(url)
             assert res.status_code == status_code
-        
+
         #test No.10(W2023-22 2)
         url = '/admin/flowsetting/{}'.format("hoge")
         with patch("flask.templating._render", return_value=""):
@@ -100,7 +100,7 @@ class TestFlowSettingView:
             with patch("flask.templating._render", return_value=""):
                 res =  client.get(url)
                 assert res.status_code == 403
-        
+
         mock_action_role = Mock()
         mock_action_role.specify_property = "test"
         mock_action_role.action_item_registrant = True
@@ -109,27 +109,29 @@ class TestFlowSettingView:
         mock_action.action_role = mock_action_role
 
         mock_flow = Mock()
+        mock_flow.id = 1
         mock_flow.flow_actions = [mock_action]
-        
+
         with patch("weko_admin.models.AdminSettings.get",return_value={"edit_mail_templates_enable": True,"display_request_form": False}):
             with patch("weko_workflow.api.Flow.get_flow_detail", return_value=mock_flow):
-                with patch("flask.templating._render", return_value=""):
-                    url = '/admin/flowsetting/{}'.format(flow_define.flow_id)
-                    res =  client.get(url)
-                    assert res.status_code == status_code
-                    assert mock_action_role.specify_property == "test"
-                    assert mock_action_role.action_item_registrant == True
-        
+                mock_args=mocker.patch("flask.templating._render",return_value=make_response())
+                url = '/admin/flowsetting/{}'.format(flow_define.flow_id)
+                res =  client.get(url)
+                args,kwargs = mock_args.call_args
+                assert res.status_code == status_code
+                assert args[1]['actions'][0].action_role.specify_property== "test"
+                assert args[1]['actions'][0].action_role.action_item_registrant == True
+
         with patch("weko_admin.models.AdminSettings.get",return_value={"edit_mail_templates_enable": False,"display_request_form": False}):
             with patch("weko_workflow.api.Flow.get_flow_detail", return_value=mock_flow):
-                with patch("flask.templating._render", return_value=""):
-                    url = '/admin/flowsetting/{}'.format(flow_define.flow_id)
-                    res =  client.get(url)
-                    assert res.status_code == status_code
-                    assert mock_action_role.specify_property == None
-                    assert mock_action_role.action_item_registrant == False
+                mock_args=mocker.patch("flask.templating._render",return_value=make_response())
+                url = '/admin/flowsetting/{}'.format(flow_define.flow_id)
+                res =  client.get(url)
+                args,kwargs = mock_args.call_args
+                assert res.status_code == status_code
+                assert args[1]['actions'][0].action_role.specify_property== None
+                assert args[1]['actions'][0].action_role.action_item_registrant == False
 
-                
     # def flow_detail(self, flow_id='0'):
     # .tox/c1/bin/pytest --cov=weko_workflow tests/test_admin.py::TestFlowSettingView::test_flow_detail_return_repositories -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
     def test_flow_detail_return_repositories(self,client,workflow,users):
@@ -141,7 +143,7 @@ class TestFlowSettingView:
             assert res.status_code == 200
             args, kwargs = mock_render.call_args
             assert len(args[1]["repositories"]) == 2
-         
+
         url = '/admin/flowsetting/{}'.format(0)
         login(client=client, email=users[3]['email'])
         with patch("flask.templating._render", return_value="") as mock_render:
@@ -516,7 +518,6 @@ class TestWorkFlowSettingView:
         assert args[1]['is_display_restricted_access_checkbox'] == False
 
         current_app.config.update(WEKO_ADMIN_RESTRICTED_ACCESS_DISPLAY_FLAG = True)
-        login(client=client, email=users[users_index]['email'])
         url = url_for('workflowsetting.workflow_detail',workflow_id='0',_external=True)
         mock_render =mocker.patch("flask.templating._render", return_value=make_response())
         res =  client.get(url)

@@ -156,7 +156,7 @@ def test_get_user_profile_info(setup_data):
             "subitem_phone_number": "123-4567",
             "subitem_position(others)": "",
             "subitem_affiliated_institution":[
-                {"subitem_affiliated_institution_name": "test institute3", "subitem_affiliated_institution_position": "test institute position3", "subitem_affiliated_institution_position": ""}
+                {"subitem_affiliated_institution_name": "test institute3", "subitem_affiliated_institution_position": ""}
             ],
             'subitem_mail_address': 'sysadmin@test.org',
         }

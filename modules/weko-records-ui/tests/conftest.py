@@ -5555,9 +5555,11 @@ def db_file_permission(app, db,users,records_restricted):
     record0_onetime=FileOnetimeDownload(user_mail=email
                                         ,record_id=recid0.pid_value
                                         ,file_name=filename0
-                                        ,download_count=1
-                                        ,expiration_date=1
-                                        ,extra_info=str({}))
+                                        ,download_limit=10
+                                        ,expiration_date = datetime.now(timezone.utc) + timedelta(hours=24)
+                                        ,extra_info={}
+                                        ,is_guest=False
+                                        ,approver_id=1)
     recid1 = results[1]["recid"]
     filename1 = results[1]["filename"]
     record1 = FilePermission(
@@ -5569,9 +5571,11 @@ def db_file_permission(app, db,users,records_restricted):
     record1_onetime=FileOnetimeDownload(user_mail=email
                                         ,record_id=recid1.pid_value
                                         ,file_name=filename1
-                                        ,download_count=1
-                                        ,expiration_date=1
-                                        ,extra_info=str({}))
+                                        ,download_limit=10
+                                        ,expiration_date = datetime.now(timezone.utc) + timedelta(hours=24)
+                                        ,extra_info={}
+                                        ,is_guest=False
+                                        ,approver_id=1)
     recid2 = results[2]["recid"]
     filename2 = results[2]["filename"]
     record2 = FilePermission(
@@ -5583,9 +5587,11 @@ def db_file_permission(app, db,users,records_restricted):
     record2_onetime=FileOnetimeDownload(user_mail=email
                                         ,record_id=recid2.pid_value
                                         ,file_name=filename2
-                                        ,download_count=1
-                                        ,expiration_date=1
-                                        ,extra_info=str({}))
+                                        ,download_limit=10
+                                        ,expiration_date = datetime.now(timezone.utc) + timedelta(hours=24)
+                                        ,extra_info={}
+                                        ,is_guest=False
+                                        ,approver_id=1)
 
     # not approved yet
     recid3 = results[len(results)-1]["recid"]
@@ -5607,8 +5613,10 @@ def db_file_permission(app, db,users,records_restricted):
     record4_onetime=FileOnetimeDownload(user_mail =email
                                         ,record_id=recid4.pid_value
                                         ,file_name=filename4
-                                        ,download_count=1
-                                        ,expiration_date=1
+                                        ,download_limit=10
+                                        ,expiration_date = datetime.now(timezone.utc) + timedelta(hours=24)
+                                        ,is_guest=False
+                                        ,approver_id=1
                                         ,extra_info=str({}))
 
     recid5 = results[len(results)-1]["recid"]
@@ -5622,9 +5630,11 @@ def db_file_permission(app, db,users,records_restricted):
     record5_onetime=FileOnetimeDownload(user_mail=email
                                         ,record_id=recid5.pid_value
                                         ,file_name=filename5
-                                        ,download_count=1
-                                        ,expiration_date=1
-                                        ,extra_info=str({}))
+                                        ,download_limit=10
+                                        ,expiration_date = datetime.now(timezone.utc) + timedelta(hours=24)
+                                        ,extra_info={}
+                                        ,is_guest=False
+                                        ,approver_id=1)
     with db.session.begin_nested():
         db.session.add(record0)
         db.session.add(record1)
@@ -5820,7 +5830,7 @@ def make_record_need_restricted_access(app, db, workflows, users):
                                         ,record_id=rec_id13
                                         ,file_name='dummy.txt'
                                         ,download_limit=1
-                                        ,expiration_date = 1
+                                        ,expiration_date = datetime.now(timezone.utc) + timedelta(hours=24)
                                         ,extra_info={}
                                         ,is_guest=False
                                         ,approver_id=1)

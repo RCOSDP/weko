@@ -285,10 +285,9 @@ def test_check_open_restricted_permission(app, records, users,db_file_permission
         with patch("weko_records_ui.permissions.__get_file_permission", return_value=data1):  
             assert check_open_restricted_permission(record, fjson) == False  
 
-            mock_permmissin=mocker.patch("weko_records_ui.permissions.check_permission_period")
+            mocker.patch("weko_records_ui.permissions.check_permission_period",return_value="test")
             current_app.config.update(WEKO_ADMIN_RESTRICTED_ACCESS_DISPLAY_FLAG = True)
-            check_open_restricted_permission(record, fjson)
-            mock_permmissin.assert_called_once()
+            assert check_open_restricted_permission(record, fjson) == "test"
 
         current_app.config.update(WEKO_ADMIN_RESTRICTED_ACCESS_DISPLAY_FLAG = False)
 

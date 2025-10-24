@@ -4837,7 +4837,7 @@ def test_get_contributors(db, users_1, db_records_1):
                 }]
     assert actual == expected
 
-    # user_id_list_json値を設定しない,owner_idが-1でない
+    # user_id_list_jsonに値を設定しない,owner_idが-1でない
     user_id_list_json=None
     actual = get_contributors(False, user_id_list_json=user_id_list_json, owner_id=1)
     expected = [{
@@ -4850,7 +4850,7 @@ def test_get_contributors(db, users_1, db_records_1):
     assert actual == expected
     
     # user_id_list_jsonに値を設定,owner_idが-1
-    user_id_list_json = ["test"]
+    user_id_list_json = [{"user":1},{"user":2}]
     actual = get_contributors(False, user_id_list_json=user_id_list_json, owner_id=-1)
     expected = []
     assert actual == expected
@@ -4927,10 +4927,6 @@ def test_get_contributors(db, users_1, db_records_1):
     user_id_list_json = [2]
     actual = get_contributors(None, user_id_list_json, owner_id=1)
     assert sorted(actual, key=lambda x: x["userid"]) == sorted(expected, key=lambda x: x["userid"])
-    
-    
-
-
 
 
 status_list = [
@@ -5240,8 +5236,9 @@ def test_check_activity_settings(app):
             check_activity_settings(other_obj_settings)
             assert current_app.config['WEKO_WORKFLOW_APPROVER_EMAIL_COLUMN_VISIBLE'] == False
 
-#.tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::reset_flow_action_roles_restricted_access -vv -s -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+#.tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_reset_flow_action_roles_restricted_access -vv -s -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_reset_flow_action_roles_restricted_access(app,db,db_register_full_action):
+    # 異常系:specify_propertyとaction_item_registrantが変化なし
     pre = FlowActionRole.query.all()
     with patch("weko_workflow.models.FlowActionRole.query") as mock_exception:
         mock_exception.filter.side_effect = Exception()
@@ -5250,10 +5247,9 @@ def test_reset_flow_action_roles_restricted_access(app,db,db_register_full_actio
     for action_role, action_role2 in zip(pre, post):
         assert action_role.specify_property == action_role2.specify_property
         assert action_role.action_item_registrant == action_role2.action_item_registrant
-    
+    # 正常系:specify_property、action_item_registrantがNone、False
     reset_flow_action_roles_restricted_access()
     for action_role in FlowActionRole.query.all():
-       assert action_role.specify_property == None 
+       assert action_role.specify_property == None
        assert action_role.action_item_registrant == False
 
-    

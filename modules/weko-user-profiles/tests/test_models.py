@@ -223,5 +223,5 @@ def test_get_institute_data(app,user_profiles):
         } for i in range(3, 13, 2)]
         expected[0]["subitem_affiliated_institution_name"] = ""
         expected[1]["subitem_affiliated_institution_position"] = ""
-        actual = UserProfile.query.filter_by(user_id = user_profiles[0].user_id).one().get_institute_data()
+        actual = UserProfile.query.filter_by(user_id = user_profiles[0].user_id).one().get_institute_data(True)
         assert expected == actual

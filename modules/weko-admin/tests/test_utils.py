@@ -1927,8 +1927,8 @@ def test_update_restricted_access(admin_settings,mocker):
     }
     result = update_restricted_access(data)
     mock_called.assert_not_called()
-
-    mock_called= mocker.patch('weko_workflow.utils.reset_flow_action_roles_restricted_access')
+    mock_called.reset_mock()
+    
     data = {
         "edit_mail_templates_enable": False
     }

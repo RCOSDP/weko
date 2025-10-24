@@ -714,10 +714,11 @@ def test_EmailProfileForm(app):
         
         current_app.config.update(WEKO_USERPROFILES_CUSTOMIZE_ENABLED = True)
         #AdminSettings.get=True
-        with patch('weko_admin.models.AdminSettings.get',return_value={"item3": {"order": 7, "visible": True, "label_name": "所属学会名", "format": "text"}
-                                                                      ,"item6": {"order": 10, "visible": False, "label_name": "所属学会役職", "format": "select"}}):
+        with patch('weko_admin.models.AdminSettings.get',
+                   return_value={"item3": {"order": 7, "visible": True, "label_name": "所属学会名", "format": "text"},
+                                 "item6": {"order": 10, "visible": False, "label_name": "所属学会役職", "format": "select"}}):
             form = EmailProfileForm(
-                formdata=None,
+                    formdata=None,
                     username="test",
                     fullname="test user",
                     timezone="Etc/GMT-9",
@@ -745,7 +746,7 @@ def test_EmailProfileForm(app):
 
         #university:visible == True
         form = EmailProfileForm(
-            formdata=None,
+                formdata=None,
                 username="test",
                 fullname="test user",
                 timezone="Etc/GMT-9",
