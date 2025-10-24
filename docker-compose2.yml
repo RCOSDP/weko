@@ -430,19 +430,19 @@ services:
     volumes:
       - mongo_data:/data/db
 
-  kibana:
-    build:
-      context: .
-      dockerfile: ./kibana/Dockerfile
-    restart: "always"
-    command: kibana
-    ports:
-      - "5601:5601"
-    environment:
-      - "ELASTICSEARCH_URL=http://elasticsearch:9200"
-      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
-    links:
-      - elasticsearch
+  # kibana:
+  #   build:
+  #     context: .
+  #     dockerfile: ./kibana/Dockerfile
+  #   restart: "always"
+  #   command: kibana
+  #   ports:
+  #     - "5601:5601"
+  #   environment:
+  #     - "ELASTICSEARCH_URL=http://elasticsearch:9200"
+  #     - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+  #   links:
+  #     - elasticsearch
 
 volumes:
   weko3_data:
