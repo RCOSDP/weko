@@ -1153,12 +1153,12 @@ def test_prepare_edit_workflow2(app, workflow, db_records,users,mocker, order_if
 
 # def prepare_delete_workflow(deposit, current_pid, recid):
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_prepare_delete_workflow -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
-def test_prepare_delete_workflow(app, db_records,users,db_register_fullaction,mocker):
+def test_prepare_delete_workflow(app, db_records,users,db_register_full_action,mocker):
     # delete flow item
     del_recid, _, _, _, _, _, del_deposit = db_records[7]
-    del_workflow_id = db_register_fullaction["activities"][7].workflow_id
-    del_flow_id = db_register_fullaction["activities"][7].flow_id
-    del_title = db_register_fullaction["activities"][7].title
+    del_workflow_id = db_register_full_action["activities"][7].workflow_id
+    del_flow_id = db_register_full_action["activities"][7].flow_id
+    del_title = db_register_full_action["activities"][7].title
     del_post_activity = {
         'pid_value': del_recid, 'itemtype_id': '1',
         'community': None, 'workflow_id': del_workflow_id,
@@ -1167,9 +1167,9 @@ def test_prepare_delete_workflow(app, db_records,users,db_register_fullaction,mo
 
     # not delete flow item
     recid_1,  _, _, _, _, _, deposit_1 = db_records[2]
-    workflow_id_1 = db_register_fullaction["activities"][0].workflow_id
-    flow_id_1 = db_register_fullaction["activities"][0].flow_id
-    title_1 = db_register_fullaction["activities"][0].title
+    workflow_id_1 = db_register_full_action["activities"][0].workflow_id
+    flow_id_1 = db_register_full_action["activities"][0].flow_id
+    title_1 = db_register_full_action["activities"][0].title
     post_activity_1 = {
         'pid_value': recid_1, 'itemtype_id': '1',
         'community': None, 'workflow_id': workflow_id_1,
@@ -1178,9 +1178,9 @@ def test_prepare_delete_workflow(app, db_records,users,db_register_fullaction,mo
 
     # approval delete flow item
     app_recid, _, _, _, _, _, app_deposit = db_records[7]
-    app_workflow_id = db_register_fullaction["activities"][8].workflow_id
-    app_flow_id = db_register_fullaction["activities"][8].flow_id
-    app_title = db_register_fullaction["activities"][8].title
+    app_workflow_id = db_register_full_action["activities"][8].workflow_id
+    app_flow_id = db_register_full_action["activities"][8].flow_id
+    app_title = db_register_full_action["activities"][8].title
     app_post_activity = {
         'pid_value': app_recid, 'itemtype_id': '1',
         'community': None, 'workflow_id': app_workflow_id,
@@ -1191,11 +1191,11 @@ def test_prepare_delete_workflow(app, db_records,users,db_register_fullaction,mo
             WEKO_NOTIFICATIONS=False
         )
     with app.test_request_context(), \
-                patch("flask_login.utils._get_user", return_value=users[0]['obj']), \
-                patch("weko_records_ui.views.check_created_id_by_recid", return_value=True), \
-                patch("weko_records_ui.views.soft_delete", return_value=True):
-            # result = prepare_delete_workflow(del_post_activity, del_recid, del_deposit)
-            # assert result.workflow_id
+            patch("flask_login.utils._get_user", return_value=users[0]['obj']), \
+            patch("weko_records_ui.views.check_created_id_by_recid", return_value=True), \
+            patch("weko_records_ui.views.soft_delete", return_value=True):
+        result = prepare_delete_workflow(del_post_activity, del_recid, del_deposit)
+        assert result.workflow_id
 
         result = prepare_delete_workflow(post_activity_1, recid_1, deposit_1)
         assert result.workflow_id
@@ -3334,9 +3334,10 @@ def test_create_onetime_download_url_to_guest(
 
 
 # def create_onetime_download_url_to_guest(activity_id: str,
-# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_create_onetime_download_url_to_guest -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
-def test_create_onetime_download_url_to_guest_password(app, workflow,mocker):
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_create_onetime_download_url_to_guest_password -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_create_onetime_download_url_to_guest_password(app, workflow,mocker, users):
     with app.test_request_context():
+        login_user(users[7]["obj"])
         today = datetime.datetime(2022,10,6,1,2,3,4)
         datetime_mock = mocker.patch("weko_workflow.utils.datetime")
         datetime_mock.today.return_value=today
@@ -3363,18 +3364,23 @@ def test_create_onetime_download_url_to_guest_password(app, workflow,mocker):
         datetime_mock_ui = mocker.patch("weko_records_ui.utils.dt")
         datetime_mock_ui.utcnow.return_value=today
         expiration_date = today + datetime.timedelta(days=30)
-        mocker.patch("weko_records_ui.utils.oracle10.hash",return_value="CE06FDFB15823A5C")
-        url_token = "{} {} {} {}".format(record_id,user_mail,"2022-10-06","CE06FDFB15823A5C")
-        url_token_value = base64.b64encode(url_token.encode()).decode()
-        url = 'http://TEST_SERVER.localdomain/record/{}/file/onetime/test_file.txt?token={}'.format(record_id,url_token_value)
+        mock_url_obj=FileOnetimeDownload(user_mail=user_mail
+                                ,record_id=record_id
+                                ,file_name=file_name
+                                ,download_limit=1
+                                ,expiration_date = expiration_date.strftime("%Y-%m-%d")
+                                ,extra_info=extra_info
+                                ,is_guest=True
+                                ,approver_id=1)
+        from weko_records_ui.utils import create_download_url
+        url = create_download_url(mock_url_obj)
         test = {
             "file_url":url,
-            "expiration_date":expiration_date.strftime("%Y-%m-%d"),
-            "expiration_date_ja":"",
-            "expiration_date_en":""
+            "expiration_date":expiration_date.strftime("%Y-%m-%d")
         }
-        result = create_onetime_download_url_to_guest(activity_id, extra_info)
-        assert result == test
+        with patch("weko_records_ui.utils.create_onetime_url_record",return_value=mock_url_obj):
+            result = create_onetime_download_url_to_guest(activity_id, extra_info)
+            assert result == test
 
         # not exist user_mail
         extra_info = {
@@ -3382,19 +3388,37 @@ def test_create_onetime_download_url_to_guest_password(app, workflow,mocker):
             "record_id":record_id,
             "guest_mail":user_mail
         }
-        result = create_onetime_download_url_to_guest(activity_id, extra_info)
-        assert result == test
-
-        # raise OverflowError
-        with patch("weko_workflow.utils.timedelta",side_effect=OverflowError):
-            test = {
-                "file_url":url,
-                "expiration_date":"",
-                "expiration_date_ja":"無制限",
-                "expiration_date_en":"Unlimited"
-            }
+        mock_url_obj=FileOnetimeDownload(user_mail=user_mail
+                                ,record_id=record_id
+                                ,file_name=file_name
+                                ,download_limit=1
+                                ,expiration_date = expiration_date.strftime("%Y-%m-%d")
+                                ,extra_info=extra_info
+                                ,is_guest=True
+                                ,approver_id=1)
+        url = create_download_url(mock_url_obj)
+        with patch("weko_records_ui.utils.create_onetime_url_record",return_value=mock_url_obj):
             result = create_onetime_download_url_to_guest(activity_id, extra_info)
             assert result == test
+
+        # raise OverflowError
+        mock_url_obj=FileOnetimeDownload(user_mail=user_mail
+                                ,record_id=record_id
+                                ,file_name=file_name
+                                ,download_limit=1
+                                ,expiration_date = ""
+                                ,extra_info=extra_info
+                                ,is_guest=True
+                                ,approver_id=1)
+        url = create_download_url(mock_url_obj)
+        with patch("weko_records_ui.utils.create_onetime_url_record",return_value=mock_url_obj):
+            with patch("weko_workflow.utils.timedelta",side_effect=OverflowError):
+                test = {
+                    "file_url":url,
+                    "expiration_date":""
+                }
+                result = create_onetime_download_url_to_guest(activity_id, extra_info)
+                assert result == test
 # def delete_guest_activity(activity_id: str) -> bool:
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_delete_guest_activity -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_delete_guest_activity(client,workflow):
@@ -4752,6 +4776,7 @@ def test_grant_access_rights_to_all_open_restricted_files(app ,db,users ):
                                 ,{'accessrole' : 'open_access'    ,'filename':'ccc.txt'}]
 
     with app.test_request_context():
+        login_user(users[0]["obj"])
         with patch('weko_workflow.utils.WekoRecord.get_record_by_pid',return_value = mock):
             res = grant_access_rights_to_all_open_restricted_files(activity_id ,file_permission, activity_detail )
             # print(res)
@@ -4773,6 +4798,7 @@ def test_grant_access_rights_to_all_open_restricted_files(app ,db,users ):
                 assert len(fd) == 1
 
     with app.test_request_context():
+        login_user(users[0]["obj"])
         res = grant_access_rights_to_all_open_restricted_files(activity_id_guest ,guest_activity, activity_detail_guest )
         assert 'bbb.txt' in res["file_url"]
         fps = FilePermission.find_by_activity(activity_id_guest)

@@ -951,7 +951,7 @@ class TestStatisticMail:
             '    test_file2_2.tsv(20)\n'
         result = StatisticMail.build_mail_data_to_string(data,"ja")
         assert result == test
-      
+
         # language is not ja
         test = \
             '----------------------------------------\n'\
@@ -1049,7 +1049,7 @@ class TestFeedbackMail:
         # not exist manual_email
         with patch("weko_admin.utils.FeedbackMailSetting.get_feedback_email_setting_by_repo",return_value=[feedback_mail_settings[1]]):
             test = {
-                "data":[{"author_id":"2","email":None}],
+                "data":[],
                 "error":"",
                 "is_sending_feedback":True,
                 "root_url":"http://test_server"
@@ -1060,7 +1060,6 @@ class TestFeedbackMail:
         # exist manual_email
         test = {
                 "data":[{"author_id":"1","email":"test.taro@test.org"},
-                        {"author_id":"2","email":None},
                         {"author_id":"","email":"test.manual1@test.org"},
                         {"author_id":"","email":"test.manual2@test.org"}],
                 "error":"",
@@ -1584,7 +1583,7 @@ def test_get_restricted_access(app, admin_settings):
     # not key
     result = get_restricted_access("")
     assert result == admin_settings[5].settings
-    
+
     #test No.3 (W2023-22 3(5))
     result = get_restricted_access("usage_report_workflow_access")
     assert result == admin_settings[5].settings["usage_report_workflow_access"]

@@ -1358,9 +1358,10 @@ class IdentifierHandle(object):
                 records = PersistentIdentifier.query.filter_by(
                     pid_type=pid_type,
                     object_uuid=self.item_uuid).all()
-            records = PersistentIdentifier.query.filter_by(
-                pid_type=pid_type,
-                pid_value=chk_value).all()
+            else:
+                records = PersistentIdentifier.query.filter_by(
+                    pid_type=pid_type,
+                    pid_value=chk_value).all()
         return cast(List[PersistentIdentifier], records)
 
     def register_pidstore(self, pid_type, reg_value):

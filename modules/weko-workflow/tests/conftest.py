@@ -1960,7 +1960,7 @@ def db_register_1(app, db, db_records, users_1, action_data, item_type):
 
 @pytest.fixture()
 def workflow(app, db, item_type, action_data, users):
-    flow_define = FlowDefine(id=1,flow_id=uuid.uuid4(),
+    flow_define = FlowDefine(flow_id=uuid.uuid4(),
                              flow_name='Registration Flow',
                              flow_user=1)
     with db.session.begin_nested():

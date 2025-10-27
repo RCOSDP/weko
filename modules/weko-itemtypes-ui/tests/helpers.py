@@ -9,6 +9,7 @@ from invenio_pidrelations.models import PIDRelation
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus, Redirect, RecordIdentifier
 from invenio_pidstore.errors import PIDDoesNotExistError
 from invenio_records_files.api import Record
+from sqlalchemy import text
 
 from weko_deposit.api import WekoDeposit,WekoRecord
 from weko_records.api import ItemsMetadata 
@@ -75,3 +76,27 @@ def logout(app,client):
     with app.test_request_context():
         logout_url = url_for("security.logout")
     client.get(logout_url)
+
+
+def sync_sequence(session, table_cls, column_name="id"):
+    """
+    Sync the sequence for a given table and column.
+    """
+    table_name = table_cls.__tablename__
+
+    seq_name = session.execute(
+        text("SELECT pg_get_serial_sequence(:table, :col)"),
+        {"table": table_name, "col": column_name}
+    ).scalar()
+
+    if not seq_name:
+        return  # No sequence found, nothing to do
+
+    setval_sql = text(f"""
+        SELECT setval(:seq, COALESCE(
+            (SELECT MAX({column_name}) FROM {table_name}), 1
+        ))
+    """)
+    session.execute(setval_sql, {"seq": seq_name})
+
+    session.commit()

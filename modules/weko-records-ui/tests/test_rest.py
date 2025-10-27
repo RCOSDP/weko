@@ -41,7 +41,6 @@ from weko_records_ui.rest import (
     create_blueprint,
     WekoRecordsCitesResource,
 )
-from weko_redis.redis import RedisConnection
 
 
 blueprint = Blueprint(
@@ -548,7 +547,7 @@ def test_FileApplication_post_v1(app, client, db, workflows_restricted, make_rec
     terms_content = "利用規約本文"
     etag = generate_etag(f"{file_name}_{terms_content}".encode("utf-8"))
     params = {"terms_token": etag}
-    with patch('weko_records_ui.rest.WekoRecord.get_record', return_value=None): 
+    with patch('weko_records_ui.rest.WekoRecord.get_record', return_value=None):
         res = client.post(
             url(f'/{version}/records/{pid_value}/files/{file_name}/application', params),
             data=json.dumps(None),
@@ -695,9 +694,9 @@ def test_FileApplication_post_v1(app, client, db, workflows_restricted, make_rec
     assert res_data['item_type_schema'] == itemtype_schema
 
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_rest.py::test_RequestMail_post_v1 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
-def test_RequestMail_post_v1(app, client, db, make_request_maillist, users):
+def test_RequestMail_post_v1(app, client, db, make_request_maillist, users, mocker):
     """Test GetFileTerms.post_v1 method."""
-
+    mocker.patch("weko_records_ui.api.RedisConnection",return_value=MagicMock())
     version = 'v1'
     invalid_version = 'v0'
 
@@ -864,7 +863,7 @@ def test_RequestMail_post_v1(app, client, db, make_request_maillist, users):
         assert res.status_code == 500
 
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_rest.py::test_CaptchaAnswerValidation_post_v1 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
-def test_CaptchaAnswerValidation_post_v1(app, client, db):
+def test_CaptchaAnswerValidation_post_v1(app, client, db, mocker):
 
     version = 'v1'
     invalid_version = 'v0'
@@ -874,11 +873,12 @@ def test_CaptchaAnswerValidation_post_v1(app, client, db):
         "key": "test_key",
         "calculation_result": 100
     }
-
-    redis_connection = RedisConnection()
-    datastore = redis_connection.connection(db=app.config['CACHE_REDIS_DB'])
-
-    datastore.hmset(b'test_key',{b'calculation_result':b'100'})
+    mock_redis = mocker.patch("weko_records_ui.api.RedisConnection")
+    mock_conn = MagicMock()
+    mock_conn.connection.return_value.hgetall.return_value = {
+        b'calculation_result': b'100'
+    }
+    mock_redis.return_value = mock_conn
 
     # TestCase: invalid api version
     try:
@@ -892,7 +892,6 @@ def test_CaptchaAnswerValidation_post_v1(app, client, db):
     assert res.status_code == 400
 
     # TestCase: captcha result validation success
-    datastore.hmset(b'test_key',{b'calculation_result':b'100'})
     try:
         res = client.post(
             f'/{version}/captcha/validate',
@@ -917,7 +916,6 @@ def test_CaptchaAnswerValidation_post_v1(app, client, db):
         assert res.status_code == 500
 
     # TestCase: validate captcha if language is Japanese
-    datastore.hmset(b'test_key',{b'calculation_result':b'100'})
     try:
         res = client.post(
             f'/{version}/captcha/validate',
@@ -930,7 +928,6 @@ def test_CaptchaAnswerValidation_post_v1(app, client, db):
     assert res.status_code == 200
 
     # TestCase: validate captcha if language is Japanese
-    datastore.hmset(b'test_key',{b'calculation_result':b'100'})
     try:
         res = client.post(
             f'/{version}/captcha/validate',

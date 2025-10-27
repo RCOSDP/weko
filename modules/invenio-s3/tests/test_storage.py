@@ -26,6 +26,7 @@ from invenio_files_rest.storage import PyFSFileStorage
 from s3fs import S3File, S3FileSystem
 from unittest.mock import MagicMock, patch
 from invenio_s3 import S3FSFileStorage, config, s3fs_storage_factory
+from invenio_s3.storage import set_blocksize
 
 
 def test_factory(location, file_instance_mock):
@@ -457,6 +458,17 @@ def test_get_fs_with_s3_path_style(location, s3fs):
     assert isinstance(fs, S3FileSystem)
     assert url == 's3://bucket_name/file_name'
 
+def test_get_fs_no_location(location, s3fs):
+    """Test _get_fs with no location type."""
+    s3fs.location = None
+    s3fs.fileurl = 's3://bucket_name/file_name'
+
+    with patch('invenio_s3.storage.PyFSFileStorage._get_fs', return_value=('fs_mock', 'url_mock')) as mock_super:
+        fs, url = s3fs._get_fs()
+
+    assert fs == 'fs_mock'
+    assert url == 'url_mock'
+
 
 @pytest.mark.parametrize('initial_data, update_data, seek, expected_result', [
     (b'abcdefghij', b'XY', 4, b'abcdXYghij'),  # Update in the middle
@@ -623,3 +635,32 @@ def test_copy_with_no_location(s3fs_3):
 
         # 親クラスのcopyメソッドが呼び出されたことを確認
         mock_copy.assert_called_once_with(src)
+
+
+class DummyClass:
+    def __init__(self, block_size, location):
+        self.block_size = block_size
+        self.location = location
+
+    @set_blocksize
+    def func(self, *args, **kwargs):
+        return "called"
+
+
+# .tox/c1/bin/pytest --cov=invenio_s3 tests/test_storage.py::test_blocksize -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-s3/.tox/c1/tmp
+def test_blocksize(app, location):
+    app.config['S3_MAXIMUM_NUMBER_OF_PARTS'] = 1000
+    app.config['S3_DEFAULT_BLOCK_SIZE'] = 64
+
+    obj = DummyClass(block_size=0, location=None)
+    result = obj.func()
+    assert result == "called"
+    assert obj.block_size == 64
+
+    obj.func(size=5000)
+    assert obj.block_size == 64
+
+    loc = MagicMock(type="s3", s3_maximum_number_of_parts=500, s3_default_block_size=128)
+    obj = DummyClass(block_size=10, location=loc)
+    obj.func(size=5000)
+    assert obj.block_size == 10  # 5000 // 500
