@@ -39,8 +39,8 @@ from weko_user_profiles.forms import (
     VerificationForm,
     custom_profile_form_factory,
     strip_filter,
-    _update_with_csrf_disabled, 
-    confirm_register_form_factory, 
+    _update_with_csrf_disabled,
+    confirm_register_form_factory,
     register_form_factory,
     current_user_email,
     check_phone_number,
@@ -158,7 +158,7 @@ def profile_form():
 
     if form.validate_on_submit():
         return "OK"
-    
+
     if len(form.username.errors) > 0:
         return str(form.username.errors[0])
     else:
@@ -191,7 +191,7 @@ class MockData:
 def test_strip_filter():
     result = strip_filter(" test ")
     assert result == "test"
-    
+
     result = strip_filter("")
     assert result == ""
 
@@ -204,7 +204,7 @@ def test_current_user_email(req_context,users):
     field = MockData("sysadmin@test.org")
     with pytest.raises(StopValidation):
         current_user_email({},field)
-    
+
     logout_user()
     login_user(users[1]["obj"])
     current_user_email({},field)
@@ -218,13 +218,13 @@ def test_check_phone_number():
     with pytest.raises(ValidationError) as e:
         check_phone_number({},field)
         assert str(e.value) == 'Phone number must be less than 15 characters.'
-    
+
     # data is not currect format
     field = MockData("this-is-not-correct-data")
     with pytest.raises(ValidationError) as e:
         check_phone_number({},field)
         assert str(e.value) == 'Phone Number format is incorrect.'
-    
+
     # correct
     field = MockData("12-345")
     check_phone_number({},field)
@@ -314,6 +314,77 @@ def test_check_other_position(app, position, field_data, expected_exception, exp
     else:
         check_other_position(form, field)  # 例外は発生しない
 
+
+#class ProfileForm(FlaskForm):
+# .tox/c1/bin/pytest --cov=weko_user_profiles tests/test_forms.py::TestProfileForm -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-user-profiles/.tox/c1/tmp
+class TestProfileForm:
+
+#    def validate_username(form, field):
+# .tox/c1/bin/pytest --cov=weko_user_profiles tests/test_forms.py::TestProfileForm::test_validate_username -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-user-profiles/.tox/c1/tmp
+    def test_validate_username(self,app,client,register_form,users,db):
+        from weko_user_profiles.config import USERPROFILES_LANGUAGE_LIST, USERPROFILES_TIMEZONE_LIST
+        from weko_user_profiles.validators import USERNAME_RULES
+
+        app.config.update(
+            USERNAME_RULES=USERNAME_RULES,
+            USERPROFILES_LANGUAGE_LIST=USERPROFILES_LANGUAGE_LIST,
+            USERPROFILES_TIMEZONE_LIST=USERPROFILES_TIMEZONE_LIST
+        )
+        user = users[0]["obj"]
+        login(app,client,obj=user)
+        data = {
+            "timezone":'Etc/GMT',
+            "language":"ja",
+            "email":'sysadmin@test.org',
+            "email_repeat":'sysadmin@test.org',
+            "fullname":"test username",
+            "university":"test university",
+            "department":"test department",
+            "position":"Professor",
+            "item1": "",
+            "item2":"12-345",
+            "item3":"",
+            "item4":"",
+            "item5":"",
+            "item6":"",
+            "item7":"",
+            "item8":"",
+            "item9":"",
+            "item10":"",
+            "item11":"",
+            "item12":"",
+        }
+
+        #login_user(users[0]["obj"])
+        user_profile1 = UserProfile(
+            user_id=users[0]["id"],
+            _username="sysadmin user",
+            _displayname="sysadmin user",
+        )
+        db.session.add(user_profile1)
+        user_profile2 = UserProfile(
+            user_id=users[1]["id"],
+            _username="repoadmin user",
+            _displayname="repoadmin user",
+        )
+        db.session.add(user_profile2)
+        db.session.commit()
+        data["username"]="sysadmin user"
+        res = client.post("/test_form/profile_form",data=data)
+        assert res.data == bytes("OK","utf-8")
+        logout(app,client)
+
+        # current_userid!= userprofile.user_id,field.data!=current_userid
+        user = users[1]["obj"]
+        login(app,client,obj=user)
+
+        res = client.post("/test_form/profile_form",data=data)
+        assert res.data == bytes('Username already exists.',"utf-8")
+
+        # raise NoResultFound
+        data["username"]="other user"
+        res = client.post("/test_form/profile_form",data=data)
+        assert res.data == bytes("invalid","utf-8")
 
 # def custom_profile_form_factory(profile_cls):
 # .tox/c1/bin/pytest --cov=weko_user_profiles tests/test_forms.py::test_custom_profile_form_factory -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-user-profiles/.tox/c1/tmp
@@ -570,78 +641,6 @@ def test_custom_profile_form_factory(app):
             assert form is not None
             assert isinstance(form.item1, HiddenField)
             assert form.item1.data == "hidden_value"
-
-#class ProfileForm(FlaskForm):
-# .tox/c1/bin/pytest --cov=weko_user_profiles tests/test_forms.py::TestProfileForm -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-user-profiles/.tox/c1/tmp
-class TestProfileForm:
-
-#    def validate_username(form, field):
-# .tox/c1/bin/pytest --cov=weko_user_profiles tests/test_forms.py::TestProfileForm::test_validate_username -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-user-profiles/.tox/c1/tmp
-    def test_validate_username(self,app,client,register_form,users,db):
-        from weko_user_profiles.config import USERPROFILES_LANGUAGE_LIST, USERPROFILES_TIMEZONE_LIST
-        from weko_user_profiles.validators import USERNAME_RULES
-
-        app.config.update(
-            USERNAME_RULES=USERNAME_RULES,
-            USERPROFILES_LANGUAGE_LIST=USERPROFILES_LANGUAGE_LIST,
-            USERPROFILES_TIMEZONE_LIST=USERPROFILES_TIMEZONE_LIST
-        )
-        user = users[0]["obj"]
-        login(app,client,obj=user)
-        data = {
-            "timezone":'Etc/GMT',
-            "language":"ja",
-            "email":'sysadmin@test.org',
-            "email_repeat":'sysadmin@test.org',
-            "fullname":"test username",
-            "university":"test university",
-            "department":"test department",
-            "position":"Professor",
-            "item1": "",
-            "item2":"12-345",
-            "item3":"",
-            "item4":"",
-            "item5":"",
-            "item6":"",
-            "item7":"",
-            "item8":"",
-            "item9":"",
-            "item10":"",
-            "item11":"",
-            "item12":"",
-        }
-
-        #login_user(users[0]["obj"])
-        user_profile1 = UserProfile(
-            user_id=users[0]["id"],
-            _username="sysadmin user",
-            _displayname="sysadmin user",
-        )
-        db.session.add(user_profile1)
-        user_profile2 = UserProfile(
-            user_id=users[1]["id"],
-            _username="repoadmin user",
-            _displayname="repoadmin user",
-        )
-        db.session.add(user_profile2)
-        db.session.commit()
-        data["username"]="sysadmin user"
-        res = client.post("/test_form/profile_form",data=data)
-        assert res.data == bytes("OK","utf-8")
-        logout(app,client)
-
-        # current_userid!= userprofile.user_id,field.data!=current_userid
-        user = users[1]["obj"]
-        login(app,client,obj=user)
-
-        res = client.post("/test_form/profile_form",data=data)
-        assert res.data == bytes('Username already exists.',"utf-8")
-
-        # raise NoResultFound
-        data["username"]="other user"
-        res = client.post("/test_form/profile_form",data=data)
-        assert res.data == bytes("invalid","utf-8")
-
 
 #class EmailProfileForm(ProfileForm):
 #    def __init__(self, *args, **kwargs):

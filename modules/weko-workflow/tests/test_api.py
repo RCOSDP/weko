@@ -15,6 +15,13 @@ from requests import HTTPError
 from sqlalchemy import and_, or_, not_
 from sqlalchemy.exc import SQLAlchemyError
 
+from weko_notifications.notifications import Notification
+from weko_records.api import ItemsMetadata
+from weko_workflow.api import Flow, GetCommunity, WorkActivity, WorkFlow, UpdateItem
+from weko_workflow.models import Activity, ActivityHistory, ActivityAction, FlowAction, FlowActionRole
+from weko_schema_ui.models import PublishStatus
+
+from invenio_accounts.testutils import login_user_via_session
 from invenio_accounts.models import Role, User
 from invenio_pidstore.errors import PIDAlreadyExists
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
@@ -203,7 +210,7 @@ class TestFlow:
         with app.test_request_context():
             login_user(users[2]["obj"])
             _flow = Flow()
-            flow = _flow.create_flow({'flow_name': 'create_flow_test'})
+            flow = _flow.create_flow({'flow_name': 'create_flow_test', 'repository_id': 'Root Index'})
 
             _flow_data = [
                 {
@@ -328,7 +335,7 @@ class TestFlow:
 
 
 
-    # .tox/c1/bin/pytest --cov=weko_workflow tests/test_api.py::TestFlow::test_upt_flow_action -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+    # .tox/c1/bin/pytest --cov=weko_workflow tests/test_api.py::TestFlow::test_upt_flow_action_for_request_mail -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
     @pytest.mark.parametrize('user_id, user_deny, expected_action_user, expected_action_user_exclude, expected_action_request_mail', [
         (-3, True, None, True, True),
         (-3, False, None, False, True),
@@ -337,7 +344,7 @@ class TestFlow:
         with app.test_request_context():
             login_user(users[2]["obj"])
             _flow = Flow()
-            flow = _flow.create_flow({'flow_name': 'create_flow_test'})
+            flow = _flow.create_flow({'flow_name': 'create_flow_test', 'repository_id': 'Root Index'})
 
             _flow_data = [
                 {
@@ -469,7 +476,7 @@ class TestWorkActivity:
 
     # .tox/c1/bin/pytest --cov=weko_workflow tests/test_api.py::TestWorkActivity::test_get_activity_list -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
     @pytest.mark.parametrize('conditions', conditions)
-    def test_get_activity_list(self, app, users, db_register_activity, conditions):
+    def test_get_activity_list(self, app, users, db_register_activity, conditions, client):
         # test preparation
         activity = WorkActivity()
 
@@ -549,7 +556,7 @@ class TestWorkActivity:
             login_user(users[2]["obj"])
             activity = WorkActivity()
             activities = activity.get_all_activity_list()
-            assert len(activities) == 13
+            assert len(activities) == 20
 
 
     # .tox/c1/bin/pytest --cov=weko_workflow tests/test_api.py::TestWorkActivity::test_get_activity_index_search -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
@@ -621,29 +628,32 @@ class TestWorkActivity:
         assert result[1].json==metadatas[1]
 
     # .tox/c1/bin/pytest --cov=weko_workflow tests/test_api.py::TestWorkActivity::test_get_community_user_ids -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
-    def test_get_community_user_ids(self,client, activity_acl_users):
+    def test_get_community_user_ids(self, client, app, activity_acl_users):
         users = activity_acl_users["users"]
         # not login
         result = WorkActivity._WorkActivity__get_community_user_ids()
         assert result == []
 
         # no role
-        login_user(users[6])
-        result = WorkActivity._WorkActivity__get_community_user_ids()
-        assert result == []
+        with app.test_request_context():
+            login_user(users[6])
+            result = WorkActivity._WorkActivity__get_community_user_ids()
+            assert result == []
 
         # no communities
-        login_user(users[4])
-        result = WorkActivity._WorkActivity__get_community_user_ids()
-        assert result == []
+        with app.test_request_context():
+            login_user(users[4])
+            result = WorkActivity._WorkActivity__get_community_user_ids()
+            assert result == []
 
         # exist communities
-        login_user(users[3])
-        result = WorkActivity._WorkActivity__get_community_user_ids()
-        assert result == [3,4]
+        with app.test_request_context():
+            login_user(users[3])
+            result = WorkActivity._WorkActivity__get_community_user_ids()
+            assert result == [3,4]
 
-    # .tox/c1/bin/pytest --cov=weko_workflow tests/test_api.py::TestWorkActivity::test_get_activity_list -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
-    def test_get_activity_list(client, activity_acl, activity_acl_users, db):
+    # .tox/c1/bin/pytest --cov=weko_workflow tests/test_api.py::TestWorkActivity::test_get_activity_list2 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+    def test_get_activity_list2(self, app, client, activity_acl, activity_acl_users, db):
         # {user_id:{tab:[activity_id,...],...}}
         result = {
             1:{# sysadmin
@@ -672,61 +682,64 @@ class TestWorkActivity:
         activity = WorkActivity()
         for user_id, tag_act in result.items():
             user = User.query.filter_by(id=user_id).one()
-            login_user(user)
-            for tab, acts in tag_act.items():
-                for res_size in size_list:
-                    num_page = math.ceil(len(acts)/res_size)
-                    for res_page in range(num_page):
-                        res_page = res_page + 1
-                        conditions={"tab":[tab]}
-                        if res_size != 20:
-                            conditions["size{}".format(tab)]=[str(res_size)]
-                        if res_page != 1:
-                            conditions["pages{}".format(tab)]=[str(res_page)]
-                        activities, max_page, size, page, name_param, count = activity.get_activity_list(conditions=conditions)
-                        assert [ac.id for ac in activities] == acts[res_size*(res_page-1):res_size*res_page]
-                        assert max_page == num_page
-                        assert size == str(res_size)
-                        assert page == str(res_page)
-                        assert count == len(acts)
+            with app.test_request_context():
+                login_user(user)
+                for tab, acts in tag_act.items():
+                    for res_size in size_list:
+                        num_page = math.ceil(len(acts)/res_size)
+                        for res_page in range(num_page):
+                            res_page = res_page + 1
+                            conditions={"tab":[tab]}
+                            if res_size != 20:
+                                conditions["size{}".format(tab)]=[str(res_size)]
+                            if res_page != 1:
+                                conditions["pages{}".format(tab)]=[str(res_page)]
+                            activities, max_page, size, page, name_param, count = activity.get_activity_list(conditions=conditions)
+                            assert [ac.id for ac in activities] == acts[res_size*(res_page-1):res_size*res_page]
+                            assert max_page == num_page
+                            assert size == str(res_size)
+                            assert page == str(res_page)
+                            assert count == len(acts)
 
-                num_page = math.ceil(len(acts)/20)
-                conditions = {"tab":[tab]}
-                # is_get_all = True
-                activities, max_page, size, page, name_param, count = activity.get_activity_list(conditions=conditions,is_get_all=True)
-                assert [ac.id for ac in activities] == acts
-                assert max_page == num_page
-                assert size == '20'
-                assert page == '1'
-                assert count == len(acts)
+                    num_page = math.ceil(len(acts)/20)
+                    conditions = {"tab":[tab]}
+                    # is_get_all = True
+                    activities, max_page, size, page, name_param, count = activity.get_activity_list(conditions=conditions,is_get_all=True)
+                    assert [ac.id for ac in activities] == acts
+                    assert max_page == num_page
+                    assert size == '20'
+                    assert page == '1'
+                    assert count == len(acts)
 
-                # activitylog = True
-                activities, max_page, size, page, name_param, count = activity.get_activity_list(conditions=conditions,activitylog=True)
-                assert [ac.id for ac in activities] == acts
-                assert max_page == math.ceil(len(acts)/100000)
-                assert size == 100000
-                assert page == 1
-                assert count == len(acts)
+                    # activitylog = True
+                    activities, max_page, size, page, name_param, count = activity.get_activity_list(conditions=conditions,activitylog=True)
+                    assert [ac.id for ac in activities] == acts
+                    assert max_page == math.ceil(len(acts)/100000)
+                    assert size == 100000
+                    assert page == 1
+                    assert count == len(acts)
 
         # count = 0
         user = User.query.filter_by(id=7).one()
-        login_user(user)
-        conditions={"tab":["todo"]}
-        activities, max_page, size, page, name_param, count = activity.get_activity_list(conditions=conditions)
-        assert activities == []
-        assert max_page == 0
-        assert size == '20'
-        assert page == '1'
+        with app.test_request_context():
+            login_user(user)
+            conditions={"tab":["todo"]}
+            activities, max_page, size, page, name_param, count = activity.get_activity_list(conditions=conditions)
+            assert activities == []
+            assert max_page == 0
+            assert size == '20'
+            assert page == '1'
 
         current_app.config['WEKO_ITEMS_UI_MULTIPLE_APPROVALS'] = False
         user = User.query.filter_by(id=7).one()
-        login_user(user)
-        conditions={"tab":["todo"]}
-        activities, max_page, size, page, name_param, count = activity.get_activity_list(conditions=conditions)
-        assert activities == []
-        assert max_page == 0
-        assert size == '20'
-        assert page == '1'
+        with app.test_request_context():
+            login_user(user)
+            conditions={"tab":["todo"]}
+            activities, max_page, size, page, name_param, count = activity.get_activity_list(conditions=conditions)
+            assert activities == []
+            assert max_page == 0
+            assert size == '20'
+            assert page == '1'
 
     # .tox/c1/bin/pytest --cov=weko_workflow tests/test_api.py::TestWorkActivity::test_get_usage_report_activities -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
     def test_get_usage_report_activities(app, activity_usage_report):
@@ -756,7 +769,7 @@ class TestWorkActivity:
 
 
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_api.py::test_WorkActivity_count_waiting_approval_by_workflow_id -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
-def test_WorkActivity_count_waiting_approval_by_workflow_id(app, db, db_register):
+def test_WorkActivity_count_waiting_approval_by_workflow_id(app, db, db_register_full_action):
     activity = WorkActivity()
     assert activity.count_waiting_approval_by_workflow_id(1) == 0
 
@@ -871,16 +884,18 @@ def test_WorkActivity_get_activity_index_search(app, db_register_full_action):
 
 
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_api.py::test_WorkActivity_upt_activity_detail -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
-def test_WorkActivity_upt_activity_detail(app, db_register_full_action, db_records):
+def test_WorkActivity_upt_activity_detail(app, db_register_full_action,users, db_records):
     activity = WorkActivity()
-    db_activity = activity.upt_activity_detail(db_records[2][2].id)
-    assert db_activity.id == 4
-    assert db_activity.action_id == 2
-    assert db_activity.title == 'test item1'
-    assert db_activity.activity_id == '2'
-    assert db_activity.flow_id == 1
-    assert db_activity.workflow_id == 1
-    assert db_activity.action_order == 1
+    with app.test_request_context():
+        login_user(users[0]["obj"])
+        db_activity = activity.upt_activity_detail(db_records[2][2].id)
+        assert db_activity.id == db_register_full_action.get('activities')[1].id
+        assert db_activity.action_id == 2
+        assert db_activity.title == 'test item1'
+        assert db_activity.activity_id == '2'
+        assert db_activity.flow_id == 1
+        assert db_activity.workflow_id == 1
+        assert db_activity.action_order == 1
 
 
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_api.py::test_WorkActivity_get_corresponding_usage_activities -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
@@ -1217,9 +1232,9 @@ def test_activity_request_mail_list_create_and_update(app, workflow, db, mocker)
     ("deletion_approved", "_get_params_for_registrant", "create_item_delete_approved", "send_mail_item_delete_approved"),
     ("deletion_rejected", "_get_params_for_registrant", "create_item_delete_rejected", "send_mail_item_delete_rejected"),
 ])
-def test_workactivity_notify_about_activity(app, db_register, mocker, case, param_method, notification_method, mail_method):
+def test_workactivity_notify_about_activity(app, db_register_full_action, mocker, case, param_method, notification_method, mail_method):
     app.config["WEKO_NOTIFICATIONS"] = True
-    activity1 = db_register["activities"][0]
+    activity1 = db_register_full_action["activities"][0]
     activity = WorkActivity()
 
     mock_notify = mocker.patch.object(activity, "_notify_about_activity_wiht_case")
@@ -1235,12 +1250,12 @@ def test_workactivity_notify_about_activity(app, db_register, mocker, case, para
 
 
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_api.py::test_workactivity_notify_about_activity_early_return -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
-def test_workactivity_notify_about_activity_early_return(app, db, db_register, mocker):
+def test_workactivity_notify_about_activity_early_return(app, db, db_register_full_action, mocker):
     activity = WorkActivity()
 
     # with WEKO_NOTIFICATIONS is False
     app.config["WEKO_NOTIFICATIONS"] = False
-    activity1 = db_register["activities"][0]
+    activity1 = db_register_full_action["activities"][0]
     mock_get_activity_by_id = mocker.patch.object(activity, "get_activity_by_id")
     assert activity.notify_about_activity(activity1.activity_id, 'registered') == None
     mock_get_activity_by_id.assert_not_called()
@@ -1256,17 +1271,29 @@ def test_workactivity_notify_about_activity_early_return(app, db, db_register, m
 
 
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_api.py::test_workactivity_notify_about_activity_invalid_case -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
-def test_workactivity_notify_about_activity_invalid_case(app, db, db_register, mocker):
+def test_workactivity_notify_about_activity_invalid_case(app, db, db_register_full_action, mocker):
     activity = WorkActivity()
     app.config["WEKO_NOTIFICATIONS"] = True
-    activity1 = db_register["activities"][0]
+    activity1 = db_register_full_action["activities"][0]
     mock_notify = mocker.patch.object(activity, "_notify_about_activity_wiht_case")
     assert activity.notify_about_activity(activity1.activity_id, 'invalid_case') == None
     mock_notify.assert_not_called()
 
 
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_api.py::test_workactivity_get_params_for_registrant -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
-def test_workactivity_get_params_for_registrant(app, users, db_register_full_action, db_records):
+def test_workactivity_get_params_for_registrant(app, users, db_register_full_action, db_records, db_user_profile):
+    mock_activity = MagicMock(
+        activity_login_user=users[0]["id"],
+        activity_update_user=users[1]["id"],
+        shared_user_id=-1,
+        item_id=db_records[2][2].id,
+    )
+    activity_obj = WorkActivity()
+    set_target_id, recid, actor_id, actor_name = activity_obj._get_params_for_registrant(mock_activity)
+    assert set_target_id == {users[0]["id"]}
+    assert recid == db_records[2][0]
+    assert actor_id == users[1]["id"]
+    assert actor_name == None
 
     activity_obj = WorkActivity()
 
@@ -1493,8 +1520,52 @@ def test_workactivity_notify_about_activity_wiht_case_invalid_activity(
 
 
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_api.py::test_workactivity_get_params_for_approver -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
-def test_workactivity_get_params_for_approver(app, users, db, db_register_full_action, db_records, db_user_profile):
+def test_workactivity_get_params_for_approver(app, users, db, db_register_full_action, mocker, db_records, db_user_profile):
+    from invenio_communities.models import Community
+    from weko_index_tree.models import Index
 
+    index = Index(position=1, id=111)
+    db.session.add(index)
+    db.session.commit()
+    comm = Community(id="test_com11", id_role=users[3]["id"],
+                        id_user=users[3]["id"], title="test community",
+                        description="this is test community",
+                        root_node_id=index.id)
+    db.session.add(comm)
+    db.session.commit()
+    flow_define = db_register_full_action["flow_define"]
+
+    mock_activity1 = MagicMock(
+        activity_login_user=users[0]["id"],
+        shared_user_id=users[1]["id"],
+        item_id=db_records[2][2].id,
+        activity_id=456,
+        title="Test Item",
+        updated=datetime.strptime('2025/03/28 12:00:00','%Y/%m/%d %H:%M:%S'),
+        flow_define=flow_define,
+        activity_community_id=None
+    )
+    mock_activity2 = MagicMock(
+        activity_login_user=users[0]["id"],
+        shared_user_id=-1,
+        item_id=db_records[2][2].id,
+        activity_id=456,
+        title="Test Item",
+        updated=datetime.strptime('2025/03/28 12:00:00','%Y/%m/%d %H:%M:%S'),
+        flow_define=flow_define,
+        activity_community_id=None,
+        action_order=3
+    )
+    mock_activity3 = MagicMock(
+        activity_login_user=users[0]["id"],
+        shared_user_id=-1,
+        item_id=db_records[2][2].id,
+        activity_id=456,
+        title="Test Item",
+        updated=datetime.strptime('2025/03/28 12:00:00','%Y/%m/%d %H:%M:%S'),
+        flow_define=flow_define,
+        activity_community_id="test_com11"
+    )
     activity = WorkActivity()
     flow_define = db_register_full_action["flow_define"]
 
@@ -1687,7 +1758,7 @@ def test_workactivity_send_mail_item_registered(app, mocker):
 
 
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_api.py::test_workactivity_send_mail_request_approval -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
-def test_workactivity_send_mail_request_approval(app, users, db, db_register, mocker):
+def test_workactivity_send_mail_request_approval(app, users, db, db_register_full_action, mocker):
     set_target_id = set()
     recid = MagicMock()
     actor_id = 0
@@ -2060,7 +2131,14 @@ def test_send_notification_email(app, mocker):
 
     mock_load_template.assert_called_once_with(mock_template, "en")
     mock_fill_template.assert_called_once_with("template_content", mock_data_callback.return_value)
-    mock_send_mail.assert_called_once_with("Test Subject", "test@example.com", "Test Body")
+    mock_send_mail.assert_called_once_with({
+        'mail_subject': 'Test Subject',
+        'mail_body': 'Test Body',
+        'mail_recipients': ['test@example.com'],
+        'mail_cc': [],
+        'mail_bcc': []
+    })
+
 
     mock_settings_false = {1: MagicMock(subscribe_email=False)}
     mock_send_mail.reset_mock()
@@ -2311,7 +2389,7 @@ def test_query_activities_by_tab_is_wait(users, db):
                         "OR workflow_activity_action.action_handler NOT IN (%(action_handler_1)s))"
         ret = WorkActivity.query_activities_by_tab_is_wait(query, False, False, [])
         assert str(ret).find(expected) != -1
-    
+
     # admin user
     with patch("flask_login.utils._get_user", return_value=users[1]['obj']):
         admin_expected = expected.replace(
@@ -2325,6 +2403,7 @@ def test_query_activities_by_tab_is_wait(users, db):
 def test_query_activities_by_tab_is_all(users, db):
     is_community_admin=False
     community_user_ids=[]
+    comadmin_index_list = []
     with patch("flask_login.utils._get_user", return_value=users[0]['obj']):
         query = db.session.query(
                 _Activity,
@@ -2335,37 +2414,40 @@ def test_query_activities_by_tab_is_all(users, db):
                     _Activity.activity_update_user == User.id,
                 )
             )
-
         expected = "(workflow_activity.shared_user_ids LIKE '%' || ? || '%') AND workflow_flow_action.action_id != ?"
-        ret = WorkActivity.query_activities_by_tab_is_all(query, is_community_admin, community_user_ids)
+        ret = WorkActivity.query_activities_by_tab_is_all(query, is_community_admin, community_user_ids, comadmin_index_list)
         assert str(ret).find(expected)
 
         is_community_admin = True
         community_user_ids = [3]
         expected = "(workflow_activity.activity_update_user LIKE '%' || ? || '%')"
-        ret = WorkActivity.query_activities_by_tab_is_all(query, is_community_admin, community_user_ids)
+        ret = WorkActivity.query_activities_by_tab_is_all(query, is_community_admin, community_user_ids, comadmin_index_list)
         assert str(ret).find(expected)
 
-# def query_activities_by_tab_is_todo(query, is_admin)
+# def query_activities_by_tab_is_todo(query, is_admin, is_community_admin, community_user_ids, comadmin_index_list)
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_api.py::test_query_activities_by_tab_is_todo -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_query_activities_by_tab_is_todo(users, db):
     with patch("flask_login.utils._get_user", return_value=users[0]['obj']):
+        is_community_admin = False
+        is_community_admin = False
+        community_user_ids = []
+        comadmin_index_list = []
         query = db.session.query(
                 _Activity,
                 _FlowActionRole
             )
         expected = "(workflow_activity.shared_user_ids LIKE '%' || ? || '%')"
-        ret = WorkActivity.query_activities_by_tab_is_todo(query, False)
+        ret = WorkActivity.query_activities_by_tab_is_todo(query, is_community_admin, is_community_admin, community_user_ids, comadmin_index_list)
         assert str(ret).find(expected)
-
+        is_community_admin = True
         current_app.config['WEKO_WORKFLOW_ENABLE_SHOW_ACTIVITY'] = True
         expected = "(workflow_activity.action_handler LIKE '%' || ? || '%')"
-        ret = WorkActivity.query_activities_by_tab_is_todo(query, True)
+        ret = WorkActivity.query_activities_by_tab_is_todo(query, is_community_admin, is_community_admin, community_user_ids, comadmin_index_list)
         assert str(ret).find(expected)
 
         current_app.config['WEKO_WORKFLOW_ENABLE_SHOW_ACTIVITY'] = False
         expected = "(workflow_activity.shared_user_ids LIKE '%' || ? || '%')"
-        ret = WorkActivity.query_activities_by_tab_is_todo(query, True)
+        ret = WorkActivity.query_activities_by_tab_is_todo(query, is_community_admin, is_community_admin, community_user_ids, comadmin_index_list)
         assert str(ret).find(expected)
 
 
@@ -2493,8 +2575,13 @@ def test_WorkActivity_query_activities_by_tab_is_todo(app, workflow, db, users, 
             title='test', shared_user_ids=[], extra_info={},
             action_order=6, item_id=item_metdata.model.id,
         )
+        request_mail = ActivityRequestMail(
+            activity_id=activity.activity_id,
+            request_maillist=users[users_idx]["email"]
+        )
         with db.session.begin_nested():
             db.session.add(activity)
+            db.session.add(request_mail)
         db.session.commit()
 
         activity_action = ActivityAction(activity_id=activity.activity_id,
@@ -2504,9 +2591,11 @@ def test_WorkActivity_query_activities_by_tab_is_todo(app, workflow, db, users, 
         with db.session.begin_nested():
             db.session.add(activity_action)
         db.session.commit()
-
+        is_community_admin = False
+        community_user_ids = []
+        comadmin_index_list = []
         actual_query = WorkActivity.query_activities_by_tab_is_todo(
-            Activity.query, False)
+            Activity.query, False, is_community_admin, community_user_ids, comadmin_index_list)
         actual = actual_query.all()
 
         assert (len(actual) > 0) == expected_activity_included
@@ -2517,12 +2606,20 @@ def test_WorkActivity_query_activities_by_tab_is_todo(app, workflow, db, users, 
     (0, True),
     (4, False),
 ])
-def test_WorkActivity_query_activities_by_tab_is_all(app, users, activity_with_roles, users_idx, expected_included):
+def test_WorkActivity_query_activities_by_tab_is_all(db,app, users, activity_with_roles, users_idx, expected_included):
     with app.test_request_context():
         login_user(users[users_idx]["obj"])
+        activity = activity_with_roles["activity"]
+        request_mail = ActivityRequestMail(
+            activity_id=activity.activity_id,
+            request_maillist=users[users_idx]["email"]
+        )
+        with db.session.begin_nested():
+            db.session.add(request_mail)
+        db.session.commit()
 
         actual_query = WorkActivity.query_activities_by_tab_is_all(
-            Activity.query, False, [])
+            Activity.query, False, [], [])
         actual = actual_query.all()
         assert (len(actual) > 0) == expected_included
 

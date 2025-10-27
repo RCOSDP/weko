@@ -1578,6 +1578,7 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
         // Load Contributor information
         let recordModel = $rootScope.recordsVM.invenioRecordsModel;
         let owner_id = 0
+        let enable_multi_contributors = $('#enable_multi_contributors').val() === 'True';
         if (recordModel.owner) {
           owner_id = recordModel.owner;
         } else {
@@ -1601,7 +1602,7 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
           $scope.is_item_owner = true;
           // ----
         } else {
-          if (recordModel.shared_user_ids && recordModel.shared_user_ids.length > 0 && recordModel.shared_user_ids != -1) {
+          if (!enable_multi_contributors || (recordModel.shared_user_ids && recordModel.shared_user_ids.length > 0 && recordModel.shared_user_ids != -1)) {
             // Call rest api to get user information
             let shared_user_ids_query = '';
             for(id of recordModel.shared_user_ids) {
@@ -3788,6 +3789,7 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
         let userSelection = $(".form_share_permission").css('display');
         let login_user_id = 0;
         let is_exist_login_user = false;
+        let enable_multi_contributors = $("#enable_multi_contributors").val() === 'True';
         // init model
         model['shared_user_ids'] = [];
 
@@ -3827,18 +3829,20 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
           check_owner_user_info['email'] = owner_email;
           check_user_info_list.push(check_owner_user_info);
           // contributor
-          let contributors = $("input[name='owner_radio']");
-          for (let idx=0; idx<contributors.length; idx++) {
-            let check_contributor_user_info = { 'username': '', 'email': '', 'owner': false };
-            let contributor_id = contributors[idx].id.replace('id_owner_radio_', '');
-            const contributor_username = $(`#share_username_${contributor_id}`).val();
-            const contributor_email = $(`#share_email_${contributor_id}`).val();
-            if (contributor_email == '' | contributors[idx].checked) {
-              continue;
+          if (enable_multi_contributors) {
+            let contributors = $("input[name='owner_radio']");
+            for (let idx=0; idx<contributors.length; idx++) {
+              let check_contributor_user_info = { 'username': '', 'email': '', 'owner': false };
+              let contributor_id = contributors[idx].id.replace('id_owner_radio_', '');
+              const contributor_username = $(`#share_username_${contributor_id}`).val();
+              const contributor_email = $(`#share_email_${contributor_id}`).val();
+              if (contributor_email == '' | contributors[idx].checked) {
+                continue;
+              }
+              check_contributor_user_info['username'] = contributor_username;
+              check_contributor_user_info['email'] = contributor_email;
+              check_user_info_list.push(check_contributor_user_info);
             }
-            check_contributor_user_info['username'] = contributor_username;
-            check_contributor_user_info['email'] = contributor_email;
-            check_user_info_list.push(check_contributor_user_info);
           }
           let ret = { 'async_validate': false, 'error': ''};
           let owner_info = {};
@@ -3870,9 +3874,13 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
             
             //contributor
             let shared_user_ids = [];
-            contributors_info.forEach((contributors => {
-              shared_user_ids.push({'user':contributors['user_id']});
-            }));
+            if (enable_multi_contributors) {
+              contributors_info.forEach((contributors => {
+                shared_user_ids.push({'user':contributors['user_id']});
+              }));
+            } else {
+              shared_user_ids.push({'user': Number.parseInt(login_user_id)});
+            }
             model['shared_user_ids'] = shared_user_ids;
           } else {
             return async_validate_users['error'];
@@ -3882,8 +3890,11 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
           if (error_message.length > 0) {
             return Promise.reject(error_message);
           }
-          if (!is_exist_login_user) {
+          if (enable_multi_contributors && !is_exist_login_user) {
             return Promise.reject('Contributer or Owner - the login user is required.');
+          }
+          if (!enable_multi_contributors && model['owner'] === Number.parseInt(login_user_id)) {
+            return Promise.reject('You cannot specify yourself in "Other user" setting.');
           }
           return true;
         });

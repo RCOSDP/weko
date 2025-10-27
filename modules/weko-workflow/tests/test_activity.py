@@ -594,7 +594,7 @@ class TestHeadlessActivity:
         mock_activity.activity_community_id = None
         activity._model = mock_activity
         activity.workflow = workflow["workflow"]
-        activity.item_type = item_type
+        activity.item_type = next(i['obj'] for i in item_type if i['id'] == 1)
 
         workflow_index_tree_id = workflow["workflow"].index_tree_id
         activity.workflow.index_tree_id = None
@@ -663,7 +663,7 @@ class TestHeadlessActivity:
         mock_activity.activity_community_id = None
         activity._model = mock_activity
         activity.workflow = workflow["workflow"]
-        activity.item_type = item_type
+        activity.item_type = next(i['obj'] for i in item_type if i['id'] == 1)
 
         metadata = {
             "pubdate": "2024-01-01",
@@ -740,7 +740,7 @@ class TestHeadlessActivity:
         activity._model = mock_activity
         activity.workflow = workflow["workflow"]
         activity.workflow.index_tree_id = "1"
-        activity.item_type = item_type
+        activity.item_type = next(i['obj'] for i in item_type if i['id'] == 1)
 
         old_metadata = {
             "pubdate": "2023-01-01",
@@ -823,7 +823,7 @@ class TestHeadlessActivity:
         activity._model = mock_activity
         activity.workflow = workflow["workflow"]
         activity.workflow.index_tree_id = "1"
-        activity.item_type = item_type
+        activity.item_type = next(i['obj'] for i in item_type if i['id'] == 1)
 
         old_metadata = {
             "pubdate": "2023-01-01",
@@ -904,7 +904,7 @@ class TestHeadlessActivity:
         activity._model = mock_activity
         activity.workflow = workflow["workflow"]
         activity.workflow.index_tree_id = "1"
-        activity.item_type = item_type
+        activity.item_type = next(i['obj'] for i in item_type if i['id'] == 1)
         old_metadata = {
             "pubdate": "2023-01-01",
             "item_title":[{"subitem_title":"Old Title"}],
@@ -996,7 +996,7 @@ class TestHeadlessActivity:
         activity._model = mock_activity
         activity.workflow = workflow["workflow"]
         activity.workflow.index_tree_id = "1"
-        activity.item_type = item_type
+        activity.item_type = next(i['obj'] for i in item_type if i['id'] == 1)
 
         old_metadata = {
             "pubdate": "2023-01-01",
@@ -1090,7 +1090,7 @@ class TestHeadlessActivity:
         activity._model = mock_activity
         activity.workflow = workflow["workflow"]
         activity.workflow.index_tree_id = "1"
-        activity.item_type = item_type
+        activity.item_type = next(i['obj'] for i in item_type if i['id'] == 1)
 
         old_metadata = {
             "pubdate": "2023-01-01",
@@ -1182,7 +1182,7 @@ class TestHeadlessActivity:
         activity._model = mock_activity
         activity.workflow = workflow["workflow"]
         activity.workflow.index_tree_id = "1"
-        activity.item_type = item_type
+        activity.item_type = next(i['obj'] for i in item_type if i['id'] == 1)
 
         old_metadata = {
             "pubdate": "2023-01-01",

@@ -179,7 +179,7 @@ def create_record_with_pdf(rec_uuid, recid):
                     "filename": "test.png",
                     "filesize": [
                     {
-                        "value": "41 KB"
+                        "value": "3 KB"
                     }
                     ],
                     "mimetype": "image/png",
@@ -208,6 +208,48 @@ def create_record_with_pdf(rec_uuid, recid):
                     },
                     "mimetype": "application/pdf"
                 },
+                {
+                    "version_id": "63e3b70e-56a6-44e7-b7b4-cd187f20420c",
+                    "filename": "sample_word.docx",
+                    "filesize": [
+                        {
+                            "value": "14 KB"
+                        }
+                    ],
+                    "format": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                    "date": [
+                        {
+                            "dateValue": "2024-12-06",
+                            "dateType": "Available"
+                        }
+                    ],
+                    "accessrole": "open_access",
+                    "url": {
+                        "url": f"https://192.168.56.134/record/{recid}/files/sample_word.docx"
+                    },
+                    "mimetype": "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                },
+                {
+                    "version_id": "0a9446bf-6ac1-4fa4-b7af-a8a291debb0e",
+                    "filename": "sample.txt",
+                    "filesize": [
+                        {
+                            "value": "1 KB"
+                        }
+                    ],
+                    "format": "text/plain",
+                    "date": [
+                        {
+                            "dateValue": "2024-12-06",
+                            "dateType": "Available"
+                        }
+                    ],
+                    "accessrole": "open_access",
+                    "url": {
+                        "url": f"https://192.168.56.134/record/{recid}/files/sample.txt"
+                    },
+                    "mimetype": "text/plain"
+                },
             ]
         },
         "relation_version_is_last": True
@@ -219,24 +261,32 @@ def create_record_with_pdf(rec_uuid, recid):
                 {"value": f"https://192.168.56.134/record/{recid}/files/test_file_1.2M.pdf"},
                 {"value": f"https://192.168.56.134/record/{recid}/files/test.png"},
                 {"value": f"https://192.168.56.134/record/{recid}/files/not_exist.pdf"},
+                {"value": f"https://192.168.56.134/record/{recid}/files/sample_word.docx"},
+                {"value": f"https://192.168.56.134/record/{recid}/files/sample.txt"},
             ],
             "mimeType": [
                 "application/pdf",
                 "application/pdf",
                 "image/png",
                 "application/pdf",
+                "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                "text/plain"
             ],
             "date": [
                 {"dateType": "fileDate.fileDateType"},
                 {"dateType": "fileDate.fileDateType"},
                 {"dateType": "fileDate.fileDateType"},
                 {"dateType": "fileDate.fileDateType"},
+                {"dateType": "fileDate.fileDateType"},
+                {"dateType": "fileDate.fileDateType"}
             ],
             "extent": [
                 "81 KB",
                 "81 KB",
-                "41 KB",
+                "3 KB",
                 "81 KB",
+                "14 KB",
+                "1 KB"
             ],
             "version": []
         },
@@ -307,7 +357,7 @@ def create_record_with_pdf(rec_uuid, recid):
                         "filename": "test.png",
                         "filesize": [
                         {
-                            "value": "41 KB"
+                            "value": "3 KB"
                         }
                         ],
                         "mimetype": "image/png",
@@ -335,6 +385,48 @@ def create_record_with_pdf(rec_uuid, recid):
                             "url": f"https://192.168.56.134/record/{recid}/files/not_exist.pdf"
                         },
                         "mimetype": "application/pdf"
+                    },
+                    {
+                        "version_id": "63e3b70e-56a6-44e7-b7b4-cd187f20420c",
+                        "filename": "sample_word.docx",
+                        "filesize": [
+                            {
+                                "value": "14 KB"
+                            }
+                        ],
+                        "format": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                        "date": [
+                            {
+                                "dateValue": "2024-12-06",
+                                "dateType": "Available"
+                            }
+                        ],
+                        "accessrole": "open_access",
+                        "url": {
+                            "url": f"https://192.168.56.134/record/{recid}/files/sample_word.docx"
+                        },
+                        "mimetype": "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                    },
+                    {
+                        "version_id": "0a9446bf-6ac1-4fa4-b7af-a8a291debb0e",
+                        "filename": "sample.txt",
+                        "filesize": [
+                            {
+                                "value": "1 KB"
+                            }
+                        ],
+                        "format": "text/plain",
+                        "date": [
+                            {
+                                "dateValue": "2024-12-06",
+                                "dateType": "Available"
+                            }
+                        ],
+                        "accessrole": "open_access",
+                        "url": {
+                            "url": f"https://192.168.56.134/record/{recid}/files/sample.txt"
+                        },
+                        "mimetype": "text/plain"
                     },
                 ]
             },
@@ -426,7 +518,7 @@ def create_record_with_pdf(rec_uuid, recid):
                 "filename": "test.png",
                 "filesize": [
                 {
-                    "value": "41 KB"
+                    "value": "3 KB"
                 }
                 ],
                 "mimetype": "image/png",
@@ -455,6 +547,54 @@ def create_record_with_pdf(rec_uuid, recid):
                     "url": f"https://192.168.56.134/record/{recid}/files/not_exist.pdf"
                 },
                 "mimetype": "application/pdf",
+                "attachment": {
+                    "content": ""
+                }
+            },
+            {
+                "version_id": "63e3b70e-56a6-44e7-b7b4-cd187f20420c",
+                "filename": "sample_word.docx",
+                "filesize": [
+                    {
+                        "value": "14 KB"
+                    }
+                ],
+                "format": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                "date": [
+                    {
+                        "dateValue": "2024-12-06",
+                        "dateType": "Available"
+                    }
+                ],
+                "accessrole": "open_access",
+                "url": {
+                    "url": f"https://192.168.56.134/record/{recid}/files/sample_word.docx"
+                },
+                "mimetype": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                "attachment": {
+                    "content": ""
+                }
+            },
+            {
+                "version_id": "0a9446bf-6ac1-4fa4-b7af-a8a291debb0e",
+                "filename": "sample.txt",
+                "filesize": [
+                    {
+                        "value": "1 KB"
+                    }
+                ],
+                "format": "text/plain",
+                "date": [
+                    {
+                        "dateValue": "2024-12-06",
+                        "dateType": "Available"
+                    }
+                ],
+                "accessrole": "open_access",
+                "url": {
+                    "url": f"https://192.168.56.134/record/{recid}/files/sample.txt"
+                },
+                "mimetype": "text/plain",
                 "attachment": {
                     "content": ""
                 }
@@ -526,7 +666,7 @@ def create_record_with_pdf(rec_uuid, recid):
                 "filename": "test.png",
                 "filesize": [
                 {
-                    "value": "41 KB"
+                    "value": "3 KB"
                 }
                 ],
                 "mimetype": "image/png",
@@ -554,7 +694,49 @@ def create_record_with_pdf(rec_uuid, recid):
                     "url": f"https://192.168.56.134/record/{recid}/files/not_exist.pdf"
                 },
                 "mimetype": "application/pdf"
-            }
+            },
+            {
+                "version_id": "63e3b70e-56a6-44e7-b7b4-cd187f20420c",
+                "filename": "sample_word.docx",
+                "filesize": [
+                    {
+                        "value": "14 KB"
+                    }
+                ],
+                "format": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                "date": [
+                    {
+                        "dateValue": "2024-12-06",
+                        "dateType": "Available"
+                    }
+                ],
+                "accessrole": "open_access",
+                "url": {
+                    "url": f"https://192.168.56.134/record/{recid}/files/sample_word.docx"
+                },
+                "mimetype": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            },
+            {
+                "version_id": "0a9446bf-6ac1-4fa4-b7af-a8a291debb0e",
+                "filename": "sample.txt",
+                "filesize": [
+                    {
+                        "value": "1 KB"
+                    }
+                ],
+                "format": "text/plain",
+                "date": [
+                    {
+                        "dateValue": "2024-12-06",
+                        "dateType": "Available"
+                    }
+                ],
+                "accessrole": "open_access",
+                "url": {
+                    "url": f"https://192.168.56.134/record/{recid}/files/sample.txt"
+                },
+                "mimetype": "text/plain",
+            },
         ]
     }
     record = WekoRecord.create(record_data, id_=rec_uuid)
@@ -576,6 +758,27 @@ def create_record_with_pdf(rec_uuid, recid):
     es_data["_item_metadata"]["item_1617605131499"]["attribute_value_mlt"][1]["version_id"] = obj.version_id
     es_data["content"][1]["version_id"] = obj.version_id
     
+    # word file
+    word_filepath = "tests/data/test_files/sample_word.docx"
+    with open(word_filepath, "rb") as f:
+        obj=ObjectVersion.create(bucket=bucket.id, key='sample_word.docx',stream=f)
+    es_data["_item_metadata"]["item_1617605131499"]["attribute_value_mlt"][4]["version_id"] = obj.version_id
+    es_data["content"][4]["version_id"] = obj.version_id
+    
+    # png file
+    png_filepath = "tests/data/test_files/test.png"
+    with open(png_filepath, "rb") as f:
+        obj=ObjectVersion.create(bucket=bucket.id, key='test.png',stream=f)
+    es_data["_item_metadata"]["item_1617605131499"]["attribute_value_mlt"][2]["version_id"] = obj.version_id
+    es_data["content"][2]["version_id"] = obj.version_id
+    
+    # txt file
+    txt_filepath = "tests/data/test_files/sample.txt"
+    with open(txt_filepath, "rb") as f:
+        obj=ObjectVersion.create(bucket=bucket.id, key='sample.txt',stream=f)
+    es_data["_item_metadata"]["item_1617605131499"]["attribute_value_mlt"][5]["version_id"] = obj.version_id
+    es_data["content"][5]["version_id"] = obj.version_id
+    
     # Phantom files
     from six import BytesIO
     f=BytesIO(b"this is not exist pdf.")
@@ -585,13 +788,20 @@ def create_record_with_pdf(rec_uuid, recid):
     obj.file.uri = "/not_exist_dir"+str(recid)
     db.session.merge(obj.file)
     db.session.commit()
+    
+    # only db file
+    f=BytesIO(b"only db png.")
+    obj = ObjectVersion.create(bucket=bucket.id, key="only_db.png",stream=f)
+    obj.file.uri = "/only_db_"+str(recid)
+    db.session.merge(obj.file)
+    db.session.commit()
     indexer.upload_metadata(es_data,rec_uuid,1)
     
     pdf_files = {}
     # pdfファイル複数渡す
     deposit = WekoDeposit.get_record(rec_uuid)
+    target_format = ["application/pdf","application/vnd.openxmlformats-officedocument.wordprocessingml.document"]
     for file in deposit.files:
-        print(f"file:{file.obj.key},mimetype:{file.obj.mimetype}")
-        if file.obj.mimetype == "application/pdf":
-            pdf_files[file.obj.key] = file
+        if file.obj.mimetype in target_format:
+            pdf_files[file.obj.key] = {"file":file,"is_pdf": file.obj.mimetype=="application/pdf"}
     return pdf_files, deposit

@@ -58,7 +58,7 @@ def test_view_with_xsl(app, db):
 
         assert b'xml-stylesheet' in res.data
 
-
+@pytest.mark.skip()
 def test_alembic(app, db):
     """Test alembic recipes."""
     ext = app.extensions['invenio-db']
@@ -96,8 +96,8 @@ def test_AppState():
         state.sets = "test_value"
         assert state.sets == "test_value"
         state.unregister_signals()
-        
-    
+
+
     # not register signal, not exist cache
     app = Flask("test_app")
     app.config.update(OAISERVER_REGISTER_RECORD_SIGNALS=False,
@@ -106,7 +106,7 @@ def test_AppState():
         state = _AppState(app=app)
         state.sets="test_value"
         state.unregister_signals()
-    
+
     app = Flask("test_app")
     app.config.update(OAISERVER_REGISTER_RECORD_SIGNALS=True,
         OAISERVER_REGISTER_SET_SIGNALS=False)

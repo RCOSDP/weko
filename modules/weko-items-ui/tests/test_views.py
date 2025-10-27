@@ -509,7 +509,7 @@ def test_iframe_save_model(
         assert ret["msg"] == "The same item may have been registered."
 
     # metainfo false
-    res = client.post(url, json={'data':1})
+    res = client.post(url, json={'metainfo': {}})
     assert res.status_code == status_code
     ret = json.loads(res.data)
     assert ret["code"] == 0
@@ -586,7 +586,7 @@ def test_iframe_save_model_1(
     activity = WorkActivity()
     ret_meta = activity.get_activity_metadata("A-00000000-00000")
     ret_meta = json.loads(ret_meta)
-    
+
     expected = (ret_meta['metainfo']['item_1685583796047'][0]['provide'])
     assert {'role': 1, 'workflow': 1} in expected
     assert {'role': 1, 'workflow': 2} in expected
@@ -681,7 +681,7 @@ def test_iframe_save_model_2(
     activity = WorkActivity()
     ret_meta = activity.get_activity_metadata("A-00000000-00000")
     ret_meta = json.loads(ret_meta)
-    
+
     expected = (ret_meta['metainfo']['item_1685583796047'][0]['roles'])
     assert {'role': 1} in expected
     assert {'role': 2} in expected
@@ -20778,12 +20778,9 @@ def test_get_search_data_acl_user0(client_api, users, db_userprofile, db_session
     assert json.loads(res.data) == {
         "error": "",
         "results": [
-            "user",
-            "comadmin",
+            "contributor",
             "repoadmin",
             "sysadmin",
-            "generaluser",
-            "originalroleuser",
             "originalroleuser2",
         ],
     }
@@ -20795,12 +20792,9 @@ def test_get_search_data_acl_user0(client_api, users, db_userprofile, db_session
     assert json.loads(res.data) == {
         "error": "",
         "results": [
-            "user@test.org",
-            "comadmin@test.org",
+            "contributor@test.org",
             "repoadmin@test.org",
             "sysadmin@test.org",
-            "generaluser@test.org",
-            "originalroleuser@test.org",
             "originalroleuser2@test.org",
         ],
     }
@@ -20822,12 +20816,9 @@ def test_get_search_data_acl_user1(client_api, users, db_userprofile, db_session
     assert json.loads(res.data) == {
         "error": "",
         "results": [
-            "user",
             "contributor",
-            "comadmin",
+            "repoadmin",
             "sysadmin",
-            "generaluser",
-            "originalroleuser",
             "originalroleuser2",
         ],
     }
@@ -20839,12 +20830,9 @@ def test_get_search_data_acl_user1(client_api, users, db_userprofile, db_session
     assert json.loads(res.data) == {
         "error": "",
         "results": [
-            "user@test.org",
             "contributor@test.org",
-            "comadmin@test.org",
+            "repoadmin@test.org",
             "sysadmin@test.org",
-            "generaluser@test.org",
-            "originalroleuser@test.org",
             "originalroleuser2@test.org",
         ],
     }
@@ -20866,12 +20854,9 @@ def test_get_search_data_acl_user2(client_api, users, db_userprofile, db_session
     assert json.loads(res.data) == {
         "error": "",
         "results": [
-            "user",
             "contributor",
-            "comadmin",
             "repoadmin",
-            "generaluser",
-            "originalroleuser",
+            "sysadmin",
             "originalroleuser2",
         ],
     }
@@ -20883,12 +20868,9 @@ def test_get_search_data_acl_user2(client_api, users, db_userprofile, db_session
     assert json.loads(res.data) == {
         "error": "",
         "results": [
-            "user@test.org",
             "contributor@test.org",
-            "comadmin@test.org",
             "repoadmin@test.org",
-            "generaluser@test.org",
-            "originalroleuser@test.org",
+            "sysadmin@test.org",
             "originalroleuser2@test.org",
         ],
     }
@@ -20910,12 +20892,9 @@ def test_get_search_data_acl_user3(client_api, users, db_userprofile, db_session
     assert json.loads(res.data) == {
         "error": "",
         "results": [
-            "user",
             "contributor",
             "repoadmin",
             "sysadmin",
-            "generaluser",
-            "originalroleuser",
             "originalroleuser2",
         ],
     }
@@ -20927,12 +20906,9 @@ def test_get_search_data_acl_user3(client_api, users, db_userprofile, db_session
     assert json.loads(res.data) == {
         "error": "",
         "results": [
-            "user@test.org",
             "contributor@test.org",
             "repoadmin@test.org",
             "sysadmin@test.org",
-            "generaluser@test.org",
-            "originalroleuser@test.org",
             "originalroleuser2@test.org",
         ],
     }
@@ -21095,8 +21071,8 @@ def test_validate_users_info_login(client_api, users, db_userprofile, mocker):
             {"error":"Not Found Username", "info": None, "owner": False,"validation": False},
             {"error":'User is not exist UserProfile',"info": '',"owner": False,"validation": False}
             ]}
-    
-    # headers error 
+
+    # headers error
     res2 = client_api.post(
         "/api/items/validate_users_info",
         data=json.dumps(
@@ -21364,7 +21340,7 @@ def test_prepare_edit_item_guest(client_api, users):
 def test_prepare_edit_item_login_1(client_api, users, id, status_code):
     login_user_via_session(client=client_api, email=users[id]["email"])
     res = client_api.post(
-        "/api/items/prepare_edit_item",
+        url_for('weko_items_ui.prepare_edit_item'),
         data=json.dumps({}),
         content_type="text/plain",
     )
@@ -21376,7 +21352,7 @@ def test_prepare_edit_item_login_2(app, client_api, users, db_records, db_itemty
     _, _, _, _, record, _ = db_records[0]
     deposit_id = record['_deposit']['id']
     login_user_via_session(client=client_api, email=users[0]["email"])
-    url = '/api/items/prepare_edit_item'
+    url = url_for('weko_items_ui.prepare_edit_item')
     data_json = {'pid_value': deposit_id}
     data = json.dumps(data_json)
     content_type = 'application/json'
@@ -21393,7 +21369,7 @@ def test_prepare_edit_item_login_2(app, client_api, users, db_records, db_itemty
     with patch('weko_deposit.api.WekoDeposit.get_record', return_value={'owner': str(users[0]['id']), 'weko_shared_ids': [users[0]['id']]}):
         datastore.delete('pid_{}_will_be_edit'.format(deposit_id))
         res = client_api.post(url, data=data, content_type=content_type)
-        assert json.loads(res.data) == {'code': -1, 'msg': 'Dependency ItemType not found.'} 
+        assert json.loads(res.data) == {'code': -1, 'msg': 'Dependency ItemType not found.'}
 
 
 # def prepare_delete_item(id=None, community=None, shared_user_id=-1):
@@ -22017,7 +21993,7 @@ def test_get_userinfo_by_emails(
     res = client_api.get(url)
     assert res.json == [{'user_id': 1, 'username' :'wekosoftware', 'email':'wekosoftware@ivis.co.jp'},
                         {'user_id': 2, 'username' :'repoadmin', 'email':'repoadmin@example.org'}]
-    
+
     # 存在しないメールアドレス
     url = url_for(
         "weko_items_ui_api.get_userinfo_by_emails", emails=['sample@ivis.co.jp'], _external=True

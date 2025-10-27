@@ -15,9 +15,10 @@ from weko_theme.utils import (
 
 
 # def get_weko_contents(getargs):
-def test_get_weko_contents(i18n_app, users, client_request_args, communities,redis_connect, db):
+# .tox/c1/bin/pytest --cov=weko_theme tests/test_utils.py::test_get_weko_contents -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-theme/.tox/c1/tmp
+def test_get_weko_contents(i18n_app, users, client_request_args, communities, redis_connect, db):
     with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
-        assert get_weko_contents('comm1')
+        assert get_weko_contents({'c': 'comm1'})
 
 
 # def get_community_id(getargs):
@@ -27,6 +28,7 @@ def test_get_community_id(i18n_app, communities, db):
 
 
 # def get_design_layout(repository_id):
+# .tox/c1/bin/pytest --cov=weko_theme tests/test_utils.py::test_get_design_layout -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-theme/.tox/c1/tmp
 def test_get_design_layout(i18n_app, users, client_request_args, communities):
     assert False in get_design_layout('Root Index')
     assert False in get_design_layout(False)
@@ -36,6 +38,7 @@ def test_get_design_layout(i18n_app, users, client_request_args, communities):
 
 
 # def has_widget_design(repository_id, current_language):
+# .tox/c1/bin/pytest --cov=weko_theme tests/test_utils.py::test_has_widget_design -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-theme/.tox/c1/tmp
 def test_has_widget_design(i18n_app, users, client_request_args, communities):
     widget_design_setting = {
         "widget-settings": "widget-settings-9999"

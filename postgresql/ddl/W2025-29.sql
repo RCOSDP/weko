@@ -22,6 +22,8 @@ ALTER TABLE files_location ADD COLUMN s3_maximum_number_of_parts BIGINT;
 ALTER TABLE files_location ADD COLUMN s3_region_name VARCHAR(128);
 ALTER TABLE files_location ADD COLUMN s3_signature_version VARCHAR(20);
 ALTER TABLE files_location ADD COLUMN s3_url_expiration BIGINT;
+-- Apply s3v4 to all existing data
+UPDATE files_location SET s3_signature_version = 's3v4';
 
 -- modules/invenio-mail/invenio_mail/alembic/ddbb24276fdc_create_mail_templates_table.py
 CREATE TABLE mail_template_genres (

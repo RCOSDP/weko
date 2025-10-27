@@ -265,7 +265,7 @@ def test_get_user_report_data(users, community):
         ],
     }
     result = get_user_report_data(repo_id="Root Index")
-    assert result == test
+    assert sorted(test["all"], key=lambda x:x["role_name"]) == sorted(result["all"], key=lambda x:x["role_name"])
 
     result = get_user_report_data(repo_id="comm1")
     assert result == {'all': [{'role_name': 'Community Administrator', 'count': 1}, {'role_name': 'Registered Users', 'count': 1}]}
@@ -902,7 +902,7 @@ class TestStatisticMail:
                 mock_send.assert_called_once_with({
                     'subject': subject,
                     'body': body,
-                    'recipients': recipient
+                    'recipients': [recipient]
                 })
 
 
@@ -947,11 +947,11 @@ class TestStatisticMail:
             '[タイトル] : title2\n'\
             '[URL] : http://test.com/records/2\n'\
             '[閲覧回数] : 3\n'\
-            '[ファイルダウンロード回数] :     test_file2_1.tsv(10)\n'\
+            '[ファイルダウンロード回数] : \n' '    '  'test_file2_1.tsv(10)\n'\
             '    test_file2_2.tsv(20)\n'
         result = StatisticMail.build_mail_data_to_string(data,"ja")
         assert result == test
-
+      
         # language is not ja
         test = \
             '----------------------------------------\n'\
@@ -1042,12 +1042,12 @@ class TestFeedbackMail:
     def test_get_feed_back_email_setting(self, feedback_mail_settings):
 
         # len(setting) = 0
-        with patch("weko_admin.utils.FeedbackMailSetting.get_all_feedback_email_setting",return_value=[]):
+        with patch("weko_admin.utils.FeedbackMailSetting.get_feedback_email_setting_by_repo",return_value=[]):
             result = FeedbackMail.get_feed_back_email_setting()
             assert result == {"data":"","is_sending_feedback":"","root_url":"","error":""}
 
         # not exist manual_email
-        with patch("weko_admin.utils.FeedbackMailSetting.get_all_feedback_email_setting",return_value=[feedback_mail_settings[1]]):
+        with patch("weko_admin.utils.FeedbackMailSetting.get_feedback_email_setting_by_repo",return_value=[feedback_mail_settings[1]]):
             test = {
                 "data":[{"author_id":"2","email":None}],
                 "error":"",
@@ -1183,8 +1183,8 @@ class TestFeedbackMail:
 
         test = {
             "data":[
-                {"start_time":"2022-10-01 01:02:03.045","end_time":"2022-10-01 02:03:04.056","count":2,"error":0,"id":2,"is_latest":True,"success":2},
-                {"start_time":"2022-10-01 01:02:03.045","end_time":"2022-10-01 02:03:04.056","count":2,"error":0,"id":1,"is_latest":True,"success":2}],
+                {"start_time":"2022-10-01 01:02:03.045","end_time":"2022-10-01 02:03:04.056","count":2,"error":0,"id":2,"is_latest":True,"success":2,'repo': 'Root Index'},
+                {"start_time":"2022-10-01 01:02:03.045","end_time":"2022-10-01 02:03:04.056","count":2,"error":0,"id":1,"is_latest":True,"success":2,'repo': 'Root Index'}],
             "error":"",
             "records_per_page":20,
             "selected_page":1,
@@ -1300,14 +1300,14 @@ class TestFeedbackMail:
 # .tox/c1/bin/pytest --cov=weko_admin tests/test_utils.py::TestFeedbackMail::test_get_mail_data_by_history_id -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
     def test_get_mail_data_by_history_id(self,feedback_mail_faileds,feedback_mail_histories):
         # not exist history
-        result = FeedbackMail.get_mail_data_by_history_id("not exist history")
+        result = FeedbackMail.get_mail_data_by_history_id(99999999)
         assert result == None
 
         # not exist failed
         result = FeedbackMail.get_mail_data_by_history_id(feedback_mail_histories[1].id)
         assert result == None
 
-        with patch("weko_search_ui.utils.get_feedback_mail_list",return_value={}):
+        with patch("weko_records.api.FeedbackMailList.get_feedback_mail_list",return_value={}):
             result = FeedbackMail.get_mail_data_by_history_id(feedback_mail_histories[0].id)
             assert result == None
         mail_list = {
@@ -1316,9 +1316,10 @@ class TestFeedbackMail:
         }
         test = {
             "data":{"test.test1@test.org":{"items":{},"author_id":"1"}},
+            "repository_id": "Root Index",
             "stats_date":"2022-10"
         }
-        with patch("weko_search_ui.utils.get_feedback_mail_list",return_value=mail_list):
+        with patch("weko_records.api.FeedbackMailList.get_feedback_mail_list",return_value=mail_list):
             result = FeedbackMail.get_mail_data_by_history_id(feedback_mail_histories[0].id)
             assert result == test
 
@@ -1939,7 +1940,7 @@ class TestUsageReport:
         result = usage_report.get_activities_per_page(activities_id=None, size=1, page=2)
         assert result == {'page': 1, 'size': 1, 'activities': [{'activity_id': '31001', 'item_name': 'test item31001', 'workflow_name': 'test workflow31001', 'action_status': 'action_doing', 'user_mail': None}], 'number_of_pages': 1}
         usage_report._UsageReport__activities_number = 2
-        result = usage_report.get_activities_per_page(activities_id=[activities[0].id], size=1, page=1)
+        result = usage_report.get_activities_per_page(activities_id=[activities[0].activity_id], size=1, page=1)
         assert result == {'page': 1, 'size': 1, 'activities': [{'activity_id': '1', 'item_name': 'test item1', 'workflow_name': 'test workflow1', 'action_status': 'action_doing', 'user_mail': None}], 'number_of_pages': 2}
 
 

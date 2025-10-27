@@ -947,7 +947,7 @@ def validate_users_info():
         """Check header of request"""
         result['error'] = _('Header Error')
         return jsonify(result)
-    
+
     data_list = request.get_json()
     for data in data_list:
         info = {
@@ -1021,9 +1021,9 @@ def get_user_info(owner):
         info['email'] = user_info['email']
         if owner == user_info['userid']:
             info['owner'] = True
-        
+
         result.append(info)
-    
+
     return jsonify(result)
 
 
@@ -1095,7 +1095,7 @@ def get_userinfo_by_emails():
         user_info = get_user_info_by_email(email)
         if not user_info or ('error' in user_info):
             raise ConnectionError("wrong email or Cannot connect to server!")
-        
+
         user_info['user_id'] = user_info['user_id']
         user_info['username'] = user_info['username']
         user_info['email'] = user_info['email']
@@ -1231,7 +1231,7 @@ def prepare_edit_item(id=None, community=None):
             db.session.commit()
         except SQLAlchemyError as ex:
             current_app.logger.error('sqlalchemy error: {}'.format(ex))
-            traceback.format_exc()
+            traceback.print_exc()
             db.session.rollback()
             return jsonify(
                 code=err_code,
@@ -1239,7 +1239,7 @@ def prepare_edit_item(id=None, community=None):
             )
         except Exception as ex:
             current_app.logger.error('Unexpected error: {}'.format(ex))
-            traceback.format_exc()
+            traceback.print_exc()
             db.session.rollback()
             return jsonify(
                 code=err_code,
@@ -1417,7 +1417,7 @@ def prepare_delete_item(id=None, community=None, shared_user_ids=[]):
             db.session.commit()
         except SQLAlchemyError as ex:
             current_app.logger.error('sqlalchemy error: {}'.format(ex))
-            traceback.format_exc()
+            traceback.print_exc()
             db.session.rollback()
             return jsonify(
                 code=err_code,
@@ -1425,7 +1425,7 @@ def prepare_delete_item(id=None, community=None, shared_user_ids=[]):
             )
         except Exception as ex:
             current_app.logger.error('Unexpected error: {}'.format(ex))
-            traceback.format_exc()
+            traceback.print_exc()
             db.session.rollback()
             return jsonify(
                 code=err_code,

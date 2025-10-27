@@ -109,7 +109,12 @@ class FlowSettingView(BaseView):
 
         if not self._check_auth(flow_id) :
             abort(403)
-
+        
+        if not use_restricted_item:
+            for action in flow.flow_actions:
+                if action.action_role:
+                    action.action_role.specify_property = None
+                    action.action_role.action_item_registrant = False
         return self.render(
             'weko_workflow/admin/flow_detail.html',
             flow_id=flow_id,
@@ -288,7 +293,7 @@ class FlowSettingView(BaseView):
             if r.name in current_app.config['WEKO_SYS_USER']:
                 is_sysadmin =True
                 break
-        if not is_sysadmin :
+        if not is_sysadmin and current_app.config["WEKO_ADMIN_RESTRICTED_ACCESS_DISPLAY_FLAG"]:
             wfs:list = WorkFlow().get_workflow_by_flow_id(flow.id)
             if 0 < len(list(filter(lambda wf : wf.open_restricted ,wfs ))):
                 return False
@@ -374,9 +379,10 @@ class WorkFlowSettingView(BaseView):
                 is_sysadmin =True
                 break
 
-        is_display_restricted_access_checkbox = is_sysadmin and current_app.config.get('WEKO_ADMIN_DISPLAY_RESTRICTED_SETTINGS', False)
-
-        if '0' == workflow_id:
+        is_display_restricted_access_checkbox = is_sysadmin \
+                                                and current_app.config.get('WEKO_ADMIN_DISPLAY_RESTRICTED_SETTINGS', False) \
+                                                and current_app.config.get('WEKO_ADMIN_RESTRICTED_ACCESS_DISPLAY_FLAG', False)
+        if '0' == workflow_id:                                                                                              
             """Create new workflow"""
             return self.render(
                 'weko_workflow/admin/workflow_detail.html',
@@ -407,8 +413,10 @@ class WorkFlowSettingView(BaseView):
         else:
             display = role
             hide = []
-
-        if workflows.open_restricted and not is_sysadmin:
+        
+        if workflows.open_restricted \
+            and not is_sysadmin \
+            and current_app.config["WEKO_ADMIN_RESTRICTED_ACCESS_DISPLAY_FLAG"]:
             abort(403)
 
         return self.render(

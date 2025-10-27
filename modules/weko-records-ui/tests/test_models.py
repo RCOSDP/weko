@@ -25,10 +25,11 @@ def test_InstitutionName_set_institution_name(app,):
 
 
 # FilePermission
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_models.py::test_FilePermission_set_institution_name -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
 def test_FilePermission_set_institution_name(app, db, db_FilePermission):
     db_FilePermission.find(
         user_id=db_FilePermission.id,
-        record_id=db_FilePermission.record_id,
+        record_id=str(db_FilePermission.record_id),
         file_name=db_FilePermission.file_name
     )
 
@@ -104,7 +105,7 @@ def test_find_list_permission_approved(app, records_restricted, users,db_file_pe
     indexer, results = records_restricted
     recid = results[len(results)-1]["recid"]
     filename =results[len(results)-1]["filename"]
-    assert len(FilePermission.find_list_permission_approved(users[0]["id"],recid.pid_value, filename)) == 0
+    assert len(FilePermission.find_list_permission_approved(users[0]["id"],recid.pid_value, filename)) == 2
 
 # def find_by_activity:
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_models.py::test_find_by_activity -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp

@@ -634,6 +634,8 @@ def db_itemtype(app, db):
         db.session.add(item_type)
         db.session.add(item_type_mapping)
     db.session.commit()
+    db.session.refresh(item_type)
+    db.session.refresh(item_type_mapping)
     return {
         "item_type_name": item_type_name,
         "item_type": item_type,

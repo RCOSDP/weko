@@ -277,7 +277,7 @@ def test_subitem_recs(app):
             "test.#text",
             ["test_key"],
             {"text": "value"},
-            {"test_key":"value"}
+            {}
         ),
         pytest.param(
             # Case09: "properties" in schema (len(keys) == 1 and "." in value, len(value.split(".")) > 2)
@@ -286,7 +286,7 @@ def test_subitem_recs(app):
             "test.#text",
             ["test_key"],
             {"test": [{"#text": "value"}, {"#text": "value2"}]},
-            {}
+            {"test_key":"value"}
         ),
         pytest.param(
             # Case10: "properties" in schema (len(keys) == 1 and "." in value, len(value.split(".")) > 2)

@@ -1020,7 +1020,7 @@ def check_jsonld_import_items(
             "error": _(
                 "The format of the specified file {} dose not "
                 "support import. Please specify a zip file."
-            ).frormat(filename)
+            ).format(filename)
         })
     except bagit.BagValidationError as ex:
         current_app.logger.warning("Failed to validate import bagit file.")
@@ -1055,7 +1055,11 @@ def handle_shared_ids(list_record, shared_ids=[]):
         list_record (list): List of records.
         shared_ids (list, optional): Shared IDs. Defaults to an empty list.
     """
-    if not shared_ids or not isinstance(shared_ids, list):
+    if not isinstance(shared_ids, list):
+        return
+
+    shared_ids = [_ for _ in shared_ids if isinstance(_, int)]
+    if not shared_ids:
         return
 
     for item in list_record:
@@ -2288,7 +2292,7 @@ def import_items_to_system(
                 cris_researchmap_linkage_request.send(pid.object_uuid)
 
         except SQLAlchemyError as ex:
-            current_app.logger.error(f"sqlalchemy error: {ex}")
+            current_app.logger.error("sqlalchemy error: %s", ex)
             if item.get("id"):
                 pid = PersistentIdentifier.query.filter_by(
                     pid_type="recid", pid_value=item["id"]
@@ -2321,7 +2325,7 @@ def import_items_to_system(
 
             return {"success": False, "error_id": error_id}
         except ConnectionError as ex:
-            current_app.logger.error("elasticsearch  error: ", ex)
+            current_app.logger.error("elasticsearch  error: %s", ex)
             db.session.rollback()
             current_app.logger.error("item id: %s update error." % item["id"])
             traceback.print_exc(file=sys.stdout)
@@ -2337,7 +2341,7 @@ def import_items_to_system(
             error_id = 'failed_to_update_elasticsearch'
             return {"success": False, "error_id": error_id}
         except ElasticsearchException as ex:
-            current_app.logger.error("elasticsearch  error: ", ex)
+            current_app.logger.error("elasticsearch  error: %s", ex)
             if item.get("id"):
                 pid = PersistentIdentifier.query.filter_by(
                     pid_type="recid", pid_value=item["id"]
@@ -2362,7 +2366,7 @@ def import_items_to_system(
             error_id = 'failed_to_update_elasticsearch'
             return {"success": False, "error_id": error_id}
         except redis.RedisError as ex:
-            current_app.logger.error(f"redis  error: {ex}")
+            current_app.logger.error("redis  error: %s", ex)
             if item.get("id"):
                 pid = PersistentIdentifier.query.filter_by(
                     pid_type="recid", pid_value=item["id"]
@@ -2395,7 +2399,7 @@ def import_items_to_system(
 
             return {"success": False, "error_id": error_id}
         except Exception as ex:
-            current_app.logger.error("Unexpected error: {}".format(ex))
+            current_app.logger.error("Unexpected error: %s", ex)
             if item.get("id"):
                 pid = PersistentIdentifier.query.filter_by(
                     pid_type="recid", pid_value=item["id"]
@@ -3055,7 +3059,7 @@ def handle_check_doi_ra(list_record):
 
     for item in list_record:
         errors = []
-        item_id = str(item.get("id"))
+        item_id = str(item.get("id", ""))
         doi_ra = item.get("doi_ra")
 
         current_app.logger.debug("item_id:{0} doi_ra:{1}".format(item_id, doi_ra))

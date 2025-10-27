@@ -23,7 +23,6 @@ from invenio_files_rest.errors import FileSizeError, StorageError, \
 from invenio_files_rest.limiters import FileSizeLimit
 from invenio_files_rest.models import Location
 from invenio_files_rest.storage import PyFSFileStorage
-from mock import patch
 from s3fs import S3File, S3FileSystem
 from unittest.mock import MagicMock, patch
 from invenio_s3 import S3FSFileStorage, config, s3fs_storage_factory
@@ -103,7 +102,15 @@ def test_delete(location, s3_bucket, s3fs_testpath, s3fs):
     os.urandom((S3FileSystem.default_block_size + 1)),
     os.urandom((S3FileSystem.default_block_size * 2)),
     os.urandom(((S3FileSystem.default_block_size * 2) + 1)),
-))
+    ),
+    ids=[
+        'small_data',
+        'exact_block_size',
+        'exact_block_size_plus_one',
+        'two_blocks',
+        'two_blocks_plus_one',
+    ],
+)
 def test_save(location, s3_bucket, s3fs_testpath, s3fs, get_md5, data):
     """Test save."""
     uri, size, checksum = s3fs.save(BytesIO(data))
@@ -571,7 +578,7 @@ def location_2():
 
 
 @pytest.fixture
-def s3fs_2(location_2):
+def s3fs_2(app, location_2):
     """S3FSFileStorageのインスタンスを作成。"""
     return S3FSFileStorage(
         fileurl="s3://testbucket/testfile",
@@ -582,13 +589,15 @@ def s3fs_2(location_2):
     )
 
 
-def test_copy_with_local_repository(s3fs_2):
+def test_copy_with_local_repository(s3fs_2, mocker):
     """self.location.typeがNoneの場合のcopyメソッドのテスト。"""
     # モックのソースファイルを作成
     src = MagicMock()
     src.fileurl = "s3://testbucket/srcfile"
 
+    mock_super_copy = mocker.patch("invenio_s3.storage.PyFSFileStorage.copy")
     s3fs_2.copy(src)
+    mock_super_copy.assert_called_once_with(src)
 
 @pytest.fixture
 def s3fs_3():

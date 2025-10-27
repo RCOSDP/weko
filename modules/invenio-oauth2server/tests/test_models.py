@@ -265,4 +265,4 @@ def test_get_by_client_id(models_fixture):
     app = models_fixture
     with app.app_context():
         lst = Client.get_by_client_id(app.u1c1_id)
-        assert len(lst) > 0
+        assert lst

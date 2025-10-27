@@ -9,9 +9,10 @@ from bagit import open_text_file
 
 from invenio_db import db
 from invenio_records import Record
-from weko_records.api import ItemsMetadata, WekoRecord
-from invenio_pidstore.models import PersistentIdentifier, PIDStatus, Redirect
-from weko_deposit.api import WekoDeposit
+from weko_records.api import ItemsMetadata
+from invenio_pidstore.models import PersistentIdentifier, PIDStatus, RecordIdentifier
+
+from weko_deposit.api import WekoDeposit, WekoRecord
 from invenio_pidrelations.models import PIDRelation
 
 def json_data(filename):
@@ -51,6 +52,42 @@ def create_record(record_data, item_data):
 
     return depid, recid,parent,doi,record, item
 
+
+def create_record2(record_data, item_data):
+    with db.session.begin_nested():
+        record_data = copy.deepcopy(record_data)
+        item_data = copy.deepcopy(item_data)
+        rec_uuid = uuid.uuid4()
+        recid = PersistentIdentifier.create('recid', record_data["recid"],object_type='rec', object_uuid=rec_uuid,status=PIDStatus.REGISTERED)
+        depid = PersistentIdentifier.create('depid', record_data["recid"],object_type='rec', object_uuid=rec_uuid,status=PIDStatus.REGISTERED)
+        rel = PIDRelation.create(recid,depid,3)
+        db.session.add(rel)
+        parent=None
+        doi = None
+
+        if '.' in record_data["recid"]:
+            parent = PersistentIdentifier.get("recid",int(float(record_data["recid"])))
+            recid_p = PIDRelation.get_child_relations(parent).one_or_none()
+            PIDRelation.create(recid_p.parent, recid,2)
+        else:
+            parent = PersistentIdentifier.create('parent', "parent:{}".format(record_data["recid"]),object_type='rec', object_uuid=rec_uuid,status=PIDStatus.REGISTERED)
+            rel = PIDRelation.create(parent, recid,2,0)
+            db.session.add(rel)
+            RecordIdentifier.next()
+        if record_data.get("_oai").get("id"):
+            oaiid = PersistentIdentifier.create('oai', record_data["_oai"]["id"],pid_provider="oai",object_type='rec', object_uuid=rec_uuid,status=PIDStatus.REGISTERED)
+            hvstid = PersistentIdentifier.create('hvstid', record_data["_oai"]["id"],object_type='rec', object_uuid=rec_uuid,status=PIDStatus.REGISTERED)
+        if "item_1612345678910" in record_data:
+            for i in range(len(record_data["item_1612345678910"]["attribute_value_mlt"])):
+                data = record_data["item_1612345678910"]["attribute_value_mlt"][i]
+                PersistentIdentifier.create(data.get("subitem_16345678901234").lower(),data.get("subitem_1623456789123"),object_type='rec', object_uuid=rec_uuid,status=PIDStatus.REGISTERED)
+        record = WekoRecord.create(record_data, id_=rec_uuid)
+        item = ItemsMetadata.create(item_data, id_=rec_uuid)
+        deposit = WekoDeposit(record, record.model)
+
+        deposit.commit()
+
+    return recid, depid, record, item, parent, doi, deposit
 
 
 def bagify(
