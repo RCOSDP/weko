@@ -289,7 +289,8 @@ def base_app(instance_path):
         WEKO_RECORDS_UI_OA_API_CODE = WEKO_RECORDS_UI_OA_API_CODE,
         EXTERNAL_SYSTEM = EXTERNAL_SYSTEM,
         ITEM_ACTION = ITEM_ACTION,
-        FILE_OPEN_STATUS = FILE_OPEN_STATUS
+        FILE_OPEN_STATUS = FILE_OPEN_STATUS,
+        WEKO_RECORDS_UI_RESTRICTED_API = False
     )
     #with ESTestServer(timeout=30) as server:
     client = Elasticsearch(['localhost:9200'])

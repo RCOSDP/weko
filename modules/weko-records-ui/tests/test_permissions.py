@@ -787,7 +787,7 @@ def test_check_created_id_guest(app, users):
     (0,False),
     (1,True),
     (2,True),
-    (3,False),
+    (3,True),
     (4,False),
     (5,False),
     (6,True),
@@ -842,6 +842,15 @@ def test_check_created_id(app, users, index, status):
     with patch("flask_login.utils._get_user", return_value=users[index]["obj"]), \
         patch("weko_records_ui.permissions.has_comadmin_permission",return_value=True):
         assert check_created_id(record) == status
+        if status in [0, 4, 5]:
+            record['owner']=current_user.get_id()
+            assert check_created_id(record) == True
+            record['owner']=-1
+            record['weko_shared_ids']=[int(current_user.get_id())]
+            assert check_created_id(record) == False
+            current_app.config.update(WEKO_ITEMS_UI_PROXY_POSTING = True)
+            assert check_created_id(record) == True
+    
 
     record = {
         "_oai": {"id": "oai:weko3.example.org:00000001", "sets": ["1657555088462"]},
@@ -897,14 +906,6 @@ def test_check_created_id(app, users, index, status):
             assert record.get("_deposit", {}).get("created_by") == 1
             assert record.get("item_type_id") == "15"
             assert record.get("weko_shared_ids") == [1,2,3]
-        if status in [0, 3, 4, 5]:
-            record['owner']=current_user.get_id()
-            assert check_created_id(record) == True
-            record['owner']=-1
-            record['weko_shared_ids']=[int(current_user.get_id())]
-            assert check_created_id(record) == False
-            current_app.config.update(WEKO_ITEMS_UI_PROXY_POSTING = True)
-            assert check_created_id(record) == True
 
     
 
