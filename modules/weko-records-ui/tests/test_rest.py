@@ -423,17 +423,18 @@ def test_FileApplication_post_v1(app, client, db, workflows_restricted, make_rec
     pid_value = 12
     file_name = "dummy.txt"
     params = {"mail":"guest@example.org", "terms_token": "aaaaa"}
-    res = client.post(
-        url(f'/{version}/records/{pid_value}/files/{file_name}/application', params),
-        data=json.dumps(None),
-        content_type='application/json',
-        headers=headers_not_login+[("Accept-Language", "aaa")]
-    )
-    try:
-        json.loads(res.get_data())
-    except:
-        assert False
-    assert res.status_code == 400
+    with patch('weko_records_ui.utils.check_file_download_permission',return_value=True):
+        res = client.post(
+            url(f'/{version}/records/{pid_value}/files/{file_name}/application', params),
+            data=json.dumps(None),
+            content_type='application/json',
+            headers=headers_not_login+[("Accept-Language", "aaa")]
+        )
+        try:
+            json.loads(res.get_data())
+        except:
+            assert False
+        assert res.status_code == 400
 
     # Not set workflow to role : 403 error
     pid_value = 12
@@ -441,17 +442,18 @@ def test_FileApplication_post_v1(app, client, db, workflows_restricted, make_rec
     terms_content = "利用規約本文"
     etag = generate_etag(f"{file_name}_{terms_content}".encode("utf-8"))
     params = {"terms_token": etag}
-    res = client.post(
-        url(f'/{version}/records/{pid_value}/files/{file_name}/application', params),
-        data=json.dumps(None),
-        content_type='application/json',
-        headers=headers_user+[("Accept-Language", "ja")]
-    )
-    try:
-        json.loads(res.get_data())
-    except:
-        assert False
-    assert res.status_code == 403
+    with patch('weko_records_ui.utils.check_file_download_permission',return_value=True):
+        res = client.post(
+            url(f'/{version}/records/{pid_value}/files/{file_name}/application', params),
+            data=json.dumps(None),
+            content_type='application/json',
+            headers=headers_user+[("Accept-Language", "ja")]
+        )
+        try:
+            json.loads(res.get_data())
+        except:
+            assert False
+        assert res.status_code == 403
 
     # Invalid scope : 403 error
     pid_value = 12
@@ -614,17 +616,18 @@ def test_FileApplication_post_v1(app, client, db, workflows_restricted, make_rec
         itemtype_schema = json.load(f)
 
     with patch('weko_records_ui.rest.init_activity_for_guest_user', return_value=(None, activity_url)):
-        res = client.post(
-            url(f'/{version}/records/{pid_value}/files/{file_name}/application', params),
-            data=json.dumps(None),
-            content_type='application/json',
-            headers=headers_not_login
-        )
-    res_data = json.loads(res.get_data())
-    assert res.status_code == 200
-    assert res_data['activity_id'] == activity_id
-    assert res_data['activity_url'] == activity_url.replace("/api", "", 1)
-    assert res_data['item_type_schema'] == itemtype_schema
+        with patch('weko_records_ui.utils.check_file_download_permission',return_value=True):
+            res = client.post(
+                url(f'/{version}/records/{pid_value}/files/{file_name}/application', params),
+                data=json.dumps(None),
+                content_type='application/json',
+                headers=headers_not_login
+            )
+        res_data = json.loads(res.get_data())
+        assert res.status_code == 200
+        assert res_data['activity_id'] == activity_id
+        assert res_data['activity_url'] == activity_url.replace("/api", "", 1)
+        assert res_data['item_type_schema'] == itemtype_schema
 
     # Success (Guest / exists activity): 200
     pid_value = 12
@@ -644,17 +647,18 @@ def test_FileApplication_post_v1(app, client, db, workflows_restricted, make_rec
         itemtype_schema = json.load(f)
 
     with patch('weko_records_ui.rest.init_activity_for_guest_user', return_value=(activity, activity_url)):
-        res = client.post(
-            url(f'/{version}/records/{pid_value}/files/{file_name}/application', params),
-            data=json.dumps(None),
-            content_type='application/json',
-            headers=headers_not_login
-        )
-    res_data = json.loads(res.get_data())
-    assert res.status_code == 200
-    assert res_data['activity_id'] == activity_id
-    assert res_data['activity_url'] == activity_url.replace("/api", "", 1)
-    assert res_data['item_type_schema'] == itemtype_schema
+        with patch('weko_records_ui.utils.check_file_download_permission',return_value=True):
+            res = client.post(
+                url(f'/{version}/records/{pid_value}/files/{file_name}/application', params),
+                data=json.dumps(None),
+                content_type='application/json',
+                headers=headers_not_login
+            )
+        res_data = json.loads(res.get_data())
+        assert res.status_code == 200
+        assert res_data['activity_id'] == activity_id
+        assert res_data['activity_url'] == activity_url.replace("/api", "", 1)
+        assert res_data['item_type_schema'] == itemtype_schema
 
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_rest.py::test_RequestMail_post_v1 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
 def test_RequestMail_post_v1(app, client, db, make_request_maillist, users):
