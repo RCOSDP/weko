@@ -1566,10 +1566,12 @@ def next_action(activity_id='0', action_id=0, json_data=None):
             res = ResponseMessageSchema().load({"code":-2, "msg":"can not get next_action_detail"})
             return jsonify(res.data), 500
 
+        enable_restricted = current_app.config.get('WEKO_ADMIN_RESTRICTED_ACCESS_DISPLAY_FLAG', False)
+
         is_last_step = next_action_endpoint == 'end_action'
         # Only gen url file link at last approval step
         url_and_expired_date = {}
-        if is_last_step and current_app.config.get('WEKO_ADMIN_RESTRICTED_ACCESS_DISPLAY_FLAG'):
+        if is_last_step and enable_restricted:
             # Approve to file permission
             # 利用申請のWF時、申請されたファイルと、そのアイテム内の制限公開ファイルすべてにアクセス権を付与する
             permissions :List[FilePermission] = FilePermission.find_by_activity(activity_id)
@@ -1609,7 +1611,7 @@ def next_action(activity_id='0', action_id=0, json_data=None):
                 next_action_handler = current_flow_action.action_roles[
                     0].action_user
         enable_mail_templates = restricted_access_setting.get("edit_mail_templates_enable", False)
-        if enable_mail_templates:
+        if enable_restricted and enable_mail_templates:
             # next_action_handlerがlist型ならfor文で複数回メール送信する。その際、handlerがロールを満たすか確認する。
             if type(next_action_handler) == list:
                 for handler in next_action_handler:
