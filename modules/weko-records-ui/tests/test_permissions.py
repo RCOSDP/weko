@@ -907,10 +907,6 @@ def test_check_created_id(app, users, index, status):
             assert record.get("item_type_id") == "15"
             assert record.get("weko_shared_ids") == [1,2,3]
 
-    
-
-
-
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_permissions.py::test_check_created_id_comadmin -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
 def test_check_created_id_comadmin(app, users, db):
     record = {
