@@ -1746,15 +1746,17 @@ def get_actionid(endpoint):
 
 def convert_record_to_item_metadata(record_metadata):
     """Convert record_metadata to item_metadata."""
+    owner_id = record_metadata.get('owner')
+    creater_id = record_metadata.get('_deposit', {}).get('created_by', owner_id)
     item_metadata = {
         'id': record_metadata['recid'],
         'pid': record_metadata['_deposit']['pid'],
         '$schema': record_metadata['item_type_id'],
         'pubdate': record_metadata['publish_date'],
         'title': record_metadata['item_title'],
-        'owner': record_metadata['owner'],
+        'owner': owner_id,
         'owners': record_metadata['owners'],
-        'created_by': record_metadata['_deposit']['created_by'],
+        'created_by': creater_id,
         'shared_user_ids': record_metadata['weko_shared_ids']
     }
     item_type = ItemTypes.get_by_id(record_metadata['item_type_id']).render
@@ -3807,6 +3809,23 @@ def get_activity_display_info(activity_id: str):
         _type_: temporary_comment [{'ActivityId': 'A-20220821-00003', 'ActionId': 1, 'ActionName': 'Start', 'ActionVersion': '1.0.0', 'ActionEndpoint': 'begin_action', 'Author': 'wekosoftware@nii.ac.jp', 'Status': 'action_done', 'ActionOrder': 1}, {'ActivityId': 'A-20220821-00003', 'ActionId': 3, 'ActionName': 'Item Registration', 'ActionVersion': '1.0.1', 'ActionEndpoint': 'item_login', 'Author': '', 'Status': ' ', 'ActionOrder': 2}, {'ActivityId': 'A-20220821-00003', 'ActionId': 4, 'ActionName': 'Approval', 'ActionVersion': '2.0.0', 'ActionEndpoint': 'approval', 'Author': '', 'Status': ' ', 'ActionOrder': 3}, {'ActivityId': 'A-20220821-00003', 'ActionId': 5, 'ActionName': 'Item Link', 'ActionVersion': '1.0.1', 'ActionEndpoint': 'item_link', 'Author': '', 'Status': ' ', 'ActionOrder': 4}, {'ActivityId': 'A-20220821-00003', 'ActionId': 7, 'ActionName': 'Identifier Grant', 'ActionVersion': '1.0.0', 'ActionEndpoint': 'identifier_grant', 'Author': '', 'Status': ' ', 'ActionOrder': 5}, {'ActivityId': 'A-20220821-00003', 'ActionId': 2, 'ActionName': 'End', 'ActionVersion': '1.0.0', 'ActionEndpoint': 'end_action', 'Author': '', 'Status': ' ', 'ActionOrder': 6}]
         Workflow: workflow_detail
     """
+
+    def _get_shared_user_ids_from_list(shared_user_ids_list):
+        """Get shared user ids from list.
+
+        Args:
+            shared_user_ids_list (list): List of shared user ids.
+        Returns:
+            list: List of shared user ids.
+        """
+        shared_user_ids = []
+        for user_id in shared_user_ids_list:
+            if isinstance(user_id, dict) and 'user' in user_id:
+                shared_user_ids.append(user_id['user'])
+            else:
+                shared_user_ids.append(user_id)
+        return shared_user_ids
+
     activity = WorkActivity()
     activity_detail = activity.get_activity_detail(activity_id)
     item = None
@@ -3841,13 +3860,26 @@ def get_activity_display_info(activity_id: str):
     if action_data:
         temporary_comment = action_data.action_comment
     metadata = activity.get_activity_metadata(activity_id)
+
+    shared_user_unique_ids = set()
+    owner_id = -1
+    if activity_detail.shared_user_ids:
+        shared_user_ids = _get_shared_user_ids_from_list(
+            activity_detail.shared_user_ids
+        )
+        shared_user_unique_ids = set(shared_user_ids)
+
     if metadata:
         item_json = json.loads(metadata).get('metainfo')
         owner_id = item_json.get('owner', -1)
         shared_user_ids = item_json.get('shared_user_ids', [])
-    else:
-        owner_id = -1
-        shared_user_ids = []
+        shared_user_unique_ids.update(
+            _get_shared_user_ids_from_list(shared_user_ids)
+        )
+
+    shared_user_ids = [
+        {"user": user_id} for user_id in list(shared_user_unique_ids)
+    ]
 
     current_app.logger.debug("action_endpoint:{}".format(action_endpoint))
     current_app.logger.debug("action_id:{}".format(action_id))

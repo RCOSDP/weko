@@ -199,7 +199,7 @@ CREATE TABLE file_onetime_download (
     created TIMESTAMP NOT NULL,
     updated TIMESTAMP NOT NULL,
     id SERIAL,
-    approver_id INTEGER NOT NULL,
+    approver_id INTEGER,
     record_id VARCHAR(255) NOT NULL,
     file_name VARCHAR(255) NOT NULL,
     expiration_date TIMESTAMP NOT NULL,

@@ -1298,6 +1298,23 @@ def check_authority_action(activity_id='0', action_id=0,
                            contain_login_item_application=False,
                            action_order=0):
     """Check authority."""
+
+    def _get_shared_user_ids_from_list(shared_user_ids_list):
+        """Get shared user ids from list.
+
+        Args:
+            shared_user_ids_list (list): List of shared user ids.
+        Returns:
+            list: List of shared user ids.
+        """
+        shared_user_ids = []
+        for shared_user in shared_user_ids_list:
+            if isinstance(shared_user, dict):
+                shared_user_ids.append(shared_user.get('user'))
+            elif isinstance(shared_user, int):
+                shared_user_ids.append(shared_user)
+        return shared_user_ids
+
     if not current_user.is_authenticated:
         return 1
 
@@ -1314,16 +1331,33 @@ def check_authority_action(activity_id='0', action_id=0,
         # その為、workflow_activityテーブルのtemp_dataを参照し、保存されている代理投稿者をチェックする
         im = ItemMetadata.query.filter_by(id=activity.item_id).one_or_none()
         if not im and activity.temp_data:
+            # Get shared_user_ids from shared_user_ids columns
+            activity_shared_user_ids = activity.shared_user_ids \
+                if activity.shared_user_ids else []
+            shared_user_unique_ids = set(
+                _get_shared_user_ids_from_list(activity_shared_user_ids)
+            )
+
             temp_data = json.loads(activity.temp_data)
             if temp_data is not None:
-                activity_shared_user_ids = temp_data.get('metainfo').get("shared_user_ids", [])
-                activity_owner = temp_data.get('metainfo').get("owner", '-1')
-                shared_user_ids = [ int(shared_user_ids_dict['user']) for shared_user_ids_dict in activity_shared_user_ids ]
+                # Get shared_user_ids from temp_data's metainfo
+                temp_shared_user_ids = temp_data.get('metainfo', {}).get(
+                    "shared_user_ids", []
+                )
+                shared_user_unique_ids.update(
+                    _get_shared_user_ids_from_list(temp_shared_user_ids)
+                )
+                activity_owner = temp_data.get('metainfo', {}).get(
+                    "owner", '-1'
+                )
+
                 # if exist shared_user_ids or owner allow to access
-                if int(cur_user) in shared_user_ids:
-                    return 0
                 if int(cur_user) == int(activity_owner):
                     return 0
+
+            # Check if current user is in shared_user_ids
+            if int(cur_user) in shared_user_unique_ids:
+                return 0
         elif im:
             # Check if this activity has contributor equaling to current user
             metadata_shared_user_ids = im.json.get('shared_user_ids', [])

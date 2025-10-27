@@ -2132,8 +2132,12 @@ def create_onetime_url_record(activity_id, record_id, file_name,
         "password_for_download": encrypted_password
     }
 
+    approver_id = None
+    if current_user and current_user.is_authenticated:
+        approver_id = current_user.id
+
     onetime_url_obj = FileOnetimeDownload.create(
-        approver_id     = current_user.id,
+        approver_id     = approver_id,
         record_id       = record_id,
         file_name       = file_name,
         expiration_date = expiration_date,

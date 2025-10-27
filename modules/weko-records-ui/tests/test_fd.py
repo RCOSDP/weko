@@ -17,9 +17,12 @@ from weko_schema_ui.models import PublishStatus
 from weko_records_ui.config import WEKO_RECORDS_UI_DETAIL_TEMPLATE
 from weko_records_ui.errors import AvailableFilesNotFoundRESTError
 from weko_records_ui.fd import (
-    _download_file, _is_terms_of_use_only, add_signals_info, error_response,
+    _download_file, _is_terms_of_use_only, add_signals_info,
+    check_onetime_token_and_validate, error_response,
     file_download_onetime, file_download_secret, file_download_ui,
-    file_list_ui, file_preview_ui, file_ui, prepare_response, weko_view_method
+    file_list_ui, file_preview_ui, file_ui, prepare_response,
+    process_onetime_file_download, validate_onetime_token,
+    validate_onetime_guest, weko_view_method
 )
 from weko_records_ui.models import AccessStatus, FileSecretDownload,FileOnetimeDownload
 
@@ -173,9 +176,11 @@ def test_file_ui2(app,records_restricted,itemtypes,users ,client ,mocker):
 
 # def file_ui(
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_fd.py::test_file_ui3 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
-def test_file_ui3(app,records_restricted,itemtypes,db_file_permission,users ,client ,mocker, esindex):
-    indexer, results = records_restricted
-    recid_none_login =  results[len(results) -2]["recid"]
+def test_file_ui3(
+    app, records_restricted, itemtypes, db_file_permission, users,
+    client, mocker
+):
+    _, results = records_restricted
     recid_login =  results[len(results) -1]["recid"]
     record_login = results[len(results) -1]["record"]
     data1 = MagicMock()
@@ -185,31 +190,37 @@ def test_file_ui3(app,records_restricted,itemtypes,db_file_permission,users ,cli
 
     with app.test_request_context():
         with patch('weko_records_ui.fd.file_permission_factory', return_value=data1):
-            #23
-            # contributer logined
-            with patch("flask_login.utils._get_user", return_value=users[0]["obj"]), \
-                patch('weko_records_ui.fd.validate_url_download',return_value=(True, '')):
-                mock = mocker.patch('weko_records_ui.fd._redirect_method' ,return_value=make_response())
-                fileobj:WekoFileObject = record_file_factory( recid_login, record_login, filename = "helloworld_open_restricted.pdf" )
-                fileobj.data['accessrole']='open_restricted'
-                fileobj.data['filename'] = "helloworld_open_restricted.pdf"
-                # with pytest.raises(Forbidden):
-                res = file_ui(recid_login,record_login ,is_preview=False , filename = "helloworld_open_restricted.pdf")
-                assert res.status == '200 OK'
+            # 23
+            # Test Case: User has permission and accessrole is open_restricted
+            with patch("flask_login.utils._get_user", return_value=users[0]["obj"]):
+                fileobj:WekoFileObject = record_file_factory(
+                    recid_login, record_login,
+                    filename="helloworld_open_restricted.pdf"
+                )
+                fileobj.data["accessrole"] = "open_restricted"
+                fileobj.data["filename"] = "helloworld_open_restricted.pdf"
+                mock_validate_onetime_token = mocker.patch(
+                    "weko_records_ui.fd.validate_onetime_token"
+                )
+                file_ui(
+                    recid_login, record_login, is_preview=False,
+                    filename="helloworld_open_restricted.pdf"
+                )
+                mock_validate_onetime_token.assert_called_once()
 
-            #24
+            # 24
+            # Test Case: User has no permission and accessrole is open_restricted
             with patch("flask_login.utils._get_user", return_value=users[7]["obj"]):
                 with patch("weko_records_ui.fd.is_owners_or_superusers", return_value=False):
                     fileobj:WekoFileObject = record_file_factory( recid_login, record_login, filename = "helloworld_open_restricted.pdf" )
-                    fileobj.data['accessrole']='open_restricted'
-                    fileobj.data['filename'] = "helloworld_open_restricted.pdf"
+                    fileobj.data["accessrole"] = "open_restricted"
+                    fileobj.data["filename"] = "helloworld_open_restricted.pdf"
 
-                    try:
-                        res = file_ui(recid_login,record_login ,is_preview=False  , filename = "helloworld_open_restricted.pdf")
-                        assert False
-                    except Forbidden :
-                        pass
-
+                    with pytest.raises(Forbidden):
+                        file_ui(
+                            recid_login, record_login, is_preview=False,
+                            filename="helloworld_open_restricted.pdf"
+                        )
 
 
 # def _download_file(file_obj, is_preview, lang, obj, pid, record):
@@ -275,14 +286,181 @@ def test_error_response(mock_render):
     mock_render.assert_called_once_with(error_template, error='Error Test')
 
 
+# def check_onetime_token_and_validate(
+#    pid, record, filename, _record_file_factory=None, **kwargs):
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_fd.py::test_check_onetime_token_and_validate -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+@patch("weko_records_ui.fd.validate_onetime_token")
+def test_check_onetime_token_and_validate(
+    mock_validate, app, records, mocker
+):
+    """Test check_onetime_token_and_validate function."""
+    # Setup
+    _, results = records
+    recid = results[0]["recid"]
+    record = results[0]["record"]
+    filename = "helloworld.pdf"
+    test_token = "test_token_123"
+    test_url = f"http://localhost/records/{recid.pid_value}/files/{filename}?token={test_token}"
+
+    # Configure mocks
+    mock_request = mocker.patch('weko_records_ui.fd.request')
+    mock_request.args.get.return_value = test_token
+    mock_request.url = test_url
+    mock_validate.return_value = "mocked_response"
+
+    # Call the function
+    with app.test_request_context():
+        result = check_onetime_token_and_validate(recid, record, filename)
+
+    # Assertions
+    mock_request.args.get.assert_called_once_with('token', type=str)
+    mock_validate.assert_called_once_with(
+        recid, record, filename, test_token, None, test_url
+    )
+    assert result == "mocked_response"
+
+
+# def validate_onetime_token(
+#    pid, record, filename, token, mailaddress=None, request_url=None):
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_fd.py::test_validate_onetime_token -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+@patch('weko_records_ui.fd.validate_url_download')
+@patch('weko_records_ui.fd.record_file_factory')
+@patch('weko_records_ui.fd.convert_token_into_obj')
+@patch('weko_records_ui.fd.current_user')
+@patch('weko_records_ui.fd.validate_onetime_guest')
+@patch('weko_records_ui.fd.process_onetime_file_download')
+@patch('weko_records_ui.fd.error_response')
+def test_validate_onetime_token(
+    mock_error_response, mock_process_download, mock_validate_guest,
+    mock_current_user, mock_convert_token, mock_record_file_factory,
+    mock_validate_url, app, records
+):
+    """Test validate_onetime_token function with different scenarios."""
+    # Setup
+    _, results = records
+    pid = results[0]["recid"]
+    record = results[0]["record"]
+    filename = "test_file.pdf"
+    token = "valid_token_123"
+    redirect_url = "http://test.com/redirect"
+
+    # Mock objects
+    file_object = MagicMock()
+    file_object.obj = True
+    url_obj = MagicMock()
+
+    # Common mock configurations
+    mock_record_file_factory.return_value = file_object
+    mock_convert_token.return_value = url_obj
+    mock_error_response.side_effect = lambda msg, code: (f"Error: {msg}", code)
+    mock_process_download.return_value = "process_success"
+    mock_validate_guest.return_value = "guest_validation"
+
+    # Test Case 1: Token validation fails
+    mock_validate_url.return_value = (False, "Invalid token")
+    result = validate_onetime_token(pid, record, filename, token)
+    mock_validate_url.assert_called_with(record, filename, token, is_secret_url=False)
+    assert result == ("Error: Invalid token", 403)
+
+    # Test Case 2: File object not found
+    mock_validate_url.return_value = (True, "")
+    mock_record_file_factory.return_value = None
+    result = validate_onetime_token(pid, record, filename, token)
+    assert result[0] == f"Error: The file \"{filename}\" does not exist."
+    assert result[1] == 404
+
+    # Test Case 3: File object found but no obj attribute
+    file_object_no_obj = MagicMock()
+    file_object_no_obj.obj = None
+    mock_record_file_factory.return_value = file_object_no_obj
+    result = validate_onetime_token(pid, record, filename, token)
+    assert result[0] == f"Error: The file \"{filename}\" does not exist."
+    assert result[1] == 404
+
+    # Reset file_object
+    mock_record_file_factory.return_value = file_object
+
+    # Test Case 4: Guest user
+    url_obj.is_guest = True
+    result = validate_onetime_token(pid, record, filename, token, redirect_url=redirect_url)
+    mock_validate_guest.assert_called_with(url_obj, pid, token, redirect_url)
+    assert result == "guest_validation"
+
+    # Test Case 5: Not authenticated user
+    url_obj.is_guest = False
+    mock_current_user.is_authenticated = False
+    url_obj.user_mail = "test@example.com"
+    result = validate_onetime_token(pid, record, filename, token)
+    assert result == ("Error: Invalid token.", 403)
+
+    # Test Case 6: Authenticated user but email doesn't match
+    mock_current_user.is_authenticated = True
+    mock_current_user.email = "wrong@example.com"
+    url_obj.user_mail = "test@example.com"
+    result = validate_onetime_token(pid, record, filename, token)
+    assert result == ("Error: Invalid token.", 403)
+
+    # Test Case 7: Successful validation with authenticated user
+    mock_current_user.is_authenticated = True
+    mock_current_user.email = "test@example.com"
+    url_obj.user_mail = "test@example.com"
+    result = validate_onetime_token(pid, record, filename, token)
+    mock_process_download.assert_called_with(pid, record, filename, token, mock_record_file_factory)
+    assert result == "process_success"
+
+
+# def validate_onetime_guest(
+#    onetime_url_record, pid, token, onetime_url):
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_fd.py::test_validate_onetime_guest -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+@patch('weko_records_ui.fd.url_for')
+@patch('weko_records_ui.fd.redirect')
+def test_validate_onetime_guest(
+    mock_redirect, mock_url_for, app, mocker
+):
+    """Test validate_onetime_guest function."""
+    # Setup
+    onetime_url_record = MagicMock()
+    onetime_url_record.user_mail = "guest@example.com"
+    pid = MagicMock()
+    pid.pid_value = "123456"
+    token = "guest_token_123"
+    onetime_url = "http://example.com/onetime"
+
+    # Configure mocks
+    mock_session = mocker.patch('weko_records_ui.fd.session')
+    mock_session.__setitem__ = MagicMock()
+    mock_url_for.return_value = "/redirect/url"
+    mock_redirect.return_value = "redirected"
+
+    # Call the function
+    result = validate_onetime_guest(onetime_url_record, pid, token, onetime_url)
+
+    # Assert session was modified correctly
+    mock_session.__setitem__.assert_any_call("user_mail", "guest@example.com")
+    mock_session.__setitem__.assert_any_call("pending_onetime_token", token)
+
+    # Assert URL was created correctly
+    mock_url_for.assert_called_with(
+        endpoint="invenio_records_ui.recid",
+        pid_value="123456",
+        onetime_url=onetime_url,
+        v="mailcheckflag"
+    )
+
+    # Assert redirect was called
+    mock_redirect.assert_called_with("/redirect/url")
+    assert result == "redirected"
+
+
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_fd.py::test_file_download_onetime -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
 @patch('weko_records_ui.fd.validate_url_download')
-@patch('weko_records_ui.fd.error_response')
-@patch('weko_records_ui.fd.check_and_send_usage_report')
 @patch('weko_records_ui.fd.save_download_log')
 @patch('weko_records_ui.fd._download_file')
-def test_file_download_onetime(dl_file, save_log, chk_and_send, err_res,
-                               val_url, app, onetime_url, mocker):
+@patch("process_onetime_file_download")
+def test_file_download_onetime(
+    mock_process_onetime, dl_file, save_log,
+    val_url, onetime_url, app, mocker
+):
     # Setup arguments of sut
     pid = None
     record = {}
@@ -292,52 +470,53 @@ def test_file_download_onetime(dl_file, save_log, chk_and_send, err_res,
     file_obj.obj = {'filename': filename}
     file_obj.get.return_value = 'open_restricted'
 
+    # Get onetime_url dict
+    onetime_obj = onetime_url["onetime_obj"]
+
     # Setup default return values of mock objects
-    mocker = mocker.patch('weko_records_ui.fd.request')
-    mocker.args.get.return_value = onetime_url['onetime_token']
-    mocker.get_json.return_value = {'mail_address': onetime_url['onetime_obj'].user_mail}
+    mock_request = mocker.patch('weko_records_ui.fd.request')
+    mock_request.args.get.return_value = onetime_url['onetime_token']
+    mock_request.get_json.return_value = {"mail_address": onetime_obj.user_mail}
+    mock_session = mocker.patch('weko_records_ui.fd.session')
+    mock_session.get.return_value = onetime_url['onetime_token']
     val_url.return_value = (True, '')
-    chk_and_send.return_value = None
-    dl_file.return_value = 'SUCCESS'
-    err_res.return_value = 'ERROR'
+    mock_process_onetime.return_value = "SUCCESS"
 
-    # Happy path
-    with app.test_request_context(), \
-         patch('weko_records_ui.fd.session', {'pending_onetime_token': onetime_url['onetime_token']}):
-        assert file_download_onetime(
-            pid, record, filename, _record_file_factory) == 'SUCCESS'
+    # Test Case: Correct path
+    with app.test_request_context():
+        result = file_download_onetime(
+            pid, record, filename, _record_file_factory
+        )
+        assert result == "SUCCESS"
         save_log.assert_called_once_with(
-            record, filename, onetime_url['onetime_token'], is_secret_url=False)
+            record, filename, onetime_url["onetime_token"], is_secret_url=False
+        )
 
-    # Invalid token
-    with patch('weko_records_ui.fd.validate_url_download',
-               return_value=(False, 'Invalid token')):
-        assert file_download_onetime(
-            pid, record, filename, _record_file_factory) == ('Invalid token', 403)
+    # Test Case: Invalid token
+    with app.test_request_context():
+        val_url.return_value = (False, "Invalid token")
+        result = file_download_onetime(
+            pid, record, filename, _record_file_factory
+        )
+        assert result == ("Invalid token", 403)
+        # Reset return values
+        val_url.return_value = (True, '')
 
-    # File object is not found
-    with app.test_request_context(), \
-         patch('weko_records_ui.fd.session', {'pending_onetime_token': onetime_url['onetime_token']}):
-        with patch('weko_records_ui.fd.record_file_factory',
-                   return_value=None):
-            assert file_download_onetime(
-                pid, record, filename) == (f'The file "{filename}" does not exist.', 404)
-
-    # check_and_send_usage_report() returns an error
-    with app.test_request_context(), \
-         patch('weko_records_ui.fd.session', {'pending_onetime_token': onetime_url['onetime_token']}):
-        with patch('weko_records_ui.fd.check_and_send_usage_report',
-                   return_value='ERROR'):
-              assert file_download_onetime(
-                    pid, record, filename, _record_file_factory) == ('ERROR', 403)
+    # Test Case: check_and_send_usage_report() returns an error
+    with app.test_request_context():
+        chk_and_send.return_value = "ERROR"
+        result = file_download_onetime(
+            pid, record, filename, _record_file_factory)
+        assert result == ("ERROR", 403)
+        # Reset return values
+        chk_and_send.return_value = None
 
     # check_and_send_usage_report() raises an exception
-    with app.test_request_context(), \
-         patch('weko_records_ui.fd.session', {'pending_onetime_token': onetime_url['onetime_token']}):
-        with patch('weko_records_ui.fd.check_and_send_usage_report',
-                   side_effect=BaseException):
-            assert file_download_onetime(
-                pid, record, filename, _record_file_factory) == ('Unexpected error occurred.', 500)
+    with app.test_request_context():
+        chk_and_send.side_effect = BaseException
+        result = file_download_onetime(
+            pid, record, filename, _record_file_factory)
+        assert result == 'ERROR'
 
     # update_extra_info() raises an SQLAlchemyError
     with app.test_request_context(), \
@@ -348,12 +527,112 @@ def test_file_download_onetime(dl_file, save_log, chk_and_send, err_res,
                 pid, record, filename, _record_file_factory) == ('Unexpected error occurred.', 500)
 
     # save_download_log() raises an exception
-    with app.test_request_context(), \
-         patch('weko_records_ui.fd.session', {'pending_onetime_token': onetime_url['onetime_token']}):
-        with patch('weko_records_ui.fd.save_download_log',
-                   side_effect=Exception):
-            assert file_download_onetime(
-                pid, record, filename, _record_file_factory) == ('Unexpected error occurred.', 500)
+    with patch('weko_records_ui.fd.save_download_log',
+               side_effect=Exception):
+        assert file_download_onetime(
+            pid, record, filename, _record_file_factory) == 'ERROR'
+
+
+# def process_onetime_file_download(
+#    pid, record, filename, token, error_handler=None):
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_fd.py::test_process_onetime_file_download -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+@patch('weko_records_ui.fd.record_file_factory')
+@patch('weko_records_ui.fd.convert_token_into_obj')
+@patch('weko_records_ui.fd.check_and_send_usage_report')
+@patch('weko_records_ui.fd.save_download_log')
+@patch('weko_records_ui.fd._download_file')
+def test_process_onetime_file_download(
+    mock_download_file, mock_save_log, mock_check_usage,
+    mock_convert_token, mock_record_file, app
+):
+    """Test process_onetime_file_download function."""
+    # Setup
+    pid = MagicMock()
+    record = MagicMock()
+    filename = "test_file.pdf"
+    token = "process_token_123"
+
+    # Mock file object
+    file_object = MagicMock()
+    file_object.obj = MagicMock()
+    mock_record_file.return_value = file_object
+
+    # Mock URL object
+    url_obj = MagicMock()
+    url_obj.extra_info = {"some": "info"}
+    url_obj.user_mail = "test@example.com"
+    mock_convert_token.return_value = url_obj
+
+    # Mock error handler
+    error_handler = MagicMock()
+    error_handler.return_value = "error_response"
+
+    mock_download_file.return_value = "download_success"
+    mock_check_usage.return_value = None
+
+    # Test Case 1: Successful download
+    result = process_onetime_file_download(
+        pid, record, filename, token, error_handler=error_handler
+    )
+
+    mock_check_usage.assert_called_with(
+        url_obj.extra_info, url_obj.user_mail, record, file_object
+    )
+    url_obj.update_extra_info.assert_called_with(url_obj.extra_info)
+    mock_save_log.assert_called_with(record, filename, token, is_secret_url=False)
+    url_obj.increment_download_count.assert_called_once()
+    mock_download_file.assert_called_with(
+        file_object, False, 'en', file_object.obj, pid, record
+    )
+    assert result == "download_success"
+
+    # Test Case 2: File object not found
+    mock_record_file.return_value = None
+    result = process_onetime_file_download(
+        pid, record, filename, token, error_handler=error_handler
+    )
+    error_handler.assert_called_with(
+        f'The file "{filename}" does not exist.', status_code=404
+    )
+    assert result == "error_response"
+
+    # Reset file_object for subsequent tests
+    mock_record_file.return_value = file_object
+
+    # Test Case 3: check_and_send_usage_report returns error
+    mock_check_usage.return_value = "usage_error"
+    result = process_onetime_file_download(
+        pid, record, filename, token, error_handler=error_handler
+    )
+    error_handler.assert_called_with("usage_error", status_code=403)
+    assert result == "error_response"
+
+    # Test Case 4: SQLAlchemyError during extra_info update
+    mock_check_usage.return_value = None
+    url_obj.update_extra_info.side_effect = SQLAlchemyError("DB error")
+    result = process_onetime_file_download(
+        pid, record, filename, token, error_handler=error_handler
+    )
+    error_handler.assert_called_with('Unexpected error occurred.', status_code=500)
+    assert result == "error_response"
+
+    # Test Case 5: Generic exception during extra_info update
+    url_obj.update_extra_info.side_effect = Exception("Generic error")
+    result = process_onetime_file_download(
+        pid, record, filename, token, error_handler=error_handler
+    )
+    error_handler.assert_called_with('Unexpected error occurred.', status_code=500)
+    assert result == "error_response"
+
+    # Test Case 6: Exception during save_download_log
+    url_obj.update_extra_info.side_effect = None
+    mock_save_log.side_effect = Exception("Log error")
+    result = process_onetime_file_download(
+        pid, record, filename, token, error_handler=error_handler
+    )
+    error_handler.assert_called_with('Unexpected error occurred.', status_code=500)
+    assert result == "error_response"
+
 
 # def _is_terms_of_use_only(file_obj:dict , req :dict) -> bool:
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_fd.py::test__is_terms_of_use_only -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
