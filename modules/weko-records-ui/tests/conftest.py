@@ -289,7 +289,8 @@ def base_app(instance_path):
         WEKO_RECORDS_UI_OA_API_CODE = WEKO_RECORDS_UI_OA_API_CODE,
         EXTERNAL_SYSTEM = EXTERNAL_SYSTEM,
         ITEM_ACTION = ITEM_ACTION,
-        FILE_OPEN_STATUS = FILE_OPEN_STATUS
+        FILE_OPEN_STATUS = FILE_OPEN_STATUS,
+        WEKO_RECORDS_UI_RESTRICTED_API = False
     )
     #with ESTestServer(timeout=30) as server:
     client = Elasticsearch(['localhost:9200'])
@@ -5548,7 +5549,7 @@ def db_file_permission(app, db,users,records_restricted):
     filename0 = results[0]["filename"]
     record0 = FilePermission(
         user_id=1, record_id=recid0.pid_value, file_name=filename0,
-        usage_application_activity_id="usage_application_activity_id_dummy1",
+        usage_application_activity_id="usage_application_1",
         usage_report_activity_id=None, status=1,
     )
     email = list(filter(lambda x : x['email'] if x['id'] == record0.user_id else None,users))[0]['email']
@@ -5564,7 +5565,7 @@ def db_file_permission(app, db,users,records_restricted):
     filename1 = results[1]["filename"]
     record1 = FilePermission(
         user_id=1, record_id=recid1.pid_value, file_name=filename1,
-                 usage_application_activity_id="usage_application_activity_id_dummy1",
+                 usage_application_activity_id="usage_application_1",
                  usage_report_activity_id="usage_report_activity_id_dummy1",status=1,
     )
     email = list(filter(lambda x : x['email'] if x['id'] == record1.user_id else None,users))[0]['email']
@@ -5580,7 +5581,7 @@ def db_file_permission(app, db,users,records_restricted):
     filename2 = results[2]["filename"]
     record2 = FilePermission(
         user_id=1, record_id=recid2.pid_value, file_name=filename2,
-                 usage_application_activity_id="usage_application_activity_id_dummy1",
+                 usage_application_activity_id="usage_application_1",
                  usage_report_activity_id="usage_report_activity_id_dummy1",status=1,
     )
     email = list(filter(lambda x : x['email'] if x['id'] == record2.user_id else None,users))[0]['email']
@@ -5598,7 +5599,7 @@ def db_file_permission(app, db,users,records_restricted):
     filename3 = results[len(results)-1]["filename"]
     record3 = FilePermission(
         user_id=users[0]['id'], record_id=recid3.pid_value, file_name=filename3,
-        usage_application_activity_id="usage_application_activity_id_dummy1",
+        usage_application_activity_id="usage_application_1",
         usage_report_activity_id=None, status=-1,
     )
 
@@ -5606,24 +5607,24 @@ def db_file_permission(app, db,users,records_restricted):
     filename4 = results[len(results)-1]["filename"]
     record4 = FilePermission(
         user_id=users[0]['id'], record_id=recid4.pid_value, file_name=filename4,
-        usage_application_activity_id="usage_application_activity_id_dummy1",
+        usage_application_activity_id="usage_application_1",
         usage_report_activity_id=None, status=1,
     )
     email = list(filter(lambda x : x['email'] if x['id'] == record4.user_id else None,users))[0]['email']
     record4_onetime=FileOnetimeDownload(user_mail =email
                                         ,record_id=recid4.pid_value
                                         ,file_name=filename4
-                                        ,download_limit =10
+                                        ,download_limit=10
                                         ,expiration_date = datetime.now(timezone.utc) + timedelta(hours=24)
-                                        ,extra_info={}
                                         ,is_guest=False
-                                        ,approver_id=1)
+                                        ,approver_id=1
+                                        ,extra_info=str({}))
 
     recid5 = results[len(results)-1]["recid"]
     filename5 = results[len(results)-1]["filename"]
     record5 = FilePermission(
         user_id=users[0]['id'], record_id=recid5.pid_value, file_name=filename5,
-        usage_application_activity_id="usage_application_activity_id_dummy1",
+        usage_application_activity_id="usage_application_1",
         usage_report_activity_id=None, status=1,
     )
     email = list(filter(lambda x : x['email'] if x['id'] == record5.user_id else None,users))[0]['email']
@@ -5934,7 +5935,7 @@ def make_record_need_restricted_access(app, db, workflows, users):
         file_name="dummy.txt",
         activity_id="A-00000000-1234",
         token='',
-        expiration_date=10
+        expiration_date=1
     )
 
     with db.session.begin_nested():

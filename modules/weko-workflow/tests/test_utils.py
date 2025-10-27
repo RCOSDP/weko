@@ -32,7 +32,7 @@ from weko_records_ui.utils import get_list_licence
 from weko_user_profiles import UserProfile
 from weko_records.api import ItemTypes, ItemsMetadata, Mapping
 from weko_user_profiles.config import WEKO_USERPROFILES_POSITION_LIST,WEKO_USERPROFILES_INSTITUTE_POSITION_LIST
-from weko_workflow.models import Activity, ActivityHistory, GuestActivity
+from weko_workflow.models import Activity, ActivityHistory, FlowActionRole, GuestActivity
 from weko_workflow.config import WEKO_WORKFLOW_FILTER_PARAMS,IDENTIFIER_GRANT_LIST
 from weko_workflow.errors import InvalidParameterValueError
 from weko_workflow.utils import (
@@ -157,7 +157,8 @@ from weko_workflow.utils import (
     load_template,
     fill_template,
     get_non_extract_files_by_recid,
-    check_activity_settings
+    check_activity_settings,
+    reset_flow_action_roles_restricted_access
 )
 from weko_workflow.api import WorkActivity
 
@@ -1186,13 +1187,15 @@ def test_prepare_delete_workflow(app, db_records,users,db_register_fullaction,mo
         'title': app_title, 'flow_id': app_flow_id, 'shared_user_ids': []
     }
 
-    current_app.config.update(WEKO_NOTIFICATIONS=False)
+    current_app.config.update(
+            WEKO_NOTIFICATIONS=False
+        )
     with app.test_request_context(), \
-            patch("flask_login.utils._get_user", return_value=users[0]['obj']), \
-            patch("weko_records_ui.views.check_created_id_by_recid", return_value=True), \
-            patch("weko_records_ui.views.soft_delete", return_value=True):
-        # result = prepare_delete_workflow(del_post_activity, del_recid, del_deposit)
-        # assert result.workflow_id
+                patch("flask_login.utils._get_user", return_value=users[0]['obj']), \
+                patch("weko_records_ui.views.check_created_id_by_recid", return_value=True), \
+                patch("weko_records_ui.views.soft_delete", return_value=True):
+            # result = prepare_delete_workflow(del_post_activity, del_recid, del_deposit)
+            # assert result.workflow_id
 
         result = prepare_delete_workflow(post_activity_1, recid_1, deposit_1)
         assert result.workflow_id
@@ -4786,86 +4789,128 @@ def test_grant_access_rights_to_all_open_restricted_files(app ,db,users ):
 
 # def get_contributors(pid_value)
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_get_contributors -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
-def test_get_contributors(db, users_1, db_records_1):
-    # 引数のpid_valueをfalseに設定する。
-    actual = get_contributors(False)
-    assert actual == []
-
-    # 引数のpid_valueをfalseに設定する。 user_id_list_json(List型) Listの中がdict
-    user_id_list_json = [{"user":1},{"user":2}]
-    actual = get_contributors(False, user_id_list_json=user_id_list_json, owner_id=1)
-    expected = [{
-                'userid' : 1,
-                'username': "",
-                'email' : "user1@sample.com",
-                'owner' : True,
-                'error': ''
-                },{
-                'userid' : 2,
-                'username': "",
-                'email' : "user2@sample.com",
-                'owner' : False,
-                'error': ''
-                }]
-    assert actual == expected
-
-    # 引数のpid_valueをfalseに設定する。 user_id_list_json(List型) Listの中がstring
-    user_id_list_json = ["漢字", "ひらがな"]
-    actual = get_contributors(False, user_id_list_json=user_id_list_json, owner_id=1)
-    expected = [{
-                'userid' : 1,
-                'username': "",
-                'email' : "user1@sample.com",
-                'owner' : True,
-                'error': ''
-                }]
-    assert actual == expected
-
-    # 引数のpid_valueをfalseに設定する。 user_id_list_json(Dict型)
-    user_id_list_json = {"user": 1}
-    actual = get_contributors(False, user_id_list_json=user_id_list_json, owner_id=1)
-    expected = [{
-                'userid' : 1,
-                'username': "",
-                'email' : "user1@sample.com",
-                'owner' : True,
-                'error': ''
-                }]
-    assert actual == expected
-
-    # pid_value=196.0を設定
-    user_profile_1 = UserProfile(
-        user_id=1,
-        _username="ユーザー1",
-        fullname="ユーザー1 full",
-        timezone="asia",
-        language="japanese",
-        _displayname="display ユーザー1"
-    )
-    user_profile_2 = UserProfile(
-        user_id=2,
-        _username="ユーザー2",
-        fullname="ユーザー2 full",
-        timezone="asia",
-        language="japanese",
-        _displayname="display ユーザー2"
-    )
-    db.session.add(user_profile_1)
-    db.session.add(user_profile_2)
-    db.session.commit()
-
-    actual = get_contributors('196.0')
-    assert actual == [{ 'userid' : 1,
-                       'username': "ユーザー1",
-                       'email' : "user1@sample.com",
-                       'owner' : True,
-                       'error': ''
+def test_get_contributors(app, db, users_1, db_records_1):
+    with app.test_request_context():
+        login_user(users_1[0]["obj"])
+        # 引数のpid_valueをfalseに設定する。
+        actual = get_contributors(False)
+        assert actual == []
+        # user_id_list_json値を設定,owner_idが-1でない
+        # 引数のpid_valueをfalseに設定する。 user_id_list_json(List型) Listの中がdict
+        user_id_list_json = [{"user":1},{"user":2}]
+        actual = get_contributors(False, user_id_list_json=user_id_list_json, owner_id=1)
+        expected = [{
+                    'userid' : 1,
+                    'username': "",
+                    'email' : "user1@sample.com",
+                    'owner' : True,
+                    'error': ''
+                    },{
+                    'userid' : 2,
+                    'username': "",
+                    'email' : "user2@sample.com",
+                    'owner' : False,
+                    'error': ''
                     }]
+        assert actual == expected
 
-    # pid_value=196.1を設定
-    # weko_shared_ids": [100] を設定（存在しないユーザーID）
-    actual = get_contributors('197')
-    expected = [{
+        # 引数のpid_valueをfalseに設定する。 user_id_list_json(List型) Listの中がstring
+        user_id_list_json = ["漢字", "ひらがな"]
+        actual = get_contributors(False, user_id_list_json=user_id_list_json, owner_id=1)
+        expected = [{
+                    'userid' : 1,
+                    'username': "",
+                    'email' : "user1@sample.com",
+                    'owner' : True,
+                    'error': ''
+                    }]
+        assert actual == expected
+
+        # 引数のpid_valueをfalseに設定する。 user_id_list_json(Dict型)
+        user_id_list_json = {"user": 1}
+        actual = get_contributors(False, user_id_list_json=user_id_list_json, owner_id=1)
+        expected = [{
+                    'userid' : 1,
+                    'username': "",
+                    'email' : "user1@sample.com",
+                    'owner' : True,
+                    'error': ''
+                    }]
+        assert actual == expected
+
+        # user_id_list_jsonに値を設定しない,owner_idが-1でない
+        user_id_list_json=None
+        actual = get_contributors(False, user_id_list_json=user_id_list_json, owner_id=1)
+        expected = [{
+                    'userid' : 1,
+                    'username': "",
+                    'email' : "user1@sample.com",
+                    'owner' : True,
+                    'error': ''
+                    }]
+        assert actual == expected
+        
+        # user_id_list_jsonに値を設定,owner_idが-1
+        user_id_list_json = [{"user":1},{"user":2}]
+        actual = get_contributors(False, user_id_list_json=user_id_list_json, owner_id=-1)
+        expected = []
+        assert actual == expected
+
+        # user_id_list_jsonに値を設定しない,owner_idが-1
+        user_id_list_json = None
+        actual = get_contributors(False, user_id_list_json=user_id_list_json, owner_id=-1)
+        expected = []
+        assert actual == expected
+
+        # pid_value=196.0を設定
+        user_profile_1 = UserProfile(
+            user_id=1,
+            _username="ユーザー1",
+            fullname="ユーザー1 full",
+            timezone="asia",
+            language="japanese",
+            _displayname="display ユーザー1"
+        )
+        user_profile_2 = UserProfile(
+            user_id=2,
+            _username="ユーザー2",
+            fullname="ユーザー2 full",
+            timezone="asia",
+            language="japanese",
+            _displayname="display ユーザー2"
+        )
+        db.session.add(user_profile_1)
+        db.session.add(user_profile_2)
+        db.session.commit()
+
+        actual = get_contributors('196.0')
+        assert actual == [{ 'userid' : 1,
+                        'username': "ユーザー1",
+                        'email' : "user1@sample.com",
+                        'owner' : True,
+                        'error': ''
+                        }]
+
+        # pid_value=196.1を設定
+        # weko_shared_ids": [100] を設定（存在しないユーザーID）
+        actual = get_contributors('197')
+        expected = [{
+                    'userid' : 1,
+                    'username': "ユーザー1",
+                    'email' : "user1@sample.com",
+                    'owner' : True,
+                    'error': ''
+                    },
+                    {
+                    'userid' : 100,
+                    'username': '',
+                    'email' : '',
+                    'owner' : False,
+                    'error': 'The specified user ID is incorrect'
+                    }]
+        assert sorted(actual, key=lambda x: x["userid"]) == sorted(expected, key=lambda x: x["userid"])
+
+        expected = [{
                 'userid' : 1,
                 'username': "ユーザー1",
                 'email' : "user1@sample.com",
@@ -4873,32 +4918,16 @@ def test_get_contributors(db, users_1, db_records_1):
                 'error': ''
                 },
                 {
-                'userid' : 100,
-                'username': '',
-                'email' : '',
+                'userid' : 2,
+                'username': "ユーザー2",
+                'email' : "user2@sample.com",
                 'owner' : False,
-                'error': 'The specified user ID is incorrect'
+                'error': ''
                 }]
-    assert sorted(actual, key=lambda x: x["userid"]) == sorted(expected, key=lambda x: x["userid"])
-
-    expected = [{
-            'userid' : 1,
-            'username': "ユーザー1",
-            'email' : "user1@sample.com",
-            'owner' : True,
-            'error': ''
-            },
-            {
-            'userid' : 2,
-            'username': "ユーザー2",
-            'email' : "user2@sample.com",
-            'owner' : False,
-            'error': ''
-            }]
-    # user_id_list_jsonを設定
-    user_id_list_json = [2]
-    actual = get_contributors(None, user_id_list_json, owner_id=1)
-    assert sorted(actual, key=lambda x: x["userid"]) == sorted(expected, key=lambda x: x["userid"])
+        # user_id_list_jsonを設定
+        user_id_list_json = [2]
+        actual = get_contributors(None, user_id_list_json, owner_id=1)
+        assert sorted(actual, key=lambda x: x["userid"]) == sorted(expected, key=lambda x: x["userid"])
 
 
 status_list = [
@@ -5207,3 +5236,21 @@ def test_check_activity_settings(app):
             # case: object type settings(Other), no changes from (case: object type settings(False))
             check_activity_settings(other_obj_settings)
             assert current_app.config['WEKO_WORKFLOW_APPROVER_EMAIL_COLUMN_VISIBLE'] == False
+
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_reset_flow_action_roles_restricted_access -vv -s -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_reset_flow_action_roles_restricted_access(app,db,db_register_full_action):
+    # 異常系:specify_propertyとaction_item_registrantが変化なし
+    pre = FlowActionRole.query.all()
+    with patch("weko_workflow.models.FlowActionRole.query") as mock_exception:
+        mock_exception.filter.side_effect = Exception()
+        reset_flow_action_roles_restricted_access()
+    post = FlowActionRole.query.all()
+    for action_role, action_role2 in zip(pre, post):
+        assert action_role.specify_property == action_role2.specify_property
+        assert action_role.action_item_registrant == action_role2.action_item_registrant
+    # 正常系:specify_property、action_item_registrantがNone、False
+    reset_flow_action_roles_restricted_access()
+    for action_role in FlowActionRole.query.all():
+       assert action_role.specify_property == None
+       assert action_role.action_item_registrant == False
+

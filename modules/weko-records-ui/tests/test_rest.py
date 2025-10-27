@@ -22,7 +22,7 @@
 import copy
 import json
 from mock import patch
-from flask import Blueprint, Response, json, url_for
+from flask import Blueprint, Response, json, url_for,current_app
 import pytest
 from pytest import fail
 
@@ -269,6 +269,17 @@ def test_GetFileTerms_get_v1(app, client, db, make_record_need_restricted_access
     headers_user = oauth_headers[6]                     # OAuth token : user (activity_scope)
     headers_not_login = oauth_headers[3]                # No OAuth token : not login
     headers_user_no_activity_scope = oauth_headers[2]   # OAuth token : user (item_scope)
+    
+    # WEKO_RECORDS_UI_RESTRICTED_API = False : 403 error
+    pid_value = 12
+    file_name = "dummy.txt"
+    res = client.get(
+        f'/{version}/records/{pid_value}/files/{file_name}/terms',
+        headers=headers_sysadmin,
+    )
+    assert res.status_code == 403
+
+    current_app.config.update(WEKO_RECORDS_UI_RESTRICTED_API = True)
 
     # Invalid version : 400 error
     pid_value = 11
@@ -371,6 +382,33 @@ def test_FileApplication_post_v1(app, client, db, workflows_restricted, make_rec
     headers_user = oauth_headers[6]                     # OAuth token : user (activity_scope)
     headers_not_login = oauth_headers[3]                # No OAuth token : not login
     headers_user_no_activity_scope = oauth_headers[2]   # OAuth token : user (item_scope)
+    
+    
+    # WEKO_RECORDS_UI_RESTRICTED_API = False : 403 error
+    pid_value = 12
+    file_name = "dummy.txt"
+    terms_content = "利用規約本文"
+    etag = generate_etag(f"{file_name}_{terms_content}".encode("utf-8"))
+    params = {"terms_token": etag}
+
+    activity_id = "A-00000000-00000"
+    activity = MagicMock
+    activity.activity_id = activity_id
+    itemtype_schema = {}
+    with open('tests/data/itemtype_schema_31001.json', 'r') as f:
+        itemtype_schema = json.load(f)
+
+    with patch('weko_workflow.api.WorkActivity.init_activity', return_value=activity):
+        res = client.post(
+            url(f'/{version}/records/{pid_value}/files/{file_name}/application', params),
+            data=json.dumps(None),
+            content_type='application/json',
+            headers=headers_contributor
+        )
+    res_data = json.loads(res.get_data())
+    assert res.status_code == 403
+
+    current_app.config.update(WEKO_RECORDS_UI_RESTRICTED_API = True)
 
     # Invalid version : 400 error
     pid_value = 12
