@@ -837,7 +837,7 @@ class Indexes(object):
     @classmethod
     def filter_roles(cls, roles):
         """Filter roles to gakunin_map group roles, gakunin_map general roles, other roles.
-        
+
         Args:
             roles (list): List of role dictionaries to be filtered.
         Returns:
@@ -886,10 +886,13 @@ class Indexes(object):
                 while role:
                     tmp = role.pop(0)
                     if tmp["name"] not in current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER']:
-                        if str(tmp["id"]) in allow:
-                            alw.append(tmp)
-                        else:
-                            deny.append(tmp)
+                        role_key = current_app.config["WEKO_ACCOUNTS_GAKUNIN_GROUP_PATTERN_DICT"]["role_keyword"]
+                        prefix = current_app.config["WEKO_ACCOUNTS_GAKUNIN_GROUP_PATTERN_DICT"]["prefix"]
+                        if role_key not in tmp["name"] or not (tmp["name"].startswith(prefix)):
+                            if str(tmp["id"]) in allow:
+                                alw.append(tmp)
+                            else:
+                                deny.append(tmp)
             return alw, deny
 
         def _get_group_allow_deny(allow_group_id=[], groups=[]):
@@ -2185,11 +2188,11 @@ class Indexes(object):
     @classmethod
     def bind_roles_including_permission(cls, roles, permission):
         """Bind roles including permissions.
-        
+
         Args:
             roles (list): List of roles.
             permission (bool): Permission of default browsing or contribute.
-        
+
         Returns:
             list: List of roles what binded.
         """
@@ -2199,7 +2202,7 @@ class Indexes(object):
                 continue
             bind_roles.append(role)
         return bind_roles
-    
+
     @classmethod
     def update_browsing_roles_groups(cls, current_index, index_setting,
                                      update_browsing_role, update_browsing_groups):
@@ -2214,7 +2217,7 @@ class Indexes(object):
         # if not update browsing roles and groups
         if not update_browsing_role and not update_browsing_groups:
             return
-        
+
         browsing_roles = set(
             current_index.browsing_role.split(",") if current_index.browsing_role else []
         )
@@ -2270,18 +2273,18 @@ class Indexes(object):
         # if not update contribute roles and groups
         if not update_contribute_role and not update_contribute_groups:
             return
-        
+
         contribute_roles = set(
             current_index.contribute_role.split(",") if current_index.contribute_role else []
         )
         contribute_groups = set(
             current_index.contribute_group.split(",") if current_index.contribute_group else []
         )
-        
+
         # if update contribute roles
         if update_contribute_role:
             contribute_roles = set(index_setting.get('contribute_role_ids', []))
-        
+
         # if update contribute groups
         if update_contribute_groups:
             contribute_roles = contribute_roles.union(

@@ -1231,3 +1231,60 @@ def test_indexes_get_handle_index_url(app, db, users, test_indices, mocker):
         handle, index_url = Indexes.get_handle_index_url(1)
         assert index_url == "http://TEST_SERVER/search?search_type=2&q=1"
         assert handle == "https://test/handle/1"
+
+# .tox/c1/bin/pytest --cov=weko_index_tree tests/test_api.py::test_get_allow_deny -v -s -vv --cov-branch --cov-report=html --cov-config=tox.ini --basetemp=/code/modules/weko-index-tree/.tox/c1/tmp
+def test_get_allow_deny(app, db, mocker):
+    with app.app_context():
+        mocker.patch.dict(current_app.config, {
+            'WEKO_ACCOUNTS_GAKUNIN_GROUP_PATTERN_DICT': {
+                'prefix': 'jc',
+                'role_keyword': 'roles'
+            },
+            'WEKO_PERMISSION_SUPER_ROLE_USER': ['System Administrator', 'Repository Administrator']
+        })
+
+    # Patterns for super role, role_keyword, prefix, allow/deny
+        roles = [
+            {"id": 1, "name": "NormalRole"},              # subject to allow/deny
+            {"id": 2, "name": "roles_test"},              # subject to allow/deny
+            {"id": 3, "name": "jcAdmin"},                 # starts with 'jc' and does not contain 'roles' → excluded by filter_roles
+            {"id": 4, "name": "System Administrator"},    # super role → skip
+            {"id": 5, "name": "OtherRole"},               # subject to allow/deny
+            {"id": 6, "name": "jc_test_roles"},           # contains prefix and role_keyword → skip
+        ]
+        index_data = {
+            'id': 1,
+            'browsing_role': '1,2,3,4,5,6',  # allow list
+            'contribute_role': '1,2,3,4,5,6',  # allow list
+            'browsing_group': '',
+            'contribute_group': '',
+            'public_date': None,
+        }
+        mocker.patch.object(Indexes, 'get_index', return_value=index_data)
+        mocker.patch.object(Indexes, 'get_account_role', return_value=roles)
+        mocker.patch('weko_index_tree.api.Group.query.all', return_value=[])
+
+        result = Indexes.get_index_with_role(1)
+
+    # browsing_role: allow = [1, 2, 5], deny = [] (others are skipped)
+        assert [r['id'] for r in result['browsing_role']['allow']] == [1, 2, 5]
+        assert [r['id'] for r in result['browsing_role']['deny']] == []
+
+    # contribute_role: allow = [1], deny = [2, 5] (others are skipped)
+        index_data['contribute_role'] = '1'
+        result = Indexes.get_index_with_role(1)
+        assert [r['id'] for r in result['contribute_role']['allow']] == [1]
+        assert [r['id'] for r in result['contribute_role']['deny']] == [2, 5]
+
+    # When allow list is empty
+        index_data['browsing_role'] = ''
+        result = Indexes.get_index_with_role(1)
+        assert [r['id'] for r in result['browsing_role']['allow']] == []
+        assert [r['id'] for r in result['browsing_role']['deny']] == [1, 2, 5]
+
+    # When role list is empty
+        mocker.patch.object(Indexes, 'get_account_role', return_value=[])
+        index_data['browsing_role'] = '1,2,3,4,5,6'
+        result = Indexes.get_index_with_role(1)
+        assert result['browsing_role']['allow'] == []
+        assert result['browsing_role']['deny'] == []

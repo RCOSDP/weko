@@ -218,31 +218,113 @@ def test_get_user_groups(i18n_app, client_rest, users, db):
 # .tox/c1/bin/pytest --cov=weko_index_tree tests/test_utils.py::test_check_roles -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-index-tree/.tox/c1/tmp
 #+++ def check_roles(user_role, roles):
 def test_check_roles(i18n_app, users):
-    # admin user
-    user_role = (True, [])
-    roles = ["1","2"]
-    check_roles(user_role, roles)
-
-    # not admin user
-    ## not login
-    ### not allow -99
-    user_role = (False,[])
-    roles = "1,2"
-    assert check_roles(user_role, roles) == False
-    ### allow -99
-    user_role = (False,[])
-    roles = "1,2,-99"
-    assert check_roles(user_role, roles) == True
-    ## login
+    # Match both role and role group
+    params = {"role_groups": [10, 20], "groups": [100], "access_group_ids": [200]}
+    user_role = (False, ["10"])
+    roles = ["10"]
     with patch("flask_login.utils._get_user", return_value=users[-1]['obj']):
-    ### all allow
-        user_role = (False,["1", "2"])
-        roles = "1,2"
-        assert check_roles(user_role, roles) == True
-    ### exist deny
-        user_role = (False,["1", "2", "3"])
-        roles = "1,2"
-        assert check_roles(user_role, roles) == False
+        assert check_roles(user_role, roles, params) is True
+
+    # Only role group matches
+    params = {"role_groups": [10, 20], "groups": [100], "access_group_ids": [200]}
+    user_role = (False, ["30"])
+    roles = ["20"]
+    with patch("flask_login.utils._get_user", return_value=users[-1]['obj']):
+        assert check_roles(user_role, roles, params) is False
+
+    # Only role matches
+    params = {"role_groups": [10, 20], "groups": [100], "access_group_ids": [200]}
+    user_role = (False, ["30"])
+    roles = ["30"]
+    with patch("flask_login.utils._get_user", return_value=users[-1]['obj']):
+        assert check_roles(user_role, roles, params) is True
+
+    # Neither role nor role group matches
+    params = {"role_groups": [10, 20], "groups": [100], "access_group_ids": [200]}
+    user_role = (False, ["40"])
+    roles = ["50"]
+    with patch("flask_login.utils._get_user", return_value=users[-1]['obj']):
+        assert check_roles(user_role, roles, params) is False
+
+    # Both not set (group check)
+    params = {"role_groups": [], "groups": [100], "access_group_ids": [200]}
+    user_role = (False, ["40"])
+    roles = []
+    with patch("flask_login.utils._get_user", return_value=users[-1]['obj']):
+        assert check_roles(user_role, roles, params) is False
+
+    # Admin user
+    user_role = (True, ["1"])
+    roles = ["1", "2"]
+    params = {"role_groups": [10], "groups": [100], "access_group_ids": [200]}
+    assert check_roles(user_role, roles, params) is True
+
+    # Guest user (role -99)
+    params = {"role_groups": [10, 20], "groups": [100], "access_group_ids": [200]}
+    user_role = (False, [])
+    roles = ["-99"]
+    with patch("flask_login.utils._get_user", return_value=MagicMock(is_authenticated=False)):
+        assert check_roles(user_role, roles, params) is True
+
+    # Role group is [10], roles are [10, 30], user_role is (not admin, [10, 30])
+    params = {"role_groups": [10], "groups": [100], "access_group_ids": [200]}
+    user_role = (False, ["10", "30"])
+    roles = ["10", "30"]
+    with patch("flask_login.utils._get_user", return_value=MagicMock(is_authenticated=True)):
+        assert check_roles(user_role, roles, params) is True
+
+    # Role group is [10, 20], roles are [30], user_role is (not admin, [30])
+    params = {"role_groups": [10, 20], "groups": [100], "access_group_ids": [200]}
+    user_role = (False, [])
+    roles = ["-99", "10"]
+    with patch("flask_login.utils._get_user", return_value=MagicMock(is_authenticated=False)):
+        assert check_roles(user_role, roles, params) is False
+
+    # User has only the role set for the index
+    params = {"role_groups": [100, 200], "groups": [300], "access_group_ids": [400]}
+    user_role = (False, ["1"])
+    roles = ["1", "100"]
+    with patch("flask_login.utils._get_user", return_value=users[-1]['obj']):
+        assert check_roles(user_role, roles, params) is False
+
+    # User has only the role group set for the index
+    params = {"role_groups": [100, 200], "groups": [300], "access_group_ids": [400]}
+    user_role = (False, ["100"])
+    roles = ["1", "100"]
+    with patch("flask_login.utils._get_user", return_value=users[-1]['obj']):
+        assert check_roles(user_role, roles, params) is False
+
+    # User has neither the role nor the role group set for the index
+    params = {"role_groups": [100, 200], "groups": [300], "access_group_ids": [400]}
+    user_role = (False, ["999"])
+    roles = ["1", "100"]
+    with patch("flask_login.utils._get_user", return_value=users[-1]['obj']):
+        assert check_roles(user_role, roles, params) is False
+
+
+# .tox/c1/bin/pytest --cov=weko_index_tree tests/test_utils.py::test_set_params -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-index-tree/.tox/c1/tmp
+def test_set_params(app):
+    with app.app_context():
+        from weko_index_tree.utils import set_params
+        class MockRole:
+            def __init__(self, id, name):
+                self.id = id
+                self.name = name
+        mock_roles = [
+            MockRole(1, "group_admin"),
+            MockRole(2, "user"),
+            MockRole(3, "group_editor"),
+            MockRole(4, "guest")
+        ]
+        with patch("invenio_accounts.models.Role.query") as mock_query:
+            mock_query.all.return_value = mock_roles
+            groups = [100, 200]
+            index_group = [300]
+            params = set_params(groups, index_group)
+
+            assert params["role_groups"] == [1, 3]
+            assert params["groups"] == [100, 200]
+            assert params["access_group_ids"] == [300]
 
 #+++ def check_groups(user_group, groups):
 def test_check_groups(i18n_app, users, db):
@@ -264,18 +346,42 @@ def test_check_groups(i18n_app, users, db):
 #+++ def filter_index_list_by_role(index_list):
 #     def _check(index_data, roles, groups):
 def test_filter_index_list_by_role(i18n_app, indices, users, db):
+    # Case 1: check_roles returns False
+    class DummyIndex1:
+        def __init__(self):
+            self.browsing_group = []
+            self.browsing_role = []
+            self.public_state = True
+            self.public_date = None
+    dummy1 = DummyIndex1()
+    with patch("weko_index_tree.utils.set_params", return_value={"role_groups": [], "groups": [], "access_group_ids": []}):
+        with patch("weko_index_tree.utils.check_roles", return_value=False):
+            assert filter_index_list_by_role([dummy1]) == []
+
+    # Case 2: public_state is False
+    class DummyIndex2:
+        def __init__(self):
+            self.browsing_group = []
+            self.browsing_role = []
+            self.public_state = False
+            self.public_date = None
+    dummy2 = DummyIndex2()
+    with patch("weko_index_tree.utils.set_params", return_value={"role_groups": [], "groups": [], "access_group_ids": []}):
+        with patch("weko_index_tree.utils.check_roles", return_value=True):
+            with patch("weko_records_ui.utils.is_future", return_value=False):
+                assert filter_index_list_by_role([dummy2]) == []
+
+    # Case 3: normal access (user logged in and has group membership)
     with patch("flask_login.utils._get_user", return_value=users[-1]['obj']):
         from weko_groups.models import Group
         g1 = Group.create(name="group_test1").add_member(users[-1]['obj'])
         g2 = Group.create(name="group_test2").add_member(users[-1]['obj'])
-
         db.session.add(g1)
         db.session.add(g2)
-
         assert len(filter_index_list_by_role([indices['index_non_dict']])) > 0
 
+    # Case 4: not logged in
     assert len(filter_index_list_by_role([indices['index_non_dict']])) == 1
-
 
 # def reduce_index_by_role
 # .tox/c1/bin/pytest --cov=weko_index_tree tests/test_utils.py::test_reduce_index_by_role -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-index-tree/.tox/c1/tmp

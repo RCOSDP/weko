@@ -46,7 +46,7 @@ from .api import Action, Flow, WorkActivity, WorkFlow
 from .config import WEKO_WORKFLOW_SHOW_HARVESTING_ITEMS
 from .models import WorkflowRole
 from .utils import recursive_get_specified_properties, check_activity_settings
-
+from sqlalchemy import and_
 
 class FlowSettingView(BaseView):
     @expose('/', methods=['GET'])
@@ -70,7 +70,11 @@ class FlowSettingView(BaseView):
         :return:
         """
         users = User.query.filter_by(active=True).all()
-        roles = Role.query.all()
+        role_key = current_app.config["WEKO_ACCOUNTS_GAKUNIN_GROUP_PATTERN_DICT"]["role_keyword"]
+        prefix = current_app.config["WEKO_ACCOUNTS_GAKUNIN_GROUP_PATTERN_DICT"]["prefix"]
+        roles = Role.query.filter(
+            ~and_(Role.name.like(f"%{role_key}%"), Role.name.startswith(prefix))
+        ).all()
         if set(role.name for role in current_user.roles) & \
                 set(current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER']):
             repositories = [{"id": "Root Index"}] + Community.query.all()
@@ -318,7 +322,11 @@ class WorkFlowSettingView(BaseView):
         """
         workflow = WorkFlow()
         workflows = workflow.get_workflow_list(user=current_user)
-        role = Role.query.all()
+        role_key = current_app.config["WEKO_ACCOUNTS_GAKUNIN_GROUP_PATTERN_DICT"]["role_keyword"]
+        prefix = current_app.config["WEKO_ACCOUNTS_GAKUNIN_GROUP_PATTERN_DICT"]["prefix"]
+        role = Role.query.filter(
+            ~and_(Role.name.like(f"%{role_key}%"), Role.name.startswith(prefix))
+        ).all()
         for wf in workflows:
             index_tree = Index().get_index_by_id(wf.index_tree_id)
             wf.index_tree = index_tree
@@ -357,7 +365,11 @@ class WorkFlowSettingView(BaseView):
         index_list = Index().get_all()
         location_list = Location.query.order_by(Location.id.asc()).all()
         hide = []
-        role = Role.query.all()
+        role_key = current_app.config["WEKO_ACCOUNTS_GAKUNIN_GROUP_PATTERN_DICT"]["role_keyword"]
+        prefix = current_app.config["WEKO_ACCOUNTS_GAKUNIN_GROUP_PATTERN_DICT"]["prefix"]
+        role = Role.query.filter(
+            ~and_(Role.name.like(f"%{role_key}%"), Role.name.startswith(prefix))
+        ).all()
         display_label = self.get_language_workflows("display")
         hide_label = self.get_language_workflows("hide")
         display_hide = self.get_language_workflows("display_hide")

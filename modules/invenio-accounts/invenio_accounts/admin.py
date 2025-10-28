@@ -88,7 +88,14 @@ class UserView(ModelView):
         form_class = super(UserView, self).scaffold_form()
         form_class.role = QuerySelectMultipleField(
             'Roles',
-            query_factory=lambda: Role.query.filter(~Role.name.like('%_groups_%')).all(),
+            query_factory=lambda: (
+                Role.query.filter(
+                    ~(
+                        Role.name.like(f"%{current_app.config['WEKO_ACCOUNTS_GAKUNIN_GROUP_PATTERN_DICT']['role_keyword']}%") &
+                        Role.name.startswith(current_app.config['WEKO_ACCOUNTS_GAKUNIN_GROUP_PATTERN_DICT']['prefix'])
+                    )
+                ).filter(~Role.name.like('%_groups_%')).all()
+            ),
             get_label='name',
             widget=Select2Widget(multiple=True)
         )
@@ -330,7 +337,6 @@ class RoleView(ModelView):
                 )
                 current_app.logger.error(str(ex))
                 db.session.rollback()
-
 
 class SessionActivityView(ModelView):
     """Admin view for user sessions."""

@@ -359,3 +359,52 @@ class TestCommunity:
 #         db.DateTime, nullable=False, default=datetime.utcnow)
 #     @classmethod
 #     def get_featured_or_none(cls, start_date=None):
+
+from invenio_accounts.models import Role
+from flask import Flask
+from invenio_communities.models import Community
+
+@pytest.fixture
+def app():
+    app = Flask(__name__)
+    app.config['WEKO_ACCOUNTS_GAKUNIN_GROUP_PATTERN_DICT'] = {
+        'role_keyword': 'roles',
+            'role_mapping': {
+            "repoadm":"Repository Administrator",
+            "comadm":"Community Administrator",
+        },
+        "sysadm_group": "jc_roles_sysadm"
+    }
+    return app
+
+# .tox/c1/bin/pytest --cov=invenio_communities tests/test_models.py::test_owner_display -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-communities/.tox/c1/tmp
+def test_owner_display(app):
+    with app.app_context():
+        # If owner_name contains role_keyword and is mapped by role_mapping
+        owner1 = Role(name="roles_repoadm")
+        comm1 = Community()
+        comm1.owner = owner1
+        assert comm1.owner_display == "Repository Administrator"
+
+        # If owner_name matches sysadm_group
+        owner2 = Role(name="jc_roles_sysadm")
+        comm2 = Community()
+        comm2.owner = owner2
+        assert comm2.owner_display == "System Administrator"
+
+        # If owner_name contains role_keyword but is not found in role_mapping
+        owner3 = Role(name="roles_unknown")
+        comm3 = Community()
+        comm3.owner = owner3
+        assert comm3.owner_display == "roles_unknown"
+
+        # If owner_name does not contain role_keyword
+        owner4 = Role(name="admin")
+        comm4 = Community()
+        comm4.owner = owner4
+        assert comm4.owner_display == "admin"
+
+        # If owner is None
+        comm_none = Community()
+        comm_none.owner = None
+        assert comm_none.owner_display is None or comm_none.owner_display == ''
