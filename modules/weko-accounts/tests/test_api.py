@@ -1,8 +1,8 @@
 from logging import exception
 import pytest
 import redis
-from datetime import datetime
-from mock import patch, MagicMock
+from datetime import datetime, timezone
+from unittest.mock import patch, MagicMock
 from flask import session,current_app,Flask
 from flask_login.utils import login_user
 from invenio_accounts.models import Role, User,userrole
@@ -954,6 +954,7 @@ def test_get_user_info_by_role_name(users):
 
 # .tox/c1/bin/pytest --cov=weko_accounts tests/test_api.py::test_sync_shib_gakunin_map_groups_success -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-accounts/.tox/c1/tmp
 def test_sync_shib_gakunin_map_groups_success(app, client, group_info_redis_connect):
+    cache_roles = {'role1', 'role3'}
     redis = group_info_redis_connect.redis
     with app.test_request_context('/sync', method='POST'):
         app.config['WEKO_ACCOUNTS_IDP_ENTITY_ID'] = 'https://example.com'
@@ -962,7 +963,9 @@ def test_sync_shib_gakunin_map_groups_success(app, client, group_info_redis_conn
 
             # Redisから取得するグループリストとデータベースのロールリストが異なる場合
             redis.delete('example_com_gakunin_groups')
-            redis.rpush('example_com_gakunin_groups', 'role1', 'role3')
+            updated_at = datetime.now(timezone.utc).isoformat(timespec="seconds")
+            redis.hset('example_com_gakunin_groups', "updated_at", updated_at)
+            redis.hset('example_com_gakunin_groups', "groups", ','.join(cache_roles))
             mock_role1 = MagicMock()
             mock_role1.name = 'role1'
             mock_role2 = MagicMock()
@@ -977,6 +980,7 @@ def test_sync_shib_gakunin_map_groups_success(app, client, group_info_redis_conn
 
 # .tox/c1/bin/pytest --cov=weko_accounts tests/test_api.py::test_sync_shib_gakunin_map_groups_no_update_needed -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-accounts/.tox/c1/tmp
 def test_sync_shib_gakunin_map_groups_no_update_needed(app, client, group_info_redis_connect):
+    cache_roles = {'role1', 'role2'}
     redis = group_info_redis_connect.redis
     with app.test_request_context('/sync', method='POST'):
         app.config['WEKO_ACCOUNTS_IDP_ENTITY_ID'] = 'https://example.com'
@@ -985,7 +989,9 @@ def test_sync_shib_gakunin_map_groups_no_update_needed(app, client, group_info_r
 
             # Redisから取得するグループリストとデータベースのロールリストが同じ場合
             redis.delete('example_com_gakunin_groups')
-            redis.rpush('example_com_gakunin_groups', 'role1', 'role2')
+            updated_at = datetime.now(timezone.utc).isoformat(timespec="seconds")
+            redis.hset('example_com_gakunin_groups', "updated_at", updated_at)
+            redis.hset('example_com_gakunin_groups', "groups", ','.join(cache_roles))
             mock_role1 = MagicMock()
             mock_role1.name = 'role1'
             mock_role2 = MagicMock()
@@ -999,11 +1005,12 @@ def test_sync_shib_gakunin_map_groups_no_update_needed(app, client, group_info_r
 
 # .tox/c1/bin/pytest --cov=weko_accounts tests/test_api.py::test_sync_shib_gakunin_map_groups_key_error -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-accounts/.tox/c1/tmp
 def test_sync_shib_gakunin_map_groups_key_error(app, client):
-    with app.test_request_context('/sync', method='POST'):
-        with patch('weko_accounts.api.current_app.logger') as mock_logger:
-            with pytest.raises(KeyError):
-                sync_shib_gakunin_map_groups()
-            mock_logger.error.assert_called_once()
+    with app.test_request_context('/sync', method='POST'), \
+            patch('weko_accounts.api.create_fqdn_from_entity_id', side_effect=KeyError('WEKO_ACCOUNTS_IDP_ENTITY_ID is missing in config')), \
+            patch('weko_accounts.api.current_app.logger') as mock_logger:
+        with pytest.raises(KeyError):
+            sync_shib_gakunin_map_groups()
+        mock_logger.error.assert_called_once()
 
 # .tox/c1/bin/pytest --cov=weko_accounts tests/test_api.py::test_sync_shib_gakunin_map_groups_redis_connection_error -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-accounts/.tox/c1/tmp
 def test_sync_shib_gakunin_map_groups_redis_connection_error(app, client):

@@ -523,7 +523,15 @@ def sync_shib_gakunin_map_groups():
         # create Redis key
         redis_key = fqdn + suffix
         datastore = RedisConnection().connection(db=current_app.config['GROUP_INFO_REDIS_DB'])
-        map_group_list = set(id.decode('utf-8') for id in datastore.lrange(redis_key, 0, -1))
+        map_group_cache = datastore.hgetall(redis_key)
+        if not map_group_cache:
+            # key not found
+            return
+        map_group_list = {
+            group_id for group_id in
+            map_group_cache[b"groups"].decode("utf-8").split(",")
+            if group_id
+        }
 
         # get roles
         roles = Role.query.all()
@@ -533,13 +541,18 @@ def sync_shib_gakunin_map_groups():
             update_roles(map_group_list, roles)
     except KeyError as ke:
         current_app.logger.error(f"Missing key in request headers: {ke}")
+        traceback.print_exc()
         raise
     except redis.ConnectionError as rce:
         current_app.logger.error(f"Redis connection error: {rce}")
+        traceback.print_exc()
         raise
     except Exception as ex:
         current_app.logger.error(f"Unexpected error: {ex}")
+        traceback.print_exc()
         raise
+
+    return map_group_list
 
 
 def update_roles(map_group_list, roles, indices=[]):
