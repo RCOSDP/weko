@@ -5,10 +5,11 @@ import traceback
 
 from flask import current_app
 from invenio_db import db
+import properties
 from properties import property_config
 from register_properties import del_properties, get_properties_id, register_properties_from_folder
 from tools import updateRestrictedRecords, update_weko_links
-
+from fix_metadata_53602 import main as fix_metadata_53602_main
 from invenio_files_rest.models import (
     timestamp_before_update as ifr_timestamp_before_update,
     Timestamp as ifr_Timestamp
@@ -22,6 +23,8 @@ from invenio_records.models import (
     Timestamp as ir_Timestamp
 )
 from weko_records.api import ItemTypes
+from fix_issue_47128_newbuild import main as fix_issue_47128_newbuild_main
+from update_itemtype_multiple import main as update_itemtype_multiple_main
 from weko_records.models import (
     ItemTypeName, ItemType,
     timestamp_before_update as weko_timestamp_before_update,
@@ -56,23 +59,30 @@ def main(restricted_item_type_id, start_time, batch_size=500):
             h.setFormatter(formatter)
 
     try:
+        get_update_item_info_W2025_29_sql() # SQLベースの処理で更新されたID一覧を取得
         current_app.logger.info("run updateRestrictedRecords")
-        updateRestrictedRecords.main(restricted_item_type_id, batch_size=batch_size)
+        updateRestrictedRecords.main(restricted_item_type_id, batch_size=batch_size) # 制限公開用のアイテムタイプ変更。全アイテムの代理投稿者変更
         current_time = show_exec_time(start_time, "update_restricted_records")
-        register_properties_only_specified()
+        register_properties_only_specified() # propertiesディレクトリ以下にしたがってプロパティの更新
         current_time = show_exec_time(current_time, "register_properties_only_specified")
-        renew_all_item_types()
+        renew_all_item_types() # 更新されたプロパティを使用してアイテムタイプの更新
         current_time = show_exec_time(current_time, "renew_all_item_types")
         update_weko_links.main(batch_size=batch_size)
         current_time = show_exec_time(current_time, "update_weko_links")
         current_app.logger.info("run update_feedback_mail_list_to_db")
-        update_feedback_mail_list_to_db.main()
+        update_feedback_mail_list_to_db.main() # 著者DBのweko idの変更。それに伴うメタデータの変更
         current_time = show_exec_time(current_time, "update_feedback_mail_list_to_db")
+        update_itemtype_multiple_main()# Multipleという名前のアイテムタイプを修正（アイテムの変更なし)
+        current_time = show_exec_time(current_time, "update_itemtype_multiple_main")
+        fix_issue_47128_newbuild_main() # harvesting_type=Trueかつitemtype_id=12の修正＋アイテムの修正
+        current_time = show_exec_time(current_time, "fix_issue_47128_newbuild_main")
+        fix_metadata_53602_main() # プロパティ変更を全アイテムのメタデータに適用
+        current_time = show_exec_time(current_time, "fix_metadata_53602_main")
         add_peer_reviewed_to_version_type_property.main()
         current_time = show_exec_time(current_time, "add_peer_reviewed_to_version_type_property")
         current_app.logger.info("All updates completed successfully.")
     except Exception as ex:
-        current_app.logger.error(ex)
+        import traceback
         current_app.logger.error(traceback.format_exc())
         db.session.rollback()
 
@@ -92,23 +102,42 @@ def register_properties_only_specified():
         current_app.logger.error(traceback.format_exc())
         db.session.rollback()
 
+def get_properties_mapping():
+    mapping = {}
+    for i in dir(properties):
+        prop = getattr(properties, i)
+        if getattr(prop, 'property_id', None) and prop.property_id:
+            mapping[int(prop.property_id)] = prop.mapping
+    return mapping
 
 def renew_all_item_types():
     try:
+        fix_ids = []
         current_app.logger.info("Start renew_all_item_types")
         query = db.session.query(ItemType.id).statement
         results = db.engine.execution_options(stream_results=True).execute(query)
         item_type_ids = [r[0] for r in results]
         current_app.logger.info("target item_type count: " + str(len(item_type_ids)))
-        
+        mapping = get_properties_mapping()
         for item_type_id in item_type_ids:
-            ret = ItemTypes.reload(item_type_id)
+            ret = ItemTypes.reload(item_type_id, mapping)
             if ret.get("code") != 0:
                 current_app.logger.error("Failed to renew item_type_id:{}".format(item_type_id))
                 current_app.logger.error(ret.get("msg"))
                 continue
-            current_app.logger.info("renew itemtype id:{}".format(item_type_id))
+            # current_app.logger.info("renew itemtype id:{}".format(item_type_id))
+            is_fix_mapping = False
+            if "mapping" in ret.get("msg",""):
+                is_fix_mapping = True
+            else:
+                is_fix_mapping = False
+            fix_ids.append((item_type_id, is_fix_mapping))
         db.session.commit()
+
+        for (itemtype_id, is_fix_mapping) in fix_ids:
+            current_app.logger.info(f"[FIX] item_type:{itemtype_id}")
+            if is_fix_mapping:
+                current_app.logger.info(f"[FIX] item_type_mapping:{itemtype_id}(item_type_id)")
         current_app.logger.info("End renew_all_item_types")
     except Exception as ex:
         current_app.logger.error(ex)
@@ -134,6 +163,36 @@ def show_exec_time(start_time, process_name):
     )
     return end_time
 
+def get_update_item_info_W2025_29_sql():
+    """Retrieve a list of IDs that are updated by SQL-based processes.
+
+    Some update operations in this script are performed directly via SQL.
+    This function is intended to obtain the list of IDs affected by those SQL updates.
+    """
+    from sqlalchemy import text
+    # Get data containing owner in json column from records_metadata
+    r_query = text("""
+        SELECT id
+        FROM records_metadata
+        WHERE json::text LIKE '%"owner"%'
+    """)
+    r_result = db.engine.execute(r_query)
+    r_ids = [row[0] for row in r_result]
+    for id in r_ids:
+        current_app.logger.info(f"[FIX] records_metadata:{id}")
+    # Get all data in item_metadata (no conditions)
+    i_query = text("""
+        SELECT id
+        FROM item_metadata
+    """)
+
+    i_result = db.engine.execute(i_query)
+    i_ids = [row[0] for row in i_result]
+
+    for id in i_ids:
+        current_app.logger.info(f"[FIX] item_metadata:{id}")
+
+
 
 if __name__ == "__main__":
     # Log start time
@@ -154,7 +213,7 @@ if __name__ == "__main__":
             batch_size = int(args[2])
             main(restricted_item_type_id, start_time, batch_size=batch_size)
         else:
-            print("Please provide restricted_item_type_id as an argument.")
+            current_app.logger.info("Please provide restricted_item_type_id as an argument.")
             sys.exit(1)
     finally:
         db.event.listen(

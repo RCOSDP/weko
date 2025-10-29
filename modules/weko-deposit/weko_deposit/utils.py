@@ -21,8 +21,7 @@
 import traceback
 from sqlalchemy.orm.exc import NoResultFound
 from flask import current_app
-from .tasks import (extract_pdf_and_update_file_contents,
-                    extract_pdf_and_update_file_contents_with_index_api)
+from .tasks import extract_pdf_and_update_file_contents
 from .api import WekoDeposit
 import pypdfium2
 import os
@@ -35,8 +34,13 @@ def update_pdf_contents_es(record_ids):
     """
     deposits = WekoDeposit.get_records(record_ids)
     for dep in deposits:
-        file_infos = dep.get_pdf_info()
-        extract_pdf_and_update_file_contents.apply_async((file_infos, str(dep.id)))
+        try:
+            file_infos = dep.get_pdf_info()
+            extract_pdf_and_update_file_contents.apply_async((
+                file_infos, str(dep.id)))
+        except NoResultFound:
+            current_app.logger.error(f"Record with UUID: {dep.id} was not found in the item_metadata table.")
+            traceback.print_exc()
 
 def extract_text_from_pdf(filepath, max_size):
     """Read PDF file and extract text.
@@ -104,20 +108,3 @@ def extract_text_with_tika(filepath, max_size):
         data = encoded[:max_size].decode('utf-8', errors='ignore')
 
     return data
-
-
-
-def update_pdf_contents_es_with_index_api(record_ids):
-    """register the contents of the record PDF file in elasticsearch
-    Args:
-        record_ids (list): List of record uuids
-    """
-    deposits = WekoDeposit.get_records(record_ids)
-    for dep in deposits:
-        try:
-            file_infos = dep.get_pdf_info_reindex_command()
-            extract_pdf_and_update_file_contents_with_index_api.apply_async((
-                file_infos, str(dep.id)))
-        except NoResultFound:
-            current_app.logger.error(f"Record with UUID: {dep.id} was not found in the item_metadata table.")
-            traceback.print_exc()

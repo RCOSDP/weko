@@ -16,6 +16,7 @@ from weko_deposit.api import WekoRecord
 from werkzeug.datastructures import FileStorage
 from werkzeug.exceptions import NotFound, Forbidden
 from jinja2.exceptions import TemplatesNotFound
+from weko_index_tree.models import IndexStyle
 from weko_workflow.models import (
     WorkFlow,
 )
@@ -496,7 +497,7 @@ def test_get_workflow_detail(app,workflows):
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_default_view_method -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
 #     """Display default view.
 #     def _get_rights_title(result, rights_key, rights_values, current_lang, meta_options):
-def test_default_view_method(app, records, itemtypes, indexstyle, users):
+def test_default_view_method(app, records, itemtypes, indexstyle, users, db):
     indexer, results = records
     record = results[0]["record"]
     recid = results[0]["recid"]
@@ -691,6 +692,35 @@ def test_default_view_method(app, records, itemtypes, indexstyle, users):
                             with patch('weko_records_ui.views.AdminSettings.get'
                                     , side_effect=lambda name , dict_to_object : {'password_enable' : True,"terms_and_conditions":""} if name == 'restricted_access' else None):
                                 assert default_view_method(recid, record ,'helloworld.pdf').status_code == 200
+
+                            with patch('weko_records_ui.views.get_index_link_list', return_value=[(11, 'TEST INDEX')]):
+                                style = db.session.query(IndexStyle).filter_by(id=app.config['WEKO_INDEX_TREE_STYLE_OPTIONS']['id']).first()
+                                db.session.delete(style)
+                                db.session.commit()
+                                assert default_view_method(recid, record ,'helloworld.pdf').status_code == 200
+                                with patch('weko_records_ui.views.render_template') as mock_render_template:
+                                    default_view_method(recid, record ,'helloworld.pdf')
+                                    kwargs = mock_render_template.call_args.kwargs
+                                    assert kwargs['width'] == '3'
+                                    assert kwargs['height'] == ''
+                                    assert not kwargs['index_link_enabled']
+
+                                index_style = MagicMock()
+                                index_style.index_link_enabled = False
+                                with patch('weko_records_ui.views.IndexStyle.get', return_value=index_style):
+                                    assert default_view_method(recid, record ,'helloworld.pdf').status_code == 200
+                                with patch('weko_records_ui.views.render_template') as mock_render_template:
+                                    default_view_method(recid, record ,'helloworld.pdf')
+                                    kwargs = mock_render_template.call_args.kwargs
+                                    assert not kwargs['index_link_list']
+
+                                index_style.index_link_enabled = True
+                                with patch('weko_records_ui.views.IndexStyle.get', return_value=index_style):
+                                    assert default_view_method(recid, record ,'helloworld.pdf').status_code == 200
+                                    with patch('weko_records_ui.views.render_template') as mock_render_template:
+                                        default_view_method(recid, record ,'helloworld.pdf')
+                                        kwargs = mock_render_template.call_args.kwargs
+                                        assert kwargs['index_link_list']
 
 
 # def default_view_method(pid, record, filename=None, template=None, **kwargs):
@@ -1226,7 +1256,7 @@ def test_soft_delete_acl_guest(client, records):
 @pytest.mark.parametrize(
     "id, status_code",
     [
-        (0, 500), # contributor
+        (0, 200), # contributor
         (1, 200), # repoadmin
         (2, 200), # sysadmin
         (3, 200), # comadmin
@@ -1236,7 +1266,7 @@ def test_soft_delete_acl_guest(client, records):
         (7, 200), # user
     ],
 )
-def test_soft_delete_acl(client, records, users, id, status_code):
+def test_soft_delete_acl(client, records, users, id, status_code, communities2):
     with patch("flask_login.utils._get_user", return_value=users[id]["obj"]):
         url = url_for(
             "weko_records_ui.soft_delete", recid=1, _external=True

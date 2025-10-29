@@ -1,13 +1,17 @@
-name: Unit Tests (Docker Matrix)
+name: Unit Tests (Smart Image Build)
 
 on: [push, pull_request]
 
+env:
+  IMAGE_TAG: ghcr.io/rcosdp/weko:${{ github.sha }}
+
 jobs:
   test:
-    name: Test ${{ matrix.module }} in Docker Compose
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
     strategy:
       fail-fast: false
+      max-parallel: 4
       matrix:
         module:
           - invenio-accounts
@@ -56,45 +60,89 @@ jobs:
           - weko-workflow
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+    - name: Checkout code
+      uses: actions/checkout@v4
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
 
-      - name: Ensure docker compose v2
-        run: |
-          docker compose version || {
-            DOCKER_CONFIG=${DOCKER_CONFIG:-$HOME/.docker}
-            mkdir -p $DOCKER_CONFIG/cli-plugins
-            curl -SL https://github.com/docker/compose/releases/latest/download/docker-compose-linux-x86_64 \
-              -o $DOCKER_CONFIG/cli-plugins/docker-compose
-            chmod +x $DOCKER_CONFIG/cli-plugins/docker-compose
-            docker compose version
-          }
+    - name: Install system dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y docker-compose fonts-noto-cjk fonts-noto-color-emoji
 
-      - name: Build containers
-        run: docker compose build
+    - name: Change owner
+      run: sudo chown -R 1000:1000 ./modules 
+        
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
 
-      - name: Start containers
-        run: docker compose up -d
+    - name: Cache Docker layers
+      uses: actions/cache@v3
+      with:
+        path: /tmp/.buildx-cache
+        key: ${{ runner.os }}-buildx-${{ github.sha }}
+        restore-keys: |
+          ${{ runner.os }}-buildx-
+    - name: Start WEKO containers
+      run: |
+        chmod +x install.sh
+        ./install.sh
+      env:
+        DOCKER_BUILDKIT: 1
+        COMPOSE_DOCKER_CLI_BUILD: 1
 
-      - name: Wait for services to be healthy
-        run: |
-          sleep 15  # 必要に応じて待機時間を調整
+    - name: Wait for services to be ready
+      run: |
+        echo "Waiting for WEKO services to start..."
+        start_time=$(date +%s)
+        max_attempts=60
+        attempt=0
+        while [ $attempt -lt $max_attempts ]; do
+          attempt=$((attempt + 1))
+          current_time=$(date +%s)
+          elapsed=$((current_time - start_time))
+          echo "Attempt $attempt/$max_attempts (${elapsed}s elapsed): Checking WEKO availability..."
+          # Check if we can connect to the service
+          if curl -f -s --insecure https://localhost/ > /dev/null 2>&1; then
+            echo "✓ WEKO is ready! (took ${elapsed}s)"
+            exit 0
+          else
+            # Get HTTP response code for debugging
+            http_code=$(curl -s -o /dev/null -w "%{http_code}" --insecure https://localhost/ 2>/dev/null || echo "connection_failed")
+            echo "  ✗ HTTP response: $http_code"
+          fi
+          if [ $attempt -lt $max_attempts ]; then
+            echo "  → Retrying in 5 seconds..."
+            sleep 5
+          fi
+        done
+        echo ""
+        echo "❌ WEKO failed to start within 300 seconds"
+        echo "Final HTTP response: $(curl -s -o /dev/null -w "%{http_code}" --insecure https://localhost/ 2>/dev/null || echo "connection_failed")"
+        echo ""
+        echo "Container status:"
+        docker compose -f docker-compose2.yml ps
+        exit 1
 
-      - name: Install test dependencies in container
-        run: |
-          docker compose exec -T web bash -c "pip install --upgrade pip && pip install tox tox-setuptools-version pytest-timeout"
+    - name: Install test dependencies
+      run: |
+          docker compose -f docker-compose2.yml exec -T web bash -c "pip install --upgrade pip && pip install tox tox-setuptools-version pytest-timeout"
 
-      - name: Run tox in module
-        run: |
-          docker compose exec -T web bash -c "cd modules/${{ matrix.module }} && tox"
+    - name: Run tox in ${{ matrix.module }}
+      run: |
+          docker compose -f docker-compose2.yml exec -T web bash -c "cd modules/${{ matrix.module }} && tox"
 
-      - name: Show logs (for debug)
-        if: failure()
-        run: docker compose logs
+    - name: Show logs if failed
+      if: failure()
+      run: docker compose -f docker-compose2.yml logs
 
-      - name: Stop and remove containers
-        if: always()
-        run: docker compose down
+    - name: Stop containers
+      if: always()
+      run: |
+        docker compose -f docker-compose2.yml down -v
+        docker system prune -f
+      
+      
