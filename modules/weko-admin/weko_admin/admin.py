@@ -1683,12 +1683,8 @@ class SwordAPIJsonldSettingsView(ModelView):
             form = FlaskForm(request.form)
 
             # GET current user oauth clients
-            list_cur_user_client = [
-                client
-                for client in Client.query.all()
-                # exclude personal clients
-                if not client.is_internal
-            ]
+            # exclude personal clients
+            list_cur_user_client = Client.query.filter_by(is_internal=False).all()
             list_sword_clients = SwordClient.get_client_id_all()
             # exclude already registered clients
             client_list = [
