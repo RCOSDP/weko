@@ -711,7 +711,66 @@ def test_EmailProfileForm(app):
             assert "username" in form.data
             assert "university" not in form.data
             assert "phoneNumber" not in form.data
+        
+        current_app.config.update(WEKO_USERPROFILES_CUSTOMIZE_ENABLED = True)
+        #AdminSettings.get=True
+        with patch('weko_admin.models.AdminSettings.get',
+                   return_value={"item3": {"order": 7, "visible": True, "label_name": "所属学会名", "format": "text"},
+                                 "item6": {"order": 10, "visible": False, "label_name": "所属学会役職", "format": "select"}}):
+            form = EmailProfileForm(
+                    formdata=None,
+                    username="test",
+                    fullname="test user",
+                    timezone="Etc/GMT-9",
+                    language="ja",
+                    email="test@test.org",
+                    email_repeat="test@test.org",
+                    university="test university",
+                    department="test department",
+                    position="test position",
+                    item1="test other position",
+                    item2="1234567",
+                    item3="test institute",
+                    item4="test institute position",
+                    item5="test institute2",
+                    item6="test institute position2",
+                    item7="",
+                    item8="",
+                    item9="",
+                    item10="",
+                    item11="",
+                    item12=""
+                )
+            assert "item3" in form.data
+            assert "item6" not in form.data
 
+        #university:visible == True
+        form = EmailProfileForm(
+                formdata=None,
+                username="test",
+                fullname="test user",
+                timezone="Etc/GMT-9",
+                language="ja",
+                email="test@test.org",
+                email_repeat="test@test.org",
+                university="test university",
+                department="test department",
+                position="test position",
+                item1="test other position",
+                item2="1234567",
+                item3="test institute",
+                item4="test institute position",
+                item5="test institute2",
+                item6="test institute position2",
+                item7="",
+                item8="",
+                item9="",
+                item10="",
+                item11="",
+                item12=""
+            )
+        assert "university" in form.data
+        assert "item1" not in form.data
 
 #class VerificationForm(FlaskForm):
 # .tox/c1/bin/pytest --cov=weko_user_profiles tests/test_forms.py::test_verificationForm -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-user-profiles/.tox/c1/tmp
