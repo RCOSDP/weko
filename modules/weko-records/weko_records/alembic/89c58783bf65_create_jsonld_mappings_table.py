@@ -102,6 +102,12 @@ def upgrade():
         ["end_transaction_id"],
         unique=False,
     )
+    op.create_index(
+        op.f("ix_jsonld_mappings_version_item_type_id"),
+        "jsonld_mappings_version",
+        ["item_type_id"],
+        unique=False,
+    )
 
 
 def downgrade():
