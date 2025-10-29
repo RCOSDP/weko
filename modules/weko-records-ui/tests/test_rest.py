@@ -137,7 +137,7 @@ def test_NeedRestrictedAccess_get_v1(app, client, db, make_record_need_restricte
     headers_user = oauth_headers[2]         # OAuth token : user
     headers_not_login = oauth_headers[3]    # No OAuth token : not login
     current_app.config.update(WEKO_ADMIN_RESTRICTED_ACCESS_DISPLAY_FLAG = True)
-    
+
     # Invalid version : 400 error
     pid_value = 11
     res = client.get(
@@ -209,25 +209,23 @@ def test_NeedRestrictedAccess_get_v1(app, client, db, make_record_need_restricte
     onetime_download = make_record_need_restricted_access['FileOnetimeDownload']['13']
     # find_downloadable_only function can not execute on test.
     with patch('weko_records_ui.models.FileOnetimeDownload.find_downloadable_only', return_value=[onetime_download]):
-        with patch('weko_records_ui.utils.check_file_download_permission',return_value=True):
-            res = client.get(
-                f'/{version}/records/{pid_value}/need-restricted-access',
-                headers=headers_contributor,
-            )
-        res_data = json.loads(res.get_data())
-        assert res.status_code == 200
-        assert res_data[0]['need_restricted_access'] == False
-
-    # Restricted access is not approval : result is True
-    pid_value = 14
-    with patch('weko_records_ui.utils.check_file_download_permission',return_value=True):
         res = client.get(
             f'/{version}/records/{pid_value}/need-restricted-access',
             headers=headers_contributor,
         )
-        res_data = json.loads(res.get_data())
-        assert res.status_code == 200
-        assert res_data[0]['need_restricted_access'] == True
+    res_data = json.loads(res.get_data())
+    assert res.status_code == 200
+    assert res_data[0]['need_restricted_access'] == False
+
+    # Restricted access is not approval : result is True
+    pid_value = 14
+    res = client.get(
+        f'/{version}/records/{pid_value}/need-restricted-access',
+        headers=headers_contributor,
+    )
+    res_data = json.loads(res.get_data())
+    assert res.status_code == 200
+    assert res_data[0]['need_restricted_access'] == True
 
     # Restricted access is not applied : result is True
     pid_value = 15
