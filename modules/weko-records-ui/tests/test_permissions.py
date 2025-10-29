@@ -331,6 +331,11 @@ def test_check_content_clickable(app, records, users,db_file_permission):
             assert check_content_clickable(record, fjson) == False
 
             fjson['accessrole'] = 'open_restricted'
+            assert check_content_clickable(record, fjson) == False
+
+            current_app.config.update(WEKO_ADMIN_RESTRICTED_ACCESS_DISPLAY_FLAG = True)
+
+            fjson['accessrole'] = 'open_restricted'
             assert check_content_clickable(record, fjson) == True
 
         with patch("weko_records_ui.permissions.check_open_restricted_permission", return_value=True):
@@ -900,6 +905,7 @@ def test_check_created_id(app, users, index, status):
     #login("contributor@test.org")
     with app.test_request_context(headers=[("Accept-Language", "en")]):
         with app.test_client() as client:
+            app.config["WEKO_ITEMS_UI_PROXY_POSTING"] = True
             login_user(users[0]["obj"])
             # contributor user
             assert current_user.is_authenticated == True

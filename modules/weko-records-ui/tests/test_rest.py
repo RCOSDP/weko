@@ -136,6 +136,7 @@ def test_NeedRestrictedAccess_get_v1(app, client, db, make_record_need_restricte
     headers_contributor = oauth_headers[1]  # OAuth token : contributor
     headers_user = oauth_headers[2]         # OAuth token : user
     headers_not_login = oauth_headers[3]    # No OAuth token : not login
+    current_app.config.update(WEKO_ADMIN_RESTRICTED_ACCESS_DISPLAY_FLAG = True)
 
     # Invalid version : 400 error
     pid_value = 11
