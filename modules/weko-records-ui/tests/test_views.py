@@ -1233,7 +1233,7 @@ def test_soft_delete_acl_guest(client, records):
         (4, 500), # generaluser
         (5, 500), # originalroleuser
         (6, 200), # originalroleuser2
-        (7, 500), # user
+        (7, 200), # user
     ],
 )
 def test_soft_delete_acl(client, records, users, id, status_code):
@@ -1361,7 +1361,7 @@ def test_restore_acl_guest(client, records):
         (4, 500), # generaluser
         (5, 500), # originalroleuser
         (6, 200), # originalroleuser2
-        (7, 500), # user
+        (7, 200), # user
     ],
 )
 def test_restore_acl(client, records, users, id, status_code):

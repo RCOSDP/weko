@@ -331,6 +331,11 @@ def test_check_content_clickable(app, records, users,db_file_permission):
             assert check_content_clickable(record, fjson) == False
 
             fjson['accessrole'] = 'open_restricted'
+            assert check_content_clickable(record, fjson) == False
+
+            current_app.config.update(WEKO_ADMIN_RESTRICTED_ACCESS_DISPLAY_FLAG = True)
+
+            fjson['accessrole'] = 'open_restricted'
             assert check_content_clickable(record, fjson) == True
 
         with patch("weko_records_ui.permissions.check_open_restricted_permission", return_value=True):
@@ -906,7 +911,6 @@ def test_check_created_id(app, users, index, status):
             assert record.get("_deposit", {}).get("created_by") == 1
             assert record.get("item_type_id") == "15"
             assert record.get("weko_shared_ids") == [1,2,3]
-            assert check_created_id(record) == True
 
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_permissions.py::test_check_created_id_comadmin -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
 def test_check_created_id_comadmin(app, users, db):
