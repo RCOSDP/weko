@@ -1769,6 +1769,7 @@ def update_restricted_access(restricted_access: dict):
 
     :param restricted_access:
     """
+    from weko_workflow.utils import reset_flow_action_roles_restricted_access
     def parse_secret_URL_file_download():
         if secret_URL_file_download.get('secret_expiration_date_unlimited_chk'):
             secret_URL_file_download['secret_expiration_date'] = config.WEKO_ADMIN_RESTRICTED_ACCESS_MAX_INTEGER
@@ -1859,6 +1860,9 @@ def update_restricted_access(restricted_access: dict):
         parse_usage_report_wf_access()
 
     AdminSettings.update('restricted_access', restricted_access)
+
+    if not restricted_access.get('edit_mail_templates_enable'):
+        reset_flow_action_roles_restricted_access()
 
     return True
 

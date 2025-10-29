@@ -440,6 +440,10 @@ $(document).ready(function () {
         $('#tb_action_list .action_order').each(function (index) {
           action_order++;
         });
+        if($('#use_restricted_item')[0].getAttribute("use_restricted_item") === 'False'){
+          new_row = new_row.replaceAll('specify-property-option', 'hide');
+          new_row = new_row.replaceAll('item-registrant-option', 'hide');
+        }
         if($('#display_request_form')[0].getAttribute("display_request_form") === 'False'){
           new_row = new_row.replaceAll('request-mail-option', 'hide');
         }
