@@ -42,6 +42,7 @@ from invenio_db import InvenioDB
 from invenio_db import db as db_
 from invenio_communities.models import Community
 
+from weko_admin.models import AdminSettings
 from weko_index_tree.models import Index
 from weko_notifications import WekoNotifications
 
@@ -50,7 +51,7 @@ from weko_user_profiles.views import blueprint_ui_init,blueprint_api_init
 from weko_user_profiles.views import blueprint as blueprint_profile
 from weko_user_profiles.models import UserProfile
 from weko_user_profiles.config import USERPROFILES_LANGUAGE_DEFAULT, \
-    USERPROFILES_TIMEZONE_DEFAULT
+    USERPROFILES_TIMEZONE_DEFAULT, WEKO_USERPROFILES_DEFAULT_FIELDS_SETTINGS
 from weko_user_profiles.admin import user_profile_adminview
 
 
@@ -433,3 +434,14 @@ def setup_data(db):
     db.session.add(profile_get_info)
     db.session.commit()
     return[profile_get_info]
+
+@pytest.fixture()
+def db_admin_setting(db):
+    with db.session.begin_nested():
+        setting = AdminSettings(
+            name="profiles_items_settings",
+            settings=WEKO_USERPROFILES_DEFAULT_FIELDS_SETTINGS
+        )
+        db.session.add(setting)
+    db.session.commit()
+    return setting
