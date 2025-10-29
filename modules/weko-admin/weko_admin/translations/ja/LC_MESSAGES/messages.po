@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: weko-admin 0.1.0.dev20170000\n"
 "Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
-"POT-Creation-Date: 2025-10-15 13:53+0900\n"
+"POT-Creation-Date: 2025-10-20 18:37+0900\n"
 "PO-Revision-Date: 2025-04-24 10:54+0900\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ja\n"
@@ -782,7 +782,7 @@ msgstr "ようこそ"
 #: weko_admin/templates/weko_admin/admin/log_analysis_settings.html:192
 #: weko_admin/templates/weko_admin/admin/ranking_settings.html:147
 #: weko_admin/templates/weko_admin/admin/report.html:239
-#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:61
+#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:62
 #: weko_admin/templates/weko_admin/admin/search_management_settings.html:442
 #: weko_admin/templates/weko_admin/admin/search_management_settings.html:479
 #: weko_admin/templates/weko_admin/admin/search_management_settings.html:589
@@ -964,7 +964,7 @@ msgid "Delete"
 msgstr "削除"
 
 #: weko_admin/templates/weko_admin/admin/facet_search_setting.html:80
-#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:83
+#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:85
 #: weko_admin/templates/weko_admin/admin/search_management_settings.html:568
 msgid "Add"
 msgstr "追加"
@@ -1060,7 +1060,7 @@ msgstr "再送信"
 #: weko_admin/templates/weko_admin/admin/jsonld_mapping_settings.html:173
 #: weko_admin/templates/weko_admin/admin/log_analysis_settings.html:196
 #: weko_admin/templates/weko_admin/admin/report.html:288
-#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:96
+#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:98
 #: weko_admin/templates/weko_admin/admin/sword_api_jsonld_settings.html:264
 msgid "Close"
 msgstr "閉じる"
@@ -1356,7 +1356,7 @@ msgid "Are you sure you want to save changes?"
 msgstr "変更してもよろしいですか？"
 
 #: weko_admin/templates/weko_admin/admin/report.html:270
-#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:97
+#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:99
 msgid "Send Mail"
 msgstr "メール送信"
 
@@ -1369,6 +1369,7 @@ msgid "Could not download file."
 msgstr "ファイルをダウンロードできませんでした"
 
 #: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:45
+#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:50
 msgid "Download Limit"
 msgstr "ダウンロード回数"
 
@@ -1377,147 +1378,158 @@ msgid "Expiration Date"
 msgstr "有効期限日数"
 
 #: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:47
-msgid "Max Download Limit"
-msgstr "ダウンロード回数上限"
-
-#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:48
-msgid "Max Expiration Date"
-msgstr "有効期限日数上限"
-
-#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:49
-msgid "Expiration Date Initial Value"
-msgstr "ダウンロード回数初期値"
-
-#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:50
-msgid "Download Limit Initial Value"
-msgstr "有効期限日数初期値"
-
-#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:51
 msgid "restricted_error_message"
 msgstr "エラーメッセージ"
 
-#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:53
+#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:49
 msgid "Content File Download"
 msgstr "コンテンツファイルのダウンロード"
 
-#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:60
+#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:52
 msgid "Unlimited"
 msgstr "無制限"
 
-#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:62
+#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:54
+msgid "Max Download Limit"
+msgstr "ダウンロード回数 上限"
+
+#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:55
+msgid "Max Expiration Date"
+msgstr "有効期限日数 上限"
+
+#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:56
+msgid "Download Limit Initial Value"
+msgstr "ダウンロード回数 初期値"
+
+#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:57
+msgid "Expiration Date Initial Value"
+msgstr "有効期限日数 初期値"
+
+#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:60
+msgid "the allowed maximum"
+msgstr "上限値"
+
+#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:63
 msgid "Usage Report Workflow Access"
 msgstr "利用報告ワークフローへのアクセス"
 
-#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:64
-#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:66
-#, python-format
-msgid "Must set a positive integer and less than %(name1)s for %(name2)s."
-msgstr "%(name2)sは1以上の整数かつ%(name1)s以下の値を設定する必要があります。"
-
+#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:65
 #: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:67
+#, python-format
+msgid "Must set a positive integer for %(name)s."
+msgstr "%(name)sは1以上の整数を設定する必要があります。"
+
 #: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:68
 #: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:69
-#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:70
-#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:85
+#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:71
+#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:87
 #, python-format
 msgid "Please set %(name)s."
 msgstr "%(name)sを設定してください。"
 
 #: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:72
+#, python-format
+msgid ""
+"%(label_name)s value is out of range. Please set an integer value between"
+" %(min)s and %(max)s."
+msgstr "%(label_name)sが範囲外の値です。"
+"%(min)s以上かつ%(max)s以下の整数値を指定してください。"
+
+#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:74
 msgid "password check function"
 msgstr "非ログインユーザーのDLにおけるパスワードチェック機能"
 
-#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:73
+#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:75
 msgid "application for use of items without content"
 msgstr "コンテンツ未登録アイテムの利用申請"
 
-#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:74
+#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:76
 msgid "item types available for application"
 msgstr "コンテンツ未登録状態で利用申請可能なアイテムタイプ"
 
-#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:75
+#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:77
 msgid "item type not available for use application"
 msgstr "コンテンツ未登録状態で利用申請不可能なアイテムタイプ"
 
-#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:76
+#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:78
 msgid "file preview in approval actions"
 msgstr "承認アクションにおけるファイルプレビュー"
 
-#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:77
+#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:79
 msgid "edit mail templates"
 msgstr "メールテンプレート編集"
 
-#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:78
+#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:80
 msgid "display request form"
 msgstr "リクエストフォーム"
 
-#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:80
+#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:82
 #: weko_admin/templates/weko_admin/admin/search_management_settings.html:464
 #: weko_admin/templates/weko_admin/admin/search_management_settings.html:471
 msgid "English"
 msgstr ""
 
-#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:81
+#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:83
 #: weko_admin/templates/weko_admin/admin/search_management_settings.html:465
 #: weko_admin/templates/weko_admin/admin/search_management_settings.html:472
 msgid "Japanese"
 msgstr "日本語"
 
-#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:82
+#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:84
 msgid "Terms and Conditions"
 msgstr ""
 
-#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:84
+#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:86
 msgid "Please input the Terms and Conditions in English."
 msgstr "英語の利用規約を入力してください。"
 
-#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:89
+#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:91
 msgid "Activity"
 msgstr ""
 
-#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:90
+#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:92
 msgid "Item"
 msgstr "アイテム"
 
-#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:91
+#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:93
 #: weko_admin/templates/weko_admin/admin/sword_api_jsonld_settings.html:135
 #: weko_admin/templates/weko_admin/admin/sword_api_settings.html:83
 msgid "WorkFlow"
 msgstr "ワークフロー"
 
-#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:92
+#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:94
 msgid "Status"
 msgstr "統計"
 
-#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:93
+#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:95
 msgid "User"
 msgstr "ユーザー"
 
-#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:94
+#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:96
 msgid "Usage Report Reminder Email"
 msgstr "利用報告督促メール"
 
-#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:95
+#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:97
 msgid "Confirm Usage Mail"
 msgstr "確認"
 
-#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:98
+#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:100
 msgid "Email is sent successfully."
 msgstr "メールを送信しました。"
 
-#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:99
+#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:101
 msgid "Failed to send mail."
 msgstr "メールの送信に失敗しました。"
 
-#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:100
+#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:102
 msgid "action_doing"
 msgstr ""
 
-#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:101
+#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:103
 msgid "Secret URL Download"
 msgstr "シークレットURLダウンロード"
 
-#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:102
+#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:104
 msgid "SecretURL Enabled"
 msgstr "機能有効化"
 
@@ -1993,4 +2005,10 @@ msgstr "現行"
 #: weko_admin/templates/weko_admin/settings/lifetime.html:59
 msgid "Update"
 msgstr "更新"
+
+#~ msgid ""
+#~ "(name1)s must be an integer greater "
+#~ "than or equal 1 and within the "
+#~ "allowed maximum."
+#~ msgstr "%(name1)sは1以上かつ上限値以内の整数で指定してください。"
 

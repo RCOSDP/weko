@@ -775,28 +775,47 @@ def test_WorkActivity_count_waiting_approval_by_workflow_id(app, db, db_register
 
 
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_api.py::test_WorkFlow_upt_workflow -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
-def test_WorkFlow_upt_workflow(app, db, workflow, logging_client):
-    w = workflow["workflow"]
-    _workflow = WorkFlow()
-    data = dict(flows_id=w.flows_id,
-                flows_name='test workflow01',
-                itemtype_id=1,
-                flow_id=1,
-                index_tree_id=None,
-                open_restricted=False,
-                location_id=None,
-                is_gakuninrdm=False,
-                repository_id='Root Index')
+def test_WorkFlow_upt_workflow(app, db, workflow, logging_client, users):
+    with app.test_request_context():
+        # System Administrator
+        login_user(users[2]["obj"])
+        w = workflow["workflow"]
+        _workflow = WorkFlow()
+        data = dict(flows_id=w.flows_id,
+                    flows_name='test workflow01',
+                    itemtype_id=1,
+                    flow_id=1,
+                    index_tree_id=None,
+                    open_restricted=False,
+                    location_id=None,
+                    is_gakuninrdm=False,
+                    repository_id='Root Index')
 
-    res = _workflow.upt_workflow(data)
-    for key in data:
-        assert getattr(res, key) == data[key]
+        res = _workflow.upt_workflow(data)
+        for key in data:
+            assert getattr(res, key) == data[key]
 
-    res = _workflow.upt_workflow({'flows_id': uuid.uuid4()})
-    assert res is None
+        # Repository Administrator
+        login_user(users[1]["obj"])
+        data = dict(flows_id=w.flows_id,
+                    flows_name='test workflow01',
+                    itemtype_id=1,
+                    flow_id=1,
+                    index_tree_id=None,
+                    open_restricted=True,
+                    location_id=None,
+                    is_gakuninrdm=False,
+                    repository_id='Root Index')
+        res = _workflow.upt_workflow(data)
+        data["open_restricted"] = False  # cannot update open_restricted
+        for key in data:
+            assert getattr(res, key) == data[key]
 
-    with pytest.raises(AssertionError):
-        _workflow.upt_workflow(None)
+        res = _workflow.upt_workflow({'flows_id': uuid.uuid4()})
+        assert res is None
+
+        with pytest.raises(AssertionError):
+            _workflow.upt_workflow(None)
 
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_api.py::test_WorkFlow_get_workflow_list -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_WorkFlow_get_workflow_list(app, db, workflow, users):
@@ -2253,13 +2272,21 @@ def test_get_non_extract_files(app, mocker):
     assert result == []
 
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_api.py::test_UpdateItem_publish -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
-def test_UpdateItem_publish(app, db_records):
+def test_UpdateItem_publish(app, db_records, mocker):
+    mock_update_es_data = mocker.patch("weko_deposit.api.WekoIndexer.update_es_data")
+
     updated_item = UpdateItem()
     dep = db_records[0][6]
     updated_item.publish(dep, PublishStatus.PRIVATE.value)
     assert dep.get('publish_status') == PublishStatus.PRIVATE.value
+    mock_update_es_data.assert_called_once_with(
+        dep, update_revision=False, field="publish_status")
+
+    mock_update_es_data.reset_mock()
     updated_item.publish(dep, PublishStatus.PUBLIC.value)
     assert dep.get('publish_status') == PublishStatus.PUBLIC.value
+    mock_update_es_data.assert_called_once_with(
+        dep, update_revision=False, field="publish_status")
 
 # def query_activities_by_tab_is_wait(query)
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_api.py::test_query_activities_by_tab_is_wait -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp

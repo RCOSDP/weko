@@ -449,6 +449,13 @@ class EmailProfileForm(ProfileForm):
         """
         super().__init__(*args, **kwargs)
         form_column = current_app.config['WEKO_USERPROFILES_FORM_COLUMN']
+        if current_app.config.get("WEKO_USERPROFILES_CUSTOMIZE_ENABLED", False):
+            profile_setting = AdminSettings.get("profiles_items_settings", dict_to_object=False)
+            if profile_setting is None:
+                profile_setting = current_app.config.get("WEKO_USERPROFILES_DEFAULT_FIELDS_SETTINGS", {})
+            for key, value in profile_setting.items():
+                if value.get('visible', False):
+                    form_column.append(key)
         disable_column_lst = list()
         if isinstance(form_column, list):
             for key in kwargs:

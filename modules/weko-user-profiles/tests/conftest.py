@@ -42,6 +42,7 @@ from invenio_db import InvenioDB
 from invenio_db import db as db_
 from invenio_communities.models import Community
 
+from weko_admin.models import AdminSettings
 from weko_index_tree.models import Index
 from weko_notifications import WekoNotifications
 
@@ -50,7 +51,7 @@ from weko_user_profiles.views import blueprint_ui_init,blueprint_api_init
 from weko_user_profiles.views import blueprint as blueprint_profile
 from weko_user_profiles.models import UserProfile
 from weko_user_profiles.config import USERPROFILES_LANGUAGE_DEFAULT, \
-    USERPROFILES_TIMEZONE_DEFAULT
+    USERPROFILES_TIMEZONE_DEFAULT, WEKO_USERPROFILES_DEFAULT_FIELDS_SETTINGS
 from weko_user_profiles.admin import user_profile_adminview
 
 
@@ -81,6 +82,25 @@ def base_app(instance_path):
         WEKO_ADMIN_PROFILE_SETTING_TEMPLATE = 'weko_admin/admin/profiles_settings.html',
         TESTING=True,
         WTF_CSRF_ENABLED=False,
+        WEKO_USERPROFILES_CUSTOMIZE_ENABLED=False,
+        WEKO_USERPROFILES_DEFAULT_FIELDS_SETTINGS = {
+            "fullname": {"order": 1, "visible": False, "label_name": "氏名", "format": "text"},
+            "university": {"order": 2, "visible": True, "label_name": "大学・機関名", "format": "text"},
+            "department": {"order": 3, "visible": False, "label_name": "所属部局・部署", "format": "text"},
+            "position": {"order": 4, "visible": False, "label_name": "役職", "format": "select"},
+            "item1": {"order": 5, "visible": False, "label_name": "役職（その他）", "format": "position(other)"},
+            "item2": {"order": 6, "visible": False, "label_name": "電話番号", "format": "phonenumber"},
+            "item3": {"order": 7, "visible": False, "label_name": "所属学会名", "format": "text"},
+            "item4": {"order": 8, "visible": False, "label_name": "所属学会役職", "format": "select"},
+            "item5": {"order": 9, "visible": False, "label_name": "所属学会名", "format": "text"},
+            "item6": {"order": 10, "visible": False, "label_name": "所属学会役職", "format": "select"},
+            "item7": {"order": 11, "visible": False, "label_name": "所属学会名", "format": "text"},
+            "item8": {"order": 12, "visible": False, "label_name": "所属学会役職", "format": "select"},
+            "item9": {"order": 13, "visible": False, "label_name": "所属学会名", "format": "text"},
+            "item10": {"order": 14, "visible": False, "label_name": "所属学会役職", "format": "select"},
+            "item11": {"order": 15, "visible": False, "label_name": "所属学会名", "format": "text"},
+            "item12": {"order": 16, "visible": False, "label_name": "所属学会役職", "format": "select"},
+        }
     )
     Babel(app_)
     Mail(app_)
@@ -414,3 +434,14 @@ def setup_data(db):
     db.session.add(profile_get_info)
     db.session.commit()
     return[profile_get_info]
+
+@pytest.fixture()
+def db_admin_setting(db):
+    with db.session.begin_nested():
+        setting = AdminSettings(
+            name="profiles_items_settings",
+            settings=WEKO_USERPROFILES_DEFAULT_FIELDS_SETTINGS
+        )
+        db.session.add(setting)
+    db.session.commit()
+    return setting

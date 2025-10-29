@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: weko-records-ui 0.1.0.dev20170000\n"
 "Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
-"POT-Creation-Date: 2025-10-15 14:21+0900\n"
+"POT-Creation-Date: 2025-10-21 14:06+0900\n"
 "PO-Revision-Date: 2021-02-02 03:25+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ja\n"
@@ -19,12 +19,12 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.5.1\n"
 
-#: tests/test_utils.py:712 weko_records_ui/api.py:634 weko_records_ui/fd.py:489
-#: weko_records_ui/fd.py:567 weko_records_ui/utils.py:1212
+#: tests/test_utils.py:712 weko_records_ui/api.py:634 weko_records_ui/fd.py:651
+#: weko_records_ui/fd.py:729 weko_records_ui/utils.py:1213
 msgid "Unexpected error occurred."
 msgstr "予期しないエラーが発生しました"
 
-#: tests/test_utils.py:716 weko_records_ui/utils.py:1214
+#: tests/test_utils.py:716 weko_records_ui/utils.py:1215
 msgid "Failed to send mail."
 msgstr ""
 
@@ -92,69 +92,69 @@ msgstr "コピー元のファイルが見つかりません。"
 msgid "Cannot update because the corresponding item is being edited."
 msgstr ""
 
-#: weko_records_ui/config.py:428
+#: weko_records_ui/config.py:435
 msgid "write your own license"
 msgstr ""
 
-#: weko_records_ui/config.py:433
+#: weko_records_ui/config.py:440
 msgid "Creative Commons CC0 1.0 Universal Public Domain Designation"
 msgstr ""
 
-#: weko_records_ui/config.py:448
+#: weko_records_ui/config.py:455
 msgid "Creative Commons Attribution 3.0 Unported (CC BY 3.0)"
 msgstr ""
 
-#: weko_records_ui/config.py:460
+#: weko_records_ui/config.py:467
 msgid "Creative Commons Attribution-ShareAlike 3.0 Unported (CC BY-SA 3.0)"
 msgstr ""
 
-#: weko_records_ui/config.py:474
+#: weko_records_ui/config.py:481
 msgid "Creative Commons Attribution-NoDerivs 3.0 Unported (CC BY-ND 3.0)"
 msgstr ""
 
-#: weko_records_ui/config.py:488
+#: weko_records_ui/config.py:495
 msgid "Creative Commons Attribution-NonCommercial 3.0 Unported (CC BY-NC 3.0)"
 msgstr ""
 
-#: weko_records_ui/config.py:502
+#: weko_records_ui/config.py:509
 msgid ""
 "Creative Commons Attribution-NonCommercial-ShareAlike 3.0 Unported (CC "
 "BY-NC-SA 3.0)"
 msgstr ""
 
-#: weko_records_ui/config.py:516
+#: weko_records_ui/config.py:523
 msgid ""
 "Creative Commons Attribution-NonCommercial-NoDerivs 3.0 Unported (CC BY-"
 "NC-ND 3.0)"
 msgstr ""
 
-#: weko_records_ui/config.py:531
+#: weko_records_ui/config.py:538
 msgid "Creative Commons Attribution 4.0 International (CC BY 4.0)"
 msgstr ""
 
-#: weko_records_ui/config.py:543
+#: weko_records_ui/config.py:550
 msgid "Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)"
 msgstr ""
 
-#: weko_records_ui/config.py:557
+#: weko_records_ui/config.py:564
 msgid ""
 "Creative Commons Attribution-NoDerivatives 4.0 International (CC BY-ND "
 "4.0)"
 msgstr ""
 
-#: weko_records_ui/config.py:571
+#: weko_records_ui/config.py:578
 msgid ""
 "Creative Commons Attribution-NonCommercial 4.0 International (CC BY-NC "
 "4.0)"
 msgstr ""
 
-#: weko_records_ui/config.py:585
+#: weko_records_ui/config.py:592
 msgid ""
 "Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International "
 "(CC BY-NC-SA 4.0)"
 msgstr ""
 
-#: weko_records_ui/config.py:599
+#: weko_records_ui/config.py:606
 msgid ""
 "Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 "
 "International (CC BY-NC-ND 4.0)"
@@ -188,10 +188,27 @@ msgstr ""
 msgid "Internal Server Error."
 msgstr ""
 
-#: weko_records_ui/fd.py:460 weko_records_ui/fd.py:552
+#: weko_records_ui/fd.py:488
+msgid "Restricted access is disabled."
+msgstr "制限公開機能が無効です"
+
+#: weko_records_ui/fd.py:501 weko_records_ui/fd.py:621
+#: weko_records_ui/fd.py:714
 #, python-format
 msgid "The file \"%s\" does not exist."
 msgstr "指定されたファイル「\"%s\"」が存在しません"
+
+#: weko_records_ui/fd.py:513 weko_records_ui/fd.py:568
+msgid "Invalid token."
+msgstr ""
+
+#: weko_records_ui/fd.py:577
+msgid "Could not download file."
+msgstr "ファイルをダウンロードできませんでした"
+
+#: weko_records_ui/fd.py:586
+msgid "Invalid verification info."
+msgstr ""
 
 #: weko_records_ui/pdf.py:672
 msgid "The storage path is incorrect."
@@ -210,7 +227,7 @@ msgstr ""
 msgid "There is not enough storage space."
 msgstr ""
 
-#: weko_records_ui/rest.py:774
+#: weko_records_ui/rest.py:778
 msgid "Item Type"
 msgstr "アイテムタイプ"
 
@@ -218,61 +235,61 @@ msgstr "アイテムタイプ"
 msgid "Allow read file."
 msgstr ""
 
-#: weko_records_ui/utils.py:451
+#: weko_records_ui/utils.py:452
 msgid "Item cannot be deleted because the import is in progress."
 msgstr ""
 
 #: weko_records_ui/templates/weko_records_ui/body_contents.html:218
 #: weko_records_ui/templates/weko_records_ui/box/preview_carousel.html:151
-#: weko_records_ui/utils.py:987
+#: weko_records_ui/utils.py:988
 msgid "Restricted Access"
-msgstr ""
+msgstr "アクセス制限"
 
-#: weko_records_ui/utils.py:996
+#: weko_records_ui/utils.py:997
 msgid "Download is available from {}/{}/{}."
 msgstr ""
 
-#: weko_records_ui/utils.py:999
+#: weko_records_ui/utils.py:1000
 msgid "Download / Preview is available from {}/{}/{}."
 msgstr ""
 
-#: weko_records_ui/utils.py:1259 weko_records_ui/utils.py:1295
+#: weko_records_ui/utils.py:1260 weko_records_ui/utils.py:1296
 msgid "Token is invalid."
 msgstr "トークンが無効です。"
 
-#: weko_records_ui/utils.py:1313 weko_records_ui/utils.py:2351
+#: weko_records_ui/utils.py:1314 weko_records_ui/utils.py:2347
 msgid "The expiration date for download has been exceeded."
 msgstr "ダウンロード有効期限を超過しています。"
 
-#: weko_records_ui/utils.py:1320 weko_records_ui/utils.py:2348
+#: weko_records_ui/utils.py:1321 weko_records_ui/utils.py:2344
 msgid "The download limit has been exceeded."
 msgstr "ダウンロード制限回数を超過しています。"
 
-#: weko_records_ui/utils.py:1579
+#: weko_records_ui/utils.py:1580
 msgid "Guest"
 msgstr ""
 
-#: weko_records_ui/utils.py:1590
+#: weko_records_ui/utils.py:1591
 msgid "Free Input"
 msgstr ""
 
-#: weko_records_ui/utils.py:2328
+#: weko_records_ui/utils.py:2324
 msgid "The type of URL is not specified."
 msgstr ""
 
-#: weko_records_ui/utils.py:2332
+#: weko_records_ui/utils.py:2328
 msgid "The provided token is invalid."
 msgstr "トークンが無効です。"
 
-#: weko_records_ui/utils.py:2336
+#: weko_records_ui/utils.py:2332
 msgid "This feature is currently disabled."
 msgstr "この機能は現在ご利用頂けません。"
 
-#: weko_records_ui/utils.py:2341
+#: weko_records_ui/utils.py:2337
 msgid "This file is currently not available for this feature."
 msgstr "このファイルは現在ダウンロードできません。"
 
-#: weko_records_ui/utils.py:2346
+#: weko_records_ui/utils.py:2342
 msgid "This URL has been deactivated."
 msgstr "このURLは削除されました。"
 
@@ -1121,10 +1138,6 @@ msgstr ""
 #: weko_records_ui/templates/weko_records_ui/box/versions.html:45
 msgid "Show All versions"
 msgstr ""
-
-#: weko_records_ui/fd.py:557
-msgid "Could not download file."
-msgstr "ファイルをダウンロードできませんでした"
 
 #~ msgid "Success Secret URL Generate"
 #~ msgstr "成功: シークレットURLを生成し、あなたのメールアドレス宛に送信しました。"

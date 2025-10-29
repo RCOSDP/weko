@@ -2,10 +2,9 @@ const {useState, useEffect ,useCallback} = React;
 const CONTENT_FILE_DOWNLOAD_LABEL = document.getElementById('content_file_download_label').value;
 const DOWNLOAD_LIMIT_LABEL = document.getElementById('download_limit_label').value;
 const EXPIRATION_DATE_LABEL = document.getElementById('expiration_date_label').value;
-const MAX_DOWNLOAD_LIMIT_LABEL= document.getElementById('max_download_limit_label').value
-const MAX_EXPIRATION_DATE_LABEL= document.getElementById('max_expiration_date_label').value
-const EXPIRATION_DATE_INITIAL_LABEL = document.getElementById('expiration_date_initial_label').value;
-const DOWNLOAD_LIMIT_INITIAL_LABEL = document.getElementById('download_limit_initial_label').value;
+const SECRET_LABEL_NAMES = $('#secret_label_names').data();
+const VALIDATION_ERROR_MESSAGES = $('#validation_error_messages').data();
+const MESSAGE_KEYWORDS = $('#message_keywords').data();
 const UNLIMITED_LABEL = document.getElementById('unlimited_label').value;
 const SAVE_LABEL = document.getElementById('save_label').value;
 const CHECK_INPUT_DOWNLOAD = document.getElementById('check_input_download').value;
@@ -13,8 +12,6 @@ const CHECK_INPUT_EXPIRATION_DATE = document.getElementById('check_input_expirat
 const EMPTY_DOWNLOAD = document.getElementById('empty_download').value;
 const EMPTY_ERROR_MESSAGE = document.getElementById('empty_error_message').value;
 const EMPTY_EXPIRATION_DATE = document.getElementById('empty_expiration_date').value;
-const EMPTY_MAX_EXPIRATION_DATE = document.getElementById('empty_max_expiration_date').value;
-const EMPTY_MAX_DOWNLOAD_LIMIT = document.getElementById('empty_max_download_limit').value;
 const USAGE_REPORT_WORKFLOW_ACCESS_LABEL = document.getElementById('usage_report_workflow_access_label').value
 const MAXINT = Number(document.getElementById('maxint').value)
 const MAX_DOWNLOAD_LIMIT = MAXINT;
@@ -64,6 +61,14 @@ const EMPTY_TERM = {
       }
     }
 };
+
+const SECRET_URL_SETTINGS = {
+  minExpirationDays: 1,
+  maxExpirationDays: 30,
+  minDownloadLimit: 1,
+  maxDownloadLimit: 10
+};
+
 (function () {
   let initValue = document.getElementById('init_data').value;
   initValue = JSON.parse(initValue);
@@ -79,13 +84,14 @@ function InputComponent({
                           label,
                           currentValue,
                           checkboxValue,
-                          canSetUnlimited,
+                          canSetUnlimited=false,
                           value,
                           setValue,
                           inputId,
                           checkboxId,
                           disabledAll=false,
                           maxLength=String(MAXINT).length,
+                          min=0,
                           max=MAXINT
                         }) {
   const style = {marginRight: "5px", marginLeft: "15px"};
@@ -134,9 +140,9 @@ function InputComponent({
            pattern="[0-9]*"
            maxLength={maxLength}
            disabled={checkboxValue || disabledAll}
+           min={min}
            max={max}
-
-      />
+    />
     {canSetUnlimited && (
       <label htmlFor={checkboxId}
              className="text-left">
@@ -297,7 +303,6 @@ function SecretURLFileDownloadLayout({value, setValue}) {
     secret_enable
   } = value;
 
-  const style = {marginRight: "5px", marginLeft: "15px"}
   let checkboxValue = secret_enable;
   let disabledAll = !checkboxValue;
 
@@ -333,48 +338,48 @@ function SecretURLFileDownloadLayout({value, setValue}) {
               </div>
               {/* end enabled checkbox */}
                 <InputComponent
-                  label={EXPIRATION_DATE_INITIAL_LABEL}
+                  label={SECRET_LABEL_NAMES.expirationDateInitial}
                   currentValue={secret_expiration_date}
                   inputId="secret_expiration_date"
-                  canSetUnlimited = {false}
                   value={value}
                   setValue={setValue}
                   disabledAll={disabledAll}
-                  maxLength={max_secret_expiration_date}
+                  maxLength={2}
+                  min={SECRET_URL_SETTINGS.minExpirationDays}
                   max={max_secret_expiration_date}
                 />
                 <InputComponent
-                  label={DOWNLOAD_LIMIT_INITIAL_LABEL}
-                  currentValue={secret_download_limit}
-                  inputId="secret_download_limit"
-                  canSetUnlimited = {false}
+                  label={SECRET_LABEL_NAMES.maxExpirationDate}
+                  currentValue={max_secret_expiration_date}
+                  inputId="max_secret_expiration_date"
                   value={value}
                   setValue={setValue}
                   disabledAll={disabledAll}
-                  maxLength={max_secret_download_limit}
+                  maxLength={2}
+                  min={SECRET_URL_SETTINGS.minExpirationDays}
+                  max={SECRET_URL_SETTINGS.maxExpirationDays}
+                />
+                <InputComponent
+                  label={SECRET_LABEL_NAMES.downloadLimitInitial}
+                  currentValue={secret_download_limit}
+                  inputId="secret_download_limit"
+                  value={value}
+                  setValue={setValue}
+                  disabledAll={disabledAll}
+                  maxLength={2}
+                  min={SECRET_URL_SETTINGS.minDownloadLimit}
                   max={max_secret_download_limit}
                 />
                 <InputComponent
-                  label={MAX_EXPIRATION_DATE_LABEL}
-                  currentValue={max_secret_expiration_date}
-                  inputId="max_secret_expiration_date"
-                  canSetUnlimited = {false}
-                  value={value}
-                  setValue={setValue}
-                  disabledAll={disabledAll}
-                  maxLength={2}
-                  max={30}
-                />
-                <InputComponent
-                  label={MAX_DOWNLOAD_LIMIT_LABEL}
+                  label={SECRET_LABEL_NAMES.maxDownloadLimit}
                   currentValue={max_secret_download_limit}
                   inputId="max_secret_download_limit"
-                  canSetUnlimited = {false}
                   value={value}
                   setValue={setValue}
                   disabledAll={disabledAll}
                   maxLength={2}
-                  max={10}
+                  min={SECRET_URL_SETTINGS.minDownloadLimit}
+                  max={SECRET_URL_SETTINGS.maxDownloadLimit}
                 />
             </div>
           </div>
@@ -629,7 +634,7 @@ function ErrorMsgDetail({errorMsg, setErrorMsg}) {
                     onChange={e => InputChanged(e, "en")}/>
         </div>
       </div>
-    </div>  
+    </div>
   )
 }
 
@@ -813,28 +818,81 @@ function RestrictedAccessLayout({
       max_secret_download_limit
     } = secretURLFileDownload;
 
-    let errorMessage;
-
-    if (secret_expiration_date === "" ) {
-      errorMessage = EMPTY_EXPIRATION_DATE;
-    } else if (secret_download_limit === "" ) {
-      errorMessage = EMPTY_DOWNLOAD;
-    } else if ((secret_expiration_date < 1 )
-      || secret_expiration_date > max_secret_expiration_date) {
-      errorMessage = CHECK_INPUT_EXPIRATION_DATE;
-    } else if ((secret_download_limit < 1 )
-      || secret_download_limit > max_secret_download_limit) {
-      errorMessage = CHECK_INPUT_DOWNLOAD;
-    } else if (max_secret_expiration_date === ""){
-      errorMessage = EMPTY_MAX_EXPIRATION_DATE;
-    } else if (max_secret_download_limit === ""){
-      errorMessage = EMPTY_DOWNLOAD;
-    } else if (max_secret_expiration_date < 1 ){
-      errorMessage = EMPTY_MAX_DOWNLOAD_LIMIT;
-    } else if (max_secret_download_limit < 1 ){
-      errorMessage = EMPTY_DOWNLOAD;
+    // Validate limitation values
+    // Check empty values
+    if (max_secret_expiration_date === "") {
+      return VALIDATION_ERROR_MESSAGES.emptyValue.replace(
+        "[label_name]", SECRET_LABEL_NAMES.maxExpirationDate);
     }
-    return errorMessage;
+    if (max_secret_download_limit === "") {
+      return VALIDATION_ERROR_MESSAGES.emptyValue.replace(
+        "[label_name]", SECRET_LABEL_NAMES.maxDownloadLimit);
+    }
+
+    // Check input values range
+    const parsedMaxExpirationDays = parseInt(max_secret_expiration_date, 10);
+    if (parsedMaxExpirationDays < SECRET_URL_SETTINGS.minExpirationDays
+      || parsedMaxExpirationDays > SECRET_URL_SETTINGS.maxExpirationDays) {
+      const message = VALIDATION_ERROR_MESSAGES.outOfRange.replace(
+        "[label_name]", SECRET_LABEL_NAMES.maxExpirationDate
+      ).replace(
+        "[min]", SECRET_URL_SETTINGS.minExpirationDays
+      ).replace(
+        "[max]", SECRET_URL_SETTINGS.maxExpirationDays
+      );
+      return message;
+    }
+    const parsedMaxDownloadLimit = parseInt(max_secret_download_limit, 10);
+    if (parsedMaxDownloadLimit < SECRET_URL_SETTINGS.minDownloadLimit
+      || parsedMaxDownloadLimit > SECRET_URL_SETTINGS.maxDownloadLimit) {
+      const message = VALIDATION_ERROR_MESSAGES.outOfRange.replace(
+        "[label_name]", SECRET_LABEL_NAMES.maxDownloadLimit
+      ).replace(
+        "[min]", SECRET_URL_SETTINGS.minDownloadLimit
+      ).replace(
+        "[max]", SECRET_URL_SETTINGS.maxDownloadLimit
+      );
+      return message;
+    }
+
+    // Validate initial values
+    // Check empty values
+    if (secret_expiration_date === "") {
+      return VALIDATION_ERROR_MESSAGES.emptyValue.replace(
+        "[label_name]", SECRET_LABEL_NAMES.expirationDateInitial);
+    }
+    if (secret_download_limit === "") {
+      return VALIDATION_ERROR_MESSAGES.emptyValue.replace(
+        "[label_name]", SECRET_LABEL_NAMES.downloadLimitInitial);
+    }
+
+    // Check input values range
+    const parsedExpirationInitialDays = parseInt(secret_expiration_date, 10);
+    if (parsedExpirationInitialDays < SECRET_URL_SETTINGS.minExpirationDays
+      || parsedExpirationInitialDays > parsedMaxExpirationDays) {
+      const message = VALIDATION_ERROR_MESSAGES.outOfRange.replace(
+        "[label_name]", SECRET_LABEL_NAMES.expirationDateInitial
+      ).replace(
+        "[min]", SECRET_URL_SETTINGS.minExpirationDays
+      ).replace(
+        "[max]", MESSAGE_KEYWORDS.maximum
+      );
+      return message;
+    }
+    const parsedDownloadLimitInitial = parseInt(secret_download_limit, 10);
+    if (parsedDownloadLimitInitial < SECRET_URL_SETTINGS.minDownloadLimit
+      || parsedDownloadLimitInitial > parsedMaxDownloadLimit) {
+      const message = VALIDATION_ERROR_MESSAGES.outOfRange.replace(
+        "[label_name]", SECRET_LABEL_NAMES.downloadLimitInitial
+      ).replace(
+        "[min]", SECRET_URL_SETTINGS.minDownloadLimit
+      ).replace(
+        "[max]", MESSAGE_KEYWORDS.maximum
+      );
+      return message;
+    }
+
+    return;
   }
 
   function validateContentFileDownload() {
@@ -937,7 +995,6 @@ function RestrictedAccessLayout({
       <div>
         <SecretURLFileDownloadLayout value={secretURLFileDownload}
                                    setValue={setSecretURLFileDownload}/>
-        <ErrorMsgConditions errorMsg={errorMsg} setErrorMsg={setErrorMsg}/>
         <div className="form-group">
           <button id="save-btn" className="btn btn-primary pull-right" style={{marginBottom: "15px"}}
                   onClick={handleSave}>

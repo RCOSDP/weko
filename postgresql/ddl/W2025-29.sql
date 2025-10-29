@@ -199,7 +199,7 @@ CREATE TABLE file_onetime_download (
     created TIMESTAMP NOT NULL,
     updated TIMESTAMP NOT NULL,
     id SERIAL,
-    approver_id INTEGER NOT NULL,
+    approver_id INTEGER,
     record_id VARCHAR(255) NOT NULL,
     file_name VARCHAR(255) NOT NULL,
     expiration_date TIMESTAMP NOT NULL,
@@ -865,7 +865,7 @@ E-mail：[restricted_site_mail]', true, 3),
 
 [secret_url]
 
-このURLは[restricted_expiration_date][restricted_expiration_date_ja]まで有効です。ダウンロードは[restricted_download_count][restricted_download_count_ja]回まで可能です。
+このURLは[restricted_expiration_date]まで有効です。ダウンロードは[restricted_download_count]回まで可能です。
 
 ＊このメールは自動送信されているので返信しないでください。
 ＊このメールに心当たりのない方は、[restricted_site_name_ja]までご連絡ください。
@@ -886,7 +886,7 @@ The data can be downloaded from the address below.
 
 [secret_url]
 
-This URL is valid until [restricted_expiration_date][restricted_expiration_date_en]. You can download it up to [restricted_download_count][restricted_download_count_en] times.
+This URL is valid until [restricted_expiration_date]. You can download it up to [restricted_download_count] times.
 
 Please do not reply to this email as it has been sent automatically.
 If you received this message in error, please notify the [restricted_site_name_en].
