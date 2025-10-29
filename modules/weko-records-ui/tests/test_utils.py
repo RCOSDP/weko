@@ -628,15 +628,17 @@ def test_get_file_info_list_1(app, make_record_need_restricted_access, esindex):
     # terms='term_free' termsDescription='利用規約本文'
     record_2 = WekoRecord.get_record_by_pid(12)
     with app.test_request_context(headers=[("Accept-Language", "en")]):
-        is_display_file_preview, files =  get_file_info_list(record_2)
-        assert is_display_file_preview == True
-        assert len(files) == 1
+        with patch('weko_records_ui.utils.check_file_download_permission',return_value=True):
+            is_display_file_preview, files =  get_file_info_list(record_2)
+            assert is_display_file_preview == True
+            assert len(files) == 1
 
     record_2['item_1689228169922']['attribute_value_mlt'][0]['terms'] = '100'
     with app.test_request_context(headers=[("Accept-Language", "en")]):
-        is_display_file_preview, files =  get_file_info_list(record_2)
-        assert is_display_file_preview == True
-        assert len(files) == 1
+        with patch('weko_records_ui.utils.check_file_download_permission',return_value=True):
+            is_display_file_preview, files =  get_file_info_list(record_2)
+            assert is_display_file_preview == True
+            assert len(files) == 1
 
 # def get_data_by_key_array_json(record):
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_get_data_by_key_array_json -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp

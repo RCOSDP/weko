@@ -586,6 +586,9 @@ def base_app(instance_path, search_class, cache_config):
         WEKO_WORKFLOW_USAGE_REPORT_WORKFLOW_NAME = '利用報告/Data Usage Report',
         WEKO_WORKFLOW_TODO_TAB = 'todo',
         WEKO_HANDLE_CREDS_JSON_PATH='/code/modules/resources/handle_creds.json',
+        WEKO_ADMIN_RESTRICTED_ACCESS_DISPLAY_FLAG = False,
+        WEKO_ADMIN_DISPLAY_RESTRICTED_SETTINGS = True,
+        WEKO_RECORDS_UI_RESTRICTED_API= False,
     )
 
     app_.testing = True
@@ -657,6 +660,7 @@ def db(app):
     """Database fixture."""
     if not database_exists(str(db_.engine.url)):
         create_database(str(db_.engine.url))
+    db_.drop_all()
     db_.create_all()
     yield db_
     db_.session.remove()
@@ -1480,6 +1484,12 @@ def db_register_full_action(app, db, db_records, users, action_data, item_type):
                                    action_role=2,
                                    action_user=1
                                    )
+    action_role_5 = FlowActionRole(flow_action_id=flow_action4.id,
+                                   action_role=2,
+                                   action_user=1,
+                                   specify_property="test",
+                                   action_item_registrant=True
+                                   )
     with db.session.begin_nested():
         db.session.add(action_role_1)
         db.session.add(action_role_2_1)
@@ -1491,6 +1501,7 @@ def db_register_full_action(app, db, db_records, users, action_data, item_type):
         db.session.add(action_role_4_2)
         db.session.add(action_role_4_3)
         db.session.add(action_role_4_4)
+        db.session.add(action_role_5)
     db.session.commit()
 
     workflow = WorkFlow(flows_id=uuid.uuid4(),
@@ -2121,10 +2132,10 @@ def no_begin_action(app, db):
 
 @pytest.fixture()
 def workflow_open_restricted(app, db, item_type, action_data, users):
-    flow_define1 = FlowDefine(flow_id=uuid.uuid4(),
+    flow_define1 = FlowDefine(id=4,flow_id=uuid.uuid4(),
                                 flow_name='terms_of_use_only',
                                 flow_user=1)
-    flow_define2 = FlowDefine(flow_id=uuid.uuid4(),
+    flow_define2 = FlowDefine(id=5,flow_id=uuid.uuid4(),
                                 flow_name='usage application',
                                 flow_user=1)
     with db.session.begin_nested():
@@ -2821,7 +2832,7 @@ def db_register_fullaction(app, db, db_records, users, action_data, item_type):
         db.session.add(action_identifier3)
     db.session.commit()
     return {"flow_actions":flow_actions,
-            "activities":[activity,activity_item1,activity_item2,activity_item3,activity_item4,activity_item5,activity_item6]}
+            "activities":[activity,activity_item1,activity_item2,activity_item3,activity_item4,activity_item5,activity_item6,del_activity,app_del_activity,two_app_del_activity,two_app_del_activity2]}
 
 @pytest.fixture()
 def db_register_usage_application_workflows(app, db, action_data, item_type ):
