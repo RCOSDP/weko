@@ -38,7 +38,7 @@ class UserActivityLogUtils:
 
         Returns:
             str: File uri.
-        
+
         Raises:
             Exception: if failed to write log data to tsv.
         """
@@ -122,14 +122,14 @@ class UserActivityLogUtils:
             Exception: if failed to delete logs.
         """
         # get config from current_app
-        config = current_app.config.get("WEKO_LOGGING_USER_ACTIVITY_SETTING")
+        config = current_app.config.get("WEKO_LOGGING_USER_ACTIVITY_DB_SETTING")
         if config is None:
-            raise Exception("WEKO_LOGGING_USER_ACTIVITY_SETTING is not set.")
+            raise Exception("WEKO_LOGGING_USER_ACTIVITY_DB_SETTING is not set.")
 
         when = config.get("delete").get("when")
         interval = config.get("delete").get("interval")
         if when is None or interval is None:
-            raise Exception("WEKO_LOGGING_USER_ACTIVITY_SETTING.delete.when or interval is not set.")
+            raise Exception("WEKO_LOGGING_USER_ACTIVITY_DB_SETTING.delete.when or interval is not set.")
 
         # set date according to when and interval
         deletion_date_to = None
@@ -142,7 +142,7 @@ class UserActivityLogUtils:
         elif when == "years":
             deletion_date_to = datetime.now() - relativedelta(years=interval)
         else:
-            raise Exception("WEKO_LOGGING_USER_ACTIVITY_SETTING.delete.when is invalid.")
+            raise Exception("WEKO_LOGGING_USER_ACTIVITY_DB_SETTING.delete.when is invalid.")
 
         UserActivityLog.query.filter(UserActivityLog.date < deletion_date_to).delete()
         db.session.commit()
@@ -221,7 +221,7 @@ class UserActivityLogUtils:
 
         Args:
             log_data (list): The log data.
-        
+
         Returns:
             str: The log data in TSV format.
         """

@@ -3452,7 +3452,7 @@ def test_get_activity_display_info(app,db, users, db_register_full_action, mocke
             {"ActivityId":activity_id,"ActionId":1,"ActionName":"Start","ActionVersion":"1.0.0","ActionEndpoint":"begin_action", "Author":"contributor@test.org", "Status":"action_doing", "ActionOrder":1},
             {"ActivityId":activity_id,"ActionId":3,"ActionName":"Item Registration","ActionVersion":"1.0.0","ActionEndpoint":"item_login", "Author":"", "Status":" ","ActionOrder":2},
             {"ActivityId":activity_id,"ActionId":5,"ActionName":"Item Link","ActionVersion":"1.0.0","ActionEndpoint":"item_link", "Author":"", "Status":" ","ActionOrder":3},
-            {"ActivityId":activity_id,"ActionId":4,"ActionName":"Approval","ActionVersion":"1.0.0","ActionEndpoint":"approval", "Author":"", "Status":" ","ActionOrder":4}
+            {"ActivityId":activity_id,"ActionId":4,"ActionName":"Approval","ActionVersion":"1.0.0","ActionEndpoint":"approval","Author":"","Status":" ","ActionOrder":4}
         ]
         endpoint, action_id, activity_detail, cur_action, histories, item, steps, temporary_comment, workflow_detail, owner_id, shared_user_ids = get_activity_display_info(activity_id)
         assert endpoint == "begin_action"
@@ -3496,7 +3496,18 @@ def test_get_activity_display_info(app,db, users, db_register_full_action, mocke
         db.session.commit()
         endpoint, action_id, activity_detail, cur_action, histories, item, steps, temporary_comment, workflow_detail, owner_id, shared_user_ids = get_activity_display_info(activity_id)
         assert owner_id == 2
-        assert sorted(shared_user_ids, key=lambda x: x["user"]) == [{"user": -1}, {"user": 1}]
+        assert shared_user_ids == [{"user":1},{"user":-1}]
+
+        # if metadata: owner and shared_user_ids are int
+        import json
+        target_activity = Activity.query.filter_by(activity_id=activity_id).first()
+        target_activity.temp_data = json.dumps({"metainfo":{"owner": 2, "shared_user_ids":[-1,1]}})
+        db.session.merge(target_activity)
+        db.session.commit()
+        endpoint, action_id, activity_detail, cur_action, histories, item, steps, temporary_comment, workflow_detail, owner_id, shared_user_ids = get_activity_display_info(activity_id)
+        assert owner_id == 2
+        assert shared_user_ids == [{"user":1},{"user":-1}]
+
 
 # def __init_activity_detail_data_for_guest(activity_id: str, community_id: str):
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test___init_activity_detail_data_for_guest -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp

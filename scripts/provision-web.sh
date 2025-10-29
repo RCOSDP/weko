@@ -47,7 +47,6 @@ fi
 export DEBIAN_FRONTEND=noninteractive
 
 provision_web_common_ubuntu14 () {
-
     # sphinxdoc-install-useful-system-tools-ubuntu14-begin
     # update list of available packages:
     $sudo apt-get -y update --allow-releaseinfo-change

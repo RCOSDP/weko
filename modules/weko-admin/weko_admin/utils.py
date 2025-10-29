@@ -2376,6 +2376,7 @@ def elasticsearch_reindex( is_db_to_es ):
     alias_name = current_app.config['SEARCH_UI_SEARCH_INDEX']
 
     # get base_index_definition (mappings and settings)
+    import weko_schema_ui
     current_path = os.path.dirname(os.path.abspath(weko_schema_ui.__file__))
     file_path = os.path.join(current_path, 'mappings', 'v6', 'weko', 'item-v1.0.0.json')
     with open(file_path,mode='r') as json_file:

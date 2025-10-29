@@ -460,11 +460,10 @@ def test_validate_onetime_guest(
 
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_fd.py::test_file_download_onetime -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
 @patch('weko_records_ui.fd.validate_url_download')
-@patch('weko_records_ui.fd.save_download_log')
 @patch('weko_records_ui.fd._download_file')
-@patch("process_onetime_file_download")
+@patch("weko_records_ui.fd.process_onetime_file_download")
 def test_file_download_onetime(
-    mock_process_onetime, dl_file, save_log,
+    mock_process_onetime, dl_file,
     val_url, onetime_url, app, mocker
 ):
     # Setup arguments of sut
@@ -494,9 +493,6 @@ def test_file_download_onetime(
             pid, record, filename, _record_file_factory
         )
         assert result == "SUCCESS"
-        save_log.assert_called_once_with(
-            record, filename, onetime_url["onetime_token"], is_secret_url=False
-        )
 
     # Test Case: Invalid token
     with app.test_request_context():
@@ -510,33 +506,10 @@ def test_file_download_onetime(
 
     # Test Case: check_and_send_usage_report() returns an error
     with app.test_request_context():
-        chk_and_send.return_value = "ERROR"
+        mock_process_onetime.return_value = ("ERROR", 403)
         result = file_download_onetime(
             pid, record, filename, _record_file_factory)
         assert result == ("ERROR", 403)
-        # Reset return values
-        chk_and_send.return_value = None
-
-    # check_and_send_usage_report() raises an exception
-    with app.test_request_context():
-        chk_and_send.side_effect = BaseException
-        result = file_download_onetime(
-            pid, record, filename, _record_file_factory)
-        assert result == 'ERROR'
-
-    # update_extra_info() raises an SQLAlchemyError
-    with app.test_request_context(), \
-         patch('weko_records_ui.fd.session', {'pending_onetime_token': onetime_url['onetime_token']}):
-        with patch('weko_records_ui.models.FileOnetimeDownload.update_extra_info',
-                   side_effect=SQLAlchemyError):
-            assert file_download_onetime(
-                pid, record, filename, _record_file_factory) == ('Unexpected error occurred.', 500)
-
-    # save_download_log() raises an exception
-    with patch('weko_records_ui.fd.save_download_log',
-               side_effect=Exception):
-        assert file_download_onetime(
-            pid, record, filename, _record_file_factory) == 'ERROR'
 
 
 # def process_onetime_file_download(

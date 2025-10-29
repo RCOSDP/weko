@@ -936,11 +936,15 @@ def activity_acl_users(app, db):
       ┃     ┗━ com_index_child02
       ┗━ not_com_index
     """
+    max_position = Index.query.with_entities(Index.position).order_by(Index.position.desc()).first()
+    max_position = -1 if max_position is None else max_position[0]
+    parent_index = Index(parent=0,position=max_position+1,index_name="root",display_no=5,public_state=True)
+    db.session.add(parent_index)
+    db.session.flush()
     indexes = [
-        Index(id=1,parent=0,position=0,index_name="com_index",display_no=5,public_state=True),
-        Index(id=2,parent=1,position=0,index_name="com_index_child01",display_no=5,public_state=True),
-        Index(id=3,parent=1,position=1,index_name="com_index_child02",display_no=5,public_state=True),
-        Index(id=4,parent=0,position=1,index_name="not_com_index",display_no=5,public_state=True)
+        Index(parent=parent_index.id,position=0,index_name="com_index_child01",display_no=5,public_state=True),
+        Index(parent=parent_index.id,position=1,index_name="com_index_child02",display_no=5,public_state=True),
+        Index(parent=0,position=max_position+2,index_name="not_com_index",display_no=5,public_state=True)
     ]
     db.session.add_all(indexes)
     db.session.commit()
@@ -948,7 +952,7 @@ def activity_acl_users(app, db):
     test_role01_com = Community.create(community_id="test_role01_com", role_id=test_role01.id,
                             id_user=sysadmin.id, title="test community",
                             description=("this is test community"),
-                            root_node_id=indexes[0].id)
+                            root_node_id=parent_index.id)
     db.session.commit()
     return {
         "users":[sysadmin, repoadmin, test_role01_user, test_role01_comadmin, test_role02_user, test_role03_comadmin, no_role_user],
@@ -996,6 +1000,10 @@ def workflow_with_action_role(db, action_data, item_type, activity_acl_users):
 @pytest.fixture()
 def activity_acl(db, workflow_with_action_role, activity_acl_users):
     users = activity_acl_users["users"]
+
+    # Assign to variables for easy understanding
+    test_role01_comadmin = users[3]
+
     workflows = workflow_with_action_role
     activites = [
         create_activity(db,"sysadmin_入力待ち",1,["4"],users[0],-1,workflows[0],'M',3),
@@ -1036,12 +1044,11 @@ def activity_acl(db, workflow_with_action_role, activity_acl_users):
         create_activity(db,"test_role01_user_入力中_権限外_!actionrole(test_role01)",36,["4"],users[2],-1,workflows[3],'M',3),
         create_activity(db,"test_role01_user_入力中_権限外_!actionrole(test_role02)",37,["4"],users[2],-1,workflows[4],'M',3),
         create_activity(db,"test_role01_user_入力中_権限外_代理(test_role01_comadmin)",38,["4"],users[2],4,workflows[0],'M',3),
-        create_activity(db,"test_role01_user_承認待ち_権限外_代理(test_role01_comadmin)",39,["4"],users[2],4,workflows[0],'M',4),
+        create_activity(db,"test_role01_user_承認待ち_権限外_代理(test_role01_comadmin)",39,["4"],users[2],test_role01_comadmin.id,workflows[0],'M',4),
         create_activity(db,"test_role01_user_入力中_権限外_actionrole(test_role02)_代理(test_role01_comadmin)",40,["4"],users[2],4,workflows[2],'M',3),
         create_activity(db,"test_role01_user_入力中_権限外_!actionrole(test_role01)_代理(test_role01_comadmin)",41,["4"],users[2],4,workflows[3],'M',3),
         create_activity(db,"test_role01_user_入力中_権限内+外",42,["2","4"],users[2],-1,workflows[0],'M',3),
         create_activity(db,"test_role03_comadmin_入力中_com所属なし",43,["2"],users[5],-1,workflows[0],'M',3),
-
     ]
 
     return activites

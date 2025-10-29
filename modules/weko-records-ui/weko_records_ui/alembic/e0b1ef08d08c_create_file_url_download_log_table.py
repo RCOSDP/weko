@@ -30,7 +30,7 @@ def upgrade():
         sa.Column('created', sa.TIMESTAMP(timezone=False), nullable=False),
         sa.Column('updated', sa.TIMESTAMP(timezone=False), nullable=False),
         sa.Column('id', sa.Integer(), primary_key=True, autoincrement=True),
-        sa.Column('approver_id', sa.Integer(), nullable=False),
+        sa.Column('approver_id', sa.Integer(), nullable=True),
         sa.Column('record_id', sa.String(255), nullable=False),
         sa.Column('file_name', sa.String(255), nullable=False),
         sa.Column('expiration_date', sa.TIMESTAMP(timezone=False), nullable=False),
