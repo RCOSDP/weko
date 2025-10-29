@@ -3416,6 +3416,8 @@ def test_create_onetime_download_url_to_guest_password(app, workflow,mocker, use
                 }
                 result = create_onetime_download_url_to_guest(activity_id, extra_info)
                 assert result == test
+
+
 # def delete_guest_activity(activity_id: str) -> bool:
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_delete_guest_activity -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_delete_guest_activity(client,workflow):

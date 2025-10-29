@@ -1296,7 +1296,7 @@ def test_create_onetime_download_record(mock_user, mock_get, users):
     mock_user.is_authenticated = False
     mock_user.id = None
     url_obj2 = create_onetime_url_record(
-        activity_id, record_id, file_name, user_mail)
+        activity_id, record_id, file_name, user_mail, is_guest=True)
     assert FileOnetimeDownload.query.count() == 2
     assert isinstance(url_obj2, FileOnetimeDownload)
     assert url_obj2.approver_id is None
@@ -1402,7 +1402,7 @@ def test_generate_sha256_hash(app):
 @patch('weko_records_ui.utils.set_mail_info', return_value={})
 @patch('weko_records_ui.utils.process_send_mail', return_value=True)
 def test_send_secret_url_mail(mock_send, mock_set_info, mock_user,
-                              mock_profile, app):
+                              mock_profile, app, db_mailTemplateGenre, db_mailtemplates):
     app.config['WEKO_RECORDS_UI_MAIL_TEMPLATE_SECRET_URL'] = 'test_template'
     mock_profile_obj = MagicMock()
     mock_profile_obj._displayname = 'test_user'
@@ -1428,12 +1428,12 @@ def test_send_secret_url_mail(mock_send, mock_set_info, mock_user,
         'restricted_fullname'       : 'test_user',
         'restricted_data_name'      : item_title,
     }
-    expected_pattern = 'test_template'
+    expected_template_id = 1
     with app.test_request_context(), \
         patch("weko_records_ui.utils.get_item_info",return_value={}):
-        expected_info["restricted_download_link"] = create_download_url(url_obj)
+        expected_info["secret_url"] = create_download_url(url_obj)
         assert send_secret_url_mail(uuid, url_obj, item_title) is True
-    mock_send.assert_called_once_with(expected_info, expected_pattern)
+    mock_send.assert_called_once_with(expected_info, expected_template_id)
     mock_send.reset_mock()
 
     mock_profile.return_value = None
@@ -1441,12 +1441,13 @@ def test_send_secret_url_mail(mock_send, mock_set_info, mock_user,
         patch("weko_records_ui.utils.get_item_info",return_value={}):
         assert send_secret_url_mail(uuid, url_obj, item_title) is True
     expected_info['restricted_fullname'] = ''
-    mock_send.assert_called_once_with(expected_info, expected_pattern)
+    mock_send.assert_called_once_with(expected_info, expected_template_id)
 
     mock_send.return_value = False
     with app.test_request_context(), \
         patch("weko_records_ui.utils.get_item_info",return_value={}):
         assert send_secret_url_mail(uuid, url_obj, item_title) is False
+
 
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_validate_token -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
 def test_validate_token(app, users):

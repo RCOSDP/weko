@@ -5904,17 +5904,30 @@ def test_check_authority(app, client, activity_acl, activity_acl_users):
         result = check_authority(lambda activity_id,action_id:"{}:{}".format(activity_id,action_id))(activity_id=activity.activity_id,action_id=activity.action_id)
         assert json.loads(result.data.decode('utf-8')) == {"code":403,"msg":"Authorization required"}
 
+
+# def check_authority_action(activity_id='0', action_id=0,
+#                            contain_login_item_application=False,
+#                            action_order=0):
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_check_authority_action -v -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
-def test_check_authority_action(app, client, activity_acl, activity_acl_users, db_register_full_action):
+def test_check_authority_action(app, client, activity_acl, activity_acl_users):
+    # Note: This test fixture is conflicted with users and db_register_full_action
+
     users = activity_acl_users["users"]
+    # Get users
+    system_admin_user = users[0]
+    repo_admin_user = users[1]
+    test_role01_com_contributor = users[2]
+    test_role01_com_admin_user = users[3]
+
     activities = activity_acl
     with app.test_request_context():
         # no authenticated
         logout_user()
         result = check_authority_action()
         assert result == 1
+
         # sysadmin user
-        login_user(users[0])
+        login_user(system_admin_user)
         activity = activities[0]
         result = check_authority_action(activity_id=activity.activity_id,
                                         action_id=activity.action_id,
@@ -5922,7 +5935,7 @@ def test_check_authority_action(app, client, activity_acl, activity_acl_users, d
         assert result == 0
 
         # repoadmin user
-        login_user(users[1])
+        login_user(repo_admin_user)
         activity = activities[0]
         result = check_authority_action(activity_id=activity.activity_id,
                                         action_id=activity.action_id,
@@ -5930,7 +5943,7 @@ def test_check_authority_action(app, client, activity_acl, activity_acl_users, d
         assert result == 0
 
         # comadmin user, activity index is within community permissions
-        login_user(users[3])
+        login_user(test_role01_com_admin_user)
         activity = activities[21]
         result = check_authority_action(activity_id=activity.activity_id,
                                         action_id=activity.action_id,
@@ -5939,7 +5952,7 @@ def test_check_authority_action(app, client, activity_acl, activity_acl_users, d
 
         # comadmin user, activity index is not within community permissions
         ## action role(user) is set, is_deny is True
-        login_user(users[2])
+        login_user(test_role01_com_contributor)
         activity = activities[14]
         result = check_authority_action(activity_id=activity.activity_id,
                                         action_id=activity.action_id,
@@ -5947,15 +5960,17 @@ def test_check_authority_action(app, client, activity_acl, activity_acl_users, d
         assert result == 1
 
         ## action role(user) is set, is_deny is False, is_allow is True
-        login_user(users[3])
+        login_user(test_role01_com_admin_user)
         activity = activities[13]
-        result = check_authority_action(activity_id=activity.activity_id,
-                                        action_id=activity.action_id,
-                                        action_order=activity.action_order)
+        result = check_authority_action(
+            activity_id=activity.activity_id,
+            action_id=activity.action_id,
+            action_order=activity.action_order
+        )
         assert result == 0
 
-        ## action role(user) is set, is_deny is False, is_allow is False
-        activity = activities[36]
+        ## action role(user) is set, is_deny is True, is_allow is False
+        activity = activities[35]
         result = check_authority_action(activity_id=activity.activity_id,
                                         action_id=activity.action_id,
                                         action_order=activity.action_order)
@@ -5967,7 +5982,6 @@ def test_check_authority_action(app, client, activity_acl, activity_acl_users, d
         result = check_authority_action(activity_id=activity.activity_id,
                                         action_id=activity.action_id,
                                         action_order=activity.action_order)
-
         assert result == 1
 
         # action is not approval, shared_user is self in item_metadata
@@ -6027,7 +6041,7 @@ def test_check_authority_action(app, client, activity_acl, activity_acl_users, d
                                         action_order=activity.action_order)
         assert result == 1
 
-    with patch("flask_login.utils._get_user", return_value=users[3]):
+    with patch("flask_login.utils._get_user", return_value=test_role01_com_admin_user):
         current_app.config["WEKO_WORKFLOW_ENABLE_CONTRIBUTOR"]=True
 
         # cur_user != activity_login_user and cur_user != activity.shared_user_id
@@ -6038,25 +6052,10 @@ def test_check_authority_action(app, client, activity_acl, activity_acl_users, d
         result = check_authority_action(activity_id=activity.activity_id, action_id=3, contain_login_item_application=True, action_order=2)
         assert result == 1
 
-        # action_handler == -1 and cur_user == activity.shared_user_id
-        activity_action = db_register_full_action["activity_actions"][2]
-        activity_action.action_handler = -1
-        activity.shared_user_ids = [users[3].id]
-        db.session.merge(activity_action)
-        db.session.merge(activity)
-        db.session.commit()
-        result = check_authority_action(activity_id=activity.activity_id, action_id=3, contain_login_item_application=True, action_order=2)
-        assert result == 1
 
-        # action_handler != -1 and cur_user == activity.shared_user_id
-        activity_action.action_handler = 100
-        db.session.merge(activity_action)
-        db.session.commit()
-        result = check_authority_action(activity_id=activity.activity_id, action_id=3, contain_login_item_application=True, action_order=2)
-        assert result == 0
 # def check_authority_action(activity_id='0', action_id=0, contain_login_item_application=False, action_order=0):
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_check_authority_action2 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
-def test_check_authority_action2(app, client, users, db_register_fullaction, mocker):
+def test_check_authority_action2(app, client, users, db_register_full_action, mocker):
     current_app.config['WEKO_WORKFLOW_ENABLE_CONTRIBUTOR'] = False
     with patch("weko_workflow.api.WorkActivity.get_activity_action_role",return_value=({'allow': []}, {'allow': []})):
         # ログアウトしている場合、1

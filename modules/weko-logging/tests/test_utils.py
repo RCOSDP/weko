@@ -169,29 +169,29 @@ def test_delete_log(app, db):
     # Case 1: config is None
     with pytest.raises(Exception) as ex:
         UserActivityLogUtils.delete_log()
-        ex.message == "WEKO_LOGGING_USER_ACTIVITY_SETTING is not set."
+        ex.message == "WEKO_LOGGING_USER_ACTIVITY_DB_SETTING is not set."
 
     # Case 2: when or interval is None
     with patch("weko_logging.utils.current_app") as mock_current_app:
         mock_current_app.config.get.return_value = {"delete": {}}
         with pytest.raises(Exception) as ex:
             UserActivityLogUtils.delete_log()
-            ex.message == "WEKO_LOGGING_USER_ACTIVITY_SETTING.delete.when or interval is not set."
+            ex.message == "WEKO_LOGGING_USER_ACTIVITY_DB_SETTING.delete.when or interval is not set."
 
     # Case 3: when is invalid
     with app.test_request_context():
         app.config.update(
-            dict(WEKO_LOGGING_USER_ACTIVITY_SETTING={"delete": {"when": "test_when", "interval": 1}})
+            dict(WEKO_LOGGING_USER_ACTIVITY_DB_SETTING={"delete": {"when": "test_when", "interval": 1}})
         )
         with pytest.raises(Exception) as ex:
             UserActivityLogUtils.delete_log()
-            ex.message == "WEKO_LOGGING_USER_ACTIVITY_SETTING.delete.when is invalid."
+            ex.message == "WEKO_LOGGING_USER_ACTIVITY_DB_SETTING.delete.when is invalid."
 
     # Case 4: delete logs (when: days)
     with app.test_request_context():
         _create_test_data()
         app.config.update(
-            dict(WEKO_LOGGING_USER_ACTIVITY_SETTING={"delete": {"when": "days", "interval": 2}})
+            dict(WEKO_LOGGING_USER_ACTIVITY_DB_SETTING={"delete": {"when": "days", "interval": 2}})
         )
         UserActivityLogUtils.delete_log()
         actual_records = UserActivityLog.query.all()
@@ -201,7 +201,7 @@ def test_delete_log(app, db):
     with app.test_request_context():
         _create_test_data()
         app.config.update(
-            dict(WEKO_LOGGING_USER_ACTIVITY_SETTING={"delete": {"when": "weeks", "interval": 3}})
+            dict(WEKO_LOGGING_USER_ACTIVITY_DB_SETTING={"delete": {"when": "weeks", "interval": 3}})
         )
         UserActivityLogUtils.delete_log()
         actual_records = UserActivityLog.query.all()
@@ -211,7 +211,7 @@ def test_delete_log(app, db):
     with app.test_request_context():
         _create_test_data()
         app.config.update(
-            dict(WEKO_LOGGING_USER_ACTIVITY_SETTING={"delete": {"when": "months", "interval": 4}})
+            dict(WEKO_LOGGING_USER_ACTIVITY_DB_SETTING={"delete": {"when": "months", "interval": 4}})
         )
         UserActivityLogUtils.delete_log()
         actual_records = UserActivityLog.query.all()
@@ -221,7 +221,7 @@ def test_delete_log(app, db):
     with app.test_request_context():
         _create_test_data()
         app.config.update(
-            dict(WEKO_LOGGING_USER_ACTIVITY_SETTING={"delete": {"when": "years", "interval": 5}})
+            dict(WEKO_LOGGING_USER_ACTIVITY_DB_SETTING={"delete": {"when": "years", "interval": 5}})
         )
         UserActivityLogUtils.delete_log()
         actual_records = UserActivityLog.query.all()
