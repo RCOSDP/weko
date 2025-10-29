@@ -3137,9 +3137,18 @@ def test_next_action_for_request_mail(app, client, db, users, db_register_reques
     # Adminsettings display_request_form is True
     with db.session.begin_nested():
         db.session.delete(adminsetting)
-        adminsetting = AdminSettings(id=1,name='restricted_access',settings={"display_request_form": True})
+        adminsetting = AdminSettings(
+            id=1,
+            name='restricted_access',
+            settings={
+                "display_request_form": True,
+                "edit_mail_templates_enable": True
+            }
+        )
         db.session.add(adminsetting)
     db.session.commit()
+
+    app.config["WEKO_ADMIN_RESTRICTED_ACCESS_DISPLAY_FLAG"] = True
 
     update_activity_order("7",7,5)
     res = client.post(url, json=input)

@@ -163,6 +163,8 @@ class TestFlowSettingView:
             db.session.add(adminsetting)
         db.session.commit()
 
+        app.config["WEKO_ADMIN_RESTRICTED_ACCESS_DISPLAY_FLAG"] = True
+
         #repoadmin
         login(client=client, email=users[1]['email'])
         url = '/admin/flowsetting/{}'.format(workflow_open_restricted[1]["flow"].flow_id)
@@ -581,7 +583,7 @@ class TestWorkFlowSettingView:
     @pytest.mark.parametrize('users_index, status_code', [
         # (0, 403),
         (1, 200),
-        # (2, 200),
+        (2, 200),
         # (3, 200),
         # (4, 200),
         # (5, 200),
@@ -662,7 +664,10 @@ class TestWorkFlowSettingView:
             res = client.post(url, data=json.dumps(data), headers=[('Content-Type', 'application/json')])
         assert res.status_code == 200
         q = WorkFlow.query.filter_by(id=1).first()
-        assert q.open_restricted == True
+        if users_index == 2:
+            assert q.open_restricted == True
+        else:
+            assert q.open_restricted == False
         assert q.is_gakuninrdm == True
         assert q.index_tree_id == 1
         q = WorkflowRole.query.all()

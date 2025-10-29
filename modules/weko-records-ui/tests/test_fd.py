@@ -356,6 +356,12 @@ def test_validate_onetime_token(
     mock_process_download.return_value = "process_success"
     mock_validate_guest.return_value = "guest_validation"
 
+    # Disable admin restricted access display flag
+    result = validate_onetime_token(pid, record, filename, token)
+    assert result == ("Error: Restricted access is disabled.", 403)
+
+    app.config["WEKO_ADMIN_RESTRICTED_ACCESS_DISPLAY_FLAG"] = True
+
     # Test Case 1: Token validation fails
     mock_validate_url.return_value = (False, "Invalid token")
     result = validate_onetime_token(pid, record, filename, token)

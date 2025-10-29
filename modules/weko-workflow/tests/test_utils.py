@@ -3368,7 +3368,7 @@ def test_create_onetime_download_url_to_guest_password(app, workflow,mocker, use
                                 ,record_id=record_id
                                 ,file_name=file_name
                                 ,download_limit=1
-                                ,expiration_date = expiration_date.strftime("%Y-%m-%d")
+                                ,expiration_date = expiration_date
                                 ,extra_info=extra_info
                                 ,is_guest=True
                                 ,approver_id=1)
@@ -3392,7 +3392,7 @@ def test_create_onetime_download_url_to_guest_password(app, workflow,mocker, use
                                 ,record_id=record_id
                                 ,file_name=file_name
                                 ,download_limit=1
-                                ,expiration_date = expiration_date.strftime("%Y-%m-%d")
+                                ,expiration_date = expiration_date
                                 ,extra_info=extra_info
                                 ,is_guest=True
                                 ,approver_id=1)
@@ -3401,25 +3401,14 @@ def test_create_onetime_download_url_to_guest_password(app, workflow,mocker, use
             result = create_onetime_download_url_to_guest(activity_id, extra_info)
             assert result == test
 
-        # raise OverflowError
-        mock_url_obj=FileOnetimeDownload(user_mail=user_mail
-                                ,record_id=record_id
-                                ,file_name=file_name
-                                ,download_limit=1
-                                ,expiration_date = ""
-                                ,extra_info=extra_info
-                                ,is_guest=True
-                                ,approver_id=1)
+        # raise Exception
         url = create_download_url(mock_url_obj)
-        with patch("weko_records_ui.utils.create_onetime_url_record",return_value=mock_url_obj):
-            with patch("weko_workflow.utils.timedelta",side_effect=OverflowError):
-                test = {
-                    "file_url":url,
-                    "expiration_date":""
-                }
-                result = create_onetime_download_url_to_guest(activity_id, extra_info)
-                assert result == test
-
+        with patch("weko_records_ui.utils.create_onetime_url_record",side_effect=Exception("Test Error")):
+            mock_logger = mocker.patch("weko_workflow.utils.current_app.logger.error")
+            test = {}
+            result = create_onetime_download_url_to_guest(activity_id, extra_info)
+            assert result == test
+            mock_logger.assert_called_once_with("Failed to create onetime URL.")
 
 # def delete_guest_activity(activity_id: str) -> bool:
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_delete_guest_activity -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
@@ -3503,7 +3492,7 @@ def test_get_activity_display_info(app,db, users, db_register_full_action, mocke
         import json
         target_activity = Activity.query.filter_by(activity_id=activity_id).first()
         target_activity.temp_data = json.dumps({"metainfo":{"owner": 2, "shared_user_ids":[{"user": -1}, {"user": 1}]}})
-        db.session.merge(activity)
+        db.session.merge(target_activity)
         db.session.commit()
         endpoint, action_id, activity_detail, cur_action, histories, item, steps, temporary_comment, workflow_detail, owner_id, shared_user_ids = get_activity_display_info(activity_id)
         assert owner_id == 2
@@ -3513,7 +3502,7 @@ def test_get_activity_display_info(app,db, users, db_register_full_action, mocke
         import json
         target_activity = Activity.query.filter_by(activity_id=activity_id).first()
         target_activity.temp_data = json.dumps({"metainfo":{"owner": 2, "shared_user_ids":[-1,1]}})
-        db.session.merge(activity)
+        db.session.merge(target_activity)
         db.session.commit()
         endpoint, action_id, activity_detail, cur_action, histories, item, steps, temporary_comment, workflow_detail, owner_id, shared_user_ids = get_activity_display_info(activity_id)
         assert owner_id == 2
@@ -4967,6 +4956,21 @@ def test_get_contributors(app, db, users_1, db_records_1):
         user_id_list_json = [2]
         actual = get_contributors(None, user_id_list_json, owner_id=1)
         assert sorted(actual, key=lambda x: x["userid"]) == sorted(expected, key=lambda x: x["userid"])
+
+        # login user does not exist when WEKO_ITEMS_UI_PROXY_POSTING is False
+        app.config["WEKO_ITEMS_UI_PROXY_POSTING"] = False
+        user_id_list_json = [1, 2]
+        actual = get_contributors(None, user_id_list_json, owner_id=2)
+        expected = [
+            {
+                'userid' : 2,
+                'username': "ユーザー2",
+                'email' : "user2@sample.com",
+                'owner' : True,
+                'error': ''
+            }
+        ]
+        assert expected == actual
 
 
 status_list = [
