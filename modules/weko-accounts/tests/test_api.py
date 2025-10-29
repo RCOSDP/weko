@@ -19,7 +19,7 @@ from weko_accounts.api import (
     remove_contribute_role,
     bind_roles_to_indices,
     create_fqdn_from_entity_id
-) 
+)
 from invenio_db import db as db_
 from invenio_db import InvenioDB
 from invenio_accounts import InvenioAccounts
@@ -43,7 +43,7 @@ class TestShibUser:
         # get is_member_of and type is list
         attr = {
             "shib_eppn":"test_eppn",
-            "shib_is_member_of": ["https://example.com/gr/xxx", 
+            "shib_is_member_of": ["https://example.com/gr/xxx",
                                   "https://example.com/gr/yyy"]
         }
         shibuser = ShibUser(attr)
@@ -972,7 +972,7 @@ def test_sync_shib_gakunin_map_groups_success(app, client, group_info_redis_conn
             mock_role2.name = 'role2'
             mock_role.query.all.return_value = [mock_role1, mock_role2]
 
-            sync_shib_gakunin_map_groups()
+            assert sync_shib_gakunin_map_groups() == cache_roles
 
             # update_rolesが呼び出されることを確認
             mock_update_roles.assert_called_once_with(
@@ -998,7 +998,7 @@ def test_sync_shib_gakunin_map_groups_no_update_needed(app, client, group_info_r
             mock_role2.name = 'role2'
             mock_role.query.all.return_value = [mock_role1, mock_role2]
 
-            sync_shib_gakunin_map_groups()
+            assert sync_shib_gakunin_map_groups() == cache_roles
 
             # update_rolesが呼び出されないことを確認
             mock_update_roles.assert_not_called()

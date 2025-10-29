@@ -514,7 +514,14 @@ def get_user_info_by_role_name(role_name):
 
 
 def sync_shib_gakunin_map_groups():
-    """Handle SHIB_BIND_GAKUNIN_MAP_GROUPS logic."""
+    """Handle SHIB_BIND_GAKUNIN_MAP_GROUPS logic.
+
+    Get group identifier for Gakunin mAP from the Redis cache
+    and update the prefixed role accordingly.
+
+    Returns:
+        set[str]: Set of group identifiers in the Gakunin mAP from Redis cache.
+    """
     try:
         # Entity ID → Redisのキーに変換
         fqdn = create_fqdn_from_entity_id()
