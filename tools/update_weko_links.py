@@ -387,16 +387,20 @@ def bulk_update_records_metadata(batch_size=500):
                     db.session.bulk_update_mappings(RecordMetadata, bulk_records_metadata_data)
                     # show bulk update records_metadata ids
                     updated_ids = [r['id'] for r in bulk_records_metadata_data]
-                    current_app.logger.info(f'    Updated records_metadata item_ids: {updated_ids}')
-
+                    # current_app.logger.info(f'    Updated records_metadata item_ids: {updated_ids}')
+                    for i in updated_ids:
+                        current_app.logger.info(f"[FIX] records_metadata:{i}")
+                
                 # bulk update activities
                 if new_activities:
                     db.session.bulk_update_mappings(Activity, new_activities)
                     # show bulk update activity ids
                     updated_ids = [r['id'] for r in new_activities]
-                    current_app.logger.info(f'    Updated workflow_activity ids: {updated_ids}')
+                    # current_app.logger.info(f'    Updated workflow_activity ids: {updated_ids}')
+                    for i in updated_ids:
+                        current_app.logger.info(f"[FIX] workflow_activity:{i}")
 
-                current_app.logger.info(f'  Finished processing recids: {recid_chunk}')
+                # current_app.logger.info(f'  Finished processing recids: {recid_chunk}')
 
         except Exception as e:
             # エラーが起きたアイテムはロールバックして次に進む
@@ -535,9 +539,11 @@ def bulk_update_workflow_activities(batch_size=500):
                     db.session.bulk_update_mappings(Activity, new_activities)
                     # show bulk update activity ids
                     updated_ids = [r['id'] for r in new_activities]
-                    current_app.logger.info(f'    Updated workflow_activity ids: {updated_ids}')
+                    # current_app.logger.info(f'    Updated workflow_activity ids: {updated_ids}')
+                    for i in updated_ids:
+                        current_app.logger.info(f"[FIX] workflow_activity:{i}")
 
-                current_app.logger.info(f'  Finished processing activities: {[r[0] for r in activities]}')
+                # current_app.logger.info(f'  Finished processing activities: {[r[0] for r in activities]}')
 
         except Exception as e:
             # エラーが起きたアイテムはロールバックして次に進む
