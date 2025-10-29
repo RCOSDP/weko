@@ -339,7 +339,8 @@ def check_roles(user_role, roles, params):
         set_index_group = any(int(r) in params["role_groups"] for r in roles_list)
         set_index_role = any(int(r) not in params["role_groups"] for r in roles_list)
         if current_user.is_authenticated:
-            self_role = user_role[1] or ['-98']
+            self_role = user_role[1] or []
+            self_role.append('-98')
             if set_index_group:
                 index_role_group = [int(r) for r in roles_list if int(r) in params["role_groups"]]
                 # Groups(role) are set for the index.
