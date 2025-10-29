@@ -905,13 +905,15 @@ def test_check_created_id(app, users, index, status):
     #login("contributor@test.org")
     with app.test_request_context(headers=[("Accept-Language", "en")]):
         with app.test_client() as client:
+            app.config["WEKO_ITEMS_UI_PROXY_POSTING"] = True
             login_user(users[0]["obj"])
             # contributor user
             assert current_user.is_authenticated == True
             assert record.get("_deposit", {}).get("created_by") == 1
             assert record.get("item_type_id") == "15"
             assert record.get("weko_shared_ids") == [1,2,3]
-
+            assert check_created_id(record) == True
+            
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_permissions.py::test_check_created_id_comadmin -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
 def test_check_created_id_comadmin(app, users, db):
     record = {
