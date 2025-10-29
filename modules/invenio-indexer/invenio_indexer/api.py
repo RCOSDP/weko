@@ -17,7 +17,9 @@ import click
 import json
 import pytz
 from celery import current_app as current_celery_app
-from elasticsearch.helpers import bulk
+from invenio_db import db
+from sqlalchemy.exc import SQLAlchemyError
+from elasticsearch.helpers import bulk, streaming_bulk
 from flask import current_app
 from invenio_records.api import Record
 from invenio_search import current_search_client
@@ -26,6 +28,8 @@ from kombu.compat import Consumer
 from sqlalchemy.orm.exc import NoResultFound
 from elasticsearch.helpers import BulkIndexError
 from elasticsearch.exceptions import ConnectionTimeout,ConnectionError
+import datetime
+import math
 
 from .proxies import current_record_to_index
 from .signals import before_record_index
@@ -193,7 +197,7 @@ class RecordIndexer(object):
         req_timeout = current_app.config['INDEXER_BULK_REQUEST_TIMEOUT']
         while True:
             with current_celery_app.pool.acquire(block=True) as conn:
-                # check 
+                # check
                 b4_queues_cnt = 0
                 with conn.channel() as chan:
                     name, b4_queues_cnt, consumers = chan.queue_declare(queue=current_app.config['INDEXER_MQ_ROUTING_KEY'], passive=True)
@@ -250,7 +254,7 @@ class RecordIndexer(object):
                             success = success + (len(error_ids)-len(be2.errors))
                             fail = fail + len(be2.errors)
                             for error in be2.errors:
-                                click.secho("{}, {}".format(error['index']['_id'],error['index']['error']['type']),fg='red')   
+                                click.secho("{}, {}".format(error['index']['_id'],error['index']['error']['type']),fg='red')
                     except ConnectionError as ce:
                         with conn.channel() as chan:
                             name, af_queues_cnt, consumers = chan.queue_declare(queue=current_app.config['INDEXER_MQ_ROUTING_KEY'], passive=True)
@@ -281,9 +285,185 @@ class RecordIndexer(object):
                         current_app.logger.error(e)
                         current_app.logger.error(traceback.format_exc())
                         break
-                
+
         count = (success,fail)
-        click.secho("count(success, error): {}".format(count),fg='green')              
+        click.secho("count(success, error): {}".format(count),fg='green')
+        return count
+
+    def process_bulk_queue_reindex(self, es_bulk_kwargs=None, with_deleted=False):
+        """
+        Process bulk indexing queue.
+
+        Args:
+            es_bulk_kwargs (dict, optional): Additional keyword arguments passed to
+                elasticsearch.helpers.bulk. Defaults to None.
+            with_deleted (bool, optional): If True, include deleted records in the indexing process. Defaults to False.
+
+        Returns:
+            tuple: (success, fail) if all processed, or (success, fail, unprocessed) if some remain.
+
+        Raises:
+            BulkIndexError: If a bulk indexing error occurs.
+            BulkConnectionError: If a connection error occurs during bulk indexing.
+            BulkConnectionTimeout: If a connection timeout occurs during bulk indexing.
+            BulkException: For other exceptions during bulk indexing.
+        """
+        from weko_deposit.utils import update_pdf_contents_es_with_index_api # avoid circular import
+        import socket
+        import re
+        broker_url = current_app.config.get('BROKER_URL')
+        # Extract host and port from BROKER_URL, fallback to default if not found
+        m = re.match(r'.*://.*@(.*):(\d+)', broker_url)
+        if m:
+            rabbit_host = m.group(1)
+            rabbit_port = int(m.group(2))
+        else:
+            rabbit_host = 'rabbitmq'
+            rabbit_port = 5672
+        try:
+            with socket.create_connection((rabbit_host, rabbit_port), timeout=3):
+                rabbitmq_conn = True
+        except Exception as e:
+            rabbitmq_conn = False
+        # Check RabbitMQ connectivity before proceeding
+        if not rabbitmq_conn:
+            click.secho(f"Cannot connect to RabbitMQ({rabbit_host}:{rabbit_port}) (socket connection failed)", fg='red')
+            return (0, 0, 0)
+
+        success = 0
+        fail = 0
+        unprocessed = 0
+        self.count = 0
+        self.success_ids = []
+        self.target_chunks = 0
+        messages_count = 0
+        count = (success,fail)
+        req_timeout = current_app.config['INDEXER_BULK_REQUEST_TIMEOUT']
+        with current_celery_app.pool.acquire(block=True) as conn:
+            # check
+            b4_queues_cnt = 0
+            with conn.channel() as chan:
+                name, b4_queues_cnt, consumers = chan.queue_declare(queue=current_app.config['INDEXER_MQ_ROUTING_KEY'], passive=True)
+                current_app.logger.debug("name:{}, queues:{}, consumers:{}".format(name, b4_queues_cnt, consumers))
+            consumer = Consumer(
+                connection=conn,
+                queue=self.mq_queue.name,
+                exchange=self.mq_exchange.name,
+                routing_key=self.mq_routing_key,
+            )
+            es_bulk_kwargs = es_bulk_kwargs or {}
+            with consumer:
+                try:
+                    messages = list(consumer.iterqueue())
+                    messages_count = len(messages)
+                    self.target_chunks = math.ceil(messages_count / es_bulk_kwargs["chunk_size"])
+                    click.secho("messages count:{}, target chunks:{}".format(messages_count, self.target_chunks),fg='green')
+                    _success,_fail  = self.reindex_bulk(
+                        self.client,
+                        self._actionsiter_sync_version(messages),
+                        request_timeout=req_timeout,
+                        # raise_on_error=True,
+                        # raise_on_exception=True,
+                        **es_bulk_kwargs
+                    )
+                    update_pdf_contents_es_with_index_api(self.success_ids)
+                    success = _success
+                    if isinstance(_fail, list):
+                        fail = len(_fail)
+                        for error in _fail:
+                            click.secho("[ERROR] {}, {}".format(error['index']['_id'],error['index']['error']['type']),fg='red')
+                    else:
+                        fail = _fail
+                    unprocessed = messages_count - (success + fail) if messages_count > (success + fail) else 0
+                except BulkIndexError as be:
+                    with conn.channel() as chan:
+                        name, af_queues_cnt, consumers = chan.queue_declare(queue=current_app.config['INDEXER_MQ_ROUTING_KEY'], passive=True)
+                        current_app.logger.debug("name:{}, queues:{}, consumers:{}".format(name, af_queues_cnt, consumers))
+                    fail = len(be.errors)
+                    success = self.count - fail
+                    unprocessed = messages_count - self.count
+                    update_pdf_contents_es_with_index_api(self.success_ids)
+                    for error in be.errors:
+                        err = error['index']
+                        err_info = err.get('error')
+                        if isinstance(err_info, dict):
+                            error_type = err_info.get('type', 'unknown')
+                        else:
+                            error_type = str(err_info)
+                        click.secho("[ERROR] {}, {}".format(err.get('_id', ''), error_type), fg='red')
+                except (BulkConnectionTimeout, ConnectionTimeout) as ce:
+                    click.secho("Error: {}".format(ce.errors),fg='red')
+                    click.secho("INDEXER_BULK_REQUEST_TIMEOUT: {} sec".format(req_timeout),fg='red')
+                    click.secho("Please change value of INDEXER_BULK_REQUEST_TIMEOUT and retry it.",fg='red')
+                    click.secho("processing: {}".format(self.count),fg='red')
+                    click.secho("latest processing id: {}".format(self.latest_item_id),fg='red')
+                    if '_success' in locals() or '_fail' in locals():
+                        success = _success
+                        fail = _fail
+                        errors = []
+                        if isinstance(fail, list):
+                            errors = fail
+                    else:
+                        success = ce.success if hasattr(ce, 'success') else 0
+                        fail = ce.failed if hasattr(ce, 'failed') else 0
+                        errors = ce.errors if hasattr(ce, 'errors') else []
+                    if len(errors) > 0:
+                        for error in errors:
+                            click.secho("[ERROR] {}, {}".format(error['index']['_id'],error['index']['error']['type']),fg='red')
+                        fail = len(errors)
+                    unprocessed = messages_count - (success + fail) if messages_count > (success + fail) else 0
+                    update_pdf_contents_es_with_index_api(self.success_ids)
+                except (BulkConnectionError, ConnectionError) as ce:
+                    with conn.channel() as chan:
+                        name, af_queues_cnt, consumers = chan.queue_declare(queue=current_app.config['INDEXER_MQ_ROUTING_KEY'], passive=True)
+                        current_app.logger.debug("name:{}, queues:{}, consumers:{}".format(name, af_queues_cnt, consumers))
+                        if '_success' in locals() or '_fail' in locals():
+                            success = _success
+                            fail = _fail
+                            errors = []
+                            if isinstance(fail, list):
+                                errors = fail
+                        else:
+                            success = ce.success if hasattr(ce, 'success') else 0
+                            fail = ce.failed if hasattr(ce, 'failed') else 0
+                            errors = ce.errors if hasattr(ce, 'errors') else []
+                        if len(errors) > 0:
+                            for error in errors:
+                                click.secho("[ERROR] {}, {}".format(error['index']['_id'],error['index']['error']['type']),fg='red')
+                            fail = len(errors)
+                        unprocessed = messages_count - (success + fail) if messages_count > (success + fail) else 0
+                        update_pdf_contents_es_with_index_api(self.success_ids)
+                except (BulkException, Exception) as e:
+                    current_app.logger.error(e)
+                    current_app.logger.error(traceback.format_exc())
+                    if '_success'  in locals() or '_fail' in locals():
+                        success = _success
+                        fail = _fail
+                        errors = []
+                        if isinstance(fail, list):
+                            errors = fail
+                    else:
+                        success = e.success if hasattr(e, 'success') else 0
+                        fail = e.failed if hasattr(e, 'failed') else 0
+                        errors = e.errors if hasattr(e, 'errors') else []
+                    if len(errors) > 0:
+                        for error in errors:
+                            err = error['index']
+                            err_info = err.get('error')
+                            if isinstance(err_info, dict):
+                                error_type = err_info.get('type', 'unknown')
+                            else:
+                                error_type = str(err_info)
+                            click.secho("[ERROR] {}, {}".format(err.get('_id', ''), error_type), fg='red')
+                        fail = len(errors)
+                    unprocessed = messages_count - (success + fail) if messages_count > (success + fail) else 0
+                    update_pdf_contents_es_with_index_api(self.success_ids)
+        if unprocessed == 0:
+            count = (success,fail)
+            click.secho("count(success, error): {}".format(count),fg='green')
+        else:
+            count = (success,fail,unprocessed)
+            click.secho("count(success, error, unprocessed): {}".format(count),fg='green')
         return count
 
     @contextmanager
@@ -338,7 +518,7 @@ class RecordIndexer(object):
                 current_app.logger.error(
                     "Failed to index record {0}".format(payload.get('id')),
                     exc_info=True)
-    
+
     def _actionsiter2(self, ids, with_deleted=False):
         """Iterate bulk actions.
 
@@ -346,7 +526,43 @@ class RecordIndexer(object):
         """
         for id in ids:
             yield self._index_action2(id, True, with_deleted=with_deleted)
-            
+
+    def _actionsiter_sync_version(self, message_iterator):
+        """
+        Iterate bulk actions with sync version.
+
+        Args:
+            message_iterator (iterator): Iterator yielding messages from a queue.
+
+        Returns:
+            iterator: Yields bulk action dictionaries for Elasticsearch.
+
+        Raises:
+            NoResultFound: If the record is not found in the database.
+            Exception: For other errors during action generation.
+        """
+        for message in message_iterator:
+            payload = message.decode()
+            try:
+                if payload['op'] == 'delete':
+                    yield self._delete_action(payload)
+                else:
+                    yield self._index_action_sync_version(payload)
+                message.ack()
+            except NoResultFound:
+                message.reject()
+            except SQLAlchemyError:
+                db.session.rollback()
+                current_app.logger.error(
+                    f'SQLAlchemy error occurred while updating the version_id in records_metadata for id: {payload.get("id", "unknown")}.'
+                )
+                message.reject()
+            except Exception:
+                message.reject()
+                current_app.logger.error(
+                    f"Failed to index record {0}".format(payload.get('id')),
+                    exc_info=True)
+
     def _delete_action(self, payload):
         """Bulk delete action.
 
@@ -371,7 +587,7 @@ class RecordIndexer(object):
         :param payload: Decoded message body.
         :returns: Dictionary defining an Elasticsearch bulk 'index' action.
         """
-        
+
         return self._index_action2(payload['id'], with_deleted=with_deleted)
 
     def _index_action2(self, id,deleteFile=False,with_deleted=False):
@@ -382,8 +598,8 @@ class RecordIndexer(object):
         """
         record = Record.get_record(id)
         self.count = self.count + 1
-        click.secho("Indexing ID:{}, Count:{}".format(id,self.count),fg='green') 
-        
+        click.secho("Indexing ID:{}, Count:{}".format(id,self.count),fg='green')
+
         self.latest_item_id = id
         index, doc_type = self.record_to_index(record)
 
@@ -392,12 +608,12 @@ class RecordIndexer(object):
         body_size = len(json.dumps(body))
         max_body_size = current_app.config['INDEXER_MAX_BODY_SIZE']
 
-        
+
         if deleteFile or (body_size>max_body_size):
             if 'content' in body:
                 for i in range(len(body['content'])):
                     body['content'][i]['file'] = ""
-        
+
         action = {
             '_op_type': 'index',
             '_index': index,
@@ -410,7 +626,64 @@ class RecordIndexer(object):
         action.update(arguments)
 
         return action
-    
+
+    def _index_action_sync_version(self, payload):
+        """
+        Create a bulk index action for Elasticsearch.
+
+        Args:
+            id (str): Record identifier.
+            deleteFile (bool, optional): If True, remove file information from the content. Default is False.
+            with_deleted (bool, optional): If True, include deleted records in the indexing process. Default is False.
+
+        Returns:
+            dict: Dictionary defining an Elasticsearch bulk 'index' action.
+
+        Raises:
+            Exception: If the record cannot be retrieved or processed.
+        """
+        from weko_deposit.api import WekoIndexer # avoid circular import
+        record_id = payload['id']
+        record = Record.get_record(record_id)
+
+        indexer = WekoIndexer()
+        indexer.get_es_index()
+        res = indexer.get_metadata_by_item_id(record_id)
+        es_version = res.get('_version')
+
+        if record.model.version_id < es_version:
+            record.model.version_id = es_version
+
+        self.count = self.count + 1
+        click.secho(f"Indexing ID:{record_id}, Count:{self.count}", fg='green')
+
+        self.latest_item_id = record_id
+        index, doc_type = self.record_to_index(record)
+
+        arguments = {}
+        body = self._prepare_record(record, index, doc_type, arguments)
+
+        body_size = len(json.dumps(body))
+        max_body_size = current_app.config['INDEXER_MAX_BODY_SIZE']
+
+        if body_size>max_body_size:
+            if 'content' in body:
+                for i in range(len(body['content'])):
+                    body['content'][i]['file'] = ""
+
+        action = {
+            '_op_type': 'index',
+            '_index': index,
+            '_type': doc_type,
+            '_id': str(record.id),
+            '_version': record.model.version_id,
+            '_version_type': self._version_type,
+            '_source': body
+        }
+        action.update(arguments)
+        db.session.commit()
+        return action
+
     @staticmethod
     def _prepare_record(record, index, doc_type, arguments=None, **kwargs):
         """Prepare record data for indexing.
@@ -445,6 +718,90 @@ class RecordIndexer(object):
 
         return data
 
+    def reindex_bulk(self, client, actions, stats_only=False, *args, **kwargs):
+        """
+        Wrapper function for streaming_bulk, providing the same behavior as bulk.
+
+        Args:
+            client (Elasticsearch): Elasticsearch client instance.
+            actions (iterator): Iterator containing bulk actions to be processed.
+            stats_only (bool, optional): If True, returns only the number of successful and failed operations. If False, returns the number of successful operations and a list of error responses. Default is False.
+            *args: Additional arguments to pass to Elasticsearch.
+            **kwargs: Extra parameters.
+
+        Returns:
+            tuple: If stats_only=True, returns (success, failed). If stats_only=False, returns (success, errors).
+
+        Raises:
+            BulkIndexError: Raised when a bulk-specific error occurs during processing.
+            BulkConnectionError: Raised when a connection error occurs.
+            BulkConnectionTimeout: Raised when a connection timeout occurs.
+            BulkException: Raised for any other exceptions during bulk processing.
+        """
+    # ...existing
+        success, failed = 0, 0
+        errors = []
+        success_ids = []
+        current_chunk = 1
+        chunk_progress = f"{current_chunk}/{self.target_chunks}"
+        ignore_status = kwargs.pop('ignore_status', None)
+        span_name = kwargs.pop('span_name', None)
+        kwargs.pop('yield_ok', None)
+        try:
+            streaming_bulk_kwargs = {"yield_ok": True}
+            if span_name is not None:
+                streaming_bulk_kwargs["span_name"] = span_name
+            if ignore_status is not None:
+                streaming_bulk_kwargs["ignore_status"] = ignore_status
+            item_count = 0
+            log_list = []
+            for ok, item in streaming_bulk(
+                client,
+                actions,
+                *args,
+                **streaming_bulk_kwargs,
+                **kwargs
+            ):
+                item_count += 1
+                if not ok:
+                    if not stats_only:
+                        errors.append(item)
+                    failed += 1
+                    log_list.append({"id": item['index']['_id'], "Status": "Fail"})
+                else:
+                    success += 1
+                    success_ids.append(item['index']['_id'])
+                    log_list.append({"id": item['index']['_id'], "Status": "Success"})
+                if item_count % kwargs["chunk_size"] == 0:
+                    date = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')
+                    for log in log_list:
+                        if log["Status"] == "Success":
+                            click.secho("[{}] ID: {}, Status: {}, Chunk: {}".format(date, log["id"], log["Status"], chunk_progress), fg='green')
+                        else:
+                            click.secho("[{}] ID: {}, Status: {}, Chunk: {}".format(date, log["id"], log["Status"], chunk_progress), fg='red')
+                    current_chunk += 1
+                    chunk_progress = f"{current_chunk}/{self.target_chunks}"
+                    log_list = []
+            date = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')
+            for log in log_list:
+                if log["Status"] == "Success":
+                    click.secho("[{}] ID: {}, Status: {}, Chunk: {}".format(date, log["id"], log["Status"], chunk_progress), fg='green')
+                else:
+                    click.secho("[{}] ID: {}, Status: {}, Chunk: {}".format(date, log["id"], log["Status"], chunk_progress), fg='red')
+            self.success_ids = success_ids
+            return (success, failed) if stats_only else (success, errors)
+        except BulkIndexError:
+            self.success_ids = success_ids
+            raise
+        except ConnectionTimeout as cte:
+            self.success_ids = success_ids
+            raise BulkConnectionTimeout(success, failed, errors, cte) from cte
+        except ConnectionError as ce:
+            self.success_ids = success_ids
+            raise BulkConnectionError(success, failed, errors, ce) from ce
+        except Exception as e:
+            self.success_ids = success_ids
+            raise BulkException(success, failed, errors, e) from e
 
 class BulkRecordIndexer(RecordIndexer):
     r"""Provide an interface for indexing records in Elasticsearch.
@@ -482,3 +839,81 @@ class BulkRecordIndexer(RecordIndexer):
     def delete_by_id(self, record_uuid):
         """Delete record from index by record identifier."""
         self.bulk_delete([record_uuid])
+
+class BulkBaseException(Exception):
+    """
+    Base exception for bulk indexing errors.
+
+    Args:
+        success (int): Number of successful operations before the exception.
+        failed (int): Number of failed operations before the exception.
+        errors (list): List of error details.
+        original_exception (Exception): The original exception that was raised.
+
+    Attributes:
+        success (int): Number of successful operations.
+        failed (int): Number of failed operations.
+        errors (list): List of error details.
+        original_exception (Exception): The original exception.
+    """
+    def __init__(self, success, failed, errors, original_exception):
+        super().__init__(str(original_exception))
+        self.success = success
+        self.failed = failed
+        self.errors = errors
+        self.original_exception = original_exception
+
+
+class BulkConnectionError(BulkBaseException, ConnectionError):
+    """
+    Exception raised when a connection error occurs during bulk indexing.
+
+    Args:
+        success (int): Number of successful operations before the exception.
+        failed (int): Number of failed operations before the exception.
+        errors (list): List of error details.
+        original_exception (Exception): The original connection error that was raised.
+
+    Attributes:
+        success (int): Number of successful operations.
+        failed (int): Number of failed operations.
+        errors (list): List of error details.
+        original_exception (Exception): The original connection error.
+    """
+    pass
+
+class BulkConnectionTimeout(BulkBaseException, ConnectionTimeout):
+    """
+    Exception raised when a connection timeout occurs during bulk indexing.
+
+    Args:
+        success (int): Number of successful operations before the exception.
+        failed (int): Number of failed operations before the exception.
+        errors (list): List of error details.
+        original_exception (Exception): The original timeout exception that was raised.
+
+    Attributes:
+        success (int): Number of successful operations.
+        failed (int): Number of failed operations.
+        errors (list): List of error details.
+        original_exception (Exception): The original timeout exception.
+    """
+    pass
+
+class BulkException(BulkBaseException):
+    """
+    General exception for errors during bulk indexing.
+
+    Args:
+        success (int): Number of successful operations before the exception.
+        failed (int): Number of failed operations before the exception.
+        errors (list): List of error details.
+        original_exception (Exception): The original exception that was raised.
+
+    Attributes:
+        success (int): Number of successful operations.
+        failed (int): Number of failed operations.
+        errors (list): List of error details.
+        original_exception (Exception): The original exception.
+    """
+    pass

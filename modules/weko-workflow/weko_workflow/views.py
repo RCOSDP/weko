@@ -202,7 +202,7 @@ def index():
 
     tab = request.args.get('tab',WEKO_WORKFLOW_TODO_TAB)
     if 'community' in request.args:
-        activities, maxpage, size, pages, name_param = activity \
+        activities, maxpage, size, pages, name_param, _ = activity \
             .get_activity_list(conditions=conditions)
         comm = GetCommunity.get_community_by_id(request.args.get('c'))
         ctx = {'community': comm}
@@ -884,12 +884,12 @@ def display_activity(activity_id="0", community_id=None):
         return render_template("weko_theme/error.html",
                 error="can not get data required for rendering")
 
+    if "?" in activity_id:
+        activity_id = activity_id.split("?")[0]
+
     activity = WorkActivity()
     activity_detail = activity.get_activity_detail(activity_id)
     for_delete = activity_detail.flow_define.flow_type == WEKO_WORKFLOW_DELETION_FLOW_TYPE
-
-    if "?" in activity_id:
-        activity_id = activity_id.split("?")[0]
 
     action_endpoint, action_id, activity_detail, cur_action, histories, item, \
         steps, temporary_comment, workflow_detail, owner_id, shared_user_ids = \
@@ -1629,7 +1629,7 @@ def next_action(activity_id='0', action_id=0, json_data=None):
                 action_id=next_action_id,
                 action_order=next_action_order).one_or_none()
             if current_flow_action and current_flow_action.action_roles and current_flow_action.action_roles[0].action_request_mail:
-                is_request_enabled = AdminSettings.get("restricted_access", dict_to_object=False) \
+                is_request_enabled = (AdminSettings.get("restricted_access", dict_to_object=False) or {}) \
                     .get("display_request_form", False)
                 #リクエスト機能がAdmin画面で無効化されている場合、メールは送信しない。
                 if is_request_enabled :

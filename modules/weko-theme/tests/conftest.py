@@ -96,6 +96,7 @@ from weko_records_ui.models import PDFCoverPageSettings
 from weko_records_ui.config import WEKO_PERMISSION_SUPER_ROLE_USER, WEKO_PERMISSION_ROLE_COMMUNITY, EMAIL_DISPLAY_FLG
 from weko_groups import WekoGroups
 from weko_gridlayout.views import blueprint as weko_gridlayout_blueprint
+from weko_logging.audit import WekoLoggingUserActivity
 from weko_theme.ext import WekoTheme
 from weko_workflow import WekoWorkflow
 from weko_workflow.models import Activity, ActionStatus, Action, WorkFlow, FlowDefine, FlowAction
@@ -426,6 +427,11 @@ def base_app(instance_path):
                 get_parent_index_tree='/<string:version>/tree/index/<int:index_id>/parent',
                 tree_route='/tree',
                 item_tree_route='/tree/<string:pid_value>',
+                api_get_all_index_jp_en='/<string:version>/tree',
+                api_get_index_tree='/<string:version>/tree/<int:index_id>',
+                api_create_index='/<string:version>/tree/index',
+                api_update_index='/<string:version>/tree/index/<int:index_id>',
+                api_delete_index='/<string:version>/tree/index/<int:index_id>',
                 index_move_route='/tree/move/<int:index_id>',
                 default_media_type='application/json',
                 create_permission_factory_imp='weko_index_tree.permissions:index_tree_permission',
@@ -441,6 +447,7 @@ def base_app(instance_path):
         WEKO_INDEX_TREE_INDEX_ADMIN_TEMPLATE = 'weko_index_tree/admin/index_edit_setting.html',
         WEKO_INDEX_TREE_LIST_API = "/api/tree",
         WEKO_INDEX_TREE_API = "/api/tree/index/",
+        WEKO_INDEX_TREE_DEFAULT_DISPLAY_NUMBER = 5,
     )
     app_.url_map.converters['pid'] = PIDConverter
 
@@ -471,6 +478,7 @@ def base_app(instance_path):
     WekoAdmin(app_)
     WekoItemsUI(app_)
     WekoTheme(app_)
+    WekoLoggingUserActivity(app_)
 
     # InvenioCommunities(app_)
     app_.register_blueprint(invenio_communities_blueprint)
@@ -538,7 +546,7 @@ def client_api(app):
 
 
 @pytest.yield_fixture()
-def client_request_args(app):
+def client_request_args(app, esindex):
     try:
         app.register_blueprint(create_blueprint(app, app.config['WEKO_INDEX_TREE_REST_ENDPOINTS']))
     except AssertionError:
@@ -705,15 +713,15 @@ def users(app, db):
 def indices(app, db):
     with db.session.begin_nested():
         # Create a test Indices
-        testIndexOne = Index(index_name="testIndexOne",position=0, browsing_role="3,-98,-99",public_state=True,id=11)
-        testIndexTwo = Index(index_name="testIndexTwo",position=1, browsing_group="group_test1",public_state=True,id=22)
+        testIndexOne = Index(index_name="testIndexOne",position=10, browsing_role="3,-98,-99",public_state=True,id=11)
+        testIndexTwo = Index(index_name="testIndexTwo",position=11, browsing_group="group_test1",public_state=True,id=22)
         testIndexThree = Index(
             index_name="testIndexThree",
             browsing_role="3,-98,-99",
             public_state=True,
             harvest_public_state=True,
             id=33,
-            position=2,
+            position=12,
             public_date=datetime.today() + timedelta(days=1)
         )
         testIndexThreeChild = Index(
@@ -1306,14 +1314,14 @@ def es(app):
     Don't create template so that the test or another fixture can modify the
     enabled events.
     """
-    current_search_client.indices.delete(index='*')
-    current_search_client.indices.delete_template('*')
+    current_search_client.indices.delete(index='test-*')
+    # current_search_client.indices.delete_template('*')
     list(current_search.create())
     try:
         yield current_search_client
     finally:
-        current_search_client.indices.delete(index='*')
-        current_search_client.indices.delete_template('*')
+        current_search_client.indices.delete(index='test-*')
+        # current_search_client.indices.delete_template('*')
 
 
 def generate_events(
@@ -1365,7 +1373,7 @@ def generate_events(
         ],
         double_click_window=0
     ).run()
-    current_search_client.indices.refresh(index='*')
+    current_search_client.indices.refresh(index='test-*')
 
 
 @pytest.yield_fixture()

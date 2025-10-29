@@ -107,9 +107,7 @@ def renew_all_item_types():
                 current_app.logger.error("Failed to renew item_type_id:{}".format(item_type_id))
                 current_app.logger.error(ret.get("msg"))
                 continue
-            item_type_name = ItemTypeName.query.get(item_type_id)
-            name = item_type_name.name if item_type_name else "No Name"
-            current_app.logger.info("itemtype id:{}, itemtype name:{}".format(item_type_id, name))
+            current_app.logger.info("renew itemtype id:{}".format(item_type_id))
         db.session.commit()
         current_app.logger.info("End renew_all_item_types")
     except Exception as ex:

@@ -258,7 +258,7 @@ def bulk_update_records_metadata(batch_size=500):
     """
     bulk update records_metadata and workflow_activity
     Note: This function skipped elasticsearch update.
-    
+
     """
     current_app.logger.info(f"  {datetime.now().isoformat()} - Updating records_metadata and workflow_activity...")
 
@@ -336,7 +336,7 @@ def bulk_update_records_metadata(batch_size=500):
             current_app.logger.error(f"  bulk update data length: {len(bulk_records_metadata_data)}")
             current_app.logger.error(f"  skipped records length: {len(skipped_record_metadata_ids)}")
             raise Exception("Bulk update data length not equal to records length")
-        
+
         # bulk update activities
         activity_query = Activity.query.filter(
             Activity.item_id.in_(list(records_metadata_info.keys())),
@@ -379,16 +379,16 @@ def bulk_update_records_metadata(batch_size=500):
             current_app.logger.error(f"  skipped activities length: {len(skipped_activity_ids)}")
             raise Exception("Bulk update data length not equal to activities length")
 
-        # transaction start
-        with db.session.begin_nested():
-            try:
+        try:
+            # transaction start
+            with db.session.begin_nested():
                 # bulk update records_metadata
                 if bulk_records_metadata_data:
                     db.session.bulk_update_mappings(RecordMetadata, bulk_records_metadata_data)
                     # show bulk update records_metadata ids
                     updated_ids = [r['id'] for r in bulk_records_metadata_data]
                     current_app.logger.info(f'    Updated records_metadata item_ids: {updated_ids}')
-                
+
                 # bulk update activities
                 if new_activities:
                     db.session.bulk_update_mappings(Activity, new_activities)
@@ -398,11 +398,11 @@ def bulk_update_records_metadata(batch_size=500):
 
                 current_app.logger.info(f'  Finished processing recids: {recid_chunk}')
 
-            except Exception as e:
-                # エラーが起きたアイテムはロールバックして次に進む
-                current_app.logger.error(e)
-                traceback.print_exc()
-                continue
+        except Exception as e:
+            # エラーが起きたアイテムはロールバックして次に進む
+            current_app.logger.error(e)
+            traceback.print_exc()
+            continue
 
     # 変更をデータベースに保存
     db.session.commit()
@@ -476,7 +476,7 @@ def bulk_update_workflow_activities(batch_size=500):
     """
     bulk update workflow_activity for in-progress workflows
     Note: This function skipped elasticsearch update.
-    
+
     """
     current_app.logger.info(f"  {datetime.now().isoformat()} - Updating workflow_activity for in-progress workflows...")
 
@@ -518,7 +518,7 @@ def bulk_update_workflow_activities(batch_size=500):
                 'id': activity_id,
                 'temp_data': json.dumps(json_data, ensure_ascii=False, default=str)
             })
-                
+
         # check if bulk update data length equal to activities length
         if (len(new_activities) + len(skipped_activity_ids)) != len(activities):
             current_app.logger.error("Bulk update data length not equal to activities length")
@@ -526,10 +526,10 @@ def bulk_update_workflow_activities(batch_size=500):
             current_app.logger.error(f"  bulk update data length: {len(new_activities)}")
             current_app.logger.error(f"  skipped activities length: {len(skipped_activity_ids)}")
             raise Exception("Bulk update data length not equal to activities length")
-        
+
         # transaction start
-        with db.session.begin_nested():
-            try:
+        try:
+            with db.session.begin_nested():
                 # bulk update activities
                 if new_activities:
                     db.session.bulk_update_mappings(Activity, new_activities)
@@ -537,13 +537,13 @@ def bulk_update_workflow_activities(batch_size=500):
                     updated_ids = [r['id'] for r in new_activities]
                     current_app.logger.info(f'    Updated workflow_activity ids: {updated_ids}')
 
-                current_app.logger.info(f'  Finished processing activities: {[r["id"] for r in activities]}')
+                current_app.logger.info(f'  Finished processing activities: {[r[0] for r in activities]}')
 
-            except Exception as e:
-                # エラーが起きたアイテムはロールバックして次に進む
-                current_app.logger.error(e)
-                traceback.print_exc()
-                continue
+        except Exception as e:
+            # エラーが起きたアイテムはロールバックして次に進む
+            current_app.logger.error(e)
+            traceback.print_exc()
+            continue
 
     # commit changes to database
     db.session.commit()

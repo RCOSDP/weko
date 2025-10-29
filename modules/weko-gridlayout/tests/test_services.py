@@ -266,10 +266,10 @@ def test_get_repository_list(i18n_app, db, communities, users):
         assert len(result['repositories']) == 1
         assert result['repositories'][0]['id'] == comm.id
 
-def test_get_repository_list_2(i18n_app):
+def test_get_repository_list_2(i18n_app, db):
     result = WidgetDesignServices.get_repository_list()
-    assert len(result['repositories']) == 1
-    assert result['repositories'][0]['id'] == 'Root Index'
+    assert len(result['repositories']) == 0
+    assert result['error'] == ''
 
 
 

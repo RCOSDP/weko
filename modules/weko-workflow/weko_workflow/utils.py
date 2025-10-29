@@ -1358,9 +1358,10 @@ class IdentifierHandle(object):
                 records = PersistentIdentifier.query.filter_by(
                     pid_type=pid_type,
                     object_uuid=self.item_uuid).all()
-            records = PersistentIdentifier.query.filter_by(
-                pid_type=pid_type,
-                pid_value=chk_value).all()
+            else:
+                records = PersistentIdentifier.query.filter_by(
+                    pid_type=pid_type,
+                    pid_value=chk_value).all()
         return cast(List[PersistentIdentifier], records)
 
     def register_pidstore(self, pid_type, reg_value):
@@ -2004,6 +2005,7 @@ def handle_finish_workflow(deposit, current_pid, recid):
     if not deposit:
         return None
 
+    pid_without_ver = None
     item_id = None
     old_record = None
     new_record = None

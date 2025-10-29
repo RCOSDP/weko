@@ -420,6 +420,7 @@ def create_record(db, record_data, item_data):
         deposit = WekoDeposit(record, record.model)
 
         #deposit.commit()
+    db.session.commit()
 
     return recid, depid, record, item, parent, doi, deposit
 

@@ -3,7 +3,7 @@ import pytest
 import uuid
 import json
 from os.path import dirname, join
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch, MagicMock, Mock
 
 import datetime
 import base64
@@ -969,6 +969,7 @@ def test_filter_all_condition(app, mocker):
     with app.test_request_context():
         # mocker.patch("flask.request.args.get", side_effect=dic)
         assert filter_all_condition(dic) == {
+            "action": ["action_0", "action_1"],
             "createdfrom": ["createdfrom_0", "createdfrom_1"],
             "createdto": ["createdto_0", "createdto_1"],
             "workflow": ["workflow_0", "workflow_1"],
@@ -1061,7 +1062,7 @@ def test_convert_record_to_item_metadata(db_records, db_itemtype):
 
 # def prepare_edit_workflow(post_activity, recid, deposit):
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_prepare_edit_workflow -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
-@pytest.mark.parametrize("order_if",[0, 1, 2, 3])
+@pytest.mark.parametrize("order_if",[0, 1, 2, 3, 4, 5])
 def test_prepare_edit_workflow(app, workflow, db_records,users,mocker, order_if):
     #login(client=client, email=users[2]["email"])
     with app.test_request_context():
@@ -1083,20 +1084,26 @@ def test_prepare_edit_workflow(app, workflow, db_records,users,mocker, order_if)
         item_application_mock = mocker.patch("weko_workflow.utils.ItemApplication.get_item_application_by_item_id", return_value = {"workflow":1, "terms":"term_free", "termsDescription":"test"})
 
         if order_if == 0:
-            result = prepare_edit_workflow(data,recid,deposit)
-            request_mail_mock.assert_called()
-            item_application_mock.assert_called()
+            with patch("weko_workflow.utils.IdentifierHandle.get_pidstore", return_value = None):
+                result = prepare_edit_workflow(data,recid,deposit)
+                request_mail_mock.assert_called()
+                item_application_mock.assert_called()
+                assert result.activity_id != None
         if order_if == 1:
             with patch("weko_workflow.utils.IdentifierHandle.get_pidstore", return_value = None):
                 result = prepare_edit_workflow(data,recid,deposit)
+                assert result.activity_id != None
+        if order_if == 2:
             with patch("weko_workflow.utils.IdentifierHandle.get_pidstore", return_value = PersistentIdentifier(status= PIDStatus.DELETED)) as idh:
                 result = prepare_edit_workflow(data,recid,deposit)
-        if order_if == 2:
-            with patch("weko_workflow.utils.Bucket.get", return_value=None):
-                with pytest.raises(SQLAlchemyError):
-                    result = prepare_edit_workflow(data,recid,deposit)
+                assert result.activity_id != None
         if order_if == 3:
-            with patch("weko_workflow.utils.PersistentIdentifier") as pi:
+            with patch("weko_workflow.utils.Bucket.get", return_value=None):
+                result = prepare_edit_workflow(data,recid,deposit)
+                assert result.activity_id != None
+        if order_if == 4:
+            with patch("weko_workflow.utils.PersistentIdentifier") as pi\
+                , patch("weko_workflow.utils.IdentifierHandle.get_pidstore", return_value=None):
                 type(pi).query = pi
                 pi.filter_by = MagicMock(return_value = pi)
                 pi.one_or_none = MagicMock(return_value = None)
@@ -1104,12 +1111,11 @@ def test_prepare_edit_workflow(app, workflow, db_records,users,mocker, order_if)
                 deposit = db_records[7][6]
                 result = prepare_edit_workflow(data,recid,deposit)
                 assert result.activity_id != None
-
-        recid = db_records[6][0]
-        deposit = db_records[6][6]
-        res = prepare_edit_workflow(data,recid,deposit)
-        assert res.activity_id != None
-
+        if order_if == 5:
+            recid = db_records[6][0]
+            deposit = db_records[6][6]
+            res = prepare_edit_workflow(data,recid,deposit)
+            assert res.activity_id != None
 
 # def prepare_edit_workflow(post_activity, recid, deposit):
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_prepare_edit_workflow2 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
@@ -1146,12 +1152,12 @@ def test_prepare_edit_workflow2(app, workflow, db_records,users,mocker, order_if
 
 # def prepare_delete_workflow(deposit, current_pid, recid):
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_prepare_delete_workflow -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
-def test_prepare_delete_workflow(app, db_records,users,db_register_fullaction,mocker):
+def test_prepare_delete_workflow(app, db_records,users,db_register_full_action,mocker):
     # delete flow item
     del_recid, _, _, _, _, _, del_deposit = db_records[7]
-    del_workflow_id = db_register_fullaction["activities"][7].workflow_id
-    del_flow_id = db_register_fullaction["activities"][7].flow_id
-    del_title = db_register_fullaction["activities"][7].title
+    del_workflow_id = db_register_full_action["activities"][7].workflow_id
+    del_flow_id = db_register_full_action["activities"][7].flow_id
+    del_title = db_register_full_action["activities"][7].title
     del_post_activity = {
         'pid_value': del_recid, 'itemtype_id': '1',
         'community': None, 'workflow_id': del_workflow_id,
@@ -1160,9 +1166,9 @@ def test_prepare_delete_workflow(app, db_records,users,db_register_fullaction,mo
 
     # not delete flow item
     recid_1,  _, _, _, _, _, deposit_1 = db_records[2]
-    workflow_id_1 = db_register_fullaction["activities"][0].workflow_id
-    flow_id_1 = db_register_fullaction["activities"][0].flow_id
-    title_1 = db_register_fullaction["activities"][0].title
+    workflow_id_1 = db_register_full_action["activities"][0].workflow_id
+    flow_id_1 = db_register_full_action["activities"][0].flow_id
+    title_1 = db_register_full_action["activities"][0].title
     post_activity_1 = {
         'pid_value': recid_1, 'itemtype_id': '1',
         'community': None, 'workflow_id': workflow_id_1,
@@ -1171,18 +1177,16 @@ def test_prepare_delete_workflow(app, db_records,users,db_register_fullaction,mo
 
     # approval delete flow item
     app_recid, _, _, _, _, _, app_deposit = db_records[7]
-    app_workflow_id = db_register_fullaction["activities"][8].workflow_id
-    app_flow_id = db_register_fullaction["activities"][8].flow_id
-    app_title = db_register_fullaction["activities"][8].title
+    app_workflow_id = db_register_full_action["activities"][8].workflow_id
+    app_flow_id = db_register_full_action["activities"][8].flow_id
+    app_title = db_register_full_action["activities"][8].title
     app_post_activity = {
         'pid_value': app_recid, 'itemtype_id': '1',
         'community': None, 'workflow_id': app_workflow_id,
         'title': app_title, 'flow_id': app_flow_id, 'shared_user_ids': []
     }
 
-    current_app.config.update(
-        WEKO_NOTIFICATIONS=False
-    )
+    current_app.config.update(WEKO_NOTIFICATIONS=False)
     with app.test_request_context(), \
             patch("flask_login.utils._get_user", return_value=users[0]['obj']), \
             patch("weko_records_ui.views.check_created_id_by_recid", return_value=True), \
@@ -1219,7 +1223,7 @@ def test_handle_finish_workflow(workflow, db_records, mocker, db_itemtype2):
             update_request.assert_not_called()
         with patch("weko_workflow.utils.RequestMailList.update") as update_request:
             result = handle_finish_workflow(deposit,current_pid,None)
-            assert result
+            assert result == current_pid.object_uuid
             update_request.assert_not_called()
 
         mocker.patch("weko_workflow.utils.FeedbackMailList.get_mail_list_by_item_id", return_value = [{"email":"exam@exam.com","author_id":""}])
@@ -1230,7 +1234,7 @@ def test_handle_finish_workflow(workflow, db_records, mocker, db_itemtype2):
             update_request.assert_called()
         with patch("weko_workflow.utils.RequestMailList.update") as update_request:
             result = handle_finish_workflow(deposit,current_pid,None)
-            assert result
+            assert result == current_pid.object_uuid
             update_request.assert_not_called()
 
 
@@ -1244,7 +1248,7 @@ def test_handle_finish_workflow2(workflow, db_records, item_type, mocker):
 
     deposit = db_records[2][6]
     current_pid = db_records[2][0]
-    recid = db_records[2][2]
+    recid = MagicMock(spec=RecordIdentifier, recid=current_pid.pid_value)
     feedback_mail_list = FeedbackMailList()
     request_mail_list = RequestMailList()
     mock_deposit = mocker.patch('weko_workflow.utils.WekoDeposit.newversion', return_value=deposit)
@@ -1491,9 +1495,9 @@ def test_get_url_root(app):
     app.config["THEME_SITEURL"] = "https://weko3.ir.rcos.nii.ac.jp"
     app.config["SERVER_NAME"] = "TEST_SERVER"
     with app.app_context():
-        assert get_url_root() == "http://TEST_SERVER.localdomain/"
+        assert get_url_root() == "https://weko3.ir.rcos.nii.ac.jp/"
         app.config["THEME_SITEURL"] = "https://weko3.ir.rcos.nii.ac.jp/"
-        assert get_url_root() == "http://TEST_SERVER.localdomain/"
+        assert get_url_root() == "https://weko3.ir.rcos.nii.ac.jp/"
 
     app.config["THEME_SITEURL"] = "https://weko3.ir.rcos.nii.ac.jp"
     app.config["SERVER_NAME"] = "TEST_SERVER"
@@ -2311,7 +2315,7 @@ def test_get_default_mail_sender(db):
     assert result == "test_sender"
 # def set_mail_info(item_info, activity_detail, guest_user=False):
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_set_mail_info -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
-def test_set_mail_info(app, db_register_full_action, mocker, db_records, db):
+def test_set_mail_info(app, db_register_full_action, mocker, records_restricted, db_records, db):
     config = current_app.config
     mocker.patch("weko_workflow.utils.get_site_info_name",return_value=("name_en","name_ja"))
     mocker.patch("weko_workflow.utils.get_default_mail_sender",return_value="default_sender")
@@ -2609,17 +2613,16 @@ def test_process_send_reminder_mail_1(db, db_register_full_action, mocker):
     process_send_reminder_mail(db_register_full_action["activities"][6],"template")
     mock_sender.assert_called_with({"mail_address":"originalroleuser@test.org","mail_id":"template"})
 
-
 # def process_send_notification_mail(
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_process_send_notification_mail -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
-def test_process_send_notification_mail(db,db_register, mocker, users):
+def test_process_send_notification_mail(app, db,db_register_full_action, mocker, users):
     mocker.patch("weko_workflow.utils.get_item_info",return_value={})
     mocker.patch("weko_workflow.utils.set_mail_info",return_value={})
     def mock_approval_date(data):
         data["approval_date"] = "2022-10-10"
         data["approval_date_after_7_days"] = "2022-10-17"
         data["31_march_corresponding_year"] = "2023-03-31"
-    activity = db_register["activities"][0]
+    activity = db_register_full_action["activities"][0]
     mocker.patch("weko_workflow.utils.get_approval_dates",side_effect=mock_approval_date)
     mock_send_registration = mocker.patch("weko_workflow.utils.send_mail_registration_done")
     mock_send_approval_req = mocker.patch("weko_workflow.utils.send_mail_request_approval")
@@ -2642,30 +2645,32 @@ def test_process_send_notification_mail(db,db_register, mocker, users):
         'reject': False
     }
 
-    with patch('weko_workflow.utils._check_mail_setting', return_value=True):
+    with app.test_request_context()\
+        , patch('weko_workflow.utils._check_mail_setting', return_value=True):
         process_send_notification_mail(activity,"item_login","next_step", action_mails_setting)
         mock_send_registration.assert_called_with(data, 'test_mail')
 
-    login_user(users[2]["obj"])
-    data = {
-        "item_type_name":"テストアイテムタイプ",
-        "next_step":"approval_",
-        "approval_date":"2022-10-10",
-        "approval_date_after_7_days": "2022-10-17",
-        "31_march_corresponding_year": "2023-03-31"
-    }
-    process_send_notification_mail(activity,"item_registration","approval_", action_mails_setting)
-    mock_send_approval_req.assert_called_with(data)
-    data = {
-        "item_type_name":"テストアイテムタイプ",
-        "next_step":"next_step",
-        "approval_date":"2022-10-10",
-        "approval_date_after_7_days": "2022-10-17",
-        "31_march_corresponding_year": "2023-03-31"
-    }
-    process_send_notification_mail(activity,"approval_administrator","next_step", action_mails_setting)
-    mock_send_approval_done.assert_called_with(data)
-    process_send_notification_mail(activity,"other_step","next_step", action_mails_setting)
+        login_user(users[2]["obj"])
+        data = {
+            "item_type_name":"テストアイテムタイプ",
+            "next_step":"approval_",
+            "approval_date":"2022-10-10",
+            "approval_date_after_7_days": "2022-10-17",
+            "31_march_corresponding_year": "2023-03-31"
+        }
+        process_send_notification_mail(activity,"item_registration","approval_", action_mails_setting)
+        mock_send_approval_req.assert_called_with(data)
+        data = {
+            "item_type_name":"テストアイテムタイプ",
+            "next_step":"next_step",
+            "approval_date":"2022-10-10",
+            "approval_date_after_7_days": "2022-10-17",
+            "31_march_corresponding_year": "2023-03-31"
+        }
+        process_send_notification_mail(activity,"approval_administrator","next_step", action_mails_setting)
+        mock_send_approval_done.assert_called_with(data)
+        process_send_notification_mail(activity,"other_step","next_step", action_mails_setting)
+
 # def get_application_and_approved_date(activities, columns):
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_get_application_and_approval_date -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_get_application_and_approval_date(db,db_register_full_action,users):
@@ -2721,12 +2726,12 @@ def test_create_usage_report(app,db_register_full_action, mocker):
     )
 # def create_record_metadata(
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_create_record_metadata -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
-def test_create_record_metadata(app,db,users,db_register,mocker):
-    activity = db_register["activities"][1]
+def test_create_record_metadata(app,db,users,db_register_full_action,mocker):
+    activity = db_register_full_action["activities"][1]
 
     item_id = activity.item_id
     activity_id = activity.activity_id
-    workflow = db_register["workflow"]
+    workflow = db_register_full_action["workflow"]
     activity_data = {
         "workflow_id":workflow.id,
         "flow_id":workflow.flow_id
@@ -3158,7 +3163,7 @@ def test_init_activity_for_guest_user(app,db_register_full_action,mocker):
 # def send_usage_application_mail_for_guest_user(guest_mail: str, temp_url: str):
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_send_usage_application_mail_for_guest_user -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 @pytest.mark.parametrize('order_if', [1,2])
-def test_send_usage_application_mail_for_guest_user(app, db_register, mocker, records_restricted, db_records, db, order_if):
+def test_send_usage_application_mail_for_guest_user(app, db_register_full_action, mocker, records_restricted, db_records, db, order_if):
     mail_config = MailConfig(mail_default_sender="test_sender")
     db.session.add(mail_config)
     db.session.commit()
@@ -3326,9 +3331,10 @@ def test_create_onetime_download_url_to_guest(
 
 
 # def create_onetime_download_url_to_guest(activity_id: str,
-# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_create_onetime_download_url_to_guest -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
-def test_create_onetime_download_url_to_guest_password(app, workflow,mocker):
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_create_onetime_download_url_to_guest_password -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_create_onetime_download_url_to_guest_password(app, workflow,mocker, users):
     with app.test_request_context():
+        login_user(users[7]["obj"])
         today = datetime.datetime(2022,10,6,1,2,3,4)
         datetime_mock = mocker.patch("weko_workflow.utils.datetime")
         datetime_mock.today.return_value=today
@@ -3355,18 +3361,23 @@ def test_create_onetime_download_url_to_guest_password(app, workflow,mocker):
         datetime_mock_ui = mocker.patch("weko_records_ui.utils.dt")
         datetime_mock_ui.utcnow.return_value=today
         expiration_date = today + datetime.timedelta(days=30)
-        mocker.patch("weko_records_ui.utils.oracle10.hash",return_value="CE06FDFB15823A5C")
-        url_token = "{} {} {} {}".format(record_id,user_mail,"2022-10-06","CE06FDFB15823A5C")
-        url_token_value = base64.b64encode(url_token.encode()).decode()
-        url = 'http://TEST_SERVER.localdomain/record/{}/file/onetime/test_file.txt?token={}'.format(record_id,url_token_value)
+        mock_url_obj=FileOnetimeDownload(user_mail=user_mail
+                                ,record_id=record_id
+                                ,file_name=file_name
+                                ,download_limit=1
+                                ,expiration_date = expiration_date.strftime("%Y-%m-%d")
+                                ,extra_info=extra_info
+                                ,is_guest=True
+                                ,approver_id=1)
+        from weko_records_ui.utils import create_download_url
+        url = create_download_url(mock_url_obj)
         test = {
             "file_url":url,
-            "expiration_date":expiration_date.strftime("%Y-%m-%d"),
-            "expiration_date_ja":"",
-            "expiration_date_en":""
+            "expiration_date":expiration_date.strftime("%Y-%m-%d")
         }
-        result = create_onetime_download_url_to_guest(activity_id, extra_info)
-        assert result == test
+        with patch("weko_records_ui.utils.create_onetime_url_record",return_value=mock_url_obj):
+            result = create_onetime_download_url_to_guest(activity_id, extra_info)
+            assert result == test
 
         # not exist user_mail
         extra_info = {
@@ -3374,19 +3385,37 @@ def test_create_onetime_download_url_to_guest_password(app, workflow,mocker):
             "record_id":record_id,
             "guest_mail":user_mail
         }
-        result = create_onetime_download_url_to_guest(activity_id, extra_info)
-        assert result == test
-
-        # raise OverflowError
-        with patch("weko_workflow.utils.timedelta",side_effect=OverflowError):
-            test = {
-                "file_url":url,
-                "expiration_date":"",
-                "expiration_date_ja":"無制限",
-                "expiration_date_en":"Unlimited"
-            }
+        mock_url_obj=FileOnetimeDownload(user_mail=user_mail
+                                ,record_id=record_id
+                                ,file_name=file_name
+                                ,download_limit=1
+                                ,expiration_date = expiration_date.strftime("%Y-%m-%d")
+                                ,extra_info=extra_info
+                                ,is_guest=True
+                                ,approver_id=1)
+        url = create_download_url(mock_url_obj)
+        with patch("weko_records_ui.utils.create_onetime_url_record",return_value=mock_url_obj):
             result = create_onetime_download_url_to_guest(activity_id, extra_info)
             assert result == test
+
+        # raise OverflowError
+        mock_url_obj=FileOnetimeDownload(user_mail=user_mail
+                                ,record_id=record_id
+                                ,file_name=file_name
+                                ,download_limit=1
+                                ,expiration_date = ""
+                                ,extra_info=extra_info
+                                ,is_guest=True
+                                ,approver_id=1)
+        url = create_download_url(mock_url_obj)
+        with patch("weko_records_ui.utils.create_onetime_url_record",return_value=mock_url_obj):
+            with patch("weko_workflow.utils.timedelta",side_effect=OverflowError):
+                test = {
+                    "file_url":url,
+                    "expiration_date":""
+                }
+                result = create_onetime_download_url_to_guest(activity_id, extra_info)
+                assert result == test
 # def delete_guest_activity(activity_id: str) -> bool:
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_delete_guest_activity -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_delete_guest_activity(client,workflow):
@@ -3417,7 +3446,7 @@ def test_get_activity_display_info(app,db, users, db_register_full_action, mocke
         activity_id = activity.activity_id
         db_history1 = ActivityHistory(
             activity_id=activity_id,
-            action_id=3,
+            action_id=1,
             action_user=users[0]["id"],
             action_status="F",
             action_date=datetime.datetime.strptime('2022/04/14 3:01:53.931', '%Y/%m/%d %H:%M:%S.%f'),
@@ -3427,9 +3456,9 @@ def test_get_activity_display_info(app,db, users, db_register_full_action, mocke
             db.session.add(db_history1)
         test_steps = [
             {"ActivityId":activity_id,"ActionId":1,"ActionName":"Start","ActionVersion":"1.0.0","ActionEndpoint":"begin_action", "Author":"contributor@test.org", "Status":"action_doing", "ActionOrder":1},
-            {"ActivityId":activity_id,"ActionId":3,"ActionName":"Item Registration","ActionVersion":"1.0.0","ActionEndpoint":"item_login", "Author":"contributor@test.org", "Status":"action_doing","ActionOrder":1},
             {"ActivityId":activity_id,"ActionId":3,"ActionName":"Item Registration","ActionVersion":"1.0.0","ActionEndpoint":"item_login", "Author":"", "Status":" ","ActionOrder":2},
-            {"ActivityId":activity_id,"ActionId":5,"ActionName":"Item Link","ActionVersion":"1.0.0","ActionEndpoint":"item_link", "Author":"", "Status":" ","ActionOrder":3}
+            {"ActivityId":activity_id,"ActionId":5,"ActionName":"Item Link","ActionVersion":"1.0.0","ActionEndpoint":"item_link", "Author":"", "Status":" ","ActionOrder":3},
+            {"ActivityId":activity_id,"ActionId":4,"ActionName":"Approval","ActionVersion":"1.0.0","ActionEndpoint":"approval","Author":"","Status":" ","ActionOrder":4}
         ]
         endpoint, action_id, activity_detail, cur_action, histories, item, steps, temporary_comment, workflow_detail, owner_id, shared_user_ids = get_activity_display_info(activity_id)
         assert endpoint == "begin_action"
@@ -3473,7 +3502,18 @@ def test_get_activity_display_info(app,db, users, db_register_full_action, mocke
         db.session.commit()
         endpoint, action_id, activity_detail, cur_action, histories, item, steps, temporary_comment, workflow_detail, owner_id, shared_user_ids = get_activity_display_info(activity_id)
         assert owner_id == 2
-        assert shared_user_ids == [{"user": -1}, {"user": 1}]
+        assert shared_user_ids == [{"user":1},{"user":-1}]
+
+        # if metadata: owner and shared_user_ids are int
+        import json
+        target_activity = Activity.query.filter_by(activity_id=activity_id).first()
+        target_activity.temp_data = json.dumps({"metainfo":{"owner": 2, "shared_user_ids":[-1,1]}})
+        db.session.merge(activity)
+        db.session.commit()
+        endpoint, action_id, activity_detail, cur_action, histories, item, steps, temporary_comment, workflow_detail, owner_id, shared_user_ids = get_activity_display_info(activity_id)
+        assert owner_id == 2
+        assert shared_user_ids == [{"user":1},{"user":-1}]
+
 
 # def __init_activity_detail_data_for_guest(activity_id: str, community_id: str):
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test___init_activity_detail_data_for_guest -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
@@ -3495,9 +3535,9 @@ def test___init_activity_detail_data_for_guest(app, db, users, db_register_full_
 
         test_steps = [
             {"ActivityId":activity_id,"ActionId":1,"ActionName":"Start","ActionVersion":"1.0.0","ActionEndpoint":"begin_action", "Author":"contributor@test.org", "Status":"action_doing", "ActionOrder":1},
-            {"ActivityId":activity_id,"ActionId":3,"ActionName":"Item Registration","ActionVersion":"1.0.0","ActionEndpoint":"item_login", "Author":"contributor@test.org", "Status":"action_doing","ActionOrder":1},
             {"ActivityId":activity_id,"ActionId":3,"ActionName":"Item Registration","ActionVersion":"1.0.0","ActionEndpoint":"item_login", "Author":"", "Status":" ","ActionOrder":2},
-            {"ActivityId":activity_id,"ActionId":5,"ActionName":"Item Link","ActionVersion":"1.0.0","ActionEndpoint":"item_link", "Author":"", "Status":" ","ActionOrder":3}
+            {"ActivityId":activity_id,"ActionId":5,"ActionName":"Item Link","ActionVersion":"1.0.0","ActionEndpoint":"item_link", "Author":"", "Status":" ","ActionOrder":3},
+            {"ActivityId":activity_id,"ActionId":4,"ActionName":"Approval","ActionVersion":"1.0.0","ActionEndpoint":"approval", "Author":"", "Status":" ","ActionOrder":4}
         ]
         action_endpoint = "begin_action"
         action_id=1
@@ -3850,7 +3890,7 @@ def test_process_send_mail_tpl(app, mocker):
     process_send_mail_tpl(mail_info, 'mail_pattern_name')
     mock_get_mail_data.assert_called_once_with('mail_pattern_name')
     mock_replace_characters.assert_called_once_with(mail_info, 'body')
-    mock_sender.assert_called_once_with('subject', 'recipient', 'replaced_body')
+    mock_sender.assert_called_once_with({'mail_subject': 'subject', 'mail_recipients': ['recipient'], 'mail_cc': [], 'mail_bcc': [], 'mail_body': 'replaced_body'})
 
     mock_sender = mocker.patch('weko_workflow.utils.send_mail')
     mock_get_mail_data = mocker.patch('weko_workflow.utils.get_mail_data_tpl')
@@ -3894,7 +3934,7 @@ def test_cancel_expired_usage_reports(db_register_full_action,mocker):
 
 # def process_send_approval_mails(activity_detail, actions_mail_setting,
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_process_send_approval_mails -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
-def test_process_send_approval_mails(app,db_register,users,mocker):
+def test_process_send_approval_mails(app,db_register_full_action,users,mocker):
     mocker.patch("weko_workflow.utils.get_item_info",return_value=None)
     mail_info={
         "restricted_download_link":"",
@@ -3903,11 +3943,11 @@ def test_process_send_approval_mails(app,db_register,users,mocker):
         "restricted_expiration_date_en":""
     }
     mocker.patch("weko_workflow.utils.set_mail_info",return_value=mail_info)
-    activity = db_register["activities"][1]
-    guest_activity = db_register["activities"][8]
-    guest_activity_2 = db_register["activities"][12]
-    guest_activity_3 = db_register["activities"][13]
-    guest_activity_4 = db_register["activities"][14]
+    activity = db_register_full_action["activities"][1]
+    guest_activity = db_register_full_action["activities"][8]
+    guest_activity_2 = db_register_full_action["activities"][12]
+    guest_activity_3 = db_register_full_action["activities"][13]
+    guest_activity_4 = db_register_full_action["activities"][14]
     next_step_approver_id = users[2]["id"]
     not_next_step_approver_id = 9999
     file_data={
@@ -4142,6 +4182,13 @@ def test_process_send_approval_mails(app,db_register,users,mocker):
         "restricted_expiration_date_ja":"",
         "restricted_expiration_date_en":""
     }
+    mock_record = {
+        '_deposit': {
+            'owners': [1],
+            'weko_shared_ids': [2]
+        }
+    }
+    mocker.patch("weko_workflow.utils.WekoRecord.get_record_by_pid", return_value=mock_record)
     mocker.patch("weko_workflow.utils.set_mail_info",return_value=mail_info)
     mock_sender = mocker.patch("weko_workflow.utils.process_send_mail")
     process_send_approval_mails(guest_activity_4, actions_mail_setting,next_step_approver_id,file_data)
@@ -4267,7 +4314,21 @@ def test_get_usage_data(app,db,db_register_full_action):
         phone_number='',
         usage_report_id='',
         wf_issued_date=today.strftime("%Y-%m-%d"),
-        item_title="{}{}{}_".format("利用申請",today.strftime("%Y%m%d"),"related_guest_activity")
+        item_title="{}{}{}_".format("利用申請",today.strftime("%Y%m%d"),"related_guest_activity"),
+        item3='',
+        item4='',
+        item5='',
+        item6='',
+        item7='',
+        item8='',
+        item9='',
+        item10='',
+        item11='',
+        item12='',
+        item13='',
+        item14='',
+        item15='',
+        item16=''
     )
     result = get_usage_data(31001,activity)
     assert result == test
@@ -4284,7 +4345,21 @@ def test_get_usage_data(app,db,db_register_full_action):
         phone_number='',
         usage_report_id='',
         wf_issued_date=today.strftime("%Y-%m-%d"),
-        item_title="{}{}{}_".format("利用申請",today.strftime("%Y%m%d"),"related_guest_activity")
+        item_title="{}{}{}_".format("利用申請",today.strftime("%Y%m%d"),"related_guest_activity"),
+        item3='',
+        item4='',
+        item5='',
+        item6='',
+        item7='',
+        item8='',
+        item9='',
+        item10='',
+        item11='',
+        item12='',
+        item13='',
+        item14='',
+        item15='',
+        item16=''
     )
     user_profile = {"results":{'subitem_user_name': "guest",'subitem_fullname': "guest",'subitem_mail_address': "user@test.org",'subitem_displayname': "guest",'subitem_university/institution': '','subitem_affiliated_division/department': '','subitem_position': '','subitem_phone_number': '','subitem_position(other)': '','subitem_affiliated_institution': [],}}
     result = get_usage_data(31001,activity,user_profile)
@@ -4302,7 +4377,21 @@ def test_get_usage_data(app,db,db_register_full_action):
         phone_number='',
         usage_report_id=activity.activity_id,
         wf_issued_date=today.strftime("%Y-%m-%d"),
-        item_title='{}{}{}'.format(activity.extra_info["usage_activity_id"],"利用報告","")
+        item_title='{}{}{}'.format(activity.extra_info["usage_activity_id"],"_利用報告_",""),
+        item3='',
+        item4='',
+        item5='',
+        item6='',
+        item7='',
+        item8='',
+        item9='',
+        item10='',
+        item11='',
+        item12='',
+        item13='',
+        item14='',
+        item15='',
+        item16=''
     )
     result = get_usage_data(31003,activity)
     assert result == test
@@ -4402,103 +4491,109 @@ def test_update_system_data_for_activity(db_register_full_action):
 
 # def check_authority_by_admin(activity):
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_check_authority_by_admin -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
-def test_check_authority_by_admin(client, activity_acl, activity_acl_users):
+def test_check_authority_by_admin(app, client, activity_acl, activity_acl_users):
     users = activity_acl_users["users"]
 
     # sysadmin user
-    login_user(users[0])
-    result = check_authority_by_admin(activity_acl[0])
-    assert result == True
+    with app.test_request_context():
+        login_user(users[0])
+        result = check_authority_by_admin(activity_acl[0])
+        assert result == True
 
     # comadmin user, activity.item_id is None
-    login_user(users[3])
-    result = check_authority_by_admin(activity_acl[30])
-    assert result == False
+    with app.test_request_context():
+        login_user(users[3])
+        result = check_authority_by_admin(activity_acl[30])
+        assert result == False
 
     # comadmin user, activity.item_id exist, path is not included in community index
-    login_user(users[3])
-    result = check_authority_by_admin(activity_acl[26])
-    assert result == False
+    with app.test_request_context():
+        login_user(users[3])
+        result = check_authority_by_admin(activity_acl[26])
+        assert result == False
 
     # comadmin user, activity.item_id exist, path is included in community index
-    login_user(users[3])
-    result = check_authority_by_admin(activity_acl[21])
-    assert result == True
+    with app.test_request_context():
+        login_user(users[3])
+        result = check_authority_by_admin(activity_acl[21])
+        assert result == True
     # not admin user
-    login_user(users[2])
-    result = check_authority_by_admin(activity_acl[21])
-    assert result == False
+    with app.test_request_context():
+        login_user(users[2])
+        result = check_authority_by_admin(activity_acl[21])
+        assert result == False
 
 
 # def validate_action_role_user(activity_id, action_id, action_order):
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_validate_action_role_user -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
-def test_validate_action_role_user(db, activity_acl_users,workflow_with_action_role):
+def test_validate_action_role_user(app, db, activity_acl_users,workflow_with_action_role):
     users = activity_acl_users["users"]
     workflow = workflow_with_action_role
-    login_user(users[2])
+    with app.test_request_context():
+        login_user(users[2])
 
-    # not set action role(user)
-    activity = create_activity(db,"not_set_action_role(user)",1,["4"],users[2],-1,workflow[0],'M',3)
-    is_set, is_allow, is_deny = validate_action_role_user(activity.activity_id, activity.action_id,activity.action_order)
-    assert is_set == False
-    assert is_allow == False
-    assert is_deny == False
+        # not set action role(user)
+        activity = create_activity(db,"not_set_action_role(user)",1,["4"],users[2],-1,workflow[0],'M',3)
+        is_set, is_allow, is_deny = validate_action_role_user(activity.activity_id, activity.action_id,activity.action_order)
+        assert is_set == False
+        assert is_allow == False
+        assert is_deny == False
 
-    # set action role as allow, self is include action role
-    activity = create_activity(db,"not_set_action_role(user)",2,["4"],users[2],-1,workflow[1],'M',3)
-    is_set, is_allow, is_deny = validate_action_role_user(activity.activity_id, activity.action_id,activity.action_order)
-    assert is_set == True
-    assert is_allow == True
-    assert is_deny == False
+        # set action role as allow, self is include action role
+        activity = create_activity(db,"not_set_action_role(user)",2,["4"],users[2],-1,workflow[1],'M',3)
+        is_set, is_allow, is_deny = validate_action_role_user(activity.activity_id, activity.action_id,activity.action_order)
+        assert is_set == True
+        assert is_allow == True
+        assert is_deny == False
 
-    # set action role as allow, self is not include action role
-    activity = create_activity(db,"not_set_action_role(user)",3,["4"],users[2],-1,workflow[2],'M',3)
-    is_set, is_allow, is_deny = validate_action_role_user(activity.activity_id, activity.action_id,activity.action_order)
-    assert is_set == True
-    assert is_allow == False
-    assert is_deny == True
+        # set action role as allow, self is not include action role
+        activity = create_activity(db,"not_set_action_role(user)",3,["4"],users[2],-1,workflow[2],'M',3)
+        is_set, is_allow, is_deny = validate_action_role_user(activity.activity_id, activity.action_id,activity.action_order)
+        assert is_set == True
+        assert is_allow == False
+        assert is_deny == True
 
-    # set action role as deny, self is include action role
-    activity = create_activity(db,"not_set_action_role(user)",4,["4"],users[2],-1,workflow[3],'M',3)
-    is_set, is_allow, is_deny = validate_action_role_user(activity.activity_id, activity.action_id,activity.action_order)
-    assert is_set == True
-    assert is_allow == False
-    assert is_deny == True
+        # set action role as deny, self is include action role
+        activity = create_activity(db,"not_set_action_role(user)",4,["4"],users[2],-1,workflow[3],'M',3)
+        is_set, is_allow, is_deny = validate_action_role_user(activity.activity_id, activity.action_id,activity.action_order)
+        assert is_set == True
+        assert is_allow == False
+        assert is_deny == True
 
-    # set action role as deny, self is not include action role
-    activity = create_activity(db,"not_set_action_role(user)",5,["4"],users[2],-1,workflow[4],'M',3)
-    is_set, is_allow, is_deny = validate_action_role_user(activity.activity_id, activity.action_id,activity.action_order)
-    assert is_set == True
-    assert is_allow == False
-    assert is_deny == False
+        # set action role as deny, self is not include action role
+        activity = create_activity(db,"not_set_action_role(user)",5,["4"],users[2],-1,workflow[4],'M',3)
+        is_set, is_allow, is_deny = validate_action_role_user(activity.activity_id, activity.action_id,activity.action_order)
+        assert is_set == True
+        assert is_allow == False
+        assert is_deny == False
 
-    # set action user as allow , self is include action user
-    activity = create_activity(db,"not_set_action_role(user)",6,["4"],users[2],-1,workflow[5],'M',3)
-    is_set, is_allow, is_deny = validate_action_role_user(activity.activity_id, activity.action_id,activity.action_order)
-    assert is_set == True
-    assert is_allow == True
-    assert is_deny == False
+        # set action user as allow , self is include action user
+        activity = create_activity(db,"not_set_action_role(user)",6,["4"],users[2],-1,workflow[5],'M',3)
+        is_set, is_allow, is_deny = validate_action_role_user(activity.activity_id, activity.action_id,activity.action_order)
+        assert is_set == True
+        assert is_allow == True
+        assert is_deny == False
 
-    # set action user as allow , self is not include action user
-    activity = create_activity(db,"not_set_action_role(user)",7,["4"],users[2],-1,workflow[6],'M',3)
-    is_set, is_allow, is_deny = validate_action_role_user(activity.activity_id, activity.action_id,activity.action_order)
-    assert is_set == True
-    assert is_allow == False
-    assert is_deny == True
+        # set action user as allow , self is not include action user
+        activity = create_activity(db,"not_set_action_role(user)",7,["4"],users[2],-1,workflow[6],'M',3)
+        is_set, is_allow, is_deny = validate_action_role_user(activity.activity_id, activity.action_id,activity.action_order)
+        assert is_set == True
+        assert is_allow == False
+        assert is_deny == True
 
-    # set action user as deny , self is include action user
-    activity = create_activity(db,"not_set_action_role(user)",8,["4"],users[2],-1,workflow[7],'M',3)
-    is_set, is_allow, is_deny = validate_action_role_user(activity.activity_id, activity.action_id,activity.action_order)
-    assert is_set == True
-    assert is_allow == False
-    assert is_deny == True
+        # set action user as deny , self is include action user
+        activity = create_activity(db,"not_set_action_role(user)",8,["4"],users[2],-1,workflow[7],'M',3)
+        is_set, is_allow, is_deny = validate_action_role_user(activity.activity_id, activity.action_id,activity.action_order)
+        assert is_set == True
+        assert is_allow == False
+        assert is_deny == True
 
-    # set action user as deny , self is not include action user
-    activity = create_activity(db,"not_set_action_role(user)",9,["4"],users[2],-1,workflow[8],'M',3)
-    is_set, is_allow, is_deny = validate_action_role_user(activity.activity_id, activity.action_id,activity.action_order)
-    assert is_set == True
-    assert is_allow == False
-    assert is_deny == False
+        # set action user as deny , self is not include action user
+        activity = create_activity(db,"not_set_action_role(user)",9,["4"],users[2],-1,workflow[8],'M',3)
+        is_set, is_allow, is_deny = validate_action_role_user(activity.activity_id, activity.action_id,activity.action_order)
+        assert is_set == True
+        assert is_allow == False
+        assert is_deny == False
 
 
 # def get_record_first_version(deposit):
@@ -4689,6 +4784,7 @@ def test_grant_access_rights_to_all_open_restricted_files(app ,db,users ):
                                 ,{'accessrole' : 'open_access'    ,'filename':'ccc.txt'}]
 
     with app.test_request_context():
+        login_user(users[0]["obj"])
         with patch('weko_workflow.utils.WekoRecord.get_record_by_pid',return_value = mock):
             res = grant_access_rights_to_all_open_restricted_files(activity_id ,file_permission, activity_detail )
             # print(res)
@@ -4710,6 +4806,7 @@ def test_grant_access_rights_to_all_open_restricted_files(app ,db,users ):
                 assert len(fd) == 1
 
     with app.test_request_context():
+        login_user(users[0]["obj"])
         res = grant_access_rights_to_all_open_restricted_files(activity_id_guest ,guest_activity, activity_detail_guest )
         assert 'bbb.txt' in res["file_url"]
         fps = FilePermission.find_by_activity(activity_id_guest)
@@ -4918,7 +5015,7 @@ def test_check_pretty(app, pretty, expect):
         assert current_app.config['JSONIFY_PRETTYPRINT_REGULAR'] == expect
 
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_make_activitylog_tsv -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
-def test_make_activitylog_tsv(db_register,db_records):
+def test_make_activitylog_tsv(db_register_full_action,db_records):
     """test make_activitylog_tsv"""
     activities = []
     activities += ActivityHistory.query.filter_by(activity_id="2").all()
@@ -4954,38 +5051,39 @@ def test_delete_lock_activity_cache(client,users):
     current_cache.delete(cache_key)
 
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_delete_user_lock_activity_cache -vv -s -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
-def test_delete_user_lock_activity_cache(client,users):
+def test_delete_user_lock_activity_cache(app, client,users):
     user = users[2]
-    login_user(user["obj"])
-    data = {
-        "is_opened": False,
-        "is_force": False,
-    }
-    activity_id = "A-22240219-00001"
-    cache_key = "workflow_userlock_activity_{}".format(user["id"])
-    current_cache.delete(cache_key)
-    # cur_locked_val is empty
-    result = delete_user_lock_activity_cache(activity_id, data)
-    assert result == "Not unlock"
-    # cur_locked_val is not empty, is_opened is False
-    current_cache.set(cache_key, activity_id)
-    result = delete_user_lock_activity_cache(activity_id, data)
-    assert result == "User Unlock Success"
-    assert current_cache.get(cache_key) == None
+    with app.test_request_context():
+        login_user(user["obj"])
+        data = {
+            "is_opened": False,
+            "is_force": False,
+        }
+        activity_id = "A-22240219-00001"
+        cache_key = "workflow_userlock_activity_{}".format(user["id"])
+        current_cache.delete(cache_key)
+        # cur_locked_val is empty
+        result = delete_user_lock_activity_cache(activity_id, data)
+        assert result == "Not unlock"
+        # cur_locked_val is not empty, is_opened is False
+        current_cache.set(cache_key, activity_id)
+        result = delete_user_lock_activity_cache(activity_id, data)
+        assert result == "User Unlock Success"
+        assert current_cache.get(cache_key) == None
 
-    # cur_locked_val is not empty, is_opened is True, is_force is False
-    current_cache.set(cache_key, activity_id)
-    data["is_opened"] = True
-    result = delete_user_lock_activity_cache(activity_id, data)
-    assert result == "Not unlock"
+        # cur_locked_val is not empty, is_opened is True, is_force is False
+        current_cache.set(cache_key, activity_id)
+        data["is_opened"] = True
+        result = delete_user_lock_activity_cache(activity_id, data)
+        assert result == "Not unlock"
 
-    # cur_locked_val is not empty, is_opened is True, is_force is True
-    data["is_force"] = True
-    result = delete_user_lock_activity_cache(activity_id, data)
-    assert result == "User Unlock Success"
-    assert current_cache.get(cache_key) == None
+        # cur_locked_val is not empty, is_opened is True, is_force is True
+        data["is_force"] = True
+        result = delete_user_lock_activity_cache(activity_id, data)
+        assert result == "User Unlock Success"
+        assert current_cache.get(cache_key) == None
 
-    current_cache.delete(cache_key)
+        current_cache.delete(cache_key)
 
 
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_convert_to_timezone -vv -s -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
@@ -5057,7 +5155,7 @@ def test_fill_template():
     assert result == expected_result
 
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_utils.py::test_get_non_extract_files_by_recid -vv -s -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
-def test_get_non_extract_files_by_recid(db_register, mocker):
+def test_get_non_extract_files_by_recid(db_register_full_action, mocker):
     # Mock PersistentIdentifier.get
     mock_pid = mocker.patch("weko_workflow.utils.PersistentIdentifier.get")
     mock_pid.return_value = mocker.Mock(object_uuid="test_uuid")

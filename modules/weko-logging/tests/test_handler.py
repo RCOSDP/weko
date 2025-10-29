@@ -2,7 +2,9 @@
 """ Pytest for weko_logging log handler."""
 
 import logging
-from mock import MagicMock
+from unittest.mock import MagicMock, patch
+
+from weko_accounts.models import ShibbolethUser
 
 from weko_logging.handler import UserActivityLogHandler
 from weko_logging.models import UserActivityLog
@@ -17,7 +19,7 @@ def test_init(app):
 
 # def emit(self, record):
 # .tox/c1/bin/pytest --cov=weko_logging tests/test_handler.py::test_emit -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-logging/.tox/c1/tmp
-def test_emit(app, users, mocker, caplog, communities):
+def test_emit(app, db, users, caplog, communities):
     caplog.set_level(logging.DEBUG)
 
     # Test Case 1: ignored when error level is not ERROR or INFO
@@ -88,6 +90,41 @@ def test_emit(app, users, mocker, caplog, communities):
     assert len(caplog.records) == 5
     records = UserActivityLog.query.all()
     assert len(records) == 3
+
+    # Test Case 6: When user is authenticated
+    with patch("weko_logging.handler.UserActivityLogHandler.get_user_id") as mock_get_user_id:
+        mock_get_user_id.return_value = users[0]["id"]
+        logger = logging.getLogger("user-activity")
+        logger.error("test", extra={
+            "operation": "ITEM_CREATE",
+            "target_key": 2,
+            "remarks": "test",
+        })
+        assert len(caplog.records) == 6
+        records = UserActivityLog.query.all()
+        assert len(records) == 4
+        last_record = records[-1]
+        assert last_record.user_id == users[0]["id"]
+
+    shib_user = ShibbolethUser(weko_uid=users[1]["id"], shib_eppn="test_eppn_123")
+    db.session.add(shib_user)
+    db.session.commit()
+
+    # Test Case 7: When eppn is set
+    with patch("weko_logging.handler.UserActivityLogHandler.get_user_id") as mock_get_user_id:
+        mock_get_user_id.return_value = users[1]["id"]
+        logger = logging.getLogger("user-activity")
+        logger.error("test", extra={
+            "operation": "ITEM_CREATE",
+            "target_key": 2,
+            "remarks": "test",
+        })
+        assert len(caplog.records) == 7
+        records = UserActivityLog.query.all()
+        assert len(records) == 5
+        last_record = records[-1]
+        assert last_record.user_id == users[1]["id"]
+        assert last_record.log["eppn"] == "test_eppn_123"
 
 
 # def get_community_id_from_path(cls):

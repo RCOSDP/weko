@@ -100,14 +100,16 @@ def test_lifetime(client,users,db,mocker):
         form="lifetime"
     )
     mock_flash.assert_called_with("Session lifetime was updated.",category="success")
-
     # method is POST, submit is not lifitime
+    SessionLifetime.query.delete()
+    db.session.add(SessionLifetime(lifetime=100))
+    db.session.commit()
     mock_render = mocker.patch("weko_admin.views.render_template",return_value=make_response())
-    res = client.post(url,data={"submit":"not lifetime"})
+    res = client.post(url,data={"submit":"not lifetime","lifetimeRadios":"45"})
     assert res.status_code == 200
     mock_render.assert_called_with(
         "weko_admin/settings/lifetime.html",
-        current_lifetime="45",
+        current_lifetime="100",
         map_lifetime=[("15",_("15 mins")),("30",_("30 mins")),("45",_("45 mins")),("60",_("60 mins")),
                       ("180",_("180 mins")),("360",_("360 mins")),("720",_("720 mins")),("1440",_("1440 mins"))],
         form="not lifetime"
@@ -897,7 +899,7 @@ def test_get_usage_report_activities(api,users,mocker):
     res = api.get(url,query_string={"page":3,"size":10})
     assert response_data(res) == {"page":1,"size":10,"activities":[],"number_of_pages":0}
 
-    res = api.post(url,json={"page":3,"size":10,"activity_ids":[1]})
+    res = api.post(url,json={"page":3,"size":10,"activity_ids":["1"]})
     assert response_data(res) == {"page":1,"size":10,"activities":[],"number_of_pages":0}
 
 

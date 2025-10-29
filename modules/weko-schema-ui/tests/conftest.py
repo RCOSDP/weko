@@ -68,6 +68,7 @@ from invenio_jsonschemas import InvenioJSONSchemas
 from invenio_oaiserver import InvenioOAIServer
 from invenio_oaiserver.models import Identify
 from invenio_oaiserver.views.server import blueprint as invenio_oaiserver_blueprint
+from invenio_oauth2server import InvenioOAuth2Server
 from invenio_pidrelations import InvenioPIDRelations
 from invenio_pidrelations.contrib.records import RecordDraft
 from invenio_pidrelations.contrib.versioning import PIDVersioning
@@ -118,6 +119,7 @@ from weko_items_ui.config import (
 )
 from weko_items_ui.views import blueprint as weko_items_ui_blueprint
 from weko_items_ui.views import blueprint_api as weko_items_ui_blueprint_api
+from weko_logging.audit import WekoLoggingUserActivity
 from weko_records import WekoRecords
 from weko_records.api import ItemsMetadata, ItemLink
 from weko_records.models import (
@@ -227,7 +229,7 @@ def base_app(instance_path):
         CACHE_REDIS_URL=os.environ.get("CACHE_REDIS_URL", "redis://redis:6379/0"),
         CACHE_TYPE="redis",
         CACHE_REDIS_DB=0,
-        CACHE_REDIS_HOST=os.environ.get("INVENIO_REDIS_HOST"),
+        CACHE_REDIS_HOST="redis",
         REDIS_PORT="6379",
         WEKO_SCHEMA_CACHE_PREFIX="cache_{schema_name}",
         RECORDS_UI_ENDPOINTS=RECORDS_UI_ENDPOINTS,
@@ -275,6 +277,7 @@ def base_app(instance_path):
     InvenioAdmin(app_)
     InvenioDB(app_)
     InvenioCache(app_)
+    InvenioOAuth2Server(app_)
     InvenioPIDStore(app_)
     InvenioPIDRelations(app_)
     InvenioSearch(app_)
@@ -295,6 +298,7 @@ def base_app(instance_path):
     WekoSearchUI(app_)
     WekoIndexTree(app_)
     WekoIndexTreeREST(app_)
+    WekoLoggingUserActivity(app_)
     WekoSchemaUI(app_)
     WekoDeposit(app_)
     WekoDepositREST(app_)
@@ -919,7 +923,7 @@ def records(app, db, esindex, indextree, location, itemtypes, db_oaischema):
         filepath = "tests/data/helloworld.docx"
         results.append(make_record(db, indexer, i, filepath, filename, mimetype))
         il = ItemLink(str(i))
-        il.bulk_update([{"item_id": "1", "sele_id": "isVersionOf"}])
+        il.bulk_update([{"src_item_pid": str(i), "dst_item_pid": "1", "sele_id": "isVersionOf"}])
 
         i = 3
         filename = "helloworld.zip"
@@ -927,7 +931,7 @@ def records(app, db, esindex, indextree, location, itemtypes, db_oaischema):
         filepath = "tests/data/helloworld.zip"
         results.append(make_record(db, indexer, i, filepath, filename, mimetype))
         il = ItemLink(str(i))
-        il.bulk_update([{"item_id": "1", "sele_id": "isCitedBy"}])
+        il.bulk_update([{"src_item_pid": str(i), "dst_item_pid": "1", "sele_id": "isCitedBy"}])
 
     # es = Elasticsearch("http://{}:9200".format(app.config["SEARCH_ELASTIC_HOSTS"]))
     # print(es.cat.indices())

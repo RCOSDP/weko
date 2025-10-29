@@ -561,30 +561,116 @@ class TestWekoAuthors:
 #     def prepare_export_data(cls, mappings, authors, schemes):
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_api.py::TestWekoAuthors::test_prepare_export_data -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
     def test_prepare_export_data(self,db, authors,mocker):
-        mocker.patch("weko_authors.api.WekoAuthors.get_all",return_value=authors)
+        mocker.patch("weko_authors.api.WekoAuthors.get_by_range",return_value=authors)
         scheme_info={"1":{"scheme":"WEKO","url":None},"2":{"scheme":"ORCID","url":"https://orcid.org/##"}}
         mocker.patch("weko_authors.api.WekoAuthors.get_identifier_scheme_info",return_value=scheme_info)
-        header, label_en,label_jp,data = WekoAuthors.prepare_export_data(None,None,None)
-        assert header == ["#pk_id","authorNameInfo[0].familyName","authorNameInfo[0].firstName","authorNameInfo[0].language","authorNameInfo[0].nameFormat","authorNameInfo[0].nameShowFlg","authorIdInfo[0].idType","authorIdInfo[0].authorId","authorIdInfo[0].authorIdShowFlg","emailInfo[0].email","is_deleted"]
-        assert label_en == ["#WEKO ID","Family Name[0]","Given Name[0]","Language[0]","Name Format[0]","Name Display[0]","Identifier Scheme[0]","Identifier[0]","Identifier Display[0]","Mail Address[0]","Delete Flag"]
-        assert label_jp == ["#WEKO ID","姓[0]","名[0]","言語[0]","フォーマット[0]","姓名・言語 表示／非表示[0]","外部著者ID 識別子[0]","外部著者ID[0]","外部著者ID 表示／非表示[0]","メールアドレス[0]","削除フラグ"]
+        header, label_en,label_jp,data = WekoAuthors.prepare_export_data(None, None, None, None, None, None, 0, 10)
+        assert header == [
+            "#pk_id",
+            "weko_id",
+            "authorNameInfo[0].familyName",
+            "authorNameInfo[0].firstName",
+            "authorNameInfo[0].language",
+            "authorNameInfo[0].nameFormat",
+            "authorNameInfo[0].nameShowFlg",
+            "authorIdInfo[0].idType",
+            "authorIdInfo[0].authorId",
+            "authorIdInfo[0].authorIdShowFlg",
+            "authorIdInfo[1].idType",
+            "authorIdInfo[1].authorId",
+            "authorIdInfo[1].authorIdShowFlg",
+            "emailInfo[0].email",
+            "is_deleted",
+            "affiliationInfo[0].identifierInfo[0].affiliationIdType",
+            "affiliationInfo[0].identifierInfo[0].affiliationId",
+            "affiliationInfo[0].identifierInfo[0].identifierShowFlg",
+            "affiliationInfo[0].identifierInfo[1].affiliationIdType",
+            "affiliationInfo[0].identifierInfo[1].affiliationId",
+            "affiliationInfo[0].identifierInfo[1].identifierShowFlg",
+            "affiliationInfo[0].affiliationNameInfo[0].affiliationName",
+            "affiliationInfo[0].affiliationNameInfo[0].affiliationNameLang",
+            "affiliationInfo[0].affiliationNameInfo[0].affiliationNameShowFlg",
+            "affiliationInfo[0].affiliationPeriodInfo[0].periodStart",
+            "affiliationInfo[0].affiliationPeriodInfo[0].periodEnd",
+            "communityIds[0]",
+        ]
+        assert label_en == [
+            "#Author ID",
+            "WEKO ID",
+            "Family Name[0]",
+            "Given Name[0]",
+            "Language[0]",
+            "Name Format[0]",
+            "Name Display[0]",
+            "Identifier Scheme[0]",
+            "Identifier[0]",
+            "Identifier Display[0]",
+            "Identifier Scheme[1]",
+            "Identifier[1]",
+            "Identifier Display[1]",
+            "Mail Address[0]",
+            "Delete Flag",
+            "Affiliation Identifier Scheme[0][0]",
+            "Affiliation Identifier[0][0]",
+            "Affiliation Identifier Display[0][0]",
+            "Affiliation Identifier Scheme[0][1]",
+            "Affiliation Identifier[0][1]",
+            "Affiliation Identifier Display[0][1]",
+            "Affiliation Name[0][0]",
+            "Language[0][0]",
+            "Affiliation Name Display[0][0]",
+            "Affiliation Period Start[0][0]",
+            "Affiliation Period End[0][0]",
+            "Community[0]",
+        ]
+        assert label_jp == [
+            "#著者ID",
+            "WEKO ID",
+            "姓[0]",
+            "名[0]",
+            "言語[0]",
+            "フォーマット[0]",
+            "姓名・言語 表示／非表示[0]",
+            "外部著者ID 識別子[0]",
+            "外部著者ID[0]",
+            "外部著者ID 表示／非表示[0]",
+            "外部著者ID 識別子[1]",
+            "外部著者ID[1]",
+            "外部著者ID 表示／非表示[1]",
+            "メールアドレス[0]",
+            "削除フラグ",
+            "外部所属機関ID 識別子[0][0]",
+            "外部所属機関ID[0][0]",
+            "外部所属機関ID 表示／非表示[0][0]",
+            "外部所属機関ID 識別子[0][1]",
+            "外部所属機関ID[0][1]",
+            "外部所属機関ID 表示／非表示[0][1]",
+            "外部所属機関名[0][0]",
+            "言語[0][0]",
+            "外部所属機関名・言語 表示／非表示[0][0]",
+            "外部所属機関 所属期間 開始日[0][0]",
+            "外部所属機関 所属期間 終了日[0][0]",
+            "コミュニティ[0]",
+        ]
         
-        assert data == [["1","テスト","太郎","ja","familyNmAndNm","Y","ORCID","1234","Y","test.taro@test.org",""],
-                        ["2","test","smith","en","familyNmAndNm","Y","ORCID","5678","Y","test.smith@test.org",""]]
+        assert data == [["1","1","テスト","太郎","ja","familyNmAndNm","Y","ORCID","1234","Y","3","12345","Y","test.taro@test.org","",None,None,None,None,None,None,"","ja","Y",None,None,None],
+                        ["2","2","test","smith","en","familyNmAndNm","Y","ORCID","5678","Y",None,None,None,"test.smith@test.org","","1","1234","Y","2","12345","Y","","ja","Y",None,None,None],
+                        ["3",None,"test2","smith2","en","familyNmAndNm","Y",None,None,None,None,None,None,"test.smith2@test.org","","1","91011","Y",None,None,None,"","ja","Y",None,None,None],
+                        ["4",None,None,None,None,None,None,None,None,None,None,None,None,None,"D",None,None,None,None,None,None,None,None,None,None,None,None]]
 
         # authors is false
-        mocker.patch("weko_authors.api.WekoAuthors.get_all",return_value=[])
-        header, label_en,label_jp,data = WekoAuthors.prepare_export_data(None,None,None)
-        assert header == ["#pk_id","authorNameInfo[0].familyName","authorNameInfo[0].firstName","authorNameInfo[0].language","authorNameInfo[0].nameFormat","authorNameInfo[0].nameShowFlg","authorIdInfo[0].idType","authorIdInfo[0].authorId","authorIdInfo[0].authorIdShowFlg","emailInfo[0].email","is_deleted"]
-        assert label_en == ["#WEKO ID","Family Name[0]","Given Name[0]","Language[0]","Name Format[0]","Name Display[0]","Identifier Scheme[0]","Identifier[0]","Identifier Display[0]","Mail Address[0]","Delete Flag"]
-        assert label_jp == ["#WEKO ID","姓[0]","名[0]","言語[0]","フォーマット[0]","姓名・言語 表示／非表示[0]","外部著者ID 識別子[0]","外部著者ID[0]","外部著者ID 表示／非表示[0]","メールアドレス[0]","削除フラグ"]
+        mocker.patch("weko_authors.api.WekoAuthors.get_by_range",return_value=[])
+        header, label_en,label_jp,data = WekoAuthors.prepare_export_data(None, None, None, None, None, None, 0, 10)
+        assert header == ["#pk_id","weko_id","authorNameInfo[0].familyName","authorNameInfo[0].firstName","authorNameInfo[0].language","authorNameInfo[0].nameFormat","authorNameInfo[0].nameShowFlg","authorIdInfo[0].idType","authorIdInfo[0].authorId","authorIdInfo[0].authorIdShowFlg","emailInfo[0].email","is_deleted","communityIds[0]"]
+        assert label_en == ["#Author ID","WEKO ID","Family Name[0]","Given Name[0]","Language[0]","Name Format[0]","Name Display[0]","Identifier Scheme[0]","Identifier[0]","Identifier Display[0]","Mail Address[0]","Delete Flag","Community[0]"]
+        assert label_jp == ["#著者ID","WEKO ID","姓[0]","名[0]","言語[0]","フォーマット[0]","姓名・言語 表示／非表示[0]","外部著者ID 識別子[0]","外部著者ID[0]","外部著者ID 表示／非表示[0]","メールアドレス[0]","削除フラグ","コミュニティ[0]"]
         
         assert data == []
         
         
         author = {
             "authorNameInfo":[],
-            "authorIdInfo":[],
+            "authorIdInfo":[{"idType":""}],
             "emailInfo":[]
         }
         a = Authors(
@@ -593,13 +679,13 @@ class TestWekoAuthors:
             json=author
         )
         mapping = WEKO_AUTHORS_FILE_MAPPING
-        header, label_en,label_jp,data = WekoAuthors.prepare_export_data(mapping,[a],scheme_info)
+        header, label_en,label_jp,data = WekoAuthors.prepare_export_data(mapping, None, None, [a], scheme_info, None, 0, 10)
         
-        assert header == ["#pk_id","authorNameInfo[0].familyName","authorNameInfo[0].firstName","authorNameInfo[0].language","authorNameInfo[0].nameFormat","authorNameInfo[0].nameShowFlg","authorIdInfo[0].idType","authorIdInfo[0].authorId","authorIdInfo[0].authorIdShowFlg","emailInfo[0].email","is_deleted"]
-        assert label_en == ["#WEKO ID","Family Name[0]","Given Name[0]","Language[0]","Name Format[0]","Name Display[0]","Identifier Scheme[0]","Identifier[0]","Identifier Display[0]","Mail Address[0]","Delete Flag"]
-        assert label_jp == ["#WEKO ID","姓[0]","名[0]","言語[0]","フォーマット[0]","姓名・言語 表示／非表示[0]","外部著者ID 識別子[0]","外部著者ID[0]","外部著者ID 表示／非表示[0]","メールアドレス[0]","削除フラグ"]
-        
-        assert data == [[None,None,None,None,None,None,None,None,None,None,None]]
+        assert header == ["#pk_id","weko_id","authorNameInfo[0].familyName","authorNameInfo[0].firstName","authorNameInfo[0].language","authorNameInfo[0].nameFormat","authorNameInfo[0].nameShowFlg","authorIdInfo[0].idType","authorIdInfo[0].authorId","authorIdInfo[0].authorIdShowFlg","emailInfo[0].email","is_deleted","communityIds[0]"]
+        assert label_en == ["#Author ID","WEKO ID","Family Name[0]","Given Name[0]","Language[0]","Name Format[0]","Name Display[0]","Identifier Scheme[0]","Identifier[0]","Identifier Display[0]","Mail Address[0]","Delete Flag","Community[0]"]
+        assert label_jp == ["#著者ID","WEKO ID","姓[0]","名[0]","言語[0]","フォーマット[0]","姓名・言語 表示／非表示[0]","外部著者ID 識別子[0]","外部著者ID[0]","外部著者ID 表示／非表示[0]","メールアドレス[0]","削除フラグ","コミュニティ[0]"]
+
+        assert data == [[None,None,None,None,None,None,None,None,None,None,None,None,None]]
 
 
     #     def get_by_range(cls, start_point, sum, with_deleted=True, with_gather=True):

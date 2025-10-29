@@ -796,7 +796,7 @@ class WidgetDesignServices:
                             return True
             return False
         except Exception as e:
-            current_app.logger.error('Failed to validate record: ', e)
+            current_app.logger.error('Failed to validate record: %s', e)
             return True
 
 

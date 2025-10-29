@@ -296,10 +296,10 @@ def test_get_image_src():
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_get_license_icon -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
 def test_get_license_icon(app):
     with app.test_request_context(headers=[("Accept-Language", "ja")]):
-        assert get_license_icon("license_12") == (
+        assert tuple(str(_) for _ in get_license_icon("license_12")) == (
             "static/images/default88x31(0).png",
             "Creative Commons CC0 1.0 Universal Public Domain Designation",
-            "https://creativecommons.org/publicdomain/zero/1.0/",
+            "https://creativecommons.org/publicdomain/zero/1.0/deed.ja",
         )
         assert get_license_icon("license_free") == ("", "", "#")
 
@@ -479,7 +479,7 @@ def test_get_item_usage_workflow(records):
                 pi.get_language_name = MagicMock()
                 terms, provide= get_item_usage_workflow(record)
                 assert terms == "Terms of Use Free Input"
-                assert provide == "1" 
+                assert provide == "1"
 
 # def get_workflow_detail(workflow_id):
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_get_workflow_detail -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
@@ -598,9 +598,10 @@ def test_default_view_method(app, records, itemtypes, indexstyle, users):
                         index = MagicMock()
                         index.index_name = ""
                         index.index_name_english = "index"
-                        with patch('weko_records_ui.views.Indexes.get_index', return_value=index):
+                        with patch('weko_records_ui.views.Indexes.get_index', return_value=index), \
+                            patch('weko_workflow.api.GetCommunity.get_community_by_root_node_id',return_value=None):
                             assert default_view_method(recid, record, 'helloworld.pdf').status_code == 200
-                            
+
                         with patch('weko_workflow.api.GetCommunity.get_community_by_root_node_id',return_value=None):
                             assert default_view_method(recid, record, 'helloworld.pdf').status_code == 200
                             # # need to fix
@@ -669,7 +670,7 @@ def test_default_view_method(app, records, itemtypes, indexstyle, users):
                             with patch('weko_records_ui.views.PIDVersioning',return_value=pid_ver):
                                 with patch('weko_records_ui.views.WekoRecord.get_record',return_value={'_deposit':{'status':'draft'}}):
                                     assert default_view_method(recid, record ,'helloworld.pdf').status_code == 200
-                            
+
                             with patch('weko_records_ui.views.WekoRecord.get_record',side_effect=Exception):
                                 assert default_view_method(recid, record ,'helloworld.pdf').status_code == 200
                             with patch('weko_records_ui.views.ItemLink.get_item_link_info',return_value={"relation":"res"}):
@@ -700,15 +701,17 @@ def test_default_view_method2(app, records, itemtypes, indexstyle, mocker):
     indexer, results = records
     record = results[0]["record"]
     recid = results[0]["recid"]
+    ignore_item = ["item_1617944105607", ["item_1617620223087", "subitem_1565671169641"]]
     with app.test_request_context():
         with patch('weko_records_ui.views.check_original_pdf_download_permission', return_value=True):
             with patch("weko_records_ui.views.get_search_detail_keyword", return_value={}):
-                with patch("weko_records_ui.views.get_index_link_list", return_value=[]):
+                with patch("weko_records_ui.views.get_index_link_list", return_value=[]), \
+                    patch("weko_items_ui.utils.get_ignore_item",return_value=ignore_item):
                     # need to fix
                     with pytest.raises(Exception) as e:
                         res = default_view_method(recid, record, 'helloworld.pdf')
                     assert e.type==TemplatesNotFound
-                    
+
                     mock_render_template = mocker.patch("weko_records_ui.views.render_template")
                     default_view_method(recid, record, template='weko_records_ui/detail.html')
                     args, kwargs = mock_render_template.call_args
@@ -973,7 +976,7 @@ def test_default_view_method3(app, records, itemtypes, indexstyle ,users,db_comm
     indexer, results = records
     record = results[0]["record"]
     recid = results[0]["recid"]
-    with app.test_request_context("/?file_order=0&community=community&onetime_file_url=/extra_info"):
+    with app.test_request_context("/?file_order=0&c=community&onetime_file_url=/extra_info"):
         with patch('weko_records_ui.views.check_original_pdf_download_permission', return_value=True):
             with patch("weko_records_ui.views.get_search_detail_keyword", return_value={}):
                 with patch("weko_records_ui.views.get_index_link_list", return_value=[]):
@@ -992,20 +995,21 @@ def test_default_view_method3(app, records, itemtypes, indexstyle ,users,db_comm
                         del record["item_1617605131499"] # files
                         with pytest.raises(NotFound) : #404
                             default_view_method(recid, record ,'helloworld.pdf')
-    
+
 # def default_view_method(pid, record, filename=None, template=None, **kwargs):
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_default_view_method4 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
 def test_default_view_method4(app, records, itemtypes, indexstyle ,users,db_community):
     indexer, results = records
     record = results[0]["record"]
     recid = results[0]["recid"]
-    with app.test_request_context("?onetime_file_url=example.com%2Ffile_name.pdf"):
+    with app.test_request_context("?onetime_url=example.com%2Ffile_name.pdf"):
         with patch('weko_records_ui.views.check_original_pdf_download_permission', return_value=True):
             with patch("weko_records_ui.views.get_search_detail_keyword", return_value={}):
                 with patch("weko_records_ui.views.get_index_link_list", return_value=[]):
                     with patch("weko_records_ui.views.render_template", return_value=make_response()) as mock_render_template:
                         default_view_method(recid, record ,'helloworld.pdf')
                         _, kwargs = mock_render_template.call_args
+
                         assert kwargs['onetime_file_name'] == 'file_name.pdf'
 
 # def doi_ish_view_method(parent_pid_value=0, version=0):
@@ -1200,10 +1204,11 @@ def test_file_version_update_acl(client, records, users, id, status_code):
 
 # def citation(record, pid, style=None, ln=None):
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_citation -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
-def test_citation(records):
+def test_citation(app, records):
     indexer, results = records
     record = results[0]["record"]
-    assert citation(record,record.pid)=='Joho, Taro, Joho, Taro, Joho, Taro, 2021, en_conference paperITEM00000009(public_open_access_simple): Publisher, 1–3 p.'
+    with app.test_request_context():
+        assert citation(record,record.pid)=='Joho, Taro, Joho, Taro, Joho, Taro, 2021, en_conference paperITEM00000009(public_open_access_simple): Publisher, 1–3 p.'
 
 
 # def soft_delete(recid):
@@ -1238,7 +1243,8 @@ def test_soft_delete_acl(client, records, users, id, status_code):
         )
         # 51994 case.01, 05(soft_delete)
         with patch("flask.templating._render", return_value=""):
-            with patch("weko_records_ui.views.call_external_system") as mock_external:
+            with patch("weko_records_ui.views.call_external_system") as mock_external, \
+                 patch("weko_records_ui.permissions.has_comadmin_permission",return_value=True):
                 pid = PersistentIdentifier.query.filter_by(
                     pid_type='recid', pid_value='1').first()
                 assert pid.status == PIDStatus.REGISTERED
@@ -1269,16 +1275,17 @@ def test_soft_delete_with_del_ver_prefix(client, records, users, id, status_code
     """Test soft_delete when recid starts with 'del_ver_'."""
     login_user_via_session(client=client, email=users[id]["email"])
     # Arrange
-    recid = "del_ver_12345"
+    recid = "del_ver_1"
 
     # 51994 case.02(soft_delete)
-    with patch("weko_records_ui.views.delete_version") as mock_delete_version:
+    with patch("weko_records_ui.views.delete_version") as mock_delete_version, \
+         patch("weko_records_ui.permissions.has_comadmin_permission",return_value=True):
         # Act
         res = client.post(url_for("weko_records_ui.soft_delete", recid=recid, _external=True))
 
         # Assert
         assert res.status_code == status_code
-        mock_delete_version.assert_called_once_with("12345")
+        mock_delete_version.assert_called_once_with("1")
 
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_soft_delete_locked -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
 @pytest.mark.parametrize(
@@ -1295,7 +1302,8 @@ def test_soft_delete_locked(client, records, users, id, status_code):
     login_user_via_session(client=client, email=users[id]["email"])
 
     # 51994 case.03(soft_delete)
-    with patch("weko_records_ui.views.is_workflow_activity_work", return_value=True):
+    with patch("weko_records_ui.views.is_workflow_activity_work", return_value=True), \
+         patch("weko_records_ui.permissions.has_comadmin_permission",return_value=True):
         res = client.post(url_for("weko_records_ui.soft_delete", recid=1, _external=True))
         expected_response = {
             "code": -1,
@@ -1361,7 +1369,8 @@ def test_restore_acl(client, records, users, id, status_code):
         url = url_for(
             "weko_records_ui.restore", recid=1, _external=True
         )
-        with patch("flask.templating._render", return_value=""):
+        with patch("flask.templating._render", return_value=""), \
+             patch("weko_records_ui.permissions.has_comadmin_permission",return_value=True):
             res = client.post(url)
             assert res.status_code == status_code
 
@@ -1539,9 +1548,9 @@ def test_default_view_method_fix35133(app, records, itemtypes, indexstyle,mocker
                         {"name": "citation_author","data": "creator name"},
                         {"name":"citation_pdf_url","data":"https://repository.dl.itc.u-tokyo.ac.jp/record/2005680/files/comparison_table_of_preparation_image_catalog.xlsx"},
                         {'name': 'citation_dissertation_institution','data':""},
-                        {'name': 'citation_abstract_html_url','data': 'http://TEST_SERVER/records/1'},
+                        {'name': 'citation_abstract_html_url','data': 'http://test_server/records/1'},
                     ]
-                assert kwargs["google_dataset_meta"] == '{"@context": "https://schema.org/", "@type": "Dataset", "citation": ["http://hdl.handle.net/2261/0002005680", "https://repository.dl.itc.u-tokyo.ac.jp/records/2005680"], "creator": [{"@type": "Person", "alternateName": "creator alternative name", "familyName": "creator family name", "givenName": "creator given name", "identifier": "123", "name": "creator name"}], "description": "『史料編纂掛備用寫眞畫像圖畫類目録』（1905年）の「画像」（肖像画模本）の部に著録する資料の架番号の新旧対照表。史料編纂所所蔵肖像画模本データベースおよび『目録』版面画像へのリンク付き。『画像史料解析センター通信』98（2022年10月）に解説記事あり。", "distribution": [{"@type": "DataDownload", "contentUrl": "https://repository.dl.itc.u-tokyo.ac.jp/record/2005680/files/comparison_table_of_preparation_image_catalog.xlsx", "encodingFormat": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"}, {"@type": "DataDownload", "contentUrl": "https://raw.githubusercontent.com/RCOSDP/JDCat-base/main/apt.txt", "encodingFormat": "text/plain"}, {"@type": "DataDownload", "contentUrl": "https://raw.githubusercontent.com/RCOSDP/JDCat-base/main/environment.yml", "encodingFormat": "application/x-yaml"}, {"@type": "DataDownload", "contentUrl": "https://raw.githubusercontent.com/RCOSDP/JDCat-base/main/postBuild", "encodingFormat": "text/x-shellscript"}], "includedInDataCatalog": {"@type": "DataCatalog", "name": "https://localhost"}, "license": ["CC BY"], "name": "『史料編纂掛備用写真画像図画類目録』画像の部：新旧架番号対照表", "spatialCoverage": [{"@type": "Place", "geo": {"@type": "GeoCoordinates", "latitude": "point latitude test", "longitude": "point longitude test"}}, {"@type": "Place", "geo": {"@type": "GeoShape", "box": "1 3 2 4"}}, "geo location place test"]}' 
+                assert kwargs["google_dataset_meta"] == '{"@context": "https://schema.org/", "@type": "Dataset", "citation": ["http://hdl.handle.net/2261/0002005680", "https://repository.dl.itc.u-tokyo.ac.jp/records/2005680"], "creator": [{"@type": "Person", "alternateName": "creator alternative name", "familyName": "creator family name", "givenName": "creator given name", "identifier": "123", "name": "creator name"}], "description": "『史料編纂掛備用寫眞畫像圖畫類目録』（1905年）の「画像」（肖像画模本）の部に著録する資料の架番号の新旧対照表。史料編纂所所蔵肖像画模本データベースおよび『目録』版面画像へのリンク付き。『画像史料解析センター通信』98（2022年10月）に解説記事あり。", "distribution": [{"@type": "DataDownload", "contentUrl": "https://repository.dl.itc.u-tokyo.ac.jp/record/2005680/files/comparison_table_of_preparation_image_catalog.xlsx", "encodingFormat": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"}, {"@type": "DataDownload", "contentUrl": "https://raw.githubusercontent.com/RCOSDP/JDCat-base/main/apt.txt", "encodingFormat": "text/plain"}, {"@type": "DataDownload", "contentUrl": "https://raw.githubusercontent.com/RCOSDP/JDCat-base/main/environment.yml", "encodingFormat": "application/x-yaml"}, {"@type": "DataDownload", "contentUrl": "https://raw.githubusercontent.com/RCOSDP/JDCat-base/main/postBuild", "encodingFormat": "text/x-shellscript"}], "includedInDataCatalog": {"@type": "DataCatalog", "name": "https://localhost"}, "license": ["CC BY"], "name": "『史料編纂掛備用写真画像図画類目録』画像の部：新旧架番号対照表", "spatialCoverage": [{"@type": "Place", "geo": {"@type": "GeoCoordinates", "latitude": "point latitude test", "longitude": "point longitude test"}}, {"@type": "Place", "geo": {"@type": "GeoShape", "box": "1 3 2 4"}}, "geo location place test"]}'
                 with patch('weko_workflow.api.GetCommunity.get_community_by_root_node_id',return_value=None):
                     default_view_method(recid, record)
                     args, kwargs = mock_render_template.call_args
@@ -1552,7 +1561,7 @@ def test_default_view_method_fix35133(app, records, itemtypes, indexstyle,mocker
                             {"name": "citation_author","data": "creator name"},
                             {"name":"citation_pdf_url","data":"https://repository.dl.itc.u-tokyo.ac.jp/record/2005680/files/comparison_table_of_preparation_image_catalog.xlsx"},
                             {'name': 'citation_dissertation_institution','data':""},
-                            {'name': 'citation_abstract_html_url','data': 'http://TEST_SERVER/records/1'},
+                            {'name': 'citation_abstract_html_url','data': 'http://test_server/records/1'},
                         ]
                     assert kwargs["google_dataset_meta"] == '{"@context": "https://schema.org/", "@type": "Dataset", "citation": ["http://hdl.handle.net/2261/0002005680", "https://repository.dl.itc.u-tokyo.ac.jp/records/2005680"], "creator": [{"@type": "Person", "alternateName": "creator alternative name", "familyName": "creator family name", "givenName": "creator given name", "identifier": "123", "name": "creator name"}], "description": "『史料編纂掛備用寫眞畫像圖畫類目録』（1905年）の「画像」（肖像画模本）の部に著録する資料の架番号の新旧対照表。史料編纂所所蔵肖像画模本データベースおよび『目録』版面画像へのリンク付き。『画像史料解析センター通信』98（2022年10月）に解説記事あり。", "distribution": [{"@type": "DataDownload", "contentUrl": "https://repository.dl.itc.u-tokyo.ac.jp/record/2005680/files/comparison_table_of_preparation_image_catalog.xlsx", "encodingFormat": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"}, {"@type": "DataDownload", "contentUrl": "https://raw.githubusercontent.com/RCOSDP/JDCat-base/main/apt.txt", "encodingFormat": "text/plain"}, {"@type": "DataDownload", "contentUrl": "https://raw.githubusercontent.com/RCOSDP/JDCat-base/main/environment.yml", "encodingFormat": "application/x-yaml"}, {"@type": "DataDownload", "contentUrl": "https://raw.githubusercontent.com/RCOSDP/JDCat-base/main/postBuild", "encodingFormat": "text/x-shellscript"}], "includedInDataCatalog": {"@type": "DataCatalog", "name": "https://localhost"}, "license": ["CC BY"], "name": "『史料編纂掛備用写真画像図画類目録』画像の部：新旧架番号対照表", "spatialCoverage": [{"@type": "Place", "geo": {"@type": "GeoCoordinates", "latitude": "point latitude test", "longitude": "point longitude test"}}, {"@type": "Place", "geo": {"@type": "GeoShape", "box": "1 3 2 4"}}, "geo location place test"]}'
 
@@ -1583,7 +1592,7 @@ def test_publish(app, client, records):
                             publish(record.pid, record_1_b)
                             mock_external.assert_called_with(old_record=record_1_c, new_record=record_0_c)
 
-# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_request_context -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_get_bucket_list -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
 def test_get_bucket_list(app,records,users):
     with app.test_request_context():
         with patch("weko_records_ui.views.get_s3_bucket_list", return_value=[]):
@@ -1591,7 +1600,7 @@ def test_get_bucket_list(app,records,users):
             assert response.status_code == 200
         with patch("weko_records_ui.views.get_s3_bucket_list",side_effect=Exception):
             response = get_bucket_list()
-            assert response.status_code == 400
+            assert response[1] == 400
 
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_copy_bucket -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
 def test_copy_bucket(app,records,users, client):

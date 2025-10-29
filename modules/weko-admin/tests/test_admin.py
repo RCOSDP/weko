@@ -1528,7 +1528,9 @@ def test_RestrictedAccessSettingView_index(client, users, admin_settings, mocker
     assert res.status_code == 200
     args, kwargs = mock_render.call_args
     assert args[0] == "weko_admin/admin/restricted_access_settings.html"
-    assert json.loads(kwargs["data"]) == {"content_file_download": {"expiration_date": 30,"expiration_date_unlimited_chk": False,"download_limit": 10,"download_limit_unlimited_chk": False,},"usage_report_workflow_access": {"expiration_date_access": 500,"expiration_date_access_unlimited_chk": False,},"terms_and_conditions": []}
+    assert json.loads(kwargs["data"]) == {"content_file_download": {"expiration_date": 30,"expiration_date_unlimited_chk": False,"download_limit": 10,"download_limit_unlimited_chk": False,},"usage_report_workflow_access": {"expiration_date_access": 500,"expiration_date_access_unlimited_chk": False,},"terms_and_conditions": [],'display_request_form': False,'edit_mail_templates_enable': False,
+                                          'error_msg': {'content': {'en': {'content': 'This data is not available for ''this user'},'ja': {'content': 'このデータは利用できません（権限がないため）。'}},'key': ''},'item_application': {'application_item_types': [],'item_application_enable': False},
+                                          'password_enable': False,'preview_workflow_approval_enable': False,'restricted_access_display_flag': False}
     assert kwargs["items_per_page"] == 25
     assert kwargs["maxint"] == 9999999
 
@@ -1981,7 +1983,7 @@ class TestsReindexElasticSearchView:
     def test_ReindexElasticSearchView_check_reindex_is_running_err(self, client,users,admin_settings):
         login_user_via_session(client,email=users[0]["email"])# sysadmin
         url = url_for("reindex_es.check_reindex_is_running")
-        with patch("weko_admin.admin.AdminSettings.get", side_effect=BaseException("test_error")):
+        with patch("weko_admin.admin.AdminSettings.get", side_effect=[None, BaseException("test_error")]):
             res = client.get(url)
             assert res.status_code == 500
             assert res.data != str(dict({ "isError":False ,"isExecuting":False,"disabled_Btn":False }))

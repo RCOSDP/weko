@@ -7,7 +7,7 @@ from invenio_previewer.ext import (
 )
 
 
-# def obj_or_import_string(value, default=None): 
+# def obj_or_import_string(value, default=None):
 def test_obj_or_import_string(app):
     value = "invenio_previewer"
     assert obj_or_import_string(value=value) != None
@@ -29,7 +29,7 @@ def test_previewable_extensions(app):
     test = _InvenioPreviewerState(app="app")
     test.entry_point_group = True
 
-    assert test.previewable_extensions() != None
+    assert test.previewable_extensions != None
 
 
 # def record_file_factory(self):
@@ -44,7 +44,7 @@ def test_record_file_factory(app):
     assert test.record_file_factory() != None
 
 
-# def register_previewer(self, name, previewer): 
+# def register_previewer(self, name, previewer):
 def test_register_previewer(app):
     data1 = MagicMock()
     test = _InvenioPreviewerState(app=data1)
@@ -61,7 +61,7 @@ def test_register_previewer(app):
         ) != None
     except:
         pass
-    
+
     name = "test"
 
     assert test.register_previewer(

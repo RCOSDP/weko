@@ -47,10 +47,13 @@ fi
 export DEBIAN_FRONTEND=noninteractive
 
 provision_web_common_ubuntu14 () {
+    # Update sources.list to use archive repositories
+    $sudo sed -i 's|http://deb.debian.org/debian|http://archive.debian.org/debian|g' /etc/apt/sources.list
+    $sudo sed -i 's|http://security.debian.org/debian-security|http://archive.debian.org/debian-security|g' /etc/apt/sources.list
 
     # sphinxdoc-install-useful-system-tools-ubuntu14-begin
     # update list of available packages:
-    $sudo apt-get -y update --allow-releaseinfo-change
+    $sudo apt-get -y update -o Acquire::Check-Valid-Until=false --allow-releaseinfo-change
 
     # install useful system tools:
     $sudo apt-get -y install \

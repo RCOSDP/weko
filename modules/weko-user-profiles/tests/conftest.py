@@ -365,6 +365,7 @@ def user_profiles(db,users):
         item15="",
         item16=""
     )
+    db.session.add(not_validate_language)
     db.session.commit()
     return [
         all_data,

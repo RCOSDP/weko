@@ -346,7 +346,7 @@ def test_ESWekoFileRankingQuery(app, esindex):
 
     index = app.config["INDEXER_DEFAULT_INDEX"]
     doc_type = "stats-file-download"
-
+    app.config['STATS_WEKO_DEFAULT_TIMEZONE'] = 'Asia/Tokyo'
     def register(i):
         with open(f"tests/data/test_events/event_download{i:02}.json","r") as f:
             esindex.index(index=index, doc_type=doc_type, id=f"{i}", body=json.load(f), refresh="true")

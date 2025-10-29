@@ -265,7 +265,7 @@ class TestHeadlessActivity:
         mock_activity.workflow = workflow["workflow"]
         # login user matches
         mock_activity.activity_login_user = users[0]["id"]
-        mock_activity.shared_user_ids = [users[3]["id"]]
+        mock_activity.shared_user_ids = [{"user": users[3]["id"]}]
         with patch("weko_workflow.headless.activity.verify_deletion") as mock_verify_deletion, \
                 patch("weko_workflow.headless.activity.HeadlessActivity.get_activity_by_id") as mock_get_activity_by_id, \
                 patch("weko_workflow.headless.activity.PersistentIdentifier.get_by_object") as mock_get_pid, \
@@ -500,7 +500,7 @@ class TestHeadlessActivity:
         activity.workflow = MagicMock(**workflow["workflow"].__dict__, spec=WorkFlow)
         activity.workflow.index_tree_id = "1"
         activity.workflow.location = MagicMock(name="local", spec=Location)
-        activity.item_type = item_type[0]["obj"]
+        activity.item_type = next(i['obj'] for i in item_type if i['id'] == 1)
 
         metadata = {
             "pubdate": "2024-01-01",
@@ -552,7 +552,7 @@ class TestHeadlessActivity:
         activity._model = mock_activity
         activity.workflow = workflow["workflow"]
         activity.workflow.index_tree_id = "1"
-        activity.item_type = item_type[0]["obj"]
+        activity.item_type = next(i['obj'] for i in item_type if i['id'] == 1)
 
         metadata = {
             "pubdate": "2024-01-01",
@@ -594,7 +594,7 @@ class TestHeadlessActivity:
         mock_activity.activity_community_id = None
         activity._model = mock_activity
         activity.workflow = workflow["workflow"]
-        activity.item_type = item_type
+        activity.item_type = next(i['obj'] for i in item_type if i['id'] == 1)
 
         workflow_index_tree_id = workflow["workflow"].index_tree_id
         activity.workflow.index_tree_id = None
@@ -633,7 +633,7 @@ class TestHeadlessActivity:
         mock_activity.activity_community_id = None
         activity._model = mock_activity
         activity.workflow = workflow["workflow"]
-        activity.item_type = item_type
+        activity.item_type = next(i['obj'] for i in item_type if i['id'] == 1)
         # no index tree id, shared_user_ids and weko_shared_ids are specified
         metadata = {
             "pubdate": "2024-01-01",
@@ -663,7 +663,7 @@ class TestHeadlessActivity:
         mock_activity.activity_community_id = None
         activity._model = mock_activity
         activity.workflow = workflow["workflow"]
-        activity.item_type = item_type
+        activity.item_type = next(i['obj'] for i in item_type if i['id'] == 1)
 
         metadata = {
             "pubdate": "2024-01-01",
@@ -740,7 +740,7 @@ class TestHeadlessActivity:
         activity._model = mock_activity
         activity.workflow = workflow["workflow"]
         activity.workflow.index_tree_id = "1"
-        activity.item_type = item_type
+        activity.item_type = next(i['obj'] for i in item_type if i['id'] == 1)
 
         old_metadata = {
             "pubdate": "2023-01-01",
@@ -823,7 +823,7 @@ class TestHeadlessActivity:
         activity._model = mock_activity
         activity.workflow = workflow["workflow"]
         activity.workflow.index_tree_id = "1"
-        activity.item_type = item_type
+        activity.item_type = next(i['obj'] for i in item_type if i['id'] == 1)
 
         old_metadata = {
             "pubdate": "2023-01-01",
@@ -904,7 +904,7 @@ class TestHeadlessActivity:
         activity._model = mock_activity
         activity.workflow = workflow["workflow"]
         activity.workflow.index_tree_id = "1"
-        activity.item_type = item_type
+        activity.item_type = next(i['obj'] for i in item_type if i['id'] == 1)
         old_metadata = {
             "pubdate": "2023-01-01",
             "item_title":[{"subitem_title":"Old Title"}],
@@ -996,7 +996,7 @@ class TestHeadlessActivity:
         activity._model = mock_activity
         activity.workflow = workflow["workflow"]
         activity.workflow.index_tree_id = "1"
-        activity.item_type = item_type
+        activity.item_type = next(i['obj'] for i in item_type if i['id'] == 1)
 
         old_metadata = {
             "pubdate": "2023-01-01",
@@ -1090,7 +1090,7 @@ class TestHeadlessActivity:
         activity._model = mock_activity
         activity.workflow = workflow["workflow"]
         activity.workflow.index_tree_id = "1"
-        activity.item_type = item_type
+        activity.item_type = next(i['obj'] for i in item_type if i['id'] == 1)
 
         old_metadata = {
             "pubdate": "2023-01-01",
@@ -1182,7 +1182,7 @@ class TestHeadlessActivity:
         activity._model = mock_activity
         activity.workflow = workflow["workflow"]
         activity.workflow.index_tree_id = "1"
-        activity.item_type = item_type
+        activity.item_type = next(i['obj'] for i in item_type if i['id'] == 1)
 
         old_metadata = {
             "pubdate": "2023-01-01",

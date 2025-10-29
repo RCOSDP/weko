@@ -45,6 +45,7 @@ from flask_login import current_user
 from sqlalchemy import MetaData, Table
 from sqlalchemy.sql import text
 from jsonschema import SchemaError, ValidationError
+from werkzeug.exceptions import HTTPException
 
 from invenio_accounts.models import Role, userrole
 from invenio_db import db
@@ -95,12 +96,11 @@ from weko_workflow.models import (
 from weko_workflow.utils import IdentifierHandle
 
 def check_display_shared_user(user_id):
-    for role_id in current_app.config['WEKO_ITEMS_UI_SHARED_USER_ROLE_ID_LIST']:
-        recs = db.session.query(userrole).filter_by(role_id=role_id).all()
-        for rec in recs:
-            if user_id == rec.user_id:
-                return True
-    return False
+    role_ids = current_app.config['WEKO_ITEMS_UI_SHARED_USER_ROLE_ID_LIST']
+    return db.session.query(userrole).filter(
+        userrole.c.user_id == user_id,
+        userrole.c.role_id.in_(role_ids)
+    ).first() is not None
 
 def get_list_username():
     """Get list username.
@@ -308,11 +308,11 @@ def get_user_information(user_ids):
             info['fullname'] = user_info.fullname
         else:
             info['userid'] = user_id
-        
+
         temp = list(map(lambda x : x[0], data))
         if not user_id in temp:
             info['error'] = "The specified user ID is incorrect"
-        
+
         for item in data:
             if int(item[0]) == int(user_id):
                 info['email'] = item[1]
@@ -2596,7 +2596,8 @@ def export_items(post_data):
             if post_data.get('record_metadata') else {}
         )
         if len(record_ids) > _get_max_export_items():
-            return abort(400)
+            current_app.logger.error("Over the maximum export limit.")
+            abort(400)
         elif len(record_ids) == 0:
             return '',204
 
@@ -2665,10 +2666,13 @@ def export_items(post_data):
             attachment_filename='export.zip'
         )
     except (json.JSONDecodeError, KeyError, TypeError, ValueError):
-        current_app.logger.error(traceback.print_exc())
-        return abort(400)
+        current_app.logger.error("Invalid export parameters.")
+        traceback.print_exc()
+        abort(400)
+    except HTTPException:
+        traceback.print_exc()
+        raise
     except Exception:
-        current_app.logger.error(traceback.print_exc())
         traceback.print_exc()
         flash(_('Error occurred during item export.'), 'error')
         resp = redirect(url_for('weko_items_ui.export'))
@@ -4107,10 +4111,10 @@ def get_duplicate_fields(data):
             author_links.extend(item_author_links)
 
     return resource_types, identifiers, titles, creators, author_links
-    
+
 def check_duplicate(data, is_item=True, exclude_ids=[]):
     """Check if a record or item is duplicate in records_metadata.
-    
+
     Checks whether records or items in records_metadata are unique.
 
     If an identifier exists, returns True if a duplicate item exists.
@@ -4119,7 +4123,7 @@ def check_duplicate(data, is_item=True, exclude_ids=[]):
 
     Does not return True if any unique properties exist.
     If each property has multiple values, all values must match to be considered a duplicate.
-    
+
     Args:
         data (dict or str): Metadata dictionary (or JSON string).
         is_item (bool): True if checking an item, False if checking a record.
@@ -4161,7 +4165,7 @@ def check_duplicate(data, is_item=True, exclude_ids=[]):
         titles.extend(_titles)
         creators.extend(_creators)
         author_links.extend(_author_links)
-    
+
     resource_types = list(set(resource_types))
     identifiers = list(set(identifiers))
     titles = list(set(titles))
@@ -4317,6 +4321,7 @@ def check_duplicate(data, is_item=True, exclude_ids=[]):
             json_str = json.dumps(json_obj, ensure_ascii=False)
             result_creators = re.findall(r'"creatorName"\s*:\s*"([^"]+)"', json_str)
             clean_creator = [re.sub(r'[\s,　]', '', name) for name in result_creators]
+            clean_creator = list(set(clean_creator))
             count_clean_creator = Counter(clean_creator)
             if count_normalized_creators == count_clean_creator:
                 final_matched.add(recid)
@@ -4662,7 +4667,7 @@ def make_stats_file_with_permission(item_type_id, recids,
             self.attr_data['request_mail_list']['max_size'] = largest_size
 
             return self.attr_data['request_mail_list']['max_size']
-        
+
         # 利用申請を取得する内部メソッド
         def get_item_application(self):
             self.attr_data['item_application']={}
@@ -5359,159 +5364,6 @@ def get_notification_targets(deposit, user_id, shared_ids):
         current_app.logger.exception("[get_notification_targets] DB access failed")
         return dict()
 
-
-def get_notification_targets_approver(activity):
-    """
-    Retrieve notification targets for the approval process in a workflow.
-
-    Args:
-        activity (Activity): The workflow activity instance containing information such as
-            the actor, flow definition, and community ID.
-
-    Returns:
-        dict: A dictionary containing the following keys:
-            - "targets" (list of User): List of users to be notified.
-            - "settings" (dict): Mapping of user_id to NotificationsUserSettings for the targets.
-            - "profiles" (dict): Mapping of user_id to UserProfile for the targets.
-            - "actor" (dict): A dictionary with the name and email of the actor (initiator).
-    """
-    from weko_workflow.api import Flow, GetCommunity
-    from weko_workflow.models import Action
-    try:
-        actor_id = activity.activity_login_user
-        actor_profile = UserProfile.get_by_userid(actor_id)
-        actor_name = actor_profile.username if actor_profile else None
-
-        flow_id = activity.flow_define.flow_id
-        flow_detail = Flow().get_flow_detail(flow_id)
-        approval_action = Action.query.filter_by(
-            action_endpoint="approval"
-        ).one()
-        approval_action_role = None
-        for action in flow_detail.flow_actions:
-            if (
-                action.action_id == approval_action.id
-                and action.action_order == activity.action_order + 1
-            ):
-                approval_action_role = action.action_role
-                break
-
-        admin_role_id = Role.query.filter_by(
-            name=current_app.config.get("WEKO_ADMIN_PERMISSION_ROLE_REPO")
-        ).one().id
-
-        target_role = {admin_role_id}
-        if approval_action_role:
-            action_role_id = approval_action_role.action_role
-            if isinstance(action_role_id, int) and approval_action_role.action_role_exclude:
-                target_role.discard(action_role_id)
-
-        set_target_id = {
-            uid[0] for uid in db.session.query(userrole.c.user_id)
-            .filter(userrole.c.role_id.in_(target_role)).distinct()
-        }
-
-        if approval_action_role:
-            action_user_id = approval_action_role.action_user
-            if isinstance(action_user_id, int):
-                if approval_action_role.action_user_exclude:
-                    set_target_id.discard(action_user_id)
-                else:
-                    set_target_id.add(action_user_id)
-
-        community_id = activity.activity_community_id
-        if community_id is not None:
-            community_admin_role_id = Role.query.filter_by(
-                name=current_app.config.get("WEKO_ADMIN_PERMISSION_ROLE_COMMUNITY")
-            ).one().id
-            community_owner_role_id = GetCommunity.get_community_by_id(community_id).id_role
-            role_left = userrole.alias("role_left")
-            role_right = userrole.alias("role_right")
-
-            set_community_admin_id = {
-                uid[0] for uid in db.session.query(role_left.c.user_id)
-                .join(role_right, role_left.c.role_id == role_right.c.role_id)
-                .filter(
-                    role_left.c.role_id == community_admin_role_id,
-                    role_right.c.role_id == community_owner_role_id
-                ).distinct()
-            }
-            set_target_id.update(set_community_admin_id)
-
-        is_shared = bool(activity.shared_user_ids)
-        if not is_shared:
-            set_target_id.discard(actor_id)
-
-        targets = User.query.filter(User.id.in_(list(set_target_id))).all()
-        settings = NotificationsUserSettings.query.filter(
-            NotificationsUserSettings.user_id.in_(list(set_target_id))
-        ).all()
-        profiles = UserProfile.query.filter(
-            UserProfile.user_id.in_(list(set_target_id))
-        ).all()
-        actor = User.query.filter_by(id=actor_id).one_or_none()
-
-        return {
-            "targets": targets,
-            "settings": {s.user_id: s for s in settings},
-            "profiles": {p.user_id: p for p in profiles},
-            "actor": {"name": actor_name, "email": actor.email}
-        }
-
-    except SQLAlchemyError:
-        current_app.logger.exception("[get_notification_targets_approver] DB access failed")
-        return dict()
-
-
-def get_notification_targets_approved(deposit, user_id, activity):
-    """
-    Retrieve notification targets for a given deposit and user.
-
-    Args:
-        deposit (dict): The deposit data containing information about owners
-                        and shared users.
-        user_id (int): The ID of the current user.
-        activity (Activity): The workflow activity instance.
-
-    Returns:
-        dict: A dictionary containing the following keys:
-            - "targets" (list): List of User objects who are the notification targets.
-            - "settings" (dict): A dictionary mapping user IDs to their notification settings.
-            - "profiles" (dict): A dictionary mapping user IDs to their user profiles.
-    """
-    owners = deposit.get("_deposit", {}).get("owners", [])
-    set_target_id = set(owners)
-    is_shared = bool(deposit.get("weko_shared_ids"))
-
-    actor_id = activity.activity_login_user
-    if actor_id:
-        set_target_id.add(actor_id)
-
-    if is_shared:
-        set_target_id.update(deposit.get("weko_shared_ids", []))
-    else:
-        set_target_id.discard(int(user_id))
-
-    target_ids = list(set_target_id)
-    current_app.logger.debug(f"[get_notification_targets_approved] target_ids: {target_ids}")
-
-    try:
-        targets = User.query.filter(User.id.in_(target_ids)).all()
-        settings = NotificationsUserSettings.query.filter(
-            NotificationsUserSettings.user_id.in_(target_ids)
-        ).all()
-        profiles = UserProfile.query.filter(
-            UserProfile.user_id.in_(target_ids)
-        ).all()
-
-        return {
-            "targets": targets,
-            "settings": {s.user_id: s for s in settings},
-            "profiles": {p.user_id: p for p in profiles}
-        }
-    except SQLAlchemyError:
-        current_app.logger.exception("[get_notification_targets_approved] DB access failed")
-        return dict()
 
 # --- メール本文生成関数 ---
 

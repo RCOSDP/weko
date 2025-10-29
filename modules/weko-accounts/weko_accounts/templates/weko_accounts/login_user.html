@@ -253,7 +253,13 @@
           // that shall be added to the drop-down list
           // The IdPs will be displayed in the sequence they are defined
           // [Optional, commented out by default]
-          // var wayf_additional_idps = [ ];
+          var wayf_additional_idps = [
+            {
+              "entityID": "https://core.orthros.gakunin.nii.ac.jp/idp",
+              "name": "Orthros",
+              "search": ["https://core.orthros.gakunin.nii.ac.jp/idp", "Orthros"]
+            },
+          ];
           
           // Example of how to add Identity Provider from other federations
           // var wayf_additional_idps = [ 
