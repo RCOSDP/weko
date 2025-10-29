@@ -414,6 +414,7 @@ class WorkFlowSettingView(BaseView):
             .filter(WorkflowRole.workflow_id == workflows.id) \
             .filter(WorkflowRole.role_id == Role.id) \
             .all()
+        hide = [r for r in hide if r in role]
         if hide:
             display = self.get_displays(hide, role)
         else:
@@ -573,8 +574,22 @@ class WorkFlowSettingView(BaseView):
         # ['4']
         current_app.logger.error("list_hide:{}".format(list_hide))
         with db.session.begin_nested():
-            db.session.query(WorkflowRole).filter_by(
-                workflow_id=wf_id).delete()
+            role_key = current_app.config["WEKO_ACCOUNTS_GAKUNIN_GROUP_PATTERN_DICT"]["role_keyword"]
+            prefix = current_app.config["WEKO_ACCOUNTS_GAKUNIN_GROUP_PATTERN_DICT"]["prefix"]
+            roles_to_delete = db.session.query(WorkflowRole).filter_by(workflow_id=wf_id).all()
+            filtered_role_ids = []
+            for wfrole in roles_to_delete:
+                role = Role.query.filter_by(id=wfrole.role_id).first()
+                if role:
+                    if role_key in role.name and role.name.startswith(prefix):
+                        continue
+                filtered_role_ids.append(wfrole.role_id)
+
+            if filtered_role_ids:
+                db.session.query(WorkflowRole).filter(
+                    WorkflowRole.workflow_id == wf_id,
+                    WorkflowRole.role_id.in_(filtered_role_ids)
+                ).delete(synchronize_session=False)
             if isinstance(list_hide, list):
                 while list_hide:
                     tmp = list_hide.pop(0)
